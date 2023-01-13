@@ -11,12 +11,10 @@ if [ "$#" -ne 2 ]; then
     echo "Example: $0 container-name 6cd9d7ebad4f16ef7273a7a831d79d5d5caf4164"
     echo "Relies on the following environment variables:"
     echo "- GITHUB_HEAD_REF, GITHUB_REF, GITHUB_SHA (GH Action default)"
-    echo "- AWS_ACCESS_KEY_ID, AWS_SECRET_ACCESS_KEY, DOCKER_REGISTRY"
+    echo "- DOCKER_REGISTRY"
     exit 1
 fi
 
-[ "${AWS_ACCESS_KEY_ID}" == "" ] && (echo "AWS_ACCESS_KEY_ID is not set" ; exit 1)
-[ "${AWS_SECRET_ACCESS_KEY}" == "" ] && (echo "AWS_SECRET_ACCESS_KEY is not set" ; exit 1)
 [ "${DOCKER_REGISTRY}" == "" ] && (echo "DOCKER_REGISTRY is not set" ; exit 1)
 
 project="$1"
