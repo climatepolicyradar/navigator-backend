@@ -43,7 +43,7 @@ jobs:
         run:  curl http://localhost:8888/api/docs
 
       - name: Run backend tests
-        run:  make test_backend
+        run:  make test
       
       - name: docker
         run: |
@@ -53,7 +53,7 @@ jobs:
           ls -la
       
       - name: Run backend search tests
-        run:  make test_backend_search
+        run:  make test_search
       
       - name: Log Dump
         if:   always()
