@@ -1,0 +1,92 @@
+version: '3.7'
+services:
+  backend_db:
+    image: postgres:12
+    restart: always
+    environment:
+      POSTGRES_USER: ${BACKEND_POSTGRES_USER}
+      POSTGRES_PASSWORD: ${BACKEND_POSTGRES_PASSWORD}
+    ports:
+      - 5432:5432
+    volumes:
+      - db-data-backend:/var/lib/postgresql/data:cached
+    healthcheck:
+      test: [ "CMD-SHELL", "pg_isready -U ${BACKEND_POSTGRES_USER}" ]
+      interval: 5s
+      timeout: 3s
+      retries: 30
+
+  opensearch-node1:
+    image: opensearchproject/opensearch:1.3.0
+    container_name: opensearch-node1
+    environment:
+      - cluster.name=opensearch-cluster
+      - node.name=opensearch-node1
+    ulimits:
+      memlock:
+        soft: -1
+        hard: -1
+      nofile:
+        soft: 65536 # maximum number of open files for the OpenSearch user, set to at least 65536 on modern systems
+        hard: 65536
+    volumes:
+      - opensearch-data1:/usr/share/opensearch/data
+    ports:
+      - 9200:9200
+      - 9600:9600 # required for Performance Analyzer
+    healthcheck:
+      test: curl -u ${OPENSEARCH_USER}:${OPENSEARCH_PASSWORD} -s -f opensearch-node1:9200/_cat/health >/dev/null || exit 1
+      interval: 5s
+      timeout: 3s
+      retries: 30
+
+  backend:
+    build:
+      context: ./
+      dockerfile: Dockerfile
+    image: navigator-backend
+    command: python app/main.py
+    tty: true
+    volumes:
+      - ./:/cpr-backend/:cached
+    ports:
+      - 8888:8888
+    environment:
+      PYTHONPATH: .
+      DATABASE_URL: ${BACKEND_DATABASE_URL}
+    env_file:
+      - .env
+    depends_on:
+      backend_db:
+        condition: service_healthy
+      opensearch-node1:
+        condition: service_healthy
+    healthcheck:
+      test: curl -s -f backend:8888/health >/dev/null || exit 1
+      interval: 5s
+      timeout: 3s
+      retries: 30
+
+  opensearch-dashboards:
+    image: opensearchproject/opensearch-dashboards:1.3.0
+    container_name: opensearch-dashboards
+    ports:
+      - 5601:5601
+    depends_on:
+      opensearch-node1:
+        condition: service_healthy
+
+  opensearch-test-loader:
+    image: elasticdump/elasticsearch-dump
+    container_name: opensearch-test-loader
+    volumes:
+      - ./:/cpr-backend/:cached
+    env_file:
+      - .env
+    depends_on:
+      opensearch-node1:
+        condition: service_healthy
+
+volumes:
+  db-data-backend:
+  opensearch-data1:

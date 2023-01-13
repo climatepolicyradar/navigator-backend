@@ -1,0 +1,14 @@
+[
+  {
+    "name": "Law",
+    "description": "Legislative Document"
+  },
+  {
+    "name": "Policy",
+    "description": "Executive Document"
+  },
+  {
+    "name": "Case",
+    "description": "Litigation Case"
+  }
+]
