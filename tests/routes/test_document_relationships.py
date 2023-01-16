@@ -1,5 +1,5 @@
 from app.api.api_v1.schemas.document import RelationshipCreateRequest
-from app.db.models.document import Document, DocumentRelationship, Relationship
+from app.db.deprecated.models.document import Document, DocumentRelationship, Relationship
 
 from .test_documents import create_4_documents
 

@@ -2,7 +2,7 @@ from datetime import datetime, timezone
 
 import pytest
 
-from app.db.models import (
+from app.db.deprecated.models import (
     Document,
     Source,
     Geography,

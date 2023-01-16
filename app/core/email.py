@@ -6,7 +6,7 @@ from python_http_client.client import Response
 from sendgrid import SendGridAPIClient
 from sendgrid.helpers.mail import DynamicTemplateData, From, Mail, TemplateId, To
 
-from app.db.models import User, PasswordResetToken
+from app.db.deprecated.models import User, PasswordResetToken
 
 _LOGGER = logging.getLogger(__name__)
 

@@ -3,7 +3,7 @@
 from time import perf_counter
 from typing import Optional
 from pydantic import BaseModel
-from app.db.models.document import Category, Document, Geography, DocumentType
+from app.db.deprecated.models.document import Category, Document, Geography, DocumentType
 from app.api.api_v1.schemas.search import (
     SearchResult,
     SearchResults,

@@ -1,6 +1,6 @@
 from unittest.mock import patch
 
-from app.db.models.document import Keyword
+from app.db.deprecated.models.document import Keyword
 from scripts.cleanup_lookups.cleanup_lookups import (
     get_clean_keyword_map,
     update_keyword_links,
