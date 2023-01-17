@@ -15,7 +15,7 @@ class ValidationError(Exception):
 
 
 class ImportSchemaMismatchError(ValidationError):
-    """Raised when a provided bulk import file fails schema validation."""
+    """Raised when a provided bulk import file fails CSV schema validation."""
 
     def __init__(self, message: str, details: dict):
         super().__init__(
@@ -25,7 +25,7 @@ class ImportSchemaMismatchError(ValidationError):
 
 
 class DocumentsFailedValidationError(ValidationError):
-    """Raised when bulk import files fail validation."""
+    """Raised when bulk import data rows fail validation."""
 
     def __init__(self, message: str, details: dict):
         super().__init__(
