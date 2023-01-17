@@ -36,6 +36,18 @@ class Category(Base):
     description = sa.Column(sa.Text, nullable=False)
 
 
+class NewDocument(Base, Auditable):
+    """A new document in the document schema.
+
+    """
+
+    __tablename__ = "document_documentX"
+    schema = "document"
+
+    id = sa.Column(sa.Integer, primary_key=True)
+
+
+
 class Document(Base, Auditable):
     """A document.
 

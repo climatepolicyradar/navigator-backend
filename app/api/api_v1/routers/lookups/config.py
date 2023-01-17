@@ -1,4 +1,5 @@
 from typing import List
+from app.core.util import table_to_json
 from fastapi import Depends, Request, Response
 
 from app.api.api_v1.schemas.metadata import Config
@@ -7,6 +8,7 @@ from app.db.session import get_db
 from app.db.crud.document import get_document_ids
 from .router import lookups_router
 
+from app.db.models import NewDocument 
 
 @lookups_router.get("/config", response_model=Config)
 def lookup_config(
@@ -40,3 +42,12 @@ async def document_ids(
     (hash, id_list) = get_document_ids(db)
     response.headers["ETag"] = hash
     return id_list
+
+@lookups_router.get("/dbconfig", response_model=Config)
+def lookup_config(
+    request: Request,
+    db=Depends(get_db),
+):
+    """Get the config for the metadata."""
+    db.execution_options()
+    return db.query(NewDocument).all()

@@ -1,31 +1,12 @@
 # Database dump
 backend_db_dump.dump
 
+models
+
 # Adobe PDF services keys
 pdfservices-credentials.json
 private.key
 certificate_pub.crt
-
-#temporary
-/frontend-old
-
-# Node dependencies
-/frontend/node_modules
-/frontend-old/node_modules
-
-#front end testing
-/frontend/e2e/cypress/screenshots
-/frontend/e2e/cypress/videos
-/frontend/e2e/cypress/e2e/1-getting-started
-/frontend/e2e/cypress/e2e/2-advanced-examples
-/frontend/e2e/node_modules/
-
-# next.js
-/frontend/.next/
-/frontend/out/
-
-# https certificate for localhost (front end)
-/frontend/certificates
 
 #design files
 /psd/

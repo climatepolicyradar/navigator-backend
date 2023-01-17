@@ -11,6 +11,13 @@ engine = create_engine(
     pool_size=10,
     max_overflow=240,
 )
+engine.execution_options(
+    schema_translate_map={
+        None: "user_schema_one",  # no schema name -> "user_schema_one"
+        "document": "document_schema",  # schema="document" becomes "document_schema"
+        "public": None,  # Table objects with schema="public" will render with no schema
+    }
+)
 SessionLocal = sessionmaker(autocommit=False, autoflush=False, bind=engine)
 
 
