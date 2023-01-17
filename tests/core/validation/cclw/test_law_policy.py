@@ -29,7 +29,7 @@ from app.core.validation.cclw.law_policy.process_csv import (
 )
 from app.core.validation.types import ImportSchemaMismatchError
 from app.core.validation.util import get_valid_metadata
-from app.db.deprecated.models import (
+from app.db.models.deprecated import (
     Source,
     Geography,
     DocumentType,

@@ -15,7 +15,7 @@ from app.api.api_v1.schemas.search import (
     FilterField,
 )
 from app.core.search import _FILTER_FIELD_MAP, OpenSearchQueryConfig
-from app.db.deprecated.models import Geography
+from app.db.models.deprecated import Geography
 
 
 @pytest.mark.search

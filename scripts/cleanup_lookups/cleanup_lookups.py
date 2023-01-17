@@ -6,7 +6,7 @@ from typing import Dict, Mapping
 
 from sqlalchemy.orm import Session
 
-from app.db.deprecated.models import (
+from app.db.models.deprecated import (
     DocumentInstrument,
     DocumentKeyword,
     DocumentSector,

@@ -13,7 +13,7 @@ from app.core.validation.util import (
     get_valid_metadata,
     write_documents_to_s3,
 )
-from app.db.deprecated.models import Keyword, Sector, Source
+from app.db.models.deprecated import Keyword, Sector, Source
 
 
 NOT_A_TREE_1 = [{"name": 1}, {"name": 2}, {"name": 3}]

@@ -5,7 +5,7 @@ import pytest
 
 from app.api.api_v1.routers.admin import ACCOUNT_ACTIVATION_EXPIRE_MINUTES
 from app.core.security import verify_password
-from app.db.deprecated.models import User, PasswordResetToken
+from app.db.models.deprecated import User, PasswordResetToken
 from app.api.api_v1.routers.unauthenticated import limiter
 
 

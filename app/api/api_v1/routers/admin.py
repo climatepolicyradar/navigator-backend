@@ -54,7 +54,7 @@ from app.db.crud.user import (
     get_user,
     get_users,
 )
-from app.db.deprecated.models.document import Document
+from app.db.models.deprecated.document import Document
 from app.db.session import get_db
 
 _LOGGER = logging.getLogger(__name__)

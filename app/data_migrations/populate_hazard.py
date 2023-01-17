@@ -2,7 +2,7 @@ import json
 
 from sqlalchemy.orm import Session
 
-from app.db.deprecated.models import Hazard
+from app.db.models.deprecated import Hazard
 from .utils import has_rows, load_list
 
 

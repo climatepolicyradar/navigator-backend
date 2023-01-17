@@ -2,7 +2,7 @@ from typing import Mapping, Optional, Sequence, cast
 
 from sqlalchemy.orm import Session
 
-from app.db.deprecated.models import Source
+from app.db.models.deprecated import Source
 from app.db.session import Base
 
 

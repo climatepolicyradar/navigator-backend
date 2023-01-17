@@ -2,7 +2,7 @@ import json
 
 from sqlalchemy.orm import Session
 
-from app.db.deprecated.models import Sector
+from app.db.models.deprecated import Sector
 from .utils import has_rows, load_tree, map_source_ids
 
 

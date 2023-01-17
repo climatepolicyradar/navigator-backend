@@ -1,6 +1,6 @@
 import sqlalchemy as sa
 
-from .auditable import Auditable
+from ..auditable import Auditable
 from app.db.session import Base
 
 
