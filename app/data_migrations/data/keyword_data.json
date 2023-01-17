@@ -862,5 +862,13 @@
   {
     "name": "Reporting",
     "description": "Reporting"
+  },
+  {
+    "name": "Energy Transition",
+    "description": "Energy Transition"
+  },
+  {
+    "name": "Adaptation Planning",
+    "description": "Adaptation Planning"
   }
 ]
