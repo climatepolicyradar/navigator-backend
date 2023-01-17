@@ -58,6 +58,7 @@ def _log_response(response: requests.Response) -> None:
 
 def get_admin_token() -> str:
     """Go through the login flow & create access token for requests."""
+
     _LOG.info("Getting auth token")
     admin_user = os.getenv(ADMIN_EMAIL_ENV)
     admin_password = os.getenv(ADMIN_PASSWORD_ENV)
@@ -79,6 +80,7 @@ def get_admin_token() -> str:
 
 def get_admin_auth_headers() -> dict[str, str]:
     """Create the required auth headers for requests."""
+
     if (admin_user_token := os.getenv(ADMIN_TOKEN_ENV)) is None:
         admin_user_token = get_admin_token()
         os.environ[ADMIN_TOKEN_ENV] = admin_user_token
@@ -90,11 +92,15 @@ def get_admin_auth_headers() -> dict[str, str]:
 
 
 def get_request_url(endpoint: str) -> str:
+    """Build a URL from the path & the defined API_HOST."""
+
     api_host = os.getenv("API_HOST", "http://backend:8888").rstrip("/")
     return f"{api_host}/{endpoint}"
 
 
 def post_data_ingest(ingest_csv_path: Path) -> requests.Response:
+    """Trigger the CCLW bulk import endpoint with the given CSV file."""
+
     _LOG.info("Making bulk import request")
 
     mp_encoder = MultipartEncoder(
