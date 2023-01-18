@@ -1,6 +1,7 @@
 import logging
 from io import StringIO
 from typing import cast, Union
+import json
 
 from fastapi import (
     APIRouter,
@@ -318,6 +319,56 @@ def import_law_policy(
         documents_ids_already_exist = set(import_ids_to_create).intersection(
             set(existing_import_ids)
         )
+        # TODO iterate over docs that already exist
+        documents_ids_already_exist_with_updates = []
+        for document in documents_ids_already_exist:
+
+            # TODO query the backend for the document object
+            db_document = [doc for doc in db.query(Document).filter(Document.import_id == document)][0]
+
+            # TODO get the document row from the csv
+            for row in validated_input(StringIO(initial_value=file_contents)):
+                if f"CCLW.{row['Category']}.{row['Id']}.{row['Document Id']}" == db_document.import_id:
+                    csv_document = row
+
+                    # TODO compare the two
+                    def csv_and_db_docs_are_different(csv_document: dict, db_document: dict) -> bool:
+                        """
+                        Compare the two documents to see if they are different.
+                        """
+                        if db_document['publication_ts'].year != csv_document['Year']:
+                            return True
+
+                        if db_document['name'] != csv_document['Title']:
+                            return True
+
+                        if db_document['description'] != csv_document['Description']:
+                            return True
+
+                        db_document_geog = [geo for geo in db.query(Geography).filter(Geography.id == db_document['geography_id'])][0]
+                        if db_document_geog.value != csv_document['Geography']:
+                            return True
+
+                        db_document_type = [doc_type for doc_type in db.query(DocumentType).filter(DocumentType.id == db_document['type_id'])][0]
+                        if db_document_type.value != csv_document['Document Type']:
+                            return True
+
+                        db_document_category = [doc_cat for doc_cat in db.query(Category).filter(Category.id == db_document['category_id'])][0]
+                        if db_document_category.value != csv_document['Category']:
+                            return True
+
+                        return False
+
+                    _LOGGER.info(f"_________________Comparing {db_document.to_json()} and {csv_document}_________________")
+                    if csv_and_db_docs_are_different(csv_document, db_document.to_json()):
+                        _LOGGER.info(f"_________________Appending {db_document.import_id}_________________")
+                        documents_ids_already_exist_with_updates.append(db_document.import_id)
+
+        if documents_ids_already_exist_with_updates:
+            _LOGGER.info(
+                f"_________________Document IDs with updates identified {len(documents_ids_already_exist_with_updates)} - {documents_ids_already_exist_with_updates[:10]}._________________",
+            )
+
         document_skipped_count = len(documents_ids_already_exist)
         _LOGGER.info(
             "Bulk Import Validation Complete.",

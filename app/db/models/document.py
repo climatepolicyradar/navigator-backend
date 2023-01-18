@@ -1,5 +1,6 @@
 import sqlalchemy as sa
 from sqlalchemy import UniqueConstraint
+from typing import Mapping, Any
 
 from .auditable import Auditable
 from .source import Source
@@ -93,6 +94,27 @@ class Document(Base, Auditable):
     )
     category_id = sa.Column(sa.Integer, sa.ForeignKey(Category.id), nullable=False)
     UniqueConstraint(source_id, import_id)
+
+    def to_json(self) -> Mapping[str, Any]:
+        """Output a JSON serialising friendly dict representing this model"""
+        return {
+            "id": self.id,
+            "publication_ts": self.publication_ts,
+            "name": self.name,
+            "description": self.description,
+            "source_url": self.source_url,
+            "source_id": self.source_id,
+            "url": self.url,
+            "cdn_object": self.cdn_object,
+            "md5_sum": self.md5_sum,
+            "content_type": self.content_type,
+            "postfix": self.postfix,
+            "slug": self.slug,
+            "import_id": self.import_id,
+            "geography_id": self.geography_id,
+            "type_id": self.type_id,
+            "category_id": self.category_id,
+        }
 
 
 class Association(Base):  # noqa: D101
