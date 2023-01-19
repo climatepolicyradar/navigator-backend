@@ -1,6 +1,5 @@
 import sqlalchemy as sa
 from sqlalchemy import UniqueConstraint
-from typing import Mapping, Any
 
 from .auditable import Auditable
 from .source import Source

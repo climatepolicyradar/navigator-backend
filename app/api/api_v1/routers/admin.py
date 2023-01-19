@@ -1,7 +1,6 @@
 import logging
 from io import StringIO
 from typing import cast, Union
-import json
 
 from fastapi import (
     APIRouter,
@@ -56,8 +55,7 @@ from app.db.crud.user import (
     get_user,
     get_users,
 )
-from app.db.models.document import Document, DocumentType, Category
-from app.db.models.geography import Geography
+from app.db.models.document import Document
 from app.db.session import get_db
 
 _LOGGER = logging.getLogger(__name__)
