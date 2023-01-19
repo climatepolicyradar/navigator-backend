@@ -315,6 +315,8 @@ def import_law_policy(
                     if doc_has_updates(validation_result, db):
                         documents_with_updates.append(validation_result.import_id)
 
+        # TODO For documents with updates, make the updates in the database and call for deletion in S3
+
         if encountered_errors:
             raise DocumentsFailedValidationError(
                 message="File failed detailed validation.", details=encountered_errors
