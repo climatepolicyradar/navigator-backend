@@ -24,6 +24,7 @@ from app.api.api_v1.schemas.document import (
 )
 from app.api.api_v1.schemas.user import User, UserCreateAdmin
 from app.core.auth import get_current_active_superuser
+from app.core.util import doc_has_updates
 from app.core.aws import get_s3_client
 from app.core.email import (
     send_new_account_email,
@@ -55,7 +56,8 @@ from app.db.crud.user import (
     get_user,
     get_users,
 )
-from app.db.models.document import Document
+from app.db.models.document import Document, DocumentType, Category
+from app.db.models.geography import Geography
 from app.db.session import get_db
 
 _LOGGER = logging.getLogger(__name__)
@@ -73,9 +75,9 @@ ACCOUNT_ACTIVATION_EXPIRE_MINUTES = 4 * 7 * 24 * 60  # 4 weeks
 )
 # TODO paginate
 async def users_list(
-    response: Response,
-    db=Depends(get_db),
-    current_user=Depends(get_current_active_superuser),
+        response: Response,
+        db=Depends(get_db),
+        current_user=Depends(get_current_active_superuser),
 ):
     """Gets all users"""
     _LOGGER.info(
@@ -96,11 +98,11 @@ async def users_list(
     response_model_exclude_none=True,
 )
 async def user_details(
-    request: Request,
-    response: Response,
-    user_id: int,
-    db=Depends(get_db),
-    current_user=Depends(get_current_active_superuser),
+        request: Request,
+        response: Response,
+        user_id: int,
+        db=Depends(get_db),
+        current_user=Depends(get_current_active_superuser),
 ):
     """Gets any user details"""
     _LOGGER.info(
@@ -120,10 +122,10 @@ async def user_details(
 
 @r.post("/users", response_model=User, response_model_exclude_none=True)
 async def user_create(
-    request: Request,
-    user: UserCreateAdmin,
-    db=Depends(get_db),
-    current_user=Depends(get_current_active_superuser),
+        request: Request,
+        user: UserCreateAdmin,
+        db=Depends(get_db),
+        current_user=Depends(get_current_active_superuser),
 ):
     """Creates a new user"""
     _LOGGER.info(
@@ -162,12 +164,12 @@ async def user_create(
 
 @r.put("/users/{user_id}", response_model=User, response_model_exclude_none=True)
 async def user_edit(
-    request: Request,
-    response: Response,
-    user_id: int,
-    user: UserCreateAdmin,
-    db=Depends(get_db),
-    current_user=Depends(get_current_active_superuser),
+        request: Request,
+        response: Response,
+        user_id: int,
+        user: UserCreateAdmin,
+        db=Depends(get_db),
+        current_user=Depends(get_current_active_superuser),
 ):
     """Updates existing user"""
     _LOGGER.info(
@@ -201,10 +203,10 @@ async def user_edit(
 
 @r.delete("/users/{user_id}", response_model=User, response_model_exclude_none=True)
 async def user_delete(
-    request: Request,
-    user_id: int,
-    db=Depends(get_db),
-    current_user=Depends(get_current_active_superuser),
+        request: Request,
+        user_id: int,
+        db=Depends(get_db),
+        current_user=Depends(get_current_active_superuser),
 ):
     """Deletes existing user"""
     _LOGGER.info(
@@ -224,10 +226,10 @@ async def user_delete(
 )
 @limiter.limit("6/minute")
 async def request_password_reset(
-    request: Request,
-    user_id: int,
-    db=Depends(get_db),
-    current_user=Depends(get_current_active_superuser),
+        request: Request,
+        user_id: int,
+        db=Depends(get_db),
+        current_user=Depends(get_current_active_superuser),
 ):
     """
     Deletes a password for a user, and kicks off password-reset flow.
@@ -274,12 +276,12 @@ async def request_password_reset(
     status_code=status.HTTP_202_ACCEPTED,
 )
 def import_law_policy(
-    request: Request,
-    law_policy_csv: UploadFile,
-    background_tasks: BackgroundTasks,
-    db=Depends(get_db),
-    current_user=Depends(get_current_active_superuser),
-    s3_client=Depends(get_s3_client),
+        request: Request,
+        law_policy_csv: UploadFile,
+        background_tasks: BackgroundTasks,
+        db=Depends(get_db),
+        current_user=Depends(get_current_active_superuser),
+        s3_client=Depends(get_s3_client),
 ):
     """Process a Law/Policy data import"""
     _LOGGER.info(
@@ -298,10 +300,11 @@ def import_law_policy(
         document_create_objects: list[DocumentCreateRequest] = []
         import_ids_to_create = []
         total_document_count = 0
+        documents_with_updates = []
 
         # TODO: Check for document existence?
         for validation_result in extract_documents(
-            csv_reader=csv_reader, valid_metadata=valid_metadata
+                csv_reader=csv_reader, valid_metadata=valid_metadata
         ):
             total_document_count += 1
             if validation_result.errors:
@@ -310,6 +313,9 @@ def import_law_policy(
                 import_ids_to_create.append(validation_result.import_id)
                 if validation_result.import_id not in existing_import_ids:
                     document_create_objects.append(validation_result.create_request)
+                if validation_result.import_id in existing_import_ids:
+                    if doc_has_updates(validation_result, db):
+                        documents_with_updates.append(validation_result.import_id)
 
         if encountered_errors:
             raise DocumentsFailedValidationError(
@@ -319,55 +325,6 @@ def import_law_policy(
         documents_ids_already_exist = set(import_ids_to_create).intersection(
             set(existing_import_ids)
         )
-        # TODO iterate over docs that already exist
-        documents_ids_already_exist_with_updates = []
-        for document in documents_ids_already_exist:
-
-            # TODO query the backend for the document object
-            db_document = [doc for doc in db.query(Document).filter(Document.import_id == document)][0]
-
-            # TODO get the document row from the csv
-            for row in validated_input(StringIO(initial_value=file_contents)):
-                if f"CCLW.{row['Category']}.{row['Id']}.{row['Document Id']}" == db_document.import_id:
-                    csv_document = row
-
-                    # TODO compare the two
-                    def csv_and_db_docs_are_different(csv_document: dict, db_document: dict) -> bool:
-                        """
-                        Compare the two documents to see if they are different.
-                        """
-                        if db_document['publication_ts'].year != csv_document['Year']:
-                            return True
-
-                        if db_document['name'] != csv_document['Title']:
-                            return True
-
-                        if db_document['description'] != csv_document['Description']:
-                            return True
-
-                        db_document_geog = [geo for geo in db.query(Geography).filter(Geography.id == db_document['geography_id'])][0]
-                        if db_document_geog.value != csv_document['Geography']:
-                            return True
-
-                        db_document_type = [doc_type for doc_type in db.query(DocumentType).filter(DocumentType.id == db_document['type_id'])][0]
-                        if db_document_type.value != csv_document['Document Type']:
-                            return True
-
-                        db_document_category = [doc_cat for doc_cat in db.query(Category).filter(Category.id == db_document['category_id'])][0]
-                        if db_document_category.value != csv_document['Category']:
-                            return True
-
-                        return False
-
-                    _LOGGER.info(f"_________________Comparing {db_document.to_json()} and {csv_document}_________________")
-                    if csv_and_db_docs_are_different(csv_document, db_document.to_json()):
-                        _LOGGER.info(f"_________________Appending {db_document.import_id}_________________")
-                        documents_ids_already_exist_with_updates.append(db_document.import_id)
-
-        if documents_ids_already_exist_with_updates:
-            _LOGGER.info(
-                f"_________________Document IDs with updates identified {len(documents_ids_already_exist_with_updates)} - {documents_ids_already_exist_with_updates[:10]}._________________",
-            )
 
         document_skipped_count = len(documents_ids_already_exist)
         _LOGGER.info(
@@ -377,7 +334,7 @@ def import_law_policy(
                     "superuser_email": current_user.email,
                     "document_count": total_document_count,
                     "document_added_count": total_document_count
-                    - document_skipped_count,
+                                            - document_skipped_count,
                     "document_skipped_count": document_skipped_count,
                     "document_skipped_ids": list(documents_ids_already_exist),
                 }
@@ -416,6 +373,7 @@ def import_law_policy(
         return BulkImportValidatedResult(
             document_count=total_document_count,
             document_added_count=total_document_count - document_skipped_count,
+            document_updated_count=len(documents_with_updates),
             document_skipped_count=document_skipped_count,
             document_skipped_ids=list(documents_ids_already_exist),
             csv_s3_location=csv_s3_location,
@@ -439,11 +397,11 @@ def import_law_policy(
 
 @r.put("/documents/{import_id_or_slug}", status_code=status.HTTP_200_OK)
 async def update_document(
-    request: Request,
-    import_id_or_slug: str,
-    meta_data: DocumentUpdateRequest,
-    db=Depends(get_db),
-    current_user=Depends(get_current_active_superuser),
+        request: Request,
+        import_id_or_slug: str,
+        meta_data: DocumentUpdateRequest,
+        db=Depends(get_db),
+        current_user=Depends(get_current_active_superuser),
 ):
     # TODO: As this grows move it out into the crud later.
 

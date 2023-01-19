@@ -7,7 +7,6 @@ from sqlalchemy.orm import Session
 
 from app.db.session import Base
 
-
 CDN_DOMAIN: str = os.getenv("CDN_DOMAIN", "cdn.climatepolicyradar.org")
 # TODO: remove & replace with proper content-type handling through pipeline
 CONTENT_TYPE_MAP = {
@@ -37,8 +36,8 @@ def random_string(length=12):
 
 
 def table_to_json(
-    table: Base,
-    db: Session,
+        table: Base,
+        db: Session,
 ) -> list[dict]:
     json_out = []
 
@@ -50,8 +49,8 @@ def table_to_json(
 
 
 def tree_table_to_json(
-    table: Base,
-    db: Session,
+        table: Base,
+        db: Session,
 ) -> list[dict]:
     json_out = []
     child_list_map: dict[int, Any] = {}
@@ -73,3 +72,32 @@ def tree_table_to_json(
             append_list.append(node_row_object)
 
     return json_out
+
+
+def doc_has_updates(csv_document: BulkImportValidatedResult, db: app.db.session) -> bool:
+    """
+    Compare the document provided in the csv against the document in the database to see if they are different.
+    """
+    # TODO do we need to handle a missing import_id?
+    db_document = [doc for doc in db.query(Document).filter(Document.import_id == csv_document.import_id)][0]
+
+    # TODO might be nice to log or return details of all the updated fields
+    if db_document.publication_ts != csv_document.create_request.publication_ts:
+        return True
+
+    if db_document.name != csv_document.create_request.name:
+        return True
+
+    if db_document.description != csv_document.create_request.description:
+        return True
+
+    if db_document.geography != csv_document.create_request.geography:
+        return True
+
+    if db_document.type != csv_document.create_request.type:
+        return True
+
+    if db_document.category != csv_document.create_request.category:
+        return True
+
+    return False
