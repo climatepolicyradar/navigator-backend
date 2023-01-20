@@ -1,0 +1,80 @@
+name: CI
+
+on:
+  push:
+    branches:
+      - main
+      - dev
+  pull_request:
+    branches:
+      - main
+      - dev
+
+# https://github.com/marketplace/actions/docker-layer-caching
+jobs:
+  test-bash:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v2
+
+      - name: Run tests
+        run:  make test_bashscripts
+
+  build-start-test:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v2
+
+      - name: Use .env.example
+        run:  cp .env.example .env
+
+      - name: Get python Container
+        run:  docker pull python:3.9
+
+      - name: Build
+        run: |
+          docker-compose build
+          docker images
+
+      - name: Build docker-compose stack
+        run:  make start
+
+      - name: verify backend is up
+        run:  curl http://localhost:8888/api/docs
+
+      - name: Run backend tests
+        run:  make test
+      
+      - name: docker
+        run: |
+          docker-compose logs
+          docker-compose ps
+          docker ps -a
+          ls -la
+      
+      - name: Run backend search tests
+        run:  make test_search
+      
+      - name: Log Dump
+        if:   always()
+        run:  docker-compose logs
+
+      - name: Run Integration Tests
+        run: echo TODO-TODO-TODO-TODO-TODO-TODO-TODO-TODO-TODO-TODO-TODO-TODO
+
+      - name: Configure AWS credentials
+        uses: aws-actions/configure-aws-credentials@v1-node16
+        with:
+          aws-access-key-id: ${{ secrets.AWS_ACCESS_KEY_ID }}
+          aws-secret-access-key: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
+          aws-region: eu-west-1
+
+      - name: Login to Amazon ECR
+        id: login-ecr
+        uses: aws-actions/amazon-ecr-login@v1
+
+      - name: Push Images to ECR
+        run: |
+          .github/retag-and-push.sh navigator-backend latest
+        env:
+          DOCKER_REGISTRY: ${{ secrets.DOCKER_REGISTRY }}
