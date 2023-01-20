@@ -1,7 +1,7 @@
 #!/usr/bin/env python3
 
 import sys
-from app.db.models import Association, Relationship, DocumentRelationship
+from app.db.models.deprecated import Association, Relationship, DocumentRelationship
 from app.db.session import SessionLocal
 from sqlalchemy.orm import Session
 

@@ -2,7 +2,7 @@ import json
 
 from sqlalchemy.orm import Session
 
-from app.db.models import Source
+from app.db.models.deprecated import Source
 from .utils import has_rows, load_list
 
 

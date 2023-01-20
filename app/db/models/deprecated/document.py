@@ -1,7 +1,7 @@
 import sqlalchemy as sa
 from sqlalchemy import UniqueConstraint
 
-from .auditable import Auditable
+from ..auditable import Auditable
 from .source import Source
 from .geography import Geography
 from app.db.session import Base

@@ -1,7 +1,7 @@
 #!/usr/bin/env python3
 
 import sys
-from app.db.models.document import Document
+from app.db.models.deprecated.document import Document
 from app.db.session import SessionLocal
 
 from app.core.validation.cclw.law_policy.process_csv import (
