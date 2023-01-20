@@ -631,21 +631,21 @@ def start_import(
     try:
         # Create a savepoint & start a transaction if necessary
         with db.begin_nested():
-            for dco in document_create_objects:
-                _LOGGER.info(f"Importing: {dco.import_id}")
+            for doc in document_create_objects:
+                _LOGGER.info(f"Importing: {doc.import_id}")
                 existing_document = (
                     db.query(Document)
-                    .filter(Document.import_id == dco.import_id)
+                    .filter(Document.import_id == doc.import_id)
                     .scalar()
                 )
                 if existing_document is None:
-                    new_document = create_document(db, dco)
-                    _LOGGER.info(f"Created Document: {dco.import_id}")
+                    new_document = create_document(db, doc)
+                    _LOGGER.info(f"Created Document: {doc.import_id}")
 
                     document_parser_inputs.append(
                         DocumentParserInput(
                             slug=cast(str, new_document.slug),
-                            **dco.dict(),
+                            **doc.dict(),
                         )
                     )
 

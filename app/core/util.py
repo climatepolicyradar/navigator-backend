@@ -81,15 +81,34 @@ def tree_table_to_json(
     return json_out
 
 
-def doc_has_updates(csv_document: DocumentValidationResult, db: Session) -> bool:
+# TODO add type for document updates
+def update_doc(updates: dict, import_id: str, db: Session) -> None:
+    """Update the document table in the database."""
+    with db.begin_nested():
+        for update in updates:
+            if updates[update]["updated"]:
+                db.query(Document).filter(Document.import_id == import_id).update(
+                    {update: updates[update]["csv_value"]}, synchronize_session="fetch"
+                )
+                _LOGGER.info(
+                    f"Updated {import_id}:{update} from {updates[update]['db_value']} -> {updates[update]['csv_value']}"
+                )
+
+
+# TODO For documents with updates, make the updates in the database and call for deletion in S3
+def update_db_if_doc_has_updates(
+    csv_document: DocumentValidationResult, db: Session
+) -> bool:
     """Compare the document provided in the csv against the document in the database to see if they are different."""
-    # TODO do we need to handle a missing import_id?
-    db_document = [
-        doc
-        for doc in db.query(Document).filter(
-            Document.import_id == csv_document.import_id
+    db_document = (
+        db.query(Document).filter(Document.import_id == csv_document.import_id).scalar()
+    )
+
+    if db_document is None:
+        # TODO how to handle this?
+        raise RuntimeError(
+            f"Could not find document with import_id {csv_document.import_id}"
         )
-    ][0]
 
     results = {
         "name": {
@@ -138,5 +157,6 @@ def doc_has_updates(csv_document: DocumentValidationResult, db: Session) -> bool
         )
 
     _LOGGER.info(f"{results} for {csv_document.import_id}")
+    update_doc(updates=results, import_id=csv_document.import_id, db=db)
 
     return any([results[result]["updated"] for result in results])
