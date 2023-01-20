@@ -101,6 +101,7 @@ def update_doc_in_db(
                 )
 
 
+# TODO do we want to archive the old file?
 def delete_doc_in_s3(
     import_id: str, bucket: str, prefixes: List[str], suffixes=None
 ) -> None:
