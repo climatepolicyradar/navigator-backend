@@ -1,7 +1,8 @@
 """Base definitions for data ingest"""
+import datetime
 from abc import abstractmethod, ABC
 from dataclasses import dataclass
-from typing import Collection, Generator, Sequence
+from typing import Collection, Generator, Sequence, Union
 
 from app.api.api_v1.schemas.document import DocumentCreateRequest
 
@@ -52,3 +53,24 @@ class DocumentGenerator(ABC):
         """Generate document groups for processing from the configured source."""
 
         raise NotImplementedError("process_source() not implemented")
+
+
+@dataclass
+class UpdateResult:
+    """Class describing the results of comparing csv data against the db data to identify updates."""
+
+    db_value: Union[str, datetime.datetime]
+    csv_value: Union[str, datetime.datetime]
+    updated: bool
+
+
+@dataclass
+class DocumentUpdateResults:
+    """Class describing the results of comparing csv data against the db data to identify updates."""
+
+    name: UpdateResult
+    publication_ts: UpdateResult
+    description: UpdateResult
+    geography: UpdateResult
+    type: UpdateResult
+    category: UpdateResult

@@ -3,16 +3,19 @@ import os
 import random
 import string
 from typing import Any, Optional
-
+from dataclasses import fields
 
 from sqlalchemy.orm import Session
 
-from app.core.validation.types import DocumentValidationResult
+from app.core.validation.types import (
+    DocumentValidationResult,
+    DocumentUpdateResults,
+    UpdateResult,
+)
 from app.db.models import Document, Geography, DocumentType, Category
 from app.db.session import Base
 
 _LOGGER = logging.getLogger(__name__)
-
 
 CDN_DOMAIN: str = os.getenv("CDN_DOMAIN", "cdn.climatepolicyradar.org")
 # TODO: remove & replace with proper content-type handling through pipeline
@@ -81,21 +84,21 @@ def tree_table_to_json(
     return json_out
 
 
-# TODO add type for document updates
-def update_doc(updates: dict, import_id: str, db: Session) -> None:
+def update_doc(updates: DocumentUpdateResults, import_id: str, db: Session) -> None:
     """Update the document table in the database."""
     with db.begin_nested():
-        for update in updates:
-            if updates[update]["updated"]:
+        for field in fields(DocumentUpdateResults):
+            if getattr(updates, field.name).updated:
                 db.query(Document).filter(Document.import_id == import_id).update(
-                    {update: updates[update]["csv_value"]}, synchronize_session="fetch"
+                    {field.name: getattr(updates, field.name).csv_value},
+                    synchronize_session="fetch",
                 )
                 _LOGGER.info(
-                    f"Updated {import_id}:{update} from {updates[update]['db_value']} -> {updates[update]['csv_value']}"
+                    f"Updated {import_id}:{field.name} from {getattr(updates, field.name).db_value} -> {getattr(updates, field.name).csv_value}"
                 )
 
 
-# TODO For documents with updates, make the updates in the database and call for deletion in S3
+# TODO call for deletion in S3
 def update_db_if_doc_has_updates(
     csv_document: DocumentValidationResult, db: Session
 ) -> bool:
@@ -110,53 +113,63 @@ def update_db_if_doc_has_updates(
             f"Could not find document with import_id {csv_document.import_id}"
         )
 
-    results = {
-        "name": {
-            "db_value": db_document.name,
-            "csv_value": csv_document.create_request.name,
-        },
-        "publication_ts": {
-            "db_value": db_document.publication_ts,
-            "csv_value": csv_document.create_request.publication_ts,
-        },
-        "description": {
-            "db_value": db_document.description,
-            "csv_value": csv_document.create_request.description,
-        },
-        "geography": {
-            "db_value": [
-                geo
-                for geo in db.query(Geography).filter(
-                    Geography.id == db_document.geography_id
-                )
-            ][0].value,
-            "csv_value": csv_document.create_request.geography,
-        },
-        "type": {
-            "db_value": [
-                doc_type
-                for doc_type in db.query(DocumentType).filter(
-                    DocumentType.id == db_document.type_id
-                )
-            ][0].name,
-            "csv_value": csv_document.create_request.type,
-        },
-        "category": {
-            "db_value": [
-                doc_cat
-                for doc_cat in db.query(Category).filter(
-                    Category.id == db_document.category_id
-                )
-            ][0].name,
-            "csv_value": csv_document.create_request.category,
-        },
-    }
-    for result in results:
-        results[result]["updated"] = (
-            results[result]["db_value"] != results[result]["csv_value"]
+    geog_db_value = [
+        geo
+        for geo in db.query(Geography).filter(Geography.id == db_document.geography_id)
+    ][0].value
+
+    doc_type_db_value = [
+        doc_type
+        for doc_type in db.query(DocumentType).filter(
+            DocumentType.id == db_document.type_id
         )
+    ][0].name
 
-    _LOGGER.info(f"{results} for {csv_document.import_id}")
-    update_doc(updates=results, import_id=csv_document.import_id, db=db)
+    category_db_value = [
+        doc_cat
+        for doc_cat in db.query(Category).filter(Category.id == db_document.category_id)
+    ][0].name
 
-    return any([results[result]["updated"] for result in results])
+    update_results = DocumentUpdateResults(
+        name=UpdateResult(
+            csv_value=csv_document.create_request.name,
+            db_value=db_document.name,
+            updated=csv_document.create_request.name != db_document.name,
+        ),
+        publication_ts=UpdateResult(
+            csv_value=csv_document.create_request.publication_ts,
+            db_value=db_document.publication_ts,
+            updated=csv_document.create_request.publication_ts
+            != db_document.publication_ts,
+        ),
+        description=UpdateResult(
+            csv_value=csv_document.create_request.description,
+            db_value=db_document.description,
+            updated=csv_document.create_request.description != db_document.description,
+        ),
+        geography=UpdateResult(
+            csv_value=csv_document.create_request.geography,
+            db_value=geog_db_value,
+            updated=csv_document.create_request.geography != geog_db_value,
+        ),
+        type=UpdateResult(
+            csv_value=csv_document.create_request.type,
+            db_value=doc_type_db_value,
+            updated=csv_document.create_request.type != doc_type_db_value,
+        ),
+        category=UpdateResult(
+            csv_value=csv_document.create_request.category,
+            db_value=category_db_value,
+            updated=csv_document.create_request.category != category_db_value,
+        ),
+    )
+
+    _LOGGER.info(f"{update_results} for {csv_document.import_id}")
+    update_doc(updates=update_results, import_id=csv_document.import_id, db=db)
+
+    return any(
+        [
+            getattr(update_results, field.name).updated
+            for field in fields(DocumentUpdateResults)
+        ]
+    )
