@@ -73,9 +73,9 @@ ACCOUNT_ACTIVATION_EXPIRE_MINUTES = 4 * 7 * 24 * 60  # 4 weeks
 )
 # TODO paginate
 async def users_list(
-        response: Response,
-        db=Depends(get_db),
-        current_user=Depends(get_current_active_superuser),
+    response: Response,
+    db=Depends(get_db),
+    current_user=Depends(get_current_active_superuser),
 ):
     """Gets all users"""
     _LOGGER.info(
@@ -96,11 +96,11 @@ async def users_list(
     response_model_exclude_none=True,
 )
 async def user_details(
-        request: Request,
-        response: Response,
-        user_id: int,
-        db=Depends(get_db),
-        current_user=Depends(get_current_active_superuser),
+    request: Request,
+    response: Response,
+    user_id: int,
+    db=Depends(get_db),
+    current_user=Depends(get_current_active_superuser),
 ):
     """Gets any user details"""
     _LOGGER.info(
@@ -120,10 +120,10 @@ async def user_details(
 
 @r.post("/users", response_model=User, response_model_exclude_none=True)
 async def user_create(
-        request: Request,
-        user: UserCreateAdmin,
-        db=Depends(get_db),
-        current_user=Depends(get_current_active_superuser),
+    request: Request,
+    user: UserCreateAdmin,
+    db=Depends(get_db),
+    current_user=Depends(get_current_active_superuser),
 ):
     """Creates a new user"""
     _LOGGER.info(
@@ -162,12 +162,12 @@ async def user_create(
 
 @r.put("/users/{user_id}", response_model=User, response_model_exclude_none=True)
 async def user_edit(
-        request: Request,
-        response: Response,
-        user_id: int,
-        user: UserCreateAdmin,
-        db=Depends(get_db),
-        current_user=Depends(get_current_active_superuser),
+    request: Request,
+    response: Response,
+    user_id: int,
+    user: UserCreateAdmin,
+    db=Depends(get_db),
+    current_user=Depends(get_current_active_superuser),
 ):
     """Updates existing user"""
     _LOGGER.info(
@@ -201,10 +201,10 @@ async def user_edit(
 
 @r.delete("/users/{user_id}", response_model=User, response_model_exclude_none=True)
 async def user_delete(
-        request: Request,
-        user_id: int,
-        db=Depends(get_db),
-        current_user=Depends(get_current_active_superuser),
+    request: Request,
+    user_id: int,
+    db=Depends(get_db),
+    current_user=Depends(get_current_active_superuser),
 ):
     """Deletes existing user"""
     _LOGGER.info(
@@ -224,10 +224,10 @@ async def user_delete(
 )
 @limiter.limit("6/minute")
 async def request_password_reset(
-        request: Request,
-        user_id: int,
-        db=Depends(get_db),
-        current_user=Depends(get_current_active_superuser),
+    request: Request,
+    user_id: int,
+    db=Depends(get_db),
+    current_user=Depends(get_current_active_superuser),
 ):
     """
     Deletes a password for a user, and kicks off password-reset flow.
@@ -274,12 +274,12 @@ async def request_password_reset(
     status_code=status.HTTP_202_ACCEPTED,
 )
 def import_law_policy(
-        request: Request,
-        law_policy_csv: UploadFile,
-        background_tasks: BackgroundTasks,
-        db=Depends(get_db),
-        current_user=Depends(get_current_active_superuser),
-        s3_client=Depends(get_s3_client),
+    request: Request,
+    law_policy_csv: UploadFile,
+    background_tasks: BackgroundTasks,
+    db=Depends(get_db),
+    current_user=Depends(get_current_active_superuser),
+    s3_client=Depends(get_s3_client),
 ):
     """Process a Law/Policy data import"""
     _LOGGER.info(
@@ -302,7 +302,7 @@ def import_law_policy(
 
         # TODO: Check for document existence?
         for validation_result in extract_documents(
-                csv_reader=csv_reader, valid_metadata=valid_metadata
+            csv_reader=csv_reader, valid_metadata=valid_metadata
         ):
             total_document_count += 1
             if validation_result.errors:
@@ -334,7 +334,7 @@ def import_law_policy(
                     "superuser_email": current_user.email,
                     "document_count": total_document_count,
                     "document_added_count": total_document_count
-                                            - document_skipped_count,
+                    - document_skipped_count,
                     "document_skipped_count": document_skipped_count,
                     "document_skipped_ids": list(documents_ids_already_exist),
                 }
@@ -397,11 +397,11 @@ def import_law_policy(
 
 @r.put("/documents/{import_id_or_slug}", status_code=status.HTTP_200_OK)
 async def update_document(
-        request: Request,
-        import_id_or_slug: str,
-        meta_data: DocumentUpdateRequest,
-        db=Depends(get_db),
-        current_user=Depends(get_current_active_superuser),
+    request: Request,
+    import_id_or_slug: str,
+    meta_data: DocumentUpdateRequest,
+    db=Depends(get_db),
+    current_user=Depends(get_current_active_superuser),
 ):
     # TODO: As this grows move it out into the crud later.
 
