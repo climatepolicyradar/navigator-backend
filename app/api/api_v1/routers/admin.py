@@ -23,7 +23,7 @@ from app.api.api_v1.schemas.document import (
 )
 from app.api.api_v1.schemas.user import User, UserCreateAdmin
 from app.core.auth import get_current_active_superuser
-from app.core.util import update_db_if_doc_has_updates
+from app.core.util import update_db_and_s3_if_doc_has_updates
 from app.core.aws import get_s3_client
 from app.core.email import (
     send_new_account_email,
@@ -312,7 +312,7 @@ def import_law_policy(
                 if validation_result.import_id not in existing_import_ids:
                     document_create_objects.append(validation_result.create_request)
                 if validation_result.import_id in existing_import_ids:
-                    if update_db_if_doc_has_updates(validation_result, db):
+                    if update_db_and_s3_if_doc_has_updates(validation_result, db):
                         documents_with_updates.append(validation_result.import_id)
 
         if encountered_errors:

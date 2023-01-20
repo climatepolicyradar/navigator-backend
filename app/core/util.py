@@ -2,11 +2,12 @@ import logging
 import os
 import random
 import string
-from typing import Any, Optional
+from typing import Any, Optional, List
 from dataclasses import fields
-
+from cloudpathlib import S3Path
 from sqlalchemy.orm import Session
 
+from app.core.config import PIPELINE_BUCKET, S3_PREFIXES
 from app.core.validation.types import (
     DocumentValidationResult,
     DocumentUpdateResults,
@@ -84,7 +85,9 @@ def tree_table_to_json(
     return json_out
 
 
-def update_doc(updates: DocumentUpdateResults, import_id: str, db: Session) -> None:
+def update_doc_in_db(
+    updates: DocumentUpdateResults, import_id: str, db: Session
+) -> None:
     """Update the document table in the database."""
     with db.begin_nested():
         for field in fields(DocumentUpdateResults):
@@ -98,11 +101,32 @@ def update_doc(updates: DocumentUpdateResults, import_id: str, db: Session) -> N
                 )
 
 
-# TODO call for deletion in S3
-def update_db_if_doc_has_updates(
+def delete_doc_in_s3(
+    import_id: str, bucket: str, prefixes: List[str], suffixes=None
+) -> None:
+    """Delete the document objects in the relevant s3 buckets."""
+    if suffixes is None:
+        suffixes = [".json", ".npy"]
+
+    for prefix in prefixes:
+        for suffix in suffixes:
+            s3_path = S3Path(os.path.join("s3://", bucket, prefix, import_id + suffix))
+            if s3_path.exists():
+                s3_path.unlink()
+                _LOGGER.info(f"Deleted {s3_path}.")
+            else:
+                _LOGGER.info(
+                    f"Could not find {s3_path} and therefore did not delete document."
+                )
+
+
+def update_db_and_s3_if_doc_has_updates(
     csv_document: DocumentValidationResult, db: Session
 ) -> bool:
-    """Compare the document provided in the csv against the document in the database to see if they are different."""
+    """
+    Compare the document provided in the csv against the document in the database to see if they are different. Then
+    update the database and S3 if they are different to represent the new data.
+    """
     db_document = (
         db.query(Document).filter(Document.import_id == csv_document.import_id).scalar()
     )
@@ -165,11 +189,18 @@ def update_db_if_doc_has_updates(
     )
 
     _LOGGER.info(f"{update_results} for {csv_document.import_id}")
-    update_doc(updates=update_results, import_id=csv_document.import_id, db=db)
-
-    return any(
+    if any(
         [
             getattr(update_results, field.name).updated
             for field in fields(DocumentUpdateResults)
         ]
-    )
+    ):
+        update_doc_in_db(
+            updates=update_results, import_id=csv_document.import_id, db=db
+        )
+
+        delete_doc_in_s3(csv_document.import_id, PIPELINE_BUCKET, S3_PREFIXES)
+
+        return True
+
+    return False

@@ -65,3 +65,8 @@ OPENSEARCH_INDEX_ENCODER: str = os.getenv(
     "OPENSEARCH_INDEX_ENCODER", "sentence-transformers/msmarco-distilbert-dot-v5"
 )
 OPENSEARCH_JIT_MAX_DOC_COUNT: int = int(os.getenv("OPENSEARCH_JIT_MAX_DOC_COUNT", "20"))
+
+PIPELINE_BUCKET: str = os.getenv("PIPELINE_BUCKET")
+S3_PREFIXES: list[str] = os.getenv(
+    "S3_PREFIXES", "parser_input,embeddings_input,indexer_input"
+).split(",")
