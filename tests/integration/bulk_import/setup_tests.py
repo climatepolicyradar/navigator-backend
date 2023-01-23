@@ -21,7 +21,7 @@ def get_local_path(file_name: str) -> str:
 def get_csv_document_ids() -> list[str]:
     """Get the import ids from the csv file."""
     # TODO remove hard code
-    df = pd.read_csv("bulk_import.csv")
+    df = pd.read_csv(get_local_path("bulk_import.csv"))
     return [import_id_from_csv_row(row[1]) for row in df.iterrows()]
 
 
