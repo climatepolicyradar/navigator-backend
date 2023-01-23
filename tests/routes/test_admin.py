@@ -286,6 +286,9 @@ def test_bulk_import_cclw_law_policy_valid(
 ):
     mock_start_import = mocker.patch("app.api.api_v1.routers.admin.start_import")
     mock_write_csv_to_s3 = mocker.patch("app.api.api_v1.routers.admin.write_csv_to_s3")
+    mock_update_doc_in_db = mocker.patch(
+        "app.api.api_v1.routers.admin.update_doc_in_db"
+    )
 
     test_db.add(Source(name="CCLW"))
     test_db.add(
@@ -319,6 +322,7 @@ def test_bulk_import_cclw_law_policy_valid(
     )
     assert response.status_code == 202
     response_json = response.json()
+    # TODO add in assertion of document updated count here and below
     assert response_json["document_count"] == 2
     assert response_json["document_skipped_count"] == 0
     assert response_json["document_skipped_ids"] == []
@@ -330,6 +334,9 @@ def test_bulk_import_cclw_law_policy_valid(
     mock_write_csv_to_s3.assert_called_once()
     call = mock_write_csv_to_s3.mock_calls[0]
     assert len(call.kwargs["file_contents"]) == csv_file.getbuffer().nbytes
+
+    mock_update_doc_in_db.assert_not_called()
+    mock_update_doc_in_db.assert_not_called()
 
 
 @pytest.mark.parametrize(
@@ -349,9 +356,6 @@ def test_bulk_import_cclw_law_policy_invalid(
 ):
     mock_start_import = mocker.patch("app.api.api_v1.routers.admin.start_import")
     mock_write_csv_to_s3 = mocker.patch("app.api.api_v1.routers.admin.write_csv_to_s3")
-    mock_delete_doc_in_s3 = mocker.patch(
-        "app.api.api_v1.routers.admin.delete_doc_in_s3"
-    )
 
     test_db.add(Source(name="CCLW"))
     test_db.add(
@@ -388,7 +392,6 @@ def test_bulk_import_cclw_law_policy_invalid(
     assert response.json()["detail"]
     mock_start_import.assert_not_called()
     mock_write_csv_to_s3.assert_not_called()
-    mock_delete_doc_in_s3.assert_not_called()
 
 
 def test_bulk_import_cclw_law_policy_db_objects(
@@ -516,3 +519,84 @@ def test_bulk_import_cclw_law_policy_preexisting_db_objects(
     mock_write_csv_to_s3.assert_called_once()
     call = mock_write_csv_to_s3.mock_calls[0]
     assert len(call.kwargs["file_contents"]) == csv_file.getbuffer().nbytes
+
+
+def test_bulk_import_cclw_law_policy_document_updates(
+    client,
+    superuser_token_headers,
+    test_db,
+    mocker,
+):
+    mock_update_doc_in_db = mocker.patch(
+        "app.api.api_v1.routers.admin.update_doc_in_db"
+    )
+    mock_delete_doc_in_s3 = mocker.patch(
+        "app.api.api_v1.routers.admin.delete_doc_in_s3"
+    )
+
+    # TODO should all this be in a function?
+    test_db.add(Source(name="CCLW"))
+    test_db.add(
+        Geography(
+            display_value="geography", slug="geography", value="GEO", type="country"
+        )
+    )
+    test_db.add(DocumentType(name="doctype", description="doctype"))
+    test_db.add(Language(language_code="LAN", name="language"))
+    test_db.add(Category(name="Policy", description="policy"))
+    test_db.add(Keyword(name="keyword1", description="keyword1"))
+    test_db.add(Keyword(name="keyword2", description="keyword2"))
+    test_db.add(Hazard(name="hazard1", description="hazard1"))
+    test_db.add(Hazard(name="hazard2", description="hazard2"))
+    test_db.add(Response(name="topic", description="topic"))
+    test_db.add(Framework(name="framework", description="framework"))
+
+    test_db.commit()
+
+    test_db.add(Instrument(name="instrument", description="instrument", source_id=1))
+    test_db.add(Sector(name="sector", description="sector", source_id=1))
+
+    test_db.commit()
+
+    csv_file = BytesIO(VALID_FILE_1.encode("utf8"))
+    files = {"law_policy_csv": ("valid.csv", csv_file, "text/csv", {"Expires": "0"})}
+    response = client.post(
+        "/api/v1/admin/bulk-imports/cclw/law-policy",
+        files=files,
+        headers=superuser_token_headers,
+    )
+    assert response.status_code == 202
+    response_json = response.json()
+    # TODO add in assertion of document updated count here and below
+    assert response_json["document_count"] == 2
+    assert response_json["document_updated_count"] == 0
+    assert response_json["document_skipped_count"] == 0
+    assert response_json["document_skipped_ids"] == []
+
+    mock_update_doc_in_db.assert_not_called()
+    mock_delete_doc_in_s3.assert_not_called()
+
+    updated_csv_file = BytesIO(
+        VALID_FILE_1.replace("description", "updated-description").encode("utf8")
+    )
+    files = {
+        "law_policy_csv": ("valid.csv", updated_csv_file, "text/csv", {"Expires": "0"})
+    }
+    response = client.post(
+        "/api/v1/admin/bulk-imports/cclw/law-policy",
+        files=files,
+        headers=superuser_token_headers,
+    )
+
+    assert response.status_code == 202
+    response_json = response.json()
+    # TODO add in assertion of document updated count here and below
+    assert response_json["document_count"] == 2
+    assert response_json["document_updated_count"] == 1
+    assert response_json["document_skipped_count"] == 1
+    assert response_json["document_skipped_ids"] == ["1"]
+
+    mock_update_doc_in_db.assert_called_once()
+    print(mock_update_doc_in_db.mock_calls)
+    mock_delete_doc_in_s3.assert_called_once()
+    print(mock_delete_doc_in_s3.mock_calls)
