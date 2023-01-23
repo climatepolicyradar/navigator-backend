@@ -7,7 +7,7 @@ from dataclasses import fields
 from cloudpathlib import S3Path
 from sqlalchemy.orm import Session
 
-from app.core.config import PIPELINE_BUCKET, S3_PREFIXES
+
 from app.core.validation.types import (
     DocumentValidationResult,
     DocumentUpdateResults,
@@ -121,9 +121,9 @@ def delete_doc_in_s3(
                 )
 
 
-def update_db_and_s3_if_doc_has_updates(
+def get_update_results(
     csv_document: DocumentValidationResult, db: Session
-) -> bool:
+) -> DocumentUpdateResults:
     """
     Compare the document provided in the csv against the document in the database to see if they are different. Then
     update the database and S3 if they are different to represent the new data.
@@ -190,18 +190,4 @@ def update_db_and_s3_if_doc_has_updates(
     )
 
     _LOGGER.info(f"{update_results} for {csv_document.import_id}")
-    if any(
-        [
-            getattr(update_results, field.name).updated
-            for field in fields(DocumentUpdateResults)
-        ]
-    ):
-        update_doc_in_db(
-            updates=update_results, import_id=csv_document.import_id, db=db
-        )
-
-        delete_doc_in_s3(csv_document.import_id, PIPELINE_BUCKET, S3_PREFIXES)
-
-        return True
-
-    return False
+    return update_results

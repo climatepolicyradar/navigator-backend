@@ -349,6 +349,9 @@ def test_bulk_import_cclw_law_policy_invalid(
 ):
     mock_start_import = mocker.patch("app.api.api_v1.routers.admin.start_import")
     mock_write_csv_to_s3 = mocker.patch("app.api.api_v1.routers.admin.write_csv_to_s3")
+    mock_delete_doc_in_s3 = mocker.patch(
+        "app.api.api_v1.routers.admin.delete_doc_in_s3"
+    )
 
     test_db.add(Source(name="CCLW"))
     test_db.add(
@@ -385,6 +388,7 @@ def test_bulk_import_cclw_law_policy_invalid(
     assert response.json()["detail"]
     mock_start_import.assert_not_called()
     mock_write_csv_to_s3.assert_not_called()
+    mock_delete_doc_in_s3.assert_not_called()
 
 
 def test_bulk_import_cclw_law_policy_db_objects(

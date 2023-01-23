@@ -1,4 +1,5 @@
 import logging
+from dataclasses import fields
 from io import StringIO
 from typing import cast, Union
 
@@ -23,7 +24,8 @@ from app.api.api_v1.schemas.document import (
 )
 from app.api.api_v1.schemas.user import User, UserCreateAdmin
 from app.core.auth import get_current_active_superuser
-from app.core.util import update_db_and_s3_if_doc_has_updates
+from app.core.config import PIPELINE_BUCKET, S3_PREFIXES
+from app.core.util import get_update_results, update_doc_in_db, delete_doc_in_s3
 from app.core.aws import get_s3_client
 from app.core.email import (
     send_new_account_email,
@@ -34,6 +36,7 @@ from app.core.validation import IMPORT_ID_MATCHER
 from app.core.validation.types import (
     ImportSchemaMismatchError,
     DocumentsFailedValidationError,
+    DocumentUpdateResults,
 )
 from app.core.validation.util import (
     get_valid_metadata,
@@ -298,7 +301,7 @@ def import_law_policy(
         document_create_objects: list[DocumentCreateRequest] = []
         import_ids_to_create = []
         total_document_count = 0
-        documents_with_updates = []
+        documents_with_updates = {}
 
         # TODO: Check for document existence?
         for validation_result in extract_documents(
@@ -312,8 +315,21 @@ def import_law_policy(
                 if validation_result.import_id not in existing_import_ids:
                     document_create_objects.append(validation_result.create_request)
                 if validation_result.import_id in existing_import_ids:
-                    if update_db_and_s3_if_doc_has_updates(validation_result, db):
-                        documents_with_updates.append(validation_result.import_id)
+                    update_results = get_update_results(validation_result, db)
+                    if any(
+                        [
+                            getattr(update_results, field.name).updated
+                            for field in fields(DocumentUpdateResults)
+                        ]
+                    ):
+                        documents_with_updates[
+                            validation_result.import_id
+                        ] = update_results
+
+        for id_ in documents_with_updates:
+            update_doc_in_db(updates=documents_with_updates[id_], import_id=id_, db=db)
+
+            delete_doc_in_s3(id_, PIPELINE_BUCKET, S3_PREFIXES)
 
         if encountered_errors:
             raise DocumentsFailedValidationError(
