@@ -1,14 +1,15 @@
 name: test-bulk-import
 
 on:
-  push:
-    branches:
-      - main
-      - dev
-  pull_request:
-    branches:
-      - main
-      - dev
+  - push
+#  push:
+#    branches:
+#      - main
+#      - dev
+#  pull_request:
+#    branches:
+#      - main
+#      - dev
 
 env:
   TEST_BUCKET: cpr-pipeline-backend-test
