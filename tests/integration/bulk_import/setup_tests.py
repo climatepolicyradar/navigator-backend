@@ -14,7 +14,7 @@ from app.core.validation.cclw.law_policy.process_csv import import_id_from_csv_r
 def get_local_path(file_name: str) -> str:
     """Get the path to the test file."""
     return os.path.join(
-        os.getcwd(), "tests", "integration", "bulk-import", "data", file_name
+        os.getcwd(), "tests", "integration", "bulk_import", "data", file_name
     )
 
 
