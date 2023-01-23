@@ -3,18 +3,16 @@ from typing import Mapping
 
 import boto3
 import pandas as pd
-
-from app.core.validation.cclw.law_policy.process_csv import (
-    CATEGORY_FIELD,
-    ACTION_ID_FIELD,
-    DOCUMENT_ID_FIELD,
-)
 from tests.integration.bulk_import.config import (
     PIPELINE_BUCKET,
     S3_PREFIXES,
     AWS_REGION,
 )
 from tests.integration.bulk_import.utils import upload_file_to_bucket, build_bucket
+
+ACTION_ID_FIELD = "Id"
+CATEGORY_FIELD = "Category"
+DOCUMENT_ID_FIELD = "Document Id"
 
 
 def import_id_from_csv_row(row: Mapping[str, str]) -> str:
