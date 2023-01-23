@@ -1,4 +1,4 @@
-name: CI
+name: test-bulk-import
 
 on:
   push:
