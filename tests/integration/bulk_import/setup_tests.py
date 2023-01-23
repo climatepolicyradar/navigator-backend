@@ -2,6 +2,8 @@ import os
 from typing import Mapping
 
 import boto3
+from botocore import errorfactory
+
 import pandas as pd
 from tests.integration.bulk_import.config import (
     PIPELINE_BUCKET,
@@ -40,8 +42,7 @@ def setup_test_infrastructure():
 
     try:
         build_bucket(s3=s3_conn, bucket_name=PIPELINE_BUCKET, location=location)
-    # TODO Tighten up with botocore.errorfactory.BucketAlreadyOwnedByYou
-    except Exception as e:
+    except errorfactory.ClientError as e:
         print(f"Exception when building bucket: {e}")
 
     for prefix in S3_PREFIXES:

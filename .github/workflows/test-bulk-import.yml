@@ -45,6 +45,7 @@ jobs:
           sed -i~ '/^AWS_SECRET_ACCESS_KEY=/s/=.*/=/' .env
           sed -i~ 's/AWS_ACCESS_KEY_ID=//' .env
           sed -i~ 's/AWS_SECRET_ACCESS_KEY=//' .env
+          rm .env~
 
       - name: Setting up python
         uses: actions/setup-python@v2
