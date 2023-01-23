@@ -41,6 +41,8 @@ jobs:
         run: |
           echo "Setting env vars..."
           sed -i~ '/^PIPELINE_BUCKET=/s/=.*/=${{ env.TEST_BUCKET }}/' .env
+          sed -i~ '/^AWS_ACCESS_KEY_ID=/s/=.*/=${{ secrets.AWS_ACCESS_KEY_ID_DEV }}/' .env
+          sed -i~ '/^AWS_SECRET_ACCESS_KEY=/s/=.*/=${{ secrets.AWS_SECRET_ACCESS_KEY_DEV }}/' .env
 
       - name: Setting up python
         uses: actions/setup-python@v2
