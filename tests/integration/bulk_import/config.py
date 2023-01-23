@@ -1,4 +1,7 @@
 import os
+from dotenv import load_dotenv
+
+load_dotenv()
 
 PIPELINE_BUCKET: str = os.getenv("PIPELINE_BUCKET")
 S3_PREFIXES: list[str] = os.getenv(
