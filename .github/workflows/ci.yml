@@ -28,13 +28,6 @@ jobs:
       - name: Use .env.example
         run:  cp .env.example .env
 
-      - name: Prune the docker containers
-        run: | 
-          docker container prune -f
-          docker image prune -f
-          docker volume prune -f
-          docker system prune -f
-
       - name: Get python Container
         run:  docker pull python:3.9
 
