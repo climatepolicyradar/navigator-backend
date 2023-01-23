@@ -2,7 +2,7 @@ import sqlalchemy as sa
 from app.db.session import Base
 
 
-class PhysicalDocument(Base):  # noqa: D101
+class PhysicalDocument(Base):
     """A physical document.
 
     Representation of a document that exists in the real world.
@@ -19,7 +19,7 @@ class PhysicalDocument(Base):  # noqa: D101
     format = sa.Column(sa.Text, nullable=True)
 
 
-class Language(Base):  # noqa: D101
+class Language(Base):
     """Note, moved from deprecated."""
 
     __tablename__ = "language"
