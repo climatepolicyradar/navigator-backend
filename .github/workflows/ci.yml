@@ -28,11 +28,11 @@ jobs:
       - name: Use .env.example
         run:  cp .env.example .env
 
-      - name: Reset the docker containers
-        run: |
-          docker rm -f $(docker ps -a -q)
-          docker rmi $(docker images -a -q)
-          docker volume rm $(docker volume ls -q)
+      - name: Prune the docker containers
+        run: | 
+          docker container prune -f
+          docker image prune -f
+          docker volume prune -f
           docker system prune -f
 
       - name: Get python Container
