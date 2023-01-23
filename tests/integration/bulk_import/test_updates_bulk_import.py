@@ -1,7 +1,7 @@
 import requests
 from cloudpathlib import S3Path
 
-from app.core.config import PIPELINE_BUCKET, API_HOST
+from tests.integration.bulk_import.config import PIPELINE_BUCKET, API_HOST
 
 # TODO should these be a pytest fixture
 EXPECTED_S3_FILES = []

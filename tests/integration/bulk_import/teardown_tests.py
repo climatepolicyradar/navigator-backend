@@ -1,6 +1,6 @@
 import boto3
 
-from app.core.config import PIPELINE_BUCKET, AWS_REGION
+from tests.integration.bulk_import.config import PIPELINE_BUCKET, AWS_REGION
 from tests.integration.bulk_import.utils import remove_objects, remove_bucket
 
 

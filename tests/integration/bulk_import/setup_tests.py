@@ -2,8 +2,11 @@ import os
 import boto3
 import pandas as pd
 
-from app.core.aws import AWS_REGION
-from app.core.config import PIPELINE_BUCKET, S3_PREFIXES
+from tests.integration.bulk_import.config import (
+    PIPELINE_BUCKET,
+    S3_PREFIXES,
+    AWS_REGION,
+)
 from tests.integration.bulk_import.utils import upload_file_to_bucket, build_bucket
 from app.core.validation.cclw.law_policy.process_csv import import_id_from_csv_row
 
