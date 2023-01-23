@@ -1,14 +1,14 @@
 name: CI
 
-#on:
-#  push:
-#    branches:
-#      - main
-#      - dev
-#  pull_request:
-#    branches:
-#      - main
-#      - dev
+on:
+  push:
+    branches:
+      - main
+      - dev
+  pull_request:
+    branches:
+      - main
+      - dev
 
 env:
   TEST_BUCKET: cpr-pipeline-backend-test
@@ -26,12 +26,12 @@ jobs:
     steps:
       - uses: actions/checkout@v2
 
-#      - name: Configure AWS credentials
-#        uses: aws-actions/configure-aws-credentials@v1-node16
-#        with:
-#          aws-access-key-id: ${{ secrets.AWS_ACCESS_KEY_ID }}
-#          aws-secret-access-key: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
-#          aws-region: eu-west-1
+      - name: Configure AWS credentials
+        uses: aws-actions/configure-aws-credentials@v1-node16
+        with:
+          aws-access-key-id: ${{ secrets.AWS_ACCESS_KEY_ID_DEV }}
+          aws-secret-access-key: ${{ secrets.AWS_SECRET_ACCESS_KEY_DEV }}
+          aws-region: eu-west-1
 
       - name: Use .env.example
         run:  cp .env.example .env
@@ -67,6 +67,6 @@ jobs:
         run: |
           python -m pytest -v tests/integration/bulk_import/test_updates_bulk_import.py
 
-      - name: Clean up the AWS infrastructure
-        run: |
-          python -m tests.integration.bulk_import.teardown_tests
+#      - name: Clean up the AWS infrastructure
+#        run: |
+#          python -m tests.integration.bulk_import.teardown_tests
