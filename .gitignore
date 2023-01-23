@@ -2,7 +2,7 @@
 backend_db_dump.dump
 
 # torch models
-models
+/models
 
 # Adobe PDF services keys
 pdfservices-credentials.json
