@@ -9,9 +9,11 @@ def tear_down_test_infrastructure():
 
     s3_conn = boto3.resource("s3", region_name=AWS_REGION)
     remove_objects(s3=s3_conn, bucket_name=PIPELINE_BUCKET)
+    print(f"Removed objects from {PIPELINE_BUCKET}.")
 
     s3_conn = boto3.client("s3", region_name=AWS_REGION)
     remove_bucket(s3=s3_conn, bucket_name=PIPELINE_BUCKET)
+    print(f"Removed {PIPELINE_BUCKET}.")
 
 
 if __name__ == "__main__":

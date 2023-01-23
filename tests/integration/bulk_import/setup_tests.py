@@ -54,6 +54,7 @@ def setup_test_infrastructure():
                 f"{prefix}/{import_id}.json",
                 get_local_path("document.json"),
             )
+            print(f"Uploaded {import_id} to {prefix}.")
 
 
 if __name__ == "__main__":

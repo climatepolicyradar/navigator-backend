@@ -14,7 +14,7 @@ on:
 env:
   TEST_BUCKET: cpr-pipeline-backend-test
   BULK_UPLOAD_FILE_PATH: ./tests/integration/bulk_import/data/bulk_import.csv
-  BULK_UPLOAD_UPDATES_FILE_PATH: ./tests/integration/bulk_import/data/bulk_import_one_title_update.csv
+  BULK_UPLOAD_UPDATES_FILE_PATH: ./tests/integration/bulk_import/data/bulk_import_update.csv
   SUPERUSER_EMAIL: user@navigator.com
   SUPERUSER_PASSWORD: password
   API_HOST: http://localhost:8888
@@ -79,7 +79,7 @@ jobs:
 
       - name: Run backend tests pre update from bulk import
         run: |
-          python -m pytest -v tests/integration/bulk_import/test_original_bulk_import.py
+          python -m pytest -v tests/integration/bulk_import/test_original_bulk_import.py --noconftest 
           
       - name: Run the bulk import to load the update documents
         run: |
@@ -87,7 +87,7 @@ jobs:
 
       - name: Run backend tests post bulk import update
         run: |
-          python -m pytest -v tests/integration/bulk_import/test_updates_bulk_import.py
+          python -m pytest -v tests/integration/bulk_import/test_updates_bulk_import.py --noconftest 
 
 #      - name: Clean up the AWS infrastructure
 #        run: |
