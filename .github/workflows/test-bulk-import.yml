@@ -1,80 +1,72 @@
 name: CI
 
-on:
-  push:
-    branches:
-      - main
-      - dev
-  pull_request:
-    branches:
-      - main
-      - dev
+#on:
+#  push:
+#    branches:
+#      - main
+#      - dev
+#  pull_request:
+#    branches:
+#      - main
+#      - dev
 
-# https://github.com/marketplace/actions/docker-layer-caching
+env:
+  TEST_BUCKET: cpr-pipeline-backend-test
+  BULK_UPLOAD_FILE_PATH: ./tests/integration/bulk_import/data/bulk_import.csv
+  BULK_UPLOAD_UPDATES_FILE_PATH: ./tests/integration/bulk_import/data/bulk_import_one_title_update.csv
+  SUPERUSER_EMAIL: user@navigator.com
+  SUPERUSER_PASSWORD: password
+  API_HOST: http://localhost:8888
+
+
+# TODO This probably doesn't sit in the backend repo but will build here for now
 jobs:
-  test-bash:
+  deploy-test-destroy:
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v2
 
-      - name: Run tests
-        run:  make test_bashscripts
-
-  build-start-test:
-    runs-on: ubuntu-latest
-    steps:
-      - uses: actions/checkout@v2
+#      - name: Configure AWS credentials
+#        uses: aws-actions/configure-aws-credentials@v1-node16
+#        with:
+#          aws-access-key-id: ${{ secrets.AWS_ACCESS_KEY_ID }}
+#          aws-secret-access-key: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
+#          aws-region: eu-west-1
 
       - name: Use .env.example
         run:  cp .env.example .env
 
-      - name: Get python Container
-        run:  docker pull python:3.9
-
-      - name: Build
+      - name: Set environment variables in the .env file
         run: |
-          docker-compose build
-          docker images
+          echo "Setting env vars..."
+          sed -i~ '/^PIPELINE_BUCKET=/s/=.*/=${{ env.TEST_BUCKET }}/' .env
 
-      - name: Build docker-compose stack
+      - name: Setup the aws environment
+        run: |
+          python -m tests.integration.bulk_import.setup_tests
+
+      - name: Spin Up Docker Containers
         run:  make start
 
       - name: verify backend is up
-        run:  curl http://localhost:8888/api/docs
+        run: curl http://localhost:8888/api/docs
 
-      - name: Run backend tests
-        run:  make test
-      
-      - name: docker
+      - name: Run the bulk import to load original documents
         run: |
-          docker-compose logs
-          docker-compose ps
-          docker ps -a
-          ls -la
-      
-      - name: Run backend search tests
-        run:  make test_search
-      
-      - name: Log Dump
-        if:   always()
-        run:  docker-compose logs
+          SUPERUSER_EMAIL=${{ env.SUPERUSER_EMAIL }} SUPERUSER_PASSWORD=${{ env.SUPERUSER_PASSWORD }} API_HOST=${{ env.API_HOST }} python ./scripts/data_ingest/main.py ${{ env.BULK_UPLOAD_FILE_PATH }}
 
-      - name: Run Integration Tests
-        run: echo TODO-TODO-TODO-TODO-TODO-TODO-TODO-TODO-TODO-TODO-TODO-TODO
-
-      - name: Configure AWS credentials
-        uses: aws-actions/configure-aws-credentials@v1-node16
-        with:
-          aws-access-key-id: ${{ secrets.AWS_ACCESS_KEY_ID }}
-          aws-secret-access-key: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
-          aws-region: eu-west-1
-
-      - name: Login to Amazon ECR
-        id: login-ecr
-        uses: aws-actions/amazon-ecr-login@v1
-
-      - name: Push Images to ECR
+      - name: Run backend tests pre update from bulk import
         run: |
-          .github/retag-and-push.sh navigator-backend latest
-        env:
-          DOCKER_REGISTRY: ${{ secrets.DOCKER_REGISTRY }}
+          python -m pytest -v tests/integration/bulk_import/test_original_bulk_import.py
+          
+      - name: Run the bulk import to load the update documents
+        run: |
+          SUPERUSER_EMAIL=${{ env.SUPERUSER_EMAIL }} SUPERUSER_PASSWORD=${{ env.SUPERUSER_PASSWORD }} API_HOST=${{ env.API_HOST }} python ./scripts/data_ingest/main.py ${{ env.BULK_UPLOAD_UPDATES_FILE_PATH }}
+
+      - name: Run backend tests post bulk import update
+        run: |
+          python -m pytest -v tests/integration/bulk_import/test_updates_bulk_import.py
+
+      - name: Clean up the AWS infrastructure
+        run: |
+          python -m tests.integration.bulk_import.teardown_tests

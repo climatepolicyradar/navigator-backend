@@ -1,7 +1,7 @@
 import boto3
 
-from cpr_pipeline_reporter.config import AWS_REGION, PIPELINE_BUCKET
-from cpr_pipeline_reporter.test.utils import remove_objects, remove_bucket
+from app.core.config import PIPELINE_BUCKET, AWS_REGION
+from tests.integration.bulk_import.utils import remove_objects, remove_bucket
 
 
 def tear_down_test_infrastructure():
