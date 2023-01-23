@@ -42,7 +42,7 @@ def setup_test_infrastructure():
         build_bucket(s3=s3_conn, bucket_name=PIPELINE_BUCKET, location=location)
     # TODO Tighten up with botocore.errorfactory.BucketAlreadyOwnedByYou
     except Exception as e:
-        pass
+        print(f"Exception when building bucket: {e}")
 
     for prefix in S3_PREFIXES:
         for import_id in get_csv_document_ids():
