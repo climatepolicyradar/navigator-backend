@@ -36,7 +36,7 @@ from app.core.validation import IMPORT_ID_MATCHER
 from app.core.validation.types import (
     ImportSchemaMismatchError,
     DocumentsFailedValidationError,
-    DocumentUpdateResults,
+    UpdateResult,
 )
 from app.core.validation.util import (
     get_valid_metadata,
@@ -316,12 +316,7 @@ def import_law_policy(
                     document_create_objects.append(validation_result.create_request)
                 if validation_result.import_id in existing_import_ids:
                     update_results = get_update_results(validation_result, db)
-                    if any(
-                        [
-                            getattr(update_results, field.name).updated
-                            for field in fields(DocumentUpdateResults)
-                        ]
-                    ):
+                    if any([update_results[field].updated for field in update_results]):
                         documents_with_updates[
                             validation_result.import_id
                         ] = update_results
