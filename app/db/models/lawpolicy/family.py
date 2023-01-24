@@ -1,6 +1,7 @@
 import enum
 import sqlalchemy as sa
-from app.db.models.document.physical_document import PhysicalDocument
+from app.db.models.app import Organisation
+from app.db.models.document import PhysicalDocument
 from .geography import Geography
 from app.db.session import Base
 
@@ -84,9 +85,10 @@ class DocumentType(Base):
 class FamilyDocument(Base):
     __tablename__ = "family_document"
 
+    id = sa.Column(sa.Integer, primary_key=True)
     family_id = sa.Column(sa.Integer, sa.ForeignKey(Family.id), nullable=False)
     physical_document_id = sa.Column(
-        sa.Integer, sa.ForeignKey(PhysicalDocument.id), nullable=False
+        sa.Integer, sa.ForeignKey(PhysicalDocument.id), nullable=False, primary_key=True
     )
 
     cdn_url = sa.Column(sa.String, nullable=True)
@@ -95,5 +97,14 @@ class FamilyDocument(Base):
     document_status = sa.Column(sa.Enum(DocumentStatus), default=DocumentStatus.CREATED)
     document_type_id = sa.Column(sa.ForeignKey(DocumentType.id), nullable=False)
 
-    # Cannot have more than one document-family link for the same document within a family.
-    sa.PrimaryKeyConstraint(family_id, physical_document_id)
+
+class FamilyOrganisation(Base):
+
+    __tablename__ = "family_organisation"
+
+    family_id = sa.Column(sa.Integer, sa.ForeignKey(Family.id), nullable=False)
+    organisation_id = sa.Column(
+        sa.Integer, sa.ForeignKey(Organisation.id), nullable=False
+    )
+
+    sa.PrimaryKeyConstraint(family_id, organisation_id)
