@@ -645,10 +645,12 @@ def test_bulk_import_cclw_law_policy_document_updates(
     assert response_json["document_count"] == 2
     assert response_json["document_updated_count"] == 1
     assert response_json["document_skipped_count"] == 2
-    assert response_json["document_skipped_ids"] == [
-        "CCLW.executive.1.2",
-        "CCLW.executive.2.33",
-    ]
+    assert sorted(response_json["document_skipped_ids"]) == sorted(
+        [
+            "CCLW.executive.1.2",
+            "CCLW.executive.2.33",
+        ]
+    )
 
     mock_update_doc_in_db.assert_called_once()
     mock_delete_doc_in_s3.assert_called_once()
