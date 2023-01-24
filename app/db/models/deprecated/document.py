@@ -2,24 +2,12 @@ import sqlalchemy as sa
 from sqlalchemy import UniqueConstraint
 
 from app.db.models.document.physical_document import Language
+from app.db.models.lawpolicy.family import DocumentType
 
 from ..auditable import Auditable
 from .source import Source
-from ..lawpolicy.geography import Geography
+from ..lawpolicy import Geography
 from app.db.session import Base
-
-
-class DocumentType(Base):
-    """A document type.
-
-    E.g. strategy, plan, law
-    """
-
-    __tablename__ = "document_type"
-
-    id = sa.Column(sa.Integer, primary_key=True)
-    name = sa.Column(sa.Text, nullable=False, unique=True)
-    description = sa.Column(sa.Text, nullable=False)
 
 
 class Category(Base):

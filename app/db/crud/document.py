@@ -49,7 +49,6 @@ from app.db.models.deprecated import (
     Category,
     Event,
     Framework,
-    Geography,
     Hazard,
     Instrument,
     Keyword,
@@ -58,8 +57,9 @@ from app.db.models.deprecated import (
     Response,
     Sector,
     Source,
-    DocumentType,
 )
+from app.db.models.lawpolicy.family import DocumentType
+from app.db.models.lawpolicy import Geography
 
 _LOGGER = logging.getLogger(__file__)
 

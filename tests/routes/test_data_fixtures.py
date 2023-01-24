@@ -1,6 +1,7 @@
 from dateutil.parser import parse
 import pytest
-from app.db.models.deprecated import Category, Document, DocumentType, Geography, Source, Event
+from app.db.models.lawpolicy import DocumentType
+from app.db.models.deprecated import Category, Document, Geography, Source, Event
 from tests.utils import json_serialize
 
 template_doc = {

@@ -9,7 +9,6 @@ from app.db.models.deprecated import (
     Source,
     Geography,
     Document,
-    DocumentType,
     Language,
     Sector,
     Response,
@@ -21,6 +20,7 @@ from app.db.models.deprecated import (
     User,
     PasswordResetToken,
 )
+from app.db.models.lawpolicy.family import DocumentType
 from tests.core.validation.cclw.test_law_policy import (
     INVALID_FILE_1,
     INVALID_CSV_MIXED_ERRORS,
