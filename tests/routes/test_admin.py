@@ -5,7 +5,7 @@ from unittest.mock import patch
 import pytest
 
 from app.api.api_v1.routers.admin import ACCOUNT_ACTIVATION_EXPIRE_MINUTES
-from app.db.models import (
+from app.db.models.deprecated import (
     Source,
     Geography,
     Document,

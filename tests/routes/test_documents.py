@@ -1,4 +1,4 @@
-from app.db.models import (
+from app.db.models.deprecated import (
     Document,
     Source,
     Geography,

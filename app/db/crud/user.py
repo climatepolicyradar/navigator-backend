@@ -5,7 +5,7 @@ from sqlalchemy.orm import Session
 from starlette import status
 
 from app.core.security import get_password_hash
-from app.db.models import User, PasswordResetToken
+from app.db.models.deprecated import User, PasswordResetToken
 from app.api.api_v1.schemas.user import User as UserSchema, UserCreate, UserCreateAdmin
 
 

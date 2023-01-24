@@ -4,7 +4,7 @@
 This script is useful to confirm the behaviour of the endpoint.
 """
 import json
-from app.db.models.document import Document
+from app.db.models.deprecated.document import Document
 from app.db.session import SessionLocal
 from sqlalchemy.orm import Session
 from app.db.crud.document import get_document_detail

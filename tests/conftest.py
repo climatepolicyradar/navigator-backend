@@ -12,7 +12,7 @@ from sqlalchemy_utils import create_database, database_exists, drop_database
 from app.core import security
 from app.core.aws import S3Client, get_s3_client
 from app.core.search import OpenSearchConnection, OpenSearchConfig
-from app.db.models import User, PasswordResetToken
+from app.db.models.deprecated import User, PasswordResetToken
 from app.db.session import Base, get_db
 from app.main import app
 from .routes.test_data_fixtures import (  # noqa F401
