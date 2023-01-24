@@ -25,6 +25,6 @@ from .document import (
     Sector,
     Source,
 )
-from .geography import Geography, GeoStatistics
+from ..lawpolicy.geography import Geography, GeoStatistics
 from .source import Source
 from .user import PasswordResetToken, User

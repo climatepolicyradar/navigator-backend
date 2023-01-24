@@ -5,7 +5,7 @@ from app.db.models.document.physical_document import Language
 
 from ..auditable import Auditable
 from .source import Source
-from .geography import Geography
+from ..lawpolicy.geography import Geography
 from app.db.session import Base
 
 
