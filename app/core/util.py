@@ -93,19 +93,18 @@ def update_doc_in_db(
     with db.begin_nested():
         for field in updates:
             if updates[field].updated:
-                db_update_result = (
+                # TODO assert that document is updated
+                (
                     db.query(Document)
                     .filter(Document.import_id == import_id)
                     .update(
                         {field: updates[field].csv_value},
                         synchronize_session="fetch",
                     )
-                    .returning(Document)
                 )
                 _LOGGER.info(
                     f"Updated {import_id}:{field} from {updates[field].db_value} -> {updates[field].csv_value}"
                 )
-                _LOGGER.info(f"DB update result: {db_update_result.fetchall()}")
 
 
 # TODO do we want to archive the old file?
