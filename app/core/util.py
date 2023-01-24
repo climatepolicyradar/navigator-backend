@@ -3,18 +3,17 @@ import os
 import random
 import string
 from typing import Any, Optional, List
-from dataclasses import fields
+
+import cloudpathlib.exceptions as cloudpathlib_exceptions
 from cloudpathlib import S3Path
 from sqlalchemy.orm import Session
 
 
 from app.core.validation.types import (
     DocumentValidationResult,
-    DocumentUpdateResults,
     UpdateResult,
 )
-from app.db.models.document import Document, DocumentType, Category
-from app.db.models.geography import Geography
+from app.db.models import Document, Geography, DocumentType, Category
 from app.db.session import Base
 
 _LOGGER = logging.getLogger(__name__)
@@ -87,19 +86,25 @@ def tree_table_to_json(
 
 
 def update_doc_in_db(
-    updates: DocumentUpdateResults, import_id: str, db: Session
+    updates: dict[str, UpdateResult], import_id: str, db: Session
 ) -> None:
     """Update the document table in the database."""
     with db.begin_nested():
-        for field in fields(DocumentUpdateResults):
-            if getattr(updates, field.name).updated:
-                db.query(Document).filter(Document.import_id == import_id).update(
-                    {field.name: getattr(updates, field.name).csv_value},
-                    synchronize_session="fetch",
+        for field in updates:
+            if updates[field].updated:
+                db_update_result = (
+                    db.query(Document)
+                    .filter(Document.import_id == import_id)
+                    .update(
+                        {field: updates[field].csv_value},
+                        synchronize_session="fetch",
+                    )
+                    .returning(Document)
                 )
                 _LOGGER.info(
-                    f"Updated {import_id}:{field.name} from {getattr(updates, field.name).db_value} -> {getattr(updates, field.name).csv_value}"
+                    f"Updated {import_id}:{field} from {updates[field].db_value} -> {updates[field].csv_value}"
                 )
+                _LOGGER.info(f"DB update result: {db_update_result.fetchall()}")
 
 
 # TODO do we want to archive the old file?
@@ -114,8 +119,11 @@ def delete_doc_in_s3(
         for suffix in suffixes:
             s3_path = S3Path(os.path.join("s3://", bucket, prefix, import_id + suffix))
             if s3_path.exists():
-                s3_path.unlink()
-                _LOGGER.info(f"Deleted {s3_path}.")
+                try:
+                    s3_path.unlink()
+                    _LOGGER.info(f"Deleted {s3_path}.")
+                except cloudpathlib_exceptions.CloudPathIsADirectoryError:
+                    _LOGGER.info(f"Could not delete {s3_path} as it is a directory.")
             else:
                 _LOGGER.info(
                     f"Could not find {s3_path} and therefore did not delete document."
@@ -124,7 +132,7 @@ def delete_doc_in_s3(
 
 def get_update_results(
     csv_document: DocumentValidationResult, db: Session
-) -> DocumentUpdateResults:
+) -> dict[str, UpdateResult]:
     """
     Compare the document provided in the csv against the document in the database to see if they are different. Then
     update the database and S3 if they are different to represent the new data.
@@ -156,39 +164,39 @@ def get_update_results(
         for doc_cat in db.query(Category).filter(Category.id == db_document.category_id)
     ][0].name
 
-    update_results = DocumentUpdateResults(
-        name=UpdateResult(
+    update_results = {
+        "name": UpdateResult(
             csv_value=csv_document.create_request.name,
             db_value=db_document.name,
             updated=csv_document.create_request.name != db_document.name,
         ),
-        publication_ts=UpdateResult(
+        "publication_ts": UpdateResult(
             csv_value=csv_document.create_request.publication_ts,
             db_value=db_document.publication_ts,
             updated=csv_document.create_request.publication_ts
             != db_document.publication_ts,
         ),
-        description=UpdateResult(
+        "description": UpdateResult(
             csv_value=csv_document.create_request.description,
             db_value=db_document.description,
             updated=csv_document.create_request.description != db_document.description,
         ),
-        geography=UpdateResult(
+        "geography": UpdateResult(
             csv_value=csv_document.create_request.geography,
             db_value=geog_db_value,
             updated=csv_document.create_request.geography != geog_db_value,
         ),
-        type=UpdateResult(
+        "type": UpdateResult(
             csv_value=csv_document.create_request.type,
             db_value=doc_type_db_value,
             updated=csv_document.create_request.type != doc_type_db_value,
         ),
-        category=UpdateResult(
+        "category": UpdateResult(
             csv_value=csv_document.create_request.category,
             db_value=category_db_value,
             updated=csv_document.create_request.category != category_db_value,
         ),
-    )
+    }
 
     _LOGGER.info(f"{update_results} for {csv_document.import_id}")
     return update_results

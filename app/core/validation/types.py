@@ -62,15 +62,3 @@ class UpdateResult:
     db_value: Union[str, datetime.datetime]
     csv_value: Union[str, datetime.datetime]
     updated: bool
-
-
-@dataclass
-class DocumentUpdateResults:
-    """Class describing the results of comparing csv data against the db data to identify updates."""
-
-    name: UpdateResult
-    publication_ts: UpdateResult
-    description: UpdateResult
-    geography: UpdateResult
-    type: UpdateResult
-    category: UpdateResult
