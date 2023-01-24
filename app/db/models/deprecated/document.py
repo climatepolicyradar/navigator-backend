@@ -2,7 +2,7 @@ import sqlalchemy as sa
 from sqlalchemy import UniqueConstraint
 
 from app.db.models.document.physical_document import Language
-from app.db.models.lawpolicy.family import DocumentType
+from app.db.models.lawpolicy import DocumentType
 
 from ..auditable import Auditable
 from .source import Source
