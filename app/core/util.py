@@ -13,7 +13,8 @@ from app.core.validation.types import (
     DocumentValidationResult,
     UpdateResult,
 )
-from app.db.models import Document, Geography, DocumentType, Category
+from app.db.models.document import Document, DocumentType, Category
+from app.db.models.geography import Geography
 from app.db.session import Base
 
 _LOGGER = logging.getLogger(__name__)

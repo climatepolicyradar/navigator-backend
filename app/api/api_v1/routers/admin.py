@@ -1,5 +1,4 @@
 import logging
-from dataclasses import fields
 from io import StringIO
 from typing import cast, Union
 
@@ -36,7 +35,6 @@ from app.core.validation import IMPORT_ID_MATCHER
 from app.core.validation.types import (
     ImportSchemaMismatchError,
     DocumentsFailedValidationError,
-    UpdateResult,
 )
 from app.core.validation.util import (
     get_valid_metadata,
