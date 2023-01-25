@@ -85,7 +85,6 @@ class DocumentType(Base):
 class FamilyDocument(Base):
     __tablename__ = "family_document"
 
-    id = sa.Column(sa.Integer, primary_key=True)
     family_id = sa.Column(sa.Integer, sa.ForeignKey(Family.id), nullable=False)
     physical_document_id = sa.Column(
         sa.Integer, sa.ForeignKey(PhysicalDocument.id), nullable=False, primary_key=True

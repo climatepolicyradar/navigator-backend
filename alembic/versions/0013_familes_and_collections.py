@@ -2,7 +2,7 @@
 
 Revision ID: 0013
 Revises: 0012
-Create Date: 2023-01-24 18:11:38.090272
+Create Date: 2023-01-25 10:17:59.465128
 
 """
 from alembic import op
@@ -79,7 +79,6 @@ def upgrade():
     sa.PrimaryKeyConstraint('collection_id', 'family_id', name=op.f('pk_collection_family'))
     )
     op.create_table('family_document',
-    sa.Column('id', sa.Integer(), nullable=False),
     sa.Column('family_id', sa.Integer(), nullable=False),
     sa.Column('physical_document_id', sa.Integer(), nullable=False),
     sa.Column('cdn_url', sa.String(), nullable=True),
@@ -91,7 +90,8 @@ def upgrade():
     sa.ForeignKeyConstraint(['family_id'], ['family.id'], name=op.f('fk_family_document__family_id__family')),
     sa.ForeignKeyConstraint(['physical_document_id'], ['physical_document.id'], name=op.f('fk_family_document__physical_document_id__physical_document')),
     sa.ForeignKeyConstraint(['variant_id'], ['variant.id'], name=op.f('fk_family_document__variant_id__variant')),
-    sa.PrimaryKeyConstraint('id', 'physical_document_id', name=op.f('pk_family_document'))
+    sa.PrimaryKeyConstraint('physical_document_id', name=op.f('pk_family_document')),
+    sa.UniqueConstraint('physical_document_id', name=op.f('uq_family_document__physical_document_id'))
     )
     op.create_table('family_event',
     sa.Column('id', sa.Integer(), nullable=False),
