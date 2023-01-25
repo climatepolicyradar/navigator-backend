@@ -2,7 +2,7 @@
 
 Revision ID: 0013
 Revises: 0012
-Create Date: 2023-01-25 10:17:59.465128
+Create Date: 2023-01-25 11:07:50.733073
 
 """
 from alembic import op
@@ -44,6 +44,13 @@ def upgrade():
     sa.PrimaryKeyConstraint('id', name=op.f('pk_family_type')),
     sa.UniqueConstraint('name', name=op.f('uq_family_type__name'))
     )
+    op.create_table('metadata_taxonomy',
+    sa.Column('id', sa.Integer(), nullable=False),
+    sa.Column('name', sa.Text(), nullable=False),
+    sa.Column('description', sa.Text(), nullable=False),
+    sa.Column('valid_metadata', sa.JSON(), nullable=True),
+    sa.PrimaryKeyConstraint('id', name=op.f('pk_metadata_taxonomy'))
+    )
     op.create_table('variant',
     sa.Column('id', sa.Integer(), nullable=False),
     sa.Column('variant', sa.Text(), nullable=False),
@@ -71,6 +78,13 @@ def upgrade():
     sa.ForeignKeyConstraint(['geography_id'], ['geography.id'], name=op.f('fk_family__geography_id__geography')),
     sa.PrimaryKeyConstraint('id', name=op.f('pk_family'))
     )
+    op.create_table('metadata_organisation',
+    sa.Column('metadata_id', sa.Integer(), nullable=False),
+    sa.Column('organisation_id', sa.Integer(), nullable=False),
+    sa.ForeignKeyConstraint(['metadata_id'], ['metadata_taxonomy.id'], name=op.f('fk_metadata_organisation__metadata_id__metadata_taxonomy')),
+    sa.ForeignKeyConstraint(['organisation_id'], ['organisation.id'], name=op.f('fk_metadata_organisation__organisation_id__organisation')),
+    sa.PrimaryKeyConstraint('metadata_id', 'organisation_id', name=op.f('pk_metadata_organisation'))
+    )
     op.create_table('collection_family',
     sa.Column('collection_id', sa.Integer(), nullable=False),
     sa.Column('family_id', sa.Integer(), nullable=False),
@@ -90,8 +104,7 @@ def upgrade():
     sa.ForeignKeyConstraint(['family_id'], ['family.id'], name=op.f('fk_family_document__family_id__family')),
     sa.ForeignKeyConstraint(['physical_document_id'], ['physical_document.id'], name=op.f('fk_family_document__physical_document_id__physical_document')),
     sa.ForeignKeyConstraint(['variant_id'], ['variant.id'], name=op.f('fk_family_document__variant_id__variant')),
-    sa.PrimaryKeyConstraint('physical_document_id', name=op.f('pk_family_document')),
-    sa.UniqueConstraint('physical_document_id', name=op.f('uq_family_document__physical_document_id'))
+    sa.PrimaryKeyConstraint('physical_document_id', name=op.f('pk_family_document'))
     )
     op.create_table('family_event',
     sa.Column('id', sa.Integer(), nullable=False),
@@ -102,6 +115,14 @@ def upgrade():
     sa.ForeignKeyConstraint(['event_type'], ['event_type.id'], name=op.f('fk_family_event__event_type__event_type')),
     sa.ForeignKeyConstraint(['family_id'], ['family.id'], name=op.f('fk_family_event__family_id__family')),
     sa.PrimaryKeyConstraint('id', name=op.f('pk_family_event'))
+    )
+    op.create_table('family_metadata',
+    sa.Column('family_id', sa.Integer(), nullable=False),
+    sa.Column('taxonomy_id', sa.Integer(), nullable=False),
+    sa.Column('value', sa.JSON(), nullable=True),
+    sa.ForeignKeyConstraint(['family_id'], ['family.id'], name=op.f('fk_family_metadata__family_id__family')),
+    sa.ForeignKeyConstraint(['taxonomy_id'], ['metadata_taxonomy.id'], name=op.f('fk_family_metadata__taxonomy_id__metadata_taxonomy')),
+    sa.PrimaryKeyConstraint('family_id', 'taxonomy_id', name=op.f('pk_family_metadata'))
     )
     op.create_table('family_organisation',
     sa.Column('family_id', sa.Integer(), nullable=False),
@@ -133,12 +154,15 @@ def downgrade():
     op.drop_table('slug')
     op.drop_table('event_document')
     op.drop_table('family_organisation')
+    op.drop_table('family_metadata')
     op.drop_table('family_event')
     op.drop_table('family_document')
     op.drop_table('collection_family')
+    op.drop_table('metadata_organisation')
     op.drop_table('family')
     op.drop_table('collection_organisation')
     op.drop_table('variant')
+    op.drop_table('metadata_taxonomy')
     op.drop_table('family_type')
     op.drop_table('family_category')
     op.drop_table('event_type')
