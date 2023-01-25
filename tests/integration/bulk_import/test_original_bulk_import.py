@@ -168,8 +168,6 @@ def test_original_bulk_import_state_rds(expected_rds_documents_pre_update):
 
     - The relevant rows should be in the rds database.
     """
-
-    # TODO send a request to the backend and assert the response is correct
     rds_documents = requests.get(f"http://{API_HOST_LOCAL}/api/v1/documents")
 
     assert rds_documents.status_code == 200
