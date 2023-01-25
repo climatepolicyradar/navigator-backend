@@ -1,15 +1,14 @@
 name: test-bulk-import
 
 on:
-  - push
-#  push:
-#    branches:
-#      - main
-#      - dev
-#  pull_request:
-#    branches:
-#      - main
-#      - dev
+  push:
+    branches:
+      - main
+      - dev
+  pull_request:
+    branches:
+      - main
+      - dev
 
 env:
   TEST_BUCKET: cpr-pipeline-backend-test
@@ -20,7 +19,6 @@ env:
   API_HOST: http://localhost:8888
 
 
-# TODO This probably doesn't sit in the backend repo but will build here for now
 jobs:
   deploy-test-destroy:
     runs-on: ubuntu-latest
@@ -79,7 +77,7 @@ jobs:
 
       - name: Run backend tests pre update from bulk import
         run: |
-          python -m pytest -v tests/integration/bulk_import/test_original_bulk_import.py --noconftest 
+          python -m pytest -v tests/integration/bulk_import/test_original_bulk_import.py --noconftest -vv
           
       - name: Run the bulk import to load the update documents
         run: |
@@ -87,8 +85,8 @@ jobs:
 
       - name: Run backend tests post bulk import update
         run: |
-          python -m pytest -v tests/integration/bulk_import/test_updates_bulk_import.py --noconftest 
+          python -m pytest -v tests/integration/bulk_import/test_updates_bulk_import.py --noconftest -vv
 
-#      - name: Clean up the AWS infrastructure
-#        run: |
-#          python -m tests.integration.bulk_import.teardown_tests
+      - name: Clean up the AWS infrastructure
+        run: |
+          python -m tests.integration.bulk_import.teardown_tests
