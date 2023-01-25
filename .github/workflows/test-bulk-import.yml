@@ -1,0 +1,92 @@
+name: test-bulk-import
+
+on:
+  push:
+    branches:
+      - main
+      - dev
+  pull_request:
+    branches:
+      - main
+      - dev
+
+env:
+  TEST_BUCKET: cpr-pipeline-backend-test
+  BULK_UPLOAD_FILE_PATH: ./tests/integration/bulk_import/data/bulk_import.csv
+  BULK_UPLOAD_UPDATES_FILE_PATH: ./tests/integration/bulk_import/data/bulk_import_update.csv
+  SUPERUSER_EMAIL: user@navigator.com
+  SUPERUSER_PASSWORD: password
+  API_HOST: http://localhost:8888
+
+
+jobs:
+  deploy-test-destroy:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v2
+
+      - name: Configuring AWS Credentials
+        uses: aws-actions/configure-aws-credentials@v1
+        with:
+          aws-access-key-id: ${{ secrets.AWS_ACCESS_KEY_ID_DEV }}
+          aws-region: 'eu-west-1'
+          aws-secret-access-key: ${{ secrets.AWS_SECRET_ACCESS_KEY_DEV }}
+
+      - name: Use .env.example
+        run:  cp .env.example .env
+
+      - name: Set environment variables in the .env file
+        run: |
+          echo "Setting env vars..."
+          sed -i~ '/^PIPELINE_BUCKET=/s/=.*/=${{ env.TEST_BUCKET }}/' .env
+          sed -i~ '/^AWS_ACCESS_KEY_ID=/s/=.*/=/' .env
+          sed -i~ '/^AWS_SECRET_ACCESS_KEY=/s/=.*/=/' .env
+          sed -i~ 's/AWS_ACCESS_KEY_ID=//' .env
+          sed -i~ 's/AWS_SECRET_ACCESS_KEY=//' .env
+          rm .env~
+          cat .env
+          ls -a 
+
+      - name: Setting up python
+        uses: actions/setup-python@v2
+        with:
+          python-version: '3.10'
+
+      - name: Installing dependencies
+        run: |
+          python -m pip install --upgrade pip
+          pip install -r requirements.txt
+
+      - name: Setup the aws environment
+        run: |
+          python -m tests.integration.bulk_import.setup_tests
+        env:
+          AWS_ACCESS_KEY_ID: ${{ secrets.AWS_ACCESS_KEY_ID_DEV }}
+          AWS_REGION: 'eu-west-1'
+          AWS_SECRET_ACCESS_KEY: ${{ secrets.AWS_SECRET_ACCESS_KEY_DEV }}
+
+      - name: Spin Up Docker Containers
+        run:  make start
+
+      - name: verify backend is up
+        run: curl http://localhost:8888/api/docs
+
+      - name: Run the bulk import to load original documents
+        run: |
+          SUPERUSER_EMAIL=${{ env.SUPERUSER_EMAIL }} SUPERUSER_PASSWORD=${{ env.SUPERUSER_PASSWORD }} API_HOST=${{ env.API_HOST }} python ./scripts/data_ingest/main.py ${{ env.BULK_UPLOAD_FILE_PATH }}
+
+      - name: Run backend tests pre update from bulk import
+        run: |
+          python -m pytest -v tests/integration/bulk_import/test_original_bulk_import.py --noconftest -vv
+          
+      - name: Run the bulk import to load the update documents
+        run: |
+          SUPERUSER_EMAIL=${{ env.SUPERUSER_EMAIL }} SUPERUSER_PASSWORD=${{ env.SUPERUSER_PASSWORD }} API_HOST=${{ env.API_HOST }} python ./scripts/data_ingest/main.py ${{ env.BULK_UPLOAD_UPDATES_FILE_PATH }}
+
+      - name: Run backend tests post bulk import update
+        run: |
+          python -m pytest -v tests/integration/bulk_import/test_updates_bulk_import.py --noconftest -vv
+
+      - name: Clean up the AWS infrastructure
+        run: |
+          python -m tests.integration.bulk_import.teardown_tests
