@@ -38,7 +38,7 @@ RUN python -c "from sentence_transformers import SentenceTransformer; SentenceTr
 # Copy files to image
 COPY alembic .
 COPY alembic.ini .
-COPY app .
+COPY app ./app
 COPY scripts .
 COPY LICENSE.md .
 COPY README.md .
