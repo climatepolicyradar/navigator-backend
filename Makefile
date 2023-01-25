@@ -4,4 +4,4 @@ include ./makefile-docker.defs
 
 git_hooks:
 	# Install git pre-commit hooks
-	poetry run pre-commit install --install-hooks
+	cd backend/; poetry run pre-commit install --install-hooks
