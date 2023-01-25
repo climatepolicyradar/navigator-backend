@@ -5,7 +5,7 @@ from typing import Mapping
 
 from sqlalchemy.orm import Session
 
-from app.db.models import Document
+from app.db.models.deprecated import Document
 from app.db.session import SessionLocal
 
 

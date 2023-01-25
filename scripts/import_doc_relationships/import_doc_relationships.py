@@ -1,7 +1,7 @@
 #!/usr/bin/env python3
 
 from datetime import datetime
-from app.db.models.document import DocumentRelationship, Relationship
+from app.db.models.deprecated.document import DocumentRelationship, Relationship
 from app.db.session import SessionLocal
 
 

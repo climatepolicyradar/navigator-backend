@@ -6,7 +6,7 @@ from sqlalchemy.orm import Query, Session
 
 from app.core.security import get_password_reset_token_expiry_ts
 from app.core.util import random_string
-from app.db.models import PasswordResetToken
+from app.db.models.deprecated import PasswordResetToken
 
 
 def get_password_reset_token_by_token(

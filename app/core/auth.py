@@ -7,7 +7,7 @@ from jwt import PyJWTError
 from app.core import security
 from app.db import session
 from app.db.crud.user import get_user_by_email
-from app.db.models import User
+from app.db.models.deprecated import User
 from app.api.api_v1.schemas.user import JWTUser
 
 

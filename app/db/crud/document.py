@@ -36,7 +36,7 @@ from app.core.aws import S3Client
 from app.core.util import to_cdn_url
 from app.core.validation import IMPORT_ID_MATCHER
 from app.core.validation.util import write_documents_to_s3
-from app.db.models import (
+from app.db.models.deprecated import (
     Document,
     DocumentFramework,
     DocumentHazard,
