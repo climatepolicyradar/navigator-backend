@@ -1,5 +1,5 @@
 import sqlalchemy as sa
-
+from sqlalchemy.dialects import postgresql
 from app.db.models.app.users import Organisation
 from .family import Family
 
@@ -13,7 +13,7 @@ class MetadataTaxonomy(Base):
     id = sa.Column(sa.Integer, primary_key=True)
     name = sa.Column(sa.Text, nullable=False)
     description = sa.Column(sa.Text, nullable=False)
-    valid_metadata = sa.Column(sa.JSON, default={})
+    valid_metadata = sa.Column(postgresql.JSONB, nullable=False)
 
 
 class FamilyMetadata(Base):
@@ -22,7 +22,7 @@ class FamilyMetadata(Base):
 
     family_id = sa.Column(sa.ForeignKey(Family.id))
     taxonomy_id = sa.Column(sa.ForeignKey(MetadataTaxonomy.id))
-    value = sa.Column(sa.JSON, default={})
+    value = sa.Column(postgresql.JSONB, nullable=False)
 
     sa.PrimaryKeyConstraint(family_id, taxonomy_id)
 

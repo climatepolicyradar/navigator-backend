@@ -2,12 +2,12 @@
 
 Revision ID: 0013
 Revises: 0012
-Create Date: 2023-01-25 11:07:50.733073
+Create Date: 2023-01-25 11:25:34.736130
 
 """
 from alembic import op
 import sqlalchemy as sa
-
+from sqlalchemy.dialects import postgresql
 
 # revision identifiers, used by Alembic.
 revision = '0013'
@@ -48,7 +48,7 @@ def upgrade():
     sa.Column('id', sa.Integer(), nullable=False),
     sa.Column('name', sa.Text(), nullable=False),
     sa.Column('description', sa.Text(), nullable=False),
-    sa.Column('valid_metadata', sa.JSON(), nullable=True),
+    sa.Column('valid_metadata', postgresql.JSONB(astext_type=sa.Text()), nullable=False),
     sa.PrimaryKeyConstraint('id', name=op.f('pk_metadata_taxonomy'))
     )
     op.create_table('variant',
@@ -119,7 +119,7 @@ def upgrade():
     op.create_table('family_metadata',
     sa.Column('family_id', sa.Integer(), nullable=False),
     sa.Column('taxonomy_id', sa.Integer(), nullable=False),
-    sa.Column('value', sa.JSON(), nullable=True),
+    sa.Column('value', postgresql.JSONB(astext_type=sa.Text()), nullable=False),
     sa.ForeignKeyConstraint(['family_id'], ['family.id'], name=op.f('fk_family_metadata__family_id__family')),
     sa.ForeignKeyConstraint(['taxonomy_id'], ['metadata_taxonomy.id'], name=op.f('fk_family_metadata__taxonomy_id__metadata_taxonomy')),
     sa.PrimaryKeyConstraint('family_id', 'taxonomy_id', name=op.f('pk_family_metadata'))
