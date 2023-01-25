@@ -381,10 +381,12 @@ def import_law_policy(
             document_count=total_document_count,
             document_added_count=total_document_count - document_skipped_count,
             document_updated_count=len(documents_with_updates),
-            document_skipped_count=document_skipped_count,
-            document_skipped_ids=list(documents_ids_already_exist),
+            document_updated_ids=list(documents_with_updates.keys()),
+            document_not_added_count=document_skipped_count,
+            document_not_added_ids=list(documents_ids_already_exist),
             csv_s3_location=csv_s3_location,
         )
+
     except ImportSchemaMismatchError as e:
         raise HTTPException(
             status_code=status.HTTP_400_BAD_REQUEST,

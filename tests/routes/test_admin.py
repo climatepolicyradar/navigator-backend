@@ -332,8 +332,8 @@ def test_bulk_import_cclw_law_policy_valid(
     response_json = response.json()
     assert response_json["document_count"] == 2
     assert response_json["document_updated_count"] == 0
-    assert response_json["document_skipped_count"] == 0
-    assert response_json["document_skipped_ids"] == []
+    assert response_json["document_not_added_count"] == 0
+    assert response_json["document_not_added_ids"] == []
 
     mock_start_import.assert_called_once()
     call = mock_start_import.mock_calls[0]
@@ -461,8 +461,8 @@ def test_bulk_import_cclw_law_policy_db_objects(
     response_json = response.json()
     assert response_json["document_count"] == 2
     assert response_json["document_updated_count"] == 0
-    assert response_json["document_skipped_count"] == 0
-    assert response_json["document_skipped_ids"] == []
+    assert response_json["document_not_added_count"] == 0
+    assert response_json["document_not_added_ids"] == []
 
     mock_start_import.assert_called_once()
     call = mock_start_import.mock_calls[0]
@@ -551,8 +551,8 @@ def test_bulk_import_cclw_law_policy_preexisting_db_objects(
     response_json = response.json()
     assert response_json["document_count"] == 2
     assert response_json["document_updated_count"] == 1
-    assert response_json["document_skipped_count"] == 1
-    assert response_json["document_skipped_ids"] == [existing_doc_import_id]
+    assert response_json["document_not_added_count"] == 1
+    assert response_json["document_not_added_ids"] == [existing_doc_import_id]
 
     mock_start_import.assert_called_once()
     call = mock_start_import.mock_calls[0]
@@ -622,8 +622,8 @@ def test_bulk_import_cclw_law_policy_document_updates(
     response_json = response.json()
     assert response_json["document_count"] == 2
     assert response_json["document_updated_count"] == 0
-    assert response_json["document_skipped_count"] == 0
-    assert response_json["document_skipped_ids"] == []
+    assert response_json["document_not_added_count"] == 0
+    assert response_json["document_not_added_ids"] == []
 
     mock_update_doc_in_db.assert_not_called()
     mock_delete_doc_in_s3.assert_not_called()
@@ -644,8 +644,8 @@ def test_bulk_import_cclw_law_policy_document_updates(
     response_json = response.json()
     assert response_json["document_count"] == 2
     assert response_json["document_updated_count"] == 1
-    assert response_json["document_skipped_count"] == 2
-    assert sorted(response_json["document_skipped_ids"]) == sorted(
+    assert response_json["document_not_added_count"] == 2
+    assert sorted(response_json["document_not_added_ids"]) == sorted(
         [
             "CCLW.executive.1.2",
             "CCLW.executive.2.33",

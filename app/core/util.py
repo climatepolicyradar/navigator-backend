@@ -93,8 +93,7 @@ def update_doc_in_db(
     with db.begin_nested():
         for field in updates:
             if updates[field].updated:
-                # TODO assert that document is updated
-                (
+                docs_updated_no = (
                     db.query(Document)
                     .filter(Document.import_id == import_id)
                     .update(
@@ -102,6 +101,12 @@ def update_doc_in_db(
                         synchronize_session="fetch",
                     )
                 )
+                if docs_updated_no != 1:
+                    raise RuntimeError(
+                        f"Expected to update 1 document but updated {docs_updated_no} during the udpate of: "
+                        f"{import_id}:{field} from {updates[field].db_value} -> {updates[field].csv_value}"
+                    )
+
                 _LOGGER.info(
                     f"Updated {import_id}:{field} from {updates[field].db_value} -> {updates[field].csv_value}"
                 )
