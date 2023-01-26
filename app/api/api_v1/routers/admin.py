@@ -1,6 +1,6 @@
 import logging
 from io import StringIO
-from typing import cast, Union
+from typing import cast, Union, List
 
 from fastapi import (
     APIRouter,
@@ -12,39 +12,41 @@ from fastapi import (
     UploadFile,
     status,
 )
-from sqlalchemy.exc import IntegrityError
 from sqlalchemy import update
-from app.core.aws import S3Document
+from sqlalchemy.exc import IntegrityError
 
 from app.api.api_v1.schemas.document import (
     BulkImportValidatedResult,
     DocumentCreateRequest,
     DocumentUpdateRequest,
+    BulkDeleteValidatedResult,
 )
 from app.api.api_v1.schemas.user import User, UserCreateAdmin
 from app.core.auth import get_current_active_superuser
-from app.core.config import PIPELINE_BUCKET, S3_PREFIXES
-from app.core.util import get_update_results, update_doc_in_db
+from app.core.aws import S3Document
 from app.core.aws import get_s3_client
+from app.core.config import PIPELINE_BUCKET, S3_PREFIXES, ID_PATTERN
 from app.core.email import (
     send_new_account_email,
     send_password_reset_email,
 )
 from app.core.ratelimit import limiter
+from app.core.util import get_update_results, update_doc_in_db
 from app.core.validation import IMPORT_ID_MATCHER
+from app.core.validation.cclw.law_policy.process_csv import (
+    extract_documents,
+    validated_input,
+)
 from app.core.validation.types import (
     ImportSchemaMismatchError,
     DocumentsFailedValidationError,
+    IdsFailedValidationError,
 )
 from app.core.validation.util import (
     get_valid_metadata,
     write_csv_to_s3,
 )
-from app.core.validation.cclw.law_policy.process_csv import (
-    extract_documents,
-    validated_input,
-)
-from app.db.crud.document import start_import
+from app.db.crud.document import start_import, start_delete
 from app.db.crud.password_reset import (
     create_password_reset_token,
     invalidate_existing_password_reset_tokens,
@@ -267,6 +269,71 @@ async def request_password_reset(
         },
     )
     return True
+
+
+# TODO do we need to remove metadata for the deleted document?
+@r.post(
+    "/bulk-delete/cclw/law-policy-delete",
+    response_model=BulkDeleteValidatedResult,
+    status_code=status.HTTP_202_ACCEPTED,
+)
+def delete_law_policy(
+    request: Request,
+    ids_to_delete: Union[List[str], None],
+    background_tasks: BackgroundTasks,
+    db=Depends(get_db),
+    current_user=Depends(get_current_active_superuser),
+    s3_client=Depends(get_s3_client),
+):
+    """Process a Law/Policy data import"""
+    try:
+        _LOGGER.info(
+            f"Superuser '{current_user.email}' triggered bulk deletion request for "
+            "CCLW Law & Policy data"
+        )
+
+        ids_to_delete_invalid = [id for id in ids_to_delete if not ID_PATTERN.match(id)]
+        if ids_to_delete_invalid:
+            raise IdsFailedValidationError(
+                message="File failed detailed validation.",
+                details=ids_to_delete_invalid,
+            )
+
+        existing_import_ids = [id_[0] for id_ in db.query(Document.import_id)]
+
+        # TODO providing a response to the request before we have actually deleted the data and asserted this can
+        #  cause a false response?
+        background_tasks.add_task(
+            start_delete, db, s3_client, ids_to_delete, PIPELINE_BUCKET, S3_PREFIXES
+        )
+
+        _LOGGER.info(
+            "Background Bulk Delete Task added",
+            extra={
+                "props": {
+                    "superuser_email": current_user.email,
+                    "delete_ids": ids_to_delete,
+                }
+            },
+        )
+
+        return BulkDeleteValidatedResult(
+            document_count_pre_delete=len(existing_import_ids),
+            document_count_post_delete=len(existing_import_ids) - len(ids_to_delete),
+            document_deleted_count=len(ids_to_delete),
+            document_deleted_ids=ids_to_delete,
+        )
+    except IdsFailedValidationError as e:
+        raise HTTPException(
+            status_code=status.HTTP_422_UNPROCESSABLE_ENTITY,
+            detail=e.details,
+        ) from e
+
+    except Exception as e:
+        _LOGGER.exception("Unexpected error")
+        raise HTTPException(
+            status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
+        ) from e
 
 
 @r.post(

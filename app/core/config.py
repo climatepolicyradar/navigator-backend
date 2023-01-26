@@ -1,4 +1,5 @@
 import os
+import re
 
 PROJECT_NAME = "navigator"
 
@@ -70,3 +71,4 @@ PIPELINE_BUCKET: str = str(os.getenv("PIPELINE_BUCKET"))
 S3_PREFIXES: list[str] = os.getenv(
     "S3_PREFIXES", "parser_input,embeddings_input,indexer_input"
 ).split(",")
+ID_PATTERN = re.compile(r"^[a-zA-Z0-9]+\.[a-zA-Z0-9]+\.[a-zA-Z0-9]+\.[a-zA-Z0-9]+")

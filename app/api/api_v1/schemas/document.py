@@ -190,3 +190,12 @@ class DocumentUpdateRequest(BaseModel):
     md5_sum: Optional[str]
     content_type: Optional[str]
     cdn_object: Optional[str]
+
+
+class BulkDeleteValidatedResult(BaseModel):
+    """Response for bulk delete request."""
+
+    document_count_pre_delete: str
+    document_count_post_delete: str
+    document_deleted_count: str
+    document_deleted_ids: list[str]

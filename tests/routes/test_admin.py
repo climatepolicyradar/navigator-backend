@@ -656,3 +656,88 @@ def test_bulk_import_cclw_law_policy_document_updates(
 
     mock_update_doc_in_db.assert_called_once()
     mock_delete_doc_in_s3.assert_called_once()
+
+
+# TODO assert that we fail validation with invalid input json
+def test_bulk_delete_cclw_law_policy_document_deletes(
+    client, superuser_token_headers, test_db, mocker, test_s3_client
+):
+    """
+    Test that the document bulk delete endpoint works as expected.
+
+    The test:
+    - Inserts the relevant metadata into the database.
+    - Imports two initial documents.
+    - Requests deletion of one document.
+    - Asserts that only the desired document was deleted in the database and s3.
+    """
+    mock_start_delete = mocker.patch("app.api.api_v1.routers.admin.start_delete")
+
+    test_db.add(Source(name="CCLW"))
+    test_db.add(
+        Geography(
+            display_value="geography", slug="geography", value="GEO", type="country"
+        )
+    )
+    test_db.add(DocumentType(name="doctype", description="doctype"))
+    test_db.add(Language(language_code="LAN", name="language"))
+    test_db.add(Category(name="Policy", description="Policy"))
+    test_db.add(Keyword(name="keyword1", description="keyword1"))
+    test_db.add(Keyword(name="keyword2", description="keyword2"))
+    test_db.add(Hazard(name="hazard1", description="hazard1"))
+    test_db.add(Hazard(name="hazard2", description="hazard2"))
+    test_db.add(Response(name="topic", description="topic"))
+    test_db.add(Framework(name="framework", description="framework"))
+
+    test_db.commit()
+    existing_doc_import_ids = {
+        "CCLW.executive.1.1": {"slug": "geography_2014_test_1_1"},
+        "CCLW.executive.1.2": {"slug": "geography_2014_test_1_2"},
+    }
+    test_db.add(Instrument(name="instrument", description="instrument", source_id=1))
+    test_db.add(Sector(name="sector", description="sector", source_id=1))
+    with test_db.begin_nested():
+        for import_id in existing_doc_import_ids:
+            test_db.add(
+                Document(
+                    publication_ts=datetime.datetime(year=2014, month=1, day=1),
+                    name="test",
+                    description="test description",
+                    source_url="http://somewhere",
+                    source_id=1,
+                    url="",
+                    cdn_object="",
+                    md5_sum=None,
+                    content_type=None,
+                    slug=existing_doc_import_ids[import_id]["slug"],
+                    import_id=import_id,
+                    geography_id=1,
+                    type_id=1,
+                    category_id=1,
+                )
+            )
+    test_db.commit()
+
+    response = client.post(
+        "/api/v1/admin/bulk-delete/cclw/law-policy-delete",
+        json=["CCLW.1.1"],
+        headers=superuser_token_headers,
+    )
+
+    assert response.status_code == 422
+    mock_start_delete.assert_not_called()
+
+    response = client.post(
+        "/api/v1/admin/bulk-delete/cclw/law-policy-delete",
+        json=["CCLW.executive.1.1"],
+        headers=superuser_token_headers,
+    )
+
+    assert response.status_code == 202
+    response_json = response.json()
+    response_json["document_count_pre_delete"] = (2,)
+    response_json["document_count_post_delete"] = (1,)
+    response_json["document_deleted_count"] = (1,)
+    response_json["document_deleted_ids"] = ["CCLW.executive.1.1"]
+
+    mock_start_delete.assert_called_once()

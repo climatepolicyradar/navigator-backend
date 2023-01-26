@@ -2,7 +2,7 @@
 import datetime
 from abc import abstractmethod, ABC
 from dataclasses import dataclass
-from typing import Collection, Generator, Sequence, Union
+from typing import Collection, Generator, Sequence, Union, List
 
 from app.api.api_v1.schemas.document import DocumentCreateRequest
 
@@ -10,7 +10,7 @@ from app.api.api_v1.schemas.document import DocumentCreateRequest
 class ValidationError(Exception):
     """Base class for import validation errors."""
 
-    def __init__(self, message: str, details: dict):
+    def __init__(self, message: str, details: Union[dict, List[str]]):
         self.message = message
         self.details = details
 
@@ -31,6 +31,16 @@ class DocumentsFailedValidationError(ValidationError):
     def __init__(self, message: str, details: dict):
         super().__init__(
             message=f"Document data provided for import failed validation: {message}",
+            details=details,
+        )
+
+
+class IdsFailedValidationError(ValidationError):
+    """Raised when bulk delete import ids fail validation against the expected id pattern."""
+
+    def __init__(self, message: str, details: List[str]):
+        super().__init__(
+            message=f"Document ids provided for deletion failed validation: {message}",
             details=details,
         )
 

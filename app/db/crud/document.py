@@ -1,6 +1,6 @@
 import logging
 from hashlib import md5
-from typing import Mapping, Sequence, Set, Tuple, Union, cast
+from typing import Mapping, Sequence, Set, Tuple, Union, cast, List
 
 from fastapi import (
     HTTPException,
@@ -659,6 +659,39 @@ def start_import(
         raise e
 
     write_documents_to_s3(s3_client=s3_client, documents=document_parser_inputs)
+
+
+def start_delete(
+    db: Session,
+    s3_client: S3Client,
+    delete_ids: List[str],
+    bucket: str,
+    prefixes: List[str],
+):
+    try:
+        with db.begin_nested():
+            for id_ in delete_ids:
+                _LOGGER.info(f"Deleting: {id_}")
+                existing_document = (
+                    db.query(Document).filter(Document.import_id == id_).scalar()
+                )
+                if existing_document is None:
+                    _LOGGER.info(f"No document in the database to delete for: {id_}")
+                else:
+                    deleted_doc = (
+                        db.query(Document).filter(Document.import_id == id_)
+                    ).delete()
+                    _LOGGER.info(f"Deleted Document: {id_} - {deleted_doc}")
+
+        # This commit is necessary after completing the nested transaction
+        _LOGGER.info("Importing performing final commit.")
+        db.commit()
+    except Exception as e:
+        _LOGGER.exception("Unexpected error deleting documents in the database.")
+        raise e
+
+    for id_ in delete_ids:
+        s3_client.delete_document_in_s3(import_id=id_, bucket=bucket, prefixes=prefixes)
 
 
 def _get_related_documents(
