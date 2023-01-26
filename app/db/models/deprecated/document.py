@@ -1,23 +1,13 @@
 import sqlalchemy as sa
 from sqlalchemy import UniqueConstraint
 
+from app.db.models.document.physical_document import Language
+from app.db.models.lawpolicy import DocumentType
+
 from ..auditable import Auditable
 from .source import Source
-from .geography import Geography
+from ..lawpolicy import Geography
 from app.db.session import Base
-
-
-class DocumentType(Base):
-    """A document type.
-
-    E.g. strategy, plan, law
-    """
-
-    __tablename__ = "document_type"
-
-    id = sa.Column(sa.Integer, primary_key=True)
-    name = sa.Column(sa.Text, nullable=False, unique=True)
-    description = sa.Column(sa.Text, nullable=False)
 
 
 class Category(Base):
@@ -202,16 +192,6 @@ class DocumentResponse(Base):  # noqa: D101
         sa.ForeignKey(Document.id, ondelete="CASCADE"),
         nullable=False,
     )
-
-
-class Language(Base):  # noqa: D101
-    __tablename__ = "language"
-
-    id = sa.Column(sa.SmallInteger, primary_key=True)
-    language_code = sa.Column(sa.CHAR(length=3), nullable=False, unique=True)
-    part1_code = sa.Column(sa.CHAR(length=2))
-    part2_code = sa.Column(sa.CHAR(length=3))
-    name = sa.Column(sa.Text)
 
 
 class DocumentLanguage(Base):

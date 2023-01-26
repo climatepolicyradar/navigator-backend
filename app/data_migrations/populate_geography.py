@@ -4,7 +4,8 @@ from typing import cast
 from slugify import slugify
 from sqlalchemy.orm import Session
 
-from app.db.models.deprecated import Geography
+from app.db.models.lawpolicy import Geography
+
 from .utils import has_rows, load_tree
 
 

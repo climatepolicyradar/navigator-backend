@@ -31,8 +31,6 @@ from app.core.validation.types import ImportSchemaMismatchError
 from app.core.validation.util import get_valid_metadata
 from app.db.models.deprecated import (
     Source,
-    Geography,
-    DocumentType,
     Language,
     Sector,
     Response,
@@ -42,6 +40,7 @@ from app.db.models.deprecated import (
     Category,
     Keyword,
 )
+from app.db.models.lawpolicy import DocumentType, Geography
 
 
 CCLW_FIELDNAMES = [

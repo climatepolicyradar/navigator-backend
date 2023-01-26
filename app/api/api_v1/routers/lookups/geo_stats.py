@@ -7,7 +7,7 @@ from pydantic import BaseModel
 from sqlalchemy import exc
 
 from app.db.session import get_db
-from app.db.models.deprecated.geography import Geography, GeoStatistics
+from app.db.models.lawpolicy import Geography, GeoStatistics
 from .router import lookups_router
 
 _LOGGER = logging.getLogger(__name__)
