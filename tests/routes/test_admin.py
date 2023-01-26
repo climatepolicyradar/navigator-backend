@@ -1,7 +1,6 @@
 import datetime
 from io import BytesIO
 from unittest.mock import patch
-
 import pytest
 
 from app.api.api_v1.routers.admin import ACCOUNT_ACTIVATION_EXPIRE_MINUTES
@@ -279,10 +278,7 @@ def test_reset_password(
 
 
 def test_bulk_import_cclw_law_policy_valid(
-    client,
-    superuser_token_headers,
-    test_db,
-    mocker,
+    client, superuser_token_headers, test_db, mocker, test_s3_client
 ):
     """
     Test that the csv validation feature of the bulk import endpoint works as expected.
@@ -297,6 +293,7 @@ def test_bulk_import_cclw_law_policy_valid(
     mock_update_doc_in_db = mocker.patch(
         "app.api.api_v1.routers.admin.update_doc_in_db"
     )
+    mock_delete_doc_in_s3 = mocker.patch.object(test_s3_client, "delete_document_in_s3")
 
     test_db.add(Source(name="CCLW"))
     test_db.add(
@@ -344,7 +341,7 @@ def test_bulk_import_cclw_law_policy_valid(
     assert len(call.kwargs["file_contents"]) == csv_file.getbuffer().nbytes
 
     mock_update_doc_in_db.assert_not_called()
-    mock_update_doc_in_db.assert_not_called()
+    mock_delete_doc_in_s3.assert_not_called()
 
 
 @pytest.mark.parametrize(
@@ -361,6 +358,7 @@ def test_bulk_import_cclw_law_policy_invalid(
     superuser_token_headers,
     test_db,
     mocker,
+    test_s3_client,
 ):
     """
     Test that the csv validation feature of the bulk import endpoint works as expected.
@@ -372,6 +370,10 @@ def test_bulk_import_cclw_law_policy_invalid(
     """
     mock_start_import = mocker.patch("app.api.api_v1.routers.admin.start_import")
     mock_write_csv_to_s3 = mocker.patch("app.api.api_v1.routers.admin.write_csv_to_s3")
+    mock_update_doc_in_db = mocker.patch(
+        "app.api.api_v1.routers.admin.update_doc_in_db"
+    )
+    mock_delete_doc_in_s3 = mocker.patch.object(test_s3_client, "delete_document_in_s3")
 
     test_db.add(Source(name="CCLW"))
     test_db.add(
@@ -408,6 +410,8 @@ def test_bulk_import_cclw_law_policy_invalid(
     assert response.json()["detail"]
     mock_start_import.assert_not_called()
     mock_write_csv_to_s3.assert_not_called()
+    mock_update_doc_in_db.assert_not_called()
+    mock_delete_doc_in_s3.assert_not_called()
 
 
 def test_bulk_import_cclw_law_policy_db_objects(
@@ -415,6 +419,7 @@ def test_bulk_import_cclw_law_policy_db_objects(
     superuser_token_headers,
     test_db,
     mocker,
+    test_s3_client,
 ):
     """
     Test that the document ingest feature of the bulk import endpoint works as expected.
@@ -426,6 +431,10 @@ def test_bulk_import_cclw_law_policy_db_objects(
     """
     mock_start_import = mocker.patch("app.api.api_v1.routers.admin.start_import")
     mock_write_csv_to_s3 = mocker.patch("app.api.api_v1.routers.admin.write_csv_to_s3")
+    mock_update_doc_in_db = mocker.patch(
+        "app.api.api_v1.routers.admin.update_doc_in_db"
+    )
+    mock_delete_doc_in_s3 = mocker.patch.object(test_s3_client, "delete_document_in_s3")
 
     test_db.add(Source(name="CCLW"))
     test_db.add(
@@ -472,14 +481,14 @@ def test_bulk_import_cclw_law_policy_db_objects(
     call = mock_write_csv_to_s3.mock_calls[0]
     assert len(call.kwargs["file_contents"]) == csv_file.getbuffer().nbytes
 
+    mock_update_doc_in_db.assert_not_called()
+    mock_delete_doc_in_s3.assert_not_called()
+
     # TODO: This test needs to check the db objects
 
 
 def test_bulk_import_cclw_law_policy_preexisting_db_objects(
-    client,
-    superuser_token_headers,
-    test_db,
-    mocker,
+    client, superuser_token_headers, test_db, mocker, test_s3_client
 ):
     """
     Test that the document skip feature of the bulk import endpoint works as expected.
@@ -496,9 +505,7 @@ def test_bulk_import_cclw_law_policy_preexisting_db_objects(
     mock_update_doc_in_db = mocker.patch(
         "app.api.api_v1.routers.admin.update_doc_in_db"
     )
-    mock_delete_doc_in_s3 = mocker.patch(
-        "app.api.api_v1.routers.admin.delete_doc_in_s3"
-    )
+    mock_delete_doc_in_s3 = mocker.patch.object(test_s3_client, "delete_document_in_s3")
 
     test_db.add(Source(name="CCLW"))
     test_db.add(
@@ -567,10 +574,7 @@ def test_bulk_import_cclw_law_policy_preexisting_db_objects(
 
 
 def test_bulk_import_cclw_law_policy_document_updates(
-    client,
-    superuser_token_headers,
-    test_db,
-    mocker,
+    client, superuser_token_headers, test_db, mocker, test_s3_client
 ):
     """
     Test that the document update feature of the bulk import endpoint works as expected.
@@ -584,9 +588,7 @@ def test_bulk_import_cclw_law_policy_document_updates(
     mock_update_doc_in_db = mocker.patch(
         "app.api.api_v1.routers.admin.update_doc_in_db"
     )
-    mock_delete_doc_in_s3 = mocker.patch(
-        "app.api.api_v1.routers.admin.delete_doc_in_s3"
-    )
+    mock_delete_doc_in_s3 = mocker.patch.object(test_s3_client, "delete_document_in_s3")
 
     test_db.add(Source(name="CCLW"))
     test_db.add(
