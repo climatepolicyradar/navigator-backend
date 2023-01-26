@@ -110,53 +110,6 @@ def update_doc_in_db(
                 )
 
 
-def object_exists(client, bucket: str, key: str) -> bool:
-    """
-    Detect whether an S3 object exists in s3.
-
-    params:
-        bucket: str - the name of the bucket
-        key: str - the key of the object to check
-    returns:
-        bool - True if the object exists, False otherwise
-    """
-    try:
-        client.head_object(Bucket=bucket, Key=key)
-        _LOGGER.info("Object '%s' found in bucket '%s'.", key, bucket)
-        return True
-    except ClientError as e:
-        _LOGGER.info("Object '%s' not found in bucket '%s': '%s.", key, bucket, e)
-        return False
-
-
-# TODO do we want to archive the old file?
-# TODO add type hint for s3_client
-def delete_doc_in_s3(
-    import_id: str, bucket: str, prefixes: List[str], s3_client: Any, suffixes=None
-) -> None:
-    """Delete the document objects in the relevant s3 buckets."""
-    if suffixes is None:
-        suffixes = [".json", ".npy"]
-
-    for prefix in prefixes:
-        for suffix in suffixes:
-            s3_key = os.path.join(prefix, import_id + suffix)
-
-            if object_exists(s3_client, bucket, s3_key):
-                try:
-                    s3_client.delete_object(Bucket=bucket, Key=s3_key)
-                    _LOGGER.info(
-                        "Deleted object '%s' from bucket '%s'.", s3_key, bucket
-                    )
-                except ClientError as e:
-                    _LOGGER.error(
-                        "Could not delete object '%s' from bucket '%s': '%s'.",
-                        s3_key,
-                        bucket,
-                        e,
-                    )
-
-
 def get_update_results(
     csv_document: DocumentValidationResult, db: Session
 ) -> dict[str, UpdateResult]:
