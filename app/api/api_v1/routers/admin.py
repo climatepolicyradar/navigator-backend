@@ -312,7 +312,7 @@ def import_law_policy(
                 import_ids_to_create.append(validation_result.import_id)
                 if validation_result.import_id not in existing_import_ids:
                     document_create_objects.append(validation_result.create_request)
-                if validation_result.import_id in existing_import_ids:
+                else:
                     update_results = get_update_results(validation_result, db)
                     if any([update_results[field].updated for field in update_results]):
                         documents_with_updates[
@@ -322,7 +322,7 @@ def import_law_policy(
         for id_ in documents_with_updates:
             update_doc_in_db(updates=documents_with_updates[id_], import_id=id_, db=db)
 
-            delete_doc_in_s3(id_, PIPELINE_BUCKET, S3_PREFIXES)
+            delete_doc_in_s3(id_, PIPELINE_BUCKET, S3_PREFIXES, s3_client)
 
         if encountered_errors:
             raise DocumentsFailedValidationError(
