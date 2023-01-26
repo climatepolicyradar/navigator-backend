@@ -279,7 +279,7 @@ async def request_password_reset(
 )
 def delete_law_policy(
     request: Request,
-    ids_to_delete: Union[List[str], None],
+    input_ids: Union[List[str], None],
     background_tasks: BackgroundTasks,
     db=Depends(get_db),
     current_user=Depends(get_current_active_superuser),
@@ -292,30 +292,33 @@ def delete_law_policy(
             "CCLW Law & Policy data"
         )
 
-        ids_to_delete_invalid = [id for id in ids_to_delete if not ID_PATTERN.match(id)]
-        if ids_to_delete_invalid:
+        input_ids_invalid = [id for id in input_ids if not ID_PATTERN.match(id)]
+        if input_ids_invalid:
             raise IdsFailedValidationError(
                 message="File failed detailed validation.",
-                details=ids_to_delete_invalid,
+                details=input_ids_invalid,
             )
 
         existing_import_ids = [id_[0] for id_ in db.query(Document.import_id)]
 
+        ids_to_delete = list(set(input_ids) & set(existing_import_ids))
+
         # TODO providing a response to the request before we have actually deleted the data and asserted this can
         #  cause a false response?
-        background_tasks.add_task(
-            start_delete, db, s3_client, ids_to_delete, PIPELINE_BUCKET, S3_PREFIXES
-        )
+        if ids_to_delete:
+            background_tasks.add_task(
+                start_delete, db, s3_client, ids_to_delete, PIPELINE_BUCKET, S3_PREFIXES
+            )
 
-        _LOGGER.info(
-            "Background Bulk Delete Task added",
-            extra={
-                "props": {
-                    "superuser_email": current_user.email,
-                    "delete_ids": ids_to_delete,
-                }
-            },
-        )
+            _LOGGER.info(
+                "Background Bulk Delete Task added",
+                extra={
+                    "props": {
+                        "superuser_email": current_user.email,
+                        "delete_ids": ids_to_delete,
+                    }
+                },
+            )
 
         return BulkDeleteValidatedResult(
             document_count_pre_delete=len(existing_import_ids),

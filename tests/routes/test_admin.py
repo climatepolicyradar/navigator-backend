@@ -668,8 +668,12 @@ def test_bulk_delete_cclw_law_policy_document_deletes(
     The test:
     - Inserts the relevant metadata into the database.
     - Imports two initial documents.
-    - Requests deletion of one document.
+    - Requests deletion of one invalid document.
+    - Asserts that the relevant error response is sent to the client.
+    - Requests deletion of one valid document.
     - Asserts that only the desired document was deleted in the database and s3.
+    - Requests deletion of a valid document that doesn't exist.
+    - Asserts that the document is not deleted and no error thrown.
     """
     mock_start_delete = mocker.patch("app.api.api_v1.routers.admin.start_delete")
 
@@ -735,9 +739,24 @@ def test_bulk_delete_cclw_law_policy_document_deletes(
 
     assert response.status_code == 202
     response_json = response.json()
-    response_json["document_count_pre_delete"] = (2,)
-    response_json["document_count_post_delete"] = (1,)
-    response_json["document_deleted_count"] = (1,)
+    response_json["document_count_pre_delete"] = 2
+    response_json["document_count_post_delete"] = 1
+    response_json["document_deleted_count"] = 1
     response_json["document_deleted_ids"] = ["CCLW.executive.1.1"]
+
+    mock_start_delete.assert_called_once()
+
+    response = client.post(
+        "/api/v1/admin/bulk-delete/cclw/law-policy-delete",
+        json=["CCLW.executive.1.3"],
+        headers=superuser_token_headers,
+    )
+
+    assert response.status_code == 202
+    response_json = response.json()
+    response_json["document_count_pre_delete"] = 1
+    response_json["document_count_post_delete"] = 1
+    response_json["document_deleted_count"] = 0
+    response_json["document_deleted_ids"] = []
 
     mock_start_delete.assert_called_once()
