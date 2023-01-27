@@ -8,7 +8,7 @@ from ingest import ingest_document
 
 
 def get_dfc_processor(db: Session):
-    def validate() -> Tuple[int, int]:
+    def validate() -> bool:
         num_old_documents = db.query(Document).count()
         num_new_documents = db.query(PhysicalDocument).count()
         print(f"Found {num_new_documents} new and {num_old_documents} old documents")
@@ -25,6 +25,6 @@ def get_dfc_processor(db: Session):
 
         # Return False for now so we just process one element
         # TODO: Change this return value
-        return False
+        return row.row_number < 2
 
     return validate, process
