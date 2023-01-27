@@ -19,8 +19,8 @@ class FamilyEvent(Base):
     __tablename__ = "family_event"
 
     id = sa.Column(sa.Integer, primary_key=True)
-    family_id = sa.Column(sa.Integer, sa.ForeignKey(Family.id), nullable=False)
-    event_type = sa.Column(sa.Integer, sa.ForeignKey(EventType.id), nullable=False)
+    family_id = sa.Column(sa.ForeignKey(Family.id), nullable=False)
+    event_type = sa.Column(sa.ForeignKey(EventType.id), nullable=False)
     description = sa.Column(sa.Text, nullable=False)
     date = sa.Column(sa.DateTime, nullable=False)
 
@@ -33,6 +33,6 @@ class EventDocument(Base):
         sa.Integer, sa.ForeignKey(FamilyEvent.id), nullable=False
     )
     physical_document_id = sa.Column(
-        sa.Integer, sa.ForeignKey(PhysicalDocument.id), nullable=False
+        sa.Text, sa.ForeignKey(PhysicalDocument.id), nullable=False
     )
     sa.PrimaryKeyConstraint(family_event_id, physical_document_id)
