@@ -11,7 +11,7 @@ class PhysicalDocument(Base):
 
     __tablename__ = "physical_document"
 
-    id = sa.Column(sa.Integer, primary_key=True)
+    id = sa.Column(sa.Text, primary_key=True)
     title = sa.Column(sa.Text, nullable=False)
     md5_sum = sa.Column(sa.Text, nullable=True)
     source_url = sa.Column(sa.Text, nullable=True)
@@ -39,7 +39,7 @@ class PhysicalDocumentLanguage(Base):
     id = sa.Column(sa.Integer, primary_key=True)
     language_id = sa.Column(sa.Integer, sa.ForeignKey(Language.id), nullable=False)
     document_id = sa.Column(
-        sa.Integer,
+        sa.Text,
         sa.ForeignKey(PhysicalDocument.id, ondelete="CASCADE"),
         nullable=False,
     )
