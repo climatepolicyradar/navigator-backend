@@ -10,9 +10,9 @@ class FamilyCategory(Base):
     """A document-family category
 
     Currently:
-        Policy, (executive)
-        Law, (legislative)
-        Case, (litigation)
+        Policy: (executive)
+        Law: (legislative)
+        Case: (litigation)
     """
 
     __tablename__ = "family_category"
