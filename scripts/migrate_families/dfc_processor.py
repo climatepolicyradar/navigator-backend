@@ -1,11 +1,10 @@
-from pprint import pprint
 from typing import Tuple
 from sqlalchemy.orm import Session
 
 from app.db.models.deprecated import Document
 from app.db.models.document import PhysicalDocument
 from dfc_csv_reader import Row
-from ingest import ingest_physical_document
+from ingest import ingest_document
 
 
 def get_dfc_processor(db: Session):
@@ -20,8 +19,7 @@ def get_dfc_processor(db: Session):
 
         # No need to start transaction as there is one already started.
 
-        new_phys_doc = ingest_physical_document(db, row=row)
-        print(f"Created new pd {new_phys_doc.id}")
+        new_phys_doc = ingest_document(db, row=row)
 
         db.commit()
 
