@@ -1,8 +1,8 @@
-"""familes and collections
+"""support families and collections
 
 Revision ID: 0013
 Revises: 0012
-Create Date: 2023-01-25 11:25:34.736130
+Create Date: 2023-01-27 10:15:44.526288
 
 """
 from alembic import op
@@ -31,18 +31,14 @@ def upgrade():
     sa.PrimaryKeyConstraint('id', name=op.f('pk_event_type'))
     )
     op.create_table('family_category',
-    sa.Column('id', sa.Integer(), nullable=False),
     sa.Column('name', sa.Text(), nullable=False),
     sa.Column('description', sa.Text(), nullable=False),
-    sa.PrimaryKeyConstraint('id', name=op.f('pk_family_category')),
-    sa.UniqueConstraint('name', name=op.f('uq_family_category__name'))
+    sa.PrimaryKeyConstraint('name', name=op.f('pk_family_category'))
     )
     op.create_table('family_type',
-    sa.Column('id', sa.Integer(), nullable=False),
-    sa.Column('name', sa.Text(), nullable=False),
+    sa.Column('type_name', sa.Text(), nullable=False),
     sa.Column('description', sa.Text(), nullable=False),
-    sa.PrimaryKeyConstraint('id', name=op.f('pk_family_type')),
-    sa.UniqueConstraint('name', name=op.f('uq_family_type__name'))
+    sa.PrimaryKeyConstraint('type_name', name=op.f('pk_family_type'))
     )
     op.create_table('metadata_taxonomy',
     sa.Column('id', sa.Integer(), nullable=False),
@@ -66,15 +62,15 @@ def upgrade():
     sa.PrimaryKeyConstraint('collection_id', 'organisation_id', name=op.f('pk_collection_organisation'))
     )
     op.create_table('family',
-    sa.Column('id', sa.Integer(), nullable=False),
-    sa.Column('title', sa.String(), nullable=False),
+    sa.Column('id', sa.Text(), nullable=False),
+    sa.Column('title', sa.Text(), nullable=False),
     sa.Column('import_id', sa.Integer(), nullable=True),
-    sa.Column('description', sa.String(), nullable=False),
-    sa.Column('geography_id', sa.Integer(), nullable=False),
-    sa.Column('category_id', sa.Integer(), nullable=False),
-    sa.Column('family_type_id', sa.Integer(), nullable=False),
-    sa.ForeignKeyConstraint(['category_id'], ['family_category.id'], name=op.f('fk_family__category_id__family_category')),
-    sa.ForeignKeyConstraint(['family_type_id'], ['family_type.id'], name=op.f('fk_family__family_type_id__family_type')),
+    sa.Column('description', sa.Text(), nullable=False),
+    sa.Column('geography_id', sa.SmallInteger(), nullable=False),
+    sa.Column('category_name', sa.Text(), nullable=False),
+    sa.Column('family_type', sa.Text(), nullable=False),
+    sa.ForeignKeyConstraint(['category_name'], ['family_category.name'], name=op.f('fk_family__category_name__family_category')),
+    sa.ForeignKeyConstraint(['family_type'], ['family_type.type_name'], name=op.f('fk_family__family_type__family_type')),
     sa.ForeignKeyConstraint(['geography_id'], ['geography.id'], name=op.f('fk_family__geography_id__geography')),
     sa.PrimaryKeyConstraint('id', name=op.f('pk_family'))
     )
@@ -87,16 +83,16 @@ def upgrade():
     )
     op.create_table('collection_family',
     sa.Column('collection_id', sa.Integer(), nullable=False),
-    sa.Column('family_id', sa.Integer(), nullable=False),
+    sa.Column('family_id', sa.Text(), nullable=False),
     sa.ForeignKeyConstraint(['collection_id'], ['collection.id'], name=op.f('fk_collection_family__collection_id__collection')),
     sa.ForeignKeyConstraint(['family_id'], ['family.id'], name=op.f('fk_collection_family__family_id__family')),
     sa.PrimaryKeyConstraint('collection_id', 'family_id', name=op.f('pk_collection_family'))
     )
     op.create_table('family_document',
-    sa.Column('family_id', sa.Integer(), nullable=False),
-    sa.Column('physical_document_id', sa.Integer(), nullable=False),
-    sa.Column('cdn_url', sa.String(), nullable=True),
-    sa.Column('import_id', sa.String(), nullable=True),
+    sa.Column('family_id', sa.Text(), nullable=False),
+    sa.Column('physical_document_id', sa.Text(), nullable=False),
+    sa.Column('cdn_url', sa.Text(), nullable=True),
+    sa.Column('import_id', sa.Text(), nullable=True),
     sa.Column('variant_id', sa.Integer(), nullable=False),
     sa.Column('document_status', sa.Enum('CREATED', 'PUBLISHED', name='documentstatus'), nullable=True),
     sa.Column('document_type_id', sa.Integer(), nullable=False),
@@ -108,7 +104,7 @@ def upgrade():
     )
     op.create_table('family_event',
     sa.Column('id', sa.Integer(), nullable=False),
-    sa.Column('family_id', sa.Integer(), nullable=False),
+    sa.Column('family_id', sa.Text(), nullable=False),
     sa.Column('event_type', sa.Integer(), nullable=False),
     sa.Column('description', sa.Text(), nullable=False),
     sa.Column('date', sa.DateTime(), nullable=False),
@@ -117,7 +113,7 @@ def upgrade():
     sa.PrimaryKeyConstraint('id', name=op.f('pk_family_event'))
     )
     op.create_table('family_metadata',
-    sa.Column('family_id', sa.Integer(), nullable=False),
+    sa.Column('family_id', sa.Text(), nullable=False),
     sa.Column('taxonomy_id', sa.Integer(), nullable=False),
     sa.Column('value', postgresql.JSONB(astext_type=sa.Text()), nullable=False),
     sa.ForeignKeyConstraint(['family_id'], ['family.id'], name=op.f('fk_family_metadata__family_id__family')),
@@ -125,7 +121,7 @@ def upgrade():
     sa.PrimaryKeyConstraint('family_id', 'taxonomy_id', name=op.f('pk_family_metadata'))
     )
     op.create_table('family_organisation',
-    sa.Column('family_id', sa.Integer(), nullable=False),
+    sa.Column('family_id', sa.Text(), nullable=False),
     sa.Column('organisation_id', sa.Integer(), nullable=False),
     sa.ForeignKeyConstraint(['family_id'], ['family.id'], name=op.f('fk_family_organisation__family_id__family')),
     sa.ForeignKeyConstraint(['organisation_id'], ['organisation.id'], name=op.f('fk_family_organisation__organisation_id__organisation')),
@@ -133,15 +129,15 @@ def upgrade():
     )
     op.create_table('event_document',
     sa.Column('family_event_id', sa.Integer(), nullable=False),
-    sa.Column('physical_document_id', sa.Integer(), nullable=False),
+    sa.Column('physical_document_id', sa.Text(), nullable=False),
     sa.ForeignKeyConstraint(['family_event_id'], ['family_event.id'], name=op.f('fk_event_document__family_event_id__family_event')),
     sa.ForeignKeyConstraint(['physical_document_id'], ['physical_document.id'], name=op.f('fk_event_document__physical_document_id__physical_document')),
     sa.PrimaryKeyConstraint('family_event_id', 'physical_document_id', name=op.f('pk_event_document'))
     )
     op.create_table('slug',
     sa.Column('name', sa.Text(), nullable=False),
-    sa.Column('family_id', sa.Integer(), nullable=True),
-    sa.Column('family_document_id', sa.Integer(), nullable=True),
+    sa.Column('family_id', sa.Text(), nullable=True),
+    sa.Column('family_document_id', sa.Text(), nullable=True),
     sa.ForeignKeyConstraint(['family_document_id'], ['family_document.physical_document_id'], name=op.f('fk_slug__family_document_id__family_document')),
     sa.ForeignKeyConstraint(['family_id'], ['family.id'], name=op.f('fk_slug__family_id__family')),
     sa.PrimaryKeyConstraint('name', name=op.f('pk_slug'))
