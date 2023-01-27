@@ -71,8 +71,8 @@ class DocumentType(Base):
     """
 
     __tablename__ = "document_type"
-
-    document_type = sa.Column(sa.Text,  primary_key=True)
+    id = sa.Column(sa.Integer, primary_key=True)
+    name = sa.Column(sa.Text, nullable=False, unique=True)
     description = sa.Column(sa.Text, nullable=False)
 
 
@@ -88,7 +88,7 @@ class FamilyDocument(Base):
     import_id = sa.Column(sa.Text, nullable=True)
     variant_name = sa.Column(sa.ForeignKey(Variant.variant_name), nullable=False)
     document_status = sa.Column(sa.Enum(DocumentStatus), default=DocumentStatus.CREATED)
-    document_type = sa.Column(sa.ForeignKey(DocumentType.document_type), nullable=False)
+    document_type_id = sa.Column(sa.ForeignKey(DocumentType.id), nullable=False)
 
 
 class FamilyOrganisation(Base):
