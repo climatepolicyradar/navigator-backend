@@ -78,7 +78,7 @@ class Document(Base, Auditable):
     )
     type_id = sa.Column(
         sa.Integer,
-        sa.ForeignKey(DocumentType.document_type),
+        sa.ForeignKey(DocumentType.id),
         nullable=False,
     )
     category_id = sa.Column(sa.Integer, sa.ForeignKey(Category.id), nullable=False)
