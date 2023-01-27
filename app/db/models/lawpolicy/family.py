@@ -17,7 +17,7 @@ class FamilyCategory(Base):
 
     __tablename__ = "family_category"
 
-    name = sa.Column(sa.Text, primary_key=True)
+    category_name = sa.Column(sa.Text, primary_key=True)
     description = sa.Column(sa.Text, nullable=False)
 
 
@@ -41,8 +41,7 @@ class Variant(Base):
     """
 
     __tablename__ = "variant"
-    id = sa.Column(sa.Integer, primary_key=True)
-    variant = sa.Column(sa.Text, nullable=False, unique=True)
+    variant_name = sa.Column(sa.Text, primary_key=True)
     description = sa.Column(sa.Text, nullable=False)
 
 
@@ -55,7 +54,7 @@ class Family(Base):
     import_id = sa.Column(sa.Integer)
     description = sa.Column(sa.Text, nullable=False)
     geography_id = sa.Column(sa.ForeignKey(Geography.id), nullable=False)
-    category_name = sa.Column(sa.ForeignKey(FamilyCategory.name), nullable=False)
+    category_name = sa.Column(sa.ForeignKey(FamilyCategory.category_name), nullable=False)
 
     family_type = sa.Column(sa.ForeignKey(FamilyType.type_name), nullable=False)
 
@@ -73,8 +72,7 @@ class DocumentType(Base):
 
     __tablename__ = "document_type"
 
-    id = sa.Column(sa.Integer, primary_key=True)
-    name = sa.Column(sa.Text, nullable=False, unique=True)
+    document_type = sa.Column(sa.Text,  primary_key=True)
     description = sa.Column(sa.Text, nullable=False)
 
 
@@ -88,9 +86,9 @@ class FamilyDocument(Base):
 
     cdn_url = sa.Column(sa.Text, nullable=True)
     import_id = sa.Column(sa.Text, nullable=True)
-    variant_id = sa.Column(sa.ForeignKey(Variant.id), nullable=False)
+    variant_name = sa.Column(sa.ForeignKey(Variant.variant_name), nullable=False)
     document_status = sa.Column(sa.Enum(DocumentStatus), default=DocumentStatus.CREATED)
-    document_type_id = sa.Column(sa.ForeignKey(DocumentType.id), nullable=False)
+    document_type = sa.Column(sa.ForeignKey(DocumentType.document_type), nullable=False)
 
 
 class FamilyOrganisation(Base):
