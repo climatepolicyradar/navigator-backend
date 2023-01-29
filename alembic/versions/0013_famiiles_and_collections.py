@@ -2,7 +2,7 @@
 
 Revision ID: 0013
 Revises: 0012
-Create Date: 2023-01-27 13:23:10.062746
+Create Date: 2023-01-29 17:53:09.049508
 
 """
 from alembic import op
@@ -62,7 +62,7 @@ def upgrade():
     op.create_table('family',
     sa.Column('id', sa.Text(), nullable=False),
     sa.Column('title', sa.Text(), nullable=False),
-    sa.Column('import_id', sa.Integer(), nullable=True),
+    sa.Column('import_id', sa.Text(), nullable=True),
     sa.Column('description', sa.Text(), nullable=False),
     sa.Column('geography_id', sa.SmallInteger(), nullable=False),
     sa.Column('category_name', sa.Text(), nullable=False),
