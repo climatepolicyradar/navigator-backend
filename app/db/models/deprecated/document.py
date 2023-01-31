@@ -287,7 +287,7 @@ class Passage(Base):  # noqa: D101
         sa.ForeignKey("passage.id"),
     )
     language_id = sa.Column(
-        sa.SmallInteger,
+        sa.Integer,
         sa.ForeignKey(Language.id),
     )
     text = sa.Column(sa.TEXT(), autoincrement=False, nullable=False)
