@@ -36,9 +36,10 @@ class PhysicalDocumentLanguage(Base):
 
     __tablename__ = "physical_document_language"
 
-    id = sa.Column(sa.Integer, primary_key=True)
     language_id = sa.Column(sa.ForeignKey(Language.id), nullable=False)
     document_id = sa.Column(
         sa.ForeignKey(PhysicalDocument.id, ondelete="CASCADE"),
         nullable=False,
     )
+
+    sa.PrimaryKeyConstraint(language_id, document_id)
