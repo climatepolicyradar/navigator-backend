@@ -34,6 +34,9 @@ def upgrade():
     sa.ForeignKeyConstraint(['document_id'], ['physical_document.id'], name=op.f('fk_physical_document_language__document_id__physical_document'), ondelete='CASCADE'),
     sa.ForeignKeyConstraint(['language_id'], ['language.id'], name=op.f('fk_physical_document_language__language_id__language')),
     sa.PrimaryKeyConstraint('id', name=op.f('pk_physical_document_language'))
+
+    # Change column type
+    op.execute("alter table language alter column id int")
     )
     # ### end Alembic commands ###
 
