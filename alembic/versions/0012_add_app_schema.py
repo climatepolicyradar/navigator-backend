@@ -2,10 +2,11 @@
 
 Revision ID: 0012
 Revises: 0011
-Create Date: 2023-01-31 16:58:28.022097
+Create Date: 2023-01-31 21:52:10.301044
 
 """
 from alembic import op
+from alembic.op import execute
 import sqlalchemy as sa
 
 
@@ -43,6 +44,7 @@ def upgrade():
     )
     op.drop_column('physical_document_language', 'id')
     # ### end Alembic commands ###
+    execute("alter table physical_document_language ADD CONSTRAINT pk_physical_document_language PRIMARY KEY (language_id, document_id)")
 
 
 def downgrade():
