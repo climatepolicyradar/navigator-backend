@@ -6,6 +6,7 @@ Create Date: 2023-01-31 16:39:09.266079
 
 """
 from alembic import op
+from alembic.op import execute
 import sqlalchemy as sa
 
 
@@ -34,11 +35,11 @@ def upgrade():
     sa.ForeignKeyConstraint(['document_id'], ['physical_document.id'], name=op.f('fk_physical_document_language__document_id__physical_document'), ondelete='CASCADE'),
     sa.ForeignKeyConstraint(['language_id'], ['language.id'], name=op.f('fk_physical_document_language__language_id__language')),
     sa.PrimaryKeyConstraint('id', name=op.f('pk_physical_document_language'))
-
-    # Change column type
-    op.execute("alter table language alter column id int")
     )
     # ### end Alembic commands ###
+
+    # Now do the column type migration
+    execute("alter table language alter column id type integer")
 
 
 def downgrade():
@@ -46,3 +47,8 @@ def downgrade():
     op.drop_table('physical_document_language')
     op.drop_table('physical_document')
     # ### end Alembic commands ###
+
+    # NOTE: There is no downgrade for the column type migration
+
+
+
