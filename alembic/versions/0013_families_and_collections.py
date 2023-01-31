@@ -1,8 +1,8 @@
-"""famiiles and collections
+"""families and collections
 
 Revision ID: 0013
 Revises: 0012
-Create Date: 2023-01-29 17:53:09.049508
+Create Date: 2023-01-31 22:12:39.137368
 
 """
 from alembic import op
@@ -88,7 +88,7 @@ def upgrade():
     )
     op.create_table('family_document',
     sa.Column('family_id', sa.Text(), nullable=False),
-    sa.Column('physical_document_id', sa.Text(), nullable=False),
+    sa.Column('physical_document_id', sa.Integer(), nullable=False),
     sa.Column('cdn_url', sa.Text(), nullable=True),
     sa.Column('import_id', sa.Text(), nullable=True),
     sa.Column('variant_name', sa.Text(), nullable=False),
@@ -127,7 +127,7 @@ def upgrade():
     )
     op.create_table('event_document',
     sa.Column('family_event_id', sa.Integer(), nullable=False),
-    sa.Column('physical_document_id', sa.Text(), nullable=False),
+    sa.Column('physical_document_id', sa.Integer(), nullable=False),
     sa.ForeignKeyConstraint(['family_event_id'], ['family_event.id'], name=op.f('fk_event_document__family_event_id__family_event')),
     sa.ForeignKeyConstraint(['physical_document_id'], ['physical_document.id'], name=op.f('fk_event_document__physical_document_id__physical_document')),
     sa.PrimaryKeyConstraint('family_event_id', 'physical_document_id', name=op.f('pk_event_document'))
@@ -135,7 +135,7 @@ def upgrade():
     op.create_table('slug',
     sa.Column('name', sa.Text(), nullable=False),
     sa.Column('family_id', sa.Text(), nullable=True),
-    sa.Column('family_document_id', sa.Text(), nullable=True),
+    sa.Column('family_document_id', sa.Integer(), nullable=True),
     sa.ForeignKeyConstraint(['family_document_id'], ['family_document.physical_document_id'], name=op.f('fk_slug__family_document_id__family_document')),
     sa.ForeignKeyConstraint(['family_id'], ['family.id'], name=op.f('fk_slug__family_id__family')),
     sa.PrimaryKeyConstraint('name', name=op.f('pk_slug'))

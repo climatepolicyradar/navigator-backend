@@ -30,9 +30,9 @@ class EventDocument(Base):
     __tablename__ = "event_document"
 
     family_event_id = sa.Column(
-        sa.Integer, sa.ForeignKey(FamilyEvent.id), nullable=False
+        sa.ForeignKey(FamilyEvent.id), nullable=False
     )
     physical_document_id = sa.Column(
-        sa.Text, sa.ForeignKey(PhysicalDocument.id), nullable=False
+        sa.ForeignKey(PhysicalDocument.id), nullable=False
     )
     sa.PrimaryKeyConstraint(family_event_id, physical_document_id)
