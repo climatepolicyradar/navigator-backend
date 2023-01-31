@@ -40,6 +40,8 @@ def upgrade():
 
     # Now do the column type migration
     execute("alter table language alter column id type integer")
+    execute("alter table passage alter column language_id type integer")
+    execute("alter sequence language_id_seq as integer")
 
 
 def downgrade():
