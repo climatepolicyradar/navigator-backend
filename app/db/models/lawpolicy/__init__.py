@@ -1,5 +1,13 @@
-from .family import Family, FamilyCategory, FamilyType, Variant
-from .family import DocumentStatus, DocumentType, FamilyDocument, FamilyOrganisation
+from .family import (
+    DocumentStatus,
+    DocumentType,
+    Family,
+    FamilyCategory,
+    FamilyDocument,
+    FamilyOrganisation
+    FamilyType,
+    Variant,
+)
 from .geography import Geography, GeoStatistics
 from .slug import Slug
 from .collection import Collection, CollectionOrganisation, CollectionFamily
