@@ -130,6 +130,12 @@ def upgrade():
     execute("alter sequence geo_statistics_id_seq as integer")
     execute("alter sequence geography_id_seq as integer")
 
+    op.create_check_constraint(
+        "must_reference_exactly_one_entity",
+        "slug",
+        "num_nonnulls(family_id, family_document_id) = 1"
+    ) 
+
 
 
 def downgrade():
