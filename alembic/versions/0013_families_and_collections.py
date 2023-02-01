@@ -6,6 +6,7 @@ Create Date: 2023-01-31 22:12:39.137368
 
 """
 from alembic import op
+from alembic.op import execute
 import sqlalchemy as sa
 from sqlalchemy.dialects import postgresql
 
@@ -58,7 +59,7 @@ def upgrade():
     sa.Column('title', sa.Text(), nullable=False),
     sa.Column('import_id', sa.Text(), nullable=True),
     sa.Column('description', sa.Text(), nullable=False),
-    sa.Column('geography_id', sa.SmallInteger(), nullable=False),
+    sa.Column('geography_id', sa.Integer(), nullable=False),
     sa.Column('category_name', sa.Text(), nullable=False),
     sa.Column('family_type', sa.Text(), nullable=False),
     sa.ForeignKeyConstraint(['category_name'], ['family_category.category_name'], name=op.f('fk_family__category_name__family_category')),
@@ -118,6 +119,13 @@ def upgrade():
     sa.PrimaryKeyConstraint('name', name=op.f('pk_slug'))
     )
     # ### end Alembic commands ###
+    execute("alter table geography alter column id type integer")
+    execute("alter table geo_statistics alter column id type integer")
+    execute("alter table geo_statistics alter column geography_id type integer")
+    execute("alter sequence geo_statistics_id_seq as integer")
+    execute("alter sequence geography_id_seq as integer")
+
+
 
 
 def downgrade():
