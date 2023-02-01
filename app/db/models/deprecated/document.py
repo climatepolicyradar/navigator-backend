@@ -1,6 +1,8 @@
 import sqlalchemy as sa
 from sqlalchemy import UniqueConstraint
 
+from app.db.models.document.physical_document import Language
+
 from ..auditable import Auditable
 from .source import Source
 from .geography import Geography
@@ -204,16 +206,6 @@ class DocumentResponse(Base):  # noqa: D101
     )
 
 
-class Language(Base):  # noqa: D101
-    __tablename__ = "language"
-
-    id = sa.Column(sa.SmallInteger, primary_key=True)
-    language_code = sa.Column(sa.CHAR(length=3), nullable=False, unique=True)
-    part1_code = sa.Column(sa.CHAR(length=2))
-    part2_code = sa.Column(sa.CHAR(length=3))
-    name = sa.Column(sa.Text)
-
-
 class DocumentLanguage(Base):
     """A document's languages."""
 
@@ -295,7 +287,7 @@ class Passage(Base):  # noqa: D101
         sa.ForeignKey("passage.id"),
     )
     language_id = sa.Column(
-        sa.SmallInteger,
+        sa.Integer,
         sa.ForeignKey(Language.id),
     )
     text = sa.Column(sa.TEXT(), autoincrement=False, nullable=False)
