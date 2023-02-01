@@ -1,5 +1,3 @@
-import sqlalchemy as sa
-from sqlalchemy import PrimaryKeyConstraint
 
 from app.db.session import Base
 
@@ -31,7 +29,7 @@ class AdminOrganisation(Base):
 
     admin_id = sa.Column(sa.Integer, sa.ForeignKey(Admin.id), nullable=False)
     organisation_id = sa.Column(
-        sa.Integer, sa.ForeignKey(Organisation.id), nullable=False
+        sa.ForeignKey(Organisation.id), nullable=False
     )
     job_title = sa.Column(sa.String)
 

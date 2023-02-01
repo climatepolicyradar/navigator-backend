@@ -36,10 +36,10 @@ RUN mkdir /models
 RUN python -c "from sentence_transformers import SentenceTransformer; SentenceTransformer('sentence-transformers/msmarco-distilbert-dot-v5', cache_folder='/models')"
 
 # Copy files to image
-COPY alembic .
+COPY alembic ./alembic
 COPY alembic.ini .
-COPY app .
-COPY scripts .
+COPY app ./app
+COPY scripts ./scripts
 COPY LICENSE.md .
 COPY README.md .
 

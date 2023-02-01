@@ -3,10 +3,11 @@
 from time import perf_counter
 from typing import Optional
 from pydantic import BaseModel
-from app.db.models.lawpolicy import DocumentType
 from app.db.models.deprecated.document import (
     Category,
     Document,
+    Geography,
+    DocumentType,
 )
 from app.api.api_v1.schemas.search import (
     SearchResult,
@@ -15,11 +16,9 @@ from app.api.api_v1.schemas.search import (
 from sqlalchemy import extract
 from sqlalchemy.orm import Session
 
-from app.db.models.lawpolicy import Geography
-
 
 class BrowseArgs(BaseModel):
-    """Arguments for the browse_rds function"""
+    """Arguements for the browse_rds function"""
 
     geography_slug: Optional[str] = None
     country_code: Optional[str] = None
