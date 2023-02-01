@@ -20,7 +20,7 @@ from app.db.models.deprecated import (
     PasswordResetToken,
 )
 from app.db.models.deprecated import DocumentType
-from app.db.models.lawpolicy import Geography
+from app.db.models.law_policy import Geography
 from tests.core.validation.cclw.test_law_policy import (
     INVALID_FILE_1,
     INVALID_CSV_MIXED_ERRORS,

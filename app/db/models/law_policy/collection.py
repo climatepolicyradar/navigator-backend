@@ -1,5 +1,5 @@
 import sqlalchemy as sa
-from app.db.models.lawpolicy import Family
+from app.db.models.law_policy import Family
 from app.db.models.app import Organisation
 
 from app.db.session import Base

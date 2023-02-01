@@ -3,7 +3,7 @@ from typing import Optional, Sequence, cast
 from sqlalchemy.orm import Session
 
 from app.core.util import tree_table_to_json, table_to_json
-from app.db.models.lawpolicy import Geography
+from app.db.models.law_policy import Geography
 from app.db.models.deprecated import (
     Category,
     DocumentType,
