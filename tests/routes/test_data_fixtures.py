@@ -1,6 +1,6 @@
 from dateutil.parser import parse
 import pytest
-from app.db.models.lawpolicy import DocumentType
+from app.db.models.deprecated import DocumentType
 from app.db.models.deprecated import Category, Document, Source, Event
 from app.db.models.lawpolicy import Geography
 from tests.utils import json_serialize

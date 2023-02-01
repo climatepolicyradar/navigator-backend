@@ -1,12 +1,11 @@
 from .family import (
     DocumentStatus,
-    DocumentType,
     Family,
     FamilyCategory,
     FamilyDocument,
-    FamilyOrganisation
+    FamilyOrganisation,
     FamilyType,
-    Variant,
+    Variant
 )
 from .geography import Geography, GeoStatistics
 from .slug import Slug

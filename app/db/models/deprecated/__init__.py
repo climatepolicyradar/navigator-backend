@@ -3,6 +3,7 @@
 from .document import (
     Category,
     Document,
+    DocumentType,
     DocumentFramework,
     DocumentHazard,
     DocumentInstrument,

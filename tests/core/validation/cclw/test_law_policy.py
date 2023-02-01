@@ -40,7 +40,8 @@ from app.db.models.deprecated import (
     Category,
     Keyword,
 )
-from app.db.models.lawpolicy import DocumentType, Geography
+from app.db.models.deprecated import DocumentType
+from app.db.models.lawpolicy import Geography
 
 
 CCLW_FIELDNAMES = [

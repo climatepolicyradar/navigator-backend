@@ -58,7 +58,7 @@ from app.db.models.deprecated import (
     Sector,
     Source,
 )
-from app.db.models.lawpolicy.family import DocumentType
+from app.db.models.deprecated import DocumentType
 from app.db.models.lawpolicy import Geography
 
 _LOGGER = logging.getLogger(__file__)

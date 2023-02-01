@@ -67,15 +67,14 @@ class DocumentStatus(enum.Enum):
     DELETED = "Deleted"
 
 
-class DocumentType(Base):
+class FamilyDocumentType(Base):
     """A document type.
 
     E.g. strategy, plan, law
     """
 
-    __tablename__ = "document_type"
-    id = sa.Column(sa.Integer, primary_key=True)
-    name = sa.Column(sa.Text, nullable=False, unique=True)
+    __tablename__ = "family_document_type"
+    name = sa.Column(sa.Text, primary_key=True)
     description = sa.Column(sa.Text, nullable=False)
 
 
@@ -91,7 +90,7 @@ class FamilyDocument(Base):
     import_id = sa.Column(sa.Text, nullable=True)
     variant_name = sa.Column(sa.ForeignKey(Variant.variant_name), nullable=False)
     document_status = sa.Column(sa.Enum(DocumentStatus), default=DocumentStatus.CREATED)
-    document_type_id = sa.Column(sa.ForeignKey(DocumentType.id), nullable=False)
+    document_type = sa.Column(sa.ForeignKey(FamilyDocumentType.name), nullable=False)
 
 
 class FamilyOrganisation(Base):
