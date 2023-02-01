@@ -64,6 +64,7 @@ class Family(Base):
 class DocumentStatus(enum.Enum):
     CREATED = "Created"
     PUBLISHED = "Published"
+    DELETED = "Deleted"
 
 
 class DocumentType(Base):

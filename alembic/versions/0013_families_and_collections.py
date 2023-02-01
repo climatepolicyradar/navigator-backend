@@ -87,7 +87,7 @@ def upgrade():
     sa.Column('cdn_url', sa.Text(), nullable=True),
     sa.Column('import_id', sa.Text(), nullable=True),
     sa.Column('variant_name', sa.Text(), nullable=False),
-    sa.Column('document_status', sa.Enum('CREATED', 'PUBLISHED', name='documentstatus'), nullable=True),
+    sa.Column('document_status', sa.Enum('CREATED', 'PUBLISHED', 'DELETED', name='documentstatus'), nullable=True),
     sa.Column('document_type_id', sa.Integer(), nullable=False),
     sa.ForeignKeyConstraint(['document_type_id'], ['document_type.id'], name=op.f('fk_family_document__document_type_id__document_type')),
     sa.ForeignKeyConstraint(['family_id'], ['family.id'], name=op.f('fk_family_document__family_id__family')),
