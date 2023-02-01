@@ -41,11 +41,10 @@ def upgrade():
     sa.PrimaryKeyConstraint('type_name', name=op.f('pk_family_type'))
     )
     op.create_table('metadata_taxonomy',
-    sa.Column('id', sa.Integer(), nullable=False),
     sa.Column('name', sa.Text(), nullable=False),
     sa.Column('description', sa.Text(), nullable=False),
     sa.Column('valid_metadata', postgresql.JSONB(astext_type=sa.Text()), nullable=False),
-    sa.PrimaryKeyConstraint('id', name=op.f('pk_metadata_taxonomy'))
+    sa.PrimaryKeyConstraint('name', name=op.f('pk_metadata_taxonomy'))
     )
     op.create_table('variant',
     sa.Column('variant_name', sa.Text(), nullable=False),
@@ -73,11 +72,11 @@ def upgrade():
     sa.PrimaryKeyConstraint('id', name=op.f('pk_family'))
     )
     op.create_table('metadata_organisation',
-    sa.Column('metadata_id', sa.Integer(), nullable=False),
+    sa.Column('taxonomy_name', sa.Text(), nullable=False),
     sa.Column('organisation_id', sa.Integer(), nullable=False),
-    sa.ForeignKeyConstraint(['metadata_id'], ['metadata_taxonomy.id'], name=op.f('fk_metadata_organisation__metadata_id__metadata_taxonomy')),
+    sa.ForeignKeyConstraint(['taxonomy_name'], ['metadata_taxonomy.name'], name=op.f('fk_metadata_organisation__taxonomy_name__metadata_taxonomy')),
     sa.ForeignKeyConstraint(['organisation_id'], ['organisation.id'], name=op.f('fk_metadata_organisation__organisation_id__organisation')),
-    sa.PrimaryKeyConstraint('metadata_id', 'organisation_id', name=op.f('pk_metadata_organisation'))
+    sa.PrimaryKeyConstraint('taxonomy_name', 'organisation_id', name=op.f('pk_metadata_organisation'))
     )
     op.create_table('collection_family',
     sa.Column('collection_id', sa.Integer(), nullable=False),
@@ -102,11 +101,11 @@ def upgrade():
     )
     op.create_table('family_metadata',
     sa.Column('family_id', sa.Text(), nullable=False),
-    sa.Column('taxonomy_id', sa.Integer(), nullable=False),
+    sa.Column('taxonomy_name', sa.Text(), nullable=False),
     sa.Column('value', postgresql.JSONB(astext_type=sa.Text()), nullable=False),
     sa.ForeignKeyConstraint(['family_id'], ['family.id'], name=op.f('fk_family_metadata__family_id__family')),
-    sa.ForeignKeyConstraint(['taxonomy_id'], ['metadata_taxonomy.id'], name=op.f('fk_family_metadata__taxonomy_id__metadata_taxonomy')),
-    sa.PrimaryKeyConstraint('family_id', 'taxonomy_id', name=op.f('pk_family_metadata'))
+    sa.ForeignKeyConstraint(['taxonomy_name'], ['metadata_taxonomy.name'], name=op.f('fk_family_metadata__taxonomy_name__metadata_taxonomy')),
+    sa.PrimaryKeyConstraint('family_id', 'taxonomy_name', name=op.f('pk_family_metadata'))
     )
     op.create_table('family_organisation',
     sa.Column('family_id', sa.Text(), nullable=False),

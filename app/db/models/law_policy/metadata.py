@@ -10,8 +10,7 @@ class MetadataTaxonomy(Base):
 
     __tablename__ = "metadata_taxonomy"
 
-    id = sa.Column(sa.Integer, primary_key=True)
-    name = sa.Column(sa.Text, nullable=False)
+    name = sa.Column(sa.Text, primary_key=True)
     description = sa.Column(sa.Text, nullable=False)
     valid_metadata = sa.Column(postgresql.JSONB, nullable=False)
 
@@ -21,17 +20,17 @@ class FamilyMetadata(Base):
     __tablename__ = "family_metadata"
 
     family_id = sa.Column(sa.ForeignKey(Family.id))
-    taxonomy_id = sa.Column(sa.ForeignKey(MetadataTaxonomy.id))
+    taxonomy_name = sa.Column(sa.ForeignKey(MetadataTaxonomy.name))
     value = sa.Column(postgresql.JSONB, nullable=False)
 
-    sa.PrimaryKeyConstraint(family_id, taxonomy_id)
+    sa.PrimaryKeyConstraint(family_id, taxonomy_name)
 
 
 class MetadataOrganisation(Base):
 
     __tablename__ = "metadata_organisation"
 
-    metadata_id = sa.Column(sa.ForeignKey(MetadataTaxonomy.id))
+    taxonomy_name = sa.Column(sa.ForeignKey(MetadataTaxonomy.name))
     organisation_id = sa.Column(sa.ForeignKey(Organisation.id))
 
-    sa.PrimaryKeyConstraint(metadata_id, organisation_id)
+    sa.PrimaryKeyConstraint(taxonomy_name, organisation_id)
