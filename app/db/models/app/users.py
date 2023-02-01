@@ -1,6 +1,6 @@
 import sqlalchemy as sa
 from sqlalchemy import PrimaryKeyConstraint
- 
+
 from app.db.session import Base
 
 
@@ -30,9 +30,7 @@ class AdminOrganisation(Base):
     __tablename__ = "admin_organisation"
 
     admin_id = sa.Column(sa.Integer, sa.ForeignKey(Admin.id), nullable=False)
-    organisation_id = sa.Column(
-        sa.ForeignKey(Organisation.id), nullable=False
-    )
+    organisation_id = sa.Column(sa.ForeignKey(Organisation.id), nullable=False)
     job_title = sa.Column(sa.String)
 
     PrimaryKeyConstraint(admin_id, organisation_id)

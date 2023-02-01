@@ -54,7 +54,9 @@ class Family(Base):
     import_id = sa.Column(sa.Text)
     description = sa.Column(sa.Text, nullable=False)
     geography_id = sa.Column(sa.ForeignKey(Geography.id), nullable=False)
-    category_name = sa.Column(sa.ForeignKey(FamilyCategory.category_name), nullable=False)
+    category_name = sa.Column(
+        sa.ForeignKey(FamilyCategory.category_name), nullable=False
+    )
 
     family_type = sa.Column(sa.ForeignKey(FamilyType.type_name), nullable=False)
 
