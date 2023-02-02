@@ -1,8 +1,6 @@
 from app.db.models.deprecated import (
     Document,
     Source,
-    Geography,
-    DocumentType,
     Language,
     Sector,
     Response,
@@ -21,6 +19,8 @@ from app.db.crud.document import (
     get_document_detail,
     get_postfix_map,
 )
+from app.db.models.law_policy import Geography
+from app.db.models.deprecated import DocumentType
 
 
 def create_4_documents(test_db):

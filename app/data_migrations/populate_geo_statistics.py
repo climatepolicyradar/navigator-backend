@@ -3,7 +3,8 @@ from typing import Union
 
 from sqlalchemy.orm import Session
 
-from app.db.models.deprecated import Geography, GeoStatistics
+from app.db.models.law_policy import GeoStatistics, Geography
+
 from .utils import has_rows
 
 

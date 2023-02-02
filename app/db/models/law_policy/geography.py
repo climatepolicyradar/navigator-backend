@@ -8,7 +8,7 @@ class Geography(Base):  # noqa: D101
 
     __tablename__ = "geography"
 
-    id = sa.Column(sa.SmallInteger, primary_key=True)
+    id = sa.Column(sa.Integer, primary_key=True)
     # to display to end-users
     display_value = sa.Column(sa.Text, unique=True, nullable=False)
     slug = sa.Column(sa.Text, unique=True, nullable=False, index=True)
@@ -17,7 +17,7 @@ class Geography(Base):  # noqa: D101
     # at the time of writing, "Sahrawi Republic" and "Western Sahara" both share "ESH"
     value = sa.Column(sa.Text)
     type = sa.Column(sa.Text)
-    parent_id = sa.Column(sa.Integer, sa.ForeignKey("geography.id"))
+    parent_id = sa.Column(sa.ForeignKey("geography.id"))
 
 
 class GeoStatistics(Base):
@@ -25,7 +25,7 @@ class GeoStatistics(Base):
 
     __tablename__ = "geo_statistics"
 
-    id = sa.Column(sa.SmallInteger(), primary_key=True)
+    id = sa.Column(sa.Integer, primary_key=True)
     name = sa.Column(sa.Text(), nullable=False, unique=True)
     geography_id = sa.Column(
         sa.Integer(), sa.ForeignKey("geography.id"), nullable=False

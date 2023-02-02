@@ -3,6 +3,7 @@
 from .document import (
     Category,
     Document,
+    DocumentType,
     DocumentFramework,
     DocumentHazard,
     DocumentInstrument,
@@ -11,7 +12,6 @@ from .document import (
     DocumentRelationship,
     DocumentResponse,
     DocumentSector,
-    DocumentType,
     Event,
     Framework,
     Hazard,
@@ -25,6 +25,5 @@ from .document import (
     Sector,
     Source,
 )
-from .geography import Geography, GeoStatistics
 from .source import Source
 from .user import PasswordResetToken, User

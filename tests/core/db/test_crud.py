@@ -5,8 +5,6 @@ import pytest
 from app.db.models.deprecated import (
     Document,
     Source,
-    Geography,
-    DocumentType,
     Language,
     Event,
     Sector,
@@ -20,6 +18,8 @@ from app.db.models.deprecated import (
 )
 from app.api.api_v1.schemas.document import DocumentCreateRequest
 from app.db.crud.document import create_document, UnknownMetadataError
+from app.db.models.deprecated import DocumentType
+from app.db.models.law_policy import Geography
 
 
 def test_create_documents(client, superuser_token_headers, test_db):

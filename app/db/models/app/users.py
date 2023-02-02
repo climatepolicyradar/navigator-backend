@@ -25,12 +25,12 @@ class Organisation(Base):
 
 
 class AdminOrganisation(Base):
-    """Link table for admin and organisation.  """
+    """Link table for admin and organisation."""
 
     __tablename__ = "admin_organisation"
 
     admin_id = sa.Column(sa.Integer, sa.ForeignKey(Admin.id), nullable=False)
-    organisation_id = sa.Column(sa.Integer, sa.ForeignKey(Organisation.id), nullable=False)
+    organisation_id = sa.Column(sa.ForeignKey(Organisation.id), nullable=False)
     job_title = sa.Column(sa.String)
 
     PrimaryKeyConstraint(admin_id, organisation_id)

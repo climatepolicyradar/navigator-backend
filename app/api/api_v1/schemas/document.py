@@ -2,13 +2,12 @@ import datetime
 from typing import Any, Mapping, Optional, Sequence
 
 from pydantic import BaseModel
-
 from app.api.api_v1.schemas.metadata import (
     Category,
-    DocumentType,
     Event,
     Framework,
     Geography,
+    DocumentType,
     Hazard,
     Instrument,
     Keyword,

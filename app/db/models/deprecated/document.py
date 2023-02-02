@@ -5,13 +5,12 @@ from app.db.models.document.physical_document import Language
 
 from ..auditable import Auditable
 from .source import Source
-from .geography import Geography
+from ..law_policy import Geography
 from app.db.session import Base
 
 
 class DocumentType(Base):
     """A document type.
-
     E.g. strategy, plan, law
     """
 
@@ -84,7 +83,6 @@ class Document(Base, Auditable):
     )
 
     geography_id = sa.Column(
-        sa.SmallInteger,
         sa.ForeignKey(Geography.id),
         nullable=False,
     )
