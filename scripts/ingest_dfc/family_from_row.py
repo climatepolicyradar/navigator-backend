@@ -1,3 +1,4 @@
+from app.db.models.law_policy.slug import Slug
 from dfc_csv_reader import Row
 from sqlalchemy.orm import Session
 
@@ -49,7 +50,6 @@ def family_from_row(db: Session, org_id: int, row: Row, phys_doc_id: int):
         document_type=document_type,
     )
 
-    # TODO: Add to the database
     db.add(family_document)
     db.commit()
     result["family_document"] = to_dict(family_document)
@@ -63,4 +63,23 @@ def family_from_row(db: Session, org_id: int, row: Row, phys_doc_id: int):
     db.commit()
     result["family_organisation"] = to_dict(family_organisation)
 
+    print(f"- Creating slugs for import {import_id}")
+    result["slugs"] = _add_slugs(db, row, family, family_document)
     return result
+
+def _add_slugs(db: Session, row: Row, family: Family, family_document:FamilyDocument):
+    family_slug = Slug(
+        name=row.cpr_family_slug,
+        family_id=family.id
+    )
+    family_document_slug = Slug(
+       name=row.cpr_document_slug,
+       family_document_id=family_document.physical_document_id
+    ) 
+
+    db.add(family_slug, family_document_slug)
+    db.commit()
+    return {
+        "family_slug": to_dict(family_slug),
+        "document_slug": to_dict(family_document_slug)
+    }
