@@ -2,6 +2,7 @@ from app.db.models.app.users import Organisation
 
 from dfc_csv_reader import Row
 from sqlalchemy.orm import Session
+from scripts.ingest_dfc.collection_from_row import collection_from_row
 from scripts.ingest_dfc.document_schema_from_row import document_schema_from_row
 from scripts.ingest_dfc.family_from_row import family_from_row
 
@@ -24,5 +25,8 @@ def ingest_row(db: Session, row: Row) -> dict:
 
     print(f"- Creating family for import {import_id}")
     result["family_schema"] = family_from_row(db, result["organisation"]["id"], row, result["doc_schema"]["physical_document"]["id"])
+
+    print(f"- Creating collection for import {import_id}")
+    result["collection_schema"] = collection_from_row(db, result["organisation"]["id"], row, result["family_schema"]["family"]["id"])
 
     return result

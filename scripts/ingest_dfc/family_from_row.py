@@ -65,6 +65,7 @@ def family_from_row(db: Session, org_id: int, row: Row, phys_doc_id: int):
 
     print(f"- Creating slugs for import {import_id}")
     result["slugs"] = _add_slugs(db, row, family, family_document)
+
     return result
 
 def _add_slugs(db: Session, row: Row, family: Family, family_document:FamilyDocument):

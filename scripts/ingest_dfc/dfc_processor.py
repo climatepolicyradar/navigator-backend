@@ -4,6 +4,7 @@ from app.db.models.deprecated import Document
 from app.db.models.document import PhysicalDocument
 from dfc_csv_reader import Row
 from ingest import ingest_row
+from scripts.ingest_dfc.utils import mypprint
 
 
 def get_dfc_processor(db: Session):
@@ -25,7 +26,7 @@ def get_dfc_processor(db: Session):
         # No need to start transaction as there is one already started.
 
         result = ingest_row(db, row=row)
-        pprint(result)
+        mypprint(result)
         rows_processed += 1
 
         # TODO: Commit the changes
