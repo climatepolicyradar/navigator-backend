@@ -1,4 +1,19 @@
+from datetime import datetime
+import enum
 from sqlalchemy.orm import Session
+
+class PublicationDateAccuracy(enum.Enum):
+    SECOND_ACCURACY = 100000,
+    MINUTE_ACCURACY = 200000,
+    HOUR_ACCURACY = 300000,
+    DAY_ACCURACY = 400000,
+    MONTH_ACCURACY = 500000,
+    YEAR_ACCURACY = 600000,
+    NOT_DEFINED = 999999,
+
+
+DEFAULT_POLICY_DATE = datetime(1900, 1, 1, 0, 0, 0, 999999)
+
 
 
 def get_or_create(db: Session, model, **kwargs):

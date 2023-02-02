@@ -113,7 +113,7 @@ Processor = Callable[[Row], bool]
 def read(csv_file_path: Path, process: Processor) -> None:
     # FIXME: remove row_start before release
     # The row_start is to aid development and debugging
-    row_start = 1 #190
+    row_start = 190
     with open(csv_file_path) as csv_file:
         reader = csv.DictReader(csv_file)
         if reader.fieldnames is None:
