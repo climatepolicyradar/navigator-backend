@@ -19,7 +19,10 @@ from app.db.models.law_policy import Geography
 
 
 @pytest.mark.search
-def test_simple_pagination(test_opensearch, monkeypatch, client):
+@pytest.mark.parametrize(
+    "group_documents", [False, True]
+)
+def test_simple_pagination(group_documents, test_opensearch, monkeypatch, client):
     monkeypatch.setattr(search, "_OPENSEARCH_CONNECTION", test_opensearch)
 
     page1_response = client.post(
@@ -29,6 +32,7 @@ def test_simple_pagination(test_opensearch, monkeypatch, client):
             "exact_match": False,
             "limit": 2,
             "offset": 0,
+            "group_documents": group_documents,
         },
     )
     assert page1_response.status_code == 200

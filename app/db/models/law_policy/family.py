@@ -1,9 +1,12 @@
 import enum
+
 import sqlalchemy as sa
+from sqlalchemy.orm import relationship
+
 from app.db.models.app import Organisation
 from app.db.models.document import PhysicalDocument
-from .geography import Geography
 from app.db.session import Base
+from .geography import Geography
 
 
 class FamilyCategory(enum.Enum):
@@ -39,6 +42,8 @@ class Family(Base):
     category_name = sa.Column(sa.Enum(FamilyCategory), nullable=False)
     family_status = sa.Column(sa.Enum(FamilyStatus), default=FamilyStatus.CREATED, nullable=False)
 
+    slugs: list["Slug"] = relationship("Slug", innerjoin=True)
+
 
 class DocumentStatus(enum.Enum):
     CREATED = "Created"
@@ -69,6 +74,9 @@ class FamilyDocument(Base):
     document_status = sa.Column(sa.Enum(DocumentStatus), default=DocumentStatus.CREATED, nullable=False)
     document_type = sa.Column(sa.ForeignKey(FamilyDocumentType.name), nullable=False)
 
+    slugs: list["Slug"] = relationship("Slug", lazy="subquery", innerjoin=True)
+    physical_document: PhysicalDocument = relationship(PhysicalDocument)
+
 
 class FamilyOrganisation(Base):
 
@@ -78,3 +86,19 @@ class FamilyOrganisation(Base):
     organisation_id = sa.Column(sa.ForeignKey(Organisation.id), nullable=False)
 
     sa.PrimaryKeyConstraint(family_import_id)
+
+
+class Slug(Base):
+
+    __tablename__ = "slug"
+    __table_args__ = (
+        sa.CheckConstraint(
+            "num_nonnulls(family_import_id, family_document_import_id) = 1",
+            name="must_reference_exactly_one_entity",
+        ),
+        sa.PrimaryKeyConstraint("name", name="pk_slug")
+    )
+
+    name = sa.Column(sa.Text, primary_key=True)
+    family_import_id = sa.Column(sa.ForeignKey(Family.import_id))
+    family_document_import_id = sa.Column(sa.ForeignKey(FamilyDocument.import_id))

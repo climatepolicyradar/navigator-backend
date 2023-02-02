@@ -54,8 +54,12 @@ def ingest_row(db: Session, row: DfcRow) -> dict:
     )
 
     print(f"- Creating Collection if required for import {import_id}")
-    collection = collection_from_row(
-        db, row, cast(int, organisation.id), family.import_id, result
+    collection_from_row(
+        db,
+        row,
+        cast(int, organisation.id),
+        cast(str, family.import_id),
+        result,
     )
 
     return result

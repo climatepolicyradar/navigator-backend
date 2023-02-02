@@ -3,6 +3,7 @@ import json
 import logging
 import os
 import time
+from collections import OrderedDict
 from dataclasses import dataclass
 from enum import Enum
 from pathlib import Path
@@ -20,8 +21,9 @@ from app.api.api_v1.schemas.search import (
     OpenSearchResponseMatchBase,
     OpenSearchResponsePassageMatch,
     SearchRequestBody,
-    SearchResults,
-    SearchResult,
+    SearchResponse,
+    SearchResultsResponse,
+    SearchDocumentResponse,
     SearchResponseDocumentPassage,
     SortField,
     SortOrder,
@@ -53,6 +55,7 @@ from app.core.config import (
     OPENSEARCH_JIT_MAX_DOC_COUNT,
 )
 from app.core.util import to_cdn_url
+from app.db.models.law_policy import Family, FamilyDocument, Slug
 
 
 _LOGGER = logging.getLogger(__name__)
@@ -180,12 +183,15 @@ class OpenSearchConnection:
         self._opensearch_connection: Optional[OpenSearch] = None
         self._sensitive_query_terms = load_sensitive_query_terms()
 
+    ##################
+    ### DEPRECATED ###
+    ##################
     def query(
         self,
         search_request_body: SearchRequestBody,
         opensearch_internal_config: OpenSearchQueryConfig,
         preference: Optional[str],
-    ) -> SearchResults:
+    ) -> SearchResultsResponse:
         """Build & make an OpenSearch query based on the given request body."""
 
         opensearch_request = build_opensearch_request_body(
@@ -215,6 +221,51 @@ class OpenSearchConnection:
         if opensearch_request.mode == QueryMode.BROWSE:
             return process_browse_response_body(
                 opensearch_response_body,
+            )
+
+        raise RuntimeError(
+            f"Could not execute unknown query type: {opensearch_request.mode}"
+        )
+
+    def query_families(
+        self,
+        search_request_body: SearchRequestBody,
+        opensearch_internal_config: OpenSearchQueryConfig,
+        document_extra_info: Mapping[str, Mapping[str, str]],
+        preference: Optional[str],
+    ) -> SearchResponse:
+        """Build & make an OpenSearch query based on the given request body."""
+
+        opensearch_request = build_opensearch_request_body(
+            search_request=search_request_body,
+            opensearch_internal_config=opensearch_internal_config,
+            sensitive_query_terms=self._sensitive_query_terms,
+        )
+
+        # We only need to use the {PREFIX}_core index if browsing because there's
+        # no need to access the text passages.
+        indices = (
+            self._get_opensearch_indices_to_query(search_request_body)
+            if opensearch_request.mode == QueryMode.SEARCH
+            else f"{self._opensearch_config.index_prefix}_core"
+        )
+
+        opensearch_response_body = self.raw_query(
+            opensearch_request.query, preference, indices
+        )
+
+        if opensearch_request.mode == QueryMode.SEARCH:
+            return process_search_response_body_families(
+                opensearch_response_body,
+                document_extra_info,
+                limit=search_request_body.limit,
+                offset=search_request_body.offset,
+            )
+
+        if opensearch_request.mode == QueryMode.BROWSE:
+            return process_browse_response_body_families(
+                opensearch_response_body,
+                document_extra_info,
             )
 
         raise RuntimeError(
@@ -646,7 +697,9 @@ def build_opensearch_request_body(
                 if term in search_request.query_string.lower()
             ]
 
-            # If the query contains any sensitive terms, and the length of the shortest sensitive term is >=50% of the length of the query by number of words, then disable KNN
+            # If the query contains any sensitive terms, and the length of the
+            # shortest sensitive term is >=50% of the length of the query by
+            # number of words, then disable KNN
             if (
                 sensitive_terms_in_query
                 and len(min(sensitive_terms_in_query, key=len).split(" "))
@@ -696,13 +749,162 @@ def build_opensearch_request_body(
     return builder
 
 
+
+
+################## NEW ######################
+from app.api.api_v1.schemas.search import (
+    SearchResponse,
+    SearchResponseFamilyDocument,
+    SearchResponseFamily,
+)
+
+
+def process_search_response_body_families(
+    opensearch_response_body: OpenSearchResponse,
+    document_extra_info: Mapping[str, Mapping[str, str]],
+    limit: int = 10,
+    offset: int = 0,
+) -> SearchResponse:
+    search_json_response = opensearch_response_body.raw_response
+    search_response_document = None
+    search_response_family = None
+
+    # Aggregate into families using OrderedDict to preserve the response relevance order
+    families: OrderedDict[str, SearchResponseFamily] = OrderedDict()
+
+    result_docs = search_json_response["aggregations"]["sample"]["top_docs"]["buckets"]
+    for result_doc in result_docs:
+        for document_match in result_doc["top_passage_hits"]["hits"]["hits"]:
+            document_match_source = document_match["_source"]
+            if OPENSEARCH_INDEX_NAME_KEY in document_match_source:
+                # Validate as a title match
+                doc_match = OpenSearchResponseNameMatch(**document_match_source)
+                if search_response_document is None:
+                    search_response_document = create_search_response_family_document(
+                        doc_match, document_extra_info,
+                    )
+                search_response_document.document_title_match = True
+            elif OPENSEARCH_INDEX_DESCRIPTION_KEY in document_match_source:
+                # Validate as a description match
+                doc_match = OpenSearchResponseDescriptionMatch(**document_match_source)
+                if search_response_document is None:
+                    search_response_document = create_search_response_family_document(
+                        doc_match, document_extra_info,
+                    )
+                search_response_document.document_description_match = True
+            elif OPENSEARCH_INDEX_TEXT_BLOCK_KEY in document_match_source:
+                # Process as a text block
+                doc_match = OpenSearchResponsePassageMatch(**document_match_source)
+                if search_response_document is None:
+                    search_response_document = create_search_response_family_document(
+                        doc_match, document_extra_info,
+                    )
+
+                response_passage = SearchResponseDocumentPassage(
+                    text=doc_match.text,
+                    text_block_id=doc_match.text_block_id,
+                    text_block_page=doc_match.text_block_page + 1,
+                    text_block_coords=doc_match.text_block_coords,
+                )
+                search_response_document.document_passage_matches.append(
+                    response_passage
+                )
+            else:
+                raise RuntimeError("Unexpected data in match results")
+
+            family_id = document_extra_info[doc_match.document_id]["family_id"]
+            search_repsonse_family = families.get(family_id)
+            if search_repsonse_family is None:
+                search_response_family = create_search_response_family(
+                    doc_match, document_extra_info,
+                )
+                families[family_id] = search_response_family
+
+        if search_response_document is None or search_response_family is None:
+            raise RuntimeError("Unexpected document match with no matching passages")
+
+        search_response_family.family_documents.append(search_response_document)
+
+        search_repsonse_family = None
+        search_response_document = None
+
+
+    search_response = SearchResponse(
+        hits=len(families),
+        query_time_ms=opensearch_response_body.request_time_ms,
+        families=list(families.values())[offset:offset+limit],
+    )
+
+    return search_response
+
+
+def process_browse_response_body_families(
+    opensearch_response_body: OpenSearchResponse,
+    document_extra_info: Mapping[str, Mapping[str, str]],
+) -> SearchResponse:
+    # FIXME: Update
+    opensearch_json_response = opensearch_response_body.raw_response
+    search_response = SearchResponse(
+        hits=opensearch_json_response["hits"]["total"]["value"],  # FIXME
+        query_time_ms=opensearch_response_body.request_time_ms,
+        families=[],
+    )
+
+    # FIXME
+    # result_docs = opensearch_json_response["hits"]["hits"]
+    # for result_doc in result_docs:
+    #     search_response_document = create_search_response_document(
+    #         OpenSearchResponseDescriptionMatch(**result_doc["_source"])
+    #     )
+    #     search_response.documents.append(search_response_document)
+
+    return search_response
+
+
+def create_search_response_family_document(
+    opensearch_match: OpenSearchResponseMatchBase,
+    document_family_match: Mapping[str, Mapping[str, str]],
+) -> SearchResponseFamilyDocument:
+    return SearchResponseFamilyDocument(
+        document_title=document_family_match[opensearch_match.document_id]["title"],
+        document_date=opensearch_match.document_date,
+        document_type=opensearch_match.document_type,
+        document_category=opensearch_match.document_category,
+        document_source_url=opensearch_match.document_source_url,
+        document_url=to_cdn_url(opensearch_match.document_cdn_object),
+        document_content_type=opensearch_match.document_content_type,
+        document_slug=opensearch_match.document_slug,
+        document_passage_matches=[],
+    )
+
+
+def create_search_response_family(
+    opensearch_match: OpenSearchResponseMatchBase,
+    document_family_match: Mapping[str, Mapping[str, str]],
+) -> SearchResponseFamily:
+    return SearchResponseFamily(
+        family_slug=document_family_match[opensearch_match.document_id]["family_slug"],
+        family_name=opensearch_match.document_name,
+        family_description=opensearch_match.document_description,
+        family_source=opensearch_match.document_source,
+        family_geography=opensearch_match.document_geography,
+        family_metadata={},  # FIXME: complete?
+        family_title_match=False,
+        family_description_match=False,
+        family_documents=[],
+    )
+
+
+#################################
+########## DEPRECATED ###########
+#################################
 def process_search_response_body(
     opensearch_response_body: OpenSearchResponse,
     limit: int = 10,
     offset: int = 0,
-) -> SearchResults:
+) -> SearchResultsResponse:
     opensearch_json_response = opensearch_response_body.raw_response
-    search_response = SearchResults(
+    search_response = SearchResultsResponse(
         hits=opensearch_json_response["aggregations"]["no_unique_docs"]["value"],
         query_time_ms=opensearch_response_body.request_time_ms,
         documents=[],
@@ -762,9 +964,9 @@ def process_search_response_body(
 
 def process_browse_response_body(
     opensearch_response_body: OpenSearchResponse,
-) -> SearchResults:
+) -> SearchResultsResponse:
     opensearch_json_response = opensearch_response_body.raw_response
-    search_response = SearchResults(
+    search_response = SearchResultsResponse(
         hits=opensearch_json_response["hits"]["total"]["value"],
         query_time_ms=opensearch_response_body.request_time_ms,
         documents=[],
@@ -783,7 +985,7 @@ def process_browse_response_body(
 def create_search_response_document(
     opensearch_match: OpenSearchResponseMatchBase,
 ):
-    return SearchResult(
+    return SearchDocumentResponse(
         document_name=opensearch_match.document_name,
         document_description=opensearch_match.document_description,
         document_geography=opensearch_match.document_geography,
@@ -800,4 +1002,5 @@ def create_search_response_document(
         document_title_match=False,
         document_description_match=False,
         document_passage_matches=[],
+        document_postfix=None,
     )

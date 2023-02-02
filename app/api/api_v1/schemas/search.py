@@ -53,6 +53,18 @@ class IncludedResults(str, Enum):
     HTMLS_TRANSLATED = "htmlsTranslated"
 
 
+class CategoryName(str, Enum):
+	"""
+	Representation of what is in the database.
+
+	TODO: Add test to ensure there is equivalence with the initial_data
+	"""
+
+	LAW = "Law"
+	POLICY = "Policy"
+	CASE = "Case"
+
+
 IncludedResultsList = Optional[conlist(IncludedResults, min_items=1)]
 
 
@@ -72,6 +84,7 @@ class SearchRequestBody(BaseModel):
 
     jit_query: Optional[JitQuery] = JitQuery.ENABLED
     include_results: IncludedResultsList = None
+    group_documents: bool = False
 
     limit: int = 10  # TODO: decide on default
     offset: int = 0
@@ -84,76 +97,6 @@ class SearchResponseDocumentPassage(BaseModel):
     text_block_id: str
     text_block_page: Optional[int]
     text_block_coords: Optional[Sequence[Coord]]
-
-
-class SearchResult(BaseModel):
-    """A single document in a search response."""
-
-    document_name: str
-    document_geography: str
-    document_sectors: Sequence[str]
-    document_source: str
-    document_date: str
-    document_id: str
-    document_slug: str
-    document_description: str
-    document_type: str
-    document_category: str
-    document_source_url: Optional[str]
-    document_url: Optional[str]
-    document_content_type: Optional[str]
-    document_title_match: bool
-    document_description_match: bool
-    document_passage_matches: list[SearchResponseDocumentPassage]
-
-
-class SearchResultResponse(SearchResult):
-    """The object that is returned in the response.
-
-    Used to extend with postfix
-    """
-
-    document_postfix: Optional[str]
-
-
-class CategoryName(str, Enum):
-    """Representation of what is in the database.
-
-    TODO: Add test to ensure there is equivalence with the initial_data
-    """
-
-    LAW = "Law"
-    POLICY = "Policy"
-    CASE = "Case"
-
-
-Top5DocumentList = conlist(SearchResult, max_items=5)
-
-
-class SummaryCountryResponse(BaseModel):
-    """Additional information for the Country page over geo stats"""
-
-    document_counts: Mapping[CategoryName, int]
-    top_documents: Mapping[CategoryName, Top5DocumentList]
-    targets: Sequence[str]  # TODO: Placeholder for later
-
-
-class SearchResults(BaseModel):
-    """The response body produced by the search API endpoint."""
-
-    hits: int
-    query_time_ms: int
-
-    documents: list[SearchResult]
-
-
-class SearchResultsResponse(BaseModel):
-    """The response body produced by the search API endpoint."""
-
-    hits: int
-    query_time_ms: int
-
-    documents: Sequence[SearchResultResponse]
 
 
 class OpenSearchResponseMatchBase(BaseModel):
@@ -193,3 +136,100 @@ class OpenSearchResponsePassageMatch(OpenSearchResponseMatchBase):
     text_block_id: str
     text_block_page: int
     text_block_coords: Sequence[Coord]
+
+
+############### NEW #####################
+class SearchResponseFamilyDocument(BaseModel):
+    """A single document in a search response."""
+    document_title: str
+    document_date: str
+    document_slug: str
+    document_type: str
+    document_category: str
+    document_source_url: Optional[str]
+    document_url: Optional[str]
+    document_content_type: Optional[str]
+    document_passage_matches: list[SearchResponseDocumentPassage]
+
+
+############### NEW #####################
+class SearchResponseFamily(BaseModel):
+    """The object that is returned in the response.
+
+    Used to extend with postfix
+    """
+    family_slug: str
+    family_name: str
+    family_description: str
+    family_source: str
+    family_geography: str
+    family_metadata: dict
+    family_title_match: bool
+    family_description_match: bool
+    family_documents: list[SearchResponseFamilyDocument]
+
+
+############### NEW #####################
+class SearchResponse(BaseModel):
+    """The response body produced by the search API endpoint."""
+
+    hits: int
+    query_time_ms: int
+
+    families: Sequence[SearchResponseFamily]
+
+
+Top5FamilyList = conlist(SearchResponseFamily, max_items=5)
+
+
+class CountrySummaryResponse(BaseModel):
+    """Additional information for the Country page over geo stats"""
+
+    document_counts: Mapping[CategoryName, int]
+    top_documents: Mapping[CategoryName, Top5FamilyList]
+    targets: Sequence[str]  # TODO: Placeholder for later
+
+
+
+###############################################
+################# DEPRECATED ##################
+###############################################
+class SearchDocumentResponse(BaseModel):
+    """A single document in a search response."""
+
+    document_name: str
+    document_geography: str
+    document_sectors: Sequence[str]
+    document_source: str
+    document_date: str
+    document_id: str
+    document_slug: str
+    document_description: str
+    document_type: str
+    document_category: str
+    document_source_url: Optional[str]
+    document_url: Optional[str]
+    document_content_type: Optional[str]
+    document_title_match: bool
+    document_description_match: bool
+    document_passage_matches: list[SearchResponseDocumentPassage]
+    document_postfix: Optional[str]
+
+
+class SearchResultsResponse(BaseModel):
+    """The response body produced by the search API endpoint."""
+
+    hits: int
+    query_time_ms: int
+
+    documents: list[SearchDocumentResponse]
+
+
+Top5DocumentList = conlist(SearchDocumentResponse, max_items=5)
+
+class SummaryCountryResponse(BaseModel):
+    """Additional information for the Country page over geo stats"""
+
+    document_counts: Mapping[CategoryName, int]
+    top_documents: Mapping[CategoryName, Top5DocumentList]
+    targets: Sequence[str]  # TODO: Placeholder for later
