@@ -59,13 +59,16 @@ def upgrade():
     sa.PrimaryKeyConstraint('collection_id', 'organisation_id', name=op.f('pk_collection_organisation'))
     )
     op.create_table('family',
-    sa.Column('id', sa.Text(), nullable=False),
+    sa.Column('id', sa.Integer(), nullable=False),
     sa.Column('title', sa.Text(), nullable=False),
     sa.Column('import_id', sa.Text(), nullable=True),
     sa.Column('description', sa.Text(), nullable=False),
     sa.Column('geography_id', sa.Integer(), nullable=False),
     sa.Column('category_name', sa.Text(), nullable=False),
     sa.Column('family_type', sa.Text(), nullable=False),
+    op.create_index(
+        op.f("ix_family_import_id"), "family", ["import_id"], unique=True
+    ),
     sa.ForeignKeyConstraint(['category_name'], ['family_category.category_name'], name=op.f('fk_family__category_name__family_category')),
     sa.ForeignKeyConstraint(['family_type'], ['family_type.type_name'], name=op.f('fk_family__family_type__family_type')),
     sa.ForeignKeyConstraint(['geography_id'], ['geography.id'], name=op.f('fk_family__geography_id__geography')),
@@ -132,6 +135,7 @@ def upgrade():
 
     op.create_check_constraint(
         "must_reference_exactly_one_entity",
+
         "slug",
         "num_nonnulls(family_id, family_document_id) = 1"
     ) 

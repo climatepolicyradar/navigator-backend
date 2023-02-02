@@ -49,9 +49,9 @@ class Family(Base):
 
     __tablename__ = "family"
 
-    id = sa.Column(sa.Text, primary_key=True)
+    id = sa.Column(sa.Integer, primary_key=True)
     title = sa.Column(sa.Text, nullable=False)
-    import_id = sa.Column(sa.Text)
+    import_id = sa.Column(sa.Text, unique=True)
     description = sa.Column(sa.Text, nullable=False)
     geography_id = sa.Column(sa.ForeignKey(Geography.id), nullable=False)
     category_name = sa.Column(
