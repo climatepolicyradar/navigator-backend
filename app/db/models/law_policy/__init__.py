@@ -5,7 +5,8 @@ from .family import (
     FamilyDocument,
     FamilyOrganisation,
     FamilyType,
-    Variant
+    Variant,
+    FamilyDocumentType
 )
 from .geography import Geography, GeoStatistics
 from .slug import Slug

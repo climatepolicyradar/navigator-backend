@@ -10,7 +10,6 @@ def get_or_create(db: Session, model, **kwargs):
     instance = db.query(model).filter_by(**kwargs).first()
 
     if instance:
-        print(f"** FOUND IT: {instance}")
         return instance
     else:
         # Add the extra args in for creation
@@ -19,5 +18,9 @@ def get_or_create(db: Session, model, **kwargs):
         instance = model(**kwargs)
         db.add(instance)
         db.commit()
-        print(f"*** CREATED IT: {instance}")
         return instance
+
+def to_dict(base_object: object):
+    extra = ["__class__"]
+    return dict((col, str(getattr(base_object, col))) for col in base_object.__table__.columns.keys() + extra)
+

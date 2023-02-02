@@ -1,3 +1,4 @@
+from pprint import pprint
 import sys
 import enum
 from datetime import datetime
@@ -9,13 +10,14 @@ from app.db.models.law_policy import (
     FamilyType,
     DocumentStatus,
     Variant,
-    DocumentType,
+    FamilyDocumentType,
+    Geography,
 )
 
 from dfc_csv_reader import Row
 from sqlalchemy.orm import Session
 
-from utils import get_or_create
+from utils import get_or_create, to_dict
 
 class PublicationDateAccuracy(enum.Enum):
     SECOND_ACCURACY = 100000,
@@ -34,56 +36,70 @@ if year is missing - you the default with has 9999
 if only a year - then use without 99999
 
 """
-
-def ingest_document(db: Session, row: Row):
+def ingest_row(db: Session, row: Row) -> dict:
     """Creates a PhysicalDocument and a FamilyDocument together."""
-
+    result = {}
     import_id = row.cpr_document_id
-    print(f"  Creating physical document for import {import_id}")
-    new_phys_doc = PhysicalDocument(
-        id=row.cpr_document_id,
-        title=row.document_title,
-        source_url=row.documents,
-        date=datetime(row.year, 1, 1) if row.year else DEFAULT_POLICY_DATE ,
-    )
 
-    # TODO: Add to the database
-    db.add(new_phys_doc)
-    db.commit()
+    print(f"  Creating physical document for import {import_id}")
+    result["doc_schema"] = document_schema_from_row(db, row)
 
     print(f"  Creating family for import {import_id}")
+    result["family_schema"] = family_from_row(db, row, result["doc_schema"]["doc"]["id"])
 
+    return result
+
+def family_from_row(db: Session, row: Row, phys_doc_id: int):
+    result = {}
+    import_id = row.cpr_document_id
     category_name = get_or_create(db, FamilyCategory, category_name=row.category, extra={"description": ""}).category_name
     family_type = get_or_create(db, FamilyType, type_name=row.document_type, extra={"description": ""}).type_name
+    geography_id = db.query(Geography).filter(Geography.display_value == row.geography).first().id
 
-    new_family = Family(
-        id=row.cpr_family_id,
+    family = Family(
         title=row.family_name,
         import_id=import_id,
         description=row.family_summary,
-        geography_id=doc.geography_id,
+        geography_id=geography_id,
         category_name=category_name,
         family_type=family_type,
     )
-    db.add(new_family)
+    db.add(family)
+    db.commit()
+    result["family"] = to_dict(family)
 
     print(f"  Creating family document for import {import_id}")
     variant_name = get_or_create( db, Variant, variant_name=row.document_role, extra={"description": ""}).variant_name
-    document_type_id = get_or_create(db, DocumentType, name=row.document_type).id
+    document_type = get_or_create(db, FamilyDocumentType, name=row.document_type, extra={"description": ""}).name
 
-    new_fam_doc = FamilyDocument(
-        family_id=row.cpr_family_id,
-        physical_document_id=new_phys_doc.id,
+    family_document = FamilyDocument(
+        family_id=family.id,
+        physical_document_id=phys_doc_id,
         cdn_url=row.documents,
         import_id=import_id,
         variant_name=variant_name,
         document_status=DocumentStatus.PUBLISHED,
-        document_type_id=document_type_id,
+        document_type=document_type,
     )
 
     # TODO: Add to the database
-    db.add(new_fam_doc)
+    db.add(family_document)
+    db.commit()
+    result["family_document"] = to_dict(family_document)
+    return result
 
-    print(f"Langs = {row.language}")
+def document_schema_from_row(db: Session, row: Row) -> dict:
+    result = {}
+    doc = PhysicalDocument(
+        title=row.document_title,
+        source_url=row.documents,
+        date=datetime(row.year, 1, 1) if row.year else DEFAULT_POLICY_DATE ,
+    )
+    # TODO: Add languages
+    #print(row.language)
 
-    return new_phys_doc, new_fam_doc
+    db.add(doc)
+    db.commit()
+    result["doc"] = to_dict(doc)
+    pprint(result)
+    return result

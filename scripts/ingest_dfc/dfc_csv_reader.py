@@ -111,7 +111,9 @@ Processor = Callable[[Row], bool]
 
 
 def read(csv_file_path: Path, process: Processor) -> None:
-    # First pass to load existing IDs/Slugs
+    # FIXME: remove row_start before release
+    # The row_start is to aid development and debugging
+    row_start = 1 #190
     with open(csv_file_path) as csv_file:
         reader = csv.DictReader(csv_file)
         if reader.fieldnames is None:
@@ -124,8 +126,9 @@ def read(csv_file_path: Path, process: Processor) -> None:
         for row in reader:
             row_count += 1
             row_object = Row(row_count, row)
-            if not process(row_object):
-                break
+            if row_count >= row_start:
+                if not process(row_object):
+                    break
 
         if errors:
             sys.exit(10)
