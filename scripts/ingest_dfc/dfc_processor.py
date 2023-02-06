@@ -70,7 +70,7 @@ def get_dfc_processor(db: Session) -> Tuple[ValidateFunc, ProcessFunc]:
         # No need to start transaction as there is one already started.
 
         result = ingest_row(db, row=row)
-        mypprint(result)
+        #mypprint(result)
         rows_processed += 1
 
         # Return False for now so we just process one element
