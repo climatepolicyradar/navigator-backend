@@ -1,17 +1,51 @@
 #!/usr/bin/env python3
+"""Ingests a CSV into the new schema.
+
+Takes a single argument that is the filename of the CSV to import.
+"""
 
 import sys
+import csv
+from pathlib import Path
 from app.db.session import SessionLocal
-from sqlalchemy.orm import Session
+from dfc_processor import ProcessFunc, ValidateFunc, get_dfc_processor
+from scripts.ingest_dfc.dfc_row.dfc_row import DfcRow, validate_csv_columns
 
-from dfc_csv_reader import read
-from dfc_processor import get_dfc_processor
+
+def read(csv_file_path: Path, process: ProcessFunc) -> None:
+    """Reads a CSV file and calls process() for each row.
+
+    Args:
+        csv_file_path (Path): the filename of the CSV file.
+        process (ProcessFunc): the function to call to process a single row.
+    """
+    with open(csv_file_path) as csv_file:
+        reader = csv.DictReader(csv_file)
+        if reader.fieldnames is None:
+            print("No fields in CSV!")
+            sys.exit(11)
+        assert validate_csv_columns(reader.fieldnames)
+        row_count = 0
+        errors = False
+
+        for row in reader:
+            row_count += 1
+            row_object = DfcRow(row_count, row)
+            # if row_count >= row_start:
+            if not process(row_object):
+                break
+
+        if errors:
+            sys.exit(10)
 
 
 if __name__ == "__main__":
     print("")
-    print("Migrating to new schema...")
+    print("Ingesting to new schema...")
     db = SessionLocal()
+    validate: ValidateFunc
+    process: ProcessFunc
+    
     validate, process = get_dfc_processor(db)
 
     print("Checking database is in a valid state...")
@@ -24,7 +58,8 @@ if __name__ == "__main__":
         print(" *** Need to supply one CSV file as an argument")
         exit(1)
 
-    filename = sys.argv[1]
+    filename = Path(sys.argv[1])
     print(f"Reading CSV file {filename}...")
+    
     read(filename, process)
     print("Complete")
