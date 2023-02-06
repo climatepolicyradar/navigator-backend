@@ -1,4 +1,6 @@
+import csv
 import logging
+import sys
 from io import StringIO
 from typing import cast, Union
 
@@ -24,15 +26,18 @@ from app.api.api_v1.schemas.document import (
 from app.api.api_v1.schemas.user import User, UserCreateAdmin
 from app.core.auth import get_current_active_superuser
 from app.core.aws import get_s3_client
+from app.core.dfc_row import validate_csv_columns, DfcRow
 from app.core.email import (
     send_new_account_email,
     send_password_reset_email,
 )
 from app.core.ratelimit import limiter
+from app.core.util import physical_document_updated
 from app.core.validation import IMPORT_ID_MATCHER
 from app.core.validation.types import (
     ImportSchemaMismatchError,
     DocumentsFailedValidationError,
+    InputData,
 )
 from app.core.validation.util import (
     get_valid_metadata,
@@ -265,6 +270,56 @@ async def request_password_reset(
         },
     )
     return True
+
+
+@r.post(
+    "/bulk-imports/cclw/law-policy-dfc",
+    response_model=BulkImportValidatedResult,
+    status_code=status.HTTP_202_ACCEPTED,
+)
+def import_law_policy_dfc(
+    request: Request,
+    law_policy_csv: UploadFile,
+    background_tasks: BackgroundTasks,
+    db=Depends(get_db),
+    current_user=Depends(get_current_active_superuser),
+    s3_client=Depends(get_s3_client),
+):
+    """Process a Law/Policy documents, families and collections data import"""
+    _LOGGER.info(
+        f"Superuser '{current_user.email}' triggered bulk import request for "
+        "CCLW Law & Policy data"
+    )
+    file_contents = law_policy_csv.file.read().decode("utf8")
+    reader = csv.DictReader(StringIO(initial_value=file_contents))
+    if reader.fieldnames is None:
+        print("No fields in CSV!")
+        sys.exit(11)
+    assert validate_csv_columns(reader.fieldnames)
+    errors = False
+
+    documents_already_exist = []  # get_documents_already_exist(db)
+    input_data = InputData(new_documents=[], updated_documents={})
+
+    for row in reader:
+        row_object = DfcRow(row)
+
+        if row_object.document_id in documents_already_exist:
+            # TODO add errors to function response so that these can be checked for
+            update_results = physical_document_updated(row=row_object, db=db)
+            if any([update_results[field].updated for field in update_results]):
+                input_data.updated_documents[row_object.document_id] = update_results
+                # TODO update the document
+                pass
+        else:
+            input_data.new_documents.append(row_object)
+            # TODO create the document
+            pass
+
+    # TODO write file to s3
+
+    if errors:
+        sys.exit(10)
 
 
 @r.post(

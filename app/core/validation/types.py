@@ -1,7 +1,10 @@
 """Base definitions for data ingest"""
 from abc import abstractmethod, ABC
 from dataclasses import dataclass
-from typing import Collection, Generator, Sequence
+from typing import Collection, Generator, Sequence, Union
+import datetime
+
+from pydantic.main import BaseModel
 
 from app.api.api_v1.schemas.document import DocumentCreateRequest
 
@@ -52,3 +55,19 @@ class DocumentGenerator(ABC):
         """Generate document groups for processing from the configured source."""
 
         raise NotImplementedError("process_source() not implemented")
+
+
+@dataclass
+class UpdateResult:
+    """Class describing the results of comparing csv data against the db data to identify updates."""
+
+    db_value: Union[str, datetime.datetime]
+    csv_value: Union[str, datetime.datetime]
+    updated: bool
+
+
+class InputData(BaseModel):
+    """Expected input data containing both document updates and new documents for the ingest stage of the pipeline."""
+
+    new_documents: Sequence[dict]
+    updated_documents: dict[str, dict]
