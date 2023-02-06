@@ -34,7 +34,7 @@ def family_from_row(db: Session, org_id: int, row: DfcRow, phys_doc_id: int) -> 
     """
 
     result = {}
-    def create_family_slug(family: Family):
+    def create_family_links(family: Family):
         print(f"- Creating family slug for import {import_id}")
         family_slug = Slug(
             name=row.cpr_family_slug,
@@ -57,11 +57,9 @@ def family_from_row(db: Session, org_id: int, row: DfcRow, phys_doc_id: int) -> 
     import_id = row.cpr_document_id
     category_name = get_or_create(db, FamilyCategory, category_name=row.category, extra={"description": ""}).category_name
     family_type = get_or_create(db, FamilyType, type_name=row.document_type, extra={"description": ""}).type_name
+
     print(f"- Getting Geography for {row.geography_iso}")
-    geography = db.query(Geography).filter(Geography.value == row.geography_iso).first()
-    if geography is None:
-        raise TypeError(f"Geography value of {row.geography_iso} does not exist in the database.")
-    geography_id = geography.id
+    geography_id = _get_geography_id(db, row)
 
     family = get_or_create(db, Family,
         title=row.family_name,
@@ -72,7 +70,7 @@ def family_from_row(db: Session, org_id: int, row: DfcRow, phys_doc_id: int) -> 
             "description":row.family_summary,
             "import_id":import_id,
         },
-        after_create=create_family_slug
+        after_create=create_family_links
     )
     db.add(family)
     db.commit()
@@ -100,6 +98,13 @@ def family_from_row(db: Session, org_id: int, row: DfcRow, phys_doc_id: int) -> 
     result["slugs"] = _add_slugs(db, row, family, family_document)
 
     return result
+
+def _get_geography_id(db, row):
+    geography = db.query(Geography).filter(Geography.value == row.geography_iso).first()
+    if geography is None:
+        raise TypeError(f"Geography value of {row.geography_iso} does not exist in the database.")
+    geography_id = geography.id
+    return geography_id
 
 
 def _add_slugs(db: Session, row: DfcRow, family: Family, family_document:FamilyDocument) -> dict:
