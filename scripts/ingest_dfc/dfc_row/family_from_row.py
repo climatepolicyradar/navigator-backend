@@ -1,5 +1,6 @@
 from app.db.models.law_policy.slug import Slug
 from sqlalchemy.orm import Session
+from sqlalchemy import func
 from app.db.session import Base
 from scripts.ingest_dfc.dfc_row.dfc_row import DfcRow
 
@@ -28,6 +29,7 @@ def family_from_row(db: Session, org_id: int, row: DfcRow, phys_doc_id: int) -> 
 
     Raises:
         TypeError: This is raised when the geography associated with this row cannot be found in the database.
+        ValueError: When there is an existing family name that only differs by case.
 
     Returns:
         dict : a created dictionary to describe what was created.
@@ -61,6 +63,10 @@ def family_from_row(db: Session, org_id: int, row: DfcRow, phys_doc_id: int) -> 
     print(f"- Getting Geography for {row.geography_iso}")
     geography_id = _get_geography_id(db, row)
 
+    if not _validate_family_name(db, row.family_name):
+        # FIXME: This should not be raised if the slugs are different - as they are in fact different families
+        raise ValueError(f"Processing row {row.row_number} got family {row.family_name} that is only different by case!")
+
     family = get_or_create(db, Family,
         title=row.family_name,
         extra={
@@ -90,6 +96,7 @@ def family_from_row(db: Session, org_id: int, row: DfcRow, phys_doc_id: int) -> 
         document_type=document_type,
     )
 
+
     db.add(family_document)
     db.commit()
     result["family_document"] = to_dict(family_document)
@@ -99,7 +106,15 @@ def family_from_row(db: Session, org_id: int, row: DfcRow, phys_doc_id: int) -> 
 
     return result
 
-def _get_geography_id(db, row):
+
+def _validate_family_name(db: Session, family_name: str) -> bool:
+    matches_lower = db.query(Family).filter(func.lower(Family.title) == func.lower(family_name)).count()
+    matches = db.query(Family).filter(Family.title == family_name).count()
+
+    return matches == matches_lower
+
+
+def _get_geography_id(db: Session, row: DfcRow):
     geography = db.query(Geography).filter(Geography.value == row.geography_iso).first()
     if geography is None:
         raise TypeError(f"Geography value of {row.geography_iso} does not exist in the database.")
