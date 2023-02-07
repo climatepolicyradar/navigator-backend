@@ -14,6 +14,7 @@ from fastapi import (
     UploadFile,
     status,
 )
+import json
 from sqlalchemy.exc import IntegrityError
 from sqlalchemy import update
 from app.core.aws import S3Document
@@ -60,6 +61,8 @@ from app.db.crud.user import (
     get_users,
 )
 from app.db.models.deprecated.document import Document
+from app.db.models.document import PhysicalDocument
+from app.db.models.law_policy import FamilyDocument
 from app.db.session import get_db
 
 _LOGGER = logging.getLogger(__name__)
@@ -290,36 +293,102 @@ def import_law_policy_dfc(
         f"Superuser '{current_user.email}' triggered bulk import request for "
         "CCLW Law & Policy data"
     )
-    file_contents = law_policy_csv.file.read().decode("utf8")
-    reader = csv.DictReader(StringIO(initial_value=file_contents))
-    if reader.fieldnames is None:
-        print("No fields in CSV!")
-        sys.exit(11)
-    assert validate_csv_columns(reader.fieldnames)
-    errors = False
+    try:
+        file_contents = law_policy_csv.file.read().decode("utf8")
+        reader = csv.DictReader(StringIO(initial_value=file_contents))
 
-    documents_already_exist = []  # get_documents_already_exist(db)
-    input_data = InputData(new_documents=[], updated_documents={})
+        if reader.fieldnames is None:
+            _LOGGER.info("No fields in CSV!")
+            sys.exit(11)
+        assert validate_csv_columns(reader.fieldnames)
 
-    for row in reader:
-        row_object = DfcRow(row)
+        # TODO validate metadata
 
-        if row_object.document_id in documents_already_exist:
-            # TODO add errors to function response so that these can be checked for
-            update_results = physical_document_updated(row=row_object, db=db)
-            if any([update_results[field].updated for field in update_results]):
-                input_data.updated_documents[row_object.document_id] = update_results
-                # TODO update the document
-                pass
-        else:
-            input_data.new_documents.append(row_object)
-            # TODO create the document
-            pass
+        existing_import_ids = [id[0] for id in db.query(FamilyDocument.import_id)]
+        _LOGGER.info(
+            "Got existing import ids (CPR Document ID)",
+            extra={"props": {"existing_import_ids": existing_import_ids}},
+        )
 
-    # TODO write file to s3
+        input_data = InputData(new_documents=[], updated_documents={})
+        document_create_objects = []
 
-    if errors:
-        sys.exit(10)
+        for row in reader:
+            row_object = DfcRow(row)
+
+            if row_object.cpr_document_id in existing_import_ids:
+                update_results = physical_document_updated(row=row_object, db=db)
+
+                if any([update_results[field].updated for field in update_results]):
+                    _LOGGER.info(
+                        "Updates found for document.",
+                        extra={
+                            "props": {
+                                "cpr_document_id": row_object.cpr_document_id,
+                                "update_results": update_results,
+                            }
+                        },
+                    )
+
+                    input_data.updated_documents[
+                        row_object.document_id
+                    ] = update_results
+            else:
+                input_data.new_documents.append(
+                    json.loads(json.dumps(row_object.__dict__))
+                )
+                document_create_objects.append(row_object)
+
+        # TODO create new physical docs -> families -> collections
+
+        for cpr_document_id, update_results in input_data.updated_documents.items():
+            _LOGGER.info(
+                "Updated document in db.",
+                extra={
+                    "props": {
+                        "cpr_document_id": cpr_document_id,
+                        "update_results": update_results,
+                    }
+                },
+            )
+            # TODO update the document in the db
+
+        # TODO write file to s3
+        _LOGGER.info(
+            "Writing file to s3",
+            extra={
+                "props": {
+                    "new_document_count": len(input_data.new_documents),
+                    "updated_document_count": len(input_data.updated_documents),
+                }
+            },
+        )
+
+        return BulkImportValidatedResult(
+            document_count=500,
+            document_added_count=50,
+            document_skipped_count=100,
+            document_skipped_ids=list([1, 2, 3]),
+            csv_s3_location="s3://bucket/key",
+        )
+
+    except ImportSchemaMismatchError as e:
+        raise HTTPException(
+            status_code=status.HTTP_400_BAD_REQUEST,
+            detail=e.details,
+        ) from e
+
+    except DocumentsFailedValidationError as e:
+        raise HTTPException(
+            status_code=status.HTTP_422_UNPROCESSABLE_ENTITY,
+            detail=e.details,
+        ) from e
+
+    except Exception as e:
+        _LOGGER.exception("Unexpected error")
+        raise HTTPException(
+            status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
+        ) from e
 
 
 @r.post(

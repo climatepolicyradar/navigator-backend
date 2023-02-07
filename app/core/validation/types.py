@@ -1,7 +1,7 @@
 """Base definitions for data ingest"""
 from abc import abstractmethod, ABC
 from dataclasses import dataclass
-from typing import Collection, Generator, Sequence, Union
+from typing import Collection, Generator, Sequence, Union, List
 import datetime
 
 from pydantic.main import BaseModel
@@ -69,5 +69,5 @@ class UpdateResult:
 class InputData(BaseModel):
     """Expected input data containing both document updates and new documents for the ingest stage of the pipeline."""
 
-    new_documents: Sequence[dict]
+    new_documents: List[dict]
     updated_documents: dict[str, dict]
