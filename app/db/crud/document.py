@@ -668,43 +668,50 @@ def start_update(
     document_updates: dict[str, dict[str, UpdateResult]],
 ) -> None:
     """Update the relevant documents in the database."""
-    with db.begin_nested():
-        for document in document_updates:
-            for field in document:
-                if (
-                    document_updates[document][field].type == "PhysicalDocument"
-                    and document_updates[document][field].updated
-                ):
-                    family_document = (
-                        db.query(FamilyDocument)
-                        .filter(FamilyDocument.import_id == document)
-                        .scalar()
-                    )
-
-                    docs_updated_no = (
-                        db.query(PhysicalDocument)
-                        .filter(
-                            PhysicalDocument.id == family_document.physical_document_id
-                        )
-                        .update(
-                            {field: document_updates[document][field].csv_value},
-                            synchronize_session="fetch",
-                        )
-                    )
-
-                    if docs_updated_no != 1:
-                        raise RuntimeError(
-                            f"Expected to update 1 document but updated {docs_updated_no} during the update of: "
-                            f"{document}:{field} from {document_updates[document][field].db_value} -> {document_updates[document][field].csv_value}"
+    _LOGGER.info(f"Starting document updates.")
+    try:
+        with db.begin_nested():
+            for document in document_updates:
+                for field in document_updates[document]:
+                    if (
+                        document_updates[document][field].type == "PhysicalDocument"
+                        and document_updates[document][field].updated
+                    ):
+                        family_document = (
+                            db.query(FamilyDocument)
+                            .filter(FamilyDocument.import_id == document)
+                            .scalar()
                         )
 
-                    _LOGGER.info(
-                        f"Updated {document}:{field} from {document_updates[document][field].db_value} -> {document_updates[document][field].csv_value}"
-                    )
-                else:
-                    _LOGGER.info(
-                        f"Skipped {document}:{field} from {document_updates[document][field].db_value} -> {document_updates[document][field].csv_value}, update type not known."
-                    )
+                        docs_updated_no = (
+                            db.query(PhysicalDocument)
+                            .filter(
+                                PhysicalDocument.id
+                                == family_document.physical_document_id
+                            )
+                            .update(
+                                {field: document_updates[document][field].csv_value},
+                                synchronize_session="fetch",
+                            )
+                        )
+
+                        if docs_updated_no != 1:
+                            raise RuntimeError(
+                                f"Expected to update 1 document but updated {docs_updated_no} during the update of: "
+                                f"{document}:{field} from '{document_updates[document][field].db_value}' -> '{document_updates[document][field].csv_value}'"
+                            )
+
+                        _LOGGER.info(
+                            f"Updated {document}:{field} from '{document_updates[document][field].db_value}' -> '{document_updates[document][field].csv_value}'"
+                        )
+                    else:
+                        _LOGGER.info(
+                            f"Skipped {document}:{field} from '{document_updates[document][field].db_value}' -> '{document_updates[document][field].csv_value}', update type not known."
+                        )
+        db.commit()
+    except Exception as e:
+        _LOGGER.exception("Unexpected error updating document entries")
+        raise e
 
 
 def _get_related_documents(

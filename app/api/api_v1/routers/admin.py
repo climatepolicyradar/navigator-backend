@@ -325,6 +325,7 @@ def import_law_policy_dfc(
                 update_results = physical_document_updated(row=row_object, db=db)
 
                 if any([update_results[field].updated for field in update_results]):
+                    # TODO incorrect type here?
                     input_data.updated_documents[
                         row_object.cpr_document_id
                     ] = update_results
@@ -354,22 +355,11 @@ def import_law_policy_dfc(
 
         # TODO create new physical docs -> families -> collections
 
-        # TODO updates required different tables haha! (physical docs, families, collections)
-        # TODO shall we just assume that all updates are to physical docs for now?
-        background_tasks.add_task(
-            start_update, db, s3_client, input_data.updated_documents
-        )
-
-        for cpr_document_id, update_results in input_data.updated_documents.items():
-            # TODO update the document in the db as a background task
-            _LOGGER.info(
-                "Updated document in db.",
-                extra={
-                    "props": {
-                        "cpr_document_id": cpr_document_id,
-                    }
-                },
-            )
+        # TODO update doesn't seem to be working
+        start_update(db=db, document_updates=input_data.updated_documents)
+        # background_tasks.add_task(
+        #     start_update, db, input_data.updated_documents
+        # )
 
         # TODO write file to s3
         _LOGGER.info(
