@@ -1,4 +1,4 @@
 from scripts.ingest_dfc.dfc_row.collection_from_row import collection_from_row
 from scripts.ingest_dfc.dfc_row.dfc_row import DfcRow
-from scripts.ingest_dfc.dfc_row.document_schema_from_row import document_schema_from_row
+from scripts.ingest_dfc.dfc_row.physical_document_from_row import physical_document_from_row
 from scripts.ingest_dfc.dfc_row.family_from_row import family_from_row

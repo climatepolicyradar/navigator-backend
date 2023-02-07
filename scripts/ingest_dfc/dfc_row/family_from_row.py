@@ -1,146 +1,186 @@
-from app.db.models.law_policy.slug import Slug
-from sqlalchemy.orm import Session
-from sqlalchemy import func
-from app.db.session import Base
-from scripts.ingest_dfc.dfc_row.dfc_row import DfcRow
+from typing import Any
 
-from scripts.ingest_dfc.utils import get_or_create, to_dict
+from sqlalchemy import func
+from sqlalchemy.orm import Session
+
 from app.db.models.law_policy import (
+    DocumentStatus,
     Family,
     FamilyCategory,
     FamilyDocument,
+    FamilyDocumentType,
     FamilyOrganisation,
     FamilyType,
-    DocumentStatus,
-    Variant,
-    FamilyDocumentType,
     Geography,
+    Slug,
+    Variant,
+)
+from scripts.ingest_dfc.dfc_row.dfc_row import DfcRow
+from scripts.ingest_dfc.utils import get_or_create, to_dict
+from scripts.ingest_dfc.dfc_row.physical_document_from_row import (
+    physical_document_from_row,
 )
 
 
-def family_from_row(db: Session, org_id: int, row: DfcRow, phys_doc_id: int) -> dict:
-    """_summary_
+def family_from_row(
+    db: Session, row: DfcRow, org_id: int, result: dict[str, Any]
+) -> Family:
+    """Create any missing Family, FamilyDocument & Associated links from the given row
 
     Args:
         db (Session): connection to the database.
         org_id (int): the organisation id associated with this row.
         row (DfcRow): the row built from the CSV.
-        phys_doc_id (int): the physical document id associated with this row.
-
+        result (dict): a result dict in which to track what was created
     Raises:
-        TypeError: This is raised when the geography associated with this row cannot be found in the database.
-        ValueError: When there is an existing family name that only differs by case.
+        ValueError: When there is an existing family name that only differs by case
+            or when the geography associated with this row cannot be found in the
+            database.
 
     Returns:
-        dict : a created dictionary to describe what was created.
+        Family : The family that was either retrieved or created
     """
+    # GET OR CREATE FAMILY
+    family = _maybe_create_family(db, row, org_id, result)
 
-    result = {}
-    def create_family_links(family: Family):
-        print(f"- Creating family slug for import {import_id}")
-        family_slug = Slug(
-            name=row.cpr_family_slug,
-            family_id=family.id
-        )
+    # GET OR CREATE FAMILY DOCUMENT
+    _maybe_create_family_document(db, row, family, result)
+
+    return family
+
+
+def _maybe_create_family(db: Session, row: DfcRow, org_id: int, result: dict[str, Any]) -> Family:
+    def _create_family_links(family: Family):
+        print(f"- Creating family slug for import {row.cpr_family_id}")
+        family_slug = Slug(name=row.cpr_family_slug, family_id=family.id)
 
         db.add(family_slug)
         db.commit()
-        result["family_slug"] = to_dict(family_slug),
+        result["family_slug"] = (to_dict(family_slug),)
 
-        print(f"- Creating family organisation for import {import_id}")
+        print(f"- Creating family organisation for import {row.cpr_family_id}")
         family_organisation = FamilyOrganisation(
-        family_id=family.id,
-        organisation_id=org_id 
+            family_id=family.id, organisation_id=org_id
         )
         db.add(family_organisation)
         db.commit()
         result["family_organisation"] = to_dict(family_organisation)
-    
-    import_id = row.cpr_document_id
-    category_name = get_or_create(db, FamilyCategory, category_name=row.category, extra={"description": ""}).category_name
-    family_type = get_or_create(db, FamilyType, type_name=row.document_type, extra={"description": ""}).type_name
 
+    # FIXME: these should come from well-known values, not whatever is in the CSV
+    category = get_or_create(
+        db, FamilyCategory, category_name=row.category, extra={"description": ""}
+    )
+    family_type = get_or_create(
+        db, FamilyType, type_name=row.document_type, extra={"description": ""}
+    )
+
+    # GET GEOGRAPHY
     print(f"- Getting Geography for {row.geography_iso}")
-    geography_id = _get_geography_id(db, row)
+    geography = _get_geography(db, row)
 
     if not _validate_family_name(db, row.family_name):
-        # FIXME: This should not be raised if the slugs are different - as they are in fact different families
-        raise ValueError(f"Processing row {row.row_number} got family {row.family_name} that is only different by case!")
-
-    family = get_or_create(db, Family,
+        # FIXME: This should not be raised if the slugs are different
+        # because they are in fact different families
+        raise ValueError(
+            f"Processing row {row.row_number} got family {row.family_name} "
+            "that is only different by case!"
+        )
+    family = get_or_create(
+        db,
+        Family,
         title=row.family_name,
         extra={
-            "geography_id":geography_id,
-            "category_name":category_name,
-            "family_type":family_type,
-            "description":row.family_summary,
-            "import_id":import_id,
+            "geography_id": geography.id,
+            "category_name": category.category_name,
+            "family_type": family_type.type_name,
+            "description": row.family_summary,
+            "import_id": row.cpr_family_id,
         },
-        after_create=create_family_links
+        after_create=_create_family_links,
     )
-    db.add(family)
-    db.commit()
     result["family"] = to_dict(family)
+    return family
 
-    print(f"- Creating family document for import {import_id}")
-    variant_name = get_or_create( db, Variant, variant_name=row.document_role, extra={"description": ""}).variant_name
-    document_type = get_or_create(db, FamilyDocumentType, name=row.document_type, extra={"description": ""}).name
 
+def _maybe_create_family_document(
+    db: Session, row: DfcRow, family: Family, result: dict[str, Any]
+) -> FamilyDocument:
+    print(f"- Creating family document for import {row.cpr_document_id}")
+
+    # FIXME: these should come from well-known values, not whatever is in the CSV
+    variant_name = get_or_create(
+        db, Variant, variant_name=row.document_role, extra={"description": ""}
+    ).variant_name
+    document_type = get_or_create(
+        db, FamilyDocumentType, name=row.document_type, extra={"description": ""}
+    ).name
+
+    family_document = (
+        db.query(FamilyDocument).filter_by(import_id=row.cpr_document_id).first()
+    )
+    if family_document is not None:
+        # If the family document exists we can assume that the associated physical
+        # document and slug have also been created
+        return family_document
+
+    physical_document = physical_document_from_row(db, row, result)
     family_document = FamilyDocument(
         family_id=family.id,
-        physical_document_id=phys_doc_id,
-        cdn_url=row.documents,
-        import_id=import_id,
+        physical_document_id=physical_document.id,
+        cdn_url=None,  # FIXME: Add this
+        import_id=row.cpr_document_id,
         variant_name=variant_name,
         document_status=DocumentStatus.PUBLISHED,
         document_type=document_type,
     )
-
-
     db.add(family_document)
     db.commit()
+
     result["family_document"] = to_dict(family_document)
+    print(f"- Creating slug for FamilyDocument with import_id {row.cpr_document_id}")
+    _add_family_document_slug(db, row, family_document, result)
 
-    print(f"- Creating slugs for import {import_id}")
-    result["slugs"] = _add_slugs(db, row, family, family_document)
-
-    return result
+    return family_document
 
 
 def _validate_family_name(db: Session, family_name: str) -> bool:
-    matches_lower = db.query(Family).filter(func.lower(Family.title) == func.lower(family_name)).count()
+    matches_lower = (
+        db.query(Family)
+        .filter(func.lower(Family.title) == func.lower(family_name))
+        .count()
+    )
     matches = db.query(Family).filter(Family.title == family_name).count()
 
     return matches == matches_lower
 
 
-def _get_geography_id(db: Session, row: DfcRow):
+def _get_geography(db: Session, row: DfcRow) -> Geography:
     geography = db.query(Geography).filter(Geography.value == row.geography_iso).first()
     if geography is None:
-        raise TypeError(f"Geography value of {row.geography_iso} does not exist in the database.")
-    geography_id = geography.id
-    return geography_id
+        raise ValueError(
+            f"Geography value of {row.geography_iso} does not exist in the database."
+        )
+    return geography
 
 
-def _add_slugs(db: Session, row: DfcRow, family: Family, family_document:FamilyDocument) -> dict:
-    """Adds the suits for the family and family_document.
+def _add_family_document_slug(
+    db: Session, row: DfcRow, family_document: FamilyDocument, result: dict[str, Any]
+) -> Slug:
+    """Adds the slugs for the family and family_document.
 
     Args:
         db (Session): connection to the database.
         row (DfcRow): the row built from the CSV.
-        family (Family): the family associated with this row.
         family_document the family document associated with this row.
 
     Returns:
         dict : a created dictionary to describe what was created.
     """
     family_document_slug = Slug(
-       name=row.cpr_document_slug,
-       family_document_id=family_document.physical_document_id
-    ) 
-
+        name=row.cpr_document_slug,
+        family_document_id=family_document.physical_document_id,
+    )
     db.add(family_document_slug)
     db.commit()
-    return {
-        "document_slug": to_dict(family_document_slug)
-    }
+    result["family_document_slug"] = {"document_slug": to_dict(family_document_slug)}
+    return family_document_slug
