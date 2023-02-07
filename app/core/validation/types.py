@@ -1,7 +1,7 @@
 """Base definitions for data ingest"""
 from abc import abstractmethod, ABC
 from dataclasses import dataclass
-from typing import Collection, Generator, Sequence, Union, List
+from typing import Collection, Generator, Sequence, Union, List, Literal
 import datetime
 
 from pydantic.main import BaseModel
@@ -64,6 +64,7 @@ class UpdateResult:
     db_value: Union[str, datetime.datetime]
     csv_value: Union[str, datetime.datetime]
     updated: bool
+    type: Literal["PhysicalDocument"]
 
 
 class InputData(BaseModel):

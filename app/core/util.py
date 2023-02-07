@@ -81,9 +81,7 @@ def tree_table_to_json(
     return json_out
 
 
-def physical_document_updated(
-    row: DfcRow, db: Session
-) -> dict[str : dict[str, UpdateResult]]:
+def physical_document_updated(row: DfcRow, db: Session) -> dict[str, UpdateResult]:
     """Identify any updates to the physical documents relating to the row by comparing against the relevant tables in
     the database.
 
@@ -97,7 +95,7 @@ def physical_document_updated(
 
     family_document = (
         db.query(FamilyDocument)
-        .filter(FamilyDocument.family_id == row.family_id)
+        .filter(FamilyDocument.import_id == row.cpr_document_id)
         .scalar()
     )
 
@@ -107,27 +105,36 @@ def physical_document_updated(
         .scalar()
     )
 
+    db_source_url = (
+        ""
+        if physical_document.source_url == '{""}'
+        else physical_document.source_url.replace("{", "")
+        .replace("}", "")
+        .split(",")[0]
+    )
+    csv_source_url = row.documents[0]
+
     return {
-        str(physical_document.id): {
-            "title": UpdateResult(
-                db_value=physical_document.title,
-                csv_value=row.document_title,
-                updated=physical_document.title != row.document_title,
-            ),
-            "source_url": UpdateResult(
-                db_value=physical_document.source_url,
-                csv_value=row.documents,
-                updated=physical_document.source_url != row.documents,
-            ),
-            "date": UpdateResult(
-                db_value=physical_document.date.year,
-                csv_value=str(row.year),
-                updated=physical_document.date.year != row.year,
-            ),
-            "format": UpdateResult(
-                db_value=physical_document.format,
-                csv_value=row.document_type,
-                updated=physical_document.format != row.document_type,
-            ),
-        }
+        "title": UpdateResult(
+            db_value=physical_document.title,
+            csv_value=row.document_title,
+            updated=physical_document.title != row.document_title,
+            type="PhysicalDocument",
+        ),
+        "source_url": UpdateResult(
+            db_value=db_source_url,
+            csv_value=csv_source_url,
+            updated=db_source_url != csv_source_url,
+            type="PhysicalDocument",
+        ),
+        # "date": UpdateResult(
+        #     db_value=physical_document.date.year,
+        #     csv_value=str(row.year),
+        #     updated=physical_document.date.year != row.year,
+        # ),
+        # "format": UpdateResult(
+        #     db_value=physical_document.format,
+        #     csv_value=row.document_type,
+        #     updated=physical_document.format != row.document_type,
+        # ),
     }

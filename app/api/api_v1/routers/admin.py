@@ -23,6 +23,7 @@ from app.api.api_v1.schemas.document import (
     BulkImportValidatedResult,
     DocumentCreateRequest,
     DocumentUpdateRequest,
+    BulkImportValidatedResultDeprecated,
 )
 from app.api.api_v1.schemas.user import User, UserCreateAdmin
 from app.core.auth import get_current_active_superuser
@@ -48,7 +49,7 @@ from app.core.validation.cclw.law_policy.process_csv import (
     extract_documents,
     validated_input,
 )
-from app.db.crud.document import start_import
+from app.db.crud.document import start_import, start_update
 from app.db.crud.password_reset import (
     create_password_reset_token,
     invalidate_existing_password_reset_tokens,
@@ -290,10 +291,15 @@ def import_law_policy_dfc(
 ):
     """Process a Law/Policy documents, families and collections data import"""
     _LOGGER.info(
-        f"Superuser '{current_user.email}' triggered bulk import request for "
-        "CCLW Law & Policy data"
+        f"Bulk import request triggered for CCLW Law & Policy data.",
+        extra={
+            "props": {
+                "superuser_email": current_user.email,
+            }
+        },
     )
     try:
+        # TODO move into a generator
         file_contents = law_policy_csv.file.read().decode("utf8")
         reader = csv.DictReader(StringIO(initial_value=file_contents))
 
@@ -303,15 +309,14 @@ def import_law_policy_dfc(
         assert validate_csv_columns(reader.fieldnames)
 
         # TODO validate metadata
-
+        not_added_import_ids = []
         existing_import_ids = [id[0] for id in db.query(FamilyDocument.import_id)]
         _LOGGER.info(
-            "Got existing import ids (CPR Document ID)",
-            extra={"props": {"existing_import_ids": existing_import_ids}},
+            "Got existing import ids (CPR Document ID).",
+            extra={"props": {"existing_import_ids_count": len(existing_import_ids)}},
         )
 
         input_data = InputData(new_documents=[], updated_documents={})
-        document_create_objects = []
 
         for row in reader:
             row_object = DfcRow(row)
@@ -320,42 +325,55 @@ def import_law_policy_dfc(
                 update_results = physical_document_updated(row=row_object, db=db)
 
                 if any([update_results[field].updated for field in update_results]):
+                    input_data.updated_documents[
+                        row_object.cpr_document_id
+                    ] = update_results
                     _LOGGER.info(
                         "Updates found for document.",
                         extra={
                             "props": {
                                 "cpr_document_id": row_object.cpr_document_id,
-                                "update_results": update_results,
+                                "update_results": [
+                                    {
+                                        field_result: json.loads(
+                                            json.dumps(
+                                                update_results[field_result].__dict__
+                                            )
+                                        )
+                                    }
+                                    for field_result in update_results
+                                ],
                             }
                         },
                     )
-
-                    input_data.updated_documents[
-                        row_object.document_id
-                    ] = update_results
             else:
+                not_added_import_ids.append(row_object.cpr_document_id)
                 input_data.new_documents.append(
                     json.loads(json.dumps(row_object.__dict__))
                 )
-                document_create_objects.append(row_object)
 
         # TODO create new physical docs -> families -> collections
 
+        # TODO updates required different tables haha! (physical docs, families, collections)
+        # TODO shall we just assume that all updates are to physical docs for now?
+        background_tasks.add_task(
+            start_update, db, s3_client, input_data.updated_documents
+        )
+
         for cpr_document_id, update_results in input_data.updated_documents.items():
+            # TODO update the document in the db as a background task
             _LOGGER.info(
                 "Updated document in db.",
                 extra={
                     "props": {
                         "cpr_document_id": cpr_document_id,
-                        "update_results": update_results,
                     }
                 },
             )
-            # TODO update the document in the db
 
         # TODO write file to s3
         _LOGGER.info(
-            "Writing file to s3",
+            "Writing file to s3.",
             extra={
                 "props": {
                     "new_document_count": len(input_data.new_documents),
@@ -365,11 +383,13 @@ def import_law_policy_dfc(
         )
 
         return BulkImportValidatedResult(
-            document_count=500,
-            document_added_count=50,
-            document_skipped_count=100,
-            document_skipped_ids=list([1, 2, 3]),
-            csv_s3_location="s3://bucket/key",
+            document_count=len(input_data.new_documents) + len(existing_import_ids),
+            document_added_count=len(input_data.new_documents),
+            document_updated_count=len(input_data.updated_documents),
+            document_updated_ids=list(input_data.updated_documents.keys()),
+            document_not_added_count=len(not_added_import_ids),
+            document_not_added_ids=not_added_import_ids,
+            csv_s3_location="s3://cclw-bulk-imports/law-policy-dfc/2021-01-01.csv",
         )
 
     except ImportSchemaMismatchError as e:
@@ -393,7 +413,7 @@ def import_law_policy_dfc(
 
 @r.post(
     "/bulk-imports/cclw/law-policy",
-    response_model=BulkImportValidatedResult,
+    response_model=BulkImportValidatedResultDeprecated,
     status_code=status.HTTP_202_ACCEPTED,
 )
 def import_law_policy(
@@ -486,7 +506,7 @@ def import_law_policy(
 
         # TODO: Add some way the caller can monitor processing pipeline...
 
-        return BulkImportValidatedResult(
+        return BulkImportValidatedResultDeprecated(
             document_count=total_document_count,
             document_added_count=total_document_count - document_skipped_count,
             document_skipped_count=document_skipped_count,
