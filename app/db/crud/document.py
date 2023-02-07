@@ -698,15 +698,18 @@ def start_update(
                         if docs_updated_no != 1:
                             raise RuntimeError(
                                 f"Expected to update 1 document but updated {docs_updated_no} during the update of: "
-                                f"{document}:{field} from '{document_updates[document][field].db_value}' -> '{document_updates[document][field].csv_value}'"
+                                f"{document}:{field} from '{document_updates[document][field].db_value}' -> "
+                                f"'{document_updates[document][field].csv_value}'"
                             )
 
                         _LOGGER.info(
-                            f"Updated {document}:{field} from '{document_updates[document][field].db_value}' -> '{document_updates[document][field].csv_value}'"
+                            f"Updated {document}:{field} from '{document_updates[document][field].db_value}' -> "
+                            f"'{document_updates[document][field].csv_value}'"
                         )
                     else:
                         _LOGGER.info(
-                            f"Skipped {document}:{field} from '{document_updates[document][field].db_value}' -> '{document_updates[document][field].csv_value}', update type not known."
+                            f"Skipped {document}:{field} from '{document_updates[document][field].db_value}' -> "
+                            f"'{document_updates[document][field].csv_value}', update type not known."
                         )
         db.commit()
     except Exception as e:

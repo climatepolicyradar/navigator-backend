@@ -1,4 +1,5 @@
 import csv
+import json
 import logging
 import sys
 from io import StringIO
@@ -14,10 +15,8 @@ from fastapi import (
     UploadFile,
     status,
 )
-import json
-from sqlalchemy.exc import IntegrityError
 from sqlalchemy import update
-from app.core.aws import S3Document
+from sqlalchemy.exc import IntegrityError
 
 from app.api.api_v1.schemas.document import (
     BulkImportValidatedResult,
@@ -27,6 +26,7 @@ from app.api.api_v1.schemas.document import (
 )
 from app.api.api_v1.schemas.user import User, UserCreateAdmin
 from app.core.auth import get_current_active_superuser
+from app.core.aws import S3Document
 from app.core.aws import get_s3_client
 from app.core.dfc_row import validate_csv_columns, DfcRow
 from app.core.email import (
@@ -36,6 +36,10 @@ from app.core.email import (
 from app.core.ratelimit import limiter
 from app.core.util import physical_document_updated
 from app.core.validation import IMPORT_ID_MATCHER
+from app.core.validation.cclw.law_policy.process_csv import (
+    extract_documents,
+    validated_input,
+)
 from app.core.validation.types import (
     ImportSchemaMismatchError,
     DocumentsFailedValidationError,
@@ -44,10 +48,6 @@ from app.core.validation.types import (
 from app.core.validation.util import (
     get_valid_metadata,
     write_csv_to_s3,
-)
-from app.core.validation.cclw.law_policy.process_csv import (
-    extract_documents,
-    validated_input,
 )
 from app.db.crud.document import start_import, start_update
 from app.db.crud.password_reset import (
@@ -62,7 +62,6 @@ from app.db.crud.user import (
     get_users,
 )
 from app.db.models.deprecated.document import Document
-from app.db.models.document import PhysicalDocument
 from app.db.models.law_policy import FamilyDocument
 from app.db.session import get_db
 
@@ -325,7 +324,6 @@ def import_law_policy_dfc(
                 update_results = physical_document_updated(row=row_object, db=db)
 
                 if any([update_results[field].updated for field in update_results]):
-                    # TODO incorrect type here?
                     input_data.updated_documents[
                         row_object.cpr_document_id
                     ] = update_results
@@ -355,11 +353,8 @@ def import_law_policy_dfc(
 
         # TODO create new physical docs -> families -> collections
 
-        # TODO update doesn't seem to be working
-        start_update(db=db, document_updates=input_data.updated_documents)
-        # background_tasks.add_task(
-        #     start_update, db, input_data.updated_documents
-        # )
+        background_tasks.add_task(start_update, db, input_data.updated_documents)
+        _LOGGER.info("Document update background task added.")
 
         # TODO write file to s3
         _LOGGER.info(
