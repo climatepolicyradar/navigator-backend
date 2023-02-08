@@ -121,3 +121,30 @@ def write_csv_to_s3(s3_client: S3Client, file_contents: str) -> Union[S3Document
         content_type="text/csv",
         fileobj=bytes_content,
     )
+
+
+def write_json_to_s3(s3_client: S3Client, json_data: dict) -> Union[S3Document, bool]:
+    """Writes the json into S3
+
+    Args:
+        s3_client (S3Client): a valid S3 client
+        file_contents (str): the contents of the file as a string
+    """
+    current_datetime = datetime.now().isoformat().replace(":", ".")
+    csv_object_key = f"{INGEST_TRIGGER_ROOT}/{current_datetime}/bulk-import.json"
+    _LOGGER.info(
+        "Writing json file into S3",
+        extra={
+            "props": {
+                "bucket": PIPELINE_BUCKET,
+                "file": csv_object_key,
+                "json_data": json_data,
+            }
+        },
+    )
+    return s3_client.upload_fileobj(
+        bucket=PIPELINE_BUCKET,
+        key=csv_object_key,
+        content_type="application/json",
+        fileobj=BytesIO(json.dumps(json_data).encode("utf8")),
+    )

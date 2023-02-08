@@ -48,6 +48,7 @@ from app.core.validation.types import (
 from app.core.validation.util import (
     get_valid_metadata,
     write_csv_to_s3,
+    write_json_to_s3,
 )
 from app.db.crud.document import start_import, start_update
 from app.db.crud.password_reset import (
@@ -365,6 +366,10 @@ def import_law_policy_dfc(
                     "updated_document_count": len(input_data.updated_documents),
                 }
             },
+        )
+        # TODO add in to json method
+        result: Union[S3Document, bool] = write_json_to_s3(
+            s3_client=s3_client, json_data=input_data.to_json()
         )
 
         return BulkImportValidatedResult(

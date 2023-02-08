@@ -1,4 +1,5 @@
 """Base definitions for data ingest"""
+import json
 from abc import abstractmethod, ABC
 from dataclasses import dataclass
 from typing import Collection, Generator, Sequence, Union, List, Literal
@@ -71,4 +72,19 @@ class InputData(BaseModel):
     """Expected input data containing both document updates and new documents for the ingest stage of the pipeline."""
 
     new_documents: List[dict]
-    updated_documents: dict[str, dict]
+    updated_documents: dict[str, dict[str, UpdateResult]]
+
+    def to_json(self) -> dict:
+        updated_documents_json = {}
+        for update in self.updated_documents:
+            updated_documents_json[update] = {
+                field_result: json.loads(
+                    json.dumps(self.updated_documents[update][field_result].__dict__)
+                )
+                for field_result in self.updated_documents[update]
+            }
+
+        return {
+            "new_documents": self.new_documents,
+            "updated_documents": updated_documents_json,
+        }
