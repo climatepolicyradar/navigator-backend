@@ -106,6 +106,8 @@ def family_updated(db: Session, row: DfcRow) -> List[UpdateResult]:
 
     family = db.query(Family).filter(Family.id == family_document.family_id).scalar()
 
+    row_family_summary = row.family_summary.replace('"', "")
+
     return [
         result
         for result in [
@@ -118,8 +120,8 @@ def family_updated(db: Session, row: DfcRow) -> List[UpdateResult]:
             ),
             UpdateResult(
                 db_value=family.description,
-                csv_value=row.family_summary,
-                updated=family.description != row.family_summary,
+                csv_value=row_family_summary,
+                updated=family.description != row_family_summary,
                 type="Family",
                 field="description",
             ),
