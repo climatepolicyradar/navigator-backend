@@ -4,12 +4,18 @@
 Takes a single argument that is the filename of the CSV to import.
 """
 
-import sys
 import csv
+import sys
 from pathlib import Path
+
 from app.db.session import SessionLocal
-from dfc_processor import ProcessFunc, ValidateFunc, get_dfc_processor
-from scripts.ingest_dfc.dfc_row.dfc_row import DfcRow, validate_csv_columns
+
+from scripts.ingest_dfc.dfc.processor import (
+    ProcessFunc,
+    ValidateFunc,
+    get_dfc_processor,
+)
+from scripts.ingest_dfc.utils import DfcRow, validate_csv_columns
 
 
 def read(csv_file_path: Path, process: ProcessFunc) -> None:
@@ -30,13 +36,12 @@ def read(csv_file_path: Path, process: ProcessFunc) -> None:
 
         for row in reader:
             row_count += 1
-            row_object = DfcRow(row_count, row)
-            # if row_count >= row_start:
+            row_object = DfcRow.from_row(row_count, row)
             if not process(row_object):
                 break
 
         if errors:
-            sys.exit(10)
+            sys.exit(2)
 
 
 if __name__ == "__main__":
@@ -45,7 +50,7 @@ if __name__ == "__main__":
     db = SessionLocal()
     validate: ValidateFunc
     process: ProcessFunc
-    
+
     validate, process = get_dfc_processor(db)
 
     print("Checking database is in a valid state...")
@@ -60,6 +65,6 @@ if __name__ == "__main__":
 
     filename = Path(sys.argv[1])
     print(f"Reading CSV file {filename}...")
-    
+
     read(filename, process)
     print("Complete")
