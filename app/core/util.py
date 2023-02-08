@@ -114,7 +114,7 @@ def physical_document_updated(row: DfcRow, db: Session) -> dict[str, UpdateResul
     )
     csv_source_url = row.documents[0]
 
-    return {
+    update_result = {
         "title": UpdateResult(
             db_value=physical_document.title,
             csv_value=row.document_title,
@@ -138,3 +138,5 @@ def physical_document_updated(row: DfcRow, db: Session) -> dict[str, UpdateResul
         #     updated=physical_document.format != row.document_type,
         # ),
     }
+
+    return {field: result for field, result in update_result.items() if result.updated}

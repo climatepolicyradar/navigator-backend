@@ -322,9 +322,9 @@ def import_law_policy_dfc(
             row_object = DfcRow(row)
 
             if row_object.cpr_document_id in existing_import_ids:
+                # TODO consider stacking these, we might have archives for a document or family updates etc.
                 update_results = physical_document_updated(row=row_object, db=db)
-
-                if any([update_results[field].updated for field in update_results]):
+                if bool(update_results):
                     input_data.updated_documents[
                         row_object.cpr_document_id
                     ] = update_results
@@ -352,25 +352,29 @@ def import_law_policy_dfc(
                     json.loads(json.dumps(row_object.__dict__))
                 )
 
-        # TODO create new physical docs -> families -> collections
+        # TODO create new physical docs -> families -> collections as background task
 
-        background_tasks.add_task(start_update, db, input_data.updated_documents)
-        _LOGGER.info("Document update background task added.")
+        if bool(input_data.updated_documents):
+            background_tasks.add_task(start_update, db, input_data.updated_documents)
+            _LOGGER.info("Document update background task added.")
 
-        # TODO write file to s3
-        _LOGGER.info(
-            "Writing file to s3.",
-            extra={
-                "props": {
-                    "new_document_count": len(input_data.new_documents),
-                    "updated_document_count": len(input_data.updated_documents),
-                }
-            },
-        )
-        # TODO add in to json method
-        result: Union[S3Document, bool] = write_json_to_s3(
-            s3_client=s3_client, json_data=input_data.to_json()
-        )
+        csv_s3_location = None
+        if bool(input_data.new_documents) or bool(input_data.updated_documents):
+            result: Union[S3Document, bool] = write_json_to_s3(
+                s3_client=s3_client, json_data=input_data.to_json()
+            )
+            csv_s3_location = (
+                "write failed" if type(result) is bool else str(result.url)
+            )
+            _LOGGER.info(
+                "Write Bulk Import CSV complete.",
+                extra={
+                    "props": {
+                        "superuser_email": current_user.email,
+                        "csv_s3_location": csv_s3_location,
+                    }
+                },
+            )
 
         return BulkImportValidatedResult(
             document_count=len(input_data.new_documents) + len(existing_import_ids),
@@ -379,7 +383,7 @@ def import_law_policy_dfc(
             document_updated_ids=list(input_data.updated_documents.keys()),
             document_not_added_count=len(not_added_import_ids),
             document_not_added_ids=not_added_import_ids,
-            csv_s3_location="s3://cclw-bulk-imports/law-policy-dfc/2021-01-01.csv",
+            csv_s3_location=csv_s3_location,
         )
 
     except ImportSchemaMismatchError as e:

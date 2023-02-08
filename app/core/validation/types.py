@@ -76,12 +76,12 @@ class InputData(BaseModel):
 
     def to_json(self) -> dict:
         updated_documents_json = {}
-        for update in self.updated_documents:
-            updated_documents_json[update] = {
+        for document_id, update_result in self.updated_documents.items():
+            updated_documents_json[document_id] = {
                 field_result: json.loads(
-                    json.dumps(self.updated_documents[update][field_result].__dict__)
+                    json.dumps(update_result[field_result].__dict__)
                 )
-                for field_result in self.updated_documents[update]
+                for field_result in update_result
             }
 
         return {
