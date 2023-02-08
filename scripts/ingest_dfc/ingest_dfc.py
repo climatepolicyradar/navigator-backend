@@ -4,12 +4,18 @@
 Takes a single argument that is the filename of the CSV to import.
 """
 
-import sys
 import csv
+import sys
 from pathlib import Path
+
 from app.db.session import SessionLocal
-from dfc_processor import ProcessFunc, ValidateFunc, get_dfc_processor
-from scripts.ingest_dfc.dfc_row.dfc_row import DfcRow, validate_csv_columns
+from scripts.ingest_dfc.dfc.csv_processor import (
+    DfcRow,
+    ProcessFunc,
+    ValidateFunc,
+    get_dfc_processor,
+    validate_csv_columns,
+)
 
 
 def read(csv_file_path: Path, process: ProcessFunc) -> None:

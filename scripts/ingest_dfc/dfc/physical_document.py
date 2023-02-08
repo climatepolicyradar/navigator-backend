@@ -24,7 +24,7 @@ def physical_document_from_row(db: Session, row: DfcRow, result: dict[str, Any])
         dict : a created dictionary to describe what was created.
     """
     document_date = (
-        datetime(row.year, 1, 1, 0, 0, 0, PublicationDateAccuracy.YEAR_ACCURACY.value)
+        datetime(row.year, 1, 1, 0, 0, 0, PublicationDateAccuracy.YEAR_ACCURACY)
         if row.year
         else UNDEFINED_DATA_TIME
     )

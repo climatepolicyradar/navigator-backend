@@ -7,23 +7,23 @@ from sqlalchemy.orm import Session
 from app.db.session import Base
 
 
-class PublicationDateAccuracy(enum.Enum):
-    """Uses the microsecond part of a datetime to record its accuracy.
-
-    This assumes that the application will never need microsecond.
+class PublicationDateAccuracy(enum.IntEnum):
     """
+    To be used in the microsecond field of a datetime to record its accuracy.
+    """
+    NOT_DEFINED = 000000
+    YEAR_ACCURACY = 100000
+    MONTH_ACCURACY = 200000
+    DAY_ACCURACY = 300000
+    HOUR_ACCURACY = 400000
+    MINUTE_ACCURACY = 500000
+    SECOND_ACCURACY = 600000
 
-    SECOND_ACCURACY = 100000
-    MINUTE_ACCURACY = 200000
-    HOUR_ACCURACY = 300000
-    DAY_ACCURACY = 400000
-    MONTH_ACCURACY = 500000
-    YEAR_ACCURACY = 600000
-    NOT_DEFINED = 999999
 
 
 """An undefined datetime"""
-UNDEFINED_DATA_TIME = datetime(1900, 1, 1, 0, 0, 0, 999999)
+# FIXME: We may choose to set this to `None` instead & make the date field nullable
+UNDEFINED_DATA_TIME = datetime(1900, 1, 1, 0, 0, 0, PublicationDateAccuracy.NOT_DEFINED)
 
 
 DbModel = TypeVar('DbModel', bound=Base)
