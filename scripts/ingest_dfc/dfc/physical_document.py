@@ -5,9 +5,10 @@ from sqlalchemy.orm import Session
 
 from app.db.models.document import PhysicalDocument
 from app.db.models.document.physical_document import Language, PhysicalDocumentLanguage
-from scripts.ingest_dfc.dfc_row.dfc_row import DfcRow
+
 from scripts.ingest_dfc.utils import (
     UNDEFINED_DATA_TIME,
+    DfcRow,
     PublicationDateAccuracy,
     to_dict,
 )
@@ -49,7 +50,5 @@ def physical_document_from_row(db: Session, row: DfcRow, result: dict[str, Any])
         db.add(lang)
         db.commit()
         result["physical_document_language"] = to_dict(physical_document_language)
-    else:
-        raise ValueError(f"Unknown language: {row.language}")
 
     return physical_document

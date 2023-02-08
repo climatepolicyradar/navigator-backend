@@ -9,13 +9,13 @@ import sys
 from pathlib import Path
 
 from app.db.session import SessionLocal
-from scripts.ingest_dfc.dfc.csv_processor import (
-    DfcRow,
+
+from scripts.ingest_dfc.dfc.processor import (
     ProcessFunc,
     ValidateFunc,
     get_dfc_processor,
-    validate_csv_columns,
 )
+from scripts.ingest_dfc.utils import DfcRow, validate_csv_columns
 
 
 def read(csv_file_path: Path, process: ProcessFunc) -> None:

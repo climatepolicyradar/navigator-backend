@@ -15,11 +15,11 @@ from app.db.models.law_policy import (
     Slug,
     Variant,
 )
-from scripts.ingest_dfc.dfc_row.dfc_row import DfcRow
-from scripts.ingest_dfc.utils import get_or_create, to_dict
-from scripts.ingest_dfc.dfc_row.physical_document_from_row import (
+
+from scripts.ingest_dfc.dfc.physical_document import (
     physical_document_from_row,
 )
+from scripts.ingest_dfc.utils import DfcRow, get_or_create, to_dict
 
 
 def family_from_row(
@@ -78,23 +78,22 @@ def _maybe_create_family(db: Session, row: DfcRow, org_id: int, result: dict[str
     print(f"- Getting Geography for {row.geography_iso}")
     geography = _get_geography(db, row)
 
-    if not _validate_family_name(db, row.family_name):
-        # FIXME: This should not be raised if the slugs are different
-        # because they are in fact different families
+    if not _validate_family_name(db, row.family_name, row.cpr_family_id):
         raise ValueError(
             f"Processing row {row.row_number} got family {row.family_name} "
-            "that is only different by case!"
+            "that is different to the existing family title for family id "
+            f"{row.cpr_family_id}"
         )
     family = get_or_create(
         db,
         Family,
-        title=row.family_name,
+        import_id=row.cpr_family_id,
         extra={
+            "title": row.family_name,
             "geography_id": geography.id,
             "category_name": category.category_name,
             "family_type": family_type.type_name,
             "description": row.family_summary,
-            "import_id": row.cpr_family_id,
         },
         after_create=_create_family_links,
     )
@@ -143,15 +142,12 @@ def _maybe_create_family_document(
     return family_document
 
 
-def _validate_family_name(db: Session, family_name: str) -> bool:
-    matches_lower = (
-        db.query(Family)
-        .filter(func.lower(Family.title) == func.lower(family_name))
-        .count()
-    )
-    matches = db.query(Family).filter(Family.title == family_name).count()
+def _validate_family_name(db: Session, family_name: str, import_id: str) -> bool:
+    matching_family = db.query(Family).filter(Family.import_id == import_id).first()
+    if matching_family is None:
+        return True
 
-    return matches == matches_lower
+    return matching_family.title.strip().lower() == family_name.strip().lower()
 
 
 def _get_geography(db: Session, row: DfcRow) -> Geography:

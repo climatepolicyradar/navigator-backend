@@ -4,8 +4,8 @@ from sqlalchemy.orm import Session
 
 from app.db.models.law_policy import Collection
 from app.db.models.law_policy.collection import CollectionFamily, CollectionOrganisation
-from scripts.ingest_dfc.dfc_row.dfc_row import DfcRow
-from scripts.ingest_dfc.utils import get_or_create, to_dict
+
+from scripts.ingest_dfc.utils import DfcRow, get_or_create, to_dict
 
 
 def collection_from_row(
