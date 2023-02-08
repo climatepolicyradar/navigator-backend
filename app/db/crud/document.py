@@ -703,6 +703,28 @@ def update_family(
     return docs_updated_no
 
 
+def validate(
+    update_func: callable,
+    db: Session,
+    doc_id: str,
+    field: str,
+    update_value: Union[str, int],
+    original_value: Union[str, int],
+) -> None:
+    """Validate the that the number of documents that are updated doesn't exceed 1."""
+    docs_updated_no = update_func(db, doc_id, field, update_value)
+
+    if docs_updated_no != 1:
+        raise RuntimeError(
+            f"Expected to update 1 document but updated {docs_updated_no} during the update of: "
+            f"{doc_id}:{field} from '{original_value}' -> '{update_value}' with {update_func.__name__}"
+        )
+
+    _LOGGER.info(
+        f"Updated {doc_id}:{field} from '{original_value}' -> '{update_value}' with {update_func.__name__}"
+    )
+
+
 def start_update(
     db: Session,
     document_updates: dict[str, List[UpdateResult]],
@@ -711,53 +733,33 @@ def start_update(
     _LOGGER.info(f"Starting document updates.")
     try:
         with db.begin_nested():
-            for document, update in document_updates.values():
-                if update.type == "PhysicalDocument":
-                    docs_updated_no = update_physical_document(
-                        db=db,
-                        doc_id=document,
-                        field=update.field,
-                        update_value=update.csv_value,
-                    )
-
-                    # TODO Look at wrapper to reduce duplication
-                    if docs_updated_no != 1:
-                        raise RuntimeError(
-                            f"Expected to update 1 document but updated {docs_updated_no} during the update of: "
-                            f"{document}:{update.field} from '{update.db_value}' -> "
-                            f"'{update.csv_value}'"
+            for document, updates in document_updates.items():
+                for update in updates:
+                    if update.type == "PhysicalDocument":
+                        validate(
+                            update_func=update_physical_document,
+                            db=db,
+                            doc_id=document,
+                            field=update.field,
+                            update_value=update.csv_value,
+                            original_value=update.db_value,
                         )
 
-                    _LOGGER.info(
-                        f"Updated {document}:{update.field} from '{update.db_value}' -> "
-                        f"'{update.csv_value}'"
-                    )
-
-                elif update.type == "Family":
-                    docs_updated_no = update_family(
-                        db=db,
-                        doc_id=document,
-                        field=update.field,
-                        update_value=update.csv_value,
-                    )
-
-                    # TODO Look at wrapper to reduce duplication
-                    if docs_updated_no != 1:
-                        raise RuntimeError(
-                            f"Expected to update 1 document but updated {docs_updated_no} during the update of: "
-                            f"{document}:{update.field} from '{update.db_value}' -> "
-                            f"'{update.csv_value}'"
+                    elif update.type == "Family":
+                        validate(
+                            update_func=update_family,
+                            db=db,
+                            doc_id=document,
+                            field=update.field,
+                            update_value=update.csv_value,
+                            original_value=update.db_value,
                         )
 
-                    _LOGGER.info(
-                        f"Updated {document}:{update.field} from '{update.db_value}' -> "
-                        f"'{update.csv_value}'"
-                    )
-                else:
-                    _LOGGER.info(
-                        f"Skipped {document}:{update.field} from '{update.db_value}' -> "
-                        f"'{update.csv_value}', update type not known."
-                    )
+                    else:
+                        _LOGGER.info(
+                            f"Skipped {document}:{update.type}:{update.field} from '{update.db_value}' -> "
+                            f"'{update.csv_value}', update type not known."
+                        )
         db.commit()
     except Exception as e:
         _LOGGER.exception("Unexpected error updating document entries")
@@ -887,7 +889,6 @@ def remove_document_relationship(
 
 
 def get_postfix_map(db: Session, doc_ids: list[str]) -> Mapping[str, str]:
-
     postfix_map = {
         doc_id: postfix if postfix else ""
         for doc_id, postfix in db.query(Document.import_id, Document.postfix).filter(

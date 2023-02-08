@@ -340,16 +340,26 @@ def import_law_policy_dfc(
 
         # TODO create new physical docs -> families -> collections as background task
 
-        if bool(docs_with_updates):
-            background_tasks.add_task(start_update, db, docs_with_updates)
-            _LOGGER.info(
-                "Document update background task added for physical document updates."
-            )
+        background_tasks.add_task(start_update, db, docs_with_updates)
 
         json_s3_location = "No data to write."
-        if bool(pipeline_input_data.new_documents) or bool(
-            pipeline_input_data.updated_documents
-        ):
+        if bool(docs_to_create) or bool(docs_with_updates):
+            # TODO do this nicer
+            pipeline_update_docs = {}
+            for doc in docs_with_updates:
+                for update in docs_with_updates[doc]:
+                    # TODO extend pipeline update taxonomy
+                    if (
+                        update.type == "PhysicalDocument"
+                        and update.field == "source_url"
+                    ):
+                        pipeline_update_docs[doc] = docs_with_updates[doc]
+
+            pipeline_input_data = InputData(
+                new_documents=docs_to_create,
+                updated_documents=pipeline_update_docs,
+            )
+
             result: Union[S3Document, bool] = write_json_to_s3(
                 s3_client=s3_client, json_data=pipeline_input_data.to_json()
             )
@@ -367,13 +377,12 @@ def import_law_policy_dfc(
             )
 
         return BulkImportValidatedResult(
-            document_count=len(pipeline_input_data.new_documents)
-            + len(existing_import_ids),
-            document_added_count=len(pipeline_input_data.new_documents),
-            document_updated_count=len(pipeline_input_data.updated_documents),
-            document_updated_ids=list(pipeline_input_data.updated_documents.keys()),
-            document_not_added_count=len(not_added_import_ids),
-            document_not_added_ids=not_added_import_ids,
+            document_count=len(docs_to_create) + len(existing_import_ids),
+            document_added_count=len(docs_to_create),
+            document_updated_count=len(docs_with_updates),
+            document_updated_ids=list(docs_with_updates.keys()),
+            document_not_added_count=len(docs_skipped),
+            document_not_added_ids=docs_skipped,
             csv_s3_location=json_s3_location,
         )
 

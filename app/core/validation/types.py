@@ -73,17 +73,15 @@ class InputData(BaseModel):
     """Expected input data containing both document updates and new documents for the ingest stage of the pipeline."""
 
     new_documents: List[dict]
-    updated_documents: dict[str, dict[str, UpdateResult]]
+    updated_documents: dict[str, List[UpdateResult]]
 
     def to_json(self) -> dict:
         updated_documents_json = {}
-        for document_id, update_result in self.updated_documents.items():
-            updated_documents_json[document_id] = {
-                field_result: json.loads(
-                    json.dumps(update_result[field_result].__dict__)
-                )
-                for field_result in update_result
-            }
+        for update in self.updated_documents:
+            for update_result in self.updated_documents[update]:
+                updated_documents_json[update] = [
+                    json.loads(json.dumps(update_result.__dict__))
+                ]
 
         return {
             "new_documents": self.new_documents,
