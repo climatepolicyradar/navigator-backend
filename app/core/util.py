@@ -8,7 +8,7 @@ from typing import Any, Optional, Union, List, Literal, Sequence
 from pydantic.dataclasses import dataclass, _T
 from sqlalchemy.orm import Session
 
-from app.core.dfc_row import DfcRow
+from app.core.import_row import CCLWImportRow
 from app.core.validation.types import UpdateResult
 from app.db.models.document import PhysicalDocument
 from app.db.models.law_policy import FamilyDocument, Family
@@ -81,18 +81,18 @@ def tree_table_to_json(
     return json_out
 
 
-def document_updates(row: DfcRow, db: Session) -> List[UpdateResult]:
+def document_updates(row: CCLWImportRow, db: Session) -> List[UpdateResult]:
     """Identify any updates to the document by combining the results of various database queries."""
 
-    return physical_document_updated(db, row) + family_updated(db, row)
+    return physical_document_updates(db, row) + family_updates(db, row)
 
 
-def family_updated(db: Session, row: DfcRow) -> List[UpdateResult]:
+def family_updates(db: Session, row: CCLWImportRow) -> List[UpdateResult]:
     """Identify any updates to the family relating to the row by comparing against the relevant tables in
     the database.
 
     Args:
-        row (DfcRow): the row from the CSV.
+        row (CCLWImportRow): the row from the CSV.
         db (Session): the database session.
 
     Returns:
@@ -130,11 +130,11 @@ def family_updated(db: Session, row: DfcRow) -> List[UpdateResult]:
     ]
 
 
-def physical_document_updated(db: Session, row: DfcRow) -> List[UpdateResult]:
+def physical_document_updates(db: Session, row: CCLWImportRow) -> List[UpdateResult]:
     """Identify any updates to the physical document by comparing against the relevant tables in the database
 
     Args:
-        row (DfcRow): the row from the CSV.
+        row (CCLWImportRow): the row from the CSV.
         db (Session): the database session.
 
     Returns:
@@ -180,3 +180,14 @@ def physical_document_updated(db: Session, row: DfcRow) -> List[UpdateResult]:
         ]
         if result.updated
     ]
+
+
+def affects_pipline(update: UpdateResult) -> bool:
+    """Determine if the update affects the pipeline and should thus trigger processing of the document."""
+    if (
+        (update.type == "PhysicalDocument" and update.field == "source_url")
+        or (update.type == "Family" and update.field == "name")
+        or (update.type == "Family" and update.field == "description")
+    ):
+        return True
+    return False

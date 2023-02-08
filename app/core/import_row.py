@@ -1,5 +1,11 @@
+import csv
 import sys
+from io import StringIO
 from typing import Sequence
+import logging
+from fastapi import UploadFile
+
+_LOGGER = logging.getLogger(__name__)
 
 REQUIRED_COLUMNS = [
     "ID",
@@ -46,7 +52,7 @@ def validate_csv_columns(column_names: Sequence[str]) -> bool:
     return VALID_COLUMN_NAMES.issubset(set(column_names))
 
 
-class DfcRow:
+class CCLWImportRow:
     id: str = ""
     document_id: str = ""
     cclw_description: str = ""
@@ -124,3 +130,21 @@ class DfcRow:
             setattr(self, key, int(value) if value else 0)
         else:
             setattr(self, key, value)
+
+
+class CCLWImportRowGenerator:
+    """A generator for CCLW import row objects for a given csv file contents."""
+
+    def __init__(self, law_policy_csv: UploadFile):
+        file_contents = law_policy_csv.file.read().decode("utf8")
+        self.reader = csv.DictReader(StringIO(initial_value=file_contents))
+
+        if self.reader.fieldnames is None:
+            _LOGGER.info("No fields in CSV!")
+            sys.exit(11)
+        assert validate_csv_columns(self.reader.fieldnames)
+
+    def get_rows(self):
+        """Generate row objects for the csv source."""
+        for row in self.reader:
+            yield CCLWImportRow(row)

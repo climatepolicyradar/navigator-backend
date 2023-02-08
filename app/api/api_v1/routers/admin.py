@@ -1,7 +1,4 @@
-import csv
-import json
 import logging
-import sys
 from io import StringIO
 from typing import cast, Union
 
@@ -28,13 +25,13 @@ from app.api.api_v1.schemas.user import User, UserCreateAdmin
 from app.core.auth import get_current_active_superuser
 from app.core.aws import S3Document
 from app.core.aws import get_s3_client
-from app.core.dfc_row import validate_csv_columns, DfcRow
 from app.core.email import (
     send_new_account_email,
     send_password_reset_email,
 )
+from app.core.import_row import CCLWImportRowGenerator
 from app.core.ratelimit import limiter
-from app.core.util import document_updates, family_updated
+from app.core.util import document_updates, affects_pipline
 from app.core.validation import IMPORT_ID_MATCHER
 from app.core.validation.cclw.law_policy.process_csv import (
     extract_documents,
@@ -276,24 +273,6 @@ async def request_password_reset(
     return True
 
 
-class DfcRowGenerator:
-    """A generator for dfc row objects for a given csv file contents."""
-
-    def __init__(self, law_policy_csv: UploadFile):
-        file_contents = law_policy_csv.file.read().decode("utf8")
-        self.reader = csv.DictReader(StringIO(initial_value=file_contents))
-
-        if self.reader.fieldnames is None:
-            _LOGGER.info("No fields in CSV!")
-            sys.exit(11)
-        assert validate_csv_columns(self.reader.fieldnames)
-
-    def get_rows(self):
-        """Generate row objects for the csv source."""
-        for row in self.reader:
-            yield DfcRow(row)
-
-
 @r.post(
     "/bulk-imports/cclw/law-policy-dfc",
     response_model=BulkImportValidatedResult,
@@ -322,13 +301,13 @@ def import_law_policy_dfc(
         docs_with_updates = {}
         docs_to_create = []
         docs_skipped = []
-        existing_import_ids = [id[0] for id in db.query(FamilyDocument.import_id)]
+        existing_import_ids = [id_[0] for id_ in db.query(FamilyDocument.import_id)]
         _LOGGER.info(
             "Got existing import ids (CPR Document ID).",
             extra={"props": {"existing_import_ids_count": len(existing_import_ids)}},
         )
 
-        for row_object in DfcRowGenerator(law_policy_csv).get_rows():
+        for row_object in CCLWImportRowGenerator(law_policy_csv).get_rows():
             if row_object.cpr_document_id in existing_import_ids:
                 updates = document_updates(row=row_object, db=db)
                 if bool(updates):
@@ -344,16 +323,13 @@ def import_law_policy_dfc(
 
         json_s3_location = "No data to write."
         if bool(docs_to_create) or bool(docs_with_updates):
-            # TODO do this nicer
             pipeline_update_docs = {}
-            for doc in docs_with_updates:
-                for update in docs_with_updates[doc]:
-                    # TODO extend pipeline update taxonomy
-                    if (
-                        update.type == "PhysicalDocument"
-                        and update.field == "source_url"
-                    ):
-                        pipeline_update_docs[doc] = docs_with_updates[doc]
+            for doc, updates in docs_with_updates.items():
+                [
+                    pipeline_update_docs.setdefault(doc, []).append(update_)
+                    for update_ in updates
+                    if affects_pipline(update_)
+                ]
 
             pipeline_input_data = InputData(
                 new_documents=docs_to_create,
