@@ -3,6 +3,7 @@ from typing import Any
 
 from sqlalchemy.orm import Session
 
+from app.db.models.deprecated import Document
 from app.db.models.document import PhysicalDocument
 from app.db.models.document.physical_document import Language, PhysicalDocumentLanguage
 
@@ -14,7 +15,9 @@ from scripts.ingest_dfc.utils import (
 )
 
 
-def physical_document_from_row(db: Session, row: DfcRow, result: dict[str, Any]) -> PhysicalDocument:
+def physical_document_from_row(
+    db: Session, row: DfcRow, existing_document: Document, result: dict[str, Any]
+) -> PhysicalDocument:
     """Creates the document part of the schema from the row.
 
     Args:
@@ -29,11 +32,12 @@ def physical_document_from_row(db: Session, row: DfcRow, result: dict[str, Any])
         if row.year
         else UNDEFINED_DATA_TIME
     )
-    # TODO: Use event data too to inform publication date
     physical_document = PhysicalDocument(
         title=row.document_title,
-        source_url=row.documents,
+        source_url=row.documents, # FIXME: parse document row
         date=document_date,
+        md5_sum=existing_document.md5_sum,
+        format=existing_document.content_type,
     )
     db.add(physical_document)
     db.commit()
