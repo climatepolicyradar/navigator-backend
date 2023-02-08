@@ -81,8 +81,14 @@ def tree_table_to_json(
     return json_out
 
 
-def physical_document_updated(row: DfcRow, db: Session) -> dict[str, UpdateResult]:
-    """Identify any updates to the physical documents relating to the row by comparing against the relevant tables in
+def document_updates(row: DfcRow, db: Session) -> List[UpdateResult]:
+    """Identify any updates to the document by combining the results of various database queries."""
+
+    return physical_document_updated(db, row) + family_updated(db, row)
+
+
+def family_updated(db: Session, row: DfcRow) -> List[UpdateResult]:
+    """Identify any updates to the family relating to the row by comparing against the relevant tables in
     the database.
 
     Args:
@@ -92,7 +98,45 @@ def physical_document_updated(row: DfcRow, db: Session) -> dict[str, UpdateResul
     Returns:
         dict[field_name: UpdateResult(field=value csv_value=value, db_value=value, update=bool, type=table_name)]
     """
+    family_document = (
+        db.query(FamilyDocument)
+        .filter(FamilyDocument.import_id == row.cpr_document_id)
+        .scalar()
+    )
 
+    family = db.query(Family).filter(Family.id == family_document.family_id).scalar()
+
+    return [
+        result
+        for result in [
+            UpdateResult(
+                db_value=family.title,
+                csv_value=row.family_name,
+                updated=family.title != row.family_name,
+                type="Family",
+                field="title",
+            ),
+            UpdateResult(
+                db_value=family.description,
+                csv_value=row.family_summary,
+                updated=family.description != row.family_summary,
+                type="Family",
+                field="description",
+            ),
+        ]
+        if result.updated
+    ]
+
+
+def physical_document_updated(db: Session, row: DfcRow) -> List[UpdateResult]:
+    """Identify any updates to the physical document by comparing against the relevant tables in the database
+
+    Args:
+        row (DfcRow): the row from the CSV.
+        db (Session): the database session.
+
+    Returns:
+        List[UpdateResult(csv_value=value, db_value=value, update=bool, type=table_name, field=value)]"""
     family_document = (
         db.query(FamilyDocument)
         .filter(FamilyDocument.import_id == row.cpr_document_id)
@@ -114,66 +158,23 @@ def physical_document_updated(row: DfcRow, db: Session) -> dict[str, UpdateResul
     )
     csv_source_url = row.documents[0]
 
-    update_result = {
-        "title": UpdateResult(
-            db_value=physical_document.title,
-            csv_value=row.document_title,
-            updated=physical_document.title != row.document_title,
-            type="PhysicalDocument",
-        ),
-        "source_url": UpdateResult(
-            db_value=db_source_url,
-            csv_value=csv_source_url,
-            updated=db_source_url != csv_source_url,
-            type="PhysicalDocument",
-        ),
-        # "date": UpdateResult(
-        #     db_value=physical_document.date.year,
-        #     csv_value=str(row.year),
-        #     updated=physical_document.date.year != row.year,
-        # ),
-        # "format": UpdateResult(
-        #     db_value=physical_document.format,
-        #     csv_value=row.document_type,
-        #     updated=physical_document.format != row.document_type,
-        # ),
-    }
-
-    return {field: result for field, result in update_result.items() if result.updated}
-
-
-def family_updated(row: DfcRow, db: Session) -> dict[str, UpdateResult]:
-    """Identify any updates to the family relating to the row by comparing against the relevant tables in
-    the database.
-
-    Args:
-        row (DfcRow): the row from the CSV.
-        db (Session): the database session.
-
-    Returns:
-        dict[field_name: UpdateResult(field=value csv_value=value, db_value=value, update=bool, type=table_name)]
-    """
-    family_document = (
-        db.query(FamilyDocument)
-        .filter(FamilyDocument.import_id == row.cpr_document_id)
-        .scalar()
-    )
-
-    family = db.query(Family).filter(Family.id == family_document.family_id).scalar()
-
-    update_result = {
-        "title": UpdateResult(
-            db_value=family.title,
-            csv_value=row.family_name,
-            updated=family.title != row.family_name,
-            type="Family",
-        ),
-        "description": UpdateResult(
-            db_value=family.description,
-            csv_value=row.family_summary,
-            updated=family.description != row.family_summary,
-            type="Family",
-        ),
-    }
-
-    return {field: result for field, result in update_result.items() if result.updated}
+    return [
+        result
+        for result in [
+            UpdateResult(
+                db_value=physical_document.title,
+                csv_value=row.document_title,
+                updated=physical_document.title != row.document_title,
+                type="PhysicalDocument",
+                field="title",
+            ),
+            UpdateResult(
+                db_value=db_source_url,
+                csv_value=csv_source_url,
+                updated=db_source_url != csv_source_url,
+                type="PhysicalDocument",
+                field="source_url",
+            ),
+        ]
+        if result.updated
+    ]

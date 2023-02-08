@@ -128,23 +128,23 @@ def write_json_to_s3(s3_client: S3Client, json_data: dict) -> Union[S3Document, 
 
     Args:
         s3_client (S3Client): a valid S3 client
-        file_contents (str): the contents of the file as a string
+        json_data (dict): the data in json format
     """
     current_datetime = datetime.now().isoformat().replace(":", ".")
-    csv_object_key = f"{INGEST_TRIGGER_ROOT}/{current_datetime}/bulk-import.json"
+    json_object_key = f"{INGEST_TRIGGER_ROOT}/{current_datetime}/bulk-import.json"
     _LOGGER.info(
         "Writing json file into S3",
         extra={
             "props": {
                 "bucket": PIPELINE_BUCKET,
-                "file": csv_object_key,
+                "file": json_object_key,
                 "json_data": json_data,
             }
         },
     )
     return s3_client.upload_fileobj(
         bucket=PIPELINE_BUCKET,
-        key=csv_object_key,
+        key=json_object_key,
         content_type="application/json",
         fileobj=BytesIO(json.dumps(json_data).encode("utf8")),
     )

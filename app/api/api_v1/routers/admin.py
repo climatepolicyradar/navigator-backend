@@ -34,7 +34,7 @@ from app.core.email import (
     send_password_reset_email,
 )
 from app.core.ratelimit import limiter
-from app.core.util import physical_document_updated, family_updated
+from app.core.util import document_updates, family_updated
 from app.core.validation import IMPORT_ID_MATCHER
 from app.core.validation.cclw.law_policy.process_csv import (
     extract_documents,
@@ -276,6 +276,24 @@ async def request_password_reset(
     return True
 
 
+class DfcRowGenerator:
+    """A generator for dfc row objects for a given csv file contents."""
+
+    def __init__(self, law_policy_csv: UploadFile):
+        file_contents = law_policy_csv.file.read().decode("utf8")
+        self.reader = csv.DictReader(StringIO(initial_value=file_contents))
+
+        if self.reader.fieldnames is None:
+            _LOGGER.info("No fields in CSV!")
+            sys.exit(11)
+        assert validate_csv_columns(self.reader.fieldnames)
+
+    def get_rows(self):
+        """Generate row objects for the csv source."""
+        for row in self.reader:
+            yield DfcRow(row)
+
+
 @r.post(
     "/bulk-imports/cclw/law-policy-dfc",
     response_model=BulkImportValidatedResult,
@@ -299,61 +317,34 @@ def import_law_policy_dfc(
         },
     )
     try:
-        # TODO move into a generator
-        file_contents = law_policy_csv.file.read().decode("utf8")
-        reader = csv.DictReader(StringIO(initial_value=file_contents))
-
-        if reader.fieldnames is None:
-            _LOGGER.info("No fields in CSV!")
-            sys.exit(11)
-        assert validate_csv_columns(reader.fieldnames)
-
         # TODO validate metadata
-        not_added_import_ids = []
+
+        docs_with_updates = {}
+        docs_to_create = []
+        docs_skipped = []
         existing_import_ids = [id[0] for id in db.query(FamilyDocument.import_id)]
         _LOGGER.info(
             "Got existing import ids (CPR Document ID).",
             extra={"props": {"existing_import_ids_count": len(existing_import_ids)}},
         )
 
-        pipeline_input_data = InputData(new_documents=[], updated_documents={})
-        family_updates = {}
-
-        for row in reader:
-            row_object = DfcRow(row)
-
+        for row_object in DfcRowGenerator(law_policy_csv).get_rows():
             if row_object.cpr_document_id in existing_import_ids:
-                physical_document_update = physical_document_updated(
-                    row=row_object, db=db
-                )
-                if bool(physical_document_update):
-                    pipeline_input_data.updated_documents[
-                        row_object.cpr_document_id
-                    ] = physical_document_update
-
-                family_update = family_updated(row=row_object, db=db)
-                if bool(family_update):
-                    family_updates[row_object.cpr_document_id] = family_update
-
+                updates = document_updates(row=row_object, db=db)
+                if bool(updates):
+                    docs_with_updates[row_object.cpr_document_id] = updates
+                else:
+                    docs_skipped.append(row_object.cpr_document_id)
             else:
-                not_added_import_ids.append(row_object.cpr_document_id)
-                pipeline_input_data.new_documents.append(
-                    json.loads(json.dumps(row_object.__dict__))
-                )
+                docs_to_create.append(row_object)
 
         # TODO create new physical docs -> families -> collections as background task
 
-        if bool(pipeline_input_data.updated_documents):
-            background_tasks.add_task(
-                start_update, db, pipeline_input_data.updated_documents
-            )
+        if bool(docs_with_updates):
+            background_tasks.add_task(start_update, db, docs_with_updates)
             _LOGGER.info(
                 "Document update background task added for physical document updates."
             )
-
-        if bool(family_updates):
-            background_tasks.add_task(start_update, db, family_updates)
-            _LOGGER.info("Document update background task added for family updates.")
 
         json_s3_location = "No data to write."
         if bool(pipeline_input_data.new_documents) or bool(
