@@ -1,3 +1,4 @@
+import datetime
 import logging
 from hashlib import md5
 from typing import Mapping, Sequence, Set, Tuple, Union, cast
@@ -61,7 +62,7 @@ from app.db.models.deprecated import (
 )
 from app.db.models.deprecated import DocumentType
 from app.db.models.document import PhysicalDocument
-from app.db.models.law_policy import Geography, FamilyDocument
+from app.db.models.law_policy import Geography, FamilyDocument, Family
 
 _LOGGER = logging.getLogger(__file__)
 
@@ -663,6 +664,45 @@ def start_import(
     write_documents_to_s3(s3_client=s3_client, documents=document_parser_inputs)
 
 
+def update_physical_document(
+    db: Session, doc_id: str, field: str, update_value: Union[str, int]
+) -> int:
+    """Update a physical document with a new value for a field."""
+    family_document = (
+        db.query(FamilyDocument).filter(FamilyDocument.import_id == doc_id).scalar()
+    )
+
+    docs_updated_no = (
+        db.query(PhysicalDocument)
+        .filter(PhysicalDocument.id == family_document.physical_document_id)
+        .update(
+            {field: update_value},
+            synchronize_session="fetch",
+        )
+    )
+
+    return docs_updated_no
+
+
+def update_family(
+    db: Session, doc_id: str, field: str, update_value: Union[str, int]
+) -> int:
+    """Update a family with a new value for a field."""
+    family_document = (
+        db.query(FamilyDocument).filter(FamilyDocument.import_id == doc_id).scalar()
+    )
+
+    docs_updated_no = (
+        db.query(Family)
+        .filter(Family.id == family_document.family_id)
+        .update(
+            {field: update_value},
+            synchronize_session="fetch",
+        )
+    )
+    return docs_updated_no
+
+
 def start_update(
     db: Session,
     document_updates: dict[str, dict[str, UpdateResult]],
@@ -671,28 +711,41 @@ def start_update(
     _LOGGER.info(f"Starting document updates.")
     try:
         with db.begin_nested():
-            for document in document_updates:
+            for document, update in document_updates.values():
                 for field in document_updates[document]:
                     if (
                         document_updates[document][field].type == "PhysicalDocument"
                         and document_updates[document][field].updated
                     ):
-                        family_document = (
-                            db.query(FamilyDocument)
-                            .filter(FamilyDocument.import_id == document)
-                            .scalar()
+                        docs_updated_no = update_physical_document(
+                            db=db,
+                            doc_id=document,
+                            field=field,
+                            update_value=document_updates[document][field].csv_value,
                         )
 
-                        docs_updated_no = (
-                            db.query(PhysicalDocument)
-                            .filter(
-                                PhysicalDocument.id
-                                == family_document.physical_document_id
+                        # TODO Look at wrapper to reduce duplication
+                        if docs_updated_no != 1:
+                            raise RuntimeError(
+                                f"Expected to update 1 document but updated {docs_updated_no} during the update of: "
+                                f"{document}:{field} from '{document_updates[document][field].db_value}' -> "
+                                f"'{document_updates[document][field].csv_value}'"
                             )
-                            .update(
-                                {field: document_updates[document][field].csv_value},
-                                synchronize_session="fetch",
-                            )
+
+                        _LOGGER.info(
+                            f"Updated {document}:{field} from '{document_updates[document][field].db_value}' -> "
+                            f"'{document_updates[document][field].csv_value}'"
+                        )
+
+                    elif (
+                        document_updates[document][field].type == "Family"
+                        and document_updates[document][field].updated
+                    ):
+                        docs_updated_no = update_family(
+                            db=db,
+                            doc_id=document,
+                            field=field,
+                            update_value=document_updates[document][field].csv_value,
                         )
 
                         if docs_updated_no != 1:

@@ -11,7 +11,7 @@ from sqlalchemy.orm import Session
 from app.core.dfc_row import DfcRow
 from app.core.validation.types import UpdateResult
 from app.db.models.document import PhysicalDocument
-from app.db.models.law_policy import FamilyDocument
+from app.db.models.law_policy import FamilyDocument, Family
 from app.db.session import Base
 
 CDN_DOMAIN: str = os.getenv("CDN_DOMAIN", "cdn.climatepolicyradar.org")
@@ -90,7 +90,7 @@ def physical_document_updated(row: DfcRow, db: Session) -> dict[str, UpdateResul
         db (Session): the database session.
 
     Returns:
-        dict[physical_document_id: UpdateResult(field=value csv_value=value, db_value=value, update=bool)]
+        dict[field_name: UpdateResult(field=value csv_value=value, db_value=value, update=bool, type=table_name)]
     """
 
     family_document = (
@@ -137,6 +137,43 @@ def physical_document_updated(row: DfcRow, db: Session) -> dict[str, UpdateResul
         #     csv_value=row.document_type,
         #     updated=physical_document.format != row.document_type,
         # ),
+    }
+
+    return {field: result for field, result in update_result.items() if result.updated}
+
+
+def family_updated(row: DfcRow, db: Session) -> dict[str, UpdateResult]:
+    """Identify any updates to the family relating to the row by comparing against the relevant tables in
+    the database.
+
+    Args:
+        row (DfcRow): the row from the CSV.
+        db (Session): the database session.
+
+    Returns:
+        dict[field_name: UpdateResult(field=value csv_value=value, db_value=value, update=bool, type=table_name)]
+    """
+    family_document = (
+        db.query(FamilyDocument)
+        .filter(FamilyDocument.import_id == row.cpr_document_id)
+        .scalar()
+    )
+
+    family = db.query(Family).filter(Family.id == family_document.family_id).scalar()
+
+    update_result = {
+        "title": UpdateResult(
+            db_value=family.title,
+            csv_value=row.family_name,
+            updated=family.title != row.family_name,
+            type="Family",
+        ),
+        "description": UpdateResult(
+            db_value=family.description,
+            csv_value=row.family_summary,
+            updated=family.description != row.family_summary,
+            type="Family",
+        ),
     }
 
     return {field: result for field, result in update_result.items() if result.updated}

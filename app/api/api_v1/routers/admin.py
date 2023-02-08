@@ -34,7 +34,7 @@ from app.core.email import (
     send_password_reset_email,
 )
 from app.core.ratelimit import limiter
-from app.core.util import physical_document_updated
+from app.core.util import physical_document_updated, family_updated
 from app.core.validation import IMPORT_ID_MATCHER
 from app.core.validation.cclw.law_policy.process_csv import (
     extract_documents,
@@ -316,54 +316,53 @@ def import_law_policy_dfc(
             extra={"props": {"existing_import_ids_count": len(existing_import_ids)}},
         )
 
-        input_data = InputData(new_documents=[], updated_documents={})
+        pipeline_input_data = InputData(new_documents=[], updated_documents={})
+        family_updates = {}
 
         for row in reader:
             row_object = DfcRow(row)
 
             if row_object.cpr_document_id in existing_import_ids:
-                # TODO consider stacking these, we might have archives for a document or family updates etc.
-                update_results = physical_document_updated(row=row_object, db=db)
-                if bool(update_results):
-                    input_data.updated_documents[
+                physical_document_update = physical_document_updated(
+                    row=row_object, db=db
+                )
+                if bool(physical_document_update):
+                    pipeline_input_data.updated_documents[
                         row_object.cpr_document_id
-                    ] = update_results
-                    _LOGGER.info(
-                        "Updates found for document.",
-                        extra={
-                            "props": {
-                                "cpr_document_id": row_object.cpr_document_id,
-                                "update_results": [
-                                    {
-                                        field_result: json.loads(
-                                            json.dumps(
-                                                update_results[field_result].__dict__
-                                            )
-                                        )
-                                    }
-                                    for field_result in update_results
-                                ],
-                            }
-                        },
-                    )
+                    ] = physical_document_update
+
+                family_update = family_updated(row=row_object, db=db)
+                if bool(family_update):
+                    family_updates[row_object.cpr_document_id] = family_update
+
             else:
                 not_added_import_ids.append(row_object.cpr_document_id)
-                input_data.new_documents.append(
+                pipeline_input_data.new_documents.append(
                     json.loads(json.dumps(row_object.__dict__))
                 )
 
         # TODO create new physical docs -> families -> collections as background task
 
-        if bool(input_data.updated_documents):
-            background_tasks.add_task(start_update, db, input_data.updated_documents)
-            _LOGGER.info("Document update background task added.")
-
-        csv_s3_location = None
-        if bool(input_data.new_documents) or bool(input_data.updated_documents):
-            result: Union[S3Document, bool] = write_json_to_s3(
-                s3_client=s3_client, json_data=input_data.to_json()
+        if bool(pipeline_input_data.updated_documents):
+            background_tasks.add_task(
+                start_update, db, pipeline_input_data.updated_documents
             )
-            csv_s3_location = (
+            _LOGGER.info(
+                "Document update background task added for physical document updates."
+            )
+
+        if bool(family_updates):
+            background_tasks.add_task(start_update, db, family_updates)
+            _LOGGER.info("Document update background task added for family updates.")
+
+        json_s3_location = "No data to write."
+        if bool(pipeline_input_data.new_documents) or bool(
+            pipeline_input_data.updated_documents
+        ):
+            result: Union[S3Document, bool] = write_json_to_s3(
+                s3_client=s3_client, json_data=pipeline_input_data.to_json()
+            )
+            json_s3_location = (
                 "write failed" if type(result) is bool else str(result.url)
             )
             _LOGGER.info(
@@ -371,19 +370,20 @@ def import_law_policy_dfc(
                 extra={
                     "props": {
                         "superuser_email": current_user.email,
-                        "csv_s3_location": csv_s3_location,
+                        "csv_s3_location": json_s3_location,
                     }
                 },
             )
 
         return BulkImportValidatedResult(
-            document_count=len(input_data.new_documents) + len(existing_import_ids),
-            document_added_count=len(input_data.new_documents),
-            document_updated_count=len(input_data.updated_documents),
-            document_updated_ids=list(input_data.updated_documents.keys()),
+            document_count=len(pipeline_input_data.new_documents)
+            + len(existing_import_ids),
+            document_added_count=len(pipeline_input_data.new_documents),
+            document_updated_count=len(pipeline_input_data.updated_documents),
+            document_updated_ids=list(pipeline_input_data.updated_documents.keys()),
             document_not_added_count=len(not_added_import_ids),
             document_not_added_ids=not_added_import_ids,
-            csv_s3_location=csv_s3_location,
+            csv_s3_location=json_s3_location,
         )
 
     except ImportSchemaMismatchError as e:

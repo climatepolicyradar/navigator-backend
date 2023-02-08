@@ -65,7 +65,7 @@ class UpdateResult:
     db_value: Union[str, datetime.datetime]
     csv_value: Union[str, datetime.datetime]
     updated: bool
-    type: Literal["PhysicalDocument"]
+    type: Literal["PhysicalDocument", "Family"]
 
 
 class InputData(BaseModel):
