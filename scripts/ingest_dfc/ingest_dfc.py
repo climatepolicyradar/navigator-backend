@@ -37,8 +37,7 @@ def read(csv_file_path: Path, process: ProcessFunc) -> None:
         for row in reader:
             row_count += 1
             row_object = DfcRow.from_row(row_count, row)
-            if not process(row_object):
-                break
+            process(row_object)
 
         if errors:
             sys.exit(2)
