@@ -7,6 +7,7 @@ from app.db.models.app.users import Organisation
 from app.db.models.deprecated import Document
 from app.db.models.document import PhysicalDocument
 
+from app.db.session import SessionLocal
 from scripts.ingest_dfc.dfc.collection import collection_from_row
 from scripts.ingest_dfc.dfc.family import family_from_row
 from scripts.ingest_dfc.utils import DfcRow, get_or_create, to_dict
@@ -56,17 +57,14 @@ def ingest_row(db: Session, row: DfcRow) -> dict:
     print(f"- Creating Collection if required for import {import_id}")
     result["collection"] = {}
     collection_from_row(
-        db, row, cast(int, organisation.id), cast(int, family.id), result["collection"]
+        db, row, cast(int, organisation.id), family.import_id, result["collection"]
     )
 
     return result
 
 
-def get_dfc_processor(db: Session) -> Tuple[ValidateFunc, ProcessFunc]:
+def get_dfc_processor() -> Tuple[ValidateFunc, ProcessFunc]:
     """Gets the validation and process function for ingesting a CSV.
-
-    Args:
-        db (Session): the connection to the database
 
     Returns:
         Tuple[ValidateFunc, ProcessFunc]: A tuple of functions
@@ -74,6 +72,7 @@ def get_dfc_processor(db: Session) -> Tuple[ValidateFunc, ProcessFunc]:
 
     def validate() -> bool:
         """Returns True if we should process the row."""
+        db = SessionLocal()
         num_new_documents = db.query(PhysicalDocument).count()
         num_old_documents = db.query(Document).count()
         print(
@@ -86,11 +85,10 @@ def get_dfc_processor(db: Session) -> Tuple[ValidateFunc, ProcessFunc]:
         """Processes the row into the db."""
         sys.stdout.write(f"Processing row: {row.row_number}: ")
 
-        # Start a nested transaction to allow for rolling back all
-        # actions triggered by a row.
-        result = ingest_row(db, row=row)
-        sys.stdout.flush()
-        # mypprint(result)
+        # Sessions are meant to be short-lived - see https://docs.sqlalchemy.org/en/13/orm/session_basics.html
+        db = SessionLocal()
+        ingest_row(db, row=row)
         db.commit()
+        sys.stdout.flush()
 
     return validate, process

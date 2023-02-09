@@ -9,7 +9,7 @@ from scripts.ingest_dfc.utils import DfcRow, get_or_create, to_dict
 
 
 def collection_from_row(
-    db: Session, row: DfcRow, org_id: int, family_id: int, result: dict[str, Any]
+    db: Session, row: DfcRow, org_id: int, family_import_id: str, result: dict[str, Any]
 ) -> Optional[Collection]:
     """Creates the collection part of the schema from the row.
 
@@ -42,7 +42,7 @@ def collection_from_row(
     result["collection_organisation"] = to_dict(collection_organisation)
 
     collection_family = get_or_create(
-        db, CollectionFamily, collection_import_id=collection.import_id, family_id=family_id
+        db, CollectionFamily, collection_import_id=collection.import_id, family_import_id=family_import_id
     )
     result["collection_family"] = to_dict(collection_family)
 
