@@ -85,6 +85,8 @@ def get_dfc_processor() -> Tuple[ValidateFunc, ProcessFunc]:
         """Processes the row into the db."""
         sys.stdout.write(f"Processing row: {row.row_number}: ")
 
+        # Beginning a transaction here would create this issue: 
+        # https://stackoverflow.com/a/58991792
         # Sessions are meant to be short-lived - see https://docs.sqlalchemy.org/en/13/orm/session_basics.html
         db = SessionLocal()
         ingest_row(db, row=row)
