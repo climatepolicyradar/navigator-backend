@@ -16,7 +16,7 @@ class PhysicalDocument(Base):
     md5_sum = sa.Column(sa.Text, nullable=True)
     source_url = sa.Column(sa.Text, nullable=True)
     date = sa.Column(sa.DateTime, nullable=False)
-    format = sa.Column(sa.Text, nullable=True)
+    content_type = sa.Column(sa.Text, nullable=True)
 
 
 class Language(Base):

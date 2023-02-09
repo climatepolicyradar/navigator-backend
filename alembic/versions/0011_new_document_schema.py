@@ -25,7 +25,7 @@ def upgrade():
     sa.Column('md5_sum', sa.Text(), nullable=True),
     sa.Column('source_url', sa.Text(), nullable=True),
     sa.Column('date', sa.DateTime(), nullable=False),
-    sa.Column('format', sa.Text(), nullable=True),
+    sa.Column('content_type', sa.Text(), nullable=True),
     sa.PrimaryKeyConstraint('id', name=op.f('pk_physical_document'))
     )
     op.create_table('physical_document_language',

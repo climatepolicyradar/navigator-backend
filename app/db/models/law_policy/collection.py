@@ -9,7 +9,7 @@ class Collection(Base):
 
     __tablename__ = "collection"
 
-    id = sa.Column(sa.Integer, primary_key=True)
+    import_id = sa.Column(sa.Text, primary_key=True)
     title = sa.Column(sa.Text, nullable=False)
     description = sa.Column(sa.Text, nullable=False)
 
@@ -18,16 +18,16 @@ class CollectionFamily(Base):
 
     __tablename__ = "collection_family"
 
-    collection_id = sa.Column(sa.ForeignKey(Collection.id), nullable=False)
+    collection_import_id = sa.Column(sa.ForeignKey(Collection.import_id), nullable=False)
     family_id = sa.Column(sa.ForeignKey(Family.id), nullable=False)
-    sa.PrimaryKeyConstraint(collection_id, family_id)
+    sa.PrimaryKeyConstraint(collection_import_id, family_id)
 
 
 class CollectionOrganisation(Base):
 
     __tablename__ = "collection_organisation"
 
-    collection_id = sa.Column(sa.ForeignKey(Collection.id), nullable=False)
+    collection_import_id = sa.Column(sa.ForeignKey(Collection.import_id), nullable=False)
     organisation_id = sa.Column(sa.ForeignKey(Organisation.id), nullable=False)
 
-    sa.PrimaryKeyConstraint(collection_id, organisation_id)
+    sa.PrimaryKeyConstraint(collection_import_id, organisation_id)
