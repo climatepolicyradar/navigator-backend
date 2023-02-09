@@ -43,6 +43,7 @@ REQUIRED_COLUMNS = [
     "CPR Collection ID",
     "CPR Family Slug",
     "CPR Document Slug",
+    "CPR Document Status",
 ]
 
 VALID_COLUMN_NAMES = set(REQUIRED_COLUMNS)
@@ -88,6 +89,7 @@ class CCLWImportRow:
     cpr_collection_id: str = ""
     cpr_family_slug: str = ""
     cpr_document_slug: str = ""
+    cpr_document_status: str = ""
 
     _semicolon_delimited_array_keys = ["sectors", "frameworks", "keywords", "responses"]
     _bar_delimited_array_keys = ["instruments", "events", "documents"]

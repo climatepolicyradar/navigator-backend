@@ -1,11 +1,8 @@
 import os
 import random
 import string
-import sys
-import datetime
-from typing import Any, Optional, Union, List, Literal, Sequence
-
-from pydantic.dataclasses import dataclass, _T
+from typing import Any, Optional, List
+import logging
 from sqlalchemy.orm import Session
 
 from app.core.import_row import CCLWImportRow
@@ -22,6 +19,8 @@ CONTENT_TYPE_MAP = {
     ".htm": "text/html",
     ".docx": "application/vnd.openxmlformats-officedocument.wordprocessingml.document",
 }
+
+_LOGGER = logging.getLogger(__name__)
 
 
 def to_cdn_url(s3_object_key: Optional[str]) -> Optional[str]:
@@ -84,7 +83,20 @@ def tree_table_to_json(
 def document_updates(row: CCLWImportRow, db: Session) -> List[UpdateResult]:
     """Identify any updates to the document by combining the results of various database queries."""
 
-    return physical_document_updates(db, row) + family_updates(db, row)
+    return (
+        physical_document_updates(db, row)
+        + family_updates(db, row)
+        + family_document_updates(db, row)
+    )
+
+
+def get_family_doc(db: Session, row: CCLWImportRow) -> FamilyDocument:
+    """Get the family document from the database."""
+    return (
+        db.query(FamilyDocument)
+        .filter(FamilyDocument.import_id == row.cpr_document_id)
+        .scalar()
+    )
 
 
 def family_updates(db: Session, row: CCLWImportRow) -> List[UpdateResult]:
@@ -98,13 +110,10 @@ def family_updates(db: Session, row: CCLWImportRow) -> List[UpdateResult]:
     Returns:
         dict[field_name: UpdateResult(field=value csv_value=value, db_value=value, update=bool, type=table_name)]
     """
-    family_document = (
-        db.query(FamilyDocument)
-        .filter(FamilyDocument.import_id == row.cpr_document_id)
-        .scalar()
-    )
 
-    family = db.query(Family).filter(Family.id == family_document.family_id).scalar()
+    family = (
+        db.query(Family).filter(Family.id == get_family_doc(db, row).family_id).scalar()
+    )
 
     row_family_summary = row.family_summary.replace('"', "")
 
@@ -131,7 +140,7 @@ def family_updates(db: Session, row: CCLWImportRow) -> List[UpdateResult]:
 
 
 def physical_document_updates(db: Session, row: CCLWImportRow) -> List[UpdateResult]:
-    """Identify any updates to the physical document by comparing against the relevant tables in the database
+    """Identify any updates to the physical document by comparing against the relevant tables in the database.
 
     Args:
         row (CCLWImportRow): the row from the CSV.
@@ -139,15 +148,10 @@ def physical_document_updates(db: Session, row: CCLWImportRow) -> List[UpdateRes
 
     Returns:
         List[UpdateResult(csv_value=value, db_value=value, update=bool, type=table_name, field=value)]"""
-    family_document = (
-        db.query(FamilyDocument)
-        .filter(FamilyDocument.import_id == row.cpr_document_id)
-        .scalar()
-    )
 
     physical_document = (
         db.query(PhysicalDocument)
-        .filter(PhysicalDocument.id == family_document.physical_document_id)
+        .filter(PhysicalDocument.id == get_family_doc(db, row).physical_document_id)
         .scalar()
     )
 
@@ -182,12 +186,47 @@ def physical_document_updates(db: Session, row: CCLWImportRow) -> List[UpdateRes
     ]
 
 
+def family_document_updates(db: Session, row: CCLWImportRow) -> List[UpdateResult]:
+    """Identify any updates to the family document by comparing against the relevant tables in the database.
+
+    Args:
+        row (CCLWImportRow): the row from the CSV.
+        db (Session): the database session.
+
+    Returns:
+        List[UpdateResult(csv_value=value, db_value=value, update=bool, type=table_name, field=value)]"""
+
+    family_document = get_family_doc(db, row)
+
+    _LOGGER.info("family_document")
+    _LOGGER.info(family_document)
+
+    _LOGGER.info("row.cpr_document_status")
+    _LOGGER.info(row.cpr_document_status)
+
+    return [
+        result
+        for result in [
+            UpdateResult(
+                db_value=family_document.document_status.value,
+                csv_value=row.cpr_document_status,
+                updated=family_document.document_status.value
+                != row.cpr_document_status,
+                type="FamilyDocument",
+                field="document_status",
+            )
+        ]
+        if result.updated
+    ]
+
+
 def affects_pipline(update: UpdateResult) -> bool:
     """Determine if the update affects the pipeline and should thus trigger processing of the document."""
     if (
         (update.type == "PhysicalDocument" and update.field == "source_url")
         or (update.type == "Family" and update.field == "name")
         or (update.type == "Family" and update.field == "description")
+        or (update.type == "FamilyDocument" and update.field == "document_status")
     ):
         return True
     return False

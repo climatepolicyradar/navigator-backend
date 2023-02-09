@@ -65,7 +65,7 @@ class UpdateResult:
     db_value: Union[str, datetime.datetime]
     csv_value: Union[str, datetime.datetime]
     updated: bool
-    type: Literal["PhysicalDocument", "Family"]
+    type: Literal["PhysicalDocument", "Family", "FamilyDocument"]
     field: str
 
 
