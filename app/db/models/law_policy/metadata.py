@@ -19,11 +19,11 @@ class FamilyMetadata(Base):
 
     __tablename__ = "family_metadata"
 
-    family_id = sa.Column(sa.ForeignKey(Family.id))
+    family_import_id = sa.Column(sa.ForeignKey(Family.import_id))
     taxonomy_name = sa.Column(sa.ForeignKey(MetadataTaxonomy.name))
     value = sa.Column(postgresql.JSONB, nullable=False)
 
-    sa.PrimaryKeyConstraint(family_id, taxonomy_name)
+    sa.PrimaryKeyConstraint(family_import_id, taxonomy_name)
 
 
 class MetadataOrganisation(Base):
