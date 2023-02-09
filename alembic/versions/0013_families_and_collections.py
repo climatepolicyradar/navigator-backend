@@ -52,11 +52,11 @@ def upgrade():
     sa.PrimaryKeyConstraint('variant_name', name=op.f('pk_variant'))
     )
     op.create_table('collection_organisation',
-    sa.Column('collection_id', sa.Text(), nullable=False),
+    sa.Column('collection_import_id', sa.Text(), nullable=False),
     sa.Column('organisation_id', sa.Integer(), nullable=False),
-    sa.ForeignKeyConstraint(['collection_id'], ['collection.import_id'], name=op.f('fk_collection_organisation__collection_id__collection')),
+    sa.ForeignKeyConstraint(['collection_import_id'], ['collection.import_id'], name=op.f('fk_collection_organisation__collection_import_id__collection')),
     sa.ForeignKeyConstraint(['organisation_id'], ['organisation.id'], name=op.f('fk_collection_organisation__organisation_id__organisation')),
-    sa.PrimaryKeyConstraint('collection_id', 'organisation_id', name=op.f('pk_collection_organisation'))
+    sa.PrimaryKeyConstraint('collection_import_id', 'organisation_id', name=op.f('pk_collection_organisation'))
     )
     op.create_table('family',
     sa.Column('id', sa.Integer(), nullable=False),
@@ -80,11 +80,11 @@ def upgrade():
     sa.PrimaryKeyConstraint('taxonomy_name', 'organisation_id', name=op.f('pk_metadata_organisation'))
     )
     op.create_table('collection_family',
-    sa.Column('collection_id', sa.Text(), nullable=False),
+    sa.Column('collection_import_id', sa.Text(), nullable=False),
     sa.Column('family_id', sa.Integer(), nullable=False),
-    sa.ForeignKeyConstraint(['collection_id'], ['collection.import_id'], name=op.f('fk_collection_family__collection_id__collection')),
+    sa.ForeignKeyConstraint(['collection_import_id'], ['collection.import_id'], name=op.f('fk_collection_family__collection_import_id__collection')),
     sa.ForeignKeyConstraint(['family_id'], ['family.id'], name=op.f('fk_collection_family__family_id__family')),
-    sa.PrimaryKeyConstraint('collection_id', 'family_id', name=op.f('pk_collection_family'))
+    sa.PrimaryKeyConstraint('collection_import_id', 'family_id', name=op.f('pk_collection_family'))
     )
     op.create_table('family_document',
     sa.Column('family_id', sa.Integer(), nullable=False),
