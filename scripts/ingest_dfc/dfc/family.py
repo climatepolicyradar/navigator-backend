@@ -3,6 +3,7 @@ from typing import Any
 from sqlalchemy import func
 from sqlalchemy.orm import Session
 
+from app.db.models.deprecated import Document
 from app.db.models.law_policy import (
     DocumentStatus,
     Family,
@@ -23,7 +24,11 @@ from scripts.ingest_dfc.utils import DfcRow, get_or_create, to_dict
 
 
 def family_from_row(
-    db: Session, row: DfcRow, org_id: int, result: dict[str, Any]
+    db: Session,
+    row: DfcRow,
+    existing_document: Document,
+    org_id: int,
+    result: dict[str, Any],
 ) -> Family:
     """Create any missing Family, FamilyDocument & Associated links from the given row
 
@@ -44,12 +49,14 @@ def family_from_row(
     family = _maybe_create_family(db, row, org_id, result)
 
     # GET OR CREATE FAMILY DOCUMENT
-    _maybe_create_family_document(db, row, family, result)
+    _maybe_create_family_document(db, row, family, existing_document, result)
 
     return family
 
 
-def _maybe_create_family(db: Session, row: DfcRow, org_id: int, result: dict[str, Any]) -> Family:
+def _maybe_create_family(
+    db: Session, row: DfcRow, org_id: int, result: dict[str, Any]
+) -> Family:
     def _create_family_links(family: Family):
         print(f"- Creating family slug for import {row.cpr_family_id}")
         family_slug = Slug(name=row.cpr_family_slug, family_id=family.id)
@@ -102,7 +109,11 @@ def _maybe_create_family(db: Session, row: DfcRow, org_id: int, result: dict[str
 
 
 def _maybe_create_family_document(
-    db: Session, row: DfcRow, family: Family, result: dict[str, Any]
+    db: Session,
+    row: DfcRow,
+    family: Family,
+    existing_document: Document,
+    result: dict[str, Any],
 ) -> FamilyDocument:
     print(f"- Creating family document for import {row.cpr_document_id}")
 
@@ -122,11 +133,11 @@ def _maybe_create_family_document(
         # document and slug have also been created
         return family_document
 
-    physical_document = physical_document_from_row(db, row, result)
+    physical_document = physical_document_from_row(db, row, existing_document, result)
     family_document = FamilyDocument(
         family_id=family.id,
         physical_document_id=physical_document.id,
-        cdn_url=None,  # FIXME: Add this
+        cdn_url=existing_document.cdn_object,
         import_id=row.cpr_document_id,
         variant_name=variant_name,
         document_status=DocumentStatus.PUBLISHED,
