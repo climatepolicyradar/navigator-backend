@@ -37,7 +37,7 @@ def physical_document_from_row(
         source_url=row.documents, # FIXME: parse document row
         date=document_date,
         md5_sum=existing_document.md5_sum,
-        format=existing_document.content_type,
+        content_type=existing_document.content_type,
     )
     db.add(physical_document)
     db.commit()

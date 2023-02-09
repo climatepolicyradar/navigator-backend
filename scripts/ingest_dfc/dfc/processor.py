@@ -1,3 +1,4 @@
+import sys
 from typing import Callable, Tuple, cast
 
 from sqlalchemy.orm import Session
@@ -34,7 +35,9 @@ def ingest_row(db: Session, row: DfcRow) -> dict:
     if existing_document is None:
         # If there does not already exist a document with the given import_id, do not
         # attempt to migrate
+        print("skipping!")
         return result
+    print("processing")
 
     print("- Creating organisation")
     organisation = get_or_create(db, Organisation, name="CCLW")
@@ -81,13 +84,13 @@ def get_dfc_processor(db: Session) -> Tuple[ValidateFunc, ProcessFunc]:
 
     def process(row: DfcRow) -> None:
         """Processes the row into the db."""
-        print(f"Processing row: {row.row_number}")
+        sys.stdout.write(f"Processing row: {row.row_number}: ")
 
         # Start a nested transaction to allow for rolling back all
         # actions triggered by a row.
-        with db.begin_nested():
-            result = ingest_row(db, row=row)
-            # mypprint(result)
+        result = ingest_row(db, row=row)
+        sys.stdout.flush()
+        # mypprint(result)
         db.commit()
 
     return validate, process

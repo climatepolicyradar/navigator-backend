@@ -30,18 +30,19 @@ def collection_from_row(
     collection = get_or_create(
         db,
         Collection,
+        import_id=row.cpr_collection_id,
         title=row.collection_name,
         extra={"description": row.collection_summary},
     )
     result["collection"] = to_dict(collection)
 
     collection_organisation = get_or_create(
-        db, CollectionOrganisation, collection_id=collection.id, organisation_id=org_id
+        db, CollectionOrganisation, collection_import_id=collection.import_id, organisation_id=org_id
     )
     result["collection_organisation"] = to_dict(collection_organisation)
 
     collection_family = get_or_create(
-        db, CollectionFamily, collection_id=collection.id, family_id=family_id
+        db, CollectionFamily, collection_import_id=collection.import_id, family_id=family_id
     )
     result["collection_family"] = to_dict(collection_family)
 

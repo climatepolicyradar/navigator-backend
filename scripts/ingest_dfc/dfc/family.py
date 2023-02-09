@@ -137,7 +137,7 @@ def _maybe_create_family_document(
     family_document = FamilyDocument(
         family_id=family.id,
         physical_document_id=physical_document.id,
-        cdn_url=existing_document.cdn_object,
+        cdn_object=existing_document.cdn_object,
         import_id=row.cpr_document_id,
         variant_name=variant_name,
         document_status=DocumentStatus.PUBLISHED,
