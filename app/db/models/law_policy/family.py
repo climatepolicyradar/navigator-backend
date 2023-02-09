@@ -86,7 +86,7 @@ class FamilyDocument(Base):
         sa.ForeignKey(PhysicalDocument.id), nullable=False, primary_key=True
     )
 
-    cdn_url = sa.Column(sa.Text, nullable=True)
+    cdn_object = sa.Column(sa.Text, nullable=True)
     import_id = sa.Column(sa.Text, nullable=True)
     variant_name = sa.Column(sa.ForeignKey(Variant.variant_name), nullable=False)
     document_status = sa.Column(sa.Enum(DocumentStatus), default=DocumentStatus.CREATED)
