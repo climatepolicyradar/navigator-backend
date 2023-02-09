@@ -49,9 +49,8 @@ class Family(Base):
 
     __tablename__ = "family"
 
-    id = sa.Column(sa.Integer, primary_key=True)
     title = sa.Column(sa.Text, nullable=False)
-    import_id = sa.Column(sa.Text, unique=True)
+    import_id = sa.Column(sa.Text, primary_key=True)
     description = sa.Column(sa.Text, nullable=False)
     geography_id = sa.Column(sa.ForeignKey(Geography.id), nullable=False)
     category_name = sa.Column(
@@ -81,13 +80,11 @@ class FamilyDocumentType(Base):
 class FamilyDocument(Base):
     __tablename__ = "family_document"
 
-    family_id = sa.Column(sa.ForeignKey(Family.id), nullable=False)
-    physical_document_id = sa.Column(
-        sa.ForeignKey(PhysicalDocument.id), nullable=False, primary_key=True
-    )
+    family_import_id = sa.Column(sa.ForeignKey(Family.import_id), nullable=False)
+    physical_document_id = sa.Column( sa.ForeignKey(PhysicalDocument.id), nullable=False, unique=True)
 
     cdn_object = sa.Column(sa.Text, nullable=True)
-    import_id = sa.Column(sa.Text, nullable=True)
+    import_id = sa.Column(sa.Text, primary_key=True)
     variant_name = sa.Column(sa.ForeignKey(Variant.variant_name), nullable=False)
     document_status = sa.Column(sa.Enum(DocumentStatus), default=DocumentStatus.CREATED)
     document_type = sa.Column(sa.ForeignKey(FamilyDocumentType.name), nullable=False)
@@ -97,7 +94,7 @@ class FamilyOrganisation(Base):
 
     __tablename__ = "family_organisation"
 
-    family_id = sa.Column(sa.ForeignKey(Family.id), nullable=False)
+    family_import_id = sa.Column(sa.ForeignKey(Family.import_id), nullable=False)
     organisation_id = sa.Column(sa.ForeignKey(Organisation.id), nullable=False)
 
-    sa.PrimaryKeyConstraint(family_id, organisation_id)
+    sa.PrimaryKeyConstraint(family_import_id, organisation_id)

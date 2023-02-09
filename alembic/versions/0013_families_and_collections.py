@@ -59,9 +59,8 @@ def upgrade():
     sa.PrimaryKeyConstraint('collection_import_id', 'organisation_id', name=op.f('pk_collection_organisation'))
     )
     op.create_table('family',
-    sa.Column('id', sa.Integer(), nullable=False),
     sa.Column('title', sa.Text(), nullable=False),
-    sa.Column('import_id', sa.Text(), nullable=True),
+    sa.Column('import_id', sa.Text(), nullable=False),
     sa.Column('description', sa.Text(), nullable=False),
     sa.Column('geography_id', sa.Integer(), nullable=False),
     sa.Column('category_name', sa.Text(), nullable=False),
@@ -69,8 +68,7 @@ def upgrade():
     sa.ForeignKeyConstraint(['category_name'], ['family_category.category_name'], name=op.f('fk_family__category_name__family_category')),
     sa.ForeignKeyConstraint(['family_type'], ['family_type.type_name'], name=op.f('fk_family__family_type__family_type')),
     sa.ForeignKeyConstraint(['geography_id'], ['geography.id'], name=op.f('fk_family__geography_id__geography')),
-    sa.PrimaryKeyConstraint('id', name=op.f('pk_family')),
-    sa.UniqueConstraint("import_id", name=op.f("uq_family__import_id"))
+    sa.PrimaryKeyConstraint('import_id', name=op.f('pk_family')),
     )
     op.create_table('metadata_organisation',
     sa.Column('taxonomy_name', sa.Text(), nullable=False),
@@ -81,46 +79,47 @@ def upgrade():
     )
     op.create_table('collection_family',
     sa.Column('collection_import_id', sa.Text(), nullable=False),
-    sa.Column('family_id', sa.Integer(), nullable=False),
+    sa.Column('family_import_id', sa.Text(), nullable=False),
     sa.ForeignKeyConstraint(['collection_import_id'], ['collection.import_id'], name=op.f('fk_collection_family__collection_import_id__collection')),
-    sa.ForeignKeyConstraint(['family_id'], ['family.id'], name=op.f('fk_collection_family__family_id__family')),
-    sa.PrimaryKeyConstraint('collection_import_id', 'family_id', name=op.f('pk_collection_family'))
+    sa.ForeignKeyConstraint(['family_import_id'], ['family.import_id'], name=op.f('fk_collection_family__family_import_id__family')),
+    sa.PrimaryKeyConstraint('collection_import_id', 'family_import_id', name=op.f('pk_collection_family'))
     )
     op.create_table('family_document',
-    sa.Column('family_id', sa.Integer(), nullable=False),
+    sa.Column('family_import_id', sa.Text(), nullable=False),
     sa.Column('physical_document_id', sa.Integer(), nullable=False),
     sa.Column('cdn_object', sa.Text(), nullable=True),
-    sa.Column('import_id', sa.Text(), nullable=True),
+    sa.Column('import_id', sa.Text(), nullable=False),
     sa.Column('variant_name', sa.Text(), nullable=False),
     sa.Column('document_status', sa.Enum('CREATED', 'PUBLISHED', 'DELETED', name='documentstatus'), nullable=True),
     sa.Column('document_type', sa.Text(), nullable=False),
     sa.ForeignKeyConstraint(['document_type'], ['family_document_type.name'], name=op.f('fk_family_document__document_type__family_document_type')),
-    sa.ForeignKeyConstraint(['family_id'], ['family.id'], name=op.f('fk_family_document__family_id__family')),
+    sa.ForeignKeyConstraint(['family_import_id'], ['family.import_id'], name=op.f('fk_family_document__family_import_id__family')),
     sa.ForeignKeyConstraint(['physical_document_id'], ['physical_document.id'], name=op.f('fk_family_document__physical_document_id__physical_document')),
     sa.ForeignKeyConstraint(['variant_name'], ['variant.variant_name'], name=op.f('fk_family_document__variant_name__variant')),
-    sa.PrimaryKeyConstraint('physical_document_id', name=op.f('pk_family_document'))
+    sa.UniqueConstraint("physical_document_id", name=op.f("uq_family_document__physical_document_id")),
+    sa.PrimaryKeyConstraint('import_id', name=op.f('pk_family_document'))
     )
     op.create_table('family_metadata',
-    sa.Column('family_id', sa.Integer(), nullable=False),
+    sa.Column('family_import_id', sa.Text(), nullable=False),
     sa.Column('taxonomy_name', sa.Text(), nullable=False),
     sa.Column('value', postgresql.JSONB(astext_type=sa.Text()), nullable=False),
-    sa.ForeignKeyConstraint(['family_id'], ['family.id'], name=op.f('fk_family_metadata__family_id__family')),
+    sa.ForeignKeyConstraint(['family_import_id'], ['family.import_id'], name=op.f('fk_family_metadata__family_import_id__family')),
     sa.ForeignKeyConstraint(['taxonomy_name'], ['metadata_taxonomy.name'], name=op.f('fk_family_metadata__taxonomy_name__metadata_taxonomy')),
-    sa.PrimaryKeyConstraint('family_id', 'taxonomy_name', name=op.f('pk_family_metadata'))
+    sa.PrimaryKeyConstraint('family_import_id', 'taxonomy_name', name=op.f('pk_family_metadata'))
     )
     op.create_table('family_organisation',
-    sa.Column('family_id', sa.Integer(), nullable=False),
+    sa.Column('family_import_id', sa.Text(), nullable=False),
     sa.Column('organisation_id', sa.Integer(), nullable=False),
-    sa.ForeignKeyConstraint(['family_id'], ['family.id'], name=op.f('fk_family_organisation__family_id__family')),
+    sa.ForeignKeyConstraint(['family_import_id'], ['family.import_id'], name=op.f('fk_family_organisation__family_import_id__family')),
     sa.ForeignKeyConstraint(['organisation_id'], ['organisation.id'], name=op.f('fk_family_organisation__organisation_id__organisation')),
-    sa.PrimaryKeyConstraint('family_id', 'organisation_id', name=op.f('pk_family_organisation'))
+    sa.PrimaryKeyConstraint('family_import_id', 'organisation_id', name=op.f('pk_family_organisation'))
     )
     op.create_table('slug',
     sa.Column('name', sa.Text(), nullable=False),
-    sa.Column('family_id', sa.Integer(), nullable=True),
+    sa.Column('family_import_id', sa.Text(), nullable=True),
     sa.Column('family_document_id', sa.Integer(), nullable=True),
     sa.ForeignKeyConstraint(['family_document_id'], ['family_document.physical_document_id'], name=op.f('fk_slug__family_document_id__family_document')),
-    sa.ForeignKeyConstraint(['family_id'], ['family.id'], name=op.f('fk_slug__family_id__family')),
+    sa.ForeignKeyConstraint(['family_import_id'], ['family.import_id'], name=op.f('fk_slug__family_import_id__family')),
     sa.PrimaryKeyConstraint('name', name=op.f('pk_slug'))
     )
     # ### end Alembic commands ###
@@ -135,7 +134,7 @@ def upgrade():
         "must_reference_exactly_one_entity",
 
         "slug",
-        "num_nonnulls(family_id, family_document_id) = 1"
+        "num_nonnulls(family_import_id, family_document_id) = 1"
     ) 
 
 
