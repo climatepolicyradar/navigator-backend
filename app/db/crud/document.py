@@ -1,4 +1,3 @@
-import datetime
 import logging
 from hashlib import md5
 from typing import Mapping, Sequence, Set, Tuple, Union, cast, List
@@ -62,7 +61,7 @@ from app.db.models.deprecated import (
 )
 from app.db.models.deprecated import DocumentType
 from app.db.models.document import PhysicalDocument
-from app.db.models.law_policy import Geography, FamilyDocument, Family
+from app.db.models.law_policy import Geography, FamilyDocument, Family, DocumentStatus
 
 _LOGGER = logging.getLogger(__file__)
 
@@ -634,21 +633,21 @@ def start_import(
     try:
         # Create a savepoint & start a transaction if necessary
         with db.begin_nested():
-            for dco in document_create_objects:
-                _LOGGER.info(f"Importing: {dco.import_id}")
+            for doc in document_create_objects:
+                _LOGGER.info(f"Importing: {doc.import_id}")
                 existing_document = (
                     db.query(Document)
-                    .filter(Document.import_id == dco.import_id)
+                    .filter(Document.import_id == doc.import_id)
                     .scalar()
                 )
                 if existing_document is None:
-                    new_document = create_document(db, dco)
-                    _LOGGER.info(f"Created Document: {dco.import_id}")
+                    new_document = create_document(db, doc)
+                    _LOGGER.info(f"Created Document: {doc.import_id}")
 
                     document_parser_inputs.append(
                         DocumentParserInput(
                             slug=cast(str, new_document.slug),
-                            **dco.dict(),
+                            **doc.dict(),
                         )
                     )
 
@@ -688,6 +687,7 @@ def update_family(
     db: Session, doc_id: str, field: str, update_value: Union[str, int]
 ) -> int:
     """Update a family with a new value for a field."""
+    # TODO use function to do this
     family_document = (
         db.query(FamilyDocument).filter(FamilyDocument.import_id == doc_id).scalar()
     )
@@ -697,6 +697,27 @@ def update_family(
         .filter(Family.id == family_document.family_id)
         .update(
             {field: update_value},
+            synchronize_session="fetch",
+        )
+    )
+    return docs_updated_no
+
+
+def update_family_document(
+    db: Session, doc_id: str, field: str, update_value: Union[str, int]
+) -> int:
+    """Update a family document with a new value for a field."""
+    docs_updated_no = (
+        db.query(FamilyDocument)
+        .filter(FamilyDocument.import_id == doc_id)
+        .update(
+            {
+                field: (
+                    DocumentStatus(update_value).name
+                    if field == "document_status"
+                    else update_value
+                )
+            },
             synchronize_session="fetch",
         )
     )
@@ -748,6 +769,16 @@ def start_update(
                     elif update.type == "Family":
                         validate(
                             update_func=update_family,
+                            db=db,
+                            doc_id=document,
+                            field=update.field,
+                            update_value=update.csv_value,
+                            original_value=update.db_value,
+                        )
+
+                    elif update.type == "FamilyDocument":
+                        validate(
+                            update_func=update_family_document,
                             db=db,
                             doc_id=document,
                             field=update.field,
