@@ -97,4 +97,4 @@ class FamilyOrganisation(Base):
     family_import_id = sa.Column(sa.ForeignKey(Family.import_id), nullable=False)
     organisation_id = sa.Column(sa.ForeignKey(Organisation.id), nullable=False)
 
-    sa.PrimaryKeyConstraint(family_import_id, organisation_id)
+    sa.PrimaryKeyConstraint(family_import_id)

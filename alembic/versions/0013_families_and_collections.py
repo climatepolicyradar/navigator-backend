@@ -112,7 +112,7 @@ def upgrade():
     sa.Column('organisation_id', sa.Integer(), nullable=False),
     sa.ForeignKeyConstraint(['family_import_id'], ['family.import_id'], name=op.f('fk_family_organisation__family_import_id__family')),
     sa.ForeignKeyConstraint(['organisation_id'], ['organisation.id'], name=op.f('fk_family_organisation__organisation_id__organisation')),
-    sa.PrimaryKeyConstraint('family_import_id', 'organisation_id', name=op.f('pk_family_organisation'))
+    sa.PrimaryKeyConstraint('family_import_id', name=op.f('pk_family_organisation'))
     )
     op.create_table('slug',
     sa.Column('name', sa.Text(), nullable=False),
