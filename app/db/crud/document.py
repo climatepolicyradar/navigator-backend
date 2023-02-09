@@ -33,7 +33,7 @@ from app.api.api_v1.schemas.metadata import (
     Topic as TopicSchema,
 )
 from app.core.aws import S3Client
-from app.core.util import to_cdn_url
+from app.core.util import to_cdn_url, get_family_doc
 from app.core.validation import IMPORT_ID_MATCHER
 from app.core.validation.types import UpdateResult
 from app.core.validation.util import write_documents_to_s3
@@ -667,13 +667,9 @@ def update_physical_document(
     db: Session, doc_id: str, field: str, update_value: Union[str, int]
 ) -> int:
     """Update a physical document with a new value for a field."""
-    family_document = (
-        db.query(FamilyDocument).filter(FamilyDocument.import_id == doc_id).scalar()
-    )
-
     docs_updated_no = (
         db.query(PhysicalDocument)
-        .filter(PhysicalDocument.id == family_document.physical_document_id)
+        .filter(PhysicalDocument.id == get_family_doc(db, doc_id).physical_document_id)
         .update(
             {field: update_value},
             synchronize_session="fetch",
@@ -687,14 +683,9 @@ def update_family(
     db: Session, doc_id: str, field: str, update_value: Union[str, int]
 ) -> int:
     """Update a family with a new value for a field."""
-    # TODO use function to do this
-    family_document = (
-        db.query(FamilyDocument).filter(FamilyDocument.import_id == doc_id).scalar()
-    )
-
     docs_updated_no = (
         db.query(Family)
-        .filter(Family.id == family_document.family_id)
+        .filter(Family.id == get_family_doc(db, doc_id).family_id)
         .update(
             {field: update_value},
             synchronize_session="fetch",

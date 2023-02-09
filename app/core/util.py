@@ -2,7 +2,6 @@ import os
 import random
 import string
 from typing import Any, Optional, List
-import logging
 from sqlalchemy.orm import Session
 
 from app.core.import_row import CCLWImportRow
@@ -19,8 +18,6 @@ CONTENT_TYPE_MAP = {
     ".htm": "text/html",
     ".docx": "application/vnd.openxmlformats-officedocument.wordprocessingml.document",
 }
-
-_LOGGER = logging.getLogger(__name__)
 
 
 def to_cdn_url(s3_object_key: Optional[str]) -> Optional[str]:
@@ -90,13 +87,10 @@ def document_updates(row: CCLWImportRow, db: Session) -> List[UpdateResult]:
     )
 
 
-# ToDo update to require only id
-def get_family_doc(db: Session, row: CCLWImportRow) -> FamilyDocument:
+def get_family_doc(db: Session, filter_id: str) -> FamilyDocument:
     """Get the family document from the database."""
     return (
-        db.query(FamilyDocument)
-        .filter(FamilyDocument.import_id == row.cpr_document_id)
-        .scalar()
+        db.query(FamilyDocument).filter(FamilyDocument.import_id == filter_id).scalar()
     )
 
 
@@ -113,7 +107,9 @@ def family_updates(db: Session, row: CCLWImportRow) -> List[UpdateResult]:
     """
 
     family = (
-        db.query(Family).filter(Family.id == get_family_doc(db, row).family_id).scalar()
+        db.query(Family)
+        .filter(Family.id == get_family_doc(db, row.cpr_document_id).family_id)
+        .scalar()
     )
 
     row_family_summary = row.family_summary.replace('"', "")
@@ -152,7 +148,10 @@ def physical_document_updates(db: Session, row: CCLWImportRow) -> List[UpdateRes
 
     physical_document = (
         db.query(PhysicalDocument)
-        .filter(PhysicalDocument.id == get_family_doc(db, row).physical_document_id)
+        .filter(
+            PhysicalDocument.id
+            == get_family_doc(db, row.cpr_document_id).physical_document_id
+        )
         .scalar()
     )
 
@@ -197,13 +196,7 @@ def family_document_updates(db: Session, row: CCLWImportRow) -> List[UpdateResul
     Returns:
         List[UpdateResult(csv_value=value, db_value=value, update=bool, type=table_name, field=value)]"""
 
-    family_document = get_family_doc(db, row)
-
-    _LOGGER.info("family_document")
-    _LOGGER.info(family_document)
-
-    _LOGGER.info("row.cpr_document_status")
-    _LOGGER.info(row.cpr_document_status)
+    family_document = get_family_doc(db, row.cpr_document_id)
 
     return [
         result
