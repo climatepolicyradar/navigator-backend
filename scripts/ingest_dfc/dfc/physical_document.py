@@ -14,11 +14,6 @@ from scripts.ingest_dfc.utils import (
     to_dict,
 )
 
-def get_first_url(row: DfcRow) -> str:
-    documents = row.documents.split(';')
-    parts = documents[0].split('|')
-    return parts[0]
-
 
 def physical_document_from_row(
     db: Session, row: DfcRow, existing_document: Document, result: dict[str, Any]
