@@ -25,8 +25,6 @@ def collection_from_row(
     if not row.cpr_collection_id or row.cpr_collection_id == "n/a":
         return None
 
-    # FIXME: Joel made a mistake with the db schema, we should also be including the
-    #        generated collection_id & keying off that
     collection = get_or_create(
         db,
         Collection,

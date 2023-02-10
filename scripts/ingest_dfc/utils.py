@@ -153,6 +153,17 @@ class DfcRow:
         return key.lower().replace(" ", "_").replace("?", "").replace("y/", "")
 
 
+    def get_first_url(self) -> str:
+        """Gets the first URL from the 'documents' attribute.
+        
+        TODO: This could/should be written with more validation.
+        """
+        first_doc = self.documents.split(';')[0]
+        first_url = first_doc.split('|')[0]
+        return first_url
+
+
+
 DbModel = TypeVar('DbModel', bound=Base)
 
 def get_or_create(db: Session, model: DbModel, **kwargs) -> DbModel:

@@ -14,6 +14,11 @@ from scripts.ingest_dfc.utils import (
     to_dict,
 )
 
+def get_first_url(row: DfcRow) -> str:
+    documents = row.documents.split(';')
+    parts = documents[0].split('|')
+    return parts[0]
+
 
 def physical_document_from_row(
     db: Session, row: DfcRow, existing_document: Document, result: dict[str, Any]
@@ -34,7 +39,7 @@ def physical_document_from_row(
     )
     physical_document = PhysicalDocument(
         title=row.document_title,
-        source_url=row.documents, # FIXME: parse document row
+        source_url=row.get_first_url(),
         date=document_date,
         md5_sum=existing_document.md5_sum,
         content_type=existing_document.content_type,
