@@ -156,10 +156,13 @@ class DfcRow:
     def get_first_url(self) -> str:
         """Gets the first URL from the 'documents' attribute.
         
-        TODO: This could/should be written with more validation.
+        FIXME: This could/should be written with more validation.
         """
-        first_doc = self.documents.split(';')[0]
-        first_url = first_doc.split('|')[0]
+        documents = self.documents.split(';')
+        if len(documents) != 1:
+            raise ValueError(f"Expected 1 document to be parsed from: {self.documents}")
+
+        first_url = documents[0].split('|')[0]
         return first_url
 
 
