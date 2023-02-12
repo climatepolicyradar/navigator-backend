@@ -16,7 +16,9 @@ from app.api.api_v1.schemas.search import (
     SearchResponse,
     SearchResultsResponse,
     SearchDocumentResponse,
+    SortField,
 )
+from app.core.browse import BrowseArgs, browse_rds, browse_rds_families
 from app.core.jit_query_wrapper import jit_query_wrapper, jit_query_families_wrapper
 from app.core.lookups import get_countries_for_region, get_country_by_slug
 from app.core.search import (
@@ -63,16 +65,29 @@ def search_documents(
         )
 
     if search_body.group_documents:
-        document_extra = get_document_extra(db)
+        if not search_body.query_string:
+            # Service browse requests from RDS
+            return browse_rds_families(
+                db=db,
+                req=_get_browse_args_from_search_request_body(search_body),
+            )
+
         return jit_query_families_wrapper(
             _OPENSEARCH_CONNECTION,
             background_tasks=background_tasks,
             search_request_body=search_body,
             opensearch_internal_config=_OPENSEARCH_INDEX_CONFIG,
-            document_extra_info=document_extra,
+            document_extra_info=get_document_extra(db),
             preference="default_search_preference",
         )
     else:
+        if not search_body.query_string:
+            # Service browse requests from RDS
+            return browse_rds(
+                db=db,
+                req=_get_browse_args_from_search_request_body(search_body),
+            )
+
         doc_results: SearchResultsResponse = jit_query_wrapper(
             _OPENSEARCH_CONNECTION,
             background_tasks=background_tasks,
@@ -80,7 +95,6 @@ def search_documents(
             opensearch_internal_config=_OPENSEARCH_INDEX_CONFIG,
             preference="default_search_preference",
         )
-
         # Now augment the search results with db data to form the response
         doc_ids = [doc.document_id for doc in doc_results.documents]
         postfix_map = get_postfix_map(db, doc_ids)
@@ -97,6 +111,29 @@ def search_documents(
                 for doc in doc_results.documents
             ],
         )
+
+
+def _get_browse_args_from_search_request_body(
+    search_body: SearchRequestBody,
+) -> BrowseArgs:
+    keyword_filters = search_body.keyword_filters
+    if keyword_filters is None:
+        country_codes = None
+        categories = None
+    else:
+        country_codes = keyword_filters.get(FilterField.COUNTRY)
+        categories = keyword_filters.get(FilterField.CATEGORY)
+    start_year, end_year = search_body.year_range or (None, None)
+    return BrowseArgs(
+        country_codes=country_codes,
+        start_year=start_year,
+        end_year=end_year,
+        categories=categories,
+        sort_field=search_body.sort_field or SortField.DATE,
+        sort_order=search_body.sort_order,
+        limit=search_body.limit,
+        offset=search_body.offset,
+    )
 
 
 def process_search_keyword_filters(

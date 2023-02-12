@@ -46,6 +46,7 @@ from app.db.models.deprecated import (
     DocumentRelationship,
     DocumentResponse,
     DocumentSector,
+    DocumentType,
     Category,
     Event,
     Framework,
@@ -58,7 +59,7 @@ from app.db.models.deprecated import (
     Sector,
     Source,
 )
-from app.db.models.deprecated import DocumentType
+from app.db.models.document import PhysicalDocument
 from app.db.models.law_policy import Family, FamilyDocument, Geography
 
 _LOGGER = logging.getLogger(__file__)
@@ -813,26 +814,16 @@ def get_document_extra(db: Session) -> Mapping[str, Mapping[str, str]]:
     document_data = (
         db.query(FamilyDocument, Family)
         .join(Family, FamilyDocument.family_import_id == Family.import_id)
-        .values(
-            FamilyDocument.import_id,
-            FamilyDocument.slugs[-1].name,
-            FamilyDocument.physical_document.title,
-            Family.import_id,
-            Family.slugs[-1].name,
-        )
     )
     return {
-        doc_import_id: {
-            "slug": doc_slug,
-            "title": doc_title,
-            "family_slug": family_slug,
-            "family_import_id": family_import_id,
+        family_document.import_id: {
+            "slug": family_document.slugs[-1].name,
+            "title": family_document.physical_document.title,
+            "family_slug": family.slugs[-1].name,
+            "family_import_id": family.import_id,
         }
         for (
-            doc_import_id,
-            doc_slug,
-            doc_title,
-            family_import_id,
-            family_slug
+            family_document,
+            family,
         ) in document_data
     }

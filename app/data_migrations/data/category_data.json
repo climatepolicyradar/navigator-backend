@@ -6,9 +6,5 @@
   {
     "name": "Policy",
     "description": "Executive Document"
-  },
-  {
-    "name": "Case",
-    "description": "Litigation Case"
   }
 ]

@@ -85,13 +85,6 @@ _DEFAULT_SORT_ORDER = SortOrder.DESCENDING
 _JSON_SERIALIZER = jss()
 
 
-class QueryMode(Enum):
-    """High level modes we use for querying Opensearch"""
-
-    BROWSE = "browse"
-    SEARCH = "search"
-
-
 def _innerproduct_threshold_to_lucene_threshold(ip_thresh: float) -> float:
     """Maps inner product to lucene threashold.
 
@@ -200,31 +193,16 @@ class OpenSearchConnection:
             sensitive_query_terms=self._sensitive_query_terms,
         )
 
-        # We only need to use the {PREFIX}_core index if browsing, as there's no need to access the text passages.
-        indices = (
-            self._get_opensearch_indices_to_query(search_request_body)
-            if opensearch_request.mode == QueryMode.SEARCH
-            else f"{self._opensearch_config.index_prefix}_core"
-        )
+        indices = self._get_opensearch_indices_to_query(search_request_body)
 
         opensearch_response_body = self.raw_query(
             opensearch_request.query, preference, indices
         )
 
-        if opensearch_request.mode == QueryMode.SEARCH:
-            return process_search_response_body(
-                opensearch_response_body,
-                limit=search_request_body.limit,
-                offset=search_request_body.offset,
-            )
-
-        if opensearch_request.mode == QueryMode.BROWSE:
-            return process_browse_response_body(
-                opensearch_response_body,
-            )
-
-        raise RuntimeError(
-            f"Could not execute unknown query type: {opensearch_request.mode}"
+        return process_search_response_body(
+            opensearch_response_body,
+            limit=search_request_body.limit,
+            offset=search_request_body.offset,
         )
 
     def query_families(
@@ -242,34 +220,17 @@ class OpenSearchConnection:
             sensitive_query_terms=self._sensitive_query_terms,
         )
 
-        # We only need to use the {PREFIX}_core index if browsing because there's
-        # no need to access the text passages.
-        indices = (
-            self._get_opensearch_indices_to_query(search_request_body)
-            if opensearch_request.mode == QueryMode.SEARCH
-            else f"{self._opensearch_config.index_prefix}_core"
-        )
+        indices = self._get_opensearch_indices_to_query(search_request_body)
 
         opensearch_response_body = self.raw_query(
             opensearch_request.query, preference, indices
         )
 
-        if opensearch_request.mode == QueryMode.SEARCH:
-            return process_search_response_body_families(
-                opensearch_response_body,
-                document_extra_info,
-                limit=search_request_body.limit,
-                offset=search_request_body.offset,
-            )
-
-        if opensearch_request.mode == QueryMode.BROWSE:
-            return process_browse_response_body_families(
-                opensearch_response_body,
-                document_extra_info,
-            )
-
-        raise RuntimeError(
-            f"Could not execute unknown query type: {opensearch_request.mode}"
+        return process_search_response_body_families(
+            opensearch_response_body,
+            document_extra_info,
+            limit=search_request_body.limit,
+            offset=search_request_body.offset,
         )
 
     def _get_opensearch_indices_to_query(
@@ -376,7 +337,6 @@ class QueryBuilder:
 
     def __init__(self, config: OpenSearchQueryConfig):
         self._config = config
-        self._mode: Optional[QueryMode] = None
         self._request_body: dict[str, Any] = {}
 
     @property
@@ -385,16 +345,7 @@ class QueryBuilder:
 
         return self._request_body
 
-    @property
-    def mode(self) -> Optional[QueryMode]:
-        """Property to allow access to the query mode for the configured request."""
-
-        return self._mode
-
     def _with_search_term_base(self):
-        if self._mode is not None:
-            raise RuntimeError("Query base has already been configured")
-        self._mode = QueryMode.SEARCH
         self._request_body = {
             "size": 0,  # only return aggregations
             "query": {
@@ -438,30 +389,6 @@ class QueryBuilder:
                     },
                 },
                 "no_unique_docs": {"cardinality": {"field": "document_slug"}},
-            },
-        }
-
-    def _with_browse_base(self):
-        if self._mode is not None:
-            raise RuntimeError("Query base has already been configured")
-        self._mode = QueryMode.BROWSE
-        self._request_body = {
-            "from": 0,
-            "size": 10,
-            "_source": {
-                "excludes": ["document_description_embedding"],
-            },
-            "sort": {
-                _SORT_FIELD_MAP[_DEFAULT_BROWSE_SORT_FIELD]: {
-                    "order": _DEFAULT_SORT_ORDER.value,
-                },
-            },
-            "query": {
-                "bool": {
-                    "must": [
-                        {"exists": {"field": "for_search_document_description"}},
-                    ],
-                },
             },
         }
 
@@ -598,10 +525,6 @@ class QueryBuilder:
             },
         ]
 
-    def with_browse_query(self):
-        """Configure the query to browse documents according to supplied filters."""
-        self._with_browse_base()
-
     def with_keyword_filter(self, field: FilterField, values: Sequence[str]):
         """Add a keyword filter to the configured query."""
         filters = self._request_body["query"]["bool"].get("filter") or []
@@ -619,11 +542,6 @@ class QueryBuilder:
 
     def with_search_order(self, field: SortField, order: SortOrder):
         """Set sort order for search results."""
-        if self._mode != QueryMode.SEARCH:
-            raise RuntimeError(
-                "Cannot configure search sort ordering for non-search mode."
-            )
-
         terms_field = self._request_body["aggs"]["sample"]["aggs"]["top_docs"]["terms"]
 
         if field == SortField.DATE:
@@ -632,34 +550,6 @@ class QueryBuilder:
             terms_field["order"] = {"_key": order.value}
         else:
             raise RuntimeError(f"Unknown sort ordering field: {field}")
-
-    def with_browse_order(self, field: SortField, order: SortOrder):
-        """Set sort order for browse results."""
-        if self._mode != QueryMode.BROWSE:
-            raise RuntimeError(
-                "Cannot configure browse sort ordering for non-browse mode."
-            )
-
-        if field in _SORT_FIELD_MAP:
-            self._request_body["sort"] = {
-                _SORT_FIELD_MAP[field]: {
-                    "order": order.value,
-                },
-            }
-        else:
-            raise RuntimeError(f"Unknown sort ordering field: {field}")
-
-    def with_browse_limit(self, limit: int):
-        """Set result limit for browse results."""
-        if self._mode != QueryMode.BROWSE:
-            raise RuntimeError("Cannot configure limit when not in browse mode.")
-        self._request_body["size"] = limit
-
-    def with_browse_offset(self, offset: int):
-        """Set result offset for browse results."""
-        if self._mode != QueryMode.BROWSE:
-            raise RuntimeError("Cannot configure offset when not in browse mode.")
-        self._request_body["from"] = offset
 
     def with_required_fields(self, required_fields: Sequence[str]):
         """Ensure that required fields are present in opensearch responses."""
@@ -687,54 +577,35 @@ def build_opensearch_request_body(
         str.maketrans("", "", string.punctuation)
     ).strip()
 
-    if search_request.query_string:
-        if search_request.exact_match:
-            builder.with_exact_query(search_request.query_string)
-        else:
-            sensitive_terms_in_query = [
-                term
-                for term in sensitive_query_terms
-                if term in search_request.query_string.lower()
-            ]
-
-            # If the query contains any sensitive terms, and the length of the
-            # shortest sensitive term is >=50% of the length of the query by
-            # number of words, then disable KNN
-            if (
-                sensitive_terms_in_query
-                and len(min(sensitive_terms_in_query, key=len).split(" "))
-                / len(search_request.query_string.split(" "))
-                >= 0.5
-            ):
-                use_knn = False
-            else:
-                use_knn = True
-
-            builder.with_semantic_query(search_request.query_string, knn=use_knn)
-
-        if search_request.sort_field is not None:
-            builder.with_search_order(
-                search_request.sort_field,
-                search_request.sort_order or _DEFAULT_SORT_ORDER,
-            )
+    if search_request.exact_match:
+        builder.with_exact_query(search_request.query_string)
     else:
-        builder.with_browse_query()
+        sensitive_terms_in_query = [
+            term
+            for term in sensitive_query_terms
+            if term in search_request.query_string.lower()
+        ]
 
-        should_update_browse_order = (
-            search_request.sort_field is not None
-            or search_request.sort_order is not None
+        # If the query contains any sensitive terms, and the length of the
+        # shortest sensitive term is >=50% of the length of the query by
+        # number of words, then disable KNN
+        if (
+            sensitive_terms_in_query
+            and len(min(sensitive_terms_in_query, key=len).split(" "))
+            / len(search_request.query_string.split(" "))
+            >= 0.5
+        ):
+            use_knn = False
+        else:
+            use_knn = True
+
+        builder.with_semantic_query(search_request.query_string, knn=use_knn)
+
+    if search_request.sort_field is not None:
+        builder.with_search_order(
+            search_request.sort_field,
+            search_request.sort_order or _DEFAULT_SORT_ORDER,
         )
-        if should_update_browse_order:
-            builder.with_browse_order(
-                search_request.sort_field or _DEFAULT_BROWSE_SORT_FIELD,
-                search_request.sort_order or _DEFAULT_SORT_ORDER,
-            )
-
-        if search_request.limit is not None:
-            builder.with_browse_limit(search_request.limit)
-
-        if search_request.offset is not None:
-            builder.with_browse_offset(search_request.offset)
 
     if _REQUIRED_FIELDS:
         builder.with_required_fields(_REQUIRED_FIELDS)
@@ -747,8 +618,6 @@ def build_opensearch_request_body(
         builder.with_year_range_filter(search_request.year_range)
 
     return builder
-
-
 
 
 ################## NEW ######################
@@ -774,6 +643,8 @@ def process_search_response_body_families(
 
     result_docs = search_json_response["aggregations"]["sample"]["top_docs"]["buckets"]
     for result_doc in result_docs:
+        title_match = False
+        description_match = False
         for document_match in result_doc["top_passage_hits"]["hits"]["hits"]:
             document_match_source = document_match["_source"]
             if OPENSEARCH_INDEX_NAME_KEY in document_match_source:
@@ -781,23 +652,26 @@ def process_search_response_body_families(
                 doc_match = OpenSearchResponseNameMatch(**document_match_source)
                 if search_response_document is None:
                     search_response_document = create_search_response_family_document(
-                        doc_match, document_extra_info,
+                        doc_match,
+                        document_extra_info,
                     )
-                search_response_document.document_title_match = True
+                title_match = True
             elif OPENSEARCH_INDEX_DESCRIPTION_KEY in document_match_source:
                 # Validate as a description match
                 doc_match = OpenSearchResponseDescriptionMatch(**document_match_source)
                 if search_response_document is None:
                     search_response_document = create_search_response_family_document(
-                        doc_match, document_extra_info,
+                        doc_match,
+                        document_extra_info,
                     )
-                search_response_document.document_description_match = True
+                description_match = True
             elif OPENSEARCH_INDEX_TEXT_BLOCK_KEY in document_match_source:
                 # Process as a text block
                 doc_match = OpenSearchResponsePassageMatch(**document_match_source)
                 if search_response_document is None:
                     search_response_document = create_search_response_family_document(
-                        doc_match, document_extra_info,
+                        doc_match,
+                        document_extra_info,
                     )
 
                 response_passage = SearchResponseDocumentPassage(
@@ -812,27 +686,31 @@ def process_search_response_body_families(
             else:
                 raise RuntimeError("Unexpected data in match results")
 
-            family_id = document_extra_info[doc_match.document_id]["family_id"]
-            search_repsonse_family = families.get(family_id)
-            if search_repsonse_family is None:
+            family_id = document_extra_info[doc_match.document_id]["family_import_id"]
+            search_response_family = families.get(family_id)
+            if search_response_family is None:
                 search_response_family = create_search_response_family(
-                    doc_match, document_extra_info,
+                    doc_match,
+                    document_extra_info,
                 )
                 families[family_id] = search_response_family
 
         if search_response_document is None or search_response_family is None:
             raise RuntimeError("Unexpected document match with no matching passages")
 
+        search_response_family.family_title_match = (
+            title_match or search_response_family.family_title_match
+        )
+        search_response_family.family_description_match = (
+            description_match or search_response_family.family_description_match
+        )
         search_response_family.family_documents.append(search_response_document)
-
-        search_repsonse_family = None
         search_response_document = None
-
 
     search_response = SearchResponse(
         hits=len(families),
         query_time_ms=opensearch_response_body.request_time_ms,
-        families=list(families.values())[offset:offset+limit],
+        families=list(families.values())[offset : offset + limit],
     )
 
     return search_response
@@ -844,6 +722,8 @@ def process_browse_response_body_families(
 ) -> SearchResponse:
     # FIXME: Update
     opensearch_json_response = opensearch_response_body.raw_response
+    families = []
+
     search_response = SearchResponse(
         hits=opensearch_json_response["hits"]["total"]["value"],  # FIXME
         query_time_ms=opensearch_response_body.request_time_ms,

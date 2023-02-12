@@ -1,7 +1,7 @@
 """Functions to support browsing the RDS document structure"""
 
 from time import perf_counter
-from typing import Optional, cast
+from typing import Optional, Sequence, cast
 from pydantic import BaseModel
 from app.db.models.deprecated.document import (
     Category,
@@ -14,21 +14,30 @@ from app.api.api_v1.schemas.search import (
     SearchResponse,
     SearchResponseFamily,
     SearchResultsResponse,
+    SortField,
+    SortOrder,
 )
-from app.db.models.law_policy import Family, FamilyOrganisation
+from app.db.models.law_policy.family import Family, FamilyOrganisation, FamilyStatus
 from app.db.models.app import Organisation
 from sqlalchemy import extract
 from sqlalchemy.orm import Session
 
 
 class BrowseArgs(BaseModel):
-    """Arguements for the browse_rds function"""
+    """Arguments for the browse_rds function"""
 
-    geography_slug: Optional[str] = None
-    country_code: Optional[str] = None
+    geography_slugs: Optional[Sequence[str]] = None
+    country_codes: Optional[Sequence[str]] = None
     start_year: Optional[int] = None
     end_year: Optional[int] = None
-    category: Optional[str] = None
+    categories: Optional[Sequence[str]] = None
+    sort_field: SortField = SortField.DATE
+    sort_order: SortOrder = SortOrder.DESCENDING
+    offset: int = 0
+    limit: int = 10
+
+
+## TODO: got ahead of myself - will complete this work in a follow-up
 
 
 def to_search_response_family(
@@ -50,22 +59,28 @@ def to_search_response_family(
     )
 
 
-def browse_rds_families(db: Session, req: BrowseArgs) -> SearchResponse:
+def browse_rds_families(
+    db: Session,
+    req: BrowseArgs,
+) -> SearchResponse:
     """Browse RDS"""
 
     t0 = perf_counter()
     query = (
-        db.query(Family)
+        db.query(Family, Geography, Organisation)
         .join(Geography, Family.geography_id == Geography.id)
-        .join(FamilyOrganisation, FamilyOrganisation.family_id == Family.id)
+        .join(
+            FamilyOrganisation, FamilyOrganisation.family_import_id == Family.import_id
+        )
         .join(Organisation, Organisation.id == FamilyOrganisation.organisation_id)
+        .filter(Family.family_status == FamilyStatus.PUBLISHED)
     )
 
-    if req.geography_slug is not None:
-        query = query.filter(Geography.slug == req.geography_slug)
+    if req.geography_slugs is not None:
+        query = query.filter(Geography.slug in req.geography_slugs)
 
-    if req.country_code is not None:
-        query = query.filter(Geography.value == req.country_code)
+    if req.country_codes is not None:
+        query = query.filter(Geography.value in req.country_codes)
 
     # FIXME: sort out years for Families
     # if req.start_year is not None:
@@ -76,18 +91,34 @@ def browse_rds_families(db: Session, req: BrowseArgs) -> SearchResponse:
 
     # query = query.order_by(Family.publication_ts.desc())
 
-    if req.category is not None:
-        query = query.filter(Family.category_name == req.category)
+    if req.categories is not None:
+        query = query.filter(Family.category_name in req.categories)
+
+    if req.sort_field == SortField.DATE:
+        # FIXME: implement order by date after events work
+        pass
+        # if req.sort_order == SortOrder.DESCENDING:
+        #     query = query.order_by(Document.publication_ts.desc())
+        # else:
+        #     query = query.order_by(Document.publication_ts.asc())
+    else:
+        if req.sort_order == SortOrder.DESCENDING:
+            query = query.order_by(Family.title.desc())
+        else:
+            query = query.order_by(Family.title.asc())
 
     families = [
         to_search_response_family(family, geography, organisation)
-        for (family, geography, _, organisation) in query
+        for (family, geography, organisation) in query.all()
     ]
+
+    offset = req.offset
+    limit = req.limit
 
     return SearchResponse(
         hits=len(families),
         query_time_ms=int((perf_counter() - t0) * 1e3),
-        families=families,
+        families=families[offset : offset + limit],
     )
 
 
@@ -137,11 +168,11 @@ def browse_rds(db: Session, req: BrowseArgs) -> SearchResultsResponse:
         .join(Category, Document.category_id == Category.id)
     )
 
-    if req.geography_slug is not None:
-        query = query.filter(Geography.slug == req.geography_slug)
+    if req.geography_slugs is not None:
+        query = query.filter(Geography.slug.in_(req.geography_slugs))
 
-    if req.country_code is not None:
-        query = query.filter(Geography.value == req.country_code)
+    if req.country_codes is not None:
+        query = query.filter(Geography.value.in_(req.country_codes))
 
     if req.start_year is not None:
         query = query.filter(extract("year", Document.publication_ts) >= req.start_year)
@@ -149,15 +180,27 @@ def browse_rds(db: Session, req: BrowseArgs) -> SearchResultsResponse:
     if req.end_year is not None:
         query = query.filter(extract("year", Document.publication_ts) <= req.end_year)
 
-    if req.category is not None:
-        query = query.filter(Category.name == req.category)
+    if req.categories is not None:
+        query = query.filter(Category.name.in_(req.categories))
 
-    query = query.order_by(Document.publication_ts.desc())
+    if req.sort_field == SortField.DATE:
+        if req.sort_order == SortOrder.DESCENDING:
+            query = query.order_by(Document.publication_ts.desc())
+        else:
+            query = query.order_by(Document.publication_ts.asc())
+    else:
+        if req.sort_order == SortOrder.DESCENDING:
+            query = query.order_by(Document.name.desc())
+        else:
+            query = query.order_by(Document.name.asc())
 
     documents = [to_search_resp_doc(dict(row)) for row in query.all()]
+
+    offset = req.offset
+    limit = req.limit
 
     return SearchResultsResponse(
         hits=len(documents),
         query_time_ms=int((perf_counter() - t0) * 1e3),
-        documents=documents,
+        documents=documents[offset : offset + limit],
     )
