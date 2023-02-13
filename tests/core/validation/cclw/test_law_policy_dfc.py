@@ -160,7 +160,7 @@ VALID_LINE_1 = (
     "executive-decree-no-2011-423-fixing-the-operating-procedures-of-the-trust-account-no-302-1221-national-fund-for"
     "-renewable-energy-and-cogeneration_39d9,"
     "executive-decree-no-2011-423-fixing-the-operating-procedures-of-the-trust-account-no-302-1221-national-fund-for"
-    "-renewable-energy-and-cogeneration_56b3,Published\n"
+    "-renewable-energy-and-cogeneration_56b3,Deleted\n"
 )
 VALID_LINE_2 = (
     "1,2,Example Description 2,FALSE,FALSE,N/A,N/A,N/A,Example doc title 2,Example family name 2,Example family "

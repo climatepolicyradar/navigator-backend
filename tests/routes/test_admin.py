@@ -5,6 +5,7 @@ from unittest.mock import patch
 import pytest
 
 from app.api.api_v1.routers.admin import ACCOUNT_ACTIVATION_EXPIRE_MINUTES
+from app.core.validation.types import UpdateResult
 from app.db.models.deprecated import (
     Source,
     Document,
@@ -532,17 +533,25 @@ def test_bulk_import_cclw_law_policy_preexisting_db_objects(
 # TODO test the update of documents and no parse
 
 
-def test_bulk_import_cclw_law_policy_dfc_document_status_change(
+def test_bulk_import_cclw_law_policy_dfc_new_document(
     client,
     superuser_token_headers,
     test_db,
     mocker,
 ):
-    mock_start_import = mocker.patch("app.api.api_v1.routers.admin.start_update")
+    """
+    Test that we can successfully ingest new rows into the database and update as well as archive existing rows.
+
+    Method:
+    - Insert an existing document into the database.
+    - Bulk import a csv with one new document and one existing document with updates.
+    - Assert the correct output.
+    """
+    mock_start_update = mocker.patch("app.api.api_v1.routers.admin.start_update")
     mock_write_csv_to_s3 = mocker.patch("app.api.api_v1.routers.admin.write_json_to_s3")
 
     existing_doc_import_id = "CCLW.executive.1.1"
-    exisiting_family_id = "CCLW.family.1.1"
+    existing_family_id = "CCLW.family.1.1"
 
     test_db.add(
         PhysicalDocument(
@@ -607,7 +616,7 @@ def test_bulk_import_cclw_law_policy_dfc_document_status_change(
     test_db.add(
         Family(
             title="Example family title.",
-            import_id=exisiting_family_id,
+            import_id=existing_family_id,
             description="Example family description.",
             geography_id=1,
             category_name="TestFamilyCategory",
@@ -617,7 +626,7 @@ def test_bulk_import_cclw_law_policy_dfc_document_status_change(
     test_db.commit()
     test_db.add(
         FamilyDocument(
-            family_import_id=exisiting_family_id,
+            family_import_id=existing_family_id,
             physical_document_id=1,
             cdn_object="cdn_path/another_path/",
             import_id=existing_doc_import_id,
@@ -636,15 +645,100 @@ def test_bulk_import_cclw_law_policy_dfc_document_status_change(
         headers=superuser_token_headers,
     )
     assert response.status_code == 202
-    # response_json = response.json()
-    # assert response_json["document_count"] == 2
-    # assert response_json["document_skipped_count"] == 1
-    # assert response_json["document_skipped_ids"] == [existing_doc_import_id]
-    #
-    # mock_start_import.assert_called_once()
-    # call = mock_start_import.mock_calls[0]
-    # assert len(call.args[2]) == 1
-    #
-    # mock_write_csv_to_s3.assert_called_once()
-    # call = mock_write_csv_to_s3.mock_calls[0]
-    # assert len(call.kwargs["file_contents"]) == csv_file.getbuffer().nbytes
+    response_json = response.json()
+    assert response_json["document_count"] == 2
+    assert response_json["document_added_count"] == 1
+    assert response_json["document_updated_count"] == 1
+    assert response_json["document_updated_ids"] == [existing_doc_import_id]
+    assert response_json["document_not_added_count"] == 0
+    assert response_json["document_not_added_ids"] == []
+    assert response_json["csv_s3_location"] != "No data to write."
+
+    mock_start_update.assert_called_once()
+    call = mock_start_update.mock_calls[0]
+    # TODO get these values dynamically from the document we create in the db and the valid csv test data
+    assert call.args[1] == {
+        "CCLW.executive.1.1": [
+            UpdateResult(
+                db_value="Test physical document.",
+                csv_value="Example doc title",
+                updated=True,
+                type="PhysicalDocument",
+                field="title",
+            ),
+            UpdateResult(
+                db_value="https://www.cclw.org.uk/dfc/dfc-2014-2015.pdf",
+                csv_value="https://marksdummyurl/bhoyz",
+                updated=True,
+                type="PhysicalDocument",
+                field="source_url",
+            ),
+            UpdateResult(
+                db_value="Example family title.",
+                csv_value="Example family name",
+                updated=True,
+                type="Family",
+                field="title",
+            ),
+            UpdateResult(
+                db_value="Example family description.",
+                csv_value="Example family summary.",
+                updated=True,
+                type="Family",
+                field="description",
+            ),
+            UpdateResult(
+                db_value="Published",
+                csv_value="Deleted",
+                updated=True,
+                type="FamilyDocument",
+                field="document_status",
+            ),
+        ]
+    }
+
+    mock_write_csv_to_s3.assert_called_once()
+    call = mock_write_csv_to_s3.mock_calls[0]
+
+    # TODO create this new documents json from the to_pipeline_input method
+    # TODO we're getting pydantic initialized key in our json
+    # TODO assert that the json can be loaded as InputData
+    assert ordered(call[2]["json_data"]) == ordered(
+        {
+            "new_documents": [
+                {
+                    "publication_ts": "0-01-01T00:00:00",
+                    "name": "Example family name 2",
+                    "description": "Example family summary 2.",
+                    "source_url": ["https://marksdummyurl/bhoyz"],
+                    "type": "Decree",
+                    "source": "CCLW",
+                    "import_id": "CCLW.executive.1.2",
+                    "category": "executive",
+                    "frameworks": [],
+                    "geography": "Algeria",
+                    "hazards": "",
+                    "instruments": ["Subsidies", "Economic"],
+                    "keywords": ["Research And Development", "Energy Supply"],
+                    "languages": "",
+                    "sectors": ["Energy"],
+                    "topics": ["Mitigation"],
+                    "events": ["08/12/2011", "Law passed"],
+                    "slug": "executive-decree-no-2011-423-fixing-the-operating-procedures-of-the-trust-account-no-302"
+                    "-1221-national-fund-for-renewable-energy-and-cogeneration_56b3",
+                }
+            ],
+            "updated_documents": {
+                "CCLW.executive.1.1": [
+                    {
+                        "db_value": "Published",
+                        "csv_value": "Deleted",
+                        "updated": True,
+                        "type": "FamilyDocument",
+                        "field": "document_status",
+                        "__pydantic_initialised__": True,
+                    }
+                ]
+            },
+        }
+    )
