@@ -11,3 +11,4 @@ from .populate_language import populate_language
 from .populate_sector import populate_sector
 from .populate_source import populate_source
 from .populate_topic import populate_topic
+from .populate_taxonomy import populate_taxonomy
