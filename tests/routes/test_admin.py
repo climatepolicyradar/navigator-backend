@@ -20,7 +20,8 @@ from app.db.models.deprecated import (
     PasswordResetToken,
 )
 from app.db.models.deprecated import DocumentType
-from app.db.models.law_policy import Geography
+from app.db.models.document import PhysicalDocument
+from app.db.models.law_policy import Geography, FamilyDocument
 from tests.core.validation.cclw.test_law_policy import (
     INVALID_FILE_1,
     INVALID_CSV_MIXED_ERRORS,
@@ -490,6 +491,72 @@ def test_bulk_import_cclw_law_policy_preexisting_db_objects(
             category_id=1,
         )
     )
+    test_db.commit()
+
+    csv_file = BytesIO(VALID_FILE_1.encode("utf8"))
+    files = {"law_policy_csv": ("valid.csv", csv_file, "text/csv", {"Expires": "0"})}
+    response = client.post(
+        "/api/v1/admin/bulk-imports/cclw/law-policy",
+        files=files,
+        headers=superuser_token_headers,
+    )
+    assert response.status_code == 202
+    response_json = response.json()
+    assert response_json["document_count"] == 2
+    assert response_json["document_skipped_count"] == 1
+    assert response_json["document_skipped_ids"] == [existing_doc_import_id]
+
+    mock_start_import.assert_called_once()
+    call = mock_start_import.mock_calls[0]
+    assert len(call.args[2]) == 1
+
+    mock_write_csv_to_s3.assert_called_once()
+    call = mock_write_csv_to_s3.mock_calls[0]
+    assert len(call.kwargs["file_contents"]) == csv_file.getbuffer().nbytes
+
+
+def test_bulk_import_cclw_law_policy_dfc_document_status_change(
+    client,
+    superuser_token_headers,
+    test_db,
+    mocker,
+):
+    mock_start_import = mocker.patch("app.api.api_v1.routers.admin.start_update")
+    mock_write_csv_to_s3 = mocker.patch("app.api.api_v1.routers.admin.write_json_to_s3")
+
+    existing_doc_import_id = "CCLW.executive.1.2"
+
+    test_db.add(
+        PhysicalDocument(
+            id=1,
+            title="Test physical document.",
+            md5_sum="1234567890",
+            source_url="https://www.cclw.org.uk/dfc/dfc-2014-2015.pdf",
+            date=datetime.datetime(year=2014, month=1, day=1),
+            content_type='application/pdf',
+        )
+    )
+    test_db.add(
+        FamilyDocument(
+            family_id=1,
+            physical_document_id=1,
+            cdn_object="https://cdn/dfc-2014-2015.pdf",
+            import_id=existing_doc_import_id,
+            variant_name = sa.Column(sa.ForeignKey(Variant.variant_name), nullable=False)
+            document_status = sa.Column(sa.Enum(DocumentStatus), default=DocumentStatus.CREATED)
+            document_type = sa.Column(sa.ForeignKey(FamilyDocumentType.name), nullable=False)
+        )
+    )
+    # test_db.add(
+    #     Family(
+    #         id=sa.Column(sa.Integer, primary_key=True)
+    #         title = sa.Column(sa.Text, nullable=False)
+    #         md5_sum = sa.Column(sa.Text, nullable=True)
+    #         source_url = sa.Column(sa.Text, nullable=True)
+    #         date = sa.Column(sa.DateTime, nullable=False)
+    #         content_type = sa.Column(sa.Text, nullable=True)
+    #     )
+    # )
     test_db.commit()
 
     csv_file = BytesIO(VALID_FILE_1.encode("utf8"))
