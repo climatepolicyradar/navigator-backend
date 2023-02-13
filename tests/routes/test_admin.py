@@ -39,6 +39,7 @@ from tests.core.validation.cclw.test_law_policy import (
     VALID_FILE_1,
 )
 from tests.core.validation.cclw.test_law_policy_dfc import DFC_VALID_FILE_1
+from tests.core.validation.test_util import ordered
 
 
 def test_get_users(client, test_superuser, superuser_token_headers):
