@@ -45,6 +45,12 @@ class Variant(Base):
     description = sa.Column(sa.Text, nullable=False)
 
 
+class FamilyStatus(enum.Enum):
+    CREATED = "Created"
+    PUBLISHED = "Published"
+    DELETED = "Deleted"
+
+
 class Family(Base):
 
     __tablename__ = "family"
@@ -56,6 +62,7 @@ class Family(Base):
     category_name = sa.Column(
         sa.ForeignKey(FamilyCategory.category_name), nullable=False
     )
+    family_status = sa.Column(sa.Enum(FamilyStatus), default=FamilyStatus.CREATED, nullable=False)
 
     family_type = sa.Column(sa.ForeignKey(FamilyType.type_name), nullable=False)
 
@@ -86,7 +93,7 @@ class FamilyDocument(Base):
     cdn_object = sa.Column(sa.Text, nullable=True)
     import_id = sa.Column(sa.Text, primary_key=True)
     variant_name = sa.Column(sa.ForeignKey(Variant.variant_name), nullable=False)
-    document_status = sa.Column(sa.Enum(DocumentStatus), default=DocumentStatus.CREATED)
+    document_status = sa.Column(sa.Enum(DocumentStatus), default=DocumentStatus.CREATED, nullable=False)
     document_type = sa.Column(sa.ForeignKey(FamilyDocumentType.name), nullable=False)
 
 
