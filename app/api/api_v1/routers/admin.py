@@ -12,37 +12,42 @@ from fastapi import (
     UploadFile,
     status,
 )
-from sqlalchemy.exc import IntegrityError
 from sqlalchemy import update
-from app.core.aws import S3Document
+from sqlalchemy.exc import IntegrityError
 
 from app.api.api_v1.schemas.document import (
     BulkImportValidatedResult,
     DocumentCreateRequest,
     DocumentUpdateRequest,
+    BulkImportValidatedResultDeprecated,
 )
 from app.api.api_v1.schemas.user import User, UserCreateAdmin
 from app.core.auth import get_current_active_superuser
+from app.core.aws import S3Document
 from app.core.aws import get_s3_client
 from app.core.email import (
     send_new_account_email,
     send_password_reset_email,
 )
+from app.core.import_row import CCLWImportRowGenerator
 from app.core.ratelimit import limiter
+from app.core.util import document_updates, affects_pipline
 from app.core.validation import IMPORT_ID_MATCHER
-from app.core.validation.types import (
-    ImportSchemaMismatchError,
-    DocumentsFailedValidationError,
-)
-from app.core.validation.util import (
-    get_valid_metadata,
-    write_csv_to_s3,
-)
 from app.core.validation.cclw.law_policy.process_csv import (
     extract_documents,
     validated_input,
 )
-from app.db.crud.document import start_import
+from app.core.validation.types import (
+    ImportSchemaMismatchError,
+    DocumentsFailedValidationError,
+    InputData,
+)
+from app.core.validation.util import (
+    get_valid_metadata,
+    write_csv_to_s3,
+    write_json_to_s3,
+)
+from app.db.crud.document import start_import, start_update
 from app.db.crud.password_reset import (
     create_password_reset_token,
     invalidate_existing_password_reset_tokens,
@@ -55,6 +60,7 @@ from app.db.crud.user import (
     get_users,
 )
 from app.db.models.deprecated.document import Document
+from app.db.models.law_policy import FamilyDocument
 from app.db.session import get_db
 
 _LOGGER = logging.getLogger(__name__)
@@ -268,8 +274,120 @@ async def request_password_reset(
 
 
 @r.post(
-    "/bulk-imports/cclw/law-policy",
+    "/bulk-imports/cclw/law-policy-dfc",
     response_model=BulkImportValidatedResult,
+    status_code=status.HTTP_202_ACCEPTED,
+)
+def import_law_policy_dfc(
+    request: Request,
+    law_policy_csv: UploadFile,
+    background_tasks: BackgroundTasks,
+    db=Depends(get_db),
+    current_user=Depends(get_current_active_superuser),
+    s3_client=Depends(get_s3_client),
+):
+    """Process a Law/Policy documents, families and collections data import"""
+    _LOGGER.info(
+        f"Bulk import request triggered for CCLW Law & Policy data.",
+        extra={
+            "props": {
+                "superuser_email": current_user.email,
+            }
+        },
+    )
+    try:
+        # TODO validate metadata
+
+        docs_with_updates = {}
+        docs_to_create = []
+        docs_skipped = []
+        existing_import_ids = [id_[0] for id_ in db.query(FamilyDocument.import_id)]
+        _LOGGER.info(
+            "Got existing import ids (CPR Document ID).",
+            extra={"props": {"existing_import_ids_count": len(existing_import_ids)}},
+        )
+
+        for row_object in CCLWImportRowGenerator(law_policy_csv).get_rows():
+            if row_object.cpr_document_id in existing_import_ids:
+                updates = document_updates(row=row_object, db=db)
+                if bool(updates):
+                    docs_with_updates[row_object.cpr_document_id] = updates
+                else:
+                    docs_skipped.append(row_object.cpr_document_id)
+            else:
+                docs_to_create.append(row_object)
+
+        # TODO create new physical docs -> families -> collections as background task
+
+        background_tasks.add_task(start_update, db, docs_with_updates)
+
+        if bool(docs_to_create) or bool(docs_with_updates):
+            pipeline_update_docs = {}
+            for doc, updates in docs_with_updates.items():
+                [
+                    pipeline_update_docs.setdefault(doc, []).append(update_)
+                    for update_ in updates
+                    if affects_pipline(update_)
+                ]
+
+            pipeline_input_data = InputData(
+                new_documents=[
+                    new_doc._to_pipeline_input() for new_doc in docs_to_create
+                ],
+                updated_documents=pipeline_update_docs,
+            )
+
+            result: Union[S3Document, bool] = write_json_to_s3(
+                s3_client=s3_client, json_data=pipeline_input_data.to_json()
+            )
+            json_s3_location = (
+                "write failed" if type(result) is bool else str(result.url)
+            )
+            _LOGGER.info(
+                "Write Bulk Import CSV complete.",
+                extra={
+                    "props": {
+                        "superuser_email": current_user.email,
+                        "csv_s3_location": json_s3_location,
+                    }
+                },
+            )
+        else:
+            _LOGGER.info("No new documents to create or existing to update.")
+            json_s3_location = "No data to write."
+
+        return BulkImportValidatedResult(
+            document_count=len(docs_to_create) + len(existing_import_ids),
+            document_added_count=len(docs_to_create),
+            document_updated_count=len(docs_with_updates),
+            document_updated_ids=list(docs_with_updates.keys()),
+            document_not_added_count=len(docs_skipped),
+            document_not_added_ids=docs_skipped,
+            csv_s3_location=json_s3_location,
+        )
+
+    except ImportSchemaMismatchError as e:
+        raise HTTPException(
+            status_code=status.HTTP_400_BAD_REQUEST,
+            detail=e.details,
+        ) from e
+
+    except DocumentsFailedValidationError as e:
+        raise HTTPException(
+            status_code=status.HTTP_422_UNPROCESSABLE_ENTITY,
+            detail=e.details,
+        ) from e
+
+    except Exception as e:
+        _LOGGER.exception("Unexpected error")
+        raise HTTPException(
+            status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
+        ) from e
+
+
+@r.post(
+    "/bulk-imports/cclw/law-policy",
+    response_model=BulkImportValidatedResultDeprecated,
     status_code=status.HTTP_202_ACCEPTED,
 )
 def import_law_policy(
@@ -362,7 +480,7 @@ def import_law_policy(
 
         # TODO: Add some way the caller can monitor processing pipeline...
 
-        return BulkImportValidatedResult(
+        return BulkImportValidatedResultDeprecated(
             document_count=total_document_count,
             document_added_count=total_document_count - document_skipped_count,
             document_skipped_count=document_skipped_count,

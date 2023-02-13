@@ -152,3 +152,12 @@ def test_write_documents_to_s3(test_s3_client, mocker):
         upload_file_mock.mock_calls[0].kwargs["fileobj"].read().decode("utf8")
     )
     assert uploaded_json_documents == [d.to_json()]
+
+
+def ordered(obj):
+    if isinstance(obj, dict):
+        return sorted((k, ordered(v)) for k, v in obj.items())
+    if isinstance(obj, list):
+        return sorted(ordered(x) for x in obj)
+    else:
+        return obj
