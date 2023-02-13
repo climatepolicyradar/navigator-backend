@@ -7,43 +7,80 @@ from fastapi import UploadFile
 
 _LOGGER = logging.getLogger(__name__)
 
+ID = "ID"
+DOCUMENT_ID = "Document ID"
+CCLW_DESCRIPTION = "CCLW Description"
+PART_OF_COLLECTION = "Part of collection?"
+CREATE_NEW_FAMILYIES = "Create new family/ies?"
+COLLECTION_ID = "Collection ID"
+COLLECTION_NAME = "Collection name"
+COLLECTION_SUMMARY = "Collection summary"
+DOCUMENT_TITLE = "Document title"
+FAMILY_NAME = "Family name"
+FAMILY_SUMMARY = "Family summary"
+FAMILY_ID = "Family ID"
+DOCUMENT_ROLE = "Document role"
+APPLIES_TO_ID = "Applies to ID"
+GEOG_ISO = "Geography ISO"
+DOCUMENTS = "Documents"
+CATEGORY = "Category"
+EVENTS = "Events"
+SECTORS = "Sectors"
+INSTRUMENTS = "Instruments"
+FRAMEWORKS = "Frameworks"
+RESPONSES = "Responses"
+NATURAL_HAZARDS = "Natural Hazards"
+DOCUMENT_TYPE = "Document Type"
+YEAR = "Year"
+LANGUAGE = "Language"
+KEYWORDS = "Keywords"
+GEOG = "Geography"
+PARENT_LEGISLATION = "Parent Legislation"
+COMMENT = "Comment"
+CPR_DOCUMENT_ID = "CPR Document ID"
+CPR_FAMILY_ID = "CPR Family ID"
+CPR_COLLECTION_IF = "CPR Collection ID"
+CPR_FAMILY_SLUG = "CPR Family Slug"
+CPR_DOCUMENT_SLUG = "CPR Document Slug"
+CPR_DOCUMENT_STATUS = "CPR Document Status"
+
 REQUIRED_COLUMNS = [
-    "ID",
-    "Document ID",
-    "CCLW Description",
-    "Part of collection?",
-    "Create new family/ies?",
-    "Collection ID",
-    "Collection name",
-    "Collection summary",
-    "Document title",
-    "Family name",
-    "Family summary",
-    "Family ID",
-    "Document role",
-    "Applies to ID",
-    "Geography ISO",
-    "Documents",
-    "Category",
-    "Events",
-    "Sectors",
-    "Instruments",
-    "Frameworks",
-    "Responses",
-    "Natural Hazards",
-    "Document Type",
-    "Year",
-    "Language",
-    "Keywords",
-    "Geography",
-    "Parent Legislation",
-    "Comment",
-    "CPR Document ID",
-    "CPR Family ID",
-    "CPR Collection ID",
-    "CPR Family Slug",
-    "CPR Document Slug",
-    "CPR Document Status",
+    ID,
+    DOCUMENT_ID,
+    CCLW_DESCRIPTION,
+    PART_OF_COLLECTION,
+    CREATE_NEW_FAMILYIES,
+    COLLECTION_ID,
+    COLLECTION_NAME,
+    COLLECTION_SUMMARY,
+    DOCUMENT_TITLE,
+    FAMILY_NAME,
+    FAMILY_SUMMARY,
+    FAMILY_ID,
+    DOCUMENT_ROLE,
+    APPLIES_TO_ID,
+    GEOG_ISO,
+    DOCUMENTS,
+    CATEGORY,
+    EVENTS,
+    SECTORS,
+    INSTRUMENTS,
+    FRAMEWORKS,
+    RESPONSES,
+    NATURAL_HAZARDS,
+    DOCUMENT_TYPE,
+    YEAR,
+    LANGUAGE,
+    KEYWORDS,
+    GEOG,
+    PARENT_LEGISLATION,
+    COMMENT,
+    CPR_DOCUMENT_ID,
+    CPR_FAMILY_ID,
+    CPR_COLLECTION_IF,
+    CPR_FAMILY_SLUG,
+    CPR_DOCUMENT_SLUG,
+    CPR_DOCUMENT_STATUS,
 ]
 
 VALID_COLUMN_NAMES = set(REQUIRED_COLUMNS)
@@ -132,6 +169,30 @@ class CCLWImportRow:
             setattr(self, key, int(value) if value else 0)
         else:
             setattr(self, key, value)
+
+    def _to_pipeline_input(self) -> dict:
+        """Returns a dict that can be used as the input to the pipeline."""
+        # TODO validate that these are correct
+        return {
+            "publication_ts": f"{self.year}-01-01T00:00:00",
+            "name": self.family_name,
+            "description": self.family_summary,
+            "source_url": self.documents,
+            "type": self.document_type,
+            "source": "CCLW",
+            "import_id": self.cpr_document_id,
+            "category": self.category,
+            "frameworks": [],
+            "geography": self.geography,
+            "hazards": self.natural_hazards,
+            "instruments": self.instruments,
+            "keywords": self.keywords,
+            "languages": self.language,
+            "sectors": self.sectors,
+            "topics": self.responses,
+            "events": self.events,
+            "slug": self.cpr_document_slug,
+        }
 
 
 class CCLWImportRowGenerator:

@@ -88,7 +88,7 @@ def document_updates(row: CCLWImportRow, db: Session) -> List[UpdateResult]:
 
 
 def get_family_doc(db: Session, filter_id: str) -> FamilyDocument:
-    """Get the family document from the database."""
+    """Get the family document from the database. Filter id should be the cpr_document_id."""
     return (
         db.query(FamilyDocument).filter(FamilyDocument.import_id == filter_id).scalar()
     )
@@ -108,7 +108,9 @@ def family_updates(db: Session, row: CCLWImportRow) -> List[UpdateResult]:
 
     family = (
         db.query(Family)
-        .filter(Family.id == get_family_doc(db, row.cpr_document_id).family_id)
+        .filter(
+            Family.import_id == get_family_doc(db, row.cpr_document_id).family_import_id
+        )
         .scalar()
     )
 

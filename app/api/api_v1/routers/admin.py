@@ -321,7 +321,6 @@ def import_law_policy_dfc(
 
         background_tasks.add_task(start_update, db, docs_with_updates)
 
-        json_s3_location = "No data to write."
         if bool(docs_to_create) or bool(docs_with_updates):
             pipeline_update_docs = {}
             for doc, updates in docs_with_updates.items():
@@ -332,7 +331,9 @@ def import_law_policy_dfc(
                 ]
 
             pipeline_input_data = InputData(
-                new_documents=docs_to_create,
+                new_documents=[
+                    new_doc._to_pipeline_input() for new_doc in docs_to_create
+                ],
                 updated_documents=pipeline_update_docs,
             )
 
@@ -351,6 +352,9 @@ def import_law_policy_dfc(
                     }
                 },
             )
+        else:
+            _LOGGER.info("No new documents to create or existing to update.")
+            json_s3_location = "No data to write."
 
         return BulkImportValidatedResult(
             document_count=len(docs_to_create) + len(existing_import_ids),
