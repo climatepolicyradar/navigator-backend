@@ -34,10 +34,10 @@ def physical_document_from_row(
     )
     physical_document = PhysicalDocument(
         title=row.document_title,
-        source_url=row.documents, # FIXME: parse document row
+        source_url=row.get_first_url(),
         date=document_date,
         md5_sum=existing_document.md5_sum,
-        format=existing_document.content_type,
+        content_type=existing_document.content_type,
     )
     db.add(physical_document)
     db.commit()

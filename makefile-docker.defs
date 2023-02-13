@@ -16,7 +16,7 @@ show_logs:
 
 start: start_containers migrations 
 
-start_backend: start_backendionly migrations 
+start_backend: start_backendonly migrations 
 
 stop:
 	docker-compose stop

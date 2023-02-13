@@ -8,7 +8,6 @@ import csv
 import sys
 from pathlib import Path
 
-from app.db.session import SessionLocal
 
 from scripts.ingest_dfc.dfc.processor import (
     ProcessFunc,
@@ -46,11 +45,10 @@ def read(csv_file_path: Path, process: ProcessFunc) -> None:
 if __name__ == "__main__":
     print("")
     print("Ingesting to new schema...")
-    db = SessionLocal()
     validate: ValidateFunc
     process: ProcessFunc
 
-    validate, process = get_dfc_processor(db)
+    validate, process = get_dfc_processor()
 
     print("Checking database is in a valid state...")
     if not validate():
@@ -67,3 +65,4 @@ if __name__ == "__main__":
 
     read(filename, process)
     print("Complete")
+    validate()

@@ -9,7 +9,7 @@ from scripts.ingest_dfc.utils import DfcRow, get_or_create, to_dict
 
 
 def collection_from_row(
-    db: Session, row: DfcRow, org_id: int, family_id: int, result: dict[str, Any]
+    db: Session, row: DfcRow, org_id: int, family_import_id: str, result: dict[str, Any]
 ) -> Optional[Collection]:
     """Creates the collection part of the schema from the row.
 
@@ -25,23 +25,28 @@ def collection_from_row(
     if not row.cpr_collection_id or row.cpr_collection_id == "n/a":
         return None
 
-    # FIXME: Joel made a mistake with the db schema, we should also be including the
-    #        generated collection_id & keying off that
     collection = get_or_create(
         db,
         Collection,
+        import_id=row.cpr_collection_id,
         title=row.collection_name,
         extra={"description": row.collection_summary},
     )
     result["collection"] = to_dict(collection)
 
     collection_organisation = get_or_create(
-        db, CollectionOrganisation, collection_id=collection.id, organisation_id=org_id
+        db,
+        CollectionOrganisation,
+        collection_import_id=collection.import_id,
+        organisation_id=org_id,
     )
     result["collection_organisation"] = to_dict(collection_organisation)
 
     collection_family = get_or_create(
-        db, CollectionFamily, collection_id=collection.id, family_id=family_id
+        db,
+        CollectionFamily,
+        collection_import_id=collection.import_id,
+        family_import_id=family_import_id,
     )
     result["collection_family"] = to_dict(collection_family)
 

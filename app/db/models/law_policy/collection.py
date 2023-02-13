@@ -19,8 +19,8 @@ class CollectionFamily(Base):
     __tablename__ = "collection_family"
 
     collection_import_id = sa.Column(sa.ForeignKey(Collection.import_id), nullable=False)
-    family_id = sa.Column(sa.ForeignKey(Family.id), nullable=False)
-    sa.PrimaryKeyConstraint(collection_import_id, family_id)
+    family_import_id = sa.Column(sa.ForeignKey(Family.import_id), nullable=False)
+    sa.PrimaryKeyConstraint(collection_import_id, family_import_id)
 
 
 class CollectionOrganisation(Base):

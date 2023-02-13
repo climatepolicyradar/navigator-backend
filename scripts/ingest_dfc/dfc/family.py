@@ -59,7 +59,7 @@ def _maybe_create_family(
 ) -> Family:
     def _create_family_links(family: Family):
         print(f"- Creating family slug for import {row.cpr_family_id}")
-        family_slug = Slug(name=row.cpr_family_slug, family_id=family.id)
+        family_slug = Slug(name=row.cpr_family_slug, family_import_id=family.import_id)
 
         db.add(family_slug)
         db.commit()
@@ -67,7 +67,7 @@ def _maybe_create_family(
 
         print(f"- Creating family organisation for import {row.cpr_family_id}")
         family_organisation = FamilyOrganisation(
-            family_id=family.id, organisation_id=org_id
+            family_import_id=family.import_id, organisation_id=org_id
         )
         db.add(family_organisation)
         db.commit()
@@ -135,9 +135,9 @@ def _maybe_create_family_document(
 
     physical_document = physical_document_from_row(db, row, existing_document, result)
     family_document = FamilyDocument(
-        family_id=family.id,
+        family_import_id=family.import_id,
         physical_document_id=physical_document.id,
-        cdn_url=existing_document.cdn_object,
+        cdn_object=existing_document.cdn_object,
         import_id=row.cpr_document_id,
         variant_name=variant_name,
         document_status=DocumentStatus.PUBLISHED,
