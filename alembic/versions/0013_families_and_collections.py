@@ -65,6 +65,7 @@ def upgrade():
     sa.Column('geography_id', sa.Integer(), nullable=False),
     sa.Column('category_name', sa.Text(), nullable=False),
     sa.Column('family_type', sa.Text(), nullable=False),
+    sa.Column('family_status', sa.Enum('CREATED', 'PUBLISHED', 'DELETED', name='familystatus'), nullable=False),
     sa.ForeignKeyConstraint(['category_name'], ['family_category.category_name'], name=op.f('fk_family__category_name__family_category')),
     sa.ForeignKeyConstraint(['family_type'], ['family_type.type_name'], name=op.f('fk_family__family_type__family_type')),
     sa.ForeignKeyConstraint(['geography_id'], ['geography.id'], name=op.f('fk_family__geography_id__geography')),
@@ -90,7 +91,7 @@ def upgrade():
     sa.Column('cdn_object', sa.Text(), nullable=True),
     sa.Column('import_id', sa.Text(), nullable=False),
     sa.Column('variant_name', sa.Text(), nullable=False),
-    sa.Column('document_status', sa.Enum('CREATED', 'PUBLISHED', 'DELETED', name='documentstatus'), nullable=True),
+    sa.Column('document_status', sa.Enum('CREATED', 'PUBLISHED', 'DELETED', name='documentstatus'), nullable=False),
     sa.Column('document_type', sa.Text(), nullable=False),
     sa.ForeignKeyConstraint(['document_type'], ['family_document_type.name'], name=op.f('fk_family_document__document_type__family_document_type')),
     sa.ForeignKeyConstraint(['family_import_id'], ['family.import_id'], name=op.f('fk_family_document__family_import_id__family')),
@@ -117,8 +118,8 @@ def upgrade():
     op.create_table('slug',
     sa.Column('name', sa.Text(), nullable=False),
     sa.Column('family_import_id', sa.Text(), nullable=True),
-    sa.Column('family_document_id', sa.Integer(), nullable=True),
-    sa.ForeignKeyConstraint(['family_document_id'], ['family_document.physical_document_id'], name=op.f('fk_slug__family_document_id__family_document')),
+    sa.Column('family_document_import_id', sa.Text(), nullable=True),
+    sa.ForeignKeyConstraint(['family_document_import_id'], ['family_document.import_id'], name=op.f('fk_slug__family_document_import_id__family_document')),
     sa.ForeignKeyConstraint(['family_import_id'], ['family.import_id'], name=op.f('fk_slug__family_import_id__family')),
     sa.PrimaryKeyConstraint('name', name=op.f('pk_slug'))
     )
@@ -132,9 +133,8 @@ def upgrade():
 
     op.create_check_constraint(
         "must_reference_exactly_one_entity",
-
         "slug",
-        "num_nonnulls(family_import_id, family_document_id) = 1"
+        "num_nonnulls(family_import_id, family_document_import_id) = 1"
     ) 
 
 

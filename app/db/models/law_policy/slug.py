@@ -9,7 +9,7 @@ class Slug(Base):
     __tablename__ = "slug"
     __table_args__ = (
         sa.CheckConstraint(
-            "num_nonnulls(family_import_id, family_document_id) = 1",
+            "num_nonnulls(family_import_id, family_document_import_id) = 1",
             name="must_reference_exactly_one_entity",
         ),
         sa.PrimaryKeyConstraint("name", name="pk_slug")
@@ -17,5 +17,5 @@ class Slug(Base):
 
     name = sa.Column(sa.Text, primary_key=True)
     family_import_id = sa.Column(sa.ForeignKey(Family.import_id))
-    family_document_id = sa.Column(sa.ForeignKey(FamilyDocument.physical_document_id))
+    family_document_import_id = sa.Column(sa.ForeignKey(FamilyDocument.import_id))
 
