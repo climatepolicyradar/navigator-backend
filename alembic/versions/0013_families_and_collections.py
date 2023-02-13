@@ -117,8 +117,8 @@ def upgrade():
     op.create_table('slug',
     sa.Column('name', sa.Text(), nullable=False),
     sa.Column('family_import_id', sa.Text(), nullable=True),
-    sa.Column('family_document_id', sa.Integer(), nullable=True),
-    sa.ForeignKeyConstraint(['family_document_id'], ['family_document.physical_document_id'], name=op.f('fk_slug__family_document_id__family_document')),
+    sa.Column('family_document_import_id', sa.Text(), nullable=True),
+    sa.ForeignKeyConstraint(['family_document_import_id'], ['family_document.import_id'], name=op.f('fk_slug__family_document_import_id__family_document')),
     sa.ForeignKeyConstraint(['family_import_id'], ['family.import_id'], name=op.f('fk_slug__family_import_id__family')),
     sa.PrimaryKeyConstraint('name', name=op.f('pk_slug'))
     )
@@ -132,9 +132,8 @@ def upgrade():
 
     op.create_check_constraint(
         "must_reference_exactly_one_entity",
-
         "slug",
-        "num_nonnulls(family_import_id, family_document_id) = 1"
+        "num_nonnulls(family_import_id, family_document_import_id) = 1"
     ) 
 
 
