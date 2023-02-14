@@ -135,7 +135,7 @@ class DfcRow:
             return value
 
         if field_info[key] == list[str]:
-            return [e.strip() for e in value.split(";")]
+            return [e.strip() for e in value.split(";") if e.strip()]
 
         if field_info[key] == int:
             return int(value) if value else 0

@@ -6,19 +6,20 @@ from sqlalchemy.orm import Session
 from app.db.models.app.users import Organisation
 from app.db.models.deprecated import Document
 from app.db.models.document import PhysicalDocument
-from app.db.models.law_policy.metadata import MetadataOrganisation
 
 from app.db.session import SessionLocal
 from scripts.ingest_dfc.dfc.collection import collection_from_row
 from scripts.ingest_dfc.dfc.family import family_from_row
-from scripts.ingest_dfc.utils import DfcRow, get_or_create, to_dict
+from scripts.ingest_dfc.dfc.organisation import create_organisation
+from scripts.ingest_dfc.dfc.validator import validate_row
+from scripts.ingest_dfc.utils import DfcRow
 
 
-ValidateFunc = Callable[[], bool]
-ProcessFunc = Callable[[DfcRow], None]
+IngestContext = int
+ProcessFunc = Callable[[IngestContext, DfcRow], None]
 
 
-def ingest_row(db: Session, row: DfcRow) -> dict:
+def ingest_row(db: Session, org_id: int, row: DfcRow) -> dict:
     """Creates the constituent elements in the database that will represent this row.
 
     Args:
@@ -41,9 +42,6 @@ def ingest_row(db: Session, row: DfcRow) -> dict:
         return result
     print("processing")
 
-    organisation = create_organisation(db, result)
-    org_id = cast(int, organisation.id)
-
     print(f"- Creating FamilyDocument for import {import_id}")
     family = family_from_row(
         db,
@@ -54,53 +52,71 @@ def ingest_row(db: Session, row: DfcRow) -> dict:
     )
 
     print(f"- Creating Collection if required for import {import_id}")
-    collection = collection_from_row(
-        db, row, cast(int, organisation.id), family.import_id, result
+    collection_from_row(
+        db, row, org_id, cast(str, family.import_id), result
     )
 
     return result
 
-
-def create_organisation(db: Session, result: dict):
-    def add_default_metadata(org: Organisation):
-        db.add(MetadataOrganisation(taxonomy_name="default", organisation_id=org.id))
-
-    print("- Creating organisation")
-    organisation = get_or_create(
-        db, Organisation, name="CCLW", after_create=add_default_metadata
+def db_ready() -> bool:
+    """Returns True if we should process the row."""
+    db = SessionLocal()
+    num_new_documents = db.query(PhysicalDocument).count()
+    num_old_documents = db.query(Document).count()
+    print(
+        f"Found {num_new_documents} new documents and {num_old_documents} old "
+        "documents"
     )
-    result["organisation"] = to_dict(organisation)
-    return organisation
+    return True  # num_new_documents == 0 and num_old_documents > 0
 
 
-def get_dfc_processor() -> Tuple[ValidateFunc, ProcessFunc]:
-    """Gets the validation and process function for ingesting a CSV.
+def db_init() -> int:
+    """Initialises the database
 
     Returns:
-        Tuple[ValidateFunc, ProcessFunc]: A tuple of functions
+        Organisation: The organisation that will be used for the ingest.
+    """
+    db = SessionLocal()
+    organisation = create_organisation(db)
+    db.commit()
+    return organisation.id
+
+
+def get_dfc_ingestor() -> ProcessFunc:
+    """Gets the ingestion function for ingesting a CSV.
+
+    Returns:
+        ProcessFunc: The function used to ingest the CSV file
     """
 
-    def validate() -> bool:
-        """Returns True if we should process the row."""
-        db = SessionLocal()
-        num_new_documents = db.query(PhysicalDocument).count()
-        num_old_documents = db.query(Document).count()
-        print(
-            f"Found {num_new_documents} new documents and {num_old_documents} old "
-            "documents"
-        )
-        return True  # num_new_documents == 0 and num_old_documents > 0
-
-    def process(row: DfcRow) -> None:
+    def process(context: IngestContext, row: DfcRow) -> None:
         """Processes the row into the db."""
-        sys.stdout.write(f"Processing row: {row.row_number}: ")
+        sys.stdout.write(f"Ingesting row: {row.row_number}: ")
 
         # Beginning a transaction here would create this issue:
         # https://stackoverflow.com/a/58991792
         # Sessions are meant to be short-lived - see https://docs.sqlalchemy.org/en/13/orm/session_basics.html
         db = SessionLocal()
-        ingest_row(db, row=row)
+        ingest_row(db, context, row=row)
         db.commit()
         sys.stdout.flush()
 
-    return validate, process
+    return process
+
+
+def get_dfc_validator() -> ProcessFunc:
+    """Gets the validation function for ingesting a CSV.
+
+    Returns:
+        ProcessFunc: The function used to validate the CSV file
+    """
+
+    def process(context: IngestContext, row: DfcRow) -> None:
+        """Processes the row into the db."""
+        sys.stdout.write(f"Validating row: {row.row_number}: ")
+
+        db = SessionLocal()
+        validate_row(db, context, row=row)
+        sys.stdout.flush()
+
+    return process

@@ -1,4 +1,4 @@
-from typing import Any
+from typing import Any, cast
 
 from sqlalchemy import func
 from sqlalchemy.orm import Session
@@ -17,6 +17,7 @@ from app.db.models.law_policy import (
 )
 from app.db.models.law_policy.metadata import MetadataOrganisation, MetadataTaxonomy
 from scripts.ingest_dfc.dfc.metadata import add_metadata
+from scripts.ingest_dfc.dfc.organisation import get_organisation_taxonomy
 
 from scripts.ingest_dfc.dfc.physical_document import (
     physical_document_from_row,
@@ -73,16 +74,9 @@ def _maybe_create_family(
         db.add(family_organisation)
         db.commit()
         result["family_organisation"] = to_dict(family_organisation)
-        # TODO Create Family metadata
-        taxonomy = (
-            db.query(MetadataTaxonomy.valid_metadata)
-            .join(MetadataOrganisation, MetadataOrganisation.taxonomy_name == MetadataTaxonomy.name)
-            .filter_by(taxonomy_name="default", organisation_id=org_id)
-            .first()
-        )
-        if not taxonomy:
-            raise ValueError(f"Could not find a default taxonomy for organisation {org_id}")
-        add_metadata(db, family.import_id, taxonomy, "default", row)
+
+        taxonomy = get_organisation_taxonomy(db, org_id)
+        add_metadata(db, cast(str, family.import_id), taxonomy, "default", row)
 
     category = FamilyCategory(row.category.upper())
 
