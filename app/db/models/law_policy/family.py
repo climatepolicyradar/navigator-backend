@@ -7,8 +7,8 @@ from app.db.session import Base
 
 
 class FamilyCategory(enum.Enum):
-    POLICY = "Policy"
-    LAW = "Law"
+    EXECUTIVE = "EXECUTIVE"
+    LEGISLATIVE = "LEGISLATIVE"
 
 class Variant(Base):
     """The type of variant of a document within a family.

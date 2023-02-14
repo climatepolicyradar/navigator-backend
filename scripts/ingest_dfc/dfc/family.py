@@ -11,7 +11,6 @@ from app.db.models.law_policy import (
     FamilyDocument,
     FamilyDocumentType,
     FamilyOrganisation,
-    FamilyType,
     Geography,
     Slug,
     Variant,
@@ -85,13 +84,7 @@ def _maybe_create_family(
             raise ValueError(f"Could not find a default taxonomy for organisation {org_id}")
         add_metadata(db, family.import_id, taxonomy, "default", row)
 
-    # FIXME: these should come from well-known values, not whatever is in the CSV
-    category = get_or_create(
-        db, FamilyCategory, category_name=row.category, extra={"description": ""}
-    )
-    family_type = get_or_create(
-        db, FamilyType, type_name=row.document_type, extra={"description": ""}
-    )
+    category = FamilyCategory(row.category.upper())
 
     # GET GEOGRAPHY
     print(f"- Getting Geography for {row.geography_iso}")
@@ -110,8 +103,7 @@ def _maybe_create_family(
         extra={
             "title": row.family_name,
             "geography_id": geography.id,
-            "category_name": category.category_name,
-            "family_type": family_type.type_name,
+            "category_name": category,
             "description": row.family_summary,
         },
         after_create=_create_family_links,

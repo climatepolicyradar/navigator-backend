@@ -93,15 +93,15 @@ class DfcRow:
     applies_to_id: str
     geography_iso: str
     documents: str
-    category: str
+    category: str               # METADATA - make an enum, remove from tax
     events: list[str]
-    sectors: list[str]
-    instruments: list[str]
-    frameworks: list[str]
-    responses: list[str]
-    natural_hazards: list[str]
+    sectors: list[str]          # METADATA
+    instruments: list[str]      # METADATA
+    frameworks: list[str]       # METADATA
+    responses: list[str]        # METADATA - topics
+    natural_hazards: list[str]  # METADATA - hazard
     keywords: list[str]
-    document_type: str
+    document_type: str          # METADATA ? 
     year: int
     language: str
     geography: str

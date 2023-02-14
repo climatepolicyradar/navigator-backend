@@ -53,7 +53,7 @@ def upgrade():
     sa.Column('import_id', sa.Text(), nullable=False),
     sa.Column('description', sa.Text(), nullable=False),
     sa.Column('geography_id', sa.Integer(), nullable=False),
-    sa.Column('category_name', sa.Enum('LAW', 'POLICY', name='familycategory'), nullable=False),
+    sa.Column('category_name', sa.Enum('EXECUTIVE', 'LEGISLATIVE', name='familycategory'), nullable=False),
     sa.Column('family_status', sa.Enum('CREATED', 'PUBLISHED', 'DELETED', name='familystatus'), nullable=False),
     sa.ForeignKeyConstraint(['geography_id'], ['geography.id'], name=op.f('fk_family__geography_id__geography')),
     sa.PrimaryKeyConstraint('import_id', name=op.f('pk_family')),
