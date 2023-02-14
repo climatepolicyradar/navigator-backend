@@ -4,7 +4,6 @@ from .family import (
     FamilyCategory,
     FamilyDocument,
     FamilyOrganisation,
-    FamilyType,
     Variant,
     FamilyDocumentType
 )

@@ -25,20 +25,10 @@ def upgrade():
     sa.Column('description', sa.Text(), nullable=False),
     sa.PrimaryKeyConstraint('import_id', name=op.f('pk_collection'))
     )
-    op.create_table('family_category',
-    sa.Column('category_name', sa.Text(), nullable=False),
-    sa.Column('description', sa.Text(), nullable=False),
-    sa.PrimaryKeyConstraint('category_name', name=op.f('pk_family_category'))
-    )
     op.create_table('family_document_type',
     sa.Column('name', sa.Text(), nullable=False),
     sa.Column('description', sa.Text(), nullable=False),
     sa.PrimaryKeyConstraint('name', name=op.f('pk_family_document_type'))
-    )
-    op.create_table('family_type',
-    sa.Column('type_name', sa.Text(), nullable=False),
-    sa.Column('description', sa.Text(), nullable=False),
-    sa.PrimaryKeyConstraint('type_name', name=op.f('pk_family_type'))
     )
     op.create_table('metadata_taxonomy',
     sa.Column('name', sa.Text(), nullable=False),
@@ -63,11 +53,8 @@ def upgrade():
     sa.Column('import_id', sa.Text(), nullable=False),
     sa.Column('description', sa.Text(), nullable=False),
     sa.Column('geography_id', sa.Integer(), nullable=False),
-    sa.Column('category_name', sa.Text(), nullable=False),
-    sa.Column('family_type', sa.Text(), nullable=False),
+    sa.Column('category_name', sa.Enum('EXECUTIVE', 'LEGISLATIVE', name='familycategory'), nullable=False),
     sa.Column('family_status', sa.Enum('CREATED', 'PUBLISHED', 'DELETED', name='familystatus'), nullable=False),
-    sa.ForeignKeyConstraint(['category_name'], ['family_category.category_name'], name=op.f('fk_family__category_name__family_category')),
-    sa.ForeignKeyConstraint(['family_type'], ['family_type.type_name'], name=op.f('fk_family__family_type__family_type')),
     sa.ForeignKeyConstraint(['geography_id'], ['geography.id'], name=op.f('fk_family__geography_id__geography')),
     sa.PrimaryKeyConstraint('import_id', name=op.f('pk_family')),
     )
@@ -152,8 +139,6 @@ def downgrade():
     op.drop_table('collection_organisation')
     op.drop_table('variant')
     op.drop_table('metadata_taxonomy')
-    op.drop_table('family_type')
     op.drop_table('family_document_type')
-    op.drop_table('family_category')
     op.drop_table('collection')
     # ### end Alembic commands ###

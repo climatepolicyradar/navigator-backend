@@ -6,32 +6,9 @@ from .geography import Geography
 from app.db.session import Base
 
 
-class FamilyCategory(Base):
-    """A document-family category
-
-    Currently:
-        Policy: (executive)
-        Law: (legislative)
-        Case: (litigation)
-    """
-
-    __tablename__ = "family_category"
-
-    category_name = sa.Column(sa.Text, primary_key=True)
-    description = sa.Column(sa.Text, nullable=False)
-
-
-class FamilyType(Base):
-    """A family type.
-
-    E.g. Decree, Act, Strategy, Policy. Programme, Law etc
-    """
-
-    __tablename__ = "family_type"
-
-    type_name = sa.Column(sa.Text, primary_key=True)
-    description = sa.Column(sa.Text, nullable=False)
-
+class FamilyCategory(enum.Enum):
+    EXECUTIVE = "EXECUTIVE"
+    LEGISLATIVE = "LEGISLATIVE"
 
 class Variant(Base):
     """The type of variant of a document within a family.
@@ -59,12 +36,8 @@ class Family(Base):
     import_id = sa.Column(sa.Text, primary_key=True)
     description = sa.Column(sa.Text, nullable=False)
     geography_id = sa.Column(sa.ForeignKey(Geography.id), nullable=False)
-    category_name = sa.Column(
-        sa.ForeignKey(FamilyCategory.category_name), nullable=False
-    )
+    category_name = sa.Column(sa.Enum(FamilyCategory), nullable=False)
     family_status = sa.Column(sa.Enum(FamilyStatus), default=FamilyStatus.CREATED, nullable=False)
-
-    family_type = sa.Column(sa.ForeignKey(FamilyType.type_name), nullable=False)
 
 
 class DocumentStatus(enum.Enum):

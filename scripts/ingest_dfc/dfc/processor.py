@@ -6,6 +6,7 @@ from sqlalchemy.orm import Session
 from app.db.models.app.users import Organisation
 from app.db.models.deprecated import Document
 from app.db.models.document import PhysicalDocument
+from app.db.models.law_policy.metadata import MetadataOrganisation
 
 from app.db.session import SessionLocal
 from scripts.ingest_dfc.dfc.collection import collection_from_row
@@ -40,27 +41,36 @@ def ingest_row(db: Session, row: DfcRow) -> dict:
         return result
     print("processing")
 
-    print("- Creating organisation")
-    organisation = get_or_create(db, Organisation, name="CCLW")
-    result["organisation"] = to_dict(organisation)
+    organisation = create_organisation(db, result)
+    org_id = cast(int, organisation.id)
 
     print(f"- Creating FamilyDocument for import {import_id}")
-    result["family"] = {}
     family = family_from_row(
         db,
         row,
         existing_document,
-        cast(int, organisation.id),
+        org_id,
         result,
     )
 
     print(f"- Creating Collection if required for import {import_id}")
-    result["collection"] = {}
-    collection_from_row(
-        db, row, cast(int, organisation.id), family.import_id, result["collection"]
+    collection = collection_from_row(
+        db, row, cast(int, organisation.id), family.import_id, result
     )
 
     return result
+
+
+def create_organisation(db: Session, result: dict):
+    def add_default_metadata(org: Organisation):
+        db.add(MetadataOrganisation(taxonomy_name="default", organisation_id=org.id))
+
+    print("- Creating organisation")
+    organisation = get_or_create(
+        db, Organisation, name="CCLW", after_create=add_default_metadata
+    )
+    result["organisation"] = to_dict(organisation)
+    return organisation
 
 
 def get_dfc_processor() -> Tuple[ValidateFunc, ProcessFunc]:
@@ -85,7 +95,7 @@ def get_dfc_processor() -> Tuple[ValidateFunc, ProcessFunc]:
         """Processes the row into the db."""
         sys.stdout.write(f"Processing row: {row.row_number}: ")
 
-        # Beginning a transaction here would create this issue: 
+        # Beginning a transaction here would create this issue:
         # https://stackoverflow.com/a/58991792
         # Sessions are meant to be short-lived - see https://docs.sqlalchemy.org/en/13/orm/session_basics.html
         db = SessionLocal()

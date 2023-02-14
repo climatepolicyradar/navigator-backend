@@ -35,12 +35,18 @@ def collection_from_row(
     result["collection"] = to_dict(collection)
 
     collection_organisation = get_or_create(
-        db, CollectionOrganisation, collection_import_id=collection.import_id, organisation_id=org_id
+        db,
+        CollectionOrganisation,
+        collection_import_id=collection.import_id,
+        organisation_id=org_id,
     )
     result["collection_organisation"] = to_dict(collection_organisation)
 
     collection_family = get_or_create(
-        db, CollectionFamily, collection_import_id=collection.import_id, family_import_id=family_import_id
+        db,
+        CollectionFamily,
+        collection_import_id=collection.import_id,
+        family_import_id=family_import_id,
     )
     result["collection_family"] = to_dict(collection_family)
 

@@ -11,11 +11,12 @@ from app.db.models.law_policy import (
     FamilyDocument,
     FamilyDocumentType,
     FamilyOrganisation,
-    FamilyType,
     Geography,
     Slug,
     Variant,
 )
+from app.db.models.law_policy.metadata import MetadataOrganisation, MetadataTaxonomy
+from scripts.ingest_dfc.dfc.metadata import add_metadata
 
 from scripts.ingest_dfc.dfc.physical_document import (
     physical_document_from_row,
@@ -72,14 +73,18 @@ def _maybe_create_family(
         db.add(family_organisation)
         db.commit()
         result["family_organisation"] = to_dict(family_organisation)
+        # TODO Create Family metadata
+        taxonomy = (
+            db.query(MetadataTaxonomy.valid_metadata)
+            .join(MetadataOrganisation, MetadataOrganisation.taxonomy_name == MetadataTaxonomy.name)
+            .filter_by(taxonomy_name="default", organisation_id=org_id)
+            .first()
+        )
+        if not taxonomy:
+            raise ValueError(f"Could not find a default taxonomy for organisation {org_id}")
+        add_metadata(db, family.import_id, taxonomy, "default", row)
 
-    # FIXME: these should come from well-known values, not whatever is in the CSV
-    category = get_or_create(
-        db, FamilyCategory, category_name=row.category, extra={"description": ""}
-    )
-    family_type = get_or_create(
-        db, FamilyType, type_name=row.document_type, extra={"description": ""}
-    )
+    category = FamilyCategory(row.category.upper())
 
     # GET GEOGRAPHY
     print(f"- Getting Geography for {row.geography_iso}")
@@ -98,8 +103,7 @@ def _maybe_create_family(
         extra={
             "title": row.family_name,
             "geography_id": geography.id,
-            "category_name": category.category_name,
-            "family_type": family_type.type_name,
+            "category_name": category,
             "description": row.family_summary,
         },
         after_create=_create_family_links,
@@ -185,7 +189,7 @@ def _add_family_document_slug(
     """
     family_document_slug = Slug(
         name=row.cpr_document_slug,
-        family_document_id=family_document.physical_document_id,
+        family_document_import_id=family_document.import_id,
     )
     db.add(family_document_slug)
     db.commit()
