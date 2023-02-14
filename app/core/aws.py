@@ -8,6 +8,7 @@ import boto3
 import botocore.client
 from botocore.exceptions import ClientError
 from botocore.response import StreamingBody
+from typing import Any, List
 
 logger = logging.getLogger(__name__)
 
@@ -280,6 +281,52 @@ class S3Client:
             return True
         except ClientError:
             return False
+
+    def object_exists(self, bucket: str, key: str) -> bool:
+        """
+        Detect whether an S3 object exists in s3.
+
+        params:
+            bucket: str - the name of the bucket
+            key: str - the key of the object to check
+        returns:
+            bool - True if the object exists, False otherwise
+        """
+        # TODO do we want to merge this method with the document_exists method?
+        try:
+            self.client.head_object(Bucket=bucket, Key=key)
+            logger.info(f"Object {key} exists in bucket {bucket}")
+            return True
+        except ClientError as e:
+            logger.info(f"Object {key} does not exist in bucket {bucket}: {e}")
+            return False
+
+    def delete_document_in_s3(
+        self, import_id: str, bucket: str, prefixes: List[str], suffixes=None
+    ) -> None:
+        """Delete the document objects in the relevant s3 buckets."""
+        # TODO do we want to archive the old file?
+        # TODO add type hint for s3_client
+        if suffixes is None:
+            suffixes = [".json", ".npy"]
+
+        for prefix in prefixes:
+            for suffix in suffixes:
+                s3_key = os.path.join(prefix, import_id + suffix)
+
+                if self.object_exists(bucket, s3_key):
+                    try:
+                        self.client.delete_object(Bucket=bucket, Key=s3_key)
+                        logger.info(
+                            "Deleted object '%s' from bucket '%s'.", s3_key, bucket
+                        )
+                    except ClientError as e:
+                        logger.error(
+                            "Could not delete object '%s' from bucket '%s': '%s'.",
+                            s3_key,
+                            bucket,
+                            e,
+                        )
 
 
 def get_s3_client():

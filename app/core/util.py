@@ -1,12 +1,21 @@
+import logging
 import os
 import random
 import string
-from typing import Any, Optional
+from typing import Any, Optional, List
 
+from botocore.exceptions import ClientError
 from sqlalchemy.orm import Session
 
+from app.core.validation.types import (
+    DocumentValidationResult,
+    UpdateResult,
+)
+from app.db.models.deprecated.document import Document, DocumentType, Category
+from app.db.models.deprecated.geography import Geography
 from app.db.session import Base
 
+_LOGGER = logging.getLogger(__name__)
 
 CDN_DOMAIN: str = os.getenv("CDN_DOMAIN", "cdn.climatepolicyradar.org")
 # TODO: remove & replace with proper content-type handling through pipeline
@@ -73,3 +82,101 @@ def tree_table_to_json(
             append_list.append(node_row_object)
 
     return json_out
+
+
+def update_doc_in_db(
+    updates: dict[str, UpdateResult], import_id: str, db: Session
+) -> None:
+    """Update the document table in the database."""
+    with db.begin_nested():
+        for field in updates:
+            if updates[field].updated:
+                docs_updated_no = (
+                    db.query(Document)
+                    .filter(Document.import_id == import_id)
+                    .update(
+                        {field: updates[field].csv_value},
+                        synchronize_session="fetch",
+                    )
+                )
+                if docs_updated_no != 1:
+                    raise RuntimeError(
+                        f"Expected to update 1 document but updated {docs_updated_no} during the udpate of: "
+                        f"{import_id}:{field} from {updates[field].db_value} -> {updates[field].csv_value}"
+                    )
+
+                _LOGGER.info(
+                    f"Updated {import_id}:{field} from {updates[field].db_value} -> {updates[field].csv_value}"
+                )
+
+
+def get_update_results(
+    csv_document: DocumentValidationResult, db: Session
+) -> dict[str, UpdateResult]:
+    """
+    Compare the document provided in the csv against the document in the database to see if they are different. Then
+    update the database and S3 if they are different to represent the new data.
+    """
+    db_document = (
+        db.query(Document).filter(Document.import_id == csv_document.import_id).scalar()
+    )
+
+    if db_document is None:
+        # TODO how to handle this?
+        raise RuntimeError(
+            f"Could not find document with import_id {csv_document.import_id}"
+        )
+
+    geog_db_value = [
+        geo
+        for geo in db.query(Geography).filter(Geography.id == db_document.geography_id)
+    ][0].value
+
+    doc_type_db_value = [
+        doc_type
+        for doc_type in db.query(DocumentType).filter(
+            DocumentType.id == db_document.type_id
+        )
+    ][0].name
+
+    category_db_value = [
+        doc_cat
+        for doc_cat in db.query(Category).filter(Category.id == db_document.category_id)
+    ][0].name
+
+    update_results = {
+        "name": UpdateResult(
+            csv_value=csv_document.create_request.name,
+            db_value=db_document.name,
+            updated=csv_document.create_request.name != db_document.name,
+        ),
+        "publication_ts": UpdateResult(
+            csv_value=csv_document.create_request.publication_ts,
+            db_value=db_document.publication_ts,
+            updated=csv_document.create_request.publication_ts
+            != db_document.publication_ts,
+        ),
+        "description": UpdateResult(
+            csv_value=csv_document.create_request.description,
+            db_value=db_document.description,
+            updated=csv_document.create_request.description != db_document.description,
+        ),
+        "geography": UpdateResult(
+            csv_value=csv_document.create_request.geography,
+            db_value=geog_db_value,
+            updated=csv_document.create_request.geography != geog_db_value,
+        ),
+        "type": UpdateResult(
+            csv_value=csv_document.create_request.type,
+            db_value=doc_type_db_value,
+            updated=csv_document.create_request.type != doc_type_db_value,
+        ),
+        "category": UpdateResult(
+            csv_value=csv_document.create_request.category,
+            db_value=category_db_value,
+            updated=csv_document.create_request.category != category_db_value,
+        ),
+    }
+
+    _LOGGER.info(f"{update_results} for {csv_document.import_id}")
+    return update_results

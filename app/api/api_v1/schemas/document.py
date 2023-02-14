@@ -176,8 +176,10 @@ class BulkImportValidatedResult(BaseModel):
 
     document_count: int
     document_added_count: int
-    document_skipped_count: int
-    document_skipped_ids: list[str]
+    document_updated_count: int
+    document_updated_ids: list[str]
+    document_not_added_count: int
+    document_not_added_ids: list[str]
     csv_s3_location: str
 
 
@@ -187,3 +189,12 @@ class DocumentUpdateRequest(BaseModel):
     md5_sum: Optional[str]
     content_type: Optional[str]
     cdn_object: Optional[str]
+
+
+class BulkDeleteValidatedResult(BaseModel):
+    """Response for bulk delete request."""
+
+    document_count_pre_delete: str
+    document_count_post_delete: str
+    document_deleted_count: str
+    document_deleted_ids: list[str]
