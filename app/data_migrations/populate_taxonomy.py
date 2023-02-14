@@ -64,12 +64,6 @@ TAXONOMY_DATA = [
         "file_key_path": "name",
         "allow_blanks": True,
     },
-    {
-        "key" : "category",
-        "filename": "app/data_migrations/data/category_data.json",
-        "file_key_path": "name",
-        "allow_blanks": True,
-    }
 ]
 
 def dot_dref(obj:dict, dotted_key: str):
