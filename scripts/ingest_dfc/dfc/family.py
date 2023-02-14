@@ -76,18 +76,13 @@ def _maybe_create_family(
         # TODO Create Family metadata
         taxonomy = (
             db.query(MetadataTaxonomy.valid_metadata)
-            .join(
-                MetadataOrganisation,
-                MetadataOrganisation.taxonomy_name == MetadataTaxonomy.name,
-            )
+            .join(MetadataOrganisation, MetadataOrganisation.taxonomy_name == MetadataTaxonomy.name)
             .filter_by(taxonomy_name="default", organisation_id=org_id)
             .first()
         )
         if not taxonomy:
-            raise ValueError(
-                f"Could not find a default taxonomy for organisation {org_id}"
-            )
-        add_metadata(db, family.import_id, taxonomy[0], "default", row)
+            raise ValueError(f"Could not find a default taxonomy for organisation {org_id}")
+        add_metadata(db, family.import_id, taxonomy, "default", row)
 
     category = FamilyCategory(row.category.upper())
 
