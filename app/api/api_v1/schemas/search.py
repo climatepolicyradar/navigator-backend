@@ -46,23 +46,25 @@ class FilterField(str, Enum):
 
 
 class IncludedResults(str, Enum):
-    """Filter field to exclude specific results from the search based on search indices."""
+    """Filter field to exclude specific results from search based on search indices."""
 
     PDFS_TRANSLATED = "pdfsTranslated"
     HTMLS_NON_TRANSLATED = "htmlsNonTranslated"
     HTMLS_TRANSLATED = "htmlsTranslated"
 
 
+# FIXME: This should be removed & replaced by uses of `FamilyCategory` defined in the
+#        law_policy.family db schema
 class CategoryName(str, Enum):
-	"""
-	Representation of what is in the database.
+    """
+    Representation of what is in the database.
 
-	TODO: Add test to ensure there is equivalence with the initial_data
-	"""
+    TODO: Add test to ensure there is equivalence with the initial_data
+    """
 
-	LAW = "Law"
-	POLICY = "Policy"
-	CASE = "Case"
+    LAW = "Law"
+    POLICY = "Policy"
+    CASE = "Case"
 
 
 IncludedResultsList = Optional[conlist(IncludedResults, min_items=1)]
@@ -138,9 +140,10 @@ class OpenSearchResponsePassageMatch(OpenSearchResponseMatchBase):
     text_block_coords: Sequence[Coord]
 
 
-############### NEW #####################
+############### NEW #####################  # noqa: E266
 class SearchResponseFamilyDocument(BaseModel):
     """A single document in a search response."""
+
     document_title: str
     document_date: str
     document_slug: str
@@ -152,12 +155,13 @@ class SearchResponseFamilyDocument(BaseModel):
     document_passage_matches: list[SearchResponseDocumentPassage]
 
 
-############### NEW #####################
+############### NEW #####################  # noqa: E266
 class SearchResponseFamily(BaseModel):
     """The object that is returned in the response.
 
     Used to extend with postfix
     """
+
     family_slug: str
     family_name: str
     family_description: str
@@ -169,7 +173,7 @@ class SearchResponseFamily(BaseModel):
     family_documents: list[SearchResponseFamilyDocument]
 
 
-############### NEW #####################
+############### NEW #####################  # noqa: E266
 class SearchResponse(BaseModel):
     """The response body produced by the search API endpoint."""
 
@@ -190,10 +194,9 @@ class CountrySummaryResponse(BaseModel):
     targets: Sequence[str]  # TODO: Placeholder for later
 
 
-
-###############################################
-################# DEPRECATED ##################
-###############################################
+###############################################  # noqa: E266
+################# DEPRECATED ##################  # noqa: E266
+###############################################  # noqa: E266
 class SearchDocumentResponse(BaseModel):
     """A single document in a search response."""
 
@@ -226,6 +229,7 @@ class SearchResultsResponse(BaseModel):
 
 
 Top5DocumentList = conlist(SearchDocumentResponse, max_items=5)
+
 
 class SummaryCountryResponse(BaseModel):
     """Additional information for the Country page over geo stats"""

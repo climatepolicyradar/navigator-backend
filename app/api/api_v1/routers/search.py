@@ -48,6 +48,9 @@ def search_documents(
     db=Depends(get_db),
 ) -> Union[SearchResponse, SearchResultsResponse]:
     """Search for documents matching the search criteria."""
+    # FIXME: The returned Union type should have `SearchResultsResponse` removed when
+    #        the frontend supports grouping by family. We will need to tidy up & remove
+    #        unused definitions at that point.
 
     _LOGGER.info(
         f"Search request (jit={search_body.jit_query})",
