@@ -53,8 +53,8 @@ def _populate_search_db_documents(db: Session) -> None:
     for f in data_dir.iterdir():
         if f.is_file() and f.suffixes == [".json"]:
             with open(f, "r") as of:
-                for l in of.readlines():
-                    search_document = json.loads(l)
+                for line in of.readlines():
+                    search_document = json.loads(line)
                     doc_details = search_document["_source"]
 
                     doc_id = doc_details["document_id"]
@@ -140,8 +140,8 @@ def _populate_search_db_families(db: Session) -> None:
     for f in data_dir.iterdir():
         if f.is_file() and f.suffixes == [".json"]:
             with open(f, "r") as of:
-                for l in of.readlines():
-                    search_document = json.loads(l)
+                for line in of.readlines():
+                    search_document = json.loads(line)
                     _create_family_structures(
                         db,
                         search_document,

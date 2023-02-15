@@ -71,7 +71,7 @@ def create_superuser(db) -> None:
         create_user(db, superuser_email, os.getenv("SUPERUSER_PASSWORD"))
     except IntegrityError:
         print(
-            f"Skipping - super user already exists with email/username {superuser_email}"
+            f"Skipping - superuser already exists with email/username {superuser_email}"
         )
 
 

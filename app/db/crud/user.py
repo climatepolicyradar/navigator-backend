@@ -73,7 +73,8 @@ def activate_user(
     password_reset_token: PasswordResetToken,
     password: str,
 ) -> User:
-    """Activate a user.
+    """
+    Activate a user.
 
     Sets a password, and toggles activation flags on user and password_reset_token.
     """

@@ -7,13 +7,11 @@ from pydantic import ConfigDict, Extra
 from pydantic.dataclasses import dataclass
 from sqlalchemy.orm import Session
 
-from app.db.session import Base
+from app.db.session import AnyModel
 
 
 class PublicationDateAccuracy(enum.IntEnum):
-    """
-    To be used in the microsecond field of a datetime to record its accuracy.
-    """
+    """To be used in the microsecond field of a datetime to record its accuracy."""
 
     NOT_DEFINED = 000000
     YEAR_ACCURACY = 100000
@@ -76,6 +74,8 @@ def validate_csv_columns(column_names: Sequence[str]) -> bool:
 
 @dataclass(config=ConfigDict(validate_assignment=True, extra=Extra.forbid))
 class DfcRow:
+    """Represents a single row of input from the documents-families-collections CSV."""
+
     row_number: int
     id: str
     document_id: str
@@ -93,15 +93,15 @@ class DfcRow:
     applies_to_id: str
     geography_iso: str
     documents: str
-    category: str               # METADATA - make an enum, remove from tax
+    category: str  # METADATA - make an enum, remove from tax
     events: list[str]
-    sectors: list[str]          # METADATA
-    instruments: list[str]      # METADATA
-    frameworks: list[str]       # METADATA
-    responses: list[str]        # METADATA - topics
+    sectors: list[str]  # METADATA
+    instruments: list[str]  # METADATA
+    frameworks: list[str]  # METADATA
+    responses: list[str]  # METADATA - topics
     natural_hazards: list[str]  # METADATA - hazard
     keywords: list[str]
-    document_type: str          # METADATA ? 
+    document_type: str  # METADATA ?
     year: int
     language: str
     geography: str
@@ -127,6 +127,7 @@ class DfcRow:
 
     @classmethod
     def field_info(cls) -> dict[str, type]:
+        """Returns an information mapping from field name to expected type."""
         return {field.name: field.type for field in fields(cls)}
 
     @classmethod
@@ -154,7 +155,8 @@ class DfcRow:
         return key.lower().replace(" ", "_").replace("?", "").replace("y/", "")
 
     def get_first_url(self) -> str:
-        """Gets the first URL from the 'documents' attribute.
+        """
+        Gets the first URL from the 'documents' attribute.
 
         FIXME: This could/should be written with more validation.
         """
@@ -166,24 +168,22 @@ class DfcRow:
         return first_url
 
 
-DbModel = TypeVar("DbModel", bound=Base)
+_DbModel = TypeVar("_DbModel", bound=AnyModel)
 
 
-def get_or_create(db: Session, model: DbModel, **kwargs) -> DbModel:
-    """Gets or Creates a row represented by model, and described by kwargs.
+def get_or_create(db: Session, model: _DbModel, **kwargs) -> _DbModel:
+    """
+    Gets or Creates a row represented by model, and described by kwargs.
 
-    Args:
-        db (Session): connection to the database.
-        model (_type_): the model (table) you are querying.
-        kwargs: a list of attributes to describe the row you are interested in.
-        NOTE:
-            - if kwargs contains an `extra` key then this will be used during
-            creation.
-            - if kwargs contains an `after_create` key then the value should
-            be a callback function that is called after an object is created.
+    :param [Session] db: connection to the database.
+    :param [_DbModel] model: the model (table) you are querying.
+    :param kwargs: a list of attributes to describe the row you are interested in.
+        - if kwargs contains an `extra` key then this will be used during
+        creation.
+        - if kwargs contains an `after_create` key then the value should
+        be a callback function that is called after an object is created.
 
-    Returns:
-        Base : The object that was either created or retrieved, or None
+    :return [_DbModel]: The object that was either created or retrieved, or None
     """
     # Remove any extra kwargs before we do the search
     extra = {}
@@ -212,14 +212,13 @@ def get_or_create(db: Session, model: DbModel, **kwargs) -> DbModel:
 
 
 def _sanitize(value: str) -> str:
-    """Sanitizes a string by parsing out the class name and truncating.
+    """
+    Sanitizes a string by parsing out the class name and truncating.
 
     Used by `to_dict()`
-    Args:
-        value (str): the string to be sanitized.
 
-    Returns:
-        str: the sanitized string.
+    :param [str] value: the string to be sanitized.
+    :return [str]: the sanitized string.
     """
     s = str(value)
     if s.startswith("<class"):
@@ -230,10 +229,11 @@ def _sanitize(value: str) -> str:
     return s
 
 
-def to_dict(base_object: Base) -> dict:
-    """Returns a dict of the attributes of the db Base object.
+def to_dict(base_object: AnyModel) -> dict:
+    """
+    Returns a dict of the attributes of the db Base object.
 
-    This also adds the class name too.
+    This also adds the class name.
     """
     extra = ["__class__"]
     return dict(

@@ -11,16 +11,15 @@ from scripts.ingest_dfc.utils import DfcRow, get_or_create, to_dict
 def collection_from_row(
     db: Session, row: DfcRow, org_id: int, family_import_id: str, result: dict[str, Any]
 ) -> Optional[Collection]:
-    """Creates the collection part of the schema from the row.
+    """
+    Create the collection part of the schema from the row.
 
-    Args:
-        db (Session): connection to the database.
-        org_id (int): the organisation id associated with this row.
-        row (DfcRow): the row built from the CSV.
-        family_id (int): the family id associated with this row.
-
-    Returns:
-        dict : a created dictionary to describe what was created.
+    :param [Session] db: connection to the database.
+    :param [DfcRow] row: the row built from the CSV.
+    :param [int] org_id: the organisation id associated with this row.
+    :param [str] family_import_id: the family id associated with this row.
+    :param [dict[str, Any]]: a result dict in which to record what was created.
+    :return [Collection | None]: A collection if one was created, otherwise None.
     """
     if not row.cpr_collection_id or row.cpr_collection_id == "n/a":
         return None

@@ -1,5 +1,6 @@
 #!/usr/bin/env python3
-"""Ingests a CSV into the new schema.
+"""
+Ingests a CSV into the new schema.
 
 Takes a single argument that is the filename of the CSV to import.
 """
@@ -18,11 +19,11 @@ from scripts.ingest_dfc.utils import DfcRow, validate_csv_columns
 
 
 def read(csv_file_path: Path, process: ProcessFunc) -> None:
-    """Reads a CSV file and calls process() for each row.
+    """
+    Reads a CSV file and calls process() for each row.
 
-    Args:
-        csv_file_path (Path): the filename of the CSV file.
-        process (ProcessFunc): the function to call to process a single row.
+    :csv_file_path [Path]: the filename of the CSV file.
+    :process [ProcessFunc]: the function to call to process a single row.
     """
     with open(csv_file_path) as csv_file:
         reader = csv.DictReader(csv_file)

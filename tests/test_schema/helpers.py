@@ -57,7 +57,8 @@ class PytestHelpers:  # noqa: D101
 
     @staticmethod
     def assert_schema_strs_similar(a: str, b: str) -> None:
-        """Rudimentary assertion to allow for column reordering on DROP, ADD.
+        """
+        Rudimentary assertion to allow for column reordering on DROP, ADD.
 
         Long run, we should replace this with the alembic-verify package:
 

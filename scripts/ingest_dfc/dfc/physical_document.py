@@ -18,14 +18,12 @@ from scripts.ingest_dfc.utils import (
 def physical_document_from_row(
     db: Session, row: DfcRow, existing_document: Document, result: dict[str, Any]
 ) -> PhysicalDocument:
-    """Creates the document part of the schema from the row.
+    """
+    Create the document part of the schema from the row.
 
-    Args:
-        db (Session): connection to the database.
-        row (DfcRow): the row built from the CSV.
-
-    Returns:
-        dict : a created dictionary to describe what was created.
+    :param [Session] db: connection to the database.
+    :param [DrfRow] row: the row built from the CSV.
+    :return [dict[str, Any]]: a dictionary to describe what was created.
     """
     document_date = (
         datetime(row.year, 1, 1, 0, 0, 0, PublicationDateAccuracy.YEAR_ACCURACY)

@@ -93,7 +93,8 @@ def create_test_db():
 
 @pytest.fixture
 def test_db(create_test_db):
-    """Provide a test DB.
+    """
+    Provide a test DB.
 
     Modify the db session to automatically roll back after each test.
     This is to avoid tests affecting the database state of other tests.

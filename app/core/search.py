@@ -5,7 +5,6 @@ import os
 import time
 from collections import OrderedDict
 from dataclasses import dataclass
-from enum import Enum
 from pathlib import Path
 from typing import Any, Mapping, Optional, Sequence
 import string
@@ -55,7 +54,6 @@ from app.core.config import (
     OPENSEARCH_JIT_MAX_DOC_COUNT,
 )
 from app.core.util import to_cdn_url
-from app.db.models.law_policy import Family, FamilyDocument, Slug
 
 
 _LOGGER = logging.getLogger(__name__)
@@ -86,14 +84,16 @@ _JSON_SERIALIZER = jss()
 
 
 def _innerproduct_threshold_to_lucene_threshold(ip_thresh: float) -> float:
-    """Maps inner product to lucene threashold.
+    """
+    Map inner product to lucene threashold.
 
     Opensearch documentation on mapping similarity functions to Lucene thresholds is
     here: https://github.com/opensearch-project/k-NN/blob/main/src/main/java/org/opensearch/knn/index/SpaceType.java#L33
 
     It defines 'inner product' as negative inner product i.e. a distance rather than
-    similarity measure, so we reverse the signs of inner product here compared to the docs.
-    """
+    similarity measure, so we reverse the signs of inner product here compared to the
+    docs.
+    """  # noqa: E501
     if ip_thresh > 0:
         return ip_thresh + 1
     else:
@@ -102,9 +102,11 @@ def _innerproduct_threshold_to_lucene_threshold(ip_thresh: float) -> float:
 
 def load_sensitive_query_terms() -> set[str]:
     """
-    Return sensitive query terms from the first column of a TSV file. Outputs are lowercased for case-insensitive matching.
+    Return sensitive query terms from the first column of a TSV file.
 
-    :return _type_: _description_
+    Outputs are lowercased for case-insensitive matching.
+
+    :return [set[str]]: sensitive query terms
     """
     tsv_path = Path(__file__).parent / "sensitive_query_terms.tsv"
     with open(tsv_path, "r") as tsv_file:
@@ -236,9 +238,15 @@ class OpenSearchConnection:
     def _get_opensearch_indices_to_query(
         self, search_request: SearchRequestBody
     ) -> str:
-        """Get the OpenSearch indices to query based on the request body. Returns a comma-separated string of indices."""
+        """
+        Get the OpenSearch indices to query based on the request body.
 
-        # By default we just query the index containing names and descriptions, and the non-translated PDFs
+        :param [SearchRequestBody] search_request: The search request body.
+        :return [str]: a comma-separated string of indices.
+        """
+
+        # By default we just query the index containing names and descriptions,
+        # and the non-translated PDFs
         indices_include = [
             f"{self._opensearch_config.index_prefix}_core",
             f"{self._opensearch_config.index_prefix}_pdfs_non_translated",
@@ -314,7 +322,8 @@ class OpenSearchConnection:
 def _year_range_filter(
     year_range: tuple[Optional[int], Optional[int]]
 ) -> Optional[dict[str, Any]]:
-    """Get an Opensearch filter for year range.
+    """
+    Get an Opensearch filter for year range.
 
     The filter returned is between the first term of `year_range` and the last term,
     and is inclusive. Either value can be set to None to only apply one year constraint.
@@ -372,7 +381,7 @@ class QueryBuilder:
                                         "_source": {
                                             "excludes": [
                                                 "text_embedding",
-                                                OPENSEARCH_INDEX_DESCRIPTION_EMBEDDING_KEY,
+                                                OPENSEARCH_INDEX_DESCRIPTION_EMBEDDING_KEY,  # noqa: E501
                                             ]
                                         },
                                         "size": self._config.max_passages_per_doc,
@@ -406,7 +415,9 @@ class QueryBuilder:
                                 OPENSEARCH_INDEX_NAME_KEY: {
                                     "query": query_string,
                                     "operator": "and",
-                                    "minimum_should_match": "2<66%",  # all terms if there are 2 or less, otherwise 66% of terms (rounded down)
+                                    "minimum_should_match": "2<66%",
+                                    # all terms if there are 2 or less, otherwise
+                                    # 66% of terms (rounded down)
                                 }
                             }
                         },
@@ -431,7 +442,9 @@ class QueryBuilder:
                                     "query": query_string,
                                     "boost": 3,
                                     "operator": "and",
-                                    "minimum_should_match": "2<66%",  # all terms if there are 2 or less, otherwise 66% of terms (rounded down)
+                                    "minimum_should_match": "2<66%",
+                                    # all terms if there are 2 or less, otherwise
+                                    # 66% of terms (rounded down)
                                 }
                             }
                         },
@@ -448,7 +461,9 @@ class QueryBuilder:
                                 "text": {
                                     "query": query_string,
                                     "operator": "and",
-                                    "minimum_should_match": "2<66%",  # all terms if there are 2 or less, otherwise 66% of terms (rounded down)
+                                    "minimum_should_match": "2<66%",
+                                    # all terms if there are 2 or less, otherwise
+                                    # 66% of terms (rounded down)
                                 },
                             }
                         },
@@ -621,11 +636,13 @@ def build_opensearch_request_body(
 
 
 ################## NEW ######################
-from app.api.api_v1.schemas.search import (
+from app.api.api_v1.schemas.search import (  # noqa: E402
     SearchResponse,
     SearchResponseFamilyDocument,
     SearchResponseFamily,
 )
+
+# FIXME: move import during post-families cleanup
 
 
 def process_search_response_body_families(
@@ -722,7 +739,7 @@ def process_browse_response_body_families(
 ) -> SearchResponse:
     # FIXME: Update
     opensearch_json_response = opensearch_response_body.raw_response
-    families = []
+    # families = []
 
     search_response = SearchResponse(
         hits=opensearch_json_response["hits"]["total"]["value"],  # FIXME
