@@ -41,7 +41,7 @@ def search_by_country(
 
     for cat in CategoryName:
         results = browse_rds(
-            db, BrowseArgs(geography_slug=geography_slug, category=cat)
+            db, BrowseArgs(geography_slugs=[geography_slug], categories=[cat])
         )
         document_counts[cat] = len(results.documents)
         top_documents[cat] = list(results.documents[:5])

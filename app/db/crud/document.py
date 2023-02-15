@@ -46,6 +46,7 @@ from app.db.models.deprecated import (
     DocumentRelationship,
     DocumentResponse,
     DocumentSector,
+    DocumentType,
     Category,
     Event,
     Framework,
@@ -58,8 +59,8 @@ from app.db.models.deprecated import (
     Sector,
     Source,
 )
-from app.db.models.deprecated import DocumentType
-from app.db.models.law_policy import Geography
+from app.db.models.document import PhysicalDocument
+from app.db.models.law_policy import Family, FamilyDocument, Geography
 
 _LOGGER = logging.getLogger(__file__)
 
@@ -783,7 +784,7 @@ def remove_document_relationship(
     db.commit()
 
 
-def get_postfix_map(db: Session, doc_ids: list[str]) -> Mapping[str, str]:
+def get_postfix_map(db: Session, doc_ids: Sequence[str]) -> Mapping[str, str]:
 
     postfix_map = {
         doc_id: postfix if postfix else ""
@@ -800,3 +801,29 @@ def get_postfix_map(db: Session, doc_ids: list[str]) -> Mapping[str, str]:
         postfix_map.update({missing_id: "" for missing_id in missing_ids})
 
     return postfix_map
+
+
+def get_document_extra(db: Session) -> Mapping[str, Mapping[str, str]]:
+    """
+    Get a map from document_id to useful properties for processing.
+
+    :param Session db: Database session to query
+    :return Mapping[str, Mapping[str, str]]: A mapping from document import_id to
+        document slug, family slug & family import id details.
+    """
+    document_data = (
+        db.query(FamilyDocument, Family)
+        .join(Family, FamilyDocument.family_import_id == Family.import_id)
+    )
+    return {
+        family_document.import_id: {
+            "slug": family_document.slugs[-1].name,
+            "title": family_document.physical_document.title,
+            "family_slug": family.slugs[-1].name,
+            "family_import_id": family.import_id,
+        }
+        for (
+            family_document,
+            family,
+        ) in document_data
+    }
