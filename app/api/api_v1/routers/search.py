@@ -6,18 +6,20 @@ for the type of document search being performed.
 """
 import json
 import logging
-from typing import Mapping, Sequence
+from typing import Mapping, Sequence, Union
 
 from fastapi import APIRouter, Request, BackgroundTasks, Depends
 from sqlalchemy.orm import Session
 
 from app.api.api_v1.schemas.search import (
     SearchRequestBody,
-    SearchResults,
+    SearchResponse,
     SearchResultsResponse,
-    SearchResultResponse,
+    SearchDocumentResponse,
+    SortField,
 )
-from app.core.jit_query_wrapper import jit_query_wrapper
+from app.core.browse import BrowseArgs, browse_rds, browse_rds_families
+from app.core.jit_query_wrapper import jit_query_wrapper, jit_query_families_wrapper
 from app.core.lookups import get_countries_for_region, get_country_by_slug
 from app.core.search import (
     FilterField,
@@ -25,7 +27,7 @@ from app.core.search import (
     OpenSearchConfig,
     OpenSearchQueryConfig,
 )
-from app.db.crud.document import get_postfix_map
+from app.db.crud.document import get_postfix_map, get_document_extra
 from app.db.session import get_db
 
 _LOGGER = logging.getLogger(__name__)
@@ -38,14 +40,17 @@ _OPENSEARCH_INDEX_CONFIG = OpenSearchQueryConfig()
 search_router = APIRouter()
 
 
-@search_router.post("/searches", response_model=SearchResultsResponse)
+@search_router.post("/searches")
 def search_documents(
     request: Request,
     search_body: SearchRequestBody,
     background_tasks: BackgroundTasks,
     db=Depends(get_db),
-):
+) -> Union[SearchResponse, SearchResultsResponse]:
     """Search for documents matching the search criteria."""
+    # FIXME: The returned Union type should have `SearchResultsResponse` removed when
+    #        the frontend supports grouping by family. We will need to tidy up & remove
+    #        unused definitions at that point.
 
     _LOGGER.info(
         f"Search request (jit={search_body.jit_query})",
@@ -62,30 +67,76 @@ def search_documents(
             search_body.keyword_filters,
         )
 
-    results: SearchResults = jit_query_wrapper(
-        _OPENSEARCH_CONNECTION,
-        background_tasks=background_tasks,
-        search_request_body=search_body,
-        opensearch_internal_config=_OPENSEARCH_INDEX_CONFIG,
-        preference="default_search_preference",
-    )
-
-    # Now augment the search results with db data to form the response
-    doc_ids = [doc.document_id for doc in results.documents]
-    postfix_map = get_postfix_map(db, doc_ids)
-
-    response: SearchResultsResponse = SearchResultsResponse(
-        hits=results.hits,
-        query_time_ms=results.query_time_ms,
-        documents=[
-            SearchResultResponse(
-                **doc.dict(), document_postfix=postfix_map[doc.document_id]
+    if search_body.group_documents:
+        if not search_body.query_string:
+            # Service browse requests from RDS
+            return browse_rds_families(
+                db=db,
+                req=_get_browse_args_from_search_request_body(search_body),
             )
-            for doc in results.documents
-        ],
-    )
 
-    return response
+        return jit_query_families_wrapper(
+            _OPENSEARCH_CONNECTION,
+            background_tasks=background_tasks,
+            search_request_body=search_body,
+            opensearch_internal_config=_OPENSEARCH_INDEX_CONFIG,
+            document_extra_info=get_document_extra(db),
+            preference="default_search_preference",
+        )
+    else:
+        if not search_body.query_string:
+            # Service browse requests from RDS
+            return browse_rds(
+                db=db,
+                req=_get_browse_args_from_search_request_body(search_body),
+            )
+
+        doc_results: SearchResultsResponse = jit_query_wrapper(
+            _OPENSEARCH_CONNECTION,
+            background_tasks=background_tasks,
+            search_request_body=search_body,
+            opensearch_internal_config=_OPENSEARCH_INDEX_CONFIG,
+            preference="default_search_preference",
+        )
+        # Now augment the search results with db data to form the response
+        doc_ids = [doc.document_id for doc in doc_results.documents]
+        postfix_map = get_postfix_map(db, doc_ids)
+        return SearchResultsResponse(
+            hits=doc_results.hits,
+            query_time_ms=doc_results.query_time_ms,
+            documents=[
+                SearchDocumentResponse(
+                    **{
+                        **doc.dict(),
+                        **{"document_postfix": postfix_map[doc.document_id]},
+                    }
+                )
+                for doc in doc_results.documents
+            ],
+        )
+
+
+def _get_browse_args_from_search_request_body(
+    search_body: SearchRequestBody,
+) -> BrowseArgs:
+    keyword_filters = search_body.keyword_filters
+    if keyword_filters is None:
+        country_codes = None
+        categories = None
+    else:
+        country_codes = keyword_filters.get(FilterField.COUNTRY)
+        categories = keyword_filters.get(FilterField.CATEGORY)
+    start_year, end_year = search_body.year_range or (None, None)
+    return BrowseArgs(
+        country_codes=country_codes,
+        start_year=start_year,
+        end_year=end_year,
+        categories=categories,
+        sort_field=search_body.sort_field or SortField.DATE,
+        sort_order=search_body.sort_order,
+        limit=search_body.limit,
+        offset=search_body.offset,
+    )
 
 
 def process_search_keyword_filters(

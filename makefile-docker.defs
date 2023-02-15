@@ -14,9 +14,9 @@ start_backendonly:
 show_logs:
 	docker-compose logs -f
 
-start: start_containers migrations 
+start: start_containers migrations
 
-start_backend: start_backendonly migrations 
+start_backend: start_backendonly migrations
 
 stop:
 	docker-compose stop

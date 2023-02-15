@@ -122,7 +122,7 @@ def upgrade():
         "must_reference_exactly_one_entity",
         "slug",
         "num_nonnulls(family_import_id, family_document_import_id) = 1"
-    ) 
+    )
 
 
 
