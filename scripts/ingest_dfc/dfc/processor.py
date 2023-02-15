@@ -12,14 +12,13 @@ from scripts.ingest_dfc.dfc.collection import collection_from_row
 from scripts.ingest_dfc.dfc.family import family_from_row
 from scripts.ingest_dfc.dfc.organisation import create_organisation
 from scripts.ingest_dfc.dfc.validator import validate_row
-from scripts.ingest_dfc.utils import DfcRow
+from scripts.ingest_dfc.utils import DfcRow, IngestContext
 
 
-IngestContext = int
 ProcessFunc = Callable[[IngestContext, DfcRow], None]
 
 
-def ingest_row(db: Session, org_id: int, row: DfcRow) -> dict:
+def ingest_row(db: Session, context: IngestContext, row: DfcRow) -> dict:
     """Creates the constituent elements in the database that will represent this row.
 
     Args:
@@ -47,16 +46,15 @@ def ingest_row(db: Session, org_id: int, row: DfcRow) -> dict:
         db,
         row,
         existing_document,
-        org_id,
+        context.org_id,
         result,
     )
 
     print(f"- Creating Collection if required for import {import_id}")
-    collection_from_row(
-        db, row, org_id, cast(str, family.import_id), result
-    )
+    collection_from_row(db, row, context.org_id, cast(str, family.import_id), result)
 
     return result
+
 
 def db_ready() -> bool:
     """Returns True if we should process the row."""
@@ -70,7 +68,7 @@ def db_ready() -> bool:
     return True  # num_new_documents == 0 and num_old_documents > 0
 
 
-def db_init() -> int:
+def db_init() -> IngestContext:
     """Initialises the database
 
     Returns:
@@ -79,7 +77,7 @@ def db_init() -> int:
     db = SessionLocal()
     organisation = create_organisation(db)
     db.commit()
-    return organisation.id
+    return IngestContext(org_id=cast(int, organisation.id), results=[])
 
 
 def get_dfc_ingestor() -> ProcessFunc:
@@ -113,10 +111,7 @@ def get_dfc_validator() -> ProcessFunc:
 
     def process(context: IngestContext, row: DfcRow) -> None:
         """Processes the row into the db."""
-        sys.stdout.write(f"Validating row: {row.row_number}: ")
-
         db = SessionLocal()
         validate_row(db, context, row=row)
-        sys.stdout.flush()
 
     return process

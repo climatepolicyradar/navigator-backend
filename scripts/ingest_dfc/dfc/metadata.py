@@ -1,13 +1,11 @@
-import json
-from typing import cast
+import sys
+from typing import List, Optional, Sequence, Set, Union, cast
 from sqlalchemy.orm import Session
 
 from app.db.models.law_policy.metadata import (
     FamilyMetadata,
-    MetadataOrganisation,
-    MetadataTaxonomy,
 )
-from scripts.ingest_dfc.utils import DfcRow
+from scripts.ingest_dfc.utils import DfcRow, Result, ResultType
 
 MAP = {
     "sector": "sectors",
@@ -21,10 +19,11 @@ MAP = {
 
 def add_metadata(
     db: Session, family_import_id: str, taxonomy: dict, taxonomy_name: str, row: DfcRow
-):
-    metadata = {}
+) -> bool:
+    result, metadata = build_metadata(taxonomy, row)
+    if result.type == ResultType.ERROR:
+        return False
 
-    validate_metadata(taxonomy, row)
     # document_type: str          # METADATA - a list of types is stored in metadata
     db.add(
         FamilyMetadata(
@@ -33,29 +32,92 @@ def add_metadata(
             value=metadata,
         )
     )
+    return True
 
 
-def validate_metadata(taxonomy, row):
+def build_metadata(taxonomy: dict, row: DfcRow) -> tuple[Result, dict]:
+    detail_list = []
+    value = {}
+    results = []
+    num_fails = 0
+    num_resolved = 0
     for tax_key, row_key in MAP.items():
-        validate_metadata_field(taxonomy, row, tax_key, row_key)
+        result, field_value = build_metadata_field(taxonomy, row, tax_key, row_key)
+        results.append(result)
+
+        if result.type == ResultType.OK:
+            value[tax_key] = field_value
+        elif result.type == ResultType.RESOLVED:
+            detail_list.append(result.details)
+            num_resolved += 1
+        else:
+            detail_list.append(result.details)
+            num_fails += 1
+
+    row_result_type = (
+        ResultType.ERROR
+        if num_fails
+        else ResultType.RESOLVED
+        if num_resolved
+        else ResultType.OK
+    )
+    return Result(type=row_result_type, details="\n".join(detail_list)), value
 
 
-def validate_metadata_field(taxonomy: dict, row: DfcRow, tax_key: str, row_key: str):
-    row_set = set(getattr(row, row_key))
+def build_metadata_field(
+    taxonomy: dict, row: DfcRow, tax_key: str, row_key: str
+) -> tuple[Result, dict]:
+    ingest_values = getattr(row, row_key)
+    row_set = set(ingest_values)
     allowed_set = set(taxonomy[tax_key]["allowed_values"])
     allow_blanks = cast(bool, taxonomy[tax_key]["allow_blanks"])
 
     if len(row_set) == 0:
         if not allow_blanks:
-            raise ValueError(
+            details = (
                 f"Row {row.row_number} is blank for {tax_key} - which is not allowed."
             )
-        return  # field is blank and allowed
+            return Result(type=ResultType.ERROR, details=details), {}
+        return Result(), {}  # field is blank and allowed
 
-    if not row_set.issubset(allowed_set):
-        raise ValueError(
-            f"Row {row.row_number} has a value for {tax_key} that is "
-            f"unrecognised: '{row_set.difference(allowed_set)}' is not in {allowed_set}"
-        )
+    unknown_set = row_set.difference(allowed_set)
+    if len(unknown_set) == 0:
+        return Result(), { tax_key: ingest_values }  # all is well - everything found
 
-    return  # Nothing raised so all OK
+    resolved_set = resolve_unknown(unknown_set, allowed_set)
+
+    if len(resolved_set) == len(unknown_set):
+        details = f"Row {row.row_number} RESOLVED: {resolved_set}"
+        vals = row_set.difference(unknown_set).union(resolved_set)
+        return Result(type=ResultType.RESOLVED, details=details), { tax_key: vals }
+
+    # If we get here we have not managed to resolve the unknown values.
+
+    details = (
+        f"Row {row.row_number} has value(s) for '{tax_key}' that is/are "
+        f"unrecognised: '{unknown_set}' "
+    )
+
+    if len(resolved_set):
+        details += f"able to resolve: {resolved_set}"
+
+    return Result(type=ResultType.ERROR, details=details), {}
+
+
+def resolve_unknown(unknown_set: Set, allowed_set: Set) -> Set[str]:
+    suggestions = set()
+    for unknown_value in unknown_set:
+        suggestion = match_unknown_value(unknown_value, allowed_set)
+        if suggestion:
+            suggestions.add(suggestion)
+    return suggestions
+
+
+def match_unknown_value(unknown_value: str, allowed_set: Set) -> Optional[str]:
+    def try_this(value: str):
+        return value.upper() == unknown_value.upper()
+
+    match = list(filter(try_this, allowed_set))
+    if len(match) > 0:
+        return match[0]
+    return None

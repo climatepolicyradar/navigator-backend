@@ -1,7 +1,7 @@
 import enum
 from dataclasses import fields
 from datetime import datetime
-from typing import Any, Sequence, TypeVar
+from typing import Any, List, Sequence, TypeVar
 
 from pydantic import ConfigDict, Extra
 from pydantic.dataclasses import dataclass
@@ -9,10 +9,12 @@ from sqlalchemy.orm import Session
 
 from app.db.session import Base
 
+
 class PublicationDateAccuracy(enum.IntEnum):
     """
     To be used in the microsecond field of a datetime to record its accuracy.
     """
+
     NOT_DEFINED = 000000
     YEAR_ACCURACY = 100000
     MONTH_ACCURACY = 200000
@@ -20,7 +22,6 @@ class PublicationDateAccuracy(enum.IntEnum):
     HOUR_ACCURACY = 400000
     MINUTE_ACCURACY = 500000
     SECOND_ACCURACY = 600000
-
 
 
 """An undefined datetime"""
@@ -92,15 +93,15 @@ class DfcRow:
     applies_to_id: str
     geography_iso: str
     documents: str
-    category: str               # METADATA - make an enum, remove from tax
+    category: str  # METADATA - make an enum, remove from tax
     events: list[str]
-    sectors: list[str]          # METADATA
-    instruments: list[str]      # METADATA
-    frameworks: list[str]       # METADATA
-    responses: list[str]        # METADATA - topics
+    sectors: list[str]  # METADATA
+    instruments: list[str]  # METADATA
+    frameworks: list[str]  # METADATA
+    responses: list[str]  # METADATA - topics
     natural_hazards: list[str]  # METADATA - hazard
     keywords: list[str]
-    document_type: str          # METADATA ? 
+    document_type: str  # METADATA ?
     year: int
     language: str
     geography: str
@@ -152,22 +153,21 @@ class DfcRow:
     def _key(key: str) -> str:
         return key.lower().replace(" ", "_").replace("?", "").replace("y/", "")
 
-
     def get_first_url(self) -> str:
         """Gets the first URL from the 'documents' attribute.
-        
+
         FIXME: This could/should be written with more validation.
         """
-        documents = self.documents.split(';')
+        documents = self.documents.split(";")
         if len(documents) != 1:
             raise ValueError(f"Expected 1 document to be parsed from: {self.documents}")
 
-        first_url = documents[0].split('|')[0]
+        first_url = documents[0].split("|")[0]
         return first_url
 
 
+DbModel = TypeVar("DbModel", bound=Base)
 
-DbModel = TypeVar('DbModel', bound=Base)
 
 def get_or_create(db: Session, model: DbModel, **kwargs) -> DbModel:
     """Gets or Creates a row represented by model, and described by kwargs.
@@ -242,19 +242,19 @@ def to_dict(base_object: Base) -> dict:
     )
 
 
-def mypprint(dict_to_print: dict, indent: int = 0) -> None:
-    """Prints a prettier for of a dict than pprint can."""
+class ResultType(enum.Enum):
+    OK = (0,)
+    RESOLVED = (10,)
+    ERROR = 20
 
-    def print_item(k, v, indent):
-        indent += 4
-        if type(v) == dict:
-            print(" " * indent + f"{k}: ")
-            mypprint(v, indent)
-        else:
-            print(" " * indent + f"{k}: {v}")
 
-    print(" " * indent + "{")
-    sorted_d = dict(sorted(dict_to_print.items()))
-    for k, v in sorted_d.items():
-        print_item(k, v, indent)
-    print(" " * indent + "}")
+@dataclass
+class Result:
+    type: ResultType = ResultType.OK
+    details: str = ""
+
+
+@dataclass
+class IngestContext:
+    org_id: int
+    results: List[Result]

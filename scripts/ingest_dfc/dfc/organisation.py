@@ -18,7 +18,10 @@ def create_organisation(db: Session):
 def get_organisation_taxonomy(db: Session, org_id: int):
     taxonomy = (
         db.query(MetadataTaxonomy.valid_metadata)
-        .join(MetadataOrganisation, MetadataOrganisation.taxonomy_name == MetadataTaxonomy.name)
+        .join(
+            MetadataOrganisation,
+            MetadataOrganisation.taxonomy_name == MetadataTaxonomy.name,
+        )
         .filter_by(taxonomy_name="default", organisation_id=org_id)
         .first()
     )

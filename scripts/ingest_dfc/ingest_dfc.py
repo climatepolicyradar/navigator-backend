@@ -17,7 +17,7 @@ from scripts.ingest_dfc.dfc.processor import (
     get_dfc_ingestor,
     get_dfc_validator,
 )
-from scripts.ingest_dfc.utils import DfcRow, validate_csv_columns
+from scripts.ingest_dfc.utils import DfcRow, ResultType, validate_csv_columns
 
 
 def read(csv_file_path: Path, context: IngestContext, process: ProcessFunc) -> None:
@@ -34,16 +34,18 @@ def read(csv_file_path: Path, context: IngestContext, process: ProcessFunc) -> N
             sys.exit(11)
         assert validate_csv_columns(reader.fieldnames)
         row_count = 0
-        errors = False
 
         for row in reader:
             row_count += 1
             row_object = DfcRow.from_row(row_count, row)
             process(context, row_object)
 
-        if errors:
-            sys.exit(2)
 
+def get_result_counts(context):
+    rows = len(context.results)
+    fails = len([r for r in context.results if r.type == ResultType.ERROR])
+    resolved = len([r for r in context.results if r.type == ResultType.RESOLVED])
+    return rows,fails,resolved
 
 if __name__ == "__main__":
     print("")
@@ -70,7 +72,16 @@ if __name__ == "__main__":
 
     print(f"Validating CSV file {filename}...")
     read(filename, context, validator)
-    sys.exit(10)
+
+    # Print all errors
+    [print(r.details) for r in context.results if r.type == ResultType.ERROR]
+
+    rows, fails, resolved = get_result_counts(context)
+    print(
+        f"Validation COMPLETE: {rows} Rows, {fails} Failures, {resolved} Resolved"
+    )
+    if fails:
+        sys.exit(10)
 
     # PHASE 2 - Ingesting
     print(f"Ingesting CSV file {filename}...")
