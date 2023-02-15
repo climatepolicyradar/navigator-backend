@@ -48,8 +48,8 @@ def get_valid_metadata(
     """
     Make a request to the backend to collect valid metadata values
 
-    :param requests.Session session: The session used for making the request.
-    :return Mapping[str, Sequence[str]]: _description_
+    :param [requests.Session] session: The session used for making the request.
+    :return [Mapping[str, Sequence[str]]]: _description_
     """
     _LOGGER.info("Retrieving valid metadata values from database")
 
@@ -66,12 +66,12 @@ def get_valid_metadata(
 
 def write_documents_to_s3(
     s3_client: S3Client, documents: Sequence[DocumentParserInput]
-):
+) -> None:
     """
     Write document specifications successfully created during a bulk import to S3
 
-    :param S3Client s3_client: an S3 client to use to write data
-    :param Sequence[DocumentCreateRequest] documents: a sequence of document
+    :param [S3Client] s3_client: an S3 client to use to write data
+    :param [Sequence[DocumentCreateRequest]] documents: a sequence of document
         specifications to write to S3
     """
     json_content = json.dumps([d.to_json() for d in documents], indent=2)
@@ -97,11 +97,12 @@ def write_documents_to_s3(
 
 
 def write_csv_to_s3(s3_client: S3Client, file_contents: str) -> Union[S3Document, bool]:
-    """Writes the csv into S3
+    """
+    Write the csv into S3
 
-    Args:
-        s3_client (S3Client): a valid S3 client
-        file_contents (str): the contents of the file as a string
+    :param [S3Client] s3_client: a valid S3 client
+    :param [str] file_contents: the contents of the file as a string
+    :return [S3Document | None]: document object if successful, otherwise False
     """
     bytes_content = BytesIO(file_contents.encode("utf8"))
     current_datetime = datetime.now().isoformat().replace(":", ".")

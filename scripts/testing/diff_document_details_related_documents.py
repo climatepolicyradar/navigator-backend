@@ -1,5 +1,9 @@
 #!/usr/bin/env python3
-"""Script that diffs two json outputs from dump_document_details.py comparing the related_documents fields only."""
+"""
+Script that diffs two json outputs from dump_document_details.py.
+
+Note: Only compares the related_documents fields.
+"""
 import sys
 import json
 

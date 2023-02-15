@@ -1,10 +1,8 @@
-import sys
-from typing import List, Optional, Sequence, Set, Union, cast
+from typing import Set, cast
+
 from sqlalchemy.orm import Session
 
-from app.db.models.law_policy.metadata import (
-    FamilyMetadata,
-)
+from app.db.models.law_policy.metadata import FamilyMetadata
 from scripts.ingest_dfc.dfc.match import match_unknown_value
 from scripts.ingest_dfc.utils import DfcRow, Result, ResultType
 
@@ -42,7 +40,7 @@ def build_metadata(taxonomy: dict, row: DfcRow) -> tuple[Result, dict]:
     num_fails = 0
     num_resolved = 0
 
-    # FIXME: Still todo is ... document_type: str 
+    # FIXME: Still todo is ... document_type: str
     for tax_key, row_key in MAP.items():
         result, field_value = build_metadata_field(taxonomy, row, tax_key, row_key)
         results.append(result)

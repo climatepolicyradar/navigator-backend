@@ -1,5 +1,8 @@
 #!/usr/bin/env python3
-"""Script that dumps to a json array all the documents in the database by calling the `get_document_detail()` function.
+"""
+Script that dumps to a json array all the documents in the database.
+
+Works by calling the`get_document_detail()` function.
 
 This script is useful to confirm the behaviour of the endpoint.
 """

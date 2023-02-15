@@ -1,4 +1,5 @@
-"""Summaries for pages.
+"""
+Summaries for pages.
 
 Like searches but with pre-defined results based on the summary context.
 """

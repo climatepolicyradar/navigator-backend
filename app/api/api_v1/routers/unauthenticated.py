@@ -46,12 +46,12 @@ async def user_create(
     """
     Registers a new user.
 
-    :param user: Details of the user to create
-    :param db: Database connection to allow creation of user
-    :returns: Always returns True if self-registration is enable (do not signal
+    :param [UserCreate] user: Details of the user to create
+    :param [Session] db: Database connection to allow creation of user
+    :return [bool]: Always returns True if self-registration is enable (do not signal
         failure/success based on existing registered email to avoid leaking
         registered user details)
-    :raises: HTTP 405 if self-registration is disabled
+    :raises [HTTPException]: HTTP 405 if self-registration is disabled
     """
     if not ENABLE_SELF_REGISTRATION:
         raise HTTPException(

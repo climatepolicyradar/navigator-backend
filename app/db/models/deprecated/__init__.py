@@ -23,7 +23,6 @@ from .document import (
     Relationship,
     Response,
     Sector,
-    Source,
 )
 from .source import Source
 from .user import PasswordResetToken, User

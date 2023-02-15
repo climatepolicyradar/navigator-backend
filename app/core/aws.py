@@ -29,10 +29,11 @@ class S3Document:
 
     @classmethod
     def from_url(cls, url: str) -> "S3Document":
-        """Create an S3 document from a URL.
+        """
+        Create an S3 document from a URL.
 
-        Returns:
-            S3Document
+        :param [str] url: The URL of the document to create
+        :return [S3Document]: document representing given URL
         """
         bucket_name, region, key = re.findall(
             r"https:\/\/([\w-]+).s3.([\w-]+).amazonaws.com\/([\w.-]+)", url
@@ -63,16 +64,16 @@ class S3Client:
         key: str,
         content_type: t.Optional[str] = None,
     ) -> t.Union[S3Document, bool]:
-        """Upload a file object to an S3 bucket.
+        """
+        Upload a file object to an S3 bucket.
 
-        Args:
-            fileobj (t.IO): a file object opened in binary mode, not text mode.
-            bucket (str): name of the bucket to upload the file to.
-            key (str): filename of the resulting file on s3. Should include the file extension.
-            content_type (str, optional): optional content-type of the file
+        :param [t.IO] fileobj: a file object opened in binary mode, not text mode.
+        :param [str] bucket: name of the bucket to upload the file to.
+        :param [str] key: filename of the resulting file on s3. Should include the file
+            extension.
+        :param [str | None] content_type: optional content-type of the file
 
-        Returns:
-            S3Document representing file if upload succeeds, False if it fails.
+        :return [S3Document | bool]: document if upload succeeds, False if it fails.
         """
         try:
             if content_type:
@@ -100,16 +101,15 @@ class S3Client:
         key: t.Optional[str] = None,
         content_type: t.Optional[str] = None,
     ) -> t.Union[S3Document, bool]:
-        """Upload a file to an S3 bucket by providing its filename.
+        """
+        Upload a file to an S3 bucket by providing its filename.
 
-        Args:
-            file_name (str): name of the file to upload.
-            bucket (str): name of the bucket to upload the file to.
-            key (str, optional): filename of the resulting file on s3. Should include the file extension. If not provided, the name of the local file is used.
-            content_type (str, optional): optional content-type of the file
-
-        Returns:
-            URL to file if upload succeeds, False if it fails.
+        :param [str] file_name: name of the file to upload.
+        :param [str] bucket: name of the bucket to upload the file to.
+        :param [str | None] key: filename of the resulting file on s3. Should include
+            the file extension. If not provided, the name of the local file is used.
+        :param [str | None] content_type: optional content-type of the file
+        :return [str | bool]: URL to file if upload succeeds, False if it fails.
         """
         # If S3 object_name was not specified, use file_name
         if key is None:
@@ -132,16 +132,14 @@ class S3Client:
     def copy_document(
         self, s3_document: S3Document, new_bucket: str, new_key: t.Optional[str] = None
     ) -> S3Document:
-        """Copy a document from one bucket and key to another bucket, and optionally a new key.
+        """
+        Copy a document from one bucket to another, with optionally a new key.
 
-        Args:
-            s3_document (S3Document): original document.
-            new_bucket (str): bucket to copy document to.
-            new_key (str, optional): key for the new document. Defaults to None, meaning that the key
-            of the original document is used.
-
-        Returns:
-            S3Document: representing the copied document.
+        :param [S3Document] s3_document: original document.
+        :param [str] new_bucket: bucket to copy document to.
+        :param [str | None] new_key: key for the new document. Defaults to None, meaning
+            that the key of the original document is used.
+        :return [S3Document]: new document representing the copy.
         """
         copy_source = {"Bucket": s3_document.bucket_name, "Key": s3_document.key}
 
@@ -153,26 +151,24 @@ class S3Client:
         return S3Document(new_bucket, AWS_REGION, new_key)
 
     def delete_document(self, s3_document: S3Document) -> None:
-        """Delete a document.
+        """
+        Delete a document.
 
-        Args:
-            s3_document (S3Document): document to delete.
+        :param [S3Document] s3_document: document to delete.
         """
         self.client.delete_object(Bucket=s3_document.bucket_name, Key=s3_document.key)
 
     def move_document(
         self, s3_document: S3Document, new_bucket: str, new_key: t.Optional[str] = None
     ) -> S3Document:
-        """Move a document from one bucket and key to another bucket, and optionally a new key.
+        """
+        Move a document from one bucket to another, with optionally a new key.
 
-        Args:
-            s3_document (S3Document): original document.
-            new_bucket (str): bucket to move document to.
-            new_key (str, optional): key for the new document. Defaults to None, meaning that the key
-            of the original document is used.
-
-        Returns:
-            S3Document: representing the moved document.
+        :s3_document [S3Document]: original document.
+        :new_bucket [str]: bucket to move document to.
+        :new_key [str | None]: key for the new document. Defaults to None, meaning
+            that the key of the original document is used.
+        :return: [S3Document] representing the moved document.
         """
         self.copy_document(s3_document, new_bucket, new_key)
 
@@ -183,21 +179,18 @@ class S3Client:
     def list_files(
         self, bucket: str, max_keys=1000
     ) -> t.Generator[S3Document, None, None]:
-        """Yield the documents contained in a bucket on S3.
+        """
+        Yield the documents contained in a bucket on S3.
 
-        Calls the s3 list_objects_v2 function to return all the keys in a given s3 bucket.
-        The argument max_keys can be used to control how many keys are returned in each
-        call made to s3. This function will always yield all keys in the bucket.
+        Calls the s3 list_objects_v2 function to return all the keys in a given s3
+        bucket. The argument max_keys can be used to control how many keys are returned
+        in each call made to s3. This function will always yield all keys in the bucket.
 
-        Args:
-            bucket (str): name of the bucket in which the files will be listed.
-            max_keys (int): maximum number of s3 keys to return on each request made to s3.
-
-        Returns:
-            False if the operation was unsuccessful.
-
-        Yields:
-            S3Document: representing each document.
+        :param [str] bucket: name of the bucket in which the files will be listed.
+        :param [int] max_keys: maximum number of s3 keys to return on each request
+            made to s3.
+        :yield [S3Document]: document representing each document.
+        :raises: [ClientError] on S3 errors
         """
         is_truncated = True
         next_continuation_token = None
@@ -224,13 +217,11 @@ class S3Client:
             raise
 
     def download_file(self, s3_document: S3Document) -> StreamingBody:
-        """Download a file from S3.
+        """
+        Download a file from S3.
 
-        Args:
-            s3_document (S3Document): s3 document to retrieve
-
-        Returns:
-            Streaming file object
+        :param [S3Document] s3_document: s3 document to retrieve
+        :return [StreamingBody]: Streaming file object
         """
         try:
             response = self.client.get_object(
@@ -250,8 +241,8 @@ class S3Client:
         """
         Generate a pre-signed URL to an object for file uploads
 
-        :param S3Document s3_document: A description of the document to create/update
-        :return str: A pre-signed URL
+        :param [S3Document] s3_document: A description of the document to create/update
+        :return [str]: A pre-signed URL
         """
         try:
             url = self.client.generate_presigned_url(
@@ -272,8 +263,8 @@ class S3Client:
         """
         Detect whether an S3Document already exists in storage.
 
-        :param S3Document s3_document: The s3 document description to check for.
-        :return bool: A flag indicating whether the described document already exists.
+        :param [S3Document] s3_document: The s3 document description to check for.
+        :return [bool]: A flag indicating whether the described document already exists.
         """
         try:
             self.client.head_object(Bucket=s3_document.bucket_name, Key=s3_document.key)

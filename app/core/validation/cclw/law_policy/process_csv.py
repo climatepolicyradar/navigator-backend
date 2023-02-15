@@ -186,10 +186,10 @@ def validated_input(csv_file: TextIOWrapper) -> DictReader:
     """
     Checks an input file for the correct provided headers.
 
-    :param TextIOWrapper csv_file: a file object to be processed as a CSV containing
+    :param [TextIOWrapper] csv_file: a file object to be processed as a CSV containing
         document specifications
-    :returns DictReader: A csv.DictReader object for reading document specifications
-    :raises
+    :return [DictReader]: A csv.DictReader object for reading document specifications
+    :raises [ImportSchemaMismatchError]: on mismatched input fields
     """
     csv_reader = DictReader(csv_file)
 
@@ -215,7 +215,10 @@ _ValidMetadata = Mapping[str, Mapping[str, Collection[str]]]
 
 
 def import_id_from_csv_row(row: Mapping[str, str]) -> str:
-    return f"CCLW.{row[CATEGORY_FIELD].strip()}.{row[ACTION_ID_FIELD].strip()}.{row[DOCUMENT_ID_FIELD].strip()}"
+    return (
+        f"CCLW.{row[CATEGORY_FIELD].strip()}.{row[ACTION_ID_FIELD].strip()}."
+        f"{row[DOCUMENT_ID_FIELD].strip()}"
+    )
 
 
 def extract_documents(
@@ -225,9 +228,9 @@ def extract_documents(
     """
     Validate the given CSV, generating document objects to be loaded
 
-    :param DictReader csv_reader: a CSV file reader from which to read document
+    :param [DictReader] csv_reader: a CSV file reader from which to read document
         specifications
-    :param _ValidMetadata valid_metadata: a mapping specifying all the metadata values
+    :param [_ValidMetadata] valid_metadata: a mapping specifying all the metadata values
         known for each known input type
     """
     valid_cclw_metadata = valid_metadata[CCLW_SOURCE]
@@ -358,9 +361,9 @@ def _calculate_publication_date(
 
     A warning will be issued if the fallback_year does not match a discovered event.
 
-    :param Sequence[Event] events: A sequence of parsed events associated with
+    :param [Sequence[Event]] events: A sequence of parsed events associated with
         the document
-    :returns datetime: The calculated publication date as described by the
+    :return [datetime]: The calculated publication date as described by the
         heuristic above
     """
     publication_date = None
@@ -398,8 +401,8 @@ def _parse_url(url: str) -> Optional[str]:
         - convert http to https
         - Remove any delimiters (a hang-over from the original CSV)
 
-    :param str url: An input string representing a URL
-    :returns str: An updated parsed URL as a string
+    :param [str] url: An input string representing a URL
+    :return [str]: An updated parsed URL as a string
     """
     if not url.strip():
         return None

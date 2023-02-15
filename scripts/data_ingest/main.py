@@ -127,7 +127,8 @@ def post_data_ingest(ingest_csv_path: Path) -> requests.Response:
 
 
 def main(ingest_csv_path: Path):
-    """Initial loader for alpha users.
+    """
+    Initial loader for alpha users.
 
     Bulk import data into the backend API database from CSV.
 

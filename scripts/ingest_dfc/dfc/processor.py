@@ -18,14 +18,12 @@ ProcessFunc = Callable[[IngestContext, DfcRow], None]
 
 
 def ingest_row(db: Session, context: IngestContext, row: DfcRow) -> dict:
-    """Creates the constituent elements in the database that will represent this row.
+    """
+    Create the constituent elements in the database that represent this row.
 
-    Args:
-        db (Session): the connection to the database.
-        row (DfcRow): the DfcRow object of the current CSV row
-
-    Returns:
-        dict: _description_
+    :param [Session] db: the connection to the database.
+    :param [DfcRow] row: the DfcRow object of the current CSV row
+    :returns [dict[str, Any]]: a result dictionary describing what was created
     """
     result = {}
     import_id = row.cpr_document_id
@@ -63,7 +61,7 @@ def ingest_row(db: Session, context: IngestContext, row: DfcRow) -> dict:
 
 
 def db_ready() -> bool:
-    """Returns True if we should process the row."""
+    """Return True if we should process the row."""
     db = SessionLocal()
     num_new_documents = db.query(PhysicalDocument).count()
     num_old_documents = db.query(Document).count()
@@ -75,10 +73,10 @@ def db_ready() -> bool:
 
 
 def db_init() -> IngestContext:
-    """Initialises the database
+    """
+    Initialise the database
 
-    Returns:
-        Organisation: The organisation that will be used for the ingest.
+    :return [Organisation]: The organisation that will be used for the ingest.
     """
     db = SessionLocal()
     organisation = create_organisation(db)
@@ -87,10 +85,10 @@ def db_init() -> IngestContext:
 
 
 def get_dfc_ingestor() -> ProcessFunc:
-    """Gets the ingestion function for ingesting a CSV.
+    """
+    Get the ingestion function for ingesting a CSV.
 
-    Returns:
-        ProcessFunc: The function used to ingest the CSV file
+    :return [ProcessFunc]: The function used to ingest the CSV file
     """
 
     def process(context: IngestContext, row: DfcRow) -> None:
@@ -110,10 +108,10 @@ def get_dfc_ingestor() -> ProcessFunc:
 
 
 def get_dfc_validator() -> ProcessFunc:
-    """Gets the validation function for ingesting a CSV.
+    """
+    Get the validation function for ingesting a CSV.
 
-    Returns:
-        ProcessFunc: The function used to validate the CSV file
+    :return [ProcessFunc]: The function used to validate the CSV file
     """
 
     def process(context: IngestContext, row: DfcRow) -> None:

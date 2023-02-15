@@ -10,12 +10,15 @@ from .geography import Geography
 
 
 class FamilyCategory(str, enum.Enum):
+    """Family categories as understood in the context of law/policy."""
+
     EXECUTIVE = "EXECUTIVE"
     LEGISLATIVE = "LEGISLATIVE"
 
 
 class Variant(Base):
-    """The type of variant of a document within a family.
+    """
+    The type of variant of a document within a family.
 
     Variants are described in the family/collection/doc notion page.
     Examples: "original language", "official translation", "unofficial translation.
@@ -27,12 +30,15 @@ class Variant(Base):
 
 
 class FamilyStatus(str, enum.Enum):
+    """Family status to control visibility in the app."""
+
     CREATED = "Created"
     PUBLISHED = "Published"
     DELETED = "Deleted"
 
 
 class Family(Base):
+    """A representation of a group of documents that represent a single law/policy."""
 
     __tablename__ = "family"
 
@@ -41,19 +47,24 @@ class Family(Base):
     description = sa.Column(sa.Text, nullable=False)
     geography_id = sa.Column(sa.ForeignKey(Geography.id), nullable=False)
     category_name = sa.Column(sa.Enum(FamilyCategory), nullable=False)
-    family_status = sa.Column(sa.Enum(FamilyStatus), default=FamilyStatus.CREATED, nullable=False)
+    family_status = sa.Column(
+        sa.Enum(FamilyStatus), default=FamilyStatus.CREATED, nullable=False
+    )
 
     slugs: list["Slug"] = relationship("Slug", innerjoin=True, lazy="joined")
 
 
 class DocumentStatus(str, enum.Enum):
+    """FamilyDocument status to control visibility in the app."""
+
     CREATED = "Created"
     PUBLISHED = "Published"
     DELETED = "Deleted"
 
 
 class FamilyDocumentType(Base):
-    """A document type.
+    """
+    A document type.
 
     E.g. strategy, plan, law
     """
@@ -64,6 +75,8 @@ class FamilyDocumentType(Base):
 
 
 class FamilyDocument(Base):
+    """A link between a Family and a PhysicalDocument."""
+
     __tablename__ = "family_document"
 
     family_import_id = sa.Column(sa.ForeignKey(Family.import_id), nullable=False)
@@ -74,7 +87,9 @@ class FamilyDocument(Base):
     cdn_object = sa.Column(sa.Text, nullable=True)
     import_id = sa.Column(sa.Text, primary_key=True)
     variant_name = sa.Column(sa.ForeignKey(Variant.variant_name), nullable=False)
-    document_status = sa.Column(sa.Enum(DocumentStatus), default=DocumentStatus.CREATED, nullable=False)
+    document_status = sa.Column(
+        sa.Enum(DocumentStatus), default=DocumentStatus.CREATED, nullable=False
+    )
     document_type = sa.Column(sa.ForeignKey(FamilyDocumentType.name), nullable=False)
 
     slugs: list["Slug"] = relationship("Slug", innerjoin=True, lazy="joined")
@@ -82,6 +97,7 @@ class FamilyDocument(Base):
 
 
 class FamilyOrganisation(Base):
+    """A link between a Family and its owning Organisation."""
 
     __tablename__ = "family_organisation"
 
@@ -92,6 +108,7 @@ class FamilyOrganisation(Base):
 
 
 class Slug(Base):
+    """An identifier for a Family of FamilyDocument to be used in URLs."""
 
     __tablename__ = "slug"
     __table_args__ = (

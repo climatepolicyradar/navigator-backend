@@ -14,13 +14,13 @@ from app.db.models.deprecated import (
     Keyword,
     Sector,
 )
-from app.db.session import Base, SessionLocal
+from app.db.session import AnyModel, SessionLocal
 
 
 LookupID = Mapping[str, int]
 
 
-def get_model_clean_lookup_table(db: Session, table: Base) -> LookupID:
+def get_model_clean_lookup_table(db: Session, table: AnyModel) -> LookupID:
     """Gets values for metadata tables & spots duplicates by string matched on name"""
     id_lookup: Dict[str, int] = {}
 

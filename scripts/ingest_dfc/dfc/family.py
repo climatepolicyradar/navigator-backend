@@ -1,13 +1,12 @@
 from typing import Any, cast
 
-from sqlalchemy import func
 from sqlalchemy.orm import Session
 
 from app.db.models.deprecated import Document
 from app.db.models.law_policy import (
     DocumentStatus,
-    Family,
     FamilyCategory,
+    Family,
     FamilyDocument,
     FamilyDocumentType,
     FamilyOrganisation,
@@ -15,13 +14,9 @@ from app.db.models.law_policy import (
     Slug,
     Variant,
 )
-from app.db.models.law_policy.metadata import MetadataOrganisation, MetadataTaxonomy
 from scripts.ingest_dfc.dfc.metadata import add_metadata
 from scripts.ingest_dfc.dfc.organisation import get_organisation_taxonomy
-
-from scripts.ingest_dfc.dfc.physical_document import (
-    physical_document_from_row,
-)
+from scripts.ingest_dfc.dfc.physical_document import physical_document_from_row
 from scripts.ingest_dfc.utils import DfcRow, get_or_create, to_dict
 
 
@@ -32,20 +27,17 @@ def family_from_row(
     org_id: int,
     result: dict[str, Any],
 ) -> Family:
-    """Create any missing Family, FamilyDocument & Associated links from the given row
+    """
+    Create any missing Family, FamilyDocument & Associated links from the given row
 
-    Args:
-        db (Session): connection to the database.
-        org_id (int): the organisation id associated with this row.
-        row (DfcRow): the row built from the CSV.
-        result (dict): a result dict in which to track what was created
-    Raises:
-        ValueError: When there is an existing family name that only differs by case
-            or when the geography associated with this row cannot be found in the
-            database.
-
-    Returns:
-        Family : The family that was either retrieved or created
+    :param [Session] db: connection to the database.
+    :param [int] org_id: the organisation id associated with this row.
+    :param [DfcRow] row: the row built from the CSV.
+    :param [dict[str, Any]] result: a result dict in which to track what was created
+    :raises [ValueError]: When there is an existing family name that only differs by
+        case or when the geography associated with this row cannot be found in the
+        database.
+    :return [Family]: The family that was either retrieved or created
     """
     # GET OR CREATE FAMILY
     family = _maybe_create_family(db, row, org_id, result)
@@ -171,15 +163,14 @@ def _get_geography(db: Session, row: DfcRow) -> Geography:
 def _add_family_document_slug(
     db: Session, row: DfcRow, family_document: FamilyDocument, result: dict[str, Any]
 ) -> Slug:
-    """Adds the slugs for the family and family_document.
+    """
+    Adds the slugs for the family and family_document.
 
-    Args:
-        db (Session): connection to the database.
-        row (DfcRow): the row built from the CSV.
-        family_document the family document associated with this row.
-
-    Returns:
-        dict : a created dictionary to describe what was created.
+    :param [Session] db: connection to the database.
+    :param [DfcRow] row: the row built from the CSV.
+    :param [FamilyDocument] family_document: family document associated with this row.
+    :param [dict[str, Any]] result: a dictionary in which to record what was created.
+    :return [Slug]: the created slug object
     """
     family_document_slug = Slug(
         name=row.cpr_document_slug,

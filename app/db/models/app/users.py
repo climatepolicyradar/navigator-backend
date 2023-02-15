@@ -16,6 +16,8 @@ class Admin(Base):
 
 
 class Organisation(Base):
+    """Table of organisations to which admin users may belong."""
+
     __tablename__ = "organisation"
 
     id = sa.Column(sa.Integer, primary_key=True)
