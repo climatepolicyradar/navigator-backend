@@ -3,31 +3,31 @@ from typing import Mapping, Optional, Sequence, cast
 from sqlalchemy.orm import Session
 
 from app.db.models.deprecated import Source
-from app.db.session import Base
+from app.db.session import AnyModel
 
 
-def has_rows(db: Session, table: Base) -> bool:
+def has_rows(db: Session, table: AnyModel) -> bool:
     return db.query(table).count() > 0
 
 
 def load_tree(
     db: Session,
-    table: Base,
+    table: AnyModel,
     data_tree_list: Sequence[Mapping[str, Mapping]],
 ) -> None:
     """
     Load a tree of data stored as JSON into a database table
 
-    :param Session db: An open database session
-    :param Base table: The table (and therefore type) of entries to create
-    :param Sequence[Mapping[str, Mapping]] tree_list: A tree-list of data to load
+    :param [Session] db: An open database session
+    :param [AnyModel] table: The table (and therefore type) of entries to create
+    :param [Sequence[Mapping[str, Mapping]]] data_tree_list: A tree-list of data to load
     """
     _load_tree(db=db, table=table, data_tree_list=data_tree_list, parent_id=None)
 
 
 def _load_tree(
     db: Session,
-    table: Base,
+    table: AnyModel,
     data_tree_list: Sequence[Mapping[str, Mapping]],
     parent_id: Optional[int] = None,
 ) -> None:
@@ -43,13 +43,13 @@ def _load_tree(
             _load_tree(db, table, child_nodes, parent_db_entry.id)
 
 
-def load_list(db: Session, table: Base, data_list: Sequence[Mapping]) -> None:
+def load_list(db: Session, table: AnyModel, data_list: Sequence[Mapping]) -> None:
     """
     Load a list of data stored as JSON into a database table
 
-    :param Session db: An open database session
-    :param Base table: The table (and therefore type) of entries to create
-    :param Sequence[Mapping] list: A list of data objects to load
+    :param [Session] db: An open database session
+    :param [AnyModel] table: The table (and therefore type) of entries to create
+    :param [Sequence[Mapping]] data_list: A list of data objects to load
     """
     for entry in data_list:
         db.add(table(**entry))

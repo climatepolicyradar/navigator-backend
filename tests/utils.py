@@ -1,8 +1,10 @@
 from app.db.session import Base
 from sqlalchemy.orm import class_mapper
 
+_AnyModel = Base
 
-def json_serialize(model: Base):
+
+def json_serialize(model: _AnyModel):
     """Transforms a model into a dictionary which can be dumped to JSON."""
     # first we get the names of all the columns on your model
     columns = [c.key for c in class_mapper(model.__class__).columns]

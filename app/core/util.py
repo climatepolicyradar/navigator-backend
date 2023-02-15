@@ -5,8 +5,7 @@ from typing import Any, Optional
 
 from sqlalchemy.orm import Session
 
-from app.db.session import Base
-
+from app.db.session import AnyModel
 
 CDN_DOMAIN: str = os.getenv("CDN_DOMAIN", "cdn.climatepolicyradar.org")
 # TODO: remove & replace with proper content-type handling through pipeline
@@ -19,13 +18,11 @@ CONTENT_TYPE_MAP = {
 
 
 def to_cdn_url(s3_object_key: Optional[str]) -> Optional[str]:
-    """Convert an s3 object key for a PDF in our s3 bucket to a URL to a PDF in our CDN.
+    """
+    Convert an s3 object key for a PDF in our s3 bucket to a URL to a PDF in our CDN.
 
-    Args:
-    :param str s3_url: object key for a PDF in our s3 bucket.
-
-    Returns:
-        str: URL to the PDF via our CDN domain.
+    :param [str] s3_url: object key for a PDF in our s3 bucket.
+    :returns [str]: URL to the PDF via our CDN domain.
     """
     if s3_object_key is None:
         return None
@@ -37,7 +34,7 @@ def random_string(length=12):
 
 
 def table_to_json(
-    table: Base,
+    table: AnyModel,
     db: Session,
 ) -> list[dict]:
     json_out = []
@@ -50,7 +47,7 @@ def table_to_json(
 
 
 def tree_table_to_json(
-    table: Base,
+    table: AnyModel,
     db: Session,
 ) -> list[dict]:
     json_out = []

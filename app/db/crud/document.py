@@ -59,7 +59,6 @@ from app.db.models.deprecated import (
     Sector,
     Source,
 )
-from app.db.models.document import PhysicalDocument
 from app.db.models.law_policy import Family, FamilyDocument, Geography
 
 _LOGGER = logging.getLogger(__file__)
@@ -406,13 +405,11 @@ def get_document_overviews(
 
 
 def get_document_ids(db: Session) -> Tuple[str, Sequence[str]]:
-    """Returns hash of and the entire list of document ids
+    """
+    Get hash of and the entire list of document ids.
 
-    Args:
-        db (Session): Database connection
-
-    Returns:
-        Tuple[str, Sequence[str]]: Tuple of the hash and the id list
+    :param [Session] db: Database connection
+    :return [Tuple[str, Sequence[str]]]: Tuple of the hash and the id list
     """
     # This query is ordered so that the return is deterministic
     query = db.query(Document.id).order_by(Document.publication_ts.desc())
@@ -539,12 +536,12 @@ def get_document_detail(db, import_id_or_slug) -> DocumentDetailResponse:
         ),
         languages=[
             LanguageSchema(
-                language_code=l.language_code,
-                part1_code=l.part1_code,
-                part2_code=l.part2_code,
-                name=l.name,
+                language_code=lang.language_code,
+                part1_code=lang.part1_code,
+                part2_code=lang.part2_code,
+                name=lang.name,
             )
-            for _, l in languages
+            for _, lang in languages
         ],
         events=[
             EventSchema(name=e.name, description=e.description, created_ts=e.created_ts)
@@ -665,7 +662,7 @@ def start_import(
 def _get_related_documents(
     db: Session, document_id: int
 ) -> Set[DocumentOverviewResponse]:
-    """Gets all the other documents this document is related to."""
+    """Get all the other documents this document is related to."""
     query_all_relationships_of_document = db.query(
         DocumentRelationship.relationship_id
     ).filter(DocumentRelationship.document_id == document_id)
@@ -726,7 +723,8 @@ def get_relationship_by_id(
 
 
 def get_documents_in_relationship(db: Session, relationship_id: int):
-    """Gets all the other documents this document is related to.
+    """
+    Get all the other documents this document is related to.
 
     TODO: return this as structured, as at the moment we return a flat list
     """
@@ -807,13 +805,12 @@ def get_document_extra(db: Session) -> Mapping[str, Mapping[str, str]]:
     """
     Get a map from document_id to useful properties for processing.
 
-    :param Session db: Database session to query
-    :return Mapping[str, Mapping[str, str]]: A mapping from document import_id to
+    :param [Session] db: Database session to query
+    :return [Mapping[str, Mapping[str, str]]]: A mapping from document import_id to
         document slug, family slug & family import id details.
     """
-    document_data = (
-        db.query(FamilyDocument, Family)
-        .join(Family, FamilyDocument.family_import_id == Family.import_id)
+    document_data = db.query(FamilyDocument, Family).join(
+        Family, FamilyDocument.family_import_id == Family.import_id
     )
     return {
         family_document.import_id: {

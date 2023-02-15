@@ -64,7 +64,7 @@ async def _get_current_db_user(
     db=Depends(session.get_db),
     jwt_user: JWTUser = Depends(_get_jwt_user),
 ) -> User:
-    """Heavier-weight user-retrieval that fetches the user from the DB after decoding the JWT."""
+    """Stricter user-retrieval that gets a user from the DB after decoding the JWT."""
     user = get_user_by_email(db, jwt_user.email)
     if user is None:
         raise CREDENTIALS_EXCEPTION

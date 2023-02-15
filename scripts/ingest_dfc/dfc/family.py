@@ -1,6 +1,5 @@
-from typing import Any
+from typing import Any, cast
 
-from sqlalchemy import func
 from sqlalchemy.orm import Session
 
 from app.db.models.deprecated import Document
@@ -31,20 +30,17 @@ def family_from_row(
     org_id: int,
     result: dict[str, Any],
 ) -> Family:
-    """Create any missing Family, FamilyDocument & Associated links from the given row
+    """
+    Create any missing Family, FamilyDocument & Associated links from the given row
 
-    Args:
-        db (Session): connection to the database.
-        org_id (int): the organisation id associated with this row.
-        row (DfcRow): the row built from the CSV.
-        result (dict): a result dict in which to track what was created
-    Raises:
-        ValueError: When there is an existing family name that only differs by case
-            or when the geography associated with this row cannot be found in the
-            database.
-
-    Returns:
-        Family : The family that was either retrieved or created
+    :param [Session] db: connection to the database.
+    :param [int] org_id: the organisation id associated with this row.
+    :param [DfcRow] row: the row built from the CSV.
+    :param [dict[str, Any]] result: a result dict in which to track what was created
+    :raises [ValueError]: When there is an existing family name that only differs by
+        case or when the geography associated with this row cannot be found in the
+        database.
+    :return [Family]: The family that was either retrieved or created
     """
     # GET OR CREATE FAMILY
     family = _maybe_create_family(db, row, org_id, result)
@@ -76,13 +72,20 @@ def _maybe_create_family(
         # TODO Create Family metadata
         taxonomy = (
             db.query(MetadataTaxonomy.valid_metadata)
-            .join(MetadataOrganisation, MetadataOrganisation.taxonomy_name == MetadataTaxonomy.name)
+            .join(
+                MetadataOrganisation,
+                MetadataOrganisation.taxonomy_name == MetadataTaxonomy.name,
+            )
             .filter_by(taxonomy_name="default", organisation_id=org_id)
             .first()
         )
         if not taxonomy:
-            raise ValueError(f"Could not find a default taxonomy for organisation {org_id}")
-        add_metadata(db, family.import_id, taxonomy, "default", row)
+            raise ValueError(
+                f"Could not find a default taxonomy for organisation {org_id}"
+            )
+        add_metadata(
+            db, cast(str, family.import_id), cast(dict, taxonomy), "default", row
+        )
 
     category = FamilyCategory(row.category.upper())
 
@@ -177,15 +180,14 @@ def _get_geography(db: Session, row: DfcRow) -> Geography:
 def _add_family_document_slug(
     db: Session, row: DfcRow, family_document: FamilyDocument, result: dict[str, Any]
 ) -> Slug:
-    """Adds the slugs for the family and family_document.
+    """
+    Adds the slugs for the family and family_document.
 
-    Args:
-        db (Session): connection to the database.
-        row (DfcRow): the row built from the CSV.
-        family_document the family document associated with this row.
-
-    Returns:
-        dict : a created dictionary to describe what was created.
+    :param [Session] db: connection to the database.
+    :param [DfcRow] row: the row built from the CSV.
+    :param [FamilyDocument] family_document: family document associated with this row.
+    :param [dict[str, Any]] result: a dictionary in which to record what was created.
+    :return [Slug]: the created slug object
     """
     family_document_slug = Slug(
         name=row.cpr_document_slug,

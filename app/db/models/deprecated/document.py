@@ -10,7 +10,9 @@ from app.db.session import Base
 
 
 class DocumentType(Base):
-    """A document type.
+    """
+    A document type.
+
     E.g. strategy, plan, law
     """
 
@@ -22,7 +24,8 @@ class DocumentType(Base):
 
 
 class Category(Base):
-    """A document category
+    """
+    A document category
 
     Currently:
         Policy, (executive)
@@ -38,7 +41,8 @@ class Category(Base):
 
 
 class Document(Base, Auditable):
-    """A document.
+    """
+    A document.
 
     id: Internal database ID
     publication_ts: Publication timestamp, or date of first event

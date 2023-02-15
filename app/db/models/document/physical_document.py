@@ -3,7 +3,8 @@ from app.db.session import Base
 
 
 class PhysicalDocument(Base):
-    """A physical document.
+    """
+    A physical document.
 
     Representation of a document that exists in the real world.
     Owned and updated only by the pipeline.
@@ -20,7 +21,11 @@ class PhysicalDocument(Base):
 
 
 class Language(Base):
-    """Note, moved from deprecated."""
+    """
+    A language used to identify the content of a document.
+
+    Note: moved from deprecated.
+    """
 
     __tablename__ = "language"
 
@@ -32,7 +37,7 @@ class Language(Base):
 
 
 class PhysicalDocumentLanguage(Base):
-    """A document's languages."""
+    """A link between a document and its languages."""
 
     __tablename__ = "physical_document_language"
 

@@ -8,7 +8,8 @@ from app.db.session import SessionLocal
 def create_relationship_with_docs(db, cclw_group_id, document_ids):
     name = f"imported_relation_{cclw_group_id}"
     print(
-        f"Creating relationship called '{name}' for {cclw_group_id} with doc ids: {document_ids}..."
+        f"Creating relationship called '{name}' for "
+        f"{cclw_group_id} with doc ids: {document_ids}..."
     )
 
     relationship = Relationship(
@@ -31,7 +32,8 @@ if __name__ == "__main__":
     groups = db.execute(
         """
     SELECT * FROM (
-        SELECT (string_to_array(import_id, '.'))[3] AS grouping_id, json_agg(id) as id_list, count(id) as len
+        SELECT (string_to_array(import_id, '.'))[3]
+            AS grouping_id, json_agg(id) as id_list, count(id) as len
             FROM document
             GROUP BY grouping_id
         ) AS T where T.len > 1;

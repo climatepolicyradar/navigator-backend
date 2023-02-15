@@ -157,7 +157,8 @@ class SearchResponseFamilyDocument(BaseModel):
 
 ############### NEW #####################  # noqa: E266
 class SearchResponseFamily(BaseModel):
-    """The object that is returned in the response.
+    """
+    The object that is returned in the response.
 
     Used to extend with postfix
     """
@@ -184,13 +185,15 @@ class SearchResponse(BaseModel):
 
 
 Top5FamilyList = conlist(SearchResponseFamily, max_items=5)
+# Alias required for type hinting
+_T5FamL = Top5FamilyList
 
 
 class CountrySummaryResponse(BaseModel):
     """Additional information for the Country page over geo stats"""
 
     document_counts: Mapping[CategoryName, int]
-    top_documents: Mapping[CategoryName, Top5FamilyList]
+    top_documents: Mapping[CategoryName, _T5FamL]
     targets: Sequence[str]  # TODO: Placeholder for later
 
 
@@ -229,11 +232,13 @@ class SearchResultsResponse(BaseModel):
 
 
 Top5DocumentList = conlist(SearchDocumentResponse, max_items=5)
+# Alias required for type hinting
+_T5DocL = Top5DocumentList
 
 
 class SummaryCountryResponse(BaseModel):
     """Additional information for the Country page over geo stats"""
 
     document_counts: Mapping[CategoryName, int]
-    top_documents: Mapping[CategoryName, Top5DocumentList]
+    top_documents: Mapping[CategoryName, _T5DocL]
     targets: Sequence[str]  # TODO: Placeholder for later

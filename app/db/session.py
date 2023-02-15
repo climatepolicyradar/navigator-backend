@@ -37,6 +37,8 @@ def make_declarative_base():
 
 
 Base = make_declarative_base()
+# Aliased type annotation useful for type hints
+AnyModel = Base
 
 
 # Dependency

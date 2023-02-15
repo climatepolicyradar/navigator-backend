@@ -1,4 +1,5 @@
-"""Searches for documents.
+"""
+Searches for documents.
 
 All endpoints should perform document searches using the SearchRequestBody as
 its input. The individual endpoints will return different responses tailored

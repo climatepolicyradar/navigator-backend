@@ -1,34 +1,29 @@
 repos:
+  - repo: https://github.com/pre-commit/pre-commit-hooks
+    rev: v3.1.0
+    hooks:
+      - id: check-json
+        exclude: tests/data/.*\.json
+      - id: detect-aws-credentials
+        args: [ --allow-missing-credentials ]
   - repo: https://github.com/ambv/black
     rev: 22.3.0
     hooks:
       - id: black
         language_version: python3
-  - repo: https://github.com/pycqa/flake8
-    rev: 4.0.0
+        exclude: alembic/versions
+  - repo: https://github.com/charliermarsh/ruff-pre-commit
+    rev: 'v0.0.246'
     hooks:
-      - id: flake8
-        args: ["--per-file-ignores", "__init__.py:F401", "--max-line-length", "88"]
-  - repo: https://github.com/pre-commit/pre-commit-hooks
-    rev: v3.1.0
-    hooks:
-      - id: check-json
-        exclude: backend/tests/data/.*\.json
-      - id: detect-aws-credentials
-        args: [ --allow-missing-credentials ]
-  - repo: https://github.com/pycqa/pydocstyle
-    rev: 6.1.1
-    hooks:
-      - id: pydocstyle
-        additional_dependencies: [ "toml" ]
+      - id: ruff
+        exclude: alembic/versions
   - repo: local
     hooks:
       - id: pyright
         name: pyright (backend)
         entry: pyright
         language: node
-        files: ^backend/
         types: [python]
-        additional_dependencies: ['pyright@1.1.267']
+        additional_dependencies: ['pyright@1.1.294']
 
-# TODO bandit?, safety?, snyk?
+# TODO more checks? e.g. bandit, safety, snyk, ...

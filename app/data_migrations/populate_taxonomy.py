@@ -29,61 +29,62 @@ TAXONOMY_DATA = [
         "allow_blanks": True,
     },
     {
-        "key" : "sector",
+        "key": "sector",
         "filename": "app/data_migrations/data/sector_data.json",
         "file_key_path": "node.name",
         "allow_blanks": True,
     },
     {
-        "key" : "keyword",
+        "key": "keyword",
         "filename": "app/data_migrations/data/keyword_data.json",
         "file_key_path": "name",
         "allow_blanks": True,
     },
     {
-        "key" : "instrument",
+        "key": "instrument",
         "filename": "app/data_migrations/data/instrument_data.json",
         "file_key_path": "node.name",
         "allow_blanks": True,
     },
     {
-        "key" : "hazard",
+        "key": "hazard",
         "filename": "app/data_migrations/data/hazard_data.json",
         "file_key_path": "name",
         "allow_blanks": True,
     },
     {
-        "key" : "framework",
+        "key": "framework",
         "filename": "app/data_migrations/data/framework_data.json",
         "file_key_path": "name",
         "allow_blanks": True,
     },
     {
-        "key" : "document_type",
+        "key": "document_type",
         "filename": "app/data_migrations/data/document_type_data.json",
         "file_key_path": "name",
         "allow_blanks": True,
     },
     {
-        "key" : "category",
+        "key": "category",
         "filename": "app/data_migrations/data/category_data.json",
         "file_key_path": "name",
         "allow_blanks": True,
-    }
+    },
 ]
 
-def dot_dref(obj:dict, dotted_key: str):
+
+def dot_dref(obj: dict, dotted_key: str):
     if "." not in dotted_key:
         return obj[dotted_key]
     keys = dotted_key.split(".", 1)
     return dot_dref(obj[keys[0]], keys[1])
-    
+
 
 def load_metadata_type(filename: str, key_path: str) -> Sequence[str]:
     with open(filename) as file:
         data = json.load(file)
     return [dot_dref(obj, key_path) for obj in data]
-    
+
 
 def get_default_taxonomy():
     taxonomy = {}
@@ -91,9 +92,11 @@ def get_default_taxonomy():
         taxonomy = {
             **taxonomy,
             data["key"]: {
-                "allowed_values": load_metadata_type(data["filename"], data["file_key_path"]),
-                "allow_blanks": data["allow_blanks"]
-            }
+                "allowed_values": load_metadata_type(
+                    data["filename"], data["file_key_path"]
+                ),
+                "allow_blanks": data["allow_blanks"],
+            },
         }
     return taxonomy
 
@@ -104,7 +107,10 @@ def populate_taxonomy(db: Session) -> None:
     if has_rows(db, MetadataTaxonomy):
         return
 
-    db.add(MetadataTaxonomy(
-        name="default", 
-        description="CCLW loaded values", 
-        valid_metadata=get_default_taxonomy()))
+    db.add(
+        MetadataTaxonomy(
+            name="default",
+            description="CCLW loaded values",
+            valid_metadata=get_default_taxonomy(),
+        )
+    )

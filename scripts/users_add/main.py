@@ -201,7 +201,8 @@ def _make_str_from_maybe_list(input: Optional[str]) -> Optional[str]:
 
 
 def main(users_csv_path):
-    """Initial loader for alpha users.
+    """
+    Initial loader for alpha users.
 
     Load users into the backend API database from CSV.
 

@@ -19,14 +19,12 @@ ProcessFunc = Callable[[DfcRow], None]
 
 
 def ingest_row(db: Session, row: DfcRow) -> dict:
-    """Creates the constituent elements in the database that will represent this row.
+    """
+    Create the constituent elements in the database that will represent this row.
 
-    Args:
-        db (Session): the connection to the database.
-        row (DfcRow): the DfcRow object of the current CSV row
-
-    Returns:
-        dict: _description_
+    :param [Session] db: the connection to the database.
+    :param [DfcRow] row: the DfcRow object of the current CSV row
+    :returns [dict[str, Any]]: a result dictionary describing what was created
     """
     result = {}
     import_id = row.cpr_document_id
@@ -78,10 +76,10 @@ def create_organisation(db: Session, result: dict):
 
 
 def get_dfc_processor() -> Tuple[ValidateFunc, ProcessFunc]:
-    """Gets the validation and process function for ingesting a CSV.
+    """
+    Get the validation and process function for ingesting a CSV.
 
-    Returns:
-        Tuple[ValidateFunc, ProcessFunc]: A tuple of functions
+    :return [Tuple[ValidateFunc, ProcessFunc]]: A tuple of functions
     """
 
     def validate() -> bool:
