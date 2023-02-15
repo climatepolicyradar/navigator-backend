@@ -45,7 +45,8 @@ def get_result_counts(context):
     rows = len(context.results)
     fails = len([r for r in context.results if r.type == ResultType.ERROR])
     resolved = len([r for r in context.results if r.type == ResultType.RESOLVED])
-    return rows,fails,resolved
+    return rows, fails, resolved
+
 
 if __name__ == "__main__":
     print("")
@@ -77,9 +78,7 @@ if __name__ == "__main__":
     [print(r.details) for r in context.results if r.type == ResultType.ERROR]
 
     rows, fails, resolved = get_result_counts(context)
-    print(
-        f"Validation COMPLETE: {rows} Rows, {fails} Failures, {resolved} Resolved"
-    )
+    print(f"Validation COMPLETE: {rows} Rows, {fails} Failures, {resolved} Resolved")
     if fails:
         sys.exit(10)
 

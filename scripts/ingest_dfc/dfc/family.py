@@ -60,7 +60,7 @@ def _maybe_create_family(
     db: Session, row: DfcRow, org_id: int, result: dict[str, Any]
 ) -> Family:
     def _create_family_links(family: Family):
-        print(f"- Creating family slug for import {row.cpr_family_id}")
+        print(f"- Creating family slug for import {family.import_id}")
         family_slug = Slug(name=row.cpr_family_slug, family_import_id=family.import_id)
 
         db.add(family_slug)

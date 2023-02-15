@@ -83,14 +83,14 @@ def build_metadata_field(
 
     unknown_set = row_set.difference(allowed_set)
     if len(unknown_set) == 0:
-        return Result(), { tax_key: ingest_values }  # all is well - everything found
+        return Result(), {tax_key: ingest_values}  # all is well - everything found
 
     resolved_set = resolve_unknown(unknown_set, allowed_set)
 
     if len(resolved_set) == len(unknown_set):
         details = f"Row {row.row_number} RESOLVED: {resolved_set}"
         vals = row_set.difference(unknown_set).union(resolved_set)
-        return Result(type=ResultType.RESOLVED, details=details), { tax_key: vals }
+        return Result(type=ResultType.RESOLVED, details=details), {tax_key: vals}
 
     # If we get here we have not managed to resolve the unknown values.
 

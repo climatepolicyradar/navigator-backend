@@ -1,13 +1,12 @@
 import sys
-from typing import Callable, Tuple, cast
+from typing import Callable, cast
 
 from sqlalchemy.orm import Session
 
-from app.db.models.app.users import Organisation
 from app.db.models.deprecated import Document
 from app.db.models.document import PhysicalDocument
+from scripts.ingest_dfc.db_utils import SessionLocal
 
-from app.db.session import SessionLocal
 from scripts.ingest_dfc.dfc.collection import collection_from_row
 from scripts.ingest_dfc.dfc.family import family_from_row
 from scripts.ingest_dfc.dfc.organisation import create_organisation
@@ -101,6 +100,7 @@ def get_dfc_ingestor() -> ProcessFunc:
         # Beginning a transaction here would create this issue:
         # https://stackoverflow.com/a/58991792
         # Sessions are meant to be short-lived - see https://docs.sqlalchemy.org/en/13/orm/session_basics.html
+
         db = SessionLocal()
         ingest_row(db, context, row=row)
         db.commit()
