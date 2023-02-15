@@ -5,6 +5,7 @@ from sqlalchemy.orm import Session
 from app.db.models.law_policy.metadata import (
     FamilyMetadata,
 )
+from scripts.ingest_dfc.dfc.match import match_unknown_value
 from scripts.ingest_dfc.utils import DfcRow, Result, ResultType
 
 MAP = {
@@ -111,13 +112,3 @@ def resolve_unknown(unknown_set: Set, allowed_set: Set) -> Set[str]:
         if suggestion:
             suggestions.add(suggestion)
     return suggestions
-
-
-def match_unknown_value(unknown_value: str, allowed_set: Set) -> Optional[str]:
-    def try_this(value: str):
-        return value.upper() == unknown_value.upper()
-
-    match = list(filter(try_this, allowed_set))
-    if len(match) > 0:
-        return match[0]
-    return None
