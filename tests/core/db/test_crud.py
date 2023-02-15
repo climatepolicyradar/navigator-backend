@@ -23,7 +23,6 @@ from app.db.models.law_policy import Geography
 
 
 def test_create_documents(client, superuser_token_headers, test_db):
-
     # ensure meta
     test_db.add(Source(name="may it be with you"))
     test_db.add(
