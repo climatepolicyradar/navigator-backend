@@ -25,7 +25,6 @@ def add_metadata(
     if result.type == ResultType.ERROR:
         return False
 
-    # document_type: str          # METADATA - a list of types is stored in metadata
     db.add(
         FamilyMetadata(
             family_import_id=family_import_id,
@@ -42,6 +41,8 @@ def build_metadata(taxonomy: dict, row: DfcRow) -> tuple[Result, dict]:
     results = []
     num_fails = 0
     num_resolved = 0
+
+    # FIXME: Still todo is ... document_type: str 
     for tax_key, row_key in MAP.items():
         result, field_value = build_metadata_field(taxonomy, row, tax_key, row_key)
         results.append(result)
