@@ -205,7 +205,7 @@ def get_or_create(db: Session, model: _DbModel, **kwargs) -> _DbModel:
         kwargs[k] = v
     instance = model(**kwargs)
     db.add(instance)
-    db.commit()
+    db.flush()
     if after_create:
         after_create(instance)
     return instance

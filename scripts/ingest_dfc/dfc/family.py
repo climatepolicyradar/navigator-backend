@@ -14,6 +14,7 @@ from app.db.models.law_policy import (
     Slug,
     Variant,
 )
+from app.db.models.law_policy.family import FamilyStatus
 from scripts.ingest_dfc.dfc.metadata import add_metadata
 from scripts.ingest_dfc.dfc.organisation import get_organisation_taxonomy
 from scripts.ingest_dfc.dfc.physical_document import physical_document_from_row
@@ -56,7 +57,6 @@ def _maybe_create_family(
         family_slug = Slug(name=row.cpr_family_slug, family_import_id=family.import_id)
 
         db.add(family_slug)
-        db.commit()
         result["family_slug"] = (to_dict(family_slug),)
 
         print(f"- Creating family organisation for import {row.cpr_family_id}")
@@ -64,7 +64,6 @@ def _maybe_create_family(
             family_import_id=family.import_id, organisation_id=org_id
         )
         db.add(family_organisation)
-        db.commit()
         result["family_organisation"] = to_dict(family_organisation)
 
         taxonomy = get_organisation_taxonomy(db, org_id)
@@ -91,6 +90,7 @@ def _maybe_create_family(
             "geography_id": geography.id,
             "category_name": category,
             "description": row.family_summary,
+            "family_status": FamilyStatus.PUBLISHED,
         },
         after_create=_create_family_links,
     )
@@ -134,7 +134,7 @@ def _maybe_create_family_document(
         document_type=document_type,
     )
     db.add(family_document)
-    db.commit()
+    db.flush()
 
     result["family_document"] = to_dict(family_document)
     print(f"- Creating slug for FamilyDocument with import_id {row.cpr_document_id}")
@@ -177,6 +177,6 @@ def _add_family_document_slug(
         family_document_import_id=family_document.import_id,
     )
     db.add(family_document_slug)
-    db.commit()
+    db.flush()
     result["family_document_slug"] = {"document_slug": to_dict(family_document_slug)}
     return family_document_slug

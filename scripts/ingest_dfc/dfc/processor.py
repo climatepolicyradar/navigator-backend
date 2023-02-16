@@ -5,7 +5,7 @@ from sqlalchemy.orm import Session
 
 from app.db.models.deprecated import Document
 from app.db.models.document import PhysicalDocument
-from scripts.ingest_dfc.db_utils import SessionLocal
+from app.db.session import SessionLocal
 
 from scripts.ingest_dfc.dfc.collection import collection_from_row
 from scripts.ingest_dfc.dfc.family import family_from_row
@@ -79,9 +79,12 @@ def db_init() -> IngestContext:
     :return [Organisation]: The organisation that will be used for the ingest.
     """
     db = SessionLocal()
-    organisation = create_organisation(db)
-    db.commit()
-    return IngestContext(org_id=cast(int, organisation.id), results=[])
+    try:
+        with db.begin():
+            organisation = create_organisation(db)
+            return IngestContext(org_id=cast(int, organisation.id), results=[])
+    finally:
+        db.close()
 
 
 def get_dfc_ingestor() -> ProcessFunc:
@@ -95,14 +98,13 @@ def get_dfc_ingestor() -> ProcessFunc:
         """Processes the row into the db."""
         sys.stdout.write(f"Ingesting row: {row.row_number}: ")
 
-        # Beginning a transaction here would create this issue:
-        # https://stackoverflow.com/a/58991792
-        # Sessions are meant to be short-lived - see https://docs.sqlalchemy.org/en/13/orm/session_basics.html
-
         db = SessionLocal()
-        ingest_row(db, context, row=row)
-        db.commit()
-        sys.stdout.flush()
+        try:
+            with db.begin():
+                ingest_row(db, context, row=row)
+        finally:
+            db.close()
+            sys.stdout.flush()
 
     return process
 
@@ -117,6 +119,10 @@ def get_dfc_validator() -> ProcessFunc:
     def process(context: IngestContext, row: DfcRow) -> None:
         """Processes the row into the db."""
         db = SessionLocal()
-        validate_row(db, context, row=row)
+        try:
+            with db.begin():
+                validate_row(db, context, row=row)
+        finally:
+            db.close()
 
     return process

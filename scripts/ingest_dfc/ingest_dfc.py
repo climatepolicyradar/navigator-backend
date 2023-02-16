@@ -50,6 +50,7 @@ def get_result_counts(context):
 
 
 if __name__ == "__main__":
+
     print("")
     print("Ingesting to new schema...")
     ingestor: ProcessFunc
@@ -70,13 +71,14 @@ if __name__ == "__main__":
     filename = Path(sys.argv[1])
 
     context = db_init()
+
     # PHASE 1 - Validation
 
     print(f"Validating CSV file {filename}...")
     read(filename, context, validator)
-
-    # Print all errors
     [print(r.details) for r in context.results if r.type == ResultType.ERROR]
+
+    # PHASE 2 - Ingest
 
     rows, fails, resolved = get_result_counts(context)
     print(f"Validation COMPLETE: {rows} Rows, {fails} Failures, {resolved} Resolved")
@@ -84,6 +86,7 @@ if __name__ == "__main__":
         sys.exit(10)
 
     # PHASE 2 - Ingesting
+    print()
     print(f"Ingesting CSV file {filename}...")
     read(filename, context, ingestor)
 
