@@ -4,7 +4,7 @@ from app.db.models.law_policy.metadata import MetadataOrganisation, MetadataTaxo
 from scripts.ingest_dfc.utils import get_or_create
 
 
-def create_organisation(db: Session):
+def create_organisation(db: Session) -> Organisation:
     def add_default_metadata(org: Organisation):
         db.add(MetadataOrganisation(taxonomy_name="default", organisation_id=org.id))
 
@@ -15,7 +15,7 @@ def create_organisation(db: Session):
     return organisation
 
 
-def get_organisation_taxonomy(db: Session, org_id: int):
+def get_organisation_taxonomy(db: Session, org_id: int) -> dict:
     taxonomy = (
         db.query(MetadataTaxonomy.valid_metadata)
         .join(
