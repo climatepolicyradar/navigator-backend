@@ -1,30 +1,31 @@
 from sqlalchemy.orm import Session
-from app.db.models.app.users import Organisation
 from app.db.models.law_policy.metadata import MetadataOrganisation, MetadataTaxonomy
-from scripts.ingest_dfc.utils import get_or_create
 
 
-def create_organisation(db: Session) -> Organisation:
-    def add_default_metadata(org: Organisation):
-        db.add(MetadataOrganisation(taxonomy_name="default", organisation_id=org.id))
+def get_organisation_taxonomy(db: Session, org_id: int) -> tuple[int, dict]:
+    """
+    Returns the taxonomy id and its dict representation for an organisation.
 
-    print("- Creating organisation")
-    organisation = get_or_create(
-        db, Organisation, name="CCLW", after_create=add_default_metadata
-    )
-    return organisation
+    Args:
+        db (Session): connection to database
+        org_id (int): organisation id
 
+    Raises:
+        ValueError: raised when taxonomy not found
 
-def get_organisation_taxonomy(db: Session, org_id: int) -> dict:
+    Returns:
+        tuple[int, dict]: the taxonomy id and dict value
+    """
     taxonomy = (
-        db.query(MetadataTaxonomy.valid_metadata)
+        db.query(MetadataTaxonomy.id, MetadataTaxonomy.valid_metadata)
         .join(
             MetadataOrganisation,
-            MetadataOrganisation.taxonomy_name == MetadataTaxonomy.name,
+            MetadataOrganisation.taxonomy_id == MetadataTaxonomy.id,
         )
-        .filter_by(taxonomy_name="default", organisation_id=org_id)
+        .filter_by(organisation_id=org_id)
         .one()
     )
     if not taxonomy:
         raise ValueError(f"Could not find a default taxonomy for organisation {org_id}")
-    return taxonomy[0]
+
+    return taxonomy[0], taxonomy[1]

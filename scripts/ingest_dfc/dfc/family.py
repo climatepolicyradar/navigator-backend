@@ -66,8 +66,8 @@ def _maybe_create_family(
         db.add(family_organisation)
         result["family_organisation"] = to_dict(family_organisation)
 
-        taxonomy = get_organisation_taxonomy(db, org_id)
-        add_metadata(db, cast(str, family.import_id), taxonomy, "default", row)
+        id, taxonomy = get_organisation_taxonomy(db, org_id)
+        add_metadata(db, cast(str, family.import_id), taxonomy, id, row)
 
     category = FamilyCategory(row.category.upper())
 

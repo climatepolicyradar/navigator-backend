@@ -2,6 +2,7 @@ import sys
 from typing import Callable, cast
 
 from sqlalchemy.orm import Session
+from app.db.models.app.users import Organisation
 
 from app.db.models.deprecated import Document
 from app.db.models.document import PhysicalDocument
@@ -9,7 +10,6 @@ from app.db.session import SessionLocal
 
 from scripts.ingest_dfc.dfc.collection import collection_from_row
 from scripts.ingest_dfc.dfc.family import family_from_row
-from scripts.ingest_dfc.dfc.organisation import create_organisation
 from scripts.ingest_dfc.dfc.validator import validate_row
 from scripts.ingest_dfc.utils import DfcRow, IngestContext
 
@@ -81,7 +81,7 @@ def db_init() -> IngestContext:
     db = SessionLocal()
     try:
         with db.begin():
-            organisation = create_organisation(db)
+            organisation = db.query(Organisation).filter_by(name="CCLW").one()
             return IngestContext(org_id=cast(int, organisation.id), results=[])
     finally:
         db.close()

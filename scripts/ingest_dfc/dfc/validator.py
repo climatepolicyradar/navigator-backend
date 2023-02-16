@@ -17,6 +17,6 @@ def validate_row(db: Session, context: IngestContext, row: DfcRow) -> None:
     Returns:
         int: number of failures encountered
     """
-    taxonomy = get_organisation_taxonomy(db, context.org_id)
+    _, taxonomy = get_organisation_taxonomy(db, context.org_id)
     result, _ = build_metadata(taxonomy, row)
     context.results.append(result)

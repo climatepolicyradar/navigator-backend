@@ -17,7 +17,7 @@ MAP = {
 
 
 def add_metadata(
-    db: Session, family_import_id: str, taxonomy: dict, taxonomy_name: str, row: DfcRow
+    db: Session, family_import_id: str, taxonomy: dict, taxonomy_id: int, row: DfcRow
 ) -> bool:
     result, metadata = build_metadata(taxonomy, row)
     if result.type == ResultType.ERROR:
@@ -26,7 +26,7 @@ def add_metadata(
     db.add(
         FamilyMetadata(
             family_import_id=family_import_id,
-            taxonomy_name=taxonomy_name,
+            taxonomy_id=taxonomy_id,
             value=metadata,
         )
     )
