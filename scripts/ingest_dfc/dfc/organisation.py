@@ -23,7 +23,7 @@ def get_organisation_taxonomy(db: Session, org_id: int):
             MetadataOrganisation.taxonomy_name == MetadataTaxonomy.name,
         )
         .filter_by(taxonomy_name="default", organisation_id=org_id)
-        .first()
+        .one()
     )
     if not taxonomy:
         raise ValueError(f"Could not find a default taxonomy for organisation {org_id}")

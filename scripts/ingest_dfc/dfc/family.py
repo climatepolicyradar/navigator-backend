@@ -116,7 +116,7 @@ def _maybe_create_family_document(
     ).name
 
     family_document = (
-        db.query(FamilyDocument).filter_by(import_id=row.cpr_document_id).first()
+        db.query(FamilyDocument).filter_by(import_id=row.cpr_document_id).one_or_none()
     )
     if family_document is not None:
         # If the family document exists we can assume that the associated physical
@@ -144,7 +144,9 @@ def _maybe_create_family_document(
 
 
 def _validate_family_name(db: Session, family_name: str, import_id: str) -> bool:
-    matching_family = db.query(Family).filter(Family.import_id == import_id).first()
+    matching_family = (
+        db.query(Family).filter(Family.import_id == import_id).one_or_none()
+    )
     if matching_family is None:
         return True
 
@@ -152,7 +154,9 @@ def _validate_family_name(db: Session, family_name: str, import_id: str) -> bool
 
 
 def _get_geography(db: Session, row: DfcRow) -> Geography:
-    geography = db.query(Geography).filter(Geography.value == row.geography_iso).first()
+    geography = (
+        db.query(Geography).filter(Geography.value == row.geography_iso).one_or_none()
+    )
     if geography is None:
         raise ValueError(
             f"Geography value of {row.geography_iso} does not exist in the database."

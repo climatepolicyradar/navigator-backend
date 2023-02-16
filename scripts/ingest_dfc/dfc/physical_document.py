@@ -42,7 +42,7 @@ def physical_document_from_row(
     result["physical_document"] = to_dict(physical_document)
 
     print(f"- Getting language: {row.language}")
-    lang = db.query(Language).filter(Language.name == row.language).first()
+    lang = db.query(Language).filter(Language.name == row.language).one_or_none()
 
     if lang is not None:
         result["language"] = to_dict(lang)

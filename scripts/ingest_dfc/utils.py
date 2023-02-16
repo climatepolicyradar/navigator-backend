@@ -195,7 +195,7 @@ def get_or_create(db: Session, model: _DbModel, **kwargs) -> _DbModel:
         after_create = kwargs["after_create"]
         del kwargs["after_create"]
 
-    instance = db.query(model).filter_by(**kwargs).first()
+    instance = db.query(model).filter_by(**kwargs).one_or_none()
 
     if instance is not None:
         return instance

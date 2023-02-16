@@ -29,7 +29,7 @@ def ingest_row(db: Session, context: IngestContext, row: DfcRow) -> dict:
     import_id = row.cpr_document_id
 
     existing_document = (
-        db.query(Document).filter(Document.import_id == import_id).first()
+        db.query(Document).filter(Document.import_id == import_id).one_or_none()
     )
     if existing_document is None:
         # If there does not already exist a document with the given import_id, do not

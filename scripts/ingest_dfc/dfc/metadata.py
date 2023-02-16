@@ -81,7 +81,7 @@ def build_metadata_field(
         return Result(), {}  # field is blank and allowed
 
     unknown_set = row_set.difference(allowed_set)
-    if len(unknown_set) == 0:
+    if not unknown_set:
         return Result(), {tax_key: ingest_values}  # all is well - everything found
 
     resolved_set = resolve_unknown(unknown_set, allowed_set)
