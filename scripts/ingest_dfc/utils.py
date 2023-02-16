@@ -93,7 +93,7 @@ class DfcRow:
     applies_to_id: str
     geography_iso: str
     documents: str
-    category: str  # METADATA - make an enum, remove from tax
+    category: str  # METADATA - made into an enum and removed from taxonomy
     events: list[str]
     sectors: list[str]  # METADATA
     instruments: list[str]  # METADATA

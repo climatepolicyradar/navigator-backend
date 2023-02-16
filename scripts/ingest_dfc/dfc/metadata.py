@@ -6,13 +6,17 @@ from app.db.models.law_policy.metadata import FamilyMetadata
 from scripts.ingest_dfc.dfc.match import match_unknown_value
 from scripts.ingest_dfc.utils import DfcRow, Result, ResultType
 
-MAP = {
+MAP_OF_LIST_VALUES = {
     "sector": "sectors",
     "instrument": "instruments",
     "framework": "frameworks",
     "topic": "responses",
     "hazard": "natural_hazards",
     "keyword": "keywords",
+}
+
+MAP_OF_STR_VALUES = {
+    "document_type": "document_type",
 }
 
 
@@ -36,23 +40,42 @@ def add_metadata(
 def build_metadata(taxonomy: dict, row: DfcRow) -> tuple[Result, dict]:
     detail_list = []
     value = {}
-    results = []
     num_fails = 0
     num_resolved = 0
 
     # FIXME: Still todo is ... document_type: str
-    for tax_key, row_key in MAP.items():
+    for tax_key, row_key in MAP_OF_LIST_VALUES.items():
         result, field_value = build_metadata_field(taxonomy, row, tax_key, row_key)
-        results.append(result)
 
         if result.type == ResultType.OK:
             value[tax_key] = field_value
         elif result.type == ResultType.RESOLVED:
+            value[tax_key] = field_value
             detail_list.append(result.details)
             num_resolved += 1
         else:
             detail_list.append(result.details)
             num_fails += 1
+
+    for tax_key, row_key in MAP_OF_STR_VALUES.items():
+        row_value = getattr(row, row_key)
+        allowed_values = taxonomy[tax_key]["allowed_values"]
+        result = Result()
+        if row_value in allowed_values:
+            value[tax_key] = row_value
+        else:
+            suggestion = match_unknown_value(row_value, set(allowed_values))
+            if not suggestion:
+                result.type = ResultType.ERROR
+                detail_list.append(
+                    f"Found no matches for {row_value} in {allowed_values}"
+                )
+                num_fails += 1
+            else:
+                value[tax_key] = suggestion
+                result.type = ResultType.RESOLVED
+                detail_list.append(f"Resolved {row_value} to {suggestion}")
+                num_resolved += 1
 
     row_result_type = (
         ResultType.ERROR
@@ -89,7 +112,7 @@ def build_metadata_field(
     if len(resolved_set) == len(unknown_set):
         details = f"Row {row.row_number} RESOLVED: {resolved_set}"
         vals = row_set.difference(unknown_set).union(resolved_set)
-        return Result(type=ResultType.RESOLVED, details=details), {tax_key: vals}
+        return Result(type=ResultType.RESOLVED, details=details), {tax_key: list(vals)}
 
     # If we get here we have not managed to resolve the unknown values.
 
