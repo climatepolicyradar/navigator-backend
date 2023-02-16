@@ -96,7 +96,6 @@ def test_add_document_to_relationship(
     superuser_token_headers,
     test_db,
 ):
-
     (
         response1_document,
         document1_payload,
@@ -128,7 +127,6 @@ def test_add_document_to_relationship_is_idempotent(
     superuser_token_headers,
     test_db,
 ):
-
     (
         response1_document,
         document1_payload,
@@ -162,7 +160,6 @@ def test_add_document_to_relationship_is_idempotent(
 def test_add_document_to_relationship_security(
     client,
 ):
-
     # Set up document relationship
     response_docrel1 = client.put(
         "/api/v1/document-relationships/1/documents/1",
@@ -179,7 +176,6 @@ def test_delete_document_from_relationship(
     superuser_token_headers,
     test_db,
 ):
-
     (
         response1_document,
         document1_payload,
@@ -226,7 +222,6 @@ def test_delete_document_from_relationship(
 def test_delete_document_from_relationship_security(
     client,
 ):
-
     # Delete a document relationship
     response_reldel = client.delete(
         "/api/v1/document-relationships/1/documents/1",
@@ -243,7 +238,6 @@ def test_get_relationship_documents(
     superuser_token_headers,
     test_db,
 ):
-
     (
         response1_document,
         document1_payload,
@@ -285,7 +279,6 @@ def test_get_relationship_documents(
 def test_get_relationship_documents_security(
     client,
 ):
-
     response_get = client.get(
         "/api/v1/document-relationships/1",
     )

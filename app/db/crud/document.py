@@ -783,7 +783,6 @@ def remove_document_relationship(
 
 
 def get_postfix_map(db: Session, doc_ids: Sequence[str]) -> Mapping[str, str]:
-
     postfix_map = {
         doc_id: postfix if postfix else ""
         for doc_id, postfix in db.query(Document.import_id, Document.postfix).filter(

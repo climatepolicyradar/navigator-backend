@@ -271,7 +271,6 @@ def test_document_detail(
     superuser_token_headers,
     test_db,
 ):
-
     (
         response1_document,
         document1_payload,
@@ -489,7 +488,6 @@ def test_update_document_security(
     client,
     test_db,
 ):
-
     (
         response1_document,
         document1_payload,
@@ -518,7 +516,6 @@ def test_update_document(
     superuser_token_headers,
     test_db,
 ):
-
     (
         response1_document,
         document1_payload,
@@ -564,7 +561,6 @@ def test_update_document_with_import_id(
     superuser_token_headers,
     test_db,
 ):
-
     (
         response1_document,
         document1_payload,
@@ -609,7 +605,6 @@ def test_update_document_with_import_id(
 def test_postfix_map(
     test_db,
 ):
-
     (
         response1_document,
         document1_payload,
