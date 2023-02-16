@@ -11,7 +11,7 @@ class MetadataTaxonomy(Base):
 
     __tablename__ = "metadata_taxonomy"
 
-    name = sa.Column(sa.Text, primary_key=True)
+    id = sa.Column(sa.Integer, primary_key=True)
     description = sa.Column(sa.Text, nullable=False)
     valid_metadata = sa.Column(postgresql.JSONB, nullable=False)
 
@@ -22,10 +22,10 @@ class FamilyMetadata(Base):
     __tablename__ = "family_metadata"
 
     family_import_id = sa.Column(sa.ForeignKey(Family.import_id))
-    taxonomy_name = sa.Column(sa.ForeignKey(MetadataTaxonomy.name))
+    taxonomy_id = sa.Column(sa.ForeignKey(MetadataTaxonomy.id))
     value = sa.Column(postgresql.JSONB, nullable=False)
 
-    sa.PrimaryKeyConstraint(family_import_id, taxonomy_name)
+    sa.PrimaryKeyConstraint(family_import_id, taxonomy_id)
 
 
 class MetadataOrganisation(Base):
@@ -33,8 +33,7 @@ class MetadataOrganisation(Base):
 
     __tablename__ = "metadata_organisation"
 
-    taxonomy_name = sa.Column(sa.ForeignKey(MetadataTaxonomy.name))
+    taxonomy_id = sa.Column(sa.ForeignKey(MetadataTaxonomy.id), nullable=False)
     organisation_id = sa.Column(sa.ForeignKey(Organisation.id))
 
-    # FIXME: we only support 1 taxonomy->organisation, so maybe just use ord_id as PK?
-    sa.PrimaryKeyConstraint(taxonomy_name, organisation_id)
+    sa.PrimaryKeyConstraint(organisation_id)

@@ -39,4 +39,4 @@ class CollectionOrganisation(Base):
 
     # FIXME: We should only have one owning organisation for a collection, so PK should
     #        probably be just `collection_import_id`
-    sa.PrimaryKeyConstraint(collection_import_id, organisation_id)
+    sa.PrimaryKeyConstraint(collection_import_id)

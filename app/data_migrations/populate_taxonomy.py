@@ -2,8 +2,9 @@ import json
 from typing import Sequence
 
 from sqlalchemy.orm import Session
+from app.db.models.app.users import Organisation
 
-from app.db.models.law_policy.metadata import MetadataTaxonomy
+from app.db.models.law_policy.metadata import MetadataOrganisation, MetadataTaxonomy
 
 from .utils import has_rows
 
@@ -98,13 +99,28 @@ def get_default_taxonomy():
 def populate_taxonomy(db: Session) -> None:
     """Populates the taxonomy from the data."""
 
-    if has_rows(db, MetadataTaxonomy):
+    if has_rows(db, MetadataTaxonomy) or has_rows(db, Organisation):
         return
 
     db.add(
         MetadataTaxonomy(
-            name="default",
+            id=1,
             description="CCLW loaded values",
             valid_metadata=get_default_taxonomy(),
+        )
+    )
+    db.add(
+        Organisation(
+            id=1,
+            name="CCLW",
+            description="Climate Change Laws of the World",
+            organisation_type="LSE",
+        )
+    )
+    db.flush()
+    db.add(
+        MetadataOrganisation(
+            taxonomy_id=1,
+            organisation_id=1,
         )
     )
