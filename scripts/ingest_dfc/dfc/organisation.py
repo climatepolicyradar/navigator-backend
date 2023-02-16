@@ -1,7 +1,7 @@
 from sqlalchemy.orm import Session
 from app.db.models.app.users import Organisation
 from app.db.models.law_policy.metadata import MetadataOrganisation, MetadataTaxonomy
-from scripts.ingest_dfc.utils import get_or_create, to_dict
+from scripts.ingest_dfc.utils import get_or_create
 
 
 def create_organisation(db: Session):

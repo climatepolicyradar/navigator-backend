@@ -6,7 +6,8 @@ from scripts.ingest_dfc.utils import DfcRow, IngestContext
 
 
 def validate_row(db: Session, context: IngestContext, row: DfcRow) -> None:
-    """Validates the constituent elements that represent this row.
+    """
+    Validates the constituent elements that represent this row.
 
     Args:
         db (Session): the connection to the database.
