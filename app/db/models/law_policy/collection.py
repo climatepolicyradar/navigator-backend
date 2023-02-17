@@ -36,5 +36,5 @@ class CollectionOrganisation(Base):
         sa.ForeignKey(Collection.import_id), nullable=False
     )
     organisation_id = sa.Column(sa.ForeignKey(Organisation.id), nullable=False)
-    
+
     sa.PrimaryKeyConstraint(collection_import_id)
