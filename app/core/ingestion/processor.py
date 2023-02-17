@@ -31,13 +31,13 @@ def ingest_row(db: Session, context: IngestContext, row: IngestRow) -> dict:
         db.query(Document).filter(Document.import_id == import_id).one_or_none()
     )
     if existing_document is None:
-        # If there does not already exist a document with the given import_id, do not
-        # attempt to migrate
-        print("skipping!")
-        return result
-    print("processing")
+        # FIXME: Need to be able to ingest a row that is brand new and
+        # ready for the pipeline
 
-    print(f"- Creating FamilyDocument for import {import_id}")
+        # If there does not already exist a document with the given import_id,
+        # do not attempt to migrate
+        return result
+
     family = family_from_row(
         db,
         row,
@@ -45,8 +45,6 @@ def ingest_row(db: Session, context: IngestContext, row: IngestRow) -> dict:
         context.org_id,
         result,
     )
-
-    print(f"- Creating Collection if required for import {import_id}")
 
     collection_from_row(
         db,

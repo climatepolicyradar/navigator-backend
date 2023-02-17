@@ -40,7 +40,6 @@ def physical_document_from_row(
     db.flush()
     result["physical_document"] = to_dict(physical_document)
 
-    print(f"- Getting language: {row.language}")
     lang = db.query(Language).filter(Language.name == row.language).one_or_none()
 
     if lang is not None:

@@ -44,7 +44,6 @@ def build_metadata(taxonomy: dict, row: IngestRow) -> tuple[Result, dict]:
     num_fails = 0
     num_resolved = 0
 
-    # FIXME: Still todo is ... document_type: str
     for tax_key, row_key in MAP_OF_LIST_VALUES.items():
         result, field_value = build_metadata_field(taxonomy, row, tax_key, row_key)
 

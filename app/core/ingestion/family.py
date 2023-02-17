@@ -54,13 +54,11 @@ def _maybe_create_family(
     db: Session, row: IngestRow, org_id: int, result: dict[str, Any]
 ) -> Family:
     def _create_family_links(family: Family):
-        print(f"- Creating family slug for import {family.import_id}")
         family_slug = Slug(name=row.cpr_family_slug, family_import_id=family.import_id)
 
         db.add(family_slug)
         result["family_slug"] = (to_dict(family_slug),)
 
-        print(f"- Creating family organisation for import {row.cpr_family_id}")
         family_organisation = FamilyOrganisation(
             family_import_id=family.import_id, organisation_id=org_id
         )
@@ -73,7 +71,6 @@ def _maybe_create_family(
     category = FamilyCategory(row.category.upper())
 
     # GET GEOGRAPHY
-    print(f"- Getting Geography for {row.geography_iso}")
     geography = _get_geography(db, row)
 
     if not _validate_family_name(db, row.family_name, row.cpr_family_id):
@@ -106,8 +103,6 @@ def _maybe_create_family_document(
     existing_document: Document,
     result: dict[str, Any],
 ) -> FamilyDocument:
-    print(f"- Creating family document for import {row.cpr_document_id}")
-
     # FIXME: these should come from well-known values, not whatever is in the CSV
     variant_name = get_or_create(
         db, Variant, variant_name=row.document_role, extra={"description": ""}
@@ -138,7 +133,6 @@ def _maybe_create_family_document(
     db.flush()
 
     result["family_document"] = to_dict(family_document)
-    print(f"- Creating slug for FamilyDocument with import_id {row.cpr_document_id}")
     _add_family_document_slug(db, row, family_document, result)
 
     return family_document
