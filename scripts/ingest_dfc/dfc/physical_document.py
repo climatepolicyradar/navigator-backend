@@ -38,11 +38,11 @@ def physical_document_from_row(
         content_type=existing_document.content_type,
     )
     db.add(physical_document)
-    db.commit()
+    db.flush()
     result["physical_document"] = to_dict(physical_document)
 
     print(f"- Getting language: {row.language}")
-    lang = db.query(Language).filter(Language.name == row.language).first()
+    lang = db.query(Language).filter(Language.name == row.language).one_or_none()
 
     if lang is not None:
         result["language"] = to_dict(lang)
@@ -50,7 +50,7 @@ def physical_document_from_row(
             language_id=lang.id, document_id=physical_document.id
         )
         db.add(lang)
-        db.commit()
+        db.flush()
         result["physical_document_language"] = to_dict(physical_document_language)
 
     return physical_document

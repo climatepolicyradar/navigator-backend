@@ -1,7 +1,7 @@
 import enum
 from dataclasses import fields
 from datetime import datetime
-from typing import Any, Sequence, TypeVar
+from typing import Any, List, Sequence, TypeVar
 
 from pydantic import ConfigDict, Extra
 from pydantic.dataclasses import dataclass
@@ -93,7 +93,7 @@ class DfcRow:
     applies_to_id: str
     geography_iso: str
     documents: str
-    category: str  # METADATA - make an enum, remove from tax
+    category: str  # METADATA - made into an enum and removed from taxonomy
     events: list[str]
     sectors: list[str]  # METADATA
     instruments: list[str]  # METADATA
@@ -137,7 +137,7 @@ class DfcRow:
             return value
 
         if field_info[key] == list[str]:
-            return [e.strip() for e in value.split(";")]
+            return [e.strip() for e in value.split(";") if e.strip()]
 
         if field_info[key] == int:
             return int(value) if value else 0
@@ -156,7 +156,7 @@ class DfcRow:
 
     def get_first_url(self) -> str:
         """
-        Gets the first URL from the 'documents' attribute.
+        Get the first URL from the 'documents' attribute.
 
         FIXME: This could/should be written with more validation.
         """
@@ -173,7 +173,7 @@ _DbModel = TypeVar("_DbModel", bound=AnyModel)
 
 def get_or_create(db: Session, model: _DbModel, **kwargs) -> _DbModel:
     """
-    Gets or Creates a row represented by model, and described by kwargs.
+    Get or create a row represented by model, and described by kwargs.
 
     :param [Session] db: connection to the database.
     :param [_DbModel] model: the model (table) you are querying.
@@ -195,7 +195,7 @@ def get_or_create(db: Session, model: _DbModel, **kwargs) -> _DbModel:
         after_create = kwargs["after_create"]
         del kwargs["after_create"]
 
-    instance = db.query(model).filter_by(**kwargs).first()
+    instance = db.query(model).filter_by(**kwargs).one_or_none()
 
     if instance is not None:
         return instance
@@ -205,7 +205,7 @@ def get_or_create(db: Session, model: _DbModel, **kwargs) -> _DbModel:
         kwargs[k] = v
     instance = model(**kwargs)
     db.add(instance)
-    db.commit()
+    db.flush()
     if after_create:
         after_create(instance)
     return instance
@@ -242,19 +242,25 @@ def to_dict(base_object: AnyModel) -> dict:
     )
 
 
-def mypprint(dict_to_print: dict, indent: int = 0) -> None:
-    """Prints a prettier for of a dict than pprint can."""
+class ResultType(enum.Enum):
+    """Result type used when processing metadata values."""
 
-    def print_item(k, v, indent):
-        indent += 4
-        if type(v) == dict:
-            print(" " * indent + f"{k}: ")
-            mypprint(v, indent)
-        else:
-            print(" " * indent + f"{k}: {v}")
+    OK = (0,)
+    RESOLVED = (10,)
+    ERROR = 20
 
-    print(" " * indent + "{")
-    sorted_d = dict(sorted(dict_to_print.items()))
-    for k, v in sorted_d.items():
-        print_item(k, v, indent)
-    print(" " * indent + "}")
+
+@dataclass
+class Result:
+    """Augmented result class for reporting extra details about processed metadata."""
+
+    type: ResultType = ResultType.OK
+    details: str = ""
+
+
+@dataclass
+class IngestContext:
+    """Context used when processing."""
+
+    org_id: int
+    results: List[Result]

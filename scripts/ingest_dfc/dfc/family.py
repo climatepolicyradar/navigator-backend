@@ -5,8 +5,8 @@ from sqlalchemy.orm import Session
 from app.db.models.deprecated import Document
 from app.db.models.law_policy import (
     DocumentStatus,
-    Family,
     FamilyCategory,
+    Family,
     FamilyDocument,
     FamilyDocumentType,
     FamilyOrganisation,
@@ -14,12 +14,10 @@ from app.db.models.law_policy import (
     Slug,
     Variant,
 )
-from app.db.models.law_policy.metadata import MetadataOrganisation, MetadataTaxonomy
+from app.db.models.law_policy.family import FamilyStatus
 from scripts.ingest_dfc.dfc.metadata import add_metadata
-
-from scripts.ingest_dfc.dfc.physical_document import (
-    physical_document_from_row,
-)
+from scripts.ingest_dfc.dfc.organisation import get_organisation_taxonomy
+from scripts.ingest_dfc.dfc.physical_document import physical_document_from_row
 from scripts.ingest_dfc.utils import DfcRow, get_or_create, to_dict
 
 
@@ -55,11 +53,10 @@ def _maybe_create_family(
     db: Session, row: DfcRow, org_id: int, result: dict[str, Any]
 ) -> Family:
     def _create_family_links(family: Family):
-        print(f"- Creating family slug for import {row.cpr_family_id}")
+        print(f"- Creating family slug for import {family.import_id}")
         family_slug = Slug(name=row.cpr_family_slug, family_import_id=family.import_id)
 
         db.add(family_slug)
-        db.commit()
         result["family_slug"] = (to_dict(family_slug),)
 
         print(f"- Creating family organisation for import {row.cpr_family_id}")
@@ -67,25 +64,10 @@ def _maybe_create_family(
             family_import_id=family.import_id, organisation_id=org_id
         )
         db.add(family_organisation)
-        db.commit()
         result["family_organisation"] = to_dict(family_organisation)
-        # TODO Create Family metadata
-        taxonomy = (
-            db.query(MetadataTaxonomy.valid_metadata)
-            .join(
-                MetadataOrganisation,
-                MetadataOrganisation.taxonomy_name == MetadataTaxonomy.name,
-            )
-            .filter_by(taxonomy_name="default", organisation_id=org_id)
-            .first()
-        )
-        if not taxonomy:
-            raise ValueError(
-                f"Could not find a default taxonomy for organisation {org_id}"
-            )
-        add_metadata(
-            db, cast(str, family.import_id), cast(dict, taxonomy), "default", row
-        )
+
+        id, taxonomy = get_organisation_taxonomy(db, org_id)
+        add_metadata(db, cast(str, family.import_id), taxonomy, id, row)
 
     category = FamilyCategory(row.category.upper())
 
@@ -108,6 +90,7 @@ def _maybe_create_family(
             "geography_id": geography.id,
             "category_name": category,
             "description": row.family_summary,
+            "family_status": FamilyStatus.PUBLISHED,
         },
         after_create=_create_family_links,
     )
@@ -133,7 +116,7 @@ def _maybe_create_family_document(
     ).name
 
     family_document = (
-        db.query(FamilyDocument).filter_by(import_id=row.cpr_document_id).first()
+        db.query(FamilyDocument).filter_by(import_id=row.cpr_document_id).one_or_none()
     )
     if family_document is not None:
         # If the family document exists we can assume that the associated physical
@@ -151,7 +134,7 @@ def _maybe_create_family_document(
         document_type=document_type,
     )
     db.add(family_document)
-    db.commit()
+    db.flush()
 
     result["family_document"] = to_dict(family_document)
     print(f"- Creating slug for FamilyDocument with import_id {row.cpr_document_id}")
@@ -161,7 +144,9 @@ def _maybe_create_family_document(
 
 
 def _validate_family_name(db: Session, family_name: str, import_id: str) -> bool:
-    matching_family = db.query(Family).filter(Family.import_id == import_id).first()
+    matching_family = (
+        db.query(Family).filter(Family.import_id == import_id).one_or_none()
+    )
     if matching_family is None:
         return True
 
@@ -169,7 +154,9 @@ def _validate_family_name(db: Session, family_name: str, import_id: str) -> bool
 
 
 def _get_geography(db: Session, row: DfcRow) -> Geography:
-    geography = db.query(Geography).filter(Geography.value == row.geography_iso).first()
+    geography = (
+        db.query(Geography).filter(Geography.value == row.geography_iso).one_or_none()
+    )
     if geography is None:
         raise ValueError(
             f"Geography value of {row.geography_iso} does not exist in the database."
@@ -194,6 +181,6 @@ def _add_family_document_slug(
         family_document_import_id=family_document.import_id,
     )
     db.add(family_document_slug)
-    db.commit()
+    db.flush()
     result["family_document_slug"] = {"document_slug": to_dict(family_document_slug)}
     return family_document_slug
