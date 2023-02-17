@@ -114,7 +114,7 @@ def populate_taxonomy(db: Session) -> None:
             id=1,
             name="CCLW",
             description="Climate Change Laws of the World",
-            organisation_type="LSE",
+            organisation_type="Academic",
         )
     )
     db.flush()
