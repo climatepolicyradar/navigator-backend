@@ -299,7 +299,7 @@ def ingest_law_policy(
         file_contents = get_file_contents(law_policy_csv)
         context = db_init(db)
         read(file_contents, context, validator)
-        rows, fails, resolved = get_result_counts(context)
+        rows, fails, resolved = get_result_counts(context.results)
         _LOGGER.info(
             f"Validation result: {rows} Rows, {fails} Failures, {resolved} Resolved"
         )

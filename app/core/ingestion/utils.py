@@ -103,8 +103,8 @@ class IngestContext:
     results: List[Result]
 
 
-def get_result_counts(context):
-    rows = len(context.results)
-    fails = len([r for r in context.results if r.type == ResultType.ERROR])
-    resolved = len([r for r in context.results if r.type == ResultType.RESOLVED])
+def get_result_counts(results: List[Result]) -> tuple[int, int, int]:
+    rows = len(results)
+    fails = len([r for r in results if r.type == ResultType.ERROR])
+    resolved = len([r for r in results if r.type == ResultType.RESOLVED])
     return rows, fails, resolved
