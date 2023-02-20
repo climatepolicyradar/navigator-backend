@@ -28,6 +28,13 @@ from app.core.email import (
     send_new_account_email,
     send_password_reset_email,
 )
+from app.core.ingestion.processor import (
+    db_init,
+    get_dfc_ingestor,
+    get_dfc_validator,
+)
+from app.core.ingestion.reader import get_file_contents, read
+from app.core.ingestion.utils import ResultType, get_result_counts
 from app.core.ratelimit import limiter
 from app.core.validation import IMPORT_ID_MATCHER
 from app.core.validation.types import (
@@ -267,6 +274,63 @@ async def request_password_reset(
     return True
 
 
+@r.post(
+    "/bulk-ingest/cclw/law-policy",
+    response_model=BulkImportValidatedResult,
+    status_code=status.HTTP_202_ACCEPTED,
+)
+def ingest_law_policy(
+    request: Request,
+    law_policy_csv: UploadFile,
+    background_tasks: BackgroundTasks,
+    db=Depends(get_db),
+    current_user=Depends(get_current_active_superuser),
+    s3_client=Depends(get_s3_client),
+):
+    """Process a Law/Policy data import"""
+    _LOGGER.info(
+        f"Superuser '{current_user.email}' triggered bulk ingest request for "
+        "CCLW Law & Policy data"
+    )
+    validator = get_dfc_validator()
+
+    # PHASE 1 - Validate
+    try:
+        file_contents = get_file_contents(law_policy_csv)
+        context = db_init(db)
+        read(file_contents, context, validator)
+        rows, fails, resolved = get_result_counts(context.results)
+        _LOGGER.info(
+            f"Validation result: {rows} Rows, {fails} Failures, {resolved} Resolved"
+        )
+    except Exception as e:
+        _LOGGER.exception("Unexpected error on ingest", extra={"errors": str(e)})
+        raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST) from e
+
+    validation_errors = [r for r in context.results if r.type == ResultType.ERROR]
+    if validation_errors:
+        _LOGGER.error(
+            "Ingest failed validation (results attached)",
+            extra={"errors": validation_errors},
+        )
+        error_details = [e.details for e in validation_errors]
+        raise HTTPException(
+            status_code=status.HTTP_400_BAD_REQUEST, detail=error_details
+        )
+
+    # PHASE 2 - Ingest
+    ingestor = get_dfc_ingestor()
+
+    try:
+        context = db_init(db)
+        read(file_contents, context, ingestor)
+    except Exception as e:
+        _LOGGER.exception("Unexpected error on ingest", extra={"errors": str(e)})
+        raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST) from e
+
+
+# TODO: This is the old endpoint which will get removed,
+#       but left here for reference.
 @r.post(
     "/bulk-imports/cclw/law-policy",
     response_model=BulkImportValidatedResult,
