@@ -47,6 +47,7 @@ def search_documents(
     search_body: SearchRequestBody,
     background_tasks: BackgroundTasks,
     db=Depends(get_db),
+    group_documents: bool = False,
 ) -> Union[SearchResponse, SearchResultsResponse]:
     """Search for documents matching the search criteria."""
     # FIXME: The returned Union type should have `SearchResultsResponse` removed when
@@ -68,7 +69,7 @@ def search_documents(
             search_body.keyword_filters,
         )
 
-    if search_body.group_documents:
+    if group_documents:
         if not search_body.query_string:
             # Service browse requests from RDS
             return browse_rds_families(

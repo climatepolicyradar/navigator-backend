@@ -86,7 +86,6 @@ class SearchRequestBody(BaseModel):
 
     jit_query: Optional[JitQuery] = JitQuery.ENABLED
     include_results: IncludedResultsList = None
-    group_documents: bool = False
 
     limit: int = 10  # TODO: decide on default
     offset: int = 0

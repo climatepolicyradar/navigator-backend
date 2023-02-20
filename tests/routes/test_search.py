@@ -35,6 +35,9 @@ from app.db.models.law_policy.family import (
 )
 from app.db.models.document import PhysicalDocument
 from app.initial_data import populate_geography
+from tests.routes.test_documents import create_4_documents
+
+SEARCH_ENDPOINT = "/api/v1/searches"
 
 
 def _populate_search_db_documents(db: Session) -> None:
@@ -247,15 +250,15 @@ def _create_family_structures(
 def test_simple_pagination_families(test_opensearch, client, test_db, monkeypatch):
     monkeypatch.setattr(search, "_OPENSEARCH_CONNECTION", test_opensearch)
     _populate_search_db_families(test_db)
+    search_endpoint = f"{SEARCH_ENDPOINT}?group_documents=True"
 
     page1_response = client.post(
-        "/api/v1/searches",
+        search_endpoint,
         json={
             "query_string": "and",
             "exact_match": False,
             "limit": 2,
             "offset": 0,
-            "group_documents": True,
         },
     )
     assert page1_response.status_code == 200
@@ -265,13 +268,12 @@ def test_simple_pagination_families(test_opensearch, client, test_db, monkeypatc
     assert len(page1_families) == 2
 
     page2_response = client.post(
-        "/api/v1/searches",
+        search_endpoint,
         json={
             "query_string": "and",
             "exact_match": False,
             "limit": 2,
             "offset": 2,
-            "group_documents": True,
         },
     )
     assert page2_response.status_code == 200
@@ -300,13 +302,15 @@ def test_search_body_valid(
     monkeypatch.setattr(search, "_OPENSEARCH_CONNECTION", test_opensearch)
     if group_documents:
         _populate_search_db_families(test_db)
+        search_endpoint = f"{SEARCH_ENDPOINT}?group_documents=True"
+    else:
+        search_endpoint = SEARCH_ENDPOINT
 
     response = client.post(
-        "/api/v1/searches",
+        search_endpoint,
         json={
             "query_string": "disaster",
             "exact_match": exact_match,
-            "group_documents": group_documents,
         },
     )
     assert response.status_code == 200
@@ -318,13 +322,14 @@ def test_jit_query_families_is_default(
 ):
     monkeypatch.setattr(search, "_OPENSEARCH_CONNECTION", test_opensearch)
     _populate_search_db_families(test_db)
+    search_endpoint = f"{SEARCH_ENDPOINT}?group_documents=True"
 
     jit_query_spy = mocker.spy(app.core.jit_query_wrapper, "jit_query_families")  # noqa
     background_task_spy = mocker.spy(fastapi.BackgroundTasks, "add_task")
 
     response = client.post(
-        "/api/v1/searches",
-        json={"query_string": "climate", "exact_match": True, "group_documents": True},
+        search_endpoint,
+        json={"query_string": "climate", "exact_match": True},
     )
     assert response.status_code == 200
 
@@ -337,13 +342,14 @@ def test_jit_query_families_is_default(
 def test_families_with_jit(test_opensearch, monkeypatch, client, test_db, mocker):
     monkeypatch.setattr(search, "_OPENSEARCH_CONNECTION", test_opensearch)
     _populate_search_db_families(test_db)
+    search_endpoint = f"{SEARCH_ENDPOINT}?group_documents=True"
 
     jit_query_spy = mocker.spy(app.core.jit_query_wrapper, "jit_query_families")
     background_task_spy = mocker.spy(fastapi.BackgroundTasks, "add_task")
 
     response = client.post(
-        "/api/v1/searches",
-        json={"query_string": "climate", "exact_match": True, "group_documents": True},
+        search_endpoint,
+        json={"query_string": "climate", "exact_match": True},
     )
 
     assert response.status_code == 200
@@ -364,7 +370,6 @@ def test_families_with_jit(test_opensearch, monkeypatch, client, test_db, mocker
         jit_query=JitQuery.ENABLED,
         limit=10,
         offset=0,
-        group_documents=True,
     )
     assert actual_search_body == expected_search_body
 
@@ -390,7 +395,6 @@ def test_families_with_jit(test_opensearch, monkeypatch, client, test_db, mocker
         jit_query=JitQuery.ENABLED,
         limit=10,
         offset=0,
-        group_documents=True,
     )
     assert actual_bkg_search_body == expected_bkg_search_body
 
@@ -408,12 +412,11 @@ def test_families_without_jit(test_opensearch, monkeypatch, client, test_db, moc
     background_task_spy = mocker.spy(fastapi.BackgroundTasks, "add_task")
 
     response = client.post(
-        "/api/v1/searches",
+        f"{SEARCH_ENDPOINT}?group_documents=True",
         json={
             "query_string": "climate",
             "exact_match": True,
             "jit_query": "disabled",
-            "group_documents": True,
         },
     )
     assert response.status_code == 200
@@ -434,7 +437,6 @@ def test_families_without_jit(test_opensearch, monkeypatch, client, test_db, moc
         jit_query=JitQuery.DISABLED,
         limit=10,
         offset=0,
-        group_documents=True,
     )
     assert actual_search_body == expected_search_body
 
@@ -452,18 +454,19 @@ def test_keyword_filters(
     monkeypatch.setattr(search, "_OPENSEARCH_CONNECTION", test_opensearch)
     if group_documents:
         _populate_search_db_families(test_db)
+        search_endpoint = f"{SEARCH_ENDPOINT}?group_documents=True"
     else:
         populate_geography(test_db)
+        search_endpoint = SEARCH_ENDPOINT
 
     query_spy = mocker.spy(search._OPENSEARCH_CONNECTION, "raw_query")
     response = client.post(
-        "/api/v1/searches",
+        search_endpoint,
         json={
             "query_string": "climate",
             "exact_match": False,
             "keyword_filters": {"countries": ["kenya"]},
             "jit_query": "disabled",
-            "group_documents": group_documents,
         },
     )
     assert response.status_code == 200
@@ -483,18 +486,19 @@ def test_keyword_filters_region(
     monkeypatch.setattr(search, "_OPENSEARCH_CONNECTION", test_opensearch)
     if group_documents:
         _populate_search_db_families(test_db)
+        search_endpoint = f"{SEARCH_ENDPOINT}?group_documents=True"
     else:
         populate_geography(test_db)
+        search_endpoint = SEARCH_ENDPOINT
 
     query_spy = mocker.spy(search._OPENSEARCH_CONNECTION, "raw_query")
     response = client.post(
-        "/api/v1/searches",
+        search_endpoint,
         json={
             "query_string": "climate",
             "exact_match": False,
             "keyword_filters": {"regions": ["south-asia"]},
             "jit_query": "disabled",
-            "group_documents": group_documents,
         },
     )
     assert response.status_code == 200
@@ -533,16 +537,18 @@ def test_keyword_filters_region_invalid(
     monkeypatch.setattr(search, "_OPENSEARCH_CONNECTION", test_opensearch)
     if group_documents:
         _populate_search_db_families(test_db)
+        search_endpoint = f"{SEARCH_ENDPOINT}?group_documents=True"
+    else:
+        search_endpoint = SEARCH_ENDPOINT
 
     query_spy = mocker.spy(search._OPENSEARCH_CONNECTION, "raw_query")
     response = client.post(
-        "/api/v1/searches",
+        search_endpoint,
         json={
             "query_string": "climate",
             "exact_match": False,
             "keyword_filters": {"regions": ["daves-region"]},
             "jit_query": "disabled",
-            "group_documents": group_documents,
         },
     )
     assert response.status_code == 200
@@ -561,11 +567,13 @@ def test_invalid_keyword_filters(
     monkeypatch.setattr(search, "_OPENSEARCH_CONNECTION", test_opensearch)
     if group_documents:
         _populate_search_db_families(test_db)
+        search_endpoint = f"{SEARCH_ENDPOINT}?group_documents=True"
     else:
         populate_geography(test_db)
+        search_endpoint = SEARCH_ENDPOINT
 
     response = client.post(
-        "/api/v1/searches",
+        search_endpoint,
         json={
             "query_string": "disaster",
             "exact_match": False,
@@ -573,7 +581,6 @@ def test_invalid_keyword_filters(
                 "geographies": ["kenya"],
                 "unknown_filter_no1": ["BOOM"],
             },
-            "group_documents": group_documents,
         },
     )
     assert response.status_code == 422
@@ -596,16 +603,18 @@ def test_year_range_filters(
     monkeypatch.setattr(search, "_OPENSEARCH_CONNECTION", test_opensearch)
     if group_documents:
         _populate_search_db_families(test_db)
+        search_endpoint = f"{SEARCH_ENDPOINT}?group_documents=True"
+    else:
+        search_endpoint = SEARCH_ENDPOINT
 
     query_spy = mocker.spy(search._OPENSEARCH_CONNECTION, "raw_query")
     response = client.post(
-        "/api/v1/searches",
+        search_endpoint,
         json={
             "query_string": "disaster",
             "exact_match": False,
             "year_range": year_range,
             "jit_query": "disabled",
-            "group_documents": group_documents,
         },
     )
     query_body = query_spy.mock_calls[0].args[0]
@@ -654,12 +663,14 @@ def test_multiple_filters(
     monkeypatch.setattr(search, "_OPENSEARCH_CONNECTION", test_opensearch)
     if group_documents:
         _populate_search_db_families(test_db)
+        search_endpoint = f"{SEARCH_ENDPOINT}?group_documents=True"
     else:
         populate_geography(test_db)
+        search_endpoint = SEARCH_ENDPOINT
 
     query_spy = mocker.spy(search._OPENSEARCH_CONNECTION, "raw_query")
     response = client.post(
-        "/api/v1/searches",
+        search_endpoint,
         json={
             "query_string": "disaster",
             "exact_match": False,
@@ -669,7 +680,6 @@ def test_multiple_filters(
             },
             "year_range": (1900, 2020),
             "jit_query": "disabled",
-            "group_documents": group_documents,
         },
     )
     assert response.status_code == 200
@@ -695,14 +705,16 @@ def test_result_order_score(
     monkeypatch.setattr(search, "_OPENSEARCH_CONNECTION", test_opensearch)
     if group_documents:
         _populate_search_db_families(test_db)
+        search_endpoint = f"{SEARCH_ENDPOINT}?group_documents=True"
+    else:
+        search_endpoint = SEARCH_ENDPOINT
 
     query_spy = mocker.spy(search._OPENSEARCH_CONNECTION, "raw_query")
     response = client.post(
-        "/api/v1/searches",
+        search_endpoint,
         json={
             "query_string": "disaster",
             "exact_match": False,
-            "group_documents": group_documents,
         },
     )
     assert response.status_code == 200
@@ -726,15 +738,17 @@ def test_result_order_date(
     monkeypatch.setattr(search, "_OPENSEARCH_CONNECTION", test_opensearch)
     if group_documents:
         _populate_search_db_families(test_db)
+        search_endpoint = f"{SEARCH_ENDPOINT}?group_documents=True"
+    else:
+        search_endpoint = SEARCH_ENDPOINT
 
     response = client.post(
-        "/api/v1/searches",
+        search_endpoint,
         json={
             "query_string": "climate",
             "exact_match": False,
             "sort_field": "date",
             "sort_order": order.value,
-            "group_documents": group_documents,
         },
     )
     assert response.status_code == 200
@@ -769,15 +783,17 @@ def test_result_order_title(
     monkeypatch.setattr(search, "_OPENSEARCH_CONNECTION", test_opensearch)
     if group_documents:
         _populate_search_db_families(test_db)
+        search_endpoint = f"{SEARCH_ENDPOINT}?group_documents=True"
+    else:
+        search_endpoint = SEARCH_ENDPOINT
 
     response = client.post(
-        "/api/v1/searches",
+        search_endpoint,
         json={
             "query_string": "climate",
             "exact_match": False,
             "sort_field": "title",
             "sort_order": order.value,
-            "group_documents": group_documents,
         },
     )
     assert response.status_code == 200
@@ -811,21 +827,24 @@ def test_invalid_request(
     monkeypatch.setattr(search, "_OPENSEARCH_CONNECTION", test_opensearch)
     if group_documents:
         _populate_search_db_families(test_db)
+        search_endpoint = f"{SEARCH_ENDPOINT}?group_documents=True"
+    else:
+        search_endpoint = SEARCH_ENDPOINT
 
     response = client.post(
-        "/api/v1/searches",
-        json={"exact_match": False, "group_documents": group_documents},
+        search_endpoint,
+        json={"exact_match": False},
     )
     assert response.status_code == 422
 
     response = client.post(
-        "/api/v1/searches",
-        json={"limit": 1, "offset": 2, "group_documents": group_documents},
+        search_endpoint,
+        json={"limit": 1, "offset": 2},
     )
     assert response.status_code == 422
 
     response = client.post(
-        "/api/v1/searches",
+        search_endpoint,
         json={},
     )
     assert response.status_code == 422
@@ -840,29 +859,29 @@ def test_case_insensitivity(
     monkeypatch.setattr(search, "_OPENSEARCH_CONNECTION", test_opensearch)
     if group_documents:
         _populate_search_db_families(test_db)
+        search_endpoint = f"{SEARCH_ENDPOINT}?group_documents=True"
+    else:
+        search_endpoint = SEARCH_ENDPOINT
 
     response1 = client.post(
-        "/api/v1/searches",
+        search_endpoint,
         json={
             "query_string": "climate",
             "exact_match": False,
-            "group_documents": group_documents,
         },
     )
     response2 = client.post(
-        "/api/v1/searches",
+        search_endpoint,
         json={
             "query_string": "climate",
             "exact_match": False,
-            "group_documents": group_documents,
         },
     )
     response3 = client.post(
-        "/api/v1/searches",
+        search_endpoint,
         json={
             "query_string": "climate",
             "exact_match": False,
-            "group_documents": group_documents,
         },
     )
 
@@ -889,29 +908,29 @@ def test_punctuation_ignored(
     monkeypatch.setattr(search, "_OPENSEARCH_CONNECTION", test_opensearch)
     if group_documents:
         _populate_search_db_families(test_db)
+        search_endpoint = f"{SEARCH_ENDPOINT}?group_documents=True"
+    else:
+        search_endpoint = SEARCH_ENDPOINT
 
     response1 = client.post(
-        "/api/v1/searches",
+        search_endpoint,
         json={
             "query_string": "climate.",
             "exact_match": False,
-            "group_documents": group_documents,
         },
     )
     response2 = client.post(
-        "/api/v1/searches",
+        search_endpoint,
         json={
             "query_string": "climate, ",
             "exact_match": False,
-            "group_documents": group_documents,
         },
     )
     response3 = client.post(
-        "/api/v1/searches",
+        search_endpoint,
         json={
             "query_string": ";climate",
             "exact_match": False,
-            "group_documents": group_documents,
         },
     )
 
@@ -935,18 +954,18 @@ def test_sensitive_queries(test_opensearch, monkeypatch, client):
     monkeypatch.setattr(search, "_OPENSEARCH_CONNECTION", test_opensearch)
 
     response1 = client.post(
-        "/api/v1/searches",
+        SEARCH_ENDPOINT,
         json={"query_string": "spain", "exact_match": False},
     )
 
     response2 = client.post(
-        "/api/v1/searches",
+        SEARCH_ENDPOINT,
         json={"query_string": "clean energy strategy", "exact_match": False},
     )
 
     # In this example the sensitive term is less than half the length of the query, so KNN results should be returned
     response3 = client.post(
-        "/api/v1/searches",
+        SEARCH_ENDPOINT,
         json={"query_string": "spanish ghg emissions", "exact_match": False},
     )
 
@@ -988,15 +1007,15 @@ def test_accents_ignored(test_opensearch, monkeypatch, client):
     monkeypatch.setattr(search, "_OPENSEARCH_CONNECTION", test_opensearch)
 
     response1 = client.post(
-        "/api/v1/searches",
+        SEARCH_ENDPOINT,
         json={"query_string": "climàte", "exact_match": False},
     )
     response2 = client.post(
-        "/api/v1/searches",
+        SEARCH_ENDPOINT,
         json={"query_string": "climatë", "exact_match": False},
     )
     response3 = client.post(
-        "/api/v1/searches",
+        SEARCH_ENDPOINT,
         json={"query_string": "climàtë", "exact_match": False},
     )
 
@@ -1018,7 +1037,7 @@ def test_time_taken(test_opensearch, monkeypatch, client):
 
     start = time.time()
     response = client.post(
-        "/api/v1/searches",
+        SEARCH_ENDPOINT,
         json={"query_string": "disaster", "exact_match": False},
     )
     end = time.time()
@@ -1040,12 +1059,15 @@ def test_empty_search_term_performs_browse(
     """Make sure that empty search term returns results in browse mode."""
     if group_documents:
         _populate_search_db_families(test_db)
+        search_endpoint = f"{SEARCH_ENDPOINT}?group_documents=True"
     else:
-        _populate_search_db_documents(test_db)
+        populate_geography(test_db)
+        create_4_documents(test_db)
+        search_endpoint = SEARCH_ENDPOINT
 
     response = client.post(
-        "/api/v1/searches",
-        json={"query_string": "", "group_documents": group_documents},
+        search_endpoint,
+        json={"query_string": ""},
     )
     assert response.status_code == 200
     assert response.json()["hits"] > 0
@@ -1067,16 +1089,18 @@ def test_browse_order_by_title(
     """Make sure that empty search terms return no results."""
     if group_documents:
         _populate_search_db_families(test_db)
+        search_endpoint = f"{SEARCH_ENDPOINT}?group_documents=True"
     else:
-        _populate_search_db_documents(test_db)
+        populate_geography(test_db)
+        create_4_documents(test_db)
+        search_endpoint = SEARCH_ENDPOINT
 
     response = client.post(
-        "/api/v1/searches",
+        search_endpoint,
         json={
             "query_string": "",
             "sort_field": "title",
             "sort_order": order.value,
-            "group_documents": group_documents,
         },
     )
     assert response.status_code == 200
@@ -1115,16 +1139,18 @@ def test_browse_order_by_date(
     """Make sure that empty search terms return no results."""
     if group_documents:
         _populate_search_db_families(test_db)
+        search_endpoint = f"{SEARCH_ENDPOINT}?group_documents=True"
     else:
-        _populate_search_db_documents(test_db)
+        populate_geography(test_db)
+        create_4_documents(test_db)
+        search_endpoint = SEARCH_ENDPOINT
 
     response = client.post(
-        "/api/v1/searches",
+        search_endpoint,
         json={
             "query_string": "",
             "sort_field": "date",
             "sort_order": order.value,
-            "group_documents": group_documents,
         },
     )
     assert response.status_code == 200
@@ -1165,25 +1191,25 @@ def test_browse_limit_offset(
     # monkeypatch.setattr(search, "_OPENSEARCH_CONNECTION", test_opensearch)
     if group_documents:
         _populate_search_db_families(test_db)
+        search_endpoint = f"{SEARCH_ENDPOINT}?group_documents=True"
     else:
-        _populate_search_db_documents(test_db)
+        populate_geography(test_db)
+        search_endpoint = SEARCH_ENDPOINT
 
     response_offset_0 = client.post(
-        "/api/v1/searches",
+        search_endpoint,
         json={
             "query_string": "",
             "limit": limit,
             "offset": 0,
-            "group_documents": group_documents,
         },
     )
     response_offset_2 = client.post(
-        "/api/v1/searches",
+        search_endpoint,
         json={
             "query_string": "",
             "limit": limit,
             "offset": 2,
-            "group_documents": group_documents,
         },
     )
 
@@ -1213,12 +1239,14 @@ def test_browse_filters(group_documents, client, test_db):
     """Check that multiple filters are successfully applied"""
     if group_documents:
         _populate_search_db_families(test_db)
+        search_endpoint = f"{SEARCH_ENDPOINT}?group_documents=True"
     else:
-        _populate_search_db_documents(test_db)
+        populate_geography(test_db)
+        search_endpoint = SEARCH_ENDPOINT
 
     # query_spy = mocker.spy(search._OPENSEARCH_CONNECTION, "raw_query")
     response = client.post(
-        "/api/v1/searches",
+        search_endpoint,
         json={
             "query_string": "",
             "keyword_filters": {
@@ -1227,7 +1255,6 @@ def test_browse_filters(group_documents, client, test_db):
             },
             "year_range": (1900, 2020),
             "jit_query": "disabled",
-            "group_documents": group_documents,
         },
     )
     assert response.status_code == 200
@@ -1262,7 +1289,7 @@ def test_simple_pagination(test_opensearch, client, test_db, monkeypatch):
     monkeypatch.setattr(search, "_OPENSEARCH_CONNECTION", test_opensearch)
 
     page1_response = client.post(
-        "/api/v1/searches",
+        SEARCH_ENDPOINT,
         json={
             "query_string": "climate",
             "exact_match": False,
@@ -1277,7 +1304,7 @@ def test_simple_pagination(test_opensearch, client, test_db, monkeypatch):
     assert len(page1_documents) == 2
 
     page2_response = client.post(
-        "/api/v1/searches",
+        SEARCH_ENDPOINT,
         json={
             "query_string": "climate",
             "exact_match": False,
@@ -1327,7 +1354,7 @@ def test_search_result_schema(caplog, test_opensearch, monkeypatch, client):
         ]
     )
     page1_response = client.post(
-        "/api/v1/searches",
+        SEARCH_ENDPOINT,
         json={
             "query_string": "climate",
             "exact_match": False,
@@ -1352,7 +1379,7 @@ def test_pagination_overlap(test_opensearch, monkeypatch, client):
     monkeypatch.setattr(search, "_OPENSEARCH_CONNECTION", test_opensearch)
 
     page1_response = client.post(
-        "/api/v1/searches",
+        SEARCH_ENDPOINT,
         json={
             "query_string": "climate",
             "exact_match": False,
@@ -1367,7 +1394,7 @@ def test_pagination_overlap(test_opensearch, monkeypatch, client):
     assert len(page1_documents) > 1
 
     page2_response = client.post(
-        "/api/v1/searches",
+        SEARCH_ENDPOINT,
         json={
             "query_string": "climate",
             "exact_match": False,
@@ -1397,7 +1424,7 @@ def test_jit_query_is_default(test_opensearch, monkeypatch, client, mocker):
     background_task_spy = mocker.spy(fastapi.BackgroundTasks, "add_task")
 
     response = client.post(
-        "/api/v1/searches",
+        SEARCH_ENDPOINT,
         json={
             "query_string": "climate",
             "exact_match": True,
@@ -1417,7 +1444,7 @@ def test_with_jit(test_opensearch, monkeypatch, client, mocker):
     background_task_spy = mocker.spy(fastapi.BackgroundTasks, "add_task")
 
     response = client.post(
-        "/api/v1/searches",
+        SEARCH_ENDPOINT,
         json={
             "query_string": "climate",
             "exact_match": True,
@@ -1482,7 +1509,7 @@ def test_without_jit(test_opensearch, monkeypatch, client, mocker):
     background_task_spy = mocker.spy(fastapi.BackgroundTasks, "add_task")
 
     response = client.post(
-        "/api/v1/searches",
+        SEARCH_ENDPOINT,
         json={
             "query_string": "climate",
             "exact_match": True,
