@@ -65,8 +65,10 @@ REQUIRED_COLUMNS = [
 VALID_COLUMN_NAMES = set(REQUIRED_COLUMNS)
 
 
-def validate_csv_columns(column_names: Sequence[str]) -> bool:
-    return VALID_COLUMN_NAMES.issubset(set(column_names))
+def validate_csv_columns(column_names: Sequence[str]) -> list[str]:
+    missing = list(VALID_COLUMN_NAMES.difference(set(column_names)))
+    missing.sort()
+    return missing
 
 
 @dataclass(config=ConfigDict(validate_assignment=True, extra=Extra.forbid))
