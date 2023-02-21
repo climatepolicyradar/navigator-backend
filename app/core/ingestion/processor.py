@@ -34,9 +34,12 @@ def ingest_row(db: Session, context: IngestContext, row: IngestRow) -> dict:
         # FIXME: Need to be able to ingest a row that is brand new and
         # ready for the pipeline
 
+        result["existing_document"] = False
         # If there does not already exist a document with the given import_id,
         # do not attempt to migrate
         return result
+
+    result["existing_document"] = True
 
     family = family_from_row(
         db,
