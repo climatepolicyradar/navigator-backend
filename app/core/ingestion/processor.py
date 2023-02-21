@@ -21,7 +21,7 @@ def ingest_row(db: Session, context: IngestContext, row: IngestRow) -> dict:
     Create the constituent elements in the database that represent this row.
 
     :param [Session] db: the connection to the database.
-    :param [DfcRow] row: the DfcRow object of the current CSV row
+    :param [IngestRow] row: the IngestRow object of the current CSV row
     :returns [dict[str, Any]]: a result dictionary describing what was created
     """
     result = {}

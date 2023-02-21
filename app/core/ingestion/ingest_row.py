@@ -114,7 +114,7 @@ class IngestRow:
 
     @classmethod
     def from_row(cls, row_number: int, data: dict[str, str]):
-        """Parse a row from a CSV into the DfcRow type"""
+        """Parse a row from a CSV into the IngestRow type"""
         field_info = cls.field_info()
         return cls(
             row_number=row_number,
