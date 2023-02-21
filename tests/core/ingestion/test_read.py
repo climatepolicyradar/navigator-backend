@@ -30,10 +30,10 @@ def test_read_raises_with_no_contents():
 
     assert len(context.results) == 0
     assert (
-        str(e_info.value.message)
+        e_info.value.message
         == "Bulk import file failed schema validation: No fields in CSV!"
     )
-    assert str(e_info.value.details) == ""
+    assert e_info.value.details == {}
 
 
 def test_read_raises_with_wrong_fields():
@@ -45,13 +45,48 @@ def test_read_raises_with_wrong_fields():
 
     assert len(context.results) == 0
     assert (
-        str(e_info.value.message)
+        e_info.value.message
         == "Bulk import file failed schema validation: Field names in CSV did not validate"
     )
-    assert (
-        str(e_info.value.details)
-        == "['Applies to ID', 'CCLW Description', 'CPR Collection ID', 'CPR Document ID', 'CPR Document Slug', 'CPR Family ID', 'CPR Family Slug', 'Category', 'Collection ID', 'Collection name', 'Collection summary', 'Comment', 'Create new family/ies?', 'Document ID', 'Document Type', 'Document role', 'Document title', 'Documents', 'Events', 'Family ID', 'Family name', 'Family summary', 'Frameworks', 'Geography', 'Geography ISO', 'ID', 'Instruments', 'Keywords', 'Language', 'Natural Hazards', 'Parent Legislation', 'Part of collection?', 'Responses', 'Sectors', 'Year']"
-    )
+    assert e_info.value.details == {
+        "missing": [
+            "Applies to ID",
+            "CCLW Description",
+            "CPR Collection ID",
+            "CPR Document ID",
+            "CPR Document Slug",
+            "CPR Family ID",
+            "CPR Family Slug",
+            "Category",
+            "Collection ID",
+            "Collection name",
+            "Collection summary",
+            "Comment",
+            "Create new family/ies?",
+            "Document ID",
+            "Document Type",
+            "Document role",
+            "Document title",
+            "Documents",
+            "Events",
+            "Family ID",
+            "Family name",
+            "Family summary",
+            "Frameworks",
+            "Geography",
+            "Geography ISO",
+            "ID",
+            "Instruments",
+            "Keywords",
+            "Language",
+            "Natural Hazards",
+            "Parent Legislation",
+            "Part of collection?",
+            "Responses",
+            "Sectors",
+            "Year",
+        ]
+    }
 
 
 def test_read_raises_with_missing_field():
@@ -61,10 +96,10 @@ def test_read_raises_with_missing_field():
 
     assert len(context.results) == 0
     assert (
-        str(e_info.value.message)
+        e_info.value.message
         == "Bulk import file failed schema validation: Field names in CSV did not validate"
     )
-    assert str(e_info.value.details) == "['CPR Document Slug']"
+    assert e_info.value.details == {"missing": ["CPR Document Slug"]}
 
 
 def test_read_ok_3rows():
