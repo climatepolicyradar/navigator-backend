@@ -1,5 +1,13 @@
 from unittest.mock import MagicMock
-from app.core.ingestion.utils import get_or_create
+
+import pytest
+from app.core.ingestion.utils import (
+    Result,
+    ResultType,
+    get_or_create,
+    get_result_counts,
+    to_dict,
+)
 from app.data_migrations import populate_geography
 from app.db.models.law_policy.family import Family, FamilyCategory, FamilyStatus, Slug
 from sqlalchemy.orm import Session
@@ -14,13 +22,13 @@ which in turns requires that the Family has at least one Slug.
 """
 
 
-def add_a_family(db: Session):
+def add_a_family(db: Session, description: str = "description"):
     family = Family(
         import_id="1",
         title="title",
         geography_id=2,
         category_name="EXECUTIVE",
-        description="description",
+        description=description,
         family_status="Published",
     )
     db.add(family)
@@ -44,7 +52,6 @@ def add_a_slug_for_family1_and_flush(db):
 
 def test_get_or_create__gets(test_db: Session):
     populate_geography(test_db)
-    test_db.flush()
     existing_family = add_a_family(test_db)
 
     family = get_or_create(
@@ -113,3 +120,49 @@ def test_get_or_create__after_create(test_db):
     assert family
     assert family == new_family
     after_create.assert_called_once_with(new_family)
+
+
+def test_to_dict(test_db):
+    populate_geography(test_db)
+    existing_family = add_a_family(
+        test_db,
+        description="""This is a really long description 
+        which should get truncated to 80 chars, the test
+        will fail if it does not.
+        """,
+    )
+
+    new_dict = to_dict(existing_family)
+
+    assert new_dict == {
+        "__class__": "Family",
+        "category_name": "EXECUTIVE",
+        "description": "This is a really long description \n        which should get truncated to 80 char...",
+        "family_status": "Published",
+        "geography_id": "2",
+        "import_id": "1",
+        "title": "title",
+    }
+
+
+OK = Result(ResultType.OK)
+ERROR = Result(ResultType.ERROR)
+RESOLVED = Result(ResultType.RESOLVED)
+
+
+@pytest.mark.parametrize(
+    "result,expected_rows,expected_fails,expected_resolved",
+    [
+        ([], 0, 0, 0),
+        ([OK, OK, OK], 3, 0, 0),
+        ([ERROR, ERROR, ERROR], 3, 3, 0),
+        ([RESOLVED, RESOLVED, RESOLVED], 3, 0, 3),
+        ([OK, ERROR, RESOLVED], 3, 1, 1),
+    ],
+)
+def test_result_counts(result, expected_rows, expected_fails, expected_resolved):
+    rows, fails, resolved = get_result_counts(result)
+
+    assert rows == expected_rows
+    assert fails == expected_fails
+    assert resolved == expected_resolved
