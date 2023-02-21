@@ -19,7 +19,7 @@ def collection_from_row(
     Create the collection part of the schema from the row.
 
     :param [Session] db: connection to the database.
-    :param [DfcRow] row: the row built from the CSV.
+    :param [IngestRow] row: the row built from the CSV.
     :param [int] org_id: the organisation id associated with this row.
     :param [str] family_import_id: the family id associated with this row.
     :param [dict[str, Any]]: a result dict in which to record what was created.

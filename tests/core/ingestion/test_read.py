@@ -1,7 +1,8 @@
+from unittest.mock import MagicMock
 import pytest
 from app.core.ingestion.ingest_row import IngestRow
 from app.core.ingestion.reader import read
-from app.core.ingestion.utils import IngestContext, Result, ResultType
+from app.core.ingestion.utils import IngestContext
 from app.core.validation.types import ImportSchemaMismatchError
 
 
@@ -18,12 +19,9 @@ THREE_ROWS_MISSING_FIELD = """ID,Document ID,CCLW Description,Part of collection
 """
 
 
-def process(context: IngestContext, row: IngestRow):
-    context.results.append(Result(ResultType.OK, details=row.document_title))
-
-
-def test_read_raises_with_no_contents():
+def test_read__raises_with_no_contents():
     context = IngestContext(org_id=1, results=[])
+    process = MagicMock()
     with pytest.raises(ImportSchemaMismatchError) as e_info:
         contents = ""
         read(contents, context, process)
@@ -36,8 +34,9 @@ def test_read_raises_with_no_contents():
     assert e_info.value.details == {}
 
 
-def test_read_raises_with_wrong_fields():
+def test_read__raises_with_wrong_fields():
     context = IngestContext(org_id=1, results=[])
+    process = MagicMock()
     with pytest.raises(ImportSchemaMismatchError) as e_info:
         contents = """a,b,c
         1,2,3"""
@@ -89,8 +88,9 @@ def test_read_raises_with_wrong_fields():
     }
 
 
-def test_read_raises_with_missing_field():
+def test_read__raises_with_missing_field():
     context = IngestContext(org_id=1, results=[])
+    process = MagicMock()
     with pytest.raises(ImportSchemaMismatchError) as e_info:
         read(THREE_ROWS_MISSING_FIELD, context, process)
 
@@ -102,12 +102,23 @@ def test_read_raises_with_missing_field():
     assert e_info.value.details == {"missing": ["CPR Document Slug"]}
 
 
-def test_read_ok_3rows():
+def test_read__processes_all_rows():
     context = IngestContext(org_id=1, results=[])
+    process = MagicMock()
     read(THREE_ROWS, context, process)
-    print(context.results)
 
-    assert len(context.results) == 3
-    assert context.results[0].details == "Title1"
-    assert context.results[1].details == "Title2"
-    assert context.results[2].details == "Title3"
+    expected_rows = 3
+    assert process.call_count == expected_rows
+
+    start_n = 1
+    n = 1
+    for args in process.call_args_list:
+        context_arg: IngestContext
+        row_arg: IngestRow
+        context_arg, row_arg = args[0]
+        assert context_arg == context
+        assert row_arg.row_number == n
+        assert row_arg.document_title == f"Title{n}"
+        n = n + 1
+
+    assert n - start_n == expected_rows
