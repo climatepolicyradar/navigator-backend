@@ -49,7 +49,7 @@ class Family(Base):
     import_id = sa.Column(sa.Text, primary_key=True)
     description = sa.Column(sa.Text, nullable=False)
     geography_id = sa.Column(sa.ForeignKey(Geography.id), nullable=False)
-    category_name = sa.Column(sa.Enum(FamilyCategory), nullable=False)
+    family_category = sa.Column(sa.Enum(FamilyCategory), nullable=False)
     family_status = sa.Column(
         sa.Enum(FamilyStatus),
         default=FamilyStatus.CREATED,

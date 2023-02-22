@@ -92,7 +92,7 @@ def browse_rds_families(
     # query = query.order_by(Family.publication_ts.desc())
 
     if req.categories is not None:
-        query = query.filter(Family.category_name in req.categories)
+        query = query.filter(Family.family_category in req.categories)
 
     if req.sort_field == SortField.DATE:
         # FIXME: implement order by date after events work
