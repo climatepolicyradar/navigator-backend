@@ -57,7 +57,7 @@ class Family(Base):
     )
 
     slugs: list["Slug"] = relationship("Slug", innerjoin=True, lazy="joined")
-    events: list["Event"] = relationship("Event", lazy="select")
+    events: list["FamilyEvent"] = relationship("FamilyEvent", lazy="select")
 
     @hybrid_property
     def published_date(self) -> Optional[datetime]:
@@ -172,15 +172,15 @@ class EventStatus(str, enum.Enum):
     DUPLICATE = "DUPLICATE"
 
 
-class EventType(Base):
+class FamilyEventType(Base):
     """Defines the types that can be associated with a law/policy event."""
 
-    __tablename__ = "event_type"
+    __tablename__ = "family_event_type"
     name = sa.Column(sa.Text, primary_key=True)
     description = sa.Column(sa.Text, nullable=False)
 
 
-class Event(Base):
+class FamilyEvent(Base):
     """An event associated with a Family timeline with optional link to a document."""
 
     __tablename__ = "family_event"
@@ -188,7 +188,7 @@ class Event(Base):
     import_id = sa.Column(sa.Text, primary_key=True)
     title = sa.Column(sa.Text, nullable=False)
     date = sa.Column(sa.DateTime(timezone=True), nullable=False)
-    event_type_name = sa.Column(sa.ForeignKey(EventType.name), nullable=False)
+    event_type_name = sa.Column(sa.ForeignKey(FamilyEventType.name), nullable=False)
     family_import_id = sa.Column(sa.ForeignKey(Family.import_id), nullable=False)
     family_document_import_id = sa.Column(
         sa.ForeignKey(FamilyDocument.import_id),

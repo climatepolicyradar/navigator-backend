@@ -2,11 +2,10 @@
 
 Revision ID: 0013
 Revises: 0012
-Create Date: 2023-02-01 19:06:26.543145
+Create Date: 2023-02-22 20:15:39.288941
 
 """
 from alembic import op
-from alembic.op import execute
 import sqlalchemy as sa
 from sqlalchemy.dialects import postgresql
 
@@ -29,6 +28,11 @@ def upgrade():
     sa.Column('name', sa.Text(), nullable=False),
     sa.Column('description', sa.Text(), nullable=False),
     sa.PrimaryKeyConstraint('name', name=op.f('pk_family_document_type'))
+    )
+    op.create_table('family_event_type',
+    sa.Column('name', sa.Text(), nullable=False),
+    sa.Column('description', sa.Text(), nullable=False),
+    sa.PrimaryKeyConstraint('name', name=op.f('pk_family_event_type'))
     )
     op.create_table('metadata_taxonomy',
     sa.Column('id', sa.Integer(), nullable=False),
@@ -53,16 +57,16 @@ def upgrade():
     sa.Column('import_id', sa.Text(), nullable=False),
     sa.Column('description', sa.Text(), nullable=False),
     sa.Column('geography_id', sa.Integer(), nullable=False),
-    sa.Column('category_name', sa.Enum('EXECUTIVE', 'LEGISLATIVE', name='familycategory'), nullable=False),
+    sa.Column('family_category', sa.Enum('EXECUTIVE', 'LEGISLATIVE', name='familycategory'), nullable=False),
     sa.Column('family_status', sa.Enum('CREATED', 'PUBLISHED', 'DELETED', name='familystatus'), nullable=False),
     sa.ForeignKeyConstraint(['geography_id'], ['geography.id'], name=op.f('fk_family__geography_id__geography')),
-    sa.PrimaryKeyConstraint('import_id', name=op.f('pk_family')),
+    sa.PrimaryKeyConstraint('import_id', name=op.f('pk_family'))
     )
     op.create_table('metadata_organisation',
     sa.Column('taxonomy_id', sa.Integer(), nullable=False),
     sa.Column('organisation_id', sa.Integer(), nullable=False),
-    sa.ForeignKeyConstraint(['taxonomy_id'], ['metadata_taxonomy.id'], name=op.f('fk_metadata_organisation__taxonomy_id__metadata_taxonomy')),
     sa.ForeignKeyConstraint(['organisation_id'], ['organisation.id'], name=op.f('fk_metadata_organisation__organisation_id__organisation')),
+    sa.ForeignKeyConstraint(['taxonomy_id'], ['metadata_taxonomy.id'], name=op.f('fk_metadata_organisation__taxonomy_id__metadata_taxonomy')),
     sa.PrimaryKeyConstraint('organisation_id', name=op.f('pk_metadata_organisation'))
     )
     op.create_table('collection_family',
@@ -84,8 +88,8 @@ def upgrade():
     sa.ForeignKeyConstraint(['family_import_id'], ['family.import_id'], name=op.f('fk_family_document__family_import_id__family')),
     sa.ForeignKeyConstraint(['physical_document_id'], ['physical_document.id'], name=op.f('fk_family_document__physical_document_id__physical_document')),
     sa.ForeignKeyConstraint(['variant_name'], ['variant.variant_name'], name=op.f('fk_family_document__variant_name__variant')),
-    sa.UniqueConstraint("physical_document_id", name=op.f("uq_family_document__physical_document_id")),
-    sa.PrimaryKeyConstraint('import_id', name=op.f('pk_family_document'))
+    sa.PrimaryKeyConstraint('import_id', name=op.f('pk_family_document')),
+    sa.UniqueConstraint('physical_document_id', name=op.f('uq_family_document__physical_document_id'))
     )
     op.create_table('family_metadata',
     sa.Column('family_import_id', sa.Text(), nullable=False),
@@ -102,34 +106,34 @@ def upgrade():
     sa.ForeignKeyConstraint(['organisation_id'], ['organisation.id'], name=op.f('fk_family_organisation__organisation_id__organisation')),
     sa.PrimaryKeyConstraint('family_import_id', name=op.f('pk_family_organisation'))
     )
+    op.create_table('family_event',
+    sa.Column('import_id', sa.Text(), nullable=False),
+    sa.Column('title', sa.Text(), nullable=False),
+    sa.Column('date', sa.DateTime(timezone=True), nullable=False),
+    sa.Column('event_type_name', sa.Text(), nullable=False),
+    sa.Column('family_import_id', sa.Text(), nullable=False),
+    sa.Column('family_document_import_id', sa.Text(), nullable=True),
+    sa.ForeignKeyConstraint(['event_type_name'], ['family_event_type.name'], name=op.f('fk_family_event__event_type_name__family_event_type')),
+    sa.ForeignKeyConstraint(['family_document_import_id'], ['family_document.import_id'], name=op.f('fk_family_event__family_document_import_id__family_document')),
+    sa.ForeignKeyConstraint(['family_import_id'], ['family.import_id'], name=op.f('fk_family_event__family_import_id__family')),
+    sa.PrimaryKeyConstraint('import_id', name=op.f('pk_family_event'))
+    )
     op.create_table('slug',
     sa.Column('name', sa.Text(), nullable=False),
     sa.Column('family_import_id', sa.Text(), nullable=True),
     sa.Column('family_document_import_id', sa.Text(), nullable=True),
+    sa.CheckConstraint('num_nonnulls(family_import_id, family_document_import_id) = 1', name=op.f('ck_slug__must_reference_exactly_one_entity')),
     sa.ForeignKeyConstraint(['family_document_import_id'], ['family_document.import_id'], name=op.f('fk_slug__family_document_import_id__family_document')),
     sa.ForeignKeyConstraint(['family_import_id'], ['family.import_id'], name=op.f('fk_slug__family_import_id__family')),
-    sa.PrimaryKeyConstraint('name', name=op.f('pk_slug'))
+    sa.PrimaryKeyConstraint('name', name='pk_slug')
     )
     # ### end Alembic commands ###
-    execute("alter table geography alter column id type integer")
-    execute("alter table document alter geography_id type integer")
-    execute("alter table geo_statistics alter column id type integer")
-    execute("alter table geo_statistics alter column geography_id type integer")
-    execute("alter sequence geo_statistics_id_seq as integer")
-    execute("alter sequence geography_id_seq as integer")
-
-    op.create_check_constraint(
-        "must_reference_exactly_one_entity",
-        "slug",
-        "num_nonnulls(family_import_id, family_document_import_id) = 1"
-    )
-
 
 
 def downgrade():
     # ### commands auto generated by Alembic - please adjust! ###
-    op.add_column('document', sa.Column('type', sa.TEXT(), autoincrement=False, nullable=True))
     op.drop_table('slug')
+    op.drop_table('family_event')
     op.drop_table('family_organisation')
     op.drop_table('family_metadata')
     op.drop_table('family_document')
@@ -139,6 +143,7 @@ def downgrade():
     op.drop_table('collection_organisation')
     op.drop_table('variant')
     op.drop_table('metadata_taxonomy')
+    op.drop_table('family_event_type')
     op.drop_table('family_document_type')
     op.drop_table('collection')
     # ### end Alembic commands ###
