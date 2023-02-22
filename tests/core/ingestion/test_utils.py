@@ -12,6 +12,8 @@ from app.data_migrations import populate_geography
 from app.db.models.law_policy.family import Family, FamilyCategory, FamilyStatus, Slug
 from sqlalchemy.orm import Session
 
+from tests.core.ingestion.helpers import FAMILY_IMPORT_ID, add_a_slug_for_family1_and_flush
+
 
 """
 Note from author:
@@ -24,7 +26,7 @@ which in turns requires that the Family has at least one Slug.
 
 def add_a_family(db: Session, description: str = "description"):
     family = Family(
-        import_id="1",
+        import_id=FAMILY_IMPORT_ID,
         title="title",
         geography_id=2,
         category_name="EXECUTIVE",
@@ -35,21 +37,6 @@ def add_a_family(db: Session, description: str = "description"):
     add_a_slug_for_family1_and_flush(db)
     return family
 
-
-def add_a_slug_for_family1_and_flush(db):
-    slug = Slug(
-        name="title_adb4",
-        family_import_id="1",
-        family_document_import_id=None,
-    )
-    db.add(slug)
-    db.flush()
-    # NOTE: Creating the Slug is part of test init,
-    #      as we need a Slug to query for the Family.
-    slug = db.query(Slug).one()
-    assert slug
-
-
 def test_get_or_create__gets(test_db: Session):
     populate_geography(test_db)
     existing_family = add_a_family(test_db)
@@ -57,7 +44,7 @@ def test_get_or_create__gets(test_db: Session):
     family = get_or_create(
         test_db,
         Family,
-        import_id="1",
+        import_id=FAMILY_IMPORT_ID,
     )
     assert family
     assert family == existing_family
@@ -75,7 +62,7 @@ def test_get_or_create__creates(test_db):
     new_family = get_or_create(
         test_db,
         Family,
-        import_id="1",
+        import_id=FAMILY_IMPORT_ID,
         extra={
             "title": "title",
             "geography_id": 2,
@@ -104,7 +91,7 @@ def test_get_or_create__after_create(test_db):
     new_family = get_or_create(
         test_db,
         Family,
-        import_id="1",
+        import_id=FAMILY_IMPORT_ID,
         extra={
             "title": "title",
             "geography_id": 2,
@@ -140,7 +127,7 @@ def test_to_dict(test_db):
         "description": "This is a really long description \n        which should get truncated to 80 char...",
         "family_status": "Published",
         "geography_id": "2",
-        "import_id": "1",
+        "import_id": FAMILY_IMPORT_ID,
         "title": "title",
     }
 

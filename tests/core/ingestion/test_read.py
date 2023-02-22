@@ -64,12 +64,9 @@ def test_read__processes_all_rows():
     expected_rows = 3
     assert process.call_count == expected_rows
 
-    start_n = 1
-    n = 1
-    for args in process.call_args_list:
-        context_arg: IngestContext
-        row_arg: IngestRow
-        context_arg, row_arg = args[0]
+    start_n = n = 1
+
+    for context_arg, row_arg in [x[0] for x in process.call_args_list]:
         assert context_arg == context
         assert row_arg.row_number == n
         assert row_arg.document_title == f"Title{n}"
