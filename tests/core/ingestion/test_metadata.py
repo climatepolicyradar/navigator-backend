@@ -18,7 +18,7 @@ def test_build_metadata__all_fields(test_db):
     row = IngestRow.from_row(1, get_ingest_row_data(0))
     row.responses = ["Loss AND Damage"]
     row.natural_hazards = ["Flood"]
-    row.sectors = ["TransPort"]
+    row.sectors = ["TransPortation"]
     row.keywords = ["Hydrogen"]
     row.frameworks = ["adaptation"]
     row.instruments = ["Other|Governance"]
