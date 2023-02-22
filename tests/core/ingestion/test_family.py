@@ -2,10 +2,22 @@ import pytest
 from sqlalchemy.orm import Session
 from app.core.ingestion.family import family_from_row
 from app.core.ingestion.ingest_row import IngestRow
-from app.core.ingestion.utils import IngestContext
 from app.db.models.deprecated import Document
-from app.db.models.law_policy.family import Family, FamilyCategory, FamilyOrganisation, FamilyStatus, Slug
-from tests.core.ingestion.helpers import DOCUMENT_IMPORT_ID, FAMILY_IMPORT_ID, SLUG_FAMILY_NAME, add_a_slug_for_family1_and_flush, get_ingest_row_data, init_for_ingest
+from app.db.models.law_policy.family import (
+    Family,
+    FamilyCategory,
+    FamilyOrganisation,
+    FamilyStatus,
+    Slug,
+)
+from tests.core.ingestion.helpers import (
+    DOCUMENT_IMPORT_ID,
+    FAMILY_IMPORT_ID,
+    SLUG_FAMILY_NAME,
+    add_a_slug_for_family1_and_flush,
+    get_ingest_row_data,
+    init_for_ingest,
+)
 
 
 def test_family_from_row(test_db: Session):
@@ -13,8 +25,11 @@ def test_family_from_row(test_db: Session):
     row = IngestRow.from_row(1, get_ingest_row_data(0))
     result = {}
 
-    doc = test_db.query(Document).filter(Document.import_id == DOCUMENT_IMPORT_ID).one_or_none()
-
+    doc = (
+        test_db.query(Document)
+        .filter(Document.import_id == DOCUMENT_IMPORT_ID)
+        .one_or_none()
+    )
 
     family = family_from_row(test_db, row, doc, 1, result)
 
@@ -30,7 +45,6 @@ def test_family_from_row(test_db: Session):
         ]
     )
     assert actual_keys.symmetric_difference(expected_keys) == set([])
-
 
     assert test_db.query(Slug).filter_by(name=SLUG_FAMILY_NAME).one()
     assert (
@@ -51,7 +65,7 @@ def test_family_from_row__bad_family_name(test_db: Session):
     test_db.add(
         Family(
             import_id=FAMILY_IMPORT_ID,
-            title= row.family_name,
+            title=row.family_name,
             geography_id=2,
             category_name=category,
             description=row.family_summary,
@@ -60,12 +74,21 @@ def test_family_from_row__bad_family_name(test_db: Session):
     )
     add_a_slug_for_family1_and_flush(test_db)
     test_db.query(Family).filter(Family.import_id == FAMILY_IMPORT_ID).one()
-    
+
     # Modify name before call
     row.family_name = "cheese"
 
     # Get the pre-existing doc
-    doc = test_db.query(Document).filter(Document.import_id == DOCUMENT_IMPORT_ID).one_or_none()
+    doc = (
+        test_db.query(Document)
+        .filter(Document.import_id == DOCUMENT_IMPORT_ID)
+        .one_or_none()
+    )
 
-    with pytest.raises(ValueError):   
+    with pytest.raises(ValueError) as e_info:
         family_from_row(test_db, row, doc, 1, result)
+
+    assert (
+        str(e_info.value)
+        == "Processing row 1 got family cheese that is different to the existing family title for family id CCLW.family.1001.0"
+    )

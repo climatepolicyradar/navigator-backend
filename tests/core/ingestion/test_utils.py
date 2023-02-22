@@ -9,10 +9,13 @@ from app.core.ingestion.utils import (
     to_dict,
 )
 from app.data_migrations import populate_geography
-from app.db.models.law_policy.family import Family, FamilyCategory, FamilyStatus, Slug
+from app.db.models.law_policy.family import Family, FamilyCategory, FamilyStatus
 from sqlalchemy.orm import Session
 
-from tests.core.ingestion.helpers import FAMILY_IMPORT_ID, add_a_slug_for_family1_and_flush
+from tests.core.ingestion.helpers import (
+    FAMILY_IMPORT_ID,
+    add_a_slug_for_family1_and_flush,
+)
 
 
 """
@@ -36,6 +39,7 @@ def add_a_family(db: Session, description: str = "description"):
     db.add(family)
     add_a_slug_for_family1_and_flush(db)
     return family
+
 
 def test_get_or_create__gets(test_db: Session):
     populate_geography(test_db)

@@ -1,6 +1,5 @@
 from unittest.mock import MagicMock
 import pytest
-from app.core.ingestion.ingest_row import IngestRow
 from app.core.ingestion.reader import read
 from app.core.ingestion.utils import IngestContext
 from app.core.validation.types import ImportSchemaMismatchError

@@ -89,9 +89,9 @@ def get_ingest_row_data(num: int, contents: str = THREE_ROWS) -> dict[str, str]:
     """
     reader = csv.DictReader(StringIO(initial_value=contents))
     for i, row in enumerate(reader):
-        if (i == num):
+        if i == num:
             return row
-    return row 
+    return {}
 
 
 def init_for_ingest(test_db: Session):
@@ -130,4 +130,3 @@ def add_a_slug_for_family1_and_flush(db):
     #      as we need a Slug to query for the Family.
     slug = db.query(Slug).one()
     assert slug
-
