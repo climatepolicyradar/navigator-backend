@@ -8,6 +8,7 @@ from app.data_migrations import (
     populate_geography,
     populate_source,
     populate_taxonomy,
+    populate_language,
 )
 from app.db.models.deprecated.document import Document
 from app.db.models.law_policy.family import Slug
@@ -100,6 +101,7 @@ def init_for_ingest(test_db: Session):
     populate_source(test_db)
     populate_category(test_db)
     populate_document_type(test_db)
+    populate_language(test_db)
     test_db.flush()
     test_db.add(
         Document(

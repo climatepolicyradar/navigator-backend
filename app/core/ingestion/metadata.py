@@ -89,7 +89,7 @@ def build_metadata(taxonomy: dict, row: IngestRow) -> tuple[Result, dict]:
 
 def build_metadata_field(
     taxonomy: dict, row: IngestRow, tax_key: str, row_key: str
-) -> tuple[Result, dict]:
+) -> tuple[Result, list[str]]:
     ingest_values = getattr(row, row_key)
     row_set = set(ingest_values)
     allowed_set = set(taxonomy[tax_key]["allowed_values"])
@@ -100,19 +100,19 @@ def build_metadata_field(
             details = (
                 f"Row {row.row_number} is blank for {tax_key} - which is not allowed."
             )
-            return Result(type=ResultType.ERROR, details=details), {}
-        return Result(), {}  # field is blank and allowed
+            return Result(type=ResultType.ERROR, details=details), []
+        return Result(), []  # field is blank and allowed
 
     unknown_set = row_set.difference(allowed_set)
     if not unknown_set:
-        return Result(), {tax_key: ingest_values}  # all is well - everything found
+        return Result(), ingest_values  # all is well - everything found
 
     resolved_set = resolve_unknown(unknown_set, allowed_set)
 
     if len(resolved_set) == len(unknown_set):
         details = f"Row {row.row_number} RESOLVED: {resolved_set}"
         vals = row_set.difference(unknown_set).union(resolved_set)
-        return Result(type=ResultType.RESOLVED, details=details), {tax_key: list(vals)}
+        return Result(type=ResultType.RESOLVED, details=details), list(vals)
 
     # If we get here we have not managed to resolve the unknown values.
 
@@ -124,7 +124,7 @@ def build_metadata_field(
     if len(resolved_set):
         details += f"able to resolve: {resolved_set}"
 
-    return Result(type=ResultType.ERROR, details=details), {}
+    return Result(type=ResultType.ERROR, details=details), []
 
 
 def resolve_unknown(unknown_set: Set, allowed_set: Set) -> Set[str]:

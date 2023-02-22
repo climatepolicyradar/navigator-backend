@@ -31,7 +31,7 @@ def test_family_from_row(test_db: Session):
         .one_or_none()
     )
 
-    family = family_from_row(test_db, row, doc, 1, result)
+    family = family_from_row(test_db, row, doc, org_id=1, result=result)
 
     actual_keys = set(result.keys())
     expected_keys = set(
