@@ -88,8 +88,8 @@ def _maybe_create_family(
         extra={
             "title": row.family_name,
             "geography_id": geography.id,
-            "category_name": category,
             "description": row.family_summary,
+            "family_category": category,
             "family_status": FamilyStatus.PUBLISHED,
         },
         after_create=_create_family_links,

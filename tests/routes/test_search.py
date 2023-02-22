@@ -195,7 +195,7 @@ def _create_family_structures(
                 .id
             ),
             family_status=FamilyStatus.PUBLISHED,
-            category_name=_doc_str_to_category(doc_details["document_category"]),
+            family_category=_doc_str_to_category(doc_details["document_category"]),
         )
         family_slug = Slug(
             name=family_id,

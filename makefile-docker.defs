@@ -77,16 +77,16 @@ setup_test_search_index:
 	docker-compose -f docker-compose.yml -f docker-compose.dev.yml run --rm opensearch-test-loader multielasticdump --direction=load --input=/cpr-backend/tests/data/ --output=${OPENSEARCH_URL} --ignoreType=template
 
 test_search: setup_test_search_index
-	docker-compose -f docker-compose.yml -f docker-compose.dev.yml run --rm backend pytest -m 'search'
+	docker-compose -f docker-compose.yml -f docker-compose.dev.yml run --rm backend pytest -vvv -m 'search'
 
 test_cors:
-	docker-compose -f docker-compose.yml -f docker-compose.dev.yml run --rm backend pytest -m 'cors'
+	docker-compose -f docker-compose.yml -f docker-compose.dev.yml run --rm backend pytest -vvv -m 'cors'
 
 test_unit:
-	docker-compose -f docker-compose.yml -f docker-compose.dev.yml run --rm backend pytest -v tests/unit
+	docker-compose -f docker-compose.yml -f docker-compose.dev.yml run --rm backend pytest -vvv tests/unit
 
 test:
-	docker-compose -f docker-compose.yml -f docker-compose.dev.yml run --rm backend pytest -v -m 'not search'
+	docker-compose -f docker-compose.yml -f docker-compose.dev.yml run --rm backend pytest -vvv -m 'not search'
 
 # ----------------------------------
 # tasks

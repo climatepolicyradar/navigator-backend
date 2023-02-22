@@ -6,6 +6,7 @@ Create Date: 2023-02-22 20:15:39.288941
 
 """
 from alembic import op
+from alembic.op import execute
 import sqlalchemy as sa
 from sqlalchemy.dialects import postgresql
 
@@ -128,6 +129,12 @@ def upgrade():
     sa.PrimaryKeyConstraint('name', name='pk_slug')
     )
     # ### end Alembic commands ###
+    execute("alter table geography alter column id type integer")
+    execute("alter table document alter geography_id type integer")
+    execute("alter table geo_statistics alter column id type integer")
+    execute("alter table geo_statistics alter column geography_id type integer")
+    execute("alter sequence geo_statistics_id_seq as integer")
+    execute("alter sequence geography_id_seq as integer")
 
 
 def downgrade():

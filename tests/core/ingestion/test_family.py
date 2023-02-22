@@ -67,8 +67,8 @@ def test_family_from_row__bad_family_name(test_db: Session):
             import_id=FAMILY_IMPORT_ID,
             title=row.family_name,
             geography_id=2,
-            category_name=category,
             description=row.family_summary,
+            family_category=category,
             family_status=FamilyStatus.PUBLISHED,
         )
     )

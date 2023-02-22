@@ -30,8 +30,8 @@ def test_collection_from_row(test_db: Session):
         extra={
             "title": "title",
             "geography_id": 2,
-            "category_name": "EXECUTIVE",
             "description": "description",
+            "family_category": "EXECUTIVE",
             "family_status": "Published",
         },
     )
