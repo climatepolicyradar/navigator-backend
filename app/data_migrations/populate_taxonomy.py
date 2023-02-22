@@ -93,6 +93,11 @@ def get_default_taxonomy():
                 "allow_blanks": data["allow_blanks"],
             },
         }
+
+    # Remove unwanted values for new taxonomy
+    if "Transportation" in taxonomy["sector"]["allowed_values"]:
+        taxonomy["sector"]["allowed_values"].remove("Transportation")
+
     return taxonomy
 
 

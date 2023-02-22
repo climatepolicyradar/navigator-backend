@@ -50,7 +50,6 @@ def get_result_counts(context):
 
 
 if __name__ == "__main__":
-
     print("")
     print("Ingesting to new schema...")
     ingestor: ProcessFunc

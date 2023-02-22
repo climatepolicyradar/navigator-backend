@@ -25,7 +25,6 @@ def get_organisation_taxonomy(db: Session, org_id: int) -> tuple[int, dict]:
         .filter_by(organisation_id=org_id)
         .one()
     )
-    if not taxonomy:
-        raise ValueError(f"Could not find a default taxonomy for organisation {org_id}")
+    # The above line will throw if there is no taxonomy for the organisation
 
     return taxonomy[0], taxonomy[1]

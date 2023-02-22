@@ -41,13 +41,12 @@ def physical_document_from_row(
     result["physical_document"] = to_dict(physical_document)
 
     lang = db.query(Language).filter(Language.name == row.language).one_or_none()
-
     if lang is not None:
         result["language"] = to_dict(lang)
         physical_document_language = PhysicalDocumentLanguage(
             language_id=lang.id, document_id=physical_document.id
         )
-        db.add(lang)
+        db.add(physical_document_language)
         db.flush()
         result["physical_document_language"] = to_dict(physical_document_language)
 

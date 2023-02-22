@@ -21,7 +21,7 @@ def ingest_row(db: Session, context: IngestContext, row: IngestRow) -> dict:
     Create the constituent elements in the database that represent this row.
 
     :param [Session] db: the connection to the database.
-    :param [DfcRow] row: the DfcRow object of the current CSV row
+    :param [IngestRow] row: the IngestRow object of the current CSV row
     :returns [dict[str, Any]]: a result dictionary describing what was created
     """
     result = {}
@@ -34,9 +34,12 @@ def ingest_row(db: Session, context: IngestContext, row: IngestRow) -> dict:
         # FIXME: Need to be able to ingest a row that is brand new and
         # ready for the pipeline
 
+        result["existing_document"] = False
         # If there does not already exist a document with the given import_id,
         # do not attempt to migrate
         return result
+
+    result["existing_document"] = True
 
     family = family_from_row(
         db,

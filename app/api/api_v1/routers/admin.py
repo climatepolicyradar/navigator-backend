@@ -2,6 +2,9 @@ import logging
 from io import StringIO
 from typing import cast, Union
 
+from sqlalchemy.orm import Session
+from app.core.aws import S3Client
+
 from fastapi import (
     APIRouter,
     BackgroundTasks,
@@ -276,7 +279,7 @@ async def request_password_reset(
 
 @r.post(
     "/bulk-ingest/cclw/law-policy",
-    response_model=BulkImportValidatedResult,
+    response_model=str,
     status_code=status.HTTP_202_ACCEPTED,
 )
 def ingest_law_policy(
@@ -287,7 +290,35 @@ def ingest_law_policy(
     current_user=Depends(get_current_active_superuser),
     s3_client=Depends(get_s3_client),
 ):
-    """Process a Law/Policy data import"""
+    """
+    Ingests the CSV into the document / family / collection schema.
+
+    Args:
+        request (Request): Incoming request (UNUSED).
+        law_policy_csv (UploadFile): CSV file to ingest.
+        background_tasks (BackgroundTasks): Tasks API to start ingest task.
+        db (_type_, optional): Database connection.
+        Defaults to Depends(get_db).
+        current_user (_type_, optional): Current user.
+        Defaults to Depends(get_current_active_superuser).
+        s3_client (_type_, optional): S3 connection.
+        Defaults to Depends(get_s3_client).
+
+    Raises:
+        HTTPException: Unexpected error, validating on ingest
+        HTTPException: Ingest failed validation (results attached)
+    """
+
+    def start_ingest(db: Session, s3_client: S3Client, file_contents: str):
+        try:
+            ingestor = get_dfc_ingestor()
+            context = db_init(db)
+            read(file_contents, context, ingestor)
+        except Exception as e:
+            _LOGGER.exception("Unexpected error on ingest", extra={"errors": str(e)})
+            raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST) from e
+        # write_documents_to_s3(s3_client=s3_client, documents=document_parser_inputs)
+
     _LOGGER.info(
         f"Superuser '{current_user.email}' triggered bulk ingest request for "
         "CCLW Law & Policy data"
@@ -304,9 +335,12 @@ def ingest_law_policy(
             f"Validation result: {rows} Rows, {fails} Failures, {resolved} Resolved"
         )
     except Exception as e:
-        _LOGGER.exception("Unexpected error on ingest", extra={"errors": str(e)})
+        _LOGGER.exception(
+            "Unexpected error, validating on ingest", extra={"errors": str(e)}
+        )
         raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST) from e
 
+    # If we have any validation errors then raise
     validation_errors = [r for r in context.results if r.type == ResultType.ERROR]
     if validation_errors:
         _LOGGER.error(
@@ -318,15 +352,38 @@ def ingest_law_policy(
             status_code=status.HTTP_400_BAD_REQUEST, detail=error_details
         )
 
-    # PHASE 2 - Ingest
-    ingestor = get_dfc_ingestor()
+    # No Validation errors - so write to s3
+    result: Union[S3Document, bool] = write_csv_to_s3(
+        s3_client=s3_client, file_contents=file_contents
+    )
+    csv_s3_location = "write failed" if type(result) is bool else str(result.url)
+    _LOGGER.info(
+        "Write Bulk Ingest CSV complete.",
+        extra={
+            "props": {
+                "superuser_email": current_user.email,
+                "csv_s3_location": csv_s3_location,
+            }
+        },
+    )
 
-    try:
-        context = db_init(db)
-        read(file_contents, context, ingestor)
-    except Exception as e:
-        _LOGGER.exception("Unexpected error on ingest", extra={"errors": str(e)})
-        raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST) from e
+    # PHASE 2 - Ingest
+    # Start the background task to do the actual ingest.
+    background_tasks.add_task(start_ingest, db, s3_client, file_contents)
+
+    _LOGGER.info(
+        "Background Bulk Ingest Task added",
+        extra={
+            "props": {
+                "superuser_email": current_user.email,
+                "csv_s3_location": csv_s3_location,
+            }
+        },
+    )
+
+    # TODO: Add some way the caller can monitor processing pipeline...
+
+    return csv_s3_location
 
 
 # TODO: This is the old endpoint which will get removed,
