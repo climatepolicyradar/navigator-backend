@@ -81,13 +81,12 @@ def build_metadata(taxonomy: dict, row: DocumentIngestRow) -> tuple[Result, dict
                 detail_list.append(f"Resolved {row_value} to {suggestion}")
                 num_resolved += 1
 
-    row_result_type = (
-        ResultType.ERROR
-        if num_fails
-        else ResultType.RESOLVED
-        if num_resolved
-        else ResultType.OK
-    )
+    row_result_type = ResultType.OK
+    if num_resolved:
+        row_result_type = ResultType.RESOLVED
+    if num_fails:
+        row_result_type = ResultType.ERROR
+
     return Result(type=row_result_type, details="\n".join(detail_list)), value
 
 

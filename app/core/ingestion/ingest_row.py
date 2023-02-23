@@ -6,7 +6,7 @@ from typing import Any, Sequence
 from pydantic import ConfigDict, Extra
 from pydantic.dataclasses import dataclass
 
-from app.db.models.law_policy.family import EventStatus
+from app.db.models.law_policy import EventStatus, FamilyCategory
 
 
 _REQUIRED_DOCUMENT_COLUMNS = [
@@ -141,7 +141,7 @@ class DocumentIngestRow(_BaseRow):
     applies_to_id: str
     geography_iso: str
     documents: str
-    category: str  # METADATA - made into an enum and removed from taxonomy
+    category: FamilyCategory
     events: list[str]
     sectors: list[str]  # METADATA
     instruments: list[str]  # METADATA
@@ -149,7 +149,7 @@ class DocumentIngestRow(_BaseRow):
     responses: list[str]  # METADATA - topics
     natural_hazards: list[str]  # METADATA - hazard
     keywords: list[str]
-    document_type: str  # METADATA ?
+    document_type: str
     year: int
     language: str
     geography: str

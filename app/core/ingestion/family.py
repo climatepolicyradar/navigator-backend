@@ -15,11 +15,11 @@ from app.db.models.law_policy import (
     FamilyDocument,
     FamilyDocumentType,
     FamilyOrganisation,
+    FamilyStatus,
     Geography,
     Slug,
     Variant,
 )
-from app.db.models.law_policy.family import FamilyStatus
 
 
 def family_from_row(

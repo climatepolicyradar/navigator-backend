@@ -6,7 +6,7 @@ from app.core.ingestion.collection import collection_from_row
 from app.core.ingestion.family import family_from_row
 from app.core.ingestion.ingest_row import DocumentIngestRow
 from app.core.ingestion.utils import IngestContext
-from app.core.ingestion.validator import validate_row
+from app.core.ingestion.validator import validate_document_row
 from app.db.models.app.users import Organisation
 
 from app.db.models.deprecated import Document
@@ -107,7 +107,7 @@ def get_dfc_validator() -> ProcessFunc:
         db = SessionLocal()
         try:
             with db.begin():
-                validate_row(db, context, row=row)
+                validate_document_row(db, context, row=row)
         finally:
             db.close()
 

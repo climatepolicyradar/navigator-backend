@@ -12,11 +12,24 @@ from app.db.session import Base
 from .geography import Geography
 
 
-class FamilyCategory(str, enum.Enum):
+class _BaseModelEnum(str, enum.Enum):
     """Family categories as understood in the context of law/policy."""
 
-    EXECUTIVE = "EXECUTIVE"
-    LEGISLATIVE = "LEGISLATIVE"
+    @classmethod
+    def _missing_(cls, value):
+        if isinstance(value, str) and not str.istitle(value):
+            return cls(value.title())
+        raise ValueError(f"{value} is not a valid FamilyCategory")
+
+    def __str__(self):
+        return self._value_
+
+
+class FamilyCategory(_BaseModelEnum):
+    """Family categories as understood in the context of law/policy."""
+
+    EXECUTIVE = "Executive"
+    LEGISLATIVE = "Legislative"
 
 
 class Variant(Base):
@@ -32,7 +45,7 @@ class Variant(Base):
     description = sa.Column(sa.Text, nullable=False)
 
 
-class FamilyStatus(str, enum.Enum):
+class FamilyStatus(_BaseModelEnum):
     """Family status to control visibility in the app."""
 
     CREATED = "Created"
@@ -88,7 +101,7 @@ class Family(Base):
         return date
 
 
-class DocumentStatus(str, enum.Enum):
+class DocumentStatus(_BaseModelEnum):
     """FamilyDocument status to control visibility in the app."""
 
     CREATED = "Created"
@@ -164,14 +177,14 @@ class Slug(Base):
     family_document_import_id = sa.Column(sa.ForeignKey(FamilyDocument.import_id))
 
 
-class EventStatus(str, enum.Enum):
+class EventStatus(_BaseModelEnum):
     """Event status to flag data issues from import."""
 
-    OK = "OK"
+    OK = "Ok"
     # Duplicate means a single event was applied to multiple families. In this
     # case we will need to validate, remove unecessary duplicates & create new
     # events through a data cleaning exercise.
-    DUPLICATED = "DUPLICATED"
+    DUPLICATED = "Duplicated"
 
 
 class FamilyEventType(Base):

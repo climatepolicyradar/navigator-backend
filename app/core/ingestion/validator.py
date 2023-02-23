@@ -6,17 +6,15 @@ from app.core.ingestion.organisation import get_organisation_taxonomy
 from app.core.ingestion.utils import IngestContext
 
 
-def validate_row(db: Session, context: IngestContext, row: DocumentIngestRow) -> None:
+def validate_document_row(
+    db: Session, context: IngestContext, row: DocumentIngestRow
+) -> None:
     """
-    Validates the constituent elements that represent this row.
+    Validate the constituent elements that represent this row.
 
-    Args:
-        db (Session): the connection to the database.
-        organisation (Organisation): The organisation context.
-        row (IngestRow): the IngestRow object of the current CSV row.
-
-    Returns:
-        int: number of failures encountered
+    :param [Session] db: the connection to the database.
+    :param [Organisation] organisation: The organisation context.
+    :param [DocumentIngestRow] row: DocumentIngestRow object from the current CSV row.
     """
     _, taxonomy = get_organisation_taxonomy(db, context.org_id)
     result, _ = build_metadata(taxonomy, row)
