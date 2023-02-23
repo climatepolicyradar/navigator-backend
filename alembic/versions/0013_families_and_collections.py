@@ -2,7 +2,7 @@
 
 Revision ID: 0013
 Revises: 0012
-Create Date: 2023-02-23 11:36:58.225421
+Create Date: 2023-02-23 18:28:02.050400
 
 """
 from alembic import op
@@ -112,6 +112,7 @@ def upgrade():
     sa.Column('event_type_name', sa.Text(), nullable=False),
     sa.Column('family_import_id', sa.Text(), nullable=False),
     sa.Column('family_document_import_id', sa.Text(), nullable=True),
+    sa.Column('status', sa.Enum('OK', 'DUPLICATED', name='eventstatus'), nullable=False),
     sa.ForeignKeyConstraint(['event_type_name'], ['family_event_type.name'], name=op.f('fk_family_event__event_type_name__family_event_type')),
     sa.ForeignKeyConstraint(['family_document_import_id'], ['family_document.import_id'], name=op.f('fk_family_event__family_document_import_id__family_document')),
     sa.ForeignKeyConstraint(['family_import_id'], ['family.import_id'], name=op.f('fk_family_event__family_import_id__family')),
