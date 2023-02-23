@@ -2,7 +2,11 @@ import csv
 from io import StringIO
 
 from fastapi import UploadFile
-from app.core.ingestion.ingest_row import IngestRow, validate_csv_columns
+from app.core.ingestion.ingest_row import (
+    VALID_DOCUMENT_COLUMN_NAMES,
+    DocumentIngestRow,
+    validate_csv_columns,
+)
 from app.core.ingestion.processor import ProcessFunc
 
 from app.core.ingestion.utils import IngestContext
@@ -30,7 +34,10 @@ def read(file_contents: str, context: IngestContext, process: ProcessFunc) -> No
     if reader.fieldnames is None:
         raise ImportSchemaMismatchError("No fields in CSV!", {})
 
-    missing_columns = validate_csv_columns(reader.fieldnames)
+    missing_columns = validate_csv_columns(
+        reader.fieldnames,
+        VALID_DOCUMENT_COLUMN_NAMES,
+    )
     if missing_columns:
         raise ImportSchemaMismatchError(
             "Field names in CSV did not validate", {"missing": missing_columns}
@@ -39,4 +46,4 @@ def read(file_contents: str, context: IngestContext, process: ProcessFunc) -> No
 
     for row in reader:
         row_count += 1
-        process(context, IngestRow.from_row(row_count, row))
+        process(context, DocumentIngestRow.from_row(row_count, row))

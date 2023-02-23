@@ -1,7 +1,7 @@
 from typing import Set, cast
 
 from sqlalchemy.orm import Session
-from app.core.ingestion.ingest_row import IngestRow
+from app.core.ingestion.ingest_row import DocumentIngestRow
 from app.core.ingestion.match import match_unknown_value
 from app.core.ingestion.utils import Result, ResultType
 
@@ -22,7 +22,11 @@ MAP_OF_STR_VALUES = {
 
 
 def add_metadata(
-    db: Session, family_import_id: str, taxonomy: dict, taxonomy_id: int, row: IngestRow
+    db: Session,
+    family_import_id: str,
+    taxonomy: dict,
+    taxonomy_id: int,
+    row: DocumentIngestRow,
 ) -> bool:
     result, metadata = build_metadata(taxonomy, row)
     if result.type == ResultType.ERROR:
@@ -38,7 +42,7 @@ def add_metadata(
     return True
 
 
-def build_metadata(taxonomy: dict, row: IngestRow) -> tuple[Result, dict]:
+def build_metadata(taxonomy: dict, row: DocumentIngestRow) -> tuple[Result, dict]:
     detail_list = []
     value = {}
     num_fails = 0
@@ -88,7 +92,7 @@ def build_metadata(taxonomy: dict, row: IngestRow) -> tuple[Result, dict]:
 
 
 def build_metadata_field(
-    taxonomy: dict, row: IngestRow, tax_key: str, row_key: str
+    taxonomy: dict, row: DocumentIngestRow, tax_key: str, row_key: str
 ) -> tuple[Result, list[str]]:
     ingest_values = getattr(row, row_key)
     row_set = set(ingest_values)

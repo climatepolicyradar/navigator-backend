@@ -1,7 +1,7 @@
 import pytest
 from sqlalchemy.orm import Session
 from app.core.ingestion.family import family_from_row
-from app.core.ingestion.ingest_row import IngestRow
+from app.core.ingestion.ingest_row import DocumentIngestRow
 from app.db.models.deprecated import Document
 from app.db.models.law_policy.family import (
     Family,
@@ -22,7 +22,7 @@ from tests.core.ingestion.helpers import (
 
 def test_family_from_row(test_db: Session):
     init_for_ingest(test_db)
-    row = IngestRow.from_row(1, get_ingest_row_data(0))
+    row = DocumentIngestRow.from_row(1, get_ingest_row_data(0))
     result = {}
 
     doc = (
@@ -61,7 +61,7 @@ def test_family_from_row(test_db: Session):
 def test_family_from_row__bad_family_name(test_db: Session):
     init_for_ingest(test_db)
     result = {}
-    row = IngestRow.from_row(1, get_ingest_row_data(0))
+    row = DocumentIngestRow.from_row(1, get_ingest_row_data(0))
     # Pre-Add the family
     category = FamilyCategory(row.category.upper())
     test_db.add(

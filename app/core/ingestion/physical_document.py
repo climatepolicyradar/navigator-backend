@@ -1,7 +1,7 @@
 from typing import Any
 
 from sqlalchemy.orm import Session
-from app.core.ingestion.ingest_row import IngestRow
+from app.core.ingestion.ingest_row import DocumentIngestRow
 from app.core.ingestion.utils import to_dict
 
 from app.db.models.deprecated import Document
@@ -10,7 +10,10 @@ from app.db.models.document.physical_document import Language, PhysicalDocumentL
 
 
 def physical_document_from_row(
-    db: Session, row: IngestRow, existing_document: Document, result: dict[str, Any]
+    db: Session,
+    row: DocumentIngestRow,
+    existing_document: Document,
+    result: dict[str, Any],
 ) -> PhysicalDocument:
     """
     Create the document part of the schema from the row.

@@ -1,11 +1,13 @@
+import abc
 from dataclasses import fields
+from datetime import datetime
 from typing import Any, Sequence
 
 from pydantic import ConfigDict, Extra
 from pydantic.dataclasses import dataclass
 
 
-REQUIRED_COLUMNS = [
+_REQUIRED_DOCUMENT_COLUMNS = [
     "ID",
     "Document ID",
     "CCLW Description",
@@ -42,21 +44,84 @@ REQUIRED_COLUMNS = [
     "CPR Family Slug",
     "CPR Document Slug",
 ]
+VALID_DOCUMENT_COLUMN_NAMES = set(_REQUIRED_DOCUMENT_COLUMNS)
 
-VALID_COLUMN_NAMES = set(REQUIRED_COLUMNS)
+_REQUIRED_EVENT_COLUMNS = [
+    "Id",
+    "Event type",
+    "Title",
+    "Date",
+    "CPR Event ID",
+    "CPR Family ID",
+]
+VALID_EVENT_COLUMN_NAMES = set(_REQUIRED_EVENT_COLUMNS)
 
 
-def validate_csv_columns(column_names: Sequence[str]) -> list[str]:
-    missing = list(VALID_COLUMN_NAMES.difference(set(column_names)))
+def validate_csv_columns(
+    column_names: Sequence[str],
+    valid_column_names: set[str],
+) -> list[str]:
+    """Check that the given set of column names is valid."""
+    missing = list(valid_column_names.difference(set(column_names)))
     missing.sort()
     return missing
 
 
 @dataclass(config=ConfigDict(validate_assignment=True, extra=Extra.forbid))
-class IngestRow:
-    """Represents a single row of input from the documents-families-collections CSV."""
+class _BaseRow(abc.ABC):
+    """Represents a single row of input from a CSV."""
 
     row_number: int
+
+    @classmethod
+    def from_row(cls, row_number: int, data: dict[str, str]):
+        """Parse a row from a CSV."""
+        field_info = cls.field_info()
+        return cls(
+            row_number=row_number,
+            **{
+                cls._key(k): cls._parse_str(cls._key(k), v, field_info)
+                for (k, v) in data.items()
+            },
+        )
+
+    @classmethod
+    def field_info(cls) -> dict[str, type]:
+        """Returns an information mapping from field name to expected type."""
+        return {field.name: field.type for field in fields(cls)}
+
+    @classmethod
+    def _parse_str(cls, key: str, value: str, field_info: dict[str, type]) -> Any:
+        if key not in field_info:
+            # Let pydantic deal with unexpected fields
+            return value
+
+        if field_info[key] == datetime:
+            return datetime.strptime(value, "%Y-%m-%d")
+
+        if field_info[key] == list[str]:
+            return [e.strip() for e in value.split(";") if e.strip()]
+
+        if field_info[key] == int:
+            return int(value) if value else 0
+
+        if field_info[key] == str:
+            if (na := str(value).lower()) == "n/a":
+                return na
+            else:
+                return value
+
+        raise Exception(f"Unhandled type '{cls.field_info()[key]}' in row parsing")
+
+    @staticmethod
+    def _key(key: str) -> str:
+        return key.lower().replace(" ", "_")
+
+
+@dataclass(config=ConfigDict(validate_assignment=True, extra=Extra.forbid))
+class DocumentIngestRow(_BaseRow):
+    """Represents a single row of input from the documents-families-collections CSV."""
+
     id: str
     document_id: str
     cclw_description: str
@@ -93,43 +158,6 @@ class IngestRow:
     cpr_family_slug: str
     cpr_document_slug: str
 
-    @classmethod
-    def from_row(cls, row_number: int, data: dict[str, str]):
-        """Parse a row from a CSV into the IngestRow type"""
-        field_info = cls.field_info()
-        return cls(
-            row_number=row_number,
-            **{
-                cls._key(k): cls._parse_str(cls._key(k), v, field_info)
-                for (k, v) in data.items()
-            },
-        )
-
-    @classmethod
-    def field_info(cls) -> dict[str, type]:
-        """Returns an information mapping from field name to expected type."""
-        return {field.name: field.type for field in fields(cls)}
-
-    @classmethod
-    def _parse_str(cls, key: str, value: str, field_info: dict[str, type]) -> Any:
-        if key not in field_info:
-            # Let pydantic deal with unexpected fields
-            return value
-
-        if field_info[key] == list[str]:
-            return [e.strip() for e in value.split(";") if e.strip()]
-
-        if field_info[key] == int:
-            return int(value) if value else 0
-
-        if field_info[key] == str:
-            if (na := str(value).lower()) == "n/a":
-                return na
-            else:
-                return value
-
-        raise Exception(f"Unhandled type '{cls.field_info()[key]}' in row parsing")
-
     @staticmethod
     def _key(key: str) -> str:
         return key.lower().replace(" ", "_").replace("?", "").replace("y/", "")
@@ -146,3 +174,15 @@ class IngestRow:
 
         first_url = documents[0].split("|")[0]
         return first_url
+
+
+@dataclass(config=ConfigDict(validate_assignment=True, extra=Extra.forbid))
+class EventIngestRow(_BaseRow):
+    """Represents a single row of input from the events CSV."""
+
+    id: str
+    event_type: str
+    title: str
+    date: datetime
+    cpr_event_id: str
+    cpr_family_id: str

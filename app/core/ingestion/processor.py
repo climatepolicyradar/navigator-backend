@@ -4,7 +4,7 @@ from typing import Callable, cast
 from sqlalchemy.orm import Session
 from app.core.ingestion.collection import collection_from_row
 from app.core.ingestion.family import family_from_row
-from app.core.ingestion.ingest_row import IngestRow
+from app.core.ingestion.ingest_row import DocumentIngestRow
 from app.core.ingestion.utils import IngestContext
 from app.core.ingestion.validator import validate_row
 from app.db.models.app.users import Organisation
@@ -13,10 +13,12 @@ from app.db.models.deprecated import Document
 from app.db.session import SessionLocal
 
 
-ProcessFunc = Callable[[IngestContext, IngestRow], None]
+ProcessFunc = Callable[[IngestContext, DocumentIngestRow], None]
 
 
-def ingest_row(db: Session, context: IngestContext, row: IngestRow) -> dict:
+def ingest_document_row(
+    db: Session, context: IngestContext, row: DocumentIngestRow
+) -> dict:
     """
     Create the constituent elements in the database that represent this row.
 
@@ -78,14 +80,14 @@ def get_dfc_ingestor() -> ProcessFunc:
     :return [ProcessFunc]: The function used to ingest the CSV file
     """
 
-    def process(context: IngestContext, row: IngestRow) -> None:
+    def process(context: IngestContext, row: DocumentIngestRow) -> None:
         """Processes the row into the db."""
         sys.stdout.write(f"Ingesting row: {row.row_number}: ")
 
         db = SessionLocal()
         try:
             with db.begin():
-                ingest_row(db, context, row=row)
+                ingest_document_row(db, context, row=row)
         finally:
             db.close()
             sys.stdout.flush()
@@ -100,7 +102,7 @@ def get_dfc_validator() -> ProcessFunc:
     :return [ProcessFunc]: The function used to validate the CSV file
     """
 
-    def process(context: IngestContext, row: IngestRow) -> None:
+    def process(context: IngestContext, row: DocumentIngestRow) -> None:
         """Processes the row into the db."""
         db = SessionLocal()
         try:

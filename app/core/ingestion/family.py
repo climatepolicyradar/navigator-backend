@@ -1,7 +1,7 @@
 from typing import Any, cast
 
 from sqlalchemy.orm import Session
-from app.core.ingestion.ingest_row import IngestRow
+from app.core.ingestion.ingest_row import DocumentIngestRow
 from app.core.ingestion.metadata import add_metadata
 from app.core.ingestion.organisation import get_organisation_taxonomy
 from app.core.ingestion.physical_document import physical_document_from_row
@@ -24,7 +24,7 @@ from app.db.models.law_policy.family import FamilyStatus
 
 def family_from_row(
     db: Session,
-    row: IngestRow,
+    row: DocumentIngestRow,
     existing_document: Document,
     org_id: int,
     result: dict[str, Any],
@@ -51,7 +51,7 @@ def family_from_row(
 
 
 def _maybe_create_family(
-    db: Session, row: IngestRow, org_id: int, result: dict[str, Any]
+    db: Session, row: DocumentIngestRow, org_id: int, result: dict[str, Any]
 ) -> Family:
     def _create_family_links(family: Family):
         family_slug = Slug(name=row.cpr_family_slug, family_import_id=family.import_id)
@@ -98,7 +98,7 @@ def _maybe_create_family(
 
 def _maybe_create_family_document(
     db: Session,
-    row: IngestRow,
+    row: DocumentIngestRow,
     family: Family,
     existing_document: Document,
     result: dict[str, Any],
@@ -147,7 +147,7 @@ def _validate_family_name(db: Session, family_name: str, import_id: str) -> bool
     return matching_family.title.strip().lower() == family_name.strip().lower()
 
 
-def _get_geography(db: Session, row: IngestRow) -> Geography:
+def _get_geography(db: Session, row: DocumentIngestRow) -> Geography:
     geography = (
         db.query(Geography).filter(Geography.value == row.geography_iso).one_or_none()
     )
@@ -159,7 +159,10 @@ def _get_geography(db: Session, row: IngestRow) -> Geography:
 
 
 def _add_family_document_slug(
-    db: Session, row: IngestRow, family_document: FamilyDocument, result: dict[str, Any]
+    db: Session,
+    row: DocumentIngestRow,
+    family_document: FamilyDocument,
+    result: dict[str, Any],
 ) -> Slug:
     """
     Adds the slugs for the family and family_document.

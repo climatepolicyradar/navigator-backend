@@ -1,6 +1,6 @@
 from sqlalchemy.orm import Session
 
-from app.core.ingestion.ingest_row import IngestRow
+from app.core.ingestion.ingest_row import DocumentIngestRow
 from app.core.ingestion.physical_document import physical_document_from_row
 from app.db.models.deprecated.document import Document
 from app.db.models.document import PhysicalDocument
@@ -15,7 +15,7 @@ from tests.core.ingestion.helpers import (
 
 def test_physical_document_from_row(test_db: Session):
     init_for_ingest(test_db)
-    row = IngestRow.from_row(1, get_ingest_row_data(0))
+    row = DocumentIngestRow.from_row(1, get_ingest_row_data(0))
     row.language = "English"
     result = {}
 

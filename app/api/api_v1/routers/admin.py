@@ -239,7 +239,7 @@ async def request_password_reset(
     current_user=Depends(get_current_active_superuser),
 ):
     """
-    Deletes a password for a user, and kicks off password-reset flow.
+    Delete a password for a user, and kick off password-reset flow.
 
     As this flow is initiated by admins, it always
     - cancels existing tokens
@@ -448,6 +448,7 @@ def ingest_events(
         500 On an unexpected error
     """
     # TODO: Combine with document import? refactor out shared structure?
+    # FIXME: this is currently just another document importer
 
     _LOGGER.info(
         f"Superuser '{current_user.email}' triggered Bulk Event Ingest for "
