@@ -8,14 +8,14 @@ from app.db.models.document.physical_document import PhysicalDocumentLanguage
 from tests.core.ingestion.helpers import (
     DOCUMENT_IMPORT_ID,
     DOCUMENT_TITLE,
-    get_ingest_row_data,
+    get_doc_ingest_row_data,
     init_for_ingest,
 )
 
 
 def test_physical_document_from_row(test_db: Session):
     init_for_ingest(test_db)
-    row = DocumentIngestRow.from_row(1, get_ingest_row_data(0))
+    row = DocumentIngestRow.from_row(1, get_doc_ingest_row_data(0))
     row.language = "English"
     result = {}
 

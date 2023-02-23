@@ -3,7 +3,7 @@ from app.core.ingestion.utils import IngestContext, ResultType
 from app.core.ingestion.validator import validate_document_row
 
 from tests.core.ingestion.helpers import (
-    get_ingest_row_data,
+    get_doc_ingest_row_data,
     init_for_ingest,
 )
 
@@ -11,7 +11,7 @@ from tests.core.ingestion.helpers import (
 def test_validate_row__good_data(test_db):
     context = IngestContext(org_id=1, results=[])
     init_for_ingest(test_db)
-    row = DocumentIngestRow.from_row(1, get_ingest_row_data(0))
+    row = DocumentIngestRow.from_row(1, get_doc_ingest_row_data(0))
 
     validate_document_row(test_db, context, row)
 
@@ -23,7 +23,7 @@ def test_validate_row__good_data(test_db):
 def test_validate_row__bad_data(test_db):
     context = IngestContext(org_id=1, results=[])
     init_for_ingest(test_db)
-    row = DocumentIngestRow.from_row(1, get_ingest_row_data(0))
+    row = DocumentIngestRow.from_row(1, get_doc_ingest_row_data(0))
     row.sectors = ["fish"]
 
     validate_document_row(test_db, context, row)
@@ -36,7 +36,7 @@ def test_validate_row__bad_data(test_db):
 def test_validate_row__resolvable_data(test_db):
     context = IngestContext(org_id=1, results=[])
     init_for_ingest(test_db)
-    row = DocumentIngestRow.from_row(1, get_ingest_row_data(0))
+    row = DocumentIngestRow.from_row(1, get_doc_ingest_row_data(0))
     row.sectors = ["TranSPORtation"]
 
     validate_document_row(test_db, context, row)

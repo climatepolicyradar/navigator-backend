@@ -14,14 +14,14 @@ from tests.core.ingestion.helpers import (
     COLLECTION_IMPORT_ID,
     FAMILY_IMPORT_ID,
     add_a_slug_for_family1_and_flush,
-    get_ingest_row_data,
+    get_doc_ingest_row_data,
     init_for_ingest,
 )
 
 
 def test_collection_from_row(test_db: Session):
     init_for_ingest(test_db)
-    row = DocumentIngestRow.from_row(1, get_ingest_row_data(0))
+    row = DocumentIngestRow.from_row(1, get_doc_ingest_row_data(0))
     result = {}
     family = get_or_create(
         test_db,

@@ -4,9 +4,9 @@ from app.core.ingestion.reader import read
 from app.core.ingestion.utils import IngestContext
 from app.core.validation.types import ImportSchemaMismatchError
 from tests.core.ingestion.helpers import (
-    ALPHABETICAL_COLUMNS,
-    THREE_ROWS,
-    THREE_ROWS_MISSING_FIELD,
+    ALPHABETICAL_DOC_COLUMNS,
+    THREE_DOC_ROWS,
+    THREE_DOC_ROWS_MISSING_FIELD,
 )
 
 
@@ -38,14 +38,14 @@ def test_read__raises_with_wrong_fields():
         e_info.value.message
         == "Bulk import file failed schema validation: Field names in CSV did not validate"
     )
-    assert e_info.value.details == {"missing": ALPHABETICAL_COLUMNS}
+    assert e_info.value.details == {"missing": ALPHABETICAL_DOC_COLUMNS}
 
 
 def test_read__raises_with_missing_field():
     context = IngestContext(org_id=1, results=[])
     process = MagicMock()
     with pytest.raises(ImportSchemaMismatchError) as e_info:
-        read(THREE_ROWS_MISSING_FIELD, context, process)
+        read(THREE_DOC_ROWS_MISSING_FIELD, context, process)
 
     assert len(context.results) == 0
     assert (
@@ -58,7 +58,7 @@ def test_read__raises_with_missing_field():
 def test_read__processes_all_rows():
     context = IngestContext(org_id=1, results=[])
     process = MagicMock()
-    read(THREE_ROWS, context, process)
+    read(THREE_DOC_ROWS, context, process)
 
     expected_rows = 3
     assert process.call_count == expected_rows

@@ -22,14 +22,14 @@ from tests.core.ingestion.helpers import (
     FAMILY_IMPORT_ID,
     SLUG_DOCUMENT_NAME,
     SLUG_FAMILY_NAME,
-    get_ingest_row_data,
+    get_doc_ingest_row_data,
     init_for_ingest,
 )
 
 
 def test_ingest_row__skips_missing_documents(test_db):
     context = IngestContext(org_id=1, results=[])
-    row = DocumentIngestRow.from_row(1, get_ingest_row_data(0))
+    row = DocumentIngestRow.from_row(1, get_doc_ingest_row_data(0))
     result = ingest_document_row(test_db, context, row)
     assert len(result.keys()) == 1
     assert result["existing_document"] is False
@@ -39,7 +39,7 @@ def test_ingest_row__migrates_existing_documents(test_db: Session):
     context = IngestContext(org_id=1, results=[])
     init_for_ingest(test_db)
 
-    row = DocumentIngestRow.from_row(1, get_ingest_row_data(0))
+    row = DocumentIngestRow.from_row(1, get_doc_ingest_row_data(0))
     result = ingest_document_row(test_db, context, row)
     test_db.flush()
 
@@ -92,7 +92,7 @@ def test_ingest_row__migrates_existing_documents(test_db: Session):
 
 
 def test_IngestRow__from_row():
-    ingest_row = DocumentIngestRow.from_row(1, get_ingest_row_data(0))
+    ingest_row = DocumentIngestRow.from_row(1, get_doc_ingest_row_data(0))
 
     assert ingest_row
     assert ingest_row.cpr_document_id == "CCLW.executive.1001.0"
@@ -100,7 +100,7 @@ def test_IngestRow__from_row():
 
 
 def test_IngestRow__from_row_raises_when_multi_urls():
-    ingest_row = DocumentIngestRow.from_row(1, get_ingest_row_data(1))
+    ingest_row = DocumentIngestRow.from_row(1, get_doc_ingest_row_data(1))
 
     assert ingest_row
     assert ingest_row.cpr_document_id == "CCLW.executive.1002.0"
