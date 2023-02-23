@@ -6,6 +6,8 @@ from typing import Any, Sequence
 from pydantic import ConfigDict, Extra
 from pydantic.dataclasses import dataclass
 
+from app.db.models.law_policy.family import EventStatus
+
 
 _REQUIRED_DOCUMENT_COLUMNS = [
     "ID",
@@ -111,7 +113,8 @@ class _BaseRow(abc.ABC):
             else:
                 return value
 
-        raise Exception(f"Unhandled type '{cls.field_info()[key]}' in row parsing")
+        # Let pydantic deal with other field types (e.g. str-Enums)
+        return value
 
     @staticmethod
     def _key(key: str) -> str:
@@ -176,7 +179,7 @@ class DocumentIngestRow(_BaseRow):
         return first_url
 
 
-@dataclass(config=ConfigDict(validate_assignment=True, extra=Extra.forbid))
+@dataclass(config=ConfigDict(validate_assignment=True, extra=Extra.ignore))
 class EventIngestRow(_BaseRow):
     """Represents a single row of input from the events CSV."""
 
@@ -186,3 +189,4 @@ class EventIngestRow(_BaseRow):
     date: datetime
     cpr_event_id: str
     cpr_family_id: str
+    event_status: EventStatus

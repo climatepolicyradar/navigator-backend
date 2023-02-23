@@ -171,7 +171,7 @@ class EventStatus(str, enum.Enum):
     # Duplicate means a single event was applied to multiple families. In this
     # case we will need to validate, remove unecessary duplicates & create new
     # events through a data cleaning exercise.
-    DUPLICATE = "DUPLICATE"
+    DUPLICATED = "DUPLICATED"
 
 
 class FamilyEventType(Base):
@@ -197,3 +197,4 @@ class FamilyEvent(Base):
         default=None,
         nullable=True,
     )
+    status = sa.Column(sa.Enum(EventStatus), nullable=False)
