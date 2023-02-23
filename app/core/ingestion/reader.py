@@ -13,11 +13,8 @@ def get_file_contents(csv_upload: UploadFile) -> str:
     """
     Gets the file contents from an UploadFile.
 
-    Args:
-        csv_upload (UploadFile): The UploadFile from an HTTP request.
-
-    Returns:
-        str: The contents of the file.
+    :param [UploadFile] csv_upload: The UploadFile from an HTTP request.
+    :return [str]: The contents of the file.
     """
     return csv_upload.file.read().decode("utf8")
 
@@ -26,8 +23,8 @@ def read(file_contents: str, context: IngestContext, process: ProcessFunc) -> No
     """
     Read a CSV file and call process() for each row.
 
-    :csv_file_path [Path]: the filename of the CSV file.
-    :process [ProcessFunc]: the function to call to process a single row.
+    :param [Path] csv_file_path: the filename of the CSV file.
+    :param [ProcessFunc] process: the function to call to process a single row.
     """
     reader = csv.DictReader(StringIO(initial_value=file_contents))
     if reader.fieldnames is None:

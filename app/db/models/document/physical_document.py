@@ -15,8 +15,8 @@ class PhysicalDocument(Base):
     id = sa.Column(sa.Integer, primary_key=True)
     title = sa.Column(sa.Text, nullable=False)
     md5_sum = sa.Column(sa.Text, nullable=True)
+    cdn_object = sa.Column(sa.Text, nullable=True)
     source_url = sa.Column(sa.Text, nullable=True)
-    date = sa.Column(sa.DateTime, nullable=False)
     content_type = sa.Column(sa.Text, nullable=True)
 
 

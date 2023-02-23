@@ -54,6 +54,8 @@ def test_family_from_row(test_db: Session):
     )
     new_family = test_db.query(Family).filter_by(import_id=FAMILY_IMPORT_ID).one()
     assert family == new_family
+    assert new_family.published_date is None
+    assert new_family.last_updated_date is None
 
 
 def test_family_from_row__bad_family_name(test_db: Session):

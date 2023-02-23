@@ -1,27 +1,8 @@
-import enum
 from dataclasses import fields
-from datetime import datetime
 from typing import Any, Sequence
 
 from pydantic import ConfigDict, Extra
 from pydantic.dataclasses import dataclass
-
-
-class PublicationDateAccuracy(enum.IntEnum):
-    """To be used in the microsecond field of a datetime to record its accuracy."""
-
-    NOT_DEFINED = 000000
-    YEAR_ACCURACY = 100000
-    MONTH_ACCURACY = 200000
-    DAY_ACCURACY = 300000
-    HOUR_ACCURACY = 400000
-    MINUTE_ACCURACY = 500000
-    SECOND_ACCURACY = 600000
-
-
-"""An undefined datetime"""
-# FIXME: We may choose to set this to `None` instead & make the date field nullable
-UNDEFINED_DATA_TIME = datetime(1900, 1, 1, 0, 0, 0, PublicationDateAccuracy.NOT_DEFINED)
 
 
 REQUIRED_COLUMNS = [

@@ -56,7 +56,7 @@ class Family(Base):
         nullable=False,
     )
 
-    slugs: list["Slug"] = relationship("Slug", innerjoin=True, lazy="joined")
+    slugs: list["Slug"] = relationship("Slug", lazy="joined")
     events: list["FamilyEvent"] = relationship("FamilyEvent", lazy="select")
 
     @hybrid_property
@@ -120,7 +120,6 @@ class FamilyDocument(Base):
         unique=True,
     )
 
-    cdn_object = sa.Column(sa.Text, nullable=True)
     import_id = sa.Column(sa.Text, primary_key=True)
     variant_name = sa.Column(sa.ForeignKey(Variant.variant_name), nullable=False)
     document_status = sa.Column(
@@ -130,8 +129,11 @@ class FamilyDocument(Base):
     )
     document_type = sa.Column(sa.ForeignKey(FamilyDocumentType.name), nullable=False)
 
-    slugs: list["Slug"] = relationship("Slug", innerjoin=True, lazy="joined")
-    physical_document: PhysicalDocument = relationship(PhysicalDocument, lazy="joined")
+    slugs: list["Slug"] = relationship("Slug", lazy="joined")
+    physical_document: Optional[PhysicalDocument] = relationship(
+        PhysicalDocument,
+        lazy="joined",
+    )
 
 
 class FamilyOrganisation(Base):
