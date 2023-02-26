@@ -1,6 +1,6 @@
 from dataclasses import dataclass
 import enum
-from typing import List, TypeVar
+from typing import TypeVar
 from app.db.session import AnyModel
 from sqlalchemy.orm import Session
 
@@ -100,10 +100,10 @@ class IngestContext:
     """Context used when processing."""
 
     org_id: int
-    results: List[Result]
+    results: list[Result]
 
 
-def get_result_counts(results: List[Result]) -> tuple[int, int, int]:
+def get_result_counts(results: list[Result]) -> tuple[int, int, int]:
     rows = len(results)
     fails = len([r for r in results if r.type == ResultType.ERROR])
     resolved = len([r for r in results if r.type == ResultType.RESOLVED])

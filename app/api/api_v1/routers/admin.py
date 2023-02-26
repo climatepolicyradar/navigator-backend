@@ -32,6 +32,7 @@ from app.core.email import (
     send_new_account_email,
     send_password_reset_email,
 )
+from app.core.ingestion.ingest_row import DocumentIngestRow, EventIngestRow
 from app.core.ingestion.processor import (
     db_init,
     get_dfc_ingestor,
@@ -39,6 +40,7 @@ from app.core.ingestion.processor import (
 )
 from app.core.ingestion.reader import get_file_contents, read
 from app.core.ingestion.utils import ResultType, get_result_counts
+from app.core.ingestion.validator import validate_event_row
 from app.core.ratelimit import limiter
 from app.core.validation import IMPORT_ID_MATCHER
 from app.core.validation.types import (
@@ -283,12 +285,13 @@ def _start_ingest(
     db: Session,
     s3_client: S3Client,
     s3_prefix: str,
-    file_contents: str,
+    documents_file_contents: str,
+    events_file_contents: str,
 ):
     try:
         ingestor = get_dfc_ingestor()
         context = db_init(db)
-        read(file_contents, context, ingestor)
+        read(documents_file_contents, context, DocumentIngestRow, ingestor)
     except Exception as e:
         _LOGGER.exception(
             "Unexpected error on ingest", extra={"props": {"errors": str(e)}}
@@ -351,24 +354,61 @@ def ingest_law_policy(
         "CCLW Law & Policy data"
     )
 
+    try:
+        context = db_init(db)
+    except Exception as e:
+        _LOGGER.exception(
+            "Failed to create ingest context", extra={"props": {"errors": str(e)}}
+        )
+        raise HTTPException(status_code=status.HTTP_500_INTERNAL_SERVER_ERROR) from e
+
+    all_results = []
+
     # PHASE 1 - Validate
     try:
         documents_file_contents = get_file_contents(law_policy_csv)
-        context = db_init(db)
         validator = get_dfc_validator(context)
-        read(documents_file_contents, context, validator)
+        read(documents_file_contents, context, DocumentIngestRow, validator)
         rows, fails, resolved = get_result_counts(context.results)
+        all_results.extend(context.results)
+        context.results = []
         _LOGGER.info(
-            f"Validation result: {rows} Rows, {fails} Failures, {resolved} Resolved"
+            f"Law & Policy validation result: {rows} Rows, {fails} Failures, "
+            f"{resolved} Resolved"
         )
     except ImportSchemaMismatchError as e:
         _LOGGER.exception(
-            "Provided CSV failed schema validation", extra={"props": {"errors": str(e)}}
+            "Provided CSV failed law & policy schema validation",
+            extra={"props": {"errors": str(e)}},
         )
         raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST) from e
     except Exception as e:
         _LOGGER.exception(
-            "Unexpected error, validating on ingest",
+            "Unexpected error, validating law & policy CSV on ingest",
+            extra={"props": {"errors": str(e)}},
+        )
+        raise HTTPException(status_code=status.HTTP_500_INTERNAL_SERVER_ERROR) from e
+
+    try:
+        events_file_contents = get_file_contents(law_policy_csv)
+        read(events_file_contents, context, EventIngestRow, validate_event_row)
+        rows, fails, resolved = get_result_counts(context.results)
+        all_results.extend(context.results)
+        context.results = all_results
+
+        _LOGGER.info(
+            f"Events validation result: {rows} Rows, {fails} Failures, "
+            f"{resolved} Resolved"
+        )
+    except ImportSchemaMismatchError as e:
+        _LOGGER.exception(
+            "Provided CSV failed events schema validation",
+            extra={"props": {"errors": str(e)}},
+        )
+        raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST) from e
+    except Exception as e:
+        _LOGGER.exception(
+            "Unexpected error, validating events CSV on ingest",
             extra={"props": {"errors": str(e)}},
         )
         raise HTTPException(status_code=status.HTTP_500_INTERNAL_SERVER_ERROR) from e
@@ -427,7 +467,12 @@ def ingest_law_policy(
     # PHASE 2 - Ingest
     # Start the background task to do the actual event ingest.
     background_tasks.add_task(
-        _start_ingest, db, s3_client, s3_prefix, documents_file_contents
+        _start_ingest,
+        db,
+        s3_client,
+        s3_prefix,
+        documents_file_contents,
+        events_file_contents,
     )
 
     _LOGGER.info(

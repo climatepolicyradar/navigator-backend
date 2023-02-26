@@ -1,12 +1,9 @@
 import csv
 from io import StringIO
+from typing import Type
 
 from fastapi import UploadFile
-from app.core.ingestion.ingest_row import (
-    VALID_DOCUMENT_COLUMN_NAMES,
-    DocumentIngestRow,
-    validate_csv_columns,
-)
+from app.core.ingestion.ingest_row import BaseIngestRow, validate_csv_columns
 from app.core.ingestion.processor import ProcessFunc
 
 from app.core.ingestion.utils import IngestContext
@@ -23,12 +20,18 @@ def get_file_contents(csv_upload: UploadFile) -> str:
     return csv_upload.file.read().decode("utf8")
 
 
-def read(file_contents: str, context: IngestContext, process: ProcessFunc) -> None:
+def read(
+    file_contents: str,
+    context: IngestContext,
+    row_type: Type[BaseIngestRow],
+    process: ProcessFunc,
+) -> None:
     """
     Read a CSV file and call process() for each row.
 
     :param [str] file_contents: the content of the imported CSV file.
     :param [IngestContext] context: a context to use during import.
+    :param [Type[BaseIngestRow]] row_type: the type of row expected from the CSV.
     :param [ProcessFunc] process: the function to call to process a single row.
     """
     reader = csv.DictReader(StringIO(initial_value=file_contents))
@@ -37,7 +40,7 @@ def read(file_contents: str, context: IngestContext, process: ProcessFunc) -> No
 
     missing_columns = validate_csv_columns(
         reader.fieldnames,
-        VALID_DOCUMENT_COLUMN_NAMES,
+        row_type.VALID_COLUMNS,
     )
     if missing_columns:
         raise ImportSchemaMismatchError(
@@ -47,4 +50,4 @@ def read(file_contents: str, context: IngestContext, process: ProcessFunc) -> No
 
     for row in reader:
         row_count += 1
-        process(context, DocumentIngestRow.from_row(row_count, row))
+        process(context, row_type.from_row(row_count, row))

@@ -1,7 +1,7 @@
 import abc
 from dataclasses import fields
 from datetime import datetime
-from typing import Any, Sequence
+from typing import Any, ClassVar, Sequence
 
 from pydantic import ConfigDict, Extra
 from pydantic.dataclasses import dataclass
@@ -69,11 +69,13 @@ def validate_csv_columns(
     return missing
 
 
-@dataclass(config=ConfigDict(validate_assignment=True, extra=Extra.forbid))
-class _BaseRow(abc.ABC):
+@dataclass(config=ConfigDict(frozen=True, validate_assignment=True, extra=Extra.forbid))
+class BaseIngestRow(abc.ABC):
     """Represents a single row of input from a CSV."""
 
     row_number: int
+
+    VALID_COLUMNS: ClassVar[set[str]] = set()
 
     @classmethod
     def from_row(cls, row_number: int, data: dict[str, str]):
@@ -121,8 +123,8 @@ class _BaseRow(abc.ABC):
         return key.lower().replace(" ", "_")
 
 
-@dataclass(config=ConfigDict(validate_assignment=True, extra=Extra.forbid))
-class DocumentIngestRow(_BaseRow):
+@dataclass(config=ConfigDict(frozen=True, validate_assignment=True, extra=Extra.forbid))
+class DocumentIngestRow(BaseIngestRow):
     """Represents a single row of input from the documents-families-collections CSV."""
 
     id: str
@@ -161,6 +163,8 @@ class DocumentIngestRow(_BaseRow):
     cpr_family_slug: str
     cpr_document_slug: str
 
+    VALID_COLUMNS: ClassVar[set[str]] = VALID_DOCUMENT_COLUMN_NAMES
+
     @staticmethod
     def _key(key: str) -> str:
         return key.lower().replace(" ", "_").replace("?", "").replace("y/", "")
@@ -179,8 +183,8 @@ class DocumentIngestRow(_BaseRow):
         return first_url
 
 
-@dataclass(config=ConfigDict(validate_assignment=True, extra=Extra.ignore))
-class EventIngestRow(_BaseRow):
+@dataclass(config=ConfigDict(frozen=True, validate_assignment=True, extra=Extra.ignore))
+class EventIngestRow(BaseIngestRow):
     """Represents a single row of input from the events CSV."""
 
     id: str
@@ -190,3 +194,5 @@ class EventIngestRow(_BaseRow):
     cpr_event_id: str
     cpr_family_id: str
     event_status: EventStatus
+
+    VALID_COLUMNS: ClassVar[set[str]] = VALID_EVENT_COLUMN_NAMES

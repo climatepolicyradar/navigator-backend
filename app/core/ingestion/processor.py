@@ -1,10 +1,10 @@
 import sys
-from typing import Callable, cast
+from typing import Callable, TypeVar, cast
 
 from sqlalchemy.orm import Session
 from app.core.ingestion.collection import collection_from_row
 from app.core.ingestion.family import family_from_row
-from app.core.ingestion.ingest_row import DocumentIngestRow
+from app.core.ingestion.ingest_row import BaseIngestRow, DocumentIngestRow
 from app.core.ingestion.organisation import get_organisation_taxonomy
 from app.core.ingestion.utils import IngestContext
 from app.core.ingestion.validator import validate_document_row
@@ -14,7 +14,9 @@ from app.db.models.deprecated import Document
 from app.db.session import SessionLocal
 
 
-ProcessFunc = Callable[[IngestContext, DocumentIngestRow], None]
+_RowType = TypeVar("_RowType", bound=BaseIngestRow)
+
+ProcessFunc = Callable[[IngestContext, _RowType], None]
 
 
 def ingest_document_row(
@@ -76,7 +78,7 @@ def db_init(db: Session) -> IngestContext:
 
 def get_dfc_ingestor() -> ProcessFunc:
     """
-    Get the ingestion function for ingesting a CSV.
+    Get the ingestion function for ingesting a law & policy CSV.
 
     :return [ProcessFunc]: The function used to ingest the CSV file
     """
@@ -98,8 +100,9 @@ def get_dfc_ingestor() -> ProcessFunc:
 
 def get_dfc_validator(context: IngestContext) -> ProcessFunc:
     """
-    Get the validation function for ingesting a CSV.
+    Get the validation function for ingesting a law & policy CSV.
 
+    :param [IngestContext] context: The context of the current ingest
     :return [ProcessFunc]: The function used to validate the CSV file
     """
     db = SessionLocal()
