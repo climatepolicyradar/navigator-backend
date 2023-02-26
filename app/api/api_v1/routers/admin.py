@@ -319,6 +319,7 @@ def _start_ingest(
 def ingest_law_policy(
     request: Request,
     law_policy_csv: UploadFile,
+    events_csv: UploadFile,
     background_tasks: BackgroundTasks,
     db=Depends(get_db),
     current_user=Depends(get_current_active_superuser),
@@ -349,13 +350,13 @@ def ingest_law_policy(
         f"Superuser '{current_user.email}' triggered Bulk Document Ingest for "
         "CCLW Law & Policy data"
     )
-    validator = get_dfc_validator()
 
     # PHASE 1 - Validate
     try:
-        file_contents = get_file_contents(law_policy_csv)
+        documents_file_contents = get_file_contents(law_policy_csv)
         context = db_init(db)
-        read(file_contents, context, validator)
+        validator = get_dfc_validator(context)
+        read(documents_file_contents, context, validator)
         rows, fails, resolved = get_result_counts(context.results)
         _LOGGER.info(
             f"Validation result: {rows} Rows, {fails} Failures, {resolved} Resolved"
@@ -390,7 +391,7 @@ def ingest_law_policy(
         result: Union[S3Document, bool] = write_csv_to_s3(
             s3_client=s3_client,
             s3_prefix=s3_prefix,
-            file_contents=file_contents,
+            file_contents=documents_file_contents,
         )
         if type(result) is bool:  # S3Client returns False if the object was not created
             _LOGGER.error(
@@ -425,7 +426,9 @@ def ingest_law_policy(
 
     # PHASE 2 - Ingest
     # Start the background task to do the actual event ingest.
-    background_tasks.add_task(_start_ingest, db, s3_client, s3_prefix, file_contents)
+    background_tasks.add_task(
+        _start_ingest, db, s3_client, s3_prefix, documents_file_contents
+    )
 
     _LOGGER.info(
         "Background Bulk Document Ingest Task added",

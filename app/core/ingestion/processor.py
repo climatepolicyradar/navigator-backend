@@ -5,6 +5,7 @@ from sqlalchemy.orm import Session
 from app.core.ingestion.collection import collection_from_row
 from app.core.ingestion.family import family_from_row
 from app.core.ingestion.ingest_row import DocumentIngestRow
+from app.core.ingestion.organisation import get_organisation_taxonomy
 from app.core.ingestion.utils import IngestContext
 from app.core.ingestion.validator import validate_document_row
 from app.db.models.app.users import Organisation
@@ -95,20 +96,21 @@ def get_dfc_ingestor() -> ProcessFunc:
     return process
 
 
-def get_dfc_validator() -> ProcessFunc:
+def get_dfc_validator(context: IngestContext) -> ProcessFunc:
     """
     Get the validation function for ingesting a CSV.
 
     :return [ProcessFunc]: The function used to validate the CSV file
     """
+    db = SessionLocal()
+    try:
+        with db.begin():
+            _, taxonomy = get_organisation_taxonomy(db, context.org_id)
+    finally:
+        db.close()
 
     def process(context: IngestContext, row: DocumentIngestRow) -> None:
         """Processes the row into the db."""
-        db = SessionLocal()
-        try:
-            with db.begin():
-                validate_document_row(db, context, row=row)
-        finally:
-            db.close()
+        validate_document_row(context=context, taxonomy=taxonomy, row=row)
 
     return process

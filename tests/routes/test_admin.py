@@ -319,13 +319,13 @@ def test_bulk_import_cclw_law_policy_valid(
     )
     assert response.status_code == 202
     response_json = response.json()
-    assert response_json["document_count"] == 2
-    assert response_json["document_skipped_count"] == 0
-    assert response_json["document_skipped_ids"] == []
+    assert response_json["detail"]["document_count"] == 2
+    assert response_json["detail"]["document_skipped_count"] == 0
+    assert response_json["detail"]["document_skipped_ids"] == []
 
     mock_start_import.assert_called_once()
     call = mock_start_import.mock_calls[0]
-    assert len(call.args[2]) == 2
+    assert len(call.args[3]) == 2
 
     mock_write_csv_to_s3.assert_called_once()
     call = mock_write_csv_to_s3.mock_calls[0]
@@ -428,13 +428,13 @@ def test_bulk_import_cclw_law_policy_db_objects(
     )
     assert response.status_code == 202
     response_json = response.json()
-    assert response_json["document_count"] == 2
-    assert response_json["document_skipped_count"] == 0
-    assert response_json["document_skipped_ids"] == []
+    assert response_json["detail"]["document_count"] == 2
+    assert response_json["detail"]["document_skipped_count"] == 0
+    assert response_json["detail"]["document_skipped_ids"] == []
 
     mock_start_import.assert_called_once()
     call = mock_start_import.mock_calls[0]
-    assert len(call.args[2]) == 2
+    assert len(call.args[3]) == 2
 
     mock_write_csv_to_s3.assert_called_once()
     call = mock_write_csv_to_s3.mock_calls[0]
@@ -501,13 +501,13 @@ def test_bulk_import_cclw_law_policy_preexisting_db_objects(
     )
     assert response.status_code == 202
     response_json = response.json()
-    assert response_json["document_count"] == 2
-    assert response_json["document_skipped_count"] == 1
-    assert response_json["document_skipped_ids"] == [existing_doc_import_id]
+    assert response_json["detail"]["document_count"] == 2
+    assert response_json["detail"]["document_skipped_count"] == 1
+    assert response_json["detail"]["document_skipped_ids"] == [existing_doc_import_id]
 
     mock_start_import.assert_called_once()
     call = mock_start_import.mock_calls[0]
-    assert len(call.args[2]) == 1
+    assert len(call.args[3]) == 1
 
     mock_write_csv_to_s3.assert_called_once()
     call = mock_write_csv_to_s3.mock_calls[0]

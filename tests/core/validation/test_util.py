@@ -140,11 +140,12 @@ def test_write_documents_to_s3(test_s3_client, mocker):
     every_now = datetime.datetime(year=2001, month=12, day=25)
     datetime_mock.now.return_value = every_now
 
-    write_documents_to_s3(test_s3_client, documents=[d])
     expected_folder_name = every_now.isoformat().replace(":", ".")
+    test_s3_prefix = f"input/{expected_folder_name}"
+    write_documents_to_s3(test_s3_client, test_s3_prefix, documents=[d])
     upload_file_mock.assert_called_once_with(
         bucket=PIPELINE_BUCKET,
-        key=f"input/{expected_folder_name}/documents.json",
+        key=f"{test_s3_prefix}/documents.json",
         content_type="application/json",
         fileobj=mock.ANY,
     )

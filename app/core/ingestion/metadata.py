@@ -1,10 +1,12 @@
-from typing import Set, cast
+from typing import Mapping, Sequence, Union
 
+from pydantic.dataclasses import dataclass
+from pydantic.config import ConfigDict, Extra
 from sqlalchemy.orm import Session
+
 from app.core.ingestion.ingest_row import DocumentIngestRow
 from app.core.ingestion.match import match_unknown_value
 from app.core.ingestion.utils import Result, ResultType
-
 from app.db.models.law_policy.metadata import FamilyMetadata
 
 MAP_OF_LIST_VALUES = {
@@ -21,10 +23,22 @@ MAP_OF_STR_VALUES = {
 }
 
 
+@dataclass(config=ConfigDict(validate_assignment=True, extra=Extra.forbid))
+class TaxonomyEntry:
+    """Details a single taxonomy field"""
+
+    allow_blanks: bool
+    allowed_values: Sequence[str]
+
+
+Taxonomy = Mapping[str, TaxonomyEntry]
+MetadataJson = Mapping[str, Union[str, Sequence[str]]]
+
+
 def add_metadata(
     db: Session,
     family_import_id: str,
-    taxonomy: dict,
+    taxonomy: Taxonomy,
     taxonomy_id: int,
     row: DocumentIngestRow,
 ) -> bool:
@@ -42,9 +56,11 @@ def add_metadata(
     return True
 
 
-def build_metadata(taxonomy: dict, row: DocumentIngestRow) -> tuple[Result, dict]:
+def build_metadata(
+    taxonomy: Taxonomy, row: DocumentIngestRow
+) -> tuple[Result, MetadataJson]:
     detail_list = []
-    value = {}
+    value: dict[str, Union[str, list[str]]] = {}
     num_fails = 0
     num_resolved = 0
 
@@ -63,7 +79,7 @@ def build_metadata(taxonomy: dict, row: DocumentIngestRow) -> tuple[Result, dict
 
     for tax_key, row_key in MAP_OF_STR_VALUES.items():
         row_value = getattr(row, row_key)
-        allowed_values = taxonomy[tax_key]["allowed_values"]
+        allowed_values = taxonomy[tax_key].allowed_values
         result = Result()
         if row_value in allowed_values:
             value[tax_key] = row_value
@@ -91,12 +107,12 @@ def build_metadata(taxonomy: dict, row: DocumentIngestRow) -> tuple[Result, dict
 
 
 def build_metadata_field(
-    taxonomy: dict, row: DocumentIngestRow, tax_key: str, row_key: str
+    taxonomy: Taxonomy, row: DocumentIngestRow, tax_key: str, row_key: str
 ) -> tuple[Result, list[str]]:
     ingest_values = getattr(row, row_key)
     row_set = set(ingest_values)
-    allowed_set = set(taxonomy[tax_key]["allowed_values"])
-    allow_blanks = cast(bool, taxonomy[tax_key]["allow_blanks"])
+    allowed_set: set[str] = set(taxonomy[tax_key].allowed_values)
+    allow_blanks = taxonomy[tax_key].allow_blanks
 
     if len(row_set) == 0:
         if not allow_blanks:
@@ -130,7 +146,7 @@ def build_metadata_field(
     return Result(type=ResultType.ERROR, details=details), []
 
 
-def resolve_unknown(unknown_set: Set, allowed_set: Set) -> Set[str]:
+def resolve_unknown(unknown_set: set[str], allowed_set: set[str]) -> set[str]:
     suggestions = set()
     for unknown_value in unknown_set:
         suggestion = match_unknown_value(unknown_value, allowed_set)
