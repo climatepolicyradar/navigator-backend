@@ -17,7 +17,11 @@ from app.api.api_v1.schemas.search import (
     SortField,
     SortOrder,
 )
-from app.db.models.law_policy.family import Family, FamilyOrganisation, FamilyStatus
+from app.db.models.law_policy.family import (
+    Family,
+    FamilyOrganisation,
+    FamilyStatus,
+)
 from app.db.models.app import Organisation
 from sqlalchemy import extract
 from sqlalchemy.orm import Session
@@ -77,10 +81,10 @@ def browse_rds_families(
     )
 
     if req.geography_slugs is not None:
-        query = query.filter(Geography.slug in req.geography_slugs)
+        query = query.filter(Geography.slug.in_(req.geography_slugs))
 
     if req.country_codes is not None:
-        query = query.filter(Geography.value in req.country_codes)
+        query = query.filter(Geography.value.in_(req.country_codes))
 
     # FIXME: sort out years for Families
     # if req.start_year is not None:
@@ -92,7 +96,7 @@ def browse_rds_families(
     # query = query.order_by(Family.publication_ts.desc())
 
     if req.categories is not None:
-        query = query.filter(Family.family_category in req.categories)
+        query = query.filter(Family.category_name.in_(req.categories))
 
     if req.sort_field == SortField.DATE:
         # FIXME: implement order by date after events work

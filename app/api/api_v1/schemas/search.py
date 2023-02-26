@@ -1,7 +1,9 @@
 from enum import Enum
-from typing import Mapping, Optional, Sequence
+from typing import Mapping, Optional, Sequence, Union
 
 from pydantic import BaseModel, conlist
+
+from app.db.models.law_policy import FamilyCategory
 
 
 Coord = tuple[float, float]
@@ -188,11 +190,11 @@ Top5FamilyList = conlist(SearchResponseFamily, max_items=5)
 _T5FamL = Top5FamilyList
 
 
-class CountrySummaryResponse(BaseModel):
-    """Additional information for the Country page over geo stats"""
+class GeographySummaryFamilyResponse(BaseModel):
+    """Additional information for the geography page over geo stats"""
 
-    document_counts: Mapping[CategoryName, int]
-    top_documents: Mapping[CategoryName, _T5FamL]
+    family_counts: Mapping[FamilyCategory, int]
+    top_families: Mapping[FamilyCategory, _T5FamL]
     targets: Sequence[str]  # TODO: Placeholder for later
 
 
@@ -235,9 +237,15 @@ Top5DocumentList = conlist(SearchDocumentResponse, max_items=5)
 _T5DocL = Top5DocumentList
 
 
-class SummaryCountryResponse(BaseModel):
-    """Additional information for the Country page over geo stats"""
+class GeographySummaryDocumentResponse(BaseModel):
+    """Additional information for the geography page over geo stats"""
 
     document_counts: Mapping[CategoryName, int]
     top_documents: Mapping[CategoryName, _T5DocL]
     targets: Sequence[str]  # TODO: Placeholder for later
+
+
+GeographySummaryResponse = Union[
+    GeographySummaryDocumentResponse,
+    GeographySummaryFamilyResponse,
+]

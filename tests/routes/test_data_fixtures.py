@@ -1,8 +1,15 @@
 from dateutil.parser import parse
 import pytest
-from app.db.models.deprecated import DocumentType
-from app.db.models.deprecated import Category, Document, Source, Event
-from app.db.models.law_policy import Geography
+from app.db.models.deprecated import Category, Document, DocumentType, Source, Event
+from app.db.models.app import Organisation
+from app.db.models.law_policy import (  # noqa F401
+    Family,
+    FamilyCategory,
+    FamilyDocument,
+    FamilyOrganisation,
+    Geography,
+    FamilyDocumentType,
+)
 from tests.utils import json_serialize
 
 template_doc = {
@@ -89,7 +96,7 @@ def doc_browse_data(test_db):
 
 
 @pytest.fixture
-def summary_country_data(test_db):
+def summary_geography_document_data(test_db):
     geos = [
         Geography(
             display_value="A place on the land", slug="a-place-on-the-land", value="XXX"
@@ -165,5 +172,50 @@ def summary_country_data(test_db):
         "doc_types": doc_types,
         "sources": sources,
         "cats": cats,
+        "events": events,
+    }
+
+
+@pytest.fixture
+def summary_geography_family_data(test_db):
+    geos = [
+        Geography(
+            display_value="A place on the land", slug="a-place-on-the-land", value="XXX"
+        ),
+        Geography(
+            display_value="A place in the sea", slug="a-place-in-the-sea", value="YYY"
+        ),
+    ]
+    doc_types = [FamilyDocumentType(name="doctype", description="for testing")]
+    organisations = [Organisation(name="test org")]
+
+    test_db.add_all(geos)
+    test_db.add_all(doc_types)
+    test_db.add_all(organisations)
+    test_db.flush()
+
+    # Now setup the Documents/Families
+
+    ## WORKING HERE
+    documents = []
+    families = []
+
+    test_db.add_all(documents)
+    test_db.add_all(families)
+    test_db.flush()
+
+    # Now some events
+    events = []
+
+    test_db.add_all(events)
+
+    test_db.commit()
+    yield {
+        "db": test_db,
+        "docs": documents,
+        "families": documents,
+        "geos": geos,
+        "doc_types": doc_types,
+        "organisations": organisations,
         "events": events,
     }
