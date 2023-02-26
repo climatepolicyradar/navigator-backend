@@ -27,7 +27,8 @@ def read(file_contents: str, context: IngestContext, process: ProcessFunc) -> No
     """
     Read a CSV file and call process() for each row.
 
-    :param [Path] csv_file_path: the filename of the CSV file.
+    :param [str] file_contents: the content of the imported CSV file.
+    :param [IngestContext] context: a context to use during import.
     :param [ProcessFunc] process: the function to call to process a single row.
     """
     reader = csv.DictReader(StringIO(initial_value=file_contents))

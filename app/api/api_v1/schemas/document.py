@@ -171,14 +171,20 @@ class DocumentUploadCompleteRequest(BaseModel):
     content_type: str
 
 
-class BulkImportValidatedResult(BaseModel):
-    """Response for bulk import request."""
+class BulkImportDetail(BaseModel):
+    """Additional detail for bulk import."""
 
     document_count: int
     document_added_count: int
     document_skipped_count: int
     document_skipped_ids: list[str]
-    csv_s3_location: str
+
+
+class BulkImportResult(BaseModel):
+    """Response for bulk import request."""
+
+    import_s3_prefix: str
+    detail: Optional[BulkImportDetail]
 
 
 class DocumentUpdateRequest(BaseModel):

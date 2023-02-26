@@ -623,8 +623,19 @@ def _get_language_by_code_or_name(db: Session, code_or_name: str) -> Language:
 def start_import(
     db: Session,
     s3_client: S3Client,
+    s3_prefix: str,
     document_create_objects: Sequence[DocumentCreateRequest],
 ):
+    """
+    Import the given documents as a background task.
+
+    :param [Session] db: _description_
+    :param [S3Client] s3_client: _description_
+    :param [str] s3_prefix: _description_
+    :param [Sequence[DocumentCreateRequest]] document_create_objects: _description_
+    :raises [HTTPException]: _description_
+    :raises e: _description_
+    """
     document_parser_inputs: list[DocumentParserInput] = []
     try:
         # Create a savepoint & start a transaction if necessary
@@ -651,12 +662,24 @@ def start_import(
         _LOGGER.info("Importing performing final commit.")
         db.commit()
     except Exception as e:
-        _LOGGER.exception("Unexpected error creating document entries")
-        if isinstance(e, IntegrityError):
-            raise HTTPException(409, detail="Document already exists")
-        raise e
+        _LOGGER.exception(
+            "Unexpected error creating document entries in the database",
+            extra={"props": {"errors": str(e)}},
+        )
+        # Note: this is executed as a background task, so do not raise an exception
 
-    write_documents_to_s3(s3_client=s3_client, documents=document_parser_inputs)
+    try:
+        write_documents_to_s3(
+            s3_client=s3_client,
+            s3_prefix=s3_prefix,
+            documents=document_parser_inputs,
+        )
+    except Exception as e:
+        _LOGGER.exception(
+            "Unexpected error writing document updates to s3",
+            extra={"props": {"errors": str(e)}},
+        )
+        # Note: this is executed as a background task, so do not raise an exception
 
 
 def _get_related_documents(
