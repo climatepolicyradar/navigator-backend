@@ -99,7 +99,7 @@ def get_new_s3_prefix() -> str:
 
 
 def write_csv_to_s3(
-    s3_client: S3Client, s3_prefix: str, file_contents: str
+    s3_client: S3Client, s3_prefix: str, s3_content_label: str, file_contents: str
 ) -> Union[S3Document, bool]:
     """
     Write the csv into S3
@@ -109,7 +109,7 @@ def write_csv_to_s3(
     :return [S3Document | False]: document object if successful, otherwise False
     """
     bytes_content = BytesIO(file_contents.encode("utf8"))
-    csv_object_key = f"{s3_prefix}/bulk-import.csv"
+    csv_object_key = f"{s3_prefix}/bulk-import-{s3_content_label}.csv"
     _LOGGER.info("Writing CSV file into S3")
     return _write_content_to_s3(
         s3_client=s3_client,

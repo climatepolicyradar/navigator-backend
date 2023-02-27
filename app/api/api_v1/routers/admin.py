@@ -425,15 +425,25 @@ def ingest_law_policy(
             status_code=status.HTTP_422_UNPROCESSABLE_ENTITY, detail=error_details
         )
 
-    # No Validation errors - so write to s3
+    # PHASE 2 - Validation completed without errors, so store the ingest files. This
+    #           will let us investigate errors later
     s3_prefix = get_new_s3_prefix()
     try:
-        result: Union[S3Document, bool] = write_csv_to_s3(
+        result_documents: Union[S3Document, bool] = write_csv_to_s3(
             s3_client=s3_client,
             s3_prefix=s3_prefix,
+            s3_content_label="documents",
             file_contents=documents_file_contents,
         )
-        if type(result) is bool:  # S3Client returns False if the object was not created
+        result_events: Union[S3Document, bool] = write_csv_to_s3(
+            s3_client=s3_client,
+            s3_prefix=s3_prefix,
+            s3_content_label="events",
+            file_contents=events_file_contents,
+        )
+        if (
+            type(result_documents) is bool
+        ):  # S3Client returns False if the object was not created
             _LOGGER.error(
                 "Write Bulk Document Ingest CSV to S3 Failed.",
                 extra={
@@ -446,14 +456,31 @@ def ingest_law_policy(
                 status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
                 detail="Unexpected error, fail to write Bulk Document Ingest CSV to S3",
             )
+        if (
+            type(result_events) is bool
+        ):  # S3Client returns False if the object was not created
+            _LOGGER.error(
+                "Write Bulk Event Ingest CSV to S3 Failed.",
+                extra={
+                    "props": {
+                        "superuser_email": current_user.email,
+                    }
+                },
+            )
+            raise HTTPException(
+                status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
+                detail="Unexpected error, fail to write Bulk Event Ingest CSV to S3",
+            )
         else:
-            csv_s3_location = str(result.url)
+            documents_csv_s3_location = str(result_documents.url)
+            events_csv_s3_location = str(result_events.url)
             _LOGGER.info(
                 "Write Event Ingest CSV complete.",
                 extra={
                     "props": {
                         "superuser_email": current_user.email,
-                        "csv_s3_location": csv_s3_location,
+                        "documents_csv_s3_location": documents_csv_s3_location,
+                        "events_csv_s3_location": events_csv_s3_location,
                     }
                 },
             )
@@ -464,8 +491,7 @@ def ingest_law_policy(
         )
         raise HTTPException(status_code=status.HTTP_500_INTERNAL_SERVER_ERROR) from e
 
-    # PHASE 2 - Ingest
-    # Start the background task to do the actual event ingest.
+    # PHASE 3 - Start the ingest (kick off background task to do the actual ingest)
     background_tasks.add_task(
         _start_ingest,
         db,
@@ -476,11 +502,12 @@ def ingest_law_policy(
     )
 
     _LOGGER.info(
-        "Background Bulk Document Ingest Task added",
+        "Background Bulk Document/Event Ingest Task added",
         extra={
             "props": {
                 "superuser_email": current_user.email,
-                "csv_s3_location": csv_s3_location,
+                "documents_csv_s3_location": documents_csv_s3_location,
+                "events_csv_s3_location": events_csv_s3_location,
             }
         },
     )
@@ -564,6 +591,7 @@ def import_law_policy(
         result: Union[S3Document, bool] = write_csv_to_s3(
             s3_client=s3_client,
             s3_prefix=s3_prefix,
+            s3_content_label="documents",
             file_contents=file_contents,
         )
 
