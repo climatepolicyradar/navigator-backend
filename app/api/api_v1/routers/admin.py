@@ -37,6 +37,7 @@ from app.core.ingestion.processor import (
     db_init,
     get_dfc_ingestor,
     get_dfc_validator,
+    get_event_ingestor,
 )
 from app.core.ingestion.reader import get_file_contents, read
 from app.core.ingestion.utils import ResultType, get_result_counts
@@ -289,9 +290,11 @@ def _start_ingest(
     events_file_contents: str,
 ):
     try:
-        ingestor = get_dfc_ingestor()
         context = db_init(db)
-        read(documents_file_contents, context, DocumentIngestRow, ingestor)
+        document_ingestor = get_dfc_ingestor(db)
+        read(documents_file_contents, context, DocumentIngestRow, document_ingestor)
+        event_ingestor = get_event_ingestor(db)
+        read(events_file_contents, context, EventIngestRow, event_ingestor)
     except Exception as e:
         _LOGGER.exception(
             "Unexpected error on ingest", extra={"props": {"errors": str(e)}}
@@ -367,7 +370,7 @@ def ingest_law_policy(
     # PHASE 1 - Validate
     try:
         documents_file_contents = get_file_contents(law_policy_csv)
-        validator = get_dfc_validator(context)
+        validator = get_dfc_validator(db, context)
         read(documents_file_contents, context, DocumentIngestRow, validator)
         rows, fails, resolved = get_result_counts(context.results)
         all_results.extend(context.results)
@@ -390,7 +393,7 @@ def ingest_law_policy(
         raise HTTPException(status_code=status.HTTP_500_INTERNAL_SERVER_ERROR) from e
 
     try:
-        events_file_contents = get_file_contents(law_policy_csv)
+        events_file_contents = get_file_contents(events_csv)
         read(events_file_contents, context, EventIngestRow, validate_event_row)
         rows, fails, resolved = get_result_counts(context.results)
         all_results.extend(context.results)

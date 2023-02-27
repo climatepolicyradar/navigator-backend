@@ -19,7 +19,7 @@ class _BaseModelEnum(str, enum.Enum):
     def _missing_(cls, value):
         if isinstance(value, str) and not str.istitle(value):
             return cls(value.title())
-        raise ValueError(f"{value} is not a valid FamilyCategory")
+        raise ValueError(f"{value} is not a valid {cls.__name__}")
 
     def __str__(self):
         return self._value_
