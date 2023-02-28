@@ -18,7 +18,8 @@ from app.db.session import Base, get_db
 from app.main import app
 from .routes.test_data_fixtures import (  # noqa F401
     doc_browse_data,
-    summary_country_data,
+    summary_geography_document_data,
+    summary_geography_family_data,
 )
 
 
