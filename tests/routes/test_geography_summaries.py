@@ -38,11 +38,11 @@ def test_endpoint_returns_families_ok(client):
     assert response.status_code == OK
     resp = response.json()
 
-    assert resp["family_counts"]["EXECUTIVE"] == 0
-    assert resp["family_counts"]["LEGISLATIVE"] == 0
+    assert resp["family_counts"]["Executive"] == 0
+    assert resp["family_counts"]["Legislative"] == 0
 
-    assert len(resp["top_families"]["EXECUTIVE"]) == 0
-    assert len(resp["top_families"]["LEGISLATIVE"]) == 0
+    assert len(resp["top_families"]["Executive"]) == 0
+    assert len(resp["top_families"]["Legislative"]) == 0
 
     assert len(resp["family_counts"]) == 2
     assert len(resp["top_families"]) == 2

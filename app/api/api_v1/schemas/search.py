@@ -146,10 +146,8 @@ class SearchResponseFamilyDocument(BaseModel):
     """A single document in a search response."""
 
     document_title: str
-    document_date: str
     document_slug: str
     document_type: str
-    document_category: str
     document_source_url: Optional[str]
     document_url: Optional[str]
     document_content_type: Optional[str]
@@ -167,6 +165,8 @@ class SearchResponseFamily(BaseModel):
     family_slug: str
     family_name: str
     family_description: str
+    family_category: str
+    family_date: str
     family_source: str
     family_geography: str
     family_metadata: dict

@@ -764,9 +764,7 @@ def create_search_response_family_document(
 ) -> SearchResponseFamilyDocument:
     return SearchResponseFamilyDocument(
         document_title=document_family_match[opensearch_match.document_id]["title"],
-        document_date=opensearch_match.document_date,
         document_type=opensearch_match.document_type,
-        document_category=opensearch_match.document_category,
         document_source_url=opensearch_match.document_source_url,
         document_url=to_cdn_url(opensearch_match.document_cdn_object),
         document_content_type=opensearch_match.document_content_type,
@@ -783,6 +781,8 @@ def create_search_response_family(
         family_slug=document_family_match[opensearch_match.document_id]["family_slug"],
         family_name=opensearch_match.document_name,
         family_description=opensearch_match.document_description,
+        family_category=opensearch_match.document_category,
+        family_date=opensearch_match.document_date,
         family_source=opensearch_match.document_source,
         family_geography=opensearch_match.document_geography,
         family_metadata={},  # FIXME: complete?
