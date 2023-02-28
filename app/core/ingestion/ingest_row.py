@@ -1,30 +1,15 @@
-import enum
+import abc
 from dataclasses import fields
 from datetime import datetime
-from typing import Any, Sequence
+from typing import Any, ClassVar, Sequence
 
 from pydantic import ConfigDict, Extra
 from pydantic.dataclasses import dataclass
 
-
-class PublicationDateAccuracy(enum.IntEnum):
-    """To be used in the microsecond field of a datetime to record its accuracy."""
-
-    NOT_DEFINED = 000000
-    YEAR_ACCURACY = 100000
-    MONTH_ACCURACY = 200000
-    DAY_ACCURACY = 300000
-    HOUR_ACCURACY = 400000
-    MINUTE_ACCURACY = 500000
-    SECOND_ACCURACY = 600000
+from app.db.models.law_policy import EventStatus, FamilyCategory
 
 
-"""An undefined datetime"""
-# FIXME: We may choose to set this to `None` instead & make the date field nullable
-UNDEFINED_DATA_TIME = datetime(1900, 1, 1, 0, 0, 0, PublicationDateAccuracy.NOT_DEFINED)
-
-
-REQUIRED_COLUMNS = [
+_REQUIRED_DOCUMENT_COLUMNS = [
     "ID",
     "Document ID",
     "CCLW Description",
@@ -61,60 +46,40 @@ REQUIRED_COLUMNS = [
     "CPR Family Slug",
     "CPR Document Slug",
 ]
+VALID_DOCUMENT_COLUMN_NAMES = set(_REQUIRED_DOCUMENT_COLUMNS)
 
-VALID_COLUMN_NAMES = set(REQUIRED_COLUMNS)
+_REQUIRED_EVENT_COLUMNS = [
+    "Id",
+    "Event type",
+    "Title",
+    "Date",
+    "CPR Event ID",
+    "CPR Family ID",
+]
+VALID_EVENT_COLUMN_NAMES = set(_REQUIRED_EVENT_COLUMNS)
 
 
-def validate_csv_columns(column_names: Sequence[str]) -> list[str]:
-    missing = list(VALID_COLUMN_NAMES.difference(set(column_names)))
+def validate_csv_columns(
+    column_names: Sequence[str],
+    valid_column_names: set[str],
+) -> list[str]:
+    """Check that the given set of column names is valid."""
+    missing = list(valid_column_names.difference(set(column_names)))
     missing.sort()
     return missing
 
 
-@dataclass(config=ConfigDict(validate_assignment=True, extra=Extra.forbid))
-class IngestRow:
-    """Represents a single row of input from the documents-families-collections CSV."""
+@dataclass(config=ConfigDict(frozen=True, validate_assignment=True, extra=Extra.forbid))
+class BaseIngestRow(abc.ABC):
+    """Represents a single row of input from a CSV."""
 
     row_number: int
-    id: str
-    document_id: str
-    cclw_description: str
-    part_of_collection: str
-    create_new_families: str
-    collection_id: str
-    collection_name: str
-    collection_summary: str
-    document_title: str
-    family_name: str
-    family_summary: str
-    family_id: str
-    document_role: str
-    applies_to_id: str
-    geography_iso: str
-    documents: str
-    category: str  # METADATA - made into an enum and removed from taxonomy
-    events: list[str]
-    sectors: list[str]  # METADATA
-    instruments: list[str]  # METADATA
-    frameworks: list[str]  # METADATA
-    responses: list[str]  # METADATA - topics
-    natural_hazards: list[str]  # METADATA - hazard
-    keywords: list[str]
-    document_type: str  # METADATA ?
-    year: int
-    language: str
-    geography: str
-    parent_legislation: str
-    comment: str
-    cpr_document_id: str
-    cpr_family_id: str
-    cpr_collection_id: str
-    cpr_family_slug: str
-    cpr_document_slug: str
+
+    VALID_COLUMNS: ClassVar[set[str]] = set()
 
     @classmethod
     def from_row(cls, row_number: int, data: dict[str, str]):
-        """Parse a row from a CSV into the IngestRow type"""
+        """Parse a row from a CSV."""
         field_info = cls.field_info()
         return cls(
             row_number=row_number,
@@ -135,6 +100,9 @@ class IngestRow:
             # Let pydantic deal with unexpected fields
             return value
 
+        if field_info[key] == datetime:
+            return datetime.strptime(value, "%Y-%m-%d")
+
         if field_info[key] == list[str]:
             return [e.strip() for e in value.split(";") if e.strip()]
 
@@ -147,7 +115,55 @@ class IngestRow:
             else:
                 return value
 
-        raise Exception(f"Unhandled type '{cls.field_info()[key]}' in row parsing")
+        # Let pydantic deal with other field types (e.g. str-Enums)
+        return value
+
+    @staticmethod
+    def _key(key: str) -> str:
+        return key.lower().replace(" ", "_")
+
+
+@dataclass(config=ConfigDict(frozen=True, validate_assignment=True, extra=Extra.forbid))
+class DocumentIngestRow(BaseIngestRow):
+    """Represents a single row of input from the documents-families-collections CSV."""
+
+    id: str
+    document_id: str
+    cclw_description: str
+    part_of_collection: str
+    create_new_families: str
+    collection_id: str
+    collection_name: str
+    collection_summary: str
+    document_title: str
+    family_name: str
+    family_summary: str
+    family_id: str
+    document_role: str
+    applies_to_id: str
+    geography_iso: str
+    documents: str
+    category: FamilyCategory
+    events: list[str]
+    sectors: list[str]  # METADATA
+    instruments: list[str]  # METADATA
+    frameworks: list[str]  # METADATA
+    responses: list[str]  # METADATA - topics
+    natural_hazards: list[str]  # METADATA - hazard
+    keywords: list[str]
+    document_type: str
+    year: int
+    language: str
+    geography: str
+    parent_legislation: str
+    comment: str
+    cpr_document_id: str
+    cpr_family_id: str
+    cpr_collection_id: str
+    cpr_family_slug: str
+    cpr_document_slug: str
+
+    VALID_COLUMNS: ClassVar[set[str]] = VALID_DOCUMENT_COLUMN_NAMES
 
     @staticmethod
     def _key(key: str) -> str:
@@ -165,3 +181,18 @@ class IngestRow:
 
         first_url = documents[0].split("|")[0]
         return first_url
+
+
+@dataclass(config=ConfigDict(frozen=True, validate_assignment=True, extra=Extra.ignore))
+class EventIngestRow(BaseIngestRow):
+    """Represents a single row of input from the events CSV."""
+
+    id: str
+    event_type: str
+    title: str
+    date: datetime
+    cpr_event_id: str
+    cpr_family_id: str
+    event_status: EventStatus
+
+    VALID_COLUMNS: ClassVar[set[str]] = VALID_EVENT_COLUMN_NAMES

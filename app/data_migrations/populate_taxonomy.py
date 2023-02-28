@@ -84,18 +84,22 @@ def load_metadata_type(filename: str, key_path: str) -> Sequence[str]:
 def get_default_taxonomy():
     taxonomy = {}
     for data in TAXONOMY_DATA:
-        taxonomy = {
-            **taxonomy,
-            data["key"]: {
-                "allowed_values": load_metadata_type(
-                    data["filename"], data["file_key_path"]
-                ),
-                "allow_blanks": data["allow_blanks"],
-            },
-        }
+        taxonomy.update(
+            {
+                data["key"]: {
+                    "allowed_values": load_metadata_type(
+                        data["filename"], data["file_key_path"]
+                    ),
+                    "allow_blanks": data["allow_blanks"],
+                },
+            }
+        )
 
     # Remove unwanted values for new taxonomy
-    if "Transportation" in taxonomy["sector"]["allowed_values"]:
+    if (
+        "sector" in taxonomy
+        and "Transportation" in taxonomy["sector"]["allowed_values"]
+    ):
         taxonomy["sector"]["allowed_values"].remove("Transportation")
 
     return taxonomy

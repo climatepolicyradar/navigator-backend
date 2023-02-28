@@ -1,23 +1,30 @@
-from sqlalchemy.orm import Session
-from app.core.ingestion.ingest_row import IngestRow
-from app.core.ingestion.metadata import build_metadata
-from app.core.ingestion.organisation import get_organisation_taxonomy
-
-from app.core.ingestion.utils import IngestContext
+from app.core.ingestion.ingest_row import DocumentIngestRow, EventIngestRow
+from app.core.ingestion.metadata import build_metadata, Taxonomy
+from app.core.ingestion.utils import IngestContext, Result, ResultType
 
 
-def validate_row(db: Session, context: IngestContext, row: IngestRow) -> None:
+def validate_document_row(
+    context: IngestContext,
+    row: DocumentIngestRow,
+    taxonomy: Taxonomy,
+) -> None:
     """
-    Validates the constituent elements that represent this row.
+    Validate the constituent elements that represent this law & policy document row.
 
-    Args:
-        db (Session): the connection to the database.
-        organisation (Organisation): The organisation context.
-        row (IngestRow): the IngestRow object of the current CSV row.
-
-    Returns:
-        int: number of failures encountered
+    :param [IngestContext] context: The ingest context.
+    :param [DocumentIngestRow] row: DocumentIngestRow object from the current CSV row.
+    :param [Taxonomy] taxonomy: the Taxonomy against which metadata should be validated.
     """
-    _, taxonomy = get_organisation_taxonomy(db, context.org_id)
     result, _ = build_metadata(taxonomy, row)
+    context.results.append(result)
+
+
+def validate_event_row(context: IngestContext, row: EventIngestRow) -> None:
+    """
+    Validate the consituent elements that represent this event row.
+
+    :param [IngestContext] context: The ingest context.
+    :param [DocumentIngestRow] row: DocumentIngestRow object from the current CSV row.
+    """
+    result = Result(ResultType.OK, f"Event: {row.cpr_event_id}, org {context.org_id}")
     context.results.append(result)

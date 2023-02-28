@@ -1,12 +1,7 @@
-from datetime import datetime
 from typing import Any
 
 from sqlalchemy.orm import Session
-from app.core.ingestion.ingest_row import (
-    UNDEFINED_DATA_TIME,
-    IngestRow,
-    PublicationDateAccuracy,
-)
+from app.core.ingestion.ingest_row import DocumentIngestRow
 from app.core.ingestion.utils import to_dict
 
 from app.db.models.deprecated import Document
@@ -15,26 +10,25 @@ from app.db.models.document.physical_document import Language, PhysicalDocumentL
 
 
 def physical_document_from_row(
-    db: Session, row: IngestRow, existing_document: Document, result: dict[str, Any]
+    db: Session,
+    row: DocumentIngestRow,
+    existing_document: Document,
+    result: dict[str, Any],
 ) -> PhysicalDocument:
     """
     Create the document part of the schema from the row.
 
     :param [Session] db: connection to the database.
-    :param [DrfRow] row: the row built from the CSV.
+    :param [IngestRow] row: the row built from the CSV.
+    :param [Document] existing_document: existing Document from which to retrieve data.
     :return [dict[str, Any]]: a dictionary to describe what was created.
     """
-    document_date = (
-        datetime(row.year, 1, 1, 0, 0, 0, PublicationDateAccuracy.YEAR_ACCURACY)
-        if row.year
-        else UNDEFINED_DATA_TIME
-    )
     physical_document = PhysicalDocument(
         title=row.document_title,
         source_url=row.get_first_url(),
-        date=document_date,
         md5_sum=existing_document.md5_sum,
         content_type=existing_document.content_type,
+        cdn_object=existing_document.cdn_object,
     )
     db.add(physical_document)
     db.flush()

@@ -20,7 +20,8 @@ from sqlalchemy import update
 from app.core.aws import S3Document
 
 from app.api.api_v1.schemas.document import (
-    BulkImportValidatedResult,
+    BulkImportDetail,
+    BulkImportResult,
     DocumentCreateRequest,
     DocumentUpdateRequest,
 )
@@ -31,13 +32,16 @@ from app.core.email import (
     send_new_account_email,
     send_password_reset_email,
 )
+from app.core.ingestion.ingest_row import DocumentIngestRow, EventIngestRow
 from app.core.ingestion.processor import (
     db_init,
     get_dfc_ingestor,
     get_dfc_validator,
+    get_event_ingestor,
 )
 from app.core.ingestion.reader import get_file_contents, read
 from app.core.ingestion.utils import ResultType, get_result_counts
+from app.core.ingestion.validator import validate_event_row
 from app.core.ratelimit import limiter
 from app.core.validation import IMPORT_ID_MATCHER
 from app.core.validation.types import (
@@ -45,6 +49,7 @@ from app.core.validation.types import (
     DocumentsFailedValidationError,
 )
 from app.core.validation.util import (
+    get_new_s3_prefix,
     get_valid_metadata,
     write_csv_to_s3,
 )
@@ -239,7 +244,7 @@ async def request_password_reset(
     current_user=Depends(get_current_active_superuser),
 ):
     """
-    Deletes a password for a user, and kicks off password-reset flow.
+    Delete a password for a user, and kick off password-reset flow.
 
     As this flow is initiated by admins, it always
     - cancels existing tokens
@@ -277,68 +282,139 @@ async def request_password_reset(
     return True
 
 
+def _start_ingest(
+    db: Session,
+    s3_client: S3Client,
+    s3_prefix: str,
+    documents_file_contents: str,
+    events_file_contents: str,
+):
+    try:
+        context = db_init(db)
+        document_ingestor = get_dfc_ingestor(db)
+        read(documents_file_contents, context, DocumentIngestRow, document_ingestor)
+        event_ingestor = get_event_ingestor(db)
+        read(events_file_contents, context, EventIngestRow, event_ingestor)
+    except Exception as e:
+        _LOGGER.exception(
+            "Unexpected error on ingest", extra={"props": {"errors": str(e)}}
+        )
+        # This is a background task, so do not raise
+
+    try:
+        pass
+        # FIXME: Write document create/update JSON to S3
+        # TODO: add a way for a user to monitor progress of the ingest
+        # write_documents_to_s3(
+        #     s3_client=s3_client,
+        #     s3_prefix=s3_prefix,
+        #     documents=document_parser_inputs,
+        # )
+    except Exception as e:
+        _LOGGER.exception(
+            "Unexpected error writing update document to s3",
+            extra={"props": {"errors": str(e)}},
+        )
+
+
 @r.post(
     "/bulk-ingest/cclw/law-policy",
-    response_model=str,
+    response_model=BulkImportResult,
     status_code=status.HTTP_202_ACCEPTED,
 )
 def ingest_law_policy(
     request: Request,
     law_policy_csv: UploadFile,
+    events_csv: UploadFile,
     background_tasks: BackgroundTasks,
     db=Depends(get_db),
     current_user=Depends(get_current_active_superuser),
     s3_client=Depends(get_s3_client),
 ):
     """
-    Ingests the CSV into the document / family / collection schema.
+    Ingest the provided CSV into the document / family / collection schema.
 
-    Args:
-        request (Request): Incoming request (UNUSED).
-        law_policy_csv (UploadFile): CSV file to ingest.
-        background_tasks (BackgroundTasks): Tasks API to start ingest task.
-        db (_type_, optional): Database connection.
+    :param [Request] request: Incoming request (UNUSED).
+    :param [UploadFile] law_policy_csv: CSV file to ingest.
+    :param [BackgroundTasks] background_tasks: Tasks API to start ingest task.
+    :param [Session] db: Database connection.
         Defaults to Depends(get_db).
-        current_user (_type_, optional): Current user.
+    :param [JWTUser] current_user: Current user.
         Defaults to Depends(get_current_active_superuser).
-        s3_client (_type_, optional): S3 connection.
+    :param [S3Client] s3_client: S3 connection.
         Defaults to Depends(get_s3_client).
-
-    Raises:
-        HTTPException: Unexpected error, validating on ingest
-        HTTPException: Ingest failed validation (results attached)
+    :return [str]: A path to an s3 object containing document updates to be processed
+        by the ingest pipeline.
+    :raises HTTPException: The following HTTPExceptions are raised on errors:
+        400 If the provided CSV file fails schema validation
+        422 On failed validation on the input CSV (results included)
+        500 On an unexpected error
     """
-
-    def start_ingest(db: Session, s3_client: S3Client, file_contents: str):
-        try:
-            ingestor = get_dfc_ingestor()
-            context = db_init(db)
-            read(file_contents, context, ingestor)
-        except Exception as e:
-            _LOGGER.exception("Unexpected error on ingest", extra={"errors": str(e)})
-            raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST) from e
-        # write_documents_to_s3(s3_client=s3_client, documents=document_parser_inputs)
+    # TODO: Combine with event import? refactor out shared structure?
 
     _LOGGER.info(
-        f"Superuser '{current_user.email}' triggered bulk ingest request for "
+        f"Superuser '{current_user.email}' triggered Bulk Document Ingest for "
         "CCLW Law & Policy data"
     )
-    validator = get_dfc_validator()
+
+    try:
+        context = db_init(db)
+    except Exception as e:
+        _LOGGER.exception(
+            "Failed to create ingest context", extra={"props": {"errors": str(e)}}
+        )
+        raise HTTPException(status_code=status.HTTP_500_INTERNAL_SERVER_ERROR) from e
+
+    all_results = []
 
     # PHASE 1 - Validate
     try:
-        file_contents = get_file_contents(law_policy_csv)
-        context = db_init(db)
-        read(file_contents, context, validator)
+        documents_file_contents = get_file_contents(law_policy_csv)
+        validator = get_dfc_validator(db, context)
+        read(documents_file_contents, context, DocumentIngestRow, validator)
         rows, fails, resolved = get_result_counts(context.results)
+        all_results.extend(context.results)
+        context.results = []
         _LOGGER.info(
-            f"Validation result: {rows} Rows, {fails} Failures, {resolved} Resolved"
+            f"Law & Policy validation result: {rows} Rows, {fails} Failures, "
+            f"{resolved} Resolved"
         )
-    except Exception as e:
+    except ImportSchemaMismatchError as e:
         _LOGGER.exception(
-            "Unexpected error, validating on ingest", extra={"errors": str(e)}
+            "Provided CSV failed law & policy schema validation",
+            extra={"props": {"errors": str(e)}},
         )
         raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST) from e
+    except Exception as e:
+        _LOGGER.exception(
+            "Unexpected error, validating law & policy CSV on ingest",
+            extra={"props": {"errors": str(e)}},
+        )
+        raise HTTPException(status_code=status.HTTP_500_INTERNAL_SERVER_ERROR) from e
+
+    try:
+        events_file_contents = get_file_contents(events_csv)
+        read(events_file_contents, context, EventIngestRow, validate_event_row)
+        rows, fails, resolved = get_result_counts(context.results)
+        all_results.extend(context.results)
+        context.results = all_results
+
+        _LOGGER.info(
+            f"Events validation result: {rows} Rows, {fails} Failures, "
+            f"{resolved} Resolved"
+        )
+    except ImportSchemaMismatchError as e:
+        _LOGGER.exception(
+            "Provided CSV failed events schema validation",
+            extra={"props": {"errors": str(e)}},
+        )
+        raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST) from e
+    except Exception as e:
+        _LOGGER.exception(
+            "Unexpected error, validating events CSV on ingest",
+            extra={"props": {"errors": str(e)}},
+        )
+        raise HTTPException(status_code=status.HTTP_500_INTERNAL_SERVER_ERROR) from e
 
     # If we have any validation errors then raise
     validation_errors = [r for r in context.results if r.type == ResultType.ERROR]
@@ -349,48 +425,108 @@ def ingest_law_policy(
         )
         error_details = [e.details for e in validation_errors]
         raise HTTPException(
-            status_code=status.HTTP_400_BAD_REQUEST, detail=error_details
+            status_code=status.HTTP_422_UNPROCESSABLE_ENTITY, detail=error_details
         )
 
-    # No Validation errors - so write to s3
-    result: Union[S3Document, bool] = write_csv_to_s3(
-        s3_client=s3_client, file_contents=file_contents
+    # PHASE 2 - Validation completed without errors, so store the ingest files. This
+    #           will let us investigate errors later
+    s3_prefix = get_new_s3_prefix()
+    try:
+        result_documents: Union[S3Document, bool] = write_csv_to_s3(
+            s3_client=s3_client,
+            s3_prefix=s3_prefix,
+            s3_content_label="documents",
+            file_contents=documents_file_contents,
+        )
+        result_events: Union[S3Document, bool] = write_csv_to_s3(
+            s3_client=s3_client,
+            s3_prefix=s3_prefix,
+            s3_content_label="events",
+            file_contents=events_file_contents,
+        )
+        if (
+            type(result_documents) is bool
+        ):  # S3Client returns False if the object was not created
+            _LOGGER.error(
+                "Write Bulk Document Ingest CSV to S3 Failed.",
+                extra={
+                    "props": {
+                        "superuser_email": current_user.email,
+                    }
+                },
+            )
+            raise HTTPException(
+                status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
+                detail="Unexpected error, fail to write Bulk Document Ingest CSV to S3",
+            )
+        if (
+            type(result_events) is bool
+        ):  # S3Client returns False if the object was not created
+            _LOGGER.error(
+                "Write Bulk Event Ingest CSV to S3 Failed.",
+                extra={
+                    "props": {
+                        "superuser_email": current_user.email,
+                    }
+                },
+            )
+            raise HTTPException(
+                status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
+                detail="Unexpected error, fail to write Bulk Event Ingest CSV to S3",
+            )
+        else:
+            documents_csv_s3_location = str(result_documents.url)
+            events_csv_s3_location = str(result_events.url)
+            _LOGGER.info(
+                "Write Event Ingest CSV complete.",
+                extra={
+                    "props": {
+                        "superuser_email": current_user.email,
+                        "documents_csv_s3_location": documents_csv_s3_location,
+                        "events_csv_s3_location": events_csv_s3_location,
+                    }
+                },
+            )
+    except Exception as e:
+        _LOGGER.exception(
+            "Unexpected error, writing Bulk Document Ingest CSV content to S3",
+            extra={"props": {"errors": str(e)}},
+        )
+        raise HTTPException(status_code=status.HTTP_500_INTERNAL_SERVER_ERROR) from e
+
+    # PHASE 3 - Start the ingest (kick off background task to do the actual ingest)
+    background_tasks.add_task(
+        _start_ingest,
+        db,
+        s3_client,
+        s3_prefix,
+        documents_file_contents,
+        events_file_contents,
     )
-    csv_s3_location = "write failed" if type(result) is bool else str(result.url)
+
     _LOGGER.info(
-        "Write Bulk Ingest CSV complete.",
+        "Background Bulk Document/Event Ingest Task added",
         extra={
             "props": {
                 "superuser_email": current_user.email,
-                "csv_s3_location": csv_s3_location,
-            }
-        },
-    )
-
-    # PHASE 2 - Ingest
-    # Start the background task to do the actual ingest.
-    background_tasks.add_task(start_ingest, db, s3_client, file_contents)
-
-    _LOGGER.info(
-        "Background Bulk Ingest Task added",
-        extra={
-            "props": {
-                "superuser_email": current_user.email,
-                "csv_s3_location": csv_s3_location,
+                "documents_csv_s3_location": documents_csv_s3_location,
+                "events_csv_s3_location": events_csv_s3_location,
             }
         },
     )
 
     # TODO: Add some way the caller can monitor processing pipeline...
-
-    return csv_s3_location
+    return BulkImportResult(
+        import_s3_prefix=s3_prefix,
+        detail=None,  # TODO: add detail?
+    )
 
 
 # TODO: This is the old endpoint which will get removed,
 #       but left here for reference.
 @r.post(
     "/bulk-imports/cclw/law-policy",
-    response_model=BulkImportValidatedResult,
+    response_model=BulkImportResult,
     status_code=status.HTTP_202_ACCEPTED,
 )
 def import_law_policy(
@@ -454,8 +590,12 @@ def import_law_policy(
             },
         )
 
+        s3_prefix = get_new_s3_prefix()
         result: Union[S3Document, bool] = write_csv_to_s3(
-            s3_client=s3_client, file_contents=file_contents
+            s3_client=s3_client,
+            s3_prefix=s3_prefix,
+            s3_content_label="documents",
+            file_contents=file_contents,
         )
 
         csv_s3_location = "write failed" if type(result) is bool else str(result.url)
@@ -469,7 +609,13 @@ def import_law_policy(
             },
         )
 
-        background_tasks.add_task(start_import, db, s3_client, document_create_objects)
+        background_tasks.add_task(
+            start_import,
+            db,
+            s3_client,
+            s3_prefix,
+            document_create_objects,
+        )
 
         _LOGGER.info(
             "Background Bulk Import Task added",
@@ -483,12 +629,14 @@ def import_law_policy(
 
         # TODO: Add some way the caller can monitor processing pipeline...
 
-        return BulkImportValidatedResult(
-            document_count=total_document_count,
-            document_added_count=total_document_count - document_skipped_count,
-            document_skipped_count=document_skipped_count,
-            document_skipped_ids=list(documents_ids_already_exist),
-            csv_s3_location=csv_s3_location,
+        return BulkImportResult(
+            import_s3_prefix=s3_prefix,
+            detail=BulkImportDetail(
+                document_count=total_document_count,
+                document_added_count=total_document_count - document_skipped_count,
+                document_skipped_count=document_skipped_count,
+                document_skipped_ids=list(documents_ids_already_exist),
+            ),
         )
     except ImportSchemaMismatchError as e:
         raise HTTPException(

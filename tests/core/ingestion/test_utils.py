@@ -32,8 +32,8 @@ def add_a_family(db: Session, description: str = "description"):
         import_id=FAMILY_IMPORT_ID,
         title="title",
         geography_id=2,
-        category_name="EXECUTIVE",
         description=description,
+        family_category="EXECUTIVE",
         family_status="Published",
     )
     db.add(family)
@@ -55,9 +55,9 @@ def test_get_or_create__gets(test_db: Session):
     assert family.title == "title"
     assert family.description == "description"
     assert family.geography_id == 2
-    assert family.category_name == "EXECUTIVE"
+    assert family.family_category == "EXECUTIVE"
     assert family.family_status == "Published"
-    assert FamilyCategory(family.category_name) == FamilyCategory.EXECUTIVE
+    assert FamilyCategory(family.family_category) == FamilyCategory.EXECUTIVE
     assert FamilyStatus(family.family_status) == FamilyStatus.PUBLISHED
 
 
@@ -70,8 +70,8 @@ def test_get_or_create__creates(test_db):
         extra={
             "title": "title",
             "geography_id": 2,
-            "category_name": "EXECUTIVE",
             "description": "description",
+            "family_category": "EXECUTIVE",
             "family_status": "Published",
         },
     )
@@ -83,9 +83,9 @@ def test_get_or_create__creates(test_db):
     assert family.title == "title"
     assert family.description == "description"
     assert family.geography_id == 2
-    assert family.category_name == "EXECUTIVE"
+    assert family.family_category == "EXECUTIVE"
     assert family.family_status == "Published"
-    assert FamilyCategory(family.category_name) == FamilyCategory.EXECUTIVE
+    assert FamilyCategory(family.family_category) == FamilyCategory.EXECUTIVE
     assert FamilyStatus(family.family_status) == FamilyStatus.PUBLISHED
 
 
@@ -99,8 +99,8 @@ def test_get_or_create__after_create(test_db):
         extra={
             "title": "title",
             "geography_id": 2,
-            "category_name": "EXECUTIVE",
             "description": "description",
+            "family_category": "EXECUTIVE",
             "family_status": "Published",
         },
         after_create=after_create,
@@ -117,7 +117,7 @@ def test_to_dict(test_db):
     populate_geography(test_db)
     existing_family = add_a_family(
         test_db,
-        description="""This is a really long description 
+        description="""This is a really long description
         which should get truncated to 80 chars, the test
         will fail if it does not.
         """,
@@ -127,8 +127,8 @@ def test_to_dict(test_db):
 
     assert new_dict == {
         "__class__": "Family",
-        "category_name": "EXECUTIVE",
-        "description": "This is a really long description \n        which should get truncated to 80 char...",
+        "description": "This is a really long description\n        which should get truncated to 80 chars...",
+        "family_category": "EXECUTIVE",
         "family_status": "Published",
         "geography_id": "2",
         "import_id": FAMILY_IMPORT_ID,

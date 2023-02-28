@@ -1,7 +1,7 @@
 from typing import cast
 from sqlalchemy.orm import Session
 from app.core.ingestion.collection import collection_from_row
-from app.core.ingestion.ingest_row import IngestRow
+from app.core.ingestion.ingest_row import DocumentIngestRow
 from app.core.ingestion.utils import get_or_create
 from app.db.models.law_policy.collection import (
     Collection,
@@ -14,14 +14,14 @@ from tests.core.ingestion.helpers import (
     COLLECTION_IMPORT_ID,
     FAMILY_IMPORT_ID,
     add_a_slug_for_family1_and_flush,
-    get_ingest_row_data,
+    get_doc_ingest_row_data,
     init_for_ingest,
 )
 
 
 def test_collection_from_row(test_db: Session):
     init_for_ingest(test_db)
-    row = IngestRow.from_row(1, get_ingest_row_data(0))
+    row = DocumentIngestRow.from_row(1, get_doc_ingest_row_data(0))
     result = {}
     family = get_or_create(
         test_db,
@@ -30,8 +30,8 @@ def test_collection_from_row(test_db: Session):
         extra={
             "title": "title",
             "geography_id": 2,
-            "category_name": "EXECUTIVE",
             "description": "description",
+            "family_category": "EXECUTIVE",
             "family_status": "Published",
         },
     )

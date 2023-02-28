@@ -15,6 +15,7 @@ from app.db.session import SessionLocal
 from app.data_migrations import (
     populate_category,
     populate_document_type,
+    populate_event_type,
     populate_framework,
     populate_geo_statistics,
     populate_geography,
@@ -37,6 +38,7 @@ def run_data_migrations(db):
 
     populate_category(db)
     populate_document_type(db)
+    populate_event_type(db)
     populate_framework(db)
     populate_geography(db)
     populate_hazard(db)

@@ -5,9 +5,11 @@ from unittest.mock import patch
 import pytest
 
 from app.api.api_v1.routers.admin import ACCOUNT_ACTIVATION_EXPIRE_MINUTES
+from app.data_migrations.populate_taxonomy import populate_taxonomy
 from app.db.models.deprecated import (
     Source,
     Document,
+    DocumentType,
     Language,
     Sector,
     Response,
@@ -19,7 +21,6 @@ from app.db.models.deprecated import (
     User,
     PasswordResetToken,
 )
-from app.db.models.deprecated import DocumentType
 from app.db.models.law_policy import Geography
 from tests.core.validation.cclw.test_law_policy import (
     INVALID_FILE_1,
@@ -278,6 +279,102 @@ def test_reset_password(
     assert mock_send_email.call_count == 2
 
 
+ONE_DFC_ROW = """ID,Document ID,CCLW Description,Part of collection?,Create new family/ies?,Collection ID,Collection name,Collection summary,Document title,Family name,Family summary,Family ID,Document role,Applies to ID,Geography ISO,Documents,Category,Events,Sectors,Instruments,Frameworks,Responses,Natural Hazards,Document Type,Year,Language,Keywords,Geography,Parent Legislation,Comment,CPR Document ID,CPR Family ID,CPR Collection ID,CPR Family Slug,CPR Document Slug
+1001,0,Test1,FALSE,FALSE,N/A,Collection1,CollectionSummary1,Title1,Fam1,Summary1,,MAIN,,GEO,http://somewhere|en,executive,02/02/2014|Law passed,Energy,,,Mitigation,,Order,,,Energy Supply,Algeria,,,CCLW.executive.1.2,CCLW.family.1001.0,CPR.Collection.1,FamSlug1,DocSlug1
+"""
+
+TWO_EVENT_ROWS = """Id,Eventable type,Eventable Id,Eventable name,Event type,Title,Description,Date,Url,CPR Event ID,CPR Family ID,Event Status
+1101,Legislation,1001,Title1,Passed/Approved,Published,,2019-12-25,,CCLW.legislation_event.1101.0,CCLW.family.1001.0,OK
+1102,Legislation,1001,Title1,Entered Into Force,Entered into force,,2018-01-01,,CCLW.legislation_event.1102.1,CCLW.family.1001.0,DUPLICATED
+"""
+
+
+def test_bulk_ingest_cclw_law_policy_preexisting_db_objects(
+    client,
+    superuser_token_headers,
+    test_db,
+    mocker,
+):
+    mock_start_import = mocker.patch("app.api.api_v1.routers.admin._start_ingest")
+    mock_write_csv_to_s3 = mocker.patch("app.api.api_v1.routers.admin.write_csv_to_s3")
+
+    populate_taxonomy(db=test_db)
+    test_db.add(Source(name="CCLW"))
+    test_db.add(
+        Geography(
+            display_value="geography", slug="geography", value="GEO", type="country"
+        )
+    )
+    test_db.add(DocumentType(name="doctype", description="doctype"))
+    test_db.add(Language(language_code="LAN", name="language"))
+    test_db.add(Category(name="Policy", description="Policy"))
+    test_db.add(Keyword(name="keyword1", description="keyword1"))
+    test_db.add(Keyword(name="keyword2", description="keyword2"))
+    test_db.add(Hazard(name="hazard1", description="hazard1"))
+    test_db.add(Hazard(name="hazard2", description="hazard2"))
+    test_db.add(Response(name="topic", description="topic"))
+    test_db.add(Framework(name="framework", description="framework"))
+
+    test_db.commit()
+    existing_doc_import_id = "CCLW.executive.1.2"
+    test_db.add(Instrument(name="instrument", description="instrument", source_id=1))
+    test_db.add(Sector(name="sector", description="sector", source_id=1))
+    test_db.add(
+        Document(
+            publication_ts=datetime.datetime(year=2014, month=1, day=1),
+            name="test",
+            description="test description",
+            source_url="http://somewhere",
+            source_id=1,
+            url="",
+            cdn_object="",
+            md5_sum=None,
+            content_type=None,
+            slug="geography_2014_test_1_2",
+            import_id=existing_doc_import_id,
+            geography_id=1,
+            type_id=1,
+            category_id=1,
+        )
+    )
+    test_db.commit()
+
+    law_policy_csv_file = BytesIO(ONE_DFC_ROW.encode("utf8"))
+    events_csv_file = BytesIO(TWO_EVENT_ROWS.encode("utf8"))
+    files = {
+        "law_policy_csv": (
+            "valid_law_policy.csv",
+            law_policy_csv_file,
+            "text/csv",
+            {"Expires": "0"},
+        ),
+        "events_csv": (
+            "valid_events.csv",
+            events_csv_file,
+            "text/csv",
+            {"Expires": "0"},
+        ),
+    }
+    response = client.post(
+        "/api/v1/admin/bulk-ingest/cclw/law-policy",
+        files=files,
+        headers=superuser_token_headers,
+    )
+    assert response.status_code == 202
+    response_json = response.json()
+    assert response_json["detail"] is None  # Not yet implemented
+
+    mock_start_import.assert_called_once()
+
+    assert mock_write_csv_to_s3.call_count == 2  # write docs & events csvs
+    call0 = mock_write_csv_to_s3.mock_calls[0]
+    assert len(call0.kwargs["file_contents"]) == law_policy_csv_file.getbuffer().nbytes
+    call1 = mock_write_csv_to_s3.mock_calls[1]
+    assert len(call1.kwargs["file_contents"]) == events_csv_file.getbuffer().nbytes
+
+
+# TODO: The following tests are for the old import endpoint & should be removed
+#       when no longer required
 def test_bulk_import_cclw_law_policy_valid(
     client,
     superuser_token_headers,
@@ -319,13 +416,13 @@ def test_bulk_import_cclw_law_policy_valid(
     )
     assert response.status_code == 202
     response_json = response.json()
-    assert response_json["document_count"] == 2
-    assert response_json["document_skipped_count"] == 0
-    assert response_json["document_skipped_ids"] == []
+    assert response_json["detail"]["document_count"] == 2
+    assert response_json["detail"]["document_skipped_count"] == 0
+    assert response_json["detail"]["document_skipped_ids"] == []
 
     mock_start_import.assert_called_once()
     call = mock_start_import.mock_calls[0]
-    assert len(call.args[2]) == 2
+    assert len(call.args[3]) == 2
 
     mock_write_csv_to_s3.assert_called_once()
     call = mock_write_csv_to_s3.mock_calls[0]
@@ -374,7 +471,7 @@ def test_bulk_import_cclw_law_policy_invalid(
     test_db.commit()
 
     csv_file = BytesIO(invalid_file_content.encode("utf8"))
-    files = {"law_policy_csv": ("valid.csv", csv_file, "text/csv", {"Expires": "0"})}
+    files = {"law_policy_csv": ("invalid.csv", csv_file, "text/csv", {"Expires": "0"})}
     response = client.post(
         "/api/v1/admin/bulk-imports/cclw/law-policy",
         files=files,
@@ -428,13 +525,13 @@ def test_bulk_import_cclw_law_policy_db_objects(
     )
     assert response.status_code == 202
     response_json = response.json()
-    assert response_json["document_count"] == 2
-    assert response_json["document_skipped_count"] == 0
-    assert response_json["document_skipped_ids"] == []
+    assert response_json["detail"]["document_count"] == 2
+    assert response_json["detail"]["document_skipped_count"] == 0
+    assert response_json["detail"]["document_skipped_ids"] == []
 
     mock_start_import.assert_called_once()
     call = mock_start_import.mock_calls[0]
-    assert len(call.args[2]) == 2
+    assert len(call.args[3]) == 2
 
     mock_write_csv_to_s3.assert_called_once()
     call = mock_write_csv_to_s3.mock_calls[0]
@@ -501,13 +598,13 @@ def test_bulk_import_cclw_law_policy_preexisting_db_objects(
     )
     assert response.status_code == 202
     response_json = response.json()
-    assert response_json["document_count"] == 2
-    assert response_json["document_skipped_count"] == 1
-    assert response_json["document_skipped_ids"] == [existing_doc_import_id]
+    assert response_json["detail"]["document_count"] == 2
+    assert response_json["detail"]["document_skipped_count"] == 1
+    assert response_json["detail"]["document_skipped_ids"] == [existing_doc_import_id]
 
     mock_start_import.assert_called_once()
     call = mock_start_import.mock_calls[0]
-    assert len(call.args[2]) == 1
+    assert len(call.args[3]) == 1
 
     mock_write_csv_to_s3.assert_called_once()
     call = mock_write_csv_to_s3.mock_calls[0]

@@ -1,8 +1,9 @@
 from sqlalchemy.orm import Session
 from app.db.models.law_policy.metadata import MetadataOrganisation, MetadataTaxonomy
+from app.core.ingestion.metadata import Taxonomy, TaxonomyEntry
 
 
-def get_organisation_taxonomy(db: Session, org_id: int) -> tuple[int, dict]:
+def get_organisation_taxonomy(db: Session, org_id: int) -> tuple[int, Taxonomy]:
     """
     Returns the taxonomy id and its dict representation for an organisation.
 
@@ -14,7 +15,7 @@ def get_organisation_taxonomy(db: Session, org_id: int) -> tuple[int, dict]:
         ValueError: raised when taxonomy not found
 
     Returns:
-        tuple[int, dict]: the taxonomy id and dict value
+        tuple[int, Taxonomy]: the taxonomy id and dict value
     """
     taxonomy = (
         db.query(MetadataTaxonomy.id, MetadataTaxonomy.valid_metadata)
@@ -27,4 +28,4 @@ def get_organisation_taxonomy(db: Session, org_id: int) -> tuple[int, dict]:
     )
     # The above line will throw if there is no taxonomy for the organisation
 
-    return taxonomy[0], taxonomy[1]
+    return taxonomy[0], {k: TaxonomyEntry(**v) for k, v in taxonomy[1].items()}

@@ -1,7 +1,7 @@
 from typing import Any, Optional
 
 from sqlalchemy.orm import Session
-from app.core.ingestion.ingest_row import IngestRow
+from app.core.ingestion.ingest_row import DocumentIngestRow
 from app.core.ingestion.utils import get_or_create, to_dict
 
 from app.db.models.law_policy import Collection
@@ -10,7 +10,7 @@ from app.db.models.law_policy.collection import CollectionFamily, CollectionOrga
 
 def collection_from_row(
     db: Session,
-    row: IngestRow,
+    row: DocumentIngestRow,
     org_id: int,
     family_import_id: str,
     result: dict[str, Any],
@@ -19,7 +19,7 @@ def collection_from_row(
     Create the collection part of the schema from the row.
 
     :param [Session] db: connection to the database.
-    :param [IngestRow] row: the row built from the CSV.
+    :param [DocumentIngestRow] row: the row built from the CSV.
     :param [int] org_id: the organisation id associated with this row.
     :param [str] family_import_id: the family id associated with this row.
     :param [dict[str, Any]]: a result dict in which to record what was created.

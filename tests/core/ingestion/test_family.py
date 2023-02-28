@@ -1,7 +1,7 @@
 import pytest
 from sqlalchemy.orm import Session
 from app.core.ingestion.family import family_from_row
-from app.core.ingestion.ingest_row import IngestRow
+from app.core.ingestion.ingest_row import DocumentIngestRow
 from app.db.models.deprecated import Document
 from app.db.models.law_policy.family import (
     Family,
@@ -15,14 +15,14 @@ from tests.core.ingestion.helpers import (
     FAMILY_IMPORT_ID,
     SLUG_FAMILY_NAME,
     add_a_slug_for_family1_and_flush,
-    get_ingest_row_data,
+    get_doc_ingest_row_data,
     init_for_ingest,
 )
 
 
 def test_family_from_row(test_db: Session):
     init_for_ingest(test_db)
-    row = IngestRow.from_row(1, get_ingest_row_data(0))
+    row = DocumentIngestRow.from_row(1, get_doc_ingest_row_data(0))
     result = {}
 
     doc = (
@@ -54,12 +54,14 @@ def test_family_from_row(test_db: Session):
     )
     new_family = test_db.query(Family).filter_by(import_id=FAMILY_IMPORT_ID).one()
     assert family == new_family
+    assert new_family.published_date is None
+    assert new_family.last_updated_date is None
 
 
 def test_family_from_row__bad_family_name(test_db: Session):
     init_for_ingest(test_db)
     result = {}
-    row = IngestRow.from_row(1, get_ingest_row_data(0))
+    row = DocumentIngestRow.from_row(1, get_doc_ingest_row_data(0))
     # Pre-Add the family
     category = FamilyCategory(row.category.upper())
     test_db.add(
@@ -67,8 +69,8 @@ def test_family_from_row__bad_family_name(test_db: Session):
             import_id=FAMILY_IMPORT_ID,
             title=row.family_name,
             geography_id=2,
-            category_name=category,
             description=row.family_summary,
+            family_category=category,
             family_status=FamilyStatus.PUBLISHED,
         )
     )

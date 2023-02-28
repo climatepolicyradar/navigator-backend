@@ -1,10 +1,14 @@
 from .family import (
     DocumentStatus,
+    EventStatus,
     FamilyCategory,
     Family,
     FamilyDocument,
     FamilyDocumentType,
+    FamilyEvent,
+    FamilyEventType,
     FamilyOrganisation,
+    FamilyStatus,
     Slug,
     Variant,
 )

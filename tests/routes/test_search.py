@@ -195,7 +195,7 @@ def _create_family_structures(
                 .id
             ),
             family_status=FamilyStatus.PUBLISHED,
-            category_name=_doc_str_to_category(doc_details["document_category"]),
+            family_category=_doc_str_to_category(doc_details["document_category"]),
         )
         family_slug = Slug(
             name=family_id,
@@ -216,9 +216,9 @@ def _create_family_structures(
 
     physical_document = PhysicalDocument(
         title=doc_details["document_name"],
+        cdn_object=None,
         md5_sum=None,
         source_url=None,
-        date=datetime.utcnow(),
         content_type=None,
     )
     db.add(physical_document)
@@ -227,7 +227,6 @@ def _create_family_structures(
     family_document = FamilyDocument(
         family_import_id=family_id,
         physical_document_id=physical_document.id,
-        cdn_object=None,
         import_id=doc_id,
         variant_name=variants[f"translated_{doc_details['translated']}"].variant_name,
         document_status=DocumentStatus.PUBLISHED,

@@ -88,8 +88,8 @@ def _maybe_create_family(
         extra={
             "title": row.family_name,
             "geography_id": geography.id,
-            "category_name": category,
             "description": row.family_summary,
+            "family_category": category,
             "family_status": FamilyStatus.PUBLISHED,
         },
         after_create=_create_family_links,
@@ -127,7 +127,6 @@ def _maybe_create_family_document(
     family_document = FamilyDocument(
         family_import_id=family.import_id,
         physical_document_id=physical_document.id,
-        cdn_object=existing_document.cdn_object,
         import_id=row.cpr_document_id,
         variant_name=variant_name,
         document_status=DocumentStatus.PUBLISHED,

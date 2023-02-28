@@ -1,11 +1,12 @@
 import datetime
 import os
 import typing as t
+import uuid
 
 import pytest
 from fastapi.testclient import TestClient
 from moto import mock_s3
-from sqlalchemy import create_engine, event
+from sqlalchemy import create_engine
 from sqlalchemy.orm import sessionmaker
 from sqlalchemy_utils import create_database, database_exists, drop_database
 
@@ -67,7 +68,7 @@ def test_opensearch():
 
 
 def get_test_db_url() -> str:
-    return os.environ["DATABASE_URL"] + "_test"
+    return os.environ["DATABASE_URL"] + f"_test_{uuid.uuid4()}"
 
 
 @pytest.fixture
@@ -92,38 +93,35 @@ def create_test_db():
 
 
 @pytest.fixture
-def test_db(create_test_db):
-    """
-    Provide a test DB.
+def test_db():
+    """Create a fresh test database for each test."""
 
-    Modify the db session to automatically roll back after each test.
-    This is to avoid tests affecting the database state of other tests.
-    """
-    # Connect to the test database
-    engine = create_engine(
-        get_test_db_url(),
-    )
+    test_db_url = get_test_db_url()
 
-    connection = engine.connect()
-    trans = connection.begin()
+    # Create the test database
+    if database_exists(test_db_url):
+        drop_database(test_db_url)
+    create_database(test_db_url)
+    try:
+        test_engine = create_engine(test_db_url)
+        connection = test_engine.connect()
+        trans = connection.begin()
+        Base.metadata.create_all(test_engine)  # type: ignore
+        test_session_maker = sessionmaker(
+            autocommit=False,
+            autoflush=False,
+            bind=test_engine,
+        )
+        test_session = test_session_maker()
 
-    # Run a parent transaction that can roll back all changes
-    test_session_maker = sessionmaker(autocommit=False, autoflush=False, bind=engine)
-    test_session = test_session_maker()
-    test_session.begin_nested()
-
-    @event.listens_for(test_session, "after_transaction_end")
-    def restart_savepoint(s, transaction):
-        if transaction.nested and not transaction._parent.nested:
-            s.expire_all()
-            s.begin_nested()
-
-    yield test_session
-
-    # Roll back the parent transaction after the test is complete
-    test_session.close()
-    trans.rollback()
-    connection.close()
+        # Run the tests
+        yield test_session
+    finally:
+        test_session.close()
+        trans.rollback()
+        connection.close()
+        # Drop the test database
+        drop_database(test_db_url)
 
 
 @pytest.fixture
