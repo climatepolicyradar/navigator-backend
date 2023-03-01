@@ -3,7 +3,7 @@ from sqlalchemy.exc import NoResultFound
 from sqlalchemy.orm import Session
 from app.core.ingestion.ingest_row import DocumentIngestRow
 from app.core.ingestion.metadata import build_metadata
-from app.core.ingestion.organisation import get_organisation_taxonomy
+from app.core.organisation import get_organisation_taxonomy
 from app.core.ingestion.utils import ResultType
 from tests.core.ingestion.helpers import get_doc_ingest_row_data, init_for_ingest
 

@@ -5,6 +5,7 @@ from unittest.mock import MagicMock
 import pytest
 
 from app.core.util import tree_table_to_json
+from app.data_migrations import populate_taxonomy
 from app.db.session import SessionLocal
 from tests.routes.test_documents import create_4_documents
 
@@ -33,6 +34,31 @@ def test_endpoint_returns_correct_keys(client):
         "sectors",
         "sources",
         "topics",
+    }
+
+
+def test_endpoint_returns_taxonomy(client, test_db):
+    """Tests whether we get the correct data when the /config endpoint is called."""
+    url_under_test = "/api/v1/config?group_documents=True"
+    populate_taxonomy(test_db)
+    test_db.flush()
+
+    response = client.get(
+        url_under_test,
+    )
+
+    response_json = response.json()
+
+    assert response.status_code == OK
+    assert response_json["organisation"] == "CCLW"
+    assert set(response_json["taxonomy"]) == {
+        "instrument",
+        "keyword",
+        "sector",
+        "document_type",
+        "topic",
+        "framework",
+        "hazard",
     }
 
 

@@ -1,21 +1,27 @@
-from typing import Sequence
+from typing import Sequence, Union
 
 from fastapi import Depends, Request, Response
 
-from app.api.api_v1.schemas.metadata import Config
+from app.api.api_v1.schemas.metadata import Config, TaxonomyConfig
 from app.core.lookups import get_metadata
 from app.db.session import get_db
 from app.db.crud.document import get_document_ids
 from .router import lookups_router
 
+from app.core.organisation import get_organisation_taxonomy_by_name
 
-@lookups_router.get("/config", response_model=Config)
+
+@lookups_router.get("/config", response_model=Union[Config, TaxonomyConfig])
 def lookup_config(
     request: Request,
     db=Depends(get_db),
+    group_documents: bool = False,
 ):
     """Get the config for the metadata."""
-    return get_metadata(db)
+    if not group_documents:
+        return get_metadata(db)
+    else:
+        return get_organisation_taxonomy_by_name(db=db, org_name="CCLW")
 
 
 @lookups_router.get(
