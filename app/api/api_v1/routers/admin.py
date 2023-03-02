@@ -40,7 +40,12 @@ from app.core.ingestion.processor import (
     get_event_ingestor,
 )
 from app.core.ingestion.reader import get_file_contents, read
-from app.core.ingestion.utils import ResultType, get_result_counts
+from app.core.ingestion.utils import (
+    IngestContext,
+    Result,
+    ResultType,
+    get_result_counts,
+)
 from app.core.ingestion.validator import validate_event_row
 from app.core.ratelimit import limiter
 from app.core.validation import IMPORT_ID_MATCHER
@@ -318,6 +323,68 @@ def _start_ingest(
 
 
 @r.post(
+    "/bulk-ingest/validate/cclw/law-policy",
+    response_model=str,
+    status_code=status.HTTP_202_ACCEPTED,
+)
+def validate_law_policy(
+    request: Request,
+    law_policy_csv: UploadFile,
+    db=Depends(get_db),
+    current_user=Depends(get_current_active_superuser),
+):
+    """
+    Validates the provided CSV into the document / family / collection schema.
+
+    :param [Request] request: Incoming request (UNUSED).
+    :param [UploadFile] law_policy_csv: CSV file to ingest.
+    :param [Session] db: Database connection.
+        Defaults to Depends(get_db).
+    :param [JWTUser] current_user: Current user.
+        Defaults to Depends(get_current_active_superuser).
+    :return [str]: A path to an s3 object containing document updates to be processed
+        by the ingest pipeline.
+    :raises HTTPException: The following HTTPExceptions are raised on errors:
+        400 If the provided CSV file fails schema validation
+        422 On failed validation on the input CSV (results included)
+        500 On an unexpected error
+    """
+    # TODO: Combine with event import? refactor out shared structure?
+
+    _LOGGER.info(
+        f"Superuser '{current_user.email}' triggered Bulk Document Validation for "
+        "CCLW Law & Policy data"
+    )
+
+    try:
+        context = db_init(db)
+    except Exception as e:
+        _LOGGER.exception(
+            "Failed to create ingest context", extra={"props": {"errors": str(e)}}
+        )
+        raise HTTPException(status_code=status.HTTP_500_INTERNAL_SERVER_ERROR) from e
+
+    all_results = []
+
+    try:
+        _, message = validate_law_policy_csv(law_policy_csv, db, context, all_results)
+    except ImportSchemaMismatchError as e:
+        _LOGGER.exception(
+            "Provided CSV failed law & policy schema validation",
+            extra={"props": {"errors": str(e)}},
+        )
+        raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST) from e
+    except Exception as e:
+        _LOGGER.exception(
+            "Unexpected error, validating law & policy CSV on ingest",
+            extra={"props": {"errors": str(e)}},
+        )
+        raise HTTPException(status_code=status.HTTP_500_INTERNAL_SERVER_ERROR) from e
+
+    return message
+
+
+@r.post(
     "/bulk-ingest/cclw/law-policy",
     response_model=BulkImportResult,
     status_code=status.HTTP_202_ACCEPTED,
@@ -369,15 +436,8 @@ def ingest_law_policy(
 
     # PHASE 1 - Validate
     try:
-        documents_file_contents = get_file_contents(law_policy_csv)
-        validator = get_dfc_validator(db, context)
-        read(documents_file_contents, context, DocumentIngestRow, validator)
-        rows, fails, resolved = get_result_counts(context.results)
-        all_results.extend(context.results)
-        context.results = []
-        _LOGGER.info(
-            f"Law & Policy validation result: {rows} Rows, {fails} Failures, "
-            f"{resolved} Resolved"
+        documents_file_contents, _ = validate_law_policy_csv(
+            law_policy_csv, db, context, all_results
         )
     except ImportSchemaMismatchError as e:
         _LOGGER.exception(
@@ -520,6 +580,28 @@ def ingest_law_policy(
         import_s3_prefix=s3_prefix,
         detail=None,  # TODO: add detail?
     )
+
+
+def validate_law_policy_csv(
+    law_policy_csv: UploadFile,
+    db: Session,
+    context: IngestContext,
+    all_results: list[Result],
+) -> tuple[str, str]:
+    documents_file_contents = get_file_contents(law_policy_csv)
+    validator = get_dfc_validator(db, context)
+    read(documents_file_contents, context, DocumentIngestRow, validator)
+    rows, fails, resolved = get_result_counts(context.results)
+    all_results.extend(context.results)
+    context.results = []
+    message = (
+        f"Law & Policy validation result: {rows} Rows, {fails} Failures, "
+        f"{resolved} Resolved"
+    )
+
+    _LOGGER.info(message)
+
+    return documents_file_contents, message
 
 
 # TODO: This is the old endpoint which will get removed,
