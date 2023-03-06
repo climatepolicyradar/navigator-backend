@@ -6,9 +6,14 @@ on:
   schedule:
     # * is a special character in YAML so you have to quote this string
     - cron:  '30 5 * * *'
+  push:
+    branches:
+      - main
+  pull_request:
+    branches:
+      - main
 
 jobs:
-
   validate-csv:
     runs-on: ubuntu-latest
     steps:
