@@ -12,6 +12,8 @@ import json
 
 from os import environ
 
+# https://developers.google.com/sheets/api/quickstart/python
+# https://googleapis.dev/python/google-auth/latest/_modules/google/oauth2/service_account.html
 from google.oauth2 import service_account
 from googleapiclient.discovery import build, Resource
 from googleapiclient.errors import HttpError

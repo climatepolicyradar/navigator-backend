@@ -4,11 +4,9 @@ on:
   push:
     branches:
       - main
-      - dev
   pull_request:
     branches:
       - main
-      - dev
 
 # https://github.com/marketplace/actions/docker-layer-caching
 jobs:

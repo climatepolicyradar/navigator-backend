@@ -7,7 +7,7 @@ start_containers:
 	# Build and run containers
 	docker-compose -f docker-compose.yml -f docker-compose.dev.yml up -d
 
-start_backendonly:
+start_backendonly: migrations
 	# Build and run containers
 	docker-compose -f docker-compose.yml -f docker-compose.dev.yml up -d backend backend_db
 

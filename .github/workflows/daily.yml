@@ -31,7 +31,9 @@ jobs:
           docker images
 
       - name: Validate
-        run:  make validate_cclw_sheet
+        run:  |
+          pip install --upgrade google-api-python-client google-auth-httplib2 google-auth-oauthlib
+          make validate_cclw_sheet
 
       - name: Log Dump
         if:   always()
