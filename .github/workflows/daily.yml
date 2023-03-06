@@ -23,7 +23,7 @@ jobs:
         run:  cp .env.example .env
 
       - name: Download Sheet
-        run: GOOGLE_SERVICE_ACCOUNT=${{ secrets.GOOGLE_SERVICE_ACCOUNT }} python scripts/validate_cclw_sheet/download.py > download.csv
+        run: GOOGLE_SERVICE_ACCOUNT='${{ secrets.GOOGLE_SERVICE_ACCOUNT }}' python scripts/validate_cclw_sheet/download.py > download.csv
 
       - name: Get python Container
         run:  docker pull python:3.9
