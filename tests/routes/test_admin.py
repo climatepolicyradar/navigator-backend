@@ -316,7 +316,7 @@ def test_validate_bulk_ingest_cclw_law_policy(
         response_json["message"]
         == "Law & Policy validation result: 1 Rows, 0 Failures, 0 Resolved"
     )
-    assert len(response_json["results"]) == 0
+    assert len(response_json["errors"]) == 0
 
 
 def test_bulk_ingest_cclw_law_policy_preexisting_db_objects(

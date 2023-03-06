@@ -108,7 +108,7 @@ class ValidationResult:
     """Returned when validating a CSV"""
 
     message: str
-    results: list[Result]
+    errors: list[Result]
 
 
 def get_result_counts(results: list[Result]) -> tuple[int, int, int]:

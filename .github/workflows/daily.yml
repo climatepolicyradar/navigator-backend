@@ -1,0 +1,33 @@
+name: Daily
+
+# See https://docs.github.com/en/actions/using-workflows/events-that-trigger-workflows#schedule
+
+on:
+  schedule:
+    # * is a special character in YAML so you have to quote this string
+    - cron:  '30 5 * * *'
+
+jobs:
+
+  validate-csv:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v2
+
+      - name: Use .env.example
+        run:  cp .env.example .env
+
+      - name: Get python Container
+        run:  docker pull python:3.9
+
+      - name: Build
+        run: |
+          docker-compose build
+          docker images
+
+      - name: Validate
+        run:  make validate_cclw_sheet
+
+      - name: Log Dump
+        if:   always()
+        run:  docker-compose logs

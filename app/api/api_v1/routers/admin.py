@@ -382,8 +382,8 @@ def validate_law_policy(
         raise HTTPException(status_code=status.HTTP_500_INTERNAL_SERVER_ERROR) from e
 
     # Intended output for this is the console - so for now just format it up for that.
-    results = [r for r in all_results if r.type != ResultType.OK]
-    return ValidationResult(message=message, results=results)
+    errors = [r for r in all_results if r.type == ResultType.ERROR]
+    return ValidationResult(message=message, errors=errors)
 
 
 @r.post(
