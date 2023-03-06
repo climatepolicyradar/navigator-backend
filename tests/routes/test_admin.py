@@ -289,6 +289,36 @@ TWO_EVENT_ROWS = """Id,Eventable type,Eventable Id,Eventable name,Event type,Tit
 """
 
 
+def test_validate_bulk_ingest_cclw_law_policy(
+    client,
+    superuser_token_headers,
+    test_db,
+):
+    populate_taxonomy(db=test_db)
+    test_db.commit()
+    law_policy_csv_file = BytesIO(ONE_DFC_ROW.encode("utf8"))
+    files = {
+        "law_policy_csv": (
+            "valid_law_policy.csv",
+            law_policy_csv_file,
+            "text/csv",
+            {"Expires": "0"},
+        ),
+    }
+    response = client.post(
+        "/api/v1/admin/bulk-ingest/validate/cclw/law-policy",
+        files=files,
+        headers=superuser_token_headers,
+    )
+    assert response.status_code == 200
+    response_json = response.json()
+    assert (
+        response_json["message"]
+        == "Law & Policy validation result: 1 Rows, 0 Failures, 0 Resolved"
+    )
+    assert len(response_json["results"]) == 0
+
+
 def test_bulk_ingest_cclw_law_policy_preexisting_db_objects(
     client,
     superuser_token_headers,

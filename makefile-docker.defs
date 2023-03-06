@@ -18,9 +18,9 @@ start: start_containers migrations
 
 start_backend: start_backendonly migrations
 
-ingest_validation: start_backendonly
-	python scripts/ingest_cclw_sheet/download.py > download.csv
-	./scripts/ingest_cclw_sheet/test-ingest.sh download.csv
+validate_cclw_sheet: start_backendonly
+	python scripts/validate_cclw_sheet/download.py > download.csv
+	./scripts/validate_cclw_sheet/validate-ingest.sh download.csv
 
 stop:
 	docker-compose stop

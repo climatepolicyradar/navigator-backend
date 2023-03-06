@@ -1,5 +1,8 @@
 #!/bin/bash
-
+#
+# Posts the request to validate the ingest.
+#
+# 
 export CSV_FILE=$1
 
 # ---------- Functions ----------
@@ -8,7 +11,7 @@ get_token() {
     curl -s \
     -H "Content-Type: application/x-www-form-urlencoded" \
     -d "username=$SUPERUSER_EMAIL&password=$SUPERUSER_PASSWORD" \
-        $API_HOST/api/tokens | \
+        $TEST_HOST/api/tokens | \
         jq ".access_token" | tr -d '"'
 }
 
@@ -17,9 +20,17 @@ validate_csv() {
     curl -s \
         -H "Authorization: Bearer ${TOKEN}" \
         -F "law_policy_csv=@${CSV_FILE}" \
-        $API_HOST/api/v1/admin/bulk-ingest/validate/cclw/law-policy
+        $TEST_HOST/api/v1/admin/bulk-ingest/validate/cclw/law-policy | jq
 }
 
+echo
 echo "👉👉👉  Validate CSV"
-validate_csv
+validate_csv > validation.json
 
+echo
+echo "👉👉👉  Detailed Output"
+cat validation.json | jq " (.results)" | jq ".[] | (.details)"
+
+echo
+echo "👉👉👉  Summary"
+cat validation.json | jq " (.message)"

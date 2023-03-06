@@ -82,8 +82,8 @@ def to_dict(base_object: AnyModel) -> dict:
 class ResultType(enum.Enum):
     """Result type used when processing metadata values."""
 
-    OK = (0,)
-    RESOLVED = (10,)
+    OK = 0
+    RESOLVED = 10
     ERROR = 20
 
 
@@ -100,6 +100,14 @@ class IngestContext:
     """Context used when processing."""
 
     org_id: int
+    results: list[Result]
+
+
+@dataclass
+class ValidationResult:
+    """Returned when validating a CSV"""
+
+    message: str
     results: list[Result]
 
 

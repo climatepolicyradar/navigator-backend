@@ -44,6 +44,7 @@ from app.core.ingestion.utils import (
     IngestContext,
     Result,
     ResultType,
+    ValidationResult,
     get_result_counts,
 )
 from app.core.ingestion.validator import validate_event_row
@@ -324,8 +325,8 @@ def _start_ingest(
 
 @r.post(
     "/bulk-ingest/validate/cclw/law-policy",
-    response_model=str,
-    status_code=status.HTTP_202_ACCEPTED,
+    response_model=ValidationResult,
+    status_code=status.HTTP_200_OK,
 )
 def validate_law_policy(
     request: Request,
@@ -349,7 +350,6 @@ def validate_law_policy(
         422 On failed validation on the input CSV (results included)
         500 On an unexpected error
     """
-    # TODO: Combine with event import? refactor out shared structure?
 
     _LOGGER.info(
         f"Superuser '{current_user.email}' triggered Bulk Document Validation for "
@@ -381,7 +381,9 @@ def validate_law_policy(
         )
         raise HTTPException(status_code=status.HTTP_500_INTERNAL_SERVER_ERROR) from e
 
-    return message
+    # Intended output for this is the console - so for now just format it up for that.
+    results = [r for r in all_results if r.type != ResultType.OK]
+    return ValidationResult(message=message, results=results)
 
 
 @r.post(
