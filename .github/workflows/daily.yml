@@ -25,22 +25,22 @@ jobs:
       - name: Get python Container
         run:  docker pull python:3.9
 
+      - name: Get dependencies  
+        run: pip install --upgrade google-api-python-client google-auth-httplib2 google-auth-oauthlib
+
       - name: Build
         run: |
           docker-compose build
           docker images
 
-      - name: Get dependencies  
-        run: pip install --upgrade google-api-python-client google-auth-httplib2 google-auth-oauthlib
+      - name: Download Sheet
+        run: GOOGLE_SERVICE_ACCOUNT=${{ secrets.GOOGLE_SERVICE_ACCOUNT }} python scripts/validate_cclw_sheet/download.py > download.csv
 
-      - name: Start
+      - name: Start Backend
         run: make start
 
-      - name: Download
-        run: make download_cclw_sheet
-
-      - name: Validate  
-        run:  make GOOGLE_SERVICE_ACCOUNT=${{ secrets.GOOGLE_SERVICE_ACCOUNT }} validate_download
+      - name: Validate Sheet 
+        run:  ./scripts/validate_cclw_sheet/validate-ingest.sh download.csv
 
       - name: Log Dump
         if:   always()

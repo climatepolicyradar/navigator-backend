@@ -18,14 +18,6 @@ start: start_containers migrations
 
 start_backend: start_backendonly migrations
 
-download_cclw_sheet:
-	echo Pulling CCLW sheet to: download.csv
-	python scripts/validate_cclw_sheet/download.py > download.csv
-
-validate_download:
-	echo Validating download.csv
-	./scripts/validate_cclw_sheet/validate-ingest.sh download.csv
-
 stop:
 	docker-compose stop
 
