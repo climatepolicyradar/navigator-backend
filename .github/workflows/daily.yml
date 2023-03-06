@@ -22,14 +22,14 @@ jobs:
       - name: Use .env.example
         run:  cp .env.example .env
 
+      - name: Get dependencies  
+        run: pip install --upgrade google-api-python-client google-auth-httplib2 google-auth-oauthlib
+
       - name: Download Sheet
         run: GOOGLE_SERVICE_ACCOUNT='${{ secrets.GOOGLE_SERVICE_ACCOUNT }}' python scripts/validate_cclw_sheet/download.py > download.csv
 
       - name: Get python Container
         run:  docker pull python:3.9
-
-      - name: Get dependencies  
-        run: pip install --upgrade google-api-python-client google-auth-httplib2 google-auth-oauthlib
 
       - name: Build
         run: |
