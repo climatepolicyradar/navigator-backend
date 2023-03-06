@@ -26,12 +26,6 @@ validate_download:
 	echo Validating download.csv
 	./scripts/validate_cclw_sheet/validate-ingest.sh download.csv
 
-validate_cclw_sheet: 
-	echo Starting ...
-	make start
-	make download_cclw_sheet
-	make validate_download
-
 stop:
 	docker-compose stop
 

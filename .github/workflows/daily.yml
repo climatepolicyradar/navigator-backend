@@ -30,10 +30,17 @@ jobs:
           docker-compose build
           docker images
 
-      - name: Validate
-        run:  |
-          pip install --upgrade google-api-python-client google-auth-httplib2 google-auth-oauthlib
-          make GOOGLE_SERVICE_ACCOUNT=${{ secrets.GOOGLE_SERVICE_ACCOUNT }} validate_cclw_sheet
+      - name: Get dependencies  
+        run: pip install --upgrade google-api-python-client google-auth-httplib2 google-auth-oauthlib
+
+      - name: Start
+        run: make start
+
+      - name: Download
+        run: make download_cclw_sheet
+
+      - name: Validate  
+        run:  make GOOGLE_SERVICE_ACCOUNT=${{ secrets.GOOGLE_SERVICE_ACCOUNT }} validate_download
 
       - name: Log Dump
         if:   always()
