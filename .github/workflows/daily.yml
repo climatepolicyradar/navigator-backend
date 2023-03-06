@@ -33,7 +33,7 @@ jobs:
       - name: Validate
         run:  |
           pip install --upgrade google-api-python-client google-auth-httplib2 google-auth-oauthlib
-          make validate_cclw_sheet
+          make GOOGLE_SERVICE_ACCOUNT=${{ secrets.GOOGLE_SERVICE_ACCOUNT }} validate_cclw_sheet
 
       - name: Log Dump
         if:   always()
