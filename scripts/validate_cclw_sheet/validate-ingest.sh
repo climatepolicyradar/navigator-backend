@@ -26,6 +26,7 @@ validate_csv() {
 echo
 echo "👉👉👉  Validate CSV"
 validate_csv > validation.json
+ls -lh validation.json
 
 echo
 echo "👉👉👉  Detailed Output"

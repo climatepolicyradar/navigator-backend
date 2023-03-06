@@ -40,7 +40,7 @@ jobs:
         run: make start
 
       - name: Validate Sheet 
-        run:  ./scripts/validate_cclw_sheet/validate-ingest.sh download.csv
+        run:  TEST_HOST="http://localhost:8888" ./scripts/validate_cclw_sheet/validate-ingest.sh download.csv
 
       - name: Log Dump
         if:   always()
