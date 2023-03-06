@@ -29,7 +29,7 @@ validate_csv > validation.json
 
 echo
 echo "👉👉👉  Detailed Output"
-cat validation.json | jq " (.results)" | jq ".[] | (.details)"
+cat validation.json | jq " (.errors)" | jq ".[] | (.details)"
 
 echo
 echo "👉👉👉  Summary"

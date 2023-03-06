@@ -7,7 +7,7 @@ start_containers:
 	# Build and run containers
 	docker-compose -f docker-compose.yml -f docker-compose.dev.yml up -d
 
-start_backendonly: migrations
+start_backendonly:
 	# Build and run containers
 	docker-compose -f docker-compose.yml -f docker-compose.dev.yml up -d backend backend_db
 
@@ -18,7 +18,7 @@ start: start_containers migrations
 
 start_backend: start_backendonly migrations
 
-validate_cclw_sheet: start_backendonly
+validate_cclw_sheet: start
 	python scripts/validate_cclw_sheet/download.py > download.csv
 	./scripts/validate_cclw_sheet/validate-ingest.sh download.csv
 
