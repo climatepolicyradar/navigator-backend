@@ -25,6 +25,7 @@ validate_csv() {
 
 echo
 echo "👉👉👉  Validate CSV"
+sleep 10 # TODO Turn this to wait for port to be open
 validate_csv > validation.json
 
 echo
