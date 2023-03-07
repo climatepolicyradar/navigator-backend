@@ -1,6 +1,5 @@
 import abc
 from dataclasses import fields
-import dataclasses
 from datetime import datetime
 from typing import Any, ClassVar, Sequence
 
@@ -72,13 +71,12 @@ class BaseIngestRow(abc.ABC):
     def from_row(cls, row_number: int, data: dict[str, str]):
         """Parse a row from a CSV."""
         field_info = cls.field_info()
-        fields = [x.name for x in dataclasses.fields(cls)]
         return cls(
             row_number=row_number,
             **{
                 cls._key(k): cls._parse_str(cls._key(k), v, field_info)
                 for (k, v) in data.items()
-                if cls._key(k) in fields
+                if cls._key(k) in field_info.keys()
             },
         )
 
