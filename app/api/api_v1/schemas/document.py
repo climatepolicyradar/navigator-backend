@@ -35,6 +35,12 @@ class DocumentOverviewResponse(BaseModel):  # noqa: D101
         frozen = True
 
 
+class DocumentWithFamilyResponse(BaseModel):
+    """A response containing the document and associated family"""
+
+    requested_id: str  # the requested id
+
+
 class DocumentDetailResponse(BaseModel):
     """A response containing detailed information about a document."""
 

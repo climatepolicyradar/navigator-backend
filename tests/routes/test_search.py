@@ -35,7 +35,7 @@ from app.db.models.law_policy.family import (
 )
 from app.db.models.document import PhysicalDocument
 from app.initial_data import populate_geography
-from tests.routes.test_documents import create_4_documents
+from tests.routes.test_documents_deprecated import create_4_documents
 
 SEARCH_ENDPOINT = "/api/v1/searches"
 
