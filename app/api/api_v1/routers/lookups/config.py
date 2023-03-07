@@ -5,7 +5,7 @@ from fastapi import Depends, Request, Response
 from app.api.api_v1.schemas.metadata import Config, TaxonomyConfig
 from app.core.lookups import get_metadata
 from app.db.session import get_db
-from app.db.crud.document import get_document_ids
+from app.db.crud.deprecated_document import get_document_ids
 from .router import lookups_router
 
 from app.core.organisation import get_organisation_taxonomy_by_name

@@ -11,7 +11,7 @@ from app.db.session import Base
 
 class DocumentType(Base):
     """
-    A document type.
+    A document type. (deprecated)
 
     E.g. strategy, plan, law
     """
@@ -25,7 +25,7 @@ class DocumentType(Base):
 
 class Category(Base):
     """
-    A document category
+    A document category (deprecated)
 
     Currently:
         Policy, (executive)
@@ -42,7 +42,7 @@ class Category(Base):
 
 class Document(Base, Auditable):
     """
-    A document.
+    A document (deprecated).
 
     id: Internal database ID
     publication_ts: Publication timestamp, or date of first event
@@ -99,7 +99,9 @@ class Document(Base, Auditable):
     UniqueConstraint(source_id, import_id)
 
 
-class Association(Base):  # noqa: D101
+class Association(Base):
+    """(deprecated)"""
+
     __tablename__ = "association"
 
     id = sa.Column(sa.Integer, primary_key=True)
@@ -117,7 +119,9 @@ class Association(Base):  # noqa: D101
     name = sa.Column(sa.Text, nullable=False)
 
 
-class Sector(Base):  # noqa: D101
+class Sector(Base):
+    """(deprecated)"""
+
     __tablename__ = "sector"
 
     id = sa.Column(sa.Integer, primary_key=True)
@@ -128,7 +132,9 @@ class Sector(Base):  # noqa: D101
     UniqueConstraint(name, source_id, parent_id)
 
 
-class DocumentSector(Base):  # noqa: D101
+class DocumentSector(Base):
+    """(deprecated)"""
+
     __tablename__ = "document_sector"
 
     id = sa.Column(sa.Integer, primary_key=True)
@@ -140,7 +146,9 @@ class DocumentSector(Base):  # noqa: D101
     )
 
 
-class Instrument(Base):  # noqa: D101
+class Instrument(Base):
+    """(deprecated)"""
+
     __tablename__ = "instrument"
 
     id = sa.Column(sa.Integer, primary_key=True)
@@ -151,7 +159,9 @@ class Instrument(Base):  # noqa: D101
     UniqueConstraint(name, source_id, parent_id)
 
 
-class DocumentInstrument(Base):  # noqa: D101
+class DocumentInstrument(Base):
+    """(deprecated)"""
+
     __tablename__ = "document_instrument"
 
     id = sa.Column(sa.Integer, primary_key=True)
@@ -167,7 +177,9 @@ class DocumentInstrument(Base):  # noqa: D101
     )
 
 
-class Framework(Base):  # noqa: D101
+class Framework(Base):
+    """(deprecated)"""
+
     __tablename__ = "framework"
 
     id = sa.Column(sa.Integer, primary_key=True)
@@ -175,7 +187,9 @@ class Framework(Base):  # noqa: D101
     description = sa.Column(sa.Text, nullable=False)
 
 
-class DocumentFramework(Base):  # noqa: D101
+class DocumentFramework(Base):
+    """(deprecated)"""
+
     __tablename__ = "document_framework"
 
     id = sa.Column(sa.Integer, primary_key=True)
@@ -187,7 +201,9 @@ class DocumentFramework(Base):  # noqa: D101
     )
 
 
-class Response(Base):  # noqa: D101
+class Response(Base):
+    """(deprecated)"""
+
     # TODO: rename Response -> Topic
     __tablename__ = "response"
 
@@ -196,7 +212,9 @@ class Response(Base):  # noqa: D101
     description = sa.Column(sa.Text, nullable=False)
 
 
-class DocumentResponse(Base):  # noqa: D101
+class DocumentResponse(Base):
+    """(deprecated)"""
+
     __tablename__ = "document_response"
 
     id = sa.Column(sa.Integer, primary_key=True)
@@ -209,7 +227,7 @@ class DocumentResponse(Base):  # noqa: D101
 
 
 class DocumentLanguage(Base):
-    """A document's languages."""
+    """A document's languages. (deprecated)"""
 
     __tablename__ = "document_language"
 
@@ -220,7 +238,9 @@ class DocumentLanguage(Base):
     )
 
 
-class Hazard(Base):  # noqa: D101
+class Hazard(Base):
+    """(deprecated)"""
+
     __tablename__ = "hazard"
 
     id = sa.Column(sa.Integer, primary_key=True)
@@ -228,7 +248,9 @@ class Hazard(Base):  # noqa: D101
     description = sa.Column(sa.Text, nullable=False)
 
 
-class DocumentHazard(Base):  # noqa: D101
+class DocumentHazard(Base):
+    """(deprecated)"""
+
     __tablename__ = "document_hazard"
 
     id = sa.Column(sa.Integer, primary_key=True)
@@ -240,8 +262,8 @@ class DocumentHazard(Base):  # noqa: D101
     )
 
 
-class Keyword(Base):  # noqa: D101
-    """Document keyword."""
+class Keyword(Base):
+    """Document keyword. (deprecated)"""
 
     __tablename__ = "keyword"
 
@@ -250,7 +272,9 @@ class Keyword(Base):  # noqa: D101
     description = sa.Column(sa.Text, nullable=False)
 
 
-class DocumentKeyword(Base):  # noqa: D101
+class DocumentKeyword(Base):
+    """(deprecated)"""
+
     __tablename__ = "document_keyword"
 
     id = sa.Column(sa.Integer, primary_key=True)
@@ -262,14 +286,18 @@ class DocumentKeyword(Base):  # noqa: D101
     )
 
 
-class PassageType(Base):  # noqa: D101
+class PassageType(Base):
+    """(deprecated)"""
+
     __tablename__ = "passage_type"
 
     id = sa.Column(sa.Integer, primary_key=True)
     name = sa.Column(sa.Text, nullable=False)
 
 
-class Passage(Base):  # noqa: D101
+class Passage(Base):
+    """(deprecated)"""
+
     __tablename__ = "passage"
 
     id = sa.Column(sa.BigInteger, primary_key=True)
@@ -295,7 +323,9 @@ class Passage(Base):  # noqa: D101
     text = sa.Column(sa.TEXT(), autoincrement=False, nullable=False)
 
 
-class Event(Base):  # noqa: D101
+class Event(Base):
+    """(deprecated)"""
+
     __tablename__ = "event"
 
     id = sa.Column(sa.Integer, primary_key=True)
@@ -309,7 +339,9 @@ class Event(Base):  # noqa: D101
     created_ts = sa.Column(sa.DateTime(timezone=True), nullable=False)
 
 
-class Relationship(Base):  # noqa: D101
+class Relationship(Base):
+    """(deprecated)"""
+
     __tablename__ = "relationship"
 
     id = sa.Column(sa.Integer, primary_key=True)
@@ -318,7 +350,9 @@ class Relationship(Base):  # noqa: D101
     description = sa.Column(sa.Text, nullable=False)
 
 
-class DocumentRelationship(Base):  # noqa: D101
+class DocumentRelationship(Base):
+    """(deprecated)"""
+
     __tablename__ = "document_relationship"
 
     document_id = sa.Column(

@@ -28,7 +28,7 @@ from app.core.search import (
     OpenSearchConfig,
     OpenSearchQueryConfig,
 )
-from app.db.crud.document import get_postfix_map, get_document_extra
+from app.db.crud.deprecated_document import get_postfix_map, get_document_extra
 from app.db.session import get_db
 
 _LOGGER = logging.getLogger(__name__)
