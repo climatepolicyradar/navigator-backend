@@ -10,7 +10,7 @@ import json
 from app.db.models.deprecated.document import Document
 from app.db.session import SessionLocal
 from sqlalchemy.orm import Session
-from app.db.crud.document import get_document_detail
+from app.db.crud.deprecated_document import get_document_detail
 
 
 def all_document_ids(db: Session):

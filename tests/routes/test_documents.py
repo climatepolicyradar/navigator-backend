@@ -14,7 +14,7 @@ from app.api.api_v1.schemas.document import (
     DocumentCreateRequest,
     RelationshipCreateRequest,
 )
-from app.db.crud.document import (
+from app.db.crud.deprecated_document import (
     create_document,
     get_document_detail,
     get_postfix_map,

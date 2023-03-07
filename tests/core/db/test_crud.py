@@ -17,7 +17,7 @@ from app.db.models.deprecated import (
     Keyword,
 )
 from app.api.api_v1.schemas.document import DocumentCreateRequest
-from app.db.crud.document import create_document, UnknownMetadataError
+from app.db.crud.deprecated_document import create_document, UnknownMetadataError
 from app.db.models.deprecated import DocumentType
 from app.db.models.law_policy import Geography
 

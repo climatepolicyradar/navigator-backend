@@ -63,7 +63,7 @@ from app.core.validation.cclw.law_policy.process_csv import (
     extract_documents,
     validated_input,
 )
-from app.db.crud.document import start_import
+from app.db.crud.deprecated_document import start_import
 from app.db.crud.password_reset import (
     create_password_reset_token,
     invalidate_existing_password_reset_tokens,
