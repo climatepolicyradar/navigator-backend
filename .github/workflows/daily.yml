@@ -1,0 +1,41 @@
+name: Daily
+
+# See https://docs.github.com/en/actions/using-workflows/events-that-trigger-workflows#schedule
+
+on:
+  schedule:
+    # * is a special character in YAML so you have to quote this string
+    - cron:  '30 5 * * *'
+
+jobs:
+  validate-cclw-sheet:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v2
+
+      - name: Use .env.example
+        run:  cp .env.example .env
+
+      - name: Get dependencies  
+        run: pip install --upgrade google-api-python-client google-auth-httplib2 google-auth-oauthlib
+
+      - name: Download Sheet
+        run: GOOGLE_SERVICE_ACCOUNT='${{ secrets.GOOGLE_SERVICE_ACCOUNT }}' python scripts/validate_cclw_sheet/download.py > download.csv
+
+      - name: Get python Container
+        run:  docker pull python:3.9
+
+      - name: Build
+        run: |
+          docker-compose build
+          docker images
+
+      - name: Start Backend
+        run: make start
+
+      - name: Validate Sheet 
+        run:  TEST_HOST="http://localhost:8888" ./scripts/validate_cclw_sheet/validate-ingest.sh download.csv
+
+      - name: Log Dump
+        if:   always()
+        run:  docker-compose logs

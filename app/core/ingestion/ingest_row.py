@@ -12,34 +12,24 @@ from app.db.models.law_policy import EventStatus, FamilyCategory
 _REQUIRED_DOCUMENT_COLUMNS = [
     "ID",
     "Document ID",
-    "CCLW Description",
-    "Part of collection?",
-    "Create new family/ies?",
-    "Collection ID",
     "Collection name",
     "Collection summary",
     "Document title",
     "Family name",
     "Family summary",
-    "Family ID",
     "Document role",
-    "Applies to ID",
     "Geography ISO",
     "Documents",
     "Category",
-    "Events",
     "Sectors",
     "Instruments",
     "Frameworks",
     "Responses",
     "Natural Hazards",
     "Document Type",
-    "Year",
     "Language",
     "Keywords",
     "Geography",
-    "Parent Legislation",
-    "Comment",
     "CPR Document ID",
     "CPR Family ID",
     "CPR Collection ID",
@@ -86,6 +76,7 @@ class BaseIngestRow(abc.ABC):
             **{
                 cls._key(k): cls._parse_str(cls._key(k), v, field_info)
                 for (k, v) in data.items()
+                if cls._key(k) in field_info.keys()
             },
         )
 
@@ -129,22 +120,15 @@ class DocumentIngestRow(BaseIngestRow):
 
     id: str
     document_id: str
-    cclw_description: str
-    part_of_collection: str
-    create_new_families: str
-    collection_id: str
     collection_name: str
     collection_summary: str
     document_title: str
     family_name: str
     family_summary: str
-    family_id: str
     document_role: str
-    applies_to_id: str
     geography_iso: str
     documents: str
     category: FamilyCategory
-    events: list[str]
     sectors: list[str]  # METADATA
     instruments: list[str]  # METADATA
     frameworks: list[str]  # METADATA
@@ -152,11 +136,8 @@ class DocumentIngestRow(BaseIngestRow):
     natural_hazards: list[str]  # METADATA - hazard
     keywords: list[str]
     document_type: str
-    year: int
     language: str
     geography: str
-    parent_legislation: str
-    comment: str
     cpr_document_id: str
     cpr_family_id: str
     cpr_collection_id: str
@@ -167,7 +148,7 @@ class DocumentIngestRow(BaseIngestRow):
 
     @staticmethod
     def _key(key: str) -> str:
-        return key.lower().replace(" ", "_").replace("?", "").replace("y/", "")
+        return key.lower().replace(" ", "_")
 
     def get_first_url(self) -> str:
         """

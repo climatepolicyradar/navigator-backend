@@ -82,8 +82,8 @@ def to_dict(base_object: AnyModel) -> dict:
 class ResultType(enum.Enum):
     """Result type used when processing metadata values."""
 
-    OK = (0,)
-    RESOLVED = (10,)
+    OK = 0
+    RESOLVED = 10
     ERROR = 20
 
 
@@ -101,6 +101,14 @@ class IngestContext:
 
     org_id: int
     results: list[Result]
+
+
+@dataclass
+class ValidationResult:
+    """Returned when validating a CSV"""
+
+    message: str
+    errors: list[Result]
 
 
 def get_result_counts(results: list[Result]) -> tuple[int, int, int]:

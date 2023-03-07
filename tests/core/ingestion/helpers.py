@@ -33,26 +33,19 @@ THREE_DOC_ROWS_BAD_META = """ID,Document ID,CCLW Description,Part of collection?
 """
 
 ALPHABETICAL_DOC_COLUMNS = [
-    "Applies to ID",
-    "CCLW Description",
     "CPR Collection ID",
     "CPR Document ID",
     "CPR Document Slug",
     "CPR Family ID",
     "CPR Family Slug",
     "Category",
-    "Collection ID",
     "Collection name",
     "Collection summary",
-    "Comment",
-    "Create new family/ies?",
     "Document ID",
     "Document Type",
     "Document role",
     "Document title",
     "Documents",
-    "Events",
-    "Family ID",
     "Family name",
     "Family summary",
     "Frameworks",
@@ -63,11 +56,8 @@ ALPHABETICAL_DOC_COLUMNS = [
     "Keywords",
     "Language",
     "Natural Hazards",
-    "Parent Legislation",
-    "Part of collection?",
     "Responses",
     "Sectors",
-    "Year",
 ]
 
 SLUG_FAMILY_NAME = "FamSlug1"
