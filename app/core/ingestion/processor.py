@@ -10,7 +10,7 @@ from app.core.ingestion.ingest_row import (
     DocumentIngestRow,
     EventIngestRow,
 )
-from app.core.ingestion.organisation import get_organisation_taxonomy
+from app.core.organisation import get_organisation_taxonomy
 from app.core.ingestion.utils import IngestContext
 from app.core.ingestion.validator import validate_document_row
 from app.db.models.app.users import Organisation

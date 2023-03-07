@@ -13,6 +13,7 @@ from app.core.validation.util import (
     get_valid_metadata,
     write_documents_to_s3,
 )
+from app.data_migrations import populate_taxonomy
 from app.db.models.deprecated import Keyword, Sector, Source
 
 
@@ -81,6 +82,7 @@ def test__flatten_maybe_tree_is_a_tree(is_a_tree: Sequence, expected: Collection
 def test_valid_metadata(test_db):
     """Test the structure returned and a couple of added values"""
 
+    populate_taxonomy(test_db)
     # Add some test data
     test_db.add(Source(name="Primary"))
     test_db.commit()

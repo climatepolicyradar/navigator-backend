@@ -3,7 +3,7 @@ from typing import Any, cast
 from sqlalchemy.orm import Session
 from app.core.ingestion.ingest_row import DocumentIngestRow
 from app.core.ingestion.metadata import add_metadata
-from app.core.ingestion.organisation import get_organisation_taxonomy
+from app.core.organisation import get_organisation_taxonomy
 from app.core.ingestion.physical_document import physical_document_from_row
 from app.core.ingestion.utils import get_or_create, to_dict
 

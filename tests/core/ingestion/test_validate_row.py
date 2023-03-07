@@ -1,7 +1,7 @@
 from app.core.ingestion.ingest_row import DocumentIngestRow
 from app.core.ingestion.utils import IngestContext, ResultType
 from app.core.ingestion.validator import validate_document_row
-from app.core.ingestion.organisation import get_organisation_taxonomy
+from app.core.organisation import get_organisation_taxonomy
 
 from tests.core.ingestion.helpers import (
     get_doc_ingest_row_data,

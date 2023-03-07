@@ -1,5 +1,5 @@
 from datetime import datetime
-from typing import Any, Mapping, Optional
+from typing import Any, Mapping, Optional, Sequence, Union
 
 from pydantic import BaseModel
 
@@ -122,3 +122,10 @@ class Config(BaseModel):
     """Definition of the metadata response object."""
 
     metadata: SourceCollections
+
+
+class TaxonomyConfig(BaseModel):
+    """Definition of the new Config which just includes taxonomy."""
+
+    organisation: str
+    taxonomy: Mapping[str, Mapping[str, Union[str, Sequence[str]]]]
