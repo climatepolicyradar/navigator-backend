@@ -34,7 +34,7 @@ from app.core.email import (
 )
 from app.core.ingestion.ingest_row import DocumentIngestRow, EventIngestRow
 from app.core.ingestion.processor import (
-    db_init,
+    initialise_context,
     get_dfc_ingestor,
     get_dfc_validator,
     get_event_ingestor,
@@ -296,7 +296,7 @@ def _start_ingest(
     events_file_contents: str,
 ):
     try:
-        context = db_init(db)
+        context = initialise_context(db)
         document_ingestor = get_dfc_ingestor(db)
         read(documents_file_contents, context, DocumentIngestRow, document_ingestor)
         event_ingestor = get_event_ingestor(db)
@@ -357,7 +357,7 @@ def validate_law_policy(
     )
 
     try:
-        context = db_init(db)
+        context = initialise_context(db)
     except Exception as e:
         _LOGGER.exception(
             "Failed to create ingest context", extra={"props": {"errors": str(e)}}
@@ -427,7 +427,7 @@ def ingest_law_policy(
     )
 
     try:
-        context = db_init(db)
+        context = initialise_context(db)
     except Exception as e:
         _LOGGER.exception(
             "Failed to create ingest context", extra={"props": {"errors": str(e)}}

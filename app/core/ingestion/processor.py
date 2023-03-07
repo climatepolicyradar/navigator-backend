@@ -89,11 +89,11 @@ def ingest_event_row(
     return result
 
 
-def db_init(db: Session) -> IngestContext:
+def initialise_context(db: Session) -> IngestContext:
     """
     Initialise the database
 
-    :return [Organisation]: The organisation that will be used for the ingest.
+    :return [IngestContext]: The organisation that will be used for the ingest.
     """
     with db.begin():
         organisation = db.query(Organisation).filter_by(name="CCLW").one()
