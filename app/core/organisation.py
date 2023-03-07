@@ -1,6 +1,8 @@
+from dataclasses import asdict
 from sqlalchemy.orm import Session
 from app.api.api_v1.schemas.metadata import TaxonomyConfig
 from app.db.models.app.users import Organisation
+from app.db.models.law_policy.family import FamilyEventType
 from app.db.models.law_policy.metadata import MetadataOrganisation, MetadataTaxonomy
 from app.core.ingestion.metadata import Taxonomy, TaxonomyEntry
 
@@ -44,8 +46,18 @@ def get_organisation_taxonomy_by_name(db: Session, org_name: str) -> TaxonomyCon
         .filter_by(name=org_name)
         .one()
     )
+    # Augment the taxonomy with the event_types from the db -
+    # TODO: in the future move these into the MetadataTaxonomy
+    event_types = db.query(FamilyEventType).all()
+    entry = TaxonomyEntry(
+        allow_blanks=False, allowed_values=[r.name for r in event_types]
+    )
+
     # The above line will throw if there is no taxonomy for the organisation
     return TaxonomyConfig(
         organisation=org_name,
-        taxonomy=taxonomy[0],
+        taxonomy={
+            **taxonomy[0],
+            "event_types": asdict(entry),
+        },
     )
