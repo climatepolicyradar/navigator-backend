@@ -9,15 +9,9 @@ def get_organisation_taxonomy(db: Session, org_id: int) -> tuple[int, Taxonomy]:
     """
     Returns the taxonomy id and its dict representation for an organisation.
 
-    Args:
-        db (Session): connection to database
-        org_id (int): organisation id
-
-    Raises:
-        ValueError: raised when taxonomy not found
-
-    Returns:
-        tuple[int, Taxonomy]: the taxonomy id and dict value
+    :param Session db: connection to the database
+    :param int org_id: organisation id
+    :return tuple[int, Taxonomy]: the taxonomy id and the Taxonomy
     """
     taxonomy = (
         db.query(MetadataTaxonomy.id, MetadataTaxonomy.valid_metadata)
@@ -34,6 +28,12 @@ def get_organisation_taxonomy(db: Session, org_id: int) -> tuple[int, Taxonomy]:
 
 
 def get_organisation_taxonomy_by_name(db: Session, org_name: str) -> TaxonomyConfig:
+    """
+    Returns the TaxonomyConfig for the named organisation
+
+    :param Session db: connection to the database
+    :return TaxonomyConfig: the TaxonomyConfig from the db
+    """
     taxonomy = (
         db.query(MetadataTaxonomy.valid_metadata)
         .join(
