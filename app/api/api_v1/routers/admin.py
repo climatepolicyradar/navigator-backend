@@ -367,7 +367,7 @@ def validate_law_policy(
     all_results = []
 
     try:
-        _, message = validate_law_policy_csv(law_policy_csv, db, context, all_results)
+        _, message = _validate_law_policy_csv(law_policy_csv, db, context, all_results)
     except ImportSchemaMismatchError as e:
         _LOGGER.exception(
             "Provided CSV failed law & policy schema validation",
@@ -438,7 +438,7 @@ def ingest_law_policy(
 
     # PHASE 1 - Validate
     try:
-        documents_file_contents, _ = validate_law_policy_csv(
+        documents_file_contents, _ = _validate_law_policy_csv(
             law_policy_csv, db, context, all_results
         )
     except ImportSchemaMismatchError as e:
@@ -584,12 +584,21 @@ def ingest_law_policy(
     )
 
 
-def validate_law_policy_csv(
+def _validate_law_policy_csv(
     law_policy_csv: UploadFile,
     db: Session,
     context: IngestContext,
     all_results: list[Result],
 ) -> tuple[str, str]:
+    """
+    Validates the csv file
+
+    :param UploadFile law_policy_csv: incoming file to validate
+    :param Session db: connection to the database
+    :param IngestContext context: the ingest context
+    :param list[Result] all_results: the results
+    :return tuple[str, str]: the file contents of the csv and the summary message
+    """
     documents_file_contents = get_file_contents(law_policy_csv)
     validator = get_dfc_validator(db, context)
     read(documents_file_contents, context, DocumentIngestRow, validator)
