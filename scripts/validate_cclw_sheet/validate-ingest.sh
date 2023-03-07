@@ -3,6 +3,8 @@
 # Posts the request to validate the ingest.
 #
 # 
+set -eou pipefail
+
 CSV_FILE=$1
 USER=${SUPERUSER_EMAIL:-user@navigator.com}
 PASSWORD=${SUPERUSER_PASSWORD:-password}
@@ -49,3 +51,6 @@ cat validation.json | jq " (.errors)" | jq ".[] | (.details)"
 echo
 echo "👉👉👉  Summary"
 cat validation.json | jq " (.message)"
+
+# Ensure return code only succeeds when no failures.
+grep ", 0 Fail" validation.json
