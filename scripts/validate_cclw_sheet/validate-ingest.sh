@@ -5,6 +5,12 @@
 # 
 export CSV_FILE=$1
 
+# Wait till server available
+until $(curl --output /dev/null --silent --head --fail ${TEST_HOST}/health); do
+    printf '.'
+    sleep 1
+done
+
 # ---------- Functions ----------
 
 get_token() {
