@@ -5,7 +5,7 @@ from unittest.mock import MagicMock
 import pytest
 
 from app.core.util import tree_table_to_json
-from app.data_migrations import populate_taxonomy
+from app.data_migrations import populate_event_type, populate_taxonomy
 from app.db.session import SessionLocal
 from tests.routes.test_documents import create_4_documents
 
@@ -38,9 +38,10 @@ def test_endpoint_returns_correct_keys(client):
 
 
 def test_endpoint_returns_taxonomy(client, test_db):
-    """Tests whether we get the correct data when the /config endpoint is called."""
+    """Tests whether we get the taxonomy when the /config endpoint is called."""
     url_under_test = "/api/v1/config?group_documents=True"
     populate_taxonomy(test_db)
+    populate_event_type(test_db)
     test_db.flush()
 
     response = client.get(
@@ -59,7 +60,31 @@ def test_endpoint_returns_taxonomy(client, test_db):
         "topic",
         "framework",
         "hazard",
+        "event_types",
     }
+    taxonomy_event_types = response_json["taxonomy"]["event_types"]["allowed_values"]
+    expected_event_types = [
+        "Amended",
+        "Appealed",
+        "Closed",
+        "Declaration Of Climate Emergency",
+        "Dismissed",
+        "Entered Into Force",
+        "Filing",
+        "Granted",
+        "Implementation Details",
+        "International Agreement",
+        "Net Zero Pledge",
+        "Other",
+        "Passed/Approved",
+        "Repealed/Replaced",
+        "Set",
+        "Settled",
+        "Updated",
+    ]
+    assert set(taxonomy_event_types).symmetric_difference(
+        set(expected_event_types)
+    ) == set([])
 
 
 class _MockColumn:
