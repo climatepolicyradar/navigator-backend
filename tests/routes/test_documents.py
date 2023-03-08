@@ -1,5 +1,26 @@
+from datetime import datetime
+from typing import Callable, Generator
+from sqlalchemy.orm import Session
+
+from fastapi.testclient import TestClient
+from pytest_mock import MockerFixture
 from app.api.api_v1.routers.admin import _start_ingest
-from app.data_migrations import populate_taxonomy
+from app.data_migrations import populate_event_type, populate_taxonomy
+from app.db.models.deprecated.document import (
+    Category,
+    Document,
+    DocumentType,
+    Framework,
+    Hazard,
+    Instrument,
+    Keyword,
+    Response,
+    Sector,
+)
+from app.db.models.deprecated.source import Source
+from app.db.models.document.physical_document import Language
+from app.db.models.law_policy.family import Family, FamilyEvent
+from app.db.models.law_policy.geography import Geography
 
 
 ONE_DFC_ROW = """ID,Document ID,CCLW Description,Part of collection?,Create new family/ies?,Collection ID,Collection name,Collection summary,Document title,Family name,Family summary,Family ID,Document role,Applies to ID,Geography ISO,Documents,Category,Events,Sectors,Instruments,Frameworks,Responses,Natural Hazards,Document Type,Year,Language,Keywords,Geography,Parent Legislation,Comment,CPR Document ID,CPR Family ID,CPR Collection ID,CPR Family Slug,CPR Document Slug
@@ -8,23 +29,81 @@ ONE_DFC_ROW = """ID,Document ID,CCLW Description,Part of collection?,Create new 
 
 TWO_EVENT_ROWS = """Id,Eventable type,Eventable Id,Eventable name,Event type,Title,Description,Date,Url,CPR Event ID,CPR Family ID,Event Status
 1101,Legislation,1001,Title1,Passed/Approved,Published,,2019-12-25,,CCLW.legislation_event.1101.0,CCLW.family.1001.0,OK
-1102,Legislation,1001,Title1,Entered Into Force,Entered into force,,2018-01-01,,CCLW.legislation_event.1102.1,CCLW.family.1001.0,DUPLICATED
 """
 
 
 def setup_with_docs(test_db, mocker):
     mock_s3 = mocker.patch("app.core.aws.S3Client")
 
-    populate_taxonomy(db=test_db)
+    populate_taxonomy(test_db)
+    populate_event_type(test_db)
+    test_db.commit()
+
+    populate_old_documents(test_db)
 
     _start_ingest(test_db, mock_s3, "s3_prefix", ONE_DFC_ROW, TWO_EVENT_ROWS)
+    test_db.commit()
 
 
-def test(client, test_db, mocker):
+def populate_old_documents(test_db):
+    test_db.add(Source(name="CCLW"))
+    test_db.add(
+        Geography(
+            display_value="geography", slug="geography", value="GEO", type="country"
+        )
+    )
+    test_db.add(DocumentType(name="doctype", description="doctype"))
+    test_db.add(Language(language_code="LAN", name="language"))
+    test_db.add(Category(name="Policy", description="Policy"))
+    test_db.add(Keyword(name="keyword1", description="keyword1"))
+    test_db.add(Keyword(name="keyword2", description="keyword2"))
+    test_db.add(Hazard(name="hazard1", description="hazard1"))
+    test_db.add(Hazard(name="hazard2", description="hazard2"))
+    test_db.add(Response(name="topic", description="topic"))
+    test_db.add(Framework(name="framework", description="framework"))
+
+    test_db.commit()
+    existing_doc_import_id = "CCLW.executive.1.2"
+    test_db.add(Instrument(name="instrument", description="instrument", source_id=1))
+    test_db.add(Sector(name="sector", description="sector", source_id=1))
+    test_db.add(
+        Document(
+            publication_ts=datetime(year=2014, month=1, day=1),
+            name="test",
+            description="test description",
+            source_url="http://somewhere",
+            source_id=1,
+            url="",
+            cdn_object="",
+            md5_sum=None,
+            content_type=None,
+            slug="geography_2014_test_1_2",
+            import_id=existing_doc_import_id,
+            geography_id=1,
+            type_id=1,
+            category_id=1,
+        )
+    )
+    test_db.commit()
+
+
+def test(
+    client: TestClient,
+    test_db: Session,
+    mocker: Callable[..., Generator[MockerFixture, None, None]],
+):
     setup_with_docs(test_db, mocker)
+    assert test_db.query(Family).count() == 1
+    assert test_db.query(FamilyEvent).count() == 1
 
     # Test associations
-    get_detail_response_1 = client.get(
-        "/api/v1/documents/CCLW.executive.1.2?group_documents=True",
+    response = client.get(
+        "/api/v1/documents/FamSlug1?group_documents=True",
     )
-    assert get_detail_response_1.status_code == 200
+    json_response = response.json()
+    assert response.status_code == 200
+    assert len(json_response) == 9
+    assert json_response["title"] == "Fam1"
+    assert json_response["geography"] == "GEO"
+    assert json_response["category"] == "Executive"
+    assert json_response["status"] == "Published"

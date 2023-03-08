@@ -10,7 +10,7 @@ from fastapi import (
 from app.core.auth import (
     get_current_active_superuser,
 )
-from app.db.crud.document import get_document_and_family
+from app.db.crud.document import get_family_and_documents
 
 from app.db.crud.deprecated_document import (
     create_document_relationship,
@@ -25,7 +25,7 @@ from app.db.crud.deprecated_document import (
 from app.api.api_v1.schemas.document import (
     DocumentDetailResponse,
     DocumentOverviewResponse,
-    DocumentWithFamilyResponse,
+    FamilyAndDocumentsResponse,
     RelationshipAndDocumentsGetResponse,
     RelationshipCreateRequest,
     RelationshipEntityResponse,
@@ -65,7 +65,7 @@ async def document_browse(
 
 @documents_router.get(
     "/documents/{import_id_or_slug}",
-    response_model=Union[DocumentDetailResponse, DocumentWithFamilyResponse],
+    response_model=Union[DocumentDetailResponse, FamilyAndDocumentsResponse],
 )
 async def document_detail(
     import_id_or_slug: str,
@@ -85,7 +85,7 @@ async def document_detail(
     if not group_documents:
         return get_document_detail(db, import_id_or_slug)
 
-    return get_document_and_family(db, import_id_or_slug)
+    return get_family_and_documents(db, import_id_or_slug)
 
 
 @documents_router.post(

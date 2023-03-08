@@ -1,4 +1,4 @@
-import datetime
+from datetime import datetime
 from typing import Any, Mapping, Optional, Sequence
 
 from pydantic import BaseModel
@@ -29,16 +29,46 @@ class DocumentOverviewResponse(BaseModel):  # noqa: D101
     description: str
     country_code: str
     country_name: str
-    publication_ts: datetime.datetime
+    publication_ts: datetime
 
     class Config:  # noqa: D106
         frozen = True
 
 
-class DocumentWithFamilyResponse(BaseModel):
-    """A response containing the document and associated family"""
+class FamilyDocumentsResponse(BaseModel):
+    """Response for a FamilyDocument, part of documents endpoints"""
 
-    requested_id: str  # the requested id
+    variant: str
+    slugs: list[str]
+    # What follows is off PhysicalDocument
+    title: str
+    md5_sum: str
+    cdn_object: str
+    source_url: str
+    content_type: str
+
+
+class FamilyEventsResponse(BaseModel):
+    """Response for a FamilyEvent, part of documents endpoints"""
+
+    title: str
+    date: datetime
+    event_type: str
+    status: str
+
+
+class FamilyAndDocumentsResponse(BaseModel):
+    """Response for a Family and its Documents, part of documents endpoints"""
+
+    title: str
+    geography: str
+    category: str
+    status: str
+    slugs: list[str]
+    events: list[FamilyEventsResponse]
+    published_date: Optional[str]
+    last_updated_date: Optional[str]
+    documents: list[FamilyDocumentsResponse]
 
 
 class DocumentDetailResponse(BaseModel):
@@ -48,7 +78,7 @@ class DocumentDetailResponse(BaseModel):
     name: str
     postfix: Optional[str]
     description: str
-    publication_ts: datetime.datetime
+    publication_ts: datetime
     source_url: Optional[str]
     url: Optional[str]
     content_type: Optional[str]
@@ -94,7 +124,7 @@ class DocumentUploadResponse(BaseModel):
 class DocumentCreateRequest(BaseModel):  # noqa: D106
     """Details of a document to create - metadata will be validated & looked up."""
 
-    publication_ts: datetime.datetime
+    publication_ts: datetime
     name: str
     description: str
     postfix: Optional[str]
