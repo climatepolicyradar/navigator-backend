@@ -48,6 +48,14 @@ class FamilyDocumentsResponse(BaseModel):
     content_type: Optional[str]
 
 
+class CollectionOverviewResponse(BaseModel):
+    """Response for a Collection - without families"""
+
+    import_id: str
+    title: str
+    description: str
+
+
 class FamilyEventsResponse(BaseModel):
     """Response for a FamilyEvent, part of documents endpoints"""
 
@@ -60,15 +68,19 @@ class FamilyEventsResponse(BaseModel):
 class FamilyAndDocumentsResponse(BaseModel):
     """Response for a Family and its Documents, part of documents endpoints"""
 
+    organisation: str
     title: str
+    summary: str
     geography: str
     category: str
     status: str
+    metadata: dict
     slugs: list[str]
     events: list[FamilyEventsResponse]
     published_date: Optional[datetime]
     last_updated_date: Optional[datetime]
     documents: list[FamilyDocumentsResponse]
+    collections: list[CollectionOverviewResponse]
 
 
 class DocumentDetailResponse(BaseModel):

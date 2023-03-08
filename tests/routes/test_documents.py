@@ -118,13 +118,18 @@ def test_documents_with_preexisting_objects(
     )
     json_response = response.json()
     assert response.status_code == 200
-    assert len(json_response) == 9
+    assert len(json_response) == 13
+    assert json_response["organisation"] == "CCLW"
     assert json_response["title"] == "Fam1"
+    assert json_response["summary"] == "Summary1"
     assert json_response["geography"] == "GEO"
     assert json_response["category"] == "Executive"
     assert json_response["status"] == "Published"
     assert json_response["published_date"] == "2019-12-25T00:00:00+00:00"
     assert json_response["last_updated_date"] == "2019-12-25T00:00:00+00:00"
+
+    assert len(json_response["metadata"]) == 7
+    assert json_response["metadata"]["keyword"] == ["Energy Supply"]
 
     assert len(json_response["slugs"]) == 1
     assert json_response["slugs"][0] == "FamSlug1"
@@ -134,3 +139,7 @@ def test_documents_with_preexisting_objects(
 
     assert len(json_response["documents"]) == 1
     assert json_response["documents"][0]["title"] == "Title1"
+    assert json_response["documents"][0]["slugs"] == ["DocSlug1"]
+
+    assert len(json_response["collections"]) == 1
+    assert json_response["collections"][0]["title"] == "Collection1"

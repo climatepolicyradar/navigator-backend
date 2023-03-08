@@ -7,11 +7,14 @@ import logging
 from typing import Optional, cast
 from sqlalchemy.orm import Session
 from app.api.api_v1.schemas.document import (
+    CollectionOverviewResponse,
     FamilyAndDocumentsResponse,
     FamilyDocumentsResponse,
     FamilyEventsResponse,
 )
+from app.db.models.app.users import Organisation
 from app.db.models.document.physical_document import PhysicalDocument
+from app.db.models.law_policy.collection import Collection, CollectionFamily
 from app.db.models.law_policy.family import Family, FamilyDocument, FamilyEvent, Slug
 from app.db.models.law_policy.geography import Geography
 from app.db.models.law_policy.metadata import FamilyMetadata
@@ -31,7 +34,7 @@ def get_family_and_documents(
     """
 
     db_objects = (
-        db.query(Family, Geography, Slug, FamilyMetadata)
+        db.query(Family, Geography, Slug, FamilyMetadata, Organisation)
         .filter(Family.geography_id == Geography.id)
         .filter(Family.import_id == FamilyMetadata.family_import_id)
         .filter(Slug.name == slug)
@@ -42,13 +45,66 @@ def get_family_and_documents(
         return None
 
     family: Family
-    family, geography, slug, family_metadata = db_objects
-    import_id = family.import_id
+    family, geography, slug, family_metadata, organisation = db_objects
+    import_id = cast(str, family.import_id)
 
+    slugs = _get_slugs_for_family_import_id(db, import_id)
+    events = _get_events_for_family_import_id(db, import_id)
+    documents = _get_documents_for_family_import_id(db, import_id)
+    collections = _get_collections_for_family_import_id(db, import_id)
+
+    return FamilyAndDocumentsResponse(
+        organisation=cast(str, organisation.name),
+        title=cast(str, family.title),
+        summary=cast(str, family.description),
+        geography=cast(str, geography.value),
+        category=cast(str, family.family_category),
+        status=cast(str, family.family_status),
+        metadata=cast(dict, family_metadata.value),
+        slugs=slugs,
+        events=events,
+        documents=documents,
+        published_date=family.published_date,
+        last_updated_date=family.last_updated_date,
+        collections=collections,
+    )
+
+
+def _get_slugs_for_family_import_id(db: Session, import_id: str) -> list[str]:
     db_slugs = (db.query(Slug).filter(Slug.family_import_id == import_id)).all()
+    return [s.name for s in db_slugs]
 
-    slugs = [s.name for s in db_slugs]
 
+def _get_slugs_for_family_document_import_id(db: Session, import_id: str):
+    db_slugs = (
+        db.query(Slug).filter(Slug.family_document_import_id == import_id)
+    ).all()
+    return [s.name for s in db_slugs]
+
+
+def _get_collections_for_family_import_id(
+    db: Session, import_id: str
+) -> list[CollectionOverviewResponse]:
+    db_collections = (
+        db.query(Collection)
+        .join(
+            CollectionFamily,
+            Collection.import_id == CollectionFamily.collection_import_id,
+        )
+        .filter(CollectionFamily.family_import_id == import_id)
+    ).all()
+
+    return [
+        CollectionOverviewResponse(
+            title=c.title, description=c.description, import_id=c.import_id
+        )
+        for c in db_collections
+    ]
+
+
+def _get_events_for_family_import_id(
+    db: Session, import_id: str
+) -> list[FamilyEventsResponse]:
     db_events = (
         db.query(FamilyEvent).filter(FamilyEvent.family_import_id == import_id)
     ).all()
@@ -60,6 +116,12 @@ def get_family_and_documents(
         for e in db_events
     ]
 
+    return events
+
+
+def _get_documents_for_family_import_id(
+    db: Session, import_id: str
+) -> list[FamilyDocumentsResponse]:
     db_documents = (
         db.query(FamilyDocument, PhysicalDocument)
         .filter(FamilyDocument.family_import_id == import_id)
@@ -69,7 +131,7 @@ def get_family_and_documents(
     documents = [
         FamilyDocumentsResponse(
             variant=d.variant_name,
-            slugs=[],
+            slugs=_get_slugs_for_family_document_import_id(db, d.import_id),
             # What follows is off PhysicalDocument
             title=pd.title,
             md5_sum=pd.md5_sum,
@@ -80,14 +142,4 @@ def get_family_and_documents(
         for d, pd in db_documents
     ]
 
-    return FamilyAndDocumentsResponse(
-        title=cast(str, family.title),
-        geography=cast(str, geography.value),
-        category=cast(str, family.family_category),
-        status=cast(str, family.family_status),
-        slugs=slugs,
-        events=events,
-        documents=documents,
-        published_date=family.published_date,
-        last_updated_date=family.last_updated_date,
-    )
+    return documents
