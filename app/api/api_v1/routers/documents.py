@@ -1,9 +1,11 @@
+from http.client import NOT_FOUND
 import logging
 from typing import List, Union
 
 from fastapi import (
     APIRouter,
     Depends,
+    HTTPException,
     Request,
 )
 
@@ -85,7 +87,12 @@ async def document_detail(
     if not group_documents:
         return get_document_detail(db, import_id_or_slug)
 
-    return get_family_and_documents(db, import_id_or_slug)
+    response = get_family_and_documents(db, import_id_or_slug)
+    if response:
+        return response
+    raise HTTPException(
+        status_code=NOT_FOUND, detail=f"Nothing found for {import_id_or_slug}"
+    )
 
 
 @documents_router.post(

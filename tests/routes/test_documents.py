@@ -87,7 +87,23 @@ def populate_old_documents(test_db):
     test_db.commit()
 
 
-def test(
+def test_documents_with_preexisting_objects_not_found(
+    client: TestClient,
+    test_db: Session,
+    mocker: Callable[..., Generator[MockerFixture, None, None]],
+):
+    setup_with_docs(test_db, mocker)
+    assert test_db.query(Family).count() == 1
+    assert test_db.query(FamilyEvent).count() == 1
+
+    # Test associations
+    response = client.get(
+        "/api/v1/documents/FamSlug100?group_documents=True",
+    )
+    assert response.status_code == 404
+
+
+def test_documents_with_preexisting_objects(
     client: TestClient,
     test_db: Session,
     mocker: Callable[..., Generator[MockerFixture, None, None]],
@@ -107,3 +123,14 @@ def test(
     assert json_response["geography"] == "GEO"
     assert json_response["category"] == "Executive"
     assert json_response["status"] == "Published"
+    assert json_response["published_date"] == "2019-12-25T00:00:00+00:00"
+    assert json_response["last_updated_date"] == "2019-12-25T00:00:00+00:00"
+
+    assert len(json_response["slugs"]) == 1
+    assert json_response["slugs"][0] == "FamSlug1"
+
+    assert len(json_response["events"]) == 1
+    assert json_response["events"][0]["title"] == "Published"
+
+    assert len(json_response["documents"]) == 1
+    assert json_response["documents"][0]["title"] == "Title1"

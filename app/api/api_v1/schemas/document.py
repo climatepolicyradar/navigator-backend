@@ -42,10 +42,10 @@ class FamilyDocumentsResponse(BaseModel):
     slugs: list[str]
     # What follows is off PhysicalDocument
     title: str
-    md5_sum: str
+    md5_sum: Optional[str]
     cdn_object: str
     source_url: str
-    content_type: str
+    content_type: Optional[str]
 
 
 class FamilyEventsResponse(BaseModel):
@@ -66,8 +66,8 @@ class FamilyAndDocumentsResponse(BaseModel):
     status: str
     slugs: list[str]
     events: list[FamilyEventsResponse]
-    published_date: Optional[str]
-    last_updated_date: Optional[str]
+    published_date: Optional[datetime]
+    last_updated_date: Optional[datetime]
     documents: list[FamilyDocumentsResponse]
 
 
