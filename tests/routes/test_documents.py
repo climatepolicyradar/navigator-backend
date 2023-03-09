@@ -1,633 +1,145 @@
-from app.db.models.deprecated import (
-    Document,
-    Source,
-    Language,
-    Sector,
-    Response,
-    Hazard,
-    Framework,
-    Instrument,
+from datetime import datetime
+from typing import Callable, Generator
+from sqlalchemy.orm import Session
+
+from fastapi.testclient import TestClient
+from pytest_mock import MockerFixture
+from app.api.api_v1.routers.admin import _start_ingest
+from app.data_migrations import populate_event_type, populate_taxonomy
+from app.db.models.deprecated.document import (
     Category,
+    Document,
+    DocumentType,
+    Framework,
+    Hazard,
+    Instrument,
     Keyword,
+    Response,
+    Sector,
 )
-from app.api.api_v1.schemas.document import (
-    DocumentCreateRequest,
-    RelationshipCreateRequest,
-)
-from app.db.crud.document import (
-    create_document,
-    get_document_detail,
-    get_postfix_map,
-)
-from app.db.models.law_policy import Geography
-from app.db.models.deprecated import DocumentType
+from app.db.models.deprecated.source import Source
+from app.db.models.document.physical_document import Language
+from app.db.models.law_policy.family import Family, FamilyEvent
+from app.db.models.law_policy.geography import Geography
 
 
-def create_4_documents(test_db):
-    # ensure meta
-    test_db.add(Source(name="may it be with you"))
+ONE_DFC_ROW = """ID,Document ID,CCLW Description,Part of collection?,Create new family/ies?,Collection ID,Collection name,Collection summary,Document title,Family name,Family summary,Family ID,Document role,Applies to ID,Geography ISO,Documents,Category,Events,Sectors,Instruments,Frameworks,Responses,Natural Hazards,Document Type,Year,Language,Keywords,Geography,Parent Legislation,Comment,CPR Document ID,CPR Family ID,CPR Collection ID,CPR Family Slug,CPR Document Slug
+1001,0,Test1,FALSE,FALSE,N/A,Collection1,CollectionSummary1,Title1,Fam1,Summary1,,MAIN,,GEO,http://somewhere|en,executive,02/02/2014|Law passed,Energy,,,Mitigation,,Order,,,Energy Supply,Algeria,,,CCLW.executive.1.2,CCLW.family.1001.0,CPR.Collection.1,FamSlug1,DocSlug1
+"""
+
+TWO_EVENT_ROWS = """Id,Eventable type,Eventable Id,Eventable name,Event type,Title,Description,Date,Url,CPR Event ID,CPR Family ID,Event Status
+1101,Legislation,1001,Title1,Passed/Approved,Published,,2019-12-25,,CCLW.legislation_event.1101.0,CCLW.family.1001.0,OK
+"""
+
+
+def setup_with_docs(test_db, mocker):
+    mock_s3 = mocker.patch("app.core.aws.S3Client")
+
+    populate_taxonomy(test_db)
+    populate_event_type(test_db)
+    test_db.commit()
+
+    populate_old_documents(test_db)
+
+    _start_ingest(test_db, mock_s3, "s3_prefix", ONE_DFC_ROW, TWO_EVENT_ROWS)
+    test_db.commit()
+
+
+def populate_old_documents(test_db):
+    test_db.add(Source(name="CCLW"))
     test_db.add(
         Geography(
-            display_value="not my favourite subject",
-            slug="not-my-favourite-subject",
-            value="NMFS",
-            type="country",
+            display_value="geography", slug="geography", value="GEO", type="country"
         )
     )
-    test_db.add(
-        Geography(
-            display_value="not my fav subject again",
-            slug="not-my-fav-subject-again",
-            value="NMFSA",
-            type="country",
-        )
-    )
-    test_db.add(DocumentType(name="just my type", description="sigh"))
-    test_db.add(Language(language_code="afr", name="Afrikaans"))
-    test_db.add(Category(name="a category", description="a category description"))
-    test_db.add(Keyword(name="some keyword", description="Imported by CPR loader"))
-    test_db.add(
-        Keyword(name="some other keyword", description="Imported by CPR loader")
-    )
-    test_db.add(Hazard(name="some hazard", description="Imported by CPR loader"))
-    test_db.add(
-        Hazard(name="some other hazard 1", description="Imported by CPR loader")
-    )
-    test_db.add(
-        Hazard(name="some other hazard 2", description="Imported by CPR loader")
-    )
-    test_db.add(Response(name="Mitigation", description="Imported by CPR loader"))
-    test_db.add(Framework(name="some framework", description="Imported by CPR loader"))
-    test_db.add(
-        Framework(name="some other framework 1", description="Imported by CPR loader")
-    )
-    test_db.add(
-        Framework(name="some other framework 2", description="Imported by CPR loader")
-    )
-    test_db.commit()
+    test_db.add(DocumentType(name="doctype", description="doctype"))
+    test_db.add(Language(language_code="LAN", name="language"))
+    test_db.add(Category(name="Policy", description="Policy"))
+    test_db.add(Keyword(name="keyword1", description="keyword1"))
+    test_db.add(Keyword(name="keyword2", description="keyword2"))
+    test_db.add(Hazard(name="hazard1", description="hazard1"))
+    test_db.add(Hazard(name="hazard2", description="hazard2"))
+    test_db.add(Response(name="topic", description="topic"))
+    test_db.add(Framework(name="framework", description="framework"))
 
+    test_db.commit()
+    existing_doc_import_id = "CCLW.executive.1.2"
+    test_db.add(Instrument(name="instrument", description="instrument", source_id=1))
+    test_db.add(Sector(name="sector", description="sector", source_id=1))
     test_db.add(
-        Instrument(
-            name="some instrument", description="Imported by CPR loader", source_id=1
-        )
-    )
-    test_db.add(
-        Instrument(
-            name="some other instrument",
-            description="Imported by CPR loader",
+        Document(
+            publication_ts=datetime(year=2014, month=1, day=1),
+            name="test",
+            description="test description",
+            source_url="http://somewhere",
             source_id=1,
+            url="",
+            cdn_object="",
+            md5_sum=None,
+            content_type=None,
+            slug="geography_2014_test_1_2",
+            import_id=existing_doc_import_id,
+            geography_id=1,
+            type_id=1,
+            category_id=1,
         )
     )
-    test_db.add(
-        Instrument(
-            name="another instrument", description="Imported by CPR loader", source_id=1
-        )
-    )
-    test_db.add(
-        Instrument(
-            name="another other instrument",
-            description="Imported by CPR loader",
-            source_id=1,
-        )
-    )
-    test_db.add(
-        Sector(name="Energy", description="Imported by CPR loader", source_id=1)
-    )
-    test_db.add(
-        Sector(name="Agriculture", description="Imported by CPR loader", source_id=1)
-    )
     test_db.commit()
 
-    document1_payload = {
-        "publication_ts": "2000-01-01T00:00:00.000000+00:00",
-        "name": "Energy Sector Strategy 1387-1391 (2007/8-2012/3)",
-        "postfix": "postfix1",
-        "description": "the document description",
-        "source_url": "https://climate-laws.org/rails/active_storage/blobs/eyJfcmFpbHMiOnsibWVzc2FnZSI6IkJBaHBBcG9IIiwiZXhwIjpudWxsLCJwdXIiOiJibG9iX2lkIn19--be6991246abda10bef5edc0a4d196b73ce1b1a26/f",
-        "type": "just my type",
-        "geography": "not my favourite subject",
-        "source": "may it be with you",
-        "import_id": "CCLW.001.000.XXX",
-        "category": "a category",
-        "languages": ["Afrikaans"],
-        "events": [
-            {
-                "name": "Publication",
-                "description": "The publication date",
-                "created_ts": "2008-12-25T00:00:00+00:00",
-            }
-        ],
-        "sectors": ["Energy"],
-        "instruments": ["some instrument", "another instrument"],
-        "frameworks": ["some framework"],
-        "topics": ["Mitigation"],
-        "hazards": ["some hazard"],
-        "keywords": ["some keyword"],
-    }
-    document_create_request_1 = DocumentCreateRequest(**document1_payload)
-    with test_db.begin_nested():
-        new_document_1 = create_document(test_db, document_create_request_1)
 
-    # This commit is necessary after completing the nested transaction
-    test_db.commit()
-    document1_created_content = get_document_detail(
-        test_db, new_document_1.import_id
-    ).dict()
-
-    # Document 2 payload also checks that we correctly associate new documents with
-    # existing metadata values.
-    document2_payload = {
-        "publication_ts": "1999-01-01T00:00:00.000000+00:00",
-        "name": "Agriculture Sector Strategy 1487-1491 (2008/9-2013/4)",
-        "postfix": "postfix2",
-        "description": "the document description",
-        "source_url": "https://climate-laws.org/rails/active_storage/blobs/eyJfcmFpbHMiOnsibWVzc2FnZSI6IkJBaHBBcG9IIiwiZXhwIjpudWxsLCJwdXIiOiJibG9iX2lkIn19--be6991246abda10bef5edc0a4d196b73ce1b1a26/g",
-        "type": "just my type",
-        "geography": "not my favourite subject",
-        "source": "may it be with you",
-        "import_id": "CCLW.002.000.XXX",
-        "category": "a category",
-        "languages": ["afr"],
-        "events": [
-            {
-                "name": "Publication",
-                "description": "The publication date",
-                "created_ts": "2009-10-12T00:00:00+00:00",
-            }
-        ],
-        "sectors": ["Energy", "Agriculture"],
-        "instruments": [
-            "some instrument",
-            "some other instrument",
-            "another other instrument",
-        ],
-        "frameworks": [
-            "some framework",
-            "some other framework 1",
-            "some other framework 2",
-        ],
-        "topics": ["Mitigation"],
-        "hazards": ["some hazard", "some other hazard 1", "some other hazard 2"],
-        "keywords": ["some keyword", "some other keyword"],
-    }
-    document_create_request_2 = DocumentCreateRequest(**document2_payload)
-    with test_db.begin_nested():
-        new_document_2 = create_document(test_db, document_create_request_2)
-
-    # This commit is necessary after completing the nested transaction
-    test_db.commit()
-    document2_created_content = get_document_detail(
-        test_db, new_document_2.import_id
-    ).dict()
-
-    # Document 3 payload checks we find related documents across the master doc.
-    document3_payload = {
-        "publication_ts": "1998-01-01T00:00:00.000000+00:00",
-        "name": "Energy Sector Strategy 1387-1391 (2009/8-2014/3)",
-        "postfix": "",
-        "description": "the document description",
-        "source_url": "https://climate-laws.org/rails/active_storage/blobs/eyJfcmFpbHMiOnsibWVzc2FnZSI6IkJBaHBBcG9IIiwiZXhwIjpudWxsLCJwdXIiOiJibG9iX2lkIn19--be6991246abda10bef5edc0a4d196b73ce1b1a26/f",
-        "type": "just my type",
-        "geography": "NMFSA",
-        "source": "may it be with you",
-        "import_id": "CCLW.003.000.XXX",
-        "category": "a category",
-        "languages": ["afr"],
-        "events": [
-            {
-                "name": "Publication",
-                "description": "The publication date",
-                "created_ts": "2010-12-25T00:00:00+00:00",
-            }
-        ],
-        "sectors": ["Energy"],
-        "instruments": ["some instrument", "another instrument"],
-        "frameworks": ["some framework"],
-        "topics": ["Mitigation"],
-        "hazards": ["some hazard"],
-        "keywords": ["some keyword"],
-    }
-    document_create_request_3 = DocumentCreateRequest(**document3_payload)
-    with test_db.begin_nested():
-        new_document_3 = create_document(test_db, document_create_request_3)
-
-    # This commit is necessary after completing the nested transaction
-    test_db.commit()
-    document3_created_content = get_document_detail(
-        test_db, new_document_3.import_id
-    ).dict()
-
-    # Document 4 payload checks we do not find unrelated docs.
-    document4_payload = {
-        "publication_ts": "1997-01-01T00:00:00.000000+00:00",
-        "name": "Energy Sector Strategy 1387-1391 (2010/8-2015/3)",
-        "postfix": None,
-        "description": "the document description",
-        "source_url": "https://climate-laws.org/rails/active_storage/blobs/eyJfcmFpbHMiOnsibWVzc2FnZSI6IkJBaHBBcG9IIiwiZXhwIjpudWxsLCJwdXIiOiJibG9iX2lkIn19--be6991246abda10bef5edc0a4d196b73ce1b1a26/f",
-        "type": "just my type",
-        "geography": "not my favourite subject",
-        "source": "may it be with you",
-        "import_id": "CCLW.005.000.XXX",
-        "category": "a category",
-        "languages": ["afr"],
-        "events": [
-            {
-                "name": "Publication",
-                "description": "The publication date",
-                "created_ts": "2012-12-25T00:00:00+00:00",
-            }
-        ],
-        "sectors": ["Energy"],
-        "instruments": ["some instrument", "another instrument"],
-        "frameworks": ["some framework"],
-        "topics": ["Mitigation"],
-        "hazards": ["some hazard"],
-        "keywords": ["some keyword"],
-    }
-    document_create_request_4 = DocumentCreateRequest(**document4_payload)
-    with test_db.begin_nested():
-        new_document_4 = create_document(test_db, document_create_request_4)
-
-    # This commit is necessary after completing the nested transaction
-    test_db.commit()
-    document4_created_content = get_document_detail(
-        test_db, new_document_4.import_id
-    ).dict()
-
-    return (
-        document1_created_content,
-        document1_payload,
-        document2_created_content,
-        document2_payload,
-        document3_created_content,
-        document3_payload,
-        document4_created_content,
-        document4_payload,
-    )
-
-
-def test_document_detail(
-    client,
-    superuser_token_headers,
-    test_db,
+def test_documents_with_preexisting_objects_not_found(
+    client: TestClient,
+    test_db: Session,
+    mocker: Callable[..., Generator[MockerFixture, None, None]],
 ):
-    (
-        response1_document,
-        document1_payload,
-        response2_document,
-        document2_payload,
-        response3_document,
-        document3_payload,
-        response4_document,
-        document4_payload,
-    ) = create_4_documents(test_db)
-
-    # Set up doc relationships
-    response_create = client.post(
-        "/api/v1/document-relationships",
-        headers=superuser_token_headers,
-        json=RelationshipCreateRequest(
-            name="Rel", type="test", description="test relationship"
-        ).dict(),
-    )
-    assert response_create.status_code == 201
-    rel_id = response_create.json()["id"]
-    doc_ids = [
-        response1_document["id"],
-        response2_document["id"],
-        response3_document["id"],
-    ]
-
-    for doc_id in doc_ids:
-        response = client.put(
-            f"/api/v1/document-relationships/{rel_id}/documents/{doc_id}",
-            headers=superuser_token_headers,
-        )
-        assert response.status_code == 201
-
-    # Test properties
-    get_detail_response_2 = client.get(
-        f"/api/v1/documents/{response2_document['import_id']}",
-    )
-    assert get_detail_response_2.status_code == 200
-
-    # Check some expected properties of the returned document
-    get_detail_json_2 = get_detail_response_2.json()
-    assert (
-        get_detail_json_2["name"]
-        == "Agriculture Sector Strategy 1487-1491 (2008/9-2013/4)"
-    )
-    assert get_detail_json_2["description"] == "the document description"
-    assert get_detail_json_2["postfix"] == "postfix2"
-    assert get_detail_json_2["publication_ts"] == "1999-01-01T00:00:00"
-    assert (
-        get_detail_json_2["source_url"]
-        == "https://climate-laws.org/rails/active_storage/blobs/eyJfcmFpbHMiOnsibWVzc2FnZSI6IkJBaHBBcG9IIiwiZXhwIjpudWxsLCJwdXIiOiJibG9iX2lkIn19--be6991246abda10bef5edc0a4d196b73ce1b1a26/g"
-    )
-
-    assert get_detail_json_2["source"] == {"name": "may it be with you"}
-    assert get_detail_json_2["geography"] == {
-        "display_value": "not my favourite subject",
-        "slug": "not-my-favourite-subject",
-        "value": "NMFS",
-        "type": "country",
-    }
-    assert get_detail_json_2["type"] == {"name": "just my type", "description": "sigh"}
-    assert get_detail_json_2["languages"] == [
-        {
-            "language_code": "afr",
-            "part1_code": None,
-            "part2_code": None,
-            "name": "Afrikaans",
-        }
-    ]
-    assert get_detail_json_2["category"] == {
-        "name": "a category",
-        "description": "a category description",
-    }
-
-    sorted_related_docs = sorted(
-        get_detail_json_2["related_documents"],
-        key=lambda d: d["document_id"],
-    )
-    assert sorted_related_docs == [
-        {
-            "document_id": response1_document["id"],
-            "import_id": "CCLW.001.000.XXX",
-            "name": "Energy Sector Strategy 1387-1391 (2007/8-2012/3)",
-            "postfix": "postfix1",
-            "description": "the document description",
-            "country_code": "NMFS",
-            "country_name": "not my favourite subject",
-            "publication_ts": "2000-01-01T00:00:00",
-            "slug": "not-my-favourite-subject_2000_energy-sector-strategy-1387-1391-2007-8-2012-3_000_xxx",
-        },
-        {
-            "document_id": response3_document["id"],
-            "import_id": "CCLW.003.000.XXX",
-            "name": "Energy Sector Strategy 1387-1391 (2009/8-2014/3)",
-            "postfix": "",
-            "description": "the document description",
-            "country_code": "NMFSA",
-            "country_name": "not my fav subject again",
-            "publication_ts": "1998-01-01T00:00:00",
-            "slug": "not-my-fav-subject-again_1998_energy-sector-strategy-1387-1391-2009-8-2014-3_000_xxx",
-        },
-    ]
-
-    assert get_detail_json_2["events"] == document2_payload["events"]
-    assert get_detail_json_2["sectors"] == [
-        {
-            "name": s,
-            "description": "Imported by CPR loader",
-            "source": {"name": "may it be with you"},
-        }
-        for s in document2_payload["sectors"]
-    ]
-    assert get_detail_json_2["instruments"] == [
-        {
-            "name": i,
-            "description": "Imported by CPR loader",
-            "source": {"name": "may it be with you"},
-        }
-        for i in document2_payload["instruments"]
-    ]
-    assert get_detail_json_2["frameworks"] == [
-        {
-            "name": f,
-            "description": "Imported by CPR loader",
-        }
-        for f in document2_payload["frameworks"]
-    ]
-    assert get_detail_json_2["topics"] == [
-        {
-            "name": t,
-            "description": "Imported by CPR loader",
-        }
-        for t in document2_payload["topics"]
-    ]
-    assert get_detail_json_2["hazards"] == [
-        {
-            "name": h,
-            "description": "Imported by CPR loader",
-        }
-        for h in document2_payload["hazards"]
-    ]
-    assert get_detail_json_2["keywords"] == [
-        {
-            "name": k,
-            "description": "Imported by CPR loader",
-        }
-        for k in document2_payload["keywords"]
-    ]
+    setup_with_docs(test_db, mocker)
+    assert test_db.query(Family).count() == 1
+    assert test_db.query(FamilyEvent).count() == 1
 
     # Test associations
-    get_detail_response_1 = client.get(
-        f"/api/v1/documents/{response1_document['import_id']}",
+    response = client.get(
+        "/api/v1/documents/FamSlug100?group_documents=True",
     )
-    assert get_detail_response_1.status_code == 200
-    get_detail_json_1 = get_detail_response_1.json()
-
-    assert set(rd["document_id"] for rd in get_detail_json_1["related_documents"]) == {
-        2,
-        3,
-    }
-
-    get_detail_response_3 = client.get(
-        f"/api/v1/documents/{response3_document['import_id']}",
-    )
-    assert get_detail_response_3.status_code == 200
-    get_detail_json_3 = get_detail_response_3.json()
-
-    assert set(rd["document_id"] for rd in get_detail_json_3["related_documents"]) == {
-        1,
-        2,
-    }
-
-    get_detail_response_4 = client.get(
-        f"/api/v1/documents/{response4_document['slug']}",
-    )
-    assert get_detail_response_4.status_code == 200
-    get_detail_json_4 = get_detail_response_4.json()
-
-    assert get_detail_json_4["related_documents"] == []
-
-    # Check content types are all unknown before update endpoint is called
-    assert get_detail_json_1["content_type"] == "unknown"
-    assert get_detail_json_2["content_type"] == "unknown"
-    assert get_detail_json_3["content_type"] == "unknown"
-    assert get_detail_json_4["content_type"] == "unknown"
-
-    document1_object = (
-        test_db.query(Document).filter(Document.id == response1_document["id"]).first()
-    )
-    document1_object.cdn_object = "hello1.pdf"
-    document1_object.url = "some_url1"
-
-    document2_object = (
-        test_db.query(Document).filter(Document.id == response2_document["id"]).first()
-    )
-    document2_object.url = "https://ab.s3.cde.amazonaws.com/url2.htm"
-
-    test_db.flush()
-
-    get_detail_response_1 = client.get(
-        f"/api/v1/documents/{response1_document['import_id']}",
-    )
-    assert get_detail_response_1.status_code == 200
-    get_detail_json_1 = get_detail_response_1.json()
-
-    get_detail_response_2 = client.get(
-        f"/api/v1/documents/{response2_document['import_id']}",
-    )
-    assert get_detail_response_2.status_code == 200
-    get_detail_json_2 = get_detail_response_2.json()
+    assert response.status_code == 404
 
 
-def test_update_document_security(
-    client,
-    test_db,
+def test_documents_with_preexisting_objects(
+    client: TestClient,
+    test_db: Session,
+    mocker: Callable[..., Generator[MockerFixture, None, None]],
 ):
-    (
-        response1_document,
-        document1_payload,
-        response2_document,
-        document2_payload,
-        response3_document,
-        document3_payload,
-        response4_document,
-        document4_payload,
-    ) = create_4_documents(test_db)
+    setup_with_docs(test_db, mocker)
+    assert test_db.query(Family).count() == 1
+    assert test_db.query(FamilyEvent).count() == 1
 
-    doc_id = response1_document["id"]
-    payload = {
-        "md5sum": "abc123",
-        "content_type": "content_type",
-        "source_url": "source_url",
-    }
-
-    response = client.put(f"/api/v1/admin/documents/{doc_id}", json=payload)
-
-    assert response.status_code == 401
-
-
-def test_update_document(
-    client,
-    superuser_token_headers,
-    test_db,
-):
-    (
-        response1_document,
-        document1_payload,
-        response2_document,
-        document2_payload,
-        response3_document,
-        document3_payload,
-        response4_document,
-        document4_payload,
-    ) = create_4_documents(test_db)
-
-    import_id = response1_document["import_id"]
-    payload = {
-        "md5_sum": "c184214e-4870-48e0-adab-3e064b1b0e76",
-        "content_type": "updated/content_type",
-        "cdn_object": "folder/file",
-    }
-
-    response = client.put(
-        f"/api/v1/admin/documents/{import_id}",
-        headers=superuser_token_headers,
-        json=payload,
+    # Test associations
+    response = client.get(
+        "/api/v1/documents/FamSlug1?group_documents=True",
     )
-
+    json_response = response.json()
     assert response.status_code == 200
-    json_object = response.json()
-    assert json_object["md5_sum"] == "c184214e-4870-48e0-adab-3e064b1b0e76"
-    assert json_object["content_type"] == "updated/content_type"
-    assert json_object["cdn_object"] == "folder/file"
+    assert len(json_response) == 13
+    assert json_response["organisation"] == "CCLW"
+    assert json_response["title"] == "Fam1"
+    assert json_response["summary"] == "Summary1"
+    assert json_response["geography"] == "GEO"
+    assert json_response["category"] == "Executive"
+    assert json_response["status"] == "Published"
+    assert json_response["published_date"] == "2019-12-25T00:00:00+00:00"
+    assert json_response["last_updated_date"] == "2019-12-25T00:00:00+00:00"
 
-    get_response = client.get(
-        f"/api/v1/documents/{import_id}",
-    )
+    assert len(json_response["metadata"]) == 7
+    assert json_response["metadata"]["keyword"] == ["Energy Supply"]
 
-    assert get_response.status_code == 200
-    json_object = get_response.json()
-    assert json_object["content_type"] == "updated/content_type"
-    assert "folder/file" in json_object["url"]
+    assert len(json_response["slugs"]) == 1
+    assert json_response["slugs"][0] == "FamSlug1"
 
+    assert len(json_response["events"]) == 1
+    assert json_response["events"][0]["title"] == "Published"
 
-def test_update_document_with_import_id(
-    client,
-    superuser_token_headers,
-    test_db,
-):
-    (
-        response1_document,
-        document1_payload,
-        response2_document,
-        document2_payload,
-        response3_document,
-        document3_payload,
-        response4_document,
-        document4_payload,
-    ) = create_4_documents(test_db)
+    assert len(json_response["documents"]) == 1
+    assert json_response["documents"][0]["title"] == "Title1"
+    assert json_response["documents"][0]["slugs"] == ["DocSlug1"]
 
-    import_id = response1_document["import_id"]
-    payload = {
-        "md5_sum": "c184214e-4870-48e0-adab-3e064b1b0e76",
-        "content_type": "updated/content_type",
-        "cdn_object": "folder/file",
-    }
-
-    update_response = client.put(
-        f"/api/v1/admin/documents/{import_id}",
-        headers=superuser_token_headers,
-        json=payload,
-    )
-
-    assert update_response.status_code == 200
-    json_object = update_response.json()
-    assert json_object["import_id"] == import_id
-    assert json_object["md5_sum"] == "c184214e-4870-48e0-adab-3e064b1b0e76"
-    assert json_object["content_type"] == "updated/content_type"
-
-    get_response = client.get(
-        f"/api/v1/documents/{import_id}",
-    )
-
-    assert get_response.status_code == 200
-    json_object = get_response.json()
-    assert json_object["import_id"] == import_id
-    assert json_object["content_type"] == "updated/content_type"
-    assert "folder/file" in json_object["url"]
-
-
-def test_postfix_map(
-    test_db,
-):
-    (
-        response1_document,
-        document1_payload,
-        response2_document,
-        document2_payload,
-        response3_document,
-        document3_payload,
-        response4_document,
-        document4_payload,
-    ) = create_4_documents(test_db)
-
-    pf_map = get_postfix_map(
-        test_db,
-        [
-            response1_document["import_id"],
-            response2_document["import_id"],
-            response3_document["import_id"],
-            response4_document["import_id"],
-        ],
-    )
-
-    assert len(pf_map) == 4
-    assert pf_map[response1_document["import_id"]] == "postfix1"
-    assert pf_map[response2_document["import_id"]] == "postfix2"
-    assert pf_map[response3_document["import_id"]] == ""
-    assert pf_map[response4_document["import_id"]] == ""
+    assert len(json_response["collections"]) == 1
+    assert json_response["collections"][0]["title"] == "Collection1"

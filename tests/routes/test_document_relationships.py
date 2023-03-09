@@ -5,7 +5,7 @@ from app.db.models.deprecated.document import (
     Relationship,
 )
 
-from .test_documents import create_4_documents
+from .test_documents_deprecated import create_4_documents
 
 
 def _create_10_relationships(client, superuser_token_headers):

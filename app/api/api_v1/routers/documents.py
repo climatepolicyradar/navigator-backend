@@ -1,16 +1,20 @@
+from http.client import NOT_FOUND
 import logging
 from typing import List, Union
 
 from fastapi import (
     APIRouter,
     Depends,
+    HTTPException,
     Request,
 )
 
 from app.core.auth import (
     get_current_active_superuser,
 )
-from app.db.crud.document import (
+from app.db.crud.document import get_family_and_documents
+
+from app.db.crud.deprecated_document import (
     create_document_relationship,
     remove_document_relationship,
     create_relationship,
@@ -23,6 +27,7 @@ from app.db.crud.document import (
 from app.api.api_v1.schemas.document import (
     DocumentDetailResponse,
     DocumentOverviewResponse,
+    FamilyAndDocumentsResponse,
     RelationshipAndDocumentsGetResponse,
     RelationshipCreateRequest,
     RelationshipEntityResponse,
@@ -62,11 +67,12 @@ async def document_browse(
 
 @documents_router.get(
     "/documents/{import_id_or_slug}",
-    response_model=DocumentDetailResponse,
+    response_model=Union[DocumentDetailResponse, FamilyAndDocumentsResponse],
 )
 async def document_detail(
     import_id_or_slug: str,
     db=Depends(get_db),
+    group_documents: bool = False,
 ):
     """Get details of the document with the given ID."""
     _LOGGER.info(
@@ -74,10 +80,19 @@ async def document_detail(
         extra={
             "props": {
                 "import_id_or_slug": import_id_or_slug,
+                "group_documents": group_documents,
             },
         },
     )
-    return get_document_detail(db, import_id_or_slug)
+    if not group_documents:
+        return get_document_detail(db, import_id_or_slug)
+
+    response = get_family_and_documents(db, import_id_or_slug)
+    if response:
+        return response
+    raise HTTPException(
+        status_code=NOT_FOUND, detail=f"Nothing found for {import_id_or_slug}"
+    )
 
 
 @documents_router.post(

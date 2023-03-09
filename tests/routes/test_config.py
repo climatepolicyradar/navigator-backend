@@ -7,7 +7,7 @@ import pytest
 from app.core.util import tree_table_to_json
 from app.data_migrations import populate_event_type, populate_taxonomy
 from app.db.session import SessionLocal
-from tests.routes.test_documents import create_4_documents
+from tests.routes.test_documents_deprecated import create_4_documents
 
 
 def test_endpoint_returns_correct_keys(client):
