@@ -43,8 +43,8 @@ class FamilyDocumentsResponse(BaseModel):
     # What follows is off PhysicalDocument
     title: str
     md5_sum: Optional[str]
-    cdn_object: str
-    source_url: str
+    cdn_object: Optional[str]
+    source_url: Optional[str]
     content_type: Optional[str]
 
 
