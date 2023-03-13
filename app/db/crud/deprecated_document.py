@@ -816,7 +816,7 @@ def get_postfix_map(db: Session, doc_ids: Sequence[str]) -> Mapping[str, str]:
     if len(postfix_map) != len(doc_ids):
         missing_ids = set(doc_ids).difference(postfix_map.keys())
         _LOGGER.error(
-            "Document ids missing", extra={"props": {"missing_ids": missing_ids}}
+            "Document ids missing", extra={"props": {"missing_ids": str(missing_ids)}}
         )
         postfix_map.update({missing_id: "" for missing_id in missing_ids})
 
