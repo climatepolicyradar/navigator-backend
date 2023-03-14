@@ -27,6 +27,10 @@ ONE_DFC_ROW = """ID,Document ID,CCLW Description,Part of collection?,Create new 
 1001,0,Test1,FALSE,FALSE,N/A,Collection1,CollectionSummary1,Title1,Fam1,Summary1,,MAIN,,GEO,http://somewhere|en,executive,02/02/2014|Law passed,Energy,,,Mitigation,,Order,,,Energy Supply,Algeria,,,CCLW.executive.1.2,CCLW.family.1001.0,CPR.Collection.1,FamSlug1,DocSlug1
 """
 
+ONE_EVENT_ROW = """Id,Eventable type,Eventable Id,Eventable name,Event type,Title,Description,Date,Url,CPR Event ID,CPR Family ID,Event Status
+1101,Legislation,1001,Title1,Passed/Approved,Published,,2019-12-25,,CCLW.legislation_event.1101.0,CCLW.family.1001.0,OK
+"""
+
 TWO_DFC_ROW = """ID,Document ID,CCLW Description,Part of collection?,Create new family/ies?,Collection ID,Collection name,Collection summary,Document title,Family name,Family summary,Family ID,Document role,Applies to ID,Geography ISO,Documents,Category,Events,Sectors,Instruments,Frameworks,Responses,Natural Hazards,Document Type,Year,Language,Keywords,Geography,Parent Legislation,Comment,CPR Document ID,CPR Family ID,CPR Collection ID,CPR Family Slug,CPR Document Slug
 1001,0,Test1,FALSE,FALSE,N/A,Collection1,CollectionSummary1,Title1,Fam1,Summary1,,MAIN,,GEO,http://somewhere|en,executive,02/02/2014|Law passed,Energy,,,Mitigation,,Order,,,Energy Supply,Algeria,,,CCLW.executive.1.2,CCLW.family.1001.0,CPR.Collection.1,FamSlug1,DocSlug1
 2002,0,Test2,FALSE,FALSE,N/A,Collection2,CollectionSummary2,Title2,Fam2,Summary2,,MAIN,,GEO,http://another_somewhere|en,executive,03/03/2024|Law passed,Energy,,,Mitigation,,Order,,,Energy Supply,Algeria,,,CCLW.executive.2.2,CCLW.family.2002.0,CPR.Collection.2,FamSlug2,DocSlug2
@@ -47,7 +51,7 @@ def setup_with_docs(test_db, mocker):
 
     populate_old_documents(test_db)
 
-    _start_ingest(test_db, mock_s3, "s3_prefix", ONE_DFC_ROW, TWO_EVENT_ROWS)
+    _start_ingest(test_db, mock_s3, "s3_prefix", ONE_DFC_ROW, ONE_EVENT_ROW)
     test_db.commit()
 
 
@@ -149,7 +153,7 @@ def test_documents_with_preexisting_objects(
     setup_with_two_docs(test_db, mocker)
     assert test_db.query(PhysicalDocument).count() == 2
     assert test_db.query(Family).count() == 2
-    assert test_db.query(FamilyEvent).count() == 1
+    assert test_db.query(FamilyEvent).count() == 2
 
     # Test associations
     response = client.get(
