@@ -18,7 +18,7 @@ from app.db.models.deprecated.document import (
     Sector,
 )
 from app.db.models.deprecated.source import Source
-from app.db.models.document.physical_document import Language
+from app.db.models.document.physical_document import Language, PhysicalDocument
 from app.db.models.law_policy.family import Family, FamilyEvent
 from app.db.models.law_policy.geography import Geography
 
@@ -127,6 +127,7 @@ def test_documents_with_preexisting_objects(
     mocker: Callable[..., Generator[MockerFixture, None, None]],
 ):
     setup_with_two_docs(test_db, mocker)
+    assert test_db.query(PhysicalDocument).count() == 2
     assert test_db.query(Family).count() == 1
     assert test_db.query(FamilyEvent).count() == 1
 
