@@ -129,7 +129,7 @@ def test_documents_with_preexisting_objects_not_found(
     test_db: Session,
     mocker: Callable[..., Generator[MockerFixture, None, None]],
 ):
-    setup_with_two_docs(test_db, mocker)
+    setup_with_docs(test_db, mocker)
     assert test_db.query(Family).count() == 1
     assert test_db.query(FamilyEvent).count() == 1
 
