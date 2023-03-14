@@ -45,6 +45,9 @@ def ingest_document_row(
         db.query(Document).filter(Document.import_id == import_id).one_or_none()
     )
     if existing_document is None:
+        _LOGGER.info(
+            "Existing document is None.", extra={"props": {"import_id": import_id}}
+        )
         # FIXME: Need to be able to ingest a row that is brand new and
         # ready for the pipeline
 
@@ -53,6 +56,7 @@ def ingest_document_row(
         # do not attempt to migrate
         return result
 
+    _LOGGER.info("Existing document.", extra={"props": {"import_id": import_id}})
     result["existing_document"] = True
 
     family = family_from_row(
@@ -69,6 +73,11 @@ def ingest_document_row(
         context.org_id,
         cast(str, family.import_id),
         result,
+    )
+
+    _LOGGER.info(
+        "Created family and collection from row.",
+        extra={"props": {"result": str(result)}},
     )
 
     return result
