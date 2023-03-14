@@ -102,6 +102,24 @@ def populate_old_documents(test_db):
             category_id=1,
         )
     )
+    test_db.add(
+        Document(
+            publication_ts=datetime(year=2014, month=1, day=1),
+            name="test",
+            description="test description",
+            source_url="http://another_somewhere",
+            source_id=1,
+            url="",
+            cdn_object="",
+            md5_sum=None,
+            content_type=None,
+            slug="geography_2014_test_1_2",
+            import_id="CCLW.executive.2.2",
+            geography_id=1,
+            type_id=1,
+            category_id=1,
+        )
+    )
     test_db.commit()
 
 
@@ -128,7 +146,7 @@ def test_documents_with_preexisting_objects(
 ):
     setup_with_two_docs(test_db, mocker)
     assert test_db.query(PhysicalDocument).count() == 2
-    assert test_db.query(Family).count() == 1
+    assert test_db.query(Family).count() == 2
     assert test_db.query(FamilyEvent).count() == 1
 
     # Test associations
