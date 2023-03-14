@@ -49,7 +49,7 @@ def get_family_and_documents(
         .filter(Family.import_id == FamilyOrganisation.family_import_id)
         .filter(FamilyOrganisation.organisation_id == Organisation.id)
         .filter(Slug.name == slug)
-    ).first()
+    ).one()
 
     _LOGGER.info(
         f"Database objects retrieved for slug.",

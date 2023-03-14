@@ -34,6 +34,7 @@ TWO_DFC_ROW = """ID,Document ID,CCLW Description,Part of collection?,Create new 
 
 TWO_EVENT_ROWS = """Id,Eventable type,Eventable Id,Eventable name,Event type,Title,Description,Date,Url,CPR Event ID,CPR Family ID,Event Status
 1101,Legislation,1001,Title1,Passed/Approved,Published,,2019-12-25,,CCLW.legislation_event.1101.0,CCLW.family.1001.0,OK
+2202,Legislation,2002,Title2,Passed/Approved,Published,,2019-12-25,,CCLW.legislation_event.2202.0,CCLW.family.2002.0,OK
 """
 
 
@@ -182,7 +183,6 @@ def test_documents_with_preexisting_objects(
     assert len(json_response["collections"]) == 1
     assert json_response["collections"][0]["title"] == "Collection1"
 
-    # Test associations
     response = client.get(
         "/api/v1/documents/FamSlug2?group_documents=True",
     )
@@ -192,3 +192,24 @@ def test_documents_with_preexisting_objects(
     assert json_response["organisation"] == "CCLW"
     assert json_response["title"] == "Fam2"
     assert json_response["summary"] == "Summary2"
+    assert json_response["geography"] == "GEO"
+    assert json_response["category"] == "Executive"
+    assert json_response["status"] == "Published"
+    assert json_response["published_date"] == "2019-12-25T00:00:00+00:00"
+    assert json_response["last_updated_date"] == "2019-12-25T00:00:00+00:00"
+
+    assert len(json_response["metadata"]) == 7
+    assert json_response["metadata"]["keyword"] == ["Energy Supply"]
+
+    assert len(json_response["slugs"]) == 1
+    assert json_response["slugs"][0] == "FamSlug2"
+
+    assert len(json_response["events"]) == 1
+    assert json_response["events"][0]["title"] == "Published"
+
+    assert len(json_response["documents"]) == 1
+    assert json_response["documents"][0]["title"] == "Title2"
+    assert json_response["documents"][0]["slugs"] == ["DocSlug2"]
+
+    assert len(json_response["collections"]) == 1
+    assert json_response["collections"][0]["title"] == "Collection2"
