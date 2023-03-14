@@ -114,7 +114,7 @@ def populate_old_documents(test_db):
             cdn_object="",
             md5_sum=None,
             content_type=None,
-            slug="geography_2014_test_1_2",
+            slug="geography_2014_test_2_2",
             import_id="CCLW.executive.2.2",
             geography_id=1,
             type_id=1,
