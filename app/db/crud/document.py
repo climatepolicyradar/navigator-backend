@@ -66,7 +66,15 @@ def get_family_and_documents(
         return None
 
     family: Family
-    family, geography, slug, family_metadata, organisation = db_objects
+    # TODO assuming we don't need family organisation in the response
+    (
+        family,
+        geography,
+        slug,
+        family_metadata,
+        family_organisation,
+        organisation,
+    ) = db_objects
     import_id = cast(str, family.import_id)
 
     slugs = _get_slugs_for_family_import_id(db, import_id)
