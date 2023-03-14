@@ -66,7 +66,6 @@ def get_family_and_documents(
         return None
 
     family: Family
-    # TODO assuming we don't need family organisation in the response
     (
         family,
         geography,
