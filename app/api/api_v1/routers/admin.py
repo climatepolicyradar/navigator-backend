@@ -48,7 +48,7 @@ from app.core.ingestion.utils import (
     get_result_counts,
 )
 from app.core.ingestion.validator import validate_event_row
-from app.core.ratelimit import limiter
+from app.core.ratelimit import DEFAULT_LIMIT, limiter
 from app.core.validation import IMPORT_ID_MATCHER
 from app.core.validation.types import (
     ImportSchemaMismatchError,
@@ -242,7 +242,7 @@ async def user_delete(
 @r.post(
     "/password-reset/{user_id}", response_model=bool, response_model_exclude_none=True
 )
-@limiter.limit("6/minute")
+@limiter.limit(DEFAULT_LIMIT)
 async def request_password_reset(
     request: Request,
     user_id: int,
