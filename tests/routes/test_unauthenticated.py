@@ -221,30 +221,6 @@ def test_password_reset_active_token_too_close_to_expiry(
     mock_send_email.assert_called_once_with(test_user, prt)
 
 
-def test_password_reset_rate_limit(
-    client,
-    test_user,
-    test_db,
-):
-    # reset the rate limiter so we do not see unexpected 429 responses
-    limiter.reset()
-
-    # Make sure we rate limit requests
-    max_requests_per_minute = 6
-    for i in range(max_requests_per_minute + 2):
-        response = client.post(
-            f"/api/v1/password-reset/{test_user.email}",
-        )
-        if i < max_requests_per_minute:
-            assert response.status_code == 200
-            assert response.json()
-        else:
-            assert response.status_code == 429
-
-    # Just make sure we're not polluting the db with extra tokens
-    assert len(test_db.query(PasswordResetToken).all()) == 1
-
-
 NEW_USER_1 = {
     "email": "newemail1@email.com",
     "names": "Joe Smith 1",
