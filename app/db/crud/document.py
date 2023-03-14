@@ -82,20 +82,6 @@ def get_family_and_documents(
     documents = _get_documents_for_family_import_id(db, import_id)
     collections = _get_collections_for_family_import_id(db, import_id)
 
-    _LOGGER.info(
-        f"Family and Document Response data.",
-        extra={
-            "props": {
-                "family": str(family),
-                "import_id": import_id,
-                "slugs": slugs,
-                "events": str(events),
-                "documents": str(documents),
-                "collections": str(collections),
-            },
-        },
-    )
-
     return FamilyAndDocumentsResponse(
         organisation=cast(str, organisation.name),
         title=cast(str, family.title),
@@ -169,16 +155,6 @@ def _get_documents_for_family_import_id(
         db.query(FamilyDocument, PhysicalDocument)
         .filter(FamilyDocument.family_import_id == import_id)
         .filter(FamilyDocument.physical_document_id == PhysicalDocument.id)
-    )
-
-    _LOGGER.info(
-        f"Got the following documents for import ID.",
-        extra={
-            "props": {
-                "db_documents": str(db_documents),
-                "import_id": str(import_id),
-            },
-        },
     )
 
     documents = [
