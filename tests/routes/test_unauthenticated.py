@@ -6,7 +6,6 @@ import pytest
 from app.api.api_v1.routers.admin import ACCOUNT_ACTIVATION_EXPIRE_MINUTES
 from app.core.security import verify_password
 from app.db.models.deprecated import User, PasswordResetToken
-from app.api.api_v1.routers.unauthenticated import limiter
 
 
 @pytest.mark.parametrize(
@@ -21,8 +20,6 @@ def test_reset_password(
     test_db,
     test_password_reset_token,
 ):
-    # reset the rate limiter so we do not see unexpected 429 responses
-    limiter.reset()
     response = client.post(
         "/api/v1/activations",
         json={
@@ -49,8 +46,6 @@ def test_reset_password(
 def test_reset_password_nonexistent(
     mock_send_email, client, test_inactive_user, test_db, test_password_reset_token
 ):
-    # reset the rate limiter so we do not see unexpected 429 responses
-    limiter.reset()
     response = client.post(
         "/api/v1/activations",
         json={
@@ -68,8 +63,6 @@ def test_reset_password_nonexistent(
 def test_reset_password_too_late(
     mock_send_email, client, test_inactive_user, test_db, test_password_reset_token
 ):
-    # reset the rate limiter so we do not see unexpected 429 responses
-    limiter.reset()
     test_password_reset_token.expiry_ts = datetime.datetime(2010, 1, 1)
     test_db.add(test_password_reset_token)
     test_db.commit()
@@ -91,8 +84,6 @@ def test_reset_password_too_late(
 def test_reset_password_used_token(
     mock_send_email, client, test_inactive_user, test_db, test_password_reset_token
 ):
-    # reset the rate limiter so we do not see unexpected 429 responses
-    limiter.reset()
     test_password_reset_token.is_redeemed = True
     test_db.add(test_password_reset_token)
     test_db.commit()
@@ -114,8 +105,6 @@ def test_reset_password_used_token(
 def test_reset_password_cancelled_token(
     mock_send_email, client, test_inactive_user, test_db, test_password_reset_token
 ):
-    # reset the rate limiter so we do not see unexpected 429 responses
-    limiter.reset()
     test_password_reset_token.is_cancelled = True
     test_db.add(test_password_reset_token)
     test_db.commit()
@@ -143,8 +132,6 @@ def test_password_reset_after_activation(
     test_db,
     test_password_reset_token,
 ):
-    # reset the rate limiter so we do not see unexpected 429 responses
-    limiter.reset()
     # Start with an old token from account creation (should not be returned as valid)
     test_password_reset_token.expiry_ts = (
         datetime.datetime.utcnow() + datetime.timedelta(minutes=500)
@@ -193,8 +180,6 @@ def test_password_reset_active_token_too_close_to_expiry(
     test_db,
     test_password_reset_token,
 ):
-    # reset the rate limiter so we do not see unexpected 429 responses
-    limiter.reset()
     # Start with an old token from account creation (should not be returned as valid)
     test_password_reset_token.expiry_ts = (
         datetime.datetime.utcnow() + datetime.timedelta(minutes=5)
@@ -226,9 +211,6 @@ def test_password_reset_rate_limit(
     test_user,
     test_db,
 ):
-    # reset the rate limiter so we do not see unexpected 429 responses
-    limiter.reset()
-
     # Make sure we rate limit requests
     max_requests_per_minute = 6
     for i in range(max_requests_per_minute + 2):
@@ -271,9 +253,6 @@ def test_register_user(
     test_db,
     test_user,
 ):
-    # reset the rate limiter so we do not see unexpected 429 responses
-    limiter.reset()
-
     mock_get_password_reset_token_expiry_ts.return_value = datetime.datetime(2099, 1, 1)
 
     response = client.post(
@@ -306,9 +285,6 @@ def test_register_user_disabled(
     test_db,
     test_user,
 ):
-    # reset the rate limiter so we do not see unexpected 429 responses
-    limiter.reset()
-
     response = client.post(
         "/api/v1/registrations",
         json=new_user,
