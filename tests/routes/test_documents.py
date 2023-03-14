@@ -126,7 +126,7 @@ def test_documents_with_preexisting_objects(
     test_db: Session,
     mocker: Callable[..., Generator[MockerFixture, None, None]],
 ):
-    setup_with_docs(test_db, mocker)
+    setup_with_two_docs(test_db, mocker)
     assert test_db.query(Family).count() == 1
     assert test_db.query(FamilyEvent).count() == 1
 
@@ -161,3 +161,14 @@ def test_documents_with_preexisting_objects(
 
     assert len(json_response["collections"]) == 1
     assert json_response["collections"][0]["title"] == "Collection1"
+
+    # Test associations
+    response = client.get(
+        "/api/v1/documents/FamSlug2?group_documents=True",
+    )
+    json_response = response.json()
+    assert response.status_code == 200
+    assert len(json_response) == 13
+    assert json_response["organisation"] == "CCLW"
+    assert json_response["title"] == "Fam2"
+    assert json_response["summary"] == "Summary2"
