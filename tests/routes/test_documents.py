@@ -102,6 +102,7 @@ def populate_old_documents(test_db):
             category_id=1,
         )
     )
+    test_db.commit()
     test_db.add(
         Document(
             publication_ts=datetime(year=2014, month=1, day=1),
