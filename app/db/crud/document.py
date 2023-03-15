@@ -15,7 +15,13 @@ from app.api.api_v1.schemas.document import (
 from app.db.models.app.users import Organisation
 from app.db.models.document.physical_document import PhysicalDocument
 from app.db.models.law_policy.collection import Collection, CollectionFamily
-from app.db.models.law_policy.family import Family, FamilyDocument, FamilyEvent, Slug
+from app.db.models.law_policy.family import (
+    Family,
+    FamilyDocument,
+    FamilyEvent,
+    Slug,
+    FamilyOrganisation,
+)
 from app.db.models.law_policy.geography import Geography
 from app.db.models.law_policy.metadata import FamilyMetadata
 
@@ -34,18 +40,30 @@ def get_family_and_documents(
     """
 
     db_objects = (
-        db.query(Family, Geography, Slug, FamilyMetadata, Organisation)
+        db.query(
+            Family, Geography, Slug, FamilyMetadata, FamilyOrganisation, Organisation
+        )
         .filter(Family.geography_id == Geography.id)
         .filter(Family.import_id == FamilyMetadata.family_import_id)
+        .filter(Family.import_id == Slug.family_import_id)
+        .filter(Family.import_id == FamilyOrganisation.family_import_id)
+        .filter(FamilyOrganisation.organisation_id == Organisation.id)
         .filter(Slug.name == slug)
-    ).first()
+    ).one_or_none()
 
     if not db_objects:
         _LOGGER.warning("No family found for slug", extra={"slug": slug})
         return None
 
     family: Family
-    family, geography, slug, family_metadata, organisation = db_objects
+    (
+        family,
+        geography,
+        slug,
+        family_metadata,
+        family_organisation,
+        organisation,
+    ) = db_objects
     import_id = cast(str, family.import_id)
 
     slugs = _get_slugs_for_family_import_id(db, import_id)
