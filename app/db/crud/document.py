@@ -51,16 +51,6 @@ def get_family_and_documents(
         .filter(Slug.name == slug)
     ).one_or_none()
 
-    _LOGGER.info(
-        f"Database objects retrieved for slug.",
-        extra={
-            "props": {
-                "slug": slug,
-                "db_objects": str(db_objects),
-            },
-        },
-    )
-
     if not db_objects:
         _LOGGER.warning("No family found for slug", extra={"slug": slug})
         return None
