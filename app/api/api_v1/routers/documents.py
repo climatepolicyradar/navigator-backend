@@ -12,7 +12,11 @@ from fastapi import (
 from app.core.auth import (
     get_current_active_superuser,
 )
-from app.db.crud.document import get_family_and_documents, get_slugged_objects
+from app.db.crud.document import (
+    get_family_and_documents,
+    get_family_document_and_context,
+    get_slugged_objects,
+)
 
 from app.db.crud.deprecated_document import (
     create_document_relationship,
@@ -100,12 +104,15 @@ async def document_detail(
 
     family_document_import_id, family_import_id = ids
 
+    response = None
+
     if family_import_id:
         response = get_family_and_documents(db, family_import_id)
-        if response:
-            return response
     elif family_document_import_id:
-        pass  # TODO: write new code to return a FamilyDocumentWithContextResponse
+        response = get_family_document_and_context(db, family_document_import_id)
+
+    if response:
+        return response
 
     raise HTTPException(
         status_code=INTERNAL_SERVER_ERROR,

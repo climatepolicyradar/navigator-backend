@@ -9,7 +9,9 @@ from sqlalchemy.orm import Session
 from app.api.api_v1.schemas.document import (
     CollectionOverviewResponse,
     FamilyAndDocumentsResponse,
+    FamilyContext,
     FamilyDocumentResponse,
+    FamilyDocumentWithContextResponse,
     FamilyEventsResponse,
 )
 from app.db.models.app.users import Organisation
@@ -42,6 +44,47 @@ def get_slugged_objects(db: Session, slug: str) -> tuple[Optional[str], Optional
             Slug.name == slug
         )
     ).one_or_none()
+
+
+def get_family_document_and_context(
+    db: Session, family_document_import_id: str
+) -> Optional[FamilyDocumentWithContextResponse]:
+    db_objects = (
+        db.query(Family, FamilyDocument, PhysicalDocument, Geography)
+        .filter(FamilyDocument.import_id == family_document_import_id)
+        .filter(Family.import_id == FamilyDocument.family_import_id)
+        .filter(FamilyDocument.physical_document_id == PhysicalDocument.id)
+        .filter(Family.geography_id == Geography.id)
+    ).one_or_none()
+
+    if not db_objects:
+        return None
+
+    family, document, physical_document, geography = db_objects
+
+    import_id = cast(str, family.import_id)
+    slugs = _get_slugs_for_family_import_id(db, import_id)
+
+    family = FamilyContext(
+        title=cast(str, family.title),
+        import_id=import_id,
+        geography=cast(str, geography.value),
+        slugs=slugs,
+        published_date=family.published_date,
+        last_updated_date=family.last_updated_date,
+    )
+    document = FamilyDocumentResponse(
+        import_id=document.import_id,
+        variant=document.variant_name,
+        slugs=_get_slugs_for_family_document_import_id(db, document.import_id),
+        title=physical_document.title,
+        md5_sum=physical_document.md5_sum,
+        cdn_object=physical_document.cdn_object,
+        source_url=physical_document.source_url,
+        content_type=physical_document.content_type,
+    )
+
+    return FamilyDocumentWithContextResponse(family=family, document=document)
 
 
 def get_family_and_documents(
