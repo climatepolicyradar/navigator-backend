@@ -127,6 +127,7 @@ def get_family_and_documents(
 
     return FamilyAndDocumentsResponse(
         organisation=cast(str, organisation.name),
+        import_id=import_id,
         title=cast(str, family.title),
         summary=cast(str, family.description),
         geography=cast(str, geography.value),

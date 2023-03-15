@@ -88,6 +88,7 @@ class FamilyAndDocumentsResponse(BaseModel):
     """Response for a Family and its Documents, part of documents endpoints"""
 
     organisation: str
+    import_id: str
     title: str
     summary: str
     geography: str

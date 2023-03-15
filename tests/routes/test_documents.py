@@ -129,7 +129,7 @@ def populate_old_documents(test_db):
     test_db.commit()
 
 
-def test_documents_with_preexisting_objects_not_found(
+def test_documents_family_slug_preexisting_objects_not_found(
     client: TestClient,
     test_db: Session,
     mocker: Callable[..., Generator[MockerFixture, None, None]],
@@ -145,7 +145,7 @@ def test_documents_with_preexisting_objects_not_found(
     assert response.status_code == 404
 
 
-def test_documents_with_preexisting_objects(
+def test_documents_family_slug_preexisting_objects(
     client: TestClient,
     test_db: Session,
     mocker: Callable[..., Generator[MockerFixture, None, None]],
@@ -161,8 +161,9 @@ def test_documents_with_preexisting_objects(
     )
     json_response = response.json()
     assert response.status_code == 200
-    assert len(json_response) == 13
+    assert len(json_response) == 14
     assert json_response["organisation"] == "CCLW"
+    assert json_response["import_id"] == "CCLW.family.1001.0"
     assert json_response["title"] == "Fam1"
     assert json_response["summary"] == "Summary1"
     assert json_response["geography"] == "GEO"
@@ -183,6 +184,7 @@ def test_documents_with_preexisting_objects(
     assert len(json_response["documents"]) == 1
     assert json_response["documents"][0]["title"] == "Title1"
     assert json_response["documents"][0]["slugs"] == ["DocSlug1"]
+    assert json_response["documents"][0]["import_id"] == "CCLW.executive.1.2"
 
     assert len(json_response["collections"]) == 1
     assert json_response["collections"][0]["title"] == "Collection1"
@@ -192,9 +194,10 @@ def test_documents_with_preexisting_objects(
     )
     json_response = response.json()
     assert response.status_code == 200
-    assert len(json_response) == 13
+    assert len(json_response) == 14
     assert json_response["organisation"] == "CCLW"
     assert json_response["title"] == "Fam2"
+    assert json_response["import_id"] == "CCLW.family.2002.0"
     assert json_response["summary"] == "Summary2"
     assert json_response["geography"] == "GEO"
     assert json_response["category"] == "Executive"
@@ -214,6 +217,7 @@ def test_documents_with_preexisting_objects(
     assert len(json_response["documents"]) == 1
     assert json_response["documents"][0]["title"] == "Title2"
     assert json_response["documents"][0]["slugs"] == ["DocSlug2"]
+    assert json_response["documents"][0]["import_id"] == "CCLW.executive.2.2"
 
     assert len(json_response["collections"]) == 1
     assert json_response["collections"][0]["title"] == "Collection2"
