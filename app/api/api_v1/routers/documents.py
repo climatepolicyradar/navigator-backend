@@ -1,4 +1,4 @@
-from http.client import NOT_FOUND
+from http.client import INTERNAL_SERVER_ERROR, NOT_FOUND
 import logging
 from typing import List, Union
 
@@ -12,7 +12,11 @@ from fastapi import (
 from app.core.auth import (
     get_current_active_superuser,
 )
-from app.db.crud.document import get_family_and_documents
+from app.db.crud.document import (
+    get_family_and_documents,
+    get_family_document_and_context,
+    get_slugged_objects,
+)
 
 from app.db.crud.deprecated_document import (
     create_document_relationship,
@@ -28,6 +32,7 @@ from app.api.api_v1.schemas.document import (
     DocumentDetailResponse,
     DocumentOverviewResponse,
     FamilyAndDocumentsResponse,
+    FamilyDocumentWithContextResponse,
     RelationshipAndDocumentsGetResponse,
     RelationshipCreateRequest,
     RelationshipEntityResponse,
@@ -67,7 +72,11 @@ async def document_browse(
 
 @documents_router.get(
     "/documents/{import_id_or_slug}",
-    response_model=Union[DocumentDetailResponse, FamilyAndDocumentsResponse],
+    response_model=Union[
+        DocumentDetailResponse,
+        FamilyAndDocumentsResponse,
+        FamilyDocumentWithContextResponse,
+    ],
 )
 async def document_detail(
     import_id_or_slug: str,
@@ -87,11 +96,27 @@ async def document_detail(
     if not group_documents:
         return get_document_detail(db, import_id_or_slug)
 
-    response = get_family_and_documents(db, import_id_or_slug)
+    ids = get_slugged_objects(db, import_id_or_slug)
+    if not ids:
+        raise HTTPException(
+            status_code=NOT_FOUND, detail=f"Nothing found for {import_id_or_slug}"
+        )
+
+    family_document_import_id, family_import_id = ids
+
+    response = None
+
+    if family_import_id:
+        response = get_family_and_documents(db, family_import_id)
+    elif family_document_import_id:
+        response = get_family_document_and_context(db, family_document_import_id)
+
     if response:
         return response
+
     raise HTTPException(
-        status_code=NOT_FOUND, detail=f"Nothing found for {import_id_or_slug}"
+        status_code=INTERNAL_SERVER_ERROR,
+        detail=f"Slug entry found and not pointing at anything: {import_id_or_slug}",
     )
 
 

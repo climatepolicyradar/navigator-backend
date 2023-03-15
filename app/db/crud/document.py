@@ -9,7 +9,9 @@ from sqlalchemy.orm import Session
 from app.api.api_v1.schemas.document import (
     CollectionOverviewResponse,
     FamilyAndDocumentsResponse,
-    FamilyDocumentsResponse,
+    FamilyContext,
+    FamilyDocumentResponse,
+    FamilyDocumentWithContextResponse,
     FamilyEventsResponse,
 )
 from app.db.models.app.users import Organisation
@@ -28,43 +30,95 @@ from app.db.models.law_policy.metadata import FamilyMetadata
 _LOGGER = logging.getLogger(__file__)
 
 
+def get_slugged_objects(db: Session, slug: str) -> tuple[Optional[str], Optional[str]]:
+    """
+    Matches the slug name to a FamilyDocument or Family import_id
+
+    :param Session db: connection to db
+    :param str slug: slug name to match
+    :return tuple[Optional[str], Optional[str]]: the FamilyDocument import id or
+    the Family import_id
+    """
+    return (
+        db.query(Slug.family_document_import_id, Slug.family_import_id).filter(
+            Slug.name == slug
+        )
+    ).one_or_none()
+
+
+def get_family_document_and_context(
+    db: Session, family_document_import_id: str
+) -> Optional[FamilyDocumentWithContextResponse]:
+    db_objects = (
+        db.query(Family, FamilyDocument, PhysicalDocument, Geography)
+        .filter(FamilyDocument.import_id == family_document_import_id)
+        .filter(Family.import_id == FamilyDocument.family_import_id)
+        .filter(FamilyDocument.physical_document_id == PhysicalDocument.id)
+        .filter(Family.geography_id == Geography.id)
+    ).one_or_none()
+
+    if not db_objects:
+        return None
+
+    family, document, physical_document, geography = db_objects
+
+    import_id = cast(str, family.import_id)
+    slugs = _get_slugs_for_family_import_id(db, import_id)
+
+    family = FamilyContext(
+        title=cast(str, family.title),
+        import_id=import_id,
+        geography=cast(str, geography.value),
+        slugs=slugs,
+        published_date=family.published_date,
+        last_updated_date=family.last_updated_date,
+    )
+    document = FamilyDocumentResponse(
+        import_id=document.import_id,
+        variant=document.variant_name,
+        slugs=_get_slugs_for_family_document_import_id(db, document.import_id),
+        title=physical_document.title,
+        md5_sum=physical_document.md5_sum,
+        cdn_object=physical_document.cdn_object,
+        source_url=physical_document.source_url,
+        content_type=physical_document.content_type,
+    )
+
+    return FamilyDocumentWithContextResponse(family=family, document=document)
+
+
 def get_family_and_documents(
-    db: Session, slug: str
+    db: Session, import_id: str
 ) -> Optional[FamilyAndDocumentsResponse]:
     """
     Get a document along with the family information.
 
     :param Session db: connection to db
-    :param str slug: id of document
+    :param str import_id: id of document
     :return DocumentWithFamilyResponse: response object
     """
 
     db_objects = (
-        db.query(
-            Family, Geography, Slug, FamilyMetadata, FamilyOrganisation, Organisation
-        )
+        db.query(Family, Geography, FamilyMetadata, FamilyOrganisation, Organisation)
+        .filter(Family.import_id == import_id)
         .filter(Family.geography_id == Geography.id)
-        .filter(Family.import_id == FamilyMetadata.family_import_id)
-        .filter(Family.import_id == Slug.family_import_id)
-        .filter(Family.import_id == FamilyOrganisation.family_import_id)
+        .filter(import_id == FamilyMetadata.family_import_id)
+        .filter(import_id == FamilyOrganisation.family_import_id)
         .filter(FamilyOrganisation.organisation_id == Organisation.id)
-        .filter(Slug.name == slug)
     ).one_or_none()
 
     if not db_objects:
-        _LOGGER.warning("No family found for slug", extra={"slug": slug})
+        _LOGGER.warning("No family found for import_id", extra={"slug": import_id})
         return None
 
     family: Family
     (
         family,
         geography,
-        slug,
         family_metadata,
-        family_organisation,
+        _,
         organisation,
     ) = db_objects
-    import_id = cast(str, family.import_id)
 
     slugs = _get_slugs_for_family_import_id(db, import_id)
     events = _get_events_for_family_import_id(db, import_id)
@@ -73,6 +127,7 @@ def get_family_and_documents(
 
     return FamilyAndDocumentsResponse(
         organisation=cast(str, organisation.name),
+        import_id=import_id,
         title=cast(str, family.title),
         summary=cast(str, family.description),
         geography=cast(str, geography.value),
@@ -139,7 +194,7 @@ def _get_events_for_family_import_id(
 
 def _get_documents_for_family_import_id(
     db: Session, import_id: str
-) -> list[FamilyDocumentsResponse]:
+) -> list[FamilyDocumentResponse]:
     db_documents = (
         db.query(FamilyDocument, PhysicalDocument)
         .filter(FamilyDocument.family_import_id == import_id)
@@ -147,7 +202,8 @@ def _get_documents_for_family_import_id(
     )
 
     documents = [
-        FamilyDocumentsResponse(
+        FamilyDocumentResponse(
+            import_id=d.import_id,
             variant=d.variant_name,
             slugs=_get_slugs_for_family_document_import_id(db, d.import_id),
             # What follows is off PhysicalDocument
