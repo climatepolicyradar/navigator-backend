@@ -159,6 +159,7 @@ def _get_documents_for_family_import_id(
 
     documents = [
         FamilyDocumentResponse(
+            import_id=d.import_id,
             variant=d.variant_name,
             slugs=_get_slugs_for_family_document_import_id(db, d.import_id),
             # What follows is off PhysicalDocument

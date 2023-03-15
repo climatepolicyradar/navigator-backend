@@ -55,6 +55,7 @@ class FamilyEventsResponse(BaseModel):
 class FamilyDocumentResponse(BaseModel):
     """Response for a FamilyDocument, without any family information"""
 
+    import_id: str
     variant: str
     slugs: list[str]
     # What follows is off PhysicalDocument
@@ -69,6 +70,7 @@ class FamilyContext(BaseModel):
     """Used to given the family context when returning a FamilyDocument"""
 
     title: str
+    import_id: str
     geography: str
     slugs: list[str]
     published_date: Optional[datetime]
