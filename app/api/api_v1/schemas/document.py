@@ -35,19 +35,6 @@ class DocumentOverviewResponse(BaseModel):  # noqa: D101
         frozen = True
 
 
-class FamilyDocumentsResponse(BaseModel):
-    """Response for a FamilyDocument, part of documents endpoints"""
-
-    variant: str
-    slugs: list[str]
-    # What follows is off PhysicalDocument
-    title: str
-    md5_sum: Optional[str]
-    cdn_object: Optional[str]
-    source_url: Optional[str]
-    content_type: Optional[str]
-
-
 class CollectionOverviewResponse(BaseModel):
     """Response for a Collection - without families"""
 
@@ -65,6 +52,36 @@ class FamilyEventsResponse(BaseModel):
     status: str
 
 
+class FamilyDocumentResponse(BaseModel):
+    """Response for a FamilyDocument, without any family information"""
+
+    variant: str
+    slugs: list[str]
+    # What follows is off PhysicalDocument
+    title: str
+    md5_sum: Optional[str]
+    cdn_object: Optional[str]
+    source_url: Optional[str]
+    content_type: Optional[str]
+
+
+class FamilyContext(BaseModel):
+    """Used to given the family context when returning a FamilyDocument"""
+
+    title: str
+    geography: str
+    slugs: list[str]
+    published_date: Optional[datetime]
+    last_updated_date: Optional[datetime]
+
+
+class FamilyDocumentWithContextResponse(BaseModel):
+    """Response for a FamilyDocument with its family's context"""
+
+    family: FamilyContext
+    document: FamilyDocumentResponse
+
+
 class FamilyAndDocumentsResponse(BaseModel):
     """Response for a Family and its Documents, part of documents endpoints"""
 
@@ -79,7 +96,7 @@ class FamilyAndDocumentsResponse(BaseModel):
     events: list[FamilyEventsResponse]
     published_date: Optional[datetime]
     last_updated_date: Optional[datetime]
-    documents: list[FamilyDocumentsResponse]
+    documents: list[FamilyDocumentResponse]
     collections: list[CollectionOverviewResponse]
 
 
