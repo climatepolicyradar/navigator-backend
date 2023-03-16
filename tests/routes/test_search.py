@@ -233,7 +233,7 @@ def _create_family_structures(
         document_type=document_type.name,
     )
     family_document_slug = Slug(
-        name=doc_id,
+        name=f"fd_{doc_id}",
         family_import_id=None,
         family_document_import_id=doc_id,
     )
@@ -243,6 +243,33 @@ def _create_family_structures(
     db.commit()
     db.refresh(family_document)
     documents[doc_id] = family_document
+
+
+@pytest.mark.search
+def test_slug_is_from_family_document(test_opensearch, client, test_db, monkeypatch):
+    monkeypatch.setattr(search, "_OPENSEARCH_CONNECTION", test_opensearch)
+    _populate_search_db_families(test_db)
+    search_endpoint = f"{SEARCH_ENDPOINT}?group_documents=True"
+
+    page1_response = client.post(
+        search_endpoint,
+        json={
+            "query_string": "and",
+            "exact_match": False,
+            "limit": 2,
+            "offset": 0,
+        },
+    )
+    assert page1_response.status_code == 200
+
+    page1_response_body = page1_response.json()
+    fam1 = page1_response_body["families"][0]
+    doc1 = fam1["family_documents"][0]
+    slug = doc1["document_slug"]
+    print()
+    print(">>>> " + slug)
+    print()
+    assert doc1["document_slug"].startswith("fd_") and "should be from FamilyDocument"
 
 
 @pytest.mark.search
@@ -285,6 +312,7 @@ def test_simple_pagination_families(test_opensearch, client, test_db, monkeypatc
     family_slugs = {d["family_slug"] for d in page1_families} | {
         d["family_slug"] for d in page2_families
     }
+
     assert len(family_slugs) == 4
 
     for d in page1_families:
