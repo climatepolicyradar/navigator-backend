@@ -30,7 +30,6 @@ from app.core.search import (
 )
 from app.db.crud.deprecated_document import get_postfix_map, get_document_extra
 from app.db.session import get_db
-from app.core.ratelimit import limiter
 
 _LOGGER = logging.getLogger(__name__)
 
@@ -43,7 +42,6 @@ search_router = APIRouter()
 
 
 @search_router.post("/searches")
-@limiter.exempt  # TODO: remove after load-testing
 def search_documents(
     request: Request,
     search_body: SearchRequestBody,
