@@ -7,11 +7,13 @@ from app.core.lookups import get_metadata
 from app.db.session import get_db
 from app.db.crud.deprecated_document import get_document_ids
 from .router import lookups_router
+from app.core.ratelimit import limiter
 
 from app.core.organisation import get_organisation_taxonomy_by_name
 
 
 @lookups_router.get("/config", response_model=Union[Config, TaxonomyConfig])
+@limiter.exempt  # TODO: remove after load-testing
 def lookup_config(
     request: Request,
     db=Depends(get_db),
@@ -29,6 +31,7 @@ def lookup_config(
     response_model=Sequence[str],
     summary="Get a list of all document ids",
 )
+@limiter.exempt  # TODO: remove after load-testing
 async def document_ids(
     response: Response,
     db=Depends(get_db),

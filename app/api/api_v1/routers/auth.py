@@ -1,5 +1,6 @@
 import logging
 
+from app.core.ratelimit import limiter
 from app.core.security import create_access_token
 from app.core.auth import authenticate_user
 from app.db.session import get_db
@@ -12,6 +13,7 @@ _LOGGER = logging.getLogger(__file__)
 
 
 @r.post("/tokens")
+@limiter.exempt  # TODO: remove after load-testing
 async def login(db=Depends(get_db), form_data: OAuth2PasswordRequestForm = Depends()):
     _LOGGER.info(
         "Auth token requested",
