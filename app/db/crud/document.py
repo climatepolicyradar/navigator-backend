@@ -26,6 +26,7 @@ from app.db.models.law_policy.family import (
 )
 from app.db.models.law_policy.geography import Geography
 from app.db.models.law_policy.metadata import FamilyMetadata
+from app.core.util import to_cdn_url
 
 _LOGGER = logging.getLogger(__file__)
 
@@ -79,7 +80,7 @@ def get_family_document_and_context(
         slugs=_get_slugs_for_family_document_import_id(db, document.import_id),
         title=physical_document.title,
         md5_sum=physical_document.md5_sum,
-        cdn_object=physical_document.cdn_object,
+        cdn_object=to_cdn_url(physical_document.cdn_object),
         source_url=physical_document.source_url,
         content_type=physical_document.content_type,
     )
@@ -209,7 +210,7 @@ def _get_documents_for_family_import_id(
             # What follows is off PhysicalDocument
             title=pd.title,
             md5_sum=pd.md5_sum,
-            cdn_object=pd.cdn_object,
+            cdn_object=to_cdn_url(pd.cdn_object),
             source_url=pd.source_url,
             content_type=pd.content_type,
         )

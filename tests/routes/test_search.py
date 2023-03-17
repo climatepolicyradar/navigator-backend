@@ -265,10 +265,6 @@ def test_slug_is_from_family_document(test_opensearch, client, test_db, monkeypa
     page1_response_body = page1_response.json()
     fam1 = page1_response_body["families"][0]
     doc1 = fam1["family_documents"][0]
-    slug = doc1["document_slug"]
-    print()
-    print(">>>> " + slug)
-    print()
     assert doc1["document_slug"].startswith("fd_") and "should be from FamilyDocument"
 
 
