@@ -282,3 +282,17 @@ class ClimateLawsValidationResult(BaseModel):
     all_valid: bool
     no_cdn: list[tuple[Any, Any]]
     no_cdn_count: int
+
+
+class RDSDataValidationResult(BaseModel):
+    """Response for the data validation endpoint for analysing the new and deprecated document data."""
+
+    family_document_ids: list[str]
+    family_document_id_count: int
+    deprecated_document_ids: list[str]
+    deprecated_document_id_count: int
+    family_not_in_deprecated_ids: list[str]
+    family_not_in_deprecated_id_count: int
+    deprecated_not_in_family_ids: list[str]
+    deprecated_not_in_family_id_count: int
+    valid: bool
