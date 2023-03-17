@@ -11,7 +11,7 @@ from app.core.email import (
     send_password_changed_email,
     send_password_reset_email,
 )
-from app.core.ratelimit import limiter
+from app.core.ratelimit import DEFAULT_LIMIT, limiter
 from app.db.crud.password_reset import (
     create_password_reset_token,
     get_password_reset_token_by_token,
@@ -37,8 +37,7 @@ ENABLE_SELF_REGISTRATION = (
 
 
 @r.post("/registrations", response_model=bool, response_model_exclude_none=True)
-# @limiter.limit(DEFAULT_LIMIT)
-@limiter.exempt  # TODO: remove after load-testing
+@limiter.limit(DEFAULT_LIMIT)
 async def user_create(
     request: Request,  # request unused, but required for rate limiting
     user: UserCreate,
@@ -91,8 +90,7 @@ async def user_create(
 
 
 @r.post("/activations", response_model=User, response_model_exclude_none=True)
-# @limiter.limit(DEFAULT_LIMIT)
-@limiter.exempt  # TODO: remove after load-testing
+@limiter.limit(DEFAULT_LIMIT)
 async def set_password(
     request: Request,  # request unused, but required for rate limiting
     payload: ResetPassword,
@@ -121,8 +119,7 @@ async def set_password(
 @r.post(
     "/password-reset/{email}", response_model=bool, response_model_exclude_none=True
 )
-# @limiter.limit(DEFAULT_LIMIT)
-@limiter.exempt  # TODO: remove after load-testing
+@limiter.limit(DEFAULT_LIMIT)
 async def request_password_reset(
     request: Request,  # request unused, but required for rate limiting
     email: str,

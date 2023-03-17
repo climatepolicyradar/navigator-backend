@@ -8,7 +8,6 @@ from fastapi import (
     HTTPException,
     Request,
 )
-from app.core.ratelimit import limiter
 
 from app.core.auth import (
     get_current_active_superuser,
@@ -51,7 +50,6 @@ documents_router = APIRouter()
     response_model=List[DocumentOverviewResponse],
     summary="Get a list of documents",
 )
-@limiter.exempt  # TODO: remove after load-testing
 async def document_browse(
     country_code: Union[str, None] = None,
     start_year: Union[int, None] = None,
@@ -80,7 +78,6 @@ async def document_browse(
         FamilyDocumentWithContextResponse,
     ],
 )
-@limiter.exempt  # TODO: remove after load-testing
 async def document_detail(
     import_id_or_slug: str,
     db=Depends(get_db),
@@ -128,7 +125,6 @@ async def document_detail(
     response_model=RelationshipEntityResponse,
     status_code=201,
 )
-@limiter.exempt  # TODO: remove after load-testing
 async def post_relationship(
     request: Request,
     relationship: RelationshipCreateRequest,
@@ -156,7 +152,6 @@ async def post_relationship(
 @documents_router.get(
     "/document-relationships", response_model=List[RelationshipEntityResponse]
 )
-@limiter.exempt  # TODO: remove after load-testing
 async def get_all_relationships(
     request: Request,
     db=Depends(get_db),
@@ -178,7 +173,6 @@ async def get_all_relationships(
     "/document-relationships/{relationship_id}",
     response_model=RelationshipAndDocumentsGetResponse,
 )
-@limiter.exempt  # TODO: remove after load-testing
 async def get_relationship(
     request: Request,
     relationship_id: int,
@@ -205,7 +199,6 @@ async def get_relationship(
 @documents_router.put(
     "/document-relationships/{relationship_id}/documents/{document_id}", status_code=201
 )
-@limiter.exempt  # TODO: remove after load-testing
 async def put_document_relationship(
     request: Request,
     document_id: int,
@@ -235,7 +228,6 @@ async def put_document_relationship(
 @documents_router.delete(
     "/document-relationships/{relationship_id}/documents/{document_id}"
 )
-@limiter.exempt  # TODO: remove after load-testing
 async def delete_document_relationship(
     request: Request,
     document_id: int,

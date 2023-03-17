@@ -9,7 +9,6 @@ from sqlalchemy import exc
 from app.db.session import get_db
 from app.db.models.law_policy import Geography, GeoStatistics
 from .router import lookups_router
-from app.core.ratelimit import limiter
 
 _LOGGER = logging.getLogger(__name__)
 
@@ -40,7 +39,6 @@ lookup_geo_stats_responses: Dict[Union[int, str], Dict[str, Any]] = {
     response_model=GeoStatsResponse,
     responses=lookup_geo_stats_responses,
 )
-@limiter.exempt  # TODO: remove after load-testing
 def lookup_geo_stats(
     geography_slug: str,
     db=Depends(get_db),
