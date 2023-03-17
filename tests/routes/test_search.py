@@ -1540,3 +1540,30 @@ def test_without_jit(test_opensearch, monkeypatch, client, mocker):
     actual_config = query_spy.mock_calls[0].args[1]
     expected_config = OpenSearchQueryConfig()
     assert actual_config == expected_config
+
+
+@pytest.mark.search
+def test_search_response_family(test_opensearch, client, test_db, monkeypatch):
+    monkeypatch.setattr(search, "_OPENSEARCH_CONNECTION", test_opensearch)
+    _populate_search_db_families(test_db)
+    search_endpoint = f"{SEARCH_ENDPOINT}?group_documents=True"
+
+    page1_response = client.post(
+        search_endpoint,
+        json={
+            "query_string": "and",
+            "exact_match": False,
+            "limit": 2,
+            "offset": 0,
+        },
+    )
+    assert page1_response.status_code == 200
+
+    page1_response_body = page1_response.json()
+    fam1 = page1_response_body["families"][0]
+    doc1 = fam1["family_documents"][0]
+    slug = doc1["document_slug"]
+    print()
+    print(">>>> " + slug)
+    print()
+    assert doc1["document_slug"].startswith("fd_") and "should be from FamilyDocument"

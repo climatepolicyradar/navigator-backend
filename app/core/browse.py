@@ -21,6 +21,7 @@ from app.db.models.law_policy.family import (
     Family,
     FamilyOrganisation,
     FamilyStatus,
+    FamilyDocument,
 )
 from app.db.models.app import Organisation
 from sqlalchemy import extract
@@ -46,6 +47,7 @@ class BrowseArgs(BaseModel):
 
 def to_search_response_family(
     family: Family,
+    family_document: FamilyDocument,
     geography: Geography,
     organisation: Organisation,
 ) -> SearchResponseFamily:
@@ -65,7 +67,7 @@ def to_search_response_family(
         # ↓ Stuff we don't currently use for search ↓
         family_title_match=False,
         family_description_match=False,
-        family_documents=[],  # TODO: are these required?
+        family_documents=[str(family_document.import_id)],  # TODO: are these required?
     )
 
 
@@ -76,14 +78,16 @@ def browse_rds_families(
     """Browse RDS"""
 
     t0 = perf_counter()
+    # TODO get the FamilyDocument here and add it to the response
     query = (
-        db.query(Family, Geography, Organisation)
+        db.query(Family, FamilyDocument, Geography, Organisation)
         .join(Geography, Family.geography_id == Geography.id)
         .join(
             FamilyOrganisation, FamilyOrganisation.family_import_id == Family.import_id
         )
         .join(Organisation, Organisation.id == FamilyOrganisation.organisation_id)
         .filter(Family.family_status == FamilyStatus.PUBLISHED)
+        .filter(FamilyDocument.import_id == Family.import_id)
     )
 
     if req.geography_slugs is not None:
@@ -102,8 +106,8 @@ def browse_rds_families(
             query = query.order_by(Family.title.asc())
 
     families = [
-        to_search_response_family(family, geography, organisation)
-        for (family, geography, organisation) in query.all()
+        to_search_response_family(family, family_document, geography, organisation)
+        for (family, family_document, geography, organisation) in query.all()
     ]
 
     if req.start_year is not None:
