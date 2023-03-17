@@ -6,6 +6,7 @@ Like searches but with pre-defined results based on the summary context.
 import logging
 from fastapi import APIRouter, Depends, Request
 
+from app.core.ratelimit import limiter
 from app.api.api_v1.schemas.search import (
     CategoryName,
     GeographySummaryResponse,
@@ -31,6 +32,7 @@ summary_router = APIRouter()
     summary="Gets a summary of the documents associated with a geography.",
     response_model=GeographySummaryResponse,
 )
+@limiter.exempt  # TODO: remove after load-testing
 def search_by_country(
     request: Request,
     geography_slug: str,
