@@ -268,5 +268,5 @@ class ClimateLawsValidationResult(BaseModel):
 
     all_climate_laws_count: int
     all_valid: bool
-    no_cdn: list[str]
+    no_cdn: list[tuple[Any, Any]]
     no_cdn_count: int

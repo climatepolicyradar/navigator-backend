@@ -865,20 +865,29 @@ def validate_climate_laws_urls(
         },
     )
 
-    unique_docs = list(
-        set(physical_document_source_urls(db=db) + document_source_urls(db=db))
-    )
+    unique_docs = [
+        doc
+        for doc in list(
+            set(physical_document_source_urls(db=db) + document_source_urls(db=db))
+        )
+        if doc is not (None, None)
+    ]
+
+    climate_laws_docs = [
+        (url, cdn)
+        for url, cdn in unique_docs
+        if urlparse(url).hostname == "climate-laws.org"
+    ]
+
+    no_cdn = [(url, cdn) for url, cdn in climate_laws_docs if cdn in [None, ""]]
+
+    _LOGGER.info("Climate laws validation complete.")
 
     # TODO assert url and cdn regex match
     # TODO assert that the cdn doc actually exists in s3
-    no_cdn = [
-        (url, cdn)
-        for url, cdn in unique_docs
-        if urlparse(url).hostname == "climate-laws.org" and cdn is None
-    ]
 
     return ClimateLawsValidationResult(
-        all_climate_laws_count=len(unique_docs),
+        all_climate_laws_count=len(climate_laws_docs),
         all_valid=len(no_cdn) == 0,
         no_cdn=no_cdn,
         no_cdn_count=len(no_cdn),
