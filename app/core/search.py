@@ -762,15 +762,16 @@ def create_search_response_family_document(
     opensearch_match: OpenSearchResponseMatchBase,
     document_family_match: Mapping[str, Mapping[str, str]],
 ) -> SearchResponseFamilyDocument:
+    doc = document_family_match[opensearch_match.document_id]
     return SearchResponseFamilyDocument(
-        document_title=document_family_match[opensearch_match.document_id]["title"],
+        document_title=doc["title"],
         document_type=opensearch_match.document_type,
         document_source_url=opensearch_match.document_source_url,
         document_url=to_cdn_url(opensearch_match.document_cdn_object),
         document_content_type=opensearch_match.document_content_type,
         # FIXME: Problem on the following line when group_documents=True,
         #        this should come from RDS Slug table
-        document_slug=opensearch_match.document_slug,
+        document_slug=doc["slug"],
         document_passage_matches=[],
     )
 
