@@ -543,6 +543,7 @@ class QueryBuilder:
     def with_keyword_filter(self, field: FilterField, values: Sequence[str]):
         """Add a keyword filter to the configured query."""
         filters = self._request_body["query"]["bool"].get("filter") or []
+
         filters.append({"terms": {_FILTER_FIELD_MAP[field]: values}})
         self._request_body["query"]["bool"]["filter"] = filters
 

@@ -44,7 +44,8 @@ def create_4_documents(test_db):
     )
     test_db.add(DocumentType(name="just my type", description="sigh"))
     test_db.add(Language(language_code="afr", name="Afrikaans"))
-    test_db.add(Category(name="a category", description="a category description"))
+    test_db.add(Category(name="Law", description="a category description"))
+    test_db.add(Category(name="Policy", description="a category description"))
     test_db.add(Keyword(name="some keyword", description="Imported by CPR loader"))
     test_db.add(
         Keyword(name="some other keyword", description="Imported by CPR loader")
@@ -108,7 +109,7 @@ def create_4_documents(test_db):
         "geography": "not my favourite subject",
         "source": "may it be with you",
         "import_id": "CCLW.001.000.XXX",
-        "category": "a category",
+        "category": "Policy",
         "languages": ["Afrikaans"],
         "events": [
             {
@@ -146,7 +147,7 @@ def create_4_documents(test_db):
         "geography": "not my favourite subject",
         "source": "may it be with you",
         "import_id": "CCLW.002.000.XXX",
-        "category": "a category",
+        "category": "Policy",
         "languages": ["afr"],
         "events": [
             {
@@ -191,7 +192,7 @@ def create_4_documents(test_db):
         "geography": "NMFSA",
         "source": "may it be with you",
         "import_id": "CCLW.003.000.XXX",
-        "category": "a category",
+        "category": "Law",
         "languages": ["afr"],
         "events": [
             {
@@ -228,7 +229,7 @@ def create_4_documents(test_db):
         "geography": "not my favourite subject",
         "source": "may it be with you",
         "import_id": "CCLW.005.000.XXX",
-        "category": "a category",
+        "category": "Policy",
         "languages": ["afr"],
         "events": [
             {
@@ -342,7 +343,7 @@ def test_document_detail(
         }
     ]
     assert get_detail_json_2["category"] == {
-        "name": "a category",
+        "name": "Policy",
         "description": "a category description",
     }
 
