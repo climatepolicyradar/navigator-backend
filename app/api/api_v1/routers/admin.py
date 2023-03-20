@@ -49,8 +49,8 @@ from app.core.ingestion.utils import (
     get_result_counts,
 )
 from app.core.ingestion.validator import validate_event_row
-from app.core.ratelimit import limiter
 from app.core.validate import physical_document_source_urls, document_source_urls
+from app.core.ratelimit import DEFAULT_LIMIT, limiter
 from app.core.validation import IMPORT_ID_MATCHER
 from app.core.validation.types import (
     ImportSchemaMismatchError,
@@ -94,7 +94,6 @@ ACCOUNT_ACTIVATION_EXPIRE_MINUTES = 4 * 7 * 24 * 60  # 4 weeks
     response_model_exclude_none=True,
 )
 # TODO paginate
-@limiter.exempt  # TODO: remove after load-testing
 async def users_list(
     response: Response,
     db=Depends(get_db),
@@ -118,7 +117,6 @@ async def users_list(
     response_model=User,
     response_model_exclude_none=True,
 )
-@limiter.exempt  # TODO: remove after load-testing
 async def user_details(
     request: Request,
     response: Response,
@@ -143,7 +141,6 @@ async def user_details(
 
 
 @r.post("/users", response_model=User, response_model_exclude_none=True)
-@limiter.exempt  # TODO: remove after load-testing
 async def user_create(
     request: Request,
     user: UserCreateAdmin,
@@ -186,7 +183,6 @@ async def user_create(
 
 
 @r.put("/users/{user_id}", response_model=User, response_model_exclude_none=True)
-@limiter.exempt  # TODO: remove after load-testing
 async def user_edit(
     request: Request,
     response: Response,
@@ -226,7 +222,6 @@ async def user_edit(
 
 
 @r.delete("/users/{user_id}", response_model=User, response_model_exclude_none=True)
-@limiter.exempt  # TODO: remove after load-testing
 async def user_delete(
     request: Request,
     user_id: int,
@@ -249,8 +244,7 @@ async def user_delete(
 @r.post(
     "/password-reset/{user_id}", response_model=bool, response_model_exclude_none=True
 )
-# @limiter.limit(DEFAULT_LIMIT)
-@limiter.exempt  # TODO: remove after load-testing
+@limiter.limit(DEFAULT_LIMIT)
 async def request_password_reset(
     request: Request,
     user_id: int,
@@ -336,7 +330,6 @@ def _start_ingest(
     response_model=ValidationResult,
     status_code=status.HTTP_200_OK,
 )
-@limiter.exempt  # TODO: remove after load-testing
 def validate_law_policy(
     request: Request,
     law_policy_csv: UploadFile,
@@ -400,7 +393,6 @@ def validate_law_policy(
     response_model=BulkImportResult,
     status_code=status.HTTP_202_ACCEPTED,
 )
-@limiter.exempt  # TODO: remove after load-testing
 def ingest_law_policy(
     request: Request,
     law_policy_csv: UploadFile,
@@ -632,7 +624,6 @@ def _validate_law_policy_csv(
     response_model=BulkImportResult,
     status_code=status.HTTP_202_ACCEPTED,
 )
-@limiter.exempt  # TODO: remove after load-testing
 def import_law_policy(
     request: Request,
     law_policy_csv: UploadFile,
@@ -760,7 +751,6 @@ def import_law_policy(
 
 
 @r.put("/documents/{import_id_or_slug}", status_code=status.HTTP_200_OK)
-@limiter.exempt  # TODO: remove after load-testing
 async def update_document(
     request: Request,
     import_id_or_slug: str,
