@@ -53,6 +53,18 @@ class FamilyStatus(_BaseModelEnum):
     DELETED = "Deleted"
 
 
+class FamilyType(Base):
+    """
+    A family type.
+
+    E.g. strategy, plan, law
+    """
+
+    __tablename__ = "family_type"
+    name = sa.Column(sa.Text, primary_key=True)
+    description = sa.Column(sa.Text, nullable=False)
+
+
 class Family(Base):
     """A representation of a group of documents that represent a single law/policy."""
 
@@ -68,6 +80,7 @@ class Family(Base):
         default=FamilyStatus.CREATED,
         nullable=False,
     )
+    family_type = sa.Column(sa.ForeignKey(FamilyType.name), nullable=False)
 
     slugs: list["Slug"] = relationship("Slug", lazy="joined")
     events: list["FamilyEvent"] = relationship("FamilyEvent", lazy="select")
@@ -113,7 +126,7 @@ class FamilyDocumentType(Base):
     """
     A document type.
 
-    E.g. strategy, plan, law
+    E.g. Main, Amendment, supporting legislation
     """
 
     __tablename__ = "family_document_type"

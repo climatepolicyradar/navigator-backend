@@ -24,6 +24,11 @@ def upgrade():
     sa.Column('description', sa.Text(), nullable=False),
     sa.PrimaryKeyConstraint('import_id', name=op.f('pk_collection'))
     )
+    op.create_table('family_type',
+    sa.Column('name', sa.Text(), nullable=False),
+    sa.Column('description', sa.Text(), nullable=False),
+    sa.PrimaryKeyConstraint('name', name=op.f('pk_family_type'))
+    )
     op.create_table('family_document_type',
     sa.Column('name', sa.Text(), nullable=False),
     sa.Column('description', sa.Text(), nullable=False),
@@ -59,7 +64,9 @@ def upgrade():
     sa.Column('geography_id', sa.Integer(), nullable=False),
     sa.Column('family_category', sa.Enum('EXECUTIVE', 'LEGISLATIVE', name='familycategory'), nullable=False),
     sa.Column('family_status', sa.Enum('CREATED', 'PUBLISHED', 'DELETED', name='familystatus'), nullable=False),
+    sa.Column('family_type', sa.Text(), nullable=False),
     sa.ForeignKeyConstraint(['geography_id'], ['geography.id'], name=op.f('fk_family__geography_id__geography')),
+    sa.ForeignKeyConstraint(['family_type'], ['family_type.name'], name=op.f('fk_family__family_type__family_type')),
     sa.PrimaryKeyConstraint('import_id', name=op.f('pk_family'))
     )
     op.create_table('metadata_organisation',
