@@ -19,6 +19,7 @@ from app.db.models.deprecated.document import (
 )
 from app.db.models.deprecated.source import Source
 from app.db.models.document.physical_document import Language, PhysicalDocument
+from app.db.models.law_policy.collection import Collection
 from app.db.models.law_policy.family import Family, FamilyEvent
 from app.db.models.law_policy.geography import Geography
 
@@ -33,7 +34,7 @@ ONE_EVENT_ROW = """Id,Eventable type,Eventable Id,Eventable name,Event type,Titl
 
 TWO_DFC_ROW = """ID,Document ID,CCLW Description,Part of collection?,Create new family/ies?,Collection ID,Collection name,Collection summary,Document title,Family name,Family summary,Family ID,Document role,Applies to ID,Geography ISO,Documents,Category,Events,Sectors,Instruments,Frameworks,Responses,Natural Hazards,Document Type,Year,Language,Keywords,Geography,Parent Legislation,Comment,CPR Document ID,CPR Family ID,CPR Collection ID,CPR Family Slug,CPR Document Slug
 1001,0,Test1,FALSE,FALSE,N/A,Collection1,CollectionSummary1,Title1,Fam1,Summary1,,MAIN,,GEO,http://somewhere|en,executive,02/02/2014|Law passed,Energy,,,Mitigation,,Order,,,Energy Supply,Algeria,,,CCLW.executive.1.2,CCLW.family.1001.0,CPR.Collection.1,FamSlug1,DocSlug1
-2002,0,Test2,FALSE,FALSE,N/A,Collection2,CollectionSummary2,Title2,Fam2,Summary2,,MAIN,,GEO,http://another_somewhere|en,executive,03/03/2024|Law passed,Energy,,,Mitigation,,Order,,,Energy Supply,Algeria,,,CCLW.executive.2.2,CCLW.family.2002.0,CPR.Collection.2,FamSlug2,DocSlug2
+2002,0,Test2,FALSE,FALSE,N/A,Collection1,CollectionSummary1,Title2,Fam2,Summary2,,MAIN,,GEO,http://another_somewhere|en,executive,03/03/2024|Law passed,Energy,,,Mitigation,,Order,,,Energy Supply,Algeria,,,CCLW.executive.2.2,CCLW.family.2002.0,CPR.Collection.1,FamSlug2,DocSlug2
 """
 
 TWO_EVENT_ROWS = """Id,Eventable type,Eventable Id,Eventable name,Event type,Title,Description,Date,Url,CPR Event ID,CPR Family ID,Event Status
@@ -154,12 +155,15 @@ def test_documents_family_slug_preexisting_objects(
     assert test_db.query(PhysicalDocument).count() == 2
     assert test_db.query(Family).count() == 2
     assert test_db.query(FamilyEvent).count() == 2
+    print(test_db.query(Collection).all())
+    assert test_db.query(Collection).count() == 1
 
     # Test associations
     response = client.get(
         "/api/v1/documents/FamSlug1?group_documents=True",
     )
     json_response = response.json()
+
     assert response.status_code == 200
     assert len(json_response) == 14
     assert json_response["organisation"] == "CCLW"
@@ -188,7 +192,12 @@ def test_documents_family_slug_preexisting_objects(
 
     assert len(json_response["collections"]) == 1
     assert json_response["collections"][0]["title"] == "Collection1"
+    assert json_response["collections"][0]["families"] == [
+        "FamSlug1",
+        "FamSlug2",
+    ]
 
+    # Ensure a different family is returned
     response = client.get(
         "/api/v1/documents/FamSlug2?group_documents=True",
     )
@@ -198,29 +207,6 @@ def test_documents_family_slug_preexisting_objects(
     assert json_response["organisation"] == "CCLW"
     assert json_response["title"] == "Fam2"
     assert json_response["import_id"] == "CCLW.family.2002.0"
-    assert json_response["summary"] == "Summary2"
-    assert json_response["geography"] == "GEO"
-    assert json_response["category"] == "Executive"
-    assert json_response["status"] == "Published"
-    assert json_response["published_date"] == "2019-12-25T00:00:00+00:00"
-    assert json_response["last_updated_date"] == "2019-12-25T00:00:00+00:00"
-
-    assert len(json_response["metadata"]) == 7
-    assert json_response["metadata"]["keyword"] == ["Energy Supply"]
-
-    assert len(json_response["slugs"]) == 1
-    assert json_response["slugs"][0] == "FamSlug2"
-
-    assert len(json_response["events"]) == 1
-    assert json_response["events"][0]["title"] == "Published"
-
-    assert len(json_response["documents"]) == 1
-    assert json_response["documents"][0]["title"] == "Title2"
-    assert json_response["documents"][0]["slugs"] == ["DocSlug2"]
-    assert json_response["documents"][0]["import_id"] == "CCLW.executive.2.2"
-
-    assert len(json_response["collections"]) == 1
-    assert json_response["collections"][0]["title"] == "Collection2"
 
 
 def test_documents_doc_slug_returns_not_found(

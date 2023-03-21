@@ -41,6 +41,7 @@ class CollectionOverviewResponse(BaseModel):
     import_id: str
     title: str
     description: str
+    families: list[str]
 
 
 class FamilyEventsResponse(BaseModel):

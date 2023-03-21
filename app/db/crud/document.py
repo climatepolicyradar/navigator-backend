@@ -187,7 +187,17 @@ def _get_collections_for_family_import_id(
 
     return [
         CollectionOverviewResponse(
-            title=c.title, description=c.description, import_id=c.import_id
+            title=c.title,
+            description=c.description,
+            import_id=c.import_id,
+            families=[
+                name[0]
+                for name in db.query(Slug.name)
+                .filter(Slug.family_import_id == Family.import_id)
+                .filter(CollectionFamily.family_import_id == Family.import_id)
+                .filter(CollectionFamily.collection_import_id == c.import_id)
+                .all()
+            ],
         )
         for c in db_collections
     ]
