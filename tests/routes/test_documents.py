@@ -259,9 +259,11 @@ def test_documents_doc_slug_preexisting_objects(
 
     family = json_response["family"]
     assert family
+    assert len(family.keys()) == 7
     assert family["title"] == "Fam2"
     assert family["import_id"] == "CCLW.family.2002.0"
     assert family["geography"] == "GEO"
+    assert family["category"] == "Executive"
     assert len(family["slugs"]) == 1
     assert family["slugs"][0] == "FamSlug2"
     assert family["published_date"] == "2019-12-25T00:00:00+00:00"
@@ -269,6 +271,13 @@ def test_documents_doc_slug_preexisting_objects(
 
     doc = json_response["document"]
     assert doc
-    assert doc["title"] == "Title2"
-    assert doc["slugs"] == ["DocSlug2"]
+    assert len(doc) == 10
     assert doc["import_id"] == "CCLW.executive.2.2"
+    assert doc["variant"] == "MAIN"
+    assert doc["slugs"] == ["DocSlug2"]
+    assert doc["title"] == "Title2"
+    assert doc["md5_sum"] is None
+    assert doc["cdn_object"] == "https://cdn.climatepolicyradar.org/"
+    assert doc["source_url"] == "http://another_somewhere"
+    assert doc["language"] == ""
+    assert doc["document_type"] == "Order"

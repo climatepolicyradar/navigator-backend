@@ -15,7 +15,11 @@ from app.api.api_v1.schemas.document import (
     FamilyEventsResponse,
 )
 from app.db.models.app.users import Organisation
-from app.db.models.document.physical_document import PhysicalDocument
+from app.db.models.document.physical_document import (
+    PhysicalDocument,
+    PhysicalDocumentLanguage,
+    Language,
+)
 from app.db.models.law_policy.collection import Collection, CollectionFamily
 from app.db.models.law_policy.family import (
     Family,
@@ -71,6 +75,7 @@ def get_family_document_and_context(
         import_id=import_id,
         geography=cast(str, geography.value),
         slugs=slugs,
+        category=family.family_category,
         published_date=family.published_date,
         last_updated_date=family.last_updated_date,
     )
@@ -83,9 +88,21 @@ def get_family_document_and_context(
         cdn_object=to_cdn_url(physical_document.cdn_object),
         source_url=physical_document.source_url,
         content_type=physical_document.content_type,
+        language=_get_language_for_phys_doc(db, physical_document.id),
+        document_type=document.document_type,
     )
 
     return FamilyDocumentWithContextResponse(family=family, document=document)
+
+
+def _get_language_for_phys_doc(db: Session, physical_document_id: str) -> str:
+    language = (
+        db.query(Language)
+        .filter(PhysicalDocumentLanguage.document_id == physical_document_id)
+        .filter(Language.id == PhysicalDocumentLanguage.language_id)
+    ).one_or_none()
+
+    return cast(str, language.code) if language else ""
 
 
 def get_family_and_documents(
@@ -213,6 +230,8 @@ def _get_documents_for_family_import_id(
             cdn_object=to_cdn_url(pd.cdn_object),
             source_url=pd.source_url,
             content_type=pd.content_type,
+            language=_get_language_for_phys_doc(db, pd.id),
+            document_type=d.document_type,
         )
         for d, pd in db_documents
     ]
