@@ -189,9 +189,14 @@ def test_documents_family_slug_preexisting_objects(
 
     assert len(json_response["collections"]) == 1
     assert json_response["collections"][0]["title"] == "Collection1"
+
+    import json
+
+    print(json.dumps(json_response))
+    assert 0
     assert json_response["collections"][0]["families"] == [
-        "FamSlug1",
-        "FamSlug2",
+        {"title": "Fam1", "slug": "FamSlug1", "description": "Summary1"},
+        {"title": "Fam2", "slug": "FamSlug2", "description": "Summary2"},
     ]
 
     # Ensure a different family is returned

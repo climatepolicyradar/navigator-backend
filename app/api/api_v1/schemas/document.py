@@ -35,13 +35,21 @@ class DocumentOverviewResponse(BaseModel):  # noqa: D101
         frozen = True
 
 
+class LinkableFamily(BaseModel):
+    """For the frontend the minimum information to link to a family"""
+
+    title: str
+    slug: str
+    description: str
+
+
 class CollectionOverviewResponse(BaseModel):
     """Response for a Collection - without families"""
 
     import_id: str
     title: str
     description: str
-    families: list[str]
+    families: list[LinkableFamily]
 
 
 class FamilyEventsResponse(BaseModel):
