@@ -124,8 +124,11 @@ class Config(BaseModel):
     metadata: SourceCollections
 
 
-class TaxonomyConfig(BaseModel):
+TaxonomyData = Mapping[str, Mapping[str, Union[str, Sequence[str]]]]
+
+
+class ApplicationConfig(BaseModel):
     """Definition of the new Config which just includes taxonomy."""
 
-    organisation: str
-    taxonomy: Mapping[str, Mapping[str, Union[str, Sequence[str]]]]
+    geographies: list[dict]
+    taxonomies: Mapping[str, TaxonomyData]
