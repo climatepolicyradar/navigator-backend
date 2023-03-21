@@ -4,7 +4,7 @@ Script to download the Google Sheet
 Requires:
 1) A Service Account to be configured
 2) The sheet in question has been "Shared" with this account's email
-3) GOOGLE_SERVICE_ACCOUNT is set in the current environment, with the 
+3) GOOGLE_SERVICE_ACCOUNT is set in the current environment, with the
     contents of the json service account details (downloaded when created)
 """
 from __future__ import print_function
@@ -23,8 +23,9 @@ from googleapiclient.errors import HttpError
 SCOPES = ["https://www.googleapis.com/auth/spreadsheets.readonly"]
 
 # The ID and range of a sample spreadsheet.
-SPREADSHEET_ID = "1l0pu47JzAo_tchuRqaJh8moZM13OvEDv9DhUdydnuhQ"
-RANGE_NAME = "All new docs as of 030323 - NEW FORMAT!A:Z"
+SPREADSHEET_ID = "1bfUsg0fPAYduc4e89UjYvbI0wDUV1xa58NzAFcTofoo"
+# RANGE_NAME = "All new docs as of 030323 - NEW FORMAT!A:Z"
+RANGE_NAME = "CPR_MASTER_1.0.0!A:Z"
 
 
 def double_quote_quotes(col: str) -> str:
