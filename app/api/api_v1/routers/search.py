@@ -28,7 +28,8 @@ from app.core.search import (
     OpenSearchConfig,
     OpenSearchQueryConfig,
 )
-from app.db.crud.deprecated_document import get_postfix_map, get_document_extra
+from app.db.crud.deprecated_document import get_postfix_map
+from app.db.crud.document import DocumentExtraCache
 from app.db.session import get_db
 
 _LOGGER = logging.getLogger(__name__)
@@ -37,6 +38,7 @@ _LOGGER = logging.getLogger(__name__)
 _OPENSEARCH_CONFIG = OpenSearchConfig()
 _OPENSEARCH_CONNECTION = OpenSearchConnection(opensearch_config=_OPENSEARCH_CONFIG)
 _OPENSEARCH_INDEX_CONFIG = OpenSearchQueryConfig()
+_DOCUMENT_EXTRA_INFO_CACHE = DocumentExtraCache()
 
 search_router = APIRouter()
 
@@ -100,7 +102,7 @@ def search_documents(
             background_tasks=background_tasks,
             search_request_body=search_body,
             opensearch_internal_config=_OPENSEARCH_INDEX_CONFIG,
-            document_extra_info=get_document_extra(db),
+            document_extra_info=_DOCUMENT_EXTRA_INFO_CACHE.get_document_extra_info(db),
             preference="default_search_preference",
         )
     else:
