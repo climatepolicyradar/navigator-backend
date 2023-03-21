@@ -5,6 +5,7 @@ import os
 import time
 from collections import OrderedDict
 from dataclasses import dataclass
+from datetime import datetime
 from pathlib import Path
 from typing import Any, Mapping, Optional, Sequence
 import string
@@ -543,6 +544,7 @@ class QueryBuilder:
     def with_keyword_filter(self, field: FilterField, values: Sequence[str]):
         """Add a keyword filter to the configured query."""
         filters = self._request_body["query"]["bool"].get("filter") or []
+
         filters.append({"terms": {_FILTER_FIELD_MAP[field]: values}})
         self._request_body["query"]["bool"]["filter"] = filters
 
@@ -733,31 +735,6 @@ def process_search_response_body_families(
     return search_response
 
 
-def process_browse_response_body_families(
-    opensearch_response_body: OpenSearchResponse,
-    document_extra_info: Mapping[str, Mapping[str, str]],
-) -> SearchResponse:
-    # FIXME: Update
-    opensearch_json_response = opensearch_response_body.raw_response
-    # families = []
-
-    search_response = SearchResponse(
-        hits=opensearch_json_response["hits"]["total"]["value"],  # FIXME
-        query_time_ms=opensearch_response_body.request_time_ms,
-        families=[],
-    )
-
-    # FIXME
-    # result_docs = opensearch_json_response["hits"]["hits"]
-    # for result_doc in result_docs:
-    #     search_response_document = create_search_response_document(
-    #         OpenSearchResponseDescriptionMatch(**result_doc["_source"])
-    #     )
-    #     search_response.documents.append(search_response_document)
-
-    return search_response
-
-
 def create_search_response_family_document(
     opensearch_match: OpenSearchResponseMatchBase,
     document_family_match: Mapping[str, Mapping[str, str]],
@@ -785,7 +762,9 @@ def create_search_response_family(
         family_name=opensearch_match.document_name,
         family_description=opensearch_match.document_description,
         family_category=opensearch_match.document_category,
-        family_date=opensearch_match.document_date,
+        family_date=datetime.strptime(
+            opensearch_match.document_date, "%d/%m/%Y"
+        ).isoformat(),
         family_source=opensearch_match.document_source,
         family_geography=opensearch_match.document_geography,
         family_metadata={},  # FIXME: complete?
@@ -891,7 +870,9 @@ def create_search_response_document(
         document_geography=opensearch_match.document_geography,
         document_sectors=opensearch_match.document_sectors,
         document_source=opensearch_match.document_source,
-        document_date=opensearch_match.document_date,
+        document_date=datetime.strptime(
+            opensearch_match.document_date, "%d/%m/%Y"
+        ).isoformat(),
         document_id=opensearch_match.document_id,
         document_type=opensearch_match.document_type,
         document_category=opensearch_match.document_category,

@@ -41,6 +41,24 @@ _OPENSEARCH_INDEX_CONFIG = OpenSearchQueryConfig()
 search_router = APIRouter()
 
 
+def _map_old_category_to_new(supplied_category: str) -> str:
+    """Temporarily translate old category strings into new values when searching"""
+    if supplied_category.lower() == "law":
+        return "Legislative"
+    if supplied_category.lower() == "policy":
+        return "Executive"
+    return supplied_category
+
+
+def _map_new_category_to_old(sdr: SearchDocumentResponse) -> SearchDocumentResponse:
+    """Temporarily translate new category strings into old values when searching"""
+    if sdr.document_category.lower() == "legislative":
+        sdr.document_category = "Law"
+    if sdr.document_category.lower() == "executive":
+        sdr.document_category = "Policy"
+    return sdr
+
+
 @search_router.post("/searches")
 def search_documents(
     request: Request,
@@ -93,6 +111,14 @@ def search_documents(
                 req=_get_browse_args_from_search_request_body(search_body),
             )
 
+        # For searches, map old categories to new category names in opensearch
+        if search_body.keyword_filters is not None:
+            if categories := search_body.keyword_filters.get(FilterField.CATEGORY):
+                mapped_categories = [_map_old_category_to_new(c) for c in categories]
+                keyword_filters = dict(search_body.keyword_filters)
+                keyword_filters[FilterField.CATEGORY] = mapped_categories
+                search_body.keyword_filters = keyword_filters
+
         doc_results: SearchResultsResponse = jit_query_wrapper(
             _OPENSEARCH_CONNECTION,
             background_tasks=background_tasks,
@@ -109,7 +135,7 @@ def search_documents(
             documents=[
                 SearchDocumentResponse(
                     **{
-                        **doc.dict(),
+                        **_map_new_category_to_old(doc).dict(),
                         **{"document_postfix": postfix_map[doc.document_id]},
                     }
                 )

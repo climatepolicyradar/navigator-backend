@@ -156,14 +156,6 @@ def _populate_search_db_families(db: Session) -> None:
                     )
 
 
-def _doc_str_to_category(doc_category: str) -> FamilyCategory:
-    if doc_category.lower() == "law":
-        return FamilyCategory.LEGISLATIVE
-    if doc_category.lower() == "policy":
-        return FamilyCategory.EXECUTIVE
-    raise RuntimeError(f"Unknown category string: '{doc_category}'")
-
-
 def _create_family_structures(
     db: Session,
     doc: dict[str, Any],
@@ -195,7 +187,7 @@ def _create_family_structures(
                 .id
             ),
             family_status=FamilyStatus.PUBLISHED,
-            family_category=_doc_str_to_category(doc_details["document_category"]),
+            family_category=FamilyCategory(doc_details["document_category"]),
         )
         family_slug = Slug(
             name=family_id,
@@ -687,9 +679,11 @@ def test_multiple_filters(
     if group_documents:
         _populate_search_db_families(test_db)
         search_endpoint = f"{SEARCH_ENDPOINT}?group_documents=True"
+        categories = ["Legislative"]
     else:
         populate_geography(test_db)
         search_endpoint = SEARCH_ENDPOINT
+        categories = ["Law"]
 
     query_spy = mocker.spy(search._OPENSEARCH_CONNECTION, "raw_query")
     response = client.post(
@@ -700,6 +694,7 @@ def test_multiple_filters(
             "keyword_filters": {
                 "countries": ["kenya"],
                 "sources": ["CCLW"],
+                "categories": categories,
             },
             "year_range": (1900, 2020),
             "jit_query": "disabled",
@@ -714,6 +709,9 @@ def test_multiple_filters(
     } in query_body["query"]["bool"]["filter"]
     assert {
         "terms": {_FILTER_FIELD_MAP[FilterField("sources")]: ["CCLW"]}
+    } in query_body["query"]["bool"]["filter"]
+    assert {
+        "terms": {_FILTER_FIELD_MAP[FilterField("categories")]: ["Legislative"]}
     } in query_body["query"]["bool"]["filter"]
     assert {
         "range": {"document_date": {"gte": "01/01/1900", "lte": "31/12/2020"}}
@@ -786,9 +784,9 @@ def test_result_order_date(
     dt = None
     for e in elements:
         if group_documents:
-            new_dt = datetime.strptime(e["family_date"], "%d/%m/%Y")
+            new_dt = datetime.fromisoformat(e["family_date"])
         else:
-            new_dt = datetime.strptime(e["document_date"], "%d/%m/%Y")
+            new_dt = datetime.fromisoformat(e["document_date"])
         if dt is not None:
             if order == SortOrder.DESCENDING:
                 assert new_dt <= dt
@@ -1302,6 +1300,39 @@ def test_browse_filters(group_documents, client, test_db):
     else:
         result_elements = response_body["documents"]
     assert len(result_elements) == 0
+
+
+@pytest.mark.search
+@pytest.mark.parametrize("group_documents", [True, False])
+def test_browse_filter_category(
+    group_documents,
+    client,
+    test_db,
+):
+    """Make sure that empty search term returns results in browse mode."""
+    if group_documents:
+        _populate_search_db_families(test_db)
+        search_endpoint = f"{SEARCH_ENDPOINT}?group_documents=True"
+        keyword_filters = {"categories": ["Legislative"]}
+    else:
+        populate_geography(test_db)
+        create_4_documents(test_db)
+        search_endpoint = SEARCH_ENDPOINT
+        keyword_filters = {"categories": ["Law"]}
+
+    response = client.post(
+        search_endpoint,
+        json={
+            "query_string": "",
+            "keyword_filters": keyword_filters,
+        },
+    )
+    assert response.status_code == 200
+    assert response.json()["hits"] > 0
+    if group_documents:
+        assert len(response.json()["families"]) > 0
+    else:
+        assert len(response.json()["documents"]) > 0
 
 
 ##########################################
