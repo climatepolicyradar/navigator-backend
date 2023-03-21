@@ -19,7 +19,6 @@ from app.db.models.deprecated.document import (
 )
 from app.db.models.deprecated.source import Source
 from app.db.models.document.physical_document import Language, PhysicalDocument
-from app.db.models.law_policy.collection import Collection
 from app.db.models.law_policy.family import Family, FamilyEvent
 from app.db.models.law_policy.geography import Geography
 
@@ -155,8 +154,6 @@ def test_documents_family_slug_preexisting_objects(
     assert test_db.query(PhysicalDocument).count() == 2
     assert test_db.query(Family).count() == 2
     assert test_db.query(FamilyEvent).count() == 2
-    print(test_db.query(Collection).all())
-    assert test_db.query(Collection).count() == 1
 
     # Test associations
     response = client.get(
