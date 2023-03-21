@@ -5,6 +5,7 @@ from app.api.api_v1.schemas.metadata import ApplicationConfig
 from app.core.organisation import get_organisation_taxonomy_by_name
 
 from app.core.util import tree_table_to_json, table_to_json
+from app.db.models.app.users import Organisation
 from app.db.models.law_policy import Geography
 from app.db.models.deprecated import (
     Category,
@@ -41,11 +42,13 @@ def get_metadata(db: Session):
 
 
 def get_config(db: Session) -> ApplicationConfig:
-    ORG_NAME = "CCLW"
+    org_names = db.query(Organisation.name).all()
+
     return ApplicationConfig(
         geographies=tree_table_to_json(table=Geography, db=db),
         taxonomies={
-            ORG_NAME: get_organisation_taxonomy_by_name(db=db, org_name=ORG_NAME)
+            org_name[0]: get_organisation_taxonomy_by_name(db=db, org_name=org_name[0])
+            for org_name in org_names
         },
     )
 

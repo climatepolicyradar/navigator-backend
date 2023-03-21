@@ -64,6 +64,8 @@ class FamilyDocumentResponse(BaseModel):
     cdn_object: Optional[str]
     source_url: Optional[str]
     content_type: Optional[str]
+    language: str
+    document_type: str
 
 
 class FamilyContext(BaseModel):
@@ -72,6 +74,7 @@ class FamilyContext(BaseModel):
     title: str
     import_id: str
     geography: str
+    category: str
     slugs: list[str]
     published_date: Optional[datetime]
     last_updated_date: Optional[datetime]
