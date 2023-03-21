@@ -1,6 +1,6 @@
 from dataclasses import asdict
 from sqlalchemy.orm import Session
-from app.api.api_v1.schemas.metadata import TaxonomyConfig
+from app.api.api_v1.schemas.metadata import TaxonomyData
 from app.db.models.app.users import Organisation
 from app.db.models.law_policy.family import FamilyEventType
 from app.db.models.law_policy.metadata import MetadataOrganisation, MetadataTaxonomy
@@ -29,7 +29,7 @@ def get_organisation_taxonomy(db: Session, org_id: int) -> tuple[int, Taxonomy]:
     return taxonomy[0], {k: TaxonomyEntry(**v) for k, v in taxonomy[1].items()}
 
 
-def get_organisation_taxonomy_by_name(db: Session, org_name: str) -> TaxonomyConfig:
+def get_organisation_taxonomy_by_name(db: Session, org_name: str) -> TaxonomyData:
     """
     Returns the TaxonomyConfig for the named organisation
 
@@ -54,10 +54,7 @@ def get_organisation_taxonomy_by_name(db: Session, org_name: str) -> TaxonomyCon
     )
 
     # The above line will throw if there is no taxonomy for the organisation
-    return TaxonomyConfig(
-        organisation=org_name,
-        taxonomy={
-            **taxonomy[0],
-            "event_types": asdict(entry),
-        },
-    )
+    return {
+        **taxonomy[0],
+        "event_types": asdict(entry),
+    }

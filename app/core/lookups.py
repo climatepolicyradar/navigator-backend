@@ -1,6 +1,8 @@
 from typing import Optional, Sequence, cast
 
 from sqlalchemy.orm import Session
+from app.api.api_v1.schemas.metadata import ApplicationConfig
+from app.core.organisation import get_organisation_taxonomy_by_name
 
 from app.core.util import tree_table_to_json, table_to_json
 from app.db.models.law_policy import Geography
@@ -36,6 +38,16 @@ def get_metadata(db: Session):
 
     source_collections = {"CCLW": cclw_source_collection}
     return {"metadata": source_collections}
+
+
+def get_config(db: Session) -> ApplicationConfig:
+    ORG_NAME = "CCLW"
+    return ApplicationConfig(
+        geographies=tree_table_to_json(table=Geography, db=db),
+        taxonomies={
+            ORG_NAME: get_organisation_taxonomy_by_name(db=db, org_name=ORG_NAME)
+        },
+    )
 
 
 def get_countries_for_region(db: Session, region_slug: str) -> Sequence[Geography]:
