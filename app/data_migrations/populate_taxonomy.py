@@ -59,12 +59,6 @@ TAXONOMY_DATA = [
         "file_key_path": "name",
         "allow_blanks": True,
     },
-    {
-        "key": "document_type",
-        "filename": "app/data_migrations/data/document_type_data.json",
-        "file_key_path": "name",
-        "allow_blanks": True,
-    },
 ]
 
 
