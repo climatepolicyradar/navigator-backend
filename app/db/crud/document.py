@@ -102,7 +102,7 @@ def _get_language_for_phys_doc(db: Session, physical_document_id: str) -> str:
         .filter(Language.id == PhysicalDocumentLanguage.language_id)
     ).one_or_none()
 
-    return cast(str, language.code) if hasattr(language, "code") else ""
+    return cast(str, language.language_code) if language is not None else ""
 
 
 def get_family_and_documents(
