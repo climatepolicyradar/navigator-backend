@@ -102,9 +102,7 @@ def _get_language_for_phys_doc(db: Session, physical_document_id: str) -> str:
         .filter(Language.id == PhysicalDocumentLanguage.language_id)
     ).one_or_none()
 
-    # I do not fully understand why the strip() below is required, but without it
-    # we see trailing spaces on the language code.
-    return str(language.language_code).strip() if language is not None else ""
+    return cast(str, language.language_code) if language is not None else ""
 
 
 def get_family_and_documents(

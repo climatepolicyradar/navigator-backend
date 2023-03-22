@@ -139,8 +139,8 @@ def populate_old_documents(test_db):
 
 
 def populate_languages(test_db):
-    test_db.add(Language(language_code="en", name="English"))
-    test_db.add(Language(language_code="fr", name="French"))
+    test_db.add(Language(language_code="eng", name="English"))
+    test_db.add(Language(language_code="fra", name="French"))
     test_db.commit()
 
 
@@ -320,7 +320,7 @@ def test_physical_doc_languages(
 
     assert response.status_code == 200
     print(json_response)
-    assert document["language"] == "en"
+    assert document["language"] == "eng"
 
     response = client.get(
         "/api/v1/documents/DocSlug2?group_documents=True",
