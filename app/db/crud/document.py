@@ -243,7 +243,11 @@ def _get_documents_for_family_import_id(
 
 
 class DocumentExtraCache:
-    """A simple cache for document -> family info mapping details."""
+    """
+    A simple cache for document -> family info mapping details.
+
+    TODO: Replace this simple per-process cache mechanism with a shared cache.
+    """
 
     def __init__(self):
         self._ttl = timedelta(minutes=60)
@@ -259,11 +263,13 @@ class DocumentExtraCache:
             document slug, family slug & family import id details.
         """
         if datetime.utcnow() - self._timestamp >= self._ttl:
-            self._doc_extra_info = self._update_document_extra(db)
+            self._doc_extra_info = self._query_document_extra_info(db)
             self._timestamp = datetime.utcnow()
         return self._doc_extra_info
 
-    def _update_document_extra(self, db: Session) -> Mapping[str, Mapping[str, str]]:
+    def _query_document_extra_info(
+        self, db: Session
+    ) -> Mapping[str, Mapping[str, str]]:
         document_data = db.query(FamilyDocument, Family).join(
             Family, FamilyDocument.family_import_id == Family.import_id
         )
