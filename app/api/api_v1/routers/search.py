@@ -156,7 +156,7 @@ def _get_browse_args_from_search_request_body(
     else:
         country_codes = keyword_filters.get(FilterField.COUNTRY)
         categories = keyword_filters.get(FilterField.CATEGORY)
-    start_year, end_year = search_body.year_range or (None, None)
+    start_year, end_year = search_body.year_range or [None, None]
     return BrowseArgs(
         country_codes=country_codes,
         start_year=start_year,
