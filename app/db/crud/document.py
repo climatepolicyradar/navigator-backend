@@ -16,6 +16,7 @@ from app.api.api_v1.schemas.document import (
     FamilyDocumentResponse,
     FamilyDocumentWithContextResponse,
     FamilyEventsResponse,
+    LinkableFamily,
 )
 from app.db.models.app.users import Organisation
 from app.db.models.document.physical_document import (
@@ -190,7 +191,17 @@ def _get_collections_for_family_import_id(
 
     return [
         CollectionOverviewResponse(
-            title=c.title, description=c.description, import_id=c.import_id
+            title=c.title,
+            description=c.description,
+            import_id=c.import_id,
+            families=[
+                LinkableFamily(slug=data[0], title=data[1], description=data[2])
+                for data in db.query(Slug.name, Family.title, Family.description)
+                .filter(Slug.family_import_id == Family.import_id)
+                .filter(CollectionFamily.family_import_id == Family.import_id)
+                .filter(CollectionFamily.collection_import_id == c.import_id)
+                .all()
+            ],
         )
         for c in db_collections
     ]
