@@ -273,3 +273,12 @@ class DocumentUpdateRequest(BaseModel):
     md5_sum: Optional[str]
     content_type: Optional[str]
     cdn_object: Optional[str]
+
+
+class ClimateLawsValidationResult(BaseModel):
+    """Response for ClimateLaws source_urls validation request."""
+
+    all_climate_laws_count: int
+    all_valid: bool
+    no_cdn: list[tuple[Any, Any]]
+    no_cdn_count: int

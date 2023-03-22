@@ -21,12 +21,14 @@ from app.db.models.deprecated import (
     User,
     PasswordResetToken,
 )
+from app.db.models.document import PhysicalDocument
 from app.db.models.law_policy import Geography
 from tests.core.validation.cclw.test_law_policy import (
     INVALID_FILE_1,
     INVALID_CSV_MIXED_ERRORS,
     VALID_FILE_1,
 )
+from tests.routes.test_search import _populate_search_db_families
 
 
 def test_get_users(client, test_superuser, superuser_token_headers):
@@ -639,3 +641,94 @@ def test_bulk_import_cclw_law_policy_preexisting_db_objects(
     mock_write_csv_to_s3.assert_called_once()
     call = mock_write_csv_to_s3.mock_calls[0]
     assert len(call.kwargs["file_contents"]) == csv_file.getbuffer().nbytes
+
+
+@pytest.mark.admin
+def test_validate_climate_laws_cdns(client, superuser_token_headers, test_db):
+    _populate_search_db_families(test_db)
+
+    # Add one climate laws source url document with a cdn url
+    test_db.add(
+        PhysicalDocument(
+            id=100,
+            title="test",
+            md5_sum="test",
+            cdn_object="KOR/2012/act-on-the-test.pdf",
+            source_url="https://climate-laws.org/rails/1231231asd23/f",
+            content_type="text/html",
+        )
+    )
+
+    # Add additional documents of the deprecated format; one with a cdn url and one without.
+    test_db.add(Source(name="CCLW"))
+    test_db.add(
+        Geography(
+            display_value="geography", slug="geography", value="GEO", type="country"
+        )
+    )
+    test_db.add(DocumentType(name="doctype", description="doctype"))
+    test_db.add(Language(language_code="LAN", name="language"))
+    test_db.add(Category(name="Policy", description="Policy"))
+    test_db.add(Keyword(name="keyword1", description="keyword1"))
+    test_db.add(Keyword(name="keyword2", description="keyword2"))
+    test_db.add(Hazard(name="hazard1", description="hazard1"))
+    test_db.add(Hazard(name="hazard2", description="hazard2"))
+    test_db.add(Response(name="topic", description="topic"))
+    test_db.add(Framework(name="framework", description="framework"))
+
+    test_db.commit()
+    test_db.add(Instrument(name="instrument", description="instrument", source_id=1))
+    test_db.add(Sector(name="sector", description="sector", source_id=1))
+    test_db.add(
+        Document(
+            publication_ts=datetime.datetime(year=2014, month=1, day=1),
+            name="test",
+            description="test description",
+            source_url="https://climate-laws.org/rails/123123123/f",
+            source_id=1,
+            url="https://climate-laws.org/rails/123123123/f",
+            cdn_object="KOR/2012/act-on-the-allocation.pdf",
+            md5_sum=None,
+            content_type=None,
+            slug="geography_2014_test_100_100",
+            import_id="CCLW.executive.100.100",
+            geography_id=1,
+            type_id=1,
+            category_id=1,
+        )
+    )
+    test_db.commit()
+    test_db.add(
+        Document(
+            publication_ts=datetime.datetime(year=2014, month=1, day=1),
+            name="test",
+            description="test description",
+            source_url="https://climate-laws.org/rails/123123sdfsd123/f",
+            source_id=1,
+            url="https://climate-laws.org/rails/123123sdfsd123/f",
+            cdn_object=None,
+            md5_sum=None,
+            content_type=None,
+            slug="geography_2014_test_200_200",
+            import_id="CCLW.executive.200.200",
+            geography_id=1,
+            type_id=1,
+            category_id=1,
+        )
+    )
+    test_db.commit()
+
+    page1_response = client.get(
+        "/api/v1/admin/validate/climate-laws-urls",
+        headers=superuser_token_headers,
+    )
+    assert page1_response.status_code == 200
+
+    page1_response_body = page1_response.json()
+
+    assert page1_response_body["all_climate_laws_count"] == 3
+    assert not page1_response_body["all_valid"]
+    assert page1_response_body["no_cdn"] == [
+        ["https://climate-laws.org/rails/123123sdfsd123/f", None]
+    ]
+    assert page1_response_body["no_cdn_count"] == 1
