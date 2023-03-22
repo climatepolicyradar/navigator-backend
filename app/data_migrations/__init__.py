@@ -1,6 +1,7 @@
 # Pre-populate all fixed metadata tables
 from .populate_category import populate_category
 from .populate_document_type import populate_document_type
+from .populate_document_role import populate_document_role
 from .populate_event_type import populate_event_type
 from .populate_framework import populate_framework
 from .populate_geo_statistics import populate_geo_statistics

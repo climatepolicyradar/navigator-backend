@@ -69,7 +69,6 @@ def test_endpoint_returns_taxonomy(client, test_db):
         "instrument",
         "keyword",
         "sector",
-        "document_type",
         "topic",
         "framework",
         "hazard",

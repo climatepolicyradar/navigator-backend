@@ -18,9 +18,7 @@ MAP_OF_LIST_VALUES = {
     "keyword": "keywords",
 }
 
-MAP_OF_STR_VALUES = {
-    "document_type": "document_type",
-}
+MAP_OF_STR_VALUES = {}
 
 
 @dataclass(config=ConfigDict(validate_assignment=True, extra=Extra.forbid))

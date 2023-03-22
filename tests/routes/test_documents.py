@@ -172,7 +172,7 @@ def test_documents_family_slug_preexisting_objects(
     assert json_response["published_date"] == "2019-12-25T00:00:00+00:00"
     assert json_response["last_updated_date"] == "2019-12-25T00:00:00+00:00"
 
-    assert len(json_response["metadata"]) == 7
+    assert len(json_response["metadata"]) == 6
     assert json_response["metadata"]["keyword"] == ["Energy Supply"]
 
     assert len(json_response["slugs"]) == 1

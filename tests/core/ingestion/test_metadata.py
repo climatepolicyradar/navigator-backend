@@ -7,9 +7,7 @@ from app.core.organisation import get_organisation_taxonomy
 from app.core.ingestion.utils import ResultType
 from tests.core.ingestion.helpers import get_doc_ingest_row_data, init_for_ingest
 
-METADATA_KEYS = set(
-    ["topic", "hazard", "sector", "keyword", "framework", "instrument", "document_type"]
-)
+METADATA_KEYS = set(["topic", "hazard", "sector", "keyword", "framework", "instrument"])
 
 
 def test_build_metadata__all_fields(test_db):
@@ -41,7 +39,6 @@ def test_build_metadata__all_fields(test_db):
     assert metadata["keyword"] == ["Hydrogen"]
     assert metadata["framework"] == ["Adaptation"]
     assert metadata["instrument"] == ["Other|Governance"]
-    assert metadata["document_type"] == "Act"
 
 
 def test_get_org_taxonomy__has_metadata_keys(test_db: Session):
