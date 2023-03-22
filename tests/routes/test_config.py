@@ -158,5 +158,5 @@ def test_document_ids(
     # Test properties
     get_ids_response = client.get("/api/v1/config/ids")
     assert get_ids_response.status_code == 200
-    assert get_ids_response.headers.get("ETag") == "81dc9bdb52d04dc20036dbd8313ed055"
-    assert get_ids_response.json() == ["1", "2", "3", "4"]
+    assert get_ids_response.headers.get("ETag") == "d93591bdf7860e1e4ee2fca799911215"
+    assert get_ids_response.json() == ["4", "3", "2", "1"]

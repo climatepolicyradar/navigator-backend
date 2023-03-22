@@ -4,8 +4,11 @@ Functions to support the documents endpoints
 old functions (non DFC) are moved to the deprecated_documents.py file.
 """
 import logging
-from typing import Optional, cast
+from datetime import datetime, timedelta
+from typing import Mapping, Optional, cast
+
 from sqlalchemy.orm import Session
+
 from app.api.api_v1.schemas.document import (
     CollectionOverviewResponse,
     FamilyAndDocumentsResponse,
@@ -237,3 +240,48 @@ def _get_documents_for_family_import_id(
     ]
 
     return documents
+
+
+class DocumentExtraCache:
+    """
+    A simple cache for document -> family info mapping details.
+
+    TODO: Replace this simple per-process cache mechanism with a shared cache.
+    """
+
+    def __init__(self):
+        self._ttl = timedelta(minutes=60)
+        self._timestamp = datetime.utcnow() - self._ttl
+        self._doc_extra_info: Mapping[str, Mapping[str, str]] = {}
+
+    def get_document_extra_info(self, db: Session) -> Mapping[str, Mapping[str, str]]:
+        """
+        Get a map from document_id to useful properties for processing.
+
+        :param [Session] db: Database session to query
+        :return [Mapping[str, Mapping[str, str]]]: A mapping from document import_id to
+            document slug, family slug & family import id details.
+        """
+        if datetime.utcnow() - self._timestamp >= self._ttl:
+            self._doc_extra_info = self._query_document_extra_info(db)
+            self._timestamp = datetime.utcnow()
+        return self._doc_extra_info
+
+    def _query_document_extra_info(
+        self, db: Session
+    ) -> Mapping[str, Mapping[str, str]]:
+        document_data = db.query(FamilyDocument, Family).join(
+            Family, FamilyDocument.family_import_id == Family.import_id
+        )
+        return {
+            family_document.import_id: {
+                "slug": family_document.slugs[-1].name,
+                "title": family_document.physical_document.title,
+                "family_slug": family.slugs[-1].name,
+                "family_import_id": family.import_id,
+            }
+            for (
+                family_document,
+                family,
+            ) in document_data
+        }

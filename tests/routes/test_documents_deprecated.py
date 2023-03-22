@@ -100,7 +100,7 @@ def create_4_documents(test_db):
     test_db.commit()
 
     document1_payload = {
-        "publication_ts": "2000-01-01T00:00:00.000000+00:00",
+        "publication_ts": "2006-01-01T00:00:00.000000+00:00",
         "name": "Energy Sector Strategy 1387-1391 (2007/8-2012/3)",
         "postfix": "postfix1",
         "description": "the document description",
@@ -138,7 +138,7 @@ def create_4_documents(test_db):
     # Document 2 payload also checks that we correctly associate new documents with
     # existing metadata values.
     document2_payload = {
-        "publication_ts": "1999-01-01T00:00:00.000000+00:00",
+        "publication_ts": "2009-01-01T00:00:00.000000+00:00",
         "name": "Agriculture Sector Strategy 1487-1491 (2008/9-2013/4)",
         "postfix": "postfix2",
         "description": "the document description",
@@ -183,7 +183,7 @@ def create_4_documents(test_db):
 
     # Document 3 payload checks we find related documents across the master doc.
     document3_payload = {
-        "publication_ts": "1998-01-01T00:00:00.000000+00:00",
+        "publication_ts": "2010-01-01T00:00:00.000000+00:00",
         "name": "Energy Sector Strategy 1387-1391 (2009/8-2014/3)",
         "postfix": "",
         "description": "the document description",
@@ -220,7 +220,7 @@ def create_4_documents(test_db):
 
     # Document 4 payload checks we do not find unrelated docs.
     document4_payload = {
-        "publication_ts": "1997-01-01T00:00:00.000000+00:00",
+        "publication_ts": "2012-01-01T00:00:00.000000+00:00",
         "name": "Energy Sector Strategy 1387-1391 (2010/8-2015/3)",
         "postfix": None,
         "description": "the document description",
@@ -320,7 +320,7 @@ def test_document_detail(
     )
     assert get_detail_json_2["description"] == "the document description"
     assert get_detail_json_2["postfix"] == "postfix2"
-    assert get_detail_json_2["publication_ts"] == "1999-01-01T00:00:00"
+    assert get_detail_json_2["publication_ts"] == "2009-01-01T00:00:00"
     assert (
         get_detail_json_2["source_url"]
         == "https://climate-laws.org/rails/active_storage/blobs/eyJfcmFpbHMiOnsibWVzc2FnZSI6IkJBaHBBcG9IIiwiZXhwIjpudWxsLCJwdXIiOiJibG9iX2lkIn19--be6991246abda10bef5edc0a4d196b73ce1b1a26/g"
@@ -360,8 +360,8 @@ def test_document_detail(
             "description": "the document description",
             "country_code": "NMFS",
             "country_name": "not my favourite subject",
-            "publication_ts": "2000-01-01T00:00:00",
-            "slug": "not-my-favourite-subject_2000_energy-sector-strategy-1387-1391-2007-8-2012-3_000_xxx",
+            "publication_ts": "2006-01-01T00:00:00",
+            "slug": "not-my-favourite-subject_2006_energy-sector-strategy-1387-1391-2007-8-2012-3_000_xxx",
         },
         {
             "document_id": response3_document["id"],
@@ -371,8 +371,8 @@ def test_document_detail(
             "description": "the document description",
             "country_code": "NMFSA",
             "country_name": "not my fav subject again",
-            "publication_ts": "1998-01-01T00:00:00",
-            "slug": "not-my-fav-subject-again_1998_energy-sector-strategy-1387-1391-2009-8-2014-3_000_xxx",
+            "publication_ts": "2010-01-01T00:00:00",
+            "slug": "not-my-fav-subject-again_2010_energy-sector-strategy-1387-1391-2009-8-2014-3_000_xxx",
         },
     ]
 

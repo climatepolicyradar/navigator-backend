@@ -1,5 +1,6 @@
 """Functions to support browsing the RDS document structure"""
 
+from datetime import datetime
 from time import perf_counter
 from typing import Optional, Sequence, cast
 from pydantic import BaseModel
@@ -19,7 +20,6 @@ from app.api.api_v1.schemas.search import (
 )
 from app.db.models.law_policy.family import (
     Family,
-    FamilyCategory,
     FamilyOrganisation,
     FamilyStatus,
 )
@@ -107,16 +107,26 @@ def browse_rds_families(
         for (family, geography, organisation) in query.all()
     ]
 
+    # Dates are calculated, and therefore sorting cannot be implemented in the query
     if req.start_year is not None:
-        # TODO: filter by start year
-        pass
+        compare_date = datetime(year=req.start_year, month=1, day=1).isoformat()
+        families = list(
+            filter(
+                lambda f: f.family_date != "" and f.family_date >= compare_date,
+                families,
+            )
+        )
 
     if req.end_year is not None:
-        # TODO: filter by end year
-        pass
+        compare_date = datetime(year=req.end_year, month=12, day=31).isoformat()
+        families = list(
+            filter(
+                lambda f: f.family_date != "" and f.family_date <= compare_date,
+                families,
+            )
+        )
 
     if req.sort_field == SortField.DATE:
-        # Dates are calculated, and therefore sorting cannot be implemented in the query
         families = sorted(
             list(filter(lambda f: f.family_date != "", families)),
             key=lambda f: f.family_date,
@@ -142,7 +152,7 @@ def to_search_resp_doc(row: dict) -> SearchDocumentResponse:
         document_slug=row["slug"],
         document_name=row["name"],
         document_description=row["description"],
-        document_date=str(row["publication_ts"]),
+        document_date=row["publication_ts"].isoformat(),
         document_category=row["category"],
         document_geography=row["country_code"],
         # ↓ Stuff we don't currently use for search ↓
@@ -196,9 +206,9 @@ def browse_rds(db: Session, req: BrowseArgs) -> SearchResultsResponse:
 
     if req.sort_field == SortField.DATE:
         if req.sort_order == SortOrder.DESCENDING:
-            query = query.order_by(Document.publication_ts.desc())
+            query = query.order_by(Document.publication_ts.desc().nulls_last())
         else:
-            query = query.order_by(Document.publication_ts.asc())
+            query = query.order_by(Document.publication_ts.asc().nulls_last())
     else:
         if req.sort_order == SortOrder.DESCENDING:
             query = query.order_by(Document.name.desc())
