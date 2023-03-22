@@ -732,3 +732,106 @@ def test_validate_climate_laws_cdns(client, superuser_token_headers, test_db):
         ["https://climate-laws.org/rails/123123sdfsd123/f", None]
     ]
     assert page1_response_body["no_cdn_count"] == 1
+
+
+@pytest.mark.admin
+def test_validate_dfc_vs_deprecated(client, superuser_token_headers, test_db):
+    _populate_search_db_families(test_db)
+
+    # Add two deprecated documents, one that exists in the new dfc tables and one that does not.
+    test_db.add(Source(name="CCLW"))
+    test_db.add(
+        Geography(
+            display_value="geography", slug="geography", value="GEO", type="country"
+        )
+    )
+    test_db.add(DocumentType(name="doctype", description="doctype"))
+    test_db.add(Language(language_code="LAN", name="language"))
+    test_db.add(Category(name="Policy", description="Policy"))
+    test_db.add(Keyword(name="keyword1", description="keyword1"))
+    test_db.add(Keyword(name="keyword2", description="keyword2"))
+    test_db.add(Hazard(name="hazard1", description="hazard1"))
+    test_db.add(Hazard(name="hazard2", description="hazard2"))
+    test_db.add(Response(name="topic", description="topic"))
+    test_db.add(Framework(name="framework", description="framework"))
+
+    test_db.commit()
+    test_db.add(Instrument(name="instrument", description="instrument", source_id=1))
+    test_db.add(Sector(name="sector", description="sector", source_id=1))
+    test_db.add(
+        Document(
+            publication_ts=datetime.datetime(year=2014, month=1, day=1),
+            name="test",
+            description="test description",
+            source_url="https://climate-laws.org/rails/123123123/f",
+            source_id=1,
+            url="https://climate-laws.org/rails/123123123/f",
+            cdn_object="KOR/2012/act-on-the-allocation.pdf",
+            md5_sum=None,
+            content_type=None,
+            slug="geography_2014_test_100_100",
+            import_id="CCLW.executive.1332.1548",
+            geography_id=1,
+            type_id=1,
+            category_id=1,
+        )
+    )
+    test_db.commit()
+    test_db.add(
+        Document(
+            publication_ts=datetime.datetime(year=2014, month=1, day=1),
+            name="test",
+            description="test description",
+            source_url="https://climate-laws.org/rails/123123sdfsd123/f",
+            source_id=1,
+            url="https://climate-laws.org/rails/123123sdfsd123/f",
+            cdn_object=None,
+            md5_sum=None,
+            content_type=None,
+            slug="geography_2014_test_200_200",
+            import_id="CCLW.executive.200.200",
+            geography_id=1,
+            type_id=1,
+            category_id=1,
+        )
+    )
+    test_db.commit()
+
+    page1_response = client.get(
+        "/api/v1/admin/validate/dfc-vs-deprecated",
+        headers=superuser_token_headers,
+    )
+    assert page1_response.status_code == 200
+
+    page1_response_body = page1_response.json()
+
+    # TODO get these ids dynamically
+    assert set(page1_response_body["family_document_ids"]) == {
+        "CCLW.executive.1332.1548",
+        "CCLW.executive.1674.3157",
+        "CCLW.legislative.8570.3016",
+        "CCLW.executive.9768.0",
+        "CCLW.legislative.1647.2254",
+        "CCLW.legislative.1031.0",
+        "CCLW.legislative.8570.3017",
+    }
+    assert page1_response_body["family_document_id_count"] == 7
+    assert set(page1_response_body["deprecated_document_ids"]) == {
+        "CCLW.executive.1332.1548",
+        "CCLW.executive.200.200",
+    }
+    assert page1_response_body["deprecated_document_id_count"] == 2
+    assert set(page1_response_body["family_not_in_deprecated_ids"]) == {
+        "CCLW.executive.1674.3157",
+        "CCLW.legislative.8570.3016",
+        "CCLW.executive.9768.0",
+        "CCLW.legislative.1647.2254",
+        "CCLW.legislative.1031.0",
+        "CCLW.legislative.8570.3017",
+    }
+    assert page1_response_body["family_not_in_deprecated_id_count"] == 6
+    assert page1_response_body["deprecated_not_in_family_ids"] == [
+        "CCLW.executive.200.200"
+    ]
+    assert page1_response_body["deprecated_not_in_family_id_count"] == 1
+    assert not page1_response_body["valid"]
