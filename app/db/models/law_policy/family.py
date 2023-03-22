@@ -109,6 +109,18 @@ class DocumentStatus(_BaseModelEnum):
     DELETED = "Deleted"
 
 
+class FamilyDocumentRole(Base):
+    """
+    A document type.
+
+    E.g. Main, Press Release, Amendment etc
+    """
+
+    __tablename__ = "family_document_role"
+    name = sa.Column(sa.Text, primary_key=True)
+    description = sa.Column(sa.Text, nullable=False)
+
+
 class FamilyDocumentType(Base):
     """
     A document type.
@@ -140,7 +152,8 @@ class FamilyDocument(Base):
         default=DocumentStatus.CREATED,
         nullable=False,
     )
-    document_type = sa.Column(sa.ForeignKey(FamilyDocumentType.name), nullable=False)
+    document_type = sa.Column(sa.ForeignKey(FamilyDocumentType.name), nullable=True)
+    document_role = sa.Column(sa.ForeignKey(FamilyDocumentRole.name), nullable=True)
 
     slugs: list["Slug"] = relationship("Slug", lazy="joined")
     physical_document: Optional[PhysicalDocument] = relationship(
