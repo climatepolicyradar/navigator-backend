@@ -23,11 +23,14 @@ from app.db.models.app import Organisation
 from app.db.models.deprecated import Category, Document, Source, DocumentType
 from app.db.models.law_policy.family import (
     DocumentStatus,
+    EventStatus,
     FamilyCategory,
     FamilyStatus,
     Family,
     FamilyDocument,
     FamilyDocumentType,
+    FamilyEvent,
+    FamilyEventType,
     FamilyOrganisation,
     Geography,
     Slug,
@@ -131,6 +134,11 @@ def _populate_search_db_families(db: Session) -> None:
     organisation = Organisation(
         name="CCLW", description="CCLW", organisation_type="CCLW Type"
     )
+    family_event_type = FamilyEventType(
+        name="Passed/Approved",
+        description="",
+    )
+    db.add(family_event_type)
     db.add(original)
     db.add(translated)
     db.add(document_type)
@@ -205,6 +213,19 @@ def _create_family_structures(
         db.commit()
         db.refresh(family)
         families[family_id] = family
+
+        # Make sure we add an event so we can filter by date
+        family_event = FamilyEvent(
+            import_id=f"CCLW.event.{doc_id_components[2]}.0",
+            title=f"CCLW.family.{doc_id_components[2]}.0 Event",
+            date=datetime.strptime(doc_details["document_date"], "%d/%m/%Y"),
+            event_type_name="Passed/Approved",
+            family_import_id=family_id,
+            family_document_import_id=None,
+            status=EventStatus.OK,
+        )
+        db.add(family_event)
+        db.commit()
 
     physical_document = PhysicalDocument(
         title=doc_details["document_name"],
@@ -1149,13 +1170,17 @@ def test_browse_order_by_title(
 
 
 @pytest.mark.search
-@pytest.mark.parametrize("group_documents", [False])  # FIXME: add ', True'
+@pytest.mark.parametrize("group_documents", [False, True])
 @pytest.mark.parametrize("order", [SortOrder.ASCENDING, SortOrder.DESCENDING])
+@pytest.mark.parametrize("start_year", [None, 1999, 2007])
+@pytest.mark.parametrize("end_year", [None, 2011, 2018])
 def test_browse_order_by_date(
     group_documents,
+    order,
+    start_year,
+    end_year,
     client,
     test_db,
-    order,
 ):
     """Make sure that empty search terms return no results."""
     if group_documents:
@@ -1172,6 +1197,7 @@ def test_browse_order_by_date(
             "query_string": "",
             "sort_field": "date",
             "sort_order": order.value,
+            "year_range": [start_year, end_year],
         },
     )
     assert response.status_code == 200
@@ -1184,16 +1210,23 @@ def test_browse_order_by_date(
     assert len(result_elements) > 0
 
     dt = None
+    new_dt = None
     for e in result_elements:
         if group_documents:
-            new_dt = datetime.fromisoformat(e["family_date"])
+            if e["family_date"]:
+                new_dt = datetime.fromisoformat(e["family_date"]).isoformat()
         else:
-            new_dt = datetime.fromisoformat(e["document_date"])
-        if dt is not None:
+            if e["document_date"]:
+                new_dt = datetime.fromisoformat(e["document_date"]).isoformat()
+        if dt is not None and new_dt is not None:
             if order == SortOrder.DESCENDING:
                 assert new_dt <= dt
             if order == SortOrder.ASCENDING:
                 assert new_dt >= dt
+            if start_year is not None:
+                assert new_dt >= datetime(year=start_year, month=1, day=1).isoformat()
+            if end_year is not None:
+                assert new_dt <= datetime(year=end_year, month=12, day=31).isoformat()
         dt = new_dt
 
 
@@ -1202,14 +1235,11 @@ def test_browse_order_by_date(
 @pytest.mark.parametrize("limit", [1, 4, 7, 10])
 def test_browse_limit_offset(
     group_documents,
-    # test_opensearch,
-    # monkeypatch,
     client,
     test_db,
     limit,
 ):
     """Make sure that the offset parameter in browse mode works."""
-    # monkeypatch.setattr(search, "_OPENSEARCH_CONNECTION", test_opensearch)
     if group_documents:
         _populate_search_db_families(test_db)
         search_endpoint = f"{SEARCH_ENDPOINT}?group_documents=True"

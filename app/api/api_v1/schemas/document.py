@@ -35,12 +35,21 @@ class DocumentOverviewResponse(BaseModel):  # noqa: D101
         frozen = True
 
 
+class LinkableFamily(BaseModel):
+    """For the frontend the minimum information to link to a family"""
+
+    title: str
+    slug: str
+    description: str
+
+
 class CollectionOverviewResponse(BaseModel):
     """Response for a Collection - without families"""
 
     import_id: str
     title: str
     description: str
+    families: list[LinkableFamily]
 
 
 class FamilyEventsResponse(BaseModel):
@@ -264,3 +273,26 @@ class DocumentUpdateRequest(BaseModel):
     md5_sum: Optional[str]
     content_type: Optional[str]
     cdn_object: Optional[str]
+
+
+class ClimateLawsValidationResult(BaseModel):
+    """Response for ClimateLaws source_urls validation request."""
+
+    all_climate_laws_count: int
+    all_valid: bool
+    no_cdn: list[tuple[Any, Any]]
+    no_cdn_count: int
+
+
+class RDSDataValidationResult(BaseModel):
+    """Response for the data validation endpoint for analysing the new and deprecated document data."""
+
+    family_document_ids: list[str]
+    family_document_id_count: int
+    deprecated_document_ids: list[str]
+    deprecated_document_id_count: int
+    family_not_in_deprecated_ids: list[str]
+    family_not_in_deprecated_id_count: int
+    deprecated_not_in_family_ids: list[str]
+    deprecated_not_in_family_id_count: int
+    valid: bool

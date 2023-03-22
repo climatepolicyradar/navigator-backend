@@ -1,7 +1,7 @@
 import logging
 from io import StringIO
 from typing import cast, Union
-
+from urllib.parse import urlparse
 from sqlalchemy.orm import Session
 from app.core.aws import S3Client
 
@@ -22,8 +22,10 @@ from app.core.aws import S3Document
 from app.api.api_v1.schemas.document import (
     BulkImportDetail,
     BulkImportResult,
+    ClimateLawsValidationResult,
     DocumentCreateRequest,
     DocumentUpdateRequest,
+    RDSDataValidationResult,
 )
 from app.api.api_v1.schemas.user import User, UserCreateAdmin
 from app.core.auth import get_current_active_superuser
@@ -48,7 +50,9 @@ from app.core.ingestion.utils import (
     get_result_counts,
 )
 from app.core.ingestion.validator import validate_event_row
+from app.core.validate import physical_document_source_urls, document_source_urls
 from app.core.ratelimit import DEFAULT_LIMIT, limiter
+from app.core.validate import family_document_ids, document_ids
 from app.core.validation import IMPORT_ID_MATCHER
 from app.core.validation.types import (
     ImportSchemaMismatchError,
@@ -829,3 +833,105 @@ async def update_document(
         },
     )
     return existing_doc
+
+
+@r.get(
+    "/validate/climate-laws-urls",
+    response_model=ClimateLawsValidationResult,
+    status_code=status.HTTP_200_OK,
+)
+def validate_climate_laws_urls(
+    request: Request,
+    db=Depends(get_db),
+    current_user=Depends(get_current_active_superuser),
+):
+    """Validate that all documents that have climate-laws source urls have documents stored in our cdn."""
+    _LOGGER.info(
+        "Validating source urls for climate laws hosted documents.",
+        extra={
+            "props": {
+                "props": {
+                    "superuser_email": current_user.email,
+                }
+            }
+        },
+    )
+
+    unique_docs = [
+        doc
+        for doc in list(
+            set(physical_document_source_urls(db=db) + document_source_urls(db=db))
+        )
+        if doc is not (None, None)
+    ]
+
+    climate_laws_docs = [
+        (url, cdn)
+        for url, cdn in unique_docs
+        if urlparse(url).hostname == "climate-laws.org"
+    ]
+
+    no_cdn = [(url, cdn) for url, cdn in climate_laws_docs if cdn in [None, ""]]
+
+    _LOGGER.info("Climate laws validation complete.")
+
+    # TODO assert url and cdn regex match
+    # TODO assert that the cdn doc actually exists in s3
+
+    return ClimateLawsValidationResult(
+        all_climate_laws_count=len(climate_laws_docs),
+        all_valid=len(no_cdn) == 0,
+        no_cdn=no_cdn,
+        no_cdn_count=len(no_cdn),
+    )
+
+
+@r.get(
+    "/validate/dfc-vs-deprecated",
+    response_model=RDSDataValidationResult,
+    status_code=status.HTTP_200_OK,
+)
+def validate_dfc_vs_deprecated(
+    request: Request,
+    db=Depends(get_db),
+    current_user=Depends(get_current_active_superuser),
+):
+    """Validate that all documents in the deprecated format are in the new format and published."""
+    _LOGGER.info(
+        "Validating documents in deprecated format against new dfc format.",
+        extra={
+            "props": {
+                "props": {
+                    "superuser_email": current_user.email,
+                }
+            }
+        },
+    )
+
+    family_doc_ids = family_document_ids(
+        db=db,
+    )
+
+    doc_ids = document_ids(
+        db=db,
+    )
+
+    family_not_in_deprecated_ids = list(set(family_doc_ids) - set(doc_ids))
+
+    deprecated_not_in_family_ids = list(set(doc_ids) - set(family_doc_ids))
+
+    return RDSDataValidationResult(
+        family_document_ids=family_doc_ids,
+        family_document_id_count=len(family_doc_ids),
+        deprecated_document_ids=doc_ids,
+        deprecated_document_id_count=len(doc_ids),
+        family_not_in_deprecated_ids=family_not_in_deprecated_ids,
+        family_not_in_deprecated_id_count=len(family_not_in_deprecated_ids),
+        deprecated_not_in_family_ids=deprecated_not_in_family_ids,
+        deprecated_not_in_family_id_count=len(deprecated_not_in_family_ids),
+        valid=(
+            len(family_not_in_deprecated_ids)
+            == 0 & len(deprecated_not_in_family_ids)
+            == 0
+        ),
+    )

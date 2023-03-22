@@ -666,6 +666,7 @@ def process_search_response_body_families(
         description_match = False
         for document_match in result_doc["top_passage_hits"]["hits"]["hits"]:
             document_match_source = document_match["_source"]
+
             if OPENSEARCH_INDEX_NAME_KEY in document_match_source:
                 # Validate as a title match
                 doc_match = OpenSearchResponseNameMatch(**document_match_source)
@@ -739,16 +740,14 @@ def create_search_response_family_document(
     opensearch_match: OpenSearchResponseMatchBase,
     document_family_match: Mapping[str, Mapping[str, str]],
 ) -> SearchResponseFamilyDocument:
-    doc = document_family_match[opensearch_match.document_id]
+    family_info = document_family_match[opensearch_match.document_id]
     return SearchResponseFamilyDocument(
-        document_title=doc["title"],
+        document_title=family_info["title"],
         document_type=opensearch_match.document_type,
         document_source_url=opensearch_match.document_source_url,
         document_url=to_cdn_url(opensearch_match.document_cdn_object),
         document_content_type=opensearch_match.document_content_type,
-        # FIXME: Problem on the following line when group_documents=True,
-        #        this should come from RDS Slug table
-        document_slug=doc["slug"],
+        document_slug=family_info["slug"],
         document_passage_matches=[],
     )
 
