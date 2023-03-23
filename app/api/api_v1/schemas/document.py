@@ -278,8 +278,9 @@ class DocumentUpdateRequest(BaseModel):
 class ClimateLawsValidationResult(BaseModel):
     """Response for ClimateLaws source_urls validation request."""
 
-    all_climate_laws_count: int
-    all_valid: bool
+    climate_laws: list[tuple[Any, Any]]
+    climate_laws_count: int
+    all_climate_laws_valid: bool
     no_cdn: list[tuple[Any, Any]]
     no_cdn_count: int
 

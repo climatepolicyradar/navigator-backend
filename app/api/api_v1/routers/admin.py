@@ -875,12 +875,10 @@ def validate_climate_laws_urls(
 
     _LOGGER.info("Climate laws validation complete.")
 
-    # TODO assert url and cdn regex match
-    # TODO assert that the cdn doc actually exists in s3
-
     return ClimateLawsValidationResult(
-        all_climate_laws_count=len(climate_laws_docs),
-        all_valid=len(no_cdn) == 0,
+        climate_laws=climate_laws_docs,
+        climate_laws_count=len(climate_laws_docs),
+        all_climate_laws_valid=len(no_cdn) == 0,
         no_cdn=no_cdn,
         no_cdn_count=len(no_cdn),
     )
