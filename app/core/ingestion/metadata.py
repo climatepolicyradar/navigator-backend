@@ -18,9 +18,7 @@ MAP_OF_LIST_VALUES = {
     "keyword": "keywords",
 }
 
-MAP_OF_STR_VALUES = {
-    "document_type": "document_type",
-}
+MAP_OF_STR_VALUES = {}
 
 
 @dataclass(config=ConfigDict(validate_assignment=True, extra=Extra.forbid))
@@ -76,26 +74,6 @@ def build_metadata(
         else:
             detail_list.append(result.details)
             num_fails += 1
-
-    for tax_key, row_key in MAP_OF_STR_VALUES.items():
-        row_value = getattr(row, row_key)
-        allowed_values = taxonomy[tax_key].allowed_values
-        result = Result()
-        if row_value in allowed_values:
-            value[tax_key] = row_value
-        else:
-            suggestion = match_unknown_value(row_value, set(allowed_values))
-            if not suggestion:
-                result.type = ResultType.ERROR
-                detail_list.append(
-                    f"Found no matches for {row_value} in {allowed_values}"
-                )
-                num_fails += 1
-            else:
-                value[tax_key] = suggestion
-                result.type = ResultType.RESOLVED
-                detail_list.append(f"Resolved {row_value} to {suggestion}")
-                num_resolved += 1
 
     row_result_type = ResultType.OK
     if num_resolved:

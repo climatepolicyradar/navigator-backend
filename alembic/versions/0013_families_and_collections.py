@@ -29,6 +29,11 @@ def upgrade():
     sa.Column('description', sa.Text(), nullable=False),
     sa.PrimaryKeyConstraint('name', name=op.f('pk_family_document_type'))
     )
+    op.create_table('family_document_role',
+    sa.Column('name', sa.Text(), nullable=False),
+    sa.Column('description', sa.Text(), nullable=False),
+    sa.PrimaryKeyConstraint('name', name=op.f('pk_family_document_role'))
+    )
     op.create_table('family_event_type',
     sa.Column('name', sa.Text(), nullable=False),
     sa.Column('description', sa.Text(), nullable=False),
@@ -82,8 +87,10 @@ def upgrade():
     sa.Column('import_id', sa.Text(), nullable=False),
     sa.Column('variant_name', sa.Text(), nullable=False),
     sa.Column('document_status', sa.Enum('CREATED', 'PUBLISHED', 'DELETED', name='documentstatus'), nullable=False),
-    sa.Column('document_type', sa.Text(), nullable=False),
+    sa.Column('document_type', sa.Text(), nullable=True),
+    sa.Column('document_role', sa.Text(), nullable=True),
     sa.ForeignKeyConstraint(['document_type'], ['family_document_type.name'], name=op.f('fk_family_document__document_type__family_document_type')),
+    sa.ForeignKeyConstraint(['document_role'], ['family_document_role.name'], name=op.f('fk_family_document__document_role__family_document_role')),
     sa.ForeignKeyConstraint(['family_import_id'], ['family.import_id'], name=op.f('fk_family_document__family_import_id__family')),
     sa.ForeignKeyConstraint(['physical_document_id'], ['physical_document.id'], name=op.f('fk_family_document__physical_document_id__physical_document')),
     sa.ForeignKeyConstraint(['variant_name'], ['variant.variant_name'], name=op.f('fk_family_document__variant_name__variant')),

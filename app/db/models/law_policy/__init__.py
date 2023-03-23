@@ -5,6 +5,7 @@ from .family import (
     Family,
     FamilyDocument,
     FamilyDocumentType,
+    FamilyDocumentRole,
     FamilyEvent,
     FamilyEventType,
     FamilyOrganisation,
