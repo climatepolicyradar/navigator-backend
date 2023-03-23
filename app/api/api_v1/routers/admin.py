@@ -845,7 +845,7 @@ def validate_climate_laws_urls(
     db=Depends(get_db),
     current_user=Depends(get_current_active_superuser),
 ):
-    """Validate that all documents that have climate-laws source urls have documents stored in our cdn."""
+    """Validate all documents with climate-laws source urls are in our cdn."""
     _LOGGER.info(
         "Validating source urls for climate laws hosted documents.",
         extra={
@@ -862,7 +862,7 @@ def validate_climate_laws_urls(
         for doc in list(
             set(physical_document_source_urls(db=db) + document_source_urls(db=db))
         )
-        if doc is not (None, None)
+        if doc != (None, None)
     ]
 
     climate_laws_docs = [
@@ -896,7 +896,7 @@ def validate_dfc_vs_deprecated(
     db=Depends(get_db),
     current_user=Depends(get_current_active_superuser),
 ):
-    """Validate that all documents in the deprecated format are in the new format and published."""
+    """Validate all documents are in the old & new schemas and published."""
     _LOGGER.info(
         "Validating documents in deprecated format against new dfc format.",
         extra={

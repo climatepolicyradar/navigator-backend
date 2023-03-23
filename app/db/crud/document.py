@@ -72,13 +72,13 @@ def get_family_document_and_context(
     family, document, physical_document, geography = db_objects
 
     import_id = cast(str, family.import_id)
-    slugs = _get_slugs_for_family_import_id(db, import_id)
+    slug = _get_slug_for_family_import_id(db, import_id)
 
     family = FamilyContext(
         title=cast(str, family.title),
         import_id=import_id,
         geography=cast(str, geography.value),
-        slugs=slugs,
+        slug=slug,
         category=family.family_category,
         published_date=family.published_date,
         last_updated_date=family.last_updated_date,
@@ -86,7 +86,7 @@ def get_family_document_and_context(
     document = FamilyDocumentResponse(
         import_id=document.import_id,
         variant=document.variant_name,
-        slugs=_get_slugs_for_family_document_import_id(db, document.import_id),
+        slug=_get_slug_for_family_document_import_id(db, document.import_id),
         title=physical_document.title,
         md5_sum=physical_document.md5_sum,
         cdn_object=to_cdn_url(physical_document.cdn_object),
@@ -142,7 +142,7 @@ def get_family_and_documents(
         organisation,
     ) = db_objects
 
-    slugs = _get_slugs_for_family_import_id(db, import_id)
+    slug = _get_slug_for_family_import_id(db, import_id)
     events = _get_events_for_family_import_id(db, import_id)
     documents = _get_documents_for_family_import_id(db, import_id)
     collections = _get_collections_for_family_import_id(db, import_id)
@@ -156,7 +156,7 @@ def get_family_and_documents(
         category=cast(str, family.family_category),
         status=cast(str, family.family_status),
         metadata=cast(dict, family_metadata.value),
-        slugs=slugs,
+        slug=slug,
         events=events,
         documents=documents,
         published_date=family.published_date,
@@ -165,16 +165,16 @@ def get_family_and_documents(
     )
 
 
-def _get_slugs_for_family_import_id(db: Session, import_id: str) -> list[str]:
-    db_slugs = (db.query(Slug).filter(Slug.family_import_id == import_id)).all()
-    return [s.name for s in db_slugs]
+def _get_slug_for_family_import_id(db: Session, import_id: str) -> str:
+    db_slug = (db.query(Slug).filter(Slug.family_import_id == import_id)).first()
+    return db_slug.name if db_slug is not None else ""
 
 
-def _get_slugs_for_family_document_import_id(db: Session, import_id: str):
-    db_slugs = (
+def _get_slug_for_family_document_import_id(db: Session, import_id: str) -> str:
+    db_slug = (
         db.query(Slug).filter(Slug.family_document_import_id == import_id)
-    ).all()
-    return [s.name for s in db_slugs]
+    ).first()
+    return db_slug.name if db_slug is not None else ""
 
 
 def _get_collections_for_family_import_id(
@@ -237,7 +237,7 @@ def _get_documents_for_family_import_id(
         FamilyDocumentResponse(
             import_id=d.import_id,
             variant=d.variant_name,
-            slugs=_get_slugs_for_family_document_import_id(db, d.import_id),
+            slug=_get_slug_for_family_document_import_id(db, d.import_id),
             # What follows is off PhysicalDocument
             title=pd.title,
             md5_sum=pd.md5_sum,
