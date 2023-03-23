@@ -166,14 +166,14 @@ def get_family_and_documents(
 
 
 def _get_slug_for_family_import_id(db: Session, import_id: str) -> str:
-    db_slug = (db.query(Slug).filter(Slug.family_import_id == import_id)).one_or_none()
+    db_slug = (db.query(Slug).filter(Slug.family_import_id == import_id)).first()
     return db_slug.name if db_slug is not None else ""
 
 
 def _get_slug_for_family_document_import_id(db: Session, import_id: str) -> str:
     db_slug = (
         db.query(Slug).filter(Slug.family_document_import_id == import_id)
-    ).one_or_none()
+    ).first()
     return db_slug.name if db_slug is not None else ""
 
 
