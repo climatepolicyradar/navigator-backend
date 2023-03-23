@@ -1,6 +1,7 @@
 """Functions to support browsing the RDS document structure"""
 
 from datetime import datetime
+from logging import getLogger
 from time import perf_counter
 from typing import Optional, Sequence, cast
 from pydantic import BaseModel
@@ -27,6 +28,8 @@ from app.db.models.app import Organisation
 from sqlalchemy import extract
 from sqlalchemy.orm import Session
 
+_LOGGER = getLogger(__name__)
+
 
 class BrowseArgs(BaseModel):
     """Arguments for the browse_rds function"""
@@ -40,9 +43,6 @@ class BrowseArgs(BaseModel):
     sort_order: SortOrder = SortOrder.DESCENDING
     offset: int = 0
     limit: int = 10
-
-
-## TODO: got ahead of myself - will complete this work in a follow-up
 
 
 def to_search_response_family(
@@ -102,10 +102,12 @@ def browse_rds_families(
         else:
             query = query.order_by(Family.title.asc())
 
+    _LOGGER.debug("Starting families query")
     families = [
         to_search_response_family(family, geography, organisation)
         for (family, geography, organisation) in query.all()
     ]
+    _LOGGER.debug("Finished families query")
 
     # Dates are calculated, and therefore sorting cannot be implemented in the query
     if req.start_year is not None:

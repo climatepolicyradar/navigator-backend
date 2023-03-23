@@ -70,7 +70,7 @@ class Family(Base):
     )
 
     slugs: list["Slug"] = relationship("Slug", lazy="joined")
-    events: list["FamilyEvent"] = relationship("FamilyEvent", lazy="select")
+    events: list["FamilyEvent"] = relationship("FamilyEvent", lazy="joined")
 
     @hybrid_property
     def published_date(self) -> Optional[datetime]:
