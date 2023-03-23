@@ -286,7 +286,7 @@ class ClimateLawsValidationResult(BaseModel):
 
 
 class RDSDataValidationResult(BaseModel):
-    """Response for validation, analysing the new and old data."""
+    """Response for validation when analysing the new and deprecated schemas."""
 
     family_document_ids: list[str]
     family_document_id_count: int
