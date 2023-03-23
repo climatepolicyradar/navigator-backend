@@ -845,7 +845,7 @@ def validate_climate_laws_urls(
     db=Depends(get_db),
     current_user=Depends(get_current_active_superuser),
 ):
-    """Validate all documents have climate-laws source urls are our cdn."""
+    """Validate all documents with climate-laws source urls are in our cdn."""
     _LOGGER.info(
         "Validating source urls for climate laws hosted documents.",
         extra={
