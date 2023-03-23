@@ -88,15 +88,14 @@ def test_documents_family_slug_returns_correct_json(
     assert len(json_response["metadata"]) == N_METADATA_KEYS
     assert json_response["metadata"]["keyword"] == ["Energy Supply"]
 
-    assert len(json_response["slugs"]) == 1
-    assert json_response["slugs"][0] == "FamSlug1"
+    assert json_response["slug"] == "FamSlug1"
 
     assert len(json_response["events"]) == 1
     assert json_response["events"][0]["title"] == "Published"
 
     assert len(json_response["documents"]) == 1
     assert json_response["documents"][0]["title"] == "Title1"
-    assert json_response["documents"][0]["slugs"] == ["DocSlug1"]
+    assert json_response["documents"][0]["slug"] == "DocSlug1"
     assert json_response["documents"][0]["import_id"] == "CCLW.executive.1.2"
 
     assert len(json_response["collections"]) == 1
@@ -149,8 +148,7 @@ def test_documents_doc_slug_preexisting_objects(
     assert family["import_id"] == "CCLW.family.2002.0"
     assert family["geography"] == "GEO"
     assert family["category"] == "Executive"
-    assert len(family["slugs"]) == 1
-    assert family["slugs"][0] == "FamSlug2"
+    assert family["slug"] == "FamSlug2"
     assert family["published_date"] == "2019-12-25T00:00:00+00:00"
     assert family["last_updated_date"] == "2019-12-25T00:00:00+00:00"
 
@@ -159,7 +157,7 @@ def test_documents_doc_slug_preexisting_objects(
     assert len(doc) == 11
     assert doc["import_id"] == "CCLW.executive.2.2"
     assert doc["variant"] is None
-    assert doc["slugs"] == ["DocSlug2"]
+    assert doc["slug"] == "DocSlug2"
     assert doc["title"] == "Title2"
     assert doc["md5_sum"] is None
     assert doc["cdn_object"] == "https://cdn.climatepolicyradar.org/"

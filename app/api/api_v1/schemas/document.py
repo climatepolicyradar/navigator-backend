@@ -66,7 +66,7 @@ class FamilyDocumentResponse(BaseModel):
 
     import_id: str
     variant: Optional[str]
-    slugs: list[str]
+    slug: str
     # What follows is off PhysicalDocument
     title: str
     md5_sum: Optional[str]
@@ -85,7 +85,7 @@ class FamilyContext(BaseModel):
     import_id: str
     geography: str
     category: str
-    slugs: list[str]
+    slug: str
     published_date: Optional[datetime]
     last_updated_date: Optional[datetime]
 
@@ -108,7 +108,7 @@ class FamilyAndDocumentsResponse(BaseModel):
     category: str
     status: str
     metadata: dict
-    slugs: list[str]
+    slug: str
     events: list[FamilyEventsResponse]
     published_date: Optional[datetime]
     last_updated_date: Optional[datetime]
