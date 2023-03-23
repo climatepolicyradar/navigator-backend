@@ -4,6 +4,8 @@ from sqlalchemy.orm import Session
 from datetime import datetime
 from app.data_migrations import (
     populate_category,
+    populate_document_role,
+    populate_document_variant,
     populate_document_type,
     populate_event_type,
     populate_geography,
@@ -131,6 +133,8 @@ def init_for_ingest(test_db: Session):
     populate_document_type(test_db)
     populate_event_type(test_db)
     populate_language(test_db)
+    populate_document_role(test_db)
+    populate_document_variant(test_db)
     test_db.flush()
     test_db.add(
         Document(

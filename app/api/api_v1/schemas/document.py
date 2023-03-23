@@ -65,7 +65,7 @@ class FamilyDocumentResponse(BaseModel):
     """Response for a FamilyDocument, without any family information"""
 
     import_id: str
-    variant: str
+    variant: Optional[str]
     slugs: list[str]
     # What follows is off PhysicalDocument
     title: str
@@ -74,7 +74,8 @@ class FamilyDocumentResponse(BaseModel):
     source_url: Optional[str]
     content_type: Optional[str]
     language: str
-    document_type: str
+    document_type: Optional[str]
+    document_role: Optional[str]
 
 
 class FamilyContext(BaseModel):
@@ -285,7 +286,7 @@ class ClimateLawsValidationResult(BaseModel):
 
 
 class RDSDataValidationResult(BaseModel):
-    """Response for the data validation endpoint for analysing the new and deprecated document data."""
+    """Response for validation, analysing the new and old data."""
 
     family_document_ids: list[str]
     family_document_id_count: int

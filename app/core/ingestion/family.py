@@ -1,4 +1,4 @@
-from typing import Any, cast
+from typing import Any, Optional, cast
 
 from sqlalchemy.orm import Session
 from app.core.ingestion.ingest_row import DocumentIngestRow
@@ -13,12 +13,10 @@ from app.db.models.law_policy import (
     FamilyCategory,
     Family,
     FamilyDocument,
-    FamilyDocumentType,
     FamilyOrganisation,
     FamilyStatus,
     Geography,
     Slug,
-    Variant,
 )
 
 
@@ -96,6 +94,21 @@ def _maybe_create_family(
     return family
 
 
+def _get_role_and_variant(row: DocumentIngestRow) -> tuple[str, Optional[str]]:
+    data = row.document_role.upper()
+    if data.startswith("MAIN"):
+        if "LANGUAGE VERSION" in data:
+            return ("MAIN", "Original Language")
+        return ("MAIN", None)
+
+    if "ENGLISH TRANSLATION" in data:
+        # FIXME: Marcus still to determine:
+        # REF: https://docs.google.com/spreadsheets/d/1RO7wp2XN4mXsKYJ4IiV7iu2GFY3cJSBWSPqblacMTT4
+        return (data, "Translation")
+
+    return (data, None)
+
+
 def _maybe_create_family_document(
     db: Session,
     row: DocumentIngestRow,
@@ -103,13 +116,7 @@ def _maybe_create_family_document(
     existing_document: Document,
     result: dict[str, Any],
 ) -> FamilyDocument:
-    # FIXME: these should come from well-known values, not whatever is in the CSV
-    variant_name = get_or_create(
-        db, Variant, variant_name=row.document_role, extra={"description": ""}
-    ).variant_name
-    document_type = get_or_create(
-        db, FamilyDocumentType, name=row.document_type, extra={"description": ""}
-    ).name
+    role, variant = _get_role_and_variant(row)
 
     family_document = (
         db.query(FamilyDocument).filter_by(import_id=row.cpr_document_id).one_or_none()
@@ -124,9 +131,10 @@ def _maybe_create_family_document(
         family_import_id=family.import_id,
         physical_document_id=physical_document.id,
         import_id=row.cpr_document_id,
-        variant_name=variant_name,
+        variant_name=variant,
         document_status=DocumentStatus.PUBLISHED,
-        document_type=document_type,
+        document_type=row.document_type,
+        document_role=role,
     )
     db.add(family_document)
     db.flush()

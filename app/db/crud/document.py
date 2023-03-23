@@ -83,7 +83,7 @@ def get_family_document_and_context(
         published_date=family.published_date,
         last_updated_date=family.last_updated_date,
     )
-    document = FamilyDocumentResponse(
+    response = FamilyDocumentResponse(
         import_id=document.import_id,
         variant=document.variant_name,
         slugs=_get_slugs_for_family_document_import_id(db, document.import_id),
@@ -94,9 +94,10 @@ def get_family_document_and_context(
         content_type=physical_document.content_type,
         language=_get_language_for_phys_doc(db, physical_document.id),
         document_type=document.document_type,
+        document_role=document.document_role,
     )
 
-    return FamilyDocumentWithContextResponse(family=family, document=document)
+    return FamilyDocumentWithContextResponse(family=family, document=response)
 
 
 def _get_language_for_phys_doc(db: Session, physical_document_id: str) -> str:
@@ -246,6 +247,7 @@ def _get_documents_for_family_import_id(
             content_type=pd.content_type,
             language=_get_language_for_phys_doc(db, pd.id),
             document_type=d.document_type,
+            document_role=d.document_role,
         )
         for d, pd in db_documents
     ]

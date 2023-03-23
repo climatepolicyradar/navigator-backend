@@ -146,7 +146,7 @@ class FamilyDocument(Base):
     )
 
     import_id = sa.Column(sa.Text, primary_key=True)
-    variant_name = sa.Column(sa.ForeignKey(Variant.variant_name), nullable=False)
+    variant_name = sa.Column(sa.ForeignKey(Variant.variant_name), nullable=True)
     document_status = sa.Column(
         sa.Enum(DocumentStatus),
         default=DocumentStatus.CREATED,

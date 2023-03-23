@@ -7,7 +7,12 @@ from sqlalchemy.orm import Session
 from fastapi.testclient import TestClient
 from pytest_mock import MockerFixture
 from app.api.api_v1.routers.admin import _start_ingest
-from app.data_migrations import populate_event_type, populate_taxonomy
+from app.data_migrations import (
+    populate_document_role,
+    populate_document_type,
+    populate_event_type,
+    populate_taxonomy,
+)
 from app.db.models.deprecated.document import (
     Category,
     Document,
@@ -55,6 +60,8 @@ def setup_with_docs(test_db, mocker):
 
     populate_taxonomy(test_db)
     populate_event_type(test_db)
+    populate_document_type(test_db)
+    populate_document_role(test_db)
     test_db.commit()
 
     populate_old_documents(test_db)
@@ -70,6 +77,8 @@ def setup_with_two_docs(
 
     populate_taxonomy(test_db)
     populate_event_type(test_db)
+    populate_document_type(test_db)
+    populate_document_role(test_db)
     test_db.commit()
 
     populate_old_documents(test_db)
@@ -271,9 +280,9 @@ def test_documents_doc_slug_preexisting_objects(
 
     doc = json_response["document"]
     assert doc
-    assert len(doc) == 10
+    assert len(doc) == 11
     assert doc["import_id"] == "CCLW.executive.2.2"
-    assert doc["variant"] == "MAIN"
+    assert doc["variant"] is None
     assert doc["slugs"] == ["DocSlug2"]
     assert doc["title"] == "Title2"
     assert doc["md5_sum"] is None
@@ -281,6 +290,7 @@ def test_documents_doc_slug_preexisting_objects(
     assert doc["source_url"] == "http://another_somewhere"
     assert doc["language"] == ""
     assert doc["document_type"] == "Order"
+    assert doc["document_role"] == "MAIN"
 
 
 @pytest.mark.languages
