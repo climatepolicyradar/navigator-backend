@@ -14,7 +14,8 @@ from tests.routes.document_helpers import (
     setup_with_two_docs,
 )
 
-METADATA_COUNT = 6
+N_METADATA_KEYS = 6
+N_FAMILY_KEYS = 14
 
 
 def test_documents_family_slug_returns_not_found(
@@ -33,15 +34,38 @@ def test_documents_family_slug_returns_not_found(
     assert response.status_code == 404
 
 
-def test_documents_family_slug_preexisting_objects(
+def test_documents_family_slug_returns_correct_family(
     client: TestClient,
     test_db: Session,
     mocker: Callable[..., Generator[MockerFixture, None, None]],
 ):
     setup_with_two_docs(test_db, mocker)
-    assert test_db.query(PhysicalDocument).count() == 2
-    assert test_db.query(Family).count() == 2
-    assert test_db.query(FamilyEvent).count() == 2
+
+    # Test associations
+    response = client.get(
+        "/api/v1/documents/FamSlug1?group_documents=True",
+    )
+
+    json_response = response.json()
+    assert response.status_code == 200
+    assert json_response["import_id"] == "CCLW.family.1001.0"
+
+    # Ensure a different family is returned
+    response = client.get(
+        "/api/v1/documents/FamSlug2?group_documents=True",
+    )
+
+    json_response = response.json()
+    assert response.status_code == 200
+    assert json_response["import_id"] == "CCLW.family.2002.0"
+
+
+def test_documents_family_slug_returns_correct_json(
+    client: TestClient,
+    test_db: Session,
+    mocker: Callable[..., Generator[MockerFixture, None, None]],
+):
+    setup_with_two_docs(test_db, mocker)
 
     # Test associations
     response = client.get(
@@ -50,7 +74,7 @@ def test_documents_family_slug_preexisting_objects(
     json_response = response.json()
 
     assert response.status_code == 200
-    assert len(json_response) == 14
+    assert len(json_response) == N_FAMILY_KEYS
     assert json_response["organisation"] == "CCLW"
     assert json_response["import_id"] == "CCLW.family.1001.0"
     assert json_response["title"] == "Fam1"
@@ -61,7 +85,7 @@ def test_documents_family_slug_preexisting_objects(
     assert json_response["published_date"] == "2019-12-25T00:00:00+00:00"
     assert json_response["last_updated_date"] == "2019-12-25T00:00:00+00:00"
 
-    assert len(json_response["metadata"]) == METADATA_COUNT
+    assert len(json_response["metadata"]) == N_METADATA_KEYS
     assert json_response["metadata"]["keyword"] == ["Energy Supply"]
 
     assert len(json_response["slugs"]) == 1
@@ -82,17 +106,6 @@ def test_documents_family_slug_preexisting_objects(
         {"title": "Fam1", "slug": "FamSlug1", "description": "Summary1"},
         {"title": "Fam2", "slug": "FamSlug2", "description": "Summary2"},
     ]
-
-    # Ensure a different family is returned
-    response = client.get(
-        "/api/v1/documents/FamSlug2?group_documents=True",
-    )
-    json_response = response.json()
-    assert response.status_code == 200
-    assert len(json_response) == 14
-    assert json_response["organisation"] == "CCLW"
-    assert json_response["title"] == "Fam2"
-    assert json_response["import_id"] == "CCLW.family.2002.0"
 
 
 def test_documents_doc_slug_returns_not_found(
