@@ -124,9 +124,9 @@ def get_family_and_documents(
     db_objects = (
         db.query(Family, Geography, FamilyMetadata, FamilyOrganisation, Organisation)
         .filter(Family.import_id == import_id)
-        .filter(Family.geography_id == Geography.id)
-        .filter(import_id == FamilyMetadata.family_import_id)
-        .filter(import_id == FamilyOrganisation.family_import_id)
+        .join(Geography, Family.geography_id == Geography.id)
+        .join(FamilyMetadata, import_id == FamilyMetadata.family_import_id)
+        .join(FamilyOrganisation, import_id == FamilyOrganisation.family_import_id)
         .filter(FamilyOrganisation.organisation_id == Organisation.id)
     ).one_or_none()
 
