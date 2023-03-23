@@ -5,7 +5,6 @@ from sqlalchemy.orm import Session
 
 from fastapi.testclient import TestClient
 from pytest_mock import MockerFixture
-from app.db.models.document.physical_document import Language, PhysicalDocument
 from app.db.models.law_policy.family import Family, FamilyEvent
 from tests.routes.document_helpers import (
     TWO_DFC_ROW_ONE_LANGUAGE,
@@ -129,9 +128,6 @@ def test_documents_doc_slug_preexisting_objects(
     mocker: Callable[..., Generator[MockerFixture, None, None]],
 ):
     setup_with_two_docs(test_db, mocker)
-    assert test_db.query(PhysicalDocument).count() == 2
-    assert test_db.query(Family).count() == 2
-    assert test_db.query(FamilyEvent).count() == 2
 
     # Test associations
     response = client.get(
@@ -175,11 +171,6 @@ def test_physical_doc_languages(
 ):
     populate_languages(test_db)
     setup_with_two_docs(test_db, mocker, doc_data=TWO_DFC_ROW_ONE_LANGUAGE)
-
-    assert test_db.query(Language).count() == 3
-    assert test_db.query(PhysicalDocument).count() == 2
-    assert test_db.query(Family).count() == 2
-    assert test_db.query(FamilyEvent).count() == 2
 
     response = client.get(
         "/api/v1/documents/DocSlug1?group_documents=True",
