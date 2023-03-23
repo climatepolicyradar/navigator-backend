@@ -94,21 +94,6 @@ def _maybe_create_family(
     return family
 
 
-def _get_role_and_variant(row: DocumentIngestRow) -> tuple[str, Optional[str]]:
-    data = row.document_role.upper()
-    if data.startswith("MAIN"):
-        if "LANGUAGE VERSION" in data:
-            return ("MAIN", "Original Language")
-        return ("MAIN", None)
-
-    if "ENGLISH TRANSLATION" in data:
-        # FIXME: Marcus still to determine:
-        # REF: https://docs.google.com/spreadsheets/d/1RO7wp2XN4mXsKYJ4IiV7iu2GFY3cJSBWSPqblacMTT4
-        return (data, "Translation")
-
-    return (data, None)
-
-
 def _maybe_create_family_document(
     db: Session,
     row: DocumentIngestRow,
@@ -116,7 +101,8 @@ def _maybe_create_family_document(
     existing_document: Document,
     result: dict[str, Any],
 ) -> FamilyDocument:
-    role, variant = _get_role_and_variant(row)
+    def none_if_empty(data: str) -> Optional[str]:
+        return data if data != "" else None
 
     family_document = (
         db.query(FamilyDocument).filter_by(import_id=row.cpr_document_id).one_or_none()
@@ -131,10 +117,10 @@ def _maybe_create_family_document(
         family_import_id=family.import_id,
         physical_document_id=physical_document.id,
         import_id=row.cpr_document_id,
-        variant_name=variant,
+        variant_name=none_if_empty(row.document_variant),
         document_status=DocumentStatus.PUBLISHED,
-        document_type=row.document_type,
-        document_role=role,
+        document_type=none_if_empty(row.document_type),
+        document_role=none_if_empty(row.document_role),
     )
     db.add(family_document)
     db.flush()

@@ -1,8 +1,5 @@
 from typing import Callable, Generator
-
-import pytest
 from sqlalchemy.orm import Session
-
 from fastapi.testclient import TestClient
 from pytest_mock import MockerFixture
 from app.db.models.law_policy.family import Family, FamilyEvent
@@ -15,6 +12,8 @@ from tests.routes.document_helpers import (
 
 N_METADATA_KEYS = 6
 N_FAMILY_KEYS = 14
+N_FAMILY_OVERVIEW_KEYS = 7
+N_DOCUMENT_KEYS = 11
 
 
 def test_documents_family_slug_returns_not_found(
@@ -139,7 +138,7 @@ def test_documents_doc_slug_preexisting_objects(
 
     family = json_response["family"]
     assert family
-    assert len(family.keys()) == 7
+    assert len(family.keys()) == N_FAMILY_OVERVIEW_KEYS
     assert family["title"] == "Fam2"
     assert family["import_id"] == "CCLW.family.2002.0"
     assert family["geography"] == "GEO"
@@ -150,20 +149,20 @@ def test_documents_doc_slug_preexisting_objects(
 
     doc = json_response["document"]
     assert doc
-    assert len(doc) == 11
+    assert len(doc) == N_DOCUMENT_KEYS
     assert doc["import_id"] == "CCLW.executive.2.2"
     assert doc["variant"] is None
     assert doc["slug"] == "DocSlug2"
     assert doc["title"] == "Title2"
     assert doc["md5_sum"] is None
     assert doc["cdn_object"] == "https://cdn.climatepolicyradar.org/"
+    assert doc["content_type"] is None
     assert doc["source_url"] == "http://another_somewhere"
     assert doc["language"] == ""
     assert doc["document_type"] == "Order"
     assert doc["document_role"] == "MAIN"
 
 
-@pytest.mark.languages
 def test_physical_doc_languages(
     client: TestClient,
     test_db: Session,

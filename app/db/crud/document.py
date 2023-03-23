@@ -198,9 +198,9 @@ def _get_collections_for_family_import_id(
             families=[
                 LinkableFamily(slug=data[0], title=data[1], description=data[2])
                 for data in db.query(Slug.name, Family.title, Family.description)
-                .filter(Slug.family_import_id == Family.import_id)
-                .filter(CollectionFamily.family_import_id == Family.import_id)
                 .filter(CollectionFamily.collection_import_id == c.import_id)
+                .filter(CollectionFamily.family_import_id == Family.import_id)
+                .join(Slug, Slug.family_import_id == Family.import_id)
                 .all()
             ],
         )

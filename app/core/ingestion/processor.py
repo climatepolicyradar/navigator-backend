@@ -155,6 +155,8 @@ def get_dfc_validator(db: Session, context: IngestContext) -> ProcessFunc:
 
     def process(context: IngestContext, row: DocumentIngestRow) -> None:
         """Processes the row into the db."""
-        validate_document_row(context=context, taxonomy=taxonomy, row=row)
+        _LOGGER.info(f"Validating document row: {row.row_number}")
+        with db.begin():
+            validate_document_row(db=db, context=context, taxonomy=taxonomy, row=row)
 
     return process

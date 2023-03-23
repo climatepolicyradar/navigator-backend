@@ -1,9 +1,34 @@
+from sqlalchemy.orm import Session
 from app.core.ingestion.ingest_row import DocumentIngestRow, EventIngestRow
 from app.core.ingestion.metadata import build_metadata, Taxonomy
 from app.core.ingestion.utils import IngestContext, Result, ResultType
+from app.db.models.law_policy.family import (
+    FamilyDocumentRole,
+    FamilyDocumentType,
+    Variant,
+)
+from app.db.session import Base
+
+DbTable = Base
+CheckResult = Result
+
+
+def _check_value_in_db(
+    row_num: int, db: Session, value: str, model: DbTable
+) -> CheckResult:
+    if value != "":
+        val = db.query(model).get(value)
+        if val is None:
+            result = Result(
+                ResultType.ERROR,
+                f"Row {row_num}: Not found in db {model.__tablename__}={value}",
+            )
+            return result
+    return Result()
 
 
 def validate_document_row(
+    db: Session,
     context: IngestContext,
     row: DocumentIngestRow,
     taxonomy: Taxonomy,
@@ -15,13 +40,34 @@ def validate_document_row(
     :param [DocumentIngestRow] row: DocumentIngestRow object from the current CSV row.
     :param [Taxonomy] taxonomy: the Taxonomy against which metadata should be validated.
     """
+
+    errors = []
+    n = row.row_number
+    result = _check_value_in_db(n, db, row.document_type, FamilyDocumentType)
+    if result.type != ResultType.OK:
+        errors.append(result)
+
+    result = _check_value_in_db(n, db, row.document_role, FamilyDocumentRole)
+    if result.type != ResultType.OK:
+        errors.append(result)
+
+    result = _check_value_in_db(n, db, row.document_variant, Variant)
+    if result.type != ResultType.OK:
+        errors.append(result)
+
     result, _ = build_metadata(taxonomy, row)
-    context.results.append(result)
+    if result.type != ResultType.OK:
+        errors.append(result)
+
+    if len(errors) > 0:
+        context.results += errors
+    else:
+        context.results.append(Result())
 
 
 def validate_event_row(context: IngestContext, row: EventIngestRow) -> None:
     """
-    Validate the consituent elements that represent this event row.
+    Validate the constituent elements that represent this event row.
 
     :param [IngestContext] context: The ingest context.
     :param [DocumentIngestRow] row: DocumentIngestRow object from the current CSV row.
