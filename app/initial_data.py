@@ -16,6 +16,7 @@ from app.data_migrations import (
     populate_category,
     populate_document_type,
     populate_document_role,
+    populate_document_variant,
     populate_event_type,
     populate_framework,
     populate_geo_statistics,
@@ -40,6 +41,7 @@ def run_data_migrations(db):
     populate_category(db)
     populate_document_type(db)
     populate_document_role(db)
+    populate_document_variant(db)
     populate_event_type(db)
     populate_framework(db)
     populate_geography(db)

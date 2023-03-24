@@ -65,7 +65,7 @@ class FamilyDocumentResponse(BaseModel):
     """Response for a FamilyDocument, without any family information"""
 
     import_id: str
-    variant: str
+    variant: Optional[str]
     slug: str
     # What follows is off PhysicalDocument
     title: str
@@ -74,7 +74,8 @@ class FamilyDocumentResponse(BaseModel):
     source_url: Optional[str]
     content_type: Optional[str]
     language: str
-    document_type: str
+    document_type: Optional[str]
+    document_role: Optional[str]
 
 
 class FamilyContext(BaseModel):

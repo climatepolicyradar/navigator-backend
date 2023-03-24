@@ -18,8 +18,6 @@ MAP_OF_LIST_VALUES = {
     "keyword": "keywords",
 }
 
-MAP_OF_STR_VALUES = {}
-
 
 @dataclass(config=ConfigDict(validate_assignment=True, extra=Extra.forbid))
 class TaxonomyEntry:

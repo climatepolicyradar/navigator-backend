@@ -85,7 +85,7 @@ def upgrade():
     sa.Column('family_import_id', sa.Text(), nullable=False),
     sa.Column('physical_document_id', sa.Integer(), nullable=False),
     sa.Column('import_id', sa.Text(), nullable=False),
-    sa.Column('variant_name', sa.Text(), nullable=False),
+    sa.Column('variant_name', sa.Text(), nullable=True),
     sa.Column('document_status', sa.Enum('CREATED', 'PUBLISHED', 'DELETED', name='documentstatus'), nullable=False),
     sa.Column('document_type', sa.Text(), nullable=True),
     sa.Column('document_role', sa.Text(), nullable=True),

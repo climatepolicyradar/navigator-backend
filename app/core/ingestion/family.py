@@ -1,4 +1,4 @@
-from typing import Any, cast
+from typing import Any, Optional, cast
 
 from sqlalchemy.orm import Session
 from app.core.ingestion.ingest_row import DocumentIngestRow
@@ -13,12 +13,10 @@ from app.db.models.law_policy import (
     FamilyCategory,
     Family,
     FamilyDocument,
-    FamilyDocumentType,
     FamilyOrganisation,
     FamilyStatus,
     Geography,
     Slug,
-    Variant,
 )
 
 
@@ -103,13 +101,8 @@ def _maybe_create_family_document(
     existing_document: Document,
     result: dict[str, Any],
 ) -> FamilyDocument:
-    # FIXME: these should come from well-known values, not whatever is in the CSV
-    variant_name = get_or_create(
-        db, Variant, variant_name=row.document_role, extra={"description": ""}
-    ).variant_name
-    document_type = get_or_create(
-        db, FamilyDocumentType, name=row.document_type, extra={"description": ""}
-    ).name
+    def none_if_empty(data: str) -> Optional[str]:
+        return data if data != "" else None
 
     family_document = (
         db.query(FamilyDocument).filter_by(import_id=row.cpr_document_id).one_or_none()
@@ -124,9 +117,10 @@ def _maybe_create_family_document(
         family_import_id=family.import_id,
         physical_document_id=physical_document.id,
         import_id=row.cpr_document_id,
-        variant_name=variant_name,
+        variant_name=none_if_empty(row.document_variant),
         document_status=DocumentStatus.PUBLISHED,
-        document_type=document_type,
+        document_type=none_if_empty(row.document_type),
+        document_role=none_if_empty(row.document_role),
     )
     db.add(family_document)
     db.flush()

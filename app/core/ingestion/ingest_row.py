@@ -18,6 +18,7 @@ _REQUIRED_DOCUMENT_COLUMNS = [
     "Family name",
     "Family summary",
     "Document role",
+    "Document variant",
     "Geography ISO",
     "Documents",
     "Category",
@@ -126,6 +127,7 @@ class DocumentIngestRow(BaseIngestRow):
     family_name: str
     family_summary: str
     document_role: str
+    document_variant: str
     geography_iso: str
     documents: str
     category: FamilyCategory
