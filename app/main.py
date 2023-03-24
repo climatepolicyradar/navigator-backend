@@ -8,8 +8,6 @@ from fastapi import Depends, FastAPI
 from fastapi.middleware.cors import CORSMiddleware
 from fastapi_health import health
 from fastapi_pagination import add_pagination
-from slowapi.errors import RateLimitExceeded
-from slowapi.extension import _rate_limit_exceeded_handler
 from starlette.requests import Request
 from alembic.command import upgrade
 from alembic.config import Config
@@ -24,7 +22,6 @@ from app.api.api_v1.routers.summaries import summary_router
 from app.core import config
 from app.core.auth import get_current_active_superuser
 from app.core.health import is_database_online
-from app.core.ratelimit import limiter
 from app.db.session import SessionLocal
 
 os.environ["SKIP_ALEMBIC_LOGGING"] = "1"
@@ -125,10 +122,6 @@ app.include_router(summary_router, prefix="/api/v1", tags=["Summaries"])
 
 # add pagination support to all routes that ask for it
 add_pagination(app)
-
-# rate limiting
-app.state.limiter = limiter
-app.add_exception_handler(RateLimitExceeded, _rate_limit_exceeded_handler)
 
 
 @app.on_event("startup")
