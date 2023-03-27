@@ -6,6 +6,7 @@ import time
 from collections import OrderedDict
 from dataclasses import dataclass
 from datetime import datetime
+from io import StringIO
 from pathlib import Path
 from typing import Any, Mapping, Optional, Sequence
 import string
@@ -13,6 +14,7 @@ import string
 from opensearchpy import OpenSearch
 from opensearchpy import JSONSerializer as jss
 from sentence_transformers import SentenceTransformer
+from sqlalchemy.orm import Session
 
 from app.api.api_v1.schemas.search import (
     FilterField,
@@ -53,8 +55,21 @@ from app.core.config import (
     OPENSEARCH_VERIFY_CERTS,
     OPENSEARCH_SSL_WARNINGS,
     OPENSEARCH_JIT_MAX_DOC_COUNT,
+    PUBLIC_APP_URL,
 )
 from app.core.util import to_cdn_url
+from app.db.models.document.physical_document import (
+    Language,
+    PhysicalDocument,
+    PhysicalDocumentLanguage,
+)
+from app.db.models.law_policy import (
+    FamilyDocument,
+    FamilyMetadata,
+    Slug,
+    Collection,
+    CollectionFamily,
+)
 
 
 _LOGGER = logging.getLogger(__name__)
@@ -79,9 +94,30 @@ _FILTER_FIELD_MAP: Mapping[FilterField, str] = {
     FilterField.LANGUAGE: "document_language",
 }
 _REQUIRED_FIELDS = ["document_name"]
-_DEFAULT_BROWSE_SORT_FIELD = SortField.DATE
 _DEFAULT_SORT_ORDER = SortOrder.DESCENDING
 _JSON_SERIALIZER = jss()
+_CSV_SEARCH_RESPONSE_COLUMNS = [
+    "Collection name",
+    "Collection summary",
+    "Family name",
+    "Family summary",
+    "Family URL",
+    "Document title",
+    "Document URL",
+    "Document role",
+    "Document variant",
+    "Geography ISO",
+    "Category",
+    "Sectors",
+    "Instruments",
+    "Frameworks",
+    "Responses",
+    "Natural Hazards",
+    "Document Type",
+    "Language",
+    "Keywords",
+    "Geography",
+]
 
 
 def _innerproduct_threshold_to_lucene_threshold(ip_thresh: float) -> float:
@@ -898,3 +934,139 @@ def create_search_response_document(
         document_passage_matches=[],
         document_postfix=None,
     )
+
+
+def _get_extra_csv_info(
+    db: Session,
+    families: Sequence[SearchResponseFamily],
+    browse_info_needed: bool,
+) -> Mapping[str, Any]:
+    all_family_slugs = [f.family_slug for f in families]
+    all_document_slugs = [d.document_slug for f in families for d in f.family_documents]
+
+    slug_and_family_metadata = (
+        db.query(Slug, FamilyMetadata)
+        .filter(Slug.name.in_(all_family_slugs))
+        .join(FamilyMetadata, FamilyMetadata.family_import_id == Slug.family_import_id)
+        .all()
+    )
+    slug_and_family_document_language = (
+        db.query(Slug, Language)
+        .filter(Slug.name.in_(all_document_slugs))
+        .join(FamilyDocument, FamilyDocument.import_id == Slug.family_document_import_id)
+        .join(PhysicalDocument, PhysicalDocument.id == FamilyDocument.physical_document_id)
+        .join(PhysicalDocumentLanguage, PhysicalDocumentLanguage.document_id == PhysicalDocument.id)
+        .join(Language, Language.id == PhysicalDocumentLanguage.language_id)
+        .all()
+    )
+    # For now there is max one collection per family
+    slug_and_collection = (
+        db.query(Slug, Collection)
+        .filter(Slug.name.in_(all_family_slugs))
+        .join(CollectionFamily, CollectionFamily.family_import_id == Slug.family_import_id)
+        .join(Collection, Collection.import_id == CollectionFamily.collection_import_id)
+        .all()
+    )
+    extra_csv_info = {
+        "metadata": {
+            slug.name: meta.value for (slug, meta) in slug_and_family_metadata
+        },
+        "language": {
+            slug.name: lang.language_name
+            for (slug, lang) in slug_and_family_document_language
+        },
+        "collection": {
+            slug.name: collection for (slug, collection) in slug_and_collection
+        },
+    }
+
+    if browse_info_needed:
+        family_documents = (
+
+        )
+
+    return extra_csv_info
+
+
+def process_result_into_csv(db: Session, search_response: SearchResponse, browse: bool) -> str:
+    csv_result_io = StringIO("")
+    writer = csv.DictWriter(
+        csv_result_io,
+        fieldnames=_CSV_SEARCH_RESPONSE_COLUMNS,
+    )
+    writer.writeheader()
+
+    extra_info_query = _get_extra_csv_info(db, search_response.families, browse)
+    url_base = f"{PUBLIC_APP_URL}/documents"
+    for family in search_response.families:
+        _LOGGER.info(f"Family: {family}")
+        family_metadata = extra_info_query["metadata"].get(family.family_slug)
+        if family_metadata is None:
+            _LOGGER.error(f"Failed to find metadata for '{family.family_slug}'")
+
+        sector_metadata = ";".join(family_metadata.get("sector", []))
+        instrument_metadata = ";".join(family_metadata.get("instrument", []))
+        framework_metadata = ";".join(family_metadata.get("framework", []))
+        response_metadata = ";".join(family_metadata.get("topic", []))
+        hazard_metadata = ";".join(family_metadata.get("hazard", []))
+        keyword_metadata = ";".join(family_metadata.get("keyword", []))
+
+        collection_name = ""
+        collection_summary = ""
+        collection = extra_info_query["collection"].get(family.family_slug)
+        if collection is not None:
+            collection_name = collection.title
+            collection_summary = collection.description
+
+        if family.family_documents:
+            for document in family.family_documents:
+                _LOGGER.info(f"Document: {document}")
+                document_language = extra_info_query["language"].get(document.document_slug)
+                if document_language is None:
+                    _LOGGER.error(f"Failed to find language for '{document.document_slug}'")
+                row = {
+                    "Collection Name": collection_name,
+                    "Collection Summary": collection_summary,
+                    "Family Name": family.family_name,
+                    "Family Summary": family.family_description,
+                    "Family Date": family.family_date,
+                    "Family URL": f"{url_base}/{family.family_slug}",
+                    "Document Title": document.document_title,
+                    "Document URL": f"{url_base}/{document.document_slug}",
+                    "Document type": document.document_type,
+                    "Geography ISO": family.family_geography,
+                    "Category": family.family_category,
+                    "Sectors": sector_metadata,
+                    "Instruments": instrument_metadata,
+                    "Frameworks": framework_metadata,
+                    "Responses": response_metadata,
+                    "Natural Hazards": hazard_metadata,
+                    "Keywords": keyword_metadata,
+                    "Language": document_language or "",
+                }
+                writer.writerow(row)
+        else:
+            row = {
+                "Collection Name": collection_name,
+                "Collection Summary": collection_summary,
+                "Family Name": family.family_name,
+                "Family Summary": family.family_description,
+                "Family Date": family.family_date,
+                "Family URL": f"{url_base}/{family.family_slug}",
+                "Document Title": document.document_title,
+                "Document URL": f"{url_base}/{document.document_slug}",
+                "Document type": document.document_type,
+                "Geography ISO": family.family_geography,
+                "Category": family.family_category,
+                "Sectors": sector_metadata,
+                "Instruments": instrument_metadata,
+                "Frameworks": framework_metadata,
+                "Responses": response_metadata,
+                "Natural Hazards": hazard_metadata,
+                "Keywords": keyword_metadata,
+                "Language": document_language or "",
+            }
+            writer.writerow(row)
+
+    csv_result_io.seek(0)
+    return csv_result_io.read()

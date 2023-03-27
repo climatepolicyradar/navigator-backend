@@ -7,9 +7,10 @@ for the type of document search being performed.
 """
 import json
 import logging
-from typing import Mapping, Sequence, Union
+from http.client import NOT_ACCEPTABLE
+from typing import Annotated, Mapping, Optional, Sequence, Union
 
-from fastapi import APIRouter, Request, BackgroundTasks, Depends
+from fastapi import APIRouter, BackgroundTasks, Depends, Header, HTTPException, Request
 from sqlalchemy.orm import Session
 
 from app.api.api_v1.schemas.search import (
@@ -27,6 +28,7 @@ from app.core.search import (
     OpenSearchConnection,
     OpenSearchConfig,
     OpenSearchQueryConfig,
+    process_result_into_csv,
 )
 from app.db.crud.deprecated_document import get_postfix_map
 from app.db.crud.document import DocumentExtraCache
@@ -53,6 +55,10 @@ def _map_new_category_to_old(supplied_category: str) -> str:
     return supplied_category
 
 
+from fastapi.responses import StreamingResponse
+from io import BytesIO
+
+
 @search_router.post("/searches")
 def search_documents(
     request: Request,
@@ -60,7 +66,8 @@ def search_documents(
     background_tasks: BackgroundTasks,
     db=Depends(get_db),
     group_documents: bool = False,
-) -> Union[SearchResponse, SearchResultsResponse]:
+    # accept: Annotated[Union[str, None], Header()] = None,
+):  # -> Union[SearchResponse, SearchResultsResponse, StreamingResponse]:
     """Search for documents matching the search criteria."""
     # FIXME: The returned Union type should have `SearchResultsResponse` removed when
     #        the frontend supports grouping by family. We will need to tidy up & remove
@@ -75,18 +82,34 @@ def search_documents(
         },
     )
 
+    # Could not seem to get FastAPI header params working as per docs
+    accept = request.headers.get("Accept")
+
     if search_body.keyword_filters is not None:
         search_body.keyword_filters = process_search_keyword_filters(
             db,
             search_body.keyword_filters,
         )
 
+    is_browse_request = not search_body.query_string
+
     if group_documents:
-        if not search_body.query_string:
+        if is_browse_request:
             # Service browse requests from RDS
-            return browse_rds_families(
+            search_response = browse_rds_families(
                 db=db,
                 req=_get_browse_args_from_search_request_body(search_body),
+            )
+        else:
+            search_response = jit_query_families_wrapper(
+                _OPENSEARCH_CONNECTION,
+                background_tasks=background_tasks,
+                search_request_body=search_body,
+                opensearch_internal_config=_OPENSEARCH_INDEX_CONFIG,
+                document_extra_info=_DOCUMENT_EXTRA_INFO_CACHE.get_document_extra_info(
+                    db
+                ),
+                preference="default_search_preference",
             )
 
         if search_body.keyword_filters is not None:
@@ -104,8 +127,33 @@ def search_documents(
             document_extra_info=_DOCUMENT_EXTRA_INFO_CACHE.get_document_extra_info(db),
             preference="default_search_preference",
         )
+
+        # # if accept == "text/csv":
+        # #     content_str = process_result_into_csv(
+        # #         db,
+        # #         search_response,
+        # #         is_browse_request,
+        # #     )
+        # #     _LOGGER.info(f"CSV: {content_str}")
+        # #     return StreamingResponse(
+        # #         content=BytesIO(content_str.encode("utf-8")),
+        # #         headers={
+        # #             "Content-Type": "text/csv",
+        # #             "Content-Disposition": "attachment; filename=results.csv".format(
+        # #                 file_name="results.csv"
+        # #             ),
+        # #         },
+        # #     )
+
+        # return search_response
     else:
-        if not search_body.query_string:
+        if accept == "text/csv":
+            raise HTTPException(
+                status_code=NOT_ACCEPTABLE,
+                detail=f"Requested type '{accept}' cannot be produced by this endpoint",
+            )
+
+        if is_browse_request:
             # Service browse requests from RDS
             return browse_rds(
                 db=db,
