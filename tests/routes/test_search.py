@@ -1217,7 +1217,7 @@ def test_browse_order_by_date(
                 new_dt = datetime.fromisoformat(e["family_date"]).isoformat()
         else:
             if e["document_date"]:
-                new_dt = datetime.fromisoformat(e["document_date"]).isoformat()
+                new_dt = datetime.strptime(e["document_date"], "%d/%m/%Y").isoformat()
         if dt is not None and new_dt is not None:
             if order == SortOrder.DESCENDING:
                 assert new_dt <= dt

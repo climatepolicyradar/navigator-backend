@@ -154,7 +154,7 @@ def to_search_resp_doc(row: dict) -> SearchDocumentResponse:
         document_slug=row["slug"],
         document_name=row["name"],
         document_description=row["description"],
-        document_date=row["publication_ts"].isoformat(),
+        document_date=row["publication_ts"].strftime("%d/%m/%Y"),
         document_category=row["category"],
         document_geography=row["country_code"],
         # ↓ Stuff we don't currently use for search ↓
