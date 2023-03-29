@@ -807,7 +807,7 @@ def test_result_order_date(
         if group_documents:
             new_dt = datetime.fromisoformat(e["family_date"])
         else:
-            new_dt = datetime.fromisoformat(e["document_date"])
+            new_dt = datetime.strptime(e["document_date"], "%d/%m/%Y")
         if dt is not None:
             if order == SortOrder.DESCENDING:
                 assert new_dt <= dt
