@@ -754,32 +754,33 @@ def process_search_response_body_families(
 
 def create_search_response_family_document(
     opensearch_match: OpenSearchResponseMatchBase,
-    document_family_match: Mapping[str, Mapping[str, str]],
+    document_family_info: Mapping[str, Mapping[str, str]],
 ) -> SearchResponseFamilyDocument:
-    family_info = document_family_match[opensearch_match.document_id]
+    document_info = document_family_info[opensearch_match.document_id]
     return SearchResponseFamilyDocument(
-        document_title=family_info["title"],
+        document_title=opensearch_match.document_name,
         document_type=opensearch_match.document_type,
         document_source_url=opensearch_match.document_source_url,
         document_url=to_cdn_url(opensearch_match.document_cdn_object),
         document_content_type=opensearch_match.document_content_type,
-        document_slug=family_info["slug"],
+        document_slug=document_info["slug"],
         document_passage_matches=[],
     )
 
 
 def create_search_response_family(
     opensearch_match: OpenSearchResponseMatchBase,
-    document_family_match: Mapping[str, Mapping[str, str]],
+    document_family_info: Mapping[str, Mapping[str, str]],
 ) -> SearchResponseFamily:
+    document_info = document_family_info[opensearch_match.document_id]
+    family_date_str = opensearch_match.document_date
+    family_date = datetime.strptime(family_date_str, "%d/%m/%Y").isoformat()
     return SearchResponseFamily(
-        family_slug=document_family_match[opensearch_match.document_id]["family_slug"],
-        family_name=opensearch_match.document_name,
-        family_description=opensearch_match.document_description,
-        family_category=opensearch_match.document_category,
-        family_date=datetime.strptime(
-            opensearch_match.document_date, "%d/%m/%Y"
-        ).isoformat(),
+        family_slug=document_info["family_slug"],
+        family_name=document_info["family_title"],
+        family_description=document_info["family_description"],
+        family_category=document_info["family_category"],
+        family_date=family_date,
         family_source=opensearch_match.document_source,
         family_geography=opensearch_match.document_geography,
         family_metadata={},  # FIXME: complete?

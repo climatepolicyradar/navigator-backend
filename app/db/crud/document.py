@@ -5,7 +5,7 @@ old functions (non DFC) are moved to the deprecated_documents.py file.
 """
 import logging
 from datetime import datetime, timedelta
-from typing import Mapping, Optional, cast
+from typing import Mapping, Optional, Tuple, cast
 
 from sqlalchemy.orm import Session
 
@@ -283,8 +283,10 @@ class DocumentExtraCache:
     def _query_document_extra_info(
         self, db: Session
     ) -> Mapping[str, Mapping[str, str]]:
-        document_data = db.query(FamilyDocument, Family).join(
-            Family, FamilyDocument.family_import_id == Family.import_id
+        document_data: list[Tuple[FamilyDocument, Family]] = (
+            db.query(FamilyDocument, Family)
+            .join(Family, FamilyDocument.family_import_id == Family.import_id)
+            .all()
         )
         return {
             family_document.import_id: {
@@ -292,9 +294,9 @@ class DocumentExtraCache:
                 "title": family_document.physical_document.title,
                 "family_slug": family.slugs[-1].name,
                 "family_import_id": family.import_id,
+                "family_title": family.title,
+                "family_description": family.description,
+                "family_category": str(family.family_category),
             }
-            for (
-                family_document,
-                family,
-            ) in document_data
+            for (family_document, family) in document_data
         }
