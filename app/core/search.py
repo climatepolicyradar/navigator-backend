@@ -885,9 +885,7 @@ def create_search_response_document(
         document_geography=opensearch_match.document_geography,
         document_sectors=opensearch_match.document_sectors,
         document_source=opensearch_match.document_source,
-        document_date=datetime.strptime(
-            opensearch_match.document_date, "%d/%m/%Y"
-        ).isoformat(),
+        document_date=opensearch_match.document_date,
         document_id=opensearch_match.document_id,
         document_type=opensearch_match.document_type,
         document_category=opensearch_match.document_category,
