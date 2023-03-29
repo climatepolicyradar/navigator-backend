@@ -656,6 +656,7 @@ def process_search_response_body_families(
     search_json_response = opensearch_response_body.raw_response
     search_response_document = None
     search_response_family = None
+    unknown_document_ids = set()
 
     # Aggregate into families using OrderedDict to preserve the response relevance order
     families: OrderedDict[str, SearchResponseFamily] = OrderedDict()
@@ -668,6 +669,7 @@ def process_search_response_body_families(
             document_match_source = document_match["_source"]
             # Skip documents from Opensearch that do not exist in RDS
             if document_match_source["document_id"] not in document_extra_info:
+                unknown_document_ids.add(document_match_source["document_id"])
                 continue
 
             if OPENSEARCH_INDEX_NAME_KEY in document_match_source:
@@ -707,7 +709,8 @@ def process_search_response_body_families(
                     response_passage
                 )
             else:
-                raise RuntimeError("Unexpected data in match results")
+                _LOGGER.error("Unexpected data in match results")
+                continue
 
             family_id = document_extra_info[doc_match.document_id]["family_import_id"]
             search_response_family = families.get(family_id)
@@ -733,6 +736,12 @@ def process_search_response_body_families(
 
         search_response_document = None
         search_response_family = None
+
+    if unknown_document_ids:
+        _LOGGER.error(
+            "Unknown document IDs were encountered in Opensearch response",
+            extra={"props": {"unknown document IDs": list(unknown_document_ids)}},
+        )
 
     search_response = SearchResponse(
         hits=len(families),
