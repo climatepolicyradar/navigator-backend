@@ -257,17 +257,17 @@ class OpenSearchConnection:
             return ",".join(indices_include)
 
         if IncludedResults.PDFS_TRANSLATED in search_request.include_results:
-            indices_include.extend(
+            indices_include.append(
                 f"{self._opensearch_config.index_prefix}_pdfs_translated"
             )
 
         if IncludedResults.HTMLS_TRANSLATED in search_request.include_results:
-            indices_include.extend(
+            indices_include.append(
                 f"{self._opensearch_config.index_prefix}_htmls_translated"
             )
 
         if IncludedResults.HTMLS_NON_TRANSLATED in search_request.include_results:
-            indices_include.extend(
+            indices_include.append(
                 f"{self._opensearch_config.index_prefix}_htmls_non_translated"
             )
 
