@@ -164,6 +164,16 @@ def _populate_search_db_families(db: Session) -> None:
                     )
 
 
+def _map_old_category_to_new(supplied_category: str) -> str:
+    """Temporarily translate new category strings into old values when searching"""
+    # TODO: remove after opensearch data & frontend upgrades
+    if supplied_category.lower() == "law":
+        return "Legislative"
+    if supplied_category.lower() == "policy":
+        return "Executive"
+    return supplied_category
+
+
 def _create_family_structures(
     db: Session,
     doc: dict[str, Any],
@@ -195,7 +205,9 @@ def _create_family_structures(
                 .id
             ),
             family_status=FamilyStatus.PUBLISHED,
-            family_category=FamilyCategory(doc_details["document_category"]),
+            family_category=FamilyCategory(
+                _map_old_category_to_new(doc_details["document_category"])
+            ),
         )
         family_slug = Slug(
             name=family_id,
@@ -710,10 +722,10 @@ def test_multiple_filters(
     response = client.post(
         search_endpoint,
         json={
-            "query_string": "disaster",
+            "query_string": "greenhouse",
             "exact_match": False,
             "keyword_filters": {
-                "countries": ["kenya"],
+                "countries": ["south-korea"],
                 "sources": ["CCLW"],
                 "categories": categories,
             },
@@ -726,17 +738,30 @@ def test_multiple_filters(
     query_body = query_spy.mock_calls[0].args[0]
 
     assert {
-        "terms": {_FILTER_FIELD_MAP[FilterField("countries")]: ["KEN"]}
+        "terms": {_FILTER_FIELD_MAP[FilterField("countries")]: ["KOR"]}
     } in query_body["query"]["bool"]["filter"]
     assert {
         "terms": {_FILTER_FIELD_MAP[FilterField("sources")]: ["CCLW"]}
     } in query_body["query"]["bool"]["filter"]
     assert {
-        "terms": {_FILTER_FIELD_MAP[FilterField("categories")]: ["Legislative"]}
+        "terms": {_FILTER_FIELD_MAP[FilterField("categories")]: ["Law"]}
     } in query_body["query"]["bool"]["filter"]
     assert {
         "range": {"document_date": {"gte": "01/01/1900", "lte": "31/12/2020"}}
     } in query_body["query"]["bool"]["filter"]
+
+    response_content = response.json()
+    assert response_content["hits"] > 0
+    if group_documents:
+        assert len(response.json()["families"]) > 0
+        families = response_content["families"]
+        for family in families:
+            assert family["family_category"] == "Legislative"
+    else:
+        assert len(response.json()["documents"]) > 0
+        documents = response_content["documents"]
+        for document in documents:
+            assert document["document_category"] == "Law"
 
 
 @pytest.mark.search
@@ -1310,19 +1335,7 @@ def test_browse_filters(group_documents, client, test_db):
     )
     assert response.status_code == 200
 
-    # FIXME: Check that filters are applied
-    # assert query_spy.call_count == 1
-    # query_body = query_spy.mock_calls[0].args[0]
-
-    # assert {
-    #     "terms": {_FILTER_FIELD_MAP[FilterField("countries")]: ["KEN"]}
-    # } in query_body["query"]["bool"]["filter"]
-    # assert {
-    #     "terms": {_FILTER_FIELD_MAP[FilterField("sources")]: ["CCLW"]}
-    # } in query_body["query"]["bool"]["filter"]
-    # assert {
-    #     "range": {"document_date": {"gte": "01/01/1900", "lte": "31/12/2020"}}
-    # } in query_body["query"]["bool"]["filter"]
+    # FIXME: Check that filters are applied properly
 
     response_body = response.json()
     if group_documents:
@@ -1358,11 +1371,18 @@ def test_browse_filter_category(
         },
     )
     assert response.status_code == 200
-    assert response.json()["hits"] > 0
+    response_content = response.json()
+    assert response_content["hits"] > 0
     if group_documents:
         assert len(response.json()["families"]) > 0
+        families = response_content["families"]
+        for family in families:
+            assert family["family_category"] == "Legislative"
     else:
         assert len(response.json()["documents"]) > 0
+        documents = response_content["documents"]
+        for document in documents:
+            assert document["document_category"] == "Law"
 
 
 ##########################################
