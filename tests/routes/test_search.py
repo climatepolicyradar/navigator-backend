@@ -1356,12 +1356,12 @@ def test_browse_filter_category(
     if group_documents:
         _populate_search_db_families(test_db)
         search_endpoint = f"{SEARCH_ENDPOINT}?group_documents=True"
-        keyword_filters = {"categories": ["Legislative"]}
+        keyword_filters = {"categories": ["Executive"]}
     else:
         populate_geography(test_db)
         create_4_documents(test_db)
         search_endpoint = SEARCH_ENDPOINT
-        keyword_filters = {"categories": ["Law"]}
+        keyword_filters = {"categories": ["Policy"]}
 
     response = client.post(
         search_endpoint,
@@ -1377,12 +1377,12 @@ def test_browse_filter_category(
         assert len(response.json()["families"]) > 0
         families = response_content["families"]
         for family in families:
-            assert family["family_category"] == "Legislative"
+            assert family["family_category"] == "Executive"
     else:
         assert len(response.json()["documents"]) > 0
         documents = response_content["documents"]
         for document in documents:
-            assert document["document_category"] == "Law"
+            assert document["document_category"] == "Policy"
 
 
 ##########################################
