@@ -4,7 +4,11 @@ from datetime import datetime
 from logging import getLogger
 from time import perf_counter
 from typing import Optional, Sequence, cast
+
 from pydantic import BaseModel
+from sqlalchemy import extract
+from sqlalchemy.orm import Session
+
 from app.db.models.deprecated.document import (
     Category,
     Document,
@@ -25,8 +29,6 @@ from app.db.models.law_policy.family import (
     FamilyStatus,
 )
 from app.db.models.app import Organisation
-from sqlalchemy import extract
-from sqlalchemy.orm import Session
 
 _LOGGER = getLogger(__name__)
 

@@ -43,22 +43,14 @@ _DOCUMENT_EXTRA_INFO_CACHE = DocumentExtraCache()
 search_router = APIRouter()
 
 
-def _map_old_category_to_new(supplied_category: str) -> str:
-    """Temporarily translate old category strings into new values when searching"""
-    if supplied_category.lower() == "law":
-        return "Legislative"
-    if supplied_category.lower() == "policy":
-        return "Executive"
-    return supplied_category
-
-
-def _map_new_category_to_old(sdr: SearchDocumentResponse) -> SearchDocumentResponse:
+def _map_new_category_to_old(supplied_category: str) -> str:
     """Temporarily translate new category strings into old values when searching"""
-    if sdr.document_category.lower() == "legislative":
-        sdr.document_category = "Law"
-    if sdr.document_category.lower() == "executive":
-        sdr.document_category = "Policy"
-    return sdr
+    # TODO: remove after opensearch data & frontend upgrades
+    if supplied_category.lower() == "legislative":
+        return "Law"
+    if supplied_category.lower() == "executive":
+        return "Policy"
+    return supplied_category
 
 
 @search_router.post("/searches")
@@ -97,6 +89,13 @@ def search_documents(
                 req=_get_browse_args_from_search_request_body(search_body),
             )
 
+        if search_body.keyword_filters is not None:
+            if categories := search_body.keyword_filters.get(FilterField.CATEGORY):
+                fixed_categories = [_map_new_category_to_old(c) for c in categories]
+                keyword_filters = dict(search_body.keyword_filters)
+                keyword_filters[FilterField.CATEGORY] = fixed_categories
+                search_body.keyword_filters = keyword_filters
+
         return jit_query_families_wrapper(
             _OPENSEARCH_CONNECTION,
             background_tasks=background_tasks,
@@ -112,14 +111,6 @@ def search_documents(
                 db=db,
                 req=_get_browse_args_from_search_request_body(search_body),
             )
-
-        # For searches, map old categories to new category names in opensearch
-        if search_body.keyword_filters is not None:
-            if categories := search_body.keyword_filters.get(FilterField.CATEGORY):
-                mapped_categories = [_map_old_category_to_new(c) for c in categories]
-                keyword_filters = dict(search_body.keyword_filters)
-                keyword_filters[FilterField.CATEGORY] = mapped_categories
-                search_body.keyword_filters = keyword_filters
 
         doc_results: SearchResultsResponse = jit_query_wrapper(
             _OPENSEARCH_CONNECTION,
@@ -137,7 +128,7 @@ def search_documents(
             documents=[
                 SearchDocumentResponse(
                     **{
-                        **_map_new_category_to_old(doc).dict(),
+                        **doc.dict(),
                         **{"document_postfix": postfix_map[doc.document_id]},
                     }
                 )
