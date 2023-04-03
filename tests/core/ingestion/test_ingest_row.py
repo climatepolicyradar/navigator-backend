@@ -23,13 +23,15 @@ from tests.core.ingestion.helpers import (
     SLUG_DOCUMENT_NAME,
     SLUG_FAMILY_NAME,
     get_doc_ingest_row_data,
-    init_for_ingest,
+    init_doc_for_migration,
+    populate_for_ingest,
 )
 
 
 def test_ingest_row__skips_missing_documents(test_db):
     context = IngestContext(org_id=1, results=[])
     row = DocumentIngestRow.from_row(1, get_doc_ingest_row_data(0))
+    populate_for_ingest(test_db)
     result = ingest_document_row(test_db, context, row)
     assert len(result.keys()) == 1
     assert result["existing_document"] is False
@@ -37,7 +39,9 @@ def test_ingest_row__skips_missing_documents(test_db):
 
 def test_ingest_row__migrates_existing_documents(test_db: Session):
     context = IngestContext(org_id=1, results=[])
-    init_for_ingest(test_db)
+
+    populate_for_ingest(test_db)
+    init_doc_for_migration(test_db)
 
     row = DocumentIngestRow.from_row(1, get_doc_ingest_row_data(0))
     result = ingest_document_row(test_db, context, row)

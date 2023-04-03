@@ -126,16 +126,7 @@ def get_event_ingest_row_data(
     return _get_csv_row_data(num, contents)
 
 
-def init_for_ingest(test_db: Session):
-    populate_taxonomy(test_db)
-    populate_geography(test_db)
-    populate_source(test_db)
-    populate_category(test_db)
-    populate_document_type(test_db)
-    populate_event_type(test_db)
-    populate_language(test_db)
-    populate_document_role(test_db)
-    populate_document_variant(test_db)
+def init_doc_for_migration(test_db: Session):
     test_db.flush()
     test_db.add(
         Document(
@@ -152,6 +143,18 @@ def init_for_ingest(test_db: Session):
         )
     )
     test_db.flush()
+
+
+def populate_for_ingest(test_db):
+    populate_taxonomy(test_db)
+    populate_geography(test_db)
+    populate_source(test_db)
+    populate_category(test_db)
+    populate_document_type(test_db)
+    populate_event_type(test_db)
+    populate_language(test_db)
+    populate_document_role(test_db)
+    populate_document_variant(test_db)
 
 
 def add_a_slug_for_family1_and_flush(db):

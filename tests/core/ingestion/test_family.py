@@ -16,12 +16,14 @@ from tests.core.ingestion.helpers import (
     SLUG_FAMILY_NAME,
     add_a_slug_for_family1_and_flush,
     get_doc_ingest_row_data,
-    init_for_ingest,
+    init_doc_for_migration,
+    populate_for_ingest,
 )
 
 
 def test_family_from_row(test_db: Session):
-    init_for_ingest(test_db)
+    populate_for_ingest(test_db)
+    init_doc_for_migration(test_db)
     row = DocumentIngestRow.from_row(1, get_doc_ingest_row_data(0))
     result = {}
 
@@ -59,7 +61,8 @@ def test_family_from_row(test_db: Session):
 
 
 def test_family_from_row__bad_family_name(test_db: Session):
-    init_for_ingest(test_db)
+    populate_for_ingest(test_db)
+    init_doc_for_migration(test_db)
     result = {}
     row = DocumentIngestRow.from_row(1, get_doc_ingest_row_data(0))
     # Pre-Add the family

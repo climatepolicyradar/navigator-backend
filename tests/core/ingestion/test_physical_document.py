@@ -9,12 +9,14 @@ from tests.core.ingestion.helpers import (
     DOCUMENT_IMPORT_ID,
     DOCUMENT_TITLE,
     get_doc_ingest_row_data,
-    init_for_ingest,
+    init_doc_for_migration,
+    populate_for_ingest,
 )
 
 
 def test_physical_document_from_row(test_db: Session):
-    init_for_ingest(test_db)
+    populate_for_ingest(test_db)
+    init_doc_for_migration(test_db)
     row = DocumentIngestRow.from_row(1, get_doc_ingest_row_data(0))
     row.language = "English"
     result = {}

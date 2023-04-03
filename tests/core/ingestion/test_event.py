@@ -14,12 +14,14 @@ from tests.core.ingestion.helpers import (
     FAMILY_IMPORT_ID,
     get_doc_ingest_row_data,
     get_event_ingest_row_data,
-    init_for_ingest,
+    init_doc_for_migration,
+    populate_for_ingest,
 )
 
 
 def test_family_event_from_row(test_db: Session):
-    init_for_ingest(test_db)
+    populate_for_ingest(test_db)
+    init_doc_for_migration(test_db)
     doc_row = DocumentIngestRow.from_row(1, get_doc_ingest_row_data(0))
     event_row = EventIngestRow.from_row(1, get_event_ingest_row_data(0))
 
