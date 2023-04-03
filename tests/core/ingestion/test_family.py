@@ -1,6 +1,6 @@
 import pytest
 from sqlalchemy.orm import Session
-from app.core.ingestion.family import family_from_row
+from app.core.ingestion.family import migrate_family_from_row
 from app.core.ingestion.ingest_row import DocumentIngestRow
 from app.db.models.deprecated import Document
 from app.db.models.law_policy.family import (
@@ -33,7 +33,7 @@ def test_family_from_row(test_db: Session):
         .one_or_none()
     )
 
-    family = family_from_row(test_db, row, doc, org_id=1, result=result)
+    family = migrate_family_from_row(test_db, row, doc, org_id=1, result=result)
 
     actual_keys = set(result.keys())
     expected_keys = set(
@@ -91,7 +91,7 @@ def test_family_from_row__bad_family_name(test_db: Session):
     )
 
     with pytest.raises(ValueError) as e_info:
-        family_from_row(test_db, row, doc, 1, result)
+        migrate_family_from_row(test_db, row, doc, 1, result)
 
     assert (
         str(e_info.value)

@@ -8,7 +8,7 @@ from app.db.models.law_policy import Collection
 from app.db.models.law_policy.collection import CollectionFamily, CollectionOrganisation
 
 
-def collection_from_row(
+def migrate_collection_from_row(
     db: Session,
     row: DocumentIngestRow,
     org_id: int,

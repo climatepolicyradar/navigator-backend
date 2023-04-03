@@ -4,7 +4,7 @@ import pytest  # noqa: F401
 from sqlalchemy.orm import Session
 
 from app.core.ingestion.event import family_event_from_row
-from app.core.ingestion.family import family_from_row
+from app.core.ingestion.family import migrate_family_from_row
 from app.core.ingestion.ingest_row import DocumentIngestRow, EventIngestRow
 from app.db.models.deprecated import Document
 from app.db.models.law_policy.family import Family, FamilyEvent
@@ -32,7 +32,7 @@ def test_family_event_from_row(test_db: Session):
     )
 
     result = {}
-    family = family_from_row(test_db, doc_row, doc, org_id=1, result=result)
+    family = migrate_family_from_row(test_db, doc_row, doc, org_id=1, result=result)
     event = family_event_from_row(test_db, event_row, result=result)
 
     assert "family_events" in result

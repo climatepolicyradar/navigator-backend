@@ -2,9 +2,9 @@ import logging
 from typing import Any, Callable, TypeVar, cast
 
 from sqlalchemy.orm import Session
-from app.core.ingestion.collection import collection_from_row
+from app.core.ingestion.collection import migrate_collection_from_row
 from app.core.ingestion.event import family_event_from_row
-from app.core.ingestion.family import family_from_row
+from app.core.ingestion.family import migrate_family_from_row
 from app.core.ingestion.ingest_row import (
     BaseIngestRow,
     DocumentIngestRow,
@@ -32,7 +32,7 @@ def ingest_document_row(
     Create the constituent elements in the database that represent this row.
 
     :param [Session] db: the connection to the database.
-    :param [DocuemntIngestRow] row: the IngestRow object of the current CSV row
+    :param [DocumentIngestRow] row: the IngestRow object of the current CSV row
     :returns [dict[str, Any]]: a result dictionary describing what was created
     """
     result = {}
@@ -59,7 +59,7 @@ def ingest_document_row(
     _LOGGER.info("Existing document.", extra={"props": {"import_id": import_id}})
     result["existing_document"] = True
 
-    family = family_from_row(
+    family = migrate_family_from_row(
         db,
         row,
         existing_document,
@@ -67,7 +67,7 @@ def ingest_document_row(
         result,
     )
 
-    collection_from_row(
+    migrate_collection_from_row(
         db,
         row,
         context.org_id,

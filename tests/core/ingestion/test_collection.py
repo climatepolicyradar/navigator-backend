@@ -1,6 +1,6 @@
 from typing import cast
 from sqlalchemy.orm import Session
-from app.core.ingestion.collection import collection_from_row
+from app.core.ingestion.collection import migrate_collection_from_row
 from app.core.ingestion.ingest_row import DocumentIngestRow
 from app.core.ingestion.utils import get_or_create
 from app.db.models.law_policy.collection import (
@@ -39,7 +39,7 @@ def test_collection_from_row(test_db: Session):
     )
     add_a_slug_for_family1_and_flush(test_db)
 
-    collection = collection_from_row(
+    collection = migrate_collection_from_row(
         test_db, row, 1, cast(str, family.import_id), result
     )
     assert collection

@@ -1,11 +1,30 @@
 from dataclasses import dataclass
 import enum
-from typing import TypeVar
+from typing import Any, Callable, Optional, TypeVar, cast
 from app.db.session import AnyModel
 from sqlalchemy.orm import Session
 
 
 _DbModel = TypeVar("_DbModel", bound=AnyModel)
+
+
+def create(db: Session, model: _DbModel, **kwargs) -> _DbModel:
+    """
+    Creates a row represented by model, and described by kwargs.
+
+    :param [Session] db: connection to the database.
+    :param [_DbModel] model: the model (table) you are querying.
+    :param kwargs: a list of attributes to describe the row you are interested in.
+        - if kwargs contains an `extra` key then this will be used during
+        creation.
+        - if kwargs contains an `after_create` key then the value should
+        be a callback function that is called after an object is created.
+
+    :return [_DbModel]: The object that was either created or retrieved, or None
+    """
+    extra, after_create = _vars_from_kwargs(kwargs)
+
+    return _create_instance(db, extra, after_create, model, **kwargs)
 
 
 def get_or_create(db: Session, model: _DbModel, **kwargs) -> _DbModel:
@@ -22,21 +41,23 @@ def get_or_create(db: Session, model: _DbModel, **kwargs) -> _DbModel:
 
     :return [_DbModel]: The object that was either created or retrieved, or None
     """
-    # Remove any extra kwargs before we do the search
-    extra = {}
-    after_create = None
-    if "extra" in kwargs.keys():
-        extra = kwargs["extra"]
-        del kwargs["extra"]
-    if "after_create" in kwargs.keys():
-        after_create = kwargs["after_create"]
-        del kwargs["after_create"]
+    extra, after_create = _vars_from_kwargs(kwargs)
 
     instance = db.query(model).filter_by(**kwargs).one_or_none()
 
     if instance is not None:
         return instance
 
+    return _create_instance(db, extra, after_create, model, **kwargs)
+
+
+def _create_instance(
+    db: Session,
+    extra: dict,
+    after_create: Optional[Callable],
+    model: _DbModel,
+    **kwargs,
+):
     # Add the extra args in for creation
     for k, v in extra.items():
         kwargs[k] = v
@@ -46,6 +67,18 @@ def get_or_create(db: Session, model: _DbModel, **kwargs) -> _DbModel:
     if after_create:
         after_create(instance)
     return instance
+
+
+def _vars_from_kwargs(kwargs: dict[str, Any]) -> tuple[dict, Optional[Callable]]:
+    extra = {}
+    after_create = None
+    if "extra" in kwargs.keys():
+        extra = kwargs["extra"]
+        del kwargs["extra"]
+    if "after_create" in kwargs.keys():
+        after_create = kwargs["after_create"]
+        del kwargs["after_create"]
+    return cast(dict, extra), after_create
 
 
 def _sanitize(value: str) -> str:
