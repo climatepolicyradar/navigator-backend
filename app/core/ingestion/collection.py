@@ -2,13 +2,13 @@ from typing import Any, Optional
 
 from sqlalchemy.orm import Session
 from app.core.ingestion.ingest_row import DocumentIngestRow
-from app.core.ingestion.utils import get_or_create, to_dict
+from app.core.ingestion.utils import create, to_dict
 
 from app.db.models.law_policy import Collection
 from app.db.models.law_policy.collection import CollectionFamily, CollectionOrganisation
 
 
-def migrate_collection_from_row(
+def handle_collection_from_row(
     db: Session,
     row: DocumentIngestRow,
     org_id: int,
@@ -16,7 +16,10 @@ def migrate_collection_from_row(
     result: dict[str, Any],
 ) -> Optional[Collection]:
     """
-    Create the collection part of the schema from the row.
+    Creates or Updates the collection part of the schema from the row if needed.
+
+    NOTE: This determines the operation CREATE/UPDATE independently of the
+    operation being performed on the Family/FamilyDocument structures.
 
     :param [Session] db: connection to the database.
     :param [DocumentIngestRow] row: the row built from the CSV.
@@ -28,29 +31,37 @@ def migrate_collection_from_row(
     if not row.cpr_collection_id or row.cpr_collection_id == "n/a":
         return None
 
-    collection = get_or_create(
-        db,
-        Collection,
-        import_id=row.cpr_collection_id,
-        title=row.collection_name,
-        extra={"description": row.collection_summary},
-    )
+    existing_collection = db.query(Collection).get(row.cpr_collection_id).one_or_none()
+
+    if existing_collection is None:
+        collection = create(
+            db,
+            Collection,
+            import_id=row.cpr_collection_id,
+            title=row.collection_name,
+            extra={"description": row.collection_summary},
+        )
+
+        collection_organisation = create(
+            db,
+            CollectionOrganisation,
+            collection_import_id=collection.import_id,
+            organisation_id=org_id,
+        )
+
+        collection_family = create(
+            db,
+            CollectionFamily,
+            collection_import_id=collection.import_id,
+            family_import_id=family_import_id,
+        )
+        result["collection_organisation"] = to_dict(collection_organisation)
+        result["collection_family"] = to_dict(collection_family)
+    else:
+        collection = existing_collection
+        collection.title = row.collection_name
+        collection.description = row.collection_summary
+
     result["collection"] = to_dict(collection)
-
-    collection_organisation = get_or_create(
-        db,
-        CollectionOrganisation,
-        collection_import_id=collection.import_id,
-        organisation_id=org_id,
-    )
-    result["collection_organisation"] = to_dict(collection_organisation)
-
-    collection_family = get_or_create(
-        db,
-        CollectionFamily,
-        collection_import_id=collection.import_id,
-        family_import_id=family_import_id,
-    )
-    result["collection_family"] = to_dict(collection_family)
 
     return collection

@@ -2,20 +2,20 @@ import logging
 from typing import Any, Callable, TypeVar, cast
 
 from sqlalchemy.orm import Session
-from app.core.ingestion.collection import migrate_collection_from_row
+from app.core.ingestion.collection import handle_collection_from_row
 from app.core.ingestion.event import family_event_from_row
-from app.core.ingestion.family import migrate_family_from_row
+from app.core.ingestion.family import handle_family_from_row
 from app.core.ingestion.ingest_row import (
     BaseIngestRow,
     DocumentIngestRow,
     EventIngestRow,
 )
 from app.core.organisation import get_organisation_taxonomy
-from app.core.ingestion.utils import IngestContext
+from app.core.ingestion.utils import IngestContext, IngestOperation
 from app.core.ingestion.validator import validate_document_row
 from app.db.models.app.users import Organisation
 
-from app.db.models.deprecated import Document
+from app.db.models.law_policy.family import FamilyDocument
 
 _LOGGER = logging.getLogger(__name__)
 
@@ -23,6 +23,15 @@ _LOGGER = logging.getLogger(__name__)
 _RowType = TypeVar("_RowType", bound=BaseIngestRow)
 
 ProcessFunc = Callable[[IngestContext, _RowType], None]
+
+
+def _get_ingest_operation(has_new_document: bool) -> IngestOperation:
+    # TODO : Add logic for DELETE
+    if not has_new_document:
+        return IngestOperation.CREATE
+    if has_new_document:
+        return IngestOperation.UPDATE
+    raise TypeError("Cannot determine operation for row")
 
 
 def ingest_document_row(
@@ -37,37 +46,27 @@ def ingest_document_row(
     """
     result = {}
     import_id = row.cpr_document_id
+    existing_document = db.query(FamilyDocument).get(import_id).one_or_none()
 
-    # TODO: Make existing document optional to allow creating new events, new documents
-    #       created without an existing document should hit the pipeline as "new", any
-    #       others should (maybe) generate updates(?)
-    existing_document = (
-        db.query(Document).filter(Document.import_id == import_id).one_or_none()
+    # TODO: extend the function to return DELETE (pass in row)
+    op = _get_ingest_operation(existing_document is not None)
+
+    _LOGGER.info(
+        f"Ingest operation for row {row.row_number} is {op}.",
+        extra={
+            "props": {
+                "row_number": row.row_number,
+                "import_id": import_id,
+                "operation": op,
+            }
+        },
     )
-    if existing_document is None:
-        _LOGGER.info(
-            "Existing document is None.", extra={"props": {"import_id": import_id}}
-        )
-        # FIXME: Need to be able to ingest a row that is brand new and
-        # ready for the pipeline
+    result["operation"] = op
 
-        result["existing_document"] = False
-        # If there does not already exist a document with the given import_id,
-        # do not attempt to migrate
-        return result
-
-    _LOGGER.info("Existing document.", extra={"props": {"import_id": import_id}})
-    result["existing_document"] = True
-
-    family = migrate_family_from_row(
-        db,
-        row,
-        existing_document,
-        context.org_id,
-        result,
+    family = handle_family_from_row(
+        db, op, existing_document, row, context.org_id, result
     )
-
-    migrate_collection_from_row(
+    handle_collection_from_row(
         db,
         row,
         context.org_id,
@@ -76,7 +75,7 @@ def ingest_document_row(
     )
 
     _LOGGER.info(
-        "Created family and collection from row.",
+        f"Operation {op} complete for row {row.row_number}",
         extra={"props": {"result": str(result)}},
     )
 

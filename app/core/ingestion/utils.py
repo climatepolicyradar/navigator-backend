@@ -55,7 +55,7 @@ def _create_instance(
     db: Session,
     extra: dict,
     after_create: Optional[Callable],
-    model: _DbModel,
+    model: AnyModel,
     **kwargs,
 ):
     # Add the extra args in for creation
@@ -149,3 +149,12 @@ def get_result_counts(results: list[Result]) -> tuple[int, int, int]:
     fails = len([r for r in results if r.type == ResultType.ERROR])
     resolved = len([r for r in results if r.type == ResultType.RESOLVED])
     return rows, fails, resolved
+
+
+class IngestOperation(str, enum.Enum):
+    """Type of operation the Ingest is going to perform for a row,"""
+
+    # MIGRATE = "Migrate"
+    CREATE = "Create"
+    UPDATE = "Update"
+    # DELETE = "Delete" - TODO: Still to be implemented
