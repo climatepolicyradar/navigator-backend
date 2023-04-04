@@ -152,8 +152,8 @@ def get_result_counts(results: list[Result]) -> tuple[int, int, int]:
 
 
 def update_if_changed(updated: dict, updated_key: str, source: Any, dest: Any):
-    if dest != source:
-        dest = source
+    if getattr(dest, updated_key) != source:
+        setattr(dest, updated_key, source)
         updated[updated_key] = source
     return updated
 

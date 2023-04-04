@@ -110,11 +110,9 @@ def _operate_on_family(
         family = db.query(Family).get(existing_document.family_import_id)
         updated = {}
 
-        update_if_changed(updated, "title", row.family_name, family.title)
-        update_if_changed(
-            updated, "description", row.family_summary, family.description
-        )
-        update_if_changed(updated, "category", category, family.family_category)
+        update_if_changed(updated, "title", row.family_name, family)
+        update_if_changed(updated, "description", row.family_summary, family)
+        update_if_changed(updated, "family_category", category, family)
 
         if len(updated) > 0:
             db.add(family)
@@ -157,30 +155,37 @@ def _maybe_create_family_document(
             updated,
             "document_type",
             none_if_empty(row.document_type),
-            family_document.document_type,
+            family_document,
         )
         update_if_changed(
             updated,
             "document_role",
             none_if_empty(row.document_role),
-            family_document.document_role,
+            family_document,
         )
         update_if_changed(
             updated,
             "variant_name",
             none_if_empty(row.document_variant),
-            family_document.variant_name,
-        )
-        update_if_changed(
-            updated,
-            "physical_document_title",
-            row.document_title,
-            family_document.physical_document.title,
+            family_document,
         )
         if len(updated) > 0:
             db.add(family_document)
             db.flush()
             result["family_document"] = updated
+
+        # Now the physical document
+        updated = {}
+        update_if_changed(
+            updated,
+            "title",
+            row.document_title,
+            family_document.physical_document,
+        )
+        if len(updated) > 0:
+            db.add(family_document.physical_document)
+            db.flush()
+            result["physical_document"] = updated
 
         # Check if slug has changed
         if db.query(Slug).get(row.cpr_document_slug) is None:

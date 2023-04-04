@@ -61,11 +61,11 @@ def handle_collection_from_row(
     else:
         collection = existing_collection
         updated = {}
-        update_if_changed(updated, "title", row.collection_name, collection.title)
-        update_if_changed(
-            updated, "description", row.collection_summary, collection.description
-        )
+        update_if_changed(updated, "title", row.collection_name, collection)
+        update_if_changed(updated, "description", row.collection_summary, collection)
         if len(updated) > 0:
             result["collection"] = updated
+            db.add(collection)
+            db.flush()
 
     return collection

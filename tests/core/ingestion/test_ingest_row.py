@@ -143,6 +143,8 @@ def test_ingest_row__updates_collection_summary(test_db):
     assert "collection" in result
     assert result["collection"]["description"] == "changed"
 
+    # TODO : Check db
+
 
 def test_ingest_row__updates_document_title(test_db):
     context, row = setup_for_update(test_db)
@@ -152,8 +154,10 @@ def test_ingest_row__updates_document_title(test_db):
     assert len(result) == 2
     assert "operation" in result
     assert result["operation"] == "Update"
-    assert "family_document" in result
-    assert result["family_document"]["physical_document_title"] == "changed"
+    assert "physical_document" in result
+    assert result["physical_document"]["title"] == "changed"
+
+    # TODO : Check db
 
 
 def test_ingest_row__updates_family_name(test_db):
@@ -167,6 +171,8 @@ def test_ingest_row__updates_family_name(test_db):
     assert "family" in result
     assert result["family"]["title"] == "changed"
 
+    # TODO : Check db
+
 
 def test_ingest_row__updates_family_summary(test_db):
     context, row = setup_for_update(test_db)
@@ -179,6 +185,8 @@ def test_ingest_row__updates_family_summary(test_db):
     assert "family" in result
     assert result["family"]["description"] == "changed"
 
+    # TODO : Check db
+
 
 def test_ingest_row__updates_fd_slug(test_db):
     context, row = setup_for_update(test_db)
@@ -190,6 +198,8 @@ def test_ingest_row__updates_fd_slug(test_db):
     assert result["operation"] == "Update"
     assert "family_document_slug" in result
     assert result["family_document_slug"]["name"] == "changed"
+
+    # TODO : Check db
 
 
 #
