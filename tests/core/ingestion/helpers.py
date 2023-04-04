@@ -1,7 +1,5 @@
 import csv
 from io import StringIO
-from sqlalchemy.orm import Session
-from datetime import datetime
 from app.data_migrations import (
     populate_category,
     populate_document_role,
@@ -13,7 +11,6 @@ from app.data_migrations import (
     populate_taxonomy,
     populate_language,
 )
-from app.db.models.deprecated.document import Document
 from app.db.models.law_policy.family import Slug
 
 THREE_DOC_ROWS = """ID,Document ID,CCLW Description,Part of collection?,Create new family/ies?,Collection ID,Collection name,Collection summary,Document title,Family name,Family summary,Family ID,Document role,Applies to ID,Geography ISO,Documents,Category,Events,Sectors,Instruments,Frameworks,Responses,Natural Hazards,Document Type,Document variant,Year,Language,Keywords,Geography,Parent Legislation,Comment,CPR Document ID,CPR Family ID,CPR Collection ID,CPR Family Slug,CPR Document Slug
@@ -126,25 +123,6 @@ def get_event_ingest_row_data(
     return _get_csv_row_data(num, contents)
 
 
-def init_doc_for_migration(test_db: Session):
-    test_db.flush()
-    test_db.add(
-        Document(
-            id=1,
-            publication_ts=datetime.now(),
-            name="test",
-            description="",
-            source_id=1,
-            slug="slug1",
-            import_id=DOCUMENT_IMPORT_ID,
-            geography_id=2,
-            type_id=1,
-            category_id=1,
-        )
-    )
-    test_db.flush()
-
-
 def populate_for_ingest(test_db):
     populate_taxonomy(test_db)
     populate_geography(test_db)
@@ -155,6 +133,7 @@ def populate_for_ingest(test_db):
     populate_language(test_db)
     populate_document_role(test_db)
     populate_document_variant(test_db)
+    test_db.flush()
 
 
 def add_a_slug_for_family1_and_flush(db):

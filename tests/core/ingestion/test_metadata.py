@@ -7,7 +7,6 @@ from app.core.organisation import get_organisation_taxonomy
 from app.core.ingestion.utils import ResultType
 from tests.core.ingestion.helpers import (
     get_doc_ingest_row_data,
-    init_doc_for_migration,
     populate_for_ingest,
 )
 
@@ -16,7 +15,6 @@ METADATA_KEYS = set(["topic", "hazard", "sector", "keyword", "framework", "instr
 
 def test_build_metadata__all_fields(test_db):
     populate_for_ingest(test_db)
-    init_doc_for_migration(test_db)
     _, taxonomy = get_organisation_taxonomy(test_db, org_id=1)
     row = DocumentIngestRow.from_row(1, get_doc_ingest_row_data(0))
     row.responses = ["Loss AND Damage"]
@@ -48,7 +46,6 @@ def test_build_metadata__all_fields(test_db):
 
 def test_get_org_taxonomy__has_metadata_keys(test_db: Session):
     populate_for_ingest(test_db)
-    init_doc_for_migration(test_db)
 
     id, taxonomy = get_organisation_taxonomy(test_db, org_id=1)
 
@@ -61,7 +58,6 @@ def test_get_org_taxonomy__has_metadata_keys(test_db: Session):
 
 def test_get_org_taxonomy__raises_on_no_organisation(test_db: Session):
     populate_for_ingest(test_db)
-    init_doc_for_migration(test_db)
 
     with pytest.raises(NoResultFound):
         get_organisation_taxonomy(test_db, org_id=2)
@@ -69,7 +65,6 @@ def test_get_org_taxonomy__raises_on_no_organisation(test_db: Session):
 
 def test_build_metadata__error_when_sector_notfound(test_db):
     populate_for_ingest(test_db)
-    init_doc_for_migration(test_db)
     _, taxonomy = get_organisation_taxonomy(test_db, org_id=1)
     row = DocumentIngestRow.from_row(1, get_doc_ingest_row_data(0))
     row.sectors = ["Medical"]
@@ -89,7 +84,6 @@ def test_build_metadata__error_when_sector_notfound(test_db):
 
 def test_build_metadata__reports_when_resolved(test_db):
     populate_for_ingest(test_db)
-    init_doc_for_migration(test_db)
     _, taxonomy = get_organisation_taxonomy(test_db, org_id=1)
     row = DocumentIngestRow.from_row(1, get_doc_ingest_row_data(0))
     row.sectors = ["Building"]

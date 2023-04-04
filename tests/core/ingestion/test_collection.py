@@ -1,6 +1,6 @@
 from typing import cast
 from sqlalchemy.orm import Session
-from app.core.ingestion.collection import migrate_collection_from_row
+from app.core.ingestion.collection import handle_collection_from_row
 from app.core.ingestion.ingest_row import DocumentIngestRow
 from app.core.ingestion.utils import get_or_create
 from app.db.models.law_policy.collection import (
@@ -15,16 +15,13 @@ from tests.core.ingestion.helpers import (
     FAMILY_IMPORT_ID,
     add_a_slug_for_family1_and_flush,
     get_doc_ingest_row_data,
-    init_doc_for_migration,
     populate_for_ingest,
 )
 
 
-def test_collection_from_row(test_db: Session):
+def db_setup(test_db):
     populate_for_ingest(test_db)
-    init_doc_for_migration(test_db)
     row = DocumentIngestRow.from_row(1, get_doc_ingest_row_data(0))
-    result = {}
     family = get_or_create(
         test_db,
         Family,
@@ -38,8 +35,14 @@ def test_collection_from_row(test_db: Session):
         },
     )
     add_a_slug_for_family1_and_flush(test_db)
+    return row, family
 
-    collection = migrate_collection_from_row(
+
+def test_handle_collection_from_row__creates(test_db: Session):
+    result = {}
+    row, family = db_setup(test_db)
+
+    collection = handle_collection_from_row(
         test_db, row, 1, cast(str, family.import_id), result
     )
     assert collection
@@ -66,3 +69,47 @@ def test_collection_from_row(test_db: Session):
         )
         .one()
     )
+
+
+def test_handle_collection_from_row__updates(test_db: Session):
+    first_result = {}
+    row, family = db_setup(test_db)
+
+    handle_collection_from_row(
+        test_db, row, 1, cast(str, family.import_id), first_result
+    )
+
+    result = {}
+    row.collection_name = "new name"
+    row.collection_summary = "new summary"
+    collection = handle_collection_from_row(
+        test_db, row, 1, cast(str, family.import_id), result
+    )
+    assert collection
+    actual_keys = set(result.keys())
+    expected_keys = set(
+        [
+            "collection",
+        ]
+    )
+    assert actual_keys.symmetric_difference(expected_keys) == set([])
+
+    updated_collection = (
+        test_db.query(Collection).filter_by(import_id=COLLECTION_IMPORT_ID).one()
+    )
+    assert updated_collection is not None
+    assert updated_collection.title == "new name"
+    assert updated_collection.description == "new summary"
+
+
+def test_handle_collection_from_row__ignores(test_db: Session):
+    result = {}
+    row, family = db_setup(test_db)
+    row.cpr_collection_id = "n/a"
+
+    collection = handle_collection_from_row(
+        test_db, row, 1, cast(str, family.import_id), result
+    )
+
+    assert collection is None
+    assert result == {}

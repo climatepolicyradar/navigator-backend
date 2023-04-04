@@ -5,7 +5,13 @@ from app.core.ingestion.ingest_row import DocumentIngestRow
 from app.core.ingestion.metadata import add_metadata
 from app.core.organisation import get_organisation_taxonomy
 from app.core.ingestion.physical_document import create_physical_document_from_row
-from app.core.ingestion.utils import IngestOperation, create, get_or_create, to_dict
+from app.core.ingestion.utils import (
+    IngestOperation,
+    create,
+    get_or_create,
+    to_dict,
+    update_if_changed,
+)
 
 from app.db.models.law_policy import (
     DocumentStatus,
@@ -22,7 +28,7 @@ from app.db.models.law_policy import (
 def handle_family_from_row(
     db: Session,
     op: IngestOperation,
-    existing_document: FamilyDocument,
+    existing_document: Optional[FamilyDocument],
     row: DocumentIngestRow,
     org_id: int,
     result: dict[str, Any],
@@ -70,7 +76,7 @@ def _after_create_family(
 def _operate_on_family(
     db: Session,
     op: IngestOperation,
-    existing_document: FamilyDocument,
+    existing_document: Optional[FamilyDocument],
     row: DocumentIngestRow,
     org_id: int,
     result: dict[str, Any],
@@ -95,17 +101,28 @@ def _operate_on_family(
             extra={**extra, "family_status": FamilyStatus.CREATED},
             after_create=_after_create_family(db, row, org_id, result),
         )
+        result["family"] = to_dict(family)
     elif op == IngestOperation.UPDATE:
-        family = db.query(Family).get(existing_document.family_import_id).one()
-        family.title = row.family_name
-        family.description = row.family_summary
-        family.family_category = category
-        db.add(family)
-        db.flush()
+        if existing_document is None:
+            raise TypeError(
+                f"Cannot Update a non-exisitng document: Row {row.row_number}"
+            )
+        family = db.query(Family).get(existing_document.family_import_id)
+        updated = {}
+
+        update_if_changed(updated, "title", row.family_name, family.title)
+        update_if_changed(
+            updated, "description", row.family_summary, family.description
+        )
+        update_if_changed(updated, "category", category, family.family_category)
+
+        if len(updated) > 0:
+            db.add(family)
+            db.flush()
+            result["family"] = updated
     else:
         raise TypeError(f"Unsupported operation {op} in _operate_on_family")
 
-    result["family"] = to_dict(family)
     return family
 
 
@@ -135,10 +152,39 @@ def _maybe_create_family_document(
     # If the family document exists we can assume that the associated physical
     # document and slug have also been created
     if op == IngestOperation.UPDATE:
-        family_document.document_type = none_if_empty(row.document_type)
-        family_document.document_role = none_if_empty(row.document_role)
-        family_document.variant_name = none_if_empty(row.document_variant)
-        family_document.physical_document.title = row.document_title
+        updated = {}
+        update_if_changed(
+            updated,
+            "document_type",
+            none_if_empty(row.document_type),
+            family_document.document_type,
+        )
+        update_if_changed(
+            updated,
+            "document_role",
+            none_if_empty(row.document_role),
+            family_document.document_role,
+        )
+        update_if_changed(
+            updated,
+            "variant_name",
+            none_if_empty(row.document_variant),
+            family_document.variant_name,
+        )
+        update_if_changed(
+            updated,
+            "physical_document_title",
+            row.document_title,
+            family_document.physical_document.title,
+        )
+        if len(updated) > 0:
+            db.add(family_document)
+            db.flush()
+            result["family_document"] = updated
+
+        # Check if slug has changed
+        if db.query(Slug).get(row.cpr_document_slug) is None:
+            _add_family_document_slug(db, row, family_document, result)
     elif op == IngestOperation.CREATE:
         physical_document = create_physical_document_from_row(db, row, result)
         family_document = FamilyDocument(
@@ -151,11 +197,10 @@ def _maybe_create_family_document(
             document_role=none_if_empty(row.document_role),
         )
 
-    db.add(family_document)
-    db.flush()
-
-    result["family_document"] = to_dict(family_document)
-    _add_family_document_slug(db, row, family_document, result)
+        db.add(family_document)
+        db.flush()
+        result["family_document"] = to_dict(family_document)
+        _add_family_document_slug(db, row, family_document, result)
 
     return family_document
 
@@ -192,5 +237,5 @@ def _add_family_document_slug(
         name=row.cpr_document_slug,
         family_document_import_id=family_document.import_id,
     )
-    result["family_document_slug"] = {"document_slug": to_dict(family_document_slug)}
+    result["family_document_slug"] = to_dict(family_document_slug)
     return family_document_slug

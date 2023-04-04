@@ -5,7 +5,6 @@ from app.core.organisation import get_organisation_taxonomy
 
 from tests.core.ingestion.helpers import (
     get_doc_ingest_row_data,
-    init_doc_for_migration,
     populate_for_ingest,
 )
 
@@ -13,7 +12,6 @@ from tests.core.ingestion.helpers import (
 def test_validate_row__good_data(test_db):
     context = IngestContext(org_id=1, results=[])
     populate_for_ingest(test_db)
-    init_doc_for_migration(test_db)
     _, taxonomy = get_organisation_taxonomy(test_db, context.org_id)
     row = DocumentIngestRow.from_row(1, get_doc_ingest_row_data(0))
 
@@ -27,7 +25,6 @@ def test_validate_row__good_data(test_db):
 def test_validate_row__bad_data(test_db):
     context = IngestContext(org_id=1, results=[])
     populate_for_ingest(test_db)
-    init_doc_for_migration(test_db)
     _, taxonomy = get_organisation_taxonomy(test_db, context.org_id)
     row = DocumentIngestRow.from_row(1, get_doc_ingest_row_data(0))
     row.sectors = ["fish"]
@@ -42,7 +39,6 @@ def test_validate_row__bad_data(test_db):
 def test_validate_row__resolvable_data(test_db):
     context = IngestContext(org_id=1, results=[])
     populate_for_ingest(test_db)
-    init_doc_for_migration(test_db)
     _, taxonomy = get_organisation_taxonomy(test_db, context.org_id)
     row = DocumentIngestRow.from_row(1, get_doc_ingest_row_data(0))
     row.sectors = ["TranSPORtation"]
@@ -57,7 +53,6 @@ def test_validate_row__resolvable_data(test_db):
 def test_validate_row__bad_document_type(test_db):
     context = IngestContext(org_id=1, results=[])
     populate_for_ingest(test_db)
-    init_doc_for_migration(test_db)
     _, taxonomy = get_organisation_taxonomy(test_db, context.org_id)
     row = DocumentIngestRow.from_row(1, get_doc_ingest_row_data(0))
     row.document_type = "fish"
@@ -72,7 +67,6 @@ def test_validate_row__bad_document_type(test_db):
 def test_validate_row__good_document_type(test_db):
     context = IngestContext(org_id=1, results=[])
     populate_for_ingest(test_db)
-    init_doc_for_migration(test_db)
     _, taxonomy = get_organisation_taxonomy(test_db, context.org_id)
     row = DocumentIngestRow.from_row(1, get_doc_ingest_row_data(0))
     row.document_type = "Order"
@@ -87,7 +81,6 @@ def test_validate_row__good_document_type(test_db):
 def test_validate_row__bad_document_role(test_db):
     context = IngestContext(org_id=1, results=[])
     populate_for_ingest(test_db)
-    init_doc_for_migration(test_db)
     _, taxonomy = get_organisation_taxonomy(test_db, context.org_id)
     row = DocumentIngestRow.from_row(1, get_doc_ingest_row_data(0))
     row.document_role = "fish"
@@ -102,7 +95,6 @@ def test_validate_row__bad_document_role(test_db):
 def test_validate_row__good_document_role(test_db):
     context = IngestContext(org_id=1, results=[])
     populate_for_ingest(test_db)
-    init_doc_for_migration(test_db)
     _, taxonomy = get_organisation_taxonomy(test_db, context.org_id)
     row = DocumentIngestRow.from_row(1, get_doc_ingest_row_data(0))
     row.document_role = "MAIN"
@@ -117,7 +109,6 @@ def test_validate_row__good_document_role(test_db):
 def test_validate_row__bad_document_variant(test_db):
     context = IngestContext(org_id=1, results=[])
     populate_for_ingest(test_db)
-    init_doc_for_migration(test_db)
     _, taxonomy = get_organisation_taxonomy(test_db, context.org_id)
     row = DocumentIngestRow.from_row(1, get_doc_ingest_row_data(0))
     row.document_variant = "fish"
@@ -132,7 +123,6 @@ def test_validate_row__bad_document_variant(test_db):
 def test_validate_row__good_document_variant(test_db):
     context = IngestContext(org_id=1, results=[])
     populate_for_ingest(test_db)
-    init_doc_for_migration(test_db)
     _, taxonomy = get_organisation_taxonomy(test_db, context.org_id)
     row = DocumentIngestRow.from_row(1, get_doc_ingest_row_data(0))
     row.document_variant = "Translation"

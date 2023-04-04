@@ -46,7 +46,7 @@ def ingest_document_row(
     """
     result = {}
     import_id = row.cpr_document_id
-    existing_document = db.query(FamilyDocument).get(import_id).one_or_none()
+    existing_document = db.query(FamilyDocument).get(import_id)
 
     # TODO: extend the function to return DELETE (pass in row)
     op = _get_ingest_operation(existing_document is not None)

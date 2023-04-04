@@ -1,5 +1,4 @@
 import pytest
-from sqlalchemy.orm import Session
 from app.core.ingestion.ingest_row import DocumentIngestRow
 from app.core.ingestion.processor import ingest_document_row
 from app.core.ingestion.utils import IngestContext
@@ -23,33 +22,25 @@ from tests.core.ingestion.helpers import (
     SLUG_DOCUMENT_NAME,
     SLUG_FAMILY_NAME,
     get_doc_ingest_row_data,
-    init_doc_for_migration,
     populate_for_ingest,
 )
 
 
-def test_ingest_row__skips_missing_documents(test_db):
+def setup_for_update(test_db):
+    context = IngestContext(org_id=1, results=[])
+    row = DocumentIngestRow.from_row(1, get_doc_ingest_row_data(0))
+    populate_for_ingest(test_db)
+    ingest_document_row(test_db, context, row)
+    return context, row
+
+
+def test_ingest_row__creates_missing_documents(test_db):
     context = IngestContext(org_id=1, results=[])
     row = DocumentIngestRow.from_row(1, get_doc_ingest_row_data(0))
     populate_for_ingest(test_db)
     result = ingest_document_row(test_db, context, row)
-    assert len(result.keys()) == 1
-    assert result["existing_document"] is False
-
-
-def test_ingest_row__migrates_existing_documents(test_db: Session):
-    context = IngestContext(org_id=1, results=[])
-
-    populate_for_ingest(test_db)
-    init_doc_for_migration(test_db)
-
-    row = DocumentIngestRow.from_row(1, get_doc_ingest_row_data(0))
-    result = ingest_document_row(test_db, context, row)
-    test_db.flush()
-
-    # Assert keys for created db objects
-    assert result["existing_document"] is True
     actual_keys = set(result.keys())
+    assert result["operation"] == "Create"
     expected_keys = set(
         [
             "family_slug",
@@ -61,11 +52,10 @@ def test_ingest_row__migrates_existing_documents(test_db: Session):
             "collection",
             "collection_organisation",
             "collection_family",
-            "existing_document",
+            "operation",
         ]
     )
     assert actual_keys.symmetric_difference(expected_keys) == set([])
-
     # Assert db objects
     assert test_db.query(Slug).filter_by(name=SLUG_FAMILY_NAME).one()
     assert (
@@ -92,7 +82,119 @@ def test_ingest_row__migrates_existing_documents(test_db: Session):
     )
 
 
-# Tests for the class IngestRow...
+def test_ingest_row__idempotent(test_db):
+    context, row = setup_for_update(test_db)
+
+    result = ingest_document_row(test_db, context, row)
+    assert len(result) == 1
+    assert "operation" in result
+    assert result["operation"] == "Update"
+
+
+# The following tests appear in the order of the properties for DocumentIngestRow
+# id: Immutable
+# document_id: Immutable
+# collection_name: Test
+# collection_summary: Test
+# document_title: Test
+# family_name: Test
+# family_summary: Test
+# document_role: TODO
+# document_variant: TODO
+# geography_iso: Immutable
+# documents: Immutable
+# category: TODO
+# sectors: METADATA
+# instruments: METADATA
+# frameworks: METADATA
+# responses: METADATA - topics
+# natural_hazards: METADATA - hazard
+# keywords: TODO
+# document_type: TODO
+# language: Immutable
+# geography: Immutable
+# cpr_document_id: Immutable
+# cpr_family_id: Immutable
+# cpr_collection_id: Immutable
+# cpr_family_slug: Not done
+# cpr_document_slug: Test
+
+
+def test_ingest_row__updates_collection_name(test_db):
+    context, row = setup_for_update(test_db)
+    row.collection_name = "changed"
+
+    result = ingest_document_row(test_db, context, row)
+    assert len(result) == 2
+    assert "operation" in result
+    assert result["operation"] == "Update"
+    assert "collection" in result
+    assert result["collection"]["title"] == "changed"
+
+
+def test_ingest_row__updates_collection_summary(test_db):
+    context, row = setup_for_update(test_db)
+    row.collection_summary = "changed"
+
+    result = ingest_document_row(test_db, context, row)
+    assert len(result) == 2
+    assert "operation" in result
+    assert result["operation"] == "Update"
+    assert "collection" in result
+    assert result["collection"]["description"] == "changed"
+
+
+def test_ingest_row__updates_document_title(test_db):
+    context, row = setup_for_update(test_db)
+    row.document_title = "changed"
+
+    result = ingest_document_row(test_db, context, row)
+    assert len(result) == 2
+    assert "operation" in result
+    assert result["operation"] == "Update"
+    assert "family_document" in result
+    assert result["family_document"]["physical_document_title"] == "changed"
+
+
+def test_ingest_row__updates_family_name(test_db):
+    context, row = setup_for_update(test_db)
+    row.family_name = "changed"
+
+    result = ingest_document_row(test_db, context, row)
+    assert len(result) == 2
+    assert "operation" in result
+    assert result["operation"] == "Update"
+    assert "family" in result
+    assert result["family"]["title"] == "changed"
+
+
+def test_ingest_row__updates_family_summary(test_db):
+    context, row = setup_for_update(test_db)
+    row.family_summary = "changed"
+
+    result = ingest_document_row(test_db, context, row)
+    assert len(result) == 2
+    assert "operation" in result
+    assert result["operation"] == "Update"
+    assert "family" in result
+    assert result["family"]["description"] == "changed"
+
+
+def test_ingest_row__updates_fd_slug(test_db):
+    context, row = setup_for_update(test_db)
+    row.cpr_document_slug = "changed"
+
+    result = ingest_document_row(test_db, context, row)
+    assert len(result) == 2
+    assert "operation" in result
+    assert result["operation"] == "Update"
+    assert "family_document_slug" in result
+    assert result["family_document_slug"]["name"] == "changed"
+
+
+#
+# Tests for the class DocumentIngestRow...
+#
 
 
 def test_IngestRow__from_row():

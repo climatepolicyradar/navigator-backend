@@ -151,6 +151,13 @@ def get_result_counts(results: list[Result]) -> tuple[int, int, int]:
     return rows, fails, resolved
 
 
+def update_if_changed(updated: dict, updated_key: str, source: Any, dest: Any):
+    if dest != source:
+        dest = source
+        updated[updated_key] = source
+    return updated
+
+
 class IngestOperation(str, enum.Enum):
     """Type of operation the Ingest is going to perform for a row,"""
 
