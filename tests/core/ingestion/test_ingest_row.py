@@ -90,6 +90,31 @@ def test_ingest_row__idempotent(test_db):
     assert "operation" in result
     assert result["operation"] == "Update"
 
+    # Assert db objects
+    assert test_db.query(Slug).filter_by(name=SLUG_FAMILY_NAME).one()
+    assert (
+        test_db.query(FamilyOrganisation)
+        .filter_by(family_import_id=FAMILY_IMPORT_ID)
+        .one()
+    )
+    assert test_db.query(Family).filter_by(import_id=FAMILY_IMPORT_ID).one()
+    assert test_db.query(PhysicalDocument).filter_by(title=DOCUMENT_TITLE).one()
+    assert test_db.query(FamilyDocument).filter_by(import_id=DOCUMENT_IMPORT_ID).one()
+    assert test_db.query(Slug).filter_by(name=SLUG_DOCUMENT_NAME).one()
+    assert test_db.query(Collection).filter_by(import_id=COLLECTION_IMPORT_ID).one()
+    assert (
+        test_db.query(CollectionOrganisation)
+        .filter_by(collection_import_id=COLLECTION_IMPORT_ID)
+        .one()
+    )
+    assert (
+        test_db.query(CollectionFamily)
+        .filter_by(
+            collection_import_id=COLLECTION_IMPORT_ID, family_import_id=FAMILY_IMPORT_ID
+        )
+        .one()
+    )
+
 
 # The following tests appear in the order of the properties for DocumentIngestRow
 # id: Immutable
@@ -99,7 +124,7 @@ def test_ingest_row__idempotent(test_db):
 # document_title: Test
 # family_name: Test
 # family_summary: Test
-# document_role: TODO
+# document_role: Test
 # document_variant: TODO
 # geography_iso: Immutable
 # documents: Immutable
@@ -131,6 +156,15 @@ def test_ingest_row__updates_collection_name(test_db):
     assert "collection" in result
     assert result["collection"]["title"] == "changed"
 
+    # Check db
+    assert 1 == test_db.query(Collection).count()
+    assert (
+        1
+        == test_db.query(Collection)
+        .filter_by(import_id=COLLECTION_IMPORT_ID, title="changed")
+        .count()
+    )
+
 
 def test_ingest_row__updates_collection_summary(test_db):
     context, row = setup_for_update(test_db)
@@ -143,7 +177,14 @@ def test_ingest_row__updates_collection_summary(test_db):
     assert "collection" in result
     assert result["collection"]["description"] == "changed"
 
-    # TODO : Check db
+    # Check db
+    assert 1 == test_db.query(Collection).count()
+    assert (
+        1
+        == test_db.query(Collection)
+        .filter_by(import_id=COLLECTION_IMPORT_ID, description="changed")
+        .count()
+    )
 
 
 def test_ingest_row__updates_document_title(test_db):
@@ -157,7 +198,9 @@ def test_ingest_row__updates_document_title(test_db):
     assert "physical_document" in result
     assert result["physical_document"]["title"] == "changed"
 
-    # TODO : Check db
+    # Check db
+    assert 1 == test_db.query(PhysicalDocument).count()
+    assert 1 == test_db.query(PhysicalDocument).filter_by(title="changed").count()
 
 
 def test_ingest_row__updates_family_name(test_db):
@@ -171,7 +214,14 @@ def test_ingest_row__updates_family_name(test_db):
     assert "family" in result
     assert result["family"]["title"] == "changed"
 
-    # TODO : Check db
+    # Check db
+    assert 1 == test_db.query(Family).count()
+    assert (
+        1
+        == test_db.query(Family)
+        .filter_by(import_id=FAMILY_IMPORT_ID, title="changed")
+        .count()
+    )
 
 
 def test_ingest_row__updates_family_summary(test_db):
@@ -185,7 +235,56 @@ def test_ingest_row__updates_family_summary(test_db):
     assert "family" in result
     assert result["family"]["description"] == "changed"
 
-    # TODO : Check db
+    # Check db
+    assert 1 == test_db.query(Family).count()
+    assert (
+        1
+        == test_db.query(Family)
+        .filter_by(import_id=FAMILY_IMPORT_ID, description="changed")
+        .count()
+    )
+
+
+def test_ingest_row__updates_family_document_role(test_db):
+    context, row = setup_for_update(test_db)
+    row.document_role = "ANNEX"
+
+    result = ingest_document_row(test_db, context, row)
+    assert len(result) == 2
+    assert "operation" in result
+    assert result["operation"] == "Update"
+    assert "family_document" in result
+    assert result["family_document"]["document_role"] == "ANNEX"
+
+    # Check db
+    assert 1 == test_db.query(FamilyDocument).count()
+    assert (
+        1
+        == test_db.query(FamilyDocument)
+        .filter_by(import_id=DOCUMENT_IMPORT_ID, document_role="ANNEX")
+        .count()
+    )
+
+
+def test_ingest_row__updates_family_document_variant(test_db):
+    context, row = setup_for_update(test_db)
+    row.document_variant = "Translation"
+
+    result = ingest_document_row(test_db, context, row)
+    assert len(result) == 2
+    assert "operation" in result
+    assert result["operation"] == "Update"
+    assert "family_document" in result
+    assert result["family_document"]["variant_name"] == "Translation"
+
+    # Check db
+    assert 1 == test_db.query(FamilyDocument).count()
+    assert (
+        1
+        == test_db.query(FamilyDocument)
+        .filter_by(import_id=DOCUMENT_IMPORT_ID, variant_name="Translation")
+        .count()
+    )
 
 
 def test_ingest_row__updates_fd_slug(test_db):
@@ -199,7 +298,14 @@ def test_ingest_row__updates_fd_slug(test_db):
     assert "family_document_slug" in result
     assert result["family_document_slug"]["name"] == "changed"
 
-    # TODO : Check db
+    # Check db
+    assert 3 == test_db.query(Slug).count()
+    assert (
+        1
+        == test_db.query(Slug)
+        .filter_by(family_document_import_id=DOCUMENT_IMPORT_ID, name="changed")
+        .count()
+    )
 
 
 #
