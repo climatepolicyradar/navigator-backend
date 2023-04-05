@@ -30,7 +30,7 @@ def test_family_from_row__creates(test_db: Session):
     row = DocumentIngestRow.from_row(1, get_doc_ingest_row_data(0))
     result = {}
     family = handle_family_from_row(
-        test_db, IngestOperation.CREATE, None, row, org_id=1, result=result
+        test_db, IngestOperation.CREATE, row, org_id=1, result=result
     )
 
     actual_keys = set(result.keys())
@@ -90,7 +90,10 @@ def test_family_from_row__updates(test_db: Session):
     row.family_name = "cheese"
 
     # Get the pre-existing doc
-    handle_family_from_row(test_db, IngestOperation.UPDATE, fd, row, 1, result)
+    family = handle_family_from_row(test_db, IngestOperation.UPDATE, row, 1, result)
+
+    assert family.title == "cheese"
+    assert 1 == test_db.query(Family).filter_by(title="cheese").count()
 
 
 def test_family_document_from_row__creates(test_db: Session):

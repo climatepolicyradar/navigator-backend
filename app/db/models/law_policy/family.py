@@ -195,7 +195,7 @@ class EventStatus(_BaseModelEnum):
 
     OK = "Ok"
     # Duplicate means a single event was applied to multiple families. In this
-    # case we will need to validate, remove unecessary duplicates & create new
+    # case we will need to validate, remove unnecessary duplicates & create new
     # events through a data cleaning exercise.
     DUPLICATED = "Duplicated"
 

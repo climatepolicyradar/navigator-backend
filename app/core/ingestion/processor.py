@@ -63,9 +63,7 @@ def ingest_document_row(
     )
     result["operation"] = op
 
-    family = handle_family_from_row(
-        db, op, existing_document, row, context.org_id, result
-    )
+    family = handle_family_from_row(db, op, row, context.org_id, result)
     handle_collection_from_row(
         db,
         row,

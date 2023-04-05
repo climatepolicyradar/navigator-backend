@@ -5,8 +5,10 @@ from pytest_mock import MockerFixture
 from app.db.models.law_policy.family import Family, FamilyEvent
 from tests.routes.document_helpers import (
     TWO_DFC_ROW_ONE_LANGUAGE,
+    TWO_EVENT_ROWS,
     populate_languages,
     setup_with_docs,
+    setup_with_multiple_docs,
     setup_with_two_docs,
 )
 
@@ -169,7 +171,9 @@ def test_physical_doc_languages(
     mocker: Callable[..., Generator[MockerFixture, None, None]],
 ):
     populate_languages(test_db)
-    setup_with_two_docs(test_db, mocker, doc_data=TWO_DFC_ROW_ONE_LANGUAGE)
+    setup_with_multiple_docs(
+        test_db, mocker, doc_data=TWO_DFC_ROW_ONE_LANGUAGE, event_data=TWO_EVENT_ROWS
+    )
 
     response = client.get(
         "/api/v1/documents/DocSlug1?group_documents=True",

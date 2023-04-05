@@ -1,4 +1,5 @@
 import pytest
+from sqlalchemy.orm import Session
 from app.core.ingestion.ingest_row import DocumentIngestRow
 from app.core.ingestion.processor import ingest_document_row
 from app.core.ingestion.utils import IngestContext
@@ -33,6 +34,74 @@ def setup_for_update(test_db):
     populate_for_ingest(test_db)
     ingest_document_row(test_db, context, row)
     return context, row
+
+
+def assert_dfc(db: Session, n_docs: int, n_families: int, n_collections: int):
+    assert n_docs == db.query(FamilyDocument).count()
+    assert n_docs == db.query(PhysicalDocument).count()
+    assert n_families == db.query(Family).count()
+    assert n_collections == db.query(Collection).count()
+
+
+def test_ingest_row__with_multiple_rows(test_db):
+    context = IngestContext(org_id=1, results=[])
+    row = DocumentIngestRow.from_row(1, get_doc_ingest_row_data(0))
+    row.cpr_family_id = "CCLW.family.test.1"
+    row.cpr_family_slug = "fam-test-1"
+    populate_for_ingest(test_db)
+
+    # First row
+    result = ingest_document_row(test_db, context, row)
+    assert 10 == len(result.keys())
+    assert_dfc(test_db, 1, 1, 1)
+
+    # Second row - adds another document to family
+    row.cpr_document_id = "CCLW.doc.test.1"
+    row.cpr_document_slug = "doc-test-1"
+    result = ingest_document_row(test_db, context, row)
+    assert 4 == len(result.keys())
+    assert_dfc(test_db, 2, 1, 1)
+
+    # Third row - adds another family and document
+    row.cpr_family_id = "CCLW.family.test.2"
+    row.cpr_family_slug = "fam-test-2"
+    row.cpr_document_id = "CCLW.doc.test.2"
+    row.cpr_document_slug = "doc-test-2"
+    result = ingest_document_row(test_db, context, row)
+    assert 8 == len(result.keys())
+    assert_dfc(test_db, 3, 2, 1)
+
+    # Forth - adds another document to the family
+    row.cpr_document_id = "CCLW.doc.test.3"
+    row.cpr_document_slug = "doc-test-3"
+    result = ingest_document_row(test_db, context, row)
+    assert 4 == len(result.keys())
+    assert_dfc(test_db, 4, 2, 1)
+
+    # Finally change the family id of the document just added
+    row.cpr_family_id = "CCLW.family.test.1"
+    row.cpr_family_slug = "fam-test-1"
+    result = ingest_document_row(test_db, context, row)
+    assert 2 == len(result.keys())
+    assert_dfc(test_db, 4, 2, 1)
+
+    # Now assert both families have correct documents
+    assert (
+        3
+        == test_db.query(FamilyDocument)
+        .filter_by(family_import_id="CCLW.family.test.1")
+        .count()
+    )
+    assert (
+        1
+        == test_db.query(FamilyDocument)
+        .filter_by(family_import_id="CCLW.family.test.2")
+        .count()
+    )
+
+    # Now assert collection has 2 families
+    assert 1 == test_db.query(Collection).count()
+    assert 2 == test_db.query(CollectionFamily).count()
 
 
 def test_ingest_row__creates_missing_documents(test_db):

@@ -23,7 +23,7 @@ def test_family_event_from_row(test_db: Session):
 
     result = {}
     family = handle_family_from_row(
-        test_db, IngestOperation.CREATE, None, doc_row, org_id=1, result=result
+        test_db, IngestOperation.CREATE, doc_row, org_id=1, result=result
     )
     event = family_event_from_row(test_db, event_row, result=result)
 

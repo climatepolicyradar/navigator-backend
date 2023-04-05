@@ -28,7 +28,6 @@ from app.db.models.law_policy import (
 def handle_family_from_row(
     db: Session,
     op: IngestOperation,
-    existing_document: Optional[FamilyDocument],
     row: DocumentIngestRow,
     org_id: int,
     result: dict[str, Any],
@@ -45,7 +44,7 @@ def handle_family_from_row(
         database.
     :return [Family]: The family that was either retrieved or created
     """
-    family = _operate_on_family(db, op, existing_document, row, org_id, result)
+    family = _operate_on_family(db, row, org_id, result)
 
     handle_family_document_from_row(db, op, row, family, result)
 
@@ -75,8 +74,6 @@ def _after_create_family(
 
 def _operate_on_family(
     db: Session,
-    op: IngestOperation,
-    existing_document: Optional[FamilyDocument],
     row: DocumentIngestRow,
     org_id: int,
     result: dict[str, Any],
@@ -91,9 +88,9 @@ def _operate_on_family(
         "family_category": category,
     }
 
-    family = None
+    family = db.query(Family).get(row.cpr_family_id)
 
-    if op == IngestOperation.CREATE:
+    if family is None:
         family = create(
             db,
             Family,
@@ -102,12 +99,7 @@ def _operate_on_family(
             after_create=_after_create_family(db, row, org_id, result),
         )
         result["family"] = to_dict(family)
-    elif op == IngestOperation.UPDATE:
-        if existing_document is None:
-            raise TypeError(
-                f"Cannot Update a non-exisitng document: Row {row.row_number}"
-            )
-        family = db.query(Family).get(existing_document.family_import_id)
+    else:
         updated = {}
 
         update_if_changed(updated, "title", row.family_name, family)
@@ -118,8 +110,6 @@ def _operate_on_family(
             db.add(family)
             db.flush()
             result["family"] = updated
-    else:
-        raise TypeError(f"Unsupported operation {op} in _operate_on_family")
 
     return family
 
@@ -134,23 +124,19 @@ def handle_family_document_from_row(
     def none_if_empty(data: str) -> Optional[str]:
         return data if data != "" else None
 
-    family_document = (
-        db.query(FamilyDocument).filter_by(import_id=row.cpr_document_id).one_or_none()
-    )
-
-    if family_document is not None and op == IngestOperation.CREATE:
-        raise TypeError(
-            f"Operation CREATE cannot be performed. Found {row.cpr_document_id}"
-        )
-    if family_document is None and op == IngestOperation.UPDATE:
-        raise TypeError(
-            f"Operation UPDATE cannot be performed not found {row.cpr_document_id}"
-        )
+    # NOTE: op is determined by existence or otherwise of FamilyDocument
+    family_document = db.query(FamilyDocument).get(row.cpr_document_id)
 
     # If the family document exists we can assume that the associated physical
     # document and slug have also been created
     if op == IngestOperation.UPDATE:
         updated = {}
+        update_if_changed(
+            updated,
+            "family_import_id",
+            none_if_empty(row.cpr_family_id),
+            family_document,
+        )
         update_if_changed(
             updated,
             "document_type",
