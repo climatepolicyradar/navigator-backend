@@ -128,12 +128,24 @@ class Result:
     details: str = ""
 
 
+NameSummary = tuple[str, str]
+
+
+@dataclass
+class MultiplyDefinedEntities:
+    """Used by validation to ensure consistency for MDE's."""
+
+    families: dict[str, NameSummary]  # id -> name, description
+    collections: dict[str, NameSummary]  # id -> name, description
+
+
 @dataclass
 class IngestContext:
     """Context used when processing."""
 
     org_id: int
     results: list[Result]
+    mde: MultiplyDefinedEntities
 
 
 @dataclass
