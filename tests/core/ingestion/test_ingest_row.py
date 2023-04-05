@@ -29,7 +29,7 @@ from tests.core.ingestion.helpers import (
 
 
 def setup_for_update(test_db):
-    context = IngestContext(org_id=1, results=[])
+    context = IngestContext()
     row = DocumentIngestRow.from_row(1, get_doc_ingest_row_data(0))
     populate_for_ingest(test_db)
     ingest_document_row(test_db, context, row)
@@ -44,7 +44,7 @@ def assert_dfc(db: Session, n_docs: int, n_families: int, n_collections: int):
 
 
 def test_ingest_row__with_multiple_rows(test_db):
-    context = IngestContext(org_id=1, results=[])
+    context = IngestContext()
     row = DocumentIngestRow.from_row(1, get_doc_ingest_row_data(0))
     row.cpr_family_id = "CCLW.family.test.1"
     row.cpr_family_slug = "fam-test-1"
@@ -105,7 +105,7 @@ def test_ingest_row__with_multiple_rows(test_db):
 
 
 def test_ingest_row__creates_missing_documents(test_db):
-    context = IngestContext(org_id=1, results=[])
+    context = IngestContext()
     row = DocumentIngestRow.from_row(1, get_doc_ingest_row_data(0))
     populate_for_ingest(test_db)
     result = ingest_document_row(test_db, context, row)

@@ -147,6 +147,11 @@ class IngestContext:
     results: list[Result]
     mde: MultiplyDefinedEntities
 
+    def __init__(self, org_id=1, results=None) -> None:
+        self.org_id = org_id
+        self.results = [] if results is None else results
+        self.mde = MultiplyDefinedEntities(families={}, collections={})
+
 
 @dataclass
 class ValidationResult:

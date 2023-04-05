@@ -9,8 +9,95 @@ from tests.core.ingestion.helpers import (
 )
 
 
+def test_validate_row__mde_good(test_db):
+    context = IngestContext()
+    populate_for_ingest(test_db)
+    _, taxonomy = get_organisation_taxonomy(test_db, context.org_id)
+    row = DocumentIngestRow.from_row(1, get_doc_ingest_row_data(0))
+
+    validate_document_row(test_db, context=context, row=row, taxonomy=taxonomy)
+    context.results = []
+    validate_document_row(test_db, context=context, row=row, taxonomy=taxonomy)
+
+    assert context.results
+    assert len(context.results) == 1
+    assert context.results[0].type == ResultType.OK
+
+
+def test_validate_row__mde_family_name_change(test_db):
+    context = IngestContext()
+    populate_for_ingest(test_db)
+    _, taxonomy = get_organisation_taxonomy(test_db, context.org_id)
+    row = DocumentIngestRow.from_row(1, get_doc_ingest_row_data(0))
+
+    validate_document_row(test_db, context=context, row=row, taxonomy=taxonomy)
+    context.results = []
+    row.family_name = "changed"
+    validate_document_row(test_db, context=context, row=row, taxonomy=taxonomy)
+
+    assert context.results
+    assert len(context.results) == 1
+    assert context.results[0].type == ResultType.ERROR
+    assert "name" in context.results[0].details
+    assert context.results[0].details.startswith("Family")
+
+
+def test_validate_row__mde_family_summary_change(test_db):
+    context = IngestContext()
+    populate_for_ingest(test_db)
+    _, taxonomy = get_organisation_taxonomy(test_db, context.org_id)
+    row = DocumentIngestRow.from_row(1, get_doc_ingest_row_data(0))
+
+    validate_document_row(test_db, context=context, row=row, taxonomy=taxonomy)
+    context.results = []
+    row.family_summary = "changed"
+    validate_document_row(test_db, context=context, row=row, taxonomy=taxonomy)
+
+    assert context.results
+    assert len(context.results) == 1
+    assert context.results[0].type == ResultType.ERROR
+    assert "summary" in context.results[0].details
+    assert context.results[0].details.startswith("Family")
+
+
+def test_validate_row__mde_collection_name_change(test_db):
+    context = IngestContext()
+    populate_for_ingest(test_db)
+    _, taxonomy = get_organisation_taxonomy(test_db, context.org_id)
+    row = DocumentIngestRow.from_row(1, get_doc_ingest_row_data(0))
+
+    validate_document_row(test_db, context=context, row=row, taxonomy=taxonomy)
+    context.results = []
+    row.collection_name = "changed"
+    validate_document_row(test_db, context=context, row=row, taxonomy=taxonomy)
+
+    assert context.results
+    assert len(context.results) == 1
+    assert context.results[0].type == ResultType.ERROR
+    assert "name" in context.results[0].details
+    assert context.results[0].details.startswith("Collection")
+
+
+def test_validate_row__mde_collection_summary_change(test_db):
+    context = IngestContext()
+    populate_for_ingest(test_db)
+    _, taxonomy = get_organisation_taxonomy(test_db, context.org_id)
+    row = DocumentIngestRow.from_row(1, get_doc_ingest_row_data(0))
+
+    validate_document_row(test_db, context=context, row=row, taxonomy=taxonomy)
+    context.results = []
+    row.collection_summary = "changed"
+    validate_document_row(test_db, context=context, row=row, taxonomy=taxonomy)
+
+    assert context.results
+    assert len(context.results) == 1
+    assert context.results[0].type == ResultType.ERROR
+    assert "summary" in context.results[0].details
+    assert context.results[0].details.startswith("Collection")
+
+
 def test_validate_row__good_data(test_db):
-    context = IngestContext(org_id=1, results=[])
+    context = IngestContext()
     populate_for_ingest(test_db)
     _, taxonomy = get_organisation_taxonomy(test_db, context.org_id)
     row = DocumentIngestRow.from_row(1, get_doc_ingest_row_data(0))
@@ -23,7 +110,7 @@ def test_validate_row__good_data(test_db):
 
 
 def test_validate_row__bad_data(test_db):
-    context = IngestContext(org_id=1, results=[])
+    context = IngestContext()
     populate_for_ingest(test_db)
     _, taxonomy = get_organisation_taxonomy(test_db, context.org_id)
     row = DocumentIngestRow.from_row(1, get_doc_ingest_row_data(0))
@@ -37,7 +124,7 @@ def test_validate_row__bad_data(test_db):
 
 
 def test_validate_row__resolvable_data(test_db):
-    context = IngestContext(org_id=1, results=[])
+    context = IngestContext()
     populate_for_ingest(test_db)
     _, taxonomy = get_organisation_taxonomy(test_db, context.org_id)
     row = DocumentIngestRow.from_row(1, get_doc_ingest_row_data(0))
@@ -51,7 +138,7 @@ def test_validate_row__resolvable_data(test_db):
 
 
 def test_validate_row__bad_document_type(test_db):
-    context = IngestContext(org_id=1, results=[])
+    context = IngestContext()
     populate_for_ingest(test_db)
     _, taxonomy = get_organisation_taxonomy(test_db, context.org_id)
     row = DocumentIngestRow.from_row(1, get_doc_ingest_row_data(0))
@@ -65,7 +152,7 @@ def test_validate_row__bad_document_type(test_db):
 
 
 def test_validate_row__good_document_type(test_db):
-    context = IngestContext(org_id=1, results=[])
+    context = IngestContext()
     populate_for_ingest(test_db)
     _, taxonomy = get_organisation_taxonomy(test_db, context.org_id)
     row = DocumentIngestRow.from_row(1, get_doc_ingest_row_data(0))
@@ -79,7 +166,7 @@ def test_validate_row__good_document_type(test_db):
 
 
 def test_validate_row__bad_document_role(test_db):
-    context = IngestContext(org_id=1, results=[])
+    context = IngestContext()
     populate_for_ingest(test_db)
     _, taxonomy = get_organisation_taxonomy(test_db, context.org_id)
     row = DocumentIngestRow.from_row(1, get_doc_ingest_row_data(0))
@@ -93,7 +180,7 @@ def test_validate_row__bad_document_role(test_db):
 
 
 def test_validate_row__good_document_role(test_db):
-    context = IngestContext(org_id=1, results=[])
+    context = IngestContext()
     populate_for_ingest(test_db)
     _, taxonomy = get_organisation_taxonomy(test_db, context.org_id)
     row = DocumentIngestRow.from_row(1, get_doc_ingest_row_data(0))
@@ -107,7 +194,7 @@ def test_validate_row__good_document_role(test_db):
 
 
 def test_validate_row__bad_document_variant(test_db):
-    context = IngestContext(org_id=1, results=[])
+    context = IngestContext()
     populate_for_ingest(test_db)
     _, taxonomy = get_organisation_taxonomy(test_db, context.org_id)
     row = DocumentIngestRow.from_row(1, get_doc_ingest_row_data(0))
@@ -121,7 +208,7 @@ def test_validate_row__bad_document_variant(test_db):
 
 
 def test_validate_row__good_document_variant(test_db):
-    context = IngestContext(org_id=1, results=[])
+    context = IngestContext()
     populate_for_ingest(test_db)
     _, taxonomy = get_organisation_taxonomy(test_db, context.org_id)
     row = DocumentIngestRow.from_row(1, get_doc_ingest_row_data(0))

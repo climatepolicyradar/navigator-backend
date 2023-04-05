@@ -90,7 +90,7 @@ def validate_document_row(
     # Check collection
     collection_id = row.cpr_collection_id
 
-    if collection_id in context.mde.families.keys():
+    if collection_id in context.mde.collections.keys():
         name, summary = context.mde.collections[collection_id]
         if name != row.collection_name:
             errors.append(
@@ -99,7 +99,7 @@ def validate_document_row(
                     f"Collection {collection_id} has differing name {on_row}",
                 )
             )
-        if summary != row.collection_name:
+        if summary != row.collection_summary:
             errors.append(
                 Result(
                     ResultType.ERROR,
