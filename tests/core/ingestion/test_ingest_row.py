@@ -52,14 +52,14 @@ def test_ingest_row__with_multiple_rows(test_db):
 
     # First row
     result = ingest_document_row(test_db, context, row)
-    assert 10 == len(result.keys())
+    assert 9 == len(result.keys())
     assert_dfc(test_db, 1, 1, 1)
 
     # Second row - adds another document to family
     row.cpr_document_id = "CCLW.doc.test.1"
     row.cpr_document_slug = "doc-test-1"
     result = ingest_document_row(test_db, context, row)
-    assert 4 == len(result.keys())
+    assert 3 == len(result.keys())
     assert_dfc(test_db, 2, 1, 1)
 
     # Third row - adds another family and document
@@ -68,21 +68,21 @@ def test_ingest_row__with_multiple_rows(test_db):
     row.cpr_document_id = "CCLW.doc.test.2"
     row.cpr_document_slug = "doc-test-2"
     result = ingest_document_row(test_db, context, row)
-    assert 8 == len(result.keys())
+    assert 7 == len(result.keys())
     assert_dfc(test_db, 3, 2, 1)
 
     # Forth - adds another document to the family
     row.cpr_document_id = "CCLW.doc.test.3"
     row.cpr_document_slug = "doc-test-3"
     result = ingest_document_row(test_db, context, row)
-    assert 4 == len(result.keys())
+    assert 3 == len(result.keys())
     assert_dfc(test_db, 4, 2, 1)
 
     # Finally change the family id of the document just added
     row.cpr_family_id = "CCLW.family.test.1"
     row.cpr_family_slug = "fam-test-1"
     result = ingest_document_row(test_db, context, row)
-    assert 2 == len(result.keys())
+    assert 1 == len(result.keys())
     assert_dfc(test_db, 4, 2, 1)
 
     # Now assert both families have correct documents
@@ -110,7 +110,6 @@ def test_ingest_row__creates_missing_documents(test_db):
     populate_for_ingest(test_db)
     result = ingest_document_row(test_db, context, row)
     actual_keys = set(result.keys())
-    assert result["operation"] == "Create"
     expected_keys = set(
         [
             "family_slug",
@@ -122,7 +121,6 @@ def test_ingest_row__creates_missing_documents(test_db):
             "collection",
             "collection_organisation",
             "collection_family",
-            "operation",
         ]
     )
     assert actual_keys.symmetric_difference(expected_keys) == set([])
@@ -156,9 +154,7 @@ def test_ingest_row__idempotent(test_db):
     context, row = setup_for_update(test_db)
 
     result = ingest_document_row(test_db, context, row)
-    assert len(result) == 1
-    assert "operation" in result
-    assert result["operation"] == "Update"
+    assert len(result) == 0
 
     # Assert db objects
     assert test_db.query(Slug).filter_by(name=SLUG_FAMILY_NAME).one()
@@ -220,9 +216,7 @@ def test_ingest_row__updates_collection_name(test_db):
     row.collection_name = "changed"
 
     result = ingest_document_row(test_db, context, row)
-    assert len(result) == 2
-    assert "operation" in result
-    assert result["operation"] == "Update"
+    assert len(result) == 1
     assert "collection" in result
     assert result["collection"]["title"] == "changed"
 
@@ -241,9 +235,7 @@ def test_ingest_row__updates_collection_summary(test_db):
     row.collection_summary = "changed"
 
     result = ingest_document_row(test_db, context, row)
-    assert len(result) == 2
-    assert "operation" in result
-    assert result["operation"] == "Update"
+    assert len(result) == 1
     assert "collection" in result
     assert result["collection"]["description"] == "changed"
 
@@ -262,9 +254,7 @@ def test_ingest_row__updates_document_title(test_db):
     row.document_title = "changed"
 
     result = ingest_document_row(test_db, context, row)
-    assert len(result) == 2
-    assert "operation" in result
-    assert result["operation"] == "Update"
+    assert len(result) == 1
     assert "physical_document" in result
     assert result["physical_document"]["title"] == "changed"
 
@@ -278,9 +268,7 @@ def test_ingest_row__updates_family_name(test_db):
     row.family_name = "changed"
 
     result = ingest_document_row(test_db, context, row)
-    assert len(result) == 2
-    assert "operation" in result
-    assert result["operation"] == "Update"
+    assert len(result) == 1
     assert "family" in result
     assert result["family"]["title"] == "changed"
 
@@ -299,9 +287,7 @@ def test_ingest_row__updates_family_summary(test_db):
     row.family_summary = "changed"
 
     result = ingest_document_row(test_db, context, row)
-    assert len(result) == 2
-    assert "operation" in result
-    assert result["operation"] == "Update"
+    assert len(result) == 1
     assert "family" in result
     assert result["family"]["description"] == "changed"
 
@@ -320,9 +306,7 @@ def test_ingest_row__updates_family_document_role(test_db):
     row.document_role = "ANNEX"
 
     result = ingest_document_row(test_db, context, row)
-    assert len(result) == 2
-    assert "operation" in result
-    assert result["operation"] == "Update"
+    assert len(result) == 1
     assert "family_document" in result
     assert result["family_document"]["document_role"] == "ANNEX"
 
@@ -341,9 +325,7 @@ def test_ingest_row__updates_family_document_variant(test_db):
     row.document_variant = "Translation"
 
     result = ingest_document_row(test_db, context, row)
-    assert len(result) == 2
-    assert "operation" in result
-    assert result["operation"] == "Update"
+    assert len(result) == 1
     assert "family_document" in result
     assert result["family_document"]["variant_name"] == "Translation"
 
@@ -362,9 +344,7 @@ def test_ingest_row__updates_family_category(test_db):
     row.category = FamilyCategory.LEGISLATIVE
 
     result = ingest_document_row(test_db, context, row)
-    assert len(result) == 2
-    assert "operation" in result
-    assert result["operation"] == "Update"
+    assert len(result) == 1
     assert "family" in result
     assert result["family"]["family_category"] == "Legislative"
 
@@ -383,9 +363,7 @@ def test_ingest_row__updates_family_document_type(test_db):
     row.document_type = "Edict"
 
     result = ingest_document_row(test_db, context, row)
-    assert len(result) == 2
-    assert "operation" in result
-    assert result["operation"] == "Update"
+    assert len(result) == 1
     assert "family_document" in result
     assert result["family_document"]["document_type"] == "Edict"
 
@@ -404,9 +382,7 @@ def test_ingest_row__updates_fd_slug(test_db):
     row.cpr_document_slug = "changed"
 
     result = ingest_document_row(test_db, context, row)
-    assert len(result) == 2
-    assert "operation" in result
-    assert result["operation"] == "Update"
+    assert len(result) == 1
     assert "family_document_slug" in result
     assert result["family_document_slug"]["name"] == "changed"
 

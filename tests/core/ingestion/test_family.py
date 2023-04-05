@@ -5,7 +5,6 @@ from app.core.ingestion.family import (
 )
 from app.core.ingestion.ingest_row import DocumentIngestRow
 from app.core.ingestion.physical_document import create_physical_document_from_row
-from app.core.ingestion.utils import IngestOperation
 from app.db.models.law_policy.family import (
     DocumentStatus,
     Family,
@@ -29,9 +28,7 @@ def test_family_from_row__creates(test_db: Session):
     populate_for_ingest(test_db)
     row = DocumentIngestRow.from_row(1, get_doc_ingest_row_data(0))
     result = {}
-    family = handle_family_from_row(
-        test_db, IngestOperation.CREATE, row, org_id=1, result=result
-    )
+    family = handle_family_from_row(test_db, row, org_id=1, result=result)
 
     actual_keys = set(result.keys())
     expected_keys = set(
@@ -90,7 +87,7 @@ def test_family_from_row__updates(test_db: Session):
     row.family_name = "cheese"
 
     # Get the pre-existing doc
-    family = handle_family_from_row(test_db, IngestOperation.UPDATE, row, 1, result)
+    family = handle_family_from_row(test_db, row, 1, result)
 
     assert family.title == "cheese"
     assert 1 == test_db.query(Family).filter_by(title="cheese").count()
@@ -102,7 +99,7 @@ def test_family_document_from_row__creates(test_db: Session):
     family = add_a_family(test_db)
     result = {}
     family_document = handle_family_document_from_row(
-        test_db, IngestOperation.CREATE, row, family, result=result
+        test_db, row, family, result=result
     )
 
     actual_keys = set(result.keys())
@@ -125,14 +122,12 @@ def test_family_document_from_row__updates(test_db: Session):
     row = DocumentIngestRow.from_row(1, get_doc_ingest_row_data(0))
     family = add_a_family(test_db)
     result = {}
-    handle_family_document_from_row(
-        test_db, IngestOperation.CREATE, row, family, result=result
-    )
+    handle_family_document_from_row(test_db, row, family, result=result)
     result = {}
     row.document_title = "test-title"
     row.document_role = "PRESS RELEASE"
     family_document = handle_family_document_from_row(
-        test_db, IngestOperation.UPDATE, row, family, result=result
+        test_db, row, family, result=result
     )
 
     actual_keys = set(result.keys())

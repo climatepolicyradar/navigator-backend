@@ -11,11 +11,9 @@ from app.core.ingestion.ingest_row import (
     EventIngestRow,
 )
 from app.core.organisation import get_organisation_taxonomy
-from app.core.ingestion.utils import IngestContext, IngestOperation
+from app.core.ingestion.utils import IngestContext
 from app.core.ingestion.validator import validate_document_row
 from app.db.models.app.users import Organisation
-
-from app.db.models.law_policy.family import FamilyDocument
 
 _LOGGER = logging.getLogger(__name__)
 
@@ -23,15 +21,6 @@ _LOGGER = logging.getLogger(__name__)
 _RowType = TypeVar("_RowType", bound=BaseIngestRow)
 
 ProcessFunc = Callable[[IngestContext, _RowType], None]
-
-
-def _get_ingest_operation(has_new_document: bool) -> IngestOperation:
-    # TODO : Add logic for DELETE
-    if not has_new_document:
-        return IngestOperation.CREATE
-    if has_new_document:
-        return IngestOperation.UPDATE
-    raise TypeError("Cannot determine operation for row")
 
 
 def ingest_document_row(
@@ -46,24 +35,18 @@ def ingest_document_row(
     """
     result = {}
     import_id = row.cpr_document_id
-    existing_document = db.query(FamilyDocument).get(import_id)
-
-    # TODO: extend the function to return DELETE (pass in row)
-    op = _get_ingest_operation(existing_document is not None)
 
     _LOGGER.info(
-        f"Ingest operation for row {row.row_number} is {op}.",
+        f"Ingest starting for row {row.row_number}.",
         extra={
             "props": {
                 "row_number": row.row_number,
                 "import_id": import_id,
-                "operation": op,
             }
         },
     )
-    result["operation"] = op
 
-    family = handle_family_from_row(db, op, row, context.org_id, result)
+    family = handle_family_from_row(db, row, context.org_id, result)
     handle_collection_from_row(
         db,
         row,
@@ -73,7 +56,7 @@ def ingest_document_row(
     )
 
     _LOGGER.info(
-        f"Operation {op} complete for row {row.row_number}",
+        f"Ingest complete for row {row.row_number}",
         extra={"props": {"result": str(result)}},
     )
 

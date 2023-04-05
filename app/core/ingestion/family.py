@@ -6,7 +6,6 @@ from app.core.ingestion.metadata import add_metadata
 from app.core.organisation import get_organisation_taxonomy
 from app.core.ingestion.physical_document import create_physical_document_from_row
 from app.core.ingestion.utils import (
-    IngestOperation,
     create,
     get_or_create,
     to_dict,
@@ -27,7 +26,6 @@ from app.db.models.law_policy import (
 
 def handle_family_from_row(
     db: Session,
-    op: IngestOperation,
     row: DocumentIngestRow,
     org_id: int,
     result: dict[str, Any],
@@ -46,7 +44,7 @@ def handle_family_from_row(
     """
     family = _operate_on_family(db, row, org_id, result)
 
-    handle_family_document_from_row(db, op, row, family, result)
+    handle_family_document_from_row(db, row, family, result)
 
     return family
 
@@ -116,7 +114,6 @@ def _operate_on_family(
 
 def handle_family_document_from_row(
     db: Session,
-    op: IngestOperation,
     row: DocumentIngestRow,
     family: Family,
     result: dict[str, Any],
@@ -129,7 +126,7 @@ def handle_family_document_from_row(
 
     # If the family document exists we can assume that the associated physical
     # document and slug have also been created
-    if op == IngestOperation.UPDATE:
+    if family_document is not None:
         updated = {}
         update_if_changed(
             updated,
@@ -176,7 +173,7 @@ def handle_family_document_from_row(
         # Check if slug has changed
         if db.query(Slug).get(row.cpr_document_slug) is None:
             _add_family_document_slug(db, row, family_document, result)
-    elif op == IngestOperation.CREATE:
+    else:
         physical_document = create_physical_document_from_row(db, row, result)
         family_document = FamilyDocument(
             family_import_id=family.import_id,

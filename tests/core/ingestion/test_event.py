@@ -5,7 +5,6 @@ from sqlalchemy.orm import Session
 from app.core.ingestion.event import family_event_from_row
 from app.core.ingestion.family import handle_family_from_row
 from app.core.ingestion.ingest_row import DocumentIngestRow, EventIngestRow
-from app.core.ingestion.utils import IngestOperation
 from app.db.models.law_policy.family import Family, FamilyEvent
 from tests.core.ingestion.helpers import (
     EVENT_IMPORT_ID,
@@ -22,9 +21,7 @@ def test_family_event_from_row(test_db: Session):
     event_row = EventIngestRow.from_row(1, get_event_ingest_row_data(0))
 
     result = {}
-    family = handle_family_from_row(
-        test_db, IngestOperation.CREATE, doc_row, org_id=1, result=result
-    )
+    family = handle_family_from_row(test_db, doc_row, org_id=1, result=result)
     event = family_event_from_row(test_db, event_row, result=result)
 
     assert "family_events" in result
