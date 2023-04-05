@@ -1,5 +1,4 @@
 import pytest
-
 from sqlalchemy.orm import Session
 from app.core.ingestion.ingest_row import DocumentIngestRow
 from app.core.ingestion.processor import ingest_document_row
@@ -194,7 +193,11 @@ def test_ingest_row__idempotent(test_db):
 # document_role: Test
 # document_variant: Test
 # geography_iso: Immutable
+<<<<<<< HEAD
 # documents: Test
+=======
+# documents: Immutable
+>>>>>>> main
 # category: Test
 # sectors: METADATA
 # instruments: METADATA
@@ -340,6 +343,7 @@ def test_ingest_row__updates_family_document_variant(test_db):
     )
 
 
+<<<<<<< HEAD
 def test_ingest_row__updates_source_url(test_db):
     context, row = setup_for_update(test_db)
     row.documents = "https://www.com"
@@ -350,7 +354,7 @@ def test_ingest_row__updates_source_url(test_db):
     assert result["physical_document"]["source_url"] == "https://www.com"
 
     # Check db
-    assert 2 == test_db.query(PhysicalDocument).count()
+    assert 1 == test_db.query(PhysicalDocument).count()
     assert (
         1
         == test_db.query(PhysicalDocument)
@@ -359,6 +363,8 @@ def test_ingest_row__updates_source_url(test_db):
     )
 
 
+=======
+>>>>>>> main
 def test_ingest_row__updates_family_category(test_db):
     context, row = setup_for_update(test_db)
     row.category = FamilyCategory.LEGISLATIVE
