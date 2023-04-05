@@ -159,12 +159,19 @@ def handle_family_document_from_row(
 
         # Now the physical document
         updated = {}
-        update_if_changed(
-            updated,
-            "title",
-            row.document_title,
-            family_document.physical_document,
-        )
+
+        # If source_url changed then create a new physical_document
+        if row.get_first_url() != family_document.physical_document.source_url:
+            physical_document = create_physical_document_from_row(db, row, result)
+            family_document.physical_document = physical_document
+        else:
+            update_if_changed(
+                updated,
+                "title",
+                row.document_title,
+                family_document.physical_document,
+            )
+
         if len(updated) > 0:
             db.add(family_document.physical_document)
             db.flush()
