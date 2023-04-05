@@ -205,7 +205,7 @@ def test_ingest_row__idempotent(test_db):
 # responses: METADATA - topics
 # natural_hazards: METADATA - hazard
 # keywords: METADATA
-# document_type: TODO
+# document_type: Test
 # language: Immutable
 # geography: Immutable
 # cpr_document_id: Immutable
