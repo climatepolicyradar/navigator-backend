@@ -1,5 +1,8 @@
 from sqlalchemy.orm import Session
-from app.core.ingestion.family import handle_family_from_row
+from app.core.ingestion.family import (
+    handle_family_document_from_row,
+    handle_family_from_row,
+)
 from app.core.ingestion.ingest_row import DocumentIngestRow
 from app.core.ingestion.physical_document import create_physical_document_from_row
 from app.core.ingestion.utils import IngestOperation
@@ -88,3 +91,71 @@ def test_family_from_row__updates(test_db: Session):
 
     # Get the pre-existing doc
     handle_family_from_row(test_db, IngestOperation.UPDATE, fd, row, 1, result)
+
+
+def test_family_document_from_row__creates(test_db: Session):
+    populate_for_ingest(test_db)
+    row = DocumentIngestRow.from_row(1, get_doc_ingest_row_data(0))
+    family = add_a_family(test_db)
+    result = {}
+    family_document = handle_family_document_from_row(
+        test_db, IngestOperation.CREATE, row, family, result=result
+    )
+
+    actual_keys = set(result.keys())
+    expected_keys = set(
+        [
+            "physical_document",
+            "family_document",
+            "family_document_slug",
+        ]
+    )
+    assert actual_keys.symmetric_difference(expected_keys) == set([])
+
+    db_family_doc = test_db.query(FamilyDocument).get(DOCUMENT_IMPORT_ID)
+    assert db_family_doc == family_document
+    assert db_family_doc.physical_document.title == row.document_title
+
+
+def test_family_document_from_row__updates(test_db: Session):
+    populate_for_ingest(test_db)
+    row = DocumentIngestRow.from_row(1, get_doc_ingest_row_data(0))
+    family = add_a_family(test_db)
+    result = {}
+    handle_family_document_from_row(
+        test_db, IngestOperation.CREATE, row, family, result=result
+    )
+    result = {}
+    row.document_title = "test-title"
+    row.document_role = "PRESS RELEASE"
+    family_document = handle_family_document_from_row(
+        test_db, IngestOperation.UPDATE, row, family, result=result
+    )
+
+    actual_keys = set(result.keys())
+    expected_keys = set(
+        [
+            "physical_document",
+            "family_document",
+        ]
+    )
+    assert actual_keys.symmetric_difference(expected_keys) == set([])
+
+    db_family_doc = test_db.query(FamilyDocument).get(DOCUMENT_IMPORT_ID)
+    assert db_family_doc == family_document
+    assert db_family_doc.physical_document.title == "test-title"
+    assert db_family_doc.document_role == "PRESS RELEASE"
+
+
+def add_a_family(test_db: Session) -> Family:
+    family = Family(
+        import_id=FAMILY_IMPORT_ID,
+        title="title",
+        geography_id=2,
+        description="description",
+        family_category="EXECUTIVE",
+        family_status="Published",
+    )
+    test_db.add(family)
+    test_db.flush()
+    return family

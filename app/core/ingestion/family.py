@@ -47,7 +47,7 @@ def handle_family_from_row(
     """
     family = _operate_on_family(db, op, existing_document, row, org_id, result)
 
-    _maybe_create_family_document(db, op, row, family, result)
+    handle_family_document_from_row(db, op, row, family, result)
 
     return family
 
@@ -124,7 +124,7 @@ def _operate_on_family(
     return family
 
 
-def _maybe_create_family_document(
+def handle_family_document_from_row(
     db: Session,
     op: IngestOperation,
     row: DocumentIngestRow,
