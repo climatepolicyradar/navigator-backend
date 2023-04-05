@@ -193,7 +193,7 @@ def test_ingest_row__idempotent(test_db):
 # document_role: Test
 # document_variant: Test
 # geography_iso: Immutable
-# documents: Immutable
+# documents: Test
 # category: Test
 # sectors: METADATA
 # instruments: METADATA
@@ -335,6 +335,25 @@ def test_ingest_row__updates_family_document_variant(test_db):
         1
         == test_db.query(FamilyDocument)
         .filter_by(import_id=DOCUMENT_IMPORT_ID, variant_name="Translation")
+        .count()
+    )
+
+
+def test_ingest_row__updates_source_url(test_db):
+    context, row = setup_for_update(test_db)
+    row.documents = "https://www.com"
+
+    result = ingest_document_row(test_db, context, row)
+    assert len(result) == 1
+    assert "physical_document" in result
+    assert result["physical_document"]["source_url"] == "https://www.com"
+
+    # Check db
+    assert 1 == test_db.query(PhysicalDocument).count()
+    assert (
+        1
+        == test_db.query(PhysicalDocument)
+        .filter_by(source_url="https://www.com")
         .count()
     )
 

@@ -165,6 +165,12 @@ def handle_family_document_from_row(
             row.document_title,
             family_document.physical_document,
         )
+        update_if_changed(
+            updated,
+            "source_url",
+            row.get_first_url(),
+            family_document.physical_document,
+        )
         if len(updated) > 0:
             db.add(family_document.physical_document)
             db.flush()
