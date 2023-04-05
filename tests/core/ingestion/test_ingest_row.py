@@ -357,6 +357,8 @@ def test_ingest_row__updates_source_url(test_db):
         .filter_by(source_url="https://www.com")
         .count()
     )
+    fd = test_db.query(FamilyDocument).get(row.cpr_document_id)
+    assert fd.physical_document.source_url == "https://www.com"
 
 
 def test_ingest_row__updates_family_category(test_db):
