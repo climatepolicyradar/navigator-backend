@@ -2,9 +2,9 @@ import logging
 from typing import Any, Callable, TypeVar, cast
 
 from sqlalchemy.orm import Session
-from app.core.ingestion.collection import collection_from_row
+from app.core.ingestion.collection import handle_collection_from_row
 from app.core.ingestion.event import family_event_from_row
-from app.core.ingestion.family import family_from_row
+from app.core.ingestion.family import handle_family_from_row
 from app.core.ingestion.ingest_row import (
     BaseIngestRow,
     DocumentIngestRow,
@@ -14,8 +14,6 @@ from app.core.organisation import get_organisation_taxonomy
 from app.core.ingestion.utils import IngestContext
 from app.core.ingestion.validator import validate_document_row
 from app.db.models.app.users import Organisation
-
-from app.db.models.deprecated import Document
 
 _LOGGER = logging.getLogger(__name__)
 
@@ -32,42 +30,24 @@ def ingest_document_row(
     Create the constituent elements in the database that represent this row.
 
     :param [Session] db: the connection to the database.
-    :param [DocuemntIngestRow] row: the IngestRow object of the current CSV row
+    :param [DocumentIngestRow] row: the IngestRow object of the current CSV row
     :returns [dict[str, Any]]: a result dictionary describing what was created
     """
     result = {}
     import_id = row.cpr_document_id
 
-    # TODO: Make existing document optional to allow creating new events, new documents
-    #       created without an existing document should hit the pipeline as "new", any
-    #       others should (maybe) generate updates(?)
-    existing_document = (
-        db.query(Document).filter(Document.import_id == import_id).one_or_none()
-    )
-    if existing_document is None:
-        _LOGGER.info(
-            "Existing document is None.", extra={"props": {"import_id": import_id}}
-        )
-        # FIXME: Need to be able to ingest a row that is brand new and
-        # ready for the pipeline
-
-        result["existing_document"] = False
-        # If there does not already exist a document with the given import_id,
-        # do not attempt to migrate
-        return result
-
-    _LOGGER.info("Existing document.", extra={"props": {"import_id": import_id}})
-    result["existing_document"] = True
-
-    family = family_from_row(
-        db,
-        row,
-        existing_document,
-        context.org_id,
-        result,
+    _LOGGER.info(
+        f"Ingest starting for row {row.row_number}.",
+        extra={
+            "props": {
+                "row_number": row.row_number,
+                "import_id": import_id,
+            }
+        },
     )
 
-    collection_from_row(
+    family = handle_family_from_row(db, row, context.org_id, result)
+    handle_collection_from_row(
         db,
         row,
         context.org_id,
@@ -76,7 +56,7 @@ def ingest_document_row(
     )
 
     _LOGGER.info(
-        "Created family and collection from row.",
+        f"Ingest complete for row {row.row_number}",
         extra={"props": {"result": str(result)}},
     )
 

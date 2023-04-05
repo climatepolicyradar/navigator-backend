@@ -4,10 +4,14 @@ from sqlalchemy.orm import Session
 from app.core.ingestion.ingest_row import DocumentIngestRow
 from app.core.ingestion.metadata import add_metadata
 from app.core.organisation import get_organisation_taxonomy
-from app.core.ingestion.physical_document import physical_document_from_row
-from app.core.ingestion.utils import get_or_create, to_dict
+from app.core.ingestion.physical_document import create_physical_document_from_row
+from app.core.ingestion.utils import (
+    create,
+    get_or_create,
+    to_dict,
+    update_if_changed,
+)
 
-from app.db.models.deprecated import Document
 from app.db.models.law_policy import (
     DocumentStatus,
     FamilyCategory,
@@ -20,15 +24,14 @@ from app.db.models.law_policy import (
 )
 
 
-def family_from_row(
+def handle_family_from_row(
     db: Session,
     row: DocumentIngestRow,
-    existing_document: Document,
     org_id: int,
     result: dict[str, Any],
 ) -> Family:
     """
-    Create any missing Family, FamilyDocument & Associated links from the given row
+    Create any Family + other entities and links from the row found in the db.
 
     :param [Session] db: connection to the database.
     :param [int] org_id: the organisation id associated with this row.
@@ -39,18 +42,16 @@ def family_from_row(
         database.
     :return [Family]: The family that was either retrieved or created
     """
-    # GET OR CREATE FAMILY
-    family = _maybe_create_family(db, row, org_id, result)
+    family = _operate_on_family(db, row, org_id, result)
 
-    # GET OR CREATE FAMILY DOCUMENT
-    _maybe_create_family_document(db, row, family, existing_document, result)
+    handle_family_document_from_row(db, row, family, result)
 
     return family
 
 
-def _maybe_create_family(
+def _after_create_family(
     db: Session, row: DocumentIngestRow, org_id: int, result: dict[str, Any]
-) -> Family:
+):
     def _create_family_links(family: Family):
         family_slug = Slug(name=row.cpr_family_slug, family_import_id=family.import_id)
 
@@ -66,79 +67,130 @@ def _maybe_create_family(
         id, taxonomy = get_organisation_taxonomy(db, org_id)
         add_metadata(db, cast(str, family.import_id), taxonomy, id, row)
 
+    return _create_family_links
+
+
+def _operate_on_family(
+    db: Session,
+    row: DocumentIngestRow,
+    org_id: int,
+    result: dict[str, Any],
+) -> Family:
     category = FamilyCategory(row.category.upper())
 
-    # GET GEOGRAPHY
     geography = _get_geography(db, row)
+    extra = {
+        "title": row.family_name,
+        "geography_id": geography.id,
+        "description": row.family_summary,
+        "family_category": category,
+    }
 
-    if not _validate_family_name(db, row.family_name, row.cpr_family_id):
-        raise ValueError(
-            f"Processing row {row.row_number} got family {row.family_name} "
-            "that is different to the existing family title for family id "
-            f"{row.cpr_family_id}"
+    family = db.query(Family).get(row.cpr_family_id)
+
+    if family is None:
+        family = create(
+            db,
+            Family,
+            import_id=row.cpr_family_id,
+            extra={**extra, "family_status": FamilyStatus.CREATED},
+            after_create=_after_create_family(db, row, org_id, result),
         )
-    family = get_or_create(
-        db,
-        Family,
-        import_id=row.cpr_family_id,
-        extra={
-            "title": row.family_name,
-            "geography_id": geography.id,
-            "description": row.family_summary,
-            "family_category": category,
-            "family_status": FamilyStatus.PUBLISHED,
-        },
-        after_create=_create_family_links,
-    )
-    result["family"] = to_dict(family)
+        result["family"] = to_dict(family)
+    else:
+        updated = {}
+
+        update_if_changed(updated, "title", row.family_name, family)
+        update_if_changed(updated, "description", row.family_summary, family)
+        update_if_changed(updated, "family_category", category, family)
+
+        if len(updated) > 0:
+            db.add(family)
+            db.flush()
+            result["family"] = updated
+
     return family
 
 
-def _maybe_create_family_document(
+def handle_family_document_from_row(
     db: Session,
     row: DocumentIngestRow,
     family: Family,
-    existing_document: Document,
     result: dict[str, Any],
 ) -> FamilyDocument:
     def none_if_empty(data: str) -> Optional[str]:
         return data if data != "" else None
 
-    family_document = (
-        db.query(FamilyDocument).filter_by(import_id=row.cpr_document_id).one_or_none()
-    )
+    # NOTE: op is determined by existence or otherwise of FamilyDocument
+    family_document = db.query(FamilyDocument).get(row.cpr_document_id)
+
+    # If the family document exists we can assume that the associated physical
+    # document and slug have also been created
     if family_document is not None:
-        # If the family document exists we can assume that the associated physical
-        # document and slug have also been created
-        return family_document
+        updated = {}
+        update_if_changed(
+            updated,
+            "family_import_id",
+            none_if_empty(row.cpr_family_id),
+            family_document,
+        )
+        update_if_changed(
+            updated,
+            "document_type",
+            none_if_empty(row.document_type),
+            family_document,
+        )
+        update_if_changed(
+            updated,
+            "document_role",
+            none_if_empty(row.document_role),
+            family_document,
+        )
+        update_if_changed(
+            updated,
+            "variant_name",
+            none_if_empty(row.document_variant),
+            family_document,
+        )
+        if len(updated) > 0:
+            db.add(family_document)
+            db.flush()
+            result["family_document"] = updated
 
-    physical_document = physical_document_from_row(db, row, existing_document, result)
-    family_document = FamilyDocument(
-        family_import_id=family.import_id,
-        physical_document_id=physical_document.id,
-        import_id=row.cpr_document_id,
-        variant_name=none_if_empty(row.document_variant),
-        document_status=DocumentStatus.PUBLISHED,
-        document_type=none_if_empty(row.document_type),
-        document_role=none_if_empty(row.document_role),
-    )
-    db.add(family_document)
-    db.flush()
+        # Now the physical document
+        updated = {}
+        update_if_changed(
+            updated,
+            "title",
+            row.document_title,
+            family_document.physical_document,
+        )
+        if len(updated) > 0:
+            db.add(family_document.physical_document)
+            db.flush()
+            result["physical_document"] = updated
 
-    result["family_document"] = to_dict(family_document)
-    _add_family_document_slug(db, row, family_document, result)
+        # Check if slug has changed
+        if db.query(Slug).get(row.cpr_document_slug) is None:
+            _add_family_document_slug(db, row, family_document, result)
+    else:
+        physical_document = create_physical_document_from_row(db, row, result)
+        family_document = FamilyDocument(
+            family_import_id=family.import_id,
+            physical_document_id=physical_document.id,
+            import_id=row.cpr_document_id,
+            variant_name=none_if_empty(row.document_variant),
+            document_status=DocumentStatus.PUBLISHED,
+            document_type=none_if_empty(row.document_type),
+            document_role=none_if_empty(row.document_role),
+        )
+
+        db.add(family_document)
+        db.flush()
+        result["family_document"] = to_dict(family_document)
+        _add_family_document_slug(db, row, family_document, result)
 
     return family_document
-
-
-def _validate_family_name(db: Session, family_name: str, import_id: str) -> bool:
-    matching_family = (
-        db.query(Family).filter(Family.import_id == import_id).one_or_none()
-    )
-    if matching_family is None:
-        return True
-
-    return matching_family.title.strip().lower() == family_name.strip().lower()
 
 
 def _get_geography(db: Session, row: DocumentIngestRow) -> Geography:
@@ -167,11 +219,11 @@ def _add_family_document_slug(
     :param [dict[str, Any]] result: a dictionary in which to record what was created.
     :return [Slug]: the created slug object
     """
-    family_document_slug = Slug(
+    family_document_slug = get_or_create(
+        db,
+        Slug,
         name=row.cpr_document_slug,
         family_document_import_id=family_document.import_id,
     )
-    db.add(family_document_slug)
-    db.flush()
-    result["family_document_slug"] = {"document_slug": to_dict(family_document_slug)}
+    result["family_document_slug"] = to_dict(family_document_slug)
     return family_document_slug

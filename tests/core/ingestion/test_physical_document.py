@@ -1,30 +1,23 @@
 from sqlalchemy.orm import Session
 
 from app.core.ingestion.ingest_row import DocumentIngestRow
-from app.core.ingestion.physical_document import physical_document_from_row
-from app.db.models.deprecated.document import Document
+from app.core.ingestion.physical_document import create_physical_document_from_row
 from app.db.models.document import PhysicalDocument
 from app.db.models.document.physical_document import PhysicalDocumentLanguage
 from tests.core.ingestion.helpers import (
-    DOCUMENT_IMPORT_ID,
     DOCUMENT_TITLE,
     get_doc_ingest_row_data,
-    init_for_ingest,
+    populate_for_ingest,
 )
 
 
 def test_physical_document_from_row(test_db: Session):
-    init_for_ingest(test_db)
+    populate_for_ingest(test_db)
     row = DocumentIngestRow.from_row(1, get_doc_ingest_row_data(0))
     row.language = "English"
     result = {}
 
-    doc = (
-        test_db.query(Document)
-        .filter(Document.import_id == DOCUMENT_IMPORT_ID)
-        .one_or_none()
-    )
-    phys_doc = physical_document_from_row(test_db, row, doc, result)
+    phys_doc = create_physical_document_from_row(test_db, row, result)
     test_db.flush()
 
     assert phys_doc

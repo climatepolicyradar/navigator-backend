@@ -4,15 +4,13 @@ from sqlalchemy.orm import Session
 from app.core.ingestion.ingest_row import DocumentIngestRow
 from app.core.ingestion.utils import to_dict
 
-from app.db.models.deprecated import Document
 from app.db.models.document import PhysicalDocument
 from app.db.models.document.physical_document import Language, PhysicalDocumentLanguage
 
 
-def physical_document_from_row(
+def create_physical_document_from_row(
     db: Session,
     row: DocumentIngestRow,
-    existing_document: Document,
     result: dict[str, Any],
 ) -> PhysicalDocument:
     """
@@ -26,9 +24,9 @@ def physical_document_from_row(
     physical_document = PhysicalDocument(
         title=row.document_title,
         source_url=row.get_first_url(),
-        md5_sum=existing_document.md5_sum,
-        content_type=existing_document.content_type,
-        cdn_object=existing_document.cdn_object,
+        md5_sum=None,
+        content_type=None,
+        cdn_object=None,
     )
     db.add(physical_document)
     db.flush()

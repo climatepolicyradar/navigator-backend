@@ -63,9 +63,13 @@ def setup_with_docs(test_db, mocker):
     test_db.commit()
 
 
-def setup_with_two_docs(
-    test_db, mocker, doc_data=TWO_DFC_ROW, event_data=TWO_EVENT_ROWS
-):
+def setup_with_two_docs(test_db, mocker):
+    setup_with_multiple_docs(
+        test_db, mocker, doc_data=TWO_DFC_ROW, event_data=TWO_EVENT_ROWS
+    )
+
+
+def setup_with_multiple_docs(test_db, mocker, doc_data, event_data):
     mock_s3 = mocker.patch("app.core.aws.S3Client")
 
     populate_taxonomy(test_db)

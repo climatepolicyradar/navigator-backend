@@ -5,8 +5,10 @@ from pytest_mock import MockerFixture
 from app.db.models.law_policy.family import Family, FamilyEvent
 from tests.routes.document_helpers import (
     TWO_DFC_ROW_ONE_LANGUAGE,
+    TWO_EVENT_ROWS,
     populate_languages,
     setup_with_docs,
+    setup_with_multiple_docs,
     setup_with_two_docs,
 )
 
@@ -79,7 +81,7 @@ def test_documents_family_slug_returns_correct_json(
     assert json_response["summary"] == "Summary1"
     assert json_response["geography"] == "GEO"
     assert json_response["category"] == "Executive"
-    assert json_response["status"] == "Published"
+    assert json_response["status"] == "Created"
     assert json_response["published_date"] == "2019-12-25T00:00:00+00:00"
     assert json_response["last_updated_date"] == "2019-12-25T00:00:00+00:00"
 
@@ -155,7 +157,7 @@ def test_documents_doc_slug_preexisting_objects(
     assert doc["slug"] == "DocSlug2"
     assert doc["title"] == "Title2"
     assert doc["md5_sum"] is None
-    assert doc["cdn_object"] == "https://cdn.climatepolicyradar.org/"
+    assert doc["cdn_object"] is None
     assert doc["content_type"] is None
     assert doc["source_url"] == "http://another_somewhere"
     assert doc["language"] == ""
@@ -169,7 +171,9 @@ def test_physical_doc_languages(
     mocker: Callable[..., Generator[MockerFixture, None, None]],
 ):
     populate_languages(test_db)
-    setup_with_two_docs(test_db, mocker, doc_data=TWO_DFC_ROW_ONE_LANGUAGE)
+    setup_with_multiple_docs(
+        test_db, mocker, doc_data=TWO_DFC_ROW_ONE_LANGUAGE, event_data=TWO_EVENT_ROWS
+    )
 
     response = client.get(
         "/api/v1/documents/DocSlug1?group_documents=True",
