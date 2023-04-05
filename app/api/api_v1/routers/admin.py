@@ -1,5 +1,4 @@
 import logging
-from io import StringIO
 from typing import cast, Union
 from urllib.parse import urlparse
 from sqlalchemy.orm import Session
@@ -16,14 +15,11 @@ from fastapi import (
     status,
 )
 from sqlalchemy.exc import IntegrityError
-from sqlalchemy import update
 from app.core.aws import S3Document
 
 from app.api.api_v1.schemas.document import (
-    BulkImportDetail,
     BulkImportResult,
     ClimateLawsValidationResult,
-    DocumentCreateRequest,
     DocumentUpdateRequest,
     RDSDataValidationResult,
 )
@@ -53,20 +49,11 @@ from app.core.ingestion.validator import validate_event_row
 from app.core.validate import physical_document_source_urls, document_source_urls
 from app.core.validate import family_document_ids, document_ids
 from app.core.validation import IMPORT_ID_MATCHER
-from app.core.validation.types import (
-    ImportSchemaMismatchError,
-    DocumentsFailedValidationError,
-)
+from app.core.validation.types import ImportSchemaMismatchError
 from app.core.validation.util import (
     get_new_s3_prefix,
-    get_valid_metadata,
     write_csv_to_s3,
 )
-from app.core.validation.cclw.law_policy.process_csv import (
-    extract_documents,
-    validated_input,
-)
-from app.db.crud.deprecated_document import start_import
 from app.db.crud.password_reset import (
     create_password_reset_token,
     invalidate_existing_password_reset_tokens,
@@ -78,7 +65,7 @@ from app.db.crud.user import (
     get_user,
     get_users,
 )
-from app.db.models.deprecated.document import Document
+from app.db.models.law_policy.family import FamilyDocument, Slug
 from app.db.session import get_db
 
 _LOGGER = logging.getLogger(__name__)
@@ -617,139 +604,6 @@ def _validate_law_policy_csv(
     return documents_file_contents, message
 
 
-# TODO: This is the old endpoint which will get removed,
-#       but left here for reference.
-@r.post(
-    "/bulk-imports/cclw/law-policy",
-    response_model=BulkImportResult,
-    status_code=status.HTTP_202_ACCEPTED,
-)
-def import_law_policy(
-    request: Request,
-    law_policy_csv: UploadFile,
-    background_tasks: BackgroundTasks,
-    db=Depends(get_db),
-    current_user=Depends(get_current_active_superuser),
-    s3_client=Depends(get_s3_client),
-):
-    """Process a Law/Policy data import"""
-    _LOGGER.info(
-        f"Superuser '{current_user.email}' triggered bulk import request for "
-        "CCLW Law & Policy data"
-    )
-
-    try:
-        file_contents = law_policy_csv.file.read().decode("utf8")
-        csv_reader = validated_input(StringIO(initial_value=file_contents))
-
-        valid_metadata = get_valid_metadata(db)
-        existing_import_ids = [id[0] for id in db.query(Document.import_id)]
-
-        encountered_errors = {}
-        document_create_objects: list[DocumentCreateRequest] = []
-        import_ids_to_create = []
-        total_document_count = 0
-
-        # TODO: Check for document existence?
-        for validation_result in extract_documents(
-            csv_reader=csv_reader, valid_metadata=valid_metadata
-        ):
-            total_document_count += 1
-            if validation_result.errors:
-                encountered_errors[validation_result.row] = validation_result.errors
-            else:
-                import_ids_to_create.append(validation_result.import_id)
-                if validation_result.import_id not in existing_import_ids:
-                    document_create_objects.append(validation_result.create_request)
-
-        if encountered_errors:
-            raise DocumentsFailedValidationError(
-                message="File failed detailed validation.", details=encountered_errors
-            )
-
-        documents_ids_already_exist = set(import_ids_to_create).intersection(
-            set(existing_import_ids)
-        )
-        document_skipped_count = len(documents_ids_already_exist)
-        _LOGGER.info(
-            "Bulk Import Validation Complete.",
-            extra={
-                "props": {
-                    "superuser_email": current_user.email,
-                    "document_count": total_document_count,
-                    "document_added_count": total_document_count
-                    - document_skipped_count,
-                    "document_skipped_count": document_skipped_count,
-                    "document_skipped_ids": list(documents_ids_already_exist),
-                }
-            },
-        )
-
-        s3_prefix = get_new_s3_prefix()
-        result: Union[S3Document, bool] = write_csv_to_s3(
-            s3_client=s3_client,
-            s3_prefix=s3_prefix,
-            s3_content_label="documents",
-            file_contents=file_contents,
-        )
-
-        csv_s3_location = "write failed" if type(result) is bool else str(result.url)
-        _LOGGER.info(
-            "Write Bulk Import CSV complete.",
-            extra={
-                "props": {
-                    "superuser_email": current_user.email,
-                    "csv_s3_location": csv_s3_location,
-                }
-            },
-        )
-
-        background_tasks.add_task(
-            start_import,
-            db,
-            s3_client,
-            s3_prefix,
-            document_create_objects,
-        )
-
-        _LOGGER.info(
-            "Background Bulk Import Task added",
-            extra={
-                "props": {
-                    "superuser_email": current_user.email,
-                    "csv_s3_location": csv_s3_location,
-                }
-            },
-        )
-
-        # TODO: Add some way the caller can monitor processing pipeline...
-
-        return BulkImportResult(
-            import_s3_prefix=s3_prefix,
-            detail=BulkImportDetail(
-                document_count=total_document_count,
-                document_added_count=total_document_count - document_skipped_count,
-                document_skipped_count=document_skipped_count,
-                document_skipped_ids=list(documents_ids_already_exist),
-            ),
-        )
-    except ImportSchemaMismatchError as e:
-        raise HTTPException(
-            status_code=status.HTTP_400_BAD_REQUEST,
-            detail=e.details,
-        ) from e
-    except DocumentsFailedValidationError as e:
-        raise HTTPException(
-            status_code=status.HTTP_422_UNPROCESSABLE_ENTITY,
-            detail=e.details,
-        ) from e
-    except Exception as e:
-        _LOGGER.exception("Unexpected error")
-        raise HTTPException(
-            status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
-        ) from e
-
-
 @r.put("/documents/{import_id_or_slug}", status_code=status.HTTP_200_OK)
 async def update_document(
     request: Request,
@@ -771,34 +625,37 @@ async def update_document(
         },
     )
 
-    # Note this code relies on the fields being the same as the db column names
-    doc_update = update(Document)
-    doc_update = doc_update.values(meta_data.dict())
-
+    num_changed = 0
     import_id = None
     slug = None
 
-    doc_query = db.query(Document)
+    doc_query = db.query(FamilyDocument)
     if IMPORT_ID_MATCHER.match(import_id_or_slug) is not None:
         import_id = import_id_or_slug
-        doc_update = doc_update.where(Document.import_id == import_id)
-        doc_query = doc_query.filter(Document.import_id == import_id)
+        doc_query = doc_query.filter(FamilyDocument.import_id == import_id)
         _LOGGER.info("update_document called with import_id")
     else:
         slug = import_id_or_slug
-        doc_update = doc_update.where(Document.slug == slug)
-        doc_query = doc_query.filter(Document.slug == slug)
+        doc_query.join(
+            Slug, Slug.family_document_import_id == FamilyDocument.import_id
+        ).filter(Slug.name == slug)
         _LOGGER.info("update_document called with slug")
 
-    existing_doc = doc_query.first()
+    existing_doc: FamilyDocument = doc_query.first()
 
     if existing_doc is None:
         raise HTTPException(
             status_code=status.HTTP_422_UNPROCESSABLE_ENTITY,
+            detail="FamilyDocument does not exist",
+        )
+    if existing_doc.physical_document is None:
+        raise HTTPException(
+            status_code=status.HTTP_422_UNPROCESSABLE_ENTITY,
+            detail="Referenced FamilyDocument does not link to a PhysicalDocument",
         )
 
-    # TODO: Enforce uniqueness on import_id and slug on "Document"
-    num_changed = db.execute(doc_update).rowcount
+    # Note this code relies on the fields being the same as the db column names
+    # FIXME: implement functionality to update FamilyDocument objects
 
     if num_changed == 0:
         _LOGGER.info("update_document complete - nothing changed")
@@ -824,15 +681,18 @@ async def update_document(
                 "superuser_email": current_user.email,
                 "num_changed": num_changed,
                 "import_id": existing_doc.import_id,
-                "md5_sum": existing_doc.md5_sum,
-                "content_type": existing_doc.content_type,
-                "cdn_object": existing_doc.cdn_object,
+                "md5_sum": existing_doc.physical_document.md5_sum,
+                "content_type": existing_doc.physical_document.content_type,
+                "cdn_object": existing_doc.physical_document.cdn_object,
             }
         },
     )
     return existing_doc
 
 
+# The following are requests to validate the internal state of the database. They will
+# probably form the basis of regular data healthchecks run periodically in a future
+# admin interface.
 @r.get(
     "/validate/climate-laws-urls",
     response_model=ClimateLawsValidationResult,
