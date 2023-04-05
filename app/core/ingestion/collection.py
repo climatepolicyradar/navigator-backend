@@ -31,6 +31,7 @@ def handle_collection_from_row(
     if not row.cpr_collection_id or row.cpr_collection_id == "n/a":
         return None
 
+    # First check for the actual collection
     existing_collection = db.query(Collection).get(row.cpr_collection_id)
 
     if existing_collection is None:
@@ -49,14 +50,7 @@ def handle_collection_from_row(
             organisation_id=org_id,
         )
 
-        collection_family = create(
-            db,
-            CollectionFamily,
-            collection_import_id=collection.import_id,
-            family_import_id=family_import_id,
-        )
         result["collection_organisation"] = to_dict(collection_organisation)
-        result["collection_family"] = to_dict(collection_family)
         result["collection"] = to_dict(collection)
     else:
         collection = existing_collection
@@ -67,5 +61,24 @@ def handle_collection_from_row(
             result["collection"] = updated
             db.add(collection)
             db.flush()
+
+    # Second check for the family - collection link
+    existing_link = (
+        db.query(CollectionFamily)
+        .filter_by(
+            collection_import_id=row.cpr_collection_id,
+            family_import_id=row.cpr_family_id,
+        )
+        .one_or_none()
+    )
+
+    if existing_link is None:
+        collection_family = create(
+            db,
+            CollectionFamily,
+            collection_import_id=collection.import_id,
+            family_import_id=family_import_id,
+        )
+        result["collection_family"] = to_dict(collection_family)
 
     return collection

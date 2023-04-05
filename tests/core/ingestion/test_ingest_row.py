@@ -10,6 +10,7 @@ from app.db.models.law_policy.collection import (
 )
 from app.db.models.law_policy.family import (
     Family,
+    FamilyCategory,
     FamilyDocument,
     FamilyOrganisation,
     Slug,
@@ -125,16 +126,16 @@ def test_ingest_row__idempotent(test_db):
 # family_name: Test
 # family_summary: Test
 # document_role: Test
-# document_variant: TODO
+# document_variant: Test
 # geography_iso: Immutable
 # documents: Immutable
-# category: TODO
+# category: Test
 # sectors: METADATA
 # instruments: METADATA
 # frameworks: METADATA
 # responses: METADATA - topics
 # natural_hazards: METADATA - hazard
-# keywords: TODO
+# keywords: METADATA
 # document_type: TODO
 # language: Immutable
 # geography: Immutable
@@ -283,6 +284,48 @@ def test_ingest_row__updates_family_document_variant(test_db):
         1
         == test_db.query(FamilyDocument)
         .filter_by(import_id=DOCUMENT_IMPORT_ID, variant_name="Translation")
+        .count()
+    )
+
+
+def test_ingest_row__updates_family_category(test_db):
+    context, row = setup_for_update(test_db)
+    row.category = FamilyCategory.LEGISLATIVE
+
+    result = ingest_document_row(test_db, context, row)
+    assert len(result) == 2
+    assert "operation" in result
+    assert result["operation"] == "Update"
+    assert "family" in result
+    assert result["family"]["family_category"] == "Legislative"
+
+    # Check db
+    assert 1 == test_db.query(Family).count()
+    assert (
+        1
+        == test_db.query(Family)
+        .filter_by(import_id=FAMILY_IMPORT_ID, family_category="Legislative")
+        .count()
+    )
+
+
+def test_ingest_row__updates_family_document_type(test_db):
+    context, row = setup_for_update(test_db)
+    row.document_type = "Edict"
+
+    result = ingest_document_row(test_db, context, row)
+    assert len(result) == 2
+    assert "operation" in result
+    assert result["operation"] == "Update"
+    assert "family_document" in result
+    assert result["family_document"]["document_type"] == "Edict"
+
+    # Check db
+    assert 1 == test_db.query(FamilyDocument).count()
+    assert (
+        1
+        == test_db.query(FamilyDocument)
+        .filter_by(import_id=DOCUMENT_IMPORT_ID, document_type="Edict")
         .count()
     )
 
