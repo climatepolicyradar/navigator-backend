@@ -7,7 +7,7 @@ from collections import OrderedDict
 from dataclasses import dataclass
 from datetime import datetime
 from pathlib import Path
-from typing import Any, Mapping, Optional, Sequence
+from typing import Any, Callable, Mapping, Optional, Sequence
 import string
 
 from opensearchpy import OpenSearch
@@ -229,6 +229,7 @@ class OpenSearchConnection:
             opensearch_request.query, preference, indices
         )
 
+        # TODO: define & use appropriate sort in process search response body families
         return process_search_response_body_families(
             opensearch_response_body,
             document_extra_info,
@@ -652,6 +653,8 @@ def process_search_response_body_families(
     document_extra_info: Mapping[str, Mapping[str, str]],
     limit: int = 10,
     offset: int = 0,
+    sort_fn: Optional[Callable[[SearchResponseFamily], str]] = None,
+    sort_reversed: bool = False,
 ) -> SearchResponse:
     search_json_response = opensearch_response_body.raw_response
     search_response_document = None
@@ -743,10 +746,19 @@ def process_search_response_body_families(
             extra={"props": {"unknown document IDs": list(unknown_document_ids)}},
         )
 
+    if sort_fn is not None:
+        sorted_families = sorted(
+            list(families.values()),
+            key=sort_fn,
+            reverse=sort_reversed,
+        )
+    else:
+        sorted_families = list(families.values())
+
     search_response = SearchResponse(
         hits=len(families),
         query_time_ms=opensearch_response_body.request_time_ms,
-        families=list(families.values())[offset : offset + limit],
+        families=sorted_families[offset : offset + limit],
     )
 
     return search_response
