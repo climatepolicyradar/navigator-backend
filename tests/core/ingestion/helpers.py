@@ -78,8 +78,9 @@ DOCUMENT_IMPORT_ID = "CCLW.executive.1001.0"
 SLUG_DOCUMENT_NAME = "DocSlug1"
 COLLECTION_IMPORT_ID = "CPR.Collection.1"
 
-FOUR_EVENT_ROWS = """Id,Eventable type,Eventable Id,Eventable name,Event type,Title,Description,Date,Url,CPR Event ID,CPR Family ID,Event Status
+FIVE_EVENT_ROWS = """Id,Eventable type,Eventable Id,Eventable name,Event type,Title,Description,Date,Url,CPR Event ID,CPR Family ID,Event Status
 1101,Legislation,1001,Title1,Passed/Approved,Published,,2019-12-25,,CCLW.legislation_event.1101.0,CCLW.family.1001.0,OK
+1101,Legislation,1001,Title1,Amended,Amended,,2021-12-25,,CCLW.legislation_event.1101.1,CCLW.family.1001.0,OK
 1102,Legislation,1001,Title1,Entered Into Force,Entered into force,,2018-01-01,,CCLW.legislation_event.1102.1,CCLW.family.1001.0,DUPLICATED
 1103,Legislation,1002,Title2,Passed/Approved,Approved,,2022-06-01,,CCLW.legislation_event.1103.0,CCLW.family.1002.0,OK
 1104,Legislation,1003,Title3,Passed/Approved,launched,,2018-05-18,,CCLW.legislation_event.1104.0,CCLW.family.1003.0,OK
@@ -121,7 +122,7 @@ def get_doc_ingest_row_data(num: int, contents: str = THREE_DOC_ROWS) -> dict[st
 
 
 def get_event_ingest_row_data(
-    num: int, contents: str = FOUR_EVENT_ROWS
+    num: int, contents: str = FIVE_EVENT_ROWS
 ) -> dict[str, str]:
     """
     Gets the event ingest data at the indexed row.

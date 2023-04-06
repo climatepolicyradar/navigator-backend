@@ -773,14 +773,13 @@ def create_search_response_family(
     document_family_info: Mapping[str, Mapping[str, str]],
 ) -> SearchResponseFamily:
     document_info = document_family_info[opensearch_match.document_id]
-    family_date_str = opensearch_match.document_date
-    family_date = datetime.strptime(family_date_str, "%d/%m/%Y").isoformat()
     return SearchResponseFamily(
         family_slug=document_info["family_slug"],
         family_name=document_info["family_title"],
         family_description=document_info["family_description"],
         family_category=document_info["family_category"],
-        family_date=family_date,
+        family_date=document_info["family_published_date"],
+        family_last_updated_date=document_info["family_last_updated_date"],
         family_source=opensearch_match.document_source,
         family_geography=opensearch_match.document_geography,
         family_metadata={},  # FIXME: complete?

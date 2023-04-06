@@ -1,6 +1,6 @@
 import abc
 from dataclasses import fields
-from datetime import datetime
+from datetime import datetime, timezone
 from typing import Any, ClassVar, Sequence
 
 from pydantic import ConfigDict, Extra
@@ -93,7 +93,7 @@ class BaseIngestRow(abc.ABC):
             return value
 
         if field_info[key] == datetime:
-            return datetime.strptime(value, "%Y-%m-%d")
+            return datetime.strptime(value, "%Y-%m-%d").replace(tzinfo=timezone.utc)
 
         if field_info[key] == list[str]:
             return [e.strip() for e in value.split(";") if e.strip()]
