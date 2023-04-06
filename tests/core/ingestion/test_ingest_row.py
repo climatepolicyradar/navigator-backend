@@ -18,6 +18,7 @@ from app.db.models.law_policy.family import (
     Slug,
 )
 from tests.core.ingestion.helpers import (
+    BAD_MULTI_URL,
     COLLECTION_IMPORT_ID,
     DOCUMENT_IMPORT_ID,
     DOCUMENT_TITLE,
@@ -44,7 +45,7 @@ def assert_dfc(db: Session, n_docs: int, n_families: int, n_collections: int):
     assert n_collections == db.query(Collection).count()
 
 
-def test_ingest_row__with_multiple_rows(test_db):
+def test_ingest_row__with_multiple_rows(test_db: Session):
     context = IngestContext()
     row = DocumentIngestRow.from_row(1, get_doc_ingest_row_data(0))
     row.cpr_family_id = "CCLW.family.test.1"
@@ -105,7 +106,7 @@ def test_ingest_row__with_multiple_rows(test_db):
     assert 2 == test_db.query(CollectionFamily).count()
 
 
-def test_ingest_row__creates_missing_documents(test_db):
+def test_ingest_row__creates_missing_documents(test_db: Session):
     context = IngestContext()
     row = DocumentIngestRow.from_row(1, get_doc_ingest_row_data(0))
     populate_for_ingest(test_db)
@@ -151,7 +152,7 @@ def test_ingest_row__creates_missing_documents(test_db):
     )
 
 
-def test_ingest_row__idempotent(test_db):
+def test_ingest_row__idempotent(test_db: Session):
     context, row = setup_for_update(test_db)
 
     result = ingest_document_row(test_db, context, row)
@@ -212,7 +213,7 @@ def test_ingest_row__idempotent(test_db):
 # cpr_document_slug: Test
 
 
-def test_ingest_row__updates_collection_name(test_db):
+def test_ingest_row__updates_collection_name(test_db: Session):
     context, row = setup_for_update(test_db)
     row.collection_name = "changed"
 
@@ -231,7 +232,7 @@ def test_ingest_row__updates_collection_name(test_db):
     )
 
 
-def test_ingest_row__updates_collection_summary(test_db):
+def test_ingest_row__updates_collection_summary(test_db: Session):
     context, row = setup_for_update(test_db)
     row.collection_summary = "changed"
 
@@ -250,7 +251,7 @@ def test_ingest_row__updates_collection_summary(test_db):
     )
 
 
-def test_ingest_row__updates_document_title(test_db):
+def test_ingest_row__updates_document_title(test_db: Session):
     context, row = setup_for_update(test_db)
     row.document_title = "changed"
 
@@ -264,7 +265,7 @@ def test_ingest_row__updates_document_title(test_db):
     assert 1 == test_db.query(PhysicalDocument).filter_by(title="changed").count()
 
 
-def test_ingest_row__updates_family_name(test_db):
+def test_ingest_row__updates_family_name(test_db: Session):
     context, row = setup_for_update(test_db)
     row.family_name = "changed"
 
@@ -283,7 +284,7 @@ def test_ingest_row__updates_family_name(test_db):
     )
 
 
-def test_ingest_row__updates_family_summary(test_db):
+def test_ingest_row__updates_family_summary(test_db: Session):
     context, row = setup_for_update(test_db)
     row.family_summary = "changed"
 
@@ -302,7 +303,7 @@ def test_ingest_row__updates_family_summary(test_db):
     )
 
 
-def test_ingest_row__updates_family_document_role(test_db):
+def test_ingest_row__updates_family_document_role(test_db: Session):
     context, row = setup_for_update(test_db)
     row.document_role = "ANNEX"
 
@@ -321,7 +322,7 @@ def test_ingest_row__updates_family_document_role(test_db):
     )
 
 
-def test_ingest_row__updates_family_document_variant(test_db):
+def test_ingest_row__updates_family_document_variant(test_db: Session):
     context, row = setup_for_update(test_db)
     row.document_variant = "Translation"
 
@@ -340,7 +341,7 @@ def test_ingest_row__updates_family_document_variant(test_db):
     )
 
 
-def test_ingest_row__updates_source_url(test_db):
+def test_ingest_row__updates_source_url(test_db: Session):
     context, row = setup_for_update(test_db)
     row.documents = "https://www.com"
 
@@ -361,7 +362,7 @@ def test_ingest_row__updates_source_url(test_db):
     assert fd.physical_document.source_url == "https://www.com"
 
 
-def test_ingest_row__updates_family_category(test_db):
+def test_ingest_row__updates_family_category(test_db: Session):
     context, row = setup_for_update(test_db)
     row.category = FamilyCategory.LEGISLATIVE
 
@@ -380,7 +381,7 @@ def test_ingest_row__updates_family_category(test_db):
     )
 
 
-def test_ingest_row__updates_family_document_type(test_db):
+def test_ingest_row__updates_family_document_type(test_db: Session):
     context, row = setup_for_update(test_db)
     row.document_type = "Edict"
 
@@ -399,7 +400,7 @@ def test_ingest_row__updates_family_document_type(test_db):
     )
 
 
-def test_ingest_row__updates_fd_slug(test_db):
+def test_ingest_row__updates_fd_slug(test_db: Session):
     context, row = setup_for_update(test_db)
     row.cpr_document_slug = "changed"
 
@@ -432,7 +433,9 @@ def test_IngestRow__from_row():
 
 
 def test_IngestRow__from_row_raises_when_multi_urls():
-    ingest_row = DocumentIngestRow.from_row(1, get_doc_ingest_row_data(1))
+    ingest_row = DocumentIngestRow.from_row(
+        1, get_doc_ingest_row_data(0, contents=BAD_MULTI_URL)
+    )
 
     assert ingest_row
     assert ingest_row.cpr_document_id == "CCLW.executive.1002.0"
