@@ -20,7 +20,6 @@ from app.api.api_v1.schemas.search import (
 )
 from app.core.search import _FILTER_FIELD_MAP, OpenSearchQueryConfig
 from app.db.models.app import Organisation
-from app.db.models.deprecated import Category, Document, Source, DocumentType
 from app.db.models.law_policy.family import (
     DocumentStatus,
     EventStatus,
@@ -38,81 +37,8 @@ from app.db.models.law_policy.family import (
 )
 from app.db.models.document import PhysicalDocument
 from app.initial_data import populate_geography
-from tests.routes.test_documents_deprecated import create_4_documents
 
 SEARCH_ENDPOINT = "/api/v1/searches"
-
-
-def _populate_search_db_documents(db: Session) -> None:
-    documents: dict[str, Document] = {}
-    document_types: dict[str, DocumentType] = {}
-    categories: dict[str, Category] = {}
-
-    populate_geography(db)
-    source = Source(name="CCLW")
-    db.add(source)
-    db.commit()
-    db.refresh(source)
-
-    containing_dir = Path(__file__).parent
-    data_dir = containing_dir.parent / "data"
-    for f in data_dir.iterdir():
-        if f.is_file() and f.suffixes == [".json"]:
-            with open(f, "r") as of:
-                for line in of.readlines():
-                    search_document = json.loads(line)
-                    doc_details = search_document["_source"]
-
-                    doc_id = doc_details["document_id"]
-                    if doc_id in documents:
-                        continue
-
-                    if doc_details["document_category"] not in categories:
-                        doc_category = Category(
-                            name=doc_details["document_category"],
-                            description="Really doesn't matter",
-                        )
-                        db.add(doc_category)
-                        db.commit()
-                        db.refresh(doc_category)
-                        categories[doc_details["document_category"]] = doc_category
-
-                    if doc_details["document_type"] not in document_types:
-                        doc_type = DocumentType(
-                            name=doc_details["document_type"],
-                            description="Doesn't matter",
-                        )
-                        db.add(doc_type)
-                        db.commit()
-                        db.refresh(doc_type)
-                        document_types[doc_details["document_type"]] = doc_type
-
-                    geography_id = (
-                        db.query(Geography)
-                        .filter(Geography.value == doc_details["document_geography"])
-                        .one()
-                        .id
-                    )
-                    doc = Document(
-                        publication_ts=datetime.strptime(
-                            doc_details["document_date"], "%d/%m/%Y"
-                        ),
-                        name=doc_details["document_name"],
-                        description=doc_details["document_description"],
-                        source_url=doc_details["document_source_url"],
-                        source_id=source.id,
-                        url=doc_details["document_cdn_object"],
-                        md5_sum=doc_details["document_md5_sum"],
-                        slug=doc_details["document_slug"],
-                        import_id=doc_details["document_id"],
-                        geography_id=geography_id,
-                        type_id=document_types[doc_details["document_type"]].id,
-                        category_id=categories[doc_details["document_category"]].id,
-                    )
-                    db.add(doc)
-                    db.commit()
-                    db.refresh(doc)
-                    documents[doc_id] = doc
 
 
 def _populate_search_db_families(db: Session) -> None:
@@ -1117,20 +1043,13 @@ def test_time_taken(test_opensearch, monkeypatch, client):
 
 
 @pytest.mark.search
-@pytest.mark.parametrize("group_documents", [True, False])
 def test_empty_search_term_performs_browse(
-    group_documents,
     client,
     test_db,
 ):
     """Make sure that empty search term returns results in browse mode."""
-    if group_documents:
-        _populate_search_db_families(test_db)
-        search_endpoint = f"{SEARCH_ENDPOINT}?group_documents=True"
-    else:
-        populate_geography(test_db)
-        create_4_documents(test_db)
-        search_endpoint = SEARCH_ENDPOINT
+    _populate_search_db_families(test_db)
+    search_endpoint = f"{SEARCH_ENDPOINT}?group_documents=True"
 
     response = client.post(
         search_endpoint,
@@ -1138,29 +1057,19 @@ def test_empty_search_term_performs_browse(
     )
     assert response.status_code == 200
     assert response.json()["hits"] > 0
-    if group_documents:
-        assert len(response.json()["families"]) > 0
-    else:
-        assert len(response.json()["documents"]) > 0
+    assert len(response.json()["families"]) > 0
 
 
 @pytest.mark.search
-@pytest.mark.parametrize("group_documents", [True, False])
 @pytest.mark.parametrize("order", [SortOrder.ASCENDING, SortOrder.DESCENDING])
 def test_browse_order_by_title(
-    group_documents,
     client,
     test_db,
     order,
 ):
     """Make sure that empty search terms return no results."""
-    if group_documents:
-        _populate_search_db_families(test_db)
-        search_endpoint = f"{SEARCH_ENDPOINT}?group_documents=True"
-    else:
-        populate_geography(test_db)
-        create_4_documents(test_db)
-        search_endpoint = SEARCH_ENDPOINT
+    _populate_search_db_families(test_db)
+    search_endpoint = f"{SEARCH_ENDPOINT}?group_documents=True"
 
     response = client.post(
         search_endpoint,
@@ -1173,19 +1082,13 @@ def test_browse_order_by_title(
     assert response.status_code == 200
 
     response_body = response.json()
-    if group_documents:
-        result_elements = response_body["families"]
-    else:
-        result_elements = response_body["documents"]
+    result_elements = response_body["families"]
 
     assert len(result_elements) > 0
 
     t = None
     for e in result_elements:
-        if group_documents:
-            new_t = e["family_name"]
-        else:
-            new_t = e["document_name"]
+        new_t = e["family_name"]
         if t is not None:
             if order == SortOrder.DESCENDING:
                 assert new_t <= t
@@ -1195,12 +1098,10 @@ def test_browse_order_by_title(
 
 
 @pytest.mark.search
-@pytest.mark.parametrize("group_documents", [False, True])
 @pytest.mark.parametrize("order", [SortOrder.ASCENDING, SortOrder.DESCENDING])
 @pytest.mark.parametrize("start_year", [None, 1999, 2007])
 @pytest.mark.parametrize("end_year", [None, 2011, 2018])
 def test_browse_order_by_date(
-    group_documents,
     order,
     start_year,
     end_year,
@@ -1208,13 +1109,8 @@ def test_browse_order_by_date(
     test_db,
 ):
     """Make sure that empty search terms return no results."""
-    if group_documents:
-        _populate_search_db_families(test_db)
-        search_endpoint = f"{SEARCH_ENDPOINT}?group_documents=True"
-    else:
-        populate_geography(test_db)
-        create_4_documents(test_db)
-        search_endpoint = SEARCH_ENDPOINT
+    _populate_search_db_families(test_db)
+    search_endpoint = f"{SEARCH_ENDPOINT}?group_documents=True"
 
     response = client.post(
         search_endpoint,
@@ -1228,21 +1124,14 @@ def test_browse_order_by_date(
     assert response.status_code == 200
 
     response_body = response.json()
-    if group_documents:
-        result_elements = response_body["families"]
-    else:
-        result_elements = response_body["documents"]
+    result_elements = response_body["families"]
     assert len(result_elements) > 0
 
     dt = None
     new_dt = None
     for e in result_elements:
-        if group_documents:
-            if e["family_date"]:
-                new_dt = datetime.fromisoformat(e["family_date"]).isoformat()
-        else:
-            if e["document_date"]:
-                new_dt = datetime.strptime(e["document_date"], "%d/%m/%Y").isoformat()
+        if e["family_date"]:
+            new_dt = datetime.fromisoformat(e["family_date"]).isoformat()
         if dt is not None and new_dt is not None:
             if order == SortOrder.DESCENDING:
                 assert new_dt <= dt
@@ -1256,21 +1145,15 @@ def test_browse_order_by_date(
 
 
 @pytest.mark.search
-@pytest.mark.parametrize("group_documents", [True, False])
 @pytest.mark.parametrize("limit", [1, 4, 7, 10])
 def test_browse_limit_offset(
-    group_documents,
     client,
     test_db,
     limit,
 ):
     """Make sure that the offset parameter in browse mode works."""
-    if group_documents:
-        _populate_search_db_families(test_db)
-        search_endpoint = f"{SEARCH_ENDPOINT}?group_documents=True"
-    else:
-        populate_geography(test_db)
-        search_endpoint = SEARCH_ENDPOINT
+    _populate_search_db_families(test_db)
+    search_endpoint = f"{SEARCH_ENDPOINT}?group_documents=True"
 
     response_offset_0 = client.post(
         search_endpoint,
@@ -1293,32 +1176,21 @@ def test_browse_limit_offset(
     assert response_offset_2.status_code == 200
 
     response_offset_0_body = response_offset_0.json()
-    if group_documents:
-        result_elements_0 = response_offset_0_body["families"]
-    else:
-        result_elements_0 = response_offset_0_body["documents"]
+    result_elements_0 = response_offset_0_body["families"]
     assert len(result_elements_0) <= limit
 
     response_offset_2_body = response_offset_2.json()
-    if group_documents:
-        result_elements_2 = response_offset_2_body["families"]
-    else:
-        result_elements_2 = response_offset_2_body["documents"]
+    result_elements_2 = response_offset_2_body["families"]
     assert len(result_elements_2) <= limit
 
     assert result_elements_0[2 : len(result_elements_2)] == result_elements_2[:-2]
 
 
 @pytest.mark.search
-@pytest.mark.parametrize("group_documents", [True, False])
-def test_browse_filters(group_documents, client, test_db):
+def test_browse_filters(client, test_db):
     """Check that multiple filters are successfully applied"""
-    if group_documents:
-        _populate_search_db_families(test_db)
-        search_endpoint = f"{SEARCH_ENDPOINT}?group_documents=True"
-    else:
-        populate_geography(test_db)
-        search_endpoint = SEARCH_ENDPOINT
+    _populate_search_db_families(test_db)
+    search_endpoint = f"{SEARCH_ENDPOINT}?group_documents=True"
 
     # query_spy = mocker.spy(search._OPENSEARCH_CONNECTION, "raw_query")
     response = client.post(
@@ -1338,30 +1210,19 @@ def test_browse_filters(group_documents, client, test_db):
     # FIXME: Check that filters are applied properly
 
     response_body = response.json()
-    if group_documents:
-        result_elements = response_body["families"]
-    else:
-        result_elements = response_body["documents"]
+    result_elements = response_body["families"]
     assert len(result_elements) == 0
 
 
 @pytest.mark.search
-@pytest.mark.parametrize("group_documents", [True, False])
 def test_browse_filter_category(
-    group_documents,
     client,
     test_db,
 ):
     """Make sure that empty search term returns results in browse mode."""
-    if group_documents:
-        _populate_search_db_families(test_db)
-        search_endpoint = f"{SEARCH_ENDPOINT}?group_documents=True"
-        keyword_filters = {"categories": ["Executive"]}
-    else:
-        populate_geography(test_db)
-        create_4_documents(test_db)
-        search_endpoint = SEARCH_ENDPOINT
-        keyword_filters = {"categories": ["Policy"]}
+    _populate_search_db_families(test_db)
+    search_endpoint = f"{SEARCH_ENDPOINT}?group_documents=True"
+    keyword_filters = {"categories": ["Executive"]}
 
     response = client.post(
         search_endpoint,
@@ -1373,63 +1234,10 @@ def test_browse_filter_category(
     assert response.status_code == 200
     response_content = response.json()
     assert response_content["hits"] > 0
-    if group_documents:
-        assert len(response.json()["families"]) > 0
-        families = response_content["families"]
-        for family in families:
-            assert family["family_category"] == "Executive"
-    else:
-        assert len(response.json()["documents"]) > 0
-        documents = response_content["documents"]
-        for document in documents:
-            assert document["document_category"] == "Policy"
-
-
-##########################################
-############# DEPRECATED #################
-##########################################
-@pytest.mark.search
-def test_simple_pagination(test_opensearch, client, test_db, monkeypatch):
-    monkeypatch.setattr(search, "_OPENSEARCH_CONNECTION", test_opensearch)
-
-    page1_response = client.post(
-        SEARCH_ENDPOINT,
-        json={
-            "query_string": "climate",
-            "exact_match": False,
-            "limit": 2,
-            "offset": 0,
-        },
-    )
-    assert page1_response.status_code == 200
-
-    page1_response_body = page1_response.json()
-    page1_documents = page1_response_body["documents"]
-    assert len(page1_documents) == 2
-
-    page2_response = client.post(
-        SEARCH_ENDPOINT,
-        json={
-            "query_string": "climate",
-            "exact_match": False,
-            "limit": 2,
-            "offset": 2,
-        },
-    )
-    assert page2_response.status_code == 200
-
-    page2_response_body = page2_response.json()
-    page2_documents = page2_response_body["documents"]
-    assert len(page2_documents) == 2
-
-    # Sanity check that we really do have 4 different documents
-    document_slugs = {d["document_slug"] for d in page1_documents} | {
-        d["document_slug"] for d in page2_documents
-    }
-    assert len(document_slugs) == 4
-
-    for d in page1_documents:
-        assert d not in page2_documents
+    assert len(response.json()["families"]) > 0
+    families = response_content["families"]
+    for family in families:
+        assert family["family_category"] == "Executive"
 
 
 @pytest.mark.search
@@ -1476,49 +1284,6 @@ def test_search_result_schema(caplog, test_opensearch, monkeypatch, client):
         assert sorted(list(d.keys())) == expected_search_result_schema
 
     assert "Document ids missing" in caplog.text
-
-
-@pytest.mark.search
-def test_pagination_overlap(test_opensearch, monkeypatch, client):
-    monkeypatch.setattr(search, "_OPENSEARCH_CONNECTION", test_opensearch)
-
-    page1_response = client.post(
-        SEARCH_ENDPOINT,
-        json={
-            "query_string": "climate",
-            "exact_match": False,
-            "limit": 2,
-            "offset": 0,
-        },
-    )
-    assert page1_response.status_code == 200
-
-    page1_response_body = page1_response.json()
-    page1_documents = page1_response_body["documents"]
-    assert len(page1_documents) > 1
-
-    page2_response = client.post(
-        SEARCH_ENDPOINT,
-        json={
-            "query_string": "climate",
-            "exact_match": False,
-            "limit": 2,
-            "offset": 1,
-        },
-    )
-    assert page2_response.status_code == 200
-
-    page2_response_body = page2_response.json()
-    page2_documents = page2_response_body["documents"]
-    assert len(page2_documents) > 0
-
-    # Check that page 2 documents are different to page 1 documents
-    assert len(
-        {d["document_slug"] for d in page1_documents}
-        | {d["document_slug"] for d in page2_documents}
-    ) > len({d["document_slug"] for d in page1_documents})
-
-    assert page1_documents[-1] == page2_documents[0]
 
 
 @pytest.mark.search
