@@ -113,7 +113,7 @@ def write_ingest_results_to_s3(
         indent=2,
     )
     bytes_content = BytesIO(json_content.encode("utf8"))
-    documents_object_key = f"{s3_prefix}/ingest_results.json"
+    documents_object_key = f"{s3_prefix}/ingest_results.txt"
     _LOGGER.info("Writing Ingest Results file into S3")
     return _write_content_to_s3(
         s3_client=s3_client,
