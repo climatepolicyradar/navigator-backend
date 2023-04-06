@@ -12,7 +12,7 @@ from tests.core.ingestion.helpers import (
 
 
 def test_read__raises_with_no_contents():
-    context = IngestContext(org_id=1, results=[])
+    context = IngestContext()
     process = MagicMock()
     with pytest.raises(ImportSchemaMismatchError) as e_info:
         contents = ""
@@ -27,7 +27,7 @@ def test_read__raises_with_no_contents():
 
 
 def test_read__raises_with_wrong_fields():
-    context = IngestContext(org_id=1, results=[])
+    context = IngestContext()
     process = MagicMock()
     with pytest.raises(ImportSchemaMismatchError) as e_info:
         contents = """a,b,c
@@ -43,7 +43,7 @@ def test_read__raises_with_wrong_fields():
 
 
 def test_read__raises_with_missing_field():
-    context = IngestContext(org_id=1, results=[])
+    context = IngestContext()
     process = MagicMock()
     with pytest.raises(ImportSchemaMismatchError) as e_info:
         read(THREE_DOC_ROWS_MISSING_FIELD, context, DocumentIngestRow, process)
@@ -57,7 +57,7 @@ def test_read__raises_with_missing_field():
 
 
 def test_read__processes_all_rows():
-    context = IngestContext(org_id=1, results=[])
+    context = IngestContext()
     process = MagicMock()
     read(THREE_DOC_ROWS, context, DocumentIngestRow, process)
 

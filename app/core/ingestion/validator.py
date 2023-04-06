@@ -1,7 +1,11 @@
 from sqlalchemy.orm import Session
 from app.core.ingestion.ingest_row import DocumentIngestRow, EventIngestRow
 from app.core.ingestion.metadata import build_metadata, Taxonomy
-from app.core.ingestion.utils import IngestContext, Result, ResultType
+from app.core.ingestion.utils import (
+    IngestContext,
+    Result,
+    ResultType,
+)
 from app.db.models.law_policy.family import (
     FamilyDocumentRole,
     FamilyDocumentType,
@@ -55,9 +59,28 @@ def validate_document_row(
     if result.type != ResultType.OK:
         errors.append(result)
 
+    # Check metadata
     result, _ = build_metadata(taxonomy, row)
     if result.type != ResultType.OK:
         errors.append(result)
+
+    # Check family
+    context.consistency_validator.check_family(
+        row.row_number,
+        row.cpr_family_id,
+        row.family_name,
+        row.family_summary,
+        errors,
+    )
+
+    # Check collection
+    context.consistency_validator.check_collection(
+        row.row_number,
+        row.cpr_collection_id,
+        row.collection_name,
+        row.collection_summary,
+        errors,
+    )
 
     if len(errors) > 0:
         context.results += errors

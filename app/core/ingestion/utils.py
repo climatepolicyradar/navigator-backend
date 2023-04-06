@@ -129,11 +129,98 @@ class Result:
 
 
 @dataclass
+class ConsistentFields:
+    """CSV entity-fields for an entity which is defined multiple times."""
+
+    name: str
+    summary: str
+    # TODO@ add status: str
+
+
+class ConsistencyValidator:
+    """Used by validation to ensure consistency for families and collections."""
+
+    families: dict[str, ConsistentFields]
+    collections: dict[str, ConsistentFields]
+
+    def __init__(self) -> None:
+        self.families = {}
+        self.collections = {}
+
+    def check_family(
+        self,
+        n_row: int,
+        family_id: str,
+        family_name: str,
+        family_summary: str,
+        errors: list[Result],
+    ) -> None:
+        """Check the consistency of this family with one previously defined."""
+        self._check_(
+            self.families,
+            "Family",
+            n_row,
+            family_id,
+            family_name,
+            family_summary,
+            errors,
+        )
+
+    def check_collection(
+        self,
+        n_row: int,
+        collection_id: str,
+        collection_name: str,
+        collection_summary: str,
+        errors: list[Result],
+    ) -> None:
+        """Check the consistency of this collection with one previously defined."""
+        self._check_(
+            self.families,
+            "Collection",
+            n_row,
+            collection_id,
+            collection_name,
+            collection_summary,
+            errors,
+        )
+
+    @staticmethod
+    def _check_(
+        entities: dict[str, ConsistentFields],
+        entity_name: str,
+        n_row: int,
+        id: str,
+        name: str,
+        summary: str,
+        errors: list[Result],
+    ) -> None:
+        error_start = f"{entity_name} {id} has differing"
+        on_row = f"on row {n_row}"
+        fields = entities.get(id)
+        if fields:
+            if fields.name != name:
+                error = Result(ResultType.ERROR, f"{error_start} name {on_row}")
+                errors.append(error)
+            if fields.summary != summary:
+                error = Result(ResultType.ERROR, f"{error_start} summary {on_row}")
+                errors.append(error)
+        else:
+            entities[id] = ConsistentFields(name, summary)
+
+
+@dataclass
 class IngestContext:
     """Context used when processing."""
 
     org_id: int
     results: list[Result]
+    consistency_validator: ConsistencyValidator
+
+    def __init__(self, org_id=1, results=None) -> None:
+        self.org_id = org_id
+        self.results = [] if results is None else results
+        self.consistency_validator = ConsistencyValidator()
 
 
 @dataclass
