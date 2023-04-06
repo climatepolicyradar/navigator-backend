@@ -64,53 +64,23 @@ def validate_document_row(
     if result.type != ResultType.OK:
         errors.append(result)
 
-    on_row = f"on row {row.row_number}"
     # Check family
-    family_id = row.cpr_family_id
-
-    if family_id in context.mde.families.keys():
-        name, summary = context.mde.families[family_id]
-        if name != row.family_name:
-            errors.append(
-                Result(
-                    ResultType.ERROR,
-                    f"Family {family_id} has differing name {on_row}",
-                )
-            )
-        if summary != row.family_summary:
-            errors.append(
-                Result(
-                    ResultType.ERROR,
-                    f"Family {family_id} has differing summary {on_row}",
-                )
-            )
-    else:
-        context.mde.families[family_id] = (row.family_name, row.family_summary)
+    context.consistency_validator.check_family(
+        row.row_number,
+        row.cpr_family_id,
+        row.family_name,
+        row.family_summary,
+        errors,
+    )
 
     # Check collection
-    collection_id = row.cpr_collection_id
-
-    if collection_id in context.mde.collections.keys():
-        name, summary = context.mde.collections[collection_id]
-        if name != row.collection_name:
-            errors.append(
-                Result(
-                    ResultType.ERROR,
-                    f"Collection {collection_id} has differing name {on_row}",
-                )
-            )
-        if summary != row.collection_summary:
-            errors.append(
-                Result(
-                    ResultType.ERROR,
-                    f"Collection {collection_id} has differing summary {on_row}",
-                )
-            )
-    else:
-        context.mde.collections[collection_id] = (
-            row.collection_name,
-            row.collection_summary,
-        )
+    context.consistency_validator.check_collection(
+        row.row_number,
+        row.cpr_collection_id,
+        row.collection_name,
+        row.collection_summary,
+        errors,
+    )
 
     if len(errors) > 0:
         context.results += errors

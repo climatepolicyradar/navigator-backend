@@ -9,7 +9,7 @@ from tests.core.ingestion.helpers import (
 )
 
 
-def test_validate_row__mde_good(test_db):
+def test_validate_row__consistent_family_and_collection(test_db):
     context = IngestContext()
     populate_for_ingest(test_db)
     _, taxonomy = get_organisation_taxonomy(test_db, context.org_id)
@@ -24,7 +24,7 @@ def test_validate_row__mde_good(test_db):
     assert context.results[0].type == ResultType.OK
 
 
-def test_validate_row__mde_family_name_change(test_db):
+def test_validate_row__family_name_change(test_db):
     context = IngestContext()
     populate_for_ingest(test_db)
     _, taxonomy = get_organisation_taxonomy(test_db, context.org_id)
@@ -42,7 +42,7 @@ def test_validate_row__mde_family_name_change(test_db):
     assert context.results[0].details.startswith("Family")
 
 
-def test_validate_row__mde_family_summary_change(test_db):
+def test_validate_row__family_summary_change(test_db):
     context = IngestContext()
     populate_for_ingest(test_db)
     _, taxonomy = get_organisation_taxonomy(test_db, context.org_id)
@@ -60,7 +60,7 @@ def test_validate_row__mde_family_summary_change(test_db):
     assert context.results[0].details.startswith("Family")
 
 
-def test_validate_row__mde_collection_name_change(test_db):
+def test_validate_row__collection_name_change(test_db):
     context = IngestContext()
     populate_for_ingest(test_db)
     _, taxonomy = get_organisation_taxonomy(test_db, context.org_id)
@@ -78,7 +78,7 @@ def test_validate_row__mde_collection_name_change(test_db):
     assert context.results[0].details.startswith("Collection")
 
 
-def test_validate_row__mde_collection_summary_change(test_db):
+def test_validate_row__collection_summary_change(test_db):
     context = IngestContext()
     populate_for_ingest(test_db)
     _, taxonomy = get_organisation_taxonomy(test_db, context.org_id)
