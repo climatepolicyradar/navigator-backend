@@ -2,7 +2,7 @@ from typing import Callable, Generator
 from sqlalchemy.orm import Session
 from fastapi.testclient import TestClient
 from pytest_mock import MockerFixture
-from app.db.models.law_policy.family import Family, FamilyEvent
+from app.db.models.law_policy.family import Family, FamilyDocument, FamilyEvent
 from tests.routes.document_helpers import (
     TWO_DFC_ROW_ONE_LANGUAGE,
     TWO_EVENT_ROWS,
@@ -193,3 +193,154 @@ def test_physical_doc_languages(
 
     assert response.status_code == 200
     assert document["language"] == ""
+
+
+def test_update_document__is_secure(
+    client: TestClient,
+    test_db: Session,
+    mocker: Callable[..., Generator[MockerFixture, None, None]],
+):
+    setup_with_two_docs(test_db, mocker)
+
+    import_id = "CCLW.executive.1.2"
+    payload = {
+        "md5sum": "abc123",
+        "content_type": "content_type",
+        "source_url": "source_url",
+    }
+
+    response = client.put(f"/api/v1/admin/documents/{import_id}", json=payload)
+
+    assert response.status_code == 401
+
+
+def test_update_document__works_on_import_id(
+    client: TestClient,
+    superuser_token_headers: dict[str, str],
+    test_db: Session,
+    mocker: Callable[..., Generator[MockerFixture, None, None]],
+):
+    setup_with_two_docs(test_db, mocker)
+
+    import_id = "CCLW.executive.1.2"
+    payload = {
+        "md5_sum": "c184214e-4870-48e0-adab-3e064b1b0e76",
+        "content_type": "updated/content_type",
+        "cdn_object": "folder/file",
+    }
+
+    response = client.put(
+        f"/api/v1/admin/documents/{import_id}",
+        headers=superuser_token_headers,
+        json=payload,
+    )
+
+    assert response.status_code == 200
+    json_object = response.json()
+    assert json_object["md5_sum"] == "c184214e-4870-48e0-adab-3e064b1b0e76"
+    assert json_object["content_type"] == "updated/content_type"
+    assert json_object["cdn_object"] == "folder/file"
+
+    # Now Check the db
+    doc = test_db.query(FamilyDocument).get(import_id).physical_document
+    assert doc.md5_sum == "c184214e-4870-48e0-adab-3e064b1b0e76"
+    assert doc.content_type == "updated/content_type"
+    assert doc.cdn_object == "folder/file"
+
+
+def test_update_document__idempotent(
+    client: TestClient,
+    superuser_token_headers: dict[str, str],
+    test_db: Session,
+    mocker: Callable[..., Generator[MockerFixture, None, None]],
+):
+    setup_with_two_docs(test_db, mocker)
+
+    import_id = "CCLW.executive.1.2"
+    payload = {
+        "md5_sum": "c184214e-4870-48e0-adab-3e064b1b0e76",
+        "content_type": "updated/content_type",
+        "cdn_object": "folder/file",
+    }
+
+    response = client.put(
+        f"/api/v1/admin/documents/{import_id}",
+        headers=superuser_token_headers,
+        json=payload,
+    )
+    assert response.status_code == 200
+
+    response = client.put(
+        f"/api/v1/admin/documents/{import_id}",
+        headers=superuser_token_headers,
+        json=payload,
+    )
+    assert response.status_code == 200
+    json_object = response.json()
+    assert json_object["md5_sum"] == "c184214e-4870-48e0-adab-3e064b1b0e76"
+    assert json_object["content_type"] == "updated/content_type"
+    assert json_object["cdn_object"] == "folder/file"
+
+    # Now Check the db
+    doc = test_db.query(FamilyDocument).get(import_id).physical_document
+    assert doc.md5_sum == "c184214e-4870-48e0-adab-3e064b1b0e76"
+    assert doc.content_type == "updated/content_type"
+    assert doc.cdn_object == "folder/file"
+
+
+def test_update_document__works_on_slug(
+    client: TestClient,
+    superuser_token_headers: dict[str, str],
+    test_db: Session,
+    mocker: Callable[..., Generator[MockerFixture, None, None]],
+):
+    setup_with_two_docs(test_db, mocker)
+
+    slug = "DocSlug1"
+    payload = {
+        "md5_sum": "c184214e-4870-48e0-adab-3e064b1b0e76",
+        "content_type": "updated/content_type",
+        "cdn_object": "folder/file",
+    }
+
+    response = client.put(
+        f"/api/v1/admin/documents/{slug}",
+        headers=superuser_token_headers,
+        json=payload,
+    )
+
+    assert response.status_code == 200
+    json_object = response.json()
+    assert json_object["md5_sum"] == "c184214e-4870-48e0-adab-3e064b1b0e76"
+    assert json_object["content_type"] == "updated/content_type"
+    assert json_object["cdn_object"] == "folder/file"
+
+    # Now Check the db
+    import_id = "CCLW.executive.1.2"
+    doc = test_db.query(FamilyDocument).get(import_id).physical_document
+    assert doc.md5_sum == "c184214e-4870-48e0-adab-3e064b1b0e76"
+    assert doc.content_type == "updated/content_type"
+    assert doc.cdn_object == "folder/file"
+
+
+def test_update_document__status_422_when_not_found(
+    client: TestClient,
+    superuser_token_headers: dict[str, str],
+    test_db: Session,
+    mocker: Callable[..., Generator[MockerFixture, None, None]],
+):
+    setup_with_two_docs(test_db, mocker)
+
+    payload = {
+        "md5_sum": "c184214e-4870-48e0-adab-3e064b1b0e76",
+        "content_type": "updated/content_type",
+        "cdn_object": "folder/file",
+    }
+
+    response = client.put(
+        "/api/v1/admin/documents/nothing",
+        headers=superuser_token_headers,
+        json=payload,
+    )
+
+    assert response.status_code == 422

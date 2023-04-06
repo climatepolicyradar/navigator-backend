@@ -79,6 +79,8 @@ from app.db.crud.user import (
     get_users,
 )
 from app.db.models.deprecated.document import Document
+from app.db.models.document.physical_document import PhysicalDocument
+from app.db.models.law_policy.family import FamilyDocument, Slug
 from app.db.session import get_db
 
 _LOGGER = logging.getLogger(__name__)
@@ -771,38 +773,38 @@ async def update_document(
         },
     )
 
-    # Note this code relies on the fields being the same as the db column names
-    doc_update = update(Document)
-    doc_update = doc_update.values(meta_data.dict())
-
-    import_id = None
-    slug = None
-
-    doc_query = db.query(Document)
+    # First query the FamilyDocument
+    query = db.query(FamilyDocument)
     if IMPORT_ID_MATCHER.match(import_id_or_slug) is not None:
-        import_id = import_id_or_slug
-        doc_update = doc_update.where(Document.import_id == import_id)
-        doc_query = doc_query.filter(Document.import_id == import_id)
+        family_document = query.get(import_id_or_slug)
         _LOGGER.info("update_document called with import_id")
     else:
-        slug = import_id_or_slug
-        doc_update = doc_update.where(Document.slug == slug)
-        doc_query = doc_query.filter(Document.slug == slug)
+        family_document = (
+            query.join(Slug, Slug.family_document_import_id == FamilyDocument.import_id)
+            .filter(Slug.name == import_id_or_slug)
+            .one_or_none()
+        )
         _LOGGER.info("update_document called with slug")
 
-    existing_doc = doc_query.first()
-
-    if existing_doc is None:
+    # Check we have found one
+    if family_document is None:
         raise HTTPException(
             status_code=status.HTTP_422_UNPROCESSABLE_ENTITY,
         )
 
-    # TODO: Enforce uniqueness on import_id and slug on "Document"
-    num_changed = db.execute(doc_update).rowcount
+    # Get the physical document to update
+    physical_document = family_document.physical_document
+
+    # Note this code relies on the fields being the same as the db column names
+    num_changed = db.execute(
+        update(PhysicalDocument)
+        .values(meta_data.dict())
+        .where(PhysicalDocument.id == physical_document.id)
+    ).rowcount
 
     if num_changed == 0:
         _LOGGER.info("update_document complete - nothing changed")
-        return existing_doc  # Nothing to do - as should be idempotent
+        return physical_document  # Nothing to do - as should be idempotent
 
     if num_changed > 1:
         # This should never happen due to table uniqueness constraints
@@ -816,21 +818,21 @@ async def update_document(
         )
 
     db.commit()
-    db.refresh(existing_doc)
+    db.refresh(physical_document)
     _LOGGER.info(
         "Call to update_document complete",
         extra={
             "props": {
                 "superuser_email": current_user.email,
                 "num_changed": num_changed,
-                "import_id": existing_doc.import_id,
-                "md5_sum": existing_doc.md5_sum,
-                "content_type": existing_doc.content_type,
-                "cdn_object": existing_doc.cdn_object,
+                "import_id": family_document.import_id,
+                "md5_sum": physical_document.md5_sum,
+                "content_type": physical_document.content_type,
+                "cdn_object": physical_document.cdn_object,
             }
         },
     )
-    return existing_doc
+    return physical_document
 
 
 @r.get(
