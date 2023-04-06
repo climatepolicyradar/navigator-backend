@@ -37,6 +37,10 @@ THREE_DOC_ROWS_BAD_META = """ID,Document ID,CCLW Description,Part of collection?
 1003,0,Test3,FALSE,FALSE,N/A,N/A,N/A,Title3,Fam3,Summary3,,MAIN,,DZA,,executive,08/12/2011|Law passed,Energy,Subsidies|Economic,,Hilarity,,Decree,,,Research And Development;Energy Supply,Algeria,,,CCLW.executive.1003.0,CCLW.family.1003.0,N/A,FamSlug3,DocSlug3
 """
 
+BAD_MULTI_URL = """ID,Document ID,CCLW Description,Part of collection?,Create new family/ies?,Collection ID,Collection name,Collection summary,Document title,Family name,Family summary,Family ID,Document role,Applies to ID,Geography ISO,Documents,Category,Events,Sectors,Instruments,Frameworks,Responses,Natural Hazards,Document Type,Document variant,Year,Language,Keywords,Geography,Parent Legislation,Comment,CPR Document ID,CPR Family ID,CPR Collection ID,CPR Family Slug,CPR Document Slug
+1002,0,Test2,FALSE,FALSE,N/A,N/A,N/A,Title2,Fam2,Summary2,,MAIN,,DZA,http://place2|en;http://place2|fr,executive,28/04/2013|Law passed||,Energy;LULUCF;Social development;Transportation;Urban;Waste,"Processes, plans and strategies|Governance",Adaptation;Mitigation,Adaptation;Mitigation,,Plan,,,,Adaptation;Energy Supply;Energy Demand;Redd+ And Lulucf;Transportation,Algeria,,,CCLW.executive.1002.0,CCLW.family.1002.0,N/A,FamSlug2,DocSlug2
+"""
+
 ALPHABETICAL_DOC_COLUMNS = [
     "CPR Collection ID",
     "CPR Document ID",
