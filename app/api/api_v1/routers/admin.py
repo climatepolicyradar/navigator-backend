@@ -61,6 +61,7 @@ from app.core.validation.util import (
     get_new_s3_prefix,
     get_valid_metadata,
     write_csv_to_s3,
+    write_ingest_results_to_s3,
 )
 from app.core.validation.cclw.law_policy.process_csv import (
     extract_documents,
@@ -297,6 +298,7 @@ def _start_ingest(
     documents_file_contents: str,
     events_file_contents: str,
 ):
+    context = None
     try:
         context = initialise_context(db)
         document_ingestor = get_dfc_ingestor(db)
@@ -308,6 +310,19 @@ def _start_ingest(
             "Unexpected error on ingest", extra={"props": {"errors": str(e)}}
         )
         # This is a background task, so do not raise
+
+    try:
+        if context is not None:
+            write_ingest_results_to_s3(
+                s3_client=s3_client,
+                s3_prefix=s3_prefix,
+                results=context.results,
+            )
+    except Exception as e:
+        _LOGGER.exception(
+            "Unexpected error writing ingest results to s3",
+            extra={"props": {"errors": str(e)}},
+        )
 
     try:
         pass

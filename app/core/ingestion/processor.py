@@ -11,7 +11,7 @@ from app.core.ingestion.ingest_row import (
     EventIngestRow,
 )
 from app.core.organisation import get_organisation_taxonomy
-from app.core.ingestion.utils import IngestContext
+from app.core.ingestion.utils import IngestContext, Result, ResultType
 from app.core.ingestion.validator import validate_document_row
 from app.db.models.app.users import Organisation
 
@@ -118,7 +118,17 @@ def get_dfc_ingestor(db: Session) -> ProcessFunc:
         _LOGGER.info(f"Ingesting document row: {row.row_number}")
 
         with db.begin():
-            ingest_document_row(db, context, row=row)
+            try:
+                ingest_document_row(db, context, row=row)
+            except Exception as e:
+                error = Result(
+                    ResultType.ERROR, f"Row {row.row_number}: Error {str(e)}"
+                )
+                context.results.append(error)
+                _LOGGER.error(
+                    "Error on ingest",
+                    extra={"props": {"row_number": row.row_number, "error": str(e)}},
+                )
 
     return process
 

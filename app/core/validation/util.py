@@ -9,6 +9,7 @@ from sqlalchemy.orm import Session
 
 from app.api.api_v1.schemas.document import DocumentParserInput
 from app.core.aws import S3Client
+from app.core.ingestion.utils import Result
 from app.core.lookups import get_metadata
 from app.core.validation import PIPELINE_BUCKET
 
@@ -81,6 +82,39 @@ def write_documents_to_s3(
     bytes_content = BytesIO(json_content.encode("utf8"))
     documents_object_key = f"{s3_prefix}/documents.json"
     _LOGGER.info("Writing Documents file into S3")
+    return _write_content_to_s3(
+        s3_client=s3_client,
+        s3_object_key=documents_object_key,
+        bytes_content=bytes_content,
+    )
+
+
+def write_ingest_results_to_s3(
+    s3_client: S3Client,
+    s3_prefix: str,
+    results: Sequence[Result],
+) -> Union[S3Document, bool]:
+    """
+    Write document specifications successfully created during a bulk import to S3
+
+    :param [S3Client] s3_client: an S3 client to use to write data
+    :param [str] s3_prefix: prefix into which to write the document updates in s3
+    :param [Sequence[DocumentCreateRequest]] documents: a sequence of document
+        specifications to write to S3
+    """
+    json_content = json.dumps(
+        [
+            {
+                "type": r.type,
+                "details": r.details,
+            }
+            for r in results
+        ],
+        indent=2,
+    )
+    bytes_content = BytesIO(json_content.encode("utf8"))
+    documents_object_key = f"{s3_prefix}/ingest_results.json"
+    _LOGGER.info("Writing Ingest Results file into S3")
     return _write_content_to_s3(
         s3_client=s3_client,
         s3_object_key=documents_object_key,
