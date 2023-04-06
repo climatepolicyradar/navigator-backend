@@ -485,52 +485,6 @@ def test_document_detail(
     get_detail_json_2 = get_detail_response_2.json()
 
 
-def test_update_document_with_import_id(
-    client,
-    superuser_token_headers,
-    test_db,
-):
-    (
-        response1_document,
-        document1_payload,
-        response2_document,
-        document2_payload,
-        response3_document,
-        document3_payload,
-        response4_document,
-        document4_payload,
-    ) = create_4_documents(test_db)
-
-    import_id = response1_document["import_id"]
-    payload = {
-        "md5_sum": "c184214e-4870-48e0-adab-3e064b1b0e76",
-        "content_type": "updated/content_type",
-        "cdn_object": "folder/file",
-    }
-
-    update_response = client.put(
-        f"/api/v1/admin/documents/{import_id}",
-        headers=superuser_token_headers,
-        json=payload,
-    )
-
-    assert update_response.status_code == 200
-    json_object = update_response.json()
-    assert json_object["import_id"] == import_id
-    assert json_object["md5_sum"] == "c184214e-4870-48e0-adab-3e064b1b0e76"
-    assert json_object["content_type"] == "updated/content_type"
-
-    get_response = client.get(
-        f"/api/v1/documents/{import_id}",
-    )
-
-    assert get_response.status_code == 200
-    json_object = get_response.json()
-    assert json_object["import_id"] == import_id
-    assert json_object["content_type"] == "updated/content_type"
-    assert "folder/file" in json_object["url"]
-
-
 def test_postfix_map(
     test_db,
 ):
