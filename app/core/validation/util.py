@@ -78,9 +78,12 @@ def write_documents_to_s3(
     :param [Sequence[DocumentCreateRequest]] documents: a sequence of document
         specifications to write to S3
     """
-    json_content = json.dumps([d.to_json() for d in documents], indent=2)
+    json_content = json.dumps(
+        {d.import_id: d.to_json() for d in documents},
+        indent=2,
+    )
     bytes_content = BytesIO(json_content.encode("utf8"))
-    documents_object_key = f"{s3_prefix}/documents.json"
+    documents_object_key = f"{s3_prefix}/input.json"
     _LOGGER.info("Writing Documents file into S3")
     return _write_content_to_s3(
         s3_client=s3_client,

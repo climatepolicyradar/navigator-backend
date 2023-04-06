@@ -138,7 +138,7 @@ class DocumentIngestRow(BaseIngestRow):
     natural_hazards: list[str]  # METADATA - hazard
     keywords: list[str]
     document_type: str
-    language: str
+    language: list[str]
     geography: str
     cpr_document_id: str
     cpr_family_id: str

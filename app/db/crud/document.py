@@ -5,7 +5,7 @@ old functions (non DFC) are moved to the deprecated_documents.py file.
 """
 import logging
 from datetime import datetime, timedelta
-from typing import Mapping, Optional, Tuple, cast
+from typing import Mapping, Optional, Sequence, Tuple, cast
 
 from sqlalchemy.orm import Session
 
@@ -92,7 +92,7 @@ def get_family_document_and_context(
         cdn_object=to_cdn_url(physical_document.cdn_object),
         source_url=physical_document.source_url,
         content_type=physical_document.content_type,
-        language=_get_language_for_phys_doc(db, physical_document.id),
+        languages=_get_languages_for_phys_doc(db, physical_document.id),
         document_type=document.document_type,
         document_role=document.document_role,
     )
@@ -100,14 +100,19 @@ def get_family_document_and_context(
     return FamilyDocumentWithContextResponse(family=family, document=response)
 
 
-def _get_language_for_phys_doc(db: Session, physical_document_id: str) -> str:
-    language = (
+def _get_languages_for_phys_doc(
+    db: Session, physical_document_id: str
+) -> Sequence[str]:
+    languages = (
         db.query(Language)
+        .join(
+            PhysicalDocumentLanguage,
+            PhysicalDocumentLanguage.language_id == Language.id,
+        )
         .filter(PhysicalDocumentLanguage.document_id == physical_document_id)
-        .filter(Language.id == PhysicalDocumentLanguage.language_id)
-    ).one_or_none()
+    ).all()
 
-    return cast(str, language.language_code) if language is not None else ""
+    return [cast(str, lang.language_code) for lang in languages]
 
 
 def get_family_and_documents(
@@ -245,7 +250,7 @@ def _get_documents_for_family_import_id(
             cdn_object=to_cdn_url(pd.cdn_object),
             source_url=pd.source_url,
             content_type=pd.content_type,
-            language=_get_language_for_phys_doc(db, pd.id),
+            languages=_get_languages_for_phys_doc(db, pd.id),
             document_type=d.document_type,
             document_role=d.document_role,
         )

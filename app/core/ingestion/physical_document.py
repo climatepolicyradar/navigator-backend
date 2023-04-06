@@ -32,14 +32,21 @@ def create_physical_document_from_row(
     db.flush()
     result["physical_document"] = to_dict(physical_document)
 
-    lang = db.query(Language).filter(Language.name == row.language).one_or_none()
-    if lang is not None:
-        result["language"] = to_dict(lang)
-        physical_document_language = PhysicalDocumentLanguage(
-            language_id=lang.id, document_id=physical_document.id
-        )
-        db.add(physical_document_language)
-        db.flush()
-        result["physical_document_language"] = to_dict(physical_document_language)
+    for language in row.language:
+        lang = db.query(Language).filter(Language.name == language).one_or_none()
+        if lang is not None:
+            doc_languages = result.get("language", [])
+            doc_languages.append(to_dict(lang))
+            result["language"] = doc_languages
+
+            physical_document_language = PhysicalDocumentLanguage(
+                language_id=lang.id, document_id=physical_document.id
+            )
+            db.add(physical_document_language)
+            db.flush()
+
+            phys_doc_languages = result.get("physical_document_language", [])
+            phys_doc_languages.append(to_dict(physical_document_language))
+            result["physical_document_language"] = phys_doc_languages
 
     return physical_document

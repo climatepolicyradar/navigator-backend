@@ -35,6 +35,7 @@ from app.core.email import (
     send_password_reset_email,
 )
 from app.core.ingestion.ingest_row import DocumentIngestRow, EventIngestRow
+from app.core.ingestion.pipeline import generate_pipeline_ingest_input
 from app.core.ingestion.processor import (
     initialise_context,
     get_dfc_ingestor,
@@ -61,6 +62,7 @@ from app.core.validation.util import (
     get_new_s3_prefix,
     get_valid_metadata,
     write_csv_to_s3,
+    write_documents_to_s3,
     write_ingest_results_to_s3,
 )
 from app.core.validation.cclw.law_policy.process_csv import (
@@ -301,6 +303,7 @@ def _start_ingest(
     events_file_contents: str,
 ):
     context = None
+    # TODO: add a way for a user to monitor progress of the ingest
     try:
         context = initialise_context(db)
         document_ingestor = get_dfc_ingestor(db)
@@ -308,10 +311,10 @@ def _start_ingest(
         event_ingestor = get_event_ingestor(db)
         read(events_file_contents, context, EventIngestRow, event_ingestor)
     except Exception as e:
+        # This is a background task, so do not raise
         _LOGGER.exception(
             "Unexpected error on ingest", extra={"props": {"errors": str(e)}}
         )
-        # This is a background task, so do not raise
 
     try:
         if context is not None:
@@ -327,17 +330,15 @@ def _start_ingest(
         )
 
     try:
-        pass
-        # FIXME: Write document create/update JSON to S3
-        # TODO: add a way for a user to monitor progress of the ingest
-        # write_documents_to_s3(
-        #     s3_client=s3_client,
-        #     s3_prefix=s3_prefix,
-        #     documents=document_parser_inputs,
-        # )
+        pipeline_ingest_input = generate_pipeline_ingest_input(db)
+        write_documents_to_s3(
+            s3_client=s3_client,
+            s3_prefix=s3_prefix,
+            documents=pipeline_ingest_input,
+        )
     except Exception as e:
         _LOGGER.exception(
-            "Unexpected error writing update document to s3",
+            "Unexpected error writing pipeline input document to s3",
             extra={"props": {"errors": str(e)}},
         )
 
