@@ -4,6 +4,8 @@ from fastapi.testclient import TestClient
 from pytest_mock import MockerFixture
 from app.db.models.law_policy.family import Family, FamilyDocument, FamilyEvent
 from tests.routes.document_helpers import (
+    ONE_DFC_ROW_TWO_LANGUAGES,
+    ONE_EVENT_ROW,
     TWO_DFC_ROW_ONE_LANGUAGE,
     TWO_EVENT_ROWS,
     populate_languages,
@@ -15,7 +17,7 @@ from tests.routes.document_helpers import (
 N_METADATA_KEYS = 6
 N_FAMILY_KEYS = 14
 N_FAMILY_OVERVIEW_KEYS = 7
-N_DOCUMENT_KEYS = 11
+N_DOCUMENT_KEYS = 12
 
 
 def test_documents_family_slug_returns_not_found(
@@ -161,6 +163,7 @@ def test_documents_doc_slug_preexisting_objects(
     assert doc["content_type"] is None
     assert doc["source_url"] == "http://another_somewhere"
     assert doc["language"] == ""
+    assert doc["languages"] == []
     assert doc["document_type"] == "Order"
     assert doc["document_role"] == "MAIN"
 
@@ -183,7 +186,7 @@ def test_physical_doc_languages(
 
     assert response.status_code == 200
     print(json_response)
-    assert document["language"] == "eng"
+    assert document["languages"] == ["eng"]
 
     response = client.get(
         "/api/v1/documents/DocSlug2?group_documents=True",
@@ -192,7 +195,28 @@ def test_physical_doc_languages(
     document = json_response["document"]
 
     assert response.status_code == 200
-    assert document["language"] == ""
+    assert document["languages"] == []
+
+
+def test_physical_doc_multiple_languages(
+    client: TestClient,
+    test_db: Session,
+    mocker: Callable[..., Generator[MockerFixture, None, None]],
+):
+    populate_languages(test_db)
+    setup_with_multiple_docs(
+        test_db, mocker, doc_data=ONE_DFC_ROW_TWO_LANGUAGES, event_data=ONE_EVENT_ROW
+    )
+
+    response = client.get(
+        "/api/v1/documents/DocSlug1?group_documents=True",
+    )
+    json_response = response.json()
+    document = json_response["document"]
+
+    assert response.status_code == 200
+    print(json_response)
+    assert set(document["languages"]) == set(["fra", "eng"])
 
 
 def test_update_document__is_secure(

@@ -147,11 +147,11 @@ def test_write_documents_to_s3(test_s3_client, mocker):
     write_documents_to_s3(test_s3_client, test_s3_prefix, documents=[d])
     upload_file_mock.assert_called_once_with(
         bucket=PIPELINE_BUCKET,
-        key=f"{test_s3_prefix}/documents.json",
+        key=f"{test_s3_prefix}/input.json",
         content_type="application/json",
         fileobj=mock.ANY,
     )
     uploaded_json_documents = json.loads(
         upload_file_mock.mock_calls[0].kwargs["fileobj"].read().decode("utf8")
     )
-    assert uploaded_json_documents == [d.to_json()]
+    assert uploaded_json_documents == {d.import_id: d.to_json()}

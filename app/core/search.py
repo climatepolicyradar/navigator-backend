@@ -758,7 +758,7 @@ def create_search_response_family_document(
 ) -> SearchResponseFamilyDocument:
     document_info = document_family_info[opensearch_match.document_id]
     return SearchResponseFamilyDocument(
-        document_title=opensearch_match.document_name,
+        document_title=document_info["title"],
         document_type=opensearch_match.document_type,
         document_source_url=opensearch_match.document_source_url,
         document_url=to_cdn_url(opensearch_match.document_cdn_object),

@@ -1,5 +1,25 @@
+from typing import Sequence
+
 import sqlalchemy as sa
+from sqlalchemy.orm import relationship
+
 from app.db.session import Base
+
+
+class Language(Base):
+    """
+    A language used to identify the content of a document.
+
+    Note: moved from deprecated.
+    """
+
+    __tablename__ = "language"
+
+    id = sa.Column(sa.Integer, primary_key=True)
+    language_code = sa.Column(sa.CHAR(length=3), nullable=False, unique=True)
+    part1_code = sa.Column(sa.CHAR(length=2))
+    part2_code = sa.Column(sa.CHAR(length=3))
+    name = sa.Column(sa.Text)
 
 
 class PhysicalDocument(Base):
@@ -19,21 +39,14 @@ class PhysicalDocument(Base):
     source_url = sa.Column(sa.Text, nullable=True)
     content_type = sa.Column(sa.Text, nullable=True)
 
-
-class Language(Base):
-    """
-    A language used to identify the content of a document.
-
-    Note: moved from deprecated.
-    """
-
-    __tablename__ = "language"
-
-    id = sa.Column(sa.Integer, primary_key=True)
-    language_code = sa.Column(sa.CHAR(length=3), nullable=False, unique=True)
-    part1_code = sa.Column(sa.CHAR(length=2))
-    part2_code = sa.Column(sa.CHAR(length=3))
-    name = sa.Column(sa.Text)
+    languages: Sequence[Language] = relationship(
+        Language,
+        secondary="physical_document_language",
+        primaryjoin="PhysicalDocument.id == PhysicalDocumentLanguage.document_id",
+        secondaryjoin="PhysicalDocumentLanguage.language_id == Language.id",
+        viewonly=True,
+        lazy="joined",
+    )
 
 
 class PhysicalDocumentLanguage(Base):

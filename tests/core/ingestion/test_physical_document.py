@@ -14,7 +14,7 @@ from tests.core.ingestion.helpers import (
 def test_physical_document_from_row(test_db: Session):
     populate_for_ingest(test_db)
     row = DocumentIngestRow.from_row(1, get_doc_ingest_row_data(0))
-    row.language = "English"
+    row.language = ["English", "German"]
     result = {}
 
     phys_doc = create_physical_document_from_row(test_db, row, result)
@@ -34,5 +34,13 @@ def test_physical_document_from_row(test_db: Session):
     # Check objects were created ...
     assert test_db.query(PhysicalDocument).filter_by(title=DOCUMENT_TITLE).one()
     assert (
-        test_db.query(PhysicalDocumentLanguage).filter_by(document_id=phys_doc.id).one()
+        len(
+            test_db.query(PhysicalDocumentLanguage)
+            .filter_by(document_id=phys_doc.id)
+            .all()
+        )
+        == 2
     )
+
+    assert len(phys_doc.languages) == 2
+    assert set([lang.language_code for lang in phys_doc.languages]) == {"eng", "deu"}

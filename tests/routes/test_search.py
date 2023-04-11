@@ -20,7 +20,6 @@ from app.api.api_v1.schemas.search import (
 )
 from app.core.search import _FILTER_FIELD_MAP, OpenSearchQueryConfig
 from app.db.models.app import Organisation
-from app.db.models.deprecated import Category, Document, Source, DocumentType
 from app.db.models.law_policy.family import (
     DocumentStatus,
     EventStatus,
@@ -41,78 +40,6 @@ from app.initial_data import populate_geography
 from tests.routes.test_documents_deprecated import create_4_documents
 
 SEARCH_ENDPOINT = "/api/v1/searches"
-
-
-def _populate_search_db_documents(db: Session) -> None:
-    documents: dict[str, Document] = {}
-    document_types: dict[str, DocumentType] = {}
-    categories: dict[str, Category] = {}
-
-    populate_geography(db)
-    source = Source(name="CCLW")
-    db.add(source)
-    db.commit()
-    db.refresh(source)
-
-    containing_dir = Path(__file__).parent
-    data_dir = containing_dir.parent / "data"
-    for f in data_dir.iterdir():
-        if f.is_file() and f.suffixes == [".json"]:
-            with open(f, "r") as of:
-                for line in of.readlines():
-                    search_document = json.loads(line)
-                    doc_details = search_document["_source"]
-
-                    doc_id = doc_details["document_id"]
-                    if doc_id in documents:
-                        continue
-
-                    if doc_details["document_category"] not in categories:
-                        doc_category = Category(
-                            name=doc_details["document_category"],
-                            description="Really doesn't matter",
-                        )
-                        db.add(doc_category)
-                        db.commit()
-                        db.refresh(doc_category)
-                        categories[doc_details["document_category"]] = doc_category
-
-                    if doc_details["document_type"] not in document_types:
-                        doc_type = DocumentType(
-                            name=doc_details["document_type"],
-                            description="Doesn't matter",
-                        )
-                        db.add(doc_type)
-                        db.commit()
-                        db.refresh(doc_type)
-                        document_types[doc_details["document_type"]] = doc_type
-
-                    geography_id = (
-                        db.query(Geography)
-                        .filter(Geography.value == doc_details["document_geography"])
-                        .one()
-                        .id
-                    )
-                    doc = Document(
-                        publication_ts=datetime.strptime(
-                            doc_details["document_date"], "%d/%m/%Y"
-                        ),
-                        name=doc_details["document_name"],
-                        description=doc_details["document_description"],
-                        source_url=doc_details["document_source_url"],
-                        source_id=source.id,
-                        url=doc_details["document_cdn_object"],
-                        md5_sum=doc_details["document_md5_sum"],
-                        slug=doc_details["document_slug"],
-                        import_id=doc_details["document_id"],
-                        geography_id=geography_id,
-                        type_id=document_types[doc_details["document_type"]].id,
-                        category_id=categories[doc_details["document_category"]].id,
-                    )
-                    db.add(doc)
-                    db.commit()
-                    db.refresh(doc)
-                    documents[doc_id] = doc
 
 
 def _populate_search_db_families(db: Session) -> None:
