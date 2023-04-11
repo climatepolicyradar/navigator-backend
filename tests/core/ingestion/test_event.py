@@ -1,4 +1,4 @@
-from datetime import datetime
+from datetime import datetime, timezone
 
 from sqlalchemy.orm import Session
 
@@ -32,5 +32,26 @@ def test_family_event_from_row(test_db: Session):
     assert family == new_family
     assert event == new_event
 
-    assert new_family.published_date == datetime(2019, 12, 25)
-    assert new_family.last_updated_date == datetime(2019, 12, 25)
+    assert new_family.published_date == datetime(2019, 12, 25, tzinfo=timezone.utc)
+    assert new_family.last_updated_date == datetime(2019, 12, 25, tzinfo=timezone.utc)
+
+
+def test_family_multiple_events_from_row(test_db: Session):
+    populate_for_ingest(test_db)
+    doc_row = DocumentIngestRow.from_row(1, get_doc_ingest_row_data(0))
+    event_row_1 = EventIngestRow.from_row(1, get_event_ingest_row_data(0))
+    event_row_2 = EventIngestRow.from_row(2, get_event_ingest_row_data(1))
+
+    result = {}
+    handle_family_from_row(test_db, doc_row, org_id=1, result=result)
+    family_event_from_row(test_db, event_row_1, result=result)
+
+    assert "family_events" in result
+    new_family = test_db.query(Family).filter_by(import_id=FAMILY_IMPORT_ID).one()
+    assert new_family.published_date == datetime(2019, 12, 25, tzinfo=timezone.utc)
+    assert new_family.last_updated_date == datetime(2019, 12, 25, tzinfo=timezone.utc)
+
+    family_event_from_row(test_db, event_row_2, result=result)
+    test_db.refresh(new_family)
+    assert new_family.published_date == datetime(2019, 12, 25, tzinfo=timezone.utc)
+    assert new_family.last_updated_date == datetime(2021, 12, 25, tzinfo=timezone.utc)

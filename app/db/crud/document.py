@@ -291,7 +291,17 @@ class DocumentExtraCache:
                 "family_import_id": family.import_id,
                 "family_title": family.title,
                 "family_description": family.description,
-                "family_category": str(family.family_category),
+                "family_category": family.family_category,
+                "family_published_date": (
+                    family.published_date.isoformat()
+                    if family.published_date is not None
+                    else ""
+                ),
+                "family_last_updated_date": (
+                    family.last_updated_date.isoformat()
+                    if family.last_updated_date is not None
+                    else ""
+                ),
             }
             for (family_document, family) in document_data
         }

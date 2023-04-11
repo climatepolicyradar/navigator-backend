@@ -167,6 +167,7 @@ class SearchResponseFamily(BaseModel):
     family_description: str
     family_category: str
     family_date: str
+    family_last_updated_date: str
     family_source: str
     family_geography: str
     family_metadata: dict

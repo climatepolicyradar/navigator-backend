@@ -56,12 +56,17 @@ def to_search_response_family(
     if family.published_date is not None:
         family_published_date = family.published_date.isoformat()
 
+    family_last_updated_date = ""
+    if family.last_updated_date is not None:
+        family_last_updated_date = family.last_updated_date.isoformat()
+
     return SearchResponseFamily(
         family_slug=cast(str, family.slugs[-1].name),
         family_name=cast(str, family.title),
         family_description=cast(str, family.description),
         family_category=str(family.family_category),
         family_date=family_published_date,
+        family_last_updated_date=family_last_updated_date,
         family_source=cast(str, organisation.name),  # FIXME: check links to source
         family_geography=cast(str, geography.value),
         family_metadata={},  # FIXME: Add metadata
