@@ -1,3 +1,4 @@
+from datetime import datetime, timezone
 from typing import Sequence, Tuple, cast
 
 from sqlalchemy.orm import Session
@@ -37,12 +38,13 @@ def generate_pipeline_ingest_input(db: Session) -> Sequence[DocumentParserInput]
     query_result = cast(
         Sequence[Tuple[Family, FamilyDocument, Geography, Organisation]], query.all()
     )
+    fallback_date = datetime(1900, 1, 1, tzinfo=timezone.utc)
     documents: Sequence[DocumentParserInput] = [
         DocumentParserInput(
-            name=family.name,  # All documents in a family are indexed by family name
+            name=cast(str, family.title),  # All documents in a family indexed by title
             description=cast(str, family.description),
             category=str(family.family_category),
-            publication_ts=family.published_date,
+            publication_ts=family.published_date or fallback_date,
             import_id=cast(str, family_document.import_id),
             source_url=(
                 cast(str, family_document.physical_document.source_url)
@@ -51,7 +53,7 @@ def generate_pipeline_ingest_input(db: Session) -> Sequence[DocumentParserInput]
             ),
             type=cast(str, family_document.document_type),
             source=cast(str, organisation.name),
-            slug=family_document.slugs[-1],
+            slug=cast(str, family_document.slugs[-1].name),
             geography=cast(str, geography.value),
             languages=[
                 cast(str, lang.name)
