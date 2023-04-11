@@ -45,11 +45,13 @@ def test_family_multiple_events_from_row(test_db: Session):
     result = {}
     handle_family_from_row(test_db, doc_row, org_id=1, result=result)
     family_event_from_row(test_db, event_row_1, result=result)
-    family_event_from_row(test_db, event_row_2, result=result)
 
     assert "family_events" in result
-
     new_family = test_db.query(Family).filter_by(import_id=FAMILY_IMPORT_ID).one()
+    assert new_family.published_date == datetime(2019, 12, 25, tzinfo=timezone.utc)
+    assert new_family.last_updated_date == datetime(2019, 12, 25, tzinfo=timezone.utc)
 
+    family_event_from_row(test_db, event_row_2, result=result)
+    test_db.refresh(new_family)
     assert new_family.published_date == datetime(2019, 12, 25, tzinfo=timezone.utc)
     assert new_family.last_updated_date == datetime(2021, 12, 25, tzinfo=timezone.utc)
