@@ -17,7 +17,7 @@ from tests.routes.document_helpers import (
 N_METADATA_KEYS = 6
 N_FAMILY_KEYS = 14
 N_FAMILY_OVERVIEW_KEYS = 7
-N_DOCUMENT_KEYS = 11
+N_DOCUMENT_KEYS = 12
 
 
 def test_documents_family_slug_returns_not_found(
@@ -162,6 +162,7 @@ def test_documents_doc_slug_preexisting_objects(
     assert doc["cdn_object"] is None
     assert doc["content_type"] is None
     assert doc["source_url"] == "http://another_somewhere"
+    assert doc["language"] == ""
     assert doc["languages"] == []
     assert doc["document_type"] == "Order"
     assert doc["document_role"] == "MAIN"

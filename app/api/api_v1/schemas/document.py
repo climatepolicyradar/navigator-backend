@@ -73,6 +73,8 @@ class FamilyDocumentResponse(BaseModel):
     cdn_object: Optional[str]
     source_url: Optional[str]
     content_type: Optional[str]
+    # TODO: Remove after transition to multiple languages
+    language: str
     languages: Sequence[str]
     document_type: Optional[str]
     document_role: Optional[str]
