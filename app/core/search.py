@@ -5,7 +5,6 @@ import os
 import time
 from collections import OrderedDict
 from dataclasses import dataclass
-from datetime import datetime
 from io import StringIO
 from pathlib import Path
 from typing import Any, Mapping, Optional, Sequence
@@ -58,11 +57,6 @@ from app.core.config import (
     PUBLIC_APP_URL,
 )
 from app.core.util import to_cdn_url
-from app.db.models.document.physical_document import (
-    Language,
-    PhysicalDocument,
-    PhysicalDocumentLanguage,
-)
 from app.db.models.law_policy import (
     FamilyDocument,
     FamilyMetadata,
@@ -214,35 +208,6 @@ class OpenSearchConnection:
         self._opensearch_config = opensearch_config
         self._opensearch_connection: Optional[OpenSearch] = None
         self._sensitive_query_terms = load_sensitive_query_terms()
-
-    ##################
-    ### DEPRECATED ###
-    ##################
-    def query(
-        self,
-        search_request_body: SearchRequestBody,
-        opensearch_internal_config: OpenSearchQueryConfig,
-        preference: Optional[str],
-    ) -> SearchResultsResponse:
-        """Build & make an OpenSearch query based on the given request body."""
-
-        opensearch_request = build_opensearch_request_body(
-            search_request=search_request_body,
-            opensearch_internal_config=opensearch_internal_config,
-            sensitive_query_terms=self._sensitive_query_terms,
-        )
-
-        indices = self._get_opensearch_indices_to_query(search_request_body)
-
-        opensearch_response_body = self.raw_query(
-            opensearch_request.query, preference, indices
-        )
-
-        return process_search_response_body(
-            opensearch_response_body,
-            limit=search_request_body.limit,
-            offset=search_request_body.offset,
-        )
 
     def query_families(
         self,
@@ -939,7 +904,6 @@ def create_search_response_document(
 def _get_extra_csv_info(
     db: Session,
     families: Sequence[SearchResponseFamily],
-    browse_info_needed: bool,
 ) -> Mapping[str, Any]:
     all_family_slugs = [f.family_slug for f in families]
     all_document_slugs = [d.document_slug for f in families for d in f.family_documents]
@@ -950,20 +914,21 @@ def _get_extra_csv_info(
         .join(FamilyMetadata, FamilyMetadata.family_import_id == Slug.family_import_id)
         .all()
     )
-    slug_and_family_document_language = (
-        db.query(Slug, Language)
+    slug_and_family_document = (
+        db.query(Slug, FamilyDocument)
         .filter(Slug.name.in_(all_document_slugs))
-        .join(FamilyDocument, FamilyDocument.import_id == Slug.family_document_import_id)
-        .join(PhysicalDocument, PhysicalDocument.id == FamilyDocument.physical_document_id)
-        .join(PhysicalDocumentLanguage, PhysicalDocumentLanguage.document_id == PhysicalDocument.id)
-        .join(Language, Language.id == PhysicalDocumentLanguage.language_id)
+        .join(
+            FamilyDocument, FamilyDocument.import_id == Slug.family_document_import_id
+        )
         .all()
     )
     # For now there is max one collection per family
     slug_and_collection = (
         db.query(Slug, Collection)
         .filter(Slug.name.in_(all_family_slugs))
-        .join(CollectionFamily, CollectionFamily.family_import_id == Slug.family_import_id)
+        .join(
+            CollectionFamily, CollectionFamily.family_import_id == Slug.family_import_id
+        )
         .join(Collection, Collection.import_id == CollectionFamily.collection_import_id)
         .all()
     )
@@ -972,23 +937,22 @@ def _get_extra_csv_info(
             slug.name: meta.value for (slug, meta) in slug_and_family_metadata
         },
         "language": {
-            slug.name: lang.language_name
-            for (slug, lang) in slug_and_family_document_language
+            slug.name: language.language_name
+            for (slug, family_document) in slug_and_family_document
+            for language in family_document.physical_document.languages
         },
         "collection": {
             slug.name: collection for (slug, collection) in slug_and_collection
         },
     }
 
-    if browse_info_needed:
-        family_documents = (
-
-        )
-
     return extra_csv_info
 
 
-def process_result_into_csv(db: Session, search_response: SearchResponse, browse: bool) -> str:
+def process_result_into_csv(
+    db: Session,
+    search_response: SearchResponse,
+) -> str:
     csv_result_io = StringIO("")
     writer = csv.DictWriter(
         csv_result_io,
@@ -996,7 +960,7 @@ def process_result_into_csv(db: Session, search_response: SearchResponse, browse
     )
     writer.writeheader()
 
-    extra_info_query = _get_extra_csv_info(db, search_response.families, browse)
+    extra_info_query = _get_extra_csv_info(db, search_response.families)
     url_base = f"{PUBLIC_APP_URL}/documents"
     for family in search_response.families:
         _LOGGER.info(f"Family: {family}")
@@ -1021,9 +985,10 @@ def process_result_into_csv(db: Session, search_response: SearchResponse, browse
         if family.family_documents:
             for document in family.family_documents:
                 _LOGGER.info(f"Document: {document}")
-                document_language = extra_info_query["language"].get(document.document_slug)
+                document_slug = document.document_slug
+                document_language = extra_info_query["language"].get(document_slug)
                 if document_language is None:
-                    _LOGGER.error(f"Failed to find language for '{document.document_slug}'")
+                    _LOGGER.warning(f"Failed to find language for '{document_slug}'")
                 row = {
                     "Collection Name": collection_name,
                     "Collection Summary": collection_summary,
@@ -1053,9 +1018,9 @@ def process_result_into_csv(db: Session, search_response: SearchResponse, browse
                 "Family Summary": family.family_description,
                 "Family Date": family.family_date,
                 "Family URL": f"{url_base}/{family.family_slug}",
-                "Document Title": document.document_title,
-                "Document URL": f"{url_base}/{document.document_slug}",
-                "Document type": document.document_type,
+                "Document Title": "",
+                "Document URL": "",
+                "Document type": "",
                 "Geography ISO": family.family_geography,
                 "Category": family.family_category,
                 "Sectors": sector_metadata,
@@ -1064,7 +1029,7 @@ def process_result_into_csv(db: Session, search_response: SearchResponse, browse
                 "Responses": response_metadata,
                 "Natural Hazards": hazard_metadata,
                 "Keywords": keyword_metadata,
-                "Language": document_language or "",
+                "Language": "",
             }
             writer.writerow(row)
 

@@ -1,20 +1,15 @@
-import dataclasses
 import json
 import time
 from datetime import datetime
 from pathlib import Path
 from typing import Any
 
-import fastapi
 import pytest
 from sqlalchemy.orm import Session
 
-import app.core
-import app.core.jit_query_wrapper
 from app.api.api_v1.routers import search
 from app.api.api_v1.schemas.search import (
     FilterField,
-    JitQuery,
     SortOrder,
     SearchRequestBody,
 )
@@ -37,7 +32,6 @@ from app.db.models.law_policy.family import (
 )
 from app.db.models.document import PhysicalDocument
 from app.initial_data import populate_geography
-from tests.routes.test_documents_deprecated import create_4_documents
 
 SEARCH_ENDPOINT = "/api/v1/searches"
 
@@ -201,7 +195,7 @@ def _create_family_structures(
 def test_slug_is_from_family_document(test_opensearch, client, test_db, monkeypatch):
     monkeypatch.setattr(search, "_OPENSEARCH_CONNECTION", test_opensearch)
     _populate_search_db_families(test_db)
-    search_endpoint = f"{SEARCH_ENDPOINT}?group_documents=True"
+    search_endpoint = f"{SEARCH_ENDPOINT}"
 
     page1_response = client.post(
         search_endpoint,
@@ -224,7 +218,7 @@ def test_slug_is_from_family_document(test_opensearch, client, test_db, monkeypa
 def test_simple_pagination_families(test_opensearch, client, test_db, monkeypatch):
     monkeypatch.setattr(search, "_OPENSEARCH_CONNECTION", test_opensearch)
     _populate_search_db_families(test_db)
-    search_endpoint = f"{SEARCH_ENDPOINT}?group_documents=True"
+    search_endpoint = f"{SEARCH_ENDPOINT}"
 
     page1_response = client.post(
         search_endpoint,
@@ -268,18 +262,12 @@ def test_simple_pagination_families(test_opensearch, client, test_db, monkeypatc
 
 
 @pytest.mark.search
-@pytest.mark.parametrize("group_documents", [True, False])
 @pytest.mark.parametrize("exact_match", [True, False])
-def test_search_body_valid(
-    group_documents, exact_match, test_opensearch, monkeypatch, client, test_db
-):
+def test_search_body_valid(exact_match, test_opensearch, monkeypatch, client, test_db):
     """Test a simple known valid search responds with success."""
     monkeypatch.setattr(search, "_OPENSEARCH_CONNECTION", test_opensearch)
-    if group_documents:
-        _populate_search_db_families(test_db)
-        search_endpoint = f"{SEARCH_ENDPOINT}?group_documents=True"
-    else:
-        search_endpoint = SEARCH_ENDPOINT
+    _populate_search_db_families(test_db)
+    search_endpoint = f"{SEARCH_ENDPOINT}"
 
     response = client.post(
         search_endpoint,
@@ -292,114 +280,24 @@ def test_search_body_valid(
 
 
 @pytest.mark.search
-def test_jit_query_families_is_default(
-    test_opensearch, monkeypatch, client, test_db, mocker
-):
-    monkeypatch.setattr(search, "_OPENSEARCH_CONNECTION", test_opensearch)
-    _populate_search_db_families(test_db)
-    search_endpoint = f"{SEARCH_ENDPOINT}?group_documents=True"
-
-    jit_query_spy = mocker.spy(app.core.jit_query_wrapper, "jit_query_families")  # noqa
-    background_task_spy = mocker.spy(fastapi.BackgroundTasks, "add_task")
-
-    response = client.post(
-        search_endpoint,
-        json={"query_string": "climate", "exact_match": True},
-    )
-    assert response.status_code == 200
-
-    # Check the jit query called by checking the background task has been added
-    assert jit_query_spy.call_count == 1 or jit_query_spy.call_count == 2
-    assert background_task_spy.call_count == 1
-
-
-@pytest.mark.search
-def test_families_with_jit(test_opensearch, monkeypatch, client, test_db, mocker):
-    monkeypatch.setattr(search, "_OPENSEARCH_CONNECTION", test_opensearch)
-    _populate_search_db_families(test_db)
-    search_endpoint = f"{SEARCH_ENDPOINT}?group_documents=True"
-
-    jit_query_spy = mocker.spy(app.core.jit_query_wrapper, "jit_query_families")
-    background_task_spy = mocker.spy(fastapi.BackgroundTasks, "add_task")
-
-    response = client.post(
-        search_endpoint,
-        json={"query_string": "climate", "exact_match": True},
-    )
-
-    assert response.status_code == 200
-
-    # Check the jit query call
-    assert jit_query_spy.call_count == 1 or jit_query_spy.call_count == 2
-    actual_search_body = jit_query_spy.mock_calls[0].args[1]
-    actual_config = jit_query_spy.mock_calls[0].args[2]
-
-    expected_search_body = SearchRequestBody(
-        query_string="climate",
-        exact_match=True,
-        max_passages_per_doc=10,
-        keyword_filters=None,
-        year_range=None,
-        sort_field=None,
-        sort_order=SortOrder.DESCENDING,
-        jit_query=JitQuery.ENABLED,
-        limit=10,
-        offset=0,
-    )
-    assert actual_search_body == expected_search_body
-
-    # Check the first call has overriden the default config
-    overrides = {
-        "max_doc_count": 20,
-    }
-    expected_config = dataclasses.replace(OpenSearchQueryConfig(), **overrides)
-    assert actual_config == expected_config
-
-    # Check the background query call
-    assert background_task_spy.call_count == 1
-    actual_bkg_search_body = background_task_spy.mock_calls[0].args[3]
-
-    expected_bkg_search_body = SearchRequestBody(
-        query_string="climate",
-        exact_match=True,
-        max_passages_per_doc=10,
-        keyword_filters=None,
-        year_range=None,
-        sort_field=None,
-        sort_order=SortOrder.DESCENDING,
-        jit_query=JitQuery.ENABLED,
-        limit=10,
-        offset=0,
-    )
-    assert actual_bkg_search_body == expected_bkg_search_body
-
-    # Check the background call is run with default config
-    actual_bkg_config = background_task_spy.mock_calls[0].args[4]
-    assert actual_bkg_config == OpenSearchQueryConfig()
-
-
-@pytest.mark.search
-def test_families_without_jit(test_opensearch, monkeypatch, client, test_db, mocker):
+def test_families_search(test_opensearch, monkeypatch, client, test_db, mocker):
     monkeypatch.setattr(search, "_OPENSEARCH_CONNECTION", test_opensearch)
     _populate_search_db_families(test_db)
 
     query_spy = mocker.spy(search._OPENSEARCH_CONNECTION, "query_families")
-    background_task_spy = mocker.spy(fastapi.BackgroundTasks, "add_task")
 
     response = client.post(
-        f"{SEARCH_ENDPOINT}?group_documents=True",
+        f"{SEARCH_ENDPOINT}",
         json={
             "query_string": "climate",
             "exact_match": True,
-            "jit_query": "disabled",
         },
     )
     assert response.status_code == 200
     # Ensure nothing has/is going on in the background
-    assert background_task_spy.call_count == 0
     assert query_spy.call_count == 1  # Called once as not using jit search
 
-    actual_search_body = query_spy.mock_calls[0].args[0]
+    actual_search_body = query_spy.mock_calls[0].kwargs["search_request_body"]
 
     expected_search_body = SearchRequestBody(
         query_string="climate",
@@ -409,30 +307,22 @@ def test_families_without_jit(test_opensearch, monkeypatch, client, test_db, moc
         year_range=None,
         sort_field=None,
         sort_order=SortOrder.DESCENDING,
-        jit_query=JitQuery.DISABLED,
         limit=10,
         offset=0,
     )
     assert actual_search_body == expected_search_body
 
     # Check default config is used
-    actual_config = query_spy.mock_calls[0].args[1]
+    actual_config = query_spy.mock_calls[0].kwargs["opensearch_internal_config"]
     expected_config = OpenSearchQueryConfig()
     assert actual_config == expected_config
 
 
 @pytest.mark.search
-@pytest.mark.parametrize("group_documents", [True, False])
-def test_keyword_filters(
-    group_documents, test_opensearch, client, test_db, monkeypatch, mocker
-):
+def test_keyword_filters(test_opensearch, client, test_db, monkeypatch, mocker):
     monkeypatch.setattr(search, "_OPENSEARCH_CONNECTION", test_opensearch)
-    if group_documents:
-        _populate_search_db_families(test_db)
-        search_endpoint = f"{SEARCH_ENDPOINT}?group_documents=True"
-    else:
-        populate_geography(test_db)
-        search_endpoint = SEARCH_ENDPOINT
+    _populate_search_db_families(test_db)
+    search_endpoint = f"{SEARCH_ENDPOINT}"
 
     query_spy = mocker.spy(search._OPENSEARCH_CONNECTION, "raw_query")
     response = client.post(
@@ -454,17 +344,10 @@ def test_keyword_filters(
 
 
 @pytest.mark.search
-@pytest.mark.parametrize("group_documents", [True, False])
-def test_keyword_filters_region(
-    group_documents, test_opensearch, test_db, monkeypatch, client, mocker
-):
+def test_keyword_filters_region(test_opensearch, test_db, monkeypatch, client, mocker):
     monkeypatch.setattr(search, "_OPENSEARCH_CONNECTION", test_opensearch)
-    if group_documents:
-        _populate_search_db_families(test_db)
-        search_endpoint = f"{SEARCH_ENDPOINT}?group_documents=True"
-    else:
-        populate_geography(test_db)
-        search_endpoint = SEARCH_ENDPOINT
+    _populate_search_db_families(test_db)
+    search_endpoint = f"{SEARCH_ENDPOINT}"
 
     query_spy = mocker.spy(search._OPENSEARCH_CONNECTION, "raw_query")
     response = client.post(
@@ -505,16 +388,12 @@ def test_keyword_filters_region(
 
 
 @pytest.mark.search
-@pytest.mark.parametrize("group_documents", [True, False])
 def test_keyword_filters_region_invalid(
-    group_documents, test_opensearch, monkeypatch, client, test_db, mocker
+    test_opensearch, monkeypatch, client, test_db, mocker
 ):
     monkeypatch.setattr(search, "_OPENSEARCH_CONNECTION", test_opensearch)
-    if group_documents:
-        _populate_search_db_families(test_db)
-        search_endpoint = f"{SEARCH_ENDPOINT}?group_documents=True"
-    else:
-        search_endpoint = SEARCH_ENDPOINT
+    _populate_search_db_families(test_db)
+    search_endpoint = f"{SEARCH_ENDPOINT}"
 
     query_spy = mocker.spy(search._OPENSEARCH_CONNECTION, "raw_query")
     response = client.post(
@@ -535,17 +414,10 @@ def test_keyword_filters_region_invalid(
 
 
 @pytest.mark.search
-@pytest.mark.parametrize("group_documents", [True, False])
-def test_invalid_keyword_filters(
-    group_documents, test_opensearch, test_db, monkeypatch, client
-):
+def test_invalid_keyword_filters(test_opensearch, test_db, monkeypatch, client):
     monkeypatch.setattr(search, "_OPENSEARCH_CONNECTION", test_opensearch)
-    if group_documents:
-        _populate_search_db_families(test_db)
-        search_endpoint = f"{SEARCH_ENDPOINT}?group_documents=True"
-    else:
-        populate_geography(test_db)
-        search_endpoint = SEARCH_ENDPOINT
+    _populate_search_db_families(test_db)
+    search_endpoint = f"{SEARCH_ENDPOINT}"
 
     response = client.post(
         search_endpoint,
@@ -565,10 +437,8 @@ def test_invalid_keyword_filters(
 @pytest.mark.parametrize(
     "year_range", [(None, None), (1900, None), (None, 2020), (1900, 2020)]
 )
-@pytest.mark.parametrize("group_documents", [True, False])
 def test_year_range_filters(
     year_range,
-    group_documents,
     test_opensearch,
     monkeypatch,
     client,
@@ -576,11 +446,8 @@ def test_year_range_filters(
     mocker,
 ):
     monkeypatch.setattr(search, "_OPENSEARCH_CONNECTION", test_opensearch)
-    if group_documents:
-        _populate_search_db_families(test_db)
-        search_endpoint = f"{SEARCH_ENDPOINT}?group_documents=True"
-    else:
-        search_endpoint = SEARCH_ENDPOINT
+    _populate_search_db_families(test_db)
+    search_endpoint = f"{SEARCH_ENDPOINT}"
 
     query_spy = mocker.spy(search._OPENSEARCH_CONNECTION, "raw_query")
     response = client.post(
@@ -630,20 +497,12 @@ def test_year_range_filters(
 
 
 @pytest.mark.search
-@pytest.mark.parametrize("group_documents", [True, False])
-def test_multiple_filters(
-    group_documents, test_opensearch, test_db, monkeypatch, client, mocker
-):
+def test_multiple_filters(test_opensearch, test_db, monkeypatch, client, mocker):
     """Check that multiple filters are successfully applied"""
     monkeypatch.setattr(search, "_OPENSEARCH_CONNECTION", test_opensearch)
-    if group_documents:
-        _populate_search_db_families(test_db)
-        search_endpoint = f"{SEARCH_ENDPOINT}?group_documents=True"
-        categories = ["Legislative"]
-    else:
-        populate_geography(test_db)
-        search_endpoint = SEARCH_ENDPOINT
-        categories = ["Law"]
+    _populate_search_db_families(test_db)
+    search_endpoint = f"{SEARCH_ENDPOINT}"
+    categories = ["Legislative"]
 
     query_spy = mocker.spy(search._OPENSEARCH_CONNECTION, "raw_query")
     response = client.post(
@@ -679,29 +538,17 @@ def test_multiple_filters(
 
     response_content = response.json()
     assert response_content["hits"] > 0
-    if group_documents:
-        assert len(response.json()["families"]) > 0
-        families = response_content["families"]
-        for family in families:
-            assert family["family_category"] == "Legislative"
-    else:
-        assert len(response.json()["documents"]) > 0
-        documents = response_content["documents"]
-        for document in documents:
-            assert document["document_category"] == "Law"
+    assert len(response.json()["families"]) > 0
+    families = response_content["families"]
+    for family in families:
+        assert family["family_category"] == "Legislative"
 
 
 @pytest.mark.search
-@pytest.mark.parametrize("group_documents", [True, False])
-def test_result_order_score(
-    group_documents, test_opensearch, monkeypatch, client, test_db, mocker
-):
+def test_result_order_score(test_opensearch, monkeypatch, client, test_db, mocker):
     monkeypatch.setattr(search, "_OPENSEARCH_CONNECTION", test_opensearch)
-    if group_documents:
-        _populate_search_db_families(test_db)
-        search_endpoint = f"{SEARCH_ENDPOINT}?group_documents=True"
-    else:
-        search_endpoint = SEARCH_ENDPOINT
+    _populate_search_db_families(test_db)
+    search_endpoint = f"{SEARCH_ENDPOINT}"
 
     query_spy = mocker.spy(search._OPENSEARCH_CONNECTION, "raw_query")
     response = client.post(
@@ -725,16 +572,10 @@ def test_result_order_score(
 
 @pytest.mark.search
 @pytest.mark.parametrize("order", [SortOrder.ASCENDING, SortOrder.DESCENDING])
-@pytest.mark.parametrize("group_documents", [False])  # FIXME: add family ordering
-def test_result_order_date(
-    group_documents, test_opensearch, monkeypatch, client, test_db, order
-):
+def test_result_order_date(test_opensearch, monkeypatch, client, test_db, order):
     monkeypatch.setattr(search, "_OPENSEARCH_CONNECTION", test_opensearch)
-    if group_documents:
-        _populate_search_db_families(test_db)
-        search_endpoint = f"{SEARCH_ENDPOINT}?group_documents=True"
-    else:
-        search_endpoint = SEARCH_ENDPOINT
+    _populate_search_db_families(test_db)
+    search_endpoint = f"{SEARCH_ENDPOINT}"
 
     response = client.post(
         search_endpoint,
@@ -748,18 +589,12 @@ def test_result_order_date(
     assert response.status_code == 200
 
     response_body = response.json()
-    if group_documents:
-        elements = response_body["families"]
-    else:
-        elements = response_body["documents"]
+    elements = response_body["families"]
     assert len(elements) > 1
 
     dt = None
     for e in elements:
-        if group_documents:
-            new_dt = datetime.fromisoformat(e["family_date"])
-        else:
-            new_dt = datetime.strptime(e["document_date"], "%d/%m/%Y")
+        new_dt = datetime.fromisoformat(e["family_date"])
         if dt is not None:
             if order == SortOrder.DESCENDING:
                 assert new_dt <= dt
@@ -770,16 +605,10 @@ def test_result_order_date(
 
 @pytest.mark.search
 @pytest.mark.parametrize("order", [SortOrder.ASCENDING, SortOrder.DESCENDING])
-@pytest.mark.parametrize("group_documents", [True, False])
-def test_result_order_title(
-    group_documents, test_opensearch, monkeypatch, client, test_db, order
-):
+def test_result_order_title(test_opensearch, monkeypatch, client, test_db, order):
     monkeypatch.setattr(search, "_OPENSEARCH_CONNECTION", test_opensearch)
-    if group_documents:
-        _populate_search_db_families(test_db)
-        search_endpoint = f"{SEARCH_ENDPOINT}?group_documents=True"
-    else:
-        search_endpoint = SEARCH_ENDPOINT
+    _populate_search_db_families(test_db)
+    search_endpoint = f"{SEARCH_ENDPOINT}"
 
     response = client.post(
         search_endpoint,
@@ -793,18 +622,12 @@ def test_result_order_title(
     assert response.status_code == 200
 
     response_body = response.json()
-    if group_documents:
-        elements = response_body["families"]
-    else:
-        elements = response_body["documents"]
+    elements = response_body["families"]
     assert len(elements) > 1
 
     t = None
     for e in elements:
-        if group_documents:
-            new_t = e["family_name"]
-        else:
-            new_t = e["document_name"]
+        new_t = e["family_name"]
         if t is not None:
             if order == SortOrder.DESCENDING:
                 assert new_t <= t
@@ -814,16 +637,10 @@ def test_result_order_title(
 
 
 @pytest.mark.search
-@pytest.mark.parametrize("group_documents", [True, False])
-def test_invalid_request(
-    group_documents, test_opensearch, monkeypatch, client, test_db
-):
+def test_invalid_request(test_opensearch, monkeypatch, client, test_db):
     monkeypatch.setattr(search, "_OPENSEARCH_CONNECTION", test_opensearch)
-    if group_documents:
-        _populate_search_db_families(test_db)
-        search_endpoint = f"{SEARCH_ENDPOINT}?group_documents=True"
-    else:
-        search_endpoint = SEARCH_ENDPOINT
+    _populate_search_db_families(test_db)
+    search_endpoint = f"{SEARCH_ENDPOINT}"
 
     response = client.post(
         search_endpoint,
@@ -845,17 +662,11 @@ def test_invalid_request(
 
 
 @pytest.mark.search
-@pytest.mark.parametrize("group_documents", [True, False])
-def test_case_insensitivity(
-    group_documents, test_opensearch, monkeypatch, client, test_db
-):
+def test_case_insensitivity(test_opensearch, monkeypatch, client, test_db):
     """Make sure that query string results are not affected by case."""
     monkeypatch.setattr(search, "_OPENSEARCH_CONNECTION", test_opensearch)
-    if group_documents:
-        _populate_search_db_families(test_db)
-        search_endpoint = f"{SEARCH_ENDPOINT}?group_documents=True"
-    else:
-        search_endpoint = SEARCH_ENDPOINT
+    _populate_search_db_families(test_db)
+    search_endpoint = f"{SEARCH_ENDPOINT}"
 
     response1 = client.post(
         search_endpoint,
@@ -886,25 +697,16 @@ def test_case_insensitivity(
     response3_json = response3.json()
     del response3_json["query_time_ms"]
 
-    if group_documents:
-        assert response1_json["families"]
-    else:
-        assert response1_json["documents"]
+    assert response1_json["families"]
     assert response1_json == response2_json == response3_json
 
 
 @pytest.mark.search
-@pytest.mark.parametrize("group_documents", [True, False])
-def test_punctuation_ignored(
-    group_documents, test_opensearch, monkeypatch, client, test_db
-):
+def test_punctuation_ignored(test_opensearch, monkeypatch, client, test_db):
     """Make sure that punctuation in query strings is ignored."""
     monkeypatch.setattr(search, "_OPENSEARCH_CONNECTION", test_opensearch)
-    if group_documents:
-        _populate_search_db_families(test_db)
-        search_endpoint = f"{SEARCH_ENDPOINT}?group_documents=True"
-    else:
-        search_endpoint = SEARCH_ENDPOINT
+    _populate_search_db_families(test_db)
+    search_endpoint = f"{SEARCH_ENDPOINT}"
 
     response1 = client.post(
         search_endpoint,
@@ -935,10 +737,7 @@ def test_punctuation_ignored(
     response3_json = response3.json()
     del response3_json["query_time_ms"]
 
-    if group_documents:
-        assert response1_json["families"]
-    else:
-        assert response1_json["documents"]
+    assert response1_json["families"]
     assert response1_json == response2_json == response3_json
 
 
@@ -968,28 +767,31 @@ def test_sensitive_queries(test_opensearch, monkeypatch, client):
     response3_json = response3.json()
 
     # If the queries above return no results then the tests below are meaningless
-    assert len(response1_json["documents"]) > 0
-    assert len(response2_json["documents"]) > 0
-    assert len(response3_json["documents"]) > 0
+    assert len(response1_json["families"]) > 0
+    assert len(response2_json["families"]) > 0
+    assert len(response3_json["families"]) > 0
 
     assert all(
         [
             "spain" in passage_match["text"].lower()
-            for document in response1_json["documents"]
+            for family in response1_json["families"]
+            for document in family["family_documents"]
             for passage_match in document["document_passage_matches"]
         ]
     )
     assert not all(
         [
             "clean energy strategy" in passage_match["text"].lower()
-            for document in response2_json["documents"]
+            for family in response1_json["families"]
+            for document in family["family_documents"]
             for passage_match in document["document_passage_matches"]
         ]
     )
     assert not all(
         [
             "spanish ghg emissions" in passage_match["text"].lower()
-            for document in response3_json["documents"]
+            for family in response1_json["families"]
+            for document in family["family_documents"]
             for passage_match in document["document_passage_matches"]
         ]
     )
@@ -1020,7 +822,7 @@ def test_accents_ignored(test_opensearch, monkeypatch, client):
     response3_json = response3.json()
     del response3_json["query_time_ms"]
 
-    assert response1_json["documents"]
+    assert response1_json["families"]
     assert response1_json == response2_json == response3_json
 
 
@@ -1044,20 +846,13 @@ def test_time_taken(test_opensearch, monkeypatch, client):
 
 
 @pytest.mark.search
-@pytest.mark.parametrize("group_documents", [True, False])
 def test_empty_search_term_performs_browse(
-    group_documents,
     client,
     test_db,
 ):
     """Make sure that empty search term returns results in browse mode."""
-    if group_documents:
-        _populate_search_db_families(test_db)
-        search_endpoint = f"{SEARCH_ENDPOINT}?group_documents=True"
-    else:
-        populate_geography(test_db)
-        create_4_documents(test_db)
-        search_endpoint = SEARCH_ENDPOINT
+    _populate_search_db_families(test_db)
+    search_endpoint = f"{SEARCH_ENDPOINT}"
 
     response = client.post(
         search_endpoint,
@@ -1065,29 +860,19 @@ def test_empty_search_term_performs_browse(
     )
     assert response.status_code == 200
     assert response.json()["hits"] > 0
-    if group_documents:
-        assert len(response.json()["families"]) > 0
-    else:
-        assert len(response.json()["documents"]) > 0
+    assert len(response.json()["families"]) > 0
 
 
 @pytest.mark.search
-@pytest.mark.parametrize("group_documents", [True, False])
 @pytest.mark.parametrize("order", [SortOrder.ASCENDING, SortOrder.DESCENDING])
 def test_browse_order_by_title(
-    group_documents,
     client,
     test_db,
     order,
 ):
     """Make sure that empty search terms return no results."""
-    if group_documents:
-        _populate_search_db_families(test_db)
-        search_endpoint = f"{SEARCH_ENDPOINT}?group_documents=True"
-    else:
-        populate_geography(test_db)
-        create_4_documents(test_db)
-        search_endpoint = SEARCH_ENDPOINT
+    _populate_search_db_families(test_db)
+    search_endpoint = f"{SEARCH_ENDPOINT}"
 
     response = client.post(
         search_endpoint,
@@ -1100,19 +885,13 @@ def test_browse_order_by_title(
     assert response.status_code == 200
 
     response_body = response.json()
-    if group_documents:
-        result_elements = response_body["families"]
-    else:
-        result_elements = response_body["documents"]
+    result_elements = response_body["families"]
 
     assert len(result_elements) > 0
 
     t = None
     for e in result_elements:
-        if group_documents:
-            new_t = e["family_name"]
-        else:
-            new_t = e["document_name"]
+        new_t = e["family_name"]
         if t is not None:
             if order == SortOrder.DESCENDING:
                 assert new_t <= t
@@ -1122,12 +901,10 @@ def test_browse_order_by_title(
 
 
 @pytest.mark.search
-@pytest.mark.parametrize("group_documents", [False, True])
 @pytest.mark.parametrize("order", [SortOrder.ASCENDING, SortOrder.DESCENDING])
 @pytest.mark.parametrize("start_year", [None, 1999, 2007])
 @pytest.mark.parametrize("end_year", [None, 2011, 2018])
 def test_browse_order_by_date(
-    group_documents,
     order,
     start_year,
     end_year,
@@ -1135,13 +912,8 @@ def test_browse_order_by_date(
     test_db,
 ):
     """Make sure that empty search terms return no results."""
-    if group_documents:
-        _populate_search_db_families(test_db)
-        search_endpoint = f"{SEARCH_ENDPOINT}?group_documents=True"
-    else:
-        populate_geography(test_db)
-        create_4_documents(test_db)
-        search_endpoint = SEARCH_ENDPOINT
+    _populate_search_db_families(test_db)
+    search_endpoint = f"{SEARCH_ENDPOINT}"
 
     response = client.post(
         search_endpoint,
@@ -1155,21 +927,14 @@ def test_browse_order_by_date(
     assert response.status_code == 200
 
     response_body = response.json()
-    if group_documents:
-        result_elements = response_body["families"]
-    else:
-        result_elements = response_body["documents"]
+    result_elements = response_body["families"]
     assert len(result_elements) > 0
 
     dt = None
     new_dt = None
     for e in result_elements:
-        if group_documents:
-            if e["family_date"]:
-                new_dt = datetime.fromisoformat(e["family_date"]).isoformat()
-        else:
-            if e["document_date"]:
-                new_dt = datetime.strptime(e["document_date"], "%d/%m/%Y").isoformat()
+        if e["family_date"]:
+            new_dt = datetime.fromisoformat(e["family_date"]).isoformat()
         if dt is not None and new_dt is not None:
             if order == SortOrder.DESCENDING:
                 assert new_dt <= dt
@@ -1183,21 +948,15 @@ def test_browse_order_by_date(
 
 
 @pytest.mark.search
-@pytest.mark.parametrize("group_documents", [True, False])
 @pytest.mark.parametrize("limit", [1, 4, 7, 10])
 def test_browse_limit_offset(
-    group_documents,
     client,
     test_db,
     limit,
 ):
     """Make sure that the offset parameter in browse mode works."""
-    if group_documents:
-        _populate_search_db_families(test_db)
-        search_endpoint = f"{SEARCH_ENDPOINT}?group_documents=True"
-    else:
-        populate_geography(test_db)
-        search_endpoint = SEARCH_ENDPOINT
+    _populate_search_db_families(test_db)
+    search_endpoint = f"{SEARCH_ENDPOINT}"
 
     response_offset_0 = client.post(
         search_endpoint,
@@ -1220,32 +979,21 @@ def test_browse_limit_offset(
     assert response_offset_2.status_code == 200
 
     response_offset_0_body = response_offset_0.json()
-    if group_documents:
-        result_elements_0 = response_offset_0_body["families"]
-    else:
-        result_elements_0 = response_offset_0_body["documents"]
+    result_elements_0 = response_offset_0_body["families"]
     assert len(result_elements_0) <= limit
 
     response_offset_2_body = response_offset_2.json()
-    if group_documents:
-        result_elements_2 = response_offset_2_body["families"]
-    else:
-        result_elements_2 = response_offset_2_body["documents"]
+    result_elements_2 = response_offset_2_body["families"]
     assert len(result_elements_2) <= limit
 
     assert result_elements_0[2 : len(result_elements_2)] == result_elements_2[:-2]
 
 
 @pytest.mark.search
-@pytest.mark.parametrize("group_documents", [True, False])
-def test_browse_filters(group_documents, client, test_db):
+def test_browse_filters(client, test_db):
     """Check that multiple filters are successfully applied"""
-    if group_documents:
-        _populate_search_db_families(test_db)
-        search_endpoint = f"{SEARCH_ENDPOINT}?group_documents=True"
-    else:
-        populate_geography(test_db)
-        search_endpoint = SEARCH_ENDPOINT
+    _populate_search_db_families(test_db)
+    search_endpoint = f"{SEARCH_ENDPOINT}"
 
     # query_spy = mocker.spy(search._OPENSEARCH_CONNECTION, "raw_query")
     response = client.post(
@@ -1265,30 +1013,19 @@ def test_browse_filters(group_documents, client, test_db):
     # FIXME: Check that filters are applied properly
 
     response_body = response.json()
-    if group_documents:
-        result_elements = response_body["families"]
-    else:
-        result_elements = response_body["documents"]
+    result_elements = response_body["families"]
     assert len(result_elements) == 0
 
 
 @pytest.mark.search
-@pytest.mark.parametrize("group_documents", [True, False])
 def test_browse_filter_category(
-    group_documents,
     client,
     test_db,
 ):
     """Make sure that empty search term returns results in browse mode."""
-    if group_documents:
-        _populate_search_db_families(test_db)
-        search_endpoint = f"{SEARCH_ENDPOINT}?group_documents=True"
-        keyword_filters = {"categories": ["Executive"]}
-    else:
-        populate_geography(test_db)
-        create_4_documents(test_db)
-        search_endpoint = SEARCH_ENDPOINT
-        keyword_filters = {"categories": ["Policy"]}
+    _populate_search_db_families(test_db)
+    search_endpoint = f"{SEARCH_ENDPOINT}"
+    keyword_filters = {"categories": ["Executive"]}
 
     response = client.post(
         search_endpoint,
@@ -1300,275 +1037,7 @@ def test_browse_filter_category(
     assert response.status_code == 200
     response_content = response.json()
     assert response_content["hits"] > 0
-    if group_documents:
-        assert len(response.json()["families"]) > 0
-        families = response_content["families"]
-        for family in families:
-            assert family["family_category"] == "Executive"
-    else:
-        assert len(response.json()["documents"]) > 0
-        documents = response_content["documents"]
-        for document in documents:
-            assert document["document_category"] == "Policy"
-
-
-##########################################
-############# DEPRECATED #################
-##########################################
-@pytest.mark.search
-def test_simple_pagination(test_opensearch, client, test_db, monkeypatch):
-    monkeypatch.setattr(search, "_OPENSEARCH_CONNECTION", test_opensearch)
-
-    page1_response = client.post(
-        SEARCH_ENDPOINT,
-        json={
-            "query_string": "climate",
-            "exact_match": False,
-            "limit": 2,
-            "offset": 0,
-        },
-    )
-    assert page1_response.status_code == 200
-
-    page1_response_body = page1_response.json()
-    page1_documents = page1_response_body["documents"]
-    assert len(page1_documents) == 2
-
-    page2_response = client.post(
-        SEARCH_ENDPOINT,
-        json={
-            "query_string": "climate",
-            "exact_match": False,
-            "limit": 2,
-            "offset": 2,
-        },
-    )
-    assert page2_response.status_code == 200
-
-    page2_response_body = page2_response.json()
-    page2_documents = page2_response_body["documents"]
-    assert len(page2_documents) == 2
-
-    # Sanity check that we really do have 4 different documents
-    document_slugs = {d["document_slug"] for d in page1_documents} | {
-        d["document_slug"] for d in page2_documents
-    }
-    assert len(document_slugs) == 4
-
-    for d in page1_documents:
-        assert d not in page2_documents
-
-
-@pytest.mark.search
-def test_search_result_schema(caplog, test_opensearch, monkeypatch, client):
-    monkeypatch.setattr(search, "_OPENSEARCH_CONNECTION", test_opensearch)
-
-    expected_search_result_schema = sorted(
-        [
-            "document_name",
-            "document_postfix",
-            "document_geography",
-            "document_source",
-            "document_sectors",
-            "document_date",
-            "document_id",
-            "document_slug",
-            "document_description",
-            "document_type",
-            "document_category",
-            "document_source_url",
-            "document_url",
-            "document_content_type",
-            "document_title_match",
-            "document_description_match",
-            "document_passage_matches",
-        ]
-    )
-    page1_response = client.post(
-        SEARCH_ENDPOINT,
-        json={
-            "query_string": "climate",
-            "exact_match": False,
-            "limit": 100,
-            "offset": 0,
-        },
-    )
-    assert page1_response.status_code == 200
-
-    page1_response_body = page1_response.json()
-    page1_documents = page1_response_body["documents"]
-    assert len(page1_documents) > 0
-
-    for d in page1_documents:
-        assert sorted(list(d.keys())) == expected_search_result_schema
-
-    assert "Document ids missing" in caplog.text
-
-
-@pytest.mark.search
-def test_pagination_overlap(test_opensearch, monkeypatch, client):
-    monkeypatch.setattr(search, "_OPENSEARCH_CONNECTION", test_opensearch)
-
-    page1_response = client.post(
-        SEARCH_ENDPOINT,
-        json={
-            "query_string": "climate",
-            "exact_match": False,
-            "limit": 2,
-            "offset": 0,
-        },
-    )
-    assert page1_response.status_code == 200
-
-    page1_response_body = page1_response.json()
-    page1_documents = page1_response_body["documents"]
-    assert len(page1_documents) > 1
-
-    page2_response = client.post(
-        SEARCH_ENDPOINT,
-        json={
-            "query_string": "climate",
-            "exact_match": False,
-            "limit": 2,
-            "offset": 1,
-        },
-    )
-    assert page2_response.status_code == 200
-
-    page2_response_body = page2_response.json()
-    page2_documents = page2_response_body["documents"]
-    assert len(page2_documents) > 0
-
-    # Check that page 2 documents are different to page 1 documents
-    assert len(
-        {d["document_slug"] for d in page1_documents}
-        | {d["document_slug"] for d in page2_documents}
-    ) > len({d["document_slug"] for d in page1_documents})
-
-    assert page1_documents[-1] == page2_documents[0]
-
-
-@pytest.mark.search
-def test_jit_query_is_default(test_opensearch, monkeypatch, client, mocker):
-    monkeypatch.setattr(search, "_OPENSEARCH_CONNECTION", test_opensearch)
-    jit_query_spy = mocker.spy(app.core.jit_query_wrapper, "jit_query")  # noqa
-    background_task_spy = mocker.spy(fastapi.BackgroundTasks, "add_task")
-
-    response = client.post(
-        SEARCH_ENDPOINT,
-        json={
-            "query_string": "climate",
-            "exact_match": True,
-        },
-    )
-    assert response.status_code == 200
-
-    # Check the jit query called by checking the background task has been added
-    assert jit_query_spy.call_count == 1 or jit_query_spy.call_count == 2
-    assert background_task_spy.call_count == 1
-
-
-@pytest.mark.search
-def test_with_jit(test_opensearch, monkeypatch, client, mocker):
-    monkeypatch.setattr(search, "_OPENSEARCH_CONNECTION", test_opensearch)
-    jit_query_spy = mocker.spy(app.core.jit_query_wrapper, "jit_query")
-    background_task_spy = mocker.spy(fastapi.BackgroundTasks, "add_task")
-
-    response = client.post(
-        SEARCH_ENDPOINT,
-        json={
-            "query_string": "climate",
-            "exact_match": True,
-        },
-    )
-
-    assert response.status_code == 200
-
-    # Check the jit query call
-    assert jit_query_spy.call_count == 1 or jit_query_spy.call_count == 2
-    actual_search_body = jit_query_spy.mock_calls[0].args[1]
-    actual_config = jit_query_spy.mock_calls[0].args[2]
-
-    expected_search_body = SearchRequestBody(
-        query_string="climate",
-        exact_match=True,
-        max_passages_per_doc=10,
-        keyword_filters=None,
-        year_range=None,
-        sort_field=None,
-        sort_order=SortOrder.DESCENDING,
-        jit_query=JitQuery.ENABLED,
-        limit=10,
-        offset=0,
-    )
-    assert actual_search_body == expected_search_body
-
-    # Check the first call has overriden the default config
-    overrides = {
-        "max_doc_count": 20,
-    }
-    expected_config = dataclasses.replace(OpenSearchQueryConfig(), **overrides)
-    assert actual_config == expected_config
-
-    # Check the background query call
-    assert background_task_spy.call_count == 1
-    actual_bkg_search_body = background_task_spy.mock_calls[0].args[3]
-
-    expected_bkg_search_body = SearchRequestBody(
-        query_string="climate",
-        exact_match=True,
-        max_passages_per_doc=10,
-        keyword_filters=None,
-        year_range=None,
-        sort_field=None,
-        sort_order=SortOrder.DESCENDING,
-        jit_query=JitQuery.ENABLED,
-        limit=10,
-        offset=0,
-    )
-    assert actual_bkg_search_body == expected_bkg_search_body
-
-    # Check the background call is run with default config
-    actual_bkg_config = background_task_spy.mock_calls[0].args[4]
-    assert actual_bkg_config == OpenSearchQueryConfig()
-
-
-@pytest.mark.search
-def test_without_jit(test_opensearch, monkeypatch, client, mocker):
-    monkeypatch.setattr(search, "_OPENSEARCH_CONNECTION", test_opensearch)
-    query_spy = mocker.spy(search._OPENSEARCH_CONNECTION, "query")
-    background_task_spy = mocker.spy(fastapi.BackgroundTasks, "add_task")
-
-    response = client.post(
-        SEARCH_ENDPOINT,
-        json={
-            "query_string": "climate",
-            "exact_match": True,
-            "jit_query": "disabled",
-        },
-    )
-    assert response.status_code == 200
-    # Ensure nothing has/is going on in the background
-    assert background_task_spy.call_count == 0
-    assert query_spy.call_count == 1  # Called once as not using jit search
-
-    actual_search_body = query_spy.mock_calls[0].args[0]
-
-    expected_search_body = SearchRequestBody(
-        query_string="climate",
-        exact_match=True,
-        max_passages_per_doc=10,
-        keyword_filters=None,
-        year_range=None,
-        sort_field=None,
-        sort_order=SortOrder.DESCENDING,
-        jit_query=JitQuery.DISABLED,
-        limit=10,
-        offset=0,
-    )
-    assert actual_search_body == expected_search_body
-
-    # Check default config is used
-    actual_config = query_spy.mock_calls[0].args[1]
-    expected_config = OpenSearchQueryConfig()
-    assert actual_config == expected_config
+    assert len(response.json()["families"]) > 0
+    families = response_content["families"]
+    for family in families:
+        assert family["family_category"] == "Executive"

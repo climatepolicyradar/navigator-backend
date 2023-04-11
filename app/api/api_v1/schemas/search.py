@@ -86,7 +86,6 @@ class SearchRequestBody(BaseModel):
     sort_field: Optional[SortField] = None
     sort_order: SortOrder = SortOrder.DESCENDING
 
-    jit_query: Optional[JitQuery] = JitQuery.ENABLED
     include_results: IncludedResultsList = None
 
     limit: int = 10  # TODO: decide on default
