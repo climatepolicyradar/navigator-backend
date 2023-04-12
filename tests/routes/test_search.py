@@ -1057,7 +1057,6 @@ def test_csv_content(
 
     row_count = 0
     for row in csv_content:
-        print(row)
         row_count += 1
         family_name = row["Family Name"]
         assert family_name in validation_data
