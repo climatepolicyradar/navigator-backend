@@ -147,7 +147,7 @@ def test_write_documents_to_s3(test_s3_client, mocker):
     write_documents_to_s3(test_s3_client, test_s3_prefix, documents=[d])
     upload_file_mock.assert_called_once_with(
         bucket=PIPELINE_BUCKET,
-        key=f"{test_s3_prefix}/input.json",
+        key=f"{test_s3_prefix}/db_state.json",
         content_type="application/json",
         fileobj=mock.ANY,
     )

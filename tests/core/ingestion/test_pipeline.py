@@ -11,7 +11,7 @@ from app.core.ingestion.processor import get_dfc_ingestor, get_event_ingestor
 from app.core.ingestion.reader import read
 from app.core.ingestion.utils import IngestContext
 from tests.core.ingestion.helpers import (
-    FOUR_EVENT_ROWS,
+    FIVE_EVENT_ROWS,
     THREE_DOC_ROWS,
     get_doc_ingest_row_data,
     get_event_ingest_row_data,
@@ -87,7 +87,7 @@ def test_generate_pipeline_input_document_content(test_db: Session):
 
 
 def test_generate_pipeline_input_document_content_with_events(test_db: Session):
-    _populate_db_for_test(test_db, THREE_DOC_ROWS, FOUR_EVENT_ROWS)
+    _populate_db_for_test(test_db, THREE_DOC_ROWS, FIVE_EVENT_ROWS)
 
     documents = generate_pipeline_ingest_input(test_db)
     documents_s3_object = {doc.import_id: doc for doc in documents}
@@ -100,7 +100,7 @@ def test_generate_pipeline_input_document_content_with_events(test_db: Session):
         assert document.name == csv_doc_row["Family name"]
         assert document.description == csv_doc_row["Family summary"]
         assert document.publication_ts == _get_published_date_for_id(
-            csv_doc_row["CPR Family ID"], FOUR_EVENT_ROWS
+            csv_doc_row["CPR Family ID"], FIVE_EVENT_ROWS
         )
 
     assert count == len(documents)
