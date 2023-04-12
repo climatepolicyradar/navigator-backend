@@ -1,6 +1,8 @@
 import json
 import time
+import csv
 from datetime import datetime
+from io import StringIO
 from pathlib import Path
 from typing import Any
 
@@ -34,6 +36,7 @@ from app.db.models.document import PhysicalDocument
 from app.initial_data import populate_geography
 
 SEARCH_ENDPOINT = "/api/v1/searches"
+CSV_DOWNLOAD_ENDPOINT = "/api/v1/searches/download-csv"
 
 
 def _populate_search_db_families(db: Session) -> None:
@@ -195,10 +198,9 @@ def _create_family_structures(
 def test_slug_is_from_family_document(test_opensearch, client, test_db, monkeypatch):
     monkeypatch.setattr(search, "_OPENSEARCH_CONNECTION", test_opensearch)
     _populate_search_db_families(test_db)
-    search_endpoint = f"{SEARCH_ENDPOINT}"
 
     page1_response = client.post(
-        search_endpoint,
+        SEARCH_ENDPOINT,
         json={
             "query_string": "and",
             "exact_match": False,
@@ -218,10 +220,9 @@ def test_slug_is_from_family_document(test_opensearch, client, test_db, monkeypa
 def test_simple_pagination_families(test_opensearch, client, test_db, monkeypatch):
     monkeypatch.setattr(search, "_OPENSEARCH_CONNECTION", test_opensearch)
     _populate_search_db_families(test_db)
-    search_endpoint = f"{SEARCH_ENDPOINT}"
 
     page1_response = client.post(
-        search_endpoint,
+        SEARCH_ENDPOINT,
         json={
             "query_string": "and",
             "exact_match": False,
@@ -236,7 +237,7 @@ def test_simple_pagination_families(test_opensearch, client, test_db, monkeypatc
     assert len(page1_families) == 2
 
     page2_response = client.post(
-        search_endpoint,
+        SEARCH_ENDPOINT,
         json={
             "query_string": "and",
             "exact_match": False,
@@ -267,10 +268,9 @@ def test_search_body_valid(exact_match, test_opensearch, monkeypatch, client, te
     """Test a simple known valid search responds with success."""
     monkeypatch.setattr(search, "_OPENSEARCH_CONNECTION", test_opensearch)
     _populate_search_db_families(test_db)
-    search_endpoint = f"{SEARCH_ENDPOINT}"
 
     response = client.post(
-        search_endpoint,
+        SEARCH_ENDPOINT,
         json={
             "query_string": "disaster",
             "exact_match": exact_match,
@@ -287,7 +287,7 @@ def test_families_search(test_opensearch, monkeypatch, client, test_db, mocker):
     query_spy = mocker.spy(search._OPENSEARCH_CONNECTION, "query_families")
 
     response = client.post(
-        f"{SEARCH_ENDPOINT}",
+        SEARCH_ENDPOINT,
         json={
             "query_string": "climate",
             "exact_match": True,
@@ -322,11 +322,10 @@ def test_families_search(test_opensearch, monkeypatch, client, test_db, mocker):
 def test_keyword_filters(test_opensearch, client, test_db, monkeypatch, mocker):
     monkeypatch.setattr(search, "_OPENSEARCH_CONNECTION", test_opensearch)
     _populate_search_db_families(test_db)
-    search_endpoint = f"{SEARCH_ENDPOINT}"
 
     query_spy = mocker.spy(search._OPENSEARCH_CONNECTION, "raw_query")
     response = client.post(
-        search_endpoint,
+        SEARCH_ENDPOINT,
         json={
             "query_string": "climate",
             "exact_match": False,
@@ -347,11 +346,10 @@ def test_keyword_filters(test_opensearch, client, test_db, monkeypatch, mocker):
 def test_keyword_filters_region(test_opensearch, test_db, monkeypatch, client, mocker):
     monkeypatch.setattr(search, "_OPENSEARCH_CONNECTION", test_opensearch)
     _populate_search_db_families(test_db)
-    search_endpoint = f"{SEARCH_ENDPOINT}"
 
     query_spy = mocker.spy(search._OPENSEARCH_CONNECTION, "raw_query")
     response = client.post(
-        search_endpoint,
+        SEARCH_ENDPOINT,
         json={
             "query_string": "climate",
             "exact_match": False,
@@ -393,11 +391,10 @@ def test_keyword_filters_region_invalid(
 ):
     monkeypatch.setattr(search, "_OPENSEARCH_CONNECTION", test_opensearch)
     _populate_search_db_families(test_db)
-    search_endpoint = f"{SEARCH_ENDPOINT}"
 
     query_spy = mocker.spy(search._OPENSEARCH_CONNECTION, "raw_query")
     response = client.post(
-        search_endpoint,
+        SEARCH_ENDPOINT,
         json={
             "query_string": "climate",
             "exact_match": False,
@@ -417,10 +414,9 @@ def test_keyword_filters_region_invalid(
 def test_invalid_keyword_filters(test_opensearch, test_db, monkeypatch, client):
     monkeypatch.setattr(search, "_OPENSEARCH_CONNECTION", test_opensearch)
     _populate_search_db_families(test_db)
-    search_endpoint = f"{SEARCH_ENDPOINT}"
 
     response = client.post(
-        search_endpoint,
+        SEARCH_ENDPOINT,
         json={
             "query_string": "disaster",
             "exact_match": False,
@@ -447,11 +443,10 @@ def test_year_range_filters(
 ):
     monkeypatch.setattr(search, "_OPENSEARCH_CONNECTION", test_opensearch)
     _populate_search_db_families(test_db)
-    search_endpoint = f"{SEARCH_ENDPOINT}"
 
     query_spy = mocker.spy(search._OPENSEARCH_CONNECTION, "raw_query")
     response = client.post(
-        search_endpoint,
+        SEARCH_ENDPOINT,
         json={
             "query_string": "disaster",
             "exact_match": False,
@@ -501,19 +496,17 @@ def test_multiple_filters(test_opensearch, test_db, monkeypatch, client, mocker)
     """Check that multiple filters are successfully applied"""
     monkeypatch.setattr(search, "_OPENSEARCH_CONNECTION", test_opensearch)
     _populate_search_db_families(test_db)
-    search_endpoint = f"{SEARCH_ENDPOINT}"
-    categories = ["Legislative"]
 
     query_spy = mocker.spy(search._OPENSEARCH_CONNECTION, "raw_query")
     response = client.post(
-        search_endpoint,
+        SEARCH_ENDPOINT,
         json={
             "query_string": "greenhouse",
             "exact_match": False,
             "keyword_filters": {
                 "countries": ["south-korea"],
                 "sources": ["CCLW"],
-                "categories": categories,
+                "categories": ["Legislative"],
             },
             "year_range": (1900, 2020),
             "jit_query": "disabled",
@@ -548,11 +541,10 @@ def test_multiple_filters(test_opensearch, test_db, monkeypatch, client, mocker)
 def test_result_order_score(test_opensearch, monkeypatch, client, test_db, mocker):
     monkeypatch.setattr(search, "_OPENSEARCH_CONNECTION", test_opensearch)
     _populate_search_db_families(test_db)
-    search_endpoint = f"{SEARCH_ENDPOINT}"
 
     query_spy = mocker.spy(search._OPENSEARCH_CONNECTION, "raw_query")
     response = client.post(
-        search_endpoint,
+        SEARCH_ENDPOINT,
         json={
             "query_string": "disaster",
             "exact_match": False,
@@ -575,10 +567,9 @@ def test_result_order_score(test_opensearch, monkeypatch, client, test_db, mocke
 def test_result_order_date(test_opensearch, monkeypatch, client, test_db, order):
     monkeypatch.setattr(search, "_OPENSEARCH_CONNECTION", test_opensearch)
     _populate_search_db_families(test_db)
-    search_endpoint = f"{SEARCH_ENDPOINT}"
 
     response = client.post(
-        search_endpoint,
+        SEARCH_ENDPOINT,
         json={
             "query_string": "climate",
             "exact_match": False,
@@ -608,10 +599,9 @@ def test_result_order_date(test_opensearch, monkeypatch, client, test_db, order)
 def test_result_order_title(test_opensearch, monkeypatch, client, test_db, order):
     monkeypatch.setattr(search, "_OPENSEARCH_CONNECTION", test_opensearch)
     _populate_search_db_families(test_db)
-    search_endpoint = f"{SEARCH_ENDPOINT}"
 
     response = client.post(
-        search_endpoint,
+        SEARCH_ENDPOINT,
         json={
             "query_string": "climate",
             "exact_match": False,
@@ -640,22 +630,21 @@ def test_result_order_title(test_opensearch, monkeypatch, client, test_db, order
 def test_invalid_request(test_opensearch, monkeypatch, client, test_db):
     monkeypatch.setattr(search, "_OPENSEARCH_CONNECTION", test_opensearch)
     _populate_search_db_families(test_db)
-    search_endpoint = f"{SEARCH_ENDPOINT}"
 
     response = client.post(
-        search_endpoint,
+        SEARCH_ENDPOINT,
         json={"exact_match": False},
     )
     assert response.status_code == 422
 
     response = client.post(
-        search_endpoint,
+        SEARCH_ENDPOINT,
         json={"limit": 1, "offset": 2},
     )
     assert response.status_code == 422
 
     response = client.post(
-        search_endpoint,
+        SEARCH_ENDPOINT,
         json={},
     )
     assert response.status_code == 422
@@ -666,24 +655,23 @@ def test_case_insensitivity(test_opensearch, monkeypatch, client, test_db):
     """Make sure that query string results are not affected by case."""
     monkeypatch.setattr(search, "_OPENSEARCH_CONNECTION", test_opensearch)
     _populate_search_db_families(test_db)
-    search_endpoint = f"{SEARCH_ENDPOINT}"
 
     response1 = client.post(
-        search_endpoint,
+        SEARCH_ENDPOINT,
         json={
             "query_string": "climate",
             "exact_match": False,
         },
     )
     response2 = client.post(
-        search_endpoint,
+        SEARCH_ENDPOINT,
         json={
             "query_string": "climate",
             "exact_match": False,
         },
     )
     response3 = client.post(
-        search_endpoint,
+        SEARCH_ENDPOINT,
         json={
             "query_string": "climate",
             "exact_match": False,
@@ -706,24 +694,23 @@ def test_punctuation_ignored(test_opensearch, monkeypatch, client, test_db):
     """Make sure that punctuation in query strings is ignored."""
     monkeypatch.setattr(search, "_OPENSEARCH_CONNECTION", test_opensearch)
     _populate_search_db_families(test_db)
-    search_endpoint = f"{SEARCH_ENDPOINT}"
 
     response1 = client.post(
-        search_endpoint,
+        SEARCH_ENDPOINT,
         json={
             "query_string": "climate.",
             "exact_match": False,
         },
     )
     response2 = client.post(
-        search_endpoint,
+        SEARCH_ENDPOINT,
         json={
             "query_string": "climate, ",
             "exact_match": False,
         },
     )
     response3 = client.post(
-        search_endpoint,
+        SEARCH_ENDPOINT,
         json={
             "query_string": ";climate",
             "exact_match": False,
@@ -846,16 +833,12 @@ def test_time_taken(test_opensearch, monkeypatch, client):
 
 
 @pytest.mark.search
-def test_empty_search_term_performs_browse(
-    client,
-    test_db,
-):
+def test_empty_search_term_performs_browse(client, test_db):
     """Make sure that empty search term returns results in browse mode."""
     _populate_search_db_families(test_db)
-    search_endpoint = f"{SEARCH_ENDPOINT}"
 
     response = client.post(
-        search_endpoint,
+        SEARCH_ENDPOINT,
         json={"query_string": ""},
     )
     assert response.status_code == 200
@@ -865,17 +848,12 @@ def test_empty_search_term_performs_browse(
 
 @pytest.mark.search
 @pytest.mark.parametrize("order", [SortOrder.ASCENDING, SortOrder.DESCENDING])
-def test_browse_order_by_title(
-    client,
-    test_db,
-    order,
-):
+def test_browse_order_by_title(client, test_db, order):
     """Make sure that empty search terms return no results."""
     _populate_search_db_families(test_db)
-    search_endpoint = f"{SEARCH_ENDPOINT}"
 
     response = client.post(
-        search_endpoint,
+        SEARCH_ENDPOINT,
         json={
             "query_string": "",
             "sort_field": "title",
@@ -904,19 +882,12 @@ def test_browse_order_by_title(
 @pytest.mark.parametrize("order", [SortOrder.ASCENDING, SortOrder.DESCENDING])
 @pytest.mark.parametrize("start_year", [None, 1999, 2007])
 @pytest.mark.parametrize("end_year", [None, 2011, 2018])
-def test_browse_order_by_date(
-    order,
-    start_year,
-    end_year,
-    client,
-    test_db,
-):
+def test_browse_order_by_date(order, start_year, end_year, client, test_db):
     """Make sure that empty search terms return no results."""
     _populate_search_db_families(test_db)
-    search_endpoint = f"{SEARCH_ENDPOINT}"
 
     response = client.post(
-        search_endpoint,
+        SEARCH_ENDPOINT,
         json={
             "query_string": "",
             "sort_field": "date",
@@ -949,17 +920,12 @@ def test_browse_order_by_date(
 
 @pytest.mark.search
 @pytest.mark.parametrize("limit", [1, 4, 7, 10])
-def test_browse_limit_offset(
-    client,
-    test_db,
-    limit,
-):
+def test_browse_limit_offset(client, test_db, limit):
     """Make sure that the offset parameter in browse mode works."""
     _populate_search_db_families(test_db)
-    search_endpoint = f"{SEARCH_ENDPOINT}"
 
     response_offset_0 = client.post(
-        search_endpoint,
+        SEARCH_ENDPOINT,
         json={
             "query_string": "",
             "limit": limit,
@@ -967,7 +933,7 @@ def test_browse_limit_offset(
         },
     )
     response_offset_2 = client.post(
-        search_endpoint,
+        SEARCH_ENDPOINT,
         json={
             "query_string": "",
             "limit": limit,
@@ -993,11 +959,9 @@ def test_browse_limit_offset(
 def test_browse_filters(client, test_db):
     """Check that multiple filters are successfully applied"""
     _populate_search_db_families(test_db)
-    search_endpoint = f"{SEARCH_ENDPOINT}"
 
-    # query_spy = mocker.spy(search._OPENSEARCH_CONNECTION, "raw_query")
     response = client.post(
-        search_endpoint,
+        SEARCH_ENDPOINT,
         json={
             "query_string": "",
             "keyword_filters": {
@@ -1018,20 +982,15 @@ def test_browse_filters(client, test_db):
 
 
 @pytest.mark.search
-def test_browse_filter_category(
-    client,
-    test_db,
-):
+def test_browse_filter_category(client, test_db):
     """Make sure that empty search term returns results in browse mode."""
     _populate_search_db_families(test_db)
-    search_endpoint = f"{SEARCH_ENDPOINT}"
-    keyword_filters = {"categories": ["Executive"]}
 
     response = client.post(
-        search_endpoint,
+        SEARCH_ENDPOINT,
         json={
             "query_string": "",
-            "keyword_filters": keyword_filters,
+            "keyword_filters": {"categories": ["Executive"]},
         },
     )
     assert response.status_code == 200
@@ -1041,3 +1000,130 @@ def test_browse_filter_category(
     families = response_content["families"]
     for family in families:
         assert family["family_category"] == "Executive"
+
+
+@pytest.mark.search
+@pytest.mark.parametrize("exact_match", [True, False])
+@pytest.mark.parametrize("query_string", ["", "greenhouse"])
+def test_csv_content(
+    exact_match,
+    query_string,
+    client,
+    test_db,
+    test_opensearch,
+    monkeypatch,
+):
+    """Make sure that downloaded CSV content matches a given search"""
+    monkeypatch.setattr(search, "_OPENSEARCH_CONNECTION", test_opensearch)
+    _populate_search_db_families(test_db)
+
+    search_response = client.post(
+        SEARCH_ENDPOINT,
+        json={
+            "query_string": query_string,
+            "exact_match": exact_match,
+        },
+    )
+    assert search_response.status_code == 200
+    search_response_content = search_response.json()
+    assert search_response_content["hits"] > 0
+    assert len(search_response.json()["families"]) > 0
+    families = search_response_content["families"]
+
+    validation_data = {
+        family["family_name"]: {
+            "family": family,
+            "documents": {
+                doc["document_title"]: doc for doc in family["family_documents"]
+            },
+        }
+        for family in families
+    }
+    expected_csv_row_count = len(validation_data)
+    for f in validation_data:
+        if doc_count := len(validation_data[f]["documents"]) > 1:
+            # Extra rows only exist for multi-doc families
+            expected_csv_row_count += doc_count - 1
+
+    download_response = client.post(
+        CSV_DOWNLOAD_ENDPOINT,
+        json={
+            "query_string": query_string,
+            "exact_match": exact_match,
+        },
+    )
+    assert download_response.status_code == 200
+    csv_content = csv.DictReader(StringIO(download_response.content.decode("utf8")))
+
+    row_count = 0
+    for row in csv_content:
+        print(row)
+        row_count += 1
+        family_name = row["Family Name"]
+        assert family_name in validation_data
+        family = validation_data[family_name]["family"]
+        assert family["family_name"] == row["Family Name"]
+        assert family["family_description"] == row["Family Summary"]
+        assert family["family_date"] == row["Family Publication Date"]
+        assert family["family_source"] == row["Source"]
+        assert family["family_category"] == row["Category"]
+        assert row["Family URL"].endswith(family["family_slug"])
+        assert family["family_geography"] == row["Geography"]
+
+        # TODO: Test family metadata - need improved test_db setup
+
+        if doc_title := row["Document Title"]:
+            assert doc_title in validation_data[family_name]["documents"]
+            document = validation_data[family_name]["documents"][doc_title]
+            assert document["document_title"] == row["Document Title"]
+            assert row["Document URL"].endswith(document["document_slug"])
+            if document["document_url"]:
+                assert document["document_url"] == row["Document Content URL"]
+            else:
+                assert document["source_url"] == row["Document Content URL"]
+            assert document["document_type"] == row["Document Type"]
+
+    assert row_count == expected_csv_row_count
+
+
+@pytest.mark.search
+@pytest.mark.parametrize("query_string", ["", "greenhouse"])
+@pytest.mark.parametrize("limit", [1, 10, 35])
+@pytest.mark.parametrize("offset", [0, 5, 10, 80])
+def test_csv_download_no_limit(
+    query_string,
+    limit,
+    offset,
+    client,
+    test_db,
+    test_opensearch,
+    monkeypatch,
+    mocker,
+):
+    """Make sure that downloaded CSV is not limited to a single page of results."""
+    monkeypatch.setattr(search, "_OPENSEARCH_CONNECTION", test_opensearch)
+    _populate_search_db_families(test_db)
+
+    if query_string:
+        query_spy = mocker.spy(search._OPENSEARCH_CONNECTION, "query_families")
+    else:
+        query_spy = mocker.spy(search, "browse_rds_families")
+
+    download_response = client.post(
+        CSV_DOWNLOAD_ENDPOINT,
+        json={
+            "query_string": query_string,
+            "limit": limit,
+            "offset": offset,
+        },
+    )
+    assert download_response.status_code == 200
+
+    if query_string:
+        actual_search_req = query_spy.mock_calls[0].kwargs["search_request_body"]
+    else:
+        actual_search_req = query_spy.mock_calls[0].kwargs["req"]
+
+    # Make sure we overrode the search request content to produce the CSV download
+    assert actual_search_req.limit == 100
+    assert actual_search_req.offset == 0

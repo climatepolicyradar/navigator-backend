@@ -117,6 +117,9 @@ def download_search_documents(
             }
         },
     )
+    # Always download all results
+    search_body.offset = 0
+    search_body.limit = 100  # TODO: configure this value
 
     _LOGGER.info(
         "Starting search...",

@@ -57,9 +57,11 @@ from app.core.config import (
     PUBLIC_APP_URL,
 )
 from app.core.util import to_cdn_url
+from app.db.models.app.users import Organisation
 from app.db.models.law_policy import (
     FamilyDocument,
     FamilyMetadata,
+    FamilyOrganisation,
     Slug,
     Collection,
     CollectionFamily,
@@ -91,26 +93,26 @@ _REQUIRED_FIELDS = ["document_name"]
 _DEFAULT_SORT_ORDER = SortOrder.DESCENDING
 _JSON_SERIALIZER = jss()
 _CSV_SEARCH_RESPONSE_COLUMNS = [
-    "Collection name",
-    "Collection summary",
-    "Family name",
-    "Family summary",
+    "Collection Name",
+    "Collection Summary",
+    "Family Name",
+    "Family Summary",
     "Family URL",
-    "Document title",
+    "Family Publication Date",
+    "Geography",
+    "Document Title",
     "Document URL",
-    "Document role",
-    "Document variant",
-    "Geography ISO",
+    "Document Content URL",
+    "Document Type",
     "Category",
     "Sectors",
     "Instruments",
     "Frameworks",
     "Responses",
     "Natural Hazards",
-    "Document Type",
-    "Language",
+    "Languages",
     "Keywords",
-    "Geography",
+    "Source",
 ]
 
 
@@ -914,6 +916,15 @@ def _get_extra_csv_info(
         .join(FamilyMetadata, FamilyMetadata.family_import_id == Slug.family_import_id)
         .all()
     )
+    slug_and_organisation = (
+        db.query(Slug, Organisation)
+        .filter(Slug.name.in_(all_family_slugs))
+        .join(
+            FamilyOrganisation,
+            FamilyOrganisation.family_import_id == Slug.family_import_id,
+        )
+        .join(Organisation, Organisation.id == FamilyOrganisation.organisation_id)
+    )
     slug_and_family_document = (
         db.query(Slug, FamilyDocument)
         .filter(Slug.name.in_(all_document_slugs))
@@ -936,10 +947,13 @@ def _get_extra_csv_info(
         "metadata": {
             slug.name: meta.value for (slug, meta) in slug_and_family_metadata
         },
-        "language": {
-            slug.name: language.language_name
+        "source": {slug.name: org.name for (slug, org) in slug_and_organisation},
+        "languages": {
+            slug.name: [
+                language.language_name
+                for language in family_document.physical_document.languages
+            ]
             for (slug, family_document) in slug_and_family_document
-            for language in family_document.physical_document.languages
         },
         "collection": {
             slug.name: collection for (slug, collection) in slug_and_collection
@@ -963,10 +977,13 @@ def process_result_into_csv(
     extra_info_query = _get_extra_csv_info(db, search_response.families)
     url_base = f"{PUBLIC_APP_URL}/documents"
     for family in search_response.families:
-        _LOGGER.info(f"Family: {family}")
-        family_metadata = extra_info_query["metadata"].get(family.family_slug)
+        _LOGGER.debug(f"Family: {family}")
+        family_metadata = extra_info_query["metadata"].get(family.family_slug, {})
         if family_metadata is None:
             _LOGGER.error(f"Failed to find metadata for '{family.family_slug}'")
+        family_source = extra_info_query["source"].get(family.family_slug, "")
+        if not family_source:
+            _LOGGER.error(f"Failed to identify organisation for '{family.family_slug}'")
 
         sector_metadata = ";".join(family_metadata.get("sector", []))
         instrument_metadata = ";".join(family_metadata.get("instrument", []))
@@ -986,20 +1003,22 @@ def process_result_into_csv(
             for document in family.family_documents:
                 _LOGGER.info(f"Document: {document}")
                 document_slug = document.document_slug
-                document_language = extra_info_query["language"].get(document_slug)
-                if document_language is None:
-                    _LOGGER.warning(f"Failed to find language for '{document_slug}'")
+                document_languages = ";".join(
+                    extra_info_query["languages"].get(document_slug, [])
+                )
+                document_content = document.document_url or document.document_source_url
                 row = {
                     "Collection Name": collection_name,
                     "Collection Summary": collection_summary,
                     "Family Name": family.family_name,
                     "Family Summary": family.family_description,
-                    "Family Date": family.family_date,
+                    "Family Publication Date": family.family_date,
                     "Family URL": f"{url_base}/{family.family_slug}",
                     "Document Title": document.document_title,
                     "Document URL": f"{url_base}/{document.document_slug}",
-                    "Document type": document.document_type,
-                    "Geography ISO": family.family_geography,
+                    "Document Content URL": document_content,
+                    "Document Type": document.document_type,
+                    "Geography": family.family_geography,
                     "Category": family.family_category,
                     "Sectors": sector_metadata,
                     "Instruments": instrument_metadata,
@@ -1007,7 +1026,8 @@ def process_result_into_csv(
                     "Responses": response_metadata,
                     "Natural Hazards": hazard_metadata,
                     "Keywords": keyword_metadata,
-                    "Language": document_language or "",
+                    "Languages": document_languages,
+                    "Source": family_source,
                 }
                 writer.writerow(row)
         else:
@@ -1016,12 +1036,13 @@ def process_result_into_csv(
                 "Collection Summary": collection_summary,
                 "Family Name": family.family_name,
                 "Family Summary": family.family_description,
-                "Family Date": family.family_date,
+                "Family Publication Date": family.family_date,
                 "Family URL": f"{url_base}/{family.family_slug}",
                 "Document Title": "",
                 "Document URL": "",
-                "Document type": "",
-                "Geography ISO": family.family_geography,
+                "Document Content URL": "",
+                "Document Type": "",
+                "Geography": family.family_geography,
                 "Category": family.family_category,
                 "Sectors": sector_metadata,
                 "Instruments": instrument_metadata,
@@ -1029,7 +1050,8 @@ def process_result_into_csv(
                 "Responses": response_metadata,
                 "Natural Hazards": hazard_metadata,
                 "Keywords": keyword_metadata,
-                "Language": "",
+                "Languages": "",
+                "Source": family_source,
             }
             writer.writerow(row)
 
