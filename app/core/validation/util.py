@@ -71,7 +71,7 @@ def write_documents_to_s3(
     documents: Sequence[DocumentParserInput],
 ) -> Union[S3Document, bool]:
     """
-    Write document specifications successfully created during a bulk import to S3
+    Write current state of documents into S3 to trigger a pipeline run after bulk ingest
 
     :param [S3Client] s3_client: an S3 client to use to write data
     :param [str] s3_prefix: prefix into which to write the document updates in s3
@@ -83,7 +83,7 @@ def write_documents_to_s3(
         indent=2,
     )
     bytes_content = BytesIO(json_content.encode("utf8"))
-    documents_object_key = f"{s3_prefix}/input.json"
+    documents_object_key = f"{s3_prefix}/db_state.json"
     _LOGGER.info("Writing Documents file into S3")
     return _write_content_to_s3(
         s3_client=s3_client,
