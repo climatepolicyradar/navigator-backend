@@ -154,4 +154,4 @@ def test_write_documents_to_s3(test_s3_client, mocker):
     uploaded_json_documents = json.loads(
         upload_file_mock.mock_calls[0].kwargs["fileobj"].read().decode("utf8")
     )
-    assert uploaded_json_documents == {d.import_id: d.to_json()}
+    assert uploaded_json_documents == {"documents": {d.import_id: d.to_json()}}

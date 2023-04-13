@@ -1,7 +1,7 @@
 import abc
 from dataclasses import fields
 from datetime import datetime, timezone
-from typing import Any, ClassVar, Sequence
+from typing import Any, ClassVar, Optional, Sequence
 
 from pydantic import ConfigDict, Extra
 from pydantic.dataclasses import dataclass
@@ -152,7 +152,7 @@ class DocumentIngestRow(BaseIngestRow):
     def _key(key: str) -> str:
         return key.lower().replace(" ", "_")
 
-    def get_first_url(self) -> str:
+    def get_first_url(self) -> Optional[str]:
         """
         Get the first URL from the 'documents' attribute.
 
@@ -163,7 +163,7 @@ class DocumentIngestRow(BaseIngestRow):
             raise ValueError(f"Expected 1 document to be parsed from: {self.documents}")
 
         first_url = documents[0].split("|")[0]
-        return first_url
+        return first_url or None
 
 
 @dataclass(config=ConfigDict(frozen=True, validate_assignment=True, extra=Extra.ignore))
