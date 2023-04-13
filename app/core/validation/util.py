@@ -79,7 +79,7 @@ def write_documents_to_s3(
         specifications to write to S3
     """
     json_content = json.dumps(
-        {d.import_id: d.to_json() for d in documents},
+        {"documents": {d.import_id: d.to_json() for d in documents}},
         indent=2,
     )
     bytes_content = BytesIO(json_content.encode("utf8"))

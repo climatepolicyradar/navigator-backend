@@ -47,7 +47,7 @@ def generate_pipeline_ingest_input(db: Session) -> Sequence[DocumentParserInput]
             publication_ts=family.published_date or fallback_date,
             import_id=cast(str, family_document.import_id),
             source_url=(
-                cast(str, family_document.physical_document.source_url)
+                cast(str, family_document.physical_document.source_url) or None
                 if family_document.physical_document is not None
                 else None
             ),
