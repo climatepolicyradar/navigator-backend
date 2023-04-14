@@ -21,7 +21,7 @@ def validate_cdn_urls(token: str):
         "Authorization": "Bearer " + token,
     }
 
-    response = requests.request("GET", URL, headers=headers, data=payload)
+    response = requests.request("HEAD", URL, headers=headers, data=payload)
 
     results = {
         id_: {"status_code": call_api(cdn), "cdn": cdn}
