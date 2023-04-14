@@ -278,15 +278,15 @@ class DocumentUpdateRequest(BaseModel):
 class ClimateLawsValidationResult(BaseModel):
     """Response for ClimateLaws source_urls validation request."""
 
-    climate_laws: list[tuple[Any, Any]]
-    climate_laws_count: int
-    all_climate_laws_valid: bool
-    no_cdn: list[tuple[Any, Any]]
-    no_cdn_count: int
+    checked: list[tuple[str, str]]
+    checked_count: int
+    all_climate_laws_stored: bool
+    missing_sources: list[str]
+    missing_sources_count: int
 
 
 class RDSDataValidationResult(BaseModel):
-    """Response for the data validation endpoint for analysing the new and deprecated document data."""
+    """Response for data validation between old and new schemas."""
 
     family_document_ids: list[str]
     family_document_id_count: int

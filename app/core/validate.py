@@ -9,14 +9,17 @@ from app.db.models.document import PhysicalDocument
 from app.db.models.law_policy import FamilyDocument, DocumentStatus
 
 
-def physical_document_source_urls(db: Session) -> list[tuple[str, str]]:
-    """Get a list of all physical document source_urls and cdn paths (even archived)."""
-    physical_documents = (db.query(PhysicalDocument)).all()
-
-    return [
-        (physical_document.source_url, physical_document.cdn_object)
-        for physical_document in physical_documents
-    ]
+def get_physical_documents_matching_source_url(
+    db: Session, filter_url: str
+) -> list[tuple[str, str]]:
+    """Get a list of all source_urls and cdn paths matching the filter."""
+    filter = f"%{filter_url}%"
+    rows = (
+        db.query(PhysicalDocument.source_url, PhysicalDocument.cdn_object)
+        .filter(PhysicalDocument.source_url.like(filter))
+        .all()
+    )
+    return [tuple(r) for r in rows]
 
 
 def document_source_urls(db: Session) -> list[tuple[str, str]]:

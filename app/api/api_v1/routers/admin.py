@@ -1,7 +1,6 @@
 import logging
 from io import StringIO
 from typing import cast, Union
-from urllib.parse import urlparse
 from sqlalchemy.orm import Session
 from app.core.aws import S3Client
 
@@ -50,7 +49,9 @@ from app.core.ingestion.utils import (
     get_result_counts,
 )
 from app.core.ingestion.validator import validate_event_row
-from app.core.validate import physical_document_source_urls, document_source_urls
+from app.core.validate import (
+    get_physical_documents_matching_source_url,
+)
 from app.core.ratelimit import DEFAULT_LIMIT, limiter
 from app.core.validate import family_document_ids, document_ids
 from app.core.validation import IMPORT_ID_MATCHER
@@ -845,9 +846,9 @@ def validate_climate_laws_urls(
     db=Depends(get_db),
     current_user=Depends(get_current_active_superuser),
 ):
-    """Validate that all documents that have climate-laws source urls have documents stored in our cdn."""
+    """Validate documents that from climate-laws have documents stored in our cdn."""
     _LOGGER.info(
-        "Validating source urls for climate laws hosted documents.",
+        "Validating source urls for climate laws are hosted documents.",
         extra={
             "props": {
                 "props": {
@@ -857,30 +858,33 @@ def validate_climate_laws_urls(
         },
     )
 
-    unique_docs = [
-        doc
-        for doc in list(
-            set(physical_document_source_urls(db=db) + document_source_urls(db=db))
-        )
-        if doc is not (None, None)
+    climate_laws_docs = get_physical_documents_matching_source_url(
+        db, "%climate-laws.org%"
+    )
+
+    sources_missing_in_cdn = [
+        url for url, cdn in climate_laws_docs if cdn in [None, ""]
     ]
 
-    climate_laws_docs = [
-        (url, cdn)
-        for url, cdn in unique_docs
-        if urlparse(url).hostname == "climate-laws.org"
-    ]
-
-    no_cdn = [(url, cdn) for url, cdn in climate_laws_docs if cdn in [None, ""]]
-
-    _LOGGER.info("Climate laws validation complete.")
+    _LOGGER.info(
+        "Climate laws validation complete.",
+        extra={
+            "props": {
+                "checked": climate_laws_docs,
+                "checked_count": len(climate_laws_docs),
+                "all_climate_laws_stored": len(sources_missing_in_cdn) == 0,
+                "missing_sources": sources_missing_in_cdn,
+                "missing_sources_count": len(sources_missing_in_cdn),
+            }
+        },
+    )
 
     return ClimateLawsValidationResult(
-        climate_laws=climate_laws_docs,
-        climate_laws_count=len(climate_laws_docs),
-        all_climate_laws_valid=len(no_cdn) == 0,
-        no_cdn=no_cdn,
-        no_cdn_count=len(no_cdn),
+        checked=climate_laws_docs,
+        checked_count=len(climate_laws_docs),
+        all_climate_laws_stored=len(sources_missing_in_cdn) == 0,
+        missing_sources=sources_missing_in_cdn,
+        missing_sources_count=len(sources_missing_in_cdn),
     )
 
 
@@ -894,9 +898,9 @@ def validate_dfc_vs_deprecated(
     db=Depends(get_db),
     current_user=Depends(get_current_active_superuser),
 ):
-    """Validate that all documents in the deprecated format are in the new format and published."""
+    """Validate documents between old and new schemas."""
     _LOGGER.info(
-        "Validating documents in deprecated format against new dfc format.",
+        "Validating documents between old and new schemas.",
         extra={
             "props": {
                 "props": {
