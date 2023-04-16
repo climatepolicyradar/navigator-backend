@@ -4,7 +4,7 @@ import csv
 from datetime import datetime
 from io import StringIO
 from pathlib import Path
-from typing import Any
+from typing import Any, Sequence, cast
 
 import pytest
 from sqlalchemy.orm import Session
@@ -16,6 +16,7 @@ from app.api.api_v1.schemas.search import (
     SearchRequestBody,
 )
 from app.core.search import _FILTER_FIELD_MAP, OpenSearchQueryConfig
+from app.core.ingestion.utils import get_or_create
 from app.db.models.app import Organisation
 from app.db.models.law_policy.family import (
     DocumentStatus,
@@ -51,10 +52,6 @@ def _populate_search_db_families(db: Session) -> None:
         "translated_True": translated,
         "translated_False": original,
     }
-    document_type = FamilyDocumentType(
-        name="Strategy",
-        description="",
-    )
     organisation = Organisation(
         name="CCLW", description="CCLW", organisation_type="CCLW Type"
     )
@@ -65,7 +62,6 @@ def _populate_search_db_families(db: Session) -> None:
     db.add(family_event_type)
     db.add(original)
     db.add(translated)
-    db.add(document_type)
     db.add(organisation)
     db.commit()
     db.refresh(organisation)
@@ -83,7 +79,6 @@ def _populate_search_db_families(db: Session) -> None:
                         documents,
                         families,
                         variants,
-                        document_type,
                         organisation,
                     )
 
@@ -104,15 +99,22 @@ def _create_family_structures(
     documents: dict[str, FamilyDocument],
     families: dict[str, Family],
     variants: dict[str, Variant],
-    document_type: FamilyDocumentType,
     organisation: Organisation,
 ) -> None:
     """Populate a db to match the test search index code"""
-
     doc_details = doc["_source"]
     doc_id = doc_details["document_id"]
     if doc_id in documents:
         return
+
+    doc_type = get_or_create(
+        db,
+        FamilyDocumentType,
+        **{
+            "name": doc_details["document_type"],
+            "description": doc_details["document_type"],
+        },
+    )
 
     doc_id_components = doc_id.split(".")
     family_id = f"CCLW.family.{doc_id_components[2]}.0"  # assume single family
@@ -165,10 +167,10 @@ def _create_family_structures(
 
     physical_document = PhysicalDocument(
         title=doc_details["document_name"],
-        cdn_object=None,
-        md5_sum=None,
-        source_url=None,
-        content_type=None,
+        cdn_object=doc_details["document_cdn_object"],
+        md5_sum=doc_details["document_md5_sum"],
+        source_url=doc_details["document_source_url"],
+        content_type=doc_details["document_content_type"],
     )
     db.add(physical_document)
     db.commit()
@@ -179,7 +181,7 @@ def _create_family_structures(
         import_id=doc_id,
         variant_name=variants[f"translated_{doc_details['translated']}"].variant_name,
         document_status=DocumentStatus.PUBLISHED,
-        document_type=document_type.name,
+        document_type=doc_type.name,
     )
     family_document_slug = Slug(
         name=f"fd_{doc_id}",
@@ -1002,6 +1004,37 @@ def test_browse_filter_category(client, test_db):
         assert family["family_category"] == "Executive"
 
 
+def _get_docs_for_family(db: Session, slug: str) -> Sequence[FamilyDocument]:
+    slug_object: Slug = db.query(Slug).filter(Slug.name == slug).one()
+    family: Family = (
+        db.query(Family).filter(Family.import_id == slug_object.family_import_id).one()
+    )
+    documents: Sequence[FamilyDocument] = (
+        db.query(FamilyDocument)
+        .filter(FamilyDocument.family_import_id == family.import_id)
+        .all()
+    )
+
+    return documents
+
+
+def _get_validation_data(db: Session, families: Sequence[dict]) -> dict[str, Any]:
+    return {
+        family["family_name"]: {
+            "family": family,
+            "documents": {
+                doc["document_title"]: doc for doc in family["family_documents"]
+            },
+            "all_docs": {
+                doc.physical_document.title: doc
+                for doc in _get_docs_for_family(db, family["family_slug"])
+                if doc.physical_document is not None
+            },
+        }
+        for family in families
+    }
+
+
 @pytest.mark.search
 @pytest.mark.parametrize("exact_match", [True, False])
 @pytest.mark.parametrize("query_string", ["", "greenhouse"])
@@ -1030,20 +1063,19 @@ def test_csv_content(
     assert len(search_response.json()["families"]) > 0
     families = search_response_content["families"]
 
-    validation_data = {
-        family["family_name"]: {
-            "family": family,
-            "documents": {
-                doc["document_title"]: doc for doc in family["family_documents"]
-            },
-        }
-        for family in families
-    }
+    validation_data = _get_validation_data(test_db, families)
     expected_csv_row_count = len(validation_data)
     for f in validation_data:
-        if doc_count := len(validation_data[f]["documents"]) > 1:
+        len_all_family_documents = len(validation_data[f]["documents"]) + len(
+            [
+                None
+                for d in validation_data[f]["all_docs"]
+                if d not in validation_data[f]["documents"]
+            ]
+        )
+        if len_all_family_documents > 1:
             # Extra rows only exist for multi-doc families
-            expected_csv_row_count += doc_count - 1
+            expected_csv_row_count += len_all_family_documents - 1
 
     download_response = client.post(
         CSV_DOWNLOAD_ENDPOINT,
@@ -1072,15 +1104,50 @@ def test_csv_content(
         # TODO: Test family metadata - need improved test_db setup
 
         if doc_title := row["Document Title"]:
-            assert doc_title in validation_data[family_name]["documents"]
-            document = validation_data[family_name]["documents"][doc_title]
-            assert document["document_title"] == row["Document Title"]
-            assert row["Document URL"].endswith(document["document_slug"])
-            if document["document_url"]:
-                assert document["document_url"] == row["Document Content URL"]
+            if doc_title in validation_data[family_name]["documents"]:
+                # The result is in search results directly, so use those details
+                document = validation_data[family_name]["documents"][doc_title]
+                assert document["document_title"] == row["Document Title"]
+                assert row["Document URL"].endswith(document["document_slug"])
+                if document["document_content_type"] == "application/pdf":
+                    assert row["Document Content URL"].startswith(
+                        "https://cdn.climatepolicyradar.org/"
+                    )
+                else:
+                    assert (
+                        document["document_source_url"] == row["Document Content URL"]
+                    )
+                assert document["document_type"] == row["Document Type"]
             else:
-                assert document["source_url"] == row["Document Content URL"]
-            assert document["document_type"] == row["Document Type"]
+                # The result is an extra document retrieved from the database
+                assert doc_title in validation_data[family_name]["all_docs"]
+                db_document: FamilyDocument = validation_data[family_name]["all_docs"][
+                    doc_title
+                ]
+                assert db_document.physical_document is not None
+                assert db_document.physical_document.title == row["Document Title"]
+                assert row["Document URL"].endswith(
+                    cast(str, db_document.slugs[-1].name)
+                )
+                if db_document.physical_document.content_type == "application/pdf":
+                    assert row["Document Content URL"].startswith(
+                        "https://cdn.climatepolicyradar.org/"
+                    )
+                else:
+                    assert (
+                        db_document.physical_document.source_url
+                        or "" == row["Document Content URL"]
+                    )
+                assert db_document.document_type == row["Document Type"]
+            if query_string:
+                assert row["Document Content Matches Search Phrase"] in ["Yes", "No"]
+            else:
+                assert row["Document Content Matches Search Phrase"] == "n/a"
+        else:
+            assert row["Document URL"] == ""
+            assert row["Document Content URL"] == ""
+            assert row["Document Type"] == ""
+            assert row["Document Content Matches Search Phrase"] == "n/a"
 
     assert row_count == expected_csv_row_count
 

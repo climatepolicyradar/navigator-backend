@@ -3,11 +3,11 @@ import json
 import logging
 import os
 import time
-from collections import OrderedDict
+from collections import OrderedDict, defaultdict
 from dataclasses import dataclass
 from io import StringIO
 from pathlib import Path
-from typing import Any, Mapping, Optional, Sequence
+from typing import Any, Mapping, Optional, Sequence, cast
 import string
 
 from opensearchpy import OpenSearch
@@ -59,6 +59,7 @@ from app.core.config import (
 from app.core.util import to_cdn_url
 from app.db.models.app.users import Organisation
 from app.db.models.law_policy import (
+    Family,
     FamilyDocument,
     FamilyMetadata,
     FamilyOrganisation,
@@ -104,6 +105,7 @@ _CSV_SEARCH_RESPONSE_COLUMNS = [
     "Document URL",
     "Document Content URL",
     "Document Type",
+    "Document Content Matches Search Phrase",
     "Category",
     "Sectors",
     "Instruments",
@@ -908,7 +910,6 @@ def _get_extra_csv_info(
     families: Sequence[SearchResponseFamily],
 ) -> Mapping[str, Any]:
     all_family_slugs = [f.family_slug for f in families]
-    all_document_slugs = [d.document_slug for f in families for d in f.family_documents]
 
     slug_and_family_metadata = (
         db.query(Slug, FamilyMetadata)
@@ -927,10 +928,10 @@ def _get_extra_csv_info(
     )
     slug_and_family_document = (
         db.query(Slug, FamilyDocument)
-        .filter(Slug.name.in_(all_document_slugs))
-        .join(
-            FamilyDocument, FamilyDocument.import_id == Slug.family_document_import_id
-        )
+        .filter(Slug.name.in_(all_family_slugs))
+        .join(Family, Family.import_id == Slug.family_import_id)
+        .join(FamilyDocument, Family.import_id == FamilyDocument.family_import_id)
+        .filter()
         .all()
     )
     # For now there is max one collection per family
@@ -943,18 +944,15 @@ def _get_extra_csv_info(
         .join(Collection, Collection.import_id == CollectionFamily.collection_import_id)
         .all()
     )
+    family_slug_to_documents = defaultdict(list)
+    for slug, document in slug_and_family_document:
+        family_slug_to_documents[slug.name].append(document)
     extra_csv_info = {
         "metadata": {
             slug.name: meta.value for (slug, meta) in slug_and_family_metadata
         },
         "source": {slug.name: org.name for (slug, org) in slug_and_organisation},
-        "languages": {
-            slug.name: [
-                language.language_name
-                for language in family_document.physical_document.languages
-            ]
-            for (slug, family_document) in slug_and_family_document
-        },
+        "documents": family_slug_to_documents,
         "collection": {
             slug.name: collection for (slug, collection) in slug_and_collection
         },
@@ -966,6 +964,7 @@ def _get_extra_csv_info(
 def process_result_into_csv(
     db: Session,
     search_response: SearchResponse,
+    is_browse: bool,
 ) -> str:
     csv_result_io = StringIO("")
     writer = csv.DictWriter(
@@ -974,14 +973,18 @@ def process_result_into_csv(
     )
     writer.writeheader()
 
-    extra_info_query = _get_extra_csv_info(db, search_response.families)
+    extra_required_info = _get_extra_csv_info(db, search_response.families)
+    all_matching_document_slugs = {
+        d.document_slug for f in search_response.families for d in f.family_documents
+    }
+
     url_base = f"{PUBLIC_APP_URL}/documents"
     for family in search_response.families:
         _LOGGER.debug(f"Family: {family}")
-        family_metadata = extra_info_query["metadata"].get(family.family_slug, {})
-        if family_metadata is None:
+        family_metadata = extra_required_info["metadata"].get(family.family_slug, {})
+        if not family_metadata:
             _LOGGER.error(f"Failed to find metadata for '{family.family_slug}'")
-        family_source = extra_info_query["source"].get(family.family_slug, "")
+        family_source = extra_required_info["source"].get(family.family_slug, "")
         if not family_source:
             _LOGGER.error(f"Failed to identify organisation for '{family.family_slug}'")
 
@@ -994,19 +997,48 @@ def process_result_into_csv(
 
         collection_name = ""
         collection_summary = ""
-        collection = extra_info_query["collection"].get(family.family_slug)
+        collection = extra_required_info["collection"].get(family.family_slug)
         if collection is not None:
             collection_name = collection.title
             collection_summary = collection.description
 
-        if family.family_documents:
-            for document in family.family_documents:
+        family_documents: Sequence[FamilyDocument] = extra_required_info["documents"][
+            family.family_slug
+        ]
+
+        if family_documents:
+            for document in family_documents:
                 _LOGGER.info(f"Document: {document}")
-                document_slug = document.document_slug
+                physical_document = document.physical_document
+
+                if physical_document is None:
+                    document_content = ""
+                    document_title = ""
+                else:
+                    document_content = (
+                        to_cdn_url(cast(str, physical_document.cdn_object))
+                        or physical_document.source_url
+                        or ""
+                    )
+                    document_title = physical_document.title
+
+                if is_browse:
+                    document_match = "n/a"
+                else:
+                    if physical_document is None:
+                        document_match = "No"
+                    else:
+                        document_match = (
+                            "Yes"
+                            if bool(set(document.slugs) & all_matching_document_slugs)
+                            else "No"
+                        )
+
                 document_languages = ";".join(
-                    extra_info_query["languages"].get(document_slug, [])
+                    [language.language_name for language in physical_document.languages]
+                    if physical_document is not None
+                    else []
                 )
-                document_content = document.document_url or document.document_source_url
                 row = {
                     "Collection Name": collection_name,
                     "Collection Summary": collection_summary,
@@ -1014,10 +1046,11 @@ def process_result_into_csv(
                     "Family Summary": family.family_description,
                     "Family Publication Date": family.family_date,
                     "Family URL": f"{url_base}/{family.family_slug}",
-                    "Document Title": document.document_title,
-                    "Document URL": f"{url_base}/{document.document_slug}",
+                    "Document Title": document_title,
+                    "Document URL": f"{url_base}/{document.slugs[-1].name}",
                     "Document Content URL": document_content,
                     "Document Type": document.document_type,
+                    "Document Content Matches Search Phrase": document_match,
                     "Geography": family.family_geography,
                     "Category": family.family_category,
                     "Sectors": sector_metadata,
@@ -1031,6 +1064,7 @@ def process_result_into_csv(
                 }
                 writer.writerow(row)
         else:
+            # Always write a row, even if the Family contains no documents
             row = {
                 "Collection Name": collection_name,
                 "Collection Summary": collection_summary,
@@ -1042,6 +1076,7 @@ def process_result_into_csv(
                 "Document URL": "",
                 "Document Content URL": "",
                 "Document Type": "",
+                "Document Content Matches Search Phrase": "n/a",
                 "Geography": family.family_geography,
                 "Category": family.family_category,
                 "Sectors": sector_metadata,

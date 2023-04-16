@@ -120,12 +120,13 @@ def download_search_documents(
     # Always download all results
     search_body.offset = 0
     search_body.limit = 100  # TODO: configure this value
+    is_browse = not bool(search_body.query_string)
 
     _LOGGER.info(
         "Starting search...",
     )
     search_response = _search_request(db=db, search_body=search_body)
-    content_str = process_result_into_csv(db, search_response)
+    content_str = process_result_into_csv(db, search_response, is_browse=is_browse)
 
     _LOGGER.debug(f"Downloading search results as CSV: {content_str}")
     return StreamingResponse(
