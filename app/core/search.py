@@ -3,16 +3,17 @@ import json
 import logging
 import os
 import time
-from collections import OrderedDict
+from collections import OrderedDict, defaultdict
 from dataclasses import dataclass
-from datetime import datetime
+from io import StringIO
 from pathlib import Path
-from typing import Any, Mapping, Optional, Sequence
+from typing import Any, Mapping, Optional, Sequence, cast
 import string
 
 from opensearchpy import OpenSearch
 from opensearchpy import JSONSerializer as jss
 from sentence_transformers import SentenceTransformer
+from sqlalchemy.orm import Session
 
 from app.api.api_v1.schemas.search import (
     FilterField,
@@ -53,8 +54,19 @@ from app.core.config import (
     OPENSEARCH_VERIFY_CERTS,
     OPENSEARCH_SSL_WARNINGS,
     OPENSEARCH_JIT_MAX_DOC_COUNT,
+    PUBLIC_APP_URL,
 )
 from app.core.util import to_cdn_url
+from app.db.models.app.users import Organisation
+from app.db.models.law_policy import (
+    Family,
+    FamilyDocument,
+    FamilyMetadata,
+    FamilyOrganisation,
+    Slug,
+    Collection,
+    CollectionFamily,
+)
 
 
 _LOGGER = logging.getLogger(__name__)
@@ -79,9 +91,31 @@ _FILTER_FIELD_MAP: Mapping[FilterField, str] = {
     FilterField.LANGUAGE: "document_language",
 }
 _REQUIRED_FIELDS = ["document_name"]
-_DEFAULT_BROWSE_SORT_FIELD = SortField.DATE
 _DEFAULT_SORT_ORDER = SortOrder.DESCENDING
 _JSON_SERIALIZER = jss()
+_CSV_SEARCH_RESPONSE_COLUMNS = [
+    "Collection Name",
+    "Collection Summary",
+    "Family Name",
+    "Family Summary",
+    "Family URL",
+    "Family Publication Date",
+    "Geography",
+    "Document Title",
+    "Document URL",
+    "Document Content URL",
+    "Document Type",
+    "Document Content Matches Search Phrase",
+    "Category",
+    "Sectors",
+    "Instruments",
+    "Frameworks",
+    "Responses",
+    "Natural Hazards",
+    "Languages",
+    "Keywords",
+    "Source",
+]
 
 
 def _innerproduct_threshold_to_lucene_threshold(ip_thresh: float) -> float:
@@ -178,35 +212,6 @@ class OpenSearchConnection:
         self._opensearch_config = opensearch_config
         self._opensearch_connection: Optional[OpenSearch] = None
         self._sensitive_query_terms = load_sensitive_query_terms()
-
-    ##################
-    ### DEPRECATED ###
-    ##################
-    def query(
-        self,
-        search_request_body: SearchRequestBody,
-        opensearch_internal_config: OpenSearchQueryConfig,
-        preference: Optional[str],
-    ) -> SearchResultsResponse:
-        """Build & make an OpenSearch query based on the given request body."""
-
-        opensearch_request = build_opensearch_request_body(
-            search_request=search_request_body,
-            opensearch_internal_config=opensearch_internal_config,
-            sensitive_query_terms=self._sensitive_query_terms,
-        )
-
-        indices = self._get_opensearch_indices_to_query(search_request_body)
-
-        opensearch_response_body = self.raw_query(
-            opensearch_request.query, preference, indices
-        )
-
-        return process_search_response_body(
-            opensearch_response_body,
-            limit=search_request_body.limit,
-            offset=search_request_body.offset,
-        )
 
     def query_families(
         self,
@@ -898,3 +903,192 @@ def create_search_response_document(
         document_passage_matches=[],
         document_postfix=None,
     )
+
+
+def _get_extra_csv_info(
+    db: Session,
+    families: Sequence[SearchResponseFamily],
+) -> Mapping[str, Any]:
+    all_family_slugs = [f.family_slug for f in families]
+
+    slug_and_family_metadata = (
+        db.query(Slug, FamilyMetadata)
+        .filter(Slug.name.in_(all_family_slugs))
+        .join(FamilyMetadata, FamilyMetadata.family_import_id == Slug.family_import_id)
+        .all()
+    )
+    slug_and_organisation = (
+        db.query(Slug, Organisation)
+        .filter(Slug.name.in_(all_family_slugs))
+        .join(
+            FamilyOrganisation,
+            FamilyOrganisation.family_import_id == Slug.family_import_id,
+        )
+        .join(Organisation, Organisation.id == FamilyOrganisation.organisation_id)
+    )
+    slug_and_family_document = (
+        db.query(Slug, FamilyDocument)
+        .filter(Slug.name.in_(all_family_slugs))
+        .join(Family, Family.import_id == Slug.family_import_id)
+        .join(FamilyDocument, Family.import_id == FamilyDocument.family_import_id)
+        .filter()
+        .all()
+    )
+    # For now there is max one collection per family
+    slug_and_collection = (
+        db.query(Slug, Collection)
+        .filter(Slug.name.in_(all_family_slugs))
+        .join(
+            CollectionFamily, CollectionFamily.family_import_id == Slug.family_import_id
+        )
+        .join(Collection, Collection.import_id == CollectionFamily.collection_import_id)
+        .all()
+    )
+    family_slug_to_documents = defaultdict(list)
+    for slug, document in slug_and_family_document:
+        family_slug_to_documents[slug.name].append(document)
+    extra_csv_info = {
+        "metadata": {
+            slug.name: meta.value for (slug, meta) in slug_and_family_metadata
+        },
+        "source": {slug.name: org.name for (slug, org) in slug_and_organisation},
+        "documents": family_slug_to_documents,
+        "collection": {
+            slug.name: collection for (slug, collection) in slug_and_collection
+        },
+    }
+
+    return extra_csv_info
+
+
+def process_result_into_csv(
+    db: Session,
+    search_response: SearchResponse,
+    is_browse: bool,
+) -> str:
+    csv_result_io = StringIO("")
+    writer = csv.DictWriter(
+        csv_result_io,
+        fieldnames=_CSV_SEARCH_RESPONSE_COLUMNS,
+    )
+    writer.writeheader()
+
+    extra_required_info = _get_extra_csv_info(db, search_response.families)
+    all_matching_document_slugs = {
+        d.document_slug for f in search_response.families for d in f.family_documents
+    }
+
+    url_base = f"{PUBLIC_APP_URL}/documents"
+    for family in search_response.families:
+        _LOGGER.debug(f"Family: {family}")
+        family_metadata = extra_required_info["metadata"].get(family.family_slug, {})
+        if not family_metadata:
+            _LOGGER.error(f"Failed to find metadata for '{family.family_slug}'")
+        family_source = extra_required_info["source"].get(family.family_slug, "")
+        if not family_source:
+            _LOGGER.error(f"Failed to identify organisation for '{family.family_slug}'")
+
+        sector_metadata = ";".join(family_metadata.get("sector", []))
+        instrument_metadata = ";".join(family_metadata.get("instrument", []))
+        framework_metadata = ";".join(family_metadata.get("framework", []))
+        response_metadata = ";".join(family_metadata.get("topic", []))
+        hazard_metadata = ";".join(family_metadata.get("hazard", []))
+        keyword_metadata = ";".join(family_metadata.get("keyword", []))
+
+        collection_name = ""
+        collection_summary = ""
+        collection = extra_required_info["collection"].get(family.family_slug)
+        if collection is not None:
+            collection_name = collection.title
+            collection_summary = collection.description
+
+        family_documents: Sequence[FamilyDocument] = extra_required_info["documents"][
+            family.family_slug
+        ]
+
+        if family_documents:
+            for document in family_documents:
+                _LOGGER.info(f"Document: {document}")
+                physical_document = document.physical_document
+
+                if physical_document is None:
+                    document_content = ""
+                    document_title = ""
+                else:
+                    document_content = (
+                        to_cdn_url(cast(str, physical_document.cdn_object))
+                        or physical_document.source_url
+                        or ""
+                    )
+                    document_title = physical_document.title
+
+                if is_browse:
+                    document_match = "n/a"
+                else:
+                    if physical_document is None:
+                        document_match = "No"
+                    else:
+                        document_match = (
+                            "Yes"
+                            if bool(set(document.slugs) & all_matching_document_slugs)
+                            else "No"
+                        )
+
+                document_languages = ";".join(
+                    [language.language_name for language in physical_document.languages]
+                    if physical_document is not None
+                    else []
+                )
+                row = {
+                    "Collection Name": collection_name,
+                    "Collection Summary": collection_summary,
+                    "Family Name": family.family_name,
+                    "Family Summary": family.family_description,
+                    "Family Publication Date": family.family_date,
+                    "Family URL": f"{url_base}/{family.family_slug}",
+                    "Document Title": document_title,
+                    "Document URL": f"{url_base}/{document.slugs[-1].name}",
+                    "Document Content URL": document_content,
+                    "Document Type": document.document_type,
+                    "Document Content Matches Search Phrase": document_match,
+                    "Geography": family.family_geography,
+                    "Category": family.family_category,
+                    "Sectors": sector_metadata,
+                    "Instruments": instrument_metadata,
+                    "Frameworks": framework_metadata,
+                    "Responses": response_metadata,
+                    "Natural Hazards": hazard_metadata,
+                    "Keywords": keyword_metadata,
+                    "Languages": document_languages,
+                    "Source": family_source,
+                }
+                writer.writerow(row)
+        else:
+            # Always write a row, even if the Family contains no documents
+            row = {
+                "Collection Name": collection_name,
+                "Collection Summary": collection_summary,
+                "Family Name": family.family_name,
+                "Family Summary": family.family_description,
+                "Family Publication Date": family.family_date,
+                "Family URL": f"{url_base}/{family.family_slug}",
+                "Document Title": "",
+                "Document URL": "",
+                "Document Content URL": "",
+                "Document Type": "",
+                "Document Content Matches Search Phrase": "n/a",
+                "Geography": family.family_geography,
+                "Category": family.family_category,
+                "Sectors": sector_metadata,
+                "Instruments": instrument_metadata,
+                "Frameworks": framework_metadata,
+                "Responses": response_metadata,
+                "Natural Hazards": hazard_metadata,
+                "Keywords": keyword_metadata,
+                "Languages": "",
+                "Source": family_source,
+            }
+            writer.writerow(row)
+
+    csv_result_io.seek(0)
+    return csv_result_io.read()

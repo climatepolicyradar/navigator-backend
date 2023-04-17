@@ -6,6 +6,7 @@ SQLALCHEMY_DATABASE_URI = os.getenv("DATABASE_URL", "")
 if not SQLALCHEMY_DATABASE_URI:
     raise RuntimeError("'{DATABASE_URL}' environment variable must be set")
 
+PUBLIC_APP_URL = os.environ["PUBLIC_APP_URL"].rstrip("/")
 API_V1_STR = "/api/v1"
 
 # OpenSearch Config
@@ -21,14 +22,12 @@ OPENSEARCH_VERIFY_CERTS: bool = (
 OPENSEARCH_SSL_WARNINGS: bool = (
     os.getenv("OPENSEARCH_SSL_WARNINGS", "False").lower() == "true"
 )
-
-
 # OpenSearch Index Config
 OPENSEARCH_INDEX_INNER_PRODUCT_THRESHOLD: float = float(
     os.getenv("OPENSEARCH_INDEX_INNER_PRODUCT_THRESHOLD", "70.0")
 )
 OPENSEARCH_INDEX_MAX_DOC_COUNT: int = int(
-    os.getenv("OPENSEARCH_INDEX_MAX_DOC_COUNT", "100")
+    os.getenv("OPENSEARCH_INDEX_MAX_DOC_COUNT", "130")
 )
 OPENSEARCH_INDEX_MAX_PASSAGES_PER_DOC: int = int(
     os.getenv("OPENSEARCH_INDEX_MAX_PASSAGES_PER_DOC", "10")

@@ -7,28 +7,27 @@ for the type of document search being performed.
 """
 import json
 import logging
-from typing import Mapping, Sequence, Union
+from io import BytesIO
+from typing import Mapping, Sequence
 
-from fastapi import APIRouter, Request, BackgroundTasks, Depends
+from fastapi import APIRouter, Depends, Request
+from fastapi.responses import StreamingResponse
 from sqlalchemy.orm import Session
 
 from app.api.api_v1.schemas.search import (
     SearchRequestBody,
     SearchResponse,
-    SearchResultsResponse,
-    SearchDocumentResponse,
     SortField,
 )
-from app.core.browse import BrowseArgs, browse_rds, browse_rds_families
-from app.core.jit_query_wrapper import jit_query_wrapper, jit_query_families_wrapper
+from app.core.browse import BrowseArgs, browse_rds_families
 from app.core.lookups import get_countries_for_region, get_country_by_slug
 from app.core.search import (
     FilterField,
     OpenSearchConnection,
     OpenSearchConfig,
     OpenSearchQueryConfig,
+    process_result_into_csv,
 )
-from app.db.crud.deprecated_document import get_postfix_map
 from app.db.crud.document import DocumentExtraCache
 from app.db.session import get_db
 
@@ -53,21 +52,43 @@ def _map_new_category_to_old(supplied_category: str) -> str:
     return supplied_category
 
 
+def _search_request(db: Session, search_body: SearchRequestBody) -> SearchResponse:
+    if search_body.keyword_filters is not None:
+        search_body.keyword_filters = process_search_keyword_filters(
+            db,
+            search_body.keyword_filters,
+        )
+    is_browse_request = not search_body.query_string
+    if is_browse_request:
+        # Service browse requests from RDS
+        return browse_rds_families(
+            db=db,
+            req=_get_browse_args_from_search_request_body(search_body),
+        )
+    else:
+        if search_body.keyword_filters is not None:
+            if categories := search_body.keyword_filters.get(FilterField.CATEGORY):
+                fixed_categories = [_map_new_category_to_old(c) for c in categories]
+                keyword_filters = dict(search_body.keyword_filters)
+                keyword_filters[FilterField.CATEGORY] = fixed_categories
+                search_body.keyword_filters = keyword_filters
+        return _OPENSEARCH_CONNECTION.query_families(
+            search_request_body=search_body,
+            opensearch_internal_config=_OPENSEARCH_INDEX_CONFIG,
+            document_extra_info=_DOCUMENT_EXTRA_INFO_CACHE.get_document_extra_info(db),
+            preference="default_search_preference",
+        )
+
+
 @search_router.post("/searches")
 def search_documents(
     request: Request,
     search_body: SearchRequestBody,
-    background_tasks: BackgroundTasks,
     db=Depends(get_db),
-    group_documents: bool = False,
-) -> Union[SearchResponse, SearchResultsResponse]:
+) -> SearchResponse:
     """Search for documents matching the search criteria."""
-    # FIXME: The returned Union type should have `SearchResultsResponse` removed when
-    #        the frontend supports grouping by family. We will need to tidy up & remove
-    #        unused definitions at that point.
-
     _LOGGER.info(
-        f"Search request (jit={search_body.jit_query})",
+        "Search request",
         extra={
             "props": {
                 "search_request": json.loads(search_body.json()),
@@ -75,66 +96,46 @@ def search_documents(
         },
     )
 
-    if search_body.keyword_filters is not None:
-        search_body.keyword_filters = process_search_keyword_filters(
-            db,
-            search_body.keyword_filters,
-        )
+    _LOGGER.info(
+        "Starting search...",
+    )
+    return _search_request(db=db, search_body=search_body)
 
-    if group_documents:
-        if not search_body.query_string:
-            # Service browse requests from RDS
-            return browse_rds_families(
-                db=db,
-                req=_get_browse_args_from_search_request_body(search_body),
-            )
 
-        if search_body.keyword_filters is not None:
-            if categories := search_body.keyword_filters.get(FilterField.CATEGORY):
-                fixed_categories = [_map_new_category_to_old(c) for c in categories]
-                keyword_filters = dict(search_body.keyword_filters)
-                keyword_filters[FilterField.CATEGORY] = fixed_categories
-                search_body.keyword_filters = keyword_filters
+@search_router.post("/searches/download-csv")
+def download_search_documents(
+    request: Request,
+    search_body: SearchRequestBody,
+    db=Depends(get_db),
+) -> StreamingResponse:
+    """Download a CSV containing details of documents matching the search criteria."""
+    _LOGGER.info(
+        "Search download request",
+        extra={
+            "props": {
+                "search_request": json.loads(search_body.json()),
+            }
+        },
+    )
+    # Always download all results
+    search_body.offset = 0
+    search_body.limit = 100  # TODO: configure this value
+    is_browse = not bool(search_body.query_string)
 
-        return jit_query_families_wrapper(
-            _OPENSEARCH_CONNECTION,
-            background_tasks=background_tasks,
-            search_request_body=search_body,
-            opensearch_internal_config=_OPENSEARCH_INDEX_CONFIG,
-            document_extra_info=_DOCUMENT_EXTRA_INFO_CACHE.get_document_extra_info(db),
-            preference="default_search_preference",
-        )
-    else:
-        if not search_body.query_string:
-            # Service browse requests from RDS
-            return browse_rds(
-                db=db,
-                req=_get_browse_args_from_search_request_body(search_body),
-            )
+    _LOGGER.info(
+        "Starting search...",
+    )
+    search_response = _search_request(db=db, search_body=search_body)
+    content_str = process_result_into_csv(db, search_response, is_browse=is_browse)
 
-        doc_results: SearchResultsResponse = jit_query_wrapper(
-            _OPENSEARCH_CONNECTION,
-            background_tasks=background_tasks,
-            search_request_body=search_body,
-            opensearch_internal_config=_OPENSEARCH_INDEX_CONFIG,
-            preference="default_search_preference",
-        )
-        # Now augment the search results with db data to form the response
-        doc_ids = [doc.document_id for doc in doc_results.documents]
-        postfix_map = get_postfix_map(db, doc_ids)
-        return SearchResultsResponse(
-            hits=doc_results.hits,
-            query_time_ms=doc_results.query_time_ms,
-            documents=[
-                SearchDocumentResponse(
-                    **{
-                        **doc.dict(),
-                        **{"document_postfix": postfix_map[doc.document_id]},
-                    }
-                )
-                for doc in doc_results.documents
-            ],
-        )
+    _LOGGER.debug(f"Downloading search results as CSV: {content_str}")
+    return StreamingResponse(
+        content=BytesIO(content_str.encode("utf-8")),
+        headers={
+            "Content-Type": "text/csv",
+            "Content-Disposition": "attachment; filename=results.csv",
+        },
+    )
 
 
 def _get_browse_args_from_search_request_body(
