@@ -26,7 +26,7 @@ def to_cdn_url(s3_object_key: Optional[str]) -> Optional[str]:
     """
     if s3_object_key is None:
         return None
-    return f"https://{CDN_DOMAIN}/{s3_object_key}"
+    return f"https://{CDN_DOMAIN}/navigator/{s3_object_key}"
 
 
 def random_string(length=12):
