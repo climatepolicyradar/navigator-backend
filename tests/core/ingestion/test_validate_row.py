@@ -24,6 +24,21 @@ def test_validate_row__fails_bad_geography_iso(test_db):
     assert context.results[0].details == "Row 1: Geography XXX found in db"
 
 
+def test_validate_row__fails_empty_geography_iso(test_db):
+    context = IngestContext()
+    populate_for_ingest(test_db)
+    _, taxonomy = get_organisation_taxonomy(test_db, context.org_id)
+    row = DocumentIngestRow.from_row(1, get_doc_ingest_row_data(0))
+    row.geography_iso = ""
+
+    validate_document_row(test_db, context=context, row=row, taxonomy=taxonomy)
+
+    assert context.results
+    assert len(context.results) == 1
+    assert context.results[0].type == ResultType.ERROR
+    assert context.results[0].details == "Row 1: Geography is empty."
+
+
 def test_validate_row__consistent_family_and_collection(test_db):
     context = IngestContext()
     populate_for_ingest(test_db)

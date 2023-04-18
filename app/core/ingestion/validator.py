@@ -33,14 +33,18 @@ def _check_value_in_db(
 
 
 def _check_geo_in_db(row_num: int, db: Session, geo_iso: str) -> CheckResult:
-    if geo_iso != "":
-        val = db.query(Geography).filter(Geography.value == geo_iso).one_or_none()
-        if val is None:
-            result = Result(
-                ResultType.ERROR,
-                f"Row {row_num}: Geography {geo_iso} found in db",
-            )
-            return result
+    if geo_iso == "":
+        return Result(
+            ResultType.ERROR,
+            f"Row {row_num}: Geography is empty.",
+        )
+    val = db.query(Geography).filter(Geography.value == geo_iso).one_or_none()
+    if val is None:
+        result = Result(
+            ResultType.ERROR,
+            f"Row {row_num}: Geography {geo_iso} found in db",
+        )
+        return result
     return Result()
 
 
