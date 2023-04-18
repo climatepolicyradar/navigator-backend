@@ -9,6 +9,7 @@ from app.data_migrations import (
     populate_document_role,
     populate_document_type,
     populate_document_variant,
+    populate_geography,
 )
 from app.data_migrations.populate_taxonomy import populate_taxonomy
 from app.db.models.deprecated import (
@@ -301,6 +302,7 @@ def test_validate_bulk_ingest_cclw_law_policy(
     test_db,
 ):
     populate_taxonomy(db=test_db)
+    populate_geography(test_db)
     populate_document_type(db=test_db)
     populate_document_role(db=test_db)
     populate_document_variant(db=test_db)
