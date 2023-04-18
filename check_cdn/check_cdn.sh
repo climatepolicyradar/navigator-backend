@@ -49,15 +49,17 @@ do
   found=$(curl -I -s $url | grep "HTTP/2 302" >/dev/null && echo "found" || echo "missing")
   if [ ${found} == "missing" ]
   then
+    # Nothing we can do about these
     echo "Missing url: ${url}"  >> cdn_urls_results.txt
     continue
   fi
 
+  md5_missing=0
   # Now check MD5 
   if [ "x${md5}" == "x" ]
   then
-    echo "Missing md5 skipping" >> cdn_urls_results.txt
-    continue
+    # These need re-triggering
+    md5_missing=1
   fi
 
   # Now check MD5 against download
@@ -72,9 +74,15 @@ do
   md5_found=$(md5sum ${tmp} | cut -d ' ' -f1)
   if [ ! ${md5} == ${md5_found} ]
   then
+    # These need re-triggering
     echo "Mismatch md5: ${md5_found}"  >> cdn_urls_results.txt
   else
-    echo "OK"  >> cdn_urls_results.txt
+    if [ ${md5_missing} == 1 ]
+    then
+      echo "Downloaded file but MD5 missing from db"  >> cdn_urls_results.txt
+    else
+      echo "OK"  >> cdn_urls_results.txt
+    fi
   fi
 done
 
