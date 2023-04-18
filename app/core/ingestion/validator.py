@@ -10,6 +10,7 @@ from app.db.models.law_policy.family import (
     FamilyDocumentRole,
     FamilyDocumentType,
     Variant,
+    Geography,
 )
 from app.db.session import Base
 
@@ -28,6 +29,22 @@ def _check_value_in_db(
                 f"Row {row_num}: Not found in db {model.__tablename__}={value}",
             )
             return result
+    return Result()
+
+
+def _check_geo_in_db(row_num: int, db: Session, geo_iso: str) -> CheckResult:
+    if geo_iso == "":
+        return Result(
+            ResultType.ERROR,
+            f"Row {row_num}: Geography is empty.",
+        )
+    val = db.query(Geography).filter(Geography.value == geo_iso).one_or_none()
+    if val is None:
+        result = Result(
+            ResultType.ERROR,
+            f"Row {row_num}: Geography {geo_iso} found in db",
+        )
+        return result
     return Result()
 
 
@@ -56,6 +73,10 @@ def validate_document_row(
         errors.append(result)
 
     result = _check_value_in_db(n, db, row.document_variant, Variant)
+    if result.type != ResultType.OK:
+        errors.append(result)
+
+    result = _check_geo_in_db(n, db, row.geography_iso)
     if result.type != ResultType.OK:
         errors.append(result)
 
