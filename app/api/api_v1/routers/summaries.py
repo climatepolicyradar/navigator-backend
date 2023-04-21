@@ -48,7 +48,13 @@ def search_by_country(
 
         for cat in FamilyCategory:
             results = browse_rds_families(
-                db, BrowseArgs(geography_slugs=[geography_slug], categories=[cat])
+                db,
+                BrowseArgs(
+                    geography_slugs=[geography_slug],
+                    categories=[cat],
+                    offset=0,
+                    limit=None,
+                ),
             )
             family_counts[cat] = len(results.families)
             top_families[cat] = list(results.families[:5])

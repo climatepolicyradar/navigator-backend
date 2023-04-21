@@ -43,8 +43,8 @@ class BrowseArgs(BaseModel):
     categories: Optional[Sequence[str]] = None
     sort_field: SortField = SortField.DATE
     sort_order: SortOrder = SortOrder.DESCENDING
-    offset: int = 0
-    limit: int = 10
+    offset: Optional[int] = 0
+    limit: Optional[int] = 10
 
 
 def to_search_response_family(
@@ -142,8 +142,8 @@ def browse_rds_families(
             reverse=req.sort_order == SortOrder.DESCENDING,
         ) + list(filter(lambda f: f.family_date == "", families))
 
-    offset = req.offset
-    limit = req.limit
+    offset = req.offset or 0
+    limit = req.limit or len(families)
 
     return SearchResponse(
         hits=len(families),
@@ -226,8 +226,8 @@ def browse_rds(db: Session, req: BrowseArgs) -> SearchResultsResponse:
 
     documents = [to_search_resp_doc(dict(row)) for row in query.all()]
 
-    offset = req.offset
-    limit = req.limit
+    offset = req.offset or 0
+    limit = req.limit or len(documents)
 
     return SearchResultsResponse(
         hits=len(documents),
