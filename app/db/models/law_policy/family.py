@@ -70,7 +70,11 @@ class Family(Base):
     )
 
     slugs: list["Slug"] = relationship("Slug", lazy="joined")
-    events: list["FamilyEvent"] = relationship("FamilyEvent", lazy="joined")
+    events: list["FamilyEvent"] = relationship(
+        "FamilyEvent",
+        lazy="joined",
+        order_by="FamilyEvent.date",
+    )
 
     @hybrid_property
     def published_date(self) -> Optional[datetime]:
@@ -156,7 +160,7 @@ class FamilyDocument(Base):
     document_role = sa.Column(sa.ForeignKey(FamilyDocumentRole.name), nullable=True)
 
     slugs: list["Slug"] = relationship("Slug", lazy="joined")
-    physical_document: Optional[PhysicalDocument] = relationship(
+    physical_document: PhysicalDocument = relationship(
         PhysicalDocument,
         lazy="joined",
     )
