@@ -24,7 +24,6 @@ from app.db.models.law_policy.collection import Collection, CollectionFamily
 from app.db.models.law_policy.family import (
     Family,
     FamilyDocument,
-    FamilyEvent,
     Slug,
     FamilyOrganisation,
 )
@@ -67,14 +66,11 @@ def get_family_document_and_context(
 
     family, document, physical_document, geography = db_objects
 
-    import_id = cast(str, family.import_id)
-    slug = _get_slug_for_family_import_id(db, import_id)
-
-    family = FamilyContext(
+    family_context = FamilyContext(
         title=cast(str, family.title),
-        import_id=import_id,
+        import_id=cast(str, family.import_id),
         geography=cast(str, geography.value),
-        slug=slug,
+        slug=family.slugs[0].name,
         category=family.family_category,
         published_date=family.published_date,
         last_updated_date=family.last_updated_date,
@@ -82,7 +78,7 @@ def get_family_document_and_context(
     response = FamilyDocumentResponse(
         import_id=document.import_id,
         variant=document.variant_name,
-        slug=_get_slug_for_family_document_import_id(db, document.import_id),
+        slug=document.slugs[0].name,
         title=physical_document.title,
         md5_sum=physical_document.md5_sum,
         cdn_object=to_cdn_url(physical_document.cdn_object),
@@ -98,7 +94,7 @@ def get_family_document_and_context(
         document_role=document.document_role,
     )
 
-    return FamilyDocumentWithContextResponse(family=family, document=response)
+    return FamilyDocumentWithContextResponse(family=family_context, document=response)
 
 
 def _get_languages_for_phys_doc(physical_document: PhysicalDocument) -> Sequence[str]:
@@ -138,8 +134,6 @@ def get_family_and_documents(
         organisation,
     ) = db_objects
 
-    slug = _get_slug_for_family_import_id(db, import_id)
-    events = _get_events_for_family_import_id(db, import_id)
     documents = _get_documents_for_family_import_id(db, import_id)
     collections = _get_collections_for_family_import_id(db, import_id)
 
@@ -152,25 +146,13 @@ def get_family_and_documents(
         category=cast(str, family.family_category),
         status=cast(str, family.family_status),
         metadata=cast(dict, family_metadata.value),
-        slug=slug,
-        events=events,
+        slug=cast(str, family.slugs[0].name),
+        events=_get_events_for_family(family),
         documents=documents,
         published_date=family.published_date,
         last_updated_date=family.last_updated_date,
         collections=collections,
     )
-
-
-def _get_slug_for_family_import_id(db: Session, import_id: str) -> str:
-    db_slug = (db.query(Slug).filter(Slug.family_import_id == import_id)).first()
-    return db_slug.name if db_slug is not None else ""
-
-
-def _get_slug_for_family_document_import_id(db: Session, import_id: str) -> str:
-    db_slug = (
-        db.query(Slug).filter(Slug.family_document_import_id == import_id)
-    ).first()
-    return db_slug.name if db_slug is not None else ""
 
 
 def _get_collections_for_family_import_id(
@@ -203,18 +185,15 @@ def _get_collections_for_family_import_id(
     ]
 
 
-def _get_events_for_family_import_id(
-    db: Session, import_id: str
-) -> list[FamilyEventsResponse]:
-    db_events = (
-        db.query(FamilyEvent).filter(FamilyEvent.family_import_id == import_id)
-    ).all()
-
+def _get_events_for_family(family: Family) -> list[FamilyEventsResponse]:
     events = [
         FamilyEventsResponse(
-            title=e.title, date=e.date, event_type=e.event_type_name, status=e.status
+            title=cast(str, e.title),
+            date=cast(datetime, e.date),
+            event_type=cast(str, e.event_type_name),
+            status=cast(str, e.status),
         )
-        for e in db_events
+        for e in family.events
     ]
 
     return events
@@ -223,28 +202,30 @@ def _get_events_for_family_import_id(
 def _get_documents_for_family_import_id(
     db: Session, import_id: str
 ) -> list[FamilyDocumentResponse]:
-    db_documents = (
-        db.query(FamilyDocument, PhysicalDocument)
-        .filter(FamilyDocument.family_import_id == import_id)
-        .filter(FamilyDocument.physical_document_id == PhysicalDocument.id)
+    db_documents = db.query(FamilyDocument).filter(
+        FamilyDocument.family_import_id == import_id
     )
     documents = [
         FamilyDocumentResponse(
             import_id=d.import_id,
             variant=d.variant_name,
-            slug=_get_slug_for_family_document_import_id(db, d.import_id),
+            slug=d.slugs[0].name,
             # What follows is off PhysicalDocument
-            title=pd.title,
-            md5_sum=pd.md5_sum,
-            cdn_object=to_cdn_url(pd.cdn_object),
-            source_url=pd.source_url,
-            content_type=pd.content_type,
-            language=_get_languages_for_phys_doc(pd)[0] if pd.languages else "",
-            languages=_get_languages_for_phys_doc(pd),
+            title=d.physical_document.title,
+            md5_sum=d.physical_document.md5_sum,
+            cdn_object=to_cdn_url(d.physical_document.cdn_object),
+            source_url=d.physical_document.source_url,
+            content_type=d.physical_document.content_type,
+            language=(
+                _get_languages_for_phys_doc(d.physical_document)[0]
+                if d.physical_document.languages
+                else ""
+            ),
+            languages=_get_languages_for_phys_doc(d.physical_document),
             document_type=d.document_type,
             document_role=d.document_role,
         )
-        for d, pd in db_documents
+        for d in db_documents
     ]
 
     return documents
