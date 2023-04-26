@@ -1,7 +1,7 @@
 from datetime import datetime
 from typing import Any, Mapping, Optional, Sequence
 
-from pydantic import BaseModel
+from pydantic import BaseModel, validator
 from app.api.api_v1.schemas.metadata import (
     Category,
     Event,
@@ -16,6 +16,7 @@ from app.api.api_v1.schemas.metadata import (
     Source,
     Topic,
 )
+from . import CLIMATE_LAWS_MATCH
 
 
 class DocumentOverviewResponse(BaseModel):  # noqa: D101
@@ -79,6 +80,13 @@ class FamilyDocumentResponse(BaseModel):
     document_type: Optional[str]
     document_role: Optional[str]
 
+    @validator("source_url")
+    def _filter_climate_laws_url_from_source(cls, v):
+        """Make sure we do not return climate-laws.org source URLs to the frontend"""
+        if v is None or CLIMATE_LAWS_MATCH.match(v) is not None:
+            return None
+        return v
+
 
 class FamilyContext(BaseModel):
     """Used to given the family context when returning a FamilyDocument"""
@@ -118,6 +126,7 @@ class FamilyAndDocumentsResponse(BaseModel):
     collections: list[CollectionOverviewResponse]
 
 
+# DEPRECATED
 class DocumentDetailResponse(BaseModel):
     """A response containing detailed information about a document."""
 
@@ -154,6 +163,7 @@ class DocumentDetailResponse(BaseModel):
         frozen = True
 
 
+# DEPRECATED
 class DocumentUploadRequest(BaseModel):
     """Details of a file we wish to upload."""
 
@@ -161,6 +171,7 @@ class DocumentUploadRequest(BaseModel):
     overwrite: Optional[bool] = False
 
 
+# DERECATED
 class DocumentUploadResponse(BaseModel):
     """Details required to upload a document to our backend storage."""
 

@@ -1,9 +1,10 @@
 from enum import Enum
 from typing import Mapping, Optional, Sequence, Union
 
-from pydantic import BaseModel, conlist
+from pydantic import BaseModel, conlist, validator
 
 from app.db.models.law_policy import FamilyCategory
+from . import CLIMATE_LAWS_MATCH
 
 
 Coord = tuple[float, float]
@@ -151,6 +152,13 @@ class SearchResponseFamilyDocument(BaseModel):
     document_url: Optional[str]
     document_content_type: Optional[str]
     document_passage_matches: list[SearchResponseDocumentPassage]
+
+    @validator("document_source_url")
+    def _filter_climate_laws_url_from_source(cls, v):
+        """Make sure we do not return climate-laws.org source URLs to the frontend"""
+        if v is None or CLIMATE_LAWS_MATCH.match(v) is not None:
+            return None
+        return v
 
 
 ############### NEW #####################  # noqa: E266
