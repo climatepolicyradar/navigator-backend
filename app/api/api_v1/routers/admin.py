@@ -1,7 +1,5 @@
 import logging
-from io import StringIO
 from typing import cast, Union
-from urllib.parse import urlparse
 from sqlalchemy.orm import Session
 from app.core.aws import S3Client
 
@@ -20,12 +18,8 @@ from sqlalchemy import update
 from app.core.aws import S3Document
 
 from app.api.api_v1.schemas.document import (
-    BulkImportDetail,
-    BulkImportResult,
-    ClimateLawsValidationResult,
-    DocumentCreateRequest,
+    BulkIngestResult,
     DocumentUpdateRequest,
-    RDSDataValidationResult,
 )
 from app.api.api_v1.schemas.user import User, UserCreateAdmin
 from app.core.auth import get_current_active_superuser
@@ -51,25 +45,14 @@ from app.core.ingestion.utils import (
     get_result_counts,
 )
 from app.core.ingestion.validator import validate_event_row
-from app.core.validate import physical_document_source_urls, document_source_urls
-from app.core.validate import family_document_ids, document_ids
 from app.core.validation import IMPORT_ID_MATCHER
-from app.core.validation.types import (
-    ImportSchemaMismatchError,
-    DocumentsFailedValidationError,
-)
+from app.core.validation.types import ImportSchemaMismatchError
 from app.core.validation.util import (
     get_new_s3_prefix,
-    get_valid_metadata,
     write_csv_to_s3,
     write_documents_to_s3,
     write_ingest_results_to_s3,
 )
-from app.core.validation.cclw.law_policy.process_csv import (
-    extract_documents,
-    validated_input,
-)
-from app.db.crud.deprecated_document import start_import
 from app.db.crud.password_reset import (
     create_password_reset_token,
     invalidate_existing_password_reset_tokens,
@@ -81,7 +64,6 @@ from app.db.crud.user import (
     get_user,
     get_users,
 )
-from app.db.models.deprecated.document import Document
 from app.db.models.document.physical_document import PhysicalDocument
 from app.db.models.law_policy.family import FamilyDocument, Slug
 from app.db.session import get_db
@@ -408,7 +390,7 @@ def validate_law_policy(
 
 @r.post(
     "/bulk-ingest/cclw/law-policy",
-    response_model=BulkImportResult,
+    response_model=BulkIngestResult,
     status_code=status.HTTP_202_ACCEPTED,
 )
 def ingest_law_policy(
@@ -424,7 +406,8 @@ def ingest_law_policy(
     Ingest the provided CSV into the document / family / collection schema.
 
     :param [Request] request: Incoming request (UNUSED).
-    :param [UploadFile] law_policy_csv: CSV file to ingest.
+    :param [UploadFile] law_policy_csv: CSV file containing documents to ingest.
+    :param [UploadFile] events_csv: CSV file containing events to ingest.
     :param [BackgroundTasks] background_tasks: Tasks API to start ingest task.
     :param [Session] db: Database connection.
         Defaults to Depends(get_db).
@@ -598,7 +581,7 @@ def ingest_law_policy(
     )
 
     # TODO: Add some way the caller can monitor processing pipeline...
-    return BulkImportResult(
+    return BulkIngestResult(
         import_s3_prefix=s3_prefix,
         detail=None,  # TODO: add detail?
     )
@@ -633,139 +616,6 @@ def _validate_law_policy_csv(
     _LOGGER.info(message)
 
     return documents_file_contents, message
-
-
-# TODO: This is the old endpoint which will get removed,
-#       but left here for reference.
-@r.post(
-    "/bulk-imports/cclw/law-policy",
-    response_model=BulkImportResult,
-    status_code=status.HTTP_202_ACCEPTED,
-)
-def import_law_policy(
-    request: Request,
-    law_policy_csv: UploadFile,
-    background_tasks: BackgroundTasks,
-    db=Depends(get_db),
-    current_user=Depends(get_current_active_superuser),
-    s3_client=Depends(get_s3_client),
-):
-    """Process a Law/Policy data import"""
-    _LOGGER.info(
-        f"Superuser '{current_user.email}' triggered bulk import request for "
-        "CCLW Law & Policy data"
-    )
-
-    try:
-        file_contents = law_policy_csv.file.read().decode("utf8")
-        csv_reader = validated_input(StringIO(initial_value=file_contents))
-
-        valid_metadata = get_valid_metadata(db)
-        existing_import_ids = [id[0] for id in db.query(Document.import_id)]
-
-        encountered_errors = {}
-        document_create_objects: list[DocumentCreateRequest] = []
-        import_ids_to_create = []
-        total_document_count = 0
-
-        # TODO: Check for document existence?
-        for validation_result in extract_documents(
-            csv_reader=csv_reader, valid_metadata=valid_metadata
-        ):
-            total_document_count += 1
-            if validation_result.errors:
-                encountered_errors[validation_result.row] = validation_result.errors
-            else:
-                import_ids_to_create.append(validation_result.import_id)
-                if validation_result.import_id not in existing_import_ids:
-                    document_create_objects.append(validation_result.create_request)
-
-        if encountered_errors:
-            raise DocumentsFailedValidationError(
-                message="File failed detailed validation.", details=encountered_errors
-            )
-
-        documents_ids_already_exist = set(import_ids_to_create).intersection(
-            set(existing_import_ids)
-        )
-        document_skipped_count = len(documents_ids_already_exist)
-        _LOGGER.info(
-            "Bulk Import Validation Complete.",
-            extra={
-                "props": {
-                    "superuser_email": current_user.email,
-                    "document_count": total_document_count,
-                    "document_added_count": total_document_count
-                    - document_skipped_count,
-                    "document_skipped_count": document_skipped_count,
-                    "document_skipped_ids": list(documents_ids_already_exist),
-                }
-            },
-        )
-
-        s3_prefix = get_new_s3_prefix()
-        result: Union[S3Document, bool] = write_csv_to_s3(
-            s3_client=s3_client,
-            s3_prefix=s3_prefix,
-            s3_content_label="documents",
-            file_contents=file_contents,
-        )
-
-        csv_s3_location = "write failed" if type(result) is bool else str(result.url)
-        _LOGGER.info(
-            "Write Bulk Import CSV complete.",
-            extra={
-                "props": {
-                    "superuser_email": current_user.email,
-                    "csv_s3_location": csv_s3_location,
-                }
-            },
-        )
-
-        background_tasks.add_task(
-            start_import,
-            db,
-            s3_client,
-            s3_prefix,
-            document_create_objects,
-        )
-
-        _LOGGER.info(
-            "Background Bulk Import Task added",
-            extra={
-                "props": {
-                    "superuser_email": current_user.email,
-                    "csv_s3_location": csv_s3_location,
-                }
-            },
-        )
-
-        # TODO: Add some way the caller can monitor processing pipeline...
-
-        return BulkImportResult(
-            import_s3_prefix=s3_prefix,
-            detail=BulkImportDetail(
-                document_count=total_document_count,
-                document_added_count=total_document_count - document_skipped_count,
-                document_skipped_count=document_skipped_count,
-                document_skipped_ids=list(documents_ids_already_exist),
-            ),
-        )
-    except ImportSchemaMismatchError as e:
-        raise HTTPException(
-            status_code=status.HTTP_400_BAD_REQUEST,
-            detail=e.details,
-        ) from e
-    except DocumentsFailedValidationError as e:
-        raise HTTPException(
-            status_code=status.HTTP_422_UNPROCESSABLE_ENTITY,
-            detail=e.details,
-        ) from e
-    except Exception as e:
-        _LOGGER.exception("Unexpected error")
-        raise HTTPException(
-            status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
-        ) from e
 
 
 @r.put("/documents/{import_id_or_slug}", status_code=status.HTTP_200_OK)
@@ -849,105 +699,3 @@ async def update_document(
         },
     )
     return physical_document
-
-
-@r.get(
-    "/validate/climate-laws-urls",
-    response_model=ClimateLawsValidationResult,
-    status_code=status.HTTP_200_OK,
-)
-def validate_climate_laws_urls(
-    request: Request,
-    db=Depends(get_db),
-    current_user=Depends(get_current_active_superuser),
-):
-    """Validate all documents with climate-laws source urls are in our cdn."""
-    _LOGGER.info(
-        "Validating source urls for climate laws hosted documents.",
-        extra={
-            "props": {
-                "props": {
-                    "superuser_email": current_user.email,
-                }
-            }
-        },
-    )
-
-    unique_docs = [
-        doc
-        for doc in list(
-            set(physical_document_source_urls(db=db) + document_source_urls(db=db))
-        )
-        if doc != (None, None)
-    ]
-
-    climate_laws_docs = [
-        (url, cdn)
-        for url, cdn in unique_docs
-        if urlparse(url).hostname == "climate-laws.org"
-    ]
-
-    no_cdn = [(url, cdn) for url, cdn in climate_laws_docs if cdn in [None, ""]]
-
-    _LOGGER.info("Climate laws validation complete.")
-
-    # TODO assert url and cdn regex match
-    # TODO assert that the cdn doc actually exists in s3
-
-    return ClimateLawsValidationResult(
-        all_climate_laws_count=len(climate_laws_docs),
-        all_valid=len(no_cdn) == 0,
-        no_cdn=no_cdn,
-        no_cdn_count=len(no_cdn),
-    )
-
-
-@r.get(
-    "/validate/dfc-vs-deprecated",
-    response_model=RDSDataValidationResult,
-    status_code=status.HTTP_200_OK,
-)
-def validate_dfc_vs_deprecated(
-    request: Request,
-    db=Depends(get_db),
-    current_user=Depends(get_current_active_superuser),
-):
-    """Validate all documents are in the old & new schemas and published."""
-    _LOGGER.info(
-        "Validating documents in deprecated format against new dfc format.",
-        extra={
-            "props": {
-                "props": {
-                    "superuser_email": current_user.email,
-                }
-            }
-        },
-    )
-
-    family_doc_ids = family_document_ids(
-        db=db,
-    )
-
-    doc_ids = document_ids(
-        db=db,
-    )
-
-    family_not_in_deprecated_ids = list(set(family_doc_ids) - set(doc_ids))
-
-    deprecated_not_in_family_ids = list(set(doc_ids) - set(family_doc_ids))
-
-    return RDSDataValidationResult(
-        family_document_ids=family_doc_ids,
-        family_document_id_count=len(family_doc_ids),
-        deprecated_document_ids=doc_ids,
-        deprecated_document_id_count=len(doc_ids),
-        family_not_in_deprecated_ids=family_not_in_deprecated_ids,
-        family_not_in_deprecated_id_count=len(family_not_in_deprecated_ids),
-        deprecated_not_in_family_ids=deprecated_not_in_family_ids,
-        deprecated_not_in_family_id_count=len(deprecated_not_in_family_ids),
-        valid=(
-            len(family_not_in_deprecated_ids)
-            == 0 & len(deprecated_not_in_family_ids)
-            == 0
-        ),
-    )
