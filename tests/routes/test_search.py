@@ -33,8 +33,12 @@ from app.db.models.law_policy.family import (
     Slug,
     Variant,
 )
-from app.db.models.document import PhysicalDocument
-from app.initial_data import populate_geography
+from app.db.models.document.physical_document import (
+    Language,
+    PhysicalDocument,
+    PhysicalDocumentLanguage,
+)
+from app.initial_data import populate_geography, populate_language
 
 SEARCH_ENDPOINT = "/api/v1/searches"
 CSV_DOWNLOAD_ENDPOINT = "/api/v1/searches/download-csv"
@@ -44,6 +48,7 @@ def _populate_search_db_families(db: Session) -> None:
     documents: dict[str, FamilyDocument] = {}
     families: dict[str, Family] = {}
 
+    populate_language(db)
     populate_geography(db)
 
     original = Variant(variant_name="Original Language", description="")
@@ -174,6 +179,16 @@ def _create_family_structures(
     )
     db.add(physical_document)
     db.commit()
+    db.refresh(physical_document)
+    # TODO: better handling of document language!
+    existing_language = db.query(Language).filter(Language.name == "English").one()
+    physical_document_language = PhysicalDocumentLanguage(
+        language_id=existing_language.id,
+        document_id=physical_document.id,
+    )
+    db.add(physical_document_language)
+    db.commit()
+    db.refresh(physical_document_language)
     db.refresh(physical_document)
     family_document = FamilyDocument(
         family_import_id=family_id,
@@ -1143,11 +1158,13 @@ def test_csv_content(
                 assert row["Document Content Matches Search Phrase"] in ["Yes", "No"]
             else:
                 assert row["Document Content Matches Search Phrase"] == "n/a"
+            assert row["Languages"] == "English"
         else:
             assert row["Document URL"] == ""
             assert row["Document Content URL"] == ""
             assert row["Document Type"] == ""
             assert row["Document Content Matches Search Phrase"] == "n/a"
+            assert row["Languages"] == ""
 
     assert row_count == expected_csv_row_count
 
