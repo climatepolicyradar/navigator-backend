@@ -86,7 +86,9 @@ def _operate_on_family(
         "family_category": category,
     }
 
-    family = db.query(Family).get(row.cpr_family_id)
+    family = (
+        db.query(Family).filter(Family.import_id == row.cpr_family_id).one_or_none()
+    )
 
     if family is None:
         family = create(
@@ -122,7 +124,11 @@ def handle_family_document_from_row(
         return data if data != "" else None
 
     # NOTE: op is determined by existence or otherwise of FamilyDocument
-    family_document = db.query(FamilyDocument).get(row.cpr_document_id)
+    family_document = (
+        db.query(FamilyDocument)
+        .filter(FamilyDocument.import_id == row.cpr_document_id)
+        .one_or_none()
+    )
 
     # If the family document exists we can assume that the associated physical
     # document and slug have also been created
@@ -178,7 +184,10 @@ def handle_family_document_from_row(
             result["physical_document"] = updated
 
         # Check if slug has changed
-        if db.query(Slug).get(row.cpr_document_slug) is None:
+        existing_slug = (
+            db.query(Slug).filter(Slug.name == row.cpr_document_slug).one_or_none()
+        )
+        if existing_slug is None:
             _add_family_document_slug(db, row, family_document, result)
     else:
         physical_document = create_physical_document_from_row(db, row, result)

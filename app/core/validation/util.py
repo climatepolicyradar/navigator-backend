@@ -5,12 +5,9 @@ from io import BytesIO
 from typing import Any, Collection, Mapping, Optional, Sequence, Union
 from app.core.aws import S3Document
 
-from sqlalchemy.orm import Session
-
 from app.api.api_v1.schemas.document import DocumentParserInput
 from app.core.aws import S3Client
 from app.core.ingestion.utils import Result
-from app.core.lookups import get_metadata
 from app.core.validation import PIPELINE_BUCKET
 
 _LOGGER = logging.getLogger(__file__)
@@ -41,28 +38,6 @@ def _flatten_maybe_tree(
             values.append(get_value(maybe_node))
 
     return values
-
-
-def get_valid_metadata(
-    db: Session,
-) -> Mapping[str, Mapping[str, Collection[str]]]:
-    """
-    Make a request to the backend to collect valid metadata values
-
-    :param [requests.Session] session: The session used for making the request.
-    :return [Mapping[str, Sequence[str]]]: _description_
-    """
-    _LOGGER.info("Retrieving valid metadata values from database")
-
-    raw_metadata = get_metadata(db)["metadata"]
-
-    return {
-        source: {
-            meta: _flatten_maybe_tree(raw_metadata[source][meta])
-            for meta in raw_metadata[source]
-        }
-        for source in raw_metadata
-    }
 
 
 def write_documents_to_s3(

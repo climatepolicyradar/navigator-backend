@@ -2,38 +2,21 @@ from datetime import datetime
 from typing import Any, Mapping, Optional, Sequence
 
 from pydantic import BaseModel, validator
-from app.api.api_v1.schemas.metadata import (
-    Category,
-    Event,
-    Framework,
-    Geography,
-    DocumentType,
-    Hazard,
-    Instrument,
-    Keyword,
-    Language,
-    Sector,
-    Source,
-    Topic,
-)
 from . import CLIMATE_LAWS_MATCH
 
 
-class DocumentOverviewResponse(BaseModel):  # noqa: D101
-    """A document overview returned in browse & related document Sequences"""
-
-    document_id: int
-    import_id: str
-    slug: str
+class Event(BaseModel):  # noqa: D101
     name: str
-    postfix: Optional[str]
     description: str
-    country_code: str
-    country_name: str
-    publication_ts: datetime
+    created_ts: datetime
 
-    class Config:  # noqa: D106
-        frozen = True
+    def to_json(self) -> Mapping[str, Any]:
+        """Provide a serialisable version of the model"""
+        return {
+            "name": self.name,
+            "description": self.description,
+            "created_ts": self.created_ts.isoformat(),
+        }
 
 
 class LinkableFamily(BaseModel):
@@ -126,67 +109,15 @@ class FamilyAndDocumentsResponse(BaseModel):
     collections: list[CollectionOverviewResponse]
 
 
-# DEPRECATED
-class DocumentDetailResponse(BaseModel):
-    """A response containing detailed information about a document."""
-
-    id: int
-    name: str
-    postfix: Optional[str]
-    description: str
-    publication_ts: datetime
-    source_url: Optional[str]
-    url: Optional[str]
-    content_type: Optional[str]
-    md5_sum: Optional[str]
-
-    slug: Optional[str]
-    import_id: Optional[str]
-
-    type: DocumentType
-    source: Source
-    category: Category
-    geography: Geography
-
-    frameworks: Sequence[Framework]
-    hazards: Sequence[Hazard]
-    instruments: Sequence[Instrument]
-    keywords: Sequence[Keyword]
-    languages: Sequence[Language]
-    sectors: Sequence[Sector]
-    topics: Sequence[Topic]
-
-    events: Sequence[Event]
-    related_documents: Optional[Sequence[DocumentOverviewResponse]] = None
-
-    class Config:  # noqa: D106
-        frozen = True
-
-
-# DEPRECATED
-class DocumentUploadRequest(BaseModel):
-    """Details of a file we wish to upload."""
-
-    filename: str
-    overwrite: Optional[bool] = False
-
-
-# DERECATED
-class DocumentUploadResponse(BaseModel):
-    """Details required to upload a document to our backend storage."""
-
-    presigned_upload_url: str
-    cdn_object: str
-
-
-class DocumentCreateRequest(BaseModel):  # noqa: D106
-    """Details of a document to create - metadata will be validated & looked up."""
+class DocumentParserInput(BaseModel):
+    """Details of a document to be processed by the pipeline."""
 
     publication_ts: datetime
     name: str
     description: str
     postfix: Optional[str]
     source_url: Optional[str]
+    slug: str
 
     type: str
     source: str
@@ -219,50 +150,12 @@ class DocumentCreateRequest(BaseModel):  # noqa: D106
         validate_assignment = True
 
 
-class DocumentParserInput(DocumentCreateRequest):
-    """Extend the document create request with the slug calculated during import."""
+class DocumentUpdateRequest(BaseModel):
+    """The current supported fields allowed for update."""
 
-    slug: str
-
-
-class RelationshipCreateRequest(BaseModel):
-    """Schema for Relationship create request."""
-
-    name: str
-    type: str
-    description: str
-
-
-class RelationshipEntityResponse(RelationshipCreateRequest):
-    """Response for Relationship create request."""
-
-    id: int
-
-    class Config:  # noqa: D106
-        orm_mode = True
-
-
-class RelationshipGetResponse(BaseModel):
-    """Response for Relationship get request."""
-
-    relationships: Sequence[RelationshipEntityResponse]
-
-    class Config:  # noqa: D106
-        orm_mode = True
-
-
-class RelationshipAndDocumentsGetResponse(BaseModel):
-    """Response for Relationship get request."""
-
-    relationship: RelationshipEntityResponse
-    documents: Optional[Sequence[DocumentOverviewResponse]] = None
-
-
-class DocumentUploadCompleteRequest(BaseModel):
-    """Information generated during the upload of a document that should be stored."""
-
-    md5_sum: str
-    content_type: str
+    md5_sum: Optional[str]
+    content_type: Optional[str]
+    cdn_object: Optional[str]
 
 
 class BulkIngestDetail(BaseModel):
@@ -279,11 +172,3 @@ class BulkIngestResult(BaseModel):
 
     import_s3_prefix: str
     detail: Optional[BulkIngestDetail]
-
-
-class DocumentUpdateRequest(BaseModel):
-    """The current supported fields allowed for update."""
-
-    md5_sum: Optional[str]
-    content_type: Optional[str]
-    cdn_object: Optional[str]

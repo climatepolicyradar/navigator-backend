@@ -57,6 +57,7 @@ env_files = """
     .env
 """
 markers = [
+    "cors",
     "search",
     "unit",
 ]

@@ -10,11 +10,8 @@ from app.core.validation import PIPELINE_BUCKET
 
 from app.core.validation.util import (
     _flatten_maybe_tree,
-    get_valid_metadata,
     write_documents_to_s3,
 )
-from app.data_migrations import populate_taxonomy
-from app.db.models.deprecated import Keyword, Sector, Source
 
 
 NOT_A_TREE_1 = [{"name": 1}, {"name": 2}, {"name": 3}]
@@ -77,40 +74,6 @@ IS_A_TREE_4_EXPECTED = []
 def test__flatten_maybe_tree_is_a_tree(is_a_tree: Sequence, expected: Collection):
     """Test that we get values from JSON that does describe a tree"""
     assert _flatten_maybe_tree(is_a_tree) == expected
-
-
-def test_valid_metadata(test_db):
-    """Test the structure returned and a couple of added values"""
-
-    populate_taxonomy(test_db)
-    # Add some test data
-    test_db.add(Source(name="Primary"))
-    test_db.commit()
-    test_db.add(Keyword(name="some keyword", description="a keyword"))
-    test_db.add(Sector(name="Energy", description="energy sector", source_id=1))
-    test_db.add(
-        Sector(name="Agriculture", description="agriculture sector", source_id=1)
-    )
-    test_db.commit()
-
-    metadata = get_valid_metadata(test_db)
-    assert "CCLW" in metadata
-    cclw_metadata = metadata["CCLW"]
-    assert "categories" in cclw_metadata
-    assert "document_types" in cclw_metadata
-    assert "frameworks" in cclw_metadata
-    assert "geographies" in cclw_metadata
-    assert "hazards" in cclw_metadata
-    assert "instruments" in cclw_metadata
-    assert "keywords" in cclw_metadata
-    assert "languages" in cclw_metadata
-    assert "sectors" in cclw_metadata
-    assert "sources" in cclw_metadata
-    assert "topics" in cclw_metadata
-
-    assert cclw_metadata["sources"] == ["Primary"]
-    assert cclw_metadata["keywords"] == ["some keyword"]
-    assert cclw_metadata["sectors"] == ["Energy", "Agriculture"]
 
 
 def test_write_documents_to_s3(test_s3_client, mocker):

@@ -32,7 +32,11 @@ def handle_collection_from_row(
         return None
 
     # First check for the actual collection
-    existing_collection = db.query(Collection).get(row.cpr_collection_id)
+    existing_collection = (
+        db.query(Collection)
+        .filter(Collection.import_id == row.cpr_collection_id)
+        .one_or_none()
+    )
 
     if existing_collection is None:
         collection = create(

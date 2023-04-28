@@ -266,7 +266,12 @@ def test_update_document__works_on_import_id(
     assert json_object["cdn_object"] == "folder/file"
 
     # Now Check the db
-    doc = test_db.query(FamilyDocument).get(import_id).physical_document
+    doc = (
+        test_db.query(FamilyDocument)
+        .filter(FamilyDocument.import_id == import_id)
+        .one()
+        .physical_document
+    )
     assert doc.md5_sum == "c184214e-4870-48e0-adab-3e064b1b0e76"
     assert doc.content_type == "updated/content_type"
     assert doc.cdn_object == "folder/file"
@@ -306,7 +311,12 @@ def test_update_document__idempotent(
     assert json_object["cdn_object"] == "folder/file"
 
     # Now Check the db
-    doc = test_db.query(FamilyDocument).get(import_id).physical_document
+    doc = (
+        test_db.query(FamilyDocument)
+        .filter(FamilyDocument.import_id == import_id)
+        .one()
+        .physical_document
+    )
     assert doc.md5_sum == "c184214e-4870-48e0-adab-3e064b1b0e76"
     assert doc.content_type == "updated/content_type"
     assert doc.cdn_object == "folder/file"
@@ -341,7 +351,12 @@ def test_update_document__works_on_slug(
 
     # Now Check the db
     import_id = "CCLW.executive.1.2"
-    doc = test_db.query(FamilyDocument).get(import_id).physical_document
+    doc = (
+        test_db.query(FamilyDocument)
+        .filter(FamilyDocument.import_id == import_id)
+        .one()
+        .physical_document
+    )
     assert doc.md5_sum == "c184214e-4870-48e0-adab-3e064b1b0e76"
     assert doc.content_type == "updated/content_type"
     assert doc.cdn_object == "folder/file"
