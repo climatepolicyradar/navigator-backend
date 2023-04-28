@@ -265,8 +265,8 @@ class DocumentUploadCompleteRequest(BaseModel):
     content_type: str
 
 
-class BulkImportDetail(BaseModel):
-    """Additional detail for bulk import."""
+class BulkIngestDetail(BaseModel):
+    """Additional detail for bulk ingest."""
 
     document_count: int
     document_added_count: int
@@ -274,11 +274,11 @@ class BulkImportDetail(BaseModel):
     document_skipped_ids: list[str]
 
 
-class BulkImportResult(BaseModel):
-    """Response for bulk import request."""
+class BulkIngestResult(BaseModel):
+    """Response for bulk ingest request."""
 
     import_s3_prefix: str
-    detail: Optional[BulkImportDetail]
+    detail: Optional[BulkIngestDetail]
 
 
 class DocumentUpdateRequest(BaseModel):
@@ -287,26 +287,3 @@ class DocumentUpdateRequest(BaseModel):
     md5_sum: Optional[str]
     content_type: Optional[str]
     cdn_object: Optional[str]
-
-
-class ClimateLawsValidationResult(BaseModel):
-    """Response for ClimateLaws source_urls validation request."""
-
-    all_climate_laws_count: int
-    all_valid: bool
-    no_cdn: list[tuple[Any, Any]]
-    no_cdn_count: int
-
-
-class RDSDataValidationResult(BaseModel):
-    """Response for validation when analysing the new and deprecated schemas."""
-
-    family_document_ids: list[str]
-    family_document_id_count: int
-    deprecated_document_ids: list[str]
-    deprecated_document_id_count: int
-    family_not_in_deprecated_ids: list[str]
-    family_not_in_deprecated_id_count: int
-    deprecated_not_in_family_ids: list[str]
-    deprecated_not_in_family_id_count: int
-    valid: bool
