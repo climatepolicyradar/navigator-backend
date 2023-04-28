@@ -1035,7 +1035,10 @@ def process_result_into_csv(
                         )
 
                 document_languages = ";".join(
-                    [language.language_name for language in physical_document.languages]
+                    [
+                        cast(str, language.name)
+                        for language in physical_document.languages
+                    ]
                     if physical_document is not None
                     else []
                 )
