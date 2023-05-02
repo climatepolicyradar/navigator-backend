@@ -1,1 +1,1 @@
-from .users import Admin, AdminOrganisation, Organisation
+from .users import AppUser, OrganisationUser, Organisation

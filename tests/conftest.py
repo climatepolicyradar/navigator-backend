@@ -1,4 +1,3 @@
-import datetime
 import os
 import typing as t
 import uuid
@@ -13,14 +12,9 @@ from sqlalchemy_utils import create_database, database_exists, drop_database
 from app.core import security
 from app.core.aws import S3Client, get_s3_client
 from app.core.search import OpenSearchConnection, OpenSearchConfig
-from app.db.models.deprecated import User, PasswordResetToken
+from app.db.models.deprecated import User
 from app.db.session import Base, get_db
 from app.main import app
-from .routes.test_data_fixtures import (  # noqa F401
-    doc_browse_data,
-    summary_geography_document_data,
-    summary_geography_family_data,
-)
 
 
 @pytest.fixture
@@ -213,18 +207,3 @@ def superuser_token_headers(
     a_token = tokens["access_token"]
     headers = {"Authorization": f"Bearer {a_token}"}
     return headers
-
-
-@pytest.fixture
-def test_password_reset_token(test_db, test_inactive_user) -> PasswordResetToken:
-    """Password Reset Token associated with test_inactive_user, for testing"""
-
-    prt = PasswordResetToken(
-        token="test-token",
-        expiry_ts=datetime.datetime(2099, 1, 1),
-        is_redeemed=False,
-        user_id=test_inactive_user.id,
-    )  # type: ignore
-    test_db.add(prt)
-    test_db.commit()
-    return prt

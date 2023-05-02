@@ -1,5 +1,5 @@
 import logging
-from typing import cast, Union
+from typing import Union
 from sqlalchemy.orm import Session
 from app.core.aws import S3Client
 
@@ -9,11 +9,9 @@ from fastapi import (
     Depends,
     HTTPException,
     Request,
-    Response,
     UploadFile,
     status,
 )
-from sqlalchemy.exc import IntegrityError
 from sqlalchemy import update
 from app.core.aws import S3Document
 
@@ -21,13 +19,8 @@ from app.api.api_v1.schemas.document import (
     BulkIngestResult,
     DocumentUpdateRequest,
 )
-from app.api.api_v1.schemas.user import User, UserCreateAdmin
-from app.core.auth import get_current_active_superuser
+from app.core.auth import get_superuser_details
 from app.core.aws import get_s3_client
-from app.core.email import (
-    send_new_account_email,
-    send_password_reset_email,
-)
 from app.core.ingestion.ingest_row import DocumentIngestRow, EventIngestRow
 from app.core.ingestion.pipeline import generate_pipeline_ingest_input
 from app.core.ingestion.processor import (
@@ -53,17 +46,6 @@ from app.core.validation.util import (
     write_documents_to_s3,
     write_ingest_results_to_s3,
 )
-from app.db.crud.password_reset import (
-    create_password_reset_token,
-    invalidate_existing_password_reset_tokens,
-)
-from app.db.crud.user import (
-    create_user,
-    deactivate_user,
-    edit_user,
-    get_user,
-    get_users,
-)
 from app.db.models.document.physical_document import PhysicalDocument
 from app.db.models.law_policy.family import FamilyDocument, Slug
 from app.db.session import get_db
@@ -74,207 +56,6 @@ admin_users_router = r = APIRouter()
 
 # TODO: revisit activation timeout
 ACCOUNT_ACTIVATION_EXPIRE_MINUTES = 4 * 7 * 24 * 60  # 4 weeks
-
-
-@r.get(
-    "/users",
-    response_model=list[User],
-    response_model_exclude_none=True,
-)
-# TODO paginate
-async def users_list(
-    response: Response,
-    db=Depends(get_db),
-    current_user=Depends(get_current_active_superuser),
-):
-    """Gets all users"""
-    _LOGGER.info(
-        f"Superuser '{current_user.email}' listing all users.",
-        extra={"props": {"superuser_email": current_user.email}},
-    )
-    users = get_users(db)
-    # This is necessary for react-admin to work
-    response.headers["Content-Range"] = f"0-9/{len(users)}"
-    response.headers["Cache-Control"] = "no-cache, no-store, private"
-    _LOGGER.info(f"Successfully retrieved user list for '{current_user.email}'.")
-    return users
-
-
-@r.get(
-    "/users/{user_id}",
-    response_model=User,
-    response_model_exclude_none=True,
-)
-async def user_details(
-    request: Request,
-    response: Response,
-    user_id: int,
-    db=Depends(get_db),
-    current_user=Depends(get_current_active_superuser),
-):
-    """Gets any user details"""
-    _LOGGER.info(
-        f"Superuser '{current_user.email}' retrieving details "
-        f"about user id '{user_id}'",
-        extra={"props": {"superuser_email": current_user.email, "user_id": user_id}},
-    )
-    user = get_user(db, user_id)
-    response.headers["Cache-Control"] = "no-cache, no-store, private"
-    _LOGGER.info(
-        f"Successfully retrieved details about user id '{user_id}' "
-        f"for '{current_user.email}'",
-        extra={"props": {"superuser_email": current_user.email, "user_id": user_id}},
-    )
-    return user
-
-
-@r.post("/users", response_model=User, response_model_exclude_none=True)
-async def user_create(
-    request: Request,
-    user: UserCreateAdmin,
-    db=Depends(get_db),
-    current_user=Depends(get_current_active_superuser),
-):
-    """Creates a new user"""
-    _LOGGER.info(
-        f"Superuser '{current_user.email}' creating a new user",
-        extra={
-            "props": {
-                "superuser_email": current_user.email,
-                "user_details": user.dict(),
-            }
-        },
-    )
-    try:
-        db_user = create_user(db, user)
-    except IntegrityError:
-        raise HTTPException(
-            status_code=status.HTTP_409_CONFLICT,
-            detail=f"Email already registered: {user.email}",
-        )
-
-    activation_token = create_password_reset_token(
-        db, cast(int, db_user.id), minutes=ACCOUNT_ACTIVATION_EXPIRE_MINUTES
-    )
-    send_new_account_email(db_user, activation_token)
-
-    _LOGGER.info(
-        f"Superuser '{current_user.email}' successfully created new user",
-        extra={
-            "props": {
-                "superuser_email": current_user.email,
-                "user_details": user.dict(),
-            }
-        },
-    )
-    return db_user
-
-
-@r.put("/users/{user_id}", response_model=User, response_model_exclude_none=True)
-async def user_edit(
-    request: Request,
-    response: Response,
-    user_id: int,
-    user: UserCreateAdmin,
-    db=Depends(get_db),
-    current_user=Depends(get_current_active_superuser),
-):
-    """Updates existing user"""
-    _LOGGER.info(
-        f"Superuser '{current_user.email}' updating user with id '{user_id}'",
-        extra={
-            "props": {
-                "superuser_email": current_user.email,
-                "user_details": user.dict(),
-            }
-        },
-    )
-    updated_user = edit_user(db, user_id, user)
-
-    # TODO: User updated email
-    # send_email(EmailType.account_changed, updated_user)
-
-    response.headers["Cache-Control"] = "no-cache, no-store, private"
-
-    _LOGGER.info(
-        f"Superuser '{current_user.email}' successfully "
-        f"updated user with id '{user_id}'",
-        extra={
-            "props": {
-                "superuser_email": current_user.email,
-                "user_details": user.dict(),
-            }
-        },
-    )
-    return updated_user
-
-
-@r.delete("/users/{user_id}", response_model=User, response_model_exclude_none=True)
-async def user_delete(
-    request: Request,
-    user_id: int,
-    db=Depends(get_db),
-    current_user=Depends(get_current_active_superuser),
-):
-    """Deletes existing user"""
-    _LOGGER.info(
-        f"Superuser '{current_user.email}' deactivating user with id '{user_id}'",
-        extra={
-            "props": {
-                "superuser_email": current_user.email,
-                "user_id": user_id,
-            }
-        },
-    )
-    return deactivate_user(db, user_id)
-
-
-@r.post(
-    "/password-reset/{user_id}", response_model=bool, response_model_exclude_none=True
-)
-async def request_password_reset(
-    request: Request,
-    user_id: int,
-    db=Depends(get_db),
-    current_user=Depends(get_current_active_superuser),
-):
-    """
-    Delete a password for a user, and kick off password-reset flow.
-
-    As this flow is initiated by admins, it always
-    - cancels existing tokens
-    - creates a new token
-    - sends an email
-
-    Also see the equivalent unauthenticated endpoint.
-    """
-    _LOGGER.info(
-        f"Superuser '{current_user.email}' resetting password for "
-        f"user with id '{user_id}'",
-        extra={
-            "props": {
-                "superuser_email": current_user.email,
-                "user_id": user_id,
-            }
-        },
-    )
-
-    deactivated_user = deactivate_user(db, user_id)
-    invalidate_existing_password_reset_tokens(db, user_id)
-    reset_token = create_password_reset_token(db, user_id)
-    send_password_reset_email(deactivated_user, reset_token)
-
-    _LOGGER.info(
-        f"Superuser '{current_user.email}' successfully reset password for "
-        f"user with id '{user_id}'",
-        extra={
-            "props": {
-                "superuser_email": current_user.email,
-                "user_id": user_id,
-            }
-        },
-    )
-    return True
 
 
 def _start_ingest(
@@ -334,7 +115,7 @@ def validate_law_policy(
     request: Request,
     law_policy_csv: UploadFile,
     db=Depends(get_db),
-    current_user=Depends(get_current_active_superuser),
+    current_user=Depends(get_superuser_details),
 ):
     """
     Validates the provided CSV into the document / family / collection schema.
@@ -399,7 +180,7 @@ def ingest_law_policy(
     events_csv: UploadFile,
     background_tasks: BackgroundTasks,
     db=Depends(get_db),
-    current_user=Depends(get_current_active_superuser),
+    current_user=Depends(get_superuser_details),
     s3_client=Depends(get_s3_client),
 ):
     """
@@ -624,7 +405,7 @@ async def update_document(
     import_id_or_slug: str,
     meta_data: DocumentUpdateRequest,
     db=Depends(get_db),
-    current_user=Depends(get_current_active_superuser),
+    current_user=Depends(get_superuser_details),
 ):
     # TODO: As this grows move it out into the crud later.
 

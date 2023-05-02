@@ -1,5 +1,7 @@
 from http.client import OK
 
+import pytest  # noqa: F401
+
 
 def _url_under_test(slug: str, group_documents: bool = False) -> str:
     url_under_test = f"/api/v1/summaries/country/{slug}"
