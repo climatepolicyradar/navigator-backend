@@ -36,7 +36,6 @@ documents_router = APIRouter()
 async def document_detail(
     import_id_or_slug: str,
     db=Depends(get_db),
-    group_documents: bool = False,
 ):
     """Get details of the document with the given ID."""
     _LOGGER.info(
@@ -44,7 +43,6 @@ async def document_detail(
         extra={
             "props": {
                 "import_id_or_slug": import_id_or_slug,
-                "group_documents": group_documents,
             },
         },
     )

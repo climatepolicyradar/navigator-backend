@@ -23,8 +23,6 @@ from app.api.api_v1.schemas.search import (
     OpenSearchResponsePassageMatch,
     SearchRequestBody,
     SearchResponse,
-    SearchResultsResponse,
-    SearchDocumentResponse,
     SearchResponseDocumentPassage,
     SortField,
     SortOrder,
@@ -791,117 +789,6 @@ def create_search_response_family(
         family_title_match=False,
         family_description_match=False,
         family_documents=[],
-    )
-
-
-#################################
-########## DEPRECATED ###########
-#################################
-def process_search_response_body(
-    opensearch_response_body: OpenSearchResponse,
-    limit: int = 10,
-    offset: int = 0,
-) -> SearchResultsResponse:
-    opensearch_json_response = opensearch_response_body.raw_response
-    search_response = SearchResultsResponse(
-        hits=opensearch_json_response["aggregations"]["no_unique_docs"]["value"],
-        query_time_ms=opensearch_response_body.request_time_ms,
-        documents=[],
-    )
-    search_response_document = None
-
-    result_docs = opensearch_json_response["aggregations"]["sample"]["top_docs"][
-        "buckets"
-    ]
-    for result_doc in result_docs[offset : offset + limit]:
-        for document_match in result_doc["top_passage_hits"]["hits"]["hits"]:
-            document_match_source = document_match["_source"]
-            if OPENSEARCH_INDEX_NAME_KEY in document_match_source:
-                # Validate as a title match
-                name_match = OpenSearchResponseNameMatch(**document_match_source)
-                if search_response_document is None:
-                    search_response_document = create_search_response_document(
-                        name_match
-                    )
-                search_response_document.document_title_match = True
-            elif OPENSEARCH_INDEX_DESCRIPTION_KEY in document_match_source:
-                # Validate as a description match
-                desc_match = OpenSearchResponseDescriptionMatch(**document_match_source)
-                if search_response_document is None:
-                    search_response_document = create_search_response_document(
-                        desc_match
-                    )
-                search_response_document.document_description_match = True
-            elif OPENSEARCH_INDEX_TEXT_BLOCK_KEY in document_match_source:
-                # Process as a text block
-                passage_match = OpenSearchResponsePassageMatch(**document_match_source)
-                if search_response_document is None:
-                    search_response_document = create_search_response_document(
-                        passage_match
-                    )
-
-                response_passage = SearchResponseDocumentPassage(
-                    text=passage_match.text,
-                    text_block_id=passage_match.text_block_id,
-                    text_block_page=passage_match.text_block_page + 1,
-                    text_block_coords=passage_match.text_block_coords,
-                )
-                search_response_document.document_passage_matches.append(
-                    response_passage
-                )
-            else:
-                raise RuntimeError("Unexpected data in match results")
-
-        if search_response_document is None:
-            raise RuntimeError("Unexpected document match with no matching passages")
-
-        search_response.documents.append(search_response_document)
-        search_response_document = None
-
-    return search_response
-
-
-def process_browse_response_body(
-    opensearch_response_body: OpenSearchResponse,
-) -> SearchResultsResponse:
-    opensearch_json_response = opensearch_response_body.raw_response
-    search_response = SearchResultsResponse(
-        hits=opensearch_json_response["hits"]["total"]["value"],
-        query_time_ms=opensearch_response_body.request_time_ms,
-        documents=[],
-    )
-
-    result_docs = opensearch_json_response["hits"]["hits"]
-    for result_doc in result_docs:
-        search_response_document = create_search_response_document(
-            OpenSearchResponseDescriptionMatch(**result_doc["_source"])
-        )
-        search_response.documents.append(search_response_document)
-
-    return search_response
-
-
-def create_search_response_document(
-    opensearch_match: OpenSearchResponseMatchBase,
-):
-    return SearchDocumentResponse(
-        document_name=opensearch_match.document_name,
-        document_description=opensearch_match.document_description,
-        document_geography=opensearch_match.document_geography,
-        document_sectors=opensearch_match.document_sectors,
-        document_source=opensearch_match.document_source,
-        document_date=opensearch_match.document_date,
-        document_id=opensearch_match.document_id,
-        document_type=opensearch_match.document_type,
-        document_category=opensearch_match.document_category,
-        document_source_url=opensearch_match.document_source_url,
-        document_url=to_cdn_url(opensearch_match.document_cdn_object),
-        document_content_type=opensearch_match.document_content_type,
-        document_slug=opensearch_match.document_slug,
-        document_title_match=False,
-        document_description_match=False,
-        document_passage_matches=[],
-        document_postfix=None,
     )
 
 

@@ -31,7 +31,7 @@ def test_documents_family_slug_returns_not_found(
 
     # Test associations
     response = client.get(
-        "/api/v1/documents/FamSlug100?group_documents=True",
+        "/api/v1/documents/FamSlug100",
     )
     assert response.status_code == 404
 
@@ -45,7 +45,7 @@ def test_documents_family_slug_returns_correct_family(
 
     # Test associations
     response = client.get(
-        "/api/v1/documents/FamSlug1?group_documents=True",
+        "/api/v1/documents/FamSlug1",
     )
 
     json_response = response.json()
@@ -54,7 +54,7 @@ def test_documents_family_slug_returns_correct_family(
 
     # Ensure a different family is returned
     response = client.get(
-        "/api/v1/documents/FamSlug2?group_documents=True",
+        "/api/v1/documents/FamSlug2",
     )
 
     json_response = response.json()
@@ -71,7 +71,7 @@ def test_documents_family_slug_returns_correct_json(
 
     # Test associations
     response = client.get(
-        "/api/v1/documents/FamSlug1?group_documents=True",
+        "/api/v1/documents/FamSlug1",
     )
     json_response = response.json()
 
@@ -120,7 +120,7 @@ def test_documents_doc_slug_returns_not_found(
 
     # Test associations
     response = client.get(
-        "/api/v1/documents/DocSlug100?group_documents=True",
+        "/api/v1/documents/DocSlug100",
     )
     assert response.status_code == 404
 
@@ -134,7 +134,7 @@ def test_documents_doc_slug_preexisting_objects(
 
     # Test associations
     response = client.get(
-        "/api/v1/documents/DocSlug2?group_documents=True",
+        "/api/v1/documents/DocSlug2",
     )
     json_response = response.json()
     assert response.status_code == 200
@@ -179,7 +179,7 @@ def test_physical_doc_languages(
     )
 
     response = client.get(
-        "/api/v1/documents/DocSlug1?group_documents=True",
+        "/api/v1/documents/DocSlug1",
     )
     json_response = response.json()
     document = json_response["document"]
@@ -189,7 +189,7 @@ def test_physical_doc_languages(
     assert document["languages"] == ["eng"]
 
     response = client.get(
-        "/api/v1/documents/DocSlug2?group_documents=True",
+        "/api/v1/documents/DocSlug2",
     )
     json_response = response.json()
     document = json_response["document"]
@@ -209,7 +209,7 @@ def test_physical_doc_multiple_languages(
     )
 
     response = client.get(
-        "/api/v1/documents/DocSlug1?group_documents=True",
+        "/api/v1/documents/DocSlug1",
     )
     json_response = response.json()
     document = json_response["document"]

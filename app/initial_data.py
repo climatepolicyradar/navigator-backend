@@ -68,7 +68,7 @@ def create_user(db, email, password):
             is_superuser=True,
         )
         db.add(db_user)
-        db.flush()
+        db.flush
 
 
 def create_superuser(db) -> None:
