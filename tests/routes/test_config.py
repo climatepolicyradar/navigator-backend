@@ -11,39 +11,11 @@ from app.data_migrations import (
     populate_taxonomy,
 )
 from app.db.session import SessionLocal
-from tests.routes.test_documents_deprecated import create_4_documents
-
-
-def test_endpoint_returns_correct_keys(client):
-    """Tests whether we get the correct data when the /config endpoint is called."""
-    url_under_test = "/api/v1/config"
-
-    response = client.get(
-        url_under_test,
-    )
-
-    response_json = response.json()
-
-    assert response.status_code == OK
-    assert set(response_json["metadata"].keys()) == {"CCLW"}
-    assert set(response_json["metadata"]["CCLW"].keys()) == {
-        "categories",
-        "document_types",
-        "frameworks",
-        "geographies",
-        "hazards",
-        "instruments",
-        "keywords",
-        "languages",
-        "sectors",
-        "sources",
-        "topics",
-    }
 
 
 def test_endpoint_returns_taxonomy(client, test_db):
     """Tests whether we get the taxonomy when the /config endpoint is called."""
-    url_under_test = "/api/v1/config?group_documents=True"
+    url_under_test = "/api/v1/config"
     populate_taxonomy(test_db)
     populate_geography(test_db)
     populate_event_type(test_db)
@@ -146,16 +118,3 @@ def test_tree_table_to_json(data, expected):
     processed_data = tree_table_to_json(table_mock, db)
 
     assert processed_data == expected
-
-
-def test_document_ids(
-    client,
-    test_db,
-):
-    create_4_documents(test_db)
-
-    # Test properties
-    get_ids_response = client.get("/api/v1/config/ids")
-    assert get_ids_response.status_code == 200
-    assert get_ids_response.headers.get("ETag") == "d93591bdf7860e1e4ee2fca799911215"
-    assert get_ids_response.json() == ["4", "3", "2", "1"]

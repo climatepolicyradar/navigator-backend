@@ -1,4 +1,6 @@
+from sqlalchemy import Column
 from sqlalchemy.orm import Session
+
 from app.core.ingestion.ingest_row import DocumentIngestRow, EventIngestRow
 from app.core.ingestion.metadata import build_metadata, Taxonomy
 from app.core.ingestion.utils import (
@@ -19,10 +21,14 @@ CheckResult = Result
 
 
 def _check_value_in_db(
-    row_num: int, db: Session, value: str, model: DbTable
+    row_num: int,
+    db: Session,
+    value: str,
+    model: DbTable,
+    model_field: Column,
 ) -> CheckResult:
     if value != "":
-        val = db.query(model).get(value)
+        val = db.query(model).filter(model_field == value).one_or_none()
         if val is None:
             result = Result(
                 ResultType.ERROR,
@@ -64,15 +70,21 @@ def validate_document_row(
 
     errors = []
     n = row.row_number
-    result = _check_value_in_db(n, db, row.document_type, FamilyDocumentType)
+    result = _check_value_in_db(
+        n, db, row.document_type, FamilyDocumentType, FamilyDocumentType.name
+    )
     if result.type != ResultType.OK:
         errors.append(result)
 
-    result = _check_value_in_db(n, db, row.document_role, FamilyDocumentRole)
+    result = _check_value_in_db(
+        n, db, row.document_role, FamilyDocumentRole, FamilyDocumentRole.name
+    )
     if result.type != ResultType.OK:
         errors.append(result)
 
-    result = _check_value_in_db(n, db, row.document_variant, Variant)
+    result = _check_value_in_db(
+        n, db, row.document_variant, Variant, Variant.variant_name
+    )
     if result.type != ResultType.OK:
         errors.append(result)
 

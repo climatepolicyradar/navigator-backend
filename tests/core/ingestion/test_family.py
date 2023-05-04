@@ -112,7 +112,11 @@ def test_family_document_from_row__creates(test_db: Session):
     )
     assert actual_keys.symmetric_difference(expected_keys) == set([])
 
-    db_family_doc = test_db.query(FamilyDocument).get(DOCUMENT_IMPORT_ID)
+    db_family_doc = (
+        test_db.query(FamilyDocument)
+        .filter(FamilyDocument.import_id == DOCUMENT_IMPORT_ID)
+        .one()
+    )
     assert db_family_doc == family_document
     assert db_family_doc.physical_document.title == row.document_title
 
@@ -139,7 +143,11 @@ def test_family_document_from_row__updates(test_db: Session):
     )
     assert actual_keys.symmetric_difference(expected_keys) == set([])
 
-    db_family_doc = test_db.query(FamilyDocument).get(DOCUMENT_IMPORT_ID)
+    db_family_doc = (
+        test_db.query(FamilyDocument)
+        .filter(FamilyDocument.import_id == DOCUMENT_IMPORT_ID)
+        .one()
+    )
     assert db_family_doc == family_document
     assert db_family_doc.physical_document.title == "test-title"
     assert db_family_doc.document_role == "PRESS RELEASE"

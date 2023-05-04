@@ -1,6 +1,6 @@
 from sqlalchemy import create_engine
-from sqlalchemy.ext.declarative import declarative_base
-from sqlalchemy.orm import sessionmaker
+from sqlalchemy.orm import registry, sessionmaker
+
 
 from app.core import config
 
@@ -15,7 +15,8 @@ SessionLocal = sessionmaker(autocommit=False, autoflush=False, bind=engine)
 
 
 def make_declarative_base():
-    Base = declarative_base()
+    mapper_registry = registry()
+    Base = mapper_registry.generate_base()
 
     Base.metadata.naming_convention = {
         "ix": "ix_%(column_0_label)s",

@@ -642,7 +642,9 @@ async def update_document(
     # First query the FamilyDocument
     query = db.query(FamilyDocument)
     if IMPORT_ID_MATCHER.match(import_id_or_slug) is not None:
-        family_document = query.get(import_id_or_slug)
+        family_document = query.filter(
+            FamilyDocument.import_id == import_id_or_slug
+        ).one_or_none()
         _LOGGER.info("update_document called with import_id")
     else:
         family_document = (
