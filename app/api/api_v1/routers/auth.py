@@ -29,18 +29,17 @@ async def login(db=Depends(get_db), form_data: OAuth2PasswordRequestForm = Depen
             headers={"WWW-Authenticate": "Bearer"},
         )
 
+    app_user_links = get_app_user_authorisation(db, app_user)
+    authorization = {
+        cast(str, org.name): {"is_admin": cast(bool, org_user.is_admin)}
+        for org_user, org in app_user_links
+    }
     token_data = {
         "sub": cast(str, app_user.email),
         "email": cast(str, app_user.email),
         "is_superuser": cast(bool, app_user.is_superuser),
+        "authorization": authorization,
     }
-
-    if app_user is not None:
-        app_user_links = get_app_user_authorisation(db, app_user)
-        token_data["authorization"] = {
-            cast(str, org.name): {"is_admin": cast(bool, org_user.is_admin)}
-            for org_user, org in app_user_links
-        }
 
     access_token = create_access_token(data=token_data)
 
