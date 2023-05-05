@@ -28,12 +28,12 @@ def _decode_jwt(token: str = Depends(security.oauth2_scheme)) -> JWTUser:
         if email is None:
             raise CREDENTIALS_EXCEPTION
 
-        authorization: Optional[dict[str, Any]] = payload.get("authorization")
+        authorisation: Optional[dict[str, Any]] = payload.get("authorisation")
 
         jwt_user = JWTUser(
             email=email,
             is_superuser=payload.get("is_superuser", False),
-            authorization=authorization,
+            authorisation=authorisation,
         )
         return jwt_user
     except PyJWTError:

@@ -8,4 +8,4 @@ class JWTUser(BaseModel):
 
     email: str
     is_superuser: bool = False
-    authorization: Optional[Mapping[str, Any]] = None
+    authorisation: Optional[Mapping[str, Any]] = None
