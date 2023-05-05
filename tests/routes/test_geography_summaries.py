@@ -1,5 +1,7 @@
 from http.client import OK
 
+import pytest  # noqa: F401
+
 
 def _url_under_test(slug: str) -> str:
     return f"/api/v1/summaries/geography/{slug}"

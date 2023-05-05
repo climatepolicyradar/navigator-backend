@@ -7,7 +7,6 @@ from fastapi.security import OAuth2PasswordBearer
 from passlib.context import CryptContext
 
 oauth2_scheme = OAuth2PasswordBearer(tokenUrl="/api/tokens")
-
 pwd_context = CryptContext(schemes=["bcrypt"], deprecated="auto")
 
 SECRET_KEY = os.environ["SECRET_KEY"]
@@ -34,8 +33,3 @@ def create_access_token(*, data: dict, minutes: Optional[int] = None):
     to_encode.update({"exp": expire})
     encoded_jwt = jwt.encode(to_encode, SECRET_KEY, algorithm=ALGORITHM)
     return encoded_jwt
-
-
-def get_password_reset_token_expiry_ts(minutes: Optional[int] = None) -> datetime:
-    expiry_minutes = minutes or PASSWORD_RESET_TOKEN_EXPIRE_MINUTES
-    return datetime.utcnow() + timedelta(minutes=expiry_minutes)

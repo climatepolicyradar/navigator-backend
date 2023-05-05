@@ -17,10 +17,9 @@ from app.api.api_v1.routers.auth import auth_router
 from app.api.api_v1.routers.documents import documents_router
 from app.api.api_v1.routers.lookups import lookups_router
 from app.api.api_v1.routers.search import search_router
-from app.api.api_v1.routers.unauthenticated import unauthenticated_router
 from app.api.api_v1.routers.summaries import summary_router
 from app.core import config
-from app.core.auth import get_current_active_superuser
+from app.core.auth import get_superuser_details
 from app.core.health import is_database_online
 from app.db.session import SessionLocal
 
@@ -104,15 +103,10 @@ async def root():
 
 # Routers
 app.include_router(
-    unauthenticated_router,
-    prefix="/api/v1",
-    tags=["Unauthenticated"],  # or Public?
-)
-app.include_router(
     admin_users_router,
     prefix="/api/v1/admin",
     tags=["Admin"],
-    dependencies=[Depends(get_current_active_superuser)],
+    dependencies=[Depends(get_superuser_details)],
 )
 app.include_router(auth_router, prefix="/api", tags=["Authentication"])
 app.include_router(documents_router, prefix="/api/v1", tags=["Documents"])

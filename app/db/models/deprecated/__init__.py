@@ -25,4 +25,4 @@ from .document import (
     Sector,
 )
 from .source import Source
-from .user import PasswordResetToken, User
+from .user import User

@@ -1,4 +1,4 @@
-import typing as t
+from typing import Any, Mapping, Optional
 
 from pydantic import BaseModel
 
@@ -10,6 +10,7 @@ class _User(BaseModel):  # noqa: D101
 class UserFlags(BaseModel):  # noqa: D101
     is_active: bool = False
     is_superuser: bool = False
+    authorization: Optional[Mapping[str, Any]] = None
 
 
 class JWTUser(_User, UserFlags):
@@ -17,14 +18,14 @@ class JWTUser(_User, UserFlags):
 
 
 class UserPreferences(BaseModel):  # noqa: D101
-    names: t.Optional[str] = None
-    job_role: t.Optional[str] = None
-    location: t.Optional[str] = None
-    affiliation_organisation: t.Optional[str] = None
-    affiliation_type: t.Optional[t.List[str]] = None
-    policy_type_of_interest: t.Optional[t.List[str]] = None
-    geographies_of_interest: t.Optional[t.List[str]] = None
-    data_focus_of_interest: t.Optional[t.List[str]] = None
+    names: Optional[str] = None
+    job_role: Optional[str] = None
+    location: Optional[str] = None
+    affiliation_organisation: Optional[str] = None
+    affiliation_type: Optional[list[str]] = None
+    policy_type_of_interest: Optional[list[str]] = None
+    geographies_of_interest: Optional[list[str]] = None
+    data_focus_of_interest: Optional[list[str]] = None
 
 
 class UserBaseWithoutFlags(_User, UserPreferences):  # noqa: D101
