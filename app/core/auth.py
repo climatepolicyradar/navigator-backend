@@ -1,11 +1,11 @@
-from typing import Any, Optional, Tuple, cast
+from typing import Any, Optional, cast
 
 import jwt
 from fastapi import Depends, HTTPException, status
 from jwt import PyJWTError
 
 from app.core import security
-from app.db.crud.user import get_app_user_by_email, get_user_by_email
+from app.db.crud.user import get_app_user_by_email
 from app.db.models.app import AppUser
 from app.api.api_v1.schemas.user import JWTUser
 
@@ -28,22 +28,11 @@ def _decode_jwt(token: str = Depends(security.oauth2_scheme)) -> JWTUser:
         if email is None:
             raise CREDENTIALS_EXCEPTION
 
-        # TODO: Remove
-        permissions: Optional[str] = payload.get("permissions")
-        if permissions is None:
-            raise CREDENTIALS_EXCEPTION
-
-        # TODO: Remove
-        is_active: Optional[bool] = payload.get("is_active")
-        if is_active is None:
-            raise CREDENTIALS_EXCEPTION
-
         authorization: Optional[dict[str, Any]] = payload.get("authorization")
 
         jwt_user = JWTUser(
             email=email,
-            is_superuser=permissions == "admin",
-            is_active=is_active,
+            is_superuser=payload.get("is_superuser", False),
             authorization=authorization,
         )
         return jwt_user
@@ -51,28 +40,19 @@ def _decode_jwt(token: str = Depends(security.oauth2_scheme)) -> JWTUser:
         raise CREDENTIALS_EXCEPTION
 
 
-def authenticate_user(
-    db, email: str, password: str
-) -> Optional[Tuple[JWTUser, Optional[AppUser]]]:
+def authenticate_user(db, email: str, password: str) -> Optional[AppUser]:
     try:
-        user = get_user_by_email(db, email)
         app_user = get_app_user_by_email(db, email)
     except HTTPException:
         return None
-    if not security.verify_password(password, cast(str, user.hashed_password)):
+    if not security.verify_password(password, cast(str, app_user.hashed_password)):
         return None
-    if app_user and not security.verify_password(
-        password, cast(str, app_user.hashed_password)
-    ):
-        return (user, None)
-    return (user, app_user)
+    return app_user
 
 
 def get_user_details(
     current_user: JWTUser = Depends(_decode_jwt),
 ) -> JWTUser:
-    if not current_user.is_active:
-        raise HTTPException(status_code=403, detail="Inactive User")
     return current_user
 
 

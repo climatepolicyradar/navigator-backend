@@ -1,24 +1,15 @@
-from typing import Optional, Tuple
+from typing import Tuple
 
 from fastapi import HTTPException
 from sqlalchemy.orm import Session
 
 from app.db.models.app import AppUser, Organisation, OrganisationUser
-from app.db.models.deprecated import User
 
 
-def get_user_by_email(db: Session, email: str) -> User:
-    user = db.query(User).filter(User.email == email).first()
+def get_app_user_by_email(db: Session, email: str) -> AppUser:
+    user = db.query(AppUser).filter(AppUser.email == email).first()
     if not user:
         raise HTTPException(status_code=404, detail="User not found")
-    return user
-
-
-def get_app_user_by_email(db: Session, email: str) -> Optional[AppUser]:
-    user = db.query(User).filter(User.email == email).first()
-    # TODO: add after transition to AppUser
-    # if not user:
-    #     raise HTTPException(status_code=404, detail="User not found")
     return user
 
 

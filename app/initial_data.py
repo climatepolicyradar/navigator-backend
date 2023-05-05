@@ -9,7 +9,7 @@ import requests
 from sqlalchemy.exc import IntegrityError
 
 from app.core.security import get_password_hash
-from app.db.models.deprecated import User
+from app.db.models.app import AppUser
 from app.db.session import SessionLocal
 
 from app.data_migrations import (
@@ -40,12 +40,12 @@ def run_data_migrations(db):
     # TODO - framework, keyword, instrument, hazard
 
 
-def create_user(db, email, password):
+def create_user(db, name, email, password):
     with db.begin_nested():
-        db_user = User(
+        db_user = AppUser(
             email=email,
+            name=name,
             hashed_password=get_password_hash(password),
-            is_active=True,
             is_superuser=True,
         )
         db.add(db_user)
@@ -55,7 +55,9 @@ def create_user(db, email, password):
 def create_superuser(db) -> None:
     superuser_email = os.getenv("SUPERUSER_EMAIL")
     try:
-        create_user(db, superuser_email, os.getenv("SUPERUSER_PASSWORD"))
+        create_user(
+            db, "CPR Super User", superuser_email, os.getenv("SUPERUSER_PASSWORD")
+        )
     except IntegrityError:
         print(
             f"Skipping - superuser already exists with email/username {superuser_email}"

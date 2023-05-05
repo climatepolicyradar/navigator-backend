@@ -67,7 +67,7 @@ def test_validate_bulk_ingest_cclw_law_policy(
     assert len(response_json["errors"]) == 0
 
 
-def test_bulk_ingest_cclw_law_policy_preexisting_db_objects(
+def test_bulk_ingest_cclw_law_policy(
     client,
     superuser_token_headers,
     test_db,
@@ -81,6 +81,7 @@ def test_bulk_ingest_cclw_law_policy_preexisting_db_objects(
     populate_document_type(db=test_db)
     populate_document_role(db=test_db)
     populate_document_variant(db=test_db)
+    test_db.commit()
 
     law_policy_csv_file = BytesIO(ONE_DFC_ROW.encode("utf8"))
     events_csv_file = BytesIO(TWO_EVENT_ROWS.encode("utf8"))
