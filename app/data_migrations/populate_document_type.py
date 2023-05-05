@@ -16,7 +16,9 @@ def populate_document_type(db: Session) -> None:
     if not populate_old_schema and not populate_new_schema:
         return
 
-    with open("app/data_migrations/data/document_type_data.json") as document_type_file:
+    with open(
+        "app/data_migrations/data/law_policy/document_type_data.json"
+    ) as document_type_file:
         document_type_data = json.load(document_type_file)
         # TODO: Remove the following line when old schema is removed
         if populate_old_schema:

@@ -1,13 +1,11 @@
 import csv
 from io import StringIO
 from app.data_migrations import (
-    populate_category,
     populate_document_role,
     populate_document_variant,
     populate_document_type,
     populate_event_type,
     populate_geography,
-    populate_source,
     populate_taxonomy,
     populate_language,
 )
@@ -137,8 +135,6 @@ def get_event_ingest_row_data(
 def populate_for_ingest(test_db):
     populate_taxonomy(test_db)
     populate_geography(test_db)
-    populate_source(test_db)
-    populate_category(test_db)
     populate_document_type(test_db)
     populate_event_type(test_db)
     populate_language(test_db)

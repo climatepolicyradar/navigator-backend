@@ -13,44 +13,25 @@ from app.db.models.deprecated import User
 from app.db.session import SessionLocal
 
 from app.data_migrations import (
-    populate_category,
     populate_document_type,
     populate_document_role,
     populate_document_variant,
     populate_event_type,
-    populate_framework,
     populate_geo_statistics,
     populate_geography,
-    populate_hazard,
-    populate_instrument,
-    populate_keyword,
     populate_language,
-    populate_sector,
-    populate_source,
-    populate_topic,
     populate_taxonomy,
 )
 
 
 def run_data_migrations(db):
     """Populate lookup tables with standard values"""
-    populate_source(db)
-
-    db.flush()  # Source is used by some metadata values
-
-    populate_category(db)
     populate_document_type(db)
     populate_document_role(db)
     populate_document_variant(db)
     populate_event_type(db)
-    populate_framework(db)
     populate_geography(db)
-    populate_hazard(db)
-    populate_instrument(db)
-    populate_keyword(db)
     populate_language(db)
-    populate_sector(db)
-    populate_topic(db)
     populate_taxonomy(db)
 
     db.flush()  # Geography data is used by geo-stats so flush

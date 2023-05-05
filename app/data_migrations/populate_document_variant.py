@@ -13,7 +13,7 @@ def populate_document_variant(db: Session) -> None:
         return
 
     with open(
-        "app/data_migrations/data/document_variant_data.json"
+        "app/data_migrations/data/law_policy/document_variant_data.json"
     ) as document_variant_file:
         document_variant_data = json.load(document_variant_file)
         load_list(db, Variant, document_variant_data)
