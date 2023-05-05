@@ -1,6 +1,7 @@
 from typing import Any, Optional, cast
 
 from sqlalchemy.orm import Session
+
 from app.core.ingestion.ingest_row import DocumentIngestRow
 from app.core.ingestion.metadata import add_metadata
 from app.core.organisation import get_organisation_taxonomy
@@ -11,7 +12,6 @@ from app.core.ingestion.utils import (
     to_dict,
     update_if_changed,
 )
-
 from app.db.models.law_policy import (
     DocumentStatus,
     FamilyCategory,

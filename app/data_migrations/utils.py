@@ -2,7 +2,6 @@ from typing import Mapping, Optional, Sequence, cast
 
 from sqlalchemy.orm import Session
 
-from app.db.models.deprecated import Source
 from app.db.session import AnyModel
 
 
@@ -53,26 +52,3 @@ def load_list(db: Session, table: AnyModel, data_list: Sequence[Mapping]) -> Non
     """
     for entry in data_list:
         db.add(table(**entry))
-
-
-def map_source_ids(
-    db: Session,
-    data_tree_list: Sequence[Mapping[str, Mapping]],
-) -> Sequence[Mapping[str, Mapping]]:
-    new_tree = []
-
-    for entry in data_tree_list:
-        data = entry["node"]
-        if "source" in data:
-            new_entry = {}
-            new_data = {**data}
-            source_id = db.query(Source.id).filter_by(name=data["source"]).scalar()
-            new_data["source_id"] = source_id
-            del new_data["source"]
-            new_entry["node"] = new_data
-            new_entry["children"] = map_source_ids(
-                db, cast(Sequence[Mapping[str, Mapping]], entry["children"])
-            )
-            new_tree.append(new_entry)
-
-    return new_tree
