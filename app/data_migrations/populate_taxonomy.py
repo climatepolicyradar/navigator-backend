@@ -2,10 +2,9 @@ import json
 from typing import Sequence
 
 from sqlalchemy.orm import Session
+
 from app.db.models.app.users import Organisation
-
 from app.db.models.law_policy.metadata import MetadataOrganisation, MetadataTaxonomy
-
 from .utils import has_rows
 
 """At the moment taxonomy is kept simple, and only supports string validation for enums
@@ -25,37 +24,37 @@ For Example:
 TAXONOMY_DATA = [
     {
         "key": "topic",
-        "filename": "app/data_migrations/data/topic_data.json",
+        "filename": "app/data_migrations/data/cclw/topic_data.json",
         "file_key_path": "name",
         "allow_blanks": True,
     },
     {
         "key": "sector",
-        "filename": "app/data_migrations/data/sector_data.json",
+        "filename": "app/data_migrations/data/cclw/sector_data.json",
         "file_key_path": "node.name",
         "allow_blanks": True,
     },
     {
         "key": "keyword",
-        "filename": "app/data_migrations/data/keyword_data.json",
+        "filename": "app/data_migrations/data/cclw/keyword_data.json",
         "file_key_path": "name",
         "allow_blanks": True,
     },
     {
         "key": "instrument",
-        "filename": "app/data_migrations/data/instrument_data.json",
+        "filename": "app/data_migrations/data/cclw/instrument_data.json",
         "file_key_path": "node.name",
         "allow_blanks": True,
     },
     {
         "key": "hazard",
-        "filename": "app/data_migrations/data/hazard_data.json",
+        "filename": "app/data_migrations/data/cclw/hazard_data.json",
         "file_key_path": "name",
         "allow_blanks": True,
     },
     {
         "key": "framework",
-        "filename": "app/data_migrations/data/framework_data.json",
+        "filename": "app/data_migrations/data/cclw/framework_data.json",
         "file_key_path": "name",
         "allow_blanks": True,
     },

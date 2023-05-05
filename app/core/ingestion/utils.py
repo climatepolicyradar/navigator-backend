@@ -112,12 +112,12 @@ def to_dict(base_object: AnyModel) -> dict:
     )
 
 
-class ResultType(enum.Enum):
+class ResultType(str, enum.Enum):
     """Result type used when processing metadata values."""
 
-    OK = 0
-    RESOLVED = 10
-    ERROR = 20
+    OK = "Ok"
+    RESOLVED = "Resolved"
+    ERROR = "Error"
 
 
 @dataclass

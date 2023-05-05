@@ -12,6 +12,8 @@ def populate_document_role(db: Session) -> None:
     if has_rows(db, FamilyDocumentRole):
         return
 
-    with open("app/data_migrations/data/document_role_data.json") as document_role_file:
+    with open(
+        "app/data_migrations/data/law_policy/document_role_data.json"
+    ) as document_role_file:
         document_role_data = json.load(document_role_file)
         load_list(db, FamilyDocumentRole, document_role_data)
