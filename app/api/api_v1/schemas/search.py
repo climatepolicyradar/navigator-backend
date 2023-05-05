@@ -1,5 +1,5 @@
 from enum import Enum
-from typing import Mapping, Optional, Sequence, Union
+from typing import Mapping, Optional, Sequence
 
 from pydantic import BaseModel, conlist, validator
 
@@ -141,7 +141,6 @@ class OpenSearchResponsePassageMatch(OpenSearchResponseMatchBase):
     text_block_coords: Sequence[Coord]
 
 
-############### NEW #####################  # noqa: E266
 class SearchResponseFamilyDocument(BaseModel):
     """A single document in a search response."""
 
@@ -161,7 +160,6 @@ class SearchResponseFamilyDocument(BaseModel):
         return v
 
 
-############### NEW #####################  # noqa: E266
 class SearchResponseFamily(BaseModel):
     """
     The object that is returned in the response.
@@ -183,7 +181,6 @@ class SearchResponseFamily(BaseModel):
     family_documents: list[SearchResponseFamilyDocument]
 
 
-############### NEW #####################  # noqa: E266
 class SearchResponse(BaseModel):
     """The response body produced by the search API endpoint."""
 
@@ -204,56 +201,3 @@ class GeographySummaryFamilyResponse(BaseModel):
     family_counts: Mapping[FamilyCategory, int]
     top_families: Mapping[FamilyCategory, _T5FamL]
     targets: Sequence[str]  # TODO: Placeholder for later
-
-
-###############################################  # noqa: E266
-################# DEPRECATED ##################  # noqa: E266
-###############################################  # noqa: E266
-class SearchDocumentResponse(BaseModel):
-    """A single document in a search response."""
-
-    document_name: str
-    document_geography: str
-    document_sectors: Sequence[str]
-    document_source: str
-    document_date: str
-    document_id: str
-    document_slug: str
-    document_description: str
-    document_type: str
-    document_category: str
-    document_source_url: Optional[str]
-    document_url: Optional[str]
-    document_content_type: Optional[str]
-    document_title_match: bool
-    document_description_match: bool
-    document_passage_matches: list[SearchResponseDocumentPassage]
-    document_postfix: Optional[str]
-
-
-class SearchResultsResponse(BaseModel):
-    """The response body produced by the search API endpoint."""
-
-    hits: int
-    query_time_ms: int
-
-    documents: list[SearchDocumentResponse]
-
-
-Top5DocumentList = conlist(SearchDocumentResponse, max_items=5)
-# Alias required for type hinting
-_T5DocL = Top5DocumentList
-
-
-class GeographySummaryDocumentResponse(BaseModel):
-    """Additional information for the geography page over geo stats"""
-
-    document_counts: Mapping[CategoryName, int]
-    top_documents: Mapping[CategoryName, _T5DocL]
-    targets: Sequence[str]  # TODO: Placeholder for later
-
-
-GeographySummaryResponse = Union[
-    GeographySummaryDocumentResponse,
-    GeographySummaryFamilyResponse,
-]
