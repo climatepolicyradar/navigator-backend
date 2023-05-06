@@ -777,10 +777,11 @@ def create_search_response_family(
         family_last_updated_date=document_info["family_last_updated_date"],
         family_source=opensearch_match.document_source,
         family_geography=opensearch_match.document_geography,
-        # TODO: remove these fields from search results because they're not used?
-        family_metadata={},
         family_title_match=False,
         family_description_match=False,
+        # TODO: Remove unused fields below?
+        # ↓ Stuff we don't currently use for search ↓
+        family_metadata={},
         family_documents=[],
     )
 
