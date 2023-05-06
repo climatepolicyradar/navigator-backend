@@ -59,10 +59,11 @@ def to_search_response_family(
         family_category=str(family.family_category),
         family_date=family_published_date,
         family_last_updated_date=family_last_updated_date,
-        family_source=cast(str, organisation.name),  # FIXME: check links to source
+        family_source=cast(str, organisation.name),
         family_geography=cast(str, geography.value),
-        family_metadata={},  # FIXME: Add metadata
+        # TODO: Remove unused fields below?
         # ↓ Stuff we don't currently use for search ↓
+        family_metadata={},
         family_title_match=False,
         family_description_match=False,
         family_documents=[],  # TODO: are these required?

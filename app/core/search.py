@@ -23,6 +23,8 @@ from app.api.api_v1.schemas.search import (
     OpenSearchResponsePassageMatch,
     SearchRequestBody,
     SearchResponse,
+    SearchResponseFamilyDocument,
+    SearchResponseFamily,
     SearchResponseDocumentPassage,
     SortField,
     SortOrder,
@@ -640,16 +642,6 @@ def build_opensearch_request_body(
     return builder
 
 
-################## NEW ######################
-from app.api.api_v1.schemas.search import (  # noqa: E402
-    SearchResponse,
-    SearchResponseFamilyDocument,
-    SearchResponseFamily,
-)
-
-# FIXME: move import during post-families cleanup
-
-
 def process_search_response_body_families(
     opensearch_response_body: OpenSearchResponse,
     document_extra_info: Mapping[str, Mapping[str, str]],
@@ -785,7 +777,8 @@ def create_search_response_family(
         family_last_updated_date=document_info["family_last_updated_date"],
         family_source=opensearch_match.document_source,
         family_geography=opensearch_match.document_geography,
-        family_metadata={},  # FIXME: complete?
+        # TODO: remove these fields from search results because they're not used?
+        family_metadata={},
         family_title_match=False,
         family_description_match=False,
         family_documents=[],

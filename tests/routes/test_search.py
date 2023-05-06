@@ -991,11 +991,15 @@ def test_browse_filters(client, test_db):
     )
     assert response.status_code == 200
 
-    # FIXME: Check that filters are applied properly
-
     response_body = response.json()
     result_elements = response_body["families"]
     assert len(result_elements) == 0
+
+    for result in result_elements:
+        result_date = result["family_date"]
+        assert datetime(1899, 12, 31, 23, 59, 59) < result_date < datetime(2021, 1, 1)
+        assert result["family_source"] == "CCLW"
+        assert result["family_geography"] == "Kenya"
 
 
 @pytest.mark.search
