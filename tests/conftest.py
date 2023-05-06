@@ -12,7 +12,7 @@ from sqlalchemy_utils import create_database, database_exists, drop_database
 from app.core import security
 from app.core.aws import S3Client, get_s3_client
 from app.core.search import OpenSearchConnection, OpenSearchConfig
-from app.db.models.deprecated import User
+from app.db.models.app import AppUser
 from app.db.session import Base, get_db
 from app.main import app
 
@@ -100,7 +100,6 @@ def test_db():
     try:
         test_engine = create_engine(test_db_url)
         connection = test_engine.connect()
-        trans = connection.begin()
         Base.metadata.create_all(test_engine)  # type: ignore
         test_session_maker = sessionmaker(
             autocommit=False,
@@ -113,7 +112,6 @@ def test_db():
         yield test_session
     finally:
         test_session.close()
-        trans.rollback()
         connection.close()
         # Drop the test database
         drop_database(test_db_url)
@@ -146,42 +144,29 @@ def get_password_hash() -> str:
 
 
 @pytest.fixture
-def test_user(test_db) -> User:
+def test_user(test_db) -> AppUser:
     """Make a test user in the database"""
 
-    user = User(
+    app_user = AppUser(
         email="fake@email.com",
+        name="Fake User",
         hashed_password=get_password_hash(),
-        is_active=True,
+        is_superuser=False,
     )
-    test_db.add(user)
+    test_db.add(app_user)
     test_db.commit()
-    return user
+    return app_user
 
 
 @pytest.fixture
-def test_inactive_user(test_db) -> User:
-    """Make a test inactive/password-less user in the database"""
-
-    user = User(
-        email="inactive@email.com",
-        hashed_password=None,
-        is_active=False,
-    )
-    test_db.add(user)
-    test_db.commit()
-    return user
-
-
-@pytest.fixture
-def test_superuser(test_db) -> User:
+def test_superuser(test_db) -> AppUser:
     """Superuser for testing"""
 
-    user = User(
-        email="fakeadmin@email.com",
+    user = AppUser(
+        email="fakesuper@email.com",
+        name="Fake Super User",
         hashed_password=get_password_hash(),
         is_superuser=True,
-        is_active=True,
     )
     test_db.add(user)
     test_db.commit()

@@ -1,4 +1,3 @@
-import datetime
 from io import BytesIO
 
 import pytest  # noqa: F401
@@ -8,22 +7,8 @@ from app.data_migrations import (
     populate_document_type,
     populate_document_variant,
     populate_geography,
+    populate_taxonomy,
 )
-from app.data_migrations.populate_taxonomy import populate_taxonomy
-from app.db.models.deprecated import (
-    Source,
-    Document,
-    DocumentType,
-    Language,
-    Sector,
-    Response,
-    Hazard,
-    Framework,
-    Instrument,
-    Category,
-    Keyword,
-)
-from app.db.models.law_policy import Geography
 
 
 def test_unauthenticated_ingest(client):
@@ -82,7 +67,7 @@ def test_validate_bulk_ingest_cclw_law_policy(
     assert len(response_json["errors"]) == 0
 
 
-def test_bulk_ingest_cclw_law_policy_preexisting_db_objects(
+def test_bulk_ingest_cclw_law_policy(
     client,
     superuser_token_headers,
     test_db,
@@ -91,48 +76,11 @@ def test_bulk_ingest_cclw_law_policy_preexisting_db_objects(
     mock_start_import = mocker.patch("app.api.api_v1.routers.admin._start_ingest")
     mock_write_csv_to_s3 = mocker.patch("app.api.api_v1.routers.admin.write_csv_to_s3")
 
+    populate_geography(db=test_db)
     populate_taxonomy(db=test_db)
     populate_document_type(db=test_db)
     populate_document_role(db=test_db)
     populate_document_variant(db=test_db)
-    test_db.add(Source(name="CCLW"))
-    test_db.add(
-        Geography(
-            display_value="geography", slug="geography", value="GEO", type="country"
-        )
-    )
-    test_db.add(DocumentType(name="doctype", description="doctype"))
-    test_db.add(Language(language_code="LAN", name="language"))
-    test_db.add(Category(name="Policy", description="Policy"))
-    test_db.add(Keyword(name="keyword1", description="keyword1"))
-    test_db.add(Keyword(name="keyword2", description="keyword2"))
-    test_db.add(Hazard(name="hazard1", description="hazard1"))
-    test_db.add(Hazard(name="hazard2", description="hazard2"))
-    test_db.add(Response(name="topic", description="topic"))
-    test_db.add(Framework(name="framework", description="framework"))
-
-    test_db.commit()
-    existing_doc_import_id = "CCLW.executive.1.2"
-    test_db.add(Instrument(name="instrument", description="instrument", source_id=1))
-    test_db.add(Sector(name="sector", description="sector", source_id=1))
-    test_db.add(
-        Document(
-            publication_ts=datetime.datetime(year=2014, month=1, day=1),
-            name="test",
-            description="test description",
-            source_url="http://somewhere",
-            source_id=1,
-            url="",
-            cdn_object="",
-            md5_sum=None,
-            content_type=None,
-            slug="geography_2014_test_1_2",
-            import_id=existing_doc_import_id,
-            geography_id=1,
-            type_id=1,
-            category_id=1,
-        )
-    )
     test_db.commit()
 
     law_policy_csv_file = BytesIO(ONE_DFC_ROW.encode("utf8"))
