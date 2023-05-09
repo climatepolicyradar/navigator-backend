@@ -56,20 +56,6 @@ class IncludedResults(str, Enum):
     HTMLS_TRANSLATED = "htmlsTranslated"
 
 
-# FIXME: This should be removed & replaced by uses of `FamilyCategory` defined in the
-#        law_policy.family db schema
-class CategoryName(str, Enum):
-    """
-    Representation of what is in the database.
-
-    TODO: Add test to ensure there is equivalence with the initial_data
-    """
-
-    LAW = "Law"
-    POLICY = "Policy"
-    CASE = "Case"
-
-
 IncludedResultsList = Optional[conlist(IncludedResults, min_items=1)]
 
 
