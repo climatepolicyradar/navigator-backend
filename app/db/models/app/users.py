@@ -9,7 +9,7 @@ class AppUser(Base):
 
     __tablename__ = "app_user"
 
-    email = sa.Column(sa.String, unique=True, primary_key=True, nullable=False)
+    email = sa.Column(sa.String, primary_key=True, nullable=False)
     name = sa.Column(sa.String)
     hashed_password = sa.Column(sa.String)
     is_superuser = sa.Column(sa.Boolean, default=False, nullable=False)
