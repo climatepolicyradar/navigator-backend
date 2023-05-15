@@ -1,3 +1,4 @@
+from typing import Callable
 from sqlalchemy.orm import Session
 from app.data_migrations.taxonomy_cclw import get_cclw_taxonomy
 
@@ -6,7 +7,11 @@ from app.db.models.law_policy.metadata import MetadataOrganisation, MetadataTaxo
 
 
 def populate_org_taxonomy(
-    db: Session, org_name: str, org_type: str, description: str, fn_get_taxonomy
+    db: Session,
+    org_name: str,
+    org_type: str,
+    description: str,
+    fn_get_taxonomy: Callable,
 ) -> None:
     """Populates the taxonomy from the data."""
 
