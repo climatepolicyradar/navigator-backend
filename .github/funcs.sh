@@ -40,7 +40,12 @@ get_maturity() {
     fi
 }
 
-get_docker_tags() { # First arg for array, second arg for semver
+get_docker_tags() { 
+    # Arguments:
+    #  - Name reference for the array 
+    #  - Name of the docker image
+    #  - The semver we are using to create the tags
+
     local -n arr=$1             # use nameref to create values
     name=$2
     semver=$3
@@ -61,5 +66,4 @@ get_docker_tags() { # First arg for array, second arg for semver
         major_tag="${name}:${major}-${maturity}"
     fi
     arr=($full_tag $minor_tag $major_tag)
-    declare -p tag_array
 }
