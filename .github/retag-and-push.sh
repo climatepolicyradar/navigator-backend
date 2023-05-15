@@ -71,18 +71,13 @@ elif is_tagged_version ${GITHUB_REF} ; then
     # push `semver` tagged image
     semver="${GITHUB_REF/refs\/tags\/v/}"
     echo "Detected Tag: ${semver}"
-    major=$(get_major "${semver}")
-    minor=$(get_minor "${semver}")
-    patch=$(get_patch "${semver}")
-    maturity=$(get_maturity "${semver}")
-    echo "Detected Version: ${major} . ${minor} . ${patch} [${maturity}]"
+    local tag_array
+    get_docker_tags tag_array ${name} ${semver}
 
-    docker_tag "${input_image}" "${name}:${major}.${minor}.${patch}-${maturity}"
-    docker_tag "${input_image}" "${name}:${major}.${minor}-${maturity}"
-    docker_tag "${input_image}" "${name}:${major}-${maturity}"
-    docker push "${name}:${major}.${minor}.${patch}-${maturity}"
-    docker push "${name}:${major}.${minor}-${maturity}"
-    docker push "${name}:${major}-${maturity}"
+    for tag in "${tag_array[@]}" ; do
+        docker_tag "${input_image}" ${tag}
+        docker push "${tag}"
+    done
 else
     echo "${GITHUB_REF} is neither a branch head nor valid semver tag"
     echo "Assuming '${GITHUB_HEAD_REF}' is a branch"
