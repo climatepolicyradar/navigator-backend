@@ -55,12 +55,13 @@ get_docker_tags() {
     patch=$(get_patch "${semver}")
     maturity=$(get_maturity "${semver}")
 
-    echo "Detected Version: ${major} . ${minor} . ${patch} [${maturity}]"
     if [ -z ${maturity} ] ; then
+        echo "Detected Version: ${major} . ${minor} . ${patch}"
         full_tag="${name}:${major}.${minor}.${patch}"
         minor_tag="${name}:${major}.${minor}"
         major_tag="${name}:${major}"
     else
+        echo "Detected Version: ${major} . ${minor} . ${patch} [${maturity}]"
         full_tag="${name}:${major}.${minor}.${patch}-${maturity}"
         minor_tag="${name}:${major}.${minor}-${maturity}"
         major_tag="${name}:${major}-${maturity}"
