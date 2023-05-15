@@ -5,7 +5,6 @@ from sqlalchemy.orm import Session
 
 from app.db.models.app.users import Organisation
 from app.db.models.law_policy.metadata import MetadataOrganisation, MetadataTaxonomy
-from .utils import has_rows
 
 """At the moment taxonomy is kept simple, and only supports string validation for enums
 
@@ -74,7 +73,7 @@ def load_metadata_type(filename: str, key_path: str) -> Sequence[str]:
     return [dot_dref(obj, key_path) for obj in data]
 
 
-def get_default_taxonomy():
+def get_cclw_taxonomy():
     taxonomy = {}
     for data in TAXONOMY_DATA:
         taxonomy.update(
@@ -98,31 +97,48 @@ def get_default_taxonomy():
     return taxonomy
 
 
-def populate_taxonomy(db: Session) -> None:
+def populate_org_taxonomy(
+    db: Session, org_name: str, org_type: str, description: str, fn_get_taxonomy
+) -> None:
     """Populates the taxonomy from the data."""
 
-    if has_rows(db, MetadataTaxonomy) or has_rows(db, Organisation):
-        return
+    # First the org
+    org = db.query(Organisation).filter(Organisation.name == org_name).one_or_none()
+    if org is None:
+        org = Organisation(
+            name=org_name, description=description, organisation_type=org_type
+        )
+        db.add(org)
+        db.flush()
 
-    db.add(
-        MetadataTaxonomy(
-            id=1,
-            description="CCLW loaded values",
-            valid_metadata=get_default_taxonomy(),
-        )
+    metadata_org = (
+        db.query(MetadataOrganisation)
+        .filter(MetadataOrganisation.organisation_id == org.id)
+        .one_or_none()
     )
-    db.add(
-        Organisation(
-            id=1,
-            name="CCLW",
-            description="Climate Change Laws of the World",
-            organisation_type="Academic",
+    if metadata_org is None:
+        # Now add the taxonomy
+        tax = MetadataTaxonomy(
+            description=f"{org_name} loaded values",
+            valid_metadata=fn_get_taxonomy(),
         )
-    )
-    db.flush()
-    db.add(
-        MetadataOrganisation(
-            taxonomy_id=1,
-            organisation_id=1,
+        db.add(tax)
+        db.flush()
+        # Finally the link between the org and the taxonomy.
+        db.add(
+            MetadataOrganisation(
+                taxonomy_id=tax.id,
+                organisation_id=org.id,
+            )
         )
+        db.flush()
+
+
+def populate_taxonomy(db: Session) -> None:
+    populate_org_taxonomy(
+        db,
+        org_name="CCLW",
+        org_type="Academic",
+        description="Climate Change Laws of the World",
+        fn_get_taxonomy=get_cclw_taxonomy,
     )
