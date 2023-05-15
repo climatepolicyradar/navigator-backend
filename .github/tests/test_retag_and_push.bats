@@ -75,3 +75,12 @@ load '/opt/bats-test-helpers/lox-bats-mock/stub.bash'
   [ "$status" -eq 0 ]
   [ "$output" == "alpha" ]
 }
+
+# ------
+
+@test "get_maturity returns empty " {
+  source /code/funcs.sh
+  run get_maturity "8.9.7"
+  [ "$status" -eq 0 ]
+  [ "$output" == "" ]
+}
