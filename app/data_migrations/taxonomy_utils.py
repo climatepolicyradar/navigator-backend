@@ -13,6 +13,29 @@ For Example:
     ...
 }
 
+These functions allow you to reference the values within the json.
+See sector_data.json for example each element in the array contains an object where 
+we use the "node.name" as the taxonomy values:
+
+  {
+    "node": {
+      "name": "Energy",
+      "description": "Energy",
+      "source": "CCLW"
+    },
+    "children": []
+  },
+
+This is referenced in the "file_key_path" as the values to be used when a file is 
+loaded:
+
+    {
+        "key": "sector",
+        "filename": "app/data_migrations/data/cclw/sector_data.json",
+        "file_key_path": "node.name",
+        "allow_blanks": True,
+    },
+
 """
 
 
