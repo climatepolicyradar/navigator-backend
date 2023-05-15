@@ -84,3 +84,62 @@ load '/opt/bats-test-helpers/lox-bats-mock/stub.bash'
   [ "$status" -eq 0 ]
   [ "$output" == "" ]
 }
+
+# ------
+
+@test "regression with missing maturity" {
+  source /code/funcs.sh
+  semver="8.9.7"
+
+  run get_major $semver
+  [ "$status" -eq 0 ]
+  [ "$output" == "8" ]
+  run get_minor $semver
+  [ "$status" -eq 0 ]
+  [ "$output" == "9" ]
+  run get_patch $semver
+  [ "$status" -eq 0 ]
+  [ "$output" == "7" ]
+  run get_maturity $semver
+  [ "$status" -eq 0 ]
+  [ "$output" == "" ]
+}
+
+# ------
+
+@test "get_docker_tags returns correctly with maturity " {
+  source /code/funcs.sh
+  run get_docker_tags tag_array "test" "8.9.7-alpha"
+  [ "$status" -eq 0 ]
+
+  # Note the above "run" command does something unholy - so just execute without it
+  local tag_array
+  get_docker_tags tag_array "test" "8.9.7-alpha"
+
+  # Test we have 3 tags
+  [ ${#tag_array[@]} -eq 3 ]
+
+  [ "${tag_array[0]}" == "test:8.9.7-alpha" ]
+  [ "${tag_array[1]}" == "test:8.9-alpha" ]
+  [ "${tag_array[2]}" == "test:8-alpha" ]
+}
+
+# ------
+
+@test "get_docker_tags returns correctly without maturity " {
+  source /code/funcs.sh
+  run get_docker_tags tag_array "test" "8.9.7"
+  [ "$status" -eq 0 ]
+
+  # Note the above "run" command does something unholy - so just execute without it
+  local tag_array
+  get_docker_tags tag_array "test" "8.9.7"
+
+  # Test we have 3 tags
+  [ ${#tag_array[@]} -eq 3 ]
+
+  [ "${tag_array[0]}" == "test:8.9.7" ]
+  [ "${tag_array[1]}" == "test:8.9" ]
+  [ "${tag_array[2]}" == "test:8" ]
+}
+

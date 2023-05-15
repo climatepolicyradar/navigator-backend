@@ -25,9 +25,41 @@ get_minor() {
 }
 
 get_patch() {
-    echo "${1}" | cut -d'.' -f3 | cut -d'-' -f1
+    if [[ ${1} == *"-"* ]]; then
+        echo "${1}" | cut -d'.' -f3 | cut -d'-' -f1
+    else
+        echo "${1}" | cut -d'.' -f3
+    fi
 }
 
 get_maturity() {
-    echo "${1}" | cut -d'.' -f3 | cut -d'-' -f2
+    if [[ ${1} == *"-"* ]]; then
+        echo "${1}" | cut -d'.' -f3 | cut -d'-' -f2
+    else
+        echo ""
+    fi
+}
+
+get_docker_tags() { # First arg for array, second arg for semver
+    local -n arr=$1             # use nameref to create values
+    name=$2
+    semver=$3
+
+    major=$(get_major "${semver}")
+    minor=$(get_minor "${semver}")
+    patch=$(get_patch "${semver}")
+    maturity=$(get_maturity "${semver}")
+
+    echo "Detected Version: ${major} . ${minor} . ${patch} [${maturity}]"
+    if [ -z ${maturity} ] ; then
+        full_tag="${name}:${major}.${minor}.${patch}"
+        minor_tag="${name}:${major}.${minor}"
+        major_tag="${name}:${major}"
+    else
+        full_tag="${name}:${major}.${minor}.${patch}-${maturity}"
+        minor_tag="${name}:${major}.${minor}-${maturity}"
+        major_tag="${name}:${major}-${maturity}"
+    fi
+    arr=($full_tag $minor_tag $major_tag)
+    declare -p tag_array
 }
