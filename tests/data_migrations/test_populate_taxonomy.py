@@ -1,5 +1,5 @@
 from app.core.organisation import get_organisation_taxonomy_by_name
-from app.data_migrations import populate_taxonomy
+from app.data_migrations import populate_event_type, populate_taxonomy
 
 
 def test_populate_taxonomy_cclw_no_transport(
@@ -13,13 +13,14 @@ def test_populate_taxonomy_cclw_no_transport(
 
 
 def test_populate_taxonomy_cclw_correct_counts(test_db):
-    populate_taxonomy(db=test_db)
+    populate_event_type(test_db)
+    populate_taxonomy(test_db)
     taxonomy = get_organisation_taxonomy_by_name(test_db, "CCLW")
 
     assert 7 == len(taxonomy)
 
     assert "event_types" in taxonomy
-    assert 0 == len(taxonomy["event_types"]["allowed_values"])
+    assert 17 == len(taxonomy["event_types"]["allowed_values"])
 
     assert "topic" in taxonomy
     assert 4 == len(taxonomy["topic"]["allowed_values"])
@@ -38,3 +39,20 @@ def test_populate_taxonomy_cclw_correct_counts(test_db):
 
     assert "framework" in taxonomy
     assert 3 == len(taxonomy["framework"]["allowed_values"])
+
+
+def test_populate_taxonomy_unf3c_correct_counts(test_db):
+    populate_event_type(test_db)
+    populate_taxonomy(test_db)
+    taxonomy = get_organisation_taxonomy_by_name(test_db, "UNFCCC")
+
+    assert 3 == len(taxonomy)
+
+    assert "event_types" in taxonomy
+    assert 17 == len(taxonomy["event_types"]["allowed_values"])
+
+    assert "submission_type" in taxonomy
+    assert 24 == len(taxonomy["submission_type"]["allowed_values"])
+
+    assert "author_type" in taxonomy
+    assert 2 == len(taxonomy["author_type"]["allowed_values"])

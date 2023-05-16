@@ -1,6 +1,7 @@
 from typing import Callable
 from sqlalchemy.orm import Session
 from app.data_migrations.taxonomy_cclw import get_cclw_taxonomy
+from app.data_migrations.taxonomy_unf3c import get_unf3c_taxonomy
 
 from app.db.models.app.users import Organisation
 from app.db.models.law_policy.metadata import MetadataOrganisation, MetadataTaxonomy
@@ -54,4 +55,11 @@ def populate_taxonomy(db: Session) -> None:
         org_type="Academic",
         description="Climate Change Laws of the World",
         fn_get_taxonomy=get_cclw_taxonomy,
+    )
+    populate_org_taxonomy(
+        db,
+        org_name="UNFCCC",
+        org_type="UN",
+        description="United Nations Framework Convention on Climate Change",
+        fn_get_taxonomy=get_unf3c_taxonomy,
     )
