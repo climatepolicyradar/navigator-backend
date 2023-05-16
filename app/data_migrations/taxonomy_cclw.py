@@ -1,4 +1,4 @@
-from app.data_migrations.taxonomy_utils import load_metadata_type
+from app.data_migrations.taxonomy_utils import read_taxonomy_values
 
 
 TAXONOMY_DATA = [
@@ -42,24 +42,14 @@ TAXONOMY_DATA = [
 
 
 def get_cclw_taxonomy():
-    taxonomy = {}
-    for data in TAXONOMY_DATA:
-        taxonomy.update(
-            {
-                data["key"]: {
-                    "allowed_values": load_metadata_type(
-                        data["filename"], data["file_key_path"]
-                    ),
-                    "allow_blanks": data["allow_blanks"],
-                },
-            }
-        )
+    taxonomy = read_taxonomy_values(TAXONOMY_DATA)
 
     # Remove unwanted values for new taxonomy
-    if (
-        "sector" in taxonomy
-        and "Transportation" in taxonomy["sector"]["allowed_values"]
-    ):
-        taxonomy["sector"]["allowed_values"].remove("Transportation")
+    if "sector" in taxonomy:
+        sectors = taxonomy["sector"]["allowed_values"]
+        if "Transportation" in sectors:
+            taxonomy["sector"]["allowed_values"] = [
+                s for s in sectors if s != "Transportation"
+            ]
 
     return taxonomy

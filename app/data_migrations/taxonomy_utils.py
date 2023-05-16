@@ -1,5 +1,8 @@
+from dataclasses import asdict
 import json
-from typing import Sequence
+from typing import Any, Mapping, Sequence
+
+from app.core.ingestion.metadata import TaxonomyEntry
 
 """At the moment taxonomy is kept simple, and only supports string validation for enums
 
@@ -39,14 +42,34 @@ loaded:
 """
 
 
-def dot_dref(obj: dict, dotted_key: str):
+def _dot_dref(obj: dict, dotted_key: str):
     if "." not in dotted_key:
         return obj[dotted_key]
     keys = dotted_key.split(".", 1)
-    return dot_dref(obj[keys[0]], keys[1])
+    return _dot_dref(obj[keys[0]], keys[1])
 
 
-def load_metadata_type(filename: str, key_path: str) -> Sequence[str]:
+def _load_metadata_type(filename: str, key_path: str) -> Sequence[str]:
     with open(filename) as file:
         data = json.load(file)
-    return [dot_dref(obj, key_path) for obj in data]
+    return [_dot_dref(obj, key_path) for obj in data]
+
+
+def _maybe_read(data: dict[str, Any]) -> TaxonomyEntry:
+    if "filename" in data:
+        return TaxonomyEntry(
+            allowed_values=_load_metadata_type(data["filename"], data["file_key_path"]),
+            allow_blanks=data["allow_blanks"],
+        )
+    else:
+        return TaxonomyEntry(
+            allowed_values=data["allowed_values"], allow_blanks=data["allow_blanks"]
+        )
+
+
+def read_taxonomy_values(taxonomy_data: list[dict[str, Any]]) -> Mapping[str, dict]:
+    taxonomy = {}
+    for data in taxonomy_data:
+        taxonomy.update({data["key"]: asdict(_maybe_read(data))})
+
+    return taxonomy
