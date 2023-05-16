@@ -41,6 +41,17 @@ docker_tag() {
     docker tag $1 $2
 }
 
+process_tagged_version() {
+    local tag_array
+    semver=$1
+    get_docker_tags tag_array ${name} ${semver}
+
+    for tag in "${tag_array[@]}" ; do
+        docker_tag "${input_image}" ${tag}
+        docker push "${tag}"
+    done
+}
+
 timestamp=$(date --utc -Iseconds | cut -c1-19 | tr -c '[0-9]T\n' '-')
 short_sha=${GITHUB_SHA:0:8}
 
@@ -71,13 +82,7 @@ elif is_tagged_version ${GITHUB_REF} ; then
     # push `semver` tagged image
     semver="${GITHUB_REF/refs\/tags\/v/}"
     echo "Detected Tag: ${semver}"
-    local tag_array
-    get_docker_tags tag_array ${name} ${semver}
-
-    for tag in "${tag_array[@]}" ; do
-        docker_tag "${input_image}" ${tag}
-        docker push "${tag}"
-    done
+    process_tagged_version ${semver}
 else
     echo "${GITHUB_REF} is neither a branch head nor valid semver tag"
     echo "Assuming '${GITHUB_HEAD_REF}' is a branch"
