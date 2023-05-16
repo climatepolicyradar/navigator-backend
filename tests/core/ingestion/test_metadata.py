@@ -60,7 +60,7 @@ def test_get_org_taxonomy__raises_on_no_organisation(test_db: Session):
     populate_for_ingest(test_db)
 
     with pytest.raises(NoResultFound):
-        get_organisation_taxonomy(test_db, org_id=2)
+        get_organisation_taxonomy(test_db, org_id=2234)
 
 
 def test_build_metadata__error_when_sector_notfound(test_db):
