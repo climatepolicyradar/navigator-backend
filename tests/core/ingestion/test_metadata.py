@@ -57,10 +57,11 @@ def test_get_org_taxonomy__has_metadata_keys(test_db: Session):
 
 
 def test_get_org_taxonomy__raises_on_no_organisation(test_db: Session):
+    ORG_ID_NOT_EXISTS = 2234
     populate_for_ingest(test_db)
 
     with pytest.raises(NoResultFound):
-        get_organisation_taxonomy(test_db, org_id=2)
+        get_organisation_taxonomy(test_db, org_id=ORG_ID_NOT_EXISTS)
 
 
 def test_build_metadata__error_when_sector_notfound(test_db):
