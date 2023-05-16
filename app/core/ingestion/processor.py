@@ -12,7 +12,7 @@ from app.core.ingestion.ingest_row import (
 )
 from app.core.organisation import get_organisation_taxonomy
 from app.core.ingestion.utils import IngestContext, Result, ResultType
-from app.core.ingestion.validator import validate_document_row
+from app.core.ingestion.validator import validate_cclw_document_row
 from app.db.models.app.users import Organisation
 
 _LOGGER = logging.getLogger(__name__)
@@ -23,7 +23,7 @@ _RowType = TypeVar("_RowType", bound=BaseIngestRow)
 ProcessFunc = Callable[[IngestContext, _RowType], None]
 
 
-def ingest_document_row(
+def ingest_cclw_document_row(
     db: Session, context: IngestContext, row: DocumentIngestRow
 ) -> dict[str, Any]:
     """
@@ -78,15 +78,17 @@ def ingest_event_row(
     return result
 
 
-def initialise_context(db: Session) -> IngestContext:
+def initialise_context(db: Session, org_name: str) -> IngestContext:
     """
     Initialise the database
 
     :return [IngestContext]: The organisation that will be used for the ingest.
     """
     with db.begin():
-        organisation = db.query(Organisation).filter_by(name="CCLW").one()
-        return IngestContext(org_id=cast(int, organisation.id), results=[])
+        organisation = db.query(Organisation).filter_by(name=org_name).one()
+        return IngestContext(
+            org_name=org_name, org_id=cast(int, organisation.id), results=[]
+        )
 
 
 def get_event_ingestor(db: Session) -> ProcessFunc:
@@ -119,7 +121,7 @@ def get_dfc_ingestor(db: Session) -> ProcessFunc:
 
         with db.begin():
             try:
-                ingest_document_row(db, context, row=row)
+                ingest_cclw_document_row(db, context, row=row)
             except Exception as e:
                 error = Result(
                     ResultType.ERROR, f"Row {row.row_number}: Error {str(e)}"
@@ -131,6 +133,11 @@ def get_dfc_ingestor(db: Session) -> ProcessFunc:
                 )
 
     return process
+
+
+VALIDATOR_MAP = {
+    "CCLW": validate_cclw_document_row,
+}
 
 
 def get_dfc_validator(db: Session, context: IngestContext) -> ProcessFunc:
@@ -146,7 +153,8 @@ def get_dfc_validator(db: Session, context: IngestContext) -> ProcessFunc:
     def process(context: IngestContext, row: DocumentIngestRow) -> None:
         """Processes the row into the db."""
         _LOGGER.info(f"Validating document row: {row.row_number}")
+        validator_func = VALIDATOR_MAP[context.org_name]
         with db.begin():
-            validate_document_row(db=db, context=context, taxonomy=taxonomy, row=row)
+            validator_func(db=db, context=context, taxonomy=taxonomy, row=row)
 
     return process

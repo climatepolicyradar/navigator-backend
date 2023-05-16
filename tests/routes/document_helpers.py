@@ -1,4 +1,4 @@
-from app.api.api_v1.routers.admin import _start_ingest
+from app.api.api_v1.routers.cclw_ingest import _start_ingest
 from app.data_migrations import (
     populate_document_role,
     populate_document_type,

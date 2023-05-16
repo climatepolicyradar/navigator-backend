@@ -213,11 +213,13 @@ class ConsistencyValidator:
 class IngestContext:
     """Context used when processing."""
 
+    org_name: str
     org_id: int
     results: list[Result]
     consistency_validator: ConsistencyValidator
 
-    def __init__(self, org_id=1, results=None) -> None:
+    def __init__(self, org_name="CCLW", org_id=1, results=None) -> None:
+        self.org_name = org_name
         self.org_id = org_id
         self.results = [] if results is None else results
         self.consistency_validator = ConsistencyValidator()

@@ -2,7 +2,7 @@ import pytest
 
 from sqlalchemy.orm import Session
 from app.core.ingestion.ingest_row import DocumentIngestRow
-from app.core.ingestion.processor import ingest_document_row
+from app.core.ingestion.processor import ingest_cclw_document_row
 from app.core.ingestion.utils import IngestContext
 from app.db.models.document.physical_document import PhysicalDocument
 from app.db.models.law_policy.collection import (
@@ -34,7 +34,7 @@ def setup_for_update(test_db):
     context = IngestContext()
     row = DocumentIngestRow.from_row(1, get_doc_ingest_row_data(0))
     populate_for_ingest(test_db)
-    ingest_document_row(test_db, context, row)
+    ingest_cclw_document_row(test_db, context, row)
     return context, row
 
 
@@ -53,14 +53,14 @@ def test_ingest_row__with_multiple_rows(test_db: Session):
     populate_for_ingest(test_db)
 
     # First row
-    result = ingest_document_row(test_db, context, row)
+    result = ingest_cclw_document_row(test_db, context, row)
     assert 9 == len(result.keys())
     assert_dfc(test_db, 1, 1, 1)
 
     # Second row - adds another document to family
     row.cpr_document_id = "CCLW.doc.test.1"
     row.cpr_document_slug = "doc-test-1"
-    result = ingest_document_row(test_db, context, row)
+    result = ingest_cclw_document_row(test_db, context, row)
     assert 3 == len(result.keys())
     assert_dfc(test_db, 2, 1, 1)
 
@@ -69,21 +69,21 @@ def test_ingest_row__with_multiple_rows(test_db: Session):
     row.cpr_family_slug = "fam-test-2"
     row.cpr_document_id = "CCLW.doc.test.2"
     row.cpr_document_slug = "doc-test-2"
-    result = ingest_document_row(test_db, context, row)
+    result = ingest_cclw_document_row(test_db, context, row)
     assert 7 == len(result.keys())
     assert_dfc(test_db, 3, 2, 1)
 
     # Forth - adds another document to the family
     row.cpr_document_id = "CCLW.doc.test.3"
     row.cpr_document_slug = "doc-test-3"
-    result = ingest_document_row(test_db, context, row)
+    result = ingest_cclw_document_row(test_db, context, row)
     assert 3 == len(result.keys())
     assert_dfc(test_db, 4, 2, 1)
 
     # Finally change the family id of the document just added
     row.cpr_family_id = "CCLW.family.test.1"
     row.cpr_family_slug = "fam-test-1"
-    result = ingest_document_row(test_db, context, row)
+    result = ingest_cclw_document_row(test_db, context, row)
     assert 1 == len(result.keys())
     assert_dfc(test_db, 4, 2, 1)
 
@@ -110,7 +110,7 @@ def test_ingest_row__creates_missing_documents(test_db: Session):
     context = IngestContext()
     row = DocumentIngestRow.from_row(1, get_doc_ingest_row_data(0))
     populate_for_ingest(test_db)
-    result = ingest_document_row(test_db, context, row)
+    result = ingest_cclw_document_row(test_db, context, row)
     actual_keys = set(result.keys())
     expected_keys = set(
         [
@@ -155,7 +155,7 @@ def test_ingest_row__creates_missing_documents(test_db: Session):
 def test_ingest_row__idempotent(test_db: Session):
     context, row = setup_for_update(test_db)
 
-    result = ingest_document_row(test_db, context, row)
+    result = ingest_cclw_document_row(test_db, context, row)
     assert len(result) == 0
 
     # Assert db objects
@@ -217,7 +217,7 @@ def test_ingest_row__updates_collection_name(test_db: Session):
     context, row = setup_for_update(test_db)
     row.collection_name = "changed"
 
-    result = ingest_document_row(test_db, context, row)
+    result = ingest_cclw_document_row(test_db, context, row)
     assert len(result) == 1
     assert "collection" in result
     assert result["collection"]["title"] == "changed"
@@ -236,7 +236,7 @@ def test_ingest_row__updates_collection_summary(test_db: Session):
     context, row = setup_for_update(test_db)
     row.collection_summary = "changed"
 
-    result = ingest_document_row(test_db, context, row)
+    result = ingest_cclw_document_row(test_db, context, row)
     assert len(result) == 1
     assert "collection" in result
     assert result["collection"]["description"] == "changed"
@@ -255,7 +255,7 @@ def test_ingest_row__updates_document_title(test_db: Session):
     context, row = setup_for_update(test_db)
     row.document_title = "changed"
 
-    result = ingest_document_row(test_db, context, row)
+    result = ingest_cclw_document_row(test_db, context, row)
     assert len(result) == 1
     assert "physical_document" in result
     assert result["physical_document"]["title"] == "changed"
@@ -269,7 +269,7 @@ def test_ingest_row__updates_family_name(test_db: Session):
     context, row = setup_for_update(test_db)
     row.family_name = "changed"
 
-    result = ingest_document_row(test_db, context, row)
+    result = ingest_cclw_document_row(test_db, context, row)
     assert len(result) == 1
     assert "family" in result
     assert result["family"]["title"] == "changed"
@@ -288,7 +288,7 @@ def test_ingest_row__updates_family_summary(test_db: Session):
     context, row = setup_for_update(test_db)
     row.family_summary = "changed"
 
-    result = ingest_document_row(test_db, context, row)
+    result = ingest_cclw_document_row(test_db, context, row)
     assert len(result) == 1
     assert "family" in result
     assert result["family"]["description"] == "changed"
@@ -307,7 +307,7 @@ def test_ingest_row__updates_family_document_role(test_db: Session):
     context, row = setup_for_update(test_db)
     row.document_role = "ANNEX"
 
-    result = ingest_document_row(test_db, context, row)
+    result = ingest_cclw_document_row(test_db, context, row)
     assert len(result) == 1
     assert "family_document" in result
     assert result["family_document"]["document_role"] == "ANNEX"
@@ -326,7 +326,7 @@ def test_ingest_row__updates_family_document_variant(test_db: Session):
     context, row = setup_for_update(test_db)
     row.document_variant = "Translation"
 
-    result = ingest_document_row(test_db, context, row)
+    result = ingest_cclw_document_row(test_db, context, row)
     assert len(result) == 1
     assert "family_document" in result
     assert result["family_document"]["variant_name"] == "Translation"
@@ -345,7 +345,7 @@ def test_ingest_row__updates_source_url(test_db: Session):
     context, row = setup_for_update(test_db)
     row.documents = "https://www.com"
 
-    result = ingest_document_row(test_db, context, row)
+    result = ingest_cclw_document_row(test_db, context, row)
     assert len(result) == 1
     assert "physical_document" in result
     assert result["physical_document"]["source_url"] == "https://www.com"
@@ -370,7 +370,7 @@ def test_ingest_row__updates_family_category(test_db: Session):
     context, row = setup_for_update(test_db)
     row.category = FamilyCategory.LEGISLATIVE
 
-    result = ingest_document_row(test_db, context, row)
+    result = ingest_cclw_document_row(test_db, context, row)
     assert len(result) == 1
     assert "family" in result
     assert result["family"]["family_category"] == "Legislative"
@@ -389,7 +389,7 @@ def test_ingest_row__updates_family_document_type(test_db: Session):
     context, row = setup_for_update(test_db)
     row.document_type = "Edict"
 
-    result = ingest_document_row(test_db, context, row)
+    result = ingest_cclw_document_row(test_db, context, row)
     assert len(result) == 1
     assert "family_document" in result
     assert result["family_document"]["document_type"] == "Edict"
@@ -408,7 +408,7 @@ def test_ingest_row__updates_fd_slug(test_db: Session):
     context, row = setup_for_update(test_db)
     row.cpr_document_slug = "changed"
 
-    result = ingest_document_row(test_db, context, row)
+    result = ingest_cclw_document_row(test_db, context, row)
     assert len(result) == 1
     assert "family_document_slug" in result
     assert result["family_document_slug"]["name"] == "changed"

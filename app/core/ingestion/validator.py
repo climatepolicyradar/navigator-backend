@@ -54,7 +54,7 @@ def _check_geo_in_db(row_num: int, db: Session, geo_iso: str) -> CheckResult:
     return Result()
 
 
-def validate_document_row(
+def validate_cclw_document_row(
     db: Session,
     context: IngestContext,
     row: DocumentIngestRow,
