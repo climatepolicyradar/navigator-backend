@@ -15,6 +15,9 @@ _REQUIRED_DOCUMENT_COLUMNS = [
     "Document title",
     "Documents",
     "Author",
+    "Author type",
+    "Geography",
+    "Geography ISO",
     "Date",
     "Document role",
     "Document variant",
@@ -35,6 +38,9 @@ class UNFCCCDocumentIngestRow(BaseIngestRow):
     document_title: str
     documents: str
     author: str
+    author_type: str  # METADATA
+    geography: str
+    geography_iso: str
     date: datetime
     document_role: str
     document_variant: str
