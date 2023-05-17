@@ -1,7 +1,7 @@
 import pytest
 from sqlalchemy.exc import NoResultFound
 from sqlalchemy.orm import Session
-from app.core.ingestion.ingest_row import DocumentIngestRow
+from app.core.ingestion.ingest_row_cclw import CCLWDocumentIngestRow
 from app.core.ingestion.metadata import build_metadata
 from app.core.organisation import get_organisation_taxonomy
 from app.core.ingestion.utils import ResultType
@@ -16,7 +16,7 @@ METADATA_KEYS = set(["topic", "hazard", "sector", "keyword", "framework", "instr
 def test_build_metadata__all_fields(test_db):
     populate_for_ingest(test_db)
     _, taxonomy = get_organisation_taxonomy(test_db, org_id=1)
-    row = DocumentIngestRow.from_row(1, get_doc_ingest_row_data(0))
+    row = CCLWDocumentIngestRow.from_row(1, get_doc_ingest_row_data(0))
     row.responses = ["Loss AND Damage"]
     row.natural_hazards = ["Flood"]
     row.sectors = ["TransPortation"]
@@ -67,7 +67,7 @@ def test_get_org_taxonomy__raises_on_no_organisation(test_db: Session):
 def test_build_metadata__error_when_sector_notfound(test_db):
     populate_for_ingest(test_db)
     _, taxonomy = get_organisation_taxonomy(test_db, org_id=1)
-    row = DocumentIngestRow.from_row(1, get_doc_ingest_row_data(0))
+    row = CCLWDocumentIngestRow.from_row(1, get_doc_ingest_row_data(0))
     row.sectors = ["Medical"]
 
     result, metadata = build_metadata(taxonomy, row)
@@ -86,7 +86,7 @@ def test_build_metadata__error_when_sector_notfound(test_db):
 def test_build_metadata__reports_when_resolved(test_db):
     populate_for_ingest(test_db)
     _, taxonomy = get_organisation_taxonomy(test_db, org_id=1)
-    row = DocumentIngestRow.from_row(1, get_doc_ingest_row_data(0))
+    row = CCLWDocumentIngestRow.from_row(1, get_doc_ingest_row_data(0))
     row.sectors = ["Building"]
 
     result, metadata = build_metadata(taxonomy, row)

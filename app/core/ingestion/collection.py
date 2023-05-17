@@ -1,7 +1,7 @@
 from typing import Any, Optional
 
 from sqlalchemy.orm import Session
-from app.core.ingestion.ingest_row import DocumentIngestRow
+from app.core.ingestion.ingest_row_cclw import CCLWDocumentIngestRow
 from app.core.ingestion.utils import create, to_dict, update_if_changed
 
 from app.db.models.law_policy import Collection
@@ -10,7 +10,7 @@ from app.db.models.law_policy.collection import CollectionFamily, CollectionOrga
 
 def handle_collection_from_row(
     db: Session,
-    row: DocumentIngestRow,
+    row: CCLWDocumentIngestRow,
     org_id: int,
     family_import_id: str,
     result: dict[str, Any],

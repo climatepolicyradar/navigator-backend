@@ -21,7 +21,7 @@ from app.api.api_v1.schemas.document import (
 )
 from app.core.auth import get_superuser_details
 from app.core.aws import get_s3_client
-from app.core.ingestion.ingest_row import DocumentIngestRow, EventIngestRow
+from app.core.ingestion.ingest_row_cclw import CCLWDocumentIngestRow, EventIngestRow
 from app.core.ingestion.pipeline import generate_pipeline_ingest_input
 from app.core.ingestion.processor import (
     initialise_context,
@@ -67,7 +67,7 @@ def _start_ingest(
     try:
         context = initialise_context(db, "CCLW")
         document_ingestor = get_dfc_ingestor(db)
-        read(documents_file_contents, context, DocumentIngestRow, document_ingestor)
+        read(documents_file_contents, context, CCLWDocumentIngestRow, document_ingestor)
         event_ingestor = get_event_ingestor(db)
         read(events_file_contents, context, EventIngestRow, event_ingestor)
     except Exception as e:
@@ -382,7 +382,7 @@ def _validate_cclw_csv(
     """
     documents_file_contents = get_file_contents(law_policy_csv)
     validator = get_dfc_validator(db, context)
-    read(documents_file_contents, context, DocumentIngestRow, validator)
+    read(documents_file_contents, context, CCLWDocumentIngestRow, validator)
     rows, fails, resolved = get_result_counts(context.results)
     all_results.extend(context.results)
     context.results = []

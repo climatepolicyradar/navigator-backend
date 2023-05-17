@@ -19,7 +19,9 @@ from app.api.api_v1.schemas.document import (
 )
 from app.core.auth import get_superuser_details
 from app.core.aws import get_s3_client
-from app.core.ingestion.ingest_row import DocumentIngestRow, EventIngestRow
+from app.core.ingestion.ingest_row_unfccc import UNFCCCDocumentIngestRow
+from app.core.ingestion.ingest_row_cclw import EventIngestRow
+
 from app.core.ingestion.pipeline import generate_pipeline_ingest_input
 from app.core.ingestion.processor import (
     initialise_context,
@@ -62,7 +64,9 @@ def _start_ingest(
     try:
         context = initialise_context(db, "UNFCCC")
         document_ingestor = get_dfc_ingestor(db)
-        read(documents_file_contents, context, DocumentIngestRow, document_ingestor)
+        read(
+            documents_file_contents, context, UNFCCCDocumentIngestRow, document_ingestor
+        )
         event_ingestor = get_event_ingestor(db)
         read(events_file_contents, context, EventIngestRow, event_ingestor)
     except Exception as e:
@@ -131,37 +135,34 @@ def validate_unfccc_law_policy(
         "UNFCCC Law & Policy data"
     )
 
-    return ValidationResult(
-        "Law & Policy validation result: 1 Rows, 0 Failures, 0 Resolved", []
-    )
-    # try:
-    #     context = initialise_context(db, "UNFCCC")
-    # except Exception as e:
-    #     _LOGGER.exception(
-    #         "Failed to create ingest context", extra={"props": {"errors": str(e)}}
-    #     )
-    #     raise HTTPException(status_code=status.HTTP_500_INTERNAL_SERVER_ERROR) from e
+    try:
+        context = initialise_context(db, "UNFCCC")
+    except Exception as e:
+        _LOGGER.exception(
+            "Failed to create ingest context", extra={"props": {"errors": str(e)}}
+        )
+        raise HTTPException(status_code=status.HTTP_500_INTERNAL_SERVER_ERROR) from e
 
-    # all_results = []
+    all_results = []
 
-    # try:
-    #     _, message = _validate_unfccc_csv(law_policy_csv, db, context, all_results)
-    # except ImportSchemaMismatchError as e:
-    #     _LOGGER.exception(
-    #         "Provided CSV failed law & policy schema validation",
-    #         extra={"props": {"errors": str(e)}},
-    #     )
-    #     raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST) from e
-    # except Exception as e:
-    #     _LOGGER.exception(
-    #         "Unexpected error, validating law & policy CSV on ingest",
-    #         extra={"props": {"errors": str(e)}},
-    #     )
-    #     raise HTTPException(status_code=status.HTTP_500_INTERNAL_SERVER_ERROR) from e
+    try:
+        _, message = _validate_unfccc_csv(law_policy_csv, db, context, all_results)
+    except ImportSchemaMismatchError as e:
+        _LOGGER.exception(
+            "Provided CSV failed law & policy schema validation",
+            extra={"props": {"errors": str(e)}},
+        )
+        raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST) from e
+    except Exception as e:
+        _LOGGER.exception(
+            "Unexpected error, validating law & policy CSV on ingest",
+            extra={"props": {"errors": str(e)}},
+        )
+        raise HTTPException(status_code=status.HTTP_500_INTERNAL_SERVER_ERROR) from e
 
-    # # Intended output for this is the console - so for now just format it up for that.
-    # errors = [r for r in all_results if r.type == ResultType.ERROR]
-    # return ValidationResult(message=message, errors=errors)
+    # Intended output for this is the console - so for now just format it up for that.
+    errors = [r for r in all_results if r.type == ResultType.ERROR]
+    return ValidationResult(message=message, errors=errors)
 
 
 @r.post(
@@ -202,11 +203,11 @@ def ingest_unfccc_law_policy(
 
     _LOGGER.info(
         f"Superuser '{current_user.email}' triggered Bulk Document Ingest for "
-        "CCLW Law & Policy data"
+        "UNFCCC Law & Policy data"
     )
 
     try:
-        context = initialise_context(db, "CCLW")
+        context = initialise_context(db, "UNFCCC")
     except Exception as e:
         _LOGGER.exception(
             "Failed to create ingest context", extra={"props": {"errors": str(e)}}
@@ -380,7 +381,7 @@ def _validate_unfccc_csv(
     """
     documents_file_contents = get_file_contents(law_policy_csv)
     validator = get_dfc_validator(db, context)
-    read(documents_file_contents, context, DocumentIngestRow, validator)
+    read(documents_file_contents, context, UNFCCCDocumentIngestRow, validator)
     rows, fails, resolved = get_result_counts(context.results)
     all_results.extend(context.results)
     context.results = []

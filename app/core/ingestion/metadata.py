@@ -4,7 +4,7 @@ from pydantic.dataclasses import dataclass
 from pydantic.config import ConfigDict, Extra
 from sqlalchemy.orm import Session
 
-from app.core.ingestion.ingest_row import DocumentIngestRow
+from app.core.ingestion.ingest_row_cclw import CCLWDocumentIngestRow
 from app.core.ingestion.match import match_unknown_value
 from app.core.ingestion.utils import Result, ResultType
 from app.db.models.law_policy.metadata import FamilyMetadata
@@ -36,7 +36,7 @@ def add_metadata(
     family_import_id: str,
     taxonomy: Taxonomy,
     taxonomy_id: int,
-    row: DocumentIngestRow,
+    row: CCLWDocumentIngestRow,
 ) -> bool:
     result, metadata = build_metadata(taxonomy, row)
     if result.type == ResultType.ERROR:
@@ -53,7 +53,7 @@ def add_metadata(
 
 
 def build_metadata(
-    taxonomy: Taxonomy, row: DocumentIngestRow
+    taxonomy: Taxonomy, row: CCLWDocumentIngestRow
 ) -> tuple[Result, MetadataJson]:
     detail_list = []
     value: dict[str, Union[str, list[str]]] = {}
@@ -83,7 +83,7 @@ def build_metadata(
 
 
 def build_metadata_field(
-    taxonomy: Taxonomy, row: DocumentIngestRow, tax_key: str, row_key: str
+    taxonomy: Taxonomy, row: CCLWDocumentIngestRow, tax_key: str, row_key: str
 ) -> tuple[Result, list[str]]:
     ingest_values = getattr(row, row_key)
     row_set = set(ingest_values)

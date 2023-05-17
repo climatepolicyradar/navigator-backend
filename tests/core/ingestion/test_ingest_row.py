@@ -1,7 +1,7 @@
 import pytest
 
 from sqlalchemy.orm import Session
-from app.core.ingestion.ingest_row import DocumentIngestRow
+from app.core.ingestion.ingest_row_cclw import CCLWDocumentIngestRow
 from app.core.ingestion.processor import ingest_cclw_document_row
 from app.core.ingestion.utils import IngestContext
 from app.db.models.document.physical_document import PhysicalDocument
@@ -32,7 +32,7 @@ from tests.core.ingestion.helpers import (
 
 def setup_for_update(test_db):
     context = IngestContext()
-    row = DocumentIngestRow.from_row(1, get_doc_ingest_row_data(0))
+    row = CCLWDocumentIngestRow.from_row(1, get_doc_ingest_row_data(0))
     populate_for_ingest(test_db)
     ingest_cclw_document_row(test_db, context, row)
     return context, row
@@ -47,7 +47,7 @@ def assert_dfc(db: Session, n_docs: int, n_families: int, n_collections: int):
 
 def test_ingest_row__with_multiple_rows(test_db: Session):
     context = IngestContext()
-    row = DocumentIngestRow.from_row(1, get_doc_ingest_row_data(0))
+    row = CCLWDocumentIngestRow.from_row(1, get_doc_ingest_row_data(0))
     row.cpr_family_id = "CCLW.family.test.1"
     row.cpr_family_slug = "fam-test-1"
     populate_for_ingest(test_db)
@@ -108,7 +108,7 @@ def test_ingest_row__with_multiple_rows(test_db: Session):
 
 def test_ingest_row__creates_missing_documents(test_db: Session):
     context = IngestContext()
-    row = DocumentIngestRow.from_row(1, get_doc_ingest_row_data(0))
+    row = CCLWDocumentIngestRow.from_row(1, get_doc_ingest_row_data(0))
     populate_for_ingest(test_db)
     result = ingest_cclw_document_row(test_db, context, row)
     actual_keys = set(result.keys())
@@ -429,7 +429,7 @@ def test_ingest_row__updates_fd_slug(test_db: Session):
 
 
 def test_IngestRow__from_row():
-    ingest_row = DocumentIngestRow.from_row(1, get_doc_ingest_row_data(0))
+    ingest_row = CCLWDocumentIngestRow.from_row(1, get_doc_ingest_row_data(0))
 
     assert ingest_row
     assert ingest_row.cpr_document_id == "CCLW.executive.1001.0"
@@ -437,7 +437,7 @@ def test_IngestRow__from_row():
 
 
 def test_IngestRow__from_row_raises_when_multi_urls():
-    ingest_row = DocumentIngestRow.from_row(
+    ingest_row = CCLWDocumentIngestRow.from_row(
         1, get_doc_ingest_row_data(0, contents=BAD_MULTI_URL)
     )
 

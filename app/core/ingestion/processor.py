@@ -5,14 +5,18 @@ from sqlalchemy.orm import Session
 from app.core.ingestion.collection import handle_collection_from_row
 from app.core.ingestion.event import family_event_from_row
 from app.core.ingestion.family import handle_family_from_row
-from app.core.ingestion.ingest_row import (
-    BaseIngestRow,
-    DocumentIngestRow,
+from app.core.ingestion.ingest_row_cclw import (
+    CCLWDocumentIngestRow,
     EventIngestRow,
 )
+from app.core.ingestion.ingest_row_base import BaseIngestRow
+from app.core.ingestion.ingest_row_unfccc import UNFCCCDocumentIngestRow
 from app.core.organisation import get_organisation_taxonomy
 from app.core.ingestion.utils import IngestContext, Result, ResultType
-from app.core.ingestion.validator import validate_cclw_document_row
+from app.core.ingestion.validator import (
+    validate_cclw_document_row,
+    validate_unfccc_document_row,
+)
 from app.db.models.app.users import Organisation
 
 _LOGGER = logging.getLogger(__name__)
@@ -24,7 +28,7 @@ ProcessFunc = Callable[[IngestContext, _RowType], None]
 
 
 def ingest_cclw_document_row(
-    db: Session, context: IngestContext, row: DocumentIngestRow
+    db: Session, context: IngestContext, row: CCLWDocumentIngestRow
 ) -> dict[str, Any]:
     """
     Create the constituent elements in the database that represent this row.
@@ -115,7 +119,7 @@ def get_dfc_ingestor(db: Session) -> ProcessFunc:
     :return [ProcessFunc]: The function used to ingest the CSV row.
     """
 
-    def process(context: IngestContext, row: DocumentIngestRow) -> None:
+    def process(context: IngestContext, row: CCLWDocumentIngestRow) -> None:
         """Processes the row into the db."""
         _LOGGER.info(f"Ingesting document row: {row.row_number}")
 
@@ -135,11 +139,6 @@ def get_dfc_ingestor(db: Session) -> ProcessFunc:
     return process
 
 
-VALIDATOR_MAP = {
-    "CCLW": validate_cclw_document_row,
-}
-
-
 def get_dfc_validator(db: Session, context: IngestContext) -> ProcessFunc:
     """
     Get the validation function for ingesting a law & policy CSV.
@@ -150,11 +149,25 @@ def get_dfc_validator(db: Session, context: IngestContext) -> ProcessFunc:
     with db.begin():
         _, taxonomy = get_organisation_taxonomy(db, context.org_id)
 
-    def process(context: IngestContext, row: DocumentIngestRow) -> None:
+    def cclw_process(context: IngestContext, row: CCLWDocumentIngestRow) -> None:
         """Processes the row into the db."""
         _LOGGER.info(f"Validating document row: {row.row_number}")
-        validator_func = VALIDATOR_MAP[context.org_name]
         with db.begin():
-            validator_func(db=db, context=context, taxonomy=taxonomy, row=row)
+            validate_cclw_document_row(
+                db=db, context=context, taxonomy=taxonomy, row=row
+            )
 
-    return process
+    def unfccc_process(context: IngestContext, row: UNFCCCDocumentIngestRow) -> None:
+        """Processes the row into the db."""
+        _LOGGER.info(f"Validating document row: {row.row_number}")
+        with db.begin():
+            validate_unfccc_document_row(
+                db=db, context=context, taxonomy=taxonomy, row=row
+            )
+
+    if context.org_name == "CCLW":
+        return cclw_process
+    elif context.org_name == "UNFCCC":
+        return unfccc_process
+
+    raise ValueError(f"Unknown org {context.org_name} for validation.")

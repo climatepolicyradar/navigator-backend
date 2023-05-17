@@ -5,7 +5,7 @@ from typing import Optional
 import pytest
 
 from sqlalchemy.orm import Session
-from app.core.ingestion.ingest_row import DocumentIngestRow, EventIngestRow
+from app.core.ingestion.ingest_row_cclw import CCLWDocumentIngestRow, EventIngestRow
 from app.core.ingestion.pipeline import generate_pipeline_ingest_input
 from app.core.ingestion.processor import get_dfc_ingestor, get_event_ingestor
 from app.core.ingestion.reader import read
@@ -30,7 +30,7 @@ def _populate_db_for_test(
     document_ingestor = get_dfc_ingestor(test_db)
     event_ingestor = get_event_ingestor(test_db)
 
-    read(ingest_doc_content, context, DocumentIngestRow, document_ingestor)
+    read(ingest_doc_content, context, CCLWDocumentIngestRow, document_ingestor)
     if ingest_event_content is not None:
         read(ingest_event_content, context, EventIngestRow, event_ingestor)
 

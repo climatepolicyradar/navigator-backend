@@ -1,6 +1,6 @@
 from sqlalchemy.orm import Session
 
-from app.core.ingestion.ingest_row import DocumentIngestRow
+from app.core.ingestion.ingest_row_cclw import CCLWDocumentIngestRow
 from app.core.ingestion.physical_document import create_physical_document_from_row
 from app.db.models.document import PhysicalDocument
 from app.db.models.document.physical_document import PhysicalDocumentLanguage
@@ -13,7 +13,7 @@ from tests.core.ingestion.helpers import (
 
 def test_physical_document_from_row(test_db: Session):
     populate_for_ingest(test_db)
-    row = DocumentIngestRow.from_row(1, get_doc_ingest_row_data(0))
+    row = CCLWDocumentIngestRow.from_row(1, get_doc_ingest_row_data(0))
     row.language = ["English", "German"]
     result = {}
 
