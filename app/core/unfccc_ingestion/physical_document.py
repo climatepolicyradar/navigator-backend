@@ -23,7 +23,7 @@ def create_physical_document_from_row(
     """
     physical_document = PhysicalDocument(
         title=row.document_title,
-        source_url=row.get_first_url(),
+        source_url=row.documents,
         md5_sum=None,
         content_type=None,
         cdn_object=None,

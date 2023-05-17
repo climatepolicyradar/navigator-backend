@@ -26,7 +26,7 @@ from app.core.cclw_ingestion.ingest_row_cclw import (
     EventIngestRow,
 )
 from app.core.cclw_ingestion.pipeline import generate_pipeline_ingest_input
-from app.core.cclw_ingestion.processor import (
+from app.core.ingestion.processor import (
     initialise_context,
     get_dfc_ingestor,
     get_dfc_validator,

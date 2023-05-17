@@ -48,6 +48,18 @@ class UNFCCCDocumentIngestRow(BaseIngestRow):
     document_variant: str
     language: list[str]
 
+    # FIXME: Modify these when the collections are ingested
+    cpr_collection_id: str
+    collection_summary: str
+    # FIXME: Where is the family id / summary coming from?
+    cpr_family_id: str
+    family_summary: str
+    # FIXME: Where is this coming from?
+    cpr_document_id: str
+    cpr_document_slug: str
+    # FIXME: check this
+    document_type = "UNFCCC"
+
     VALID_COLUMNS: ClassVar[set[str]] = VALID_DOCUMENT_COLUMN_NAMES
 
     @staticmethod

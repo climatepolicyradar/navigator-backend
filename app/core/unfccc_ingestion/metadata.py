@@ -24,7 +24,7 @@ def add_metadata(
     taxonomy_id: int,
     row: UNFCCCDocumentIngestRow,
 ) -> bool:
-    result, metadata = build_metadata(taxonomy, row)
+    result, metadata = build_unfccc_metadata(taxonomy, row)
     if result.type == ResultType.ERROR:
         return False
 
@@ -38,7 +38,7 @@ def add_metadata(
     return True
 
 
-def build_metadata(
+def build_unfccc_metadata(
     taxonomy: Taxonomy, row: UNFCCCDocumentIngestRow
 ) -> tuple[Result, MetadataJson]:
     detail_list = []
@@ -47,7 +47,7 @@ def build_metadata(
     num_resolved = 0
 
     for tax_key, row_key in MAP_OF_LIST_VALUES.items():
-        result, field_value = build_metadata_field(taxonomy, row, tax_key, row_key)
+        result, field_value = _build_metadata_field(taxonomy, row, tax_key, row_key)
 
         if result.type == ResultType.OK:
             value[tax_key] = field_value
@@ -68,7 +68,7 @@ def build_metadata(
     return Result(type=row_result_type, details="\n".join(detail_list)), value
 
 
-def build_metadata_field(
+def _build_metadata_field(
     taxonomy: Taxonomy, row: UNFCCCDocumentIngestRow, tax_key: str, row_key: str
 ) -> tuple[Result, list[str]]:
     ingest_values = getattr(row, row_key)

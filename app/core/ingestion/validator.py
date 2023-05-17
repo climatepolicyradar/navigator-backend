@@ -7,12 +7,13 @@ from app.core.cclw_ingestion.ingest_row_cclw import (
 )
 from app.core.ingestion.metadata import Taxonomy
 from app.core.unfccc_ingestion.ingest_row_unfccc import UNFCCCDocumentIngestRow
-from app.core.cclw_ingestion.metadata import build_metadata
+from app.core.cclw_ingestion.metadata import build_cclw_metadata
 from app.core.ingestion.utils import (
     IngestContext,
     Result,
     ResultType,
 )
+from app.core.unfccc_ingestion.metadata import build_unfccc_metadata
 from app.db.models.law_policy.family import (
     FamilyDocumentRole,
     FamilyDocumentType,
@@ -110,7 +111,7 @@ def validate_unfccc_document_row(
     # Check metadata
     # validate: author_type: str  # METADATA
     # validate: submission_type: str  # METADATA
-    # PDH: result, _ = build_metadata(taxonomy, row)
+    result, _ = build_unfccc_metadata(taxonomy, row)
     if result.type != ResultType.OK:
         errors.append(result)
 
@@ -178,7 +179,7 @@ def validate_cclw_document_row(
         errors.append(result)
 
     # Check metadata
-    result, _ = build_metadata(taxonomy, row)
+    result, _ = build_cclw_metadata(taxonomy, row)
     if result.type != ResultType.OK:
         errors.append(result)
 

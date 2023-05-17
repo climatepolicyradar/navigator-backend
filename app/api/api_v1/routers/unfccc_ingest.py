@@ -20,16 +20,14 @@ from app.api.api_v1.schemas.document import (
 from app.core.auth import get_superuser_details
 from app.core.aws import get_s3_client
 from app.core.unfccc_ingestion.ingest_row_unfccc import UNFCCCDocumentIngestRow
-from app.core.cclw_ingestion.ingest_row_cclw import EventIngestRow
 
-from app.core.cclw_ingestion.pipeline import generate_pipeline_ingest_input
-from app.core.cclw_ingestion.processor import (
+from app.core.unfccc_ingestion.pipeline import generate_pipeline_ingest_input
+from app.core.ingestion.processor import (
     initialise_context,
     get_dfc_ingestor,
     get_dfc_validator,
-    get_event_ingestor,
 )
-from app.core.cclw_ingestion.reader import get_file_contents, read
+from app.core.unfccc_ingestion.reader import get_file_contents, read
 from app.core.ingestion.utils import (
     IngestContext,
     Result,
@@ -39,7 +37,6 @@ from app.core.ingestion.utils import (
     ValidationResult,
     get_result_counts,
 )
-from app.core.ingestion.validator import validate_event_row
 from app.core.validation.types import ImportSchemaMismatchError
 from app.core.validation.util import (
     get_new_s3_prefix,
@@ -59,7 +56,6 @@ def _start_ingest(
     s3_client: S3Client,
     s3_prefix: str,
     documents_file_contents: str,
-    events_file_contents: str,
 ):
     context = None
     # TODO: add a way for a user to monitor progress of the ingest
@@ -69,8 +65,6 @@ def _start_ingest(
         read(
             documents_file_contents, context, UNFCCCDocumentIngestRow, document_ingestor
         )
-        event_ingestor = get_event_ingestor(db)
-        read(events_file_contents, context, EventIngestRow, event_ingestor)
     except Exception as e:
         # This is a background task, so do not raise
         _LOGGER.exception(
@@ -236,30 +230,6 @@ def ingest_unfccc_law_policy(
         )
         raise HTTPException(status_code=status.HTTP_500_INTERNAL_SERVER_ERROR) from e
 
-    try:
-        events_file_contents = get_file_contents(events_csv)
-        read(events_file_contents, context, EventIngestRow, validate_event_row)
-        rows, fails, resolved = get_result_counts(context.results)
-        all_results.extend(context.results)
-        context.results = all_results
-
-        _LOGGER.info(
-            f"Events validation result: {rows} Rows, {fails} Failures, "
-            f"{resolved} Resolved"
-        )
-    except ImportSchemaMismatchError as e:
-        _LOGGER.exception(
-            "Provided CSV failed events schema validation",
-            extra={"props": {"errors": str(e)}},
-        )
-        raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST) from e
-    except Exception as e:
-        _LOGGER.exception(
-            "Unexpected error, validating events CSV on ingest",
-            extra={"props": {"errors": str(e)}},
-        )
-        raise HTTPException(status_code=status.HTTP_500_INTERNAL_SERVER_ERROR) from e
-
     # If we have any validation errors then raise
     validation_errors = [r for r in context.results if r.type == ResultType.ERROR]
     if validation_errors:
@@ -282,12 +252,7 @@ def ingest_unfccc_law_policy(
             s3_content_label="documents",
             file_contents=documents_file_contents,
         )
-        result_events: Union[S3Document, bool] = write_csv_to_s3(
-            s3_client=s3_client,
-            s3_prefix=s3_prefix,
-            s3_content_label="events",
-            file_contents=events_file_contents,
-        )
+
         if (
             type(result_documents) is bool
         ):  # S3Client returns False if the object was not created
@@ -303,34 +268,17 @@ def ingest_unfccc_law_policy(
                 status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
                 detail="Unexpected error, fail to write Bulk Document Ingest CSV to S3",
             )
-        if (
-            type(result_events) is bool
-        ):  # S3Client returns False if the object was not created
-            _LOGGER.error(
-                "Write Bulk Event Ingest CSV to S3 Failed.",
-                extra={
-                    "props": {
-                        "superuser_email": current_user.email,
-                    }
-                },
-            )
-            raise HTTPException(
-                status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
-                detail="Unexpected error, fail to write Bulk Event Ingest CSV to S3",
-            )
-        else:
-            documents_csv_s3_location = str(result_documents.url)
-            events_csv_s3_location = str(result_events.url)
-            _LOGGER.info(
-                "Write Event Ingest CSV complete.",
-                extra={
-                    "props": {
-                        "superuser_email": current_user.email,
-                        "documents_csv_s3_location": documents_csv_s3_location,
-                        "events_csv_s3_location": events_csv_s3_location,
-                    }
-                },
-            )
+        documents_csv_s3_location = str(result_documents.url)
+        _LOGGER.info(
+            "Write Event Ingest CSV complete.",
+            extra={
+                "props": {
+                    "superuser_email": current_user.email,
+                    "documents_csv_s3_location": documents_csv_s3_location,
+                }
+            },
+        )
+
     except Exception as e:
         _LOGGER.exception(
             "Unexpected error, writing Bulk Document Ingest CSV content to S3",
@@ -345,7 +293,6 @@ def ingest_unfccc_law_policy(
         s3_client,
         s3_prefix,
         documents_file_contents,
-        events_file_contents,
     )
 
     _LOGGER.info(
@@ -354,7 +301,6 @@ def ingest_unfccc_law_policy(
             "props": {
                 "superuser_email": current_user.email,
                 "documents_csv_s3_location": documents_csv_s3_location,
-                "events_csv_s3_location": events_csv_s3_location,
             }
         },
     )

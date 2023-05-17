@@ -2,7 +2,7 @@ import pytest
 from sqlalchemy.exc import NoResultFound
 from sqlalchemy.orm import Session
 from app.core.cclw_ingestion.ingest_row_cclw import CCLWDocumentIngestRow
-from app.core.cclw_ingestion.metadata import build_metadata
+from app.core.cclw_ingestion.metadata import build_cclw_metadata
 from app.core.organisation import get_organisation_taxonomy
 from app.core.ingestion.utils import ResultType
 from tests.core.ingestion.helpers import (
@@ -25,7 +25,7 @@ def test_build_metadata__all_fields(test_db):
     row.instruments = ["Other|Governance"]
     row.document_type = "Act"
 
-    result, metadata = build_metadata(taxonomy, row)
+    result, metadata = build_cclw_metadata(taxonomy, row)
 
     assert result
     assert result.type == ResultType.RESOLVED
@@ -70,7 +70,7 @@ def test_build_metadata__error_when_sector_notfound(test_db):
     row = CCLWDocumentIngestRow.from_row(1, get_doc_ingest_row_data(0))
     row.sectors = ["Medical"]
 
-    result, metadata = build_metadata(taxonomy, row)
+    result, metadata = build_cclw_metadata(taxonomy, row)
 
     assert result
     assert result.type == ResultType.ERROR
@@ -89,7 +89,7 @@ def test_build_metadata__reports_when_resolved(test_db):
     row = CCLWDocumentIngestRow.from_row(1, get_doc_ingest_row_data(0))
     row.sectors = ["Building"]
 
-    result, metadata = build_metadata(taxonomy, row)
+    result, metadata = build_cclw_metadata(taxonomy, row)
 
     assert result
     assert result.type == ResultType.RESOLVED

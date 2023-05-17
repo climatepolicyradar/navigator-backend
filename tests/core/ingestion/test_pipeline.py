@@ -10,7 +10,7 @@ from app.core.cclw_ingestion.ingest_row_cclw import (
     EventIngestRow,
 )
 from app.core.cclw_ingestion.pipeline import generate_pipeline_ingest_input
-from app.core.cclw_ingestion.processor import get_dfc_ingestor, get_event_ingestor
+from app.core.ingestion.processor import get_dfc_ingestor, get_event_ingestor
 from app.core.cclw_ingestion.reader import read
 from app.core.ingestion.utils import IngestContext
 from tests.core.ingestion.helpers import (
