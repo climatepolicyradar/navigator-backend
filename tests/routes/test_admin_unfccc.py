@@ -24,7 +24,7 @@ def test_unauthorized_ingest(client):
 
 
 ONE_DFC_ROW = """id,md5sum,Submission type,Collection name,Collection ID,Family name,Document title,Documents,Author,Author type,Geography,Geography ISO,Date,Document role,Document variant,Language
-1,00254c407297fbb50a77d748b817ee5c,Revised Synthesis Report,,,Nationally determined contributions under the Paris Agreement. Revised note by the secretariat,Nationally determined contributions under the Paris Agreement. Revised note by the secretariat,https://unfccc.int/sites/default/files/resource/cma2021_08r01_S.pdf,UNFCCC Secretariat,Party,UK,GBR,2021-10-25T12:00:00Z,,,
+1,00254c407297fbb50a77d748b817ee5c,Synthesis Report,,,Nationally determined contributions under the Paris Agreement. Revised note by the secretariat,Nationally determined contributions under the Paris Agreement. Revised note by the secretariat,https://unfccc.int/sites/default/files/resource/cma2021_08r01_S.pdf,UNFCCC Secretariat,Party,UK,GBR,2021-10-25T12:00:00Z,,,
 """
 
 TWO_EVENT_ROWS = """Id,Eventable type,Eventable Id,Eventable name,Event type,Title,Description,Date,Url,CPR Event ID,CPR Family ID,Event Status
@@ -60,11 +60,11 @@ def test_validate_bulk_ingest_unfccc_law_policy(
     )
     assert response.status_code == 200
     response_json = response.json()
+    assert len(response_json["errors"]) == 0
     assert (
         response_json["message"]
         == "Law & Policy validation result: 1 Rows, 0 Failures, 0 Resolved"
     )
-    assert len(response_json["errors"]) == 0
 
 
 # def test_bulk_ingest_unfccc_law_policy(

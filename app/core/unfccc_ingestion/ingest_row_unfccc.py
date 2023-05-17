@@ -49,14 +49,14 @@ class UNFCCCDocumentIngestRow(BaseIngestRow):
     language: list[str]
 
     # FIXME: Modify these when the collections are ingested
-    cpr_collection_id: str
-    collection_summary: str
+    cpr_collection_id: str = "111"
+    collection_summary: str = "summary"
     # FIXME: Where is the family id / summary coming from?
-    cpr_family_id: str
-    family_summary: str
+    cpr_family_id: str = "111"
+    family_summary: str = "summary"
     # FIXME: Where is this coming from?
-    cpr_document_id: str
-    cpr_document_slug: str
+    cpr_document_id: str = "111"
+    cpr_document_slug: str = "slug"
     # FIXME: check this
     document_type = "UNFCCC"
 
