@@ -1,9 +1,13 @@
 from sqlalchemy import Column
 from sqlalchemy.orm import Session
 
-from app.core.ingestion.ingest_row_cclw import CCLWDocumentIngestRow, EventIngestRow
-from app.core.ingestion.ingest_row_unfccc import UNFCCCDocumentIngestRow
-from app.core.ingestion.metadata import build_metadata, Taxonomy
+from app.core.cclw_ingestion.ingest_row_cclw import (
+    CCLWDocumentIngestRow,
+    EventIngestRow,
+)
+from app.core.ingestion.metadata import Taxonomy
+from app.core.unfccc_ingestion.ingest_row_unfccc import UNFCCCDocumentIngestRow
+from app.core.cclw_ingestion.metadata import build_metadata
 from app.core.ingestion.utils import (
     IngestContext,
     Result,
@@ -70,34 +74,47 @@ def validate_unfccc_document_row(
     """
 
     errors = []
-    # n = row.row_number
-    # result = _check_value_in_db(
-    #     n, db, row.document_type, FamilyDocumentType, FamilyDocumentType.name
-    # )
-    # if result.type != ResultType.OK:
-    #     errors.append(result)
+    n = row.row_number
 
-    # result = _check_value_in_db(
-    #     n, db, row.document_role, FamilyDocumentRole, FamilyDocumentRole.name
-    # )
-    # if result.type != ResultType.OK:
-    #     errors.append(result)
+    # don't validate: md5sum: str
+    # don't validate: collection_name: str
+    # don't validate: collection_id: str
+    # don't validate: family_name: str
+    # don't validate: document_title: str
+    # don't validate: documents: str
+    # don't validate: author: str
+    # don't validate: geography: str
+    # don't validate: date: datetime
 
-    # result = _check_value_in_db(
-    #     n, db, row.document_variant, Variant, Variant.variant_name
-    # )
-    # if result.type != ResultType.OK:
-    #     errors.append(result)
+    # validate: document_role: str
+    result = _check_value_in_db(
+        n, db, row.document_role, FamilyDocumentRole, FamilyDocumentRole.name
+    )
+    if result.type != ResultType.OK:
+        errors.append(result)
 
-    # result = _check_geo_in_db(n, db, row.geography_iso)
-    # if result.type != ResultType.OK:
-    #     errors.append(result)
+    # validate: document_variant: str
+    result = _check_value_in_db(
+        n, db, row.document_variant, Variant, Variant.variant_name
+    )
+    if result.type != ResultType.OK:
+        errors.append(result)
 
-    # # Check metadata
-    # result, _ = build_metadata(taxonomy, row)
-    # if result.type != ResultType.OK:
-    #     errors.append(result)
+    # validate: geography_iso: str
+    result = _check_geo_in_db(n, db, row.geography_iso)
+    if result.type != ResultType.OK:
+        errors.append(result)
 
+    # validate: language: list[str]
+
+    # Check metadata
+    # validate: author_type: str  # METADATA
+    # validate: submission_type: str  # METADATA
+    # PDH: result, _ = build_metadata(taxonomy, row)
+    if result.type != ResultType.OK:
+        errors.append(result)
+
+    # TODO:
     # # Check family
     # context.consistency_validator.check_family(
     #     row.row_number,

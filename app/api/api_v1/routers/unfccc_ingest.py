@@ -19,21 +19,23 @@ from app.api.api_v1.schemas.document import (
 )
 from app.core.auth import get_superuser_details
 from app.core.aws import get_s3_client
-from app.core.ingestion.ingest_row_unfccc import UNFCCCDocumentIngestRow
-from app.core.ingestion.ingest_row_cclw import EventIngestRow
+from app.core.unfccc_ingestion.ingest_row_unfccc import UNFCCCDocumentIngestRow
+from app.core.cclw_ingestion.ingest_row_cclw import EventIngestRow
 
-from app.core.ingestion.pipeline import generate_pipeline_ingest_input
-from app.core.ingestion.processor import (
+from app.core.cclw_ingestion.pipeline import generate_pipeline_ingest_input
+from app.core.cclw_ingestion.processor import (
     initialise_context,
     get_dfc_ingestor,
     get_dfc_validator,
     get_event_ingestor,
 )
-from app.core.ingestion.reader import get_file_contents, read
+from app.core.cclw_ingestion.reader import get_file_contents, read
 from app.core.ingestion.utils import (
     IngestContext,
     Result,
     ResultType,
+)
+from app.core.ingestion.utils import (
     ValidationResult,
     get_result_counts,
 )

@@ -1,10 +1,10 @@
 from sqlalchemy.orm import Session
-from app.core.ingestion.family import (
+from app.core.cclw_ingestion.family import (
     handle_family_document_from_row,
     handle_family_from_row,
 )
-from app.core.ingestion.ingest_row_cclw import CCLWDocumentIngestRow
-from app.core.ingestion.physical_document import create_physical_document_from_row
+from app.core.cclw_ingestion.ingest_row_cclw import CCLWDocumentIngestRow
+from app.core.cclw_ingestion.physical_document import create_physical_document_from_row
 from app.db.models.law_policy.family import (
     DocumentStatus,
     Family,

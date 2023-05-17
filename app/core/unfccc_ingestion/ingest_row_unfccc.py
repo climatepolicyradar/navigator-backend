@@ -7,6 +7,7 @@ from app.core.ingestion.ingest_row_base import BaseIngestRow
 
 
 _REQUIRED_DOCUMENT_COLUMNS = [
+    "id",
     "md5sum",
     "Submission type",
     "Collection name",
@@ -30,6 +31,7 @@ VALID_DOCUMENT_COLUMN_NAMES = set(_REQUIRED_DOCUMENT_COLUMNS)
 class UNFCCCDocumentIngestRow(BaseIngestRow):
     """Represents a single row of input from the documents-families-collections CSV."""
 
+    id: str
     md5sum: str
     submission_type: str  # METADATA
     collection_name: str
