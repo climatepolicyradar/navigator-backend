@@ -73,8 +73,12 @@ def test_bulk_ingest_unfccc_law_policy(
     test_db,
     mocker,
 ):
-    mock_start_import = mocker.patch("app.api.api_v1.routers.admin._start_ingest")
-    mock_write_csv_to_s3 = mocker.patch("app.api.api_v1.routers.admin.write_csv_to_s3")
+    mock_start_import = mocker.patch(
+        "app.api.api_v1.routers.unfccc_ingest._start_ingest"
+    )
+    mock_write_csv_to_s3 = mocker.patch(
+        "app.api.api_v1.routers.unfccc_ingest.write_csv_to_s3"
+    )
 
     populate_geography(test_db)
     populate_taxonomy(test_db)
