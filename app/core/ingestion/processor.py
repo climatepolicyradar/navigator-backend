@@ -110,14 +110,13 @@ def initialise_context(db: Session, org_name: str) -> IngestContext:
             return CCLWIngestContext(
                 org_name=org_name, org_id=cast(int, organisation.id), results=[]
             )
-        elif org_name == "UNFCCC":
+        if org_name == "UNFCCC":
             return UNFCCCIngestContext(
                 org_name=org_name, org_id=cast(int, organisation.id), results=[]
             )
-        else:
-            raise ValueError(
-                f"Code not in sync with data - org {org_name} unknown to code"
-            )
+        raise ValueError(
+            f"Code not in sync with data - org {org_name} unknown to code"
+        )
 
 
 def get_event_ingestor(db: Session) -> ProcessFunc:
