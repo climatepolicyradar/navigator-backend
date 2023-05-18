@@ -12,7 +12,7 @@ from requests_toolbelt.multipart.encoder import MultipartEncoder
 ADMIN_EMAIL_ENV = "SUPERUSER_EMAIL"
 ADMIN_PASSWORD_ENV = "SUPERUSER_PASSWORD"
 ADMIN_TOKEN_ENV = "SUPERUSER_TOKEN"
-BULK_IMPORT_ENDPOINT = "api/v1/admin/bulk-imports/cclw/law-policy"
+BULK_IMPORT_ENDPOINT = "api/v1/admin/bulk-imports/cclw"
 
 
 DEFAULT_LOGGING = {

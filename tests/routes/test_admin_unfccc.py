@@ -12,13 +12,13 @@ from app.data_migrations import (
 
 
 def test_unauthenticated_ingest(client):
-    response = client.post("/api/v1/admin/bulk-ingest/cclw/law-policy")
+    response = client.post("/api/v1/admin/bulk-ingest/cclw")
     assert response.status_code == 401
 
 
 def test_unauthorized_ingest(client):
     response = client.post(
-        "/api/v1/admin/bulk-ingest/cclw/law-policy",
+        "/api/v1/admin/bulk-ingest/cclw",
     )
     assert response.status_code == 401
 
@@ -68,7 +68,7 @@ def test_validate_unfccc_works(
         ),
     }
     response = client.post(
-        "/api/v1/admin/bulk-ingest/validate/unfccc/law-policy",
+        "/api/v1/admin/bulk-ingest/validate/unfccc",
         files=files,
         headers=superuser_token_headers,
     )
@@ -109,7 +109,7 @@ def test_validate_unfccc_fails_missing_collection(
         ),
     }
     response = client.post(
-        "/api/v1/admin/bulk-ingest/validate/unfccc/law-policy",
+        "/api/v1/admin/bulk-ingest/validate/unfccc",
         files=files,
         headers=superuser_token_headers,
     )
@@ -163,7 +163,7 @@ def test_validate_unfccc_fails_missing_collection(
 #         ),
 #     }
 #     response = client.post(
-#         "/api/v1/admin/bulk-ingest/unfccc/law-policy",
+#         "/api/v1/admin/bulk-ingest/unfccc",
 #         files=files,
 #         headers=superuser_token_headers,
 #     )

@@ -33,7 +33,7 @@ validate_csv() {
     curl -s \
         -H "Authorization: Bearer ${TOKEN}" \
         -F "law_policy_csv=@${CSV_FILE}" \
-        ${TEST_HOST}/api/v1/admin/bulk-ingest/validate/cclw/law-policy | jq
+        ${TEST_HOST}/api/v1/admin/bulk-ingest/validate/cclw | jq
 }
 
 echo "Validating as ${USER}"

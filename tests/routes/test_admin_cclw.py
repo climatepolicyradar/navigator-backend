@@ -12,13 +12,13 @@ from app.data_migrations import (
 
 
 def test_unauthenticated_ingest(client):
-    response = client.post("/api/v1/admin/bulk-ingest/cclw/law-policy")
+    response = client.post("/api/v1/admin/bulk-ingest/cclw")
     assert response.status_code == 401
 
 
 def test_unauthorized_ingest(client):
     response = client.post(
-        "/api/v1/admin/bulk-ingest/cclw/law-policy",
+        "/api/v1/admin/bulk-ingest/cclw",
     )
     assert response.status_code == 401
 
@@ -54,7 +54,7 @@ def test_validate_bulk_ingest_cclw_law_policy(
         ),
     }
     response = client.post(
-        "/api/v1/admin/bulk-ingest/validate/cclw/law-policy",
+        "/api/v1/admin/bulk-ingest/validate/cclw",
         files=files,
         headers=superuser_token_headers,
     )
@@ -102,7 +102,7 @@ def test_bulk_ingest_cclw_law_policy(
         ),
     }
     response = client.post(
-        "/api/v1/admin/bulk-ingest/cclw/law-policy",
+        "/api/v1/admin/bulk-ingest/cclw",
         files=files,
         headers=superuser_token_headers,
     )

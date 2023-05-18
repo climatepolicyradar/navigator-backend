@@ -114,9 +114,7 @@ def initialise_context(db: Session, org_name: str) -> IngestContext:
             return UNFCCCIngestContext(
                 org_name=org_name, org_id=cast(int, organisation.id), results=[]
             )
-        raise ValueError(
-            f"Code not in sync with data - org {org_name} unknown to code"
-        )
+        raise ValueError(f"Code not in sync with data - org {org_name} unknown to code")
 
 
 def get_event_ingestor(db: Session) -> ProcessFunc:

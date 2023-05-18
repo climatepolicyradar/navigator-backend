@@ -107,7 +107,7 @@ def _start_ingest(
 
 
 @r.post(
-    "/bulk-ingest/validate/unfccc/law-policy",
+    "/bulk-ingest/validate/unfccc",
     response_model=ValidationResult,
     status_code=status.HTTP_200_OK,
 )
@@ -177,7 +177,7 @@ def validate_unfccc_law_policy(
 
 
 @r.post(
-    "/bulk-ingest/unfccc/law-policy",
+    "/bulk-ingest/unfccc",
     response_model=BulkIngestResult,
     status_code=status.HTTP_202_ACCEPTED,
 )

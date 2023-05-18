@@ -107,7 +107,7 @@ def _start_ingest(
 
 
 @r.post(
-    "/bulk-ingest/validate/cclw/law-policy",
+    "/bulk-ingest/validate/cclw",
     response_model=ValidationResult,
     status_code=status.HTTP_200_OK,
 )
@@ -170,7 +170,7 @@ def validate_law_policy(
 
 
 @r.post(
-    "/bulk-ingest/cclw/law-policy",
+    "/bulk-ingest/cclw",
     response_model=BulkIngestResult,
     status_code=status.HTTP_202_ACCEPTED,
 )
