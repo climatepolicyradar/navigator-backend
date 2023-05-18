@@ -26,9 +26,9 @@ _REQUIRED_DOCUMENT_COLUMNS = [
 VALID_DOCUMENT_COLUMN_NAMES = set(_REQUIRED_DOCUMENT_COLUMNS)
 
 _REQUIRED_COLLECTION_COLUMNS = [
-    "Collection ID",
-    "Collection Name",
-    "Collection Summary",
+    "CPR Collection ID",
+    "Collection name",
+    "Collection summary",
 ]
 VALID_COLLECTION_COLUMN_NAMES = set(_REQUIRED_COLLECTION_COLUMNS)
 
@@ -73,7 +73,7 @@ class UNFCCCDocumentIngestRow(BaseIngestRow):
 class CollectonIngestRow(BaseIngestRow):
     """Represents a single row of input from the collection CSV."""
 
-    collection_id: str
+    cpr_collection_id: str
     collection_name: str
     collection_summary: str
 

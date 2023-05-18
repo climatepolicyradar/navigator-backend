@@ -31,10 +31,10 @@ ONE_UNFCCC_ROW = """id,md5sum,Submission type,Collection ID,Family name,Document
 1,00254c407297fbb50a77d748b817ee5c,Synthesis Report,Coll1,Nationally determined contributions under the Paris Agreement. Revised note by the secretariat,Nationally determined contributions under the Paris Agreement. Revised note by the secretariat,https://unfccc.int/sites/default/files/resource/cma2021_08r01_S.pdf,UNFCCC Secretariat,Party,UK,GBR,2021-10-25T12:00:00Z,,,
 """
 
-ZERO_COLLECTION_ROW = """Collection ID,Collection Name,Collection Summary
+ZERO_COLLECTION_ROW = """CPR Collection ID,Collection name,Collection summary
 """
 
-ONE_COLLECTION_ROW = """Collection ID,Collection Name,Collection Summary
+ONE_COLLECTION_ROW = """CPR Collection ID,Collection name,Collection summary
 Coll1,Collection One,Everything to do with testing
 """
 

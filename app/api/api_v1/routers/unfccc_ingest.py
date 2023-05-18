@@ -352,7 +352,7 @@ def _validate_unfccc_csv(
     # First read all the ids in the collection_csv
     def collate_ids(context: IngestContext, row: CollectonIngestRow) -> None:
         ctx = cast(UNFCCCIngestContext, context)
-        ctx.collection_ids_defined.append(row.collection_id)
+        ctx.collection_ids_defined.append(row.cpr_collection_id)
 
     collection_file_contents = get_file_contents(collection_csv)
     read(collection_file_contents, context, CollectonIngestRow, collate_ids)
