@@ -147,7 +147,7 @@ def handle_family_document_from_row(
         update_if_changed(
             updated,
             "document_type",
-            none_if_empty(row.document_type),
+            none_if_empty(row.submission_type),
             family_document,
         )
         update_if_changed(
@@ -201,7 +201,7 @@ def handle_family_document_from_row(
             import_id=row.cpr_document_id,
             variant_name=none_if_empty(row.document_variant),
             document_status=DocumentStatus.PUBLISHED,
-            document_type=none_if_empty(row.document_type),
+            document_type=none_if_empty(row.submission_type),
             document_role=none_if_empty(row.document_role),
         )
 

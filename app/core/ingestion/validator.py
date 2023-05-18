@@ -108,11 +108,17 @@ def validate_unfccc_document_row(
     if result.type != ResultType.OK:
         errors.append(result)
 
+    # validate: Submission type as document type
+    result = _check_value_in_db(
+        n, db, row.submission_type, FamilyDocumentType, FamilyDocumentType.name
+    )
+    if result.type != ResultType.OK:
+        errors.append(result)
+
     # validate: language: list[str]
 
     # Check metadata
     # validate: author_type: str  # METADATA
-    # validate: submission_type: str  # METADATA
     result, _ = build_unfccc_metadata(taxonomy, row)
     if result.type != ResultType.OK:
         errors.append(result)

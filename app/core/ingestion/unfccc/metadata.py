@@ -8,7 +8,6 @@ from app.db.models.law_policy.metadata import FamilyMetadata
 
 
 MAP_OF_LIST_VALUES = {
-    "submission_type": "submission_type",
     "author_type": "author_type",
 }
 

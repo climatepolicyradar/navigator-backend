@@ -42,7 +42,7 @@ class UNFCCCDocumentIngestRow(BaseIngestRow):
 
     category: str
     md5sum: str
-    submission_type: str  # METADATA
+    submission_type: str  # aka Document Type for UNFCCC
     family_name: str
     document_title: str
     documents: str
@@ -63,8 +63,6 @@ class UNFCCCDocumentIngestRow(BaseIngestRow):
 
     # FIXME: Where is the summary from?
     family_summary: str = "summary"
-    # FIXME:
-    document_type = "UNFCCC"
 
     VALID_COLUMNS: ClassVar[set[str]] = VALID_DOCUMENT_COLUMN_NAMES
 
