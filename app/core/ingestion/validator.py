@@ -13,6 +13,7 @@ from app.core.ingestion.utils import (
     IngestContext,
     Result,
     ResultType,
+    UNFCCCIngestContext,
 )
 from app.core.unfccc_ingestion.metadata import build_unfccc_metadata
 from app.db.models.law_policy.family import (
@@ -63,7 +64,7 @@ def _check_geo_in_db(row_num: int, db: Session, geo_iso: str) -> CheckResult:
 
 def validate_unfccc_document_row(
     db: Session,
-    context: IngestContext,
+    context: UNFCCCIngestContext,
     row: UNFCCCDocumentIngestRow,
     taxonomy: Taxonomy,
 ) -> None:
@@ -116,24 +117,23 @@ def validate_unfccc_document_row(
     if result.type != ResultType.OK:
         errors.append(result)
 
-    # TODO:
-    # # Check family
-    # context.consistency_validator.check_family(
-    #     row.row_number,
-    #     row.cpr_family_id,
-    #     row.family_name,
-    #     row.family_summary,
-    #     errors,
-    # )
+    # Check family
+    context.consistency_validator.check_family(
+        row.row_number,
+        row.cpr_family_id,
+        row.family_name,
+        row.family_summary,
+        errors,
+    )
 
-    # # Check collection
-    # context.consistency_validator.check_collection(
-    #     row.row_number,
-    #     row.cpr_collection_id,
-    #     row.collection_name,
-    #     row.collection_summary,
-    #     errors,
-    # )
+    # Check collection id against the collection csv
+    if row.collection_id not in context.collection_ids:
+        errors.append(
+            Result(
+                ResultType.ERROR,
+                f"Collection ID {row.collection_id} is missing from the collection CSV",
+            )
+        )
 
     if len(errors) > 0:
         context.results += errors

@@ -23,8 +23,12 @@ def test_unauthorized_ingest(client):
     assert response.status_code == 401
 
 
-ONE_DFC_ROW = """id,md5sum,Submission type,Collection name,Collection ID,Family name,Document title,Documents,Author,Author type,Geography,Geography ISO,Date,Document role,Document variant,Language
-1,00254c407297fbb50a77d748b817ee5c,Synthesis Report,,,Nationally determined contributions under the Paris Agreement. Revised note by the secretariat,Nationally determined contributions under the Paris Agreement. Revised note by the secretariat,https://unfccc.int/sites/default/files/resource/cma2021_08r01_S.pdf,UNFCCC Secretariat,Party,UK,GBR,2021-10-25T12:00:00Z,,,
+ONE_DFC_ROW = """id,md5sum,Submission type,Collection ID,Family name,Document title,Documents,Author,Author type,Geography,Geography ISO,Date,Document role,Document variant,Language
+1,00254c407297fbb50a77d748b817ee5c,Synthesis Report,Coll1,Nationally determined contributions under the Paris Agreement. Revised note by the secretariat,Nationally determined contributions under the Paris Agreement. Revised note by the secretariat,https://unfccc.int/sites/default/files/resource/cma2021_08r01_S.pdf,UNFCCC Secretariat,Party,UK,GBR,2021-10-25T12:00:00Z,,,
+"""
+
+ONE_COLLECTION_ROW = """Collection ID,Collection Name,Collection Summary
+Coll1,Collection One,Everything to do with testing
 """
 
 TWO_EVENT_ROWS = """Id,Eventable type,Eventable Id,Eventable name,Event type,Title,Description,Date,Url,CPR Event ID,CPR Family ID,Event Status
@@ -44,11 +48,18 @@ def test_validate_bulk_ingest_unfccc_law_policy(
     populate_document_role(test_db)
     populate_document_variant(test_db)
     test_db.commit()
-    law_policy_csv_file = BytesIO(ONE_DFC_ROW.encode("utf8"))
+    unfccc_data_csv = BytesIO(ONE_DFC_ROW.encode("utf8"))
+    collection_csv = BytesIO(ONE_COLLECTION_ROW.encode("utf8"))
     files = {
-        "law_policy_csv": (
-            "valid_law_policy.csv",
-            law_policy_csv_file,
+        "unfccc_data_csv": (
+            "unfccc_data_csv.csv",
+            unfccc_data_csv,
+            "text/csv",
+            {"Expires": "0"},
+        ),
+        "collection_csv": (
+            "collection_csv.csv",
+            collection_csv,
             "text/csv",
             {"Expires": "0"},
         ),

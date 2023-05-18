@@ -224,9 +224,12 @@ class UNFCCCIngestContext(IngestContext):
     """Ingest Context for UNFCCC"""
 
     collection_ids: list[str]
+    # Just for families:
+    consistency_validator: ConsistencyValidator
 
     def __init__(self, org_name="UNFCCC", org_id=2, results=None):
         self.collection_ids = []
+        self.consistency_validator = ConsistencyValidator()
         self.org_name = org_name
         self.org_id = org_id
         self.results = [] if results is None else results

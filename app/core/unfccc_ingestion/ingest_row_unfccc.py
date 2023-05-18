@@ -10,7 +10,6 @@ _REQUIRED_DOCUMENT_COLUMNS = [
     "id",
     "md5sum",
     "Submission type",
-    "Collection name",
     "Collection ID",
     "Family name",
     "Document title",
@@ -41,7 +40,6 @@ class UNFCCCDocumentIngestRow(BaseIngestRow):
     id: str
     md5sum: str
     submission_type: str  # METADATA
-    collection_name: str
     collection_id: str
     family_name: str
     document_title: str

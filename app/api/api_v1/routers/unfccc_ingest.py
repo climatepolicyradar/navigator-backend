@@ -355,7 +355,7 @@ def _validate_unfccc_csv(
         ctx.collection_ids.append(row.collection_id)
 
     collection_file_contents = get_file_contents(collection_csv)
-    read(collection_file_contents, context, UNFCCCDocumentIngestRow, collate_ids)
+    read(collection_file_contents, context, CollectonIngestRow, collate_ids)
 
     # Now do the validation of the documents
     documents_file_contents = get_file_contents(unfccc_data_csv)
