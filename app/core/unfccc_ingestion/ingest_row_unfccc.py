@@ -53,9 +53,6 @@ class UNFCCCDocumentIngestRow(BaseIngestRow):
     document_variant: str
     language: list[str]
 
-    # FIXME: Modify these when the collections are ingested
-    cpr_collection_id: str = "111"
-    collection_summary: str = "summary"
     # FIXME: Where is the family id / summary coming from?
     cpr_family_id: str = "111"
     family_summary: str = "summary"

@@ -207,7 +207,10 @@ def get_dfc_validator(db: Session, context: IngestContext) -> ProcessFunc:
         _LOGGER.info(f"Validating document row: {row.row_number}")
         with db.begin():
             validate_unfccc_document_row(
-                db=db, context=context, taxonomy=taxonomy, row=row
+                db=db,
+                context=cast(UNFCCCIngestContext, context),
+                taxonomy=taxonomy,
+                row=row,
             )
 
     if context.org_name == "CCLW":

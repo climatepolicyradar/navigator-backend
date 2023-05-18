@@ -127,7 +127,7 @@ def validate_unfccc_document_row(
     )
 
     # Check collection id against the collection csv
-    if row.collection_id not in context.collection_ids:
+    if row.collection_id not in context.collection_ids_defined:
         errors.append(
             Result(
                 ResultType.ERROR,

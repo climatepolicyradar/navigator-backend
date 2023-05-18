@@ -223,12 +223,14 @@ class IngestContext(abc.ABC):
 class UNFCCCIngestContext(IngestContext):
     """Ingest Context for UNFCCC"""
 
-    collection_ids: list[str]
+    collection_ids_defined: list[str]
+    collection_ids_referenced: list[str]
     # Just for families:
     consistency_validator: ConsistencyValidator
 
     def __init__(self, org_name="UNFCCC", org_id=2, results=None):
-        self.collection_ids = []
+        self.collection_ids_defined = []
+        self.collection_ids_referenced = []
         self.consistency_validator = ConsistencyValidator()
         self.org_name = org_name
         self.org_id = org_id

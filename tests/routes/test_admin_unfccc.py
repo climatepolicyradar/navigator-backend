@@ -27,6 +27,9 @@ ONE_DFC_ROW = """id,md5sum,Submission type,Collection ID,Family name,Document ti
 1,00254c407297fbb50a77d748b817ee5c,Synthesis Report,Coll1,Nationally determined contributions under the Paris Agreement. Revised note by the secretariat,Nationally determined contributions under the Paris Agreement. Revised note by the secretariat,https://unfccc.int/sites/default/files/resource/cma2021_08r01_S.pdf,UNFCCC Secretariat,Party,UK,GBR,2021-10-25T12:00:00Z,,,
 """
 
+ZERO_COLLECTION_ROW = """Collection ID,Collection Name,Collection Summary
+"""
+
 ONE_COLLECTION_ROW = """Collection ID,Collection Name,Collection Summary
 Coll1,Collection One,Everything to do with testing
 """
@@ -37,7 +40,7 @@ TWO_EVENT_ROWS = """Id,Eventable type,Eventable Id,Eventable name,Event type,Tit
 """
 
 
-def test_validate_bulk_ingest_unfccc_law_policy(
+def test_validate_unfccc_works(
     client,
     superuser_token_headers,
     test_db,
@@ -74,7 +77,52 @@ def test_validate_bulk_ingest_unfccc_law_policy(
     assert len(response_json["errors"]) == 0
     assert (
         response_json["message"]
-        == "Law & Policy validation result: 1 Rows, 0 Failures, 0 Resolved"
+        == "UNFCCC validation result: 1 Rows, 0 Failures, 0 Resolved"
+    )
+
+
+def test_validate_unfccc_fails_missing_collection(
+    client,
+    superuser_token_headers,
+    test_db,
+):
+    populate_taxonomy(test_db)
+    populate_geography(test_db)
+    populate_document_type(test_db)
+    populate_document_role(test_db)
+    populate_document_variant(test_db)
+    test_db.commit()
+    unfccc_data_csv = BytesIO(ONE_DFC_ROW.encode("utf8"))
+    collection_csv = BytesIO(ZERO_COLLECTION_ROW.encode("utf8"))
+    files = {
+        "unfccc_data_csv": (
+            "unfccc_data_csv.csv",
+            unfccc_data_csv,
+            "text/csv",
+            {"Expires": "0"},
+        ),
+        "collection_csv": (
+            "collection_csv.csv",
+            collection_csv,
+            "text/csv",
+            {"Expires": "0"},
+        ),
+    }
+    response = client.post(
+        "/api/v1/admin/bulk-ingest/validate/unfccc/law-policy",
+        files=files,
+        headers=superuser_token_headers,
+    )
+    assert response.status_code == 200
+    response_json = response.json()
+    assert len(response_json["errors"]) == 1
+    assert response_json["errors"][0] == {
+        "details": "Collection ID Coll1 is missing from the collection CSV",
+        "type": "Error",
+    }
+    assert (
+        response_json["message"]
+        == "UNFCCC validation result: 1 Rows, 1 Failures, 0 Resolved"
     )
 
 
