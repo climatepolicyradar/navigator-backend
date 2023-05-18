@@ -23,19 +23,19 @@ def test_unauthorized_validation(client):
     assert response.status_code == 401
 
 
-MISSING_COLL_UNFCCC_ROW = """id,md5sum,Submission type,Collection ID,Family name,Document title,Documents,Author,Author type,Geography,Geography ISO,Date,Document role,Document variant,Language
-1,00254c407297fbb50a77d748b817ee5c,Synthesis Report,Coll2,Nationally determined contributions under the Paris Agreement. Revised note by the secretariat,Nationally determined contributions under the Paris Agreement. Revised note by the secretariat,https://unfccc.int/sites/default/files/resource/cma2021_08r01_S.pdf,UNFCCC Secretariat,Party,UK,GBR,2021-10-25T12:00:00Z,,,
+MISSING_COLL_UNFCCC_ROW = """Category,md5sum,Submission type,Collection ID,Family name,Document title,Documents,Author,Author type,Geography,Geography ISO,Date,Document role,Document variant,Language,CPR Collection ID,CPR Document ID,CPR Document Slug,CPR Family ID,CPR Family Slug
+Cat1,00254c407297fbb50a77d748b817ee5c,Synthesis Report,CollID ignored,Nationally determined contributions under the Paris Agreement. Revised note by the secretariat,Nationally determined contributions under the Paris Agreement. Revised note by the secretariat,https://unfccc.int/sites/default/files/resource/cma2021_08r01_S.pdf,UNFCCC Secretariat,Party,UK,GBR,2021-10-25T12:00:00Z,,,en,UNFCCC.Collection.1,UNFCCC.Document.1,Doc-slug,UNFCCC.family.1,Family-slug
 """
 
-ONE_UNFCCC_ROW = """id,md5sum,Submission type,Collection ID,Family name,Document title,Documents,Author,Author type,Geography,Geography ISO,Date,Document role,Document variant,Language
-1,00254c407297fbb50a77d748b817ee5c,Synthesis Report,Coll1,Nationally determined contributions under the Paris Agreement. Revised note by the secretariat,Nationally determined contributions under the Paris Agreement. Revised note by the secretariat,https://unfccc.int/sites/default/files/resource/cma2021_08r01_S.pdf,UNFCCC Secretariat,Party,UK,GBR,2021-10-25T12:00:00Z,,,
+ONE_UNFCCC_ROW = """Category,md5sum,Submission type,Collection ID,Family name,Document title,Documents,Author,Author type,Geography,Geography ISO,Date,Document role,Document variant,Language,CPR Collection ID,CPR Document ID,CPR Document Slug,CPR Family ID,CPR Family Slug
+Cat1,00254c407297fbb50a77d748b817ee5c,Synthesis Report,CollID ignored,Nationally determined contributions under the Paris Agreement. Revised note by the secretariat,Nationally determined contributions under the Paris Agreement. Revised note by the secretariat,https://unfccc.int/sites/default/files/resource/cma2021_08r01_S.pdf,UNFCCC Secretariat,Party,UK,GBR,2021-10-25T12:00:00Z,,,en,UNFCCC.Collection.Found,UNFCCC.Document.1,Doc-slug,UNFCCC.family.1,Family-slug
 """
 
 ZERO_COLLECTION_ROW = """CPR Collection ID,Collection name,Collection summary
 """
 
 ONE_COLLECTION_ROW = """CPR Collection ID,Collection name,Collection summary
-Coll1,Collection One,Everything to do with testing
+UNFCCC.Collection.Found,Collection One,Everything to do with testing
 """
 
 
@@ -116,7 +116,7 @@ def test_validate_unfccc_fails_missing_defined_collection(
     response_json = response.json()
     assert len(response_json["errors"]) == 1
     assert response_json["errors"][0] == {
-        "details": "The following Collection IDs were referenced and not defined: ['Coll1']",
+        "details": "The following Collection IDs were referenced and not defined: ['UNFCCC.Collection.Found']",
         "type": "Error",
     }
     assert (
@@ -161,7 +161,7 @@ def test_validate_unfccc_fails_missing_referenced_collection(
     response_json = response.json()
     assert len(response_json["errors"]) == 1
     assert response_json["errors"][0] == {
-        "details": "The following Collection IDs were referenced and not defined: ['Coll2']",
+        "details": "The following Collection IDs were referenced and not defined: ['UNFCCC.Collection.1']",
         "type": "Error",
     }
     assert (

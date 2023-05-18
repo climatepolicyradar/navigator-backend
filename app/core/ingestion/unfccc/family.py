@@ -56,8 +56,7 @@ def _after_create_family(
 ):
     def _create_family_links(family: Family):
         # FIXME: Is this how we are handling slugs?
-        slug = f"slug_unfccc_{row.id}"
-        family_slug = Slug(name=slug, family_import_id=family.import_id)
+        family_slug = Slug(name=row.cpr_family_slug, family_import_id=family.import_id)
 
         db.add(family_slug)
         result["family_slug"] = (to_dict(family_slug),)
@@ -83,14 +82,11 @@ def _operate_on_family(
     # FIXME: Check this:
     category = FamilyCategory.UNFCCC
 
-    # FIXME: Check this:
-    family_summary = f"Summary for {row.id}"
-
     geography = _get_geography(db, row)
     extra = {
         "title": row.family_name,
         "geography_id": geography.id,
-        "description": family_summary,
+        "description": row.family_summary,
         "family_category": category,
     }
 

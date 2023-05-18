@@ -127,7 +127,7 @@ def validate_unfccc_document_row(
     )
 
     # Add to the collections that are referenced so we can valiate later
-    context.collection_ids_referenced.append(row.collection_id)
+    context.collection_ids_referenced.append(row.cpr_collection_id)
 
     if len(errors) > 0:
         context.results += errors

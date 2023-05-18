@@ -5,9 +5,35 @@ from pydantic import ConfigDict, Extra
 from pydantic.dataclasses import dataclass
 from app.core.ingestion.ingest_row_base import BaseIngestRow
 
+""" 
+New Columns:
+
+Category	- ignore, hard code for now
+md5sum	
+Submission type	
+ -- Collection name	*REMOVE*
+Collection ID	
+Family name	
+Document title	
+Documents	
+Author	
+Author type	
+Geography	
+Geography ISO	
+Date	
+Document role	
+Document variant	
+Language	
+CPR Collection ID	
+CPR Document ID	
+CPR Family ID	
+CPR Family Slug	
+CPR Document Slug
+
+"""
 
 _REQUIRED_DOCUMENT_COLUMNS = [
-    "id",
+    "Category",
     "md5sum",
     "Submission type",
     "Collection ID",
@@ -22,6 +48,11 @@ _REQUIRED_DOCUMENT_COLUMNS = [
     "Document role",
     "Document variant",
     "Language",
+    "CPR Collection ID",
+    "CPR Document ID",
+    "CPR Family ID",
+    "CPR Family Slug",
+    "CPR Document Slug",
 ]
 VALID_DOCUMENT_COLUMN_NAMES = set(_REQUIRED_DOCUMENT_COLUMNS)
 
@@ -37,7 +68,7 @@ VALID_COLLECTION_COLUMN_NAMES = set(_REQUIRED_COLLECTION_COLUMNS)
 class UNFCCCDocumentIngestRow(BaseIngestRow):
     """Represents a single row of input from the documents-families-collections CSV."""
 
-    id: str
+    category: str
     md5sum: str
     submission_type: str  # METADATA
     collection_id: str
@@ -53,13 +84,15 @@ class UNFCCCDocumentIngestRow(BaseIngestRow):
     document_variant: str
     language: list[str]
 
-    # FIXME: Where is the family id / summary coming from?
-    cpr_family_id: str = "111"
+    cpr_collection_id: str
+    cpr_document_id: str
+    cpr_family_id: str
+    cpr_family_slug: str
+    cpr_document_slug: str
+
+    # FIXME: Where is the summary from?
     family_summary: str = "summary"
-    # FIXME: Where is this coming from?
-    cpr_document_id: str = "111"
-    cpr_document_slug: str = "slug"
-    # FIXME: check this
+    # FIXME:
     document_type = "UNFCCC"
 
     VALID_COLUMNS: ClassVar[set[str]] = VALID_DOCUMENT_COLUMN_NAMES
