@@ -1,7 +1,7 @@
 from typing import Any, Optional
 
 from sqlalchemy.orm import Session
-from app.core.unfccc_ingestion.ingest_row_unfccc import UNFCCCDocumentIngestRow
+from app.core.ingestion.unfccc.ingest_row_unfccc import UNFCCCDocumentIngestRow
 
 from app.db.models.law_policy import Collection
 

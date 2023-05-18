@@ -2,15 +2,15 @@ import logging
 from typing import Any, Callable, TypeVar, cast
 
 from sqlalchemy.orm import Session
-from app.core.cclw_ingestion.collection import handle_collection_from_row
-from app.core.cclw_ingestion.event import family_event_from_row
-from app.core.cclw_ingestion.family import handle_family_from_row
-from app.core.cclw_ingestion.ingest_row_cclw import (
+from app.core.ingestion.cclw.collection import handle_collection_from_row
+from app.core.ingestion.cclw.event import family_event_from_row
+from app.core.ingestion.cclw.family import handle_family_from_row
+from app.core.ingestion.cclw.ingest_row_cclw import (
     CCLWDocumentIngestRow,
     EventIngestRow,
 )
 from app.core.ingestion.ingest_row_base import BaseIngestRow
-from app.core.unfccc_ingestion.ingest_row_unfccc import (
+from app.core.ingestion.unfccc.ingest_row_unfccc import (
     CollectonIngestRow,
     UNFCCCDocumentIngestRow,
 )

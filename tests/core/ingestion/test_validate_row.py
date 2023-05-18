@@ -1,4 +1,4 @@
-from app.core.cclw_ingestion.ingest_row_cclw import CCLWDocumentIngestRow
+from app.core.ingestion.cclw.ingest_row_cclw import CCLWDocumentIngestRow
 from app.core.ingestion.utils import CCLWIngestContext, ResultType
 from app.core.ingestion.validator import validate_cclw_document_row
 from app.core.organisation import get_organisation_taxonomy

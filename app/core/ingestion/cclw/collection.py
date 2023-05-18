@@ -1,7 +1,7 @@
 from typing import Any, Optional
 
 from sqlalchemy.orm import Session
-from app.core.cclw_ingestion.ingest_row_cclw import CCLWDocumentIngestRow
+from app.core.ingestion.cclw.ingest_row_cclw import CCLWDocumentIngestRow
 from app.core.ingestion.utils import create, to_dict, update_if_changed
 
 from app.db.models.law_policy import Collection

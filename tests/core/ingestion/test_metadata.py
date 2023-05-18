@@ -1,8 +1,8 @@
 import pytest
 from sqlalchemy.exc import NoResultFound
 from sqlalchemy.orm import Session
-from app.core.cclw_ingestion.ingest_row_cclw import CCLWDocumentIngestRow
-from app.core.cclw_ingestion.metadata import build_cclw_metadata
+from app.core.ingestion.cclw.ingest_row_cclw import CCLWDocumentIngestRow
+from app.core.ingestion.cclw.metadata import build_cclw_metadata
 from app.core.organisation import get_organisation_taxonomy
 from app.core.ingestion.utils import ResultType
 from tests.core.ingestion.helpers import (

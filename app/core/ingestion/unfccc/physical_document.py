@@ -1,7 +1,7 @@
 from typing import Any
 
 from sqlalchemy.orm import Session
-from app.core.cclw_ingestion.ingest_row_cclw import CCLWDocumentIngestRow
+from app.core.ingestion.unfccc.ingest_row_unfccc import UNFCCCDocumentIngestRow
 from app.core.ingestion.utils import to_dict
 
 from app.db.models.document import PhysicalDocument
@@ -10,7 +10,7 @@ from app.db.models.document.physical_document import Language, PhysicalDocumentL
 
 def create_physical_document_from_row(
     db: Session,
-    row: CCLWDocumentIngestRow,
+    row: UNFCCCDocumentIngestRow,
     result: dict[str, Any],
 ) -> PhysicalDocument:
     """
@@ -23,7 +23,7 @@ def create_physical_document_from_row(
     """
     physical_document = PhysicalDocument(
         title=row.document_title,
-        source_url=row.get_first_url(),
+        source_url=row.documents,
         md5_sum=None,
         content_type=None,
         cdn_object=None,

@@ -1,7 +1,7 @@
 from typing import cast
 from sqlalchemy.orm import Session
-from app.core.cclw_ingestion.collection import handle_collection_from_row
-from app.core.cclw_ingestion.ingest_row_cclw import CCLWDocumentIngestRow
+from app.core.ingestion.cclw.collection import handle_collection_from_row
+from app.core.ingestion.cclw.ingest_row_cclw import CCLWDocumentIngestRow
 from app.core.ingestion.utils import get_or_create
 from app.db.models.law_policy.collection import (
     Collection,

@@ -2,10 +2,12 @@ from typing import Any, Optional, cast
 
 from sqlalchemy.orm import Session
 
-from app.core.cclw_ingestion.ingest_row_cclw import CCLWDocumentIngestRow
-from app.core.cclw_ingestion.metadata import add_metadata
+from app.core.ingestion.unfccc.ingest_row_unfccc import UNFCCCDocumentIngestRow
+from app.core.ingestion.unfccc.metadata import add_metadata
 from app.core.organisation import get_organisation_taxonomy
-from app.core.cclw_ingestion.physical_document import create_physical_document_from_row
+from app.core.ingestion.unfccc.physical_document import (
+    create_physical_document_from_row,
+)
 from app.core.ingestion.utils import (
     create,
     get_or_create,
@@ -26,7 +28,7 @@ from app.db.models.law_policy import (
 
 def handle_family_from_row(
     db: Session,
-    row: CCLWDocumentIngestRow,
+    row: UNFCCCDocumentIngestRow,
     org_id: int,
     result: dict[str, Any],
 ) -> Family:
@@ -50,10 +52,12 @@ def handle_family_from_row(
 
 
 def _after_create_family(
-    db: Session, row: CCLWDocumentIngestRow, org_id: int, result: dict[str, Any]
+    db: Session, row: UNFCCCDocumentIngestRow, org_id: int, result: dict[str, Any]
 ):
     def _create_family_links(family: Family):
-        family_slug = Slug(name=row.cpr_family_slug, family_import_id=family.import_id)
+        # FIXME: Is this how we are handling slugs?
+        slug = f"slug_unfccc_{row.id}"
+        family_slug = Slug(name=slug, family_import_id=family.import_id)
 
         db.add(family_slug)
         result["family_slug"] = (to_dict(family_slug),)
@@ -72,17 +76,21 @@ def _after_create_family(
 
 def _operate_on_family(
     db: Session,
-    row: CCLWDocumentIngestRow,
+    row: UNFCCCDocumentIngestRow,
     org_id: int,
     result: dict[str, Any],
 ) -> Family:
-    category = FamilyCategory(row.category.upper())
+    # FIXME: Check this:
+    category = FamilyCategory.UNFCCC
+
+    # FIXME: Check this:
+    family_summary = f"Summary for {row.id}"
 
     geography = _get_geography(db, row)
     extra = {
         "title": row.family_name,
         "geography_id": geography.id,
-        "description": row.family_summary,
+        "description": family_summary,
         "family_category": category,
     }
 
@@ -116,7 +124,7 @@ def _operate_on_family(
 
 def handle_family_document_from_row(
     db: Session,
-    row: CCLWDocumentIngestRow,
+    row: UNFCCCDocumentIngestRow,
     family: Family,
     result: dict[str, Any],
 ) -> FamilyDocument:
@@ -167,7 +175,7 @@ def handle_family_document_from_row(
         updated = {}
 
         # If source_url changed then create a new physical_document
-        if row.get_first_url() != family_document.physical_document.source_url:
+        if row.documents != family_document.physical_document.source_url:
             physical_document = create_physical_document_from_row(db, row, result)
             family_document.physical_document = physical_document
         else:
@@ -209,7 +217,7 @@ def handle_family_document_from_row(
     return family_document
 
 
-def _get_geography(db: Session, row: CCLWDocumentIngestRow) -> Geography:
+def _get_geography(db: Session, row: UNFCCCDocumentIngestRow) -> Geography:
     geography = (
         db.query(Geography).filter(Geography.value == row.geography_iso).one_or_none()
     )
@@ -222,7 +230,7 @@ def _get_geography(db: Session, row: CCLWDocumentIngestRow) -> Geography:
 
 def _add_family_document_slug(
     db: Session,
-    row: CCLWDocumentIngestRow,
+    row: UNFCCCDocumentIngestRow,
     family_document: FamilyDocument,
     result: dict[str, Any],
 ) -> Slug:

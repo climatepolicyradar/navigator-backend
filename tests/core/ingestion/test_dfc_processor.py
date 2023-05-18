@@ -1,6 +1,6 @@
-from app.core.cclw_ingestion.ingest_row_cclw import CCLWDocumentIngestRow
+from app.core.ingestion.cclw.ingest_row_cclw import CCLWDocumentIngestRow
 from app.core.ingestion.processor import get_dfc_ingestor
-from app.core.cclw_ingestion.reader import read
+from app.core.ingestion.cclw.reader import read
 from app.core.ingestion.utils import CCLWIngestContext, ResultType
 from app.db.models.law_policy.family import FamilyDocument
 from tests.core.ingestion.helpers import (

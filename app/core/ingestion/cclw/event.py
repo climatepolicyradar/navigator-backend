@@ -5,7 +5,7 @@ from typing import Any, Optional
 from pydantic.json import pydantic_encoder
 from sqlalchemy.exc import IntegrityError
 from sqlalchemy.orm import Session
-from app.core.cclw_ingestion.ingest_row_cclw import EventIngestRow
+from app.core.ingestion.cclw.ingest_row_cclw import EventIngestRow
 from app.core.ingestion.utils import get_or_create, to_dict
 
 from app.db.models.law_policy import FamilyEvent

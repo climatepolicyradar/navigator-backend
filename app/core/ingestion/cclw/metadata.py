@@ -1,15 +1,19 @@
 from typing import Union
-from sqlalchemy.orm import Session
 
-from app.core.ingestion.metadata import MetadataJson, Taxonomy, build_metadata_field
-from app.core.ingestion.utils import Result, ResultType
-from app.core.unfccc_ingestion.ingest_row_unfccc import UNFCCCDocumentIngestRow
+from app.core.ingestion.cclw.ingest_row_cclw import CCLWDocumentIngestRow
 from app.db.models.law_policy.metadata import FamilyMetadata
+from sqlalchemy.orm import Session
+from app.core.ingestion.utils import Result, ResultType
+from app.core.ingestion.metadata import Taxonomy, MetadataJson, build_metadata_field
 
 
 MAP_OF_LIST_VALUES = {
-    "submission_type": "submission_type",
-    "author_type": "author_type",
+    "sector": "sectors",
+    "instrument": "instruments",
+    "framework": "frameworks",
+    "topic": "responses",
+    "hazard": "natural_hazards",
+    "keyword": "keywords",
 }
 
 
@@ -18,9 +22,9 @@ def add_metadata(
     family_import_id: str,
     taxonomy: Taxonomy,
     taxonomy_id: int,
-    row: UNFCCCDocumentIngestRow,
+    row: CCLWDocumentIngestRow,
 ) -> bool:
-    result, metadata = build_unfccc_metadata(taxonomy, row)
+    result, metadata = build_cclw_metadata(taxonomy, row)
     if result.type == ResultType.ERROR:
         return False
 
@@ -34,8 +38,8 @@ def add_metadata(
     return True
 
 
-def build_unfccc_metadata(
-    taxonomy: Taxonomy, row: UNFCCCDocumentIngestRow
+def build_cclw_metadata(
+    taxonomy: Taxonomy, row: CCLWDocumentIngestRow
 ) -> tuple[Result, MetadataJson]:
     detail_list = []
     value: dict[str, Union[str, list[str]]] = {}

@@ -1,7 +1,7 @@
 import pytest
 
 from sqlalchemy.orm import Session
-from app.core.cclw_ingestion.ingest_row_cclw import CCLWDocumentIngestRow
+from app.core.ingestion.cclw.ingest_row_cclw import CCLWDocumentIngestRow
 from app.core.ingestion.processor import ingest_cclw_document_row
 from app.core.ingestion.utils import CCLWIngestContext
 from app.db.models.document.physical_document import PhysicalDocument

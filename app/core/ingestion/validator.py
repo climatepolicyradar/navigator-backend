@@ -1,13 +1,13 @@
 from sqlalchemy import Column
 from sqlalchemy.orm import Session
 
-from app.core.cclw_ingestion.ingest_row_cclw import (
+from app.core.ingestion.cclw.ingest_row_cclw import (
     CCLWDocumentIngestRow,
     EventIngestRow,
 )
 from app.core.ingestion.metadata import Taxonomy
-from app.core.unfccc_ingestion.ingest_row_unfccc import UNFCCCDocumentIngestRow
-from app.core.cclw_ingestion.metadata import build_cclw_metadata
+from app.core.ingestion.unfccc.ingest_row_unfccc import UNFCCCDocumentIngestRow
+from app.core.ingestion.cclw.metadata import build_cclw_metadata
 from app.core.ingestion.utils import (
     CCLWIngestContext,
     IngestContext,
@@ -15,7 +15,7 @@ from app.core.ingestion.utils import (
     ResultType,
     UNFCCCIngestContext,
 )
-from app.core.unfccc_ingestion.metadata import build_unfccc_metadata
+from app.core.ingestion.unfccc.metadata import build_unfccc_metadata
 from app.db.models.law_policy.family import (
     FamilyDocumentRole,
     FamilyDocumentType,

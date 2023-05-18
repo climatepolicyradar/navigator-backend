@@ -19,19 +19,19 @@ from app.api.api_v1.schemas.document import (
 )
 from app.core.auth import get_superuser_details
 from app.core.aws import get_s3_client
-from app.core.unfccc_ingestion.ingest_row_unfccc import (
+from app.core.ingestion.unfccc.ingest_row_unfccc import (
     CollectonIngestRow,
     UNFCCCDocumentIngestRow,
 )
 
-from app.core.unfccc_ingestion.pipeline import generate_pipeline_ingest_input
+from app.core.ingestion.unfccc.pipeline import generate_pipeline_ingest_input
 from app.core.ingestion.processor import (
     get_collection_ingestor,
     initialise_context,
     get_dfc_ingestor,
     get_dfc_validator,
 )
-from app.core.unfccc_ingestion.reader import get_file_contents, read
+from app.core.ingestion.unfccc.reader import get_file_contents, read
 from app.core.ingestion.utils import (
     IngestContext,
     Result,

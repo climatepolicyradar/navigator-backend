@@ -1,7 +1,7 @@
 from unittest.mock import MagicMock
 import pytest
-from app.core.cclw_ingestion.ingest_row_cclw import CCLWDocumentIngestRow
-from app.core.cclw_ingestion.reader import read
+from app.core.ingestion.cclw.ingest_row_cclw import CCLWDocumentIngestRow
+from app.core.ingestion.cclw.reader import read
 from app.core.ingestion.utils import CCLWIngestContext
 from app.core.validation.types import ImportSchemaMismatchError
 from tests.core.ingestion.helpers import (
