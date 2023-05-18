@@ -1,7 +1,5 @@
 from io import BytesIO
 
-import pytest  # noqa: F401
-
 from app.data_migrations import (
     populate_document_role,
     populate_document_type,
@@ -170,7 +168,7 @@ def test_validate_unfccc_fails_missing_referenced_collection(
     )
 
 
-# def test_bulk_ingest_unfccc_law_policy(
+# def test_ingest_unfccc_works(
 #     client,
 #     superuser_token_headers,
 #     test_db,
@@ -182,26 +180,24 @@ def test_validate_unfccc_fails_missing_referenced_collection(
 #     mock_write_csv_to_s3 = mocker.patch(
 #         "app.api.api_v1.routers.unfccc_ingest.write_csv_to_s3"
 #     )
-
-#     populate_geography(test_db)
 #     populate_taxonomy(test_db)
+#     populate_geography(test_db)
 #     populate_document_type(test_db)
 #     populate_document_role(test_db)
 #     populate_document_variant(test_db)
 #     test_db.commit()
-
-#     law_policy_csv_file = BytesIO(ONE_UNFCCC_ROW.encode("utf8"))
-#     events_csv_file = BytesIO(TWO_EVENT_ROWS.encode("utf8"))
+#     unfccc_data_csv = BytesIO(ONE_UNFCCC_ROW.encode("utf8"))
+#     collection_csv = BytesIO(ONE_COLLECTION_ROW.encode("utf8"))
 #     files = {
-#         "law_policy_csv": (
-#             "valid_law_policy.csv",
-#             law_policy_csv_file,
+#         "unfccc_data_csv": (
+#             "unfccc_data_csv.csv",
+#             unfccc_data_csv,
 #             "text/csv",
 #             {"Expires": "0"},
 #         ),
-#         "events_csv": (
-#             "valid_events.csv",
-#             events_csv_file,
+#         "collection_csv": (
+#             "collection_csv.csv",
+#             collection_csv,
 #             "text/csv",
 #             {"Expires": "0"},
 #         ),
@@ -212,13 +208,11 @@ def test_validate_unfccc_fails_missing_referenced_collection(
 #         headers=superuser_token_headers,
 #     )
 #     assert response.status_code == 202
-#     response_json = response.json()
-#     assert response_json["detail"] is None  # Not yet implemented
 
 #     mock_start_import.assert_called_once()
 
 #     assert mock_write_csv_to_s3.call_count == 2  # write docs & events csvs
 #     call0 = mock_write_csv_to_s3.mock_calls[0]
-#     assert len(call0.kwargs["file_contents"]) == law_policy_csv_file.getbuffer().nbytes
+#     assert len(call0.kwargs["file_contents"]) == unfccc_data_csv.getbuffer().nbytes
 #     call1 = mock_write_csv_to_s3.mock_calls[1]
-#     assert len(call1.kwargs["file_contents"]) == events_csv_file.getbuffer().nbytes
+#     assert len(call1.kwargs["file_contents"]) == collection_csv.getbuffer().nbytes
