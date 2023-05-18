@@ -69,7 +69,7 @@ def _start_ingest(
     # TODO: add a way for a user to monitor progress of the ingest
     try:
         context = initialise_context(db, "CCLW")
-        document_ingestor = get_document_ingestor(db)
+        document_ingestor = get_document_ingestor(db, context)
         read(documents_file_contents, context, CCLWDocumentIngestRow, document_ingestor)
         event_ingestor = get_event_ingestor(db)
         read(events_file_contents, context, EventIngestRow, event_ingestor)

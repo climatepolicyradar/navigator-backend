@@ -79,6 +79,33 @@ def ingest_cclw_document_row(
     return result
 
 
+def ingest_unfccc_document_row(
+    db: Session, context: IngestContext, row: UNFCCCDocumentIngestRow
+) -> dict[str, Any]:
+    """
+    Create the constituent elements in the database that represent this row.
+
+    :param [Session] db: the connection to the database.
+    :param [DocumentIngestRow] row: the IngestRow object of the current CSV row
+    :returns [dict[str, Any]]: a result dictionary describing what was created
+    """
+    result = {}
+    import_id = row.cpr_document_id
+
+    _LOGGER.info(
+        f"Ingest starting for row {row.row_number}.",
+        extra={
+            "props": {
+                "row_number": row.row_number,
+                "import_id": import_id,
+            }
+        },
+    )
+
+    # FIXME: Implement here
+    return result
+
+
 def ingest_collection_row(
     db: Session, context: IngestContext, row: CollectonIngestRow
 ) -> dict[str, Any]:
@@ -156,14 +183,14 @@ def get_collection_ingestor(db: Session) -> ProcessFunc:
     return process
 
 
-def get_document_ingestor(db: Session) -> ProcessFunc:
+def get_document_ingestor(db: Session, context: IngestContext) -> ProcessFunc:
     """
     Get the ingestion function for ingesting a law & policy CSV row.
 
     :return [ProcessFunc]: The function used to ingest the CSV row.
     """
 
-    def process(context: IngestContext, row: CCLWDocumentIngestRow) -> None:
+    def cclw_process(context: IngestContext, row: CCLWDocumentIngestRow) -> None:
         """Processes the row into the db."""
         _LOGGER.info(f"Ingesting document row: {row.row_number}")
 
@@ -180,7 +207,29 @@ def get_document_ingestor(db: Session) -> ProcessFunc:
                     extra={"props": {"row_number": row.row_number, "error": str(e)}},
                 )
 
-    return process
+    def unfccc_process(context: IngestContext, row: UNFCCCDocumentIngestRow) -> None:
+        """Processes the row into the db."""
+        _LOGGER.info(f"Ingesting document row: {row.row_number}")
+
+        with db.begin():
+            try:
+                ingest_unfccc_document_row(db, context, row=row)
+            except Exception as e:
+                error = Result(
+                    ResultType.ERROR, f"Row {row.row_number}: Error {str(e)}"
+                )
+                context.results.append(error)
+                _LOGGER.error(
+                    "Error on ingest",
+                    extra={"props": {"row_number": row.row_number, "error": str(e)}},
+                )
+
+    if context.org_name == "CCLW":
+        return cclw_process
+    elif context.org_name == "UNFCCC":
+        return unfccc_process
+
+    raise ValueError(f"Unknown org {context.org_name} for validation.")
 
 
 def get_document_validator(db: Session, context: IngestContext) -> ProcessFunc:

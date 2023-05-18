@@ -30,7 +30,7 @@ def _populate_db_for_test(
     populate_for_ingest(test_db)
     test_db.commit()
     context = CCLWIngestContext()
-    document_ingestor = get_document_ingestor(test_db)
+    document_ingestor = get_document_ingestor(test_db, context)
     event_ingestor = get_event_ingestor(test_db)
 
     read(ingest_doc_content, context, CCLWDocumentIngestRow, document_ingestor)

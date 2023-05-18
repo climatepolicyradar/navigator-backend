@@ -168,51 +168,51 @@ def test_validate_unfccc_fails_missing_referenced_collection(
     )
 
 
-# def test_ingest_unfccc_works(
-#     client,
-#     superuser_token_headers,
-#     test_db,
-#     mocker,
-# ):
-#     mock_start_import = mocker.patch(
-#         "app.api.api_v1.routers.unfccc_ingest._start_ingest"
-#     )
-#     mock_write_csv_to_s3 = mocker.patch(
-#         "app.api.api_v1.routers.unfccc_ingest.write_csv_to_s3"
-#     )
-#     populate_taxonomy(test_db)
-#     populate_geography(test_db)
-#     populate_document_type(test_db)
-#     populate_document_role(test_db)
-#     populate_document_variant(test_db)
-#     test_db.commit()
-#     unfccc_data_csv = BytesIO(ONE_UNFCCC_ROW.encode("utf8"))
-#     collection_csv = BytesIO(ONE_COLLECTION_ROW.encode("utf8"))
-#     files = {
-#         "unfccc_data_csv": (
-#             "unfccc_data_csv.csv",
-#             unfccc_data_csv,
-#             "text/csv",
-#             {"Expires": "0"},
-#         ),
-#         "collection_csv": (
-#             "collection_csv.csv",
-#             collection_csv,
-#             "text/csv",
-#             {"Expires": "0"},
-#         ),
-#     }
-#     response = client.post(
-#         "/api/v1/admin/bulk-ingest/unfccc",
-#         files=files,
-#         headers=superuser_token_headers,
-#     )
-#     assert response.status_code == 202
+def test_ingest_unfccc_works(
+    client,
+    superuser_token_headers,
+    test_db,
+    mocker,
+):
+    mock_start_import = mocker.patch(
+        "app.api.api_v1.routers.unfccc_ingest._start_ingest"
+    )
+    mock_write_csv_to_s3 = mocker.patch(
+        "app.api.api_v1.routers.unfccc_ingest.write_csv_to_s3"
+    )
+    populate_taxonomy(test_db)
+    populate_geography(test_db)
+    populate_document_type(test_db)
+    populate_document_role(test_db)
+    populate_document_variant(test_db)
+    test_db.commit()
+    unfccc_data_csv = BytesIO(ONE_UNFCCC_ROW.encode("utf8"))
+    collection_csv = BytesIO(ONE_COLLECTION_ROW.encode("utf8"))
+    files = {
+        "unfccc_data_csv": (
+            "unfccc_data_csv.csv",
+            unfccc_data_csv,
+            "text/csv",
+            {"Expires": "0"},
+        ),
+        "collection_csv": (
+            "collection_csv.csv",
+            collection_csv,
+            "text/csv",
+            {"Expires": "0"},
+        ),
+    }
+    response = client.post(
+        "/api/v1/admin/bulk-ingest/unfccc",
+        files=files,
+        headers=superuser_token_headers,
+    )
+    assert response.status_code == 202
 
-#     mock_start_import.assert_called_once()
+    mock_start_import.assert_called_once()
 
-#     assert mock_write_csv_to_s3.call_count == 2  # write docs & events csvs
-#     call0 = mock_write_csv_to_s3.mock_calls[0]
-#     assert len(call0.kwargs["file_contents"]) == unfccc_data_csv.getbuffer().nbytes
-#     call1 = mock_write_csv_to_s3.mock_calls[1]
-#     assert len(call1.kwargs["file_contents"]) == collection_csv.getbuffer().nbytes
+    assert mock_write_csv_to_s3.call_count == 2  # write docs & events csvs
+    call0 = mock_write_csv_to_s3.mock_calls[0]
+    assert len(call0.kwargs["file_contents"]) == unfccc_data_csv.getbuffer().nbytes
+    call1 = mock_write_csv_to_s3.mock_calls[1]
+    assert len(call1.kwargs["file_contents"]) == collection_csv.getbuffer().nbytes

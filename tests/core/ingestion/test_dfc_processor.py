@@ -14,7 +14,7 @@ def test_cclw_ingestor__three_good_rows(test_db):
     populate_for_ingest(test_db)
     test_db.commit()
     context = CCLWIngestContext()
-    document_ingestor = get_document_ingestor(test_db)
+    document_ingestor = get_document_ingestor(test_db, context)
 
     read(THREE_DOC_ROWS, context, CCLWDocumentIngestRow, document_ingestor)
 
@@ -26,7 +26,7 @@ def test_cclw_ingestor__second_bad_row(test_db):
     populate_for_ingest(test_db)
     test_db.commit()
     context = CCLWIngestContext()
-    document_ingestor = get_document_ingestor(test_db)
+    document_ingestor = get_document_ingestor(test_db, context)
 
     read(THREE_DOC_ROWS_2ND_BAD, context, CCLWDocumentIngestRow, document_ingestor)
 
