@@ -1,5 +1,5 @@
 from app.core.ingestion.cclw.ingest_row_cclw import CCLWDocumentIngestRow
-from app.core.ingestion.processor import get_dfc_ingestor
+from app.core.ingestion.processor import get_document_ingestor
 from app.core.ingestion.cclw.reader import read
 from app.core.ingestion.utils import CCLWIngestContext, ResultType
 from app.db.models.law_policy.family import FamilyDocument
@@ -10,11 +10,11 @@ from tests.core.ingestion.helpers import (
 )
 
 
-def test_dfc_ingestor__three_good_rows(test_db):
+def test_cclw_ingestor__three_good_rows(test_db):
     populate_for_ingest(test_db)
     test_db.commit()
     context = CCLWIngestContext()
-    document_ingestor = get_dfc_ingestor(test_db)
+    document_ingestor = get_document_ingestor(test_db)
 
     read(THREE_DOC_ROWS, context, CCLWDocumentIngestRow, document_ingestor)
 
@@ -22,11 +22,11 @@ def test_dfc_ingestor__three_good_rows(test_db):
     assert 3 == test_db.query(FamilyDocument).count()
 
 
-def test_dfc_ingestor__second_bad_row(test_db):
+def test_cclw_ingestor__second_bad_row(test_db):
     populate_for_ingest(test_db)
     test_db.commit()
     context = CCLWIngestContext()
-    document_ingestor = get_dfc_ingestor(test_db)
+    document_ingestor = get_document_ingestor(test_db)
 
     read(THREE_DOC_ROWS_2ND_BAD, context, CCLWDocumentIngestRow, document_ingestor)
 

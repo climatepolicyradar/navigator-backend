@@ -28,8 +28,8 @@ from app.core.ingestion.unfccc.pipeline import generate_pipeline_ingest_input
 from app.core.ingestion.processor import (
     get_collection_ingestor,
     initialise_context,
-    get_dfc_ingestor,
-    get_dfc_validator,
+    get_document_ingestor,
+    get_document_validator,
 )
 from app.core.ingestion.unfccc.reader import get_file_contents, read
 from app.core.ingestion.utils import (
@@ -67,12 +67,15 @@ def _start_ingest(
     # TODO: add a way for a user to monitor progress of the ingest
     try:
         context = initialise_context(db, "UNFCCC")
-        document_ingestor = get_dfc_ingestor(db)
+        # First the collections....
+        collection_ingestor = get_collection_ingestor(db)
+        read(collection_file_contents, context, CollectonIngestRow, collection_ingestor)
+
+        # FIXME: Write a unfccc ingestor
+        document_ingestor = get_document_ingestor(db)
         read(
             documents_file_contents, context, UNFCCCDocumentIngestRow, document_ingestor
         )
-        collection_ingestor = get_collection_ingestor(db)
-        read(collection_file_contents, context, CollectonIngestRow, collection_ingestor)
     except Exception as e:
         # This is a background task, so do not raise
         _LOGGER.exception(
@@ -271,6 +274,12 @@ def ingest_unfccc_law_policy(
             s3_content_label="documents",
             file_contents=documents_file_contents,
         )
+        result_collections: Union[S3Document, bool] = write_csv_to_s3(
+            s3_client=s3_client,
+            s3_prefix=s3_prefix,
+            s3_content_label="collections",
+            file_contents=collection_file_contents,
+        )
 
         if (
             type(result_documents) is bool
@@ -287,17 +296,35 @@ def ingest_unfccc_law_policy(
                 status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
                 detail="Unexpected error, fail to write Bulk Document Ingest CSV to S3",
             )
-        documents_csv_s3_location = str(result_documents.url)
-        _LOGGER.info(
-            "Write Event Ingest CSV complete.",
-            extra={
-                "props": {
-                    "superuser_email": current_user.email,
-                    "documents_csv_s3_location": documents_csv_s3_location,
-                }
-            },
-        )
-
+        if (
+            type(result_collections) is bool
+        ):  # S3Client returns False if the object was not created
+            _LOGGER.error(
+                "Write Bulk Collections Ingest CSV to S3 Failed.",
+                extra={
+                    "props": {
+                        "superuser_email": current_user.email,
+                    }
+                },
+            )
+            msg = "Unexpected error, fail to write Bulk Collections Ingest CSV to S3"
+            raise HTTPException(
+                status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
+                detail=msg,
+            )
+        else:
+            documents_csv_s3_location = str(result_documents.url)
+            collections_csv_s3_location = str(result_collections.url)
+            _LOGGER.info(
+                "Write Event UNFCCC Ingest CSV complete.",
+                extra={
+                    "props": {
+                        "superuser_email": current_user.email,
+                        "documents_csv_s3_location": documents_csv_s3_location,
+                        "collections_csv_s3_location": collections_csv_s3_location,
+                    }
+                },
+            )
     except Exception as e:
         _LOGGER.exception(
             "Unexpected error, writing Bulk Document Ingest CSV content to S3",
@@ -359,7 +386,7 @@ def _validate_unfccc_csv(
 
     # Now do the validation of the documents
     documents_file_contents = get_file_contents(unfccc_data_csv)
-    validator = get_dfc_validator(db, context)
+    validator = get_document_validator(db, context)
     read(documents_file_contents, context, UNFCCCDocumentIngestRow, validator)
     # Get the rows here as this is the length of results
     rows = len(context.results)

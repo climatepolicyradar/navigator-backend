@@ -2,7 +2,10 @@ import logging
 from typing import Any, Callable, TypeVar, cast
 
 from sqlalchemy.orm import Session
-from app.core.ingestion.cclw.collection import handle_collection_from_row
+from app.core.ingestion.cclw.collection import (
+    create_collection,
+    handle_collection_from_row,
+)
 from app.core.ingestion.cclw.event import family_event_from_row
 from app.core.ingestion.cclw.family import handle_family_from_row
 from app.core.ingestion.cclw.ingest_row_cclw import (
@@ -79,8 +82,10 @@ def ingest_cclw_document_row(
 def ingest_collection_row(
     db: Session, context: IngestContext, row: CollectonIngestRow
 ) -> dict[str, Any]:
-    # FIXME: implement this
-    return {}
+    result = {}
+    with db.begin():
+        create_collection(db, row, context.org_id, result)
+    return result
 
 
 def ingest_event_row(
@@ -151,7 +156,7 @@ def get_collection_ingestor(db: Session) -> ProcessFunc:
     return process
 
 
-def get_dfc_ingestor(db: Session) -> ProcessFunc:
+def get_document_ingestor(db: Session) -> ProcessFunc:
     """
     Get the ingestion function for ingesting a law & policy CSV row.
 
@@ -178,7 +183,7 @@ def get_dfc_ingestor(db: Session) -> ProcessFunc:
     return process
 
 
-def get_dfc_validator(db: Session, context: IngestContext) -> ProcessFunc:
+def get_document_validator(db: Session, context: IngestContext) -> ProcessFunc:
     """
     Get the validation function for ingesting a law & policy CSV.
 

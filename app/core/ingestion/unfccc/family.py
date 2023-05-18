@@ -55,7 +55,6 @@ def _after_create_family(
     db: Session, row: UNFCCCDocumentIngestRow, org_id: int, result: dict[str, Any]
 ):
     def _create_family_links(family: Family):
-        # FIXME: Is this how we are handling slugs?
         family_slug = Slug(name=row.cpr_family_slug, family_import_id=family.import_id)
 
         db.add(family_slug)

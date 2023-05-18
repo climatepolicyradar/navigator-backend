@@ -28,8 +28,8 @@ from app.core.ingestion.cclw.ingest_row_cclw import (
 from app.core.ingestion.cclw.pipeline import generate_pipeline_ingest_input
 from app.core.ingestion.processor import (
     initialise_context,
-    get_dfc_ingestor,
-    get_dfc_validator,
+    get_document_ingestor,
+    get_document_validator,
     get_event_ingestor,
 )
 from app.core.ingestion.cclw.reader import get_file_contents, read
@@ -69,7 +69,7 @@ def _start_ingest(
     # TODO: add a way for a user to monitor progress of the ingest
     try:
         context = initialise_context(db, "CCLW")
-        document_ingestor = get_dfc_ingestor(db)
+        document_ingestor = get_document_ingestor(db)
         read(documents_file_contents, context, CCLWDocumentIngestRow, document_ingestor)
         event_ingestor = get_event_ingestor(db)
         read(events_file_contents, context, EventIngestRow, event_ingestor)
@@ -324,7 +324,7 @@ def ingest_law_policy(
             documents_csv_s3_location = str(result_documents.url)
             events_csv_s3_location = str(result_events.url)
             _LOGGER.info(
-                "Write Event Ingest CSV complete.",
+                "Write Event CCLW Ingest CSV complete.",
                 extra={
                     "props": {
                         "superuser_email": current_user.email,
@@ -384,7 +384,7 @@ def _validate_cclw_csv(
     :return tuple[str, str]: the file contents of the csv and the summary message
     """
     documents_file_contents = get_file_contents(law_policy_csv)
-    validator = get_dfc_validator(db, context)
+    validator = get_document_validator(db, context)
     read(documents_file_contents, context, CCLWDocumentIngestRow, validator)
     rows, fails, resolved = get_result_counts(context.results)
     all_results.extend(context.results)
