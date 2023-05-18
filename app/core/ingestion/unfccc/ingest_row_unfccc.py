@@ -5,38 +5,10 @@ from pydantic import ConfigDict, Extra
 from pydantic.dataclasses import dataclass
 from app.core.ingestion.ingest_row_base import BaseIngestRow
 
-""" 
-New Columns:
-
-Category	- ignore, hard code for now
-md5sum	
-Submission type	
- -- Collection name	*REMOVE*
-Collection ID	
-Family name	
-Document title	
-Documents	
-Author	
-Author type	
-Geography	
-Geography ISO	
-Date	
-Document role	
-Document variant	
-Language	
-CPR Collection ID	
-CPR Document ID	
-CPR Family ID	
-CPR Family Slug	
-CPR Document Slug
-
-"""
-
 _REQUIRED_DOCUMENT_COLUMNS = [
     "Category",
     "md5sum",
     "Submission type",
-    "Collection ID",
     "Family name",
     "Document title",
     "Documents",
@@ -71,7 +43,6 @@ class UNFCCCDocumentIngestRow(BaseIngestRow):
     category: str
     md5sum: str
     submission_type: str  # METADATA
-    collection_id: str
     family_name: str
     document_title: str
     documents: str
