@@ -3,7 +3,7 @@ import pytest
 from sqlalchemy.orm import Session
 from app.core.cclw_ingestion.ingest_row_cclw import CCLWDocumentIngestRow
 from app.core.ingestion.processor import ingest_cclw_document_row
-from app.core.ingestion.utils import IngestContext
+from app.core.ingestion.utils import CCLWIngestContext
 from app.db.models.document.physical_document import PhysicalDocument
 from app.db.models.law_policy.collection import (
     Collection,
@@ -31,7 +31,7 @@ from tests.core.ingestion.helpers import (
 
 
 def setup_for_update(test_db):
-    context = IngestContext()
+    context = CCLWIngestContext()
     row = CCLWDocumentIngestRow.from_row(1, get_doc_ingest_row_data(0))
     populate_for_ingest(test_db)
     ingest_cclw_document_row(test_db, context, row)
@@ -46,7 +46,7 @@ def assert_dfc(db: Session, n_docs: int, n_families: int, n_collections: int):
 
 
 def test_ingest_row__with_multiple_rows(test_db: Session):
-    context = IngestContext()
+    context = CCLWIngestContext()
     row = CCLWDocumentIngestRow.from_row(1, get_doc_ingest_row_data(0))
     row.cpr_family_id = "CCLW.family.test.1"
     row.cpr_family_slug = "fam-test-1"
@@ -107,7 +107,7 @@ def test_ingest_row__with_multiple_rows(test_db: Session):
 
 
 def test_ingest_row__creates_missing_documents(test_db: Session):
-    context = IngestContext()
+    context = CCLWIngestContext()
     row = CCLWDocumentIngestRow.from_row(1, get_doc_ingest_row_data(0))
     populate_for_ingest(test_db)
     result = ingest_cclw_document_row(test_db, context, row)

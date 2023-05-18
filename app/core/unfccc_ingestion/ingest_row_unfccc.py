@@ -26,6 +26,13 @@ _REQUIRED_DOCUMENT_COLUMNS = [
 ]
 VALID_DOCUMENT_COLUMN_NAMES = set(_REQUIRED_DOCUMENT_COLUMNS)
 
+_REQUIRED_COLLECTION_COLUMNS = [
+    "Collection ID",
+    "Collection Name",
+    "Collection Summary",
+]
+VALID_COLLECTION_COLUMN_NAMES = set(_REQUIRED_COLLECTION_COLUMNS)
+
 
 @dataclass(config=ConfigDict(frozen=True, validate_assignment=True, extra=Extra.forbid))
 class UNFCCCDocumentIngestRow(BaseIngestRow):
@@ -65,3 +72,14 @@ class UNFCCCDocumentIngestRow(BaseIngestRow):
     @staticmethod
     def _key(key: str) -> str:
         return key.lower().replace(" ", "_")
+
+
+@dataclass(config=ConfigDict(frozen=True, validate_assignment=True, extra=Extra.ignore))
+class CollectonIngestRow(BaseIngestRow):
+    """Represents a single row of input from the collection CSV."""
+
+    collection_id: str
+    collection_name: str
+    collection_summary: str
+
+    VALID_COLUMNS: ClassVar[set[str]] = VALID_COLLECTION_COLUMN_NAMES

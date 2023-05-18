@@ -9,6 +9,7 @@ from app.core.ingestion.metadata import Taxonomy
 from app.core.unfccc_ingestion.ingest_row_unfccc import UNFCCCDocumentIngestRow
 from app.core.cclw_ingestion.metadata import build_cclw_metadata
 from app.core.ingestion.utils import (
+    CCLWIngestContext,
     IngestContext,
     Result,
     ResultType,
@@ -142,7 +143,7 @@ def validate_unfccc_document_row(
 
 def validate_cclw_document_row(
     db: Session,
-    context: IngestContext,
+    context: CCLWIngestContext,
     row: CCLWDocumentIngestRow,
     taxonomy: Taxonomy,
 ) -> None:

@@ -10,9 +10,18 @@ from app.core.cclw_ingestion.ingest_row_cclw import (
     EventIngestRow,
 )
 from app.core.ingestion.ingest_row_base import BaseIngestRow
-from app.core.unfccc_ingestion.ingest_row_unfccc import UNFCCCDocumentIngestRow
+from app.core.unfccc_ingestion.ingest_row_unfccc import (
+    CollectonIngestRow,
+    UNFCCCDocumentIngestRow,
+)
 from app.core.organisation import get_organisation_taxonomy
-from app.core.ingestion.utils import IngestContext, Result, ResultType
+from app.core.ingestion.utils import (
+    CCLWIngestContext,
+    IngestContext,
+    Result,
+    ResultType,
+    UNFCCCIngestContext,
+)
 from app.core.ingestion.validator import (
     validate_cclw_document_row,
     validate_unfccc_document_row,
@@ -67,6 +76,13 @@ def ingest_cclw_document_row(
     return result
 
 
+def ingest_collection_row(
+    db: Session, context: IngestContext, row: CollectonIngestRow
+) -> dict[str, Any]:
+    # FIXME: implement this
+    return {}
+
+
 def ingest_event_row(
     db: Session, context: IngestContext, row: EventIngestRow
 ) -> dict[str, Any]:
@@ -90,9 +106,18 @@ def initialise_context(db: Session, org_name: str) -> IngestContext:
     """
     with db.begin():
         organisation = db.query(Organisation).filter_by(name=org_name).one()
-        return IngestContext(
-            org_name=org_name, org_id=cast(int, organisation.id), results=[]
-        )
+        if org_name == "CCLW":
+            return CCLWIngestContext(
+                org_name=org_name, org_id=cast(int, organisation.id), results=[]
+            )
+        elif org_name == "UNFCCC":
+            return UNFCCCIngestContext(
+                org_name=org_name, org_id=cast(int, organisation.id), results=[]
+            )
+        else:
+            raise ValueError(
+                f"Code not in sync with data - org {org_name} unknown to code"
+            )
 
 
 def get_event_ingestor(db: Session) -> ProcessFunc:
@@ -108,6 +133,23 @@ def get_event_ingestor(db: Session) -> ProcessFunc:
 
         with db.begin():
             ingest_event_row(db, context, row=row)
+
+    return process
+
+
+def get_collection_ingestor(db: Session) -> ProcessFunc:
+    """
+    Get the ingestion function for ingesting a collection CSV row.
+
+    :return [ProcessFunc]: The function used to ingest the CSV row.
+    """
+
+    def process(context: IngestContext, row: CollectonIngestRow) -> None:
+        """Processes the row into the db."""
+        _LOGGER.info(f"Ingesting collection row: {row.row_number}")
+
+        with db.begin():
+            ingest_collection_row(db, context, row=row)
 
     return process
 
@@ -154,7 +196,10 @@ def get_dfc_validator(db: Session, context: IngestContext) -> ProcessFunc:
         _LOGGER.info(f"Validating document row: {row.row_number}")
         with db.begin():
             validate_cclw_document_row(
-                db=db, context=context, taxonomy=taxonomy, row=row
+                db=db,
+                context=cast(CCLWIngestContext, context),
+                taxonomy=taxonomy,
+                row=row,
             )
 
     def unfccc_process(context: IngestContext, row: UNFCCCDocumentIngestRow) -> None:

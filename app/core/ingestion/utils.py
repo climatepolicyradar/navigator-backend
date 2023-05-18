@@ -1,3 +1,4 @@
+import abc
 from dataclasses import dataclass
 import enum
 from typing import Any, Callable, Optional, TypeVar, cast
@@ -210,19 +211,38 @@ class ConsistencyValidator:
 
 
 @dataclass
-class IngestContext:
+class IngestContext(abc.ABC):
     """Context used when processing."""
 
     org_name: str
     org_id: int
     results: list[Result]
-    consistency_validator: ConsistencyValidator
 
-    def __init__(self, org_name="CCLW", org_id=1, results=None) -> None:
+
+@dataclass
+class UNFCCCIngestContext(IngestContext):
+    """Ingest Context for UNFCCC"""
+
+    collection_ids: list[str]
+
+    def __init__(self, org_name="UNFCCC", org_id=2, results=None):
+        self.collection_ids = []
         self.org_name = org_name
         self.org_id = org_id
         self.results = [] if results is None else results
+
+
+@dataclass
+class CCLWIngestContext(IngestContext):
+    """Ingest Context for CCLW"""
+
+    consistency_validator: ConsistencyValidator
+
+    def __init__(self, org_name="CCLW", org_id=1, results=None):
         self.consistency_validator = ConsistencyValidator()
+        self.org_name = org_name
+        self.org_id = org_id
+        self.results = [] if results is None else results
 
 
 @dataclass

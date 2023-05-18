@@ -12,7 +12,7 @@ from app.core.cclw_ingestion.ingest_row_cclw import (
 from app.core.cclw_ingestion.pipeline import generate_pipeline_ingest_input
 from app.core.ingestion.processor import get_dfc_ingestor, get_event_ingestor
 from app.core.cclw_ingestion.reader import read
-from app.core.ingestion.utils import IngestContext
+from app.core.ingestion.utils import CCLWIngestContext
 from tests.core.ingestion.helpers import (
     FIVE_EVENT_ROWS,
     THREE_DOC_ROWS,
@@ -29,7 +29,7 @@ def _populate_db_for_test(
 ) -> None:
     populate_for_ingest(test_db)
     test_db.commit()
-    context = IngestContext()
+    context = CCLWIngestContext()
     document_ingestor = get_dfc_ingestor(test_db)
     event_ingestor = get_event_ingestor(test_db)
 

@@ -1,5 +1,5 @@
 import logging
-from typing import Union
+from typing import Union, cast
 from sqlalchemy.orm import Session
 from app.core.aws import S3Client
 
@@ -19,10 +19,14 @@ from app.api.api_v1.schemas.document import (
 )
 from app.core.auth import get_superuser_details
 from app.core.aws import get_s3_client
-from app.core.unfccc_ingestion.ingest_row_unfccc import UNFCCCDocumentIngestRow
+from app.core.unfccc_ingestion.ingest_row_unfccc import (
+    CollectonIngestRow,
+    UNFCCCDocumentIngestRow,
+)
 
 from app.core.unfccc_ingestion.pipeline import generate_pipeline_ingest_input
 from app.core.ingestion.processor import (
+    get_collection_ingestor,
     initialise_context,
     get_dfc_ingestor,
     get_dfc_validator,
@@ -32,6 +36,7 @@ from app.core.ingestion.utils import (
     IngestContext,
     Result,
     ResultType,
+    UNFCCCIngestContext,
 )
 from app.core.ingestion.utils import (
     ValidationResult,
@@ -56,6 +61,7 @@ def _start_ingest(
     s3_client: S3Client,
     s3_prefix: str,
     documents_file_contents: str,
+    collection_file_contents: str,
 ):
     context = None
     # TODO: add a way for a user to monitor progress of the ingest
@@ -65,6 +71,8 @@ def _start_ingest(
         read(
             documents_file_contents, context, UNFCCCDocumentIngestRow, document_ingestor
         )
+        collection_ingestor = get_collection_ingestor(db)
+        read(collection_file_contents, context, CollectonIngestRow, collection_ingestor)
     except Exception as e:
         # This is a background task, so do not raise
         _LOGGER.exception(
@@ -105,7 +113,8 @@ def _start_ingest(
 )
 def validate_unfccc_law_policy(
     request: Request,
-    law_policy_csv: UploadFile,
+    unfccc_data_csv: UploadFile,
+    collection_csv: UploadFile,
     db=Depends(get_db),
     current_user=Depends(get_superuser_details),
 ):
@@ -142,7 +151,13 @@ def validate_unfccc_law_policy(
     all_results = []
 
     try:
-        _, message = _validate_unfccc_csv(law_policy_csv, db, context, all_results)
+        _, _, message = _validate_unfccc_csv(
+            unfccc_data_csv,
+            collection_csv,
+            db,
+            cast(UNFCCCIngestContext, context),
+            all_results,
+        )
     except ImportSchemaMismatchError as e:
         _LOGGER.exception(
             "Provided CSV failed law & policy schema validation",
@@ -168,8 +183,8 @@ def validate_unfccc_law_policy(
 )
 def ingest_unfccc_law_policy(
     request: Request,
-    law_policy_csv: UploadFile,
-    events_csv: UploadFile,
+    unfccc_data_csv: UploadFile,
+    collection_csv: UploadFile,
     background_tasks: BackgroundTasks,
     db=Depends(get_db),
     current_user=Depends(get_superuser_details),
@@ -179,8 +194,8 @@ def ingest_unfccc_law_policy(
     Ingest the provided CSV into the document / family / collection schema.
 
     :param [Request] request: Incoming request (UNUSED).
-    :param [UploadFile] law_policy_csv: CSV file containing documents to ingest.
-    :param [UploadFile] events_csv: CSV file containing events to ingest.
+    :param [UploadFile] unfccc_data_csv: CSV file containing documents to ingest.
+    :param [UploadFile] collection_csv: CSV file containing collection to ingest.
     :param [BackgroundTasks] background_tasks: Tasks API to start ingest task.
     :param [Session] db: Database connection.
         Defaults to Depends(get_db).
@@ -214,8 +229,12 @@ def ingest_unfccc_law_policy(
 
     # PHASE 1 - Validate
     try:
-        documents_file_contents, _ = _validate_unfccc_csv(
-            law_policy_csv, db, context, all_results
+        documents_file_contents, collection_file_contents, _ = _validate_unfccc_csv(
+            unfccc_data_csv,
+            collection_csv,
+            db,
+            cast(UNFCCCIngestContext, context),
+            all_results,
         )
     except ImportSchemaMismatchError as e:
         _LOGGER.exception(
@@ -293,6 +312,7 @@ def ingest_unfccc_law_policy(
         s3_client,
         s3_prefix,
         documents_file_contents,
+        collection_file_contents,
     )
 
     _LOGGER.info(
@@ -313,11 +333,12 @@ def ingest_unfccc_law_policy(
 
 
 def _validate_unfccc_csv(
-    law_policy_csv: UploadFile,
+    unfccc_data_csv: UploadFile,
+    collection_csv: UploadFile,
     db: Session,
-    context: IngestContext,
+    context: UNFCCCIngestContext,
     all_results: list[Result],
-) -> tuple[str, str]:
+) -> tuple[str, str, str]:
     """
     Validates the csv file
 
@@ -327,7 +348,17 @@ def _validate_unfccc_csv(
     :param list[Result] all_results: the results
     :return tuple[str, str]: the file contents of the csv and the summary message
     """
-    documents_file_contents = get_file_contents(law_policy_csv)
+
+    # First read all the ids in the collection_csv
+    def collate_ids(context: IngestContext, row: CollectonIngestRow) -> None:
+        ctx = cast(UNFCCCIngestContext, context)
+        ctx.collection_ids.append(row.collection_id)
+
+    collection_file_contents = get_file_contents(collection_csv)
+    read(collection_file_contents, context, UNFCCCDocumentIngestRow, collate_ids)
+
+    # Now do the validation of the documents
+    documents_file_contents = get_file_contents(unfccc_data_csv)
     validator = get_dfc_validator(db, context)
     read(documents_file_contents, context, UNFCCCDocumentIngestRow, validator)
     rows, fails, resolved = get_result_counts(context.results)
@@ -340,4 +371,4 @@ def _validate_unfccc_csv(
 
     _LOGGER.info(message)
 
-    return documents_file_contents, message
+    return documents_file_contents, collection_file_contents, message
