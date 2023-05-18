@@ -126,14 +126,8 @@ def validate_unfccc_document_row(
         errors,
     )
 
-    # Check collection id against the collection csv
-    if row.collection_id not in context.collection_ids_defined:
-        errors.append(
-            Result(
-                ResultType.ERROR,
-                f"Collection ID {row.collection_id} is missing from the collection CSV",
-            )
-        )
+    # Add to the collections that are referenced so we can valiate later
+    context.collection_ids_referenced.append(row.collection_id)
 
     if len(errors) > 0:
         context.results += errors

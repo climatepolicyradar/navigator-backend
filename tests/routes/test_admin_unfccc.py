@@ -12,18 +12,22 @@ from app.data_migrations import (
 
 
 def test_unauthenticated_ingest(client):
-    response = client.post("/api/v1/admin/bulk-ingest/cclw")
+    response = client.post("/api/v1/admin/bulk-ingest/unfccc")
     assert response.status_code == 401
 
 
-def test_unauthorized_ingest(client):
+def test_unauthorized_validation(client):
     response = client.post(
-        "/api/v1/admin/bulk-ingest/cclw",
+        "/api/v1/admin/bulk-ingest/validate/unfccc",
     )
     assert response.status_code == 401
 
 
-ONE_DFC_ROW = """id,md5sum,Submission type,Collection ID,Family name,Document title,Documents,Author,Author type,Geography,Geography ISO,Date,Document role,Document variant,Language
+MISSING_COLL_UNFCCC_ROW = """id,md5sum,Submission type,Collection ID,Family name,Document title,Documents,Author,Author type,Geography,Geography ISO,Date,Document role,Document variant,Language
+1,00254c407297fbb50a77d748b817ee5c,Synthesis Report,Coll2,Nationally determined contributions under the Paris Agreement. Revised note by the secretariat,Nationally determined contributions under the Paris Agreement. Revised note by the secretariat,https://unfccc.int/sites/default/files/resource/cma2021_08r01_S.pdf,UNFCCC Secretariat,Party,UK,GBR,2021-10-25T12:00:00Z,,,
+"""
+
+ONE_UNFCCC_ROW = """id,md5sum,Submission type,Collection ID,Family name,Document title,Documents,Author,Author type,Geography,Geography ISO,Date,Document role,Document variant,Language
 1,00254c407297fbb50a77d748b817ee5c,Synthesis Report,Coll1,Nationally determined contributions under the Paris Agreement. Revised note by the secretariat,Nationally determined contributions under the Paris Agreement. Revised note by the secretariat,https://unfccc.int/sites/default/files/resource/cma2021_08r01_S.pdf,UNFCCC Secretariat,Party,UK,GBR,2021-10-25T12:00:00Z,,,
 """
 
@@ -32,11 +36,6 @@ ZERO_COLLECTION_ROW = """Collection ID,Collection Name,Collection Summary
 
 ONE_COLLECTION_ROW = """Collection ID,Collection Name,Collection Summary
 Coll1,Collection One,Everything to do with testing
-"""
-
-TWO_EVENT_ROWS = """Id,Eventable type,Eventable Id,Eventable name,Event type,Title,Description,Date,Url,CPR Event ID,CPR Family ID,Event Status
-1101,Legislation,1001,Title1,Passed/Approved,Published,,2019-12-25,,CCLW.legislation_event.1101.0,CCLW.family.1001.0,OK
-1102,Legislation,1001,Title1,Entered Into Force,Entered into force,,2018-01-01,,CCLW.legislation_event.1102.1,CCLW.family.1001.0,DUPLICATED
 """
 
 
@@ -51,7 +50,7 @@ def test_validate_unfccc_works(
     populate_document_role(test_db)
     populate_document_variant(test_db)
     test_db.commit()
-    unfccc_data_csv = BytesIO(ONE_DFC_ROW.encode("utf8"))
+    unfccc_data_csv = BytesIO(ONE_UNFCCC_ROW.encode("utf8"))
     collection_csv = BytesIO(ONE_COLLECTION_ROW.encode("utf8"))
     files = {
         "unfccc_data_csv": (
@@ -81,7 +80,7 @@ def test_validate_unfccc_works(
     )
 
 
-def test_validate_unfccc_fails_missing_collection(
+def test_validate_unfccc_fails_missing_defined_collection(
     client,
     superuser_token_headers,
     test_db,
@@ -92,7 +91,7 @@ def test_validate_unfccc_fails_missing_collection(
     populate_document_role(test_db)
     populate_document_variant(test_db)
     test_db.commit()
-    unfccc_data_csv = BytesIO(ONE_DFC_ROW.encode("utf8"))
+    unfccc_data_csv = BytesIO(ONE_UNFCCC_ROW.encode("utf8"))
     collection_csv = BytesIO(ZERO_COLLECTION_ROW.encode("utf8"))
     files = {
         "unfccc_data_csv": (
@@ -117,7 +116,52 @@ def test_validate_unfccc_fails_missing_collection(
     response_json = response.json()
     assert len(response_json["errors"]) == 1
     assert response_json["errors"][0] == {
-        "details": "Collection ID Coll1 is missing from the collection CSV",
+        "details": "The following Collection IDs were referenced and not defined: ['Coll1']",
+        "type": "Error",
+    }
+    assert (
+        response_json["message"]
+        == "UNFCCC validation result: 1 Rows, 1 Failures, 0 Resolved"
+    )
+
+
+def test_validate_unfccc_fails_missing_referenced_collection(
+    client,
+    superuser_token_headers,
+    test_db,
+):
+    populate_taxonomy(test_db)
+    populate_geography(test_db)
+    populate_document_type(test_db)
+    populate_document_role(test_db)
+    populate_document_variant(test_db)
+    test_db.commit()
+    unfccc_data_csv = BytesIO(MISSING_COLL_UNFCCC_ROW.encode("utf8"))
+    collection_csv = BytesIO(ZERO_COLLECTION_ROW.encode("utf8"))
+    files = {
+        "unfccc_data_csv": (
+            "unfccc_data_csv.csv",
+            unfccc_data_csv,
+            "text/csv",
+            {"Expires": "0"},
+        ),
+        "collection_csv": (
+            "collection_csv.csv",
+            collection_csv,
+            "text/csv",
+            {"Expires": "0"},
+        ),
+    }
+    response = client.post(
+        "/api/v1/admin/bulk-ingest/validate/unfccc",
+        files=files,
+        headers=superuser_token_headers,
+    )
+    assert response.status_code == 200
+    response_json = response.json()
+    assert len(response_json["errors"]) == 1
+    assert response_json["errors"][0] == {
+        "details": "The following Collection IDs were referenced and not defined: ['Coll2']",
         "type": "Error",
     }
     assert (
@@ -146,7 +190,7 @@ def test_validate_unfccc_fails_missing_collection(
 #     populate_document_variant(test_db)
 #     test_db.commit()
 
-#     law_policy_csv_file = BytesIO(ONE_DFC_ROW.encode("utf8"))
+#     law_policy_csv_file = BytesIO(ONE_UNFCCC_ROW.encode("utf8"))
 #     events_csv_file = BytesIO(TWO_EVENT_ROWS.encode("utf8"))
 #     files = {
 #         "law_policy_csv": (
