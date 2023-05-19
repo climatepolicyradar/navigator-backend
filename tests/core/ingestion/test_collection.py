@@ -1,6 +1,6 @@
 from typing import cast
 from sqlalchemy.orm import Session
-from app.core.ingestion.cclw.collection import handle_collection_and_link
+from app.core.ingestion.collection import handle_collection_and_link
 from app.core.ingestion.cclw.ingest_row_cclw import CCLWDocumentIngestRow
 from app.core.ingestion.processor import build_params_from_cclw
 from app.core.ingestion.utils import get_or_create

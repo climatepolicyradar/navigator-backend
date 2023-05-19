@@ -25,14 +25,14 @@ from app.core.ingestion.cclw.ingest_row_cclw import (
     CCLWDocumentIngestRow,
     EventIngestRow,
 )
-from app.core.ingestion.cclw.pipeline import generate_pipeline_ingest_input
+from app.core.ingestion.pipeline import generate_pipeline_ingest_input
 from app.core.ingestion.processor import (
     initialise_context,
     get_cclw_document_ingestor,
     get_document_validator,
     get_event_ingestor,
 )
-from app.core.ingestion.cclw.reader import get_file_contents, read
+from app.core.ingestion.reader import get_file_contents, read
 from app.core.ingestion.utils import (
     IngestContext,
     Result,

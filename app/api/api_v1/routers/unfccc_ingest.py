@@ -24,14 +24,14 @@ from app.core.ingestion.unfccc.ingest_row_unfccc import (
     UNFCCCDocumentIngestRow,
 )
 
-from app.core.ingestion.unfccc.pipeline import generate_pipeline_ingest_input
+from app.core.ingestion.pipeline import generate_pipeline_ingest_input
 from app.core.ingestion.processor import (
     get_collection_ingestor,
     initialise_context,
     get_unfccc_document_ingestor,
     get_document_validator,
 )
-from app.core.ingestion.unfccc.reader import get_file_contents, read
+from app.core.ingestion.reader import get_file_contents, read
 from app.core.ingestion.utils import (
     IngestContext,
     Result,

@@ -3,7 +3,7 @@ from datetime import datetime, timezone
 from sqlalchemy.orm import Session
 
 from app.core.ingestion.cclw.event import family_event_from_row
-from app.core.ingestion.cclw.family import handle_family_from_params
+from app.core.ingestion.family import handle_family_from_params
 from app.core.ingestion.cclw.ingest_row_cclw import (
     CCLWDocumentIngestRow,
     EventIngestRow,

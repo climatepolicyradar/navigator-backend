@@ -1,5 +1,5 @@
 from sqlalchemy.orm import Session
-from app.core.ingestion.cclw.family import (
+from app.core.ingestion.family import (
     handle_family_document_from_params,
     handle_family_from_params,
 )

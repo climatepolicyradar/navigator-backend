@@ -2,12 +2,12 @@ import logging
 from typing import Any, Callable, TypeVar, cast
 
 from sqlalchemy.orm import Session
-from app.core.ingestion.cclw.collection import (
+from app.core.ingestion.collection import (
     create_collection,
     handle_collection_and_link,
 )
 from app.core.ingestion.cclw.event import family_event_from_row
-from app.core.ingestion.cclw.family import handle_family_from_params
+from app.core.ingestion.family import handle_family_from_params
 from app.core.ingestion.cclw.ingest_row_cclw import (
     CCLWDocumentIngestRow,
     EventIngestRow,
