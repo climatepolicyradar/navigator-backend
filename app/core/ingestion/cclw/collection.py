@@ -40,8 +40,25 @@ def create_collection(
 
         result["collection_organisation"] = to_dict(collection_organisation)
         result["collection"] = to_dict(collection)
-    else:
-        raise ValueError(f"Collection {row.cpr_collection_id} is pre-exiting")
+
+        return collection
+
+    if existing_collection is not None:
+        # Check it matches
+        # FIXME: also check for the collection-organisation relationship?
+        collection = (
+            db.query(Collection)
+            .filter(Collection.title == row.collection_name)
+            .filter(Collection.description == row.collection_summary)
+            .filter(Collection.import_id == row.collection_summary)
+            .one_or_none()
+        )
+        if collection:
+            return collection
+
+    raise ValueError(
+        f"Collection {row.cpr_collection_id} is pre-exiting, and mis-matches"
+    )
 
 
 def handle_collection_from_row(
