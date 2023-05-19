@@ -6,6 +6,7 @@ from typing import Optional, Callable
 class IngestParameters:
     """Agnostic parameters for any ingest."""
 
+    create_collections: bool
     add_metadata: Callable
     source_url: Optional[str]  # get_first_url()
     document_id: str

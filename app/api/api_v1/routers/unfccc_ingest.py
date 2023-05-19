@@ -28,7 +28,7 @@ from app.core.ingestion.unfccc.pipeline import generate_pipeline_ingest_input
 from app.core.ingestion.processor import (
     get_collection_ingestor,
     initialise_context,
-    get_document_ingestor,
+    get_unfccc_document_ingestor,
     get_document_validator,
 )
 from app.core.ingestion.unfccc.reader import get_file_contents, read
@@ -71,7 +71,7 @@ def _start_ingest(
         collection_ingestor = get_collection_ingestor(db)
         read(collection_file_contents, context, CollectonIngestRow, collection_ingestor)
 
-        document_ingestor = get_document_ingestor(db, context)
+        document_ingestor = get_unfccc_document_ingestor(db, context)
         read(
             documents_file_contents, context, UNFCCCDocumentIngestRow, document_ingestor
         )

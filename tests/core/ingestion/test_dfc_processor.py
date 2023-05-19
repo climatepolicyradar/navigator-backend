@@ -1,5 +1,5 @@
 from app.core.ingestion.cclw.ingest_row_cclw import CCLWDocumentIngestRow
-from app.core.ingestion.processor import get_document_ingestor
+from app.core.ingestion.processor import get_cclw_document_ingestor
 from app.core.ingestion.cclw.reader import read
 from app.core.ingestion.utils import CCLWIngestContext, ResultType
 from app.db.models.law_policy.family import FamilyDocument
@@ -14,7 +14,7 @@ def test_cclw_ingestor__three_good_rows(test_db):
     populate_for_ingest(test_db)
     test_db.commit()
     context = CCLWIngestContext()
-    document_ingestor = get_document_ingestor(test_db, context)
+    document_ingestor = get_cclw_document_ingestor(test_db, context)
 
     read(THREE_DOC_ROWS, context, CCLWDocumentIngestRow, document_ingestor)
 
@@ -26,7 +26,7 @@ def test_cclw_ingestor__second_bad_row(test_db):
     populate_for_ingest(test_db)
     test_db.commit()
     context = CCLWIngestContext()
-    document_ingestor = get_document_ingestor(test_db, context)
+    document_ingestor = get_cclw_document_ingestor(test_db, context)
 
     read(THREE_DOC_ROWS_2ND_BAD, context, CCLWDocumentIngestRow, document_ingestor)
 
