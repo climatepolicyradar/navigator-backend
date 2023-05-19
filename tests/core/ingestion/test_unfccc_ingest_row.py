@@ -69,7 +69,7 @@ def test_ingest_single_collection_and_document(test_db: Session):
     # Act - create document
     document_row = UNFCCCDocumentIngestRow(
         row_number=1,
-        category="ignored",
+        category="UNFCCC",
         md5sum="md5sum",
         submission_type="Plan",
         family_name="family_name",
@@ -78,21 +78,20 @@ def test_ingest_single_collection_and_document(test_db: Session):
         author="author",
         author_type="Party",
         geography="GBR",
-        geography_iso="geography_iso",
+        geography_iso="GBR",
         date=datetime.now(),
         document_role="MAIN",
         document_variant="Original Language",
         language=["en"],
         download_url="download_url",
-        cpr_collection_id="cpr_collection_id",
+        cpr_collection_id="id1",
         cpr_document_id="cpr_document_id",
         cpr_family_id="cpr_family_id",
         cpr_family_slug="cpr_family_slug",
         cpr_document_slug="cpr_document_slug",
     )
     result = ingest_unfccc_document_row(test_db, context, document_row)
-    # FIXME: Finish writing test
-    assert len(result) > 0
+    assert len(result) == 8
 
 
 # def setup_for_update(test_db):
