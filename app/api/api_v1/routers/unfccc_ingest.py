@@ -71,7 +71,6 @@ def _start_ingest(
         collection_ingestor = get_collection_ingestor(db)
         read(collection_file_contents, context, CollectonIngestRow, collection_ingestor)
 
-        # FIXME: Write a unfccc ingestor
         document_ingestor = get_document_ingestor(db, context)
         read(
             documents_file_contents, context, UNFCCCDocumentIngestRow, document_ingestor

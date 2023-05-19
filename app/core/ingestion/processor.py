@@ -7,12 +7,15 @@ from app.core.ingestion.cclw.collection import (
     handle_collection_from_row,
 )
 from app.core.ingestion.cclw.event import family_event_from_row
-from app.core.ingestion.cclw.family import handle_family_from_row
+from app.core.ingestion.cclw.family import handle_family_from_params
 from app.core.ingestion.cclw.ingest_row_cclw import (
     CCLWDocumentIngestRow,
     EventIngestRow,
 )
+from app.core.ingestion.cclw.metadata import add_cclw_metadata
 from app.core.ingestion.ingest_row_base import BaseIngestRow
+from app.core.ingestion.metadata import Taxonomy
+from app.core.ingestion.params import IngestParameters
 from app.core.ingestion.unfccc.ingest_row_unfccc import (
     CollectonIngestRow,
     UNFCCCDocumentIngestRow,
@@ -31,12 +34,41 @@ from app.core.ingestion.validator import (
 )
 from app.db.models.app.users import Organisation
 
-_LOGGER = logging.getLogger(__name__)
 
+_LOGGER = logging.getLogger(__name__)
 
 _RowType = TypeVar("_RowType", bound=BaseIngestRow)
 
 ProcessFunc = Callable[[IngestContext, _RowType], None]
+
+
+def build_params_from_cclw(row: CCLWDocumentIngestRow) -> IngestParameters:
+    def add_metadata(db: Session, import_id: str, taxonomy: Taxonomy, taxonomy_id: int):
+        add_cclw_metadata(db, import_id, taxonomy, taxonomy_id, row)
+
+    return IngestParameters(
+        add_metadata=add_metadata,
+        source_url=row.get_first_url(),
+        document_id=row.document_id,
+        collection_name=row.collection_name,
+        collection_summary=row.collection_summary,
+        document_title=row.document_title,
+        family_name=row.family_name,
+        family_summary=row.family_summary,
+        document_role=row.document_role,
+        document_variant=row.document_variant,
+        geography_iso=row.geography_iso,
+        documents=row.documents,
+        category=row.category,
+        document_type=row.document_type,
+        language=row.language,
+        geography=row.geography,
+        cpr_document_id=row.cpr_document_id,
+        cpr_family_id=row.cpr_family_id,
+        cpr_collection_id=row.cpr_collection_id,
+        cpr_family_slug=row.cpr_family_slug,
+        cpr_document_slug=row.cpr_document_slug,
+    )
 
 
 def ingest_cclw_document_row(
@@ -62,7 +94,9 @@ def ingest_cclw_document_row(
         },
     )
 
-    family = handle_family_from_row(db, row, context.org_id, result)
+    family = handle_family_from_params(
+        db, build_params_from_cclw(row), context.org_id, result
+    )
     handle_collection_from_row(
         db,
         row,
@@ -103,6 +137,7 @@ def ingest_unfccc_document_row(
     )
 
     # FIXME: Implement here
+
     return result
 
 
