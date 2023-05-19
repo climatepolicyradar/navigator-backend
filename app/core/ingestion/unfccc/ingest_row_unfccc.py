@@ -20,6 +20,7 @@ _REQUIRED_DOCUMENT_COLUMNS = [
     "Document role",
     "Document variant",
     "Language",
+    "Download URL",
     "CPR Collection ID",
     "CPR Document ID",
     "CPR Family ID",
@@ -54,6 +55,7 @@ class UNFCCCDocumentIngestRow(BaseIngestRow):
     document_role: str
     document_variant: str
     language: list[str]
+    download_url: str
 
     cpr_collection_id: str
     cpr_document_id: str
