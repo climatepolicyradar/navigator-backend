@@ -2,10 +2,10 @@ from typing import Any, Optional, cast
 
 from sqlalchemy.orm import Session
 
-from app.core.ingestion.ingest_row import DocumentIngestRow
-from app.core.ingestion.metadata import add_metadata
+from app.core.ingestion.cclw.ingest_row_cclw import CCLWDocumentIngestRow
+from app.core.ingestion.cclw.metadata import add_metadata
 from app.core.organisation import get_organisation_taxonomy
-from app.core.ingestion.physical_document import create_physical_document_from_row
+from app.core.ingestion.cclw.physical_document import create_physical_document_from_row
 from app.core.ingestion.utils import (
     create,
     get_or_create,
@@ -26,7 +26,7 @@ from app.db.models.law_policy import (
 
 def handle_family_from_row(
     db: Session,
-    row: DocumentIngestRow,
+    row: CCLWDocumentIngestRow,
     org_id: int,
     result: dict[str, Any],
 ) -> Family:
@@ -50,7 +50,7 @@ def handle_family_from_row(
 
 
 def _after_create_family(
-    db: Session, row: DocumentIngestRow, org_id: int, result: dict[str, Any]
+    db: Session, row: CCLWDocumentIngestRow, org_id: int, result: dict[str, Any]
 ):
     def _create_family_links(family: Family):
         family_slug = Slug(name=row.cpr_family_slug, family_import_id=family.import_id)
@@ -72,7 +72,7 @@ def _after_create_family(
 
 def _operate_on_family(
     db: Session,
-    row: DocumentIngestRow,
+    row: CCLWDocumentIngestRow,
     org_id: int,
     result: dict[str, Any],
 ) -> Family:
@@ -116,7 +116,7 @@ def _operate_on_family(
 
 def handle_family_document_from_row(
     db: Session,
-    row: DocumentIngestRow,
+    row: CCLWDocumentIngestRow,
     family: Family,
     result: dict[str, Any],
 ) -> FamilyDocument:
@@ -209,7 +209,7 @@ def handle_family_document_from_row(
     return family_document
 
 
-def _get_geography(db: Session, row: DocumentIngestRow) -> Geography:
+def _get_geography(db: Session, row: CCLWDocumentIngestRow) -> Geography:
     geography = (
         db.query(Geography).filter(Geography.value == row.geography_iso).one_or_none()
     )
@@ -222,7 +222,7 @@ def _get_geography(db: Session, row: DocumentIngestRow) -> Geography:
 
 def _add_family_document_slug(
     db: Session,
-    row: DocumentIngestRow,
+    row: CCLWDocumentIngestRow,
     family_document: FamilyDocument,
     result: dict[str, Any],
 ) -> Slug:

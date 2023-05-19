@@ -2,9 +2,12 @@ from datetime import datetime, timezone
 
 from sqlalchemy.orm import Session
 
-from app.core.ingestion.event import family_event_from_row
-from app.core.ingestion.family import handle_family_from_row
-from app.core.ingestion.ingest_row import DocumentIngestRow, EventIngestRow
+from app.core.ingestion.cclw.event import family_event_from_row
+from app.core.ingestion.cclw.family import handle_family_from_row
+from app.core.ingestion.cclw.ingest_row_cclw import (
+    CCLWDocumentIngestRow,
+    EventIngestRow,
+)
 from app.db.models.law_policy.family import Family, FamilyEvent
 from tests.core.ingestion.helpers import (
     EVENT_IMPORT_ID,
@@ -17,7 +20,7 @@ from tests.core.ingestion.helpers import (
 
 def test_family_event_from_row(test_db: Session):
     populate_for_ingest(test_db)
-    doc_row = DocumentIngestRow.from_row(1, get_doc_ingest_row_data(0))
+    doc_row = CCLWDocumentIngestRow.from_row(1, get_doc_ingest_row_data(0))
     event_row = EventIngestRow.from_row(1, get_event_ingest_row_data(0))
 
     result = {}
@@ -38,7 +41,7 @@ def test_family_event_from_row(test_db: Session):
 
 def test_family_multiple_events_from_row(test_db: Session):
     populate_for_ingest(test_db)
-    doc_row = DocumentIngestRow.from_row(1, get_doc_ingest_row_data(0))
+    doc_row = CCLWDocumentIngestRow.from_row(1, get_doc_ingest_row_data(0))
     event_row_1 = EventIngestRow.from_row(1, get_event_ingest_row_data(0))
     event_row_2 = EventIngestRow.from_row(2, get_event_ingest_row_data(1))
 

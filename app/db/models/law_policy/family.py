@@ -30,6 +30,7 @@ class FamilyCategory(_BaseModelEnum):
 
     EXECUTIVE = "Executive"
     LEGISLATIVE = "Legislative"
+    UNFCCC = "UNFCCC"
 
 
 class Variant(Base):

@@ -1,10 +1,10 @@
 from sqlalchemy.orm import Session
-from app.core.ingestion.family import (
+from app.core.ingestion.cclw.family import (
     handle_family_document_from_row,
     handle_family_from_row,
 )
-from app.core.ingestion.ingest_row import DocumentIngestRow
-from app.core.ingestion.physical_document import create_physical_document_from_row
+from app.core.ingestion.cclw.ingest_row_cclw import CCLWDocumentIngestRow
+from app.core.ingestion.cclw.physical_document import create_physical_document_from_row
 from app.db.models.law_policy.family import (
     DocumentStatus,
     Family,
@@ -26,7 +26,7 @@ from tests.core.ingestion.helpers import (
 
 def test_family_from_row__creates(test_db: Session):
     populate_for_ingest(test_db)
-    row = DocumentIngestRow.from_row(1, get_doc_ingest_row_data(0))
+    row = CCLWDocumentIngestRow.from_row(1, get_doc_ingest_row_data(0))
     result = {}
     family = handle_family_from_row(test_db, row, org_id=1, result=result)
 
@@ -58,7 +58,7 @@ def test_family_from_row__creates(test_db: Session):
 def test_family_from_row__updates(test_db: Session):
     populate_for_ingest(test_db)
     result = {}
-    row = DocumentIngestRow.from_row(1, get_doc_ingest_row_data(0))
+    row = CCLWDocumentIngestRow.from_row(1, get_doc_ingest_row_data(0))
     # Pre-Add the family
     category = FamilyCategory(row.category.upper())
     test_db.add(
@@ -95,7 +95,7 @@ def test_family_from_row__updates(test_db: Session):
 
 def test_family_document_from_row__creates(test_db: Session):
     populate_for_ingest(test_db)
-    row = DocumentIngestRow.from_row(1, get_doc_ingest_row_data(0))
+    row = CCLWDocumentIngestRow.from_row(1, get_doc_ingest_row_data(0))
     family = add_a_family(test_db)
     result = {}
     family_document = handle_family_document_from_row(
@@ -123,7 +123,7 @@ def test_family_document_from_row__creates(test_db: Session):
 
 def test_family_document_from_row__updates(test_db: Session):
     populate_for_ingest(test_db)
-    row = DocumentIngestRow.from_row(1, get_doc_ingest_row_data(0))
+    row = CCLWDocumentIngestRow.from_row(1, get_doc_ingest_row_data(0))
     family = add_a_family(test_db)
     result = {}
     handle_family_document_from_row(test_db, row, family, result=result)

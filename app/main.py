@@ -4,7 +4,7 @@ import os
 
 import json_logging
 import uvicorn
-from fastapi import Depends, FastAPI
+from fastapi import APIRouter, Depends, FastAPI
 from fastapi.middleware.cors import CORSMiddleware
 from fastapi_health import health
 from fastapi_pagination import add_pagination
@@ -12,7 +12,9 @@ from starlette.requests import Request
 from alembic.command import upgrade
 from alembic.config import Config
 
-from app.api.api_v1.routers.admin import admin_users_router
+from app.api.api_v1.routers.cclw_ingest import cclw_ingest_router
+from app.api.api_v1.routers.unfccc_ingest import unfccc_ingest_router
+from app.api.api_v1.routers.admin import admin_document_router
 from app.api.api_v1.routers.auth import auth_router
 from app.api.api_v1.routers.documents import documents_router
 from app.api.api_v1.routers.lookups import lookups_router
@@ -101,9 +103,15 @@ async def root():
     return {"message": "CPR API v1"}
 
 
-# Routers
+# Create an admin router that is a combination of:
+admin_router = APIRouter()
+admin_router.include_router(cclw_ingest_router)
+admin_router.include_router(unfccc_ingest_router)
+admin_router.include_router(admin_document_router)
+
+# App Routers
 app.include_router(
-    admin_users_router,
+    admin_router,
     prefix="/api/v1/admin",
     tags=["Admin"],
     dependencies=[Depends(get_superuser_details)],

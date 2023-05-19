@@ -12,13 +12,13 @@ from app.data_migrations import (
 
 
 def test_unauthenticated_ingest(client):
-    response = client.post("/api/v1/admin/bulk-ingest/cclw/law-policy")
+    response = client.post("/api/v1/admin/bulk-ingest/cclw")
     assert response.status_code == 401
 
 
 def test_unauthorized_ingest(client):
     response = client.post(
-        "/api/v1/admin/bulk-ingest/cclw/law-policy",
+        "/api/v1/admin/bulk-ingest/cclw",
     )
     assert response.status_code == 401
 
@@ -38,11 +38,11 @@ def test_validate_bulk_ingest_cclw_law_policy(
     superuser_token_headers,
     test_db,
 ):
-    populate_taxonomy(db=test_db)
+    populate_taxonomy(test_db)
     populate_geography(test_db)
-    populate_document_type(db=test_db)
-    populate_document_role(db=test_db)
-    populate_document_variant(db=test_db)
+    populate_document_type(test_db)
+    populate_document_role(test_db)
+    populate_document_variant(test_db)
     test_db.commit()
     law_policy_csv_file = BytesIO(ONE_DFC_ROW.encode("utf8"))
     files = {
@@ -54,7 +54,7 @@ def test_validate_bulk_ingest_cclw_law_policy(
         ),
     }
     response = client.post(
-        "/api/v1/admin/bulk-ingest/validate/cclw/law-policy",
+        "/api/v1/admin/bulk-ingest/validate/cclw",
         files=files,
         headers=superuser_token_headers,
     )
@@ -73,14 +73,16 @@ def test_bulk_ingest_cclw_law_policy(
     test_db,
     mocker,
 ):
-    mock_start_import = mocker.patch("app.api.api_v1.routers.admin._start_ingest")
-    mock_write_csv_to_s3 = mocker.patch("app.api.api_v1.routers.admin.write_csv_to_s3")
+    mock_start_import = mocker.patch("app.api.api_v1.routers.cclw_ingest._start_ingest")
+    mock_write_csv_to_s3 = mocker.patch(
+        "app.api.api_v1.routers.cclw_ingest.write_csv_to_s3"
+    )
 
-    populate_geography(db=test_db)
-    populate_taxonomy(db=test_db)
-    populate_document_type(db=test_db)
-    populate_document_role(db=test_db)
-    populate_document_variant(db=test_db)
+    populate_geography(test_db)
+    populate_taxonomy(test_db)
+    populate_document_type(test_db)
+    populate_document_role(test_db)
+    populate_document_variant(test_db)
     test_db.commit()
 
     law_policy_csv_file = BytesIO(ONE_DFC_ROW.encode("utf8"))
@@ -100,7 +102,7 @@ def test_bulk_ingest_cclw_law_policy(
         ),
     }
     response = client.post(
-        "/api/v1/admin/bulk-ingest/cclw/law-policy",
+        "/api/v1/admin/bulk-ingest/cclw",
         files=files,
         headers=superuser_token_headers,
     )

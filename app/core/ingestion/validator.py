@@ -1,13 +1,21 @@
 from sqlalchemy import Column
 from sqlalchemy.orm import Session
 
-from app.core.ingestion.ingest_row import DocumentIngestRow, EventIngestRow
-from app.core.ingestion.metadata import build_metadata, Taxonomy
+from app.core.ingestion.cclw.ingest_row_cclw import (
+    CCLWDocumentIngestRow,
+    EventIngestRow,
+)
+from app.core.ingestion.metadata import Taxonomy
+from app.core.ingestion.unfccc.ingest_row_unfccc import UNFCCCDocumentIngestRow
+from app.core.ingestion.cclw.metadata import build_cclw_metadata
 from app.core.ingestion.utils import (
+    CCLWIngestContext,
     IngestContext,
     Result,
     ResultType,
+    UNFCCCIngestContext,
 )
+from app.core.ingestion.unfccc.metadata import build_unfccc_metadata
 from app.db.models.law_policy.family import (
     FamilyDocumentRole,
     FamilyDocumentType,
@@ -54,10 +62,89 @@ def _check_geo_in_db(row_num: int, db: Session, geo_iso: str) -> CheckResult:
     return Result()
 
 
-def validate_document_row(
+def validate_unfccc_document_row(
     db: Session,
-    context: IngestContext,
-    row: DocumentIngestRow,
+    context: UNFCCCIngestContext,
+    row: UNFCCCDocumentIngestRow,
+    taxonomy: Taxonomy,
+) -> None:
+    """
+    Validate the constituent elements that represent this law & policy document row.
+
+    :param [IngestContext] context: The ingest context.
+    :param [DocumentIngestRow] row: DocumentIngestRow object from the current CSV row.
+    :param [Taxonomy] taxonomy: the Taxonomy against which metadata should be validated.
+    """
+
+    errors = []
+    n = row.row_number
+
+    # don't validate: md5sum: str
+    # don't validate: collection_name: str
+    # don't validate: collection_id: str
+    # don't validate: family_name: str
+    # don't validate: document_title: str
+    # don't validate: documents: str
+    # don't validate: author: str
+    # don't validate: geography: str
+    # don't validate: date: datetime
+
+    # validate: document_role: str
+    result = _check_value_in_db(
+        n, db, row.document_role, FamilyDocumentRole, FamilyDocumentRole.name
+    )
+    if result.type != ResultType.OK:
+        errors.append(result)
+
+    # validate: document_variant: str
+    result = _check_value_in_db(
+        n, db, row.document_variant, Variant, Variant.variant_name
+    )
+    if result.type != ResultType.OK:
+        errors.append(result)
+
+    # validate: geography_iso: str
+    result = _check_geo_in_db(n, db, row.geography_iso)
+    if result.type != ResultType.OK:
+        errors.append(result)
+
+    # validate: Submission type as document type
+    result = _check_value_in_db(
+        n, db, row.submission_type, FamilyDocumentType, FamilyDocumentType.name
+    )
+    if result.type != ResultType.OK:
+        errors.append(result)
+
+    # validate: language: list[str]
+
+    # Check metadata
+    # validate: author_type: str  # METADATA
+    result, _ = build_unfccc_metadata(taxonomy, row)
+    if result.type != ResultType.OK:
+        errors.append(result)
+
+    # Check family
+    context.consistency_validator.check_family(
+        row.row_number,
+        row.cpr_family_id,
+        row.family_name,
+        row.family_summary,
+        errors,
+    )
+
+    # Add to the collections that are referenced so we can valiate later
+    context.collection_ids_referenced.append(row.cpr_collection_id)
+
+    if len(errors) > 0:
+        context.results += errors
+    else:
+        context.results.append(Result())
+
+
+def validate_cclw_document_row(
+    db: Session,
+    context: CCLWIngestContext,
+    row: CCLWDocumentIngestRow,
     taxonomy: Taxonomy,
 ) -> None:
     """
@@ -93,7 +180,7 @@ def validate_document_row(
         errors.append(result)
 
     # Check metadata
-    result, _ = build_metadata(taxonomy, row)
+    result, _ = build_cclw_metadata(taxonomy, row)
     if result.type != ResultType.OK:
         errors.append(result)
 

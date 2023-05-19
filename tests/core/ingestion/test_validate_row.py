@@ -1,6 +1,6 @@
-from app.core.ingestion.ingest_row import DocumentIngestRow
-from app.core.ingestion.utils import IngestContext, ResultType
-from app.core.ingestion.validator import validate_document_row
+from app.core.ingestion.cclw.ingest_row_cclw import CCLWDocumentIngestRow
+from app.core.ingestion.utils import CCLWIngestContext, ResultType
+from app.core.ingestion.validator import validate_cclw_document_row
 from app.core.organisation import get_organisation_taxonomy
 
 from tests.core.ingestion.helpers import (
@@ -10,13 +10,13 @@ from tests.core.ingestion.helpers import (
 
 
 def test_validate_row__fails_bad_geography_iso(test_db):
-    context = IngestContext()
+    context = CCLWIngestContext()
     populate_for_ingest(test_db)
     _, taxonomy = get_organisation_taxonomy(test_db, context.org_id)
-    row = DocumentIngestRow.from_row(1, get_doc_ingest_row_data(0))
+    row = CCLWDocumentIngestRow.from_row(1, get_doc_ingest_row_data(0))
     row.geography_iso = "XXX"
 
-    validate_document_row(test_db, context=context, row=row, taxonomy=taxonomy)
+    validate_cclw_document_row(test_db, context=context, row=row, taxonomy=taxonomy)
 
     assert context.results
     assert len(context.results) == 1
@@ -25,13 +25,13 @@ def test_validate_row__fails_bad_geography_iso(test_db):
 
 
 def test_validate_row__fails_empty_geography_iso(test_db):
-    context = IngestContext()
+    context = CCLWIngestContext()
     populate_for_ingest(test_db)
     _, taxonomy = get_organisation_taxonomy(test_db, context.org_id)
-    row = DocumentIngestRow.from_row(1, get_doc_ingest_row_data(0))
+    row = CCLWDocumentIngestRow.from_row(1, get_doc_ingest_row_data(0))
     row.geography_iso = ""
 
-    validate_document_row(test_db, context=context, row=row, taxonomy=taxonomy)
+    validate_cclw_document_row(test_db, context=context, row=row, taxonomy=taxonomy)
 
     assert context.results
     assert len(context.results) == 1
@@ -40,14 +40,14 @@ def test_validate_row__fails_empty_geography_iso(test_db):
 
 
 def test_validate_row__consistent_family_and_collection(test_db):
-    context = IngestContext()
+    context = CCLWIngestContext()
     populate_for_ingest(test_db)
     _, taxonomy = get_organisation_taxonomy(test_db, context.org_id)
-    row = DocumentIngestRow.from_row(1, get_doc_ingest_row_data(0))
+    row = CCLWDocumentIngestRow.from_row(1, get_doc_ingest_row_data(0))
 
-    validate_document_row(test_db, context=context, row=row, taxonomy=taxonomy)
+    validate_cclw_document_row(test_db, context=context, row=row, taxonomy=taxonomy)
     context.results = []
-    validate_document_row(test_db, context=context, row=row, taxonomy=taxonomy)
+    validate_cclw_document_row(test_db, context=context, row=row, taxonomy=taxonomy)
 
     assert context.results
     assert len(context.results) == 1
@@ -55,15 +55,15 @@ def test_validate_row__consistent_family_and_collection(test_db):
 
 
 def test_validate_row__family_name_change(test_db):
-    context = IngestContext()
+    context = CCLWIngestContext()
     populate_for_ingest(test_db)
     _, taxonomy = get_organisation_taxonomy(test_db, context.org_id)
-    row = DocumentIngestRow.from_row(1, get_doc_ingest_row_data(0))
+    row = CCLWDocumentIngestRow.from_row(1, get_doc_ingest_row_data(0))
 
-    validate_document_row(test_db, context=context, row=row, taxonomy=taxonomy)
+    validate_cclw_document_row(test_db, context=context, row=row, taxonomy=taxonomy)
     context.results = []
     row.family_name = "changed"
-    validate_document_row(test_db, context=context, row=row, taxonomy=taxonomy)
+    validate_cclw_document_row(test_db, context=context, row=row, taxonomy=taxonomy)
 
     assert context.results
     assert len(context.results) == 1
@@ -73,15 +73,15 @@ def test_validate_row__family_name_change(test_db):
 
 
 def test_validate_row__family_summary_change(test_db):
-    context = IngestContext()
+    context = CCLWIngestContext()
     populate_for_ingest(test_db)
     _, taxonomy = get_organisation_taxonomy(test_db, context.org_id)
-    row = DocumentIngestRow.from_row(1, get_doc_ingest_row_data(0))
+    row = CCLWDocumentIngestRow.from_row(1, get_doc_ingest_row_data(0))
 
-    validate_document_row(test_db, context=context, row=row, taxonomy=taxonomy)
+    validate_cclw_document_row(test_db, context=context, row=row, taxonomy=taxonomy)
     context.results = []
     row.family_summary = "changed"
-    validate_document_row(test_db, context=context, row=row, taxonomy=taxonomy)
+    validate_cclw_document_row(test_db, context=context, row=row, taxonomy=taxonomy)
 
     assert context.results
     assert len(context.results) == 1
@@ -91,15 +91,15 @@ def test_validate_row__family_summary_change(test_db):
 
 
 def test_validate_row__collection_name_change(test_db):
-    context = IngestContext()
+    context = CCLWIngestContext()
     populate_for_ingest(test_db)
     _, taxonomy = get_organisation_taxonomy(test_db, context.org_id)
-    row = DocumentIngestRow.from_row(1, get_doc_ingest_row_data(0))
+    row = CCLWDocumentIngestRow.from_row(1, get_doc_ingest_row_data(0))
 
-    validate_document_row(test_db, context=context, row=row, taxonomy=taxonomy)
+    validate_cclw_document_row(test_db, context=context, row=row, taxonomy=taxonomy)
     context.results = []
     row.collection_name = "changed"
-    validate_document_row(test_db, context=context, row=row, taxonomy=taxonomy)
+    validate_cclw_document_row(test_db, context=context, row=row, taxonomy=taxonomy)
 
     assert context.results
     assert len(context.results) == 1
@@ -109,15 +109,15 @@ def test_validate_row__collection_name_change(test_db):
 
 
 def test_validate_row__collection_summary_change(test_db):
-    context = IngestContext()
+    context = CCLWIngestContext()
     populate_for_ingest(test_db)
     _, taxonomy = get_organisation_taxonomy(test_db, context.org_id)
-    row = DocumentIngestRow.from_row(1, get_doc_ingest_row_data(0))
+    row = CCLWDocumentIngestRow.from_row(1, get_doc_ingest_row_data(0))
 
-    validate_document_row(test_db, context=context, row=row, taxonomy=taxonomy)
+    validate_cclw_document_row(test_db, context=context, row=row, taxonomy=taxonomy)
     context.results = []
     row.collection_summary = "changed"
-    validate_document_row(test_db, context=context, row=row, taxonomy=taxonomy)
+    validate_cclw_document_row(test_db, context=context, row=row, taxonomy=taxonomy)
 
     assert context.results
     assert len(context.results) == 1
@@ -127,12 +127,12 @@ def test_validate_row__collection_summary_change(test_db):
 
 
 def test_validate_row__good_data(test_db):
-    context = IngestContext()
+    context = CCLWIngestContext()
     populate_for_ingest(test_db)
     _, taxonomy = get_organisation_taxonomy(test_db, context.org_id)
-    row = DocumentIngestRow.from_row(1, get_doc_ingest_row_data(0))
+    row = CCLWDocumentIngestRow.from_row(1, get_doc_ingest_row_data(0))
 
-    validate_document_row(test_db, context=context, row=row, taxonomy=taxonomy)
+    validate_cclw_document_row(test_db, context=context, row=row, taxonomy=taxonomy)
 
     assert context.results
     assert len(context.results) == 1
@@ -140,13 +140,13 @@ def test_validate_row__good_data(test_db):
 
 
 def test_validate_row__bad_data(test_db):
-    context = IngestContext()
+    context = CCLWIngestContext()
     populate_for_ingest(test_db)
     _, taxonomy = get_organisation_taxonomy(test_db, context.org_id)
-    row = DocumentIngestRow.from_row(1, get_doc_ingest_row_data(0))
+    row = CCLWDocumentIngestRow.from_row(1, get_doc_ingest_row_data(0))
     row.sectors = ["fish"]
 
-    validate_document_row(test_db, context=context, row=row, taxonomy=taxonomy)
+    validate_cclw_document_row(test_db, context=context, row=row, taxonomy=taxonomy)
 
     assert context.results
     assert len(context.results) == 1
@@ -154,13 +154,13 @@ def test_validate_row__bad_data(test_db):
 
 
 def test_validate_row__resolvable_data(test_db):
-    context = IngestContext()
+    context = CCLWIngestContext()
     populate_for_ingest(test_db)
     _, taxonomy = get_organisation_taxonomy(test_db, context.org_id)
-    row = DocumentIngestRow.from_row(1, get_doc_ingest_row_data(0))
+    row = CCLWDocumentIngestRow.from_row(1, get_doc_ingest_row_data(0))
     row.sectors = ["TranSPORtation"]
 
-    validate_document_row(test_db, context=context, row=row, taxonomy=taxonomy)
+    validate_cclw_document_row(test_db, context=context, row=row, taxonomy=taxonomy)
 
     assert context.results
     assert len(context.results) == 1
@@ -168,13 +168,13 @@ def test_validate_row__resolvable_data(test_db):
 
 
 def test_validate_row__bad_document_type(test_db):
-    context = IngestContext()
+    context = CCLWIngestContext()
     populate_for_ingest(test_db)
     _, taxonomy = get_organisation_taxonomy(test_db, context.org_id)
-    row = DocumentIngestRow.from_row(1, get_doc_ingest_row_data(0))
+    row = CCLWDocumentIngestRow.from_row(1, get_doc_ingest_row_data(0))
     row.document_type = "fish"
 
-    validate_document_row(test_db, context=context, row=row, taxonomy=taxonomy)
+    validate_cclw_document_row(test_db, context=context, row=row, taxonomy=taxonomy)
 
     assert context.results
     assert len(context.results) == 1
@@ -182,13 +182,13 @@ def test_validate_row__bad_document_type(test_db):
 
 
 def test_validate_row__good_document_type(test_db):
-    context = IngestContext()
+    context = CCLWIngestContext()
     populate_for_ingest(test_db)
     _, taxonomy = get_organisation_taxonomy(test_db, context.org_id)
-    row = DocumentIngestRow.from_row(1, get_doc_ingest_row_data(0))
+    row = CCLWDocumentIngestRow.from_row(1, get_doc_ingest_row_data(0))
     row.document_type = "Order"
 
-    validate_document_row(test_db, context=context, row=row, taxonomy=taxonomy)
+    validate_cclw_document_row(test_db, context=context, row=row, taxonomy=taxonomy)
 
     assert context.results
     assert len(context.results) == 1
@@ -196,13 +196,13 @@ def test_validate_row__good_document_type(test_db):
 
 
 def test_validate_row__bad_document_role(test_db):
-    context = IngestContext()
+    context = CCLWIngestContext()
     populate_for_ingest(test_db)
     _, taxonomy = get_organisation_taxonomy(test_db, context.org_id)
-    row = DocumentIngestRow.from_row(1, get_doc_ingest_row_data(0))
+    row = CCLWDocumentIngestRow.from_row(1, get_doc_ingest_row_data(0))
     row.document_role = "fish"
 
-    validate_document_row(test_db, context=context, row=row, taxonomy=taxonomy)
+    validate_cclw_document_row(test_db, context=context, row=row, taxonomy=taxonomy)
 
     assert context.results
     assert len(context.results) == 1
@@ -210,13 +210,13 @@ def test_validate_row__bad_document_role(test_db):
 
 
 def test_validate_row__good_document_role(test_db):
-    context = IngestContext()
+    context = CCLWIngestContext()
     populate_for_ingest(test_db)
     _, taxonomy = get_organisation_taxonomy(test_db, context.org_id)
-    row = DocumentIngestRow.from_row(1, get_doc_ingest_row_data(0))
+    row = CCLWDocumentIngestRow.from_row(1, get_doc_ingest_row_data(0))
     row.document_role = "MAIN"
 
-    validate_document_row(test_db, context=context, row=row, taxonomy=taxonomy)
+    validate_cclw_document_row(test_db, context=context, row=row, taxonomy=taxonomy)
 
     assert context.results
     assert len(context.results) == 1
@@ -224,13 +224,13 @@ def test_validate_row__good_document_role(test_db):
 
 
 def test_validate_row__bad_document_variant(test_db):
-    context = IngestContext()
+    context = CCLWIngestContext()
     populate_for_ingest(test_db)
     _, taxonomy = get_organisation_taxonomy(test_db, context.org_id)
-    row = DocumentIngestRow.from_row(1, get_doc_ingest_row_data(0))
+    row = CCLWDocumentIngestRow.from_row(1, get_doc_ingest_row_data(0))
     row.document_variant = "fish"
 
-    validate_document_row(test_db, context=context, row=row, taxonomy=taxonomy)
+    validate_cclw_document_row(test_db, context=context, row=row, taxonomy=taxonomy)
 
     assert context.results
     assert len(context.results) == 1
@@ -238,13 +238,13 @@ def test_validate_row__bad_document_variant(test_db):
 
 
 def test_validate_row__good_document_variant(test_db):
-    context = IngestContext()
+    context = CCLWIngestContext()
     populate_for_ingest(test_db)
     _, taxonomy = get_organisation_taxonomy(test_db, context.org_id)
-    row = DocumentIngestRow.from_row(1, get_doc_ingest_row_data(0))
+    row = CCLWDocumentIngestRow.from_row(1, get_doc_ingest_row_data(0))
     row.document_variant = "Translation"
 
-    validate_document_row(test_db, context=context, row=row, taxonomy=taxonomy)
+    validate_cclw_document_row(test_db, context=context, row=row, taxonomy=taxonomy)
 
     assert context.results
     assert len(context.results) == 1

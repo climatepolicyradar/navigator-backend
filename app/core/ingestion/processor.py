@@ -2,17 +2,33 @@ import logging
 from typing import Any, Callable, TypeVar, cast
 
 from sqlalchemy.orm import Session
-from app.core.ingestion.collection import handle_collection_from_row
-from app.core.ingestion.event import family_event_from_row
-from app.core.ingestion.family import handle_family_from_row
-from app.core.ingestion.ingest_row import (
-    BaseIngestRow,
-    DocumentIngestRow,
+from app.core.ingestion.cclw.collection import (
+    create_collection,
+    handle_collection_from_row,
+)
+from app.core.ingestion.cclw.event import family_event_from_row
+from app.core.ingestion.cclw.family import handle_family_from_row
+from app.core.ingestion.cclw.ingest_row_cclw import (
+    CCLWDocumentIngestRow,
     EventIngestRow,
 )
+from app.core.ingestion.ingest_row_base import BaseIngestRow
+from app.core.ingestion.unfccc.ingest_row_unfccc import (
+    CollectonIngestRow,
+    UNFCCCDocumentIngestRow,
+)
 from app.core.organisation import get_organisation_taxonomy
-from app.core.ingestion.utils import IngestContext, Result, ResultType
-from app.core.ingestion.validator import validate_document_row
+from app.core.ingestion.utils import (
+    CCLWIngestContext,
+    IngestContext,
+    Result,
+    ResultType,
+    UNFCCCIngestContext,
+)
+from app.core.ingestion.validator import (
+    validate_cclw_document_row,
+    validate_unfccc_document_row,
+)
 from app.db.models.app.users import Organisation
 
 _LOGGER = logging.getLogger(__name__)
@@ -23,8 +39,8 @@ _RowType = TypeVar("_RowType", bound=BaseIngestRow)
 ProcessFunc = Callable[[IngestContext, _RowType], None]
 
 
-def ingest_document_row(
-    db: Session, context: IngestContext, row: DocumentIngestRow
+def ingest_cclw_document_row(
+    db: Session, context: IngestContext, row: CCLWDocumentIngestRow
 ) -> dict[str, Any]:
     """
     Create the constituent elements in the database that represent this row.
@@ -63,6 +79,42 @@ def ingest_document_row(
     return result
 
 
+def ingest_unfccc_document_row(
+    db: Session, context: IngestContext, row: UNFCCCDocumentIngestRow
+) -> dict[str, Any]:
+    """
+    Create the constituent elements in the database that represent this row.
+
+    :param [Session] db: the connection to the database.
+    :param [DocumentIngestRow] row: the IngestRow object of the current CSV row
+    :returns [dict[str, Any]]: a result dictionary describing what was created
+    """
+    result = {}
+    import_id = row.cpr_document_id
+
+    _LOGGER.info(
+        f"Ingest starting for row {row.row_number}.",
+        extra={
+            "props": {
+                "row_number": row.row_number,
+                "import_id": import_id,
+            }
+        },
+    )
+
+    # FIXME: Implement here
+    return result
+
+
+def ingest_collection_row(
+    db: Session, context: IngestContext, row: CollectonIngestRow
+) -> dict[str, Any]:
+    result = {}
+    with db.begin():
+        create_collection(db, row, context.org_id, result)
+    return result
+
+
 def ingest_event_row(
     db: Session, context: IngestContext, row: EventIngestRow
 ) -> dict[str, Any]:
@@ -78,15 +130,23 @@ def ingest_event_row(
     return result
 
 
-def initialise_context(db: Session) -> IngestContext:
+def initialise_context(db: Session, org_name: str) -> IngestContext:
     """
     Initialise the database
 
     :return [IngestContext]: The organisation that will be used for the ingest.
     """
     with db.begin():
-        organisation = db.query(Organisation).filter_by(name="CCLW").one()
-        return IngestContext(org_id=cast(int, organisation.id), results=[])
+        organisation = db.query(Organisation).filter_by(name=org_name).one()
+        if org_name == "CCLW":
+            return CCLWIngestContext(
+                org_name=org_name, org_id=cast(int, organisation.id), results=[]
+            )
+        if org_name == "UNFCCC":
+            return UNFCCCIngestContext(
+                org_name=org_name, org_id=cast(int, organisation.id), results=[]
+            )
+        raise ValueError(f"Code not in sync with data - org {org_name} unknown to code")
 
 
 def get_event_ingestor(db: Session) -> ProcessFunc:
@@ -106,20 +166,37 @@ def get_event_ingestor(db: Session) -> ProcessFunc:
     return process
 
 
-def get_dfc_ingestor(db: Session) -> ProcessFunc:
+def get_collection_ingestor(db: Session) -> ProcessFunc:
+    """
+    Get the ingestion function for ingesting a collection CSV row.
+
+    :return [ProcessFunc]: The function used to ingest the CSV row.
+    """
+
+    def process(context: IngestContext, row: CollectonIngestRow) -> None:
+        """Processes the row into the db."""
+        _LOGGER.info(f"Ingesting collection row: {row.row_number}")
+
+        with db.begin():
+            ingest_collection_row(db, context, row=row)
+
+    return process
+
+
+def get_document_ingestor(db: Session, context: IngestContext) -> ProcessFunc:
     """
     Get the ingestion function for ingesting a law & policy CSV row.
 
     :return [ProcessFunc]: The function used to ingest the CSV row.
     """
 
-    def process(context: IngestContext, row: DocumentIngestRow) -> None:
+    def cclw_process(context: IngestContext, row: CCLWDocumentIngestRow) -> None:
         """Processes the row into the db."""
         _LOGGER.info(f"Ingesting document row: {row.row_number}")
 
         with db.begin():
             try:
-                ingest_document_row(db, context, row=row)
+                ingest_cclw_document_row(db, context, row=row)
             except Exception as e:
                 error = Result(
                     ResultType.ERROR, f"Row {row.row_number}: Error {str(e)}"
@@ -130,10 +207,32 @@ def get_dfc_ingestor(db: Session) -> ProcessFunc:
                     extra={"props": {"row_number": row.row_number, "error": str(e)}},
                 )
 
-    return process
+    def unfccc_process(context: IngestContext, row: UNFCCCDocumentIngestRow) -> None:
+        """Processes the row into the db."""
+        _LOGGER.info(f"Ingesting document row: {row.row_number}")
+
+        with db.begin():
+            try:
+                ingest_unfccc_document_row(db, context, row=row)
+            except Exception as e:
+                error = Result(
+                    ResultType.ERROR, f"Row {row.row_number}: Error {str(e)}"
+                )
+                context.results.append(error)
+                _LOGGER.error(
+                    "Error on ingest",
+                    extra={"props": {"row_number": row.row_number, "error": str(e)}},
+                )
+
+    if context.org_name == "CCLW":
+        return cclw_process
+    elif context.org_name == "UNFCCC":
+        return unfccc_process
+
+    raise ValueError(f"Unknown org {context.org_name} for validation.")
 
 
-def get_dfc_validator(db: Session, context: IngestContext) -> ProcessFunc:
+def get_document_validator(db: Session, context: IngestContext) -> ProcessFunc:
     """
     Get the validation function for ingesting a law & policy CSV.
 
@@ -143,10 +242,31 @@ def get_dfc_validator(db: Session, context: IngestContext) -> ProcessFunc:
     with db.begin():
         _, taxonomy = get_organisation_taxonomy(db, context.org_id)
 
-    def process(context: IngestContext, row: DocumentIngestRow) -> None:
+    def cclw_process(context: IngestContext, row: CCLWDocumentIngestRow) -> None:
         """Processes the row into the db."""
         _LOGGER.info(f"Validating document row: {row.row_number}")
         with db.begin():
-            validate_document_row(db=db, context=context, taxonomy=taxonomy, row=row)
+            validate_cclw_document_row(
+                db=db,
+                context=cast(CCLWIngestContext, context),
+                taxonomy=taxonomy,
+                row=row,
+            )
 
-    return process
+    def unfccc_process(context: IngestContext, row: UNFCCCDocumentIngestRow) -> None:
+        """Processes the row into the db."""
+        _LOGGER.info(f"Validating document row: {row.row_number}")
+        with db.begin():
+            validate_unfccc_document_row(
+                db=db,
+                context=cast(UNFCCCIngestContext, context),
+                taxonomy=taxonomy,
+                row=row,
+            )
+
+    if context.org_name == "CCLW":
+        return cclw_process
+    elif context.org_name == "UNFCCC":
+        return unfccc_process
+
+    raise ValueError(f"Unknown org {context.org_name} for validation.")

@@ -1,7 +1,7 @@
 from typing import cast
 from sqlalchemy.orm import Session
-from app.core.ingestion.collection import handle_collection_from_row
-from app.core.ingestion.ingest_row import DocumentIngestRow
+from app.core.ingestion.cclw.collection import handle_collection_from_row
+from app.core.ingestion.cclw.ingest_row_cclw import CCLWDocumentIngestRow
 from app.core.ingestion.utils import get_or_create
 from app.db.models.law_policy.collection import (
     Collection,
@@ -21,7 +21,7 @@ from tests.core.ingestion.helpers import (
 
 def db_setup(test_db):
     populate_for_ingest(test_db)
-    row = DocumentIngestRow.from_row(1, get_doc_ingest_row_data(0))
+    row = CCLWDocumentIngestRow.from_row(1, get_doc_ingest_row_data(0))
     family = get_or_create(
         test_db,
         Family,

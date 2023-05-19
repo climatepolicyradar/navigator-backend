@@ -3,7 +3,7 @@ from io import StringIO
 from typing import Type
 
 from fastapi import UploadFile
-from app.core.ingestion.ingest_row import BaseIngestRow, validate_csv_columns
+from app.core.ingestion.ingest_row_base import BaseIngestRow, validate_csv_columns
 from app.core.ingestion.processor import ProcessFunc
 
 from app.core.ingestion.utils import IngestContext

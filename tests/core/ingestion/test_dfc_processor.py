@@ -1,7 +1,7 @@
-from app.core.ingestion.ingest_row import DocumentIngestRow
-from app.core.ingestion.processor import get_dfc_ingestor
-from app.core.ingestion.reader import read
-from app.core.ingestion.utils import IngestContext, ResultType
+from app.core.ingestion.cclw.ingest_row_cclw import CCLWDocumentIngestRow
+from app.core.ingestion.processor import get_document_ingestor
+from app.core.ingestion.cclw.reader import read
+from app.core.ingestion.utils import CCLWIngestContext, ResultType
 from app.db.models.law_policy.family import FamilyDocument
 from tests.core.ingestion.helpers import (
     THREE_DOC_ROWS,
@@ -10,25 +10,25 @@ from tests.core.ingestion.helpers import (
 )
 
 
-def test_dfc_ingestor__three_good_rows(test_db):
+def test_cclw_ingestor__three_good_rows(test_db):
     populate_for_ingest(test_db)
     test_db.commit()
-    context = IngestContext()
-    document_ingestor = get_dfc_ingestor(test_db)
+    context = CCLWIngestContext()
+    document_ingestor = get_document_ingestor(test_db, context)
 
-    read(THREE_DOC_ROWS, context, DocumentIngestRow, document_ingestor)
+    read(THREE_DOC_ROWS, context, CCLWDocumentIngestRow, document_ingestor)
 
     assert len(context.results) == 0
     assert 3 == test_db.query(FamilyDocument).count()
 
 
-def test_dfc_ingestor__second_bad_row(test_db):
+def test_cclw_ingestor__second_bad_row(test_db):
     populate_for_ingest(test_db)
     test_db.commit()
-    context = IngestContext()
-    document_ingestor = get_dfc_ingestor(test_db)
+    context = CCLWIngestContext()
+    document_ingestor = get_document_ingestor(test_db, context)
 
-    read(THREE_DOC_ROWS_2ND_BAD, context, DocumentIngestRow, document_ingestor)
+    read(THREE_DOC_ROWS_2ND_BAD, context, CCLWDocumentIngestRow, document_ingestor)
 
     assert len(context.results) == 1
     assert context.results[0].type == ResultType.ERROR

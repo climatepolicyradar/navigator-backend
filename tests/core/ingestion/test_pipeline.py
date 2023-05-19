@@ -5,11 +5,14 @@ from typing import Optional
 import pytest
 
 from sqlalchemy.orm import Session
-from app.core.ingestion.ingest_row import DocumentIngestRow, EventIngestRow
-from app.core.ingestion.pipeline import generate_pipeline_ingest_input
-from app.core.ingestion.processor import get_dfc_ingestor, get_event_ingestor
-from app.core.ingestion.reader import read
-from app.core.ingestion.utils import IngestContext
+from app.core.ingestion.cclw.ingest_row_cclw import (
+    CCLWDocumentIngestRow,
+    EventIngestRow,
+)
+from app.core.ingestion.cclw.pipeline import generate_pipeline_ingest_input
+from app.core.ingestion.processor import get_document_ingestor, get_event_ingestor
+from app.core.ingestion.cclw.reader import read
+from app.core.ingestion.utils import CCLWIngestContext
 from tests.core.ingestion.helpers import (
     FIVE_EVENT_ROWS,
     THREE_DOC_ROWS,
@@ -26,11 +29,11 @@ def _populate_db_for_test(
 ) -> None:
     populate_for_ingest(test_db)
     test_db.commit()
-    context = IngestContext()
-    document_ingestor = get_dfc_ingestor(test_db)
+    context = CCLWIngestContext()
+    document_ingestor = get_document_ingestor(test_db, context)
     event_ingestor = get_event_ingestor(test_db)
 
-    read(ingest_doc_content, context, DocumentIngestRow, document_ingestor)
+    read(ingest_doc_content, context, CCLWDocumentIngestRow, document_ingestor)
     if ingest_event_content is not None:
         read(ingest_event_content, context, EventIngestRow, event_ingestor)
 

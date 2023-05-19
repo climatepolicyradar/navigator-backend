@@ -46,13 +46,12 @@ def test_populate_taxonomy_unf3c_correct_counts(test_db):
     populate_taxonomy(test_db)
     taxonomy = get_organisation_taxonomy_by_name(test_db, "UNFCCC")
 
-    assert 3 == len(taxonomy)
+    assert 2 == len(taxonomy)
 
     assert "event_types" in taxonomy
     assert 17 == len(taxonomy["event_types"]["allowed_values"])
 
-    assert "submission_type" in taxonomy
-    assert 24 == len(taxonomy["submission_type"]["allowed_values"])
+    assert "submission_type" not in taxonomy
 
     assert "author_type" in taxonomy
     assert 2 == len(taxonomy["author_type"]["allowed_values"])

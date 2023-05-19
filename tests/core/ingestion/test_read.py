@@ -1,8 +1,8 @@
 from unittest.mock import MagicMock
 import pytest
-from app.core.ingestion.ingest_row import DocumentIngestRow
-from app.core.ingestion.reader import read
-from app.core.ingestion.utils import IngestContext
+from app.core.ingestion.cclw.ingest_row_cclw import CCLWDocumentIngestRow
+from app.core.ingestion.cclw.reader import read
+from app.core.ingestion.utils import CCLWIngestContext
 from app.core.validation.types import ImportSchemaMismatchError
 from tests.core.ingestion.helpers import (
     ALPHABETICAL_DOC_COLUMNS,
@@ -12,11 +12,11 @@ from tests.core.ingestion.helpers import (
 
 
 def test_read__raises_with_no_contents():
-    context = IngestContext()
+    context = CCLWIngestContext()
     process = MagicMock()
     with pytest.raises(ImportSchemaMismatchError) as e_info:
         contents = ""
-        read(contents, context, DocumentIngestRow, process)
+        read(contents, context, CCLWDocumentIngestRow, process)
 
     assert len(context.results) == 0
     assert (
@@ -27,12 +27,12 @@ def test_read__raises_with_no_contents():
 
 
 def test_read__raises_with_wrong_fields():
-    context = IngestContext()
+    context = CCLWIngestContext()
     process = MagicMock()
     with pytest.raises(ImportSchemaMismatchError) as e_info:
         contents = """a,b,c
         1,2,3"""
-        read(contents, context, DocumentIngestRow, process)
+        read(contents, context, CCLWDocumentIngestRow, process)
 
     assert len(context.results) == 0
     assert (
@@ -43,10 +43,10 @@ def test_read__raises_with_wrong_fields():
 
 
 def test_read__raises_with_missing_field():
-    context = IngestContext()
+    context = CCLWIngestContext()
     process = MagicMock()
     with pytest.raises(ImportSchemaMismatchError) as e_info:
-        read(THREE_DOC_ROWS_MISSING_FIELD, context, DocumentIngestRow, process)
+        read(THREE_DOC_ROWS_MISSING_FIELD, context, CCLWDocumentIngestRow, process)
 
     assert len(context.results) == 0
     assert (
@@ -57,9 +57,9 @@ def test_read__raises_with_missing_field():
 
 
 def test_read__processes_all_rows():
-    context = IngestContext()
+    context = CCLWIngestContext()
     process = MagicMock()
-    read(THREE_DOC_ROWS, context, DocumentIngestRow, process)
+    read(THREE_DOC_ROWS, context, CCLWDocumentIngestRow, process)
 
     expected_rows = 3
     assert process.call_count == expected_rows

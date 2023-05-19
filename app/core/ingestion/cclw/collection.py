@@ -1,16 +1,69 @@
 from typing import Any, Optional
 
 from sqlalchemy.orm import Session
-from app.core.ingestion.ingest_row import DocumentIngestRow
+from app.core.ingestion.cclw.ingest_row_cclw import CCLWDocumentIngestRow
+from app.core.ingestion.unfccc.ingest_row_unfccc import CollectonIngestRow
 from app.core.ingestion.utils import create, to_dict, update_if_changed
 
 from app.db.models.law_policy import Collection
 from app.db.models.law_policy.collection import CollectionFamily, CollectionOrganisation
 
 
+def create_collection(
+    db: Session,
+    row: CollectonIngestRow,
+    org_id: int,
+    result: dict[str, Any],
+) -> Optional[Collection]:
+    # First check for the actual collection
+    existing_collection = (
+        db.query(Collection)
+        .filter(Collection.import_id == row.cpr_collection_id)
+        .one_or_none()
+    )
+
+    if existing_collection is None:
+        collection = create(
+            db,
+            Collection,
+            import_id=row.cpr_collection_id,
+            title=row.collection_name,
+            extra={"description": row.collection_summary},
+        )
+
+        collection_organisation = create(
+            db,
+            CollectionOrganisation,
+            collection_import_id=collection.import_id,
+            organisation_id=org_id,
+        )
+
+        result["collection_organisation"] = to_dict(collection_organisation)
+        result["collection"] = to_dict(collection)
+
+        return collection
+
+    if existing_collection is not None:
+        # Check it matches
+        # FIXME: also check for the collection-organisation relationship?
+        collection = (
+            db.query(Collection)
+            .filter(Collection.title == row.collection_name)
+            .filter(Collection.description == row.collection_summary)
+            .filter(Collection.import_id == row.collection_summary)
+            .one_or_none()
+        )
+        if collection:
+            return collection
+
+    raise ValueError(
+        f"Collection {row.cpr_collection_id} is pre-exiting, and mis-matches"
+    )
+
+
 def handle_collection_from_row(
     db: Session,
-    row: DocumentIngestRow,
+    row: CCLWDocumentIngestRow,
     org_id: int,
     family_import_id: str,
     result: dict[str, Any],
