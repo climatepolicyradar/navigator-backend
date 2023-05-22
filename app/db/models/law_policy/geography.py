@@ -6,6 +6,7 @@ from app.db.session import Base
 GEO_NONE = "XAA"
 GEO_INTERNATIONAL = "XAB"
 
+GEO_OTHER = "Other"
 CPR_DEFINED_GEOS = {GEO_NONE: "No Geography", GEO_INTERNATIONAL: "International"}
 
 

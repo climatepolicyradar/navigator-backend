@@ -5,7 +5,11 @@ from slugify import slugify
 from sqlalchemy.orm import Session
 
 from app.db.models.law_policy import Geography
-from app.db.models.law_policy.geography import CPR_DEFINED_GEOS, GeoStatistics
+from app.db.models.law_policy.geography import (
+    CPR_DEFINED_GEOS,
+    GEO_OTHER,
+    GeoStatistics,
+)
 
 from .utils import has_rows, load_tree
 
@@ -43,15 +47,30 @@ def populate_geography(db: Session) -> None:
     geo_populated = has_rows(db, Geography)
     # First ensure our defined entries are present
     remove_old_international_geo(db)
+
+    # Add the Other region
+    other = db.query(Geography).filter(Geography.value == GEO_OTHER).one_or_none()
+    if other is None:
+        other = Geography(
+            display_value=GEO_OTHER,
+            slug=GEO_OTHER.lower(),
+            value=GEO_OTHER,
+            type="ISO-3166 CPR Extension",
+        )
+        db.add(other)
+        db.flush()
+
+    # Add the CPR geo definitions in Other
     for value, description in CPR_DEFINED_GEOS.items():
         db_geo = db.query(Geography).filter(Geography.value == value).one_or_none()
         if db_geo is None:
             db.add(
                 Geography(
                     display_value=description,
-                    slug=value,
+                    slug=value.lower(),
                     value=value,
                     type="ISO-3166 CPR Extension",
+                    parent_id=other.id,
                 )
             )
 
