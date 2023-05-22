@@ -1,16 +1,16 @@
 from typing import Any
 
 from sqlalchemy.orm import Session
-from app.core.ingestion.cclw.ingest_row_cclw import CCLWDocumentIngestRow
+from app.core.ingestion.params import IngestParameters
 from app.core.ingestion.utils import to_dict
 
 from app.db.models.document import PhysicalDocument
 from app.db.models.document.physical_document import Language, PhysicalDocumentLanguage
 
 
-def create_physical_document_from_row(
+def create_physical_document_from_params(
     db: Session,
-    row: CCLWDocumentIngestRow,
+    params: IngestParameters,
     result: dict[str, Any],
 ) -> PhysicalDocument:
     """
@@ -22,8 +22,8 @@ def create_physical_document_from_row(
     :return [dict[str, Any]]: a dictionary to describe what was created.
     """
     physical_document = PhysicalDocument(
-        title=row.document_title,
-        source_url=row.get_first_url(),
+        title=params.document_title,
+        source_url=params.source_url,
         md5_sum=None,
         content_type=None,
         cdn_object=None,
@@ -32,7 +32,7 @@ def create_physical_document_from_row(
     db.flush()
     result["physical_document"] = to_dict(physical_document)
 
-    for language in row.language:
+    for language in params.language:
         lang = db.query(Language).filter(Language.name == language).one_or_none()
         if lang is not None:
             doc_languages = result.get("language", [])

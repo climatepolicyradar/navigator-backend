@@ -24,14 +24,14 @@ from app.core.ingestion.unfccc.ingest_row_unfccc import (
     UNFCCCDocumentIngestRow,
 )
 
-from app.core.ingestion.unfccc.pipeline import generate_pipeline_ingest_input
+from app.core.ingestion.pipeline import generate_pipeline_ingest_input
 from app.core.ingestion.processor import (
     get_collection_ingestor,
     initialise_context,
-    get_document_ingestor,
+    get_unfccc_document_ingestor,
     get_document_validator,
 )
-from app.core.ingestion.unfccc.reader import get_file_contents, read
+from app.core.ingestion.reader import get_file_contents, read
 from app.core.ingestion.utils import (
     IngestContext,
     Result,
@@ -56,7 +56,7 @@ _LOGGER = logging.getLogger(__name__)
 unfccc_ingest_router = r = APIRouter()
 
 
-def _start_ingest(
+def start_unfccc_ingest(
     db: Session,
     s3_client: S3Client,
     s3_prefix: str,
@@ -71,8 +71,7 @@ def _start_ingest(
         collection_ingestor = get_collection_ingestor(db)
         read(collection_file_contents, context, CollectonIngestRow, collection_ingestor)
 
-        # FIXME: Write a unfccc ingestor
-        document_ingestor = get_document_ingestor(db, context)
+        document_ingestor = get_unfccc_document_ingestor(db, context)
         read(
             documents_file_contents, context, UNFCCCDocumentIngestRow, document_ingestor
         )
@@ -334,7 +333,7 @@ def ingest_unfccc_law_policy(
 
     # PHASE 3 - Start the ingest (kick off background task to do the actual ingest)
     background_tasks.add_task(
-        _start_ingest,
+        start_unfccc_ingest,
         db,
         s3_client,
         s3_prefix,

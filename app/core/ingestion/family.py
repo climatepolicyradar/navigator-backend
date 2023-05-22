@@ -2,10 +2,9 @@ from typing import Any, Optional, cast
 
 from sqlalchemy.orm import Session
 
-from app.core.ingestion.cclw.ingest_row_cclw import CCLWDocumentIngestRow
-from app.core.ingestion.cclw.metadata import add_metadata
+from app.core.ingestion.params import IngestParameters
 from app.core.organisation import get_organisation_taxonomy
-from app.core.ingestion.cclw.physical_document import create_physical_document_from_row
+from app.core.ingestion.physical_document import create_physical_document_from_params
 from app.core.ingestion.utils import (
     create,
     get_or_create,
@@ -24,9 +23,9 @@ from app.db.models.law_policy import (
 )
 
 
-def handle_family_from_row(
+def handle_family_from_params(
     db: Session,
-    row: CCLWDocumentIngestRow,
+    params: IngestParameters,
     org_id: int,
     result: dict[str, Any],
 ) -> Family:
@@ -42,18 +41,20 @@ def handle_family_from_row(
         database.
     :return [Family]: The family that was either retrieved or created
     """
-    family = _operate_on_family(db, row, org_id, result)
+    family = _operate_on_family(db, params, org_id, result)
 
-    handle_family_document_from_row(db, row, family, result)
+    handle_family_document_from_params(db, params, family, result)
 
     return family
 
 
 def _after_create_family(
-    db: Session, row: CCLWDocumentIngestRow, org_id: int, result: dict[str, Any]
+    db: Session, params: IngestParameters, org_id: int, result: dict[str, Any]
 ):
     def _create_family_links(family: Family):
-        family_slug = Slug(name=row.cpr_family_slug, family_import_id=family.import_id)
+        family_slug = Slug(
+            name=params.cpr_family_slug, family_import_id=family.import_id
+        )
 
         db.add(family_slug)
         result["family_slug"] = (to_dict(family_slug),)
@@ -64,46 +65,46 @@ def _after_create_family(
         db.add(family_organisation)
         result["family_organisation"] = to_dict(family_organisation)
 
-        id, taxonomy = get_organisation_taxonomy(db, org_id)
-        add_metadata(db, cast(str, family.import_id), taxonomy, id, row)
+        tax_id, taxonomy = get_organisation_taxonomy(db, org_id)
+        params.add_metadata(db, cast(str, family.import_id), taxonomy, tax_id)
 
     return _create_family_links
 
 
 def _operate_on_family(
     db: Session,
-    row: CCLWDocumentIngestRow,
+    params: IngestParameters,
     org_id: int,
     result: dict[str, Any],
 ) -> Family:
-    category = FamilyCategory(row.category.upper())
+    category = FamilyCategory(params.category.upper())
 
-    geography = _get_geography(db, row)
+    geography = _get_geography(db, params)
     extra = {
-        "title": row.family_name,
+        "title": params.family_name,
         "geography_id": geography.id,
-        "description": row.family_summary,
+        "description": params.family_summary,
         "family_category": category,
     }
 
     family = (
-        db.query(Family).filter(Family.import_id == row.cpr_family_id).one_or_none()
+        db.query(Family).filter(Family.import_id == params.cpr_family_id).one_or_none()
     )
 
     if family is None:
         family = create(
             db,
             Family,
-            import_id=row.cpr_family_id,
+            import_id=params.cpr_family_id,
             extra={**extra, "family_status": FamilyStatus.CREATED},
-            after_create=_after_create_family(db, row, org_id, result),
+            after_create=_after_create_family(db, params, org_id, result),
         )
         result["family"] = to_dict(family)
     else:
         updated = {}
 
-        update_if_changed(updated, "title", row.family_name, family)
-        update_if_changed(updated, "description", row.family_summary, family)
+        update_if_changed(updated, "title", params.family_name, family)
+        update_if_changed(updated, "description", params.family_summary, family)
         update_if_changed(updated, "family_category", category, family)
 
         if len(updated) > 0:
@@ -114,9 +115,9 @@ def _operate_on_family(
     return family
 
 
-def handle_family_document_from_row(
+def handle_family_document_from_params(
     db: Session,
-    row: CCLWDocumentIngestRow,
+    params: IngestParameters,
     family: Family,
     result: dict[str, Any],
 ) -> FamilyDocument:
@@ -126,7 +127,7 @@ def handle_family_document_from_row(
     # NOTE: op is determined by existence or otherwise of FamilyDocument
     family_document = (
         db.query(FamilyDocument)
-        .filter(FamilyDocument.import_id == row.cpr_document_id)
+        .filter(FamilyDocument.import_id == params.cpr_document_id)
         .one_or_none()
     )
 
@@ -137,25 +138,25 @@ def handle_family_document_from_row(
         update_if_changed(
             updated,
             "family_import_id",
-            none_if_empty(row.cpr_family_id),
+            none_if_empty(params.cpr_family_id),
             family_document,
         )
         update_if_changed(
             updated,
             "document_type",
-            none_if_empty(row.document_type),
+            none_if_empty(params.document_type),
             family_document,
         )
         update_if_changed(
             updated,
             "document_role",
-            none_if_empty(row.document_role),
+            none_if_empty(params.document_role),
             family_document,
         )
         update_if_changed(
             updated,
             "variant_name",
-            none_if_empty(row.document_variant),
+            none_if_empty(params.document_variant),
             family_document,
         )
         if len(updated) > 0:
@@ -167,14 +168,14 @@ def handle_family_document_from_row(
         updated = {}
 
         # If source_url changed then create a new physical_document
-        if row.get_first_url() != family_document.physical_document.source_url:
-            physical_document = create_physical_document_from_row(db, row, result)
+        if params.source_url != family_document.physical_document.source_url:
+            physical_document = create_physical_document_from_params(db, params, result)
             family_document.physical_document = physical_document
         else:
             update_if_changed(
                 updated,
                 "title",
-                row.document_title,
+                params.document_title,
                 family_document.physical_document,
             )
 
@@ -185,44 +186,46 @@ def handle_family_document_from_row(
 
         # Check if slug has changed
         existing_slug = (
-            db.query(Slug).filter(Slug.name == row.cpr_document_slug).one_or_none()
+            db.query(Slug).filter(Slug.name == params.cpr_document_slug).one_or_none()
         )
         if existing_slug is None:
-            _add_family_document_slug(db, row, family_document, result)
+            _add_family_document_slug(db, params, family_document, result)
     else:
-        physical_document = create_physical_document_from_row(db, row, result)
+        physical_document = create_physical_document_from_params(db, params, result)
         family_document = FamilyDocument(
             family_import_id=family.import_id,
             physical_document_id=physical_document.id,
-            import_id=row.cpr_document_id,
-            variant_name=none_if_empty(row.document_variant),
+            import_id=params.cpr_document_id,
+            variant_name=none_if_empty(params.document_variant),
             document_status=DocumentStatus.PUBLISHED,
-            document_type=none_if_empty(row.document_type),
-            document_role=none_if_empty(row.document_role),
+            document_type=none_if_empty(params.document_type),
+            document_role=none_if_empty(params.document_role),
         )
 
         db.add(family_document)
         db.flush()
         result["family_document"] = to_dict(family_document)
-        _add_family_document_slug(db, row, family_document, result)
+        _add_family_document_slug(db, params, family_document, result)
 
     return family_document
 
 
-def _get_geography(db: Session, row: CCLWDocumentIngestRow) -> Geography:
+def _get_geography(db: Session, params: IngestParameters) -> Geography:
     geography = (
-        db.query(Geography).filter(Geography.value == row.geography_iso).one_or_none()
+        db.query(Geography)
+        .filter(Geography.value == params.geography_iso)
+        .one_or_none()
     )
     if geography is None:
         raise ValueError(
-            f"Geography value of {row.geography_iso} does not exist in the database."
+            f"Geography value of {params.geography_iso} does not exist in the database."
         )
     return geography
 
 
 def _add_family_document_slug(
     db: Session,
-    row: CCLWDocumentIngestRow,
+    params: IngestParameters,
     family_document: FamilyDocument,
     result: dict[str, Any],
 ) -> Slug:
@@ -238,7 +241,7 @@ def _add_family_document_slug(
     family_document_slug = get_or_create(
         db,
         Slug,
-        name=row.cpr_document_slug,
+        name=params.cpr_document_slug,
         family_document_import_id=family_document.import_id,
     )
     result["family_document_slug"] = to_dict(family_document_slug)

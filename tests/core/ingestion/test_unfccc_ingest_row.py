@@ -1,4 +1,16 @@
-# from sqlalchemy.orm import Session
+from datetime import datetime
+from sqlalchemy.orm import Session
+from app.core.ingestion.processor import (
+    ingest_collection_row,
+    ingest_unfccc_document_row,
+    initialise_context,
+)
+from app.core.ingestion.unfccc.ingest_row_unfccc import (
+    CollectonIngestRow,
+    UNFCCCDocumentIngestRow,
+)
+from app.db.models.law_policy.collection import CollectionOrganisation
+
 # from app.core.ingestion.processor import ingest_unfccc_document_row
 # from app.core.ingestion.unfccc.ingest_row_unfccc import UNFCCCDocumentIngestRow
 # from app.core.ingestion.utils import UNFCCCIngestContext
@@ -14,18 +26,72 @@
 #     FamilyOrganisation,
 #     Slug,
 # )
-# from tests.core.ingestion.helpers import (
-#     COLLECTION_IMPORT_ID,
-#     DOCUMENT_IMPORT_ID,
-#     DOCUMENT_TITLE,
-#     FAMILY_IMPORT_ID,
-#     SLUG_DOCUMENT_NAME,
-#     SLUG_FAMILY_NAME,
-#     get_doc_ingest_row_data,
-#     populate_for_ingest,
-# )
+from tests.core.ingestion.helpers import (
+    #     COLLECTION_IMPORT_ID,
+    #     DOCUMENT_IMPORT_ID,
+    #     DOCUMENT_TITLE,
+    #     FAMILY_IMPORT_ID,
+    #     SLUG_DOCUMENT_NAME,
+    #     SLUG_FAMILY_NAME,
+    #     get_doc_ingest_row_data,
+    populate_for_ingest,
+)
+from app.db.models.law_policy import Collection
 
 # FIXME: All this file needs attention
+
+
+def test_ingest_single_collection_and_document(test_db: Session):
+    populate_for_ingest(test_db)
+    test_db.commit()
+    context = initialise_context(test_db, "UNFCCC")
+
+    # Act - create collection
+    collection_row = CollectonIngestRow(
+        row_number=1,
+        cpr_collection_id="id1",
+        collection_name="collection-title",
+        collection_summary="collection-description",
+    )
+    result = ingest_collection_row(test_db, context, collection_row)
+
+    # Assert we have created a collection and a link to the org
+    assert len(result) == 2
+    assert "collection" in result.keys()
+    assert "collection_organisation" in result.keys()
+    assert test_db.query(Collection).filter(Collection.import_id == "id1").one()
+    assert (
+        test_db.query(CollectionOrganisation)
+        .filter(CollectionOrganisation.collection_import_id == "id1")
+        .one()
+    )
+
+    # Act - create document
+    document_row = UNFCCCDocumentIngestRow(
+        row_number=1,
+        category="UNFCCC",
+        md5sum="md5sum",
+        submission_type="Plan",
+        family_name="family_name",
+        document_title="document_title",
+        documents="documents",
+        author="author",
+        author_type="Party",
+        geography="GBR",
+        geography_iso="GBR",
+        date=datetime.now(),
+        document_role="MAIN",
+        document_variant="Original Language",
+        language=["en"],
+        download_url="download_url",
+        cpr_collection_id="id1",
+        cpr_document_id="cpr_document_id",
+        cpr_family_id="cpr_family_id",
+        cpr_family_slug="cpr_family_slug",
+        cpr_document_slug="cpr_document_slug",
+    )
+    result = ingest_unfccc_document_row(test_db, context, document_row)
+    assert len(result) == 8
 
 
 # def setup_for_update(test_db):

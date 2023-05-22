@@ -17,7 +17,7 @@ MAP_OF_LIST_VALUES = {
 }
 
 
-def add_metadata(
+def add_cclw_metadata(
     db: Session,
     family_import_id: str,
     taxonomy: Taxonomy,

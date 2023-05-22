@@ -1,10 +1,11 @@
 from sqlalchemy.orm import Session
-from app.core.ingestion.cclw.family import (
-    handle_family_document_from_row,
-    handle_family_from_row,
+from app.core.ingestion.family import (
+    handle_family_document_from_params,
+    handle_family_from_params,
 )
 from app.core.ingestion.cclw.ingest_row_cclw import CCLWDocumentIngestRow
-from app.core.ingestion.cclw.physical_document import create_physical_document_from_row
+from app.core.ingestion.physical_document import create_physical_document_from_params
+from app.core.ingestion.processor import build_params_from_cclw
 from app.db.models.law_policy.family import (
     DocumentStatus,
     Family,
@@ -28,7 +29,9 @@ def test_family_from_row__creates(test_db: Session):
     populate_for_ingest(test_db)
     row = CCLWDocumentIngestRow.from_row(1, get_doc_ingest_row_data(0))
     result = {}
-    family = handle_family_from_row(test_db, row, org_id=1, result=result)
+    family = handle_family_from_params(
+        test_db, build_params_from_cclw(row), org_id=1, result=result
+    )
 
     actual_keys = set(result.keys())
     expected_keys = set(
@@ -71,7 +74,9 @@ def test_family_from_row__updates(test_db: Session):
             family_status=FamilyStatus.PUBLISHED,
         )
     )
-    pd = create_physical_document_from_row(test_db, row, result)
+    pd = create_physical_document_from_params(
+        test_db, build_params_from_cclw(row), result
+    )
     fd = FamilyDocument(
         family_import_id=FAMILY_IMPORT_ID,
         physical_document_id=pd.id,
@@ -87,7 +92,7 @@ def test_family_from_row__updates(test_db: Session):
     row.family_name = "cheese"
 
     # Get the pre-existing doc
-    family = handle_family_from_row(test_db, row, 1, result)
+    family = handle_family_from_params(test_db, build_params_from_cclw(row), 1, result)
 
     assert family.title == "cheese"
     assert 1 == test_db.query(Family).filter_by(title="cheese").count()
@@ -98,8 +103,8 @@ def test_family_document_from_row__creates(test_db: Session):
     row = CCLWDocumentIngestRow.from_row(1, get_doc_ingest_row_data(0))
     family = add_a_family(test_db)
     result = {}
-    family_document = handle_family_document_from_row(
-        test_db, row, family, result=result
+    family_document = handle_family_document_from_params(
+        test_db, build_params_from_cclw(row), family, result=result
     )
 
     actual_keys = set(result.keys())
@@ -126,12 +131,14 @@ def test_family_document_from_row__updates(test_db: Session):
     row = CCLWDocumentIngestRow.from_row(1, get_doc_ingest_row_data(0))
     family = add_a_family(test_db)
     result = {}
-    handle_family_document_from_row(test_db, row, family, result=result)
+    handle_family_document_from_params(
+        test_db, build_params_from_cclw(row), family, result=result
+    )
     result = {}
     row.document_title = "test-title"
     row.document_role = "PRESS RELEASE"
-    family_document = handle_family_document_from_row(
-        test_db, row, family, result=result
+    family_document = handle_family_document_from_params(
+        test_db, build_params_from_cclw(row), family, result=result
     )
 
     actual_keys = set(result.keys())

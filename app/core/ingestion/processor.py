@@ -2,21 +2,25 @@ import logging
 from typing import Any, Callable, TypeVar, cast
 
 from sqlalchemy.orm import Session
-from app.core.ingestion.cclw.collection import (
+from app.core.ingestion.collection import (
     create_collection,
-    handle_collection_from_row,
+    handle_collection_and_link,
 )
 from app.core.ingestion.cclw.event import family_event_from_row
-from app.core.ingestion.cclw.family import handle_family_from_row
+from app.core.ingestion.family import handle_family_from_params
 from app.core.ingestion.cclw.ingest_row_cclw import (
     CCLWDocumentIngestRow,
     EventIngestRow,
 )
+from app.core.ingestion.cclw.metadata import add_cclw_metadata
 from app.core.ingestion.ingest_row_base import BaseIngestRow
+from app.core.ingestion.metadata import Taxonomy
+from app.core.ingestion.params import IngestParameters
 from app.core.ingestion.unfccc.ingest_row_unfccc import (
     CollectonIngestRow,
     UNFCCCDocumentIngestRow,
 )
+from app.core.ingestion.unfccc.metadata import add_unfccc_metadata
 from app.core.organisation import get_organisation_taxonomy
 from app.core.ingestion.utils import (
     CCLWIngestContext,
@@ -31,12 +35,72 @@ from app.core.ingestion.validator import (
 )
 from app.db.models.app.users import Organisation
 
-_LOGGER = logging.getLogger(__name__)
 
+_LOGGER = logging.getLogger(__name__)
 
 _RowType = TypeVar("_RowType", bound=BaseIngestRow)
 
 ProcessFunc = Callable[[IngestContext, _RowType], None]
+
+
+def build_params_from_cclw(row: CCLWDocumentIngestRow) -> IngestParameters:
+    def add_metadata(db: Session, import_id: str, taxonomy: Taxonomy, taxonomy_id: int):
+        add_cclw_metadata(db, import_id, taxonomy, taxonomy_id, row)
+
+    return IngestParameters(
+        create_collections=True,
+        add_metadata=add_metadata,
+        source_url=row.get_first_url(),
+        document_id=row.document_id,
+        collection_name=row.collection_name,
+        collection_summary=row.collection_summary,
+        document_title=row.document_title,
+        family_name=row.family_name,
+        family_summary=row.family_summary,
+        document_role=row.document_role,
+        document_variant=row.document_variant,
+        geography_iso=row.geography_iso,
+        documents=row.documents,
+        category=row.category,
+        document_type=row.document_type,
+        language=row.language,
+        geography=row.geography,
+        cpr_document_id=row.cpr_document_id,
+        cpr_family_id=row.cpr_family_id,
+        cpr_collection_id=row.cpr_collection_id,
+        cpr_family_slug=row.cpr_family_slug,
+        cpr_document_slug=row.cpr_document_slug,
+    )
+
+
+def build_params_from_unfccc(row: UNFCCCDocumentIngestRow) -> IngestParameters:
+    def add_metadata(db: Session, import_id: str, taxonomy: Taxonomy, taxonomy_id: int):
+        add_unfccc_metadata(db, import_id, taxonomy, taxonomy_id, row)
+
+    return IngestParameters(
+        create_collections=False,
+        add_metadata=add_metadata,
+        source_url=row.documents,
+        document_id=row.cpr_document_id,
+        collection_name="",
+        collection_summary="",
+        document_title=row.document_title,
+        family_name=row.family_name,
+        family_summary=row.family_summary,
+        document_role=row.document_role,
+        document_variant=row.document_variant,
+        geography_iso=row.geography_iso,
+        documents=row.documents,
+        category=row.category,
+        document_type=row.submission_type,
+        language=row.language,
+        geography=row.geography,
+        cpr_document_id=row.cpr_document_id,
+        cpr_family_id=row.cpr_family_id,
+        cpr_collection_id=row.cpr_collection_id,
+        cpr_family_slug=row.cpr_family_slug,
+        cpr_document_slug=row.cpr_document_slug,
+    )
 
 
 def ingest_cclw_document_row(
@@ -61,11 +125,11 @@ def ingest_cclw_document_row(
             }
         },
     )
-
-    family = handle_family_from_row(db, row, context.org_id, result)
-    handle_collection_from_row(
+    params = build_params_from_cclw(row)
+    family = handle_family_from_params(db, params, context.org_id, result)
+    handle_collection_and_link(
         db,
-        row,
+        params,
         context.org_id,
         cast(str, family.import_id),
         result,
@@ -80,7 +144,9 @@ def ingest_cclw_document_row(
 
 
 def ingest_unfccc_document_row(
-    db: Session, context: IngestContext, row: UNFCCCDocumentIngestRow
+    db: Session,
+    context: IngestContext,
+    row: UNFCCCDocumentIngestRow,
 ) -> dict[str, Any]:
     """
     Create the constituent elements in the database that represent this row.
@@ -102,7 +168,21 @@ def ingest_unfccc_document_row(
         },
     )
 
-    # FIXME: Implement here
+    params = build_params_from_unfccc(row)
+    family = handle_family_from_params(db, params, context.org_id, result)
+    handle_collection_and_link(
+        db,
+        params,
+        context.org_id,
+        cast(str, family.import_id),
+        result,
+    )
+
+    _LOGGER.info(
+        f"Ingest complete for row {row.row_number}",
+        extra={"props": {"result": str(result)}},
+    )
+
     return result
 
 
@@ -110,8 +190,7 @@ def ingest_collection_row(
     db: Session, context: IngestContext, row: CollectonIngestRow
 ) -> dict[str, Any]:
     result = {}
-    with db.begin():
-        create_collection(db, row, context.org_id, result)
+    create_collection(db, row, context.org_id, result)
     return result
 
 
@@ -183,7 +262,7 @@ def get_collection_ingestor(db: Session) -> ProcessFunc:
     return process
 
 
-def get_document_ingestor(db: Session, context: IngestContext) -> ProcessFunc:
+def get_cclw_document_ingestor(db: Session, context: IngestContext) -> ProcessFunc:
     """
     Get the ingestion function for ingesting a law & policy CSV row.
 
@@ -207,6 +286,16 @@ def get_document_ingestor(db: Session, context: IngestContext) -> ProcessFunc:
                     extra={"props": {"row_number": row.row_number, "error": str(e)}},
                 )
 
+    return cclw_process
+
+
+def get_unfccc_document_ingestor(db: Session, context: IngestContext) -> ProcessFunc:
+    """
+    Get the ingestion function for ingesting a law & policy CSV row.
+
+    :return [ProcessFunc]: The function used to ingest the CSV row.
+    """
+
     def unfccc_process(context: IngestContext, row: UNFCCCDocumentIngestRow) -> None:
         """Processes the row into the db."""
         _LOGGER.info(f"Ingesting document row: {row.row_number}")
@@ -224,12 +313,7 @@ def get_document_ingestor(db: Session, context: IngestContext) -> ProcessFunc:
                     extra={"props": {"row_number": row.row_number, "error": str(e)}},
                 )
 
-    if context.org_name == "CCLW":
-        return cclw_process
-    elif context.org_name == "UNFCCC":
-        return unfccc_process
-
-    raise ValueError(f"Unknown org {context.org_name} for validation.")
+    return unfccc_process
 
 
 def get_document_validator(db: Session, context: IngestContext) -> ProcessFunc:

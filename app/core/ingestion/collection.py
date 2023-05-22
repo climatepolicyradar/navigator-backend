@@ -1,9 +1,13 @@
 from typing import Any, Optional
 
 from sqlalchemy.orm import Session
-from app.core.ingestion.cclw.ingest_row_cclw import CCLWDocumentIngestRow
+from app.core.ingestion.params import IngestParameters
 from app.core.ingestion.unfccc.ingest_row_unfccc import CollectonIngestRow
-from app.core.ingestion.utils import create, to_dict, update_if_changed
+from app.core.ingestion.utils import (
+    create,
+    to_dict,
+    update_if_changed,
+)
 
 from app.db.models.law_policy import Collection
 from app.db.models.law_policy.collection import CollectionFamily, CollectionOrganisation
@@ -61,9 +65,9 @@ def create_collection(
     )
 
 
-def handle_collection_from_row(
+def handle_collection_and_link(
     db: Session,
-    row: CCLWDocumentIngestRow,
+    params: IngestParameters,
     org_id: int,
     family_import_id: str,
     result: dict[str, Any],
@@ -81,23 +85,28 @@ def handle_collection_from_row(
     :param [dict[str, Any]]: a result dict in which to record what was created.
     :return [Collection | None]: A collection if one was created, otherwise None.
     """
-    if not row.cpr_collection_id or row.cpr_collection_id == "n/a":
+    if not params.cpr_collection_id or params.cpr_collection_id == "n/a":
         return None
 
     # First check for the actual collection
     existing_collection = (
         db.query(Collection)
-        .filter(Collection.import_id == row.cpr_collection_id)
+        .filter(Collection.import_id == params.cpr_collection_id)
         .one_or_none()
     )
 
     if existing_collection is None:
+        if params.create_collections is False:
+            id = params.cpr_collection_id
+            msg = f"Collection {id} is not pre-exsiting so not linking"
+            raise ValueError(msg)
+
         collection = create(
             db,
             Collection,
-            import_id=row.cpr_collection_id,
-            title=row.collection_name,
-            extra={"description": row.collection_summary},
+            import_id=params.cpr_collection_id,
+            title=params.collection_name,
+            extra={"description": params.collection_summary},
         )
 
         collection_organisation = create(
@@ -112,8 +121,8 @@ def handle_collection_from_row(
     else:
         collection = existing_collection
         updated = {}
-        update_if_changed(updated, "title", row.collection_name, collection)
-        update_if_changed(updated, "description", row.collection_summary, collection)
+        update_if_changed(updated, "title", params.collection_name, collection)
+        update_if_changed(updated, "description", params.collection_summary, collection)
         if len(updated) > 0:
             result["collection"] = updated
             db.add(collection)
@@ -123,8 +132,8 @@ def handle_collection_from_row(
     existing_link = (
         db.query(CollectionFamily)
         .filter_by(
-            collection_import_id=row.cpr_collection_id,
-            family_import_id=row.cpr_family_id,
+            collection_import_id=params.cpr_collection_id,
+            family_import_id=params.cpr_family_id,
         )
         .one_or_none()
     )

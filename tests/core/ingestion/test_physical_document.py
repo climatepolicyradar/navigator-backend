@@ -1,7 +1,8 @@
 from sqlalchemy.orm import Session
 
 from app.core.ingestion.cclw.ingest_row_cclw import CCLWDocumentIngestRow
-from app.core.ingestion.cclw.physical_document import create_physical_document_from_row
+from app.core.ingestion.physical_document import create_physical_document_from_params
+from app.core.ingestion.processor import build_params_from_cclw
 from app.db.models.document import PhysicalDocument
 from app.db.models.document.physical_document import PhysicalDocumentLanguage
 from tests.core.ingestion.helpers import (
@@ -17,7 +18,9 @@ def test_physical_document_from_row(test_db: Session):
     row.language = ["English", "German"]
     result = {}
 
-    phys_doc = create_physical_document_from_row(test_db, row, result)
+    phys_doc = create_physical_document_from_params(
+        test_db, build_params_from_cclw(row), result
+    )
     test_db.flush()
 
     assert phys_doc
