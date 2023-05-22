@@ -22,6 +22,7 @@ from app.db.models.law_policy.family import (
     Variant,
     Geography,
 )
+from app.db.models.law_policy.geography import GEO_NONE
 from app.db.session import Base
 
 DbTable = Base
@@ -109,7 +110,7 @@ def validate_unfccc_document_row(
         if result.type != ResultType.OK:
             errors.append(result)
     else:
-        row.geography_iso = "XAA"  # Agreed representation of "no-geography"
+        row.geography_iso = GEO_NONE
 
     # validate: Submission type as document type
     result = _check_value_in_db(

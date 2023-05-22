@@ -5,11 +5,9 @@ from slugify import slugify
 from sqlalchemy.orm import Session
 
 from app.db.models.law_policy import Geography
-from app.db.models.law_policy.geography import GeoStatistics
+from app.db.models.law_policy.geography import CPR_DEFINED_GEOS, GeoStatistics
 
 from .utils import has_rows, load_tree
-
-CPR_DEFINED_GEOS = {"XXA": "No Geography", "XXB": "International"}
 
 
 def _add_geo_slugs(geo_tree: list[dict[str, dict]]):

@@ -31,7 +31,7 @@ def test_endpoint_returns_taxonomy(client, test_db):
     assert len(response_json) == 2
 
     assert "geographies" in response_json
-    assert len(response_json["geographies"]) == 7
+    assert len(response_json["geographies"]) == 9
 
     assert "taxonomies" in response_json
     assert "CCLW" in response_json["taxonomies"]

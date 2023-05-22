@@ -3,6 +3,12 @@ import sqlalchemy as sa
 from app.db.session import Base
 
 
+GEO_NONE = "XAA"
+GEO_INTERNATIONAL = "XAB"
+
+CPR_DEFINED_GEOS = {GEO_NONE: "No Geography", GEO_INTERNATIONAL: "International"}
+
+
 class Geography(Base):  # noqa: D101
     """Database model for Geography"""
 
