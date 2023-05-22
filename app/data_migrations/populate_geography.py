@@ -53,7 +53,7 @@ def populate_geography(db: Session) -> None:
     if other is None:
         other = Geography(
             display_value=GEO_OTHER,
-            slug=GEO_OTHER.lower(),
+            slug=slugify(GEO_OTHER),
             value=GEO_OTHER,
             type="ISO-3166 CPR Extension",
         )
@@ -67,7 +67,7 @@ def populate_geography(db: Session) -> None:
             db.add(
                 Geography(
                     display_value=description,
-                    slug=value.lower(),
+                    slug=slugify(value),
                     value=value,
                     type="ISO-3166 CPR Extension",
                     parent_id=other.id,
