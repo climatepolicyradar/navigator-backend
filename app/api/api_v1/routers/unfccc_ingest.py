@@ -56,7 +56,7 @@ _LOGGER = logging.getLogger(__name__)
 unfccc_ingest_router = r = APIRouter()
 
 
-def _start_ingest(
+def start_unfccc_ingest(
     db: Session,
     s3_client: S3Client,
     s3_prefix: str,
@@ -333,7 +333,7 @@ def ingest_unfccc_law_policy(
 
     # PHASE 3 - Start the ingest (kick off background task to do the actual ingest)
     background_tasks.add_task(
-        _start_ingest,
+        start_unfccc_ingest,
         db,
         s3_client,
         s3_prefix,

@@ -190,8 +190,7 @@ def ingest_collection_row(
     db: Session, context: IngestContext, row: CollectonIngestRow
 ) -> dict[str, Any]:
     result = {}
-    with db.begin():
-        create_collection(db, row, context.org_id, result)
+    create_collection(db, row, context.org_id, result)
     return result
 
 
