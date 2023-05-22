@@ -19,6 +19,7 @@ EXPECTED_DOCUMENTS = """{
       "description": "summary",
       "postfix": null,
       "source_url": "https://unfccc.int/sites/default/files/resource/cma2021_08r01_S.pdf",
+      "download_url": null,
       "slug": "Doc-slug",
       "type": "Synthesis Report",
       "source": "UNFCCC",
@@ -270,4 +271,4 @@ def test_start_unfccc_ingest(
 
     documents_call = mock_write_s3.mock_calls[1]
     content = documents_call.kwargs["bytes_content"].read()
-    assert content == bytes(EXPECTED_DOCUMENTS, encoding="utf8")
+    assert content.decode("utf8") == EXPECTED_DOCUMENTS
