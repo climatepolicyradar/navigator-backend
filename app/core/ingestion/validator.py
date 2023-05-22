@@ -104,9 +104,12 @@ def validate_unfccc_document_row(
         errors.append(result)
 
     # validate: geography_iso: str
-    result = _check_geo_in_db(n, db, row.geography_iso)
-    if result.type != ResultType.OK:
-        errors.append(result)
+    if row.geography_iso != "":
+        result = _check_geo_in_db(n, db, row.geography_iso)
+        if result.type != ResultType.OK:
+            errors.append(result)
+    else:
+        row.geography_iso = "XAA"  # Agreed representation of "no-geography"
 
     # validate: Submission type as document type
     result = _check_value_in_db(
