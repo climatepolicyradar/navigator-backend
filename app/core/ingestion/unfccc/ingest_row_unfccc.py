@@ -39,7 +39,7 @@ VALID_COLLECTION_COLUMN_NAMES = set(_REQUIRED_COLLECTION_COLUMNS)
 
 @dataclass(config=ConfigDict(frozen=True, validate_assignment=True, extra=Extra.forbid))
 class UNFCCCDocumentIngestRow(BaseIngestRow):
-    """Represents a single row of input from the documents-families-collections CSV."""
+    """Represents a single row of input from the UNFCCC CSV."""
 
     category: str
     md5sum: str

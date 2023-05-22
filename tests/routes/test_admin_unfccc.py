@@ -19,6 +19,7 @@ EXPECTED_DOCUMENTS = """{
       "description": "summary",
       "postfix": null,
       "source_url": "https://unfccc.int/sites/default/files/resource/cma2021_08r01_S.pdf",
+      "download_url": "url of downloaded document",
       "slug": "Doc-slug",
       "type": "Synthesis Report",
       "source": "UNFCCC",
@@ -51,11 +52,11 @@ def test_unauthorized_validation(client):
 
 
 MISSING_COLL_UNFCCC_ROW = """Category,md5sum,Submission type,Family name,Document title,Documents,Author,Author type,Geography,Geography ISO,Date,Document role,Document variant,Language,Download URL,CPR Collection ID,CPR Document ID,CPR Document Slug,CPR Family ID,CPR Family Slug
-UNFCCC,00254c407297fbb50a77d748b817ee5c,Synthesis Report,Nationally determined contributions under the Paris Agreement. Revised note by the secretariat,Nationally determined contributions under the Paris Agreement. Revised note by the secretariat,https://unfccc.int/sites/default/files/resource/cma2021_08r01_S.pdf,UNFCCC Secretariat,Party,UK,GBR,2021-10-25T12:00:00Z,,,en,url,UNFCCC.Collection.1,UNFCCC.Document.1,Doc-slug,UNFCCC.family.1,Family-slug
+UNFCCC,00254c407297fbb50a77d748b817ee5c,Synthesis Report,Nationally determined contributions under the Paris Agreement. Revised note by the secretariat,Nationally determined contributions under the Paris Agreement. Revised note by the secretariat,https://unfccc.int/sites/default/files/resource/cma2021_08r01_S.pdf,UNFCCC Secretariat,Party,UK,GBR,2021-10-25T12:00:00Z,,,en,url of downloaded document,UNFCCC.Collection.1,UNFCCC.Document.1,Doc-slug,UNFCCC.family.1,Family-slug
 """
 
 ONE_UNFCCC_ROW = """Category,md5sum,Submission type,Family name,Document title,Documents,Author,Author type,Geography,Geography ISO,Date,Document role,Document variant,Language,Download URL,CPR Collection ID,CPR Document ID,CPR Document Slug,CPR Family ID,CPR Family Slug
-UNFCCC,00254c407297fbb50a77d748b817ee5c,Synthesis Report,Nationally determined contributions under the Paris Agreement. Revised note by the secretariat,Nationally determined contributions under the Paris Agreement. Revised note by the secretariat,https://unfccc.int/sites/default/files/resource/cma2021_08r01_S.pdf,UNFCCC Secretariat,Party,UK,GBR,2021-10-25T12:00:00Z,,,en,url,UNFCCC.Collection.Found,UNFCCC.Document.1,Doc-slug,UNFCCC.family.1,Family-slug
+UNFCCC,00254c407297fbb50a77d748b817ee5c,Synthesis Report,Nationally determined contributions under the Paris Agreement. Revised note by the secretariat,Nationally determined contributions under the Paris Agreement. Revised note by the secretariat,https://unfccc.int/sites/default/files/resource/cma2021_08r01_S.pdf,UNFCCC Secretariat,Party,UK,GBR,2021-10-25T12:00:00Z,,,en,url of downloaded document,UNFCCC.Collection.Found,UNFCCC.Document.1,Doc-slug,UNFCCC.family.1,Family-slug
 """
 
 ZERO_COLLECTION_ROW = """CPR Collection ID,Collection name,Collection summary
@@ -270,4 +271,4 @@ def test_start_unfccc_ingest(
 
     documents_call = mock_write_s3.mock_calls[1]
     content = documents_call.kwargs["bytes_content"].read()
-    assert content == bytes(EXPECTED_DOCUMENTS, encoding="utf8")
+    assert content.decode("utf8") == EXPECTED_DOCUMENTS

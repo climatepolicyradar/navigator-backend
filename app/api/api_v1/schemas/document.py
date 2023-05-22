@@ -117,6 +117,8 @@ class DocumentParserInput(BaseModel):
     description: str
     postfix: Optional[str]
     source_url: Optional[str]
+    download_url: Optional[str]
+
     slug: str
 
     type: str

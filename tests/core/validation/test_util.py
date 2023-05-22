@@ -84,6 +84,7 @@ def test_write_documents_to_s3(test_s3_client, mocker):
         postfix="pf-A",
         description="description",
         source_url=None,
+        download_url=None,
         type="executive",
         source="CCLW",
         import_id="1234-5678",

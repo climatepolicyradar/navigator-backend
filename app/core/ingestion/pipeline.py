@@ -51,6 +51,7 @@ def generate_pipeline_ingest_input(db: Session) -> Sequence[DocumentParserInput]
                 if family_document.physical_document is not None
                 else None
             ),
+            download_url=None,
             type=cast(str, family_document.document_type or ""),
             source=cast(str, organisation.name),
             slug=cast(str, family_document.slugs[-1].name),
