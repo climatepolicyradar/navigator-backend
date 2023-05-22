@@ -11,12 +11,37 @@ from app.core.ingestion.unfccc.ingest_row_unfccc import (
 )
 from app.db.models.law_policy.collection import CollectionOrganisation
 from app.db.models.law_policy.family import Family
-from app.db.models.law_policy.geography import GEO_NONE, Geography
+from app.db.models.law_policy.geography import GEO_INTERNATIONAL, GEO_NONE, Geography
 
 from tests.core.ingestion.helpers import (
     populate_for_ingest,
 )
 from app.db.models.law_policy import Collection
+
+
+DOC_ROW = UNFCCCDocumentIngestRow(
+    row_number=1,
+    category="UNFCCC",
+    md5sum="md5sum",
+    submission_type="Plan",
+    family_name="family_name",
+    document_title="document_title",
+    documents="documents",
+    author="author",
+    author_type="Party",
+    geography="GBR",
+    geography_iso="GBR",
+    date=datetime.now(),
+    document_role="MAIN",
+    document_variant="Original Language",
+    language=["en"],
+    download_url="download_url",
+    cpr_collection_id="id1",
+    cpr_document_id="cpr_document_id",
+    cpr_family_id="cpr_family_id",
+    cpr_family_slug="cpr_family_slug",
+    cpr_document_slug="cpr_document_slug",
+)
 
 
 def test_ingest_single_collection_and_document(test_db: Session):
@@ -45,29 +70,8 @@ def test_ingest_single_collection_and_document(test_db: Session):
     )
 
     # Act - create document
-    document_row = UNFCCCDocumentIngestRow(
-        row_number=1,
-        category="UNFCCC",
-        md5sum="md5sum",
-        submission_type="Plan",
-        family_name="family_name",
-        document_title="document_title",
-        documents="documents",
-        author="author",
-        author_type="Party",
-        geography="GBR",
-        geography_iso="GBR",
-        date=datetime.now(),
-        document_role="MAIN",
-        document_variant="Original Language",
-        language=["en"],
-        download_url="download_url",
-        cpr_collection_id="id1",
-        cpr_document_id="cpr_document_id",
-        cpr_family_id="cpr_family_id",
-        cpr_family_slug="cpr_family_slug",
-        cpr_document_slug="cpr_document_slug",
-    )
+    document_row = DOC_ROW
+
     result = ingest_unfccc_document_row(test_db, context, document_row)
     assert len(result) == 8
 
@@ -86,41 +90,10 @@ def test_ingest_blank_geo(test_db: Session):
     )
     result = ingest_collection_row(test_db, context, collection_row)
 
-    # Assert we have created a collection and a link to the org
-    assert len(result) == 2
-    assert "collection" in result.keys()
-    assert "collection_organisation" in result.keys()
-    assert test_db.query(Collection).filter(Collection.import_id == "id1").one()
-    assert (
-        test_db.query(CollectionOrganisation)
-        .filter(CollectionOrganisation.collection_import_id == "id1")
-        .one()
-    )
-
     # Act - create document
-    document_row = UNFCCCDocumentIngestRow(
-        row_number=1,
-        category="UNFCCC",
-        md5sum="md5sum",
-        submission_type="Plan",
-        family_name="family_name",
-        document_title="document_title",
-        documents="documents",
-        author="author",
-        author_type="Party",
-        geography="",
-        geography_iso="",
-        date=datetime.now(),
-        document_role="MAIN",
-        document_variant="Original Language",
-        language=["en"],
-        download_url="download_url",
-        cpr_collection_id="id1",
-        cpr_document_id="cpr_document_id",
-        cpr_family_id="cpr_family_id",
-        cpr_family_slug="cpr_family_slug",
-        cpr_document_slug="cpr_document_slug",
-    )
+    document_row = DOC_ROW
+    document_row.geography_iso = ""
+
     result = ingest_unfccc_document_row(test_db, context, document_row)
     assert len(result) == 8
 
@@ -131,3 +104,35 @@ def test_ingest_blank_geo(test_db: Session):
     geo = test_db.query(Geography).get(family.geography_id)
     no_geo = test_db.query(Geography).filter(Geography.value == GEO_NONE).one()
     assert geo == no_geo
+
+
+def test_ingest_international_geo(test_db: Session):
+    populate_for_ingest(test_db)
+    test_db.commit()
+    context = initialise_context(test_db, "UNFCCC")
+
+    # Act - create collection
+    collection_row = CollectonIngestRow(
+        row_number=1,
+        cpr_collection_id="id1",
+        collection_name="collection-title",
+        collection_summary="collection-description",
+    )
+    result = ingest_collection_row(test_db, context, collection_row)
+
+    # Act - create document
+    document_row = DOC_ROW
+    document_row.geography_iso = "INT"
+
+    result = ingest_unfccc_document_row(test_db, context, document_row)
+    assert len(result) == 8
+
+    assert 1 == test_db.query(Family).count()
+    family = test_db.query(Family).first()
+    assert family
+    assert family.geography_id
+    geo = test_db.query(Geography).get(family.geography_id)
+    international = (
+        test_db.query(Geography).filter(Geography.value == GEO_INTERNATIONAL).one()
+    )
+    assert geo == international
