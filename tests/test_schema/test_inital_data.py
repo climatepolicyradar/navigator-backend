@@ -15,6 +15,6 @@ def test_initial_data_populates_tables(engine):
         language_count = db.execute("SELECT count(*) FROM language;").scalar()
         geo_stats_count = db.execute("SELECT count(*) FROM geo_statistics;").scalar()
 
-    assert geo_count == 211
+    assert geo_count == 212
     assert language_count == 7893
     assert geo_stats_count == 201
