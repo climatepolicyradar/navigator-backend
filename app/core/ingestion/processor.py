@@ -34,6 +34,7 @@ from app.core.ingestion.validator import (
     validate_unfccc_document_row,
 )
 from app.db.models.app.users import Organisation
+from app.db.models.law_policy.geography import GEO_INTERNATIONAL, GEO_NONE
 
 
 _LOGGER = logging.getLogger(__name__)
@@ -41,6 +42,16 @@ _LOGGER = logging.getLogger(__name__)
 _RowType = TypeVar("_RowType", bound=BaseIngestRow)
 
 ProcessFunc = Callable[[IngestContext, _RowType], None]
+
+
+def parse_csv_geography(csv_geo: str) -> str:
+    if csv_geo == "":
+        return GEO_NONE
+
+    if csv_geo == "INT":
+        return GEO_INTERNATIONAL  # Support old style
+
+    return csv_geo
 
 
 def build_params_from_cclw(row: CCLWDocumentIngestRow) -> IngestParameters:
@@ -59,7 +70,7 @@ def build_params_from_cclw(row: CCLWDocumentIngestRow) -> IngestParameters:
         family_summary=row.family_summary,
         document_role=row.document_role,
         document_variant=row.document_variant,
-        geography_iso=row.geography_iso,
+        geography_iso=parse_csv_geography(row.geography_iso),
         documents=row.documents,
         category=row.category,
         document_type=row.document_type,
@@ -89,7 +100,7 @@ def build_params_from_unfccc(row: UNFCCCDocumentIngestRow) -> IngestParameters:
         family_summary=row.family_summary,
         document_role=row.document_role,
         document_variant=row.document_variant,
-        geography_iso=row.geography_iso,
+        geography_iso=parse_csv_geography(row.geography_iso),
         documents=row.documents,
         category=row.category,
         document_type=row.submission_type,
