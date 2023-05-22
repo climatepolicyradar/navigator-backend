@@ -42,6 +42,7 @@ def remove_old_international_geo(db: Session) -> None:
 def populate_geography(db: Session) -> None:
     """Populates the geography table with pre-defined data."""
 
+    geo_populated = has_rows(db, Geography)
     # First ensure our defined entries are present
     remove_old_international_geo(db)
     for value, description in CPR_DEFINED_GEOS.items():
@@ -56,7 +57,7 @@ def populate_geography(db: Session) -> None:
                 )
             )
 
-    if has_rows(db, Geography):
+    if geo_populated:
         return
 
     with open("app/data_migrations/data/geography_data.json") as geo_data_file:

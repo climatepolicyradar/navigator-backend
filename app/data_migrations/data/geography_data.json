@@ -1445,14 +1445,6 @@
       },
       {
         "node": {
-          "display_value": "International",
-          "value": "INT",
-          "type": "ISO-3166"
-        },
-        "children": []
-      },
-      {
-        "node": {
           "display_value": "Japan",
           "value": "JPN",
           "type": "ISO-3166"
