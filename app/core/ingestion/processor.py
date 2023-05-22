@@ -178,6 +178,9 @@ def ingest_unfccc_document_row(
         result,
     )
 
+    ctx = cast(UNFCCCIngestContext, context)
+    ctx.download_urls[import_id] = row.download_url
+
     _LOGGER.info(
         f"Ingest complete for row {row.row_number}",
         extra={"props": {"result": str(result)}},

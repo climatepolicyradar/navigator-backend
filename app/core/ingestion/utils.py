@@ -227,11 +227,13 @@ class UNFCCCIngestContext(IngestContext):
     collection_ids_referenced: list[str]
     # Just for families:
     consistency_validator: ConsistencyValidator
+    download_urls: dict[str, str]  # import_id -> url
 
     def __init__(self, org_name="UNFCCC", org_id=2, results=None):
         self.collection_ids_defined = []
         self.collection_ids_referenced = []
         self.consistency_validator = ConsistencyValidator()
+        self.download_urls = {}
         self.org_name = org_name
         self.org_id = org_id
         self.results = [] if results is None else results
