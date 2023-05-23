@@ -2,7 +2,7 @@ from typing import Any, Optional
 
 from sqlalchemy.orm import Session
 from app.core.ingestion.params import IngestParameters
-from app.core.ingestion.unfccc.ingest_row_unfccc import CollectonIngestRow
+from app.core.ingestion.unfccc.ingest_row_unfccc import CollectionIngestRow
 from app.core.ingestion.utils import (
     create,
     to_dict,
@@ -15,7 +15,7 @@ from app.db.models.law_policy.collection import CollectionFamily, CollectionOrga
 
 def create_collection(
     db: Session,
-    row: CollectonIngestRow,
+    row: CollectionIngestRow,
     org_id: int,
     result: dict[str, Any],
 ) -> Optional[Collection]:

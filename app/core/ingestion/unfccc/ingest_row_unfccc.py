@@ -7,17 +7,17 @@ from app.core.ingestion.ingest_row_base import BaseIngestRow
 
 _REQUIRED_DOCUMENT_COLUMNS = [
     "Category",
-    "Submission type",
-    "Family name",
-    "Document title",
+    "Submission Type",
+    "Family Name",
+    "Document Title",
     "Documents",
     "Author",
-    "Author type",
+    "Author Type",
     "Geography",
     "Geography ISO",
     "Date",
-    "Document role",
-    "Document variant",
+    "Document Role",
+    "Document Variant",
     "Language",
     "CPR Collection ID",
     "CPR Document ID",
@@ -74,7 +74,7 @@ class UNFCCCDocumentIngestRow(BaseIngestRow):
 
 
 @dataclass(config=ConfigDict(frozen=True, validate_assignment=True, extra=Extra.ignore))
-class CollectonIngestRow(BaseIngestRow):
+class CollectionIngestRow(BaseIngestRow):
     """Represents a single row of input from the collection CSV."""
 
     cpr_collection_id: str

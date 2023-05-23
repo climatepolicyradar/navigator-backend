@@ -6,7 +6,7 @@ from app.core.ingestion.processor import (
     initialise_context,
 )
 from app.core.ingestion.unfccc.ingest_row_unfccc import (
-    CollectonIngestRow,
+    CollectionIngestRow,
     UNFCCCDocumentIngestRow,
 )
 from app.db.models.law_policy.collection import CollectionOrganisation
@@ -50,7 +50,7 @@ def test_ingest_single_collection_and_document(test_db: Session):
     context = initialise_context(test_db, "UNFCCC")
 
     # Act - create collection
-    collection_row = CollectonIngestRow(
+    collection_row = CollectionIngestRow(
         row_number=1,
         cpr_collection_id="id1",
         collection_name="collection-title",
@@ -82,7 +82,7 @@ def test_ingest_blank_geo(test_db: Session):
     context = initialise_context(test_db, "UNFCCC")
 
     # Act - create collection
-    collection_row = CollectonIngestRow(
+    collection_row = CollectionIngestRow(
         row_number=1,
         cpr_collection_id="id1",
         collection_name="collection-title",
@@ -112,7 +112,7 @@ def test_ingest_international_geo(test_db: Session):
     context = initialise_context(test_db, "UNFCCC")
 
     # Act - create collection
-    collection_row = CollectonIngestRow(
+    collection_row = CollectionIngestRow(
         row_number=1,
         cpr_collection_id="id1",
         collection_name="collection-title",

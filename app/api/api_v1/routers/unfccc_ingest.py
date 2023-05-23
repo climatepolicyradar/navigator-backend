@@ -20,7 +20,7 @@ from app.api.api_v1.schemas.document import (
 from app.core.auth import get_superuser_details
 from app.core.aws import get_s3_client
 from app.core.ingestion.unfccc.ingest_row_unfccc import (
-    CollectonIngestRow,
+    CollectionIngestRow,
     UNFCCCDocumentIngestRow,
 )
 
@@ -69,7 +69,9 @@ def start_unfccc_ingest(
         context = initialise_context(db, "UNFCCC")
         # First the collections....
         collection_ingestor = get_collection_ingestor(db)
-        read(collection_file_contents, context, CollectonIngestRow, collection_ingestor)
+        read(
+            collection_file_contents, context, CollectionIngestRow, collection_ingestor
+        )
 
         document_ingestor = get_unfccc_document_ingestor(db, context)
         read(
@@ -380,12 +382,12 @@ def _validate_unfccc_csv(
     """
 
     # First read all the ids in the collection_csv
-    def collate_ids(context: IngestContext, row: CollectonIngestRow) -> None:
+    def collate_ids(context: IngestContext, row: CollectionIngestRow) -> None:
         ctx = cast(UNFCCCIngestContext, context)
         ctx.collection_ids_defined.append(row.cpr_collection_id)
 
     collection_file_contents = get_file_contents(collection_csv)
-    read(collection_file_contents, context, CollectonIngestRow, collate_ids)
+    read(collection_file_contents, context, CollectionIngestRow, collate_ids)
 
     # Now do the validation of the documents
     documents_file_contents = get_file_contents(unfccc_data_csv)
@@ -401,9 +403,10 @@ def _validate_unfccc_csv(
     defined_not_referenced = defined.difference(referenced)
 
     if len(defined_not_referenced) > 0:
+        # Empty collections are allowed, but need reporting
         context.results.append(
             Result(
-                ResultType.ERROR,
+                ResultType.OK,
                 "The following Collection IDs were "
                 + f"defined and not referenced: {list(defined_not_referenced)}",
             )
