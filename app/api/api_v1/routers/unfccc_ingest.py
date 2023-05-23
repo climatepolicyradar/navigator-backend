@@ -98,7 +98,9 @@ def start_unfccc_ingest(
         ctx = cast(UNFCCCIngestContext, context)
         # We now have to populate the download_url values...
         for doc in pipeline_ingest_input:
-            doc.download_url = ctx.download_urls[doc.import_id]
+            doc.download_url = ""
+            if doc.import_id in ctx.download_urls:
+                doc.download_url = ctx.download_urls[doc.import_id]
         write_documents_to_s3(
             s3_client=s3_client,
             s3_prefix=s3_prefix,
