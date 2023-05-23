@@ -1,4 +1,4 @@
-from typing import Any, Optional
+from typing import Any, Optional, cast
 
 from sqlalchemy.orm import Session
 from app.core.ingestion.params import IngestParameters
@@ -11,6 +11,29 @@ from app.core.ingestion.utils import (
 
 from app.db.models.law_policy import Collection
 from app.db.models.law_policy.collection import CollectionFamily, CollectionOrganisation
+
+
+def handle_cclw_collection_and_link(
+    db: Session,
+    params: IngestParameters,
+    org_id: int,
+    family_import_id: str,
+    result: dict[str, Any],
+) -> Optional[Collection]:
+    collection = handle_create_collection(
+        db,
+        params.cpr_collection_ids[0],  # Only every one for CCLW
+        params.collection_name,
+        params.collection_summary,
+        org_id,
+        result,
+    )
+
+    if collection is not None:
+        handle_link_collection_to_family(
+            db, params.cpr_collection_ids, cast(str, family_import_id), result
+        )
+    return collection
 
 
 def create_collection(
@@ -65,11 +88,12 @@ def create_collection(
     )
 
 
-def handle_collection_and_link(
+def handle_create_collection(
     db: Session,
-    params: IngestParameters,
+    collection_id: str,
+    collection_name: str,
+    collection_summary: str,
     org_id: int,
-    family_import_id: str,
     result: dict[str, Any],
 ) -> Optional[Collection]:
     """
@@ -85,34 +109,27 @@ def handle_collection_and_link(
     :param [dict[str, Any]]: a result dict in which to record what was created.
     :return [Collection | None]: A collection if one was created, otherwise None.
     """
-    if not params.cpr_collection_id or params.cpr_collection_id == "n/a":
+    if not collection_id or collection_id == "n/a":
         return None
 
     # First check for the actual collection
     existing_collection = (
-        db.query(Collection)
-        .filter(Collection.import_id == params.cpr_collection_id)
-        .one_or_none()
+        db.query(Collection).filter(Collection.import_id == collection_id).one_or_none()
     )
 
     if existing_collection is None:
-        if params.create_collections is False:
-            id = params.cpr_collection_id
-            msg = f"Collection {id} is not pre-exsiting so not linking"
-            raise ValueError(msg)
-
         collection = create(
             db,
             Collection,
-            import_id=params.cpr_collection_id,
-            title=params.collection_name,
-            extra={"description": params.collection_summary},
+            import_id=collection_id,
+            title=collection_name,
+            extra={"description": collection_summary},
         )
 
         collection_organisation = create(
             db,
             CollectionOrganisation,
-            collection_import_id=collection.import_id,
+            collection_import_id=collection_id,
             organisation_id=org_id,
         )
 
@@ -121,30 +138,37 @@ def handle_collection_and_link(
     else:
         collection = existing_collection
         updated = {}
-        update_if_changed(updated, "title", params.collection_name, collection)
-        update_if_changed(updated, "description", params.collection_summary, collection)
+        update_if_changed(updated, "title", collection_name, collection)
+        update_if_changed(updated, "description", collection_summary, collection)
         if len(updated) > 0:
             result["collection"] = updated
             db.add(collection)
             db.flush()
 
-    # Second check for the family - collection link
-    existing_link = (
-        db.query(CollectionFamily)
-        .filter_by(
-            collection_import_id=params.cpr_collection_id,
-            family_import_id=params.cpr_family_id,
-        )
-        .one_or_none()
-    )
-
-    if existing_link is None:
-        collection_family = create(
-            db,
-            CollectionFamily,
-            collection_import_id=collection.import_id,
-            family_import_id=family_import_id,
-        )
-        result["collection_family"] = to_dict(collection_family)
-
     return collection
+
+
+def handle_link_collection_to_family(
+    db: Session,
+    collection_ids: list[str],
+    family_import_id: str,
+    result: dict[str, Any],
+) -> None:
+    for collection_id in collection_ids:
+        existing_link = (
+            db.query(CollectionFamily)
+            .filter_by(
+                collection_import_id=collection_id,
+                family_import_id=family_import_id,
+            )
+            .one_or_none()
+        )
+
+        if existing_link is None:
+            collection_family = create(
+                db,
+                CollectionFamily,
+                collection_import_id=collection_id,
+                family_import_id=family_import_id,
+            )
+            result["collection_family"] = to_dict(collection_family)

@@ -55,7 +55,7 @@ class UNFCCCDocumentIngestRow(BaseIngestRow):
     document_variant: str
     language: list[str]
 
-    cpr_collection_id: str
+    cpr_collection_id: list[str]
     cpr_document_id: str
     cpr_family_id: str
     cpr_family_slug: str
@@ -63,7 +63,6 @@ class UNFCCCDocumentIngestRow(BaseIngestRow):
     cpr_document_status: str
     download_url: str
 
-    # FIXME: Where is the summary from?
     family_summary: str = "summary"
 
     VALID_COLUMNS: ClassVar[set[str]] = VALID_DOCUMENT_COLUMN_NAMES

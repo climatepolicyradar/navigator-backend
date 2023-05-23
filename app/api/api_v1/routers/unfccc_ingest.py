@@ -29,18 +29,15 @@ from app.core.ingestion.processor import (
     get_collection_ingestor,
     initialise_context,
     get_unfccc_document_ingestor,
-    get_document_validator,
 )
 from app.core.ingestion.reader import get_file_contents, read
+from app.core.ingestion.unfccc.validate import validate_unfccc_csv
 from app.core.ingestion.utils import (
-    IngestContext,
-    Result,
     ResultType,
     UNFCCCIngestContext,
 )
 from app.core.ingestion.utils import (
     ValidationResult,
-    get_result_counts,
 )
 from app.core.validation.types import ImportSchemaMismatchError
 from app.core.validation.util import (
@@ -159,13 +156,16 @@ def validate_unfccc_law_policy(
     all_results = []
 
     try:
-        _, _, message = _validate_unfccc_csv(
-            unfccc_data_csv,
-            collection_csv,
+        docs = get_file_contents(unfccc_data_csv)
+        collections = get_file_contents(collection_csv)
+        message = validate_unfccc_csv(
+            docs,
+            collections,
             db,
             cast(UNFCCCIngestContext, context),
             all_results,
         )
+        _LOGGER.info(message)
     except ImportSchemaMismatchError as e:
         _LOGGER.exception(
             "Provided CSV failed law & policy schema validation",
@@ -237,13 +237,16 @@ def ingest_unfccc_law_policy(
 
     # PHASE 1 - Validate
     try:
-        documents_file_contents, collection_file_contents, _ = _validate_unfccc_csv(
-            unfccc_data_csv,
-            collection_csv,
+        collection_file_contents = get_file_contents(collection_csv)
+        documents_file_contents = get_file_contents(unfccc_data_csv)
+        message = validate_unfccc_csv(
+            documents_file_contents,
+            collection_file_contents,
             db,
             cast(UNFCCCIngestContext, context),
             all_results,
         )
+        _LOGGER.info(message)
     except ImportSchemaMismatchError as e:
         _LOGGER.exception(
             "Provided CSV failed law & policy schema validation",
@@ -362,75 +365,3 @@ def ingest_unfccc_law_policy(
         import_s3_prefix=s3_prefix,
         detail=None,  # TODO: add detail?
     )
-
-
-def _validate_unfccc_csv(
-    unfccc_data_csv: UploadFile,
-    collection_csv: UploadFile,
-    db: Session,
-    context: UNFCCCIngestContext,
-    all_results: list[Result],
-) -> tuple[str, str, str]:
-    """
-    Validates the csv file
-
-    :param UploadFile law_policy_csv: incoming file to validate
-    :param Session db: connection to the database
-    :param IngestContext context: the ingest context
-    :param list[Result] all_results: the results
-    :return tuple[str, str]: the file contents of the csv and the summary message
-    """
-
-    # First read all the ids in the collection_csv
-    def collate_ids(context: IngestContext, row: CollectionIngestRow) -> None:
-        ctx = cast(UNFCCCIngestContext, context)
-        ctx.collection_ids_defined.append(row.cpr_collection_id)
-
-    collection_file_contents = get_file_contents(collection_csv)
-    read(collection_file_contents, context, CollectionIngestRow, collate_ids)
-
-    # Now do the validation of the documents
-    documents_file_contents = get_file_contents(unfccc_data_csv)
-    validator = get_document_validator(db, context)
-    read(documents_file_contents, context, UNFCCCDocumentIngestRow, validator)
-    # Get the rows here as this is the length of results
-    rows = len(context.results)
-
-    # Check the set of defined collections against those referenced
-    defined = set(context.collection_ids_defined)
-    referenced = set(context.collection_ids_referenced)
-
-    defined_not_referenced = defined.difference(referenced)
-
-    if len(defined_not_referenced) > 0:
-        # Empty collections are allowed, but need reporting
-        context.results.append(
-            Result(
-                ResultType.OK,
-                "The following Collection IDs were "
-                + f"defined and not referenced: {list(defined_not_referenced)}",
-            )
-        )
-
-    referenced_not_defined = referenced.difference(defined)
-    if len(referenced_not_defined) > 0:
-        context.results.append(
-            Result(
-                ResultType.ERROR,
-                "The following Collection IDs were "
-                f"referenced and not defined: {list(referenced_not_defined)}",
-            )
-        )
-
-    _, fails, resolved = get_result_counts(context.results)
-    all_results.extend(context.results)
-
-    context.results = []
-    message = (
-        f"UNFCCC validation result: {rows} Rows, {fails} Failures, "
-        f"{resolved} Resolved"
-    )
-
-    _LOGGER.info(message)
-
-    return documents_file_contents, collection_file_contents, message

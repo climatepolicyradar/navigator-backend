@@ -1,8 +1,10 @@
 from typing import cast
 from sqlalchemy.orm import Session
-from app.core.ingestion.collection import handle_collection_and_link
 from app.core.ingestion.cclw.ingest_row_cclw import CCLWDocumentIngestRow
-from app.core.ingestion.processor import build_params_from_cclw
+from app.core.ingestion.processor import (
+    build_params_from_cclw,
+    handle_cclw_collection_and_link,
+)
 from app.core.ingestion.utils import get_or_create
 from app.db.models.law_policy.collection import (
     Collection,
@@ -43,7 +45,7 @@ def test_handle_collection_from_row__creates(test_db: Session):
     result = {}
     row, family = db_setup(test_db)
 
-    collection = handle_collection_and_link(
+    collection = handle_cclw_collection_and_link(
         test_db, build_params_from_cclw(row), 1, cast(str, family.import_id), result
     )
     assert collection
@@ -76,7 +78,7 @@ def test_handle_collection_from_row__updates(test_db: Session):
     first_result = {}
     row, family = db_setup(test_db)
 
-    handle_collection_and_link(
+    handle_cclw_collection_and_link(
         test_db,
         build_params_from_cclw(row),
         1,
@@ -87,7 +89,7 @@ def test_handle_collection_from_row__updates(test_db: Session):
     result = {}
     row.collection_name = "new name"
     row.collection_summary = "new summary"
-    collection = handle_collection_and_link(
+    collection = handle_cclw_collection_and_link(
         test_db, build_params_from_cclw(row), 1, cast(str, family.import_id), result
     )
     assert collection
@@ -112,7 +114,7 @@ def test_handle_collection_from_row__ignores(test_db: Session):
     row, family = db_setup(test_db)
     row.cpr_collection_id = "n/a"
 
-    collection = handle_collection_and_link(
+    collection = handle_cclw_collection_and_link(
         test_db, build_params_from_cclw(row), 1, cast(str, family.import_id), result
     )
 
