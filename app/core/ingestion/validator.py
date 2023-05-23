@@ -80,7 +80,6 @@ def validate_unfccc_document_row(
     errors = []
     n = row.row_number
 
-    # don't validate: md5sum: str
     # don't validate: collection_name: str
     # don't validate: collection_id: str
     # don't validate: family_name: str
