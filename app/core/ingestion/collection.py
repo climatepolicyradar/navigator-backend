@@ -77,7 +77,7 @@ def create_collection(
             db.query(Collection)
             .filter(Collection.title == row.collection_name)
             .filter(Collection.description == row.collection_summary)
-            .filter(Collection.import_id == row.collection_summary)
+            .filter(Collection.import_id == row.cpr_collection_id)
             .one_or_none()
         )
         if collection:
