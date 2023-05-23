@@ -4,7 +4,8 @@ from typing import Any, Callable, TypeVar, cast
 from sqlalchemy.orm import Session
 from app.core.ingestion.collection import (
     create_collection,
-    handle_collection_and_link,
+    handle_cclw_collection_and_link,
+    handle_link_collection_to_family,
 )
 from app.core.ingestion.cclw.event import family_event_from_row
 from app.core.ingestion.family import handle_family_from_params
@@ -78,7 +79,7 @@ def build_params_from_cclw(row: CCLWDocumentIngestRow) -> IngestParameters:
         geography=row.geography,
         cpr_document_id=row.cpr_document_id,
         cpr_family_id=row.cpr_family_id,
-        cpr_collection_id=row.cpr_collection_id,
+        cpr_collection_ids=[row.cpr_collection_id],
         cpr_family_slug=row.cpr_family_slug,
         cpr_document_slug=row.cpr_document_slug,
     )
@@ -108,7 +109,7 @@ def build_params_from_unfccc(row: UNFCCCDocumentIngestRow) -> IngestParameters:
         geography=row.geography,
         cpr_document_id=row.cpr_document_id,
         cpr_family_id=row.cpr_family_id,
-        cpr_collection_id=row.cpr_collection_id,
+        cpr_collection_ids=row.cpr_collection_id,
         cpr_family_slug=row.cpr_family_slug,
         cpr_document_slug=row.cpr_document_slug,
     )
@@ -138,12 +139,8 @@ def ingest_cclw_document_row(
     )
     params = build_params_from_cclw(row)
     family = handle_family_from_params(db, params, context.org_id, result)
-    handle_collection_and_link(
-        db,
-        params,
-        context.org_id,
-        cast(str, family.import_id),
-        result,
+    handle_cclw_collection_and_link(
+        db, params, context.org_id, cast(str, family.import_id), result
     )
 
     _LOGGER.info(
@@ -181,12 +178,8 @@ def ingest_unfccc_document_row(
 
     params = build_params_from_unfccc(row)
     family = handle_family_from_params(db, params, context.org_id, result)
-    handle_collection_and_link(
-        db,
-        params,
-        context.org_id,
-        cast(str, family.import_id),
-        result,
+    handle_link_collection_to_family(
+        db, params.cpr_collection_ids, cast(str, family.import_id), result
     )
 
     ctx = cast(UNFCCCIngestContext, context)

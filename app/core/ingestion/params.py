@@ -25,6 +25,6 @@ class IngestParameters:
     geography: str
     cpr_document_id: str
     cpr_family_id: str
-    cpr_collection_id: str
+    cpr_collection_ids: list[str]
     cpr_family_slug: str
     cpr_document_slug: str

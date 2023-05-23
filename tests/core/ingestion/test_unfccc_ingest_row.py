@@ -34,7 +34,7 @@ DOC_ROW = UNFCCCDocumentIngestRow(
     document_role="MAIN",
     document_variant="Original Language",
     language=["en"],
-    cpr_collection_id="id1",
+    cpr_collection_id=["id1"],
     cpr_document_id="cpr_document_id",
     cpr_family_id="cpr_family_id",
     cpr_family_slug="cpr_family_slug",
@@ -73,7 +73,7 @@ def test_ingest_single_collection_and_document(test_db: Session):
     document_row = DOC_ROW
 
     result = ingest_unfccc_document_row(test_db, context, document_row)
-    assert len(result) == 8
+    assert len(result) == 7
 
 
 def test_ingest_blank_geo(test_db: Session):
@@ -95,7 +95,7 @@ def test_ingest_blank_geo(test_db: Session):
     document_row.geography_iso = ""
 
     result = ingest_unfccc_document_row(test_db, context, document_row)
-    assert len(result) == 8
+    assert len(result) == 7
 
     assert 1 == test_db.query(Family).count()
     family = test_db.query(Family).first()
@@ -125,7 +125,7 @@ def test_ingest_international_geo(test_db: Session):
     document_row.geography_iso = "INT"
 
     result = ingest_unfccc_document_row(test_db, context, document_row)
-    assert len(result) == 8
+    assert len(result) == 7
 
     assert 1 == test_db.query(Family).count()
     family = test_db.query(Family).first()
