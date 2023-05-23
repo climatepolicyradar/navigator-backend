@@ -24,7 +24,7 @@ _REQUIRED_DOCUMENT_COLUMNS = [
     "CPR Family ID",
     "CPR Family Slug",
     "CPR Document Slug",
-    "CPR Document status",
+    "CPR Document Status",
     "Download URL",
 ]
 VALID_DOCUMENT_COLUMN_NAMES = set(_REQUIRED_DOCUMENT_COLUMNS)
