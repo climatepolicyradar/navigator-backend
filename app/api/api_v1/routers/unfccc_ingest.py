@@ -165,6 +165,7 @@ def validate_unfccc_law_policy(
             cast(UNFCCCIngestContext, context),
             all_results,
         )
+        _LOGGER.info(all_results)
         _LOGGER.info(message)
     except ImportSchemaMismatchError as e:
         _LOGGER.exception(
@@ -246,6 +247,7 @@ def ingest_unfccc_law_policy(
             cast(UNFCCCIngestContext, context),
             all_results,
         )
+        _LOGGER.info(all_results)
         _LOGGER.info(message)
     except ImportSchemaMismatchError as e:
         _LOGGER.exception(
