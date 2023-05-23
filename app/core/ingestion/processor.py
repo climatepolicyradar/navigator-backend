@@ -17,7 +17,7 @@ from app.core.ingestion.ingest_row_base import BaseIngestRow
 from app.core.ingestion.metadata import Taxonomy
 from app.core.ingestion.params import IngestParameters
 from app.core.ingestion.unfccc.ingest_row_unfccc import (
-    CollectonIngestRow,
+    CollectionIngestRow,
     UNFCCCDocumentIngestRow,
 )
 from app.core.ingestion.unfccc.metadata import add_unfccc_metadata
@@ -201,7 +201,7 @@ def ingest_unfccc_document_row(
 
 
 def ingest_collection_row(
-    db: Session, context: IngestContext, row: CollectonIngestRow
+    db: Session, context: IngestContext, row: CollectionIngestRow
 ) -> dict[str, Any]:
     result = {}
     create_collection(db, row, context.org_id, result)
@@ -266,7 +266,7 @@ def get_collection_ingestor(db: Session) -> ProcessFunc:
     :return [ProcessFunc]: The function used to ingest the CSV row.
     """
 
-    def process(context: IngestContext, row: CollectonIngestRow) -> None:
+    def process(context: IngestContext, row: CollectionIngestRow) -> None:
         """Processes the row into the db."""
         _LOGGER.info(f"Ingesting collection row: {row.row_number}")
 

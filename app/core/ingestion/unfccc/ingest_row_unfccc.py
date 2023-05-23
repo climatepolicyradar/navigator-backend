@@ -7,25 +7,25 @@ from app.core.ingestion.ingest_row_base import BaseIngestRow
 
 _REQUIRED_DOCUMENT_COLUMNS = [
     "Category",
-    "md5sum",
-    "Submission type",
-    "Family name",
-    "Document title",
+    "Submission Type",
+    "Family Name",
+    "Document Title",
     "Documents",
     "Author",
-    "Author type",
+    "Author Type",
     "Geography",
     "Geography ISO",
     "Date",
-    "Document role",
-    "Document variant",
+    "Document Role",
+    "Document Variant",
     "Language",
-    "Download URL",
     "CPR Collection ID",
     "CPR Document ID",
     "CPR Family ID",
     "CPR Family Slug",
     "CPR Document Slug",
+    "CPR Document Status",
+    "Download URL",
 ]
 VALID_DOCUMENT_COLUMN_NAMES = set(_REQUIRED_DOCUMENT_COLUMNS)
 
@@ -42,7 +42,6 @@ class UNFCCCDocumentIngestRow(BaseIngestRow):
     """Represents a single row of input from the UNFCCC CSV."""
 
     category: str
-    md5sum: str
     submission_type: str  # aka Document Type for UNFCCC
     family_name: str
     document_title: str
@@ -55,13 +54,14 @@ class UNFCCCDocumentIngestRow(BaseIngestRow):
     document_role: str
     document_variant: str
     language: list[str]
-    download_url: str
 
     cpr_collection_id: str
     cpr_document_id: str
     cpr_family_id: str
     cpr_family_slug: str
     cpr_document_slug: str
+    cpr_document_status: str
+    download_url: str
 
     # FIXME: Where is the summary from?
     family_summary: str = "summary"
@@ -74,7 +74,7 @@ class UNFCCCDocumentIngestRow(BaseIngestRow):
 
 
 @dataclass(config=ConfigDict(frozen=True, validate_assignment=True, extra=Extra.ignore))
-class CollectonIngestRow(BaseIngestRow):
+class CollectionIngestRow(BaseIngestRow):
     """Represents a single row of input from the collection CSV."""
 
     cpr_collection_id: str

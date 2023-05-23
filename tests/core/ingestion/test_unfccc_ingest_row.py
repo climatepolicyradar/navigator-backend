@@ -6,7 +6,7 @@ from app.core.ingestion.processor import (
     initialise_context,
 )
 from app.core.ingestion.unfccc.ingest_row_unfccc import (
-    CollectonIngestRow,
+    CollectionIngestRow,
     UNFCCCDocumentIngestRow,
 )
 from app.db.models.law_policy.collection import CollectionOrganisation
@@ -22,7 +22,6 @@ from app.db.models.law_policy import Collection
 DOC_ROW = UNFCCCDocumentIngestRow(
     row_number=1,
     category="UNFCCC",
-    md5sum="md5sum",
     submission_type="Plan",
     family_name="family_name",
     document_title="document_title",
@@ -35,12 +34,13 @@ DOC_ROW = UNFCCCDocumentIngestRow(
     document_role="MAIN",
     document_variant="Original Language",
     language=["en"],
-    download_url="download_url",
     cpr_collection_id="id1",
     cpr_document_id="cpr_document_id",
     cpr_family_id="cpr_family_id",
     cpr_family_slug="cpr_family_slug",
     cpr_document_slug="cpr_document_slug",
+    cpr_document_status="PUBLISHED",
+    download_url="download_url",
 )
 
 
@@ -50,7 +50,7 @@ def test_ingest_single_collection_and_document(test_db: Session):
     context = initialise_context(test_db, "UNFCCC")
 
     # Act - create collection
-    collection_row = CollectonIngestRow(
+    collection_row = CollectionIngestRow(
         row_number=1,
         cpr_collection_id="id1",
         collection_name="collection-title",
@@ -82,7 +82,7 @@ def test_ingest_blank_geo(test_db: Session):
     context = initialise_context(test_db, "UNFCCC")
 
     # Act - create collection
-    collection_row = CollectonIngestRow(
+    collection_row = CollectionIngestRow(
         row_number=1,
         cpr_collection_id="id1",
         collection_name="collection-title",
@@ -112,7 +112,7 @@ def test_ingest_international_geo(test_db: Session):
     context = initialise_context(test_db, "UNFCCC")
 
     # Act - create collection
-    collection_row = CollectonIngestRow(
+    collection_row = CollectionIngestRow(
         row_number=1,
         cpr_collection_id="id1",
         collection_name="collection-title",

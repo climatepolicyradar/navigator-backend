@@ -22,7 +22,7 @@ from app.db.models.law_policy.family import (
     Variant,
     Geography,
 )
-from app.db.models.law_policy.geography import GEO_NONE
+from app.db.models.law_policy.geography import GEO_INTERNATIONAL, GEO_NONE
 from app.db.session import Base
 
 DbTable = Base
@@ -48,6 +48,9 @@ def _check_value_in_db(
 
 
 def _check_geo_in_db(row_num: int, db: Session, geo_iso: str) -> CheckResult:
+    if geo_iso == "INT":
+        geo_iso = GEO_INTERNATIONAL
+
     if geo_iso == "":
         return Result(
             ResultType.ERROR,
@@ -80,7 +83,6 @@ def validate_unfccc_document_row(
     errors = []
     n = row.row_number
 
-    # don't validate: md5sum: str
     # don't validate: collection_name: str
     # don't validate: collection_id: str
     # don't validate: family_name: str
