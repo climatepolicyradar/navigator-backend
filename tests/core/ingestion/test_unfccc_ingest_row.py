@@ -1,3 +1,4 @@
+import copy
 from datetime import datetime
 from sqlalchemy.orm import Session
 from app.core.ingestion.processor import (
@@ -70,7 +71,7 @@ def test_ingest_single_collection_and_document(test_db: Session):
     )
 
     # Act - create document
-    document_row = DOC_ROW
+    document_row = copy.deepcopy(DOC_ROW)
 
     result = ingest_unfccc_document_row(test_db, context, document_row)
     assert len(result) == 7
@@ -96,9 +97,10 @@ def test_ingest_two_collections_and_document(test_db: Session):
         collection_summary="collection-description2",
     )
     ingest_collection_row(test_db, context, collection_row2)
+    assert 2 == test_db.query(Collection).count()
 
     # Act - create document
-    document_row = DOC_ROW
+    document_row = copy.deepcopy(DOC_ROW)
     document_row.cpr_collection_id = ["id1", "id2"]
     result = ingest_unfccc_document_row(test_db, context, document_row)
 
@@ -132,7 +134,7 @@ def test_ingest_blank_geo(test_db: Session):
     test_db.commit()
     context = initialise_context(test_db, "UNFCCC")
 
-    # Act - create collection
+    # Arrange - create collection
     collection_row = CollectionIngestRow(
         row_number=1,
         cpr_collection_id="id1",
@@ -142,7 +144,7 @@ def test_ingest_blank_geo(test_db: Session):
     result = ingest_collection_row(test_db, context, collection_row)
 
     # Act - create document
-    document_row = DOC_ROW
+    document_row = copy.deepcopy(DOC_ROW)
     document_row.geography_iso = ""
 
     result = ingest_unfccc_document_row(test_db, context, document_row)
@@ -162,7 +164,7 @@ def test_ingest_international_geo(test_db: Session):
     test_db.commit()
     context = initialise_context(test_db, "UNFCCC")
 
-    # Act - create collection
+    # Arrange - create collection
     collection_row = CollectionIngestRow(
         row_number=1,
         cpr_collection_id="id1",
@@ -172,10 +174,11 @@ def test_ingest_international_geo(test_db: Session):
     result = ingest_collection_row(test_db, context, collection_row)
 
     # Act - create document
-    document_row = DOC_ROW
+    document_row = copy.deepcopy(DOC_ROW)
     document_row.geography_iso = "INT"
 
     result = ingest_unfccc_document_row(test_db, context, document_row)
+    test_db.commit()
     assert len(result) == 7
 
     assert 1 == test_db.query(Family).count()
