@@ -1,3 +1,4 @@
+import pytest
 from typing import Callable, Generator
 from sqlalchemy.orm import Session
 from fastapi.testclient import TestClient
@@ -238,15 +239,22 @@ def test_update_document__is_secure(
     assert response.status_code == 401
 
 
+@pytest.mark.parametrize(
+    "import_id",
+    [
+        "CCLW.executive.1.2",
+        "UNFCCC.non-party.1.2",
+    ],
+)
 def test_update_document__works_on_import_id(
     client: TestClient,
     superuser_token_headers: dict[str, str],
     test_db: Session,
     mocker: Callable[..., Generator[MockerFixture, None, None]],
+    import_id: str,
 ):
     setup_with_two_docs(test_db, mocker)
 
-    import_id = "CCLW.executive.1.2"
     payload = {
         "md5_sum": "c184214e-4870-48e0-adab-3e064b1b0e76",
         "content_type": "updated/content_type",
