@@ -74,6 +74,7 @@ def start_unfccc_ingest(
         read(
             documents_file_contents, context, UNFCCCDocumentIngestRow, document_ingestor
         )
+        _LOGGER.info("UNFCCC Ingestion Complete")
     except Exception as e:
         # This is a background task, so do not raise
         _LOGGER.exception(

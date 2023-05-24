@@ -23,6 +23,16 @@ TWO_DFC_ROW = """ID,Document ID,CCLW Description,Part of collection?,Create new 
 2002,0,Test2,FALSE,FALSE,N/A,Collection1,CollectionSummary1,Title2,Fam2,Summary2,,MAIN,,GBR,http://another_somewhere|en,executive,03/03/2024|Law passed,Energy,,,Mitigation,,Order,,,Energy Supply,Algeria,,,CCLW.executive.2.2,CCLW.family.2002.0,CPR.Collection.1,FamSlug2,DocSlug2,
 """
 
+TWO_DFC_ROW_DIFFERENT_ORG = """ID,Document ID,CCLW Description,Part of collection?,Create new family/ies?,Collection ID,Collection name,Collection summary,Document title,Family name,Family summary,Family ID,Document role,Applies to ID,Geography ISO,Documents,Category,Events,Sectors,Instruments,Frameworks,Responses,Natural Hazards,Document Type,Year,Language,Keywords,Geography,Parent Legislation,Comment,CPR Document ID,CPR Family ID,CPR Collection ID,CPR Family Slug,CPR Document Slug,Document variant
+1001,0,Test1,FALSE,FALSE,N/A,Collection1,CollectionSummary1,Title1,Fam1,Summary1,,MAIN,,GBR,http://somewhere|en,executive,02/02/2014|Law passed,Energy,,,Mitigation,,Order,,,Energy Supply,Algeria,,,CCLW.executive.1.2,CCLW.family.1001.0,CPR.Collection.1,FamSlug1,DocSlug1,
+2002,0,Test2,FALSE,FALSE,N/A,Collection1,CollectionSummary1,Title2,Fam2,Summary2,,MAIN,,GBR,http://another_somewhere|en,executive,03/03/2024|Law passed,Energy,,,Mitigation,,Order,,,Energy Supply,Algeria,,,UNFCCC.non-party.2.2,CCLW.family.2002.0,CPR.Collection.1,FamSlug2,DocSlug2,
+"""
+
+TWO_DFC_ROW_NON_MATCHING_IDS = """ID,Document ID,CCLW Description,Part of collection?,Create new family/ies?,Collection ID,Collection name,Collection summary,Document title,Family name,Family summary,Family ID,Document role,Applies to ID,Geography ISO,Documents,Category,Events,Sectors,Instruments,Frameworks,Responses,Natural Hazards,Document Type,Year,Language,Keywords,Geography,Parent Legislation,Comment,CPR Document ID,CPR Family ID,CPR Collection ID,CPR Family Slug,CPR Document Slug,Document variant
+1001,0,Test1,FALSE,FALSE,N/A,Collection1,CollectionSummary1,Title1,Fam1,Summary1,,MAIN,,GBR,http://somewhere|en,executive,02/02/2014|Law passed,Energy,,,Mitigation,,Order,,,Energy Supply,Algeria,,,CCLW.executive.12,CCLW.family.1001.0,CPR.Collection.1,FamSlug1,DocSlug1,
+2002,0,Test2,FALSE,FALSE,N/A,Collection1,CollectionSummary1,Title2,Fam2,Summary2,,MAIN,,GBR,http://another_somewhere|en,executive,03/03/2024|Law passed,Energy,,,Mitigation,,Order,,,Energy Supply,Algeria,,,UNFCCC.s.ill.y.2.2,CCLW.family.2002.0,CPR.Collection.1,FamSlug2,DocSlug2,
+"""
+
 ONE_DFC_ROW_TWO_LANGUAGES = """ID,Document ID,CCLW Description,Part of collection?,Create new family/ies?,Collection ID,Collection name,Collection summary,Document title,Family name,Family summary,Family ID,Document role,Applies to ID,Geography ISO,Documents,Category,Events,Sectors,Instruments,Frameworks,Responses,Natural Hazards,Document Type,Year,Language,Keywords,Geography,Parent Legislation,Comment,CPR Document ID,CPR Family ID,CPR Collection ID,CPR Family Slug,CPR Document Slug,Document variant
 1001,0,Test1,FALSE,FALSE,N/A,Collection1,CollectionSummary1,Title1,Fam1,Summary1,,MAIN,,GBR,http://somewhere|en,executive,02/02/2014|Law passed,Energy,,,Mitigation,,Order,,French;English,Energy Supply,Algeria,,,CCLW.executive.1.2,CCLW.family.1001.0,CPR.Collection.1,FamSlug1,DocSlug1,Translation
 """

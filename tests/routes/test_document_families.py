@@ -7,7 +7,9 @@ from app.db.models.law_policy.family import Family, FamilyDocument, FamilyEvent
 from tests.routes.document_helpers import (
     ONE_DFC_ROW_TWO_LANGUAGES,
     ONE_EVENT_ROW,
+    TWO_DFC_ROW_DIFFERENT_ORG,
     TWO_DFC_ROW_ONE_LANGUAGE,
+    TWO_DFC_ROW_NON_MATCHING_IDS,
     TWO_EVENT_ROWS,
     populate_languages,
     setup_with_docs,
@@ -242,8 +244,43 @@ def test_update_document__is_secure(
 @pytest.mark.parametrize(
     "import_id",
     [
+        "CCLW.executive.12",
+        "UNFCCC.s.ill.y.2.2",
+    ],
+)
+def test_update_document__fails_on_non_matching_import_id(
+    client: TestClient,
+    superuser_token_headers: dict[str, str],
+    test_db: Session,
+    mocker: Callable[..., Generator[MockerFixture, None, None]],
+    import_id: str,
+):
+    setup_with_multiple_docs(
+        test_db,
+        mocker,
+        doc_data=TWO_DFC_ROW_NON_MATCHING_IDS,
+        event_data=TWO_EVENT_ROWS,
+    )
+    payload = {
+        "md5_sum": "c184214e-4870-48e0-adab-3e064b1b0e76",
+        "content_type": "updated/content_type",
+        "cdn_object": "folder/file",
+    }
+
+    response = client.put(
+        f"/api/v1/admin/documents/{import_id}",
+        headers=superuser_token_headers,
+        json=payload,
+    )
+
+    assert response.status_code == 422
+
+
+@pytest.mark.parametrize(
+    "import_id",
+    [
         "CCLW.executive.1.2",
-        "UNFCCC.non-party.1.2",
+        "UNFCCC.non-party.2.2",
     ],
 )
 def test_update_document__works_on_import_id(
@@ -253,8 +290,9 @@ def test_update_document__works_on_import_id(
     mocker: Callable[..., Generator[MockerFixture, None, None]],
     import_id: str,
 ):
-    setup_with_two_docs(test_db, mocker)
-
+    setup_with_multiple_docs(
+        test_db, mocker, doc_data=TWO_DFC_ROW_DIFFERENT_ORG, event_data=TWO_EVENT_ROWS
+    )
     payload = {
         "md5_sum": "c184214e-4870-48e0-adab-3e064b1b0e76",
         "content_type": "updated/content_type",
