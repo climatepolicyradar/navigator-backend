@@ -58,6 +58,7 @@ class Family(Base):
     """A representation of a group of documents that represent a single law/policy."""
 
     __tablename__ = "family"
+    __allow_unmapped__ = True
 
     title = sa.Column(sa.Text, nullable=False)
     import_id = sa.Column(sa.Text, primary_key=True)
@@ -142,6 +143,7 @@ class FamilyDocument(Base):
     """A link between a Family and a PhysicalDocument."""
 
     __tablename__ = "family_document"
+    __allow_unmapped__ = True
 
     family_import_id = sa.Column(sa.ForeignKey(Family.import_id), nullable=False)
     physical_document_id = sa.Column(

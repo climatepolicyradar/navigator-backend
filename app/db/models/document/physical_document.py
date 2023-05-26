@@ -31,6 +31,7 @@ class PhysicalDocument(Base):
     """
 
     __tablename__ = "physical_document"
+    __allow_unmapped__ = True
 
     id = sa.Column(sa.Integer, primary_key=True)
     title = sa.Column(sa.Text, nullable=False)
