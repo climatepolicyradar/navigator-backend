@@ -154,7 +154,7 @@ def test_ingest_blank_geo(test_db: Session):
     family = test_db.query(Family).first()
     assert family
     assert family.geography_id
-    geo = test_db.get(Geography, family.geography_id)
+    geo = test_db.query(Geography).filter(Geography.id == family.geography_id).one()
     no_geo = test_db.query(Geography).filter(Geography.value == GEO_NONE).one()
     assert geo == no_geo
 
@@ -185,7 +185,7 @@ def test_ingest_international_geo(test_db: Session):
     family = test_db.query(Family).first()
     assert family
     assert family.geography_id
-    geo = test_db.get(Geography, family.geography_id)
+    geo = test_db.query(Geography).filter(Geography.id == family.geography_id).one()
     international = (
         test_db.query(Geography).filter(Geography.value == GEO_INTERNATIONAL).one()
     )
