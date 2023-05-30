@@ -11,7 +11,7 @@ from app.core.ingestion.unfccc.ingest_row_unfccc import (
     UNFCCCDocumentIngestRow,
 )
 from app.db.models.law_policy.collection import CollectionFamily, CollectionOrganisation
-from app.db.models.law_policy.family import Family
+from app.db.models.law_policy.family import Family, FamilyEvent
 from app.db.models.law_policy.geography import GEO_INTERNATIONAL, GEO_NONE, Geography
 
 from tests.core.ingestion.helpers import (
@@ -19,6 +19,7 @@ from tests.core.ingestion.helpers import (
 )
 from app.db.models.law_policy import Collection
 
+EVENT_DATE = datetime.now()
 
 DOC_ROW = UNFCCCDocumentIngestRow(
     row_number=1,
@@ -31,12 +32,12 @@ DOC_ROW = UNFCCCDocumentIngestRow(
     author_type="Party",
     geography="GBR",
     geography_iso="GBR",
-    date=datetime.now(),
+    date=EVENT_DATE,
     document_role="MAIN",
     document_variant="Original Language",
     language=["en"],
     cpr_collection_id=["id1"],
-    cpr_document_id="cpr_document_id",
+    cpr_document_id="test.document.1.0",
     cpr_family_id="cpr_family_id",
     cpr_family_slug="cpr_family_slug",
     cpr_document_slug="cpr_document_slug",
@@ -127,6 +128,12 @@ def test_ingest_two_collections_and_document(test_db: Session):
         .filter(CollectionFamily.family_import_id == "cpr_family_id")
         .one()
     )
+    assert (
+        test_db.query(FamilyEvent)
+        .filter(FamilyEvent.date == EVENT_DATE)
+        .filter(FamilyEvent.family_import_id == "cpr_family_id")
+        .one()
+    )
 
 
 def test_ingest_blank_geo(test_db: Session):
@@ -154,7 +161,7 @@ def test_ingest_blank_geo(test_db: Session):
     family = test_db.query(Family).first()
     assert family
     assert family.geography_id
-    geo = test_db.query(Geography).get(family.geography_id)
+    geo = test_db.query(Geography).filter(Geography.id == family.geography_id).one()
     no_geo = test_db.query(Geography).filter(Geography.value == GEO_NONE).one()
     assert geo == no_geo
 
@@ -185,7 +192,7 @@ def test_ingest_international_geo(test_db: Session):
     family = test_db.query(Family).first()
     assert family
     assert family.geography_id
-    geo = test_db.query(Geography).get(family.geography_id)
+    geo = test_db.query(Geography).filter(Geography.id == family.geography_id).one()
     international = (
         test_db.query(Geography).filter(Geography.value == GEO_INTERNATIONAL).one()
     )
