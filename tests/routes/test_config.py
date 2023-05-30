@@ -6,19 +6,29 @@ import pytest
 
 from app.core.util import tree_table_to_json
 from app.data_migrations import (
+    populate_document_role,
+    populate_document_type,
+    populate_document_variant,
     populate_event_type,
     populate_geography,
+    populate_language,
     populate_taxonomy,
 )
 from app.db.session import SessionLocal
 
 
-def test_endpoint_returns_taxonomy(client, test_db):
-    """Tests whether we get the taxonomy when the /config endpoint is called."""
+def test_config_endpoint_content(client, test_db):
+    """Tests whether we get the expected content when the /config endpoint is called."""
+    # TODO: this test is fragile, we should look into validation according to the
+    #       supporting data, rather than counts & fixed lists
     url_under_test = "/api/v1/config"
-    populate_taxonomy(test_db)
-    populate_geography(test_db)
+    populate_document_role(test_db)
+    populate_document_type(test_db)
+    populate_document_variant(test_db)
     populate_event_type(test_db)
+    populate_geography(test_db)
+    populate_language(test_db)
+    populate_taxonomy(test_db)
     test_db.flush()
 
     response = client.get(
@@ -28,16 +38,16 @@ def test_endpoint_returns_taxonomy(client, test_db):
     response_json = response.json()
 
     assert response.status_code == OK
-    assert len(response_json) == 2
+    assert len(response_json) == 6
 
     assert "geographies" in response_json
     assert len(response_json["geographies"]) == 8
 
     assert "taxonomies" in response_json
-    assert "CCLW" in response_json["taxonomies"]
-    tax = response_json["taxonomies"]["CCLW"]
 
-    assert set(tax) == {
+    assert "CCLW" in response_json["taxonomies"]
+    cclw_taxonomy = response_json["taxonomies"]["CCLW"]
+    assert set(cclw_taxonomy) == {
         "instrument",
         "keyword",
         "sector",
@@ -46,8 +56,8 @@ def test_endpoint_returns_taxonomy(client, test_db):
         "hazard",
         "event_types",
     }
-    taxonomy_event_types = tax["event_types"]["allowed_values"]
-    expected_event_types = [
+    cclw_taxonomy_event_types = cclw_taxonomy["event_types"]["allowed_values"]
+    cclw_expected_event_types = [
         "Amended",
         "Appealed",
         "Closed",
@@ -66,9 +76,29 @@ def test_endpoint_returns_taxonomy(client, test_db):
         "Settled",
         "Updated",
     ]
-    assert set(taxonomy_event_types).symmetric_difference(
-        set(expected_event_types)
-    ) == set([])
+    assert set(cclw_taxonomy_event_types) ^ set(cclw_expected_event_types) == set()
+
+    assert "UNFCCC" in response_json["taxonomies"]
+    unfccc_taxonomy = response_json["taxonomies"]["UNFCCC"]
+    assert set(unfccc_taxonomy) == {"author_type", "event_types"}
+    assert set(unfccc_taxonomy["author_type"]["allowed_values"]) == {
+        "Party",
+        "Non-Party",
+    }
+
+    assert "languages" in response_json
+    assert len(response_json["languages"]) == 7893
+    assert "fra" in response_json["languages"]
+    assert all(len(key) == 3 for key in response_json["languages"])
+    assert "document_roles" in response_json
+    assert len(response_json["document_roles"]) == 10
+    assert "MAIN" in response_json["document_roles"]
+    assert "document_types" in response_json
+    assert len(response_json["document_types"]) == 75
+    assert "Adaptation Communication" in response_json["document_types"]
+    assert "document_variants" in response_json
+    assert len(response_json["document_variants"]) == 2
+    assert "Original Language" in response_json["document_variants"]
 
 
 class _MockColumn:
