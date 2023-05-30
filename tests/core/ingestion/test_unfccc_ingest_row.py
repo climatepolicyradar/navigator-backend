@@ -19,7 +19,7 @@ from tests.core.ingestion.helpers import (
 )
 from app.db.models.law_policy import Collection
 
-THE_DATE = datetime.now()
+EVENT_DATE = datetime.now()
 
 DOC_ROW = UNFCCCDocumentIngestRow(
     row_number=1,
@@ -32,7 +32,7 @@ DOC_ROW = UNFCCCDocumentIngestRow(
     author_type="Party",
     geography="GBR",
     geography_iso="GBR",
-    date=THE_DATE,
+    date=EVENT_DATE,
     document_role="MAIN",
     document_variant="Original Language",
     language=["en"],
@@ -130,7 +130,7 @@ def test_ingest_two_collections_and_document(test_db: Session):
     )
     assert (
         test_db.query(FamilyEvent)
-        .filter(FamilyEvent.date == THE_DATE)
+        .filter(FamilyEvent.date == EVENT_DATE)
         .filter(FamilyEvent.family_import_id == "cpr_family_id")
         .one()
     )
