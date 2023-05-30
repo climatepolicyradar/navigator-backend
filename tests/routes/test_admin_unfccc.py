@@ -20,7 +20,7 @@ EXPECTED_DOCUMENTS = """{
     "UNFCCC.Document.1.0": {
       "publication_ts": "2021-10-25T00:00:00+00:00",
       "name": "Nationally determined contributions under the Paris Agreement. Revised note by the secretariat",
-      "description": "summary",
+      "description": "Nationally determined contributions under the Paris Agreement. Revised note by the secretariat, Synthesis Report from UNFCCC Secretariat in 2021",
       "postfix": null,
       "source_url": "https://unfccc.int/sites/default/files/resource/cma2021_08r01_S.pdf",
       "download_url": "url of downloaded document",

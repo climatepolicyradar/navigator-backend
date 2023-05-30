@@ -90,6 +90,10 @@ def build_params_from_unfccc(row: UNFCCCDocumentIngestRow) -> IngestParameters:
     def add_metadata(db: Session, import_id: str, taxonomy: Taxonomy, taxonomy_id: int):
         add_unfccc_metadata(db, import_id, taxonomy, taxonomy_id, row)
 
+    def build_summary() -> str:
+        start = f"{row.family_name}, {row.submission_type}"
+        return f"{start} from {row.author} in {row.date.year}"
+
     return IngestParameters(
         create_collections=False,
         add_metadata=add_metadata,
@@ -99,7 +103,7 @@ def build_params_from_unfccc(row: UNFCCCDocumentIngestRow) -> IngestParameters:
         collection_summary="",
         document_title=row.document_title,
         family_name=row.family_name,
-        family_summary=row.family_summary,
+        family_summary=build_summary(),
         document_role=row.document_role,
         document_variant=row.document_variant,
         geography_iso=parse_csv_geography(row.geography_iso),
