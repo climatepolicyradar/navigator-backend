@@ -39,7 +39,7 @@ async def update_document(
             "props": {
                 "superuser_email": current_user.email,
                 "import_id_or_slug": import_id_or_slug,
-                "meta_data": meta_data,
+                "meta_data": meta_data.as_json(),
             }
         },
     )

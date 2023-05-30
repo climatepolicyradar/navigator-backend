@@ -1,5 +1,5 @@
 from datetime import datetime
-from typing import Any, Mapping, Optional, Sequence
+from typing import Any, Mapping, Optional, Sequence, Union
 
 from pydantic import BaseModel, validator
 from . import CLIMATE_LAWS_MATCH
@@ -158,6 +158,14 @@ class DocumentUpdateRequest(BaseModel):
     md5_sum: Optional[str]
     content_type: Optional[str]
     cdn_object: Optional[str]
+
+    def as_json(self) -> dict[str, Union[str, None]]:
+        """Convert to json for logging"""
+        return {
+            "md5_sum": self.md5_sum,
+            "content_type": self.content_type,
+            "cdn_object": self.cdn_object,
+        }
 
 
 class BulkIngestDetail(BaseModel):
