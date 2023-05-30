@@ -11,7 +11,7 @@ from app.core.ingestion.unfccc.ingest_row_unfccc import (
     UNFCCCDocumentIngestRow,
 )
 from app.db.models.law_policy.collection import CollectionFamily, CollectionOrganisation
-from app.db.models.law_policy.family import Family
+from app.db.models.law_policy.family import Family, FamilyEvent
 from app.db.models.law_policy.geography import GEO_INTERNATIONAL, GEO_NONE, Geography
 
 from tests.core.ingestion.helpers import (
@@ -19,6 +19,7 @@ from tests.core.ingestion.helpers import (
 )
 from app.db.models.law_policy import Collection
 
+THE_DATE = datetime.now()
 
 DOC_ROW = UNFCCCDocumentIngestRow(
     row_number=1,
@@ -31,7 +32,7 @@ DOC_ROW = UNFCCCDocumentIngestRow(
     author_type="Party",
     geography="GBR",
     geography_iso="GBR",
-    date=datetime.now(),
+    date=THE_DATE,
     document_role="MAIN",
     document_variant="Original Language",
     language=["en"],
@@ -125,6 +126,12 @@ def test_ingest_two_collections_and_document(test_db: Session):
         test_db.query(CollectionFamily)
         .filter(CollectionFamily.collection_import_id == "id2")
         .filter(CollectionFamily.family_import_id == "cpr_family_id")
+        .one()
+    )
+    assert (
+        test_db.query(FamilyEvent)
+        .filter(FamilyEvent.date == THE_DATE)
+        .filter(FamilyEvent.family_import_id == "cpr_family_id")
         .one()
     )
 
