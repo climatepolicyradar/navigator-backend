@@ -1,3 +1,4 @@
+from datetime import datetime
 from io import BytesIO
 from typing import cast
 from app.api.api_v1.routers.unfccc_ingest import start_unfccc_ingest
@@ -7,14 +8,17 @@ from app.data_migrations import (
     populate_document_role,
     populate_document_type,
     populate_document_variant,
+    populate_event_type,
     populate_geography,
     populate_taxonomy,
 )
 
+EVENT_DATE = datetime(2021, 10, 25)
+
 EXPECTED_DOCUMENTS = """{
   "documents": {
-    "UNFCCC.Document.1": {
-      "publication_ts": "1900-01-01T00:00:00+00:00",
+    "UNFCCC.Document.1.0": {
+      "publication_ts": "2021-10-25T00:00:00+00:00",
       "name": "Nationally determined contributions under the Paris Agreement. Revised note by the secretariat",
       "description": "summary",
       "postfix": null,
@@ -23,7 +27,7 @@ EXPECTED_DOCUMENTS = """{
       "slug": "Doc-slug",
       "type": "Synthesis Report",
       "source": "UNFCCC",
-      "import_id": "UNFCCC.Document.1",
+      "import_id": "UNFCCC.Document.1.0",
       "category": "UNFCCC",
       "frameworks": [],
       "geography": "GBR",
@@ -52,11 +56,11 @@ def test_unauthorized_validation(client):
 
 
 MISSING_COLL_UNFCCC_ROW = """Category,Submission Type,Family Name,Document Title,Documents,Author,Author Type,Geography,Geography ISO,Date,Document Role,Document Variant,Language,Download URL,CPR Collection ID,CPR Document ID,CPR Document Slug,CPR Family ID,CPR Family Slug,CPR Document Status
-UNFCCC,Synthesis Report,Nationally determined contributions under the Paris Agreement. Revised note by the secretariat,Nationally determined contributions under the Paris Agreement. Revised note by the secretariat,https://unfccc.int/sites/default/files/resource/cma2021_08r01_S.pdf,UNFCCC Secretariat,Party,UK,GBR,2021-10-25T12:00:00Z,,,en,url of downloaded document,UNFCCC.Collection.1,UNFCCC.Document.1,Doc-slug,UNFCCC.family.1,Family-slug,
+UNFCCC,Synthesis Report,Nationally determined contributions under the Paris Agreement. Revised note by the secretariat,Nationally determined contributions under the Paris Agreement. Revised note by the secretariat,https://unfccc.int/sites/default/files/resource/cma2021_08r01_S.pdf,UNFCCC Secretariat,Party,UK,GBR,2021-10-25T00:00:00Z,,,en,url of downloaded document,UNFCCC.Collection.1,UNFCCC.Document.1.0,Doc-slug,UNFCCC.family.1,Family-slug,
 """
 
 ONE_UNFCCC_ROW = """Category,Submission Type,Family Name,Document Title,Documents,Author,Author Type,Geography,Geography ISO,Date,Document Role,Document Variant,Language,Download URL,CPR Collection ID,CPR Document ID,CPR Document Slug,CPR Family ID,CPR Family Slug,CPR Document Status
-UNFCCC,Synthesis Report,Nationally determined contributions under the Paris Agreement. Revised note by the secretariat,Nationally determined contributions under the Paris Agreement. Revised note by the secretariat,https://unfccc.int/sites/default/files/resource/cma2021_08r01_S.pdf,UNFCCC Secretariat,Party,UK,GBR,2021-10-25T12:00:00Z,,,en,url of downloaded document,UNFCCC.Collection.Found,UNFCCC.Document.1,Doc-slug,UNFCCC.family.1,Family-slug,
+UNFCCC,Synthesis Report,Nationally determined contributions under the Paris Agreement. Revised note by the secretariat,Nationally determined contributions under the Paris Agreement. Revised note by the secretariat,https://unfccc.int/sites/default/files/resource/cma2021_08r01_S.pdf,UNFCCC Secretariat,Party,UK,GBR,2021-10-25T00:00:00Z,,,en,url of downloaded document,UNFCCC.Collection.Found,UNFCCC.Document.1.0,Doc-slug,UNFCCC.family.1,Family-slug,
 """
 
 ZERO_COLLECTION_ROW = """CPR Collection ID,Collection name,Collection summary
@@ -73,6 +77,7 @@ def test_validate_unfccc_works(
     test_db,
 ):
     populate_taxonomy(test_db)
+    populate_event_type(test_db)
     populate_geography(test_db)
     populate_document_type(test_db)
     populate_document_role(test_db)
@@ -115,6 +120,7 @@ def test_validate_unfccc_fails_missing_defined_collection(
 ):
     populate_taxonomy(test_db)
     populate_geography(test_db)
+    populate_event_type(test_db)
     populate_document_type(test_db)
     populate_document_role(test_db)
     populate_document_variant(test_db)
@@ -161,6 +167,7 @@ def test_validate_unfccc_fails_missing_referenced_collection(
     populate_taxonomy(test_db)
     populate_geography(test_db)
     populate_document_type(test_db)
+    populate_event_type(test_db)
     populate_document_role(test_db)
     populate_document_variant(test_db)
     test_db.commit()
@@ -212,6 +219,7 @@ def test_ingest_unfccc_works(
     )
     populate_taxonomy(test_db)
     populate_geography(test_db)
+    populate_event_type(test_db)
     populate_document_type(test_db)
     populate_document_role(test_db)
     populate_document_variant(test_db)
@@ -255,6 +263,7 @@ def test_start_unfccc_ingest(
     mock_write_s3 = mocker.patch("app.core.validation.util._write_content_to_s3")
     populate_taxonomy(test_db)
     populate_geography(test_db)
+    populate_event_type(test_db)
     populate_document_type(test_db)
     populate_document_role(test_db)
     populate_document_variant(test_db)

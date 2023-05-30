@@ -17,6 +17,7 @@ from app.core.ingestion.cclw.metadata import add_cclw_metadata
 from app.core.ingestion.ingest_row_base import BaseIngestRow
 from app.core.ingestion.metadata import Taxonomy
 from app.core.ingestion.params import IngestParameters
+from app.core.ingestion.unfccc.event import create_event_from_row
 from app.core.ingestion.unfccc.ingest_row_unfccc import (
     CollectionIngestRow,
     UNFCCCDocumentIngestRow,
@@ -181,6 +182,9 @@ def ingest_unfccc_document_row(
     handle_link_collection_to_family(
         db, params.cpr_collection_ids, cast(str, family.import_id), result
     )
+
+    # Now create a FamilyEvent to store the date
+    create_event_from_row(db, row)
 
     ctx = cast(UNFCCCIngestContext, context)
     ctx.download_urls[import_id] = row.download_url
