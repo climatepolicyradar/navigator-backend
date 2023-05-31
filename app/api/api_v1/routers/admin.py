@@ -71,7 +71,7 @@ async def update_document(
     # Note this code relies on the fields being the same as the db column names
     num_changed = db.execute(
         update(PhysicalDocument)
-        .values(meta_data.dict())
+        .values(meta_data.dict().pop('languages'))
         .where(PhysicalDocument.id == physical_document.id)
     ).rowcount
 
@@ -102,6 +102,7 @@ async def update_document(
                 "md5_sum": physical_document.md5_sum,
                 "content_type": physical_document.content_type,
                 "cdn_object": physical_document.cdn_object,
+                "languages": physical_document.languages,
             }
         },
     )
