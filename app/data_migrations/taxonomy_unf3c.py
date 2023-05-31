@@ -7,6 +7,12 @@ TAXONOMY_DATA = [
         "allow_blanks": False,
         "allowed_values": ["Party", "Non-Party"],
     },
+    {
+        "key": "author",
+        "allow_blanks": False,
+        "allow_any": True,
+        "allowed_values": [],
+    },
 ]
 
 

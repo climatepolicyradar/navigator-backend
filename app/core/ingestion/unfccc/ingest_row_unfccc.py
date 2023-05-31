@@ -46,7 +46,7 @@ class UNFCCCDocumentIngestRow(BaseIngestRow):
     family_name: str
     document_title: str
     documents: str
-    author: str
+    author: str  # METADATA
     author_type: str  # METADATA
     geography: str
     geography_iso: str

@@ -50,7 +50,9 @@ def get_organisation_taxonomy_by_name(db: Session, org_name: str) -> TaxonomyDat
     # TODO: in the future move these into the MetadataTaxonomy
     event_types = db.query(FamilyEventType).all()
     entry = TaxonomyEntry(
-        allow_blanks=False, allowed_values=[r.name for r in event_types]
+        allow_blanks=False,
+        allowed_values=[r.name for r in event_types],
+        allow_any=False,
     )
 
     # The above line will throw if there is no taxonomy for the organisation
