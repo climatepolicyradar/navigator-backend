@@ -14,7 +14,7 @@ from app.api.api_v1.schemas.document import (
 )
 from app.core.auth import get_superuser_details
 from app.core.validation import IMPORT_ID_MATCHER
-from app.db.models.document.physical_document import PhysicalDocument
+from app.db.models.document.physical_document import PhysicalDocument, Language, PhysicalDocumentLanguage
 from app.db.models.law_policy.family import FamilyDocument, Slug
 from app.db.session import get_db
 
@@ -71,9 +71,79 @@ async def update_document(
     # Note this code relies on the fields being the same as the db column names
     num_changed = db.execute(
         update(PhysicalDocument)
-        .values(meta_data.dict().pop('languages'))
+        .values(meta_data.physical_doc_keys_json())
         .where(PhysicalDocument.id == physical_document.id)
     ).rowcount
+
+    # Update the languages
+    if meta_data.languages is not None:
+        _LOGGER.info(
+            "Adding meta_data object languages to the database.",
+            extra={"props": {'meta_data_languages': meta_data.languages}}
+        )
+
+        all_physical_document_languages = (
+            db.query(PhysicalDocumentLanguage)
+            .all()
+        )
+        all_languages = db.query(Language).all()
+        _LOGGER.info(
+            "All existing languages.",
+            extra={
+                "props": {
+                    'physical_document_languages': all_physical_document_languages,
+                    'languages': all_languages,
+                }
+            }
+        )
+
+        physical_document_languages = (
+            db.query(PhysicalDocumentLanguage)
+            .filter(
+                PhysicalDocumentLanguage.document_id == physical_document.id,
+            )
+            .all()
+        )
+        _LOGGER.info(
+            "Existing languages identified for document.",
+            extra={
+                "props": {
+                    'physical_document_languages': physical_document_languages,
+                    'import_id': import_id_or_slug
+                }
+            }
+        )
+        if physical_document_languages is not None:
+            for physical_document_language in physical_document_languages:
+                _LOGGER.info(
+                    "Deleting language for document.",
+                    extra={
+                        "props": {
+                            'language': physical_document_language,
+                            'import_id': import_id_or_slug
+                        }
+                    }
+                )
+                db.delete(physical_document_language)
+                db.flush()
+
+        for language in meta_data.languages:
+            lang = db.query(Language).filter(Language.name == language).one_or_none()
+            _LOGGER.info(
+                "Retrieved language name from database, updating if not None.",
+                extra={
+                    "props": {
+                        'language': lang,
+                        'import_id': import_id_or_slug
+                    }
+                }
+            )
+            if lang is not None:
+                physical_document_language = PhysicalDocumentLanguage(
+                    language_id=lang.id, document_id=physical_document.id
+                )
+                db.add(physical_document_language)
+                db.flush()
 
     if num_changed == 0:
         _LOGGER.info("update_document complete - nothing changed")

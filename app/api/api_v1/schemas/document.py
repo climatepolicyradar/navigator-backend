@@ -169,6 +169,14 @@ class DocumentUpdateRequest(BaseModel):
             "languages": self.languages,
         }
 
+    def physical_doc_keys_json(self) -> dict[str, Union[str, None]]:
+        """Convert to json updating only the physical document keys"""
+        return {
+            "md5_sum": self.md5_sum,
+            "content_type": self.content_type,
+            "cdn_object": self.cdn_object,
+        }
+
 
 class BulkIngestDetail(BaseModel):
     """Additional detail for bulk ingest."""

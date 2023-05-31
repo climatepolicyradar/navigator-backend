@@ -3,6 +3,8 @@ from typing import Callable, Generator
 from sqlalchemy.orm import Session
 from fastapi.testclient import TestClient
 from pytest_mock import MockerFixture
+
+from app.db.models.document.physical_document import PhysicalDocumentLanguage
 from app.db.models.law_policy.family import Family, FamilyDocument, FamilyEvent
 from tests.routes.document_helpers import (
     ONE_DFC_ROW_TWO_LANGUAGES,
@@ -321,6 +323,69 @@ def test_update_document__works_on_import_id(
     assert doc.md5_sum == "c184214e-4870-48e0-adab-3e064b1b0e76"
     assert doc.content_type == "updated/content_type"
     assert doc.cdn_object == "folder/file"
+
+
+@pytest.mark.parametrize(
+    "import_id",
+    [
+        "CCLW.executive.1.2",
+        "UNFCCC.non-party.2.2",
+    ],
+)
+def test_update_document__works_on_new_language(
+    client: TestClient,
+    superuser_token_headers: dict[str, str],
+    test_db: Session,
+    mocker: Callable[..., Generator[MockerFixture, None, None]],
+    import_id: str,
+):
+    setup_with_multiple_docs(
+        test_db, mocker, doc_data=TWO_DFC_ROW_DIFFERENT_ORG, event_data=TWO_EVENT_ROWS
+    )
+    payload = {
+        "md5_sum": "c184214e-4870-48e0-adab-3e064b1b0e76",
+        "content_type": "updated/content_type",
+        "cdn_object": "folder/file",
+        "languages": ["fra", "eng", "spa"],
+    }
+
+    response = client.put(
+        f"/api/v1/admin/documents/{import_id}",
+        headers=superuser_token_headers,
+        json=payload,
+    )
+
+    assert response.status_code == 200
+    json_object = response.json()
+    assert json_object["md5_sum"] == "c184214e-4870-48e0-adab-3e064b1b0e76"
+    assert json_object["content_type"] == "updated/content_type"
+    assert json_object["cdn_object"] == "folder/file"
+    assert json_object["languages"] == ["fra", "eng", "spa"]
+
+    # Now Check the db
+    doc = (
+        test_db.query(FamilyDocument)
+        .filter(FamilyDocument.import_id == import_id)
+        .one()
+        .physical_document
+    )
+    assert doc.md5_sum == "c184214e-4870-48e0-adab-3e064b1b0e76"
+    assert doc.content_type == "updated/content_type"
+    assert doc.cdn_object == "folder/file"
+
+    languages = (
+        test_db.query(PhysicalDocumentLanguage)
+        .all()
+    )
+    assert languages == []
+
+    languages = (
+        test_db.query(PhysicalDocumentLanguage)
+        .filter(PhysicalDocumentLanguage.document_id == doc.physical_document_id)
+        .all()
+    )
+    assert len(languages) == 3
+    assert [l.language for l in languages] == ["fra", "eng", "spa"]
 
 
 def test_update_document__idempotent(
