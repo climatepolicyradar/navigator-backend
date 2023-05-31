@@ -12,6 +12,7 @@ class TaxonomyEntry:
     """Details a single taxonomy field"""
 
     allow_blanks: bool
+    allow_any: bool
     allowed_values: Sequence[str]
 
 
@@ -36,12 +37,16 @@ def build_metadata_field(
     row_set = set(ingest_values)
     allowed_set: set[str] = set(taxonomy[tax_key].allowed_values)
     allow_blanks = taxonomy[tax_key].allow_blanks
+    allow_any = taxonomy[tax_key].allow_any
 
     if len(row_set) == 0:
         if not allow_blanks:
             details = f"Row {row_number} is blank for {tax_key} - which is not allowed."
             return Result(type=ResultType.ERROR, details=details), []
         return Result(), []  # field is blank and allowed
+
+    if allow_any:
+        return Result(), ingest_values
 
     unknown_set = row_set.difference(allowed_set)
     if not unknown_set:

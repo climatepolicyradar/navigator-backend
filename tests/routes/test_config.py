@@ -80,7 +80,7 @@ def test_config_endpoint_content(client, test_db):
 
     assert "UNFCCC" in response_json["taxonomies"]
     unfccc_taxonomy = response_json["taxonomies"]["UNFCCC"]
-    assert set(unfccc_taxonomy) == {"author_type", "event_types"}
+    assert set(unfccc_taxonomy) == {"author", "author_type", "event_types"}
     assert set(unfccc_taxonomy["author_type"]["allowed_values"]) == {
         "Party",
         "Non-Party",

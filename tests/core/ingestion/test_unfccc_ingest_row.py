@@ -13,6 +13,7 @@ from app.core.ingestion.unfccc.ingest_row_unfccc import (
 from app.db.models.law_policy.collection import CollectionFamily, CollectionOrganisation
 from app.db.models.law_policy.family import Family, FamilyEvent
 from app.db.models.law_policy.geography import GEO_INTERNATIONAL, GEO_NONE, Geography
+from app.db.models.law_policy.metadata import FamilyMetadata
 
 from tests.core.ingestion.helpers import (
     populate_for_ingest,
@@ -76,6 +77,19 @@ def test_ingest_single_collection_and_document(test_db: Session):
 
     result = ingest_unfccc_document_row(test_db, context, document_row)
     assert len(result) == 7
+
+    test_db_families = test_db.query(Family).all()
+    assert len(test_db_families) == 1
+    created_family: Family = test_db_families[0]
+    created_family_metadata: FamilyMetadata = (
+        test_db.query(FamilyMetadata)
+        .filter(FamilyMetadata.family_import_id == created_family.import_id)
+        .one()
+    )
+    assert created_family_metadata.value == {
+        "author": ["author"],
+        "author_type": ["Party"],
+    }
 
 
 def test_ingest_two_collections_and_document(test_db: Session):

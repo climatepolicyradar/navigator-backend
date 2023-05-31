@@ -17,7 +17,7 @@ For Example:
 }
 
 These functions allow you to reference the values within the json.
-See sector_data.json for example each element in the array contains an object where 
+See sector_data.json for example each element in the array contains an object where
 we use the "node.name" as the taxonomy values:
 
   {
@@ -29,7 +29,7 @@ we use the "node.name" as the taxonomy values:
     "children": []
   },
 
-This is referenced in the "file_key_path" as the values to be used when a file is 
+This is referenced in the "file_key_path" as the values to be used when a file is
 loaded:
 
     {
@@ -60,10 +60,13 @@ def _maybe_read(data: dict[str, Any]) -> TaxonomyEntry:
         return TaxonomyEntry(
             allowed_values=_load_metadata_type(data["filename"], data["file_key_path"]),
             allow_blanks=data["allow_blanks"],
+            allow_any=False,
         )
     else:
         return TaxonomyEntry(
-            allowed_values=data["allowed_values"], allow_blanks=data["allow_blanks"]
+            allowed_values=data["allowed_values"],
+            allow_blanks=data["allow_blanks"],
+            allow_any=data.get("allow_any", False),
         )
 
 
