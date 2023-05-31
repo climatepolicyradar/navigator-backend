@@ -29,11 +29,12 @@ def create_event_from_row(db: Session, row: UNFCCCDocumentIngestRow):
     if row.document_role.upper() == "SUMMARY":
         return
 
+    event_type = _get_type_from_role(row.document_role.upper())
     event = FamilyEvent(
         import_id=_create_event_id(row.cpr_document_id),
-        title="UNFCCC Submission",
+        title=event_type,
         date=row.date,
-        event_type_name=_get_type_from_role(row.document_role.upper()),
+        event_type_name=event_type,
         family_import_id=row.cpr_family_id,
         family_document_import_id=row.cpr_document_id,
         status=EventStatus.OK,
