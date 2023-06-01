@@ -377,11 +377,11 @@ def test_update_document__works_on_new_language(
 
     languages = (
         test_db.query(PhysicalDocumentLanguage)
-        .filter(PhysicalDocumentLanguage.document_id == doc.physical_document_id)
+        .filter(PhysicalDocumentLanguage.document_id == doc.id)
         .all()
     )
     assert len(languages) == 2
-    assert [l.language_id for l in languages] == ["eng", "fra"]
+    assert [l.language_id for l in languages] == [2, 1]
 
 
 def test_update_document__idempotent(
