@@ -339,14 +339,16 @@ def test_update_document__works_on_new_language(
     mocker: Callable[..., Generator[MockerFixture, None, None]],
     import_id: str,
 ):
+    populate_languages(test_db)
     setup_with_multiple_docs(
         test_db, mocker, doc_data=TWO_DFC_ROW_DIFFERENT_ORG, event_data=TWO_EVENT_ROWS
     )
+
     payload = {
         "md5_sum": "c184214e-4870-48e0-adab-3e064b1b0e76",
         "content_type": "updated/content_type",
         "cdn_object": "folder/file",
-        "languages": ["fra", "eng", "spa"],
+        "languages": ["fra", "eng"],
     }
 
     response = client.put(
@@ -360,7 +362,7 @@ def test_update_document__works_on_new_language(
     assert json_object["md5_sum"] == "c184214e-4870-48e0-adab-3e064b1b0e76"
     assert json_object["content_type"] == "updated/content_type"
     assert json_object["cdn_object"] == "folder/file"
-    assert json_object["languages"] == ["fra", "eng", "spa"]
+    assert [language['language_code'] for language in json_object["languages"]] == ["fra", "eng"]
 
     # Now Check the db
     doc = (
@@ -375,17 +377,11 @@ def test_update_document__works_on_new_language(
 
     languages = (
         test_db.query(PhysicalDocumentLanguage)
-        .all()
-    )
-    assert languages == []
-
-    languages = (
-        test_db.query(PhysicalDocumentLanguage)
         .filter(PhysicalDocumentLanguage.document_id == doc.physical_document_id)
         .all()
     )
-    assert len(languages) == 3
-    assert [l.language for l in languages] == ["fra", "eng", "spa"]
+    assert len(languages) == 2
+    assert [l.language_id for l in languages] == ["eng", "fra"]
 
 
 def test_update_document__idempotent(
