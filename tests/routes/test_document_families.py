@@ -362,7 +362,7 @@ def test_update_document__works_on_new_language(
     assert json_object["md5_sum"] == "c184214e-4870-48e0-adab-3e064b1b0e76"
     assert json_object["content_type"] == "updated/content_type"
     assert json_object["cdn_object"] == "folder/file"
-    assert [language['language_code'] for language in json_object["languages"]] == ["fra", "eng"]
+    assert [language['language_code'] for language in json_object["languages"]] == ["eng", "fra"]
 
     # Now Check the db
     doc = (
