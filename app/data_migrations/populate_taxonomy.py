@@ -19,15 +19,16 @@ def populate_org_taxonomy(
     # First the org
     org = db.query(Organisation).filter(Organisation.name == org_name).one_or_none()
 
-    def add_org():
+    def add_org() -> Organisation:
         new_org = Organisation(
             name=org_name, description=description, organisation_type=org_type
         )
         db.add(new_org)
         db.flush()
+        return new_org
 
     if org is None:
-        add_org()
+        org = add_org()
     else:
         if org.organisation_type != org_type or org.description != description:
             db.delete(org)
