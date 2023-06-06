@@ -18,27 +18,40 @@ def populate_org_taxonomy(
 
     # First the org
     org = db.query(Organisation).filter(Organisation.name == org_name).one_or_none()
-    if org is None:
-        org = Organisation(
+
+    def add_org():
+        new_org = Organisation(
             name=org_name, description=description, organisation_type=org_type
         )
-        db.add(org)
+        db.add(new_org)
         db.flush()
+
+    if org is None:
+        add_org()
+    else:
+        if org.organisation_type != org_type or org.description != description:
+            db.delete(org)
+            add_org()
 
     metadata_org = (
         db.query(MetadataOrganisation)
         .filter(MetadataOrganisation.organisation_id == org.id)
         .one_or_none()
     )
-    if metadata_org is None:
-        # Now add the taxonomy
+    metadata_taxonomy = (
+        db.query(MetadataTaxonomy)
+        .filter(MetadataTaxonomy.id == metadata_org.taxonomy_id)
+        .one_or_none()
+    )
+
+    def add_metadata_org():
         tax = MetadataTaxonomy(
             description=f"{org_name} loaded values",
             valid_metadata=fn_get_taxonomy(),
         )
         db.add(tax)
         db.flush()
-        # Finally the link between the org and the taxonomy.
+
         db.add(
             MetadataOrganisation(
                 taxonomy_id=tax.id,
@@ -46,6 +59,16 @@ def populate_org_taxonomy(
             )
         )
         db.flush()
+
+    if metadata_org is None:
+        add_metadata_org()
+    else:
+        if metadata_taxonomy.valid_metadata != fn_get_taxonomy():
+            db.delete(metadata_org)
+            db.flush()
+            db.delete(metadata_taxonomy)
+            db.flush()
+            add_metadata_org()
 
 
 def populate_taxonomy(db: Session) -> None:
