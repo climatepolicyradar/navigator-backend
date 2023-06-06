@@ -86,7 +86,7 @@ def test_documents_family_slug_returns_correct_json(
     assert json_response["summary"] == "Summary1"
     assert json_response["geography"] == "GBR"
     assert json_response["category"] == "Executive"
-    assert json_response["status"] == "Created"
+    assert json_response["status"] == "Published"
     assert json_response["published_date"] == "2019-12-25T00:00:00+00:00"
     assert json_response["last_updated_date"] == "2019-12-25T00:00:00+00:00"
 
