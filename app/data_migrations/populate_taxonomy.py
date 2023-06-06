@@ -4,7 +4,7 @@ from app.data_migrations.taxonomy_cclw import get_cclw_taxonomy
 from app.data_migrations.taxonomy_unf3c import get_unf3c_taxonomy
 
 from app.db.models.app.users import Organisation
-from app.db.models.law_policy.metadata import MetadataOrganisation, MetadataTaxonomy
+from app.db.models.law_policy.metadata import MetadataOrganisation, MetadataTaxonomy, FamilyMetadata
 
 
 def populate_org_taxonomy(
@@ -44,7 +44,7 @@ def populate_org_taxonomy(
         .one_or_none()
     )
 
-    def add_metadata_org():
+    if metadata_org is None:
         tax = MetadataTaxonomy(
             description=f"{org_name} loaded values",
             valid_metadata=fn_get_taxonomy(),
@@ -59,16 +59,9 @@ def populate_org_taxonomy(
             )
         )
         db.flush()
-
-    if metadata_org is None:
-        add_metadata_org()
     else:
         if metadata_taxonomy.valid_metadata != fn_get_taxonomy():
-            db.delete(metadata_org)
-            db.flush()
-            db.delete(metadata_taxonomy)
-            db.flush()
-            add_metadata_org()
+            metadata_taxonomy.valid_metadata = fn_get_taxonomy()
 
 
 def populate_taxonomy(db: Session) -> None:
