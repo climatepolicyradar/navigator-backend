@@ -7,36 +7,42 @@ TAXONOMY_DATA = [
         "filename": "app/data_migrations/data/cclw/topic_data.json",
         "file_key_path": "name",
         "allow_blanks": True,
+        "allow_any": False,
     },
     {
         "key": "sector",
         "filename": "app/data_migrations/data/cclw/sector_data.json",
         "file_key_path": "node.name",
         "allow_blanks": True,
+        "allow_any": False,
     },
     {
         "key": "keyword",
         "filename": "app/data_migrations/data/cclw/keyword_data.json",
         "file_key_path": "name",
         "allow_blanks": True,
+        "allow_any": False,
     },
     {
         "key": "instrument",
         "filename": "app/data_migrations/data/cclw/instrument_data.json",
         "file_key_path": "node.name",
         "allow_blanks": True,
+        "allow_any": False,
     },
     {
         "key": "hazard",
         "filename": "app/data_migrations/data/cclw/hazard_data.json",
         "file_key_path": "name",
         "allow_blanks": True,
+        "allow_any": False,
     },
     {
         "key": "framework",
         "filename": "app/data_migrations/data/cclw/framework_data.json",
         "file_key_path": "name",
         "allow_blanks": True,
+        "allow_any": False,
     },
 ]
 
