@@ -3,6 +3,7 @@ name: Daily
 # See https://docs.github.com/en/actions/using-workflows/events-that-trigger-workflows#schedule
 
 on:
+  workflow_dispatch:
   schedule:
     # * is a special character in YAML so you have to quote this string
     - cron:  '30 5 * * *'
