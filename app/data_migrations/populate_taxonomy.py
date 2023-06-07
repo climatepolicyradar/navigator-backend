@@ -40,6 +40,7 @@ def populate_org_taxonomy(
         .one_or_none()
     )
     if metadata_org is None:
+        # Now add the taxonomy
         tax = MetadataTaxonomy(
             description=f"{org_name} loaded values",
             valid_metadata=fn_get_taxonomy(),
@@ -47,6 +48,7 @@ def populate_org_taxonomy(
         db.add(tax)
         db.flush()
 
+        # Finally the link between the org and the taxonomy.
         db.add(
             MetadataOrganisation(
                 taxonomy_id=tax.id,
