@@ -1,4 +1,4 @@
-from typing import Any, Mapping, Sequence, Union
+from typing import Any, Mapping, Sequence, Union, Optional
 
 from pydantic.dataclasses import dataclass
 from pydantic.config import ConfigDict, Extra
@@ -12,8 +12,8 @@ class TaxonomyEntry:
     """Details a single taxonomy field"""
 
     allow_blanks: bool
-    allow_any: bool
     allowed_values: Sequence[str]
+    allow_any: Optional[bool] = False
 
 
 Taxonomy = Mapping[str, TaxonomyEntry]

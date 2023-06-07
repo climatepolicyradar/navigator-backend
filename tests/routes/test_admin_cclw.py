@@ -37,9 +37,9 @@ TWO_EVENT_ROWS = """Id,Eventable type,Eventable Id,Eventable name,Event type,Tit
 
 
 def test_validate_bulk_ingest_cclw_law_policy(
-    client,
-    superuser_token_headers,
-    test_db,
+        client,
+        superuser_token_headers,
+        test_db,
 ):
     populate_taxonomy(test_db)
     populate_geography(test_db)
@@ -64,16 +64,16 @@ def test_validate_bulk_ingest_cclw_law_policy(
     assert response.status_code == 200
     response_json = response.json()
     assert (
-        response_json["message"]
-        == "Law & Policy validation result: 1 Rows, 0 Failures, 0 Resolved"
+            response_json["message"]
+            == "Law & Policy validation result: 1 Rows, 0 Failures, 0 Resolved"
     )
     assert len(response_json["errors"]) == 0
 
 
 def test_validate_bulk_ingest_cclw_law_policy_existing_taxonomy(
-    client,
-    superuser_token_headers,
-    test_db,
+        client,
+        superuser_token_headers,
+        test_db,
 ):
     """Test that the validation step passes when there is existing taxonomy data without the allow_any field."""
     # Add the taxonomy data, we can't use the standard populate taxonomy function as this enforces the allow_any
@@ -90,7 +90,31 @@ def test_validate_bulk_ingest_cclw_law_policy_existing_taxonomy(
             "filename": "app/data_migrations/data/cclw/sector_data.json",
             "file_key_path": "node.name",
             "allow_blanks": True,
-        }
+        },
+        {
+            "key": "keyword",
+            "filename": "app/data_migrations/data/cclw/keyword_data.json",
+            "file_key_path": "name",
+            "allow_blanks": True,
+        },
+        {
+            "key": "instrument",
+            "filename": "app/data_migrations/data/cclw/instrument_data.json",
+            "file_key_path": "node.name",
+            "allow_blanks": True,
+        },
+        {
+            "key": "hazard",
+            "filename": "app/data_migrations/data/cclw/hazard_data.json",
+            "file_key_path": "name",
+            "allow_blanks": True,
+        },
+        {
+            "key": "framework",
+            "filename": "app/data_migrations/data/cclw/framework_data.json",
+            "file_key_path": "name",
+            "allow_blanks": True,
+        },
     ]
 
     TAXONOMY_DATA = {}
@@ -155,17 +179,17 @@ def test_validate_bulk_ingest_cclw_law_policy_existing_taxonomy(
     assert response.status_code == 200
     response_json = response.json()
     assert (
-        response_json["message"]
-        == "Law & Policy validation result: 1 Rows, 0 Failures, 0 Resolved"
+            response_json["message"]
+            == "Law & Policy validation result: 1 Rows, 0 Failures, 0 Resolved"
     )
     assert len(response_json["errors"]) == 0
 
 
 def test_bulk_ingest_cclw_law_policy(
-    client,
-    superuser_token_headers,
-    test_db,
-    mocker,
+        client,
+        superuser_token_headers,
+        test_db,
+        mocker,
 ):
     mock_start_import = mocker.patch("app.api.api_v1.routers.cclw_ingest._start_ingest")
     mock_write_csv_to_s3 = mocker.patch(
