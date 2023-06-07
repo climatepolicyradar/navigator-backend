@@ -23,9 +23,9 @@ from googleapiclient.errors import HttpError
 SCOPES = ["https://www.googleapis.com/auth/spreadsheets.readonly"]
 
 # The ID and range of a sample spreadsheet.
-SPREADSHEET_ID = "1bfUsg0fPAYduc4e89UjYvbI0wDUV1xa58NzAFcTofoo"
+SPREADSHEET_ID = "10xcBKgiYoT7eWQoyoWYlELO_z7TC1XE-_CIkC0vONWk"
 # RANGE_NAME = "All new docs as of 030323 - NEW FORMAT!A:Z"
-RANGE_NAME = "CPR_MASTER_1.0.0!A:Z"
+RANGE_NAME = "CPR_MASTER_DOCS_1.0.2!A:Z"
 
 
 def double_quote_quotes(col: str) -> str:
