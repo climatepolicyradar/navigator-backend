@@ -37,9 +37,9 @@ TWO_EVENT_ROWS = """Id,Eventable type,Eventable Id,Eventable name,Event type,Tit
 
 
 def test_validate_bulk_ingest_cclw_law_policy(
-        client,
-        superuser_token_headers,
-        test_db,
+    client,
+    superuser_token_headers,
+    test_db,
 ):
     populate_taxonomy(test_db)
     populate_geography(test_db)
@@ -71,9 +71,9 @@ def test_validate_bulk_ingest_cclw_law_policy(
 
 
 def test_validate_bulk_ingest_cclw_law_policy_existing_taxonomy(
-        client,
-        superuser_token_headers,
-        test_db,
+    client,
+    superuser_token_headers,
+    test_db,
 ):
     """Test that the validation step passes when there is existing taxonomy data without the allow_any field."""
     # Add the taxonomy data, we can't use the standard populate taxonomy function as this enforces the allow_any
@@ -186,10 +186,10 @@ def test_validate_bulk_ingest_cclw_law_policy_existing_taxonomy(
 
 
 def test_bulk_ingest_cclw_law_policy(
-        client,
-        superuser_token_headers,
-        test_db,
-        mocker,
+    client,
+    superuser_token_headers,
+    test_db,
+    mocker,
 ):
     mock_start_import = mocker.patch("app.api.api_v1.routers.cclw_ingest._start_ingest")
     mock_write_csv_to_s3 = mocker.patch(
