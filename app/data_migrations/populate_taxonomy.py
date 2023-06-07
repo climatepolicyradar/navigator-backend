@@ -39,12 +39,6 @@ def populate_org_taxonomy(
         .filter(MetadataOrganisation.organisation_id == org.id)
         .one_or_none()
     )
-    metadata_taxonomy = (
-        db.query(MetadataTaxonomy)
-        .filter(MetadataTaxonomy.id == metadata_org.taxonomy_id)
-        .one_or_none()
-    )
-
     if metadata_org is None:
         tax = MetadataTaxonomy(
             description=f"{org_name} loaded values",
@@ -61,6 +55,11 @@ def populate_org_taxonomy(
         )
         db.flush()
     else:
+        metadata_taxonomy = (
+            db.query(MetadataTaxonomy)
+            .filter(MetadataTaxonomy.id == metadata_org.taxonomy_id)
+            .one_or_none()
+        )
         if metadata_taxonomy.valid_metadata != fn_get_taxonomy():
             metadata_taxonomy.valid_metadata = fn_get_taxonomy()
 
