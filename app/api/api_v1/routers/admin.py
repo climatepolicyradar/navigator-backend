@@ -82,18 +82,8 @@ async def update_document(
             extra={"props": {'meta_data_languages': meta_data.languages}}
         )
 
-        physical_document_languages = (
-            db.query(PhysicalDocumentLanguage)
-            .filter(
-                PhysicalDocumentLanguage.document_id == physical_document.id,
-            )
-            .all()
-        )
-
-        if physical_document_languages is not None:
-            for physical_document_language in physical_document_languages:
-                db.delete(physical_document_language)
-                db.flush()
+        db.delete(db.query(PhysicalDocumentLanguage).filter(PhysicalDocumentLanguage.document_id == physical_document.id).all())
+        db.flush()
 
         for language in meta_data.languages:
             lang = db.query(Language).filter(Language.language_code == language).one_or_none()

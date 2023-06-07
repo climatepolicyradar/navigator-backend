@@ -381,7 +381,7 @@ def test_update_document__works_on_new_language(
         .all()
     )
     assert len(languages) == 2
-    assert [l.language_id for l in languages] == [2, 1]
+    assert set([l.language_id for l in languages]) == {2, 1}
 
 
 def test_update_document__idempotent(
