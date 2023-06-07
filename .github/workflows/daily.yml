@@ -20,7 +20,14 @@ jobs:
         run: pip install --upgrade google-api-python-client google-auth-httplib2 google-auth-oauthlib
 
       - name: Download Sheet
-        run: GOOGLE_SERVICE_ACCOUNT='${{ secrets.GOOGLE_SERVICE_ACCOUNT }}' python scripts/validate_cclw_sheet/download.py > download.csv
+        run: python scripts/validate_cclw_sheet/download.py > download.csv
+        env:
+          GOOGLE_SERVICE_ACCOUNT: ${{ secrets.GOOGLE_SERVICE_ACCOUNT }} 
+
+      - name: Validate Download
+        run: |
+          head -n1 download.csv
+          wc -l download.csv
 
       - name: Get python Container
         run:  docker pull python:3.9
