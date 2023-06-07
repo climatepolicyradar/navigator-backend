@@ -96,7 +96,7 @@ def _operate_on_family(
             db,
             Family,
             import_id=params.cpr_family_id,
-            extra={**extra, "family_status": FamilyStatus.CREATED},
+            extra={**extra, "family_status": FamilyStatus.PUBLISHED},
             after_create=_after_create_family(db, params, org_id, result),
         )
         result["family"] = to_dict(family)
