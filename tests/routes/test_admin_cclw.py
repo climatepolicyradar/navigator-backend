@@ -9,6 +9,9 @@ from app.data_migrations import (
     populate_geography,
     populate_taxonomy,
 )
+from app.data_migrations.taxonomy_utils import _load_metadata_type
+from app.db.models.app import Organisation
+from app.db.models.law_policy import MetadataOrganisation, MetadataTaxonomy
 
 
 def test_unauthenticated_ingest(client):
@@ -63,6 +66,121 @@ def test_validate_bulk_ingest_cclw_law_policy(
     assert (
         response_json["message"]
         == "Law & Policy validation result: 1 Rows, 0 Failures, 0 Resolved"
+    )
+    assert len(response_json["errors"]) == 0
+
+
+def test_validate_bulk_ingest_cclw_law_policy_existing_taxonomy(
+    client,
+    superuser_token_headers,
+    test_db,
+):
+    """Test that the validation step passes when there is existing taxonomy data without the allow_any field."""
+    # Add the taxonomy data, we can't use the standard populate taxonomy function as this enforces the allow_any
+    # field.
+    TAXONOMY = [
+        {
+            "key": "topic",
+            "filename": "app/data_migrations/data/cclw/topic_data.json",
+            "file_key_path": "name",
+            "allow_blanks": True,
+        },
+        {
+            "key": "sector",
+            "filename": "app/data_migrations/data/cclw/sector_data.json",
+            "file_key_path": "node.name",
+            "allow_blanks": True,
+        },
+        {
+            "key": "keyword",
+            "filename": "app/data_migrations/data/cclw/keyword_data.json",
+            "file_key_path": "name",
+            "allow_blanks": True,
+        },
+        {
+            "key": "instrument",
+            "filename": "app/data_migrations/data/cclw/instrument_data.json",
+            "file_key_path": "node.name",
+            "allow_blanks": True,
+        },
+        {
+            "key": "hazard",
+            "filename": "app/data_migrations/data/cclw/hazard_data.json",
+            "file_key_path": "name",
+            "allow_blanks": True,
+        },
+        {
+            "key": "framework",
+            "filename": "app/data_migrations/data/cclw/framework_data.json",
+            "file_key_path": "name",
+            "allow_blanks": True,
+        },
+    ]
+
+    TAXONOMY_DATA = {}
+    for i in TAXONOMY:
+        TAXONOMY_DATA.update(
+            {
+                i["key"]: {
+                    "allowed_values": _load_metadata_type(
+                        i["filename"], i["file_key_path"]
+                    ),
+                    "allow_blanks": i["allow_blanks"],
+                }
+            }
+        )
+
+    # Add the organisation
+    org_name = "CCLW"
+    description = "Climate Change Laws of the World"
+    org_type = "Academic"
+    org = Organisation(
+        name=org_name, description=description, organisation_type=org_type
+    )
+    test_db.add(org)
+    test_db.flush()
+
+    # Now add the taxonomy
+    tax = MetadataTaxonomy(
+        description=f"{org_name} loaded values",
+        valid_metadata=TAXONOMY_DATA,
+    )
+    test_db.add(tax)
+    test_db.flush()
+
+    # Finally the link between the org and the taxonomy.
+    test_db.add(
+        MetadataOrganisation(
+            taxonomy_id=tax.id,
+            organisation_id=org.id,
+        )
+    )
+    test_db.flush()
+
+    populate_geography(test_db)
+    populate_document_type(test_db)
+    populate_document_role(test_db)
+    populate_document_variant(test_db)
+    test_db.commit()
+    law_policy_csv_file = BytesIO(ONE_DFC_ROW.encode("utf8"))
+    files = {
+        "law_policy_csv": (
+            "valid_law_policy.csv",
+            law_policy_csv_file,
+            "text/csv",
+            {"Expires": "0"},
+        ),
+    }
+    response = client.post(
+        "/api/v1/admin/bulk-ingest/validate/cclw",
+        files=files,
+        headers=superuser_token_headers,
+    )
+    assert response.status_code == 200
+    response_json = response.json()
+    assert (
+            response_json["message"]
+            == "Law & Policy validation result: 1 Rows, 0 Failures, 0 Resolved"
     )
     assert len(response_json["errors"]) == 0
 
