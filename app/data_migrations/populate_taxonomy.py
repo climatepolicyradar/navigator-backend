@@ -24,6 +24,7 @@ def populate_org_taxonomy(
         )
         db.add(org)
         db.flush()
+        db.commit()
 
     metadata_org = (
         db.query(MetadataOrganisation)
@@ -46,6 +47,7 @@ def populate_org_taxonomy(
             )
         )
         db.flush()
+        db.commit()
 
 
 def populate_taxonomy(db: Session) -> None:

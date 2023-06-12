@@ -1,4 +1,4 @@
-from typing import Any, Mapping, Sequence, Union, Optional
+from typing import Any, Mapping, Sequence, Union
 
 from pydantic.dataclasses import dataclass
 from pydantic.config import ConfigDict, Extra
@@ -13,7 +13,7 @@ class TaxonomyEntry:
 
     allow_blanks: bool
     allowed_values: Sequence[str]
-    allow_any: Optional[bool] = False
+    allow_any: bool = False
 
 
 Taxonomy = Mapping[str, TaxonomyEntry]
