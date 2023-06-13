@@ -6,7 +6,7 @@ from unittest import mock
 import pytest
 
 from app.api.api_v1.schemas.document import DocumentParserInput
-from app.core.validation import PIPELINE_BUCKET
+from app.core.validation import IMPORT_ID_MATCHER, PIPELINE_BUCKET
 
 from app.core.validation.util import (
     _flatten_maybe_tree,
@@ -119,3 +119,38 @@ def test_write_documents_to_s3(test_s3_client, mocker):
         upload_file_mock.mock_calls[0].kwargs["fileobj"].read().decode("utf8")
     )
     assert uploaded_json_documents == {"documents": {d.import_id: d.to_json()}}
+
+
+@pytest.mark.parametrize(
+    "valid_id",
+    [
+        "CCLW.exec.1.2",
+        "CCLW-2.exec.1.2",
+        "CCLW_2.exec-1-2.1.2",
+        "CCLW.exec_leg-3.1-2-3-4.2",
+        "UNFCCC_p1-d3.exec.1.2-3-4-5-6",
+        "UNFCCC.exec-1-2_3_4-5.1.2",
+    ],
+)
+def test_valid_import_ids(valid_id):
+    assert IMPORT_ID_MATCHER.match(valid_id)
+
+
+@pytest.mark.parametrize(
+    "invalid_id",
+    [
+        "CCLW.exec.1.2.3",  # too many elements
+        "CCLW-2.exec.-1.2",  # element starts with -
+        "_2.exec-1-2.1.2",  # element starts with _
+        "CCLW.exec__leg-3.1-2-3-4.2",  # chained -_ chars
+        "UNFCCC_p1-d3.exec.1.2-3-4-5--6",  # chained -_ chars
+        "UNFCCC.1.2",  # too few elements
+        "CCLW..1.2",  # empty elements
+        "CCLW...2",  # many empty elements
+        "CCLW.%25.1.2",  # invalid character
+        "CCLW.%25.1%20%25.2",  # many invalid characters
+        "CCLW.^25.1'25.2",  # many invalid characters
+    ],
+)
+def test_invalid_import_ids(invalid_id):
+    assert IMPORT_ID_MATCHER.match(invalid_id) is None
