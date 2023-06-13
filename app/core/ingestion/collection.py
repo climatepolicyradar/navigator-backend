@@ -48,7 +48,6 @@ def create_collection(
         .filter(Collection.import_id == row.cpr_collection_id)
         .one_or_none()
     )
-
     if existing_collection is None:
         collection = create(
             db,
@@ -71,8 +70,23 @@ def create_collection(
         return collection
 
     if existing_collection is not None:
-        # Check it matches
-        # FIXME: also check for the collection-organisation relationship?
+        # Check it belongs to the same organisation
+        existing_collection_organisation = (
+            db.query(CollectionOrganisation)
+            .filter(
+                CollectionOrganisation.collection_import_id == row.cpr_collection_id
+            )
+            .filter(CollectionOrganisation.organisation_id == org_id)
+            .one_or_none()
+        )
+
+        if not existing_collection_organisation:
+            raise ValueError(
+                f"This collection {row.cpr_collection_id}"
+                + " belongs to another org or none."
+            )
+
+        # Check values match
         collection = (
             db.query(Collection)
             .filter(Collection.title == row.collection_name)
@@ -82,6 +96,7 @@ def create_collection(
         )
         if collection:
             return collection
+        raise ValueError(f"Collection {row.collection_name} has incompatible values")
 
     raise ValueError(
         f"Collection {row.cpr_collection_id} is pre-exiting, and mis-matches"
