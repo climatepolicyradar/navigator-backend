@@ -72,8 +72,16 @@ def validate_csv_columns(
     valid_column_names: set[str],
 ) -> list[str]:
     """Check that the given set of column names is valid."""
+
+    def original_name(col: str) -> str:
+        for name in valid_column_names:
+            if name.upper() == col:
+                return name
+        raise ValueError(f"Original name called with value not in set: {col}")
+
     cols_to_check = set(name.upper() for name in column_names)
     expected = set([name.upper() for name in valid_column_names])
-    missing = list(expected.difference(cols_to_check))
+    missing_insensitive = list(expected.difference(cols_to_check))
+    missing = [original_name(col) for col in missing_insensitive]
     missing.sort()
     return missing
