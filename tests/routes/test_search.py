@@ -1211,6 +1211,21 @@ def test_csv_content(
             # Extra rows only exist for multi-doc families
             expected_csv_row_count += len_all_family_documents - 1
 
+    search_response = client.post(
+        SEARCH_ENDPOINT,
+        json={
+            "query_string": query_string,
+            "exact_match": exact_match,
+        },
+    )
+    assert search_response.status_code == 200
+    search_content = search_response.json()
+    all_matching_titles = {
+        d["document_title"]
+        for f in search_content["families"]
+        for d in f["family_documents"]
+    }
+
     download_response = client.post(
         CSV_DOWNLOAD_ENDPOINT,
         json={
@@ -1222,6 +1237,7 @@ def test_csv_content(
     csv_content = csv.DictReader(StringIO(download_response.content.decode("utf8")))
 
     row_count = 0
+    doc_match_count = 0
     for row in csv_content:
         row_count += 1
         family_name = row["Family Name"]
@@ -1236,7 +1252,6 @@ def test_csv_content(
         assert family["family_geography"] == row["Geography"]
 
         # TODO: Test family metadata - need improved test_db setup
-
         if doc_title := row["Document Title"]:
             if doc_title in validation_data[family_name]["documents"]:
                 # The result is in search results directly, so use those details
@@ -1274,7 +1289,12 @@ def test_csv_content(
                     )
                 assert db_document.document_type == row["Document Type"]
             if query_string:
-                assert row["Document Content Matches Search Phrase"] in ["Yes", "No"]
+                should_match_document = row["Document Title"] in all_matching_titles
+                if should_match_document:
+                    doc_match_count += 1
+                    assert row["Document Content Matches Search Phrase"] == "Yes"
+                else:
+                    assert row["Document Content Matches Search Phrase"] == "No"
             else:
                 assert row["Document Content Matches Search Phrase"] == "n/a"
             assert row["Languages"] == "English"
@@ -1285,6 +1305,9 @@ def test_csv_content(
             assert row["Document Content Matches Search Phrase"] == "n/a"
             assert row["Languages"] == ""
 
+    if query_string:
+        assert doc_match_count > 0
+        assert doc_match_count < row_count
     assert row_count == expected_csv_row_count
 
 
