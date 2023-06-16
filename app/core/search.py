@@ -911,7 +911,10 @@ def process_result_into_csv(
                     else:
                         document_match = (
                             "Yes"
-                            if bool(set(document.slugs) & all_matching_document_slugs)
+                            if bool(
+                                {slug.name for slug in document.slugs}
+                                & all_matching_document_slugs
+                            )
                             else "No"
                         )
 
