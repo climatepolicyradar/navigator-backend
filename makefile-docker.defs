@@ -86,7 +86,7 @@ test_unit:
 	docker-compose -f docker-compose.yml -f docker-compose.dev.yml run --rm backend pytest -vvv tests/unit
 
 test:
-	docker-compose -f docker-compose.yml -f docker-compose.dev.yml run --rm backend pytest -vvv -m 'not search'
+	docker-compose -f docker-compose.yml -f docker-compose.dev.yml run --rm backend pytest -vvv --test-alembic -m 'not search'
 
 # ----------------------------------
 # tasks
