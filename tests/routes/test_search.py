@@ -1306,6 +1306,8 @@ def test_csv_content(
             assert row["Languages"] == ""
 
     if query_string:
+        # Make sure that we have tested some rows, that we have some "Yes" the document
+        # matches the search term, and some "No" values too!
         assert doc_match_count > 0
         assert doc_match_count < row_count
     assert row_count == expected_csv_row_count
