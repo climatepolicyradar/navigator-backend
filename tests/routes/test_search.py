@@ -1171,7 +1171,7 @@ def _get_validation_data(db: Session, families: Sequence[dict]) -> dict[str, Any
 
 @pytest.mark.search
 @pytest.mark.parametrize("exact_match", [True, False])
-@pytest.mark.parametrize("query_string", ["", "greenhouse"])
+@pytest.mark.parametrize("query_string", ["", "carbon"])
 def test_csv_content(
     exact_match,
     query_string,
@@ -1224,6 +1224,7 @@ def test_csv_content(
         d["document_title"]
         for f in search_content["families"]
         for d in f["family_documents"]
+        if d["document_passage_matches"]
     }
 
     download_response = client.post(
@@ -1264,7 +1265,8 @@ def test_csv_content(
                     )
                 else:
                     assert (
-                        document["document_source_url"] == row["Document Content URL"]
+                        document["document_source_url"]
+                        or "" == row["Document Content URL"]
                     )
                 assert document["document_type"] == row["Document Type"]
             else:

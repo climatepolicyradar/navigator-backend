@@ -856,7 +856,10 @@ def process_result_into_csv(
 
     extra_required_info = _get_extra_csv_info(db, search_response.families)
     all_matching_document_slugs = {
-        d.document_slug for f in search_response.families for d in f.family_documents
+        d.document_slug
+        for f in search_response.families
+        for d in f.family_documents
+        if d.document_passage_matches
     }
 
     url_base = f"{PUBLIC_APP_URL}/documents"
