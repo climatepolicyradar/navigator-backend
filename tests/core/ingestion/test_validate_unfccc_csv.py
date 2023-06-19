@@ -6,13 +6,13 @@ from tests.core.ingestion.helpers import populate_for_ingest
 
 
 ONE_UNFCCC_ROW = """Category,Submission Type,Family Name,Document Title,Documents,Author,Author Type,Geography,Geography ISO,Date,Document Role,Document Variant,Language,Download URL,CPR Collection ID,CPR Document ID,CPR Document Slug,CPR Family ID,CPR Family Slug,CPR Document Status
-UNFCCC,Synthesis Report,Nationally determined contributions under the Paris Agreement. Revised note by the secretariat,Nationally determined contributions under the Paris Agreement. Revised note by the secretariat,https://unfccc.int/sites/default/files/resource/cma2021_08r01_S.pdf,UNFCCC Secretariat,Party,UK,GBR,2021-10-25T12:00:00Z,,,en,url of downloaded document,UNFCCC.Collection.Found1;UNFCCC.Collection.Found2,UNFCCC.Document.1,Doc-slug,UNFCCC.family.1,Family-slug,
+UNFCCC,Synthesis Report,Nationally determined contributions under the Paris Agreement. Revised note by the secretariat,Nationally determined contributions under the Paris Agreement. Revised note by the secretariat,https://unfccc.int/sites/default/files/resource/cma2021_08r01_S.pdf,UNFCCC Secretariat,Party,UK,GBR,2021-10-25T12:00:00Z,,,en,url of downloaded document,UNFCCC.Collection.Found.1;UNFCCC.Collection.Found.2,UNFCCC.Document.1.0,Doc-slug,UNFCCC.family.1.0,Family-slug,
 """
 
 
 TWO_COLLECTION_ROW = """CPR Collection ID,Collection name,Collection summary
-UNFCCC.Collection.Found1,Collection One,Everything to do with testing
-UNFCCC.Collection.Found2,Collection One,Everything to do with testing
+UNFCCC.Collection.Found.1,Collection One,Everything to do with testing
+UNFCCC.Collection.Found.2,Collection One,Everything to do with testing
 """
 
 

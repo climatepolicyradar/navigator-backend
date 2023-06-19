@@ -56,18 +56,18 @@ def test_unauthorized_validation(client):
 
 
 MISSING_COLL_UNFCCC_ROW = """Category,Submission Type,Family Name,Document Title,Documents,Author,Author Type,Geography,Geography ISO,Date,Document Role,Document Variant,Language,Download URL,CPR Collection ID,CPR Document ID,CPR Document Slug,CPR Family ID,CPR Family Slug,CPR Document Status
-UNFCCC,Synthesis Report,Nationally determined contributions under the Paris Agreement. Revised note by the secretariat,Nationally determined contributions under the Paris Agreement. Revised note by the secretariat,https://unfccc.int/sites/default/files/resource/cma2021_08r01_S.pdf,UNFCCC Secretariat,Party,UK,GBR,2021-10-25T00:00:00Z,,,en,url of downloaded document,UNFCCC.Collection.1,UNFCCC.Document.1.0,Doc-slug,UNFCCC.family.1,Family-slug,
+UNFCCC,Synthesis Report,Nationally determined contributions under the Paris Agreement. Revised note by the secretariat,Nationally determined contributions under the Paris Agreement. Revised note by the secretariat,https://unfccc.int/sites/default/files/resource/cma2021_08r01_S.pdf,UNFCCC Secretariat,Party,UK,GBR,2021-10-25T00:00:00Z,,,en,url of downloaded document,UNFCCC.Collection.1.0,UNFCCC.Document.1.0,Doc-slug,UNFCCC.family.1.0,Family-slug,
 """
 
 ONE_UNFCCC_ROW = """Category,Submission Type,Family Name,Document Title,Documents,Author,Author Type,Geography,Geography ISO,Date,Document Role,Document Variant,Language,Download URL,CPR Collection ID,CPR Document ID,CPR Document Slug,CPR Family ID,CPR Family Slug,CPR Document Status
-UNFCCC,Synthesis Report,Nationally determined contributions under the Paris Agreement. Revised note by the secretariat,Nationally determined contributions under the Paris Agreement. Revised note by the secretariat,https://unfccc.int/sites/default/files/resource/cma2021_08r01_S.pdf,UNFCCC Secretariat,Party,UK,GBR,2021-10-25T00:00:00Z,,,en,url of downloaded document,UNFCCC.Collection.Found,UNFCCC.Document.1.0,Doc-slug,UNFCCC.family.1,Family-slug,
+UNFCCC,Synthesis Report,Nationally determined contributions under the Paris Agreement. Revised note by the secretariat,Nationally determined contributions under the Paris Agreement. Revised note by the secretariat,https://unfccc.int/sites/default/files/resource/cma2021_08r01_S.pdf,UNFCCC Secretariat,Party,UK,GBR,2021-10-25T00:00:00Z,,,en,url of downloaded document,UNFCCC.Collection.Found.1,UNFCCC.Document.1.0,Doc-slug,UNFCCC.family.1.0,Family-slug,
 """
 
 ZERO_COLLECTION_ROW = """CPR Collection ID,Collection name,Collection summary
 """
 
 ONE_COLLECTION_ROW = """CPR Collection ID,Collection name,Collection summary
-UNFCCC.Collection.Found,Collection One,Everything to do with testing
+UNFCCC.Collection.Found.1,Collection One,Everything to do with testing
 """
 
 
@@ -149,8 +149,9 @@ def test_validate_unfccc_fails_missing_defined_collection(
     assert response.status_code == 200
     response_json = response.json()
     assert len(response_json["errors"]) == 1
+    err = "The following Collection IDs were referenced and not defined: ['UNFCCC.Collection.Found.1']"
     assert response_json["errors"][0] == {
-        "details": "The following Collection IDs were referenced and not defined: ['UNFCCC.Collection.Found']",
+        "details": err,
         "type": "Error",
     }
     assert (
@@ -196,7 +197,7 @@ def test_validate_unfccc_fails_missing_referenced_collection(
     response_json = response.json()
     assert len(response_json["errors"]) == 1
     assert response_json["errors"][0] == {
-        "details": "The following Collection IDs were referenced and not defined: ['UNFCCC.Collection.1']",
+        "details": "The following Collection IDs were referenced and not defined: ['UNFCCC.Collection.1.0']",
         "type": "Error",
     }
     assert (

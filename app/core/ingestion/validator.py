@@ -16,6 +16,7 @@ from app.core.ingestion.utils import (
     UNFCCCIngestContext,
 )
 from app.core.ingestion.unfccc.metadata import build_unfccc_metadata
+from app.core.validation import IMPORT_ID_MATCHER
 from app.db.models.law_policy.family import (
     FamilyDocumentRole,
     FamilyDocumentType,
@@ -84,13 +85,34 @@ def validate_unfccc_document_row(
     n = row.row_number
 
     # don't validate: collection_name: str
-    # don't validate: collection_id: str
     # don't validate: family_name: str
     # don't validate: document_title: str
     # don't validate: documents: str
     # don't validate: author: str
     # don't validate: geography: str
     # don't validate: date: datetime
+
+    # Validate family id
+    if IMPORT_ID_MATCHER.match(row.cpr_family_id) is None:
+        errors.append(
+            Result(ResultType.ERROR, f"Family ID format error {row.cpr_family_id}")
+        )
+
+    # Validate collection id (optional)
+    if row.cpr_collection_id:
+        for collection_id in row.cpr_collection_id:
+            if IMPORT_ID_MATCHER.match(collection_id) is None:
+                errors.append(
+                    Result(
+                        ResultType.ERROR, f"Collection ID format error {collection_id}"
+                    )
+                )
+
+    # Validate document id
+    if IMPORT_ID_MATCHER.match(row.cpr_document_id) is None:
+        errors.append(
+            Result(ResultType.ERROR, f"Document ID format error {row.cpr_document_id}")
+        )
 
     # validate: document_role: str
     result = _check_value_in_db(
