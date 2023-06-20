@@ -1259,15 +1259,16 @@ def test_csv_content(
                 document = validation_data[family_name]["documents"][doc_title]
                 assert document["document_title"] == row["Document Title"]
                 assert row["Document URL"].endswith(document["document_slug"])
+                # Check that if the content type is pdf, we include a CDN URL for
+                # the document, otherwise we send the document source URL.
                 if document["document_content_type"] == "application/pdf":
                     assert row["Document Content URL"].startswith(
                         "https://cdn.climatepolicyradar.org/"
                     )
                 else:
-                    assert (
-                        document["document_source_url"]
-                        or "" == row["Document Content URL"]
-                    )
+                    # Deal with the fact that our document model allows `None` for URL
+                    validation_source_url = document["document_source_url"] or ""
+                    assert validation_source_url == row["Document Content URL"]
                 assert document["document_type"] == row["Document Type"]
             else:
                 # The result is an extra document retrieved from the database
