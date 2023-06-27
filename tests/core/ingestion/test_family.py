@@ -160,6 +160,31 @@ def test_family_document_from_row__updates(test_db: Session):
     assert db_family_doc.document_role == "PRESS RELEASE"
 
 
+def test_family_document_from_row__updates_status(test_db: Session):
+    populate_for_ingest(test_db)
+    row = CCLWDocumentIngestRow.from_row(1, get_doc_ingest_row_data(0))
+    family = add_a_family(test_db)
+    result = {}
+    handle_family_document_from_params(
+        test_db, build_params_from_cclw(row), family, result=result
+    )
+    result = {}
+    row.cpr_document_status = "DELETED"
+    family_document = handle_family_document_from_params(
+        test_db, build_params_from_cclw(row), family, result=result
+    )
+
+    assert list(result.keys()) == ["family_document"]
+
+    db_family_doc = (
+        test_db.query(FamilyDocument)
+        .filter(FamilyDocument.import_id == DOCUMENT_IMPORT_ID)
+        .one()
+    )
+    assert db_family_doc == family_document
+    assert db_family_doc.document_status == "DELETED"
+
+
 def add_a_family(test_db: Session) -> Family:
     family = Family(
         import_id=FAMILY_IMPORT_ID,

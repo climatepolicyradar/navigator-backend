@@ -159,6 +159,12 @@ def handle_family_document_from_params(
             none_if_empty(params.document_variant),
             family_document,
         )
+        update_if_changed(
+            updated,
+            "document_status",
+            none_if_empty(params.cpr_document_status),
+            family_document,
+        )
         if len(updated) > 0:
             db.add(family_document)
             db.flush()

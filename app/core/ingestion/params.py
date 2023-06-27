@@ -28,3 +28,4 @@ class IngestParameters:
     cpr_collection_ids: list[str]
     cpr_family_slug: str
     cpr_document_slug: str
+    cpr_document_status: str
