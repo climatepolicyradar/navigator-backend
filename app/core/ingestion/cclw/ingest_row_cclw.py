@@ -35,6 +35,7 @@ _REQUIRED_DOCUMENT_COLUMNS = [
     "CPR Collection ID",
     "CPR Family Slug",
     "CPR Document Slug",
+    "CPR Document Status",
 ]
 VALID_DOCUMENT_COLUMN_NAMES = set(_REQUIRED_DOCUMENT_COLUMNS)
 
@@ -79,6 +80,7 @@ class CCLWDocumentIngestRow(BaseIngestRow):
     cpr_collection_id: str
     cpr_family_slug: str
     cpr_document_slug: str
+    cpr_document_status: str
 
     VALID_COLUMNS: ClassVar[set[str]] = VALID_DOCUMENT_COLUMN_NAMES
 
