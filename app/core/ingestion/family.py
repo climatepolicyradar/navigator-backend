@@ -10,6 +10,7 @@ from app.core.ingestion.utils import (
     get_or_create,
     to_dict,
     update_if_changed,
+    update_if_enum_changed,
 )
 from app.db.models.law_policy import (
     DocumentStatus,
@@ -159,7 +160,7 @@ def handle_family_document_from_params(
             none_if_empty(params.document_variant),
             family_document,
         )
-        update_if_changed(
+        update_if_enum_changed(
             updated,
             "document_status",
             none_if_empty(params.cpr_document_status),
