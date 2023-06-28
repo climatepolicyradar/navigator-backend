@@ -34,7 +34,6 @@ def add_a_family(db: Session, description: str = "description"):
         geography_id=2,
         description=description,
         family_category="EXECUTIVE",
-        family_status="Published",
     )
     db.add(family)
     add_a_slug_for_family1_and_flush(db)
@@ -56,9 +55,9 @@ def test_get_or_create__gets(test_db: Session):
     assert family.description == "description"
     assert family.geography_id == 2
     assert family.family_category == "EXECUTIVE"
-    assert family.family_status == "Published"
+    assert family.family_status == "Created"
     assert FamilyCategory(family.family_category) == FamilyCategory.EXECUTIVE
-    assert FamilyStatus(family.family_status) == FamilyStatus.PUBLISHED
+    assert FamilyStatus(family.family_status) == FamilyStatus.CREATED
 
 
 def test_get_or_create__creates(test_db):
@@ -72,7 +71,6 @@ def test_get_or_create__creates(test_db):
             "geography_id": 2,
             "description": "description",
             "family_category": "EXECUTIVE",
-            "family_status": "Published",
         },
     )
     add_a_slug_for_family1_and_flush(test_db)
@@ -84,9 +82,9 @@ def test_get_or_create__creates(test_db):
     assert family.description == "description"
     assert family.geography_id == 2
     assert family.family_category == "EXECUTIVE"
-    assert family.family_status == "Published"
+    assert family.family_status == "Created"
     assert FamilyCategory(family.family_category) == FamilyCategory.EXECUTIVE
-    assert FamilyStatus(family.family_status) == FamilyStatus.PUBLISHED
+    assert FamilyStatus(family.family_status) == FamilyStatus.CREATED
 
 
 def test_get_or_create__after_create(test_db):
@@ -101,7 +99,6 @@ def test_get_or_create__after_create(test_db):
             "geography_id": 2,
             "description": "description",
             "family_category": "EXECUTIVE",
-            "family_status": "Published",
         },
         after_create=after_create,
     )
@@ -129,7 +126,6 @@ def test_to_dict(test_db):
         "__class__": "Family",
         "description": "This is a really long description\n        which should get truncated to 80 chars...",
         "family_category": "EXECUTIVE",
-        "family_status": "Published",
         "geography_id": "2",
         "import_id": FAMILY_IMPORT_ID,
         "title": "title",

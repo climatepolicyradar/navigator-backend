@@ -10,8 +10,6 @@ from app.db.models.law_policy.family import (
     FamilyDocument,
     FamilyOrganisation,
     Geography,
-    DocumentStatus,
-    FamilyStatus,
 )
 
 
@@ -25,14 +23,6 @@ def generate_pipeline_ingest_input(db: Session) -> Sequence[DocumentParserInput]
         )
         .join(Organisation, Organisation.id == FamilyOrganisation.organisation_id)
         .join(Geography, Geography.id == Family.geography_id)
-        .filter(
-            Family.family_status.in_([FamilyStatus.PUBLISHED, FamilyStatus.CREATED])
-        )
-        .filter(
-            FamilyDocument.document_status.in_(
-                [DocumentStatus.CREATED, DocumentStatus.PUBLISHED]
-            )
-        )
     )
 
     query_result = cast(

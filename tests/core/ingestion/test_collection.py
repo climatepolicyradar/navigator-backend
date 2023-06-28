@@ -34,7 +34,6 @@ def db_setup(test_db):
             "geography_id": 2,
             "description": "description",
             "family_category": "EXECUTIVE",
-            "family_status": "Published",
         },
     )
     add_a_slug_for_family1_and_flush(test_db)

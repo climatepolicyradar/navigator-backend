@@ -65,18 +65,31 @@ class Family(Base):
     description = sa.Column(sa.Text, nullable=False)
     geography_id = sa.Column(sa.ForeignKey(Geography.id), nullable=False)
     family_category = sa.Column(sa.Enum(FamilyCategory), nullable=False)
-    family_status = sa.Column(
-        sa.Enum(FamilyStatus),
-        default=FamilyStatus.CREATED,
-        nullable=False,
-    )
 
+    family_documents: list["FamilyDocument"] = relationship(
+        "FamilyDocument",
+        lazy="joined",
+    )
     slugs: list["Slug"] = relationship("Slug", lazy="joined")
     events: list["FamilyEvent"] = relationship(
         "FamilyEvent",
         lazy="joined",
         order_by="FamilyEvent.date",
     )
+
+    @hybrid_property
+    def family_status(self) -> FamilyStatus:
+        """Calculates the family status given its documents."""
+        if not self.family_documents:
+            return FamilyStatus.CREATED
+
+        doc_states = [doc.document_status for doc in self.family_documents]
+        if DocumentStatus.PUBLISHED in doc_states:
+            return FamilyStatus.PUBLISHED
+        if DocumentStatus.CREATED in doc_states:
+            return FamilyStatus.CREATED
+        # If we get here then all must be deleted
+        return FamilyStatus.DELETED
 
     @hybrid_property
     def published_date(self) -> Optional[datetime]:

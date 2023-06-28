@@ -12,7 +12,6 @@ from app.db.models.law_policy.family import (
     FamilyCategory,
     FamilyDocument,
     FamilyOrganisation,
-    FamilyStatus,
     Slug,
 )
 from tests.core.ingestion.helpers import (
@@ -71,7 +70,6 @@ def test_family_from_row__updates(test_db: Session):
             geography_id=2,
             description=row.family_summary,
             family_category=category,
-            family_status=FamilyStatus.PUBLISHED,
         )
     )
     pd = create_physical_document_from_params(
@@ -192,7 +190,6 @@ def add_a_family(test_db: Session) -> Family:
         geography_id=2,
         description="description",
         family_category="EXECUTIVE",
-        family_status="Published",
     )
     test_db.add(family)
     test_db.flush()

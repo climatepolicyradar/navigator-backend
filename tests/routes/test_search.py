@@ -24,7 +24,6 @@ from app.db.models.law_policy.family import (
     DocumentStatus,
     EventStatus,
     FamilyCategory,
-    FamilyStatus,
     Family,
     FamilyDocument,
     FamilyDocumentType,
@@ -159,7 +158,6 @@ def _create_family_structures(
                 .one()
                 .id
             ),
-            family_status=FamilyStatus.PUBLISHED,
             family_category=FamilyCategory(
                 _map_old_category_to_new(doc_details["document_category"])
             ),
