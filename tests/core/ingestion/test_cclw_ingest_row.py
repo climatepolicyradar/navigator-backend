@@ -45,6 +45,62 @@ def assert_dfc(db: Session, n_docs: int, n_families: int, n_collections: int):
     assert n_collections == db.query(Collection).count()
 
 
+@pytest.mark.parametrize(
+    "test_data",
+    [
+        {
+            "document_statuses": ["Published", "Published", "Published"],
+            "expected_family_status": "Published",
+        },
+        {
+            "document_statuses": ["Published", "Created", "Published"],
+            "expected_family_status": "Published",
+        },
+        {
+            "document_statuses": ["Published", "Deleted", "Published"],
+            "expected_family_status": "Published",
+        },
+        {
+            "document_statuses": ["Created", "Created", "Created"],
+            "expected_family_status": "Created",
+        },
+        {
+            "document_statuses": ["Deleted", "Created", "Created"],
+            "expected_family_status": "Created",
+        },
+        {
+            "document_statuses": ["Deleted", "Deleted", "Created"],
+            "expected_family_status": "Created",
+        },
+        {
+            "document_statuses": ["Deleted", "Deleted", "Deleted"],
+            "expected_family_status": "Deleted",
+        },
+        {"document_statuses": ["Deleted"], "expected_family_status": "Deleted"},
+    ],
+)
+def test_ingest_rows__correct_family_status(test_db: Session, test_data):
+    """NOTE: this is the best place to test family_status."""
+    document_statuses: list[str] = test_data["document_statuses"]
+    expected_family_status: str = test_data["expected_family_status"]
+    context = CCLWIngestContext()
+    row = CCLWDocumentIngestRow.from_row(1, get_doc_ingest_row_data(0))
+    import_id = row.cpr_family_id = "CCLW.family.test.1"
+    row.cpr_family_slug = "fam-test-1"
+    populate_for_ingest(test_db)
+
+    for n, doc_status in enumerate(document_statuses):
+        row.cpr_document_id = f"CCLW.doc.test.{n}"
+        row.cpr_document_slug = f"CCLW.doc.test.{n}"
+        row.cpr_document_status = doc_status
+        ingest_cclw_document_row(test_db, context, row)
+
+    test_db.commit()
+    family: Family = test_db.query(Family).filter(Family.import_id == import_id).one()
+    assert len(document_statuses) == len(family.family_documents)
+    assert expected_family_status == family.family_status
+
+
 def test_ingest_row__with_multiple_rows(test_db: Session):
     context = CCLWIngestContext()
     row = CCLWDocumentIngestRow.from_row(1, get_doc_ingest_row_data(0))

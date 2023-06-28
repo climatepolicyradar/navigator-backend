@@ -13,12 +13,10 @@ from app.core.ingestion.utils import (
     update_if_enum_changed,
 )
 from app.db.models.law_policy import (
-    DocumentStatus,
     FamilyCategory,
     Family,
     FamilyDocument,
     FamilyOrganisation,
-    FamilyStatus,
     Geography,
     Slug,
 )
@@ -97,7 +95,7 @@ def _operate_on_family(
             db,
             Family,
             import_id=params.cpr_family_id,
-            extra={**extra, "family_status": FamilyStatus.PUBLISHED},
+            extra=extra,
             after_create=_after_create_family(db, params, org_id, result),
         )
         result["family"] = to_dict(family)
@@ -163,7 +161,7 @@ def handle_family_document_from_params(
         update_if_enum_changed(
             updated,
             "document_status",
-            none_if_empty(params.cpr_document_status),
+            params.cpr_document_status,
             family_document,
         )
         if len(updated) > 0:
@@ -204,7 +202,7 @@ def handle_family_document_from_params(
             physical_document_id=physical_document.id,
             import_id=params.cpr_document_id,
             variant_name=none_if_empty(params.document_variant),
-            document_status=DocumentStatus.PUBLISHED,
+            document_status=params.cpr_document_status,
             document_type=none_if_empty(params.document_type),
             document_role=none_if_empty(params.document_role),
         )
