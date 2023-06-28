@@ -84,7 +84,6 @@ def browse_rds_families(
             FamilyOrganisation, FamilyOrganisation.family_import_id == Family.import_id
         )
         .join(Organisation, Organisation.id == FamilyOrganisation.organisation_id)
-        .filter(Family.family_status == FamilyStatus.PUBLISHED)
     )
 
     if req.geography_slugs is not None:
@@ -106,7 +105,9 @@ def browse_rds_families(
     families = [
         to_search_response_family(family, geography, organisation)
         for (family, geography, organisation) in query.all()
+        if family.family_status == FamilyStatus.PUBLISHED
     ]
+
     _LOGGER.debug("Finished families query")
 
     # Dates are calculated, and therefore sorting cannot be implemented in the query
