@@ -832,9 +832,10 @@ def test_punctuation_ignored(test_opensearch, monkeypatch, client, test_db):
 
 
 @pytest.mark.search
-def test_sensitive_queries(test_opensearch, monkeypatch, client):
+def test_sensitive_queries(test_db, test_opensearch, monkeypatch, client):
     """Make sure that queries in the list of sensitive queries only return results containing that term, and not KNN results."""
     monkeypatch.setattr(search, "_OPENSEARCH_CONNECTION", test_opensearch)
+    _populate_search_db_families(test_db)
 
     response1 = client.post(
         SEARCH_ENDPOINT,
@@ -888,9 +889,10 @@ def test_sensitive_queries(test_opensearch, monkeypatch, client):
 
 
 @pytest.mark.search
-def test_accents_ignored(test_opensearch, monkeypatch, client):
+def test_accents_ignored(test_db, test_opensearch, monkeypatch, client):
     """Make sure that accents in query strings are ignored."""
     monkeypatch.setattr(search, "_OPENSEARCH_CONNECTION", test_opensearch)
+    _populate_search_db_families(test_db)
 
     response1 = client.post(
         SEARCH_ENDPOINT,
