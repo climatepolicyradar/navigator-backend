@@ -1,10 +1,11 @@
-import json
-import time
 import csv
+import json
+import random
+import time
 from datetime import datetime
 from io import StringIO
 from pathlib import Path
-from typing import Any, Sequence, cast
+from typing import Any, Mapping, Sequence, cast
 
 import pytest
 from sqlalchemy.orm import Session
@@ -17,6 +18,7 @@ from app.api.api_v1.schemas.search import (
 )
 from app.core.search import _FILTER_FIELD_MAP, OpenSearchQueryConfig
 from app.core.ingestion.utils import get_or_create
+from app.data_migrations.taxonomy_cclw import get_cclw_taxonomy
 from app.db.models.app import Organisation
 from app.db.models.law_policy.family import (
     DocumentStatus,
@@ -33,12 +35,17 @@ from app.db.models.law_policy.family import (
     Slug,
     Variant,
 )
+from app.db.models.law_policy.metadata import (
+    FamilyMetadata,
+    MetadataTaxonomy,
+    MetadataOrganisation,
+)
 from app.db.models.document.physical_document import (
     Language,
     PhysicalDocument,
     PhysicalDocumentLanguage,
 )
-from app.initial_data import populate_geography, populate_language
+from app.initial_data import populate_geography, populate_language, populate_taxonomy
 
 SEARCH_ENDPOINT = "/api/v1/searches"
 CSV_DOWNLOAD_ENDPOINT = "/api/v1/searches/download-csv"
@@ -50,6 +57,7 @@ def _populate_search_db_families(db: Session) -> None:
 
     populate_language(db)
     populate_geography(db)
+    populate_taxonomy(db)
 
     original = Variant(variant_name="Original Language", description="")
     translated = Variant(variant_name="Official Translation", description="")
@@ -71,6 +79,8 @@ def _populate_search_db_families(db: Session) -> None:
     db.commit()
     db.refresh(organisation)
 
+    cclw_taxonomy_data = get_cclw_taxonomy()
+
     containing_dir = Path(__file__).parent
     data_dir = containing_dir.parent / "data"
     for f in data_dir.iterdir():
@@ -85,6 +95,7 @@ def _populate_search_db_families(db: Session) -> None:
                         families,
                         variants,
                         organisation,
+                        cclw_taxonomy_data,
                     )
 
 
@@ -98,6 +109,18 @@ def _map_old_category_to_new(supplied_category: str) -> str:
     return supplied_category
 
 
+def _generate_metadata(
+    cclw_taxonomy_data: Mapping[str, dict]
+) -> Mapping[str, Sequence[str]]:
+    meta_value = {}
+    for k in cclw_taxonomy_data:
+        element_count = random.randint(0, 3)
+        meta_value[k] = random.sample(
+            cclw_taxonomy_data[k]["allowed_values"], element_count
+        )
+    return meta_value
+
+
 def _create_family_structures(
     db: Session,
     doc: dict[str, Any],
@@ -105,6 +128,7 @@ def _create_family_structures(
     families: dict[str, Family],
     variants: dict[str, Variant],
     organisation: Organisation,
+    cclw_taxonomy_data: Mapping[str, dict],
 ) -> None:
     """Populate a db to match the test search index code"""
     doc_details = doc["_source"]
@@ -168,6 +192,29 @@ def _create_family_structures(
             status=EventStatus.OK,
         )
         db.add(family_event)
+        db.commit()
+
+        metadata_value = _generate_metadata(cclw_taxonomy_data)
+
+        family_metadata = FamilyMetadata(
+            family_import_id=family.import_id,
+            taxonomy_id=(
+                db.query(MetadataTaxonomy)
+                .join(
+                    MetadataOrganisation,
+                    MetadataOrganisation.taxonomy_id == MetadataTaxonomy.id,
+                )
+                .join(
+                    Organisation,
+                    MetadataOrganisation.organisation_id == Organisation.id,
+                )
+                .filter(Organisation.name == "CCLW")
+                .one()
+                .id
+            ),
+            value=metadata_value,
+        )
+        db.add(family_metadata)
         db.commit()
 
     physical_document = PhysicalDocument(
@@ -1164,6 +1211,13 @@ def _get_validation_data(db: Session, families: Sequence[dict]) -> dict[str, Any
                 for doc in _get_docs_for_family(db, family["family_slug"])
                 if doc.physical_document is not None
             },
+            "metadata": (
+                db.query(FamilyMetadata)
+                .join(Slug, FamilyMetadata.family_import_id == Slug.family_import_id)
+                .filter(Slug.family_import_id == family["family_slug"])
+                .one()
+                .value
+            ),
         }
         for family in families
     }
@@ -1307,6 +1361,11 @@ def test_csv_content(
             assert row["Document Type"] == ""
             assert row["Document Content Matches Search Phrase"] == "n/a"
             assert row["Languages"] == ""
+
+        expected_metadata = validation_data[family_name]["metadata"]
+        for k in expected_metadata:
+            assert k.title() in row
+            assert row[k.title()] == ";".join(expected_metadata[k])
 
     if query_string:
         # Make sure that we have tested some rows, that we have some "Yes" the document

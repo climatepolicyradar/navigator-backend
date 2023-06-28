@@ -1,4 +1,5 @@
 import csv
+import itertools
 import json
 import logging
 import os
@@ -107,13 +108,7 @@ _CSV_SEARCH_RESPONSE_COLUMNS = [
     "Document Type",
     "Document Content Matches Search Phrase",
     "Category",
-    "Sectors",
-    "Instruments",
-    "Frameworks",
-    "Responses",
-    "Natural Hazards",
     "Languages",
-    "Keywords",
     "Source",
 ]
 
@@ -847,13 +842,14 @@ def process_result_into_csv(
     search_response: SearchResponse,
     is_browse: bool,
 ) -> str:
-    csv_result_io = StringIO("")
-    writer = csv.DictWriter(
-        csv_result_io,
-        fieldnames=_CSV_SEARCH_RESPONSE_COLUMNS,
-    )
-    writer.writeheader()
+    """
+    Process a search/browse result into a CSV file for download.
 
+    :param Session db: database session for supplementary queries
+    :param SearchResponse search_response: the search result to process
+    :param bool is_browse: a flag indicating whether this is a search/browse result
+    :return str: the search result represented as CSV
+    """
     extra_required_info = _get_extra_csv_info(db, search_response.families)
     all_matching_document_slugs = {
         d.document_slug
@@ -863,6 +859,8 @@ def process_result_into_csv(
     }
 
     url_base = f"{PUBLIC_APP_URL}/documents"
+    metadata_keys = {}
+    rows = []
     for family in search_response.families:
         _LOGGER.debug(f"Family: {family}")
         family_metadata = extra_required_info["metadata"].get(family.family_slug, {})
@@ -872,12 +870,13 @@ def process_result_into_csv(
         if not family_source:
             _LOGGER.error(f"Failed to identify organisation for '{family.family_slug}'")
 
-        sector_metadata = ";".join(family_metadata.get("sector", []))
-        instrument_metadata = ";".join(family_metadata.get("instrument", []))
-        framework_metadata = ";".join(family_metadata.get("framework", []))
-        response_metadata = ";".join(family_metadata.get("topic", []))
-        hazard_metadata = ";".join(family_metadata.get("hazard", []))
-        keyword_metadata = ";".join(family_metadata.get("keyword", []))
+        if family_source not in metadata_keys:
+            metadata_keys[family_source] = list(
+                [key.title() for key in family_metadata.keys()]
+            )
+        metadata: dict[str, str] = defaultdict(str)
+        for k in family_metadata:
+            metadata[k.title()] = ";".join(family_metadata.get(k, []))
 
         collection_name = ""
         collection_summary = ""
@@ -889,7 +888,6 @@ def process_result_into_csv(
         family_documents: Sequence[FamilyDocument] = extra_required_info["documents"][
             family.family_slug
         ]
-
         if family_documents:
             for document in family_documents:
                 _LOGGER.info(f"Document: {document}")
@@ -943,16 +941,11 @@ def process_result_into_csv(
                     "Document Content Matches Search Phrase": document_match,
                     "Geography": family.family_geography,
                     "Category": family.family_category,
-                    "Sectors": sector_metadata,
-                    "Instruments": instrument_metadata,
-                    "Frameworks": framework_metadata,
-                    "Responses": response_metadata,
-                    "Natural Hazards": hazard_metadata,
-                    "Keywords": keyword_metadata,
                     "Languages": document_languages,
                     "Source": family_source,
+                    **metadata,
                 }
-                writer.writerow(row)
+                rows.append(row)
         else:
             # Always write a row, even if the Family contains no documents
             row = {
@@ -969,16 +962,23 @@ def process_result_into_csv(
                 "Document Content Matches Search Phrase": "n/a",
                 "Geography": family.family_geography,
                 "Category": family.family_category,
-                "Sectors": sector_metadata,
-                "Instruments": instrument_metadata,
-                "Frameworks": framework_metadata,
-                "Responses": response_metadata,
-                "Natural Hazards": hazard_metadata,
-                "Keywords": keyword_metadata,
                 "Languages": "",
                 "Source": family_source,
+                **metadata,
             }
-            writer.writerow(row)
+            rows.append(row)
+
+    csv_result_io = StringIO("")
+    csv_fieldnames = list(
+        itertools.chain(_CSV_SEARCH_RESPONSE_COLUMNS, *metadata_keys.values())
+    )
+    writer = csv.DictWriter(
+        csv_result_io,
+        fieldnames=csv_fieldnames,
+    )
+    writer.writeheader()
+    for row in rows:
+        writer.writerow(row)
 
     csv_result_io.seek(0)
     return csv_result_io.read()

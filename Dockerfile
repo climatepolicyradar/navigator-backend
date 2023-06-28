@@ -29,11 +29,11 @@ RUN poetry export --with dev \
 RUN pip3 install --no-cache "torch==1.13.0+cpu" "torchvision==0.14.0+cpu" -f https://download.pytorch.org/whl/torch_stable.html
 
 # Install application requirements
-RUN pip install --no-cache -r requirements.txt
+RUN pip3 install --no-cache -r requirements.txt
 
 # Download the sentence transformer model
 RUN mkdir /models
-RUN python -c "from sentence_transformers import SentenceTransformer; SentenceTransformer('sentence-transformers/msmarco-distilbert-dot-v5', cache_folder='/models')"
+RUN python3 -c "from sentence_transformers import SentenceTransformer; SentenceTransformer('sentence-transformers/msmarco-distilbert-dot-v5', cache_folder='/models')"
 
 # Copy files to image
 COPY alembic ./alembic
@@ -44,4 +44,4 @@ COPY LICENSE.md .
 COPY README.md .
 
 ENV PYTHONPATH=/cpr-backend
-CMD python app/main.py
+CMD python3 app/main.py
