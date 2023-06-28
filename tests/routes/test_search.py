@@ -345,7 +345,7 @@ def test_search_body_valid(exact_match, test_opensearch, monkeypatch, client, te
     assert response.status_code == 200
 
 
-@pytest.mark.search2
+@pytest.mark.search
 def test_families_search(test_opensearch, monkeypatch, client, test_db, mocker):
     monkeypatch.setattr(search, "_OPENSEARCH_CONNECTION", test_opensearch)
     _populate_search_db_families(test_db)
@@ -391,7 +391,7 @@ def test_families_search(test_opensearch, monkeypatch, client, test_db, mocker):
     assert _EXPECTED_FAMILY_TITLE in names_returned
 
 
-@pytest.mark.search2
+@pytest.mark.search
 def test_families_search_with_deleted(test_opensearch, monkeypatch, client, test_db):
     monkeypatch.setattr(search, "_OPENSEARCH_CONNECTION", test_opensearch)
     _populate_search_db_families(test_db)
@@ -401,17 +401,6 @@ def test_families_search_with_deleted(test_opensearch, monkeypatch, client, test
             update(FamilyDocument)
             .where(FamilyDocument.import_id == doc.import_id)
             .values(document_status="Deleted")
-        )
-
-    test_db.commit()
-    print(f"********* Import id: {family.import_id}")
-    for doc in family.family_documents:
-        print(doc.import_id)
-        print(
-            test_db.query(FamilyDocument)
-            .filter(FamilyDocument.import_id == doc.import_id)
-            .one()
-            .document_status
         )
 
     response = client.post(
