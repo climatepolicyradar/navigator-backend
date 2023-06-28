@@ -403,6 +403,7 @@ def test_families_search_with_deleted(test_opensearch, monkeypatch, client, test
             .values(document_status="Deleted")
         )
 
+    test_db.commit()
     print(f"********* Import id: {family.import_id}")
     for doc in family.family_documents:
         print(doc.import_id)
@@ -420,6 +421,7 @@ def test_families_search_with_deleted(test_opensearch, monkeypatch, client, test
             "exact_match": True,
         },
     )
+
     assert response.status_code == 200
 
     # Check the correct number of hits is returned

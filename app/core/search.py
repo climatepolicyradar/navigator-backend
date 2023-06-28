@@ -704,13 +704,6 @@ def process_search_response_body_families(
 
             family_id = document_extra_info[doc_match.document_id]["family_import_id"]
             family_status = document_extra_info[doc_match.document_id]["family_status"]
-            document_status = document_extra_info[doc_match.document_id][
-                "document_status"
-            ]
-            document_id = document_extra_info[doc_match.document_id]["document_id"]
-            print("*" * 80)
-            print(family_id, family_status)
-            print(document_id, document_status)
 
             search_response_family = families.get(family_id)
             if search_response_family is None and family_status == "Published":

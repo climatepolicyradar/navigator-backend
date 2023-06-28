@@ -5,6 +5,7 @@ old functions (non DFC) are moved to the deprecated_documents.py file.
 """
 import logging
 from datetime import datetime, timedelta
+import os
 from typing import Mapping, Optional, Sequence, Tuple, cast
 
 from sqlalchemy.orm import Session
@@ -32,6 +33,8 @@ from app.db.models.law_policy.metadata import FamilyMetadata
 from app.core.util import to_cdn_url
 
 _LOGGER = logging.getLogger(__file__)
+
+_DOCUMENT_CACHE_TTL: int = int(os.environ.get("DOCUMENT_CACHE_TTL_MS", "60000"))
 
 
 def get_slugged_objects(db: Session, slug: str) -> tuple[Optional[str], Optional[str]]:
@@ -239,7 +242,7 @@ class DocumentExtraCache:
     """
 
     def __init__(self):
-        self._ttl = timedelta(minutes=60)
+        self._ttl = timedelta(milliseconds=_DOCUMENT_CACHE_TTL)
         self._timestamp = datetime.utcnow() - self._ttl
         self._doc_extra_info: Mapping[str, Mapping[str, str]] = {}
 
@@ -264,12 +267,9 @@ class DocumentExtraCache:
             .join(Family, FamilyDocument.family_import_id == Family.import_id)
             .all()
         )
-        _LOGGER.info("##############################################")
         return {
             family_document.import_id: {
                 "slug": family_document.slugs[-1].name,
-                "document_status": family_document.document_status,
-                "document_id": family_document.import_id,
                 "title": family_document.physical_document.title,
                 "family_slug": family.slugs[-1].name,
                 "family_import_id": family.import_id,
