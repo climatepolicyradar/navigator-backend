@@ -83,6 +83,7 @@ def build_params_from_cclw(row: CCLWDocumentIngestRow) -> IngestParameters:
         cpr_collection_ids=[row.cpr_collection_id],
         cpr_family_slug=row.cpr_family_slug,
         cpr_document_slug=row.cpr_document_slug,
+        cpr_document_status=row.cpr_document_status,
     )
 
 
@@ -117,6 +118,7 @@ def build_params_from_unfccc(row: UNFCCCDocumentIngestRow) -> IngestParameters:
         cpr_collection_ids=row.cpr_collection_id,
         cpr_family_slug=row.cpr_family_slug,
         cpr_document_slug=row.cpr_document_slug,
+        cpr_document_status="PUBLISHED",
     )
 
 

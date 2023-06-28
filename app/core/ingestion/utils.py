@@ -272,3 +272,10 @@ def update_if_changed(updated: dict, updated_key: str, source: Any, dest: Any):
         setattr(dest, updated_key, source)
         updated[updated_key] = source
     return updated
+
+
+def update_if_enum_changed(updated: dict, updated_key: str, source: str, dest: Any):
+    if getattr(dest, updated_key).value != source.title():
+        setattr(dest, updated_key, source)
+        updated[updated_key] = source
+    return updated
