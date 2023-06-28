@@ -8,6 +8,7 @@ from pathlib import Path
 from typing import Any, Mapping, Sequence, cast
 
 import pytest
+from sqlalchemy import update
 from sqlalchemy.orm import Session
 
 from app.api.api_v1.routers import search
@@ -48,6 +49,9 @@ from app.initial_data import populate_geography, populate_language, populate_tax
 
 SEARCH_ENDPOINT = "/api/v1/searches"
 CSV_DOWNLOAD_ENDPOINT = "/api/v1/searches/download-csv"
+_EXPECTED_FAMILY_TITLE = (
+    "Spanish Climate Change And Clean Energy Strategy Horizon 2007- 2012 -2020"
+)
 
 
 def _populate_search_db_families(db: Session) -> None:
@@ -341,11 +345,23 @@ def test_search_body_valid(exact_match, test_opensearch, monkeypatch, client, te
     assert response.status_code == 200
 
 
-@pytest.mark.search
+@pytest.mark.search2
 def test_families_search(test_opensearch, monkeypatch, client, test_db, mocker):
     monkeypatch.setattr(search, "_OPENSEARCH_CONNECTION", test_opensearch)
     _populate_search_db_families(test_db)
 
+    expected_config = OpenSearchQueryConfig()
+    expected_search_body = SearchRequestBody(
+        query_string="climate",
+        exact_match=True,
+        max_passages_per_doc=10,
+        keyword_filters=None,
+        year_range=None,
+        sort_field=None,
+        sort_order=SortOrder.DESCENDING,
+        limit=10,
+        offset=0,
+    )
     query_spy = mocker.spy(search._OPENSEARCH_CONNECTION, "query_families")
 
     response = client.post(
@@ -360,24 +376,58 @@ def test_families_search(test_opensearch, monkeypatch, client, test_db, mocker):
     assert query_spy.call_count == 1  # Called once as not using jit search
 
     actual_search_body = query_spy.mock_calls[0].kwargs["search_request_body"]
-
-    expected_search_body = SearchRequestBody(
-        query_string="climate",
-        exact_match=True,
-        max_passages_per_doc=10,
-        keyword_filters=None,
-        year_range=None,
-        sort_field=None,
-        sort_order=SortOrder.DESCENDING,
-        limit=10,
-        offset=0,
-    )
     assert actual_search_body == expected_search_body
 
     # Check default config is used
     actual_config = query_spy.mock_calls[0].kwargs["opensearch_internal_config"]
-    expected_config = OpenSearchQueryConfig()
     assert actual_config == expected_config
+
+    # Check the correct number of hits is returned
+    data = response.json()
+    assert data["hits"] == 3
+    assert len(data["families"]) == 3
+
+    names_returned = [f["family_name"] for f in data["families"]]
+    assert _EXPECTED_FAMILY_TITLE in names_returned
+
+
+@pytest.mark.search2
+def test_families_search_with_deleted(test_opensearch, monkeypatch, client, test_db):
+    monkeypatch.setattr(search, "_OPENSEARCH_CONNECTION", test_opensearch)
+    _populate_search_db_families(test_db)
+    family = test_db.query(Family).filter(Family.title == _EXPECTED_FAMILY_TITLE).one()
+    for doc in family.family_documents:
+        test_db.execute(
+            update(FamilyDocument)
+            .where(FamilyDocument.import_id == doc.import_id)
+            .values(document_status="Deleted")
+        )
+
+    print(f"********* Import id: {family.import_id}")
+    for doc in family.family_documents:
+        print(doc.import_id)
+        print(
+            test_db.query(FamilyDocument)
+            .filter(FamilyDocument.import_id == doc.import_id)
+            .one()
+            .document_status
+        )
+
+    response = client.post(
+        SEARCH_ENDPOINT,
+        json={
+            "query_string": "climate",
+            "exact_match": True,
+        },
+    )
+    assert response.status_code == 200
+
+    # Check the correct number of hits is returned
+    data = response.json()
+    assert data["hits"] == 2
+    assert len(data["families"]) == 2
+    names_returned = [f["family_name"] for f in data["families"]]
+    assert _EXPECTED_FAMILY_TITLE not in names_returned
 
 
 @pytest.mark.search

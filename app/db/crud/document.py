@@ -264,15 +264,19 @@ class DocumentExtraCache:
             .join(Family, FamilyDocument.family_import_id == Family.import_id)
             .all()
         )
+        _LOGGER.info("##############################################")
         return {
             family_document.import_id: {
                 "slug": family_document.slugs[-1].name,
+                "document_status": family_document.document_status,
+                "document_id": family_document.import_id,
                 "title": family_document.physical_document.title,
                 "family_slug": family.slugs[-1].name,
                 "family_import_id": family.import_id,
                 "family_title": family.title,
                 "family_description": family.description,
                 "family_category": family.family_category,
+                "family_status": family.family_status,
                 "family_published_date": (
                     family.published_date.isoformat()
                     if family.published_date is not None

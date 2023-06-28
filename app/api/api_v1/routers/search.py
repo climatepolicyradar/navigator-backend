@@ -72,6 +72,7 @@ def _search_request(db: Session, search_body: SearchRequestBody) -> SearchRespon
                 keyword_filters = dict(search_body.keyword_filters)
                 keyword_filters[FilterField.CATEGORY] = fixed_categories
                 search_body.keyword_filters = keyword_filters
+        # filter families not published
         return _OPENSEARCH_CONNECTION.query_families(
             search_request_body=search_body,
             opensearch_internal_config=_OPENSEARCH_INDEX_CONFIG,
