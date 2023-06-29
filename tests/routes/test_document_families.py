@@ -26,9 +26,9 @@ N_DOCUMENT_KEYS = 12
 
 
 def test_documents_family_slug_returns_not_found(
-    client: TestClient,
-    test_db: Session,
-    mocker: Callable[..., Generator[MockerFixture, None, None]],
+        client: TestClient,
+        test_db: Session,
+        mocker: Callable[..., Generator[MockerFixture, None, None]],
 ):
     setup_with_docs(test_db, mocker)
     assert test_db.query(Family).count() == 1
@@ -42,9 +42,9 @@ def test_documents_family_slug_returns_not_found(
 
 
 def test_documents_family_slug_returns_correct_family(
-    client: TestClient,
-    test_db: Session,
-    mocker: Callable[..., Generator[MockerFixture, None, None]],
+        client: TestClient,
+        test_db: Session,
+        mocker: Callable[..., Generator[MockerFixture, None, None]],
 ):
     setup_with_two_docs(test_db, mocker)
 
@@ -68,9 +68,9 @@ def test_documents_family_slug_returns_correct_family(
 
 
 def test_documents_family_slug_returns_correct_json(
-    client: TestClient,
-    test_db: Session,
-    mocker: Callable[..., Generator[MockerFixture, None, None]],
+        client: TestClient,
+        test_db: Session,
+        mocker: Callable[..., Generator[MockerFixture, None, None]],
 ):
     setup_with_two_docs(test_db, mocker)
 
@@ -115,9 +115,9 @@ def test_documents_family_slug_returns_correct_json(
 
 
 def test_documents_doc_slug_returns_not_found(
-    client: TestClient,
-    test_db: Session,
-    mocker: Callable[..., Generator[MockerFixture, None, None]],
+        client: TestClient,
+        test_db: Session,
+        mocker: Callable[..., Generator[MockerFixture, None, None]],
 ):
     setup_with_docs(test_db, mocker)
     assert test_db.query(Family).count() == 1
@@ -131,9 +131,9 @@ def test_documents_doc_slug_returns_not_found(
 
 
 def test_documents_doc_slug_preexisting_objects(
-    client: TestClient,
-    test_db: Session,
-    mocker: Callable[..., Generator[MockerFixture, None, None]],
+        client: TestClient,
+        test_db: Session,
+        mocker: Callable[..., Generator[MockerFixture, None, None]],
 ):
     setup_with_two_docs(test_db, mocker)
 
@@ -174,9 +174,9 @@ def test_documents_doc_slug_preexisting_objects(
 
 
 def test_physical_doc_languages(
-    client: TestClient,
-    test_db: Session,
-    mocker: Callable[..., Generator[MockerFixture, None, None]],
+        client: TestClient,
+        test_db: Session,
+        mocker: Callable[..., Generator[MockerFixture, None, None]],
 ):
     populate_languages(test_db)
     setup_with_multiple_docs(
@@ -204,9 +204,9 @@ def test_physical_doc_languages(
 
 
 def test_physical_doc_multiple_languages(
-    client: TestClient,
-    test_db: Session,
-    mocker: Callable[..., Generator[MockerFixture, None, None]],
+        client: TestClient,
+        test_db: Session,
+        mocker: Callable[..., Generator[MockerFixture, None, None]],
 ):
     populate_languages(test_db)
     setup_with_multiple_docs(
@@ -225,9 +225,9 @@ def test_physical_doc_multiple_languages(
 
 
 def test_update_document__is_secure(
-    client: TestClient,
-    test_db: Session,
-    mocker: Callable[..., Generator[MockerFixture, None, None]],
+        client: TestClient,
+        test_db: Session,
+        mocker: Callable[..., Generator[MockerFixture, None, None]],
 ):
     setup_with_two_docs(test_db, mocker)
 
@@ -251,11 +251,11 @@ def test_update_document__is_secure(
     ],
 )
 def test_update_document__fails_on_non_matching_import_id(
-    client: TestClient,
-    superuser_token_headers: dict[str, str],
-    test_db: Session,
-    mocker: Callable[..., Generator[MockerFixture, None, None]],
-    import_id: str,
+        client: TestClient,
+        superuser_token_headers: dict[str, str],
+        test_db: Session,
+        mocker: Callable[..., Generator[MockerFixture, None, None]],
+        import_id: str,
 ):
     setup_with_multiple_docs(
         test_db,
@@ -286,11 +286,11 @@ def test_update_document__fails_on_non_matching_import_id(
     ],
 )
 def test_update_document__works_on_import_id(
-    client: TestClient,
-    superuser_token_headers: dict[str, str],
-    test_db: Session,
-    mocker: Callable[..., Generator[MockerFixture, None, None]],
-    import_id: str,
+        client: TestClient,
+        superuser_token_headers: dict[str, str],
+        test_db: Session,
+        mocker: Callable[..., Generator[MockerFixture, None, None]],
+        import_id: str,
 ):
     setup_with_multiple_docs(
         test_db, mocker, doc_data=TWO_DFC_ROW_DIFFERENT_ORG, event_data=TWO_EVENT_ROWS
@@ -333,12 +333,13 @@ def test_update_document__works_on_import_id(
     ],
 )
 def test_update_document__works_on_new_language(
-    client: TestClient,
-    superuser_token_headers: dict[str, str],
-    test_db: Session,
-    mocker: Callable[..., Generator[MockerFixture, None, None]],
-    import_id: str,
+        client: TestClient,
+        superuser_token_headers: dict[str, str],
+        test_db: Session,
+        mocker: Callable[..., Generator[MockerFixture, None, None]],
+        import_id: str,
 ):
+    """Send two payloads in series to assert that languages are additive and we don't remove existing languages."""
     populate_languages(test_db)
     setup_with_multiple_docs(
         test_db, mocker, doc_data=TWO_DFC_ROW_DIFFERENT_ORG, event_data=TWO_EVENT_ROWS
@@ -425,11 +426,132 @@ def test_update_document__works_on_new_language(
     assert set(l.language_id for l in languages) == {2, 1}
 
 
+@pytest.mark.parametrize(
+    "import_id",
+    [
+        "CCLW.executive.1.2",
+        "UNFCCC.non-party.2.2",
+    ],
+)
+def test_update_document__works_with_no_language(
+        client: TestClient,
+        superuser_token_headers: dict[str, str],
+        test_db: Session,
+        mocker: Callable[..., Generator[MockerFixture, None, None]],
+        import_id: str,
+):
+    """Test that we can send a payload to the backend with no languages to assert that none are added."""
+    populate_languages(test_db)
+    setup_with_multiple_docs(
+        test_db, mocker, doc_data=TWO_DFC_ROW_DIFFERENT_ORG, event_data=TWO_EVENT_ROWS
+    )
+
+    # ADD THE FIRST LANGUAGE
+    payload = {
+        "md5_sum": "c184214e-4870-48e0-adab-3e064b1b0e76",
+        "content_type": "updated/content_type",
+        "cdn_object": "folder/file",
+        "languages": None,
+    }
+
+    response = client.put(
+        f"/api/v1/admin/documents/{import_id}",
+        headers=superuser_token_headers,
+        json=payload,
+    )
+
+    assert response.status_code == 200
+    json_object = response.json()
+    assert json_object["md5_sum"] == "c184214e-4870-48e0-adab-3e064b1b0e76"
+    assert json_object["content_type"] == "updated/content_type"
+    assert json_object["cdn_object"] == "folder/file"
+    assert {language['language_code'] for language in json_object["languages"]} == {}
+
+    # Now Check the db
+    doc = (
+        test_db.query(FamilyDocument)
+        .filter(FamilyDocument.import_id == import_id)
+        .one()
+        .physical_document
+    )
+    assert doc.md5_sum == "c184214e-4870-48e0-adab-3e064b1b0e76"
+    assert doc.content_type == "updated/content_type"
+    assert doc.cdn_object == "folder/file"
+
+    languages = (
+        test_db.query(PhysicalDocumentLanguage)
+        .filter(PhysicalDocumentLanguage.document_id == doc.id)
+        .all()
+    )
+    assert len(languages) == 0
+    assert set([l.language_id for l in languages]) == {}
+
+
+@pytest.mark.parametrize(
+    "import_id",
+    [
+        "CCLW.executive.1.2",
+        "UNFCCC.non-party.2.2",
+    ],
+)
+def test_update_document__works_multiple_languages(
+        client: TestClient,
+        superuser_token_headers: dict[str, str],
+        test_db: Session,
+        mocker: Callable[..., Generator[MockerFixture, None, None]],
+        import_id: str,
+):
+    """Test that we can send a payload to the backend with multiple languages to assert that both are added."""
+    populate_languages(test_db)
+    setup_with_multiple_docs(
+        test_db, mocker, doc_data=TWO_DFC_ROW_DIFFERENT_ORG, event_data=TWO_EVENT_ROWS
+    )
+
+    payload = {
+        "md5_sum": "c184214e-4870-48e0-adab-3e064b1b0e76",
+        "content_type": "updated/content_type",
+        "cdn_object": "folder/file",
+        "languages": ["eng", "fra"],
+    }
+
+    response = client.put(
+        f"/api/v1/admin/documents/{import_id}",
+        headers=superuser_token_headers,
+        json=payload,
+    )
+
+    assert response.status_code == 200
+    json_object = response.json()
+    assert json_object["md5_sum"] == "c184214e-4870-48e0-adab-3e064b1b0e76"
+    assert json_object["content_type"] == "updated/content_type"
+    assert json_object["cdn_object"] == "folder/file"
+    assert {language['language_code'] for language in json_object["languages"]} == {"eng", "fra"}
+
+    # Now Check the db
+    doc = (
+        test_db.query(FamilyDocument)
+        .filter(FamilyDocument.import_id == import_id)
+        .one()
+        .physical_document
+    )
+    assert doc.md5_sum == "c184214e-4870-48e0-adab-3e064b1b0e76"
+    assert doc.content_type == "updated/content_type"
+    assert doc.cdn_object == "folder/file"
+
+    languages = (
+        test_db.query(PhysicalDocumentLanguage)
+        .filter(PhysicalDocumentLanguage.document_id == doc.id)
+        .all()
+    )
+    assert len(languages) == 2
+    assert set(l.language_id for l in languages) == {2, 1}
+
+
 def test_update_document__idempotent(
-    client: TestClient,
-    superuser_token_headers: dict[str, str],
-    test_db: Session,
-    mocker: Callable[..., Generator[MockerFixture, None, None]],
+        client: TestClient,
+        superuser_token_headers: dict[str, str],
+        test_db: Session,
+        mocker: Callable[..., Generator[MockerFixture, None, None]],
 ):
     setup_with_two_docs(test_db, mocker)
 
@@ -471,10 +593,10 @@ def test_update_document__idempotent(
 
 
 def test_update_document__works_on_slug(
-    client: TestClient,
-    superuser_token_headers: dict[str, str],
-    test_db: Session,
-    mocker: Callable[..., Generator[MockerFixture, None, None]],
+        client: TestClient,
+        superuser_token_headers: dict[str, str],
+        test_db: Session,
+        mocker: Callable[..., Generator[MockerFixture, None, None]],
 ):
     setup_with_two_docs(test_db, mocker)
 
@@ -511,10 +633,10 @@ def test_update_document__works_on_slug(
 
 
 def test_update_document__status_422_when_not_found(
-    client: TestClient,
-    superuser_token_headers: dict[str, str],
-    test_db: Session,
-    mocker: Callable[..., Generator[MockerFixture, None, None]],
+        client: TestClient,
+        superuser_token_headers: dict[str, str],
+        test_db: Session,
+        mocker: Callable[..., Generator[MockerFixture, None, None]],
 ):
     setup_with_two_docs(test_db, mocker)
 
