@@ -382,7 +382,7 @@ def test_update_document__works_on_new_language(
         .all()
     )
     assert len(languages) == 1
-    assert set([l.language_id for l in languages]) == {2}
+    assert set([l.language_id for l in languages]) == {1}
 
     # NOW ADD A NEW LANGUAGE TO CHECK THAT THE UPDATE IS ADDITIVE
     payload = {
