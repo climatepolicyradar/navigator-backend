@@ -82,8 +82,9 @@ async def update_document(
             extra={"props": {'meta_data_languages': meta_data.languages}}
         )
 
-        db.query(PhysicalDocumentLanguage).filter(PhysicalDocumentLanguage.document_id == physical_document.id).delete()
-        db.flush()
+        physical_document_languages = db.query(PhysicalDocumentLanguage).filter(
+            PhysicalDocumentLanguage.document_id == physical_document.id
+        ).all()
 
         for language in meta_data.languages:
             lang = db.query(Language).filter(Language.language_code == language).one_or_none()
@@ -91,8 +92,9 @@ async def update_document(
                 physical_document_language = PhysicalDocumentLanguage(
                     language_id=lang.id, document_id=physical_document.id
                 )
-                db.add(physical_document_language)
-                db.flush()
+                if physical_document_language not in physical_document_languages:
+                    db.add(physical_document_language)
+                    db.flush()
 
     if num_changed == 0:
         _LOGGER.info("update_document complete - nothing changed")
