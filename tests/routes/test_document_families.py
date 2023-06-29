@@ -344,11 +344,12 @@ def test_update_document__works_on_new_language(
         test_db, mocker, doc_data=TWO_DFC_ROW_DIFFERENT_ORG, event_data=TWO_EVENT_ROWS
     )
 
+    # ADD THE FIRST LANGUAGE
     payload = {
         "md5_sum": "c184214e-4870-48e0-adab-3e064b1b0e76",
         "content_type": "updated/content_type",
         "cdn_object": "folder/file",
-        "languages": ["fra", "eng"],
+        "languages": ["eng"],
     }
 
     response = client.put(
@@ -362,7 +363,47 @@ def test_update_document__works_on_new_language(
     assert json_object["md5_sum"] == "c184214e-4870-48e0-adab-3e064b1b0e76"
     assert json_object["content_type"] == "updated/content_type"
     assert json_object["cdn_object"] == "folder/file"
-    assert [language['language_code'] for language in json_object["languages"]] == ["eng", "fra"]
+    assert {language['language_code'] for language in json_object["languages"]} == {"eng"}
+
+    # Now Check the db
+    doc = (
+        test_db.query(FamilyDocument)
+        .filter(FamilyDocument.import_id == import_id)
+        .one()
+        .physical_document
+    )
+    assert doc.md5_sum == "c184214e-4870-48e0-adab-3e064b1b0e76"
+    assert doc.content_type == "updated/content_type"
+    assert doc.cdn_object == "folder/file"
+
+    languages = (
+        test_db.query(PhysicalDocumentLanguage)
+        .filter(PhysicalDocumentLanguage.document_id == doc.id)
+        .all()
+    )
+    assert len(languages) == 1
+    assert set([l.language_id for l in languages]) == {2}
+
+    # NOW ADD A NEW LANGUAGE TO CHECK THAT THE UPDATE IS ADDITIVE
+    payload = {
+        "md5_sum": "c184214e-4870-48e0-adab-3e064b1b0e76",
+        "content_type": "updated/content_type",
+        "cdn_object": "folder/file",
+        "languages": ["fra"],
+    }
+
+    response = client.put(
+        f"/api/v1/admin/documents/{import_id}",
+        headers=superuser_token_headers,
+        json=payload,
+    )
+
+    assert response.status_code == 200
+    json_object = response.json()
+    assert json_object["md5_sum"] == "c184214e-4870-48e0-adab-3e064b1b0e76"
+    assert json_object["content_type"] == "updated/content_type"
+    assert json_object["cdn_object"] == "folder/file"
+    assert {language['language_code'] for language in json_object["languages"]} == {"eng", "fra"}
 
     # Now Check the db
     doc = (
@@ -381,7 +422,7 @@ def test_update_document__works_on_new_language(
         .all()
     )
     assert len(languages) == 2
-    assert set([l.language_id for l in languages]) == {2, 1}
+    assert set(l.language_id for l in languages) == {2, 1}
 
 
 def test_update_document__idempotent(
