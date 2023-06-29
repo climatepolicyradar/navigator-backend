@@ -1,10 +1,11 @@
+from typing import Callable, Generator, Optional
+
 import pytest
-from typing import Callable, Generator
-from sqlalchemy.orm import Session
 from fastapi.testclient import TestClient
 from pytest_mock import MockerFixture
+from sqlalchemy.orm import Session
 
-from app.db.models.document.physical_document import PhysicalDocumentLanguage
+from app.db.models.document.physical_document import Language, PhysicalDocumentLanguage
 from app.db.models.law_policy.family import Family, FamilyDocument, FamilyEvent
 from tests.routes.document_helpers import (
     ONE_DFC_ROW_TWO_LANGUAGES,
@@ -13,7 +14,6 @@ from tests.routes.document_helpers import (
     TWO_DFC_ROW_ONE_LANGUAGE,
     TWO_DFC_ROW_NON_MATCHING_IDS,
     TWO_EVENT_ROWS,
-    populate_languages,
     setup_with_docs,
     setup_with_multiple_docs,
     setup_with_two_docs,
@@ -178,7 +178,6 @@ def test_physical_doc_languages(
     test_db: Session,
     mocker: Callable[..., Generator[MockerFixture, None, None]],
 ):
-    populate_languages(test_db)
     setup_with_multiple_docs(
         test_db, mocker, doc_data=TWO_DFC_ROW_ONE_LANGUAGE, event_data=TWO_EVENT_ROWS
     )
@@ -208,7 +207,6 @@ def test_physical_doc_multiple_languages(
     test_db: Session,
     mocker: Callable[..., Generator[MockerFixture, None, None]],
 ):
-    populate_languages(test_db)
     setup_with_multiple_docs(
         test_db, mocker, doc_data=ONE_DFC_ROW_TWO_LANGUAGES, event_data=ONE_EVENT_ROW
     )
@@ -340,7 +338,6 @@ def test_update_document__works_on_new_language(
     import_id: str,
 ):
     """Send two payloads in series to assert that languages are additive and we don't remove existing languages."""
-    populate_languages(test_db)
     setup_with_multiple_docs(
         test_db, mocker, doc_data=TWO_DFC_ROW_DIFFERENT_ORG, event_data=TWO_EVENT_ROWS
     )
@@ -364,7 +361,9 @@ def test_update_document__works_on_new_language(
     assert json_object["md5_sum"] == "c184214e-4870-48e0-adab-3e064b1b0e76"
     assert json_object["content_type"] == "updated/content_type"
     assert json_object["cdn_object"] == "folder/file"
-    assert {language['language_code'] for language in json_object["languages"]} == {"eng"}
+    assert {language["language_code"] for language in json_object["languages"]} == {
+        "eng"
+    }
 
     # Now Check the db
     doc = (
@@ -383,7 +382,8 @@ def test_update_document__works_on_new_language(
         .all()
     )
     assert len(languages) == 1
-    assert set([l.language_id for l in languages]) == {1}
+    lang = test_db.query(Language).filter(Language.id == languages[0].language_id).one()
+    assert lang.language_code == "eng"
 
     # NOW ADD A NEW LANGUAGE TO CHECK THAT THE UPDATE IS ADDITIVE
     payload = {
@@ -404,7 +404,10 @@ def test_update_document__works_on_new_language(
     assert json_object["md5_sum"] == "c184214e-4870-48e0-adab-3e064b1b0e76"
     assert json_object["content_type"] == "updated/content_type"
     assert json_object["cdn_object"] == "folder/file"
-    assert {language['language_code'] for language in json_object["languages"]} == {"eng", "fra"}
+    expected_languages = {"eng", "fra"}
+    assert {
+        lang["language_code"] for lang in json_object["languages"]
+    } == expected_languages
 
     # Now Check the db
     doc = (
@@ -417,13 +420,15 @@ def test_update_document__works_on_new_language(
     assert doc.content_type == "updated/content_type"
     assert doc.cdn_object == "folder/file"
 
-    languages = (
+    doc_languages = (
         test_db.query(PhysicalDocumentLanguage)
         .filter(PhysicalDocumentLanguage.document_id == doc.id)
         .all()
     )
-    assert len(languages) == 2
-    assert set(l.language_id for l in languages) == {2, 1}
+    assert len(doc_languages) == 2
+    for doc_lang in doc_languages:
+        lang = test_db.query(Language).filter(Language.id == doc_lang.language_id).one()
+        assert lang.language_code in expected_languages
 
 
 @pytest.mark.parametrize(
@@ -433,15 +438,19 @@ def test_update_document__works_on_new_language(
         "UNFCCC.non-party.2.2",
     ],
 )
+@pytest.mark.parametrize(
+    "languages",
+    [[], None],
+)
 def test_update_document__works_with_no_language(
     client: TestClient,
     superuser_token_headers: dict[str, str],
     test_db: Session,
     mocker: Callable[..., Generator[MockerFixture, None, None]],
     import_id: str,
+    languages: Optional[list[str]],
 ):
     """Test that we can send a payload to the backend with no languages to assert that none are added."""
-    populate_languages(test_db)
     setup_with_multiple_docs(
         test_db, mocker, doc_data=TWO_DFC_ROW_DIFFERENT_ORG, event_data=TWO_EVENT_ROWS
     )
@@ -451,7 +460,7 @@ def test_update_document__works_with_no_language(
         "md5_sum": "c184214e-4870-48e0-adab-3e064b1b0e76",
         "content_type": "updated/content_type",
         "cdn_object": "folder/file",
-        "languages": None,
+        "languages": languages,
     }
 
     response = client.put(
@@ -465,7 +474,7 @@ def test_update_document__works_with_no_language(
     assert json_object["md5_sum"] == "c184214e-4870-48e0-adab-3e064b1b0e76"
     assert json_object["content_type"] == "updated/content_type"
     assert json_object["cdn_object"] == "folder/file"
-    assert {language['language_code'] for language in json_object["languages"]} == {}
+    assert {language["language_code"] for language in json_object["languages"]} == set()
 
     # Now Check the db
     doc = (
@@ -478,13 +487,13 @@ def test_update_document__works_with_no_language(
     assert doc.content_type == "updated/content_type"
     assert doc.cdn_object == "folder/file"
 
-    languages = (
+    db_languages = (
         test_db.query(PhysicalDocumentLanguage)
         .filter(PhysicalDocumentLanguage.document_id == doc.id)
         .all()
     )
-    assert len(languages) == 0
-    assert set([l.language_id for l in languages]) == set()
+    assert len(db_languages) == 0
+    assert set([lang.language_id for lang in db_languages]) == set()
 
 
 @pytest.mark.parametrize(
@@ -494,24 +503,47 @@ def test_update_document__works_with_no_language(
         "UNFCCC.non-party.2.2",
     ],
 )
-def test_update_document__works_multiple_languages(
+@pytest.mark.parametrize(
+    "existing_languages",
+    [[], ["eng"], ["aaa"], ["aaa", "aab"]],
+)
+def test_update_document__works_existing_languages(
     client: TestClient,
     superuser_token_headers: dict[str, str],
     test_db: Session,
     mocker: Callable[..., Generator[MockerFixture, None, None]],
     import_id: str,
+    existing_languages: list[str],
 ):
     """Test that we can send a payload to the backend with multiple languages to assert that both are added."""
-    populate_languages(test_db)
     setup_with_multiple_docs(
         test_db, mocker, doc_data=TWO_DFC_ROW_DIFFERENT_ORG, event_data=TWO_EVENT_ROWS
     )
 
+    for lang_code in existing_languages:
+        existing_doc = (
+            test_db.query(FamilyDocument)
+            .filter(FamilyDocument.import_id == import_id)
+            .one()
+            .physical_document
+        )
+        existing_lang = (
+            test_db.query(Language).filter(Language.language_code == lang_code).one()
+        )
+        existing_doc_lang = PhysicalDocumentLanguage(
+            language_id=existing_lang.id,
+            document_id=existing_doc.id,
+        )
+        test_db.add(existing_doc_lang)
+        test_db.flush()
+        test_db.commit()
+
+    languages_to_add = ["eng", "fra"]
     payload = {
         "md5_sum": "c184214e-4870-48e0-adab-3e064b1b0e76",
         "content_type": "updated/content_type",
         "cdn_object": "folder/file",
-        "languages": ["eng", "fra"],
+        "languages": languages_to_add,
     }
 
     response = client.put(
@@ -525,7 +557,11 @@ def test_update_document__works_multiple_languages(
     assert json_object["md5_sum"] == "c184214e-4870-48e0-adab-3e064b1b0e76"
     assert json_object["content_type"] == "updated/content_type"
     assert json_object["cdn_object"] == "folder/file"
-    assert {language['language_code'] for language in json_object["languages"]} == {"eng", "fra"}
+
+    expected_languages = set(languages_to_add + existing_languages)
+    assert {
+        language["language_code"] for language in json_object["languages"]
+    } == expected_languages
 
     # Now Check the db
     doc = (
@@ -538,13 +574,15 @@ def test_update_document__works_multiple_languages(
     assert doc.content_type == "updated/content_type"
     assert doc.cdn_object == "folder/file"
 
-    languages = (
+    doc_languages = (
         test_db.query(PhysicalDocumentLanguage)
         .filter(PhysicalDocumentLanguage.document_id == doc.id)
         .all()
     )
-    assert len(languages) == 2
-    assert set(l.language_id for l in languages) == {2, 1}
+    assert len(doc_languages) == len(expected_languages)
+    for doc_lang in doc_languages:
+        lang = test_db.query(Language).filter(Language.id == doc_lang.language_id).one()
+        assert lang.language_code in expected_languages
 
 
 def test_update_document__idempotent(
