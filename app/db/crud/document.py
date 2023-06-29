@@ -77,6 +77,12 @@ def get_family_document_and_context(
 
     family, document, physical_document, geography = db_objects
 
+    if (
+        family.family_status != FamilyStatus.PUBLISHED
+        or document.document_status != DocumentStatus.PUBLISHED
+    ):
+        raise ValueError(f"The document {family_document_import_id} is not published")
+
     family_context = FamilyContext(
         title=cast(str, family.title),
         import_id=cast(str, family.import_id),

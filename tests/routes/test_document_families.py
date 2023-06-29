@@ -194,6 +194,7 @@ def test_documents_doc_slug_returns_not_found(
         "/api/v1/documents/DocSlug100",
     )
     assert response.status_code == 404
+    assert response.json()["detail"] == "Nothing found for DocSlug100"
 
 
 def test_documents_doc_slug_preexisting_objects(
@@ -203,7 +204,6 @@ def test_documents_doc_slug_preexisting_objects(
 ):
     setup_with_two_docs(test_db, mocker)
 
-    # Test associations
     response = client.get(
         "/api/v1/documents/DocSlug2",
     )
@@ -237,6 +237,25 @@ def test_documents_doc_slug_preexisting_objects(
     assert doc["languages"] == []
     assert doc["document_type"] == "Order"
     assert doc["document_role"] == "MAIN"
+
+
+def test_documents_doc_slug_when_deleted(
+    client: TestClient,
+    test_db: Session,
+    mocker: Callable[..., Generator[MockerFixture, None, None]],
+):
+    setup_with_two_docs(test_db, mocker)
+    test_db.execute(
+        update(FamilyDocument)
+        .where(FamilyDocument.import_id == "CCLW.executive.2.2")
+        .values(document_status="Deleted")
+    )
+    response = client.get(
+        "/api/v1/documents/DocSlug2",
+    )
+    json_response = response.json()
+    assert response.status_code == 404
+    assert json_response["detail"] == "The document CCLW.executive.2.2 is not published"
 
 
 def test_physical_doc_languages(
