@@ -282,6 +282,7 @@ class DocumentExtraCache:
         document_data: list[Tuple[FamilyDocument, Family]] = (
             db.query(FamilyDocument, Family)
             .join(Family, FamilyDocument.family_import_id == Family.import_id)
+            .filter(FamilyDocument.document_status == DocumentStatus.PUBLISHED)
             .all()
         )
         return {

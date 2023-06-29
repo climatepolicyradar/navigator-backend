@@ -49,9 +49,7 @@ from app.initial_data import populate_geography, populate_language, populate_tax
 
 SEARCH_ENDPOINT = "/api/v1/searches"
 CSV_DOWNLOAD_ENDPOINT = "/api/v1/searches/download-csv"
-_EXPECTED_FAMILY_TITLE = (
-    "Spanish Climate Change And Clean Energy Strategy Horizon 2007- 2012 -2020"
-)
+_EXPECTED_FAMILY_TITLE = "Decision No 1386/2013/EU of the European Parliament and of the Council of 19 November 2013 on a General Union Environment Action Programme to 2020 ‘Living well, within the limits of our planet’"
 
 
 def _populate_search_db_families(db: Session) -> None:
@@ -391,8 +389,10 @@ def test_families_search(test_opensearch, monkeypatch, client, test_db, mocker):
     assert _EXPECTED_FAMILY_TITLE in names_returned
 
 
-@pytest.mark.search
-def test_families_search_with_deleted(test_opensearch, monkeypatch, client, test_db):
+@pytest.mark.search2
+def test_families_search_with_all_docs_deleted(
+    test_opensearch, monkeypatch, client, test_db
+):
     monkeypatch.setattr(search, "_OPENSEARCH_CONNECTION", test_opensearch)
     _populate_search_db_families(test_db)
     family = test_db.query(Family).filter(Family.title == _EXPECTED_FAMILY_TITLE).one()
@@ -419,6 +419,50 @@ def test_families_search_with_deleted(test_opensearch, monkeypatch, client, test
     assert len(data["families"]) == 2
     names_returned = [f["family_name"] for f in data["families"]]
     assert _EXPECTED_FAMILY_TITLE not in names_returned
+
+
+@pytest.mark.search2
+def test_families_search_with_one_doc_deleted(
+    test_opensearch, monkeypatch, client, test_db
+):
+    monkeypatch.setattr(search, "_OPENSEARCH_CONNECTION", test_opensearch)
+    _populate_search_db_families(test_db)
+    family = test_db.query(Family).filter(Family.title == _EXPECTED_FAMILY_TITLE).one()
+    doc = family.family_documents[0]
+    test_db.execute(
+        update(FamilyDocument)
+        .where(FamilyDocument.import_id == doc.import_id)
+        .values(document_status="Deleted")
+    )
+    deleted_title = doc.physical_document.title
+
+    response = client.post(
+        SEARCH_ENDPOINT,
+        json={
+            "query_string": "climate",
+            "exact_match": True,
+        },
+    )
+
+    assert response.status_code == 200
+
+    # Check the correct number of hits is returned
+    data = response.json()
+    assert data["hits"] == 3
+    assert len(data["families"]) == 3
+    names_returned = [f["family_name"] for f in data["families"]]
+    assert _EXPECTED_FAMILY_TITLE in names_returned
+
+    # Check the deleted document is not returned but the non-deleted one is
+    found = False
+    for fam in data["families"]:
+        if fam["family_name"] == _EXPECTED_FAMILY_TITLE:
+            found = True
+            doc_titles = [d["document_title"] for d in fam["family_documents"]]
+            assert len(doc_titles) == 1
+            assert deleted_title not in doc_titles
+
+    assert found
 
 
 @pytest.mark.search
