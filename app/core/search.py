@@ -68,6 +68,7 @@ from app.db.models.law_policy import (
     Collection,
     CollectionFamily,
 )
+from app.db.models.law_policy.family import DocumentStatus
 
 
 _LOGGER = logging.getLogger(__name__)
@@ -809,7 +810,7 @@ def _get_extra_csv_info(
         .filter(Slug.name.in_(all_family_slugs))
         .join(Family, Family.import_id == Slug.family_import_id)
         .join(FamilyDocument, Family.import_id == FamilyDocument.family_import_id)
-        .filter()
+        .filter(FamilyDocument.document_status == DocumentStatus.PUBLISHED)
         .all()
     )
     # For now there is max one collection per family
