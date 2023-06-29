@@ -389,7 +389,7 @@ def test_families_search(test_opensearch, monkeypatch, client, test_db, mocker):
     assert _EXPECTED_FAMILY_TITLE in names_returned
 
 
-@pytest.mark.search2
+@pytest.mark.search
 def test_families_search_with_all_docs_deleted(
     test_opensearch, monkeypatch, client, test_db
 ):
@@ -421,7 +421,7 @@ def test_families_search_with_all_docs_deleted(
     assert _EXPECTED_FAMILY_TITLE not in names_returned
 
 
-@pytest.mark.search2
+@pytest.mark.search
 def test_families_search_with_one_doc_deleted(
     test_opensearch, monkeypatch, client, test_db
 ):
