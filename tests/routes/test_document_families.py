@@ -484,7 +484,7 @@ def test_update_document__works_with_no_language(
         .all()
     )
     assert len(languages) == 0
-    assert set([l.language_id for l in languages]) == {}
+    assert set([l.language_id for l in languages]) == set()
 
 
 @pytest.mark.parametrize(
