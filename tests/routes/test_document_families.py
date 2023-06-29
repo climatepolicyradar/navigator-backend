@@ -1,5 +1,6 @@
 import pytest
 from typing import Callable, Generator
+from sqlalchemy import update
 from sqlalchemy.orm import Session
 from fastapi.testclient import TestClient
 from pytest_mock import MockerFixture
@@ -110,6 +111,28 @@ def test_documents_family_slug_returns_correct_json(
         {"title": "Fam1", "slug": "FamSlug1", "description": "Summary1"},
         {"title": "Fam2", "slug": "FamSlug2", "description": "Summary2"},
     ]
+
+
+def test_documents_family_slug_doesnt_return_deleted_docs(
+    client: TestClient,
+    test_db: Session,
+    mocker: Callable[..., Generator[MockerFixture, None, None]],
+):
+    setup_with_two_docs(test_db, mocker)
+    test_db.execute(
+        update(FamilyDocument)
+        .where(FamilyDocument.import_id == "CCLW.executive.1.2")
+        .values(document_status="Deleted")
+    )
+
+    # Test associations
+    response = client.get(
+        "/api/v1/documents/FamSlug1",
+    )
+    json_response = response.json()
+
+    assert response.status_code == 200
+    assert len(json_response["documents"]) == 0
 
 
 def test_documents_doc_slug_returns_not_found(

@@ -23,6 +23,7 @@ from app.db.models.app.users import Organisation
 from app.db.models.document.physical_document import PhysicalDocument
 from app.db.models.law_policy.collection import Collection, CollectionFamily
 from app.db.models.law_policy.family import (
+    DocumentStatus,
     Family,
     FamilyDocument,
     Slug,
@@ -205,8 +206,10 @@ def _get_events_for_family(family: Family) -> list[FamilyEventsResponse]:
 def _get_documents_for_family_import_id(
     db: Session, import_id: str
 ) -> list[FamilyDocumentResponse]:
-    db_documents = db.query(FamilyDocument).filter(
-        FamilyDocument.family_import_id == import_id
+    db_documents = (
+        db.query(FamilyDocument)
+        .filter(FamilyDocument.family_import_id == import_id)
+        .filter(FamilyDocument.document_status == DocumentStatus.PUBLISHED)
     )
     documents = [
         FamilyDocumentResponse(
