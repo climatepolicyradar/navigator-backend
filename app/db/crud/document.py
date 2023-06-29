@@ -26,6 +26,7 @@ from app.db.models.law_policy.family import (
     DocumentStatus,
     Family,
     FamilyDocument,
+    FamilyStatus,
     Slug,
     FamilyOrganisation,
 )
@@ -56,7 +57,7 @@ def get_slugged_objects(db: Session, slug: str) -> tuple[Optional[str], Optional
 
 def get_family_document_and_context(
     db: Session, family_document_import_id: str
-) -> Optional[FamilyDocumentWithContextResponse]:
+) -> FamilyDocumentWithContextResponse:
     db_objects = (
         db.query(Family, FamilyDocument, PhysicalDocument, Geography)
         .filter(FamilyDocument.import_id == family_document_import_id)
@@ -66,7 +67,13 @@ def get_family_document_and_context(
     ).one_or_none()
 
     if not db_objects:
-        return None
+        _LOGGER.warning(
+            "No family document found for import_id",
+            extra={"slug": family_document_import_id},
+        )
+        raise ValueError(
+            f"No family document found for import_id: {family_document_import_id}"
+        )
 
     family, document, physical_document, geography = db_objects
 
@@ -105,9 +112,7 @@ def _get_languages_for_phys_doc(physical_document: PhysicalDocument) -> Sequence
     return [cast(str, lang.language_code) for lang in physical_document.languages]
 
 
-def get_family_and_documents(
-    db: Session, import_id: str
-) -> Optional[FamilyAndDocumentsResponse]:
+def get_family_and_documents(db: Session, import_id: str) -> FamilyAndDocumentsResponse:
     """
     Get a document along with the family information.
 
@@ -127,7 +132,7 @@ def get_family_and_documents(
 
     if not db_objects:
         _LOGGER.warning("No family found for import_id", extra={"slug": import_id})
-        return None
+        raise ValueError(f"No family found for import_id: {import_id}")
 
     family: Family
     (
@@ -137,6 +142,9 @@ def get_family_and_documents(
         _,
         organisation,
     ) = db_objects
+
+    if family.family_status != FamilyStatus.PUBLISHED:
+        raise ValueError(f"Family {import_id} is not published")
 
     documents = _get_documents_for_family_import_id(db, import_id)
     collections = _get_collections_for_family_import_id(db, import_id)

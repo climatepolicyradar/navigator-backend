@@ -1,4 +1,4 @@
-from http.client import INTERNAL_SERVER_ERROR, NOT_FOUND
+from http.client import NOT_FOUND
 import logging
 from typing import Union
 
@@ -55,17 +55,10 @@ async def document_detail(
 
     family_document_import_id, family_import_id = ids
 
-    response = None
-
-    if family_import_id:
-        response = get_family_and_documents(db, family_import_id)
-    elif family_document_import_id:
-        response = get_family_document_and_context(db, family_document_import_id)
-
-    if response:
-        return response
-
-    raise HTTPException(
-        status_code=INTERNAL_SERVER_ERROR,
-        detail=f"Slug entry found and not pointing at anything: {import_id_or_slug}",
-    )
+    try:
+        if family_import_id:
+            return get_family_and_documents(db, family_import_id)
+        elif family_document_import_id:
+            return get_family_document_and_context(db, family_document_import_id)
+    except ValueError as err:
+        raise HTTPException(status_code=NOT_FOUND, detail=str(err))
