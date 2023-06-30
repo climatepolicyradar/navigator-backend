@@ -49,7 +49,7 @@ from app.initial_data import populate_geography, populate_language, populate_tax
 
 SEARCH_ENDPOINT = "/api/v1/searches"
 CSV_DOWNLOAD_ENDPOINT = "/api/v1/searches/download-csv"
-_EXPECTED_FAMILY_TITLE = "Decision No 1386/2013/EU of the European Parliament and of the Council of 19 November 2013 on a General Union Environment Action Programme to 2020 ‘Living well, within the limits of our planet’"
+_EXPECTED_FAMILY_TITLE = "Decision No 1386/2013/EU"
 
 
 def _populate_search_db_families(db: Session) -> None:
@@ -151,7 +151,9 @@ def _create_family_structures(
 
     if family_id not in families:
         family = Family(
-            title=doc_details["document_name"],
+            # Truncate the family name to produce the same "family name" for the example
+            # data where we have engineered 2 documents into a single family.
+            title=doc_details["document_name"][:24],
             import_id=family_id,
             description=doc_details["document_description"],
             geography_id=(
@@ -395,6 +397,8 @@ def test_families_search_with_all_docs_deleted(
 ):
     monkeypatch.setattr(search, "_OPENSEARCH_CONNECTION", test_opensearch)
     _populate_search_db_families(test_db)
+    # This test is fragile due to _EXPECTED_FAMILY_TITLE being generated in the
+    # populate db function from imperfect data. Ye be warned! 🏴‍☠️
     family = test_db.query(Family).filter(Family.title == _EXPECTED_FAMILY_TITLE).one()
     for doc in family.family_documents:
         test_db.execute(
@@ -429,6 +433,8 @@ def test_families_search_with_one_doc_deleted(
 ):
     monkeypatch.setattr(search, "_OPENSEARCH_CONNECTION", test_opensearch)
     _populate_search_db_families(test_db)
+    # This test is fragile due to _EXPECTED_FAMILY_TITLE being generated in the
+    # populate db function from imperfect data. Ye be warned! 🏴‍☠️
     family = test_db.query(Family).filter(Family.title == _EXPECTED_FAMILY_TITLE).one()
     doc = family.family_documents[0]
     test_db.execute(
