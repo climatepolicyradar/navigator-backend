@@ -88,7 +88,7 @@ def create_test_db():
 
 
 @pytest.fixture
-def test_db():
+def test_db(scope="function"):
     """Create a fresh test database for each test."""
 
     test_db_url = get_test_db_url()

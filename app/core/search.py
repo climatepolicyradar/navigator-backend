@@ -658,9 +658,15 @@ def process_search_response_body_families(
         description_match = False
         for document_match in result_doc["top_passage_hits"]["hits"]["hits"]:
             document_match_source = document_match["_source"]
-            # Skip documents from Opensearch that do not exist in RDS
-            if document_match_source["document_id"] not in document_extra_info:
+            document_id = document_match_source["document_id"]
+            # Skip documents that do not exist in RDS or are not Published
+            if document_id not in document_extra_info:
                 unknown_document_ids.add(document_match_source["document_id"])
+                continue
+
+            # Skip documents whose family is not set to Publshed
+            family_status = document_extra_info[document_id]["family_status"]
+            if family_status != "Published":
                 continue
 
             if OPENSEARCH_INDEX_NAME_KEY in document_match_source:
@@ -704,7 +710,6 @@ def process_search_response_body_families(
                 continue
 
             family_id = document_extra_info[doc_match.document_id]["family_import_id"]
-            family_status = document_extra_info[doc_match.document_id]["family_status"]
 
             search_response_family = families.get(family_id)
             if search_response_family is None and family_status == "Published":
@@ -716,7 +721,8 @@ def process_search_response_body_families(
 
         if search_response_document is None or search_response_family is None:
             _LOGGER.error(
-                "Unexpected document encountered, not attempting to include in results"
+                "Unexpected or unpublished document encountered, "
+                "not attempting to include in results"
             )
         else:
             search_response_family.family_title_match = (

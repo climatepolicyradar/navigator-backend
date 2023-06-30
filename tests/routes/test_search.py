@@ -407,11 +407,13 @@ def test_families_search_with_all_docs_deleted(
         SEARCH_ENDPOINT,
         json={
             "query_string": "climate",
-            "exact_match": True,
+            "exact_match": False,
         },
     )
-
     assert response.status_code == 200
+
+    response2 = client.get(f"/api/v1/documents/{family.import_id}")
+    assert response2.status_code == 404
 
     # Check the correct number of hits is returned
     data = response.json()
