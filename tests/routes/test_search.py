@@ -49,9 +49,7 @@ from app.initial_data import populate_geography, populate_language, populate_tax
 
 SEARCH_ENDPOINT = "/api/v1/searches"
 CSV_DOWNLOAD_ENDPOINT = "/api/v1/searches/download-csv"
-_EXPECTED_FAMILY_TITLE = (
-    "Spanish Climate Change And Clean Energy Strategy Horizon 2007- 2012 -2020"
-)
+_EXPECTED_FAMILY_TITLE = "Decision No 1386/2013/EU"
 
 
 def _populate_search_db_families(db: Session) -> None:
@@ -153,7 +151,9 @@ def _create_family_structures(
 
     if family_id not in families:
         family = Family(
-            title=doc_details["document_name"],
+            # Truncate the family name to produce the same "family name" for the example
+            # data where we have engineered 2 documents into a single family.
+            title=doc_details["document_name"][:24],
             import_id=family_id,
             description=doc_details["document_description"],
             geography_id=(
@@ -392,9 +392,13 @@ def test_families_search(test_opensearch, monkeypatch, client, test_db, mocker):
 
 
 @pytest.mark.search
-def test_families_search_with_deleted(test_opensearch, monkeypatch, client, test_db):
+def test_families_search_with_all_docs_deleted(
+    test_opensearch, monkeypatch, client, test_db
+):
     monkeypatch.setattr(search, "_OPENSEARCH_CONNECTION", test_opensearch)
     _populate_search_db_families(test_db)
+    # This test is fragile due to _EXPECTED_FAMILY_TITLE being generated in the
+    # populate db function from imperfect data. Ye be warned! 🏴‍☠️
     family = test_db.query(Family).filter(Family.title == _EXPECTED_FAMILY_TITLE).one()
     for doc in family.family_documents:
         test_db.execute(
@@ -402,6 +406,43 @@ def test_families_search_with_deleted(test_opensearch, monkeypatch, client, test
             .where(FamilyDocument.import_id == doc.import_id)
             .values(document_status="Deleted")
         )
+
+    response = client.post(
+        SEARCH_ENDPOINT,
+        json={
+            "query_string": "climate",
+            "exact_match": False,
+        },
+    )
+    assert response.status_code == 200
+
+    response2 = client.get(f"/api/v1/documents/{family.import_id}")
+    assert response2.status_code == 404
+
+    # Check the correct number of hits is returned
+    data = response.json()
+    assert data["hits"] == 2
+    assert len(data["families"]) == 2
+    names_returned = [f["family_name"] for f in data["families"]]
+    assert _EXPECTED_FAMILY_TITLE not in names_returned
+
+
+@pytest.mark.search
+def test_families_search_with_one_doc_deleted(
+    test_opensearch, monkeypatch, client, test_db
+):
+    monkeypatch.setattr(search, "_OPENSEARCH_CONNECTION", test_opensearch)
+    _populate_search_db_families(test_db)
+    # This test is fragile due to _EXPECTED_FAMILY_TITLE being generated in the
+    # populate db function from imperfect data. Ye be warned! 🏴‍☠️
+    family = test_db.query(Family).filter(Family.title == _EXPECTED_FAMILY_TITLE).one()
+    doc = family.family_documents[0]
+    test_db.execute(
+        update(FamilyDocument)
+        .where(FamilyDocument.import_id == doc.import_id)
+        .values(document_status="Deleted")
+    )
+    deleted_title = doc.physical_document.title
 
     response = client.post(
         SEARCH_ENDPOINT,
@@ -415,10 +456,21 @@ def test_families_search_with_deleted(test_opensearch, monkeypatch, client, test
 
     # Check the correct number of hits is returned
     data = response.json()
-    assert data["hits"] == 2
-    assert len(data["families"]) == 2
+    assert data["hits"] == 3
+    assert len(data["families"]) == 3
     names_returned = [f["family_name"] for f in data["families"]]
-    assert _EXPECTED_FAMILY_TITLE not in names_returned
+    assert _EXPECTED_FAMILY_TITLE in names_returned
+
+    # Check the deleted document is not returned but the non-deleted one is
+    found = False
+    for fam in data["families"]:
+        if fam["family_name"] == _EXPECTED_FAMILY_TITLE:
+            found = True
+            doc_titles = [d["document_title"] for d in fam["family_documents"]]
+            assert len(doc_titles) == 1
+            assert deleted_title not in doc_titles
+
+    assert found
 
 
 @pytest.mark.search

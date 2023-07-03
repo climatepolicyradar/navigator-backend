@@ -23,6 +23,11 @@ TWO_DFC_ROW = """ID,Document ID,CCLW Description,Part of collection?,Create new 
 2002,0,Test2,FALSE,FALSE,N/A,Collection1,CollectionSummary1,Title2,Fam2,Summary2,,MAIN,,GBR,http://another_somewhere|en,executive,03/03/2024|Law passed,Energy,,,Mitigation,,Order,,,Energy Supply,Algeria,,,CCLW.executive.2.2,CCLW.family.2002.0,CPR.Collection.1,FamSlug2,DocSlug2,,PUBLISHED
 """
 
+TWO_DOCS_ONE_FAM = """ID,Document ID,CCLW Description,Part of collection?,Create new family/ies?,Collection ID,Collection name,Collection summary,Document title,Family name,Family summary,Family ID,Document role,Applies to ID,Geography ISO,Documents,Category,Events,Sectors,Instruments,Frameworks,Responses,Natural Hazards,Document Type,Year,Language,Keywords,Geography,Parent Legislation,Comment,CPR Document ID,CPR Family ID,CPR Collection ID,CPR Family Slug,CPR Document Slug,Document variant,CPR Document Status
+1001,0,Test1,FALSE,FALSE,N/A,Collection1,CollectionSummary1,Title1,Fam1,Summary1,,MAIN,,GBR,http://somewhere|en,executive,02/02/2014|Law passed,Energy,,,Mitigation,,Order,,,Energy Supply,Algeria,,,CCLW.executive.1.2,CCLW.family.1001.0,CPR.Collection.1,FamSlug1,DocSlug1,,PUBLISHED
+2002,0,Test2,FALSE,FALSE,N/A,Collection1,CollectionSummary1,Title2,Fam1,Summary2,,MAIN,,GBR,http://another_somewhere|en,executive,03/03/2024|Law passed,Energy,,,Mitigation,,Order,,,Energy Supply,Algeria,,,CCLW.executive.2.2,CCLW.family.1001.0,CPR.Collection.1,FamSlug1,DocSlug2,,PUBLISHED
+"""
+
 TWO_DFC_ROW_DIFFERENT_ORG = """ID,Document ID,CCLW Description,Part of collection?,Create new family/ies?,Collection ID,Collection name,Collection summary,Document title,Family name,Family summary,Family ID,Document role,Applies to ID,Geography ISO,Documents,Category,Events,Sectors,Instruments,Frameworks,Responses,Natural Hazards,Document Type,Year,Language,Keywords,Geography,Parent Legislation,Comment,CPR Document ID,CPR Family ID,CPR Collection ID,CPR Family Slug,CPR Document Slug,Document variant,CPR Document Status
 1001,0,Test1,FALSE,FALSE,N/A,Collection1,CollectionSummary1,Title1,Fam1,Summary1,,MAIN,,GBR,http://somewhere|en,executive,02/02/2014|Law passed,Energy,,,Mitigation,,Order,,,Energy Supply,Algeria,,,CCLW.executive.1.2,CCLW.family.1001.0,CPR.Collection.1,FamSlug1,DocSlug1,,PUBLISHED
 2002,0,Test2,FALSE,FALSE,N/A,Collection1,CollectionSummary1,Title2,Fam2,Summary2,,MAIN,,GBR,http://another_somewhere|en,executive,03/03/2024|Law passed,Energy,,,Mitigation,,Order,,,Energy Supply,Algeria,,,UNFCCC.non-party.2.2,CCLW.family.2002.0,CPR.Collection.1,FamSlug2,DocSlug2,,PUBLISHED
@@ -71,6 +76,12 @@ def setup_with_docs(test_db, mocker):
 def setup_with_two_docs(test_db, mocker):
     setup_with_multiple_docs(
         test_db, mocker, doc_data=TWO_DFC_ROW, event_data=TWO_EVENT_ROWS
+    )
+
+
+def setup_with_two_docs_one_family(test_db, mocker):
+    setup_with_multiple_docs(
+        test_db, mocker, doc_data=TWO_DOCS_ONE_FAM, event_data=ONE_EVENT_ROW
     )
 
 

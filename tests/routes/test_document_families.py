@@ -1,10 +1,9 @@
-from typing import Callable, Generator, Optional
-
 import pytest
+from typing import Callable, Generator, Optional
+from sqlalchemy import update
+from sqlalchemy.orm import Session
 from fastapi.testclient import TestClient
 from pytest_mock import MockerFixture
-from sqlalchemy.orm import Session
-
 from app.db.models.document.physical_document import Language, PhysicalDocumentLanguage
 from app.db.models.law_policy.family import Family, FamilyDocument, FamilyEvent
 from tests.routes.document_helpers import (
@@ -17,6 +16,7 @@ from tests.routes.document_helpers import (
     setup_with_docs,
     setup_with_multiple_docs,
     setup_with_two_docs,
+    setup_with_two_docs_one_family,
 )
 
 N_METADATA_KEYS = 6
@@ -39,6 +39,7 @@ def test_documents_family_slug_returns_not_found(
         "/api/v1/documents/FamSlug100",
     )
     assert response.status_code == 404
+    assert response.json()["detail"] == "Nothing found for FamSlug100"
 
 
 def test_documents_family_slug_returns_correct_family(
@@ -114,6 +115,71 @@ def test_documents_family_slug_returns_correct_json(
     ]
 
 
+def test_documents_family_slug_returns_multiple_docs(
+    client: TestClient,
+    test_db: Session,
+    mocker: Callable[..., Generator[MockerFixture, None, None]],
+):
+    setup_with_two_docs_one_family(test_db, mocker)
+
+    response = client.get(
+        "/api/v1/documents/FamSlug1",
+    )
+    json_response = response.json()
+
+    assert response.status_code == 200
+    assert len(json_response["documents"]) == 2
+
+
+def test_documents_family_slug_returns_only_published_docs(
+    client: TestClient,
+    test_db: Session,
+    mocker: Callable[..., Generator[MockerFixture, None, None]],
+):
+    setup_with_two_docs_one_family(test_db, mocker)
+    test_db.execute(
+        update(FamilyDocument)
+        .where(FamilyDocument.import_id == "CCLW.executive.1.2")
+        .values(document_status="Deleted")
+    )
+
+    # Test associations
+    response = client.get(
+        "/api/v1/documents/FamSlug1",
+    )
+    json_response = response.json()
+
+    assert response.status_code == 200
+    assert len(json_response["documents"]) == 1
+
+
+def test_documents_family_slug_returns_404_when_all_docs_deleted(
+    client: TestClient,
+    test_db: Session,
+    mocker: Callable[..., Generator[MockerFixture, None, None]],
+):
+    setup_with_two_docs_one_family(test_db, mocker)
+    test_db.execute(
+        update(FamilyDocument)
+        .where(FamilyDocument.import_id == "CCLW.executive.1.2")
+        .values(document_status="Deleted")
+    )
+    test_db.execute(
+        update(FamilyDocument)
+        .where(FamilyDocument.import_id == "CCLW.executive.2.2")
+        .values(document_status="Deleted")
+    )
+
+    # Test associations
+    response = client.get(
+        "/api/v1/documents/FamSlug1",
+    )
+    json_response = response.json()
+
+    assert response.status_code == 404
+    assert json_response["detail"] == "Family CCLW.family.1001.0 is not published"
+
+
 def test_documents_doc_slug_returns_not_found(
     client: TestClient,
     test_db: Session,
@@ -128,6 +194,7 @@ def test_documents_doc_slug_returns_not_found(
         "/api/v1/documents/DocSlug100",
     )
     assert response.status_code == 404
+    assert response.json()["detail"] == "Nothing found for DocSlug100"
 
 
 def test_documents_doc_slug_preexisting_objects(
@@ -137,7 +204,6 @@ def test_documents_doc_slug_preexisting_objects(
 ):
     setup_with_two_docs(test_db, mocker)
 
-    # Test associations
     response = client.get(
         "/api/v1/documents/DocSlug2",
     )
@@ -171,6 +237,25 @@ def test_documents_doc_slug_preexisting_objects(
     assert doc["languages"] == []
     assert doc["document_type"] == "Order"
     assert doc["document_role"] == "MAIN"
+
+
+def test_documents_doc_slug_when_deleted(
+    client: TestClient,
+    test_db: Session,
+    mocker: Callable[..., Generator[MockerFixture, None, None]],
+):
+    setup_with_two_docs(test_db, mocker)
+    test_db.execute(
+        update(FamilyDocument)
+        .where(FamilyDocument.import_id == "CCLW.executive.2.2")
+        .values(document_status="Deleted")
+    )
+    response = client.get(
+        "/api/v1/documents/DocSlug2",
+    )
+    json_response = response.json()
+    assert response.status_code == 404
+    assert json_response["detail"] == "The document CCLW.executive.2.2 is not published"
 
 
 def test_physical_doc_languages(
