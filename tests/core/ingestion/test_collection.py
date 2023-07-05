@@ -161,6 +161,41 @@ def test_handle_collection_from_row__changes_collection(test_db: Session):
     assert link.collection_import_id == row.cpr_collection_id
 
 
+def test_handle_collection_from_row__removes_family_from_collection(test_db: Session):
+    row, family = setup_with_collection(test_db)
+
+    result = {}
+    row.collection_name = ""
+    row.collection_summary = ""
+    collection = handle_cclw_collection_and_link(
+        test_db, build_params_from_cclw(row), 1, cast(str, family.import_id), result
+    )
+    assert collection
+    actual_keys = set(result.keys())
+    expected_keys = set(
+        [
+            "collection",
+        ]
+    )
+    assert actual_keys.symmetric_difference(expected_keys) == set([])
+
+    # Test original collection is unchanged
+    original_collection = (
+        test_db.query(Collection).filter_by(import_id=COLLECTION_IMPORT_ID).one()
+    )
+    assert original_collection is not None
+    assert original_collection.title == "Collection1"
+    assert original_collection.description == "CollectionSummary1"
+
+    # Test no collection links
+    link = (
+        test_db.query(CollectionFamily)
+        .filter_by(family_import_id=family.import_id)
+        .all()
+    )
+    assert link is None
+
+
 def test_handle_collection_from_row__ignores_na(test_db: Session):
     result = {}
     row, family = db_setup(test_db)
