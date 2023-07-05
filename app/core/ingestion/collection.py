@@ -1,5 +1,4 @@
 from typing import Any, Optional, cast
-from sqlalchemy import delete
 
 from sqlalchemy.orm import Session
 from app.core.ingestion.params import IngestParameters
@@ -203,9 +202,7 @@ def handle_link_family_to_one_collection(
     family_import_id: str,
     result: dict[str, Any],
 ) -> None:
-    # TODO: PDCT-167 remove all links not to this collection_id
-    # then if we don't have a link to this collection_id then add it
-    existing_link = (
+    existing_links = (
         db.query(CollectionFamily)
         .filter_by(
             family_import_id=family_import_id,
@@ -213,17 +210,14 @@ def handle_link_family_to_one_collection(
         .all()
     )
 
-    if existing_link is not None:
-        if collection_id in [link.collection_import_id for link in existing_link]:
+    if existing_links is not None:
+        if collection_id in [link.collection_import_id for link in existing_links]:
             # Nothing to do as its already part of the collection
             return
         else:
-            # Remove any links
-            db.execute(
-                delete(CollectionFamily).where(
-                    CollectionFamily.family_import_id == family_import_id
-                )
-            )
+            # Remove any links (enforce one collection per family)
+            for link in existing_links:
+                db.delete(link)
 
     # Now we need to add the link to the correct collection
     collection_family = create(
