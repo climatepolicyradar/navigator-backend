@@ -31,12 +31,9 @@ def handle_cclw_collection_and_link(
         result,
     )
 
-    # A Family can only be a member of one collection at the moment, so
-    # remove any existing link to any collection
-    if collection is not None:
-        handle_link_family_to_one_collection(
-            db, collection_id, cast(str, family_import_id), result
-        )
+    handle_link_family_to_one_collection(
+        db, collection_id, cast(str, family_import_id), result
+    )
     return collection
 
 
@@ -107,6 +104,10 @@ def create_collection(
     )
 
 
+def is_a_collection_id(collection_id: str) -> bool:
+    return len(collection_id) > 0 and collection_id.lower() != "n/a"
+
+
 def handle_create_collection(
     db: Session,
     collection_id: str,
@@ -129,7 +130,7 @@ def handle_create_collection(
     :return [Collection | None]: A collection if one was created, otherwise None.
     """
 
-    if not collection_id or collection_id == "n/a":
+    if not is_a_collection_id(collection_id):
         return None
 
     # First check for the actual collection
@@ -210,7 +211,7 @@ def handle_link_family_to_one_collection(
         .all()
     )
 
-    if existing_links is not None:
+    if len(existing_links) > 0:
         if collection_id in [link.collection_import_id for link in existing_links]:
             # Nothing to do as its already part of the collection
             return
@@ -220,10 +221,11 @@ def handle_link_family_to_one_collection(
                 db.delete(link)
 
     # Now we need to add the link to the correct collection
-    collection_family = create(
-        db,
-        CollectionFamily,
-        collection_import_id=collection_id,
-        family_import_id=family_import_id,
-    )
-    result["collection_family"] = to_dict(collection_family)
+    if is_a_collection_id(collection_id):
+        collection_family = create(
+            db,
+            CollectionFamily,
+            collection_import_id=collection_id,
+            family_import_id=family_import_id,
+        )
+        result["collection_family"] = to_dict(collection_family)

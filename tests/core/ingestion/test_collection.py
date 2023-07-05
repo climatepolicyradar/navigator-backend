@@ -165,18 +165,16 @@ def test_handle_collection_from_row__removes_family_from_collection(test_db: Ses
     row, family = setup_with_collection(test_db)
 
     result = {}
+    row.cpr_collection_id = ""
     row.collection_name = ""
     row.collection_summary = ""
     collection = handle_cclw_collection_and_link(
         test_db, build_params_from_cclw(row), 1, cast(str, family.import_id), result
     )
-    assert collection
+    test_db.commit()
+    assert collection is None
     actual_keys = set(result.keys())
-    expected_keys = set(
-        [
-            "collection",
-        ]
-    )
+    expected_keys = set([])
     assert actual_keys.symmetric_difference(expected_keys) == set([])
 
     # Test original collection is unchanged
@@ -193,7 +191,7 @@ def test_handle_collection_from_row__removes_family_from_collection(test_db: Ses
         .filter_by(family_import_id=family.import_id)
         .all()
     )
-    assert link is None
+    assert len(link) == 0
 
 
 def test_handle_collection_from_row__ignores_na(test_db: Session):
