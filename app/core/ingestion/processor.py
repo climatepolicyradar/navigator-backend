@@ -146,6 +146,7 @@ def ingest_cclw_document_row(
     )
     params = build_params_from_cclw(row)
     family = handle_family_from_params(db, params, context.org_id, result)
+
     handle_cclw_collection_and_link(
         db, params, context.org_id, cast(str, family.import_id), result
     )

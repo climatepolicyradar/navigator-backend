@@ -40,6 +40,21 @@ def db_setup(test_db):
     return row, family
 
 
+def setup_with_collection(test_db):
+    first_result = {}
+    row, family = db_setup(test_db)
+
+    handle_cclw_collection_and_link(
+        test_db,
+        build_params_from_cclw(row),
+        1,
+        cast(str, family.import_id),
+        first_result,
+    )
+
+    return row, family
+
+
 def test_handle_collection_from_row__creates(test_db: Session):
     result = {}
     row, family = db_setup(test_db)
@@ -73,17 +88,8 @@ def test_handle_collection_from_row__creates(test_db: Session):
     )
 
 
-def test_handle_collection_from_row__updates(test_db: Session):
-    first_result = {}
-    row, family = db_setup(test_db)
-
-    handle_cclw_collection_and_link(
-        test_db,
-        build_params_from_cclw(row),
-        1,
-        cast(str, family.import_id),
-        first_result,
-    )
+def test_handle_collection_from_row__updates_name_and_summary(test_db: Session):
+    row, family = setup_with_collection(test_db)
 
     result = {}
     row.collection_name = "new name"
@@ -108,7 +114,54 @@ def test_handle_collection_from_row__updates(test_db: Session):
     assert updated_collection.description == "new summary"
 
 
-def test_handle_collection_from_row__ignores(test_db: Session):
+def test_handle_collection_from_row__changes_collection(test_db: Session):
+    row, family = setup_with_collection(test_db)
+
+    result = {}
+    row.cpr_collection_id = f"{COLLECTION_IMPORT_ID}#2"
+    row.collection_name = "new name"
+    row.collection_summary = "new summary"
+    collection = handle_cclw_collection_and_link(
+        test_db, build_params_from_cclw(row), 1, cast(str, family.import_id), result
+    )
+    assert collection
+    actual_keys = set(result.keys())
+    expected_keys = set(
+        [
+            "collection_organisation",
+            "collection_family",
+            "collection",
+        ]
+    )
+    assert actual_keys.symmetric_difference(expected_keys) == set([])
+
+    # Test original collection is unchanged
+    original_collection = (
+        test_db.query(Collection).filter_by(import_id=COLLECTION_IMPORT_ID).one()
+    )
+    assert original_collection is not None
+    assert original_collection.title == "Collection1"
+    assert original_collection.description == "CollectionSummary1"
+
+    # Test new collection
+    new_collection = (
+        test_db.query(Collection).filter_by(import_id=row.cpr_collection_id).one()
+    )
+    assert new_collection is not None
+    assert new_collection.title == "new name"
+    assert new_collection.description == "new summary"
+
+    # Test new collection links
+    link = (
+        test_db.query(CollectionFamily)
+        .filter_by(family_import_id=family.import_id)
+        .one()
+    )
+    assert link is not None
+    assert link.collection_import_id == row.cpr_collection_id
+
+
+def test_handle_collection_from_row__ignores_na(test_db: Session):
     result = {}
     row, family = db_setup(test_db)
     row.cpr_collection_id = "n/a"

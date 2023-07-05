@@ -20,18 +20,22 @@ def handle_cclw_collection_and_link(
     family_import_id: str,
     result: dict[str, Any],
 ) -> Optional[Collection]:
+    collection_id = params.cpr_collection_ids[0]  # Only ever one for CCLW
+
     collection = handle_create_collection(
         db,
-        params.cpr_collection_ids[0],  # Only every one for CCLW
+        collection_id,
         params.collection_name,
         params.collection_summary,
         org_id,
         result,
     )
 
+    # A Family can only be a member of one collection at the moment, so
+    # remove any existing link to any collection
     if collection is not None:
-        handle_link_collection_to_family(
-            db, params.cpr_collection_ids, cast(str, family_import_id), result
+        handle_link_family_to_one_collection(
+            db, collection_id, cast(str, family_import_id), result
         )
     return collection
 
@@ -124,6 +128,7 @@ def handle_create_collection(
     :param [dict[str, Any]]: a result dict in which to record what was created.
     :return [Collection | None]: A collection if one was created, otherwise None.
     """
+
     if not collection_id or collection_id == "n/a":
         return None
 
@@ -169,6 +174,8 @@ def handle_link_collection_to_family(
     family_import_id: str,
     result: dict[str, Any],
 ) -> None:
+    # TODO: PDCT-167 remove all links not to this collection_id
+    # then if we don't have a link to this collection_id then add it
     for collection_id in collection_ids:
         existing_link = (
             db.query(CollectionFamily)
@@ -187,3 +194,36 @@ def handle_link_collection_to_family(
                 family_import_id=family_import_id,
             )
             result["collection_family"] = to_dict(collection_family)
+
+
+def handle_link_family_to_one_collection(
+    db: Session,
+    collection_id: str,
+    family_import_id: str,
+    result: dict[str, Any],
+) -> None:
+    existing_links = (
+        db.query(CollectionFamily)
+        .filter_by(
+            family_import_id=family_import_id,
+        )
+        .all()
+    )
+
+    if existing_links is not None:
+        if collection_id in [link.collection_import_id for link in existing_links]:
+            # Nothing to do as its already part of the collection
+            return
+        else:
+            # Remove any links (enforce one collection per family)
+            for link in existing_links:
+                db.delete(link)
+
+    # Now we need to add the link to the correct collection
+    collection_family = create(
+        db,
+        CollectionFamily,
+        collection_import_id=collection_id,
+        family_import_id=family_import_id,
+    )
+    result["collection_family"] = to_dict(collection_family)
