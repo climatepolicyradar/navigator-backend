@@ -119,7 +119,8 @@ def download_search_documents(
     )
     # Always download all results
     search_body.offset = 0
-    search_body.limit = 100  # TODO: configure this value
+    # TODO: properly configure the limit - for now we override if under 100 or not set
+    search_body.limit = max(search_body.limit, 100)
     is_browse = not bool(search_body.query_string)
 
     _LOGGER.info(

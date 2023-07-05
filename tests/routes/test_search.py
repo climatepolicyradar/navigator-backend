@@ -1470,7 +1470,7 @@ def test_csv_content(
 
 @pytest.mark.search
 @pytest.mark.parametrize("query_string", ["", "greenhouse"])
-@pytest.mark.parametrize("limit", [1, 10, 35])
+@pytest.mark.parametrize("limit", [1, 10, 35, 150])
 @pytest.mark.parametrize("offset", [0, 5, 10, 80])
 def test_csv_download_no_limit(
     query_string,
@@ -1507,5 +1507,5 @@ def test_csv_download_no_limit(
         actual_search_req = query_spy.mock_calls[0].kwargs["req"]
 
     # Make sure we overrode the search request content to produce the CSV download
-    assert actual_search_req.limit == 100
+    assert actual_search_req.limit == max(limit, 100)
     assert actual_search_req.offset == 0
