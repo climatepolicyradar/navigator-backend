@@ -158,9 +158,19 @@ class DocumentUpdateRequest(BaseModel):
     md5_sum: Optional[str]
     content_type: Optional[str]
     cdn_object: Optional[str]
+    languages: Optional[Sequence[str]]
 
     def as_json(self) -> dict[str, Union[str, None]]:
         """Convert to json for logging"""
+        return {
+            "md5_sum": self.md5_sum,
+            "content_type": self.content_type,
+            "cdn_object": self.cdn_object,
+            "languages": self.languages,
+        }
+
+    def physical_doc_keys_json(self) -> dict[str, Union[str, None]]:
+        """Convert to json updating only the physical document keys"""
         return {
             "md5_sum": self.md5_sum,
             "content_type": self.content_type,

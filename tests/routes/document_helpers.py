@@ -5,9 +5,9 @@ from app.data_migrations import (
     populate_document_variant,
     populate_event_type,
     populate_geography,
+    populate_language,
     populate_taxonomy,
 )
-from app.db.models.document.physical_document import Language
 
 
 ONE_DFC_ROW = """ID,Document ID,CCLW Description,Part of collection?,Create new family/ies?,Collection ID,Collection name,Collection summary,Document title,Family name,Family summary,Family ID,Document role,Applies to ID,Geography ISO,Documents,Category,Events,Sectors,Instruments,Frameworks,Responses,Natural Hazards,Document Type,Year,Language,Keywords,Geography,Parent Legislation,Comment,CPR Document ID,CPR Family ID,CPR Collection ID,CPR Family Slug,CPR Document Slug,Document variant,CPR Document Status
@@ -66,6 +66,7 @@ def setup_with_docs(test_db, mocker):
     populate_document_type(test_db)
     populate_document_role(test_db)
     populate_document_variant(test_db)
+    populate_language(test_db)
     test_db.commit()
 
     _start_ingest(test_db, mock_s3, "s3_prefix", ONE_DFC_ROW, ONE_EVENT_ROW)
@@ -93,13 +94,8 @@ def setup_with_multiple_docs(test_db, mocker, doc_data, event_data):
     populate_document_type(test_db)
     populate_document_role(test_db)
     populate_document_variant(test_db)
+    populate_language(test_db)
     test_db.commit()
 
     _start_ingest(test_db, mock_s3, "s3_prefix", doc_data, event_data)
-    test_db.commit()
-
-
-def populate_languages(test_db):
-    test_db.add(Language(language_code="eng", name="English"))
-    test_db.add(Language(language_code="fra", name="French"))
     test_db.commit()

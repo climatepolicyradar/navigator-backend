@@ -14,7 +14,11 @@ from app.api.api_v1.schemas.document import (
 )
 from app.core.auth import get_superuser_details
 from app.core.validation import IMPORT_ID_MATCHER
-from app.db.models.document.physical_document import PhysicalDocument
+from app.db.models.document.physical_document import (
+    PhysicalDocument,
+    Language,
+    PhysicalDocumentLanguage,
+)
 from app.db.models.law_policy.family import FamilyDocument, Slug
 from app.db.session import get_db
 
@@ -71,9 +75,39 @@ async def update_document(
     # Note this code relies on the fields being the same as the db column names
     num_changed = db.execute(
         update(PhysicalDocument)
-        .values(meta_data.dict())
+        .values(meta_data.physical_doc_keys_json())
         .where(PhysicalDocument.id == physical_document.id)
     ).rowcount
+
+    # Update the languages
+    if meta_data.languages is not None:
+        _LOGGER.info(
+            "Adding meta_data object languages to the database.",
+            extra={"props": {"meta_data_languages": meta_data.languages}},
+        )
+
+        physical_document_languages = (
+            db.query(PhysicalDocumentLanguage, Language)
+            .filter(PhysicalDocumentLanguage.document_id == physical_document.id)
+            .join(Language, Language.id == PhysicalDocumentLanguage.language_id)
+            .all()
+        )
+        existing_language_codes = {
+            lang.language_code for _, lang in physical_document_languages
+        }
+
+        for language in meta_data.languages:
+            lang = (
+                db.query(Language)
+                .filter(Language.language_code == language)
+                .one_or_none()
+            )
+            if lang is not None and language not in existing_language_codes:
+                physical_document_language = PhysicalDocumentLanguage(
+                    language_id=lang.id, document_id=physical_document.id
+                )
+                db.add(physical_document_language)
+                db.flush()
 
     if num_changed == 0:
         _LOGGER.info("update_document complete - nothing changed")
@@ -102,6 +136,7 @@ async def update_document(
                 "md5_sum": physical_document.md5_sum,
                 "content_type": physical_document.content_type,
                 "cdn_object": physical_document.cdn_object,
+                "languages": [doc.language_code for doc in physical_document.languages],
             }
         },
     )
