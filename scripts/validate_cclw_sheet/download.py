@@ -24,8 +24,7 @@ SCOPES = ["https://www.googleapis.com/auth/spreadsheets.readonly"]
 
 # The ID and range of a sample spreadsheet.
 SPREADSHEET_ID = "10xcBKgiYoT7eWQoyoWYlELO_z7TC1XE-_CIkC0vONWk"
-# RANGE_NAME = "All new docs as of 030323 - NEW FORMAT!A:Z"
-RANGE_NAME = "CPR_MASTER_DOCS_1.0.2!A:Z"
+RANGE_NAME = "CPR_MASTER_DOCS_1.0.2!A:ZZ"
 
 
 def double_quote_quotes(col: str) -> str:
