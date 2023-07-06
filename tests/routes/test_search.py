@@ -346,6 +346,49 @@ def test_search_body_valid(exact_match, test_opensearch, monkeypatch, client, te
 
 
 @pytest.mark.search
+def test_benchmark_families_search(test_opensearch, monkeypatch, client, test_db):
+    monkeypatch.setattr(search, "_OPENSEARCH_CONNECTION", test_opensearch)
+    _populate_search_db_families(test_db)
+
+    times = []
+    for _ in range(1, 10):
+        response = client.post(
+            SEARCH_ENDPOINT,
+            json={
+                "query_string": "climate",
+                "exact_match": True,
+            },
+        )
+        assert response.status_code == 200
+        time_taken = response.json()["total_time_ms"]
+        times.append(str(time_taken))
+
+    with open("benchmark_search.txt", "w") as out_file:
+        out_file.write("\n".join(times))
+
+
+@pytest.mark.search
+def test_benchmark_families_browse(test_opensearch, monkeypatch, client, test_db):
+    monkeypatch.setattr(search, "_OPENSEARCH_CONNECTION", test_opensearch)
+    _populate_search_db_families(test_db)
+
+    times = []
+    for _ in range(1, 10):
+        response = client.post(
+            SEARCH_ENDPOINT,
+            json={
+                "query_string": "",
+            },
+        )
+        assert response.status_code == 200
+        time_taken = response.json()["total_time_ms"]
+        times.append(str(time_taken))
+
+    with open("benchmark_browse.txt", "w") as out_file:
+        out_file.write("\n".join(times))
+
+
+@pytest.mark.search
 def test_families_search(test_opensearch, monkeypatch, client, test_db, mocker):
     monkeypatch.setattr(search, "_OPENSEARCH_CONNECTION", test_opensearch)
     _populate_search_db_families(test_db)

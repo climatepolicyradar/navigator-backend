@@ -2,7 +2,7 @@
 
 from datetime import datetime
 from logging import getLogger
-from time import perf_counter
+from time import perf_counter_ns
 from typing import Optional, Sequence, cast
 
 from pydantic import BaseModel
@@ -76,7 +76,7 @@ def browse_rds_families(
 ) -> SearchResponse:
     """Browse RDS"""
 
-    t0 = perf_counter()
+    t0 = perf_counter_ns()
     query = (
         db.query(Family, Geography, Organisation)
         .join(Geography, Family.geography_id == Geography.id)
@@ -138,9 +138,11 @@ def browse_rds_families(
 
     offset = req.offset or 0
     limit = req.limit or len(families)
+    time_taken = int((perf_counter_ns() - t0) / 1e6)
 
     return SearchResponse(
         hits=len(families),
-        query_time_ms=int((perf_counter() - t0) * 1e3),
+        query_time_ms=time_taken,
+        total_time_ms=time_taken,
         families=families[offset : offset + limit],
     )
