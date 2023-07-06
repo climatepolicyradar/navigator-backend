@@ -123,8 +123,16 @@ class OpenSearchResponsePassageMatch(OpenSearchResponseMatchBase):
 
     text: str
     text_block_id: str
-    text_block_page: int
-    text_block_coords: Sequence[Coord]
+    text_block_page: Optional[int]
+    text_block_coords: Optional[Sequence[Coord]]
+
+    @validator("text_block_page", always=True)
+    @classmethod
+    def validate_page(cls, value):
+        """PDF page numbers must be incremented from our 0-indexed values."""
+        if value is None:
+            return None
+        return value + 1
 
 
 class SearchResponseFamilyDocument(BaseModel):

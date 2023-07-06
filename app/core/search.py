@@ -699,7 +699,7 @@ def process_search_response_body_families(
                 response_passage = SearchResponseDocumentPassage(
                     text=doc_match.text,
                     text_block_id=doc_match.text_block_id,
-                    text_block_page=doc_match.text_block_page + 1,
+                    text_block_page=doc_match.text_block_page,
                     text_block_coords=doc_match.text_block_coords,
                 )
                 search_response_document.document_passage_matches.append(
