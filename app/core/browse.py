@@ -15,7 +15,9 @@ from app.api.api_v1.schemas.search import (
     SortOrder,
 )
 from app.db.models.law_policy.family import (
+    DocumentStatus,
     Family,
+    FamilyDocument,
     FamilyOrganisation,
     FamilyStatus,
 )
@@ -77,6 +79,11 @@ def browse_rds_families(
     """Browse RDS"""
 
     t0 = perf_counter()
+    subquery = (
+        db.query(Family.import_id)
+        .join(FamilyDocument,  FamilyDocument.family_import_id == Family.import_id)
+        .filter(FamilyDocument.document_status == DocumentStatus.PUBLISHED)
+    )
     query = (
         db.query(Family, Geography, Organisation)
         .join(Geography, Family.geography_id == Geography.id)
@@ -84,6 +91,7 @@ def browse_rds_families(
             FamilyOrganisation, FamilyOrganisation.family_import_id == Family.import_id
         )
         .join(Organisation, Organisation.id == FamilyOrganisation.organisation_id)
+        .filter(Family.import_id.in_(subquery))
     )
 
     if req.geography_slugs is not None:
@@ -105,7 +113,6 @@ def browse_rds_families(
     families = [
         to_search_response_family(family, geography, organisation)
         for (family, geography, organisation) in query.all()
-        if family.family_status == FamilyStatus.PUBLISHED
     ]
 
     _LOGGER.debug("Finished families query")

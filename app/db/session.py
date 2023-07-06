@@ -13,6 +13,14 @@ engine = create_engine(
 )
 SessionLocal = sessionmaker(autocommit=False, autoflush=False, bind=engine)
 
+# sql-debug: uncomment for debug
+import logging
+
+logging.basicConfig()
+logger = logging.getLogger("sqlalchemy.engine")
+logger.setLevel(logging.DEBUG)
+# End sql-debug
+
 
 def make_declarative_base():
     mapper_registry = registry()

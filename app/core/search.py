@@ -664,11 +664,6 @@ def process_search_response_body_families(
                 unknown_document_ids.add(document_match_source["document_id"])
                 continue
 
-            # Skip documents whose family is not set to Publshed
-            family_status = document_extra_info[document_id]["family_status"]
-            if family_status != "Published":
-                continue
-
             if OPENSEARCH_INDEX_NAME_KEY in document_match_source:
                 # Validate as a title match
                 doc_match = OpenSearchResponseNameMatch(**document_match_source)
@@ -712,7 +707,7 @@ def process_search_response_body_families(
             family_id = document_extra_info[doc_match.document_id]["family_import_id"]
 
             search_response_family = families.get(family_id)
-            if search_response_family is None and family_status == "Published":
+            if search_response_family is None:
                 search_response_family = create_search_response_family(
                     doc_match,
                     document_extra_info,

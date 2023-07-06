@@ -99,7 +99,6 @@ class FamilyAndDocumentsResponse(BaseModel):
     summary: str
     geography: str
     category: str
-    status: str
     metadata: dict
     slug: str
     events: list[FamilyEventsResponse]

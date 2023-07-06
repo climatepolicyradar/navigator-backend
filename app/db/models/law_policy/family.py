@@ -78,20 +78,6 @@ class Family(Base):
     )
 
     @hybrid_property
-    def family_status(self) -> FamilyStatus:
-        """Calculates the family status given its documents."""
-        if not self.family_documents:
-            return FamilyStatus.CREATED
-
-        doc_states = [doc.document_status for doc in self.family_documents]
-        if DocumentStatus.PUBLISHED in doc_states:
-            return FamilyStatus.PUBLISHED
-        if DocumentStatus.CREATED in doc_states:
-            return FamilyStatus.CREATED
-        # If we get here then all must be deleted
-        return FamilyStatus.DELETED
-
-    @hybrid_property
     def published_date(self) -> Optional[datetime]:
         """A date to use for filtering by published date."""
         if not self.events:

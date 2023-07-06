@@ -64,6 +64,7 @@ def get_family_document_and_context(
         .filter(Family.import_id == FamilyDocument.family_import_id)
         .filter(FamilyDocument.physical_document_id == PhysicalDocument.id)
         .filter(Family.geography_id == Geography.id)
+        .filter(FamilyDocument.document_status == DocumentStatus.PUBLISHED)
     ).one_or_none()
 
     if not db_objects:
@@ -76,12 +77,6 @@ def get_family_document_and_context(
         )
 
     family, document, physical_document, geography = db_objects
-
-    if (
-        family.family_status != FamilyStatus.PUBLISHED
-        or document.document_status != DocumentStatus.PUBLISHED
-    ):
-        raise ValueError(f"The document {family_document_import_id} is not published")
 
     family_context = FamilyContext(
         title=cast(str, family.title),
@@ -134,6 +129,7 @@ def get_family_and_documents(db: Session, import_id: str) -> FamilyAndDocumentsR
         .join(FamilyMetadata, import_id == FamilyMetadata.family_import_id)
         .join(FamilyOrganisation, import_id == FamilyOrganisation.family_import_id)
         .filter(FamilyOrganisation.organisation_id == Organisation.id)
+        .filter(FamilyDocument.document_status == DocumentStatus.PUBLISHED)
     ).one_or_none()
 
     if not db_objects:
@@ -149,9 +145,6 @@ def get_family_and_documents(db: Session, import_id: str) -> FamilyAndDocumentsR
         organisation,
     ) = db_objects
 
-    if family.family_status != FamilyStatus.PUBLISHED:
-        raise ValueError(f"Family {import_id} is not published")
-
     documents = _get_documents_for_family_import_id(db, import_id)
     collections = _get_collections_for_family_import_id(db, import_id)
 
@@ -162,7 +155,6 @@ def get_family_and_documents(db: Session, import_id: str) -> FamilyAndDocumentsR
         summary=cast(str, family.description),
         geography=cast(str, geography.value),
         category=cast(str, family.family_category),
-        status=cast(str, family.family_status),
         metadata=cast(dict, family_metadata.value),
         slug=cast(str, family.slugs[0].name),
         events=_get_events_for_family(family),
@@ -294,7 +286,6 @@ class DocumentExtraCache:
                 "family_title": family.title,
                 "family_description": family.description,
                 "family_category": family.family_category,
-                "family_status": family.family_status,
                 "family_published_date": (
                     family.published_date.isoformat()
                     if family.published_date is not None
