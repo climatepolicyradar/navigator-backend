@@ -53,6 +53,12 @@ jobs:
       - name: Run backend search tests
         run:  make test_search
       
+      - name: Browse Benchmark - response times in ms
+        run: cat benchmark_browse.txt
+
+      - name: Search Benchmark - response times in ms
+        run: cat benchmark_search.txt
+      
       - name: Log Dump
         if:   always()
         run:  docker-compose logs

@@ -1,6 +1,9 @@
 # Database dump
 backend_db_dump.dump
 
+# Benchmarks
+benchmark*
+
 # torch models
 /models
 

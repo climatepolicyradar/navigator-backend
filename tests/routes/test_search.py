@@ -52,6 +52,13 @@ CSV_DOWNLOAD_ENDPOINT = "/api/v1/searches/download-csv"
 _EXPECTED_FAMILY_TITLE = "Decision No 1386/2013/EU"
 
 
+def clean_response(r):
+    new_r = r.json()
+    del new_r["query_time_ms"]
+    del new_r["total_time_ms"]
+    return new_r
+
+
 def _populate_search_db_families(db: Session) -> None:
     documents: dict[str, FamilyDocument] = {}
     families: dict[str, Family] = {}
@@ -363,7 +370,7 @@ def test_benchmark_families_search(test_opensearch, monkeypatch, client, test_db
         time_taken = response.json()["total_time_ms"]
         times.append(str(time_taken))
 
-    with open("benchmark_search.txt", "w") as out_file:
+    with open("/data/benchmark_search.txt", "w") as out_file:
         out_file.write("\n".join(times))
 
 
@@ -384,7 +391,7 @@ def test_benchmark_families_browse(test_opensearch, monkeypatch, client, test_db
         time_taken = response.json()["total_time_ms"]
         times.append(str(time_taken))
 
-    with open("benchmark_browse.txt", "w") as out_file:
+    with open("/data/benchmark_browse.txt", "w") as out_file:
         out_file.write("\n".join(times))
 
 
@@ -876,12 +883,9 @@ def test_case_insensitivity(test_opensearch, monkeypatch, client, test_db):
         },
     )
 
-    response1_json = response1.json()
-    del response1_json["query_time_ms"]
-    response2_json = response2.json()
-    del response2_json["query_time_ms"]
-    response3_json = response3.json()
-    del response3_json["query_time_ms"]
+    response1_json = clean_response(response1)
+    response2_json = clean_response(response2)
+    response3_json = clean_response(response3)
 
     assert response1_json["families"]
     assert response1_json == response2_json == response3_json
@@ -915,12 +919,9 @@ def test_punctuation_ignored(test_opensearch, monkeypatch, client, test_db):
         },
     )
 
-    response1_json = response1.json()
-    del response1_json["query_time_ms"]
-    response2_json = response2.json()
-    del response2_json["query_time_ms"]
-    response3_json = response3.json()
-    del response3_json["query_time_ms"]
+    response1_json = clean_response(response1)
+    response2_json = clean_response(response2)
+    response3_json = clean_response(response3)
 
     assert response1_json["families"]
     assert response1_json == response2_json == response3_json
@@ -1002,13 +1003,9 @@ def test_accents_ignored(test_db, test_opensearch, monkeypatch, client):
         json={"query_string": "climàtë", "exact_match": False},
     )
 
-    response1_json = response1.json()
-    del response1_json["query_time_ms"]
-    response2_json = response2.json()
-    del response2_json["query_time_ms"]
-    response3_json = response3.json()
-    del response3_json["query_time_ms"]
-
+    response1_json = clean_response(response1)
+    response2_json = clean_response(response2)
+    response3_json = clean_response(response3)
     assert response1_json["families"]
     assert response1_json == response2_json == response3_json
 
