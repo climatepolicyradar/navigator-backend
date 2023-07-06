@@ -6,6 +6,7 @@ from datetime import datetime
 from io import StringIO
 from pathlib import Path
 from typing import Any, Mapping, Sequence, cast
+import httpx
 
 import pytest
 from sqlalchemy import update
@@ -52,7 +53,7 @@ CSV_DOWNLOAD_ENDPOINT = "/api/v1/searches/download-csv"
 _EXPECTED_FAMILY_TITLE = "Decision No 1386/2013/EU"
 
 
-def clean_response(r):
+def clean_response(r: httpx.Response) -> dict:
     new_r = r.json()
     del new_r["query_time_ms"]
     del new_r["total_time_ms"]
