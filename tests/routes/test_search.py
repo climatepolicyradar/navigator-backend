@@ -14,6 +14,7 @@ from sqlalchemy.orm import Session
 from app.api.api_v1.routers import search
 from app.api.api_v1.schemas.search import (
     FilterField,
+    IncludedResults,
     SortOrder,
     SearchRequestBody,
 )
@@ -1509,3 +1510,45 @@ def test_csv_download_no_limit(
     # Make sure we overrode the search request content to produce the CSV download
     assert actual_search_req.limit == max(limit, 100)
     assert actual_search_req.offset == 0
+
+
+@pytest.mark.search
+def test_extra_indices_with_html_search(
+    test_opensearch, monkeypatch, client, test_db, mocker
+):
+    monkeypatch.setattr(search, "_OPENSEARCH_CONNECTION", test_opensearch)
+    _populate_search_db_families(test_db)
+
+    expected_config = OpenSearchQueryConfig()
+    expected_search_body = SearchRequestBody(
+        query_string="climate",
+        exact_match=False,
+        max_passages_per_doc=10,
+        keyword_filters=None,
+        year_range=None,
+        sort_field=None,
+        sort_order=SortOrder.DESCENDING,
+        limit=10,
+        offset=0,
+        include_results=[IncludedResults.HTMLS_NON_TRANSLATED],
+    )
+    query_spy = mocker.spy(search._OPENSEARCH_CONNECTION, "query_families")
+
+    response = client.post(
+        SEARCH_ENDPOINT,
+        json={
+            "query_string": "climate",
+            "exact_match": False,
+            "include_results": ["htmlsNonTranslated"],
+        },
+    )
+    assert response.status_code == 200
+    # Ensure nothing has/is going on in the background
+    assert query_spy.call_count == 1  # Called once as not using jit search
+
+    actual_search_body = query_spy.mock_calls[0].kwargs["search_request_body"]
+    assert actual_search_body == expected_search_body
+
+    # Check default config is used
+    actual_config = query_spy.mock_calls[0].kwargs["opensearch_internal_config"]
+    assert actual_config == expected_config
