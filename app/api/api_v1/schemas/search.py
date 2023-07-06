@@ -180,6 +180,7 @@ class SearchResponse(BaseModel):
 
     hits: int
     query_time_ms: int
+    total_time_ms: int
 
     families: Sequence[SearchResponseFamily]
 

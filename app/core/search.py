@@ -218,6 +218,7 @@ class OpenSearchConnection:
     ) -> SearchResponse:
         """Build & make an OpenSearch query based on the given request body."""
 
+        t0 = time.perf_counter_ns()
         opensearch_request = build_opensearch_request_body(
             search_request=search_request_body,
             opensearch_internal_config=opensearch_internal_config,
@@ -231,6 +232,7 @@ class OpenSearchConnection:
         )
 
         return process_search_response_body_families(
+            t0,
             opensearch_response_body,
             document_extra_info,
             limit=search_request_body.limit,
@@ -639,6 +641,7 @@ def build_opensearch_request_body(
 
 
 def process_search_response_body_families(
+    t0: float,
     opensearch_response_body: OpenSearchResponse,
     document_extra_info: Mapping[str, Mapping[str, str]],
     limit: int = 10,
@@ -742,9 +745,11 @@ def process_search_response_body_families(
             extra={"props": {"unknown document IDs": list(unknown_document_ids)}},
         )
 
+    time_taken = int((time.perf_counter_ns() - t0) / 1e6)
     search_response = SearchResponse(
         hits=len(families),
         query_time_ms=opensearch_response_body.request_time_ms,
+        total_time_ms=time_taken,
         families=list(families.values())[offset : offset + limit],
     )
 
