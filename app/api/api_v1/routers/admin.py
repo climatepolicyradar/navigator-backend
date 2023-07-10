@@ -97,11 +97,23 @@ async def update_document(
         }
 
         for language in meta_data.languages:
-            lang = (
-                db.query(Language)
-                .filter(Language.language_code == language)
-                .one_or_none()
-            )
+            if len(language) == 2:
+                # The part1_code is the iso639-1 two letter language code.
+                # This is the way languages are detected in the pipeline.
+                lang = (
+                    db.query(Language)
+                    .filter(Language.part1_code == language)
+                    .one_or_none()
+                )
+            elif len(language) == 3:
+                lang = (
+                    db.query(Language)
+                    .filter(Language.language_code == language)
+                    .one_or_none()
+                )
+            else:
+                lang = None
+
             if lang is not None and language not in existing_language_codes:
                 physical_document_language = PhysicalDocumentLanguage(
                     language_id=lang.id, document_id=physical_document.id

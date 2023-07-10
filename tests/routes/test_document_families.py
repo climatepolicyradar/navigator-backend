@@ -523,6 +523,114 @@ def test_update_document__works_on_new_language(
         "UNFCCC.non-party.2.2",
     ],
 )
+def test_update_document__works_on_new_iso_639_1_language(
+    client: TestClient,
+    superuser_token_headers: dict[str, str],
+    test_db: Session,
+    mocker: Callable[..., Generator[MockerFixture, None, None]],
+    import_id: str,
+):
+    """Send two payloads in series to assert that languages are additive and we don't remove existing languages."""
+    setup_with_multiple_docs(
+        test_db, mocker, doc_data=TWO_DFC_ROW_DIFFERENT_ORG, event_data=TWO_EVENT_ROWS
+    )
+
+    # ADD THE FIRST LANGUAGE
+    payload = {
+        "md5_sum": "c184214e-4870-48e0-adab-3e064b1b0e76",
+        "content_type": "updated/content_type",
+        "cdn_object": "folder/file",
+        "languages": ["bo"],
+    }
+
+    response = client.put(
+        f"/api/v1/admin/documents/{import_id}",
+        headers=superuser_token_headers,
+        json=payload,
+    )
+
+    assert response.status_code == 200
+    json_object = response.json()
+    assert json_object["md5_sum"] == "c184214e-4870-48e0-adab-3e064b1b0e76"
+    assert json_object["content_type"] == "updated/content_type"
+    assert json_object["cdn_object"] == "folder/file"
+    assert {language["language_code"] for language in json_object["languages"]} == {
+        "bod"
+    }
+
+    # Now Check the db
+    doc = (
+        test_db.query(FamilyDocument)
+        .filter(FamilyDocument.import_id == import_id)
+        .one()
+        .physical_document
+    )
+    assert doc.md5_sum == "c184214e-4870-48e0-adab-3e064b1b0e76"
+    assert doc.content_type == "updated/content_type"
+    assert doc.cdn_object == "folder/file"
+
+    languages = (
+        test_db.query(PhysicalDocumentLanguage)
+        .filter(PhysicalDocumentLanguage.document_id == doc.id)
+        .all()
+    )
+    assert len(languages) == 1
+    lang = test_db.query(Language).filter(Language.id == languages[0].language_id).one()
+    assert lang.language_code == "bod"
+
+    # NOW ADD A NEW LANGUAGE TO CHECK THAT THE UPDATE IS ADDITIVE
+    payload = {
+        "md5_sum": "c184214e-4870-48e0-adab-3e064b1b0e76",
+        "content_type": "updated/content_type",
+        "cdn_object": "folder/file",
+        "languages": ["el"],
+    }
+
+    response = client.put(
+        f"/api/v1/admin/documents/{import_id}",
+        headers=superuser_token_headers,
+        json=payload,
+    )
+
+    assert response.status_code == 200
+    json_object = response.json()
+    assert json_object["md5_sum"] == "c184214e-4870-48e0-adab-3e064b1b0e76"
+    assert json_object["content_type"] == "updated/content_type"
+    assert json_object["cdn_object"] == "folder/file"
+    expected_languages = {"ell", "bod"}
+    assert {
+        lang["language_code"] for lang in json_object["languages"]
+    } == expected_languages
+
+    # Now Check the db
+    doc = (
+        test_db.query(FamilyDocument)
+        .filter(FamilyDocument.import_id == import_id)
+        .one()
+        .physical_document
+    )
+    assert doc.md5_sum == "c184214e-4870-48e0-adab-3e064b1b0e76"
+    assert doc.content_type == "updated/content_type"
+    assert doc.cdn_object == "folder/file"
+
+    doc_languages = (
+        test_db.query(PhysicalDocumentLanguage)
+        .filter(PhysicalDocumentLanguage.document_id == doc.id)
+        .all()
+    )
+    assert len(doc_languages) == 2
+    for doc_lang in doc_languages:
+        lang = test_db.query(Language).filter(Language.id == doc_lang.language_id).one()
+        assert lang.language_code in expected_languages
+
+
+@pytest.mark.parametrize(
+    "import_id",
+    [
+        "CCLW.executive.1.2",
+        "UNFCCC.non-party.2.2",
+    ],
+)
 @pytest.mark.parametrize(
     "languages",
     [[], None],
