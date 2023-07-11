@@ -83,7 +83,12 @@ async def update_document(
     if meta_data.languages is not None:
         _LOGGER.info(
             "Adding meta_data object languages to the database.",
-            extra={"props": {"meta_data_languages": meta_data.languages}},
+            extra={
+                "props": {
+                    "meta_data_languages": meta_data.languages,
+                    "import_id_or_slug": import_id_or_slug,
+                }
+            },
         )
 
         physical_document_languages = (
@@ -97,23 +102,40 @@ async def update_document(
         }
 
         for language in meta_data.languages:
-            if len(language) == 2:
-                # The part1_code is the iso639-1 two letter language code.
-                # This is the way languages are detected in the pipeline.
+            if len(language) == 2:  # iso639-1 two letter language code
                 lang = (
                     db.query(Language)
                     .filter(Language.part1_code == language)
                     .one_or_none()
                 )
-            elif len(language) == 3:
+            elif len(language) == 3:  # iso639-2/3 three letter language code
                 lang = (
                     db.query(Language)
                     .filter(Language.language_code == language)
                     .one_or_none()
                 )
             else:
+                _LOGGER.warning(
+                    "Retrieved no language from database for meta_data object language.",
+                    extra={
+                        "props": {
+                            "metadata_language": language,
+                            "import_id_or_slug": import_id_or_slug,
+                        }
+                    },
+                )
                 lang = None
 
+            _LOGGER.info(
+                "Retrieved language from database for meta_data object language.",
+                extra={
+                    "props": {
+                        "metadata_language": language,
+                        "db_language": (None if lang is None else lang.language_code),
+                        "import_id_or_slug": import_id_or_slug,
+                    }
+                },
+            )
             if lang is not None and language not in existing_language_codes:
                 physical_document_language = PhysicalDocumentLanguage(
                     language_id=lang.id, document_id=physical_document.id
