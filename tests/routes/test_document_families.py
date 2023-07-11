@@ -669,7 +669,7 @@ def test_update_document__logs_warning_on_four_letter_language(
     assert {language["language_code"] for language in json_object["languages"]} == set()
 
     assert log_spy.call_args_list[0].args[0] == "Retrieved no language from database for meta_data object " \
-                                                "language. "
+                                                "language."
     assert len(log_spy.call_args_list) == 1
 
     # Now Check the db
