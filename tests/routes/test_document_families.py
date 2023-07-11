@@ -689,8 +689,6 @@ def test_update_document__logs_warning_on_four_letter_language(
         .all()
     )
     assert len(languages) == 0
-    lang = test_db.query(Language).filter(Language.id == languages[0].language_id).one_or_none()
-    assert lang is None
 
 
 @pytest.mark.parametrize(
