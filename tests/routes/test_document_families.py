@@ -631,6 +631,75 @@ def test_update_document__works_on_new_iso_639_1_language(
         "UNFCCC.non-party.2.2",
     ],
 )
+def test_update_document__logs_warning_on_four_letter_language(
+    client: TestClient,
+    superuser_token_headers: dict[str, str],
+    test_db: Session,
+    mocker: Callable[..., Generator[MockerFixture, None, None]],
+    import_id: str,
+):
+    """Send a payload to assert that languages that are too long aren't added and a warning is logged."""
+    setup_with_multiple_docs(
+        test_db, mocker, doc_data=TWO_DFC_ROW_DIFFERENT_ORG, event_data=TWO_EVENT_ROWS
+    )
+
+    # Payload with a four letter language code that won't exist in the db
+    payload = {
+        "md5_sum": "c184214e-4870-48e0-adab-3e064b1b0e76",
+        "content_type": "updated/content_type",
+        "cdn_object": "folder/file",
+        "languages": ["boda"],
+    }
+
+    from app.api.api_v1.routers.admin import _LOGGER
+
+    log_spy = mocker.spy(_LOGGER, "warning")
+
+    response = client.put(
+        f"/api/v1/admin/documents/{import_id}",
+        headers=superuser_token_headers,
+        json=payload,
+    )
+
+    assert response.status_code == 200
+    json_object = response.json()
+    assert json_object["md5_sum"] == "c184214e-4870-48e0-adab-3e064b1b0e76"
+    assert json_object["content_type"] == "updated/content_type"
+    assert json_object["cdn_object"] == "folder/file"
+    assert {language["language_code"] for language in json_object["languages"]} == set()
+
+    assert log_spy.call_args_list[0].args[0] == "Retrieved no language from database for meta_data object " \
+                                                "language. "
+    assert len(log_spy.call_args_list) == 1
+
+    # Now Check the db
+    doc = (
+        test_db.query(FamilyDocument)
+        .filter(FamilyDocument.import_id == import_id)
+        .one()
+        .physical_document
+    )
+    assert doc.md5_sum == "c184214e-4870-48e0-adab-3e064b1b0e76"
+    assert doc.content_type == "updated/content_type"
+    assert doc.cdn_object == "folder/file"
+
+    languages = (
+        test_db.query(PhysicalDocumentLanguage)
+        .filter(PhysicalDocumentLanguage.document_id == doc.id)
+        .all()
+    )
+    assert len(languages) == 0
+    lang = test_db.query(Language).filter(Language.id == languages[0].language_id).one()
+    assert lang is None
+
+
+@pytest.mark.parametrize(
+    "import_id",
+    [
+        "CCLW.executive.1.2",
+        "UNFCCC.non-party.2.2",
+    ],
+)
 @pytest.mark.parametrize(
     "languages",
     [[], None],
