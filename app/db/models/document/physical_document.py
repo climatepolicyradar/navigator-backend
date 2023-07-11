@@ -6,6 +6,8 @@ from sqlalchemy.orm import relationship
 from app.db.session import Base
 
 
+# TODO Our current process for updating languages in the database relies on all the part1_code's being unique/null.
+#  Thus, we should enforce null or uniqueness on part1_code's in the database.
 class Language(Base):
     """
     A language used to identify the content of a document.
