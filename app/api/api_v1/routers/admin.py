@@ -136,7 +136,7 @@ async def update_document(
                     }
                 },
             )
-            if lang is not None and language not in existing_language_codes:
+            if lang is not None and lang.language_code not in existing_language_codes:
                 physical_document_language = PhysicalDocumentLanguage(
                     language_id=lang.id, document_id=physical_document.id
                 )
