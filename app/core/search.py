@@ -408,7 +408,20 @@ class QueryBuilder:
     def with_semantic_query(self, query_string: str, knn: bool):
         """Configure the query to search semantically for a given query string."""
 
-        embedding = _ENCODER.encode(query_string)
+        _LOGGER.info("Starting embeddings generation for '{query_string}'")
+        start_generation = time.time_ns()
+        embedding = _ENCODER.encode(query_string, show_progress_bar=False)
+        end_generation = time.time_ns()
+        embeddings_generation_time = round((end_generation - start_generation) / 1e6)
+        _LOGGER.info(
+            "Completed embeddings generation for '{query_string}'",
+            extra={
+                "props": {
+                    "embeddings_generation_time": embeddings_generation_time,
+                },
+            },
+        )
+
         self._with_search_term_base()
         self._request_body["query"]["bool"]["should"] = [
             {
