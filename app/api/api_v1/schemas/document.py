@@ -160,7 +160,7 @@ class DocumentUpdateRequest(BaseModel):
     cdn_object: Optional[str]
     languages: Optional[Sequence[str]]
 
-    def as_json(self) -> dict[str, Union[str, None]]:
+    def as_json(self) -> dict[str, Union[str, Sequence[str], None]]:
         """Convert to json for logging"""
         return {
             "md5_sum": self.md5_sum,

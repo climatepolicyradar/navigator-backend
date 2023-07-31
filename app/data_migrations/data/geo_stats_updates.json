@@ -1,0 +1,14 @@
+[
+  {
+    "name": "China",
+    "legislative_process": "new process",
+    "federal": true,
+    "federal_details": "22 provinces, 5 autonomus regions",
+    "political_groups": "G77;G20",
+    "global_emissions_percent": 24.36,
+    "climate_risk_index": 55.5,
+    "worldbank_income_group": "Upper middle income",
+    "visibility_status": "published",
+    "iso": "CHN"
+  }
+]
