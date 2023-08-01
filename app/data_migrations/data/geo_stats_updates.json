@@ -10,5 +10,53 @@
     "worldbank_income_group": "Upper middle income",
     "visibility_status": "published",
     "iso": "CHN"
+  },
+  {
+    "name": "South Korea",
+    "legislative_process": "<p>The legal system of South Korea is a civil law system that has its basis in the Constitution of the Republic of Korea, which is at the pinnacle of the country\u2019s hierarchy of laws. Korea\u2019s Acts and Subordinate Statutes form a consolidated system that is designed to prevent contradictions or conflicts.</p><p>The power to enact Acts belongs exclusively to the National Assembly, with the law-making power held by the Executive for subordinate statutes confined to matters delegated by Acts and other matters necessary to enforce Acts. Since such subordinate statutes are required to conform to Acts, the National Assembly is the supreme law-making organ. The most recent National Assembly elections took place in April 2016. The next election is expected for 2020. The last Presidential Election took place in December 2012. The next Presidential election is due to take place in 2017.</p><p>The law-making process can be initiated by the national assembly or by government representatives. In the first case, a bill is proposed by 10 or more national assembly representatives. The proposed bill is deliberated by the standing committee. After the bill passes the committee, it is referred to the plenary session. Bills that pass the plenary session will then be sent to the government to be promulgated. Bills can also be submitted by a relevant ministry. Other ministries will be consulted and a public notice will be issued. The bill is then reviewed by the Ministry of Legislation (MOLEG), an independent and specialised self-legislative control agency within the government in order to exercise overall control of and co-ordinate the government\u2019s legislative activities and to review whether individual bills contravene higher laws or conflict with relevant laws. The bill is deliberated at the State Council and sent for presidential approval. After that it is submitted to the National Assembly for decision. Once it is passed in the National Assembly, it returns to MOLEG and is finally promulgated. Presidential decrees are promulgated directly after their approval by the President and do not go through the National Assembly.</p>",
+    "federal": false,
+    "federal_details": "",
+    "political_groups": "G77;G20;OECD;EIG",
+    "global_emissions_percent": 1.38,
+    "climate_risk_index": 82.83,
+    "worldbank_income_group": "High income",
+    "visibility_status": "published",
+    "iso": "KOR"
+  },
+  {
+    "name": "Japan",
+    "legislative_process": "<p>The National Diet is the sole law-making organ of the State based on the Constitution promulgated in 1946. The Diet comprises two houses: The House of Representatives (the lower house) and the House of Councillors (the upper House). The House of Representatives has 480 members elected for a four-year term by a combination of single-seat constituency system and proportional representation. The Lower House may be dissolved at any time by the Emperor on the advice of the Prime Minister. The last general election for the House of Representatives took place in December 2014 upon the Prime Minister\u2019s decision to dissolve the Lower House. The next Lower House election is expected to take place late 2018 unless it is dissolved. The House of Councillors (the Upper House) has 242 members, elected for a six-year term \u2013 every three years half of the Upper House members are elected. The last Upper House election took place in July 2016 and the next is expected for 2019.</p><p>Japan is a parliamentary cabinet system, and more than half of cabinet members are selected from MPs by the Prime Minister. The Prime Minister is elected by MPs through a resolution of the Diet. MPs and the Cabinet are qualified to submit bills, and all the bills are passed to a committee for deliberation, which sometimes includes open hearings. After the committee votes on the bill, it is passed for approval to Diet plenary session in both houses. If the two chambers\u2019 votes are at odds, a conference committee is convened in an attempt to reach a compromise. After a law is passed it is promulgated by the Emperor and announced in the government gazette. The Diet also has the authority to approve the budget, ratify treaties and amend the Constitution.</p>",
+    "federal": false,
+    "federal_details": "",
+    "political_groups": "G20;OECD",
+    "global_emissions_percent": 2.66,
+    "climate_risk_index": 69.33,
+    "worldbank_income_group": "High income",
+    "visibility_status": "published",
+    "iso": "JPN"
+  },
+  {
+    "name": "United States of America",
+    "legislative_process": "<p>The United States has a bicameral legislature or Congress composed of the Senate (100 seats; 6-year term, with one third of membership renewed every 2 years) and the House of Representatives (435 seats, 2-year term). The last election for both House of Representatives and Senate was held in November 2016. The next election is expected in 2018.</p><p>Bills may be introduced by a member of either chamber. Typically, the first stage in the approval of a bill involves consideration by a committee. If approved (reported) by the committee, the bill reaches the floor of the chamber. Once a bill is approved by one chamber, it is sent to the other, which may pass, reject or amend it. In order for a proposed bill to become law, both chambers must agree on identical versions of the bill and the President must sign it. If the President vetoes a bill, the veto can be overturned if a two-thirds majority of both chambers vote to do so.</p>",
+    "federal": true,
+    "federal_details": "50 states, 1 federal district; 16 territories",
+    "political_groups": "G20;OECD",
+    "global_emissions_percent": 12.28,
+    "climate_risk_index": 44.17,
+    "worldbank_income_group": "High income",
+    "visibility_status": "published",
+    "iso": "USA"
+  },
+  {
+    "name": "Mexico",
+    "legislative_process": "<p>The United Mexican States (Mexico) has a bicameral legislature (Congress) made up of the Chamber of Deputies and the Senate. The Lower Chamber is formed by 300 members elected in a system of electoral districts, and 200 members elected through a system of regional lists for a three-year term. The Senate has 128 senators, two of whom are elected and one assigned for each of the 31 states and the Federal District for a six-year term. The last elections for the Senate as well as the Chamber of Deputies occurred on July 1st, 2018.</p><p>The Constitution establishes that&nbsp; the President and members of the Congress can introduce a bill in Congress. In accordance with Art. 71 of the Constitution, citizens also have the ability to introduce bills if they can gather at least 0.13% of the electorate. In practice, most bills are initiated by the executive branch. With a few exceptions, the legislative process requires the discussion and approval of a draft bill by both the Senate and the Chamber of Deputies. The Senate addresses all matters concerning foreign policy, approves international agree\u00acments and confirms presidential appointments. The Chamber of Deputies addresses all matters pertaining to the government\u2019s budget and public expenditures.</p><p>If passed in both Chambers, a bill becomes law once it has received presidential approval and been published in the official gazette. If not sanctioned, the bill is sent back to one of the chambers with suggested amendments, re-launching the legislative process for the adoption of that law.</p>",
+    "federal": true,
+    "federal_details": "32 federal entities, which are 31 states and its capital Mexico City",
+    "political_groups": "G20;OECD;EIG",
+    "global_emissions_percent": 1.45,
+    "climate_risk_index": 61.83,
+    "worldbank_income_group": "Upper middle income",
+    "visibility_status": "published",
+    "iso": "MEX"
   }
 ]
