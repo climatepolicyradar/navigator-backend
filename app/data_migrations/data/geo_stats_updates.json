@@ -58,5 +58,17 @@
     "worldbank_income_group": "Upper middle income",
     "visibility_status": "published",
     "iso": "MEX"
+  },
+  {
+    "name": "France",
+    "legislative_process": "<p>France has a bicameral parliamentary system where legislative power belongs to the National Assembly and the Senate. The last election for the National Assembly was held in 2017, the next is scheduled for 2022. The Senate is elected indirectly by Members of Parliament and local representatives. Statute legislation may be proposed by the Council of Ministers or by Members of Parliament; the majority of bills are currently proposed by the government.</p><p>There is a strict separation between laws and regulations. Laws determine general principles and rules in domains explicitly set out in the constitution, such as civil rights, nationality and crime. They must be voted on by the Parliament and can be blocked by the Constitutional Court if it finds that the law goes against the Constitution. In this case, the law must be modified and voted on again, or abandoned. Regulations can establish rules out\u00adside of the law\u2019s domain or specify more precisely how to implement laws. Regulations do not need to be voted on by the Parliament.</p>",
+    "federal": false,
+    "federal_details": "",
+    "political_groups": "G20;OECD;EU",
+    "global_emissions_percent": 0.69,
+    "climate_risk_index": 38.0,
+    "worldbank_income_group": "High income",
+    "visibility_status": "published",
+    "iso": "FRA"
   }
 ]
