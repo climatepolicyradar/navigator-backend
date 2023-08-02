@@ -1,3 +1,4 @@
+from typing import cast
 from sqlalchemy.orm import Session
 
 from app.core.ingestion.cclw.ingest_row_cclw import CCLWDocumentIngestRow
@@ -16,6 +17,16 @@ from tests.core.ingestion.helpers import (
     get_doc_ingest_row_data,
     populate_for_ingest,
 )
+
+
+def _get_all_phys_docs(test_db: Session, phys_doc_id: int):
+    return (
+        test_db.query(PhysicalDocumentLanguage)
+        .filter_by(document_id=phys_doc_id)
+        .filter_by(source=LanguageSource.USER)
+        .filter_by(visible=True)
+        .all()
+    )
 
 
 def _create_physical_document(
@@ -51,15 +62,7 @@ def test_physical_document_from_row(test_db: Session):
     )
     assert actual_keys.symmetric_difference(expected_keys) == set([])
     assert test_db.query(PhysicalDocument).filter_by(title=DOCUMENT_TITLE).one()
-    assert (
-        len(
-            test_db.query(PhysicalDocumentLanguage)
-            .filter_by(document_id=phys_doc.id)
-            .filter_by(source=LanguageSource.USER)
-            .all()
-        )
-        == 2
-    )
+    assert len(_get_all_phys_docs(test_db, cast(int, phys_doc.id))) == 2
 
 
 def test_update_physical_document_idempotent_language(test_db: Session):
@@ -81,15 +84,7 @@ def test_update_physical_document_idempotent_language(test_db: Session):
     expected_keys = set([])
     assert actual_keys.symmetric_difference(expected_keys) == set([])
     assert test_db.query(PhysicalDocument).filter_by(title=DOCUMENT_TITLE).one()
-    assert (
-        len(
-            test_db.query(PhysicalDocumentLanguage)
-            .filter_by(document_id=phys_doc.id)
-            .filter_by(source=LanguageSource.USER)
-            .all()
-        )
-        == 2
-    )
+    assert len(_get_all_phys_docs(test_db, cast(int, phys_doc.id))) == 2
 
 
 def test_update_physical_document_adds_language(test_db: Session):
@@ -119,15 +114,7 @@ def test_update_physical_document_adds_language(test_db: Session):
     )
     assert actual_keys.symmetric_difference(expected_keys) == set([])
     assert test_db.query(PhysicalDocument).filter_by(title=DOCUMENT_TITLE).one()
-    assert (
-        len(
-            test_db.query(PhysicalDocumentLanguage)
-            .filter_by(document_id=phys_doc.id)
-            .filter_by(source=LanguageSource.USER)
-            .all()
-        )
-        == 3
-    )
+    assert len(_get_all_phys_docs(test_db, cast(int, phys_doc.id))) == 3
 
 
 def test_update_physical_document_removes_language(test_db: Session):
@@ -148,12 +135,4 @@ def test_update_physical_document_removes_language(test_db: Session):
     expected_keys = set([])
     assert actual_keys.symmetric_difference(expected_keys) == set([])
     assert test_db.query(PhysicalDocument).filter_by(title=DOCUMENT_TITLE).one()
-    assert (
-        len(
-            test_db.query(PhysicalDocumentLanguage)
-            .filter_by(document_id=phys_doc.id)
-            .filter_by(source=LanguageSource.USER)
-            .all()
-        )
-        == 1
-    )
+    assert len(_get_all_phys_docs(test_db, cast(int, phys_doc.id))) == 1

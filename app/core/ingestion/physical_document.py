@@ -80,6 +80,7 @@ def update_physical_document_languages(
             language_id=lang.id,
             document_id=physical_document.id,
             source=LanguageSource.USER,
+            visible=True,
         )
         db.add(physical_document_language)
         db.flush()
