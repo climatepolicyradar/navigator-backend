@@ -116,7 +116,7 @@ async def update_document(
                 )
             else:
                 _LOGGER.warning(
-                    "Retrieved no language from database for meta_data object language.",
+                    "Retrieved no language from database for meta_data object language",
                     extra={
                         "props": {
                             "metadata_language": language,

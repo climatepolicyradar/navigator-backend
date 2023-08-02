@@ -639,7 +639,9 @@ def test_update_document__works_on_existing_iso_639_1_language(
     mocker: Callable[..., Generator[MockerFixture, None, None]],
     import_id: str,
 ):
-    """Assert that we can skip over existing languages for documents when using two letter iso codes.
+    """
+    Assert that we can skip over existing languages for documents when using two letter iso codes.
+
     Send two payloads in series to assert that if we add a 639 two letter iso code where there is already a
     language entry for that physical document we don't throw an error. This proves that we can detect that the
     two-letter iso code language already exists.
@@ -751,7 +753,9 @@ def test_update_document__works_on_existing_iso_639_3_language(
     mocker: Callable[..., Generator[MockerFixture, None, None]],
     import_id: str,
 ):
-    """Assert that we can skip over existing languages for documents when using three letter iso codes.
+    """
+    Assert that we can skip over existing languages for documents when using three letter iso codes.
+
     Send two payloads in series to assert that if we add a 639 three letter iso code where there is already a
     language entry for that physical document we don't throw an error. This proves that we can detect that the
     three-letter iso code language already exists.
@@ -893,8 +897,11 @@ def test_update_document__logs_warning_on_four_letter_language(
     assert json_object["cdn_object"] == "folder/file"
     assert {language["language_code"] for language in json_object["languages"]} == set()
 
-    assert log_spy.call_args_list[0].args[0] == "Retrieved no language from database for meta_data object " \
-                                                "language."
+    assert (
+        log_spy.call_args_list[0].args[0]
+        == "Retrieved no language from database for meta_data object "
+        "language"
+    )
     assert len(log_spy.call_args_list) == 1
 
     # Now Check the db
