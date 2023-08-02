@@ -291,6 +291,31 @@ def test_physical_doc_languages(
     assert document["languages"] == []
 
 
+def test_physical_doc_languages_not_visible(
+    client: TestClient,
+    test_db: Session,
+    mocker: Callable[..., Generator[MockerFixture, None, None]],
+):
+    setup_with_multiple_docs(
+        test_db, mocker, doc_data=TWO_DFC_ROW_ONE_LANGUAGE, event_data=TWO_EVENT_ROWS
+    )
+    test_db.execute(
+        update(PhysicalDocumentLanguage)
+        .where(PhysicalDocumentLanguage.document_id == 1)
+        .values(visible=False)
+    )
+
+    response = client.get(
+        "/api/v1/documents/DocSlug1",
+    )
+    json_response = response.json()
+    document = json_response["document"]
+
+    assert response.status_code == 200
+    print(json_response)
+    assert document["languages"] == []
+
+
 def test_physical_doc_multiple_languages(
     client: TestClient,
     test_db: Session,

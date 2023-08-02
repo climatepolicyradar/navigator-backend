@@ -107,7 +107,7 @@ def get_family_document_and_context(
         cdn_object=to_cdn_url(physical_document.cdn_object),
         source_url=physical_document.source_url,
         content_type=physical_document.content_type,
-        language=(langs[0] if physical_document.languages else ""),
+        language=(langs[0] if len(langs) > 0 else ""),
         languages=langs,
         document_type=document.document_type,
         document_role=document.document_role,
@@ -119,14 +119,15 @@ def get_family_document_and_context(
 def _get_visible_languages_for_phys_doc(
     db: Session, physical_document: PhysicalDocument
 ) -> Sequence[str]:
-    _, language_codes = (
-        db.query(PhysicalDocumentLanguage, Language.language_code)
+    result = (
+        db.query(PhysicalDocumentLanguage.visible, Language.language_code)
         .join(Language, Language.id == PhysicalDocumentLanguage.language_id)
         .filter(PhysicalDocumentLanguage.document_id == physical_document.id)
-        .filter(PhysicalDocumentLanguage.visible is True)
         .all()
     )
-    return [cast(str, code) for code in language_codes]
+    if result is None or len(result) == 0:
+        return []
+    return [cast(str, code) for visible, code in result if visible]
 
 
 def get_family_and_documents(db: Session, import_id: str) -> FamilyAndDocumentsResponse:
