@@ -7,22 +7,10 @@ from sqlalchemy.ext.hybrid import hybrid_property
 from sqlalchemy.orm import relationship
 
 from app.db.models.app import Organisation
+from app.db.models.app.enum import _BaseModelEnum
 from app.db.models.document import PhysicalDocument
 from app.db.session import Base
 from .geography import Geography
-
-
-class _BaseModelEnum(str, enum.Enum):
-    """Family categories as understood in the context of law/policy."""
-
-    @classmethod
-    def _missing_(cls, value):
-        if isinstance(value, str) and not str.istitle(value):
-            return cls(value.title())
-        raise ValueError(f"{value} is not a valid {cls.__name__}")
-
-    def __str__(self):
-        return self._value_
 
 
 class FamilyCategory(_BaseModelEnum):

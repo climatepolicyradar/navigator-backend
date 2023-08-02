@@ -2,7 +2,7 @@ from typing import Sequence
 
 import sqlalchemy as sa
 from sqlalchemy.orm import relationship
-
+from app.db.models.app.enum import _BaseModelEnum
 from app.db.session import Base
 
 
@@ -52,6 +52,13 @@ class PhysicalDocument(Base):
     )
 
 
+class LanguageSource(_BaseModelEnum):
+    """The source of where the language came from"""
+
+    USER = "User"
+    MODEL = "Model"
+
+
 class PhysicalDocumentLanguage(Base):
     """A link between a document and its languages."""
 
@@ -62,5 +69,8 @@ class PhysicalDocumentLanguage(Base):
         sa.ForeignKey(PhysicalDocument.id, ondelete="CASCADE"),
         nullable=False,
     )
+
+    source = sa.Column(sa.Enum(LanguageSource), nullable=False)
+    visible = sa.Column(sa.Boolean, default=False, nullable=False)
 
     sa.PrimaryKeyConstraint(language_id, document_id)
