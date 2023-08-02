@@ -6,13 +6,13 @@ from sqlalchemy.ext.hybrid import hybrid_property
 from sqlalchemy.orm import relationship
 
 from app.db.models.app import Organisation
-from app.db.models.app.enum import _BaseModelEnum
+from app.db.models.app.enum import BaseModelEnum
 from app.db.models.document import PhysicalDocument
 from app.db.session import Base
 from .geography import Geography
 
 
-class FamilyCategory(_BaseModelEnum):
+class FamilyCategory(BaseModelEnum):
     """Family categories as understood in the context of law/policy."""
 
     EXECUTIVE = "Executive"
@@ -33,7 +33,7 @@ class Variant(Base):
     description = sa.Column(sa.Text, nullable=False)
 
 
-class FamilyStatus(_BaseModelEnum):
+class FamilyStatus(BaseModelEnum):
     """Family status to control visibility in the app."""
 
     CREATED = "Created"
@@ -107,7 +107,7 @@ class Family(Base):
         return date
 
 
-class DocumentStatus(_BaseModelEnum):
+class DocumentStatus(BaseModelEnum):
     """FamilyDocument status to control visibility in the app."""
 
     CREATED = "Created"
@@ -197,7 +197,7 @@ class Slug(Base):
     family_document_import_id = sa.Column(sa.ForeignKey(FamilyDocument.import_id))
 
 
-class EventStatus(_BaseModelEnum):
+class EventStatus(BaseModelEnum):
     """Event status to flag data issues from import."""
 
     OK = "Ok"

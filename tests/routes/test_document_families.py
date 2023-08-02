@@ -1039,6 +1039,7 @@ def test_update_document__works_existing_languages(
         existing_doc_lang = PhysicalDocumentLanguage(
             language_id=existing_lang.id,
             document_id=existing_doc.id,
+            source=LanguageSource.MODEL,
         )
         test_db.add(existing_doc_lang)
         test_db.flush()

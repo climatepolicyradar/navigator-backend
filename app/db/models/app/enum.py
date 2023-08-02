@@ -1,7 +1,7 @@
 import enum
 
 
-class _BaseModelEnum(str, enum.Enum):
+class BaseModelEnum(str, enum.Enum):
     """Family categories as understood in the context of law/policy."""
 
     @classmethod
@@ -11,4 +11,5 @@ class _BaseModelEnum(str, enum.Enum):
         raise ValueError(f"{value} is not a valid {cls.__name__}")
 
     def __str__(self):
+        """Returns tha value."""
         return self._value_

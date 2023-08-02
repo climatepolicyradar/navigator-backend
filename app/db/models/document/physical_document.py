@@ -2,7 +2,7 @@ from typing import Sequence
 
 import sqlalchemy as sa
 from sqlalchemy.orm import relationship
-from app.db.models.app.enum import _BaseModelEnum
+from app.db.models.app.enum import BaseModelEnum
 from app.db.session import Base
 
 
@@ -53,7 +53,7 @@ class PhysicalDocument(Base):
     )
 
 
-class LanguageSource(_BaseModelEnum):
+class LanguageSource(BaseModelEnum):
     """The source of where the language came from"""
 
     USER = "User"
