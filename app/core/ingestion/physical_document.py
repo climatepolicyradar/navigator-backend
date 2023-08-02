@@ -5,7 +5,11 @@ from app.core.ingestion.params import IngestParameters
 from app.core.ingestion.utils import to_dict
 
 from app.db.models.document import PhysicalDocument
-from app.db.models.document.physical_document import Language, PhysicalDocumentLanguage
+from app.db.models.document.physical_document import (
+    Language,
+    LanguageSource,
+    PhysicalDocumentLanguage,
+)
 
 
 def create_physical_document_from_params(
@@ -40,7 +44,9 @@ def create_physical_document_from_params(
             result["language"] = doc_languages
 
             physical_document_language = PhysicalDocumentLanguage(
-                language_id=lang.id, document_id=physical_document.id
+                language_id=lang.id,
+                document_id=physical_document.id,
+                source=LanguageSource.USER,
             )
             db.add(physical_document_language)
             db.flush()

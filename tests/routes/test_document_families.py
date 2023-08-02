@@ -4,7 +4,11 @@ from sqlalchemy import update
 from sqlalchemy.orm import Session
 from fastapi.testclient import TestClient
 from pytest_mock import MockerFixture
-from app.db.models.document.physical_document import Language, PhysicalDocumentLanguage
+from app.db.models.document.physical_document import (
+    Language,
+    LanguageSource,
+    PhysicalDocumentLanguage,
+)
 from app.db.models.law_policy.family import Family, FamilyDocument, FamilyEvent
 from tests.routes.document_helpers import (
     ONE_DFC_ROW_TWO_LANGUAGES,
@@ -464,6 +468,7 @@ def test_update_document__works_on_new_language(
     languages = (
         test_db.query(PhysicalDocumentLanguage)
         .filter(PhysicalDocumentLanguage.document_id == doc.id)
+        .filter(PhysicalDocumentLanguage.source == LanguageSource.MODEL)
         .all()
     )
     assert len(languages) == 1
@@ -508,6 +513,7 @@ def test_update_document__works_on_new_language(
     doc_languages = (
         test_db.query(PhysicalDocumentLanguage)
         .filter(PhysicalDocumentLanguage.document_id == doc.id)
+        .filter(PhysicalDocumentLanguage.source == LanguageSource.MODEL)
         .all()
     )
     assert len(doc_languages) == 2
@@ -572,6 +578,7 @@ def test_update_document__works_on_new_iso_639_1_language(
     languages = (
         test_db.query(PhysicalDocumentLanguage)
         .filter(PhysicalDocumentLanguage.document_id == doc.id)
+        .filter(PhysicalDocumentLanguage.source == LanguageSource.MODEL)
         .all()
     )
     assert len(languages) == 1
@@ -616,6 +623,7 @@ def test_update_document__works_on_new_iso_639_1_language(
     doc_languages = (
         test_db.query(PhysicalDocumentLanguage)
         .filter(PhysicalDocumentLanguage.document_id == doc.id)
+        .filter(PhysicalDocumentLanguage.source == LanguageSource.MODEL)
         .all()
     )
     assert len(doc_languages) == 2
@@ -687,6 +695,7 @@ def test_update_document__works_on_existing_iso_639_1_language(
     languages = (
         test_db.query(PhysicalDocumentLanguage)
         .filter(PhysicalDocumentLanguage.document_id == doc.id)
+        .filter(PhysicalDocumentLanguage.source == LanguageSource.MODEL)
         .all()
     )
     assert len(languages) == 1
@@ -731,6 +740,7 @@ def test_update_document__works_on_existing_iso_639_1_language(
     doc_languages = (
         test_db.query(PhysicalDocumentLanguage)
         .filter(PhysicalDocumentLanguage.document_id == doc.id)
+        .filter(PhysicalDocumentLanguage.source == LanguageSource.MODEL)
         .all()
     )
     assert len(doc_languages) == 1
@@ -801,6 +811,7 @@ def test_update_document__works_on_existing_iso_639_3_language(
     languages = (
         test_db.query(PhysicalDocumentLanguage)
         .filter(PhysicalDocumentLanguage.document_id == doc.id)
+        .filter(PhysicalDocumentLanguage.source == LanguageSource.MODEL)
         .all()
     )
     assert len(languages) == 1
@@ -845,6 +856,7 @@ def test_update_document__works_on_existing_iso_639_3_language(
     doc_languages = (
         test_db.query(PhysicalDocumentLanguage)
         .filter(PhysicalDocumentLanguage.document_id == doc.id)
+        .filter(PhysicalDocumentLanguage.source == LanguageSource.MODEL)
         .all()
     )
     assert len(doc_languages) == 1
@@ -918,6 +930,7 @@ def test_update_document__logs_warning_on_four_letter_language(
     languages = (
         test_db.query(PhysicalDocumentLanguage)
         .filter(PhysicalDocumentLanguage.document_id == doc.id)
+        .filter(PhysicalDocumentLanguage.source == LanguageSource.MODEL)
         .all()
     )
     assert len(languages) == 0
@@ -982,6 +995,7 @@ def test_update_document__works_with_no_language(
     db_languages = (
         test_db.query(PhysicalDocumentLanguage)
         .filter(PhysicalDocumentLanguage.document_id == doc.id)
+        .filter(PhysicalDocumentLanguage.source == LanguageSource.MODEL)
         .all()
     )
     assert len(db_languages) == 0
@@ -1069,6 +1083,7 @@ def test_update_document__works_existing_languages(
     doc_languages = (
         test_db.query(PhysicalDocumentLanguage)
         .filter(PhysicalDocumentLanguage.document_id == doc.id)
+        .filter(PhysicalDocumentLanguage.source == LanguageSource.MODEL)
         .all()
     )
     assert len(doc_languages) == len(expected_languages)

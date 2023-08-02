@@ -15,6 +15,7 @@ from app.api.api_v1.schemas.document import (
 from app.core.auth import get_superuser_details
 from app.core.validation import IMPORT_ID_MATCHER
 from app.db.models.document.physical_document import (
+    LanguageSource,
     PhysicalDocument,
     Language,
     PhysicalDocumentLanguage,
@@ -138,7 +139,9 @@ async def update_document(
             )
             if lang is not None and lang.language_code not in existing_language_codes:
                 physical_document_language = PhysicalDocumentLanguage(
-                    language_id=lang.id, document_id=physical_document.id
+                    language_id=lang.id,
+                    document_id=physical_document.id,
+                    source=LanguageSource.MODEL,
                 )
                 db.add(physical_document_language)
                 db.flush()
