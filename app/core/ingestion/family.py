@@ -4,7 +4,10 @@ from sqlalchemy.orm import Session
 
 from app.core.ingestion.params import IngestParameters
 from app.core.organisation import get_organisation_taxonomy
-from app.core.ingestion.physical_document import create_physical_document_from_params
+from app.core.ingestion.physical_document import (
+    create_physical_document_from_params,
+    update_physical_document_languages,
+)
 from app.core.ingestion.utils import (
     create,
     get_or_create,
@@ -182,6 +185,9 @@ def handle_family_document_from_params(
                 "title",
                 params.document_title,
                 family_document.physical_document,
+            )
+            update_physical_document_languages(
+                db, params.language, result, family_document.physical_document
             )
 
         if len(updated) > 0:

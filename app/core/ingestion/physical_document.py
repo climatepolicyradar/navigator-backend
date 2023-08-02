@@ -1,5 +1,6 @@
 from typing import Any
 
+from sqlalchemy import delete, and_
 from sqlalchemy.orm import Session
 from app.core.ingestion.params import IngestParameters
 from app.core.ingestion.utils import to_dict
@@ -21,8 +22,8 @@ def create_physical_document_from_params(
     Create the document part of the schema from the row.
 
     :param [Session] db: connection to the database.
-    :param [IngestRow] row: the row built from the CSV.
-    :param [Document] existing_document: existing Document from which to retrieve data.
+    :param IngestParameters params: The parameters for the ingest.
+    :param dict[str, Any] result: The result of the ingest
     :return [dict[str, Any]]: a dictionary to describe what was created.
     """
     physical_document = PhysicalDocument(
@@ -36,23 +37,63 @@ def create_physical_document_from_params(
     db.flush()
     result["physical_document"] = to_dict(physical_document)
 
-    for language in params.language:
-        lang = db.query(Language).filter(Language.name == language).one_or_none()
-        if lang is not None:
-            doc_languages = result.get("language", [])
-            doc_languages.append(to_dict(lang))
-            result["language"] = doc_languages
-
-            physical_document_language = PhysicalDocumentLanguage(
-                language_id=lang.id,
-                document_id=physical_document.id,
-                source=LanguageSource.USER,
-            )
-            db.add(physical_document_language)
-            db.flush()
-
-            phys_doc_languages = result.get("physical_document_language", [])
-            phys_doc_languages.append(to_dict(physical_document_language))
-            result["physical_document_language"] = phys_doc_languages
+    update_physical_document_languages(db, params.language, result, physical_document)
 
     return physical_document
+
+
+def update_physical_document_languages(
+    db: Session,
+    langs: list[str],
+    result: dict[str, Any],
+    physical_document: PhysicalDocument,
+) -> None:
+    """
+    Updates the physical document with the languages in param.
+
+    :param Session db: connection to the db.
+    :param list[str] langs: List of languages.
+    :param dict[str, Any] result: The result of the ingest
+    :param PhysicalDocument physical_document: The physical document to update
+    """
+    existing_lang_ids = [
+        pdl.language_id
+        for pdl in db.query(PhysicalDocumentLanguage)
+        .filter_by(document_id=physical_document.id)
+        .all()
+    ]
+
+    for language in langs:
+        lang = db.query(Language).filter(Language.name == language).one_or_none()
+        if lang is None:
+            continue
+
+        if lang.id in existing_lang_ids:
+            existing_lang_ids.remove(lang.id)
+            continue
+
+        doc_languages = result.get("language", [])
+        doc_languages.append(to_dict(lang))
+        result["language"] = doc_languages
+
+        physical_document_language = PhysicalDocumentLanguage(
+            language_id=lang.id,
+            document_id=physical_document.id,
+            source=LanguageSource.USER,
+        )
+        db.add(physical_document_language)
+        db.flush()
+
+        phys_doc_languages = result.get("physical_document_language", [])
+        phys_doc_languages.append(to_dict(physical_document_language))
+        result["physical_document_language"] = phys_doc_languages
+
+    for lang_id in existing_lang_ids:
+        db.execute(
+            delete(PhysicalDocumentLanguage).where(
+                and_(
+                    PhysicalDocumentLanguage.language_id == lang_id,
+                    PhysicalDocumentLanguage.document_id == physical_document.id,
+                )
+            )
+        )
