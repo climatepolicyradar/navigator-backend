@@ -71,7 +71,9 @@ class PhysicalDocumentLanguage(Base):
         nullable=False,
     )
 
-    source = sa.Column(sa.Enum(LanguageSource), nullable=False)
+    source = sa.Column(
+        sa.Enum(LanguageSource), default=LanguageSource.MODEL, nullable=False
+    )
     visible = sa.Column(sa.Boolean, default=False, nullable=False)
 
     sa.PrimaryKeyConstraint(language_id, document_id)

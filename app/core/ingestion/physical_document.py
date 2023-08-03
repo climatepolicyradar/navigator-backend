@@ -1,6 +1,5 @@
 from typing import Any
 
-from sqlalchemy import delete, and_
 from sqlalchemy.orm import Session
 from app.core.ingestion.params import IngestParameters
 from app.core.ingestion.utils import to_dict
@@ -69,7 +68,6 @@ def update_physical_document_languages(
             continue
 
         if lang.id in existing_lang_ids:
-            existing_lang_ids.remove(lang.id)
             continue
 
         doc_languages = result.get("language", [])
@@ -88,13 +86,3 @@ def update_physical_document_languages(
         phys_doc_languages = result.get("physical_document_language", [])
         phys_doc_languages.append(to_dict(physical_document_language))
         result["physical_document_language"] = phys_doc_languages
-
-    for lang_id in existing_lang_ids:
-        db.execute(
-            delete(PhysicalDocumentLanguage).where(
-                and_(
-                    PhysicalDocumentLanguage.language_id == lang_id,
-                    PhysicalDocumentLanguage.document_id == physical_document.id,
-                )
-            )
-        )
