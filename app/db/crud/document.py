@@ -21,9 +21,7 @@ from app.api.api_v1.schemas.document import (
 )
 from app.db.models.app.users import Organisation
 from app.db.models.document.physical_document import (
-    Language,
     PhysicalDocument,
-    PhysicalDocumentLanguage,
 )
 from app.db.models.law_policy.collection import Collection, CollectionFamily
 from app.db.models.law_policy.family import (
@@ -97,7 +95,7 @@ def get_family_document_and_context(
         published_date=family.published_date,
         last_updated_date=family.last_updated_date,
     )
-    langs = _get_visible_languages_for_phys_doc(db, physical_document)
+    langs = _get_visible_languages_for_phys_doc(physical_document)
     response = FamilyDocumentResponse(
         import_id=document.import_id,
         variant=document.variant_name,
@@ -117,17 +115,13 @@ def get_family_document_and_context(
 
 
 def _get_visible_languages_for_phys_doc(
-    db: Session, physical_document: PhysicalDocument
+    physical_document: PhysicalDocument,
 ) -> Sequence[str]:
-    result = (
-        db.query(PhysicalDocumentLanguage.visible, Language.language_code)
-        .join(Language, Language.id == PhysicalDocumentLanguage.language_id)
-        .filter(PhysicalDocumentLanguage.document_id == physical_document.id)
-        .all()
-    )
-    if result is None or len(result) == 0:
-        return []
-    return [cast(str, code) for visible, code in result if visible]
+    return [
+        lang.language.language_code
+        for lang in physical_document.language_wrappers
+        if lang.visible
+    ]
 
 
 def get_family_and_documents(db: Session, import_id: str) -> FamilyAndDocumentsResponse:
@@ -239,7 +233,7 @@ def _get_documents_for_family_import_id(
     )
 
     def make_response(d: FamilyDocument) -> FamilyDocumentResponse:
-        langs = _get_visible_languages_for_phys_doc(db, d.physical_document)
+        langs = _get_visible_languages_for_phys_doc(d.physical_document)
         return FamilyDocumentResponse(
             import_id=cast(str, d.import_id),
             variant=cast(str, d.variant_name),

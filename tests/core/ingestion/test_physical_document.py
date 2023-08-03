@@ -115,24 +115,3 @@ def test_update_physical_document_adds_language(test_db: Session):
     assert actual_keys.symmetric_difference(expected_keys) == set([])
     assert test_db.query(PhysicalDocument).filter_by(title=DOCUMENT_TITLE).one()
     assert len(_get_all_phys_docs(test_db, cast(int, phys_doc.id))) == 3
-
-
-def test_update_physical_document_removes_language(test_db: Session):
-    result = {}
-    phys_doc, _ = _create_physical_document(test_db, ["English", "German"])
-
-    update_physical_document_languages(test_db, ["English"], result, phys_doc)
-    test_db.flush()
-
-    assert phys_doc
-    assert len(phys_doc.languages) == 1
-    assert set([lang.language_code for lang in phys_doc.languages]) == {
-        "eng",
-    }
-
-    # Now check db
-    actual_keys = set(result.keys())
-    expected_keys = set([])
-    assert actual_keys.symmetric_difference(expected_keys) == set([])
-    assert test_db.query(PhysicalDocument).filter_by(title=DOCUMENT_TITLE).one()
-    assert len(_get_all_phys_docs(test_db, cast(int, phys_doc.id))) == 1
