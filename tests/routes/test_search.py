@@ -44,6 +44,7 @@ from app.db.models.law_policy.metadata import (
 )
 from app.db.models.document.physical_document import (
     Language,
+    LanguageSource,
     PhysicalDocument,
     PhysicalDocumentLanguage,
 )
@@ -243,6 +244,8 @@ def _create_family_structures(
     physical_document_language = PhysicalDocumentLanguage(
         language_id=existing_language.id,
         document_id=physical_document.id,
+        source=LanguageSource.USER,
+        visible=True,
     )
     db.add(physical_document_language)
     db.commit()

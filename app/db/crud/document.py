@@ -20,7 +20,9 @@ from app.api.api_v1.schemas.document import (
     LinkableFamily,
 )
 from app.db.models.app.users import Organisation
-from app.db.models.document.physical_document import PhysicalDocument
+from app.db.models.document.physical_document import (
+    PhysicalDocument,
+)
 from app.db.models.law_policy.collection import Collection, CollectionFamily
 from app.db.models.law_policy.family import (
     DocumentStatus,
@@ -93,6 +95,7 @@ def get_family_document_and_context(
         published_date=family.published_date,
         last_updated_date=family.last_updated_date,
     )
+    langs = _get_visible_languages_for_phys_doc(physical_document)
     response = FamilyDocumentResponse(
         import_id=document.import_id,
         variant=document.variant_name,
@@ -102,12 +105,8 @@ def get_family_document_and_context(
         cdn_object=to_cdn_url(physical_document.cdn_object),
         source_url=physical_document.source_url,
         content_type=physical_document.content_type,
-        language=(
-            _get_languages_for_phys_doc(physical_document)[0]
-            if physical_document.languages
-            else ""
-        ),
-        languages=_get_languages_for_phys_doc(physical_document),
+        language=(langs[0] if len(langs) > 0 else ""),
+        languages=langs,
         document_type=document.document_type,
         document_role=document.document_role,
     )
@@ -115,8 +114,14 @@ def get_family_document_and_context(
     return FamilyDocumentWithContextResponse(family=family_context, document=response)
 
 
-def _get_languages_for_phys_doc(physical_document: PhysicalDocument) -> Sequence[str]:
-    return [cast(str, lang.language_code) for lang in physical_document.languages]
+def _get_visible_languages_for_phys_doc(
+    physical_document: PhysicalDocument,
+) -> Sequence[str]:
+    return [
+        lang.language.language_code
+        for lang in physical_document.language_wrappers
+        if lang.visible
+    ]
 
 
 def get_family_and_documents(db: Session, import_id: str) -> FamilyAndDocumentsResponse:
@@ -226,30 +231,26 @@ def _get_documents_for_family_import_id(
         .filter(FamilyDocument.family_import_id == import_id)
         .filter(FamilyDocument.document_status == DocumentStatus.PUBLISHED)
     )
-    documents = [
-        FamilyDocumentResponse(
-            import_id=d.import_id,
-            variant=d.variant_name,
-            slug=d.slugs[0].name,
-            # What follows is off PhysicalDocument
-            title=d.physical_document.title,
-            md5_sum=d.physical_document.md5_sum,
-            cdn_object=to_cdn_url(d.physical_document.cdn_object),
-            source_url=d.physical_document.source_url,
-            content_type=d.physical_document.content_type,
-            language=(
-                _get_languages_for_phys_doc(d.physical_document)[0]
-                if d.physical_document.languages
-                else ""
-            ),
-            languages=_get_languages_for_phys_doc(d.physical_document),
-            document_type=d.document_type,
-            document_role=d.document_role,
-        )
-        for d in db_documents
-    ]
 
-    return documents
+    def make_response(d: FamilyDocument) -> FamilyDocumentResponse:
+        langs = _get_visible_languages_for_phys_doc(d.physical_document)
+        return FamilyDocumentResponse(
+            import_id=cast(str, d.import_id),
+            variant=cast(str, d.variant_name),
+            slug=cast(str, d.slugs[0].name),
+            # What follows is off PhysicalDocument
+            title=cast(str, d.physical_document.title),
+            md5_sum=cast(str, d.physical_document.md5_sum),
+            cdn_object=to_cdn_url(cast(str, d.physical_document.cdn_object)),
+            source_url=cast(str, d.physical_document.source_url),
+            content_type=cast(str, d.physical_document.content_type),
+            language=(langs[0] if d.physical_document.languages else ""),
+            languages=langs,
+            document_type=cast(str, d.document_type),
+            document_role=cast(str, d.document_role),
+        )
+
+    return [make_response(d) for d in db_documents]
 
 
 class DocumentExtraCache:

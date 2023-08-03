@@ -4,7 +4,11 @@ from sqlalchemy import update
 from sqlalchemy.orm import Session
 from fastapi.testclient import TestClient
 from pytest_mock import MockerFixture
-from app.db.models.document.physical_document import Language, PhysicalDocumentLanguage
+from app.db.models.document.physical_document import (
+    Language,
+    LanguageSource,
+    PhysicalDocumentLanguage,
+)
 from app.db.models.law_policy.family import Family, FamilyDocument, FamilyEvent
 from tests.routes.document_helpers import (
     ONE_DFC_ROW_TWO_LANGUAGES,
@@ -287,6 +291,31 @@ def test_physical_doc_languages(
     assert document["languages"] == []
 
 
+def test_physical_doc_languages_not_visible(
+    client: TestClient,
+    test_db: Session,
+    mocker: Callable[..., Generator[MockerFixture, None, None]],
+):
+    setup_with_multiple_docs(
+        test_db, mocker, doc_data=TWO_DFC_ROW_ONE_LANGUAGE, event_data=TWO_EVENT_ROWS
+    )
+    test_db.execute(
+        update(PhysicalDocumentLanguage)
+        .where(PhysicalDocumentLanguage.document_id == 1)
+        .values(visible=False)
+    )
+
+    response = client.get(
+        "/api/v1/documents/DocSlug1",
+    )
+    json_response = response.json()
+    document = json_response["document"]
+
+    assert response.status_code == 200
+    print(json_response)
+    assert document["languages"] == []
+
+
 def test_physical_doc_multiple_languages(
     client: TestClient,
     test_db: Session,
@@ -446,9 +475,7 @@ def test_update_document__works_on_new_language(
     assert json_object["md5_sum"] == "c184214e-4870-48e0-adab-3e064b1b0e76"
     assert json_object["content_type"] == "updated/content_type"
     assert json_object["cdn_object"] == "folder/file"
-    assert {language["language_code"] for language in json_object["languages"]} == {
-        "eng"
-    }
+    assert json_object["languages"] == ["eng"]
 
     # Now Check the db
     doc = (
@@ -464,6 +491,7 @@ def test_update_document__works_on_new_language(
     languages = (
         test_db.query(PhysicalDocumentLanguage)
         .filter(PhysicalDocumentLanguage.document_id == doc.id)
+        .filter(PhysicalDocumentLanguage.source == LanguageSource.MODEL)
         .all()
     )
     assert len(languages) == 1
@@ -489,10 +517,8 @@ def test_update_document__works_on_new_language(
     assert json_object["md5_sum"] == "c184214e-4870-48e0-adab-3e064b1b0e76"
     assert json_object["content_type"] == "updated/content_type"
     assert json_object["cdn_object"] == "folder/file"
-    expected_languages = {"eng", "fra"}
-    assert {
-        lang["language_code"] for lang in json_object["languages"]
-    } == expected_languages
+    expected_languages = ["eng", "fra"]
+    assert json_object["languages"] == expected_languages
 
     # Now Check the db
     doc = (
@@ -508,6 +534,7 @@ def test_update_document__works_on_new_language(
     doc_languages = (
         test_db.query(PhysicalDocumentLanguage)
         .filter(PhysicalDocumentLanguage.document_id == doc.id)
+        .filter(PhysicalDocumentLanguage.source == LanguageSource.MODEL)
         .all()
     )
     assert len(doc_languages) == 2
@@ -554,9 +581,7 @@ def test_update_document__works_on_new_iso_639_1_language(
     assert json_object["md5_sum"] == "c184214e-4870-48e0-adab-3e064b1b0e76"
     assert json_object["content_type"] == "updated/content_type"
     assert json_object["cdn_object"] == "folder/file"
-    assert {language["language_code"] for language in json_object["languages"]} == {
-        "bod"
-    }
+    assert json_object["languages"] == ["bod"]
 
     # Now Check the db
     doc = (
@@ -572,6 +597,7 @@ def test_update_document__works_on_new_iso_639_1_language(
     languages = (
         test_db.query(PhysicalDocumentLanguage)
         .filter(PhysicalDocumentLanguage.document_id == doc.id)
+        .filter(PhysicalDocumentLanguage.source == LanguageSource.MODEL)
         .all()
     )
     assert len(languages) == 1
@@ -597,10 +623,8 @@ def test_update_document__works_on_new_iso_639_1_language(
     assert json_object["md5_sum"] == "c184214e-4870-48e0-adab-3e064b1b0e76"
     assert json_object["content_type"] == "updated/content_type"
     assert json_object["cdn_object"] == "folder/file"
-    expected_languages = {"ell", "bod"}
-    assert {
-        lang["language_code"] for lang in json_object["languages"]
-    } == expected_languages
+    expected_languages = set(["ell", "bod"])
+    assert set(json_object["languages"]) == expected_languages
 
     # Now Check the db
     doc = (
@@ -616,6 +640,7 @@ def test_update_document__works_on_new_iso_639_1_language(
     doc_languages = (
         test_db.query(PhysicalDocumentLanguage)
         .filter(PhysicalDocumentLanguage.document_id == doc.id)
+        .filter(PhysicalDocumentLanguage.source == LanguageSource.MODEL)
         .all()
     )
     assert len(doc_languages) == 2
@@ -669,9 +694,7 @@ def test_update_document__works_on_existing_iso_639_1_language(
     assert json_object["md5_sum"] == "c184214e-4870-48e0-adab-3e064b1b0e76"
     assert json_object["content_type"] == "updated/content_type"
     assert json_object["cdn_object"] == "folder/file"
-    assert {language["language_code"] for language in json_object["languages"]} == {
-        "bod"
-    }
+    assert json_object["languages"] == ["bod"]
 
     # Now Check the db
     doc = (
@@ -687,6 +710,7 @@ def test_update_document__works_on_existing_iso_639_1_language(
     languages = (
         test_db.query(PhysicalDocumentLanguage)
         .filter(PhysicalDocumentLanguage.document_id == doc.id)
+        .filter(PhysicalDocumentLanguage.source == LanguageSource.MODEL)
         .all()
     )
     assert len(languages) == 1
@@ -712,10 +736,8 @@ def test_update_document__works_on_existing_iso_639_1_language(
     assert json_object["md5_sum"] == "c184214e-4870-48e0-adab-3e064b1b0e76"
     assert json_object["content_type"] == "updated/content_type"
     assert json_object["cdn_object"] == "folder/file"
-    expected_languages = {"bod"}
-    assert {
-        lang["language_code"] for lang in json_object["languages"]
-    } == expected_languages
+    expected_languages = ["bod"]
+    assert json_object["languages"] == expected_languages
 
     # Now Check the db
     doc = (
@@ -731,6 +753,7 @@ def test_update_document__works_on_existing_iso_639_1_language(
     doc_languages = (
         test_db.query(PhysicalDocumentLanguage)
         .filter(PhysicalDocumentLanguage.document_id == doc.id)
+        .filter(PhysicalDocumentLanguage.source == LanguageSource.MODEL)
         .all()
     )
     assert len(doc_languages) == 1
@@ -783,9 +806,7 @@ def test_update_document__works_on_existing_iso_639_3_language(
     assert json_object["md5_sum"] == "c184214e-4870-48e0-adab-3e064b1b0e76"
     assert json_object["content_type"] == "updated/content_type"
     assert json_object["cdn_object"] == "folder/file"
-    assert {language["language_code"] for language in json_object["languages"]} == {
-        "bod"
-    }
+    assert json_object["languages"] == ["bod"]
 
     # Now Check the db
     doc = (
@@ -801,6 +822,7 @@ def test_update_document__works_on_existing_iso_639_3_language(
     languages = (
         test_db.query(PhysicalDocumentLanguage)
         .filter(PhysicalDocumentLanguage.document_id == doc.id)
+        .filter(PhysicalDocumentLanguage.source == LanguageSource.MODEL)
         .all()
     )
     assert len(languages) == 1
@@ -826,10 +848,8 @@ def test_update_document__works_on_existing_iso_639_3_language(
     assert json_object["md5_sum"] == "c184214e-4870-48e0-adab-3e064b1b0e76"
     assert json_object["content_type"] == "updated/content_type"
     assert json_object["cdn_object"] == "folder/file"
-    expected_languages = {"bod"}
-    assert {
-        lang["language_code"] for lang in json_object["languages"]
-    } == expected_languages
+    expected_languages = ["bod"]
+    assert json_object["languages"] == expected_languages
 
     # Now Check the db
     doc = (
@@ -845,6 +865,7 @@ def test_update_document__works_on_existing_iso_639_3_language(
     doc_languages = (
         test_db.query(PhysicalDocumentLanguage)
         .filter(PhysicalDocumentLanguage.document_id == doc.id)
+        .filter(PhysicalDocumentLanguage.source == LanguageSource.MODEL)
         .all()
     )
     assert len(doc_languages) == 1
@@ -895,7 +916,7 @@ def test_update_document__logs_warning_on_four_letter_language(
     assert json_object["md5_sum"] == "c184214e-4870-48e0-adab-3e064b1b0e76"
     assert json_object["content_type"] == "updated/content_type"
     assert json_object["cdn_object"] == "folder/file"
-    assert {language["language_code"] for language in json_object["languages"]} == set()
+    assert json_object["languages"] == []
 
     assert (
         log_spy.call_args_list[0].args[0]
@@ -918,6 +939,7 @@ def test_update_document__logs_warning_on_four_letter_language(
     languages = (
         test_db.query(PhysicalDocumentLanguage)
         .filter(PhysicalDocumentLanguage.document_id == doc.id)
+        .filter(PhysicalDocumentLanguage.source == LanguageSource.MODEL)
         .all()
     )
     assert len(languages) == 0
@@ -966,7 +988,7 @@ def test_update_document__works_with_no_language(
     assert json_object["md5_sum"] == "c184214e-4870-48e0-adab-3e064b1b0e76"
     assert json_object["content_type"] == "updated/content_type"
     assert json_object["cdn_object"] == "folder/file"
-    assert {language["language_code"] for language in json_object["languages"]} == set()
+    assert json_object["languages"] == []
 
     # Now Check the db
     doc = (
@@ -982,6 +1004,7 @@ def test_update_document__works_with_no_language(
     db_languages = (
         test_db.query(PhysicalDocumentLanguage)
         .filter(PhysicalDocumentLanguage.document_id == doc.id)
+        .filter(PhysicalDocumentLanguage.source == LanguageSource.MODEL)
         .all()
     )
     assert len(db_languages) == 0
@@ -1025,6 +1048,7 @@ def test_update_document__works_existing_languages(
         existing_doc_lang = PhysicalDocumentLanguage(
             language_id=existing_lang.id,
             document_id=existing_doc.id,
+            source=LanguageSource.MODEL,
         )
         test_db.add(existing_doc_lang)
         test_db.flush()
@@ -1051,9 +1075,7 @@ def test_update_document__works_existing_languages(
     assert json_object["cdn_object"] == "folder/file"
 
     expected_languages = set(languages_to_add + existing_languages)
-    assert {
-        language["language_code"] for language in json_object["languages"]
-    } == expected_languages
+    assert set(json_object["languages"]) == expected_languages
 
     # Now Check the db
     doc = (
@@ -1069,6 +1091,7 @@ def test_update_document__works_existing_languages(
     doc_languages = (
         test_db.query(PhysicalDocumentLanguage)
         .filter(PhysicalDocumentLanguage.document_id == doc.id)
+        .filter(PhysicalDocumentLanguage.source == LanguageSource.MODEL)
         .all()
     )
     assert len(doc_languages) == len(expected_languages)

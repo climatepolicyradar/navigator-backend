@@ -1,8 +1,9 @@
 from typing import Sequence
 
 import sqlalchemy as sa
+from sqlalchemy.ext.hybrid import hybrid_property
 from sqlalchemy.orm import relationship
-
+from app.db.models.app.enum import BaseModelEnum
 from app.db.session import Base
 
 
@@ -43,14 +44,21 @@ class PhysicalDocument(Base):
     source_url = sa.Column(sa.Text, nullable=True)
     content_type = sa.Column(sa.Text, nullable=True)
 
-    languages: Sequence[Language] = relationship(
-        Language,
-        secondary="physical_document_language",
-        primaryjoin="PhysicalDocument.id == PhysicalDocumentLanguage.document_id",
-        secondaryjoin="PhysicalDocumentLanguage.language_id == Language.id",
-        viewonly=True,
-        lazy="joined",
+    language_wrappers = relationship(
+        "PhysicalDocumentLanguage", viewonly=True, lazy="joined"
     )
+
+    @hybrid_property
+    def languages(self) -> Sequence[Language]:
+        """Uses the language_wrapper to now return the languages."""
+        return [w.language for w in self.language_wrappers]
+
+
+class LanguageSource(BaseModelEnum):
+    """The source of where the language came from"""
+
+    USER = "User"
+    MODEL = "Model"
 
 
 class PhysicalDocumentLanguage(Base):
@@ -63,5 +71,11 @@ class PhysicalDocumentLanguage(Base):
         sa.ForeignKey(PhysicalDocument.id, ondelete="CASCADE"),
         nullable=False,
     )
+
+    source = sa.Column(
+        sa.Enum(LanguageSource), default=LanguageSource.MODEL, nullable=False
+    )
+    visible = sa.Column(sa.Boolean, default=False, nullable=False)
+    language = relationship("Language", viewonly=True, lazy="joined")
 
     sa.PrimaryKeyConstraint(language_id, document_id)
