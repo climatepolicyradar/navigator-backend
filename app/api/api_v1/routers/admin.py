@@ -163,18 +163,24 @@ async def update_document(
 
     db.commit()
     db.refresh(physical_document)
+    langs = [doc.language_code for doc in physical_document.languages]
+    result = {
+        "id": physical_document.id,
+        "title": physical_document.title,
+        "md5_sum": physical_document.md5_sum,
+        "cdn_object": physical_document.cdn_object,
+        "source_url": physical_document.source_url,
+        "content_type": physical_document.content_type,
+        "languages": langs,
+    }
     _LOGGER.info(
         "Call to update_document complete",
         extra={
             "props": {
                 "superuser_email": current_user.email,
                 "num_changed": num_changed,
-                "import_id": family_document.import_id,
-                "md5_sum": physical_document.md5_sum,
-                "content_type": physical_document.content_type,
-                "cdn_object": physical_document.cdn_object,
-                "languages": [doc.language_code for doc in physical_document.languages],
+                "result": result,
             }
         },
     )
-    return physical_document
+    return result

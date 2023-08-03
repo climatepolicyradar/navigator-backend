@@ -475,9 +475,7 @@ def test_update_document__works_on_new_language(
     assert json_object["md5_sum"] == "c184214e-4870-48e0-adab-3e064b1b0e76"
     assert json_object["content_type"] == "updated/content_type"
     assert json_object["cdn_object"] == "folder/file"
-    assert {language["language_code"] for language in json_object["languages"]} == {
-        "eng"
-    }
+    assert json_object["languages"] == ["eng"]
 
     # Now Check the db
     doc = (
@@ -519,10 +517,8 @@ def test_update_document__works_on_new_language(
     assert json_object["md5_sum"] == "c184214e-4870-48e0-adab-3e064b1b0e76"
     assert json_object["content_type"] == "updated/content_type"
     assert json_object["cdn_object"] == "folder/file"
-    expected_languages = {"eng", "fra"}
-    assert {
-        lang["language_code"] for lang in json_object["languages"]
-    } == expected_languages
+    expected_languages = ["eng", "fra"]
+    assert json_object["languages"] == expected_languages
 
     # Now Check the db
     doc = (
@@ -585,9 +581,7 @@ def test_update_document__works_on_new_iso_639_1_language(
     assert json_object["md5_sum"] == "c184214e-4870-48e0-adab-3e064b1b0e76"
     assert json_object["content_type"] == "updated/content_type"
     assert json_object["cdn_object"] == "folder/file"
-    assert {language["language_code"] for language in json_object["languages"]} == {
-        "bod"
-    }
+    assert json_object["languages"] == ["bod"]
 
     # Now Check the db
     doc = (
@@ -629,10 +623,8 @@ def test_update_document__works_on_new_iso_639_1_language(
     assert json_object["md5_sum"] == "c184214e-4870-48e0-adab-3e064b1b0e76"
     assert json_object["content_type"] == "updated/content_type"
     assert json_object["cdn_object"] == "folder/file"
-    expected_languages = {"ell", "bod"}
-    assert {
-        lang["language_code"] for lang in json_object["languages"]
-    } == expected_languages
+    expected_languages = ["ell", "bod"]
+    assert json_object["languages"] == expected_languages
 
     # Now Check the db
     doc = (
@@ -702,9 +694,7 @@ def test_update_document__works_on_existing_iso_639_1_language(
     assert json_object["md5_sum"] == "c184214e-4870-48e0-adab-3e064b1b0e76"
     assert json_object["content_type"] == "updated/content_type"
     assert json_object["cdn_object"] == "folder/file"
-    assert {language["language_code"] for language in json_object["languages"]} == {
-        "bod"
-    }
+    assert json_object["languages"] == ["bod"]
 
     # Now Check the db
     doc = (
@@ -746,10 +736,8 @@ def test_update_document__works_on_existing_iso_639_1_language(
     assert json_object["md5_sum"] == "c184214e-4870-48e0-adab-3e064b1b0e76"
     assert json_object["content_type"] == "updated/content_type"
     assert json_object["cdn_object"] == "folder/file"
-    expected_languages = {"bod"}
-    assert {
-        lang["language_code"] for lang in json_object["languages"]
-    } == expected_languages
+    expected_languages = ["bod"]
+    assert json_object["languages"] == expected_languages
 
     # Now Check the db
     doc = (
@@ -818,9 +806,7 @@ def test_update_document__works_on_existing_iso_639_3_language(
     assert json_object["md5_sum"] == "c184214e-4870-48e0-adab-3e064b1b0e76"
     assert json_object["content_type"] == "updated/content_type"
     assert json_object["cdn_object"] == "folder/file"
-    assert {language["language_code"] for language in json_object["languages"]} == {
-        "bod"
-    }
+    assert json_object["languages"] == ["bod"]
 
     # Now Check the db
     doc = (
@@ -862,10 +848,8 @@ def test_update_document__works_on_existing_iso_639_3_language(
     assert json_object["md5_sum"] == "c184214e-4870-48e0-adab-3e064b1b0e76"
     assert json_object["content_type"] == "updated/content_type"
     assert json_object["cdn_object"] == "folder/file"
-    expected_languages = {"bod"}
-    assert {
-        lang["language_code"] for lang in json_object["languages"]
-    } == expected_languages
+    expected_languages = ["bod"]
+    assert json_object["languages"] == expected_languages
 
     # Now Check the db
     doc = (
@@ -932,7 +916,7 @@ def test_update_document__logs_warning_on_four_letter_language(
     assert json_object["md5_sum"] == "c184214e-4870-48e0-adab-3e064b1b0e76"
     assert json_object["content_type"] == "updated/content_type"
     assert json_object["cdn_object"] == "folder/file"
-    assert {language["language_code"] for language in json_object["languages"]} == set()
+    assert json_object["languages"] == []
 
     assert (
         log_spy.call_args_list[0].args[0]
@@ -1004,7 +988,7 @@ def test_update_document__works_with_no_language(
     assert json_object["md5_sum"] == "c184214e-4870-48e0-adab-3e064b1b0e76"
     assert json_object["content_type"] == "updated/content_type"
     assert json_object["cdn_object"] == "folder/file"
-    assert {language["language_code"] for language in json_object["languages"]} == set()
+    assert json_object["languages"] == []
 
     # Now Check the db
     doc = (
@@ -1091,9 +1075,7 @@ def test_update_document__works_existing_languages(
     assert json_object["cdn_object"] == "folder/file"
 
     expected_languages = set(languages_to_add + existing_languages)
-    assert {
-        language["language_code"] for language in json_object["languages"]
-    } == expected_languages
+    assert set(json_object["languages"]) == expected_languages
 
     # Now Check the db
     doc = (

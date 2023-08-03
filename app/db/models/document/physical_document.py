@@ -44,7 +44,9 @@ class PhysicalDocument(Base):
     source_url = sa.Column(sa.Text, nullable=True)
     content_type = sa.Column(sa.Text, nullable=True)
 
-    language_wrappers = relationship("PhysicalDocumentLanguage")
+    language_wrappers = relationship(
+        "PhysicalDocumentLanguage", viewonly=True, lazy="joined"
+    )
 
     @hybrid_property
     def languages(self) -> Sequence[Language]:
@@ -74,6 +76,6 @@ class PhysicalDocumentLanguage(Base):
         sa.Enum(LanguageSource), default=LanguageSource.MODEL, nullable=False
     )
     visible = sa.Column(sa.Boolean, default=False, nullable=False)
-    language = relationship("Language")
+    language = relationship("Language", viewonly=True, lazy="joined")
 
     sa.PrimaryKeyConstraint(language_id, document_id)
