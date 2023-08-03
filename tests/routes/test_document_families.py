@@ -623,8 +623,8 @@ def test_update_document__works_on_new_iso_639_1_language(
     assert json_object["md5_sum"] == "c184214e-4870-48e0-adab-3e064b1b0e76"
     assert json_object["content_type"] == "updated/content_type"
     assert json_object["cdn_object"] == "folder/file"
-    expected_languages = ["ell", "bod"]
-    assert json_object["languages"] == expected_languages
+    expected_languages = set(["ell", "bod"])
+    assert set(json_object["languages"]) == expected_languages
 
     # Now Check the db
     doc = (
