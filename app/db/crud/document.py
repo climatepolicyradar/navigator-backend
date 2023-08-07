@@ -95,7 +95,7 @@ def get_family_document_and_context(
         published_date=family.published_date,
         last_updated_date=family.last_updated_date,
     )
-    langs = _get_visible_languages_for_phys_doc(physical_document)
+    visible_languages = _get_visible_languages_for_phys_doc(physical_document)
     response = FamilyDocumentResponse(
         import_id=document.import_id,
         variant=document.variant_name,
@@ -105,8 +105,8 @@ def get_family_document_and_context(
         cdn_object=to_cdn_url(physical_document.cdn_object),
         source_url=physical_document.source_url,
         content_type=physical_document.content_type,
-        language=(langs[0] if len(langs) > 0 else ""),
-        languages=langs,
+        language=(visible_languages[0] if visible_languages else ""),
+        languages=visible_languages,
         document_type=document.document_type,
         document_role=document.document_role,
     )
