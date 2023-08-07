@@ -45,6 +45,7 @@ pyright = "^1.1.294"
 pytest-asyncio = "^0.18.3"
 ruff = "^0.0.246"
 pytest-alembic = "^0.10.5"
+types-SQLAlchemy = "^1.4.31"
 
 [build-system]
 requires = ["poetry-core>=1.0.0"]

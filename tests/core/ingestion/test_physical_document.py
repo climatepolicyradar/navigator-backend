@@ -115,3 +115,47 @@ def test_update_physical_document_adds_language(test_db: Session):
     assert actual_keys.symmetric_difference(expected_keys) == set([])
     assert test_db.query(PhysicalDocument).filter_by(title=DOCUMENT_TITLE).one()
     assert len(_get_all_phys_docs(test_db, cast(int, phys_doc.id))) == 3
+
+
+def test_update_physical_document_language_model_to_user(test_db: Session):
+    phys_doc, _ = _create_physical_document(test_db, ["English", "German"])
+
+    existing_links: list[PhysicalDocumentLanguage] = (
+        test_db.query(PhysicalDocumentLanguage).filter_by(document_id=phys_doc.id).all()
+    )
+    for link in existing_links:
+        link.source = LanguageSource.MODEL  # type: ignore
+        link.visible = False  # type: ignore
+    test_db.flush()
+
+    # Validate db state before calling update
+    language_links_before_update: list[PhysicalDocumentLanguage] = (
+        test_db.query(PhysicalDocumentLanguage).filter_by(document_id=phys_doc.id).all()
+    )
+    for link in language_links_before_update:
+        assert link.source == LanguageSource.MODEL
+        assert link.visible is False
+
+    result = {}
+    update_physical_document_languages(test_db, ["English", "German"], result, phys_doc)
+    test_db.flush()
+
+    # Now check db
+    assert phys_doc
+    assert len(phys_doc.languages) == 2
+    assert set([lang.language_code for lang in phys_doc.languages]) == {
+        "eng",
+        "deu",
+    }
+
+    actual_keys = set(result.keys())
+    expected_keys = set(["physical_document_language"])
+    assert actual_keys.symmetric_difference(expected_keys) == set([])
+    language_links_after_update: list[PhysicalDocumentLanguage] = (
+        test_db.query(PhysicalDocumentLanguage).filter_by(document_id=phys_doc.id).all()
+    )
+    for link in language_links_after_update:
+        assert link.source == LanguageSource.USER
+        assert link.visible is True
+
+    assert len(_get_all_phys_docs(test_db, cast(int, phys_doc.id))) == 2
