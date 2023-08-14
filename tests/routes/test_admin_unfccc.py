@@ -27,6 +27,7 @@ EXPECTED_DOCUMENTS = """{
       "type": "Synthesis Report",
       "source": "UNFCCC",
       "import_id": "UNFCCC.Document.1.0",
+      "family_import_id": "UNFCCC.family.1.0",
       "category": "UNFCCC",
       "geography": "GBR",
       "languages": [],

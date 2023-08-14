@@ -87,6 +87,7 @@ def test_write_documents_to_s3(test_s3_client, mocker):
         type="executive",
         source="CCLW",
         import_id="1234-5678",
+        family_import_id="family_1234-5678",
         slug="geo_2008_name_1234_5678",
         category="category",
         geography="GEO",

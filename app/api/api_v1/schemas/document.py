@@ -126,6 +126,7 @@ class DocumentParserInput(BaseModel):
     type: str
     source: str
     import_id: str
+    family_import_id: str
     category: str
     geography: str
     languages: Sequence[str]
