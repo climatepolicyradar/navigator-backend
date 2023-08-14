@@ -81,7 +81,6 @@ def test_write_documents_to_s3(test_s3_client, mocker):
     d = DocumentParserInput(
         publication_ts=datetime.datetime(year=2008, month=12, day=25),
         name="name",
-        postfix="pf-A",
         description="description",
         source_url=None,
         download_url=None,
@@ -90,15 +89,9 @@ def test_write_documents_to_s3(test_s3_client, mocker):
         import_id="1234-5678",
         slug="geo_2008_name_1234_5678",
         category="category",
-        frameworks=[],
         geography="GEO",
-        hazards=[],
-        instruments=[],
-        keywords=[],
         languages=[],
-        sectors=[],
-        topics=[],
-        events=[],
+        metadata={},
     )
 
     upload_file_mock = mocker.patch.object(test_s3_client, "upload_fileobj")

@@ -5,6 +5,9 @@ from pydantic import BaseModel, validator
 from . import CLIMATE_LAWS_MATCH
 
 
+Json = dict[str, Any]
+
+
 class Event(BaseModel):  # noqa: D101
     name: str
     description: str
@@ -115,7 +118,6 @@ class DocumentParserInput(BaseModel):
     publication_ts: datetime
     name: str
     description: str
-    postfix: Optional[str]
     source_url: Optional[str]
     download_url: Optional[str]
 
@@ -125,17 +127,10 @@ class DocumentParserInput(BaseModel):
     source: str
     import_id: str
     category: str
-
-    frameworks: Sequence[str]
     geography: str
-    hazards: Sequence[str]
-    instruments: Sequence[str]
-    keywords: Sequence[str]
     languages: Sequence[str]
-    sectors: Sequence[str]
-    topics: Sequence[str]
 
-    events: Sequence[Event]
+    metadata: Json
 
     def to_json(self) -> Mapping[str, Any]:
         """Provide a serialisable version of the model"""
@@ -144,7 +139,6 @@ class DocumentParserInput(BaseModel):
         json_dict["publication_ts"] = (
             self.publication_ts.isoformat() if self.publication_ts is not None else None
         )
-        json_dict["events"] = [event.to_json() for event in self.events]
         return json_dict
 
     class Config:  # noqa: D106

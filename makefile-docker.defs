@@ -77,7 +77,7 @@ setup_test_search_index:
 	docker-compose -f docker-compose.yml -f docker-compose.dev.yml run --rm opensearch-test-loader multielasticdump --direction=load --input=/cpr-backend/tests/data/ --output=${OPENSEARCH_URL} --ignoreType=template
 
 test_search: setup_test_search_index
-	docker-compose -f docker-compose.yml -f docker-compose.dev.yml run --name search_test -v ./data:/data backend pytest -vvv -m 'search'
+	docker-compose -f docker-compose.yml -f docker-compose.dev.yml run --name search_test -v "${PWD}/data:/data" backend pytest -vvv -m 'search'
 	docker cp search_test:/data/benchmark_browse.txt .
 	docker cp search_test:/data/benchmark_search.txt .
 	docker rm search_test
