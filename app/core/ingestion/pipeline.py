@@ -1,5 +1,5 @@
 from datetime import datetime, timezone
-from typing import Sequence, Tuple, cast
+from typing import Any, Sequence, Tuple, cast
 
 from sqlalchemy.orm import Session
 
@@ -11,22 +11,27 @@ from app.db.models.law_policy.family import (
     FamilyOrganisation,
     Geography,
 )
+from app.db.models.law_policy.metadata import FamilyMetadata
 
 
 def generate_pipeline_ingest_input(db: Session) -> Sequence[DocumentParserInput]:
     """Generates a complete view of the current document database as pipeline input"""
     query = (
-        db.query(Family, FamilyDocument, Geography, Organisation)
+        db.query(Family, FamilyDocument, FamilyMetadata, Geography, Organisation)
         .join(Family, Family.import_id == FamilyDocument.family_import_id)
         .join(
             FamilyOrganisation, FamilyOrganisation.family_import_id == Family.import_id
         )
+        .join(FamilyMetadata, Family.import_id == FamilyMetadata.family_import_id)
         .join(Organisation, Organisation.id == FamilyOrganisation.organisation_id)
         .join(Geography, Geography.id == Family.geography_id)
     )
 
     query_result = cast(
-        Sequence[Tuple[Family, FamilyDocument, Geography, Organisation]], query.all()
+        Sequence[
+            Tuple[Family, FamilyDocument, FamilyMetadata, Geography, Organisation]
+        ],
+        query.all(),
     )
     fallback_date = datetime(1900, 1, 1, tzinfo=timezone.utc)
     documents: Sequence[DocumentParserInput] = [
@@ -36,6 +41,7 @@ def generate_pipeline_ingest_input(db: Session) -> Sequence[DocumentParserInput]
             category=str(family.family_category),
             publication_ts=family.published_date or fallback_date,
             import_id=cast(str, family_document.import_id),
+            family_import_id=cast(str, family.import_id),
             source_url=(
                 cast(str, family_document.physical_document.source_url)
                 if family_document.physical_document is not None
@@ -54,17 +60,15 @@ def generate_pipeline_ingest_input(db: Session) -> Sequence[DocumentParserInput]
                     else []
                 )
             ],
-            # TODO: the following are not used & should be removed
-            events=[],
-            frameworks=[],
-            hazards=[],
-            instruments=[],
-            keywords=[],
-            postfix=None,
-            sectors=[],
-            topics=[],
+            metadata=cast(dict[str, Any], family_metadata.value),
         )
-        for family, family_document, geography, organisation in query_result
+        for (
+            family,
+            family_document,
+            family_metadata,
+            geography,
+            organisation,
+        ) in query_result
     ]
 
     return documents
