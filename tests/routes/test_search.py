@@ -110,16 +110,6 @@ def _populate_search_db_families(db: Session) -> None:
                     )
 
 
-def _map_old_category_to_new(supplied_category: str) -> str:
-    """Temporarily translate new category strings into old values when searching"""
-    # TODO: remove after opensearch data & frontend upgrades
-    if supplied_category.lower() == "law":
-        return "Legislative"
-    if supplied_category.lower() == "policy":
-        return "Executive"
-    return supplied_category
-
-
 def _generate_metadata(
     cclw_taxonomy_data: Mapping[str, dict]
 ) -> Mapping[str, Sequence[str]]:
@@ -172,9 +162,7 @@ def _create_family_structures(
                 .one()
                 .id
             ),
-            family_category=FamilyCategory(
-                _map_old_category_to_new(doc_details["document_category"])
-            ),
+            family_category=FamilyCategory(doc_details["document_category"]),
         )
         family_slug = Slug(
             name=family_id,
@@ -733,7 +721,7 @@ def test_multiple_filters(test_opensearch, test_db, monkeypatch, client, mocker)
         "terms": {_FILTER_FIELD_MAP[FilterField("sources")]: ["CCLW"]}
     } in query_body["query"]["bool"]["filter"]
     assert {
-        "terms": {_FILTER_FIELD_MAP[FilterField("categories")]: ["Law"]}
+        "terms": {_FILTER_FIELD_MAP[FilterField("categories")]: ["Legislative"]}
     } in query_body["query"]["bool"]["filter"]
     assert {
         "range": {"document_date": {"gte": "01/01/1900", "lte": "31/12/2020"}}

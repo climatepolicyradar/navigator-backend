@@ -42,16 +42,6 @@ _DOCUMENT_EXTRA_INFO_CACHE = DocumentExtraCache()
 search_router = APIRouter()
 
 
-def _map_new_category_to_old(supplied_category: str) -> str:
-    """Temporarily translate new category strings into old values when searching"""
-    # TODO: remove after opensearch data & frontend upgrades
-    if supplied_category.lower() == "legislative":
-        return "Law"
-    if supplied_category.lower() == "executive":
-        return "Policy"
-    return supplied_category
-
-
 def _search_request(db: Session, search_body: SearchRequestBody) -> SearchResponse:
     if search_body.keyword_filters is not None:
         search_body.keyword_filters = process_search_keyword_filters(
@@ -66,12 +56,6 @@ def _search_request(db: Session, search_body: SearchRequestBody) -> SearchRespon
             req=_get_browse_args_from_search_request_body(search_body),
         )
     else:
-        if search_body.keyword_filters is not None:
-            if categories := search_body.keyword_filters.get(FilterField.CATEGORY):
-                fixed_categories = [_map_new_category_to_old(c) for c in categories]
-                keyword_filters = dict(search_body.keyword_filters)
-                keyword_filters[FilterField.CATEGORY] = fixed_categories
-                search_body.keyword_filters = keyword_filters
         return _OPENSEARCH_CONNECTION.query_families(
             search_request_body=search_body,
             opensearch_internal_config=_OPENSEARCH_INDEX_CONFIG,
