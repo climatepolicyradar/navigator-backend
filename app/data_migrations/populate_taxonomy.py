@@ -81,10 +81,7 @@ def _migrate_UNFCCC(db: Session, org_unfcc: Organisation) -> None:
     result = db.execute(
         update(Organisation)
         .where(Organisation.id == org_unfcc.id)
-        .values(
-            name="CPR",
-            description="Climate Policy Radar",
-        )
+        .values(name="CPR", description="Climate Policy Radar", organisation_type="CIC")
     )
     # Raise if we didn't update
     if result.rowcount == 0:  # type: ignore
