@@ -1,3 +1,4 @@
+from enum import Enum
 import sqlalchemy as sa
 from sqlalchemy import PrimaryKeyConstraint
 
@@ -38,3 +39,40 @@ class OrganisationUser(Base):
     is_admin = sa.Column(sa.Boolean, default=False, nullable=False)
 
     PrimaryKeyConstraint(appuser_email, organisation_id)
+
+
+class CountedEntity(str, Enum):
+    """Entities that are to be counted."""
+
+    Collection = "collection"
+    Family = "family"
+    Document = "document"
+    Event = "event"
+
+
+class OrganisationDatasource(Base):
+    """
+    A list of datasources (document corpuses) for an organisation.
+
+    Example:
+        Organisation LSE has a datasource CCLW and another UNFCCC
+        There would be two entries in this table with different prefixes.
+        The format of id to get produced would be:
+            <datasource.prefix>.<entity>.<counter>.<n>
+
+    """
+
+    __tablename__ = "organisation_datasource"
+
+    id = sa.Column(sa.Integer, primary_key=True)
+    organisation_id = sa.Column(
+        sa.Integer, sa.ForeignKey(Organisation.id), nullable=False
+    )
+    description = sa.Column(sa.String)
+    prefix = sa.Column(sa.String)
+    counter = sa.Column(sa.Integer)
+
+    def get_import_id(self, entity: CountedEntity, n: int = 0) -> str:
+        """gets an import id"""
+        # TODO Read and increment counter
+        return f"{self.prefix}.{entity.value}.{self.counter}.{n}"
