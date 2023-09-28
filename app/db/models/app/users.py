@@ -52,7 +52,7 @@ class CountedEntity(str, Enum):
 
 class OrganisationDatasource(Base):
     """
-    A list of datasources (document corpuses) for an organisation.
+    A list of data sources (corpuses) for an organisation.
 
     Example:
         Organisation LSE has a datasource CCLW and another UNFCCC
@@ -69,10 +69,10 @@ class OrganisationDatasource(Base):
         sa.Integer, sa.ForeignKey(Organisation.id), nullable=False
     )
     description = sa.Column(sa.String)
-    prefix = sa.Column(sa.String)
-    counter = sa.Column(sa.Integer)
+    prefix = sa.Column(sa.String, unique=True)
+    counter = sa.Column(sa.Integer, default=1)
 
     def get_import_id(self, entity: CountedEntity, n: int = 0) -> str:
         """gets an import id"""
         # TODO Read and increment counter
-        return f"{self.prefix}.{entity.value}.{self.counter}.{n}"
+        return f"{self.prefix}.{entity.value}.i{self.counter}.{n}"
