@@ -46,6 +46,7 @@ from app.core.validation.util import (
     write_documents_to_s3,
     write_ingest_results_to_s3,
 )
+from app.db.models.app import ORGANISATION_CCLW
 from app.db.session import get_db
 
 _LOGGER = logging.getLogger(__name__)
@@ -63,7 +64,7 @@ def _start_ingest(
     context = None
     # TODO: add a way for a user to monitor progress of the ingest
     try:
-        context = initialise_context(db, "CCLW")
+        context = initialise_context(db, ORGANISATION_CCLW)
         document_ingestor = get_cclw_document_ingestor(db, context)
         read(documents_file_contents, context, CCLWDocumentIngestRow, document_ingestor)
         event_ingestor = get_event_ingestor(db)
@@ -135,7 +136,7 @@ def validate_law_policy(
     )
 
     try:
-        context = initialise_context(db, "CCLW")
+        context = initialise_context(db, ORGANISATION_CCLW)
     except Exception as e:
         _LOGGER.exception(
             "Failed to create ingest context", extra={"props": {"errors": str(e)}}
@@ -206,7 +207,7 @@ def ingest_law_policy(
     )
 
     try:
-        context = initialise_context(db, "CCLW")
+        context = initialise_context(db, ORGANISATION_CCLW)
     except Exception as e:
         _LOGGER.exception(
             "Failed to create ingest context", extra={"props": {"errors": str(e)}}

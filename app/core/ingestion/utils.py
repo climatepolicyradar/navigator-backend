@@ -2,6 +2,7 @@ import abc
 from dataclasses import dataclass
 import enum
 from typing import Any, Callable, Optional, TypeVar, cast
+from app.db.models.app import ORGANISATION_CCLW, ORGANISATION_UNFCCC
 from app.db.session import AnyModel
 from sqlalchemy.orm import Session
 
@@ -229,7 +230,7 @@ class UNFCCCIngestContext(IngestContext):
     consistency_validator: ConsistencyValidator
     download_urls: dict[str, str]  # import_id -> url
 
-    def __init__(self, org_name="UNFCCC", org_id=2, results=None):
+    def __init__(self, org_name=ORGANISATION_UNFCCC, org_id=2, results=None):
         self.collection_ids_defined = []
         self.collection_ids_referenced = []
         self.consistency_validator = ConsistencyValidator()
@@ -245,7 +246,7 @@ class CCLWIngestContext(IngestContext):
 
     consistency_validator: ConsistencyValidator
 
-    def __init__(self, org_name="CCLW", org_id=1, results=None):
+    def __init__(self, org_name=ORGANISATION_CCLW, org_id=1, results=None):
         self.consistency_validator = ConsistencyValidator()
         self.org_name = org_name
         self.org_id = org_id

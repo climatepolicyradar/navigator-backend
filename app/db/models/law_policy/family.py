@@ -5,7 +5,7 @@ import sqlalchemy as sa
 from sqlalchemy.ext.hybrid import hybrid_property
 from sqlalchemy.orm import relationship
 
-from app.db.models.app import Organisation
+from app.db.models.app import ORGANISATION_UNFCCC, Organisation
 from app.db.models.app.enum import BaseModelEnum
 from app.db.models.document import PhysicalDocument
 from app.db.session import Base
@@ -17,7 +17,7 @@ class FamilyCategory(BaseModelEnum):
 
     EXECUTIVE = "Executive"
     LEGISLATIVE = "Legislative"
-    UNFCCC = "UNFCCC"
+    UNFCCC = ORGANISATION_UNFCCC
 
 
 class Variant(Base):

@@ -35,6 +35,7 @@ from app.core.ingestion.validator import (
     validate_cclw_document_row,
     validate_unfccc_document_row,
 )
+from app.db.models.app import ORGANISATION_CCLW, ORGANISATION_UNFCCC
 from app.db.models.app.users import Organisation
 from app.db.models.law_policy.geography import GEO_INTERNATIONAL, GEO_NONE
 
@@ -235,11 +236,11 @@ def initialise_context(db: Session, org_name: str) -> IngestContext:
     """
     with db.begin():
         organisation = db.query(Organisation).filter_by(name=org_name).one()
-        if org_name == "CCLW":
+        if org_name == ORGANISATION_CCLW:
             return CCLWIngestContext(
                 org_name=org_name, org_id=cast(int, organisation.id), results=[]
             )
-        if org_name == "UNFCCC":
+        if org_name == ORGANISATION_UNFCCC:
             return UNFCCCIngestContext(
                 org_name=org_name, org_id=cast(int, organisation.id), results=[]
             )
@@ -366,9 +367,9 @@ def get_document_validator(db: Session, context: IngestContext) -> ProcessFunc:
                 row=row,
             )
 
-    if context.org_name == "CCLW":
+    if context.org_name == ORGANISATION_CCLW:
         return cclw_process
-    elif context.org_name == "UNFCCC":
+    elif context.org_name == ORGANISATION_UNFCCC:
         return unfccc_process
 
     raise ValueError(f"Unknown org {context.org_name} for validation.")
