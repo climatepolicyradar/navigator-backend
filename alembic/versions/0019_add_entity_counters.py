@@ -7,6 +7,9 @@ Create Date: 2023-10-02 11:32:43.825217
 """
 from alembic import op
 import sqlalchemy as sa
+from sqlalchemy.orm import Session
+
+from app.db.models.app.counters import ORGANISATION_CCLW, ORGANISATION_UNFCCC, EntityCounters
 
 
 # revision identifiers, used by Alembic.
@@ -28,6 +31,19 @@ def upgrade():
     sa.UniqueConstraint('prefix', name=op.f('uq_entity_counters__prefix'))
     )
     # ### end Alembic commands ###
+
+    ### Now perform the data migration
+    bind = op.get_bind()
+    session = Session(bind=bind)
+    session.add(EntityCounters(
+        prefix=ORGANISATION_CCLW,
+        description="Counter for CCLW entities"
+    ))
+    session.add(EntityCounters(
+        prefix=ORGANISATION_UNFCCC,
+        description="Counter for UNFCCC entities"
+    ))
+    session.commit()
 
 
 def downgrade():

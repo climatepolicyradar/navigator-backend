@@ -69,6 +69,18 @@ class EntityCounters(Base):
     prefix = sa.Column(sa.String, unique=True, nullable=False)  # Organisation.name
     counter = sa.Column(sa.Integer, default=0)
 
+    def get_next_count(self) -> str:
+        """Gets the next counter value"""
+        try:
+            db = object_session(self)
+            cmd = self._get_and_increment.bindparams(id=self.id)
+            value = db.execute(cmd).scalar()
+            db.commit()
+            return value
+        except:
+            _LOGGER.exception(f"When generating counter for {self.prefix}")
+            raise
+
     def get_import_id(self, entity: CountedEntity, n: int = 0) -> str:
         """gets an import id"""
         # Validation
@@ -78,13 +90,6 @@ class EntityCounters(Base):
         if not prefix_ok:
             raise RuntimeError("Prefix is not a known organisation!")
 
-        try:
-            db = object_session(self)
-            cmd = self._get_and_increment.bindparams(id=self.id)
-            i_value = str(db.execute(cmd).scalar()).zfill(8)
-            db.commit()
-            n_value = str(n).zfill(4)
-            return f"{self.prefix}.{entity.value}.i{i_value}.n{n_value}"
-        except:
-            _LOGGER.exception(f"When generating counter for {self.prefix} / {entity}")
-            raise
+        i_value = str(self.get_next_count()).zfill(8)
+        n_value = str(n).zfill(4)
+        return f"{self.prefix}.{entity.value}.i{i_value}.n{n_value}"
