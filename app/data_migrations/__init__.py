@@ -7,3 +7,4 @@ from .populate_geo_statistics import populate_geo_statistics
 from .populate_geography import populate_geography
 from .populate_language import populate_language
 from .populate_taxonomy import populate_taxonomy
+from .populate_counters import populate_counters

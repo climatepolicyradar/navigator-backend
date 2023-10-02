@@ -13,6 +13,7 @@ from app.db.models.app import AppUser
 from app.db.session import SessionLocal
 
 from app.data_migrations import (
+    populate_counters,
     populate_document_type,
     populate_document_role,
     populate_document_variant,
@@ -33,6 +34,7 @@ def run_data_migrations(db):
     populate_geography(db)
     populate_language(db)
     populate_taxonomy(db)
+    populate_counters(db)
 
     db.flush()  # Geography data is used by geo-stats so flush
 

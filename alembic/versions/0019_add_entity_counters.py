@@ -32,18 +32,6 @@ def upgrade():
     )
     # ### end Alembic commands ###
 
-    ### Now perform the data migration
-    bind = op.get_bind()
-    session = Session(bind=bind)
-    session.add(EntityCounters(
-        prefix=ORGANISATION_CCLW,
-        description="Counter for CCLW entities"
-    ))
-    session.add(EntityCounters(
-        prefix=ORGANISATION_UNFCCC,
-        description="Counter for UNFCCC entities"
-    ))
-    session.commit()
 
 
 def downgrade():
