@@ -1,2 +1,2 @@
 from .users import AppUser, OrganisationUser, Organisation
-from .counters import EntityCounters, ORGANISATION_CCLW, ORGANISATION_UNFCCC
+from .counters import EntityCounter, ORGANISATION_CCLW, ORGANISATION_UNFCCC

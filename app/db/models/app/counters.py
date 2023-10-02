@@ -32,7 +32,7 @@ class CountedEntity(str, Enum):
     Event = "event"
 
 
-class EntityCounters(Base):
+class EntityCounter(Base):
     """
     A list of entity counters per organisation name.
 
@@ -46,7 +46,7 @@ class EntityCounters(Base):
 
     """
 
-    __tablename__ = "entity_counters"
+    __tablename__ = "entity_counter"
     __table_args__ = (
         sa.CheckConstraint(
             "prefix IN ('CCLW','UNFCCC')",
@@ -57,7 +57,7 @@ class EntityCounters(Base):
     _get_and_increment = text(
         """
         WITH updated AS (
-        UPDATE entity_counters SET counter = counter + 1 
+        UPDATE entity_counter SET counter = counter + 1 
         WHERE id = :id RETURNING counter
         )
         SELECT counter FROM updated;
