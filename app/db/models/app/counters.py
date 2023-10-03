@@ -81,7 +81,7 @@ class EntityCounter(Base):
             _LOGGER.exception(f"When generating counter for {self.prefix}")
             raise
 
-    def get_import_id(self, entity: CountedEntity, n: int = 0) -> str:
+    def get_import_id(self, entity: CountedEntity) -> str:
         """gets an import id"""
         # Validation
         prefix_ok = (
@@ -89,7 +89,7 @@ class EntityCounter(Base):
         )
         if not prefix_ok:
             raise RuntimeError("Prefix is not a known organisation!")
-
+        n = 0  # The fourth quad is historical
         i_value = str(self.get_next_count()).zfill(8)
         n_value = str(n).zfill(4)
         return f"{self.prefix}.{entity.value}.i{i_value}.n{n_value}"
