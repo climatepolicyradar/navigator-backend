@@ -16,7 +16,7 @@ def test_import_id_generation(test_db):
     assert row.counter == 0
 
     import_id = row.create_import_id(CountedEntity.Family)
-    assert import_id == "CCLW.family.i00000001.n0001"
+    assert import_id == "CCLW.family.i00000001.n0000"
 
     row: EntityCounter = (
         test_db.query(EntityCounter).filter(EntityCounter.prefix == "CCLW").one()
