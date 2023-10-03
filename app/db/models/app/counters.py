@@ -70,7 +70,11 @@ class EntityCounter(Base):
     counter = sa.Column(sa.Integer, default=0)
 
     def get_next_count(self) -> str:
-        """Gets the next counter value"""
+        """
+        Gets the next counter value and updates the row.
+
+        :return str: The next counter value.
+        """
         try:
             db = object_session(self)
             cmd = self._get_and_increment.bindparams(id=self.id)
@@ -81,8 +85,16 @@ class EntityCounter(Base):
             _LOGGER.exception(f"When generating counter for {self.prefix}")
             raise
 
-    def get_import_id(self, entity: CountedEntity) -> str:
-        """gets an import id"""
+    def create_import_id(self, entity: CountedEntity) -> str:
+        """
+        Creates a unique import id.
+
+        This uses the n-value of zero to conform to existing format.
+
+        :param CountedEntity entity: The entity you want counted
+        :raises RuntimeError: raised when the prefix is not an organisation.
+        :return str: The fully formatted import_id
+        """
         # Validation
         prefix_ok = (
             self.prefix == ORGANISATION_CCLW or self.prefix == ORGANISATION_UNFCCC
