@@ -46,6 +46,7 @@ from app.core.validation.util import (
     write_documents_to_s3,
     write_ingest_results_to_s3,
 )
+from app.db.models.app import ORGANISATION_UNFCCC
 from app.db.session import get_db
 
 _LOGGER = logging.getLogger(__name__)
@@ -63,7 +64,7 @@ def start_unfccc_ingest(
     context = None
     # TODO: add a way for a user to monitor progress of the ingest
     try:
-        context = initialise_context(db, "UNFCCC")
+        context = initialise_context(db, ORGANISATION_UNFCCC)
         # First the collections....
         collection_ingestor = get_collection_ingestor(db)
         read(
@@ -149,7 +150,7 @@ def validate_unfccc_law_policy(
     )
 
     try:
-        context = initialise_context(db, "UNFCCC")
+        context = initialise_context(db, ORGANISATION_UNFCCC)
     except Exception as e:
         _LOGGER.exception(
             "Failed to create ingest context", extra={"props": {"errors": str(e)}}
@@ -230,7 +231,7 @@ def ingest_unfccc_law_policy(
     )
 
     try:
-        context = initialise_context(db, "UNFCCC")
+        context = initialise_context(db, ORGANISATION_UNFCCC)
     except Exception as e:
         _LOGGER.exception(
             "Failed to create ingest context", extra={"props": {"errors": str(e)}}
