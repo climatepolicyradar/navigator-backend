@@ -100,4 +100,4 @@ check_opensearch_local:
 	curl -XGET http://localhost:9200 -u 'admin:admin' --insecure
 
 postgres_dump:
-	docker-compose run -v ${PWD}/backend:/app/data --rm backend_db pg_dump -d ${BACKEND_DATABASE_URL} --data-only -F c --file /app/data/backend_db_dump.dump
+	docker-compose run -v ${PWD}/backend:/app/data --rm backend_db pg_dump -d ${DATABASE_URL} --data-only -F c --file /app/data/backend_db_dump.dump

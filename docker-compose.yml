@@ -3,15 +3,14 @@ services:
   backend_db:
     image: postgres:14
     restart: always
-    environment:
-      POSTGRES_USER: ${BACKEND_POSTGRES_USER}
-      POSTGRES_PASSWORD: ${BACKEND_POSTGRES_PASSWORD}
+    env_file:
+      - .env
     ports:
       - 5432:5432
     volumes:
       - db-data-backend:/var/lib/postgresql/data:cached
     healthcheck:
-      test: [ "CMD-SHELL", "pg_isready -U ${BACKEND_POSTGRES_USER}" ]
+      test: [ "CMD-SHELL", "pg_isready -U ${POSTGRES_USER}"  ]
       interval: 5s
       timeout: 3s
       retries: 30
@@ -22,6 +21,8 @@ services:
     environment:
       - cluster.name=opensearch-cluster
       - node.name=opensearch-node1
+    env_file:
+      - .env
     ulimits:
       memlock:
         soft: -1
@@ -53,7 +54,6 @@ services:
       - 8888:8888
     environment:
       PYTHONPATH: .
-      DATABASE_URL: ${BACKEND_DATABASE_URL}
     env_file:
       - .env
     depends_on:
