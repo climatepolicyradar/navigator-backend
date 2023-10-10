@@ -41,7 +41,9 @@ def generate_pipeline_ingest_input(db: Session) -> Sequence[DocumentParserInput]
             category=str(family.family_category),
             publication_ts=family.published_date or fallback_date,
             import_id=cast(str, family_document.import_id),
+            slug=cast(str, family_document.slugs[-1].name),
             family_import_id=cast(str, family.import_id),
+            family_slug=cast(str, family.slugs[-1].name),
             source_url=(
                 cast(str, family_document.physical_document.source_url)
                 if family_document.physical_document is not None
@@ -50,7 +52,6 @@ def generate_pipeline_ingest_input(db: Session) -> Sequence[DocumentParserInput]
             download_url=None,
             type=cast(str, family_document.document_type or ""),
             source=cast(str, organisation.name),
-            slug=cast(str, family_document.slugs[-1].name),
             geography=cast(str, geography.value),
             languages=[
                 cast(str, lang.name)

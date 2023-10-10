@@ -121,12 +121,13 @@ class DocumentParserInput(BaseModel):
     source_url: Optional[str]
     download_url: Optional[str]
 
+    import_id: str
     slug: str
+    family_import_id: str
+    family_slug: str
 
     type: str
     source: str
-    import_id: str
-    family_import_id: str
     category: str
     geography: str
     languages: Sequence[str]
