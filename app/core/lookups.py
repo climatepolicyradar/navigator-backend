@@ -68,3 +68,22 @@ def get_country_by_slug(db: Session, country_slug: str) -> Optional[Geography]:
         return None
 
     return geography
+
+
+def get_country_from_country_code(
+    db: Session, country_code: str
+) -> Optional[Geography]:
+    geography = db.query(Geography).filter_by(value=country_code).scalar()
+    if geography is None:
+        return None
+
+    return geography
+
+
+def is_country_code(db: Session, country_code: str) -> bool:
+    EXPECTED_GEO_CODE_LENGTH = 3
+    if len(country_code) != EXPECTED_GEO_CODE_LENGTH:
+        return False
+
+    country_code = db.query(Geography).filter(Geography.value == country_code).first()
+    return bool(country_code is not None)
