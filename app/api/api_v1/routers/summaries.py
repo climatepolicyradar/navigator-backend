@@ -8,7 +8,7 @@ from fastapi import APIRouter, Depends, Request
 
 from app.api.api_v1.schemas.search import GeographySummaryFamilyResponse
 from app.core.browse import BrowseArgs, browse_rds_families
-from app.core.lookups import get_country_from_country_code, is_country_code
+from app.core.lookups import get_country_slug_from_country_code, is_country_code
 from app.db.models.law_policy import FamilyCategory
 from app.db.session import get_db
 
@@ -29,9 +29,12 @@ def search_by_geography(
 ):
     """Searches the documents filtering by geography and grouping by category."""
 
-    geography_slug = geography_string
+    geography_slug = None
     if is_country_code(db, geography_string):
-        geography_slug = get_country_from_country_code(db, geography_string).slug
+        geography_slug = get_country_slug_from_country_code(db, geography_string)
+
+    if geography_slug is None:
+        geography_slug = geography_string
 
     _LOGGER.info(
         f"Getting geography summary for {geography_slug}",
