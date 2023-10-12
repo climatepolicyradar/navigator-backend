@@ -3,13 +3,33 @@ from http.client import OK
 import pytest  # noqa: F401
 
 
-def _url_under_test(slug: str) -> str:
-    return f"/api/v1/summaries/geography/{slug}"
+def _url_under_test(geography: str) -> str:
+    return f"/api/v1/summaries/geography/{geography}"
 
 
-def test_endpoint_returns_families_ok(client):
+def test_endpoint_returns_families_ok_with_slug(client):
     """Test the endpoint returns an empty sets of data"""
     response = client.get(_url_under_test("moldova"))
+    assert response.status_code == OK
+    resp = response.json()
+
+    assert resp["family_counts"]["Executive"] == 0
+    assert resp["family_counts"]["Legislative"] == 0
+    assert resp["family_counts"]["UNFCCC"] == 0
+
+    assert len(resp["top_families"]["Executive"]) == 0
+    assert len(resp["top_families"]["Legislative"]) == 0
+    assert len(resp["top_families"]["UNFCCC"]) == 0
+
+    assert len(resp["family_counts"]) == 3
+    assert len(resp["top_families"]) == 3
+
+    assert len(resp["targets"]) == 0
+
+
+def test_endpoint_returns_families_ok_with_code(client):
+    """Test the endpoint returns an empty sets of data"""
+    response = client.get(_url_under_test("MDA"))
     assert response.status_code == OK
     resp = response.json()
 
