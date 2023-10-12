@@ -1,6 +1,7 @@
 from typing import Optional, Sequence, cast
 
 from sqlalchemy.orm import Session
+from sqlalchemy.exc import MultipleResultsFound
 from app.api.api_v1.schemas.metadata import ApplicationConfig
 from app.core.organisation import get_organisation_taxonomy_by_name
 
@@ -13,6 +14,10 @@ from app.db.models.law_policy import (
     FamilyDocumentType,
     Variant,
 )
+
+import logging
+
+_LOGGER = logging.getLogger(__name__)
 
 
 def get_config(db: Session) -> ApplicationConfig:
@@ -70,15 +75,19 @@ def get_country_by_slug(db: Session, country_slug: str) -> Optional[Geography]:
     return geography
 
 
-def get_country_slug_from_country_code(
-    db: Session, country_code: str
-) -> Optional[Geography]:
-    geography_slug = (
-        db.query(Geography.slug).filter_by(value=country_code).one_or_none()
-    )
-    if geography_slug is None:
+def get_country_slug_from_country_code(db: Session, country_code: str) -> Optional[str]:
+    try:
+        geography = db.query(Geography).filter_by(value=country_code).one_or_none()
+    except MultipleResultsFound:
+        _LOGGER.exception(
+            "Multiple geographies with country code '%s' found.", country_code
+        )
         return None
 
+    if geography is None:
+        return None
+
+    geography_slug = geography.slug
     return geography_slug
 
 
@@ -87,7 +96,14 @@ def is_country_code(db: Session, country_code: str) -> bool:
     if len(country_code) != EXPECTED_GEO_CODE_LENGTH:
         return False
 
-    country_code = (
-        db.query(Geography).filter(Geography.value == country_code).one_or_none()
-    )
+    try:
+        country_code = (
+            db.query(Geography).filter(Geography.value == country_code).one_or_none()
+        )
+    except MultipleResultsFound:
+        _LOGGER.exception(
+            "Multiple geographies with country code '%s' found.", country_code
+        )
+        return False
+
     return bool(country_code is not None)
