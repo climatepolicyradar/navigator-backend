@@ -4,7 +4,7 @@ RUN mkdir /cpr-backend
 WORKDIR /cpr-backend
 
 RUN apt update && \
-    apt install -y postgresql-client curl \
+    apt install -y postgresql-client curl git \
     && rm -rf /var/lib/apt/lists/*
 
 # Install pip and poetry
@@ -18,6 +18,7 @@ COPY poetry.lock pyproject.toml ./
 RUN poetry export --with dev \
     | grep -v '\--hash' \
     | grep -v '^torch' \
+    | grep -v '^triton' \
     | grep -v '^nvidia' \
     | sed -e 's/ \\$//' \
     | sed -e 's/^[[:alpha:]]\+\[\([[:alpha:]]\+\[[[:alpha:]]\+\]\)\]/\1/' \
@@ -26,7 +27,7 @@ RUN poetry export --with dev \
 # e.g. we need to replace pydocstyle[pydocstyle[toml]] with pydocstyle[toml]
 
 # Install torch-cpu with pip
-RUN pip3 install --no-cache "torch==1.13.0+cpu" "torchvision==0.14.0+cpu" -f https://download.pytorch.org/whl/torch_stable.html
+RUN pip3 install --no-cache "torch==2.0.0+cpu" "torchvision==0.15.1+cpu" -f https://download.pytorch.org/whl/torch_stable.html
 
 # Install application requirements
 RUN pip3 install --no-cache -r requirements.txt

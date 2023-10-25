@@ -11,9 +11,9 @@ from pathlib import Path
 from typing import Any, Mapping, Optional, Sequence, cast
 import string
 
+from cpr_data_access.embedding import Embedder
 from opensearchpy import OpenSearch
 from opensearchpy import JSONSerializer as jss
-from sentence_transformers import SentenceTransformer
 from sqlalchemy.orm import Session
 
 from app.api.api_v1.schemas.search import (
@@ -73,10 +73,10 @@ from app.db.models.law_policy.family import DocumentStatus
 
 _LOGGER = logging.getLogger(__name__)
 
-_ENCODER = SentenceTransformer(
-    model_name_or_path=OPENSEARCH_INDEX_ENCODER,
+_ENCODER = Embedder(
     cache_folder=os.environ.get("INDEX_ENCODER_CACHE_FOLDER", "/models"),
 )
+
 # Map a sort field type to the document key used by OpenSearch
 _SORT_FIELD_MAP: Mapping[SortField, str] = {
     SortField.DATE: "document_date",
@@ -86,10 +86,7 @@ _SORT_FIELD_MAP: Mapping[SortField, str] = {
 _FILTER_FIELD_MAP: Mapping[FilterField, str] = {
     FilterField.SOURCE: "document_source",
     FilterField.COUNTRY: "document_geography",
-    FilterField.SECTOR: "document_sector",
-    FilterField.TYPE: "document_type",
     FilterField.CATEGORY: "document_category",
-    FilterField.KEYWORD: "document_keyword",
     FilterField.LANGUAGE: "document_language",
 }
 _REQUIRED_FIELDS = ["document_name"]
@@ -410,7 +407,11 @@ class QueryBuilder:
 
         _LOGGER.info(f"Starting embeddings generation for '{query_string}'")
         start_generation = time.time_ns()
-        embedding = _ENCODER.encode(query_string, show_progress_bar=False)
+        embedding = _ENCODER.embed(
+            query_string,
+            normalize=False,
+            show_progress_bar=False,
+        )
         end_generation = time.time_ns()
         embeddings_generation_time = round((end_generation - start_generation) / 1e6)
         _LOGGER.info(

@@ -64,3 +64,11 @@ OPENSEARCH_INDEX_ENCODER: str = os.getenv(
     "OPENSEARCH_INDEX_ENCODER", "sentence-transformers/msmarco-distilbert-dot-v5"
 )
 OPENSEARCH_JIT_MAX_DOC_COUNT: int = int(os.getenv("OPENSEARCH_JIT_MAX_DOC_COUNT", "20"))
+
+# Vespa Config
+VESPA_SEARCH_LIMIT: int = int(os.getenv("VESPA_SEARCH_LIMIT", "150"))
+VESPA_SEARCH_MATCHES_PER_DOC: int = int(
+    os.getenv("VESPA_SEARCH_MAX_MATCHES_PER_DOC", "20")
+)
+VESPA_SECRETS_LOCATION: str = os.getenv("VESPA_SECRETS_LOCATION", "/secrets")
+VESPA_URL: str = os.environ["VESPA_URL"]

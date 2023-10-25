@@ -37,15 +37,8 @@ class FilterField(str, Enum):
     SOURCE = "sources"
     COUNTRY = "countries"
     REGION = "regions"
-    INSTRUMENT = "instruments"
-    SECTOR = "sectors"
-    TYPE = "types"
     CATEGORY = "categories"
-    TOPIC = "topics"
-    KEYWORD = "keywords"
-    HAZARD = "hazards"
     LANGUAGE = "languages"
-    FRAMEWORK = "frameworks"
 
 
 class IncludedResults(str, Enum):

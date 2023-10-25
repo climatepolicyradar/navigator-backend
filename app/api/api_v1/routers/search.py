@@ -8,9 +8,13 @@ for the type of document search being performed.
 import json
 import logging
 from io import BytesIO
-from typing import Mapping, Sequence
+from typing import Mapping, Optional, Sequence
 
-from cpr_data_access.search_adaptors import VespaSearchAdaptor  # type: ignore
+from cpr_data_access.search_adaptors import VespaSearchAdapter
+from cpr_data_access.models.search import FilterField as DataAccessFilterField
+from cpr_data_access.models.search import SearchRequestBody as DataAccessSearchRequest
+from cpr_data_access.models.search import SortField as DataAccessSortField
+from cpr_data_access.models.search import SortOrder as DataAccessSortOrder
 from fastapi import APIRouter, Depends, Request
 from fastapi.responses import StreamingResponse
 from sqlalchemy.orm import Session
@@ -19,8 +23,15 @@ from app.api.api_v1.schemas.search import (
     SearchRequestBody,
     SearchResponse,
     SortField,
+    SortOrder,
 )
 from app.core.browse import BrowseArgs, browse_rds_families
+from app.core.config import (
+    VESPA_SECRETS_LOCATION,
+    VESPA_URL,
+    VESPA_SEARCH_LIMIT,
+    VESPA_SEARCH_MATCHES_PER_DOC,
+)
 from app.core.lookups import get_countries_for_region, get_country_by_slug
 from app.core.search import (
     FilterField,
@@ -40,12 +51,68 @@ _OPENSEARCH_CONNECTION = OpenSearchConnection(opensearch_config=_OPENSEARCH_CONF
 _OPENSEARCH_INDEX_CONFIG = OpenSearchQueryConfig()
 _DOCUMENT_EXTRA_INFO_CACHE = DocumentExtraCache()
 
-_VESPA_CONNECTION = VespaSearchAdaptor()
+_VESPA_CONNECTION = VespaSearchAdapter(
+    instance_url=VESPA_URL,
+    cert_directory=VESPA_SECRETS_LOCATION,
+)
 
 search_router = APIRouter()
 
 
-def _search_request(db: Session, search_body: SearchRequestBody, use_vespa: bool = False) -> SearchResponse:
+def _convert_sort_field(
+    sort_field: Optional[SortField],
+) -> Optional[DataAccessSortField]:
+    if sort_field is None:
+        return None
+
+    if sort_field == SortField.DATE:
+        return "date"
+    if sort_field == SortField.TITLE:
+        return "name"
+
+
+def _convert_sort_order(sort_order: SortOrder) -> DataAccessSortOrder:
+    if sort_order == SortOrder.ASCENDING:
+        return "ascending"
+    if sort_order == SortOrder.DESCENDING:
+        return "descending"
+
+
+def _convert_filter_field(filter_field: FilterField) -> DataAccessFilterField:
+    if filter_field == FilterField.CATEGORY:
+        return "category"
+    if filter_field == FilterField.COUNTRY:
+        return "geography"
+    if filter_field == FilterField.REGION:
+        return "geography"
+    if filter_field == FilterField.LANGUAGE:
+        return "language"
+    if filter_field == FilterField.SOURCE:
+        return "source"
+
+
+def _convert_filters(
+    db: Session,
+    keyword_filters: Optional[Mapping[FilterField, Sequence[str]]],
+) -> Optional[Mapping[DataAccessFilterField, Sequence[str]]]:
+    if keyword_filters is None:
+        return None
+
+    new_keyword_filters = {}
+    for field, values in keyword_filters.items():
+        if field == FilterField.REGION:
+            new_values = []
+            for region in values:
+                new_values.extend(get_countries_for_region(db, region))
+        else:
+            new_values = values
+        new_keyword_filters[_convert_filter_field(field)] = new_values
+    return new_keyword_filters
+
+
+def _search_request(
+    db: Session, search_body: SearchRequestBody, use_vespa: bool = False
+) -> SearchResponse:
     if search_body.keyword_filters is not None:
         search_body.keyword_filters = process_search_keyword_filters(
             db,
@@ -60,12 +127,29 @@ def _search_request(db: Session, search_body: SearchRequestBody, use_vespa: bool
         )
     else:
         if use_vespa:
-            return _VESPA_CONNECTION.search(request=search_body)
+            data_access_search_body = DataAccessSearchRequest(
+                query_string=search_body.query_string,
+                exact_match=search_body.exact_match,
+                limit=VESPA_SEARCH_LIMIT,
+                max_hits_per_family=VESPA_SEARCH_MATCHES_PER_DOC,
+                keyword_filters=_convert_filters(db, search_body.keyword_filters),
+                year_range=search_body.year_range,
+                sort_by=_convert_sort_field(search_body.sort_field),
+                sort_order=_convert_sort_order(search_body.sort_order),
+                continuation_token=None,  # TODO: implement pagination?
+            )
+            data_access_search_response = _VESPA_CONNECTION.search(
+                request=data_access_search_body
+            )
+            # TODO: implement conversion
+            return SearchResponse(hits=0, query_time_ms=0, total_time_ms=0, families=[])
         else:
             return _OPENSEARCH_CONNECTION.query_families(
                 search_request_body=search_body,
                 opensearch_internal_config=_OPENSEARCH_INDEX_CONFIG,
-                document_extra_info=_DOCUMENT_EXTRA_INFO_CACHE.get_document_extra_info(db),
+                document_extra_info=_DOCUMENT_EXTRA_INFO_CACHE.get_document_extra_info(
+                    db
+                ),
                 preference="default_search_preference",
             )
 
