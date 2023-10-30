@@ -69,13 +69,15 @@ def _search_request(
     else:
         if use_vespa:
             data_access_search_params = create_vespa_search_params(db, search_body)
+            # TODO: we may wish to cache responses to improve pagination performance
             data_access_search_response = _VESPA_CONNECTION.search(
                 parameters=data_access_search_params
             )
             return process_vespa_search_response(
                 db,
                 data_access_search_response,
-                search_body,
+                limit=search_body.limit,
+                offset=search_body.offset,
             )
         else:
             return _OPENSEARCH_CONNECTION.query_families(

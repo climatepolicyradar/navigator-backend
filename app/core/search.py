@@ -64,7 +64,7 @@ from app.core.config import (
     VESPA_SEARCH_MATCHES_PER_DOC,
 )
 from app.core.util import to_cdn_url
-from app.core.lookups import get_countries_for_region
+from app.core.lookups import get_countries_for_region, get_countries_for_slugs
 from app.db.models.app.users import Organisation
 from app.db.models.law_policy import (
     Family,
@@ -1020,7 +1020,6 @@ def process_result_into_csv(
 
 
 # Vespa search processing functions
-
 def _convert_sort_field(
     sort_field: Optional[SortField],
 ) -> Optional[str]:
@@ -1066,6 +1065,10 @@ def _convert_filters(
             new_values = []
             for region in values:
                 new_values.extend(get_countries_for_region(db, region))
+        elif field == FilterField.COUNTRY:
+            new_values = [
+                country.value for country in get_countries_for_slugs(db, values)
+            ]
         else:
             new_values = values
         new_keyword_filters[_convert_filter_field(field)] = new_values
@@ -1082,13 +1085,23 @@ from app.core.util import to_cdn_url
 
 
 def _process_vespa_search_response_families(
-    db: Session, vespa_families: Sequence[DataAccessResponseFamily]
+    db: Session,
+    vespa_families: Sequence[DataAccessResponseFamily],
+    limit: int,
+    offset: int,
 ) -> Sequence[SearchResponseFamily]:
-    all_family_ids = [vf.id for vf in vespa_families]
+    """
+    Process a list of data access results into a list of SearchResponse Families
+
+    Note: this function requires that results from the data access library are grouped
+          by family_import_id.
+    """
+    vespa_families_to_process = vespa_families[offset : limit + offset]
+    all_response_family_ids = [vf.id for vf in vespa_families_to_process]
 
     family_and_family_metadata: Sequence[tuple[Family, FamilyMetadata]] = (
         db.query(Family, FamilyMetadata)
-        .filter(Family.import_id.in_(all_family_ids))
+        .filter(Family.import_id.in_(all_response_family_ids))
         .join(FamilyMetadata, FamilyMetadata.family_import_id == Family.import_id)
         .all()
     )  # type: ignore
@@ -1105,7 +1118,7 @@ def _process_vespa_search_response_families(
     response_families = []
     response_family = None
 
-    for vespa_family in vespa_families:
+    for vespa_family in vespa_families_to_process:
         db_family_tuple = db_family_lookup.get(vespa_family.id)
         if db_family_tuple is None:
             _LOGGER.error(f"Could not locate family with import id '{vespa_family.id}'")
@@ -1210,9 +1223,12 @@ def _process_vespa_search_response_families(
 
 
 def process_vespa_search_response(
-    db: Session, vespa_search_response: DataAccessSearchResponse
+    db: Session,
+    vespa_search_response: DataAccessSearchResponse,
+    limit: int,
+    offset: int,
 ) -> SearchResponse:
-    # TODO: implement conversion
+    """Process a Vespa search response into a F/E search response"""
     return SearchResponse(
         hits=vespa_search_response.total_hits,
         query_time_ms=vespa_search_response.query_time_ms or 0,
@@ -1220,14 +1236,14 @@ def process_vespa_search_response(
         families=_process_vespa_search_response_families(
             db,
             vespa_search_response.families,
+            limit=limit,
+            offset=offset,
         ),
     )
 
 
-def create_vespa_search_params(
-        db: Session,
-        search_body: SearchRequestBody
-    ):
+def create_vespa_search_params(db: Session, search_body: SearchRequestBody):
+    """Create Vespa search parameters from a F/E search request body"""
     return DataAccessSearchParams(
         query_string=search_body.query_string,
         exact_match=search_body.exact_match,
@@ -1237,5 +1253,5 @@ def create_vespa_search_params(
         year_range=search_body.year_range,
         sort_by=_convert_sort_field(search_body.sort_field),
         sort_order=_convert_sort_order(search_body.sort_order),
-        continuation_token=None,  # TODO: implement pagination?
+        continuation_token=None,  # TODO: implement large scale pagination?
     )
