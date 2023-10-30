@@ -71,6 +71,8 @@ class SearchRequestBody(BaseModel):
     limit: int = 10  # TODO: decide on default
     offset: int = 0
 
+    continuation_token: Optional[str] = None
+
 
 class SearchResponseDocumentPassage(BaseModel):
     """A Document passage match returned by the search API endpoint."""
