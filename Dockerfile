@@ -34,7 +34,7 @@ RUN pip3 install --no-cache -r requirements.txt
 
 # Download the sentence transformer model
 RUN mkdir /models
-RUN python3 -c "from sentence_transformers import SentenceTransformer; SentenceTransformer('sentence-transformers/msmarco-distilbert-dot-v5', cache_folder='/models')"
+RUN python3 -c "from sentence_transformers import SentenceTransformer; SentenceTransformer('msmarco-distilbert-dot-v5', cache_folder='/models')"
 
 # Copy files to image
 COPY alembic ./alembic

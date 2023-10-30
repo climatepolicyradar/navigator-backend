@@ -69,3 +69,8 @@ VESPA_SEARCH_MATCHES_PER_DOC: int = int(
 )
 VESPA_SECRETS_LOCATION: str = os.getenv("VESPA_SECRETS_LOCATION", "/secrets")
 VESPA_URL: str = os.environ["VESPA_URL"]
+
+# Shared search config
+INDEX_ENCODER_CACHE_FOLDER: str = os.getenv(
+    "INDEX_ENCODER_CACHE_FOLDER", "/models"
+)

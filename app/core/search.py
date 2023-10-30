@@ -37,6 +37,7 @@ from app.api.api_v1.schemas.search import (
     IncludedResults,
 )
 from app.core.config import (
+    INDEX_ENCODER_CACHE_FOLDER,
     OPENSEARCH_INDEX_INNER_PRODUCT_THRESHOLD,
     OPENSEARCH_INDEX_MAX_DOC_COUNT,
     OPENSEARCH_INDEX_MAX_PASSAGES_PER_DOC,
@@ -80,9 +81,7 @@ from app.db.models.law_policy.family import DocumentStatus
 
 _LOGGER = logging.getLogger(__name__)
 
-_ENCODER = Embedder(
-    cache_folder=os.environ.get("INDEX_ENCODER_CACHE_FOLDER", "/models"),
-)
+_ENCODER = Embedder(cache_folder=INDEX_ENCODER_CACHE_FOLDER)
 
 # Map a sort field type to the document key used by OpenSearch
 _SORT_FIELD_MAP: Mapping[SortField, str] = {
@@ -1061,17 +1060,21 @@ def _convert_filters(
 
     new_keyword_filters = {}
     for field, values in keyword_filters.items():
+        new_field = _convert_filter_field(field)
         if field == FilterField.REGION:
-            new_values = []
+            new_values = new_keyword_filters.get(new_field, [])
             for region in values:
-                new_values.extend(get_countries_for_region(db, region))
+                new_values.extend([
+                    country.value for country in get_countries_for_region(db, region)
+                ])
         elif field == FilterField.COUNTRY:
-            new_values = [
+            new_values = new_keyword_filters.get(new_field, [])
+            new_values.extend([
                 country.value for country in get_countries_for_slugs(db, values)
-            ]
+            ])
         else:
             new_values = values
-        new_keyword_filters[_convert_filter_field(field)] = new_values
+        new_keyword_filters[new_field] = new_values
     return new_keyword_filters
 
 
@@ -1233,6 +1236,7 @@ def process_vespa_search_response(
         hits=vespa_search_response.total_hits,
         query_time_ms=vespa_search_response.query_time_ms or 0,
         total_time_ms=vespa_search_response.total_time_ms or 0,
+        continuation_token=vespa_search_response.continuation_token,
         families=_process_vespa_search_response_families(
             db,
             vespa_search_response.families,
@@ -1253,5 +1257,6 @@ def create_vespa_search_params(db: Session, search_body: SearchRequestBody):
         year_range=search_body.year_range,
         sort_by=_convert_sort_field(search_body.sort_field),
         sort_order=_convert_sort_order(search_body.sort_order),
-        continuation_token=None,  # TODO: implement large scale pagination?
+        # TODO: implement large scale pagination? For now, just pass through
+        continuation_token=search_body.continuation_token,
     )
