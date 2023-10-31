@@ -24,6 +24,7 @@ from app.core.browse import BrowseArgs, browse_rds_families
 from app.core.config import VESPA_SECRETS_LOCATION, VESPA_URL
 from app.core.lookups import get_countries_for_region, get_country_by_slug
 from app.core.search import (
+    ENCODER,
     FilterField,
     OpenSearchConnection,
     OpenSearchConfig,
@@ -46,6 +47,7 @@ _DOCUMENT_EXTRA_INFO_CACHE = DocumentExtraCache()
 _VESPA_CONNECTION = VespaSearchAdapter(
     instance_url=VESPA_URL,
     cert_directory=VESPA_SECRETS_LOCATION,
+    embedder=ENCODER,
 )
 
 search_router = APIRouter()

@@ -12,11 +12,13 @@ from typing import Any, Mapping, Optional, Sequence, cast
 import string
 
 from cpr_data_access.embedding import Embedder
-from cpr_data_access.models.search import Document as DataAccessResponseDocument
-from cpr_data_access.models.search import Family as DataAccessResponseFamily
-from cpr_data_access.models.search import Passage as DataAccessResponsePassage
-from cpr_data_access.models.search import SearchParameters as DataAccessSearchParams
-from cpr_data_access.models.search import SearchResponse as DataAccessSearchResponse
+from cpr_data_access.models.search import (
+    Document as DataAccessResponseDocument,
+    Family as DataAccessResponseFamily,
+    Passage as DataAccessResponsePassage,
+    SearchParameters as DataAccessSearchParams,
+    SearchResponse as DataAccessSearchResponse,
+)
 from opensearchpy import OpenSearch
 from opensearchpy import JSONSerializer as jss
 from sqlalchemy.orm import Session
@@ -81,7 +83,7 @@ from app.db.models.law_policy.family import DocumentStatus
 
 _LOGGER = logging.getLogger(__name__)
 
-_ENCODER = Embedder(cache_folder=INDEX_ENCODER_CACHE_FOLDER)
+ENCODER = Embedder(cache_folder=INDEX_ENCODER_CACHE_FOLDER)
 
 # Map a sort field type to the document key used by OpenSearch
 _SORT_FIELD_MAP: Mapping[SortField, str] = {
@@ -413,7 +415,7 @@ class QueryBuilder:
 
         _LOGGER.info(f"Starting embeddings generation for '{query_string}'")
         start_generation = time.time_ns()
-        embedding = _ENCODER.embed(
+        embedding = ENCODER.embed(
             query_string,
             normalize=False,
             show_progress_bar=False,
@@ -1126,6 +1128,7 @@ def _process_vespa_search_response_families(
         if db_family_tuple is None:
             _LOGGER.error(f"Could not locate family with import id '{vespa_family.id}'")
             continue
+        # TODO: filter UNPUBLISHED docs?
         if db_family_tuple[0].family_status != FamilyStatus.PUBLISHED:
             _LOGGER.debug(
                 f"Skipping unpublished family with id '{vespa_family.id}' "
@@ -1166,8 +1169,8 @@ def _process_vespa_search_response_families(
                     family_name=hit.family_name,
                     family_description=hit.family_description or "",
                     family_category=hit.family_category,
-                    family_date=db_family.publication_date,
-                    family_last_updated_date=db_family.last_updated_date,
+                    family_date=db_family.published_date.isoformat(),
+                    family_last_updated_date=db_family.last_updated_date.isoformat(),
                     family_source=hit.family_source,
                     family_description_match=False,
                     family_title_match=False,
@@ -1175,12 +1178,13 @@ def _process_vespa_search_response_families(
                     family_geography=hit.family_geography,
                     family_metadata=cast(dict, db_family_metadata.value),
                 )
+                response_family_lookup[family_import_id] = response_family
 
             if isinstance(hit, DataAccessResponseDocument):
                 response_family.family_description_match = True
                 response_family.family_title_match = True
 
-            if isinstance(hit, DataAccessResponsePassage):
+            elif isinstance(hit, DataAccessResponsePassage):
                 document_import_id = hit.document_import_id
                 if document_import_id is None:
                     _LOGGER.error("Skipping hit with empty document import id")
@@ -1218,6 +1222,9 @@ def _process_vespa_search_response_families(
                         text_block_coords=hit.text_block_coords,
                     )
                 )
+
+            else:
+                _LOGGER.error(f"Unknown hit type: {type(hit)}")
 
         response_families.append(response_family)
         response_family = None
