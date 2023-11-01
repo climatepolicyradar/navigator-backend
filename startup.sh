@@ -1,5 +1,11 @@
 #!/bin/bash
 
+set -euo pipefail
+
+VESPA_CERT="${VESPA_CERT:-}"
+VESPA_KEY="${VESPA_KEY:-}"
+VESPA_SECRETS_LOCATION="${VESPA_SECRETS_LOCATION:-/secrets}"
+
 # base64 decode key/cert supplied in env vars
 if [ -n "${VESPA_CERT}" ]; then
     echo "${VESPA_CERT}" openssl base64 -A -d > "${VESPA_SECRETS_LOCATION}/cert.pem"
