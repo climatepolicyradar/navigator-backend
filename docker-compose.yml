@@ -46,7 +46,7 @@ services:
       context: ./
       dockerfile: Dockerfile
     image: navigator-backend
-    command: python app/main.py
+    command: /bin/bash /cpr-backend/startup.sh
     tty: true
     volumes:
       - ./:/cpr-backend/:cached

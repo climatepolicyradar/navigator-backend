@@ -34,6 +34,7 @@ RUN pip3 install --no-cache -r requirements.txt
 
 # Download the sentence transformer model
 RUN mkdir /models
+RUN mkdir /secrets
 RUN python3 -c "from sentence_transformers import SentenceTransformer; SentenceTransformer('msmarco-distilbert-dot-v5', cache_folder='/models')"
 
 # Copy files to image
@@ -43,6 +44,7 @@ COPY app ./app
 COPY scripts ./scripts
 COPY LICENSE.md .
 COPY README.md .
+COPY startup.sh .
 
 ENV PYTHONPATH=/cpr-backend
-CMD python3 app/main.py
+CMD [ "/bin/bash", "/cpr-backend/startup.sh" ]
