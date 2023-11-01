@@ -10,6 +10,7 @@ import logging
 from io import BytesIO
 from typing import Mapping, Sequence
 
+from cpr_data_access.search_adaptors import VespaSearchAdapter
 from fastapi import APIRouter, Depends, Request
 from fastapi.responses import StreamingResponse
 from sqlalchemy.orm import Session
@@ -20,13 +21,17 @@ from app.api.api_v1.schemas.search import (
     SortField,
 )
 from app.core.browse import BrowseArgs, browse_rds_families
+from app.core.config import VESPA_SECRETS_LOCATION, VESPA_URL
 from app.core.lookups import get_countries_for_region, get_country_by_slug
 from app.core.search import (
+    ENCODER,
     FilterField,
     OpenSearchConnection,
     OpenSearchConfig,
     OpenSearchQueryConfig,
+    create_vespa_search_params,
     process_result_into_csv,
+    process_vespa_search_response,
 )
 from app.db.crud.document import DocumentExtraCache
 from app.db.session import get_db
@@ -39,10 +44,18 @@ _OPENSEARCH_CONNECTION = OpenSearchConnection(opensearch_config=_OPENSEARCH_CONF
 _OPENSEARCH_INDEX_CONFIG = OpenSearchQueryConfig()
 _DOCUMENT_EXTRA_INFO_CACHE = DocumentExtraCache()
 
+_VESPA_CONNECTION = VespaSearchAdapter(
+    instance_url=VESPA_URL,
+    cert_directory=VESPA_SECRETS_LOCATION,
+    embedder=ENCODER,
+)
+
 search_router = APIRouter()
 
 
-def _search_request(db: Session, search_body: SearchRequestBody) -> SearchResponse:
+def _search_request(
+    db: Session, search_body: SearchRequestBody, use_vespa: bool = False
+) -> SearchResponse:
     if search_body.keyword_filters is not None:
         search_body.keyword_filters = process_search_keyword_filters(
             db,
@@ -56,12 +69,27 @@ def _search_request(db: Session, search_body: SearchRequestBody) -> SearchRespon
             req=_get_browse_args_from_search_request_body(search_body),
         )
     else:
-        return _OPENSEARCH_CONNECTION.query_families(
-            search_request_body=search_body,
-            opensearch_internal_config=_OPENSEARCH_INDEX_CONFIG,
-            document_extra_info=_DOCUMENT_EXTRA_INFO_CACHE.get_document_extra_info(db),
-            preference="default_search_preference",
-        )
+        if use_vespa:
+            data_access_search_params = create_vespa_search_params(db, search_body)
+            # TODO: we may wish to cache responses to improve pagination performance
+            data_access_search_response = _VESPA_CONNECTION.search(
+                parameters=data_access_search_params
+            )
+            return process_vespa_search_response(
+                db,
+                data_access_search_response,
+                limit=search_body.limit,
+                offset=search_body.offset,
+            )
+        else:
+            return _OPENSEARCH_CONNECTION.query_families(
+                search_request_body=search_body,
+                opensearch_internal_config=_OPENSEARCH_INDEX_CONFIG,
+                document_extra_info=_DOCUMENT_EXTRA_INFO_CACHE.get_document_extra_info(
+                    db
+                ),
+                preference="default_search_preference",
+            )
 
 
 @search_router.post("/searches")
@@ -69,6 +97,7 @@ def search_documents(
     request: Request,
     search_body: SearchRequestBody,
     db=Depends(get_db),
+    use_vespa: bool = False,
 ) -> SearchResponse:
     """Search for documents matching the search criteria."""
     _LOGGER.info(
@@ -83,7 +112,7 @@ def search_documents(
     _LOGGER.info(
         "Starting search...",
     )
-    return _search_request(db=db, search_body=search_body)
+    return _search_request(db=db, search_body=search_body, use_vespa=use_vespa)
 
 
 @search_router.post("/searches/download-csv")
@@ -91,6 +120,7 @@ def download_search_documents(
     request: Request,
     search_body: SearchRequestBody,
     db=Depends(get_db),
+    use_vespa: bool = False,
 ) -> StreamingResponse:
     """Download a CSV containing details of documents matching the search criteria."""
     _LOGGER.info(
@@ -110,7 +140,11 @@ def download_search_documents(
     _LOGGER.info(
         "Starting search...",
     )
-    search_response = _search_request(db=db, search_body=search_body)
+    search_response = _search_request(
+        db=db,
+        search_body=search_body,
+        use_vespa=use_vespa,
+    )
     content_str = process_result_into_csv(db, search_response, is_browse=is_browse)
 
     _LOGGER.debug(f"Downloading search results as CSV: {content_str}")

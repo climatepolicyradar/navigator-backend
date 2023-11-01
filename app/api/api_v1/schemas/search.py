@@ -37,15 +37,8 @@ class FilterField(str, Enum):
     SOURCE = "sources"
     COUNTRY = "countries"
     REGION = "regions"
-    INSTRUMENT = "instruments"
-    SECTOR = "sectors"
-    TYPE = "types"
     CATEGORY = "categories"
-    TOPIC = "topics"
-    KEYWORD = "keywords"
-    HAZARD = "hazards"
     LANGUAGE = "languages"
-    FRAMEWORK = "frameworks"
 
 
 class IncludedResults(str, Enum):
@@ -77,6 +70,8 @@ class SearchRequestBody(BaseModel):
 
     limit: int = 10  # TODO: decide on default
     offset: int = 0
+
+    continuation_token: Optional[str] = None
 
 
 class SearchResponseDocumentPassage(BaseModel):
@@ -181,6 +176,7 @@ class SearchResponse(BaseModel):
     hits: int
     query_time_ms: int
     total_time_ms: int
+    continuation_token: Optional[str] = None
 
     families: Sequence[SearchResponseFamily]
 

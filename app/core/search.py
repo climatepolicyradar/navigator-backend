@@ -11,9 +11,16 @@ from pathlib import Path
 from typing import Any, Mapping, Optional, Sequence, cast
 import string
 
+from cpr_data_access.embedding import Embedder
+from cpr_data_access.models.search import (
+    Document as DataAccessResponseDocument,
+    Family as DataAccessResponseFamily,
+    Passage as DataAccessResponsePassage,
+    SearchParameters as DataAccessSearchParams,
+    SearchResponse as DataAccessSearchResponse,
+)
 from opensearchpy import OpenSearch
 from opensearchpy import JSONSerializer as jss
-from sentence_transformers import SentenceTransformer
 from sqlalchemy.orm import Session
 
 from app.api.api_v1.schemas.search import (
@@ -32,6 +39,7 @@ from app.api.api_v1.schemas.search import (
     IncludedResults,
 )
 from app.core.config import (
+    INDEX_ENCODER_CACHE_FOLDER,
     OPENSEARCH_INDEX_INNER_PRODUCT_THRESHOLD,
     OPENSEARCH_INDEX_MAX_DOC_COUNT,
     OPENSEARCH_INDEX_MAX_PASSAGES_PER_DOC,
@@ -45,7 +53,6 @@ from app.core.config import (
     OPENSEARCH_INDEX_DESCRIPTION_EMBEDDING_KEY,
     OPENSEARCH_INDEX_INDEX_KEY,
     OPENSEARCH_INDEX_TEXT_BLOCK_KEY,
-    OPENSEARCH_INDEX_ENCODER,
     OPENSEARCH_URL,
     OPENSEARCH_INDEX_PREFIX,
     OPENSEARCH_USERNAME,
@@ -56,8 +63,11 @@ from app.core.config import (
     OPENSEARCH_SSL_WARNINGS,
     OPENSEARCH_JIT_MAX_DOC_COUNT,
     PUBLIC_APP_URL,
+    VESPA_SEARCH_LIMIT,
+    VESPA_SEARCH_MATCHES_PER_DOC,
 )
 from app.core.util import to_cdn_url
+from app.core.lookups import get_countries_for_region, get_countries_for_slugs
 from app.db.models.app.users import Organisation
 from app.db.models.law_policy import (
     Family,
@@ -73,10 +83,8 @@ from app.db.models.law_policy.family import DocumentStatus
 
 _LOGGER = logging.getLogger(__name__)
 
-_ENCODER = SentenceTransformer(
-    model_name_or_path=OPENSEARCH_INDEX_ENCODER,
-    cache_folder=os.environ.get("INDEX_ENCODER_CACHE_FOLDER", "/models"),
-)
+ENCODER = Embedder(cache_folder=INDEX_ENCODER_CACHE_FOLDER)
+
 # Map a sort field type to the document key used by OpenSearch
 _SORT_FIELD_MAP: Mapping[SortField, str] = {
     SortField.DATE: "document_date",
@@ -86,10 +94,7 @@ _SORT_FIELD_MAP: Mapping[SortField, str] = {
 _FILTER_FIELD_MAP: Mapping[FilterField, str] = {
     FilterField.SOURCE: "document_source",
     FilterField.COUNTRY: "document_geography",
-    FilterField.SECTOR: "document_sector",
-    FilterField.TYPE: "document_type",
     FilterField.CATEGORY: "document_category",
-    FilterField.KEYWORD: "document_keyword",
     FilterField.LANGUAGE: "document_language",
 }
 _REQUIRED_FIELDS = ["document_name"]
@@ -410,7 +415,11 @@ class QueryBuilder:
 
         _LOGGER.info(f"Starting embeddings generation for '{query_string}'")
         start_generation = time.time_ns()
-        embedding = _ENCODER.encode(query_string, show_progress_bar=False)
+        embedding = ENCODER.embed(
+            query_string,
+            normalize=False,
+            show_progress_bar=False,
+        )
         end_generation = time.time_ns()
         embeddings_generation_time = round((end_generation - start_generation) / 1e6)
         _LOGGER.info(
@@ -1009,3 +1018,252 @@ def process_result_into_csv(
 
     csv_result_io.seek(0)
     return csv_result_io.read()
+
+
+# Vespa search processing functions
+def _convert_sort_field(
+    sort_field: Optional[SortField],
+) -> Optional[str]:
+    if sort_field is None:
+        return None
+
+    if sort_field == SortField.DATE:
+        return "date"
+    if sort_field == SortField.TITLE:
+        return "name"
+
+
+def _convert_sort_order(sort_order: SortOrder) -> str:
+    if sort_order == SortOrder.ASCENDING:
+        return "ascending"
+    if sort_order == SortOrder.DESCENDING:
+        return "descending"
+
+
+def _convert_filter_field(filter_field: FilterField) -> str:
+    if filter_field == FilterField.CATEGORY:
+        return "category"
+    if filter_field == FilterField.COUNTRY:
+        return "geography"
+    if filter_field == FilterField.REGION:
+        return "geography"
+    if filter_field == FilterField.LANGUAGE:
+        return "language"
+    if filter_field == FilterField.SOURCE:
+        return "source"
+
+
+def _convert_filters(
+    db: Session,
+    keyword_filters: Optional[Mapping[FilterField, Sequence[str]]],
+) -> Optional[Mapping[str, Sequence[str]]]:
+    if keyword_filters is None:
+        return None
+
+    new_keyword_filters = {}
+    for field, values in keyword_filters.items():
+        new_field = _convert_filter_field(field)
+        if field == FilterField.REGION:
+            new_values = new_keyword_filters.get(new_field, [])
+            for region in values:
+                new_values.extend([
+                    country.value for country in get_countries_for_region(db, region)
+                ])
+        elif field == FilterField.COUNTRY:
+            new_values = new_keyword_filters.get(new_field, [])
+            new_values.extend([
+                country.value for country in get_countries_for_slugs(db, values)
+            ])
+        else:
+            new_values = values
+        new_keyword_filters[new_field] = new_values
+    return new_keyword_filters
+
+
+from app.db.models.law_policy import (
+    Family,
+    FamilyMetadata,
+    FamilyDocument,
+    FamilyStatus,
+)
+from app.core.util import to_cdn_url
+
+
+def _process_vespa_search_response_families(
+    db: Session,
+    vespa_families: Sequence[DataAccessResponseFamily],
+    limit: int,
+    offset: int,
+) -> Sequence[SearchResponseFamily]:
+    """
+    Process a list of data access results into a list of SearchResponse Families
+
+    Note: this function requires that results from the data access library are grouped
+          by family_import_id.
+    """
+    vespa_families_to_process = vespa_families[offset : limit + offset]
+    all_response_family_ids = [vf.id for vf in vespa_families_to_process]
+
+    family_and_family_metadata: Sequence[tuple[Family, FamilyMetadata]] = (
+        db.query(Family, FamilyMetadata)
+        .filter(Family.import_id.in_(all_response_family_ids))
+        .join(FamilyMetadata, FamilyMetadata.family_import_id == Family.import_id)
+        .all()
+    )  # type: ignore
+    db_family_lookup: Mapping[str, tuple[Family, FamilyMetadata]] = {
+        str(family.import_id): (family, family_metadata)
+        for (family, family_metadata) in family_and_family_metadata
+    }
+    db_family_document_lookup: Mapping[str, FamilyDocument] = {
+        str(fd.import_id): fd
+        for (fam, _) in family_and_family_metadata
+        for fd in fam.family_documents
+    }
+
+    response_families = []
+    response_family = None
+
+    for vespa_family in vespa_families_to_process:
+        db_family_tuple = db_family_lookup.get(vespa_family.id)
+        if db_family_tuple is None:
+            _LOGGER.error(f"Could not locate family with import id '{vespa_family.id}'")
+            continue
+        # TODO: filter UNPUBLISHED docs?
+        if db_family_tuple[0].family_status != FamilyStatus.PUBLISHED:
+            _LOGGER.debug(
+                f"Skipping unpublished family with id '{vespa_family.id}' "
+                "in search results"
+            )
+        db_family = db_family_tuple[0]
+        db_family_metadata = db_family_tuple[1]
+
+        response_family_lookup = {}
+        response_document_lookup = {}
+
+        for hit in vespa_family.hits:
+            family_import_id = hit.family_import_id
+            if family_import_id is None:
+                _LOGGER.error("Skipping hit with empty family import id")
+                continue
+
+            # Check for all required family/document fields in the hit
+            if (
+                hit.family_slug is None
+                or hit.document_slug is None
+                or hit.family_name is None
+                or hit.family_category is None
+                or hit.family_source is None
+                or hit.family_geography is None
+            ):
+                _LOGGER.error(
+                    "Skipping hit with empty required family info for import "
+                    f"id: {family_import_id}"
+                )
+                continue
+
+            response_family = response_family_lookup.get(family_import_id)
+            # All hits contain required family info to create response
+            if response_family is None:
+                response_family = SearchResponseFamily(
+                    family_slug=hit.family_slug,
+                    family_name=hit.family_name,
+                    family_description=hit.family_description or "",
+                    family_category=hit.family_category,
+                    family_date=db_family.published_date.isoformat(),
+                    family_last_updated_date=db_family.last_updated_date.isoformat(),
+                    family_source=hit.family_source,
+                    family_description_match=False,
+                    family_title_match=False,
+                    family_documents=[],
+                    family_geography=hit.family_geography,
+                    family_metadata=cast(dict, db_family_metadata.value),
+                )
+                response_family_lookup[family_import_id] = response_family
+
+            if isinstance(hit, DataAccessResponseDocument):
+                response_family.family_description_match = True
+                response_family.family_title_match = True
+
+            elif isinstance(hit, DataAccessResponsePassage):
+                document_import_id = hit.document_import_id
+                if document_import_id is None:
+                    _LOGGER.error("Skipping hit with empty document import id")
+                    continue
+
+                response_document = response_document_lookup.get(document_import_id)
+                if response_document is None:
+                    db_family_document = db_family_document_lookup.get(
+                        document_import_id
+                    )
+                    if db_family_document is None:
+                        _LOGGER.error(
+                            "Skipping unknown family document with id "
+                            f"'{document_import_id}'"
+                        )
+                        continue
+
+                    response_document = SearchResponseFamilyDocument(
+                        document_title=str(db_family_document.physical_document.title),
+                        document_slug=hit.document_slug,
+                        document_type=str(db_family_document.document_type),
+                        document_source_url=hit.document_source_url,
+                        document_url=to_cdn_url(hit.document_cdn_object),
+                        document_content_type=hit.document_content_type,
+                        document_passage_matches=[],
+                    )
+                    response_document_lookup[document_import_id] = response_document
+                    response_family.family_documents.append(response_document)
+
+                response_document.document_passage_matches.append(
+                    SearchResponseDocumentPassage(
+                        text=hit.text_block,
+                        text_block_id=hit.text_block_id,
+                        text_block_page=hit.text_block_page,
+                        text_block_coords=hit.text_block_coords,
+                    )
+                )
+
+            else:
+                _LOGGER.error(f"Unknown hit type: {type(hit)}")
+
+        response_families.append(response_family)
+        response_family = None
+
+    return response_families
+
+
+def process_vespa_search_response(
+    db: Session,
+    vespa_search_response: DataAccessSearchResponse,
+    limit: int,
+    offset: int,
+) -> SearchResponse:
+    """Process a Vespa search response into a F/E search response"""
+    return SearchResponse(
+        hits=vespa_search_response.total_hits,
+        query_time_ms=vespa_search_response.query_time_ms or 0,
+        total_time_ms=vespa_search_response.total_time_ms or 0,
+        continuation_token=vespa_search_response.continuation_token,
+        families=_process_vespa_search_response_families(
+            db,
+            vespa_search_response.families,
+            limit=limit,
+            offset=offset,
+        ),
+    )
+
+
+def create_vespa_search_params(db: Session, search_body: SearchRequestBody):
+    """Create Vespa search parameters from a F/E search request body"""
+    return DataAccessSearchParams(
+        query_string=search_body.query_string,
+        exact_match=search_body.exact_match,
+        limit=VESPA_SEARCH_LIMIT,
+        max_hits_per_family=VESPA_SEARCH_MATCHES_PER_DOC,
+        keyword_filters=_convert_filters(db, search_body.keyword_filters),
+        year_range=search_body.year_range,
+        sort_by=_convert_sort_field(search_body.sort_field),
+        sort_order=_convert_sort_order(search_body.sort_order),
+        # TODO: implement large scale pagination? For now, just pass through
+        continuation_token=search_body.continuation_token,
+    )
