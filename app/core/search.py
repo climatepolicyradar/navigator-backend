@@ -2,84 +2,80 @@ import csv
 import itertools
 import json
 import logging
-import os
+import string
 import time
 from collections import OrderedDict, defaultdict
 from dataclasses import dataclass
 from io import StringIO
 from pathlib import Path
 from typing import Any, Mapping, Optional, Sequence, cast
-import string
 
 from cpr_data_access.embedding import Embedder
-from cpr_data_access.models.search import (
-    Document as DataAccessResponseDocument,
-    Family as DataAccessResponseFamily,
-    Passage as DataAccessResponsePassage,
-    SearchParameters as DataAccessSearchParams,
-    SearchResponse as DataAccessSearchResponse,
-)
-from opensearchpy import OpenSearch
+from cpr_data_access.models.search import Document as DataAccessResponseDocument
+from cpr_data_access.models.search import Family as DataAccessResponseFamily
+from cpr_data_access.models.search import Passage as DataAccessResponsePassage
+from cpr_data_access.models.search import SearchParameters as DataAccessSearchParams
+from cpr_data_access.models.search import SearchResponse as DataAccessSearchResponse
 from opensearchpy import JSONSerializer as jss
+from opensearchpy import OpenSearch
 from sqlalchemy.orm import Session
 
 from app.api.api_v1.schemas.search import (
     FilterField,
+    IncludedResults,
     OpenSearchResponseDescriptionMatch,
-    OpenSearchResponseNameMatch,
     OpenSearchResponseMatchBase,
+    OpenSearchResponseNameMatch,
     OpenSearchResponsePassageMatch,
     SearchRequestBody,
     SearchResponse,
-    SearchResponseFamilyDocument,
-    SearchResponseFamily,
     SearchResponseDocumentPassage,
+    SearchResponseFamily,
+    SearchResponseFamilyDocument,
     SortField,
     SortOrder,
-    IncludedResults,
 )
 from app.core.config import (
     INDEX_ENCODER_CACHE_FOLDER,
+    OPENSEARCH_INDEX_DESCRIPTION_BOOST,
+    OPENSEARCH_INDEX_DESCRIPTION_EMBEDDING_KEY,
+    OPENSEARCH_INDEX_DESCRIPTION_KEY,
+    OPENSEARCH_INDEX_EMBEDDED_TEXT_BOOST,
+    OPENSEARCH_INDEX_INDEX_KEY,
     OPENSEARCH_INDEX_INNER_PRODUCT_THRESHOLD,
+    OPENSEARCH_INDEX_KNN_K_VALUE,
     OPENSEARCH_INDEX_MAX_DOC_COUNT,
     OPENSEARCH_INDEX_MAX_PASSAGES_PER_DOC,
-    OPENSEARCH_INDEX_KNN_K_VALUE,
     OPENSEARCH_INDEX_N_PASSAGES_TO_SAMPLE_PER_SHARD,
     OPENSEARCH_INDEX_NAME_BOOST,
-    OPENSEARCH_INDEX_DESCRIPTION_BOOST,
-    OPENSEARCH_INDEX_EMBEDDED_TEXT_BOOST,
     OPENSEARCH_INDEX_NAME_KEY,
-    OPENSEARCH_INDEX_DESCRIPTION_KEY,
-    OPENSEARCH_INDEX_DESCRIPTION_EMBEDDING_KEY,
-    OPENSEARCH_INDEX_INDEX_KEY,
-    OPENSEARCH_INDEX_TEXT_BLOCK_KEY,
-    OPENSEARCH_URL,
     OPENSEARCH_INDEX_PREFIX,
-    OPENSEARCH_USERNAME,
+    OPENSEARCH_INDEX_TEXT_BLOCK_KEY,
+    OPENSEARCH_JIT_MAX_DOC_COUNT,
     OPENSEARCH_PASSWORD,
     OPENSEARCH_REQUEST_TIMEOUT,
-    OPENSEARCH_USE_SSL,
-    OPENSEARCH_VERIFY_CERTS,
     OPENSEARCH_SSL_WARNINGS,
-    OPENSEARCH_JIT_MAX_DOC_COUNT,
+    OPENSEARCH_URL,
+    OPENSEARCH_USE_SSL,
+    OPENSEARCH_USERNAME,
+    OPENSEARCH_VERIFY_CERTS,
     PUBLIC_APP_URL,
     VESPA_SEARCH_LIMIT,
     VESPA_SEARCH_MATCHES_PER_DOC,
 )
-from app.core.util import to_cdn_url
 from app.core.lookups import get_countries_for_region, get_countries_for_slugs
+from app.core.util import to_cdn_url
 from app.db.models.app.users import Organisation
 from app.db.models.law_policy import (
+    Collection,
+    CollectionFamily,
     Family,
     FamilyDocument,
     FamilyMetadata,
     FamilyOrganisation,
     Slug,
-    Collection,
-    CollectionFamily,
 )
-from app.db.models.law_policy.family import DocumentStatus
-
+from app.db.models.law_policy.family import DocumentStatus, FamilyStatus
 
 _LOGGER = logging.getLogger(__name__)
 
@@ -167,7 +163,7 @@ class OpenSearchQueryConfig:
     max_doc_count: int = OPENSEARCH_INDEX_MAX_DOC_COUNT
     max_passages_per_doc: int = OPENSEARCH_INDEX_MAX_PASSAGES_PER_DOC
     n_passages_to_sample_per_shard: int = (
-        OPENSEARCH_INDEX_N_PASSAGES_TO_SAMPLE_PER_SHARD
+        OPENSEARCH_INDEX_N_PASSAGES_TO_SAMPLE_PER_SHARD  # noqa
     )
     k = OPENSEARCH_INDEX_KNN_K_VALUE
     jit_max_doc_count: int = OPENSEARCH_JIT_MAX_DOC_COUNT
@@ -1066,27 +1062,18 @@ def _convert_filters(
         if field == FilterField.REGION:
             new_values = new_keyword_filters.get(new_field, [])
             for region in values:
-                new_values.extend([
-                    country.value for country in get_countries_for_region(db, region)
-                ])
+                new_values.extend(
+                    [country.value for country in get_countries_for_region(db, region)]
+                )
         elif field == FilterField.COUNTRY:
             new_values = new_keyword_filters.get(new_field, [])
-            new_values.extend([
-                country.value for country in get_countries_for_slugs(db, values)
-            ])
+            new_values.extend(
+                [country.value for country in get_countries_for_slugs(db, values)]
+            )
         else:
             new_values = values
         new_keyword_filters[new_field] = new_values
     return new_keyword_filters
-
-
-from app.db.models.law_policy import (
-    Family,
-    FamilyMetadata,
-    FamilyDocument,
-    FamilyStatus,
-)
-from app.core.util import to_cdn_url
 
 
 def _process_vespa_search_response_families(

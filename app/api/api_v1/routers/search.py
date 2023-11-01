@@ -15,19 +15,15 @@ from fastapi import APIRouter, Depends, Request
 from fastapi.responses import StreamingResponse
 from sqlalchemy.orm import Session
 
-from app.api.api_v1.schemas.search import (
-    SearchRequestBody,
-    SearchResponse,
-    SortField,
-)
+from app.api.api_v1.schemas.search import SearchRequestBody, SearchResponse, SortField
 from app.core.browse import BrowseArgs, browse_rds_families
 from app.core.config import VESPA_SECRETS_LOCATION, VESPA_URL
 from app.core.lookups import get_countries_for_region, get_country_by_slug
 from app.core.search import (
     ENCODER,
     FilterField,
-    OpenSearchConnection,
     OpenSearchConfig,
+    OpenSearchConnection,
     OpenSearchQueryConfig,
     create_vespa_search_params,
     process_result_into_csv,
@@ -177,6 +173,7 @@ def _get_browse_args_from_search_request_body(
         sort_order=search_body.sort_order,
         limit=search_body.limit,
         offset=search_body.offset,
+        geography_slugs=[],
     )
 
 
