@@ -173,7 +173,6 @@ def _get_browse_args_from_search_request_body(
         sort_order=search_body.sort_order,
         limit=search_body.limit,
         offset=search_body.offset,
-        geography_slugs=[],
     )
 
 
