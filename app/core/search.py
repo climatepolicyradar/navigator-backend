@@ -1227,7 +1227,7 @@ def process_vespa_search_response(
 ) -> SearchResponse:
     """Process a Vespa search response into a F/E search response"""
     return SearchResponse(
-        hits=vespa_search_response.total_hits,
+        hits=len(vespa_search_response.families),
         query_time_ms=vespa_search_response.query_time_ms or 0,
         total_time_ms=vespa_search_response.total_time_ms or 0,
         continuation_token=vespa_search_response.continuation_token,
