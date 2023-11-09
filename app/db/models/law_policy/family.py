@@ -65,7 +65,7 @@ class Family(Base):
     )
 
     @hybrid_property
-    def family_status(self) -> FamilyStatus:
+    def family_status(self) -> FamilyStatus:  # type: ignore
         """Calculates the family status given its documents."""
         if not self.family_documents:
             return FamilyStatus.CREATED
@@ -77,6 +77,47 @@ class Family(Base):
             return FamilyStatus.CREATED
         # If we get here then all must be deleted
         return FamilyStatus.DELETED
+
+    @family_status.expression
+    def family_status(cls):
+        is_published = (
+            sa.select([sa.func.count(FamilyDocument.document_status)])
+            .where(
+                sa.and_(
+                    FamilyDocument.family_import_id == cls.import_id,
+                    FamilyDocument.document_status == DocumentStatus.PUBLISHED,
+                )
+            )
+            .as_scalar()
+        )
+
+        is_created = (
+            sa.select([sa.func.count(FamilyDocument.document_status)])
+            .where(
+                sa.and_(
+                    FamilyDocument.family_import_id == cls.import_id,
+                    FamilyDocument.document_status == DocumentStatus.CREATED,
+                )
+            )
+            .as_scalar()
+        )
+
+        # DO NOT USE 'is None'!
+        return sa.case(
+            [
+                (
+                    cls.family_documents == None,  # noqa: E711
+                    sa.literal_column(f"'{FamilyStatus.CREATED}'"),
+                )
+            ],
+            else_=sa.case(
+                [(is_published > 0, sa.literal_column(f"'{FamilyStatus.PUBLISHED}'"))],
+                else_=sa.case(
+                    [(is_created > 0, sa.literal_column(f"'{FamilyStatus.CREATED}'"))],
+                    else_=sa.literal_column(f"'{FamilyStatus.DELETED}'"),
+                ),
+            ),
+        ).label("family_status")
 
     @hybrid_property
     def published_date(self) -> Optional[datetime]:
