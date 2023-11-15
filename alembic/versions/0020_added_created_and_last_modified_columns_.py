@@ -1,9 +1,9 @@
 """
-Added created and last modified columns to documents.
+Added created and last modified columns on documents.
 
-Revision ID: 0021
-Revises: 0020
-Create Date: 2023-11-15 11:52:30.895543
+Revision ID: 0020
+Revises: 0019
+Create Date: 2023-11-15 16:54:02.928192
 
 """
 import sqlalchemy as sa
@@ -13,8 +13,8 @@ from alembic_utils.pg_trigger import PGTrigger
 from alembic import op
 
 # revision identifiers, used by Alembic.
-revision = "0021"
-down_revision = "0020"
+revision = "0020"
+down_revision = "0019"
 branch_labels = None
 depends_on = None
 
