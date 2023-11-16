@@ -3,7 +3,7 @@ Added created and last modified columns on documents.
 
 Revision ID: 0020
 Revises: 0019
-Create Date: 2023-11-15 16:54:02.928192
+Create Date: 2023-11-16 17:01:21.091516
 
 """
 import sqlalchemy as sa
@@ -32,12 +32,7 @@ def upgrade():
     )
     op.add_column(
         "family_document",
-        sa.Column(
-            "last_modified",
-            sa.DateTime(timezone=True),
-            server_default=sa.text("now()"),
-            nullable=False,
-        ),
+        sa.Column("last_modified", sa.DateTime(timezone=True), nullable=False),
     )
     public_update_last_modified = PGFunction(
         schema="public",
@@ -58,13 +53,12 @@ def upgrade():
         signature="update_last_modified",
         on_entity="public.family_document",
         definition="""
-    BEFORE UPDATE ON public.family_document
+    BEFORE INSERT OR UPDATE ON public.family_document
     FOR EACH ROW
     EXECUTE PROCEDURE public.update_last_modified()
 """,
     )
     op.create_entity(public_family_document_update_last_modified)  # type: ignore
-
     # ### end Alembic commands ###
 
 
@@ -76,7 +70,7 @@ def downgrade():
         on_entity="public.family_document",
         is_constraint=False,
         definition="""
-    BEFORE UPDATE ON public.family_document
+    BEFORE INSERT OR UPDATE ON public.family_document
     FOR EACH ROW
     EXECUTE PROCEDURE public.update_last_modified()
 """,

@@ -208,8 +208,8 @@ class FamilyDocument(Base):
     )
     last_modified = sa.Column(
         sa.DateTime(timezone=True),
-        server_default=sa.func.now(),
-        server_onupdate=sa.func.now(),
+        default=sa.func.now(),
+        onupdate=sa.func.now(),
         nullable=False,
     )
 

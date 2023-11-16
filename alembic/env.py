@@ -52,7 +52,7 @@ last_modified_trigger = PGTrigger(
     signature="update_last_modified",
     on_entity="public.family_document",
     definition="""
-    BEFORE UPDATE ON public.family_document
+    BEFORE INSERT OR UPDATE ON public.family_document
     FOR EACH ROW
     EXECUTE PROCEDURE public.update_last_modified()
 """,
