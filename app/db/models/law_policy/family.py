@@ -9,6 +9,7 @@ from app.db.models.app import Organisation
 from app.db.models.app.enum import BaseModelEnum
 from app.db.models.document import PhysicalDocument
 from app.db.session import Base
+
 from .geography import Geography
 
 
@@ -202,6 +203,15 @@ class FamilyDocument(Base):
     )
     document_type = sa.Column(sa.ForeignKey(FamilyDocumentType.name), nullable=True)
     document_role = sa.Column(sa.ForeignKey(FamilyDocumentRole.name), nullable=True)
+    created = sa.Column(
+        sa.DateTime(timezone=True), server_default=sa.func.now(), nullable=False
+    )
+    last_modified = sa.Column(
+        sa.DateTime(timezone=True),
+        default=sa.func.now(),
+        onupdate=sa.func.now(),
+        nullable=False,
+    )
 
     slugs: list["Slug"] = relationship("Slug", lazy="joined")
     physical_document: PhysicalDocument = relationship(

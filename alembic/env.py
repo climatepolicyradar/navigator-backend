@@ -1,10 +1,13 @@
 import logging
 import os
-from alembic import context
 from logging.config import fileConfig
-from sqlalchemy import engine_from_config
-from sqlalchemy import pool
 
+from alembic_utils.pg_function import PGFunction
+from alembic_utils.pg_trigger import PGTrigger
+from alembic_utils.replaceable_entity import register_entities
+from sqlalchemy import engine_from_config, pool
+
+from alembic import context
 from app.db.models import Base
 
 logger = logging.getLogger(__name__)
@@ -29,6 +32,31 @@ target_metadata = Base.metadata
 # can be acquired:
 # my_important_option = config.get_main_option("my_important_option")
 # ... etc.
+
+# Add any custom DDL statements here.
+last_modified_procedure = PGFunction(
+    schema="public",
+    signature="update_last_modified()",
+    definition="""
+RETURNS TRIGGER AS $$
+BEGIN
+    NEW.last_modified = NOW();
+    RETURN NEW;
+END;
+$$ language 'plpgsql'
+""",
+)
+
+last_modified_trigger = PGTrigger(
+    schema="public",
+    signature="update_last_modified",
+    on_entity="public.family_document",
+    definition="""
+    BEFORE INSERT OR UPDATE ON public.family_document
+    FOR EACH ROW
+    EXECUTE PROCEDURE public.update_last_modified()
+""",
+)
 
 
 def get_url():
@@ -101,6 +129,9 @@ def run_migrations_online():
 
         with context.begin_transaction():
             context.run_migrations()
+
+
+register_entities([last_modified_procedure, last_modified_trigger])
 
 
 if context.is_offline_mode():
