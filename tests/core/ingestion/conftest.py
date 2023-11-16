@@ -22,8 +22,6 @@ def patch_time(time_to_freeze, tick=True):
             now = datetime.datetime.now()
             if hasattr(target, "created"):
                 target.created = now
-            # if hasattr(target, "last_modified"):
-            #     target.last_modified = now
 
         event.listen(
             FamilyDocument, "before_insert", set_initial_timestamp, propagate=True
