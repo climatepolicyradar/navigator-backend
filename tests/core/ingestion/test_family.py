@@ -1,9 +1,12 @@
+from datetime import datetime, timezone
+
 from sqlalchemy.orm import Session
+
+from app.core.ingestion.cclw.ingest_row_cclw import CCLWDocumentIngestRow
 from app.core.ingestion.family import (
     handle_family_document_from_params,
     handle_family_from_params,
 )
-from app.core.ingestion.cclw.ingest_row_cclw import CCLWDocumentIngestRow
 from app.core.ingestion.physical_document import create_physical_document_from_params
 from app.core.ingestion.processor import build_params_from_cclw
 from app.db.models.law_policy.family import (
@@ -122,22 +125,36 @@ def test_family_document_from_row__creates(test_db: Session):
     )
     assert db_family_doc == family_document
     assert db_family_doc.physical_document.title == row.document_title
+    assert db_family_doc.created is not None
+    assert db_family_doc.last_modified is not None
+    assert db_family_doc.created == db_family_doc.last_modified
 
 
-def test_family_document_from_row__updates(test_db: Session):
-    populate_for_ingest(test_db)
-    row = CCLWDocumentIngestRow.from_row(1, get_doc_ingest_row_data(0))
-    family = add_a_family(test_db)
-    result = {}
-    handle_family_document_from_params(
-        test_db, build_params_from_cclw(row), family, result=result
-    )
+def test_family_document_from_row__updates(test_db: Session, patch_current_time):
+    with patch_current_time("2000-01-01 00:00:00.0Z", tick=False):
+        populate_for_ingest(test_db)
+
+        row = CCLWDocumentIngestRow.from_row(1, get_doc_ingest_row_data(0))
+        family = add_a_family(test_db)
+        result = {}
+        handle_family_document_from_params(
+            test_db, build_params_from_cclw(row), family, result=result
+        )
+
     result = {}
     row.document_title = "test-title"
     row.document_role = "PRESS RELEASE"
     family_document = handle_family_document_from_params(
         test_db, build_params_from_cclw(row), family, result=result
     )
+
+    assert family_document.created is not None
+    assert family_document.created == datetime(
+        2000, 1, 1, 0, 0, 0, 0, tzinfo=timezone.utc
+    )
+    assert family_document.last_modified is not None
+    assert family_document.created != family_document.last_modified
+    assert family_document.created < family_document.last_modified
 
     actual_keys = set(result.keys())
     expected_keys = set(
@@ -157,15 +174,24 @@ def test_family_document_from_row__updates(test_db: Session):
     assert db_family_doc.physical_document.title == "test-title"
     assert db_family_doc.document_role == "PRESS RELEASE"
 
-
-def test_family_document_from_row__updates_status(test_db: Session):
-    populate_for_ingest(test_db)
-    row = CCLWDocumentIngestRow.from_row(1, get_doc_ingest_row_data(0))
-    family = add_a_family(test_db)
-    result = {}
-    handle_family_document_from_params(
-        test_db, build_params_from_cclw(row), family, result=result
+    assert db_family_doc.created == datetime(
+        2000, 1, 1, 0, 0, 0, 0, tzinfo=timezone.utc
     )
+    assert db_family_doc.last_modified is not None
+    assert db_family_doc.created != db_family_doc.last_modified
+    assert db_family_doc.created < db_family_doc.last_modified
+
+
+def test_family_document_from_row__updates_status(test_db: Session, patch_current_time):
+    with patch_current_time("2000-01-01 00:00:00.0Z", tick=False):
+        populate_for_ingest(test_db)
+        row = CCLWDocumentIngestRow.from_row(1, get_doc_ingest_row_data(0))
+        family = add_a_family(test_db)
+        result = {}
+        handle_family_document_from_params(
+            test_db, build_params_from_cclw(row), family, result=result
+        )
+
     result = {}
     row.cpr_document_status = "DELETED"
     family_document = handle_family_document_from_params(
@@ -181,6 +207,12 @@ def test_family_document_from_row__updates_status(test_db: Session):
     )
     assert db_family_doc == family_document
     assert db_family_doc.document_status == "DELETED"
+    assert db_family_doc.created == datetime(
+        2000, 1, 1, 0, 0, 0, 0, tzinfo=timezone.utc
+    )
+    assert db_family_doc.last_modified is not None
+    assert db_family_doc.created != db_family_doc.last_modified
+    assert db_family_doc.created < db_family_doc.last_modified
 
 
 def add_a_family(test_db: Session) -> Family:

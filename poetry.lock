@@ -881,6 +881,20 @@ typing_extensions = "*"
 dev = ["black", "mypy", "pre-commit", "pylint", "pytest", "pytest-benchmark", "pytest-cov"]
 
 [[package]]
+name = "freezegun"
+version = "1.2.2"
+description = "Let your Python tests travel through time"
+optional = false
+python-versions = ">=3.6"
+files = [
+    {file = "freezegun-1.2.2-py3-none-any.whl", hash = "sha256:ea1b963b993cb9ea195adbd893a48d573fda951b0da64f60883d7e988b606c9f"},
+    {file = "freezegun-1.2.2.tar.gz", hash = "sha256:cd22d1ba06941384410cd967d8a99d5ae2442f57dfafeff2fda5de8dc5c05446"},
+]
+
+[package.dependencies]
+python-dateutil = ">=2.7"
+
+[[package]]
 name = "frozenlist"
 version = "1.4.0"
 description = "A list-like structure which implements collections.abc.MutableSequence"
@@ -3182,6 +3196,16 @@ typing-extensions = {version = ">=3.10.0", markers = "python_version < \"3.10\""
 full = ["httpx (>=0.22.0)", "itsdangerous", "jinja2", "python-multipart", "pyyaml"]
 
 [[package]]
+name = "surrogate"
+version = "0.1"
+description = "A Python micro-lib to create stubs for non-existing modules."
+optional = false
+python-versions = "*"
+files = [
+    {file = "surrogate-0.1.tar.gz", hash = "sha256:edebec660d728325be1d52cab40d778d4c75ba04f927f4aba12d35f730b2df03"},
+]
+
+[[package]]
 name = "sympy"
 version = "1.12"
 description = "Computer algebra system (CAS) in Python"
@@ -4132,4 +4156,4 @@ multidict = ">=4.0"
 [metadata]
 lock-version = "2.0"
 python-versions = "^3.9"
-content-hash = "eae7d047ba0d12231ffdd662373c9f93c690e32c5ef2b0ce8e34b39854f4fc34"
+content-hash = "bb0c95f79a976156d60794947fbc7839c566d88aad7cbf70907a36fc30322071"
