@@ -13,6 +13,15 @@ class Collection(Base):
     import_id = sa.Column(sa.Text, primary_key=True)
     title = sa.Column(sa.Text, nullable=False)
     description = sa.Column(sa.Text, nullable=False)
+    created = sa.Column(
+        sa.DateTime(timezone=True), server_default=sa.func.now(), nullable=False
+    )
+    last_modified = sa.Column(
+        sa.DateTime(timezone=True),
+        server_default=sa.func.now(),
+        onupdate=sa.func.now(),
+        nullable=False,
+    )
 
 
 class CollectionFamily(Base):

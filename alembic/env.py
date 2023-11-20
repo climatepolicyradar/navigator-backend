@@ -47,12 +47,43 @@ $$ language 'plpgsql'
 """,
 )
 
-last_modified_trigger = PGTrigger(
+doc_last_modified_trigger = PGTrigger(
     schema="public",
     signature="update_last_modified",
     on_entity="public.family_document",
     definition="""
     BEFORE INSERT OR UPDATE ON public.family_document
+    FOR EACH ROW
+    EXECUTE PROCEDURE public.update_last_modified()
+""",
+)
+
+family_last_modified_trigger = PGTrigger(
+    schema="public",
+    signature="update_last_modified",
+    on_entity="public.family",
+    definition="""
+    BEFORE INSERT OR UPDATE ON public.family
+    FOR EACH ROW
+    EXECUTE PROCEDURE public.update_last_modified()
+""",
+)
+collection_last_modified_trigger = PGTrigger(
+    schema="public",
+    signature="update_last_modified",
+    on_entity="public.collection",
+    definition="""
+    BEFORE INSERT OR UPDATE ON public.collection
+    FOR EACH ROW
+    EXECUTE PROCEDURE public.update_last_modified()
+""",
+)
+event_last_modified_trigger = PGTrigger(
+    schema="public",
+    signature="update_last_modified",
+    on_entity="public.family_event",
+    definition="""
+    BEFORE INSERT OR UPDATE ON public.family_event
     FOR EACH ROW
     EXECUTE PROCEDURE public.update_last_modified()
 """,
@@ -131,7 +162,15 @@ def run_migrations_online():
             context.run_migrations()
 
 
-register_entities([last_modified_procedure, last_modified_trigger])
+register_entities(
+    [
+        last_modified_procedure,
+        doc_last_modified_trigger,
+        event_last_modified_trigger,
+        collection_last_modified_trigger,
+        family_last_modified_trigger,
+    ]
+)
 
 
 if context.is_offline_mode():

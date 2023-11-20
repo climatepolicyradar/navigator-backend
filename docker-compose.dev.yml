@@ -1,9 +1,10 @@
-version: '3.7'
+version: "3.7"
 services:
-
   backend:
     environment:
       PYTHONDONTWRITEBYTECODE: 0
+    env_file:
+      - .env
     volumes:
       - ./:/cpr-backend/:ro
 

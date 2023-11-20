@@ -53,6 +53,15 @@ class Family(Base):
     description = sa.Column(sa.Text, nullable=False)
     geography_id = sa.Column(sa.ForeignKey(Geography.id), nullable=False)
     family_category = sa.Column(sa.Enum(FamilyCategory), nullable=False)
+    created = sa.Column(
+        sa.DateTime(timezone=True), server_default=sa.func.now(), nullable=False
+    )
+    last_modified = sa.Column(
+        sa.DateTime(timezone=True),
+        server_default=sa.func.now(),
+        onupdate=sa.func.now(),
+        nullable=False,
+    )
 
     family_documents: list["FamilyDocument"] = relationship(
         "FamilyDocument",
@@ -148,6 +157,24 @@ class Family(Base):
                 date = max(cast(datetime, event.date), date)
         return date
 
+    # @hybrid_property
+    # def last_modified(self) -> datetime:
+    #     """A "last updated" date to use during display of Family."""
+
+    #     date = None
+    #     for event in self.events:
+    #         if date is None:
+    #             date = cast(datetime, event.last_modified)
+    #         else:
+    #             date = max(cast(datetime, event.last_modified), date)
+
+    #     for doc in self.family_documents:
+    #         if date is None:
+    #             date = cast(datetime, doc.last_modified)
+    #         else:
+    #             date = max(cast(datetime, doc.last_modified), date)
+    #     return date
+
 
 class DocumentStatus(BaseModelEnum):
     """FamilyDocument status to control visibility in the app."""
@@ -208,7 +235,7 @@ class FamilyDocument(Base):
     )
     last_modified = sa.Column(
         sa.DateTime(timezone=True),
-        default=sa.func.now(),
+        server_default=sa.func.now(),
         onupdate=sa.func.now(),
         nullable=False,
     )
@@ -282,3 +309,12 @@ class FamilyEvent(Base):
         nullable=True,
     )
     status = sa.Column(sa.Enum(EventStatus), nullable=False)
+    created = sa.Column(
+        sa.DateTime(timezone=True), server_default=sa.func.now(), nullable=False
+    )
+    last_modified = sa.Column(
+        sa.DateTime(timezone=True),
+        server_default=sa.func.now(),
+        onupdate=sa.func.now(),
+        nullable=False,
+    )

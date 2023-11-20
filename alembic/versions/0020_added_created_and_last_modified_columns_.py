@@ -32,7 +32,12 @@ def upgrade():
     )
     op.add_column(
         "family_document",
-        sa.Column("last_modified", sa.DateTime(timezone=True), nullable=False),
+        sa.Column(
+            "last_modified",
+            sa.DateTime(timezone=True),
+            server_default=sa.text("now()"),
+            nullable=False,
+        ),
     )
     public_update_last_modified = PGFunction(
         schema="public",
