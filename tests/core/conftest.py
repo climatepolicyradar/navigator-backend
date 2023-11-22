@@ -13,8 +13,8 @@ def patch_current_time():
 
 
 @contextmanager
-def patch_time(time_to_freeze, entity, tick=False):
-    with freeze_time(time_to_freeze, tick=tick) as frozen_time:
+def patch_time(time_to_freeze, entity):
+    with freeze_time(time_to_freeze) as frozen_time:
 
         def set_initial_timestamp(mapper, connection, target):
             now = datetime.datetime.now(datetime.timezone.utc)
