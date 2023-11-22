@@ -231,12 +231,6 @@ def run_migrations_online():
 
 
 register_entities(
-    # [
-    #     last_modified_procedure,
-    #     doc_last_modified_trigger,
-    #     event_last_modified_trigger,
-    #     collection_last_modified_trigger,
-    # ]
     [
         last_modified_procedure,
         update_family_when_related_entity_updated,
