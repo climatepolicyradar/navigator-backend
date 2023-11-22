@@ -59,32 +59,8 @@ def upgrade():
     )
     op.drop_entity(public_update_last_modified)  # type: ignore
 
-    # op.drop_column("family_document", "last_modified")
-    # op.add_column(
-    #     "family_document",
-    #     sa.Column(
-    #         "last_modified",
-    #         sa.DateTime(timezone=True),
-    #         server_default=sa.text("now()"),
-    #         nullable=False,
-    #     ),
-    # )
-
 
 def downgrade():
-    # op.drop_column("family_document", "last_modified")
-    # op.add_column(
-    #     "family_document",
-    #     sa.Column(
-    #         "last_modified",
-    #         sa.DateTime(timezone=True),
-    #         nullable=False,
-    #     ),
-    # )
-    # op.alter_column(
-    #     "family_document", "last_modified", server_default=None, nullable=True
-    # )
-
     public_update_last_modified = PGFunction(
         schema="public",
         signature="update_last_modified()",
