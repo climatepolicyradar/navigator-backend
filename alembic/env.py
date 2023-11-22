@@ -122,7 +122,6 @@ event_last_modified_trigger = PGTrigger(
 """,
 )
 
-# TODO: Do we need on delete as well?
 family_event_last_modified_trigger = PGTrigger(
     schema="public",
     signature="update_family_last_modified",
