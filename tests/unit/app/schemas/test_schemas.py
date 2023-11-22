@@ -141,7 +141,6 @@ def test_search_responses() -> None:
         original_block_data
     )
 
-    assert default_passage_response.text_block_page != original_block_page
     assert default_passage_response.text_block_page == original_block_page + 1
 
     response_base = OpenSearchResponseMatchBase.parse_obj(base_response_data)
@@ -150,7 +149,6 @@ def test_search_responses() -> None:
         **response_base.dict(), **original_block_data
     )
 
-    assert opensearch_passage_response.text_block_page != original_block_page
     assert opensearch_passage_response.text_block_page == original_block_page + 1
 
     assert opensearch_passage_response.text_block_page == (
