@@ -1,6 +1,8 @@
 from unittest.mock import MagicMock
 
 import pytest
+from sqlalchemy.orm import Session
+
 from app.core.ingestion.utils import (
     Result,
     ResultType,
@@ -10,13 +12,10 @@ from app.core.ingestion.utils import (
 )
 from app.data_migrations import populate_geography
 from app.db.models.law_policy.family import Family, FamilyCategory, FamilyStatus
-from sqlalchemy.orm import Session
-
 from tests.core.ingestion.helpers import (
     FAMILY_IMPORT_ID,
     add_a_slug_for_family1_and_flush,
 )
-
 
 """
 Note from author:
@@ -110,24 +109,26 @@ def test_get_or_create__after_create(test_db):
     after_create.assert_called_once_with(new_family)
 
 
-def test_to_dict(test_db):
+def test_to_dict(test_db, patch_current_time):
     populate_geography(test_db)
-    existing_family = add_a_family(
-        test_db,
-        description="""This is a really long description
-        which should get truncated to 80 chars, the test
-        will fail if it does not.
-        """,
-    )
+
+    with patch_current_time("2000-01-01 00:00:00.0Z", Family):
+        existing_family = add_a_family(
+            test_db,
+            description="""This is a really long description which should get truncated
+        to 80 chars, the test will fail if it does not.""",
+        )
 
     new_dict = to_dict(existing_family)
 
     assert new_dict == {
         "__class__": "Family",
-        "description": "This is a really long description\n        which should get truncated to 80 chars...",
+        "created": "2000-01-01 00:00:00+00:00",
+        "description": "This is a really long description which should get truncated\n        to 80 chars...",
         "family_category": "EXECUTIVE",
         "geography_id": "2",
         "import_id": FAMILY_IMPORT_ID,
+        "last_modified": "2000-01-01 00:00:00+00:00",
         "title": "title",
     }
 
