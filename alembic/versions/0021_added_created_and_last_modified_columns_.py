@@ -3,10 +3,11 @@ Added created and last modified columns for all entities
 
 Revision ID: 0021
 Revises: 0020
-Create Date: 2023-11-20 15:58:31.251530
+Create Date: 2023-11-22 16:05:12.088610
 
 """
 import sqlalchemy as sa
+from alembic_utils.pg_function import PGFunction
 from alembic_utils.pg_trigger import PGTrigger
 
 from alembic import op
@@ -74,31 +75,72 @@ def upgrade():
             nullable=False,
         ),
     )
+    public_update_1_last_modified = PGFunction(
+        schema="public",
+        signature="update_1_last_modified()",
+        definition="""
+    RETURNS TRIGGER AS $$
+    BEGIN
+        NEW.last_modified = NOW();
+        RETURN NEW;
+    END;
+    $$ language 'plpgsql'""",
+    )
+    op.create_entity(public_update_1_last_modified)  # type: ignore
+
+    public_update_2_family_last_modified = PGFunction(
+        schema="public",
+        signature="update_2_family_last_modified()",
+        definition="""
+    RETURNS TRIGGER AS $$
+    BEGIN
+        UPDATE family
+        SET last_modified = NOW()
+        WHERE import_id = NEW.family_import_id;
+        RETURN NEW;
+    END;
+    $$ language 'plpgsql'""",
+    )
+    op.create_entity(public_update_2_family_last_modified)  # type: ignore
+
+    public_update_2_collection_last_modified = PGFunction(
+        schema="public",
+        signature="update_2_collection_last_modified()",
+        definition="""
+    RETURNS TRIGGER AS $$
+    BEGIN
+        UPDATE collection
+        SET last_modified = NOW()
+        WHERE import_id = NEW.collection_import_id;
+        RETURN NEW;
+    END;
+    $$ language 'plpgsql'""",
+    )
+    op.create_entity(public_update_2_collection_last_modified)  # type: ignore
+
+    public_family_document_update_last_modified = PGTrigger(
+        schema="public",
+        signature="update_last_modified",
+        on_entity="public.family_document",
+        is_constraint=False,
+        definition="""
+    BEFORE UPDATE ON public.family_document
+    FOR EACH ROW
+    EXECUTE PROCEDURE public.update_1_last_modified()""",
+    )
+    op.replace_entity(public_family_document_update_last_modified)  # type: ignore
+
     public_family_event_update_last_modified = PGTrigger(
         schema="public",
         signature="update_last_modified",
         on_entity="public.family_event",
         is_constraint=False,
         definition="""
-    BEFORE INSERT OR UPDATE ON public.family_event
+    BEFORE UPDATE ON public.family_event
     FOR EACH ROW
-    EXECUTE PROCEDURE public.update_last_modified()
-    """,
+    EXECUTE PROCEDURE public.update_1_last_modified()""",
     )
     op.create_entity(public_family_event_update_last_modified)  # type: ignore
-
-    public_collection_update_last_modified = PGTrigger(
-        schema="public",
-        signature="update_last_modified",
-        on_entity="public.collection",
-        is_constraint=False,
-        definition="""
-    BEFORE INSERT OR UPDATE ON public.collection
-    FOR EACH ROW
-    EXECUTE PROCEDURE public.update_last_modified()
-    """,
-    )
-    op.create_entity(public_collection_update_last_modified)  # type: ignore
 
     public_family_update_last_modified = PGTrigger(
         schema="public",
@@ -106,43 +148,154 @@ def upgrade():
         on_entity="public.family",
         is_constraint=False,
         definition="""
-    BEFORE INSERT OR UPDATE ON public.family
+    BEFORE UPDATE ON public.family
     FOR EACH ROW
-    EXECUTE PROCEDURE public.update_last_modified()
-    """,
+    EXECUTE PROCEDURE public.update_1_last_modified()""",
     )
     op.create_entity(public_family_update_last_modified)  # type: ignore
+
+    public_family_document_update_family_last_modified = PGTrigger(
+        schema="public",
+        signature="update_family_last_modified",
+        on_entity="public.family_document",
+        is_constraint=False,
+        definition="""
+    BEFORE INSERT OR UPDATE OR DELETE ON public.family_document
+    FOR EACH ROW
+    EXECUTE PROCEDURE public.update_2_family_last_modified()""",
+    )
+    op.create_entity(public_family_document_update_family_last_modified)  # type: ignore
+
+    public_family_event_update_family_last_modified = PGTrigger(
+        schema="public",
+        signature="update_family_last_modified",
+        on_entity="public.family_event",
+        is_constraint=False,
+        definition="""
+    BEFORE INSERT OR UPDATE OR DELETE ON public.family_event
+    FOR EACH ROW
+    EXECUTE PROCEDURE public.update_2_family_last_modified()""",
+    )
+    op.create_entity(public_family_event_update_family_last_modified)  # type: ignore
+
+    public_collection_update_collection_last_modified = PGTrigger(
+        schema="public",
+        signature="update_collection_last_modified",
+        on_entity="public.collection",
+        is_constraint=False,
+        definition="""
+    BEFORE UPDATE ON public.collection
+    FOR EACH ROW
+    EXECUTE PROCEDURE public.update_1_last_modified()""",
+    )
+    op.create_entity(public_collection_update_collection_last_modified)  # type: ignore
+
+    public_collection_family_update_collection_last_modified = PGTrigger(
+        schema="public",
+        signature="update_collection_last_modified",
+        on_entity="public.collection_family",
+        is_constraint=False,
+        definition="""
+    BEFORE INSERT OR UPDATE OR DELETE ON public.collection_family
+    FOR EACH ROW
+    EXECUTE PROCEDURE public.update_2_collection_last_modified()""",
+    )
+    op.create_entity(public_collection_family_update_collection_last_modified)  # type: ignore
+
+    public_update_last_modified = PGFunction(
+        schema="public",
+        signature="update_last_modified()",
+        definition="""
+    returns trigger
+    LANGUAGE plpgsql
+    AS $function$
+    BEGIN
+        NEW.last_modified = NOW();
+        RETURN NEW;
+    END;
+    $function$""",
+    )
+    op.drop_entity(public_update_last_modified)  # type: ignore
 
     # ### end Alembic commands ###
 
 
 def downgrade():
     # ### commands auto generated by Alembic - please adjust! ###
+    public_update_last_modified = PGFunction(
+        schema="public",
+        signature="update_last_modified()",
+        definition="""
+    returns trigger
+    LANGUAGE plpgsql
+    AS $function$
+    BEGIN
+        NEW.last_modified = NOW();
+        RETURN NEW;
+    END;
+    $function$""",
+    )
+    op.create_entity(public_update_last_modified)  # type: ignore
+
+    public_collection_family_update_collection_last_modified = PGTrigger(
+        schema="public",
+        signature="update_collection_last_modified",
+        on_entity="public.collection_family",
+        is_constraint=False,
+        definition="""
+    BEFORE INSERT OR UPDATE OR DELETE ON public.collection_family
+    FOR EACH ROW
+    EXECUTE PROCEDURE public.update_2_collection_last_modified()""",
+    )
+    op.drop_entity(public_collection_family_update_collection_last_modified)  # type: ignore
+
+    public_collection_update_collection_last_modified = PGTrigger(
+        schema="public",
+        signature="update_collection_last_modified",
+        on_entity="public.collection",
+        is_constraint=False,
+        definition="""
+    BEFORE UPDATE ON public.collection
+    FOR EACH ROW
+    EXECUTE PROCEDURE public.update_1_last_modified()""",
+    )
+    op.drop_entity(public_collection_update_collection_last_modified)  # type: ignore
+
+    public_family_event_update_family_last_modified = PGTrigger(
+        schema="public",
+        signature="update_family_last_modified",
+        on_entity="public.family_event",
+        is_constraint=False,
+        definition="""
+    BEFORE INSERT OR UPDATE OR DELETE ON public.family_event
+    FOR EACH ROW
+    EXECUTE PROCEDURE public.update_2_family_last_modified()""",
+    )
+    op.drop_entity(public_family_event_update_family_last_modified)  # type: ignore
+
+    public_family_document_update_family_last_modified = PGTrigger(
+        schema="public",
+        signature="update_family_last_modified",
+        on_entity="public.family_document",
+        is_constraint=False,
+        definition="""
+    BEFORE INSERT OR UPDATE OR DELETE ON public.family_document
+    FOR EACH ROW
+    EXECUTE PROCEDURE public.update_2_family_last_modified()""",
+    )
+    op.drop_entity(public_family_document_update_family_last_modified)  # type: ignore
+
     public_family_update_last_modified = PGTrigger(
         schema="public",
         signature="update_last_modified",
         on_entity="public.family",
         is_constraint=False,
-        definition=""""
-    BEFORE INSERT OR UPDATE ON public.family
+        definition="""
+    BEFORE UPDATE ON public.family
     FOR EACH ROW
-    EXECUTE PROCEDURE public.update_last_modified()
-    """,
+    EXECUTE PROCEDURE public.update_1_last_modified()""",
     )
     op.drop_entity(public_family_update_last_modified)  # type: ignore
-
-    public_collection_update_last_modified = PGTrigger(
-        schema="public",
-        signature="update_last_modified",
-        on_entity="public.collection",
-        is_constraint=False,
-        definition="""
-    BEFORE INSERT OR UPDATE ON public.collection
-    FOR EACH ROW
-    EXECUTE PROCEDURE public.update_last_modified()
-    """,
-    )
-    op.drop_entity(public_collection_update_last_modified)  # type: ignore
 
     public_family_event_update_last_modified = PGTrigger(
         schema="public",
@@ -150,12 +303,65 @@ def downgrade():
         on_entity="public.family_event",
         is_constraint=False,
         definition="""
-    BEFORE INSERT OR UPDATE ON public.family_event
+    BEFORE UPDATE ON public.family_event
     FOR EACH ROW
-    EXECUTE PROCEDURE public.update_last_modified()
-    """,
+    EXECUTE PROCEDURE public.update_1_last_modified()""",
     )
     op.drop_entity(public_family_event_update_last_modified)  # type: ignore
+
+    public_family_document_update_last_modified = PGTrigger(
+        schema="public",
+        signature="update_last_modified",
+        on_entity="public.family_document",
+        is_constraint=False,
+        definition="""
+    BEFORE INSERT OR UPDATE ON public.family_document
+    FOR EACH ROW
+    EXECUTE FUNCTION update_last_modified()""",
+    )
+    op.replace_entity(public_family_document_update_last_modified)  # type: ignore
+    public_update_2_collection_last_modified = PGFunction(
+        schema="public",
+        signature="update_2_collection_last_modified()",
+        definition="""
+    RETURNS TRIGGER AS $$
+    BEGIN
+        UPDATE collection
+        SET last_modified = NOW()
+        WHERE import_id = NEW.collection_import_id;
+        RETURN NEW;
+    END;
+    $$ language 'plpgsql'""",
+    )
+    op.drop_entity(public_update_2_collection_last_modified)  # type: ignore
+
+    public_update_2_family_last_modified = PGFunction(
+        schema="public",
+        signature="update_2_family_last_modified()",
+        definition="""
+    RETURNS TRIGGER AS $$
+    BEGIN
+        UPDATE family
+        SET last_modified = NOW()
+        WHERE import_id = NEW.family_import_id;
+        RETURN NEW;
+    END;
+    $$ language 'plpgsql'""",
+    )
+    op.drop_entity(public_update_2_family_last_modified)  # type: ignore
+
+    public_update_1_last_modified = PGFunction(
+        schema="public",
+        signature="update_1_last_modified()",
+        definition="""
+    RETURNS TRIGGER AS $$
+    BEGIN
+        NEW.last_modified = NOW();
+        RETURN NEW;
+    END;
+    $$ language 'plpgsql'""",
+    )
+    op.drop_entity(public_update_1_last_modified)  # type: ignore
 
     op.drop_column("family_event", "last_modified")
     op.drop_column("family_event", "created")

@@ -36,7 +36,7 @@ target_metadata = Base.metadata
 # Add any custom DDL statements here.
 last_modified_procedure = PGFunction(
     schema="public",
-    signature="update_last_modified()",
+    signature="update_1_last_modified()",
     definition="""
 RETURNS TRIGGER AS $$
 BEGIN
@@ -47,14 +47,33 @@ $$ language 'plpgsql'
 """,
 )
 
-doc_last_modified_trigger = PGTrigger(
+update_family_when_related_entity_updated = PGFunction(
     schema="public",
-    signature="update_last_modified",
-    on_entity="public.family_document",
+    signature="update_2_family_last_modified()",
     definition="""
-    BEFORE INSERT OR UPDATE ON public.family_document
-    FOR EACH ROW
-    EXECUTE PROCEDURE public.update_last_modified()
+RETURNS TRIGGER AS $$
+BEGIN
+    UPDATE family
+    SET last_modified = NOW()
+    WHERE import_id = NEW.family_import_id;
+    RETURN NEW;
+END;
+$$ language 'plpgsql'
+""",
+)
+
+update_collection_when_related_entity_updated = PGFunction(
+    schema="public",
+    signature="update_2_collection_last_modified()",
+    definition="""
+RETURNS TRIGGER AS $$
+BEGIN
+    UPDATE collection
+    SET last_modified = NOW()
+    WHERE import_id = NEW.collection_import_id;
+    RETURN NEW;
+END;
+$$ language 'plpgsql'
 """,
 )
 
@@ -63,29 +82,78 @@ family_last_modified_trigger = PGTrigger(
     signature="update_last_modified",
     on_entity="public.family",
     definition="""
-    BEFORE INSERT OR UPDATE ON public.family
+    BEFORE UPDATE ON public.family
     FOR EACH ROW
-    EXECUTE PROCEDURE public.update_last_modified()
+    EXECUTE PROCEDURE public.update_1_last_modified()
 """,
 )
-collection_last_modified_trigger = PGTrigger(
+
+
+doc_last_modified_trigger = PGTrigger(
     schema="public",
     signature="update_last_modified",
-    on_entity="public.collection",
+    on_entity="public.family_document",
     definition="""
-    BEFORE INSERT OR UPDATE ON public.collection
+    BEFORE UPDATE ON public.family_document
     FOR EACH ROW
-    EXECUTE PROCEDURE public.update_last_modified()
+    EXECUTE PROCEDURE public.update_1_last_modified()
 """,
 )
+
+family_doc_last_modified_trigger = PGTrigger(
+    schema="public",
+    signature="update_family_last_modified",
+    on_entity="public.family_document",
+    definition="""
+    BEFORE INSERT OR UPDATE OR DELETE ON public.family_document
+    FOR EACH ROW
+    EXECUTE PROCEDURE public.update_2_family_last_modified()
+""",
+)
+
 event_last_modified_trigger = PGTrigger(
     schema="public",
     signature="update_last_modified",
     on_entity="public.family_event",
     definition="""
-    BEFORE INSERT OR UPDATE ON public.family_event
+    BEFORE UPDATE ON public.family_event
     FOR EACH ROW
-    EXECUTE PROCEDURE public.update_last_modified()
+    EXECUTE PROCEDURE public.update_1_last_modified()
+""",
+)
+
+# TODO: Do we need on delete as well?
+family_event_last_modified_trigger = PGTrigger(
+    schema="public",
+    signature="update_family_last_modified",
+    on_entity="public.family_event",
+    definition="""
+    BEFORE INSERT OR UPDATE OR DELETE ON public.family_event
+    FOR EACH ROW
+    EXECUTE PROCEDURE public.update_2_family_last_modified()
+""",
+)
+
+collection_last_modified_trigger = PGTrigger(
+    schema="public",
+    signature="update_collection_last_modified",
+    on_entity="public.collection",
+    definition="""
+    BEFORE UPDATE ON public.collection
+    FOR EACH ROW
+    EXECUTE PROCEDURE public.update_1_last_modified()
+""",
+)
+
+
+family_collection_last_modified_trigger = PGTrigger(
+    schema="public",
+    signature="update_collection_last_modified ",
+    on_entity="public.collection_family",
+    definition="""
+    BEFORE INSERT OR UPDATE OR DELETE ON public.collection_family
+    FOR EACH ROW
+    EXECUTE PROCEDURE public.update_2_collection_last_modified()
 """,
 )
 
@@ -163,12 +231,23 @@ def run_migrations_online():
 
 
 register_entities(
+    # [
+    #     last_modified_procedure,
+    #     doc_last_modified_trigger,
+    #     event_last_modified_trigger,
+    #     collection_last_modified_trigger,
+    # ]
     [
         last_modified_procedure,
+        update_family_when_related_entity_updated,
+        update_collection_when_related_entity_updated,
         doc_last_modified_trigger,
         event_last_modified_trigger,
-        collection_last_modified_trigger,
         family_last_modified_trigger,
+        family_doc_last_modified_trigger,
+        family_event_last_modified_trigger,
+        collection_last_modified_trigger,
+        family_collection_last_modified_trigger,
     ]
 )
 

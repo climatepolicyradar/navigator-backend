@@ -157,24 +157,6 @@ class Family(Base):
                 date = max(cast(datetime, event.date), date)
         return date
 
-    # @hybrid_property
-    # def last_modified(self) -> datetime:
-    #     """A "last updated" date to use during display of Family."""
-
-    #     date = None
-    #     for event in self.events:
-    #         if date is None:
-    #             date = cast(datetime, event.last_modified)
-    #         else:
-    #             date = max(cast(datetime, event.last_modified), date)
-
-    #     for doc in self.family_documents:
-    #         if date is None:
-    #             date = cast(datetime, doc.last_modified)
-    #         else:
-    #             date = max(cast(datetime, doc.last_modified), date)
-    #     return date
-
 
 class DocumentStatus(BaseModelEnum):
     """FamilyDocument status to control visibility in the app."""
