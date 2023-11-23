@@ -45,9 +45,15 @@ def upgrade():
         definition="""
     RETURNS TRIGGER AS $$
     BEGIN
-        UPDATE family
-        SET last_modified = NOW()
-        WHERE import_id = NEW.family_import_id;
+        if tg_op = 'DELETE' then
+            UPDATE family
+            SET last_modified = NOW()
+            WHERE import_id = OLD.family_import_id;
+        else 
+            UPDATE family
+            SET last_modified = NOW()
+            WHERE import_id = NEW.family_import_id;
+        end if;
         RETURN NEW;
     END;
     $$ language 'plpgsql'""",
@@ -137,9 +143,15 @@ def downgrade():
         definition="""
     RETURNS TRIGGER AS $$
     BEGIN
-        UPDATE family
-        SET last_modified = NOW()
-        WHERE import_id = NEW.family_import_id;
+        if tg_op = 'DELETE' then
+            UPDATE family
+            SET last_modified = NOW()
+            WHERE import_id = OLD.family_import_id;
+        else 
+            UPDATE family
+            SET last_modified = NOW()
+            WHERE import_id = NEW.family_import_id;
+        end if;
         RETURN NEW;
     END;
     $$ language 'plpgsql'""",
