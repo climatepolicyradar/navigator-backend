@@ -45,9 +45,15 @@ def upgrade():
         definition="""
     RETURNS TRIGGER AS $$
     BEGIN
-        UPDATE collection
-        SET last_modified = NOW()
-        WHERE import_id = NEW.collection_import_id;
+        if tg_op = 'DELETE' then
+            UPDATE collection
+            SET last_modified = NOW()
+            WHERE import_id = OLD.collection_import_id;
+        else 
+            UPDATE collection
+            SET last_modified = NOW()
+            WHERE import_id = NEW.collection_import_id;
+        end if;
         RETURN NEW;
     END;
     $$ language 'plpgsql'""",
@@ -113,9 +119,15 @@ def downgrade():
         definition="""
     RETURNS TRIGGER AS $$
     BEGIN
-        UPDATE collection
-        SET last_modified = NOW()
-        WHERE import_id = NEW.collection_import_id;
+        if tg_op = 'DELETE' then
+            UPDATE collection
+            SET last_modified = NOW()
+            WHERE import_id = OLD.collection_import_id;
+        else 
+            UPDATE collection
+            SET last_modified = NOW()
+            WHERE import_id = NEW.collection_import_id;
+        end if;
         RETURN NEW;
     END;
     $$ language 'plpgsql'""",
