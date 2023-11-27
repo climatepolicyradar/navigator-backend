@@ -94,7 +94,7 @@ def test_config_endpoint_content(client, test_db):
     assert len(response_json["document_roles"]) == 10
     assert "MAIN" in response_json["document_roles"]
     assert "document_types" in response_json
-    assert len(response_json["document_types"]) == 75
+    assert len(response_json["document_types"]) == 76
     assert "Adaptation Communication" in response_json["document_types"]
     assert "document_variants" in response_json
     assert len(response_json["document_variants"]) == 2
