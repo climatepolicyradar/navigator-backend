@@ -117,7 +117,7 @@ family_doc_last_modified_trigger = PGTrigger(
     signature="update_family_last_modified",
     on_entity="public.family_document",
     definition="""
-    BEFORE INSERT OR UPDATE OR DELETE ON public.family_document
+    AFTER INSERT OR UPDATE OR DELETE ON public.family_document
     FOR EACH ROW
     EXECUTE PROCEDURE public.update_2_family_last_modified()
 """,
@@ -139,7 +139,7 @@ family_event_last_modified_trigger = PGTrigger(
     signature="update_family_last_modified",
     on_entity="public.family_event",
     definition="""
-    BEFORE INSERT OR UPDATE OR DELETE ON public.family_event
+    AFTER INSERT OR UPDATE OR DELETE ON public.family_event
     FOR EACH ROW
     EXECUTE PROCEDURE public.update_2_family_last_modified()
 """,
@@ -162,7 +162,7 @@ family_collection_last_modified_trigger = PGTrigger(
     signature="update_collection_last_modified ",
     on_entity="public.collection_family",
     definition="""
-    BEFORE INSERT OR UPDATE OR DELETE ON public.collection_family
+    AFTER INSERT OR UPDATE OR DELETE ON public.collection_family
     FOR EACH ROW
     EXECUTE PROCEDURE public.update_2_collection_last_modified()
 """,
