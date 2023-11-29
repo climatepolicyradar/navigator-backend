@@ -1156,8 +1156,16 @@ def _process_vespa_search_response_families(
                     family_name=hit.family_name,
                     family_description=hit.family_description or "",
                     family_category=hit.family_category,
-                    family_date=db_family.published_date.isoformat(),
-                    family_last_updated_date=db_family.last_updated_date.isoformat(),
+                    family_date=(
+                        db_family.published_date.isoformat()
+                        if db_family.published_date is not None
+                        else ""
+                    ),
+                    family_last_updated_date=(
+                        db_family.last_updated_date.isoformat()
+                        if db_family.last_updated_date is not None
+                        else ""
+                    ),
                     family_source=hit.family_source,
                     family_description_match=False,
                     family_title_match=False,
