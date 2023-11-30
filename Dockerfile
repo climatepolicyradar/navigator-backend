@@ -15,7 +15,7 @@ RUN pip install --no-cache "poetry==1.3.2"
 # TODO: refine this as part of CI & test updates
 COPY poetry.lock pyproject.toml ./
 # Create a requirements file so we can install with minimal caching
-RUN poetry export --with dev \
+RUN poetry export --with dev --with vespa \
     | grep -v '\--hash' \
     | grep -v '^torch' \
     | grep -v '^triton' \
