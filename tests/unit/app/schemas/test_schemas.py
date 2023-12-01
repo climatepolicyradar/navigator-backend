@@ -1,12 +1,7 @@
 import pytest
 
 from app.api.api_v1.schemas.document import FamilyDocumentResponse
-from app.api.api_v1.schemas.search import (
-    OpenSearchResponsePassageMatch,
-    SearchResponseDocumentPassage,
-    SearchResponseFamilyDocument,
-    OpenSearchResponseMatchBase,
-)
+from app.api.api_v1.schemas.search import SearchResponseFamilyDocument
 
 CLIMATE_LAWS_DOMAIN_PATHS = [
     "climate-laws.org",
@@ -103,4 +98,3 @@ def test_non_climate_laws_source_url_left_in_document(source_domain_path, scheme
         document_role=None,
     )
     assert document_response.source_url == given_url
-    
