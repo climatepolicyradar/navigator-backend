@@ -716,7 +716,6 @@ def process_search_response_body_families(
                         doc_match,
                         document_extra_info,
                     )
-
                 response_passage = SearchResponseDocumentPassage(
                     text=doc_match.text,
                     text_block_id=doc_match.text_block_id,
