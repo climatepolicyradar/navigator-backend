@@ -81,15 +81,6 @@ class SearchResponseDocumentPassage(BaseModel):
     text_block_id: str
     text_block_page: Optional[int]
     text_block_coords: Optional[Sequence[Coord]]
-    
-    @validator("text_block_page", always=True)
-    @classmethod
-    def validate_page(cls, value):
-        """PDF page numbers must be incremented from our 0-indexed values."""
-        if value is None:
-            return None
-        return value + 1
-
 
 
 class OpenSearchResponseMatchBase(BaseModel):
@@ -129,14 +120,6 @@ class OpenSearchResponsePassageMatch(OpenSearchResponseMatchBase):
     text_block_id: str
     text_block_page: Optional[int]
     text_block_coords: Optional[Sequence[Coord]]
-
-    @validator("text_block_page", always=True)
-    @classmethod
-    def validate_page(cls, value):
-        """PDF page numbers must be incremented from our 0-indexed values."""
-        if value is None:
-            return None
-        return value + 1
 
 
 class SearchResponseFamilyDocument(BaseModel):
@@ -188,6 +171,24 @@ class SearchResponse(BaseModel):
     continuation_token: Optional[str] = None
 
     families: Sequence[SearchResponseFamily]
+
+    @validator("families", always=True)
+    @classmethod
+    def increment_pages(cls, value):
+        """PDF page numbers must be incremented from our 0-indexed values."""
+        for family in value:
+            for family_document in family.family_documents:
+                for index, passage_match in enumerate(
+                    family_document.document_passage_matches
+                ):
+                    if (
+                        passage_match.text_block_page
+                        or passage_match.text_block_page == 0
+                    ):
+                        family_document.document_passage_matches[
+                            index
+                        ].text_block_page += 1
+        return value
 
 
 Top5FamilyList = conlist(SearchResponseFamily, max_items=5)

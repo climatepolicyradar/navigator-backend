@@ -1,12 +1,7 @@
 import pytest
 
 from app.api.api_v1.schemas.document import FamilyDocumentResponse
-from app.api.api_v1.schemas.search import (
-    OpenSearchResponsePassageMatch,
-    SearchResponseDocumentPassage,
-    SearchResponseFamilyDocument,
-    OpenSearchResponseMatchBase,
-)
+from app.api.api_v1.schemas.search import SearchResponseFamilyDocument
 
 CLIMATE_LAWS_DOMAIN_PATHS = [
     "climate-laws.org",
@@ -103,54 +98,3 @@ def test_non_climate_laws_source_url_left_in_document(source_domain_path, scheme
         document_role=None,
     )
     assert document_response.source_url == given_url
-
-
-def test_search_responses() -> None:
-    """
-    Test that instantiating Search Response objects is done correctly.
-
-    Particularly testing of the validators.
-    """
-    original_block_page = 0
-
-    original_block_data = {
-        "text": "example text",
-        "text_block_id": "p_0_b_0",
-        "text_block_page": original_block_page,
-        "text_block_coords": None,
-    }
-
-    base_response_data = {
-        "document_name": "Sample Document",
-        "document_geography": "USA",
-        "document_description": "This is a sample document description.",
-        "document_sectors": ["Technology", "Healthcare"],
-        "document_source": "Sample Source",
-        "document_id": "sample_import_id_123",
-        "document_date": "2023-11-22",
-        "document_type": "PDF",
-        "document_source_url": "https://example.com/sample_document",
-        "document_cdn_object": "sample_cdn_object_reference",
-        "document_category": "Sample Category",
-        "document_content_type": "application/pdf",
-        "document_slug": "sample-document",
-    }
-
-    # This is used for vespa responses
-    default_passage_response = SearchResponseDocumentPassage.parse_obj(
-        original_block_data
-    )
-
-    assert default_passage_response.text_block_page == original_block_page + 1
-
-    response_base = OpenSearchResponseMatchBase.parse_obj(base_response_data)
-
-    opensearch_passage_response = OpenSearchResponsePassageMatch(
-        **response_base.dict(), **original_block_data
-    )
-
-    assert opensearch_passage_response.text_block_page == original_block_page + 1
-
-    assert opensearch_passage_response.text_block_page == (
-        default_passage_response.text_block_page
-    )
