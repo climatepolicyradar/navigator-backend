@@ -10,21 +10,17 @@ RUN apt update && \
 # Install pip and poetry
 RUN pip install --no-cache --upgrade pip
 RUN pip install --no-cache "poetry==1.3.2"
+RUN pip install --no-cache "poetry-plugin-export==1.6.0"
 
 # Create layer for dependencies
 # TODO: refine this as part of CI & test updates
 COPY poetry.lock pyproject.toml ./
 # Create a requirements file so we can install with minimal caching
-RUN poetry export --with dev --with vespa \
-    | grep -v '\--hash' \
-    | grep -v '^torch' \
-    | grep -v '^triton' \
-    | grep -v '^nvidia' \
-    | sed -e 's/ \\$//' \
-    | sed -e 's/^[[:alpha:]]\+\[\([[:alpha:]]\+\[[[:alpha:]]\+\]\)\]/\1/' \
-    > requirements.txt
-# The above final impenetrable sed command allows us to fix an export issue from poetry
-# e.g. we need to replace pydocstyle[pydocstyle[toml]] with pydocstyle[toml]
+# See: https://github.com/python-poetry/poetry-plugin-export
+RUN poetry export --with dev \
+    --without-hashes \
+    --format=requirements.txt \
+    --output=requirements.txt
 
 # Install torch-cpu with pip
 RUN pip3 install --no-cache "torch==2.0.0+cpu" "torchvision==0.15.1+cpu" -f https://download.pytorch.org/whl/torch_stable.html
