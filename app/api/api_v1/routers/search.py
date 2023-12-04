@@ -76,6 +76,9 @@ def _search_request(
                 data_access_search_response,
                 limit=search_body.limit,
                 offset=search_body.offset,
+                document_extra_info=_DOCUMENT_EXTRA_INFO_CACHE.get_document_extra_info(
+                    db
+                ),
             ).increment_pages()
         else:
             return _OPENSEARCH_CONNECTION.query_families(

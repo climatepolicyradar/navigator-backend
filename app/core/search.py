@@ -1231,8 +1231,17 @@ def process_vespa_search_response(
     vespa_search_response: DataAccessSearchResponse,
     limit: int,
     offset: int,
+    document_extra_info: Mapping[str, Mapping[str, str]],
 ) -> SearchResponse:
     """Process a Vespa search response into a F/E search response"""
+
+    vespa_search_response.families = [
+        family
+        for family in vespa_search_response.families
+        if family.id in document_extra_info
+        and document_extra_info[family.id]["family_status"] == "Published"
+    ]
+
     return SearchResponse(
         hits=len(vespa_search_response.families),
         query_time_ms=vespa_search_response.query_time_ms or 0,
