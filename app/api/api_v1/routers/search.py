@@ -76,7 +76,7 @@ def _search_request(
                 data_access_search_response,
                 limit=search_body.limit,
                 offset=search_body.offset,
-            )
+            ).increment_pages()
         else:
             return _OPENSEARCH_CONNECTION.query_families(
                 search_request_body=search_body,
@@ -85,7 +85,7 @@ def _search_request(
                     db
                 ),
                 preference="default_search_preference",
-            )
+            ).increment_pages()
 
 
 @search_router.post("/searches")
