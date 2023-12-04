@@ -1,7 +1,13 @@
 import pytest
+from datetime import datetime
 
 from app.api.api_v1.schemas.document import FamilyDocumentResponse
-from app.api.api_v1.schemas.search import SearchResponseFamilyDocument
+from app.api.api_v1.schemas.search import (
+    SearchResponseDocumentPassage,
+    SearchResponseFamilyDocument,
+    SearchResponseFamily,
+    SearchResponse,
+)
 
 CLIMATE_LAWS_DOMAIN_PATHS = [
     "climate-laws.org",
@@ -98,3 +104,94 @@ def test_non_climate_laws_source_url_left_in_document(source_domain_path, scheme
         document_role=None,
     )
     assert document_response.source_url == given_url
+
+
+def test_search_response() -> None:
+    """
+    Test that instantiating Search Response objects is done correctly.
+
+    Particularly testing of the validators.
+    """
+    search_response = SearchResponse(
+        hits=1,
+        query_time_ms=1,
+        total_time_ms=1,
+        families=[
+            SearchResponseFamily(
+                family_slug="example_slug",
+                family_name="Example Family",
+                family_description="This is an example family",
+                family_category="Example Category",
+                family_date=str(
+                    datetime.now()
+                ),  # You can replace this with an actual date string
+                family_last_updated_date=str(
+                    datetime.now()
+                ),  # You can replace this with an actual date string
+                family_source="Example Source",
+                family_geography="Example Geography",
+                family_metadata={"key1": "value1", "key2": "value2"},
+                family_title_match=True,
+                family_description_match=False,
+                family_documents=[
+                    SearchResponseFamilyDocument(
+                        document_title="Document Title",
+                        document_slug="Document Slug",
+                        document_type="Executive",
+                        document_source_url="https://cdn.example.com/file.pdf",
+                        document_url=None,
+                        document_content_type="application/pdf",
+                        document_passage_matches=[
+                            SearchResponseDocumentPassage(
+                                text="Example",
+                                text_block_id="p_0_b_0",
+                                text_block_page=0,
+                                text_block_coords=None,
+                            ),
+                            SearchResponseDocumentPassage(
+                                text="Example",
+                                text_block_id="p_1_b_0",
+                                text_block_page=1,
+                                text_block_coords=None,
+                            ),
+                            SearchResponseDocumentPassage(
+                                text="Example",
+                                text_block_id="p_1_b_2",
+                                text_block_page=1,
+                                text_block_coords=None,
+                            ),
+                        ],
+                    )
+                ],
+            )
+        ],
+    )
+
+    first_document_initial_pages = [
+        page.text_block_page
+        for page in search_response.families[0]
+        .family_documents[0]
+        .document_passage_matches
+    ]
+
+    search_response_incremented = search_response.increment_pages()
+
+    first_document_incremented_pages = [
+        page.text_block_page
+        for page in search_response_incremented.families[0]
+        .family_documents[0]
+        .document_passage_matches
+    ]
+
+    assert len(first_document_initial_pages) == len(first_document_incremented_pages)
+
+    assert first_document_initial_pages != first_document_incremented_pages
+
+    expected_pages = []
+    for page in first_document_initial_pages:
+        if page is None:
+            expected_pages.append(page)
+        else:
+            expected_pages.append(page + 1)
+
+    assert expected_pages == first_document_incremented_pages
