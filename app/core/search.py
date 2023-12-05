@@ -1114,12 +1114,12 @@ def _process_vespa_search_response_families(
         if db_family_tuple is None:
             _LOGGER.error(f"Could not locate family with import id '{vespa_family.id}'")
             continue
-        # TODO: filter UNPUBLISHED docs?
         if db_family_tuple[0].family_status != FamilyStatus.PUBLISHED:
             _LOGGER.debug(
                 f"Skipping unpublished family with id '{vespa_family.id}' "
                 "in search results"
             )
+            continue
         db_family = db_family_tuple[0]
         db_family_metadata = db_family_tuple[1]
 
@@ -1233,6 +1233,7 @@ def process_vespa_search_response(
     offset: int,
 ) -> SearchResponse:
     """Process a Vespa search response into a F/E search response"""
+
     return SearchResponse(
         hits=len(vespa_search_response.families),
         query_time_ms=vespa_search_response.query_time_ms or 0,
