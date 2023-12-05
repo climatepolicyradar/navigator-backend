@@ -15,7 +15,6 @@ from cpr_data_access.models.search import (
 )
 from sqlalchemy.orm import Session
 
-from app.api.api_v1.routers.search import _DOCUMENT_EXTRA_INFO_CACHE
 from app.core.config import VESPA_SEARCH_MATCHES_PER_DOC, VESPA_SEARCH_LIMIT
 from app.core.search import (
     FilterField,
@@ -540,7 +539,6 @@ def test_process_vespa_search_response(
         vespa_search_response=vespa_response,
         limit=limit,
         offset=offset,
-        document_extra_info=_DOCUMENT_EXTRA_INFO_CACHE.get_document_extra_info(test_db),
     )
 
     assert len(search_response.families) == min(len(fam_specs), limit)
