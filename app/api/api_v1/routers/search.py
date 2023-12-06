@@ -11,7 +11,8 @@ from io import BytesIO
 from typing import Mapping, Sequence
 
 from cpr_data_access.search_adaptors import VespaSearchAdapter
-from fastapi import APIRouter, Depends, Request
+from cpr_data_access.exceptions import QueryError
+from fastapi import APIRouter, Depends, Request, HTTPException, status
 from fastapi.responses import StreamingResponse
 from sqlalchemy.orm import Session
 
@@ -68,6 +69,11 @@ def _search_request(
         if use_vespa:
             data_access_search_params = create_vespa_search_params(db, search_body)
             # TODO: we may wish to cache responses to improve pagination performance
+
+            _LOGGER.info(
+                "Vespa search beginning.",
+                extra={"props": {"search_params": data_access_search_params.json()}},
+            )
             data_access_search_response = _VESPA_CONNECTION.search(
                 parameters=data_access_search_params
             )
@@ -108,7 +114,10 @@ def search_documents(
     _LOGGER.info(
         "Starting search...",
     )
-    return _search_request(db=db, search_body=search_body, use_vespa=use_vespa)
+    try:
+        return _search_request(db=db, search_body=search_body, use_vespa=use_vespa)
+    except QueryError as e:
+        raise HTTPException(status_code=status.HTTP_500_INTERNAL_SERVER_ERROR) from e
 
 
 @search_router.post("/searches/download-csv")

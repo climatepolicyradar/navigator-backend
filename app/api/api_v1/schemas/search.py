@@ -31,6 +31,7 @@ class JitQuery(str, Enum):
     DISABLED = "disabled"
 
 
+# TODO: move to the data access library
 class FilterField(str, Enum):
     """Filter field for use building OpenSearch query body."""
 
