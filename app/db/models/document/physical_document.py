@@ -3,6 +3,7 @@ from typing import Sequence
 import sqlalchemy as sa
 from sqlalchemy.ext.hybrid import hybrid_property
 from sqlalchemy.orm import relationship
+
 from app.db.models.app.enum import BaseModelEnum
 from app.db.session import Base
 
@@ -78,4 +79,4 @@ class PhysicalDocumentLanguage(Base):
     visible = sa.Column(sa.Boolean, default=False, nullable=False)
     language = relationship("Language", viewonly=True, lazy="joined")
 
-    sa.PrimaryKeyConstraint(language_id, document_id)
+    sa.PrimaryKeyConstraint(language_id, document_id, source)
