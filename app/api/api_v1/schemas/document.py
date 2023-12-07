@@ -1,7 +1,7 @@
 from datetime import datetime
 from typing import Any, Mapping, Optional, Sequence, Union
 
-from pydantic import BaseModel, validator
+from pydantic import field_validator, ConfigDict, BaseModel
 from . import CLIMATE_LAWS_MATCH
 
 
@@ -52,21 +52,22 @@ class FamilyDocumentResponse(BaseModel):
     """Response for a FamilyDocument, without any family information"""
 
     import_id: str
-    variant: Optional[str]
+    variant: Optional[str] = None
     slug: str
     # What follows is off PhysicalDocument
     title: str
-    md5_sum: Optional[str]
-    cdn_object: Optional[str]
-    source_url: Optional[str]
-    content_type: Optional[str]
+    md5_sum: Optional[str] = None
+    cdn_object: Optional[str] = None
+    source_url: Optional[str] = None
+    content_type: Optional[str] = None
     # TODO: Remove after transition to multiple languages
     language: str
     languages: Sequence[str]
-    document_type: Optional[str]
-    document_role: Optional[str]
+    document_type: Optional[str] = None
+    document_role: Optional[str] = None
 
-    @validator("source_url")
+    @field_validator("source_url")
+    @classmethod
     def _filter_climate_laws_url_from_source(cls, v):
         """Make sure we do not return climate-laws.org source URLs to the frontend"""
         if v is None or CLIMATE_LAWS_MATCH.match(v) is not None:
@@ -82,8 +83,8 @@ class FamilyContext(BaseModel):
     geography: str
     category: str
     slug: str
-    published_date: Optional[datetime]
-    last_updated_date: Optional[datetime]
+    published_date: Optional[datetime] = None
+    last_updated_date: Optional[datetime] = None
 
 
 class FamilyDocumentWithContextResponse(BaseModel):
@@ -106,8 +107,8 @@ class FamilyAndDocumentsResponse(BaseModel):
     metadata: dict
     slug: str
     events: list[FamilyEventsResponse]
-    published_date: Optional[datetime]
-    last_updated_date: Optional[datetime]
+    published_date: Optional[datetime] = None
+    last_updated_date: Optional[datetime] = None
     documents: list[FamilyDocumentResponse]
     collections: list[CollectionOverviewResponse]
 
@@ -118,8 +119,8 @@ class DocumentParserInput(BaseModel):
     publication_ts: datetime
     name: str
     description: str
-    source_url: Optional[str]
-    download_url: Optional[str]
+    source_url: Optional[str] = None
+    download_url: Optional[str] = None
 
     import_id: str
     slug: str
@@ -143,18 +144,16 @@ class DocumentParserInput(BaseModel):
         )
         return json_dict
 
-    class Config:  # noqa: D106
-        orm_mode = True
-        validate_assignment = True
+    model_config = ConfigDict(from_attributes=True, validate_assignment=True)
 
 
 class DocumentUpdateRequest(BaseModel):
     """The current supported fields allowed for update."""
 
-    md5_sum: Optional[str]
-    content_type: Optional[str]
-    cdn_object: Optional[str]
-    languages: Optional[Sequence[str]]
+    md5_sum: Optional[str] = None
+    content_type: Optional[str] = None
+    cdn_object: Optional[str] = None
+    languages: Optional[Sequence[str]] = None
 
     def as_json(self) -> dict[str, Union[str, Sequence[str], None]]:
         """Convert to json for logging"""
@@ -187,4 +186,4 @@ class BulkIngestResult(BaseModel):
     """Response for bulk ingest request."""
 
     import_s3_prefix: str
-    detail: Optional[BulkIngestDetail]
+    detail: Optional[BulkIngestDetail] = None
