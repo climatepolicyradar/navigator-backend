@@ -1,10 +1,10 @@
 from pydantic.dataclasses import dataclass
-from pydantic import ConfigDict, Extra
+from pydantic import ConfigDict
 import pytest
 from app.core.ingestion.ingest_row_base import BaseIngestRow, validate_csv_columns
 
 
-@dataclass(config=ConfigDict(frozen=True, validate_assignment=True, extra=Extra.forbid))
+@dataclass(config=ConfigDict(frozen=True, validate_assignment=True, extra="forbid"))
 class BaseIngestRowTest(BaseIngestRow):
     """A class for testing"""
 

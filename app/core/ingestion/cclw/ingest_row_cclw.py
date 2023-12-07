@@ -1,7 +1,7 @@
 from datetime import datetime
 from typing import ClassVar, Optional
 
-from pydantic import ConfigDict, Extra
+from pydantic import ConfigDict
 from pydantic.dataclasses import dataclass
 from app.core.ingestion.ingest_row_base import BaseIngestRow
 
@@ -50,7 +50,7 @@ _REQUIRED_EVENT_COLUMNS = [
 VALID_EVENT_COLUMN_NAMES = set(_REQUIRED_EVENT_COLUMNS)
 
 
-@dataclass(config=ConfigDict(frozen=True, validate_assignment=True, extra=Extra.forbid))
+@dataclass(config=ConfigDict(frozen=True, validate_assignment=True, extra="forbid"))
 class CCLWDocumentIngestRow(BaseIngestRow):
     """Represents a single row of input from the documents-families-collections CSV."""
 
@@ -102,7 +102,7 @@ class CCLWDocumentIngestRow(BaseIngestRow):
         return first_url or None
 
 
-@dataclass(config=ConfigDict(frozen=True, validate_assignment=True, extra=Extra.ignore))
+@dataclass(config=ConfigDict(frozen=True, validate_assignment=True, extra="ignore"))
 class EventIngestRow(BaseIngestRow):
     """Represents a single row of input from the events CSV."""
 
