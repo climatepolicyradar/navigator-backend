@@ -11,7 +11,7 @@ from cpr_data_access.models.search import (
     Hit as DataAccessHit,
     Passage as DataAccessPassage,
     SearchResponse as DataAccessSearchResponse,
-    filter_fields as data_access_filter_fields,
+    filter_fields,
 )
 from sqlalchemy.orm import Session
 
@@ -213,7 +213,7 @@ def test__convert_filters(test_db, filters):
 
     if converted_filters not in [None, []]:
         assert isinstance(converted_filters, dict)
-        assert set(converted_filters.keys()).issubset(data_access_filter_fields)
+        assert set(converted_filters.keys()).issubset(filter_fields.values())
 
         expected_languages = filters.get(FilterField.LANGUAGE)
         expected_categories = filters.get(FilterField.CATEGORY)
@@ -227,10 +227,10 @@ def test__convert_filters(test_db, filters):
         else:
             expected_countries = None
 
-        assert expected_countries == converted_filters.get("geography")
-        assert expected_languages == converted_filters.get("language")
-        assert expected_sources == converted_filters.get("source")
-        assert expected_categories == converted_filters.get("category")
+        assert expected_countries == converted_filters.get(filter_fields["geography"])
+        assert expected_languages == converted_filters.get(filter_fields["language"])
+        assert expected_sources == converted_filters.get(filter_fields["source"])
+        assert expected_categories == converted_filters.get(filter_fields["category"])
 
 
 @dataclass
