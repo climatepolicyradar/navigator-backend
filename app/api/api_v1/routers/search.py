@@ -11,7 +11,8 @@ from io import BytesIO
 from typing import Mapping, Sequence
 
 from cpr_data_access.search_adaptors import VespaSearchAdapter
-from fastapi import APIRouter, Depends, Request
+from cpr_data_access.exceptions import QueryError 
+from fastapi import APIRouter, Depends, HTTPException, status, Request
 from fastapi.responses import StreamingResponse
 from sqlalchemy.orm import Session
 
@@ -68,9 +69,14 @@ def _search_request(
         if use_vespa:
             data_access_search_params = create_vespa_search_params(db, search_body)
             # TODO: we may wish to cache responses to improve pagination performance
-            data_access_search_response = _VESPA_CONNECTION.search(
-                parameters=data_access_search_params
-            )
+            try:
+                data_access_search_response = _VESPA_CONNECTION.search(
+                    parameters=data_access_search_params
+                )
+            except QueryError:
+                raise HTTPException(
+                    status_code=status.HTTP_400_BAD_REQUEST, detail="Invalid Query"
+                )
             return process_vespa_search_response(
                 db,
                 data_access_search_response,
