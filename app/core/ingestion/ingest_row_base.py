@@ -3,10 +3,10 @@ from dataclasses import fields
 from pydantic.dataclasses import dataclass
 from datetime import datetime, timezone
 from typing import Any, ClassVar, Sequence
-from pydantic import ConfigDict, Extra
+from pydantic import ConfigDict
 
 
-@dataclass(config=ConfigDict(frozen=True, validate_assignment=True, extra=Extra.forbid))
+@dataclass(config=ConfigDict(frozen=True, validate_assignment=True, extra="forbid"))
 class BaseIngestRow(abc.ABC):
     """Represents a single row of input from a CSV."""
 
