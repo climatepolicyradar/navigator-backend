@@ -10,7 +10,7 @@ alembic = "^1.7.6"
 Authlib = "^0.15.5"
 bcrypt = "^3.2.0"
 boto3 = "^1.26"
-cpr-data-access = {git = "https://github.com/climatepolicyradar/data-access.git", rev = "a44692e4bfbd511fae424ed204ed48524981cb5f", extras = ["vespa"]}
+cpr-data-access = {git = "https://github.com/climatepolicyradar/data-access.git", rev = "34785d6bb3eb1776a175129c8e79deac7b635036", extras = ["vespa"]}
 fastapi = "^0.103.2"
 fastapi-health = "^0.4.0"
 fastapi-pagination = { extras = ["sqlalchemy"], version = "^0.9.1" }
