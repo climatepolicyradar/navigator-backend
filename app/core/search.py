@@ -16,6 +16,7 @@ from cpr_data_access.models.search import Family as DataAccessResponseFamily
 from cpr_data_access.models.search import Passage as DataAccessResponsePassage
 from cpr_data_access.models.search import SearchParameters as DataAccessSearchParams
 from cpr_data_access.models.search import SearchResponse as DataAccessSearchResponse
+from cpr_data_access.models.search import filter_fields
 from opensearchpy import JSONSerializer as jss
 from opensearchpy import OpenSearch
 from sqlalchemy.orm import Session
@@ -1037,15 +1038,15 @@ def _convert_sort_order(sort_order: SortOrder) -> str:
 
 def _convert_filter_field(filter_field: FilterField) -> str:
     if filter_field == FilterField.CATEGORY:
-        return "category"
+        return filter_fields["category"]
     if filter_field == FilterField.COUNTRY:
-        return "geography"
+        return filter_fields["geography"]
     if filter_field == FilterField.REGION:
-        return "geography"
+        return filter_fields["geography"]
     if filter_field == FilterField.LANGUAGE:
-        return "language"
+        return filter_fields["language"]
     if filter_field == FilterField.SOURCE:
-        return "source"
+        return filter_fields["source"]
 
 
 def _convert_filters(
@@ -1054,7 +1055,6 @@ def _convert_filters(
 ) -> Optional[Mapping[str, Sequence[str]]]:
     if keyword_filters is None:
         return None
-
     new_keyword_filters = {}
     for field, values in keyword_filters.items():
         new_field = _convert_filter_field(field)
@@ -1072,6 +1072,7 @@ def _convert_filters(
         else:
             new_values = values
         new_keyword_filters[new_field] = new_values
+
     return new_keyword_filters
 
 

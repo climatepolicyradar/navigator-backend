@@ -320,7 +320,9 @@ def test_start_unfccc_ingest(
     content = json.load(documents_call.kwargs["bytes_content"])
     content = json.dumps(content, sort_keys=True, indent=2).split("\n")
 
-    expected = json.dumps(json.loads(EXPECTED_DOCUMENTS), sort_keys=True, indent=2).split("\n")
+    expected = json.dumps(
+        json.loads(EXPECTED_DOCUMENTS), sort_keys=True, indent=2
+    ).split("\n")
 
     for line in range(len(expected)):
         assert content[line] == expected[line]

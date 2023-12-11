@@ -197,6 +197,7 @@ def _get_expected_countries(db: Session, slugs: Sequence[str]) -> Sequence[str]:
         {FilterField.SOURCE: ["CCLW"]},
         {FilterField.REGION: ["europe-central-asia"]},
         {FilterField.COUNTRY: ["france", "germany"]},
+        {FilterField.COUNTRY: ["cambodia"]},
         {FilterField.REGION: ["south_america"], FilterField.COUNTRY: ["france"]},
     ],
 )
@@ -204,13 +205,14 @@ def test__convert_filters(test_db, filters):
     db_setup(test_db)
     converted_filters = _convert_filters(test_db, filters)
 
-    if filters is None:
-        assert converted_filters is None
+    if filters in [None, []]:
+        assert converted_filters in [None, []]
 
-    if filters is not None:
-        assert converted_filters is not None
+    if filters not in [None, []]:
+        assert converted_filters not in [None, []]
 
-    if converted_filters is not None:
+    if converted_filters not in [None, []]:
+        assert isinstance(converted_filters, dict)
         assert set(converted_filters.keys()).issubset(data_access_filter_fields)
 
         expected_languages = filters.get(FilterField.LANGUAGE)
