@@ -53,7 +53,7 @@ search_router = APIRouter()
 def _search_request(
     db: Session, search_body: SearchRequestBody, use_vespa: bool = False
 ) -> SearchResponse:
-    if search_body.keyword_filters is not None and use_vespa == False:
+    if search_body.keyword_filters is not None and use_vespa is False:
         search_body.keyword_filters = process_search_keyword_filters(
             db,
             search_body.keyword_filters,

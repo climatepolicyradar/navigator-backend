@@ -622,8 +622,8 @@ vespa = ["pyvespa (>=0.37.1,<0.38.0)", "pyyaml (>=6.0.1,<7.0.0)", "sentence-tran
 [package.source]
 type = "git"
 url = "https://github.com/climatepolicyradar/data-access.git"
-reference = "34785d6bb3eb1776a175129c8e79deac7b635036"
-resolved_reference = "34785d6bb3eb1776a175129c8e79deac7b635036"
+reference = "0.4.4"
+resolved_reference = "b7e1585ec4dce8d0bf65197824975446f23798b5"
 
 [[package]]
 name = "cryptography"
@@ -4249,4 +4249,4 @@ multidict = ">=4.0"
 [metadata]
 lock-version = "2.0"
 python-versions = "^3.9"
-content-hash = "6f11f32c56bcaf5aa28f2bcd56f7a5aa2e81444147b10d7c2dec1bbc3e9d692f"
+content-hash = "722b96f4c0d30e6b00ba909e236d43d86c2c1d3f06c8caee203e83318b76b3ef"
