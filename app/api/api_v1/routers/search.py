@@ -11,7 +11,7 @@ from io import BytesIO
 from typing import Mapping, Sequence
 
 from cpr_data_access.search_adaptors import VespaSearchAdapter
-from cpr_data_access.exceptions import QueryError 
+from cpr_data_access.exceptions import QueryError
 from fastapi import APIRouter, Depends, HTTPException, status, Request
 from fastapi.responses import StreamingResponse
 from sqlalchemy.orm import Session
@@ -53,7 +53,7 @@ search_router = APIRouter()
 def _search_request(
     db: Session, search_body: SearchRequestBody, use_vespa: bool = False
 ) -> SearchResponse:
-    if search_body.keyword_filters is not None:
+    if search_body.keyword_filters is not None and use_vespa is False:
         search_body.keyword_filters = process_search_keyword_filters(
             db,
             search_body.keyword_filters,
@@ -211,5 +211,4 @@ def process_search_keyword_filters(
             # Be consistent in ordering for search
             values = sorted(list(set(values)))
             filter_map[field] = values
-
     return filter_map
