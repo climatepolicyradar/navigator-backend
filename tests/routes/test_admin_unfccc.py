@@ -1,5 +1,6 @@
 from datetime import datetime
 from io import BytesIO
+import json
 from typing import cast
 from app.api.api_v1.routers.unfccc_ingest import start_unfccc_ingest
 from app.core.aws import S3Client
@@ -40,6 +41,30 @@ EXPECTED_DOCUMENTS = """{
           "Party"
         ]
       }
+    },
+    "UNFCCC.Document.2.0": {
+      "publication_ts": "2021-10-25T00:00:00+00:00",
+      "name": "Nationally determined contributions under the Paris Agreement. Revised note by the secretariat",
+      "description": "Nationally determined contributions under the Paris Agreement. Revised note by the secretariat, Synthesis Report from UNFCCC Secretariat in 2021",
+      "source_url": "https://unfccc.int/sites/default/files/resource/cma2021_08r01_S.pdf",
+      "download_url": null,
+      "import_id": "UNFCCC.Document.2.0",
+      "slug": "Doc-slug2",
+      "family_import_id": "UNFCCC.family.2.0",
+      "family_slug": "Family-slug2",
+      "type": "Synthesis Report",
+      "source": "UNFCCC",
+      "category": "UNFCCC",
+      "geography": "GBR",
+      "languages": [],
+      "metadata": {
+        "author": [
+          "UNFCCC Secretariat"
+        ],
+        "author_type": [
+          "Party"
+        ]
+      }
     }
   }
 }"""
@@ -62,7 +87,12 @@ UNFCCC,Synthesis Report,Nationally determined contributions under the Paris Agre
 """
 
 ONE_UNFCCC_ROW = """Category,Submission Type,Family Name,Document Title,Documents,Author,Author Type,Geography,Geography ISO,Date,Document Role,Document Variant,Language,Download URL,CPR Collection ID,CPR Document ID,CPR Document Slug,CPR Family ID,CPR Family Slug,CPR Document Status
+UNFCCC,Synthesis Report,Nationally determined contributions under the Paris Agreement. Revised note by the secretariat,Nationally determined contributions under the Paris Agreement. Revised note by the secretariat,https://unfccc.int/sites/default/files/resource/cma2021_08r01_S.pdf,UNFCCC Secretariat,Party,UK,GBR,2021-10-25T00:00:00Z,,,en,,UNFCCC.Collection.Found.1,UNFCCC.Document.1.0,Doc-slug,UNFCCC.family.1.0,Family-slug,
+"""
+
+TWO_UNFCCC_ROW = """Category,Submission Type,Family Name,Document Title,Documents,Author,Author Type,Geography,Geography ISO,Date,Document Role,Document Variant,Language,Download URL,CPR Collection ID,CPR Document ID,CPR Document Slug,CPR Family ID,CPR Family Slug,CPR Document Status
 UNFCCC,Synthesis Report,Nationally determined contributions under the Paris Agreement. Revised note by the secretariat,Nationally determined contributions under the Paris Agreement. Revised note by the secretariat,https://unfccc.int/sites/default/files/resource/cma2021_08r01_S.pdf,UNFCCC Secretariat,Party,UK,GBR,2021-10-25T00:00:00Z,,,en,url of downloaded document,UNFCCC.Collection.Found.1,UNFCCC.Document.1.0,Doc-slug,UNFCCC.family.1.0,Family-slug,
+UNFCCC,Synthesis Report,Nationally determined contributions under the Paris Agreement. Revised note by the secretariat,Nationally determined contributions under the Paris Agreement. Revised note by the secretariat,https://unfccc.int/sites/default/files/resource/cma2021_08r01_S.pdf,UNFCCC Secretariat,Party,UK,GBR,2021-10-25T00:00:00Z,,,en,,UNFCCC.Collection.Found.2,UNFCCC.Document.2.0,Doc-slug2,UNFCCC.family.2.0,Family-slug2,
 """
 
 ZERO_COLLECTION_ROW = """CPR Collection ID,Collection name,Collection summary
@@ -70,6 +100,11 @@ ZERO_COLLECTION_ROW = """CPR Collection ID,Collection name,Collection summary
 
 ONE_COLLECTION_ROW = """CPR Collection ID,Collection name,Collection summary
 UNFCCC.Collection.Found.1,Collection One,Everything to do with testing
+"""
+
+TWO_COLLECTION_ROW = """CPR Collection ID,Collection name,Collection summary
+UNFCCC.Collection.Found.1,Collection One,Everything to do with testing
+UNFCCC.Collection.Found.2,Collection Two,Everything to do with testing
 """
 
 
@@ -227,8 +262,8 @@ def test_ingest_unfccc_works(
     populate_document_role(test_db)
     populate_document_variant(test_db)
     test_db.commit()
-    unfccc_data_csv = BytesIO(ONE_UNFCCC_ROW.encode("utf8"))
-    collection_csv = BytesIO(ONE_COLLECTION_ROW.encode("utf8"))
+    unfccc_data_csv = BytesIO(TWO_UNFCCC_ROW.encode("utf8"))
+    collection_csv = BytesIO(TWO_COLLECTION_ROW.encode("utf8"))
     files = {
         "unfccc_data_csv": (
             "unfccc_data_csv.csv",
@@ -273,7 +308,7 @@ def test_start_unfccc_ingest(
     test_db.commit()
 
     start_unfccc_ingest(
-        test_db, cast(S3Client, ""), "prefix", ONE_UNFCCC_ROW, ONE_COLLECTION_ROW
+        test_db, cast(S3Client, ""), "prefix", TWO_UNFCCC_ROW, TWO_COLLECTION_ROW
     )
 
     assert mock_write_s3.call_count == 2
@@ -282,5 +317,13 @@ def test_start_unfccc_ingest(
     assert content == b"[]"
 
     documents_call = mock_write_s3.mock_calls[1]
-    content = documents_call.kwargs["bytes_content"].read()
-    assert content.decode("utf8") == EXPECTED_DOCUMENTS
+    content = json.load(documents_call.kwargs["bytes_content"])
+    content = json.dumps(content, sort_keys=True, indent=2).split("\n")
+
+    expected = json.dumps(
+        json.loads(EXPECTED_DOCUMENTS), sort_keys=True, indent=2
+    ).split("\n")
+
+    for line in range(len(expected)):
+        assert content[line] == expected[line]
+    assert len(content) == len(expected)

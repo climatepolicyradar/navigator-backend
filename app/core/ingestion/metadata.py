@@ -1,13 +1,13 @@
 from typing import Any, Mapping, Sequence, Union
 
 from pydantic.dataclasses import dataclass
-from pydantic.config import ConfigDict, Extra
+from pydantic.config import ConfigDict
 
 from app.core.ingestion.match import match_unknown_value
 from app.core.ingestion.utils import Result, ResultType
 
 
-@dataclass(config=ConfigDict(validate_assignment=True, extra=Extra.forbid))
+@dataclass(config=ConfigDict(validate_assignment=True, extra="forbid"))
 class TaxonomyEntry:
     """Details a single taxonomy field"""
 

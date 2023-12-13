@@ -1,7 +1,7 @@
 from datetime import datetime
 from typing import ClassVar
 
-from pydantic import ConfigDict, Extra
+from pydantic import ConfigDict
 from pydantic.dataclasses import dataclass
 from app.core.ingestion.ingest_row_base import BaseIngestRow
 
@@ -37,7 +37,7 @@ _REQUIRED_COLLECTION_COLUMNS = [
 VALID_COLLECTION_COLUMN_NAMES = set(_REQUIRED_COLLECTION_COLUMNS)
 
 
-@dataclass(config=ConfigDict(frozen=True, validate_assignment=True, extra=Extra.forbid))
+@dataclass(config=ConfigDict(frozen=True, validate_assignment=True, extra="forbid"))
 class UNFCCCDocumentIngestRow(BaseIngestRow):
     """Represents a single row of input from the UNFCCC CSV."""
 
@@ -72,7 +72,7 @@ class UNFCCCDocumentIngestRow(BaseIngestRow):
         return key.lower().replace(" ", "_")
 
 
-@dataclass(config=ConfigDict(frozen=True, validate_assignment=True, extra=Extra.ignore))
+@dataclass(config=ConfigDict(frozen=True, validate_assignment=True, extra="ignore"))
 class CollectionIngestRow(BaseIngestRow):
     """Represents a single row of input from the collection CSV."""
 

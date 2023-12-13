@@ -1,10 +1,11 @@
 from enum import Enum
-from typing import Mapping, Optional, Sequence
+from typing import List, Mapping, Optional, Sequence
 
-from pydantic import BaseModel, conlist, validator
+from pydantic import field_validator, Field, BaseModel
 
 from app.db.models.law_policy import FamilyCategory
 from . import CLIMATE_LAWS_MATCH
+from typing_extensions import Annotated
 
 
 Coord = tuple[float, float]
@@ -49,7 +50,7 @@ class IncludedResults(str, Enum):
     HTMLS_TRANSLATED = "htmlsTranslated"
 
 
-IncludedResultsList = Optional[conlist(IncludedResults, min_items=1)]
+IncludedResultsList = Optional[Annotated[List[IncludedResults], Field(min_length=1)]]
 
 
 class SearchRequestBody(BaseModel):
@@ -79,8 +80,8 @@ class SearchResponseDocumentPassage(BaseModel):
 
     text: str
     text_block_id: str
-    text_block_page: Optional[int]
-    text_block_coords: Optional[Sequence[Coord]]
+    text_block_page: Optional[int] = None
+    text_block_coords: Optional[Sequence[Coord]] = None
 
 
 class OpenSearchResponseMatchBase(BaseModel):
@@ -94,10 +95,10 @@ class OpenSearchResponseMatchBase(BaseModel):
     document_id: str  # Changed semantics to be import_id, not database id
     document_date: str
     document_type: str
-    document_source_url: Optional[str]
-    document_cdn_object: Optional[str]
+    document_source_url: Optional[str] = None
+    document_cdn_object: Optional[str] = None
     document_category: str
-    document_content_type: Optional[str]
+    document_content_type: Optional[str] = None
     document_slug: str
 
 
@@ -118,8 +119,8 @@ class OpenSearchResponsePassageMatch(OpenSearchResponseMatchBase):
 
     text: str
     text_block_id: str
-    text_block_page: Optional[int]
-    text_block_coords: Optional[Sequence[Coord]]
+    text_block_page: Optional[int] = None
+    text_block_coords: Optional[Sequence[Coord]] = None
 
 
 class SearchResponseFamilyDocument(BaseModel):
@@ -128,12 +129,13 @@ class SearchResponseFamilyDocument(BaseModel):
     document_title: str
     document_slug: str
     document_type: str
-    document_source_url: Optional[str]
-    document_url: Optional[str]
-    document_content_type: Optional[str]
+    document_source_url: Optional[str] = None
+    document_url: Optional[str] = None
+    document_content_type: Optional[str] = None
     document_passage_matches: list[SearchResponseDocumentPassage]
 
-    @validator("document_source_url")
+    @field_validator("document_source_url")
+    @classmethod
     def _filter_climate_laws_url_from_source(cls, v):
         """Make sure we do not return climate-laws.org source URLs to the frontend"""
         if v is None or CLIMATE_LAWS_MATCH.match(v) is not None:
@@ -193,7 +195,7 @@ class SearchResponse(BaseModel):
         return self
 
 
-Top5FamilyList = conlist(SearchResponseFamily, max_items=5)
+Top5FamilyList = Annotated[List[SearchResponseFamily], Field(max_length=5)]
 # Alias required for type hinting
 _T5FamL = Top5FamilyList
 
