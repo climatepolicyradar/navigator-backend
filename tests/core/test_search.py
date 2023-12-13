@@ -41,10 +41,10 @@ def db_setup(test_db):
 @pytest.mark.parametrize(
     (
         "query_string,exact_match,year_range,sort_field,sort_order,"
-        "keyword_filters,limit,offset,continuation_token"
+        "keyword_filters,max_passages,limit,offset,continuation_token"
     ),
     [
-        ("hello", True, None, None, SortOrder.ASCENDING, None, 10, 10, None),
+        ("hello", True, None, None, SortOrder.ASCENDING, None, 10, 10, 10, None),
         (
             "world",
             True,
@@ -52,6 +52,7 @@ def db_setup(test_db):
             SortField.TITLE,
             SortOrder.DESCENDING,
             {FilterField.CATEGORY: ["Legislative"], FilterField.REGION: ["europe"]},
+            10,
             10,
             0,
             "ABC",
@@ -63,6 +64,7 @@ def db_setup(test_db):
             SortField.DATE,
             SortOrder.ASCENDING,
             {FilterField.SOURCE: ["UNFCCC"]},
+            20,
             10,
             0,
             None,
@@ -77,11 +79,23 @@ def db_setup(test_db):
                 FilterField.COUNTRY: ["germany", "France"],
                 FilterField.REGION: ["europe"],
             },
+            20,
             10,
             0,
             "ABC",
         ),
-        ("hello", True, None, SortField.TITLE, SortOrder.ASCENDING, None, 10, 0, None),
+        (
+            "hello",
+            True,
+            None,
+            SortField.TITLE,
+            SortOrder.ASCENDING,
+            None,
+            10,
+            10,
+            0,
+            None,
+        ),
         (
             "world",
             True,
@@ -89,6 +103,7 @@ def db_setup(test_db):
             SortField.DATE,
             SortOrder.DESCENDING,
             None,
+            50,
             100,
             10,
             "ABC",
@@ -100,6 +115,7 @@ def db_setup(test_db):
             None,
             SortOrder.ASCENDING,
             {FilterField.LANGUAGE: ["english"]},
+            1000,
             10,
             0,
             None,
@@ -111,12 +127,35 @@ def db_setup(test_db):
             SortField.TITLE,
             SortOrder.DESCENDING,
             None,
+            100,
             10,
             0,
             "ABC",
         ),
-        ("hello", True, None, SortField.DATE, SortOrder.ASCENDING, None, 15, 5, None),
-        ("world", True, (1940, 1960), None, SortOrder.DESCENDING, None, 10, 0, "ABC"),
+        (
+            "hello",
+            True,
+            None,
+            SortField.DATE,
+            SortOrder.ASCENDING,
+            None,
+            10,
+            15,
+            5,
+            None,
+        ),
+        (
+            "world",
+            True,
+            (1940, 1960),
+            None,
+            SortOrder.DESCENDING,
+            None,
+            10,
+            10,
+            0,
+            "ABC",
+        ),
     ],
 )
 def test_create_vespa_search_params(
@@ -127,6 +166,7 @@ def test_create_vespa_search_params(
     sort_field,
     sort_order,
     keyword_filters,
+    max_passages,
     limit,
     offset,
     continuation_token,
@@ -136,7 +176,7 @@ def test_create_vespa_search_params(
     search_request_body = SearchRequestBody(
         query_string=query_string,
         exact_match=exact_match,
-        max_passages_per_doc=10,
+        max_passages_per_doc=max_passages,
         keyword_filters=keyword_filters,
         year_range=year_range,
         sort_field=sort_field,
@@ -153,9 +193,9 @@ def test_create_vespa_search_params(
     )
 
     # Test constant values
-    assert produced_search_parameters.limit == VESPA_SEARCH_LIMIT
-    assert (
-        produced_search_parameters.max_hits_per_family == VESPA_SEARCH_MATCHES_PER_DOC
+    assert produced_search_parameters.limit == min(limit, VESPA_SEARCH_LIMIT)
+    assert produced_search_parameters.max_hits_per_family == min(
+        max_passages, VESPA_SEARCH_MATCHES_PER_DOC
     )
 
     # Test simple passthrough data first
