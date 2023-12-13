@@ -63,9 +63,9 @@ OPENSEARCH_INDEX_TEXT_BLOCK_KEY: str = os.getenv(
 OPENSEARCH_JIT_MAX_DOC_COUNT: int = int(os.getenv("OPENSEARCH_JIT_MAX_DOC_COUNT", "20"))
 
 # Vespa Config
-VESPA_SEARCH_LIMIT: int = int(os.getenv("VESPA_SEARCH_LIMIT", "150"))
+VESPA_SEARCH_LIMIT: int = int(os.getenv("VESPA_SEARCH_LIMIT", "500"))
 VESPA_SEARCH_MATCHES_PER_DOC: int = int(
-    os.getenv("VESPA_SEARCH_MAX_MATCHES_PER_DOC", "20")
+    os.getenv("VESPA_SEARCH_MAX_MATCHES_PER_DOC", "100")
 )
 VESPA_SECRETS_LOCATION: str = os.getenv("VESPA_SECRETS_LOCATION", "/secrets")
 VESPA_URL: str = os.getenv("VESPA_URL", "")
