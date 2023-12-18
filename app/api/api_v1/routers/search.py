@@ -73,9 +73,9 @@ def _search_request(
                 data_access_search_response = _VESPA_CONNECTION.search(
                     parameters=data_access_search_params
                 )
-            except QueryError:
+            except QueryError as e:
                 raise HTTPException(
-                    status_code=status.HTTP_400_BAD_REQUEST, detail="Invalid Query"
+                    status_code=status.HTTP_400_BAD_REQUEST, detail=" ".join(e.args)
                 )
             return process_vespa_search_response(
                 db,
