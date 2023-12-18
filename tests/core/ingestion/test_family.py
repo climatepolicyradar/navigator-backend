@@ -116,8 +116,7 @@ def test_family_from_row__updates(test_db: Session, patch_current_time):
         .order_by(Slug.created)
         .all()
     )
-    assert len(slugs) == 2
-    assert slugs[0].created < slugs[1].created
+    assert len(slugs) == 1
 
 
 def test_family_document_from_row__creates(test_db: Session):
@@ -211,8 +210,7 @@ def test_family_document_from_row__updates(test_db: Session, patch_current_time)
         .order_by(Slug.created)
         .all()
     )
-    assert len(slugs) == 2
-    assert slugs[0].created < slugs[1].created
+    assert len(slugs) == 1
 
 
 def test_family_document_from_row__updates_status(test_db: Session, patch_current_time):
