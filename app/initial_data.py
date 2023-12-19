@@ -77,13 +77,16 @@ def populate_initial_data(db):
 def wait_for_app():
     url = os.getenv("API_HOST")
     health = f"{url}/health"
+    attempts = 100
 
     # wait for health url
-    for i in range(100):
+    for i in range(attempts):
         try:
             response = requests.get(health)
             if response.status_code == OK:
                 return
+            else:
+                print(f"Health code: {response.status_code}, retry: {i}/{attempts}")
         except requests.ConnectionError:
             pass
 
