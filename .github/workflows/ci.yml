@@ -29,6 +29,15 @@ jobs:
       - name: Get python Container
         run:  docker pull python:3.9
 
+      - name: Install latest Vespa CLI
+        env:
+          VESPA_CLI_VERSION: "8.250.43"
+        run: |
+          mkdir scripts/vespa-cli
+          curl -fsSL https://github.com/vespa-engine/vespa/releases/download/v${VESPA_CLI_VERSION}/vespa-cli_${VESPA_CLI_VERSION}_linux_amd64.tar.gz | \
+            tar -zxf - -C scripts/vespa-cli --strip-component=1
+          echo "scripts/vespa-cli/bin" >> $GITHUB_PATH
+
       - name: Build
         run: |
           docker-compose build
@@ -49,10 +58,17 @@ jobs:
           docker-compose ps
           docker ps -a
           ls -la
+         
+      - name: Setup vespa for search
+        run: |
+          make vespa_setup
       
+      - name: Run backend search tests for vespa
+        run:  make test_search
+
       - name: Run backend search tests for opensearch
         run:  make test_opensearch
-      
+     
       - name: Browse Benchmark - response times in ms
         run: cat benchmark_browse.txt
 

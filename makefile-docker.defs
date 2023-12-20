@@ -5,7 +5,7 @@
 # ----------------------------------
 start_containers:
 	# Build and run containers
-	docker-compose -f docker-compose.yml -f docker-compose.dev.yml up -d
+	docker-compose -f docker-compose.yml -f docker-compose.dev.yml up -d --remove-orphans
 
 start_backendonly:
 	# Build and run containers
@@ -72,6 +72,44 @@ build:
 test_bashscripts: build_bats
 	docker run --rm -v "${PWD}/.github:/code" bats-with-helpers:latest /code/tests/test_retag_and_push.bats
 
+
+vespa_confirm_cli_installed:
+	@if [ ! $$(which vespa) ]; then \
+		echo 'ERROR: The vespa cli is not installed, please install and try again:' ; \
+		echo 'https://docs.vespa.ai/en/vespa-cli.html'; \
+		exit 1; \
+	fi
+
+vespa_healthy:
+	@if [ ! $$(curl -f -s 'http://localhost:19071/status.html') ]; then \
+		echo 'ERROR: Bad response from local vespa cluster, is it running?'; \
+		exit 1; \
+	fi
+
+
+VESPA_TEST_APP_DIR='tests/search_fixtures/vespa_test_schema'
+
+.ONESHELL:
+vespa_deploy_schema:
+	vespa config set target local
+	@vespa deploy ${VESPA_TEST_APP_DIR} --wait 300
+
+.ONESHELL:
+vespa_load_data:
+	vespa config set target local
+	vespa feed --progress=3 tests/search_fixtures/vespa_search_weights.json
+	vespa feed --progress=3 tests/search_fixtures/vespa_family_document.json
+	vespa feed --progress=3 tests/search_fixtures/vespa_document_passage.json
+
+vespa_setup: vespa_confirm_cli_installed vespa_healthy vespa_deploy_schema vespa_load_data
+
+test_search:
+	-docker rm search_test
+	docker-compose -f docker-compose.yml -f docker-compose.dev.yml run --name search_test backend pytest -vvv -m 'search'
+	docker cp search_test:/data/benchmark_browse.txt .
+	docker cp search_test:/data/benchmark_search.txt .
+	docker rm search_test
+
 setup_test_search_index:
 	docker-compose -f docker-compose.yml -f docker-compose.dev.yml run --rm backend curl -XDELETE -u "${OPENSEARCH_USER}:${OPENSEARCH_PASSWORD}" ${OPENSEARCH_URL}/${OPENSEARCH_INDEX_PREFIX}* --insecure
 	docker-compose -f docker-compose.yml -f docker-compose.dev.yml run --rm opensearch-test-loader multielasticdump --direction=load --input=/cpr-backend/tests/data/ --output=${OPENSEARCH_URL} --ignoreType=template
@@ -90,7 +128,7 @@ test_unit:
 	docker-compose -f docker-compose.yml -f docker-compose.dev.yml run --rm backend pytest -vvv tests/unit
 
 test:
-	docker-compose -f docker-compose.yml -f docker-compose.dev.yml run --rm backend pytest -vvv --test-alembic -m 'not opensearch'
+	docker-compose -f docker-compose.yml -f docker-compose.dev.yml run --rm backend pytest -vvv --test-alembic -m 'not opensearch and not search'
 
 # ----------------------------------
 # tasks
