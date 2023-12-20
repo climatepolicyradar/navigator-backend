@@ -76,8 +76,9 @@ setup_test_search_index:
 	docker-compose -f docker-compose.yml -f docker-compose.dev.yml run --rm backend curl -XDELETE -u "${OPENSEARCH_USER}:${OPENSEARCH_PASSWORD}" ${OPENSEARCH_URL}/${OPENSEARCH_INDEX_PREFIX}* --insecure
 	docker-compose -f docker-compose.yml -f docker-compose.dev.yml run --rm opensearch-test-loader multielasticdump --direction=load --input=/cpr-backend/tests/data/ --output=${OPENSEARCH_URL} --ignoreType=template
 
-test_search: setup_test_search_index
-	docker-compose -f docker-compose.yml -f docker-compose.dev.yml run --name search_test -v "${PWD}/data:/data" backend pytest -vvv -m 'search'
+test_opensearch: setup_test_search_index
+	-docker rm search_test
+	docker-compose -f docker-compose.yml -f docker-compose.dev.yml run --name search_test -v "${PWD}/data:/data" backend pytest -vvv -m 'opensearch'
 	docker cp search_test:/data/benchmark_browse.txt .
 	docker cp search_test:/data/benchmark_search.txt .
 	docker rm search_test
@@ -89,7 +90,7 @@ test_unit:
 	docker-compose -f docker-compose.yml -f docker-compose.dev.yml run --rm backend pytest -vvv tests/unit
 
 test:
-	docker-compose -f docker-compose.yml -f docker-compose.dev.yml run --rm backend pytest -vvv --test-alembic -m 'not search'
+	docker-compose -f docker-compose.yml -f docker-compose.dev.yml run --rm backend pytest -vvv --test-alembic -m 'not opensearch'
 
 # ----------------------------------
 # tasks

@@ -62,7 +62,7 @@ env_files = """
 """
 markers = [
     "cors",
-    "search",
+    "opensearch",
     "unit",
 ]
 asyncio_mode = "strict"

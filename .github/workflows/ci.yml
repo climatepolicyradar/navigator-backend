@@ -50,8 +50,8 @@ jobs:
           docker ps -a
           ls -la
       
-      - name: Run backend search tests
-        run:  make test_search
+      - name: Run backend search tests for opensearch
+        run:  make test_opensearch
       
       - name: Browse Benchmark - response times in ms
         run: cat benchmark_browse.txt

@@ -260,7 +260,7 @@ def _create_family_structures(
     documents[doc_id] = family_document
 
 
-@pytest.mark.search
+@pytest.mark.opensearch
 def test_slug_is_from_family_document(test_opensearch, client, test_db, monkeypatch):
     monkeypatch.setattr(search, "_OPENSEARCH_CONNECTION", test_opensearch)
     _populate_search_db_families(test_db)
@@ -273,6 +273,7 @@ def test_slug_is_from_family_document(test_opensearch, client, test_db, monkeypa
             "limit": 2,
             "offset": 0,
         },
+        params={"use_vespa": False},
     )
     assert page1_response.status_code == 200
 
@@ -282,7 +283,7 @@ def test_slug_is_from_family_document(test_opensearch, client, test_db, monkeypa
     assert doc1["document_slug"].startswith("fd_") and "should be from FamilyDocument"
 
 
-@pytest.mark.search
+@pytest.mark.opensearch
 def test_simple_pagination_families(test_opensearch, client, test_db, monkeypatch):
     monkeypatch.setattr(search, "_OPENSEARCH_CONNECTION", test_opensearch)
     _populate_search_db_families(test_db)
@@ -295,6 +296,7 @@ def test_simple_pagination_families(test_opensearch, client, test_db, monkeypatc
             "limit": 2,
             "offset": 0,
         },
+        params={"use_vespa": False},
     )
     assert page1_response.status_code == 200
 
@@ -310,6 +312,7 @@ def test_simple_pagination_families(test_opensearch, client, test_db, monkeypatc
             "limit": 2,
             "offset": 2,
         },
+        params={"use_vespa": False},
     )
     assert page2_response.status_code == 200
 
@@ -328,7 +331,7 @@ def test_simple_pagination_families(test_opensearch, client, test_db, monkeypatc
         assert d not in page2_families
 
 
-@pytest.mark.search
+@pytest.mark.opensearch
 @pytest.mark.parametrize("exact_match", [True, False])
 def test_search_body_valid(exact_match, test_opensearch, monkeypatch, client, test_db):
     """Test a simple known valid search responds with success."""
@@ -341,11 +344,12 @@ def test_search_body_valid(exact_match, test_opensearch, monkeypatch, client, te
             "query_string": "disaster",
             "exact_match": exact_match,
         },
+        params={"use_vespa": False},
     )
     assert response.status_code == 200
 
 
-@pytest.mark.search
+@pytest.mark.opensearch
 def test_benchmark_families_search(test_opensearch, monkeypatch, client, test_db):
     monkeypatch.setattr(search, "_OPENSEARCH_CONNECTION", test_opensearch)
     _populate_search_db_families(test_db)
@@ -358,6 +362,7 @@ def test_benchmark_families_search(test_opensearch, monkeypatch, client, test_db
                 "query_string": "climate",
                 "exact_match": True,
             },
+            params={"use_vespa": False},
         )
         assert response.status_code == 200
         time_taken = response.json()["total_time_ms"]
@@ -367,7 +372,7 @@ def test_benchmark_families_search(test_opensearch, monkeypatch, client, test_db
         out_file.write("\n".join(times))
 
 
-@pytest.mark.search
+@pytest.mark.opensearch
 def test_benchmark_families_browse(test_opensearch, monkeypatch, client, test_db):
     monkeypatch.setattr(search, "_OPENSEARCH_CONNECTION", test_opensearch)
     _populate_search_db_families(test_db)
@@ -379,6 +384,7 @@ def test_benchmark_families_browse(test_opensearch, monkeypatch, client, test_db
             json={
                 "query_string": "",
             },
+            params={"use_vespa": False},
         )
         assert response.status_code == 200
         time_taken = response.json()["total_time_ms"]
@@ -388,7 +394,7 @@ def test_benchmark_families_browse(test_opensearch, monkeypatch, client, test_db
         out_file.write("\n".join(times))
 
 
-@pytest.mark.search
+@pytest.mark.opensearch
 def test_families_search(test_opensearch, monkeypatch, client, test_db, mocker):
     monkeypatch.setattr(search, "_OPENSEARCH_CONNECTION", test_opensearch)
     _populate_search_db_families(test_db)
@@ -413,6 +419,7 @@ def test_families_search(test_opensearch, monkeypatch, client, test_db, mocker):
             "query_string": "climate",
             "exact_match": True,
         },
+        params={"use_vespa": False},
     )
     assert response.status_code == 200
     # Ensure nothing has/is going on in the background
@@ -434,7 +441,7 @@ def test_families_search(test_opensearch, monkeypatch, client, test_db, mocker):
     assert _EXPECTED_FAMILY_TITLE in names_returned
 
 
-@pytest.mark.search
+@pytest.mark.opensearch
 def test_families_search_with_all_docs_deleted(
     test_opensearch, monkeypatch, client, test_db
 ):
@@ -456,6 +463,7 @@ def test_families_search_with_all_docs_deleted(
             "query_string": "climate",
             "exact_match": False,
         },
+        params={"use_vespa": False},
     )
     assert response.status_code == 200
 
@@ -470,7 +478,7 @@ def test_families_search_with_all_docs_deleted(
     assert _EXPECTED_FAMILY_TITLE not in names_returned
 
 
-@pytest.mark.search
+@pytest.mark.opensearch
 def test_families_search_with_one_doc_deleted(
     test_opensearch, monkeypatch, client, test_db
 ):
@@ -493,6 +501,7 @@ def test_families_search_with_one_doc_deleted(
             "query_string": "climate",
             "exact_match": True,
         },
+        params={"use_vespa": False},
     )
 
     assert response.status_code == 200
@@ -516,7 +525,7 @@ def test_families_search_with_one_doc_deleted(
     assert found
 
 
-@pytest.mark.search
+@pytest.mark.opensearch
 def test_keyword_filters(test_opensearch, client, test_db, monkeypatch, mocker):
     monkeypatch.setattr(search, "_OPENSEARCH_CONNECTION", test_opensearch)
     _populate_search_db_families(test_db)
@@ -530,6 +539,7 @@ def test_keyword_filters(test_opensearch, client, test_db, monkeypatch, mocker):
             "keyword_filters": {"countries": ["kenya"]},
             "jit_query": "disabled",
         },
+        params={"use_vespa": False},
     )
     assert response.status_code == 200
     assert query_spy.call_count == 1
@@ -540,7 +550,7 @@ def test_keyword_filters(test_opensearch, client, test_db, monkeypatch, mocker):
     } in query_body["query"]["bool"]["filter"]
 
 
-@pytest.mark.search
+@pytest.mark.opensearch
 def test_keyword_filters_region(test_opensearch, test_db, monkeypatch, client, mocker):
     monkeypatch.setattr(search, "_OPENSEARCH_CONNECTION", test_opensearch)
     _populate_search_db_families(test_db)
@@ -554,6 +564,7 @@ def test_keyword_filters_region(test_opensearch, test_db, monkeypatch, client, m
             "keyword_filters": {"regions": ["south-asia"]},
             "jit_query": "disabled",
         },
+        params={"use_vespa": False},
     )
     assert response.status_code == 200
     assert query_spy.call_count == 1
@@ -583,7 +594,7 @@ def test_keyword_filters_region(test_opensearch, test_db, monkeypatch, client, m
     assert [_FILTER_FIELD_MAP[FilterField.COUNTRY]] == query_term_keys
 
 
-@pytest.mark.search
+@pytest.mark.opensearch
 def test_keyword_filters_region_invalid(
     test_opensearch, monkeypatch, client, test_db, mocker
 ):
@@ -599,6 +610,7 @@ def test_keyword_filters_region_invalid(
             "keyword_filters": {"regions": ["daves-region"]},
             "jit_query": "disabled",
         },
+        params={"use_vespa": False},
     )
     assert response.status_code == 200
     assert query_spy.call_count == 1
@@ -608,7 +620,7 @@ def test_keyword_filters_region_invalid(
     assert "filter" not in query_body["query"]["bool"]
 
 
-@pytest.mark.search
+@pytest.mark.opensearch
 def test_invalid_keyword_filters(test_opensearch, test_db, monkeypatch, client):
     monkeypatch.setattr(search, "_OPENSEARCH_CONNECTION", test_opensearch)
     _populate_search_db_families(test_db)
@@ -623,11 +635,12 @@ def test_invalid_keyword_filters(test_opensearch, test_db, monkeypatch, client):
                 "unknown_filter_no1": ["BOOM"],
             },
         },
+        params={"use_vespa": False},
     )
     assert response.status_code == 422
 
 
-@pytest.mark.search
+@pytest.mark.opensearch
 @pytest.mark.parametrize(
     "year_range", [(None, None), (1900, None), (None, 2020), (1900, 2020)]
 )
@@ -651,6 +664,7 @@ def test_year_range_filters(
             "year_range": year_range,
             "jit_query": "disabled",
         },
+        params={"use_vespa": False},
     )
     query_body = query_spy.mock_calls[0].args[0]
 
@@ -689,7 +703,7 @@ def test_year_range_filters(
         assert "filter" not in query_body["query"]["bool"]
 
 
-@pytest.mark.search
+@pytest.mark.opensearch
 def test_multiple_filters(test_opensearch, test_db, monkeypatch, client, mocker):
     """Check that multiple filters are successfully applied"""
     monkeypatch.setattr(search, "_OPENSEARCH_CONNECTION", test_opensearch)
@@ -709,6 +723,7 @@ def test_multiple_filters(test_opensearch, test_db, monkeypatch, client, mocker)
             "year_range": (1900, 2020),
             "jit_query": "disabled",
         },
+        params={"use_vespa": False},
     )
     assert response.status_code == 200
     assert query_spy.call_count == 1
@@ -735,7 +750,7 @@ def test_multiple_filters(test_opensearch, test_db, monkeypatch, client, mocker)
         assert family["family_category"] == "Legislative"
 
 
-@pytest.mark.search
+@pytest.mark.opensearch
 def test_result_order_score(test_opensearch, monkeypatch, client, test_db, mocker):
     monkeypatch.setattr(search, "_OPENSEARCH_CONNECTION", test_opensearch)
     _populate_search_db_families(test_db)
@@ -747,6 +762,7 @@ def test_result_order_score(test_opensearch, monkeypatch, client, test_db, mocke
             "query_string": "disaster",
             "exact_match": False,
         },
+        params={"use_vespa": False},
     )
     assert response.status_code == 200
     query_response = query_spy.spy_return.raw_response
@@ -760,7 +776,7 @@ def test_result_order_score(test_opensearch, monkeypatch, client, test_db, mocke
         s = new_s
 
 
-@pytest.mark.search
+@pytest.mark.opensearch
 @pytest.mark.parametrize("order", [SortOrder.ASCENDING, SortOrder.DESCENDING])
 def test_result_order_date(test_opensearch, monkeypatch, client, test_db, order):
     monkeypatch.setattr(search, "_OPENSEARCH_CONNECTION", test_opensearch)
@@ -774,6 +790,7 @@ def test_result_order_date(test_opensearch, monkeypatch, client, test_db, order)
             "sort_field": "date",
             "sort_order": order.value,
         },
+        params={"use_vespa": False},
     )
     assert response.status_code == 200
 
@@ -792,7 +809,7 @@ def test_result_order_date(test_opensearch, monkeypatch, client, test_db, order)
         dt = new_dt
 
 
-@pytest.mark.search
+@pytest.mark.opensearch
 @pytest.mark.parametrize("order", [SortOrder.ASCENDING, SortOrder.DESCENDING])
 def test_result_order_title(test_opensearch, monkeypatch, client, test_db, order):
     monkeypatch.setattr(search, "_OPENSEARCH_CONNECTION", test_opensearch)
@@ -806,6 +823,7 @@ def test_result_order_title(test_opensearch, monkeypatch, client, test_db, order
             "sort_field": "title",
             "sort_order": order.value,
         },
+        params={"use_vespa": False},
     )
     assert response.status_code == 200
 
@@ -824,7 +842,7 @@ def test_result_order_title(test_opensearch, monkeypatch, client, test_db, order
         t = new_t
 
 
-@pytest.mark.search
+@pytest.mark.opensearch
 def test_invalid_request(test_opensearch, monkeypatch, client, test_db):
     monkeypatch.setattr(search, "_OPENSEARCH_CONNECTION", test_opensearch)
     _populate_search_db_families(test_db)
@@ -848,7 +866,7 @@ def test_invalid_request(test_opensearch, monkeypatch, client, test_db):
     assert response.status_code == 422
 
 
-@pytest.mark.search
+@pytest.mark.opensearch
 def test_case_insensitivity(test_opensearch, monkeypatch, client, test_db):
     """Make sure that query string results are not affected by case."""
     monkeypatch.setattr(search, "_OPENSEARCH_CONNECTION", test_opensearch)
@@ -860,6 +878,7 @@ def test_case_insensitivity(test_opensearch, monkeypatch, client, test_db):
             "query_string": "climate",
             "exact_match": False,
         },
+        params={"use_vespa": False},
     )
     response2 = client.post(
         SEARCH_ENDPOINT,
@@ -867,6 +886,7 @@ def test_case_insensitivity(test_opensearch, monkeypatch, client, test_db):
             "query_string": "climate",
             "exact_match": False,
         },
+        params={"use_vespa": False},
     )
     response3 = client.post(
         SEARCH_ENDPOINT,
@@ -874,6 +894,7 @@ def test_case_insensitivity(test_opensearch, monkeypatch, client, test_db):
             "query_string": "climate",
             "exact_match": False,
         },
+        params={"use_vespa": False},
     )
 
     response1_json = clean_response(response1)
@@ -884,7 +905,7 @@ def test_case_insensitivity(test_opensearch, monkeypatch, client, test_db):
     assert response1_json == response2_json == response3_json
 
 
-@pytest.mark.search
+@pytest.mark.opensearch
 def test_punctuation_ignored(test_opensearch, monkeypatch, client, test_db):
     """Make sure that punctuation in query strings is ignored."""
     monkeypatch.setattr(search, "_OPENSEARCH_CONNECTION", test_opensearch)
@@ -896,6 +917,7 @@ def test_punctuation_ignored(test_opensearch, monkeypatch, client, test_db):
             "query_string": "climate.",
             "exact_match": False,
         },
+        params={"use_vespa": False},
     )
     response2 = client.post(
         SEARCH_ENDPOINT,
@@ -903,6 +925,7 @@ def test_punctuation_ignored(test_opensearch, monkeypatch, client, test_db):
             "query_string": "climate, ",
             "exact_match": False,
         },
+        params={"use_vespa": False},
     )
     response3 = client.post(
         SEARCH_ENDPOINT,
@@ -910,6 +933,7 @@ def test_punctuation_ignored(test_opensearch, monkeypatch, client, test_db):
             "query_string": ";climate",
             "exact_match": False,
         },
+        params={"use_vespa": False},
     )
 
     response1_json = clean_response(response1)
@@ -920,7 +944,7 @@ def test_punctuation_ignored(test_opensearch, monkeypatch, client, test_db):
     assert response1_json == response2_json == response3_json
 
 
-@pytest.mark.search
+@pytest.mark.opensearch
 def test_sensitive_queries(test_db, test_opensearch, monkeypatch, client):
     """Make sure that queries in the list of sensitive queries only return results containing that term, and not KNN results."""
     monkeypatch.setattr(search, "_OPENSEARCH_CONNECTION", test_opensearch)
@@ -929,17 +953,20 @@ def test_sensitive_queries(test_db, test_opensearch, monkeypatch, client):
     response1 = client.post(
         SEARCH_ENDPOINT,
         json={"query_string": "spain", "exact_match": False},
+        params={"use_vespa": False},
     )
 
     response2 = client.post(
         SEARCH_ENDPOINT,
         json={"query_string": "clean energy strategy", "exact_match": False},
+        params={"use_vespa": False},
     )
 
     # In this example the sensitive term is less than half the length of the query, so KNN results should be returned
     response3 = client.post(
         SEARCH_ENDPOINT,
         json={"query_string": "spanish ghg emissions", "exact_match": False},
+        params={"use_vespa": False},
     )
 
     response1_json = response1.json()
@@ -977,7 +1004,7 @@ def test_sensitive_queries(test_db, test_opensearch, monkeypatch, client):
     )
 
 
-@pytest.mark.search
+@pytest.mark.opensearch
 def test_accents_ignored(test_db, test_opensearch, monkeypatch, client):
     """Make sure that accents in query strings are ignored."""
     monkeypatch.setattr(search, "_OPENSEARCH_CONNECTION", test_opensearch)
@@ -986,14 +1013,17 @@ def test_accents_ignored(test_db, test_opensearch, monkeypatch, client):
     response1 = client.post(
         SEARCH_ENDPOINT,
         json={"query_string": "climàte", "exact_match": False},
+        params={"use_vespa": False},
     )
     response2 = client.post(
         SEARCH_ENDPOINT,
         json={"query_string": "climatë", "exact_match": False},
+        params={"use_vespa": False},
     )
     response3 = client.post(
         SEARCH_ENDPOINT,
         json={"query_string": "climàtë", "exact_match": False},
+        params={"use_vespa": False},
     )
 
     response1_json = clean_response(response1)
@@ -1003,7 +1033,7 @@ def test_accents_ignored(test_db, test_opensearch, monkeypatch, client):
     assert response1_json == response2_json == response3_json
 
 
-@pytest.mark.search
+@pytest.mark.opensearch
 def test_time_taken(test_opensearch, monkeypatch, client):
     """Make sure that query time taken is sensible."""
     monkeypatch.setattr(search, "_OPENSEARCH_CONNECTION", test_opensearch)
@@ -1012,6 +1042,7 @@ def test_time_taken(test_opensearch, monkeypatch, client):
     response = client.post(
         SEARCH_ENDPOINT,
         json={"query_string": "disaster", "exact_match": False},
+        params={"use_vespa": False},
     )
     end = time.time()
 
@@ -1022,7 +1053,7 @@ def test_time_taken(test_opensearch, monkeypatch, client):
     assert 0 < reported_response_time_ms < expected_response_time_ms_max
 
 
-@pytest.mark.search
+@pytest.mark.opensearch
 def test_empty_search_term_performs_browse(client, test_db):
     """Make sure that empty search term returns results in browse mode."""
     _populate_search_db_families(test_db)
@@ -1030,13 +1061,14 @@ def test_empty_search_term_performs_browse(client, test_db):
     response = client.post(
         SEARCH_ENDPOINT,
         json={"query_string": ""},
+        params={"use_vespa": False},
     )
     assert response.status_code == 200
     assert response.json()["hits"] > 0
     assert len(response.json()["families"]) > 0
 
 
-@pytest.mark.search
+@pytest.mark.opensearch
 @pytest.mark.parametrize("order", [SortOrder.ASCENDING, SortOrder.DESCENDING])
 def test_browse_order_by_title(client, test_db, order):
     """Make sure that empty search terms return no results."""
@@ -1049,6 +1081,7 @@ def test_browse_order_by_title(client, test_db, order):
             "sort_field": "title",
             "sort_order": order.value,
         },
+        params={"use_vespa": False},
     )
     assert response.status_code == 200
 
@@ -1068,7 +1101,7 @@ def test_browse_order_by_title(client, test_db, order):
         t = new_t
 
 
-@pytest.mark.search
+@pytest.mark.opensearch
 @pytest.mark.parametrize("order", [SortOrder.ASCENDING, SortOrder.DESCENDING])
 @pytest.mark.parametrize("start_year", [None, 1999, 2007])
 @pytest.mark.parametrize("end_year", [None, 2011, 2018])
@@ -1084,6 +1117,7 @@ def test_browse_order_by_date(order, start_year, end_year, client, test_db):
             "sort_order": order.value,
             "year_range": [start_year, end_year],
         },
+        params={"use_vespa": False},
     )
     assert response.status_code == 200
 
@@ -1108,7 +1142,7 @@ def test_browse_order_by_date(order, start_year, end_year, client, test_db):
         dt = new_dt
 
 
-@pytest.mark.search
+@pytest.mark.opensearch
 @pytest.mark.parametrize("limit", [1, 4, 7, 10])
 def test_browse_limit_offset(client, test_db, limit):
     """Make sure that the offset parameter in browse mode works."""
@@ -1121,6 +1155,7 @@ def test_browse_limit_offset(client, test_db, limit):
             "limit": limit,
             "offset": 0,
         },
+        params={"use_vespa": False},
     )
     response_offset_2 = client.post(
         SEARCH_ENDPOINT,
@@ -1129,6 +1164,7 @@ def test_browse_limit_offset(client, test_db, limit):
             "limit": limit,
             "offset": 2,
         },
+        params={"use_vespa": False},
     )
 
     assert response_offset_0.status_code == 200
@@ -1145,7 +1181,7 @@ def test_browse_limit_offset(client, test_db, limit):
     assert result_elements_0[2 : len(result_elements_2)] == result_elements_2[:-2]
 
 
-@pytest.mark.search
+@pytest.mark.opensearch
 def test_browse_filters(client, test_db):
     """Check that multiple filters are successfully applied"""
     _populate_search_db_families(test_db)
@@ -1161,6 +1197,7 @@ def test_browse_filters(client, test_db):
             "year_range": (1900, 2020),
             "jit_query": "disabled",
         },
+        params={"use_vespa": False},
     )
     assert response.status_code == 200
 
@@ -1175,7 +1212,7 @@ def test_browse_filters(client, test_db):
         assert result_date == "2017-01-01T00:00:00+00:00"
 
 
-@pytest.mark.search
+@pytest.mark.opensearch
 def test_browse_filters_region(client, test_db):
     """Check that multiple filters are successfully applied"""
     _populate_search_db_families(test_db)
@@ -1191,6 +1228,7 @@ def test_browse_filters_region(client, test_db):
             "year_range": (1900, 2020),
             "jit_query": "disabled",
         },
+        params={"use_vespa": False},
     )
     assert response.status_code == 200
 
@@ -1201,7 +1239,7 @@ def test_browse_filters_region(client, test_db):
     assert set(geographies) == set(["JPN", "AUS", "IDN", "KOR"])
 
 
-@pytest.mark.search
+@pytest.mark.opensearch
 def test_browse_filters_region_and_geography(client, test_db):
     """Check that multiple filters are successfully applied"""
     _populate_search_db_families(test_db)
@@ -1218,6 +1256,7 @@ def test_browse_filters_region_and_geography(client, test_db):
             "year_range": (1900, 2020),
             "jit_query": "disabled",
         },
+        params={"use_vespa": False},
     )
     assert response.status_code == 200
 
@@ -1234,7 +1273,7 @@ def test_browse_filters_region_and_geography(client, test_db):
 # value - this is in contrast to Opensearch which uses the same files but
 # in this case the value will be an ISO.
 #
-# @pytest.mark.search
+# @pytest.mark.opensearch
 # def test_browse_filters_geography_iso(client, test_db):
 #     """Check that multiple filters are successfully applied"""
 #     _populate_search_db_families(test_db)
@@ -1264,7 +1303,7 @@ def test_browse_filters_region_and_geography(client, test_db):
 #     assert set(geographies) == set(['JPN'])
 
 
-@pytest.mark.search
+@pytest.mark.opensearch
 def test_browse_filters_geography_slug(client, test_db):
     """Check that multiple filters are successfully applied"""
     _populate_search_db_families(test_db)
@@ -1280,6 +1319,7 @@ def test_browse_filters_geography_slug(client, test_db):
             "year_range": (1900, 2020),
             "jit_query": "disabled",
         },
+        params={"use_vespa": False},
     )
     assert response.status_code == 200
 
@@ -1290,7 +1330,7 @@ def test_browse_filters_geography_slug(client, test_db):
     assert set(geographies) == set(["JPN"])
 
 
-@pytest.mark.search
+@pytest.mark.opensearch
 def test_browse_filter_category(client, test_db):
     """Make sure that empty search term returns results in browse mode."""
     _populate_search_db_families(test_db)
@@ -1301,6 +1341,7 @@ def test_browse_filter_category(client, test_db):
             "query_string": "",
             "keyword_filters": {"categories": ["Executive"]},
         },
+        params={"use_vespa": False},
     )
     assert response.status_code == 200
     response_content = response.json()
@@ -1349,7 +1390,7 @@ def _get_validation_data(db: Session, families: Sequence[dict]) -> dict[str, Any
     }
 
 
-@pytest.mark.search
+@pytest.mark.opensearch
 @pytest.mark.parametrize("exact_match", [True, False])
 @pytest.mark.parametrize("query_string", ["", "carbon"])
 def test_csv_content(
@@ -1370,6 +1411,7 @@ def test_csv_content(
             "query_string": query_string,
             "exact_match": exact_match,
         },
+        params={"use_vespa": False},
     )
     assert search_response.status_code == 200
     search_response_content = search_response.json()
@@ -1397,6 +1439,7 @@ def test_csv_content(
             "query_string": query_string,
             "exact_match": exact_match,
         },
+        params={"use_vespa": False},
     )
     assert search_response.status_code == 200
     search_content = search_response.json()
@@ -1413,6 +1456,7 @@ def test_csv_content(
             "query_string": query_string,
             "exact_match": exact_match,
         },
+        params={"use_vespa": False},
     )
     assert download_response.status_code == 200
     csv_content = csv.DictReader(StringIO(download_response.content.decode("utf8")))
@@ -1501,7 +1545,7 @@ def test_csv_content(
     assert row_count == expected_csv_row_count
 
 
-@pytest.mark.search
+@pytest.mark.opensearch
 @pytest.mark.parametrize("query_string", ["", "greenhouse"])
 @pytest.mark.parametrize("limit", [1, 10, 35, 150])
 @pytest.mark.parametrize("offset", [0, 5, 10, 80])
@@ -1531,6 +1575,7 @@ def test_csv_download_no_limit(
             "limit": limit,
             "offset": offset,
         },
+        params={"use_vespa": False},
     )
     assert download_response.status_code == 200
 
@@ -1544,7 +1589,7 @@ def test_csv_download_no_limit(
     assert actual_search_req.offset == 0
 
 
-@pytest.mark.search
+@pytest.mark.opensearch
 def test_extra_indices_with_html_search(
     test_opensearch, monkeypatch, client, test_db, mocker
 ):
@@ -1573,6 +1618,7 @@ def test_extra_indices_with_html_search(
             "exact_match": False,
             "include_results": ["htmlsNonTranslated"],
         },
+        params={"use_vespa": False},
     )
     assert response.status_code == 200
     # Ensure nothing has/is going on in the background
