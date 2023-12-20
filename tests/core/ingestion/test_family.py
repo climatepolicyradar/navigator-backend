@@ -50,6 +50,10 @@ def test_family_from_row__creates(test_db: Session):
 
     assert test_db.query(Slug).filter_by(name=SLUG_FAMILY_NAME).one()
     assert (
+        test_db.query(Slug.created).filter_by(name=SLUG_FAMILY_NAME).scalar()
+        is not None
+    )
+    assert (
         test_db.query(FamilyOrganisation)
         .filter_by(family_import_id=FAMILY_IMPORT_ID)
         .one()
@@ -106,6 +110,14 @@ def test_family_from_row__updates(test_db: Session, patch_current_time):
     assert family.last_modified is not None
     assert family.created < family.last_modified
 
+    slugs = (
+        test_db.query(Slug)
+        .filter_by(family_import_id=FAMILY_IMPORT_ID)
+        .order_by(Slug.created)
+        .all()
+    )
+    assert len(slugs) == 1
+
 
 def test_family_document_from_row__creates(test_db: Session):
     populate_for_ingest(test_db)
@@ -136,6 +148,13 @@ def test_family_document_from_row__creates(test_db: Session):
     assert db_family_doc.created is not None
     assert db_family_doc.last_modified is not None
     assert db_family_doc.created == db_family_doc.last_modified
+
+    assert (
+        test_db.query(Slug.created)
+        .filter_by(family_document_import_id=DOCUMENT_IMPORT_ID)
+        .scalar()
+        is not None
+    )
 
 
 def test_family_document_from_row__updates(test_db: Session, patch_current_time):
@@ -184,6 +203,14 @@ def test_family_document_from_row__updates(test_db: Session, patch_current_time)
     )
     assert db_family_doc.last_modified is not None
     assert db_family_doc.created < db_family_doc.last_modified
+
+    slugs = (
+        test_db.query(Slug)
+        .filter_by(family_document_import_id=DOCUMENT_IMPORT_ID)
+        .order_by(Slug.created)
+        .all()
+    )
+    assert len(slugs) == 1
 
 
 def test_family_document_from_row__updates_status(test_db: Session, patch_current_time):
