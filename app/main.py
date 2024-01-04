@@ -71,6 +71,7 @@ def run_migrations() -> None:
     Call through subprocess as opposed to the alembic command function as the server
     startup never completed when using the alembic solution.
     """
+    logger.info("run alembic upgrade head...")
     subprocess.run(["alembic", "-c", "./alembic.ini", "upgrade", "head"], check=True)
 
 
@@ -78,7 +79,6 @@ def run_migrations() -> None:
 async def lifespan(app_: FastAPI):
     """Run startup and shutdown events."""
     logger.info("Starting up...")
-    logger.info("run alembic upgrade head...")
     run_migrations()
     yield
     logger.info("Shutting down...")
