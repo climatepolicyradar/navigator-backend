@@ -9,8 +9,8 @@ from fastapi.middleware.cors import CORSMiddleware
 from fastapi_health import health
 from fastapi_pagination import add_pagination
 from starlette.requests import Request
-from alembic.command import upgrade
-from alembic.config import Config
+import subprocess
+from contextlib import asynccontextmanager
 
 from app.api.api_v1.routers.cclw_ingest import cclw_ingest_router
 from app.api.api_v1.routers.unfccc_ingest import unfccc_ingest_router
@@ -63,7 +63,33 @@ ENABLE_API_DOCS = os.getenv("ENABLE_API_DOCS", "False").lower() == "true"
 _docs_url = "/api/docs" if ENABLE_API_DOCS else None
 _openapi_url = "/api" if ENABLE_API_DOCS else None
 
-app = FastAPI(title=config.PROJECT_NAME, docs_url=_docs_url, openapi_url=_openapi_url)
+
+def run_migrations() -> None:
+    """
+    Apply alembic migrations.
+
+    Call through subprocess as opposed to the alembic command function as the server
+    startup never completed when using the alembic solution.
+    """
+    subprocess.run(["alembic", "-c", "./alembic.ini", "upgrade", "head"], check=True)
+
+
+@asynccontextmanager
+async def lifespan(app_: FastAPI):
+    """Run startup and shutdown events."""
+    logger.info("Starting up...")
+    logger.info("run alembic upgrade head...")
+    run_migrations()
+    yield
+    logger.info("Shutting down...")
+
+
+app = FastAPI(
+    title=config.PROJECT_NAME,
+    docs_url=_docs_url,
+    openapi_url=_openapi_url,
+    lifespan=lifespan,
+)
 json_logging.init_fastapi(enable_json=True)
 json_logging.init_request_instrument(app)
 json_logging.config_root_logger()
@@ -124,11 +150,6 @@ app.include_router(summary_router, prefix="/api/v1", tags=["Summaries"])
 
 # add pagination support to all routes that ask for it
 add_pagination(app)
-
-
-@app.on_event("startup")
-async def startup() -> None:
-    upgrade(Config("./alembic.ini"), "head")
 
 
 if __name__ == "__main__":
