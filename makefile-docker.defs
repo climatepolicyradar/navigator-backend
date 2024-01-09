@@ -103,11 +103,12 @@ vespa_load_data:
 
 vespa_setup: vespa_confirm_cli_installed vespa_healthy vespa_deploy_schema vespa_load_data
 
+.ONESHELL:
 test_search:
 	-docker rm search_test
-	docker-compose -f docker-compose.yml -f docker-compose.dev.yml run --name search_test backend pytest -vvv -m 'search'
-	docker cp search_test:/data/benchmark_browse.txt .
-	docker cp search_test:/data/benchmark_search.txt .
+	docker-compose -f docker-compose.yml -f docker-compose.dev.yml run --name search_test -v "${PWD}/data:/data" backend pytest -vvv tests/routes/test_vespasearch.py -m 'search'
+	docker cp search_test:/data/benchmark_browse_vespa.txt .
+	docker cp search_test:/data/benchmark_search_vespa.txt .
 	docker rm search_test
 
 setup_test_search_index:
