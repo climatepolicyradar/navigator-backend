@@ -58,6 +58,11 @@
           - Reference: https://docs.vespa.ai/en/reference/services-content.html
     -->
     <content id="family-document-passage" version="1.0">
+        <tuning>
+            <resource-limits>
+                <disk>0.95</disk>
+            </resource-limits>
+        </tuning>
         <min-redundancy>2</min-redundancy>
         <documents>
             <document type="search_weights" mode="index" global="true" />
