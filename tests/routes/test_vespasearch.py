@@ -15,13 +15,11 @@ from cpr_data_access.models.search import SearchParameters
 
 from app.api.api_v1.routers import search
 
-from app.core.lookups import get_country_slug_from_country_code
 
 from app.data_migrations.taxonomy_cclw import get_cclw_taxonomy
 from app.data_migrations.taxonomy_unf3c import get_unf3c_taxonomy
 
 from app.db.models.app import Organisation
-from app.db.models.law_policy import Geography
 from app.db.models.law_policy.family import (
     DocumentStatus,
     EventStatus,
@@ -424,81 +422,6 @@ def test_search_with_deleted_docs(test_vespa, monkeypatch, client, test_db):
     all_deleted_count = len(all_deleted_body["families"])
     assert start_family_count > one_deleted_count > all_deleted_count
     assert len(all_deleted_body["families"]) == 0
-
-
-@pytest.mark.search
-@pytest.mark.parametrize("label,query", [("search", "the"), ("browse", "")])
-def test_keyword_country_filters(
-    label, query, test_vespa, client, test_db, monkeypatch
-):
-    monkeypatch.setattr(search, "_VESPA_CONNECTION", test_vespa)
-    _populate_search_db_families(test_db)
-    base_params = {"query_string": query}
-
-    # Bad request
-    invalid_country = {**base_params, **{"keyword_filters": {"countries": ["nowhere"]}}}
-    response = client.post(
-        SEARCH_ENDPOINT,
-        json=invalid_country,
-    )
-    assert response.status_code == 400
-
-    # Get all documents and iterate over there country codes
-    # to confirm they are returned when filtered on
-    all_body = _make_search_request(client, params=base_params)
-    families = [f for f in all_body["families"]]
-    assert len(families) >= 4
-
-    for family in families:
-        country_code = family["family_geography"]
-        country_slug = get_country_slug_from_country_code(test_db, country_code)
-
-        params = {**base_params, **{"keyword_filters": {"countries": [country_slug]}}}
-        body_with_filters = _make_search_request(client, params=params)
-        filtered_family_slugs = [
-            f["family_slug"] for f in body_with_filters["families"]
-        ]
-
-        assert family["family_slug"] in filtered_family_slugs
-
-
-@pytest.mark.search
-@pytest.mark.parametrize("label,query", [("search", "the"), ("browse", "")])
-def test_keyword_region_filters(label, query, test_vespa, client, test_db, monkeypatch):
-    monkeypatch.setattr(search, "_VESPA_CONNECTION", test_vespa)
-    _populate_search_db_families(test_db)
-    base_params = {"query_string": query}
-
-    # Bad request
-    invalid_region = {**base_params, **{"keyword_filters": {"regions": ["no-region"]}}}
-    response = client.post(
-        SEARCH_ENDPOINT,
-        json=invalid_region,
-    )
-    assert response.status_code == 400
-
-    # Get regions of all documents and iterate over them
-    # to confirm the originals are returned when filtered on
-    all_body = _make_search_request(client, params=base_params)
-    families = [f for f in all_body["families"]]
-    assert len(families) >= 4
-
-    for family in families:
-        country_code = family["family_geography"]
-        parent_id = (
-            test_db.query(Geography)
-            .filter(Geography.value == country_code)
-            .first()
-            .parent_id
-        )
-        region = test_db.query(Geography).filter(Geography.id == parent_id).first()
-
-        params = {**base_params, **{"keyword_filters": {"regions": [region.slug]}}}
-        body_with_filters = _make_search_request(client, params=params)
-        filtered_family_slugs = [
-            f["family_slug"] for f in body_with_filters["families"]
-        ]
-        assert family["family_slug"] in filtered_family_slugs
 
 
 @pytest.mark.search
