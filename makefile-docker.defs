@@ -110,7 +110,7 @@ test_search:
 		-v "${PWD}/data:/data" \
 		backend pytest \
 		-vvv tests/routes/test_vespasearch.py \
-		-m 'search' -k test_keyword_
+		-m 'search'
 
 setup_test_search_index:
 	docker-compose -f docker-compose.yml -f docker-compose.dev.yml run --rm backend curl -XDELETE -u "${OPENSEARCH_USER}:${OPENSEARCH_PASSWORD}" ${OPENSEARCH_URL}/${OPENSEARCH_INDEX_PREFIX}* --insecure
