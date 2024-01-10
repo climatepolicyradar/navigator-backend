@@ -72,7 +72,6 @@ build:
 test_bashscripts: build_bats
 	docker run --rm -v "${PWD}/.github:/code" bats-with-helpers:latest /code/tests/test_retag_and_push.bats
 
-
 vespa_confirm_cli_installed:
 	@if [ ! $$(which vespa) ]; then \
 		echo 'ERROR: The vespa cli is not installed, please install and try again:' ; \
@@ -85,7 +84,6 @@ vespa_healthy:
 		echo 'ERROR: Bad response from local vespa cluster, is it running?'; \
 		exit 1; \
 	fi
-
 
 VESPA_TEST_APP_DIR='tests/search_fixtures/vespa_test_schema'
 
@@ -105,18 +103,20 @@ vespa_setup: vespa_confirm_cli_installed vespa_healthy vespa_deploy_schema vespa
 
 .ONESHELL:
 test_search:
-	-docker rm search_test
-	docker-compose -f docker-compose.yml -f docker-compose.dev.yml run --name search_test -v "${PWD}/data:/data" backend pytest -vvv tests/routes/test_vespasearch.py -m 'search'
-	docker cp search_test:/data/benchmark_browse_vespa.txt .
-	docker cp search_test:/data/benchmark_search_vespa.txt .
-	docker rm search_test
+	docker-compose \
+		-f docker-compose.yml \
+		-f docker-compose.dev.yml \
+		run --rm --name search_test \
+		-v "${PWD}/data:/data" \
+		backend pytest \
+		-vvv tests/routes/test_vespasearch.py \
+		-m 'search'
 
 setup_test_search_index:
 	docker-compose -f docker-compose.yml -f docker-compose.dev.yml run --rm backend curl -XDELETE -u "${OPENSEARCH_USER}:${OPENSEARCH_PASSWORD}" ${OPENSEARCH_URL}/${OPENSEARCH_INDEX_PREFIX}* --insecure
 	docker-compose -f docker-compose.yml -f docker-compose.dev.yml run --rm opensearch-test-loader multielasticdump --direction=load --input=/cpr-backend/tests/data/ --output=${OPENSEARCH_URL} --ignoreType=template
 
 test_opensearch: setup_test_search_index
-	-docker rm search_test
 	docker-compose -f docker-compose.yml -f docker-compose.dev.yml run --name search_test -v "${PWD}/data:/data" backend pytest -vvv -m 'opensearch'
 	docker cp search_test:/data/benchmark_browse.txt .
 	docker cp search_test:/data/benchmark_search.txt .

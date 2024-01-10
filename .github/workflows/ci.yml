@@ -60,8 +60,7 @@ jobs:
           ls -la
          
       - name: Setup vespa for search
-        run: |
-          make vespa_setup
+        run: make vespa_setup
       
       - name: Run backend search tests for vespa
         run:  make test_search
@@ -69,10 +68,10 @@ jobs:
       - name: Run backend search tests for opensearch
         run:  make test_opensearch
      
-      - name: Browse Benchmark - response times in ms
+      - name: Browse Benchmark opensearch - response times in ms
         run: cat benchmark_browse.txt
 
-      - name: Search Benchmark - response times in ms
+      - name: Search Benchmark opensearch - response times in ms
         run: cat benchmark_search.txt
       
       - name: Log Dump
