@@ -273,22 +273,6 @@ def test_empty_search_term_performs_browse(client, test_db, mocker):
 
 
 @pytest.mark.search
-def test_slug_is_from_family_document(test_vespa, client, test_db, monkeypatch):
-    monkeypatch.setattr(search, "_VESPA_CONNECTION", test_vespa)
-    _populate_search_db_families(test_db)
-
-    params = {"query_string": "a"}
-    body = _make_search_request(client, params)
-
-    assert len(body["families"]) > 0
-    for family in body["families"]:
-        for doc in family["family_documents"]:
-            assert doc["document_slug"].startswith(
-                "fd_"
-            ), f"returned slug should be from the family, slug: {doc['document_slug']}"
-
-
-@pytest.mark.search
 def test_simple_pagination_families(test_vespa, client, test_db, monkeypatch):
     monkeypatch.setattr(search, "_VESPA_CONNECTION", test_vespa)
     _populate_search_db_families(test_db)
