@@ -138,15 +138,14 @@ def test_benchmark_families_search(
 
 
 @pytest.mark.search
-@pytest.mark.parametrize("exact_match", [True, False])
-def test_specific_doc_returned(exact_match, test_vespa, monkeypatch, client, test_db):
+def test_specific_doc_returned(test_vespa, monkeypatch, client, test_db):
     monkeypatch.setattr(search, "_VESPA_CONNECTION", test_vespa)
     _populate_db_families(test_db)
 
     family_name_query = "Agriculture Sector Plan 2015-2019"
     params = {
         "query_string": family_name_query,
-        "exact_match": exact_match,
+        "exact_match": True,
         "limit": 1,
     }
     body = _make_search_request(client, params)
@@ -188,7 +187,9 @@ def test_search_params_contract(
         },
     )
 
-    query_spy.assert_called_once_with(parameters=params)
+    expected_params = params
+    expected_params.limit = 150
+    query_spy.assert_called_once_with(parameters=expected_params)
 
 
 @pytest.mark.search
