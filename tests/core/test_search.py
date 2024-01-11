@@ -193,7 +193,7 @@ def test_create_vespa_search_params(
     )
 
     # Test constant values
-    assert produced_search_parameters.limit == min(limit, VESPA_SEARCH_LIMIT)
+    assert produced_search_parameters.limit == VESPA_SEARCH_LIMIT
     assert produced_search_parameters.max_hits_per_family == min(
         max_passages, VESPA_SEARCH_MATCHES_PER_DOC
     )
