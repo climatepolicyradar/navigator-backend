@@ -1,0 +1,19 @@
+<query-profile id="default">
+    <!--
+        This is the number of documents returned, for >200 physical documents with
+        25 passages this will need to be revisited. Can be overridden in the vespa
+        query because maxHits is disabled.
+    -->
+    <field name="hits">5000</field>
+    <field name="maxHits">50000</field>
+    <field name="grouping.defaultMaxHits">-1</field>
+    <field name="grouping.defaultMaxGroups">-1</field>
+    <field name="grouping.globalMaxGroups">-1</field>
+    <!--
+        See https://docs.vespa.ai/en/reference/query-api-reference.html#ranking.softtimeout.enable
+        for documentation on the below timeout options.
+    -->  
+    <field name="timeout">20</field>
+    <field name="ranking.softtimeout.enable">true</field>
+    <field name="ranking.softtimeout.factor">0.7</field>
+</query-profile>
