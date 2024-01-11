@@ -1251,7 +1251,6 @@ def process_vespa_search_response(
 
 def create_vespa_search_params(db: Session, search_body: SearchRequestBody):
     """Create Vespa search parameters from a F/E search request body"""
-    search_body.limit = min(search_body.limit, VESPA_SEARCH_LIMIT)
     search_body.max_passages_per_doc = min(
         search_body.max_passages_per_doc, VESPA_SEARCH_MATCHES_PER_DOC
     )
@@ -1259,7 +1258,7 @@ def create_vespa_search_params(db: Session, search_body: SearchRequestBody):
     return DataAccessSearchParams(
         query_string=search_body.query_string,
         exact_match=search_body.exact_match,
-        limit=search_body.limit,
+        limit=VESPA_SEARCH_LIMIT,
         max_hits_per_family=search_body.max_passages_per_doc,
         keyword_filters=_convert_filters(db, search_body.keyword_filters),
         year_range=search_body.year_range,

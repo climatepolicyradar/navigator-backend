@@ -45,20 +45,41 @@ def test_simple_pagination_families(test_vespa, client, test_db, monkeypatch):
     monkeypatch.setattr(search, "_VESPA_CONNECTION", test_vespa)
     _populate_db_families(test_db)
 
-    doc_slugs = []
-    for offset in range(3):
-        params = {
-            "query_string": "and",
-            "limit": 1,
-            "offset": offset,
-        }
-        body = _make_search_request(client, params)
+    FIXTURE_COUNT = 4
+    LIMIT = 2
 
-        for f in body["families"]:
-            for d in f["family_documents"]:
-                doc_slugs.append(d["document_slug"])
+    # Query one
+    params = {
+        "query_string": "and",
+        "limit": LIMIT,
+        "offset": 0,
+    }
+    body_one = _make_search_request(client, params)
+    assert body_one["hits"] == FIXTURE_COUNT
+    assert len(body_one["families"]) == LIMIT
+    assert (
+        body_one["families"][0]["family_slug"]
+        == "agriculture-sector-plan-2015-2019_7999"
+    )
+    assert (
+        body_one["families"][1]["family_slug"]
+        == "national-environment-policy-of-guinea_f0df"
+    )
 
-    assert len(set(doc_slugs)) == len(doc_slugs)
+    # Query two
+    params = {
+        "query_string": "and",
+        "limit": LIMIT,
+        "offset": 2,
+    }
+    body_two = _make_search_request(client, params)
+    assert body_two["hits"] == FIXTURE_COUNT
+    assert len(body_two["families"]) == LIMIT
+    assert (
+        body_two["families"][0]["family_slug"]
+        == "submission-to-the-unfccc-ahead-of-the-first-technical-dialogue-of-the-global-stocktake-formally-submitted-by-observer-organization-climateworks-foundation-on-behalf-of-the-igst-consortium_e760"
+    )
+    assert body_two["families"][1]["family_slug"] == "national-energy-strategy_980b"
 
 
 @pytest.mark.search
