@@ -85,12 +85,10 @@ vespa_healthy:
 		exit 1; \
 	fi
 
-VESPA_TEST_APP_DIR='tests/search_fixtures/vespa_test_schema'
-
 .ONESHELL:
 vespa_deploy_schema:
 	vespa config set target local
-	@vespa deploy ${VESPA_TEST_APP_DIR} --wait 300
+	@vespa deploy tests/search_fixtures/vespa_test_schema --wait 300
 
 .ONESHELL:
 vespa_load_data:
