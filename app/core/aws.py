@@ -14,7 +14,6 @@ from app.core.config import AWS_REGION
 logger = logging.getLogger(__name__)
 
 
-
 class S3Document:
     """A class representing an S3 document."""
 
