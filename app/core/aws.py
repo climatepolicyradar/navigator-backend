@@ -227,7 +227,7 @@ class S3Client:
                 next_continuation_token = response.get("NextContinuationToken", None)
 
         except ClientError:
-            logger.exception("Request to list files in bucket '{bucket}' failed")
+            logger.exception(f"Request to list files in bucket '{bucket}' failed")
             raise
 
     def download_file(self, s3_document: S3Document) -> StreamingBody:
