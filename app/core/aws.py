@@ -47,7 +47,7 @@ class S3Client:
 
     def __init__(self, dev_mode: bool):  # noqa: D107
         if dev_mode is True:
-            logger.debug("***************** IN DEVELOPMENT MODE *****************")
+            logger.info("***************** IN DEVELOPMENT MODE *****************")
             self.client = boto3.client(
                 "s3",
                 aws_access_key_id=os.getenv("AWS_ACCESS_KEY_ID"),
@@ -60,6 +60,7 @@ class S3Client:
                 ),
             )
         else:
+            logger.info("***************** IN DEPLOYMENT MODE *****************")
             self.client = boto3.client(
                 "s3",
                 aws_access_key_id=os.getenv("AWS_ACCESS_KEY_ID"),
