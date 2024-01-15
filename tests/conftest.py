@@ -11,7 +11,7 @@ from sqlalchemy_utils import create_database, database_exists, drop_database
 
 from app.core import security
 from app.core.aws import S3Client, get_s3_client
-from app.core.search import OpenSearchConnection, OpenSearchConfig
+from app.core.search import OpenSearchConfig, OpenSearchConnection
 from app.db.models.app import AppUser
 from app.db.session import Base, get_db
 from app.main import app
@@ -29,7 +29,7 @@ def test_s3_client(s3_document_bucket_names):
     bucket_names = s3_document_bucket_names.values()
 
     with mock_s3():
-        s3_client = S3Client()
+        s3_client = S3Client(dev_mode=False)
         for bucket in bucket_names:
             s3_client.client.create_bucket(
                 Bucket=bucket,
