@@ -7,18 +7,30 @@ for the type of document search being performed.
 """
 import json
 import logging
+import os
+from datetime import datetime
 from io import BytesIO
 from typing import Mapping, Sequence
 
-from cpr_data_access.search_adaptors import VespaSearchAdapter
 from cpr_data_access.exceptions import QueryError
-from fastapi import APIRouter, Depends, HTTPException, status, Request
+from cpr_data_access.search_adaptors import VespaSearchAdapter
+from fastapi import APIRouter, Depends, HTTPException, Request, status
 from fastapi.responses import StreamingResponse
 from sqlalchemy.orm import Session
 
 from app.api.api_v1.schemas.search import SearchRequestBody, SearchResponse, SortField
+from app.core.aws import get_s3_client
 from app.core.browse import BrowseArgs, browse_rds_families
 from app.core.config import VESPA_SECRETS_LOCATION, VESPA_URL
+from app.core.download import (
+    check_aws_credentials,
+    convert_dump_to_csv,
+    file_exists_in_s3,
+    get_file_from_s3,
+    get_s3_bucket,
+    get_whole_database_dump,
+    upload_to_s3,
+)
 from app.core.lookups import get_countries_for_region, get_country_by_slug
 from app.core.search import (
     ENCODER,
@@ -155,6 +167,63 @@ def download_search_documents(
         headers={
             "Content-Type": "text/csv",
             "Content-Disposition": "attachment; filename=results.csv",
+        },
+    )
+
+
+@search_router.post("/searches/download-all-data")
+def download_all_search_documents(
+    request: Request, search_body: SearchRequestBody, db=Depends(get_db)
+) -> StreamingResponse:
+    """Download a CSV containing details of all the documents in the corpus."""
+    _LOGGER.info("Whole data download request")
+
+    doc_cache_bucket = os.getenv("DOCUMENT_CACHE_BUCKET", "")
+    ingest_cycle_start = os.getenv("INGEST_CYCLE_START", "")
+    aws_environment = "prod" if "prod" in doc_cache_bucket else "staging"
+    data_dump_s3_key = f"navigator/{aws_environment}_data_dump_{ingest_cycle_start}.csv"
+    s3 = get_s3_client()
+
+    if not file_exists_in_s3(doc_cache_bucket, data_dump_s3_key):
+        _LOGGER.info(
+            "Data dump file has not yet been created for the current ingest cycle"
+        )
+        _LOGGER.info(f"Generating dump for ingest cycle w/c {ingest_cycle_start}...")
+
+        # Query database.
+        df = get_whole_database_dump(db)
+        df_as_csv = convert_dump_to_csv(df)
+
+        # 3. Connect to AWS.
+        # valid_credentials = check_aws_validity("staging")
+        AWS_ACCESS_KEY_ID = os.getenv("AWS_ACCESS_KEY_ID", "")
+        AWS_SECRET_ACCESS_KEY = os.getenv("AWS_SECRET_ACCESS_KEY", "")
+        AWS_REGION = os.getenv("AWS_REGION", "")
+        valid_credentials = check_aws_credentials(
+            AWS_ACCESS_KEY_ID, AWS_SECRET_ACCESS_KEY, AWS_REGION
+        )
+        if valid_credentials is False:
+            _LOGGER.error("Cannot connect to AWS.")
+        else:
+            s3.upload_fileobj(df_as_csv, doc_cache_bucket, data_dump_s3_key)
+
+        # 4. Upload to S3
+        s3 = get_s3_bucket("staging", doc_cache_bucket)
+        if s3 is not None:
+            upload_to_s3(
+                s3, doc_cache_bucket, aws_environment, data_dump_s3_key, df_as_csv
+            )
+        _LOGGER.info("Finished uploading data dump to s3")
+
+    s3_file = get_file_from_s3(doc_cache_bucket, data_dump_s3_key)
+
+    _LOGGER.debug(f"Downloading all documents as of '{ingest_cycle_start}' as CSV")
+    timestamp = datetime.now()
+    return StreamingResponse(
+        content=BytesIO(s3_file.encode("utf-8")),
+        headers={
+            "Content-Type": "text/csv",
+            "Content-Disposition": f"attachment; filename=whole_database_dump-{timestamp}.csv",
         },
     )
 
