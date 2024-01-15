@@ -6,7 +6,7 @@ import typing as t
 
 import boto3
 import botocore.client
-from botocore.exceptions import ClientError
+from botocore.exceptions import ClientError, UnauthorizedSSOTokenError
 from botocore.response import StreamingBody
 
 logger = logging.getLogger(__name__)
@@ -70,6 +70,20 @@ class S3Client:
                     connect_timeout=10,
                 ),
             )
+
+    def is_connected(self) -> bool:
+        """
+        Check whether we are connected to AWS.
+
+        :return [bool]: Connection status
+        """
+        sts = boto3.client("sts")
+
+        try:
+            sts.get_caller_identity()
+            return True
+        except UnauthorizedSSOTokenError:
+            return False
 
     def upload_fileobj(
         self,
