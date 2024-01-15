@@ -167,7 +167,7 @@ def download_search_documents(
     )
 
 
-@search_router.post("/searches/download-all-data")
+@search_router.get("/searches/download-all-data")
 def download_all_search_documents(db=Depends(get_db)) -> StreamingResponse:
     """Download a CSV containing details of all the documents in the corpus."""
     _LOGGER.info("Whole data download request")
