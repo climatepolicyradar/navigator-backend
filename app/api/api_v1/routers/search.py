@@ -21,7 +21,14 @@ from sqlalchemy.orm import Session
 from app.api.api_v1.schemas.search import SearchRequestBody, SearchResponse, SortField
 from app.core.aws import S3Document, get_s3_client
 from app.core.browse import BrowseArgs, browse_rds_families
-from app.core.config import VESPA_SECRETS_LOCATION, VESPA_URL
+from app.core.config import (
+    AWS_REGION,
+    DOC_CACHE_BUCKET,
+    INGEST_CYCLE_START,
+    PUBLIC_APP_URL,
+    VESPA_SECRETS_LOCATION,
+    VESPA_URL,
+)
 from app.core.download import (
     convert_dump_to_csv,
     generate_data_dump_as_csv,
@@ -172,40 +179,28 @@ def download_all_search_documents(db=Depends(get_db)) -> StreamingResponse:
     """Download a CSV containing details of all the documents in the corpus."""
     _LOGGER.info("Whole data download request")
 
-    ingest_cycle_start = os.getenv("INGEST_CYCLE_START")
-    app_url = os.getenv("PUBLIC_APP_URL")
-    doc_cache_bucket = os.getenv("DOCUMENT_CACHE_BUCKET")
-    aws_region = os.getenv("AWS_REGION")
-    if (
-        ingest_cycle_start is None
-        or app_url is None
-        or doc_cache_bucket is None
-        or aws_region is None
-    ):
+    if INGEST_CYCLE_START is None or PUBLIC_APP_URL is None or DOC_CACHE_BUCKET is None:
         raise HTTPException(
             status_code=status.HTTP_503_SERVICE_UNAVAILABLE,
             detail="Missing required environment variables",
         )
 
-    aws_environment = "production" if "dev" not in app_url else "staging"
-    data_dump_s3_key = f"navigator/{aws_environment}_data_dump_{ingest_cycle_start}.csv"
+    aws_environment = "production" if "dev" not in PUBLIC_APP_URL else "staging"
+    data_dump_s3_key = f"navigator/{aws_environment}_data_dump_{INGEST_CYCLE_START}.csv"
 
     s3_client = get_s3_client()
     valid_credentials = s3_client.is_connected()
 
-    s3_document = S3Document(doc_cache_bucket, aws_region, data_dump_s3_key)
+    s3_document = S3Document(DOC_CACHE_BUCKET, AWS_REGION, data_dump_s3_key)
     if not s3_client.document_exists(s3_document):
-        _LOGGER.debug(
-            "Data dump file has not yet been created for the current ingest cycle"
-        )
-        _LOGGER.info(f"Generating dump for ingest cycle w/c {ingest_cycle_start}...")
-        df_as_csv = generate_data_dump_as_csv(app_url, db)
+        _LOGGER.info(f"Generating dump for ingest cycle w/c {INGEST_CYCLE_START}...")
+        df_as_csv = generate_data_dump_as_csv(PUBLIC_APP_URL, db)
 
         if valid_credentials is False:
             _LOGGER.error("Cannot connect to AWS.")
         else:
             response = s3_client.upload_fileobj(
-                df_as_csv, doc_cache_bucket, data_dump_s3_key
+                df_as_csv, DOC_CACHE_BUCKET, data_dump_s3_key
             )
             if response is False:
                 _LOGGER.error("Failed to upload object to s3: %s", response)
@@ -218,7 +213,7 @@ def download_all_search_documents(db=Depends(get_db)) -> StreamingResponse:
 
     s3_file = s3_client.download_file(s3_document)
 
-    _LOGGER.debug(f"Downloading all documents as of '{ingest_cycle_start}' as CSV")
+    _LOGGER.debug(f"Downloading all documents as of '{INGEST_CYCLE_START}' as CSV")
     timestamp = datetime.now()
     filename = f"whole_database_dump-{timestamp}.csv"
     return StreamingResponse(

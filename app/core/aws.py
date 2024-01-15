@@ -9,9 +9,10 @@ import botocore.client
 from botocore.exceptions import ClientError, UnauthorizedSSOTokenError
 from botocore.response import StreamingBody
 
+from app.core.config import AWS_REGION
+
 logger = logging.getLogger(__name__)
 
-AWS_REGION = os.getenv("AWS_REGION", "eu-west-1")
 
 
 class S3Document:
