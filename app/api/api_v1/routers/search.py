@@ -66,7 +66,7 @@ search_router = APIRouter()
 
 
 def _search_request(
-    db: Session, search_body: SearchRequestBody, use_vespa: bool = False
+    db: Session, search_body: SearchRequestBody, use_vespa: bool = True
 ) -> SearchResponse:
     if search_body.keyword_filters is not None and use_vespa is False:
         search_body.keyword_filters = process_search_keyword_filters(
@@ -114,7 +114,7 @@ def search_documents(
     request: Request,
     search_body: SearchRequestBody,
     db=Depends(get_db),
-    use_vespa: bool = False,
+    use_vespa: bool = True,
 ) -> SearchResponse:
     """Search for documents matching the search criteria."""
     _LOGGER.info(
@@ -137,7 +137,7 @@ def download_search_documents(
     request: Request,
     search_body: SearchRequestBody,
     db=Depends(get_db),
-    use_vespa: bool = False,
+    use_vespa: bool = True,
 ) -> StreamingResponse:
     """Download a CSV containing details of documents matching the search criteria."""
     _LOGGER.info(

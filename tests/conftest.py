@@ -15,6 +15,9 @@ from app.core.search import OpenSearchConfig, OpenSearchConnection
 from app.db.models.app import AppUser
 from app.db.session import Base, get_db
 from app.main import app
+from cpr_data_access.search_adaptors import VespaSearchAdapter
+from cpr_data_access.search_adaptors import Vespa
+from cpr_data_access.embedding import Embedder
 
 
 @pytest.fixture
@@ -60,6 +63,19 @@ def test_opensearch():
         )
     )
     yield connection
+
+
+@pytest.fixture(scope="session")
+def test_vespa():
+    """Connect to local vespa instance"""
+
+    def __mocked_init__(self, embedder: t.Optional[Embedder] = None):
+        self.client = Vespa(url="http://vespatest", port=8080)
+        self.embedder = embedder or Embedder()
+
+    VespaSearchAdapter.__init__ = __mocked_init__
+
+    yield VespaSearchAdapter()
 
 
 def get_test_db_url() -> str:
