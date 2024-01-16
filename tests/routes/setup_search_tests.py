@@ -68,18 +68,25 @@ def _fixture_docs() -> Iterable[tuple[VespaFixture, VespaFixture]]:
         yield doc, family
 
 
-def _populate_db_families(db: Session) -> None:
+def _populate_db_families(db: Session, max_docs: int = 4) -> None:
+    """
+    Sets up the database using fixtures
+
+    Lower `max_docs` to limit the number of fixtures added to the db.
+    """
     run_data_migrations(db)
     _create_organisation(db)
 
     seen_family_ids = []
-    for doc, family in _fixture_docs():
+    for count, (doc, family) in enumerate(_fixture_docs(), start=1):
         if doc["fields"]["family_document_ref"] not in seen_family_ids:
             _create_family(db, family)
             _create_family_event(db, family)
             _create_family_metadata(db, family)
             seen_family_ids.append(doc["fields"]["family_document_ref"])
         _create_document(db, doc, family)
+        if count == max_docs:
+            return
 
 
 def _create_organisation(db: Session):

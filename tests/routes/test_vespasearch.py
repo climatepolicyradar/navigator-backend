@@ -6,7 +6,13 @@ from typing import Mapping
 import pytest
 from sqlalchemy import update
 
-from tests.routes.setup_search_tests import _populate_db_families
+from tests.routes.setup_search_tests import (
+    _create_family,
+    _create_family_event,
+    _create_family_metadata,
+    _create_document,
+    _populate_db_families,
+)
 
 from cpr_data_access.models.search import SearchParameters
 
@@ -106,6 +112,78 @@ def test_search_body_valid(exact_match, test_vespa, client, test_db, monkeypatch
         "total_time_ms",
     ]
     assert isinstance(body["families"], list)
+
+
+@pytest.mark.search
+def test_no_doc_if_in_postgres_but_not_vespa(test_vespa, client, test_db, monkeypatch):
+    """Test a simple known valid search responds with success."""
+    monkeypatch.setattr(search, "_VESPA_CONNECTION", test_vespa)
+    _populate_db_families(test_db)
+
+    # Add an extra postgres family that won't be in vespa
+    EXTRA_TEST_FAMILY = "Extra Test Family"
+    new_family = {
+        "id": "id:doc_search:family_document::CCLW.executive.111.222",
+        "fields": {
+            "family_source": "CCLW",
+            "family_name": EXTRA_TEST_FAMILY,
+            "family_slug": "extra-test-family",
+            "family_category": "Executive",
+            "document_languages": ["French"],
+            "document_import_id": "CCLW.executive.111.222",
+            "family_description": "",
+            "family_publication_ts": "2011-08-01T00:00:00+00:00",
+            "family_import_id": "CCLW.family.111.0",
+        },
+    }
+    new_doc = {
+        "id": "id:doc_search:document_passage::CCLW.executive.111.222.333",
+        "fields": {},
+    }
+    _create_family(test_db, new_family)
+    _create_family_event(test_db, new_family)
+    _create_family_metadata(test_db, new_family)
+    _create_document(test_db, new_doc, new_family)
+
+    # This will be present in browse, which is fine
+    body = _make_search_request(client, params={"query_string": ""})
+    browse_families = [f["family_name"] for f in body["families"]]
+    assert EXTRA_TEST_FAMILY in browse_families
+
+    # But it won't break when running a search
+    body = _make_search_request(
+        client,
+        params={
+            "query_string": EXTRA_TEST_FAMILY,
+            "exact_match": "true",
+        },
+    )
+
+    assert len(body["families"]) == 0
+
+
+@pytest.mark.search
+@pytest.mark.parametrize("label,query", [("search", "the"), ("browse", "")])
+def test_no_doc_if_in_vespa_but_not_postgres(
+    label, query, test_vespa, monkeypatch, client, test_db
+):
+    # Only add the first document
+    COUNT_OF_POSTGRES_DOCS = 1
+    EXPECTED_FIRST_NAME = "National Environment Policy of Guinea"
+    monkeypatch.setattr(search, "_VESPA_CONNECTION", test_vespa)
+    _populate_db_families(test_db, max_docs=COUNT_OF_POSTGRES_DOCS)
+
+    body = _make_search_request(
+        client,
+        params={
+            "query_string": query,
+        },
+    )
+
+    # When documents are in vespa but not in postgres, we only get the overlap
+    assert len(body["families"]) == COUNT_OF_POSTGRES_DOCS, f"{label} failed"
+    assert body["hits"] == COUNT_OF_POSTGRES_DOCS
+    assert body["families"][0]["family_name"] == EXPECTED_FIRST_NAME, f"{label} failed"
 
 
 @pytest.mark.search
