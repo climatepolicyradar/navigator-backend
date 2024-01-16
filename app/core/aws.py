@@ -6,12 +6,12 @@ import typing as t
 
 import boto3
 import botocore.client
-from botocore.exceptions import ClientError
+from botocore.exceptions import ClientError, UnauthorizedSSOTokenError
 from botocore.response import StreamingBody
 
-logger = logging.getLogger(__name__)
+from app.core.config import AWS_REGION
 
-AWS_REGION = os.getenv("AWS_REGION", "eu-west-1")
+logger = logging.getLogger(__name__)
 
 
 class S3Document:
@@ -45,17 +45,46 @@ class S3Document:
 class S3Client:
     """Helper class to connect to S3 and perform actions on buckets and documents."""
 
-    def __init__(self):  # noqa: D107
-        self.client = boto3.client(
-            "s3",
-            aws_access_key_id=os.getenv("AWS_ACCESS_KEY_ID"),
-            aws_secret_access_key=os.getenv("AWS_SECRET_ACCESS_KEY"),
-            config=botocore.client.Config(
-                signature_version="s3v4",
-                region_name=AWS_REGION,
-                connect_timeout=10,
-            ),
-        )
+    def __init__(self, dev_mode: bool):  # noqa: D107
+        if dev_mode is True:
+            logger.info("***************** IN DEVELOPMENT MODE *****************")
+            self.client = boto3.client(
+                "s3",
+                aws_access_key_id=os.getenv("AWS_ACCESS_KEY_ID"),
+                aws_secret_access_key=os.getenv("AWS_SECRET_ACCESS_KEY"),
+                aws_session_token=os.getenv("AWS_SESSION_TOKEN"),
+                config=botocore.client.Config(
+                    signature_version="s3v4",
+                    region_name=AWS_REGION,
+                    connect_timeout=10,
+                ),
+            )
+        else:
+            logger.info("***************** IN DEPLOYMENT MODE *****************")
+            self.client = boto3.client(
+                "s3",
+                aws_access_key_id=os.getenv("AWS_ACCESS_KEY_ID"),
+                aws_secret_access_key=os.getenv("AWS_SECRET_ACCESS_KEY"),
+                config=botocore.client.Config(
+                    signature_version="s3v4",
+                    region_name=AWS_REGION,
+                    connect_timeout=10,
+                ),
+            )
+
+    def is_connected(self) -> bool:
+        """
+        Check whether we are connected to AWS.
+
+        :return [bool]: Connection status
+        """
+        sts = boto3.client("sts")
+
+        try:
+            sts.get_caller_identity()
+            return True
+        except UnauthorizedSSOTokenError:
+            return False
 
     def upload_fileobj(
         self,
@@ -213,7 +242,7 @@ class S3Client:
                 next_continuation_token = response.get("NextContinuationToken", None)
 
         except ClientError:
-            logger.exception("Request to list files in bucket '{bucket}' failed")
+            logger.exception(f"Request to list files in bucket '{bucket}' failed")
             raise
 
     def download_file(self, s3_document: S3Document) -> StreamingBody:
@@ -275,4 +304,5 @@ class S3Client:
 
 def get_s3_client():
     """Get s3 client for API."""
-    return S3Client()
+    dev_mode = bool(os.getenv("DEVELOPMENT_MODE", "False"))
+    return S3Client(dev_mode)
