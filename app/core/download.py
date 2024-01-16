@@ -255,6 +255,12 @@ def replace_slug_with_qualified_url(
     public_app_url: str,
     url_cols: list[str] = ["Family Slug", "Document Slug"],
 ) -> pd.DataFrame:
+    """
+    Use the slug to create a fully qualified URL to the entity.
+
+    This functionality won't be included in the MVP for the data dump,
+    but will likely be included in future revisions.
+    """
     url_base = f"{public_app_url}/documents/"
 
     for col in url_cols:
