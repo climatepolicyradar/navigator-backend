@@ -304,5 +304,5 @@ class S3Client:
 
 def get_s3_client():
     """Get s3 client for API."""
-    dev_mode = bool(os.getenv("DEVELOPMENT_MODE", "False"))
+    dev_mode = t.cast(bool, os.getenv("DEVELOPMENT_MODE", "False"))
     return S3Client(dev_mode)
