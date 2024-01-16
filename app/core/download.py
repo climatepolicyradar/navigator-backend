@@ -124,24 +124,27 @@ group by family_import_id
 )
 
 SELECT
-    n1.collection_import_ids as "Collection ID(s)",
-    n1.collection_titles as "Collection Title(s)",
-    n1.collection_descriptions as "Collection Description(s)",
+	d.import_id as "Document ID",
+	ds.name as "Document Slug",
+    p.title as "Document Title",
     f.import_id as "Family ID",
+	fs.name as "Family Slug",
     f.title as "Family Title",
     f.description as "Family Summary",
-    fs.name as "Family Slug",
-    d.import_id as "Document ID",
-    p.title as "Document Title",
+	n1.collection_import_ids as "Collection ID(s)",
+    n1.collection_titles as "Collection Title(s)",
+    n1.collection_descriptions as "Collection Description(s)",
     INITCAP(d.document_role::TEXT) as "Document Role",
     d.variant_name as "Document Variant",
-    ds.name as "Document Slug",
     p.source_url as "Document Content URL",
     d.document_type as "Document Type",
+	array_to_string(ARRAY(
+        SELECT jsonb_array_elements_text(fm.value->'framework')), ';'
+    ) as "Framework",
     CASE
        WHEN f.family_category = 'UNFCCC' THEN 'UNFCCC'
        ELSE INITCAP(f.family_category::TEXT)
-       END "Document Category",
+       END "Category",
     n2.language as "Language",
     o.name as "Source",
     g.value as "Geography ISO",
@@ -158,9 +161,6 @@ SELECT
     array_to_string(ARRAY(
         SELECT jsonb_array_elements_text(fm.value->'keyword')), ';'
     ) as "Keyword",
-    array_to_string(ARRAY(
-        SELECT jsonb_array_elements_text(fm.value->'framework')), ';'
-    ) as "Framework",
     array_to_string(ARRAY(
         SELECT jsonb_array_elements_text(fm.value->'instrument')), ';'
     ) as "Instrument",
@@ -270,7 +270,6 @@ def convert_dump_to_csv(df: pd.DataFrame):
     return csv_buffer
 
 
-def generate_data_dump_as_csv(app_url: str, db=Depends(get_db)):
+def generate_data_dump_as_csv(db=Depends(get_db)):
     df = get_whole_database_dump(db)
-    df = replace_slug_with_qualified_url(df, app_url)
     return convert_dump_to_csv(df)
