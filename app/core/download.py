@@ -124,9 +124,9 @@ group by family_import_id
 )
 
 SELECT
-    ds.name as "Document Slug",
+    ds.name as "Document ID",
     p.title as "Document Title",
-    fs.name as "Family Slug",
+    fs.name as "Family ID",
     f.title as "Family Title",
     f.description as "Family Summary",
     n1.collection_titles as "Collection Title(s)",
@@ -173,9 +173,9 @@ SELECT
     n3.event_dates as "Full timeline of events (dates)",
     d.created::date as "Date Added to System",
     f.last_modified::date as " Last Modified on System",
-    d.import_id as "Document ID",
-    f.import_id as "Family ID",
-    n1.collection_import_ids as "Collection ID(s)"
+    d.import_id as "Internal Document ID",
+    f.import_id as "Internal Family ID",
+    n1.collection_import_ids as "Internal Collection ID(s)"
 FROM physical_document p
 JOIN family_document d
     ON p.id = d.physical_document_id
