@@ -180,6 +180,12 @@ def download_all_search_documents(db=Depends(get_db)) -> StreamingResponse:
     _LOGGER.info("Whole data download request")
 
     if INGEST_CYCLE_START is None or PUBLIC_APP_URL is None or DOC_CACHE_BUCKET is None:
+        if INGEST_CYCLE_START is None:
+            _LOGGER.error("{INGEST_CYCLE_START} is not set")
+        if PUBLIC_APP_URL is None:
+            _LOGGER.error("{PUBLIC_APP_URL} is not set")
+        if DOC_CACHE_BUCKET is None:
+            _LOGGER.error("{DOC_CACHE_BUCKET} is not set")
         raise HTTPException(
             status_code=status.HTTP_503_SERVICE_UNAVAILABLE,
             detail="Missing required environment variables",
@@ -194,7 +200,7 @@ def download_all_search_documents(db=Depends(get_db)) -> StreamingResponse:
     s3_document = S3Document(DOC_CACHE_BUCKET, AWS_REGION, data_dump_s3_key)
     if not s3_client.document_exists(s3_document):
         _LOGGER.info(f"Generating dump for ingest cycle w/c {INGEST_CYCLE_START}...")
-        df_as_csv = generate_data_dump_as_csv(PUBLIC_APP_URL, db)
+        df_as_csv = generate_data_dump_as_csv(db)
 
         if valid_credentials is False:
             _LOGGER.error("Cannot connect to AWS.")

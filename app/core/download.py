@@ -124,24 +124,24 @@ group by family_import_id
 )
 
 SELECT
-    n1.collection_import_ids as "Collection ID(s)",
-    n1.collection_titles as "Collection Title(s)",
-    n1.collection_descriptions as "Collection Description(s)",
-    f.import_id as "Family ID",
+    ds.name as "Document ID",
+    p.title as "Document Title",
+    fs.name as "Family ID",
     f.title as "Family Title",
     f.description as "Family Summary",
-    fs.name as "Family Slug",
-    d.import_id as "Document ID",
-    p.title as "Document Title",
+    n1.collection_titles as "Collection Title(s)",
+    n1.collection_descriptions as "Collection Description(s)",
     INITCAP(d.document_role::TEXT) as "Document Role",
     d.variant_name as "Document Variant",
-    ds.name as "Document Slug",
     p.source_url as "Document Content URL",
     d.document_type as "Document Type",
+    array_to_string(ARRAY(
+        SELECT jsonb_array_elements_text(fm.value->'framework')), ';'
+    ) as "Framework",
     CASE
        WHEN f.family_category = 'UNFCCC' THEN 'UNFCCC'
        ELSE INITCAP(f.family_category::TEXT)
-       END "Document Category",
+       END "Category",
     n2.language as "Language",
     o.name as "Source",
     g.value as "Geography ISO",
@@ -159,9 +159,6 @@ SELECT
         SELECT jsonb_array_elements_text(fm.value->'keyword')), ';'
     ) as "Keyword",
     array_to_string(ARRAY(
-        SELECT jsonb_array_elements_text(fm.value->'framework')), ';'
-    ) as "Framework",
-    array_to_string(ARRAY(
         SELECT jsonb_array_elements_text(fm.value->'instrument')), ';'
     ) as "Instrument",
     array_to_string(ARRAY(
@@ -175,7 +172,10 @@ SELECT
     n3.event_type_names as "Full timeline of events (types)",
     n3.event_dates as "Full timeline of events (dates)",
     d.created::date as "Date Added to System",
-    f.last_modified::date as " Last Modified on System"
+    f.last_modified::date as "Last Modified on System",
+    d.import_id as "Internal Document ID",
+    f.import_id as "Internal Family ID",
+    n1.collection_import_ids as "Internal Collection ID(s)"
 FROM physical_document p
 JOIN family_document d
     ON p.id = d.physical_document_id
@@ -255,6 +255,12 @@ def replace_slug_with_qualified_url(
     public_app_url: str,
     url_cols: list[str] = ["Family Slug", "Document Slug"],
 ) -> pd.DataFrame:
+    """
+    Use the slug to create a fully qualified URL to the entity.
+
+    This functionality won't be included in the MVP for the data dump,
+    but will likely be included in future revisions.
+    """
     url_base = f"{public_app_url}/documents/"
 
     for col in url_cols:
@@ -270,7 +276,6 @@ def convert_dump_to_csv(df: pd.DataFrame):
     return csv_buffer
 
 
-def generate_data_dump_as_csv(app_url: str, db=Depends(get_db)):
+def generate_data_dump_as_csv(db=Depends(get_db)):
     df = get_whole_database_dump(db)
-    df = replace_slug_with_qualified_url(df, app_url)
     return convert_dump_to_csv(df)
