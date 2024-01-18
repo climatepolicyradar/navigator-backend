@@ -13,7 +13,7 @@ from app.db.models.law_policy.family import Family, FamilyDocument, FamilyEvent
 from tests.routes.document_helpers import (
     ONE_DFC_ROW_TWO_LANGUAGES,
     ONE_EVENT_ROW,
-    ONE_UNPUBLISHED_ROW,
+    TWO_UNPUBLISHED_DFC_ROW,
     TWO_DFC_ROW_DIFFERENT_ORG,
     TWO_DFC_ROW_ONE_LANGUAGE,
     TWO_DFC_ROW_NON_MATCHING_IDS,
@@ -1020,14 +1020,15 @@ def test_update_document__works_with_statuses(
 ):
     """Test that we can send a payload to the backend to update family_document.document_status"""
     setup_with_multiple_docs(
-        test_db, mocker, doc_data=ONE_UNPUBLISHED_ROW, event_data=ONE_EVENT_ROW
+        test_db, mocker, doc_data=TWO_UNPUBLISHED_DFC_ROW, event_data=TWO_EVENT_ROWS
     )
-    import_id = "CCLW.executive.1.2"
+    UPDATE_IMPORT_ID = "CCLW.executive.1.2"
+    UNCHANGED_IMPORT_ID = "CCLW.executive.2.2"
 
     # State of db beforehand
     pre_family_status = (
         test_db.query(FamilyDocument)
-        .filter(FamilyDocument.import_id == import_id)
+        .filter(FamilyDocument.import_id == UPDATE_IMPORT_ID)
         .one()
         .document_status
     )
@@ -1039,7 +1040,7 @@ def test_update_document__works_with_statuses(
         "document_status": "Published",
     }
     response = client.put(
-        f"/api/v1/admin/documents/{import_id}",
+        f"/api/v1/admin/documents/{UPDATE_IMPORT_ID}",
         headers=superuser_token_headers,
         json=payload,
     )
@@ -1051,17 +1052,23 @@ def test_update_document__works_with_statuses(
     assert json_object["document_status"] == "Published"
 
     # Now Check the db
-    family = (
+    updated_family = (
         test_db.query(FamilyDocument)
-        .filter(FamilyDocument.import_id == import_id)
+        .filter(FamilyDocument.import_id == UPDATE_IMPORT_ID)
         .one()
     )
-    assert family.document_status == "Published"
-    assert family.document_status != pre_family_status
-
-    doc = family.physical_document
+    assert updated_family.document_status == "Published"
+    assert updated_family.document_status != pre_family_status
+    doc = updated_family.physical_document
     assert doc.md5_sum == "c184214e-4870-48e0-adab-3e064b1b0e76"
     assert doc.content_type == "updated/content_type"
+
+    unchanged_family = (
+        test_db.query(FamilyDocument)
+        .filter(FamilyDocument.import_id == UNCHANGED_IMPORT_ID)
+        .one()
+    )
+    assert unchanged_family.document_status == "Deleted"
 
 
 @pytest.mark.parametrize(
