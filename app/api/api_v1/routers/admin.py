@@ -80,6 +80,10 @@ async def update_document(
         .where(PhysicalDocument.id == physical_document.id)
     ).rowcount
 
+    # Update family_document.document_status
+    if meta_data.document_status:
+        family_document.document_status = meta_data.document_status
+
     # Update the languages
     if meta_data.languages is not None:
         _LOGGER.info(
@@ -171,6 +175,7 @@ async def update_document(
         "cdn_object": physical_document.cdn_object,
         "source_url": physical_document.source_url,
         "content_type": physical_document.content_type,
+        "document_status": family_document.document_status,
         "languages": langs,
     }
     _LOGGER.info(

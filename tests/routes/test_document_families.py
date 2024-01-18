@@ -13,6 +13,7 @@ from app.db.models.law_policy.family import Family, FamilyDocument, FamilyEvent
 from tests.routes.document_helpers import (
     ONE_DFC_ROW_TWO_LANGUAGES,
     ONE_EVENT_ROW,
+    ONE_UNPUBLISHED_ROW,
     TWO_DFC_ROW_DIFFERENT_ORG,
     TWO_DFC_ROW_ONE_LANGUAGE,
     TWO_DFC_ROW_NON_MATCHING_IDS,
@@ -1009,6 +1010,58 @@ def test_update_document__works_with_no_language(
     )
     assert len(db_languages) == 0
     assert set([lang.language_id for lang in db_languages]) == set()
+
+
+def test_update_document__works_with_statuses(
+    client: TestClient,
+    superuser_token_headers: dict[str, str],
+    test_db: Session,
+    mocker: Callable[..., Generator[MockerFixture, None, None]],
+):
+    """Test that we can send a payload to the backend to update family_document.document_status"""
+    setup_with_multiple_docs(
+        test_db, mocker, doc_data=ONE_UNPUBLISHED_ROW, event_data=ONE_EVENT_ROW
+    )
+    import_id = "CCLW.executive.1.2"
+
+    # State of db beforehand
+    pre_family_status = (
+        test_db.query(FamilyDocument)
+        .filter(FamilyDocument.import_id == import_id)
+        .one()
+        .document_status
+    )
+
+    # Make Request
+    payload = {
+        "md5_sum": "c184214e-4870-48e0-adab-3e064b1b0e76",
+        "content_type": "updated/content_type",
+        "document_status": "Published",
+    }
+    response = client.put(
+        f"/api/v1/admin/documents/{import_id}",
+        headers=superuser_token_headers,
+        json=payload,
+    )
+
+    assert response.status_code == 200
+    json_object = response.json()
+    assert json_object["md5_sum"] == "c184214e-4870-48e0-adab-3e064b1b0e76"
+    assert json_object["content_type"] == "updated/content_type"
+    assert json_object["document_status"] == "Published"
+
+    # Now Check the db
+    family = (
+        test_db.query(FamilyDocument)
+        .filter(FamilyDocument.import_id == import_id)
+        .one()
+    )
+    assert family.document_status == "Published"
+    assert family.document_status != pre_family_status
+
+    doc = family.physical_document
+    assert doc.md5_sum == "c184214e-4870-48e0-adab-3e064b1b0e76"
+    assert doc.content_type == "updated/content_type"
 
 
 @pytest.mark.parametrize(

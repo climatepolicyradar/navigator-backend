@@ -2,8 +2,9 @@ from datetime import datetime
 from typing import Any, Mapping, Optional, Sequence, Union
 
 from pydantic import field_validator, ConfigDict, BaseModel
-from . import CLIMATE_LAWS_MATCH
 
+from . import CLIMATE_LAWS_MATCH
+from app.db.models.law_policy.family import DocumentStatus
 
 Json = dict[str, Any]
 
@@ -153,6 +154,7 @@ class DocumentUpdateRequest(BaseModel):
     md5_sum: Optional[str] = None
     content_type: Optional[str] = None
     cdn_object: Optional[str] = None
+    document_status: Optional[DocumentStatus] = None
     languages: Optional[Sequence[str]] = None
 
     def as_json(self) -> dict[str, Union[str, Sequence[str], None]]:
@@ -161,6 +163,7 @@ class DocumentUpdateRequest(BaseModel):
             "md5_sum": self.md5_sum,
             "content_type": self.content_type,
             "cdn_object": self.cdn_object,
+            "document_status": self.document_status,
             "languages": self.languages,
         }
 
