@@ -1,4 +1,5 @@
 import logging
+from typing import cast
 
 from fastapi import (
     APIRouter,
@@ -8,24 +9,68 @@ from fastapi import (
     status,
 )
 from sqlalchemy import update
+from sqlalchemy import Column
 
+from app.db.models.law_policy import DocumentStatus
 from app.api.api_v1.schemas.document import (
     DocumentUpdateRequest,
 )
 from app.core.auth import get_superuser_details
-from app.core.validation import IMPORT_ID_MATCHER
+from app.core.lookups import get_family_document_by_import_id_or_slug
 from app.db.models.document.physical_document import (
     LanguageSource,
     PhysicalDocument,
     Language,
     PhysicalDocumentLanguage,
 )
-from app.db.models.law_policy.family import FamilyDocument, Slug
 from app.db.session import get_db
 
 _LOGGER = logging.getLogger(__name__)
 
 admin_document_router = r = APIRouter()
+
+
+@r.post("/documents/{import_id_or_slug}/processed", status_code=status.HTTP_200_OK)
+async def update_document_status(
+    request: Request,
+    import_id_or_slug: str,
+    db=Depends(get_db),
+    current_user=Depends(get_superuser_details),
+):
+    _LOGGER.info(
+        f"Superuser '{current_user.email}' called update_document_status",
+        extra={
+            "props": {
+                "superuser_email": current_user.email,
+                "import_id_or_slug": import_id_or_slug,
+            }
+        },
+    )
+
+    family_document = get_family_document_by_import_id_or_slug(db, import_id_or_slug)
+    if family_document is None:
+        raise HTTPException(
+            status_code=status.HTTP_422_UNPROCESSABLE_ENTITY,
+        )
+
+    if family_document.document_status == DocumentStatus.CREATED:
+        family_document.document_status = cast(Column, DocumentStatus.PUBLISHED)
+        _LOGGER.info(
+            "Publishing family document",
+            extra={
+                "props": {
+                    "superuser_email": current_user.email,
+                    "import_id_or_slug": import_id_or_slug,
+                    "result": family_document.document_status,
+                }
+            },
+        )
+
+    db.commit()
+    return {
+        "import_id": family_document.import_id,
+        "document_status": family_document.document_status,
+    }
 
 
 @r.put("/documents/{import_id_or_slug}", status_code=status.HTTP_200_OK)
@@ -50,21 +95,9 @@ async def update_document(
     )
 
     # First query the FamilyDocument
-    query = db.query(FamilyDocument)
-    if IMPORT_ID_MATCHER.match(import_id_or_slug) is not None:
-        family_document = query.filter(
-            FamilyDocument.import_id == import_id_or_slug
-        ).one_or_none()
-        _LOGGER.info("update_document called with import_id")
-    else:
-        family_document = (
-            query.join(Slug, Slug.family_document_import_id == FamilyDocument.import_id)
-            .filter(Slug.name == import_id_or_slug)
-            .one_or_none()
-        )
-        _LOGGER.info("update_document called with slug")
-
+    family_document = get_family_document_by_import_id_or_slug(db, import_id_or_slug)
     # Check we have found one
+
     if family_document is None:
         raise HTTPException(
             status_code=status.HTTP_422_UNPROCESSABLE_ENTITY,
@@ -79,10 +112,6 @@ async def update_document(
         .values(meta_data.physical_doc_keys_json())
         .where(PhysicalDocument.id == physical_document.id)
     ).rowcount
-
-    # Update family_document.document_status
-    if meta_data.document_status:
-        family_document.document_status = meta_data.document_status
 
     # Update the languages
     if meta_data.languages is not None:
@@ -175,7 +204,6 @@ async def update_document(
         "cdn_object": physical_document.cdn_object,
         "source_url": physical_document.source_url,
         "content_type": physical_document.content_type,
-        "document_status": family_document.document_status,
         "languages": langs,
     }
     _LOGGER.info(

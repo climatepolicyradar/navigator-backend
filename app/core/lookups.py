@@ -6,6 +6,7 @@ from app.api.api_v1.schemas.metadata import ApplicationConfig
 from app.core.organisation import get_organisation_taxonomy_by_name
 
 from app.core.util import tree_table_to_json
+from app.core.validation import IMPORT_ID_MATCHER
 from app.db.models.app.users import Organisation
 from app.db.models.document.physical_document import Language
 from app.db.models.law_policy import (
@@ -14,6 +15,8 @@ from app.db.models.law_policy import (
     FamilyDocumentType,
     Variant,
 )
+from app.db.models.law_policy.family import FamilyDocument, Slug
+
 
 import logging
 
@@ -117,3 +120,21 @@ def is_country_code(db: Session, country_code: str) -> bool:
         return False
 
     return bool(country_code is not None)
+
+
+def get_family_document_by_import_id_or_slug(
+    db: Session, import_id_or_slug: str
+) -> Optional[FamilyDocument]:
+    query = db.query(FamilyDocument)
+    is_import_id = IMPORT_ID_MATCHER.match(import_id_or_slug) is not None
+    if is_import_id:
+        family_document = query.filter(
+            FamilyDocument.import_id == import_id_or_slug
+        ).one_or_none()
+    else:
+        family_document = (
+            query.join(Slug, Slug.family_document_import_id == FamilyDocument.import_id)
+            .filter(Slug.name == import_id_or_slug)
+            .one_or_none()
+        )
+    return family_document
