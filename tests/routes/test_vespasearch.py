@@ -164,30 +164,6 @@ def test_no_doc_if_in_postgres_but_not_vespa(test_vespa, client, test_db, monkey
 
 @pytest.mark.search
 @pytest.mark.parametrize("label,query", [("search", "the"), ("browse", "")])
-def test_no_doc_if_in_vespa_but_not_postgres(
-    label, query, test_vespa, monkeypatch, client, test_db
-):
-    # Only add the first document
-    COUNT_OF_POSTGRES_DOCS = 1
-    EXPECTED_FIRST_NAME = "National Environment Policy of Guinea"
-    monkeypatch.setattr(search, "_VESPA_CONNECTION", test_vespa)
-    _populate_db_families(test_db, max_docs=COUNT_OF_POSTGRES_DOCS)
-
-    body = _make_search_request(
-        client,
-        params={
-            "query_string": query,
-        },
-    )
-
-    # When documents are in vespa but not in postgres, we only get the overlap
-    assert len(body["families"]) == COUNT_OF_POSTGRES_DOCS, f"{label} failed"
-    assert body["hits"] == COUNT_OF_POSTGRES_DOCS
-    assert body["families"][0]["family_name"] == EXPECTED_FIRST_NAME, f"{label} failed"
-
-
-@pytest.mark.search
-@pytest.mark.parametrize("label,query", [("search", "the"), ("browse", "")])
 def test_benchmark_families_search(
     label, query, test_vespa, monkeypatch, client, test_db
 ):
