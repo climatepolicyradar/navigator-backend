@@ -2,8 +2,8 @@ from datetime import datetime
 from typing import Any, Mapping, Optional, Sequence, Union
 
 from pydantic import field_validator, ConfigDict, BaseModel
-from . import CLIMATE_LAWS_MATCH
 
+from . import CLIMATE_LAWS_MATCH
 
 Json = dict[str, Any]
 

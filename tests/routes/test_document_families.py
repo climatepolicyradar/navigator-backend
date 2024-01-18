@@ -13,6 +13,7 @@ from app.db.models.law_policy.family import Family, FamilyDocument, FamilyEvent
 from tests.routes.document_helpers import (
     ONE_DFC_ROW_TWO_LANGUAGES,
     ONE_EVENT_ROW,
+    TWO_UNPUBLISHED_DFC_ROW,
     TWO_DFC_ROW_DIFFERENT_ORG,
     TWO_DFC_ROW_ONE_LANGUAGE,
     TWO_DFC_ROW_NON_MATCHING_IDS,
@@ -334,6 +335,96 @@ def test_physical_doc_multiple_languages(
     assert response.status_code == 200
     print(json_response)
     assert set(document["languages"]) == set(["fra", "eng"])
+
+
+def test_update_document_status__is_secure(
+    client: TestClient,
+    test_db: Session,
+    mocker: Callable[..., Generator[MockerFixture, None, None]],
+):
+    setup_with_two_docs(test_db, mocker)
+
+    import_id = "CCLW.executive.1.2"
+    response = client.post(f"/api/v1/admin/documents/{import_id}/processed")
+    assert response.status_code == 401
+
+
+@pytest.mark.parametrize(
+    "import_id",
+    [
+        "CCLW.executive.12",
+        "UNFCCC.s.ill.y.2.2",
+    ],
+)
+def test_update_document_status__fails_on_non_matching_import_id(
+    client: TestClient,
+    superuser_token_headers: dict[str, str],
+    test_db: Session,
+    mocker: Callable[..., Generator[MockerFixture, None, None]],
+    import_id: str,
+):
+    setup_with_multiple_docs(
+        test_db,
+        mocker,
+        doc_data=TWO_DFC_ROW_NON_MATCHING_IDS,
+        event_data=TWO_EVENT_ROWS,
+    )
+
+    response = client.post(
+        f"/api/v1/admin/documents/{import_id}/processed",
+        headers=superuser_token_headers,
+    )
+
+    assert response.status_code == 422
+
+
+def test_update_document_status__publishes_document(
+    client: TestClient,
+    superuser_token_headers: dict[str, str],
+    test_db: Session,
+    mocker: Callable[..., Generator[MockerFixture, None, None]],
+):
+    """Test that we can send a payload to the backend to update family_document.document_status"""
+    setup_with_multiple_docs(
+        test_db, mocker, doc_data=TWO_UNPUBLISHED_DFC_ROW, event_data=TWO_EVENT_ROWS
+    )
+    UPDATE_IMPORT_ID = "CCLW.executive.1.2"
+    UNCHANGED_IMPORT_ID = "CCLW.executive.2.2"
+
+    # State of db beforehand
+    pre_family_status = (
+        test_db.query(FamilyDocument)
+        .filter(FamilyDocument.import_id == UPDATE_IMPORT_ID)
+        .one()
+        .document_status
+    )
+
+    response = client.post(
+        f"/api/v1/admin/documents/{UPDATE_IMPORT_ID}/processed",
+        headers=superuser_token_headers,
+    )
+
+    assert response.status_code == 200
+    json_object = response.json()
+
+    assert json_object["import_id"] == UPDATE_IMPORT_ID
+    assert json_object["document_status"] == "Published"
+
+    # Now Check the db
+    updated_family = (
+        test_db.query(FamilyDocument)
+        .filter(FamilyDocument.import_id == UPDATE_IMPORT_ID)
+        .one()
+    )
+    assert updated_family.document_status == "Published"
+    assert updated_family.document_status != pre_family_status
+
+    unchanged_family = (
+        test_db.query(FamilyDocument)
+        .filter(FamilyDocument.import_id == UNCHANGED_IMPORT_ID)
+        .one()
+    )
+    assert unchanged_family.document_status == "Deleted"
 
 
 def test_update_document__is_secure(
