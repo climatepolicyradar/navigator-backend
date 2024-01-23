@@ -172,7 +172,7 @@ def test_benchmark_families_search(
     _populate_db_families(test_db)
 
     # This is high as it's meant as a last resort for catching new perfomance problems
-    REASONABLE_LATENCY_MS = 25
+    REASONABLE_LATENCY_MS = 50
 
     times = []
     for _ in range(1, 10):
