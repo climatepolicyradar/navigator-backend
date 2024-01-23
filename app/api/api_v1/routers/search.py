@@ -7,7 +7,6 @@ for the type of document search being performed.
 """
 import json
 import logging
-import os
 from datetime import datetime
 from io import BytesIO
 from typing import Mapping, Sequence
@@ -30,9 +29,7 @@ from app.core.config import (
     VESPA_URL,
 )
 from app.core.download import (
-    convert_dump_to_csv,
     generate_data_dump_as_csv,
-    get_whole_database_dump,
 )
 from app.core.lookups import get_countries_for_region, get_country_by_slug
 from app.core.search import (
