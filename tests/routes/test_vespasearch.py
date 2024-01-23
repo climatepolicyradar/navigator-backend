@@ -132,6 +132,7 @@ def test_no_doc_if_in_postgres_but_not_vespa(test_vespa, client, test_db, monkey
             "document_languages": ["French"],
             "document_import_id": "CCLW.executive.111.222",
             "family_description": "",
+            "family_geography": "CAN",
             "family_publication_ts": "2011-08-01T00:00:00+00:00",
             "family_import_id": "CCLW.family.111.0",
         },
