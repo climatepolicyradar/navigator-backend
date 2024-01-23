@@ -7,7 +7,6 @@ for the type of document search being performed.
 """
 import json
 import logging
-import os
 from datetime import datetime
 from io import BytesIO
 from typing import Mapping, Sequence
@@ -30,9 +29,7 @@ from app.core.config import (
     VESPA_URL,
 )
 from app.core.download import (
-    convert_dump_to_csv,
     generate_data_dump_as_csv,
-    get_whole_database_dump,
 )
 from app.core.lookups import get_countries_for_region, get_country_by_slug
 from app.core.search import (
@@ -68,14 +65,15 @@ search_router = APIRouter()
 def _search_request(
     db: Session, search_body: SearchRequestBody, use_vespa: bool = True
 ) -> SearchResponse:
-    if search_body.keyword_filters is not None and use_vespa is False:
-        search_body.keyword_filters = process_search_keyword_filters(
-            db,
-            search_body.keyword_filters,
-        )
     is_browse_request = not search_body.query_string
     if is_browse_request:
         # Service browse requests from RDS
+        if search_body.keyword_filters is not None:
+            search_body.keyword_filters = process_search_keyword_filters(
+                db,
+                search_body.keyword_filters,
+            )
+
         return browse_rds_families(
             db=db,
             req=_get_browse_args_from_search_request_body(search_body),
@@ -259,7 +257,6 @@ def process_search_keyword_filters(
     request_filters: Mapping[FilterField, Sequence[str]],
 ) -> Mapping[FilterField, Sequence[str]]:
     filter_map = {}
-
     for field, values in request_filters.items():
         if field == FilterField.REGION:
             field = FilterField.COUNTRY
