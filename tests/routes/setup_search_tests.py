@@ -25,6 +25,7 @@ from app.db.models.law_policy.family import (
 from app.db.models.law_policy.metadata import (
     FamilyMetadata,
 )
+from app.db.models.law_policy import Geography
 from app.db.models.document.physical_document import (
     LanguageSource,
     PhysicalDocument,
@@ -106,11 +107,14 @@ def _create_family(db: Session, family: VespaFixture):
     family_id = _parse_id(family)
     family_import_id = family["fields"]["family_import_id"]
 
+    geo = family["fields"]["family_geography"]
+    geography = db.query(Geography).filter(Geography.value == geo).one()
+
     family_object = Family(
         title=family["fields"]["family_name"],
         import_id=family_import_id,
         description=family["fields"]["family_description"],
-        geography_id=1,
+        geography_id=geography.id,
         family_category=FamilyCategory(family["fields"]["family_category"]),
     )
     db.add(family_object)
