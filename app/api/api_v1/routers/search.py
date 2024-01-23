@@ -7,8 +7,6 @@ for the type of document search being performed.
 """
 import json
 import logging
-import os
-from datetime import datetime
 from io import BytesIO
 from typing import Mapping, Sequence
 
@@ -17,23 +15,21 @@ from cpr_data_access.search_adaptors import VespaSearchAdapter
 from fastapi import APIRouter, Depends, HTTPException, Request, status
 from fastapi.responses import StreamingResponse
 from sqlalchemy.orm import Session
+from starlette.responses import RedirectResponse
 
 from app.api.api_v1.schemas.search import SearchRequestBody, SearchResponse, SortField
 from app.core.aws import S3Document, get_s3_client
 from app.core.browse import BrowseArgs, browse_rds_families
 from app.core.config import (
     AWS_REGION,
+    CDN_DOMAIN,
     DOC_CACHE_BUCKET,
     INGEST_CYCLE_START,
     PUBLIC_APP_URL,
     VESPA_SECRETS_LOCATION,
     VESPA_URL,
 )
-from app.core.download import (
-    convert_dump_to_csv,
-    generate_data_dump_as_csv,
-    get_whole_database_dump,
-)
+from app.core.download import generate_data_dump_as_csv
 from app.core.lookups import get_countries_for_region, get_country_by_slug
 from app.core.search import (
     ENCODER,
@@ -175,7 +171,7 @@ def download_search_documents(
 
 
 @search_router.get("/searches/download-all-data")
-def download_all_search_documents(db=Depends(get_db)) -> StreamingResponse:
+def download_all_search_documents(db=Depends(get_db)) -> RedirectResponse:
     """Download a CSV containing details of all the documents in the corpus."""
     _LOGGER.info("Whole data download request")
 
@@ -191,43 +187,90 @@ def download_all_search_documents(db=Depends(get_db)) -> StreamingResponse:
             detail="Missing required environment variables",
         )
 
-    aws_environment = "production" if "dev" not in PUBLIC_APP_URL else "staging"
-    data_dump_s3_key = f"navigator/{aws_environment}_data_dump_{INGEST_CYCLE_START}.csv"
+    data_dump_s3_key = "navigator/whole_data_dump.csv"
+
+    s3_client = get_s3_client()
+    valid_credentials = s3_client.is_connected()
+    print("AWS credentials are valid: ", valid_credentials)
+
+    s3_document = S3Document(DOC_CACHE_BUCKET, AWS_REGION, data_dump_s3_key)
+    print("Document exists in S3: ", s3_client.document_exists(s3_document))
+    if valid_credentials is True and (not s3_client.document_exists(s3_document)):
+        _LOGGER.info("Redirecting to create data dump route...")
+        redirect_url = f"{PUBLIC_APP_URL}/api/v1/searches/create-all-search-dump"
+        return RedirectResponse(
+            redirect_url, status_code=status.HTTP_307_TEMPORARY_REDIRECT
+        )
+
+    # _LOGGER.info(f"Downloading all documents as of '{INGEST_CYCLE_START}' as CSV")
+    # s3_file = s3_client.download_file(s3_document)
+
+    _LOGGER.info("Redirecting to CDN data dump location...")
+    redirect_url = f"https://{CDN_DOMAIN}/{data_dump_s3_key}"
+    # timestamp = datetime.now()  # .date()
+    # filename = f"whole_database_dump-{timestamp}.csv"
+    # return StreamingResponse(
+    #     content=BytesIO(s3_file.read()),
+    #     headers={
+    #         "Content-Type": "text/csv",
+    #         "Content-Disposition": f"attachment; filename={filename}",
+    #     },
+    # )
+    return RedirectResponse(redirect_url, status_code=status.HTTP_303_SEE_OTHER)
+
+
+@search_router.post("/searches/create-all-search-dump")
+def create_all_search_documents_dump(db=Depends(get_db)) -> RedirectResponse:
+    """Download a CSV containing details of all the documents in the corpus."""
+    _LOGGER.info("create-all-search-dump")
+    if INGEST_CYCLE_START is None or PUBLIC_APP_URL is None or DOC_CACHE_BUCKET is None:
+        if INGEST_CYCLE_START is None:
+            _LOGGER.error("{INGEST_CYCLE_START} is not set")
+        if PUBLIC_APP_URL is None:
+            _LOGGER.error("{PUBLIC_APP_URL} is not set")
+        if DOC_CACHE_BUCKET is None:
+            _LOGGER.error("{DOC_CACHE_BUCKET} is not set")
+        raise HTTPException(
+            status_code=status.HTTP_503_SERVICE_UNAVAILABLE,
+            detail="Missing required environment variables",
+        )
+
+    aws_env = "production" if "dev" not in PUBLIC_APP_URL else "staging"
+    _LOGGER.info(
+        f"Generating {aws_env} dump for ingest cycle w/c {INGEST_CYCLE_START}..."
+    )
 
     s3_client = get_s3_client()
     valid_credentials = s3_client.is_connected()
 
-    s3_document = S3Document(DOC_CACHE_BUCKET, AWS_REGION, data_dump_s3_key)
-    if not s3_client.document_exists(s3_document):
-        _LOGGER.info(f"Generating dump for ingest cycle w/c {INGEST_CYCLE_START}...")
-        df_as_csv = generate_data_dump_as_csv(db)
+    data_dump_s3_key = "navigator/whole_data_dump.csv"
+    df_as_csv = generate_data_dump_as_csv(INGEST_CYCLE_START, db)
+    # print(df_as_csv.getvalue())
 
-        if valid_credentials is False:
-            _LOGGER.error("Cannot connect to AWS.")
-        else:
-            response = s3_client.upload_fileobj(
-                df_as_csv, DOC_CACHE_BUCKET, data_dump_s3_key
-            )
-            if response is False:
-                _LOGGER.error("Failed to upload object to s3: %s", response)
-
-        if s3_client.document_exists(s3_document):
-            _LOGGER.debug("Finished uploading data dump to s3")
-
+    if valid_credentials is False:
+        _LOGGER.error("Cannot connect to AWS.")
     else:
-        _LOGGER.debug("File already exists in S3. Fetching...")
+        response = s3_client.upload_fileobj(
+            bucket=DOC_CACHE_BUCKET,
+            key=data_dump_s3_key,
+            content_type="application/csv",
+            fileobj=df_as_csv,
+        )
+        if response is False:
+            _LOGGER.error("Failed to upload object to s3: %s", response)
 
-    s3_file = s3_client.download_file(s3_document)
+    s3_document = S3Document(DOC_CACHE_BUCKET, AWS_REGION, data_dump_s3_key)
+    if s3_client.document_exists(s3_document):
+        _LOGGER.info(f"Finished uploading data dump to {DOC_CACHE_BUCKET}")
 
-    _LOGGER.debug(f"Downloading all documents as of '{INGEST_CYCLE_START}' as CSV")
-    timestamp = datetime.now()
-    filename = f"whole_database_dump-{timestamp}.csv"
-    return StreamingResponse(
-        content=BytesIO(s3_file.read()),
-        headers={
-            "Content-Type": "text/csv",
-            "Content-Disposition": f"attachment; filename={filename}",
-        },
+        _LOGGER.info("Redirecting to CDN data dump location...")
+        redirect_url = f"https://{CDN_DOMAIN}/{data_dump_s3_key}"
+        return RedirectResponse(redirect_url, status_code=status.HTTP_303_SEE_OTHER)
+    msg = f"Failed to upload data dump to {DOC_CACHE_BUCKET}"
+    _LOGGER.info(msg)
+    raise HTTPException(
+        status_code=status.HTTP_404_NOT_FOUND,
+        detail=msg,
     )
 
 

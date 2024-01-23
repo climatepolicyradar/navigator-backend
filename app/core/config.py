@@ -76,4 +76,6 @@ INDEX_ENCODER_CACHE_FOLDER: str = os.getenv("INDEX_ENCODER_CACHE_FOLDER", "/mode
 # Whole database dump
 INGEST_CYCLE_START = os.getenv("INGEST_CYCLE_START")
 DOC_CACHE_BUCKET = os.getenv("DOCUMENT_CACHE_BUCKET")
+DEVELOPMENT_MODE = os.getenv("DEVELOPMENT_MODE", False)
 AWS_REGION = os.getenv("AWS_REGION", "eu-west-1")
+CDN_DOMAIN = os.getenv("CDN_DOMAIN")

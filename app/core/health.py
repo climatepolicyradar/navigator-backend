@@ -5,7 +5,7 @@ from fastapi import Depends
 from requests.compat import urljoin
 from sqlalchemy.orm import Session
 
-from app.core.config import VESPA_URL
+from app.core.config import DEVELOPMENT_MODE, VESPA_URL
 from app.db.session import get_db
 
 _LOGGER = logging.getLogger(__file__)
@@ -24,7 +24,8 @@ def is_vespa_online():
     try:
         response = requests.get(VESPA_HEALTH_ENDPOINT)
     except Exception as e:
-        _LOGGER.error(e)
+        if DEVELOPMENT_MODE == "False":
+            _LOGGER.error(e)
         return False
     return response.ok
 
