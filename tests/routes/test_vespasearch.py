@@ -279,18 +279,15 @@ def test_keyword_country_filters(
     _populate_db_families(test_db)
     base_params = {"query_string": query}
 
-    # Get all documents and iterate over there country codes
-    # to confirm they are returned when filtered on
+    # Get all documents and iterate over their country codes to confirm that each are
+    # the specific one that is returned in the query (as they each have a unique
+    # country code)
     all_body = _make_search_request(client, params=base_params)
     families = [f for f in all_body["families"]]
     assert len(families) >= 4
 
     for family in families:
         country_code = family["family_geography"]
-
-        # Fixture for UNFCCC.non-party.1267.0 has a non geography (XAA)
-        if country_code == "Other":
-            return
 
         country_slug = get_country_slug_from_country_code(test_db, country_code)
 
@@ -299,7 +296,7 @@ def test_keyword_country_filters(
         filtered_family_slugs = [
             f["family_slug"] for f in body_with_filters["families"]
         ]
-
+        assert len(filtered_family_slugs) == 1
         assert family["family_slug"] in filtered_family_slugs
 
 
