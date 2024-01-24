@@ -191,38 +191,29 @@ def download_all_search_documents(db=Depends(get_db)) -> RedirectResponse:
 
     s3_client = get_s3_client()
     valid_credentials = s3_client.is_connected()
-    print("AWS credentials are valid: ", valid_credentials)
+    if not valid_credentials:
+        _LOGGER.info("Error connecting to S3 AWS")
+        raise HTTPException(
+            status_code=status.HTTP_401_UNAUTHORIZED, detail="Error connecting to AWS"
+        )
 
     s3_document = S3Document(DOC_CACHE_BUCKET, AWS_REGION, data_dump_s3_key)
-    print("Document exists in S3: ", s3_client.document_exists(s3_document))
     if valid_credentials is True and (not s3_client.document_exists(s3_document)):
         _LOGGER.info("Redirecting to create data dump route...")
         redirect_url = f"{PUBLIC_APP_URL}/api/v1/searches/create-all-search-dump"
         return RedirectResponse(
-            redirect_url, status_code=status.HTTP_307_TEMPORARY_REDIRECT
+            redirect_url,
+            # status_code=status.HTTP_307_TEMPORARY_REDIRECT
         )
-
-    # _LOGGER.info(f"Downloading all documents as of '{INGEST_CYCLE_START}' as CSV")
-    # s3_file = s3_client.download_file(s3_document)
 
     _LOGGER.info("Redirecting to CDN data dump location...")
     redirect_url = f"https://{CDN_DOMAIN}/{data_dump_s3_key}"
-    # timestamp = datetime.now()  # .date()
-    # filename = f"whole_database_dump-{timestamp}.csv"
-    # return StreamingResponse(
-    #     content=BytesIO(s3_file.read()),
-    #     headers={
-    #         "Content-Type": "text/csv",
-    #         "Content-Disposition": f"attachment; filename={filename}",
-    #     },
-    # )
     return RedirectResponse(redirect_url, status_code=status.HTTP_303_SEE_OTHER)
 
 
-@search_router.post("/searches/create-all-search-dump")
+@search_router.get("/searches/create-all-search-dump")
 def create_all_search_documents_dump(db=Depends(get_db)) -> RedirectResponse:
     """Download a CSV containing details of all the documents in the corpus."""
-    _LOGGER.info("create-all-search-dump")
     if INGEST_CYCLE_START is None or PUBLIC_APP_URL is None or DOC_CACHE_BUCKET is None:
         if INGEST_CYCLE_START is None:
             _LOGGER.error("{INGEST_CYCLE_START} is not set")
@@ -242,14 +233,22 @@ def create_all_search_documents_dump(db=Depends(get_db)) -> RedirectResponse:
 
     s3_client = get_s3_client()
     valid_credentials = s3_client.is_connected()
+    if not valid_credentials:
+        _LOGGER.info("Error connecting to S3 AWS")
+        raise HTTPException(
+            status_code=status.HTTP_401_UNAUTHORIZED, detail="Error connecting to AWS"
+        )
 
     data_dump_s3_key = "navigator/whole_data_dump.csv"
     df_as_csv = generate_data_dump_as_csv(INGEST_CYCLE_START, db)
-    # print(df_as_csv.getvalue())
 
-    if valid_credentials is False:
-        _LOGGER.error("Cannot connect to AWS.")
-    else:
+    # After writing to a file buffer the position stays at the end whereas when you
+    # upload a buffer, it starts from the position it is currently in. We need to add
+    # the seek(0) to reset the buffer position to the beginning before writing to S3 to
+    # avoid creating an empty file.
+    df_as_csv.seek(0)
+
+    try:
         response = s3_client.upload_fileobj(
             bucket=DOC_CACHE_BUCKET,
             key=data_dump_s3_key,
@@ -258,20 +257,18 @@ def create_all_search_documents_dump(db=Depends(get_db)) -> RedirectResponse:
         )
         if response is False:
             _LOGGER.error("Failed to upload object to s3: %s", response)
+    except Exception as e:
+        _LOGGER.error(e)
 
     s3_document = S3Document(DOC_CACHE_BUCKET, AWS_REGION, data_dump_s3_key)
     if s3_client.document_exists(s3_document):
         _LOGGER.info(f"Finished uploading data dump to {DOC_CACHE_BUCKET}")
-
         _LOGGER.info("Redirecting to CDN data dump location...")
         redirect_url = f"https://{CDN_DOMAIN}/{data_dump_s3_key}"
         return RedirectResponse(redirect_url, status_code=status.HTTP_303_SEE_OTHER)
-    msg = f"Failed to upload data dump to {DOC_CACHE_BUCKET}"
-    _LOGGER.info(msg)
-    raise HTTPException(
-        status_code=status.HTTP_404_NOT_FOUND,
-        detail=msg,
-    )
+
+    _LOGGER.info(f"Can't find data dump for {INGEST_CYCLE_START} in {DOC_CACHE_BUCKET}")
+    raise HTTPException(status_code=status.HTTP_404_NOT_FOUND)
 
 
 def _get_browse_args_from_search_request_body(
