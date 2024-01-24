@@ -3,6 +3,8 @@ import typing as t
 import uuid
 
 import pytest
+from cpr_data_access.embedding import Embedder
+from cpr_data_access.search_adaptors import Vespa, VespaSearchAdapter
 from fastapi.testclient import TestClient
 from moto import mock_s3
 from sqlalchemy import create_engine
@@ -15,9 +17,6 @@ from app.core.search import OpenSearchConfig, OpenSearchConnection
 from app.db.models.app import AppUser
 from app.db.session import Base, get_db
 from app.main import app
-from cpr_data_access.search_adaptors import VespaSearchAdapter
-from cpr_data_access.search_adaptors import Vespa
-from cpr_data_access.embedding import Embedder
 
 
 @pytest.fixture

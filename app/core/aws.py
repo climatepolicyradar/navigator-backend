@@ -9,7 +9,7 @@ import botocore.client
 from botocore.exceptions import ClientError, UnauthorizedSSOTokenError
 from botocore.response import StreamingBody
 
-from app.core.config import AWS_REGION
+from app.core.config import AWS_REGION, DEVELOPMENT_MODE
 
 logger = logging.getLogger(__name__)
 
@@ -46,13 +46,12 @@ class S3Client:
     """Helper class to connect to S3 and perform actions on buckets and documents."""
 
     def __init__(self, dev_mode: bool):  # noqa: D107
-        if dev_mode is True:
-            logger.info("***************** IN DEVELOPMENT MODE *****************")
+        if dev_mode is False:
+            logger.info("***************** IN DEPLOYMENT MODE *****************")
             self.client = boto3.client(
                 "s3",
                 aws_access_key_id=os.getenv("AWS_ACCESS_KEY_ID"),
                 aws_secret_access_key=os.getenv("AWS_SECRET_ACCESS_KEY"),
-                aws_session_token=os.getenv("AWS_SESSION_TOKEN"),
                 config=botocore.client.Config(
                     signature_version="s3v4",
                     region_name=AWS_REGION,
@@ -60,11 +59,12 @@ class S3Client:
                 ),
             )
         else:
-            logger.info("***************** IN DEPLOYMENT MODE *****************")
+            logger.info("***************** IN DEVELOPMENT MODE *****************")
             self.client = boto3.client(
                 "s3",
                 aws_access_key_id=os.getenv("AWS_ACCESS_KEY_ID"),
                 aws_secret_access_key=os.getenv("AWS_SECRET_ACCESS_KEY"),
+                aws_session_token=os.getenv("AWS_SESSION_TOKEN"),
                 config=botocore.client.Config(
                     signature_version="s3v4",
                     region_name=AWS_REGION,
@@ -304,5 +304,4 @@ class S3Client:
 
 def get_s3_client():
     """Get s3 client for API."""
-    dev_mode = t.cast(bool, os.getenv("DEVELOPMENT_MODE", "False"))
-    return S3Client(dev_mode)
+    return S3Client(DEVELOPMENT_MODE)
