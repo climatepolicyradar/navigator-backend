@@ -31,7 +31,7 @@ def test_s3_client(s3_document_bucket_names):
     bucket_names = s3_document_bucket_names.values()
 
     with mock_s3():
-        s3_client = S3Client(dev_mode="False")
+        s3_client = S3Client(dev_mode=False)
         for bucket in bucket_names:
             s3_client.client.create_bucket(
                 Bucket=bucket,
