@@ -101,3 +101,17 @@ line-length = 88
 [tool.ruff.per-file-ignores]
 "__init__.py" = ["F401"]
 "tests/*" = ["E501"]
+
+[tool.pyright]
+include = ["alembic", "app", "scripts", "tests"]
+exclude = [
+    "**/__pycache__",
+]
+ignore = ["scripts/**/*"]
+defineConstant = { DEBUG = true }
+
+reportMissingImports = true
+reportMissingTypeStubs = false
+
+pythonVersion = "3.9"
+pythonPlatform = "Linux"
