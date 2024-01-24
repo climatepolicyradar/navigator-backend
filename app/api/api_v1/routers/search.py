@@ -200,66 +200,29 @@ def download_all_search_documents(db=Depends(get_db)) -> RedirectResponse:
 
     s3_document = S3Document(DOC_CACHE_BUCKET, AWS_REGION, data_dump_s3_key)
     if valid_credentials is True and (not s3_client.document_exists(s3_document)):
-        _LOGGER.info("Redirecting to create data dump route...")
-        redirect_url = f"{PUBLIC_APP_URL}/api/v1/searches/create-all-search-dump"
-        return RedirectResponse(
-            redirect_url,
-            # status_code=status.HTTP_307_TEMPORARY_REDIRECT
+        aws_env = "production" if "dev" not in PUBLIC_APP_URL else "staging"
+        _LOGGER.info(
+            f"Generating {aws_env} dump for ingest cycle w/c {INGEST_CYCLE_START}..."
         )
 
-    _LOGGER.info("Redirecting to CDN data dump location...")
-    redirect_url = f"https://{CDN_DOMAIN}/{data_dump_s3_key}"
-    return RedirectResponse(redirect_url, status_code=status.HTTP_303_SEE_OTHER)
+        # After writing to a file buffer the position stays at the end whereas when you
+        # upload a buffer, it starts from the position it is currently in. We need to
+        # add the seek(0) to reset the buffer position to the beginning before writing
+        # to S3 to avoid creating an empty file.
+        df_as_csv = generate_data_dump_as_csv(INGEST_CYCLE_START, db)
+        df_as_csv.seek(0)
 
-
-@search_router.get("/searches/create-all-search-dump")
-def create_all_search_documents_dump(db=Depends(get_db)) -> RedirectResponse:
-    """Download a CSV containing details of all the documents in the corpus."""
-    if INGEST_CYCLE_START is None or PUBLIC_APP_URL is None or DOC_CACHE_BUCKET is None:
-        if INGEST_CYCLE_START is None:
-            _LOGGER.error("{INGEST_CYCLE_START} is not set")
-        if PUBLIC_APP_URL is None:
-            _LOGGER.error("{PUBLIC_APP_URL} is not set")
-        if DOC_CACHE_BUCKET is None:
-            _LOGGER.error("{DOC_CACHE_BUCKET} is not set")
-        raise HTTPException(
-            status_code=status.HTTP_503_SERVICE_UNAVAILABLE,
-            detail="Missing required environment variables",
-        )
-
-    aws_env = "production" if "dev" not in PUBLIC_APP_URL else "staging"
-    _LOGGER.info(
-        f"Generating {aws_env} dump for ingest cycle w/c {INGEST_CYCLE_START}..."
-    )
-
-    s3_client = get_s3_client()
-    valid_credentials = s3_client.is_connected()
-    if not valid_credentials:
-        _LOGGER.info("Error connecting to S3 AWS")
-        raise HTTPException(
-            status_code=status.HTTP_401_UNAUTHORIZED, detail="Error connecting to AWS"
-        )
-
-    data_dump_s3_key = "navigator/whole_data_dump.csv"
-    df_as_csv = generate_data_dump_as_csv(INGEST_CYCLE_START, db)
-
-    # After writing to a file buffer the position stays at the end whereas when you
-    # upload a buffer, it starts from the position it is currently in. We need to add
-    # the seek(0) to reset the buffer position to the beginning before writing to S3 to
-    # avoid creating an empty file.
-    df_as_csv.seek(0)
-
-    try:
-        response = s3_client.upload_fileobj(
-            bucket=DOC_CACHE_BUCKET,
-            key=data_dump_s3_key,
-            content_type="application/csv",
-            fileobj=df_as_csv,
-        )
-        if response is False:
-            _LOGGER.error("Failed to upload object to s3: %s", response)
-    except Exception as e:
-        _LOGGER.error(e)
+        try:
+            response = s3_client.upload_fileobj(
+                bucket=DOC_CACHE_BUCKET,
+                key=data_dump_s3_key,
+                content_type="application/csv",
+                fileobj=df_as_csv,
+            )
+            if response is False:
+                _LOGGER.error("Failed to upload object to s3: %s", response)
+        except Exception as e:
+            _LOGGER.error(e)
 
     s3_document = S3Document(DOC_CACHE_BUCKET, AWS_REGION, data_dump_s3_key)
     if s3_client.document_exists(s3_document):
