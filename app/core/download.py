@@ -268,7 +268,7 @@ def replace_slug_with_qualified_url(
 
 def convert_dump_to_csv(df: pd.DataFrame):
     csv_buffer = BytesIO()
-    df.to_csv(csv_buffer, sep=",", index=False)
+    df.to_csv(csv_buffer, sep=",", index=False, encoding="utf-8")
     return csv_buffer
 
 
