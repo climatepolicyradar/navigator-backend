@@ -231,11 +231,10 @@ def create_query(ingest_cycle_start: str) -> str:
         "on ds.family_document_import_id = d.import_id "
         "LEFT JOIN most_recent_family_slugs fs on fs.family_import_id = f.import_id "
         "LEFT JOIN event_dates fp on fp.family_import_id = f.import_id "
-        "ORDER BY d.created desc, n1.family_import_id"
-    )
-    # "WHERE d.created < '{}' "
-    # .format(ingest_cycle_start)
-    print(query)
+        "WHERE d.last_modified < '{}' "
+        "ORDER BY "
+        "d.last_modified desc, d.created desc, d.ctid desc, n1.family_import_id"
+    ).format(ingest_cycle_start)
     return query
 
 
@@ -273,8 +272,6 @@ def convert_dump_to_csv(df: pd.DataFrame):
 
 
 def generate_data_dump_as_csv(ingest_cycle_start: str, db=Depends(get_db)):
-    print(ingest_cycle_start)
     df = get_whole_database_dump(ingest_cycle_start, db)
-    print(df)
     csv = convert_dump_to_csv(df)
     return csv
