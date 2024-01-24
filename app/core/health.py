@@ -24,7 +24,7 @@ def is_vespa_online():
     try:
         response = requests.get(VESPA_HEALTH_ENDPOINT)
     except Exception as e:
-        if DEVELOPMENT_MODE == "False":
+        if DEVELOPMENT_MODE is False:
             _LOGGER.error(e)
         return False
     return response.ok
