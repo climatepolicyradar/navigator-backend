@@ -1,6 +1,7 @@
 """Functions to support browsing the RDS document structure"""
 
-from io import BytesIO
+import zipfile
+from io import BytesIO, StringIO
 from logging import getLogger
 
 import pandas as pd
@@ -274,4 +275,38 @@ def convert_dump_to_csv(df: pd.DataFrame):
 def generate_data_dump_as_csv(ingest_cycle_start: str, db=Depends(get_db)):
     df = get_whole_database_dump(ingest_cycle_start, db)
     csv = convert_dump_to_csv(df)
+    csv.seek(0)
     return csv
+
+
+def generate_data_dump_readme(ingest_cycle_start: str):
+    file_buffer = StringIO(
+        "Thank you for downloading the full document dataset from Climate Policy Radar "
+        "and Climate Change Laws of the World!"
+        "\n\n"
+        "For more information including our data dictionary, methodology and "
+        "information about how to cite us, visit "
+        "\n"
+        "https://climatepolicyradar.notion.site/Readme-for-document-data-download-f2d55b7e238941b59559b9b1c4cc52c5"
+        ".\n\n"
+        "View our terms of use at https://app.climatepolicyradar.org/terms-of-use"
+        "\n\n"
+        f"Date data last updated: {ingest_cycle_start}"
+    )
+    file_buffer.seek(0)
+    return file_buffer
+
+
+def create_data_download_zip_archive(ingest_cycle_start: str, db=Depends(get_db)):
+    readme_buffer = generate_data_dump_readme(ingest_cycle_start)
+    csv_buffer = generate_data_dump_as_csv(ingest_cycle_start, db)
+
+    zip_buffer = BytesIO()
+    with zipfile.ZipFile(zip_buffer, "a", zipfile.ZIP_DEFLATED, False) as zip_file:
+        for file_name, data in [
+            ("README.txt", readme_buffer),
+            (f"Document_Data_Download-{ingest_cycle_start}.csv", csv_buffer),
+        ]:
+            zip_file.writestr(file_name, data.getvalue())
+
+    return zip_buffer

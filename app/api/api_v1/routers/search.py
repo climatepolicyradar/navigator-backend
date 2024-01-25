@@ -29,7 +29,7 @@ from app.core.config import (
     VESPA_SECRETS_LOCATION,
     VESPA_URL,
 )
-from app.core.download import generate_data_dump_as_csv
+from app.core.download import create_data_download_zip_archive
 from app.core.lookups import get_countries_for_region, get_country_by_slug
 from app.core.search import (
     ENCODER,
@@ -188,7 +188,8 @@ def download_all_search_documents(db=Depends(get_db)) -> RedirectResponse:
             detail="Missing required environment variables",
         )
 
-    data_dump_s3_key = "navigator/whole_data_dump.csv"
+    s3_prefix = "navigator/dumps"
+    data_dump_s3_key = f"{s3_prefix}/whole_data_dump-{INGEST_CYCLE_START}.zip"
 
     s3_client = get_s3_client()
     valid_credentials = s3_client.is_connected()
@@ -209,24 +210,26 @@ def download_all_search_documents(db=Depends(get_db)) -> RedirectResponse:
         # upload a buffer, it starts from the position it is currently in. We need to
         # add the seek(0) to reset the buffer position to the beginning before writing
         # to S3 to avoid creating an empty file.
-        df_as_csv = generate_data_dump_as_csv(INGEST_CYCLE_START, db)
-        df_as_csv.seek(0)
+        zip_buffer = create_data_download_zip_archive(INGEST_CYCLE_START, db)
+        zip_buffer.seek(0)
 
         try:
             response = s3_client.upload_fileobj(
                 bucket=DOC_CACHE_BUCKET,
                 key=data_dump_s3_key,
-                content_type="application/csv",
-                fileobj=df_as_csv,
+                content_type="application/zip",
+                fileobj=zip_buffer,
             )
             if response is False:
-                _LOGGER.error("Failed to upload object to s3: %s", response)
+                _LOGGER.error("Failed to upload archive to s3: %s", response)
+            else:
+                _LOGGER.info(f"Finished uploading data archive to {DOC_CACHE_BUCKET}")
+
         except Exception as e:
             _LOGGER.error(e)
 
     s3_document = S3Document(DOC_CACHE_BUCKET, AWS_REGION, data_dump_s3_key)
     if s3_client.document_exists(s3_document):
-        _LOGGER.info(f"Finished uploading data dump to {DOC_CACHE_BUCKET}")
         _LOGGER.info("Redirecting to CDN data dump location...")
         redirect_url = f"https://{CDN_DOMAIN}/{data_dump_s3_key}"
         return RedirectResponse(redirect_url, status_code=status.HTTP_303_SEE_OTHER)
