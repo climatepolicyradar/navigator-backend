@@ -88,9 +88,7 @@ def _start_ingest(
     read(events_file_contents, context, EventIngestRow, event_ingestor)
 
 
-def setup_with_docs(test_db, mocker):
-    mocker.patch("app.core.aws.S3Client")
-
+def setup_with_docs(test_db):
     populate_geography(test_db)
     populate_taxonomy(test_db)
     populate_event_type(test_db)
@@ -104,21 +102,17 @@ def setup_with_docs(test_db, mocker):
     test_db.commit()
 
 
-def setup_with_two_docs(test_db, mocker):
+def setup_with_two_docs(test_db):
+    setup_with_multiple_docs(test_db, doc_data=TWO_DFC_ROW, event_data=TWO_EVENT_ROWS)
+
+
+def setup_with_two_docs_one_family(test_db):
     setup_with_multiple_docs(
-        test_db, mocker, doc_data=TWO_DFC_ROW, event_data=TWO_EVENT_ROWS
+        test_db, doc_data=TWO_DOCS_ONE_FAM, event_data=ONE_EVENT_ROW
     )
 
 
-def setup_with_two_docs_one_family(test_db, mocker):
-    setup_with_multiple_docs(
-        test_db, mocker, doc_data=TWO_DOCS_ONE_FAM, event_data=ONE_EVENT_ROW
-    )
-
-
-def setup_with_multiple_docs(test_db, mocker, doc_data, event_data):
-    mocker.patch("app.core.aws.S3Client")
-
+def setup_with_multiple_docs(test_db, doc_data, event_data):
     populate_geography(test_db)
     populate_taxonomy(test_db)
     populate_event_type(test_db)
