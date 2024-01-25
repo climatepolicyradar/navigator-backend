@@ -188,7 +188,7 @@ def download_all_search_documents(db=Depends(get_db)) -> RedirectResponse:
             detail="Missing required environment variables",
         )
 
-    s3_prefix = "navigator"
+    s3_prefix = "navigator/dumps"
     data_dump_s3_key = f"{s3_prefix}/whole_data_dump-{INGEST_CYCLE_START}.zip"
 
     s3_client = get_s3_client()
@@ -215,7 +215,10 @@ def download_all_search_documents(db=Depends(get_db)) -> RedirectResponse:
 
         try:
             response = s3_client.upload_fileobj(
-                bucket=DOC_CACHE_BUCKET, key=data_dump_s3_key, fileobj=zip_buffer
+                bucket=DOC_CACHE_BUCKET,
+                key=data_dump_s3_key,
+                content_type="application/zip",
+                fileobj=zip_buffer,
             )
             if response is False:
                 _LOGGER.error("Failed to upload archive to s3: %s", response)
