@@ -1,4 +1,7 @@
-from app.api.api_v1.routers.cclw_ingest import _start_ingest
+from sqlalchemy.orm import Session
+
+
+from app.db.models.app import ORGANISATION_CCLW
 from app.data_migrations import (
     populate_document_role,
     populate_document_type,
@@ -8,6 +11,17 @@ from app.data_migrations import (
     populate_language,
     populate_taxonomy,
 )
+
+from tests.core.ingestion.legacy_setup.cclw.ingest_row_cclw import (
+    CCLWDocumentIngestRow,
+    EventIngestRow,
+)
+from tests.core.ingestion.legacy_setup.processor import (
+    initialise_context,
+    get_cclw_document_ingestor,
+    get_event_ingestor,
+)
+from tests.core.ingestion.legacy_setup.reader import read
 
 
 TWO_UNPUBLISHED_DFC_ROW = """ID,Document ID,CCLW Description,Part of collection?,Create new family/ies?,Collection ID,Collection name,Collection summary,Document title,Family name,Family summary,Family ID,Document role,Applies to ID,Geography ISO,Documents,Category,Events,Sectors,Instruments,Frameworks,Responses,Natural Hazards,Document Type,Year,Language,Keywords,Geography,Parent Legislation,Comment,CPR Document ID,CPR Family ID,CPR Collection ID,CPR Family Slug,CPR Document Slug,Document variant,CPR Document Status
@@ -62,8 +76,20 @@ TWO_EVENT_ROWS = """Id,Eventable type,Eventable Id,Eventable name,Event type,Tit
 """
 
 
+def _start_ingest(
+    db: Session,
+    documents_file_contents: str,
+    events_file_contents: str,
+):
+    context = initialise_context(db, ORGANISATION_CCLW)
+    document_ingestor = get_cclw_document_ingestor(db, context)
+    read(documents_file_contents, context, CCLWDocumentIngestRow, document_ingestor)
+    event_ingestor = get_event_ingestor(db)
+    read(events_file_contents, context, EventIngestRow, event_ingestor)
+
+
 def setup_with_docs(test_db, mocker):
-    mock_s3 = mocker.patch("app.core.aws.S3Client")
+    mocker.patch("app.core.aws.S3Client")
 
     populate_geography(test_db)
     populate_taxonomy(test_db)
@@ -74,7 +100,7 @@ def setup_with_docs(test_db, mocker):
     populate_language(test_db)
     test_db.commit()
 
-    _start_ingest(test_db, mock_s3, "s3_prefix", ONE_DFC_ROW, ONE_EVENT_ROW)
+    _start_ingest(test_db, ONE_DFC_ROW, ONE_EVENT_ROW)
     test_db.commit()
 
 
@@ -91,7 +117,7 @@ def setup_with_two_docs_one_family(test_db, mocker):
 
 
 def setup_with_multiple_docs(test_db, mocker, doc_data, event_data):
-    mock_s3 = mocker.patch("app.core.aws.S3Client")
+    mocker.patch("app.core.aws.S3Client")
 
     populate_geography(test_db)
     populate_taxonomy(test_db)
@@ -102,5 +128,5 @@ def setup_with_multiple_docs(test_db, mocker, doc_data, event_data):
     populate_language(test_db)
     test_db.commit()
 
-    _start_ingest(test_db, mock_s3, "s3_prefix", doc_data, event_data)
+    _start_ingest(test_db, doc_data, event_data)
     test_db.commit()

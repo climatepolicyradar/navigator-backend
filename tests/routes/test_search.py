@@ -20,7 +20,7 @@ from app.api.api_v1.schemas.search import (
     SearchRequestBody,
 )
 from app.core.search import _FILTER_FIELD_MAP, OpenSearchQueryConfig
-from app.core.ingestion.utils import get_or_create
+from tests.core.ingestion.legacy_setup.utils import get_or_create
 from app.data_migrations.taxonomy_cclw import get_cclw_taxonomy
 from app.db.models.app import Organisation
 from app.db.models.law_policy.family import (
