@@ -4,7 +4,7 @@ from app.api.api_v1.schemas.metadata import TaxonomyData
 from app.db.models.app.users import Organisation
 from app.db.models.law_policy.family import FamilyEventType
 from app.db.models.law_policy.metadata import MetadataOrganisation, MetadataTaxonomy
-from app.core.ingestion.metadata import Taxonomy, TaxonomyEntry
+from app.core.ingestion.types import Taxonomy, TaxonomyEntry
 
 
 def get_organisation_taxonomy(db: Session, org_id: int) -> tuple[int, Taxonomy]:

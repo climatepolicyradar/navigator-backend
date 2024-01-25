@@ -2,7 +2,7 @@ from dataclasses import asdict
 import json
 from typing import Any, Mapping, Sequence
 
-from app.core.ingestion.metadata import TaxonomyEntry
+from app.core.ingestion.types import TaxonomyEntry
 
 """At the moment taxonomy is kept simple, and only supports string validation for enums
 
