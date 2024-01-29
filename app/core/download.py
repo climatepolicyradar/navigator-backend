@@ -288,7 +288,7 @@ def generate_data_dump_readme(ingest_cycle_start: str):
         "information about how to cite us, visit "
         "\n"
         "https://climatepolicyradar.notion.site/Readme-for-document-data-download-f2d55b7e238941b59559b9b1c4cc52c5"
-        ".\n\n"
+        "\n\n"
         "View our terms of use at https://app.climatepolicyradar.org/terms-of-use"
         "\n\n"
         f"Date data last updated: {ingest_cycle_start}"
