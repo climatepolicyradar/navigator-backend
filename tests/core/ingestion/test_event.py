@@ -9,7 +9,7 @@ from app.core.ingestion.cclw.ingest_row_cclw import (
     EventIngestRow,
 )
 from app.core.ingestion.processor import build_params_from_cclw
-from app.db.models.law_policy.family import Family, FamilyEvent
+from db_client.models.law_policy.family import Family, FamilyEvent
 from tests.core.ingestion.helpers import (
     EVENT_IMPORT_ID,
     FAMILY_IMPORT_ID,

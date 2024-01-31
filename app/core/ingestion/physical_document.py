@@ -5,8 +5,8 @@ from sqlalchemy.orm import Session
 from app.core.ingestion.params import IngestParameters
 from app.core.ingestion.utils import to_dict
 
-from app.db.models.document import PhysicalDocument
-from app.db.models.document.physical_document import (
+from db_client.models.document import PhysicalDocument
+from db_client.models.document.physical_document import (
     Language,
     LanguageSource,
     PhysicalDocumentLanguage,

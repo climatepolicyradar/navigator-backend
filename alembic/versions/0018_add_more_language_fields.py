@@ -9,7 +9,7 @@ from alembic import op
 import sqlalchemy as sa
 from sqlalchemy.dialects import postgresql
 
-from app.db.models.document.physical_document import LanguageSource
+from db_client.models.document.physical_document import LanguageSource
 
 # revision identifiers, used by Alembic.
 revision = '0018'

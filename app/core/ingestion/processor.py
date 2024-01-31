@@ -35,9 +35,9 @@ from app.core.ingestion.validator import (
     validate_cclw_document_row,
     validate_unfccc_document_row,
 )
-from app.db.models.app import ORGANISATION_CCLW, ORGANISATION_UNFCCC
-from app.db.models.app.users import Organisation
-from app.db.models.law_policy.geography import GEO_INTERNATIONAL, GEO_NONE
+from db_client.models.app import ORGANISATION_CCLW, ORGANISATION_UNFCCC
+from db_client.models.app.users import Organisation
+from db_client.models.law_policy.geography import GEO_INTERNATIONAL, GEO_NONE
 
 
 _LOGGER = logging.getLogger(__name__)

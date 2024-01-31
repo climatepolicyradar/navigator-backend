@@ -4,13 +4,13 @@ from sqlalchemy.orm import Session
 from app.core.ingestion.cclw.ingest_row_cclw import CCLWDocumentIngestRow
 from app.core.ingestion.processor import ingest_cclw_document_row
 from app.core.ingestion.utils import CCLWIngestContext
-from app.db.models.document.physical_document import PhysicalDocument
-from app.db.models.law_policy.collection import (
+from db_client.models.document.physical_document import PhysicalDocument
+from db_client.models.law_policy.collection import (
     Collection,
     CollectionFamily,
     CollectionOrganisation,
 )
-from app.db.models.law_policy.family import (
+from db_client.models.law_policy.family import (
     Family,
     FamilyCategory,
     FamilyDocument,

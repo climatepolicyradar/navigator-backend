@@ -1,9 +1,9 @@
 from dataclasses import asdict
 from sqlalchemy.orm import Session
 from app.api.api_v1.schemas.metadata import TaxonomyData
-from app.db.models.app.users import Organisation
-from app.db.models.law_policy.family import FamilyEventType
-from app.db.models.law_policy.metadata import MetadataOrganisation, MetadataTaxonomy
+from db_client.models.app.users import Organisation
+from db_client.models.law_policy.family import FamilyEventType
+from db_client.models.law_policy.metadata import MetadataOrganisation, MetadataTaxonomy
 from app.core.ingestion.metadata import Taxonomy, TaxonomyEntry
 
 

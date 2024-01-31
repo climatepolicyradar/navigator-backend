@@ -1,6 +1,6 @@
 from sqlalchemy.orm import Session
 from app.core.ingestion.unfccc.ingest_row_unfccc import UNFCCCDocumentIngestRow
-from app.db.models.law_policy.family import EventStatus, FamilyEvent
+from db_client.models.law_policy.family import EventStatus, FamilyEvent
 
 
 TYPE_MAP = {

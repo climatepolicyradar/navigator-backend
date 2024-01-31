@@ -10,8 +10,8 @@ from app.data_migrations import (
     populate_taxonomy,
 )
 from app.data_migrations.taxonomy_utils import _load_metadata_type
-from app.db.models.app import Organisation
-from app.db.models.law_policy import MetadataOrganisation, MetadataTaxonomy
+from db_client.models.app import Organisation
+from db_client.models.law_policy import MetadataOrganisation, MetadataTaxonomy
 
 
 def test_unauthenticated_ingest(client):

@@ -9,8 +9,8 @@ from app.core.ingestion.physical_document import (
     update_physical_document_languages,
 )
 from app.core.ingestion.processor import build_params_from_cclw
-from app.db.models.document import PhysicalDocument
-from app.db.models.document.physical_document import (
+from db_client.models.document import PhysicalDocument
+from db_client.models.document.physical_document import (
     LanguageSource,
     PhysicalDocumentLanguage,
 )

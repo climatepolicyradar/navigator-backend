@@ -14,13 +14,13 @@ from app.api.api_v1.schemas.search import (
     SortField,
     SortOrder,
 )
-from app.db.models.law_policy.family import (
+from db_client.models.law_policy.family import (
     Family,
     FamilyOrganisation,
     FamilyStatus,
 )
-from app.db.models.law_policy.geography import Geography
-from app.db.models.app import Organisation
+from db_client.models.law_policy.geography import Geography
+from db_client.models.app import Organisation
 
 _LOGGER = getLogger(__name__)
 

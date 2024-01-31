@@ -1,5 +1,5 @@
 from app.data_migrations import populate_counters
-from app.db.models.app.counters import CountedEntity, EntityCounter
+from db_client.models.app.counters import CountedEntity, EntityCounter
 
 
 def test_import_id_generation(test_db):

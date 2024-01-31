@@ -8,7 +8,7 @@ from alembic_utils.replaceable_entity import register_entities
 from sqlalchemy import engine_from_config, pool
 
 from alembic import context
-from app.db.models import Base
+from db_client.models import Base
 
 logger = logging.getLogger(__name__)
 

@@ -4,12 +4,12 @@ from sqlalchemy import update
 from sqlalchemy.orm import Session
 from fastapi.testclient import TestClient
 from pytest_mock import MockerFixture
-from app.db.models.document.physical_document import (
+from db_client.models.document.physical_document import (
     Language,
     LanguageSource,
     PhysicalDocumentLanguage,
 )
-from app.db.models.law_policy.family import Family, FamilyDocument, FamilyEvent
+from db_client.models.law_policy.family import Family, FamilyDocument, FamilyEvent
 from tests.routes.document_helpers import (
     ONE_DFC_ROW_TWO_LANGUAGES,
     ONE_EVENT_ROW,

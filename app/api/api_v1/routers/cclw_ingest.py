@@ -46,7 +46,7 @@ from app.core.validation.util import (
     write_documents_to_s3,
     write_ingest_results_to_s3,
 )
-from app.db.models.app import ORGANISATION_CCLW
+from db_client.models.app import ORGANISATION_CCLW
 from app.db.session import get_db
 
 _LOGGER = logging.getLogger(__name__)

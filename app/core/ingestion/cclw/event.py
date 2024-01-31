@@ -8,7 +8,7 @@ from sqlalchemy.orm import Session
 from app.core.ingestion.cclw.ingest_row_cclw import EventIngestRow
 from app.core.ingestion.utils import get_or_create, to_dict
 
-from app.db.models.law_policy import FamilyEvent
+from db_client.models.law_policy import FamilyEvent
 
 _LOGGER = logging.getLogger(__name__)
 

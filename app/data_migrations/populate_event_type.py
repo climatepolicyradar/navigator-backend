@@ -2,7 +2,7 @@ import json
 
 from sqlalchemy.orm import Session
 
-from app.db.models.law_policy import FamilyEventType
+from db_client.models.law_policy import FamilyEventType
 from .utils import has_rows, load_list
 
 

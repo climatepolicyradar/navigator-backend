@@ -4,14 +4,14 @@ from typing import Any, Sequence, Tuple, cast
 from sqlalchemy.orm import Session
 
 from app.api.api_v1.schemas.document import DocumentParserInput
-from app.db.models.app.users import Organisation
-from app.db.models.law_policy.family import (
+from db_client.models.app.users import Organisation
+from db_client.models.law_policy.family import (
     Family,
     FamilyDocument,
     FamilyOrganisation,
     Geography,
 )
-from app.db.models.law_policy.metadata import FamilyMetadata
+from db_client.models.law_policy.metadata import FamilyMetadata
 
 
 def generate_pipeline_ingest_input(db: Session) -> Sequence[DocumentParserInput]:

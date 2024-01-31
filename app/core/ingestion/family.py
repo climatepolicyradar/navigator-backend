@@ -15,7 +15,7 @@ from app.core.ingestion.utils import (
     update_if_changed,
     update_if_enum_changed,
 )
-from app.db.models.law_policy import (
+from db_client.models.law_policy import (
     FamilyCategory,
     Family,
     FamilyDocument,

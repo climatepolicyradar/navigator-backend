@@ -6,12 +6,12 @@ from app.core.ingestion.processor import (
     handle_cclw_collection_and_link,
 )
 from app.core.ingestion.utils import get_or_create
-from app.db.models.law_policy.collection import (
+from db_client.models.law_policy.collection import (
     Collection,
     CollectionFamily,
     CollectionOrganisation,
 )
-from app.db.models.law_policy.family import Family
+from db_client.models.law_policy.family import Family
 
 from tests.core.ingestion.helpers import (
     COLLECTION_IMPORT_ID,

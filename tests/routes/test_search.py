@@ -22,8 +22,8 @@ from app.api.api_v1.schemas.search import (
 from app.core.search import _FILTER_FIELD_MAP, OpenSearchQueryConfig
 from app.core.ingestion.utils import get_or_create
 from app.data_migrations.taxonomy_cclw import get_cclw_taxonomy
-from app.db.models.app import Organisation
-from app.db.models.law_policy.family import (
+from db_client.models.app import Organisation
+from db_client.models.law_policy.family import (
     DocumentStatus,
     EventStatus,
     FamilyCategory,
@@ -37,12 +37,12 @@ from app.db.models.law_policy.family import (
     Slug,
     Variant,
 )
-from app.db.models.law_policy.metadata import (
+from db_client.models.law_policy.metadata import (
     FamilyMetadata,
     MetadataTaxonomy,
     MetadataOrganisation,
 )
-from app.db.models.document.physical_document import (
+from db_client.models.document.physical_document import (
     Language,
     LanguageSource,
     PhysicalDocument,

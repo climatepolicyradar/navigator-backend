@@ -2,7 +2,7 @@ import json
 
 from sqlalchemy.orm import Session
 
-from app.db.models.law_policy import FamilyDocumentType
+from db_client.models.law_policy import FamilyDocumentType
 from .utils import load_list_idempotent
 
 

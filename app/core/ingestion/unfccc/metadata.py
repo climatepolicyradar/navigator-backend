@@ -4,7 +4,7 @@ from sqlalchemy.orm import Session
 from app.core.ingestion.metadata import MetadataJson, Taxonomy, build_metadata_field
 from app.core.ingestion.utils import Result, ResultType
 from app.core.ingestion.unfccc.ingest_row_unfccc import UNFCCCDocumentIngestRow
-from app.db.models.law_policy.metadata import FamilyMetadata
+from db_client.models.law_policy.metadata import FamilyMetadata
 
 
 MAP_OF_LIST_VALUES = {

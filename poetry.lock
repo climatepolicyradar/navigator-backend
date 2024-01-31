@@ -744,7 +744,7 @@ sqlalchemy = "^1.4.31"
 type = "git"
 url = "https://github.com/climatepolicyradar/navigator-db-client.git"
 reference = "HEAD"
-resolved_reference = "bc4b919c4148bedf78e7049f095f18138ee1b3fc"
+resolved_reference = "9d58b797b26ff365068d071b5b40dc4270b2ddda"
 
 [[package]]
 name = "deprecation"

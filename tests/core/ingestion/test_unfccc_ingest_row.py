@@ -10,15 +10,15 @@ from app.core.ingestion.unfccc.ingest_row_unfccc import (
     CollectionIngestRow,
     UNFCCCDocumentIngestRow,
 )
-from app.db.models.law_policy.collection import CollectionFamily, CollectionOrganisation
-from app.db.models.law_policy.family import Family, FamilyEvent
-from app.db.models.law_policy.geography import GEO_INTERNATIONAL, GEO_NONE, Geography
-from app.db.models.law_policy.metadata import FamilyMetadata
+from db_client.models.law_policy.collection import CollectionFamily, CollectionOrganisation
+from db_client.models.law_policy.family import Family, FamilyEvent
+from db_client.models.law_policy.geography import GEO_INTERNATIONAL, GEO_NONE, Geography
+from db_client.models.law_policy.metadata import FamilyMetadata
 
 from tests.core.ingestion.helpers import (
     populate_for_ingest,
 )
-from app.db.models.law_policy import Collection
+from db_client.models.law_policy import Collection
 
 EVENT_DATE = datetime.now()
 

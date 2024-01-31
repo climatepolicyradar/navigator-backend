@@ -9,7 +9,7 @@ from app.core.ingestion.family import (
 )
 from app.core.ingestion.physical_document import create_physical_document_from_params
 from app.core.ingestion.processor import build_params_from_cclw
-from app.db.models.law_policy.family import (
+from db_client.models.law_policy.family import (
     DocumentStatus,
     Family,
     FamilyCategory,

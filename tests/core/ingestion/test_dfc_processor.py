@@ -2,7 +2,7 @@ from app.core.ingestion.cclw.ingest_row_cclw import CCLWDocumentIngestRow
 from app.core.ingestion.processor import get_cclw_document_ingestor
 from app.core.ingestion.reader import read
 from app.core.ingestion.utils import CCLWIngestContext, ResultType
-from app.db.models.law_policy.family import FamilyDocument
+from db_client.models.law_policy.family import FamilyDocument
 from tests.core.ingestion.helpers import (
     THREE_DOC_ROWS,
     THREE_DOC_ROWS_2ND_BAD,

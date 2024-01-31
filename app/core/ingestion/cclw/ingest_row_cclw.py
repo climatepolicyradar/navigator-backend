@@ -5,7 +5,7 @@ from pydantic import ConfigDict
 from pydantic.dataclasses import dataclass
 from app.core.ingestion.ingest_row_base import BaseIngestRow
 
-from app.db.models.law_policy import EventStatus, FamilyCategory
+from db_client.models.law_policy import EventStatus, FamilyCategory
 
 
 _REQUIRED_DOCUMENT_COLUMNS = [

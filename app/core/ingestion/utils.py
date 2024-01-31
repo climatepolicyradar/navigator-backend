@@ -2,8 +2,8 @@ import abc
 from dataclasses import dataclass
 import enum
 from typing import Any, Callable, Optional, TypeVar, cast
-from app.db.models.app import ORGANISATION_CCLW, ORGANISATION_UNFCCC
-from app.db.session import AnyModel
+from db_client.models.app import ORGANISATION_CCLW, ORGANISATION_UNFCCC
+from db_client.models import AnyModel
 from sqlalchemy.orm import Session
 
 

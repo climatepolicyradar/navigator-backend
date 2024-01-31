@@ -11,7 +11,7 @@ from app.core.ingestion.utils import (
     to_dict,
 )
 from app.data_migrations import populate_geography
-from app.db.models.law_policy.family import Family, FamilyCategory, FamilyStatus
+from db_client.models.law_policy.family import Family, FamilyCategory, FamilyStatus
 from tests.core.ingestion.helpers import (
     FAMILY_IMPORT_ID,
     add_a_slug_for_family1_and_flush,

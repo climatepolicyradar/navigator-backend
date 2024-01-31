@@ -6,7 +6,7 @@ from jwt import PyJWTError
 
 from app.core import security
 from app.db.crud.user import get_app_user_by_email
-from app.db.models.app import AppUser
+from db_client.models.app import AppUser
 from app.api.api_v1.schemas.user import JWTUser
 
 
