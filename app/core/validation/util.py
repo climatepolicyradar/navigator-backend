@@ -6,7 +6,7 @@ from typing import Any, Collection, Mapping, Optional, Sequence, Union
 
 from app.api.api_v1.schemas.document import DocumentParserInput
 from app.core.aws import S3Client, S3Document
-from app.core.ingestion.utils import Result
+from app.core.ingestion.types import Result
 from app.core.validation import PIPELINE_BUCKET
 
 _LOGGER = logging.getLogger(__file__)

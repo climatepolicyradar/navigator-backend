@@ -3,7 +3,7 @@ from typing import ClassVar
 
 from pydantic import ConfigDict
 from pydantic.dataclasses import dataclass
-from app.core.ingestion.ingest_row_base import BaseIngestRow
+from tests.core.ingestion.legacy_setup.ingest_row_base import BaseIngestRow
 
 _REQUIRED_DOCUMENT_COLUMNS = [
     "Category",

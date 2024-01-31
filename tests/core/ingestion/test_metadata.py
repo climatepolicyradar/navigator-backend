@@ -1,47 +1,12 @@
 import pytest
 from sqlalchemy.exc import NoResultFound
 from sqlalchemy.orm import Session
-from app.core.ingestion.cclw.ingest_row_cclw import CCLWDocumentIngestRow
-from app.core.ingestion.cclw.metadata import build_cclw_metadata
 from app.core.organisation import get_organisation_taxonomy
-from app.core.ingestion.utils import ResultType
 from tests.core.ingestion.helpers import (
-    get_doc_ingest_row_data,
     populate_for_ingest,
 )
 
 METADATA_KEYS = set(["topic", "hazard", "sector", "keyword", "framework", "instrument"])
-
-
-def test_build_metadata__all_fields(test_db):
-    populate_for_ingest(test_db)
-    _, taxonomy = get_organisation_taxonomy(test_db, org_id=1)
-    row = CCLWDocumentIngestRow.from_row(1, get_doc_ingest_row_data(0))
-    row.responses = ["Loss AND Damage"]
-    row.natural_hazards = ["Flood"]
-    row.sectors = ["TransPortation"]
-    row.keywords = ["Hydrogen"]
-    row.frameworks = ["adaptation"]
-    row.instruments = ["Other|Governance"]
-    row.document_type = "Act"
-
-    result, metadata = build_cclw_metadata(taxonomy, row)
-
-    assert result
-    assert result.type == ResultType.RESOLVED
-    assert (
-        result.details
-        == "Row 1 RESOLVED: {'Transport'}\nRow 1 RESOLVED: {'Adaptation'}\nRow 1 RESOLVED: {'Loss And Damage'}"
-    )
-
-    assert metadata
-    assert set(metadata.keys()).symmetric_difference(METADATA_KEYS) == set([])
-    assert metadata["topic"] == ["Loss And Damage"]
-    assert metadata["hazard"] == ["Flood"]
-    assert metadata["sector"] == ["Transport"]
-    assert metadata["keyword"] == ["Hydrogen"]
-    assert metadata["framework"] == ["Adaptation"]
-    assert metadata["instrument"] == ["Other|Governance"]
 
 
 def test_get_org_taxonomy__has_metadata_keys(test_db: Session):
@@ -62,39 +27,3 @@ def test_get_org_taxonomy__raises_on_no_organisation(test_db: Session):
 
     with pytest.raises(NoResultFound):
         get_organisation_taxonomy(test_db, org_id=ORG_ID_NOT_EXISTS)
-
-
-def test_build_metadata__error_when_sector_notfound(test_db):
-    populate_for_ingest(test_db)
-    _, taxonomy = get_organisation_taxonomy(test_db, org_id=1)
-    row = CCLWDocumentIngestRow.from_row(1, get_doc_ingest_row_data(0))
-    row.sectors = ["Medical"]
-
-    result, metadata = build_cclw_metadata(taxonomy, row)
-
-    assert result
-    assert result.type == ResultType.ERROR
-    assert (
-        result.details
-        == "Row 1 has value(s) for 'sector' that is/are unrecognised: '{'Medical'}' "
-    )
-
-    assert metadata
-    assert set(metadata.keys()).symmetric_difference(METADATA_KEYS) == set(["sector"])
-
-
-def test_build_metadata__reports_when_resolved(test_db):
-    populate_for_ingest(test_db)
-    _, taxonomy = get_organisation_taxonomy(test_db, org_id=1)
-    row = CCLWDocumentIngestRow.from_row(1, get_doc_ingest_row_data(0))
-    row.sectors = ["Building"]
-
-    result, metadata = build_cclw_metadata(taxonomy, row)
-
-    assert result
-    assert result.type == ResultType.RESOLVED
-    assert result.details == "Row 1 RESOLVED: {'Buildings'}"
-
-    assert metadata
-    assert set(metadata.keys()).symmetric_difference(METADATA_KEYS) == set([])
-    assert metadata["sector"] == ["Buildings"]

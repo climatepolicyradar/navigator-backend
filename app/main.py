@@ -12,8 +12,7 @@ from starlette.requests import Request
 import subprocess
 from contextlib import asynccontextmanager
 
-from app.api.api_v1.routers.cclw_ingest import cclw_ingest_router
-from app.api.api_v1.routers.unfccc_ingest import unfccc_ingest_router
+from app.api.api_v1.routers.pipeline_trigger import pipeline_trigger_router
 from app.api.api_v1.routers.admin import admin_document_router
 from app.api.api_v1.routers.auth import auth_router
 from app.api.api_v1.routers.documents import documents_router
@@ -131,8 +130,7 @@ async def root():
 
 # Create an admin router that is a combination of:
 admin_router = APIRouter()
-admin_router.include_router(cclw_ingest_router)
-admin_router.include_router(unfccc_ingest_router)
+admin_router.include_router(pipeline_trigger_router)
 admin_router.include_router(admin_document_router)
 
 # App Routers

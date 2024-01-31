@@ -2,36 +2,36 @@ import logging
 from typing import Any, Callable, TypeVar, cast
 
 from sqlalchemy.orm import Session
-from app.core.ingestion.collection import (
+from tests.core.ingestion.legacy_setup.collection import (
     create_collection,
     handle_cclw_collection_and_link,
     handle_link_collection_to_family,
 )
-from app.core.ingestion.cclw.event import family_event_from_row
-from app.core.ingestion.family import handle_family_from_params
-from app.core.ingestion.cclw.ingest_row_cclw import (
+from tests.core.ingestion.legacy_setup.cclw.event import family_event_from_row
+from tests.core.ingestion.legacy_setup.family import handle_family_from_params
+from tests.core.ingestion.legacy_setup.cclw.ingest_row_cclw import (
     CCLWDocumentIngestRow,
     EventIngestRow,
 )
-from app.core.ingestion.cclw.metadata import add_cclw_metadata
-from app.core.ingestion.ingest_row_base import BaseIngestRow
-from app.core.ingestion.metadata import Taxonomy
-from app.core.ingestion.params import IngestParameters
-from app.core.ingestion.unfccc.event import create_event_from_row
-from app.core.ingestion.unfccc.ingest_row_unfccc import (
+from tests.core.ingestion.legacy_setup.cclw.metadata import add_cclw_metadata
+from tests.core.ingestion.legacy_setup.ingest_row_base import BaseIngestRow
+from tests.core.ingestion.legacy_setup.metadata import Taxonomy
+from tests.core.ingestion.legacy_setup.params import IngestParameters
+from tests.core.ingestion.legacy_setup.unfccc.event import create_event_from_row
+from tests.core.ingestion.legacy_setup.unfccc.ingest_row_unfccc import (
     CollectionIngestRow,
     UNFCCCDocumentIngestRow,
 )
-from app.core.ingestion.unfccc.metadata import add_unfccc_metadata
+from tests.core.ingestion.legacy_setup.unfccc.metadata import add_unfccc_metadata
 from app.core.organisation import get_organisation_taxonomy
-from app.core.ingestion.utils import (
+from tests.core.ingestion.legacy_setup.utils import (
     CCLWIngestContext,
     IngestContext,
     Result,
     ResultType,
     UNFCCCIngestContext,
 )
-from app.core.ingestion.validator import (
+from tests.core.ingestion.legacy_setup.validator import (
     validate_cclw_document_row,
     validate_unfccc_document_row,
 )

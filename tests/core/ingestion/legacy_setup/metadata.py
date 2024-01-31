@@ -1,22 +1,11 @@
 from typing import Any, Mapping, Sequence, Union
 
-from pydantic.dataclasses import dataclass
-from pydantic.config import ConfigDict
+from app.core.ingestion.types import Taxonomy
 
-from app.core.ingestion.match import match_unknown_value
-from app.core.ingestion.utils import Result, ResultType
-
-
-@dataclass(config=ConfigDict(validate_assignment=True, extra="forbid"))
-class TaxonomyEntry:
-    """Details a single taxonomy field"""
-
-    allow_blanks: bool
-    allowed_values: Sequence[str]
-    allow_any: bool = False
+from tests.core.ingestion.legacy_setup.match import match_unknown_value
+from tests.core.ingestion.legacy_setup.utils import Result, ResultType
 
 
-Taxonomy = Mapping[str, TaxonomyEntry]
 MetadataJson = Mapping[str, Union[str, Sequence[str]]]
 
 

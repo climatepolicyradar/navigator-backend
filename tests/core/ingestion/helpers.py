@@ -1,5 +1,5 @@
-import csv
-from io import StringIO
+from sqlalchemy.orm import Session
+
 from app.data_migrations import (
     populate_document_role,
     populate_document_variant,
@@ -9,128 +9,14 @@ from app.data_migrations import (
     populate_taxonomy,
     populate_language,
 )
-from app.db.models.law_policy.family import Slug
 
-THREE_DOC_ROWS = """ID,Document ID,CCLW Description,Part of collection?,Create new family/ies?,Collection ID,Collection name,Collection summary,Document title,Family name,Family summary,Family ID,Document role,Applies to ID,Geography ISO,Documents,Category,Events,Sectors,Instruments,Frameworks,Responses,Natural Hazards,Document Type,Document variant,Year,Language,Keywords,Geography,Parent Legislation,Comment,CPR Document ID,CPR Family ID,CPR Collection ID,CPR Family Slug,CPR Document Slug,CPR Document Status
-1001,0,Test1,FALSE,FALSE,N/A,Collection1,CollectionSummary1,Title1,Fam1,Summary1,,MAIN,,DZA,http://place1|en,executive,02/02/2014|Law passed,Energy,,,Mitigation,,Order,,,,Energy Supply,Algeria,,,CCLW.executive.1001.0,CCLW.family.1001.0,CPR.Collection.1,FamSlug1,DocSlug1,PUBLISHED
-1002,0,Test2,FALSE,FALSE,N/A,N/A,N/A,Title2,Fam2,Summary2,,MAIN,,DZA,http://place2|en,executive,28/04/2013|Law passed||,Energy;LULUCF;Social development;Transportation;Urban;Waste,"Processes, plans and strategies|Governance",Adaptation;Mitigation,Adaptation;Mitigation,,Plan,,,,Adaptation;Energy Supply;Energy Demand;Redd+ And Lulucf;Transportation,Algeria,,,CCLW.executive.1002.0,CCLW.family.1002.0,N/A,FamSlug2,DocSlug2,PUBLISHED
-1003,0,Test3,FALSE,FALSE,N/A,N/A,N/A,Title3,Fam3,Summary3,,MAIN,,DZA,http://place3,executive,08/12/2011|Law passed,Energy,Subsidies|Economic,,Mitigation,,Decree,,,,Research And Development;Energy Supply,Algeria,,,CCLW.executive.1003.0,CCLW.family.1003.0,N/A,FamSlug3,DocSlug3,PUBLISHED
-"""
-
-THREE_DOC_ROWS_2ND_BAD = """ID,Document ID,CCLW Description,Part of collection?,Create new family/ies?,Collection ID,Collection name,Collection summary,Document title,Family name,Family summary,Family ID,Document role,Applies to ID,Geography ISO,Documents,Category,Events,Sectors,Instruments,Frameworks,Responses,Natural Hazards,Document Type,Document variant,Year,Language,Keywords,Geography,Parent Legislation,Comment,CPR Document ID,CPR Family ID,CPR Collection ID,CPR Family Slug,CPR Document Slug,CPR Document Status
-1001,0,Test1,FALSE,FALSE,N/A,Collection1,CollectionSummary1,Title1,Fam1,Summary1,,MAIN,,DZA,http://place1|en,executive,02/02/2014|Law passed,Energy,,,Mitigation,,Order,,,,Energy Supply,Algeria,,,CCLW.executive.1001.0,CCLW.family.1001.0,CPR.Collection.1,FamSlug1,DocSlug1,PUBLISHED
-1002,0,Test2,FALSE,FALSE,N/A,N/A,N/A,Title2,Fam2,Summary2,,MAIN,,DZA,http://place2|en;http://place2|fr,executive,28/04/2013|Law passed||,Energy;LULUCF;Social development;Transportation;Urban;Waste,"Processes, plans and strategies|Governance",Adaptation;Mitigation,Adaptation;Mitigation,,Plan,,,,Adaptation;Energy Supply;Energy Demand;Redd+ And Lulucf;Transportation,Algeria,,,CCLW.executive.1002.0,CCLW.family.1002.0,N/A,FamSlug2,DocSlug2,PUBLISHED
-1003,0,Test3,FALSE,FALSE,N/A,N/A,N/A,Title3,Fam3,Summary3,,MAIN,,DZA,http://place3,executive,08/12/2011|Law passed,Energy,Subsidies|Economic,,Mitigation,,Decree,,,,Research And Development;Energy Supply,Algeria,,,CCLW.executive.1003.0,CCLW.family.1003.0,N/A,FamSlug3,DocSlug3,PUBLISHED
-"""
-
-THREE_DOC_ROWS_MISSING_FIELD = """ID,Document ID,CCLW Description,Part of collection?,Create new family/ies?,Collection ID,Collection name,Collection summary,Document title,Family name,Family summary,Family ID,Document role,Applies to ID,Geography ISO,Documents,Category,Events,Sectors,Instruments,Frameworks,Responses,Natural Hazards,Document Type,Document variant,Year,Language,Keywords,Geography,Parent Legislation,Comment,CPR Document ID,CPR Family ID,CPR Collection ID,CPR Family Slug,CPR Document Status
-1001,0,Test1,FALSE,FALSE,N/A,N/A,N/A,Title1,Fam1,Summary1,,MAIN,,DZA,,executive,02/02/2014|Law passed,Energy,,,Mitigation,,Order,,,Energy Supply,Algeria,,,CCLW.executive.1001.0,CCLW.family.1001.0,N/A,FamSlug1,PUBLISHED
-1002,0,Test2,FALSE,FALSE,N/A,N/A,N/A,Title2,Fam2,Summary2,,MAIN,,DZA,,executive,28/04/2013|Law passed||,Energy;LULUCF;Social development;Transportation;Urban;Waste,"Processes, plans and strategies|Governance",Adaptation;Mitigation,Adaptation;Mitigation,,Plan,,,Adaptation;Energy Supply;Energy Demand;Redd+ And Lulucf;Transportation,Algeria,,,CCLW.executive.1002.0,CCLW.family.1002.0,N/A,FamSlug2,PUBLISHED
-1003,0,Test3,FALSE,FALSE,N/A,N/A,N/A,Title3,Fam3,Summary3,,MAIN,,DZA,,executive,08/12/2011|Law passed,Energy,Subsidies|Economic,,Mitigation,,Decree,,,Research And Development;Energy Supply,Algeria,,,CCLW.executive.1003.0,CCLW.family.1003.0,N/A,FamSlug3,PUBLISHED
-"""
-
-THREE_DOC_ROWS_BAD_META = """ID,Document ID,CCLW Description,Part of collection?,Create new family/ies?,Collection ID,Collection name,Collection summary,Document title,Family name,Family summary,Family ID,Document role,Applies to ID,Geography ISO,Documents,Category,Events,Sectors,Instruments,Frameworks,Responses,Natural Hazards,Document Type,Year,Language,Keywords,Geography,Parent Legislation,Comment,CPR Document ID,CPR Family ID,CPR Collection ID,CPR Family Slug,CPR Document Slug,CPR Document Status
-1001,0,Test1,FALSE,FALSE,N/A,Collection1,CollectionSummary1,Title1,Fam1,Summary1,,MAIN,,DZA,http://place1|en;http://place2|fr,executive,02/02/2014|Law passed,Medical,,,Mitigation,,Order,,,Energy Supply,Algeria,,,CCLW.executive.1001.0,CCLW.family.1001.0,CPR.Collection.1,FamSlug1,DocSlug1,PUBLISHED
-1002,0,Test2,FALSE,FALSE,N/A,N/A,N/A,Title2,Fam2,Summary2,,MAIN,,DZA,,executive,28/04/2013|Law passed||,Energy;LULUCF;Social development;Transportation;Urban;Waste,Oboe,Adaptation;Mitigation,Adaptation;Mitigation,,Plan,,,Adaptation;Energy Supply;Energy Demand;Redd+ And Lulucf;Transportation,Algeria,,,CCLW.executive.1002.0,CCLW.family.1002.0,N/A,FamSlug2,DocSlug2,PUBLISHED
-1003,0,Test3,FALSE,FALSE,N/A,N/A,N/A,Title3,Fam3,Summary3,,MAIN,,DZA,,executive,08/12/2011|Law passed,Energy,Subsidies|Economic,,Hilarity,,Decree,,,Research And Development;Energy Supply,Algeria,,,CCLW.executive.1003.0,CCLW.family.1003.0,N/A,FamSlug3,DocSlug3,PUBLISHED
-"""
-
-BAD_MULTI_URL = """ID,Document ID,CCLW Description,Part of collection?,Create new family/ies?,Collection ID,Collection name,Collection summary,Document title,Family name,Family summary,Family ID,Document role,Applies to ID,Geography ISO,Documents,Category,Events,Sectors,Instruments,Frameworks,Responses,Natural Hazards,Document Type,Document variant,Year,Language,Keywords,Geography,Parent Legislation,Comment,CPR Document ID,CPR Family ID,CPR Collection ID,CPR Family Slug,CPR Document Slug,CPR Document Status
-1002,0,Test2,FALSE,FALSE,N/A,N/A,N/A,Title2,Fam2,Summary2,,MAIN,,DZA,http://place2|en;http://place2|fr,executive,28/04/2013|Law passed||,Energy;LULUCF;Social development;Transportation;Urban;Waste,"Processes, plans and strategies|Governance",Adaptation;Mitigation,Adaptation;Mitigation,,Plan,,,,Adaptation;Energy Supply;Energy Demand;Redd+ And Lulucf;Transportation,Algeria,,,CCLW.executive.1002.0,CCLW.family.1002.0,N/A,FamSlug2,DocSlug2,PUBLISHED
-"""
-
-ALPHABETICAL_DOC_COLUMNS = [
-    "CPR Collection ID",
-    "CPR Document ID",
-    "CPR Document Slug",
-    "CPR Document Status",
-    "CPR Family ID",
-    "CPR Family Slug",
-    "Category",
-    "Collection name",
-    "Collection summary",
-    "Document ID",
-    "Document Type",
-    "Document role",
-    "Document title",
-    "Document variant",
-    "Documents",
-    "Family name",
-    "Family summary",
-    "Frameworks",
-    "Geography",
-    "Geography ISO",
-    "ID",
-    "Instruments",
-    "Keywords",
-    "Language",
-    "Natural Hazards",
-    "Responses",
-    "Sectors",
-]
-
-SLUG_FAMILY_NAME = "FamSlug1"
-FAMILY_IMPORT_ID = "CCLW.family.1001.0"
-EVENT_IMPORT_ID = "CCLW.legislation_event.1101.0"
-DOCUMENT_TITLE = "Title1"
-DOCUMENT_IMPORT_ID = "CCLW.executive.1001.0"
-SLUG_DOCUMENT_NAME = "DocSlug1"
-COLLECTION_IMPORT_ID = "CPR.Collection.1"
-
-FIVE_EVENT_ROWS = """Id,Eventable type,Eventable Id,Eventable name,Event type,Title,Description,Date,Url,CPR Event ID,CPR Family ID,Event Status
-1101,Legislation,1001,Title1,Passed/Approved,Published,,2019-12-25,,CCLW.legislation_event.1101.0,CCLW.family.1001.0,OK
-1101,Legislation,1001,Title1,Amended,Amended,,2021-12-25,,CCLW.legislation_event.1101.1,CCLW.family.1001.0,OK
-1102,Legislation,1001,Title1,Entered Into Force,Entered into force,,2018-01-01,,CCLW.legislation_event.1102.1,CCLW.family.1001.0,DUPLICATED
-1103,Legislation,1002,Title2,Passed/Approved,Approved,,2022-06-01,,CCLW.legislation_event.1103.0,CCLW.family.1002.0,OK
-1104,Legislation,1003,Title3,Passed/Approved,launched,,2018-05-18,,CCLW.legislation_event.1104.0,CCLW.family.1003.0,OK
-"""
-
-ALPHABETICAL_EVENT_COLUMNS = [
-    "CPR Event ID",
-    "CPR Family ID",
-    "Date",
-    "Description",
-    "Event Status",
-    "Event type",
-    "Eventable Id",
-    "Eventable name",
-    "Eventable type",
-    "Id",
-    "Title",
-    "Url",
-]
-
-
-def _get_csv_row_data(num: int, contents: str) -> dict[str, str]:
-    reader = csv.DictReader(StringIO(initial_value=contents))
-    for i, row in enumerate(reader):
-        if i == num:
-            return row
-    return {}
-
-
-def get_doc_ingest_row_data(num: int, contents: str = THREE_DOC_ROWS) -> dict[str, str]:
-    """
-    Get the document ingest data at the indexed row.
-
-    :param [int] num: Index into the THREE_ROWS string
-    :param [str] contents: string to interpret as the content of a document ingest file
-    :return [dict[str, str]]: the DocumentIngestRow at this index
-    """
-    return _get_csv_row_data(num, contents)
-
-
-def get_event_ingest_row_data(
-    num: int, contents: str = FIVE_EVENT_ROWS
-) -> dict[str, str]:
-    """
-    Gets the event ingest data at the indexed row.
-
-    :param [int] num: Index into the THREE_ROWS string
-    :param [str] contents: string to interpret as the content of a document ingest file
-    :return [dict[str, str]]: the DocumentIngestRow at this index
-    """
-    return _get_csv_row_data(num, contents)
+from tests.routes.setup_search_tests import (
+    _create_family,
+    _create_family_event,
+    _create_family_metadata,
+    _create_document,
+    _create_organisation,
+)
 
 
 def populate_for_ingest(test_db):
@@ -144,15 +30,25 @@ def populate_for_ingest(test_db):
     test_db.flush()
 
 
-def add_a_slug_for_family1_and_flush(db):
-    slug = Slug(
-        name="title_adb4",
-        family_import_id=FAMILY_IMPORT_ID,
-        family_document_import_id=None,
-    )
-    db.add(slug)
-    db.flush()
-    # NOTE: Creating the Slug is part of test init,
-    #      as we need a Slug to query for the Family.
-    slug = db.query(Slug).one()
-    assert slug
+def add_family_document(test_db: Session, family_name: str):
+    new_family = {
+        "id": "id:doc_search:family_document::CCLW.executive.111.222",
+        "fields": {
+            "family_source": "CCLW",
+            "family_name": family_name,
+            "family_slug": "testfamily-1",
+            "family_category": "Executive",
+            "document_languages": ["French"],
+            "document_import_id": "CCLW.executive.111.222",
+            "family_description": "",
+            "family_geography": "CAN",
+            "family_publication_ts": "2011-08-01T00:00:00+00:00",
+            "family_import_id": "CCLW.family.111.0",
+        },
+    }
+    new_doc = {"id": "CCLW.executive.111.222.333", "fields": {}}
+    _create_organisation(test_db)
+    _create_family(test_db, new_family)
+    _create_family_event(test_db, new_family)
+    _create_family_metadata(test_db, new_family)
+    _create_document(test_db, new_doc, new_family)

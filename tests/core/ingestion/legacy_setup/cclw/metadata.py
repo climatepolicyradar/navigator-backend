@@ -1,10 +1,14 @@
 from typing import Union
 
-from app.core.ingestion.cclw.ingest_row_cclw import CCLWDocumentIngestRow
+from tests.core.ingestion.legacy_setup.cclw.ingest_row_cclw import CCLWDocumentIngestRow
 from app.db.models.law_policy.metadata import FamilyMetadata
 from sqlalchemy.orm import Session
-from app.core.ingestion.utils import Result, ResultType
-from app.core.ingestion.metadata import Taxonomy, MetadataJson, build_metadata_field
+from tests.core.ingestion.legacy_setup.utils import Result, ResultType
+from tests.core.ingestion.legacy_setup.metadata import (
+    Taxonomy,
+    MetadataJson,
+    build_metadata_field,
+)
 
 
 MAP_OF_LIST_VALUES = {

@@ -1,9 +1,11 @@
 from typing import Any, Optional, cast
 
 from sqlalchemy.orm import Session
-from app.core.ingestion.params import IngestParameters
-from app.core.ingestion.unfccc.ingest_row_unfccc import CollectionIngestRow
-from app.core.ingestion.utils import (
+from tests.core.ingestion.legacy_setup.params import IngestParameters
+from tests.core.ingestion.legacy_setup.unfccc.ingest_row_unfccc import (
+    CollectionIngestRow,
+)
+from tests.core.ingestion.legacy_setup.utils import (
     create,
     to_dict,
     update_if_changed,

@@ -1,5 +1,7 @@
 from sqlalchemy.orm import Session
-from app.core.ingestion.unfccc.ingest_row_unfccc import UNFCCCDocumentIngestRow
+from tests.core.ingestion.legacy_setup.unfccc.ingest_row_unfccc import (
+    UNFCCCDocumentIngestRow,
+)
 from app.db.models.law_policy.family import EventStatus, FamilyEvent
 
 

@@ -3,7 +3,7 @@ from typing import ClassVar, Optional
 
 from pydantic import ConfigDict
 from pydantic.dataclasses import dataclass
-from app.core.ingestion.ingest_row_base import BaseIngestRow
+from tests.core.ingestion.legacy_setup.ingest_row_base import BaseIngestRow
 
 from app.db.models.law_policy import EventStatus, FamilyCategory
 

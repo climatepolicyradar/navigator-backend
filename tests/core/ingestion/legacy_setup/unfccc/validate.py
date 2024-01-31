@@ -1,18 +1,18 @@
 from typing import cast
 from sqlalchemy.orm import Session
-from app.core.ingestion.processor import get_document_validator
-from app.core.ingestion.unfccc.ingest_row_unfccc import (
+from tests.core.ingestion.legacy_setup.processor import get_document_validator
+from tests.core.ingestion.legacy_setup.unfccc.ingest_row_unfccc import (
     CollectionIngestRow,
     UNFCCCDocumentIngestRow,
 )
-from app.core.ingestion.utils import (
+from tests.core.ingestion.legacy_setup.utils import (
     IngestContext,
     Result,
     ResultType,
     UNFCCCIngestContext,
     get_result_counts,
 )
-from app.core.ingestion.reader import read
+from tests.core.ingestion.legacy_setup.reader import read
 
 
 def validate_unfccc_csv(

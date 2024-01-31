@@ -1,10 +1,17 @@
 from typing import Union
 from sqlalchemy.orm import Session
 
-from app.core.ingestion.metadata import MetadataJson, Taxonomy, build_metadata_field
-from app.core.ingestion.utils import Result, ResultType
-from app.core.ingestion.unfccc.ingest_row_unfccc import UNFCCCDocumentIngestRow
+from tests.core.ingestion.legacy_setup.utils import Result, ResultType
+from tests.core.ingestion.legacy_setup.metadata import Taxonomy
 from app.db.models.law_policy.metadata import FamilyMetadata
+
+from tests.core.ingestion.legacy_setup.metadata import (
+    MetadataJson,
+    build_metadata_field,
+)
+from tests.core.ingestion.legacy_setup.unfccc.ingest_row_unfccc import (
+    UNFCCCDocumentIngestRow,
+)
 
 
 MAP_OF_LIST_VALUES = {

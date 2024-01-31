@@ -2,8 +2,8 @@ from logging import getLogger
 from typing import Any
 
 from sqlalchemy.orm import Session
-from app.core.ingestion.params import IngestParameters
-from app.core.ingestion.utils import to_dict
+from tests.core.ingestion.legacy_setup.params import IngestParameters
+from tests.core.ingestion.legacy_setup.utils import to_dict
 
 from app.db.models.document import PhysicalDocument
 from app.db.models.document.physical_document import (

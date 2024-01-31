@@ -2,13 +2,13 @@ from typing import Any, Optional, cast
 
 from sqlalchemy.orm import Session
 
-from app.core.ingestion.params import IngestParameters
+from tests.core.ingestion.legacy_setup.params import IngestParameters
 from app.core.organisation import get_organisation_taxonomy
-from app.core.ingestion.physical_document import (
+from tests.core.ingestion.legacy_setup.physical_document import (
     create_physical_document_from_params,
     update_physical_document_languages,
 )
-from app.core.ingestion.utils import (
+from tests.core.ingestion.legacy_setup.utils import (
     create,
     get_or_create,
     to_dict,
