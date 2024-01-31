@@ -9,37 +9,32 @@ RUN apt update && \
 
 # Install pip and poetry
 RUN pip install --no-cache --upgrade pip
-# RUN pip install --no-cache "poetry==1.3.2"
+RUN pip install --no-cache "poetry==1.3.2"
 
 # Create layer for dependencies
 # TODO: refine this as part of CI & test updates
-# COPY poetry.lock pyproject.toml ./
+COPY poetry.lock pyproject.toml ./
 # Create a requirements file so we can install with minimal caching
 # See: https://github.com/python-poetry/poetry-plugin-export
-# RUN poetry export --with dev \
-#     | grep -v '\--hash' \
-#     | grep -v '^torch' \
-#     | grep -v '^triton' \
-#     | grep -v '^nvidia' \
-#     | sed -e 's/ \\$//' \
-#     | sed -e 's/^[[:alpha:]]\+\[\([[:alpha:]]\+\[[[:alpha:]]\+\]\)\]/\1/' \
-#     > requirements.txt
+RUN poetry export --with dev \
+    | grep -v '\--hash' \
+    | grep -v '^torch' \
+    | grep -v '^triton' \
+    | grep -v '^nvidia' \
+    | sed -e 's/ \\$//' \
+    | sed -e 's/^[[:alpha:]]\+\[\([[:alpha:]]\+\[[[:alpha:]]\+\]\)\]/\1/' \
+    > requirements.txt
 
 # Install torch-cpu with pip
-RUN pip3 install --no-cache "torch==2.0.0" "torchvision==0.15.1" -f https://download.pytorch.org/whl/torch_stable.html
+RUN pip3 install --no-cache "torch==2.0.0+cpu" "torchvision==0.15.1+cpu" -f https://download.pytorch.org/whl/torch_stable.html
 
 # Install application requirements
-# RUN pip3 install --no-cache -r requirements.txt
+RUN pip3 install --no-cache -r requirements.txt
 
 # Download the sentence transformer model
-# RUN mkdir /models
-# RUN mkdir /secrets
-# RUN python3 -c "from sentence_transformers import SentenceTransformer; SentenceTransformer('msmarco-distilbert-dot-v5', cache_folder='/models')"
-
-# Requirements
-RUN pip install poetry
-COPY poetry.lock pyproject.toml ./
-RUN poetry config virtualenvs.create false && poetry install --no-cache
+RUN mkdir /models
+RUN mkdir /secrets
+RUN python3 -c "from sentence_transformers import SentenceTransformer; SentenceTransformer('msmarco-distilbert-dot-v5', cache_folder='/models')"
 
 # Copy files to image
 COPY alembic ./alembic
