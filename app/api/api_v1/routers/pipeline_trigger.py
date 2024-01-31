@@ -26,7 +26,7 @@ from app.db.session import get_db
 
 _LOGGER = logging.getLogger(__name__)
 
-cclw_ingest_router = r = APIRouter()
+pipeline_trigger_router = r = APIRouter()
 
 
 def _start_ingest(

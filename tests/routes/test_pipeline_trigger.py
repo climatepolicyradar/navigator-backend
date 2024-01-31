@@ -21,7 +21,9 @@ def test_start_ingest(
     test_db,
     mocker,
 ):
-    mock_start_import = mocker.patch("app.api.api_v1.routers.cclw_ingest._start_ingest")
+    mock_start_import = mocker.patch(
+        "app.api.api_v1.routers.pipeline_trigger._start_ingest"
+    )
 
     populate_geography(test_db)
     populate_taxonomy(test_db)
