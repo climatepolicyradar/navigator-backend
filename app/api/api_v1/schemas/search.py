@@ -25,13 +25,6 @@ class SortField(str, Enum):
     TITLE = "title"
 
 
-class JitQuery(str, Enum):
-    """Flag used for determining if a jit query is to be used."""
-
-    ENABLED = "enabled"
-    DISABLED = "disabled"
-
-
 class FilterField(str, Enum):
     """Filter field for use building OpenSearch query body."""
 
@@ -77,45 +70,6 @@ class SearchRequestBody(BaseModel):
 
 class SearchResponseDocumentPassage(BaseModel):
     """A Document passage match returned by the search API endpoint."""
-
-    text: str
-    text_block_id: str
-    text_block_page: Optional[int] = None
-    text_block_coords: Optional[Sequence[Coord]] = None
-
-
-class OpenSearchResponseMatchBase(BaseModel):
-    """Describes matches returned by an OpenSearch query"""
-
-    document_name: str
-    document_geography: str
-    document_description: str
-    document_sectors: Sequence[str]
-    document_source: str
-    document_id: str  # Changed semantics to be import_id, not database id
-    document_date: str
-    document_type: str
-    document_source_url: Optional[str] = None
-    document_cdn_object: Optional[str] = None
-    document_category: str
-    document_content_type: Optional[str] = None
-    document_slug: str
-
-
-class OpenSearchResponseNameMatch(OpenSearchResponseMatchBase):
-    """Describes matches returned by OpenSearch on Document name."""
-
-    for_search_document_name: str
-
-
-class OpenSearchResponseDescriptionMatch(OpenSearchResponseMatchBase):
-    """Describes matches returned by OpenSearch on Document description."""
-
-    for_search_document_description: str
-
-
-class OpenSearchResponsePassageMatch(OpenSearchResponseMatchBase):
-    """Describes matches returned by OpenSearch on Document passage."""
 
     text: str
     text_block_id: str
