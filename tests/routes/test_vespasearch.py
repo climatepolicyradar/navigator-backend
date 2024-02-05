@@ -19,8 +19,8 @@ from cpr_data_access.models.search import SearchParameters
 from app.api.api_v1.routers import search
 from app.core.lookups import get_country_slug_from_country_code
 
-from app.db.models.law_policy import Geography
-from app.db.models.law_policy.family import FamilyDocument
+from db_client.models.law_policy import Geography
+from db_client.models.law_policy.family import FamilyDocument
 
 
 SEARCH_ENDPOINT = "/api/v1/searches"

@@ -3,7 +3,7 @@ from sqlalchemy import Column
 
 from sqlalchemy.orm import Session
 
-from app.db.session import AnyModel
+from db_client.models import AnyModel
 
 
 def has_rows(db: Session, table: AnyModel) -> bool:

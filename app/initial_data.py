@@ -9,7 +9,7 @@ import requests
 from sqlalchemy.exc import IntegrityError
 
 from app.core.security import get_password_hash
-from app.db.models.app import AppUser
+from db_client.models.app import AppUser
 from app.db.session import SessionLocal
 
 from app.data_migrations import (

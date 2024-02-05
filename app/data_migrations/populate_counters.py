@@ -1,6 +1,6 @@
 from sqlalchemy.orm import Session
 
-from app.db.models.app.counters import (
+from db_client.models.app.counters import (
     ORGANISATION_CCLW,
     ORGANISATION_UNFCCC,
     EntityCounter,

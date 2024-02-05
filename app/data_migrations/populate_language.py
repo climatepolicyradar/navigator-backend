@@ -2,7 +2,7 @@ import json
 
 from sqlalchemy.orm import Session
 
-from app.db.models.document.physical_document import Language
+from db_client.models.document.physical_document import Language
 from .utils import has_rows, load_list
 
 

@@ -1,7 +1,7 @@
 from typing import Union
 
 from tests.core.ingestion.legacy_setup.cclw.ingest_row_cclw import CCLWDocumentIngestRow
-from app.db.models.law_policy.metadata import FamilyMetadata
+from db_client.models.law_policy.metadata import FamilyMetadata
 from sqlalchemy.orm import Session
 from tests.core.ingestion.legacy_setup.utils import Result, ResultType
 from tests.core.ingestion.legacy_setup.metadata import (

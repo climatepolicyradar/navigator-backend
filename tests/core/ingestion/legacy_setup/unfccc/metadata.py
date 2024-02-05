@@ -3,7 +3,7 @@ from sqlalchemy.orm import Session
 
 from tests.core.ingestion.legacy_setup.utils import Result, ResultType
 from tests.core.ingestion.legacy_setup.metadata import Taxonomy
-from app.db.models.law_policy.metadata import FamilyMetadata
+from db_client.models.law_policy.metadata import FamilyMetadata
 
 from tests.core.ingestion.legacy_setup.metadata import (
     MetadataJson,

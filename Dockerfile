@@ -26,7 +26,7 @@ RUN poetry export --with dev \
     > requirements.txt
 
 # Install torch-cpu with pip
-RUN pip3 install --no-cache "torch==2.0.0" "torchvision==0.15.1" -f https://download.pytorch.org/whl/torch_stable.html
+RUN pip3 install --no-cache "torch==2.0.0+cpu" "torchvision==0.15.1+cpu" -f https://download.pytorch.org/whl/torch_stable.html
 
 # Install application requirements
 RUN pip3 install --no-cache -r requirements.txt

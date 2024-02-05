@@ -2,10 +2,10 @@ from typing import Callable
 from sqlalchemy.orm import Session
 from app.data_migrations.taxonomy_cclw import get_cclw_taxonomy
 from app.data_migrations.taxonomy_unf3c import get_unf3c_taxonomy
-from app.db.models.app import ORGANISATION_CCLW, ORGANISATION_UNFCCC
+from db_client.models.app import ORGANISATION_CCLW, ORGANISATION_UNFCCC
 
-from app.db.models.app.users import Organisation
-from app.db.models.law_policy.metadata import MetadataOrganisation, MetadataTaxonomy
+from db_client.models.app.users import Organisation
+from db_client.models.law_policy.metadata import MetadataOrganisation, MetadataTaxonomy
 
 
 def populate_org_taxonomy(

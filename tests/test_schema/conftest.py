@@ -2,7 +2,7 @@ import contextlib
 
 import pytest
 from app.core import config
-from app.db.session import Base
+from db_client.models import Base
 from tests.test_schema.helpers import clean_tables
 from sqlalchemy import create_engine
 from sqlalchemy.orm import sessionmaker
