@@ -26,7 +26,7 @@ RUN poetry export --with dev \
     > requirements.txt
 
 # Install torch-cpu with pip
-RUN pip3 install --no-cache "torch==2.0.0+cpu" "torchvision==0.15.1+cpu" -f https://download.pytorch.org/whl/torch_stable.html
+RUN pip3 install --no-cache "torch==2.0.0" "torchvision==0.15.1" -f https://download.pytorch.org/whl/torch_stable.html
 
 # Install application requirements
 RUN pip3 install --no-cache -r requirements.txt
@@ -37,8 +37,6 @@ RUN mkdir /secrets
 RUN python3 -c "from sentence_transformers import SentenceTransformer; SentenceTransformer('msmarco-distilbert-dot-v5', cache_folder='/models')"
 
 # Copy files to image
-COPY alembic ./alembic
-COPY alembic.ini .
 COPY app ./app
 COPY scripts ./scripts
 COPY LICENSE.md .
