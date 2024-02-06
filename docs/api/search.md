@@ -35,8 +35,8 @@ There is **_no_** authentication required for using this interface. 
 
 The search endpoint behaves in two distinct ways:
 
-1. In “Browse” mode - this is when an empty`  query_string  `is provided. This mode does not use Opensearch, rather queries the structured data (postgresql) directly, using the other supplied filter fields.
-2. In “Search” mode - when a `query_string `is provided. A query is constructed sent to Opensearch and the response is augmented with the structured data before being returned in the same response scheme.
+1. In “Browse” mode - this is when an empty`  query_string  `is provided. This mode does not use Vespa, rather queries the structured data (postgresql) directly, using the other supplied filter fields.
+2. In “Search” mode - when a `query_string `is provided. A query is constructed sent to Vespa and the response is augmented with the structured data before being returned in the same response scheme.
 
 
 ## **Request Payload**
@@ -130,7 +130,7 @@ The total number of families that meet the search criteria.
 
 #### query_time_ms
 
-The time Opensearch spent performing the query.
+The time Vespa spent performing the query.
 
 #### total_time_ms
 

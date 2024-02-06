@@ -12,21 +12,21 @@ Coord = tuple[float, float]
 
 
 class SortOrder(str, Enum):
-    """Sort ordering for use building OpenSearch query body."""
+    """Sort ordering for use building query body."""
 
     ASCENDING = "asc"
     DESCENDING = "desc"
 
 
 class SortField(str, Enum):
-    """Sort field for use building OpenSearch query body."""
+    """Sort field for use building query body."""
 
     DATE = "date"
     TITLE = "title"
 
 
 class FilterField(str, Enum):
-    """Filter field for use building OpenSearch query body."""
+    """Filter field for use building query body."""
 
     SOURCE = "sources"
     COUNTRY = "countries"
