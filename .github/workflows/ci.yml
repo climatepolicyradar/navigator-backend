@@ -65,15 +65,6 @@ jobs:
       - name: Run backend search tests for vespa
         run:  make test_search
 
-      - name: Run backend search tests for opensearch
-        run:  make test_opensearch
-     
-      - name: Browse Benchmark opensearch - response times in ms
-        run: cat benchmark_browse.txt
-
-      - name: Search Benchmark opensearch - response times in ms
-        run: cat benchmark_search.txt
-      
       - name: Log Dump
         if:   always()
         run:  docker-compose logs
