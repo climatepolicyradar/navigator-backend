@@ -11,12 +11,12 @@ from sqlalchemy import create_engine
 from sqlalchemy.orm import sessionmaker
 from sqlalchemy_utils import create_database, database_exists, drop_database
 
+from db_client.models.app import AppUser
+from db_client.models import Base
+
 from app.core import security
 from app.core.aws import S3Client, get_s3_client
-from app.core.search import OpenSearchConfig, OpenSearchConnection
-from db_client.models.app import AppUser
 from app.db.session import get_db
-from db_client.models import Base
 from app.main import app
 
 
@@ -49,20 +49,6 @@ def test_s3_client(s3_document_bucket_names):
         )
 
         yield s3_client
-
-
-@pytest.fixture(scope="session")
-def test_opensearch():
-    """Provide a test OpenSearch DB"""
-    connection = OpenSearchConnection(
-        OpenSearchConfig(
-            url=os.environ["OPENSEARCH_URL"],
-            username=os.environ["OPENSEARCH_USER"],
-            password=os.environ["OPENSEARCH_PASSWORD"],
-            index_prefix=f"{os.environ['OPENSEARCH_INDEX_PREFIX']}_test",
-        )
-    )
-    yield connection
 
 
 @pytest.fixture(scope="session")

@@ -34,23 +34,13 @@ from app.core.lookups import get_countries_for_region, get_country_by_slug
 from app.core.search import (
     ENCODER,
     FilterField,
-    OpenSearchConfig,
-    OpenSearchConnection,
-    OpenSearchQueryConfig,
     create_vespa_search_params,
     process_result_into_csv,
     process_vespa_search_response,
 )
-from app.db.crud.document import DocumentExtraCache
 from app.db.session import get_db
 
 _LOGGER = logging.getLogger(__name__)
-
-# Use configured environment for router
-_OPENSEARCH_CONFIG = OpenSearchConfig()
-_OPENSEARCH_CONNECTION = OpenSearchConnection(opensearch_config=_OPENSEARCH_CONFIG)
-_OPENSEARCH_INDEX_CONFIG = OpenSearchQueryConfig()
-_DOCUMENT_EXTRA_INFO_CACHE = DocumentExtraCache()
 
 _VESPA_CONNECTION = VespaSearchAdapter(
     instance_url=VESPA_URL,
@@ -78,32 +68,22 @@ def _search_request(
             req=_get_browse_args_from_search_request_body(search_body),
         )
     else:
-        if use_vespa:
-            data_access_search_params = create_vespa_search_params(db, search_body)
-            # TODO: we may wish to cache responses to improve pagination performance
-            try:
-                data_access_search_response = _VESPA_CONNECTION.search(
-                    parameters=data_access_search_params
-                )
-            except QueryError:
-                raise HTTPException(
-                    status_code=status.HTTP_400_BAD_REQUEST, detail="Invalid Query"
-                )
-            return process_vespa_search_response(
-                db,
-                data_access_search_response,
-                limit=search_body.limit,
-                offset=search_body.offset,
-            ).increment_pages()
-        else:
-            return _OPENSEARCH_CONNECTION.query_families(
-                search_request_body=search_body,
-                opensearch_internal_config=_OPENSEARCH_INDEX_CONFIG,
-                document_extra_info=_DOCUMENT_EXTRA_INFO_CACHE.get_document_extra_info(
-                    db
-                ),
-                preference="default_search_preference",
-            ).increment_pages()
+        data_access_search_params = create_vespa_search_params(db, search_body)
+        # TODO: we may wish to cache responses to improve pagination performance
+        try:
+            data_access_search_response = _VESPA_CONNECTION.search(
+                parameters=data_access_search_params
+            )
+        except QueryError:
+            raise HTTPException(
+                status_code=status.HTTP_400_BAD_REQUEST, detail="Invalid Query"
+            )
+        return process_vespa_search_response(
+            db,
+            data_access_search_response,
+            limit=search_body.limit,
+            offset=search_body.offset,
+        ).increment_pages()
 
 
 @search_router.post("/searches")
