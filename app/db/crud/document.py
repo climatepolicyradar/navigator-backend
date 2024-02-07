@@ -4,9 +4,9 @@ Functions to support the documents endpoints
 old functions (non DFC) are moved to the deprecated_documents.py file.
 """
 import logging
-from datetime import datetime, timedelta
 import os
-from typing import Mapping, Optional, Sequence, Tuple, cast
+from datetime import datetime
+from typing import Optional, Sequence, cast
 
 from sqlalchemy.orm import Session
 
@@ -251,62 +251,3 @@ def _get_documents_for_family_import_id(
         )
 
     return [make_response(d) for d in db_documents]
-
-
-class DocumentExtraCache:
-    """
-    A simple cache for document -> family info mapping details.
-
-    TODO: Replace this simple per-process cache mechanism with a shared cache.
-    """
-
-    def __init__(self):
-        self._ttl = timedelta(milliseconds=_DOCUMENT_CACHE_TTL)
-        self._timestamp = datetime.utcnow() - self._ttl
-        self._doc_extra_info: Mapping[str, Mapping[str, str]] = {}
-
-    def get_document_extra_info(self, db: Session) -> Mapping[str, Mapping[str, str]]:
-        """
-        Get a map from document_id to useful properties for processing.
-
-        :param [Session] db: Database session to query
-        :return [Mapping[str, Mapping[str, str]]]: A mapping from document import_id to
-            document slug, family slug & family import id details.
-        """
-        if datetime.utcnow() - self._timestamp >= self._ttl:
-            self._doc_extra_info = self._query_document_extra_info(db)
-            self._timestamp = datetime.utcnow()
-        return self._doc_extra_info
-
-    def _query_document_extra_info(
-        self, db: Session
-    ) -> Mapping[str, Mapping[str, str]]:
-        document_data: list[Tuple[FamilyDocument, Family]] = (
-            db.query(FamilyDocument, Family)
-            .join(Family, FamilyDocument.family_import_id == Family.import_id)
-            .filter(FamilyDocument.document_status == DocumentStatus.PUBLISHED)
-            .all()
-        )
-        return {
-            family_document.import_id: {
-                "slug": family_document.slugs[-1].name,
-                "title": family_document.physical_document.title,
-                "family_slug": family.slugs[-1].name,
-                "family_import_id": family.import_id,
-                "family_title": family.title,
-                "family_description": family.description,
-                "family_category": family.family_category,
-                "family_status": family.family_status,
-                "family_published_date": (
-                    family.published_date.isoformat()
-                    if family.published_date is not None
-                    else ""
-                ),
-                "family_last_updated_date": (
-                    family.last_updated_date.isoformat()
-                    if family.last_updated_date is not None
-                    else ""
-                ),
-            }
-            for (family_document, family) in document_data
-        }
