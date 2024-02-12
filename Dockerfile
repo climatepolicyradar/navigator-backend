@@ -44,7 +44,6 @@ COPY README.md .
 COPY startup.sh .
 
 # ENV
-ENV ALEMBIC_FILES_LOCATION=/usr/local/lib/python3.9/site-packages/db_client
 ENV PYTHONPATH=/cpr-backend
 
 CMD [ "/bin/bash", "/cpr-backend/startup.sh" ]

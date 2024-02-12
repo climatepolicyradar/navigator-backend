@@ -68,8 +68,7 @@ _openapi_url = "/api" if ENABLE_API_DOCS else None
 async def lifespan(app_: FastAPI):
     """Run startup and shutdown events."""
     logger.info("Starting up...")
-    alembic_files_location = os.environ["ALEMBIC_FILES_LOCATION"]
-    run_migrations(alembic_files_location, engine)
+    run_migrations(engine)
     yield
     logger.info("Shutting down...")
 
