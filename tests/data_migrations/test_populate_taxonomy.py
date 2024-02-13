@@ -1,5 +1,5 @@
 from app.core.organisation import get_organisation_taxonomy_by_name
-from app.data_migrations import populate_event_type, populate_taxonomy
+from db_client.initial_data import populate_event_type, populate_taxonomy
 
 
 def test_populate_taxonomy_cclw_no_transport(

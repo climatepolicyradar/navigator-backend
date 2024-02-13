@@ -1,6 +1,6 @@
 from typing import Any, Mapping, Sequence, Union
 
-from app.core.ingestion.types import Taxonomy
+from db_client.models.law_policy.taxonomy_entry import Taxonomy
 
 from tests.core.ingestion.legacy_setup.match import match_unknown_value
 from tests.core.ingestion.legacy_setup.utils import Result, ResultType

@@ -6,8 +6,10 @@ from typing import Any, Collection, Mapping, Optional, Sequence, Union
 
 from app.api.api_v1.schemas.document import DocumentParserInput
 from app.core.aws import S3Client, S3Document
-from app.core.ingestion.types import Result
 from app.core.validation import PIPELINE_BUCKET
+
+from dataclasses import dataclass
+import enum
 
 _LOGGER = logging.getLogger(__file__)
 
@@ -64,6 +66,22 @@ def write_documents_to_s3(
         s3_object_key=documents_object_key,
         bytes_content=bytes_content,
     )
+
+
+class ResultType(str, enum.Enum):
+    """Result type used when processing metadata values."""
+
+    OK = "Ok"
+    RESOLVED = "Resolved"
+    ERROR = "Error"
+
+
+@dataclass
+class Result:
+    """Augmented result class for reporting extra details about processed metadata."""
+
+    type: ResultType = ResultType.OK
+    details: str = ""
 
 
 def write_ingest_results_to_s3(

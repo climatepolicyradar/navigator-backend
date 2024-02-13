@@ -1,4 +1,4 @@
-from app.data_migrations import populate_counters
+from db_client.data_migrations import populate_counters
 from db_client.models.app.counters import CountedEntity, EntityCounter
 
 

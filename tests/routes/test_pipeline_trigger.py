@@ -1,4 +1,4 @@
-from app.data_migrations import (
+from db_client.data_migrations import (
     populate_document_role,
     populate_document_type,
     populate_document_variant,

@@ -1,5 +1,5 @@
 import pytest
-from app.data_migrations.populate_geo_statistics import to_float
+from db_client.data_migrations.populate_geo_statistics import to_float
 
 
 @pytest.mark.unit

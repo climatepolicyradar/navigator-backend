@@ -6,72 +6,10 @@ from sys import argv
 from time import sleep
 import requests
 
-from sqlalchemy.exc import IntegrityError
+from db_client.initial_data import populate_initial_data
 
-from app.core.security import get_password_hash
-from db_client.models.app import AppUser
 from app.db.session import SessionLocal
-
-from app.data_migrations import (
-    populate_counters,
-    populate_document_type,
-    populate_document_role,
-    populate_document_variant,
-    populate_event_type,
-    populate_geo_statistics,
-    populate_geography,
-    populate_language,
-    populate_taxonomy,
-)
-
-
-def run_data_migrations(db):
-    """Populate lookup tables with standard values"""
-    populate_document_type(db)
-    populate_document_role(db)
-    populate_document_variant(db)
-    populate_event_type(db)
-    populate_geography(db)
-    populate_language(db)
-    populate_taxonomy(db)
-    populate_counters(db)
-
-    db.flush()  # Geography data is used by geo-stats so flush
-
-    populate_geo_statistics(db)
-    # TODO - framework, keyword, instrument, hazard
-
-
-def create_user(db, name, email, password):
-    with db.begin_nested():
-        db_user = AppUser(
-            email=email,
-            name=name,
-            hashed_password=get_password_hash(password),
-            is_superuser=True,
-        )
-        db.add(db_user)
-        db.flush
-
-
-def create_superuser(db) -> None:
-    superuser_email = os.getenv("SUPERUSER_EMAIL")
-    try:
-        create_user(
-            db, "CPR Super User", superuser_email, os.getenv("SUPERUSER_PASSWORD")
-        )
-    except IntegrityError:
-        print(
-            f"Skipping - superuser already exists with email/username {superuser_email}"
-        )
-
-
-def populate_initial_data(db):
-    print("Creating superuser...")
-    create_superuser(db)
-
-    print("Running data migrations...")
-    run_data_migrations(db)
+from app.core.security import get_password_hash
 
 
 def wait_for_app():
@@ -102,6 +40,6 @@ if __name__ == "__main__":
         wait_for_app()
 
     db = SessionLocal()
-    populate_initial_data(db)
+    populate_initial_data(db, get_password_hash)
     db.commit()
     print("Done creating initial data")
