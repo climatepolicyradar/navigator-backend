@@ -11,12 +11,10 @@ repos:
     hooks:
       - id: black
         language_version: python3
-        exclude: alembic/versions
   - repo: https://github.com/charliermarsh/ruff-pre-commit
     rev: 'v0.0.246'
     hooks:
       - id: ruff
-        exclude: alembic/versions
   - repo: local
     hooks:
       - id: pyright

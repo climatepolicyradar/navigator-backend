@@ -19,14 +19,14 @@ from tests.core.ingestion.legacy_setup.utils import (
 )
 from tests.core.ingestion.legacy_setup.unfccc.metadata import build_unfccc_metadata
 from app.core.validation import IMPORT_ID_MATCHER
-from app.db.models.law_policy.family import (
+from db_client.models.law_policy.family import (
     FamilyDocumentRole,
     FamilyDocumentType,
     Variant,
     Geography,
 )
-from app.db.models.law_policy.geography import GEO_INTERNATIONAL, GEO_NONE
-from app.db.session import Base
+from db_client.models.law_policy.geography import GEO_INTERNATIONAL, GEO_NONE
+from db_client.models import Base
 
 DbTable = Base
 CheckResult = Result

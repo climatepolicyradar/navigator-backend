@@ -1,4 +1,4 @@
-from app.db.session import Base
+from db_client.models import Base
 from sqlalchemy.orm import class_mapper
 
 _AnyModel = Base

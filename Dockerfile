@@ -37,13 +37,13 @@ RUN mkdir /secrets
 RUN python3 -c "from sentence_transformers import SentenceTransformer; SentenceTransformer('msmarco-distilbert-dot-v5', cache_folder='/models')"
 
 # Copy files to image
-COPY alembic ./alembic
-COPY alembic.ini .
 COPY app ./app
 COPY scripts ./scripts
 COPY LICENSE.md .
 COPY README.md .
 COPY startup.sh .
 
+# ENV
 ENV PYTHONPATH=/cpr-backend
+
 CMD [ "/bin/bash", "/cpr-backend/startup.sh" ]

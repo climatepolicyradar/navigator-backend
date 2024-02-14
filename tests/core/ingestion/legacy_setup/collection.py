@@ -11,8 +11,8 @@ from tests.core.ingestion.legacy_setup.utils import (
     update_if_changed,
 )
 
-from app.db.models.law_policy import Collection
-from app.db.models.law_policy.collection import CollectionFamily, CollectionOrganisation
+from db_client.models.law_policy import Collection
+from db_client.models.law_policy.collection import CollectionFamily, CollectionOrganisation
 
 
 def handle_cclw_collection_and_link(

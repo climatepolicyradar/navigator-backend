@@ -5,8 +5,8 @@ from sqlalchemy.orm import Session
 from tests.core.ingestion.legacy_setup.params import IngestParameters
 from tests.core.ingestion.legacy_setup.utils import to_dict
 
-from app.db.models.document import PhysicalDocument
-from app.db.models.document.physical_document import (
+from db_client.models.document import PhysicalDocument
+from db_client.models.document.physical_document import (
     Language,
     LanguageSource,
     PhysicalDocumentLanguage,

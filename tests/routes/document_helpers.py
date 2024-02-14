@@ -1,8 +1,8 @@
 from sqlalchemy.orm import Session
 
 
-from app.db.models.app import ORGANISATION_CCLW
-from app.data_migrations import (
+from db_client.models.app import ORGANISATION_CCLW
+from db_client.data_migrations import (
     populate_document_role,
     populate_document_type,
     populate_document_variant,

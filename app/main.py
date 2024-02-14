@@ -9,8 +9,9 @@ from fastapi.middleware.cors import CORSMiddleware
 from fastapi_health import health
 from fastapi_pagination import add_pagination
 from starlette.requests import Request
-import subprocess
 from contextlib import asynccontextmanager
+
+from db_client import run_migrations
 
 from app.api.api_v1.routers.pipeline_trigger import pipeline_trigger_router
 from app.api.api_v1.routers.admin import admin_document_router
@@ -22,7 +23,7 @@ from app.api.api_v1.routers.summaries import summary_router
 from app.core import config
 from app.core.auth import get_superuser_details
 from app.core.health import is_database_online
-from app.db.session import SessionLocal
+from app.db.session import SessionLocal, engine
 
 os.environ["SKIP_ALEMBIC_LOGGING"] = "1"
 
@@ -63,22 +64,11 @@ _docs_url = "/api/docs" if ENABLE_API_DOCS else None
 _openapi_url = "/api" if ENABLE_API_DOCS else None
 
 
-def run_migrations() -> None:
-    """
-    Apply alembic migrations.
-
-    Call through subprocess as opposed to the alembic command function as the server
-    startup never completed when using the alembic solution.
-    """
-    logger.info("run alembic upgrade head...")
-    subprocess.run(["alembic", "-c", "./alembic.ini", "upgrade", "head"], check=True)
-
-
 @asynccontextmanager
 async def lifespan(app_: FastAPI):
     """Run startup and shutdown events."""
     logger.info("Starting up...")
-    run_migrations()
+    run_migrations(engine)
     yield
     logger.info("Shutting down...")
 

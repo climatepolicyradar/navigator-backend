@@ -11,13 +11,13 @@ from fastapi import (
 from sqlalchemy import update
 from sqlalchemy import Column
 
-from app.db.models.law_policy import DocumentStatus
+from db_client.models.law_policy import DocumentStatus
 from app.api.api_v1.schemas.document import (
     DocumentUpdateRequest,
 )
 from app.core.auth import get_superuser_details
 from app.core.lookups import get_family_document_by_import_id_or_slug
-from app.db.models.document.physical_document import (
+from db_client.models.document.physical_document import (
     LanguageSource,
     PhysicalDocument,
     Language,

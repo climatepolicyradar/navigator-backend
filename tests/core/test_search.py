@@ -27,7 +27,7 @@ from app.core.search import (
     _convert_sort_field,
     _convert_sort_order,
 )
-from app.db.models.law_policy import Geography
+from db_client.models.law_policy import Geography
 from tests.core.ingestion.helpers import populate_for_ingest
 
 
@@ -464,9 +464,9 @@ _FAM_SPEC_3 = FamSpec(
 )
 
 
-from app.db.models.app.users import Organisation
-from app.db.models.document import PhysicalDocument
-from app.db.models.law_policy import (
+from db_client.models.app.users import Organisation
+from db_client.models.document import PhysicalDocument
+from db_client.models.law_policy import (
     DocumentStatus,
     EventStatus,
     Family,
@@ -477,7 +477,7 @@ from app.db.models.law_policy import (
     MetadataOrganisation,
     MetadataTaxonomy,
 )
-from app.db.models.law_policy.family import DocumentStatus
+from db_client.models.law_policy.family import DocumentStatus
 
 
 def populate_test_db(db: Session, fam_specs: Sequence[FamSpec]) -> None:

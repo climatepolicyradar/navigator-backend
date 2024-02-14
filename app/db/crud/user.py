@@ -3,7 +3,7 @@ from typing import Tuple
 from fastapi import HTTPException
 from sqlalchemy.orm import Session
 
-from app.db.models.app import AppUser, Organisation, OrganisationUser
+from db_client.models.app import AppUser, Organisation, OrganisationUser
 
 
 def get_app_user_by_email(db: Session, email: str) -> AppUser:

@@ -6,11 +6,11 @@ from typing import Iterable, Mapping, Optional, Sequence
 
 from sqlalchemy.orm import Session
 
-from app.data_migrations.taxonomy_cclw import get_cclw_taxonomy
-from app.data_migrations.taxonomy_unf3c import get_unf3c_taxonomy
+from db_client.data_migrations.taxonomy_cclw import get_cclw_taxonomy
+from db_client.data_migrations.taxonomy_unf3c import get_unf3c_taxonomy
 
-from app.db.models.app import Organisation
-from app.db.models.law_policy.family import (
+from db_client.models.app import Organisation
+from db_client.models.law_policy.family import (
     DocumentStatus,
     EventStatus,
     FamilyCategory,
@@ -22,16 +22,16 @@ from app.db.models.law_policy.family import (
     Slug,
     Variant,
 )
-from app.db.models.law_policy.metadata import (
+from db_client.models.law_policy.metadata import (
     FamilyMetadata,
 )
-from app.db.models.law_policy import Geography
-from app.db.models.document.physical_document import (
+from db_client.models.law_policy import Geography
+from db_client.models.document.physical_document import (
     LanguageSource,
     PhysicalDocument,
     PhysicalDocumentLanguage,
 )
-from app.initial_data import run_data_migrations
+from db_client.initial_data import run_data_migrations
 
 FIXTURE_DIR = Path(__file__).parents[1] / "search_fixtures"
 VESPA_FAMILY_PATH = FIXTURE_DIR / "vespa_family_document.json"
