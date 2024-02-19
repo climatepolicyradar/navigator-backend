@@ -775,8 +775,8 @@ SQLAlchemy-Utils = "^0.38.2"
 [package.source]
 type = "git"
 url = "https://github.com/climatepolicyradar/navigator-db-client.git"
-reference = "v1.0.1"
-resolved_reference = "136231dce532ed6b96a8ed5db553a5b80c2fc604"
+reference = "test-db-migrate"
+resolved_reference = "00dfb0978334ea2c079b376e58b3adf6cb04f66b"
 
 [[package]]
 name = "deprecation"
@@ -4449,4 +4449,4 @@ multidict = ">=4.0"
 [metadata]
 lock-version = "2.0"
 python-versions = "^3.9"
-content-hash = "684bb191c539e44cbd18fe48ec56cb259cd880c6829d0b4cfaa41d6e93722d75"
+content-hash = "2fc39201b5ee92a2360b69639e03a887d98d0eed259804b3d4deca97034fe484"
