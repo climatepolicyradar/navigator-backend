@@ -30,7 +30,7 @@ starlette = "^0.27.0"
 tenacity = "^8.0.1"
 uvicorn = { extras = ["standard"], version = "^0.20.0" }
 botocore = "^1.34.19"
-db-client = {git = "https://github.com/climatepolicyradar/navigator-db-client.git", tag = "v1.0.0"}
+db-client = {git = "https://github.com/climatepolicyradar/navigator-db-client.git", tag = "v1.0.1"}
 urllib3 = "<2"
 
 [tool.poetry.dev-dependencies]

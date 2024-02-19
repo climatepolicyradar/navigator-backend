@@ -14,6 +14,10 @@ RUN pip install --no-cache "poetry==1.3.2"
 # Create layer for dependencies
 # TODO: refine this as part of CI & test updates
 COPY poetry.lock pyproject.toml ./
+
+# Install the export plugin - not strictly required until later versions of poetry
+RUN pip3 install --no-cache "poetry-plugin-export"
+
 # Create a requirements file so we can install with minimal caching
 # See: https://github.com/python-poetry/poetry-plugin-export
 RUN poetry export --with dev \
@@ -24,6 +28,11 @@ RUN poetry export --with dev \
     | sed -e 's/ \\$//' \
     | sed -e 's/^[[:alpha:]]\+\[\([[:alpha:]]\+\[[[:alpha:]]\+\]\)\]/\1/' \
     > requirements.txt
+
+# Check for zero length requirements file.
+RUN if [ "$(wc -l <requirements.txt)" = "0" ] ; \
+    then echo No requirements.txt: check the lock file is up-to-date ; exit 1; \
+    fi
 
 # Install torch-cpu with pip
 RUN pip3 install --no-cache "torch==2.0.0+cpu" "torchvision==0.15.1+cpu" -f https://download.pytorch.org/whl/torch_stable.html
