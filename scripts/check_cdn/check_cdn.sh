@@ -4,7 +4,7 @@ rm_existing() {
   [ -f $1 ] && rm $1 || echo "$1 Clean"
 }
 
-rm_existing cdn_urls_input.txt 
+rm_existing cdn_urls_input.txt
 rm_existing cdn_urls_missing.csv  # Contains missing CDN objects from CCLW
 rm_existing cdn_urls_results.txt
 
@@ -15,7 +15,7 @@ echo "--------------------------------------------------------------------------
 echo "Starting checking database: ${PGHOST}:${PGPORT}/${PGDATABASE}"
 echo "--------------------------------------------------------------------------------"
 
-# Get the script input from the database  
+# Get the script input from the database
 psql -At --output cdn_urls_input.txt -c "select source_url,id,import_id,md5_sum from physical_document,family_document \
     where (source_url like '%climate-laws%') and family_document.physical_document_id = id;"
 CCLW_URLS=$(cat cdn_urls_input.txt | wc -l)
@@ -59,7 +59,7 @@ do
   # fi
 
   md5_missing=0
-  # Now check MD5 
+  # Now check MD5
   if [ "x${md5}" == "x" ]
   then
     # These need re-triggering

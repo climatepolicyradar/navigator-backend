@@ -12,7 +12,10 @@ from tests.core.ingestion.legacy_setup.utils import (
 )
 
 from db_client.models.law_policy import Collection
-from db_client.models.law_policy.collection import CollectionFamily, CollectionOrganisation
+from db_client.models.law_policy.collection import (
+    CollectionFamily,
+    CollectionOrganisation,
+)
 
 
 def handle_cclw_collection_and_link(

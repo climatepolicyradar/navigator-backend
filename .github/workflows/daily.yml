@@ -17,13 +17,13 @@ jobs:
       - name: Use .env.example
         run:  cp .env.example .env
 
-      - name: Get dependencies  
+      - name: Get dependencies
         run: pip install --upgrade google-api-python-client google-auth-httplib2 google-auth-oauthlib
 
       - name: Download Sheet
         run: python scripts/validate_cclw_sheet/download.py > download.csv
         env:
-          GOOGLE_SERVICE_ACCOUNT: ${{ secrets.GOOGLE_SERVICE_ACCOUNT }} 
+          GOOGLE_SERVICE_ACCOUNT: ${{ secrets.GOOGLE_SERVICE_ACCOUNT }}
 
       - name: Validate Download
         run: |
@@ -41,7 +41,7 @@ jobs:
       - name: Start Backend
         run: make start
 
-      - name: Validate Sheet 
+      - name: Validate Sheet
         run:  TEST_HOST="http://localhost:8888" ./scripts/validate_cclw_sheet/validate-ingest.sh download.csv
 
       - name: Log Dump

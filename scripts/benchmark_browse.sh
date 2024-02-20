@@ -8,7 +8,7 @@ do_browse_local() {
         -X POST \
         -H 'Accept: application/json' \
         -H 'Content-Type: application/json'\
-        --data-raw '{"query_string":"","exact_match":true,"keyword_filters":{},"sort_field":null,"sort_order":"desc","limit":100,"offset":0}' 
+        --data-raw '{"query_string":"","exact_match":true,"keyword_filters":{},"sort_field":null,"sort_order":"desc","limit":100,"offset":0}'
 }
 
 do_browse_local | jq | grep time
