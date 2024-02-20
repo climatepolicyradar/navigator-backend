@@ -12,7 +12,7 @@
     <!--
         See https://docs.vespa.ai/en/reference/query-api-reference.html#ranking.softtimeout.enable
         for documentation on the below timeout options.
-    -->  
+    -->
     <field name="timeout">20</field>
     <field name="ranking.softtimeout.enable">true</field>
     <field name="ranking.softtimeout.factor">0.7</field>
