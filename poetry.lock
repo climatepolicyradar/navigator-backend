@@ -775,7 +775,7 @@ SQLAlchemy-Utils = "^0.38.2"
 [package.source]
 type = "git"
 url = "https://github.com/climatepolicyradar/navigator-db-client.git"
-reference = "test-db-migrate"
+reference = "7aab453dd8b7b4cf53738f7757d0ec674fe77997"
 resolved_reference = "7aab453dd8b7b4cf53738f7757d0ec674fe77997"
 
 [[package]]
@@ -4457,4 +4457,4 @@ multidict = ">=4.0"
 [metadata]
 lock-version = "2.0"
 python-versions = "^3.9"
-content-hash = "2fc39201b5ee92a2360b69639e03a887d98d0eed259804b3d4deca97034fe484"
+content-hash = "194f026bb0a95052c7b62ee727360997025c03a335f064fb61aa90312b3a8484"
