@@ -40,9 +40,9 @@ get_maturity() {
     fi
 }
 
-get_docker_tags() { 
+get_docker_tags() {
     # Arguments:
-    #  - Name reference for the array 
+    #  - Name reference for the array
     #  - Name of the docker image
     #  - The semver we are using to create the tags
 

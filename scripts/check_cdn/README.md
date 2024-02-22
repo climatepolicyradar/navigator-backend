@@ -2,7 +2,7 @@
 
 ## Pre-requistes
 
-The environment is sufficiently configured so that you can `psql` to the 
+The environment is sufficiently configured so that you can `psql` to the
 database of your choice. This means configuring the following:
 
 ```

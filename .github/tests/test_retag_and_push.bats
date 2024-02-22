@@ -142,4 +142,3 @@ load '/opt/bats-test-helpers/lox-bats-mock/stub.bash'
   [ "${tag_array[1]}" == "test:8.9" ]
   [ "${tag_array[2]}" == "test:8" ]
 }
-

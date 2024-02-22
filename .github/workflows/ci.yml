@@ -51,17 +51,17 @@ jobs:
 
       - name: Run backend tests
         run:  make test
-      
+
       - name: docker
         run: |
           docker-compose logs
           docker-compose ps
           docker ps -a
           ls -la
-         
+
       - name: Setup vespa for search
         run: make vespa_setup
-      
+
       - name: Run backend search tests for vespa
         run:  make test_search
 

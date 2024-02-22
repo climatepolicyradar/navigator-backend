@@ -2,13 +2,13 @@
 #
 # Posts the request to validate the ingest.
 #
-# 
+#
 set -eou pipefail
 
 CSV_FILE=$1
 USER=${SUPERUSER_EMAIL:-user@navigator.com}
 PASSWORD=${SUPERUSER_PASSWORD:-password}
- 
+
 # ---------- Functions ----------
 
 wait_for_server() {
