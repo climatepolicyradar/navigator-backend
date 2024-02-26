@@ -1,4 +1,5 @@
 #!/usr/bin/env python3
+import logging
 
 from http.client import OK
 import os
@@ -10,6 +11,9 @@ from db_client.initial_data import populate_initial_data
 
 from app.db.session import SessionLocal
 from app.core.security import get_password_hash
+
+
+_LOGGER = logging.getLogger(__name__)
 
 
 def wait_for_app():
@@ -25,8 +29,8 @@ def wait_for_app():
                 return
             else:
                 print(f"Health code: {response.status_code}, retry: {i}/{attempts}")
-        except requests.ConnectionError:
-            pass
+        except requests.ConnectionError as e:
+            _LOGGER.warning(f"Retrying health check following error: {e}")
 
         sleep(1)
     raise TimeoutError()
