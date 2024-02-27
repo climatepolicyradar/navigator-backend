@@ -8,12 +8,16 @@ from fastapi import APIRouter, Depends, FastAPI
 from fastapi.middleware.cors import CORSMiddleware
 from fastapi_health import health
 from fastapi_pagination import add_pagination
+from apscheduler.schedulers.background import BackgroundScheduler
 from starlette.requests import Request
 from contextlib import asynccontextmanager
 
 from db_client import run_migrations
 
-from app.api.api_v1.routers.pipeline_trigger import pipeline_trigger_router
+from app.api.api_v1.routers.pipeline_trigger import (
+    pipeline_trigger_router,
+    start_scheduled_ingest,
+)
 from app.api.api_v1.routers.admin import admin_document_router
 from app.api.api_v1.routers.auth import auth_router
 from app.api.api_v1.routers.documents import documents_router
@@ -138,6 +142,16 @@ app.include_router(summary_router, prefix="/api/v1", tags=["Summaries"])
 
 # add pagination support to all routes that ask for it
 add_pagination(app)
+
+scheduler = BackgroundScheduler()
+scheduler.add_job(
+    start_scheduled_ingest,
+    "cron",
+    day_of_week="mon",
+    hour=9,
+    minute=15,
+)
+scheduler.start()
 
 
 if __name__ == "__main__":
