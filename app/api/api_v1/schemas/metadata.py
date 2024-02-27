@@ -6,9 +6,10 @@ from pydantic import BaseModel
 TaxonomyData = Mapping[str, Mapping[str, Union[bool, Sequence[str]]]]
 
 
-class OrganisationStats(BaseModel):
+class OrganisationConfig(BaseModel):
     """Definition of stats used on homepage"""
 
+    taxonomy: TaxonomyData
     total: int
     laws: int
     policies: int
@@ -18,9 +19,8 @@ class ApplicationConfig(BaseModel):
     """Definition of the new Config which just includes taxonomy."""
 
     geographies: Sequence[dict]
-    taxonomies: Mapping[str, TaxonomyData]
+    organisations: Mapping[str, OrganisationConfig]
     languages: Mapping[str, str]
     document_roles: Sequence[str]
     document_types: Sequence[str]
     document_variants: Sequence[str]
-    cclw_stats: OrganisationStats

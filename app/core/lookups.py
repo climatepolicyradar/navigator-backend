@@ -4,8 +4,7 @@ from sqlalchemy.orm import Session
 from sqlalchemy.exc import MultipleResultsFound
 from app.api.api_v1.schemas.metadata import ApplicationConfig
 from app.core.organisation import (
-    get_organisation_stats,
-    get_organisation_taxonomy_by_name,
+    get_organisation_config,
 )
 
 from app.core.util import tree_table_to_json
@@ -30,8 +29,8 @@ def get_config(db: Session) -> ApplicationConfig:
     # First get the CCLW stats
     return ApplicationConfig(
         geographies=tree_table_to_json(table=Geography, db=db),
-        taxonomies={
-            org.name: get_organisation_taxonomy_by_name(db=db, org_name=org.name)
+        organisations={
+            org.name: get_organisation_config(db, org)
             for org in db.query(Organisation).all()
         },
         languages={lang.language_code: lang.name for lang in db.query(Language).all()},
@@ -51,7 +50,6 @@ def get_config(db: Session) -> ApplicationConfig:
             variant.variant_name
             for variant in db.query(Variant).order_by(Variant.variant_name).all()
         ],
-        cclw_stats=get_organisation_stats(db, "CCLW"),
     )
 
 

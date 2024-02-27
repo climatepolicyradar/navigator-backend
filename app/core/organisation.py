@@ -1,6 +1,7 @@
 from dataclasses import asdict
+from typing import cast
 from sqlalchemy.orm import Session
-from app.api.api_v1.schemas.metadata import OrganisationStats, TaxonomyData
+from app.api.api_v1.schemas.metadata import OrganisationConfig, TaxonomyData
 from db_client.models.app.users import Organisation
 from db_client.models.law_policy.family import (
     FamilyEventType,
@@ -67,9 +68,7 @@ def get_organisation_taxonomy_by_name(db: Session, org_name: str) -> TaxonomyDat
     }
 
 
-def get_organisation_stats(db: Session, org_name: str) -> OrganisationStats:
-    org = db.query(Organisation).filter(Organisation.name == org_name).one()
-
+def get_organisation_config(db: Session, org: Organisation) -> OrganisationConfig:
     total = (
         db.query(FamilyOrganisation)
         .filter(FamilyOrganisation.organisation_id == org.id)
@@ -93,4 +92,9 @@ def get_organisation_stats(db: Session, org_name: str) -> OrganisationStats:
         .filter(Family.family_category == FamilyCategory.EXECUTIVE)
         .count()
     )
-    return OrganisationStats(total=total, laws=laws, policies=policies)
+    return OrganisationConfig(
+        total=total,
+        laws=laws,
+        policies=policies,
+        taxonomy=get_organisation_taxonomy_by_name(db, cast(str, org.name)),
+    )

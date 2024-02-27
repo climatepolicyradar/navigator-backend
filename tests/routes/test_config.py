@@ -55,15 +55,15 @@ def test_config_endpoint_content(client, test_db):
     response_json = response.json()
 
     assert response.status_code == OK
-    assert len(response_json) == 7
+    assert len(response_json) == 6
 
     assert "geographies" in response_json
     assert len(response_json["geographies"]) == 8
 
-    assert "taxonomies" in response_json
+    assert "organisations" in response_json
 
-    assert "CCLW" in response_json["taxonomies"]
-    cclw_taxonomy = response_json["taxonomies"]["CCLW"]
+    assert "CCLW" in response_json["organisations"]
+    cclw_taxonomy = response_json["organisations"]["CCLW"]["taxonomy"]
     assert set(cclw_taxonomy) == {
         "instrument",
         "keyword",
@@ -95,8 +95,8 @@ def test_config_endpoint_content(client, test_db):
     ]
     assert set(cclw_taxonomy_event_types) ^ set(cclw_expected_event_types) == set()
 
-    assert "UNFCCC" in response_json["taxonomies"]
-    unfccc_taxonomy = response_json["taxonomies"]["UNFCCC"]
+    assert "UNFCCC" in response_json["organisations"]
+    unfccc_taxonomy = response_json["organisations"]["UNFCCC"]["taxonomy"]
     assert set(unfccc_taxonomy) == {"author", "author_type", "event_types"}
     assert set(unfccc_taxonomy["author_type"]["allowed_values"]) == {
         "Party",
@@ -117,11 +117,11 @@ def test_config_endpoint_content(client, test_db):
     assert len(response_json["document_variants"]) == 2
     assert "Original Language" in response_json["document_variants"]
 
-    stats = response_json["cclw_stats"]
-    assert len(stats) == 3
-    assert stats["total"] == 0
-    assert stats["laws"] == 0
-    assert stats["policies"] == 0
+    org_config = response_json["organisations"]["CCLW"]
+    assert len(org_config) == 4
+    assert org_config["total"] == 0
+    assert org_config["laws"] == 0
+    assert org_config["policies"] == 0
 
 
 def test_config_endpoint_cclw_stats(client, test_db):
@@ -149,12 +149,12 @@ def test_config_endpoint_cclw_stats(client, test_db):
 
     response_json = response.json()
 
-    stats = response_json["cclw_stats"]
-    assert len(stats) == 3
-    assert stats["total"] == 5
-    assert stats["laws"] == 2
-    assert stats["policies"] == 3
-    assert stats["total"] == stats["laws"] + stats["policies"]
+    org_config = response_json["organisations"]["CCLW"]
+    assert len(org_config) == 4
+    assert org_config["total"] == 5
+    assert org_config["laws"] == 2
+    assert org_config["policies"] == 3
+    assert org_config["total"] == org_config["laws"] + org_config["policies"]
 
 
 class _MockColumn:
