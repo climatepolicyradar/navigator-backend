@@ -34,6 +34,7 @@ def _start_ingest(
     s3_client: S3Client,
     s3_prefix: str,
 ):
+    """Writes a db state file to s3 which will trigger an ingest."""
     try:
         pipeline_ingest_input = generate_pipeline_ingest_input(db)
         write_documents_to_s3(
@@ -83,7 +84,6 @@ def ingest_law_policy(
 
     s3_prefix = get_new_s3_prefix()
 
-    # PHASE 3 - Start the ingest (kick off background task to do the actual ingest)
     background_tasks.add_task(
         _start_ingest,
         db,
@@ -100,8 +100,7 @@ def ingest_law_policy(
         },
     )
 
-    # TODO: Add some way the caller can monitor processing pipeline...
     return BulkIngestResult(
         import_s3_prefix=s3_prefix,
-        detail=None,  # TODO: add detail?
+        detail=None,
     )
