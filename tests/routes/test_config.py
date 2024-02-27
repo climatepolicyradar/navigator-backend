@@ -1,7 +1,11 @@
 from http.client import OK
 from typing import Any
 from unittest.mock import MagicMock
-
+from db_client.models.law_policy.family import (
+    Family,
+    FamilyCategory,
+    FamilyOrganisation,
+)
 import pytest
 
 from app.core.util import tree_table_to_json
@@ -15,6 +19,19 @@ from db_client.data_migrations import (
     populate_taxonomy,
 )
 from app.db.session import SessionLocal
+
+
+def _add_family(test_db, import_id: str, cat: FamilyCategory):
+    test_db.add(
+        Family(
+            title="f1",
+            import_id=import_id,
+            description="",
+            geography_id=1,
+            family_category=cat,
+        )
+    )
+    test_db.add(FamilyOrganisation(organisation_id=1, family_import_id=import_id))
 
 
 def test_config_endpoint_content(client, test_db):
@@ -38,7 +55,7 @@ def test_config_endpoint_content(client, test_db):
     response_json = response.json()
 
     assert response.status_code == OK
-    assert len(response_json) == 6
+    assert len(response_json) == 7
 
     assert "geographies" in response_json
     assert len(response_json["geographies"]) == 8
@@ -99,6 +116,45 @@ def test_config_endpoint_content(client, test_db):
     assert "document_variants" in response_json
     assert len(response_json["document_variants"]) == 2
     assert "Original Language" in response_json["document_variants"]
+
+    stats = response_json["cclw_stats"]
+    assert len(stats) == 3
+    assert stats["total"] == 0
+    assert stats["laws"] == 0
+    assert stats["policies"] == 0
+
+
+def test_config_endpoint_cclw_stats(client, test_db):
+    url_under_test = "/api/v1/config"
+    populate_document_role(test_db)
+    populate_document_type(test_db)
+    populate_document_variant(test_db)
+    populate_event_type(test_db)
+    populate_geography(test_db)
+    populate_language(test_db)
+    populate_taxonomy(test_db)
+    test_db.flush()
+
+    # Add some data here
+    _add_family(test_db, "T.0.0.1", FamilyCategory.EXECUTIVE)
+    _add_family(test_db, "T.0.0.2", FamilyCategory.EXECUTIVE)
+    _add_family(test_db, "T.0.0.3", FamilyCategory.EXECUTIVE)
+    _add_family(test_db, "T.0.0.4", FamilyCategory.LEGISLATIVE)
+    _add_family(test_db, "T.0.0.5", FamilyCategory.LEGISLATIVE)
+    test_db.flush()
+
+    response = client.get(
+        url_under_test,
+    )
+
+    response_json = response.json()
+
+    stats = response_json["cclw_stats"]
+    assert len(stats) == 3
+    assert stats["total"] == 5
+    assert stats["laws"] == 2
+    assert stats["policies"] == 3
+    assert stats["total"] == stats["laws"] + stats["policies"]
 
 
 class _MockColumn:

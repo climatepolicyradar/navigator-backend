@@ -1,8 +1,13 @@
 from dataclasses import asdict
 from sqlalchemy.orm import Session
-from app.api.api_v1.schemas.metadata import TaxonomyData
+from app.api.api_v1.schemas.metadata import OrganisationStats, TaxonomyData
 from db_client.models.app.users import Organisation
-from db_client.models.law_policy.family import FamilyEventType
+from db_client.models.law_policy.family import (
+    FamilyEventType,
+    FamilyOrganisation,
+    Family,
+    FamilyCategory,
+)
 from db_client.models.law_policy.metadata import MetadataOrganisation, MetadataTaxonomy
 from db_client.models.law_policy.taxonomy_entry import Taxonomy, TaxonomyEntry
 
@@ -60,3 +65,32 @@ def get_organisation_taxonomy_by_name(db: Session, org_name: str) -> TaxonomyDat
         **taxonomy[0],
         "event_types": asdict(entry),
     }
+
+
+def get_organisation_stats(db: Session, org_name: str) -> OrganisationStats:
+    org = db.query(Organisation).filter(Organisation.name == org_name).one()
+
+    total = (
+        db.query(FamilyOrganisation)
+        .filter(FamilyOrganisation.organisation_id == org.id)
+        .count()
+    )
+    laws = (
+        db.query(Family)
+        .join(
+            FamilyOrganisation, Family.import_id == FamilyOrganisation.family_import_id
+        )
+        .filter(FamilyOrganisation.organisation_id == org.id)
+        .filter(Family.family_category == FamilyCategory.LEGISLATIVE)
+        .count()
+    )
+    policies = (
+        db.query(Family)
+        .join(
+            FamilyOrganisation, Family.import_id == FamilyOrganisation.family_import_id
+        )
+        .filter(FamilyOrganisation.organisation_id == org.id)
+        .filter(Family.family_category == FamilyCategory.EXECUTIVE)
+        .count()
+    )
+    return OrganisationStats(total=total, laws=laws, policies=policies)
