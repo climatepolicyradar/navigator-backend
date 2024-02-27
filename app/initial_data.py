@@ -17,6 +17,7 @@ _LOGGER = logging.getLogger(__name__)
 
 
 def wait_for_app():
+    print("Waiting for app...")
     url = os.getenv("API_HOST")
     health = f"{url}/health"
     attempts = 100
