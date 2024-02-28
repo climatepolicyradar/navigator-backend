@@ -22,8 +22,8 @@ class GeoStatsResponse(BaseModel):
     federal: bool
     federal_details: str
     political_groups: str
-    global_emissions_percent: Optional[float] = None
-    climate_risk_index: Optional[float] = None
+    global_emissions_percent: Optional[str] = None
+    climate_risk_index: Optional[str] = None
     worldbank_income_group: str
     visibility_status: str
 

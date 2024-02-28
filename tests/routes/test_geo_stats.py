@@ -1,13 +1,13 @@
 from http.client import NOT_FOUND, OK
 from unittest.mock import Mock
-from db_client import run_migrations
+from db_client.models.law_policy.geography import GeoStatistics, Geography
 from app.api.api_v1.routers.lookups.geo_stats import (
     GeoStatsResponse,
     lookup_geo_stats,
 )
 
-TEST_GEO_NAME = "Antigua and Barbuda"
-TEST_GEO_SLUG = "antigua-and-barbuda"
+TEST_GEO_NAME = "test1"
+TEST_GEO_SLUG = "a"
 URL_UNDER_TEST = f"/api/v1/geo_stats/{TEST_GEO_SLUG}"
 
 TEST_GEO_SLUG_BAD = "this-is-not-a-geography"
@@ -16,8 +16,29 @@ URL_UNDER_TEST_BAD = f"/api/v1/geo_stats/{TEST_GEO_SLUG_BAD}"
 
 def test_endpoint_returns_correct_data(client, test_db):
     """Tests when the db is populated we can get out the data as expected."""
-    run_migrations(test_db)
-    test_db.flush()  # update the session, no need to commit as its just a test
+
+    test_db.add(Geography(id=1, slug="a", display_value="A"))
+    test_db.add(Geography(id=2, slug="b", display_value="B"))
+    test_db.add(Geography(id=3, slug="c", display_value="C"))
+    test_db.flush()
+
+    test_db.add(
+        GeoStatistics(
+            id=1,
+            geography_id=1,
+            name="test1",
+            legislative_process="lp",
+            federal=False,
+            federal_details="fd",
+            political_groups="pg",
+            global_emissions_percent="gep",
+            climate_risk_index="cri",
+            worldbank_income_group="wb",
+            visibility_status="vs",
+        )
+    )
+
+    test_db.commit()
 
     response = client.get(
         URL_UNDER_TEST,
@@ -61,8 +82,8 @@ def test_queries_db():
         federal=True,
         federal_details="row.federal_details",
         political_groups="row.political_groups",
-        global_emissions_percent=0.1,
-        climate_risk_index=0.2,
+        global_emissions_percent="0.1",
+        climate_risk_index="0.2",
         worldbank_income_group="row.worldbank_income_group",
         visibility_status="row.visibility_status",
     )
