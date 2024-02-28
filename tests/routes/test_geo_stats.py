@@ -1,6 +1,5 @@
 from http.client import NOT_FOUND, OK
 from unittest.mock import Mock
-from db_client.models.law_policy.geography import GeoStatistics
 from db_client import run_migrations
 from app.api.api_v1.routers.lookups.geo_stats import (
     GeoStatsResponse,
@@ -18,8 +17,6 @@ URL_UNDER_TEST_BAD = f"/api/v1/geo_stats/{TEST_GEO_SLUG_BAD}"
 def test_endpoint_returns_correct_data(client, test_db):
     """Tests when the db is populated we can get out the data as expected."""
     run_migrations(test_db)
-    n = test_db.query(GeoStatistics).count()
-    assert n == 1233456
     test_db.flush()  # update the session, no need to commit as its just a test
 
     response = client.get(
