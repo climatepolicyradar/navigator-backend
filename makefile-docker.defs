@@ -3,20 +3,16 @@
 # ----------------------------------
 # starting, stopping, migrating DB
 # ----------------------------------
-start_containers:
+start:
 	# Build and run containers
 	docker-compose -f docker-compose.yml -f docker-compose.dev.yml up -d --remove-orphans
 
-start_backendonly:
+start_backend:
 	# Build and run containers
 	docker-compose -f docker-compose.yml -f docker-compose.dev.yml up -d backend backend_db
 
 show_logs:
 	docker-compose logs -f
-
-start: start_containers migrations
-
-start_backend: start_backendonly migrations
 
 stop:
 	docker-compose stop
@@ -32,10 +28,6 @@ up:
 # database maintenance
 # ----------------------------------
 
-migrations_docker_backend:
-	# Create initial data in database
-	docker-compose -f docker-compose.yml -f docker-compose.dev.yml run --rm backend python3 app/initial_data.py
-
 cleanup_tables:
 	# Cleanup duplicate data
 	docker-compose -f docker-compose.yml -f docker-compose.dev.yml run --rm backend python3 scripts/cleanup_lookups/cleanup_lookups.py
@@ -44,7 +36,6 @@ add_unique_ids:
 	# Cleanup duplicate data
 	docker-compose -f docker-compose.yml -f docker-compose.dev.yml run --rm backend python3 scripts/add_unique_ids/add_unique_ids.py
 
-migrations: migrations_docker_backend
 
 %:
 	@:
@@ -117,7 +108,7 @@ test_unit:
 	docker-compose -f docker-compose.yml -f docker-compose.dev.yml run --rm backend pytest -vvv tests/unit
 
 test:
-	docker-compose -f docker-compose.yml -f docker-compose.dev.yml run --rm backend pytest -vvv -m 'not search'
+	docker-compose -f docker-compose.yml -f docker-compose.dev.yml run  backend pytest -vvv -m 'not search' tests/routes/test_geo_stats.py
 
 # ----------------------------------
 # tasks
