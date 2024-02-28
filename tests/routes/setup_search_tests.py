@@ -31,7 +31,6 @@ from db_client.models.document.physical_document import (
     PhysicalDocument,
     PhysicalDocumentLanguage,
 )
-from db_client.initial_data import run_data_migrations
 
 FIXTURE_DIR = Path(__file__).parents[1] / "search_fixtures"
 VESPA_FAMILY_PATH = FIXTURE_DIR / "vespa_family_document.json"
@@ -75,7 +74,6 @@ def _populate_db_families(db: Session, max_docs: int = 4) -> None:
 
     Lower `max_docs` to limit the number of fixtures added to the db.
     """
-    run_data_migrations(db)
     _create_organisation(db)
 
     seen_family_ids = []

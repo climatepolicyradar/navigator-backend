@@ -1,8 +1,7 @@
 from http.client import NOT_FOUND, OK
 from unittest.mock import Mock
-from db_client.initial_data import populate_initial_data
-from app.core.security import get_password_hash
-
+from db_client.models.law_policy.geography import GeoStatistics
+from db_client import run_migrations
 from app.api.api_v1.routers.lookups.geo_stats import (
     GeoStatsResponse,
     lookup_geo_stats,
@@ -18,7 +17,9 @@ URL_UNDER_TEST_BAD = f"/api/v1/geo_stats/{TEST_GEO_SLUG_BAD}"
 
 def test_endpoint_returns_correct_data(client, test_db):
     """Tests when the db is populated we can get out the data as expected."""
-    populate_initial_data(test_db, get_password_hash)
+    run_migrations(test_db)
+    n = test_db.query(GeoStatistics).count()
+    assert n == 1233456
     test_db.flush()  # update the session, no need to commit as its just a test
 
     response = client.get(
@@ -33,7 +34,6 @@ def test_endpoint_returns_correct_data(client, test_db):
 
 def test_endpoint_returns_not_found(client, test_db):
     """Tests the fact if the db is populated then 404 is returned for an unknown id."""
-    populate_initial_data(test_db, get_password_hash)
     test_db.flush()  # update the session, no need to commit as its just a test
 
     response = client.get(
