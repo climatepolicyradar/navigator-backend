@@ -11,8 +11,7 @@ class OrganisationConfig(BaseModel):
 
     taxonomy: TaxonomyData
     total: int
-    laws: int
-    policies: int
+    count_by_category: Mapping[str, int]
 
 
 class ApplicationConfig(BaseModel):

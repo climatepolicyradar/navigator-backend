@@ -118,10 +118,14 @@ def test_config_endpoint_content(client, test_db):
     assert "Original Language" in response_json["document_variants"]
 
     org_config = response_json["organisations"]["CCLW"]
-    assert len(org_config) == 4
+    assert len(org_config) == 3
+    assert "taxonomy" in org_config
     assert org_config["total"] == 0
-    assert org_config["laws"] == 0
-    assert org_config["policies"] == 0
+    assert org_config["count_by_category"] == {
+        "Executive": 0,
+        "Legislative": 0,
+        "UNFCCC": 0,
+    }
 
 
 def test_config_endpoint_cclw_stats(client, test_db):
@@ -141,6 +145,7 @@ def test_config_endpoint_cclw_stats(client, test_db):
     _add_family(test_db, "T.0.0.3", FamilyCategory.EXECUTIVE)
     _add_family(test_db, "T.0.0.4", FamilyCategory.LEGISLATIVE)
     _add_family(test_db, "T.0.0.5", FamilyCategory.LEGISLATIVE)
+    _add_family(test_db, "T.0.0.6", FamilyCategory.UNFCCC)
     test_db.flush()
 
     response = client.get(
@@ -150,11 +155,17 @@ def test_config_endpoint_cclw_stats(client, test_db):
     response_json = response.json()
 
     org_config = response_json["organisations"]["CCLW"]
-    assert len(org_config) == 4
-    assert org_config["total"] == 5
-    assert org_config["laws"] == 2
-    assert org_config["policies"] == 3
-    assert org_config["total"] == org_config["laws"] + org_config["policies"]
+    assert len(org_config) == 3
+    assert org_config["total"] == 6
+
+    laws = org_config["count_by_category"]["Legislative"]
+    policies = org_config["count_by_category"]["Executive"]
+    unfccc = org_config["count_by_category"]["UNFCCC"]
+    assert laws == 2
+    assert policies == 3
+    assert unfccc == 1
+
+    assert org_config["total"] == laws + policies + unfccc
 
 
 class _MockColumn:

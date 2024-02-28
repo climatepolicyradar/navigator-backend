@@ -74,27 +74,22 @@ def get_organisation_config(db: Session, org: Organisation) -> OrganisationConfi
         .filter(FamilyOrganisation.organisation_id == org.id)
         .count()
     )
-    laws = (
-        db.query(Family)
-        .join(
-            FamilyOrganisation, Family.import_id == FamilyOrganisation.family_import_id
+    count_by_category = {}
+    for category in FamilyCategory:
+        count = (
+            db.query(Family)
+            .join(
+                FamilyOrganisation,
+                Family.import_id == FamilyOrganisation.family_import_id,
+            )
+            .filter(FamilyOrganisation.organisation_id == org.id)
+            .filter(Family.family_category == category)
+            .count()
         )
-        .filter(FamilyOrganisation.organisation_id == org.id)
-        .filter(Family.family_category == FamilyCategory.LEGISLATIVE)
-        .count()
-    )
-    policies = (
-        db.query(Family)
-        .join(
-            FamilyOrganisation, Family.import_id == FamilyOrganisation.family_import_id
-        )
-        .filter(FamilyOrganisation.organisation_id == org.id)
-        .filter(Family.family_category == FamilyCategory.EXECUTIVE)
-        .count()
-    )
+        count_by_category[category] = count
+
     return OrganisationConfig(
         total=total,
-        laws=laws,
-        policies=policies,
+        count_by_category=count_by_category,
         taxonomy=get_organisation_taxonomy_by_name(db, cast(str, org.name)),
     )
