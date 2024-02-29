@@ -2,7 +2,7 @@
 # Takes 3 args: host, port, timeout
 #
 host="${1:-localhost}"
-port="${1:-8888}"
+port="${2:-8888}"
 timeout="${3:-60}"
 
 echo "Waiting for $host on port $port"
