@@ -1,7 +1,11 @@
 from http.client import OK
 from typing import Any
 from unittest.mock import MagicMock
-
+from db_client.models.law_policy.family import (
+    Family,
+    FamilyCategory,
+    FamilyOrganisation,
+)
 import pytest
 
 from app.core.util import tree_table_to_json
@@ -15,6 +19,19 @@ from db_client.data_migrations import (
     populate_taxonomy,
 )
 from app.db.session import SessionLocal
+
+
+def _add_family(test_db, import_id: str, cat: FamilyCategory):
+    test_db.add(
+        Family(
+            title="f1",
+            import_id=import_id,
+            description="",
+            geography_id=1,
+            family_category=cat,
+        )
+    )
+    test_db.add(FamilyOrganisation(organisation_id=1, family_import_id=import_id))
 
 
 def test_config_endpoint_content(client, test_db):
@@ -43,10 +60,10 @@ def test_config_endpoint_content(client, test_db):
     assert "geographies" in response_json
     assert len(response_json["geographies"]) == 8
 
-    assert "taxonomies" in response_json
+    assert "organisations" in response_json
 
-    assert "CCLW" in response_json["taxonomies"]
-    cclw_taxonomy = response_json["taxonomies"]["CCLW"]
+    assert "CCLW" in response_json["organisations"]
+    cclw_taxonomy = response_json["organisations"]["CCLW"]["taxonomy"]
     assert set(cclw_taxonomy) == {
         "instrument",
         "keyword",
@@ -78,8 +95,8 @@ def test_config_endpoint_content(client, test_db):
     ]
     assert set(cclw_taxonomy_event_types) ^ set(cclw_expected_event_types) == set()
 
-    assert "UNFCCC" in response_json["taxonomies"]
-    unfccc_taxonomy = response_json["taxonomies"]["UNFCCC"]
+    assert "UNFCCC" in response_json["organisations"]
+    unfccc_taxonomy = response_json["organisations"]["UNFCCC"]["taxonomy"]
     assert set(unfccc_taxonomy) == {"author", "author_type", "event_types"}
     assert set(unfccc_taxonomy["author_type"]["allowed_values"]) == {
         "Party",
@@ -99,6 +116,56 @@ def test_config_endpoint_content(client, test_db):
     assert "document_variants" in response_json
     assert len(response_json["document_variants"]) == 2
     assert "Original Language" in response_json["document_variants"]
+
+    org_config = response_json["organisations"]["CCLW"]
+    assert len(org_config) == 3
+    assert "taxonomy" in org_config
+    assert org_config["total"] == 0
+    assert org_config["count_by_category"] == {
+        "Executive": 0,
+        "Legislative": 0,
+        "UNFCCC": 0,
+    }
+
+
+def test_config_endpoint_cclw_stats(client, test_db):
+    url_under_test = "/api/v1/config"
+    populate_document_role(test_db)
+    populate_document_type(test_db)
+    populate_document_variant(test_db)
+    populate_event_type(test_db)
+    populate_geography(test_db)
+    populate_language(test_db)
+    populate_taxonomy(test_db)
+    test_db.flush()
+
+    # Add some data here
+    _add_family(test_db, "T.0.0.1", FamilyCategory.EXECUTIVE)
+    _add_family(test_db, "T.0.0.2", FamilyCategory.EXECUTIVE)
+    _add_family(test_db, "T.0.0.3", FamilyCategory.EXECUTIVE)
+    _add_family(test_db, "T.0.0.4", FamilyCategory.LEGISLATIVE)
+    _add_family(test_db, "T.0.0.5", FamilyCategory.LEGISLATIVE)
+    _add_family(test_db, "T.0.0.6", FamilyCategory.UNFCCC)
+    test_db.flush()
+
+    response = client.get(
+        url_under_test,
+    )
+
+    response_json = response.json()
+
+    org_config = response_json["organisations"]["CCLW"]
+    assert len(org_config) == 3
+    assert org_config["total"] == 6
+
+    laws = org_config["count_by_category"]["Legislative"]
+    policies = org_config["count_by_category"]["Executive"]
+    unfccc = org_config["count_by_category"]["UNFCCC"]
+    assert laws == 2
+    assert policies == 3
+    assert unfccc == 1
+
+    assert org_config["total"] == laws + policies + unfccc
 
 
 class _MockColumn:
