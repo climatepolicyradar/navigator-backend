@@ -1,6 +1,7 @@
 from dataclasses import asdict
 from typing import cast
 from sqlalchemy.orm import Session
+from sqlalchemy import func
 from app.api.api_v1.schemas.metadata import OrganisationConfig, TaxonomyData
 from db_client.models.app.users import Organisation
 from db_client.models.law_policy.family import (
@@ -74,19 +75,26 @@ def get_organisation_config(db: Session, org: Organisation) -> OrganisationConfi
         .filter(FamilyOrganisation.organisation_id == org.id)
         .count()
     )
-    count_by_category = {}
-    for category in FamilyCategory:
-        count = (
-            db.query(Family)
-            .join(
-                FamilyOrganisation,
-                Family.import_id == FamilyOrganisation.family_import_id,
-            )
-            .filter(FamilyOrganisation.organisation_id == org.id)
-            .filter(Family.family_category == category)
-            .count()
+
+    counts = (
+        db.query(Family.family_category, func.count())
+        .join(
+            FamilyOrganisation,
+            Family.import_id == FamilyOrganisation.family_import_id,
         )
-        count_by_category[category] = count
+        .filter(FamilyOrganisation.organisation_id == org.id)
+        .group_by(Family.family_category)
+        .all()
+    )
+    found_categories = {c[0].value: c[1] for c in counts}
+    count_by_category = {}
+
+    # Supply zeros when there aren't any
+    for category in [e.value for e in FamilyCategory]:
+        if category in found_categories.keys():
+            count_by_category[category] = found_categories[category]
+        else:
+            count_by_category[category] = 0
 
     return OrganisationConfig(
         total=total,
