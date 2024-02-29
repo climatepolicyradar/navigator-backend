@@ -1,8 +1,15 @@
 from dataclasses import asdict
+from typing import cast
 from sqlalchemy.orm import Session
-from app.api.api_v1.schemas.metadata import TaxonomyData
+from sqlalchemy import func
+from app.api.api_v1.schemas.metadata import OrganisationConfig, TaxonomyData
 from db_client.models.app.users import Organisation
-from db_client.models.law_policy.family import FamilyEventType
+from db_client.models.law_policy.family import (
+    FamilyEventType,
+    FamilyOrganisation,
+    Family,
+    FamilyCategory,
+)
 from db_client.models.law_policy.metadata import MetadataOrganisation, MetadataTaxonomy
 from db_client.models.law_policy.taxonomy_entry import Taxonomy, TaxonomyEntry
 
@@ -60,3 +67,37 @@ def get_organisation_taxonomy_by_name(db: Session, org_name: str) -> TaxonomyDat
         **taxonomy[0],
         "event_types": asdict(entry),
     }
+
+
+def get_organisation_config(db: Session, org: Organisation) -> OrganisationConfig:
+    total = (
+        db.query(FamilyOrganisation)
+        .filter(FamilyOrganisation.organisation_id == org.id)
+        .count()
+    )
+
+    counts = (
+        db.query(Family.family_category, func.count())
+        .join(
+            FamilyOrganisation,
+            Family.import_id == FamilyOrganisation.family_import_id,
+        )
+        .filter(FamilyOrganisation.organisation_id == org.id)
+        .group_by(Family.family_category)
+        .all()
+    )
+    found_categories = {c[0].value: c[1] for c in counts}
+    count_by_category = {}
+
+    # Supply zeros when there aren't any
+    for category in [e.value for e in FamilyCategory]:
+        if category in found_categories.keys():
+            count_by_category[category] = found_categories[category]
+        else:
+            count_by_category[category] = 0
+
+    return OrganisationConfig(
+        total=total,
+        count_by_category=count_by_category,
+        taxonomy=get_organisation_taxonomy_by_name(db, cast(str, org.name)),
+    )

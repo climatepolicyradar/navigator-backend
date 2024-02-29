@@ -3,7 +3,9 @@ from typing import Optional, Sequence, cast
 from sqlalchemy.orm import Session
 from sqlalchemy.exc import MultipleResultsFound
 from app.api.api_v1.schemas.metadata import ApplicationConfig
-from app.core.organisation import get_organisation_taxonomy_by_name
+from app.core.organisation import (
+    get_organisation_config,
+)
 
 from app.core.util import tree_table_to_json
 from app.core.validation import IMPORT_ID_MATCHER
@@ -24,10 +26,11 @@ _LOGGER = logging.getLogger(__name__)
 
 
 def get_config(db: Session) -> ApplicationConfig:
+    # First get the CCLW stats
     return ApplicationConfig(
         geographies=tree_table_to_json(table=Geography, db=db),
-        taxonomies={
-            org.name: get_organisation_taxonomy_by_name(db=db, org_name=org.name)
+        organisations={
+            org.name: get_organisation_config(db, org)
             for org in db.query(Organisation).all()
         },
         languages={lang.language_code: lang.name for lang in db.query(Language).all()},
