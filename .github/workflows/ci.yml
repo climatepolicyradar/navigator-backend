@@ -47,7 +47,7 @@ jobs:
         run:  make start
 
       - name: Wait for backend to open port
-        run:  sleep 10
+        run:  ./scripts/wait_for_port.sh localhost 8888 60
 
       - name: Run backend tests
         run:  make test

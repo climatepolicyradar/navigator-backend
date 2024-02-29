@@ -34,9 +34,9 @@ def _make_search_request(client, params: Mapping[str, str]):
 
 
 @pytest.mark.search
-def test_empty_search_term_performs_browse(client, test_db, mocker):
+def test_empty_search_term_performs_browse(client, data_db, mocker):
     """Make sure that empty search term returns results in browse mode."""
-    _populate_db_families(test_db)
+    _populate_db_families(data_db)
     query_spy = mocker.spy(search._VESPA_CONNECTION, "search")
 
     body = _make_search_request(client, {"query_string": ""})
@@ -47,9 +47,9 @@ def test_empty_search_term_performs_browse(client, test_db, mocker):
 
 
 @pytest.mark.search
-def test_simple_pagination_families(test_vespa, client, test_db, monkeypatch):
+def test_simple_pagination_families(test_vespa, client, data_db, monkeypatch):
     monkeypatch.setattr(search, "_VESPA_CONNECTION", test_vespa)
-    _populate_db_families(test_db)
+    _populate_db_families(data_db)
 
     FIXTURE_COUNT = 4
     LIMIT = 2
@@ -90,10 +90,10 @@ def test_simple_pagination_families(test_vespa, client, test_db, monkeypatch):
 
 @pytest.mark.search
 @pytest.mark.parametrize("exact_match", [True, False])
-def test_search_body_valid(exact_match, test_vespa, client, test_db, monkeypatch):
+def test_search_body_valid(exact_match, test_vespa, client, data_db, monkeypatch):
     """Test a simple known valid search responds with success."""
     monkeypatch.setattr(search, "_VESPA_CONNECTION", test_vespa)
-    _populate_db_families(test_db)
+    _populate_db_families(data_db)
 
     body = _make_search_request(
         client,
@@ -115,10 +115,10 @@ def test_search_body_valid(exact_match, test_vespa, client, test_db, monkeypatch
 
 
 @pytest.mark.search
-def test_no_doc_if_in_postgres_but_not_vespa(test_vespa, client, test_db, monkeypatch):
+def test_no_doc_if_in_postgres_but_not_vespa(test_vespa, client, data_db, monkeypatch):
     """Test a simple known valid search responds with success."""
     monkeypatch.setattr(search, "_VESPA_CONNECTION", test_vespa)
-    _populate_db_families(test_db)
+    _populate_db_families(data_db)
 
     # Add an extra postgres family that won't be in vespa
     EXTRA_TEST_FAMILY = "Extra Test Family"
@@ -141,10 +141,10 @@ def test_no_doc_if_in_postgres_but_not_vespa(test_vespa, client, test_db, monkey
         "id": "id:doc_search:document_passage::CCLW.executive.111.222.333",
         "fields": {},
     }
-    _create_family(test_db, new_family)
-    _create_family_event(test_db, new_family)
-    _create_family_metadata(test_db, new_family)
-    _create_document(test_db, new_doc, new_family)
+    _create_family(data_db, new_family)
+    _create_family_event(data_db, new_family)
+    _create_family_metadata(data_db, new_family)
+    _create_document(data_db, new_doc, new_family)
 
     # This will be present in browse, which is fine
     body = _make_search_request(client, params={"query_string": ""})
@@ -166,10 +166,10 @@ def test_no_doc_if_in_postgres_but_not_vespa(test_vespa, client, test_db, monkey
 @pytest.mark.search
 @pytest.mark.parametrize("label,query", [("search", "the"), ("browse", "")])
 def test_benchmark_families_search(
-    label, query, test_vespa, monkeypatch, client, test_db
+    label, query, test_vespa, monkeypatch, client, data_db
 ):
     monkeypatch.setattr(search, "_VESPA_CONNECTION", test_vespa)
-    _populate_db_families(test_db)
+    _populate_db_families(data_db)
 
     # This is high as it's meant as a last resort for catching new perfomance problems
     REASONABLE_LATENCY_MS = 50
@@ -193,9 +193,9 @@ def test_benchmark_families_search(
 
 
 @pytest.mark.search
-def test_specific_doc_returned(test_vespa, monkeypatch, client, test_db):
+def test_specific_doc_returned(test_vespa, monkeypatch, client, data_db):
     monkeypatch.setattr(search, "_VESPA_CONNECTION", test_vespa)
-    _populate_db_families(test_db)
+    _populate_db_families(data_db)
 
     family_name_query = "Agriculture Sector Plan 2015-2019"
     params = {
@@ -226,10 +226,10 @@ def test_specific_doc_returned(test_vespa, monkeypatch, client, test_db):
     ],
 )
 def test_search_params_contract(
-    params, test_vespa, monkeypatch, client, test_db, mocker
+    params, test_vespa, monkeypatch, client, data_db, mocker
 ):
     monkeypatch.setattr(search, "_VESPA_CONNECTION", test_vespa)
-    _populate_db_families(test_db)
+    _populate_db_families(data_db)
     query_spy = mocker.spy(search._VESPA_CONNECTION, "search")
 
     _make_search_request(
@@ -248,20 +248,20 @@ def test_search_params_contract(
 
 
 @pytest.mark.search
-def test_search_with_deleted_docs(test_vespa, monkeypatch, client, test_db):
+def test_search_with_deleted_docs(test_vespa, monkeypatch, client, data_db):
     monkeypatch.setattr(search, "_VESPA_CONNECTION", test_vespa)
-    _populate_db_families(test_db)
+    _populate_db_families(data_db)
 
     start_body = _make_search_request(client, params={"query_string": "and"})
 
-    test_db.execute(
+    data_db.execute(
         update(FamilyDocument)
         .where(FamilyDocument.import_id == "CCLW.executive.10246.4861")
         .values(document_status="Deleted")
     )
     one_deleted_body = _make_search_request(client, params={"query_string": "and"})
 
-    test_db.execute(update(FamilyDocument).values(document_status="Deleted"))
+    data_db.execute(update(FamilyDocument).values(document_status="Deleted"))
     all_deleted_body = _make_search_request(client, params={"query_string": "and"})
 
     start_family_count = len(start_body["families"])
@@ -274,10 +274,10 @@ def test_search_with_deleted_docs(test_vespa, monkeypatch, client, test_db):
 @pytest.mark.search
 @pytest.mark.parametrize("label,query", [("search", "the"), ("browse", "")])
 def test_keyword_country_filters(
-    label, query, test_vespa, client, test_db, monkeypatch
+    label, query, test_vespa, client, data_db, monkeypatch
 ):
     monkeypatch.setattr(search, "_VESPA_CONNECTION", test_vespa)
-    _populate_db_families(test_db)
+    _populate_db_families(data_db)
     base_params = {"query_string": query}
 
     # Get all documents and iterate over their country codes to confirm that each are
@@ -290,7 +290,7 @@ def test_keyword_country_filters(
     for family in families:
         country_code = family["family_geography"]
 
-        country_slug = get_country_slug_from_country_code(test_db, country_code)
+        country_slug = get_country_slug_from_country_code(data_db, country_code)
 
         params = {**base_params, **{"keyword_filters": {"countries": [country_slug]}}}
         body_with_filters = _make_search_request(client, params=params)
@@ -303,9 +303,9 @@ def test_keyword_country_filters(
 
 @pytest.mark.search
 @pytest.mark.parametrize("label,query", [("search", "the"), ("browse", "")])
-def test_keyword_region_filters(label, query, test_vespa, client, test_db, monkeypatch):
+def test_keyword_region_filters(label, query, test_vespa, client, data_db, monkeypatch):
     monkeypatch.setattr(search, "_VESPA_CONNECTION", test_vespa)
-    _populate_db_families(test_db)
+    _populate_db_families(data_db)
     base_params = {"query_string": query}
 
     # Get regions of all documents and iterate over them
@@ -322,12 +322,12 @@ def test_keyword_region_filters(label, query, test_vespa, client, test_db, monke
             return
 
         parent_id = (
-            test_db.query(Geography)
+            data_db.query(Geography)
             .filter(Geography.value == country_code)
             .first()
             .parent_id
         )
-        region = test_db.query(Geography).filter(Geography.id == parent_id).first()
+        region = data_db.query(Geography).filter(Geography.id == parent_id).first()
 
         params = {**base_params, **{"keyword_filters": {"regions": [region.slug]}}}
         body_with_filters = _make_search_request(client, params=params)
@@ -340,10 +340,10 @@ def test_keyword_region_filters(label, query, test_vespa, client, test_db, monke
 @pytest.mark.search
 @pytest.mark.parametrize("label,query", [("search", "the"), ("browse", "")])
 def test_invalid_keyword_filters(
-    label, query, test_vespa, test_db, monkeypatch, client
+    label, query, test_vespa, data_db, monkeypatch, client
 ):
     monkeypatch.setattr(search, "_VESPA_CONNECTION", test_vespa)
-    _populate_db_families(test_db)
+    _populate_db_families(data_db)
 
     response = client.post(
         SEARCH_ENDPOINT,
@@ -362,9 +362,9 @@ def test_invalid_keyword_filters(
 @pytest.mark.parametrize(
     "year_range", [(None, None), (1900, None), (None, 2020), (1900, 2020)]
 )
-def test_year_range_filterered_in(year_range, test_vespa, test_db, monkeypatch, client):
+def test_year_range_filterered_in(year_range, test_vespa, data_db, monkeypatch, client):
     monkeypatch.setattr(search, "_VESPA_CONNECTION", test_vespa)
-    _populate_db_families(test_db)
+    _populate_db_families(data_db)
 
     # Search
     params = {"query_string": "and", "year_range": year_range}
@@ -380,10 +380,10 @@ def test_year_range_filterered_in(year_range, test_vespa, test_db, monkeypatch, 
 @pytest.mark.search
 @pytest.mark.parametrize("year_range", [(None, 2010), (2024, None)])
 def test_year_range_filterered_out(
-    year_range, test_vespa, test_db, monkeypatch, client
+    year_range, test_vespa, data_db, monkeypatch, client
 ):
     monkeypatch.setattr(search, "_VESPA_CONNECTION", test_vespa)
-    _populate_db_families(test_db)
+    _populate_db_families(data_db)
 
     # Search
     params = {"query_string": "and", "year_range": year_range}
@@ -398,9 +398,9 @@ def test_year_range_filterered_out(
 
 @pytest.mark.search
 @pytest.mark.parametrize("label, query", [("search", "the"), ("browse", "")])
-def test_multiple_filters(label, query, test_vespa, test_db, monkeypatch, client):
+def test_multiple_filters(label, query, test_vespa, data_db, monkeypatch, client):
     monkeypatch.setattr(search, "_VESPA_CONNECTION", test_vespa)
-    _populate_db_families(test_db)
+    _populate_db_families(data_db)
 
     params = {
         "query_string": query,
@@ -417,9 +417,9 @@ def test_multiple_filters(label, query, test_vespa, test_db, monkeypatch, client
 
 @pytest.mark.search
 @pytest.mark.parametrize("label, query", [("search", "the"), ("browse", "")])
-def test_result_order_score(label, query, test_vespa, test_db, monkeypatch, client):
+def test_result_order_score(label, query, test_vespa, data_db, monkeypatch, client):
     monkeypatch.setattr(search, "_VESPA_CONNECTION", test_vespa)
-    _populate_db_families(test_db)
+    _populate_db_families(data_db)
 
     params = {
         "query_string": query,
@@ -441,9 +441,9 @@ def test_result_order_score(label, query, test_vespa, test_db, monkeypatch, clie
 
 @pytest.mark.search
 @pytest.mark.parametrize("label, query", [("search", "the"), ("browse", "")])
-def test_result_order_title(label, query, test_vespa, test_db, monkeypatch, client):
+def test_result_order_title(label, query, test_vespa, data_db, monkeypatch, client):
     monkeypatch.setattr(search, "_VESPA_CONNECTION", test_vespa)
-    _populate_db_families(test_db)
+    _populate_db_families(data_db)
 
     params = {
         "query_string": query,
@@ -463,18 +463,18 @@ def test_result_order_title(label, query, test_vespa, test_db, monkeypatch, clie
         {},
     ],
 )
-def test_invalid_requests(params, test_vespa, test_db, monkeypatch, client):
+def test_invalid_requests(params, test_vespa, data_db, monkeypatch, client):
     monkeypatch.setattr(search, "_VESPA_CONNECTION", test_vespa)
-    _populate_db_families(test_db)
+    _populate_db_families(data_db)
 
     response = client.post(SEARCH_ENDPOINT, json=params)
     assert response.status_code == 422
 
 
 @pytest.mark.search
-def test_case_insensitivity(test_vespa, test_db, monkeypatch, client):
+def test_case_insensitivity(test_vespa, data_db, monkeypatch, client):
     monkeypatch.setattr(search, "_VESPA_CONNECTION", test_vespa)
-    _populate_db_families(test_db)
+    _populate_db_families(data_db)
 
     lower_body = _make_search_request(client, {"query_string": "the"})
     upper_body = _make_search_request(client, {"query_string": "THE"})
@@ -483,9 +483,9 @@ def test_case_insensitivity(test_vespa, test_db, monkeypatch, client):
 
 
 @pytest.mark.search
-def test_punctuation_ignored(test_vespa, test_db, monkeypatch, client):
+def test_punctuation_ignored(test_vespa, data_db, monkeypatch, client):
     monkeypatch.setattr(search, "_VESPA_CONNECTION", test_vespa)
-    _populate_db_families(test_db)
+    _populate_db_families(data_db)
 
     regular_body = _make_search_request(client, {"query_string": "the"})
     punc_body = _make_search_request(client, {"query_string": ", the."})
@@ -497,12 +497,12 @@ def test_punctuation_ignored(test_vespa, test_db, monkeypatch, client):
 @pytest.mark.search
 def test_accents_ignored(
     test_vespa,
-    test_db,
+    data_db,
     monkeypatch,
     client,
 ):
     monkeypatch.setattr(search, "_VESPA_CONNECTION", test_vespa)
-    _populate_db_families(test_db)
+    _populate_db_families(data_db)
 
     start = time.time()
     body = _make_search_request(client, {"query_string": "the"})
@@ -516,11 +516,11 @@ def test_accents_ignored(
 @pytest.mark.parametrize("exact_match", [True, False])
 @pytest.mark.parametrize("query_string", ["", "local"])
 def test_csv_content(
-    exact_match, query_string, test_vespa, test_db, monkeypatch, client
+    exact_match, query_string, test_vespa, data_db, monkeypatch, client
 ):
     """Make sure that downloaded CSV content matches a given search"""
     monkeypatch.setattr(search, "_VESPA_CONNECTION", test_vespa)
-    _populate_db_families(test_db)
+    _populate_db_families(data_db)
     params = {
         "exact_match": exact_match,
         "query_string": query_string,
@@ -553,10 +553,10 @@ def test_csv_content(
 @pytest.mark.parametrize("label, query", [("search", "the"), ("browse", "")])
 @pytest.mark.parametrize("limit", [10, 50, 500])
 def test_csv_download_search_no_limit(
-    label, query, limit, test_vespa, test_db, monkeypatch, client, mocker
+    label, query, limit, test_vespa, data_db, monkeypatch, client, mocker
 ):
     monkeypatch.setattr(search, "_VESPA_CONNECTION", test_vespa)
-    _populate_db_families(test_db)
+    _populate_db_families(data_db)
 
     if label == "search":
         query_spy = mocker.spy(search._VESPA_CONNECTION, "search")
