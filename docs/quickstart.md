@@ -14,6 +14,17 @@ This will install pip, poetry, git pre-commit hooks and set up a poetry environm
 
 It will also create an [environment](./environment.md) file at `.env`.
 
+## Installing the right version of db-client for local developemnt
+
+The correct version is installed in the docker containers, however it can be
+tricky to get that version in your local environment, so use:
+qsq
+
+```
+pip install git+https://github.com/climatepolicyradar/navigator-db-client@v2.0.1
+
+```
+
 ## Docker-based development
 
 The only dependencies for docker-based development should be docker and docker-compose.
