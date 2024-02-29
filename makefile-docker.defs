@@ -108,7 +108,7 @@ test_unit:
 	docker-compose -f docker-compose.yml -f docker-compose.dev.yml run --rm backend pytest -vvv tests/unit
 
 test:
-	docker-compose -f docker-compose.yml -f docker-compose.dev.yml run  backend pytest -vvv -m 'not search' tests/routes/test_geo_stats.py
+	docker-compose -f docker-compose.yml -f docker-compose.dev.yml run --rm backend pytest -vvv -m 'not search'
 
 # ----------------------------------
 # tasks
