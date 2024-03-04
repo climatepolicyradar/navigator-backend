@@ -6,31 +6,31 @@ def verify_password_mock(first: str, second: str):
     return True
 
 
-def test_login(client, test_user, monkeypatch):
+def test_login(test_client, test_user, monkeypatch):
     # Patch the test to skip password hashing check for speed
     monkeypatch.setattr(security, "verify_password", verify_password_mock)
 
-    response = client.post(
+    response = test_client.post(
         "/api/tokens",
         data={"username": test_user.email, "password": "nottheactualpass"},
     )
     assert response.status_code == 200
 
 
-def test_wrong_password(client, test_db, test_user, test_password, monkeypatch):
+def test_wrong_password(test_client, test_db, test_user, test_password, monkeypatch):
     def verify_password_failed_mock(first: str, second: str):
         return False
 
     monkeypatch.setattr(security, "verify_password", verify_password_failed_mock)
 
-    response = client.post(
+    response = test_client.post(
         "/api/tokens", data={"username": test_user.email, "password": "wrong"}
     )
     assert response.status_code == 401
 
 
-def test_wrong_login(client, test_db, test_user, test_password):
-    response = client.post(
+def test_wrong_login(test_client, test_db, test_user, test_password):
+    response = test_client.post(
         "/api/tokens", data={"username": "fakeuser", "password": test_password}
     )
     assert response.status_code == 401

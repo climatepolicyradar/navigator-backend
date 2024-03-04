@@ -14,7 +14,7 @@ TEST_GEO_SLUG_BAD = "this-is-not-a-geography"
 URL_UNDER_TEST_BAD = f"/api/v1/geo_stats/{TEST_GEO_SLUG_BAD}"
 
 
-def test_endpoint_returns_correct_data(client, test_db):
+def test_endpoint_returns_correct_data(test_client, test_db):
     """Tests when the db is populated we can get out the data as expected."""
 
     test_db.add(Geography(id=1, slug="a", display_value="A"))
@@ -40,7 +40,7 @@ def test_endpoint_returns_correct_data(client, test_db):
 
     test_db.commit()
 
-    response = client.get(
+    response = test_client.get(
         URL_UNDER_TEST,
     )
     stats = response.json()
@@ -50,19 +50,19 @@ def test_endpoint_returns_correct_data(client, test_db):
     assert stats["federal"] is False
 
 
-def test_endpoint_returns_not_found(client, test_db):
+def test_endpoint_returns_not_found(test_client, test_db):
     """Tests the fact if the db is populated then 404 is returned for an unknown id."""
     test_db.flush()  # update the session, no need to commit as its just a test
 
-    response = client.get(
+    response = test_client.get(
         URL_UNDER_TEST_BAD,
     )
     assert response.status_code == NOT_FOUND
 
 
-def test_endpoint_returns_not_found_empty_db(client):
+def test_endpoint_returns_not_found_empty_db(test_client):
     """Tests the fact if the db is empty then no error is generated and 404 is returned."""
-    response = client.get(
+    response = test_client.get(
         URL_UNDER_TEST,
     )
     assert response.status_code == NOT_FOUND

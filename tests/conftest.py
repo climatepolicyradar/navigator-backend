@@ -92,7 +92,15 @@ def create_test_db():
 
 @pytest.fixture
 def test_db(scope="function"):
-    """Create a fresh test database for each test."""
+    """
+    Create a fresh test database for each test.
+
+    This will populate the db with the schema in the code (no migrations)
+    Therefore it is quick but contains no data.
+
+    Note: use with `test_client`
+
+    """
 
     test_db_url = get_test_db_url()
 
@@ -122,23 +130,29 @@ def test_db(scope="function"):
 
 @pytest.fixture
 def data_db(scope="function"):
-    """Create a fresh test database for each test."""
+    """
+    Create a fresh test database for each test.
 
+    This will populate the db using the alembic migrations.
+    Therefore it is slower but contains data.
+
+    Note: use with `data_client`
+
+    """
     test_db_url = get_test_db_url()
 
     # Create the test database
     if database_exists(test_db_url):
         drop_database(test_db_url)
     create_database(test_db_url)
+    # Save DATABASE_URL
+    saved = os.environ["DATABASE_URL"]
+    os.environ["DATABASE_URL"] = test_db_url
     try:
         test_engine = create_engine(test_db_url)
         connection = test_engine.connect()
 
-        # Save and restore the DATABASE_URL
-        saved = os.environ["DATABASE_URL"]
-        os.environ["DATABASE_URL"] = test_db_url
         run_migrations(test_engine)
-        os.environ["DATABASE_URL"] = saved
 
         test_session_maker = sessionmaker(
             autocommit=False,
@@ -150,6 +164,8 @@ def data_db(scope="function"):
         # Run the tests
         yield test_session
     finally:
+        # restore DATABASE_URL
+        os.environ["DATABASE_URL"] = saved
         test_session.close()
         connection.close()
         # Drop the test database
@@ -157,8 +173,24 @@ def data_db(scope="function"):
 
 
 @pytest.fixture
-def client(test_db, test_s3_client):
-    """Get a TestClient instance that reads/write to the test database."""
+def data_client(data_db, test_s3_client):
+    """Get a TestClient instance that reads/write to the data_db database."""
+
+    def get_data_db():
+        yield data_db
+
+    def get_test_s3_client():
+        yield test_s3_client
+
+    app.dependency_overrides[get_db] = get_data_db
+    app.dependency_overrides[get_s3_client] = get_test_s3_client
+
+    yield TestClient(app)
+
+
+@pytest.fixture
+def test_client(test_db, test_s3_client):
+    """Get a TestClient instance that reads/write to the test_db database."""
 
     def get_test_db():
         yield test_db
@@ -218,7 +250,7 @@ def verify_password_mock(first: str, second: str) -> bool:
 
 @pytest.fixture
 def superuser_token_headers(
-    client: TestClient, test_superuser, test_password, monkeypatch
+    test_client: TestClient, test_superuser, test_password, monkeypatch
 ) -> t.Dict[str, str]:
     monkeypatch.setattr(security, "verify_password", verify_password_mock)
 
@@ -226,7 +258,7 @@ def superuser_token_headers(
         "username": test_superuser.email,
         "password": test_password,
     }
-    r = client.post("/api/tokens", data=login_data)
+    r = test_client.post("/api/tokens", data=login_data)
     tokens = r.json()
     a_token = tokens["access_token"]
     headers = {"Authorization": f"Bearer {a_token}"}

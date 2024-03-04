@@ -21,8 +21,8 @@ import pytest
         ("https://prefix-climate-laws.org", False),  # climate laws prefixed domain
     ],
 )
-def test_cors_regex(client, origin, should_be_allowed):
-    response = client.options(
+def test_cors_regex(test_client, origin, should_be_allowed):
+    response = test_client.options(
         "/api/v1/config",
         headers={"Origin": origin, "Access-Control-Request-Method": "GET"},
     )

@@ -34,7 +34,7 @@ def _add_family(test_db, import_id: str, cat: FamilyCategory):
     test_db.add(FamilyOrganisation(organisation_id=1, family_import_id=import_id))
 
 
-def test_config_endpoint_content(client, test_db):
+def test_config_endpoint_content(test_client, test_db):
     """Tests whether we get the expected content when the /config endpoint is called."""
     # TODO: this test is fragile, we should look into validation according to the
     #       supporting data, rather than counts & fixed lists
@@ -48,7 +48,7 @@ def test_config_endpoint_content(client, test_db):
     populate_taxonomy(test_db)
     test_db.flush()
 
-    response = client.get(
+    response = test_client.get(
         url_under_test,
     )
 
@@ -128,7 +128,7 @@ def test_config_endpoint_content(client, test_db):
     }
 
 
-def test_config_endpoint_cclw_stats(client, test_db):
+def test_config_endpoint_cclw_stats(test_client, test_db):
     url_under_test = "/api/v1/config"
     populate_document_role(test_db)
     populate_document_type(test_db)
@@ -148,7 +148,7 @@ def test_config_endpoint_cclw_stats(client, test_db):
     _add_family(test_db, "T.0.0.6", FamilyCategory.UNFCCC)
     test_db.flush()
 
-    response = client.get(
+    response = test_client.get(
         url_under_test,
     )
 
