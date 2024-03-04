@@ -46,8 +46,8 @@ jobs:
       - name: Build docker-compose stack
         run:  make start
 
-      - name: verify backend is up
-        run:  curl http://localhost:8888/api/docs
+      - name: Wait for backend to open port
+        run:  ./scripts/wait_for_port.sh localhost 8888 60
 
       - name: Run backend tests
         run:  make test

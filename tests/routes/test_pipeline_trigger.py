@@ -10,13 +10,13 @@ from db_client.data_migrations import (
 START_INGEST_ENDPOINT = "/api/v1/admin/start-ingest"
 
 
-def test_unauthorized_start_ingest(client):
-    response = client.post(START_INGEST_ENDPOINT)
+def test_unauthorized_start_ingest(test_client):
+    response = test_client.post(START_INGEST_ENDPOINT)
     assert response.status_code == 401
 
 
 def test_start_ingest(
-    client,
+    test_client,
     superuser_token_headers,
     test_db,
     mocker,
@@ -32,7 +32,7 @@ def test_start_ingest(
     populate_document_variant(test_db)
     test_db.commit()
 
-    response = client.post(
+    response = test_client.post(
         START_INGEST_ENDPOINT,
         headers=superuser_token_headers,
     )

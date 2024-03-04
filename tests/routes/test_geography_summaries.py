@@ -7,9 +7,9 @@ def _url_under_test(geography: str) -> str:
     return f"/api/v1/summaries/geography/{geography}"
 
 
-def test_endpoint_returns_families_ok_with_slug(client):
+def test_endpoint_returns_families_ok_with_slug(test_client):
     """Test the endpoint returns an empty sets of data"""
-    response = client.get(_url_under_test("moldova"))
+    response = test_client.get(_url_under_test("moldova"))
     assert response.status_code == OK
     resp = response.json()
 
@@ -27,9 +27,9 @@ def test_endpoint_returns_families_ok_with_slug(client):
     assert len(resp["targets"]) == 0
 
 
-def test_endpoint_returns_families_ok_with_code(client):
+def test_endpoint_returns_families_ok_with_code(test_client):
     """Test the endpoint returns an empty sets of data"""
-    response = client.get(_url_under_test("MDA"))
+    response = test_client.get(_url_under_test("MDA"))
     assert response.status_code == OK
     resp = response.json()
 
@@ -47,10 +47,10 @@ def test_endpoint_returns_families_ok_with_code(client):
     assert len(resp["targets"]) == 0
 
 
-def test_geography_with_families_ordered(client, summary_geography_family_data):
+def test_geography_with_families_ordered(test_client, summary_geography_family_data):
     """Test that all the data is returned ordered by published date"""
     geography_slug = summary_geography_family_data["geos"][0].slug
-    response = client.get(_url_under_test(geography_slug))
+    response = test_client.get(_url_under_test(geography_slug))
     assert response.status_code == OK
     resp = response.json()
     assert resp

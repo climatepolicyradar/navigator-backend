@@ -31,7 +31,7 @@ N_DOCUMENT_KEYS = 12
 
 
 def test_documents_family_slug_returns_not_found(
-    client: TestClient,
+    test_client: TestClient,
     test_db: Session,
 ):
     setup_with_docs(test_db)
@@ -39,7 +39,7 @@ def test_documents_family_slug_returns_not_found(
     assert test_db.query(FamilyEvent).count() == 1
 
     # Test associations
-    response = client.get(
+    response = test_client.get(
         "/api/v1/documents/FamSlug100",
     )
     assert response.status_code == 404
@@ -47,13 +47,13 @@ def test_documents_family_slug_returns_not_found(
 
 
 def test_documents_family_slug_returns_correct_family(
-    client: TestClient,
+    test_client: TestClient,
     test_db: Session,
 ):
     setup_with_two_docs(test_db)
 
     # Test associations
-    response = client.get(
+    response = test_client.get(
         "/api/v1/documents/FamSlug1",
     )
 
@@ -62,7 +62,7 @@ def test_documents_family_slug_returns_correct_family(
     assert json_response["import_id"] == "CCLW.family.1001.0"
 
     # Ensure a different family is returned
-    response = client.get(
+    response = test_client.get(
         "/api/v1/documents/FamSlug2",
     )
 
@@ -72,13 +72,13 @@ def test_documents_family_slug_returns_correct_family(
 
 
 def test_documents_family_slug_returns_correct_json(
-    client: TestClient,
+    test_client: TestClient,
     test_db: Session,
 ):
     setup_with_two_docs(test_db)
 
     # Test associations
-    response = client.get(
+    response = test_client.get(
         "/api/v1/documents/FamSlug1",
     )
     json_response = response.json()
@@ -118,12 +118,12 @@ def test_documents_family_slug_returns_correct_json(
 
 
 def test_documents_family_slug_returns_multiple_docs(
-    client: TestClient,
+    test_client: TestClient,
     test_db: Session,
 ):
     setup_with_two_docs_one_family(test_db)
 
-    response = client.get(
+    response = test_client.get(
         "/api/v1/documents/FamSlug1",
     )
     json_response = response.json()
@@ -133,7 +133,7 @@ def test_documents_family_slug_returns_multiple_docs(
 
 
 def test_documents_family_slug_returns_only_published_docs(
-    client: TestClient,
+    test_client: TestClient,
     test_db: Session,
 ):
     setup_with_two_docs_one_family(test_db)
@@ -144,7 +144,7 @@ def test_documents_family_slug_returns_only_published_docs(
     )
 
     # Test associations
-    response = client.get(
+    response = test_client.get(
         "/api/v1/documents/FamSlug1",
     )
     json_response = response.json()
@@ -154,7 +154,7 @@ def test_documents_family_slug_returns_only_published_docs(
 
 
 def test_documents_family_slug_returns_404_when_all_docs_deleted(
-    client: TestClient,
+    test_client: TestClient,
     test_db: Session,
 ):
     setup_with_two_docs_one_family(test_db)
@@ -170,7 +170,7 @@ def test_documents_family_slug_returns_404_when_all_docs_deleted(
     )
 
     # Test associations
-    response = client.get(
+    response = test_client.get(
         "/api/v1/documents/FamSlug1",
     )
     json_response = response.json()
@@ -180,7 +180,7 @@ def test_documents_family_slug_returns_404_when_all_docs_deleted(
 
 
 def test_documents_doc_slug_returns_not_found(
-    client: TestClient,
+    test_client: TestClient,
     test_db: Session,
 ):
     setup_with_docs(test_db)
@@ -188,7 +188,7 @@ def test_documents_doc_slug_returns_not_found(
     assert test_db.query(FamilyEvent).count() == 1
 
     # Test associations
-    response = client.get(
+    response = test_client.get(
         "/api/v1/documents/DocSlug100",
     )
     assert response.status_code == 404
@@ -196,12 +196,12 @@ def test_documents_doc_slug_returns_not_found(
 
 
 def test_documents_doc_slug_preexisting_objects(
-    client: TestClient,
+    test_client: TestClient,
     test_db: Session,
 ):
     setup_with_two_docs(test_db)
 
-    response = client.get(
+    response = test_client.get(
         "/api/v1/documents/DocSlug2",
     )
     json_response = response.json()
@@ -237,7 +237,7 @@ def test_documents_doc_slug_preexisting_objects(
 
 
 def test_documents_doc_slug_when_deleted(
-    client: TestClient,
+    test_client: TestClient,
     test_db: Session,
 ):
     setup_with_two_docs(test_db)
@@ -246,7 +246,7 @@ def test_documents_doc_slug_when_deleted(
         .where(FamilyDocument.import_id == "CCLW.executive.2.2")
         .values(document_status="Deleted")
     )
-    response = client.get(
+    response = test_client.get(
         "/api/v1/documents/DocSlug2",
     )
     json_response = response.json()
@@ -255,14 +255,14 @@ def test_documents_doc_slug_when_deleted(
 
 
 def test_physical_doc_languages(
-    client: TestClient,
+    test_client: TestClient,
     test_db: Session,
 ):
     setup_with_multiple_docs(
         test_db, doc_data=TWO_DFC_ROW_ONE_LANGUAGE, event_data=TWO_EVENT_ROWS
     )
 
-    response = client.get(
+    response = test_client.get(
         "/api/v1/documents/DocSlug1",
     )
     json_response = response.json()
@@ -272,7 +272,7 @@ def test_physical_doc_languages(
     print(json_response)
     assert document["languages"] == ["eng"]
 
-    response = client.get(
+    response = test_client.get(
         "/api/v1/documents/DocSlug2",
     )
     json_response = response.json()
@@ -283,7 +283,7 @@ def test_physical_doc_languages(
 
 
 def test_physical_doc_languages_not_visible(
-    client: TestClient,
+    test_client: TestClient,
     test_db: Session,
 ):
     setup_with_multiple_docs(
@@ -295,7 +295,7 @@ def test_physical_doc_languages_not_visible(
         .values(visible=False)
     )
 
-    response = client.get(
+    response = test_client.get(
         "/api/v1/documents/DocSlug1",
     )
     json_response = response.json()
@@ -307,14 +307,14 @@ def test_physical_doc_languages_not_visible(
 
 
 def test_physical_doc_multiple_languages(
-    client: TestClient,
+    test_client: TestClient,
     test_db: Session,
 ):
     setup_with_multiple_docs(
         test_db, doc_data=ONE_DFC_ROW_TWO_LANGUAGES, event_data=ONE_EVENT_ROW
     )
 
-    response = client.get(
+    response = test_client.get(
         "/api/v1/documents/DocSlug1",
     )
     json_response = response.json()
@@ -326,13 +326,13 @@ def test_physical_doc_multiple_languages(
 
 
 def test_update_document_status__is_secure(
-    client: TestClient,
+    test_client: TestClient,
     test_db: Session,
 ):
     setup_with_two_docs(test_db)
 
     import_id = "CCLW.executive.1.2"
-    response = client.post(f"/api/v1/admin/documents/{import_id}/processed")
+    response = test_client.post(f"/api/v1/admin/documents/{import_id}/processed")
     assert response.status_code == 401
 
 
@@ -344,7 +344,7 @@ def test_update_document_status__is_secure(
     ],
 )
 def test_update_document_status__fails_on_non_matching_import_id(
-    client: TestClient,
+    test_client: TestClient,
     superuser_token_headers: dict[str, str],
     test_db: Session,
     import_id: str,
@@ -355,7 +355,7 @@ def test_update_document_status__fails_on_non_matching_import_id(
         event_data=TWO_EVENT_ROWS,
     )
 
-    response = client.post(
+    response = test_client.post(
         f"/api/v1/admin/documents/{import_id}/processed",
         headers=superuser_token_headers,
     )
@@ -364,7 +364,7 @@ def test_update_document_status__fails_on_non_matching_import_id(
 
 
 def test_update_document_status__publishes_document(
-    client: TestClient,
+    test_client: TestClient,
     superuser_token_headers: dict[str, str],
     test_db: Session,
 ):
@@ -383,7 +383,7 @@ def test_update_document_status__publishes_document(
         .document_status
     )
 
-    response = client.post(
+    response = test_client.post(
         f"/api/v1/admin/documents/{UPDATE_IMPORT_ID}/processed",
         headers=superuser_token_headers,
     )
@@ -412,7 +412,7 @@ def test_update_document_status__publishes_document(
 
 
 def test_update_document__is_secure(
-    client: TestClient,
+    test_client: TestClient,
     test_db: Session,
 ):
     setup_with_two_docs(test_db)
@@ -424,7 +424,7 @@ def test_update_document__is_secure(
         "source_url": "source_url",
     }
 
-    response = client.put(f"/api/v1/admin/documents/{import_id}", json=payload)
+    response = test_client.put(f"/api/v1/admin/documents/{import_id}", json=payload)
 
     assert response.status_code == 401
 
@@ -437,7 +437,7 @@ def test_update_document__is_secure(
     ],
 )
 def test_update_document__fails_on_non_matching_import_id(
-    client: TestClient,
+    test_client: TestClient,
     superuser_token_headers: dict[str, str],
     test_db: Session,
     import_id: str,
@@ -453,7 +453,7 @@ def test_update_document__fails_on_non_matching_import_id(
         "cdn_object": "folder/file",
     }
 
-    response = client.put(
+    response = test_client.put(
         f"/api/v1/admin/documents/{import_id}",
         headers=superuser_token_headers,
         json=payload,
@@ -470,7 +470,7 @@ def test_update_document__fails_on_non_matching_import_id(
     ],
 )
 def test_update_document__works_on_import_id(
-    client: TestClient,
+    test_client: TestClient,
     superuser_token_headers: dict[str, str],
     test_db: Session,
     import_id: str,
@@ -484,7 +484,7 @@ def test_update_document__works_on_import_id(
         "cdn_object": "folder/file",
     }
 
-    response = client.put(
+    response = test_client.put(
         f"/api/v1/admin/documents/{import_id}",
         headers=superuser_token_headers,
         json=payload,
@@ -516,7 +516,7 @@ def test_update_document__works_on_import_id(
     ],
 )
 def test_update_document__works_on_new_language(
-    client: TestClient,
+    test_client: TestClient,
     superuser_token_headers: dict[str, str],
     test_db: Session,
     import_id: str,
@@ -534,7 +534,7 @@ def test_update_document__works_on_new_language(
         "languages": ["eng"],
     }
 
-    response = client.put(
+    response = test_client.put(
         f"/api/v1/admin/documents/{import_id}",
         headers=superuser_token_headers,
         json=payload,
@@ -576,7 +576,7 @@ def test_update_document__works_on_new_language(
         "languages": ["fra"],
     }
 
-    response = client.put(
+    response = test_client.put(
         f"/api/v1/admin/documents/{import_id}",
         headers=superuser_token_headers,
         json=payload,
@@ -621,7 +621,7 @@ def test_update_document__works_on_new_language(
     ],
 )
 def test_update_document__works_on_new_iso_639_1_language(
-    client: TestClient,
+    test_client: TestClient,
     superuser_token_headers: dict[str, str],
     test_db: Session,
     import_id: str,
@@ -639,7 +639,7 @@ def test_update_document__works_on_new_iso_639_1_language(
         "languages": ["bo"],
     }
 
-    response = client.put(
+    response = test_client.put(
         f"/api/v1/admin/documents/{import_id}",
         headers=superuser_token_headers,
         json=payload,
@@ -681,7 +681,7 @@ def test_update_document__works_on_new_iso_639_1_language(
         "languages": ["el"],
     }
 
-    response = client.put(
+    response = test_client.put(
         f"/api/v1/admin/documents/{import_id}",
         headers=superuser_token_headers,
         json=payload,
@@ -727,7 +727,7 @@ def test_update_document__works_on_new_iso_639_1_language(
     ],
 )
 def test_update_document__works_on_existing_iso_639_1_language(
-    client: TestClient,
+    test_client: TestClient,
     superuser_token_headers: dict[str, str],
     test_db: Session,
     import_id: str,
@@ -751,7 +751,7 @@ def test_update_document__works_on_existing_iso_639_1_language(
         "languages": ["bod"],
     }
 
-    response = client.put(
+    response = test_client.put(
         f"/api/v1/admin/documents/{import_id}",
         headers=superuser_token_headers,
         json=payload,
@@ -793,7 +793,7 @@ def test_update_document__works_on_existing_iso_639_1_language(
         "languages": ["bo"],
     }
 
-    response = client.put(
+    response = test_client.put(
         f"/api/v1/admin/documents/{import_id}",
         headers=superuser_token_headers,
         json=payload,
@@ -838,7 +838,7 @@ def test_update_document__works_on_existing_iso_639_1_language(
     ],
 )
 def test_update_document__works_on_existing_iso_639_3_language(
-    client: TestClient,
+    test_client: TestClient,
     superuser_token_headers: dict[str, str],
     test_db: Session,
     import_id: str,
@@ -862,7 +862,7 @@ def test_update_document__works_on_existing_iso_639_3_language(
         "languages": ["bo"],
     }
 
-    response = client.put(
+    response = test_client.put(
         f"/api/v1/admin/documents/{import_id}",
         headers=superuser_token_headers,
         json=payload,
@@ -904,7 +904,7 @@ def test_update_document__works_on_existing_iso_639_3_language(
         "languages": ["bod"],
     }
 
-    response = client.put(
+    response = test_client.put(
         f"/api/v1/admin/documents/{import_id}",
         headers=superuser_token_headers,
         json=payload,
@@ -949,7 +949,7 @@ def test_update_document__works_on_existing_iso_639_3_language(
     ],
 )
 def test_update_document__logs_warning_on_four_letter_language(
-    client: TestClient,
+    test_client: TestClient,
     superuser_token_headers: dict[str, str],
     test_db: Session,
     mocker: Callable[..., Generator[MockerFixture, None, None]],
@@ -972,7 +972,7 @@ def test_update_document__logs_warning_on_four_letter_language(
 
     log_spy = mocker.spy(_LOGGER, "warning")
 
-    response = client.put(
+    response = test_client.put(
         f"/api/v1/admin/documents/{import_id}",
         headers=superuser_token_headers,
         json=payload,
@@ -1024,7 +1024,7 @@ def test_update_document__logs_warning_on_four_letter_language(
     [[], None],
 )
 def test_update_document__works_with_no_language(
-    client: TestClient,
+    test_client: TestClient,
     superuser_token_headers: dict[str, str],
     test_db: Session,
     import_id: str,
@@ -1043,7 +1043,7 @@ def test_update_document__works_with_no_language(
         "languages": languages,
     }
 
-    response = client.put(
+    response = test_client.put(
         f"/api/v1/admin/documents/{import_id}",
         headers=superuser_token_headers,
         json=payload,
@@ -1089,7 +1089,7 @@ def test_update_document__works_with_no_language(
     [[], ["eng"], ["aaa"], ["aaa", "aab"]],
 )
 def test_update_document__works_existing_languages(
-    client: TestClient,
+    test_client: TestClient,
     superuser_token_headers: dict[str, str],
     test_db: Session,
     import_id: str,
@@ -1127,7 +1127,7 @@ def test_update_document__works_existing_languages(
         "languages": languages_to_add,
     }
 
-    response = client.put(
+    response = test_client.put(
         f"/api/v1/admin/documents/{import_id}",
         headers=superuser_token_headers,
         json=payload,
@@ -1166,7 +1166,7 @@ def test_update_document__works_existing_languages(
 
 
 def test_update_document__idempotent(
-    client: TestClient,
+    test_client: TestClient,
     superuser_token_headers: dict[str, str],
     test_db: Session,
 ):
@@ -1179,14 +1179,14 @@ def test_update_document__idempotent(
         "cdn_object": "folder/file",
     }
 
-    response = client.put(
+    response = test_client.put(
         f"/api/v1/admin/documents/{import_id}",
         headers=superuser_token_headers,
         json=payload,
     )
     assert response.status_code == 200
 
-    response = client.put(
+    response = test_client.put(
         f"/api/v1/admin/documents/{import_id}",
         headers=superuser_token_headers,
         json=payload,
@@ -1210,7 +1210,7 @@ def test_update_document__idempotent(
 
 
 def test_update_document__works_on_slug(
-    client: TestClient,
+    test_client: TestClient,
     superuser_token_headers: dict[str, str],
     test_db: Session,
 ):
@@ -1223,7 +1223,7 @@ def test_update_document__works_on_slug(
         "cdn_object": "folder/file",
     }
 
-    response = client.put(
+    response = test_client.put(
         f"/api/v1/admin/documents/{slug}",
         headers=superuser_token_headers,
         json=payload,
@@ -1249,7 +1249,7 @@ def test_update_document__works_on_slug(
 
 
 def test_update_document__status_422_when_not_found(
-    client: TestClient,
+    test_client: TestClient,
     superuser_token_headers: dict[str, str],
     test_db: Session,
 ):
@@ -1261,7 +1261,7 @@ def test_update_document__status_422_when_not_found(
         "cdn_object": "folder/file",
     }
 
-    response = client.put(
+    response = test_client.put(
         "/api/v1/admin/documents/nothing",
         headers=superuser_token_headers,
         json=payload,
