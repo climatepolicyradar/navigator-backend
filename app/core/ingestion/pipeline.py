@@ -1,5 +1,7 @@
 from datetime import datetime, timezone
 from typing import Any, Sequence, Tuple, cast
+import logging
+
 
 from sqlalchemy.orm import Session
 
@@ -14,8 +16,12 @@ from db_client.models.law_policy.family import (
 from db_client.models.law_policy.metadata import FamilyMetadata
 
 
+_LOGGER = logging.getLogger(__name__)
+
+
 def generate_pipeline_ingest_input(db: Session) -> Sequence[DocumentParserInput]:
     """Generates a complete view of the current document database as pipeline input"""
+    _LOGGER.info("Running pipeline family query")
     query = (
         db.query(Family, FamilyDocument, FamilyMetadata, Geography, Organisation)
         .join(Family, Family.import_id == FamilyDocument.family_import_id)
@@ -34,6 +40,7 @@ def generate_pipeline_ingest_input(db: Session) -> Sequence[DocumentParserInput]
         query.all(),
     )
     fallback_date = datetime(1900, 1, 1, tzinfo=timezone.utc)
+    _LOGGER.info("Running pipeline document query")
     documents: Sequence[DocumentParserInput] = [
         DocumentParserInput(
             name=cast(str, family.title),  # All documents in a family indexed by title
