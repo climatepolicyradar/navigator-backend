@@ -53,6 +53,9 @@ class SearchRequestBody(BaseModel):
     exact_match: bool = False
     max_passages_per_doc: int = 10  # TODO: decide on default
 
+    family_ids: Optional[Sequence[str]] = None
+    document_ids: Optional[Sequence[str]] = None
+
     # TODO: Improve filters to allow generics & use filter types
     keyword_filters: Optional[Mapping[FilterField, Sequence[str]]] = None
     year_range: Optional[tuple[Optional[int], Optional[int]]] = None

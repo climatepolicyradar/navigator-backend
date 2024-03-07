@@ -514,6 +514,8 @@ def create_vespa_search_params(db: Session, search_body: SearchRequestBody):
         exact_match=search_body.exact_match,
         limit=VESPA_SEARCH_LIMIT,
         max_hits_per_family=search_body.max_passages_per_doc,
+        family_ids=search_body.family_ids,
+        document_ids=search_body.document_ids,
         keyword_filters=_convert_filters(db, search_body.keyword_filters),
         year_range=search_body.year_range,
         sort_by=_convert_sort_field(search_body.sort_field),
