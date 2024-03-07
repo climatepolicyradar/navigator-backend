@@ -102,7 +102,6 @@ def _create_organisation(db: Session):
 
 
 def _create_family(db: Session, family: VespaFixture):
-    family_id = _parse_id(family)
     family_import_id = family["fields"]["family_import_id"]
 
     geo = family["fields"]["family_geography"]
@@ -119,7 +118,7 @@ def _create_family(db: Session, family: VespaFixture):
     db.commit()
 
     family_slug = Slug(
-        name=family_id,
+        name=family["fields"]["family_slug"],
         family_import_id=family_import_id,
         family_document_import_id=None,
     )
@@ -246,7 +245,7 @@ def _create_document(
     )
 
     family_document_slug = Slug(
-        name=f"fd_{_parse_id(doc)}",
+        name=family["fields"]["document_slug"],
         family_import_id=None,
         family_document_import_id=doc_import_id,
     )
