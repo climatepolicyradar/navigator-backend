@@ -56,10 +56,24 @@ def db_setup(test_db):
 @pytest.mark.parametrize(
     (
         "query_string,exact_match,year_range,sort_field,sort_order,"
-        "keyword_filters,max_passages,limit,offset,continuation_token"
+        "keyword_filters,max_passages,limit,offset,continuation_token,"
+        "family_ids,document_ids"
     ),
     [
-        ("hello", True, None, None, SortOrder.ASCENDING, None, 10, 10, 10, None),
+        (
+            "hello",
+            True,
+            None,
+            None,
+            SortOrder.ASCENDING,
+            None,
+            10,
+            10,
+            10,
+            None,
+            None,
+            None,
+        ),
         (
             "world",
             True,
@@ -71,6 +85,8 @@ def db_setup(test_db):
             10,
             0,
             "ABC",
+            None,
+            None,
         ),
         (
             "hello",
@@ -82,6 +98,8 @@ def db_setup(test_db):
             20,
             10,
             0,
+            None,
+            None,
             None,
         ),
         (
@@ -98,6 +116,8 @@ def db_setup(test_db):
             10,
             0,
             "ABC",
+            None,
+            None,
         ),
         (
             "hello",
@@ -109,6 +129,8 @@ def db_setup(test_db):
             10,
             10,
             0,
+            None,
+            None,
             None,
         ),
         (
@@ -122,6 +144,8 @@ def db_setup(test_db):
             100,
             10,
             "ABC",
+            None,
+            None,
         ),
         (
             "hello",
@@ -134,6 +158,8 @@ def db_setup(test_db):
             10,
             0,
             None,
+            None,
+            ["CCLW.document.1.0"],
         ),
         (
             "world",
@@ -146,6 +172,8 @@ def db_setup(test_db):
             10,
             0,
             "ABC",
+            ["CCLW.executive.1.0"],
+            None,
         ),
         (
             "hello",
@@ -158,6 +186,8 @@ def db_setup(test_db):
             15,
             5,
             None,
+            ["CCLW.executive.1.0"],
+            ["CCLW.document.1.0", "CCLW.document.2.0"],
         ),
         (
             "world",
@@ -170,6 +200,8 @@ def db_setup(test_db):
             10,
             0,
             "ABC",
+            ["CCLW.executive.1.0", "CCLW.executive.2.0"],
+            ["CCLW.document.1.0", "CCLW.document.2.0"],
         ),
     ],
 )
@@ -185,6 +217,8 @@ def test_create_vespa_search_params(
     limit,
     offset,
     continuation_token,
+    family_ids,
+    document_ids,
 ):
     db_setup(test_db)
 
@@ -192,6 +226,8 @@ def test_create_vespa_search_params(
         query_string=query_string,
         exact_match=exact_match,
         max_passages_per_doc=max_passages,
+        family_ids=family_ids,
+        document_ids=document_ids,
         keyword_filters=keyword_filters,
         year_range=year_range,
         sort_field=sort_field,
