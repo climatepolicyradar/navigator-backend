@@ -27,8 +27,23 @@ from app.core.search import (
     _convert_sort_field,
     _convert_sort_order,
 )
-from db_client.models.law_policy import Geography
 from tests.core.ingestion.helpers import populate_for_ingest
+
+
+from db_client.models.app.users import Organisation
+from db_client.models.document import PhysicalDocument
+from db_client.models.law_policy import (
+    EventStatus,
+    Family,
+    FamilyCategory,
+    FamilyDocument,
+    FamilyEvent,
+    FamilyMetadata,
+    Geography,
+    MetadataOrganisation,
+    MetadataTaxonomy,
+)
+from db_client.models.law_policy.family import DocumentStatus
 
 
 def db_setup(test_db):
@@ -275,6 +290,8 @@ def test__convert_filters(test_db, filters):
 
 @dataclass
 class FamSpec:
+    """Spec used to build family fixtures for tests"""
+
     random_seed: int
     family_import_id: str
     family_source: str
@@ -462,22 +479,6 @@ _FAM_SPEC_3 = FamSpec(
     family_document_count=2,
     document_hit_count=40,
 )
-
-
-from db_client.models.app.users import Organisation
-from db_client.models.document import PhysicalDocument
-from db_client.models.law_policy import (
-    DocumentStatus,
-    EventStatus,
-    Family,
-    FamilyCategory,
-    FamilyDocument,
-    FamilyEvent,
-    FamilyMetadata,
-    MetadataOrganisation,
-    MetadataTaxonomy,
-)
-from db_client.models.law_policy.family import DocumentStatus
 
 
 def populate_test_db(db: Session, fam_specs: Sequence[FamSpec]) -> None:
