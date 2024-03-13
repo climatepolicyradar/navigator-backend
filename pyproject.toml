@@ -56,10 +56,7 @@ build-backend = "poetry.core.masonry.api"
 
 [tool.pytest.ini_options]
 addopts = "-p no:cacheprovider"
-env_files = """
-    .env.test
-    .env
-"""
+
 markers = [
     "cors",
     "search",
