@@ -205,33 +205,6 @@ def db_setup(test_db):
             ["CCLW.executive.1.0", "CCLW.executive.2.0"],
             ["CCLW.document.1.0", "CCLW.document.2.0"],
         ),
-        (
-            "",  # Browse request
-            True,
-            (1940, 1960),
-            None,
-            SortOrder.DESCENDING,
-            None,
-            10,
-            10,
-            0,
-            "ABC",
-        ),
-        (
-            "",
-            False,
-            (1940, None),
-            None,
-            SortOrder.DESCENDING,
-            {
-                FilterField.COUNTRY: ["germany", "France"],
-                FilterField.REGION: ["europe"],
-            },
-            20,
-            10,
-            0,
-            "ABC",
-        ),
     ],
 )
 def test_create_vespa_search_params(
@@ -293,6 +266,93 @@ def test_create_vespa_search_params(
         assert not produced_search_parameters.keyword_filters
     assert produced_search_parameters.sort_by == _convert_sort_field(sort_field)
     assert produced_search_parameters.sort_order == _convert_sort_order(sort_order)
+
+
+@pytest.mark.parametrize(
+    (
+        "exact_match,year_range,sort_field,sort_order,"
+        "keyword_filters,max_passages,limit,offset,continuation_token,"
+        "family_ids,document_ids"
+    ),
+    [
+        (
+            True,
+            (1940, 1960),
+            None,
+            SortOrder.DESCENDING,
+            None,
+            10,
+            10,
+            0,
+            "ABC",
+            None,
+            None,
+        ),
+        (
+            False,
+            (1940, None),
+            None,
+            SortOrder.DESCENDING,
+            {
+                FilterField.COUNTRY: ["germany", "France"],
+                FilterField.REGION: ["europe"],
+            },
+            20,
+            10,
+            0,
+            "ABC",
+            ["CCLW.document.1.0", "CCLW.document.2.0"],
+            None,
+        ),
+        (
+            False,
+            (1940, None),
+            None,
+            SortOrder.DESCENDING,
+            {
+                FilterField.COUNTRY: ["germany", "France"],
+                FilterField.REGION: ["europe"],
+            },
+            20,
+            10,
+            0,
+            "ABC",
+            ["CCLW.executive.1.0", "CCLW.executive.2.0"],
+            ["CCLW.document.1.0", "CCLW.document.2.0"],
+        ),
+    ],
+)
+def test_create_browse_request_params(
+    test_db,
+    exact_match,
+    year_range,
+    sort_field,
+    sort_order,
+    keyword_filters,
+    max_passages,
+    limit,
+    offset,
+    continuation_token,
+    family_ids,
+    document_ids,
+):
+    db_setup(test_db)
+
+    SearchRequestBody(
+        query_string="",
+        exact_match=exact_match,
+        max_passages_per_doc=max_passages,
+        family_ids=family_ids,
+        document_ids=document_ids,
+        keyword_filters=keyword_filters,
+        year_range=year_range,
+        sort_field=sort_field,
+        sort_order=sort_order,
+        include_results=None,
+        limit=limit,
+        offset=offset,
+        continuation_token=continuation_token,
+    )
 
 
 @pytest.mark.parametrize(
@@ -751,9 +811,9 @@ def test_process_vespa_search_response(
                 FilterField.COUNTRY: ["germany", "france"],
                 FilterField.REGION: ["europe"],
             },
-            {"geography": ["DEU", "FRA"]},
+            {"countries": ["DEU", "FRA"]},
         ),
-        ({FilterField.COUNTRY: ["france", "germany"]}, {"geography": ["DEU", "FRA"]}),
+        ({FilterField.COUNTRY: ["france", "germany"]}, {"countries": ["DEU", "FRA"]}),
     ],
 )
 def test_process_search_keyword_filters(
