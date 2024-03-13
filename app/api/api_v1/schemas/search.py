@@ -118,6 +118,7 @@ class SearchResponseFamily(BaseModel):
     family_metadata: dict
     family_title_match: bool
     family_description_match: bool
+    total_passage_hits: int
     family_documents: list[SearchResponseFamilyDocument]
 
 
@@ -125,6 +126,7 @@ class SearchResponse(BaseModel):
     """The response body produced by the search API endpoint."""
 
     hits: int
+    total_family_hits: int
     query_time_ms: int
     total_time_ms: int
     continuation_token: Optional[str] = None
