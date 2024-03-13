@@ -890,21 +890,21 @@ test = ["pytest (>=6)"]
 
 [[package]]
 name = "fastapi"
-version = "0.103.2"
+version = "0.104.1"
 description = "FastAPI framework, high performance, easy to learn, fast to code, ready for production"
 category = "main"
 optional = false
-python-versions = ">=3.7"
+python-versions = ">=3.8"
 files = [
-    {file = "fastapi-0.103.2-py3-none-any.whl", hash = "sha256:3270de872f0fe9ec809d4bd3d4d890c6d5cc7b9611d721d6438f9dacc8c4ef2e"},
-    {file = "fastapi-0.103.2.tar.gz", hash = "sha256:75a11f6bfb8fc4d2bec0bd710c2d5f2829659c0e8c0afd5560fdda6ce25ec653"},
+    {file = "fastapi-0.104.1-py3-none-any.whl", hash = "sha256:752dc31160cdbd0436bb93bad51560b57e525cbb1d4bbf6f4904ceee75548241"},
+    {file = "fastapi-0.104.1.tar.gz", hash = "sha256:e5e4540a7c5e1dcfbbcf5b903c234feddcdcd881f191977a1c5dfd917487e7ae"},
 ]
 
 [package.dependencies]
 anyio = ">=3.7.1,<4.0.0"
 pydantic = ">=1.7.4,<1.8 || >1.8,<1.8.1 || >1.8.1,<2.0.0 || >2.0.0,<2.0.1 || >2.0.1,<2.1.0 || >2.1.0,<3.0.0"
 starlette = ">=0.27.0,<0.28.0"
-typing-extensions = ">=4.5.0"
+typing-extensions = ">=4.8.0"
 
 [package.extras]
 all = ["email-validator (>=2.0.0)", "httpx (>=0.23.0)", "itsdangerous (>=1.1.0)", "jinja2 (>=2.11.2)", "orjson (>=3.2.1)", "pydantic-extra-types (>=2.0.0)", "pydantic-settings (>=2.0.0)", "python-multipart (>=0.0.5)", "pyyaml (>=5.3.1)", "ujson (>=4.0.1,!=4.0.2,!=4.1.0,!=4.2.0,!=4.3.0,!=5.0.0,!=5.1.0)", "uvicorn[standard] (>=0.12.0)"]
@@ -926,34 +926,39 @@ fastapi = ">=0.63.0"
 
 [[package]]
 name = "fastapi-pagination"
-version = "0.9.3"
+version = "0.12.19"
 description = "FastAPI pagination"
 category = "main"
 optional = false
-python-versions = ">=3.7,<4.0"
+python-versions = ">=3.8,<4.0"
 files = [
-    {file = "fastapi-pagination-0.9.3.tar.gz", hash = "sha256:bf2bd538786b5804130b01b1a0b3bdab5917e3409ef729e86f9e8224055e9432"},
-    {file = "fastapi_pagination-0.9.3-py3-none-any.whl", hash = "sha256:d1dbdcf996df60006f1d4366dcb9abfa8fbc73b9779e0483cb7701d1c4daafc1"},
+    {file = "fastapi_pagination-0.12.19-py3-none-any.whl", hash = "sha256:67838b21e2f62fae739117d130f8153a362d1fc266c2d738543e71d446618635"},
+    {file = "fastapi_pagination-0.12.19.tar.gz", hash = "sha256:d947d0c91589dc2fc99a15409707eb24272970a044489d21363641af03516fd7"},
 ]
 
 [package.dependencies]
-fastapi = ">=0.61.2"
-pydantic = ">=1.7.2"
-SQLAlchemy = {version = ">=1.3.20", optional = true, markers = "extra == \"gino\" or extra == \"sqlalchemy\" or extra == \"asyncpg\" or extra == \"all\""}
+fastapi = ">=0.93.0"
+pydantic = ">=1.9.1"
+sqlakeyset = {version = ">=2.0.1680321678,<3.0.0", optional = true, markers = "extra == \"sqlmodel\" or extra == \"sqlalchemy\" or extra == \"all\""}
+SQLAlchemy = {version = ">=1.3.20", optional = true, markers = "extra == \"sqlalchemy\" or extra == \"asyncpg\" or extra == \"all\""}
+typing-extensions = ">=4.8.0,<5.0.0"
 
 [package.extras]
-all = ["Django (<3.3.0)", "SQLAlchemy (>=1.3.20)", "asyncpg (>=0.24.0)", "databases[mysql,postgresql,sqlite] (>=0.4.0)", "gino[starlette] (>=1.0.1)", "mongoengine (>=0.23.1,<0.25.0)", "motor (>=2.5.1,<3.0.0)", "orm (>=0.1.5)", "ormar (>=0.10.5)", "piccolo (>=0.29,<0.35)", "tortoise-orm[aiomysql,aiosqlite,asyncpg] (>=0.16.18,<0.20.0)"]
+all = ["SQLAlchemy (>=1.3.20)", "asyncpg (>=0.24.0)", "beanie (>=1.25.0)", "bunnet (>=1.1.0,<2.0.0)", "databases (>=0.6.0)", "django (<5.0.0)", "mongoengine (>=0.23.1,<0.29.0)", "motor (>=2.5.1,<4.0.0)", "orm (>=0.3.1)", "ormar (>=0.11.2)", "piccolo (>=0.89,<0.122)", "pony (>=0.7.16,<0.8.0)", "scylla-driver (>=3.25.6,<4.0.0)", "sqlakeyset (>=2.0.1680321678,<3.0.0)", "sqlmodel (>=0.0.8,<0.0.15)", "tortoise-orm (>=0.16.18,<0.21.0)"]
 asyncpg = ["SQLAlchemy (>=1.3.20)", "asyncpg (>=0.24.0)"]
-databases = ["databases[mysql,postgresql,sqlite] (>=0.4.0)"]
-django = ["Django (<3.3.0)", "databases[mysql,postgresql,sqlite] (>=0.4.0)"]
-gino = ["SQLAlchemy (>=1.3.20)", "gino[starlette] (>=1.0.1)"]
-mongoengine = ["mongoengine (>=0.23.1,<0.25.0)"]
-motor = ["motor (>=2.5.1,<3.0.0)"]
-orm = ["databases[mysql,postgresql,sqlite] (>=0.4.0)", "orm (>=0.1.5)", "typesystem (>=0.2.0,<0.3.0)"]
-ormar = ["ormar (>=0.10.5)"]
-piccolo = ["piccolo (>=0.29,<0.35)"]
-sqlalchemy = ["SQLAlchemy (>=1.3.20)"]
-tortoise = ["tortoise-orm[aiomysql,aiosqlite,asyncpg] (>=0.16.18,<0.20.0)"]
+beanie = ["beanie (>=1.25.0)"]
+bunnet = ["bunnet (>=1.1.0,<2.0.0)"]
+databases = ["databases (>=0.6.0)"]
+django = ["databases (>=0.6.0)", "django (<5.0.0)"]
+mongoengine = ["mongoengine (>=0.23.1,<0.29.0)"]
+motor = ["motor (>=2.5.1,<4.0.0)"]
+orm = ["databases (>=0.6.0)", "orm (>=0.3.1)"]
+ormar = ["ormar (>=0.11.2)"]
+piccolo = ["piccolo (>=0.89,<0.122)"]
+scylla-driver = ["scylla-driver (>=3.25.6,<4.0.0)"]
+sqlalchemy = ["SQLAlchemy (>=1.3.20)", "sqlakeyset (>=2.0.1680321678,<3.0.0)"]
+sqlmodel = ["sqlakeyset (>=2.0.1680321678,<3.0.0)", "sqlmodel (>=0.0.8,<0.0.15)"]
+tortoise = ["tortoise-orm (>=0.16.18,<0.21.0)"]
 
 [[package]]
 name = "filelock"
@@ -3302,6 +3307,24 @@ files = [
 ]
 
 [[package]]
+name = "sqlakeyset"
+version = "2.0.1708907391"
+description = "offset-free paging for sqlalchemy"
+category = "main"
+optional = false
+python-versions = ">=3.7,<4.0"
+files = [
+    {file = "sqlakeyset-2.0.1708907391-py3-none-any.whl", hash = "sha256:3eb6bd0ccd599ab44aa5c0b0f9a710d5c4d24813c7053adc9398bf539b68859e"},
+    {file = "sqlakeyset-2.0.1708907391.tar.gz", hash = "sha256:376af65f0faecea6e19b16dd5dd047439d4314c5ae1d85d8a46bbb1ee44f32e3"},
+]
+
+[package.dependencies]
+packaging = ">=20.0"
+python-dateutil = "*"
+sqlalchemy = ">=1.3.11"
+typing_extensions = ">=4,<5"
+
+[[package]]
 name = "sqlalchemy"
 version = "1.4.52"
 description = "Database Abstraction Library"
@@ -4418,4 +4441,4 @@ multidict = ">=4.0"
 [metadata]
 lock-version = "2.0"
 python-versions = "^3.9"
-content-hash = "a55d6a4e7e61a164bcbee10954ca4d103fdeef73fbae47cdedcd5681e19f6650"
+content-hash = "d32a69e8ae283519d00c0cc6a29e28c982dcc5080c94e066546b717c06cd2cd9"
