@@ -556,14 +556,17 @@ def _generate_search_response_hits(spec: FamSpec) -> Sequence[DataAccessHit]:
 def _generate_search_response(specs: Sequence[FamSpec]) -> DataAccessSearchResponse:
     families = []
     for fam_spec in specs:
+        passage_hits = _generate_search_response_hits(fam_spec)
         f = DataAccessFamily(
             id=fam_spec.family_import_id,
-            hits=_generate_search_response_hits(fam_spec),
+            hits=passage_hits,
+            total_passage_hits=(len(passage_hits) * 10),
         )
         families.append(f)
 
     return DataAccessSearchResponse(
         total_hits=len(specs),
+        total_family_hits=(len(families) * 4),
         query_time_ms=87 * len(specs),
         total_time_ms=95 * len(specs),
         families=families,
@@ -725,6 +728,7 @@ def test_process_vespa_search_response(
     populate_test_db(test_db, fam_specs=fam_specs)
 
     vespa_response = _generate_search_response(fam_specs)
+
     search_response = process_vespa_search_response(
         db=test_db,
         vespa_search_response=vespa_response,
@@ -735,12 +739,18 @@ def test_process_vespa_search_response(
     assert len(search_response.families) == min(len(fam_specs), limit)
     assert search_response.query_time_ms == vespa_response.query_time_ms
     assert search_response.total_time_ms == vespa_response.total_time_ms
+    assert search_response.total_family_hits == vespa_response.total_family_hits
     assert search_response.continuation_token == vespa_response.continuation_token
 
     # Now validate family results
     for i, fam_spec in enumerate(fam_specs[offset : offset + limit]):
         search_response_family_i = search_response.families[i]
         assert search_response_family_i.family_slug == slugify(fam_spec.family_name)
+
+        assert (
+            search_response_family_i.total_passage_hits
+            == vespa_response.families[i + offset].total_passage_hits
+        )
 
         # Check that we have the correct document details in the response
         expected_document_ids = set(

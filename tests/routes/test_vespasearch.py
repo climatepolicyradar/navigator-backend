@@ -140,6 +140,7 @@ def test_search_body_valid(exact_match, test_vespa, data_client, data_db, monkey
         "families",
         "hits",
         "query_time_ms",
+        "total_family_hits",
         "total_time_ms",
     ]
     assert isinstance(body["families"], list)

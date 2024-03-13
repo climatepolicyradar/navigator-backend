@@ -114,6 +114,7 @@ def test_search_response() -> None:
     """
     search_response = SearchResponse(
         hits=1,
+        total_family_hits=1,
         query_time_ms=1,
         total_time_ms=1,
         families=[
@@ -133,6 +134,7 @@ def test_search_response() -> None:
                 family_metadata={"key1": "value1", "key2": "value2"},
                 family_title_match=True,
                 family_description_match=False,
+                total_passage_hits=1,
                 family_documents=[
                     SearchResponseFamilyDocument(
                         document_title="Document Title",
