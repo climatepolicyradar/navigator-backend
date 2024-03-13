@@ -12,9 +12,11 @@ from cpr_data_access.models.search import (
     Passage as DataAccessPassage,
     SearchResponse as DataAccessSearchResponse,
     filter_fields,
+    KeywordFilters,
 )
 from sqlalchemy.orm import Session
 
+from app.api.api_v1.routers.search import process_search_keyword_filters
 from app.core.config import VESPA_SEARCH_MATCHES_PER_DOC, VESPA_SEARCH_LIMIT
 from app.core.search import (
     FilterField,
@@ -109,7 +111,7 @@ def db_setup(test_db):
             None,
             SortOrder.DESCENDING,
             {
-                FilterField.COUNTRY: ["germany", "France"],
+                FilterField.COUNTRY: ["germany", "france"],
                 FilterField.REGION: ["europe"],
             },
             20,
@@ -203,6 +205,33 @@ def db_setup(test_db):
             ["CCLW.executive.1.0", "CCLW.executive.2.0"],
             ["CCLW.document.1.0", "CCLW.document.2.0"],
         ),
+        (
+            "",  # Browse request
+            True,
+            (1940, 1960),
+            None,
+            SortOrder.DESCENDING,
+            None,
+            10,
+            10,
+            0,
+            "ABC",
+        ),
+        (
+            "",
+            False,
+            (1940, None),
+            None,
+            SortOrder.DESCENDING,
+            {
+                FilterField.COUNTRY: ["germany", "France"],
+                FilterField.REGION: ["europe"],
+            },
+            20,
+            10,
+            0,
+            "ABC",
+        ),
     ],
 )
 def test_create_vespa_search_params(
@@ -256,51 +285,83 @@ def test_create_vespa_search_params(
     assert produced_search_parameters.exact_match == exact_match
 
     # Test converted data
-    assert produced_search_parameters.keyword_filters == _convert_filters(
-        test_db, keyword_filters
-    )
+    if keyword_filters:
+        assert produced_search_parameters.keyword_filters == KeywordFilters(
+            **_convert_filters(test_db, keyword_filters)
+        )
+    else:
+        assert not produced_search_parameters.keyword_filters
     assert produced_search_parameters.sort_by == _convert_sort_field(sort_field)
     assert produced_search_parameters.sort_order == _convert_sort_order(sort_order)
 
 
-def _get_expected_countries(db: Session, slugs: Sequence[str]) -> Sequence[str]:
-    geographies = db.query(Geography).filter(Geography.slug.in_(slugs)).all()
-
-    geo_names = []
-    for geo in geographies:
-        is_region = geo.parent_id is None
-        if is_region:
-            countries = db.query(Geography).filter(Geography.parent_id == geo.id).all()
-            assert len(countries) > 5
-            geo_names.extend(c.value for c in countries)
-        else:
-            geo_names.append(geo.value)
-
-    return geo_names
-
-
 @pytest.mark.parametrize(
-    "filters",
+    "filters, expected",
     [
-        None,
-        {FilterField.CATEGORY: ["Executive"]},
-        {FilterField.LANGUAGE: ["english"]},
-        {FilterField.SOURCE: ["CCLW"]},
-        {FilterField.REGION: ["europe-central-asia"]},
-        {FilterField.COUNTRY: ["france", "germany"]},
-        {FilterField.COUNTRY: ["cambodia"]},
-        {FilterField.REGION: ["south_america"], FilterField.COUNTRY: ["france"]},
+        (None, None),
+        ({FilterField.REGION: ["this-is-not-a-region"]}, None),
+        (
+            {
+                FilterField.REGION: ["latin-america-caribbean"],
+                FilterField.COUNTRY: ["france"],
+            },
+            None,
+        ),
+        ({FilterField.REGION: ["north-america"]}, {"family_geography": ["CAN", "USA"]}),
+        (
+            {
+                FilterField.REGION: ["north-america"],
+                FilterField.COUNTRY: ["not-a-country"],
+            },
+            {"family_geography": ["CAN", "USA"]},
+        ),
+        (
+            {FilterField.REGION: ["north-america"], FilterField.COUNTRY: ["canada"]},
+            {"family_geography": ["CAN"]},
+        ),
+        ({FilterField.COUNTRY: ["cambodia"]}, {"family_geography": ["KHM"]}),
+        ({FilterField.COUNTRY: ["this-is-not-valid"]}, None),
+        (
+            {FilterField.COUNTRY: ["france", "germany"]},
+            {"family_geography": ["FRA", "DEU"]},
+        ),
+        (
+            {FilterField.COUNTRY: ["cambodia"], FilterField.CATEGORY: ["Executive"]},
+            {"family_category": ["Executive"], "family_geography": ["KHM"]},
+        ),
+        (
+            {FilterField.COUNTRY: ["cambodia"], FilterField.LANGUAGE: ["english"]},
+            {"document_languages": ["english"], "family_geography": ["KHM"]},
+        ),
+        (
+            {FilterField.COUNTRY: ["cambodia"], FilterField.SOURCE: ["CCLW"]},
+            {"family_source": ["CCLW"], "family_geography": ["KHM"]},
+        ),
+        (
+            {
+                FilterField.REGION: ["north-america"],
+                FilterField.CATEGORY: ["Executive"],
+            },
+            {"family_category": ["Executive"], "family_geography": ["CAN", "USA"]},
+        ),
+        (
+            {FilterField.REGION: ["north-america"], FilterField.LANGUAGE: ["english"]},
+            {"document_languages": ["english"], "family_geography": ["CAN", "USA"]},
+        ),
+        (
+            {FilterField.REGION: ["north-america"], FilterField.SOURCE: ["CCLW"]},
+            {"family_source": ["CCLW"], "family_geography": ["CAN", "USA"]},
+        ),
+        ({FilterField.CATEGORY: ["Executive"]}, {"family_category": ["Executive"]}),
+        ({FilterField.LANGUAGE: ["english"]}, {"document_languages": ["english"]}),
+        ({FilterField.SOURCE: ["CCLW"]}, {"family_source": ["CCLW"]}),
     ],
 )
-def test__convert_filters(test_db, filters):
+def test__convert_filters(test_db, filters, expected):
     db_setup(test_db)
     converted_filters = _convert_filters(test_db, filters)
 
-    if filters in [None, []]:
-        assert converted_filters in [None, []]
-
-    if filters not in [None, []]:
-        assert converted_filters not in [None, []]
+    assert converted_filters == expected
 
     if converted_filters not in [None, []]:
         assert isinstance(converted_filters, dict)
@@ -309,16 +370,7 @@ def test__convert_filters(test_db, filters):
         expected_languages = filters.get(FilterField.LANGUAGE)
         expected_categories = filters.get(FilterField.CATEGORY)
         expected_sources = filters.get(FilterField.SOURCE)
-        region_slugs = filters.get(FilterField.REGION, [])
-        country_slugs = filters.get(FilterField.COUNTRY, [])
-        geo_slugs = region_slugs + country_slugs
-        if geo_slugs:
-            expected_countries = _get_expected_countries(test_db, geo_slugs)
-            assert expected_countries
-        else:
-            expected_countries = None
 
-        assert expected_countries == converted_filters.get(filter_fields["geography"])
         assert expected_languages == converted_filters.get(filter_fields["language"])
         assert expected_sources == converted_filters.get(filter_fields["source"])
         assert expected_categories == converted_filters.get(filter_fields["category"])
@@ -683,3 +735,36 @@ def test_process_vespa_search_response(
                 assert all(
                     [pm.text_block_coords is None for pm in fd.document_passage_matches]
                 )
+
+
+@pytest.mark.parametrize(
+    "filters, expected",
+    [
+        (None, None),
+        (
+            {FilterField.CATEGORY: ["Legislative"], FilterField.REGION: ["europe"]},
+            {"category": ["Legislative"]},
+        ),
+        ({FilterField.SOURCE: ["UNFCCC"]}, {"source": ["UNFCCC"]}),
+        (
+            {
+                FilterField.COUNTRY: ["germany", "france"],
+                FilterField.REGION: ["europe"],
+            },
+            {"geography": ["DEU", "FRA"]},
+        ),
+        ({FilterField.COUNTRY: ["france", "germany"]}, {"geography": ["DEU", "FRA"]}),
+    ],
+)
+def test_process_search_keyword_filters(
+    test_db,
+    filters,
+    expected,
+):
+    db_setup(test_db)
+
+    processed_filters = process_search_keyword_filters(
+        test_db,
+        filters,
+    )
+    assert processed_filters == expected

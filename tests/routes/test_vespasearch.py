@@ -375,6 +375,29 @@ def test_keyword_region_filters(
 
 @pytest.mark.search
 @pytest.mark.parametrize("label,query", [("search", "the"), ("browse", "")])
+def test_keyword_region_and_country_filters(
+    label, query, test_vespa, data_client, data_db, monkeypatch
+):
+    monkeypatch.setattr(search, "_VESPA_CONNECTION", test_vespa)
+    _populate_db_families(data_db)
+
+    # Filtering on one region and one country should return the one match
+    base_params = {
+        "query_string": query,
+        "keyword_filters": {
+            "regions": ["east-asia-pacific"],
+            "countries": ["NIU"],
+        },
+    }
+
+    body = _make_search_request(data_client, params=base_params)
+
+    assert len(body["families"]) == 1
+    assert body["families"][0]["family_name"] == "Agriculture Sector Plan 2015-2019"
+
+
+@pytest.mark.search
+@pytest.mark.parametrize("label,query", [("search", "the"), ("browse", "")])
 def test_invalid_keyword_filters(
     label, query, test_vespa, data_db, monkeypatch, data_client
 ):
