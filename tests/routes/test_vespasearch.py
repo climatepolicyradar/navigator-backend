@@ -13,6 +13,7 @@ from tests.routes.setup_search_tests import (
     _create_family_metadata,
     _create_document,
     _populate_db_families,
+    VESPA_FIXTURE_COUNT,
 )
 
 from cpr_data_access.models.search import SearchParameters
@@ -30,7 +31,7 @@ CSV_DOWNLOAD_ENDPOINT = "/api/v1/searches/download-csv"
 
 def _make_search_request(client, params: Mapping[str, str]):
     response = client.post(SEARCH_ENDPOINT, json=params)
-    assert response.status_code == 200
+    assert response.status_code == 200, response.text
     return response.json()
 
 
@@ -82,7 +83,6 @@ def test_simple_pagination_families(test_vespa, data_client, data_db, monkeypatc
     monkeypatch.setattr(search, "_VESPA_CONNECTION", test_vespa)
     _populate_db_families(data_db)
 
-    FIXTURE_COUNT = 4
     LIMIT = 2
 
     # Query one
@@ -92,7 +92,7 @@ def test_simple_pagination_families(test_vespa, data_client, data_db, monkeypatc
         "offset": 0,
     }
     body_one = _make_search_request(data_client, params)
-    assert body_one["hits"] == FIXTURE_COUNT
+    assert body_one["hits"] == VESPA_FIXTURE_COUNT
     assert len(body_one["families"]) == LIMIT
     assert (
         body_one["families"][0]["family_slug"]
@@ -110,13 +110,16 @@ def test_simple_pagination_families(test_vespa, data_client, data_db, monkeypatc
         "offset": 2,
     }
     body_two = _make_search_request(data_client, params)
-    assert body_two["hits"] == FIXTURE_COUNT
+    assert body_two["hits"] == VESPA_FIXTURE_COUNT
     assert len(body_two["families"]) == LIMIT
     assert (
         body_two["families"][0]["family_slug"]
-        == "submission-to-the-unfccc-ahead-of-the-first-technical-dialogue-of-the-global-stocktake-formally-submitted-by-observer-organization-climateworks-foundation-on-behalf-of-the-igst-consortium_e760"
+        == "national-energy-policy-and-energy-action-plan_9262"
     )
-    assert body_two["families"][1]["family_slug"] == "national-energy-strategy_980b"
+    assert (
+        body_two["families"][1]["family_slug"]
+        == "submission-to-the-unfccc-ahead-of-the-first-technical-dialogue_e760"
+    )
 
 
 @pytest.mark.search
@@ -140,6 +143,7 @@ def test_search_body_valid(exact_match, test_vespa, data_client, data_db, monkey
         "families",
         "hits",
         "query_time_ms",
+        "this_continuation_token",
         "total_family_hits",
         "total_time_ms",
     ]
@@ -320,7 +324,7 @@ def test_keyword_country_filters(
     # country code)
     all_body = _make_search_request(data_client, params=base_params)
     families = [f for f in all_body["families"]]
-    assert len(families) >= 4
+    assert len(families) == VESPA_FIXTURE_COUNT
 
     for family in families:
         country_code = family["family_geography"]
@@ -349,7 +353,7 @@ def test_keyword_region_filters(
     # to confirm the originals are returned when filtered on
     all_body = _make_search_request(data_client, params=base_params)
     families = [f for f in all_body["families"]]
-    assert len(families) >= 4
+    assert len(families) == VESPA_FIXTURE_COUNT
 
     for family in families:
         country_code = family["family_geography"]
@@ -386,15 +390,15 @@ def test_keyword_region_and_country_filters(
     base_params = {
         "query_string": query,
         "keyword_filters": {
-            "regions": ["east-asia-pacific"],
-            "countries": ["NIU"],
+            "regions": ["europe-central-asia"],
+            "countries": ["ITA"],
         },
     }
 
     body = _make_search_request(data_client, params=base_params)
 
     assert len(body["families"]) == 1
-    assert body["families"][0]["family_name"] == "Agriculture Sector Plan 2015-2019"
+    assert body["families"][0]["family_name"] == "National Energy Strategy"
 
 
 @pytest.mark.search
@@ -497,7 +501,7 @@ def test_result_order_score(
     desc_date_body = _make_search_request(data_client, params)
     desc_dates = [f["family_date"] for f in desc_date_body["families"]]
 
-    assert 4 == len(asc_dates) == len(desc_dates)
+    assert VESPA_FIXTURE_COUNT == len(asc_dates) == len(desc_dates)
     assert asc_dates == list(reversed(desc_dates))
     assert asc_dates[0] < desc_dates[0]
     assert asc_dates[-1] > desc_dates[-1]
@@ -557,7 +561,11 @@ def test_punctuation_ignored(test_vespa, data_db, monkeypatch, data_client):
     punc_body = _make_search_request(data_client, {"query_string": ", the."})
     accent_body = _make_search_request(data_client, {"query_string": "thë"})
 
-    assert punc_body["families"] == regular_body["families"] == accent_body["families"]
+    assert (
+        sorted([f["family_slug"] for f in punc_body["families"]])
+        == sorted([f["family_slug"] for f in regular_body["families"]])
+        == sorted([f["family_slug"] for f in accent_body["families"]])
+    )
 
 
 @pytest.mark.search
