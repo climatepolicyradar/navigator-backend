@@ -49,9 +49,9 @@ def _to_dto(family_doc_geo_stats) -> GeographyDTO:
         iso_code=family_doc_geo_stats.value,
         slug=family_doc_geo_stats.slug,
         family_counts={
-            FamilyCategory.EXECUTIVE: 0,
-            FamilyCategory.LEGISLATIVE: 0,
-            FamilyCategory.UNFCCC: 0,
+            FamilyCategory.EXECUTIVE: 10,
+            FamilyCategory.LEGISLATIVE: 10,
+            FamilyCategory.UNFCCC: 10,
         },
     )
 
