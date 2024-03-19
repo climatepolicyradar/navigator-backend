@@ -1,0 +1,60 @@
+"""
+Functions to support the documents endpoints
+
+old functions (non DFC) are moved to the deprecated_documents.py file.
+"""
+
+import logging
+
+from db_client.models.law_policy.family import Family, FamilyDocument
+from db_client.models.law_policy.geography import Geography
+from sqlalchemy import func
+from sqlalchemy.orm import Query, Session
+
+_LOGGER = logging.getLogger(__file__)
+
+
+def _db_count_docs_in_category_and_geo(db: Session) -> Query:
+    # NOTE: SqlAlchemy will make a complete hash of query generation
+    #       if columns are used in the query() call. Therefore, entire
+    #       objects are returned.
+    subquery = (
+        db.query(
+            Family.family_category,
+            Family.geography_id,
+            func.count().label("records_count"),
+        )
+        .join(FamilyDocument, FamilyDocument.family_import_id == Family.import_id)
+        .group_by(Family.family_category, Family.geography_id)
+        .subquery()
+    )
+    return (
+        db.query(
+            Geography.display_value,
+            Geography.slug,
+            Geography.value,
+            subquery.c.family_category,
+            subquery.c.records_count,
+        )
+        .join(Geography, subquery.c.geography_id == Geography.id, isouter=True)
+        .order_by(Geography.display_value, subquery.c.family_category)
+    )
+
+
+def all(db: Session):
+    """
+    Returns all the documents.
+
+    :param db Session: the database connection
+    :return Optional[DocumentResponse]: All of things
+    """
+    result = _db_count_docs_in_category_and_geo(db).limit(5).all()
+
+    if not result:
+        return []
+
+    return result
+
+
+def get_geography_stats(db: Session):
+    return all(db)
