@@ -21,10 +21,9 @@ async def geographies(db=Depends(get_db)):
             "iso_code": "AFG",
             "slug": "afghanistan",
             "family_counts": {
-                "executive": 100,
-                "legislative": 50,
-                "unfccc": 25,
-                "other": 0,
+                "Executive": 100,
+                "Legislative": 50,
+                "UNFCCC": 25,
             },
         },
         {
@@ -32,10 +31,9 @@ async def geographies(db=Depends(get_db)):
             "iso_code": "BGD",
             "slug": "bangladesh",
             "family_counts": {
-                "executive": 1000,
-                "legislative": 500,
-                "unfccc": 250,
-                "other": 0,
+                "Executive": 1000,
+                "Legislative": 500,
+                "UNFCCC": 250,
             },
         },
     ]
