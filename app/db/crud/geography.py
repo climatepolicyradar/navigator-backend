@@ -49,14 +49,14 @@ def _to_dto(family_doc_geo_stats) -> GeographyDTO:
         iso_code=family_doc_geo_stats.value,
         slug=family_doc_geo_stats.slug,
         family_counts={
-            FamilyCategory.EXECUTIVE.value: 0,
-            FamilyCategory.LEGISLATIVE.value: 0,
-            FamilyCategory.UNFCCC.value: 0,
+            FamilyCategory.EXECUTIVE: 0,
+            FamilyCategory.LEGISLATIVE: 0,
+            FamilyCategory.UNFCCC: 0,
         },
     )
 
 
-def all(db: Session) -> list:
+def get_geography_stats(db: Session) -> list[GeographyDTO]:
     """
     Returns all the documents.
 
@@ -70,7 +70,3 @@ def all(db: Session) -> list:
 
     result = [_to_dto(fdgs) for fdgs in family_doc_geo_stats]
     return result
-
-
-def get_geography_stats(db: Session):
-    return all(db)
