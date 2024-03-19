@@ -56,14 +56,11 @@ class SearchRequestBody(BaseModel):
     family_ids: Optional[Sequence[str]] = None
     document_ids: Optional[Sequence[str]] = None
 
-    # TODO: Improve filters to allow generics & use filter types
     keyword_filters: Optional[Mapping[FilterField, Sequence[str]]] = None
     year_range: Optional[tuple[Optional[int], Optional[int]]] = None
 
     sort_field: Optional[SortField] = None
     sort_order: SortOrder = SortOrder.DESCENDING
-
-    include_results: IncludedResultsList = None
 
     limit: int = 10  # TODO: decide on default
     offset: int = 0

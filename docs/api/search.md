@@ -56,7 +56,6 @@ The payload is a JSON object representing the search to be performed. This can b
   "year_range": ["string","string"],
   "sort_field": "date",
   "sort_order": "desc",
-  "include_results": ["pdfsTranslated"],
   "limit": 10,
   "offset": 0
 }
@@ -99,10 +98,6 @@ Further information and understanding can be found by [reading the tests here](h
 The field to sort by can be chosen from “date” or “title” [see related code](https://github.com/climatepolicyradar/navigator-backend/blob/ddebbd17f6b62cf7909e6e4c575285b8b00a41b2/app/api/api_v1/schemas/search.py#L20).
 
 The order can be chosen from ascending (use “asc”) or descending (use “desc”), [see related code](https://github.com/climatepolicyradar/navigator-backend/blob/ddebbd17f6b62cf7909e6e4c575285b8b00a41b2/app/api/api_v1/schemas/search.py#L13).
-
-#### include_results (optional)
-
-This is an array that lists the indexes to use when performing the search. The values can be chosen from: “pdfsTranslated”, “htmlsNonTranslated”, “htmlsTranslated”
 
 #### limit & offset
 
