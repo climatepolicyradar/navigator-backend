@@ -6,10 +6,12 @@ old functions (non DFC) are moved to the deprecated_documents.py file.
 
 import logging
 
-from db_client.models.law_policy.family import Family, FamilyDocument
+from db_client.models.law_policy.family import Family, FamilyCategory, FamilyDocument
 from db_client.models.law_policy.geography import Geography
 from sqlalchemy import func
 from sqlalchemy.orm import Query, Session
+
+from app.api.api_v1.schemas.geography import Geography as GeographySchema
 
 _LOGGER = logging.getLogger(__file__)
 
@@ -41,18 +43,32 @@ def _db_count_docs_in_category_and_geo(db: Session) -> Query:
     )
 
 
-def all(db: Session):
+def _to_dto(family_doc_geo_stats) -> GeographySchema:
+    return GeographySchema(
+        display_name=family_doc_geo_stats.display_value,
+        iso_code=family_doc_geo_stats.value,
+        slug=family_doc_geo_stats.slug,
+        family_counts={
+            FamilyCategory.EXECUTIVE: 0,
+            FamilyCategory.LEGISLATIVE: 0,
+            FamilyCategory.UNFCCC: 0,
+        },
+    )
+
+
+def all(db: Session) -> list:
     """
     Returns all the documents.
 
     :param db Session: the database connection
     :return Optional[DocumentResponse]: All of things
     """
-    result = _db_count_docs_in_category_and_geo(db).limit(5).all()
+    family_doc_geo_stats = _db_count_docs_in_category_and_geo(db).all()
 
-    if not result:
+    if not family_doc_geo_stats:
         return []
 
+    result = [_to_dto(fdgs) for fdgs in family_doc_geo_stats]
     return result
 
 
