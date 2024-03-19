@@ -649,7 +649,7 @@ files = [
 
 [[package]]
 name = "cpr-data-access"
-version = "0.4.8"
+version = "0.5.1"
 description = ""
 category = "main"
 optional = false
@@ -679,8 +679,8 @@ vespa = ["pyvespa (>=0.37.1,<0.38.0)", "pyyaml (>=6.0.1,<7.0.0)", "sentence-tran
 [package.source]
 type = "git"
 url = "https://github.com/climatepolicyradar/data-access.git"
-reference = "v0.4.9"
-resolved_reference = "165748ef612345e497447b6db3216f9bff730737"
+reference = "v0.5.1"
+resolved_reference = "697de7bf3500568b2ec7d648af10a6f5cf65d394"
 
 [[package]]
 name = "cryptography"
@@ -4441,4 +4441,4 @@ multidict = ">=4.0"
 [metadata]
 lock-version = "2.0"
 python-versions = "^3.9"
-content-hash = "d32a69e8ae283519d00c0cc6a29e28c982dcc5080c94e066546b717c06cd2cd9"
+content-hash = "b2b64dbf679896e25b218dec06110140bd59996224fc5613ba51ecfea3d94de4"
