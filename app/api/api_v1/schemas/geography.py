@@ -1,5 +1,6 @@
-from typing import Any
+from typing import Any, Mapping
 
+from db_client.models.law_policy import FamilyCategory
 from pydantic import BaseModel
 
 Json = dict[str, Any]
@@ -11,4 +12,4 @@ class Geography(BaseModel):
     display_name: str
     iso_code: str
     slug: str
-    family_counts: Json
+    family_counts: Mapping[FamilyCategory, int]
