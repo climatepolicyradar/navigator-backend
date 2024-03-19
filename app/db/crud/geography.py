@@ -11,7 +11,7 @@ from db_client.models.law_policy.geography import Geography
 from sqlalchemy import func
 from sqlalchemy.orm import Query, Session
 
-from app.api.api_v1.schemas.geography import Geography as GeographySchema
+from app.api.api_v1.schemas.geography import GeographyDTO
 
 _LOGGER = logging.getLogger(__file__)
 
@@ -43,15 +43,15 @@ def _db_count_docs_in_category_and_geo(db: Session) -> Query:
     )
 
 
-def _to_dto(family_doc_geo_stats) -> GeographySchema:
-    return GeographySchema(
+def _to_dto(family_doc_geo_stats) -> GeographyDTO:
+    return GeographyDTO(
         display_name=family_doc_geo_stats.display_value,
         iso_code=family_doc_geo_stats.value,
         slug=family_doc_geo_stats.slug,
         family_counts={
-            FamilyCategory.EXECUTIVE: 0,
-            FamilyCategory.LEGISLATIVE: 0,
-            FamilyCategory.UNFCCC: 0,
+            FamilyCategory.EXECUTIVE.value: 0,
+            FamilyCategory.LEGISLATIVE.value: 0,
+            FamilyCategory.UNFCCC.value: 0,
         },
     )
 

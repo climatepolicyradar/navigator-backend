@@ -6,7 +6,7 @@ from pydantic import BaseModel
 Json = dict[str, Any]
 
 
-class Geography(BaseModel):
+class GeographyDTO(BaseModel):
     """DTO for Geography object used by world map."""
 
     display_name: str
