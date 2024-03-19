@@ -23,3 +23,13 @@ services:
     depends_on:
       vespatest:
         condition: service_healthy
+
+  pgadmin:
+    image: dpage/pgadmin4
+    container_name: pgadmin4
+    restart: always
+    ports:
+      - 8000:80
+    environment:
+      PGADMIN_DEFAULT_EMAIL: dev@cpr.com
+      PGADMIN_DEFAULT_PASSWORD: climatepolicyradar
