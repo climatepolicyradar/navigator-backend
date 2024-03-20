@@ -9,9 +9,11 @@ import logging
 from db_client.models.law_policy.family import Family, FamilyCategory, FamilyDocument
 from db_client.models.law_policy.geography import Geography
 from sqlalchemy import func
+from sqlalchemy.exc import OperationalError
 from sqlalchemy.orm import Query, Session
 
 from app.api.api_v1.schemas.geography import GeographyDTO
+from app.errors import RepositoryError
 
 _LOGGER = logging.getLogger(__file__)
 
@@ -30,7 +32,7 @@ def _db_count_docs_in_category_and_geo(db: Session) -> Query:
         .group_by(Family.family_category, Family.geography_id)
         .subquery()
     )
-    return (
+    query = (
         db.query(
             Geography.display_value,
             Geography.slug,
@@ -41,6 +43,8 @@ def _db_count_docs_in_category_and_geo(db: Session) -> Query:
         .join(Geography, subquery.c.geography_id == Geography.id, isouter=True)
         .order_by(Geography.display_value, subquery.c.family_category)
     )
+
+    return query
 
 
 def _to_dto(family_doc_geo_stats) -> GeographyDTO:
@@ -63,7 +67,11 @@ def get_geography_stats(db: Session) -> list[GeographyDTO]:
     :param db Session: the database connection
     :return Optional[DocumentResponse]: All of things
     """
-    family_doc_geo_stats = _db_count_docs_in_category_and_geo(db).all()
+    try:
+        family_doc_geo_stats = _db_count_docs_in_category_and_geo(db).all()
+    except OperationalError as e:
+        _LOGGER.error(e)
+        raise RepositoryError("Error querying the database for geography stats")
 
     if not family_doc_geo_stats:
         return []
