@@ -19,7 +19,8 @@ _LOGGER = logging.getLogger(__file__)
 
 
 def _db_count_docs_in_category_and_geo(db: Session) -> Query:
-    """Query the database for the doc count per category per geo.
+    """
+    Query the database for the doc count per category per geo.
 
     NOTE: SqlAlchemy will make a complete hash of query generation if
     columns are used in the query() call. Therefore, entire objects are
@@ -54,7 +55,8 @@ def _db_count_docs_in_category_and_geo(db: Session) -> Query:
 
 
 def _to_dto(family_doc_geo_stats) -> GeographyStatsDTO:
-    """Convert result set item to GeographyDTO.
+    """
+    Convert result set item to GeographyDTO.
 
     :param family_doc_geo_stats: A Tuple representing a record in the
         result set of a performed query.
@@ -74,7 +76,8 @@ def _to_dto(family_doc_geo_stats) -> GeographyStatsDTO:
 
 
 def get_geography_stats(db: Session) -> list[GeographyStatsDTO]:
-    """Get a count of docs per category per geography for all geographies.
+    """
+    Get a count of docs per category per geography for all geographies.
 
     :param db Session: The database session.
     :return list[GeographyStatsDTO]: A list of Geography stats objects
