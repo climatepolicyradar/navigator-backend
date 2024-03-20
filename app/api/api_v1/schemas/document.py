@@ -138,7 +138,7 @@ class DocumentParserInput(BaseModel):
     def to_json(self) -> Mapping[str, Any]:
         """Provide a serialisable version of the model"""
 
-        json_dict = self.dict()
+        json_dict = self.model_dump()
         json_dict["publication_ts"] = (
             self.publication_ts.isoformat() if self.publication_ts is not None else None
         )

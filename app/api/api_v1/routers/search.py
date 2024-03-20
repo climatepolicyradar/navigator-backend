@@ -11,6 +11,7 @@ from io import BytesIO
 from typing import Mapping, Sequence
 
 from cpr_data_access.exceptions import QueryError
+from cpr_data_access.models.search import filter_fields
 from cpr_data_access.search_adaptors import VespaSearchAdapter
 from fastapi import APIRouter, Depends, HTTPException, Request, status
 from fastapi.responses import StreamingResponse
@@ -30,13 +31,13 @@ from app.core.config import (
     VESPA_URL,
 )
 from app.core.download import create_data_download_zip_archive
-from app.core.lookups import get_countries_for_region, get_country_by_slug
 from app.core.search import (
     ENCODER,
     FilterField,
     create_vespa_search_params,
     process_result_into_csv,
     process_vespa_search_response,
+    _convert_filters,
 )
 from app.db.session import get_db
 
@@ -245,28 +246,18 @@ def process_search_keyword_filters(
     db: Session,
     request_filters: Mapping[FilterField, Sequence[str]],
 ) -> Mapping[FilterField, Sequence[str]]:
-    filter_map = {}
-    for field, values in request_filters.items():
-        if field == FilterField.REGION:
-            field = FilterField.COUNTRY
-            filter_values = []
-            for geo_slug in values:
-                filter_values.extend(
-                    [g.value for g in get_countries_for_region(db, geo_slug)]
-                )
-        elif field == FilterField.COUNTRY:
-            filter_values = [
-                country.value
-                for geo_slug in values
-                if (country := get_country_by_slug(db, geo_slug)) is not None
-            ]
-        else:
-            filter_values = values
+    filters = _convert_filters(db, request_filters)
+    if not filters:
+        return None
 
-        if filter_values:
-            values = filter_map.get(field, [])
-            values.extend(filter_values)
-            # Be consistent in ordering for search
-            values = sorted(list(set(values)))
-            filter_map[field] = values
+    # Switch back to pg names needed for browse
+    filter_fields_switch_back = {v: k for k, v in filter_fields.items()}
+    # Special case for browse where regions/countries are treated as countries
+    filter_fields_switch_back["family_geography"] = "countries"
+
+    filter_map = {}
+    for key, value in filters.items():
+        sorted_values = sorted(list(set(value)))
+        filter_map[filter_fields_switch_back[key]] = sorted_values
+
     return filter_map

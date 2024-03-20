@@ -1,9 +1,6 @@
-from typing import Any, Mapping
+from typing import Mapping
 
-from db_client.models.law_policy import FamilyCategory
 from pydantic import BaseModel
-
-Json = dict[str, Any]
 
 
 class GeographyDTO(BaseModel):
@@ -12,4 +9,4 @@ class GeographyDTO(BaseModel):
     display_name: str
     iso_code: str
     slug: str
-    family_counts: Mapping[FamilyCategory, int]
+    family_counts: Mapping[str, int]

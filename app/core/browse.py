@@ -63,8 +63,8 @@ def to_search_response_family(
         family_geography=cast(str, geography.value),
         family_title_match=False,
         family_description_match=False,
-        # TODO: Remove unused fields below?
-        # ↓ Stuff we don't currently use for search ↓
+        # ↓ Stuff we don't currently use for browse ↓
+        total_passage_hits=0,
         family_metadata={},
         family_documents=[],
     )
@@ -142,6 +142,7 @@ def browse_rds_families(
 
     return SearchResponse(
         hits=len(families),
+        total_family_hits=len(families),
         query_time_ms=time_taken,
         total_time_ms=time_taken,
         families=families[offset : offset + limit],

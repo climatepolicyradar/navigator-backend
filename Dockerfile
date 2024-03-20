@@ -9,7 +9,7 @@ RUN apt update && \
 
 # Install pip and poetry
 RUN pip install --no-cache --upgrade pip
-RUN pip install --no-cache "poetry==1.6.1"
+RUN pip install --no-cache "poetry==1.7.1"
 
 # Create layer for dependencies
 # TODO: refine this as part of CI & test updates
@@ -35,7 +35,7 @@ RUN if [ "$(wc -l <requirements.txt)" = "0" ] ; \
     fi
 
 # Install torch-cpu with pip
-RUN pip3 install --no-cache "torch==2.0.0+cpu" "torchvision==0.15.1+cpu" -f https://download.pytorch.org/whl/torch_stable.html
+RUN pip3 install --no-cache "torch==2.0.0+cpu" -f https://download.pytorch.org/whl/torch_stable.html
 
 # Install application requirements
 RUN pip3 install --no-cache -r requirements.txt

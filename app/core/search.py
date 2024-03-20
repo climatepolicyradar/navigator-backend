@@ -11,7 +11,7 @@ from cpr_data_access.models.search import Family as DataAccessResponseFamily
 from cpr_data_access.models.search import Passage as DataAccessResponsePassage
 from cpr_data_access.models.search import SearchParameters as DataAccessSearchParams
 from cpr_data_access.models.search import SearchResponse as DataAccessSearchResponse
-from cpr_data_access.models.search import filter_fields
+from cpr_data_access.models.search import filter_fields, KeywordFilters
 from sqlalchemy.orm import Session
 
 from app.api.api_v1.schemas.search import (
@@ -310,24 +310,38 @@ def _convert_filters(
     if keyword_filters is None:
         return None
     new_keyword_filters = {}
+    regions = []
+    countries = []
     for field, values in keyword_filters.items():
         new_field = _convert_filter_field(field)
         if field == FilterField.REGION:
-            new_values = new_keyword_filters.get(new_field, [])
             for region in values:
-                new_values.extend(
+                regions.extend(
                     [country.value for country in get_countries_for_region(db, region)]
                 )
         elif field == FilterField.COUNTRY:
-            new_values = new_keyword_filters.get(new_field, [])
-            new_values.extend(
+            countries.extend(
                 [country.value for country in get_countries_for_slugs(db, values)]
             )
         else:
             new_values = values
-        new_keyword_filters[new_field] = new_values
+            new_keyword_filters[new_field] = new_values
 
-    return new_keyword_filters
+    # Regions and countries filters should only include the overlap
+    geo_field = filter_fields["geography"]
+    if regions and countries:
+        values = list(set(countries).intersection(regions))
+        if values:
+            new_keyword_filters[geo_field] = values
+    elif regions:
+        new_keyword_filters[geo_field] = regions
+    elif countries:
+        new_keyword_filters[geo_field] = countries
+
+    if len(new_keyword_filters) > 0:
+        return new_keyword_filters
+    else:
+        return None
 
 
 def _process_vespa_search_response_families(
@@ -423,6 +437,7 @@ def _process_vespa_search_response_families(
                     family_source=hit.family_source,
                     family_description_match=False,
                     family_title_match=False,
+                    total_passage_hits=vespa_family.total_passage_hits,
                     family_documents=[],
                     family_geography=hit.family_geography,
                     family_metadata=cast(dict, db_family_metadata.value),
@@ -491,6 +506,7 @@ def process_vespa_search_response(
 
     return SearchResponse(
         hits=len(vespa_search_response.families),
+        total_family_hits=vespa_search_response.total_family_hits,
         query_time_ms=vespa_search_response.query_time_ms or 0,
         total_time_ms=vespa_search_response.total_time_ms or 0,
         continuation_token=vespa_search_response.continuation_token,
@@ -508,13 +524,19 @@ def create_vespa_search_params(db: Session, search_body: SearchRequestBody):
     search_body.max_passages_per_doc = min(
         search_body.max_passages_per_doc, VESPA_SEARCH_MATCHES_PER_DOC
     )
-
+    converted_filters = _convert_filters(db, search_body.keyword_filters)
+    if converted_filters:
+        filters = KeywordFilters.model_validate(converted_filters)
+    else:
+        filters = None
     return DataAccessSearchParams(
         query_string=search_body.query_string,
         exact_match=search_body.exact_match,
         limit=VESPA_SEARCH_LIMIT,
         max_hits_per_family=search_body.max_passages_per_doc,
-        keyword_filters=_convert_filters(db, search_body.keyword_filters),
+        family_ids=search_body.family_ids,
+        document_ids=search_body.document_ids,
+        keyword_filters=filters,
         year_range=search_body.year_range,
         sort_by=_convert_sort_field(search_body.sort_field),
         sort_order=_convert_sort_order(search_body.sort_order),
