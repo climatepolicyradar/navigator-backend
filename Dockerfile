@@ -9,7 +9,7 @@ RUN apt update && \
 
 # Install pip and poetry
 RUN pip install --no-cache --upgrade pip
-RUN pip install --no-cache "poetry==1.6.1"
+RUN pip install --no-cache "poetry==1.7.1"
 
 # Create layer for dependencies
 # TODO: refine this as part of CI & test updates
