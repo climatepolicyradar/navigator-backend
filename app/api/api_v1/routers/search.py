@@ -52,9 +52,7 @@ _VESPA_CONNECTION = VespaSearchAdapter(
 search_router = APIRouter()
 
 
-def _search_request(
-    db: Session, search_body: SearchRequestBody, use_vespa: bool = True
-) -> SearchResponse:
+def _search_request(db: Session, search_body: SearchRequestBody) -> SearchResponse:
     is_browse_request = not search_body.query_string
     if is_browse_request:
         # Service browse requests from RDS
@@ -92,7 +90,6 @@ def search_documents(
     request: Request,
     search_body: SearchRequestBody,
     db=Depends(get_db),
-    use_vespa: bool = True,
 ) -> SearchResponse:
     """Search for documents matching the search criteria."""
     _LOGGER.info(
@@ -107,7 +104,7 @@ def search_documents(
     _LOGGER.info(
         "Starting search...",
     )
-    return _search_request(db=db, search_body=search_body, use_vespa=use_vespa)
+    return _search_request(db=db, search_body=search_body)
 
 
 @search_router.post("/searches/download-csv")
@@ -115,7 +112,6 @@ def download_search_documents(
     request: Request,
     search_body: SearchRequestBody,
     db=Depends(get_db),
-    use_vespa: bool = True,
 ) -> StreamingResponse:
     """Download a CSV containing details of documents matching the search criteria."""
     _LOGGER.info(
@@ -138,7 +134,6 @@ def download_search_documents(
     search_response = _search_request(
         db=db,
         search_body=search_body,
-        use_vespa=use_vespa,
     )
     content_str = process_result_into_csv(db, search_response, is_browse=is_browse)
 
