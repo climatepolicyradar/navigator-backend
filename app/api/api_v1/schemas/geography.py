@@ -1,8 +1,6 @@
-from typing import Any
+from typing import Mapping
 
 from pydantic import BaseModel
-
-Json = dict[str, Any]
 
 
 class Geography(BaseModel):
