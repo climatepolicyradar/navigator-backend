@@ -1,15 +1,7 @@
 # definitions for local development
 
-migrations_local_backend:
-	# Run database migrations in local dev mode
-	cd backend/; alembic upgrade head
-
-migrations_local_loader:
-	# Run database migrations in local dev mode
-	cd loader/; alembic upgrade head
-
 poetry_environment:
-	cd backend/; poetry install
+	poetry install
 
 check_dev_environment:
 ifneq (,$(wildcard ./.env))
@@ -25,8 +17,7 @@ dev_install: check_dev_environment
 	# Install pip
 	pip install --upgrade pip
 	# Install poetry
-	pip install "poetry==1.1.8"
+	pip install "poetry==1.7.1"
 
 	make poetry_environment
 	make git_hooks
-	make migrations_local
