@@ -12,16 +12,22 @@ from sqlalchemy import func
 from sqlalchemy.exc import OperationalError
 from sqlalchemy.orm import Query, Session
 
-from app.api.api_v1.schemas.geography import GeographyDTO
+from app.api.api_v1.schemas.geography import GeographyStatsDTO
 from app.errors import RepositoryError
 
 _LOGGER = logging.getLogger(__file__)
 
 
 def _db_count_docs_in_category_and_geo(db: Session) -> Query:
-    # NOTE: SqlAlchemy will make a complete hash of query generation
-    #       if columns are used in the query() call. Therefore, entire
-    #       objects are returned.
+    """Query the database for the doc count per category per geo.
+
+    NOTE: SqlAlchemy will make a complete hash of query generation if
+    columns are used in the query() call. Therefore, entire objects are
+    returned.
+
+    :param Session db: DB Session to perform query on.
+    :return Query: A Query object containing the queries to perform.
+    """
     subquery = (
         db.query(
             Family.family_category,
@@ -47,8 +53,15 @@ def _db_count_docs_in_category_and_geo(db: Session) -> Query:
     return query
 
 
-def _to_dto(family_doc_geo_stats) -> GeographyDTO:
-    return GeographyDTO(
+def _to_dto(family_doc_geo_stats) -> GeographyStatsDTO:
+    """Convert result set item to GeographyDTO.
+
+    :param family_doc_geo_stats: A Tuple representing a record in the
+        result set of a performed query.
+    :return GeographyStatsDTO: A JSON serialisable representation of the
+        Tuple record returned from the database.
+    """
+    return GeographyStatsDTO(
         display_name=family_doc_geo_stats.display_value,
         iso_code=family_doc_geo_stats.value,
         slug=family_doc_geo_stats.slug,
@@ -60,12 +73,11 @@ def _to_dto(family_doc_geo_stats) -> GeographyDTO:
     )
 
 
-def get_geography_stats(db: Session) -> list[GeographyDTO]:
-    """
-    Returns all the documents.
+def get_geography_stats(db: Session) -> list[GeographyStatsDTO]:
+    """Get a count of docs per category per geography for all geographies.
 
-    :param db Session: the database connection
-    :return Optional[DocumentResponse]: All of things
+    :param db Session: The database session.
+    :return list[GeographyStatsDTO]: A list of Geography stats objects
     """
     try:
         family_doc_geo_stats = _db_count_docs_in_category_and_geo(db).all()

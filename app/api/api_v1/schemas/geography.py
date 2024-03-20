@@ -3,7 +3,7 @@ from typing import Mapping
 from pydantic import BaseModel
 
 
-class GeographyDTO(BaseModel):
+class GeographyStatsDTO(BaseModel):
     """DTO for Geography object used by world map."""
 
     display_name: str
