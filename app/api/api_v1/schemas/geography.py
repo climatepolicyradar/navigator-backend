@@ -11,4 +11,4 @@ class Geography(BaseModel):
     display_name: str
     iso_code: str
     slug: str
-    family_counts: Json
+    family_counts: Mapping[str, int]
