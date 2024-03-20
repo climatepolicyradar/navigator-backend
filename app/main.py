@@ -1,27 +1,27 @@
 import logging
 import logging.config
 import os
+from contextlib import asynccontextmanager
 
 import json_logging
 import uvicorn
+from apscheduler.schedulers.background import BackgroundScheduler
+from db_client import run_migrations
 from fastapi import APIRouter, Depends, FastAPI
 from fastapi.middleware.cors import CORSMiddleware
 from fastapi_health import health
 from fastapi_pagination import add_pagination
-from apscheduler.schedulers.background import BackgroundScheduler
 from starlette.requests import Request
-from contextlib import asynccontextmanager
 
-from db_client import run_migrations
-
+from app.api.api_v1.routers.admin import admin_document_router
+from app.api.api_v1.routers.auth import auth_router
+from app.api.api_v1.routers.documents import documents_router
+from app.api.api_v1.routers.geographies import geographies_router
+from app.api.api_v1.routers.lookups import lookups_router
 from app.api.api_v1.routers.pipeline_trigger import (
     pipeline_trigger_router,
     start_scheduled_ingest,
 )
-from app.api.api_v1.routers.admin import admin_document_router
-from app.api.api_v1.routers.auth import auth_router
-from app.api.api_v1.routers.documents import documents_router
-from app.api.api_v1.routers.lookups import lookups_router
 from app.api.api_v1.routers.search import search_router
 from app.api.api_v1.routers.summaries import summary_router
 from app.core import config
@@ -139,6 +139,7 @@ app.include_router(documents_router, prefix="/api/v1", tags=["Documents"])
 app.include_router(lookups_router, prefix="/api/v1", tags=["Lookups"])
 app.include_router(search_router, prefix="/api/v1", tags=["Searches"])
 app.include_router(summary_router, prefix="/api/v1", tags=["Summaries"])
+app.include_router(geographies_router, prefix="/api/v1", tags=["Geographies"])
 
 # add pagination support to all routes that ask for it
 add_pagination(app)
