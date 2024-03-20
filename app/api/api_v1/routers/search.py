@@ -8,7 +8,7 @@ for the type of document search being performed.
 import json
 import logging
 from io import BytesIO
-from typing import Mapping, Sequence
+from typing import Mapping, Sequence, Optional
 
 from cpr_data_access.exceptions import QueryError
 from cpr_data_access.models.search import filter_fields
@@ -245,7 +245,7 @@ def _get_browse_args_from_search_request_body(
 def process_search_keyword_filters(
     db: Session,
     request_filters: Mapping[FilterField, Sequence[str]],
-) -> Mapping[FilterField, Sequence[str]]:
+) -> Optional[Mapping[FilterField, Sequence[str]]]:
     filters = _convert_filters(db, request_filters)
     if not filters:
         return None
