@@ -19,6 +19,7 @@ from tests.routes.setup_search_tests import (
 from cpr_data_access.models.search import SearchParameters
 
 from app.api.api_v1.routers import search
+from app.core import search as core_search
 from app.core.lookups import get_country_slug_from_country_code
 
 from db_client.models.law_policy import Geography, Slug
@@ -523,6 +524,71 @@ def test_result_order_title(
 
     # Scope of test is to confirm this does not cause a failure
     _ = _make_search_request(data_client, params)
+
+
+@pytest.mark.search
+def test_continuation_token__families(test_vespa, data_db, monkeypatch, data_client):
+    monkeypatch.setattr(search, "_VESPA_CONNECTION", test_vespa)
+    monkeypatch.setattr(core_search, "VESPA_SEARCH_LIMIT", 2)
+
+    _populate_db_families(data_db)
+
+    params = {"query_string": "the"}
+    response = _make_search_request(data_client, params)
+    continuation = response["continuation_token"]
+    first_family_ids = [f["family_slug"] for f in response["families"]]
+
+    # Confirm we have grabbed a subset of all results
+    assert len(response["families"]) < response["total_family_hits"]
+
+    # Get next results set
+    params = {"query_string": "the", "continuation_tokens": [continuation]}
+    response = _make_search_request(data_client, params)
+    second_family_ids = [f["family_slug"] for f in response["families"]]
+
+    # Confirm we actually got different results
+    assert sorted(first_family_ids) != sorted(second_family_ids)
+
+
+@pytest.mark.search
+def test_continuation_token__passages(test_vespa, data_db, monkeypatch, data_client):
+    monkeypatch.setattr(search, "_VESPA_CONNECTION", test_vespa)
+    monkeypatch.setattr(core_search, "VESPA_SEARCH_LIMIT", 1)
+
+    _populate_db_families(data_db)
+
+    # Get second set of families
+    params = {
+        "query_string": "the",
+        "document_ids": ["CCLW.executive.10246.4861", "CCLW.executive.4934.1571"],
+    }
+    first_family = _make_search_request(data_client, params)
+    params["continuation_tokens"] = [first_family["continuation_token"]]
+    second_family = _make_search_request(data_client, params)
+    passages_continuation = second_family["families"][0]["continuation_token"]
+
+    second_family_passages_one = [
+        h["text_block_id"]
+        for h in second_family["families"][0]["family_documents"][0][
+            "document_passage_matches"
+        ]
+    ]
+
+    # Get next set of passages
+    params["continuation_tokens"] = [
+        second_family["this_continuation_token"],
+        passages_continuation,
+    ]
+    response = _make_search_request(data_client, params)
+    second_family_passages_two = [
+        h["text_block_id"]
+        for h in response["families"][0]["family_documents"][0][
+            "document_passage_matches"
+        ]
+    ]
+
+    # Confirm we actually got different results
+    assert sorted(second_family_passages_one) != sorted(second_family_passages_two)
 
 
 @pytest.mark.search
