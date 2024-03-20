@@ -66,7 +66,6 @@ class SearchRequestBody(BaseModel):
     offset: int = 0
 
     continuation_tokens: Optional[Sequence[str]] = None
-    continuation_token: Optional[str] = None  # Deprecated
 
 
 class SearchResponseDocumentPassage(BaseModel):
