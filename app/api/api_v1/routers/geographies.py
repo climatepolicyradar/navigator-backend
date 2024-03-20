@@ -2,7 +2,7 @@ import logging
 
 from fastapi import APIRouter, Depends, HTTPException, status
 
-from app.api.api_v1.schemas.geography import GeographyDTO
+from app.api.api_v1.schemas.geography import GeographyStatsDTO
 from app.db.crud.geography import get_geography_stats
 from app.db.session import get_db
 from app.errors import RepositoryError
@@ -12,9 +12,9 @@ _LOGGER = logging.getLogger(__file__)
 geographies_router = APIRouter()
 
 
-@geographies_router.get("/geographies", response_model=list[GeographyDTO])
+@geographies_router.get("/geographies", response_model=list[GeographyStatsDTO])
 async def geographies(db=Depends(get_db)):
-    """Get a summary of all geographies for world map."""
+    """Get a summary of doc stats for all geographies for world map."""
     _LOGGER.info("Getting detailed information on all geographies")
 
     try:
