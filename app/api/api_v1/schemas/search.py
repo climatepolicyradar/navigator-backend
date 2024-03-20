@@ -68,7 +68,8 @@ class SearchRequestBody(BaseModel):
     limit: int = 10  # TODO: decide on default
     offset: int = 0
 
-    continuation_token: Optional[str] = None
+    continuation_tokens: Optional[Sequence[str]] = None
+    continuation_token: Optional[str] = None  # Deprecated
 
 
 class SearchResponseDocumentPassage(BaseModel):
@@ -120,6 +121,7 @@ class SearchResponseFamily(BaseModel):
     family_description_match: bool
     total_passage_hits: int
     family_documents: list[SearchResponseFamilyDocument]
+    continuation_token: Optional[str] = None
 
 
 class SearchResponse(BaseModel):
@@ -130,6 +132,7 @@ class SearchResponse(BaseModel):
     query_time_ms: int
     total_time_ms: int
     continuation_token: Optional[str] = None
+    this_continuation_token: Optional[str] = None
 
     families: Sequence[SearchResponseFamily]
 

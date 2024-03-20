@@ -438,6 +438,7 @@ def _process_vespa_search_response_families(
                     family_description_match=False,
                     family_title_match=False,
                     total_passage_hits=vespa_family.total_passage_hits,
+                    continuation_token=vespa_family.continuation_token,
                     family_documents=[],
                     family_geography=hit.family_geography,
                     family_metadata=cast(dict, db_family_metadata.value),
@@ -510,6 +511,7 @@ def process_vespa_search_response(
         query_time_ms=vespa_search_response.query_time_ms or 0,
         total_time_ms=vespa_search_response.total_time_ms or 0,
         continuation_token=vespa_search_response.continuation_token,
+        this_continuation_token=vespa_search_response.this_continuation_token,
         families=_process_vespa_search_response_families(
             db,
             vespa_search_response.families,
@@ -540,6 +542,5 @@ def create_vespa_search_params(db: Session, search_body: SearchRequestBody):
         year_range=search_body.year_range,
         sort_by=_convert_sort_field(search_body.sort_field),
         sort_order=_convert_sort_order(search_body.sort_order),
-        # TODO: implement large scale pagination? For now, just pass through
-        continuation_token=search_body.continuation_token,
+        continuation_tokens=search_body.continuation_tokens,
     )

@@ -58,7 +58,7 @@ def db_setup(test_db):
 @pytest.mark.parametrize(
     (
         "query_string,exact_match,year_range,sort_field,sort_order,"
-        "keyword_filters,max_passages,limit,offset,continuation_token,"
+        "keyword_filters,max_passages,limit,offset,continuation_tokens,"
         "family_ids,document_ids"
     ),
     [
@@ -86,7 +86,7 @@ def db_setup(test_db):
             10,
             10,
             0,
-            "ABC",
+            ["ABC"],
             None,
             None,
         ),
@@ -117,7 +117,7 @@ def db_setup(test_db):
             20,
             10,
             0,
-            "ABC",
+            ["ABC"],
             None,
             None,
         ),
@@ -145,7 +145,7 @@ def db_setup(test_db):
             50,
             100,
             10,
-            "ABC",
+            ["ABC", "ADDD"],
             None,
             None,
         ),
@@ -173,7 +173,7 @@ def db_setup(test_db):
             100,
             10,
             0,
-            "ABC",
+            ["ABC"],
             ["CCLW.executive.1.0"],
             None,
         ),
@@ -201,7 +201,7 @@ def db_setup(test_db):
             10,
             10,
             0,
-            "ABC",
+            ["ABC"],
             ["CCLW.executive.1.0", "CCLW.executive.2.0"],
             ["CCLW.document.1.0", "CCLW.document.2.0"],
         ),
@@ -218,7 +218,7 @@ def test_create_vespa_search_params(
     max_passages,
     limit,
     offset,
-    continuation_token,
+    continuation_tokens,
     family_ids,
     document_ids,
 ):
@@ -237,7 +237,7 @@ def test_create_vespa_search_params(
         include_results=None,
         limit=limit,
         offset=offset,
-        continuation_token=continuation_token,
+        continuation_tokens=continuation_tokens,
     )
 
     # First step, just make sure we can create a validated pydantic model
@@ -252,7 +252,7 @@ def test_create_vespa_search_params(
     )
 
     # Test simple passthrough data first
-    assert produced_search_parameters.continuation_token == continuation_token
+    assert produced_search_parameters.continuation_tokens == continuation_tokens
     assert produced_search_parameters.year_range == year_range
     assert produced_search_parameters.query_string == query_string
     assert produced_search_parameters.exact_match == exact_match
@@ -570,7 +570,7 @@ def _generate_search_response(specs: Sequence[FamSpec]) -> DataAccessSearchRespo
         query_time_ms=87 * len(specs),
         total_time_ms=95 * len(specs),
         families=families,
-        continuation_token="ABC,XYZ",
+        continuation_token="ABCXYZ",
     )
 
 
@@ -728,7 +728,6 @@ def test_process_vespa_search_response(
     populate_test_db(test_db, fam_specs=fam_specs)
 
     vespa_response = _generate_search_response(fam_specs)
-
     search_response = process_vespa_search_response(
         db=test_db,
         vespa_search_response=vespa_response,
