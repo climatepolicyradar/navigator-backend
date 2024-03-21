@@ -20,7 +20,7 @@ from starlette.responses import RedirectResponse
 
 from app.api.api_v1.schemas.search import SearchRequestBody, SearchResponse, SortField
 from app.core.aws import S3Document, get_s3_client
-from app.core.browse import BrowseArgs, browse_rds_families
+from app.core.browse import BrowseArgs
 from app.core.config import (
     AWS_REGION,
     CDN_DOMAIN,
@@ -55,34 +55,24 @@ search_router = APIRouter()
 def _search_request(db: Session, search_body: SearchRequestBody) -> SearchResponse:
     is_browse_request = not search_body.query_string
     if is_browse_request:
-        # Service browse requests from RDS
-        if search_body.keyword_filters is not None:
-            search_body.keyword_filters = process_search_keyword_filters(
-                db,
-                search_body.keyword_filters,
-            )
-
-        return browse_rds_families(
-            db=db,
-            req=_get_browse_args_from_search_request_body(search_body),
+        search_body.all_results = True
+        search_body.exact_match = False
+    data_access_search_params = create_vespa_search_params(db, search_body)
+    # TODO: we may wish to cache responses to improve pagination performance
+    try:
+        data_access_search_response = _VESPA_CONNECTION.search(
+            parameters=data_access_search_params
         )
-    else:
-        data_access_search_params = create_vespa_search_params(db, search_body)
-        # TODO: we may wish to cache responses to improve pagination performance
-        try:
-            data_access_search_response = _VESPA_CONNECTION.search(
-                parameters=data_access_search_params
-            )
-        except QueryError:
-            raise HTTPException(
-                status_code=status.HTTP_400_BAD_REQUEST, detail="Invalid Query"
-            )
-        return process_vespa_search_response(
-            db,
-            data_access_search_response,
-            limit=search_body.limit,
-            offset=search_body.offset,
-        ).increment_pages()
+    except QueryError:
+        raise HTTPException(
+            status_code=status.HTTP_400_BAD_REQUEST, detail="Invalid Query"
+        )
+    return process_vespa_search_response(
+        db,
+        data_access_search_response,
+        limit=search_body.limit,
+        offset=search_body.offset,
+    ).increment_pages()
 
 
 @search_router.post("/searches")

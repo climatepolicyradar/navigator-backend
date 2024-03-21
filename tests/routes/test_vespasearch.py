@@ -67,16 +67,22 @@ def _fam_ids_from_response(test_db, response) -> list[str]:
 
 
 @pytest.mark.search
-def test_empty_search_term_performs_browse(data_client, data_db, mocker):
+def test_empty_search_term_performs_browse(
+    test_vespa, data_client, data_db, mocker, monkeypatch
+):
     """Make sure that empty search term returns results in browse mode."""
     _populate_db_families(data_db)
-    query_spy = mocker.spy(search._VESPA_CONNECTION, "search")
+    monkeypatch.setattr(search, "_VESPA_CONNECTION", test_vespa)
 
+    query_spy = mocker.spy(search._VESPA_CONNECTION, "search")
     body = _make_search_request(data_client, {"query_string": ""})
 
     assert body["hits"] > 0
     assert len(body["families"]) > 0
-    query_spy.assert_not_called()
+
+    # Should automatically use vespa `all_results` parameter for browse requests
+    assert query_spy.call_args.kwargs["parameters"].all_results
+    query_spy.assert_called_once()
 
 
 @pytest.mark.search
@@ -186,10 +192,10 @@ def test_no_doc_if_in_postgres_but_not_vespa(
     _create_family_metadata(data_db, new_family)
     _create_document(data_db, new_doc, new_family)
 
-    # This will be present in browse, which is fine
+    # This will also not be present in browse
     body = _make_search_request(data_client, params={"query_string": ""})
     browse_families = [f["family_name"] for f in body["families"]]
-    assert EXTRA_TEST_FAMILY in browse_families
+    assert EXTRA_TEST_FAMILY not in browse_families
 
     # But it won't break when running a search
     body = _make_search_request(
@@ -810,12 +816,7 @@ def test_csv_download_search_no_limit(
     monkeypatch.setattr(search, "_VESPA_CONNECTION", test_vespa)
     _populate_db_families(data_db)
 
-    if label == "search":
-        query_spy = mocker.spy(search._VESPA_CONNECTION, "search")
-    elif label == "browse":
-        query_spy = mocker.spy(search, "browse_rds_families")
-    else:
-        raise ValueError("unexpected label parameter")
+    query_spy = mocker.spy(search._VESPA_CONNECTION, "search")
 
     download_response = data_client.post(
         CSV_DOWNLOAD_ENDPOINT,
@@ -826,12 +827,5 @@ def test_csv_download_search_no_limit(
     )
     assert download_response.status_code == 200
 
-    if label == "search":
-        actual_search_req = query_spy.mock_calls[0].kwargs["parameters"]
-    elif label == "browse":
-        actual_search_req = query_spy.mock_calls[0].kwargs["req"]
-    else:
-        raise ValueError("unexpected label parameter")
-
-    # Make sure we overrode the search request content to produce the CSV download
+    actual_search_req = query_spy.mock_calls[0].kwargs["parameters"]
     assert 100 <= actual_search_req.limit
