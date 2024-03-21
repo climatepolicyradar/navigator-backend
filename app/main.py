@@ -73,6 +73,17 @@ async def lifespan(app_: FastAPI):
     """Run startup and shutdown events."""
     logger.info("Starting up...")
     run_migrations(engine)
+    scheduler = BackgroundScheduler()
+    scheduler.add_job(
+        start_scheduled_ingest,
+        "cron",
+        id="ingest_trigger",
+        day_of_week="mon",
+        hour=9,
+        minute=15,
+        replace_existing=True,
+    )
+    scheduler.start()
     yield
     logger.info("Shutting down...")
 
@@ -143,16 +154,6 @@ app.include_router(geographies_router, prefix="/api/v1", tags=["Geographies"])
 
 # add pagination support to all routes that ask for it
 add_pagination(app)
-
-scheduler = BackgroundScheduler()
-scheduler.add_job(
-    start_scheduled_ingest,
-    "cron",
-    day_of_week="mon",
-    hour=9,
-    minute=15,
-)
-scheduler.start()
 
 
 if __name__ == "__main__":
