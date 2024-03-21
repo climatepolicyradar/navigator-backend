@@ -32,6 +32,8 @@ from db_client.models.document.physical_document import (
     PhysicalDocumentLanguage,
 )
 
+
+VESPA_FIXTURE_COUNT = 5
 FIXTURE_DIR = Path(__file__).parents[1] / "search_fixtures"
 VESPA_FAMILY_PATH = FIXTURE_DIR / "vespa_family_document.json"
 VESPA_DOCUMENT_PATH = FIXTURE_DIR / "vespa_document_passage.json"
@@ -68,7 +70,7 @@ def _fixture_docs() -> Iterable[tuple[VespaFixture, VespaFixture]]:
         yield doc, family
 
 
-def _populate_db_families(db: Session, max_docs: int = 4) -> None:
+def _populate_db_families(db: Session, max_docs: int = VESPA_FIXTURE_COUNT) -> None:
     """
     Sets up the database using fixtures
 
