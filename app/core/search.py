@@ -534,6 +534,7 @@ def create_vespa_search_params(db: Session, search_body: SearchRequestBody):
     return DataAccessSearchParams(
         query_string=search_body.query_string,
         exact_match=search_body.exact_match,
+        all_results=search_body.all_results,
         limit=VESPA_SEARCH_LIMIT,
         max_hits_per_family=search_body.max_passages_per_doc,
         family_ids=search_body.family_ids,

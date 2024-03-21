@@ -51,6 +51,7 @@ class SearchRequestBody(BaseModel):
 
     query_string: str
     exact_match: bool = False
+    all_results: bool = False
     max_passages_per_doc: int = 10  # TODO: decide on default
 
     family_ids: Optional[Sequence[str]] = None

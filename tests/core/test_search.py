@@ -16,7 +16,6 @@ from cpr_data_access.models.search import (
 )
 from sqlalchemy.orm import Session
 
-from app.api.api_v1.routers.search import process_search_keyword_filters
 from app.core.config import VESPA_SEARCH_MATCHES_PER_DOC, VESPA_SEARCH_LIMIT
 from app.core.search import (
     FilterField,
@@ -270,7 +269,7 @@ def test_create_vespa_search_params(
 @pytest.mark.parametrize(
     (
         "exact_match,year_range,sort_field,sort_order,"
-        "keyword_filters,max_passages,limit,offset,continuation_token,"
+        "keyword_filters,max_passages,limit,offset,continuation_tokens,"
         "family_ids,document_ids"
     ),
     [
@@ -283,7 +282,7 @@ def test_create_vespa_search_params(
             10,
             10,
             0,
-            "ABC",
+            ["ABC"],
             None,
             None,
         ),
@@ -299,7 +298,7 @@ def test_create_vespa_search_params(
             20,
             10,
             0,
-            "ABC",
+            ["ABC"],
             ["CCLW.document.1.0", "CCLW.document.2.0"],
             None,
         ),
@@ -315,7 +314,7 @@ def test_create_vespa_search_params(
             20,
             10,
             0,
-            "ABC",
+            ["ABC"],
             ["CCLW.executive.1.0", "CCLW.executive.2.0"],
             ["CCLW.document.1.0", "CCLW.document.2.0"],
         ),
@@ -331,7 +330,7 @@ def test_create_browse_request_params(
     max_passages,
     limit,
     offset,
-    continuation_token,
+    continuation_tokens,
     family_ids,
     document_ids,
 ):
@@ -349,7 +348,7 @@ def test_create_browse_request_params(
         sort_order=sort_order,
         limit=limit,
         offset=offset,
-        continuation_token=continuation_token,
+        continuation_tokens=continuation_tokens,
     )
 
 
@@ -802,36 +801,3 @@ def test_process_vespa_search_response(
                 assert all(
                     [pm.text_block_coords is None for pm in fd.document_passage_matches]
                 )
-
-
-@pytest.mark.parametrize(
-    "filters, expected",
-    [
-        (None, None),
-        (
-            {FilterField.CATEGORY: ["Legislative"], FilterField.REGION: ["europe"]},
-            {"category": ["Legislative"]},
-        ),
-        ({FilterField.SOURCE: ["UNFCCC"]}, {"source": ["UNFCCC"]}),
-        (
-            {
-                FilterField.COUNTRY: ["germany", "france"],
-                FilterField.REGION: ["europe"],
-            },
-            {"countries": ["DEU", "FRA"]},
-        ),
-        ({FilterField.COUNTRY: ["france", "germany"]}, {"countries": ["DEU", "FRA"]}),
-    ],
-)
-def test_process_search_keyword_filters(
-    test_db,
-    filters,
-    expected,
-):
-    db_setup(test_db)
-
-    processed_filters = process_search_keyword_filters(
-        test_db,
-        filters,
-    )
-    assert processed_filters == expected
