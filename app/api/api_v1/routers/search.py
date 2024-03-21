@@ -8,19 +8,16 @@ for the type of document search being performed.
 import json
 import logging
 from io import BytesIO
-from typing import Mapping, Sequence, Optional
 
 from cpr_data_access.exceptions import QueryError
-from cpr_data_access.models.search import filter_fields
 from cpr_data_access.search_adaptors import VespaSearchAdapter
 from fastapi import APIRouter, Depends, HTTPException, Request, status
 from fastapi.responses import StreamingResponse
 from sqlalchemy.orm import Session
 from starlette.responses import RedirectResponse
 
-from app.api.api_v1.schemas.search import SearchRequestBody, SearchResponse, SortField
+from app.api.api_v1.schemas.search import SearchRequestBody, SearchResponse
 from app.core.aws import S3Document, get_s3_client
-from app.core.browse import BrowseArgs
 from app.core.config import (
     AWS_REGION,
     CDN_DOMAIN,
@@ -33,11 +30,9 @@ from app.core.config import (
 from app.core.download import create_data_download_zip_archive
 from app.core.search import (
     ENCODER,
-    FilterField,
     create_vespa_search_params,
     process_result_into_csv,
     process_vespa_search_response,
-    _convert_filters,
 )
 from app.db.session import get_db
 
@@ -202,47 +197,3 @@ def download_all_search_documents(db=Depends(get_db)) -> RedirectResponse:
 
     _LOGGER.info(f"Can't find data dump for {INGEST_CYCLE_START} in {DOC_CACHE_BUCKET}")
     raise HTTPException(status_code=status.HTTP_404_NOT_FOUND)
-
-
-def _get_browse_args_from_search_request_body(
-    search_body: SearchRequestBody,
-) -> BrowseArgs:
-    keyword_filters = search_body.keyword_filters
-    if keyword_filters is None:
-        country_codes = None
-        categories = None
-    else:
-        country_codes = keyword_filters.get(FilterField.COUNTRY)
-        categories = keyword_filters.get(FilterField.CATEGORY)
-    start_year, end_year = search_body.year_range or [None, None]
-    return BrowseArgs(
-        country_codes=country_codes,
-        start_year=start_year,
-        end_year=end_year,
-        categories=categories,
-        sort_field=search_body.sort_field or SortField.DATE,
-        sort_order=search_body.sort_order,
-        limit=search_body.limit,
-        offset=search_body.offset,
-    )
-
-
-def process_search_keyword_filters(
-    db: Session,
-    request_filters: Mapping[FilterField, Sequence[str]],
-) -> Optional[Mapping[FilterField, Sequence[str]]]:
-    filters = _convert_filters(db, request_filters)
-    if not filters:
-        return None
-
-    # Switch back to pg names needed for browse
-    filter_fields_switch_back = {v: k for k, v in filter_fields.items()}
-    # Special case for browse where regions/countries are treated as countries
-    filter_fields_switch_back["family_geography"] = "countries"
-
-    filter_map = {}
-    for key, value in filters.items():
-        sorted_values = sorted(list(set(value)))
-        filter_map[filter_fields_switch_back[key]] = sorted_values
-
-    return filter_map
