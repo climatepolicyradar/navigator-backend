@@ -49,17 +49,6 @@ def _start_ingest(
         )
 
 
-def start_scheduled_ingest():
-    db = get_db().__next__()
-    s3_client = get_s3_client()
-    s3_prefix = get_new_s3_prefix()
-    _start_ingest(
-        db=db,
-        s3_client=s3_client,
-        s3_prefix=s3_prefix,
-    )
-
-
 @r.post(
     "/start-ingest",
     response_model=BulkIngestResult,
