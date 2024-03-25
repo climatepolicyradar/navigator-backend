@@ -34,7 +34,7 @@ from tests.core.ingestion.helpers import populate_for_ingest
 
 from db_client.models.organisation import Organisation
 from db_client.models.document import PhysicalDocument
-from db_client.models.law_policy import (
+from db_client.models.dfce import (
     EventStatus,
     Family,
     FamilyCategory,
@@ -44,8 +44,8 @@ from db_client.models.law_policy import (
     Geography,
     MetadataOrganisation,
     MetadataTaxonomy,
+    DocumentStatus,
 )
-from db_client.models.law_policy.family import DocumentStatus
 
 
 def db_setup(test_db):
@@ -349,7 +349,7 @@ def test_create_browse_request_params(
         sort_order=sort_order,
         limit=limit,
         offset=offset,
-        continuation_tokens=continuation_token,
+        continuation_token=continuation_token,
     )
 
 
