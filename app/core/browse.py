@@ -79,10 +79,11 @@ def browse_rds_families(
 
     t0 = perf_counter_ns()
     query = (
-        db.query(Family, Geography, Corpus)
+        db.query(Family, Geography, Corpus, Organisation)
         .join(Geography, Family.geography_id == Geography.id)
         .join(FamilyCorpus, FamilyCorpus.family_import_id == Family.import_id)
-        .join(Corpus, Corpus.import_id == FamilyCorpus.corpus_import_id)
+        .join(Corpus, FamilyCorpus.corpus_import_id == Corpus.import_id)
+        .join(Organisation, Organisation.id == Corpus.organisation_id)
     )
 
     if req.geography_slugs is not None:
@@ -103,7 +104,7 @@ def browse_rds_families(
     _LOGGER.debug("Starting families query")
     families = [
         to_search_response_family(family, geography, organisation)
-        for (family, geography, organisation) in query.all()
+        for (family, geography, _, organisation) in query.all()
         if family.family_status == FamilyStatus.PUBLISHED
     ]
 
