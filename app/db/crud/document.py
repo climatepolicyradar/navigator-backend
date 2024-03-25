@@ -19,7 +19,6 @@ from app.api.api_v1.schemas.document import (
     FamilyEventsResponse,
     LinkableFamily,
 )
-from db_client.models.organisation import Organisation
 from db_client.models.document.physical_document import (
     PhysicalDocument,
 )
@@ -30,7 +29,8 @@ from db_client.models.dfce.family import (
     FamilyDocument,
     FamilyStatus,
     Slug,
-    FamilyOrganisation,
+    FamilyCorpus,
+    Corpus,
 )
 from db_client.models.dfce.geography import Geography
 from db_client.models.dfce.metadata import FamilyMetadata
@@ -126,7 +126,7 @@ def _get_visible_languages_for_phys_doc(
 
 def get_family_and_documents(db: Session, import_id: str) -> FamilyAndDocumentsResponse:
     """
-    Get a document along with the family information.
+    Get a document along with the corpus information.
 
     :param Session db: connection to db
     :param str import_id: id of document
@@ -134,12 +134,12 @@ def get_family_and_documents(db: Session, import_id: str) -> FamilyAndDocumentsR
     """
 
     db_objects = (
-        db.query(Family, Geography, FamilyMetadata, FamilyOrganisation, Organisation)
+        db.query(Family, Geography, FamilyMetadata, FamilyCorpus, Corpus)
         .filter(Family.import_id == import_id)
         .join(Geography, Family.geography_id == Geography.id)
         .join(FamilyMetadata, import_id == FamilyMetadata.family_import_id)
-        .join(FamilyOrganisation, import_id == FamilyOrganisation.family_import_id)
-        .filter(FamilyOrganisation.organisation_id == Organisation.id)
+        .join(FamilyCorpus, import_id == FamilyCorpus.family_import_id)
+        .filter(FamilyCorpus.corpus_import_id == Corpus.import_id)
     ).one_or_none()
 
     if not db_objects:
