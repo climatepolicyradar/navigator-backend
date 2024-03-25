@@ -1,6 +1,6 @@
 from http.client import NOT_FOUND, OK
 from unittest.mock import Mock
-from db_client.models.law_policy.geography import GeoStatistics, Geography
+from db_client.models.dfce.geography import GeoStatistics, Geography
 from app.api.api_v1.routers.lookups.geo_stats import (
     GeoStatsResponse,
     lookup_geo_stats,

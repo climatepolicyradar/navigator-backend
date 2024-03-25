@@ -11,7 +11,7 @@ from fastapi import (
 from sqlalchemy import update
 from sqlalchemy import Column
 
-from db_client.models.law_policy import DocumentStatus
+from db_client.models.dfce import DocumentStatus
 from app.api.api_v1.schemas.document import (
     DocumentUpdateRequest,
 )

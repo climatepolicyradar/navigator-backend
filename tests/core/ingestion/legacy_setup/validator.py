@@ -5,7 +5,7 @@ from tests.core.ingestion.legacy_setup.cclw.ingest_row_cclw import (
     CCLWDocumentIngestRow,
     EventIngestRow,
 )
-from tests.core.ingestion.legacy_setup.metadata import Taxonomy
+from db_client.models.dfce.taxonomy_entry import Taxonomy
 from tests.core.ingestion.legacy_setup.unfccc.ingest_row_unfccc import (
     UNFCCCDocumentIngestRow,
 )
@@ -19,13 +19,13 @@ from tests.core.ingestion.legacy_setup.utils import (
 )
 from tests.core.ingestion.legacy_setup.unfccc.metadata import build_unfccc_metadata
 from app.core.validation import IMPORT_ID_MATCHER
-from db_client.models.law_policy.family import (
+from db_client.models.dfce.family import (
     FamilyDocumentRole,
     FamilyDocumentType,
     Variant,
     Geography,
 )
-from db_client.models.law_policy.geography import GEO_INTERNATIONAL, GEO_NONE
+from db_client.models.dfce.geography import GEO_INTERNATIONAL, GEO_NONE
 from db_client.models import Base
 
 DbTable = Base

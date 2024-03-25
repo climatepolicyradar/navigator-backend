@@ -19,12 +19,12 @@ from app.api.api_v1.schemas.document import (
     FamilyEventsResponse,
     LinkableFamily,
 )
-from db_client.models.app.users import Organisation
+from db_client.models.organisation import Organisation
 from db_client.models.document.physical_document import (
     PhysicalDocument,
 )
-from db_client.models.law_policy.collection import Collection, CollectionFamily
-from db_client.models.law_policy.family import (
+from db_client.models.dfce.collection import Collection, CollectionFamily
+from db_client.models.dfce.family import (
     DocumentStatus,
     Family,
     FamilyDocument,
@@ -32,8 +32,8 @@ from db_client.models.law_policy.family import (
     Slug,
     FamilyOrganisation,
 )
-from db_client.models.law_policy.geography import Geography
-from db_client.models.law_policy.metadata import FamilyMetadata
+from db_client.models.dfce.geography import Geography
+from db_client.models.dfce.metadata import FamilyMetadata
 from app.core.util import to_cdn_url
 
 _LOGGER = logging.getLogger(__file__)

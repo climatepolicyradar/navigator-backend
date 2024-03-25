@@ -22,8 +22,8 @@ from app.api.api_v1.routers import search
 from app.core import search as core_search
 from app.core.lookups import get_country_slug_from_country_code
 
-from db_client.models.law_policy import Geography, Slug
-from db_client.models.law_policy.family import FamilyDocument
+from db_client.models.dfce import Geography, Slug
+from db_client.models.dfce.family import FamilyDocument
 
 
 SEARCH_ENDPOINT = "/api/v1/searches"

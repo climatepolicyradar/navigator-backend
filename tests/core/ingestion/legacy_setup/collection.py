@@ -11,8 +11,8 @@ from tests.core.ingestion.legacy_setup.utils import (
     update_if_changed,
 )
 
-from db_client.models.law_policy import Collection
-from db_client.models.law_policy.collection import (
+from db_client.models.dfce import Collection
+from db_client.models.dfce.collection import (
     CollectionFamily,
     CollectionOrganisation,
 )

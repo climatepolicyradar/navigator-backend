@@ -9,8 +9,8 @@ from sqlalchemy.orm import Session
 from db_client.data_migrations.taxonomy_cclw import get_cclw_taxonomy
 from db_client.data_migrations.taxonomy_unf3c import get_unf3c_taxonomy
 
-from db_client.models.app import Organisation
-from db_client.models.law_policy.family import (
+from db_client.models.organisation import Organisation
+from db_client.models.dfce.family import (
     DocumentStatus,
     EventStatus,
     FamilyCategory,
@@ -22,10 +22,10 @@ from db_client.models.law_policy.family import (
     Slug,
     Variant,
 )
-from db_client.models.law_policy.metadata import (
+from db_client.models.dfce.metadata import (
     FamilyMetadata,
 )
-from db_client.models.law_policy import Geography
+from db_client.models.dfce import Geography
 from db_client.models.document.physical_document import (
     LanguageSource,
     PhysicalDocument,

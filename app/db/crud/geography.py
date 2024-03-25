@@ -2,8 +2,8 @@
 
 import logging
 
-from db_client.models.law_policy.family import Family, FamilyDocument
-from db_client.models.law_policy.geography import Geography
+from db_client.models.dfce.family import Family, FamilyDocument
+from db_client.models.dfce.geography import Geography
 from sqlalchemy import func, true
 from sqlalchemy.exc import OperationalError
 from sqlalchemy.orm import Query, Session

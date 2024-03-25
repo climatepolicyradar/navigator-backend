@@ -3,7 +3,7 @@ from typing import List, Mapping, Optional, Sequence
 
 from pydantic import field_validator, Field, BaseModel
 
-from db_client.models.law_policy import FamilyCategory
+from db_client.models.dfce import FamilyCategory
 from . import CLIMATE_LAWS_MATCH
 from typing_extensions import Annotated
 
