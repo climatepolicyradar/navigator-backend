@@ -15,7 +15,7 @@ from tests.core.ingestion.legacy_setup.utils import (
     update_if_changed,
     update_if_enum_changed,
 )
-from db_client.models.law_policy import (
+from db_client.models.dfce import (
     FamilyCategory,
     Family,
     FamilyDocument,

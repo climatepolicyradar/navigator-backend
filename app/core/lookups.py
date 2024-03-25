@@ -9,15 +9,15 @@ from app.core.organisation import (
 
 from app.core.util import tree_table_to_json
 from app.core.validation import IMPORT_ID_MATCHER
-from db_client.models.app.users import Organisation
+from db_client.models.organisation import Organisation
 from db_client.models.document.physical_document import Language
-from db_client.models.law_policy import (
+from db_client.models.dfce import (
     Geography,
     FamilyDocumentRole,
     FamilyDocumentType,
     Variant,
 )
-from db_client.models.law_policy.family import FamilyDocument, Slug
+from db_client.models.dfce.family import FamilyDocument, Slug
 
 
 import logging

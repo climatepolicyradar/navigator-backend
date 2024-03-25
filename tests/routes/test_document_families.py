@@ -9,7 +9,7 @@ from db_client.models.document.physical_document import (
     LanguageSource,
     PhysicalDocumentLanguage,
 )
-from db_client.models.law_policy.family import Family, FamilyDocument, FamilyEvent
+from db_client.models.dfce.family import Family, FamilyDocument, FamilyEvent
 from tests.routes.document_helpers import (
     ONE_DFC_ROW_TWO_LANGUAGES,
     ONE_EVENT_ROW,

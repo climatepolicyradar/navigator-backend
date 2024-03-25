@@ -3,15 +3,15 @@ from typing import cast
 from sqlalchemy.orm import Session
 from sqlalchemy import func
 from app.api.api_v1.schemas.metadata import OrganisationConfig, TaxonomyData
-from db_client.models.app.users import Organisation
-from db_client.models.law_policy.family import (
+from db_client.models.organisation import Organisation
+from db_client.models.dfce.family import (
     FamilyEventType,
     FamilyOrganisation,
     Family,
     FamilyCategory,
 )
-from db_client.models.law_policy.metadata import MetadataOrganisation, MetadataTaxonomy
-from db_client.models.law_policy.taxonomy_entry import Taxonomy, TaxonomyEntry
+from db_client.models.dfce.metadata import MetadataOrganisation, MetadataTaxonomy
+from db_client.models.dfce.taxonomy_entry import Taxonomy, TaxonomyEntry
 
 
 def get_organisation_taxonomy(db: Session, org_id: int) -> tuple[int, Taxonomy]:

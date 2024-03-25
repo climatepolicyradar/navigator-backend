@@ -32,7 +32,7 @@ from app.core.search import (
 from tests.core.ingestion.helpers import populate_for_ingest
 
 
-from db_client.models.app.users import Organisation
+from db_client.models.organisation import Organisation
 from db_client.models.document import PhysicalDocument
 from db_client.models.law_policy import (
     EventStatus,
@@ -349,7 +349,7 @@ def test_create_browse_request_params(
         sort_order=sort_order,
         limit=limit,
         offset=offset,
-        continuation_token=continuation_token,
+        # continuation_token=continuation_token,
     )
 
 

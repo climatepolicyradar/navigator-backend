@@ -1,7 +1,7 @@
 from http.client import OK
 from typing import Any
 from unittest.mock import MagicMock
-from db_client.models.law_policy.family import (
+from db_client.models.dfce.family import (
     Family,
     FamilyCategory,
     FamilyOrganisation,

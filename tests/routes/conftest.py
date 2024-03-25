@@ -1,7 +1,7 @@
 import pytest
 
-from db_client.models.app import Organisation
-from db_client.models.law_policy import (  # noqa F401
+from db_client.models.organisation import Organisation
+from db_client.models.dfce import (  # noqa F401
     Family,
     FamilyCategory,
     FamilyDocument,

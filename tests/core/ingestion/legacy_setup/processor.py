@@ -15,7 +15,7 @@ from tests.core.ingestion.legacy_setup.cclw.ingest_row_cclw import (
 )
 from tests.core.ingestion.legacy_setup.cclw.metadata import add_cclw_metadata
 from tests.core.ingestion.legacy_setup.ingest_row_base import BaseIngestRow
-from tests.core.ingestion.legacy_setup.metadata import Taxonomy
+from db_client.models.dfce.taxonomy_entry import Taxonomy
 from tests.core.ingestion.legacy_setup.params import IngestParameters
 from tests.core.ingestion.legacy_setup.unfccc.event import create_event_from_row
 from tests.core.ingestion.legacy_setup.unfccc.ingest_row_unfccc import (
@@ -35,9 +35,12 @@ from tests.core.ingestion.legacy_setup.validator import (
     validate_cclw_document_row,
     validate_unfccc_document_row,
 )
-from db_client.models.app import ORGANISATION_CCLW, ORGANISATION_UNFCCC
-from db_client.models.app.users import Organisation
-from db_client.models.law_policy.geography import GEO_INTERNATIONAL, GEO_NONE
+from db_client.models.organisation.counters import (
+    ORGANISATION_CCLW,
+    ORGANISATION_UNFCCC,
+)
+from db_client.models.organisation import Organisation
+from db_client.models.dfce.geography import GEO_INTERNATIONAL, GEO_NONE
 
 
 _LOGGER = logging.getLogger(__name__)

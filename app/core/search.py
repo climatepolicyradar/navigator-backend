@@ -32,8 +32,8 @@ from app.core.config import (
 )
 from app.core.lookups import get_countries_for_region, get_countries_for_slugs
 from app.core.util import to_cdn_url
-from db_client.models.app.users import Organisation
-from db_client.models.law_policy import (
+from db_client.models.organisation import Organisation
+from db_client.models.dfce import (
     Collection,
     CollectionFamily,
     Family,
@@ -42,7 +42,7 @@ from db_client.models.law_policy import (
     FamilyOrganisation,
     Slug,
 )
-from db_client.models.law_policy.family import DocumentStatus, FamilyStatus
+from db_client.models.dfce.family import DocumentStatus, FamilyStatus
 
 _LOGGER = logging.getLogger(__name__)
 
