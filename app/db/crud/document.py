@@ -31,6 +31,7 @@ from db_client.models.dfce.family import (
     Slug,
     FamilyCorpus,
     Corpus,
+    Organisation,
 )
 from db_client.models.dfce.geography import Geography
 from db_client.models.dfce.metadata import FamilyMetadata
@@ -126,7 +127,7 @@ def _get_visible_languages_for_phys_doc(
 
 def get_family_and_documents(db: Session, import_id: str) -> FamilyAndDocumentsResponse:
     """
-    Get a document along with the corpus information.
+    Get a document along with the family information.
 
     :param Session db: connection to db
     :param str import_id: id of document
@@ -134,12 +135,13 @@ def get_family_and_documents(db: Session, import_id: str) -> FamilyAndDocumentsR
     """
 
     db_objects = (
-        db.query(Family, Geography, FamilyMetadata, FamilyCorpus, Corpus)
+        db.query(Family, Geography, FamilyMetadata, FamilyCorpus, Corpus, Organisation)
         .filter(Family.import_id == import_id)
         .join(Geography, Family.geography_id == Geography.id)
         .join(FamilyMetadata, import_id == FamilyMetadata.family_import_id)
         .join(FamilyCorpus, import_id == FamilyCorpus.family_import_id)
-        .filter(FamilyCorpus.corpus_import_id == Corpus.import_id)
+        .join(Corpus, import_id == FamilyCorpus.corpus_import_id)
+        .filter(Corpus.organisation_id == Organisation.id)
     ).one_or_none()
 
     if not db_objects:
@@ -151,6 +153,7 @@ def get_family_and_documents(db: Session, import_id: str) -> FamilyAndDocumentsR
         family,
         geography,
         family_metadata,
+        _,
         _,
         organisation,
     ) = db_objects
