@@ -349,7 +349,7 @@ def test_create_browse_request_params(
         sort_order=sort_order,
         limit=limit,
         offset=offset,
-        # continuation_token=continuation_token,
+        continuation_tokens=continuation_token,
     )
 
 
