@@ -5,7 +5,6 @@ All endpoints should perform document searches using the SearchRequestBody as
 its input. The individual endpoints will return different responses tailored
 for the type of document search being performed.
 """
-import json
 import logging
 from io import BytesIO
 
@@ -81,7 +80,7 @@ def search_documents(
         "Search request",
         extra={
             "props": {
-                "search_request": json.loads(search_body.json()),
+                "search_request": search_body.model_dump(),
             }
         },
     )
@@ -103,7 +102,7 @@ def download_search_documents(
         "Search download request",
         extra={
             "props": {
-                "search_request": json.loads(search_body.json()),
+                "search_request": search_body.model_dump(),
             }
         },
     )
