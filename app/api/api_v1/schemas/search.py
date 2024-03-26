@@ -119,6 +119,7 @@ class SearchResponseFamily(BaseModel):
     total_passage_hits: int
     family_documents: list[SearchResponseFamilyDocument]
     continuation_token: Optional[str] = None
+    prev_continuation_token: Optional[str] = None
 
 
 class SearchResponse(BaseModel):
@@ -130,6 +131,7 @@ class SearchResponse(BaseModel):
     total_time_ms: int
     continuation_token: Optional[str] = None
     this_continuation_token: Optional[str] = None
+    prev_continuation_token: Optional[str] = None
 
     families: Sequence[SearchResponseFamily]
 

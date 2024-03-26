@@ -439,6 +439,7 @@ def _process_vespa_search_response_families(
                     family_title_match=False,
                     total_passage_hits=vespa_family.total_passage_hits,
                     continuation_token=vespa_family.continuation_token,
+                    prev_continuation_token=vespa_family.prev_continuation_token,
                     family_documents=[],
                     family_geography=hit.family_geography,
                     family_metadata=cast(dict, db_family_metadata.value),
@@ -512,6 +513,7 @@ def process_vespa_search_response(
         total_time_ms=vespa_search_response.total_time_ms or 0,
         continuation_token=vespa_search_response.continuation_token,
         this_continuation_token=vespa_search_response.this_continuation_token,
+        prev_continuation_token=vespa_search_response.prev_continuation_token,
         families=_process_vespa_search_response_families(
             db,
             vespa_search_response.families,

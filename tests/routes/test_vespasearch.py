@@ -149,6 +149,7 @@ def test_search_body_valid(exact_match, test_vespa, data_client, data_db, monkey
         "continuation_token",
         "families",
         "hits",
+        "prev_continuation_token",
         "query_time_ms",
         "this_continuation_token",
         "total_family_hits",
@@ -555,6 +556,16 @@ def test_continuation_token__families(test_vespa, data_db, monkeypatch, data_cli
     # Confirm we actually got different results
     assert sorted(first_family_ids) != sorted(second_family_ids)
 
+    # Go back to prev and confirm its what we had initially
+    params = {
+        "query_string": "the",
+        "continuation_tokens": [response["prev_continuation_token"]],
+    }
+    response = _make_search_request(data_client, params)
+    prev_family_ids = [f["family_slug"] for f in response["families"]]
+
+    assert sorted(first_family_ids) == sorted(prev_family_ids)
+
 
 @pytest.mark.search
 def test_continuation_token__passages(test_vespa, data_db, monkeypatch, data_client):
@@ -570,31 +581,56 @@ def test_continuation_token__passages(test_vespa, data_db, monkeypatch, data_cli
     }
     first_family = _make_search_request(data_client, params)
     params["continuation_tokens"] = [first_family["continuation_token"]]
-    second_family = _make_search_request(data_client, params)
-    passages_continuation = second_family["families"][0]["continuation_token"]
-
-    second_family_passages_one = [
+    second_family_first_passages = _make_search_request(data_client, params)
+    second_family_first_passages_ids = [
         h["text_block_id"]
-        for h in second_family["families"][0]["family_documents"][0][
+        for h in second_family_first_passages["families"][0]["family_documents"][0][
             "document_passage_matches"
         ]
     ]
 
     # Get next set of passages
+    this_family_continuation = second_family_first_passages["this_continuation_token"]
+    next_passages_continuation = second_family_first_passages["families"][0][
+        "continuation_token"
+    ]
     params["continuation_tokens"] = [
-        second_family["this_continuation_token"],
-        passages_continuation,
+        this_family_continuation,
+        next_passages_continuation,
+    ]
+    second_family_second_passages = _make_search_request(data_client, params)
+    second_family_second_passages_ids = [
+        h["text_block_id"]
+        for h in second_family_second_passages["families"][0]["family_documents"][0][
+            "document_passage_matches"
+        ]
+    ]
+
+    # Confirm we actually got different results
+    assert sorted(second_family_first_passages_ids) != sorted(
+        second_family_second_passages_ids
+    )
+
+    # Go to previous set and confirm its the same
+    prev_passages_continuation = second_family_second_passages["families"][0][
+        "prev_continuation_token"
+    ]
+
+    params["continuation_tokens"] = [
+        this_family_continuation,
+        prev_passages_continuation,
     ]
     response = _make_search_request(data_client, params)
-    second_family_passages_two = [
+    second_family_prev_passages_ids = [
         h["text_block_id"]
         for h in response["families"][0]["family_documents"][0][
             "document_passage_matches"
         ]
     ]
 
-    # Confirm we actually got different results
-    assert sorted(second_family_passages_one) != sorted(second_family_passages_two)
+    assert sorted(second_family_second_passages_ids) != sorted(
+        second_family_prev_passages_ids
+    )
 
 
 @pytest.mark.search

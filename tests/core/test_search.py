@@ -568,6 +568,8 @@ def _generate_search_response(specs: Sequence[FamSpec]) -> DataAccessSearchRespo
         total_time_ms=95 * len(specs),
         families=families,
         continuation_token="ABCXYZ",
+        this_continuation_token="",
+        prev_continuation_token="ABCDEFXYZ",
     )
 
 
@@ -737,6 +739,14 @@ def test_process_vespa_search_response(
     assert search_response.total_time_ms == vespa_response.total_time_ms
     assert search_response.total_family_hits == vespa_response.total_family_hits
     assert search_response.continuation_token == vespa_response.continuation_token
+    assert (
+        search_response.this_continuation_token
+        == vespa_response.this_continuation_token
+    )
+    assert (
+        search_response.prev_continuation_token
+        == vespa_response.prev_continuation_token
+    )
 
     # Now validate family results
     for i, fam_spec in enumerate(fam_specs[offset : offset + limit]):
