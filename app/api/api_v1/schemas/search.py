@@ -35,17 +35,6 @@ class FilterField(str, Enum):
     LANGUAGE = "languages"
 
 
-class IncludedResults(str, Enum):
-    """Filter field to exclude specific results from search based on search indices."""
-
-    PDFS_TRANSLATED = "pdfsTranslated"
-    HTMLS_NON_TRANSLATED = "htmlsNonTranslated"
-    HTMLS_TRANSLATED = "htmlsTranslated"
-
-
-IncludedResultsList = Optional[Annotated[List[IncludedResults], Field(min_length=1)]]
-
-
 class SearchRequestBody(BaseModel):
     """The request body expected by the search API endpoint."""
 
