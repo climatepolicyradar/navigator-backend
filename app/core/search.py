@@ -21,8 +21,6 @@ from app.api.api_v1.schemas.search import (
     SearchResponseDocumentPassage,
     SearchResponseFamily,
     SearchResponseFamilyDocument,
-    SortField,
-    SortOrder,
 )
 from app.core.config import (
     INDEX_ENCODER_CACHE_FOLDER,
@@ -266,26 +264,6 @@ def process_result_into_csv(
 
     csv_result_io.seek(0)
     return csv_result_io.read()
-
-
-# Vespa search processing functions
-def _convert_sort_field(
-    sort_field: Optional[SortField],
-) -> Optional[str]:
-    if sort_field is None:
-        return None
-
-    if sort_field == SortField.DATE:
-        return "date"
-    if sort_field == SortField.TITLE:
-        return "name"
-
-
-def _convert_sort_order(sort_order: SortOrder) -> str:
-    if sort_order == SortOrder.ASCENDING:
-        return "ascending"
-    if sort_order == SortOrder.DESCENDING:
-        return "descending"
 
 
 def _convert_filter_field(filter_field: str) -> Optional[str]:
