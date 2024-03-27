@@ -29,8 +29,6 @@ from app.core.search import (
     _convert_sort_field,
     _convert_sort_order,
 )
-from tests.core.ingestion.helpers import populate_for_ingest
-
 
 from db_client.models.organisation import Organisation
 from db_client.models.document import PhysicalDocument
@@ -46,12 +44,6 @@ from db_client.models.dfce import (
     MetadataTaxonomy,
     DocumentStatus,
 )
-
-
-def db_setup(test_db):
-    # Make sure we have geography tables etc populated
-    populate_for_ingest(test_db)
-    test_db.commit()
 
 
 # Make sure we cover a decent number of the potential options
@@ -208,7 +200,7 @@ def db_setup(test_db):
     ],
 )
 def test_create_vespa_search_params(
-    test_db,
+    data_db,
     query_string,
     exact_match,
     year_range,
@@ -222,8 +214,6 @@ def test_create_vespa_search_params(
     family_ids,
     document_ids,
 ):
-    db_setup(test_db)
-
     search_request_body = SearchRequestBody(
         query_string=query_string,
         exact_match=exact_match,
@@ -241,7 +231,7 @@ def test_create_vespa_search_params(
 
     # First step, just make sure we can create a validated pydantic model
     produced_search_parameters = create_vespa_search_params(
-        test_db, search_request_body
+        data_db, search_request_body
     )
 
     # Test constant values
@@ -259,7 +249,7 @@ def test_create_vespa_search_params(
     # Test converted data
     if keyword_filters:
         assert produced_search_parameters.keyword_filters == KeywordFilters(
-            **_convert_filters(test_db, keyword_filters)
+            **_convert_filters(data_db, keyword_filters)
         )
     else:
         assert not produced_search_parameters.keyword_filters
@@ -283,7 +273,7 @@ def test_create_vespa_search_params(
             10,
             10,
             0,
-            "ABC",
+            ["ABC"],
             None,
             None,
         ),
@@ -299,7 +289,7 @@ def test_create_vespa_search_params(
             20,
             10,
             0,
-            "ABC",
+            ["ABC"],
             ["CCLW.document.1.0", "CCLW.document.2.0"],
             None,
         ),
@@ -315,14 +305,13 @@ def test_create_vespa_search_params(
             20,
             10,
             0,
-            "ABC",
+            ["ABC"],
             ["CCLW.executive.1.0", "CCLW.executive.2.0"],
             ["CCLW.document.1.0", "CCLW.document.2.0"],
         ),
     ],
 )
 def test_create_browse_request_params(
-    test_db,
     exact_match,
     year_range,
     sort_field,
@@ -331,12 +320,10 @@ def test_create_browse_request_params(
     max_passages,
     limit,
     offset,
-    continuation_token,
+    continuation_tokens,
     family_ids,
     document_ids,
 ):
-    db_setup(test_db)
-
     SearchRequestBody(
         query_string="",
         exact_match=exact_match,
@@ -349,7 +336,7 @@ def test_create_browse_request_params(
         sort_order=sort_order,
         limit=limit,
         offset=offset,
-        continuation_token=continuation_token,
+        continuation_tokens=continuation_tokens,
     )
 
 
@@ -415,9 +402,8 @@ def test_create_browse_request_params(
         ({FilterField.SOURCE: ["CCLW"]}, {"family_source": ["CCLW"]}),
     ],
 )
-def test__convert_filters(test_db, filters, expected):
-    db_setup(test_db)
-    converted_filters = _convert_filters(test_db, filters)
+def test__convert_filters(data_db, filters, expected):
+    converted_filters = _convert_filters(data_db, filters)
 
     assert converted_filters == expected
 
@@ -630,9 +616,8 @@ _FAM_SPEC_3 = FamSpec(
 )
 
 
-def populate_test_db(db: Session, fam_specs: Sequence[FamSpec]) -> None:
+def populate_data_db(db: Session, fam_specs: Sequence[FamSpec]) -> None:
     """Minimal population of family structures required for testing conversion below"""
-    db_setup(db)
 
     for fam_spec in fam_specs:
         organisation = (
@@ -717,17 +702,17 @@ def populate_test_db(db: Session, fam_specs: Sequence[FamSpec]) -> None:
     ],
 )
 def test_process_vespa_search_response(
-    test_db: Session,
+    data_db: Session,
     fam_specs: Sequence[FamSpec],
     offset: int,
     limit: int,
 ):
     # Make sure we process a response without error
-    populate_test_db(test_db, fam_specs=fam_specs)
+    populate_data_db(data_db, fam_specs=fam_specs)
 
     vespa_response = _generate_search_response(fam_specs)
     search_response = process_vespa_search_response(
-        db=test_db,
+        db=data_db,
         vespa_search_response=vespa_response,
         limit=limit,
         offset=offset,
@@ -824,14 +809,12 @@ def test_process_vespa_search_response(
     ],
 )
 def test_process_search_keyword_filters(
-    test_db,
+    data_db,
     filters,
     expected,
 ):
-    db_setup(test_db)
-
     processed_filters = process_search_keyword_filters(
-        test_db,
+        data_db,
         filters,
     )
     assert processed_filters == expected
