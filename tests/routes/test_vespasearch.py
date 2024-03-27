@@ -16,10 +16,8 @@ from tests.routes.setup_search_tests import (
     VESPA_FIXTURE_COUNT,
 )
 
-from cpr_data_access.models.search import SearchParameters
-
 from app.api.api_v1.routers import search
-from app.core import search as core_search
+from app.api.api_v1.schemas import search as search_schemas
 from app.core.lookups import get_country_slug_from_country_code
 
 from db_client.models.dfce import Geography, Slug
@@ -259,39 +257,33 @@ def test_specific_doc_returned(test_vespa, monkeypatch, data_client, data_db):
 
 
 @pytest.mark.search
-@pytest.mark.parametrize(
-    "params",
-    [
-        SearchParameters(query_string="climate"),
-        SearchParameters(query_string="climate", exact_match=True),
-        SearchParameters(
-            query_string="climate",
-            exact_match=True,
-            limit=1,
-            max_hits_per_family=10,
-        ),
-    ],
-)
-def test_search_params_contract(
-    params, test_vespa, monkeypatch, data_client, data_db, mocker
+def test_search_params_backend_limits(
+    test_vespa, monkeypatch, data_client, data_db, mocker
 ):
+    search_limit = 10
+    passage_limit = 5
+
     monkeypatch.setattr(search, "_VESPA_CONNECTION", test_vespa)
+    monkeypatch.setattr(search_schemas, "VESPA_SEARCH_LIMIT", search_limit)
+    monkeypatch.setattr(search_schemas, "VESPA_SEARCH_MATCHES_PER_DOC", passage_limit)
     _populate_db_families(data_db)
     query_spy = mocker.spy(search._VESPA_CONNECTION, "search")
 
     _make_search_request(
         data_client,
         params={
-            "query_string": params.query_string,
-            "exact_match": params.exact_match,
-            "limit": params.limit,
-            "max_hits_per_family": params.max_hits_per_family,
+            "query_string": "the",
+            "limit": f"{(search_limit * 2)}",
+            "max_hits_per_family": f"{(passage_limit * 2)}",
         },
     )
+    query_spy.assert_called_once()
+    params = query_spy.call_args.kwargs["parameters"]
 
-    expected_params = params
-    expected_params.limit = 150
-    query_spy.assert_called_once_with(parameters=expected_params)
+    # Limit converts to _page_size and both are capped at the search limit
+    assert params._page_size == search_limit
+    assert params.limit == search_limit
+    assert params.max_hits_per_family == passage_limit
 
 
 @pytest.mark.search
@@ -536,7 +528,7 @@ def test_result_order_title(
 @pytest.mark.search
 def test_continuation_token__families(test_vespa, data_db, monkeypatch, data_client):
     monkeypatch.setattr(search, "_VESPA_CONNECTION", test_vespa)
-    monkeypatch.setattr(core_search, "VESPA_SEARCH_LIMIT", 2)
+    monkeypatch.setattr(search_schemas, "VESPA_SEARCH_LIMIT", 2)
 
     _populate_db_families(data_db)
 
@@ -570,7 +562,7 @@ def test_continuation_token__families(test_vespa, data_db, monkeypatch, data_cli
 @pytest.mark.search
 def test_continuation_token__passages(test_vespa, data_db, monkeypatch, data_client):
     monkeypatch.setattr(search, "_VESPA_CONNECTION", test_vespa)
-    monkeypatch.setattr(core_search, "VESPA_SEARCH_LIMIT", 1)
+    monkeypatch.setattr(search_schemas, "VESPA_SEARCH_LIMIT", 1)
 
     _populate_db_families(data_db)
 

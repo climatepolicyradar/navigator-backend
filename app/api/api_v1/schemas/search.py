@@ -1,12 +1,18 @@
 from enum import Enum
 from typing import List, Mapping, Optional, Sequence
 
-from pydantic import field_validator, Field, BaseModel
+from pydantic import field_validator, Field, BaseModel, PrivateAttr, model_validator
+from typing import Literal
 
 from db_client.models.dfce import FamilyCategory
 from . import CLIMATE_LAWS_MATCH
 from typing_extensions import Annotated
+from cpr_data_access.models.search import SearchParameters as DataAccessSearchParameters
 
+from app.core.config import (
+    VESPA_SEARCH_LIMIT,
+    VESPA_SEARCH_MATCHES_PER_DOC,
+)
 
 Coord = tuple[float, float]
 
@@ -35,27 +41,42 @@ class FilterField(str, Enum):
     LANGUAGE = "languages"
 
 
-class SearchRequestBody(BaseModel):
+BackendFilterValues = Literal[
+    "sources", "countries", "regions", "categories", "languages"
+]
+BackendKeywordFilter = Optional[Mapping[BackendFilterValues, Sequence[str]]]
+
+
+class SearchRequestBody(DataAccessSearchParameters):
     """The request body expected by the search API endpoint."""
 
-    query_string: str
-    exact_match: bool = False
-    all_results: bool = False
-    max_passages_per_doc: int = 10  # TODO: decide on default
+    # We need to add `keyword_filters` here because the items recieved from the frontend
+    # need processing to be ready for vespa (key name change & geo slugs to geo codes)
+    keyword_filters: BackendKeywordFilter = None
 
-    family_ids: Optional[Sequence[str]] = None
-    document_ids: Optional[Sequence[str]] = None
-
-    keyword_filters: Optional[Mapping[FilterField, Sequence[str]]] = None
-    year_range: Optional[tuple[Optional[int], Optional[int]]] = None
-
-    sort_field: Optional[SortField] = None
-    sort_order: SortOrder = SortOrder.DESCENDING
-
-    limit: int = 10  # TODO: decide on default
+    # The following can be removed once we move away from limit-offset pagination
     offset: int = 0
+    _page_size: int = PrivateAttr(default=10)
 
-    continuation_tokens: Optional[Sequence[str]] = None
+    @model_validator(mode="after")
+    def backend_limit_handling(self):
+        """
+        Backend specific requirements for limit values
+
+        This caps moth the passage and family limits to the backend limit, as well as
+        differentiating between Vespas limit and the backends limit:
+
+        For vespa the limit is the size per group result
+        For the backend this is essentially a page within that
+        """
+
+        self.max_hits_per_family = min(
+            self.max_hits_per_family, VESPA_SEARCH_MATCHES_PER_DOC
+        )
+        self.limit = min(self.limit, VESPA_SEARCH_LIMIT)
+        self._page_size = self.limit
+        self.limit = VESPA_SEARCH_LIMIT
+        return self
 
 
 class SearchResponseDocumentPassage(BaseModel):

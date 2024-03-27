@@ -52,7 +52,6 @@ def _search_request(db: Session, search_body: SearchRequestBody) -> SearchRespon
         search_body.all_results = True
         search_body.exact_match = False
     data_access_search_params = create_vespa_search_params(db, search_body)
-    # TODO: we may wish to cache responses to improve pagination performance
     try:
         data_access_search_response = _VESPA_CONNECTION.search(
             parameters=data_access_search_params
@@ -64,7 +63,7 @@ def _search_request(db: Session, search_body: SearchRequestBody) -> SearchRespon
     return process_vespa_search_response(
         db,
         data_access_search_response,
-        limit=search_body.limit,
+        limit=search_body._page_size,
         offset=search_body.offset,
     ).increment_pages()
 
