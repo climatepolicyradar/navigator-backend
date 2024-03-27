@@ -5,6 +5,7 @@ from slugify import slugify
 from typing import Sequence
 
 import pytest
+from cpr_data_access.models.search import Filters as DataAccessFilters
 from cpr_data_access.models.search import (
     Document as DataAccessDocument,
     Family as DataAccessFamily,
@@ -12,7 +13,6 @@ from cpr_data_access.models.search import (
     Passage as DataAccessPassage,
     SearchResponse as DataAccessSearchResponse,
     filter_fields,
-    KeywordFilters,
 )
 from sqlalchemy.orm import Session
 
@@ -252,11 +252,12 @@ def test_create_vespa_search_params(
 
     # Test converted data
     if keyword_filters:
-        assert produced_search_parameters.keyword_filters == KeywordFilters(
+        assert produced_search_parameters.filters == DataAccessFilters(
             **_convert_filters(test_db, keyword_filters)
         )
     else:
         assert not produced_search_parameters.keyword_filters
+        assert not produced_search_parameters.filters
 
     assert produced_search_parameters.sort_by == sort_field
     assert produced_search_parameters.sort_order == sort_order
