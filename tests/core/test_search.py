@@ -5,6 +5,7 @@ from slugify import slugify
 from typing import Sequence
 
 import pytest
+from cpr_data_access.models.search import Filters as DataAccessFilters
 from cpr_data_access.models.search import (
     Document as DataAccessDocument,
     Family as DataAccessFamily,
@@ -12,22 +13,15 @@ from cpr_data_access.models.search import (
     Passage as DataAccessPassage,
     SearchResponse as DataAccessSearchResponse,
     filter_fields,
-    KeywordFilters,
 )
 from sqlalchemy.orm import Session
 
-from app.api.api_v1.routers.search import process_search_keyword_filters
 from app.core.config import VESPA_SEARCH_MATCHES_PER_DOC, VESPA_SEARCH_LIMIT
 from app.core.search import (
-    FilterField,
     SearchRequestBody,
-    SortField,
-    SortOrder,
     create_vespa_search_params,
     process_vespa_search_response,
     _convert_filters,
-    _convert_sort_field,
-    _convert_sort_order,
 )
 from tests.core.ingestion.helpers import populate_for_ingest
 
@@ -67,7 +61,7 @@ def db_setup(test_db):
             True,
             None,
             None,
-            SortOrder.ASCENDING,
+            "asc",
             None,
             10,
             10,
@@ -80,9 +74,9 @@ def db_setup(test_db):
             "world",
             True,
             (1940, 1960),
-            SortField.TITLE,
-            SortOrder.DESCENDING,
-            {FilterField.CATEGORY: ["Legislative"], FilterField.REGION: ["europe"]},
+            "title",
+            "desc",
+            {"categories": ["Legislative"], "regions": ["europe"]},
             10,
             10,
             0,
@@ -94,9 +88,9 @@ def db_setup(test_db):
             "hello",
             False,
             (None, 1960),
-            SortField.DATE,
-            SortOrder.ASCENDING,
-            {FilterField.SOURCE: ["UNFCCC"]},
+            "date",
+            "asc",
+            {"sources": ["UNFCCC"]},
             20,
             10,
             0,
@@ -109,10 +103,10 @@ def db_setup(test_db):
             False,
             (1940, None),
             None,
-            SortOrder.DESCENDING,
+            "desc",
             {
-                FilterField.COUNTRY: ["germany", "france"],
-                FilterField.REGION: ["europe"],
+                "countries": ["germany", "france"],
+                "regions": ["europe"],
             },
             20,
             10,
@@ -125,8 +119,8 @@ def db_setup(test_db):
             "hello",
             True,
             None,
-            SortField.TITLE,
-            SortOrder.ASCENDING,
+            "title",
+            "asc",
             None,
             10,
             10,
@@ -139,8 +133,8 @@ def db_setup(test_db):
             "world",
             True,
             (1940, 1960),
-            SortField.DATE,
-            SortOrder.DESCENDING,
+            "date",
+            "desc",
             None,
             50,
             100,
@@ -154,8 +148,8 @@ def db_setup(test_db):
             False,
             (None, 1960),
             None,
-            SortOrder.ASCENDING,
-            {FilterField.LANGUAGE: ["english"]},
+            "asc",
+            {"languages": ["english"]},
             1000,
             10,
             0,
@@ -167,8 +161,8 @@ def db_setup(test_db):
             "world",
             False,
             (1940, None),
-            SortField.TITLE,
-            SortOrder.DESCENDING,
+            "title",
+            "desc",
             None,
             100,
             10,
@@ -181,8 +175,8 @@ def db_setup(test_db):
             "hello",
             True,
             None,
-            SortField.DATE,
-            SortOrder.ASCENDING,
+            "date",
+            "asc",
             None,
             10,
             15,
@@ -196,7 +190,7 @@ def db_setup(test_db):
             True,
             (1940, 1960),
             None,
-            SortOrder.DESCENDING,
+            "desc",
             None,
             10,
             10,
@@ -258,19 +252,21 @@ def test_create_vespa_search_params(
 
     # Test converted data
     if keyword_filters:
-        assert produced_search_parameters.keyword_filters == KeywordFilters(
+        assert produced_search_parameters.filters == DataAccessFilters(
             **_convert_filters(test_db, keyword_filters)
         )
     else:
         assert not produced_search_parameters.keyword_filters
-    assert produced_search_parameters.sort_by == _convert_sort_field(sort_field)
-    assert produced_search_parameters.sort_order == _convert_sort_order(sort_order)
+        assert not produced_search_parameters.filters
+
+    assert produced_search_parameters.sort_by == sort_field
+    assert produced_search_parameters.sort_order == sort_order
 
 
 @pytest.mark.parametrize(
     (
         "exact_match,year_range,sort_field,sort_order,"
-        "keyword_filters,max_passages,limit,offset,continuation_token,"
+        "keyword_filters,max_passages,limit,offset,continuation_tokens,"
         "family_ids,document_ids"
     ),
     [
@@ -278,12 +274,12 @@ def test_create_vespa_search_params(
             True,
             (1940, 1960),
             None,
-            SortOrder.DESCENDING,
+            "desc",
             None,
             10,
             10,
             0,
-            "ABC",
+            ["ABC"],
             None,
             None,
         ),
@@ -291,15 +287,15 @@ def test_create_vespa_search_params(
             False,
             (1940, None),
             None,
-            SortOrder.DESCENDING,
+            "desc",
             {
-                FilterField.COUNTRY: ["germany", "France"],
-                FilterField.REGION: ["europe"],
+                "countries": ["germany", "France"],
+                "regions": ["europe"],
             },
             20,
             10,
             0,
-            "ABC",
+            ["ABC"],
             ["CCLW.document.1.0", "CCLW.document.2.0"],
             None,
         ),
@@ -307,15 +303,15 @@ def test_create_vespa_search_params(
             False,
             (1940, None),
             None,
-            SortOrder.DESCENDING,
+            "desc",
             {
-                FilterField.COUNTRY: ["germany", "France"],
-                FilterField.REGION: ["europe"],
+                "countries": ["germany", "France"],
+                "regions": ["europe"],
             },
             20,
             10,
             0,
-            "ABC",
+            ["ABC"],
             ["CCLW.executive.1.0", "CCLW.executive.2.0"],
             ["CCLW.document.1.0", "CCLW.document.2.0"],
         ),
@@ -331,7 +327,7 @@ def test_create_browse_request_params(
     max_passages,
     limit,
     offset,
-    continuation_token,
+    continuation_tokens,
     family_ids,
     document_ids,
 ):
@@ -349,7 +345,7 @@ def test_create_browse_request_params(
         sort_order=sort_order,
         limit=limit,
         offset=offset,
-        continuation_token=continuation_token,
+        continuation_tokens=continuation_tokens,
     )
 
 
@@ -357,62 +353,62 @@ def test_create_browse_request_params(
     "filters, expected",
     [
         (None, None),
-        ({FilterField.REGION: ["this-is-not-a-region"]}, None),
+        ({"regions": ["this-is-not-a-region"]}, None),
         (
             {
-                FilterField.REGION: ["latin-america-caribbean"],
-                FilterField.COUNTRY: ["france"],
+                "regions": ["latin-america-caribbean"],
+                "countries": ["france"],
             },
             None,
         ),
-        ({FilterField.REGION: ["north-america"]}, {"family_geography": ["CAN", "USA"]}),
+        ({"regions": ["north-america"]}, {"family_geography": ["CAN", "USA"]}),
         (
             {
-                FilterField.REGION: ["north-america"],
-                FilterField.COUNTRY: ["not-a-country"],
+                "regions": ["north-america"],
+                "countries": ["not-a-country"],
             },
             {"family_geography": ["CAN", "USA"]},
         ),
         (
-            {FilterField.REGION: ["north-america"], FilterField.COUNTRY: ["canada"]},
+            {"regions": ["north-america"], "countries": ["canada"]},
             {"family_geography": ["CAN"]},
         ),
-        ({FilterField.COUNTRY: ["cambodia"]}, {"family_geography": ["KHM"]}),
-        ({FilterField.COUNTRY: ["this-is-not-valid"]}, None),
+        ({"countries": ["cambodia"]}, {"family_geography": ["KHM"]}),
+        ({"countries": ["this-is-not-valid"]}, None),
         (
-            {FilterField.COUNTRY: ["france", "germany"]},
+            {"countries": ["france", "germany"]},
             {"family_geography": ["FRA", "DEU"]},
         ),
         (
-            {FilterField.COUNTRY: ["cambodia"], FilterField.CATEGORY: ["Executive"]},
+            {"countries": ["cambodia"], "categories": ["Executive"]},
             {"family_category": ["Executive"], "family_geography": ["KHM"]},
         ),
         (
-            {FilterField.COUNTRY: ["cambodia"], FilterField.LANGUAGE: ["english"]},
+            {"countries": ["cambodia"], "languages": ["english"]},
             {"document_languages": ["english"], "family_geography": ["KHM"]},
         ),
         (
-            {FilterField.COUNTRY: ["cambodia"], FilterField.SOURCE: ["CCLW"]},
+            {"countries": ["cambodia"], "sources": ["CCLW"]},
             {"family_source": ["CCLW"], "family_geography": ["KHM"]},
         ),
         (
             {
-                FilterField.REGION: ["north-america"],
-                FilterField.CATEGORY: ["Executive"],
+                "regions": ["north-america"],
+                "categories": ["Executive"],
             },
             {"family_category": ["Executive"], "family_geography": ["CAN", "USA"]},
         ),
         (
-            {FilterField.REGION: ["north-america"], FilterField.LANGUAGE: ["english"]},
+            {"regions": ["north-america"], "languages": ["english"]},
             {"document_languages": ["english"], "family_geography": ["CAN", "USA"]},
         ),
         (
-            {FilterField.REGION: ["north-america"], FilterField.SOURCE: ["CCLW"]},
+            {"regions": ["north-america"], "sources": ["CCLW"]},
             {"family_source": ["CCLW"], "family_geography": ["CAN", "USA"]},
         ),
-        ({FilterField.CATEGORY: ["Executive"]}, {"family_category": ["Executive"]}),
-        ({FilterField.LANGUAGE: ["english"]}, {"document_languages": ["english"]}),
-        ({FilterField.SOURCE: ["CCLW"]}, {"family_source": ["CCLW"]}),
+        ({"categories": ["Executive"]}, {"family_category": ["Executive"]}),
+        ({"languages": ["english"]}, {"document_languages": ["english"]}),
+        ({"sources": ["CCLW"]}, {"family_source": ["CCLW"]}),
     ],
 )
 def test__convert_filters(test_db, filters, expected):
@@ -425,9 +421,9 @@ def test__convert_filters(test_db, filters, expected):
         assert isinstance(converted_filters, dict)
         assert set(converted_filters.keys()).issubset(filter_fields.values())
 
-        expected_languages = filters.get(FilterField.LANGUAGE)
-        expected_categories = filters.get(FilterField.CATEGORY)
-        expected_sources = filters.get(FilterField.SOURCE)
+        expected_languages = filters.get("languages")
+        expected_categories = filters.get("categories")
+        expected_sources = filters.get("sources")
 
         assert expected_languages == converted_filters.get(filter_fields["language"])
         assert expected_sources == converted_filters.get(filter_fields["source"])
@@ -569,6 +565,8 @@ def _generate_search_response(specs: Sequence[FamSpec]) -> DataAccessSearchRespo
         total_time_ms=95 * len(specs),
         families=families,
         continuation_token="ABCXYZ",
+        this_continuation_token="",
+        prev_continuation_token="ABCDEFXYZ",
     )
 
 
@@ -738,6 +736,14 @@ def test_process_vespa_search_response(
     assert search_response.total_time_ms == vespa_response.total_time_ms
     assert search_response.total_family_hits == vespa_response.total_family_hits
     assert search_response.continuation_token == vespa_response.continuation_token
+    assert (
+        search_response.this_continuation_token
+        == vespa_response.this_continuation_token
+    )
+    assert (
+        search_response.prev_continuation_token
+        == vespa_response.prev_continuation_token
+    )
 
     # Now validate family results
     for i, fam_spec in enumerate(fam_specs[offset : offset + limit]):
@@ -802,36 +808,3 @@ def test_process_vespa_search_response(
                 assert all(
                     [pm.text_block_coords is None for pm in fd.document_passage_matches]
                 )
-
-
-@pytest.mark.parametrize(
-    "filters, expected",
-    [
-        (None, None),
-        (
-            {FilterField.CATEGORY: ["Legislative"], FilterField.REGION: ["europe"]},
-            {"category": ["Legislative"]},
-        ),
-        ({FilterField.SOURCE: ["UNFCCC"]}, {"source": ["UNFCCC"]}),
-        (
-            {
-                FilterField.COUNTRY: ["germany", "france"],
-                FilterField.REGION: ["europe"],
-            },
-            {"countries": ["DEU", "FRA"]},
-        ),
-        ({FilterField.COUNTRY: ["france", "germany"]}, {"countries": ["DEU", "FRA"]}),
-    ],
-)
-def test_process_search_keyword_filters(
-    test_db,
-    filters,
-    expected,
-):
-    db_setup(test_db)
-
-    processed_filters = process_search_keyword_filters(
-        test_db,
-        filters,
-    )
-    assert processed_filters == expected

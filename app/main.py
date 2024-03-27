@@ -5,7 +5,6 @@ from contextlib import asynccontextmanager
 
 import json_logging
 import uvicorn
-from apscheduler.schedulers.background import BackgroundScheduler
 from db_client import run_migrations
 from fastapi import APIRouter, Depends, FastAPI
 from fastapi.middleware.cors import CORSMiddleware
@@ -20,7 +19,6 @@ from app.api.api_v1.routers.geographies import geographies_router
 from app.api.api_v1.routers.lookups import lookups_router
 from app.api.api_v1.routers.pipeline_trigger import (
     pipeline_trigger_router,
-    start_scheduled_ingest,
 )
 from app.api.api_v1.routers.search import search_router
 from app.api.api_v1.routers.summaries import summary_router
@@ -73,17 +71,6 @@ async def lifespan(app_: FastAPI):
     """Run startup and shutdown events."""
     logger.info("Starting up...")
     run_migrations(engine)
-    scheduler = BackgroundScheduler()
-    scheduler.add_job(
-        start_scheduled_ingest,
-        "cron",
-        id="ingest_trigger",
-        day_of_week="mon",
-        hour=9,
-        minute=15,
-        replace_existing=True,
-    )
-    scheduler.start()
     yield
     logger.info("Shutting down...")
 

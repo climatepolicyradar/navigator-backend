@@ -9,7 +9,7 @@ python = "^3.9"
 Authlib = "^0.15.5"
 bcrypt = "^3.2.0"
 boto3 = "^1.26"
-cpr-data-access = {git = "https://github.com/climatepolicyradar/data-access.git", rev = "v0.5.1", extras = ["vespa"]}
+cpr-data-access = {git = "https://github.com/climatepolicyradar/data-access.git", tag="v0.5.6", extras = ["vespa"]}
 fastapi = "^0.104.1"
 fastapi-health = "^0.4.0"
 fastapi-pagination = { extras = ["sqlalchemy"], version = "^0.12.19" }

@@ -9,26 +9,23 @@ from cpr_data_access.embedding import Embedder
 from cpr_data_access.models.search import Document as DataAccessResponseDocument
 from cpr_data_access.models.search import Family as DataAccessResponseFamily
 from cpr_data_access.models.search import Passage as DataAccessResponsePassage
-from cpr_data_access.models.search import SearchParameters as DataAccessSearchParams
 from cpr_data_access.models.search import SearchResponse as DataAccessSearchResponse
-from cpr_data_access.models.search import filter_fields, KeywordFilters
+from cpr_data_access.models.search import Filters as DataAccessKeywordFilters
+from cpr_data_access.models.search import filter_fields
 from sqlalchemy.orm import Session
 
 from app.api.api_v1.schemas.search import (
     FilterField,
+    BackendFilterValues,
     SearchRequestBody,
     SearchResponse,
     SearchResponseDocumentPassage,
     SearchResponseFamily,
     SearchResponseFamilyDocument,
-    SortField,
-    SortOrder,
 )
 from app.core.config import (
     INDEX_ENCODER_CACHE_FOLDER,
     PUBLIC_APP_URL,
-    VESPA_SEARCH_LIMIT,
-    VESPA_SEARCH_MATCHES_PER_DOC,
 )
 from app.core.lookups import get_countries_for_region, get_countries_for_slugs
 from app.core.util import to_cdn_url
@@ -272,27 +269,7 @@ def process_result_into_csv(
     return csv_result_io.read()
 
 
-# Vespa search processing functions
-def _convert_sort_field(
-    sort_field: Optional[SortField],
-) -> Optional[str]:
-    if sort_field is None:
-        return None
-
-    if sort_field == SortField.DATE:
-        return "date"
-    if sort_field == SortField.TITLE:
-        return "name"
-
-
-def _convert_sort_order(sort_order: SortOrder) -> str:
-    if sort_order == SortOrder.ASCENDING:
-        return "ascending"
-    if sort_order == SortOrder.DESCENDING:
-        return "descending"
-
-
-def _convert_filter_field(filter_field: FilterField) -> str:
+def _convert_filter_field(filter_field: str) -> Optional[str]:
     if filter_field == FilterField.CATEGORY:
         return filter_fields["category"]
     if filter_field == FilterField.COUNTRY:
@@ -307,7 +284,7 @@ def _convert_filter_field(filter_field: FilterField) -> str:
 
 def _convert_filters(
     db: Session,
-    keyword_filters: Optional[Mapping[FilterField, Sequence[str]]],
+    keyword_filters: Optional[Mapping[BackendFilterValues, Sequence[str]]],
 ) -> Optional[Mapping[str, Sequence[str]]]:
     if keyword_filters is None:
         return None
@@ -441,6 +418,7 @@ def _process_vespa_search_response_families(
                     family_title_match=False,
                     total_passage_hits=vespa_family.total_passage_hits,
                     continuation_token=vespa_family.continuation_token,
+                    prev_continuation_token=vespa_family.prev_continuation_token,
                     family_documents=[],
                     family_geography=hit.family_geography,
                     family_metadata=cast(dict, db_family_metadata.value),
@@ -514,6 +492,7 @@ def process_vespa_search_response(
         total_time_ms=vespa_search_response.total_time_ms or 0,
         continuation_token=vespa_search_response.continuation_token,
         this_continuation_token=vespa_search_response.this_continuation_token,
+        prev_continuation_token=vespa_search_response.prev_continuation_token,
         families=_process_vespa_search_response_families(
             db,
             vespa_search_response.families,
@@ -523,26 +502,13 @@ def process_vespa_search_response(
     )
 
 
-def create_vespa_search_params(db: Session, search_body: SearchRequestBody):
+def create_vespa_search_params(
+    db: Session, search_body: SearchRequestBody
+) -> SearchRequestBody:
     """Create Vespa search parameters from a F/E search request body"""
-    search_body.max_passages_per_doc = min(
-        search_body.max_passages_per_doc, VESPA_SEARCH_MATCHES_PER_DOC
-    )
     converted_filters = _convert_filters(db, search_body.keyword_filters)
     if converted_filters:
-        filters = KeywordFilters.model_validate(converted_filters)
+        search_body.filters = DataAccessKeywordFilters.model_validate(converted_filters)
     else:
-        filters = None
-    return DataAccessSearchParams(
-        query_string=search_body.query_string,
-        exact_match=search_body.exact_match,
-        limit=VESPA_SEARCH_LIMIT,
-        max_hits_per_family=search_body.max_passages_per_doc,
-        family_ids=search_body.family_ids,
-        document_ids=search_body.document_ids,
-        keyword_filters=filters,
-        year_range=search_body.year_range,
-        sort_by=_convert_sort_field(search_body.sort_field),
-        sort_order=_convert_sort_order(search_body.sort_order),
-        continuation_tokens=search_body.continuation_tokens,
-    )
+        search_body.filters = None
+    return search_body

@@ -16,10 +16,8 @@ from tests.routes.setup_search_tests import (
     VESPA_FIXTURE_COUNT,
 )
 
-from cpr_data_access.models.search import SearchParameters
-
 from app.api.api_v1.routers import search
-from app.core import search as core_search
+from app.api.api_v1.schemas import search as search_schemas
 from app.core.lookups import get_country_slug_from_country_code
 
 from db_client.models.dfce import Geography, Slug
@@ -67,16 +65,22 @@ def _fam_ids_from_response(test_db, response) -> list[str]:
 
 
 @pytest.mark.search
-def test_empty_search_term_performs_browse(data_client, data_db, mocker):
+def test_empty_search_term_performs_browse(
+    test_vespa, data_client, data_db, mocker, monkeypatch
+):
     """Make sure that empty search term returns results in browse mode."""
     _populate_db_families(data_db)
-    query_spy = mocker.spy(search._VESPA_CONNECTION, "search")
+    monkeypatch.setattr(search, "_VESPA_CONNECTION", test_vespa)
 
+    query_spy = mocker.spy(search._VESPA_CONNECTION, "search")
     body = _make_search_request(data_client, {"query_string": ""})
 
     assert body["hits"] > 0
     assert len(body["families"]) > 0
-    query_spy.assert_not_called()
+
+    # Should automatically use vespa `all_results` parameter for browse requests
+    assert query_spy.call_args.kwargs["parameters"].all_results
+    query_spy.assert_called_once()
 
 
 @pytest.mark.search
@@ -143,6 +147,7 @@ def test_search_body_valid(exact_match, test_vespa, data_client, data_db, monkey
         "continuation_token",
         "families",
         "hits",
+        "prev_continuation_token",
         "query_time_ms",
         "this_continuation_token",
         "total_family_hits",
@@ -186,10 +191,10 @@ def test_no_doc_if_in_postgres_but_not_vespa(
     _create_family_metadata(data_db, new_family)
     _create_document(data_db, new_doc, new_family)
 
-    # This will be present in browse, which is fine
+    # This will also not be present in browse
     body = _make_search_request(data_client, params={"query_string": ""})
     browse_families = [f["family_name"] for f in body["families"]]
-    assert EXTRA_TEST_FAMILY in browse_families
+    assert EXTRA_TEST_FAMILY not in browse_families
 
     # But it won't break when running a search
     body = _make_search_request(
@@ -252,39 +257,33 @@ def test_specific_doc_returned(test_vespa, monkeypatch, data_client, data_db):
 
 
 @pytest.mark.search
-@pytest.mark.parametrize(
-    "params",
-    [
-        SearchParameters(query_string="climate"),
-        SearchParameters(query_string="climate", exact_match=True),
-        SearchParameters(
-            query_string="climate",
-            exact_match=True,
-            limit=1,
-            max_hits_per_family=10,
-        ),
-    ],
-)
-def test_search_params_contract(
-    params, test_vespa, monkeypatch, data_client, data_db, mocker
+def test_search_params_backend_limits(
+    test_vespa, monkeypatch, data_client, data_db, mocker
 ):
+    search_limit = 10
+    passage_limit = 5
+
     monkeypatch.setattr(search, "_VESPA_CONNECTION", test_vespa)
+    monkeypatch.setattr(search_schemas, "VESPA_SEARCH_LIMIT", search_limit)
+    monkeypatch.setattr(search_schemas, "VESPA_SEARCH_MATCHES_PER_DOC", passage_limit)
     _populate_db_families(data_db)
     query_spy = mocker.spy(search._VESPA_CONNECTION, "search")
 
     _make_search_request(
         data_client,
         params={
-            "query_string": params.query_string,
-            "exact_match": params.exact_match,
-            "limit": params.limit,
-            "max_hits_per_family": params.max_hits_per_family,
+            "query_string": "the",
+            "limit": f"{(search_limit * 2)}",
+            "max_hits_per_family": f"{(passage_limit * 2)}",
         },
     )
+    query_spy.assert_called_once()
+    params = query_spy.call_args.kwargs["parameters"]
 
-    expected_params = params
-    expected_params.limit = 150
-    query_spy.assert_called_once_with(parameters=expected_params)
+    # Limit converts to _page_size and both are capped at the search limit
+    assert params._page_size == search_limit
+    assert params.limit == search_limit
+    assert params.max_hits_per_family == passage_limit
 
 
 @pytest.mark.search
@@ -529,7 +528,7 @@ def test_result_order_title(
 @pytest.mark.search
 def test_continuation_token__families(test_vespa, data_db, monkeypatch, data_client):
     monkeypatch.setattr(search, "_VESPA_CONNECTION", test_vespa)
-    monkeypatch.setattr(core_search, "VESPA_SEARCH_LIMIT", 2)
+    monkeypatch.setattr(search_schemas, "VESPA_SEARCH_LIMIT", 2)
 
     _populate_db_families(data_db)
 
@@ -549,11 +548,21 @@ def test_continuation_token__families(test_vespa, data_db, monkeypatch, data_cli
     # Confirm we actually got different results
     assert sorted(first_family_ids) != sorted(second_family_ids)
 
+    # Go back to prev and confirm its what we had initially
+    params = {
+        "query_string": "the",
+        "continuation_tokens": [response["prev_continuation_token"]],
+    }
+    response = _make_search_request(data_client, params)
+    prev_family_ids = [f["family_slug"] for f in response["families"]]
+
+    assert sorted(first_family_ids) == sorted(prev_family_ids)
+
 
 @pytest.mark.search
 def test_continuation_token__passages(test_vespa, data_db, monkeypatch, data_client):
     monkeypatch.setattr(search, "_VESPA_CONNECTION", test_vespa)
-    monkeypatch.setattr(core_search, "VESPA_SEARCH_LIMIT", 1)
+    monkeypatch.setattr(search_schemas, "VESPA_SEARCH_LIMIT", 1)
 
     _populate_db_families(data_db)
 
@@ -564,47 +573,56 @@ def test_continuation_token__passages(test_vespa, data_db, monkeypatch, data_cli
     }
     first_family = _make_search_request(data_client, params)
     params["continuation_tokens"] = [first_family["continuation_token"]]
-    second_family = _make_search_request(data_client, params)
-    passages_continuation = second_family["families"][0]["continuation_token"]
-
-    second_family_passages_one = [
+    second_family_first_passages = _make_search_request(data_client, params)
+    second_family_first_passages_ids = [
         h["text_block_id"]
-        for h in second_family["families"][0]["family_documents"][0][
+        for h in second_family_first_passages["families"][0]["family_documents"][0][
             "document_passage_matches"
         ]
     ]
 
     # Get next set of passages
+    this_family_continuation = second_family_first_passages["this_continuation_token"]
+    next_passages_continuation = second_family_first_passages["families"][0][
+        "continuation_token"
+    ]
     params["continuation_tokens"] = [
-        second_family["this_continuation_token"],
-        passages_continuation,
+        this_family_continuation,
+        next_passages_continuation,
+    ]
+    second_family_second_passages = _make_search_request(data_client, params)
+    second_family_second_passages_ids = [
+        h["text_block_id"]
+        for h in second_family_second_passages["families"][0]["family_documents"][0][
+            "document_passage_matches"
+        ]
+    ]
+
+    # Confirm we actually got different results
+    assert sorted(second_family_first_passages_ids) != sorted(
+        second_family_second_passages_ids
+    )
+
+    # Go to previous set and confirm its the same
+    prev_passages_continuation = second_family_second_passages["families"][0][
+        "prev_continuation_token"
+    ]
+
+    params["continuation_tokens"] = [
+        this_family_continuation,
+        prev_passages_continuation,
     ]
     response = _make_search_request(data_client, params)
-    second_family_passages_two = [
+    second_family_prev_passages_ids = [
         h["text_block_id"]
         for h in response["families"][0]["family_documents"][0][
             "document_passage_matches"
         ]
     ]
 
-    # Confirm we actually got different results
-    assert sorted(second_family_passages_one) != sorted(second_family_passages_two)
-
-
-@pytest.mark.search
-@pytest.mark.parametrize(
-    "params",
-    [
-        {"exact_match": False},
-        {},
-    ],
-)
-def test_invalid_requests(params, test_vespa, data_db, monkeypatch, data_client):
-    monkeypatch.setattr(search, "_VESPA_CONNECTION", test_vespa)
-    _populate_db_families(data_db)
-
-    response = data_client.post(SEARCH_ENDPOINT, json=params)
-    assert response.status_code == 422
+    assert sorted(second_family_second_passages_ids) != sorted(
+        second_family_prev_passages_ids
+    )
 
 
 @pytest.mark.search
@@ -810,12 +828,7 @@ def test_csv_download_search_no_limit(
     monkeypatch.setattr(search, "_VESPA_CONNECTION", test_vespa)
     _populate_db_families(data_db)
 
-    if label == "search":
-        query_spy = mocker.spy(search._VESPA_CONNECTION, "search")
-    elif label == "browse":
-        query_spy = mocker.spy(search, "browse_rds_families")
-    else:
-        raise ValueError("unexpected label parameter")
+    query_spy = mocker.spy(search._VESPA_CONNECTION, "search")
 
     download_response = data_client.post(
         CSV_DOWNLOAD_ENDPOINT,
@@ -826,12 +839,5 @@ def test_csv_download_search_no_limit(
     )
     assert download_response.status_code == 200
 
-    if label == "search":
-        actual_search_req = query_spy.mock_calls[0].kwargs["parameters"]
-    elif label == "browse":
-        actual_search_req = query_spy.mock_calls[0].kwargs["req"]
-    else:
-        raise ValueError("unexpected label parameter")
-
-    # Make sure we overrode the search request content to produce the CSV download
+    actual_search_req = query_spy.mock_calls[0].kwargs["parameters"]
     assert 100 <= actual_search_req.limit
