@@ -9,6 +9,8 @@ from db_client.models.dfce.family import (
     FamilyOrganisation,
     Family,
     FamilyCategory,
+    FamilyCorpus,
+    Corpus,
 )
 from db_client.models.dfce.metadata import MetadataOrganisation, MetadataTaxonomy
 from db_client.models.dfce.taxonomy_entry import Taxonomy, TaxonomyEntry
