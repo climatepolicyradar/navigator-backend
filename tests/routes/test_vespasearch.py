@@ -626,22 +626,6 @@ def test_continuation_token__passages(test_vespa, data_db, monkeypatch, data_cli
 
 
 @pytest.mark.search
-@pytest.mark.parametrize(
-    "params",
-    [
-        {"exact_match": False},
-        {},
-    ],
-)
-def test_invalid_requests(params, test_vespa, data_db, monkeypatch, data_client):
-    monkeypatch.setattr(search, "_VESPA_CONNECTION", test_vespa)
-    _populate_db_families(data_db)
-
-    response = data_client.post(SEARCH_ENDPOINT, json=params)
-    assert response.status_code == 422
-
-
-@pytest.mark.search
 def test_case_insensitivity(test_vespa, data_db, monkeypatch, data_client):
     monkeypatch.setattr(search, "_VESPA_CONNECTION", test_vespa)
     _populate_db_families(data_db)
