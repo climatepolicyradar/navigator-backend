@@ -10,7 +10,8 @@ from cpr_data_access.models.search import Document as DataAccessResponseDocument
 from cpr_data_access.models.search import Family as DataAccessResponseFamily
 from cpr_data_access.models.search import Passage as DataAccessResponsePassage
 from cpr_data_access.models.search import SearchResponse as DataAccessSearchResponse
-from cpr_data_access.models.search import filter_fields, KeywordFilters
+from cpr_data_access.models.search import Filters as DataAccessKeywordFilters
+from cpr_data_access.models.search import filter_fields
 from sqlalchemy.orm import Session
 
 from app.api.api_v1.schemas.search import (
@@ -505,7 +506,7 @@ def create_vespa_search_params(
     """Create Vespa search parameters from a F/E search request body"""
     converted_filters = _convert_filters(db, search_body.keyword_filters)
     if converted_filters:
-        search_body.filters = KeywordFilters.model_validate(converted_filters)
+        search_body.filters = DataAccessKeywordFilters.model_validate(converted_filters)
     else:
         search_body.filters = None
     return search_body
