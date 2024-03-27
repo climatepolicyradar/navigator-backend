@@ -50,6 +50,9 @@ BackendKeywordFilter = Optional[Mapping[BackendFilterValues, Sequence[str]]]
 class SearchRequestBody(DataAccessSearchParameters):
     """The request body expected by the search API endpoint."""
 
+    # Query string should be required in backend (its not in dal)
+    query_string: str
+
     # We need to add `keyword_filters` here because the items recieved from the frontend
     # need processing to be ready for vespa (key name change & geo slugs to geo codes)
     keyword_filters: BackendKeywordFilter = None
