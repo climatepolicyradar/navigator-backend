@@ -56,6 +56,9 @@ build_bats:
 build:
 	docker compose build --no-cache backend
 
+build_from_cached:
+	docker compose build backend
+
 # ----------------------------------
 # testing
 # ----------------------------------
