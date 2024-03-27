@@ -36,10 +36,14 @@ from db_client.models.dfce import (
     Family,
     FamilyDocument,
     FamilyMetadata,
-    FamilyOrganisation,
     Slug,
 )
-from db_client.models.dfce.family import DocumentStatus, FamilyStatus
+from db_client.models.dfce.family import (
+    DocumentStatus,
+    FamilyStatus,
+    FamilyCorpus,
+    Corpus,
+)
 
 _LOGGER = logging.getLogger(__name__)
 
@@ -79,11 +83,9 @@ def _get_extra_csv_info(
     slug_and_organisation = (
         db.query(Slug, Organisation)
         .filter(Slug.name.in_(all_family_slugs))
-        .join(
-            FamilyOrganisation,
-            FamilyOrganisation.family_import_id == Slug.family_import_id,
-        )
-        .join(Organisation, Organisation.id == FamilyOrganisation.organisation_id)
+        .join(FamilyCorpus, FamilyCorpus.family_import_id == Slug.family_import_id)
+        .join(Corpus, Corpus.import_id == FamilyCorpus.corpus_import_id)
+        .join(Organisation, Organisation.id == Corpus.organisation_id)
     )
     slug_and_family_document = (
         db.query(Slug, FamilyDocument)
