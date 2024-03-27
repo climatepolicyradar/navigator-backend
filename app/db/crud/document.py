@@ -135,7 +135,7 @@ def get_family_and_documents(db: Session, import_id: str) -> FamilyAndDocumentsR
     """
 
     db_objects = (
-        db.query(Family, Geography, FamilyMetadata, FamilyCorpus, Corpus, Organisation)
+        db.query(Family, Geography, FamilyMetadata, Organisation)
         .filter(Family.import_id == import_id)
         .join(Geography, Family.geography_id == Geography.id)
         .join(FamilyMetadata, import_id == FamilyMetadata.family_import_id)
@@ -153,8 +153,6 @@ def get_family_and_documents(db: Session, import_id: str) -> FamilyAndDocumentsR
         family,
         geography,
         family_metadata,
-        _,
-        _,
         organisation,
     ) = db_objects
 

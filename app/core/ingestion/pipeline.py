@@ -24,9 +24,7 @@ def generate_pipeline_ingest_input(db: Session) -> Sequence[DocumentParserInput]
     """Generates a complete view of the current document database as pipeline input"""
     _LOGGER.info("Running pipeline family query")
     query = (
-        db.query(
-            Family, FamilyDocument, FamilyMetadata, Geography, Corpus, Organisation
-        )
+        db.query(Family, FamilyDocument, FamilyMetadata, Geography, Organisation)
         .join(Family, Family.import_id == FamilyDocument.family_import_id)
         .join(FamilyCorpus, FamilyCorpus.family_import_id == Family.import_id)
         .join(Corpus, Corpus.import_id == FamilyCorpus.corpus_import_id)

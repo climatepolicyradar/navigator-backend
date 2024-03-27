@@ -84,7 +84,7 @@ def _get_extra_csv_info(
         .all()
     )
     slug_and_organisation = (
-        db.query(Slug, Corpus, Organisation)
+        db.query(Slug, Organisation)
         .filter(Slug.name.in_(all_family_slugs))
         .join(FamilyCorpus, FamilyCorpus.family_import_id == Slug.family_import_id)
         .join(Corpus, Corpus.import_id == FamilyCorpus.corpus_import_id)
@@ -115,7 +115,7 @@ def _get_extra_csv_info(
         "metadata": {
             slug.name: meta.value for (slug, meta) in slug_and_family_metadata
         },
-        "source": {slug.name: org.name for (slug, _, org) in slug_and_organisation},
+        "source": {slug.name: org.name for (slug, org) in slug_and_organisation},
         "documents": family_slug_to_documents,
         "collection": {
             slug.name: collection for (slug, collection) in slug_and_collection
