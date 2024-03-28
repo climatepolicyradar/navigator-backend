@@ -10,7 +10,7 @@ from db_client.models.document.physical_document import (
     PhysicalDocumentLanguage,
 )
 from db_client.models.dfce.family import Family, FamilyDocument, FamilyEvent
-from tests.routes.document_helpers import (
+from tests.routes.setup_helpers import (
     setup_docs_with_two_orgs,
     setup_docs_with_two_orgs_no_langs,
     setup_with_docs,
