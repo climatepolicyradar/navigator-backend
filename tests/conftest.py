@@ -148,6 +148,8 @@ def data_db(scope="function"):
     # Save DATABASE_URL
     saved = os.environ["DATABASE_URL"]
     os.environ["DATABASE_URL"] = test_db_url
+    connection = None
+    test_session = None
     try:
         test_engine = create_engine(test_db_url)
         connection = test_engine.connect()
@@ -166,8 +168,10 @@ def data_db(scope="function"):
     finally:
         # restore DATABASE_URL
         os.environ["DATABASE_URL"] = saved
-        test_session.close()
-        connection.close()
+        if test_session is not None:
+            test_session.close()
+        if connection is not None:
+            connection.close()
         # Drop the test database
         drop_database(test_db_url)
 
@@ -244,6 +248,21 @@ def test_superuser(test_db) -> AppUser:
     return user
 
 
+@pytest.fixture
+def data_superuser(data_db) -> AppUser:
+    """Superuser for testing"""
+
+    user = AppUser(
+        email="fakesuper@email.com",
+        name="Fake Super User",
+        hashed_password=get_password_hash(),
+        is_superuser=True,
+    )
+    data_db.add(user)
+    data_db.commit()
+    return user
+
+
 def verify_password_mock(first: str, second: str) -> bool:
     return True
 
@@ -259,6 +278,23 @@ def superuser_token_headers(
         "password": test_password,
     }
     r = test_client.post("/api/tokens", data=login_data)
+    tokens = r.json()
+    a_token = tokens["access_token"]
+    headers = {"Authorization": f"Bearer {a_token}"}
+    return headers
+
+
+@pytest.fixture
+def data_superuser_token_headers(
+    data_client: TestClient, data_superuser, test_password, monkeypatch
+) -> t.Dict[str, str]:
+    monkeypatch.setattr(security, "verify_password", verify_password_mock)
+
+    login_data = {
+        "username": data_superuser.email,
+        "password": test_password,
+    }
+    r = data_client.post("/api/tokens", data=login_data)
     tokens = r.json()
     a_token = tokens["access_token"]
     headers = {"Authorization": f"Bearer {a_token}"}
