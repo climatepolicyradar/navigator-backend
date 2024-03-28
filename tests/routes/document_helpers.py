@@ -1,6 +1,10 @@
 from sqlalchemy.orm import Session
 
-from tests.routes.dfce_helpers import add_collections, add_families, link_collection_family
+from tests.routes.dfce_helpers import (
+    add_collections,
+    add_families,
+    link_collection_family,
+)
 
 
 # ONE_DFC_ROW = """ID,Document ID,CCLW Description,Part of collection?,Create new family/ies?,Collection ID,Collection name,Collection summary,Document title,Family name,Family summary,Family ID,Document role,Applies to ID,Geography ISO,Documents,Category,Events,Sectors,Instruments,Frameworks,Responses,Natural Hazards,Document Type,Year,Language,Keywords,Geography,Parent Legislation,Comment,CPR Document ID,CPR Family ID,CPR Collection ID,CPR Family Slug,CPR Document Slug,Document variant,CPR Document Status
@@ -79,7 +83,7 @@ event2 = {
 
 document1 = {
     "title": "Document1",
-    "slug": "DocSlug1", 
+    "slug": "DocSlug1",
     "md5_sum": "111",
     "url": "http://somewhere1",
     "content_type": "application/pdf",
@@ -88,12 +92,13 @@ document1 = {
     "status": "PUBLISHED",
     "role": "MAIN",
     "type": "Plan",
+    "languages": ["eng"],
     "events": [event1],
 }
 
 document2 = {
     "title": "Document2",
-    "slug": "DocSlug2", 
+    "slug": "DocSlug2",
     "md5_sum": None,
     "url": "http://another_somewhere",
     "content_type": None,
@@ -102,6 +107,7 @@ document2 = {
     "status": "PUBLISHED",
     "role": "MAIN",
     "type": "Order",
+    "languages": [],
     "events": [event2],
 }
 
@@ -129,16 +135,19 @@ family2 = {
 
 def setup_with_docs(db: Session):
     # _start_ingest(test_db, ONE_DFC_ROW, ONE_EVENT_ROW)
-    # Collection 
+    # Collection
     add_collections(db, collections=[collection1])
 
     # Family + Document + events
     add_families(db, families=[family1])
 
     # Collection - Family
-    link_collection_family(db, [
-        (collection1["import_id"],family1["import_id"]),
-    ])
+    link_collection_family(
+        db,
+        [
+            (collection1["import_id"], family1["import_id"]),
+        ],
+    )
 
 
 def setup_with_two_docs(db: Session):
@@ -146,25 +155,27 @@ def setup_with_two_docs(db: Session):
 
     # setup_with_multiple_docs(test_db, doc_data=TWO_DFC_ROW, event_data=TWO_EVENT_ROWS)
 
-    # Collection 
+    # Collection
     add_collections(db, collections=[collection1])
 
     # Family + Document + events
     add_families(db, families=[family1, family2])
 
     # Collection - Family
-    link_collection_family(db, [
-        (collection1["import_id"],family1["import_id"]),
-        (collection1["import_id"],family2["import_id"]),
-    ])
-
+    link_collection_family(
+        db,
+        [
+            (collection1["import_id"], family1["import_id"]),
+            (collection1["import_id"], family2["import_id"]),
+        ],
+    )
 
 
 def setup_with_two_docs_one_family(db: Session):
     # setup_with_multiple_docs(
     #     test_db, doc_data=TWO_DOCS_ONE_FAM, event_data=ONE_EVENT_ROW
     # )
-    # Collection 
+    # Collection
     add_collections(db, collections=[collection1])
 
     # Family + Document + events
@@ -172,11 +183,83 @@ def setup_with_two_docs_one_family(db: Session):
     add_families(db, families=[family1])
 
     # Collection - Family
-    link_collection_family(db, [
-        (collection1["import_id"],family1["import_id"]),
-    ])
+    link_collection_family(
+        db,
+        [
+            (collection1["import_id"], family1["import_id"]),
+        ],
+    )
 
 
-def setup_with_multiple_docs(db: Session, doc_data, event_data):
-    # _start_ingest(test_db, doc_data, event_data)
-    pass
+def setup_with_two_docs_multiple_languages(db: Session):
+    document1["languages"] = ["fra", "eng"]
+    # Collection
+    add_collections(db, collections=[collection1])
+
+    # Family + Document + events
+    add_families(db, families=[family1, family2])
+
+    # Collection - Family
+    link_collection_family(
+        db,
+        [
+            (collection1["import_id"], family1["import_id"]),
+            (collection1["import_id"], family2["import_id"]),
+        ],
+    )
+
+
+def setup_with_two_docs_bad_ids(db: Session):
+    document1["import_id"] = "CCLW.executive.12"
+    document2["import_id"] = "UNFCCC.s.ill.y.2.2"
+    # Collection
+    add_collections(db, collections=[collection1])
+
+    # Family + Document + events
+    add_families(db, families=[family1, family2])
+
+    # Collection - Family
+    link_collection_family(
+        db,
+        [
+            (collection1["import_id"], family1["import_id"]),
+            (collection1["import_id"], family2["import_id"]),
+        ],
+    )
+
+
+def setup_with_two_unpublished_docs(db: Session):
+    document1["status"] = "CREATED"
+    document2["status"] = "DELETED"
+    # Collection
+    add_collections(db, collections=[collection1])
+
+    # Family + Document + events
+    add_families(db, families=[family1, family2])
+
+    # Collection - Family
+    link_collection_family(
+        db,
+        [
+            (collection1["import_id"], family1["import_id"]),
+            (collection1["import_id"], family2["import_id"]),
+        ],
+    )
+
+
+def setup_docs_with_two_orgs(db: Session):
+    document2["import_id"] = "UNFCCC.non-party.2.2"
+
+    # Family + Document + events
+    add_families(db, families=[family1], org_id=1)
+    add_families(db, families=[family2], org_id=2)
+
+
+def setup_docs_with_two_orgs_no_langs(db: Session):
+    document2["import_id"] = "UNFCCC.non-party.2.2"
+    document1["languages"] = []
+    document2["languages"] = []
+
+    # Family + Document + events
+    add_families(db, families=[family1], org_id=1)
+    add_families(db, families=[family2], org_id=2)
