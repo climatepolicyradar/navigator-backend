@@ -10,18 +10,15 @@ from db_client.models.document.physical_document import (
     PhysicalDocumentLanguage,
 )
 from db_client.models.dfce.family import Family, FamilyDocument, FamilyEvent
-from tests.routes.document_helpers import (
-    ONE_DFC_ROW_TWO_LANGUAGES,
-    ONE_EVENT_ROW,
-    TWO_UNPUBLISHED_DFC_ROW,
-    TWO_DFC_ROW_DIFFERENT_ORG,
-    TWO_DFC_ROW_ONE_LANGUAGE,
-    TWO_DFC_ROW_NON_MATCHING_IDS,
-    TWO_EVENT_ROWS,
+from tests.routes.setup_helpers import (
+    setup_docs_with_two_orgs,
+    setup_docs_with_two_orgs_no_langs,
     setup_with_docs,
-    setup_with_multiple_docs,
     setup_with_two_docs,
     setup_with_two_docs_one_family,
+    setup_with_two_docs_multiple_languages,
+    setup_with_two_docs_bad_ids,
+    setup_with_two_unpublished_docs,
 )
 
 N_METADATA_KEYS = 6
@@ -31,15 +28,15 @@ N_DOCUMENT_KEYS = 12
 
 
 def test_documents_family_slug_returns_not_found(
-    test_client: TestClient,
-    test_db: Session,
+    data_db: Session,
+    data_client: TestClient,
 ):
-    setup_with_docs(test_db)
-    assert test_db.query(Family).count() == 1
-    assert test_db.query(FamilyEvent).count() == 1
+    setup_with_docs(data_db)
+    assert data_db.query(Family).count() == 1
+    assert data_db.query(FamilyEvent).count() == 1
 
     # Test associations
-    response = test_client.get(
+    response = data_client.get(
         "/api/v1/documents/FamSlug100",
     )
     assert response.status_code == 404
@@ -47,13 +44,13 @@ def test_documents_family_slug_returns_not_found(
 
 
 def test_documents_family_slug_returns_correct_family(
-    test_client: TestClient,
-    test_db: Session,
+    data_db: Session,
+    data_client: TestClient,
 ):
-    setup_with_two_docs(test_db)
+    setup_with_two_docs(data_db)
 
     # Test associations
-    response = test_client.get(
+    response = data_client.get(
         "/api/v1/documents/FamSlug1",
     )
 
@@ -62,7 +59,7 @@ def test_documents_family_slug_returns_correct_family(
     assert json_response["import_id"] == "CCLW.family.1001.0"
 
     # Ensure a different family is returned
-    response = test_client.get(
+    response = data_client.get(
         "/api/v1/documents/FamSlug2",
     )
 
@@ -72,13 +69,13 @@ def test_documents_family_slug_returns_correct_family(
 
 
 def test_documents_family_slug_returns_correct_json(
-    test_client: TestClient,
-    test_db: Session,
+    data_client: TestClient,
+    data_db: Session,
 ):
-    setup_with_two_docs(test_db)
+    setup_with_two_docs(data_db)
 
     # Test associations
-    response = test_client.get(
+    response = data_client.get(
         "/api/v1/documents/FamSlug1",
     )
     json_response = response.json()
@@ -89,14 +86,15 @@ def test_documents_family_slug_returns_correct_json(
     assert json_response["import_id"] == "CCLW.family.1001.0"
     assert json_response["title"] == "Fam1"
     assert json_response["summary"] == "Summary1"
-    assert json_response["geography"] == "GBR"
+    assert json_response["geography"] == "Other"
     assert json_response["category"] == "Executive"
     assert json_response["status"] == "Published"
     assert json_response["published_date"] == "2019-12-25T00:00:00Z"
     assert json_response["last_updated_date"] == "2019-12-25T00:00:00Z"
 
-    assert len(json_response["metadata"]) == N_METADATA_KEYS
-    assert json_response["metadata"]["keyword"] == ["Energy Supply"]
+    # TODO: https://linear.app/climate-policy-radar/issue/PDCT-1017
+    assert len(json_response["metadata"]) == 2
+    assert json_response["metadata"]["size"] == "big"
 
     assert json_response["slug"] == "FamSlug1"
 
@@ -104,7 +102,7 @@ def test_documents_family_slug_returns_correct_json(
     assert json_response["events"][0]["title"] == "Published"
 
     assert len(json_response["documents"]) == 1
-    assert json_response["documents"][0]["title"] == "Title1"
+    assert json_response["documents"][0]["title"] == "Document1"
     assert json_response["documents"][0]["slug"] == "DocSlug1"
     assert json_response["documents"][0]["import_id"] == "CCLW.executive.1.2"
 
@@ -118,12 +116,12 @@ def test_documents_family_slug_returns_correct_json(
 
 
 def test_documents_family_slug_returns_multiple_docs(
-    test_client: TestClient,
-    test_db: Session,
+    data_client: TestClient,
+    data_db: Session,
 ):
-    setup_with_two_docs_one_family(test_db)
+    setup_with_two_docs_one_family(data_db)
 
-    response = test_client.get(
+    response = data_client.get(
         "/api/v1/documents/FamSlug1",
     )
     json_response = response.json()
@@ -133,18 +131,18 @@ def test_documents_family_slug_returns_multiple_docs(
 
 
 def test_documents_family_slug_returns_only_published_docs(
-    test_client: TestClient,
-    test_db: Session,
+    data_client: TestClient,
+    data_db: Session,
 ):
-    setup_with_two_docs_one_family(test_db)
-    test_db.execute(
+    setup_with_two_docs_one_family(data_db)
+    data_db.execute(
         update(FamilyDocument)
         .where(FamilyDocument.import_id == "CCLW.executive.1.2")
         .values(document_status="Deleted")
     )
 
     # Test associations
-    response = test_client.get(
+    response = data_client.get(
         "/api/v1/documents/FamSlug1",
     )
     json_response = response.json()
@@ -154,23 +152,23 @@ def test_documents_family_slug_returns_only_published_docs(
 
 
 def test_documents_family_slug_returns_404_when_all_docs_deleted(
-    test_client: TestClient,
-    test_db: Session,
+    data_client: TestClient,
+    data_db: Session,
 ):
-    setup_with_two_docs_one_family(test_db)
-    test_db.execute(
+    setup_with_two_docs_one_family(data_db)
+    data_db.execute(
         update(FamilyDocument)
         .where(FamilyDocument.import_id == "CCLW.executive.1.2")
         .values(document_status="Deleted")
     )
-    test_db.execute(
+    data_db.execute(
         update(FamilyDocument)
         .where(FamilyDocument.import_id == "CCLW.executive.2.2")
         .values(document_status="Deleted")
     )
 
     # Test associations
-    response = test_client.get(
+    response = data_client.get(
         "/api/v1/documents/FamSlug1",
     )
     json_response = response.json()
@@ -180,15 +178,15 @@ def test_documents_family_slug_returns_404_when_all_docs_deleted(
 
 
 def test_documents_doc_slug_returns_not_found(
-    test_client: TestClient,
-    test_db: Session,
+    data_client: TestClient,
+    data_db: Session,
 ):
-    setup_with_docs(test_db)
-    assert test_db.query(Family).count() == 1
-    assert test_db.query(FamilyEvent).count() == 1
+    setup_with_docs(data_db)
+    assert data_db.query(Family).count() == 1
+    assert data_db.query(FamilyEvent).count() == 1
 
     # Test associations
-    response = test_client.get(
+    response = data_client.get(
         "/api/v1/documents/DocSlug100",
     )
     assert response.status_code == 404
@@ -196,12 +194,12 @@ def test_documents_doc_slug_returns_not_found(
 
 
 def test_documents_doc_slug_preexisting_objects(
-    test_client: TestClient,
-    test_db: Session,
+    data_client: TestClient,
+    data_db: Session,
 ):
-    setup_with_two_docs(test_db)
+    setup_with_two_docs(data_db)
 
-    response = test_client.get(
+    response = data_client.get(
         "/api/v1/documents/DocSlug2",
     )
     json_response = response.json()
@@ -213,7 +211,7 @@ def test_documents_doc_slug_preexisting_objects(
     assert len(family.keys()) == N_FAMILY_OVERVIEW_KEYS
     assert family["title"] == "Fam2"
     assert family["import_id"] == "CCLW.family.2002.0"
-    assert family["geography"] == "GBR"
+    assert family["geography"] == "Other"
     assert family["category"] == "Executive"
     assert family["slug"] == "FamSlug2"
     assert family["published_date"] == "2019-12-25T00:00:00Z"
@@ -225,7 +223,7 @@ def test_documents_doc_slug_preexisting_objects(
     assert doc["import_id"] == "CCLW.executive.2.2"
     assert doc["variant"] is None
     assert doc["slug"] == "DocSlug2"
-    assert doc["title"] == "Title2"
+    assert doc["title"] == "Document2"
     assert doc["md5_sum"] is None
     assert doc["cdn_object"] is None
     assert doc["content_type"] is None
@@ -237,16 +235,16 @@ def test_documents_doc_slug_preexisting_objects(
 
 
 def test_documents_doc_slug_when_deleted(
-    test_client: TestClient,
-    test_db: Session,
+    data_client: TestClient,
+    data_db: Session,
 ):
-    setup_with_two_docs(test_db)
-    test_db.execute(
+    setup_with_two_docs(data_db)
+    data_db.execute(
         update(FamilyDocument)
         .where(FamilyDocument.import_id == "CCLW.executive.2.2")
         .values(document_status="Deleted")
     )
-    response = test_client.get(
+    response = data_client.get(
         "/api/v1/documents/DocSlug2",
     )
     json_response = response.json()
@@ -255,14 +253,12 @@ def test_documents_doc_slug_when_deleted(
 
 
 def test_physical_doc_languages(
-    test_client: TestClient,
-    test_db: Session,
+    data_client: TestClient,
+    data_db: Session,
 ):
-    setup_with_multiple_docs(
-        test_db, doc_data=TWO_DFC_ROW_ONE_LANGUAGE, event_data=TWO_EVENT_ROWS
-    )
+    setup_with_two_docs(data_db)
 
-    response = test_client.get(
+    response = data_client.get(
         "/api/v1/documents/DocSlug1",
     )
     json_response = response.json()
@@ -272,7 +268,7 @@ def test_physical_doc_languages(
     print(json_response)
     assert document["languages"] == ["eng"]
 
-    response = test_client.get(
+    response = data_client.get(
         "/api/v1/documents/DocSlug2",
     )
     json_response = response.json()
@@ -283,19 +279,20 @@ def test_physical_doc_languages(
 
 
 def test_physical_doc_languages_not_visible(
-    test_client: TestClient,
-    test_db: Session,
+    data_client: TestClient,
+    data_db: Session,
 ):
-    setup_with_multiple_docs(
-        test_db, doc_data=TWO_DFC_ROW_ONE_LANGUAGE, event_data=TWO_EVENT_ROWS
-    )
-    test_db.execute(
+    setup_with_two_docs(data_db)
+    # setup_with_multiple_docs(
+    #     data_db, doc_data=TWO_DFC_ROW_ONE_LANGUAGE, event_data=TWO_EVENT_ROWS
+    # )
+    data_db.execute(
         update(PhysicalDocumentLanguage)
         .where(PhysicalDocumentLanguage.document_id == 1)
         .values(visible=False)
     )
 
-    response = test_client.get(
+    response = data_client.get(
         "/api/v1/documents/DocSlug1",
     )
     json_response = response.json()
@@ -307,14 +304,12 @@ def test_physical_doc_languages_not_visible(
 
 
 def test_physical_doc_multiple_languages(
-    test_client: TestClient,
-    test_db: Session,
+    data_client: TestClient,
+    data_db: Session,
 ):
-    setup_with_multiple_docs(
-        test_db, doc_data=ONE_DFC_ROW_TWO_LANGUAGES, event_data=ONE_EVENT_ROW
-    )
+    setup_with_two_docs_multiple_languages(data_db)
 
-    response = test_client.get(
+    response = data_client.get(
         "/api/v1/documents/DocSlug1",
     )
     json_response = response.json()
@@ -326,13 +321,13 @@ def test_physical_doc_multiple_languages(
 
 
 def test_update_document_status__is_secure(
-    test_client: TestClient,
-    test_db: Session,
+    data_client: TestClient,
+    data_db: Session,
 ):
-    setup_with_two_docs(test_db)
+    setup_with_two_docs(data_db)
 
     import_id = "CCLW.executive.1.2"
-    response = test_client.post(f"/api/v1/admin/documents/{import_id}/processed")
+    response = data_client.post(f"/api/v1/admin/documents/{import_id}/processed")
     assert response.status_code == 401
 
 
@@ -344,48 +339,42 @@ def test_update_document_status__is_secure(
     ],
 )
 def test_update_document_status__fails_on_non_matching_import_id(
-    test_client: TestClient,
-    superuser_token_headers: dict[str, str],
-    test_db: Session,
+    data_client: TestClient,
+    data_superuser_token_headers: dict[str, str],
+    data_db: Session,
     import_id: str,
 ):
-    setup_with_multiple_docs(
-        test_db,
-        doc_data=TWO_DFC_ROW_NON_MATCHING_IDS,
-        event_data=TWO_EVENT_ROWS,
-    )
+    setup_with_two_docs_bad_ids(data_db)
 
-    response = test_client.post(
+    response = data_client.post(
         f"/api/v1/admin/documents/{import_id}/processed",
-        headers=superuser_token_headers,
+        headers=data_superuser_token_headers,
     )
 
     assert response.status_code == 422
 
 
 def test_update_document_status__publishes_document(
-    test_client: TestClient,
-    superuser_token_headers: dict[str, str],
-    test_db: Session,
+    data_client: TestClient,
+    data_superuser_token_headers: dict[str, str],
+    data_db: Session,
 ):
     """Test that we can send a payload to the backend to update family_document.document_status"""
-    setup_with_multiple_docs(
-        test_db, doc_data=TWO_UNPUBLISHED_DFC_ROW, event_data=TWO_EVENT_ROWS
-    )
+    setup_with_two_unpublished_docs(data_db)
     UPDATE_IMPORT_ID = "CCLW.executive.1.2"
     UNCHANGED_IMPORT_ID = "CCLW.executive.2.2"
 
     # State of db beforehand
     pre_family_status = (
-        test_db.query(FamilyDocument)
+        data_db.query(FamilyDocument)
         .filter(FamilyDocument.import_id == UPDATE_IMPORT_ID)
         .one()
         .document_status
     )
 
-    response = test_client.post(
+    response = data_client.post(
         f"/api/v1/admin/documents/{UPDATE_IMPORT_ID}/processed",
-        headers=superuser_token_headers,
+        headers=data_superuser_token_headers,
     )
 
     assert response.status_code == 200
@@ -396,7 +385,7 @@ def test_update_document_status__publishes_document(
 
     # Now Check the db
     updated_family = (
-        test_db.query(FamilyDocument)
+        data_db.query(FamilyDocument)
         .filter(FamilyDocument.import_id == UPDATE_IMPORT_ID)
         .one()
     )
@@ -404,7 +393,7 @@ def test_update_document_status__publishes_document(
     assert updated_family.document_status != pre_family_status
 
     unchanged_family = (
-        test_db.query(FamilyDocument)
+        data_db.query(FamilyDocument)
         .filter(FamilyDocument.import_id == UNCHANGED_IMPORT_ID)
         .one()
     )
@@ -412,10 +401,10 @@ def test_update_document_status__publishes_document(
 
 
 def test_update_document__is_secure(
-    test_client: TestClient,
-    test_db: Session,
+    data_client: TestClient,
+    data_db: Session,
 ):
-    setup_with_two_docs(test_db)
+    setup_with_two_docs(data_db)
 
     import_id = "CCLW.executive.1.2"
     payload = {
@@ -424,7 +413,7 @@ def test_update_document__is_secure(
         "source_url": "source_url",
     }
 
-    response = test_client.put(f"/api/v1/admin/documents/{import_id}", json=payload)
+    response = data_client.put(f"/api/v1/admin/documents/{import_id}", json=payload)
 
     assert response.status_code == 401
 
@@ -437,25 +426,21 @@ def test_update_document__is_secure(
     ],
 )
 def test_update_document__fails_on_non_matching_import_id(
-    test_client: TestClient,
-    superuser_token_headers: dict[str, str],
-    test_db: Session,
+    data_client: TestClient,
+    data_superuser_token_headers: dict[str, str],
+    data_db: Session,
     import_id: str,
 ):
-    setup_with_multiple_docs(
-        test_db,
-        doc_data=TWO_DFC_ROW_NON_MATCHING_IDS,
-        event_data=TWO_EVENT_ROWS,
-    )
+    setup_with_two_docs_bad_ids(data_db)
     payload = {
         "md5_sum": "c184214e-4870-48e0-adab-3e064b1b0e76",
         "content_type": "updated/content_type",
         "cdn_object": "folder/file",
     }
 
-    response = test_client.put(
+    response = data_client.put(
         f"/api/v1/admin/documents/{import_id}",
-        headers=superuser_token_headers,
+        headers=data_superuser_token_headers,
         json=payload,
     )
 
@@ -470,23 +455,22 @@ def test_update_document__fails_on_non_matching_import_id(
     ],
 )
 def test_update_document__works_on_import_id(
-    test_client: TestClient,
-    superuser_token_headers: dict[str, str],
-    test_db: Session,
+    data_client: TestClient,
+    data_superuser_token_headers: dict[str, str],
+    data_db: Session,
     import_id: str,
 ):
-    setup_with_multiple_docs(
-        test_db, doc_data=TWO_DFC_ROW_DIFFERENT_ORG, event_data=TWO_EVENT_ROWS
-    )
+    setup_docs_with_two_orgs(data_db)
+
     payload = {
         "md5_sum": "c184214e-4870-48e0-adab-3e064b1b0e76",
         "content_type": "updated/content_type",
         "cdn_object": "folder/file",
     }
 
-    response = test_client.put(
+    response = data_client.put(
         f"/api/v1/admin/documents/{import_id}",
-        headers=superuser_token_headers,
+        headers=data_superuser_token_headers,
         json=payload,
     )
 
@@ -498,7 +482,7 @@ def test_update_document__works_on_import_id(
 
     # Now Check the db
     doc = (
-        test_db.query(FamilyDocument)
+        data_db.query(FamilyDocument)
         .filter(FamilyDocument.import_id == import_id)
         .one()
         .physical_document
@@ -516,15 +500,13 @@ def test_update_document__works_on_import_id(
     ],
 )
 def test_update_document__works_on_new_language(
-    test_client: TestClient,
-    superuser_token_headers: dict[str, str],
-    test_db: Session,
+    data_client: TestClient,
+    data_superuser_token_headers: dict[str, str],
+    data_db: Session,
     import_id: str,
 ):
     """Send two payloads in series to assert that languages are additive and we don't remove existing languages."""
-    setup_with_multiple_docs(
-        test_db, doc_data=TWO_DFC_ROW_DIFFERENT_ORG, event_data=TWO_EVENT_ROWS
-    )
+    setup_docs_with_two_orgs_no_langs(data_db)
 
     # ADD THE FIRST LANGUAGE
     payload = {
@@ -534,9 +516,9 @@ def test_update_document__works_on_new_language(
         "languages": ["eng"],
     }
 
-    response = test_client.put(
+    response = data_client.put(
         f"/api/v1/admin/documents/{import_id}",
-        headers=superuser_token_headers,
+        headers=data_superuser_token_headers,
         json=payload,
     )
 
@@ -549,7 +531,7 @@ def test_update_document__works_on_new_language(
 
     # Now Check the db
     doc = (
-        test_db.query(FamilyDocument)
+        data_db.query(FamilyDocument)
         .filter(FamilyDocument.import_id == import_id)
         .one()
         .physical_document
@@ -559,13 +541,13 @@ def test_update_document__works_on_new_language(
     assert doc.cdn_object == "folder/file"
 
     languages = (
-        test_db.query(PhysicalDocumentLanguage)
+        data_db.query(PhysicalDocumentLanguage)
         .filter(PhysicalDocumentLanguage.document_id == doc.id)
         .filter(PhysicalDocumentLanguage.source == LanguageSource.MODEL)
         .all()
     )
     assert len(languages) == 1
-    lang = test_db.query(Language).filter(Language.id == languages[0].language_id).one()
+    lang = data_db.query(Language).filter(Language.id == languages[0].language_id).one()
     assert lang.language_code == "eng"
 
     # NOW ADD A NEW LANGUAGE TO CHECK THAT THE UPDATE IS ADDITIVE
@@ -576,9 +558,9 @@ def test_update_document__works_on_new_language(
         "languages": ["fra"],
     }
 
-    response = test_client.put(
+    response = data_client.put(
         f"/api/v1/admin/documents/{import_id}",
-        headers=superuser_token_headers,
+        headers=data_superuser_token_headers,
         json=payload,
     )
 
@@ -592,7 +574,7 @@ def test_update_document__works_on_new_language(
 
     # Now Check the db
     doc = (
-        test_db.query(FamilyDocument)
+        data_db.query(FamilyDocument)
         .filter(FamilyDocument.import_id == import_id)
         .one()
         .physical_document
@@ -602,14 +584,14 @@ def test_update_document__works_on_new_language(
     assert doc.cdn_object == "folder/file"
 
     doc_languages = (
-        test_db.query(PhysicalDocumentLanguage)
+        data_db.query(PhysicalDocumentLanguage)
         .filter(PhysicalDocumentLanguage.document_id == doc.id)
         .filter(PhysicalDocumentLanguage.source == LanguageSource.MODEL)
         .all()
     )
     assert len(doc_languages) == 2
     for doc_lang in doc_languages:
-        lang = test_db.query(Language).filter(Language.id == doc_lang.language_id).one()
+        lang = data_db.query(Language).filter(Language.id == doc_lang.language_id).one()
         assert lang.language_code in expected_languages
 
 
@@ -621,15 +603,13 @@ def test_update_document__works_on_new_language(
     ],
 )
 def test_update_document__works_on_new_iso_639_1_language(
-    test_client: TestClient,
-    superuser_token_headers: dict[str, str],
-    test_db: Session,
+    data_client: TestClient,
+    data_superuser_token_headers: dict[str, str],
+    data_db: Session,
     import_id: str,
 ):
     """Send two payloads in series to assert that languages are additive and we don't remove existing languages."""
-    setup_with_multiple_docs(
-        test_db, doc_data=TWO_DFC_ROW_DIFFERENT_ORG, event_data=TWO_EVENT_ROWS
-    )
+    setup_docs_with_two_orgs_no_langs(data_db)
 
     # ADD THE FIRST LANGUAGE
     payload = {
@@ -639,9 +619,9 @@ def test_update_document__works_on_new_iso_639_1_language(
         "languages": ["bo"],
     }
 
-    response = test_client.put(
+    response = data_client.put(
         f"/api/v1/admin/documents/{import_id}",
-        headers=superuser_token_headers,
+        headers=data_superuser_token_headers,
         json=payload,
     )
 
@@ -654,7 +634,7 @@ def test_update_document__works_on_new_iso_639_1_language(
 
     # Now Check the db
     doc = (
-        test_db.query(FamilyDocument)
+        data_db.query(FamilyDocument)
         .filter(FamilyDocument.import_id == import_id)
         .one()
         .physical_document
@@ -664,13 +644,13 @@ def test_update_document__works_on_new_iso_639_1_language(
     assert doc.cdn_object == "folder/file"
 
     languages = (
-        test_db.query(PhysicalDocumentLanguage)
+        data_db.query(PhysicalDocumentLanguage)
         .filter(PhysicalDocumentLanguage.document_id == doc.id)
         .filter(PhysicalDocumentLanguage.source == LanguageSource.MODEL)
         .all()
     )
     assert len(languages) == 1
-    lang = test_db.query(Language).filter(Language.id == languages[0].language_id).one()
+    lang = data_db.query(Language).filter(Language.id == languages[0].language_id).one()
     assert lang.language_code == "bod"
 
     # NOW ADD A NEW LANGUAGE TO CHECK THAT THE UPDATE IS ADDITIVE
@@ -681,9 +661,9 @@ def test_update_document__works_on_new_iso_639_1_language(
         "languages": ["el"],
     }
 
-    response = test_client.put(
+    response = data_client.put(
         f"/api/v1/admin/documents/{import_id}",
-        headers=superuser_token_headers,
+        headers=data_superuser_token_headers,
         json=payload,
     )
 
@@ -697,7 +677,7 @@ def test_update_document__works_on_new_iso_639_1_language(
 
     # Now Check the db
     doc = (
-        test_db.query(FamilyDocument)
+        data_db.query(FamilyDocument)
         .filter(FamilyDocument.import_id == import_id)
         .one()
         .physical_document
@@ -707,14 +687,14 @@ def test_update_document__works_on_new_iso_639_1_language(
     assert doc.cdn_object == "folder/file"
 
     doc_languages = (
-        test_db.query(PhysicalDocumentLanguage)
+        data_db.query(PhysicalDocumentLanguage)
         .filter(PhysicalDocumentLanguage.document_id == doc.id)
         .filter(PhysicalDocumentLanguage.source == LanguageSource.MODEL)
         .all()
     )
     assert len(doc_languages) == 2
     for doc_lang in doc_languages:
-        lang = test_db.query(Language).filter(Language.id == doc_lang.language_id).one()
+        lang = data_db.query(Language).filter(Language.id == doc_lang.language_id).one()
         assert lang.language_code in expected_languages
 
 
@@ -727,9 +707,9 @@ def test_update_document__works_on_new_iso_639_1_language(
     ],
 )
 def test_update_document__works_on_existing_iso_639_1_language(
-    test_client: TestClient,
-    superuser_token_headers: dict[str, str],
-    test_db: Session,
+    data_client: TestClient,
+    data_superuser_token_headers: dict[str, str],
+    data_db: Session,
     import_id: str,
 ):
     """
@@ -739,9 +719,7 @@ def test_update_document__works_on_existing_iso_639_1_language(
     language entry for that physical document we don't throw an error. This proves that we can detect that the
     two-letter iso code language already exists.
     """
-    setup_with_multiple_docs(
-        test_db, doc_data=TWO_DFC_ROW_DIFFERENT_ORG, event_data=TWO_EVENT_ROWS
-    )
+    setup_docs_with_two_orgs_no_langs(data_db)
 
     # ADD THE FIRST LANGUAGE
     payload = {
@@ -751,9 +729,9 @@ def test_update_document__works_on_existing_iso_639_1_language(
         "languages": ["bod"],
     }
 
-    response = test_client.put(
+    response = data_client.put(
         f"/api/v1/admin/documents/{import_id}",
-        headers=superuser_token_headers,
+        headers=data_superuser_token_headers,
         json=payload,
     )
 
@@ -766,7 +744,7 @@ def test_update_document__works_on_existing_iso_639_1_language(
 
     # Now Check the db
     doc = (
-        test_db.query(FamilyDocument)
+        data_db.query(FamilyDocument)
         .filter(FamilyDocument.import_id == import_id)
         .one()
         .physical_document
@@ -776,13 +754,13 @@ def test_update_document__works_on_existing_iso_639_1_language(
     assert doc.cdn_object == "folder/file"
 
     languages = (
-        test_db.query(PhysicalDocumentLanguage)
+        data_db.query(PhysicalDocumentLanguage)
         .filter(PhysicalDocumentLanguage.document_id == doc.id)
         .filter(PhysicalDocumentLanguage.source == LanguageSource.MODEL)
         .all()
     )
     assert len(languages) == 1
-    lang = test_db.query(Language).filter(Language.id == languages[0].language_id).one()
+    lang = data_db.query(Language).filter(Language.id == languages[0].language_id).one()
     assert lang.language_code == "bod"
 
     # NOW ADD THE SAME LANGUAGE AGAIN TO CHECK THAT THE UPDATE IS ADDITIVE AND WE SKIP OVER EXISTING LANGUAGES
@@ -793,9 +771,9 @@ def test_update_document__works_on_existing_iso_639_1_language(
         "languages": ["bo"],
     }
 
-    response = test_client.put(
+    response = data_client.put(
         f"/api/v1/admin/documents/{import_id}",
-        headers=superuser_token_headers,
+        headers=data_superuser_token_headers,
         json=payload,
     )
 
@@ -809,7 +787,7 @@ def test_update_document__works_on_existing_iso_639_1_language(
 
     # Now Check the db
     doc = (
-        test_db.query(FamilyDocument)
+        data_db.query(FamilyDocument)
         .filter(FamilyDocument.import_id == import_id)
         .one()
         .physical_document
@@ -819,14 +797,14 @@ def test_update_document__works_on_existing_iso_639_1_language(
     assert doc.cdn_object == "folder/file"
 
     doc_languages = (
-        test_db.query(PhysicalDocumentLanguage)
+        data_db.query(PhysicalDocumentLanguage)
         .filter(PhysicalDocumentLanguage.document_id == doc.id)
         .filter(PhysicalDocumentLanguage.source == LanguageSource.MODEL)
         .all()
     )
     assert len(doc_languages) == 1
     for doc_lang in doc_languages:
-        lang = test_db.query(Language).filter(Language.id == doc_lang.language_id).one()
+        lang = data_db.query(Language).filter(Language.id == doc_lang.language_id).one()
         assert lang.language_code in expected_languages
 
 
@@ -838,9 +816,9 @@ def test_update_document__works_on_existing_iso_639_1_language(
     ],
 )
 def test_update_document__works_on_existing_iso_639_3_language(
-    test_client: TestClient,
-    superuser_token_headers: dict[str, str],
-    test_db: Session,
+    data_client: TestClient,
+    data_superuser_token_headers: dict[str, str],
+    data_db: Session,
     import_id: str,
 ):
     """
@@ -850,9 +828,7 @@ def test_update_document__works_on_existing_iso_639_3_language(
     language entry for that physical document we don't throw an error. This proves that we can detect that the
     three-letter iso code language already exists.
     """
-    setup_with_multiple_docs(
-        test_db, doc_data=TWO_DFC_ROW_DIFFERENT_ORG, event_data=TWO_EVENT_ROWS
-    )
+    setup_docs_with_two_orgs_no_langs(data_db)
 
     # ADD THE FIRST LANGUAGE
     payload = {
@@ -862,9 +838,9 @@ def test_update_document__works_on_existing_iso_639_3_language(
         "languages": ["bo"],
     }
 
-    response = test_client.put(
+    response = data_client.put(
         f"/api/v1/admin/documents/{import_id}",
-        headers=superuser_token_headers,
+        headers=data_superuser_token_headers,
         json=payload,
     )
 
@@ -877,7 +853,7 @@ def test_update_document__works_on_existing_iso_639_3_language(
 
     # Now Check the db
     doc = (
-        test_db.query(FamilyDocument)
+        data_db.query(FamilyDocument)
         .filter(FamilyDocument.import_id == import_id)
         .one()
         .physical_document
@@ -887,13 +863,13 @@ def test_update_document__works_on_existing_iso_639_3_language(
     assert doc.cdn_object == "folder/file"
 
     languages = (
-        test_db.query(PhysicalDocumentLanguage)
+        data_db.query(PhysicalDocumentLanguage)
         .filter(PhysicalDocumentLanguage.document_id == doc.id)
         .filter(PhysicalDocumentLanguage.source == LanguageSource.MODEL)
         .all()
     )
     assert len(languages) == 1
-    lang = test_db.query(Language).filter(Language.id == languages[0].language_id).one()
+    lang = data_db.query(Language).filter(Language.id == languages[0].language_id).one()
     assert lang.language_code == "bod"
 
     # NOW ADD THE SAME LANGUAGE AGAIN TO CHECK THAT THE UPDATE IS ADDITIVE AND WE SKIP OVER EXISTING LANGUAGES
@@ -904,9 +880,9 @@ def test_update_document__works_on_existing_iso_639_3_language(
         "languages": ["bod"],
     }
 
-    response = test_client.put(
+    response = data_client.put(
         f"/api/v1/admin/documents/{import_id}",
-        headers=superuser_token_headers,
+        headers=data_superuser_token_headers,
         json=payload,
     )
 
@@ -920,7 +896,7 @@ def test_update_document__works_on_existing_iso_639_3_language(
 
     # Now Check the db
     doc = (
-        test_db.query(FamilyDocument)
+        data_db.query(FamilyDocument)
         .filter(FamilyDocument.import_id == import_id)
         .one()
         .physical_document
@@ -930,14 +906,14 @@ def test_update_document__works_on_existing_iso_639_3_language(
     assert doc.cdn_object == "folder/file"
 
     doc_languages = (
-        test_db.query(PhysicalDocumentLanguage)
+        data_db.query(PhysicalDocumentLanguage)
         .filter(PhysicalDocumentLanguage.document_id == doc.id)
         .filter(PhysicalDocumentLanguage.source == LanguageSource.MODEL)
         .all()
     )
     assert len(doc_languages) == 1
     for doc_lang in doc_languages:
-        lang = test_db.query(Language).filter(Language.id == doc_lang.language_id).one()
+        lang = data_db.query(Language).filter(Language.id == doc_lang.language_id).one()
         assert lang.language_code in expected_languages
 
 
@@ -949,16 +925,14 @@ def test_update_document__works_on_existing_iso_639_3_language(
     ],
 )
 def test_update_document__logs_warning_on_four_letter_language(
-    test_client: TestClient,
-    superuser_token_headers: dict[str, str],
-    test_db: Session,
+    data_client: TestClient,
+    data_superuser_token_headers: dict[str, str],
+    data_db: Session,
     mocker: Callable[..., Generator[MockerFixture, None, None]],
     import_id: str,
 ):
     """Send a payload to assert that languages that are too long aren't added and a warning is logged."""
-    setup_with_multiple_docs(
-        test_db, doc_data=TWO_DFC_ROW_DIFFERENT_ORG, event_data=TWO_EVENT_ROWS
-    )
+    setup_docs_with_two_orgs_no_langs(data_db)
 
     # Payload with a four letter language code that won't exist in the db
     payload = {
@@ -972,9 +946,9 @@ def test_update_document__logs_warning_on_four_letter_language(
 
     log_spy = mocker.spy(_LOGGER, "warning")
 
-    response = test_client.put(
+    response = data_client.put(
         f"/api/v1/admin/documents/{import_id}",
-        headers=superuser_token_headers,
+        headers=data_superuser_token_headers,
         json=payload,
     )
 
@@ -994,7 +968,7 @@ def test_update_document__logs_warning_on_four_letter_language(
 
     # Now Check the db
     doc = (
-        test_db.query(FamilyDocument)
+        data_db.query(FamilyDocument)
         .filter(FamilyDocument.import_id == import_id)
         .one()
         .physical_document
@@ -1004,7 +978,7 @@ def test_update_document__logs_warning_on_four_letter_language(
     assert doc.cdn_object == "folder/file"
 
     languages = (
-        test_db.query(PhysicalDocumentLanguage)
+        data_db.query(PhysicalDocumentLanguage)
         .filter(PhysicalDocumentLanguage.document_id == doc.id)
         .filter(PhysicalDocumentLanguage.source == LanguageSource.MODEL)
         .all()
@@ -1024,16 +998,14 @@ def test_update_document__logs_warning_on_four_letter_language(
     [[], None],
 )
 def test_update_document__works_with_no_language(
-    test_client: TestClient,
-    superuser_token_headers: dict[str, str],
-    test_db: Session,
+    data_client: TestClient,
+    data_superuser_token_headers: dict[str, str],
+    data_db: Session,
     import_id: str,
     languages: Optional[list[str]],
 ):
     """Test that we can send a payload to the backend with no languages to assert that none are added."""
-    setup_with_multiple_docs(
-        test_db, doc_data=TWO_DFC_ROW_DIFFERENT_ORG, event_data=TWO_EVENT_ROWS
-    )
+    setup_docs_with_two_orgs_no_langs(data_db)
 
     # ADD THE FIRST LANGUAGE
     payload = {
@@ -1043,9 +1015,9 @@ def test_update_document__works_with_no_language(
         "languages": languages,
     }
 
-    response = test_client.put(
+    response = data_client.put(
         f"/api/v1/admin/documents/{import_id}",
-        headers=superuser_token_headers,
+        headers=data_superuser_token_headers,
         json=payload,
     )
 
@@ -1058,7 +1030,7 @@ def test_update_document__works_with_no_language(
 
     # Now Check the db
     doc = (
-        test_db.query(FamilyDocument)
+        data_db.query(FamilyDocument)
         .filter(FamilyDocument.import_id == import_id)
         .one()
         .physical_document
@@ -1068,7 +1040,7 @@ def test_update_document__works_with_no_language(
     assert doc.cdn_object == "folder/file"
 
     db_languages = (
-        test_db.query(PhysicalDocumentLanguage)
+        data_db.query(PhysicalDocumentLanguage)
         .filter(PhysicalDocumentLanguage.document_id == doc.id)
         .filter(PhysicalDocumentLanguage.source == LanguageSource.MODEL)
         .all()
@@ -1089,35 +1061,33 @@ def test_update_document__works_with_no_language(
     [[], ["eng"], ["aaa"], ["aaa", "aab"]],
 )
 def test_update_document__works_existing_languages(
-    test_client: TestClient,
-    superuser_token_headers: dict[str, str],
-    test_db: Session,
+    data_client: TestClient,
+    data_superuser_token_headers: dict[str, str],
+    data_db: Session,
     import_id: str,
     existing_languages: list[str],
 ):
     """Test that we can send a payload to the backend with multiple languages to assert that both are added."""
-    setup_with_multiple_docs(
-        test_db, doc_data=TWO_DFC_ROW_DIFFERENT_ORG, event_data=TWO_EVENT_ROWS
-    )
+    setup_docs_with_two_orgs_no_langs(data_db)
 
     for lang_code in existing_languages:
         existing_doc = (
-            test_db.query(FamilyDocument)
+            data_db.query(FamilyDocument)
             .filter(FamilyDocument.import_id == import_id)
             .one()
             .physical_document
         )
         existing_lang = (
-            test_db.query(Language).filter(Language.language_code == lang_code).one()
+            data_db.query(Language).filter(Language.language_code == lang_code).one()
         )
         existing_doc_lang = PhysicalDocumentLanguage(
             language_id=existing_lang.id,
             document_id=existing_doc.id,
             source=LanguageSource.MODEL,
         )
-        test_db.add(existing_doc_lang)
-        test_db.flush()
-        test_db.commit()
+        data_db.add(existing_doc_lang)
+        data_db.flush()
+        data_db.commit()
 
     languages_to_add = ["eng", "fra"]
     payload = {
@@ -1127,9 +1097,9 @@ def test_update_document__works_existing_languages(
         "languages": languages_to_add,
     }
 
-    response = test_client.put(
+    response = data_client.put(
         f"/api/v1/admin/documents/{import_id}",
-        headers=superuser_token_headers,
+        headers=data_superuser_token_headers,
         json=payload,
     )
 
@@ -1144,7 +1114,7 @@ def test_update_document__works_existing_languages(
 
     # Now Check the db
     doc = (
-        test_db.query(FamilyDocument)
+        data_db.query(FamilyDocument)
         .filter(FamilyDocument.import_id == import_id)
         .one()
         .physical_document
@@ -1154,23 +1124,23 @@ def test_update_document__works_existing_languages(
     assert doc.cdn_object == "folder/file"
 
     doc_languages = (
-        test_db.query(PhysicalDocumentLanguage)
+        data_db.query(PhysicalDocumentLanguage)
         .filter(PhysicalDocumentLanguage.document_id == doc.id)
         .filter(PhysicalDocumentLanguage.source == LanguageSource.MODEL)
         .all()
     )
     assert len(doc_languages) == len(expected_languages)
     for doc_lang in doc_languages:
-        lang = test_db.query(Language).filter(Language.id == doc_lang.language_id).one()
+        lang = data_db.query(Language).filter(Language.id == doc_lang.language_id).one()
         assert lang.language_code in expected_languages
 
 
 def test_update_document__idempotent(
-    test_client: TestClient,
-    superuser_token_headers: dict[str, str],
-    test_db: Session,
+    data_client: TestClient,
+    data_superuser_token_headers: dict[str, str],
+    data_db: Session,
 ):
-    setup_with_two_docs(test_db)
+    setup_with_two_docs(data_db)
 
     import_id = "CCLW.executive.1.2"
     payload = {
@@ -1179,16 +1149,16 @@ def test_update_document__idempotent(
         "cdn_object": "folder/file",
     }
 
-    response = test_client.put(
+    response = data_client.put(
         f"/api/v1/admin/documents/{import_id}",
-        headers=superuser_token_headers,
+        headers=data_superuser_token_headers,
         json=payload,
     )
     assert response.status_code == 200
 
-    response = test_client.put(
+    response = data_client.put(
         f"/api/v1/admin/documents/{import_id}",
-        headers=superuser_token_headers,
+        headers=data_superuser_token_headers,
         json=payload,
     )
     assert response.status_code == 200
@@ -1199,7 +1169,7 @@ def test_update_document__idempotent(
 
     # Now Check the db
     doc = (
-        test_db.query(FamilyDocument)
+        data_db.query(FamilyDocument)
         .filter(FamilyDocument.import_id == import_id)
         .one()
         .physical_document
@@ -1210,11 +1180,11 @@ def test_update_document__idempotent(
 
 
 def test_update_document__works_on_slug(
-    test_client: TestClient,
-    superuser_token_headers: dict[str, str],
-    test_db: Session,
+    data_client: TestClient,
+    data_superuser_token_headers: dict[str, str],
+    data_db: Session,
 ):
-    setup_with_two_docs(test_db)
+    setup_with_two_docs(data_db)
 
     slug = "DocSlug1"
     payload = {
@@ -1223,9 +1193,9 @@ def test_update_document__works_on_slug(
         "cdn_object": "folder/file",
     }
 
-    response = test_client.put(
+    response = data_client.put(
         f"/api/v1/admin/documents/{slug}",
-        headers=superuser_token_headers,
+        headers=data_superuser_token_headers,
         json=payload,
     )
 
@@ -1238,7 +1208,7 @@ def test_update_document__works_on_slug(
     # Now Check the db
     import_id = "CCLW.executive.1.2"
     doc = (
-        test_db.query(FamilyDocument)
+        data_db.query(FamilyDocument)
         .filter(FamilyDocument.import_id == import_id)
         .one()
         .physical_document
@@ -1249,11 +1219,11 @@ def test_update_document__works_on_slug(
 
 
 def test_update_document__status_422_when_not_found(
-    test_client: TestClient,
-    superuser_token_headers: dict[str, str],
-    test_db: Session,
+    data_client: TestClient,
+    data_superuser_token_headers: dict[str, str],
+    data_db: Session,
 ):
-    setup_with_two_docs(test_db)
+    setup_with_two_docs(data_db)
 
     payload = {
         "md5_sum": "c184214e-4870-48e0-adab-3e064b1b0e76",
@@ -1261,9 +1231,9 @@ def test_update_document__status_422_when_not_found(
         "cdn_object": "folder/file",
     }
 
-    response = test_client.put(
+    response = data_client.put(
         "/api/v1/admin/documents/nothing",
-        headers=superuser_token_headers,
+        headers=data_superuser_token_headers,
         json=payload,
     )
 
