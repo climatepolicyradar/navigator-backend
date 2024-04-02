@@ -80,6 +80,10 @@ def get_default_families():
         "geography_id": 1,
         "category": "Executive",
         "documents": [],
+        "metadata": {
+            "size": "big",
+            "color": "pink",
+        },
     }
 
     family2 = {
@@ -90,12 +94,15 @@ def get_default_families():
         "geography_id": 1,
         "category": "Executive",
         "documents": [],
+        "metadata": {
+            "size": "small",
+            "color": "blue",
+        },
     }
     return family1, family2
 
 
 def setup_with_docs(db: Session):
-    # _start_ingest(test_db, ONE_DFC_ROW, ONE_EVENT_ROW)
     # Collection
     collection1, collection2 = get_default_collections()
     add_collections(db, collections=[collection1])
@@ -119,8 +126,6 @@ def setup_with_docs(db: Session):
 def setup_with_two_docs(db: Session):
     """Creates 2 DFCEs"""
 
-    # setup_with_multiple_docs(test_db, doc_data=TWO_DFC_ROW, event_data=TWO_EVENT_ROWS)
-
     # Collection
     collection1, collection2 = get_default_collections()
     add_collections(db, collections=[collection1])
@@ -143,9 +148,6 @@ def setup_with_two_docs(db: Session):
 
 
 def setup_with_two_docs_one_family(db: Session):
-    # setup_with_multiple_docs(
-    #     test_db, doc_data=TWO_DOCS_ONE_FAM, event_data=ONE_EVENT_ROW
-    # )
     # Collection
     collection1, collection2 = get_default_collections()
     add_collections(db, collections=[collection1])

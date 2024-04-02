@@ -92,9 +92,9 @@ def test_documents_family_slug_returns_correct_json(
     assert json_response["published_date"] == "2019-12-25T00:00:00Z"
     assert json_response["last_updated_date"] == "2019-12-25T00:00:00Z"
 
-    # TODO
-    # assert len(json_response["metadata"]) == N_METADATA_KEYS
-    # assert json_response["metadata"]["keyword"] == ["Energy Supply"]
+    # TODO: https://linear.app/climate-policy-radar/issue/PDCT-1017
+    assert len(json_response["metadata"]) == 2
+    assert json_response["metadata"]["size"] == "big"
 
     assert json_response["slug"] == "FamSlug1"
 

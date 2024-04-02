@@ -59,11 +59,13 @@ def add_families(db: Session, families, org_id=1):
         for d in f["documents"]:
             add_document(db, f["import_id"], d)
 
+        metadata_value = {}
+        if "metadata" in f:
+            metadata_value = f["metadata"]
+
         db.add(
             FamilyMetadata(
-                family_import_id=f["import_id"],
-                taxonomy_id=1,
-                value={},
+                family_import_id=f["import_id"], taxonomy_id=1, value=metadata_value
             )
         )
 
