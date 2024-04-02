@@ -17,6 +17,7 @@ from db_client.models.document.physical_document import (
     PhysicalDocumentLanguage,
     Language,
 )
+from db_client.models.dfce.family import FamilyCorpus
 
 
 def add_collections(db: Session, collections, org_id=1):
@@ -68,6 +69,13 @@ def add_families(db: Session, families, org_id=1):
                 family_import_id=f["import_id"], taxonomy_id=1, value=metadata_value
             )
         )
+        if "corpus_import_id" in f:
+            db.add(
+                FamilyCorpus(
+                    family_import_id=f["import_id"],
+                    corpus_import_id=f["corpus_import_id"],
+                )
+            )
 
     db.commit()
     for f in families:

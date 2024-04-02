@@ -74,6 +74,7 @@ def get_default_documents():
 def get_default_families():
     family1 = {
         "import_id": "CCLW.family.1001.0",
+        "corpus_import_id": "CCLW.corpus.i00000001.n0000",
         "title": "Fam1",
         "slug": "FamSlug1",
         "description": "Summary1",
@@ -88,6 +89,7 @@ def get_default_families():
 
     family2 = {
         "import_id": "CCLW.family.2002.0",
+        "corpus_import_id": "CCLW.corpus.i00000001.n0000",
         "title": "Fam2",
         "slug": "FamSlug2",
         "description": "Summary2",
