@@ -37,7 +37,7 @@ def get_organisation_taxonomy(db: Session, org_id: int) -> Taxonomy:
     )
     # The above line will throw if there is no taxonomy for the organisation
 
-    return {k: TaxonomyEntry(**v) for k, v in taxonomy[1].items()}
+    return {k: TaxonomyEntry(**v) for k, v in taxonomy[0].items()}
 
 
 def get_organisation_taxonomy_by_name(db: Session, org_name: str) -> TaxonomyData:
