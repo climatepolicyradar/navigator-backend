@@ -4,24 +4,18 @@ from unittest.mock import MagicMock
 from db_client.models.dfce.family import (
     Family,
     FamilyCategory,
-    FamilyOrganisation,
+    FamilyCorpus,
 )
+from db_client.models.organisation import Corpus, Organisation
+
 import pytest
 
 from app.core.util import tree_table_to_json
-from db_client.data_migrations import (
-    populate_document_role,
-    populate_document_type,
-    populate_document_variant,
-    populate_event_type,
-    populate_geography,
-    populate_language,
-    populate_taxonomy,
-)
+
 from app.db.session import SessionLocal
 
 
-def _add_family(test_db, import_id: str, cat: FamilyCategory):
+def _add_family(test_db, import_id: str, cat: FamilyCategory, corpus_import_id):
     test_db.add(
         Family(
             title="f1",
@@ -31,24 +25,18 @@ def _add_family(test_db, import_id: str, cat: FamilyCategory):
             family_category=cat,
         )
     )
-    test_db.add(FamilyOrganisation(organisation_id=1, family_import_id=import_id))
+    test_db.add(
+        FamilyCorpus(family_import_id=import_id, corpus_import_id=corpus_import_id)
+    )
 
 
-def test_config_endpoint_content(test_client, test_db):
+def test_config_endpoint_content(data_client, data_db):
     """Tests whether we get the expected content when the /config endpoint is called."""
     # TODO: this test is fragile, we should look into validation according to the
     #       supporting data, rather than counts & fixed lists
     url_under_test = "/api/v1/config"
-    populate_document_role(test_db)
-    populate_document_type(test_db)
-    populate_document_variant(test_db)
-    populate_event_type(test_db)
-    populate_geography(test_db)
-    populate_language(test_db)
-    populate_taxonomy(test_db)
-    test_db.flush()
 
-    response = test_client.get(
+    response = data_client.get(
         url_under_test,
     )
 
@@ -128,27 +116,33 @@ def test_config_endpoint_content(test_client, test_db):
     }
 
 
-def test_config_endpoint_cclw_stats(test_client, test_db):
+def test_config_endpoint_cclw_stats(data_client, data_db):
     url_under_test = "/api/v1/config"
-    populate_document_role(test_db)
-    populate_document_type(test_db)
-    populate_document_variant(test_db)
-    populate_event_type(test_db)
-    populate_geography(test_db)
-    populate_language(test_db)
-    populate_taxonomy(test_db)
-    test_db.flush()
+
+    cclw = (
+        data_db.query(Corpus)
+        .join(Organisation, Organisation.id == Corpus.organisation_id)
+        .filter(Organisation.name == "CCLW")
+        .one()
+    )
+    unfccc = (
+        data_db.query(Corpus)
+        .join(Organisation, Organisation.id == Corpus.organisation_id)
+        .filter(Organisation.name == "UNFCCC")
+        .one()
+    )
+    unfccc = data_db.query(Corpus).filter(Corpus.organisation_id == 1).one()
 
     # Add some data here
-    _add_family(test_db, "T.0.0.1", FamilyCategory.EXECUTIVE)
-    _add_family(test_db, "T.0.0.2", FamilyCategory.EXECUTIVE)
-    _add_family(test_db, "T.0.0.3", FamilyCategory.EXECUTIVE)
-    _add_family(test_db, "T.0.0.4", FamilyCategory.LEGISLATIVE)
-    _add_family(test_db, "T.0.0.5", FamilyCategory.LEGISLATIVE)
-    _add_family(test_db, "T.0.0.6", FamilyCategory.UNFCCC)
-    test_db.flush()
+    _add_family(data_db, "T.0.0.1", FamilyCategory.EXECUTIVE, cclw.import_id)
+    _add_family(data_db, "T.0.0.2", FamilyCategory.EXECUTIVE, cclw.import_id)
+    _add_family(data_db, "T.0.0.3", FamilyCategory.EXECUTIVE, cclw.import_id)
+    _add_family(data_db, "T.0.0.4", FamilyCategory.LEGISLATIVE, cclw.import_id)
+    _add_family(data_db, "T.0.0.5", FamilyCategory.LEGISLATIVE, cclw.import_id)
+    _add_family(data_db, "T.0.0.6", FamilyCategory.UNFCCC, unfccc.import_id)
+    data_db.flush()
 
-    response = test_client.get(
+    response = data_client.get(
         url_under_test,
     )
 
