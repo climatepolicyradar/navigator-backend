@@ -5,7 +5,6 @@ from db_client.models.dfce import (
     Collection,
     Family,
     CollectionOrganisation,
-    FamilyOrganisation,
     CollectionFamily,
     FamilyDocument,
     FamilyEvent,
@@ -17,6 +16,7 @@ from db_client.models.document.physical_document import (
     PhysicalDocumentLanguage,
     Language,
 )
+from db_client.models.dfce.family import FamilyCorpus
 
 
 def add_collections(db: Session, collections, org_id=1):
@@ -65,15 +65,19 @@ def add_families(db: Session, families, org_id=1):
 
         db.add(
             FamilyMetadata(
-                family_import_id=f["import_id"], taxonomy_id=1, value=metadata_value
+                family_import_id=f["import_id"],
+                taxonomy_id=1,  # any old thing - as going to be removed!
+                value=metadata_value,
             )
         )
+        if "corpus_import_id" in f:
+            db.add(
+                FamilyCorpus(
+                    family_import_id=f["import_id"],
+                    corpus_import_id=f["corpus_import_id"],
+                )
+            )
 
-    db.commit()
-    for f in families:
-        db.add(
-            FamilyOrganisation(family_import_id=f["import_id"], organisation_id=org_id)
-        )
     db.commit()
 
 

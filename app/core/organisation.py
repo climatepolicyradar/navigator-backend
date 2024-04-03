@@ -3,18 +3,22 @@ from typing import cast
 from sqlalchemy.orm import Session
 from sqlalchemy import func
 from app.api.api_v1.schemas.metadata import OrganisationConfig, TaxonomyData
-from db_client.models.organisation import Organisation
 from db_client.models.dfce.family import (
     FamilyEventType,
-    FamilyOrganisation,
     Family,
     FamilyCategory,
+    FamilyCorpus,
+    Corpus,
 )
-from db_client.models.dfce.metadata import MetadataOrganisation, MetadataTaxonomy
+from db_client.models.organisation import (
+    Organisation,
+    CorpusType,
+)
+
 from db_client.models.dfce.taxonomy_entry import Taxonomy, TaxonomyEntry
 
 
-def get_organisation_taxonomy(db: Session, org_id: int) -> tuple[int, Taxonomy]:
+def get_organisation_taxonomy(db: Session, org_id: int) -> Taxonomy:
     """
     Returns the taxonomy id and its dict representation for an organisation.
 
@@ -23,17 +27,17 @@ def get_organisation_taxonomy(db: Session, org_id: int) -> tuple[int, Taxonomy]:
     :return tuple[int, Taxonomy]: the taxonomy id and the Taxonomy
     """
     taxonomy = (
-        db.query(MetadataTaxonomy.id, MetadataTaxonomy.valid_metadata)
+        db.query(CorpusType.valid_metadata)
         .join(
-            MetadataOrganisation,
-            MetadataOrganisation.taxonomy_id == MetadataTaxonomy.id,
+            Corpus,
+            CorpusType.name == Corpus.corpus_type_name,
         )
-        .filter_by(organisation_id=org_id)
+        .filter(Corpus.organisation_id == org_id)
         .one()
     )
     # The above line will throw if there is no taxonomy for the organisation
 
-    return taxonomy[0], {k: TaxonomyEntry(**v) for k, v in taxonomy[1].items()}
+    return {k: TaxonomyEntry(**v) for k, v in taxonomy[0].items()}
 
 
 def get_organisation_taxonomy_by_name(db: Session, org_name: str) -> TaxonomyData:
@@ -44,13 +48,13 @@ def get_organisation_taxonomy_by_name(db: Session, org_name: str) -> TaxonomyDat
     :return TaxonomyConfig: the TaxonomyConfig from the db
     """
     taxonomy = (
-        db.query(MetadataTaxonomy.valid_metadata)
+        db.query(CorpusType.valid_metadata)
         .join(
-            MetadataOrganisation,
-            MetadataOrganisation.taxonomy_id == MetadataTaxonomy.id,
+            Corpus,
+            Corpus.corpus_type_name == CorpusType.name,
         )
-        .join(Organisation, Organisation.id == MetadataOrganisation.organisation_id)
-        .filter_by(name=org_name)
+        .join(Organisation, Organisation.id == Corpus.organisation_id)
+        .filter(Organisation.name == org_name)
         .one()
     )
     # Augment the taxonomy with the event_types from the db -
@@ -71,18 +75,18 @@ def get_organisation_taxonomy_by_name(db: Session, org_name: str) -> TaxonomyDat
 
 def get_organisation_config(db: Session, org: Organisation) -> OrganisationConfig:
     total = (
-        db.query(FamilyOrganisation)
-        .filter(FamilyOrganisation.organisation_id == org.id)
+        db.query(Family)
+        .join(FamilyCorpus, FamilyCorpus.family_import_id == Family.import_id)
+        .join(Corpus, Corpus.import_id == FamilyCorpus.corpus_import_id)
+        .filter(Corpus.organisation_id == org.id)
         .count()
     )
 
     counts = (
         db.query(Family.family_category, func.count())
-        .join(
-            FamilyOrganisation,
-            Family.import_id == FamilyOrganisation.family_import_id,
-        )
-        .filter(FamilyOrganisation.organisation_id == org.id)
+        .join(FamilyCorpus, FamilyCorpus.family_import_id == Family.import_id)
+        .join(Corpus, Corpus.import_id == FamilyCorpus.corpus_import_id)
+        .filter(Corpus.organisation_id == org.id)
         .group_by(Family.family_category)
         .all()
     )
