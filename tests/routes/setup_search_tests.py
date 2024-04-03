@@ -166,7 +166,7 @@ def _create_family_metadata(db: Session, family: VespaFixture):
     family_import_id = family["fields"]["family_import_id"]
     family_metadata = FamilyMetadata(
         family_import_id=family_import_id,
-        taxonomy_id=1,
+        taxonomy_id=1,  # any old thing - as going to be removed!
         value=metadata_value,
     )
     db.add(family_metadata)

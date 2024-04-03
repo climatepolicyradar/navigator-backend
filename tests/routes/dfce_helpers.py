@@ -65,7 +65,9 @@ def add_families(db: Session, families, org_id=1):
 
         db.add(
             FamilyMetadata(
-                family_import_id=f["import_id"], taxonomy_id=1, value=metadata_value
+                family_import_id=f["import_id"],
+                taxonomy_id=1,  # any old thing - as going to be removed!
+                value=metadata_value,
             )
         )
         if "corpus_import_id" in f:
