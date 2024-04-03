@@ -1,6 +1,7 @@
 # Description
 
 Please include:
+
 - a summary of the changes
 - links to any related issue/ticket
 - any additional relevant motivation and context
@@ -13,6 +14,9 @@ Please select the option(s) below that are most relevant:
 - [ ] Bug fix
 - [ ] New feature
 - [ ] Breaking change
+- [ ] GitHub workflow update
+- [ ] Documentation update
+- [ ] Remove legacy code
 
 ## How Has This Been Tested?
 
