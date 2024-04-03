@@ -24,8 +24,6 @@ from app.core.search import (
     _convert_filters,
 )
 
-
-from db_client.models.organisation import Organisation
 from db_client.models.document import PhysicalDocument
 from db_client.models.dfce import (
     EventStatus,
@@ -33,10 +31,7 @@ from db_client.models.dfce import (
     FamilyCategory,
     FamilyDocument,
     FamilyEvent,
-    FamilyMetadata,
     Geography,
-    MetadataOrganisation,
-    MetadataTaxonomy,
     DocumentStatus,
 )
 
@@ -619,11 +614,6 @@ def populate_data_db(db: Session, fam_specs: Sequence[FamSpec]) -> None:
     """Minimal population of family structures required for testing conversion below"""
 
     for fam_spec in fam_specs:
-        organisation = (
-            db.query(Organisation)
-            .filter(Organisation.name == fam_spec.family_source)
-            .one()
-        )
         family = Family(
             title=fam_spec.family_name,
             import_id=fam_spec.family_import_id,
@@ -647,21 +637,7 @@ def populate_data_db(db: Session, fam_specs: Sequence[FamSpec]) -> None:
             status=EventStatus.OK,
         )
         db.add(family_event)
-        family_metadata = FamilyMetadata(
-            family_import_id=fam_spec.family_import_id,
-            taxonomy_id=(
-                db.query(MetadataOrganisation, MetadataTaxonomy)
-                .filter(MetadataOrganisation.organisation_id == organisation.id)
-                .join(
-                    MetadataTaxonomy,
-                    MetadataOrganisation.taxonomy_id == MetadataTaxonomy.id,
-                )
-                .one()[1]
-                .id
-            ),
-            value=fam_spec.family_metadata,
-        )
-        db.add(family_metadata)
+
         for i in range(1, fam_spec.family_document_count + 1):
             physical_document = PhysicalDocument(
                 title=f"{fam_spec.family_name} {i}",
