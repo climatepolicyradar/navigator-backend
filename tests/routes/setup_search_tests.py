@@ -9,7 +9,7 @@ from sqlalchemy.orm import Session
 from db_client.data_migrations.taxonomy_cclw import get_cclw_taxonomy
 from db_client.data_migrations.taxonomy_unf3c import get_unf3c_taxonomy
 
-from db_client.models.organisation import Organisation
+from db_client.models.organisation import Corpus
 from db_client.models.dfce.family import (
     DocumentStatus,
     EventStatus,
@@ -18,9 +18,9 @@ from db_client.models.dfce.family import (
     FamilyDocument,
     FamilyDocumentType,
     FamilyEvent,
-    FamilyOrganisation,
     Slug,
     Variant,
+    FamilyCorpus,
 )
 from db_client.models.dfce.metadata import (
     FamilyMetadata,
@@ -76,7 +76,6 @@ def _populate_db_families(db: Session, max_docs: int = VESPA_FIXTURE_COUNT) -> N
 
     Lower `max_docs` to limit the number of fixtures added to the db.
     """
-    _create_organisation(db)
 
     seen_family_ids = []
     for count, (doc, family) in enumerate(_fixture_docs(), start=1):
@@ -88,19 +87,6 @@ def _populate_db_families(db: Session, max_docs: int = VESPA_FIXTURE_COUNT) -> N
         _create_document(db, doc, family)
         if count == max_docs:
             return
-
-
-def _create_organisation(db: Session):
-    for org in [
-        Organisation(
-            id=0, name="CCLW", description="CCLW", organisation_type="CCLW Type"
-        ),
-        Organisation(
-            id=1, name="UNFCCC", description="UNFCCC", organisation_type="UNFCCC Type"
-        ),
-    ]:
-        db.merge(org)
-        db.commit()
 
 
 def _create_family(db: Session, family: VespaFixture):
@@ -125,21 +111,14 @@ def _create_family(db: Session, family: VespaFixture):
         family_document_import_id=None,
     )
 
-    if family["fields"]["family_source"] == "CCLW":
-        orgid = 0
-    elif family["fields"]["family_source"] == "UNFCCC":
-        orgid = 1
-    else:
-        raise ValueError(f"Unexpected value in: {family['fields']['family_source']}")
-
-    family_organisation = FamilyOrganisation(
-        family_import_id=family_import_id,
-        organisation_id=orgid,
+    org = family["fields"]["family_source"]
+    corpus = db.query(Corpus).filter(Corpus.import_id.like(f"{org}%")).one()
+    db.add(
+        FamilyCorpus(
+            family_import_id=family_object.import_id, corpus_import_id=corpus.import_id
+        )
     )
-
     db.add(family_slug)
-    db.commit()
-    db.add(family_organisation)
     db.commit()
     db.refresh(family_object)
 

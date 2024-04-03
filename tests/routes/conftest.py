@@ -2,10 +2,7 @@ import pytest
 
 from db_client.models.organisation import Organisation
 from db_client.models.dfce import (  # noqa F401
-    Family,
-    FamilyCategory,
     FamilyDocument,
-    FamilyOrganisation,
     Geography,
     FamilyDocumentType,
 )

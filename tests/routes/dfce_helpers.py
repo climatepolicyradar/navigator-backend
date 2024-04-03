@@ -5,7 +5,6 @@ from db_client.models.dfce import (
     Collection,
     Family,
     CollectionOrganisation,
-    FamilyOrganisation,
     CollectionFamily,
     FamilyDocument,
     FamilyEvent,
@@ -77,11 +76,6 @@ def add_families(db: Session, families, org_id=1):
                 )
             )
 
-    db.commit()
-    for f in families:
-        db.add(
-            FamilyOrganisation(family_import_id=f["import_id"], organisation_id=org_id)
-        )
     db.commit()
 
 
