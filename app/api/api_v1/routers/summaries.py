@@ -3,13 +3,15 @@ Summaries for pages.
 
 Like searches but with pre-defined results based on the summary context.
 """
+
 import logging
-from fastapi import APIRouter, Depends, Request
+
+from db_client.models.dfce import FamilyCategory, Geography
+from fastapi import APIRouter, Depends, HTTPException, Request, status
 
 from app.api.api_v1.schemas.search import GeographySummaryFamilyResponse
 from app.core.browse import BrowseArgs, browse_rds_families
 from app.core.lookups import get_country_slug_from_country_code, is_country_code
-from db_client.models.dfce import FamilyCategory
 from app.db.session import get_db
 
 _LOGGER = logging.getLogger(__name__)
@@ -22,11 +24,7 @@ summary_router = APIRouter()
     summary="Gets a summary of the documents associated with a geography.",
     response_model=GeographySummaryFamilyResponse,
 )
-def search_by_geography(
-    request: Request,
-    geography_string: str,
-    db=Depends(get_db),
-):
+def search_by_geography(request: Request, geography_string: str, db=Depends(get_db)):
     """Searches the documents filtering by geography and grouping by category."""
 
     geography_slug = None
@@ -40,6 +38,17 @@ def search_by_geography(
         f"Getting geography summary for {geography_slug}",
         extra={"props": {"geography_slug": geography_slug}},
     )
+
+    exists = bool(
+        db.query(Geography).filter_by(slug=geography_slug).one_or_none() is not None
+    )
+    if not exists:
+        msg = (
+            f"No geography with slug or country code matching '{geography_slug}' found"
+        )
+        _LOGGER.error(msg)
+        raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail=msg)
+
     top_families = {}
     family_counts = {}
 
