@@ -8,6 +8,10 @@ start:
 	docker compose -f docker-compose.yml -f docker-compose.dev.yml up -d --remove-orphans
 	$(MAKE) vespa_setup
 
+start_without_vespa_setup:
+	# Build & run containers and setup vespa
+	docker compose -f docker-compose.yml -f docker-compose.dev.yml up -d --remove-orphans
+
 start_backend:
 	# Build and run containers
 	docker compose -f docker-compose.yml -f docker-compose.dev.yml up -d backend backend_db

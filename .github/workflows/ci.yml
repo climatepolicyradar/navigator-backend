@@ -35,7 +35,7 @@ jobs:
           docker images
 
       - name: Build docker-compose stack
-        run:  make start
+        run:  make start_without_vespa_setup
 
       - name: Wait for backend to open port
         run:  ./scripts/wait_for_port.sh localhost 8888 60
