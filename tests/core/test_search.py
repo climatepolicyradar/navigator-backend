@@ -362,6 +362,12 @@ def test_create_browse_request_params(
     "filters, expected",
     [
         (None, None),
+        ({}, None),
+        ({"regions": {}}, None),
+        (
+            {"regions": {}, "categories": ["Executive"]},
+            {"family_category": ["Executive"]},
+        ),
         ({"regions": ["this-is-not-a-region"]}, None),
         (
             {
