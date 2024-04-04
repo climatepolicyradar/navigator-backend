@@ -32,7 +32,7 @@ def search_by_geography(request: Request, geography_string: str, db=Depends(get_
         geography_slug = get_country_slug_from_country_code(db, geography_string)
 
     if geography_slug is None:
-        geography_slug = geography_string
+        geography_slug = geography_string.lower()
 
     _LOGGER.info(
         f"Getting geography summary for {geography_slug}",
