@@ -10,8 +10,33 @@ on:
 
 # https://github.com/marketplace/actions/docker-layer-caching
 jobs:
+  prep:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Set up Docker Buildx
+        uses: docker/setup-buildx-action@v3
+
+      - name: Build and push
+        uses: docker/build-push-action@v2
+        with:
+          context: .
+          file: ./Dockerfile
+          tags: backend:latest
+          outputs: type=docker,dest=/tmp/backend.tar
+
+      - name: Upload artifact
+        uses: actions/upload-artifact@v2
+        with:
+          name: backend
+          path: /tmp/backend.tar
+
+
   test-bash:
     runs-on: ubuntu-latest
+    needs:
+      - prep
     steps:
       - uses: actions/checkout@v4
 
@@ -20,6 +45,8 @@ jobs:
 
   non-search-tests:
     runs-on: ubuntu-latest
+    needs:
+      - prep
     steps:
       - uses: actions/checkout@v4
 
@@ -29,10 +56,19 @@ jobs:
       - name: Get python Container
         run:  docker pull python:3.9
 
-      - name: Build
+      - name: Set up Docker Buildx
+        uses: docker/setup-buildx-action@v1
+
+      - name: Download artifact
+        uses: actions/download-artifact@v2
+        with:
+          name: backend
+          path: /tmp
+
+      - name: Load Docker image
         run: |
-          docker-compose build
-          docker images
+          docker load --input /tmp/backend.tar
+          docker image ls -a
 
       - name: Build docker-compose stack
         run:  make start_without_vespa_setup
@@ -56,6 +92,8 @@ jobs:
 
   search-tests:
     runs-on: ubuntu-latest
+    needs:
+      - prep
     steps:
       - uses: actions/checkout@v4
 
@@ -74,10 +112,19 @@ jobs:
             tar -zxf - -C scripts/vespa-cli --strip-component=1
           echo "scripts/vespa-cli/bin" >> $GITHUB_PATH
 
-      - name: Build
+      - name: Set up Docker Buildx
+        uses: docker/setup-buildx-action@v1
+
+      - name: Download artifact
+        uses: actions/download-artifact@v2
+        with:
+          name: backend
+          path: /tmp
+
+      - name: Load Docker image
         run: |
-          docker-compose build
-          docker images
+          docker load --input /tmp/backend.tar
+          docker image ls -a
 
       - name: Build docker-compose stack
         run:  make start
@@ -94,6 +141,8 @@ jobs:
 
   integration-tests:
     runs-on: ubuntu-latest
+    needs:
+      - prep
     steps:
       - name: Run Integration Tests
         run: echo TODO-TODO-TODO-TODO-TODO-TODO-TODO-TODO-TODO-TODO-TODO-TODO
@@ -101,6 +150,7 @@ jobs:
   build:
     runs-on: ubuntu-latest
     needs:
+      - prep
       - test-bash
       - non-search-tests
       - search-tests
@@ -114,10 +164,19 @@ jobs:
       - name: Get python Container
         run:  docker pull python:3.9
 
-      - name: Build
+      - name: Set up Docker Buildx
+        uses: docker/setup-buildx-action@v1
+
+      - name: Download artifact
+        uses: actions/download-artifact@v2
+        with:
+          name: backend
+          path: /tmp
+
+      - name: Load Docker image
         run: |
-          docker-compose build
-          docker images
+          docker load --input /tmp/backend.tar
+          docker image ls -a
 
       - name: Configure AWS credentials
         uses: aws-actions/configure-aws-credentials@v4
