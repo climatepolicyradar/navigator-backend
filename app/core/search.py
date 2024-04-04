@@ -286,12 +286,15 @@ def _convert_filters(
     db: Session,
     keyword_filters: Optional[Mapping[BackendFilterValues, Sequence[str]]],
 ) -> Optional[Mapping[str, Sequence[str]]]:
-    if keyword_filters is None:
+    if not keyword_filters:
         return None
     new_keyword_filters = {}
     regions = []
     countries = []
     for field, values in keyword_filters.items():
+        if not values:
+            continue
+
         new_field = _convert_filter_field(field)
         if field == FilterField.REGION:
             for region in values:
