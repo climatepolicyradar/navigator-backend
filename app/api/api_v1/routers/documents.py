@@ -27,35 +27,32 @@ documents_router = APIRouter()
 
 
 @documents_router.get(
-    "/documents/{import_id_or_slug}",
+    "/documents/{slug}",
     response_model=Union[
         FamilyAndDocumentsResponse,
         FamilyDocumentWithContextResponse,
     ],
 )
-async def document_detail(
-    import_id_or_slug: str,
+async def family_or_document_detail(
+    slug: str,
     db=Depends(get_db),
 ):
-    """Get details of the document with the given ID."""
+    """Get details of the family or document associated with the slug."""
     _LOGGER.info(
-        f"Getting detailed information for document '{import_id_or_slug}'",
+        f"Getting detailed information for family or document '{slug}'",
         extra={
             "props": {
-                "import_id_or_slug": import_id_or_slug,
+                "import_id_or_slug": slug,
             },
         },
     )
 
-    ids = get_slugged_objects(db, import_id_or_slug)
-    if not ids:
-        raise HTTPException(
-            status_code=NOT_FOUND, detail=f"Nothing found for {import_id_or_slug}"
-        )
-
-    family_document_import_id, family_import_id = ids
+    family_document_import_id, family_import_id = get_slugged_objects(db, slug)
+    if family_document_import_id is None and family_import_id is None:
+        raise HTTPException(status_code=NOT_FOUND, detail=f"Nothing found for {slug}")
 
     try:
+        # Family import id takes precedence, at at least one is not None
         if family_import_id:
             return get_family_and_documents(db, family_import_id)
         elif family_document_import_id:

@@ -4,7 +4,6 @@ Functions to support the documents endpoints
 old functions (non DFC) are moved to the deprecated_documents.py file.
 """
 import logging
-import os
 from datetime import datetime
 from typing import Optional, Sequence, cast
 
@@ -39,9 +38,6 @@ from app.core.util import to_cdn_url
 
 _LOGGER = logging.getLogger(__file__)
 
-# Set default cache timeout to 1-day, this can be revisited later.
-_DOCUMENT_CACHE_TTL: int = int(os.environ.get("DOCUMENT_CACHE_TTL_MS", "86400000"))
-
 
 def get_slugged_objects(db: Session, slug: str) -> tuple[Optional[str], Optional[str]]:
     """
@@ -52,11 +48,14 @@ def get_slugged_objects(db: Session, slug: str) -> tuple[Optional[str], Optional
     :return tuple[Optional[str], Optional[str]]: the FamilyDocument import id or
     the Family import_id
     """
-    return (
+    result = (
         db.query(Slug.family_document_import_id, Slug.family_import_id).filter(
             Slug.name == slug
         )
     ).one_or_none()
+    if result is None:
+        return (None, None)
+    return result
 
 
 def get_family_document_and_context(
