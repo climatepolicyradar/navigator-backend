@@ -50,6 +50,7 @@ def _search_request(db: Session, search_body: SearchRequestBody) -> SearchRespon
     is_browse_request = not search_body.query_string
     if is_browse_request:
         search_body.all_results = True
+        search_body.documents_only = True
         search_body.exact_match = False
     data_access_search_params = create_vespa_search_params(db, search_body)
     try:
