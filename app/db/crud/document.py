@@ -48,11 +48,14 @@ def get_slugged_objects(db: Session, slug: str) -> tuple[Optional[str], Optional
     :return tuple[Optional[str], Optional[str]]: the FamilyDocument import id or
     the Family import_id
     """
-    return (
+    result = (
         db.query(Slug.family_document_import_id, Slug.family_import_id).filter(
             Slug.name == slug
         )
     ).one_or_none()
+    if result is None:
+        return (None, None)
+    return result
 
 
 def get_family_document_and_context(

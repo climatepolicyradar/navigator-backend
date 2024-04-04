@@ -27,7 +27,7 @@ documents_router = APIRouter()
 
 
 @documents_router.get(
-    "/documents/{import_id_or_slug}",
+    "/documents/{slug}",
     response_model=Union[
         FamilyAndDocumentsResponse,
         FamilyDocumentWithContextResponse,
