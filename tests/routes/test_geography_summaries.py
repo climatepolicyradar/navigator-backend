@@ -7,13 +7,9 @@ def _url_under_test(geography: str) -> str:
     return f"/api/v1/summaries/geography/{geography}"
 
 
-@pytest.mark.parametrize(
-    ("geo"),
-    ["moldova", "Moldova"],
-)
-def test_endpoint_returns_families_ok_with_slug(geo, data_client):
+def test_endpoint_returns_families_ok_with_slug(data_client):
     """Test the endpoint returns an empty sets of data"""
-    response = data_client.get(_url_under_test(geo))
+    response = data_client.get(_url_under_test("moldova"))
     assert response.status_code == OK
     resp = response.json()
 
@@ -59,9 +55,13 @@ def test_geography_with_families_ordered(data_client):
     assert resp
 
 
-def test_endpoint_returns_404_when_not_found(data_client):
+@pytest.mark.parametrize(
+    ("geo"),
+    ["XCC", "Moldova"],
+)
+def test_endpoint_returns_404_when_not_found(geo, data_client):
     """Test the endpoint returns an empty sets of data"""
-    response = data_client.get(_url_under_test("XCC"))
+    response = data_client.get(_url_under_test(geo))
     assert response.status_code == NOT_FOUND
 
 
