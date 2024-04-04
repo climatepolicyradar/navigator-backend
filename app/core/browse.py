@@ -104,7 +104,7 @@ def browse_rds_families(
     _LOGGER.debug("Starting families query")
     families = [
         to_search_response_family(family, geography, organisation)
-        for (family, geography, _, organisation) in query.all()
+        for (family, geography, organisation) in query.all()
         if family.family_status == FamilyStatus.PUBLISHED
     ]
 
