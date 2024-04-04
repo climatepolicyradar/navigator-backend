@@ -16,7 +16,7 @@ Please select the option(s) below that are most relevant:
 - [ ] Breaking change
 - [ ] GitHub workflow update
 - [ ] Documentation update
-- [ ] Remove legacy code
+- [ ] Refactor legacy code
 
 ## How Has This Been Tested?
 
