@@ -640,7 +640,6 @@ def populate_data_db(db: Session, fam_specs: Sequence[FamSpec]) -> None:
         db.add(family_event)
         family_metadata = FamilyMetadata(
             family_import_id=fam_spec.family_import_id,
-            taxonomy_id=1,  # any old thing - as going to be removed!
             value=fam_spec.family_metadata,
         )
         db.add(family_metadata)

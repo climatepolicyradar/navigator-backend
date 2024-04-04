@@ -1,6 +1,6 @@
 # definitions for local development
 
-poetry_environment:
+poetry_environment: create_venv
 	poetry install
 
 check_dev_environment:
@@ -21,3 +21,8 @@ dev_install: check_dev_environment
 
 	make poetry_environment
 	make git_hooks
+
+create_venv:
+	- pyenv deactivate
+	pyenv virtualenv 3.9 backend
+	pyenv activate backend

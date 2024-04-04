@@ -3,10 +3,27 @@ Functions to support the documents endpoints
 
 old functions (non DFC) are moved to the deprecated_documents.py file.
 """
+
 import logging
 from datetime import datetime
 from typing import Optional, Sequence, cast
 
+from db_client.models.dfce.collection import Collection, CollectionFamily
+from db_client.models.dfce.family import (
+    Corpus,
+    DocumentStatus,
+    Family,
+    FamilyCorpus,
+    FamilyDocument,
+    FamilyStatus,
+    Slug,
+)
+from db_client.models.dfce.geography import Geography
+from db_client.models.dfce.metadata import FamilyMetadata
+from db_client.models.document.physical_document import (
+    PhysicalDocument,
+)
+from db_client.models.organisation.organisation import Organisation
 from sqlalchemy.orm import Session
 
 from app.api.api_v1.schemas.document import (
@@ -18,22 +35,6 @@ from app.api.api_v1.schemas.document import (
     FamilyEventsResponse,
     LinkableFamily,
 )
-from db_client.models.document.physical_document import (
-    PhysicalDocument,
-)
-from db_client.models.dfce.collection import Collection, CollectionFamily
-from db_client.models.dfce.family import (
-    DocumentStatus,
-    Family,
-    FamilyDocument,
-    FamilyStatus,
-    Slug,
-    FamilyCorpus,
-    Corpus,
-    Organisation,
-)
-from db_client.models.dfce.geography import Geography
-from db_client.models.dfce.metadata import FamilyMetadata
 from app.core.util import to_cdn_url
 
 _LOGGER = logging.getLogger(__file__)
