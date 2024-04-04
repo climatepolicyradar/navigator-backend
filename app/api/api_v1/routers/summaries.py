@@ -44,7 +44,7 @@ def search_by_geography(request: Request, geography_string: str, db=Depends(get_
     )
     if not exists:
         msg = (
-            f"No geography with slug or country code' matching {geography_slug}' found"
+            f"No geography with slug or country code matching '{geography_slug}' found"
         )
         _LOGGER.error(msg)
         raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail=msg)
