@@ -21,7 +21,7 @@ def test_documents_family_slug_returns_not_found(
     assert data_db.query(Family).count() == 1
     assert data_db.query(FamilyEvent).count() == 1
 
-    # Test associations
+    # Test by slug
     response = data_client.get(
         "/api/v1/documents/FamSlug100",
     )
@@ -35,7 +35,7 @@ def test_documents_family_slug_returns_correct_family(
 ):
     setup_with_two_docs(data_db)
 
-    # Test associations
+    # Test by slug
     response = data_client.get(
         "/api/v1/documents/FamSlug1",
     )

@@ -4,7 +4,6 @@ Functions to support the documents endpoints
 old functions (non DFC) are moved to the deprecated_documents.py file.
 """
 import logging
-import os
 from datetime import datetime
 from typing import Optional, Sequence, cast
 
@@ -38,9 +37,6 @@ from db_client.models.dfce.metadata import FamilyMetadata
 from app.core.util import to_cdn_url
 
 _LOGGER = logging.getLogger(__file__)
-
-# Set default cache timeout to 1-day, this can be revisited later.
-_DOCUMENT_CACHE_TTL: int = int(os.environ.get("DOCUMENT_CACHE_TTL_MS", "86400000"))
 
 
 def get_slugged_objects(db: Session, slug: str) -> tuple[Optional[str], Optional[str]]:
