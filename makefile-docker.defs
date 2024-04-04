@@ -104,16 +104,16 @@ test_search:
 		-v "${PWD}/data:/data" \
 		backend pytest \
 		-vvv tests/routes/test_vespasearch.py \
-		-m 'search'
+		-m 'search' ${ARGS}
 
 test_cors:
-	docker compose -f docker-compose.yml -f docker-compose.dev.yml run --rm backend pytest -vvv -m 'cors'
+	docker compose -f docker-compose.yml -f docker-compose.dev.yml run --rm backend pytest -vvv -m 'cors' ${ARGS}
 
 test_unit:
-	docker compose -f docker-compose.yml -f docker-compose.dev.yml run --rm backend pytest -vvv tests/unit
+	docker compose -f docker-compose.yml -f docker-compose.dev.yml run --rm backend pytest -vvv tests/unit ${ARGS}
 
 test:
-	docker compose -f docker-compose.yml -f docker-compose.dev.yml run --rm backend pytest -vvv -m 'not search'
+	docker compose -f docker-compose.yml -f docker-compose.dev.yml run --rm backend pytest -vvv -m 'not search' ${ARGS}
 
 # ----------------------------------
 # tasks
