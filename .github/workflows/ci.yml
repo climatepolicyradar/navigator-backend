@@ -13,15 +13,51 @@ jobs:
   test-bash:
     runs-on: ubuntu-latest
     steps:
-      - uses: actions/checkout@v2
+      - uses: actions/checkout@v4
 
       - name: Run tests
         run:  make test_bashscripts
 
-  build-start-test:
+  unit-tests:
     runs-on: ubuntu-latest
     steps:
-      - uses: actions/checkout@v2
+      - uses: actions/checkout@v4
+
+      - name: Use .env.example
+        run:  cp .env.example .env
+
+      - name: Get python Container
+        run:  docker pull python:3.9
+
+      - name: Build
+        run: |
+          docker-compose build
+          docker images
+
+      - name: Build docker-compose stack
+        run:  make start
+
+      - name: Wait for backend to open port
+        run:  ./scripts/wait_for_port.sh localhost 8888 60
+
+      - name: Run backend tests
+        run:  make test
+
+      - name: docker
+        run: |
+          docker-compose logs
+          docker-compose ps
+          docker ps -a
+          ls -la
+
+      - name: Log Dump
+        if:   always()
+        run:  docker-compose logs
+
+  search-tests:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
 
       - name: Use .env.example
         run:  cp .env.example .env
@@ -46,19 +82,6 @@ jobs:
       - name: Build docker-compose stack
         run:  make start
 
-      - name: Wait for backend to open port
-        run:  ./scripts/wait_for_port.sh localhost 8888 60
-
-      - name: Run backend tests
-        run:  make test
-
-      - name: docker
-        run: |
-          docker-compose logs
-          docker-compose ps
-          docker ps -a
-          ls -la
-
       - name: Setup vespa for search
         run: make vespa_setup
 
@@ -69,8 +92,32 @@ jobs:
         if:   always()
         run:  docker-compose logs
 
+  integration-tests:
+    runs-on: ubuntu-latest
+    steps:
       - name: Run Integration Tests
         run: echo TODO-TODO-TODO-TODO-TODO-TODO-TODO-TODO-TODO-TODO-TODO-TODO
+
+  push-to-ecr:
+    runs-on: ubuntu-latest
+    needs:
+      - test-bash
+      - unit-tests
+      - search-tests
+      - integration-tests
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Use .env.example
+        run:  cp .env.example .env
+
+      - name: Get python Container
+        run:  docker pull python:3.9
+
+      - name: Build
+        run: |
+          docker-compose build
+          docker images
 
       - name: Configure AWS credentials
         uses: aws-actions/configure-aws-credentials@v4
