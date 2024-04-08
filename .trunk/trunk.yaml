@@ -40,6 +40,9 @@ lint:
         - tests/data/**/*.json
         - tests/search_fixtures/**/*.json
         - scripts/**
+    - linters: [markdownlint]
+      paths:
+        - LICENSE.md
 
   enabled:
     - actionlint@1.6.27
