@@ -1,0 +1,13 @@
+###############################################################################
+# Ignore specific revisions when using Git Blame
+#
+# The file should contain the full (40 char) commit hashes. Lines starting with
+# a hash are considered comments and can be used to explain what makes the
+# given commit(s) unimportant. 
+#
+# You can call git blame with the --ignore-revs-file option to ignore all the
+# commits listed in this file.
+###############################################################################
+
+# Run trunk auto-formatting
+220ab8dc9367b6cf4c6d41a491a32c3c4e5c8eb2
