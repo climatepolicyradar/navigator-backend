@@ -1,24 +1,33 @@
-name: CI
+name: CI/CD
 
 on:
   push:
+    tags: [v*]
     branches:
       - main
   pull_request:
+    # By default, a workflow only runs when a pull_request event's activity type is opened,
+    # synchronize, or reopened.
+    types: [opened, synchronize, reopened, edited]
     branches:
       - main
 
-# https://github.com/marketplace/actions/docker-layer-caching
-jobs:
-  test-bash:
-    runs-on: ubuntu-latest
-    steps:
-      - uses: actions/checkout@v4
+permissions: read-all
 
-      - name: Run tests
-        run:  make test_bashscripts
+jobs:
+  check-auto-tagging-will-work:
+    if: |
+      github.event_name == 'pull_request' &&
+      (! startsWith(github.ref, 'refs/tags') && ! startsWith(github.ref, 'refs/heads/main'))
+    uses: climatepolicyradar/reusable-workflows/.github/workflows/check-auto-tagging-will-work.yml@v3
 
   non-search-tests:
+    if: |
+      always() &&
+      (needs.check-auto-tagging-will-work.result == 'skipped' || needs.check-auto-tagging-will-work.result == 'success') &&
+      ! startsWith(github.ref, 'refs/tags')
+    needs:
+      - check-auto-tagging-will-work
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
@@ -55,6 +64,12 @@ jobs:
         run:  docker-compose logs
 
   search-tests:
+    if: |
+      always() &&
+      (needs.check-auto-tagging-will-work.result == 'skipped' || needs.check-auto-tagging-will-work.result == 'success') &&
+      ! startsWith(github.ref, 'refs/tags')
+    needs:
+      - check-auto-tagging-will-work
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
@@ -93,15 +108,26 @@ jobs:
         run:  docker-compose logs
 
   integration-tests:
+    if: |
+      always() &&
+      (needs.check-auto-tagging-will-work.result == 'skipped' || needs.check-auto-tagging-will-work.result == 'success') &&
+      ! startsWith(github.ref, 'refs/tags')
+    needs:
+      - check-auto-tagging-will-work
     runs-on: ubuntu-latest
     steps:
       - name: Run Integration Tests
         run: echo TODO-TODO-TODO-TODO-TODO-TODO-TODO-TODO-TODO-TODO-TODO-TODO
 
   build:
+    if: |
+      always() &&
+      (needs.non-search-tests.result == 'success' &&
+      needs.search-tests.result == 'success' &&
+      needs.integration-tests.result == 'success') &&
+      ! startsWith(github.ref, 'refs/tags')
     runs-on: ubuntu-latest
     needs:
-      - test-bash
       - non-search-tests
       - search-tests
       - integration-tests
@@ -130,8 +156,58 @@ jobs:
         id: login-ecr
         uses: aws-actions/amazon-ecr-login@v1.6.1
 
-      - name: Push Images to ECR
-        run: |
-          .github/retag-and-push.sh navigator-backend latest
+      - name: Publish initial image based on branch to ECR
         env:
           DOCKER_REGISTRY: ${{ secrets.DOCKER_REGISTRY }}
+          ECR_REGISTRY: ${{ steps.login-ecr.outputs.registry }}
+        shell: bash
+        run: |
+          if [[ "${GITHUB_REF}" == "refs/heads"* ]]; then
+            branch="${GITHUB_REF/refs\/heads\//}"
+            if [[ "${branch}" = "main" ]]; then
+              docker_tag=latest
+              docker tag navigator-backend "$ECR_REGISTRY/navigator-backend:${docker_tag}"
+              docker push "$ECR_REGISTRY/navigator-backend:${docker_tag}"
+            fi
+          elif [[ "${GITHUB_REF}" != "refs/tags"* ]]; then
+            echo "Assuming '${GITHUB_HEAD_REF}' is a branch"
+            if [[ -n "${GITHUB_HEAD_REF}" ]]; then
+                branch="$(echo ${GITHUB_HEAD_REF}| tr -c '[0-9,A-Z,a-z]' '-')"
+                timestamp=$(date --utc -Iseconds | cut -c1-19 | tr -c '[0-9]T\n' '-')
+                short_sha=${GITHUB_SHA:0:8}
+                docker_tag="${branch}-${timestamp}-${short_sha}"
+                docker tag navigator-backend "$ECR_REGISTRY/navigator-backend:${docker_tag}"
+                docker push "$ECR_REGISTRY/navigator-backend:${docker_tag}"
+            fi
+          fi
+
+  manual-semver:
+    if: ${{ always() && startsWith(github.ref, 'refs/tags') }}
+    uses: climatepolicyradar/reusable-workflows/.github/workflows/semver.yml@v3
+    secrets: inherit
+    with:
+      repo-name: navigator-backend
+      semver-tag: main-${GITHUB_SHA::8}
+
+  tag:
+    if: ${{ always() && (needs.build.result == 'success')}}
+    needs: build
+    permissions:
+      contents: write
+    uses: climatepolicyradar/reusable-workflows/.github/workflows/tag.yml@v3
+    with:
+      repo-name: navigator-backend
+      semver-tag: main-${GITHUB_SHA::8}
+    secrets:
+      AWS_ACCESS_KEY_ID: ${{ secrets.AWS_ACCESS_KEY_ID }}
+      AWS_SECRET_ACCESS_KEY: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
+      DOCKER_REGISTRY: ${{ secrets.DOCKER_REGISTRY }}
+
+  release:
+    if: ${{ always() && (needs.tag.result == 'success' && needs.tag.outputs.new_tag != 'Skip')}}
+    needs: tag
+    permissions:
+      contents: write
+    uses: climatepolicyradar/reusable-workflows/.github/workflows/release.yml@v3
+    with:
+      new_tag: ${{ needs.tag.outputs.new_tag }}
