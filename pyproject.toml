@@ -70,11 +70,6 @@ ignore = """
 include = ["app", "scripts", "tests"]
 exclude = ["**/__pycache__"]
 ignore = ["scripts/**/*"]
-defineConstant = { DEBUG = true }
-
-reportMissingImports = true
-reportMissingTypeStubs = false
-
 pythonVersion = "3.9"
 pythonPlatform = "Linux"
 venv = "backend"
