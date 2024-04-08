@@ -1,5 +1,6 @@
 """Functions to support browsing the RDS document structure"""
 
+from typing import Optional
 import zipfile
 from io import BytesIO, StringIO
 from logging import getLogger
@@ -249,7 +250,7 @@ def get_whole_database_dump(ingest_cycle_start: str, db=Depends(get_db)):
 def replace_slug_with_qualified_url(
     df: pd.DataFrame,
     public_app_url: str,
-    url_cols: list[str] = ["Family Slug", "Document Slug"],
+    url_cols: Optional[list[str]] = None,
 ) -> pd.DataFrame:
     """
     Use the slug to create a fully qualified URL to the entity.
@@ -257,6 +258,9 @@ def replace_slug_with_qualified_url(
     This functionality won't be included in the MVP for the data dump,
     but will likely be included in future revisions.
     """
+    if url_cols is None:
+        url_cols = ["Family Slug", "Document Slug"]
+
     url_base = f"{public_app_url}/documents/"
 
     for col in url_cols:
