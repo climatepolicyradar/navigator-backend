@@ -39,6 +39,7 @@ Please select the option(s) below that are most relevant:
 - [ ] GitHub workflow update
 - [ ] Documentation update
 - [ ] Refactor legacy code
+- [ ] Dependency update
 
 ## How Has This Been Tested?
 
