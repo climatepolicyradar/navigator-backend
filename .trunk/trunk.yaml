@@ -36,6 +36,7 @@ lint:
       paths:
         # Ignore test data JSON files
         - tests/data/**/*.json
+        - tests/search_fixtures/**/*.json
 
   enabled:
     - actionlint@1.6.27
