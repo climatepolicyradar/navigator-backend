@@ -8,8 +8,8 @@ for the type of document search being performed.
 import logging
 from io import BytesIO
 
-from cpr_data_access.exceptions import QueryError
-from cpr_data_access.search_adaptors import VespaSearchAdapter
+from cpr_sdk.exceptions import QueryError
+from cpr_sdk.search_adaptors import VespaSearchAdapter
 from fastapi import APIRouter, Depends, HTTPException, Request, status
 from fastapi.responses import StreamingResponse
 from sqlalchemy.orm import Session

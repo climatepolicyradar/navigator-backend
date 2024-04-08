@@ -5,18 +5,33 @@ from collections import defaultdict
 from io import StringIO
 from typing import Any, Mapping, Optional, Sequence, cast
 
-from cpr_data_access.embedding import Embedder
-from cpr_data_access.models.search import Document as DataAccessResponseDocument
-from cpr_data_access.models.search import Family as DataAccessResponseFamily
-from cpr_data_access.models.search import Passage as DataAccessResponsePassage
-from cpr_data_access.models.search import SearchResponse as DataAccessSearchResponse
-from cpr_data_access.models.search import Filters as DataAccessKeywordFilters
-from cpr_data_access.models.search import filter_fields
+from cpr_sdk.embedding import Embedder
+from cpr_sdk.models.search import Document as DataAccessResponseDocument
+from cpr_sdk.models.search import Family as DataAccessResponseFamily
+from cpr_sdk.models.search import Filters as DataAccessKeywordFilters
+from cpr_sdk.models.search import Passage as DataAccessResponsePassage
+from cpr_sdk.models.search import SearchResponse as DataAccessSearchResponse
+from cpr_sdk.models.search import filter_fields
+from db_client.models.dfce import (
+    Collection,
+    CollectionFamily,
+    Family,
+    FamilyDocument,
+    FamilyMetadata,
+    Slug,
+)
+from db_client.models.dfce.family import (
+    Corpus,
+    DocumentStatus,
+    FamilyCorpus,
+    FamilyStatus,
+)
+from db_client.models.organisation import Organisation
 from sqlalchemy.orm import Session
 
 from app.api.api_v1.schemas.search import (
-    FilterField,
     BackendFilterValues,
+    FilterField,
     SearchRequestBody,
     SearchResponse,
     SearchResponseDocumentPassage,
@@ -29,21 +44,6 @@ from app.core.config import (
 )
 from app.core.lookups import get_countries_for_region, get_countries_for_slugs
 from app.core.util import to_cdn_url
-from db_client.models.organisation import Organisation
-from db_client.models.dfce import (
-    Collection,
-    CollectionFamily,
-    Family,
-    FamilyDocument,
-    FamilyMetadata,
-    Slug,
-)
-from db_client.models.dfce.family import (
-    DocumentStatus,
-    FamilyStatus,
-    FamilyCorpus,
-    Corpus,
-)
 
 _LOGGER = logging.getLogger(__name__)
 
@@ -330,9 +330,9 @@ def _process_vespa_search_response_families(
     offset: int,
 ) -> Sequence[SearchResponseFamily]:
     """
-    Process a list of data access results into a list of SearchResponse Families
+    Process a list of cpr sdk results into a list of SearchResponse Families
 
-    Note: this function requires that results from the data access library are grouped
+    Note: this function requires that results from the cpr sdk library are grouped
           by family_import_id.
     """
     vespa_families_to_process = vespa_families[offset : limit + offset]
