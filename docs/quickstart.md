@@ -20,9 +20,8 @@ It will also create an [environment](./environment.md) file at `.env`.
 The correct version is installed in the docker containers, however it can be
 tricky to get that version in your local environment, so use:
 
-```
+```bash
 pip install git+https://github.com/climatepolicyradar/navigator-db-client@v3.4.0
-
 ```
 
 ## Docker-based development

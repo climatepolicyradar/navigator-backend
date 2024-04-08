@@ -13,7 +13,8 @@
 
 ## **PURPOSE**
 
-This document is intended to explain the use of our search API for external developers and integrators.
+This document is intended to explain the use of our search API for external
+developers and integrators.
 
 ## **BACKGROUND**
 
@@ -63,7 +64,7 @@ and is described in further detail below.
 }
 ```
 
-#### Properties
+#### Properties of Request Payload
 
 ##### query_string
 
@@ -103,7 +104,8 @@ Further information and understanding can be found by [reading the tests here](h
 
 The field to sort by can be chosen from “date” or “title” [see related code](https://github.com/climatepolicyradar/navigator-backend/blob/ddebbd17f6b62cf7909e6e4c575285b8b00a41b2/app/api/api_v1/schemas/search.py#L20).
 
-The order can be chosen from ascending (use “asc”) or descending (use “desc”), [see related code](https://github.com/climatepolicyradar/navigator-backend/blob/ddebbd17f6b62cf7909e6e4c575285b8b00a41b2/app/api/api_v1/schemas/search.py#L13).
+The order can be chosen from ascending (use “asc”) or descending (use “desc”),
+[see related code.](https://github.com/climatepolicyradar/navigator-backend/blob/ddebbd17f6b62cf7909e6e4c575285b8b00a41b2/app/api/api_v1/schemas/search.py#L13)
 
 ##### limit & offset
 
@@ -126,7 +128,7 @@ along with their passage matches. The payload has the following scheme:
 }
 ```
 
-#### Properties
+#### Properties of Response Payload
 
 ##### hits
 
@@ -261,7 +263,9 @@ The CDN url of where the document can be found within our system.
 
 ##### document_content_type
 
-The content_type of the document found at the above URLs. [Complete list is available at the IANA site](https://www.iana.org/assignments/media-types/media-types.xhtml). Most common is “`application/pdf`” and “`text/html`”.
+The content_type of the document found at the above URLs.
+[Complete list is available at the IANA site.](https://www.iana.org/assignments/media-types/media-types.xhtml)
+Most common is “`application/pdf`” and “`text/html`”.
 
 ##### document_passage_matches
 
