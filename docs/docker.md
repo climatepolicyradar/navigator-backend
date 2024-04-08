@@ -3,7 +3,7 @@
 Run the stack with
 
 ```shell
-docker-compose up
+docker compose up
 ```
 
 or
@@ -15,29 +15,29 @@ make start
 ## Rebuilding containers
 
 ```shell
-docker-compose build
+docker compose build
 ```
 
 ## Restarting containers
 
 ```shell
-docker-compose restart
+docker compose restart
 ```
 
 ## Bringing containers down
 
 ```shell
-docker-compose down
+docker compose down
 ```
 
 ## Logging
 
 ```shell
-docker-compose logs
+docker compose logs
 ```
 
 Or for a specific service:
 
 ```shell
-docker-compose logs -f name_of_service # backend|db|...
+docker compose logs -f name_of_service # backend|db|...
 ```

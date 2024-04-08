@@ -29,6 +29,11 @@ up:
 	# docker-compose up, without -d
 	docker compose -f docker-compose.yml -f docker-compose.dev.yml up
 
+restart:
+	docker compose build
+	make start
+	make show_logs
+
 # ----------------------------------
 # database maintenance
 # ----------------------------------
