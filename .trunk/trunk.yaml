@@ -31,6 +31,13 @@ lint:
         - name: lint
           run: bandit --exit-zero -c bandit.yaml --format json --output ${tmpfile} ${target}
 
+  ignore:
+    - linters: [ALL]
+      paths:
+        # Ignore test data JSON files
+        - tests/data/**/*.json
+        - tests/search_fixtures/**/*.json
+
   enabled:
     - actionlint@1.6.27
     - bandit@1.7.8
@@ -44,9 +51,17 @@ lint:
     - oxipng@9.0.0
     - pre-commit-hooks@4.5.0:
         commands:
-          - end-of-file-fixer
+          - check-ast
+          - check-case-conflict
+          - check-docstring-first
           - check-json
-          - detect-aws-credentials
+          - check-merge-conflict
+          - check-toml
+          - check-yaml
+          - debug-statements
+          - detect-aws-credentials --allow-missing-credentials
+          - end-of-file-fixer
+          - trailing-whitespace
     - prettier@3.2.5
     - pyright@1.1.357
     - ruff@0.3.5
