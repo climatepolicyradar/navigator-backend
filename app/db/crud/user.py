@@ -1,9 +1,8 @@
 from typing import Tuple
 
+from db_client.models.organisation import AppUser, Organisation, OrganisationUser
 from fastapi import HTTPException
 from sqlalchemy.orm import Session
-
-from db_client.models.organisation import AppUser, Organisation, OrganisationUser
 
 
 def get_app_user_by_email(db: Session, email: str) -> AppUser:

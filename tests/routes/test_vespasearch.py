@@ -4,25 +4,22 @@ from io import StringIO
 from typing import Mapping
 
 import pytest
-from sqlalchemy.orm import Session
+from db_client.models.dfce import Geography, Slug
+from db_client.models.dfce.family import FamilyDocument
 from sqlalchemy import update
-
-from tests.routes.setup_search_tests import (
-    _create_family,
-    _create_family_event,
-    _create_family_metadata,
-    _create_document,
-    _populate_db_families,
-    VESPA_FIXTURE_COUNT,
-)
+from sqlalchemy.orm import Session
 
 from app.api.api_v1.routers import search
 from app.api.api_v1.schemas import search as search_schemas
 from app.core.lookups import get_country_slug_from_country_code
-
-from db_client.models.dfce import Geography, Slug
-from db_client.models.dfce.family import FamilyDocument
-
+from tests.routes.setup_search_tests import (
+    VESPA_FIXTURE_COUNT,
+    _create_document,
+    _create_family,
+    _create_family_event,
+    _create_family_metadata,
+    _populate_db_families,
+)
 
 SEARCH_ENDPOINT = "/api/v1/searches"
 CSV_DOWNLOAD_ENDPOINT = "/api/v1/searches/download-csv"

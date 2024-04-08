@@ -2,8 +2,7 @@
 
 **3<sup>**rd**</sup> October 2023**
 
-***
-
+---
 
 # **VERSION HISTORY**
 
@@ -12,16 +11,13 @@
 | 1.0 | Initial version based on [v1.3.15-beta.](https://github.com/climatepolicyradar/navigator-backend/releases/tag/v1.3.15-beta) | 3/10/2023 | Peter Hooper |
 |     |                                                                                                                             |           |              |
 
-
 # **PURPOSE**
 
-This document is intended to explain the use of our search API for external developers and integrators. 
-
+This document is intended to explain the use of our search API for external developers and integrators.
 
 # **BACKGROUND**
 
 The API  is a typical REST API where the requests and responses are encoded as `application/json`
-
 
 # **SEARCH ENDPOINT**
 
@@ -29,15 +25,14 @@ The API  is a typical REST API where the requests and responses are encoded as 
 | :------: | ---------------- |
 | **POST** | /api/v1/searches |
 
-There is **_no_** authentication required for using this interface. 
+There is **_no_** authentication required for using this interface.
 
-❗ We ask that users be respectful of its use and remind users that data is available to download on request. 
+❗ We ask that users be respectful of its use and remind users that data is available to download on request.
 
 The search endpoint behaves in two distinct ways:
 
 1. In “Browse” mode - this is when an empty`  query_string  `is provided. This mode does not use Vespa, rather queries the structured data (postgresql) directly, using the other supplied filter fields.
 2. In “Search” mode - when a `query_string `is provided. A query is constructed sent to Vespa and the response is augmented with the structured data before being returned in the same response scheme.
-
 
 ## **Request Payload**
 
@@ -69,7 +64,7 @@ A string representation of the search to be performed, example “Adaptation str
 
 #### exact_match
 
-Boolean value to indicate if the `query_string `should be treated as an exact match when the search is performed. 
+Boolean value to indicate if the `query_string `should be treated as an exact match when the search is performed.
 
 #### max_passages_per_doc (optional, default is 10)
 
@@ -81,7 +76,7 @@ This is an object containing a map of fields and their values to filter on. The 
 
 #### year_range
 
-This is an array containing exactly two values, which can be null or an integer representing the years to search between. Examples: 
+This is an array containing exactly two values, which can be null or an integer representing the years to search between. Examples:
 
 `[2000, 2023]` - Would search between 2000 and 2023 inclusive.
 
@@ -102,7 +97,6 @@ The order can be chosen from ascending (use “asc”) or descending (use “des
 #### limit & offset
 
 These values control pagination, allowing a front end application to page through the results. The `limit` refers to the maximum number of results to return and `offset` where to start returning the results from that were retrieved via the backend.
-
 
 ## **Response Payload**
 
@@ -129,7 +123,7 @@ The time Vespa spent performing the query.
 
 #### total_time_ms
 
-The total time spent in getting the response. 
+The total time spent in getting the response.
 
 #### families
 
@@ -156,7 +150,7 @@ A list of family objects, each following the scheme below:
 
 The slug that forms part of the URL to navigate to the family. Example, with a slug of  `climate-change-adaptation-strategy_1882`, a URL can be created to this family of documents as:
 
- [`https://app.climatepolicyradar.org/document/climate-change-adaptation-strategy_1882`](https://app.climatepolicyradar.org/document/climate-change-adaptation-strategy_1882)
+[`https://app.climatepolicyradar.org/document/climate-change-adaptation-strategy_1882`](https://app.climatepolicyradar.org/document/climate-change-adaptation-strategy_1882)
 
 #### family_name
 
@@ -243,12 +237,11 @@ The CDN url of where the document can be found within our system.
 
 #### document_content_type
 
-The content\_type of the document found at the above URLs. [Complete list is available at the IANA site](https://www.iana.org/assignments/media-types/media-types.xhtml). Most common is “`application/pdf`” and “`text/html`”.
+The content_type of the document found at the above URLs. [Complete list is available at the IANA site](https://www.iana.org/assignments/media-types/media-types.xhtml). Most common is “`application/pdf`” and “`text/html`”.
 
 #### document_passage_matches
 
 This is a list of passages that match the search criteria within this document. The length of which is affected by `max_passages_per_doc `in the request.` `This is used for passage highlighting, please contact us for further information should you wish to use this data.
-
 
 ## **Examples**
 

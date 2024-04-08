@@ -1,5 +1,7 @@
+import enum
 import json
 import logging
+from dataclasses import dataclass
 from datetime import datetime
 from io import BytesIO
 from typing import Any, Collection, Mapping, Optional, Sequence, Union
@@ -7,9 +9,6 @@ from typing import Any, Collection, Mapping, Optional, Sequence, Union
 from app.api.api_v1.schemas.document import DocumentParserInput
 from app.core.aws import S3Client, S3Document
 from app.core.validation import PIPELINE_BUCKET
-
-from dataclasses import dataclass
-import enum
 
 _LOGGER = logging.getLogger(__file__)
 

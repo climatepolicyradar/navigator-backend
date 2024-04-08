@@ -1,11 +1,10 @@
 import pytest
-
-from db_client.models.organisation import Organisation
 from db_client.models.dfce import (  # noqa F401
     FamilyDocument,
-    Geography,
     FamilyDocumentType,
+    Geography,
 )
+from db_client.models.organisation import Organisation
 
 template_doc = {
     "name": "doc",

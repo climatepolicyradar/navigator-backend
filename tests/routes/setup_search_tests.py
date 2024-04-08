@@ -1,37 +1,32 @@
-from datetime import datetime
 import json
-from pathlib import Path
 import random
+from datetime import datetime
+from pathlib import Path
 from typing import Iterable, Mapping, Optional, Sequence
-
-from sqlalchemy.orm import Session
 
 from db_client.data_migrations.taxonomy_cclw import get_cclw_taxonomy
 from db_client.data_migrations.taxonomy_unf3c import get_unf3c_taxonomy
-
-from db_client.models.organisation import Corpus
+from db_client.models.dfce import Geography
 from db_client.models.dfce.family import (
     DocumentStatus,
     EventStatus,
-    FamilyCategory,
     Family,
+    FamilyCategory,
+    FamilyCorpus,
     FamilyDocument,
     FamilyDocumentType,
     FamilyEvent,
     Slug,
     Variant,
-    FamilyCorpus,
 )
-from db_client.models.dfce.metadata import (
-    FamilyMetadata,
-)
-from db_client.models.dfce import Geography
+from db_client.models.dfce.metadata import FamilyMetadata
 from db_client.models.document.physical_document import (
     LanguageSource,
     PhysicalDocument,
     PhysicalDocumentLanguage,
 )
-
+from db_client.models.organisation import Corpus
+from sqlalchemy.orm import Session
 
 VESPA_FIXTURE_COUNT = 5
 FIXTURE_DIR = Path(__file__).parents[1] / "search_fixtures"

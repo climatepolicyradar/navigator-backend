@@ -1,6 +1,5 @@
 version: "3.7"
 services:
-
   vespatest:
     image: vespaengine/vespa:8.273.20
     container_name: vespatest

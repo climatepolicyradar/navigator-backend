@@ -5,7 +5,7 @@ repos:
       - id: check-json
         exclude: tests/data/.*\.json
       - id: detect-aws-credentials
-        args: [ --allow-missing-credentials ]
+        args: [--allow-missing-credentials]
       - id: trailing-whitespace
       - id: end-of-file-fixer
         exclude: ^.*\.egg-info/
@@ -18,9 +18,9 @@ repos:
       - id: check-docstring-first
 
   - repo: https://github.com/python-poetry/poetry
-    rev: '1.7.1'
+    rev: "1.7.1"
     hooks:
-    -   id: poetry-check
+      - id: poetry-check
         args: ["-C", "."]
   - repo: https://github.com/ambv/black
     rev: 23.1.0
@@ -28,7 +28,7 @@ repos:
       - id: black
         language_version: python3
   - repo: https://github.com/charliermarsh/ruff-pre-commit
-    rev: 'v0.0.246'
+    rev: "v0.0.246"
     hooks:
       - id: ruff
   - repo: local
@@ -38,6 +38,5 @@ repos:
         entry: pyright
         language: node
         types: [python]
-        additional_dependencies: ['pyright@1.1.294']
-
+        additional_dependencies: ["pyright@1.1.294"]
 # TODO more checks? e.g. bandit, safety, snyk, ...
