@@ -1,4 +1,5 @@
-from typing import Callable, Generator, Optional
+import logging
+from typing import Optional
 
 import pytest
 from db_client.models.dfce.family import FamilyDocument
@@ -8,7 +9,6 @@ from db_client.models.document.physical_document import (
     PhysicalDocumentLanguage,
 )
 from fastapi.testclient import TestClient
-from pytest_mock import MockerFixture
 from sqlalchemy import update
 from sqlalchemy.orm import Session
 
@@ -698,8 +698,8 @@ def test_update_document__logs_warning_on_four_letter_language(
     data_client: TestClient,
     data_superuser_token_headers: dict[str, str],
     data_db: Session,
-    mocker: Callable[..., Generator[MockerFixture, None, None]],
     import_id: str,
+    caplog,
 ):
     """Send a payload to assert that languages that are too long aren't added and a warning is logged."""
     setup_docs_with_two_orgs_no_langs(data_db)
@@ -712,15 +712,12 @@ def test_update_document__logs_warning_on_four_letter_language(
         "languages": ["boda"],
     }
 
-    from app.api.api_v1.routers.admin import _LOGGER
-
-    log_spy = mocker.spy(_LOGGER, "warning")
-
-    response = data_client.put(
-        f"/api/v1/admin/documents/{import_id}",
-        headers=data_superuser_token_headers,
-        json=payload,
-    )
+    with caplog.at_level(logging.WARNING):
+        response = data_client.put(
+            f"/api/v1/admin/documents/{import_id}",
+            headers=data_superuser_token_headers,
+            json=payload,
+        )
 
     assert response.status_code == 200
     json_object = response.json()
@@ -730,11 +727,9 @@ def test_update_document__logs_warning_on_four_letter_language(
     assert json_object["languages"] == []
 
     assert (
-        log_spy.call_args_list[0].args[0]
-        == "Retrieved no language from database for meta_data object "
-        "language"
+        "Retrieved no language from database for meta_data object language"
+        in caplog.text
     )
-    assert len(log_spy.call_args_list) == 1
 
     # Now Check the db
     doc = (
