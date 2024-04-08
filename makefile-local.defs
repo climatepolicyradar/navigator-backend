@@ -9,6 +9,9 @@ ifneq (,$(wildcard ./.env))
 	exit 1
 endif
 
+configure_pyright:
+	trunk actions run configure-pyright-with-pyenv
+
 dev_install: install_trunk check_dev_environment
 	# Sets up a local dev environment
 
@@ -20,7 +23,7 @@ dev_install: install_trunk check_dev_environment
 	pip install "poetry==1.7.1"
 
 	make poetry_environment
-	trunk actions run configure-pyright-with-pyenv
+	make configure_pyright
 
 create_venv:
 	- pyenv deactivate
