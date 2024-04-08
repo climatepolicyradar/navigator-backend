@@ -11,3 +11,6 @@
 
 # Run trunk auto-formatting
 220ab8dc9367b6cf4c6d41a491a32c3c4e5c8eb2
+
+# Ignore LICENSE re-formatting
+4e8229e076fec4c5013655a9950187bea9b354df
