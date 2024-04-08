@@ -27,16 +27,23 @@ The API  is a typical REST API where the requests and responses are encoded as 
 
 There is **_no_** authentication required for using this interface.
 
-❗ We ask that users be respectful of its use and remind users that data is available to download on request.
+❗ We ask that users be respectful of its use and remind users that data is
+available to download on request.
 
 The search endpoint behaves in two distinct ways:
 
-1. In “Browse” mode - this is when an empty`query_string`is provided. This mode does not use Vespa, rather queries the structured data (postgresql) directly, using the other supplied filter fields.
-2. In “Search” mode - when a `query_string`is provided. A query is constructed sent to Vespa and the response is augmented with the structured data before being returned in the same response scheme.
+1. In “Browse” mode - this is when an empty`query_string`is provided. This mode
+   does not use Vespa, rather queries the structured data (postgresql) directly,
+   using the other supplied filter fields.
+2. In “Search” mode - when a `query_string`is provided. A query is constructed
+   and sent to Vespa and the response is augmented with the structured data before
+   being returned in the same response scheme.
 
 ### **Request Payload**
 
-The payload is a JSON object representing the search to be performed. This can be seen in [code here](https://github.com/climatepolicyradar/navigator-backend/blob/ddebbd17f6b62cf7909e6e4c575285b8b00a41b2/app/api/api_v1/schemas/search.py#L62) and is described in further detail below.
+The payload is a JSON object representing the search to be performed. This can
+be seen in [code here](https://github.com/climatepolicyradar/navigator-backend/blob/ddebbd17f6b62cf7909e6e4c575285b8b00a41b2/app/api/api_v1/schemas/search.py#L62)
+and is described in further detail below.
 
 ```json
 {
@@ -60,11 +67,13 @@ The payload is a JSON object representing the search to be performed. This can b
 
 ##### query_string
 
-A string representation of the search to be performed, for example “Adaptation strategy”
+A string representation of the search to be performed, for example, “Adaptation
+strategy”
 
 ##### exact_match
 
-Boolean value to indicate if the `query_string`should be treated as an exact match when the search is performed.
+Boolean value to indicate if the `query_string`should be treated as an exact
+match when the search is performed.
 
 ##### max_passages_per_doc (optional, default is 10)
 
@@ -72,11 +81,13 @@ The maximum number of matched passages to be returned for a single document.
 
 ##### keyword_filters (optional)
 
-This is an object containing a map of fields and their values to filter on. The allowed fields can be found in [code here](https://github.com/climatepolicyradar/navigator-backend/blob/ddebbd17f6b62cf7909e6e4c575285b8b00a41b2/app/api/api_v1/schemas/search.py#L34).
+This is an object containing a map of fields and their values to filter on. The
+allowed fields can be found in [code here](https://github.com/climatepolicyradar/navigator-backend/blob/ddebbd17f6b62cf7909e6e4c575285b8b00a41b2/app/api/api_v1/schemas/search.py#L34).
 
 ##### year_range
 
-This is an array containing exactly two values, which can be null or an integer representing the years to search between. Examples:
+This is an array containing exactly two values, which can be null or an integer
+representing the years to search between. Examples:
 
 `[2000, 2023]` - Would search between 2000 and 2023 inclusive.
 
@@ -96,11 +107,15 @@ The order can be chosen from ascending (use “asc”) or descending (use “des
 
 ##### limit & offset
 
-These values control pagination, allowing a front end application to page through the results. The `limit` refers to the maximum number of results to return and `offset` where to start returning the results from that were retrieved via the backend.
+These values control pagination, allowing a front end application to page
+through the results. The `limit` refers to the maximum number of results to
+return and `offset` where to start returning the results from that were
+retrieved via the backend.
 
 ### **Response Payload**
 
-The response returns a list of families and includes their associated documents along with their passage matches. The payload has the following scheme:
+The response returns a list of families and includes their associated documents
+along with their passage matches. The payload has the following scheme:
 
 ```json
 {
@@ -168,11 +183,13 @@ The family category, for example: Executive (see list in [code here](https://git
 
 ##### family_date
 
-The date the family of documents was published, this is from the corresponding “Passed/Approved” event for this family.
+The date the family of documents was published, this is from the corresponding
+“Passed/Approved” event for this family.
 
 ##### family_last_updated_date
 
-The date the family of documents was published, this is from the most recent event of this family of documents.
+The date the family of documents was published, this is from the most recent
+event of this family of documents.
 
 ##### family_source
 
@@ -192,7 +209,8 @@ Boolean value that is true if the search is matched within the family’s title.
 
 ##### family_description_match
 
-Boolean value that is true if the search is matched within the family’s description.
+Boolean value that is true if the search is matched within the family’s
+description.
 
 ##### family_documents
 
