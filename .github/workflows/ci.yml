@@ -40,7 +40,7 @@ jobs:
 
       - name: Build
         run: |
-          docker-compose build
+          docker compose build
           docker images
 
       - name: Build docker-compose stack
@@ -52,16 +52,16 @@ jobs:
       - name: Run backend tests
         run:  make test_non_search
 
-      - name: docker
+      - name: Docker debug
         run: |
-          docker-compose logs
-          docker-compose ps
+          docker compose logs
+          docker compose ps
           docker ps -a
           ls -la
 
       - name: Log Dump
-        if:   always()
-        run:  docker-compose logs
+        if: always()
+        run: docker compose logs
 
   search-tests:
     if: |
@@ -91,7 +91,7 @@ jobs:
 
       - name: Build
         run: |
-          docker-compose build
+          docker compose build
           docker images
 
       - name: Build docker-compose stack
@@ -105,7 +105,7 @@ jobs:
 
       - name: Log Dump
         if:   always()
-        run:  docker-compose logs
+        run:  docker compose logs
 
   integration-tests:
     if: |
@@ -142,7 +142,7 @@ jobs:
 
       - name: Build
         run: |
-          docker-compose build
+          docker compose build
           docker images
 
       - name: Configure AWS credentials
