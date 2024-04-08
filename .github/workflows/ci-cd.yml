@@ -1,0 +1,213 @@
+name: CI/CD
+
+on:
+  push:
+    tags: [v*]
+    branches:
+      - main
+  pull_request:
+    # By default, a workflow only runs when a pull_request event's activity type is opened,
+    # synchronize, or reopened.
+    types: [opened, synchronize, reopened, edited]
+    branches:
+      - main
+
+permissions: read-all
+
+jobs:
+  check-auto-tagging-will-work:
+    if: |
+      github.event_name == 'pull_request' &&
+      (! startsWith(github.ref, 'refs/tags') && ! startsWith(github.ref, 'refs/heads/main'))
+    uses: climatepolicyradar/reusable-workflows/.github/workflows/check-auto-tagging-will-work.yml@v3
+
+  non-search-tests:
+    if: |
+      always() &&
+      (needs.check-auto-tagging-will-work.result == 'skipped' || needs.check-auto-tagging-will-work.result == 'success') &&
+      ! startsWith(github.ref, 'refs/tags')
+    needs:
+      - check-auto-tagging-will-work
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Use .env.example
+        run:  cp .env.example .env
+
+      - name: Get python Container
+        run:  docker pull python:3.9
+
+      - name: Build
+        run: |
+          docker compose build
+          docker images
+
+      - name: Build docker-compose stack
+        run:  make start_without_vespa_setup
+
+      - name: Wait for backend to open port
+        run:  ./scripts/wait_for_port.sh localhost 8888 60
+
+      - name: Run backend tests
+        run:  make test_non_search
+
+      - name: Docker debug
+        run: |
+          docker compose logs
+          docker compose ps
+          docker ps -a
+          ls -la
+
+      - name: Log Dump
+        if: always()
+        run: docker compose logs
+
+  search-tests:
+    if: |
+      always() &&
+      (needs.check-auto-tagging-will-work.result == 'skipped' || needs.check-auto-tagging-will-work.result == 'success') &&
+      ! startsWith(github.ref, 'refs/tags')
+    needs:
+      - check-auto-tagging-will-work
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Use .env.example
+        run:  cp .env.example .env
+
+      - name: Get python Container
+        run:  docker pull python:3.9
+
+      - name: Install latest Vespa CLI
+        env:
+          VESPA_CLI_VERSION: "8.250.43"
+        run: |
+          mkdir scripts/vespa-cli
+          curl -fsSL https://github.com/vespa-engine/vespa/releases/download/v${VESPA_CLI_VERSION}/vespa-cli_${VESPA_CLI_VERSION}_linux_amd64.tar.gz | \
+            tar -zxf - -C scripts/vespa-cli --strip-component=1
+          echo "scripts/vespa-cli/bin" >> $GITHUB_PATH
+
+      - name: Build
+        run: |
+          docker compose build
+          docker images
+
+      - name: Build docker-compose stack
+        run:  make start
+
+      - name: Setup vespa for search
+        run: make vespa_setup
+
+      - name: Run backend search tests for vespa
+        run:  make test_search
+
+      - name: Log Dump
+        if:   always()
+        run:  docker compose logs
+
+  integration-tests:
+    if: |
+      always() &&
+      (needs.check-auto-tagging-will-work.result == 'skipped' || needs.check-auto-tagging-will-work.result == 'success') &&
+      ! startsWith(github.ref, 'refs/tags')
+    needs:
+      - check-auto-tagging-will-work
+    runs-on: ubuntu-latest
+    steps:
+      - name: Run Integration Tests
+        run: echo TODO-TODO-TODO-TODO-TODO-TODO-TODO-TODO-TODO-TODO-TODO-TODO
+
+  build:
+    if: |
+      always() &&
+      (needs.non-search-tests.result == 'success' &&
+      needs.search-tests.result == 'success' &&
+      needs.integration-tests.result == 'success') &&
+      ! startsWith(github.ref, 'refs/tags')
+    runs-on: ubuntu-latest
+    needs:
+      - non-search-tests
+      - search-tests
+      - integration-tests
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Use .env.example
+        run:  cp .env.example .env
+
+      - name: Get python Container
+        run:  docker pull python:3.9
+
+      - name: Build
+        run: |
+          docker compose build
+          docker images
+
+      - name: Configure AWS credentials
+        uses: aws-actions/configure-aws-credentials@v4
+        with:
+          aws-access-key-id: ${{ secrets.AWS_ACCESS_KEY_ID }}
+          aws-secret-access-key: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
+          aws-region: eu-west-1
+
+      - name: Login to Amazon ECR
+        id: login-ecr
+        uses: aws-actions/amazon-ecr-login@v1.6.1
+
+      - name: Publish initial image based on branch to ECR
+        env:
+          DOCKER_REGISTRY: ${{ secrets.DOCKER_REGISTRY }}
+          ECR_REGISTRY: ${{ steps.login-ecr.outputs.registry }}
+        shell: bash
+        run: |
+          if [[ "${GITHUB_REF}" == "refs/heads"* ]]; then
+            branch="${GITHUB_REF/refs\/heads\//}"
+            if [[ "${branch}" = "main" ]]; then
+              docker_tag=latest
+              docker tag navigator-backend "$ECR_REGISTRY/navigator-backend:${docker_tag}"
+              docker push "$ECR_REGISTRY/navigator-backend:${docker_tag}"
+            fi
+          elif [[ "${GITHUB_REF}" != "refs/tags"* ]]; then
+            echo "Assuming '${GITHUB_HEAD_REF}' is a branch"
+            if [[ -n "${GITHUB_HEAD_REF}" ]]; then
+                branch="$(echo ${GITHUB_HEAD_REF}| tr -c '[0-9,A-Z,a-z]' '-')"
+                timestamp=$(date --utc -Iseconds | cut -c1-19 | tr -c '[0-9]T\n' '-')
+                short_sha=${GITHUB_SHA:0:8}
+                docker_tag="${branch}-${timestamp}-${short_sha}"
+                docker tag navigator-backend "$ECR_REGISTRY/navigator-backend:${docker_tag}"
+                docker push "$ECR_REGISTRY/navigator-backend:${docker_tag}"
+            fi
+          fi
+
+  manual-semver:
+    if: ${{ always() && startsWith(github.ref, 'refs/tags') }}
+    uses: climatepolicyradar/reusable-workflows/.github/workflows/semver.yml@v3
+    secrets: inherit
+    with:
+      repo-name: navigator-backend
+      semver-tag: main-${GITHUB_SHA::8}
+
+  tag:
+    if: ${{ always() && (needs.build.result == 'success')}}
+    needs: build
+    permissions:
+      contents: write
+    uses: climatepolicyradar/reusable-workflows/.github/workflows/tag.yml@v3
+    with:
+      repo-name: navigator-backend
+      semver-tag: main-${GITHUB_SHA::8}
+    secrets:
+      AWS_ACCESS_KEY_ID: ${{ secrets.AWS_ACCESS_KEY_ID }}
+      AWS_SECRET_ACCESS_KEY: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
+      DOCKER_REGISTRY: ${{ secrets.DOCKER_REGISTRY }}
+
+  release:
+    if: ${{ always() && (needs.tag.result == 'success' && needs.tag.outputs.new_tag != 'Skip')}}
+    needs: tag
+    permissions:
+      contents: write
+    uses: climatepolicyradar/reusable-workflows/.github/workflows/release.yml@v3
+    with:
+      new_tag: ${{ needs.tag.outputs.new_tag }}
