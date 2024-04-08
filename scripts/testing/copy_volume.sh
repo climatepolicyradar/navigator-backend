@@ -14,9 +14,9 @@ test -z "${DEST}" && (
 )
 
 # Create bolume if not existing
-docker volume ls | grep ${DEST} || docker volume create --name ${DEST}
+docker volume ls | grep "${DEST}" || docker volume create --name "${DEST}"
 
 # Do the copy
-docker run --rm -it -v ${SRC}:/from -v ${DEST}:/to alpine ash -c "cd /from ; cp -av . /to"
+docker run --rm -it -v "${SRC}":/from -v "${DEST}":/to alpine ash -c "cd /from ; cp -av . /to"
 
 docker volume ls

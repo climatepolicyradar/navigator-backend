@@ -13,7 +13,7 @@ PASSWORD=${SUPERUSER_PASSWORD:-password}
 
 wait_for_server() {
 	printf 'Waiting for server.'
-	until $(curl --output /dev/null --silent ${TEST_HOST}/health); do
+	until $(curl --output /dev/null --silent "${TEST_HOST}"/health); do
 		printf '.'
 		sleep 1
 	done
@@ -24,7 +24,7 @@ get_token() {
 	curl -s \
 		-H "Content-Type: application/x-www-form-urlencoded" \
 		-d "username=${USER}&password=${PASSWORD}" \
-		${TEST_HOST}/api/tokens |
+		"${TEST_HOST}"/api/tokens |
 		jq ".access_token" | tr -d '"'
 }
 
@@ -33,7 +33,7 @@ validate_csv() {
 	curl -s \
 		-H "Authorization: Bearer ${TOKEN}" \
 		-F "law_policy_csv=@${CSV_FILE}" \
-		${TEST_HOST}/api/v1/admin/bulk-ingest/validate/cclw
+		"${TEST_HOST}"/api/v1/admin/bulk-ingest/validate/cclw
 }
 
 echo "Validating as ${USER}"
