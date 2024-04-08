@@ -1,9 +1,9 @@
 """Functions to support browsing the RDS document structure"""
 
-from typing import Optional
 import zipfile
 from io import BytesIO, StringIO
 from logging import getLogger
+from typing import Optional
 
 import pandas as pd
 from fastapi import Depends
