@@ -9,7 +9,10 @@ ifneq (,$(wildcard ./.env))
 	exit 1
 endif
 
-dev_install: check_dev_environment
+configure_pyright:
+	trunk actions run configure-pyright-with-pyenv
+
+dev_install: install_trunk check_dev_environment
 	# Sets up a local dev environment
 
 	# Copy .env
@@ -20,9 +23,20 @@ dev_install: check_dev_environment
 	pip install "poetry==1.7.1"
 
 	make poetry_environment
-	make git_hooks
+	make configure_pyright
 
 create_venv:
 	- pyenv deactivate
 	pyenv virtualenv 3.9 backend
 	pyenv activate backend
+
+install_trunk:
+	$(eval trunk_installed=$(shell trunk --version > /dev/null 2>&1 ; echo $$? ))
+ifneq (${trunk_installed},0)
+	$(eval OS_NAME=$(shell uname -s | tr A-Z a-z))
+	curl https://get.trunk.io -fsSL | bash
+endif
+
+uninstall_trunk:
+	sudo rm -if `which trunk`
+	rm -ifr ${HOME}/.cache/trunk
