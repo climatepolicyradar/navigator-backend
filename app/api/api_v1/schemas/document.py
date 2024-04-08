@@ -3,7 +3,7 @@ from typing import Any, Mapping, Optional, Sequence, Union
 
 from pydantic import BaseModel, ConfigDict, field_validator
 
-from . import CLIMATE_LAWS_MATCH
+from app.api.api_v1.schemas import CLIMATE_LAWS_MATCH
 
 Json = dict[str, Any]
 
