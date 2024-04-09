@@ -5,16 +5,15 @@ import uuid
 import pytest
 from cpr_data_access.embedding import Embedder
 from cpr_data_access.search_adaptors import Vespa, VespaSearchAdapter
+from db_client import run_migrations
+from db_client.models import Base
+from db_client.models.organisation import AppUser
 from fastapi.testclient import TestClient
 from moto import mock_s3
 from sqlalchemy import create_engine
-from sqlalchemy.orm import sessionmaker
 from sqlalchemy.engine import Connection
+from sqlalchemy.orm import sessionmaker
 from sqlalchemy_utils import create_database, database_exists, drop_database
-
-from db_client.models.organisation import AppUser
-from db_client.models import Base
-from db_client import run_migrations
 
 from app.core import security
 from app.core.aws import S3Client, get_s3_client
