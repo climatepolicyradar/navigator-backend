@@ -245,7 +245,7 @@ def test_create_vespa_search_params(
         )
         assert converted_keyword_filters
         assert produced_search_parameters.filters == DataAccessFilters(
-            **converted_keyword_filters
+            **converted_keyword_filters  # type: ignore
         )
     else:
         assert not produced_search_parameters.keyword_filters
