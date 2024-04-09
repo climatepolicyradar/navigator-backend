@@ -38,10 +38,7 @@ from app.api.api_v1.schemas.search import (
     SearchResponseFamily,
     SearchResponseFamilyDocument,
 )
-from app.core.config import (
-    INDEX_ENCODER_CACHE_FOLDER,
-    PUBLIC_APP_URL,
-)
+from app.core.config import INDEX_ENCODER_CACHE_FOLDER, PUBLIC_APP_URL
 from app.core.lookups import get_countries_for_region, get_countries_for_slugs
 from app.core.util import to_cdn_url
 

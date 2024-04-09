@@ -6,10 +6,7 @@ from db_client.models.dfce import FamilyCategory
 from pydantic import BaseModel, Field, PrivateAttr, field_validator, model_validator
 from typing_extensions import Annotated
 
-from app.core.config import (
-    VESPA_SEARCH_LIMIT,
-    VESPA_SEARCH_MATCHES_PER_DOC,
-)
+from app.core.config import VESPA_SEARCH_LIMIT, VESPA_SEARCH_MATCHES_PER_DOC
 
 from . import CLIMATE_LAWS_MATCH
 

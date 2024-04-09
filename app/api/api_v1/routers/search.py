@@ -5,6 +5,7 @@ All endpoints should perform document searches using the SearchRequestBody as
 its input. The individual endpoints will return different responses tailored
 for the type of document search being performed.
 """
+
 import logging
 from io import BytesIO
 

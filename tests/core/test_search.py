@@ -4,25 +4,13 @@ from datetime import datetime
 from typing import Sequence
 
 import pytest
-from cpr_sdk.models.search import (
-    Document as DataAccessDocument,
-)
-from cpr_sdk.models.search import (
-    Family as DataAccessFamily,
-)
+from cpr_sdk.models.search import Document as DataAccessDocument
+from cpr_sdk.models.search import Family as DataAccessFamily
 from cpr_sdk.models.search import Filters as DataAccessFilters
-from cpr_sdk.models.search import (
-    Hit as DataAccessHit,
-)
-from cpr_sdk.models.search import (
-    Passage as DataAccessPassage,
-)
-from cpr_sdk.models.search import (
-    SearchResponse as DataAccessSearchResponse,
-)
-from cpr_sdk.models.search import (
-    filter_fields,
-)
+from cpr_sdk.models.search import Hit as DataAccessHit
+from cpr_sdk.models.search import Passage as DataAccessPassage
+from cpr_sdk.models.search import SearchResponse as DataAccessSearchResponse
+from cpr_sdk.models.search import filter_fields
 from db_client.models.dfce import (
     DocumentStatus,
     EventStatus,
