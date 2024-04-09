@@ -1,16 +1,16 @@
 import random
 from dataclasses import dataclass
 from datetime import datetime
-from typing import Sequence
+from typing import Mapping, Sequence, Union
 
 import pytest
-from cpr_data_access.models.search import Document as DataAccessDocument
-from cpr_data_access.models.search import Family as DataAccessFamily
-from cpr_data_access.models.search import Filters as DataAccessFilters
-from cpr_data_access.models.search import Hit as DataAccessHit
-from cpr_data_access.models.search import Passage as DataAccessPassage
-from cpr_data_access.models.search import SearchResponse as DataAccessSearchResponse
-from cpr_data_access.models.search import filter_fields
+from cpr_sdk.models.search import Document as CprSdkDocument
+from cpr_sdk.models.search import Family as CprSdkFamily
+from cpr_sdk.models.search import Filters as CprSdkFilters
+from cpr_sdk.models.search import Hit as CprSdkHit
+from cpr_sdk.models.search import Passage as CprSdkPassage
+from cpr_sdk.models.search import SearchResponse as CprSdkSearchResponse
+from cpr_sdk.models.search import filter_fields
 from db_client.models.dfce import (
     DocumentStatus,
     EventStatus,
@@ -205,12 +205,16 @@ def test_create_vespa_search_params(
     search_request_body = SearchRequestBody(
         query_string=query_string,
         exact_match=exact_match,
-        max_passages_per_doc=max_passages,
+        # The SearchParameters model provides allows this field as an alias for
+        # max_hits_per_family.
+        max_passages_per_doc=max_passages,  # type: ignore
         family_ids=family_ids,
         document_ids=document_ids,
         keyword_filters=keyword_filters,
         year_range=year_range,
-        sort_field=sort_field,
+        # The SearchParameters model provides allows this field as an alias for
+        # max_hits_per_family.
+        sort_field=sort_field,  # type: ignore
         sort_order=sort_order,
         limit=limit,
         offset=offset,
@@ -236,8 +240,32 @@ def test_create_vespa_search_params(
 
     # Test converted data
     if keyword_filters:
-        assert produced_search_parameters.filters == DataAccessFilters(
-            **_convert_filters(data_db, keyword_filters)
+        converted_keyword_filters: Union[Mapping[str, Sequence[str]], None] = (
+            _convert_filters(data_db, keyword_filters)
+        )
+        assert converted_keyword_filters is not None
+        assert produced_search_parameters.filters is not None
+        assert produced_search_parameters.filters == CprSdkFilters(
+            family_geography=(
+                converted_keyword_filters["family_geography"]
+                if "family_geography" in converted_keyword_filters.keys()
+                else []
+            ),
+            family_category=(
+                converted_keyword_filters["family_category"]
+                if "family_category" in converted_keyword_filters.keys()
+                else []
+            ),
+            document_languages=(
+                converted_keyword_filters["document_languages"]
+                if "document_languages" in converted_keyword_filters.keys()
+                else []
+            ),
+            family_source=(
+                converted_keyword_filters["family_source"]
+                if "family_source" in converted_keyword_filters.keys()
+                else []
+            ),
         )
     else:
         assert not produced_search_parameters.keyword_filters
@@ -443,7 +471,7 @@ def _generate_coords():
     ]
 
 
-def _generate_search_response_hits(spec: FamSpec) -> Sequence[DataAccessHit]:
+def _generate_search_response_hits(spec: FamSpec) -> Sequence[CprSdkHit]:
     random.seed(spec.random_seed)
     doc_data = {}
     hits = []
@@ -454,7 +482,7 @@ def _generate_search_response_hits(spec: FamSpec) -> Sequence[DataAccessHit]:
             "languages": random.sample(_LANGUAGES, random.randint(1, 3)),
         }
         hits.append(
-            DataAccessDocument(
+            CprSdkDocument(
                 family_import_id=spec.family_import_id,
                 family_name=spec.family_name,
                 family_description=spec.family_description,
@@ -485,7 +513,7 @@ def _generate_search_response_hits(spec: FamSpec) -> Sequence[DataAccessHit]:
                 "languages": random.sample(_LANGUAGES, random.randint(1, 3)),
             }
         hits.append(
-            DataAccessPassage(
+            CprSdkPassage(
                 family_import_id=spec.family_import_id,
                 family_name=spec.family_name,
                 family_description=spec.family_description,
@@ -527,18 +555,18 @@ def _generate_search_response_hits(spec: FamSpec) -> Sequence[DataAccessHit]:
     return hits
 
 
-def _generate_search_response(specs: Sequence[FamSpec]) -> DataAccessSearchResponse:
+def _generate_search_response(specs: Sequence[FamSpec]) -> CprSdkSearchResponse:
     families = []
     for fam_spec in specs:
         passage_hits = _generate_search_response_hits(fam_spec)
-        f = DataAccessFamily(
+        f = CprSdkFamily(
             id=fam_spec.family_import_id,
             hits=passage_hits,
             total_passage_hits=(len(passage_hits) * 10),
         )
         families.append(f)
 
-    return DataAccessSearchResponse(
+    return CprSdkSearchResponse(
         total_hits=len(specs),
         total_family_hits=(len(families) * 4),
         query_time_ms=87 * len(specs),
