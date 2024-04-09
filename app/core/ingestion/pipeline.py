@@ -1,21 +1,19 @@
+import logging
 from datetime import datetime, timezone
 from typing import Any, Sequence, Tuple, cast
-import logging
 
-
+from db_client.models.dfce.family import (
+    Corpus,
+    Family,
+    FamilyCorpus,
+    FamilyDocument,
+    Geography,
+)
+from db_client.models.dfce.metadata import FamilyMetadata
+from db_client.models.organisation import Organisation
 from sqlalchemy.orm import Session
 
 from app.api.api_v1.schemas.document import DocumentParserInput
-from db_client.models.organisation import Organisation
-from db_client.models.dfce.family import (
-    Family,
-    FamilyDocument,
-    Geography,
-    FamilyCorpus,
-    Corpus,
-)
-from db_client.models.dfce.metadata import FamilyMetadata
-
 
 _LOGGER = logging.getLogger(__name__)
 

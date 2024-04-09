@@ -7,12 +7,7 @@ import pytest
 
 from app.api.api_v1.schemas.document import DocumentParserInput
 from app.core.validation import IMPORT_ID_MATCHER, PIPELINE_BUCKET
-
-from app.core.validation.util import (
-    _flatten_maybe_tree,
-    write_documents_to_s3,
-)
-
+from app.core.validation.util import _flatten_maybe_tree, write_documents_to_s3
 
 NOT_A_TREE_1 = [{"name": 1}, {"name": 2}, {"name": 3}]
 NOT_A_TREE_2 = [

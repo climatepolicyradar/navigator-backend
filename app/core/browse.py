@@ -5,6 +5,9 @@ from logging import getLogger
 from time import perf_counter_ns
 from typing import Optional, Sequence, cast
 
+from db_client.models.dfce.family import Corpus, Family, FamilyCorpus, FamilyStatus
+from db_client.models.dfce.geography import Geography
+from db_client.models.organisation import Organisation
 from pydantic import BaseModel
 from sqlalchemy.orm import Session
 
@@ -14,14 +17,6 @@ from app.api.api_v1.schemas.search import (
     SortField,
     SortOrder,
 )
-from db_client.models.dfce.family import (
-    Family,
-    FamilyStatus,
-    FamilyCorpus,
-    Corpus,
-)
-from db_client.models.dfce.geography import Geography
-from db_client.models.organisation import Organisation
 
 _LOGGER = getLogger(__name__)
 

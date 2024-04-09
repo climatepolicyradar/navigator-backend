@@ -1,6 +1,7 @@
 import pytest
 from sqlalchemy.exc import NoResultFound
 from sqlalchemy.orm import Session
+
 from app.core.organisation import get_organisation_taxonomy
 from tests.routes.setup_helpers import setup_with_docs
 

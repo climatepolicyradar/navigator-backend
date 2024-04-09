@@ -1,7 +1,8 @@
+from db_client.models.dfce.family import Family, FamilyDocument, FamilyEvent
+from fastapi.testclient import TestClient
 from sqlalchemy import update
 from sqlalchemy.orm import Session
-from fastapi.testclient import TestClient
-from db_client.models.dfce.family import Family, FamilyDocument, FamilyEvent
+
 from tests.routes.setup_helpers import (
     setup_with_docs,
     setup_with_two_docs,

@@ -17,9 +17,7 @@ from app.api.api_v1.routers.auth import auth_router
 from app.api.api_v1.routers.documents import documents_router
 from app.api.api_v1.routers.geographies import geographies_router
 from app.api.api_v1.routers.lookups import lookups_router
-from app.api.api_v1.routers.pipeline_trigger import (
-    pipeline_trigger_router,
-)
+from app.api.api_v1.routers.pipeline_trigger import pipeline_trigger_router
 from app.api.api_v1.routers.search import search_router
 from app.api.api_v1.routers.summaries import summary_router
 from app.core import config

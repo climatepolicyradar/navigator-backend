@@ -1,17 +1,12 @@
 from http.client import OK
 from typing import Any
 from unittest.mock import MagicMock
-from db_client.models.dfce.family import (
-    Family,
-    FamilyCategory,
-    FamilyCorpus,
-)
-from db_client.models.organisation import Corpus, Organisation
 
 import pytest
+from db_client.models.dfce.family import Family, FamilyCategory, FamilyCorpus
+from db_client.models.organisation import Corpus, Organisation
 
 from app.core.util import tree_table_to_json
-
 from app.db.session import SessionLocal
 
 
