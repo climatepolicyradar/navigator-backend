@@ -1,12 +1,13 @@
-import pytest
 from datetime import datetime
+
+import pytest
 
 from app.api.api_v1.schemas.document import FamilyDocumentResponse
 from app.api.api_v1.schemas.search import (
-    SearchResponseDocumentPassage,
-    SearchResponseFamilyDocument,
-    SearchResponseFamily,
     SearchResponse,
+    SearchResponseDocumentPassage,
+    SearchResponseFamily,
+    SearchResponseFamilyDocument,
 )
 
 CLIMATE_LAWS_DOMAIN_PATHS = [

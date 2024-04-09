@@ -1,21 +1,19 @@
 from dataclasses import asdict
 from typing import cast
-from sqlalchemy.orm import Session
-from sqlalchemy import func
-from app.api.api_v1.schemas.metadata import OrganisationConfig, TaxonomyData
+
 from db_client.models.dfce.family import (
-    FamilyEventType,
+    Corpus,
     Family,
     FamilyCategory,
     FamilyCorpus,
-    Corpus,
+    FamilyEventType,
 )
-from db_client.models.organisation import (
-    Organisation,
-    CorpusType,
-)
-
 from db_client.models.dfce.taxonomy_entry import Taxonomy, TaxonomyEntry
+from db_client.models.organisation import CorpusType, Organisation
+from sqlalchemy import func
+from sqlalchemy.orm import Session
+
+from app.api.api_v1.schemas.metadata import OrganisationConfig, TaxonomyData
 
 
 def get_organisation_taxonomy(db: Session, org_id: int) -> Taxonomy:

@@ -1,14 +1,13 @@
 from typing import Any, Optional, cast
 
 import jwt
+from db_client.models.organisation import AppUser
 from fastapi import Depends, HTTPException, status
 from jwt import PyJWTError
 
+from app.api.api_v1.schemas.user import JWTUser
 from app.core import security
 from app.db.crud.user import get_app_user_by_email
-from db_client.models.organisation import AppUser
-from app.api.api_v1.schemas.user import JWTUser
-
 
 CREDENTIALS_EXCEPTION = HTTPException(
     status_code=status.HTTP_401_UNAUTHORIZED,

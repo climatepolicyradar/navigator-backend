@@ -3,9 +3,8 @@ import random
 import string
 from typing import Any, Optional
 
-from sqlalchemy.orm import Session
-
 from db_client.models import AnyModel
+from sqlalchemy.orm import Session
 
 CDN_DOMAIN: str = os.getenv("CDN_DOMAIN", "cdn.climatepolicyradar.org")
 # TODO: remove & replace with proper content-type handling through pipeline

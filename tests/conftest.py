@@ -107,6 +107,9 @@ def test_db(scope="function"):
     if database_exists(test_db_url):
         drop_database(test_db_url)
     create_database(test_db_url)
+
+    test_session = None
+    connection = None
     try:
         test_engine = create_engine(test_db_url)
         connection = test_engine.connect()
@@ -121,8 +124,11 @@ def test_db(scope="function"):
         # Run the tests
         yield test_session
     finally:
-        test_session.close()
-        connection.close()
+        if test_session is not None:
+            test_session.close()
+        if connection is not None:
+            connection.close()
+
         # Drop the test database
         drop_database(test_db_url)
 
