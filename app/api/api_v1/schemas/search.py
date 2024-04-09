@@ -1,18 +1,13 @@
 from enum import Enum
-from typing import List, Mapping, Optional, Sequence
+from typing import List, Literal, Mapping, Optional, Sequence
 
-from pydantic import field_validator, Field, BaseModel, PrivateAttr, model_validator
-from typing import Literal
-
-from db_client.models.dfce import FamilyCategory
-from . import CLIMATE_LAWS_MATCH
-from typing_extensions import Annotated
 from cpr_data_access.models.search import SearchParameters as DataAccessSearchParameters
+from db_client.models.dfce import FamilyCategory
+from pydantic import BaseModel, Field, PrivateAttr, field_validator, model_validator
+from typing_extensions import Annotated
 
-from app.core.config import (
-    VESPA_SEARCH_LIMIT,
-    VESPA_SEARCH_MATCHES_PER_DOC,
-)
+from app.api.api_v1.schemas import CLIMATE_LAWS_MATCH
+from app.core.config import VESPA_SEARCH_LIMIT, VESPA_SEARCH_MATCHES_PER_DOC
 
 Coord = tuple[float, float]
 

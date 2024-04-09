@@ -24,6 +24,8 @@ runtimes:
 # This is the section where you manage your linters.
 # (https://docs.trunk.io/check/configuration)
 lint:
+  disabled:
+    - oxipng
   definitions:
     - name: bandit
       direct_configs: [bandit.yaml]
@@ -37,6 +39,10 @@ lint:
         # Ignore test data JSON files
         - tests/data/**/*.json
         - tests/search_fixtures/**/*.json
+        - scripts/**
+    - linters: [markdownlint]
+      paths:
+        - LICENSE.md
 
   enabled:
     - actionlint@1.6.27
@@ -48,7 +54,6 @@ lint:
     - isort@5.13.2
     - markdownlint@0.39.0
     - osv-scanner@1.7.0
-    - oxipng@9.0.0
     - pre-commit-hooks@4.5.0:
         commands:
           - check-ast

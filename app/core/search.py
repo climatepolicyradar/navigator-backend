@@ -8,28 +8,10 @@ from typing import Any, Mapping, Optional, Sequence, cast
 from cpr_data_access.embedding import Embedder
 from cpr_data_access.models.search import Document as DataAccessResponseDocument
 from cpr_data_access.models.search import Family as DataAccessResponseFamily
+from cpr_data_access.models.search import Filters as DataAccessKeywordFilters
 from cpr_data_access.models.search import Passage as DataAccessResponsePassage
 from cpr_data_access.models.search import SearchResponse as DataAccessSearchResponse
-from cpr_data_access.models.search import Filters as DataAccessKeywordFilters
 from cpr_data_access.models.search import filter_fields
-from sqlalchemy.orm import Session
-
-from app.api.api_v1.schemas.search import (
-    FilterField,
-    BackendFilterValues,
-    SearchRequestBody,
-    SearchResponse,
-    SearchResponseDocumentPassage,
-    SearchResponseFamily,
-    SearchResponseFamilyDocument,
-)
-from app.core.config import (
-    INDEX_ENCODER_CACHE_FOLDER,
-    PUBLIC_APP_URL,
-)
-from app.core.lookups import get_countries_for_region, get_countries_for_slugs
-from app.core.util import to_cdn_url
-from db_client.models.organisation import Organisation
 from db_client.models.dfce import (
     Collection,
     CollectionFamily,
@@ -39,11 +21,26 @@ from db_client.models.dfce import (
     Slug,
 )
 from db_client.models.dfce.family import (
-    DocumentStatus,
-    FamilyStatus,
-    FamilyCorpus,
     Corpus,
+    DocumentStatus,
+    FamilyCorpus,
+    FamilyStatus,
 )
+from db_client.models.organisation import Organisation
+from sqlalchemy.orm import Session
+
+from app.api.api_v1.schemas.search import (
+    BackendFilterValues,
+    FilterField,
+    SearchRequestBody,
+    SearchResponse,
+    SearchResponseDocumentPassage,
+    SearchResponseFamily,
+    SearchResponseFamilyDocument,
+)
+from app.core.config import INDEX_ENCODER_CACHE_FOLDER, PUBLIC_APP_URL
+from app.core.lookups import get_countries_for_region, get_countries_for_slugs
+from app.core.util import to_cdn_url
 
 _LOGGER = logging.getLogger(__name__)
 

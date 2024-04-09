@@ -7,17 +7,17 @@ Requires:
 3) GOOGLE_SERVICE_ACCOUNT is set in the current environment, with the
     contents of the json service account details (downloaded when created)
 """
-from __future__ import print_function
-import json
 
+from __future__ import print_function
+
+import json
 from os import environ
 
 # https://developers.google.com/sheets/api/quickstart/python
 # https://googleapis.dev/python/google-auth/latest/_modules/google/oauth2/service_account.html
 from google.oauth2 import service_account
-from googleapiclient.discovery import build, Resource
+from googleapiclient.discovery import Resource, build
 from googleapiclient.errors import HttpError
-
 
 # If modifying these scopes, delete the file token.json.
 SCOPES = ["https://www.googleapis.com/auth/spreadsheets.readonly"]

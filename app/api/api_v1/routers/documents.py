@@ -1,24 +1,18 @@
-from http.client import NOT_FOUND
 import logging
+from http.client import NOT_FOUND
 from typing import Union
 
-from fastapi import (
-    APIRouter,
-    Depends,
-    HTTPException,
-)
-
-from app.db.crud.document import (
-    get_family_and_documents,
-    get_family_document_and_context,
-    get_slugged_objects,
-)
+from fastapi import APIRouter, Depends, HTTPException
 
 from app.api.api_v1.schemas.document import (
     FamilyAndDocumentsResponse,
     FamilyDocumentWithContextResponse,
 )
-
+from app.db.crud.document import (
+    get_family_and_documents,
+    get_family_document_and_context,
+    get_slugged_objects,
+)
 from app.db.session import get_db
 
 _LOGGER = logging.getLogger(__file__)

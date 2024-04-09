@@ -30,9 +30,9 @@ make migrations_docker_loader
 For more information see
 [Alembic's official documentation](https://alembic.sqlalchemy.org/en/latest/tutorial.html#create-a-migration-script).
 
-### Local dev environment
+### Local environment
 
-In app root:
+In the app root:
 
 ```shell
 alembic revision --autogenerate -m "[revision message]"
@@ -44,9 +44,9 @@ More specifically
 PYTHONPATH=. DATABASE_URL=postgresql://navigator:password@localhost:5432/navigator alembic revision --autogenerate -m "[revision message]"
 ```
 
-### Docker dev environment
+### Docker environment
 
-In project root:
+In the project root:
 
 ```shell
 make new_migration_backend "[revision message]"

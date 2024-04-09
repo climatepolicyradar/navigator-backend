@@ -1,31 +1,18 @@
 import random
 from dataclasses import dataclass
 from datetime import datetime
-from slugify import slugify
 from typing import Sequence
 
 import pytest
+from cpr_data_access.models.search import Document as DataAccessDocument
+from cpr_data_access.models.search import Family as DataAccessFamily
 from cpr_data_access.models.search import Filters as DataAccessFilters
-from cpr_data_access.models.search import (
-    Document as DataAccessDocument,
-    Family as DataAccessFamily,
-    Hit as DataAccessHit,
-    Passage as DataAccessPassage,
-    SearchResponse as DataAccessSearchResponse,
-    filter_fields,
-)
-from sqlalchemy.orm import Session
-
-from app.core.config import VESPA_SEARCH_MATCHES_PER_DOC, VESPA_SEARCH_LIMIT
-from app.core.search import (
-    SearchRequestBody,
-    create_vespa_search_params,
-    process_vespa_search_response,
-    _convert_filters,
-)
-
-from db_client.models.document import PhysicalDocument
+from cpr_data_access.models.search import Hit as DataAccessHit
+from cpr_data_access.models.search import Passage as DataAccessPassage
+from cpr_data_access.models.search import SearchResponse as DataAccessSearchResponse
+from cpr_data_access.models.search import filter_fields
 from db_client.models.dfce import (
+    DocumentStatus,
     EventStatus,
     Family,
     FamilyCategory,
@@ -33,7 +20,17 @@ from db_client.models.dfce import (
     FamilyEvent,
     FamilyMetadata,
     Geography,
-    DocumentStatus,
+)
+from db_client.models.document import PhysicalDocument
+from slugify import slugify
+from sqlalchemy.orm import Session
+
+from app.core.config import VESPA_SEARCH_LIMIT, VESPA_SEARCH_MATCHES_PER_DOC
+from app.core.search import (
+    SearchRequestBody,
+    _convert_filters,
+    create_vespa_search_params,
+    process_vespa_search_response,
 )
 
 

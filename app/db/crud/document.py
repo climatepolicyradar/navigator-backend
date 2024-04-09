@@ -20,9 +20,7 @@ from db_client.models.dfce.family import (
 )
 from db_client.models.dfce.geography import Geography
 from db_client.models.dfce.metadata import FamilyMetadata
-from db_client.models.document.physical_document import (
-    PhysicalDocument,
-)
+from db_client.models.document.physical_document import PhysicalDocument
 from db_client.models.organisation.organisation import Organisation
 from sqlalchemy.orm import Session
 

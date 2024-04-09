@@ -1,22 +1,22 @@
 from typing import List, Tuple
-from sqlalchemy.orm import Session
 
 from db_client.models.dfce import (
     Collection,
-    Family,
-    CollectionOrganisation,
     CollectionFamily,
+    CollectionOrganisation,
+    Family,
     FamilyDocument,
     FamilyEvent,
-    Slug,
     FamilyMetadata,
-)
-from db_client.models.document.physical_document import (
-    PhysicalDocument,
-    PhysicalDocumentLanguage,
-    Language,
+    Slug,
 )
 from db_client.models.dfce.family import FamilyCorpus
+from db_client.models.document.physical_document import (
+    Language,
+    PhysicalDocument,
+    PhysicalDocumentLanguage,
+)
+from sqlalchemy.orm import Session
 
 
 def add_collections(db: Session, collections, org_id=1):

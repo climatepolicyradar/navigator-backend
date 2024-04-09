@@ -4,10 +4,10 @@ from typing import cast
 from fastapi import APIRouter, Depends, HTTPException, status
 from fastapi.security import OAuth2PasswordRequestForm
 
-from app.core.security import create_access_token
 from app.core.auth import authenticate_user
-from app.db.session import get_db
+from app.core.security import create_access_token
 from app.db.crud.user import get_app_user_authorisation
+from app.db.session import get_db
 
 auth_router = r = APIRouter()
 

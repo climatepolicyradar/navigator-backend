@@ -1,26 +1,22 @@
+import logging
 from typing import Optional, Sequence, cast
 
-from sqlalchemy.orm import Session
-from sqlalchemy.exc import MultipleResultsFound
-from app.api.api_v1.schemas.metadata import ApplicationConfig
-from app.core.organisation import (
-    get_organisation_config,
-)
-
-from app.core.util import tree_table_to_json
-from app.core.validation import IMPORT_ID_MATCHER
-from db_client.models.organisation import Organisation
-from db_client.models.document.physical_document import Language
 from db_client.models.dfce import (
-    Geography,
     FamilyDocumentRole,
     FamilyDocumentType,
+    Geography,
     Variant,
 )
 from db_client.models.dfce.family import FamilyDocument, Slug
+from db_client.models.document.physical_document import Language
+from db_client.models.organisation import Organisation
+from sqlalchemy.exc import MultipleResultsFound
+from sqlalchemy.orm import Session
 
-
-import logging
+from app.api.api_v1.schemas.metadata import ApplicationConfig
+from app.core.organisation import get_organisation_config
+from app.core.util import tree_table_to_json
+from app.core.validation import IMPORT_ID_MATCHER
 
 _LOGGER = logging.getLogger(__name__)
 
