@@ -11,6 +11,7 @@ from db_client.models.organisation import AppUser
 from fastapi.testclient import TestClient
 from moto import mock_s3
 from sqlalchemy import create_engine
+from sqlalchemy.engine import Connection
 from sqlalchemy.orm import sessionmaker
 from sqlalchemy_utils import create_database, database_exists, drop_database
 
@@ -133,52 +134,42 @@ def test_db(scope="function"):
         drop_database(test_db_url)
 
 
-@pytest.fixture
-def data_db(scope="function"):
-    """
-    Create a fresh test database for each test.
-
-    This will populate the db using the alembic migrations.
-    Therefore it is slower but contains data.
-
-    Note: use with `data_client`
-
-    """
+@pytest.fixture(scope="session")
+def data_db_connection() -> t.Generator[Connection, None, None]:
     test_db_url = get_test_db_url()
 
-    # Create the test database
     if database_exists(test_db_url):
         drop_database(test_db_url)
     create_database(test_db_url)
-    # Save DATABASE_URL
-    saved = os.environ["DATABASE_URL"]
+
+    saved_db_url = os.environ["DATABASE_URL"]
     os.environ["DATABASE_URL"] = test_db_url
-    connection = None
-    test_session = None
-    try:
-        test_engine = create_engine(test_db_url)
-        connection = test_engine.connect()
 
-        run_migrations(test_engine)
+    test_engine = create_engine(test_db_url)
 
-        test_session_maker = sessionmaker(
-            autocommit=False,
-            autoflush=False,
-            bind=test_engine,
-        )
-        test_session = test_session_maker()
+    run_migrations(test_engine)
+    connection = test_engine.connect()
 
-        # Run the tests
-        yield test_session
-    finally:
-        # restore DATABASE_URL
-        os.environ["DATABASE_URL"] = saved
-        if test_session is not None:
-            test_session.close()
-        if connection is not None:
-            connection.close()
-        # Drop the test database
-        drop_database(test_db_url)
+    yield connection
+    connection.close()
+
+    os.environ["DATABASE_URL"] = saved_db_url
+    drop_database(test_db_url)
+
+
+@pytest.fixture(scope="function")
+def data_db(data_db_connection):
+    transaction = data_db_connection.begin()
+
+    SessionLocal = sessionmaker(
+        autocommit=False, autoflush=False, bind=data_db_connection
+    )
+    session = SessionLocal()
+
+    yield session
+
+    session.close()
+    transaction.rollback()
 
 
 @pytest.fixture
