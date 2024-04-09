@@ -1,7 +1,7 @@
 import random
 from dataclasses import dataclass
 from datetime import datetime
-from typing import Sequence
+from typing import Mapping, Sequence, Union
 
 import pytest
 from cpr_sdk.models.search import Document as DataAccessDocument
@@ -240,8 +240,12 @@ def test_create_vespa_search_params(
 
     # Test converted data
     if keyword_filters:
+        converted_keyword_filters: Union[Mapping[str, Sequence[str]], None] = (
+            _convert_filters(data_db, keyword_filters)
+        )
+        assert converted_keyword_filters
         assert produced_search_parameters.filters == DataAccessFilters(
-            **_convert_filters(data_db, keyword_filters)
+            **converted_keyword_filters
         )
     else:
         assert not produced_search_parameters.keyword_filters
