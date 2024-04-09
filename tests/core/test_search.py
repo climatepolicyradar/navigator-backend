@@ -205,12 +205,16 @@ def test_create_vespa_search_params(
     search_request_body = SearchRequestBody(
         query_string=query_string,
         exact_match=exact_match,
-        max_passages_per_doc=max_passages,
+        # The SearchParameters model provides allows this field as an alias for
+        # max_hits_per_family.
+        max_passages_per_doc=max_passages,  # type: ignore
         family_ids=family_ids,
         document_ids=document_ids,
         keyword_filters=keyword_filters,
         year_range=year_range,
-        sort_field=sort_field,
+        # The SearchParameters model provides allows this field as an alias for
+        # max_hits_per_family.
+        sort_field=sort_field,  # type: ignore
         sort_order=sort_order,
         limit=limit,
         offset=offset,

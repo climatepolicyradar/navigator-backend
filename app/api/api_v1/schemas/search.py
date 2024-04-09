@@ -6,9 +6,8 @@ from db_client.models.dfce import FamilyCategory
 from pydantic import BaseModel, Field, PrivateAttr, field_validator, model_validator
 from typing_extensions import Annotated
 
+from app.api.api_v1.schemas import CLIMATE_LAWS_MATCH
 from app.core.config import VESPA_SEARCH_LIMIT, VESPA_SEARCH_MATCHES_PER_DOC
-
-from . import CLIMATE_LAWS_MATCH
 
 Coord = tuple[float, float]
 
@@ -47,6 +46,7 @@ class SearchRequestBody(DataAccessSearchParameters):
     """The request body expected by the search API endpoint."""
 
     # Query string should be required in backend (its not in dal)
+    # trunk-ignore(pyright/reportIncompatibleVariableOverride)
     query_string: str
 
     # We need to add `keyword_filters` here because the items recieved from the frontend

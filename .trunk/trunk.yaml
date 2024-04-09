@@ -49,7 +49,7 @@ lint:
     - markdownlint@0.39.0
     - osv-scanner@1.7.0
     - oxipng@9.0.0
-    - pre-commit-hooks@4.5.0:
+    - pre-commit-hooks@4.6.0:
         commands:
           - check-ast
           - check-case-conflict
