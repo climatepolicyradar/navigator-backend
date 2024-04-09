@@ -1,6 +1,6 @@
 import os
 import uuid
-from typing import Optional
+from typing import Dict, Optional
 
 import pytest
 from cpr_sdk.embedding import Embedder
@@ -280,7 +280,7 @@ def verify_password_mock(first: str, second: str) -> bool:
 @pytest.fixture
 def superuser_token_headers(
     test_client: TestClient, test_superuser, test_password, monkeypatch
-) -> t.Dict[str, str]:
+) -> Dict[str, str]:
     monkeypatch.setattr(security, "verify_password", verify_password_mock)
 
     login_data = {
@@ -297,7 +297,7 @@ def superuser_token_headers(
 @pytest.fixture
 def data_superuser_token_headers(
     data_client: TestClient, data_superuser, test_password, monkeypatch
-) -> t.Dict[str, str]:
+) -> Dict[str, str]:
     monkeypatch.setattr(security, "verify_password", verify_password_mock)
 
     login_data = {
