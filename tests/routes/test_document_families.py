@@ -53,10 +53,7 @@ def test_physical_doc_languages_not_visible(
     data_db: Session,
 ):
     setup_with_two_docs(data_db)
-    data_db.execute(
-        update(PhysicalDocumentLanguage)
-        .values(visible=False)
-    )
+    data_db.execute(update(PhysicalDocumentLanguage).values(visible=False))
 
     response = data_client.get(
         "/api/v1/documents/DocSlug1",
