@@ -1,7 +1,7 @@
 from enum import Enum
 from typing import List, Literal, Mapping, Optional, Sequence
 
-from cpr_sdk.models.search import SearchParameters as DataAccessSearchParameters
+from cpr_sdk.models.search import SearchParameters as CprSdkSearchParameters
 from db_client.models.dfce import FamilyCategory
 from pydantic import BaseModel, Field, PrivateAttr, field_validator, model_validator
 from typing_extensions import Annotated
@@ -42,7 +42,7 @@ BackendFilterValues = Literal[
 BackendKeywordFilter = Optional[Mapping[BackendFilterValues, Sequence[str]]]
 
 
-class SearchRequestBody(DataAccessSearchParameters):
+class SearchRequestBody(CprSdkSearchParameters):
     """The request body expected by the search API endpoint."""
 
     # Query string should be required in backend (its not in dal)

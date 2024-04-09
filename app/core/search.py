@@ -6,11 +6,11 @@ from io import StringIO
 from typing import Any, Mapping, Optional, Sequence, cast
 
 from cpr_sdk.embedding import Embedder
-from cpr_sdk.models.search import Document as DataAccessResponseDocument
-from cpr_sdk.models.search import Family as DataAccessResponseFamily
-from cpr_sdk.models.search import Filters as DataAccessKeywordFilters
-from cpr_sdk.models.search import Passage as DataAccessResponsePassage
-from cpr_sdk.models.search import SearchResponse as DataAccessSearchResponse
+from cpr_sdk.models.search import Document as CprSdkResponseDocument
+from cpr_sdk.models.search import Family as CprSdkResponseFamily
+from cpr_sdk.models.search import Filters as CprSdkKeywordFilters
+from cpr_sdk.models.search import Passage as CprSdkResponsePassage
+from cpr_sdk.models.search import SearchResponse as CprSdkSearchResponse
 from cpr_sdk.models.search import filter_fields
 from db_client.models.dfce import (
     Collection,
@@ -322,7 +322,7 @@ def _convert_filters(
 
 def _process_vespa_search_response_families(
     db: Session,
-    vespa_families: Sequence[DataAccessResponseFamily],
+    vespa_families: Sequence[CprSdkResponseFamily],
     limit: int,
     offset: int,
 ) -> Sequence[SearchResponseFamily]:
@@ -422,11 +422,11 @@ def _process_vespa_search_response_families(
                 )
                 response_family_lookup[family_import_id] = response_family
 
-            if isinstance(hit, DataAccessResponseDocument):
+            if isinstance(hit, CprSdkResponseDocument):
                 response_family.family_description_match = True
                 response_family.family_title_match = True
 
-            elif isinstance(hit, DataAccessResponsePassage):
+            elif isinstance(hit, CprSdkResponsePassage):
                 document_import_id = hit.document_import_id
                 if document_import_id is None:
                     _LOGGER.error("Skipping hit with empty document import id")
@@ -476,7 +476,7 @@ def _process_vespa_search_response_families(
 
 def process_vespa_search_response(
     db: Session,
-    vespa_search_response: DataAccessSearchResponse,
+    vespa_search_response: CprSdkSearchResponse,
     limit: int,
     offset: int,
 ) -> SearchResponse:
@@ -505,7 +505,7 @@ def create_vespa_search_params(
     """Create Vespa search parameters from a F/E search request body"""
     converted_filters = _convert_filters(db, search_body.keyword_filters)
     if converted_filters:
-        search_body.filters = DataAccessKeywordFilters.model_validate(converted_filters)
+        search_body.filters = CprSdkKeywordFilters.model_validate(converted_filters)
     else:
         search_body.filters = None
     return search_body
