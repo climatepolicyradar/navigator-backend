@@ -1,7 +1,7 @@
 import os
 import typing as t
 import uuid
-from typing import Dict, Optional
+from typing import Optional
 
 import pytest
 from cpr_sdk.embedding import Embedder
