@@ -1,4 +1,5 @@
 import os
+import typing as t
 import uuid
 from typing import Dict, Optional
 
@@ -280,7 +281,7 @@ def verify_password_mock(first: str, second: str) -> bool:
 @pytest.fixture
 def superuser_token_headers(
     test_client: TestClient, test_superuser, test_password, monkeypatch
-) -> Dict[str, str]:
+) -> t.Dict[str, str]:
     monkeypatch.setattr(security, "verify_password", verify_password_mock)
 
     login_data = {
@@ -297,7 +298,7 @@ def superuser_token_headers(
 @pytest.fixture
 def data_superuser_token_headers(
     data_client: TestClient, data_superuser, test_password, monkeypatch
-) -> Dict[str, str]:
+) -> t.Dict[str, str]:
     monkeypatch.setattr(security, "verify_password", verify_password_mock)
 
     login_data = {
