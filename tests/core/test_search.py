@@ -239,7 +239,6 @@ def test_create_vespa_search_params(
     assert produced_search_parameters.exact_match == exact_match
 
     # Test converted data
-    # Test converted data
     if keyword_filters:
         converted_keyword_filters: Union[Mapping[str, Sequence[str]], None] = (
             _convert_filters(data_db, keyword_filters)
