@@ -9,6 +9,39 @@ from db_client.models.organisation import Corpus, Organisation
 from app.core.util import tree_table_to_json
 from app.db.session import SessionLocal
 
+LEN_ORG_CONFIG = 4
+EXPECTED_CCLW_TAXONOMY = {
+    "instrument",
+    "keyword",
+    "sector",
+    "topic",
+    "framework",
+    "hazard",
+    "event_types",
+}
+EXPECTED_CCLW_EVENTS = [
+    "Amended",
+    "Appealed",
+    "Closed",
+    "Declaration Of Climate Emergency",
+    "Dismissed",
+    "Entered Into Force",
+    "Filing",
+    "Granted",
+    "Implementation Details",
+    "International Agreement",
+    "Net Zero Pledge",
+    "Other",
+    "Passed/Approved",
+    "Repealed/Replaced",
+    "Set",
+    "Settled",
+    "Updated",
+]
+
+
+EXPECTED_UNFCCC_TAXONOMY = {"author", "author_type", "event_types"}
+
 
 def _add_family(test_db, import_id: str, cat: FamilyCategory, corpus_import_id):
     test_db.add(
@@ -42,50 +75,6 @@ def test_config_endpoint_content(data_client, data_db):
 
     assert "geographies" in response_json
     assert len(response_json["geographies"]) == 8
-
-    assert "organisations" in response_json
-
-    assert "CCLW" in response_json["organisations"]
-    cclw_taxonomy = response_json["organisations"]["CCLW"]["taxonomy"]
-    assert set(cclw_taxonomy) == {
-        "instrument",
-        "keyword",
-        "sector",
-        "topic",
-        "framework",
-        "hazard",
-        "event_types",
-    }
-    cclw_taxonomy_event_types = cclw_taxonomy["event_types"]["allowed_values"]
-    cclw_expected_event_types = [
-        "Amended",
-        "Appealed",
-        "Closed",
-        "Declaration Of Climate Emergency",
-        "Dismissed",
-        "Entered Into Force",
-        "Filing",
-        "Granted",
-        "Implementation Details",
-        "International Agreement",
-        "Net Zero Pledge",
-        "Other",
-        "Passed/Approved",
-        "Repealed/Replaced",
-        "Set",
-        "Settled",
-        "Updated",
-    ]
-    assert set(cclw_taxonomy_event_types) ^ set(cclw_expected_event_types) == set()
-
-    assert "UNFCCC" in response_json["organisations"]
-    unfccc_taxonomy = response_json["organisations"]["UNFCCC"]["taxonomy"]
-    assert set(unfccc_taxonomy) == {"author", "author_type", "event_types"}
-    assert set(unfccc_taxonomy["author_type"]["allowed_values"]) == {
-        "Party",
-        "Non-Party",
-    }
-
     assert "languages" in response_json
     assert len(response_json["languages"]) == 7893
     assert "fra" in response_json["languages"]
@@ -100,15 +89,47 @@ def test_config_endpoint_content(data_client, data_db):
     assert len(response_json["document_variants"]) == 2
     assert "Original Language" in response_json["document_variants"]
 
-    org_config = response_json["organisations"]["CCLW"]
-    assert len(org_config) == 3
-    assert "taxonomy" in org_config
-    assert org_config["total"] == 0
-    assert org_config["count_by_category"] == {
+    # Now test organisations
+    assert "organisations" in response_json
+
+    assert "CCLW" in response_json["organisations"]
+    cclw_org = response_json["organisations"]["CCLW"]
+    assert len(cclw_org) == LEN_ORG_CONFIG
+
+    # Test the counts are there (just CCLW)
+    assert cclw_org["total"] == 0
+    assert cclw_org["count_by_category"] == {
         "Executive": 0,
         "Legislative": 0,
         "UNFCCC": 0,
     }
+
+    assert "UNFCCC" in response_json["organisations"]
+    unfccc_org = response_json["organisations"]["UNFCCC"]
+    assert len(unfccc_org) == LEN_ORG_CONFIG
+
+    # Old tests - to be removed in PDCT-1057
+    cclw_taxonomy = cclw_org["taxonomy"]
+    assert set(cclw_taxonomy) == EXPECTED_CCLW_TAXONOMY
+    cclw_taxonomy_event_types = cclw_taxonomy["event_types"]["allowed_values"]
+    assert set(cclw_taxonomy_event_types) ^ set(EXPECTED_CCLW_EVENTS) == set()
+
+    unfccc_taxonomy = unfccc_org["taxonomy"]
+    assert set(unfccc_taxonomy) == EXPECTED_UNFCCC_TAXONOMY
+    assert set(unfccc_taxonomy["author_type"]["allowed_values"]) == {
+        "Party",
+        "Non-Party",
+    }
+
+    # New taxonomy tests
+    cclw_copora = cclw_org["copora"]
+    assert len(cclw_copora) == 1
+    assert cclw_copora[0]["corpus_import_id"] == "CCLW.corpus.i00000001.n0000"
+    assert cclw_copora[0]["corpus_type"] == "Laws and Policies"
+    assert cclw_copora[0]["corpus_type_description"] == "Laws and policies"
+    assert cclw_copora[0]["description"] == "CCLW national policies"
+    assert cclw_copora[0]["title"] == "CCLW national policies"
+    assert set(cclw_copora[0]["taxonomy"]) ^ EXPECTED_CCLW_TAXONOMY == set()
 
 
 def test_config_endpoint_cclw_stats(data_client, data_db):
@@ -144,7 +165,7 @@ def test_config_endpoint_cclw_stats(data_client, data_db):
     response_json = response.json()
 
     org_config = response_json["organisations"]["CCLW"]
-    assert len(org_config) == 3
+    assert len(org_config) == LEN_ORG_CONFIG
     assert org_config["total"] == 6
 
     laws = org_config["count_by_category"]["Legislative"]
