@@ -1,5 +1,5 @@
 from dataclasses import asdict
-from typing import cast
+from typing import Sequence, cast
 
 from db_client.models.dfce.family import (
     Corpus,
@@ -13,7 +13,7 @@ from db_client.models.organisation import CorpusType, Organisation
 from sqlalchemy import func
 from sqlalchemy.orm import Session
 
-from app.api.api_v1.schemas.metadata import OrganisationConfig, TaxonomyData
+from app.api.api_v1.schemas.metadata import CorpusData, OrganisationConfig, TaxonomyData
 
 
 def get_organisation_taxonomy(db: Session, org_id: int) -> Taxonomy:
@@ -38,6 +38,7 @@ def get_organisation_taxonomy(db: Session, org_id: int) -> Taxonomy:
     return {k: TaxonomyEntry(**v) for k, v in taxonomy[0].items()}
 
 
+# TODO: Remove this function as part of PDCT-1067
 def get_organisation_taxonomy_by_name(db: Session, org_name: str) -> TaxonomyData:
     """
     Returns the TaxonomyConfig for the named organisation
@@ -71,6 +72,48 @@ def get_organisation_taxonomy_by_name(db: Session, org_name: str) -> TaxonomyDat
     }
 
 
+def _to_corpus_data(row, event_types) -> CorpusData:
+    return CorpusData(
+        corpus_import_id=row.corpus_import_id,
+        title=row.title,
+        description=row.description,
+        corpus_type=row.corpus_type,
+        corpus_type_description=row.corpus_type_description,
+        taxonomy={
+            **row.taxonomy,
+            "event_types": asdict(event_types),
+        },
+    )
+
+
+def get_copora_for_org(db: Session, org_name: str) -> Sequence[CorpusData]:
+    copora = (
+        db.query(
+            Corpus.import_id.label("corpus_import_id"),
+            Corpus.title.label("title"),
+            Corpus.description.label("description"),
+            Corpus.corpus_type_name.label("corpus_type"),
+            CorpusType.description.label("corpus_type_description"),
+            CorpusType.valid_metadata.label("taxonomy"),
+        )
+        .join(
+            Corpus,
+            Corpus.corpus_type_name == CorpusType.name,
+        )
+        .join(Organisation, Organisation.id == Corpus.organisation_id)
+        .filter(Organisation.name == org_name)
+        .all()
+    )
+
+    event_types = db.query(FamilyEventType).all()
+    entry = TaxonomyEntry(
+        allow_blanks=False,
+        allowed_values=[r.name for r in event_types],
+        allow_any=False,
+    )
+    return [_to_corpus_data(row, entry) for row in copora]
+
+
 def get_organisation_config(db: Session, org: Organisation) -> OrganisationConfig:
     total = (
         db.query(Family)
@@ -98,8 +141,10 @@ def get_organisation_config(db: Session, org: Organisation) -> OrganisationConfi
         else:
             count_by_category[category] = 0
 
+    org_name = cast(str, org.name)
     return OrganisationConfig(
         total=total,
         count_by_category=count_by_category,
-        taxonomy=get_organisation_taxonomy_by_name(db, cast(str, org.name)),
+        taxonomy=get_organisation_taxonomy_by_name(db, org_name),
+        copora=get_copora_for_org(db, org_name),
     )
