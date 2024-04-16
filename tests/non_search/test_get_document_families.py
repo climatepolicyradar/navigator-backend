@@ -3,7 +3,7 @@ from fastapi.testclient import TestClient
 from sqlalchemy import update
 from sqlalchemy.orm import Session
 
-from tests.routes.setup_helpers import (
+from tests.non_search.setup_helpers import (
     setup_with_docs,
     setup_with_two_docs,
     setup_with_two_docs_one_family,

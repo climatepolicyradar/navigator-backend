@@ -1,6 +1,8 @@
+import datetime
 import os
 import typing as t
 import uuid
+from contextlib import contextmanager
 from typing import Optional
 
 import pytest
@@ -10,11 +12,13 @@ from db_client import run_migrations
 from db_client.models import Base
 from db_client.models.organisation import AppUser
 from fastapi.testclient import TestClient
+from freezegun import freeze_time
 from moto import mock_s3
-from sqlalchemy import create_engine
+from sqlalchemy import create_engine, event
 from sqlalchemy.engine import Connection
 from sqlalchemy.orm import sessionmaker
 from sqlalchemy_utils import create_database, database_exists, drop_database
+from surrogate import surrogate
 
 from app.core import security
 from app.core.aws import S3Client, get_s3_client
@@ -301,3 +305,39 @@ def data_superuser_token_headers(
     a_token = tokens["access_token"]
     headers = {"Authorization": f"Bearer {a_token}"}
     return headers
+
+
+@pytest.fixture()
+def patch_current_time():
+    return patch_time
+
+
+@contextmanager
+def patch_time(time_to_freeze, entity):
+    with freeze_time(time_to_freeze) as frozen_time:
+
+        def set_initial_timestamp(mapper, connection, target):
+            now = datetime.datetime.now(datetime.timezone.utc)
+
+            if hasattr(target, "created"):
+                target.created = now
+            if hasattr(target, "last_modified"):
+                target.last_modified = now
+
+        event.listen(entity, "before_insert", set_initial_timestamp, propagate=True)
+        yield frozen_time
+        event.remove(entity, "before_insert", set_initial_timestamp)
+
+
+@pytest.fixture(scope="session", autouse=True)
+def stub_freezegun_dynamic_imports():
+    """Needed for patch_time to work due to freezegun imports."""
+    with surrogate("transformers.models.deprecated.open_llama.tokenization_open_llama"):
+        with surrogate(
+            "transformers.models.deprecated.open_llama.tokenization_open_llama_fast"
+        ):
+            with surrogate("transformers.models.open_llama.tokenization_open_llama"):
+                with surrogate(
+                    "transformers.models.open_llama.tokenization_open_llama_fast"
+                ):
+                    yield
