@@ -112,7 +112,7 @@ test_search:
 		run --rm --name search_test \
 		-v "${PWD}/data:/data" \
 		backend pytest \
-		-vvv tests/routes/test_vespasearch.py \
+		-vvv tests/search \
 		-m 'search' ${ARGS}
 
 test_cors:
