@@ -5,10 +5,22 @@ from pydantic import BaseModel
 TaxonomyData = Mapping[str, Mapping[str, Union[bool, Sequence[str]]]]
 
 
+class CorpusData(BaseModel):
+    """Contains the Corpus and CorpusType info"""
+
+    corpus_import_id: str
+    title: str
+    description: str
+    corpus_type: str
+    corpus_type_description: str
+    taxonomy: TaxonomyData
+
+
 class OrganisationConfig(BaseModel):
     """Definition of stats used on homepage"""
 
-    taxonomy: TaxonomyData
+    taxonomy: TaxonomyData  # TODO: Remove this in subsequent deploy see PDCT-1057
+    copora: Sequence[CorpusData]
     total: int
     count_by_category: Mapping[str, int]
 
