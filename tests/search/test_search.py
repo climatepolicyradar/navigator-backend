@@ -35,6 +35,7 @@ from app.core.search import (
 
 
 # Make sure we cover a decent number of the potential options
+@pytest.mark.search
 @pytest.mark.parametrize(
     (
         "query_string,exact_match,year_range,sort_field,sort_order,"
@@ -213,7 +214,7 @@ def test_create_vespa_search_params(
         keyword_filters=keyword_filters,
         year_range=year_range,
         # The SearchParameters model provides allows this field as an alias for
-        # max_hits_per_family.
+        # sort_by.
         sort_field=sort_field,  # type: ignore
         sort_order=sort_order,
         limit=limit,
@@ -275,6 +276,7 @@ def test_create_vespa_search_params(
     assert produced_search_parameters.sort_order == sort_order
 
 
+@pytest.mark.search
 @pytest.mark.parametrize(
     (
         "exact_match,year_range,sort_field,sort_order,"
@@ -345,12 +347,16 @@ def test_create_browse_request_params(
     SearchRequestBody(
         query_string="",
         exact_match=exact_match,
-        max_passages_per_doc=max_passages,
+        # The SearchParameters model provides allows this field as an alias for
+        # max_hits_per_family.
+        max_passages_per_doc=max_passages,  # type:ignore
         family_ids=family_ids,
         document_ids=document_ids,
         keyword_filters=keyword_filters,
         year_range=year_range,
-        sort_field=sort_field,
+        # The SearchParameters model provides allows this field as an alias for
+        # sort_by.
+        sort_field=sort_field,  # type:ignore
         sort_order=sort_order,
         limit=limit,
         offset=offset,
@@ -358,6 +364,7 @@ def test_create_browse_request_params(
     )
 
 
+@pytest.mark.search
 @pytest.mark.parametrize(
     "filters, expected",
     [
@@ -699,6 +706,7 @@ def populate_data_db(db: Session, fam_specs: Sequence[FamSpec]) -> None:
     db.commit()
 
 
+@pytest.mark.search
 @pytest.mark.parametrize(
     "fam_specs,offset,limit",
     [
