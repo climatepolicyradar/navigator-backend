@@ -12,7 +12,7 @@ from fastapi.testclient import TestClient
 from sqlalchemy import update
 from sqlalchemy.orm import Session
 
-from tests.routes.setup_helpers import (
+from tests.non_search.setup_helpers import (
     setup_docs_with_two_orgs,
     setup_docs_with_two_orgs_no_langs,
     setup_with_two_docs,

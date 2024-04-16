@@ -3,7 +3,7 @@ from sqlalchemy.exc import NoResultFound
 from sqlalchemy.orm import Session
 
 from app.core.organisation import get_organisation_taxonomy
-from tests.routes.setup_helpers import setup_with_docs
+from tests.non_search.setup_helpers import setup_with_docs
 
 METADATA_KEYS = set(["topic", "hazard", "sector", "keyword", "framework", "instrument"])
 

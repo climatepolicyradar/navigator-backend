@@ -1,6 +1,6 @@
 from sqlalchemy.orm import Session
 
-from tests.routes.dfce_helpers import (
+from tests.non_search.dfce_helpers import (
     add_collections,
     add_families,
     link_collection_family,
