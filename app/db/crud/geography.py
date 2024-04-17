@@ -2,9 +2,9 @@
 
 import logging
 
-from db_client.models.dfce.family import Family, FamilyDocument
+from db_client.models.dfce.family import DocumentStatus, Family, FamilyDocument
 from db_client.models.dfce.geography import Geography
-from sqlalchemy import func, true
+from sqlalchemy import func
 from sqlalchemy.exc import OperationalError
 from sqlalchemy.orm import Query, Session
 
@@ -29,17 +29,13 @@ def _db_count_docs_in_category_and_geo(db: Session) -> Query:
     # family_category values (so if some geographies have no documents for a particular
     # family_category, we can set the count for that category to 0).
     family_categories = db.query(Family.family_category).distinct().subquery()
-    geo_family_combinations = (
-        db.query(
-            Geography.id.label("geography_id"),
-            Geography.display_value,
-            Geography.slug,
-            Geography.value,
-            family_categories.c.family_category,
-        )
-        .join(family_categories, true())  # Emulates CROSS JOIN
-        .subquery("geo_family_combinations")
-    )
+    geo_family_combinations = db.query(
+        Geography.id.label("geography_id"),
+        Geography.display_value,
+        Geography.slug,
+        Geography.value,
+        family_categories.c.family_category,
+    ).subquery("geo_family_combinations")
 
     # Get a count of documents in each present family_category for each geography.
     counts = (
@@ -49,6 +45,7 @@ def _db_count_docs_in_category_and_geo(db: Session) -> Query:
             func.count().label("records_count"),
         )
         .join(FamilyDocument, FamilyDocument.family_import_id == Family.import_id)
+        .filter(FamilyDocument.document_status == DocumentStatus.PUBLISHED)
         .group_by(Family.family_category, Family.geography_id)
         .subquery("counts")
     )
@@ -104,7 +101,7 @@ def _to_dto(family_doc_geo_stats) -> GeographyStatsDTO:
     )
 
 
-def get_geography_stats(db: Session) -> list[GeographyStatsDTO]:
+def get_world_map_stats(db: Session) -> list[GeographyStatsDTO]:
     """
     Get a count of docs per category per geography for all geographies.
 

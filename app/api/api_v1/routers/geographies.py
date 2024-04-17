@@ -3,7 +3,7 @@ import logging
 from fastapi import APIRouter, Depends, HTTPException, status
 
 from app.api.api_v1.schemas.geography import GeographyStatsDTO
-from app.db.crud.geography import get_geography_stats
+from app.db.crud.geography import get_world_map_stats
 from app.db.session import get_db
 from app.errors import RepositoryError
 
@@ -18,15 +18,16 @@ async def geographies(db=Depends(get_db)):
     _LOGGER.info("Getting detailed information on all geographies")
 
     try:
-        geo_stats = get_geography_stats(db)
+        world_map_stats = get_world_map_stats(db)
 
-        if geo_stats == []:
-            _LOGGER.error("No geography stats found")
+        if world_map_stats == []:
+            _LOGGER.error("No stats for world map found")
             raise HTTPException(
-                status_code=status.HTTP_404_NOT_FOUND, detail="No geography stats found"
+                status_code=status.HTTP_404_NOT_FOUND,
+                detail="No stats for world map found",
             )
 
-        return geo_stats
+        return world_map_stats
     except RepositoryError as e:
         raise HTTPException(
             status_code=status.HTTP_503_SERVICE_UNAVAILABLE, detail=e.message
