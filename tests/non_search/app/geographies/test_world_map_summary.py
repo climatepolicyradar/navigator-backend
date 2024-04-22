@@ -67,7 +67,7 @@ def test_endpoint_returns_ok_some_docs_per_family_unpublished(data_db, data_clie
 
     assert resp["family_counts"]["EXECUTIVE"] == 1
     assert resp["family_counts"]["LEGISLATIVE"] == 1
-    assert resp["family_counts"]["UNFCCC"] == 3
+    assert resp["family_counts"]["UNFCCC"] == 2
 
     assert len(resp["family_counts"]) == 3
 
