@@ -47,7 +47,7 @@ RUN python3 -c "from sentence_transformers import SentenceTransformer; SentenceT
 
 # Copy files to image
 COPY app ./app
-COPY scripts ./scripts
+COPY wait_for_port.sh ./scripts
 COPY LICENSE.md .
 COPY README.md .
 COPY startup.sh .
