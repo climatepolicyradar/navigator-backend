@@ -2,7 +2,7 @@
 
 import logging
 
-from db_client.models.dfce.family import DocumentStatus, Family, FamilyDocument
+from db_client.models.dfce.family import Family, FamilyStatus
 from db_client.models.dfce.geography import Geography
 from sqlalchemy import func
 from sqlalchemy.exc import OperationalError
@@ -14,9 +14,9 @@ from app.errors import RepositoryError
 _LOGGER = logging.getLogger(__file__)
 
 
-def _db_count_docs_in_category_and_geo(db: Session) -> Query:
+def _db_count_fams_in_category_and_geo(db: Session) -> Query:
     """
-    Query the database for the doc count per category per geo.
+    Query the database for the fam count per category per geo.
 
     NOTE: SqlAlchemy will make a complete hash of query generation if
     columns are used in the query() call. Therefore, entire objects are
@@ -44,8 +44,7 @@ def _db_count_docs_in_category_and_geo(db: Session) -> Query:
             Family.geography_id,
             func.count().label("records_count"),
         )
-        .join(FamilyDocument, FamilyDocument.family_import_id == Family.import_id)
-        .filter(FamilyDocument.document_status == DocumentStatus.PUBLISHED)
+        .filter(Family.family_status == FamilyStatus.PUBLISHED)
         .group_by(Family.family_category, Family.geography_id)
         .subquery("counts")
     )
@@ -103,19 +102,19 @@ def _to_dto(family_doc_geo_stats) -> GeographyStatsDTO:
 
 def get_world_map_stats(db: Session) -> list[GeographyStatsDTO]:
     """
-    Get a count of docs per category per geography for all geographies.
+    Get a count of fam per category per geography for all geographies.
 
     :param db Session: The database session.
     :return list[GeographyStatsDTO]: A list of Geography stats objects
     """
     try:
-        family_doc_geo_stats = _db_count_docs_in_category_and_geo(db).all()
+        family_geo_stats = _db_count_fams_in_category_and_geo(db).all()
     except OperationalError as e:
         _LOGGER.error(e)
         raise RepositoryError("Error querying the database for geography stats")
 
-    if not family_doc_geo_stats:
+    if not family_geo_stats:
         return []
 
-    result = [_to_dto(fdgs) for fdgs in family_doc_geo_stats]
+    result = [_to_dto(fgs) for fgs in family_geo_stats]
     return result

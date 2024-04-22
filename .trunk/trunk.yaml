@@ -25,6 +25,7 @@ runtimes:
 # (https://docs.trunk.io/check/configuration)
 lint:
   disabled:
+    - hadolint
     - oxipng
   definitions:
     - name: bandit
@@ -50,7 +51,6 @@ lint:
     - black@24.3.0
     - checkov@3.2.55
     - git-diff-check
-    - hadolint@2.12.0
     - isort@5.13.2
     - markdownlint@0.39.0
     - osv-scanner@1.7.0

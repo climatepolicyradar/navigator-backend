@@ -14,7 +14,7 @@ geographies_router = APIRouter()
 
 @geographies_router.get("/geographies", response_model=list[GeographyStatsDTO])
 async def geographies(db=Depends(get_db)):
-    """Get a summary of doc stats for all geographies for world map."""
+    """Get a summary of fam stats for all geographies for world map."""
     _LOGGER.info("Getting detailed information on all geographies")
 
     try:
