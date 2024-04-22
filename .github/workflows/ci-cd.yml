@@ -61,7 +61,7 @@ jobs:
         run: make start_without_vespa_setup
 
       - name: Wait for backend to open port
-        run: ./scripts/wait_for_port.sh localhost 8888 60
+        run: ./wait_for_port.sh localhost 8888 60
 
       - name: Run backend tests
         run: make test_non_search
@@ -98,7 +98,7 @@ jobs:
         env:
           VESPA_CLI_VERSION: 8.250.43
         run: |
-          mkdir scripts/vespa-cli
+          mkdir -p scripts/vespa-cli
           curl -fsSL https://github.com/vespa-engine/vespa/releases/download/v${VESPA_CLI_VERSION}/vespa-cli_${VESPA_CLI_VERSION}_linux_amd64.tar.gz | \
             tar -zxf - -C scripts/vespa-cli --strip-component=1
           echo "scripts/vespa-cli/bin" >> $GITHUB_PATH
