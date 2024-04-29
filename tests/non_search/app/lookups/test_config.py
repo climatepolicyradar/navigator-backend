@@ -108,19 +108,6 @@ def test_config_endpoint_content(data_client, data_db):
     unfccc_org = response_json["organisations"]["UNFCCC"]
     assert len(unfccc_org) == LEN_ORG_CONFIG
 
-    # Old tests - to be removed in PDCT-1057
-    cclw_taxonomy = cclw_org["taxonomy"]
-    assert set(cclw_taxonomy) == EXPECTED_CCLW_TAXONOMY
-    cclw_taxonomy_event_types = cclw_taxonomy["event_types"]["allowed_values"]
-    assert set(cclw_taxonomy_event_types) ^ set(EXPECTED_CCLW_EVENTS) == set()
-
-    unfccc_taxonomy = unfccc_org["taxonomy"]
-    assert set(unfccc_taxonomy) == EXPECTED_UNFCCC_TAXONOMY
-    assert set(unfccc_taxonomy["author_type"]["allowed_values"]) == {
-        "Party",
-        "Non-Party",
-    }
-
     # New taxonomy tests
     cclw_corpora = cclw_org["corpora"]
     assert len(cclw_corpora) == 1
