@@ -19,7 +19,6 @@ class CorpusData(BaseModel):
 class OrganisationConfig(BaseModel):
     """Definition of stats used on homepage"""
 
-    taxonomy: TaxonomyData  # TODO: Remove this in subsequent deploy see PDCT-1057
     copora: Sequence[CorpusData]
     total: int
     count_by_category: Mapping[str, int]
