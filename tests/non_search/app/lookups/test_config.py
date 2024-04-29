@@ -9,7 +9,7 @@ from db_client.models.organisation import Corpus, Organisation
 from app.core.util import tree_table_to_json
 from app.db.session import SessionLocal
 
-LEN_ORG_CONFIG = 4
+LEN_ORG_CONFIG = 3
 EXPECTED_CCLW_TAXONOMY = {
     "instrument",
     "keyword",
