@@ -122,14 +122,14 @@ def test_config_endpoint_content(data_client, data_db):
     }
 
     # New taxonomy tests
-    cclw_copora = cclw_org["copora"]
-    assert len(cclw_copora) == 1
-    assert cclw_copora[0]["corpus_import_id"] == "CCLW.corpus.i00000001.n0000"
-    assert cclw_copora[0]["corpus_type"] == "Laws and Policies"
-    assert cclw_copora[0]["corpus_type_description"] == "Laws and policies"
-    assert cclw_copora[0]["description"] == "CCLW national policies"
-    assert cclw_copora[0]["title"] == "CCLW national policies"
-    assert set(cclw_copora[0]["taxonomy"]) ^ EXPECTED_CCLW_TAXONOMY == set()
+    cclw_corpora = cclw_org["corpora"]
+    assert len(cclw_corpora) == 1
+    assert cclw_corpora[0]["corpus_import_id"] == "CCLW.corpus.i00000001.n0000"
+    assert cclw_corpora[0]["corpus_type"] == "Laws and Policies"
+    assert cclw_corpora[0]["corpus_type_description"] == "Laws and policies"
+    assert cclw_corpora[0]["description"] == "CCLW national policies"
+    assert cclw_corpora[0]["title"] == "CCLW national policies"
+    assert set(cclw_corpora[0]["taxonomy"]) ^ EXPECTED_CCLW_TAXONOMY == set()
 
 
 def test_config_endpoint_cclw_stats(data_client, data_db):

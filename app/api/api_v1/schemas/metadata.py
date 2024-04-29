@@ -19,7 +19,7 @@ class CorpusData(BaseModel):
 class OrganisationConfig(BaseModel):
     """Definition of stats used on homepage"""
 
-    copora: Sequence[CorpusData]
+    corpora: Sequence[CorpusData]
     total: int
     count_by_category: Mapping[str, int]
 

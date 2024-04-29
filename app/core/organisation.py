@@ -52,8 +52,8 @@ def _to_corpus_data(row, event_types) -> CorpusData:
     )
 
 
-def get_copora_for_org(db: Session, org_name: str) -> Sequence[CorpusData]:
-    copora = (
+def get_corpora_for_org(db: Session, org_name: str) -> Sequence[CorpusData]:
+    corpora = (
         db.query(
             Corpus.import_id.label("corpus_import_id"),
             Corpus.title.label("title"),
@@ -77,7 +77,7 @@ def get_copora_for_org(db: Session, org_name: str) -> Sequence[CorpusData]:
         allowed_values=[r.name for r in event_types],
         allow_any=False,
     )
-    return [_to_corpus_data(row, entry) for row in copora]
+    return [_to_corpus_data(row, entry) for row in corpora]
 
 
 def get_organisation_config(db: Session, org: Organisation) -> OrganisationConfig:
@@ -111,5 +111,5 @@ def get_organisation_config(db: Session, org: Organisation) -> OrganisationConfi
     return OrganisationConfig(
         total=total,
         count_by_category=count_by_category,
-        copora=get_copora_for_org(db, org_name),
+        corpora=get_corpora_for_org(db, org_name),
     )
