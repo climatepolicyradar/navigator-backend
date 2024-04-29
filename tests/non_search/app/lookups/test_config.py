@@ -9,7 +9,7 @@ from db_client.models.organisation import Corpus, Organisation
 from app.core.util import tree_table_to_json
 from app.db.session import SessionLocal
 
-LEN_ORG_CONFIG = 4
+LEN_ORG_CONFIG = 3
 EXPECTED_CCLW_TAXONOMY = {
     "instrument",
     "keyword",
@@ -108,28 +108,15 @@ def test_config_endpoint_content(data_client, data_db):
     unfccc_org = response_json["organisations"]["UNFCCC"]
     assert len(unfccc_org) == LEN_ORG_CONFIG
 
-    # Old tests - to be removed in PDCT-1057
-    cclw_taxonomy = cclw_org["taxonomy"]
-    assert set(cclw_taxonomy) == EXPECTED_CCLW_TAXONOMY
-    cclw_taxonomy_event_types = cclw_taxonomy["event_types"]["allowed_values"]
-    assert set(cclw_taxonomy_event_types) ^ set(EXPECTED_CCLW_EVENTS) == set()
-
-    unfccc_taxonomy = unfccc_org["taxonomy"]
-    assert set(unfccc_taxonomy) == EXPECTED_UNFCCC_TAXONOMY
-    assert set(unfccc_taxonomy["author_type"]["allowed_values"]) == {
-        "Party",
-        "Non-Party",
-    }
-
     # New taxonomy tests
-    cclw_copora = cclw_org["copora"]
-    assert len(cclw_copora) == 1
-    assert cclw_copora[0]["corpus_import_id"] == "CCLW.corpus.i00000001.n0000"
-    assert cclw_copora[0]["corpus_type"] == "Laws and Policies"
-    assert cclw_copora[0]["corpus_type_description"] == "Laws and policies"
-    assert cclw_copora[0]["description"] == "CCLW national policies"
-    assert cclw_copora[0]["title"] == "CCLW national policies"
-    assert set(cclw_copora[0]["taxonomy"]) ^ EXPECTED_CCLW_TAXONOMY == set()
+    cclw_corpora = cclw_org["corpora"]
+    assert len(cclw_corpora) == 1
+    assert cclw_corpora[0]["corpus_import_id"] == "CCLW.corpus.i00000001.n0000"
+    assert cclw_corpora[0]["corpus_type"] == "Laws and Policies"
+    assert cclw_corpora[0]["corpus_type_description"] == "Laws and policies"
+    assert cclw_corpora[0]["description"] == "CCLW national policies"
+    assert cclw_corpora[0]["title"] == "CCLW national policies"
+    assert set(cclw_corpora[0]["taxonomy"]) ^ EXPECTED_CCLW_TAXONOMY == set()
 
 
 def test_config_endpoint_cclw_stats(data_client, data_db):
