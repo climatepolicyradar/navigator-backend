@@ -85,6 +85,7 @@ class FamilyContext(BaseModel):
     slug: str
     published_date: Optional[datetime] = None
     last_updated_date: Optional[datetime] = None
+    corpus: str
 
 
 class FamilyDocumentWithContextResponse(BaseModel):
@@ -111,6 +112,7 @@ class FamilyAndDocumentsResponse(BaseModel):
     last_updated_date: Optional[datetime] = None
     documents: list[FamilyDocumentResponse]
     collections: list[CollectionOverviewResponse]
+    corpus: str
 
 
 class DocumentParserInput(BaseModel):
