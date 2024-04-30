@@ -14,6 +14,8 @@ class CorpusData(BaseModel):
     corpus_type: str
     corpus_type_description: str
     taxonomy: TaxonomyData
+    text: str
+    image_url: str
 
 
 class OrganisationConfig(BaseModel):
