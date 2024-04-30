@@ -94,7 +94,7 @@ def get_family_document_and_context(
         category=family.family_category,
         published_date=family.published_date,
         last_updated_date=family.last_updated_date,
-        corpus=family_corpus.corpus_import_id,
+        corpus_id=family_corpus.corpus_import_id,
     )
     visible_languages = _get_visible_languages_for_phys_doc(physical_document)
     response = FamilyDocumentResponse(
@@ -172,7 +172,7 @@ def get_family_and_documents(db: Session, import_id: str) -> FamilyAndDocumentsR
         published_date=family.published_date,
         last_updated_date=family.last_updated_date,
         collections=collections,
-        corpus=family_corpus.corpus_import_id,
+        corpus_id=family_corpus.corpus_import_id,
     )
 
 

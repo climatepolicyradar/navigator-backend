@@ -76,7 +76,7 @@ def test_documents_family_slug_returns_correct_json(
     assert json_response["geography"] == "Other"
     assert json_response["category"] == "Executive"
     assert json_response["status"] == "Published"
-    assert json_response["corpus"] == "CCLW.corpus.i00000001.n0000"
+    assert json_response["corpus_id"] == "CCLW.corpus.i00000001.n0000"
     assert json_response["published_date"] == "2019-12-25T00:00:00Z"
     assert json_response["last_updated_date"] == "2019-12-25T00:00:00Z"
 
@@ -202,7 +202,7 @@ def test_documents_doc_slug_preexisting_objects(
     assert family["geography"] == "Other"
     assert family["category"] == "Executive"
     assert family["slug"] == "FamSlug2"
-    assert family["corpus"] == "CCLW.corpus.i00000001.n0000"
+    assert family["corpus_id"] == "CCLW.corpus.i00000001.n0000"
     assert family["published_date"] == "2019-12-25T00:00:00Z"
     assert family["last_updated_date"] == "2019-12-25T00:00:00Z"
 
