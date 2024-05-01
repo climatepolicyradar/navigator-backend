@@ -108,11 +108,15 @@ def test_config_endpoint_content(data_client, data_db):
     unfccc_org = response_json["organisations"]["UNFCCC"]
     assert len(unfccc_org) == LEN_ORG_CONFIG
 
-    # New taxonomy tests
     cclw_corpora = cclw_org["corpora"]
     assert len(cclw_corpora) == 1
     assert cclw_corpora[0]["corpus_import_id"] == "CCLW.corpus.i00000001.n0000"
     assert cclw_corpora[0]["corpus_type"] == "Laws and Policies"
+    assert (
+        cclw_corpora[0]["image_url"]
+        == "https://cdn.climatepolicyradar.org/corpora/CCLW.corpus.i00000001.n0000/logo.png"
+    )
+    assert "Grantham Research Institute" in cclw_corpora[0]["text"]
     assert cclw_corpora[0]["corpus_type_description"] == "Laws and policies"
     assert cclw_corpora[0]["description"] == "CCLW national policies"
     assert cclw_corpora[0]["title"] == "CCLW national policies"

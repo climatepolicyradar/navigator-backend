@@ -14,6 +14,7 @@ from sqlalchemy import func
 from sqlalchemy.orm import Session
 
 from app.api.api_v1.schemas.metadata import CorpusData, OrganisationConfig
+from app.core import config
 
 
 def get_organisation_taxonomy(db: Session, org_id: int) -> Taxonomy:
@@ -39,12 +40,15 @@ def get_organisation_taxonomy(db: Session, org_id: int) -> Taxonomy:
 
 
 def _to_corpus_data(row, event_types) -> CorpusData:
+    image_url = f"https://{config.CDN_DOMAIN}/{row.image_url}"
     return CorpusData(
         corpus_import_id=row.corpus_import_id,
         title=row.title,
         description=row.description,
         corpus_type=row.corpus_type,
         corpus_type_description=row.corpus_type_description,
+        image_url=image_url,
+        text=row.text,
         taxonomy={
             **row.taxonomy,
             "event_types": asdict(event_types),
@@ -58,6 +62,8 @@ def get_corpora_for_org(db: Session, org_name: str) -> Sequence[CorpusData]:
             Corpus.import_id.label("corpus_import_id"),
             Corpus.title.label("title"),
             Corpus.description.label("description"),
+            Corpus.corpus_image_url.label("image_url"),
+            Corpus.corpus_text.label("text"),
             Corpus.corpus_type_name.label("corpus_type"),
             CorpusType.description.label("corpus_type_description"),
             CorpusType.valid_metadata.label("taxonomy"),
