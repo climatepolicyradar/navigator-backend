@@ -40,7 +40,9 @@ def get_organisation_taxonomy(db: Session, org_id: int) -> Taxonomy:
 
 
 def _to_corpus_data(row, event_types) -> CorpusData:
-    image_url = f"https://{config.CDN_DOMAIN}/{row.image_url}"
+    image_url = (
+        f"https://{config.CDN_DOMAIN}/{row.image_url}" if len(row.image_url) > 0 else ""
+    )
     return CorpusData(
         corpus_import_id=row.corpus_import_id,
         title=row.title,
