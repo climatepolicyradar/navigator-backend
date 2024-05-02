@@ -59,6 +59,16 @@ DEFAULT_LOGGING = {
 logger = logging.getLogger(__name__)
 logging.config.dictConfig(DEFAULT_LOGGING)
 
+_docs_description = """
+This documentation is intended to explain the use of our search API for external 
+developers and integrators. The API is a typical REST API where the requests and
+responses are encoded as `application/json`.
+
+We ask that users be respectful of its use and remind users that data is available to
+download on request.
+
+Please be aware that this documentation is still under development.
+"""
 ENABLE_API_DOCS = os.getenv("ENABLE_API_DOCS", "False").lower() == "true"
 _docs_url = "/api/docs" if ENABLE_API_DOCS else None
 _openapi_url = "/api" if ENABLE_API_DOCS else None
@@ -75,6 +85,7 @@ async def lifespan(app_: FastAPI):
 
 app = FastAPI(
     title=config.PROJECT_NAME,
+    description=_docs_description,
     docs_url=_docs_url,
     openapi_url=_openapi_url,
     lifespan=lifespan,
@@ -102,7 +113,7 @@ app.add_middleware(
 )
 
 # add health endpoint
-app.add_api_route("/health", health([is_database_online]))
+app.add_api_route("/health", health([is_database_online]), include_in_schema=False)
 
 
 @app.middleware("http")
@@ -129,13 +140,24 @@ app.include_router(
     prefix="/api/v1/admin",
     tags=["Admin"],
     dependencies=[Depends(get_superuser_details)],
+    include_in_schema=False,
 )
-app.include_router(auth_router, prefix="/api", tags=["Authentication"])
-app.include_router(documents_router, prefix="/api/v1", tags=["Documents"])
-app.include_router(lookups_router, prefix="/api/v1", tags=["Lookups"])
+app.include_router(
+    auth_router, prefix="/api", tags=["Authentication"], include_in_schema=False
+)
+app.include_router(
+    documents_router, prefix="/api/v1", tags=["Documents"], include_in_schema=False
+)
+app.include_router(
+    lookups_router, prefix="/api/v1", tags=["Lookups"], include_in_schema=False
+)
 app.include_router(search_router, prefix="/api/v1", tags=["Searches"])
-app.include_router(summary_router, prefix="/api/v1", tags=["Summaries"])
-app.include_router(geographies_router, prefix="/api/v1", tags=["Geographies"])
+app.include_router(
+    summary_router, prefix="/api/v1", tags=["Summaries"], include_in_schema=False
+)
+app.include_router(
+    geographies_router, prefix="/api/v1", tags=["Geographies"], include_in_schema=False
+)
 
 # add pagination support to all routes that ask for it
 add_pagination(app)
