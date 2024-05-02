@@ -74,7 +74,7 @@ jobs:
           ls -la
 
       - name: Log Dump
-        if: always()
+        if: always() && ! cancelled()
         run: docker compose logs
 
   search-tests:
@@ -118,7 +118,7 @@ jobs:
         run: make test_search
 
       - name: Log Dump
-        if: always()
+        if: always() && ! cancelled()
         run: docker compose logs
 
   integration-tests:

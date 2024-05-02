@@ -61,11 +61,12 @@ def get_family_document_and_context(
     db: Session, family_document_import_id: str
 ) -> FamilyDocumentWithContextResponse:
     db_objects = (
-        db.query(Family, FamilyDocument, PhysicalDocument, Geography)
+        db.query(Family, FamilyDocument, PhysicalDocument, Geography, FamilyCorpus)
         .filter(FamilyDocument.import_id == family_document_import_id)
         .filter(Family.import_id == FamilyDocument.family_import_id)
         .filter(FamilyDocument.physical_document_id == PhysicalDocument.id)
         .filter(Family.geography_id == Geography.id)
+        .filter(FamilyCorpus.family_import_id == Family.import_id)
     ).one_or_none()
 
     if not db_objects:
@@ -77,7 +78,7 @@ def get_family_document_and_context(
             f"No family document found for import_id: {family_document_import_id}"
         )
 
-    family, document, physical_document, geography = db_objects
+    family, document, physical_document, geography, family_corpus = db_objects
 
     if (
         family.family_status != FamilyStatus.PUBLISHED
@@ -93,6 +94,7 @@ def get_family_document_and_context(
         category=family.family_category,
         published_date=family.published_date,
         last_updated_date=family.last_updated_date,
+        corpus_id=family_corpus.corpus_import_id,
     )
     visible_languages = _get_visible_languages_for_phys_doc(physical_document)
     response = FamilyDocumentResponse(
@@ -133,7 +135,7 @@ def get_family_and_documents(db: Session, import_id: str) -> FamilyAndDocumentsR
     """
 
     db_objects = (
-        db.query(Family, Geography, FamilyMetadata, Organisation)
+        db.query(Family, Geography, FamilyMetadata, Organisation, FamilyCorpus)
         .join(Geography, Family.geography_id == Geography.id)
         .join(FamilyMetadata, Family.import_id == FamilyMetadata.family_import_id)
         .join(FamilyCorpus, Family.import_id == FamilyCorpus.family_import_id)
@@ -147,12 +149,7 @@ def get_family_and_documents(db: Session, import_id: str) -> FamilyAndDocumentsR
         raise ValueError(f"No family found for import_id: {import_id}")
 
     family: Family
-    (
-        family,
-        geography,
-        family_metadata,
-        organisation,
-    ) = db_objects
+    (family, geography, family_metadata, organisation, family_corpus) = db_objects
 
     if family.family_status != FamilyStatus.PUBLISHED:
         raise ValueError(f"Family {import_id} is not published")
@@ -175,6 +172,7 @@ def get_family_and_documents(db: Session, import_id: str) -> FamilyAndDocumentsR
         published_date=family.published_date,
         last_updated_date=family.last_updated_date,
         collections=collections,
+        corpus_id=family_corpus.corpus_import_id,
     )
 
 
