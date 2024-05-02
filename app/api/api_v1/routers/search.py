@@ -8,10 +8,11 @@ for the type of document search being performed.
 
 import logging
 from io import BytesIO
+from typing import Annotated
 
 from cpr_sdk.exceptions import QueryError
 from cpr_sdk.search_adaptors import VespaSearchAdapter
-from fastapi import APIRouter, Depends, HTTPException, Request, status
+from fastapi import APIRouter, Body, Depends, HTTPException, Request, status
 from fastapi.responses import StreamingResponse
 from sqlalchemy.orm import Session
 from starlette.responses import RedirectResponse
@@ -74,10 +75,64 @@ def _search_request(db: Session, search_body: SearchRequestBody) -> SearchRespon
 @search_router.post("/searches")
 def search_documents(
     request: Request,
-    search_body: SearchRequestBody,
+    search_body: Annotated[
+        SearchRequestBody,
+        Body(
+            openapi_examples={
+                "simple": {
+                    "summary": "Simple Search Example",
+                    "description": "Perform a simple search for matching passages",
+                    "value": {
+                        "query_string": "Energy Prices",
+                    },
+                },
+                "browse request": {
+                    "summary": "Browse Example",
+                    "description": "Perform a browse request within a year range",
+                    "value": {
+                        "query_string": "",
+                        "year_range": [2000, None],
+                        "sort_field": "date",
+                        "sort_order": "desc",
+                    },
+                },
+                "filters": {
+                    "summary": "Filter example",
+                    "description": "Filtering and using exact match",
+                    "value": {
+                        "query_string": "Just transition",
+                        "exact_match": True,
+                        "keyword_filters": {
+                            "sources": ["CCLW"],
+                            "categories": ["Legislative"],
+                        },
+                    },
+                },
+            }
+        ),
+    ],
     db=Depends(get_db),
 ) -> SearchResponse:
-    """Search for documents matching the search criteria."""
+    """
+    Search for documents matching the search criteria and filters.
+
+    There is no authentication required for using this interface. We ask that users be
+    respectful of its use and remind users that data is available to download on
+    request.
+
+    The search endpoint behaves in two distinct ways:
+        - "Browse" mode is when an empty `query_string` is provided. This is intended
+        for document level search using filters. Individual passages are not returned.
+        - "Search" mode is when a `query_string` is present. This matches against
+        individual document passages.
+
+    The request and response object is otherwise identical for both.
+
+    The results can be paginated via a combination of limit, offset and continuation
+    tokens. The limit/offset slices the results after they have been retrieved from
+    the search database. The continuation token can be used to get the next set of
+    results from the search database. See the request schema for more details.
+    """
     _LOGGER.info(
         "Search request",
         extra={
@@ -93,7 +148,7 @@ def search_documents(
     return _search_request(db=db, search_body=search_body)
 
 
-@search_router.post("/searches/download-csv")
+@search_router.post("/searches/download-csv", include_in_schema=False)
 def download_search_documents(
     request: Request,
     search_body: SearchRequestBody,
@@ -133,7 +188,7 @@ def download_search_documents(
     )
 
 
-@search_router.get("/searches/download-all-data")
+@search_router.get("/searches/download-all-data", include_in_schema=False)
 def download_all_search_documents(db=Depends(get_db)) -> RedirectResponse:
     """Download a CSV containing details of all the documents in the corpus."""
     _LOGGER.info("Whole data download request")
