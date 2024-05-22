@@ -8,7 +8,7 @@ from typing import Any, Collection, Mapping, Optional, Sequence, Union
 
 from app.api.api_v1.schemas.document import DocumentParserInput
 from app.core.aws import S3Client, S3Document
-from app.core.validation import PIPELINE_BUCKET
+from app.core.config import PIPELINE_BUCKET
 
 _LOGGER = logging.getLogger(__file__)
 
@@ -158,6 +158,9 @@ def _write_content_to_s3(
     :param [str] s3_object_key: path into which to write the document updates in s3
     :param [BytesIO] content: bytes to write into the given object path
     """
+    if not PIPELINE_BUCKET:
+        raise Exception("PIPELINE_BUCKET not set")
+
     _LOGGER.info(
         "Writing content into S3",
         extra={
