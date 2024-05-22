@@ -23,7 +23,7 @@ from app.core.config import (
     AWS_REGION,
     CDN_DOMAIN,
     DOC_CACHE_BUCKET,
-    INGEST_CYCLE_START,
+    PIPELINE_BUCKET,
     PUBLIC_APP_URL,
     VESPA_SECRETS_LOCATION,
     VESPA_URL,
@@ -193,9 +193,9 @@ def download_all_search_documents(db=Depends(get_db)) -> RedirectResponse:
     """Download a CSV containing details of all the documents in the corpus."""
     _LOGGER.info("Whole data download request")
 
-    if INGEST_CYCLE_START is None or PUBLIC_APP_URL is None or DOC_CACHE_BUCKET is None:
-        if INGEST_CYCLE_START is None:
-            _LOGGER.error("{INGEST_CYCLE_START} is not set")
+    if PIPELINE_BUCKET is None or PUBLIC_APP_URL is None or DOC_CACHE_BUCKET is None:
+        if PIPELINE_BUCKET is None:
+            _LOGGER.error("{PIPELINE_BUCKET} is not set")
         if PUBLIC_APP_URL is None:
             _LOGGER.error("{PUBLIC_APP_URL} is not set")
         if DOC_CACHE_BUCKET is None:
@@ -205,10 +205,12 @@ def download_all_search_documents(db=Depends(get_db)) -> RedirectResponse:
             detail="Missing required environment variables",
         )
 
-    s3_prefix = "navigator/dumps"
-    data_dump_s3_key = f"{s3_prefix}/whole_data_dump-{INGEST_CYCLE_START}.zip"
-
     s3_client = get_s3_client()
+    latest_ingest_start = s3_client.get_latest_ingest_start()
+
+    s3_prefix = "navigator/dumps"
+    data_dump_s3_key = f"{s3_prefix}/whole_data_dump-{latest_ingest_start}.zip"
+
     valid_credentials = s3_client.is_connected()
     if not valid_credentials:
         _LOGGER.info("Error connecting to S3 AWS")
@@ -220,14 +222,14 @@ def download_all_search_documents(db=Depends(get_db)) -> RedirectResponse:
     if valid_credentials is True and (not s3_client.document_exists(s3_document)):
         aws_env = "production" if "dev" not in PUBLIC_APP_URL else "staging"
         _LOGGER.info(
-            f"Generating {aws_env} dump for ingest cycle w/c {INGEST_CYCLE_START}..."
+            f"Generating {aws_env} dump for ingest cycle w/c {latest_ingest_start}..."
         )
 
         # After writing to a file buffer the position stays at the end whereas when you
         # upload a buffer, it starts from the position it is currently in. We need to
         # add the seek(0) to reset the buffer position to the beginning before writing
         # to S3 to avoid creating an empty file.
-        zip_buffer = create_data_download_zip_archive(INGEST_CYCLE_START, db)
+        zip_buffer = create_data_download_zip_archive(latest_ingest_start, db)
         zip_buffer.seek(0)
 
         try:
@@ -251,5 +253,7 @@ def download_all_search_documents(db=Depends(get_db)) -> RedirectResponse:
         redirect_url = f"https://{CDN_DOMAIN}/{data_dump_s3_key}"
         return RedirectResponse(redirect_url, status_code=status.HTTP_303_SEE_OTHER)
 
-    _LOGGER.info(f"Can't find data dump for {INGEST_CYCLE_START} in {DOC_CACHE_BUCKET}")
+    _LOGGER.info(
+        f"Can't find data dump for {latest_ingest_start} in {DOC_CACHE_BUCKET}"
+    )
     raise HTTPException(status_code=status.HTTP_404_NOT_FOUND)

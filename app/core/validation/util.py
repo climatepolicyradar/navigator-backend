@@ -8,11 +8,9 @@ from typing import Any, Collection, Mapping, Optional, Sequence, Union
 
 from app.api.api_v1.schemas.document import DocumentParserInput
 from app.core.aws import S3Client, S3Document
-from app.core.config import PIPELINE_BUCKET
+from app.core.config import INGEST_TRIGGER_ROOT, PIPELINE_BUCKET
 
 _LOGGER = logging.getLogger(__file__)
-
-INGEST_TRIGGER_ROOT = "input"
 
 
 def _flatten_maybe_tree(
