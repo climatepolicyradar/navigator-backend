@@ -54,8 +54,8 @@ def _search_request(db: Session, search_body: SearchRequestBody) -> SearchRespon
         search_body.all_results = True
         search_body.documents_only = True
         search_body.exact_match = False
-    data_access_search_params = create_vespa_search_params(db, search_body)
     try:
+        data_access_search_params = create_vespa_search_params(db, search_body)
         data_access_search_response = _VESPA_CONNECTION.search(
             parameters=data_access_search_params
         )
