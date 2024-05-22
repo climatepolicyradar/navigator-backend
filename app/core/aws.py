@@ -4,13 +4,19 @@ import logging
 import os
 import re
 import typing as t
+from datetime import datetime
 
 import boto3
 import botocore.client
 from botocore.exceptions import ClientError, UnauthorizedSSOTokenError
 from botocore.response import StreamingBody
 
-from app.core.config import AWS_REGION, DEVELOPMENT_MODE
+from app.core.config import (
+    AWS_REGION,
+    DEVELOPMENT_MODE,
+    INGEST_TRIGGER_ROOT,
+    PIPELINE_BUCKET,
+)
 
 logger = logging.getLogger(__name__)
 
@@ -301,6 +307,40 @@ class S3Client:
             return True
         except ClientError:
             return False
+
+    def get_latest_ingest_start(self) -> str:
+        """
+        Gets the date of the most recent ingest using s3
+
+        Assumes the input directory maintains the same format of timestamps.
+        Returns as a date in the format: `%Y-%m-%d`, (e.g. 2024-04-08)
+        """
+        paginator = self.client.get_paginator("list_objects_v2")
+        page_iterator = paginator.paginate(
+            Bucket=PIPELINE_BUCKET, Prefix=f"{INGEST_TRIGGER_ROOT}/", Delimiter="/"
+        )
+
+        ingest_dates = []
+        for page in page_iterator:
+            for prefix in [p["Prefix"] for p in page.get("CommonPrefixes", [])]:
+                ingest_timestamp = prefix.lstrip(f"{INGEST_TRIGGER_ROOT}/").rstrip("/")
+                try:
+                    ingest_dates.append(
+                        datetime.strptime(ingest_timestamp, "%Y-%m-%dT%H.%M.%S.%f")
+                        .date()
+                        .isoformat()
+                    )
+                except ValueError:
+                    continue
+
+        if len(ingest_dates) == 0:
+            raise Exception(
+                "Invalid pipeline bucket config: "
+                f"{PIPELINE_BUCKET}/{INGEST_TRIGGER_ROOT}"
+            )
+
+        latest_ingest_start = sorted(ingest_dates)[-1]
+        return latest_ingest_start
 
 
 def get_s3_client():
