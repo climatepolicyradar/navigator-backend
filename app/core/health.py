@@ -1,17 +1,13 @@
 import logging
 
-import requests
 from fastapi import Depends
-from requests.compat import urljoin
 from sqlalchemy.orm import Session
 
-from app.core.config import DEVELOPMENT_MODE, VESPA_URL
+from app.api.api_v1.routers.search import _VESPA_CONNECTION
+from app.core.config import DEVELOPMENT_MODE
 from app.db.session import get_db
 
 _LOGGER = logging.getLogger(__file__)
-
-
-VESPA_HEALTH_ENDPOINT = urljoin(VESPA_URL, "/status.html")
 
 
 def is_rds_online(db):
@@ -20,14 +16,15 @@ def is_rds_online(db):
 
 
 def is_vespa_online():
-    """Checks the health endpoint for the deployed vespa instance"""
+    """Check queries work against the vespa instance"""
     try:
-        response = requests.get(VESPA_HEALTH_ENDPOINT)
+        query_body = {"yql": "select * from sources * where true", "hits": "0"}
+        _VESPA_CONNECTION.client.query(query_body)
     except Exception as e:
         if DEVELOPMENT_MODE is False:
             _LOGGER.error(e)
         return False
-    return response.ok
+    return True
 
 
 def is_database_online(db: Session = Depends(get_db)) -> bool:
