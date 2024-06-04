@@ -851,6 +851,12 @@ def test_all_data_download(data_db, data_client):
         patch("app.api.api_v1.routers.search.DOC_CACHE_BUCKET", "test_cdn_bucket"),
         patch("app.core.aws.S3Client.is_connected", return_value=True),
     ):
+        data_client.follow_redirects = False
         download_response = data_client.get(ALL_DATA_DOWNLOAD_ENDPOINT)
 
-    assert download_response.status_code == 200
+    # Redirects to cdn
+    assert download_response.status_code == 303
+    assert download_response.headers["location"] == (
+        "https://cdn.climatepolicyradar.org/"
+        "navigator/dumps/whole_data_dump-2024-03-22.zip"
+    )
