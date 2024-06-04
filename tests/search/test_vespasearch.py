@@ -2,6 +2,7 @@ import csv
 import time
 from io import StringIO
 from typing import Mapping
+from unittest.mock import patch
 
 import pytest
 from db_client.models.dfce import Geography, Slug
@@ -23,6 +24,7 @@ from tests.search.setup_search_tests import (
 
 SEARCH_ENDPOINT = "/api/v1/searches"
 CSV_DOWNLOAD_ENDPOINT = "/api/v1/searches/download-csv"
+ALL_DATA_DOWNLOAD_ENDPOINT = "/api/v1/searches/download-all-data"
 
 
 def _make_search_request(client, params: Mapping[str, str]):
@@ -838,3 +840,17 @@ def test_csv_download_search_no_limit(
 
     actual_search_req = query_spy.mock_calls[0].kwargs["parameters"]
     assert 100 <= actual_search_req.limit
+
+
+@pytest.mark.search
+def test_all_data_download(data_db, data_client):
+    _populate_db_families(data_db)
+
+    with (
+        patch("app.api.api_v1.routers.search.PIPELINE_BUCKET", "test_pipeline_bucket"),
+        patch("app.api.api_v1.routers.search.DOC_CACHE_BUCKET", "test_cdn_bucket"),
+        patch("app.core.aws.S3Client.is_connected", return_value=True),
+    ):
+        download_response = data_client.get(ALL_DATA_DOWNLOAD_ENDPOINT)
+
+    assert download_response.status_code == 200
