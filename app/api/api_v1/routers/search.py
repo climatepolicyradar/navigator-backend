@@ -23,6 +23,7 @@ from app.core.config import (
     AWS_REGION,
     CDN_DOMAIN,
     DOC_CACHE_BUCKET,
+    INGEST_TRIGGER_ROOT,
     PIPELINE_BUCKET,
     PUBLIC_APP_URL,
     VESPA_SECRETS_LOCATION,
@@ -206,7 +207,9 @@ def download_all_search_documents(db=Depends(get_db)) -> RedirectResponse:
         )
 
     s3_client = get_s3_client()
-    latest_ingest_start = s3_client.get_latest_ingest_start()
+    latest_ingest_start = s3_client.get_latest_ingest_start(
+        PIPELINE_BUCKET, INGEST_TRIGGER_ROOT
+    )
 
     s3_prefix = "navigator/dumps"
     data_dump_s3_key = f"{s3_prefix}/whole_data_dump-{latest_ingest_start}.zip"
