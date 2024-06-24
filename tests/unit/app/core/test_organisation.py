@@ -1,17 +1,18 @@
-import pytest
-from sqlalchemy.exc import NoResultFound
 from sqlalchemy.orm import Session
 
-from app.core.organisation import get_organisation_taxonomy
+from app.core.organisation import get_corpora_for_org
 from tests.non_search.setup_helpers import setup_with_docs
 
-METADATA_KEYS = set(["topic", "hazard", "sector", "keyword", "framework", "instrument"])
+METADATA_KEYS = set(
+    ["topic", "hazard", "sector", "keyword", "framework", "instrument", "event_types"]
+)
 
 
-def test_get_org_taxonomy__has_metadata_keys(data_db: Session):
+def test_get_corpora_for_org__has_metadata_keys(data_db: Session):
     setup_with_docs(data_db)
 
-    taxonomy = get_organisation_taxonomy(data_db, org_id=1)
+    copora = get_corpora_for_org(data_db, "CCLW")
+    taxonomy = copora[0].taxonomy
 
     assert taxonomy
     actual_keys = set(taxonomy.keys())
@@ -19,9 +20,8 @@ def test_get_org_taxonomy__has_metadata_keys(data_db: Session):
     assert actual_keys.symmetric_difference(METADATA_KEYS) == set([])
 
 
-def test_get_org_taxonomy__raises_on_no_organisation(data_db: Session):
-    ORG_ID_NOT_EXISTS = 2234
+def test_get_corpora_for_org__empty_when_missing(data_db: Session):
     setup_with_docs(data_db)
 
-    with pytest.raises(NoResultFound):
-        get_organisation_taxonomy(data_db, org_id=ORG_ID_NOT_EXISTS)
+    copora = get_corpora_for_org(data_db, "MISSING_ORG_NAME")
+    assert len(copora) == 0
