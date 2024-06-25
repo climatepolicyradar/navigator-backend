@@ -8,35 +8,13 @@ from db_client.models.dfce.family import (
     FamilyCorpus,
     FamilyEventType,
 )
-from db_client.models.dfce.taxonomy_entry import Taxonomy, TaxonomyEntry
+from db_client.models.dfce.taxonomy_entry import TaxonomyEntry
 from db_client.models.organisation import CorpusType, Organisation
 from sqlalchemy import func
 from sqlalchemy.orm import Session
 
 from app.api.api_v1.schemas.metadata import CorpusData, OrganisationConfig
 from app.core import config
-
-
-def get_organisation_taxonomy(db: Session, org_id: int) -> Taxonomy:
-    """
-    Returns the taxonomy id and its dict representation for an organisation.
-
-    :param Session db: connection to the database
-    :param int org_id: organisation id
-    :return tuple[int, Taxonomy]: the taxonomy id and the Taxonomy
-    """
-    taxonomy = (
-        db.query(CorpusType.valid_metadata)
-        .join(
-            Corpus,
-            CorpusType.name == Corpus.corpus_type_name,
-        )
-        .filter(Corpus.organisation_id == org_id)
-        .one()
-    )
-    # The above line will throw if there is no taxonomy for the organisation
-
-    return {k: TaxonomyEntry(**v) for k, v in taxonomy[0].items()}
 
 
 def _to_corpus_data(row, event_types) -> CorpusData:
