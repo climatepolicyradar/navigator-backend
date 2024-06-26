@@ -34,6 +34,16 @@ botocore = "^1.34.19"
 db-client = { git = "https://github.com/climatepolicyradar/navigator-db-client.git", tag = "v3.5.0" }
 urllib3 = "<2"
 apscheduler = "^3.10.4"
+torch = [
+  { platform = "darwin", url = "https://download.pytorch.org/whl/cpu/torch-2.0.0-cp39-none-macosx_10_9_x86_64.whl" },
+  { platform = "linux", version = "2.0.0", source = "pytorch" },
+  { platform = "win32", version = "2.0.0", source = "pytorch" },
+]
+
+[[tool.poetry.source]]
+name = "pytorch"
+url = "https://download.pytorch.org/whl/cpu"
+priority = "explicit"
 
 [tool.poetry.dev-dependencies]
 black = "^23.1.0"
