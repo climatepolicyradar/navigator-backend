@@ -1,9 +1,7 @@
-from db_client.data_migrations import populate_counters
 from db_client.models.organisation.counters import CountedEntity, EntityCounter
 
 
 def test_import_id_generation(test_db):
-    populate_counters(test_db)
     rows = test_db.query(EntityCounter).count()
     assert rows > 0
 
