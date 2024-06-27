@@ -55,7 +55,10 @@ BackendKeywordFilter = Optional[Mapping[BackendFilterValues, Sequence[str]]]
 class SearchRequestBody(CprSdkSearchParameters):
     """The request body expected by the search API endpoint."""
 
-    model_config = ConfigDict(use_attribute_docstrings=True)
+    model_config = ConfigDict(
+        use_attribute_docstrings=True,
+        populate_by_name=True,
+    )
 
     # Query string should be required in backend (its not in dal)
     # trunk-ignore(pyright/reportIncompatibleVariableOverride)
@@ -79,6 +82,7 @@ class SearchRequestBody(CprSdkSearchParameters):
     Where to start from in the number of query result that was 
     retrieved from the search database.
     """
+    limit: int = Field(alias="page_size", default=10)
 
     _page_size: int = PrivateAttr(default=10)
 
