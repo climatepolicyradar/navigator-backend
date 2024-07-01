@@ -17,7 +17,7 @@ EXPECTED_CCLW_TAXONOMY = {
     "topic",
     "framework",
     "hazard",
-    "event_types",
+    "event_type",
 }
 EXPECTED_CCLW_EVENTS = [
     "Amended",
@@ -40,7 +40,7 @@ EXPECTED_CCLW_EVENTS = [
 ]
 
 
-EXPECTED_UNFCCC_TAXONOMY = {"author", "author_type", "event_types"}
+EXPECTED_UNFCCC_TAXONOMY = {"author", "author_type", "event_type"}
 
 
 def _add_family(test_db, import_id: str, cat: FamilyCategory, corpus_import_id):

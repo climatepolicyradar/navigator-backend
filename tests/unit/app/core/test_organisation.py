@@ -4,7 +4,7 @@ from app.core.organisation import get_corpora_for_org
 from tests.non_search.setup_helpers import setup_with_docs
 
 METADATA_KEYS = set(
-    ["topic", "hazard", "sector", "keyword", "framework", "instrument", "event_types"]
+    ["topic", "hazard", "sector", "keyword", "framework", "instrument", "event_type"]
 )
 
 

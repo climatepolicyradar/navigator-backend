@@ -36,18 +36,18 @@ def test_endpoint_returns_ok_all_docs_per_family_published(data_db, data_client)
     resp_json = response.json()
     assert len(resp_json) > 1
 
-    idx = _find_geography_index(resp_json, "display_name", "Afghanistan")
+    idx = _find_geography_index(resp_json, "display_name", "India")
     resp = resp_json[idx]
 
     assert set(["display_name", "iso_code", "slug", "family_counts"]) == set(
         resp.keys()
     )
 
+    assert len(resp["family_counts"]) == 3
+
     assert resp["family_counts"]["EXECUTIVE"] == 1
     assert resp["family_counts"]["LEGISLATIVE"] == 1
     assert resp["family_counts"]["UNFCCC"] == 1
-
-    assert len(resp["family_counts"]) == 3
 
 
 def test_endpoint_returns_ok_some_docs_per_family_unpublished(data_db, data_client):
@@ -58,18 +58,18 @@ def test_endpoint_returns_ok_some_docs_per_family_unpublished(data_db, data_clie
     resp_json = response.json()
     assert len(resp_json) > 1
 
-    idx = _find_geography_index(resp_json, "display_name", "Afghanistan")
+    idx = _find_geography_index(resp_json, "display_name", "India")
     resp = resp_json[idx]
 
     assert set(["display_name", "iso_code", "slug", "family_counts"]) == set(
         resp.keys()
     )
 
+    assert len(resp["family_counts"]) == 3
+
     assert resp["family_counts"]["EXECUTIVE"] == 1
     assert resp["family_counts"]["LEGISLATIVE"] == 1
     assert resp["family_counts"]["UNFCCC"] == 2
-
-    assert len(resp["family_counts"]) == 3
 
 
 def test_endpoint_returns_404_when_not_found(data_client):

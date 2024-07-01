@@ -1,14 +1,6 @@
-from dataclasses import asdict
 from typing import Sequence, cast
 
-from db_client.models.dfce.family import (
-    Corpus,
-    Family,
-    FamilyCategory,
-    FamilyCorpus,
-    FamilyEventType,
-)
-from db_client.models.dfce.taxonomy_entry import TaxonomyEntry
+from db_client.models.dfce.family import Corpus, Family, FamilyCategory, FamilyCorpus
 from db_client.models.organisation import CorpusType, Organisation
 from sqlalchemy import func
 from sqlalchemy.orm import Session
@@ -17,7 +9,7 @@ from app.api.api_v1.schemas.metadata import CorpusData, OrganisationConfig
 from app.core import config
 
 
-def _to_corpus_data(row, event_types) -> CorpusData:
+def _to_corpus_data(row) -> CorpusData:
     image_url = (
         f"https://{config.CDN_DOMAIN}/{row.image_url}" if len(row.image_url) > 0 else ""
     )
@@ -29,10 +21,7 @@ def _to_corpus_data(row, event_types) -> CorpusData:
         corpus_type_description=row.corpus_type_description,
         image_url=image_url,
         text=row.text,
-        taxonomy={
-            **row.taxonomy,
-            "event_types": asdict(event_types),
-        },
+        taxonomy={**row.taxonomy},
     )
 
 
@@ -57,13 +46,7 @@ def get_corpora_for_org(db: Session, org_name: str) -> Sequence[CorpusData]:
         .all()
     )
 
-    event_types = db.query(FamilyEventType).all()
-    entry = TaxonomyEntry(
-        allow_blanks=False,
-        allowed_values=[r.name for r in event_types],
-        allow_any=False,
-    )
-    return [_to_corpus_data(row, entry) for row in corpora]
+    return [_to_corpus_data(row) for row in corpora]
 
 
 def get_organisation_config(db: Session, org: Organisation) -> OrganisationConfig:
