@@ -12,7 +12,7 @@ from db_client.models.organisation import AppUser
 from fastapi.testclient import TestClient
 from moto import mock_s3
 from sqlalchemy import create_engine
-from sqlalchemy.engine import Connection
+from sqlalchemy.engine import Engine
 from sqlalchemy.orm import sessionmaker
 from sqlalchemy_utils import create_database, database_exists, drop_database
 
@@ -171,7 +171,7 @@ def test_db(scope="function"):
 
 
 @pytest.fixture(scope="session")
-def data_db_connection() -> t.Generator[Connection, None, None]:
+def data_db_engine() -> t.Generator[Engine, None, None]:
     test_db_url = get_test_db_url()
 
     if database_exists(test_db_url):
@@ -184,28 +184,26 @@ def data_db_connection() -> t.Generator[Connection, None, None]:
     test_engine = create_engine(test_db_url)
 
     run_migrations(test_engine)
-    connection = test_engine.connect()
 
-    yield connection
-    connection.close()
+    yield test_engine
 
     os.environ["DATABASE_URL"] = saved_db_url
     drop_database(test_db_url)
 
 
 @pytest.fixture(scope="function")
-def data_db(data_db_connection):
-    transaction = data_db_connection.begin()
+def data_db(data_db_engine):
+    connection = data_db_engine.connect()
+    transaction = connection.begin()
 
-    SessionLocal = sessionmaker(
-        autocommit=False, autoflush=False, bind=data_db_connection
-    )
+    SessionLocal = sessionmaker(autocommit=False, autoflush=False, bind=connection)
     session = SessionLocal()
 
     yield session
 
     session.close()
     transaction.rollback()
+    connection.close()
 
 
 @pytest.fixture

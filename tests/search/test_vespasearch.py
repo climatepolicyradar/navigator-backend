@@ -232,9 +232,6 @@ def test_benchmark_families_search(
     average = sum(times) / len(times)
     assert average < REASONABLE_LATENCY_MS
 
-    with open(f"/data/benchmark_{label}_vespa.txt", "w") as out_file:
-        out_file.write("\n".join([str(t) for t in times]))
-
 
 @pytest.mark.search
 def test_specific_doc_returned(test_vespa, monkeypatch, data_client, data_db):
