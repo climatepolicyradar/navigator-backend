@@ -25,7 +25,6 @@ from db_client.models.document import PhysicalDocument
 from slugify import slugify
 from sqlalchemy.orm import Session
 
-from app.core.config import VESPA_SEARCH_LIMIT, VESPA_SEARCH_MATCHES_PER_DOC
 from app.core.search import (
     SearchRequestBody,
     _convert_filters,
@@ -39,7 +38,7 @@ from app.core.search import (
 @pytest.mark.parametrize(
     (
         "query_string,exact_match,year_range,sort_field,sort_order,"
-        "keyword_filters,max_passages,limit,offset,continuation_tokens,"
+        "keyword_filters,max_passages,page_size,offset,continuation_tokens,"
         "family_ids,document_ids"
     ),
     [
@@ -197,7 +196,7 @@ def test_create_vespa_search_params(
     sort_order,
     keyword_filters,
     max_passages,
-    limit,
+    page_size,
     offset,
     continuation_tokens,
     family_ids,
@@ -217,7 +216,7 @@ def test_create_vespa_search_params(
         # sort_by.
         sort_field=sort_field,  # type: ignore
         sort_order=sort_order,
-        limit=limit,
+        page_size=page_size,
         offset=offset,
         continuation_tokens=continuation_tokens,
     )
@@ -225,12 +224,6 @@ def test_create_vespa_search_params(
     # First step, just make sure we can create a validated pydantic model
     produced_search_parameters = create_vespa_search_params(
         data_db, search_request_body
-    )
-
-    # Test constant values
-    assert produced_search_parameters.limit == VESPA_SEARCH_LIMIT
-    assert produced_search_parameters.max_hits_per_family == min(
-        max_passages, VESPA_SEARCH_MATCHES_PER_DOC
     )
 
     # Test simple passthrough data first
@@ -280,7 +273,7 @@ def test_create_vespa_search_params(
 @pytest.mark.parametrize(
     (
         "exact_match,year_range,sort_field,sort_order,"
-        "keyword_filters,max_passages,limit,offset,continuation_tokens,"
+        "keyword_filters,max_passages,page_size,offset,continuation_tokens,"
         "family_ids,document_ids"
     ),
     [
@@ -338,7 +331,7 @@ def test_create_browse_request_params(
     sort_order,
     keyword_filters,
     max_passages,
-    limit,
+    page_size,
     offset,
     continuation_tokens,
     family_ids,
@@ -358,7 +351,7 @@ def test_create_browse_request_params(
         # sort_by.
         sort_field=sort_field,  # type:ignore
         sort_order=sort_order,
-        limit=limit,
+        page_size=page_size,
         offset=offset,
         continuation_tokens=continuation_tokens,
     )
@@ -708,7 +701,7 @@ def populate_data_db(db: Session, fam_specs: Sequence[FamSpec]) -> None:
 
 @pytest.mark.search
 @pytest.mark.parametrize(
-    "fam_specs,offset,limit",
+    "fam_specs,offset,page_size",
     [
         # Just one family, one document, 10 hits
         ([_FAM_SPEC_0], 0, 10),
@@ -716,7 +709,7 @@ def populate_data_db(db: Session, fam_specs: Sequence[FamSpec]) -> None:
         ([_FAM_SPEC_0, _FAM_SPEC_1], 0, 10),
         # Multiple families, mixed results (some docs in FAM_2 must be missing)
         ([_FAM_SPEC_0, _FAM_SPEC_2, _FAM_SPEC_1], 0, 5),
-        # Test limit, offset
+        # Test page_size, offset
         ([_FAM_SPEC_3, _FAM_SPEC_1, _FAM_SPEC_2, _FAM_SPEC_0], 2, 1),
     ],
 )
@@ -724,7 +717,7 @@ def test_process_vespa_search_response(
     data_db: Session,
     fam_specs: Sequence[FamSpec],
     offset: int,
-    limit: int,
+    page_size: int,
 ):
     # Make sure we process a response without error
     populate_data_db(data_db, fam_specs=fam_specs)
@@ -733,11 +726,11 @@ def test_process_vespa_search_response(
     search_response = process_vespa_search_response(
         db=data_db,
         vespa_search_response=vespa_response,
-        limit=limit,
+        limit=page_size,
         offset=offset,
     )
 
-    assert len(search_response.families) == min(len(fam_specs), limit)
+    assert len(search_response.families) == min(len(fam_specs), page_size)
     assert search_response.query_time_ms == vespa_response.query_time_ms
     assert search_response.total_time_ms == vespa_response.total_time_ms
     assert search_response.total_family_hits == vespa_response.total_family_hits
@@ -752,7 +745,7 @@ def test_process_vespa_search_response(
     )
 
     # Now validate family results
-    for i, fam_spec in enumerate(fam_specs[offset : offset + limit]):
+    for i, fam_spec in enumerate(fam_specs[offset : offset + page_size]):
         search_response_family_i = search_response.families[i]
         assert search_response_family_i.family_slug == slugify(fam_spec.family_name)
 
