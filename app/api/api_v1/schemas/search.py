@@ -55,7 +55,10 @@ BackendKeywordFilter = Optional[Mapping[BackendFilterValues, Sequence[str]]]
 class SearchRequestBody(CprSdkSearchParameters):
     """The request body expected by the search API endpoint."""
 
-    model_config = ConfigDict(use_attribute_docstrings=True)
+    model_config = ConfigDict(
+        use_attribute_docstrings=True,
+        populate_by_name=True,
+    )
 
     # Query string should be required in backend (its not in dal)
     # trunk-ignore(pyright/reportIncompatibleVariableOverride)
@@ -79,6 +82,7 @@ class SearchRequestBody(CprSdkSearchParameters):
     Where to start from in the number of query result that was 
     retrieved from the search database.
     """
+    limit: int = Field(alias="page_size", default=10)
 
     _page_size: int = PrivateAttr(default=10)
 
@@ -120,50 +124,6 @@ class SearchRequestBody(CprSdkSearchParameters):
         json_schema["properties"].pop("filters")
         json_schema["properties"].pop("all_results")
         json_schema["properties"].pop("documents_only")
-
-        # Extra field documentation
-        # TODO: Move these to parent class
-        json_schema["properties"]["exact_match"]["description"] = (
-            "Indicate if the `query_string` should be treated as an exact match when "
-            "the search is performed."
-        )
-        json_schema["properties"]["limit"]["description"] = (
-            "Refers to the maximum number of results to return from the "
-            "query result. To get the whole query set this value "
-            f"to {VESPA_SEARCH_LIMIT}"
-        )
-        json_schema["properties"]["max_passages_per_doc"]["description"] = (
-            "The maximum number of matched passages to be returned for a "
-            "single document."
-        )
-        json_schema["properties"]["family_ids"][
-            "description"
-        ] = "Optionally limit a search to a specific set of family ids."
-        json_schema["properties"]["document_ids"][
-            "description"
-        ] = "Optionally limit a search to a specific set of document ids."
-        json_schema["properties"]["year_range"]["description"] = (
-            "The years to search between. Containing exactly two values, "
-            "which can be null or an integer representing the years to "
-            "search between. These are inclusive and can be null. Example:"
-            " [null, 2010] will return all documents return in or before "
-            "2010"
-        )
-        json_schema["properties"]["sort_field"][
-            "description"
-        ] = "The field to sort by can be chosen from `date` or `title`"
-        json_schema["properties"]["sort_order"]["description"] = (
-            "The order of the results according to the "
-            "`sort_field`, can be chosen from ascending (use “asc”) or "
-            "descending (use “desc”)"
-        )
-        json_schema["properties"]["continuation_tokens"]["description"] = (
-            "Use to return the next page of results from a specific "
-            "search, the next token can be found on the response object. "
-            "It's also possible to get the next page of passages by "
-            "including the family level continuation token first in the "
-            "array followed by the passage level one"
-        )
 
         return json_schema
 

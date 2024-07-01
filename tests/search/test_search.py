@@ -137,7 +137,7 @@ from app.core.search import (
             None,
             "asc",
             {"languages": ["english"]},
-            1000,
+            500,
             10,
             0,
             None,
