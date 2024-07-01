@@ -813,8 +813,8 @@ def test_csv_content(
 
 @pytest.mark.search
 @pytest.mark.parametrize("label, query", [("search", "the"), ("browse", "")])
-@pytest.mark.parametrize("limit", [10, 50, 500])
-def test_csv_download_search_no_limit(
+@pytest.mark.parametrize("limit", [100, 250, 500])
+def test_csv_download_search_variable_limit(
     label, query, limit, test_vespa, data_db, monkeypatch, data_client, mocker
 ):
     monkeypatch.setattr(search, "_VESPA_CONNECTION", test_vespa)
@@ -822,17 +822,24 @@ def test_csv_download_search_no_limit(
 
     query_spy = mocker.spy(search._VESPA_CONNECTION, "search")
 
+    params = {
+        "query_string": query,
+        "limit": limit,
+        "page_size": 100,
+        "offset": 0,
+    }
+
     download_response = data_client.post(
         CSV_DOWNLOAD_ENDPOINT,
-        json={
-            "query_string": query,
-            "limit": limit,
-        },
+        json=params,
     )
     assert download_response.status_code == 200
 
-    actual_search_req = query_spy.mock_calls[0].kwargs["parameters"]
-    assert 100 <= actual_search_req.limit
+    actual_params = query_spy.call_args.kwargs["parameters"].model_dump()
+
+    # Check requested params are not changed
+    for key, value in params.items():
+        assert actual_params[key] == value
 
 
 @pytest.mark.search
