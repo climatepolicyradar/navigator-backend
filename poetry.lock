@@ -926,20 +926,6 @@ typing_extensions = "*"
 dev = ["black", "mypy", "pre-commit", "pylint", "pytest", "pytest-benchmark", "pytest-cov"]
 
 [[package]]
-name = "freezegun"
-version = "1.5.1"
-description = "Let your Python tests travel through time"
-optional = false
-python-versions = ">=3.7"
-files = [
-    {file = "freezegun-1.5.1-py3-none-any.whl", hash = "sha256:bf111d7138a8abe55ab48a71755673dbaa4ab87f4cff5634a4442dfec34c15f1"},
-    {file = "freezegun-1.5.1.tar.gz", hash = "sha256:b29dedfcda6d5e8e083ce71b2b542753ad48cfec44037b3fc79702e2980a89e9"},
-]
-
-[package.dependencies]
-python-dateutil = ">=2.7"
-
-[[package]]
 name = "frozenlist"
 version = "1.4.1"
 description = "A list-like structure which implements collections.abc.MutableSequence"
@@ -4225,4 +4211,4 @@ multidict = ">=4.0"
 [metadata]
 lock-version = "2.0"
 python-versions = "^3.9"
-content-hash = "2c758d7a9fb7c809e8ae1ecc2660980e7e3fbd9bcad7853dd485fda553b67376"
+content-hash = "445c7337cdcfb8090678db0b6c4122812ce0e597c702588a8cd10900348bda4f"
