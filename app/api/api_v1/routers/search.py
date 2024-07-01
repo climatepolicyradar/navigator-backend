@@ -68,7 +68,7 @@ def _search_request(db: Session, search_body: SearchRequestBody) -> SearchRespon
     return process_vespa_search_response(
         db,
         data_access_search_response,
-        limit=search_body._page_size,
+        limit=search_body.page_size,
         offset=search_body.offset,
     ).increment_pages()
 
@@ -156,6 +156,7 @@ def download_search_documents(
     db=Depends(get_db),
 ) -> StreamingResponse:
     """Download a CSV containing details of documents matching the search criteria."""
+
     _LOGGER.info(
         "Search download request",
         extra={

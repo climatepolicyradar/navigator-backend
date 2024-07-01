@@ -11,7 +11,6 @@ from sqlalchemy import update
 from sqlalchemy.orm import Session
 
 from app.api.api_v1.routers import search
-from app.api.api_v1.schemas import search as search_schemas
 from app.core.lookups import get_country_slug_from_country_code
 from tests.search.setup_search_tests import (
     VESPA_FIXTURE_COUNT,
@@ -87,17 +86,17 @@ def test_simple_pagination_families(test_vespa, data_client, data_db, monkeypatc
     monkeypatch.setattr(search, "_VESPA_CONNECTION", test_vespa)
     _populate_db_families(data_db)
 
-    LIMIT = 2
+    PAGE_SIZE = 2
 
     # Query one
     params = {
         "query_string": "and",
-        "limit": LIMIT,
+        "page_size": PAGE_SIZE,
         "offset": 0,
     }
     body_one = _make_search_request(data_client, params)
     assert body_one["hits"] == VESPA_FIXTURE_COUNT
-    assert len(body_one["families"]) == LIMIT
+    assert len(body_one["families"]) == PAGE_SIZE
     assert (
         body_one["families"][0]["family_slug"]
         == "agriculture-sector-plan-2015-2019_7999"
@@ -110,12 +109,12 @@ def test_simple_pagination_families(test_vespa, data_client, data_db, monkeypatc
     # Query two
     params = {
         "query_string": "and",
-        "limit": LIMIT,
+        "page_size": PAGE_SIZE,
         "offset": 2,
     }
     body_two = _make_search_request(data_client, params)
     assert body_two["hits"] == VESPA_FIXTURE_COUNT
-    assert len(body_two["families"]) == LIMIT
+    assert len(body_two["families"]) == PAGE_SIZE
     assert (
         body_two["families"][0]["family_slug"]
         == "national-energy-policy-and-energy-action-plan_9262"
@@ -242,7 +241,7 @@ def test_specific_doc_returned(test_vespa, monkeypatch, data_client, data_db):
     params = {
         "query_string": family_name_query,
         "exact_match": True,
-        "limit": 1,
+        "page_size": 1,
     }
     body = _make_search_request(data_client, params)
 
@@ -252,34 +251,29 @@ def test_specific_doc_returned(test_vespa, monkeypatch, data_client, data_db):
     assert family_name == family_name_query
 
 
+@pytest.mark.parametrize(
+    ("extra_params", "invalid_field"),
+    [
+        ({"page_size": 20, "limit": 10}, "page_size"),
+        ({"offset": 20, "limit": 10}, "offset"),
+        ({"limit": 501}, "limit"),
+        ({"max_hits_per_family": 501}, "max_hits_per_family"),
+    ],
+)
 @pytest.mark.search
 def test_search_params_backend_limits(
-    test_vespa, monkeypatch, data_client, data_db, mocker
+    test_vespa, monkeypatch, data_client, data_db, extra_params, invalid_field
 ):
-    search_limit = 10
-    passage_limit = 5
 
     monkeypatch.setattr(search, "_VESPA_CONNECTION", test_vespa)
-    monkeypatch.setattr(search_schemas, "VESPA_SEARCH_LIMIT", search_limit)
-    monkeypatch.setattr(search_schemas, "VESPA_SEARCH_MATCHES_PER_DOC", passage_limit)
     _populate_db_families(data_db)
-    query_spy = mocker.spy(search._VESPA_CONNECTION, "search")
 
-    _make_search_request(
-        data_client,
-        params={
-            "query_string": "the",
-            "limit": f"{(search_limit * 2)}",
-            "max_hits_per_family": f"{(passage_limit * 2)}",
-        },
-    )
-    query_spy.assert_called_once()
-    params = query_spy.call_args.kwargs["parameters"]
-
-    # Limit converts to _page_size and both are capped at the search limit
-    assert params._page_size == search_limit
-    assert params.limit == search_limit
-    assert params.max_hits_per_family == passage_limit
+    params = {"query_string": "the", **extra_params}
+    response = data_client.post(SEARCH_ENDPOINT, json=params)
+    assert response.status_code == 422, response.text
+    for error in response.json()["detail"]:
+        assert "body" in error["loc"], error
+        assert invalid_field in error["loc"], error
 
 
 @pytest.mark.search
@@ -524,11 +518,10 @@ def test_result_order_title(
 @pytest.mark.search
 def test_continuation_token__families(test_vespa, data_db, monkeypatch, data_client):
     monkeypatch.setattr(search, "_VESPA_CONNECTION", test_vespa)
-    monkeypatch.setattr(search_schemas, "VESPA_SEARCH_LIMIT", 2)
 
     _populate_db_families(data_db)
 
-    params = {"query_string": "the"}
+    params = {"query_string": "the", "limit": 2, "page_size": 1}
     response = _make_search_request(data_client, params)
     continuation = response["continuation_token"]
     first_family_ids = [f["family_slug"] for f in response["families"]]
@@ -548,6 +541,8 @@ def test_continuation_token__families(test_vespa, data_db, monkeypatch, data_cli
     params = {
         "query_string": "the",
         "continuation_tokens": [response["prev_continuation_token"]],
+        "limit": 2,
+        "page_size": 1,
     }
     response = _make_search_request(data_client, params)
     prev_family_ids = [f["family_slug"] for f in response["families"]]
@@ -558,7 +553,6 @@ def test_continuation_token__families(test_vespa, data_db, monkeypatch, data_cli
 @pytest.mark.search
 def test_continuation_token__passages(test_vespa, data_db, monkeypatch, data_client):
     monkeypatch.setattr(search, "_VESPA_CONNECTION", test_vespa)
-    monkeypatch.setattr(search_schemas, "VESPA_SEARCH_LIMIT", 1)
 
     _populate_db_families(data_db)
 
@@ -566,6 +560,8 @@ def test_continuation_token__passages(test_vespa, data_db, monkeypatch, data_cli
     params = {
         "query_string": "the",
         "document_ids": ["CCLW.executive.10246.4861", "CCLW.executive.4934.1571"],
+        "limit": 1,
+        "page_size": 1,
     }
     first_family = _make_search_request(data_client, params)
     params["continuation_tokens"] = [first_family["continuation_token"]]

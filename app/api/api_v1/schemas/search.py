@@ -8,16 +8,14 @@ from pydantic import (
     ConfigDict,
     Field,
     GetJsonSchemaHandler,
-    PrivateAttr,
+    ValidationInfo,
     field_validator,
-    model_validator,
 )
 from pydantic.json_schema import JsonSchemaValue
 from pydantic_core.core_schema import CoreSchema
 from typing_extensions import Annotated
 
 from app.api.api_v1.schemas import CLIMATE_LAWS_MATCH
-from app.core.config import VESPA_SEARCH_LIMIT, VESPA_SEARCH_MATCHES_PER_DOC
 
 Coord = tuple[float, float]
 
@@ -77,34 +75,45 @@ class SearchRequestBody(CprSdkSearchParameters):
     "sources", "countries", "regions", "categories", "languages"
     """
 
-    offset: int = 0
+    offset: int = Field(
+        default=0,
+        ge=0,
+        le=500,
+    )
     """
     Where to start from in the number of query result that was 
     retrieved from the search database.
     """
-    limit: int = Field(alias="page_size", default=10)
 
-    _page_size: int = PrivateAttr(default=10)
+    page_size: int = Field(
+        default=10,
+        ge=0,
+        le=500,
+    )
 
-    @model_validator(mode="after")
-    def backend_limit_handling(self):
-        """
-        Backend specific requirements for limit values
+    @field_validator("offset", mode="after")
+    @classmethod
+    def offset_to_limit(cls, offset: int, info: ValidationInfo):
+        """Ensure offset is not above the limit"""
+        limit = info.data["limit"]
+        if offset > limit:
+            raise ValueError(
+                "Cannot offset past max possible results. "
+                f"Offset: {offset}, limit: {limit}"
+            )
+        return offset
 
-        This caps moth the passage and family limits to the backend limit, as well as
-        differentiating between Vespas limit and the backends limit:
-
-        For vespa the limit is the size per group result
-        For the backend this is essentially a page within that
-        """
-
-        self.max_hits_per_family = min(
-            self.max_hits_per_family, VESPA_SEARCH_MATCHES_PER_DOC
-        )
-        self.limit = min(self.limit, VESPA_SEARCH_LIMIT)
-        self._page_size = self.limit
-        self.limit = VESPA_SEARCH_LIMIT
-        return self
+    @field_validator("page_size", mode="after")
+    @classmethod
+    def page_size_to_limit(cls, page_size: int, info: ValidationInfo):
+        """Ensure page_size is not above the limit"""
+        limit = info.data["limit"]
+        if page_size > limit:
+            raise ValueError(
+                "Cannot have page size larger than the total result limit "
+                f"page_size: {page_size}, limit: {limit}"
+            )
+        return page_size
 
     @classmethod
     def __get_pydantic_json_schema__(

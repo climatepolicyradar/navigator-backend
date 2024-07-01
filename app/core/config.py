@@ -11,10 +11,6 @@ PUBLIC_APP_URL = os.environ["PUBLIC_APP_URL"].rstrip("/")
 API_V1_STR = "/api/v1"
 
 # Vespa Config
-VESPA_SEARCH_LIMIT: int = int(os.getenv("VESPA_SEARCH_LIMIT", "100"))
-VESPA_SEARCH_MATCHES_PER_DOC: int = int(
-    os.getenv("VESPA_SEARCH_MAX_MATCHES_PER_DOC", "100")
-)
 VESPA_SECRETS_LOCATION: str = os.getenv("VESPA_SECRETS_LOCATION", "/secrets")
 VESPA_URL: str = os.environ["VESPA_URL"]
 
