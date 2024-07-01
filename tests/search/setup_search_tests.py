@@ -4,9 +4,6 @@ from datetime import datetime
 from pathlib import Path
 from typing import Iterable, Mapping, Optional, Sequence
 
-from db_client.data_migrations.taxonomy_cclw import get_cclw_taxonomy
-from db_client.data_migrations.taxonomy_unf3c import get_unf3c_taxonomy
-from db_client.models.dfce import Geography
 from db_client.models.dfce.family import (
     DocumentStatus,
     EventStatus,
@@ -16,6 +13,7 @@ from db_client.models.dfce.family import (
     FamilyDocument,
     FamilyDocumentType,
     FamilyEvent,
+    Geography,
     Slug,
     Variant,
 )
@@ -25,7 +23,7 @@ from db_client.models.document.physical_document import (
     PhysicalDocument,
     PhysicalDocumentLanguage,
 )
-from db_client.models.organisation import Corpus
+from db_client.models.organisation.corpus import Corpus, CorpusType, Organisation
 from sqlalchemy.orm import Session
 
 VESPA_FIXTURE_COUNT = 5
@@ -147,11 +145,22 @@ def _generate_synthetic_metadata(
     return meta_value
 
 
+def _get_taxonomy(db: Session, org_name: str):
+    return (
+        db.query(CorpusType.valid_metadata)
+        .join(
+            Corpus,
+            Corpus.corpus_type_name == CorpusType.name,
+        )
+        .join(Organisation, Organisation.id == Corpus.organisation_id)
+        .filter(Organisation.name == org_name)
+        .scalar()
+    )
+
+
 def _create_family_metadata(db: Session, family: VespaFixture):
-    if family["fields"]["family_source"] == "UNFCCC":
-        taxonomy = get_unf3c_taxonomy()
-    elif family["fields"]["family_source"] == "CCLW":
-        taxonomy = get_cclw_taxonomy()
+    if family["fields"]["family_source"] in ["UNFCCC", "CCLW"]:
+        taxonomy = _get_taxonomy(db, family["fields"]["family_source"])
     else:
         raise ValueError(
             f"Could not get taxonomy for: {family['fields']['family_source']}"
