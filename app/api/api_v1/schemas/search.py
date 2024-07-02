@@ -93,7 +93,7 @@ class SearchRequestBody(CprSdkSearchParameters):
 
     @field_validator("offset", mode="after")
     @classmethod
-    def offset_to_limit(cls, offset: int, info: ValidationInfo):
+    def offset_below_limit(cls, offset: int, info: ValidationInfo):
         """Ensure offset is not above the limit"""
         limit = info.data["limit"]
         if offset > limit:
@@ -105,7 +105,7 @@ class SearchRequestBody(CprSdkSearchParameters):
 
     @field_validator("page_size", mode="after")
     @classmethod
-    def page_size_to_limit(cls, page_size: int, info: ValidationInfo):
+    def page_size_below_limit(cls, page_size: int, info: ValidationInfo):
         """Ensure page_size is not above the limit"""
         limit = info.data["limit"]
         if page_size > limit:
