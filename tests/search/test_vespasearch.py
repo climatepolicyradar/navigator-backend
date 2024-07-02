@@ -843,6 +843,27 @@ def test_csv_download_search_variable_limit(
 
 
 @pytest.mark.search
+def test_csv_download__ignore_extra_fields(
+    test_vespa, data_db, monkeypatch, data_client, mocker
+):
+    monkeypatch.setattr(search, "_VESPA_CONNECTION", test_vespa)
+    _populate_db_families(data_db)
+
+    params = {
+        "query_string": "winter",
+    }
+
+    # Ensure extra, unspecified fields don't cause an error
+    fields = []
+    with patch("app.core.search._CSV_SEARCH_RESPONSE_COLUMNS", fields):
+        download_response = data_client.post(
+            CSV_DOWNLOAD_ENDPOINT,
+            json=params,
+        )
+    assert download_response.status_code == 200
+
+
+@pytest.mark.search
 def test_all_data_download(data_db, data_client):
     _populate_db_families(data_db)
 

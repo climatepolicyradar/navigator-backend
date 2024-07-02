@@ -255,8 +255,7 @@ def process_result_into_csv(
         itertools.chain(_CSV_SEARCH_RESPONSE_COLUMNS, *metadata_keys.values())
     )
     writer = csv.DictWriter(
-        csv_result_io,
-        fieldnames=csv_fieldnames,
+        csv_result_io, fieldnames=csv_fieldnames, extrasaction="ignore"
     )
     writer.writeheader()
     for row in rows:
