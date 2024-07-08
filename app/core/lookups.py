@@ -9,12 +9,11 @@ from db_client.models.dfce import (
 )
 from db_client.models.dfce.family import FamilyDocument, Slug
 from db_client.models.document.physical_document import Language
-from db_client.models.organisation import Organisation
 from sqlalchemy.exc import MultipleResultsFound
 from sqlalchemy.orm import Session
 
 from app.api.api_v1.schemas.metadata import ApplicationConfig
-from app.core.organisation import get_organisation_config
+from app.core.organisation import get_all_organisations, get_organisation_config
 from app.core.util import tree_table_to_json
 from app.core.validation import IMPORT_ID_MATCHER
 
@@ -26,8 +25,8 @@ def get_config(db: Session) -> ApplicationConfig:
     return ApplicationConfig(
         geographies=tree_table_to_json(table=Geography, db=db),
         organisations={
-            org.name: get_organisation_config(db, org)
-            for org in db.query(Organisation).all()
+            cast(str, org.name): get_organisation_config(db, org)
+            for org in get_all_organisations(db)
         },
         languages={lang.language_code: lang.name for lang in db.query(Language).all()},
         document_roles=[
