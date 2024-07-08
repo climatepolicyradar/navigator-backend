@@ -82,3 +82,7 @@ def get_organisation_config(db: Session, org: Organisation) -> OrganisationConfi
         count_by_category=count_by_category,
         corpora=get_corpora_for_org(db, org_name),
     )
+
+
+def get_all_organisations(db: Session) -> list[Organisation]:
+    return db.query(Organisation).all()

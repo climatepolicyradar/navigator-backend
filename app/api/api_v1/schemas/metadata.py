@@ -1,8 +1,7 @@
-from typing import Mapping, Sequence, Union
+from typing import Mapping, Sequence
 
+from db_client.functions.corpus_helpers import TaxonomyData
 from pydantic import BaseModel
-
-TaxonomyData = Mapping[str, Mapping[str, Union[bool, Sequence[str]]]]
 
 
 class CorpusData(BaseModel):

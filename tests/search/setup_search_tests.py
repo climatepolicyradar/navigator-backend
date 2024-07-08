@@ -139,6 +139,8 @@ def _generate_synthetic_metadata(
 ) -> Mapping[str, Sequence[str]]:
     meta_value = {}
     for k in taxonomy:
+        if "allowed_values" not in taxonomy[k]:
+            continue
         allowed_values = taxonomy[k]["allowed_values"]
         element_count = random.randint(0, len(allowed_values))
         meta_value[k] = random.sample(allowed_values, element_count)
