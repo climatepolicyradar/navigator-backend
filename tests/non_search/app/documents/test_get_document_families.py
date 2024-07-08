@@ -73,7 +73,7 @@ def test_documents_family_slug_returns_correct_json(
     assert json_response["import_id"] == "CCLW.family.1001.0"
     assert json_response["title"] == "Fam1"
     assert json_response["summary"] == "Summary1"
-    assert json_response["geography"] == "South Asia"
+    assert json_response["geography"] == "Other"
     assert json_response["category"] == "Executive"
     assert json_response["status"] == "Published"
     assert json_response["corpus_id"] == "CCLW.corpus.i00000001.n0000"
@@ -199,7 +199,7 @@ def test_documents_doc_slug_preexisting_objects(
     assert len(family.keys()) == N_FAMILY_OVERVIEW_KEYS
     assert family["title"] == "Fam2"
     assert family["import_id"] == "CCLW.family.2002.0"
-    assert family["geography"] == "South Asia"
+    assert family["geography"] == "Other"
     assert family["category"] == "Executive"
     assert family["slug"] == "FamSlug2"
     assert family["corpus_id"] == "CCLW.corpus.i00000001.n0000"

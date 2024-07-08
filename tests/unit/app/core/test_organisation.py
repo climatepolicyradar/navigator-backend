@@ -3,9 +3,7 @@ from sqlalchemy.orm import Session
 from app.core.organisation import get_corpora_for_org
 from tests.non_search.setup_helpers import setup_with_docs
 
-METADATA_KEYS = set(
-    ["topic", "hazard", "sector", "keyword", "framework", "instrument", "event_type"]
-)
+METADATA_KEYS = set(["topic", "hazard", "sector", "keyword", "framework", "instrument"])
 
 
 def test_get_corpora_for_org__has_metadata_keys(data_db: Session):

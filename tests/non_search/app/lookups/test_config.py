@@ -17,7 +17,6 @@ EXPECTED_CCLW_TAXONOMY = {
     "topic",
     "framework",
     "hazard",
-    "event_type",
 }
 EXPECTED_CCLW_EVENTS = [
     "Amended",
