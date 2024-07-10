@@ -137,7 +137,9 @@ def create_query(ingest_cycle_start: str) -> str:
         'f.description as "Family Summary", '
         'n1.collection_titles as "Collection Title(s)", '
         'n1.collection_descriptions as "Collection Description(s)", '
-        'INITCAP(d.document_role::TEXT) as "Document Role", '
+        "INITCAP(d.valid_metadata::json#>>'{"
+        "role,0}') as "
+        '"Document Role", '
         'd.variant_name as "Document Variant", '
         'p.source_url as "Document Content URL", '
         'd.document_type as "Document Type", '
@@ -235,10 +237,10 @@ def create_query(ingest_cycle_start: str) -> str:
         "on ds.family_document_import_id = d.import_id "
         "LEFT JOIN most_recent_family_slugs fs on fs.family_import_id = f.import_id "
         "LEFT JOIN event_dates fp on fp.family_import_id = f.import_id "
-        "WHERE d.last_modified < '{}' "
+        f"WHERE d.last_modified < '{ingest_cycle_start}' "
         "ORDER BY "
         "d.last_modified desc, d.created desc, d.ctid desc, n1.family_import_id"
-    ).format(ingest_cycle_start)
+    )
     return query
 
 
