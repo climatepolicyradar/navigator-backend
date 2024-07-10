@@ -119,7 +119,7 @@ def add_document(db: Session, family_import_id, d):
             variant_name=d["language_variant"],
             document_status=d["status"],
             document_type=d["type"],
-            document_role=d["role"],
+            valid_metadata=d["metadata"],
         )
     )
     db.flush()

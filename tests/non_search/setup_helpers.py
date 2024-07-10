@@ -32,7 +32,9 @@ def get_default_documents():
         "import_id": "CCLW.executive.1.2",
         "language_variant": "Original Language",
         "status": "PUBLISHED",
-        "role": "MAIN",
+        "metadata": {
+            "role": ["MAIN"],
+        },
         "type": "Plan",
         "languages": ["eng"],
         "events": [
@@ -55,7 +57,9 @@ def get_default_documents():
         "import_id": "CCLW.executive.2.2",
         "language_variant": None,
         "status": "PUBLISHED",
-        "role": "MAIN",
+        "metadata": {
+            "role": ["MAIN"],
+        },
         "type": "Order",
         "languages": [],
         "events": [
