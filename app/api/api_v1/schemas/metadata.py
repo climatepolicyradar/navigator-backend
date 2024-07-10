@@ -31,6 +31,5 @@ class ApplicationConfig(BaseModel):
     geographies: Sequence[dict]
     organisations: Mapping[str, OrganisationConfig]
     languages: Mapping[str, str]
-    document_roles: Sequence[str]
     document_types: Sequence[str]
     document_variants: Sequence[str]
