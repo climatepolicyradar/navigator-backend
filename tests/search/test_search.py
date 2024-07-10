@@ -683,7 +683,7 @@ def populate_data_db(db: Session, fam_specs: Sequence[FamSpec]) -> None:
                 variant_name=None,
                 document_status=DocumentStatus.PUBLISHED,
                 document_type=None,
-                document_role=None,
+                valid_metadata={"role": ["MAIN"]},
             )
             db.add(family_document)
 

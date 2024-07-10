@@ -1,12 +1,7 @@
 import logging
 from typing import Optional, Sequence, cast
 
-from db_client.models.dfce import (
-    FamilyDocumentRole,
-    FamilyDocumentType,
-    Geography,
-    Variant,
-)
+from db_client.models.dfce import FamilyDocumentType, Geography, Variant
 from db_client.models.dfce.family import FamilyDocument, Slug
 from db_client.models.document.physical_document import Language
 from sqlalchemy.exc import MultipleResultsFound
@@ -29,12 +24,6 @@ def get_config(db: Session) -> ApplicationConfig:
             for org in get_all_organisations(db)
         },
         languages={lang.language_code: lang.name for lang in db.query(Language).all()},
-        document_roles=[
-            doc_role.name
-            for doc_role in db.query(FamilyDocumentRole)
-            .order_by(FamilyDocumentRole.name)
-            .all()
-        ],
         document_types=[
             doc_type.name
             for doc_type in db.query(FamilyDocumentType)

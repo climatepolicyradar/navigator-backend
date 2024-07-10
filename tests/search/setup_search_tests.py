@@ -228,6 +228,7 @@ def _create_document(
         variant_name=variant.variant_name,
         document_status=DocumentStatus.PUBLISHED,
         document_type=doc_type.name,
+        valid_metadata={"role": ["MAIN"]},
     )
 
     family_document_slug = Slug(

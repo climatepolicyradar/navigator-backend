@@ -25,7 +25,9 @@ def _add_published_fams_and_docs(db: Session):
         "import_id": "CCLW.executive.3.3",
         "language_variant": None,
         "status": "PUBLISHED",
-        "role": "MAIN",
+        "metadata": {
+            "role": ["MAIN"],
+        },
         "type": "Order",
         "languages": [],
         "events": [
@@ -120,7 +122,9 @@ def setup_mixed_doc_statuses_world_map(db: Session):
         "import_id": "CCLW.executive.0.0",
         "language_variant": None,
         "status": "CREATED",
-        "role": "MAIN",
+        "metadata": {
+            "role": ["MAIN"],
+        },
         "type": "Order",
         "languages": [],
         "events": [
@@ -142,7 +146,9 @@ def setup_mixed_doc_statuses_world_map(db: Session):
         "import_id": "CCLW.executive.4.4",
         "language_variant": None,
         "status": "DELETED",
-        "role": "MAIN",
+        "metadata": {
+            "role": ["MAIN"],
+        },
         "type": "Order",
         "languages": [],
         "events": [
@@ -164,7 +170,9 @@ def setup_mixed_doc_statuses_world_map(db: Session):
         "import_id": "CCLW.executive.5.5",
         "language_variant": None,
         "status": "CREATED",
-        "role": "MAIN",
+        "metadata": {
+            "role": ["MAIN"],
+        },
         "type": "Order",
         "languages": [],
         "events": [
@@ -186,7 +194,9 @@ def setup_mixed_doc_statuses_world_map(db: Session):
         "import_id": "CCLW.executive.6.6",
         "language_variant": None,
         "status": "PUBLISHED",
-        "role": "MAIN",
+        "metadata": {
+            "role": ["MAIN"],
+        },
         "type": "Order",
         "languages": [],
         "events": [
@@ -208,7 +218,9 @@ def setup_mixed_doc_statuses_world_map(db: Session):
         "import_id": "CCLW.executive.7.7",
         "language_variant": None,
         "status": "PUBLISHED",
-        "role": "MAIN",
+        "metadata": {
+            "role": ["MAIN"],
+        },
         "type": "Order",
         "languages": [],
         "events": [
