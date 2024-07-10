@@ -64,7 +64,7 @@ class FamilyDocumentResponse(BaseModel):
     language: str
     languages: Sequence[str]
     document_type: Optional[str] = None
-    document_role: Optional[str] = None
+    document_role: str
 
     @field_validator("source_url")
     @classmethod
