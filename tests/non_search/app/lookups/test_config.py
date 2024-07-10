@@ -76,16 +76,21 @@ def test_config_endpoint_content(data_client, data_db):
 
     assert "geographies" in response_json
     assert len(response_json["geographies"]) == 8
+
     assert "languages" in response_json
     assert len(response_json["languages"]) == 7893
+
     assert "fra" in response_json["languages"]
     assert all(len(key) == 3 for key in response_json["languages"])
+
     assert "document_roles" in response_json
     assert len(response_json["document_roles"]) == 10
     assert "MAIN" in response_json["document_roles"]
+
     assert "document_types" in response_json
     assert len(response_json["document_types"]) == 76
     assert "Adaptation Communication" in response_json["document_types"]
+
     assert "document_variants" in response_json
     assert len(response_json["document_variants"]) == 2
     assert "Original Language" in response_json["document_variants"]
