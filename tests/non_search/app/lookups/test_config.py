@@ -72,7 +72,17 @@ def test_config_endpoint_content(data_client, data_db):
     response_json = response.json()
 
     assert response.status_code == OK
-    assert len(response_json) == 6
+    assert (
+        set(response_json.keys())
+        ^ {
+            "geographies",
+            "organisations",
+            "document_variants",
+            "languages",
+            "document_types",
+        }
+        == set()
+    )
 
     assert "geographies" in response_json
     assert len(response_json["geographies"]) == 8
@@ -82,10 +92,6 @@ def test_config_endpoint_content(data_client, data_db):
 
     assert "fra" in response_json["languages"]
     assert all(len(key) == 3 for key in response_json["languages"])
-
-    assert "document_roles" in response_json
-    assert len(response_json["document_roles"]) == 10
-    assert "MAIN" in response_json["document_roles"]
 
     assert "document_types" in response_json
     assert len(response_json["document_types"]) == 76
@@ -127,6 +133,10 @@ def test_config_endpoint_content(data_client, data_db):
     assert cclw_corpora[0]["description"] == "CCLW national policies"
     assert cclw_corpora[0]["title"] == "CCLW national policies"
     assert set(cclw_corpora[0]["taxonomy"]) ^ EXPECTED_CCLW_TAXONOMY == set()
+
+    # Check document roles.
+    assert len(cclw_corpora[0]["taxonomy"]["_document"]["role"]["allowed_values"]) == 10
+    assert "MAIN" in cclw_corpora[0]["taxonomy"]["_document"]["role"]["allowed_values"]
 
 
 def test_config_endpoint_cclw_stats(data_client, data_db):
