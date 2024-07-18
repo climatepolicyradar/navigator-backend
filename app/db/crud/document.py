@@ -108,7 +108,7 @@ def get_family_document_and_context(
         content_type=physical_document.content_type,
         language=(visible_languages[0] if visible_languages else ""),
         languages=visible_languages,
-        document_type=document.document_type,
+        document_type=document.valid_metadata["type"][0],
         document_role=document.valid_metadata["role"][0],
     )
 
@@ -243,7 +243,7 @@ def _get_documents_for_family_import_id(
             content_type=cast(str, d.physical_document.content_type),
             language=(visible_languages[0] if visible_languages else ""),
             languages=visible_languages,
-            document_type=cast(str, d.document_type),
+            document_type=cast(str, d.valid_metadata["type"][0]),
             document_role=cast(str, d.valid_metadata["role"][0]),  # type:ignore
         )
 

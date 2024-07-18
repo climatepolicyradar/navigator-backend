@@ -682,8 +682,7 @@ def populate_data_db(db: Session, fam_specs: Sequence[FamSpec]) -> None:
                 import_id=f"{fam_spec.family_import_id}.{i}",
                 variant_name=None,
                 document_status=DocumentStatus.PUBLISHED,
-                document_type=None,
-                valid_metadata={"role": ["MAIN"]},
+                valid_metadata={"role": ["MAIN"], "type": ["Law"]},
             )
             db.add(family_document)
 

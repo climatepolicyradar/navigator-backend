@@ -449,7 +449,9 @@ def _process_vespa_search_response_families(
                     response_document = SearchResponseFamilyDocument(
                         document_title=str(db_family_document.physical_document.title),
                         document_slug=hit.document_slug,
-                        document_type=str(db_family_document.document_type),
+                        document_type=cast(
+                            str, db_family_document.valid_metadata["type"][0]
+                        ),
                         document_source_url=hit.document_source_url,
                         document_url=to_cdn_url(hit.document_cdn_object),
                         document_content_type=hit.document_content_type,
