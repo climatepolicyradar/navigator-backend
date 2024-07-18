@@ -142,7 +142,9 @@ def create_query(ingest_cycle_start: str) -> str:
         '"Document Role", '
         'd.variant_name as "Document Variant", '
         'p.source_url as "Document Content URL", '
-        'd.document_type as "Document Type", '
+        "INITCAP(d.valid_metadata::json#>>'{"
+        "type,0}') as "
+        '"Document Type", '
         "CASE "
         "WHEN f.family_category = 'UNFCCC' THEN 'UNFCCC' "
         "ELSE INITCAP(f.family_category::TEXT) "

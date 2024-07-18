@@ -1,9 +1,5 @@
 import pytest
-from db_client.models.dfce import (  # noqa F401
-    FamilyDocument,
-    FamilyDocumentType,
-    Geography,
-)
+from db_client.models.dfce import Geography
 from db_client.models.organisation import Organisation
 
 template_doc = {
@@ -30,11 +26,9 @@ def summary_geography_family_data(test_db):
             display_value="A place in the sea", slug="a-place-in-the-sea", value="YYY"
         ),
     ]
-    doc_types = [FamilyDocumentType(name="doctype", description="for testing")]
     organisations = [Organisation(name="test org")]
 
     test_db.add_all(geos)
-    test_db.add_all(doc_types)
     test_db.add_all(organisations)
     test_db.flush()
 
@@ -59,7 +53,6 @@ def summary_geography_family_data(test_db):
         "docs": documents,
         "families": documents,
         "geos": geos,
-        "doc_types": doc_types,
         "organisations": organisations,
         "events": events,
     }

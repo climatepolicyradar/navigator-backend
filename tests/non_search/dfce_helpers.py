@@ -118,7 +118,6 @@ def add_document(db: Session, family_import_id, d):
             import_id=d["import_id"],
             variant_name=d["language_variant"],
             document_status=d["status"],
-            document_type=d["type"],
             valid_metadata=d["metadata"],
         )
     )

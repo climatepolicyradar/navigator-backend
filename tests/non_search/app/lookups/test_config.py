@@ -79,7 +79,6 @@ def test_config_endpoint_content(data_client, data_db):
             "organisations",
             "document_variants",
             "languages",
-            "document_types",
         }
         == set()
     )
@@ -92,10 +91,6 @@ def test_config_endpoint_content(data_client, data_db):
 
     assert "fra" in response_json["languages"]
     assert all(len(key) == 3 for key in response_json["languages"])
-
-    assert "document_types" in response_json
-    assert len(response_json["document_types"]) == 76
-    assert "Adaptation Communication" in response_json["document_types"]
 
     assert "document_variants" in response_json
     assert len(response_json["document_variants"]) == 2
@@ -135,8 +130,17 @@ def test_config_endpoint_content(data_client, data_db):
     assert set(cclw_corpora[0]["taxonomy"]) ^ EXPECTED_CCLW_TAXONOMY == set()
 
     # Check document roles.
+    assert "role" in cclw_corpora[0]["taxonomy"]["_document"].keys()
     assert len(cclw_corpora[0]["taxonomy"]["_document"]["role"]["allowed_values"]) == 10
     assert "MAIN" in cclw_corpora[0]["taxonomy"]["_document"]["role"]["allowed_values"]
+
+    # Check document roles.
+    assert "type" in cclw_corpora[0]["taxonomy"]["_document"].keys()
+    assert len(cclw_corpora[0]["taxonomy"]["_document"]["type"]["allowed_values"]) == 76
+    assert (
+        "Adaptation Communication"
+        in cclw_corpora[0]["taxonomy"]["_document"]["type"]["allowed_values"]
+    )
 
 
 def test_config_endpoint_cclw_stats(data_client, data_db):

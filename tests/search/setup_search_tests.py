@@ -11,7 +11,6 @@ from db_client.models.dfce.family import (
     FamilyCategory,
     FamilyCorpus,
     FamilyDocument,
-    FamilyDocumentType,
     FamilyEvent,
     Geography,
     Slug,
@@ -212,12 +211,6 @@ def _create_document(
     db.merge(variant)
     db.commit()
 
-    doc_type = FamilyDocumentType(
-        name=family["fields"]["family_category"], description=""
-    )
-    db.merge(doc_type)
-    db.commit()
-
     family_import_id = family["fields"]["family_import_id"]
     doc_import_id = family["fields"]["document_import_id"]
 
@@ -227,8 +220,10 @@ def _create_document(
         import_id=doc_import_id,
         variant_name=variant.variant_name,
         document_status=DocumentStatus.PUBLISHED,
-        document_type=doc_type.name,
-        valid_metadata={"role": ["MAIN"]},
+        valid_metadata={
+            "role": ["MAIN"],
+            "type": [family["fields"]["family_category"]],
+        },
     )
 
     family_document_slug = Slug(

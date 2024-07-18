@@ -108,8 +108,16 @@ def get_family_document_and_context(
         content_type=physical_document.content_type,
         language=(visible_languages[0] if visible_languages else ""),
         languages=visible_languages,
-        document_type=document.document_type,
-        document_role=document.valid_metadata["role"][0],
+        document_type=(
+            document.valid_metadata["type"][0]
+            if "type" in document.valid_metadata.keys()
+            else ""
+        ),
+        document_role=(
+            document.valid_metadata["role"][0]
+            if "role" in document.valid_metadata.keys()
+            else ""
+        ),
     )
 
     return FamilyDocumentWithContextResponse(family=family_context, document=response)
@@ -243,8 +251,16 @@ def _get_documents_for_family_import_id(
             content_type=cast(str, d.physical_document.content_type),
             language=(visible_languages[0] if visible_languages else ""),
             languages=visible_languages,
-            document_type=cast(str, d.document_type),
-            document_role=cast(str, d.valid_metadata["role"][0]),  # type:ignore
+            document_type=(
+                cast(str, d.valid_metadata["type"][0])  # type:ignore
+                if "type" in d.valid_metadata.keys()
+                else ""
+            ),
+            document_role=(
+                cast(str, d.valid_metadata["role"][0])  # type:ignore
+                if "role" in d.valid_metadata.keys()
+                else ""
+            ),
         )
 
     return [make_response(d) for d in db_documents]

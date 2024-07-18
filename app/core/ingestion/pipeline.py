@@ -55,7 +55,11 @@ def generate_pipeline_ingest_input(db: Session) -> Sequence[DocumentParserInput]
                 else None
             ),
             download_url=None,
-            type=cast(str, family_document.document_type or ""),
+            type=(
+                cast(str, family_document.valid_metadata["type"][0])  # type:ignore
+                if "type" in family_document.valid_metadata.keys()
+                else ""
+            ),
             source=cast(str, organisation.name),
             geography=cast(str, geography.value),
             languages=[

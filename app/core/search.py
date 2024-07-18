@@ -219,7 +219,13 @@ def process_result_into_csv(
                     "Document Title": document_title,
                     "Document URL": f"{url_base}/{document.slugs[-1].name}",
                     "Document Content URL": document_content,
-                    "Document Type": document.document_type,
+                    "Document Type": (
+                        cast(
+                            str, document.valid_metadata["type"][0]  # type:ignore
+                        )
+                        if "type" in document.valid_metadata.keys()
+                        else ""
+                    ),
                     "Document Content Matches Search Phrase": document_match,
                     "Geography": family.family_geography,
                     "Category": family.family_category,
@@ -449,7 +455,11 @@ def _process_vespa_search_response_families(
                     response_document = SearchResponseFamilyDocument(
                         document_title=str(db_family_document.physical_document.title),
                         document_slug=hit.document_slug,
-                        document_type=str(db_family_document.document_type),
+                        document_type=(
+                            db_family_document.valid_metadata["type"][0]  # type:ignore
+                            if "type" in db_family_document.valid_metadata.keys()
+                            else ""
+                        ),
                         document_source_url=hit.document_source_url,
                         document_url=to_cdn_url(hit.document_cdn_object),
                         document_content_type=hit.document_content_type,

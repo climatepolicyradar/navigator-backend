@@ -77,7 +77,7 @@ def test_climate_laws_source_url_filtered_from_document(source_domain_path, sche
         content_type=None,
         language="",
         languages=[],
-        document_type=None,
+        document_type="Law",
         document_role="MAIN",
     )
     assert document_response.source_url is None
@@ -101,7 +101,7 @@ def test_non_climate_laws_source_url_left_in_document(source_domain_path, scheme
         content_type=None,
         language="",
         languages=[],
-        document_type=None,
+        document_type="Law",
         document_role="MAIN",
     )
     assert document_response.source_url == given_url
