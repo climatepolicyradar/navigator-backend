@@ -54,7 +54,7 @@ def get_default_documents():
         "import_id": "CCLW.executive.2.2",
         "language_variant": None,
         "status": "PUBLISHED",
-        "metadata": {"role": ["MAIN"], "type": "Order"},
+        "metadata": {"role": ["MAIN"], "type": ["Order"]},
         "languages": [],
         "events": [
             {
