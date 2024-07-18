@@ -80,6 +80,11 @@ def get_family_document_and_context(
 
     family, document, physical_document, geography, family_corpus = db_objects
 
+    if set(document.valid_metadata.keys()) ^ set(["role", "type"]) != set():
+        raise AttributeError(
+            "Additional document metadata keys present compared to what is expected"
+        )
+
     if (
         family.family_status != FamilyStatus.PUBLISHED
         or document.document_status != DocumentStatus.PUBLISHED
