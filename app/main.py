@@ -56,7 +56,7 @@ DEFAULT_LOGGING = {
         "level": LOG_LEVEL,
     },
 }
-logger = logging.getLogger(__name__)
+_LOGGER = logging.getLogger(__name__)
 logging.config.dictConfig(DEFAULT_LOGGING)
 
 _docs_description = """
@@ -77,10 +77,10 @@ _openapi_url = "/api" if ENABLE_API_DOCS else None
 @asynccontextmanager
 async def lifespan(app_: FastAPI):
     """Run startup and shutdown events."""
-    logger.info("Starting up...")
+    _LOGGER.info("Starting up...")
     run_migrations(engine)
     yield
-    logger.info("Shutting down...")
+    _LOGGER.info("Shutting down...")
 
 
 app = FastAPI(
