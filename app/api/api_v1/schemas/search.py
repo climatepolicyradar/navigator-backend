@@ -164,7 +164,7 @@ class SearchResponseFamilyDocument(BaseModel):
     https://app.climatepolicyradar.org/documents/national-climate-change-adaptation-strategy_06f8
     """
 
-    document_type: str
+    document_type: Optional[str] = None
     """
     The type of document, for example: “Strategy”
     """
