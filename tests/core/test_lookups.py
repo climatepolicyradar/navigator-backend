@@ -9,9 +9,13 @@ from app.core.lookups import doc_type_from_family_document_metadata
     (
         ({"role": ["MAIN"], "type": ["Law"]}, "Law"),
         ({"role": ["MAIN"], "type": ["Law", "Executive"]}, "Law"),
+        ({"role": ["MAIN"], "type": ["Law", None]}, "Law"),
         ({"role": ["MAIN"], "type": [None]}, ""),
+        ({"role": ["MAIN"], "type": [None, "Law"]}, ""),
         ({"role": ["MAIN"], "type": []}, ""),
+        ({"role": ["MAIN"], "type": None}, ""),
         ({"role": ["MAIN"]}, ""),
+        ({}, ""),
     ),
 )
 def test_doc_type_from_family_document_metadata(metadata, expected):
