@@ -72,6 +72,28 @@ def test__flatten_maybe_tree_is_a_tree(is_a_tree: Sequence, expected: Collection
     assert _flatten_maybe_tree(is_a_tree) == expected
 
 
+def test_document_parser_input_type():
+    """Check type is converted to string when null"""
+    d = DocumentParserInput(
+        publication_ts=datetime.datetime(year=2008, month=12, day=25),
+        name="name",
+        description="description",
+        source_url=None,
+        download_url=None,
+        type=None,  # pyright: ignore[reportArgumentType]
+        source="CCLW",
+        import_id="1234-5678",
+        slug="geo_2008_name_1234_5678",
+        family_import_id="family_1234-5678",
+        family_slug="geo_2008_family_1234_5679",
+        category="category",
+        geography="GEO",
+        languages=[],
+        metadata={},
+    )
+    assert d.type == ""
+
+
 def test_write_documents_to_s3(test_s3_client, mocker):
     """Really simple check that values are passed to the s3 client correctly"""
     d = DocumentParserInput(
