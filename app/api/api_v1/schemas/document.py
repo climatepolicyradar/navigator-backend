@@ -129,13 +129,18 @@ class DocumentParserInput(BaseModel):
     family_import_id: str
     family_slug: str
 
-    type: str
+    type: str = ""
     source: str
     category: str
     geography: str
     languages: Sequence[str]
 
     metadata: Json
+
+    @field_validator("type", mode="before")
+    @classmethod
+    def none_to_empty_string(cls, value):
+        return "" if value is None else value
 
     def to_json(self) -> Mapping[str, Any]:
         """Provide a serialisable version of the model"""
