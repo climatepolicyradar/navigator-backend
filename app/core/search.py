@@ -39,7 +39,11 @@ from app.api.api_v1.schemas.search import (
     SearchResponseFamilyDocument,
 )
 from app.core.config import INDEX_ENCODER_CACHE_FOLDER, PUBLIC_APP_URL
-from app.core.lookups import get_countries_for_region, get_countries_for_slugs
+from app.core.lookups import (
+    doc_type_from_family_document_metadata,
+    get_countries_for_region,
+    get_countries_for_slugs,
+)
 from app.core.util import to_cdn_url
 
 _LOGGER = logging.getLogger(__name__)
@@ -219,13 +223,7 @@ def process_result_into_csv(
                     "Document Title": document_title,
                     "Document URL": f"{url_base}/{document.slugs[-1].name}",
                     "Document Content URL": document_content,
-                    "Document Type": (
-                        cast(
-                            str, document.valid_metadata["type"][0]  # type:ignore
-                        )
-                        if "type" in document.valid_metadata.keys()
-                        else ""
-                    ),
+                    "Document Type": doc_type_from_family_document_metadata(document),
                     "Document Content Matches Search Phrase": document_match,
                     "Geography": family.family_geography,
                     "Category": family.family_category,
@@ -455,10 +453,8 @@ def _process_vespa_search_response_families(
                     response_document = SearchResponseFamilyDocument(
                         document_title=str(db_family_document.physical_document.title),
                         document_slug=hit.document_slug,
-                        document_type=(
-                            db_family_document.valid_metadata["type"][0]  # type:ignore
-                            if "type" in db_family_document.valid_metadata.keys()
-                            else ""
+                        document_type=doc_type_from_family_document_metadata(
+                            db_family_document
                         ),
                         document_source_url=hit.document_source_url,
                         document_url=to_cdn_url(hit.document_cdn_object),

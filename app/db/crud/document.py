@@ -33,6 +33,7 @@ from app.api.api_v1.schemas.document import (
     FamilyEventsResponse,
     LinkableFamily,
 )
+from app.core.lookups import doc_type_from_family_document_metadata
 from app.core.util import to_cdn_url
 
 _LOGGER = logging.getLogger(__file__)
@@ -108,11 +109,7 @@ def get_family_document_and_context(
         content_type=physical_document.content_type,
         language=(visible_languages[0] if visible_languages else ""),
         languages=visible_languages,
-        document_type=(
-            document.valid_metadata["type"][0]
-            if "type" in document.valid_metadata.keys()
-            else ""
-        ),
+        document_type=doc_type_from_family_document_metadata(document),
         document_role=(
             document.valid_metadata["role"][0]
             if "role" in document.valid_metadata.keys()
@@ -251,11 +248,7 @@ def _get_documents_for_family_import_id(
             content_type=cast(str, d.physical_document.content_type),
             language=(visible_languages[0] if visible_languages else ""),
             languages=visible_languages,
-            document_type=(
-                cast(str, d.valid_metadata["type"][0])  # type:ignore
-                if "type" in d.valid_metadata.keys()
-                else ""
-            ),
+            document_type=doc_type_from_family_document_metadata(d),
             document_role=(
                 cast(str, d.valid_metadata["role"][0])  # type:ignore
                 if "role" in d.valid_metadata.keys()

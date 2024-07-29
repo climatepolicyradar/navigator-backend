@@ -14,6 +14,7 @@ from db_client.models.organisation import Organisation
 from sqlalchemy.orm import Session
 
 from app.api.api_v1.schemas.document import DocumentParserInput
+from app.core.lookups import doc_type_from_family_document_metadata
 
 _LOGGER = logging.getLogger(__name__)
 
@@ -55,11 +56,7 @@ def generate_pipeline_ingest_input(db: Session) -> Sequence[DocumentParserInput]
                 else None
             ),
             download_url=None,
-            type=(
-                cast(str, family_document.valid_metadata["type"][0])  # type:ignore
-                if "type" in family_document.valid_metadata.keys()
-                else ""
-            ),
+            type=doc_type_from_family_document_metadata(family_document),
             source=cast(str, organisation.name),
             geography=cast(str, geography.value),
             languages=[
