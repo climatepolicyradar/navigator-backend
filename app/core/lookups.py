@@ -119,3 +119,15 @@ def get_family_document_by_import_id_or_slug(
             .one_or_none()
         )
     return family_document
+
+
+def doc_type_from_family_document_metadata(family_document: FamilyDocument) -> str:
+    """Retrieves the document type from FamilyDocument metadata
+
+    If the field is missing, empty or None, returns an empty string
+    Will also return at empty string if the first value of metadata is None
+    """
+    doctype: list = family_document.valid_metadata.get("type")
+    if not doctype or len(doctype) == 0:
+        return ""
+    return cast(str, doctype[0] or "")
