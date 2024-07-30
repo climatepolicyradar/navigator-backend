@@ -12,6 +12,7 @@ updates:
       interval: monthly
     ignore:
       - dependency-name: cpr_sdk
+      - dependency-name: db_client
   - package-ecosystem: pip
     directory: /
     schedule:
