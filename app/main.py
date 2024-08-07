@@ -147,6 +147,12 @@ app.include_router(
     auth_router, prefix="/api", tags=["Authentication"], include_in_schema=False
 )
 app.include_router(
+    custom_app_router,
+    prefix="/api",
+    tags=["Custom App Config"],
+    include_in_schema=False,
+)
+app.include_router(
     documents_router, prefix="/api/v1", tags=["Documents"], include_in_schema=False
 )
 app.include_router(
@@ -158,12 +164,6 @@ app.include_router(
 )
 app.include_router(
     geographies_router, prefix="/api/v1", tags=["Geographies"], include_in_schema=False
-)
-app.include_router(
-    custom_app_router,
-    prefix="/api/v1",
-    tags=["Custom App Config"],
-    include_in_schema=False,
 )
 
 # add pagination support to all routes that ask for it
