@@ -15,6 +15,10 @@ def test_create_config_token_fails_when_all_data_present(test_client):
         json={"years": 1, "allowed_corpora_ids": ["a_corpus_id"]},
     )
     assert response.status_code == status.HTTP_200_OK
+    data = response.json()
+    assert isinstance(data, dict)
+    assert isinstance(data["access_token"], str)
+    assert data["token_type"] == "bearer"
 
 
 def test_create_config_token_fails_when_years_missing(test_client):
@@ -26,3 +30,7 @@ def test_create_config_token_fails_when_years_missing(test_client):
         },
     )
     assert response.status_code == status.HTTP_200_OK
+    data = response.json()
+    assert isinstance(data, dict)
+    assert isinstance(data["access_token"], str)
+    assert data["token_type"] == "bearer"
