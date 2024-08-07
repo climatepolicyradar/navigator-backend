@@ -32,17 +32,17 @@ def has_expected_keys(keys: list[str]) -> bool:
 
 
 @pytest.mark.parametrize(
-    "input_str,expected_allowed_corpora",
+    "input_corpora,expected_allowed_corpora",
     [
-        ("apple,banana,carrot", ["apple", "banana", "carrot"]),
-        ("cucumber", ["cucumber"]),
+        (["apple", "carrot", "banana"], ["apple", "banana", "carrot"]),
+        (["cucumber"], ["cucumber"]),
     ],
 )
 def test_create_configuration_token_default_expiry(
-    input_str: str, expected_allowed_corpora: list[str]
+    input_corpora: list[str], expected_allowed_corpora: list[str]
 ):
     datetime.utcnow()
-    token = encode_configuration_token(input_str)
+    token = encode_configuration_token(input_corpora)
     assert token is not None
     assert isinstance(token, str)
 
@@ -57,20 +57,20 @@ def test_create_configuration_token_default_expiry(
 
 
 @pytest.mark.parametrize(
-    "input_str,expected_allowed_corpora,expiry_years",
+    "input_corpora,expected_allowed_corpora,expiry_years",
     [
         (
-            "raspberry,strawberry,orange",
+            ["raspberry", "strawberry", "orange"],
             ["orange", "raspberry", "strawberry"],
             1,
         ),
-        ("grapefruit", ["grapefruit"], 5),
+        (["grapefruit"], ["grapefruit"], 5),
     ],
 )
 def test_create_configuration_token_specific_expiry(
-    input_str: str, expected_allowed_corpora: list[str], expiry_years: int
+    input_corpora: list[str], expected_allowed_corpora: list[str], expiry_years: int
 ):
-    token = encode_configuration_token(input_str, expiry_years)
+    token = encode_configuration_token(input_corpora, expiry_years)
     assert token is not None
     assert isinstance(token, str)
 
