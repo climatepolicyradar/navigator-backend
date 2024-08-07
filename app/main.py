@@ -14,6 +14,7 @@ from starlette.requests import Request
 
 from app.api.api_v1.routers.admin import admin_document_router
 from app.api.api_v1.routers.auth import auth_router
+from app.api.api_v1.routers.custom_app import custom_app_router
 from app.api.api_v1.routers.documents import documents_router
 from app.api.api_v1.routers.geographies import geographies_router
 from app.api.api_v1.routers.lookups import lookups_router
@@ -157,6 +158,12 @@ app.include_router(
 )
 app.include_router(
     geographies_router, prefix="/api/v1", tags=["Geographies"], include_in_schema=False
+)
+app.include_router(
+    custom_app_router,
+    prefix="/api/v1",
+    tags=["Custom App Config"],
+    include_in_schema=False,
 )
 
 # add pagination support to all routes that ask for it
