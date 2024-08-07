@@ -41,6 +41,7 @@ torch = [
   { platform = "linux", version = "2.0.0", source = "pytorch" },
   { platform = "win32", version = "2.0.0", source = "pytorch" },
 ]
+python-dateutil = "^2.9.0.post0"
 
 [[tool.poetry.source]]
 name = "pytorch"
