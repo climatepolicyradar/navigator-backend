@@ -1,9 +1,10 @@
 import logging
 import os
-from datetime import datetime, timedelta
+from datetime import datetime
 from typing import Optional
 
 import jwt
+from dateutil.relativedelta import relativedelta
 from db_client.models.dfce.family import Corpus
 from sqlalchemy.orm import Session
 
@@ -13,8 +14,7 @@ SECRET_KEY = os.environ["SECRET_KEY"]
 ALGORITHM = "HS256"
 
 # TODO: revisit/configure access token expiry
-WEEKS_IN_YEAR = 52
-CUSTOM_APP_TOKEN_EXPIRE_WEEKS = 10 * WEEKS_IN_YEAR  # 10 years for access token
+CUSTOM_APP_TOKEN_EXPIRE_YEARS = 10  # token valid for 10 years
 
 
 def validate(db: Session, allowed_corpora_ids: list[str]) -> bool:
@@ -35,7 +35,7 @@ def validate(db: Session, allowed_corpora_ids: list[str]) -> bool:
 
 
 def create_configuration_token(
-    allowed_corpora: str, weeks: Optional[int] = None
+    allowed_corpora: str, years: Optional[int] = None
 ) -> str:
     """Create a custom app configuration token.
 
@@ -43,9 +43,9 @@ def create_configuration_token(
         corpus import IDs that the custom app should show.
     :return str: A JWT token containing the encoded allowed corpora.
     """
-    expiry_weeks = weeks or CUSTOM_APP_TOKEN_EXPIRE_WEEKS
+    expiry_years = years or CUSTOM_APP_TOKEN_EXPIRE_YEARS
     issued_at = datetime.utcnow()
-    expire = issued_at + timedelta(weeks=expiry_weeks)
+    expire = issued_at + relativedelta(years=expiry_years)
 
     corpora_ids = allowed_corpora.split(",")
     corpora_ids.sort()
@@ -55,5 +55,11 @@ def create_configuration_token(
     msg += f"for the following corpora: {corpora_ids}"
     print(msg)
 
-    to_encode = {"allowed_corpora_ids": corpora_ids, "exp": expire, "iat": issued_at}
+    to_encode = {
+        "allowed_corpora_ids": corpora_ids,
+        "exp": expire,
+        "iat": datetime.timestamp(issued_at.replace(microsecond=0)),  # No microseconds
+        # "aud": theme,
+        # "sub": theme,
+    }
     return jwt.encode(to_encode, SECRET_KEY, algorithm=ALGORITHM)
