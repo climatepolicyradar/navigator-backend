@@ -789,7 +789,7 @@ vision = ["Pillow (>=9.4.0)"]
 
 [[package]]
 name = "db-client"
-version = "3.8.9"
+version = "3.8.10"
 description = "All things to do with the datamodel and its storage. Including alembic migrations and datamodel code."
 optional = false
 python-versions = "^3.9"
@@ -809,8 +809,8 @@ SQLAlchemy-Utils = "^0.38.2"
 [package.source]
 type = "git"
 url = "https://github.com/climatepolicyradar/navigator-db-client.git"
-reference = "v3.8.9"
-resolved_reference = "a6985c6d42be5fd5549deb693b60fd7b2694b97a"
+reference = "v3.8.10"
+resolved_reference = "ed871f39ab5380558969bd90b35b0e3dc5706806"
 
 [[package]]
 name = "deprecation"
@@ -3931,14 +3931,6 @@ name = "torch"
 version = "2.0.0+cpu"
 description = "Tensors and Dynamic neural networks in Python with strong GPU acceleration"
 optional = false
-python-versions = "*"
-files = []
-
-[[package]]
-name = "torch"
-version = "2.0.0+cpu"
-description = "Tensors and Dynamic neural networks in Python with strong GPU acceleration"
-optional = false
 python-versions = ">=3.8.0"
 files = [
     {file = "torch-2.0.0+cpu-cp310-cp310-linux_x86_64.whl", hash = "sha256:7c9e668462cd0813fc4baaeaa137efce2516e73cf381120846edf45d4ec21174"},
@@ -4724,4 +4716,4 @@ test = ["big-O", "importlib-resources", "jaraco.functools", "jaraco.itertools", 
 [metadata]
 lock-version = "2.0"
 python-versions = "^3.9"
-content-hash = "f22b376c7e477d876daceb8bc6debfaccdeabd59e283bd61bf6be6f551622495"
+content-hash = "b0c805ad41c5ac283f16043d0a7b2724aeb776ae0e005ab54891463ba1ce258b"
