@@ -5,7 +5,7 @@ import jwt
 import pytest
 from dateutil.relativedelta import relativedelta
 
-from app.core.custom_app import create_configuration_token
+from app.core.custom_app import encode_configuration_token
 
 SECRET_KEY = os.environ["SECRET_KEY"]
 ALGORITHM = "HS256"
@@ -42,7 +42,7 @@ def test_create_configuration_token_default_expiry(
     input_str: str, expected_allowed_corpora: list[str]
 ):
     datetime.utcnow()
-    token = create_configuration_token(input_str)
+    token = encode_configuration_token(input_str)
     assert token is not None
     assert isinstance(token, str)
 
@@ -70,7 +70,7 @@ def test_create_configuration_token_default_expiry(
 def test_create_configuration_token_specific_expiry(
     input_str: str, expected_allowed_corpora: list[str], expiry_years: int
 ):
-    token = create_configuration_token(input_str, expiry_years)
+    token = encode_configuration_token(input_str, expiry_years)
     assert token is not None
     assert isinstance(token, str)
 

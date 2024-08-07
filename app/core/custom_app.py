@@ -34,7 +34,7 @@ def validate(db: Session, allowed_corpora_ids: list[str]) -> bool:
     return validate_success
 
 
-def create_configuration_token(
+def encode_configuration_token(
     allowed_corpora: list[str], years: Optional[int] = None
 ) -> str:
     """Create a custom app configuration token.
