@@ -44,7 +44,8 @@ def create_configuration_token(
     :return str: A JWT token containing the encoded allowed corpora.
     """
     expiry_weeks = weeks or CUSTOM_APP_TOKEN_EXPIRE_WEEKS
-    expire = datetime.utcnow() + timedelta(weeks=expiry_weeks)
+    issued_at = datetime.utcnow()
+    expire = issued_at + timedelta(weeks=expiry_weeks)
 
     corpora_ids = allowed_corpora.split(",")
     corpora_ids.sort()
@@ -54,5 +55,5 @@ def create_configuration_token(
     msg += f"for the following corpora: {corpora_ids}"
     print(msg)
 
-    to_encode = {"allowed_corpora_ids": corpora_ids, "exp": expire}
+    to_encode = {"allowed_corpora_ids": corpora_ids, "exp": expire, "iat": issued_at}
     return jwt.encode(to_encode, SECRET_KEY, algorithm=ALGORITHM)
