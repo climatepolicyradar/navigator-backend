@@ -19,6 +19,18 @@ def timedelta_years(years, from_date=None):
     return from_date - relativedelta(years=years)
 
 
+def has_expected_keys(keys: list[str]) -> bool:
+    return bool(
+        set(keys)
+        ^ {
+            "allowed_corpora_ids",
+            "exp",
+            "iat",
+        }
+        == set()
+    )
+
+
 @pytest.mark.parametrize(
     "input_str,expected_allowed_corpora",
     [
@@ -35,6 +47,8 @@ def test_create_configuration_token_default_expiry(
     assert isinstance(token, str)
 
     data = jwt.decode(token, SECRET_KEY, algorithms=[ALGORITHM])
+
+    assert has_expected_keys(data)
 
     assert data["allowed_corpora_ids"] == expected_allowed_corpora
     assert timedelta_years(
@@ -56,12 +70,12 @@ def test_create_configuration_token_default_expiry(
 def test_create_configuration_token_specific_expiry(
     input_str: str, expected_allowed_corpora: list[str], expiry_years: int
 ):
-    datetime.utcnow()
     token = create_configuration_token(input_str, expiry_years)
     assert token is not None
     assert isinstance(token, str)
 
     data = jwt.decode(token, SECRET_KEY, algorithms=[ALGORITHM])
+    assert has_expected_keys(data)
 
     assert data["allowed_corpora_ids"] == expected_allowed_corpora
     assert timedelta_years(
