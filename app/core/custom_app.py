@@ -59,7 +59,5 @@ def create_configuration_token(
         "allowed_corpora_ids": corpora_ids,
         "exp": expire,
         "iat": datetime.timestamp(issued_at.replace(microsecond=0)),  # No microseconds
-        # "aud": theme,
-        # "sub": theme,
     }
     return jwt.encode(to_encode, SECRET_KEY, algorithm=ALGORITHM)
