@@ -35,19 +35,20 @@ def validate(db: Session, allowed_corpora_ids: list[str]) -> bool:
 
 
 def create_configuration_token(
-    allowed_corpora: str, years: Optional[int] = None
+    allowed_corpora: list[str], years: Optional[int] = None
 ) -> str:
     """Create a custom app configuration token.
 
-    :param str allowed_corpora: A comma separated string containing the
-        corpus import IDs that the custom app should show.
+    :param list[str] allowed_corpora: A comma separated string
+        containing the corpus import IDs that the custom app should
+        show.
     :return str: A JWT token containing the encoded allowed corpora.
     """
     expiry_years = years or CUSTOM_APP_TOKEN_EXPIRE_YEARS
     issued_at = datetime.utcnow()
     expire = issued_at + relativedelta(years=expiry_years)
 
-    corpora_ids = allowed_corpora.split(",")
+    corpora_ids = allowed_corpora
     corpora_ids.sort()
 
     msg = "Creating custom app configuration token that expires on "
