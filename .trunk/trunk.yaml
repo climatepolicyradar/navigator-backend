@@ -82,7 +82,6 @@ actions:
   disabled:
     - trunk-check-pre-push
   enabled:
-    - git-lfs
     - configure-pyright-with-pyenv
     - trunk-check-pre-commit
     - trunk-announce
