@@ -8,5 +8,3 @@ class CustomAppConfigDTO(BaseModel):
 
     allowed_corpora_ids: list[str]
     years: Optional[int]
-    exp: int
-    iat: int
