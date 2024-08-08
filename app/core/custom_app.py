@@ -47,11 +47,12 @@ def create_configuration_token(
     return jwt.encode(to_encode, SECRET_KEY, algorithm=ALGORITHM)
 
 
-def decode_configuration_token(token: str) -> list:
+def decode_configuration_token(token: str) -> list[str]:
     """Decodes a configuration token.
 
-    :param str  : A token that has been encoded a list of allowed corpora.
-    :return list: A list of valid corpora ids.
+    :param str token : A JWT token that has been encoded with a list of allowed corpora ids that the custom app should show,
+    an expiry date and an issued at date.
+    :return list[str]: A decoded list of valid corpora ids.
     """
 
     db = next(get_db())
