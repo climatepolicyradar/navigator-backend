@@ -5,8 +5,9 @@ from typing import Optional
 
 import jwt
 from dateutil.relativedelta import relativedelta
-from db_client.models.dfce.family import Corpus
-from sqlalchemy.orm import Session
+
+from app.db.crud.helpers.validate import validate_corpora_ids
+from app.db.session import get_db
 
 _LOGGER = logging.getLogger(__name__)
 
@@ -15,23 +16,6 @@ ALGORITHM = "HS256"
 
 # TODO: revisit/configure access token expiry
 CUSTOM_APP_TOKEN_EXPIRE_YEARS = 10  # token valid for 10 years
-
-
-def validate(db: Session, allowed_corpora_ids: list[str]) -> bool:
-    """Validate whether all given corpus IDs exist in the DB.
-
-    :param Session db: The DB session to connect to.
-    :param list[str] allowed_corpora_ids: The corpus import IDs we want
-        to validate.
-    :return bool: Return whether or not all the corpora exist in the DB.
-    """
-    existing_corpora_in_db = db.query(Corpus.import_id).distinct().all()
-    validate_success = all(
-        corpus in existing_corpora_in_db for corpus in allowed_corpora_ids
-    )
-    if not validate_success:
-        _LOGGER.error("One or more of the given corpora do not exist in the database.")
-    return validate_success
 
 
 def create_configuration_token(
@@ -61,3 +45,26 @@ def create_configuration_token(
         "iat": datetime.timestamp(issued_at.replace(microsecond=0)),  # No microseconds
     }
     return jwt.encode(to_encode, SECRET_KEY, algorithm=ALGORITHM)
+
+
+def decode_configuration_token(token: str) -> list[str]:
+    """Decodes a configuration token.
+
+    :param str token : A JWT token that has been encoded with a list of allowed corpora ids that the custom app should show,
+    an expiry date and an issued at date.
+    :return list[str]: A decoded list of valid corpora ids.
+    """
+
+    db = next(get_db())
+
+    try:
+        decoded_token = jwt.decode(token, SECRET_KEY, algorithms=[ALGORITHM])
+        corpora_ids: list = decoded_token.get("allowed_corpora_ids")
+
+        if not validate_corpora_ids(db, corpora_ids):
+            raise jwt.InvalidTokenError(
+                "One or more of the given corpora does not exist in the database"
+            )
+    except jwt.InvalidTokenError as error:
+        raise error
+    return corpora_ids
