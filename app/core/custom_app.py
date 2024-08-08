@@ -18,10 +18,6 @@ ALGORITHM = "HS256"
 CUSTOM_APP_TOKEN_EXPIRE_YEARS = 10  # token valid for 10 years
 
 
-def _has_token_expired(expiry_date: int) -> bool:
-    return datetime.today() > datetime.utcfromtimestamp(expiry_date)
-
-
 def create_configuration_token(
     allowed_corpora: str, years: Optional[int] = None
 ) -> str:
@@ -63,10 +59,6 @@ def decode_configuration_token(token: str) -> list:
     try:
         decoded_token = jwt.decode(token, SECRET_KEY, algorithms=[ALGORITHM])
         corpora_ids: list = decoded_token.get("allowed_corpora_ids")
-        expiry_date: int = decoded_token.get("exp")
-
-        if _has_token_expired(expiry_date):
-            raise jwt.InvalidTokenError("This token has expired")
 
         if not validate_corpora_ids(db, corpora_ids):
             raise jwt.InvalidTokenError(
