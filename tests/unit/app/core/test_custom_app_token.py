@@ -6,7 +6,6 @@ import pytest
 from dateutil.relativedelta import relativedelta
 
 from app.core.custom_app import create_configuration_token, decode_configuration_token
-from app.db.crud.helpers import validate
 
 SECRET_KEY = os.environ["SECRET_KEY"]
 ALGORITHM = "HS256"
@@ -102,19 +101,29 @@ def test_decoding_expired_token_raise_invalid_token_error(expired_token: str):
     assert str(error.value) == "Signature has expired"
 
 
+def return_true_validate_corpora_mock(*args) -> bool:
+    return True
+
+
+def return_false_validate_corpora_mock(*args) -> bool:
+    return False
+
+
 @pytest.mark.parametrize(
     "token, expected_allowed_corpora",
     [
         (
-            create_configuration_token("mango, apple"),
-            ["mango, apple"],
+            create_configuration_token("mango,apple"),
+            ["apple", "mango"],
         )
     ],
 )
 def test_decodes_configuration_token_returns_list_of_corpora_ids(
     token: str, expected_allowed_corpora: list[str], monkeypatch
 ):
-    monkeypatch.setattr(validate, "validate_corpora_ids", True)
+    monkeypatch.setattr(
+        "app.core.custom_app.validate_corpora_ids", return_true_validate_corpora_mock
+    )
 
     decoded_corpora_ids = decode_configuration_token(token)
     assert decoded_corpora_ids == expected_allowed_corpora
@@ -122,12 +131,14 @@ def test_decodes_configuration_token_returns_list_of_corpora_ids(
 
 @pytest.mark.parametrize(
     "token",
-    [create_configuration_token("mango, apple")],
+    [create_configuration_token("mango,apple")],
 )
 def test_returns_invalid_token_error_for_non_existent_corpora_ids(
     token: str, monkeypatch
 ):
-    monkeypatch.setattr(validate, "validate_corpora_ids", False)
+    monkeypatch.setattr(
+        "app.core.custom_app.validate_corpora_ids", return_false_validate_corpora_mock
+    )
 
     with pytest.raises(jwt.InvalidTokenError) as error:
         decode_configuration_token(token)
