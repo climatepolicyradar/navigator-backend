@@ -3931,14 +3931,6 @@ name = "torch"
 version = "2.0.0+cpu"
 description = "Tensors and Dynamic neural networks in Python with strong GPU acceleration"
 optional = false
-python-versions = "*"
-files = []
-
-[[package]]
-name = "torch"
-version = "2.0.0+cpu"
-description = "Tensors and Dynamic neural networks in Python with strong GPU acceleration"
-optional = false
 python-versions = ">=3.8.0"
 files = [
     {file = "torch-2.0.0+cpu-cp310-cp310-linux_x86_64.whl", hash = "sha256:7c9e668462cd0813fc4baaeaa137efce2516e73cf381120846edf45d4ec21174"},
