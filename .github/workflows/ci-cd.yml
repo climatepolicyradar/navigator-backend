@@ -19,7 +19,7 @@ jobs:
     if: |
       github.event_name == 'pull_request' &&
       (! startsWith(github.ref, 'refs/tags') && ! startsWith(github.ref, 'refs/heads/main'))
-    uses: climatepolicyradar/reusable-workflows/.github/workflows/check-auto-tagging-will-work.yml@v3
+    uses: climatepolicyradar/reusable-workflows/.github/workflows/check-auto-tagging-will-work.yml@v10
 
   code-quality:
     if: |
@@ -33,7 +33,7 @@ jobs:
       checks: write
       # For repo checkout
       contents: read
-    uses: climatepolicyradar/reusable-workflows/.github/workflows/python-precommit-validator.yml@v7
+    uses: climatepolicyradar/reusable-workflows/.github/workflows/python-precommit-validator.yml@v10
 
   non-search-tests:
     if: |
