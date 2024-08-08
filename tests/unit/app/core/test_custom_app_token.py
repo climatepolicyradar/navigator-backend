@@ -94,7 +94,7 @@ def test_create_configuration_token_specific_expiry(
 
 
 @pytest.mark.parametrize("expired_token", [create_expired_token()])
-def test_decoding_expired_token_raise_invalid_token_error(expired_token: str):
+def test_decoding_expired_token_raise_expired_signature_token_error(expired_token: str):
     with pytest.raises(jwt.ExpiredSignatureError) as error:
         decode_configuration_token(expired_token)
 
