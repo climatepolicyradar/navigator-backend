@@ -1,11 +1,12 @@
 import os
-from datetime import datetime
+from datetime import datetime, timedelta
 
 import jwt
 import pytest
 from dateutil.relativedelta import relativedelta
 
-from app.core.custom_app import create_configuration_token
+from app.core.custom_app import create_configuration_token, decode_configuration_token
+from app.db.crud.helpers import validate
 
 SECRET_KEY = os.environ["SECRET_KEY"]
 ALGORITHM = "HS256"
@@ -29,6 +30,16 @@ def has_expected_keys(keys: list[str]) -> bool:
         }
         == set()
     )
+
+
+def create_expired_token() -> str:
+    expire = datetime.now() - timedelta(days=2)
+    to_encode = {
+        "allowed_corpora_ids": "mango, pineapple",
+        "exp": expire,
+        "iat": datetime.timestamp(expire),
+    }
+    return jwt.encode(to_encode, SECRET_KEY, algorithm=ALGORITHM)
 
 
 @pytest.mark.parametrize(
@@ -81,3 +92,47 @@ def test_create_configuration_token_specific_expiry(
     assert timedelta_years(
         expiry_years, datetime.fromtimestamp(data["exp"])
     ) == datetime.fromtimestamp(data["iat"])
+
+
+@pytest.mark.parametrize("expired_token", [create_expired_token()])
+def test_decoding_expired_token_raise_invalid_token_error(expired_token: str):
+    with pytest.raises(jwt.ExpiredSignatureError) as error:
+        decode_configuration_token(expired_token)
+
+    assert str(error.value) == "Signature has expired"
+
+
+@pytest.mark.parametrize(
+    "token, expected_allowed_corpora",
+    [
+        (
+            create_configuration_token("mango, apple"),
+            ["mango, apple"],
+        )
+    ],
+)
+def test_decodes_configuration_token_returns_list_of_corpora_ids(
+    token: str, expected_allowed_corpora: list[str], monkeypatch
+):
+    monkeypatch.setattr(validate, "validate_corpora_ids", True)
+
+    decoded_corpora_ids = decode_configuration_token(token)
+    assert decoded_corpora_ids == expected_allowed_corpora
+
+
+@pytest.mark.parametrize(
+    "token",
+    [create_configuration_token("mango, apple")],
+)
+def test_returns_invalid_token_error_for_non_existent_corpora_ids(
+    token: str, monkeypatch
+):
+    monkeypatch.setattr(validate, "validate_corpora_ids", False)
+
+    with pytest.raises(jwt.InvalidTokenError) as error:
+        decode_configuration_token(token)
+
+    assert (
+        str(error.value)
+        == "One or more of the given corpora does not exist in the database"
+    )
