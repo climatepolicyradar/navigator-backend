@@ -11,6 +11,8 @@ SECRET_KEY = os.environ["SECRET_KEY"]
 ALGORITHM = "HS256"
 
 EXPIRE_AFTER_DEFAULT_YEARS = 10
+EXPIRE_AFTER_1_YEAR = 1
+EXPIRE_AFTER_5_YEARS = 5
 
 
 def timedelta_years(years, from_date=None):
@@ -38,10 +40,9 @@ def has_expected_keys(keys: list[str]) -> bool:
         (["cucumber"], ["cucumber"]),
     ],
 )
-def test_create_configuration_token_default_expiry(
+def test_encode_configuration_token_default_expiry(
     input_corpora: list[str], expected_allowed_corpora: list[str]
 ):
-    datetime.utcnow()
     token = encode_configuration_token(input_corpora)
     assert token is not None
     assert isinstance(token, str)
@@ -62,12 +63,12 @@ def test_create_configuration_token_default_expiry(
         (
             ["raspberry", "strawberry", "orange"],
             ["orange", "raspberry", "strawberry"],
-            1,
+            EXPIRE_AFTER_1_YEAR,
         ),
-        (["grapefruit"], ["grapefruit"], 5),
+        (["grapefruit"], ["grapefruit"], EXPIRE_AFTER_5_YEARS),
     ],
 )
-def test_create_configuration_token_specific_expiry(
+def test_encode_configuration_token_specific_expiry(
     input_corpora: list[str], expected_allowed_corpora: list[str], expiry_years: int
 ):
     token = encode_configuration_token(input_corpora, expiry_years)
