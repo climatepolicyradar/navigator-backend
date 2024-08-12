@@ -101,9 +101,7 @@ def create_configuration_token(input: str, years: Optional[int] = None) -> str:
     return jwt.encode(to_encode, SECRET_KEY, algorithm=ALGORITHM)
 
 
-def decode_configuration_token(
-    token: str, audience: Optional[str]
-) -> Optional[list[str]]:
+def decode_configuration_token(token: str, audience: Optional[str]) -> list[str]:
     """Decodes a configuration token.
 
     :param str token : A JWT token that has been encoded with a list of
@@ -114,14 +112,10 @@ def decode_configuration_token(
 
     db = next(get_db())
 
-    try:
-        decoded_token = jwt.decode(
-            token, SECRET_KEY, algorithms=[ALGORITHM], issuer=ISSUER, audience=audience
-        )
-        corpora_ids: list = decoded_token.get("allowed_corpora_ids")
+    decoded_token = jwt.decode(
+        token, SECRET_KEY, algorithms=[ALGORITHM], issuer=ISSUER, audience=audience
+    )
+    corpora_ids: list = decoded_token.get("allowed_corpora_ids")
 
-        validate_corpora_ids(db, corpora_ids)
-        return corpora_ids
-
-    except jwt.InvalidTokenError as error:
-        _LOGGER.error(error)
+    validate_corpora_ids(db, corpora_ids)
+    return corpora_ids

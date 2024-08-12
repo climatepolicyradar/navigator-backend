@@ -48,10 +48,10 @@ def valid_token() -> str:
 
 @pytest.fixture
 def mock_false_validate_corpora_mock(monkeypatch):
-    return_value = False
-
     def validate_corpora_mock_return_value(db, corpora_ids):
-        return return_value
+        raise jwt.InvalidTokenError(
+            "One or more of the given corpora does not exist in the database"
+        )
 
     monkeypatch.setattr(
         "app.core.custom_app.validate_corpora_ids", validate_corpora_mock_return_value
