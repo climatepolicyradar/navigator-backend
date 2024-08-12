@@ -11,6 +11,7 @@ from app.api.api_v1.schemas.custom_app import CustomAppConfigDTO
 from app.db.crud.helpers.validate import validate_corpora_ids
 from app.db.session import get_db
 
+logging.basicConfig(level=logging.DEBUG)
 _LOGGER = logging.getLogger(__name__)
 
 SECRET_KEY = os.environ["SECRET_KEY"]
@@ -62,6 +63,7 @@ def create_configuration_token(input: str, years: Optional[int] = None) -> str:
 
     parts = input.split(";")
     if len(parts) != EXPECTED_ARGS_LENGTH or any(len(part) < 1 for part in parts):
+        _LOGGER.error("Expected exactly 3 arguments")
         raise ValueError
 
     corpora_ids, subject, audience = parts
@@ -78,12 +80,15 @@ def create_configuration_token(input: str, years: Optional[int] = None) -> str:
     )
 
     if _contains_special_chars(config.subject):
+        _LOGGER.error(
+            "Subject must not contain any special characters, including spaces"
+        )
         raise ValueError
 
     msg = "Creating custom app configuration token that expires on "
     msg += f"{expire.strftime('%a %d %B %Y at %H:%M:%S:%f')} "
     msg += f"for the following corpora: {corpora_ids}"
-    print(msg)
+    _LOGGER.info(msg)
 
     to_encode = {
         "allowed_corpora_ids": config.allowed_corpora_ids,
