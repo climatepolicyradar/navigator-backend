@@ -88,7 +88,7 @@ def create_configuration_token(input: str, years: Optional[int] = None) -> str:
     msg = "Creating custom app configuration token that expires on "
     msg += f"{expire.strftime('%a %d %B %Y at %H:%M:%S:%f')} "
     msg += f"for the following corpora: {corpora_ids}"
-    _LOGGER.info(msg)
+    print(msg)
 
     to_encode = {
         "allowed_corpora_ids": config.allowed_corpora_ids,
@@ -101,7 +101,9 @@ def create_configuration_token(input: str, years: Optional[int] = None) -> str:
     return jwt.encode(to_encode, SECRET_KEY, algorithm=ALGORITHM)
 
 
-def decode_configuration_token(token: str, audience: Optional[str]) -> list[str]:
+def decode_configuration_token(
+    token: str, audience: Optional[str]
+) -> Optional[list[str]]:
     """Decodes a configuration token.
 
     :param str token : A JWT token that has been encoded with a list of
@@ -118,10 +120,8 @@ def decode_configuration_token(token: str, audience: Optional[str]) -> list[str]
         )
         corpora_ids: list = decoded_token.get("allowed_corpora_ids")
 
-        if not validate_corpora_ids(db, corpora_ids):
-            raise jwt.InvalidTokenError(
-                "One or more of the given corpora does not exist in the database"
-            )
+        validate_corpora_ids(db, corpora_ids)
+        return corpora_ids
+
     except jwt.InvalidTokenError as error:
-        raise error
-    return corpora_ids
+        _LOGGER.error(error)
