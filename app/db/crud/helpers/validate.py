@@ -1,6 +1,8 @@
 import logging
 
 from db_client.models.dfce.family import Corpus
+from jwt import InvalidTokenError
+from sqlalchemy import distinct, select
 from sqlalchemy.orm import Session
 
 _LOGGER = logging.getLogger(__name__)
@@ -14,10 +16,11 @@ def validate_corpora_ids(db: Session, allowed_corpora_ids: list[str]) -> bool:
         to validate.
     :return bool: Return whether or not all the corpora exist in the DB.
     """
-    existing_corpora_in_db = db.query(Corpus.import_id).distinct().all()
+    existing_corpora_in_db = db.scalars(select(distinct(Corpus.import_id))).all()
     validate_success = all(
         corpus in existing_corpora_in_db for corpus in allowed_corpora_ids
     )
     if not validate_success:
-        _LOGGER.error("One or more of the given corpora do not exist in the database.")
+        msg = "One or more of the given corpora do not exist in the database."
+        raise InvalidTokenError(msg)
     return validate_success
