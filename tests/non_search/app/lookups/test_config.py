@@ -109,6 +109,7 @@ def test_config_endpoint_content(data_client, data_db):
         "Executive": 0,
         "Legislative": 0,
         "UNFCCC": 0,
+        "MCF": 0,
     }
 
     assert "UNFCCC" in response_json["organisations"]
