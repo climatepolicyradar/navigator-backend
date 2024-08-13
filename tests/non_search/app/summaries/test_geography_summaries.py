@@ -13,16 +13,18 @@ def test_endpoint_returns_families_ok_with_slug(data_client):
     assert response.status_code == OK
     resp = response.json()
 
+    assert len(resp["family_counts"]) == 4
+    assert len(resp["top_families"]) == 4
+
     assert resp["family_counts"]["Executive"] == 0
     assert resp["family_counts"]["Legislative"] == 0
     assert resp["family_counts"]["UNFCCC"] == 0
+    assert resp["family_counts"]["MCF"] == 0
 
     assert len(resp["top_families"]["Executive"]) == 0
     assert len(resp["top_families"]["Legislative"]) == 0
     assert len(resp["top_families"]["UNFCCC"]) == 0
-
-    assert len(resp["family_counts"]) == 3
-    assert len(resp["top_families"]) == 3
+    assert len(resp["top_families"]["MCF"]) == 0
 
     assert len(resp["targets"]) == 0
 
@@ -33,16 +35,18 @@ def test_endpoint_returns_families_ok_with_code(data_client):
     assert response.status_code == OK
     resp = response.json()
 
+    assert len(resp["family_counts"]) == 4
+    assert len(resp["top_families"]) == 4
+
     assert resp["family_counts"]["Executive"] == 0
     assert resp["family_counts"]["Legislative"] == 0
     assert resp["family_counts"]["UNFCCC"] == 0
+    assert resp["family_counts"]["MCF"] == 0
 
     assert len(resp["top_families"]["Executive"]) == 0
     assert len(resp["top_families"]["Legislative"]) == 0
     assert len(resp["top_families"]["UNFCCC"]) == 0
-
-    assert len(resp["family_counts"]) == 3
-    assert len(resp["top_families"]) == 3
+    assert len(resp["top_families"]["MCF"]) == 0
 
     assert len(resp["targets"]) == 0
 
