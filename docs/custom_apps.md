@@ -22,7 +22,11 @@ where:
 
 ### Encoding
 
+Note: remember to use the secret key that corresponds to the AWS environment you
+want to generate the token for.
+
 ```bash
+export SECRET_KEY=secret_key
 export CORPORA_IDS=CCLW.corpus.i00000001.n0000,UNFCCC.corpus.i00000001.n0000
 export THEME=CPR
 export APP_DOMAIN=https://app.climatepolicyradar.org/
@@ -35,6 +39,8 @@ Assuming you have your Docker containers running locally in your `navigator-back
 repo:
 
 ```bash
+docker compose build
+docker compose up -d
 export TOKEN=token
 docker exec -it navigator-backend-backend-1 python -c "from app.core import config; from app.core.custom_app import decode_configuration_token; print(decode_configuration_token('$TOKEN', '$APP_DOMAIN'))"
 ```
