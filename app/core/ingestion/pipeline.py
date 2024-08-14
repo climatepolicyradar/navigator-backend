@@ -2,6 +2,7 @@ import logging
 from datetime import datetime, timezone
 from typing import Any, Sequence, Tuple, cast
 
+from db_client.models.dfce import DocumentStatus
 from db_client.models.dfce.family import (
     Corpus,
     Family,
@@ -30,6 +31,7 @@ def generate_pipeline_ingest_input(db: Session) -> Sequence[DocumentParserInput]
         .join(FamilyMetadata, Family.import_id == FamilyMetadata.family_import_id)
         .join(Organisation, Organisation.id == Corpus.organisation_id)
         .join(Geography, Geography.id == Family.geography_id)
+        .filter(FamilyDocument.document_status != DocumentStatus.DELETED)
     )
 
     query_result = cast(
