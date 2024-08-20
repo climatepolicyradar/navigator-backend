@@ -5,10 +5,12 @@
       "family_source": "CCLW",
       "search_weights_ref": "id:doc_search:search_weights::default_weights",
       "family_name": "National Environment Policy of Guinea",
+      "document_title": "National Environment Policy of Guinea",
       "document_content_type": "application/pdf",
       "family_slug": "national-environment-policy-of-guinea_f0df",
       "document_source_url": "https://earthguinea.org/wp-content/uploads/2017/09/politique-nationale-de-l-environnement-2011-nov-2012.pdf",
       "family_geography": "GIN",
+      "family_geographies": ["GIN"],
       "family_category": "Executive",
       "document_md5_sum": "00ce569611f01abe4f7e06f40558ada8",
       "family_name_index": "National Environment Policy of Guinea",
@@ -281,7 +283,21 @@
       "family_publication_ts": "2011-08-01T00:00:00+00:00",
       "family_description_index": "This document notably 1) sets adaptation to climate change as a prominent goal, 2) promotes research in areas related to climate change, biological diversity and the fight against desertification, particularly in sectors related to agrofuels, non-wood forest products and forestry, and 3) promotes measures towards soil restoration and carbon sequestration.",
       "document_cdn_object": "GIN/2011/national-environment-policy-of-guinea_00ce569611f01abe4f7e06f40558ada8.pdf",
-      "family_import_id": "CCLW.family.10246.0"
+      "family_import_id": "CCLW.family.10246.0",
+      "corpus_import_id": "CCLW.corpus.1.0",
+      "corpus_type_name": "UNFCCC Submissions",
+      "collection_title": "collection one",
+      "collection_summary": "Sample collection used for tests",
+      "metadata": [
+          {
+              "name": "sector",
+              "value": "Price"
+          },
+          {
+              "name": "sector",
+              "value": "Government"
+          }
+      ]
     }
   },
   {
@@ -290,10 +306,12 @@
       "family_source": "CCLW",
       "search_weights_ref": "id:doc_search:search_weights::default_weights",
       "family_name": "National Energy Strategy",
+      "document_title": "National Energy Strategy",
       "document_content_type": "application/pdf",
       "family_slug": "national-energy-strategy_980b",
       "document_source_url": "https://www.mise.gov.it/images/stories/documenti/BROCHURE_ENG_SEN.PDF",
       "family_geography": "ITA",
+      "family_geographies": ["ITA"],
       "family_category": "Executive",
       "document_md5_sum": "14d0e04e17d7ace8503ff6b0473f53eb",
       "family_name_index": "National Energy Strategy",
@@ -566,7 +584,29 @@
       "family_publication_ts": "2013-03-08T00:00:00+00:00",
       "family_description_index": "The National Energy Strategy (NES), which has a double time horizon (2020 and 2050), directs efforts towards substantially improving the competitiveness of the energy system and environmental sustainability. The results expected by 2020 are:1) Wholesale prices of all energy sources will be aligned with average European average price levels, resulting in savings of about EUR9bn (USD11.3bn)/year in the overall power and gas bill (from current EUR70bn (USD87.8bn) - assuming same commodity prices).2) Expenditure on energy imports will be reduced by about EUR14bn (USD17.6bn)/year from the present EUR62bn (USD77.8bn), and dependency on foreign supplies from 84% to 67%, thanks to energy efficiency, increased production from renewables, lower electricity imports and increased production from national resources. 3) Private investment of EUR180bn (USD213bn) will be supported by incentives between now and 2020 in renewables and energy efficiency and in traditional sectors (electricity and gas networks, re-gasification plants, storage, hydrocarbon development).4) GHG emissions will fall by about 21% compared to the 2005 level, exceeding the European 20-20-20 targets for Italy.5) Renewable energy sources will account for 19-20% of gross final consumption (compared with about 10% in 2010). This is equivalent to 22-23% of primary energy consumption, while fossil fuel use will fall from 86% to 76%. Renewables will become the primary source in the electricity sector together with gas, accounting for 34-38% of consumption (compared with 23% in 2010).6) Primary consumption will fall by about 24% by 2020 compared with the reference scenario (an estimated 4% below 2010 levels); this exceeds the European 20-20-20 targets of -20%, thanks mainly to energy efficiency measures. To attain these results, the strategy formulates seven priorities, each with specific supporting measures already set in motion or currently being defined:1) Fostering Energy Efficiency2) Promoting a competitive gas market, integrated with the other European markets and with aligned prices3) Developing renewable in a sustainable way, in order to exceed the European targets (\\20-20-20\\), while at the same time keeping energy bills competitive4) Developing an efficient electricity market fully integrated with the European market; with gradual integration of renewable power production5) Restructuring the refining industry and the fuel distribution network, to achieve a more sustainable system competitive on the European level6) Sustainably raising national hydrocarbons production, which will bring major economic and employment benefits, while observing the highest international standards in terms of security and environmental protection7) Modernising governance of the energy sector to make decision-making processes more effective and more efficient8) Research and development will play a key role in developing technologies that allow for a more competitive and sustainable energy system The NES lays down long-term indicative objectives for 2050. Among the most important:1) The need to strengthen efforts in energy efficiency. Primary consumption will have to fall in the range of 17-26% by 2050 compared to 2010, by decoupling economic growth from energy consumption. In particular, efforts in building and transport will be critical2) The high penetration of renewable energy, than in any of the scenarios envisaged at the time is expected to reach levels of at least 60% of gross final consumption by 2050, with much higher levels in the electricity sector. In addition to the need of research and development for the reduction of costs, it will be fundamental to rethinking the market and network infrastructure3) A substantial increase in the degree of electrification, which will almost double by 2050, reaching at least 38%, particularly in electricity and transport4) The key role of gas for the energy transition, despite a reduction of its weight both in percentage and in absolute value in the span of the scenario",
       "document_cdn_object": "ITA/2017/presentation-on-italy-s-national-energy-strategy-2017_14d0e04e17d7ace8503ff6b0473f53eb.pdf",
-      "family_import_id": "CCLW.family.1385.0"
+      "family_import_id": "CCLW.family.1385.0",
+      "corpus_import_id": "CCLW.corpus.2.0",
+      "corpus_type_name": "Laws and Policies",
+      "collection_title": "collection two",
+      "collection_summary": "Sample collection used for tests",
+      "metadata": [
+          {
+              "name": "sector",
+              "value": "Price"
+          },
+          {
+              "name": "sector",
+              "value": "Government"
+          },
+          {
+              "name": "topic",
+              "value": "Mitigation"
+          },
+          {
+              "name": "instrument",
+              "value": "Capacity building"
+          }
+      ]
     }
   },
   {
@@ -575,10 +615,12 @@
       "family_source": "CCLW",
       "search_weights_ref": "id:doc_search:search_weights::default_weights",
       "family_name": "Agriculture Sector Plan 2015-2019",
+      "document_title": "Agriculture Sector Plan 2015-2019",
       "document_content_type": "application/pdf",
       "family_slug": "agriculture-sector-plan-2015-2019_7999",
       "document_source_url": "http://www.lse.ac.uk/GranthamInstitute/wp-content/uploads/2018/04/Niue-Agriculture-Sector-Plan-2015-19.pdf",
       "family_geography": "NIU",
+      "family_geographies": ["NIU"],
       "family_category": "Executive",
       "document_md5_sum": "b38dcb601d6f08bbd56f08e815256f56",
       "family_name_index": "Agriculture Sector Plan 2015-2019",
@@ -851,7 +893,41 @@
       "family_publication_ts": "2015-12-25T00:00:00+00:00",
       "family_description_index": "<br>&nbsp;<br>&nbsp;<br>&nbsp;<br>&nbsp;The Agriculture Sector Plan aims at improving food and nutritional security, develop sustainable food production and management systems, support sustainable economic growth and improve the balance of trade, strengthen natural resource management, and improve the capacity-building of stakeholders and agricultural staff. The document discusses climate change impacts and the solutions the country must implement to secure its agriculture's resilience.<br>&nbsp;<br>&nbsp;<br>&nbsp;<br><br>",
       "document_cdn_object": "NIU/2015/agriculture-sector-plan-2015-2019_b38dcb601d6f08bbd56f08e815256f56.pdf",
-      "family_import_id": "CCLW.family.8633.0"
+      "family_import_id": "CCLW.family.8633.0",
+      "corpus_import_id": "CCLW.corpus.2.0",
+      "corpus_type_name": "Laws and Policies",
+      "collection_title": "collection two",
+      "collection_summary": "Sample collection used for tests",
+      "metadata": [
+          {
+              "name": "sector",
+              "value": "Price"
+          },
+          {
+              "name": "sector",
+              "value": "Government"
+          },
+          {
+              "name": "topic",
+              "value": "Mitigation"
+          },
+          {
+              "name": "keyword",
+              "value": "Institutions"
+          },
+          {
+              "name": "topic",
+              "value": "Misc"
+          },
+          {
+              "name": "keyword",
+              "value": "Disaster Risk Management"
+          },
+          {
+              "name": "instrument",
+              "value": "Capacity building"
+          }
+      ]
     }
   },
   {
@@ -860,10 +936,12 @@
       "family_source": "UNFCCC",
       "search_weights_ref": "id:doc_search:search_weights::default_weights",
       "family_name": "Submission to the UNFCCC ahead of the first Technical Dialogue of the Global Stocktake: Formally submitted by observer organization ClimateWorks Foundation on behalf of the iGST consortium.",
+      "document_title": "Formally submitted by observer organization ClimateWorks Foundation on behalf of the iGST consortium",
       "document_content_type": "application/pdf",
       "family_slug": "submission-to-the-unfccc-ahead-of-the-first-technical-dialogue_e760",
       "document_source_url": "https://unfccc.int/sites/default/files/resource/202202271039---iGST%20Consolidated%20Submission%20for%20the%20First%20Technical%20Dialogue%20of%20GST1.pdf",
       "family_geography": "XAA",
+      "family_geographies": ["XAA"],
       "family_category": "UNFCCC",
       "document_md5_sum": "486d2578a3bd9d9a3e2efe2a5c39a534",
       "family_name_index": "Submission to the UNFCCC ahead of the first Technical Dialogue of the Global Stocktake: Formally submitted by observer organization ClimateWorks Foundation on behalf of the iGST consortium.",
@@ -1136,7 +1214,17 @@
       "family_publication_ts": "2022-04-01T00:00:00+00:00",
       "family_description_index": "Submission to the UNFCCC ahead of the first Technical Dialogue of the Global Stocktake: Formally submitted by observer organization ClimateWorks Foundation on behalf of the iGST consortium., Submission to the Global Stocktake from ClimateWorks Foundation (CWF) in 2022",
       "document_cdn_object": "XAA/1900/submission-to-the-unfccc-ahead-of-the-first-technical-dialogue-of-the-global-stocktake-formally-submitted-by-observer-organization-climateworks-foundation-on-behalf-of-the-igst-consortium_486d2578a3bd9d9a3e2efe2a5c39a534.pdf",
-      "family_import_id": "UNFCCC.family.1267.0"
+      "family_import_id": "UNFCCC.family.1267.0",
+      "corpus_import_id": "CCLW.corpus.2.0",
+      "corpus_type_name": "Laws and Policies",
+      "collection_title": "collection two",
+      "collection_summary": "Sample collection used for tests",
+      "metadata": [
+        {
+          "name": "sector",
+          "value": "Price"
+        }
+      ]
     }
   },
   {
@@ -1145,10 +1233,12 @@
       "family_source": "CCLW",
       "search_weights_ref": "id:doc_search:search_weights::default_weights",
       "family_name": "National Energy Policy and Energy Action Plan",
+      "document_title": "National Energy Policy and Energy Action Plan",
       "document_content_type": "application/pdf",
       "family_slug": "national-energy-policy-and-energy-action-plan_9262",
       "document_source_url": "https://climate-laws.org/rails/active_storage/blobs/eyJfcmFpbHMiOnsibWVzc2FnZSI6IkJBaHBBak1HIiwiZXhwIjpudWxsLCJwdXIiOiJibG9iX2lkIn19--e3a24fcea601c6723c1496ba623ec1f48fcdd62d/f",
       "family_geography": "MHL",
+      "family_geographies": ["MHL"],
       "family_category": "Executive",
       "document_md5_sum": "1c1b4a82ac7f6310a6951e289f0b9f38",
       "family_name_index": "National Energy Policy and Energy Action Plan",
@@ -1421,7 +1511,12 @@
       "family_publication_ts": "2016-04-01T00:00:00+00:00",
       "family_description_index": "This document sets a vision of improving quality of life through clean, reliable, affordable, accessible, environmentally appropriate and sustainable energy services.<br><br>&nbsp;It intends to 1) strengthen financial, policy and legislative frameworks for the energy sector, 2) supply 100% of urban households with electricity, 3) To provide 95% of rural outer atoll households with off grid electricity, 4) To provide access to modern forms of cooking to 90% of all households by 2020, 5) To make households and businesses 50% more energy efficient and government buildings 75% more energy efficient by 2020, 6) To achieve a 20% efficiency improvement in transport sector fuel use by 2020, 7) To reduce supply side energy losses from MEC by 20% by 2017, and 8) To provide 20% of power generation through indigenous renewable resources by 2020.",
       "document_cdn_object": "MHL/2016/national-energy-policy-and-energy-action-plan_1c1b4a82ac7f6310a6951e289f0b9f38.pdf",
-      "family_import_id": "CCLW.family.4934.0"
+      "family_import_id": "CCLW.family.4934.0",
+      "corpus_import_id": "CCLW.corpus.2.0",
+      "corpus_type_name": "Laws and Policies",
+      "collection_title": "collection two",
+      "collection_summary": "Sample collection used for tests",
+      "metadata": []
     }
   }
 ]

@@ -67,6 +67,11 @@ schema family_document {
             attribute: fast-search
         }
 
+        field family_geographies type array<string> {
+            indexing: attribute | summary
+            attribute: fast-search
+        }
+
         field family_source type string {
             indexing: attribute | summary
             attribute: fast-search
@@ -74,6 +79,11 @@ schema family_document {
 
         field document_import_id type string {
             indexing: summary | attribute
+        }
+
+        field document_title type string {
+            indexing: summary | attribute
+            attribute: fast-search
         }
 
         field document_slug type string {
@@ -99,6 +109,45 @@ schema family_document {
 
         field document_source_url type string {
             indexing: summary | attribute
+        }
+
+        field corpus_import_id type string {
+            indexing: summary | attribute
+            attribute: fast-search
+
+        }
+
+        field corpus_type_name type string {
+            indexing: summary | attribute
+            attribute: fast-search
+        }
+
+        field collection_title type string {
+            indexing: summary | attribute
+            attribute: fast-search
+        }
+
+        field collection_summary type string {
+            indexing: summary | attribute
+            attribute: fast-search
+        }
+
+        struct metadata_item {
+            field name type string {}
+            field value type string {}
+        }
+
+        field metadata type array<metadata_item> {
+            indexing: summary
+
+            struct-field name {
+                indexing: attribute
+                attribute: fast-search
+            }
+            struct-field value {
+                indexing: attribute
+                attribute: fast-search
+            }
         }
     }
 
@@ -152,19 +201,26 @@ schema family_document {
     }
 
     document-summary search_summary {
-        summary family_name type string {}
-        summary family_description type string {}
-        summary family_import_id type string {}
-        summary family_slug type string {}
-        summary family_category type string {}
-        summary family_publication_ts type string {}
-        summary family_geography type string {}
-        summary family_source type string {}
-        summary document_import_id type string {}
-        summary document_slug type string {}
-        summary document_languages type array<string> {}
-        summary document_content_type type string {}
-        summary document_cdn_object type string {}
-        summary document_source_url type string {}
+        summary family_name {}
+        summary family_description {}
+        summary family_import_id {}
+        summary family_slug {}
+        summary family_category {}
+        summary family_publication_ts {}
+        summary family_geography {}
+        summary family_geographies {}
+        summary family_source {}
+        summary document_import_id {}
+        summary document_title {}
+        summary document_slug {}
+        summary document_languages {}
+        summary document_content_type {}
+        summary document_cdn_object {}
+        summary document_source_url {}
+        summary metadata {}
+        summary corpus_import_id {}
+        summary corpus_type_name {}
+        summary collection_title {}
+        summary collection_summary {}
     }
 }
