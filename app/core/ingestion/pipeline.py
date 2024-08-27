@@ -3,21 +3,14 @@ from datetime import datetime, timezone
 from typing import Any, Sequence, Tuple, cast
 
 from db_client.models.dfce import DocumentStatus
-from db_client.models.dfce.family import (
-    Corpus,
-    Family,
-    FamilyCorpus,
-    FamilyDocument,
-    FamilyGeography,
-    Geography,
-)
+from db_client.models.dfce.family import Corpus, Family, FamilyCorpus, FamilyDocument
 from db_client.models.dfce.metadata import FamilyMetadata
 from db_client.models.organisation import Organisation
-from sqlalchemy import func
 from sqlalchemy.orm import Session
 
 from app.api.api_v1.schemas.document import DocumentParserInput
 from app.core.lookups import doc_type_from_family_document_metadata
+from app.db.crud.geography import get_geo_subquery
 
 _LOGGER = logging.getLogger(__name__)
 
@@ -25,22 +18,11 @@ _LOGGER = logging.getLogger(__name__)
 def generate_pipeline_ingest_input(db: Session) -> Sequence[DocumentParserInput]:
     """Generates a complete view of the current document database as pipeline input"""
     _LOGGER.info("Running pipeline family query")
-    geo_subquery = (
-        db.query(
-            func.min(Geography.value).label("value"), FamilyGeography.family_import_id
-        )
-        .join(FamilyGeography, FamilyGeography.geography_id == Geography.id)
-        .filter(FamilyGeography.family_import_id == Family.import_id)
-        .group_by(Geography.value, FamilyGeography.family_import_id)
-        .subquery("geo_subquery")
-    )
-    """ NOTE: This is an intermeadiate step to migrate to multi-geography support.
-    We grab the minimum geography value for each family to use as a fallback for a single geography.
-    This is beacause there is no rank for geography values and we need to pick one.
-    """
+    geo_subquery = get_geo_subquery(db)
+
     query = (
         db.query(
-            Family, FamilyDocument, FamilyMetadata, geo_subquery.c.value, Organisation
+            Family, FamilyDocument, FamilyMetadata, geo_subquery.c.value, Organisation  # type: ignore
         )
         .join(Family, Family.import_id == FamilyDocument.family_import_id)
         .join(FamilyCorpus, FamilyCorpus.family_import_id == Family.import_id)
@@ -48,7 +30,7 @@ def generate_pipeline_ingest_input(db: Session) -> Sequence[DocumentParserInput]
         .join(FamilyMetadata, Family.import_id == FamilyMetadata.family_import_id)
         .join(Organisation, Organisation.id == Corpus.organisation_id)
         .filter(FamilyDocument.document_status != DocumentStatus.DELETED)
-        .filter(geo_subquery.c.family_import_id == Family.import_id)
+        .filter(geo_subquery.c.family_import_id == Family.import_id)  # type: ignore
     )
 
     query_result = cast(

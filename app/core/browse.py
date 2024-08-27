@@ -6,7 +6,6 @@ from time import perf_counter_ns
 from typing import Optional, Sequence, cast
 
 from db_client.models.dfce.family import Corpus, Family, FamilyCorpus, FamilyStatus
-from db_client.models.dfce.geography import Geography
 from db_client.models.organisation import Organisation
 from pydantic import BaseModel
 from sqlalchemy.orm import Session
@@ -17,6 +16,7 @@ from app.api.api_v1.schemas.search import (
     SortField,
     SortOrder,
 )
+from app.db.crud.geography import get_geo_subquery
 
 _LOGGER = getLogger(__name__)
 
@@ -37,7 +37,7 @@ class BrowseArgs(BaseModel):
 
 def to_search_response_family(
     family: Family,
-    geography: Geography,
+    geography_value: str,
     organisation: Organisation,
 ) -> SearchResponseFamily:
     family_published_date = ""
@@ -56,7 +56,7 @@ def to_search_response_family(
         family_date=family_published_date,
         family_last_updated_date=family_last_updated_date,
         family_source=cast(str, organisation.name),
-        family_geography=cast(str, geography.value),
+        family_geography=geography_value,
         family_title_match=False,
         family_description_match=False,
         # ↓ Stuff we don't currently use for browse ↓
@@ -73,19 +73,14 @@ def browse_rds_families(
     """Browse RDS"""
 
     t0 = perf_counter_ns()
+    geo_subquery = get_geo_subquery(db, req.geography_slugs, req.country_codes)
     query = (
-        db.query(Family, Geography, Organisation)
-        .join(Geography, Family.geographies[0] == Geography.id)
+        db.query(Family, geo_subquery.c.value, Organisation)  # type: ignore
         .join(FamilyCorpus, FamilyCorpus.family_import_id == Family.import_id)
         .join(Corpus, FamilyCorpus.corpus_import_id == Corpus.import_id)
         .join(Organisation, Organisation.id == Corpus.organisation_id)
+        .filter(geo_subquery.c.family_import_id == Family.import_id)  # type: ignore
     )
-
-    if req.geography_slugs is not None:
-        query = query.filter(Geography.slug.in_(req.geography_slugs))
-
-    if req.country_codes is not None:
-        query = query.filter(Geography.value.in_(req.country_codes))
 
     if req.categories is not None:
         query = query.filter(Family.family_category.in_(req.categories))
@@ -98,8 +93,8 @@ def browse_rds_families(
 
     _LOGGER.debug("Starting families query")
     families = [
-        to_search_response_family(family, geography, organisation)
-        for (family, geography, organisation) in query.all()
+        to_search_response_family(family, geography_value, organisation)
+        for (family, geography_value, organisation) in query.all()
         if family.family_status == FamilyStatus.PUBLISHED
     ]
 
