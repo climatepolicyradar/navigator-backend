@@ -2,7 +2,7 @@
 
 import logging
 
-from db_client.models.dfce.family import Family, FamilyStatus
+from db_client.models.dfce.family import Family, FamilyGeography, FamilyStatus
 from db_client.models.dfce.geography import Geography
 from sqlalchemy import func
 from sqlalchemy.exc import OperationalError
@@ -41,11 +41,12 @@ def _db_count_fams_in_category_and_geo(db: Session) -> Query:
     counts = (
         db.query(
             Family.family_category,
-            Family.geography_id,
+            FamilyGeography.geography_id,
             func.count().label("records_count"),
         )
+        .join(FamilyGeography, Family.import_id == FamilyGeography.family_import_id)
         .filter(Family.family_status == FamilyStatus.PUBLISHED)
-        .group_by(Family.family_category, Family.geography_id)
+        .group_by(Family.family_category, FamilyGeography.geography_id)
         .subquery("counts")
     )
 

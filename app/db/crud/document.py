@@ -66,7 +66,7 @@ def get_family_document_and_context(
         .filter(FamilyDocument.import_id == family_document_import_id)
         .filter(Family.import_id == FamilyDocument.family_import_id)
         .filter(FamilyDocument.physical_document_id == PhysicalDocument.id)
-        .filter(Family.geography_id == Geography.id)
+        .filter(Family.geographies[0])
         .filter(FamilyCorpus.family_import_id == Family.import_id)
     ).one_or_none()
 
@@ -141,7 +141,7 @@ def get_family_and_documents(db: Session, import_id: str) -> FamilyAndDocumentsR
 
     db_objects = (
         db.query(Family, Geography, FamilyMetadata, Organisation, FamilyCorpus)
-        .join(Geography, Family.geography_id == Geography.id)
+        .join(Geography, Family.geographies[0] == Geography.id)
         .join(FamilyMetadata, Family.import_id == FamilyMetadata.family_import_id)
         .join(FamilyCorpus, Family.import_id == FamilyCorpus.family_import_id)
         .join(Corpus, Corpus.import_id == FamilyCorpus.corpus_import_id)

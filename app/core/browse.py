@@ -75,7 +75,7 @@ def browse_rds_families(
     t0 = perf_counter_ns()
     query = (
         db.query(Family, Geography, Organisation)
-        .join(Geography, Family.geography_id == Geography.id)
+        .join(Geography, Family.geographies[0] == Geography.id)
         .join(FamilyCorpus, FamilyCorpus.family_import_id == Family.import_id)
         .join(Corpus, FamilyCorpus.corpus_import_id == Corpus.import_id)
         .join(Organisation, Organisation.id == Corpus.organisation_id)
