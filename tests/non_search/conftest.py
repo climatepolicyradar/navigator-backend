@@ -2,19 +2,6 @@ import pytest
 from db_client.models.dfce import Geography
 from db_client.models.organisation import Organisation
 
-template_doc = {
-    "name": "doc",
-    "description": "doc test",
-    "source_url": "url1",
-    "url": "url",
-    "md5_sum": "sum",
-    "source_id": 0,
-    "category_id": 0,
-    "geography_id": 0,
-    "type_id": 0,
-    "publication_ts": "2022-08-17",
-}
-
 
 @pytest.fixture
 def summary_geography_family_data(test_db):

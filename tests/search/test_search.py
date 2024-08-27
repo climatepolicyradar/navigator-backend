@@ -18,6 +18,7 @@ from db_client.models.dfce import (
     FamilyCategory,
     FamilyDocument,
     FamilyEvent,
+    FamilyGeography,
     FamilyMetadata,
     Geography,
 )
@@ -641,15 +642,20 @@ def populate_data_db(db: Session, fam_specs: Sequence[FamSpec]) -> None:
             title=fam_spec.family_name,
             import_id=fam_spec.family_import_id,
             description=fam_spec.family_description,
-            geography_id=(
-                db.query(Geography)
-                .filter(Geography.slug == fam_spec.family_geo)
-                .one()
-                .id
-            ),
             family_category=FamilyCategory(fam_spec.family_category),
         )
         db.add(family)
+        db.add(
+            FamilyGeography(
+                family_import_id=fam_spec.family_import_id,
+                geography_id=(
+                    db.query(Geography)
+                    .filter(Geography.slug == fam_spec.family_geo)
+                    .one()
+                    .id
+                ),
+            )
+        )
         family_event = FamilyEvent(
             import_id=f"{fam_spec.family_source}.event.{fam_spec.family_import_id.split('.')[2]}.0",
             title="Published",

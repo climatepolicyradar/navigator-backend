@@ -3,7 +3,12 @@ from typing import Any
 from unittest.mock import MagicMock
 
 import pytest
-from db_client.models.dfce.family import Family, FamilyCategory, FamilyCorpus
+from db_client.models.dfce.family import (
+    Family,
+    FamilyCategory,
+    FamilyCorpus,
+    FamilyGeography,
+)
 from db_client.models.organisation import Corpus, Organisation
 
 from app.core.util import tree_table_to_json
@@ -50,10 +55,10 @@ def _add_family(test_db, import_id: str, cat: FamilyCategory, corpus_import_id):
             title="f1",
             import_id=import_id,
             description="",
-            geography_id=1,
             family_category=cat,
         )
     )
+    test_db.add(FamilyGeography(family_import_id=import_id, geography_id=1))
     test_db.add(
         FamilyCorpus(family_import_id=import_id, corpus_import_id=corpus_import_id)
     )
