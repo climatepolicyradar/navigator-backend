@@ -1,6 +1,7 @@
 from datetime import datetime
 from typing import Any, Mapping, Optional, Sequence, Union
 
+from cpr_sdk.pipeline_general_models import BackendDocument
 from pydantic import BaseModel, ConfigDict, field_validator
 
 from app.api.api_v1.schemas import CLIMATE_LAWS_MATCH
@@ -115,41 +116,8 @@ class FamilyAndDocumentsResponse(BaseModel):
     corpus_id: str
 
 
-class DocumentParserInput(BaseModel):
+class DocumentParserInput(BackendDocument):
     """Details of a document to be processed by the pipeline."""
-
-    publication_ts: datetime
-    name: str
-    description: str
-    source_url: Optional[str] = None
-    download_url: Optional[str] = None
-
-    import_id: str
-    slug: str
-    family_import_id: str
-    family_slug: str
-
-    type: str = ""
-    source: str
-    category: str
-    geography: str
-    languages: Sequence[str]
-
-    metadata: Json
-
-    @field_validator("type", mode="before")
-    @classmethod
-    def none_to_empty_string(cls, value):
-        return "" if value is None else value
-
-    def to_json(self) -> Mapping[str, Any]:
-        """Provide a serialisable version of the model"""
-
-        json_dict = self.model_dump()
-        json_dict["publication_ts"] = (
-            self.publication_ts.isoformat() if self.publication_ts is not None else None
-        )
-        return json_dict
 
     model_config = ConfigDict(from_attributes=True, validate_assignment=True)
 
