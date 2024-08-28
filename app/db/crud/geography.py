@@ -28,7 +28,7 @@ def get_geo_subquery(
         .filter(FamilyGeography.family_import_id == Family.import_id)
         .group_by(Geography.value, Geography.slug, FamilyGeography.family_import_id)
     )
-    """ NOTE: This is an intermeadiate step to migrate to multi-geography support.
+    """ NOTE: This is an intermediate step to migrate to multi-geography support.
     We grab the minimum geography value for each family to use as a fallback for a single geography.
     This is beacause there is no rank for geography values and we need to pick one.
 
