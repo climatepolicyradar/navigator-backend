@@ -3,19 +3,14 @@ from datetime import datetime, timezone
 from typing import Any, Sequence, Tuple, cast
 
 from db_client.models.dfce import DocumentStatus
-from db_client.models.dfce.family import (
-    Corpus,
-    Family,
-    FamilyCorpus,
-    FamilyDocument,
-    Geography,
-)
+from db_client.models.dfce.family import Corpus, Family, FamilyCorpus, FamilyDocument
 from db_client.models.dfce.metadata import FamilyMetadata
 from db_client.models.organisation import Organisation
 from sqlalchemy.orm import Session
 
 from app.api.api_v1.schemas.document import DocumentParserInput
 from app.core.lookups import doc_type_from_family_document_metadata
+from app.db.crud.geography import get_geo_subquery
 
 _LOGGER = logging.getLogger(__name__)
 
@@ -23,21 +18,23 @@ _LOGGER = logging.getLogger(__name__)
 def generate_pipeline_ingest_input(db: Session) -> Sequence[DocumentParserInput]:
     """Generates a complete view of the current document database as pipeline input"""
     _LOGGER.info("Running pipeline family query")
+    geo_subquery = get_geo_subquery(db)
+
     query = (
-        db.query(Family, FamilyDocument, FamilyMetadata, Geography, Organisation)
+        db.query(
+            Family, FamilyDocument, FamilyMetadata, geo_subquery.c.value, Organisation  # type: ignore
+        )
         .join(Family, Family.import_id == FamilyDocument.family_import_id)
         .join(FamilyCorpus, FamilyCorpus.family_import_id == Family.import_id)
         .join(Corpus, Corpus.import_id == FamilyCorpus.corpus_import_id)
         .join(FamilyMetadata, Family.import_id == FamilyMetadata.family_import_id)
         .join(Organisation, Organisation.id == Corpus.organisation_id)
-        .join(Geography, Geography.id == Family.geography_id)
         .filter(FamilyDocument.document_status != DocumentStatus.DELETED)
+        .filter(geo_subquery.c.family_import_id == Family.import_id)  # type: ignore
     )
 
     query_result = cast(
-        Sequence[
-            Tuple[Family, FamilyDocument, FamilyMetadata, Geography, Organisation]
-        ],
+        Sequence[Tuple[Family, FamilyDocument, FamilyMetadata, str, Organisation]],
         query.all(),
     )
     fallback_date = datetime(1900, 1, 1, tzinfo=timezone.utc)
@@ -60,7 +57,7 @@ def generate_pipeline_ingest_input(db: Session) -> Sequence[DocumentParserInput]
             download_url=None,
             type=doc_type_from_family_document_metadata(family_document),
             source=cast(str, organisation.name),
-            geography=cast(str, geography.value),
+            geography=cast(str, geography),
             languages=[
                 cast(str, lang.name)
                 for lang in (

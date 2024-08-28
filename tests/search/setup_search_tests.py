@@ -12,6 +12,7 @@ from db_client.models.dfce.family import (
     FamilyCorpus,
     FamilyDocument,
     FamilyEvent,
+    FamilyGeography,
     Geography,
     Slug,
     Variant,
@@ -91,11 +92,15 @@ def _create_family(db: Session, family: VespaFixture):
         title=family["fields"]["family_name"],
         import_id=family_import_id,
         description=family["fields"]["family_description"],
-        geography_id=geography.id,
         family_category=FamilyCategory(family["fields"]["family_category"]),
     )
     db.add(family_object)
     db.commit()
+    db.add(
+        FamilyGeography(
+            family_import_id=family_object.import_id, geography_id=geography.id
+        )
+    )
 
     family_slug = Slug(
         name=family["fields"]["family_slug"],

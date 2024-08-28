@@ -2,7 +2,7 @@
 
 import logging
 
-from db_client.models.dfce.family import Family, FamilyStatus
+from db_client.models.dfce.family import Family, FamilyGeography, FamilyStatus
 from db_client.models.dfce.geography import Geography
 from sqlalchemy import func
 from sqlalchemy.exc import OperationalError
@@ -12,6 +12,39 @@ from app.api.api_v1.schemas.geography import GeographyStatsDTO
 from app.errors import RepositoryError
 
 _LOGGER = logging.getLogger(__file__)
+
+
+def get_geo_subquery(
+    db: Session, allowed_geo_values=None, allowed_geo_slugs=None
+) -> Query:
+
+    geo_subquery = (
+        db.query(
+            func.min(Geography.value).label("value"),
+            func.min(Geography.slug).label("slug"),
+            FamilyGeography.family_import_id,
+        )
+        .join(FamilyGeography, FamilyGeography.geography_id == Geography.id)
+        .filter(FamilyGeography.family_import_id == Family.import_id)
+        .group_by(Geography.value, Geography.slug, FamilyGeography.family_import_id)
+    )
+    """ NOTE: This is an intermediate step to migrate to multi-geography support.
+    We grab the minimum geography value for each family to use as a fallback for a single geography.
+    This is because there is no rank for geography values and we need to pick one.
+
+    This also looks dodgy as the "value" and "slug" may not match up.
+    However, the browse code only uses one of these values, so it should be fine.
+
+    Don't forget this is temporary and will be removed once multi-geography support is implemented.
+    """
+
+    if allowed_geo_slugs is not None:
+        geo_subquery = geo_subquery.filter(Geography.slug.in_(allowed_geo_slugs))
+
+    if allowed_geo_values is not None:
+        geo_subquery = geo_subquery.filter(Geography.value.in_(allowed_geo_values))
+
+    return geo_subquery.subquery("geo_subquery")
 
 
 def _db_count_fams_in_category_and_geo(db: Session) -> Query:
@@ -41,11 +74,12 @@ def _db_count_fams_in_category_and_geo(db: Session) -> Query:
     counts = (
         db.query(
             Family.family_category,
-            Family.geography_id,
+            FamilyGeography.geography_id,
             func.count().label("records_count"),
         )
+        .join(FamilyGeography, Family.import_id == FamilyGeography.family_import_id)
         .filter(Family.family_status == FamilyStatus.PUBLISHED)
-        .group_by(Family.family_category, Family.geography_id)
+        .group_by(Family.family_category, FamilyGeography.geography_id)
         .subquery("counts")
     )
 

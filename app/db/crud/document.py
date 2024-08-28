@@ -18,7 +18,6 @@ from db_client.models.dfce.family import (
     FamilyStatus,
     Slug,
 )
-from db_client.models.dfce.geography import Geography
 from db_client.models.dfce.metadata import FamilyMetadata
 from db_client.models.document.physical_document import PhysicalDocument
 from db_client.models.organisation.organisation import Organisation
@@ -35,6 +34,7 @@ from app.api.api_v1.schemas.document import (
 )
 from app.core.lookups import doc_type_from_family_document_metadata
 from app.core.util import to_cdn_url
+from app.db.crud.geography import get_geo_subquery
 
 _LOGGER = logging.getLogger(__file__)
 
@@ -61,13 +61,16 @@ def get_slugged_objects(db: Session, slug: str) -> tuple[Optional[str], Optional
 def get_family_document_and_context(
     db: Session, family_document_import_id: str
 ) -> FamilyDocumentWithContextResponse:
+    geo_subquery = get_geo_subquery(db)
     db_objects = (
-        db.query(Family, FamilyDocument, PhysicalDocument, Geography, FamilyCorpus)
+        db.query(
+            Family, FamilyDocument, PhysicalDocument, geo_subquery.c.value, FamilyCorpus  # type: ignore
+        )
         .filter(FamilyDocument.import_id == family_document_import_id)
         .filter(Family.import_id == FamilyDocument.family_import_id)
         .filter(FamilyDocument.physical_document_id == PhysicalDocument.id)
-        .filter(Family.geography_id == Geography.id)
         .filter(FamilyCorpus.family_import_id == Family.import_id)
+        .filter(geo_subquery.c.family_import_id == Family.import_id)  # type: ignore
     ).one_or_none()
 
     if not db_objects:
@@ -79,7 +82,7 @@ def get_family_document_and_context(
             f"No family document found for import_id: {family_document_import_id}"
         )
 
-    family, document, physical_document, geography, family_corpus = db_objects
+    family, document, physical_document, geography_value, family_corpus = db_objects
 
     if (
         family.family_status != FamilyStatus.PUBLISHED
@@ -90,7 +93,7 @@ def get_family_document_and_context(
     family_context = FamilyContext(
         title=cast(str, family.title),
         import_id=cast(str, family.import_id),
-        geography=cast(str, geography.value),
+        geography=geography_value,
         slug=family.slugs[0].name,
         category=family.family_category,
         published_date=family.published_date,
@@ -139,14 +142,17 @@ def get_family_and_documents(db: Session, import_id: str) -> FamilyAndDocumentsR
     :return DocumentWithFamilyResponse: response object
     """
 
+    geo_subquery = get_geo_subquery(db)
     db_objects = (
-        db.query(Family, Geography, FamilyMetadata, Organisation, FamilyCorpus)
-        .join(Geography, Family.geography_id == Geography.id)
+        db.query(
+            Family, geo_subquery.c.value, FamilyMetadata, Organisation, FamilyCorpus  # type: ignore
+        )
         .join(FamilyMetadata, Family.import_id == FamilyMetadata.family_import_id)
         .join(FamilyCorpus, Family.import_id == FamilyCorpus.family_import_id)
         .join(Corpus, Corpus.import_id == FamilyCorpus.corpus_import_id)
         .join(Organisation, Corpus.organisation_id == Organisation.id)
         .filter(Family.import_id == import_id)
+        .filter(geo_subquery.c.family_import_id == Family.import_id)  # type: ignore
     ).one_or_none()
 
     if not db_objects:
@@ -154,7 +160,7 @@ def get_family_and_documents(db: Session, import_id: str) -> FamilyAndDocumentsR
         raise ValueError(f"No family found for import_id: {import_id}")
 
     family: Family
-    (family, geography, family_metadata, organisation, family_corpus) = db_objects
+    (family, geography_value, family_metadata, organisation, family_corpus) = db_objects
 
     if family.family_status != FamilyStatus.PUBLISHED:
         raise ValueError(f"Family {import_id} is not published")
@@ -167,7 +173,7 @@ def get_family_and_documents(db: Session, import_id: str) -> FamilyAndDocumentsR
         import_id=import_id,
         title=cast(str, family.title),
         summary=cast(str, family.description),
-        geography=cast(str, geography.value),
+        geography=geography_value,
         category=cast(str, family.family_category),
         status=cast(str, family.family_status),
         metadata=cast(dict, family_metadata.value),

@@ -13,9 +13,9 @@ def test_generate_pipeline_ingest_input(data_db: Session):
     documents = generate_pipeline_ingest_input(data_db)
     assert len(documents) == 2
     assert documents[0].name == "Fam1"
-    assert documents[0].import_id == "CCLW.executive.2.2"
     assert documents[1].name == "Fam1"
-    assert documents[1].import_id == "CCLW.executive.1.2"
+    doc_ids = set([doc.import_id for doc in documents])
+    assert doc_ids == {"CCLW.executive.1.2", "CCLW.executive.2.2"}
 
 
 def test_generate_pipeline_ingest_input__deleted(data_db: Session):
