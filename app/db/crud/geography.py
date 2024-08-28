@@ -30,7 +30,7 @@ def get_geo_subquery(
     )
     """ NOTE: This is an intermediate step to migrate to multi-geography support.
     We grab the minimum geography value for each family to use as a fallback for a single geography.
-    This is beacause there is no rank for geography values and we need to pick one.
+    This is because there is no rank for geography values and we need to pick one.
 
     This also looks dodgy as the "value" and "slug" may not match up.
     However, the browse code only uses one of these values, so it should be fine.
