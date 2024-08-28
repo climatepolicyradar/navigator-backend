@@ -30,7 +30,7 @@ create_query.cache = None  # type: ignore
 def get_whole_database_dump(ingest_cycle_start: str, db=Depends(get_db)):
     query = create_query(ingest_cycle_start)
     with db.connection() as conn:
-        df = pd.read_sql_query(query, conn)
+        df = pd.read_sql(query, conn.connection)
         return df
 
 
