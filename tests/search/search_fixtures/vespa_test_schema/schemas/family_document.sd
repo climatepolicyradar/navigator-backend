@@ -155,7 +155,7 @@ schema family_document {
     import field search_weights_ref.description_weight as description_weight {}
 
     fieldset default {
-        fields: family_name_index, family_description_index, family_description_embedding
+        fields: family_name_index, family_description_index
     }
 
     rank-profile exact inherits default {
