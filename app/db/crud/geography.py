@@ -15,7 +15,7 @@ _LOGGER = logging.getLogger(__file__)
 
 
 def get_geo_subquery(
-    db: Session, allowed_geo_values=None, allowed_geo_slugs=None
+    db: Session, allowed_geo_slugs=None, allowed_geo_values=None
 ) -> Query:
 
     geo_subquery = (
