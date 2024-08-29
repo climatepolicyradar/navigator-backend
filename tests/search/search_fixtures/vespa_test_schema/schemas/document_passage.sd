@@ -68,25 +68,25 @@ schema document_passage {
     }
 
     document-summary search_summary {
-        summary family_name type string {}
-        summary family_description type string {}
-        summary family_import_id type string {}
-        summary family_slug type string {}
-        summary family_category type string {}
-        summary family_publication_ts type string {}
-        summary family_geography type string {}
-        summary family_source type string {}
-        summary document_import_id type string {}
-        summary document_slug type string {}
-        summary document_languages type array<string> {}
-        summary document_content_type type string {}
-        summary document_cdn_object type string {}
-        summary document_source_url type string {}
-        summary text_block type string {}
-        summary text_block_id type string {}
-        summary text_block_type type string {}
-        summary text_block_page type int {}
-        summary text_block_coords type array<array<float>> {}
+        summary family_name {}
+        summary family_description {}
+        summary family_import_id {}
+        summary family_slug {}
+        summary family_category {}
+        summary family_publication_ts {}
+        summary family_geography {}
+        summary family_source {}
+        summary document_import_id {}
+        summary document_slug {}
+        summary document_languages {}
+        summary document_content_type {}
+        summary document_cdn_object {}
+        summary document_source_url {}
+        summary text_block {}
+        summary text_block_id {}
+        summary text_block_type {}
+        summary text_block_page {}
+        summary text_block_coords {}
     }
 
     rank-profile exact inherits default {
