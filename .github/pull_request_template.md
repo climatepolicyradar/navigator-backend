@@ -47,6 +47,7 @@ Please describe the tests that you added to verify your changes.
 
 ## Reviewer Checklist
 
+- [ ] **DB_CLIENT DEPENDENCY IS ON THE LATEST VERSION**
 - [ ] The PR represents a single feature (small driveby fixes are also ok)
 - [ ] The PR includes tests that are sufficient for the level of risk
 - [ ] The code is sufficiently commented, particularly in hard-to-understand areas
