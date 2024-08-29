@@ -64,7 +64,7 @@ schema document_passage {
     import field search_weights_ref.passage_weight as passage_weight {}
 
     fieldset default {
-        fields: text_block, text_embedding
+        fields: text_block
     }
 
     document-summary search_summary {
