@@ -36,6 +36,8 @@ def get_geo_subquery(
     However, the browse code only uses one of these values, so it should be fine.
 
     Don't forget this is temporary and will be removed once multi-geography support is implemented.
+
+    Also remember to update the pipeline query to pass these in when changing this.
     """
 
     if allowed_geo_slugs is not None:
