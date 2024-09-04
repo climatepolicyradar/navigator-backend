@@ -40,6 +40,8 @@ def add_collections(db: Session, collections, org_id=1):
 
 
 def add_families(db: Session, families, org_id=1):
+    # Note: corpus & organisation are set up in migrations
+
     for f in families:
         db.add(
             Family(
@@ -84,7 +86,6 @@ def add_families(db: Session, families, org_id=1):
                     corpus_import_id=f["corpus_import_id"],
                 )
             )
-
     db.commit()
 
 
