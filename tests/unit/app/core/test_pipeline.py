@@ -5,13 +5,13 @@ from app.core.ingestion.pipeline import (
     generate_pipeline_ingest_input,
 )
 from tests.non_search.setup_helpers import (
-    setup_with_two_docs_one_family,
+    setup_docs_with_two_orgs,
     setup_with_two_unpublished_docs,
 )
 
 
 def test_generate_pipeline_ingest_input(data_db: Session):
-    setup_with_two_docs_one_family(data_db)
+    setup_docs_with_two_orgs(data_db)
 
     state_rows = generate_pipeline_ingest_input(data_db)
     assert len(state_rows) == 2
