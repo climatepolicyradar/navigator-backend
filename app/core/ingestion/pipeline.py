@@ -40,8 +40,8 @@ def generate_pipeline_ingest_input(db: Session) -> Sequence[DocumentParserInput]
         .join(
             PhysicalDocument, PhysicalDocument.id == FamilyDocument.physical_document_id
         )
-        .join(CollectionFamily, CollectionFamily.family_import_id == Family.import_id)
-        .join(Collection, Collection.import_id == CollectionFamily.collection_import_id)
+        .outerjoin(CollectionFamily, CollectionFamily.family_import_id == Family.import_id)
+        .outerjoin(Collection, Collection.import_id == CollectionFamily.collection_import_id)
         .filter(FamilyDocument.document_status != DocumentStatus.DELETED)
         .filter(geo_subquery.c.family_import_id == Family.import_id)  # type: ignore
     )
