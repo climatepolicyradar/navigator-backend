@@ -15,6 +15,8 @@ def test_generate_pipeline_ingest_input(data_db: Session):
 
     state_rows = generate_pipeline_ingest_input(data_db)
     assert len(state_rows) == 2
+    # Sort to ensure order is consistent across tests
+    sorted(state_rows, key=lambda d: d.import_id)
 
     # Now test one field from each table we've queried
     # Check family title
@@ -22,8 +24,8 @@ def test_generate_pipeline_ingest_input(data_db: Session):
     assert state_rows[1].name == "Fam1"
 
     # Check family_document import_id
-    doc_ids = set([doc.import_id for doc in state_rows])
-    assert doc_ids == {"CCLW.executive.1.2", "CCLW.executive.2.2"}
+    assert state_rows[0].import_id == "CCLW.executive.2.2"
+    assert state_rows[1].import_id == "CCLW.executive.1.2"
 
     # Check family_metadata
     assert state_rows[0].metadata["family.size"] == "big"
