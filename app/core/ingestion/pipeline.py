@@ -1,9 +1,15 @@
 import logging
 from datetime import datetime, timezone
-from typing import Any, Sequence, Tuple, cast
+from typing import Sequence, Tuple, cast
 
-from db_client.models.dfce import DocumentStatus
-from db_client.models.dfce.family import Corpus, Family, FamilyCorpus, FamilyDocument
+from db_client.models.dfce import Collection, CollectionFamily, DocumentStatus
+from db_client.models.dfce.family import (
+    Corpus,
+    Family,
+    FamilyCorpus,
+    FamilyDocument,
+    PhysicalDocument,
+)
 from db_client.models.dfce.metadata import FamilyMetadata
 from db_client.models.organisation import Organisation
 from sqlalchemy.orm import Session
@@ -14,6 +20,8 @@ from app.db.crud.geography import get_geo_subquery
 
 _LOGGER = logging.getLogger(__name__)
 
+MetadataType = dict[str, list[str]]
+
 
 def generate_pipeline_ingest_input(db: Session) -> Sequence[DocumentParserInput]:
     """Generates a complete view of the current document database as pipeline input"""
@@ -22,19 +30,35 @@ def generate_pipeline_ingest_input(db: Session) -> Sequence[DocumentParserInput]
 
     query = (
         db.query(
-            Family, FamilyDocument, FamilyMetadata, geo_subquery.c.value, Organisation  # type: ignore
+            Family, FamilyDocument, FamilyMetadata, geo_subquery.c.value, Organisation, Corpus, PhysicalDocument, Collection  # type: ignore
         )
         .join(Family, Family.import_id == FamilyDocument.family_import_id)
         .join(FamilyCorpus, FamilyCorpus.family_import_id == Family.import_id)
         .join(Corpus, Corpus.import_id == FamilyCorpus.corpus_import_id)
         .join(FamilyMetadata, Family.import_id == FamilyMetadata.family_import_id)
         .join(Organisation, Organisation.id == Corpus.organisation_id)
+        .join(
+            PhysicalDocument, PhysicalDocument.id == FamilyDocument.physical_document_id
+        )
+        .join(CollectionFamily, CollectionFamily.family_import_id == Family.import_id)
+        .join(Collection, Collection.import_id == CollectionFamily.collection_import_id)
         .filter(FamilyDocument.document_status != DocumentStatus.DELETED)
         .filter(geo_subquery.c.family_import_id == Family.import_id)  # type: ignore
     )
 
     query_result = cast(
-        Sequence[Tuple[Family, FamilyDocument, FamilyMetadata, str, Organisation]],
+        Sequence[
+            Tuple[
+                Family,
+                FamilyDocument,
+                FamilyMetadata,
+                str,
+                Organisation,
+                Corpus,
+                PhysicalDocument,
+                Collection,
+            ]
+        ],
         query.all(),
     )
     fallback_date = datetime(1900, 1, 1, tzinfo=timezone.utc)
@@ -42,6 +66,7 @@ def generate_pipeline_ingest_input(db: Session) -> Sequence[DocumentParserInput]
     documents: Sequence[DocumentParserInput] = [
         DocumentParserInput(
             name=cast(str, family.title),  # All documents in a family indexed by title
+            document_title=cast(str, physical_document.title),
             description=cast(str, family.description),
             category=str(family.family_category),
             publication_ts=family.published_date or fallback_date,
@@ -58,6 +83,11 @@ def generate_pipeline_ingest_input(db: Session) -> Sequence[DocumentParserInput]
             type=doc_type_from_family_document_metadata(family_document),
             source=cast(str, organisation.name),
             geography=cast(str, geography),
+            geographies=[cast(str, geography)],
+            corpus_import_id=cast(str, corpus.import_id),
+            corpus_type_name=cast(str, corpus.corpus_type_name),
+            collection_title=cast(str, collection.title),
+            collection_summary=cast(str, collection.description),
             languages=[
                 cast(str, lang.name)
                 for lang in (
@@ -66,7 +96,10 @@ def generate_pipeline_ingest_input(db: Session) -> Sequence[DocumentParserInput]
                     else []
                 )
             ],
-            metadata=cast(dict[str, Any], family_metadata.value),
+            metadata=flatten_pipeline_metadata(
+                cast(MetadataType, family_metadata.value),
+                cast(MetadataType, family_document.valid_metadata),
+            ),
         )
         for (
             family,
@@ -74,7 +107,28 @@ def generate_pipeline_ingest_input(db: Session) -> Sequence[DocumentParserInput]
             family_metadata,
             geography,
             organisation,
+            corpus,
+            physical_document,
+            collection,
         ) in query_result
     ]
 
+    # FIXME: Break if row explosion
+
     return documents
+
+
+def flatten_pipeline_metadata(
+    family_metadata: MetadataType, document_metadata: MetadataType
+) -> MetadataType:
+    """Combines metadata objects ready for the pipeline"""
+
+    metadata = {}
+
+    for k, v in family_metadata.items():
+        metadata[f"family.{k}"] = v
+
+    for k, v in document_metadata.items():
+        metadata[f"document.{k}"] = v
+
+    return metadata
