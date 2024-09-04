@@ -40,8 +40,12 @@ def generate_pipeline_ingest_input(db: Session) -> Sequence[DocumentParserInput]
         .join(
             PhysicalDocument, PhysicalDocument.id == FamilyDocument.physical_document_id
         )
-        .outerjoin(CollectionFamily, CollectionFamily.family_import_id == Family.import_id)
-        .outerjoin(Collection, Collection.import_id == CollectionFamily.collection_import_id)
+        .outerjoin(
+            CollectionFamily, CollectionFamily.family_import_id == Family.import_id
+        )
+        .outerjoin(
+            Collection, Collection.import_id == CollectionFamily.collection_import_id
+        )
         .filter(FamilyDocument.document_status != DocumentStatus.DELETED)
         .filter(geo_subquery.c.family_import_id == Family.import_id)  # type: ignore
     )
@@ -83,11 +87,19 @@ def generate_pipeline_ingest_input(db: Session) -> Sequence[DocumentParserInput]
             type=doc_type_from_family_document_metadata(family_document),
             source=cast(str, organisation.name),
             geography=cast(str, geography),
-            geographies=[cast(str, geography)],
-            corpus_import_id=cast(str, corpus.import_id),
-            corpus_type_name=cast(str, corpus.corpus_type_name),
-            collection_title=cast(str, collection.title),
-            collection_summary=cast(str, collection.description),
+            geographies=([cast(str, geography)] if geography is not None else []),
+            corpus_import_id=(
+                cast(str, corpus.import_id) if corpus is not None else None
+            ),
+            corpus_type_name=(
+                cast(str, corpus.corpus_type_name) if corpus is not None else None
+            ),
+            collection_title=(
+                cast(str, collection.title) if collection is not None else None
+            ),
+            collection_summary=(
+                cast(str, collection.description) if collection is not None else None
+            ),
             languages=[
                 cast(str, lang.name)
                 for lang in (
