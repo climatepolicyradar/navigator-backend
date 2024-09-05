@@ -2,7 +2,7 @@ import logging
 from datetime import datetime, timezone
 from typing import Sequence, Tuple, cast
 
-from db_client.models.dfce import Collection, CollectionFamily, DocumentStatus
+from db_client.models.dfce import Collection, DocumentStatus
 from db_client.models.dfce.family import (
     Corpus,
     Family,
