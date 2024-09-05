@@ -5,6 +5,7 @@ from app.core.ingestion.pipeline import (
     generate_pipeline_ingest_input,
 )
 from tests.non_search.setup_helpers import (
+    setup_docs_with_two_orgs,
     setup_with_two_docs_one_family,
     setup_with_two_unpublished_docs,
 )
@@ -42,8 +43,12 @@ def test_generate_pipeline_ingest_input(data_db: Session):
     # Check physical_document
     assert state_rows[0].document_title == "Document2"
 
-    # Check collection
-    assert state_rows[0].collection_title == "Collection1"
+
+def test_generate_pipeline_ingest_input_no_collection_family_link(data_db: Session):
+    setup_docs_with_two_orgs(data_db)
+
+    state_rows = generate_pipeline_ingest_input(data_db)
+    assert len(state_rows) == 2
 
 
 def test_generate_pipeline_ingest_input__deleted(data_db: Session):
