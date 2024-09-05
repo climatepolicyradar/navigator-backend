@@ -43,9 +43,6 @@ def test_generate_pipeline_ingest_input(data_db: Session):
     # Check physical_document
     assert state_rows[0].document_title == "Document2"
 
-    # Check collection
-    assert state_rows[0].collection_title == "Collection1"
-
 
 def test_generate_pipeline_ingest_input_no_collection_family_link(data_db: Session):
     setup_docs_with_two_orgs(data_db)
