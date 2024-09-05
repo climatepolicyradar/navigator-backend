@@ -51,13 +51,6 @@ def test_generate_pipeline_ingest_input_no_collection_family_link(data_db: Sessi
     assert len(state_rows) == 2
 
 
-def test_generate_pipeline_ingest_input_no_collection_family_link(data_db: Session):
-    setup_docs_with_two_orgs(data_db)
-
-    state_rows = generate_pipeline_ingest_input(data_db)
-    assert len(state_rows) == 2
-
-
 def test_generate_pipeline_ingest_input__deleted(data_db: Session):
     setup_with_two_unpublished_docs(data_db)
 
