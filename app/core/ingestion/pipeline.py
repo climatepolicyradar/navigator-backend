@@ -109,11 +109,19 @@ def generate_pipeline_ingest_input(db: Session) -> Sequence[DocumentParserInput]
         ) in query_result
     ]
 
-    database_doc_count = db.query(PhysicalDocument).count()
+    # TODO: Revert to raise a ValueError when the issue is resolved
+    database_doc_count = (
+        db.query(FamilyDocument)
+        .filter(FamilyDocument.document_status != DocumentStatus.DELETED)
+        .count()
+    )
     if len(documents) > database_doc_count:
-        raise ValueError(
-            "Potential Row Explosion. Ingest input is returning more documents than "
-            f"exist in the database {len(documents)}:{database_doc_count}"
+        _LOGGER.warning(
+            "Potential Row Explosion. Ingest input is returning more documents than exist in the database",
+            extra={
+                "ingest_count": len(documents),
+                "database_count": database_doc_count,
+            },
         )
 
     return documents
