@@ -87,13 +87,9 @@ def generate_pipeline_ingest_input(db: Session) -> Sequence[DocumentParserInput]
             type=doc_type_from_family_document_metadata(family_document),
             source=cast(str, organisation.name),
             geography=cast(str, geography),
-            geographies=([cast(str, geography)] if geography is not None else []),
-            corpus_import_id=(
-                cast(str, corpus.import_id) if corpus is not None else None
-            ),
-            corpus_type_name=(
-                cast(str, corpus.corpus_type_name) if corpus is not None else None
-            ),
+            geographies=[cast(str, geography)],
+            corpus_import_id=cast(str, corpus.import_id),
+            corpus_type_name=cast(str, corpus.corpus_type_name),
             collection_title=(
                 cast(str, collection.title) if collection is not None else None
             ),
