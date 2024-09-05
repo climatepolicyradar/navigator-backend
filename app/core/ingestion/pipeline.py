@@ -2,7 +2,7 @@ import logging
 from datetime import datetime, timezone
 from typing import Sequence, Tuple, cast
 
-from db_client.models.dfce import Collection, DocumentStatus
+from db_client.models.dfce import DocumentStatus
 from db_client.models.dfce.family import (
     Corpus,
     Family,
@@ -30,7 +30,7 @@ def generate_pipeline_ingest_input(db: Session) -> Sequence[DocumentParserInput]
 
     query = (
         db.query(
-            Family, FamilyDocument, FamilyMetadata, geo_subquery.c.value, Organisation, Corpus, PhysicalDocument, Collection  # type: ignore
+            Family, FamilyDocument, FamilyMetadata, geo_subquery.c.value, Organisation, Corpus, PhysicalDocument  # type: ignore
         )
         .join(Family, Family.import_id == FamilyDocument.family_import_id)
         .join(FamilyCorpus, FamilyCorpus.family_import_id == Family.import_id)
@@ -54,7 +54,6 @@ def generate_pipeline_ingest_input(db: Session) -> Sequence[DocumentParserInput]
                 Organisation,
                 Corpus,
                 PhysicalDocument,
-                Collection,
             ]
         ],
         query.all(),
@@ -84,12 +83,8 @@ def generate_pipeline_ingest_input(db: Session) -> Sequence[DocumentParserInput]
             geographies=[cast(str, geography)],
             corpus_import_id=cast(str, corpus.import_id),
             corpus_type_name=cast(str, corpus.corpus_type_name),
-            collection_title=(
-                cast(str, collection.title) if collection is not None else None
-            ),
-            collection_summary=(
-                cast(str, collection.description) if collection is not None else None
-            ),
+            collection_title=None,
+            collection_summary=None,
             languages=[
                 cast(str, lang.name)
                 for lang in (
@@ -111,7 +106,6 @@ def generate_pipeline_ingest_input(db: Session) -> Sequence[DocumentParserInput]
             organisation,
             corpus,
             physical_document,
-            collection,
         ) in query_result
     ]
 
