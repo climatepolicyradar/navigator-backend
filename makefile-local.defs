@@ -20,14 +20,14 @@ dev_install: install_trunk check_dev_environment
 	# Install pip
 	pip install --upgrade pip
 	# Install poetry
-	pip install "poetry==1.7.1"
+	pip install "poetry==1.8.1"
 
 	make poetry_environment
 	make configure_pyright
 
 create_venv:
 	- pyenv deactivate
-	pyenv virtualenv 3.9 backend
+	pyenv virtualenv 3.10 backend
 	pyenv activate backend
 
 install_trunk:
