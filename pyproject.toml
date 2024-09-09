@@ -1,12 +1,12 @@
 [tool.poetry]
 name = "navigator_backend"
-version = "1.14.16"
+version = "1.14.17"
 description = ""
 authors = ["CPR-dev-team <tech@climatepolicyradar.org>"]
 packages = [{ include = "app" }, { include = "tests" }]
 
 [tool.poetry.dependencies]
-python = "^3.9"
+python = "^3.10"
 Authlib = "^0.15.5"
 bcrypt = "^3.2.0"
 boto3 = "^1.26"
@@ -36,8 +36,8 @@ urllib3 = "<2"
 apscheduler = "^3.10.4"
 numpy = "1.26.4"
 torch = [
-  { platform = "darwin", url = "https://download.pytorch.org/whl/cpu/torch-2.0.0-cp39-none-macosx_10_9_x86_64.whl", markers = "platform_machine=='x86_64'" },
-  { platform = "darwin", url = "https://download.pytorch.org/whl/cpu/torch-2.0.0-cp39-none-macosx_11_0_arm64.whl", markers = "platform_machine=='arm64'" },
+  { platform = "darwin", url = "https://download.pytorch.org/whl/cpu/torch-2.0.0-cp310-none-macosx_10_9_x86_64.whl", markers = "platform_machine=='x86_64'" },
+  { platform = "darwin", url = "https://download.pytorch.org/whl/cpu/torch-2.0.0-cp310-none-macosx_11_0_arm64.whl", markers = "platform_machine=='arm64'" },
   { platform = "linux", version = "2.0.0", source = "pytorch" },
   { platform = "win32", version = "2.0.0", source = "pytorch" },
 ]
@@ -80,6 +80,6 @@ ignore = """
 include = ["app", "tests"]
 exclude = ["**/__pycache__"]
 ignore = ["scripts/**/*"]
-pythonVersion = "3.9"
+pythonVersion = "3.10"
 pythonPlatform = "Linux"
 venv = "backend"
