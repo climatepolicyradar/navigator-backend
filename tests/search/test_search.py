@@ -371,7 +371,7 @@ def test_create_vespa_search_params(
     (
         "exact_match,year_range,sort_field,sort_order,"
         "keyword_filters,max_passages,page_size,offset,continuation_tokens,"
-        "family_ids,document_ids,corpus_type_names,corpus_import_ids,metadata_filters"
+        "family_ids,document_ids,metadata_filters,corpus_type_names,corpus_import_ids"
     ),
     [
         (
@@ -445,9 +445,9 @@ def test_create_browse_request_params(
     continuation_tokens,
     family_ids,
     document_ids,
+    metadata_filters,
     corpus_type_names,
     corpus_import_ids,
-    metadata_filters,
 ):
     SearchRequestBody(
         query_string="",
@@ -464,7 +464,11 @@ def test_create_browse_request_params(
         continuation_tokens=continuation_tokens,
         corpus_type_names=corpus_type_names,
         corpus_import_ids=corpus_import_ids,
-        metadata=[MetadataFilter.model_validate(mdata) for mdata in metadata_filters],
+        metadata=(
+            [MetadataFilter.model_validate(mdata) for mdata in metadata_filters]
+            if metadata_filters is not None
+            else []
+        ),
     )
 
 
