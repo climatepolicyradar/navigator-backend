@@ -1,6 +1,7 @@
 import random
 from dataclasses import dataclass
 from datetime import datetime
+from importlib import metadata
 from typing import Mapping, Sequence, Union
 
 import pytest
@@ -8,6 +9,7 @@ from cpr_sdk.models.search import Document as CprSdkDocument
 from cpr_sdk.models.search import Family as CprSdkFamily
 from cpr_sdk.models.search import Filters as CprSdkFilters
 from cpr_sdk.models.search import Hit as CprSdkHit
+from cpr_sdk.models.search import MetadataFilter
 from cpr_sdk.models.search import Passage as CprSdkPassage
 from cpr_sdk.models.search import SearchResponse as CprSdkSearchResponse
 from cpr_sdk.models.search import filter_fields
@@ -40,7 +42,7 @@ from app.core.search import (
     (
         "query_string,exact_match,year_range,sort_field,sort_order,"
         "keyword_filters,max_passages,page_size,offset,continuation_tokens,"
-        "family_ids,document_ids"
+        "family_ids,document_ids,corpus_type_names,corpus_import_ids,metadata_filters"
     ),
     [
         (
@@ -53,6 +55,9 @@ from app.core.search import (
             10,
             10,
             10,
+            None,
+            None,
+            None,
             None,
             None,
             None,
@@ -70,6 +75,9 @@ from app.core.search import (
             ["ABC"],
             None,
             None,
+            None,
+            None,
+            None,
         ),
         (
             "hello",
@@ -81,6 +89,9 @@ from app.core.search import (
             20,
             10,
             0,
+            None,
+            None,
+            None,
             None,
             None,
             None,
@@ -101,6 +112,9 @@ from app.core.search import (
             ["ABC"],
             None,
             None,
+            None,
+            None,
+            None,
         ),
         (
             "hello",
@@ -112,6 +126,9 @@ from app.core.search import (
             10,
             10,
             0,
+            None,
+            None,
+            None,
             None,
             None,
             None,
@@ -129,6 +146,9 @@ from app.core.search import (
             ["ABC", "ADDD"],
             None,
             None,
+            None,
+            None,
+            None,
         ),
         (
             "hello",
@@ -143,6 +163,9 @@ from app.core.search import (
             None,
             None,
             ["CCLW.document.1.0"],
+            None,
+            None,
+            None,
         ),
         (
             "world",
@@ -156,6 +179,9 @@ from app.core.search import (
             0,
             ["ABC"],
             ["CCLW.executive.1.0"],
+            None,
+            None,
+            None,
             None,
         ),
         (
@@ -171,6 +197,9 @@ from app.core.search import (
             None,
             ["CCLW.executive.1.0"],
             ["CCLW.document.1.0", "CCLW.document.2.0"],
+            None,
+            None,
+            None,
         ),
         (
             "world",
@@ -185,6 +214,63 @@ from app.core.search import (
             ["ABC"],
             ["CCLW.executive.1.0", "CCLW.executive.2.0"],
             ["CCLW.document.1.0", "CCLW.document.2.0"],
+            None,
+            None,
+            None,
+        ),
+        (
+            "world",
+            True,
+            None,
+            None,
+            "desc",
+            None,
+            10,
+            10,
+            0,
+            None,
+            None,
+            None,
+            [
+                {"name": "family.sector", "value": "Price"},
+                {"name": "family.topic", "value": "Mitigation"},
+            ],
+            None,
+            None,
+        ),
+        (
+            "world",
+            True,
+            None,
+            None,
+            "desc",
+            None,
+            10,
+            10,
+            0,
+            None,
+            None,
+            None,
+            None,
+            ["UNFCCC Submissions", "Laws and Policies"],
+            None,
+        ),
+        (
+            "world",
+            True,
+            None,
+            None,
+            "desc",
+            None,
+            10,
+            10,
+            0,
+            None,
+            None,
+            None,
+            None,
+            None,
+            ["CCLW.corpus.1.0", "CCLW.corpus.2.0"],
         ),
     ],
 )
@@ -202,6 +288,9 @@ def test_create_vespa_search_params(
     continuation_tokens,
     family_ids,
     document_ids,
+    corpus_type_names,
+    corpus_import_ids,
+    metadata_filters,
 ):
     search_request_body = SearchRequestBody(
         query_string=query_string,
@@ -216,6 +305,9 @@ def test_create_vespa_search_params(
         page_size=page_size,
         offset=offset,
         continuation_tokens=continuation_tokens,
+        corpus_type_names=corpus_type_names,
+        corpus_import_ids=corpus_import_ids,
+        metadata=[MetadataFilter.model_validate(mdata) for mdata in metadata_filters],
     )
 
     # First step, just make sure we can create a validated pydantic model
@@ -257,6 +349,11 @@ def test_create_vespa_search_params(
                 if "family_source" in converted_keyword_filters.keys()
                 else []
             ),
+            family_geographies=(
+                converted_keyword_filters["family_geographies"]
+                if "family_geographies" in converted_keyword_filters.keys()
+                else []
+            ),
         )
     else:
         assert not produced_search_parameters.keyword_filters
@@ -266,13 +363,12 @@ def test_create_vespa_search_params(
     assert produced_search_parameters.sort_order == sort_order
 
 
-# TODO Add new filters to test here.
 @pytest.mark.search
 @pytest.mark.parametrize(
     (
         "exact_match,year_range,sort_field,sort_order,"
         "keyword_filters,max_passages,page_size,offset,continuation_tokens,"
-        "family_ids,document_ids"
+        "family_ids,document_ids,corpus_type_names,corpus_import_ids,metadata_filters"
     ),
     [
         (
