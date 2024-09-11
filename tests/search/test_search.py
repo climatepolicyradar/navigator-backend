@@ -34,6 +34,7 @@ from app.core.search import (
 )
 
 
+# TODO Add new filters to test here.
 @pytest.mark.search
 @pytest.mark.parametrize(
     (
@@ -265,6 +266,7 @@ def test_create_vespa_search_params(
     assert produced_search_parameters.sort_order == sort_order
 
 
+# TODO Add new filters to test here.
 @pytest.mark.search
 @pytest.mark.parametrize(
     (
@@ -349,6 +351,7 @@ def test_create_browse_request_params(
     )
 
 
+# TODO Add new filters to test here.
 @pytest.mark.search
 @pytest.mark.parametrize(
     "filters, expected",
@@ -695,6 +698,7 @@ def populate_data_db(db: Session, fam_specs: Sequence[FamSpec]) -> None:
     db.commit()
 
 
+# TODO Add new filters to test here (probably updating family spec).
 @pytest.mark.search
 @pytest.mark.parametrize(
     "fam_specs,offset,page_size",

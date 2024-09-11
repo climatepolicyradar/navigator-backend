@@ -300,6 +300,7 @@ def test_search_with_deleted_docs(test_vespa, monkeypatch, data_client, data_db)
     assert len(all_deleted_body["families"]) == 0
 
 
+# TODO Add test alike below with the new search filters
 @pytest.mark.search
 @pytest.mark.parametrize("label,query", [("search", "the"), ("browse", "")])
 def test_keyword_country_filters(
