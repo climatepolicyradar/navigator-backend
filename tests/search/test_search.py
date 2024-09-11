@@ -1,7 +1,6 @@
 import random
 from dataclasses import dataclass
 from datetime import datetime
-from importlib import metadata
 from typing import Mapping, Sequence, Union
 
 import pytest

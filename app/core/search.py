@@ -273,7 +273,6 @@ def _convert_filter_field(filter_field: str) -> Optional[str]:
     if filter_field == FilterField.CATEGORY:
         return filter_fields["category"]
     if filter_field == FilterField.COUNTRY:
-        breakpoint()
         return filter_fields["geographies"]
     if filter_field == FilterField.REGION:
         return filter_fields["geographies"]
