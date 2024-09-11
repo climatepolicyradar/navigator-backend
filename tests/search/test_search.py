@@ -41,7 +41,7 @@ from app.core.search import (
     (
         "query_string,exact_match,year_range,sort_field,sort_order,"
         "keyword_filters,max_passages,page_size,offset,continuation_tokens,"
-        "family_ids,document_ids,corpus_type_names,corpus_import_ids,metadata_filters"
+        "family_ids,document_ids,metadata_filters,corpus_type_names,corpus_import_ids"
     ),
     [
         (
@@ -287,9 +287,9 @@ def test_create_vespa_search_params(
     continuation_tokens,
     family_ids,
     document_ids,
+    metadata_filters,
     corpus_type_names,
     corpus_import_ids,
-    metadata_filters,
 ):
     search_request_body = SearchRequestBody(
         query_string=query_string,
@@ -306,7 +306,11 @@ def test_create_vespa_search_params(
         continuation_tokens=continuation_tokens,
         corpus_type_names=corpus_type_names,
         corpus_import_ids=corpus_import_ids,
-        metadata=[MetadataFilter.model_validate(mdata) for mdata in metadata_filters],
+        metadata=(
+            [MetadataFilter.model_validate(mdata) for mdata in metadata_filters]
+            if metadata_filters is not None
+            else []
+        ),
     )
 
     # First step, just make sure we can create a validated pydantic model
@@ -382,6 +386,12 @@ def test_create_vespa_search_params(
             ["ABC"],
             None,
             None,
+            [
+                {"name": "family.sector", "value": "Price"},
+                {"name": "family.topic", "value": "Mitigation"},
+            ],
+            None,
+            None,
         ),
         (
             False,
@@ -397,6 +407,9 @@ def test_create_vespa_search_params(
             0,
             ["ABC"],
             ["CCLW.document.1.0", "CCLW.document.2.0"],
+            None,
+            None,
+            ["UNFCCC Submissions", "Laws and Policies"],
             None,
         ),
         (
@@ -414,6 +427,9 @@ def test_create_vespa_search_params(
             ["ABC"],
             ["CCLW.executive.1.0", "CCLW.executive.2.0"],
             ["CCLW.document.1.0", "CCLW.document.2.0"],
+            None,
+            None,
+            ["CCLW.corpus.1.0", "CCLW.corpus.2.0"],
         ),
     ],
 )
@@ -429,6 +445,9 @@ def test_create_browse_request_params(
     continuation_tokens,
     family_ids,
     document_ids,
+    corpus_type_names,
+    corpus_import_ids,
+    metadata_filters,
 ):
     SearchRequestBody(
         query_string="",
@@ -443,6 +462,9 @@ def test_create_browse_request_params(
         page_size=page_size,
         offset=offset,
         continuation_tokens=continuation_tokens,
+        corpus_type_names=corpus_type_names,
+        corpus_import_ids=corpus_import_ids,
+        metadata=[MetadataFilter.model_validate(mdata) for mdata in metadata_filters],
     )
 
 

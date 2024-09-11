@@ -18,13 +18,6 @@ COPY poetry.lock pyproject.toml ./
 RUN poetry config virtualenvs.create false
 RUN poetry install --no-root
 
-# TEMP
-RUN pip install pyvespa==0.45.0 \
-    && pip install pyyaml==6.0.2 \
-    && pip install sentence-transformers==2.2.2 \
-    && pip install 'torch>=2.0.0,<=2.2.2' \
-    && pip install spacy==3.5.1
-
 # Download the sentence transformer model
 RUN mkdir /models
 RUN mkdir /secrets
