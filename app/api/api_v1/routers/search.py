@@ -66,6 +66,7 @@ def _search_request(db: Session, search_body: SearchRequestBody) -> SearchRespon
             status_code=status.HTTP_400_BAD_REQUEST,
             detail=f"Invalid Query: {' '.join(e.args)}",
         )
+
     return process_vespa_search_response(
         db,
         data_access_search_response,
