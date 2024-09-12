@@ -471,7 +471,6 @@ def test_create_browse_request_params(
     )
 
 
-# TODO Add new filters to test here.
 @pytest.mark.search
 @pytest.mark.parametrize(
     "filters, expected",
