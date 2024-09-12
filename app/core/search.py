@@ -393,7 +393,7 @@ def _process_vespa_search_response_families(
                 or hit.family_category is None
                 or hit.family_source is None
                 or hit.family_geography is None
-                # TODO: Fix this, for one doc it's coming back as None for all hits!
+                # TODO: This attribute is sometimes None, should be fixed by sdk bump.
                 or hit.family_geographies is None
             ):
                 _LOGGER.error(
