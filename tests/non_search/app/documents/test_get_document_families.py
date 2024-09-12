@@ -199,7 +199,7 @@ def test_documents_doc_slug_preexisting_objects(
     assert len(family.keys()) == N_FAMILY_OVERVIEW_KEYS
     assert family["title"] == "Fam2"
     assert family["import_id"] == "CCLW.family.2002.0"
-    assert family["geography"] == "South Asia"
+    assert family["geography"] == "AFG"
     assert family["category"] == "Executive"
     assert family["slug"] == "FamSlug2"
     assert family["corpus_id"] == "CCLW.corpus.i00000001.n0000"

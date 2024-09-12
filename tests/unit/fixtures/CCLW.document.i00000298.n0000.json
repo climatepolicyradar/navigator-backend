@@ -1,0 +1,24 @@
+{
+  "title": "The Environment Buildings Decree of the Netherlands  (Besluit bouwwerken leefomgeving, Bbl)",
+  "slug": "the-environment-buildings-decree-of-the-netherlands-besluit-bouwwerken-leefomgeving-bbl_f2dd",
+  "md5_sum": null,
+  "url": "https://wetten.overheid.nl/BWBR0041297/2024-01-01",
+  "content_type": "text/html",
+  "import_id": "CCLW.document.i00000298.n0000",
+  "language_variant": "Original Language",
+  "status": "PUBLISHED",
+  "metadata": {
+    "role": ["MAIN"],
+    "type": ["Plan"]
+  },
+  "languages": ["eng"],
+  "events": [
+    {
+      "import_id": "CPR.Event.36.0",
+      "title": "Published",
+      "date": "2019-12-25",
+      "type": "Passed/Approved",
+      "status": "OK"
+    }
+  ]
+}

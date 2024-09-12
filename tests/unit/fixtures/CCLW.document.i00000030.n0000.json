@@ -1,0 +1,24 @@
+{
+  "title": "Law No. 08/L-025 on Protection of Air from Pollution",
+  "slug": "law-no-08-l-025-on-protection-of-air-from-pollution_e1e1",
+  "md5_sum": null,
+  "url": "https://gzk.rks-gov.net/ActDocumentDetail.aspx?ActID=60330",
+  "content_type": "text/html",
+  "import_id": "CCLW.document.i00000030.n0000",
+  "language_variant": "Original Language",
+  "status": "PUBLISHED",
+  "metadata": {
+    "role": ["MAIN"],
+    "type": ["Plan"]
+  },
+  "languages": ["eng"],
+  "events": [
+    {
+      "import_id": "CPR.Event.19.0",
+      "title": "Published",
+      "date": "2019-12-25",
+      "type": "Passed/Approved",
+      "status": "OK"
+    }
+  ]
+}
