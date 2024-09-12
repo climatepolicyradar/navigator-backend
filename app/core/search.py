@@ -391,6 +391,7 @@ def _process_vespa_search_response_families(
                 or hit.family_category is None
                 or hit.family_source is None
                 or hit.family_geography is None
+                or hit.family_geographies is None
             ):
                 _LOGGER.error(
                     "Skipping hit with empty required family info for import "
@@ -424,6 +425,7 @@ def _process_vespa_search_response_families(
                     prev_continuation_token=vespa_family.prev_continuation_token,
                     family_documents=[],
                     family_geography=hit.family_geography,
+                    family_geographies=hit.family_geographies,
                     family_metadata=cast(dict, db_family_metadata.value),
                 )
                 response_family_lookup[family_import_id] = response_family

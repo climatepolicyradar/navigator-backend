@@ -132,6 +132,7 @@ def test_search_response() -> None:
                 ),  # You can replace this with an actual date string
                 family_source="Example Source",
                 family_geography="Example Geography",
+                family_geographies=["Example Geography"],
                 family_metadata={"key1": "value1", "key2": "value2"},
                 family_title_match=True,
                 family_description_match=False,

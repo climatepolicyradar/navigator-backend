@@ -300,10 +300,9 @@ def test_search_with_deleted_docs(test_vespa, monkeypatch, data_client, data_db)
     assert len(all_deleted_body["families"]) == 0
 
 
-# TODO Add test alike below with the new search filters
 @pytest.mark.search
 @pytest.mark.parametrize("label,query", [("search", "the"), ("browse", "")])
-def test_keyword_country_filters(
+def test_keyword_country_filters__geography(
     label, query, test_vespa, data_client, data_db, monkeypatch
 ):
     monkeypatch.setattr(search, "_VESPA_CONNECTION", test_vespa)
@@ -318,6 +317,7 @@ def test_keyword_country_filters(
     assert len(families) == VESPA_FIXTURE_COUNT
 
     for family in families:
+        assert family["family_geography"] in family["family_geographies"]
         country_code = family["family_geography"]
 
         country_slug = get_country_slug_from_country_code(data_db, country_code)
@@ -329,6 +329,39 @@ def test_keyword_country_filters(
         ]
         assert len(filtered_family_slugs) == 1
         assert family["family_slug"] in filtered_family_slugs
+
+
+@pytest.mark.search
+@pytest.mark.parametrize("label,query", [("search", "the"), ("browse", "")])
+def test_keyword_country_filters__geographies(
+    label, query, test_vespa, data_client, data_db, monkeypatch
+):
+    monkeypatch.setattr(search, "_VESPA_CONNECTION", test_vespa)
+    _populate_db_families(data_db)
+    base_params = {"query_string": query}
+
+    # Get all documents and iterate over their country codes to confirm that each are
+    # the specific one that is returned in the query (as they each have a unique
+    # country code)
+    all_body = _make_search_request(data_client, params=base_params)
+    families = [f for f in all_body["families"]]
+    assert len(families) == VESPA_FIXTURE_COUNT
+
+    for family in families:
+        assert family["family_geography"] in family["family_geographies"]
+        for country_code in family["family_geographies"]:
+            country_slug = get_country_slug_from_country_code(data_db, country_code)
+
+            params = {
+                **base_params,
+                **{"keyword_filters": {"countries": [country_slug]}},
+            }
+            body_with_filters = _make_search_request(data_client, params=params)
+            filtered_family_slugs = [
+                f["family_slug"] for f in body_with_filters["families"]
+            ]
+            assert len(filtered_family_slugs) == 1
+            assert family["family_slug"] in filtered_family_slugs
 
 
 @pytest.mark.search
