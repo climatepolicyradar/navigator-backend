@@ -842,7 +842,7 @@ def test_csv_content(
         assert row["Family Publication Date"] == family["family_date"]
         assert row["Category"] == family["family_category"]
         assert row["Geography"] == family["family_geography"]
-        # TODO: Add family geographies test here
+        assert row["Geography"] in family["family_geographies"]
 
         # TODO: Add collections to test db setup to provide document level coverage
 

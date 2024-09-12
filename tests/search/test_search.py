@@ -822,7 +822,6 @@ def populate_data_db(db: Session, fam_specs: Sequence[FamSpec]) -> None:
     db.commit()
 
 
-# TODO Add new filters to test here (probably updating family spec).
 @pytest.mark.search
 @pytest.mark.parametrize(
     "fam_specs,offset,page_size",

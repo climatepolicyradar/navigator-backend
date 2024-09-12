@@ -49,7 +49,6 @@ _VESPA_CONNECTION = VespaSearchAdapter(
 search_router = APIRouter()
 
 
-# TODO update naming from data access to sdk
 def _search_request(db: Session, search_body: SearchRequestBody) -> SearchResponse:
     is_browse_request = not search_body.query_string
     if is_browse_request:
@@ -66,7 +65,6 @@ def _search_request(db: Session, search_body: SearchRequestBody) -> SearchRespon
             status_code=status.HTTP_400_BAD_REQUEST,
             detail=f"Invalid Query: {' '.join(e.args)}",
         )
-
     return process_vespa_search_response(
         db,
         data_access_search_response,

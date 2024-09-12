@@ -326,8 +326,6 @@ def _convert_filters(
         return None
 
 
-# TODO: This is the code that's to fix for the test_csv_content test, we're dropping
-# families vespa_families can contain families and we're returning None
 def _process_vespa_search_response_families(
     db: Session,
     vespa_families: Sequence[CprSdkResponseFamily],
@@ -393,7 +391,6 @@ def _process_vespa_search_response_families(
                 or hit.family_category is None
                 or hit.family_source is None
                 or hit.family_geography is None
-                # TODO: This attribute is sometimes None, should be fixed by sdk bump.
                 or hit.family_geographies is None
             ):
                 _LOGGER.error(
