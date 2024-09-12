@@ -310,7 +310,7 @@ def _convert_filters(
             new_keyword_filters[new_field] = new_values
 
     # Regions and countries filters should only include the overlap
-    geo_field = filter_fields["geography"]
+    geo_field = filter_fields["geographies"]
     if regions and countries:
         values = list(set(countries).intersection(regions))
         if values:

@@ -35,7 +35,6 @@ from app.core.search import (
 )
 
 
-# TODO Add new filters to test here.
 @pytest.mark.search
 @pytest.mark.parametrize(
     (
@@ -492,50 +491,50 @@ def test_create_browse_request_params(
             },
             None,
         ),
-        ({"regions": ["north-america"]}, {"family_geography": ["CAN", "USA"]}),
+        ({"regions": ["north-america"]}, {"family_geographies": ["CAN", "USA"]}),
         (
             {
                 "regions": ["north-america"],
                 "countries": ["not-a-country"],
             },
-            {"family_geography": ["CAN", "USA"]},
+            {"family_geographies": ["CAN", "USA"]},
         ),
         (
             {"regions": ["north-america"], "countries": ["canada"]},
-            {"family_geography": ["CAN"]},
+            {"family_geographies": ["CAN"]},
         ),
-        ({"countries": ["cambodia"]}, {"family_geography": ["KHM"]}),
+        ({"countries": ["cambodia"]}, {"family_geographies": ["KHM"]}),
         ({"countries": ["this-is-not-valid"]}, None),
         (
             {"countries": ["france", "germany"]},
-            {"family_geography": ["FRA", "DEU"]},
+            {"family_geographies": ["FRA", "DEU"]},
         ),
         (
             {"countries": ["cambodia"], "categories": ["Executive"]},
-            {"family_category": ["Executive"], "family_geography": ["KHM"]},
+            {"family_category": ["Executive"], "family_geographies": ["KHM"]},
         ),
         (
             {"countries": ["cambodia"], "languages": ["english"]},
-            {"document_languages": ["english"], "family_geography": ["KHM"]},
+            {"document_languages": ["english"], "family_geographies": ["KHM"]},
         ),
         (
             {"countries": ["cambodia"], "sources": ["CCLW"]},
-            {"family_source": ["CCLW"], "family_geography": ["KHM"]},
+            {"family_source": ["CCLW"], "family_geographies": ["KHM"]},
         ),
         (
             {
                 "regions": ["north-america"],
                 "categories": ["Executive"],
             },
-            {"family_category": ["Executive"], "family_geography": ["CAN", "USA"]},
+            {"family_category": ["Executive"], "family_geographies": ["CAN", "USA"]},
         ),
         (
             {"regions": ["north-america"], "languages": ["english"]},
-            {"document_languages": ["english"], "family_geography": ["CAN", "USA"]},
+            {"document_languages": ["english"], "family_geographies": ["CAN", "USA"]},
         ),
         (
             {"regions": ["north-america"], "sources": ["CCLW"]},
-            {"family_source": ["CCLW"], "family_geography": ["CAN", "USA"]},
+            {"family_source": ["CCLW"], "family_geographies": ["CAN", "USA"]},
         ),
         ({"categories": ["Executive"]}, {"family_category": ["Executive"]}),
         ({"languages": ["english"]}, {"document_languages": ["english"]}),
