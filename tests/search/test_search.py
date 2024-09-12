@@ -570,6 +570,7 @@ class FamSpec:
     family_category: str
     family_ts: str
     family_geo: str
+    family_geos: list[str]
     family_metadata: dict[str, list[str]]
 
     description_hit: bool
@@ -611,6 +612,7 @@ def _generate_search_response_hits(spec: FamSpec) -> Sequence[CprSdkHit]:
                 family_category=spec.family_category,
                 family_publication_ts=datetime.fromisoformat(spec.family_ts),
                 family_geography=spec.family_geo,
+                family_geographies=spec.family_geos,
                 document_cdn_object=(
                     f"{spec.family_import_id}/{slugify(spec.family_name)}"
                     f"_{document_number}"
@@ -642,6 +644,7 @@ def _generate_search_response_hits(spec: FamSpec) -> Sequence[CprSdkHit]:
                 family_category=spec.family_category,
                 family_publication_ts=datetime.fromisoformat(spec.family_ts),
                 family_geography=spec.family_geo,
+                family_geographies=spec.family_geos,
                 document_cdn_object=(
                     f"{spec.family_import_id}/{slugify(spec.family_name)}"
                     f"_{document_number}"
@@ -707,6 +710,7 @@ _FAM_SPEC_0 = FamSpec(
     family_category="Executive",
     family_ts="2023-12-12",
     family_geo="france",
+    family_geos=["france"],
     family_metadata={"keyword": ["Spacial Planning"]},
     description_hit=True,
     family_document_count=1,
@@ -721,6 +725,7 @@ _FAM_SPEC_1 = FamSpec(
     family_category="Legislative",
     family_ts="2022-12-25",
     family_geo="spain",
+    family_geos=["spain"],
     family_metadata={"sector": ["Urban", "Transportation"], "keyword": ["Hydrogen"]},
     description_hit=False,
     family_document_count=3,
@@ -735,6 +740,7 @@ _FAM_SPEC_2 = FamSpec(
     family_category="UNFCCC",
     family_ts="2019-01-01",
     family_geo="ukraine",
+    family_geos=["ukraine"],
     family_metadata={"author_type": ["Non-Party"], "author": ["Anyone"]},
     description_hit=True,
     family_document_count=5,
@@ -749,6 +755,7 @@ _FAM_SPEC_3 = FamSpec(
     family_category="UNFCCC",
     family_ts="2010-03-14",
     family_geo="norway",
+    family_geos=["norway"],
     family_metadata={"author_type": ["Party"], "author": ["Anyone Else"]},
     description_hit=False,
     family_document_count=2,
@@ -767,17 +774,15 @@ def populate_data_db(db: Session, fam_specs: Sequence[FamSpec]) -> None:
             family_category=FamilyCategory(fam_spec.family_category),
         )
         db.add(family)
-        db.add(
-            FamilyGeography(
-                family_import_id=fam_spec.family_import_id,
-                geography_id=(
-                    db.query(Geography)
-                    .filter(Geography.slug == fam_spec.family_geo)
-                    .one()
-                    .id
-                ),
+        for fam_geo in fam_spec.family_geos:
+            db.add(
+                FamilyGeography(
+                    family_import_id=fam_spec.family_import_id,
+                    geography_id=(
+                        db.query(Geography).filter(Geography.slug == fam_geo).one().id
+                    ),
+                )
             )
-        )
         family_event = FamilyEvent(
             import_id=f"{fam_spec.family_source}.event.{fam_spec.family_import_id.split('.')[2]}.0",
             title="Published",

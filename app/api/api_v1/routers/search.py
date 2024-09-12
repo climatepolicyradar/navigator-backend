@@ -49,6 +49,7 @@ _VESPA_CONNECTION = VespaSearchAdapter(
 search_router = APIRouter()
 
 
+# TODO update naming from data access to sdk
 def _search_request(db: Session, search_body: SearchRequestBody) -> SearchResponse:
     is_browse_request = not search_body.query_string
     if is_browse_request:
