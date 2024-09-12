@@ -85,6 +85,9 @@ def _populate_db_families(db: Session, max_docs: int = VESPA_FIXTURE_COUNT) -> N
 def _create_family(db: Session, family: VespaFixture):
     family_import_id = family["fields"]["family_import_id"]
 
+    geo = family["fields"]["family_geography"]
+    geography = db.query(Geography).filter(Geography.value == geo).one()
+
     family_object = Family(
         title=family["fields"]["family_name"],
         import_id=family_import_id,
@@ -93,14 +96,11 @@ def _create_family(db: Session, family: VespaFixture):
     )
     db.add(family_object)
     db.commit()
-
-    for fam_geo in family["fields"]["family_geographies"]:
-        geography = db.query(Geography).filter(Geography.value == fam_geo).one()
-        db.add(
-            FamilyGeography(
-                family_import_id=family_object.import_id, geography_id=geography.id
-            )
+    db.add(
+        FamilyGeography(
+            family_import_id=family_object.import_id, geography_id=geography.id
         )
+    )
 
     family_slug = Slug(
         name=family["fields"]["family_slug"],
