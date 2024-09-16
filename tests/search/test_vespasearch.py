@@ -11,7 +11,10 @@ from sqlalchemy import update
 from sqlalchemy.orm import Session
 
 from app.api.api_v1.routers import search
+from app.core.search import ENCODER
+from cpr_sdk.search_adaptors import VespaSearchAdapter
 from app.core.lookups import get_country_slug_from_country_code
+from app.core.config import VESPA_URL
 from tests.search.setup_search_tests import (
     VESPA_FIXTURE_COUNT,
     _create_document,
@@ -853,7 +856,12 @@ def test_csv_download_search_variable_limit(
     # monkeypatch.setattr(search, "_VESPA_CONNECTION", test_vespa)
     _populate_db_families(data_db)
 
-    query_spy = mocker.spy(search._VESPA_CONNECTION, "search")
+    search_adapter = VespaSearchAdapter(
+        instance_url=VESPA_URL,
+        embedder=ENCODER,
+    )
+
+    query_spy = mocker.spy(search_adapter, "search")
 
     params = {
         "query_string": query,
