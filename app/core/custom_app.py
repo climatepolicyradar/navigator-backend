@@ -101,7 +101,7 @@ def create_configuration_token(input: str, years: Optional[int] = None) -> str:
     return jwt.encode(to_encode, SECRET_KEY, algorithm=ALGORITHM)
 
 
-def decode_configuration_token(token: str, audience: Optional[str]) -> list[str]:
+def decode_config_token(token: str, audience: Optional[str]) -> list[str]:
     """Decodes a configuration token.
 
     :param str token : A JWT token that has been encoded with a list of
