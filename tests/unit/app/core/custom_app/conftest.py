@@ -37,7 +37,6 @@ def expired_token() -> str:
     ],
 )
 def token_with_invalid_aud(request) -> str:
-    # return create_configuration_token(request.param)
     return request.param
 
 
