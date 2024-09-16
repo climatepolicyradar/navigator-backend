@@ -1,21 +1,25 @@
 import logging
-import os
 from datetime import datetime
 from typing import Optional, cast
 
 import jwt
 from dateutil.relativedelta import relativedelta
+from fastapi import HTTPException, status
 from pydantic import HttpUrl
 
 from app.api.api_v1.schemas.custom_app import CustomAppConfigDTO
+from app.core import security
 from app.db.crud.helpers.validate import validate_corpora_ids
 from app.db.session import get_db
 
-logging.basicConfig(level=logging.DEBUG)
+TOKEN_EXCEPTION = HTTPException(
+    status_code=status.HTTP_401_UNAUTHORIZED,
+    detail="Could not validate configuration token",
+    headers={"WWW-Authenticate": "Bearer"},
+)
+
 _LOGGER = logging.getLogger(__name__)
 
-SECRET_KEY = os.environ["SECRET_KEY"]
-ALGORITHM = "HS256"
 ISSUER = "Climate Policy Radar"
 
 # TODO: revisit/configure access token expiry
@@ -98,7 +102,7 @@ def create_configuration_token(input: str, years: Optional[int] = None) -> str:
         "sub": config.subject,
         "aud": str(config.audience),
     }
-    return jwt.encode(to_encode, SECRET_KEY, algorithm=ALGORITHM)
+    return jwt.encode(to_encode, security.SECRET_KEY, algorithm=security.ALGORITHM)
 
 
 def decode_config_token(token: str, audience: Optional[str]) -> list[str]:
@@ -112,10 +116,20 @@ def decode_config_token(token: str, audience: Optional[str]) -> list[str]:
 
     db = next(get_db())
 
-    decoded_token = jwt.decode(
-        token, SECRET_KEY, algorithms=[ALGORITHM], issuer=ISSUER, audience=audience
-    )
-    corpora_ids: list = decoded_token.get("allowed_corpora_ids")
+    try:
+        _LOGGER.error(f"Audience {audience}")
+        decoded_token = jwt.decode(
+            token,
+            security.SECRET_KEY,
+            algorithms=[security.ALGORITHM],
+            issuer=ISSUER,
+            audience=audience,
+        )
+        corpora_ids: list = decoded_token.get("allowed_corpora_ids")
+
+    except Exception as e:
+        _LOGGER.exception("Error decoding custom app configuration token")
+        raise TOKEN_EXCEPTION from e
 
     validate_corpora_ids(db, corpora_ids)
     return corpora_ids
