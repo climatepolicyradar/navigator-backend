@@ -106,6 +106,11 @@ def get_test_db_url() -> str:
 
 
 @pytest.fixture
+def valid_token():
+    return "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJhbGxvd2VkX2NvcnBvcmFfaWRzIjpbIkNDTFcuY29ycHVzLmkwMDAwMDAwMS5uMDAwMCIsIlVORkNDQy5jb3JwdXMuaTAwMDAwMDAxLm4wMDAwIl0sImV4cCI6MjAzOTAwNTAxMSwiaWF0IjoxNzIzNDY4NjExLCJpc3MiOiJDbGltYXRlIFBvbGljeSBSYWRhciIsInN1YiI6IkNQUiIsImF1ZCI6Imh0dHBzOi8vYXBwLmRldi5jbGltYXRlcG9saWN5cmFkYXIub3JnLyJ9._9iU1lB31uDoOVDkufmu9cI4S68U6-CWkgTfNSieXPo"
+
+
+@pytest.fixture
 def create_test_db():
     """Create a test database and use it for the whole test session."""
 

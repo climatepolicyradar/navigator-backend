@@ -8,12 +8,13 @@ for the type of document search being performed.
 
 import logging
 from io import BytesIO
-from typing import Annotated
+from typing import Annotated, cast
 
 from cpr_sdk.exceptions import QueryError
 from cpr_sdk.search_adaptors import VespaSearchAdapter
-from fastapi import APIRouter, Body, Depends, HTTPException, Request, status
+from fastapi import APIRouter, Body, Depends, Header, HTTPException, Request, status
 from fastapi.responses import StreamingResponse
+from pydantic import HttpUrl
 from sqlalchemy.orm import Session
 from starlette.responses import RedirectResponse
 
@@ -29,6 +30,7 @@ from app.core.config import (
     VESPA_SECRETS_LOCATION,
     VESPA_URL,
 )
+from app.core.custom_app import decode_config_token
 from app.core.download import create_data_download_zip_archive
 from app.core.search import (
     ENCODER,
@@ -112,6 +114,7 @@ def search_documents(
             }
         ),
     ],
+    app_token: Annotated[str, Header()],
     db=Depends(get_db),
 ) -> SearchResponse:
     """
@@ -134,18 +137,25 @@ def search_documents(
     the search database. The continuation token can be used to get the next set of
     results from the search database. See the request schema for more details.
     """
+    app_url = PUBLIC_APP_URL
+    if not app_url.endswith("/"):
+        app_url += "/"
+
+    allowed_corpora_ids = decode_config_token(app_token, str(cast(HttpUrl, app_url)))
+    _LOGGER.info(f"Corpora IDs {str(allowed_corpora_ids)}")
+
     _LOGGER.info(
         "Search request",
         extra={
             "props": {
                 "search_request": search_body.model_dump(),
+                "app_token": str(app_token),
+                "allowed_corpora_ids": str(allowed_corpora_ids),
             }
         },
     )
 
-    _LOGGER.info(
-        "Starting search...",
-    )
+    _LOGGER.info("Starting search...")
     return _search_request(db=db, search_body=search_body)
 
 

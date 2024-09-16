@@ -26,8 +26,8 @@ CSV_DOWNLOAD_ENDPOINT = "/api/v1/searches/download-csv"
 ALL_DATA_DOWNLOAD_ENDPOINT = "/api/v1/searches/download-all-data"
 
 
-def _make_search_request(client, params: Mapping[str, str]):
-    response = client.post(SEARCH_ENDPOINT, json=params)
+def _make_search_request(client, token, params: Mapping[str, str]):
+    response = client.post(SEARCH_ENDPOINT, json=params, headers={"app-token": token})
     assert response.status_code == 200, response.text
     return response.json()
 
@@ -64,14 +64,14 @@ def _fam_ids_from_response(test_db, response) -> list[str]:
 
 @pytest.mark.search
 def test_empty_search_term_performs_browse(
-    test_vespa, data_client, data_db, mocker, monkeypatch
+    test_vespa, data_client, data_db, mocker, monkeypatch, valid_token
 ):
     """Make sure that empty search term returns results in browse mode."""
     _populate_db_families(data_db)
     monkeypatch.setattr(search, "_VESPA_CONNECTION", test_vespa)
 
     query_spy = mocker.spy(search._VESPA_CONNECTION, "search")
-    body = _make_search_request(data_client, {"query_string": ""})
+    body = _make_search_request(data_client, valid_token, {"query_string": ""})
 
     assert body["hits"] > 0
     assert len(body["families"]) > 0
@@ -82,7 +82,9 @@ def test_empty_search_term_performs_browse(
 
 
 @pytest.mark.search
-def test_simple_pagination_families(test_vespa, data_client, data_db, monkeypatch):
+def test_simple_pagination_families(
+    test_vespa, data_client, data_db, monkeypatch, valid_token
+):
     monkeypatch.setattr(search, "_VESPA_CONNECTION", test_vespa)
     _populate_db_families(data_db)
 
@@ -94,7 +96,7 @@ def test_simple_pagination_families(test_vespa, data_client, data_db, monkeypatc
         "page_size": PAGE_SIZE,
         "offset": 0,
     }
-    body_one = _make_search_request(data_client, params)
+    body_one = _make_search_request(data_client, valid_token, params)
     assert body_one["hits"] == VESPA_FIXTURE_COUNT
     assert len(body_one["families"]) == PAGE_SIZE
     assert (
@@ -112,7 +114,7 @@ def test_simple_pagination_families(test_vespa, data_client, data_db, monkeypatc
         "page_size": PAGE_SIZE,
         "offset": 2,
     }
-    body_two = _make_search_request(data_client, params)
+    body_two = _make_search_request(data_client, valid_token, params)
     assert body_two["hits"] == VESPA_FIXTURE_COUNT
     assert len(body_two["families"]) == PAGE_SIZE
     assert (
@@ -127,13 +129,16 @@ def test_simple_pagination_families(test_vespa, data_client, data_db, monkeypatc
 
 @pytest.mark.search
 @pytest.mark.parametrize("exact_match", [True, False])
-def test_search_body_valid(exact_match, test_vespa, data_client, data_db, monkeypatch):
+def test_search_body_valid(
+    exact_match, test_vespa, data_client, data_db, monkeypatch, valid_token
+):
     """Test a simple known valid search responds with success."""
     monkeypatch.setattr(search, "_VESPA_CONNECTION", test_vespa)
     _populate_db_families(data_db)
 
     body = _make_search_request(
         data_client,
+        valid_token,
         params={
             "query_string": "and",
             "exact_match": exact_match,
@@ -156,7 +161,7 @@ def test_search_body_valid(exact_match, test_vespa, data_client, data_db, monkey
 
 @pytest.mark.search
 def test_no_doc_if_in_postgres_but_not_vespa(
-    test_vespa, data_client, data_db, monkeypatch
+    test_vespa, data_client, data_db, monkeypatch, valid_token
 ):
     """Test a simple known valid search responds with success."""
     monkeypatch.setattr(search, "_VESPA_CONNECTION", test_vespa)
@@ -190,13 +195,14 @@ def test_no_doc_if_in_postgres_but_not_vespa(
     _create_document(data_db, new_doc, new_family)
 
     # This will also not be present in browse
-    body = _make_search_request(data_client, params={"query_string": ""})
+    body = _make_search_request(data_client, valid_token, params={"query_string": ""})
     browse_families = [f["family_name"] for f in body["families"]]
     assert EXTRA_TEST_FAMILY not in browse_families
 
     # But it won't break when running a search
     body = _make_search_request(
         data_client,
+        valid_token,
         params={
             "query_string": EXTRA_TEST_FAMILY,
             "exact_match": "true",
@@ -209,7 +215,7 @@ def test_no_doc_if_in_postgres_but_not_vespa(
 @pytest.mark.search
 @pytest.mark.parametrize("label,query", [("search", "the"), ("browse", "")])
 def test_benchmark_families_search(
-    label, query, test_vespa, monkeypatch, data_client, data_db
+    label, query, test_vespa, monkeypatch, data_client, data_db, valid_token
 ):
     monkeypatch.setattr(search, "_VESPA_CONNECTION", test_vespa)
     _populate_db_families(data_db)
@@ -223,7 +229,7 @@ def test_benchmark_families_search(
             "query_string": query,
             "exact_match": True,
         }
-        body = _make_search_request(data_client, params)
+        body = _make_search_request(data_client, valid_token, params)
 
         time_taken = body["total_time_ms"]
         times.append(time_taken)
@@ -233,7 +239,9 @@ def test_benchmark_families_search(
 
 
 @pytest.mark.search
-def test_specific_doc_returned(test_vespa, monkeypatch, data_client, data_db):
+def test_specific_doc_returned(
+    test_vespa, monkeypatch, data_client, data_db, valid_token
+):
     monkeypatch.setattr(search, "_VESPA_CONNECTION", test_vespa)
     _populate_db_families(data_db)
 
@@ -243,7 +251,7 @@ def test_specific_doc_returned(test_vespa, monkeypatch, data_client, data_db):
         "exact_match": True,
         "page_size": 1,
     }
-    body = _make_search_request(data_client, params)
+    body = _make_search_request(data_client, valid_token, params)
 
     families = [f for f in body["families"]]
     assert body["hits"] == len(families) == 1
@@ -262,14 +270,22 @@ def test_specific_doc_returned(test_vespa, monkeypatch, data_client, data_db):
 )
 @pytest.mark.search
 def test_search_params_backend_limits(
-    test_vespa, monkeypatch, data_client, data_db, extra_params, invalid_field
+    test_vespa,
+    monkeypatch,
+    data_client,
+    data_db,
+    extra_params,
+    invalid_field,
+    valid_token,
 ):
-
     monkeypatch.setattr(search, "_VESPA_CONNECTION", test_vespa)
     _populate_db_families(data_db)
 
     params = {"query_string": "the", **extra_params}
-    response = data_client.post(SEARCH_ENDPOINT, json=params)
+    response = data_client.post(
+        SEARCH_ENDPOINT, headers={"app-token": valid_token}, json=params
+    )
+
     assert response.status_code == 422, response.text
     for error in response.json()["detail"]:
         assert "body" in error["loc"], error
@@ -277,21 +293,29 @@ def test_search_params_backend_limits(
 
 
 @pytest.mark.search
-def test_search_with_deleted_docs(test_vespa, monkeypatch, data_client, data_db):
+def test_search_with_deleted_docs(
+    test_vespa, monkeypatch, data_client, data_db, valid_token
+):
     monkeypatch.setattr(search, "_VESPA_CONNECTION", test_vespa)
     _populate_db_families(data_db)
 
-    start_body = _make_search_request(data_client, params={"query_string": "and"})
+    start_body = _make_search_request(
+        data_client, valid_token, params={"query_string": "and"}
+    )
 
     data_db.execute(
         update(FamilyDocument)
         .where(FamilyDocument.import_id == "CCLW.executive.10246.4861")
         .values(document_status="Deleted")
     )
-    one_deleted_body = _make_search_request(data_client, params={"query_string": "and"})
+    one_deleted_body = _make_search_request(
+        data_client, valid_token, params={"query_string": "and"}
+    )
 
     data_db.execute(update(FamilyDocument).values(document_status="Deleted"))
-    all_deleted_body = _make_search_request(data_client, params={"query_string": "and"})
+    all_deleted_body = _make_search_request(
+        data_client, valid_token, params={"query_string": "and"}
+    )
 
     start_family_count = len(start_body["families"])
     one_deleted_count = len(one_deleted_body["families"])
@@ -303,7 +327,7 @@ def test_search_with_deleted_docs(test_vespa, monkeypatch, data_client, data_db)
 @pytest.mark.search
 @pytest.mark.parametrize("label,query", [("search", "the"), ("browse", "")])
 def test_keyword_country_filters(
-    label, query, test_vespa, data_client, data_db, monkeypatch
+    label, query, test_vespa, data_client, data_db, monkeypatch, valid_token
 ):
     monkeypatch.setattr(search, "_VESPA_CONNECTION", test_vespa)
     _populate_db_families(data_db)
@@ -312,7 +336,7 @@ def test_keyword_country_filters(
     # Get all documents and iterate over their country codes to confirm that each are
     # the specific one that is returned in the query (as they each have a unique
     # country code)
-    all_body = _make_search_request(data_client, params=base_params)
+    all_body = _make_search_request(data_client, valid_token, params=base_params)
     families = [f for f in all_body["families"]]
     assert len(families) == VESPA_FIXTURE_COUNT
 
@@ -322,7 +346,9 @@ def test_keyword_country_filters(
         country_slug = get_country_slug_from_country_code(data_db, country_code)
 
         params = {**base_params, **{"keyword_filters": {"countries": [country_slug]}}}
-        body_with_filters = _make_search_request(data_client, params=params)
+        body_with_filters = _make_search_request(
+            data_client, valid_token, params=params
+        )
         filtered_family_slugs = [
             f["family_slug"] for f in body_with_filters["families"]
         ]
@@ -333,7 +359,7 @@ def test_keyword_country_filters(
 @pytest.mark.search
 @pytest.mark.parametrize("label,query", [("search", "the"), ("browse", "")])
 def test_keyword_region_filters(
-    label, query, test_vespa, data_client, data_db, monkeypatch
+    label, query, test_vespa, data_client, data_db, monkeypatch, valid_token
 ):
     monkeypatch.setattr(search, "_VESPA_CONNECTION", test_vespa)
     _populate_db_families(data_db)
@@ -341,7 +367,7 @@ def test_keyword_region_filters(
 
     # Get regions of all documents and iterate over them
     # to confirm the originals are returned when filtered on
-    all_body = _make_search_request(data_client, params=base_params)
+    all_body = _make_search_request(data_client, valid_token, params=base_params)
     families = [f for f in all_body["families"]]
     assert len(families) == VESPA_FIXTURE_COUNT
 
@@ -361,7 +387,9 @@ def test_keyword_region_filters(
         region = data_db.query(Geography).filter(Geography.id == parent_id).first()
 
         params = {**base_params, **{"keyword_filters": {"regions": [region.slug]}}}
-        body_with_filters = _make_search_request(data_client, params=params)
+        body_with_filters = _make_search_request(
+            data_client, valid_token, params=params
+        )
         filtered_family_slugs = [
             f["family_slug"] for f in body_with_filters["families"]
         ]
@@ -371,7 +399,7 @@ def test_keyword_region_filters(
 @pytest.mark.search
 @pytest.mark.parametrize("label,query", [("search", "the"), ("browse", "")])
 def test_keyword_region_and_country_filters(
-    label, query, test_vespa, data_client, data_db, monkeypatch
+    label, query, test_vespa, data_client, data_db, monkeypatch, valid_token
 ):
     monkeypatch.setattr(search, "_VESPA_CONNECTION", test_vespa)
     _populate_db_families(data_db)
@@ -385,7 +413,7 @@ def test_keyword_region_and_country_filters(
         },
     }
 
-    body = _make_search_request(data_client, params=base_params)
+    body = _make_search_request(data_client, valid_token, params=base_params)
 
     assert len(body["families"]) == 1
     assert body["families"][0]["family_name"] == "National Energy Strategy"
@@ -417,44 +445,46 @@ def test_invalid_keyword_filters(
     "year_range", [(None, None), (1900, None), (None, 2020), (1900, 2020)]
 )
 def test_year_range_filterered_in(
-    year_range, test_vespa, data_db, monkeypatch, data_client
+    year_range, test_vespa, data_db, monkeypatch, data_client, valid_token
 ):
     monkeypatch.setattr(search, "_VESPA_CONNECTION", test_vespa)
     _populate_db_families(data_db)
 
     # Search
     params = {"query_string": "and", "year_range": year_range}
-    body = _make_search_request(data_client, params=params)
+    body = _make_search_request(data_client, valid_token, params=params)
     assert len(body["families"]) > 0
 
     # Browse
     params = {"query_string": "", "year_range": year_range}
-    body = _make_search_request(data_client, params=params)
+    body = _make_search_request(data_client, valid_token, params=params)
     assert len(body["families"]) > 0
 
 
 @pytest.mark.search
 @pytest.mark.parametrize("year_range", [(None, 2010), (2024, None)])
 def test_year_range_filterered_out(
-    year_range, test_vespa, data_db, monkeypatch, data_client
+    year_range, test_vespa, data_db, monkeypatch, data_client, valid_token
 ):
     monkeypatch.setattr(search, "_VESPA_CONNECTION", test_vespa)
     _populate_db_families(data_db)
 
     # Search
     params = {"query_string": "and", "year_range": year_range}
-    body = _make_search_request(data_client, params=params)
+    body = _make_search_request(data_client, valid_token, params=params)
     assert len(body["families"]) == 0
 
     # Browse
     params = {"query_string": "", "year_range": year_range}
-    body = _make_search_request(data_client, params=params)
+    body = _make_search_request(data_client, valid_token, params=params)
     assert len(body["families"]) == 0
 
 
 @pytest.mark.search
 @pytest.mark.parametrize("label, query", [("search", "the"), ("browse", "")])
-def test_multiple_filters(label, query, test_vespa, data_db, monkeypatch, data_client):
+def test_multiple_filters(
+    label, query, test_vespa, data_db, monkeypatch, data_client, valid_token
+):
     monkeypatch.setattr(search, "_VESPA_CONNECTION", test_vespa)
     _populate_db_families(data_db)
 
@@ -468,13 +498,13 @@ def test_multiple_filters(label, query, test_vespa, data_db, monkeypatch, data_c
         "year_range": (1900, 2020),
     }
 
-    _ = _make_search_request(data_client, params)
+    _ = _make_search_request(data_client, valid_token, params)
 
 
 @pytest.mark.search
 @pytest.mark.parametrize("label, query", [("search", "the"), ("browse", "")])
 def test_result_order_score(
-    label, query, test_vespa, data_db, monkeypatch, data_client
+    label, query, test_vespa, data_db, monkeypatch, data_client, valid_token
 ):
     monkeypatch.setattr(search, "_VESPA_CONNECTION", test_vespa)
     _populate_db_families(data_db)
@@ -484,11 +514,11 @@ def test_result_order_score(
         "sort_field": "date",
         "sort_order": "asc",
     }
-    asc_date_body = _make_search_request(data_client, params)
+    asc_date_body = _make_search_request(data_client, valid_token, params)
     asc_dates = [f["family_date"] for f in asc_date_body["families"]]
 
     params["sort_order"] = "desc"
-    desc_date_body = _make_search_request(data_client, params)
+    desc_date_body = _make_search_request(data_client, valid_token, params)
     desc_dates = [f["family_date"] for f in desc_date_body["families"]]
 
     assert VESPA_FIXTURE_COUNT == len(asc_dates) == len(desc_dates)
@@ -500,7 +530,7 @@ def test_result_order_score(
 @pytest.mark.search
 @pytest.mark.parametrize("label, query", [("search", "the"), ("browse", "")])
 def test_result_order_title(
-    label, query, test_vespa, data_db, monkeypatch, data_client
+    label, query, test_vespa, data_db, monkeypatch, data_client, valid_token
 ):
     monkeypatch.setattr(search, "_VESPA_CONNECTION", test_vespa)
     _populate_db_families(data_db)
@@ -512,17 +542,19 @@ def test_result_order_title(
     }
 
     # Scope of test is to confirm this does not cause a failure
-    _ = _make_search_request(data_client, params)
+    _ = _make_search_request(data_client, valid_token, params)
 
 
 @pytest.mark.search
-def test_continuation_token__families(test_vespa, data_db, monkeypatch, data_client):
+def test_continuation_token__families(
+    test_vespa, data_db, monkeypatch, data_client, valid_token
+):
     monkeypatch.setattr(search, "_VESPA_CONNECTION", test_vespa)
 
     _populate_db_families(data_db)
 
     params = {"query_string": "the", "limit": 2, "page_size": 1}
-    response = _make_search_request(data_client, params)
+    response = _make_search_request(data_client, valid_token, params)
     continuation = response["continuation_token"]
     first_family_ids = [f["family_slug"] for f in response["families"]]
 
@@ -531,7 +563,7 @@ def test_continuation_token__families(test_vespa, data_db, monkeypatch, data_cli
 
     # Get next results set
     params = {"query_string": "the", "continuation_tokens": [continuation]}
-    response = _make_search_request(data_client, params)
+    response = _make_search_request(data_client, valid_token, params)
     second_family_ids = [f["family_slug"] for f in response["families"]]
 
     # Confirm we actually got different results
@@ -544,14 +576,16 @@ def test_continuation_token__families(test_vespa, data_db, monkeypatch, data_cli
         "limit": 2,
         "page_size": 1,
     }
-    response = _make_search_request(data_client, params)
+    response = _make_search_request(data_client, valid_token, params)
     prev_family_ids = [f["family_slug"] for f in response["families"]]
 
     assert sorted(first_family_ids) == sorted(prev_family_ids)
 
 
 @pytest.mark.search
-def test_continuation_token__passages(test_vespa, data_db, monkeypatch, data_client):
+def test_continuation_token__passages(
+    test_vespa, data_db, monkeypatch, data_client, valid_token
+):
     monkeypatch.setattr(search, "_VESPA_CONNECTION", test_vespa)
 
     _populate_db_families(data_db)
@@ -563,9 +597,11 @@ def test_continuation_token__passages(test_vespa, data_db, monkeypatch, data_cli
         "limit": 1,
         "page_size": 1,
     }
-    first_family = _make_search_request(data_client, params)
+    first_family = _make_search_request(data_client, valid_token, params)
     params["continuation_tokens"] = [first_family["continuation_token"]]
-    second_family_first_passages = _make_search_request(data_client, params)
+    second_family_first_passages = _make_search_request(
+        data_client, valid_token, params
+    )
     second_family_first_passages_ids = [
         h["text_block_id"]
         for h in second_family_first_passages["families"][0]["family_documents"][0][
@@ -582,7 +618,9 @@ def test_continuation_token__passages(test_vespa, data_db, monkeypatch, data_cli
         this_family_continuation,
         next_passages_continuation,
     ]
-    second_family_second_passages = _make_search_request(data_client, params)
+    second_family_second_passages = _make_search_request(
+        data_client, valid_token, params
+    )
     second_family_second_passages_ids = [
         h["text_block_id"]
         for h in second_family_second_passages["families"][0]["family_documents"][0][
@@ -604,7 +642,7 @@ def test_continuation_token__passages(test_vespa, data_db, monkeypatch, data_cli
         this_family_continuation,
         prev_passages_continuation,
     ]
-    response = _make_search_request(data_client, params)
+    response = _make_search_request(data_client, valid_token, params)
     second_family_prev_passages_ids = [
         h["text_block_id"]
         for h in response["families"][0]["family_documents"][0][
@@ -618,24 +656,32 @@ def test_continuation_token__passages(test_vespa, data_db, monkeypatch, data_cli
 
 
 @pytest.mark.search
-def test_case_insensitivity(test_vespa, data_db, monkeypatch, data_client):
+def test_case_insensitivity(test_vespa, data_db, monkeypatch, data_client, valid_token):
     monkeypatch.setattr(search, "_VESPA_CONNECTION", test_vespa)
     _populate_db_families(data_db)
 
-    lower_body = _make_search_request(data_client, {"query_string": "the"})
-    upper_body = _make_search_request(data_client, {"query_string": "THE"})
+    lower_body = _make_search_request(data_client, valid_token, {"query_string": "the"})
+    upper_body = _make_search_request(data_client, valid_token, {"query_string": "THE"})
 
     assert lower_body["families"] == upper_body["families"]
 
 
 @pytest.mark.search
-def test_punctuation_ignored(test_vespa, data_db, monkeypatch, data_client):
+def test_punctuation_ignored(
+    test_vespa, data_db, monkeypatch, data_client, valid_token
+):
     monkeypatch.setattr(search, "_VESPA_CONNECTION", test_vespa)
     _populate_db_families(data_db)
 
-    regular_body = _make_search_request(data_client, {"query_string": "the"})
-    punc_body = _make_search_request(data_client, {"query_string": ", the."})
-    accent_body = _make_search_request(data_client, {"query_string": "thë"})
+    regular_body = _make_search_request(
+        data_client, valid_token, {"query_string": "the"}
+    )
+    punc_body = _make_search_request(
+        data_client, valid_token, {"query_string": ", the."}
+    )
+    accent_body = _make_search_request(
+        data_client, valid_token, {"query_string": "thë"}
+    )
 
     assert (
         sorted([f["family_slug"] for f in punc_body["families"]])
@@ -645,17 +691,12 @@ def test_punctuation_ignored(test_vespa, data_db, monkeypatch, data_client):
 
 
 @pytest.mark.search
-def test_accents_ignored(
-    test_vespa,
-    data_db,
-    monkeypatch,
-    data_client,
-):
+def test_accents_ignored(test_vespa, data_db, monkeypatch, data_client, valid_token):
     monkeypatch.setattr(search, "_VESPA_CONNECTION", test_vespa)
     _populate_db_families(data_db)
 
     start = time.time()
-    body = _make_search_request(data_client, {"query_string": "the"})
+    body = _make_search_request(data_client, valid_token, {"query_string": "the"})
     end = time.time()
 
     request_time_ms = 1000 * (end - start)
@@ -672,11 +713,7 @@ def test_accents_ignored(
 )
 @pytest.mark.search
 def test_family_ids_search(
-    test_vespa,
-    data_db,
-    monkeypatch,
-    data_client,
-    family_ids,
+    test_vespa, data_db, monkeypatch, data_client, family_ids, valid_token
 ):
     monkeypatch.setattr(search, "_VESPA_CONNECTION", test_vespa)
     _populate_db_families(data_db)
@@ -686,7 +723,7 @@ def test_family_ids_search(
         "family_ids": family_ids,
     }
 
-    response = _make_search_request(data_client, params)
+    response = _make_search_request(data_client, valid_token, params)
 
     got_family_ids = _fam_ids_from_response(data_db, response)
     assert sorted(got_family_ids) == sorted(family_ids)
@@ -706,11 +743,7 @@ def test_family_ids_search(
 )
 @pytest.mark.search
 def test_document_ids_search(
-    test_vespa,
-    data_db,
-    monkeypatch,
-    data_client,
-    document_ids,
+    test_vespa, data_db, monkeypatch, data_client, document_ids, valid_token
 ):
     monkeypatch.setattr(search, "_VESPA_CONNECTION", test_vespa)
     _populate_db_families(data_db)
@@ -719,7 +752,7 @@ def test_document_ids_search(
         "query_string": "the",
         "document_ids": document_ids,
     }
-    response = _make_search_request(data_client, params)
+    response = _make_search_request(data_client, valid_token, params)
 
     got_document_ids = _doc_ids_from_response(data_db, response)
     assert sorted(got_document_ids) == sorted(document_ids)
@@ -727,10 +760,7 @@ def test_document_ids_search(
 
 @pytest.mark.search
 def test_document_ids_and_family_ids_search(
-    test_vespa,
-    data_db,
-    monkeypatch,
-    data_client,
+    test_vespa, data_db, monkeypatch, data_client, valid_token
 ):
     monkeypatch.setattr(search, "_VESPA_CONNECTION", test_vespa)
     _populate_db_families(data_db)
@@ -744,16 +774,13 @@ def test_document_ids_and_family_ids_search(
         "document_ids": document_ids,
     }
 
-    response = _make_search_request(data_client, params)
+    response = _make_search_request(data_client, valid_token, params)
     assert len(response["families"]) == 0
 
 
 @pytest.mark.search
 def test_empty_ids_dont_limit_result(
-    test_vespa,
-    data_db,
-    monkeypatch,
-    data_client,
+    test_vespa, data_db, monkeypatch, data_client, valid_token
 ):
     monkeypatch.setattr(search, "_VESPA_CONNECTION", test_vespa)
     _populate_db_families(data_db)
@@ -765,7 +792,7 @@ def test_empty_ids_dont_limit_result(
         "document_ids": [],
     }
 
-    response = _make_search_request(data_client, params)
+    response = _make_search_request(data_client, valid_token, params)
 
     got_document_ids = _doc_ids_from_response(data_db, response)
     got_family_ids = _fam_ids_from_response(data_db, response)
@@ -778,7 +805,13 @@ def test_empty_ids_dont_limit_result(
 @pytest.mark.parametrize("exact_match", [True, False])
 @pytest.mark.parametrize("query_string", ["", "local"])
 def test_csv_content(
-    exact_match, query_string, test_vespa, data_db, monkeypatch, data_client
+    exact_match,
+    query_string,
+    test_vespa,
+    data_db,
+    monkeypatch,
+    data_client,
+    valid_token,
 ):
     """Make sure that downloaded CSV content matches a given search"""
     monkeypatch.setattr(search, "_VESPA_CONNECTION", test_vespa)
@@ -787,7 +820,7 @@ def test_csv_content(
         "exact_match": exact_match,
         "query_string": query_string,
     }
-    body = _make_search_request(data_client, params)
+    body = _make_search_request(data_client, valid_token, params)
     families = body["families"]
     assert len(families) > 0
 
