@@ -4,19 +4,12 @@ from typing import Optional, cast
 
 import jwt
 from dateutil.relativedelta import relativedelta
-from fastapi import HTTPException, status
 from pydantic import HttpUrl
 
 from app.api.api_v1.schemas.custom_app import CustomAppConfigDTO
 from app.core import security
 from app.db.crud.helpers.validate import validate_corpora_ids
 from app.db.session import get_db
-
-TOKEN_EXCEPTION = HTTPException(
-    status_code=status.HTTP_401_UNAUTHORIZED,
-    detail="Could not validate configuration token",
-    headers={"WWW-Authenticate": "Bearer"},
-)
 
 _LOGGER = logging.getLogger(__name__)
 
@@ -116,20 +109,14 @@ def decode_config_token(token: str, audience: Optional[str]) -> list[str]:
 
     db = next(get_db())
 
-    try:
-        _LOGGER.error(f"Audience {audience}")
-        decoded_token = jwt.decode(
-            token,
-            security.SECRET_KEY,
-            algorithms=[security.ALGORITHM],
-            issuer=ISSUER,
-            audience=audience,
-        )
-        corpora_ids: list = decoded_token.get("allowed_corpora_ids")
-
-    except Exception as e:
-        _LOGGER.exception("Error decoding custom app configuration token")
-        raise TOKEN_EXCEPTION from e
+    decoded_token = jwt.decode(
+        token,
+        security.SECRET_KEY,
+        algorithms=[security.ALGORITHM],
+        issuer=ISSUER,
+        audience=audience,
+    )
+    corpora_ids: list = decoded_token.get("allowed_corpora_ids")
 
     validate_corpora_ids(db, corpora_ids)
     return corpora_ids

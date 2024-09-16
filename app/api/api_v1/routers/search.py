@@ -14,6 +14,7 @@ from cpr_sdk.exceptions import QueryError
 from cpr_sdk.search_adaptors import VespaSearchAdapter
 from fastapi import APIRouter, Body, Depends, Header, HTTPException, Request, status
 from fastapi.responses import StreamingResponse
+from jwt import PyJWTError
 from pydantic import HttpUrl
 from sqlalchemy.orm import Session
 from starlette.responses import RedirectResponse
@@ -156,7 +157,14 @@ def search_documents(
     )
 
     _LOGGER.info("Starting search...")
-    return _search_request(db=db, search_body=search_body)
+    try:
+        return _search_request(db=db, search_body=search_body)
+    except PyJWTError:
+        raise HTTPException(
+            status_code=status.HTTP_400_BAD_REQUEST,
+            detail="Could not validate configuration token",
+            headers={"WWW-Authenticate": "Bearer"},
+        )
 
 
 @search_router.post("/searches/download-csv", include_in_schema=False)
