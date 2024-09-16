@@ -357,12 +357,24 @@ def test_create_vespa_search_params(
                 else []
             ),
         )
+
     else:
         assert not produced_search_parameters.keyword_filters
         assert not produced_search_parameters.filters
 
     assert produced_search_parameters.sort_by == sort_field
     assert produced_search_parameters.sort_order == sort_order
+
+    assert produced_search_parameters.metadata == (
+        [
+            MetadataFilter.model_validate({"name": mdata.name, "value": mdata.value})
+            for mdata in produced_search_parameters.metadata
+        ]
+        if produced_search_parameters.metadata is not None
+        else []
+    )
+    assert corpus_type_names == produced_search_parameters.corpus_type_names
+    assert corpus_import_ids == produced_search_parameters.corpus_import_ids
 
 
 @pytest.mark.search
