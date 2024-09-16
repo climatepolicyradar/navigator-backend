@@ -1,11 +1,8 @@
 import os
 import typing as t
 import uuid
-from typing import Optional
 
 import pytest
-from cpr_sdk.embedding import Embedder
-from cpr_sdk.search_adaptors import Vespa, VespaSearchAdapter
 from db_client import run_migrations
 from db_client.models import Base
 from db_client.models.organisation import AppUser
@@ -83,22 +80,27 @@ def test_s3_client(s3_document_bucket_names, mock_aws_creds):
         yield s3_client
 
 
-@pytest.fixture(scope="session")
+# @pytest.fixture(scope="session")
+# def test_vespa():
+#     """Connect to local vespa instance"""
+
+#     def __mocked_init__(
+#         self,
+#         instance_url: str,
+#         cert_directory: Optional[str] = None,
+#         embedder: Optional[Embedder] = None,
+#     ):
+#         self.client = Vespa(url=instance_url, port=8080)
+#         self.embedder = embedder or Embedder()
+
+#     VespaSearchAdapter.__init__ = __mocked_init__
+
+#     yield VespaSearchAdapter(instance_url="http://vespatest")
+
+
+@pytest.fixture()
 def test_vespa():
-    """Connect to local vespa instance"""
-
-    def __mocked_init__(
-        self,
-        instance_url: str,
-        cert_directory: Optional[str] = None,
-        embedder: Optional[Embedder] = None,
-    ):
-        self.client = Vespa(url=instance_url, port=8080)
-        self.embedder = embedder or Embedder()
-
-    VespaSearchAdapter.__init__ = __mocked_init__
-
-    yield VespaSearchAdapter(instance_url="http://vespatest")
+    pass
 
 
 def get_test_db_url() -> str:

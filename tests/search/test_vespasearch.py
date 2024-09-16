@@ -68,7 +68,7 @@ def test_empty_search_term_performs_browse(
 ):
     """Make sure that empty search term returns results in browse mode."""
     _populate_db_families(data_db)
-    monkeypatch.setattr(search, "_VESPA_CONNECTION", test_vespa)
+    # monkeypatch.setattr(search, "_VESPA_CONNECTION", test_vespa)
 
     query_spy = mocker.spy(search._VESPA_CONNECTION, "search")
     body = _make_search_request(data_client, valid_token, {"query_string": ""})
@@ -85,7 +85,7 @@ def test_empty_search_term_performs_browse(
 def test_simple_pagination_families(
     test_vespa, data_client, data_db, monkeypatch, valid_token
 ):
-    monkeypatch.setattr(search, "_VESPA_CONNECTION", test_vespa)
+    # monkeypatch.setattr(search, "_VESPA_CONNECTION", test_vespa)
     _populate_db_families(data_db)
 
     PAGE_SIZE = 2
@@ -133,7 +133,7 @@ def test_search_body_valid(
     exact_match, test_vespa, data_client, data_db, monkeypatch, valid_token
 ):
     """Test a simple known valid search responds with success."""
-    monkeypatch.setattr(search, "_VESPA_CONNECTION", test_vespa)
+    # monkeypatch.setattr(search, "_VESPA_CONNECTION", test_vespa)
     _populate_db_families(data_db)
 
     body = _make_search_request(
@@ -164,7 +164,7 @@ def test_no_doc_if_in_postgres_but_not_vespa(
     test_vespa, data_client, data_db, monkeypatch, valid_token
 ):
     """Test a simple known valid search responds with success."""
-    monkeypatch.setattr(search, "_VESPA_CONNECTION", test_vespa)
+    # monkeypatch.setattr(search, "_VESPA_CONNECTION", test_vespa)
     _populate_db_families(data_db)
 
     # Add an extra postgres family that won't be in vespa
@@ -217,7 +217,7 @@ def test_no_doc_if_in_postgres_but_not_vespa(
 def test_benchmark_families_search(
     label, query, test_vespa, monkeypatch, data_client, data_db, valid_token
 ):
-    monkeypatch.setattr(search, "_VESPA_CONNECTION", test_vespa)
+    # monkeypatch.setattr(search, "_VESPA_CONNECTION", test_vespa)
     _populate_db_families(data_db)
 
     # This is high as it's meant as a last resort for catching new perfomance problems
@@ -242,7 +242,7 @@ def test_benchmark_families_search(
 def test_specific_doc_returned(
     test_vespa, monkeypatch, data_client, data_db, valid_token
 ):
-    monkeypatch.setattr(search, "_VESPA_CONNECTION", test_vespa)
+    # monkeypatch.setattr(search, "_VESPA_CONNECTION", test_vespa)
     _populate_db_families(data_db)
 
     family_name_query = "Agriculture Sector Plan 2015-2019"
@@ -278,7 +278,7 @@ def test_search_params_backend_limits(
     invalid_field,
     valid_token,
 ):
-    monkeypatch.setattr(search, "_VESPA_CONNECTION", test_vespa)
+    # monkeypatch.setattr(search, "_VESPA_CONNECTION", test_vespa)
     _populate_db_families(data_db)
 
     params = {"query_string": "the", **extra_params}
@@ -296,7 +296,7 @@ def test_search_params_backend_limits(
 def test_search_with_deleted_docs(
     test_vespa, monkeypatch, data_client, data_db, valid_token
 ):
-    monkeypatch.setattr(search, "_VESPA_CONNECTION", test_vespa)
+    # monkeypatch.setattr(search, "_VESPA_CONNECTION", test_vespa)
     _populate_db_families(data_db)
 
     start_body = _make_search_request(
@@ -329,7 +329,7 @@ def test_search_with_deleted_docs(
 def test_keyword_country_filters(
     label, query, test_vespa, data_client, data_db, monkeypatch, valid_token
 ):
-    monkeypatch.setattr(search, "_VESPA_CONNECTION", test_vespa)
+    # monkeypatch.setattr(search, "_VESPA_CONNECTION", test_vespa)
     _populate_db_families(data_db)
     base_params = {"query_string": query}
 
@@ -361,7 +361,7 @@ def test_keyword_country_filters(
 def test_keyword_region_filters(
     label, query, test_vespa, data_client, data_db, monkeypatch, valid_token
 ):
-    monkeypatch.setattr(search, "_VESPA_CONNECTION", test_vespa)
+    # monkeypatch.setattr(search, "_VESPA_CONNECTION", test_vespa)
     _populate_db_families(data_db)
     base_params = {"query_string": query}
 
@@ -401,7 +401,7 @@ def test_keyword_region_filters(
 def test_keyword_region_and_country_filters(
     label, query, test_vespa, data_client, data_db, monkeypatch, valid_token
 ):
-    monkeypatch.setattr(search, "_VESPA_CONNECTION", test_vespa)
+    # monkeypatch.setattr(search, "_VESPA_CONNECTION", test_vespa)
     _populate_db_families(data_db)
 
     # Filtering on one region and one country should return the one match
@@ -424,7 +424,7 @@ def test_keyword_region_and_country_filters(
 def test_invalid_keyword_filters(
     label, query, test_vespa, data_db, monkeypatch, data_client
 ):
-    monkeypatch.setattr(search, "_VESPA_CONNECTION", test_vespa)
+    # monkeypatch.setattr(search, "_VESPA_CONNECTION", test_vespa)
     _populate_db_families(data_db)
 
     response = data_client.post(
@@ -447,7 +447,7 @@ def test_invalid_keyword_filters(
 def test_year_range_filterered_in(
     year_range, test_vespa, data_db, monkeypatch, data_client, valid_token
 ):
-    monkeypatch.setattr(search, "_VESPA_CONNECTION", test_vespa)
+    # monkeypatch.setattr(search, "_VESPA_CONNECTION", test_vespa)
     _populate_db_families(data_db)
 
     # Search
@@ -466,7 +466,7 @@ def test_year_range_filterered_in(
 def test_year_range_filterered_out(
     year_range, test_vespa, data_db, monkeypatch, data_client, valid_token
 ):
-    monkeypatch.setattr(search, "_VESPA_CONNECTION", test_vespa)
+    # monkeypatch.setattr(search, "_VESPA_CONNECTION", test_vespa)
     _populate_db_families(data_db)
 
     # Search
@@ -485,7 +485,7 @@ def test_year_range_filterered_out(
 def test_multiple_filters(
     label, query, test_vespa, data_db, monkeypatch, data_client, valid_token
 ):
-    monkeypatch.setattr(search, "_VESPA_CONNECTION", test_vespa)
+    # monkeypatch.setattr(search, "_VESPA_CONNECTION", test_vespa)
     _populate_db_families(data_db)
 
     params = {
@@ -506,7 +506,7 @@ def test_multiple_filters(
 def test_result_order_score(
     label, query, test_vespa, data_db, monkeypatch, data_client, valid_token
 ):
-    monkeypatch.setattr(search, "_VESPA_CONNECTION", test_vespa)
+    # monkeypatch.setattr(search, "_VESPA_CONNECTION", test_vespa)
     _populate_db_families(data_db)
 
     params = {
@@ -532,7 +532,7 @@ def test_result_order_score(
 def test_result_order_title(
     label, query, test_vespa, data_db, monkeypatch, data_client, valid_token
 ):
-    monkeypatch.setattr(search, "_VESPA_CONNECTION", test_vespa)
+    # monkeypatch.setattr(search, "_VESPA_CONNECTION", test_vespa)
     _populate_db_families(data_db)
 
     params = {
@@ -549,7 +549,7 @@ def test_result_order_title(
 def test_continuation_token__families(
     test_vespa, data_db, monkeypatch, data_client, valid_token
 ):
-    monkeypatch.setattr(search, "_VESPA_CONNECTION", test_vespa)
+    # monkeypatch.setattr(search, "_VESPA_CONNECTION", test_vespa)
 
     _populate_db_families(data_db)
 
@@ -586,7 +586,7 @@ def test_continuation_token__families(
 def test_continuation_token__passages(
     test_vespa, data_db, monkeypatch, data_client, valid_token
 ):
-    monkeypatch.setattr(search, "_VESPA_CONNECTION", test_vespa)
+    # monkeypatch.setattr(search, "_VESPA_CONNECTION", test_vespa)
 
     _populate_db_families(data_db)
 
@@ -657,7 +657,7 @@ def test_continuation_token__passages(
 
 @pytest.mark.search
 def test_case_insensitivity(test_vespa, data_db, monkeypatch, data_client, valid_token):
-    monkeypatch.setattr(search, "_VESPA_CONNECTION", test_vespa)
+    # monkeypatch.setattr(search, "_VESPA_CONNECTION", test_vespa)
     _populate_db_families(data_db)
 
     lower_body = _make_search_request(data_client, valid_token, {"query_string": "the"})
@@ -670,7 +670,7 @@ def test_case_insensitivity(test_vespa, data_db, monkeypatch, data_client, valid
 def test_punctuation_ignored(
     test_vespa, data_db, monkeypatch, data_client, valid_token
 ):
-    monkeypatch.setattr(search, "_VESPA_CONNECTION", test_vespa)
+    # monkeypatch.setattr(search, "_VESPA_CONNECTION", test_vespa)
     _populate_db_families(data_db)
 
     regular_body = _make_search_request(
@@ -692,7 +692,7 @@ def test_punctuation_ignored(
 
 @pytest.mark.search
 def test_accents_ignored(test_vespa, data_db, monkeypatch, data_client, valid_token):
-    monkeypatch.setattr(search, "_VESPA_CONNECTION", test_vespa)
+    # monkeypatch.setattr(search, "_VESPA_CONNECTION", test_vespa)
     _populate_db_families(data_db)
 
     start = time.time()
@@ -715,7 +715,7 @@ def test_accents_ignored(test_vespa, data_db, monkeypatch, data_client, valid_to
 def test_family_ids_search(
     test_vespa, data_db, monkeypatch, data_client, family_ids, valid_token
 ):
-    monkeypatch.setattr(search, "_VESPA_CONNECTION", test_vespa)
+    # monkeypatch.setattr(search, "_VESPA_CONNECTION", test_vespa)
     _populate_db_families(data_db)
 
     params = {
@@ -745,7 +745,7 @@ def test_family_ids_search(
 def test_document_ids_search(
     test_vespa, data_db, monkeypatch, data_client, document_ids, valid_token
 ):
-    monkeypatch.setattr(search, "_VESPA_CONNECTION", test_vespa)
+    # monkeypatch.setattr(search, "_VESPA_CONNECTION", test_vespa)
     _populate_db_families(data_db)
 
     params = {
@@ -762,7 +762,7 @@ def test_document_ids_search(
 def test_document_ids_and_family_ids_search(
     test_vespa, data_db, monkeypatch, data_client, valid_token
 ):
-    monkeypatch.setattr(search, "_VESPA_CONNECTION", test_vespa)
+    # monkeypatch.setattr(search, "_VESPA_CONNECTION", test_vespa)
     _populate_db_families(data_db)
 
     # The doc doesnt belong to the family, so we should get no results
@@ -782,7 +782,7 @@ def test_document_ids_and_family_ids_search(
 def test_empty_ids_dont_limit_result(
     test_vespa, data_db, monkeypatch, data_client, valid_token
 ):
-    monkeypatch.setattr(search, "_VESPA_CONNECTION", test_vespa)
+    # monkeypatch.setattr(search, "_VESPA_CONNECTION", test_vespa)
     _populate_db_families(data_db)
 
     # We'd expect this to be interpreted as 'unlimited'
@@ -814,7 +814,7 @@ def test_csv_content(
     valid_token,
 ):
     """Make sure that downloaded CSV content matches a given search"""
-    monkeypatch.setattr(search, "_VESPA_CONNECTION", test_vespa)
+    # monkeypatch.setattr(search, "_VESPA_CONNECTION", test_vespa)
     _populate_db_families(data_db)
     params = {
         "exact_match": exact_match,
@@ -850,7 +850,7 @@ def test_csv_content(
 def test_csv_download_search_variable_limit(
     label, query, limit, test_vespa, data_db, monkeypatch, data_client, mocker
 ):
-    monkeypatch.setattr(search, "_VESPA_CONNECTION", test_vespa)
+    # monkeypatch.setattr(search, "_VESPA_CONNECTION", test_vespa)
     _populate_db_families(data_db)
 
     query_spy = mocker.spy(search._VESPA_CONNECTION, "search")
@@ -879,7 +879,7 @@ def test_csv_download_search_variable_limit(
 def test_csv_download__ignore_extra_fields(
     test_vespa, data_db, monkeypatch, data_client, mocker
 ):
-    monkeypatch.setattr(search, "_VESPA_CONNECTION", test_vespa)
+    # monkeypatch.setattr(search, "_VESPA_CONNECTION", test_vespa)
     _populate_db_families(data_db)
 
     params = {
