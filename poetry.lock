@@ -687,13 +687,13 @@ files = [
 
 [[package]]
 name = "cpr-sdk"
-version = "1.4.3"
+version = "1.4.4"
 description = ""
 optional = false
 python-versions = "<4.0,>=3.10"
 files = [
-    {file = "cpr_sdk-1.4.3-py3-none-any.whl", hash = "sha256:3bc2736bfb477785d080ca41d9bcfcd42475f576dc8cd87d900afdc37802f411"},
-    {file = "cpr_sdk-1.4.3.tar.gz", hash = "sha256:ed5600c99c65d861d87672c1c4329dd9ba0fbcb008ce8483ca85ef879299e43a"},
+    {file = "cpr_sdk-1.4.4-py3-none-any.whl", hash = "sha256:572005c437a9e7fa038ed5755b3ea70bf28e72429ffdd55ea92b7f593e0a6b44"},
+    {file = "cpr_sdk-1.4.4.tar.gz", hash = "sha256:d8ef03558e59a0fe3cb81568c88e177af0d9c7ebcef10e27e2316988b215acfb"},
 ]
 
 [package.dependencies]
@@ -4896,4 +4896,4 @@ type = ["pytest-mypy"]
 [metadata]
 lock-version = "2.0"
 python-versions = "^3.10"
-content-hash = "a12a1dc7ceba10c5bf439c6b808b342fa3bc01b753b59c0e1d5a44c79975ce47"
+content-hash = "5e91bfb2419b9a5bbd51a52b2e563f8daa127d46a873bda32ad33a6bdee42096"
