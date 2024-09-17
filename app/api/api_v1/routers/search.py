@@ -23,6 +23,7 @@ from app.core.aws import S3Document, get_s3_client
 from app.core.config import (
     AWS_REGION,
     CDN_DOMAIN,
+    DEVELOPMENT_MODE,
     DOC_CACHE_BUCKET,
     INGEST_TRIGGER_ROOT,
     PIPELINE_BUCKET,
@@ -44,7 +45,7 @@ _LOGGER = logging.getLogger(__name__)
 
 _VESPA_CONNECTION = VespaSearchAdapter(
     instance_url=VESPA_URL,
-    cert_directory=VESPA_SECRETS_LOCATION,
+    cert_directory=VESPA_SECRETS_LOCATION if not DEVELOPMENT_MODE else None,
     embedder=ENCODER,
 )
 
