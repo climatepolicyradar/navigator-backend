@@ -3,7 +3,10 @@ from typing import Mapping
 import pytest
 
 from app.api.api_v1.routers import search
-from tests.search.vespa.setup_search_tests import _populate_db_families
+from tests.search.vespa.setup_search_tests import (
+    VESPA_FIXTURE_COUNT,
+    _populate_db_families,
+)
 
 SEARCH_ENDPOINT = "/api/v1/searches"
 
@@ -12,6 +15,50 @@ def _make_search_request(client, params: Mapping[str, str]):
     response = client.post(SEARCH_ENDPOINT, json=params)
     assert response.status_code == 200, response.text
     return response.json()
+
+
+@pytest.mark.search
+def test_simple_pagination_families(test_vespa, data_client, data_db, monkeypatch):
+    monkeypatch.setattr(search, "_VESPA_CONNECTION", test_vespa)
+    _populate_db_families(data_db)
+
+    PAGE_SIZE = 2
+
+    # Query one
+    params = {
+        "query_string": "and",
+        "page_size": PAGE_SIZE,
+        "offset": 0,
+    }
+    body_one = _make_search_request(data_client, params)
+    assert body_one["hits"] == VESPA_FIXTURE_COUNT
+    assert len(body_one["families"]) == PAGE_SIZE
+    assert (
+        body_one["families"][0]["family_slug"]
+        == "agriculture-sector-plan-2015-2019_7999"
+    )
+    assert (
+        body_one["families"][1]["family_slug"]
+        == "national-environment-policy-of-guinea_f0df"
+    )
+
+    # Query two
+    params = {
+        "query_string": "and",
+        "page_size": PAGE_SIZE,
+        "offset": 2,
+    }
+    body_two = _make_search_request(data_client, params)
+    assert body_two["hits"] == VESPA_FIXTURE_COUNT
+    assert len(body_two["families"]) == PAGE_SIZE
+    assert (
+        body_two["families"][0]["family_slug"]
+        == "national-energy-policy-and-energy-action-plan_9262"
+    )
+    assert (
+        body_two["families"][1]["family_slug"]
+        == "submission-to-the-unfccc-ahead-of-the-first-technical-dialogue_e760"
+    )
 
 
 @pytest.mark.search
