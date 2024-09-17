@@ -84,6 +84,7 @@ def test_no_doc_if_in_postgres_but_not_vespa(
             "document_slug": "aslug",
             "family_description": "",
             "family_geography": "CAN",
+            "family_geographies": ["CAN"],
             "family_publication_ts": "2011-08-01T00:00:00+00:00",
             "family_import_id": "CCLW.family.111.0",
         },
@@ -205,3 +206,44 @@ def test_search_with_deleted_docs(test_vespa, monkeypatch, data_client, data_db)
     all_deleted_count = len(all_deleted_body["families"])
     assert start_family_count > one_deleted_count > all_deleted_count
     assert len(all_deleted_body["families"]) == 0
+
+
+@pytest.mark.search
+@pytest.mark.parametrize(
+    "label,query,metadata_filters",
+    [
+        ("search", "the", [{"name": "sector", "value": "Price"}]),
+        (
+            "browse",
+            "",
+            [
+                {"name": "topic", "value": "Mitigation"},
+                {"name": "instrument", "value": "Capacity building"},
+            ],
+        ),
+    ],
+)
+def test_metadata_filter(
+    label, query, metadata_filters, test_vespa, data_db, monkeypatch, data_client
+):
+    monkeypatch.setattr(search, "_VESPA_CONNECTION", test_vespa)
+
+    _populate_db_families(data_db, deterministic_metadata=True)
+
+    response = data_client.post(
+        SEARCH_ENDPOINT,
+        json={
+            "query_string": query,
+            "metadata": metadata_filters,
+        },
+    )
+    assert response.status_code == 200
+    assert len(response.json()["families"]) > 0
+
+    for metadata_filter in metadata_filters:
+        for f in response.json()["families"]:
+            assert metadata_filter["name"] in f["family_metadata"]
+            assert (
+                metadata_filter["value"]
+                in f["family_metadata"][metadata_filter["name"]]
+            )
