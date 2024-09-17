@@ -117,7 +117,6 @@ def decode_config_token(token: str, audience: Optional[str]) -> list[str]:
     db = next(get_db())
 
     try:
-        _LOGGER.error(f"Audience {audience}")
         decoded_token = jwt.decode(
             token,
             security.SECRET_KEY,
