@@ -80,29 +80,6 @@ def test_s3_client(s3_document_bucket_names, mock_aws_creds):
         yield s3_client
 
 
-# @pytest.fixture(scope="session")
-# def test_vespa():
-#     """Connect to local vespa instance"""
-
-#     def __mocked_init__(
-#         self,
-#         instance_url: str,
-#         cert_directory: Optional[str] = None,
-#         embedder: Optional[Embedder] = None,
-#     ):
-#         self.client = Vespa(url=instance_url, port=8080)
-#         self.embedder = embedder or Embedder()
-
-#     VespaSearchAdapter.__init__ = __mocked_init__
-
-#     yield VespaSearchAdapter(instance_url="http://vespatest")
-
-
-@pytest.fixture()
-def test_vespa():
-    pass
-
-
 def get_test_db_url() -> str:
     return os.environ["DATABASE_URL"] + f"_test_{uuid.uuid4()}"
 

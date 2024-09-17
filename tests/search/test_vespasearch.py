@@ -5,16 +5,15 @@ from typing import Mapping
 from unittest.mock import patch
 
 import pytest
+from cpr_sdk.search_adaptors import VespaSearchAdapter
 from db_client.models.dfce import Geography, Slug
 from db_client.models.dfce.family import FamilyDocument
 from sqlalchemy import update
 from sqlalchemy.orm import Session
 
-from app.api.api_v1.routers import search
-from app.core.search import ENCODER
-from cpr_sdk.search_adaptors import VespaSearchAdapter
-from app.core.lookups import get_country_slug_from_country_code
 from app.core.config import VESPA_URL
+from app.core.lookups import get_country_slug_from_country_code
+from app.core.search import ENCODER
 from tests.search.setup_search_tests import (
     VESPA_FIXTURE_COUNT,
     _create_document,
@@ -67,13 +66,16 @@ def _fam_ids_from_response(test_db, response) -> list[str]:
 
 @pytest.mark.search
 def test_empty_search_term_performs_browse(
-    test_vespa, data_client, data_db, mocker, monkeypatch, valid_token
+    data_client, data_db, mocker, monkeypatch, valid_token
 ):
     """Make sure that empty search term returns results in browse mode."""
     _populate_db_families(data_db)
-    # monkeypatch.setattr(search, "_VESPA_CONNECTION", test_vespa)
+    search_adapter = VespaSearchAdapter(
+        instance_url=VESPA_URL,
+        embedder=ENCODER,
+    )
 
-    query_spy = mocker.spy(search._VESPA_CONNECTION, "search")
+    query_spy = mocker.spy(search_adapter, "search")
     body = _make_search_request(data_client, valid_token, {"query_string": ""})
 
     assert body["hits"] > 0
@@ -86,9 +88,14 @@ def test_empty_search_term_performs_browse(
 
 @pytest.mark.search
 def test_simple_pagination_families(
-    test_vespa, data_client, data_db, monkeypatch, valid_token
+    data_client, data_db, monkeypatch, valid_token, mocker
 ):
-    # monkeypatch.setattr(search, "_VESPA_CONNECTION", test_vespa)
+    search_adapter = VespaSearchAdapter(
+        instance_url=VESPA_URL,
+        embedder=ENCODER,
+    )
+
+    mocker.spy(search_adapter, "search")
     _populate_db_families(data_db)
 
     PAGE_SIZE = 2
@@ -133,11 +140,16 @@ def test_simple_pagination_families(
 @pytest.mark.search
 @pytest.mark.parametrize("exact_match", [True, False])
 def test_search_body_valid(
-    exact_match, test_vespa, data_client, data_db, monkeypatch, valid_token
+    exact_match, data_client, data_db, monkeypatch, valid_token, mocker
 ):
     """Test a simple known valid search responds with success."""
-    # monkeypatch.setattr(search, "_VESPA_CONNECTION", test_vespa)
     _populate_db_families(data_db)
+    search_adapter = VespaSearchAdapter(
+        instance_url=VESPA_URL,
+        embedder=ENCODER,
+    )
+
+    mocker.spy(search_adapter, "search")
 
     body = _make_search_request(
         data_client,
@@ -164,11 +176,16 @@ def test_search_body_valid(
 
 @pytest.mark.search
 def test_no_doc_if_in_postgres_but_not_vespa(
-    test_vespa, data_client, data_db, monkeypatch, valid_token
+    data_client, data_db, monkeypatch, valid_token, mocker
 ):
     """Test a simple known valid search responds with success."""
-    # monkeypatch.setattr(search, "_VESPA_CONNECTION", test_vespa)
     _populate_db_families(data_db)
+    search_adapter = VespaSearchAdapter(
+        instance_url=VESPA_URL,
+        embedder=ENCODER,
+    )
+
+    mocker.spy(search_adapter, "search")
 
     # Add an extra postgres family that won't be in vespa
     EXTRA_TEST_FAMILY = "Extra Test Family"
@@ -218,10 +235,15 @@ def test_no_doc_if_in_postgres_but_not_vespa(
 @pytest.mark.search
 @pytest.mark.parametrize("label,query", [("search", "the"), ("browse", "")])
 def test_benchmark_families_search(
-    label, query, test_vespa, monkeypatch, data_client, data_db, valid_token
+    label, query, monkeypatch, data_client, data_db, valid_token, mocker
 ):
-    # monkeypatch.setattr(search, "_VESPA_CONNECTION", test_vespa)
     _populate_db_families(data_db)
+    search_adapter = VespaSearchAdapter(
+        instance_url=VESPA_URL,
+        embedder=ENCODER,
+    )
+
+    mocker.spy(search_adapter, "search")
 
     # This is high as it's meant as a last resort for catching new perfomance problems
     REASONABLE_LATENCY_MS = 50
@@ -242,11 +264,14 @@ def test_benchmark_families_search(
 
 
 @pytest.mark.search
-def test_specific_doc_returned(
-    test_vespa, monkeypatch, data_client, data_db, valid_token
-):
-    # monkeypatch.setattr(search, "_VESPA_CONNECTION", test_vespa)
+def test_specific_doc_returned(monkeypatch, data_client, data_db, valid_token, mocker):
     _populate_db_families(data_db)
+    search_adapter = VespaSearchAdapter(
+        instance_url=VESPA_URL,
+        embedder=ENCODER,
+    )
+
+    mocker.spy(search_adapter, "search")
 
     family_name_query = "Agriculture Sector Plan 2015-2019"
     params = {
@@ -273,16 +298,15 @@ def test_specific_doc_returned(
 )
 @pytest.mark.search
 def test_search_params_backend_limits(
-    test_vespa,
-    monkeypatch,
-    data_client,
-    data_db,
-    extra_params,
-    invalid_field,
-    valid_token,
+    monkeypatch, data_client, data_db, extra_params, invalid_field, valid_token, mocker
 ):
-    # monkeypatch.setattr(search, "_VESPA_CONNECTION", test_vespa)
     _populate_db_families(data_db)
+    search_adapter = VespaSearchAdapter(
+        instance_url=VESPA_URL,
+        embedder=ENCODER,
+    )
+
+    mocker.spy(search_adapter, "search")
 
     params = {"query_string": "the", **extra_params}
     response = data_client.post(
@@ -297,10 +321,15 @@ def test_search_params_backend_limits(
 
 @pytest.mark.search
 def test_search_with_deleted_docs(
-    test_vespa, monkeypatch, data_client, data_db, valid_token
+    monkeypatch, data_client, data_db, valid_token, mocker
 ):
-    # monkeypatch.setattr(search, "_VESPA_CONNECTION", test_vespa)
     _populate_db_families(data_db)
+    search_adapter = VespaSearchAdapter(
+        instance_url=VESPA_URL,
+        embedder=ENCODER,
+    )
+
+    mocker.spy(search_adapter, "search")
 
     start_body = _make_search_request(
         data_client, valid_token, params={"query_string": "and"}
@@ -330,10 +359,16 @@ def test_search_with_deleted_docs(
 @pytest.mark.search
 @pytest.mark.parametrize("label,query", [("search", "the"), ("browse", "")])
 def test_keyword_country_filters(
-    label, query, test_vespa, data_client, data_db, monkeypatch, valid_token
+    label, query, data_client, data_db, monkeypatch, valid_token, mocker
 ):
-    # monkeypatch.setattr(search, "_VESPA_CONNECTION", test_vespa)
     _populate_db_families(data_db)
+    search_adapter = VespaSearchAdapter(
+        instance_url=VESPA_URL,
+        embedder=ENCODER,
+    )
+
+    mocker.spy(search_adapter, "search")
+
     base_params = {"query_string": query}
 
     # Get all documents and iterate over their country codes to confirm that each are
@@ -362,10 +397,15 @@ def test_keyword_country_filters(
 @pytest.mark.search
 @pytest.mark.parametrize("label,query", [("search", "the"), ("browse", "")])
 def test_keyword_region_filters(
-    label, query, test_vespa, data_client, data_db, monkeypatch, valid_token
+    label, query, data_client, data_db, monkeypatch, valid_token, mocker
 ):
-    # monkeypatch.setattr(search, "_VESPA_CONNECTION", test_vespa)
     _populate_db_families(data_db)
+    search_adapter = VespaSearchAdapter(
+        instance_url=VESPA_URL,
+        embedder=ENCODER,
+    )
+
+    mocker.spy(search_adapter, "search")
     base_params = {"query_string": query}
 
     # Get regions of all documents and iterate over them
@@ -402,10 +442,15 @@ def test_keyword_region_filters(
 @pytest.mark.search
 @pytest.mark.parametrize("label,query", [("search", "the"), ("browse", "")])
 def test_keyword_region_and_country_filters(
-    label, query, test_vespa, data_client, data_db, monkeypatch, valid_token
+    label, query, data_client, data_db, monkeypatch, valid_token, mocker
 ):
-    # monkeypatch.setattr(search, "_VESPA_CONNECTION", test_vespa)
     _populate_db_families(data_db)
+    search_adapter = VespaSearchAdapter(
+        instance_url=VESPA_URL,
+        embedder=ENCODER,
+    )
+
+    mocker.spy(search_adapter, "search")
 
     # Filtering on one region and one country should return the one match
     base_params = {
@@ -425,10 +470,15 @@ def test_keyword_region_and_country_filters(
 @pytest.mark.search
 @pytest.mark.parametrize("label,query", [("search", "the"), ("browse", "")])
 def test_invalid_keyword_filters(
-    label, query, test_vespa, data_db, monkeypatch, data_client
+    label, query, data_db, monkeypatch, data_client, mocker
 ):
-    # monkeypatch.setattr(search, "_VESPA_CONNECTION", test_vespa)
     _populate_db_families(data_db)
+    search_adapter = VespaSearchAdapter(
+        instance_url=VESPA_URL,
+        embedder=ENCODER,
+    )
+
+    mocker.spy(search_adapter, "search")
 
     response = data_client.post(
         SEARCH_ENDPOINT,
@@ -448,10 +498,15 @@ def test_invalid_keyword_filters(
     "year_range", [(None, None), (1900, None), (None, 2020), (1900, 2020)]
 )
 def test_year_range_filterered_in(
-    year_range, test_vespa, data_db, monkeypatch, data_client, valid_token
+    year_range, data_db, monkeypatch, data_client, valid_token, mocker
 ):
-    # monkeypatch.setattr(search, "_VESPA_CONNECTION", test_vespa)
     _populate_db_families(data_db)
+    search_adapter = VespaSearchAdapter(
+        instance_url=VESPA_URL,
+        embedder=ENCODER,
+    )
+
+    mocker.spy(search_adapter, "search")
 
     # Search
     params = {"query_string": "and", "year_range": year_range}
@@ -467,10 +522,15 @@ def test_year_range_filterered_in(
 @pytest.mark.search
 @pytest.mark.parametrize("year_range", [(None, 2010), (2024, None)])
 def test_year_range_filterered_out(
-    year_range, test_vespa, data_db, monkeypatch, data_client, valid_token
+    year_range, data_db, mocker, data_client, valid_token
 ):
-    # monkeypatch.setattr(search, "_VESPA_CONNECTION", test_vespa)
     _populate_db_families(data_db)
+    search_adapter = VespaSearchAdapter(
+        instance_url=VESPA_URL,
+        embedder=ENCODER,
+    )
+
+    mocker.spy(search_adapter, "search")
 
     # Search
     params = {"query_string": "and", "year_range": year_range}
@@ -486,10 +546,15 @@ def test_year_range_filterered_out(
 @pytest.mark.search
 @pytest.mark.parametrize("label, query", [("search", "the"), ("browse", "")])
 def test_multiple_filters(
-    label, query, test_vespa, data_db, monkeypatch, data_client, valid_token
+    label, query, data_db, monkeypatch, data_client, valid_token, mocker
 ):
-    # monkeypatch.setattr(search, "_VESPA_CONNECTION", test_vespa)
     _populate_db_families(data_db)
+    search_adapter = VespaSearchAdapter(
+        instance_url=VESPA_URL,
+        embedder=ENCODER,
+    )
+
+    mocker.spy(search_adapter, "search")
 
     params = {
         "query_string": query,
@@ -507,10 +572,15 @@ def test_multiple_filters(
 @pytest.mark.search
 @pytest.mark.parametrize("label, query", [("search", "the"), ("browse", "")])
 def test_result_order_score(
-    label, query, test_vespa, data_db, monkeypatch, data_client, valid_token
+    label, query, data_db, monkeypatch, data_client, valid_token, mocker
 ):
-    # monkeypatch.setattr(search, "_VESPA_CONNECTION", test_vespa)
     _populate_db_families(data_db)
+    search_adapter = VespaSearchAdapter(
+        instance_url=VESPA_URL,
+        embedder=ENCODER,
+    )
+
+    mocker.spy(search_adapter, "search")
 
     params = {
         "query_string": query,
@@ -533,10 +603,15 @@ def test_result_order_score(
 @pytest.mark.search
 @pytest.mark.parametrize("label, query", [("search", "the"), ("browse", "")])
 def test_result_order_title(
-    label, query, test_vespa, data_db, monkeypatch, data_client, valid_token
+    label, query, data_db, monkeypatch, data_client, valid_token, mocker
 ):
-    # monkeypatch.setattr(search, "_VESPA_CONNECTION", test_vespa)
     _populate_db_families(data_db)
+    search_adapter = VespaSearchAdapter(
+        instance_url=VESPA_URL,
+        embedder=ENCODER,
+    )
+
+    mocker.spy(search_adapter, "search")
 
     params = {
         "query_string": query,
@@ -550,11 +625,15 @@ def test_result_order_title(
 
 @pytest.mark.search
 def test_continuation_token__families(
-    test_vespa, data_db, monkeypatch, data_client, valid_token
+    data_db, monkeypatch, data_client, valid_token, mocker
 ):
-    # monkeypatch.setattr(search, "_VESPA_CONNECTION", test_vespa)
-
     _populate_db_families(data_db)
+    search_adapter = VespaSearchAdapter(
+        instance_url=VESPA_URL,
+        embedder=ENCODER,
+    )
+
+    mocker.spy(search_adapter, "search")
 
     params = {"query_string": "the", "limit": 2, "page_size": 1}
     response = _make_search_request(data_client, valid_token, params)
@@ -587,11 +666,15 @@ def test_continuation_token__families(
 
 @pytest.mark.search
 def test_continuation_token__passages(
-    test_vespa, data_db, monkeypatch, data_client, valid_token
+    data_db, monkeypatch, data_client, valid_token, mocker
 ):
-    # monkeypatch.setattr(search, "_VESPA_CONNECTION", test_vespa)
-
     _populate_db_families(data_db)
+    search_adapter = VespaSearchAdapter(
+        instance_url=VESPA_URL,
+        embedder=ENCODER,
+    )
+
+    mocker.spy(search_adapter, "search")
 
     # Get second set of families
     params = {
@@ -659,9 +742,14 @@ def test_continuation_token__passages(
 
 
 @pytest.mark.search
-def test_case_insensitivity(test_vespa, data_db, monkeypatch, data_client, valid_token):
-    # monkeypatch.setattr(search, "_VESPA_CONNECTION", test_vespa)
+def test_case_insensitivity(data_db, monkeypatch, data_client, valid_token, mocker):
     _populate_db_families(data_db)
+    search_adapter = VespaSearchAdapter(
+        instance_url=VESPA_URL,
+        embedder=ENCODER,
+    )
+
+    mocker.spy(search_adapter, "search")
 
     lower_body = _make_search_request(data_client, valid_token, {"query_string": "the"})
     upper_body = _make_search_request(data_client, valid_token, {"query_string": "THE"})
@@ -670,11 +758,14 @@ def test_case_insensitivity(test_vespa, data_db, monkeypatch, data_client, valid
 
 
 @pytest.mark.search
-def test_punctuation_ignored(
-    test_vespa, data_db, monkeypatch, data_client, valid_token
-):
-    # monkeypatch.setattr(search, "_VESPA_CONNECTION", test_vespa)
+def test_punctuation_ignored(data_db, mocker, data_client, valid_token):
     _populate_db_families(data_db)
+    search_adapter = VespaSearchAdapter(
+        instance_url=VESPA_URL,
+        embedder=ENCODER,
+    )
+
+    mocker.spy(search_adapter, "search")
 
     regular_body = _make_search_request(
         data_client, valid_token, {"query_string": "the"}
@@ -694,9 +785,14 @@ def test_punctuation_ignored(
 
 
 @pytest.mark.search
-def test_accents_ignored(test_vespa, data_db, monkeypatch, data_client, valid_token):
-    # monkeypatch.setattr(search, "_VESPA_CONNECTION", test_vespa)
+def test_accents_ignored(data_db, mocker, data_client, valid_token):
     _populate_db_families(data_db)
+    search_adapter = VespaSearchAdapter(
+        instance_url=VESPA_URL,
+        embedder=ENCODER,
+    )
+
+    mocker.spy(search_adapter, "search")
 
     start = time.time()
     body = _make_search_request(data_client, valid_token, {"query_string": "the"})
@@ -715,11 +811,14 @@ def test_accents_ignored(test_vespa, data_db, monkeypatch, data_client, valid_to
     ],
 )
 @pytest.mark.search
-def test_family_ids_search(
-    test_vespa, data_db, monkeypatch, data_client, family_ids, valid_token
-):
-    # monkeypatch.setattr(search, "_VESPA_CONNECTION", test_vespa)
+def test_family_ids_search(data_db, mocker, data_client, family_ids, valid_token):
     _populate_db_families(data_db)
+    search_adapter = VespaSearchAdapter(
+        instance_url=VESPA_URL,
+        embedder=ENCODER,
+    )
+
+    mocker.spy(search_adapter, "search")
 
     params = {
         "query_string": "the",
@@ -746,9 +845,14 @@ def test_family_ids_search(
 )
 @pytest.mark.search
 def test_document_ids_search(
-    test_vespa, data_db, monkeypatch, data_client, document_ids, valid_token
+    data_db, monkeypatch, data_client, document_ids, valid_token, mocker
 ):
-    # monkeypatch.setattr(search, "_VESPA_CONNECTION", test_vespa)
+    search_adapter = VespaSearchAdapter(
+        instance_url=VESPA_URL,
+        embedder=ENCODER,
+    )
+
+    query_spy = mocker.spy(search_adapter, "search")
     _populate_db_families(data_db)
 
     params = {
@@ -756,17 +860,21 @@ def test_document_ids_search(
         "document_ids": document_ids,
     }
     response = _make_search_request(data_client, valid_token, params)
+    assert query_spy.assert_called_once()
 
     got_document_ids = _doc_ids_from_response(data_db, response)
     assert sorted(got_document_ids) == sorted(document_ids)
 
 
 @pytest.mark.search
-def test_document_ids_and_family_ids_search(
-    test_vespa, data_db, monkeypatch, data_client, valid_token
-):
-    # monkeypatch.setattr(search, "_VESPA_CONNECTION", test_vespa)
+def test_document_ids_and_family_ids_search(data_db, mocker, data_client, valid_token):
     _populate_db_families(data_db)
+    search_adapter = VespaSearchAdapter(
+        instance_url=VESPA_URL,
+        embedder=ENCODER,
+    )
+
+    mocker.spy(search_adapter, "search")
 
     # The doc doesnt belong to the family, so we should get no results
     family_ids = ["UNFCCC.family.1267.0"]
@@ -782,11 +890,14 @@ def test_document_ids_and_family_ids_search(
 
 
 @pytest.mark.search
-def test_empty_ids_dont_limit_result(
-    test_vespa, data_db, monkeypatch, data_client, valid_token
-):
-    # monkeypatch.setattr(search, "_VESPA_CONNECTION", test_vespa)
+def test_empty_ids_dont_limit_result(data_db, mocker, data_client, valid_token):
     _populate_db_families(data_db)
+    search_adapter = VespaSearchAdapter(
+        instance_url=VESPA_URL,
+        embedder=ENCODER,
+    )
+
+    mocker.spy(search_adapter, "search")
 
     # We'd expect this to be interpreted as 'unlimited'
     params = {
@@ -810,15 +921,20 @@ def test_empty_ids_dont_limit_result(
 def test_csv_content(
     exact_match,
     query_string,
-    test_vespa,
     data_db,
-    monkeypatch,
+    mocker,
     data_client,
     valid_token,
 ):
     """Make sure that downloaded CSV content matches a given search"""
-    # monkeypatch.setattr(search, "_VESPA_CONNECTION", test_vespa)
     _populate_db_families(data_db)
+    search_adapter = VespaSearchAdapter(
+        instance_url=VESPA_URL,
+        embedder=ENCODER,
+    )
+
+    mocker.spy(search_adapter, "search")
+
     params = {
         "exact_match": exact_match,
         "query_string": query_string,
@@ -851,9 +967,13 @@ def test_csv_content(
 @pytest.mark.parametrize("label, query", [("search", "the"), ("browse", "")])
 @pytest.mark.parametrize("limit", [100, 250, 500])
 def test_csv_download_search_variable_limit(
-    label, query, limit, test_vespa, data_db, monkeypatch, data_client, mocker
+    label, query, limit, data_db, monkeypatch, data_client, mocker
 ):
-    # monkeypatch.setattr(search, "_VESPA_CONNECTION", test_vespa)
+    search_adapter = VespaSearchAdapter(
+        instance_url=VESPA_URL,
+        embedder=ENCODER,
+    )
+
     _populate_db_families(data_db)
 
     search_adapter = VespaSearchAdapter(
@@ -884,10 +1004,14 @@ def test_csv_download_search_variable_limit(
 
 
 @pytest.mark.search
-def test_csv_download__ignore_extra_fields(
-    test_vespa, data_db, monkeypatch, data_client, mocker
-):
-    # monkeypatch.setattr(search, "_VESPA_CONNECTION", test_vespa)
+def test_csv_download__ignore_extra_fields(data_db, monkeypatch, data_client, mocker):
+    search_adapter = VespaSearchAdapter(
+        instance_url=VESPA_URL,
+        embedder=ENCODER,
+    )
+
+    query_spy = mocker.spy(search_adapter, "search")
+
     _populate_db_families(data_db)
 
     params = {
@@ -901,7 +1025,16 @@ def test_csv_download__ignore_extra_fields(
             CSV_DOWNLOAD_ENDPOINT,
             json=params,
         )
+
     assert download_response.status_code == 200
+
+    actual_params = query_spy.call_args.kwargs["parameters"].model_dump()
+
+    # Check requested params are not changed
+    for key, value in params.items():
+        assert actual_params[key] == value
+
+    query_spy.assert_called_once()
 
 
 @pytest.mark.search
