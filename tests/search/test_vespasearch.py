@@ -1,15 +1,10 @@
-import csv
 import time
-from io import StringIO
 from typing import Mapping
-from unittest.mock import patch
 
 import pytest
-from cpr_sdk.models.search import MetadataFilter
-from db_client.models.dfce import Geography, Slug
+from db_client.models.dfce import Geography
 from db_client.models.dfce.family import FamilyDocument
 from sqlalchemy import update
-from sqlalchemy.orm import Session
 
 from app.api.api_v1.routers import search
 from app.core.lookups import get_country_slug_from_country_code
@@ -23,44 +18,12 @@ from tests.search.setup_search_tests import (
 )
 
 SEARCH_ENDPOINT = "/api/v1/searches"
-CSV_DOWNLOAD_ENDPOINT = "/api/v1/searches/download-csv"
-ALL_DATA_DOWNLOAD_ENDPOINT = "/api/v1/searches/download-all-data"
 
 
 def _make_search_request(client, params: Mapping[str, str]):
     response = client.post(SEARCH_ENDPOINT, json=params)
     assert response.status_code == 200, response.text
     return response.json()
-
-
-def _doc_ids_from_response(test_db: Session, response: dict) -> list[str]:
-    """The response doesnt know about ids, so we look them up using the slug"""
-    document_ids = []
-    for fam in response["families"]:
-        for doc in fam["family_documents"]:
-            family_document = (
-                test_db.query(FamilyDocument)
-                .join(Slug, Slug.family_document_import_id == FamilyDocument.import_id)
-                .filter(Slug.name == doc["document_slug"])
-                .one()
-            )
-            document_ids.append(family_document.import_id)
-
-    return document_ids
-
-
-def _fam_ids_from_response(test_db, response) -> list[str]:
-    """The response doesnt know about ids, so we look them up using the slug"""
-    family_ids = []
-    for fam in response["families"]:
-        family_document = (
-            test_db.query(FamilyDocument)
-            .join(Slug, Slug.family_import_id == FamilyDocument.family_import_id)
-            .filter(Slug.name == fam["family_slug"])
-            .one()
-        )
-        family_ids.append(family_document.family_import_id)
-    return family_ids
 
 
 @pytest.mark.search
@@ -266,7 +229,6 @@ def test_specific_doc_returned(test_vespa, monkeypatch, data_client, data_db):
 def test_search_params_backend_limits(
     test_vespa, monkeypatch, data_client, data_db, extra_params, invalid_field
 ):
-
     monkeypatch.setattr(search, "_VESPA_CONNECTION", test_vespa)
     _populate_db_families(data_db)
 
@@ -737,224 +699,3 @@ def test_accents_ignored(
 
     request_time_ms = 1000 * (end - start)
     assert 0 < body["query_time_ms"] < body["total_time_ms"] < request_time_ms
-
-
-@pytest.mark.parametrize(
-    "family_ids",
-    [
-        ["CCLW.family.1385.0"],
-        ["CCLW.family.10246.0", "CCLW.family.8633.0"],
-        ["CCLW.family.10246.0", "CCLW.family.8633.0", "UNFCCC.family.1267.0"],
-    ],
-)
-@pytest.mark.search
-def test_family_ids_search(
-    test_vespa,
-    data_db,
-    monkeypatch,
-    data_client,
-    family_ids,
-):
-    monkeypatch.setattr(search, "_VESPA_CONNECTION", test_vespa)
-    _populate_db_families(data_db)
-
-    params = {
-        "query_string": "the",
-        "family_ids": family_ids,
-    }
-
-    response = _make_search_request(data_client, params)
-
-    got_family_ids = _fam_ids_from_response(data_db, response)
-    assert sorted(got_family_ids) == sorted(family_ids)
-
-
-@pytest.mark.parametrize(
-    "document_ids",
-    [
-        ["CCLW.executive.1385.5336"],
-        ["CCLW.executive.10246.4861", "UNFCCC.non-party.1267.0"],
-        [
-            "CCLW.executive.8633.3052",
-            "UNFCCC.non-party.1267.0",
-            "CCLW.executive.10246.4861",
-        ],
-    ],
-)
-@pytest.mark.search
-def test_document_ids_search(
-    test_vespa,
-    data_db,
-    monkeypatch,
-    data_client,
-    document_ids,
-):
-    monkeypatch.setattr(search, "_VESPA_CONNECTION", test_vespa)
-    _populate_db_families(data_db)
-
-    params = {
-        "query_string": "the",
-        "document_ids": document_ids,
-    }
-    response = _make_search_request(data_client, params)
-
-    got_document_ids = _doc_ids_from_response(data_db, response)
-    assert sorted(got_document_ids) == sorted(document_ids)
-
-
-@pytest.mark.search
-def test_document_ids_and_family_ids_search(
-    test_vespa,
-    data_db,
-    monkeypatch,
-    data_client,
-):
-    monkeypatch.setattr(search, "_VESPA_CONNECTION", test_vespa)
-    _populate_db_families(data_db)
-
-    # The doc doesnt belong to the family, so we should get no results
-    family_ids = ["UNFCCC.family.1267.0"]
-    document_ids = ["CCLW.executive.10246.4861"]
-    params = {
-        "query_string": "the",
-        "family_ids": family_ids,
-        "document_ids": document_ids,
-    }
-
-    response = _make_search_request(data_client, params)
-    assert len(response["families"]) == 0
-
-
-@pytest.mark.search
-def test_empty_ids_dont_limit_result(
-    test_vespa,
-    data_db,
-    monkeypatch,
-    data_client,
-):
-    monkeypatch.setattr(search, "_VESPA_CONNECTION", test_vespa)
-    _populate_db_families(data_db)
-
-    # We'd expect this to be interpreted as 'unlimited'
-    params = {
-        "query_string": "the",
-        "family_ids": [],
-        "document_ids": [],
-    }
-
-    response = _make_search_request(data_client, params)
-
-    got_document_ids = _doc_ids_from_response(data_db, response)
-    got_family_ids = _fam_ids_from_response(data_db, response)
-
-    assert len(got_family_ids) > 1
-    assert len(got_document_ids) > 1
-
-
-@pytest.mark.search
-@pytest.mark.parametrize("exact_match", [True, False])
-@pytest.mark.parametrize("query_string", ["", "local"])
-def test_csv_content(
-    exact_match, query_string, test_vespa, data_db, monkeypatch, data_client
-):
-    """Make sure that downloaded CSV content matches a given search"""
-    monkeypatch.setattr(search, "_VESPA_CONNECTION", test_vespa)
-    _populate_db_families(data_db)
-    params = {
-        "exact_match": exact_match,
-        "query_string": query_string,
-    }
-    body = _make_search_request(data_client, params)
-    families = body["families"]
-    assert len(families) > 0
-
-    csv_response = data_client.post(
-        CSV_DOWNLOAD_ENDPOINT,
-        json={
-            "exact_match": exact_match,
-            "query_string": query_string,
-        },
-    )
-    assert csv_response.status_code == 200
-
-    csv_content = csv.DictReader(StringIO(csv_response.text))
-    for row, family in zip(csv_content, families):
-        assert row["Family Name"] == family["family_name"]
-        assert row["Family Summary"] == family["family_description"]
-        assert row["Family Publication Date"] == family["family_date"]
-        assert row["Category"] == family["family_category"]
-        assert row["Geography"] == family["family_geography"]
-
-        # TODO: Add collections to test db setup to provide document level coverage
-
-
-@pytest.mark.search
-@pytest.mark.parametrize("label, query", [("search", "the"), ("browse", "")])
-@pytest.mark.parametrize("limit", [100, 250, 500])
-def test_csv_download_search_variable_limit(
-    label, query, limit, test_vespa, data_db, monkeypatch, data_client, mocker
-):
-    monkeypatch.setattr(search, "_VESPA_CONNECTION", test_vespa)
-    _populate_db_families(data_db)
-
-    query_spy = mocker.spy(search._VESPA_CONNECTION, "search")
-
-    params = {
-        "query_string": query,
-        "limit": limit,
-        "page_size": 100,
-        "offset": 0,
-    }
-
-    download_response = data_client.post(
-        CSV_DOWNLOAD_ENDPOINT,
-        json=params,
-    )
-    assert download_response.status_code == 200
-
-    actual_params = query_spy.call_args.kwargs["parameters"].model_dump()
-
-    # Check requested params are not changed
-    for key, value in params.items():
-        assert actual_params[key] == value
-
-
-@pytest.mark.search
-def test_csv_download__ignore_extra_fields(
-    test_vespa, data_db, monkeypatch, data_client, mocker
-):
-    monkeypatch.setattr(search, "_VESPA_CONNECTION", test_vespa)
-    _populate_db_families(data_db)
-
-    params = {
-        "query_string": "winter",
-    }
-
-    # Ensure extra, unspecified fields don't cause an error
-    fields = []
-    with patch("app.core.search._CSV_SEARCH_RESPONSE_COLUMNS", fields):
-        download_response = data_client.post(
-            CSV_DOWNLOAD_ENDPOINT,
-            json=params,
-        )
-    assert download_response.status_code == 200
-
-
-@pytest.mark.search
-def test_all_data_download(data_db, data_client):
-    _populate_db_families(data_db)
-
-    with (
-        patch("app.api.api_v1.routers.search.PIPELINE_BUCKET", "test_pipeline_bucket"),
-        patch("app.api.api_v1.routers.search.DOC_CACHE_BUCKET", "test_cdn_bucket"),
-        patch("app.core.aws.S3Client.is_connected", return_value=True),
-    ):
-        data_client.follow_redirects = False
-        download_response = data_client.get(ALL_DATA_DOWNLOAD_ENDPOINT)
-
-    # Redirects to cdn
-    assert download_response.status_code == 303
-    assert download_response.headers["location"] == (
-        "https://cdn.climatepolicyradar.org/"
-        "navigator/dumps/whole_data_dump-2024-03-22.zip"
-    )
