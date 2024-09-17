@@ -473,13 +473,11 @@ def test_metadata_filter(label, query, test_vespa, data_db, monkeypatch, data_cl
         {"name": metadata[0], "value": metadata_value} for metadata_value in metadata[1]
     ]
 
-    breakpoint()
-
     response = data_client.post(
         SEARCH_ENDPOINT,
         json={
             "query_string": query,
-            "metadata": [{"name": "sector", "value": "Price"}],
+            "metadata": metadata_filters,
         },
     )
     assert response.status_code == 200
