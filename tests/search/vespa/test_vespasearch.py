@@ -1,5 +1,4 @@
 import time
-from typing import Mapping
 
 import pytest
 from db_client.models.dfce.family import FamilyDocument
@@ -7,21 +6,14 @@ from sqlalchemy import update
 
 from app.api.api_v1.routers import search
 from tests.search.vespa.setup_search_tests import (
-    VESPA_FIXTURE_COUNT,
+    SEARCH_ENDPOINT,
     _create_document,
     _create_family,
     _create_family_event,
     _create_family_metadata,
+    _make_search_request,
     _populate_db_families,
 )
-
-SEARCH_ENDPOINT = "/api/v1/searches"
-
-
-def _make_search_request(client, params: Mapping[str, str]):
-    response = client.post(SEARCH_ENDPOINT, json=params)
-    assert response.status_code == 200, response.text
-    return response.json()
 
 
 @pytest.mark.search
