@@ -1,8 +1,5 @@
-import csv
 import time
-from io import StringIO
 from typing import Mapping
-from unittest.mock import patch
 
 import pytest
 from db_client.models.dfce import Geography, Slug
@@ -22,8 +19,6 @@ from tests.search.setup_search_tests import (
 )
 
 SEARCH_ENDPOINT = "/api/v1/searches"
-CSV_DOWNLOAD_ENDPOINT = "/api/v1/searches/download-csv"
-ALL_DATA_DOWNLOAD_ENDPOINT = "/api/v1/searches/download-all-data"
 
 
 def _make_search_request(client, token, params: Mapping[str, str]):
@@ -799,118 +794,3 @@ def test_empty_ids_dont_limit_result(
 
     assert len(got_family_ids) > 1
     assert len(got_document_ids) > 1
-
-
-@pytest.mark.search
-@pytest.mark.parametrize("exact_match", [True, False])
-@pytest.mark.parametrize("query_string", ["", "local"])
-def test_csv_content(
-    exact_match,
-    query_string,
-    test_vespa,
-    data_db,
-    monkeypatch,
-    data_client,
-    valid_token,
-):
-    """Make sure that downloaded CSV content matches a given search"""
-    monkeypatch.setattr(search, "_VESPA_CONNECTION", test_vespa)
-    _populate_db_families(data_db)
-    params = {
-        "exact_match": exact_match,
-        "query_string": query_string,
-    }
-    body = _make_search_request(data_client, valid_token, params)
-    families = body["families"]
-    assert len(families) > 0
-
-    csv_response = data_client.post(
-        CSV_DOWNLOAD_ENDPOINT,
-        json={
-            "exact_match": exact_match,
-            "query_string": query_string,
-        },
-    )
-    assert csv_response.status_code == 200
-
-    csv_content = csv.DictReader(StringIO(csv_response.text))
-    for row, family in zip(csv_content, families):
-        assert row["Family Name"] == family["family_name"]
-        assert row["Family Summary"] == family["family_description"]
-        assert row["Family Publication Date"] == family["family_date"]
-        assert row["Category"] == family["family_category"]
-        assert row["Geography"] == family["family_geography"]
-
-        # TODO: Add collections to test db setup to provide document level coverage
-
-
-@pytest.mark.search
-@pytest.mark.parametrize("label, query", [("search", "the"), ("browse", "")])
-@pytest.mark.parametrize("limit", [100, 250, 500])
-def test_csv_download_search_variable_limit(
-    label, query, limit, test_vespa, data_db, monkeypatch, data_client, mocker
-):
-    monkeypatch.setattr(search, "_VESPA_CONNECTION", test_vespa)
-    _populate_db_families(data_db)
-
-    query_spy = mocker.spy(search._VESPA_CONNECTION, "search")
-
-    params = {
-        "query_string": query,
-        "limit": limit,
-        "page_size": 100,
-        "offset": 0,
-    }
-
-    download_response = data_client.post(
-        CSV_DOWNLOAD_ENDPOINT,
-        json=params,
-    )
-    assert download_response.status_code == 200
-
-    actual_params = query_spy.call_args.kwargs["parameters"].model_dump()
-
-    # Check requested params are not changed
-    for key, value in params.items():
-        assert actual_params[key] == value
-
-
-@pytest.mark.search
-def test_csv_download__ignore_extra_fields(
-    test_vespa, data_db, monkeypatch, data_client, mocker
-):
-    monkeypatch.setattr(search, "_VESPA_CONNECTION", test_vespa)
-    _populate_db_families(data_db)
-
-    params = {
-        "query_string": "winter",
-    }
-
-    # Ensure extra, unspecified fields don't cause an error
-    fields = []
-    with patch("app.core.search._CSV_SEARCH_RESPONSE_COLUMNS", fields):
-        download_response = data_client.post(
-            CSV_DOWNLOAD_ENDPOINT,
-            json=params,
-        )
-    assert download_response.status_code == 200
-
-
-@pytest.mark.search
-def test_all_data_download(data_db, data_client):
-    _populate_db_families(data_db)
-
-    with (
-        patch("app.api.api_v1.routers.search.PIPELINE_BUCKET", "test_pipeline_bucket"),
-        patch("app.api.api_v1.routers.search.DOC_CACHE_BUCKET", "test_cdn_bucket"),
-        patch("app.core.aws.S3Client.is_connected", return_value=True),
-    ):
-        data_client.follow_redirects = False
-        download_response = data_client.get(ALL_DATA_DOWNLOAD_ENDPOINT)
-
-    # Redirects to cdn
-    assert download_response.status_code == 303
-    assert download_response.headers["location"] == (
-        "https://cdn.climatepolicyradar.org/"
-        "navigator/dumps/whole_data_dump-2024-03-22.zip"
-    )

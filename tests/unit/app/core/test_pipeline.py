@@ -17,7 +17,7 @@ def test_generate_pipeline_ingest_input(data_db: Session):
     state_rows = generate_pipeline_ingest_input(data_db)
     assert len(state_rows) == 2
     # Sort to ensure order is consistent across tests
-    sorted(state_rows, key=lambda d: d.import_id)
+    state_rows = sorted(state_rows, key=lambda d: d.import_id, reverse=True)
 
     # Now test one field from each table we've queried
     # Check family title
