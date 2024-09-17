@@ -251,6 +251,11 @@ class SearchResponseFamily(BaseModel):
     The geographical location of the family in ISO 3166-1 alpha-3
     """
 
+    family_geographies: List[str]
+    """
+    The geographical locations of the family in ISO 3166-1 alpha-3
+    """
+
     family_metadata: dict
     """
     An object if metadata for the family, the schema will change given the family_source

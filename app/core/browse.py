@@ -57,6 +57,7 @@ def to_search_response_family(
         family_last_updated_date=family_last_updated_date,
         family_source=cast(str, organisation.name),
         family_geography=geography_value,
+        family_geographies=[row.value for row in family.geographies],
         family_title_match=False,
         family_description_match=False,
         # ↓ Stuff we don't currently use for browse ↓
