@@ -468,7 +468,7 @@ def test_metadata_filter(
 ):
     monkeypatch.setattr(search, "_VESPA_CONNECTION", test_vespa)
 
-    _populate_db_families(data_db)
+    _populate_db_families(data_db, deterministic_metadata=True)
 
     response = data_client.post(
         SEARCH_ENDPOINT,
