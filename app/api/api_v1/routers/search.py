@@ -56,9 +56,9 @@ def _search_request(db: Session, search_body: SearchRequestBody) -> SearchRespon
         search_body.documents_only = True
         search_body.exact_match = False
     try:
-        data_access_search_params = create_vespa_search_params(db, search_body)
-        data_access_search_response = _VESPA_CONNECTION.search(
-            parameters=data_access_search_params
+        cpr_sdk_search_params = create_vespa_search_params(db, search_body)
+        cpr_sdk_search_response = _VESPA_CONNECTION.search(
+            parameters=cpr_sdk_search_params
         )
     except QueryError as e:
         raise HTTPException(
@@ -67,7 +67,7 @@ def _search_request(db: Session, search_body: SearchRequestBody) -> SearchRespon
         )
     return process_vespa_search_response(
         db,
-        data_access_search_response,
+        cpr_sdk_search_response,
         limit=search_body.page_size,
         offset=search_body.offset,
     ).increment_pages()

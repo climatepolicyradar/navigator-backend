@@ -326,6 +326,8 @@ def _convert_filters(
         return None
 
 
+# TODO: I think something in here is converting the metadata incorrectly
+# TODO: Add a test for this function
 def _process_vespa_search_response_families(
     db: Session,
     vespa_families: Sequence[CprSdkResponseFamily],
@@ -341,6 +343,8 @@ def _process_vespa_search_response_families(
     vespa_families_to_process = vespa_families[offset : limit + offset]
     all_response_family_ids = [vf.id for vf in vespa_families_to_process]
 
+    # TODO: Disparity between what's in postgres and vespa
+    breakpoint()
     family_and_family_metadata: Sequence[tuple[Family, FamilyMetadata]] = (
         db.query(Family, FamilyMetadata)
         .filter(Family.import_id.in_(all_response_family_ids))

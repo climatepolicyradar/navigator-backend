@@ -5,6 +5,7 @@ from typing import Mapping
 from unittest.mock import patch
 
 import pytest
+from cpr_sdk.models.search import MetadataFilter
 from db_client.models.dfce import Geography, Slug
 from db_client.models.dfce.family import FamilyDocument
 from sqlalchemy import update
@@ -445,6 +446,49 @@ def test_invalid_keyword_filters(
         },
     )
     assert response.status_code == 422
+
+
+@pytest.mark.search
+@pytest.mark.parametrize("label,query", [("search", "the"), ("browse", "")])
+def test_metadata_filter(label, query, test_vespa, data_db, monkeypatch, data_client):
+    monkeypatch.setattr(search, "_VESPA_CONNECTION", test_vespa)
+
+    _populate_db_families(data_db)
+
+    response = data_client.post(
+        SEARCH_ENDPOINT,
+        json={
+            "query_string": query,
+        },
+    )
+    assert response.status_code == 200
+    assert len(response.json()["families"]) > 0
+
+    # In the create metadata function we can produce these: [('author', [])], so this
+    # could need updating.
+    metadata: tuple = next(
+        iter(response.json()["families"][0]["family_metadata"].items())
+    )
+    metadata_filters: list[dict] = [
+        {"name": metadata[0], "value": metadata_value} for metadata_value in metadata[1]
+    ]
+
+    breakpoint()
+
+    response = data_client.post(
+        SEARCH_ENDPOINT,
+        json={
+            "query_string": query,
+            "metadata": [{"name": "sector", "value": "Price"}],
+        },
+    )
+    assert response.status_code == 200
+    assert len(response.json()["families"]) > 0
+
+    for metadata_filter in metadata_filters:
+        for f in response.json()["families"]:
+            assert metadata_filter["name"] in f["family_metadata"].keys()
+            assert metadata_filter["value"] in f["family_metadata"].values()
 
 
 @pytest.mark.search
