@@ -27,7 +27,7 @@ from db_client.models.organisation.corpus import Corpus, CorpusType, Organisatio
 from sqlalchemy.orm import Session
 
 VESPA_FIXTURE_COUNT = 5
-FIXTURE_DIR = Path(__file__).parent / "search_fixtures"
+FIXTURE_DIR = Path(__file__).parent / "fixtures"
 VESPA_FAMILY_PATH = FIXTURE_DIR / "vespa_family_document.json"
 VESPA_DOCUMENT_PATH = FIXTURE_DIR / "vespa_document_passage.json"
 

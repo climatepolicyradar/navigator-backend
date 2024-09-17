@@ -6,7 +6,7 @@ from db_client.models.dfce.family import FamilyDocument
 from sqlalchemy.orm import Session
 
 from app.api.api_v1.routers import search
-from tests.search.setup_search_tests import _populate_db_families
+from tests.search.vespa.setup_search_tests import _populate_db_families
 
 SEARCH_ENDPOINT = "/api/v1/searches"
 

@@ -8,7 +8,7 @@ from sqlalchemy import update
 
 from app.api.api_v1.routers import search
 from app.core.lookups import get_country_slug_from_country_code
-from tests.search.setup_search_tests import (
+from tests.search.vespa.setup_search_tests import (
     VESPA_FIXTURE_COUNT,
     _create_document,
     _create_family,
