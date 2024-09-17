@@ -1,20 +1,11 @@
-from typing import Mapping
-
 import pytest
 
 from app.api.api_v1.routers import search
 from tests.search.vespa.setup_search_tests import (
     VESPA_FIXTURE_COUNT,
+    _make_search_request,
     _populate_db_families,
 )
-
-SEARCH_ENDPOINT = "/api/v1/searches"
-
-
-def _make_search_request(client, params: Mapping[str, str]):
-    response = client.post(SEARCH_ENDPOINT, json=params)
-    assert response.status_code == 200, response.text
-    return response.json()
 
 
 @pytest.mark.search
