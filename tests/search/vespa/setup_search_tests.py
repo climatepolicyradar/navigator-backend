@@ -27,8 +27,17 @@ from db_client.models.document.physical_document import (
 from db_client.models.organisation.corpus import Corpus, CorpusType, Organisation
 from sqlalchemy.orm import Session
 
+SEARCH_ENDPOINT = "/api/v1/searches"
+
+
+def _make_search_request(client, params: Mapping[str, str]):
+    response = client.post(SEARCH_ENDPOINT, json=params)
+    assert response.status_code == 200, response.text
+    return response.json()
+
+
 VESPA_FIXTURE_COUNT = 5
-FIXTURE_DIR = Path(__file__).parent / "search_fixtures"
+FIXTURE_DIR = Path(__file__).parent / "fixtures"
 VESPA_FAMILY_PATH = FIXTURE_DIR / "vespa_family_document.json"
 VESPA_DOCUMENT_PATH = FIXTURE_DIR / "vespa_document_passage.json"
 

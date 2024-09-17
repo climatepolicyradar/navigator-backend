@@ -1,20 +1,13 @@
-from typing import Mapping
-
 import pytest
 from db_client.models.dfce import Slug
 from db_client.models.dfce.family import FamilyDocument
 from sqlalchemy.orm import Session
 
 from app.api.api_v1.routers import search
-from tests.search.setup_search_tests import _populate_db_families
-
-SEARCH_ENDPOINT = "/api/v1/searches"
-
-
-def _make_search_request(client, params: Mapping[str, str]):
-    response = client.post(SEARCH_ENDPOINT, json=params)
-    assert response.status_code == 200, response.text
-    return response.json()
+from tests.search.vespa.setup_search_tests import (
+    _make_search_request,
+    _populate_db_families,
+)
 
 
 def _doc_ids_from_response(test_db: Session, response: dict) -> list[str]:
