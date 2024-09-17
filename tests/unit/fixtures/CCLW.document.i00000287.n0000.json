@@ -1,0 +1,24 @@
+{
+  "title": "Published in Bulletin of Acts, Orders, and Decrees",
+  "slug": "published-in-bulletin-of-acts-orders-and-decrees_fbf2",
+  "md5_sum": "a2f4c4d5a3ad34b4aba9b84e15eacc8a",
+  "url": "https://zoek.officielebekendmakingen.nl/stb-2018-292.pdf",
+  "content_type": "application/pdf",
+  "import_id": "CCLW.document.i00000287.n0000",
+  "language_variant": "Original Language",
+  "status": "PUBLISHED",
+  "metadata": {
+    "role": ["MAIN"],
+    "type": ["Plan"]
+  },
+  "languages": ["eng"],
+  "events": [
+    {
+      "import_id": "CPR.Event.33.0",
+      "title": "Published",
+      "date": "2019-12-25",
+      "type": "Passed/Approved",
+      "status": "OK"
+    }
+  ]
+}

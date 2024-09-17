@@ -1,0 +1,24 @@
+{
+  "title": "Azerbaijan 2030: National Policies for Socio-economic Development ",
+  "slug": "azerbaijan-2030-national-policies-for-socio-economic-development_6170",
+  "md5_sum": null,
+  "url": "https://president.az/en/articles/view/50474",
+  "content_type": "text/html",
+  "import_id": "CCLW.document.i00000222.n0000",
+  "language_variant": "Original Language",
+  "status": "PUBLISHED",
+  "metadata": {
+    "role": ["MAIN"],
+    "type": ["Plan"]
+  },
+  "languages": ["eng"],
+  "events": [
+    {
+      "import_id": "CPR.Event.30.0",
+      "title": "Published",
+      "date": "2019-12-25",
+      "type": "Passed/Approved",
+      "status": "OK"
+    }
+  ]
+}

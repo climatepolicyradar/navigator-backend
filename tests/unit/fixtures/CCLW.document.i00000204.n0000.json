@@ -1,0 +1,24 @@
+{
+  "title": "Delivering 30by30 on land in England",
+  "slug": "delivering-30by30-on-land-in-england_4b97",
+  "md5_sum": "2f71b8bb629775fb8f3c47d70cc327ca",
+  "url": "https://assets.publishing.service.gov.uk/media/65807a5e23b70a000d234b5d/Delivering_30by30_on_land_in_England.pdf",
+  "content_type": "application/pdf",
+  "import_id": "CCLW.document.i00000204.n0000",
+  "language_variant": "Original Language",
+  "status": "PUBLISHED",
+  "metadata": {
+    "role": ["MAIN"],
+    "type": ["Plan"]
+  },
+  "languages": ["eng"],
+  "events": [
+    {
+      "import_id": "CPR.Event.28.0",
+      "title": "Published",
+      "date": "2019-12-25",
+      "type": "Passed/Approved",
+      "status": "OK"
+    }
+  ]
+}

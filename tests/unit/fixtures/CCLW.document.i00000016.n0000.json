@@ -1,0 +1,24 @@
+{
+  "title": "Decree",
+  "slug": "decree_35ee",
+  "md5_sum": null,
+  "url": "https://www.legifrance.gouv.fr/jorf/id/JORFTEXT000031740341",
+  "content_type": "text/html",
+  "import_id": "CCLW.document.i00000016.n0000",
+  "language_variant": "Original Language",
+  "status": "DELETED",
+  "metadata": {
+    "role": ["MAIN"],
+    "type": ["Plan"]
+  },
+  "languages": ["eng"],
+  "events": [
+    {
+      "import_id": "CPR.Event.16.0",
+      "title": "Published",
+      "date": "2019-12-25",
+      "type": "Passed/Approved",
+      "status": "OK"
+    }
+  ]
+}

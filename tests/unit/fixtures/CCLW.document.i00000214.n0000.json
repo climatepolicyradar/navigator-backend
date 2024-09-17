@@ -1,0 +1,24 @@
+{
+  "title": "Document title",
+  "slug": "regulation-on-ozone-depleting-substances_ff44",
+  "md5_sum": null,
+  "url": "https://faolex.fao.org/docs/pdf/mne204562.pdf",
+  "content_type": null,
+  "import_id": "CCLW.document.i00000214.n0000",
+  "language_variant": "Original Language",
+  "status": "PUBLISHED",
+  "metadata": {
+    "role": ["MAIN"],
+    "type": ["Plan"]
+  },
+  "languages": ["eng"],
+  "events": [
+    {
+      "import_id": "CPR.Event.29.0",
+      "title": "Published",
+      "date": "2019-12-25",
+      "type": "Passed/Approved",
+      "status": "OK"
+    }
+  ]
+}
