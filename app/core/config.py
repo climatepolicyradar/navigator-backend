@@ -1,5 +1,5 @@
 import os
-from typing import Final, Optional
+from typing import Final
 
 PROJECT_NAME = "navigator"
 
@@ -11,7 +11,7 @@ PUBLIC_APP_URL = os.environ["PUBLIC_APP_URL"].rstrip("/")
 API_V1_STR = "/api/v1"
 
 # Vespa Config
-VESPA_SECRETS_LOCATION: Optional[str] = os.getenv("VESPA_SECRETS_LOCATION", None)
+VESPA_SECRETS_LOCATION: str = os.getenv("VESPA_SECRETS_LOCATION", "/secrets")
 VESPA_URL: str = os.environ["VESPA_URL"]
 
 # Shared search config
