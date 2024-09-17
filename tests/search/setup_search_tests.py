@@ -194,7 +194,9 @@ def _create_family_metadata_deterministic(db: Session, family: VespaFixture):
     if not family_metadata:
         return
     for metadata in family_metadata:
-        metadata_values[metadata["name"]].append(metadata["value"])
+        name = metadata["name"]  # type: ignore
+        value = metadata["value"]  # type: ignore
+        metadata_values[name].append(value)
 
     family_metadata = FamilyMetadata(
         family_import_id=family["fields"]["family_import_id"],
