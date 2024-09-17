@@ -142,8 +142,17 @@ def search_documents(
     if not app_url.endswith("/"):
         app_url += "/"
 
-    allowed_corpora_ids = decode_config_token(app_token, str(cast(HttpUrl, app_url)))
-    _LOGGER.info(f"Corpora IDs {str(allowed_corpora_ids)}")
+    try:
+        allowed_corpora_ids = decode_config_token(
+            app_token, str(cast(HttpUrl, app_url))
+        )
+        _LOGGER.info(f"Corpora IDs {str(allowed_corpora_ids)}")
+    except PyJWTError:
+        raise HTTPException(
+            status_code=status.HTTP_400_BAD_REQUEST,
+            detail="Could not validate configuration token",
+            headers={"WWW-Authenticate": "Bearer"},
+        )
 
     _LOGGER.info(
         "Search request",
@@ -157,14 +166,7 @@ def search_documents(
     )
 
     _LOGGER.info("Starting search...")
-    try:
-        return _search_request(db=db, search_body=search_body)
-    except PyJWTError:
-        raise HTTPException(
-            status_code=status.HTTP_400_BAD_REQUEST,
-            detail="Could not validate configuration token",
-            headers={"WWW-Authenticate": "Bearer"},
-        )
+    return _search_request(db=db, search_body=search_body)
 
 
 @search_router.post("/searches/download-csv", include_in_schema=False)
