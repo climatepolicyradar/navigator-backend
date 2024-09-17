@@ -449,29 +449,26 @@ def test_invalid_keyword_filters(
 
 
 @pytest.mark.search
-@pytest.mark.parametrize("label,query", [("search", "the"), ("browse", "")])
-def test_metadata_filter(label, query, test_vespa, data_db, monkeypatch, data_client):
+@pytest.mark.parametrize(
+    "label,query,metadata_filters",
+    [
+        ("search", "the", [{"name": "sector", "value": "Price"}]),
+        (
+            "browse",
+            "",
+            [
+                {"name": "topic", "value": "Mitigation"},
+                {"name": "instrument", "value": "Capacity building"},
+            ],
+        ),
+    ],
+)
+def test_metadata_filter(
+    label, query, metadata_filters, test_vespa, data_db, monkeypatch, data_client
+):
     monkeypatch.setattr(search, "_VESPA_CONNECTION", test_vespa)
 
     _populate_db_families(data_db)
-
-    response = data_client.post(
-        SEARCH_ENDPOINT,
-        json={
-            "query_string": query,
-        },
-    )
-    assert response.status_code == 200
-    assert len(response.json()["families"]) > 0
-
-    # In the create metadata function we can produce these: [('author', [])], so this
-    # could need updating.
-    metadata: tuple = next(
-        iter(response.json()["families"][0]["family_metadata"].items())
-    )
-    metadata_filters: list[dict] = [
-        {"name": metadata[0], "value": metadata_value} for metadata_value in metadata[1]
-    ]
 
     response = data_client.post(
         SEARCH_ENDPOINT,
@@ -485,8 +482,11 @@ def test_metadata_filter(label, query, test_vespa, data_db, monkeypatch, data_cl
 
     for metadata_filter in metadata_filters:
         for f in response.json()["families"]:
-            assert metadata_filter["name"] in f["family_metadata"].keys()
-            assert metadata_filter["value"] in f["family_metadata"].values()
+            assert metadata_filter["name"] in f["family_metadata"]
+            assert (
+                metadata_filter["value"]
+                in f["family_metadata"][metadata_filter["name"]]
+            )
 
 
 @pytest.mark.search

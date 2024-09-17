@@ -1,5 +1,6 @@
 import json
 import random
+from collections import defaultdict
 from datetime import datetime
 from pathlib import Path
 from typing import Iterable, Mapping, Optional, Sequence
@@ -165,18 +166,16 @@ def _get_taxonomy(db: Session, org_name: str):
 
 
 def _create_family_metadata(db: Session, family: VespaFixture):
-    if family["fields"]["family_source"] in ["UNFCCC", "CCLW"]:
-        taxonomy = _get_taxonomy(db, family["fields"]["family_source"])
-    else:
-        raise ValueError(
-            f"Could not get taxonomy for: {family['fields']['family_source']}"
-        )
-    metadata_value = _generate_synthetic_metadata(taxonomy)
+    metadata_values = defaultdict(list)
+    family_metadata = family["fields"]["metadata"]
+    if not family_metadata:
+        return
+    for metadata in family_metadata:
+        metadata_values[metadata["name"]].append(metadata["value"])
 
-    family_import_id = family["fields"]["family_import_id"]
     family_metadata = FamilyMetadata(
-        family_import_id=family_import_id,
-        value=metadata_value,
+        family_import_id=family["fields"]["family_import_id"],
+        value=metadata_values,
     )
     db.add(family_metadata)
     db.commit()
