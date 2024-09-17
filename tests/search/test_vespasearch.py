@@ -5,6 +5,7 @@ from typing import Mapping
 from unittest.mock import patch
 
 import pytest
+from cpr_sdk.models.search import MetadataFilter
 from db_client.models.dfce import Geography, Slug
 from db_client.models.dfce.family import FamilyDocument
 from sqlalchemy import update
@@ -445,6 +446,47 @@ def test_invalid_keyword_filters(
         },
     )
     assert response.status_code == 422
+
+
+@pytest.mark.search
+@pytest.mark.parametrize(
+    "label,query,metadata_filters",
+    [
+        ("search", "the", [{"name": "sector", "value": "Price"}]),
+        (
+            "browse",
+            "",
+            [
+                {"name": "topic", "value": "Mitigation"},
+                {"name": "instrument", "value": "Capacity building"},
+            ],
+        ),
+    ],
+)
+def test_metadata_filter(
+    label, query, metadata_filters, test_vespa, data_db, monkeypatch, data_client
+):
+    monkeypatch.setattr(search, "_VESPA_CONNECTION", test_vespa)
+
+    _populate_db_families(data_db, deterministic_metadata=True)
+
+    response = data_client.post(
+        SEARCH_ENDPOINT,
+        json={
+            "query_string": query,
+            "metadata": metadata_filters,
+        },
+    )
+    assert response.status_code == 200
+    assert len(response.json()["families"]) > 0
+
+    for metadata_filter in metadata_filters:
+        for f in response.json()["families"]:
+            assert metadata_filter["name"] in f["family_metadata"]
+            assert (
+                metadata_filter["value"]
+                in f["family_metadata"][metadata_filter["name"]]
+            )
 
 
 @pytest.mark.search
