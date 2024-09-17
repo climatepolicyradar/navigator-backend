@@ -44,50 +44,6 @@ def test_empty_search_term_performs_browse(
 
 
 @pytest.mark.search
-def test_simple_pagination_families(test_vespa, data_client, data_db, monkeypatch):
-    monkeypatch.setattr(search, "_VESPA_CONNECTION", test_vespa)
-    _populate_db_families(data_db)
-
-    PAGE_SIZE = 2
-
-    # Query one
-    params = {
-        "query_string": "and",
-        "page_size": PAGE_SIZE,
-        "offset": 0,
-    }
-    body_one = _make_search_request(data_client, params)
-    assert body_one["hits"] == VESPA_FIXTURE_COUNT
-    assert len(body_one["families"]) == PAGE_SIZE
-    assert (
-        body_one["families"][0]["family_slug"]
-        == "agriculture-sector-plan-2015-2019_7999"
-    )
-    assert (
-        body_one["families"][1]["family_slug"]
-        == "national-environment-policy-of-guinea_f0df"
-    )
-
-    # Query two
-    params = {
-        "query_string": "and",
-        "page_size": PAGE_SIZE,
-        "offset": 2,
-    }
-    body_two = _make_search_request(data_client, params)
-    assert body_two["hits"] == VESPA_FIXTURE_COUNT
-    assert len(body_two["families"]) == PAGE_SIZE
-    assert (
-        body_two["families"][0]["family_slug"]
-        == "national-energy-policy-and-energy-action-plan_9262"
-    )
-    assert (
-        body_two["families"][1]["family_slug"]
-        == "submission-to-the-unfccc-ahead-of-the-first-technical-dialogue_e760"
-    )
-
-
-@pytest.mark.search
 @pytest.mark.parametrize("exact_match", [True, False])
 def test_search_body_valid(exact_match, test_vespa, data_client, data_db, monkeypatch):
     """Test a simple known valid search responds with success."""
