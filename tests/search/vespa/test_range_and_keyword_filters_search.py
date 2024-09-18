@@ -1,5 +1,6 @@
 import pytest
 from db_client.models.dfce import Geography
+from fastapi import status
 
 from app.api.api_v1.routers import search
 from app.core.lookups import get_country_slug_from_country_code
@@ -156,7 +157,12 @@ def test_invalid_keyword_filters(
             "unknown_filter_no1": ["BOOM"],
         },
     }
-    _make_search_request(data_client, valid_token, params, expected_status_code=422)
+    _make_search_request(
+        data_client,
+        valid_token,
+        params,
+        expected_status_code=status.HTTP_422_UNPROCESSABLE_ENTITY,
+    )
 
 
 @pytest.mark.search

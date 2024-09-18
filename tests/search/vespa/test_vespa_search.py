@@ -1,5 +1,6 @@
 import pytest
 from db_client.models.dfce.family import FamilyDocument
+from fastapi import status
 from sqlalchemy import update
 
 from app.api.api_v1.routers import search
@@ -189,7 +190,10 @@ def test_search_params_backend_limits(
 
     params = {"query_string": "the", **extra_params}
     response = _make_search_request(
-        data_client, valid_token, params, expected_status_code=422
+        data_client,
+        valid_token,
+        params,
+        expected_status_code=status.HTTP_422_UNPROCESSABLE_ENTITY,
     )
     for error in response["detail"]:
         assert "body" in error["loc"], error

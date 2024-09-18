@@ -25,13 +25,17 @@ from db_client.models.document.physical_document import (
     PhysicalDocumentLanguage,
 )
 from db_client.models.organisation.corpus import Corpus, CorpusType, Organisation
+from fastapi import status
 from sqlalchemy.orm import Session
 
 SEARCH_ENDPOINT = "/api/v1/searches"
 
 
 def _make_search_request(
-    client, token, params: Mapping[str, str], expected_status_code: int = 200
+    client,
+    token,
+    params: Mapping[str, str],
+    expected_status_code: int = status.HTTP_200_OK,
 ):
     response = client.post(SEARCH_ENDPOINT, json=params, headers={"app-token": token})
     assert response.status_code == expected_status_code, response.text
