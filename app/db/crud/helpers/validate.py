@@ -17,6 +17,6 @@ def validate_corpora_ids(db: Session, allowed_corpora_ids: list[str]) -> bool:
     """
     existing_corpora_in_db = db.scalars(select(distinct(Corpus.import_id))).all()
     validate_success = all(
-        corpus in existing_corpora_in_db for corpus in allowed_corpora_ids
+        corpus in allowed_corpora_ids for corpus in existing_corpora_in_db
     )
     return validate_success
