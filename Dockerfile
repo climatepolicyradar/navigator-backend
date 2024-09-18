@@ -21,7 +21,6 @@ RUN poetry install --no-root
 # Download the sentence transformer model
 RUN mkdir /models
 RUN mkdir /secrets
-RUN python3 -c "from sentence_transformers import SentenceTransformer; SentenceTransformer('msmarco-distilbert-dot-v5', cache_folder='/models')"
 
 # Copy files to image
 COPY app ./app
