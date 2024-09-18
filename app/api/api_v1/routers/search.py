@@ -146,7 +146,8 @@ def search_documents(
             app_token, str(cast(HttpUrl, app_url))
         )
         _LOGGER.info(f"Corpora IDs {str(allowed_corpora_ids)}")
-    except PyJWTError:
+    except PyJWTError as e:
+        _LOGGER.error(e)
         raise HTTPException(
             status_code=status.HTTP_400_BAD_REQUEST,
             detail="Could not validate configuration token",
