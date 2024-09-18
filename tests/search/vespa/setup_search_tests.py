@@ -1,5 +1,6 @@
 import json
 import random
+from collections import defaultdict
 from datetime import datetime
 from pathlib import Path
 from typing import Iterable, Mapping, Optional, Sequence
@@ -26,8 +27,17 @@ from db_client.models.document.physical_document import (
 from db_client.models.organisation.corpus import Corpus, CorpusType, Organisation
 from sqlalchemy.orm import Session
 
+SEARCH_ENDPOINT = "/api/v1/searches"
+
+
+def _make_search_request(client, params: Mapping[str, str]):
+    response = client.post(SEARCH_ENDPOINT, json=params)
+    assert response.status_code == 200, response.text
+    return response.json()
+
+
 VESPA_FIXTURE_COUNT = 5
-FIXTURE_DIR = Path(__file__).parent / "search_fixtures"
+FIXTURE_DIR = Path(__file__).parent / "fixtures"
 VESPA_FAMILY_PATH = FIXTURE_DIR / "vespa_family_document.json"
 VESPA_DOCUMENT_PATH = FIXTURE_DIR / "vespa_document_passage.json"
 
@@ -63,7 +73,9 @@ def _fixture_docs() -> Iterable[tuple[VespaFixture, VespaFixture]]:
         yield doc, family
 
 
-def _populate_db_families(db: Session, max_docs: int = VESPA_FIXTURE_COUNT) -> None:
+def _populate_db_families(
+    db: Session, max_docs: int = VESPA_FIXTURE_COUNT, deterministic_metadata=False
+) -> None:
     """
     Sets up the database using fixtures
 
@@ -75,7 +87,10 @@ def _populate_db_families(db: Session, max_docs: int = VESPA_FIXTURE_COUNT) -> N
         if doc["fields"]["family_document_ref"] not in seen_family_ids:
             _create_family(db, family)
             _create_family_event(db, family)
-            _create_family_metadata(db, family)
+            if not deterministic_metadata:
+                _create_family_metadata(db, family)
+            else:
+                _create_family_metadata_deterministic(db, family)
             seen_family_ids.append(doc["fields"]["family_document_ref"])
         _create_document(db, doc, family)
         if count == max_docs:
@@ -177,6 +192,24 @@ def _create_family_metadata(db: Session, family: VespaFixture):
     family_metadata = FamilyMetadata(
         family_import_id=family_import_id,
         value=metadata_value,
+    )
+    db.add(family_metadata)
+    db.commit()
+
+
+def _create_family_metadata_deterministic(db: Session, family: VespaFixture):
+    metadata_values = defaultdict(list)
+    family_metadata = family["fields"]["metadata"]
+    if not family_metadata:
+        return
+    for metadata in family_metadata:
+        name = metadata["name"]  # type: ignore
+        value = metadata["value"]  # type: ignore
+        metadata_values[name].append(value)
+
+    family_metadata = FamilyMetadata(
+        family_import_id=family["fields"]["family_import_id"],
+        value=metadata_values,
     )
     db.add(family_metadata)
     db.commit()

@@ -273,9 +273,9 @@ def _convert_filter_field(filter_field: str) -> Optional[str]:
     if filter_field == FilterField.CATEGORY:
         return filter_fields["category"]
     if filter_field == FilterField.COUNTRY:
-        return filter_fields["geography"]
+        return filter_fields["geographies"]
     if filter_field == FilterField.REGION:
-        return filter_fields["geography"]
+        return filter_fields["geographies"]
     if filter_field == FilterField.LANGUAGE:
         return filter_fields["language"]
     if filter_field == FilterField.SOURCE:
@@ -310,7 +310,7 @@ def _convert_filters(
             new_keyword_filters[new_field] = new_values
 
     # Regions and countries filters should only include the overlap
-    geo_field = filter_fields["geography"]
+    geo_field = filter_fields["geographies"]
     if regions and countries:
         values = list(set(countries).intersection(regions))
         if values:
@@ -326,6 +326,7 @@ def _convert_filters(
         return None
 
 
+# TODO: Add a test for this function
 def _process_vespa_search_response_families(
     db: Session,
     vespa_families: Sequence[CprSdkResponseFamily],
@@ -341,6 +342,7 @@ def _process_vespa_search_response_families(
     vespa_families_to_process = vespa_families[offset : limit + offset]
     all_response_family_ids = [vf.id for vf in vespa_families_to_process]
 
+    # TODO: Potential disparity between what's in postgres and vespa
     family_and_family_metadata: Sequence[tuple[Family, FamilyMetadata]] = (
         db.query(Family, FamilyMetadata)
         .filter(Family.import_id.in_(all_response_family_ids))
@@ -391,6 +393,7 @@ def _process_vespa_search_response_families(
                 or hit.family_category is None
                 or hit.family_source is None
                 or hit.family_geography is None
+                or hit.family_geographies is None
             ):
                 _LOGGER.error(
                     "Skipping hit with empty required family info for import "
@@ -424,6 +427,7 @@ def _process_vespa_search_response_families(
                     prev_continuation_token=vespa_family.prev_continuation_token,
                     family_documents=[],
                     family_geography=hit.family_geography,
+                    family_geographies=hit.family_geographies,
                     family_metadata=cast(dict, db_family_metadata.value),
                 )
                 response_family_lookup[family_import_id] = response_family
@@ -478,7 +482,6 @@ def _process_vespa_search_response_families(
 
         response_families.append(response_family)
         response_family = None
-
     return response_families
 
 

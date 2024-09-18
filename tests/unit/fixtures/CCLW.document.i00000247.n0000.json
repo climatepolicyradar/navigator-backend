@@ -1,0 +1,24 @@
+{
+  "title": "Law on the Efficient Use of Energy Sources and Energy Efficiency ",
+  "slug": "law-on-the-efficient-use-of-energy-sources-and-energy-efficiency_98da",
+  "md5_sum": null,
+  "url": "https://e-qanun.az/framework/48129",
+  "content_type": "text/html",
+  "import_id": "CCLW.document.i00000247.n0000",
+  "language_variant": "Original Language",
+  "status": "PUBLISHED",
+  "metadata": {
+    "role": ["MAIN"],
+    "type": ["Plan"]
+  },
+  "languages": ["eng"],
+  "events": [
+    {
+      "import_id": "CPR.Event.31.0",
+      "title": "Published",
+      "date": "2019-12-25",
+      "type": "Passed/Approved",
+      "status": "OK"
+    }
+  ]
+}

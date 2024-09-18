@@ -8,6 +8,7 @@ from cpr_sdk.models.search import Document as CprSdkDocument
 from cpr_sdk.models.search import Family as CprSdkFamily
 from cpr_sdk.models.search import Filters as CprSdkFilters
 from cpr_sdk.models.search import Hit as CprSdkHit
+from cpr_sdk.models.search import MetadataFilter
 from cpr_sdk.models.search import Passage as CprSdkPassage
 from cpr_sdk.models.search import SearchResponse as CprSdkSearchResponse
 from cpr_sdk.models.search import filter_fields
@@ -39,7 +40,7 @@ from app.core.search import (
     (
         "query_string,exact_match,year_range,sort_field,sort_order,"
         "keyword_filters,max_passages,page_size,offset,continuation_tokens,"
-        "family_ids,document_ids"
+        "family_ids,document_ids,metadata_filters,corpus_type_names,corpus_import_ids"
     ),
     [
         (
@@ -52,6 +53,9 @@ from app.core.search import (
             10,
             10,
             10,
+            None,
+            None,
+            None,
             None,
             None,
             None,
@@ -69,6 +73,9 @@ from app.core.search import (
             ["ABC"],
             None,
             None,
+            None,
+            None,
+            None,
         ),
         (
             "hello",
@@ -80,6 +87,9 @@ from app.core.search import (
             20,
             10,
             0,
+            None,
+            None,
+            None,
             None,
             None,
             None,
@@ -100,6 +110,9 @@ from app.core.search import (
             ["ABC"],
             None,
             None,
+            None,
+            None,
+            None,
         ),
         (
             "hello",
@@ -111,6 +124,9 @@ from app.core.search import (
             10,
             10,
             0,
+            None,
+            None,
+            None,
             None,
             None,
             None,
@@ -128,6 +144,9 @@ from app.core.search import (
             ["ABC", "ADDD"],
             None,
             None,
+            None,
+            None,
+            None,
         ),
         (
             "hello",
@@ -142,6 +161,9 @@ from app.core.search import (
             None,
             None,
             ["CCLW.document.1.0"],
+            None,
+            None,
+            None,
         ),
         (
             "world",
@@ -155,6 +177,9 @@ from app.core.search import (
             0,
             ["ABC"],
             ["CCLW.executive.1.0"],
+            None,
+            None,
+            None,
             None,
         ),
         (
@@ -170,6 +195,9 @@ from app.core.search import (
             None,
             ["CCLW.executive.1.0"],
             ["CCLW.document.1.0", "CCLW.document.2.0"],
+            None,
+            None,
+            None,
         ),
         (
             "world",
@@ -184,6 +212,63 @@ from app.core.search import (
             ["ABC"],
             ["CCLW.executive.1.0", "CCLW.executive.2.0"],
             ["CCLW.document.1.0", "CCLW.document.2.0"],
+            None,
+            None,
+            None,
+        ),
+        (
+            "world",
+            True,
+            None,
+            None,
+            "desc",
+            None,
+            10,
+            10,
+            0,
+            None,
+            None,
+            None,
+            [
+                {"name": "family.sector", "value": "Price"},
+                {"name": "family.topic", "value": "Mitigation"},
+            ],
+            None,
+            None,
+        ),
+        (
+            "world",
+            True,
+            None,
+            None,
+            "desc",
+            None,
+            10,
+            10,
+            0,
+            None,
+            None,
+            None,
+            None,
+            ["UNFCCC Submissions", "Laws and Policies"],
+            None,
+        ),
+        (
+            "world",
+            True,
+            None,
+            None,
+            "desc",
+            None,
+            10,
+            10,
+            0,
+            None,
+            None,
+            None,
+            None,
+            None,
+            ["CCLW.corpus.1.0", "CCLW.corpus.2.0"],
         ),
     ],
 )
@@ -201,6 +286,9 @@ def test_create_vespa_search_params(
     continuation_tokens,
     family_ids,
     document_ids,
+    metadata_filters,
+    corpus_type_names,
+    corpus_import_ids,
 ):
     search_request_body = SearchRequestBody(
         query_string=query_string,
@@ -215,6 +303,13 @@ def test_create_vespa_search_params(
         page_size=page_size,
         offset=offset,
         continuation_tokens=continuation_tokens,
+        corpus_type_names=corpus_type_names,
+        corpus_import_ids=corpus_import_ids,
+        metadata=(
+            [MetadataFilter.model_validate(mdata) for mdata in metadata_filters]
+            if metadata_filters is not None
+            else []
+        ),
     )
 
     # First step, just make sure we can create a validated pydantic model
@@ -256,7 +351,13 @@ def test_create_vespa_search_params(
                 if "family_source" in converted_keyword_filters.keys()
                 else []
             ),
+            family_geographies=(
+                converted_keyword_filters["family_geographies"]
+                if "family_geographies" in converted_keyword_filters.keys()
+                else []
+            ),
         )
+
     else:
         assert not produced_search_parameters.keyword_filters
         assert not produced_search_parameters.filters
@@ -264,13 +365,24 @@ def test_create_vespa_search_params(
     assert produced_search_parameters.sort_by == sort_field
     assert produced_search_parameters.sort_order == sort_order
 
+    assert produced_search_parameters.metadata == (
+        [
+            MetadataFilter.model_validate({"name": mdata.name, "value": mdata.value})
+            for mdata in produced_search_parameters.metadata
+        ]
+        if produced_search_parameters.metadata is not None
+        else []
+    )
+    assert corpus_type_names == produced_search_parameters.corpus_type_names
+    assert corpus_import_ids == produced_search_parameters.corpus_import_ids
+
 
 @pytest.mark.search
 @pytest.mark.parametrize(
     (
         "exact_match,year_range,sort_field,sort_order,"
         "keyword_filters,max_passages,page_size,offset,continuation_tokens,"
-        "family_ids,document_ids"
+        "family_ids,document_ids,metadata_filters,corpus_type_names,corpus_import_ids"
     ),
     [
         (
@@ -283,6 +395,12 @@ def test_create_vespa_search_params(
             10,
             0,
             ["ABC"],
+            None,
+            None,
+            [
+                {"name": "family.sector", "value": "Price"},
+                {"name": "family.topic", "value": "Mitigation"},
+            ],
             None,
             None,
         ),
@@ -300,6 +418,9 @@ def test_create_vespa_search_params(
             0,
             ["ABC"],
             ["CCLW.document.1.0", "CCLW.document.2.0"],
+            None,
+            None,
+            ["UNFCCC Submissions", "Laws and Policies"],
             None,
         ),
         (
@@ -317,6 +438,9 @@ def test_create_vespa_search_params(
             ["ABC"],
             ["CCLW.executive.1.0", "CCLW.executive.2.0"],
             ["CCLW.document.1.0", "CCLW.document.2.0"],
+            None,
+            None,
+            ["CCLW.corpus.1.0", "CCLW.corpus.2.0"],
         ),
     ],
 )
@@ -332,6 +456,9 @@ def test_create_browse_request_params(
     continuation_tokens,
     family_ids,
     document_ids,
+    metadata_filters,
+    corpus_type_names,
+    corpus_import_ids,
 ):
     SearchRequestBody(
         query_string="",
@@ -346,6 +473,13 @@ def test_create_browse_request_params(
         page_size=page_size,
         offset=offset,
         continuation_tokens=continuation_tokens,
+        corpus_type_names=corpus_type_names,
+        corpus_import_ids=corpus_import_ids,
+        metadata=(
+            [MetadataFilter.model_validate(mdata) for mdata in metadata_filters]
+            if metadata_filters is not None
+            else []
+        ),
     )
 
 
@@ -368,50 +502,50 @@ def test_create_browse_request_params(
             },
             None,
         ),
-        ({"regions": ["north-america"]}, {"family_geography": ["CAN", "USA"]}),
+        ({"regions": ["north-america"]}, {"family_geographies": ["CAN", "USA"]}),
         (
             {
                 "regions": ["north-america"],
                 "countries": ["not-a-country"],
             },
-            {"family_geography": ["CAN", "USA"]},
+            {"family_geographies": ["CAN", "USA"]},
         ),
         (
             {"regions": ["north-america"], "countries": ["canada"]},
-            {"family_geography": ["CAN"]},
+            {"family_geographies": ["CAN"]},
         ),
-        ({"countries": ["cambodia"]}, {"family_geography": ["KHM"]}),
+        ({"countries": ["cambodia"]}, {"family_geographies": ["KHM"]}),
         ({"countries": ["this-is-not-valid"]}, None),
         (
             {"countries": ["france", "germany"]},
-            {"family_geography": ["FRA", "DEU"]},
+            {"family_geographies": ["FRA", "DEU"]},
         ),
         (
             {"countries": ["cambodia"], "categories": ["Executive"]},
-            {"family_category": ["Executive"], "family_geography": ["KHM"]},
+            {"family_category": ["Executive"], "family_geographies": ["KHM"]},
         ),
         (
             {"countries": ["cambodia"], "languages": ["english"]},
-            {"document_languages": ["english"], "family_geography": ["KHM"]},
+            {"document_languages": ["english"], "family_geographies": ["KHM"]},
         ),
         (
             {"countries": ["cambodia"], "sources": ["CCLW"]},
-            {"family_source": ["CCLW"], "family_geography": ["KHM"]},
+            {"family_source": ["CCLW"], "family_geographies": ["KHM"]},
         ),
         (
             {
                 "regions": ["north-america"],
                 "categories": ["Executive"],
             },
-            {"family_category": ["Executive"], "family_geography": ["CAN", "USA"]},
+            {"family_category": ["Executive"], "family_geographies": ["CAN", "USA"]},
         ),
         (
             {"regions": ["north-america"], "languages": ["english"]},
-            {"document_languages": ["english"], "family_geography": ["CAN", "USA"]},
+            {"document_languages": ["english"], "family_geographies": ["CAN", "USA"]},
         ),
         (
             {"regions": ["north-america"], "sources": ["CCLW"]},
-            {"family_source": ["CCLW"], "family_geography": ["CAN", "USA"]},
+            {"family_source": ["CCLW"], "family_geographies": ["CAN", "USA"]},
         ),
         ({"categories": ["Executive"]}, {"family_category": ["Executive"]}),
         ({"languages": ["english"]}, {"document_languages": ["english"]}),
@@ -448,6 +582,7 @@ class FamSpec:
     family_category: str
     family_ts: str
     family_geo: str
+    family_geos: list[str]
     family_metadata: dict[str, list[str]]
 
     description_hit: bool
@@ -489,6 +624,7 @@ def _generate_search_response_hits(spec: FamSpec) -> Sequence[CprSdkHit]:
                 family_category=spec.family_category,
                 family_publication_ts=datetime.fromisoformat(spec.family_ts),
                 family_geography=spec.family_geo,
+                family_geographies=spec.family_geos,
                 document_cdn_object=(
                     f"{spec.family_import_id}/{slugify(spec.family_name)}"
                     f"_{document_number}"
@@ -520,6 +656,7 @@ def _generate_search_response_hits(spec: FamSpec) -> Sequence[CprSdkHit]:
                 family_category=spec.family_category,
                 family_publication_ts=datetime.fromisoformat(spec.family_ts),
                 family_geography=spec.family_geo,
+                family_geographies=spec.family_geos,
                 document_cdn_object=(
                     f"{spec.family_import_id}/{slugify(spec.family_name)}"
                     f"_{document_number}"
@@ -585,6 +722,7 @@ _FAM_SPEC_0 = FamSpec(
     family_category="Executive",
     family_ts="2023-12-12",
     family_geo="france",
+    family_geos=["france"],
     family_metadata={"keyword": ["Spacial Planning"]},
     description_hit=True,
     family_document_count=1,
@@ -599,6 +737,7 @@ _FAM_SPEC_1 = FamSpec(
     family_category="Legislative",
     family_ts="2022-12-25",
     family_geo="spain",
+    family_geos=["spain"],
     family_metadata={"sector": ["Urban", "Transportation"], "keyword": ["Hydrogen"]},
     description_hit=False,
     family_document_count=3,
@@ -613,6 +752,7 @@ _FAM_SPEC_2 = FamSpec(
     family_category="UNFCCC",
     family_ts="2019-01-01",
     family_geo="ukraine",
+    family_geos=["ukraine"],
     family_metadata={"author_type": ["Non-Party"], "author": ["Anyone"]},
     description_hit=True,
     family_document_count=5,
@@ -627,6 +767,7 @@ _FAM_SPEC_3 = FamSpec(
     family_category="UNFCCC",
     family_ts="2010-03-14",
     family_geo="norway",
+    family_geos=["norway"],
     family_metadata={"author_type": ["Party"], "author": ["Anyone Else"]},
     description_hit=False,
     family_document_count=2,
@@ -645,17 +786,15 @@ def populate_data_db(db: Session, fam_specs: Sequence[FamSpec]) -> None:
             family_category=FamilyCategory(fam_spec.family_category),
         )
         db.add(family)
-        db.add(
-            FamilyGeography(
-                family_import_id=fam_spec.family_import_id,
-                geography_id=(
-                    db.query(Geography)
-                    .filter(Geography.slug == fam_spec.family_geo)
-                    .one()
-                    .id
-                ),
+        for fam_geo in fam_spec.family_geos:
+            db.add(
+                FamilyGeography(
+                    family_import_id=fam_spec.family_import_id,
+                    geography_id=(
+                        db.query(Geography).filter(Geography.slug == fam_geo).one().id
+                    ),
+                )
             )
-        )
         family_event = FamilyEvent(
             import_id=f"{fam_spec.family_source}.event.{fam_spec.family_import_id.split('.')[2]}.0",
             title="Published",

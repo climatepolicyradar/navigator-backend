@@ -1,3 +1,5 @@
+from typing import Any, Dict
+
 from sqlalchemy.orm import Session
 
 from tests.non_search.dfce_helpers import (
@@ -91,7 +93,7 @@ def get_default_families():
         "title": "Fam2",
         "slug": "FamSlug2",
         "description": "Summary2",
-        "geography_id": 1,
+        "geography_id": 2,
         "category": "Executive",
         "documents": [],
         "metadata": {
@@ -143,6 +145,37 @@ def setup_with_two_docs(db: Session):
         [
             (collection1["import_id"], family1["import_id"]),
             (collection1["import_id"], family2["import_id"]),
+        ],
+    )
+
+
+def setup_with_documents_large_with_families(
+    documents_large: list[Dict[str, Any]],
+    db: Session,
+):
+    # Collection
+    collection1, collection2 = get_default_collections()
+    add_collections(db, collections=[collection1])
+
+    # Family + Document + events
+    family1, family2 = get_default_families()
+
+    family1["metadata"] = {
+        "topic": "Mitigation",
+        "sector": "Economy-wide",
+    }
+
+    split_index = len(documents_large) // 2
+
+    family1["documents"] = documents_large[:split_index]
+    family2["documents"] = documents_large[split_index:]
+    add_families(db, families=[family1, family2])
+
+    # Collection - Family
+    link_collection_family(
+        db,
+        [
+            (collection1["import_id"], family1["import_id"]),
         ],
     )
 

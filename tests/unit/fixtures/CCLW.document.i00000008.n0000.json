@@ -1,0 +1,24 @@
+{
+  "title": "Cabinet Decision approving the Framework",
+  "slug": "cabinet-decision-approving-the-framework_b837",
+  "md5_sum": null,
+  "url": "https://www.thepresidency.gov.za/cabinet-statements/statement-virtual-cabinet-meeting-31-august-2022",
+  "content_type": "text/html",
+  "import_id": "CCLW.document.i00000008.n0000",
+  "language_variant": "Original Language",
+  "status": "PUBLISHED",
+  "metadata": {
+    "role": ["MAIN"],
+    "type": ["Plan"]
+  },
+  "languages": ["eng"],
+  "events": [
+    {
+      "import_id": "CPR.Event.15.0",
+      "title": "Published",
+      "date": "2019-12-25",
+      "type": "Passed/Approved",
+      "status": "OK"
+    }
+  ]
+}

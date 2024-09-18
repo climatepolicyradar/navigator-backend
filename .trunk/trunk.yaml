@@ -39,7 +39,7 @@ lint:
       paths:
         # Ignore test data JSON files
         - tests/data/**/*.json
-        - tests/search/search_fixtures/**/*.json
+        - tests/search/vespa/fixtures/**/*.json
         - scripts/**
     - linters: [markdownlint]
       paths:
