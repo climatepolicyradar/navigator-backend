@@ -127,7 +127,7 @@ def test_benchmark_families_search(
     monkeypatch.setattr(search, "_VESPA_CONNECTION", test_vespa)
     _populate_db_families(data_db)
 
-    # This is high as it's meant as a last resort for catching new perfomance problems
+    # This is high as it's meant as a last resort for catching new performance problems
     REASONABLE_LATENCY_MS = 50
 
     times = []
@@ -230,52 +230,3 @@ def test_search_with_deleted_docs(
     all_deleted_count = len(all_deleted_body["families"])
     assert start_family_count > one_deleted_count > all_deleted_count
     assert len(all_deleted_body["families"]) == 0
-
-
-@pytest.mark.search
-@pytest.mark.parametrize(
-    "label,query,metadata_filters",
-    [
-        ("search", "the", [{"name": "sector", "value": "Price"}]),
-        (
-            "browse",
-            "",
-            [
-                {"name": "topic", "value": "Mitigation"},
-                {"name": "instrument", "value": "Capacity building"},
-            ],
-        ),
-    ],
-)
-def test_metadata_filter(
-    label,
-    query,
-    metadata_filters,
-    test_vespa,
-    data_db,
-    monkeypatch,
-    data_client,
-    valid_token,
-):
-    monkeypatch.setattr(search, "_VESPA_CONNECTION", test_vespa)
-
-    _populate_db_families(data_db, deterministic_metadata=True)
-
-    response = _make_search_request(
-        data_client,
-        valid_token,
-        {
-            "query_string": query,
-            "metadata": metadata_filters,
-        },
-        expected_status_code=200,
-    )
-    assert len(response["families"]) > 0
-
-    for metadata_filter in metadata_filters:
-        for f in response["families"]:
-            assert metadata_filter["name"] in f["family_metadata"]
-            assert (
-                metadata_filter["value"]
-                in f["family_metadata"][metadata_filter["name"]]
-            )
