@@ -64,14 +64,12 @@ def create_configuration_token(input: str, years: Optional[int] = None) -> str:
         raise ValueError
 
     corpora_ids, subject, audience = parts
-    if not audience.endswith("/"):
-        audience += "/"
 
     config = CustomAppConfigDTO(
         allowed_corpora_ids=_parse_and_sort_corpora_ids(corpora_ids),
         subject=subject,
         issuer=ISSUER,
-        audience=cast(HttpUrl, audience),
+        audience=cast(HttpUrl, add_trailing_slash_to_url(audience)),
         expiry=expire,
         issued_at=int(
             datetime.timestamp(issued_at.replace(microsecond=0))
@@ -113,8 +111,21 @@ def decode_config_token(token: str, audience: Optional[str]) -> list[str]:
         TOKEN_SECRET_KEY,
         algorithms=[security.ALGORITHM],
         issuer=ISSUER,
-        audience=audience,
+        audience=(
+            add_trailing_slash_to_url(audience) if audience is not None else None
+        ),
     )
     corpora_ids: list = decoded_token.get("allowed_corpora_ids")
 
     return corpora_ids
+
+
+def add_trailing_slash_to_url(app_url: str) -> str:
+    """Add trailing slash to end of a URL string.
+
+    :param str app_url : A URL in string format.
+    :return str: The URL with a trailing '/' added if it wasn't present.
+    """
+    if not app_url.endswith("/"):
+        app_url += "/"
+    return app_url

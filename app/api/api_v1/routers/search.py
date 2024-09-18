@@ -8,14 +8,13 @@ for the type of document search being performed.
 
 import logging
 from io import BytesIO
-from typing import Annotated, cast
+from typing import Annotated
 
 from cpr_sdk.exceptions import QueryError
 from cpr_sdk.search_adaptors import VespaSearchAdapter
 from fastapi import APIRouter, Body, Depends, Header, HTTPException, Request, status
 from fastapi.responses import StreamingResponse
 from jwt import PyJWTError
-from pydantic import HttpUrl
 from sqlalchemy.orm import Session
 from starlette.responses import RedirectResponse
 
@@ -137,15 +136,8 @@ def search_documents(
     the search database. The continuation token can be used to get the next set of
     results from the search database. See the request schema for more details.
     """
-    app_url = PUBLIC_APP_URL
-    if not app_url.endswith("/"):
-        app_url += "/"
-
     try:
-        allowed_corpora_ids = decode_config_token(
-            app_token, str(cast(HttpUrl, app_url))
-        )
-        _LOGGER.info(f"Corpora IDs {str(allowed_corpora_ids)}")
+        allowed_corpora_ids = decode_config_token(app_token, PUBLIC_APP_URL)
     except PyJWTError as e:
         _LOGGER.error(e)
         raise HTTPException(
@@ -159,7 +151,6 @@ def search_documents(
         extra={
             "props": {
                 "search_request": search_body.model_dump(),
-                "app_token": str(app_token),
                 "allowed_corpora_ids": str(allowed_corpora_ids),
             }
         },
