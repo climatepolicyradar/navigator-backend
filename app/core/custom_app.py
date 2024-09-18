@@ -8,8 +8,6 @@ from pydantic import HttpUrl
 
 from app.api.api_v1.schemas.custom_app import CustomAppConfigDTO
 from app.core import security
-from app.db.crud.helpers.validate import validate_corpora_ids
-from app.db.session import get_db
 
 _LOGGER = logging.getLogger(__name__)
 
@@ -106,9 +104,6 @@ def decode_config_token(token: str, audience: Optional[str]) -> list[str]:
         date and an issued at date.
     :return list[str]: A decoded list of valid corpora ids.
     """
-
-    db = next(get_db())
-
     decoded_token = jwt.decode(
         token,
         security.SECRET_KEY,
@@ -118,5 +113,4 @@ def decode_config_token(token: str, audience: Optional[str]) -> list[str]:
     )
     corpora_ids: list = decoded_token.get("allowed_corpora_ids")
 
-    validate_corpora_ids(db, corpora_ids)
     return corpora_ids

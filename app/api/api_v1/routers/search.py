@@ -39,6 +39,7 @@ from app.core.search import (
     process_result_into_csv,
     process_vespa_search_response,
 )
+from app.db.crud.helpers.validate import validate_corpora_ids
 from app.db.session import get_db
 
 _LOGGER = logging.getLogger(__name__)
@@ -164,6 +165,7 @@ def search_documents(
             }
         },
     )
+    validate_corpora_ids(db, allowed_corpora_ids)
 
     _LOGGER.info("Starting search...")
     return _search_request(db=db, search_body=search_body)
