@@ -1,6 +1,6 @@
 [tool.poetry]
 name = "navigator_backend"
-version = "1.15.1"
+version = "1.16.0"
 description = ""
 authors = ["CPR-dev-team <tech@climatepolicyradar.org>"]
 packages = [{ include = "app" }, { include = "tests" }]
@@ -10,7 +10,7 @@ python = "^3.10"
 Authlib = "^0.15.5"
 bcrypt = "^3.2.0"
 boto3 = "^1.26"
-cpr_sdk = { version = "1.4.4", extras = ["vespa"] }
+cpr_sdk = { version = "1.6.1", extras = ["vespa"] }
 fastapi = "^0.104.1"
 fastapi-health = "^0.4.0"
 fastapi-pagination = { extras = ["sqlalchemy"], version = "^0.12.19" }
@@ -35,18 +35,7 @@ db-client = { git = "https://github.com/climatepolicyradar/navigator-db-client.g
 urllib3 = "<2"
 apscheduler = "^3.10.4"
 numpy = "1.26.4"
-torch = [
-  { platform = "darwin", url = "https://download.pytorch.org/whl/cpu/torch-2.0.0-cp310-none-macosx_10_9_x86_64.whl", markers = "platform_machine=='x86_64'" },
-  { platform = "darwin", url = "https://download.pytorch.org/whl/cpu/torch-2.0.0-cp310-none-macosx_11_0_arm64.whl", markers = "platform_machine=='arm64'" },
-  { platform = "linux", version = "2.0.0", source = "pytorch" },
-  { platform = "win32", version = "2.0.0", source = "pytorch" },
-]
 python-dateutil = "^2.9.0.post0"
-
-[[tool.poetry.source]]
-name = "pytorch"
-url = "https://download.pytorch.org/whl/cpu"
-priority = "explicit"
 
 [tool.poetry.dev-dependencies]
 black = "^23.1.0"
