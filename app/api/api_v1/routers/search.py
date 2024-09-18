@@ -150,7 +150,7 @@ def search_documents(
         _LOGGER.error(e)
         raise HTTPException(
             status_code=status.HTTP_400_BAD_REQUEST,
-            detail="Could not validate configuration token",
+            detail="Could not decode configuration token",
             headers={"WWW-Authenticate": "Bearer"},
         )
 
