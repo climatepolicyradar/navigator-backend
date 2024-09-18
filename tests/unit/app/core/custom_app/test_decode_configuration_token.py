@@ -20,12 +20,12 @@ def test_decoding_expired_token_raise_expired_signature_token_error(expired_toke
         ("mango,apple;subject;https://audience.com", None, "Invalid audience"),
         (
             "mango,apple;subject;https://audience.com",
-            "https://audience.com",
+            "https://audience.org",
             "Audience doesn't match",
         ),
         (
             "mango,apple;subject;https://AUDIENCE.OrG",
-            "https://AUDIENCE.OrG",
+            "https://AUDIENCE.Com",
             "Audience doesn't match",
         ),
     ],
@@ -44,5 +44,5 @@ def test_decode_configuration_token_success(valid_token):
     decoded_corpora_ids = decode_config_token(valid_token, VALID_AUDIENCE)
     assert len(decoded_corpora_ids) > 0
 
-    expected_num_corpora = 4
+    expected_num_corpora = 2
     assert len(decoded_corpora_ids) == expected_num_corpora
