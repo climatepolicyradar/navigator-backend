@@ -4,7 +4,6 @@ from db_client.models.dfce import Geography
 from app.api.api_v1.routers import search
 from app.core.lookups import get_country_slug_from_country_code
 from tests.search.vespa.setup_search_tests import (
-    SEARCH_ENDPOINT,
     VESPA_FIXTURE_COUNT,
     _make_search_request,
     _populate_db_families,
@@ -150,17 +149,14 @@ def test_invalid_keyword_filters(
     monkeypatch.setattr(search, "_VESPA_CONNECTION", test_vespa)
     _populate_db_families(data_db)
 
-    response = data_client.post(
-        SEARCH_ENDPOINT,
-        json={
-            "query_string": query,
-            "keyword_filters": {
-                "geographies": ["kenya"],
-                "unknown_filter_no1": ["BOOM"],
-            },
+    params = {
+        "query_string": query,
+        "keyword_filters": {
+            "geographies": ["kenya"],
+            "unknown_filter_no1": ["BOOM"],
         },
-    )
-    assert response.status_code == 422
+    }
+    _make_search_request(data_client, valid_token, params, expected_status_code=422)
 
 
 @pytest.mark.search

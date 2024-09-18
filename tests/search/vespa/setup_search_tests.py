@@ -30,9 +30,11 @@ from sqlalchemy.orm import Session
 SEARCH_ENDPOINT = "/api/v1/searches"
 
 
-def _make_search_request(client, token, params: Mapping[str, str]):
+def _make_search_request(
+    client, token, params: Mapping[str, str], expected_status_code: int = 200
+):
     response = client.post(SEARCH_ENDPOINT, json=params, headers={"app-token": token})
-    assert response.status_code == 200, response.text
+    assert response.status_code == expected_status_code, response.text
     return response.json()
 
 

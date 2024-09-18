@@ -4,7 +4,6 @@ from sqlalchemy import update
 
 from app.api.api_v1.routers import search
 from tests.search.vespa.setup_search_tests import (
-    SEARCH_ENDPOINT,
     _create_document,
     _create_family,
     _create_family_event,
@@ -189,9 +188,10 @@ def test_search_params_backend_limits(
     _populate_db_families(data_db)
 
     params = {"query_string": "the", **extra_params}
-    response = data_client.post(SEARCH_ENDPOINT, json=params)
-    assert response.status_code == 422, response.text
-    for error in response.json()["detail"]:
+    response = _make_search_request(
+        data_client, valid_token, params, expected_status_code=422
+    )
+    for error in response["detail"]:
         assert "body" in error["loc"], error
         assert invalid_field in error["loc"], error
 
@@ -257,18 +257,19 @@ def test_metadata_filter(
 
     _populate_db_families(data_db, deterministic_metadata=True)
 
-    response = data_client.post(
-        SEARCH_ENDPOINT,
-        json={
+    response = _make_search_request(
+        data_client,
+        valid_token,
+        {
             "query_string": query,
             "metadata": metadata_filters,
         },
+        expected_status_code=200,
     )
-    assert response.status_code == 200
-    assert len(response.json()["families"]) > 0
+    assert len(response["families"]) > 0
 
     for metadata_filter in metadata_filters:
-        for f in response.json()["families"]:
+        for f in response["families"]:
             assert metadata_filter["name"] in f["family_metadata"]
             assert (
                 metadata_filter["value"]
