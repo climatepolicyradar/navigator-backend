@@ -26,7 +26,7 @@ dev_install: install_trunk check_dev_environment
 	make configure_pyright
 
 create_venv:
-	- pyenv deactivate
+	-pyenv deactivate
 	pyenv virtualenv 3.10 backend
 	pyenv activate backend
 

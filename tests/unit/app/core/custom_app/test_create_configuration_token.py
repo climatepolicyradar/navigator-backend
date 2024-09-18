@@ -5,7 +5,7 @@ import pytest
 from dateutil.relativedelta import relativedelta
 
 from app.core.custom_app import create_configuration_token
-from tests.unit.app.core.custom_app.conftest import ALGORITHM, SECRET_KEY
+from tests.unit.app.core.custom_app.conftest import ALGORITHM, TOKEN_SECRET_KEY
 
 EXPIRE_AFTER_1_YEAR = 1
 EXPIRE_AFTER_5_YEARS = 5
@@ -47,7 +47,7 @@ def test_create_configuration_token_incorrect_num_args_in_input(input_str: str):
         token = create_configuration_token(input_str)
         assert token is None
 
-        data = jwt.decode(token, SECRET_KEY, algorithms=[ALGORITHM])
+        data = jwt.decode(token, TOKEN_SECRET_KEY, algorithms=[ALGORITHM])
         assert has_expected_keys(data)
 
 
@@ -63,7 +63,7 @@ def test_create_configuration_token_subject_contains_special_chars(input_str: st
         token = create_configuration_token(input_str)
         assert token is None
 
-        data = jwt.decode(token, SECRET_KEY, algorithms=[ALGORITHM])
+        data = jwt.decode(token, TOKEN_SECRET_KEY, algorithms=[ALGORITHM])
         assert has_expected_keys(data)
 
 
@@ -79,7 +79,7 @@ def test_create_configuration_token_audience_not_a_http_url(input_str: str):
         token = create_configuration_token(input_str)
         assert token is None
 
-        data = jwt.decode(token, SECRET_KEY, algorithms=[ALGORITHM])
+        data = jwt.decode(token, TOKEN_SECRET_KEY, algorithms=[ALGORITHM])
         assert has_expected_keys(data)
 
 
@@ -107,7 +107,7 @@ def test_create_configuration_token_default_expiry(
 
     data = jwt.decode(
         token,
-        SECRET_KEY,
+        TOKEN_SECRET_KEY,
         algorithms=[ALGORITHM],
         audience=expected_audience,
     )
@@ -155,7 +155,7 @@ def test_create_configuration_token_specific_expiry(
 
     data = jwt.decode(
         token,
-        SECRET_KEY,
+        TOKEN_SECRET_KEY,
         algorithms=[ALGORITHM],
         audience=expected_audience,
     )

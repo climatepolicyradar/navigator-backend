@@ -8,7 +8,7 @@ ALL_DATA_DOWNLOAD_ENDPOINT = "/api/v1/searches/download-all-data"
 
 
 @pytest.mark.search
-def test_all_data_download(data_db, data_client):
+def test_all_data_download(data_db, data_client, valid_token):
     _populate_db_families(data_db)
 
     with (

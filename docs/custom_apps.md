@@ -26,7 +26,7 @@ Note: remember to use the secret key that corresponds to the AWS environment you
 want to generate the token for.
 
 ```bash
-export SECRET_KEY=secret_key
+export TOKEN_SECRET_KEY=secret_key
 export CORPORA_IDS=CCLW.corpus.i00000001.n0000,UNFCCC.corpus.i00000001.n0000
 export THEME=CPR
 export APP_DOMAIN=https://app.climatepolicyradar.org/

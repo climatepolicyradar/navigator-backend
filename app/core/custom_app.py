@@ -8,14 +8,11 @@ from dateutil.relativedelta import relativedelta
 from pydantic import HttpUrl
 
 from app.api.api_v1.schemas.custom_app import CustomAppConfigDTO
-from app.db.crud.helpers.validate import validate_corpora_ids
-from app.db.session import get_db
+from app.core import security
 
-logging.basicConfig(level=logging.DEBUG)
 _LOGGER = logging.getLogger(__name__)
 
-SECRET_KEY = os.environ["SECRET_KEY"]
-ALGORITHM = "HS256"
+TOKEN_SECRET_KEY = os.environ["TOKEN_SECRET_KEY"]
 ISSUER = "Climate Policy Radar"
 
 # TODO: revisit/configure access token expiry
@@ -72,7 +69,7 @@ def create_configuration_token(input: str, years: Optional[int] = None) -> str:
         allowed_corpora_ids=_parse_and_sort_corpora_ids(corpora_ids),
         subject=subject,
         issuer=ISSUER,
-        audience=cast(HttpUrl, audience),
+        audience=cast(HttpUrl, add_trailing_slash_to_url(audience)),
         expiry=expire,
         issued_at=int(
             datetime.timestamp(issued_at.replace(microsecond=0))
@@ -98,10 +95,10 @@ def create_configuration_token(input: str, years: Optional[int] = None) -> str:
         "sub": config.subject,
         "aud": str(config.audience),
     }
-    return jwt.encode(to_encode, SECRET_KEY, algorithm=ALGORITHM)
+    return jwt.encode(to_encode, TOKEN_SECRET_KEY, algorithm=security.ALGORITHM)
 
 
-def decode_configuration_token(token: str, audience: Optional[str]) -> list[str]:
+def decode_config_token(token: str, audience: Optional[str]) -> list[str]:
     """Decodes a configuration token.
 
     :param str token : A JWT token that has been encoded with a list of
@@ -109,13 +106,26 @@ def decode_configuration_token(token: str, audience: Optional[str]) -> list[str]
         date and an issued at date.
     :return list[str]: A decoded list of valid corpora ids.
     """
-
-    db = next(get_db())
-
     decoded_token = jwt.decode(
-        token, SECRET_KEY, algorithms=[ALGORITHM], issuer=ISSUER, audience=audience
+        token,
+        TOKEN_SECRET_KEY,
+        algorithms=[security.ALGORITHM],
+        issuer=ISSUER,
+        audience=(
+            add_trailing_slash_to_url(audience) if audience is not None else None
+        ),
     )
     corpora_ids: list = decoded_token.get("allowed_corpora_ids")
 
-    validate_corpora_ids(db, corpora_ids)
     return corpora_ids
+
+
+def add_trailing_slash_to_url(app_url: str) -> str:
+    """Add trailing slash to end of a URL string.
+
+    :param str app_url : A URL in string format.
+    :return str: The URL with a trailing '/' added if it wasn't present.
+    """
+    if not app_url.endswith("/"):
+        app_url += "/"
+    return app_url

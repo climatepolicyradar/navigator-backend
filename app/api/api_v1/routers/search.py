@@ -12,8 +12,9 @@ from typing import Annotated
 
 from cpr_sdk.exceptions import QueryError
 from cpr_sdk.search_adaptors import VespaSearchAdapter
-from fastapi import APIRouter, Body, Depends, HTTPException, Request, status
+from fastapi import APIRouter, Body, Depends, Header, HTTPException, Request, status
 from fastapi.responses import StreamingResponse
+from jwt import PyJWTError
 from sqlalchemy.orm import Session
 from starlette.responses import RedirectResponse
 
@@ -29,12 +30,14 @@ from app.core.config import (
     VESPA_SECRETS_LOCATION,
     VESPA_URL,
 )
+from app.core.custom_app import decode_config_token
 from app.core.download import create_data_download_zip_archive
 from app.core.search import (
     create_vespa_search_params,
     process_result_into_csv,
     process_vespa_search_response,
 )
+from app.db.crud.helpers.validate import validate_corpora_ids
 from app.db.session import get_db
 
 _LOGGER = logging.getLogger(__name__)
@@ -110,6 +113,7 @@ def search_documents(
             }
         ),
     ],
+    app_token: Annotated[str, Header()],
     db=Depends(get_db),
 ) -> SearchResponse:
     """
@@ -132,18 +136,35 @@ def search_documents(
     the search database. The continuation token can be used to get the next set of
     results from the search database. See the request schema for more details.
     """
+    try:
+        allowed_corpora_ids = decode_config_token(app_token, PUBLIC_APP_URL)
+    except PyJWTError as e:
+        _LOGGER.error(e)
+        raise HTTPException(
+            status_code=status.HTTP_400_BAD_REQUEST,
+            detail="Could not decode configuration token",
+            headers={"WWW-Authenticate": "Bearer"},
+        )
+
     _LOGGER.info(
         "Search request",
         extra={
             "props": {
                 "search_request": search_body.model_dump(),
+                "allowed_corpora_ids": str(allowed_corpora_ids),
             }
         },
     )
 
-    _LOGGER.info(
-        "Starting search...",
-    )
+    if not validate_corpora_ids(db, allowed_corpora_ids):
+        msg = "One or more of the given corpora do not exist in the database."
+        raise HTTPException(
+            status_code=status.HTTP_400_BAD_REQUEST,
+            detail=msg,
+            headers={"WWW-Authenticate": "Bearer"},
+        )
+
+    _LOGGER.info("Starting search...")
     return _search_request(db=db, search_body=search_body)
 
 
