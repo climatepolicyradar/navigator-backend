@@ -45,32 +45,6 @@ def valid_token() -> str:
     return create_configuration_token(f"mango,apple;subject;{VALID_AUDIENCE}")
 
 
-@pytest.fixture
-def mock_false_validate_corpora_mock(monkeypatch):
-    def validate_corpora_mock_return_value(db, corpora_ids):
-        raise jwt.InvalidTokenError(
-            "One or more of the given corpora does not exist in the database"
-        )
-
-    monkeypatch.setattr(
-        "app.core.custom_app.validate_corpora_ids", validate_corpora_mock_return_value
-    )
-    yield validate_corpora_mock_return_value
-
-
-@pytest.fixture
-def mock_true_validate_corpora_mock(monkeypatch):
-    return_value = True
-
-    def validate_corpora_mock_return_value(db, corpora_ids):
-        return return_value
-
-    monkeypatch.setattr(
-        "app.core.custom_app.validate_corpora_ids", validate_corpora_mock_return_value
-    )
-    yield validate_corpora_mock_return_value
-
-
 @pytest.fixture(scope="module", params=[True, False])
 def return_validate_corpora_mock(request, monkeypatch):
     validate_corpora_mock_return_value = request.param

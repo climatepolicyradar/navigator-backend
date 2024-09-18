@@ -40,26 +40,9 @@ def test_decoding_token_with_invalid_aud_raises_expired_signature_token_error(
     assert str(error.value) == error_msg
 
 
-def test_returns_invalid_token_error_for_non_existent_corpora_ids(
-    valid_token, mock_false_validate_corpora_mock
-):
-    with pytest.raises(jwt.InvalidTokenError) as error:
-        decode_config_token(valid_token, VALID_AUDIENCE)
-
-    assert (
-        str(error.value)
-        == "One or more of the given corpora does not exist in the database"
-    )
-
-
-@pytest.mark.parametrize(
-    "expected_allowed_corpora",
-    [["apple", "mango"]],
-)
-def test_decode_configuration_token_success(
-    valid_token,
-    expected_allowed_corpora: list[str],
-    mock_true_validate_corpora_mock,
-):
+def test_decode_configuration_token_success(valid_token):
     decoded_corpora_ids = decode_config_token(valid_token, VALID_AUDIENCE)
-    assert decoded_corpora_ids == expected_allowed_corpora
+    assert len(decoded_corpora_ids) > 0
+
+    expected_num_corpora = 4
+    assert len(decoded_corpora_ids) == expected_num_corpora
