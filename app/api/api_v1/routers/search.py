@@ -163,7 +163,14 @@ def search_documents(
             }
         },
     )
-    validate_corpora_ids(db, allowed_corpora_ids)
+
+    if not validate_corpora_ids(db, allowed_corpora_ids):
+        msg = "One or more of the given corpora do not exist in the database."
+        raise HTTPException(
+            status_code=status.HTTP_400_BAD_REQUEST,
+            detail=msg,
+            headers={"WWW-Authenticate": "Bearer"},
+        )
 
     _LOGGER.info("Starting search...")
     return _search_request(db=db, search_body=search_body)
