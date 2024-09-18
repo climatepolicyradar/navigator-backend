@@ -224,3 +224,25 @@ def test_multiple_filters(
     }
 
     _ = _make_search_request(data_client, valid_token, params)
+
+
+@pytest.mark.search
+def test_geo_filter_with_exact(
+    test_vespa, data_db, monkeypatch, data_client, valid_token
+):
+    monkeypatch.setattr(search, "_VESPA_CONNECTION", test_vespa)
+    _populate_db_families(data_db)
+
+    params = {
+        "query_string": "the potential of district heating",
+        "exact_match": True,
+        "keyword_filters": {
+            "countries": ["italy"],
+        },
+    }
+
+    response = _make_search_request(data_client, valid_token, params)
+
+    assert len(response["families"]) > 0
+    for family in response["families"]:
+        assert "ITA" in family["family_geographies"]
