@@ -115,11 +115,8 @@ jobs:
           docker compose build
           docker images
 
-      - name: Build docker-compose stack
+      - name: Build docker-compose stack & Setup vespa for search
         run: make start
-
-      - name: Setup vespa for search
-        run: make vespa_setup
 
       - name: Run backend search tests for vespa
         run: make test_search
