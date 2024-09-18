@@ -17,6 +17,7 @@ from sqlalchemy_utils import create_database, database_exists, drop_database
 
 from app.core import security
 from app.core.aws import S3Client, get_s3_client
+from app.core.custom_app import create_configuration_token
 from app.db.session import get_db
 from app.main import app
 
@@ -104,15 +105,19 @@ def get_test_db_url() -> str:
 
 @pytest.fixture
 def valid_token():
-    return (
-        "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9."
-        "eyJhbGxvd2VkX2NvcnBvcmFfaWRzIjpbIkNDTFcuY29ycHVzLmkwMDAwMDAwMS5uMDAwMCIsIkNQUi"
-        "5jb3JwdXMuaTAwMDAwMDAxLm4wMDAwIiwiTUNGLmNvcnB1cy5HQ0YubjAwMDAiLCJNQ0YuY29ycHVz"
-        "LmkwMDAwMDAwMS5uMDAwMCIsIlVORkNDQy5jb3JwdXMuaTAwMDAwMDAxLm4wMDAwIl0sImV4cCI6Mj"
-        "A0MjE5OTE3NSwiaWF0IjoxNzI2NjYyNzc1LCJpc3MiOiJDbGltYXRlIFBvbGljeSBSYWRhciIsInN1"
-        "YiI6IkNQUiIsImF1ZCI6Imh0dHA6Ly9sb2NhbGhvc3Q6MzAwMC8ifQ."
-        "8gtNGaPX5IyGq212T3RfYl60QwO3lZB3otO64kpXiLM"
-    )
+    """Generate valid config token using TOKEN_SECRET_KEY.
+
+    Need to generate the config token using the token secret key from
+    your local env file. For tests in CI, this will be the secret key in
+    the .env.example file, but for local development this secret key
+    might be different (e.g., the one for staging). This fixture works
+    around this.
+    """
+    corpora_ids = "CCLW.corpus.i00000001.n0000,UNFCCC.corpus.i00000001.n0000"
+    subject = "CCLW"
+    audience = "http://localhost:3000"
+    input_str = f"{corpora_ids};{subject};{audience}"
+    return create_configuration_token(input_str)
 
 
 @pytest.fixture
