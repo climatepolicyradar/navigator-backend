@@ -35,18 +35,7 @@ db-client = { git = "https://github.com/climatepolicyradar/navigator-db-client.g
 urllib3 = "<2"
 apscheduler = "^3.10.4"
 numpy = "1.26.4"
-torch = [
-  { platform = "darwin", url = "https://download.pytorch.org/whl/cpu/torch-2.0.0-cp310-none-macosx_10_9_x86_64.whl", markers = "platform_machine=='x86_64'" },
-  { platform = "darwin", url = "https://download.pytorch.org/whl/cpu/torch-2.0.0-cp310-none-macosx_11_0_arm64.whl", markers = "platform_machine=='arm64'" },
-  { platform = "linux", version = "2.0.0", source = "pytorch" },
-  { platform = "win32", version = "2.0.0", source = "pytorch" },
-]
 python-dateutil = "^2.9.0.post0"
-
-[[tool.poetry.source]]
-name = "pytorch"
-url = "https://download.pytorch.org/whl/cpu"
-priority = "explicit"
 
 [tool.poetry.dev-dependencies]
 black = "^23.1.0"
