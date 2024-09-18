@@ -104,7 +104,15 @@ def get_test_db_url() -> str:
 
 @pytest.fixture
 def valid_token():
-    return "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJhbGxvd2VkX2NvcnBvcmFfaWRzIjpbIkNDTFcuY29ycHVzLmkwMDAwMDAwMS5uMDAwMCIsIlVORkNDQy5jb3JwdXMuaTAwMDAwMDAxLm4wMDAwIl0sImV4cCI6MjAzOTAwNTAxMSwiaWF0IjoxNzIzNDY4NjExLCJpc3MiOiJDbGltYXRlIFBvbGljeSBSYWRhciIsInN1YiI6IkNQUiIsImF1ZCI6Imh0dHBzOi8vYXBwLmRldi5jbGltYXRlcG9saWN5cmFkYXIub3JnLyJ9._9iU1lB31uDoOVDkufmu9cI4S68U6-CWkgTfNSieXPo"
+    return (
+        "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9."
+        "eyJhbGxvd2VkX2NvcnBvcmFfaWRzIjpbIkNDTFcuY29ycHVzLmkwMDAwMDAwMS5uMDAwMCIsIkNQUi"
+        "5jb3JwdXMuaTAwMDAwMDAxLm4wMDAwIiwiTUNGLmNvcnB1cy5HQ0YubjAwMDAiLCJNQ0YuY29ycHVz"
+        "LmkwMDAwMDAwMS5uMDAwMCIsIlVORkNDQy5jb3JwdXMuaTAwMDAwMDAxLm4wMDAwIl0sImV4cCI6Mj"
+        "A0MjE5OTE3NSwiaWF0IjoxNzI2NjYyNzc1LCJpc3MiOiJDbGltYXRlIFBvbGljeSBSYWRhciIsInN1"
+        "YiI6IkNQUiIsImF1ZCI6Imh0dHA6Ly9sb2NhbGhvc3Q6MzAwMC8ifQ."
+        "8gtNGaPX5IyGq212T3RfYl60QwO3lZB3otO64kpXiLM"
+    )
 
 
 @pytest.fixture
