@@ -8,6 +8,7 @@ from db_client.models.document.physical_document import (
     LanguageSource,
     PhysicalDocumentLanguage,
 )
+from fastapi import status
 from fastapi.testclient import TestClient
 from sqlalchemy import update
 from sqlalchemy.orm import Session
@@ -114,7 +115,7 @@ def test_update_document_status__fails_on_non_matching_import_id(
         headers=data_superuser_token_headers,
     )
 
-    assert response.status_code == 422
+    assert response.status_code == status.HTTP_422_UNPROCESSABLE_ENTITY
 
 
 def test_update_document_status__publishes_document(
@@ -207,7 +208,7 @@ def test_update_document__fails_on_non_matching_import_id(
         json=payload,
     )
 
-    assert response.status_code == 422
+    assert response.status_code == status.HTTP_422_UNPROCESSABLE_ENTITY
 
 
 @pytest.mark.parametrize(
@@ -995,4 +996,4 @@ def test_update_document__status_422_when_not_found(
         json=payload,
     )
 
-    assert response.status_code == 422
+    assert response.status_code == status.HTTP_422_UNPROCESSABLE_ENTITY
