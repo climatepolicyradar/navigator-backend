@@ -4,7 +4,6 @@ import uuid
 from typing import Optional
 
 import pytest
-from cpr_sdk.embedding import Embedder
 from cpr_sdk.search_adaptors import Vespa, VespaSearchAdapter
 from db_client import run_migrations
 from db_client.models import Base
@@ -91,10 +90,8 @@ def test_vespa():
         self,
         instance_url: str,
         cert_directory: Optional[str] = None,
-        embedder: Optional[Embedder] = None,
     ):
         self.client = Vespa(url=instance_url, port=8080)
-        self.embedder = embedder or Embedder()
 
     VespaSearchAdapter.__init__ = __mocked_init__
 

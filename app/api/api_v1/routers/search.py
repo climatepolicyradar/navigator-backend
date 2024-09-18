@@ -31,7 +31,6 @@ from app.core.config import (
 )
 from app.core.download import create_data_download_zip_archive
 from app.core.search import (
-    ENCODER,
     create_vespa_search_params,
     process_result_into_csv,
     process_vespa_search_response,
@@ -43,7 +42,6 @@ _LOGGER = logging.getLogger(__name__)
 _VESPA_CONNECTION = VespaSearchAdapter(
     instance_url=VESPA_URL,
     cert_directory=VESPA_SECRETS_LOCATION,
-    embedder=ENCODER,
 )
 
 search_router = APIRouter()
