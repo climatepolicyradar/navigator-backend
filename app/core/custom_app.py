@@ -1,4 +1,5 @@
 import logging
+import os
 from datetime import datetime
 from typing import Optional, cast
 
@@ -11,6 +12,7 @@ from app.core import security
 
 _LOGGER = logging.getLogger(__name__)
 
+TOKEN_SECRET_KEY = os.environ["TOKEN_SECRET_KEY"]
 ISSUER = "Climate Policy Radar"
 
 # TODO: revisit/configure access token expiry
@@ -62,6 +64,8 @@ def create_configuration_token(input: str, years: Optional[int] = None) -> str:
         raise ValueError
 
     corpora_ids, subject, audience = parts
+    if not audience.endswith("/"):
+        audience += "/"
 
     config = CustomAppConfigDTO(
         allowed_corpora_ids=_parse_and_sort_corpora_ids(corpora_ids),
@@ -93,7 +97,7 @@ def create_configuration_token(input: str, years: Optional[int] = None) -> str:
         "sub": config.subject,
         "aud": str(config.audience),
     }
-    return jwt.encode(to_encode, security.SECRET_KEY, algorithm=security.ALGORITHM)
+    return jwt.encode(to_encode, TOKEN_SECRET_KEY, algorithm=security.ALGORITHM)
 
 
 def decode_config_token(token: str, audience: Optional[str]) -> list[str]:
@@ -106,7 +110,7 @@ def decode_config_token(token: str, audience: Optional[str]) -> list[str]:
     """
     decoded_token = jwt.decode(
         token,
-        security.SECRET_KEY,
+        TOKEN_SECRET_KEY,
         algorithms=[security.ALGORITHM],
         issuer=ISSUER,
         audience=audience,
