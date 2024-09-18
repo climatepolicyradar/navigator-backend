@@ -10,24 +10,32 @@ from tests.search.vespa.setup_search_tests import (
 
 
 @pytest.mark.search
-def test_case_insensitivity(test_vespa, data_db, monkeypatch, data_client):
+def test_case_insensitivity(test_vespa, data_db, monkeypatch, data_client, valid_token):
     monkeypatch.setattr(search, "_VESPA_CONNECTION", test_vespa)
     _populate_db_families(data_db)
 
-    lower_body = _make_search_request(data_client, {"query_string": "the"})
-    upper_body = _make_search_request(data_client, {"query_string": "THE"})
+    lower_body = _make_search_request(data_client, valid_token, {"query_string": "the"})
+    upper_body = _make_search_request(data_client, valid_token, {"query_string": "THE"})
 
     assert lower_body["families"] == upper_body["families"]
 
 
 @pytest.mark.search
-def test_punctuation_ignored(test_vespa, data_db, monkeypatch, data_client):
+def test_punctuation_ignored(
+    test_vespa, data_db, monkeypatch, data_client, valid_token
+):
     monkeypatch.setattr(search, "_VESPA_CONNECTION", test_vespa)
     _populate_db_families(data_db)
 
-    regular_body = _make_search_request(data_client, {"query_string": "the"})
-    punc_body = _make_search_request(data_client, {"query_string": ", the."})
-    accent_body = _make_search_request(data_client, {"query_string": "thë"})
+    regular_body = _make_search_request(
+        data_client, valid_token, {"query_string": "the"}
+    )
+    punc_body = _make_search_request(
+        data_client, valid_token, {"query_string": ", the."}
+    )
+    accent_body = _make_search_request(
+        data_client, valid_token, {"query_string": "thë"}
+    )
 
     assert (
         sorted([f["family_slug"] for f in punc_body["families"]])
@@ -37,17 +45,12 @@ def test_punctuation_ignored(test_vespa, data_db, monkeypatch, data_client):
 
 
 @pytest.mark.search
-def test_accents_ignored(
-    test_vespa,
-    data_db,
-    monkeypatch,
-    data_client,
-):
+def test_accents_ignored(test_vespa, data_db, monkeypatch, data_client, valid_token):
     monkeypatch.setattr(search, "_VESPA_CONNECTION", test_vespa)
     _populate_db_families(data_db)
 
     start = time.time()
-    body = _make_search_request(data_client, {"query_string": "the"})
+    body = _make_search_request(data_client, valid_token, {"query_string": "the"})
     end = time.time()
 
     request_time_ms = 1000 * (end - start)

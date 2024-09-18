@@ -49,7 +49,9 @@ def _fam_ids_from_response(test_db, response) -> list[str]:
     ],
 )
 @pytest.mark.search
-def test_family_ids_search(test_vespa, data_db, monkeypatch, data_client, family_ids):
+def test_family_ids_search(
+    test_vespa, data_db, monkeypatch, data_client, family_ids, valid_token
+):
     monkeypatch.setattr(search, "_VESPA_CONNECTION", test_vespa)
     _populate_db_families(data_db)
 
@@ -58,7 +60,7 @@ def test_family_ids_search(test_vespa, data_db, monkeypatch, data_client, family
         "family_ids": family_ids,
     }
 
-    response = _make_search_request(data_client, params)
+    response = _make_search_request(data_client, valid_token, params)
 
     got_family_ids = _fam_ids_from_response(data_db, response)
     assert sorted(got_family_ids) == sorted(family_ids)
@@ -78,7 +80,7 @@ def test_family_ids_search(test_vespa, data_db, monkeypatch, data_client, family
 )
 @pytest.mark.search
 def test_document_ids_search(
-    test_vespa, data_db, monkeypatch, data_client, document_ids
+    test_vespa, data_db, monkeypatch, data_client, document_ids, valid_token
 ):
     monkeypatch.setattr(search, "_VESPA_CONNECTION", test_vespa)
     _populate_db_families(data_db)
@@ -87,7 +89,7 @@ def test_document_ids_search(
         "query_string": "the",
         "document_ids": document_ids,
     }
-    response = _make_search_request(data_client, params)
+    response = _make_search_request(data_client, valid_token, params)
 
     got_document_ids = _doc_ids_from_response(data_db, response)
     assert sorted(got_document_ids) == sorted(document_ids)
@@ -95,7 +97,7 @@ def test_document_ids_search(
 
 @pytest.mark.search
 def test_document_ids_and_family_ids_search(
-    test_vespa, data_db, monkeypatch, data_client
+    test_vespa, data_db, monkeypatch, data_client, valid_token
 ):
     monkeypatch.setattr(search, "_VESPA_CONNECTION", test_vespa)
     _populate_db_families(data_db)
@@ -109,12 +111,14 @@ def test_document_ids_and_family_ids_search(
         "document_ids": document_ids,
     }
 
-    response = _make_search_request(data_client, params)
+    response = _make_search_request(data_client, valid_token, params)
     assert len(response["families"]) == 0
 
 
 @pytest.mark.search
-def test_empty_ids_dont_limit_result(test_vespa, data_db, monkeypatch, data_client):
+def test_empty_ids_dont_limit_result(
+    test_vespa, data_db, monkeypatch, data_client, valid_token
+):
     monkeypatch.setattr(search, "_VESPA_CONNECTION", test_vespa)
     _populate_db_families(data_db)
 
@@ -125,7 +129,7 @@ def test_empty_ids_dont_limit_result(test_vespa, data_db, monkeypatch, data_clie
         "document_ids": [],
     }
 
-    response = _make_search_request(data_client, params)
+    response = _make_search_request(data_client, valid_token, params)
 
     got_document_ids = _doc_ids_from_response(data_db, response)
     got_family_ids = _fam_ids_from_response(data_db, response)

@@ -14,7 +14,7 @@ from tests.search.vespa.setup_search_tests import (
 @pytest.mark.search
 @pytest.mark.parametrize("label,query", [("search", "the"), ("browse", "")])
 def test_keyword_country_filters__geography(
-    label, query, test_vespa, data_client, data_db, monkeypatch
+    label, query, test_vespa, data_client, data_db, monkeypatch, valid_token
 ):
     monkeypatch.setattr(search, "_VESPA_CONNECTION", test_vespa)
     _populate_db_families(data_db)
@@ -23,7 +23,7 @@ def test_keyword_country_filters__geography(
     # Get all documents and iterate over their country codes to confirm that each are
     # the specific one that is returned in the query (as they each have a unique
     # country code)
-    all_body = _make_search_request(data_client, params=base_params)
+    all_body = _make_search_request(data_client, valid_token, params=base_params)
     families = [f for f in all_body["families"]]
     assert len(families) == VESPA_FIXTURE_COUNT
 
@@ -34,7 +34,9 @@ def test_keyword_country_filters__geography(
         country_slug = get_country_slug_from_country_code(data_db, country_code)
 
         params = {**base_params, **{"keyword_filters": {"countries": [country_slug]}}}
-        body_with_filters = _make_search_request(data_client, params=params)
+        body_with_filters = _make_search_request(
+            data_client, valid_token, params=params
+        )
         filtered_family_slugs = [
             f["family_slug"] for f in body_with_filters["families"]
         ]
@@ -45,7 +47,7 @@ def test_keyword_country_filters__geography(
 @pytest.mark.search
 @pytest.mark.parametrize("label,query", [("search", "the"), ("browse", "")])
 def test_keyword_country_filters__geographies(
-    label, query, test_vespa, data_client, data_db, monkeypatch
+    label, query, test_vespa, data_client, data_db, monkeypatch, valid_token
 ):
     monkeypatch.setattr(search, "_VESPA_CONNECTION", test_vespa)
     _populate_db_families(data_db)
@@ -54,7 +56,7 @@ def test_keyword_country_filters__geographies(
     # Get all documents and iterate over their country codes to confirm that each are
     # the specific one that is returned in the query (as they each have a unique
     # country code)
-    all_body = _make_search_request(data_client, params=base_params)
+    all_body = _make_search_request(data_client, valid_token, params=base_params)
     families = [f for f in all_body["families"]]
     assert len(families) == VESPA_FIXTURE_COUNT
 
@@ -67,7 +69,9 @@ def test_keyword_country_filters__geographies(
                 **base_params,
                 **{"keyword_filters": {"countries": [country_slug]}},
             }
-            body_with_filters = _make_search_request(data_client, params=params)
+            body_with_filters = _make_search_request(
+                data_client, valid_token, params=params
+            )
             filtered_family_slugs = [
                 f["family_slug"] for f in body_with_filters["families"]
             ]
@@ -78,7 +82,7 @@ def test_keyword_country_filters__geographies(
 @pytest.mark.search
 @pytest.mark.parametrize("label,query", [("search", "the"), ("browse", "")])
 def test_keyword_region_filters(
-    label, query, test_vespa, data_client, data_db, monkeypatch
+    label, query, test_vespa, data_client, data_db, monkeypatch, valid_token
 ):
     monkeypatch.setattr(search, "_VESPA_CONNECTION", test_vespa)
     _populate_db_families(data_db)
@@ -86,7 +90,7 @@ def test_keyword_region_filters(
 
     # Get regions of all documents and iterate over them
     # to confirm the originals are returned when filtered on
-    all_body = _make_search_request(data_client, params=base_params)
+    all_body = _make_search_request(data_client, valid_token, params=base_params)
     families = [f for f in all_body["families"]]
     assert len(families) == VESPA_FIXTURE_COUNT
 
@@ -106,7 +110,9 @@ def test_keyword_region_filters(
         region = data_db.query(Geography).filter(Geography.id == parent_id).first()
 
         params = {**base_params, **{"keyword_filters": {"regions": [region.slug]}}}
-        body_with_filters = _make_search_request(data_client, params=params)
+        body_with_filters = _make_search_request(
+            data_client, valid_token, params=params
+        )
         filtered_family_slugs = [
             f["family_slug"] for f in body_with_filters["families"]
         ]
@@ -116,7 +122,7 @@ def test_keyword_region_filters(
 @pytest.mark.search
 @pytest.mark.parametrize("label,query", [("search", "the"), ("browse", "")])
 def test_keyword_region_and_country_filters(
-    label, query, test_vespa, data_client, data_db, monkeypatch
+    label, query, test_vespa, data_client, data_db, monkeypatch, valid_token
 ):
     monkeypatch.setattr(search, "_VESPA_CONNECTION", test_vespa)
     _populate_db_families(data_db)
@@ -130,7 +136,7 @@ def test_keyword_region_and_country_filters(
         },
     }
 
-    body = _make_search_request(data_client, params=base_params)
+    body = _make_search_request(data_client, valid_token, params=base_params)
 
     assert len(body["families"]) == 1
     assert body["families"][0]["family_name"] == "National Energy Strategy"
@@ -139,7 +145,7 @@ def test_keyword_region_and_country_filters(
 @pytest.mark.search
 @pytest.mark.parametrize("label,query", [("search", "the"), ("browse", "")])
 def test_invalid_keyword_filters(
-    label, query, test_vespa, data_db, monkeypatch, data_client
+    label, query, test_vespa, data_db, monkeypatch, data_client, valid_token
 ):
     monkeypatch.setattr(search, "_VESPA_CONNECTION", test_vespa)
     _populate_db_families(data_db)
@@ -162,44 +168,46 @@ def test_invalid_keyword_filters(
     "year_range", [(None, None), (1900, None), (None, 2020), (1900, 2020)]
 )
 def test_year_range_filtered_in(
-    year_range, test_vespa, data_db, monkeypatch, data_client
+    year_range, test_vespa, data_db, monkeypatch, data_client, valid_token
 ):
     monkeypatch.setattr(search, "_VESPA_CONNECTION", test_vespa)
     _populate_db_families(data_db)
 
     # Search
     params = {"query_string": "and", "year_range": year_range}
-    body = _make_search_request(data_client, params=params)
+    body = _make_search_request(data_client, valid_token, params=params)
     assert len(body["families"]) > 0
 
     # Browse
     params = {"query_string": "", "year_range": year_range}
-    body = _make_search_request(data_client, params=params)
+    body = _make_search_request(data_client, valid_token, params=params)
     assert len(body["families"]) > 0
 
 
 @pytest.mark.search
 @pytest.mark.parametrize("year_range", [(None, 2010), (2024, None)])
 def test_year_range_filtered_out(
-    year_range, test_vespa, data_db, monkeypatch, data_client
+    year_range, test_vespa, data_db, monkeypatch, data_client, valid_token
 ):
     monkeypatch.setattr(search, "_VESPA_CONNECTION", test_vespa)
     _populate_db_families(data_db)
 
     # Search
     params = {"query_string": "and", "year_range": year_range}
-    body = _make_search_request(data_client, params=params)
+    body = _make_search_request(data_client, valid_token, params=params)
     assert len(body["families"]) == 0
 
     # Browse
     params = {"query_string": "", "year_range": year_range}
-    body = _make_search_request(data_client, params=params)
+    body = _make_search_request(data_client, valid_token, params=params)
     assert len(body["families"]) == 0
 
 
 @pytest.mark.search
 @pytest.mark.parametrize("label, query", [("search", "the"), ("browse", "")])
-def test_multiple_filters(label, query, test_vespa, data_db, monkeypatch, data_client):
+def test_multiple_filters(
+    label, query, test_vespa, data_db, monkeypatch, data_client, valid_token
+):
     monkeypatch.setattr(search, "_VESPA_CONNECTION", test_vespa)
     _populate_db_families(data_db)
 
@@ -213,4 +221,4 @@ def test_multiple_filters(label, query, test_vespa, data_db, monkeypatch, data_c
         "year_range": (1900, 2020),
     }
 
-    _ = _make_search_request(data_client, params)
+    _ = _make_search_request(data_client, valid_token, params)

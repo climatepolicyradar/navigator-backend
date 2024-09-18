@@ -11,7 +11,7 @@ from tests.search.vespa.setup_search_tests import (
 @pytest.mark.search
 @pytest.mark.parametrize("label, query", [("search", "the"), ("browse", "")])
 def test_result_order_score(
-    label, query, test_vespa, data_db, monkeypatch, data_client
+    label, query, test_vespa, data_db, monkeypatch, data_client, valid_token
 ):
     monkeypatch.setattr(search, "_VESPA_CONNECTION", test_vespa)
     _populate_db_families(data_db)
@@ -21,11 +21,11 @@ def test_result_order_score(
         "sort_field": "date",
         "sort_order": "asc",
     }
-    asc_date_body = _make_search_request(data_client, params)
+    asc_date_body = _make_search_request(data_client, valid_token, params)
     asc_dates = [f["family_date"] for f in asc_date_body["families"]]
 
     params["sort_order"] = "desc"
-    desc_date_body = _make_search_request(data_client, params)
+    desc_date_body = _make_search_request(data_client, valid_token, params)
     desc_dates = [f["family_date"] for f in desc_date_body["families"]]
 
     assert VESPA_FIXTURE_COUNT == len(asc_dates) == len(desc_dates)
@@ -37,7 +37,7 @@ def test_result_order_score(
 @pytest.mark.search
 @pytest.mark.parametrize("label, query", [("search", "the"), ("browse", "")])
 def test_result_order_title(
-    label, query, test_vespa, data_db, monkeypatch, data_client
+    label, query, test_vespa, data_db, monkeypatch, data_client, valid_token
 ):
     monkeypatch.setattr(search, "_VESPA_CONNECTION", test_vespa)
     _populate_db_families(data_db)
@@ -49,4 +49,4 @@ def test_result_order_title(
     }
 
     # Scope of test is to confirm this does not cause a failure
-    _ = _make_search_request(data_client, params)
+    _ = _make_search_request(data_client, valid_token, params)

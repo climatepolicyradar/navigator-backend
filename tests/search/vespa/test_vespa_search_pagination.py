@@ -9,7 +9,9 @@ from tests.search.vespa.setup_search_tests import (
 
 
 @pytest.mark.search
-def test_simple_pagination_families(test_vespa, data_client, data_db, monkeypatch):
+def test_simple_pagination_families(
+    test_vespa, data_client, data_db, monkeypatch, valid_token
+):
     monkeypatch.setattr(search, "_VESPA_CONNECTION", test_vespa)
     _populate_db_families(data_db)
 
@@ -21,7 +23,7 @@ def test_simple_pagination_families(test_vespa, data_client, data_db, monkeypatc
         "page_size": PAGE_SIZE,
         "offset": 0,
     }
-    body_one = _make_search_request(data_client, params)
+    body_one = _make_search_request(data_client, valid_token, params)
     assert body_one["hits"] == VESPA_FIXTURE_COUNT
     assert len(body_one["families"]) == PAGE_SIZE
     assert (
@@ -39,7 +41,7 @@ def test_simple_pagination_families(test_vespa, data_client, data_db, monkeypatc
         "page_size": PAGE_SIZE,
         "offset": 2,
     }
-    body_two = _make_search_request(data_client, params)
+    body_two = _make_search_request(data_client, valid_token, params)
     assert body_two["hits"] == VESPA_FIXTURE_COUNT
     assert len(body_two["families"]) == PAGE_SIZE
     assert (
@@ -53,13 +55,15 @@ def test_simple_pagination_families(test_vespa, data_client, data_db, monkeypatc
 
 
 @pytest.mark.search
-def test_continuation_token__families(test_vespa, data_db, monkeypatch, data_client):
+def test_continuation_token__families(
+    test_vespa, data_db, monkeypatch, data_client, valid_token
+):
     monkeypatch.setattr(search, "_VESPA_CONNECTION", test_vespa)
 
     _populate_db_families(data_db)
 
     params = {"query_string": "the", "limit": 2, "page_size": 1}
-    response = _make_search_request(data_client, params)
+    response = _make_search_request(data_client, valid_token, params)
     continuation = response["continuation_token"]
     first_family_ids = [f["family_slug"] for f in response["families"]]
 
@@ -68,7 +72,7 @@ def test_continuation_token__families(test_vespa, data_db, monkeypatch, data_cli
 
     # Get next results set
     params = {"query_string": "the", "continuation_tokens": [continuation]}
-    response = _make_search_request(data_client, params)
+    response = _make_search_request(data_client, valid_token, params)
     second_family_ids = [f["family_slug"] for f in response["families"]]
 
     # Confirm we actually got different results
@@ -81,14 +85,16 @@ def test_continuation_token__families(test_vespa, data_db, monkeypatch, data_cli
         "limit": 2,
         "page_size": 1,
     }
-    response = _make_search_request(data_client, params)
+    response = _make_search_request(data_client, valid_token, params)
     prev_family_ids = [f["family_slug"] for f in response["families"]]
 
     assert sorted(first_family_ids) == sorted(prev_family_ids)
 
 
 @pytest.mark.search
-def test_continuation_token__passages(test_vespa, data_db, monkeypatch, data_client):
+def test_continuation_token__passages(
+    test_vespa, data_db, monkeypatch, data_client, valid_token
+):
     monkeypatch.setattr(search, "_VESPA_CONNECTION", test_vespa)
 
     _populate_db_families(data_db)
@@ -100,9 +106,11 @@ def test_continuation_token__passages(test_vespa, data_db, monkeypatch, data_cli
         "limit": 1,
         "page_size": 1,
     }
-    first_family = _make_search_request(data_client, params)
+    first_family = _make_search_request(data_client, valid_token, params)
     params["continuation_tokens"] = [first_family["continuation_token"]]
-    second_family_first_passages = _make_search_request(data_client, params)
+    second_family_first_passages = _make_search_request(
+        data_client, valid_token, params
+    )
     second_family_first_passages_ids = [
         h["text_block_id"]
         for h in second_family_first_passages["families"][0]["family_documents"][0][
@@ -119,7 +127,9 @@ def test_continuation_token__passages(test_vespa, data_db, monkeypatch, data_cli
         this_family_continuation,
         next_passages_continuation,
     ]
-    second_family_second_passages = _make_search_request(data_client, params)
+    second_family_second_passages = _make_search_request(
+        data_client, valid_token, params
+    )
     second_family_second_passages_ids = [
         h["text_block_id"]
         for h in second_family_second_passages["families"][0]["family_documents"][0][
@@ -141,7 +151,7 @@ def test_continuation_token__passages(test_vespa, data_db, monkeypatch, data_cli
         this_family_continuation,
         prev_passages_continuation,
     ]
-    response = _make_search_request(data_client, params)
+    response = _make_search_request(data_client, valid_token, params)
     second_family_prev_passages_ids = [
         h["text_block_id"]
         for h in response["families"][0]["family_documents"][0][

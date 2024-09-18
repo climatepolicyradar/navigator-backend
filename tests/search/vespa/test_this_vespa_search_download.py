@@ -1,28 +1,30 @@
 import csv
 from io import StringIO
-from typing import Mapping
 from unittest.mock import patch
 
 import pytest
 
 from app.api.api_v1.routers import search
-from tests.search.vespa.setup_search_tests import _populate_db_families
+from tests.search.vespa.setup_search_tests import (
+    _make_search_request,
+    _populate_db_families,
+)
 
 SEARCH_ENDPOINT = "/api/v1/searches"
 CSV_DOWNLOAD_ENDPOINT = "/api/v1/searches/download-csv"
-
-
-def _make_search_request(client, params: Mapping[str, str]):
-    response = client.post(SEARCH_ENDPOINT, json=params)
-    assert response.status_code == 200, response.text
-    return response.json()
 
 
 @pytest.mark.search
 @pytest.mark.parametrize("exact_match", [True, False])
 @pytest.mark.parametrize("query_string", ["", "local"])
 def test_csv_content(
-    exact_match, query_string, test_vespa, data_db, monkeypatch, data_client
+    exact_match,
+    query_string,
+    test_vespa,
+    data_db,
+    monkeypatch,
+    data_client,
+    valid_token,
 ):
     """Make sure that downloaded CSV content matches a given search"""
     monkeypatch.setattr(search, "_VESPA_CONNECTION", test_vespa)
@@ -31,7 +33,7 @@ def test_csv_content(
         "exact_match": exact_match,
         "query_string": query_string,
     }
-    body = _make_search_request(data_client, params)
+    body = _make_search_request(data_client, valid_token, params)
     families = body["families"]
     assert len(families) > 0
 

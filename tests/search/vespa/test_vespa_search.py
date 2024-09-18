@@ -16,14 +16,14 @@ from tests.search.vespa.setup_search_tests import (
 
 @pytest.mark.search
 def test_empty_search_term_performs_browse(
-    test_vespa, data_client, data_db, mocker, monkeypatch
+    test_vespa, data_client, data_db, mocker, monkeypatch, valid_token
 ):
     """Make sure that empty search term returns results in browse mode."""
     _populate_db_families(data_db)
     monkeypatch.setattr(search, "_VESPA_CONNECTION", test_vespa)
 
     query_spy = mocker.spy(search._VESPA_CONNECTION, "search")
-    body = _make_search_request(data_client, {"query_string": ""})
+    body = _make_search_request(data_client, valid_token, {"query_string": ""})
 
     assert body["hits"] > 0
     assert len(body["families"]) > 0
@@ -35,13 +35,16 @@ def test_empty_search_term_performs_browse(
 
 @pytest.mark.search
 @pytest.mark.parametrize("exact_match", [True, False])
-def test_search_body_valid(exact_match, test_vespa, data_client, data_db, monkeypatch):
+def test_search_body_valid(
+    exact_match, test_vespa, data_client, data_db, monkeypatch, valid_token
+):
     """Test a simple known valid search responds with success."""
     monkeypatch.setattr(search, "_VESPA_CONNECTION", test_vespa)
     _populate_db_families(data_db)
 
     body = _make_search_request(
         data_client,
+        valid_token,
         params={
             "query_string": "and",
             "exact_match": exact_match,
@@ -64,7 +67,7 @@ def test_search_body_valid(exact_match, test_vespa, data_client, data_db, monkey
 
 @pytest.mark.search
 def test_no_doc_if_in_postgres_but_not_vespa(
-    test_vespa, data_client, data_db, monkeypatch
+    test_vespa, data_client, data_db, monkeypatch, valid_token
 ):
     """Test a simple known valid search responds with success."""
     monkeypatch.setattr(search, "_VESPA_CONNECTION", test_vespa)
@@ -99,13 +102,14 @@ def test_no_doc_if_in_postgres_but_not_vespa(
     _create_document(data_db, new_doc, new_family)
 
     # This will also not be present in browse
-    body = _make_search_request(data_client, params={"query_string": ""})
+    body = _make_search_request(data_client, valid_token, params={"query_string": ""})
     browse_families = [f["family_name"] for f in body["families"]]
     assert EXTRA_TEST_FAMILY not in browse_families
 
     # But it won't break when running a search
     body = _make_search_request(
         data_client,
+        valid_token,
         params={
             "query_string": EXTRA_TEST_FAMILY,
             "exact_match": "true",
@@ -118,7 +122,7 @@ def test_no_doc_if_in_postgres_but_not_vespa(
 @pytest.mark.search
 @pytest.mark.parametrize("label,query", [("search", "the"), ("browse", "")])
 def test_benchmark_families_search(
-    label, query, test_vespa, monkeypatch, data_client, data_db
+    label, query, test_vespa, monkeypatch, data_client, data_db, valid_token
 ):
     monkeypatch.setattr(search, "_VESPA_CONNECTION", test_vespa)
     _populate_db_families(data_db)
@@ -132,7 +136,7 @@ def test_benchmark_families_search(
             "query_string": query,
             "exact_match": True,
         }
-        body = _make_search_request(data_client, params)
+        body = _make_search_request(data_client, valid_token, params)
 
         time_taken = body["total_time_ms"]
         times.append(time_taken)
@@ -142,7 +146,9 @@ def test_benchmark_families_search(
 
 
 @pytest.mark.search
-def test_specific_doc_returned(test_vespa, monkeypatch, data_client, data_db):
+def test_specific_doc_returned(
+    test_vespa, monkeypatch, data_client, data_db, valid_token
+):
     monkeypatch.setattr(search, "_VESPA_CONNECTION", test_vespa)
     _populate_db_families(data_db)
 
@@ -152,7 +158,7 @@ def test_specific_doc_returned(test_vespa, monkeypatch, data_client, data_db):
         "exact_match": True,
         "page_size": 1,
     }
-    body = _make_search_request(data_client, params)
+    body = _make_search_request(data_client, valid_token, params)
 
     families = [f for f in body["families"]]
     assert body["hits"] == len(families) == 1
@@ -171,7 +177,13 @@ def test_specific_doc_returned(test_vespa, monkeypatch, data_client, data_db):
 )
 @pytest.mark.search
 def test_search_params_backend_limits(
-    test_vespa, monkeypatch, data_client, data_db, extra_params, invalid_field
+    test_vespa,
+    monkeypatch,
+    data_client,
+    data_db,
+    extra_params,
+    invalid_field,
+    valid_token,
 ):
     monkeypatch.setattr(search, "_VESPA_CONNECTION", test_vespa)
     _populate_db_families(data_db)
@@ -185,21 +197,29 @@ def test_search_params_backend_limits(
 
 
 @pytest.mark.search
-def test_search_with_deleted_docs(test_vespa, monkeypatch, data_client, data_db):
+def test_search_with_deleted_docs(
+    test_vespa, monkeypatch, data_client, data_db, valid_token
+):
     monkeypatch.setattr(search, "_VESPA_CONNECTION", test_vespa)
     _populate_db_families(data_db)
 
-    start_body = _make_search_request(data_client, params={"query_string": "and"})
+    start_body = _make_search_request(
+        data_client, valid_token, params={"query_string": "and"}
+    )
 
     data_db.execute(
         update(FamilyDocument)
         .where(FamilyDocument.import_id == "CCLW.executive.10246.4861")
         .values(document_status="Deleted")
     )
-    one_deleted_body = _make_search_request(data_client, params={"query_string": "and"})
+    one_deleted_body = _make_search_request(
+        data_client, valid_token, params={"query_string": "and"}
+    )
 
     data_db.execute(update(FamilyDocument).values(document_status="Deleted"))
-    all_deleted_body = _make_search_request(data_client, params={"query_string": "and"})
+    all_deleted_body = _make_search_request(
+        data_client, valid_token, params={"query_string": "and"}
+    )
 
     start_family_count = len(start_body["families"])
     one_deleted_count = len(one_deleted_body["families"])
@@ -224,7 +244,14 @@ def test_search_with_deleted_docs(test_vespa, monkeypatch, data_client, data_db)
     ],
 )
 def test_metadata_filter(
-    label, query, metadata_filters, test_vespa, data_db, monkeypatch, data_client
+    label,
+    query,
+    metadata_filters,
+    test_vespa,
+    data_db,
+    monkeypatch,
+    data_client,
+    valid_token,
 ):
     monkeypatch.setattr(search, "_VESPA_CONNECTION", test_vespa)
 
