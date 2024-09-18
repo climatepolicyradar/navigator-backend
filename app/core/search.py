@@ -5,7 +5,6 @@ from collections import defaultdict
 from io import StringIO
 from typing import Any, Mapping, Optional, Sequence, cast
 
-from cpr_sdk.embedding import Embedder
 from cpr_sdk.models.search import Document as CprSdkResponseDocument
 from cpr_sdk.models.search import Family as CprSdkResponseFamily
 from cpr_sdk.models.search import Filters as CprSdkKeywordFilters
@@ -38,7 +37,7 @@ from app.api.api_v1.schemas.search import (
     SearchResponseFamily,
     SearchResponseFamilyDocument,
 )
-from app.core.config import INDEX_ENCODER_CACHE_FOLDER, PUBLIC_APP_URL
+from app.core.config import PUBLIC_APP_URL
 from app.core.lookups import (
     doc_type_from_family_document_metadata,
     get_countries_for_region,
@@ -47,8 +46,6 @@ from app.core.lookups import (
 from app.core.util import to_cdn_url
 
 _LOGGER = logging.getLogger(__name__)
-
-ENCODER = Embedder(cache_folder=INDEX_ENCODER_CACHE_FOLDER)
 
 _CSV_SEARCH_RESPONSE_COLUMNS = [
     "Collection Name",

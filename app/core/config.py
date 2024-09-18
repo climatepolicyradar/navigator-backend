@@ -15,9 +15,6 @@ API_V1_STR = "/api/v1"
 VESPA_SECRETS_LOCATION: Optional[str] = os.getenv("VESPA_SECRETS_LOCATION", None)
 VESPA_URL: str = os.environ["VESPA_URL"]
 
-# Shared search config
-INDEX_ENCODER_CACHE_FOLDER: str = os.getenv("INDEX_ENCODER_CACHE_FOLDER", "/models")
-
 # Whole database dump
 INGEST_CYCLE_START = os.getenv("INGEST_CYCLE_START")
 DOC_CACHE_BUCKET = os.getenv("DOCUMENT_CACHE_BUCKET")
