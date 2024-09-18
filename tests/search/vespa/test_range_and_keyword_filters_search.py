@@ -158,6 +158,28 @@ def test_invalid_keyword_filters(
 
 
 @pytest.mark.search
+@pytest.mark.parametrize("label,query", [("search", "the"), ("browse", "")])
+def test_valid_keyword_filters(
+    label, query, test_vespa, data_db, monkeypatch, data_client
+):
+    monkeypatch.setattr(search, "_VESPA_CONNECTION", test_vespa)
+    _populate_db_families(data_db)
+
+    response = data_client.post(
+        SEARCH_ENDPOINT,
+        json={
+            "query_string": query,
+            "exact_match": True,
+            "keyword_filters": {
+                "regions": ["GIN"],
+            },
+        },
+    )
+    breakpoint()
+    assert response.status_code == 422
+
+
+@pytest.mark.search
 @pytest.mark.parametrize(
     "year_range", [(None, None), (1900, None), (None, 2020), (1900, 2020)]
 )
