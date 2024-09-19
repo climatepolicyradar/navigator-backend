@@ -78,3 +78,11 @@ def test_get_corpora_for_org__none_corpus_image_url(data_db: Session):
 
     corpora = get_corpora_for_org(data_db, "CCLW")
     assert len(corpora) == 2
+
+
+def test_get_corpora_for_org__none_corpus_text(data_db: Session):
+    setup_with_docs(data_db)
+    setup_new_corpus(data_db, "title", "description", None, "corpus_image_url")
+
+    corpora = get_corpora_for_org(data_db, "CCLW")
+    assert len(corpora) == 2
