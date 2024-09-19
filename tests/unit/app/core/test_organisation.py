@@ -4,7 +4,7 @@ import pytest
 from sqlalchemy.orm import Session
 
 from app.core.organisation import get_all_organisations, get_corpora_for_org
-from tests.non_search.setup_helpers import setup_with_docs
+from tests.non_search.setup_helpers import setup_new_corpus, setup_with_docs
 
 CCLW_EXPECTED_NUM_CORPORA = 1
 CCLW_METADATA_KEYS = set(
@@ -70,3 +70,11 @@ def test_get_corpora_for_org__empty_when_missing(data_db: Session):
 
     corpora = get_corpora_for_org(data_db, "MISSING_ORG_NAME")
     assert len(corpora) == 0
+
+
+def test_get_corpora_for_org__none_corpus_image_url(data_db: Session):
+    setup_with_docs(data_db)
+    setup_new_corpus(data_db, "title", "description", "corpus_text", None)
+
+    corpora = get_corpora_for_org(data_db, "CCLW")
+    assert len(corpora) == 2
