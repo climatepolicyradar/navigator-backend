@@ -11,8 +11,11 @@ from app.core import config
 
 def _to_corpus_data(row) -> CorpusData:
     image_url = (
-        f"https://{config.CDN_DOMAIN}/{row.image_url}" if len(row.image_url) > 0 else ""
+        f"https://{config.CDN_DOMAIN}/{row.image_url}"
+        if row.image_url is not None and len(row.image_url) > 0
+        else ""
     )
+    corpus_text = row.text if row.text is not None else ""
     return CorpusData(
         corpus_import_id=row.corpus_import_id,
         title=row.title,
@@ -20,7 +23,7 @@ def _to_corpus_data(row) -> CorpusData:
         corpus_type=row.corpus_type,
         corpus_type_description=row.corpus_type_description,
         image_url=image_url,
-        text=row.text,
+        text=corpus_text,
         taxonomy={**row.taxonomy},
     )
 
