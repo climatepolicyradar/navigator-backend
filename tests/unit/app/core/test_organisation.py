@@ -79,6 +79,12 @@ def test_get_corpora_for_org__none_corpus_image_url(data_db: Session):
     corpora = get_corpora_for_org(data_db, "CCLW")
     assert len(corpora) == 2
 
+    json_corpora = [corpus.model_dump() for corpus in corpora]
+    for corpus in json_corpora:
+        if corpus["title"] == "title":
+            assert corpus["image_url"] == ""
+            pass
+
 
 def test_get_corpora_for_org__none_corpus_text(data_db: Session):
     setup_with_docs(data_db)
@@ -86,3 +92,9 @@ def test_get_corpora_for_org__none_corpus_text(data_db: Session):
 
     corpora = get_corpora_for_org(data_db, "CCLW")
     assert len(corpora) == 2
+
+    json_corpora = [corpus.model_dump() for corpus in corpora]
+    for corpus in json_corpora:
+        if corpus["title"] == "title":
+            assert corpus["text"] == ""
+            pass
