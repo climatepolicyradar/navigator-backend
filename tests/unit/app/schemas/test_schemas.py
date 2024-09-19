@@ -134,6 +134,8 @@ def test_search_response() -> None:
                 family_geography="Example Geography",
                 family_geographies=["Example Geography"],
                 family_metadata={"key1": "value1", "key2": "value2"},
+                corpus_import_id="test.corpus.0.1",
+                corpus_type_name="Example Corpus Type",
                 family_title_match=True,
                 family_description_match=False,
                 total_passage_hits=1,

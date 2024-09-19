@@ -37,6 +37,7 @@ class BrowseArgs(BaseModel):
 
 def to_search_response_family(
     family: Family,
+    corpus: Corpus,
     geography_value: str,
     organisation: Organisation,
 ) -> SearchResponseFamily:
@@ -56,6 +57,8 @@ def to_search_response_family(
         family_date=family_published_date,
         family_last_updated_date=family_last_updated_date,
         family_source=cast(str, organisation.name),
+        corpus_import_id=cast(str, corpus.import_id),
+        corpus_type_name=cast(str, corpus.corpus_type_name),
         family_geography=geography_value,
         family_geographies=[row.value for row in family.geographies],
         family_title_match=False,
@@ -76,7 +79,7 @@ def browse_rds_families(
     t0 = perf_counter_ns()
     geo_subquery = get_geo_subquery(db, req.geography_slugs, req.country_codes)
     query = (
-        db.query(Family, geo_subquery.c.value, Organisation)  # type: ignore
+        db.query(Family, Corpus, geo_subquery.c.value, Organisation)  # type: ignore
         .join(FamilyCorpus, FamilyCorpus.family_import_id == Family.import_id)
         .join(Corpus, FamilyCorpus.corpus_import_id == Corpus.import_id)
         .join(Organisation, Organisation.id == Corpus.organisation_id)
@@ -94,8 +97,8 @@ def browse_rds_families(
 
     _LOGGER.debug("Starting families query")
     families = [
-        to_search_response_family(family, geography_value, organisation)
-        for (family, geography_value, organisation) in query.all()
+        to_search_response_family(family, corpus, geography_value, organisation)
+        for (family, corpus, geography_value, organisation) in query.all()
         if family.family_status == FamilyStatus.PUBLISHED
     ]
 

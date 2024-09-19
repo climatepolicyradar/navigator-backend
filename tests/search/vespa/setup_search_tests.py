@@ -3,7 +3,7 @@ import random
 from collections import defaultdict
 from datetime import datetime
 from pathlib import Path
-from typing import Iterable, Mapping, Optional, Sequence
+from typing import Any, Iterable, Mapping, Optional, Sequence
 
 from db_client.models.dfce.family import (
     DocumentStatus,
@@ -34,7 +34,7 @@ SEARCH_ENDPOINT = "/api/v1/searches"
 def _make_search_request(
     client,
     token,
-    params: Mapping[str, str],
+    params: Mapping[str, Any],
     expected_status_code: int = status.HTTP_200_OK,
 ):
     response = client.post(SEARCH_ENDPOINT, json=params, headers={"app-token": token})
