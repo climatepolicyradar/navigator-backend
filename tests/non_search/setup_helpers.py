@@ -1,5 +1,6 @@
-from typing import Any, Dict
+from typing import Any, Dict, Optional
 
+from db_client.models.organisation.corpus import Corpus, CorpusType
 from sqlalchemy.orm import Session
 
 from tests.non_search.dfce_helpers import (
@@ -295,3 +296,26 @@ def setup_docs_with_two_orgs_no_langs(db: Session):
     family2["documents"] = [document2]
     add_families(db, families=[family1], org_id=1)
     add_families(db, families=[family2], org_id=2)
+
+
+def setup_new_corpus(
+    db: Session,
+    title: str,
+    description: str,
+    corpus_text: Optional[str],
+    corpus_image_url: Optional[str],
+    organisation_id: int = 1,
+    corpus_type_name: str = "Intl. agreements",
+) -> CorpusType:
+    c = Corpus(
+        import_id="name",
+        title=title,
+        description=description,
+        corpus_text=corpus_text,
+        corpus_image_url=corpus_image_url,
+        organisation_id=organisation_id,
+        corpus_type_name=corpus_type_name,
+    )
+    db.add(c)
+    db.commit()
+    return c
