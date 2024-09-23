@@ -68,31 +68,15 @@ def test_create_configuration_token_subject_contains_special_chars(input_str: st
 
 
 @pytest.mark.parametrize(
-    "input_str",
-    [
-        ("kiwi;subject;not_a_url"),
-        ("pear;subject;url_with_no_scheme.com"),
-    ],
-)
-def test_create_configuration_token_audience_not_a_http_url(input_str: str):
-    with pytest.raises(ValueError):
-        token = create_configuration_token(input_str)
-        assert token is None
-
-        data = jwt.decode(token, TOKEN_SECRET_KEY, algorithms=[ALGORITHM])
-        assert has_expected_keys(data)
-
-
-@pytest.mark.parametrize(
     "input_str,expected_allowed_corpora,expected_subject,expected_audience",
     [
         (
-            "apple,banana,carrot;ORG1;http://ORG1.org",
+            "apple,banana,carrot;ORG1;ORG1.org",
             ["apple", "banana", "carrot"],
             "ORG1",
-            "http://org1.org/",
+            "ORG1.org",
         ),
-        ("cucumber;ORG2;https://ORG2.com/", ["cucumber"], "ORG2", "https://org2.com/"),
+        ("cucumber;ORG2;ORG2.com", ["cucumber"], "ORG2", "ORG2.com"),
     ],
 )
 def test_create_configuration_token_default_expiry(
@@ -122,23 +106,26 @@ def test_create_configuration_token_default_expiry(
         EXPIRE_AFTER_DEFAULT_YEARS, datetime.fromtimestamp(data["exp"])
     ) == datetime.fromtimestamp(data["iat"])
 
+    assert not data["aud"].endswith("/")
+    assert not data["aud"].startswith("http")
+
 
 @pytest.mark.parametrize(
     "input_str,expected_allowed_corpora,expiry_years,expected_subject,expected_audience",
     [
         (
-            "raspberry,strawberry,orange;ORG1;http://ORG1.org",
+            "raspberry,strawberry,orange;ORG1;ORG1.org",
             ["orange", "raspberry", "strawberry"],
             EXPIRE_AFTER_1_YEAR,
             "ORG1",
-            "http://org1.org/",
+            "ORG1.org",
         ),
         (
-            "grapefruit;ORG2;https://ORG2.com/",
+            "grapefruit;ORG2;ORG2.com",
             ["grapefruit"],
             EXPIRE_AFTER_5_YEARS,
             "ORG2",
-            "https://org2.com/",
+            "ORG2.com",
         ),
     ],
 )
@@ -168,3 +155,6 @@ def test_create_configuration_token_specific_expiry(
     assert timedelta_years(
         expiry_years, datetime.fromtimestamp(data["exp"])
     ) == datetime.fromtimestamp(data["iat"])
+
+    assert not data["aud"].endswith("/")
+    assert not data["aud"].startswith("http")
