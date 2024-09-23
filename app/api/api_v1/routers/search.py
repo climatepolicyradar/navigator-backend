@@ -151,13 +151,14 @@ def search_documents(
         extra={
             "props": {
                 "search_request": search_body.model_dump(),
+                "corpus_import_ids": str(allowed_corpora_ids),
                 "allowed_corpora_ids": str(allowed_corpora_ids),
             }
         },
     )
 
     if not validate_corpora_ids(db, allowed_corpora_ids):
-        msg = "One or more of the given corpora do not exist in the database."
+        msg = "Error validating corpora IDs."
         raise HTTPException(
             status_code=status.HTTP_400_BAD_REQUEST,
             detail=msg,

@@ -33,10 +33,7 @@ def test_search_with_invalid_corpus_id_in_token(
             expected_status_code=status.HTTP_400_BAD_REQUEST,
         )
 
-        assert (
-            response["detail"]
-            == "One or more of the given corpora do not exist in the database."
-        )
+        assert response["detail"] == "Error validating corpora IDs."
 
 
 @pytest.mark.search
