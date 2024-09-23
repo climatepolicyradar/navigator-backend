@@ -175,7 +175,7 @@ def test_valid_keyword_filters(
             },
         },
     )
-    breakpoint()
+
     assert response.status_code == 422
 
 
