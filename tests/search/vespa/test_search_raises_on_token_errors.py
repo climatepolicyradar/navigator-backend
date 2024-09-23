@@ -49,10 +49,9 @@ def test_search_with_invalid_corpus_id_in_search_request_params(
     _populate_db_families(data_db)
 
     with patch(
-        "app.api.api_v1.routers.search.validate_corpora_ids", return_value=True
-    ), patch(
-        "app.api.api_v1.routers.search.verify_any_corpora_ids_in_db", return_value=False
-    ):
+        "app.api.api_v1.routers.search.verify_any_corpora_ids_in_db",
+        return_value=True,
+    ), patch("app.api.api_v1.routers.search.validate_corpora_ids", return_value=False):
         response = _make_search_request(
             data_client,
             valid_token,
