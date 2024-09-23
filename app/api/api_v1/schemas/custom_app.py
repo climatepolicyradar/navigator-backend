@@ -1,6 +1,6 @@
 from datetime import datetime
 
-from pydantic import BaseModel, HttpUrl
+from pydantic import BaseModel
 
 
 class CustomAppConfigDTO(BaseModel):
@@ -8,7 +8,7 @@ class CustomAppConfigDTO(BaseModel):
 
     allowed_corpora_ids: list[str]
     subject: str
-    audience: HttpUrl
+    audience: str
     issuer: str
     expiry: datetime
     issued_at: int
