@@ -113,6 +113,7 @@ def search_documents(
             }
         ),
     ],
+    host: Annotated[str, Header()],
     app_token: Annotated[str, Header()],
     db=Depends(get_db),
 ) -> SearchResponse:
@@ -137,7 +138,7 @@ def search_documents(
     results from the search database. See the request schema for more details.
     """
     try:
-        allowed_corpora_ids = decode_config_token(app_token, PUBLIC_APP_URL)
+        allowed_corpora_ids = decode_config_token(app_token, host)
     except PyJWTError as e:
         _LOGGER.error(e)
         raise HTTPException(
