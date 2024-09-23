@@ -584,7 +584,8 @@ class FamSpec:
     family_geo: str
     family_geos: list[str]
     family_metadata: dict[str, list[str]]
-
+    corpus_import_id: str
+    corpus_type_name: str
     description_hit: bool
     family_document_count: int
     document_hit_count: int
@@ -625,6 +626,8 @@ def _generate_search_response_hits(spec: FamSpec) -> Sequence[CprSdkHit]:
                 family_publication_ts=datetime.fromisoformat(spec.family_ts),
                 family_geography=spec.family_geo,
                 family_geographies=spec.family_geos,
+                corpus_import_id=spec.corpus_import_id,
+                corpus_type_name=spec.corpus_type_name,
                 document_cdn_object=(
                     f"{spec.family_import_id}/{slugify(spec.family_name)}"
                     f"_{document_number}"
@@ -657,6 +660,8 @@ def _generate_search_response_hits(spec: FamSpec) -> Sequence[CprSdkHit]:
                 family_publication_ts=datetime.fromisoformat(spec.family_ts),
                 family_geography=spec.family_geo,
                 family_geographies=spec.family_geos,
+                corpus_import_id=spec.corpus_import_id,
+                corpus_type_name=spec.corpus_type_name,
                 document_cdn_object=(
                     f"{spec.family_import_id}/{slugify(spec.family_name)}"
                     f"_{document_number}"
@@ -724,6 +729,8 @@ _FAM_SPEC_0 = FamSpec(
     family_geo="france",
     family_geos=["france"],
     family_metadata={"keyword": ["Spacial Planning"]},
+    corpus_import_id="CCLW.corpus.i00000001.n0000",
+    corpus_type_name="Intl. agreements",
     description_hit=True,
     family_document_count=1,
     document_hit_count=10,
@@ -739,6 +746,8 @@ _FAM_SPEC_1 = FamSpec(
     family_geo="spain",
     family_geos=["spain"],
     family_metadata={"sector": ["Urban", "Transportation"], "keyword": ["Hydrogen"]},
+    corpus_import_id="CCLW.corpus.i00000001.n0000",
+    corpus_type_name="Intl. agreements",
     description_hit=False,
     family_document_count=3,
     document_hit_count=25,
@@ -754,6 +763,8 @@ _FAM_SPEC_2 = FamSpec(
     family_geo="ukraine",
     family_geos=["ukraine"],
     family_metadata={"author_type": ["Non-Party"], "author": ["Anyone"]},
+    corpus_import_id="CCLW.corpus.i00000001.n0000",
+    corpus_type_name="Intl. agreements",
     description_hit=True,
     family_document_count=5,
     document_hit_count=4,
@@ -769,6 +780,8 @@ _FAM_SPEC_3 = FamSpec(
     family_geo="norway",
     family_geos=["norway"],
     family_metadata={"author_type": ["Party"], "author": ["Anyone Else"]},
+    corpus_import_id="CCLW.corpus.i00000001.n0000",
+    corpus_type_name="Intl. agreements",
     description_hit=False,
     family_document_count=2,
     document_hit_count=40,

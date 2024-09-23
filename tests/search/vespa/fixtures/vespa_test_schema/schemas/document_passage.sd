@@ -54,6 +54,7 @@ schema document_passage {
     import field family_document_ref.family_publication_ts as family_publication_ts {}
     import field family_document_ref.family_publication_year as family_publication_year {}
     import field family_document_ref.family_geography as family_geography {}
+    import field family_document_ref.family_geographies as family_geographies {}
     import field family_document_ref.family_source as family_source {}
     import field family_document_ref.document_import_id as document_import_id {}
     import field family_document_ref.document_slug as document_slug {}
@@ -61,6 +62,9 @@ schema document_passage {
     import field family_document_ref.document_content_type as document_content_type {}
     import field family_document_ref.document_cdn_object as document_cdn_object {}
     import field family_document_ref.document_source_url as document_source_url {}
+    import field family_document_ref.corpus_import_id as corpus_import_id {}
+    import field family_document_ref.corpus_type_name as corpus_type_name {}
+    import field family_document_ref.metadata as metadata {}
     import field search_weights_ref.passage_weight as passage_weight {}
 
     fieldset default {
@@ -75,6 +79,7 @@ schema document_passage {
         summary family_category {}
         summary family_publication_ts {}
         summary family_geography {}
+        summary family_geographies {}
         summary family_source {}
         summary document_import_id {}
         summary document_slug {}
@@ -82,6 +87,9 @@ schema document_passage {
         summary document_content_type {}
         summary document_cdn_object {}
         summary document_source_url {}
+        summary corpus_import_id {}
+        summary corpus_type_name {}
+        summary metadata {}
         summary text_block {}
         summary text_block_id {}
         summary text_block_type {}

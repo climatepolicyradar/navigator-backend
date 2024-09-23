@@ -417,6 +417,8 @@ def _process_vespa_search_response_families(
                         else ""
                     ),
                     family_source=hit.family_source,
+                    corpus_import_id=hit.corpus_import_id or "",
+                    corpus_type_name=hit.corpus_type_name or "",
                     family_description_match=False,
                     family_title_match=False,
                     total_passage_hits=vespa_family.total_passage_hits,

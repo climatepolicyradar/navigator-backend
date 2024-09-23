@@ -246,6 +246,16 @@ class SearchResponseFamily(BaseModel):
     The source, currently organisation name. Either “CCLW” or “UNFCCC”
     """
 
+    corpus_import_id: str
+    """
+    The id of the corpus the family belongs to. E.G. 'CCLW.corpus.i00000001.n0000'
+    """
+
+    corpus_type_name: str
+    """
+    The name given to the type of corpus the family belongs to. E.G. 'Laws and Policies'
+    """
+
     family_geography: str
     """
     The geographical location of the family in ISO 3166-1 alpha-3
