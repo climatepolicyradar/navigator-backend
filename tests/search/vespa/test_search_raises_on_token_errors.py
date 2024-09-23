@@ -37,6 +37,33 @@ def test_search_with_invalid_corpus_id_in_token(
 
 
 @pytest.mark.search
+def test_search_with_invalid_corpus_id_in_search_request_params(
+    data_client, data_db, valid_token, monkeypatch, test_vespa
+):
+    """
+    GIVEN a list of corpora IDs from the search request body params
+    WHEN those corpora IDs are not a subset of the app token corpora IDs
+    THEN raise a 403 HTTP error
+    """
+    monkeypatch.setattr(search, "_VESPA_CONNECTION", test_vespa)
+    _populate_db_families(data_db)
+
+    with patch(
+        "app.api.api_v1.routers.search.validate_corpora_ids", return_value=True
+    ), patch(
+        "app.api.api_v1.routers.search.verify_any_corpora_ids_in_db", return_value=False
+    ):
+        response = _make_search_request(
+            data_client,
+            valid_token,
+            params={"query_string": ""},
+            expected_status_code=status.HTTP_403_FORBIDDEN,
+        )
+
+        assert response["detail"] == "Error validating corpora IDs."
+
+
+@pytest.mark.search
 @pytest.mark.parametrize(
     "side_effect",
     [

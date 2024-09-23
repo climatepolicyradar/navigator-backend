@@ -8,7 +8,7 @@ for the type of document search being performed.
 
 import logging
 from io import BytesIO
-from typing import Annotated
+from typing import Annotated, cast
 
 from cpr_sdk.exceptions import QueryError
 from cpr_sdk.search_adaptors import VespaSearchAdapter
@@ -37,7 +37,10 @@ from app.core.search import (
     process_result_into_csv,
     process_vespa_search_response,
 )
-from app.db.crud.helpers.validate import verify_any_corpora_ids_in_db
+from app.db.crud.helpers.validate import (
+    validate_corpora_ids,
+    verify_any_corpora_ids_in_db,
+)
 from app.db.session import get_db
 
 _LOGGER = logging.getLogger(__name__)
@@ -163,6 +166,19 @@ def search_documents(
         msg = "Error verifying corpora IDs."
         raise HTTPException(
             status_code=status.HTTP_400_BAD_REQUEST,
+            detail=msg,
+            headers={"WWW-Authenticate": "Bearer"},
+        )
+
+    # For the second validation, search request corpora Ids are validated against the
+    # app token corpora IDs if the search request param 'corpus_import_ids' is not None.
+    # corpus_import_ids must be a subset of app token IDs.
+    if search_body.corpus_import_ids is not None and not validate_corpora_ids(
+        set(search_body.corpus_import_ids), cast(set, allowed_corpora_ids)
+    ):
+        msg = "Error validating corpora IDs."
+        raise HTTPException(
+            status_code=status.HTTP_403_FORBIDDEN,
             detail=msg,
             headers={"WWW-Authenticate": "Bearer"},
         )
