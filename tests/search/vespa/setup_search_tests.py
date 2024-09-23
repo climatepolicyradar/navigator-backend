@@ -29,6 +29,7 @@ from fastapi import status
 from sqlalchemy.orm import Session
 
 SEARCH_ENDPOINT = "/api/v1/searches"
+TEST_HOST = "localhost:8888"
 
 
 def _make_search_request(
@@ -37,7 +38,11 @@ def _make_search_request(
     params: Mapping[str, Any],
     expected_status_code: int = status.HTTP_200_OK,
 ):
-    response = client.post(SEARCH_ENDPOINT, json=params, headers={"app-token": token})
+    response = client.post(
+        SEARCH_ENDPOINT,
+        json=params,
+        headers={"app-token": token, "host": TEST_HOST},
+    )
     assert response.status_code == expected_status_code, response.text
     return response.json()
 
@@ -160,7 +165,7 @@ def _create_family_event(db: Session, family: VespaFixture):
 
 
 def _generate_synthetic_metadata(
-    taxonomy: Mapping[str, dict]
+    taxonomy: Mapping[str, dict],
 ) -> Mapping[str, Sequence[str]]:
     meta_value = {}
     for k in taxonomy:

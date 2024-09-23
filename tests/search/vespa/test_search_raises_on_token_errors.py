@@ -24,7 +24,7 @@ def test_search_with_invalid_corpus_id_in_token(
     _populate_db_families(data_db)
 
     with patch(
-        "app.api.api_v1.routers.search.validate_corpora_ids", return_value=False
+        "app.api.api_v1.routers.search.verify_any_corpora_ids_in_db", return_value=False
     ):
         response = _make_search_request(
             data_client,
@@ -33,7 +33,7 @@ def test_search_with_invalid_corpus_id_in_token(
             expected_status_code=status.HTTP_400_BAD_REQUEST,
         )
 
-        assert response["detail"] == "Error validating corpora IDs."
+        assert response["detail"] == "Error verifying corpora IDs."
 
 
 @pytest.mark.search

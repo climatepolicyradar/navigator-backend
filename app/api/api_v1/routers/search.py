@@ -37,7 +37,7 @@ from app.core.search import (
     process_result_into_csv,
     process_vespa_search_response,
 )
-from app.db.crud.helpers.validate import validate_corpora_ids
+from app.db.crud.helpers.validate import verify_any_corpora_ids_in_db
 from app.db.session import get_db
 
 _LOGGER = logging.getLogger(__name__)
@@ -157,15 +157,20 @@ def search_documents(
         },
     )
 
-    if not validate_corpora_ids(db, allowed_corpora_ids):
-        msg = "Error validating corpora IDs."
+    # First corpora validation is app token against DB. At least one of the app token
+    # corpora IDs must be present in the DB to continue the search request.
+    if not verify_any_corpora_ids_in_db(db, allowed_corpora_ids):
+        msg = "Error verifying corpora IDs."
         raise HTTPException(
             status_code=status.HTTP_400_BAD_REQUEST,
             detail=msg,
             headers={"WWW-Authenticate": "Bearer"},
         )
 
-    _LOGGER.info("Starting search...")
+    _LOGGER.info(
+        "Starting search...",
+        extra={"props": {"search_request": search_body.model_dump()}},
+    )
     return _search_request(db=db, search_body=search_body)
 
 

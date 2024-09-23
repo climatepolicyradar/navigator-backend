@@ -115,7 +115,24 @@ def valid_token():
     """
     corpora_ids = "CCLW.corpus.i00000001.n0000,UNFCCC.corpus.i00000001.n0000"
     subject = "CCLW"
-    audience = "http://localhost:3000"
+    audience = "localhost:8888"
+    input_str = f"{corpora_ids};{subject};{audience}"
+    return create_configuration_token(input_str)
+
+
+@pytest.fixture
+def unfccc_token():
+    """Generate valid config token using TOKEN_SECRET_KEY.
+
+    Need to generate the config token using the token secret key from
+    your local env file. For tests in CI, this will be the secret key in
+    the .env.example file, but for local development this secret key
+    might be different (e.g., the one for staging). This fixture works
+    around this.
+    """
+    corpora_ids = "CCLW.corpus.i00000001.n0000,UNFCCC.corpus.i00000001.n0000"
+    subject = "CCLW"
+    audience = "localhost:8888"
     input_str = f"{corpora_ids};{subject};{audience}"
     return create_configuration_token(input_str)
 
