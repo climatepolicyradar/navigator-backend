@@ -151,7 +151,6 @@ def search_documents(
         extra={
             "props": {
                 "search_request": search_body.model_dump(),
-                "corpus_import_ids": str(allowed_corpora_ids),
                 "allowed_corpora_ids": str(allowed_corpora_ids),
             }
         },
