@@ -1,11 +1,10 @@
 import logging
 import os
 from datetime import datetime
-from typing import Optional, cast
+from typing import Optional
 
 import jwt
 from dateutil.relativedelta import relativedelta
-from pydantic import HttpUrl
 
 from app.api.api_v1.schemas.custom_app import CustomAppConfigDTO
 from app.core import security
@@ -69,7 +68,7 @@ def create_configuration_token(input: str, years: Optional[int] = None) -> str:
         allowed_corpora_ids=_parse_and_sort_corpora_ids(corpora_ids),
         subject=subject,
         issuer=ISSUER,
-        audience=cast(HttpUrl, add_trailing_slash_to_url(audience)),
+        audience=audience,
         expiry=expire,
         issued_at=int(
             datetime.timestamp(issued_at.replace(microsecond=0))
@@ -111,21 +110,8 @@ def decode_config_token(token: str, audience: Optional[str]) -> list[str]:
         TOKEN_SECRET_KEY,
         algorithms=[security.ALGORITHM],
         issuer=ISSUER,
-        audience=(
-            add_trailing_slash_to_url(audience) if audience is not None else None
-        ),
+        audience=audience,
     )
     corpora_ids: list = decoded_token.get("allowed_corpora_ids")
 
     return corpora_ids
-
-
-def add_trailing_slash_to_url(app_url: str) -> str:
-    """Add trailing slash to end of a URL string.
-
-    :param str app_url : A URL in string format.
-    :return str: The URL with a trailing '/' added if it wasn't present.
-    """
-    if not app_url.endswith("/"):
-        app_url += "/"
-    return app_url

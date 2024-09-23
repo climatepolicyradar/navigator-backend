@@ -15,8 +15,8 @@ where:
   custom app
 - `THEME` is the name of the theme or organisation - it must not contain any
   special characters or spaces
-- `APP_DOMAIN` is the domain name of the custom app (NOTE: this is specific to
-  the AWS environment)
+- `AUDIENCE` is the host name of the custom app, without HTTP scheme. This must
+  not end with a trailing slash OR start with a trailing slash.
 
 ## Example usage
 
@@ -29,8 +29,8 @@ want to generate the token for.
 export TOKEN_SECRET_KEY=secret_key
 export CORPORA_IDS=CCLW.corpus.i00000001.n0000,UNFCCC.corpus.i00000001.n0000
 export THEME=CPR
-export APP_DOMAIN=https://app.climatepolicyradar.org/
-python -c "from app.core import config; from app.core.custom_app import create_configuration_token; print(create_configuration_token('$CORPORA_IDS;$THEME;$APP_DOMAIN'))"
+export AUDIENCE=app.dev.climatepolicyradar.org
+python -c "from app.core import config; from app.core.custom_app import create_configuration_token; print(create_configuration_token('$CORPORA_IDS;$THEME;$AUDIENCE'))"
 ```
 
 ### Decoding
