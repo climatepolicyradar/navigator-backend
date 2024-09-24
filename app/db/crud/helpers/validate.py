@@ -44,9 +44,8 @@ def validate_corpora_ids(corpora_ids: set[str], valid_corpora_ids: set[str]) -> 
     validate_success = corpora_ids.issubset(valid_corpora_ids)
     if not validate_success:
         invalid_corpora = set(corpora_ids).difference(valid_corpora_ids)
-        if invalid_corpora != set():
-            _LOGGER.warning(
-                f"Some corpora in search request params {invalid_corpora}"
-                "forbidden to search against."
-            )
+        _LOGGER.warning(
+            f"Some corpora in search request params {invalid_corpora}"
+            "forbidden to search against."
+        )
     return validate_success
