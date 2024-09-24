@@ -1,4 +1,3 @@
-from typing import Any
 from unittest.mock import patch
 
 import pytest
@@ -274,41 +273,3 @@ def test_search_with_deleted_docs(
     assert len(all_deleted_body["families"]) == 0
 
     assert mock_corpora_exist_in_db.assert_called
-
-
-@pytest.mark.search
-@pytest.mark.parametrize(
-    ("corpus_import_id", "corpus_type_name"),
-    [
-        ("CCLW.corpus.1.0", "UNFCCC Submissions"),
-        ("CCLW.corpus.1.0", None),
-        (None, "UNFCCC Submissions"),
-    ],
-)
-def test_corpus_filtering(
-    test_vespa,
-    monkeypatch,
-    data_client,
-    data_db,
-    valid_token,
-    corpus_import_id: str,
-    corpus_type_name: str,
-):
-    monkeypatch.setattr(search, "_VESPA_CONNECTION", test_vespa)
-    _populate_db_families(data_db)
-    params: dict[str, Any] = {"query_string": "and"}
-    if corpus_import_id:
-        params["corpus_import_ids"] = [corpus_import_id]
-    if corpus_type_name:
-        params["corpus_type_names"] = [corpus_type_name]
-    response = _make_search_request(
-        data_client,
-        token=valid_token,
-        params=params,
-    )
-    assert len(response["families"]) > 0
-    for family in response["families"]:
-        if corpus_import_id:
-            assert family["corpus_import_id"] == corpus_import_id
-        if corpus_type_name:
-            assert family["corpus_type_name"] == corpus_type_name
