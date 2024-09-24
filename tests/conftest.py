@@ -115,7 +115,7 @@ def valid_token():
     """
     corpora_ids = "CCLW.corpus.1.0,CCLW.corpus.2.0"
     subject = "CCLW"
-    audience = "localhost:8888"
+    audience = "localhost"
     input_str = f"{corpora_ids};{subject};{audience}"
     return create_configuration_token(input_str)
 
