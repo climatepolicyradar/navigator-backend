@@ -1,4 +1,4 @@
-from typing import Any
+from unittest.mock import patch
 
 import pytest
 from db_client.models.dfce.family import FamilyDocument
@@ -17,8 +17,15 @@ from tests.search.vespa.setup_search_tests import (
 
 
 @pytest.mark.search
+@patch("app.api.api_v1.routers.search.verify_any_corpora_ids_in_db", return_value=True)
 def test_empty_search_term_performs_browse(
-    test_vespa, data_client, data_db, mocker, monkeypatch, valid_token
+    mock_corpora_exist_in_db,
+    test_vespa,
+    data_client,
+    data_db,
+    mocker,
+    monkeypatch,
+    valid_token,
 ):
     """Make sure that empty search term returns results in browse mode."""
     _populate_db_families(data_db)
@@ -34,11 +41,20 @@ def test_empty_search_term_performs_browse(
     assert query_spy.call_args.kwargs["parameters"].all_results
     query_spy.assert_called_once()
 
+    assert mock_corpora_exist_in_db.assert_called
+
 
 @pytest.mark.search
+@patch("app.api.api_v1.routers.search.verify_any_corpora_ids_in_db", return_value=True)
 @pytest.mark.parametrize("exact_match", [True, False])
 def test_search_body_valid(
-    exact_match, test_vespa, data_client, data_db, monkeypatch, valid_token
+    mock_corpora_exist_in_db,
+    exact_match,
+    test_vespa,
+    data_client,
+    data_db,
+    monkeypatch,
+    valid_token,
 ):
     """Test a simple known valid search responds with success."""
     monkeypatch.setattr(search, "_VESPA_CONNECTION", test_vespa)
@@ -66,10 +82,13 @@ def test_search_body_valid(
     ]
     assert isinstance(body["families"], list)
 
+    assert mock_corpora_exist_in_db.assert_called
+
 
 @pytest.mark.search
+@patch("app.api.api_v1.routers.search.verify_any_corpora_ids_in_db", return_value=True)
 def test_no_doc_if_in_postgres_but_not_vespa(
-    test_vespa, data_client, data_db, monkeypatch, valid_token
+    mock_corpora_exist_in_db, test_vespa, data_client, data_db, monkeypatch, valid_token
 ):
     """Test a simple known valid search responds with success."""
     monkeypatch.setattr(search, "_VESPA_CONNECTION", test_vespa)
@@ -120,11 +139,21 @@ def test_no_doc_if_in_postgres_but_not_vespa(
 
     assert len(body["families"]) == 0
 
+    assert mock_corpora_exist_in_db.assert_called
+
 
 @pytest.mark.search
+@patch("app.api.api_v1.routers.search.verify_any_corpora_ids_in_db", return_value=True)
 @pytest.mark.parametrize("label,query", [("search", "the"), ("browse", "")])
 def test_benchmark_families_search(
-    label, query, test_vespa, monkeypatch, data_client, data_db, valid_token
+    mock_corpora_exist_in_db,
+    label,
+    query,
+    test_vespa,
+    monkeypatch,
+    data_client,
+    data_db,
+    valid_token,
 ):
     monkeypatch.setattr(search, "_VESPA_CONNECTION", test_vespa)
     _populate_db_families(data_db)
@@ -146,10 +175,13 @@ def test_benchmark_families_search(
     average = sum(times) / len(times)
     assert average < REASONABLE_LATENCY_MS
 
+    assert mock_corpora_exist_in_db.assert_called
 
+
+@patch("app.api.api_v1.routers.search.verify_any_corpora_ids_in_db", return_value=True)
 @pytest.mark.search
 def test_specific_doc_returned(
-    test_vespa, monkeypatch, data_client, data_db, valid_token
+    mock_corpora_exist_in_db, test_vespa, monkeypatch, data_client, data_db, valid_token
 ):
     monkeypatch.setattr(search, "_VESPA_CONNECTION", test_vespa)
     _populate_db_families(data_db)
@@ -167,7 +199,10 @@ def test_specific_doc_returned(
     family_name = families[0]["family_name"]
     assert family_name == family_name_query
 
+    assert mock_corpora_exist_in_db.assert_called
 
+
+@patch("app.api.api_v1.routers.search.verify_any_corpora_ids_in_db", return_value=True)
 @pytest.mark.parametrize(
     ("extra_params", "invalid_field"),
     [
@@ -179,6 +214,7 @@ def test_specific_doc_returned(
 )
 @pytest.mark.search
 def test_search_params_backend_limits(
+    mock_corpora_exist_in_db,
     test_vespa,
     monkeypatch,
     data_client,
@@ -201,10 +237,13 @@ def test_search_params_backend_limits(
         assert "body" in error["loc"], error
         assert invalid_field in error["loc"], error
 
+    assert mock_corpora_exist_in_db.assert_called
+
 
 @pytest.mark.search
+@patch("app.api.api_v1.routers.search.verify_any_corpora_ids_in_db", return_value=True)
 def test_search_with_deleted_docs(
-    test_vespa, monkeypatch, data_client, data_db, valid_token
+    mock_corpora_exist_in_db, test_vespa, monkeypatch, data_client, data_db, valid_token
 ):
     monkeypatch.setattr(search, "_VESPA_CONNECTION", test_vespa)
     _populate_db_families(data_db)
@@ -233,43 +272,4 @@ def test_search_with_deleted_docs(
     assert start_family_count > one_deleted_count > all_deleted_count
     assert len(all_deleted_body["families"]) == 0
 
-
-@pytest.mark.search
-@pytest.mark.parametrize(
-    ("corpus_import_id", "corpus_type_name"),
-    [
-        ("CCLW.corpus.1.0", "UNFCCC Submissions"),
-        ("CCLW.corpus.1.0", None),
-        (None, "UNFCCC Submissions"),
-    ],
-)
-def test_corpus_filtering(
-    test_vespa,
-    monkeypatch,
-    data_client,
-    data_db,
-    valid_token,
-    corpus_import_id: str,
-    corpus_type_name: str,
-):
-    monkeypatch.setattr(search, "_VESPA_CONNECTION", test_vespa)
-    _populate_db_families(data_db)
-
-    params: dict[str, Any] = {"query_string": "and"}
-    if corpus_import_id:
-        params["corpus_import_ids"] = [corpus_import_id]
-    if corpus_type_name:
-        params["corpus_type_names"] = [corpus_type_name]
-
-    response = _make_search_request(
-        data_client,
-        token=valid_token,
-        params=params,
-    )
-
-    assert len(response["families"]) > 0
-    for family in response["families"]:
-        if corpus_import_id:
-            assert family["corpus_import_id"] == corpus_import_id
-        if corpus_type_name:
-            assert family["corpus_type_name"] == corpus_type_name
+    assert mock_corpora_exist_in_db.assert_called

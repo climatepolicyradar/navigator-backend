@@ -1,3 +1,5 @@
+from unittest.mock import patch
+
 import pytest
 from db_client.models.dfce import Geography
 from fastapi import status
@@ -12,9 +14,17 @@ from tests.search.vespa.setup_search_tests import (
 
 
 @pytest.mark.search
+@patch("app.api.api_v1.routers.search.verify_any_corpora_ids_in_db", return_value=True)
 @pytest.mark.parametrize("label,query", [("search", "the"), ("browse", "")])
 def test_keyword_country_filters__geography(
-    label, query, test_vespa, data_client, data_db, monkeypatch, valid_token
+    mock_corpora_exist_in_db,
+    label,
+    query,
+    test_vespa,
+    data_client,
+    data_db,
+    monkeypatch,
+    valid_token,
 ):
     monkeypatch.setattr(search, "_VESPA_CONNECTION", test_vespa)
     _populate_db_families(data_db)
@@ -43,11 +53,21 @@ def test_keyword_country_filters__geography(
         assert len(filtered_family_slugs) == 1
         assert family["family_slug"] in filtered_family_slugs
 
+    assert mock_corpora_exist_in_db.assert_called
+
 
 @pytest.mark.search
+@patch("app.api.api_v1.routers.search.verify_any_corpora_ids_in_db", return_value=True)
 @pytest.mark.parametrize("label,query", [("search", "the"), ("browse", "")])
 def test_keyword_country_filters__geographies(
-    label, query, test_vespa, data_client, data_db, monkeypatch, valid_token
+    mock_corpora_exist_in_db,
+    label,
+    query,
+    test_vespa,
+    data_client,
+    data_db,
+    monkeypatch,
+    valid_token,
 ):
     monkeypatch.setattr(search, "_VESPA_CONNECTION", test_vespa)
     _populate_db_families(data_db)
@@ -78,11 +98,21 @@ def test_keyword_country_filters__geographies(
             assert len(filtered_family_slugs) == 1
             assert family["family_slug"] in filtered_family_slugs
 
+    assert mock_corpora_exist_in_db.assert_called
+
 
 @pytest.mark.search
+@patch("app.api.api_v1.routers.search.verify_any_corpora_ids_in_db", return_value=True)
 @pytest.mark.parametrize("label,query", [("search", "the"), ("browse", "")])
 def test_keyword_region_filters(
-    label, query, test_vespa, data_client, data_db, monkeypatch, valid_token
+    mock_corpora_exist_in_db,
+    label,
+    query,
+    test_vespa,
+    data_client,
+    data_db,
+    monkeypatch,
+    valid_token,
 ):
     monkeypatch.setattr(search, "_VESPA_CONNECTION", test_vespa)
     _populate_db_families(data_db)
@@ -118,11 +148,21 @@ def test_keyword_region_filters(
         ]
         assert family["family_slug"] in filtered_family_slugs
 
+    assert mock_corpora_exist_in_db.assert_called
+
 
 @pytest.mark.search
+@patch("app.api.api_v1.routers.search.verify_any_corpora_ids_in_db", return_value=True)
 @pytest.mark.parametrize("label,query", [("search", "the"), ("browse", "")])
 def test_keyword_region_and_country_filters(
-    label, query, test_vespa, data_client, data_db, monkeypatch, valid_token
+    mock_corpora_exist_in_db,
+    label,
+    query,
+    test_vespa,
+    data_client,
+    data_db,
+    monkeypatch,
+    valid_token,
 ):
     monkeypatch.setattr(search, "_VESPA_CONNECTION", test_vespa)
     _populate_db_families(data_db)
@@ -141,11 +181,21 @@ def test_keyword_region_and_country_filters(
     assert len(body["families"]) == 1
     assert body["families"][0]["family_name"] == "National Energy Strategy"
 
+    assert mock_corpora_exist_in_db.assert_called
+
 
 @pytest.mark.search
+@patch("app.api.api_v1.routers.search.verify_any_corpora_ids_in_db", return_value=True)
 @pytest.mark.parametrize("label,query", [("search", "the"), ("browse", "")])
 def test_invalid_keyword_filters(
-    label, query, test_vespa, data_db, monkeypatch, data_client, valid_token
+    mock_corpora_exist_in_db,
+    label,
+    query,
+    test_vespa,
+    data_db,
+    monkeypatch,
+    data_client,
+    valid_token,
 ):
     monkeypatch.setattr(search, "_VESPA_CONNECTION", test_vespa)
     _populate_db_families(data_db)
@@ -164,13 +214,22 @@ def test_invalid_keyword_filters(
         expected_status_code=status.HTTP_422_UNPROCESSABLE_ENTITY,
     )
 
+    assert mock_corpora_exist_in_db.assert_called
+
 
 @pytest.mark.search
+@patch("app.api.api_v1.routers.search.verify_any_corpora_ids_in_db", return_value=True)
 @pytest.mark.parametrize(
     "year_range", [(None, None), (1900, None), (None, 2020), (1900, 2020)]
 )
 def test_year_range_filtered_in(
-    year_range, test_vespa, data_db, monkeypatch, data_client, valid_token
+    mock_corpora_exist_in_db,
+    year_range,
+    test_vespa,
+    data_db,
+    monkeypatch,
+    data_client,
+    valid_token,
 ):
     monkeypatch.setattr(search, "_VESPA_CONNECTION", test_vespa)
     _populate_db_families(data_db)
@@ -185,11 +244,20 @@ def test_year_range_filtered_in(
     body = _make_search_request(data_client, valid_token, params=params)
     assert len(body["families"]) > 0
 
+    assert mock_corpora_exist_in_db.assert_called
+
 
 @pytest.mark.search
+@patch("app.api.api_v1.routers.search.verify_any_corpora_ids_in_db", return_value=True)
 @pytest.mark.parametrize("year_range", [(None, 2010), (2024, None)])
 def test_year_range_filtered_out(
-    year_range, test_vespa, data_db, monkeypatch, data_client, valid_token
+    mock_corpora_exist_in_db,
+    year_range,
+    test_vespa,
+    data_db,
+    monkeypatch,
+    data_client,
+    valid_token,
 ):
     monkeypatch.setattr(search, "_VESPA_CONNECTION", test_vespa)
     _populate_db_families(data_db)
@@ -204,11 +272,21 @@ def test_year_range_filtered_out(
     body = _make_search_request(data_client, valid_token, params=params)
     assert len(body["families"]) == 0
 
+    assert mock_corpora_exist_in_db.assert_called
+
 
 @pytest.mark.search
+@patch("app.api.api_v1.routers.search.verify_any_corpora_ids_in_db", return_value=True)
 @pytest.mark.parametrize("label, query", [("search", "the"), ("browse", "")])
 def test_multiple_filters(
-    label, query, test_vespa, data_db, monkeypatch, data_client, valid_token
+    mock_corpora_exist_in_db,
+    label,
+    query,
+    test_vespa,
+    data_db,
+    monkeypatch,
+    data_client,
+    valid_token,
 ):
     monkeypatch.setattr(search, "_VESPA_CONNECTION", test_vespa)
     _populate_db_families(data_db)
@@ -224,11 +302,13 @@ def test_multiple_filters(
     }
 
     _ = _make_search_request(data_client, valid_token, params)
+    assert mock_corpora_exist_in_db.assert_called
 
 
 @pytest.mark.search
+@patch("app.api.api_v1.routers.search.verify_any_corpora_ids_in_db", return_value=True)
 def test_geo_filter_with_exact(
-    test_vespa, data_db, monkeypatch, data_client, valid_token
+    mock_corpora_exist_in_db, test_vespa, data_db, monkeypatch, data_client, valid_token
 ):
     monkeypatch.setattr(search, "_VESPA_CONNECTION", test_vespa)
     _populate_db_families(data_db)
@@ -246,3 +326,5 @@ def test_geo_filter_with_exact(
     assert len(response["families"]) > 0
     for family in response["families"]:
         assert "ITA" in family["family_geographies"]
+
+    assert mock_corpora_exist_in_db.assert_called

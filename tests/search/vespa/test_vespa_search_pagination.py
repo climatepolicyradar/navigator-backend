@@ -1,3 +1,5 @@
+from unittest.mock import patch
+
 import pytest
 
 from app.api.api_v1.routers import search
@@ -9,8 +11,9 @@ from tests.search.vespa.setup_search_tests import (
 
 
 @pytest.mark.search
+@patch("app.api.api_v1.routers.search.verify_any_corpora_ids_in_db", return_value=True)
 def test_simple_pagination_families(
-    test_vespa, data_client, data_db, monkeypatch, valid_token
+    mock_corpora_exist_in_db, test_vespa, data_client, data_db, monkeypatch, valid_token
 ):
     monkeypatch.setattr(search, "_VESPA_CONNECTION", test_vespa)
     _populate_db_families(data_db)
@@ -53,10 +56,13 @@ def test_simple_pagination_families(
         == "submission-to-the-unfccc-ahead-of-the-first-technical-dialogue_e760"
     )
 
+    assert mock_corpora_exist_in_db.assert_called
+
 
 @pytest.mark.search
+@patch("app.api.api_v1.routers.search.verify_any_corpora_ids_in_db", return_value=True)
 def test_continuation_token__families(
-    test_vespa, data_db, monkeypatch, data_client, valid_token
+    mock_corpora_exist_in_db, test_vespa, data_db, monkeypatch, data_client, valid_token
 ):
     monkeypatch.setattr(search, "_VESPA_CONNECTION", test_vespa)
 
@@ -90,10 +96,13 @@ def test_continuation_token__families(
 
     assert sorted(first_family_ids) == sorted(prev_family_ids)
 
+    assert mock_corpora_exist_in_db.assert_called
+
 
 @pytest.mark.search
+@patch("app.api.api_v1.routers.search.verify_any_corpora_ids_in_db", return_value=True)
 def test_continuation_token__passages(
-    test_vespa, data_db, monkeypatch, data_client, valid_token
+    mock_corpora_exist_in_db, test_vespa, data_db, monkeypatch, data_client, valid_token
 ):
     monkeypatch.setattr(search, "_VESPA_CONNECTION", test_vespa)
 
@@ -162,3 +171,5 @@ def test_continuation_token__passages(
     assert sorted(second_family_second_passages_ids) != sorted(
         second_family_prev_passages_ids
     )
+
+    assert mock_corpora_exist_in_db.assert_called

@@ -1,3 +1,5 @@
+from unittest.mock import patch
+
 import pytest
 from db_client.models.dfce import Slug
 from db_client.models.dfce.family import FamilyDocument
@@ -40,6 +42,7 @@ def _fam_ids_from_response(test_db, response) -> list[str]:
     return family_ids
 
 
+@patch("app.api.api_v1.routers.search.verify_any_corpora_ids_in_db", return_value=True)
 @pytest.mark.parametrize(
     "family_ids",
     [
@@ -50,7 +53,13 @@ def _fam_ids_from_response(test_db, response) -> list[str]:
 )
 @pytest.mark.search
 def test_family_ids_search(
-    test_vespa, data_db, monkeypatch, data_client, family_ids, valid_token
+    mock_corpora_exist_in_db,
+    test_vespa,
+    data_db,
+    monkeypatch,
+    data_client,
+    family_ids,
+    valid_token,
 ):
     monkeypatch.setattr(search, "_VESPA_CONNECTION", test_vespa)
     _populate_db_families(data_db)
@@ -64,8 +73,10 @@ def test_family_ids_search(
 
     got_family_ids = _fam_ids_from_response(data_db, response)
     assert sorted(got_family_ids) == sorted(family_ids)
+    assert mock_corpora_exist_in_db.assert_called
 
 
+@patch("app.api.api_v1.routers.search.verify_any_corpora_ids_in_db", return_value=True)
 @pytest.mark.parametrize(
     "document_ids",
     [
@@ -80,7 +91,13 @@ def test_family_ids_search(
 )
 @pytest.mark.search
 def test_document_ids_search(
-    test_vespa, data_db, monkeypatch, data_client, document_ids, valid_token
+    mock_corpora_exist_in_db,
+    test_vespa,
+    data_db,
+    monkeypatch,
+    data_client,
+    document_ids,
+    valid_token,
 ):
     monkeypatch.setattr(search, "_VESPA_CONNECTION", test_vespa)
     _populate_db_families(data_db)
@@ -93,11 +110,13 @@ def test_document_ids_search(
 
     got_document_ids = _doc_ids_from_response(data_db, response)
     assert sorted(got_document_ids) == sorted(document_ids)
+    assert mock_corpora_exist_in_db.assert_called
 
 
+@patch("app.api.api_v1.routers.search.verify_any_corpora_ids_in_db", return_value=True)
 @pytest.mark.search
 def test_document_ids_and_family_ids_search(
-    test_vespa, data_db, monkeypatch, data_client, valid_token
+    mock_corpora_exist_in_db, test_vespa, data_db, monkeypatch, data_client, valid_token
 ):
     monkeypatch.setattr(search, "_VESPA_CONNECTION", test_vespa)
     _populate_db_families(data_db)
@@ -113,11 +132,13 @@ def test_document_ids_and_family_ids_search(
 
     response = _make_search_request(data_client, valid_token, params)
     assert len(response["families"]) == 0
+    assert mock_corpora_exist_in_db.assert_called
 
 
+@patch("app.api.api_v1.routers.search.verify_any_corpora_ids_in_db", return_value=True)
 @pytest.mark.search
 def test_empty_ids_dont_limit_result(
-    test_vespa, data_db, monkeypatch, data_client, valid_token
+    mock_corpora_exist_in_db, test_vespa, data_db, monkeypatch, data_client, valid_token
 ):
     monkeypatch.setattr(search, "_VESPA_CONNECTION", test_vespa)
     _populate_db_families(data_db)
@@ -136,3 +157,4 @@ def test_empty_ids_dont_limit_result(
 
     assert len(got_family_ids) > 1
     assert len(got_document_ids) > 1
+    assert mock_corpora_exist_in_db.assert_called

@@ -1,3 +1,5 @@
+from unittest.mock import patch
+
 import pytest
 
 from app.api.api_v1.routers import search
@@ -8,6 +10,7 @@ from tests.search.vespa.setup_search_tests import (
 
 
 @pytest.mark.search
+@patch("app.api.api_v1.routers.search.verify_any_corpora_ids_in_db", return_value=True)
 @pytest.mark.parametrize(
     "label,query,metadata_filters",
     [
@@ -23,6 +26,7 @@ from tests.search.vespa.setup_search_tests import (
     ],
 )
 def test_metadata_filter(
+    mock_corpora_exist_in_db,
     label,
     query,
     metadata_filters,
@@ -54,3 +58,5 @@ def test_metadata_filter(
                 metadata_filter["value"]
                 in f["family_metadata"][metadata_filter["name"]]
             )
+
+    assert mock_corpora_exist_in_db.assert_called

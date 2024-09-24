@@ -30,3 +30,22 @@ def verify_any_corpora_ids_in_db(db: Session, corpora_ids: list[str]) -> bool:
             )
 
     return validate_success
+
+
+def validate_corpora_ids(corpora_ids: set[str], valid_corpora_ids: set[str]) -> bool:
+    """Validate all given corpus IDs against a list of allowed corpora.
+
+    :param set[str] corpora_ids: The corpus import IDs we want to
+        validate.
+    :param set[str] valid_corpora_ids: The corpus import IDs
+        we want to validate against.
+    :return bool: Return whether or not all the corpora are valid.
+    """
+    validate_success = corpora_ids.issubset(valid_corpora_ids)
+    if not validate_success:
+        invalid_corpora = set(corpora_ids).difference(valid_corpora_ids)
+        _LOGGER.warning(
+            f"Some corpora in search request params {invalid_corpora}"
+            "forbidden to search against."
+        )
+    return validate_success
