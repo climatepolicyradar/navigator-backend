@@ -15,6 +15,7 @@ from cpr_sdk.search_adaptors import VespaSearchAdapter
 from fastapi import APIRouter, Body, Depends, Header, HTTPException, Request, status
 from fastapi.responses import StreamingResponse
 from jwt import PyJWTError
+from pydantic_core import Url
 from sqlalchemy.orm import Session
 from starlette.responses import RedirectResponse
 
@@ -116,7 +117,6 @@ def search_documents(
             }
         ),
     ],
-    host: Annotated[str, Header()],
     app_token: Annotated[str, Header()],
     db=Depends(get_db),
 ) -> SearchResponse:
@@ -140,19 +140,23 @@ def search_documents(
     the search database. The continuation token can be used to get the next set of
     results from the search database. See the request schema for more details.
     """
+    origin = request.headers.get("origin")
+    if origin is not None:
+        origin = Url(origin).host
+
     _LOGGER.info(
         "Search request",
         extra={
             "props": {
                 "search_request": search_body.model_dump(),
-                "host": str(host),
+                "origin": origin,
                 "app_token": str(app_token),
             }
         },
     )
 
     try:
-        allowed_corpora_ids = decode_config_token(app_token, host)
+        allowed_corpora_ids = decode_config_token(app_token, origin)
     except PyJWTError as e:
         _LOGGER.error(e)
         raise HTTPException(

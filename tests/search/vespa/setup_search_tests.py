@@ -29,7 +29,7 @@ from fastapi import status
 from sqlalchemy.orm import Session
 
 SEARCH_ENDPOINT = "/api/v1/searches"
-TEST_HOST = "localhost:8888"
+TEST_HOST = "http://localhost:3000/"
 
 
 def _make_search_request(
@@ -41,7 +41,7 @@ def _make_search_request(
     response = client.post(
         SEARCH_ENDPOINT,
         json=params,
-        headers={"app-token": token, "host": TEST_HOST},
+        headers={"app-token": token, "origin": TEST_HOST},
     )
     assert response.status_code == expected_status_code, response.text
     return response.json()
