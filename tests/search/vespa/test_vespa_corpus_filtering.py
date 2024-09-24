@@ -20,6 +20,8 @@ from tests.search.vespa.setup_search_tests import (
         ("CCLW.corpus.1.0", None, 1),
         (None, "UNFCCC Submissions", 1),
         (None, None, 5),
+        (None, "Laws and Policies", 4),
+        ("CCLW.corpus.2.0", None, 4),
     ],
 )
 def test_corpus_filtering(
