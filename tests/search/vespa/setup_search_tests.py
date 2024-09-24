@@ -39,10 +39,16 @@ def _make_search_request(
     expected_status_code: int = status.HTTP_200_OK,
     origin: Optional[str] = TEST_HOST,
 ):
+    headers = (
+        {"app-token": token}
+        if origin is None
+        else {"app-token": token, "origin": origin}
+    )
+
     response = client.post(
         SEARCH_ENDPOINT,
         json=params,
-        headers={"app-token": token, "origin": origin},
+        headers=headers,
     )
     assert response.status_code == expected_status_code, response.text
     return response.json()
