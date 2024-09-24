@@ -8,7 +8,7 @@ for the type of document search being performed.
 
 import logging
 from io import BytesIO
-from typing import Annotated, cast
+from typing import Annotated, Sequence, cast
 
 from cpr_sdk.exceptions import QueryError
 from cpr_sdk.search_adaptors import VespaSearchAdapter
@@ -140,6 +140,17 @@ def search_documents(
     the search database. The continuation token can be used to get the next set of
     results from the search database. See the request schema for more details.
     """
+    _LOGGER.info(
+        "Search request",
+        extra={
+            "props": {
+                "search_request": search_body.model_dump(),
+                "host": str(host),
+                "app_token": str(app_token),
+            }
+        },
+    )
+
     try:
         allowed_corpora_ids = decode_config_token(app_token, host)
     except PyJWTError as e:
@@ -149,16 +160,6 @@ def search_documents(
             detail="Could not decode configuration token",
             headers={"WWW-Authenticate": "Bearer"},
         )
-
-    _LOGGER.info(
-        "Search request",
-        extra={
-            "props": {
-                "search_request": search_body.model_dump(),
-                "allowed_corpora_ids": str(allowed_corpora_ids),
-            }
-        },
-    )
 
     # First corpora validation is app token against DB. At least one of the app token
     # corpora IDs must be present in the DB to continue the search request.
@@ -170,10 +171,14 @@ def search_documents(
             headers={"WWW-Authenticate": "Bearer"},
         )
 
+    # If the search request IDs are null, we want to search using the app token corpora.
+    if search_body.corpus_import_ids is None:
+        search_body.corpus_import_ids = cast(Sequence, allowed_corpora_ids)
+
     # For the second validation, search request corpora Ids are validated against the
     # app token corpora IDs if the search request param 'corpus_import_ids' is not None.
     # corpus_import_ids must be a subset of app token IDs.
-    if search_body.corpus_import_ids is not None and not validate_corpora_ids(
+    if not validate_corpora_ids(
         set(search_body.corpus_import_ids), cast(set, allowed_corpora_ids)
     ):
         msg = "Error validating corpora IDs."
