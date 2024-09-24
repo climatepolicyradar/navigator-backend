@@ -127,6 +127,33 @@ def test_search_decoding_token_raises_PyJWTError(
 
 
 @pytest.mark.search
+def test_search_decoding_token_with_none_origin_passed_to_audience(
+    data_client,
+    data_db,
+    valid_token,
+    monkeypatch,
+    test_vespa,
+):
+    """
+    GIVEN a request to the search endpoint
+    WHEN the decode_config_token() function is passed a None origin
+    THEN raise a 400 HTTP error
+    """
+    monkeypatch.setattr(search, "_VESPA_CONNECTION", test_vespa)
+    _populate_db_families(data_db)
+
+    response = _make_search_request(
+        data_client,
+        valid_token,
+        params={"query_string": ""},
+        origin=None,
+        expected_status_code=status.HTTP_400_BAD_REQUEST,
+    )
+
+    assert response["detail"] == "Could not decode configuration token"
+
+
+@pytest.mark.search
 def test_search_with_invalid_corpus_id_in_search_request_params(
     data_client, data_db, valid_token, monkeypatch, test_vespa
 ):

@@ -37,11 +37,12 @@ def _make_search_request(
     token,
     params: Mapping[str, Any],
     expected_status_code: int = status.HTTP_200_OK,
+    origin: Optional[str] = TEST_HOST,
 ):
     response = client.post(
         SEARCH_ENDPOINT,
         json=params,
-        headers={"app-token": token, "origin": TEST_HOST},
+        headers={"app-token": token, "origin": origin},
     )
     assert response.status_code == expected_status_code, response.text
     return response.json()
