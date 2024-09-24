@@ -1,4 +1,5 @@
 import time
+from unittest.mock import patch
 
 import pytest
 
@@ -10,7 +11,10 @@ from tests.search.vespa.setup_search_tests import (
 
 
 @pytest.mark.search
-def test_case_insensitivity(test_vespa, data_db, monkeypatch, data_client, valid_token):
+@patch("app.api.api_v1.routers.search.verify_any_corpora_ids_in_db", return_value=True)
+def test_case_insensitivity(
+    mock_corpora_exist_in_db, test_vespa, data_db, monkeypatch, data_client, valid_token
+):
     monkeypatch.setattr(search, "_VESPA_CONNECTION", test_vespa)
     _populate_db_families(data_db)
 
@@ -18,11 +22,13 @@ def test_case_insensitivity(test_vespa, data_db, monkeypatch, data_client, valid
     upper_body = _make_search_request(data_client, valid_token, {"query_string": "THE"})
 
     assert lower_body["families"] == upper_body["families"]
+    assert mock_corpora_exist_in_db.assert_called
 
 
 @pytest.mark.search
+@patch("app.api.api_v1.routers.search.verify_any_corpora_ids_in_db", return_value=True)
 def test_punctuation_ignored(
-    test_vespa, data_db, monkeypatch, data_client, valid_token
+    mock_corpora_exist_in_db, test_vespa, data_db, monkeypatch, data_client, valid_token
 ):
     monkeypatch.setattr(search, "_VESPA_CONNECTION", test_vespa)
     _populate_db_families(data_db)
@@ -43,9 +49,14 @@ def test_punctuation_ignored(
         == sorted([f["family_slug"] for f in accent_body["families"]])
     )
 
+    assert mock_corpora_exist_in_db.assert_called
+
 
 @pytest.mark.search
-def test_accents_ignored(test_vespa, data_db, monkeypatch, data_client, valid_token):
+@patch("app.api.api_v1.routers.search.verify_any_corpora_ids_in_db", return_value=True)
+def test_accents_ignored(
+    mock_corpora_exist_in_db, test_vespa, data_db, monkeypatch, data_client, valid_token
+):
     monkeypatch.setattr(search, "_VESPA_CONNECTION", test_vespa)
     _populate_db_families(data_db)
 
@@ -55,3 +66,5 @@ def test_accents_ignored(test_vespa, data_db, monkeypatch, data_client, valid_to
 
     request_time_ms = 1000 * (end - start)
     assert 0 < body["query_time_ms"] < body["total_time_ms"] < request_time_ms
+
+    assert mock_corpora_exist_in_db.assert_called

@@ -15,9 +15,11 @@ CSV_DOWNLOAD_ENDPOINT = "/api/v1/searches/download-csv"
 
 
 @pytest.mark.search
+@patch("app.api.api_v1.routers.search.verify_any_corpora_ids_in_db", return_value=True)
 @pytest.mark.parametrize("exact_match", [True, False])
 @pytest.mark.parametrize("query_string", ["", "local"])
 def test_csv_content(
+    mock_corpora_exist_in_db,
     exact_match,
     query_string,
     test_vespa,
@@ -56,12 +58,23 @@ def test_csv_content(
 
         # TODO: Add collections to test db setup to provide document level coverage
 
+    assert mock_corpora_exist_in_db.assert_called
+
 
 @pytest.mark.search
+@patch("app.api.api_v1.routers.search.verify_any_corpora_ids_in_db", return_value=True)
 @pytest.mark.parametrize("label, query", [("search", "the"), ("browse", "")])
 @pytest.mark.parametrize("limit", [100, 250, 500])
 def test_csv_download_search_variable_limit(
-    label, query, limit, test_vespa, data_db, monkeypatch, data_client, mocker
+    mock_corpora_exist_in_db,
+    label,
+    query,
+    limit,
+    test_vespa,
+    data_db,
+    monkeypatch,
+    data_client,
+    mocker,
 ):
     monkeypatch.setattr(search, "_VESPA_CONNECTION", test_vespa)
     _populate_db_families(data_db)
@@ -87,10 +100,13 @@ def test_csv_download_search_variable_limit(
     for key, value in params.items():
         assert actual_params[key] == value
 
+    assert mock_corpora_exist_in_db.assert_called
+
 
 @pytest.mark.search
+@patch("app.api.api_v1.routers.search.verify_any_corpora_ids_in_db", return_value=True)
 def test_csv_download__ignore_extra_fields(
-    test_vespa, data_db, monkeypatch, data_client, mocker
+    mock_corpora_exist_in_db, test_vespa, data_db, monkeypatch, data_client, mocker
 ):
     monkeypatch.setattr(search, "_VESPA_CONNECTION", test_vespa)
     _populate_db_families(data_db)
@@ -107,3 +123,5 @@ def test_csv_download__ignore_extra_fields(
             json=params,
         )
     assert download_response.status_code == 200
+
+    assert mock_corpora_exist_in_db.assert_called

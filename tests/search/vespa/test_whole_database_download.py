@@ -8,7 +8,8 @@ ALL_DATA_DOWNLOAD_ENDPOINT = "/api/v1/searches/download-all-data"
 
 
 @pytest.mark.search
-def test_all_data_download(data_db, data_client, valid_token):
+@patch("app.api.api_v1.routers.search.verify_any_corpora_ids_in_db", return_value=True)
+def test_all_data_download(mock_corpora_exist_in_db, data_db, data_client, valid_token):
     _populate_db_families(data_db)
 
     with (
@@ -25,3 +26,5 @@ def test_all_data_download(data_db, data_client, valid_token):
         "https://cdn.climatepolicyradar.org/"
         "navigator/dumps/whole_data_dump-2024-03-22.zip"
     )
+
+    assert mock_corpora_exist_in_db.assert_called

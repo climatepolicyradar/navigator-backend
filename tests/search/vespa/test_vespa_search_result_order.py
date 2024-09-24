@@ -1,3 +1,5 @@
+from unittest.mock import patch
+
 import pytest
 
 from app.api.api_v1.routers import search
@@ -9,9 +11,17 @@ from tests.search.vespa.setup_search_tests import (
 
 
 @pytest.mark.search
+@patch("app.api.api_v1.routers.search.verify_any_corpora_ids_in_db", return_value=True)
 @pytest.mark.parametrize("label, query", [("search", "the"), ("browse", "")])
 def test_result_order_score(
-    label, query, test_vespa, data_db, monkeypatch, data_client, valid_token
+    mock_corpora_exist_in_db,
+    label,
+    query,
+    test_vespa,
+    data_db,
+    monkeypatch,
+    data_client,
+    valid_token,
 ):
     monkeypatch.setattr(search, "_VESPA_CONNECTION", test_vespa)
     _populate_db_families(data_db)
@@ -33,11 +43,21 @@ def test_result_order_score(
     assert asc_dates[0] < desc_dates[0]
     assert asc_dates[-1] > desc_dates[-1]
 
+    assert mock_corpora_exist_in_db.assert_called
+
 
 @pytest.mark.search
+@patch("app.api.api_v1.routers.search.verify_any_corpora_ids_in_db", return_value=True)
 @pytest.mark.parametrize("label, query", [("search", "the"), ("browse", "")])
 def test_result_order_title(
-    label, query, test_vespa, data_db, monkeypatch, data_client, valid_token
+    mock_corpora_exist_in_db,
+    label,
+    query,
+    test_vespa,
+    data_db,
+    monkeypatch,
+    data_client,
+    valid_token,
 ):
     monkeypatch.setattr(search, "_VESPA_CONNECTION", test_vespa)
     _populate_db_families(data_db)
@@ -50,3 +70,5 @@ def test_result_order_title(
 
     # Scope of test is to confirm this does not cause a failure
     _ = _make_search_request(data_client, valid_token, params)
+
+    assert mock_corpora_exist_in_db.assert_called
