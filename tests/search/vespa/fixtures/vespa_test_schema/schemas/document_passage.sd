@@ -129,4 +129,4 @@ schema document_passage {
         }
         match-features: text_score()
     }
-}
+} 
