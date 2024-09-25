@@ -14,4 +14,4 @@ schema search_weights {
             indexing: attribute | summary
         }
     }
-}
+} 
