@@ -20,6 +20,6 @@ INGEST_CYCLE_START = os.getenv("INGEST_CYCLE_START")
 DOC_CACHE_BUCKET = os.getenv("DOCUMENT_CACHE_BUCKET")
 PIPELINE_BUCKET: str = os.getenv("PIPELINE_BUCKET", "not_set")
 INGEST_TRIGGER_ROOT: Final = "input"
-DEVELOPMENT_MODE = os.getenv("DEVELOPMENT_MODE", "False")
+DEVELOPMENT_MODE: bool = os.getenv("DEVELOPMENT_MODE", "False").lower() == "true"
 AWS_REGION = os.getenv("AWS_REGION", "eu-west-1")
 CDN_DOMAIN = os.getenv("CDN_DOMAIN")

@@ -104,7 +104,7 @@ def get_test_db_url() -> str:
 
 
 @pytest.fixture
-def valid_token(monkeypatch):
+def valid_token():
     """Generate valid config token using TOKEN_SECRET_KEY.
 
     Need to generate the config token using the token secret key from
