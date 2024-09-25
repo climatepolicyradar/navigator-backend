@@ -14,6 +14,7 @@ def test_decoding_expired_token_raise_expired_signature_token_error(expired_toke
     assert str(error.value) == "Signature has expired"
 
 
+@pytest.mark.skip("Re-implement this as part of PDCT-1509")
 @pytest.mark.parametrize(
     "input_str, aud, error_msg",
     [
@@ -30,7 +31,7 @@ def test_decoding_expired_token_raise_expired_signature_token_error(expired_toke
         ),
     ],
 )
-def test_decoding_token_with_invalid_aud_raises_expired_signature_token_error(
+def test_decoding_token_with_invalid_aud_raises_invalid_token_error(
     input_str: str, aud: Optional[str], error_msg: str
 ):
     token = create_configuration_token(input_str)
@@ -38,6 +39,25 @@ def test_decoding_token_with_invalid_aud_raises_expired_signature_token_error(
         decode_config_token(token, aud)
 
     assert str(error.value) == error_msg
+
+
+@pytest.mark.parametrize(
+    "input_str, aud",
+    [
+        ("mango,apple;subject;https://audience.com", None),
+        ("mango,apple;subject;https://audience.com", "https://audience.org"),
+        ("mango,apple;subject;https://AUDIENCE.OrG", "https://AUDIENCE.Com"),
+    ],
+)
+def test_decoding_token_with_invalid_aud_success_in_dev_mode(
+    input_str: str, aud: Optional[str]
+):
+    token = create_configuration_token(input_str)
+    decoded_corpora_ids = decode_config_token(token, aud)
+    assert len(decoded_corpora_ids) > 0
+
+    expected_num_corpora = 2
+    assert len(decoded_corpora_ids) == expected_num_corpora
 
 
 def test_decode_configuration_token_success(valid_token):

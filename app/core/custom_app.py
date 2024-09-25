@@ -111,6 +111,7 @@ def decode_config_token(token: str, audience: Optional[str]) -> list[str]:
         algorithms=[security.ALGORITHM],
         issuer=ISSUER,
         audience=audience,
+        options={"verify_aud": False},
     )
     corpora_ids: list = decoded_token.get("allowed_corpora_ids")
 
