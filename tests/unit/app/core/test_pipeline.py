@@ -49,13 +49,13 @@ def test_generate_pipeline_ingest_input(data_db: Session):
     assert state_rows[0].document_title == "Document2"
 
     # Check metadata
-    assert state_rows[0].metadata["family.published_data"] == datetime(
+    assert state_rows[0].metadata["family.published_date"] == datetime(
         2019, 12, 25, 0, 0, tzinfo=timezone.utc
     )
     assert state_rows[0].metadata["family.last_updated_date"] == datetime(
         2019, 12, 25, 0, 0, tzinfo=timezone.utc
     )
-    assert state_rows[0].metadata["family.published_data"] == datetime(
+    assert state_rows[0].metadata["family.published_date"] == datetime(
         2019, 12, 25, 0, 0, tzinfo=timezone.utc
     )
     assert state_rows[0].metadata["family.last_updated_date"] == datetime(
