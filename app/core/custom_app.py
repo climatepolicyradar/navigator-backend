@@ -8,7 +8,6 @@ from dateutil.relativedelta import relativedelta
 
 from app.api.api_v1.schemas.custom_app import CustomAppConfigDTO
 from app.core import security
-from app.core.config import DEVELOPMENT_MODE
 
 _LOGGER = logging.getLogger(__name__)
 
@@ -112,7 +111,7 @@ def decode_config_token(token: str, audience: Optional[str]) -> list[str]:
         algorithms=[security.ALGORITHM],
         issuer=ISSUER,
         audience=audience,
-        options={"verify_aud": not DEVELOPMENT_MODE},
+        options={"verify_aud": False},
     )
     corpora_ids: list = decoded_token.get("allowed_corpora_ids")
 

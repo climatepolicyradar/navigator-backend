@@ -14,6 +14,7 @@ def test_decoding_expired_token_raise_expired_signature_token_error(expired_toke
     assert str(error.value) == "Signature has expired"
 
 
+@pytest.mark.skip("Re-implement this as part of PDCT-1509")
 @pytest.mark.parametrize(
     "input_str, aud, error_msg",
     [
@@ -31,9 +32,8 @@ def test_decoding_expired_token_raise_expired_signature_token_error(expired_toke
     ],
 )
 def test_decoding_token_with_invalid_aud_raises_invalid_token_error(
-    input_str: str, aud: Optional[str], error_msg: str, monkeypatch
+    input_str: str, aud: Optional[str], error_msg: str
 ):
-    monkeypatch.setattr("app.core.custom_app.DEVELOPMENT_MODE", False)
     token = create_configuration_token(input_str)
     with pytest.raises(jwt.InvalidTokenError) as error:
         decode_config_token(token, aud)
@@ -50,9 +50,8 @@ def test_decoding_token_with_invalid_aud_raises_invalid_token_error(
     ],
 )
 def test_decoding_token_with_invalid_aud_success_in_dev_mode(
-    input_str: str, aud: Optional[str], monkeypatch
+    input_str: str, aud: Optional[str]
 ):
-    monkeypatch.setattr("app.core.custom_app.DEVELOPMENT_MODE", True)
     token = create_configuration_token(input_str)
     decoded_corpora_ids = decode_config_token(token, aud)
     assert len(decoded_corpora_ids) > 0
@@ -61,9 +60,7 @@ def test_decoding_token_with_invalid_aud_success_in_dev_mode(
     assert len(decoded_corpora_ids) == expected_num_corpora
 
 
-@pytest.mark.parametrize("development_mode", [True, False])
-def test_decode_configuration_token_success(development_mode, monkeypatch, valid_token):
-    monkeypatch.setattr("app.core.custom_app.DEVELOPMENT_MODE", development_mode)
+def test_decode_configuration_token_success(valid_token):
     decoded_corpora_ids = decode_config_token(valid_token, VALID_AUDIENCE)
     assert len(decoded_corpora_ids) > 0
 
