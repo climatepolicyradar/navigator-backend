@@ -104,7 +104,7 @@ def get_test_db_url() -> str:
 
 
 @pytest.fixture
-def valid_token():
+def valid_token(monkeypatch):
     """Generate valid config token using TOKEN_SECRET_KEY.
 
     Need to generate the config token using the token secret key from
@@ -113,6 +113,7 @@ def valid_token():
     might be different (e.g., the one for staging). This fixture works
     around this.
     """
+    monkeypatch.setattr("app.core.custom_app.DEVELOPMENT_MODE", False)
     corpora_ids = "CCLW.corpus.1.0,CCLW.corpus.2.0"
     subject = "CCLW"
     audience = "localhost"

@@ -30,9 +30,10 @@ def test_decoding_expired_token_raise_expired_signature_token_error(expired_toke
         ),
     ],
 )
-def test_decoding_token_with_invalid_aud_raises_expired_signature_token_error(
-    input_str: str, aud: Optional[str], error_msg: str
+def test_decoding_token_with_invalid_aud_raises_invalid_token_error(
+    input_str: str, aud: Optional[str], error_msg: str, monkeypatch
 ):
+    monkeypatch.setattr("app.core.custom_app.DEVELOPMENT_MODE", False)
     token = create_configuration_token(input_str)
     with pytest.raises(jwt.InvalidTokenError) as error:
         decode_config_token(token, aud)
