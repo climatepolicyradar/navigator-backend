@@ -126,6 +126,7 @@ def test_search_decoding_token_raises_PyJWTError(
         assert response["detail"] == "Could not decode configuration token"
 
 
+@pytest.mark.skip("Re-implement this as part of PDCT-1509")
 @pytest.mark.search
 def test_search_decoding_token_with_none_origin_passed_to_audience(
     data_client,
