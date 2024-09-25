@@ -1,3 +1,4 @@
+from datetime import datetime, timezone
 from typing import Dict
 
 from sqlalchemy.orm import Session
@@ -18,6 +19,7 @@ def test_generate_pipeline_ingest_input(data_db: Session):
     setup_with_two_docs_one_family(data_db)
 
     state_rows = generate_pipeline_ingest_input(data_db)
+
     assert len(state_rows) == 2
     # Sort to ensure order is consistent across tests
     state_rows = sorted(state_rows, key=lambda d: d.import_id, reverse=True)
@@ -45,6 +47,20 @@ def test_generate_pipeline_ingest_input(data_db: Session):
 
     # Check physical_document
     assert state_rows[0].document_title == "Document2"
+
+    # Check metadata
+    assert state_rows[0].metadata["family.published_data"] == datetime(
+        2019, 12, 25, 0, 0, tzinfo=timezone.utc
+    )
+    assert state_rows[0].metadata["family.last_updated_date"] == datetime(
+        2019, 12, 25, 0, 0, tzinfo=timezone.utc
+    )
+    assert state_rows[0].metadata["family.published_data"] == datetime(
+        2019, 12, 25, 0, 0, tzinfo=timezone.utc
+    )
+    assert state_rows[0].metadata["family.last_updated_date"] == datetime(
+        2019, 12, 25, 0, 0, tzinfo=timezone.utc
+    )
 
 
 def test_generate_pipeline_ingest_input_with_fixture(
