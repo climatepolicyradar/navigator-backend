@@ -96,6 +96,8 @@ def generate_pipeline_ingest_input(db: Session) -> Sequence[DocumentParserInput]
             metadata=flatten_pipeline_metadata(
                 cast(MetadataType, family_metadata.value),
                 cast(MetadataType, family_document.valid_metadata),
+                family.last_updated_date,
+                family.published_date,
             ),
         )
         for (
@@ -128,7 +130,10 @@ def generate_pipeline_ingest_input(db: Session) -> Sequence[DocumentParserInput]
 
 
 def flatten_pipeline_metadata(
-    family_metadata: MetadataType, document_metadata: MetadataType
+    family_metadata: MetadataType,
+    document_metadata: MetadataType,
+    last_updated: datetime,
+    published_date: datetime,
 ) -> MetadataType:
     """Combines metadata objects ready for the pipeline"""
 
@@ -139,5 +144,8 @@ def flatten_pipeline_metadata(
 
     for k, v in document_metadata.items():
         metadata[f"document.{k}"] = v
+
+    metadata["family.last_updated_date"] = last_updated
+    metadata["family.published_date"] = published_date
 
     return metadata
