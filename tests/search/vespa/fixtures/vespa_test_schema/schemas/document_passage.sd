@@ -62,6 +62,15 @@ schema document_passage {
             struct-field name {
                 indexing: attribute
             }
+            struct-field id {
+                indexing: attribute
+            }
+            struct-field model {
+                indexing: attribute
+            }
+            struct-field timestamp {
+                indexing: attribute
+            }
         }
     }
 
