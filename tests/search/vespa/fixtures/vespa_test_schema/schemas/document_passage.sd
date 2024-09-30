@@ -44,6 +44,34 @@ schema document_passage {
                 }
             }
         }
+
+        struct concept {
+            field name          type string {}
+            field id            type string {}
+            field parent_ids    type array<string> {}
+            field parent_names  type array<string> {}
+            field start         type int {}
+            field end           type int {}
+            field model         type string {}
+            field timestamp     type string {}
+        }
+
+        field concepts type array<concept> {
+            indexing: summary
+
+            struct-field name {
+                indexing: attribute
+            }
+            struct-field id {
+                indexing: attribute
+            }
+            struct-field model {
+                indexing: attribute
+            }
+            struct-field timestamp {
+                indexing: attribute
+            }
+        }
     }
 
     import field family_document_ref.family_name as family_name {}
@@ -95,6 +123,7 @@ schema document_passage {
         summary text_block_type {}
         summary text_block_page {}
         summary text_block_coords {}
+        summary concepts {}
     }
 
     rank-profile exact inherits default {
