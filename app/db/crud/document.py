@@ -71,7 +71,7 @@ def get_family_document_and_context(
         .filter(FamilyDocument.physical_document_id == PhysicalDocument.id)
         .filter(FamilyCorpus.family_import_id == Family.import_id)
         .filter(geo_subquery.c.family_import_id == Family.import_id)  # type: ignore
-    ).one_or_none()
+    ).first()  # TODO: Fix when handling multiple geographies /PDCT-1510
 
     if not db_objects:
         _LOGGER.warning(
