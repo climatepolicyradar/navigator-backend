@@ -41,7 +41,7 @@ def test_get_family_document_and_context_extra_geog(
     data_db.add(
         FamilyGeography(
             family_import_id=doc.family_import_id,
-            geography_id=2,
+            geography_id=17,
         )
     )
     data_db.commit()
