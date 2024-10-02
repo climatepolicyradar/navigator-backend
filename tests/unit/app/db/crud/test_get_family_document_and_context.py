@@ -1,6 +1,6 @@
 from typing import Dict
 
-from db_client.models.dfce import FamilyGeography
+from db_client.models.dfce import FamilyDocument, FamilyGeography
 from sqlalchemy.orm import Session
 
 from app.api.api_v1.schemas.document import FamilyDocumentWithContextResponse
@@ -13,12 +13,18 @@ def test_get_family_document_and_context(
     data_db: Session,
 ):
     setup_with_documents_large_with_families(documents_large, data_db)
-    response: FamilyDocumentWithContextResponse = get_family_document_and_context(
-        data_db, "CCLW.document.i00000192.n0000"
+    doc = (
+        data_db.query(FamilyDocument)
+        .filter(FamilyDocument.import_id == "CCLW.document.i00000192.n0000")
+        .one()
     )
 
-    assert response.family.import_id == "CCLW.family.1001.0"
-    assert response.document.import_id == "CCLW.document.i00000192.n0000"
+    response: FamilyDocumentWithContextResponse = get_family_document_and_context(
+        data_db, doc.import_id
+    )
+
+    assert response.family.import_id == doc.family_import_id
+    assert response.document.import_id == doc.import_id
 
 
 def test_get_family_document_and_context_extra_geog(
@@ -26,17 +32,22 @@ def test_get_family_document_and_context_extra_geog(
     data_db: Session,
 ):
     setup_with_documents_large_with_families(documents_large, data_db)
+    doc = (
+        data_db.query(FamilyDocument)
+        .filter(FamilyDocument.import_id == "CCLW.document.i00000192.n0000")
+        .one()
+    )
     # add an extra geography
     data_db.add(
         FamilyGeography(
-            family_import_id="CCLW.family.1001.0",
+            family_import_id=doc.family_import_id,
             geography_id=2,
         )
     )
     data_db.commit()
     response: FamilyDocumentWithContextResponse = get_family_document_and_context(
-        data_db, "CCLW.document.i00000192.n0000"
+        data_db, doc.import_id
     )
 
-    assert response.family.import_id == "CCLW.family.1001.0"
-    assert response.document.import_id == "CCLW.document.i00000192.n0000"
+    assert response.family.import_id == doc.family_import_id
+    assert response.document.import_id == doc.import_id
