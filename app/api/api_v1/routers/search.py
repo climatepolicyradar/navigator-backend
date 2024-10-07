@@ -291,7 +291,7 @@ def download_all_search_documents(
         # add the seek(0) to reset the buffer position to the beginning before writing
         # to S3 to avoid creating an empty file.
         #
-        # # TODO Add where clause to filter out MCF data
+        # FIXME Add where clause to filter out MCF data
         zip_buffer = create_data_download_zip_archive(latest_ingest_start, db)
         zip_buffer.seek(0)
 
