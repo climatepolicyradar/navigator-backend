@@ -61,7 +61,9 @@ def get_slugged_objects(db: Session, slug: str) -> tuple[Optional[str], Optional
 def get_family_document_and_context(
     db: Session, family_document_import_id: str
 ) -> FamilyDocumentWithContextResponse:
-    geo_subquery = get_geo_subquery(db)
+    geo_subquery = get_geo_subquery(
+        db, family_document_import_id=family_document_import_id
+    )
     db_objects = (
         db.query(
             Family, FamilyDocument, PhysicalDocument, geo_subquery.c.value, FamilyCorpus  # type: ignore
@@ -71,7 +73,7 @@ def get_family_document_and_context(
         .filter(FamilyDocument.physical_document_id == PhysicalDocument.id)
         .filter(FamilyCorpus.family_import_id == Family.import_id)
         .filter(geo_subquery.c.family_import_id == Family.import_id)  # type: ignore
-    ).one_or_none()
+    ).first()  # TODO: Fix when handling multiple geographies /PDCT-1510
 
     if not db_objects:
         _LOGGER.warning(
