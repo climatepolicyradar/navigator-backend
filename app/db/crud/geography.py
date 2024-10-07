@@ -2,7 +2,12 @@
 
 import logging
 
-from db_client.models.dfce.family import Family, FamilyGeography, FamilyStatus
+from db_client.models.dfce.family import (
+    Family,
+    FamilyDocument,
+    FamilyGeography,
+    FamilyStatus,
+)
 from db_client.models.dfce.geography import Geography
 from sqlalchemy import func
 from sqlalchemy.exc import OperationalError
@@ -15,7 +20,10 @@ _LOGGER = logging.getLogger(__file__)
 
 
 def get_geo_subquery(
-    db: Session, allowed_geo_slugs=None, allowed_geo_values=None
+    db: Session,
+    allowed_geo_slugs=None,
+    allowed_geo_values=None,
+    family_document_import_id=None,
 ) -> Query:
 
     geo_subquery = (
@@ -45,6 +53,12 @@ def get_geo_subquery(
 
     if allowed_geo_values is not None:
         geo_subquery = geo_subquery.filter(Geography.value.in_(allowed_geo_values))
+
+    if family_document_import_id is not None:
+        geo_subquery = geo_subquery.join(
+            FamilyDocument,
+            FamilyDocument.family_import_id == FamilyGeography.family_import_id,
+        ).filter(FamilyDocument.import_id == family_document_import_id)
 
     return geo_subquery.subquery("geo_subquery")
 
