@@ -178,7 +178,7 @@ class AppTokenFactory:
             )
         return validate_success
 
-    def decode(self, db: Session, token: str, audience: Optional[str]) -> list[str]:
+    def decode(self, token: str, audience: Optional[str]) -> list[str]:
         """Decodes a configuration token.
 
         :param str token : A JWT token that has been encoded with a list of
@@ -240,7 +240,7 @@ class AppTokenFactory:
         origin = self.get_origin(request)
 
         # Decode the app token and validate it.
-        self.decode(db, token, origin)
+        self.decode(token, origin)
 
         # First corpora validation is app token against DB. At least one of the app token
         # corpora IDs must be present in the DB to continue the search request.
