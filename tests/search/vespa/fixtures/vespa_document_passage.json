@@ -798,7 +798,28 @@
         ]
       },
       "family_document_ref": "id:doc_search:family_document::CCLW.executive.10246.4861",
-      "text_block": "The involvement of local populations has led to the establishment of more than 300 forest groups in village forests over 10,000 ha and in 6 classified forests over 97,000 ha (MAEF, 2006). In addition, 185 forests in the domain of decentralized communities and totaling 38,500 ha have been classified with the assistance of the forestry administration."
+      "text_block": "The involvement of local populations has led to the establishment of more than 300 forest groups in village forests over 10,000 ha and in 6 classified forests over 97,000 ha (MAEF, 2006). In addition, 185 forests in the domain of decentralized communities and totaling 38,500 ha have been classified with the assistance of the forestry administration.",
+      "concepts": [
+        {
+          "name": "sectors",
+          "id": 0,
+          "start": 6,
+          "end": 12,
+          "model": "sectors_1",
+          "timestamp": "2021-06-01T00:00:00Z",
+          "parent_concepts": [
+            {
+              "id": 0,
+              "name": "Q0"
+            },
+            {
+              "id": 1,
+              "name": "Q1"
+            }
+          ],
+          "parent_concept_ids_flat": "Q0,Q1,"
+        }
+      ]
     }
   },
   {
@@ -1600,7 +1621,28 @@
         ]
       },
       "family_document_ref": "id:doc_search:family_document::CCLW.executive.1385.5336",
-      "text_block": "Thanks to their high efficiency, heat pumps are bound to play a key role in achieving the target. By contrast, biomass facilities (traditionally very widespread\nin Italy) will have to mitigate their emissions, and guarantee high environmental quality. Furthermore, the potential of district heating in urban and non-urban\nareas will be harnessed in efficient ways."
+      "text_block": "Thanks to their high efficiency, heat pumps are bound to play a key role in achieving the target. By contrast, biomass facilities (traditionally very widespread\nin Italy) will have to mitigate their emissions, and guarantee high environmental quality. Furthermore, the potential of district heating in urban and non-urban\nareas will be harnessed in efficient ways.",
+      "concepts": [
+        {
+          "name": "just transition",
+          "id": 1,
+          "start": 4,
+          "end": 6,
+          "model": "sectors_1",
+          "timestamp": "2021-06-01T00:00:00Z",
+          "parent_concepts": [
+            {
+              "id": 1,
+              "name": "Q1"
+            },
+            {
+              "id": 2,
+              "name": "Q2"
+            }
+          ],
+          "parent_concept_ids_flat": "Q1,Q2,"
+        }
+      ]
     }
   },
   {
@@ -2402,7 +2444,28 @@
         ]
       },
       "family_document_ref": "id:doc_search:family_document::CCLW.executive.8633.3052",
-      "text_block": "Niue imports ten times more than it exports; the import value averages NZD 4.3 million/annum and the export value averages NZD 0.27 million/annum which are often imported food. Private sector subsistence activity accounted for approximately one quarter of gross domestic product (GDP) in 2009 and subsistence agriculture and fishing remain important. The major agricultural export commodity is taro, targeting the niche markets which are mainly Niueans Citizens living in New Zealand and Australia. Other agricultural commodities exported include small amounts of honey, noni and vanilla. Niue face many challenges to meet export requirements ranging from volume to meet demand, transportation, sanitary and phytosanitary and food safety requirements and accessing export markets."
+      "text_block": "Niue imports ten times more than it exports; the import value averages NZD 4.3 million/annum and the export value averages NZD 0.27 million/annum which are often imported food. Private sector subsistence activity accounted for approximately one quarter of gross domestic product (GDP) in 2009 and subsistence agriculture and fishing remain important. The major agricultural export commodity is taro, targeting the niche markets which are mainly Niueans Citizens living in New Zealand and Australia. Other agricultural commodities exported include small amounts of honey, noni and vanilla. Niue face many challenges to meet export requirements ranging from volume to meet demand, transportation, sanitary and phytosanitary and food safety requirements and accessing export markets.",
+      "concepts": [
+        {
+          "name": "environment",
+          "id": 2,
+          "start": 8,
+          "end": 10,
+          "model": "sectors_1",
+          "timestamp": "2021-06-01T00:00:00Z",
+          "parent_concepts": [
+            {
+              "id": 2,
+              "name": "Q2"
+            },
+            {
+              "id": 3,
+              "name": "Q3"
+            }
+          ],
+          "parent_concept_ids_flat": "Q2,Q3,"
+        }
+      ]
     }
   },
   {
@@ -3204,7 +3267,28 @@
         ]
       },
       "family_document_ref": "id:doc_search:family_document::UNFCCC.non-party.1267.0",
-      "text_block": "Recognition that the global adaptation goal is and must be dynamic and composite, and cannot be siloed. It is inherently entwined with progress both towards adequate mitigation and access to sustainable development, and it opens seamlessly into the even broader challenges of loss & damage."
+      "text_block": "Recognition that the global adaptation goal is and must be dynamic and composite, and cannot be siloed. It is inherently entwined with progress both towards adequate mitigation and access to sustainable development, and it opens seamlessly into the even broader challenges of loss & damage.",
+      "concepts": [
+        {
+          "name": "sectors",
+          "id": 3,
+          "start": 4,
+          "end": 13,
+          "model": "sectors_1",
+          "timestamp": "2021-06-01T00:00:00Z",
+          "parent_concepts": [
+            {
+              "id": 3,
+              "name": "Q3"
+            },
+            {
+              "id": 4,
+              "name": "Q4"
+            }
+          ],
+          "parent_concept_ids_flat": "Q3,Q4,"
+        }
+      ]
     }
   },
   {
@@ -4006,7 +4090,28 @@
         ]
       },
       "family_document_ref": "id:doc_search:family_document::CCLW.executive.4934.1571",
-      "text_block": "The aim of the action plan is to allow the relevant stakeholders to work together to achieve the vision of the plan.\nThe plans intend to include all activities related to the energy sector development so and that the development is\ncoordinated through one agency and plan. Guiding principles as noted in the NEP should be considered when\nimplementing the plan; these are adopting the whole of energy sector approach, the many partners one team\napproach, financial, social and environmental sustainability, gender, data management and information and climate\nchange. The Action Plan sets out activities for a three years period and that are required to contribute to the policy\noutcomes and policy goal set out for the energy sector. The action plan also includes the leading agency and\nsupporting or participating stakeholders required to implement the activities. It is noted that most of the activities\nare to be implemented and coordinated by the Energy Planning Division, in particular on the coordination of\nactivities. This action plan is aligned to the National Energy Policy Outcomes identified in the policy framework;"
+      "text_block": "The aim of the action plan is to allow the relevant stakeholders to work together to achieve the vision of the plan.\nThe plans intend to include all activities related to the energy sector development so and that the development is\ncoordinated through one agency and plan. Guiding principles as noted in the NEP should be considered when\nimplementing the plan; these are adopting the whole of energy sector approach, the many partners one team\napproach, financial, social and environmental sustainability, gender, data management and information and climate\nchange. The Action Plan sets out activities for a three years period and that are required to contribute to the policy\noutcomes and policy goal set out for the energy sector. The action plan also includes the leading agency and\nsupporting or participating stakeholders required to implement the activities. It is noted that most of the activities\nare to be implemented and coordinated by the Energy Planning Division, in particular on the coordination of\nactivities. This action plan is aligned to the National Energy Policy Outcomes identified in the policy framework;",
+      "concepts": [
+        {
+          "name": "environment",
+          "id": 4,
+          "start": 4,
+          "end": 9,
+          "model": "sectors_1",
+          "timestamp": "2021-06-01T00:00:00Z",
+          "parent_concepts": [
+            {
+              "id": 4,
+              "name": "Q4"
+            },
+            {
+              "id": 5,
+              "name": "Q5"
+            }
+          ],
+          "parent_concept_ids_flat": "Q4,Q5,"
+        }
+      ]
     }
   },
   {
@@ -4808,7 +4913,28 @@
         ]
       },
       "family_document_ref": "id:doc_search:family_document::CCLW.executive.4934.1571",
-      "text_block": "Local government and civil society"
+      "text_block": "Local government and civil society",
+      "concepts": [
+        {
+          "name": "just transition",
+          "id": 5,
+          "start": 1,
+          "end": 4,
+          "model": "sectors_1",
+          "timestamp": "2021-06-01T00:00:00Z",
+          "parent_concepts": [
+            {
+              "id": 5,
+              "name": "Q5"
+            },
+            {
+              "id": 6,
+              "name": "Q6"
+            }
+          ],
+          "parent_concept_ids_flat": "Q5,Q6,"
+        }
+      ]
     }
   },
   {
@@ -5610,7 +5736,28 @@
         ]
       },
       "family_document_ref": "id:doc_search:family_document::CCLW.executive.4934.1571",
-      "text_block": "Strategy 9.1\nPromote cleaner fuels and efficient cooking technologies to improve health\nand environmental protection, particularly the women and children"
+      "text_block": "Strategy 9.1\nPromote cleaner fuels and efficient cooking technologies to improve health\nand environmental protection, particularly the women and children",
+      "concepts": [
+        {
+          "name": "environment",
+          "id": 6,
+          "start": 1,
+          "end": 6,
+          "model": "sectors_1",
+          "timestamp": "2021-06-01T00:00:00Z",
+          "parent_concepts": [
+            {
+              "id": 6,
+              "name": "Q6"
+            },
+            {
+              "id": 7,
+              "name": "Q7"
+            }
+          ],
+          "parent_concept_ids_flat": "Q6,Q7,"
+        }
+      ]
     }
   },
   {
@@ -6412,7 +6559,28 @@
         ]
       },
       "family_document_ref": "id:doc_search:family_document::CCLW.executive.4934.1571",
-      "text_block": "http://www.majurodeclaration.org/commitments"
+      "text_block": "http://www.majurodeclaration.org/commitments",
+      "concepts": [
+        {
+          "name": "manufacturing",
+          "id": 7,
+          "start": 7,
+          "end": 10,
+          "model": "sectors_1",
+          "timestamp": "2021-06-01T00:00:00Z",
+          "parent_concepts": [
+            {
+              "id": 7,
+              "name": "Q7"
+            },
+            {
+              "id": 8,
+              "name": "Q8"
+            }
+          ],
+          "parent_concept_ids_flat": "Q7,Q8,"
+        }
+      ]
     }
   },
   {
@@ -7214,7 +7382,28 @@
         ]
       },
       "family_document_ref": "id:doc_search:family_document::CCLW.executive.4934.1571",
-      "text_block": "Annex 3: Organizations and people consulted"
+      "text_block": "Annex 3: Organizations and people consulted",
+      "concepts": [
+        {
+          "name": "environment",
+          "id": 8,
+          "start": 8,
+          "end": 17,
+          "model": "sectors_1",
+          "timestamp": "2021-06-01T00:00:00Z",
+          "parent_concepts": [
+            {
+              "id": 8,
+              "name": "Q8"
+            },
+            {
+              "id": 9,
+              "name": "Q9"
+            }
+          ],
+          "parent_concept_ids_flat": "Q8,Q9,"
+        }
+      ]
     }
   },
   {
@@ -8016,7 +8205,28 @@
         ]
       },
       "family_document_ref": "id:doc_search:family_document::CCLW.executive.4934.1571",
-      "text_block": "3.0 Monitoring and evaluation"
+      "text_block": "3.0 Monitoring and evaluation",
+      "concepts": [
+        {
+          "name": "manufacturing",
+          "id": 9,
+          "start": 1,
+          "end": 11,
+          "model": "sectors_1",
+          "timestamp": "2021-06-01T00:00:00Z",
+          "parent_concepts": [
+            {
+              "id": 9,
+              "name": "Q9"
+            },
+            {
+              "id": 10,
+              "name": "Q10"
+            }
+          ],
+          "parent_concept_ids_flat": "Q9,Q10,"
+        }
+      ]
     }
   },
   {
@@ -8818,7 +9028,28 @@
         ]
       },
       "family_document_ref": "id:doc_search:family_document::CCLW.executive.4934.1571",
-      "text_block": "a. Whole-of-energy-sector: The government coordinates and fosters partnerships and cooperation\nbetween relevant ministries and energy sector institutions, including the Marshalls Energy Company\nand petroleum oil companies, the private sector, and non-governmental and community-based\norganizations. A strong leadership of the Energy Planning Division with an appropriate legal\nmandate should be strengthened to coordinate planning and management of the energy sector.\nThere should be a clear, appropriate and effective definition of roles for government, utilities and\nthe private sector in the planning and management of the energy sector. Comprehensive energy\nplanning should be undertaken, with energy treated as an integrated sector into all development\nsectors including poverty alleviation, health, education and financial and economic planning.\nSimultaneously, energy planning should be strongly coordinated with other infrastructure plans that\nare intensive in the use of energy, such as water and sewerage services, schools, hospitals and\nhealth clinics, and commercial and industrial development."
+      "text_block": "a. Whole-of-energy-sector: The government coordinates and fosters partnerships and cooperation\nbetween relevant ministries and energy sector institutions, including the Marshalls Energy Company\nand petroleum oil companies, the private sector, and non-governmental and community-based\norganizations. A strong leadership of the Energy Planning Division with an appropriate legal\nmandate should be strengthened to coordinate planning and management of the energy sector.\nThere should be a clear, appropriate and effective definition of roles for government, utilities and\nthe private sector in the planning and management of the energy sector. Comprehensive energy\nplanning should be undertaken, with energy treated as an integrated sector into all development\nsectors including poverty alleviation, health, education and financial and economic planning.\nSimultaneously, energy planning should be strongly coordinated with other infrastructure plans that\nare intensive in the use of energy, such as water and sewerage services, schools, hospitals and\nhealth clinics, and commercial and industrial development.",
+      "concepts": [
+        {
+          "name": "environment",
+          "id": 10,
+          "start": 1,
+          "end": 9,
+          "model": "sectors_1",
+          "timestamp": "2021-06-01T00:00:00Z",
+          "parent_concepts": [
+            {
+              "id": 10,
+              "name": "Q10"
+            },
+            {
+              "id": 11,
+              "name": "Q11"
+            }
+          ],
+          "parent_concept_ids_flat": "Q10,Q11,"
+        }
+      ]
     }
   },
   {
@@ -9620,7 +9851,28 @@
         ]
       },
       "family_document_ref": "id:doc_search:family_document::CCLW.executive.4934.1571",
-      "text_block": "The National Energy Policy encompasses government's energy sector priorities, outcomes and goals;\nit brings to our attention our energy sector situation where we stand in terms of the energy targets\nand goals we aim to achieve by 2020. Aligned to the National Energy Policy is a three-year action\nplan that brings to the forefront urgent actions to be carried out and turn our visions into reality."
+      "text_block": "The National Energy Policy encompasses government's energy sector priorities, outcomes and goals;\nit brings to our attention our energy sector situation where we stand in terms of the energy targets\nand goals we aim to achieve by 2020. Aligned to the National Energy Policy is a three-year action\nplan that brings to the forefront urgent actions to be carried out and turn our visions into reality.",
+      "concepts": [
+        {
+          "name": "manufacturing",
+          "id": 11,
+          "start": 1,
+          "end": 4,
+          "model": "sectors_1",
+          "timestamp": "2021-06-01T00:00:00Z",
+          "parent_concepts": [
+            {
+              "id": 11,
+              "name": "Q11"
+            },
+            {
+              "id": 12,
+              "name": "Q12"
+            }
+          ],
+          "parent_concept_ids_flat": "Q11,Q12,"
+        }
+      ]
     }
   },
   {
@@ -10422,7 +10674,28 @@
         ]
       },
       "family_document_ref": "id:doc_search:family_document::CCLW.executive.4934.1571",
-      "text_block": "Broad goals"
+      "text_block": "Broad goals",
+      "concepts": [
+        {
+          "name": "just transition",
+          "id": 12,
+          "start": 3,
+          "end": 11,
+          "model": "sectors_1",
+          "timestamp": "2021-06-01T00:00:00Z",
+          "parent_concepts": [
+            {
+              "id": 12,
+              "name": "Q12"
+            },
+            {
+              "id": 13,
+              "name": "Q13"
+            }
+          ],
+          "parent_concept_ids_flat": "Q12,Q13,"
+        }
+      ]
     }
   },
   {
@@ -11224,7 +11497,28 @@
         ]
       },
       "family_document_ref": "id:doc_search:family_document::CCLW.executive.4934.1571",
-      "text_block": "1.6 National energy policy areas"
+      "text_block": "1.6 National energy policy areas",
+      "concepts": [
+        {
+          "name": "environment",
+          "id": 13,
+          "start": 4,
+          "end": 7,
+          "model": "sectors_1",
+          "timestamp": "2021-06-01T00:00:00Z",
+          "parent_concepts": [
+            {
+              "id": 13,
+              "name": "Q13"
+            },
+            {
+              "id": 14,
+              "name": "Q14"
+            }
+          ],
+          "parent_concept_ids_flat": "Q13,Q14,"
+        }
+      ]
     }
   },
   {
@@ -12026,7 +12320,28 @@
         ]
       },
       "family_document_ref": "id:doc_search:family_document::CCLW.executive.4934.1571",
-      "text_block": "Priority outcome: All Marshallese have equitable access to modern energy services"
+      "text_block": "Priority outcome: All Marshallese have equitable access to modern energy services",
+      "concepts": [
+        {
+          "name": "sectors",
+          "id": 14,
+          "start": 5,
+          "end": 7,
+          "model": "sectors_1",
+          "timestamp": "2021-06-01T00:00:00Z",
+          "parent_concepts": [
+            {
+              "id": 14,
+              "name": "Q14"
+            },
+            {
+              "id": 15,
+              "name": "Q15"
+            }
+          ],
+          "parent_concept_ids_flat": "Q14,Q15,"
+        }
+      ]
     }
   },
   {
@@ -12828,7 +13143,28 @@
         ]
       },
       "family_document_ref": "id:doc_search:family_document::CCLW.executive.4934.1571",
-      "text_block": "Biomass energy has some potential as well. A proposed project for small-scale mill systems in the\nouter islands is currently on hold. MEC also plans to refit the Majuro Station One, Engine #3 to utilize\nbiofuels. The Global Sustainable Energy Islands Initiative has conducted a feasibility study on the\nuptake of coconut/copra biofuels as a source of energy for the Marshall Islands. The Tobolar copra\nmill is retailing a 50/50 blend of filtered coconut oil and diesel, below the price of regular diesel."
+      "text_block": "Biomass energy has some potential as well. A proposed project for small-scale mill systems in the\nouter islands is currently on hold. MEC also plans to refit the Majuro Station One, Engine #3 to utilize\nbiofuels. The Global Sustainable Energy Islands Initiative has conducted a feasibility study on the\nuptake of coconut/copra biofuels as a source of energy for the Marshall Islands. The Tobolar copra\nmill is retailing a 50/50 blend of filtered coconut oil and diesel, below the price of regular diesel.",
+      "concepts": [
+        {
+          "name": "just transition",
+          "id": 15,
+          "start": 2,
+          "end": 5,
+          "model": "sectors_1",
+          "timestamp": "2021-06-01T00:00:00Z",
+          "parent_concepts": [
+            {
+              "id": 15,
+              "name": "Q15"
+            },
+            {
+              "id": 16,
+              "name": "Q16"
+            }
+          ],
+          "parent_concept_ids_flat": "Q15,Q16,"
+        }
+      ]
     }
   },
   {
@@ -13630,7 +13966,28 @@
         ]
       },
       "family_document_ref": "id:doc_search:family_document::CCLW.executive.4934.1571",
-      "text_block": "Local ownership and responsibility for the EAP are important sustainability criteria for any Plan. It was very\nencouraging that a number of activities in the existing EAP were earmarked to be implemented using local financial\nresources. This is planned to be the case in the new EAP. Increased effort is being made in the revised EAP to confirm\ndonor funding for activities in Plan to reduce slippage during implementation. This will also enhance public\nconfidence in the Plan. . Additionally, a ranking criterion will be used to prioritize the activities into high, low and\nmedium categories. To enhance transparency the ranking matrix below is proposed for used to rank projects in the\nnew EAP."
+      "text_block": "Local ownership and responsibility for the EAP are important sustainability criteria for any Plan. It was very\nencouraging that a number of activities in the existing EAP were earmarked to be implemented using local financial\nresources. This is planned to be the case in the new EAP. Increased effort is being made in the revised EAP to confirm\ndonor funding for activities in Plan to reduce slippage during implementation. This will also enhance public\nconfidence in the Plan. . Additionally, a ranking criterion will be used to prioritize the activities into high, low and\nmedium categories. To enhance transparency the ranking matrix below is proposed for used to rank projects in the\nnew EAP.",
+      "concepts": [
+        {
+          "name": "sectors",
+          "id": 16,
+          "start": 4,
+          "end": 9,
+          "model": "sectors_1",
+          "timestamp": "2021-06-01T00:00:00Z",
+          "parent_concepts": [
+            {
+              "id": 16,
+              "name": "Q16"
+            },
+            {
+              "id": 17,
+              "name": "Q17"
+            }
+          ],
+          "parent_concept_ids_flat": "Q16,Q17,"
+        }
+      ]
     }
   },
   {
@@ -14432,7 +14789,28 @@
         ]
       },
       "family_document_ref": "id:doc_search:family_document::CCLW.executive.4934.1571",
-      "text_block": "Strategy 18.1: Conduct an independent study of the viability of alternatives to diesel fuel for power generation where economically sound (e.g. coconut oil, LNG, grid-\nconnected solar). Implementation of recommended viable alternatives"
+      "text_block": "Strategy 18.1: Conduct an independent study of the viability of alternatives to diesel fuel for power generation where economically sound (e.g. coconut oil, LNG, grid-\nconnected solar). Implementation of recommended viable alternatives",
+      "concepts": [
+        {
+          "name": "manufacturing",
+          "id": 17,
+          "start": 9,
+          "end": 15,
+          "model": "sectors_1",
+          "timestamp": "2021-06-01T00:00:00Z",
+          "parent_concepts": [
+            {
+              "id": 17,
+              "name": "Q17"
+            },
+            {
+              "id": 18,
+              "name": "Q18"
+            }
+          ],
+          "parent_concept_ids_flat": "Q17,Q18,"
+        }
+      ]
     }
   },
   {
@@ -15234,7 +15612,28 @@
         ]
       },
       "family_document_ref": "id:doc_search:family_document::CCLW.executive.4934.1571",
-      "text_block": "Expected Output/Result 13: Increased the number of energy efficient vehicles into the country through appropriate fiscal incentives for business, private sectors,\nhouseholds and government"
+      "text_block": "Expected Output/Result 13: Increased the number of energy efficient vehicles into the country through appropriate fiscal incentives for business, private sectors,\nhouseholds and government",
+      "concepts": [
+        {
+          "name": "just transition",
+          "id": 18,
+          "start": 8,
+          "end": 17,
+          "model": "sectors_1",
+          "timestamp": "2021-06-01T00:00:00Z",
+          "parent_concepts": [
+            {
+              "id": 18,
+              "name": "Q18"
+            },
+            {
+              "id": 19,
+              "name": "Q19"
+            }
+          ],
+          "parent_concept_ids_flat": "Q18,Q19,"
+        }
+      ]
     }
   },
   {
@@ -16036,7 +16435,28 @@
         ]
       },
       "family_document_ref": "id:doc_search:family_document::CCLW.executive.4934.1571",
-      "text_block": "Emphasis should be placed on the need for environmental, social, cultural and gender analyses in\nenergy plans and projects that would capture the productive and strategic uses of electricity, not\njust for lighting, but for linking electricity access to the creation of economic opportunities, jobs,\ndelivery of health care, education, telecommunication, access to transport and other vital services."
+      "text_block": "Emphasis should be placed on the need for environmental, social, cultural and gender analyses in\nenergy plans and projects that would capture the productive and strategic uses of electricity, not\njust for lighting, but for linking electricity access to the creation of economic opportunities, jobs,\ndelivery of health care, education, telecommunication, access to transport and other vital services.",
+      "concepts": [
+        {
+          "name": "just transition",
+          "id": 19,
+          "start": 3,
+          "end": 13,
+          "model": "sectors_1",
+          "timestamp": "2021-06-01T00:00:00Z",
+          "parent_concepts": [
+            {
+              "id": 19,
+              "name": "Q19"
+            },
+            {
+              "id": 20,
+              "name": "Q20"
+            }
+          ],
+          "parent_concept_ids_flat": "Q19,Q20,"
+        }
+      ]
     }
   },
   {
@@ -16838,7 +17258,28 @@
         ]
       },
       "family_document_ref": "id:doc_search:family_document::CCLW.executive.4934.1571",
-      "text_block": "1.5.2 Sub-regional"
+      "text_block": "1.5.2 Sub-regional",
+      "concepts": [
+        {
+          "name": "just transition",
+          "id": 20,
+          "start": 5,
+          "end": 10,
+          "model": "sectors_1",
+          "timestamp": "2021-06-01T00:00:00Z",
+          "parent_concepts": [
+            {
+              "id": 20,
+              "name": "Q20"
+            },
+            {
+              "id": 21,
+              "name": "Q21"
+            }
+          ],
+          "parent_concept_ids_flat": "Q20,Q21,"
+        }
+      ]
     }
   },
   {
@@ -17640,7 +18081,28 @@
         ]
       },
       "family_document_ref": "id:doc_search:family_document::CCLW.executive.4934.1571",
-      "text_block": "Priority outcome: Smarter uses of energy in households, businesses, government, the transport\nsector and power utilities\nOutputs:"
+      "text_block": "Priority outcome: Smarter uses of energy in households, businesses, government, the transport\nsector and power utilities\nOutputs:",
+      "concepts": [
+        {
+          "name": "just transition",
+          "id": 21,
+          "start": 6,
+          "end": 15,
+          "model": "sectors_1",
+          "timestamp": "2021-06-01T00:00:00Z",
+          "parent_concepts": [
+            {
+              "id": 21,
+              "name": "Q21"
+            },
+            {
+              "id": 22,
+              "name": "Q22"
+            }
+          ],
+          "parent_concept_ids_flat": "Q21,Q22,"
+        }
+      ]
     }
   },
   {
@@ -18442,7 +18904,28 @@
         ]
       },
       "family_document_ref": "id:doc_search:family_document::CCLW.executive.4934.1571",
-      "text_block": "vehicles through increased average passenger mpg of fuel or, for freight carrying vehicles, increased\naverage ton mpg. While the use of alternative fuels may potentially result in fuel cost savings and\nreduced GHG emissions, alternative fuels are not considered to be a true energy efficiency strategy.\nThey might deliver significant fuel cost savings for the operator, but an equivalent amount of energy\n(and sometimes more) is often required to complete the same transport task using conventional\nfuel. Thus the substitution of one fuel for another rarely results in energy savings.16"
+      "text_block": "vehicles through increased average passenger mpg of fuel or, for freight carrying vehicles, increased\naverage ton mpg. While the use of alternative fuels may potentially result in fuel cost savings and\nreduced GHG emissions, alternative fuels are not considered to be a true energy efficiency strategy.\nThey might deliver significant fuel cost savings for the operator, but an equivalent amount of energy\n(and sometimes more) is often required to complete the same transport task using conventional\nfuel. Thus the substitution of one fuel for another rarely results in energy savings.16",
+      "concepts": [
+        {
+          "name": "sectors",
+          "id": 22,
+          "start": 6,
+          "end": 14,
+          "model": "sectors_1",
+          "timestamp": "2021-06-01T00:00:00Z",
+          "parent_concepts": [
+            {
+              "id": 22,
+              "name": "Q22"
+            },
+            {
+              "id": 23,
+              "name": "Q23"
+            }
+          ],
+          "parent_concept_ids_flat": "Q22,Q23,"
+        }
+      ]
     }
   },
   {
@@ -19244,7 +19727,28 @@
         ]
       },
       "family_document_ref": "id:doc_search:family_document::CCLW.executive.4934.1571",
-      "text_block": "The contributions from development partners and non-government organizations and the private\nsector are considered vital to meeting our national goals, and they have done so much over the past\nyears. Our national visions and goals cannot be met without the commitment, the partnerships and\nthe willingness of all the Marshallese people."
+      "text_block": "The contributions from development partners and non-government organizations and the private\nsector are considered vital to meeting our national goals, and they have done so much over the past\nyears. Our national visions and goals cannot be met without the commitment, the partnerships and\nthe willingness of all the Marshallese people.",
+      "concepts": [
+        {
+          "name": "manufacturing",
+          "id": 23,
+          "start": 5,
+          "end": 10,
+          "model": "sectors_1",
+          "timestamp": "2021-06-01T00:00:00Z",
+          "parent_concepts": [
+            {
+              "id": 23,
+              "name": "Q23"
+            },
+            {
+              "id": 24,
+              "name": "Q24"
+            }
+          ],
+          "parent_concept_ids_flat": "Q23,Q24,"
+        }
+      ]
     }
   },
   {
@@ -20046,7 +20550,28 @@
         ]
       },
       "family_document_ref": "id:doc_search:family_document::CCLW.executive.4934.1571",
-      "text_block": "In that same year, MEC installed 2629 standard residential meters and 462 residential pre-paid\nmeters. There were 462 commercial meters and 145 government meters. Average household\nelectricity consumption was 531 KWh/month, with a tariff rate of USD 0.30 per kWh. In April 2012,\nthe tariff rate (lifelines) increased to USD0.43 kWh and this remains the current lifelines tariff rate."
+      "text_block": "In that same year, MEC installed 2629 standard residential meters and 462 residential pre-paid\nmeters. There were 462 commercial meters and 145 government meters. Average household\nelectricity consumption was 531 KWh/month, with a tariff rate of USD 0.30 per kWh. In April 2012,\nthe tariff rate (lifelines) increased to USD0.43 kWh and this remains the current lifelines tariff rate.",
+      "concepts": [
+        {
+          "name": "just transition",
+          "id": 24,
+          "start": 2,
+          "end": 7,
+          "model": "sectors_1",
+          "timestamp": "2021-06-01T00:00:00Z",
+          "parent_concepts": [
+            {
+              "id": 24,
+              "name": "Q24"
+            },
+            {
+              "id": 25,
+              "name": "Q25"
+            }
+          ],
+          "parent_concept_ids_flat": "Q24,Q25,"
+        }
+      ]
     }
   },
   {
@@ -20848,7 +21373,28 @@
         ]
       },
       "family_document_ref": "id:doc_search:family_document::CCLW.executive.4934.1571",
-      "text_block": "The Green Energy Micronesia (GEM) Initiative of the Northern Pacific was endorsed in 2010 with the\naim of promoting a clean energy drive for the three Micronesian islands: Palau, Marshall Islands, and\nthe Federated States of Micronesia. The goal includes a 20% of power generation through renewable\nenergy by 2020 and general improved energy efficiency.\n1.5.3 Regional"
+      "text_block": "The Green Energy Micronesia (GEM) Initiative of the Northern Pacific was endorsed in 2010 with the\naim of promoting a clean energy drive for the three Micronesian islands: Palau, Marshall Islands, and\nthe Federated States of Micronesia. The goal includes a 20% of power generation through renewable\nenergy by 2020 and general improved energy efficiency.\n1.5.3 Regional",
+      "concepts": [
+        {
+          "name": "manufacturing",
+          "id": 25,
+          "start": 7,
+          "end": 8,
+          "model": "sectors_1",
+          "timestamp": "2021-06-01T00:00:00Z",
+          "parent_concepts": [
+            {
+              "id": 25,
+              "name": "Q25"
+            },
+            {
+              "id": 26,
+              "name": "Q26"
+            }
+          ],
+          "parent_concept_ids_flat": "Q25,Q26,"
+        }
+      ]
     }
   },
   {
@@ -21650,7 +22196,28 @@
         ]
       },
       "family_document_ref": "id:doc_search:family_document::CCLW.executive.4934.1571",
-      "text_block": "23 This is the project under the SID DOCK - PIGGAREP plus funding to be completed by April 2015\nPage | 50"
+      "text_block": "23 This is the project under the SID DOCK - PIGGAREP plus funding to be completed by April 2015\nPage | 50",
+      "concepts": [
+        {
+          "name": "just transition",
+          "id": 26,
+          "start": 4,
+          "end": 11,
+          "model": "sectors_1",
+          "timestamp": "2021-06-01T00:00:00Z",
+          "parent_concepts": [
+            {
+              "id": 26,
+              "name": "Q26"
+            },
+            {
+              "id": 27,
+              "name": "Q27"
+            }
+          ],
+          "parent_concept_ids_flat": "Q26,Q27,"
+        }
+      ]
     }
   },
   {
@@ -22452,7 +23019,28 @@
         ]
       },
       "family_document_ref": "id:doc_search:family_document::CCLW.executive.4934.1571",
-      "text_block": "13 RMI SREEM (Sustaining Renewable Energy and Energy Efficiency Measures in Micronesia) Project includes\nenergy efficiency at MEC power plants\nThe project includes activities to establish the energy efficiency loan schemes (EELS), to be completed by\nApril 2015"
+      "text_block": "13 RMI SREEM (Sustaining Renewable Energy and Energy Efficiency Measures in Micronesia) Project includes\nenergy efficiency at MEC power plants\nThe project includes activities to establish the energy efficiency loan schemes (EELS), to be completed by\nApril 2015",
+      "concepts": [
+        {
+          "name": "environment",
+          "id": 27,
+          "start": 2,
+          "end": 8,
+          "model": "sectors_1",
+          "timestamp": "2021-06-01T00:00:00Z",
+          "parent_concepts": [
+            {
+              "id": 27,
+              "name": "Q27"
+            },
+            {
+              "id": 28,
+              "name": "Q28"
+            }
+          ],
+          "parent_concept_ids_flat": "Q27,Q28,"
+        }
+      ]
     }
   },
   {
@@ -23254,7 +23842,28 @@
         ]
       },
       "family_document_ref": "id:doc_search:family_document::CCLW.executive.4934.1571",
-      "text_block": "The Energy Planning Division (EPD) under the Ministry of Resources and Development (MRD) was re-\nestablished in 2008 during the energy crisis to formulate a policy that would guide the energy sector\nduring the crisis and, in particular, identify actions that put the government into an energy crisis\nwhen the global price of oil increased to above USD 120 a barrel. Since then the EPD has been the\nfocal point for all energy-related activities and initiatives in the Marshall Islands, from managing\nenergy projects including ADMIRE - the Actions for the Development of Marshall Islands Renewable\nEnergies, the Northern Regional Energy Project (North-REP) and other national energy initiatives.\nSince the endorsement of the 2009 NEP and EAP, the EPD has been responsible for coordinating the\nimplementation of the NEP and the five-year EAP. Foremost and one of the priority needs for MRD\nand EPD is to put in place a law that governs the establishment of the EPD and its roles and\nfunction"
+      "text_block": "The Energy Planning Division (EPD) under the Ministry of Resources and Development (MRD) was re-\nestablished in 2008 during the energy crisis to formulate a policy that would guide the energy sector\nduring the crisis and, in particular, identify actions that put the government into an energy crisis\nwhen the global price of oil increased to above USD 120 a barrel. Since then the EPD has been the\nfocal point for all energy-related activities and initiatives in the Marshall Islands, from managing\nenergy projects including ADMIRE - the Actions for the Development of Marshall Islands Renewable\nEnergies, the Northern Regional Energy Project (North-REP) and other national energy initiatives.\nSince the endorsement of the 2009 NEP and EAP, the EPD has been responsible for coordinating the\nimplementation of the NEP and the five-year EAP. Foremost and one of the priority needs for MRD\nand EPD is to put in place a law that governs the establishment of the EPD and its roles and\nfunction",
+      "concepts": [
+        {
+          "name": "manufacturing",
+          "id": 28,
+          "start": 4,
+          "end": 8,
+          "model": "sectors_1",
+          "timestamp": "2021-06-01T00:00:00Z",
+          "parent_concepts": [
+            {
+              "id": 28,
+              "name": "Q28"
+            },
+            {
+              "id": 29,
+              "name": "Q29"
+            }
+          ],
+          "parent_concept_ids_flat": "Q28,Q29,"
+        }
+      ]
     }
   },
   {
@@ -24056,7 +24665,28 @@
         ]
       },
       "family_document_ref": "id:doc_search:family_document::CCLW.executive.4934.1571",
-      "text_block": "Despite the lack of price control, fuel prices in Majuro (excluding duties and taxes) are about average\nfor Pacific Island countries, while outer islands fuel prices are notably higher."
+      "text_block": "Despite the lack of price control, fuel prices in Majuro (excluding duties and taxes) are about average\nfor Pacific Island countries, while outer islands fuel prices are notably higher.",
+      "concepts": [
+        {
+          "name": "manufacturing",
+          "id": 29,
+          "start": 2,
+          "end": 5,
+          "model": "sectors_1",
+          "timestamp": "2021-06-01T00:00:00Z",
+          "parent_concepts": [
+            {
+              "id": 29,
+              "name": "Q29"
+            },
+            {
+              "id": 30,
+              "name": "Q30"
+            }
+          ],
+          "parent_concept_ids_flat": "Q29,Q30,"
+        }
+      ]
     }
   },
   {
@@ -24858,7 +25488,28 @@
         ]
       },
       "family_document_ref": "id:doc_search:family_document::CCLW.executive.4934.1571",
-      "text_block": "*Refer to Annex 1 for Financial Options\n\"Sourced from the 2011 National Census report"
+      "text_block": "*Refer to Annex 1 for Financial Options\n\"Sourced from the 2011 National Census report",
+      "concepts": [
+        {
+          "name": "sectors",
+          "id": 30,
+          "start": 8,
+          "end": 15,
+          "model": "sectors_1",
+          "timestamp": "2021-06-01T00:00:00Z",
+          "parent_concepts": [
+            {
+              "id": 30,
+              "name": "Q30"
+            },
+            {
+              "id": 31,
+              "name": "Q31"
+            }
+          ],
+          "parent_concept_ids_flat": "Q30,Q31,"
+        }
+      ]
     }
   },
   {
@@ -25660,7 +26311,28 @@
         ]
       },
       "family_document_ref": "id:doc_search:family_document::CCLW.executive.4934.1571",
-      "text_block": "While the government is trying its best to acquire resources to improve access to modern energy\nservices and to reduce our fossil fuel dependence, it can only do so much. I am glad to state that this\npolicy includes enabling frameworks to improve the partnership between government and the\nprivate sector, creating financial incentives to foster the participation of the business community to\nintegrate renewable energy with energy efficient technologies and practices."
+      "text_block": "While the government is trying its best to acquire resources to improve access to modern energy\nservices and to reduce our fossil fuel dependence, it can only do so much. I am glad to state that this\npolicy includes enabling frameworks to improve the partnership between government and the\nprivate sector, creating financial incentives to foster the participation of the business community to\nintegrate renewable energy with energy efficient technologies and practices.",
+      "concepts": [
+        {
+          "name": "sectors",
+          "id": 31,
+          "start": 10,
+          "end": 12,
+          "model": "sectors_1",
+          "timestamp": "2021-06-01T00:00:00Z",
+          "parent_concepts": [
+            {
+              "id": 31,
+              "name": "Q31"
+            },
+            {
+              "id": 32,
+              "name": "Q32"
+            }
+          ],
+          "parent_concept_ids_flat": "Q31,Q32,"
+        }
+      ]
     }
   },
   {
@@ -26462,7 +27134,28 @@
         ]
       },
       "family_document_ref": "id:doc_search:family_document::CCLW.executive.4934.1571",
-      "text_block": "Strategy 16.1 Determine the indigenous energy resources that are available for development through feasibility studies"
+      "text_block": "Strategy 16.1 Determine the indigenous energy resources that are available for development through feasibility studies",
+      "concepts": [
+        {
+          "name": "just transition",
+          "id": 32,
+          "start": 8,
+          "end": 12,
+          "model": "sectors_1",
+          "timestamp": "2021-06-01T00:00:00Z",
+          "parent_concepts": [
+            {
+              "id": 32,
+              "name": "Q32"
+            },
+            {
+              "id": 33,
+              "name": "Q33"
+            }
+          ],
+          "parent_concept_ids_flat": "Q32,Q33,"
+        }
+      ]
     }
   },
   {
@@ -27264,7 +27957,28 @@
         ]
       },
       "family_document_ref": "id:doc_search:family_document::CCLW.executive.4934.1571",
-      "text_block": "Operationalization of the EAP"
+      "text_block": "Operationalization of the EAP",
+      "concepts": [
+        {
+          "name": "just transition",
+          "id": 33,
+          "start": 8,
+          "end": 17,
+          "model": "sectors_1",
+          "timestamp": "2021-06-01T00:00:00Z",
+          "parent_concepts": [
+            {
+              "id": 33,
+              "name": "Q33"
+            },
+            {
+              "id": 34,
+              "name": "Q34"
+            }
+          ],
+          "parent_concept_ids_flat": "Q33,Q34,"
+        }
+      ]
     }
   },
   {
@@ -28066,7 +28780,28 @@
         ]
       },
       "family_document_ref": "id:doc_search:family_document::CCLW.executive.4934.1571",
-      "text_block": "Expected Output/Result 1: The Energy Planning Division developed its capacity and skills set to enable it to review and manage the energy legislations and policy\nframeworks"
+      "text_block": "Expected Output/Result 1: The Energy Planning Division developed its capacity and skills set to enable it to review and manage the energy legislations and policy\nframeworks",
+      "concepts": [
+        {
+          "name": "manufacturing",
+          "id": 34,
+          "start": 10,
+          "end": 12,
+          "model": "sectors_1",
+          "timestamp": "2021-06-01T00:00:00Z",
+          "parent_concepts": [
+            {
+              "id": 34,
+              "name": "Q34"
+            },
+            {
+              "id": 35,
+              "name": "Q35"
+            }
+          ],
+          "parent_concept_ids_flat": "Q34,Q35,"
+        }
+      ]
     }
   },
   {
@@ -28868,7 +29603,28 @@
         ]
       },
       "family_document_ref": "id:doc_search:family_document::CCLW.executive.4934.1571",
-      "text_block": "Strategy 14.1 Investigate the practicality of retrofits to reduce fuel use in sea transport, e.g. more efficient propellers, sail-assist technologies, and other alternate ener\nsources"
+      "text_block": "Strategy 14.1 Investigate the practicality of retrofits to reduce fuel use in sea transport, e.g. more efficient propellers, sail-assist technologies, and other alternate ener\nsources",
+      "concepts": [
+        {
+          "name": "just transition",
+          "id": 35,
+          "start": 4,
+          "end": 9,
+          "model": "sectors_1",
+          "timestamp": "2021-06-01T00:00:00Z",
+          "parent_concepts": [
+            {
+              "id": 35,
+              "name": "Q35"
+            },
+            {
+              "id": 36,
+              "name": "Q36"
+            }
+          ],
+          "parent_concept_ids_flat": "Q35,Q36,"
+        }
+      ]
     }
   },
   {
@@ -29670,7 +30426,28 @@
         ]
       },
       "family_document_ref": "id:doc_search:family_document::CCLW.executive.4934.1571",
-      "text_block": "f. Many partners, one team: The guiding principle 'many partners, one team' is used by the\nFramework for Action on Energy Security in the Pacific. It is relevant and significant in the\nimplementation of this national energy policy and therefore is adopted as one of its guiding\nprinciples. The 29 atolls and five islands of the Marshall Islands are scattered, and visiting these\nislands to implement energy projects is expensive and takes a lot of time and effort, so the 'many\npartners, one team' approach is required in meeting the RMI national objective of improving\nlivelihoods in the outer islands. This approach was used during the 2013 outer islands energy survey,\nwhen the Energy Planning Division (EPD) and the Marshalls Energy Company (MEC) conducted an\nenergy survey in three outer islands and included the NGO, KIO Club, in the distribution of energy-\nefficient biomass stoves, as well as the Ministry of Internal Affairs and College of the Marshall Islands\nin conducting water quality testing and training."
+      "text_block": "f. Many partners, one team: The guiding principle 'many partners, one team' is used by the\nFramework for Action on Energy Security in the Pacific. It is relevant and significant in the\nimplementation of this national energy policy and therefore is adopted as one of its guiding\nprinciples. The 29 atolls and five islands of the Marshall Islands are scattered, and visiting these\nislands to implement energy projects is expensive and takes a lot of time and effort, so the 'many\npartners, one team' approach is required in meeting the RMI national objective of improving\nlivelihoods in the outer islands. This approach was used during the 2013 outer islands energy survey,\nwhen the Energy Planning Division (EPD) and the Marshalls Energy Company (MEC) conducted an\nenergy survey in three outer islands and included the NGO, KIO Club, in the distribution of energy-\nefficient biomass stoves, as well as the Ministry of Internal Affairs and College of the Marshall Islands\nin conducting water quality testing and training.",
+      "concepts": [
+        {
+          "name": "sectors",
+          "id": 36,
+          "start": 3,
+          "end": 4,
+          "model": "sectors_1",
+          "timestamp": "2021-06-01T00:00:00Z",
+          "parent_concepts": [
+            {
+              "id": 36,
+              "name": "Q36"
+            },
+            {
+              "id": 37,
+              "name": "Q37"
+            }
+          ],
+          "parent_concept_ids_flat": "Q36,Q37,"
+        }
+      ]
     }
   },
   {
@@ -30472,7 +31249,28 @@
         ]
       },
       "family_document_ref": "id:doc_search:family_document::CCLW.executive.4934.1571",
-      "text_block": "e. Data management and information: The availability, accessibility and quality of data and\ninformation for all key strategic areas are critical in order to make informed decisions and policy\ninterventions. Continued efforts are needed across all sub-sectors for effective and efficient data\ncollection and management."
+      "text_block": "e. Data management and information: The availability, accessibility and quality of data and\ninformation for all key strategic areas are critical in order to make informed decisions and policy\ninterventions. Continued efforts are needed across all sub-sectors for effective and efficient data\ncollection and management.",
+      "concepts": [
+        {
+          "name": "manufacturing",
+          "id": 37,
+          "start": 5,
+          "end": 15,
+          "model": "sectors_1",
+          "timestamp": "2021-06-01T00:00:00Z",
+          "parent_concepts": [
+            {
+              "id": 37,
+              "name": "Q37"
+            },
+            {
+              "id": 38,
+              "name": "Q38"
+            }
+          ],
+          "parent_concept_ids_flat": "Q37,Q38,"
+        }
+      ]
     }
   },
   {
@@ -31274,7 +32072,28 @@
         ]
       },
       "family_document_ref": "id:doc_search:family_document::CCLW.executive.4934.1571",
-      "text_block": "I am pleased to present this National Energy Policy and Action Plan that\nwill guide the development of the country's energy sector in the next five\nto ten years."
+      "text_block": "I am pleased to present this National Energy Policy and Action Plan that\nwill guide the development of the country's energy sector in the next five\nto ten years.",
+      "concepts": [
+        {
+          "name": "sectors",
+          "id": 38,
+          "start": 8,
+          "end": 15,
+          "model": "sectors_1",
+          "timestamp": "2021-06-01T00:00:00Z",
+          "parent_concepts": [
+            {
+              "id": 38,
+              "name": "Q38"
+            },
+            {
+              "id": 39,
+              "name": "Q39"
+            }
+          ],
+          "parent_concept_ids_flat": "Q38,Q39,"
+        }
+      ]
     }
   },
   {
@@ -32076,7 +32895,28 @@
         ]
       },
       "family_document_ref": "id:doc_search:family_document::CCLW.executive.4934.1571",
-      "text_block": "Strategy 13.1: Establish guidelines for the maintenance of the Government vehicle with adequate budget allocation"
+      "text_block": "Strategy 13.1: Establish guidelines for the maintenance of the Government vehicle with adequate budget allocation",
+      "concepts": [
+        {
+          "name": "sectors",
+          "id": 39,
+          "start": 7,
+          "end": 8,
+          "model": "sectors_1",
+          "timestamp": "2021-06-01T00:00:00Z",
+          "parent_concepts": [
+            {
+              "id": 39,
+              "name": "Q39"
+            },
+            {
+              "id": 40,
+              "name": "Q40"
+            }
+          ],
+          "parent_concept_ids_flat": "Q39,Q40,"
+        }
+      ]
     }
   },
   {
@@ -32878,7 +33718,28 @@
         ]
       },
       "family_document_ref": "id:doc_search:family_document::CCLW.executive.4934.1571",
-      "text_block": "the desire for increased access to secure, reliable, affordable and high quality energy\nservices, in both the urban areas and outer islands and atolls of the country;\n\u2022 improvement of, and increased efficiency in the use of energy in all sectors, including the\nresidential and commercial sectors, the transport sector, and government buildings and\nutilities;\n\u2022 enhancement of the potential for an increased share of renewable energy resources in the\noverall national energy mix; and\nthe potential benefits from adopting more efficient practices in petroleum supply chain\nmanagement and procurement."
+      "text_block": "the desire for increased access to secure, reliable, affordable and high quality energy\nservices, in both the urban areas and outer islands and atolls of the country;\n\u2022 improvement of, and increased efficiency in the use of energy in all sectors, including the\nresidential and commercial sectors, the transport sector, and government buildings and\nutilities;\n\u2022 enhancement of the potential for an increased share of renewable energy resources in the\noverall national energy mix; and\nthe potential benefits from adopting more efficient practices in petroleum supply chain\nmanagement and procurement.",
+      "concepts": [
+        {
+          "name": "sectors",
+          "id": 40,
+          "start": 9,
+          "end": 11,
+          "model": "sectors_1",
+          "timestamp": "2021-06-01T00:00:00Z",
+          "parent_concepts": [
+            {
+              "id": 40,
+              "name": "Q40"
+            },
+            {
+              "id": 41,
+              "name": "Q41"
+            }
+          ],
+          "parent_concept_ids_flat": "Q40,Q41,"
+        }
+      ]
     }
   },
   {
@@ -33680,7 +34541,28 @@
         ]
       },
       "family_document_ref": "id:doc_search:family_document::CCLW.executive.4934.1571",
-      "text_block": ".\n.\nTo provide 95% of rural outer atoll households with off grid electricity by 2015;\nTo provide access to modern forms of cooking to 90% of all households by 2020;\nTo make households and businesses 50% more energy efficient and government buildings\n75% more energy efficient by 2020;\nTo achieve a 20% efficiency improvement in transport sector fuel use by 2020;\nTo reduce supply side energy losses from MEC by 20% by 2017; and\nTo provide 20% of power generation through indigenous renewable resources by 2020."
+      "text_block": ".\n.\nTo provide 95% of rural outer atoll households with off grid electricity by 2015;\nTo provide access to modern forms of cooking to 90% of all households by 2020;\nTo make households and businesses 50% more energy efficient and government buildings\n75% more energy efficient by 2020;\nTo achieve a 20% efficiency improvement in transport sector fuel use by 2020;\nTo reduce supply side energy losses from MEC by 20% by 2017; and\nTo provide 20% of power generation through indigenous renewable resources by 2020.",
+      "concepts": [
+        {
+          "name": "just transition",
+          "id": 41,
+          "start": 6,
+          "end": 15,
+          "model": "sectors_1",
+          "timestamp": "2021-06-01T00:00:00Z",
+          "parent_concepts": [
+            {
+              "id": 41,
+              "name": "Q41"
+            },
+            {
+              "id": 42,
+              "name": "Q42"
+            }
+          ],
+          "parent_concept_ids_flat": "Q41,Q42,"
+        }
+      ]
     }
   },
   {
@@ -34482,7 +35364,28 @@
         ]
       },
       "family_document_ref": "id:doc_search:family_document::CCLW.executive.4934.1571",
-      "text_block": "2020 If the EPD is transferred to OEPPC under the Prime Minister's Office, a regulation of the OEPPC for the energy sector management is relevant\nPage | 41"
+      "text_block": "2020 If the EPD is transferred to OEPPC under the Prime Minister's Office, a regulation of the OEPPC for the energy sector management is relevant\nPage | 41",
+      "concepts": [
+        {
+          "name": "manufacturing",
+          "id": 42,
+          "start": 6,
+          "end": 11,
+          "model": "sectors_1",
+          "timestamp": "2021-06-01T00:00:00Z",
+          "parent_concepts": [
+            {
+              "id": 42,
+              "name": "Q42"
+            },
+            {
+              "id": 43,
+              "name": "Q43"
+            }
+          ],
+          "parent_concept_ids_flat": "Q42,Q43,"
+        }
+      ]
     }
   },
   {
@@ -35284,7 +36187,28 @@
         ]
       },
       "family_document_ref": "id:doc_search:family_document::CCLW.executive.4934.1571",
-      "text_block": "Increased the number of energy efficient vehicles into the country through appropriate fiscal\nincentives for business, private sectors, households and government sectors.\nGovernment developed a more energy efficient transport network through collaborations with\nvarious stakeholders and adopting best practices that are applicable in the RMI"
+      "text_block": "Increased the number of energy efficient vehicles into the country through appropriate fiscal\nincentives for business, private sectors, households and government sectors.\nGovernment developed a more energy efficient transport network through collaborations with\nvarious stakeholders and adopting best practices that are applicable in the RMI",
+      "concepts": [
+        {
+          "name": "just transition",
+          "id": 43,
+          "start": 6,
+          "end": 10,
+          "model": "sectors_1",
+          "timestamp": "2021-06-01T00:00:00Z",
+          "parent_concepts": [
+            {
+              "id": 43,
+              "name": "Q43"
+            },
+            {
+              "id": 44,
+              "name": "Q44"
+            }
+          ],
+          "parent_concept_ids_flat": "Q43,Q44,"
+        }
+      ]
     }
   },
   {
@@ -36086,7 +37010,28 @@
         ]
       },
       "family_document_ref": "id:doc_search:family_document::CCLW.executive.4934.1571",
-      "text_block": "This 2015 NEP also aspires to contribute to achieving the vision of the Strategic Development Plan\nFramework 2003-2018: Vision 2018, and therefore all of its broad mission outcomes, strategies and\nprioritised activities should be effectively mainstreamed into national development budgeting and\nstrategic planning."
+      "text_block": "This 2015 NEP also aspires to contribute to achieving the vision of the Strategic Development Plan\nFramework 2003-2018: Vision 2018, and therefore all of its broad mission outcomes, strategies and\nprioritised activities should be effectively mainstreamed into national development budgeting and\nstrategic planning.",
+      "concepts": [
+        {
+          "name": "sectors",
+          "id": 44,
+          "start": 9,
+          "end": 12,
+          "model": "sectors_1",
+          "timestamp": "2021-06-01T00:00:00Z",
+          "parent_concepts": [
+            {
+              "id": 44,
+              "name": "Q44"
+            },
+            {
+              "id": 45,
+              "name": "Q45"
+            }
+          ],
+          "parent_concept_ids_flat": "Q44,Q45,"
+        }
+      ]
     }
   },
   {
@@ -36888,7 +37833,28 @@
         ]
       },
       "family_document_ref": "id:doc_search:family_document::CCLW.executive.4934.1571",
-      "text_block": "Expected Output/Result 1: The Energy Planning Division developed its capacity and skills set to enable it to review and manage the energy legislations and pol\nframeworks"
+      "text_block": "Expected Output/Result 1: The Energy Planning Division developed its capacity and skills set to enable it to review and manage the energy legislations and pol\nframeworks",
+      "concepts": [
+        {
+          "name": "manufacturing",
+          "id": 45,
+          "start": 4,
+          "end": 7,
+          "model": "sectors_1",
+          "timestamp": "2021-06-01T00:00:00Z",
+          "parent_concepts": [
+            {
+              "id": 45,
+              "name": "Q45"
+            },
+            {
+              "id": 46,
+              "name": "Q46"
+            }
+          ],
+          "parent_concept_ids_flat": "Q45,Q46,"
+        }
+      ]
     }
   },
   {
@@ -37690,7 +38656,28 @@
         ]
       },
       "family_document_ref": "id:doc_search:family_document::CCLW.executive.4934.1571",
-      "text_block": "maximum wholesale and retail price margins. The study should also\nidentify and assess different methods for regulating fuel prices and\nrecommend a method that is feasible and practical for the RMI"
+      "text_block": "maximum wholesale and retail price margins. The study should also\nidentify and assess different methods for regulating fuel prices and\nrecommend a method that is feasible and practical for the RMI",
+      "concepts": [
+        {
+          "name": "sectors",
+          "id": 46,
+          "start": 6,
+          "end": 15,
+          "model": "sectors_1",
+          "timestamp": "2021-06-01T00:00:00Z",
+          "parent_concepts": [
+            {
+              "id": 46,
+              "name": "Q46"
+            },
+            {
+              "id": 47,
+              "name": "Q47"
+            }
+          ],
+          "parent_concept_ids_flat": "Q46,Q47,"
+        }
+      ]
     }
   },
   {
@@ -38492,7 +39479,28 @@
         ]
       },
       "family_document_ref": "id:doc_search:family_document::CCLW.executive.4934.1571",
-      "text_block": "Some of the improvement can come from better fuel efficiency brought about by improved\nmaintenance of the existing vehicle stock. There are private companies that have vehicle testing and\nbasic car maintenance facilities; however, there is no enabling environment such as regulation or\nincentive for enforcing standards on fuel efficiency or vehicle worthiness. There is no legislation on\nrestrictions of second hand cars, importation of engine sizes and fiscal incentives for importing larger\nvehicles with more seats."
+      "text_block": "Some of the improvement can come from better fuel efficiency brought about by improved\nmaintenance of the existing vehicle stock. There are private companies that have vehicle testing and\nbasic car maintenance facilities; however, there is no enabling environment such as regulation or\nincentive for enforcing standards on fuel efficiency or vehicle worthiness. There is no legislation on\nrestrictions of second hand cars, importation of engine sizes and fiscal incentives for importing larger\nvehicles with more seats.",
+      "concepts": [
+        {
+          "name": "manufacturing",
+          "id": 47,
+          "start": 1,
+          "end": 7,
+          "model": "sectors_1",
+          "timestamp": "2021-06-01T00:00:00Z",
+          "parent_concepts": [
+            {
+              "id": 47,
+              "name": "Q47"
+            },
+            {
+              "id": 48,
+              "name": "Q48"
+            }
+          ],
+          "parent_concept_ids_flat": "Q47,Q48,"
+        }
+      ]
     }
   },
   {
@@ -39294,7 +40302,28 @@
         ]
       },
       "family_document_ref": "id:doc_search:family_document::CCLW.executive.4934.1571",
-      "text_block": "Strategy 1.2: Annual work plan developed for MRD's EPD with clear objectives, priorities and timeframe including a communication strategy to be reviewed quarterly"
+      "text_block": "Strategy 1.2: Annual work plan developed for MRD's EPD with clear objectives, priorities and timeframe including a communication strategy to be reviewed quarterly",
+      "concepts": [
+        {
+          "name": "sectors",
+          "id": 48,
+          "start": 2,
+          "end": 12,
+          "model": "sectors_1",
+          "timestamp": "2021-06-01T00:00:00Z",
+          "parent_concepts": [
+            {
+              "id": 48,
+              "name": "Q48"
+            },
+            {
+              "id": 49,
+              "name": "Q49"
+            }
+          ],
+          "parent_concept_ids_flat": "Q48,Q49,"
+        }
+      ]
     }
   },
   {
@@ -40096,7 +41125,28 @@
         ]
       },
       "family_document_ref": "id:doc_search:family_document::CCLW.executive.4934.1571",
-      "text_block": "Other initiatives are the use of hybrid cars and electric vehicles, which are considered relevant when\nreducing the fossil fuel consumption for transportation. The Ministry of Foreign Affairs has received\na hybrid car by the European Union for demonstration use and the benefits are yet to be\ndocumented."
+      "text_block": "Other initiatives are the use of hybrid cars and electric vehicles, which are considered relevant when\nreducing the fossil fuel consumption for transportation. The Ministry of Foreign Affairs has received\na hybrid car by the European Union for demonstration use and the benefits are yet to be\ndocumented.",
+      "concepts": [
+        {
+          "name": "environment",
+          "id": 49,
+          "start": 4,
+          "end": 14,
+          "model": "sectors_1",
+          "timestamp": "2021-06-01T00:00:00Z",
+          "parent_concepts": [
+            {
+              "id": 49,
+              "name": "Q49"
+            },
+            {
+              "id": 50,
+              "name": "Q50"
+            }
+          ],
+          "parent_concept_ids_flat": "Q49,Q50,"
+        }
+      ]
     }
   },
   {
@@ -40898,7 +41948,28 @@
         ]
       },
       "family_document_ref": "id:doc_search:family_document::CCLW.executive.4934.1571",
-      "text_block": "Of equal importance to creating an enabling environment for private sector involvement in the energy sector are\ndevelopments in the continuation of the public sector reform programs discussed earlier. This will give prospective\ninvestors confidence and reduce uncertainty concerning the overall sustainability of RMI over the long term, when\ncompact grants end in 2023. There is an increasingly competitive international business environment in which to\nattract investment. RMI would have some challenges in this area as it is ranked 114th by the World Bank, out of 189\ncountries in terms of doing business in 2014. In a few areas which are very important for attracting foreign investor\nor establishing a small business out of 189 countries RMI ranked as follows: starting a business, 56; enforcing\ncontracts, 61; getting credit, 86; obtaining a construction permit, 32 and registering property, 189. In terms of\ndeveloping a strategy to generally expand the private sector it would be advantageous for RMI to consider the issues\nhighlighted by the World Bank doing business report."
+      "text_block": "Of equal importance to creating an enabling environment for private sector involvement in the energy sector are\ndevelopments in the continuation of the public sector reform programs discussed earlier. This will give prospective\ninvestors confidence and reduce uncertainty concerning the overall sustainability of RMI over the long term, when\ncompact grants end in 2023. There is an increasingly competitive international business environment in which to\nattract investment. RMI would have some challenges in this area as it is ranked 114th by the World Bank, out of 189\ncountries in terms of doing business in 2014. In a few areas which are very important for attracting foreign investor\nor establishing a small business out of 189 countries RMI ranked as follows: starting a business, 56; enforcing\ncontracts, 61; getting credit, 86; obtaining a construction permit, 32 and registering property, 189. In terms of\ndeveloping a strategy to generally expand the private sector it would be advantageous for RMI to consider the issues\nhighlighted by the World Bank doing business report.",
+      "concepts": [
+        {
+          "name": "environment",
+          "id": 50,
+          "start": 8,
+          "end": 11,
+          "model": "sectors_1",
+          "timestamp": "2021-06-01T00:00:00Z",
+          "parent_concepts": [
+            {
+              "id": 50,
+              "name": "Q50"
+            },
+            {
+              "id": 51,
+              "name": "Q51"
+            }
+          ],
+          "parent_concept_ids_flat": "Q50,Q51,"
+        }
+      ]
     }
   },
   {
@@ -41700,7 +42771,28 @@
         ]
       },
       "family_document_ref": "id:doc_search:family_document::CCLW.executive.4934.1571",
-      "text_block": "o energy policy administration and coordination;\no petroleum;\no electric power;\no transport and energy use;\no energy efficiency; and\nrenewable energy"
+      "text_block": "o energy policy administration and coordination;\no petroleum;\no electric power;\no transport and energy use;\no energy efficiency; and\nrenewable energy",
+      "concepts": [
+        {
+          "name": "environment",
+          "id": 51,
+          "start": 3,
+          "end": 5,
+          "model": "sectors_1",
+          "timestamp": "2021-06-01T00:00:00Z",
+          "parent_concepts": [
+            {
+              "id": 51,
+              "name": "Q51"
+            },
+            {
+              "id": 52,
+              "name": "Q52"
+            }
+          ],
+          "parent_concept_ids_flat": "Q51,Q52,"
+        }
+      ]
     }
   },
   {
@@ -42502,7 +43594,28 @@
         ]
       },
       "family_document_ref": "id:doc_search:family_document::CCLW.executive.4934.1571",
-      "text_block": "I wish to thank the people and organizations that have contributed in one way or another to the\ncompletion of the National Energy Policy and Energy Action Plan."
+      "text_block": "I wish to thank the people and organizations that have contributed in one way or another to the\ncompletion of the National Energy Policy and Energy Action Plan.",
+      "concepts": [
+        {
+          "name": "sectors",
+          "id": 52,
+          "start": 9,
+          "end": 19,
+          "model": "sectors_1",
+          "timestamp": "2021-06-01T00:00:00Z",
+          "parent_concepts": [
+            {
+              "id": 52,
+              "name": "Q52"
+            },
+            {
+              "id": 53,
+              "name": "Q53"
+            }
+          ],
+          "parent_concept_ids_flat": "Q52,Q53,"
+        }
+      ]
     }
   },
   {
@@ -43304,7 +44417,28 @@
         ]
       },
       "family_document_ref": "id:doc_search:family_document::CCLW.executive.4934.1571",
-      "text_block": "The electric power sector outcomes and outputs are summarized as follows for the purposes of\nfollow-up actions."
+      "text_block": "The electric power sector outcomes and outputs are summarized as follows for the purposes of\nfollow-up actions.",
+      "concepts": [
+        {
+          "name": "manufacturing",
+          "id": 53,
+          "start": 5,
+          "end": 8,
+          "model": "sectors_1",
+          "timestamp": "2021-06-01T00:00:00Z",
+          "parent_concepts": [
+            {
+              "id": 53,
+              "name": "Q53"
+            },
+            {
+              "id": 54,
+              "name": "Q54"
+            }
+          ],
+          "parent_concept_ids_flat": "Q53,Q54,"
+        }
+      ]
     }
   },
   {
@@ -44106,7 +45240,28 @@
         ]
       },
       "family_document_ref": "id:doc_search:family_document::CCLW.executive.4934.1571",
-      "text_block": "RMI is a member of the International Renewable Energy Agency (IRENA), which seeks to make an\nimpact on the world of renewable energy by maintaining a clear and independent position, providing\na range of reliable and well-understood services that complement those already offered by the\nrenewable energy community and gather existing, but scattered, activities around a central hub. In\n2014, IRENA provided technical assistance to the formulation of the Renewable Readiness"
+      "text_block": "RMI is a member of the International Renewable Energy Agency (IRENA), which seeks to make an\nimpact on the world of renewable energy by maintaining a clear and independent position, providing\na range of reliable and well-understood services that complement those already offered by the\nrenewable energy community and gather existing, but scattered, activities around a central hub. In\n2014, IRENA provided technical assistance to the formulation of the Renewable Readiness",
+      "concepts": [
+        {
+          "name": "just transition",
+          "id": 54,
+          "start": 5,
+          "end": 14,
+          "model": "sectors_1",
+          "timestamp": "2021-06-01T00:00:00Z",
+          "parent_concepts": [
+            {
+              "id": 54,
+              "name": "Q54"
+            },
+            {
+              "id": 55,
+              "name": "Q55"
+            }
+          ],
+          "parent_concept_ids_flat": "Q54,Q55,"
+        }
+      ]
     }
   },
   {
@@ -44908,7 +46063,28 @@
         ]
       },
       "family_document_ref": "id:doc_search:family_document::CCLW.executive.4934.1571",
-      "text_block": "Map of Republic of the Marshall Islands"
+      "text_block": "Map of Republic of the Marshall Islands",
+      "concepts": [
+        {
+          "name": "manufacturing",
+          "id": 55,
+          "start": 4,
+          "end": 7,
+          "model": "sectors_1",
+          "timestamp": "2021-06-01T00:00:00Z",
+          "parent_concepts": [
+            {
+              "id": 55,
+              "name": "Q55"
+            },
+            {
+              "id": 56,
+              "name": "Q56"
+            }
+          ],
+          "parent_concept_ids_flat": "Q55,Q56,"
+        }
+      ]
     }
   },
   {
@@ -45710,7 +46886,28 @@
         ]
       },
       "family_document_ref": "id:doc_search:family_document::CCLW.executive.4934.1571",
-      "text_block": "Expected Output/Result 16: Available energy modelling developed to ascertain the technical and economic indigenous energy sources where technically practical and\neconomically viable"
+      "text_block": "Expected Output/Result 16: Available energy modelling developed to ascertain the technical and economic indigenous energy sources where technically practical and\neconomically viable",
+      "concepts": [
+        {
+          "name": "manufacturing",
+          "id": 56,
+          "start": 5,
+          "end": 15,
+          "model": "sectors_1",
+          "timestamp": "2021-06-01T00:00:00Z",
+          "parent_concepts": [
+            {
+              "id": 56,
+              "name": "Q56"
+            },
+            {
+              "id": 57,
+              "name": "Q57"
+            }
+          ],
+          "parent_concept_ids_flat": "Q56,Q57,"
+        }
+      ]
     }
   },
   {
@@ -46512,7 +47709,28 @@
         ]
       },
       "family_document_ref": "id:doc_search:family_document::CCLW.executive.4934.1571",
-      "text_block": "Strategy 3.3 EPD introduces a communications plan using multiple medias and having targeted messaging to address particular interests of local stakeholder and\ninternational development partners"
+      "text_block": "Strategy 3.3 EPD introduces a communications plan using multiple medias and having targeted messaging to address particular interests of local stakeholder and\ninternational development partners",
+      "concepts": [
+        {
+          "name": "environment",
+          "id": 57,
+          "start": 10,
+          "end": 13,
+          "model": "sectors_1",
+          "timestamp": "2021-06-01T00:00:00Z",
+          "parent_concepts": [
+            {
+              "id": 57,
+              "name": "Q57"
+            },
+            {
+              "id": 58,
+              "name": "Q58"
+            }
+          ],
+          "parent_concept_ids_flat": "Q57,Q58,"
+        }
+      ]
     }
   },
   {
@@ -47314,7 +48532,28 @@
         ]
       },
       "family_document_ref": "id:doc_search:family_document::CCLW.executive.4934.1571",
-      "text_block": "At the household level, behavioral change is necessary to adopt energy conservation and energy efficiency practices.\nThis would not only contribute to household energy cost savings, which could be diverted to other priority\nexpenditure, it would also contribute to reduction of the national energy import bill and the national expenditure on\nenergy subsidies. A number of education and awareness programs throughout the education system and using pubic\nmedia and social media commenced, more collaboration with the Ministry of Internal Affairs, Community\nDevelopment Division in the current plan to facilitated action at the household level, These will be consolidated in\nthe revised EAP. In addition a progressive tariff regime, which allowed the rate of import duties on energy efficient\nappliance and vehicles, was proposed in the 2009 EAP and recorded mixed results. Likewise various home financing\nloan programs were proposed, and achieved similar result. These efforts would be consolidated in the revised EAP.\nMore effort would be made to increase education and awareness of these programs. As part of these effort will be\nto project savings from household, as this should increase interest in participating in these programs."
+      "text_block": "At the household level, behavioral change is necessary to adopt energy conservation and energy efficiency practices.\nThis would not only contribute to household energy cost savings, which could be diverted to other priority\nexpenditure, it would also contribute to reduction of the national energy import bill and the national expenditure on\nenergy subsidies. A number of education and awareness programs throughout the education system and using pubic\nmedia and social media commenced, more collaboration with the Ministry of Internal Affairs, Community\nDevelopment Division in the current plan to facilitated action at the household level, These will be consolidated in\nthe revised EAP. In addition a progressive tariff regime, which allowed the rate of import duties on energy efficient\nappliance and vehicles, was proposed in the 2009 EAP and recorded mixed results. Likewise various home financing\nloan programs were proposed, and achieved similar result. These efforts would be consolidated in the revised EAP.\nMore effort would be made to increase education and awareness of these programs. As part of these effort will be\nto project savings from household, as this should increase interest in participating in these programs.",
+      "concepts": [
+        {
+          "name": "sectors",
+          "id": 58,
+          "start": 5,
+          "end": 15,
+          "model": "sectors_1",
+          "timestamp": "2021-06-01T00:00:00Z",
+          "parent_concepts": [
+            {
+              "id": 58,
+              "name": "Q58"
+            },
+            {
+              "id": 59,
+              "name": "Q59"
+            }
+          ],
+          "parent_concept_ids_flat": "Q58,Q59,"
+        }
+      ]
     }
   },
   {
@@ -48116,7 +49355,28 @@
         ]
       },
       "family_document_ref": "id:doc_search:family_document::CCLW.executive.4934.1571",
-      "text_block": "The Government of the Republic of the Marshall Islands endorsed its three-year National Strategic\nPlan (NSP) 2015-2017, in June 2014 that was built around the concept of 1-5-3, capturing the\nimportance of one clear, concise objective, five sectors with development objectives and three\nyears' rolling plan. One of the five sectors is Infrastructure Development, and energy is in this sector,\nalong with transportation, water and sanitation, solid and hazardous waste management and\ninformation communications technology"
+      "text_block": "The Government of the Republic of the Marshall Islands endorsed its three-year National Strategic\nPlan (NSP) 2015-2017, in June 2014 that was built around the concept of 1-5-3, capturing the\nimportance of one clear, concise objective, five sectors with development objectives and three\nyears' rolling plan. One of the five sectors is Infrastructure Development, and energy is in this sector,\nalong with transportation, water and sanitation, solid and hazardous waste management and\ninformation communications technology",
+      "concepts": [
+        {
+          "name": "manufacturing",
+          "id": 59,
+          "start": 5,
+          "end": 8,
+          "model": "sectors_1",
+          "timestamp": "2021-06-01T00:00:00Z",
+          "parent_concepts": [
+            {
+              "id": 59,
+              "name": "Q59"
+            },
+            {
+              "id": 60,
+              "name": "Q60"
+            }
+          ],
+          "parent_concept_ids_flat": "Q59,Q60,"
+        }
+      ]
     }
   },
   {
@@ -48918,7 +50178,28 @@
         ]
       },
       "family_document_ref": "id:doc_search:family_document::CCLW.executive.4934.1571",
-      "text_block": "5 Including national, regional and global energy initiatives and projects\n*Equitable considers that all people, women and men and children have equal access to modern energy\nservices irrespective of their roles at households, community or in businesses, their locations and social status."
+      "text_block": "5 Including national, regional and global energy initiatives and projects\n*Equitable considers that all people, women and men and children have equal access to modern energy\nservices irrespective of their roles at households, community or in businesses, their locations and social status.",
+      "concepts": [
+        {
+          "name": "manufacturing",
+          "id": 60,
+          "start": 2,
+          "end": 8,
+          "model": "sectors_1",
+          "timestamp": "2021-06-01T00:00:00Z",
+          "parent_concepts": [
+            {
+              "id": 60,
+              "name": "Q60"
+            },
+            {
+              "id": 61,
+              "name": "Q61"
+            }
+          ],
+          "parent_concept_ids_flat": "Q60,Q61,"
+        }
+      ]
     }
   },
   {
@@ -49720,7 +51001,28 @@
         ]
       },
       "family_document_ref": "id:doc_search:family_document::CCLW.executive.4934.1571",
-      "text_block": "Expected Output/Result 14: Government developed a more energy efficient transport network through collaborations with various stakeholders and adopting best\npractices that are applicable in the PMI"
+      "text_block": "Expected Output/Result 14: Government developed a more energy efficient transport network through collaborations with various stakeholders and adopting best\npractices that are applicable in the PMI",
+      "concepts": [
+        {
+          "name": "just transition",
+          "id": 61,
+          "start": 5,
+          "end": 15,
+          "model": "sectors_1",
+          "timestamp": "2021-06-01T00:00:00Z",
+          "parent_concepts": [
+            {
+              "id": 61,
+              "name": "Q61"
+            },
+            {
+              "id": 62,
+              "name": "Q62"
+            }
+          ],
+          "parent_concept_ids_flat": "Q61,Q62,"
+        }
+      ]
     }
   },
   {
@@ -50522,7 +51824,28 @@
         ]
       },
       "family_document_ref": "id:doc_search:family_document::CCLW.executive.4934.1571",
-      "text_block": "Priority outcome: A reliable, sustainable and affordable energy supply"
+      "text_block": "Priority outcome: A reliable, sustainable and affordable energy supply",
+      "concepts": [
+        {
+          "name": "manufacturing",
+          "id": 62,
+          "start": 4,
+          "end": 5,
+          "model": "sectors_1",
+          "timestamp": "2021-06-01T00:00:00Z",
+          "parent_concepts": [
+            {
+              "id": 62,
+              "name": "Q62"
+            },
+            {
+              "id": 63,
+              "name": "Q63"
+            }
+          ],
+          "parent_concept_ids_flat": "Q62,Q63,"
+        }
+      ]
     }
   },
   {
@@ -51324,7 +52647,28 @@
         ]
       },
       "family_document_ref": "id:doc_search:family_document::CCLW.executive.4934.1571",
-      "text_block": "Government departments were to champion good energy use stewardship, with resultant publicity\nof good practices and effort. An innovative proposal for the Ministry of Finance to allow\ndepartments to retain energy cost savings and spend them on other areas is very noteworthy. It\nwould be good to improve the prospect for full implementation of this proposal. Plans to improve\nenergy efficiency in the government transport fleet by improving maintenance and progressive\nreplacement with more energy-efficient vehicle imports and more public transportation requires\nenforcement action in the first place to become effective. The phase-out of inefficient incandescent\nlamps and their replacement with higher efficiency products such as light emitting diodes (LEDS) or\ncompact fluorescent lamps (CFLs) provides one of the most straightforward and cost-effective ways\nto significantly reduce electricity use and carbon emissions."
+      "text_block": "Government departments were to champion good energy use stewardship, with resultant publicity\nof good practices and effort. An innovative proposal for the Ministry of Finance to allow\ndepartments to retain energy cost savings and spend them on other areas is very noteworthy. It\nwould be good to improve the prospect for full implementation of this proposal. Plans to improve\nenergy efficiency in the government transport fleet by improving maintenance and progressive\nreplacement with more energy-efficient vehicle imports and more public transportation requires\nenforcement action in the first place to become effective. The phase-out of inefficient incandescent\nlamps and their replacement with higher efficiency products such as light emitting diodes (LEDS) or\ncompact fluorescent lamps (CFLs) provides one of the most straightforward and cost-effective ways\nto significantly reduce electricity use and carbon emissions.",
+      "concepts": [
+        {
+          "name": "environment",
+          "id": 63,
+          "start": 9,
+          "end": 15,
+          "model": "sectors_1",
+          "timestamp": "2021-06-01T00:00:00Z",
+          "parent_concepts": [
+            {
+              "id": 63,
+              "name": "Q63"
+            },
+            {
+              "id": 64,
+              "name": "Q64"
+            }
+          ],
+          "parent_concept_ids_flat": "Q63,Q64,"
+        }
+      ]
     }
   },
   {
@@ -52126,7 +53470,28 @@
         ]
       },
       "family_document_ref": "id:doc_search:family_document::CCLW.executive.4934.1571",
-      "text_block": "The Marshall Islands is highly dependent on imported petroleum fuels. It is estimated that about\n92% of energy used in 2011 was from petroleum, biomass remaining significant but declining to\nabout 2%, with on-grid and off-grid solar power totalling around 6 %. The main petroleum imports\nare gasoline, diesel fuel, dual-purpose kerosene (used as aviation turbine fuel and household\nkerosene), and liquefied petroleum gas (LPG). In 2011, the Marshall Islands imported 56 million liters\nof petroleum fuel. The Marshalls Energy Company (MEC) and Mobil are the main importers, with\nMEC having very large storage capacity. Based on information for the years 2007 to 2011, 48% of\nimports were used for transportation and 52% for electricity generation. Kerosene demand for\nhouseholds is almost nil with increasing numbers of people using LPG for cooking and solar energy\nfor lighting. However, in the outer islands and atolls, there is evidence that biomass is still the\npredominant fuel for cooking."
+      "text_block": "The Marshall Islands is highly dependent on imported petroleum fuels. It is estimated that about\n92% of energy used in 2011 was from petroleum, biomass remaining significant but declining to\nabout 2%, with on-grid and off-grid solar power totalling around 6 %. The main petroleum imports\nare gasoline, diesel fuel, dual-purpose kerosene (used as aviation turbine fuel and household\nkerosene), and liquefied petroleum gas (LPG). In 2011, the Marshall Islands imported 56 million liters\nof petroleum fuel. The Marshalls Energy Company (MEC) and Mobil are the main importers, with\nMEC having very large storage capacity. Based on information for the years 2007 to 2011, 48% of\nimports were used for transportation and 52% for electricity generation. Kerosene demand for\nhouseholds is almost nil with increasing numbers of people using LPG for cooking and solar energy\nfor lighting. However, in the outer islands and atolls, there is evidence that biomass is still the\npredominant fuel for cooking.",
+      "concepts": [
+        {
+          "name": "sectors",
+          "id": 64,
+          "start": 1,
+          "end": 8,
+          "model": "sectors_1",
+          "timestamp": "2021-06-01T00:00:00Z",
+          "parent_concepts": [
+            {
+              "id": 64,
+              "name": "Q64"
+            },
+            {
+              "id": 65,
+              "name": "Q65"
+            }
+          ],
+          "parent_concept_ids_flat": "Q64,Q65,"
+        }
+      ]
     }
   },
   {
@@ -52928,7 +54293,28 @@
         ]
       },
       "family_document_ref": "id:doc_search:family_document::CCLW.executive.4934.1571",
-      "text_block": "The EDF 9 funding support through the Renewable Energy Programme (REP-5) implemented from\n2008 to 2012 installed 420 SHSS of 200 Wp in various island communities and six stand-alone PV\nsystems, each in six primary schools with a system range from 6-13 kWp, thus a contribution of solar\nPV energy of around 141 kWp. The contribution of the EU/SPC Northern Pacific Regional Energy\nProject (North-REP) has in total installed 1,500 stand-alone SHSS (300 kWp) in the islands and it is\nexpected that the project will be completed by 2015. It is likely that electrification programs using\nsolar PV will continue in the future with EU funding. The sustainability of these systems is a\ncontinued challenge; there is a discussion amongst the key stakeholders, including MRD, MEC, MIA\nand communities to develop a more sustainable program, where the true costs of maintenance are\nincluded. The responsibility for maintenance and collection of the maintenance fee of USD 5.00 a\nmonth (a subsidised rate) is currently with MEC."
+      "text_block": "The EDF 9 funding support through the Renewable Energy Programme (REP-5) implemented from\n2008 to 2012 installed 420 SHSS of 200 Wp in various island communities and six stand-alone PV\nsystems, each in six primary schools with a system range from 6-13 kWp, thus a contribution of solar\nPV energy of around 141 kWp. The contribution of the EU/SPC Northern Pacific Regional Energy\nProject (North-REP) has in total installed 1,500 stand-alone SHSS (300 kWp) in the islands and it is\nexpected that the project will be completed by 2015. It is likely that electrification programs using\nsolar PV will continue in the future with EU funding. The sustainability of these systems is a\ncontinued challenge; there is a discussion amongst the key stakeholders, including MRD, MEC, MIA\nand communities to develop a more sustainable program, where the true costs of maintenance are\nincluded. The responsibility for maintenance and collection of the maintenance fee of USD 5.00 a\nmonth (a subsidised rate) is currently with MEC.",
+      "concepts": [
+        {
+          "name": "just transition",
+          "id": 65,
+          "start": 3,
+          "end": 8,
+          "model": "sectors_1",
+          "timestamp": "2021-06-01T00:00:00Z",
+          "parent_concepts": [
+            {
+              "id": 65,
+              "name": "Q65"
+            },
+            {
+              "id": 66,
+              "name": "Q66"
+            }
+          ],
+          "parent_concept_ids_flat": "Q65,Q66,"
+        }
+      ]
     }
   },
   {
@@ -53730,7 +55116,28 @@
         ]
       },
       "family_document_ref": "id:doc_search:family_document::CCLW.executive.4934.1571",
-      "text_block": "The energy sector complements the NSP by a review of its 2009 NEP and aligning its Energy Action\nPlan (EAP) to the NSP three-year timeframe. The 2015 NEP monitoring plan has been developed as\npart of this policy, aligning the priorities outcome and goals to the overall vision of the energy sector\nand the 2018 vision."
+      "text_block": "The energy sector complements the NSP by a review of its 2009 NEP and aligning its Energy Action\nPlan (EAP) to the NSP three-year timeframe. The 2015 NEP monitoring plan has been developed as\npart of this policy, aligning the priorities outcome and goals to the overall vision of the energy sector\nand the 2018 vision.",
+      "concepts": [
+        {
+          "name": "manufacturing",
+          "id": 66,
+          "start": 9,
+          "end": 18,
+          "model": "sectors_1",
+          "timestamp": "2021-06-01T00:00:00Z",
+          "parent_concepts": [
+            {
+              "id": 66,
+              "name": "Q66"
+            },
+            {
+              "id": 67,
+              "name": "Q67"
+            }
+          ],
+          "parent_concept_ids_flat": "Q66,Q67,"
+        }
+      ]
     }
   },
   {
@@ -54532,7 +55939,28 @@
         ]
       },
       "family_document_ref": "id:doc_search:family_document::CCLW.executive.4934.1571",
-      "text_block": "c. Environmental and social sustainability: Environmental and social sustainability encompasses\nboth minimising local negative social and physical environmental impacts of the energy sector, as"
+      "text_block": "c. Environmental and social sustainability: Environmental and social sustainability encompasses\nboth minimising local negative social and physical environmental impacts of the energy sector, as",
+      "concepts": [
+        {
+          "name": "just transition",
+          "id": 67,
+          "start": 4,
+          "end": 6,
+          "model": "sectors_1",
+          "timestamp": "2021-06-01T00:00:00Z",
+          "parent_concepts": [
+            {
+              "id": 67,
+              "name": "Q67"
+            },
+            {
+              "id": 68,
+              "name": "Q68"
+            }
+          ],
+          "parent_concept_ids_flat": "Q67,Q68,"
+        }
+      ]
     }
   },
   {
@@ -55334,7 +56762,28 @@
         ]
       },
       "family_document_ref": "id:doc_search:family_document::CCLW.executive.4934.1571",
-      "text_block": "Principles of the M&E plan"
+      "text_block": "Principles of the M&E plan",
+      "concepts": [
+        {
+          "name": "environment",
+          "id": 68,
+          "start": 2,
+          "end": 8,
+          "model": "sectors_1",
+          "timestamp": "2021-06-01T00:00:00Z",
+          "parent_concepts": [
+            {
+              "id": 68,
+              "name": "Q68"
+            },
+            {
+              "id": 69,
+              "name": "Q69"
+            }
+          ],
+          "parent_concept_ids_flat": "Q68,Q69,"
+        }
+      ]
     }
   },
   {
@@ -56136,7 +57585,28 @@
         ]
       },
       "family_document_ref": "id:doc_search:family_document::CCLW.executive.4934.1571",
-      "text_block": "Strategy 11.1 Effective implementation of the SIDS DOCK project titled Energy Efficiency Loan Schemes (EELS) 23"
+      "text_block": "Strategy 11.1 Effective implementation of the SIDS DOCK project titled Energy Efficiency Loan Schemes (EELS) 23",
+      "concepts": [
+        {
+          "name": "manufacturing",
+          "id": 69,
+          "start": 7,
+          "end": 10,
+          "model": "sectors_1",
+          "timestamp": "2021-06-01T00:00:00Z",
+          "parent_concepts": [
+            {
+              "id": 69,
+              "name": "Q69"
+            },
+            {
+              "id": 70,
+              "name": "Q70"
+            }
+          ],
+          "parent_concept_ids_flat": "Q69,Q70,"
+        }
+      ]
     }
   },
   {
@@ -56938,7 +58408,28 @@
         ]
       },
       "family_document_ref": "id:doc_search:family_document::CCLW.executive.4934.1571",
-      "text_block": "Renewable energy is the most long-term alternative to imported petroleum products for electricity\nproduction in the Marshall Islands; solar photovoltaic systems are considered one of the most\nappropriate technology for electricity production from renewable energy, and the country has made\nconsiderable progress in improving energy production (electrification) using solar energy, mainly in\nthe remote and outer islands and atolls. The use of renewable energy sources is a priority for the\ngovernment, with its strong commitment to mitigate climate change effects, and also as a way of\nshowing that a small island developing state is gravely concerned about the increase and impact of\ngreenhouse gas emissions produced globally. In 2012, the ADMIRE project provided funding support\nfor the installation of wind monitoring masts in two atolls; Wotje and Jaluits, to collect information\non the potential for wind energy in these atolls. The island's first wind turbine was installed in April\n2011 by a private firm, Moana Marine LLC. Capacity currently stands at 10 kW. Wind speeds for the\nisland have been recorded in the past by the USA, with averages in the region of 6-7 m/s throughout\nthe islands."
+      "text_block": "Renewable energy is the most long-term alternative to imported petroleum products for electricity\nproduction in the Marshall Islands; solar photovoltaic systems are considered one of the most\nappropriate technology for electricity production from renewable energy, and the country has made\nconsiderable progress in improving energy production (electrification) using solar energy, mainly in\nthe remote and outer islands and atolls. The use of renewable energy sources is a priority for the\ngovernment, with its strong commitment to mitigate climate change effects, and also as a way of\nshowing that a small island developing state is gravely concerned about the increase and impact of\ngreenhouse gas emissions produced globally. In 2012, the ADMIRE project provided funding support\nfor the installation of wind monitoring masts in two atolls; Wotje and Jaluits, to collect information\non the potential for wind energy in these atolls. The island's first wind turbine was installed in April\n2011 by a private firm, Moana Marine LLC. Capacity currently stands at 10 kW. Wind speeds for the\nisland have been recorded in the past by the USA, with averages in the region of 6-7 m/s throughout\nthe islands.",
+      "concepts": [
+        {
+          "name": "manufacturing",
+          "id": 70,
+          "start": 7,
+          "end": 9,
+          "model": "sectors_1",
+          "timestamp": "2021-06-01T00:00:00Z",
+          "parent_concepts": [
+            {
+              "id": 70,
+              "name": "Q70"
+            },
+            {
+              "id": 71,
+              "name": "Q71"
+            }
+          ],
+          "parent_concept_ids_flat": "Q70,Q71,"
+        }
+      ]
     }
   },
   {
@@ -57740,7 +59231,28 @@
         ]
       },
       "family_document_ref": "id:doc_search:family_document::CCLW.executive.4934.1571",
-      "text_block": "1.6.6 Renewable energy"
+      "text_block": "1.6.6 Renewable energy",
+      "concepts": [
+        {
+          "name": "environment",
+          "id": 71,
+          "start": 8,
+          "end": 15,
+          "model": "sectors_1",
+          "timestamp": "2021-06-01T00:00:00Z",
+          "parent_concepts": [
+            {
+              "id": 71,
+              "name": "Q71"
+            },
+            {
+              "id": 72,
+              "name": "Q72"
+            }
+          ],
+          "parent_concept_ids_flat": "Q71,Q72,"
+        }
+      ]
     }
   },
   {
@@ -58542,7 +60054,28 @@
         ]
       },
       "family_document_ref": "id:doc_search:family_document::CCLW.executive.4934.1571",
-      "text_block": "It is recommended that an annual monitoring report be developed, summarising the key activities\nundertaken during the year, as well as an analysis with recommendations based on progress against\nthe M&E log frame to assist with forward planning, decision making on priorities, resource allocation\nand fundraising. This report should include an analysis of the extent to which the implementation of\nactivities has contributed to the achievement of outcomes, which planned results were achieved,\nand some narrative on whether the planned activities were appropriate. The indicators and their\nmeans of verification, at the appropriate level in the log frame analysis, should be referred to."
+      "text_block": "It is recommended that an annual monitoring report be developed, summarising the key activities\nundertaken during the year, as well as an analysis with recommendations based on progress against\nthe M&E log frame to assist with forward planning, decision making on priorities, resource allocation\nand fundraising. This report should include an analysis of the extent to which the implementation of\nactivities has contributed to the achievement of outcomes, which planned results were achieved,\nand some narrative on whether the planned activities were appropriate. The indicators and their\nmeans of verification, at the appropriate level in the log frame analysis, should be referred to.",
+      "concepts": [
+        {
+          "name": "manufacturing",
+          "id": 72,
+          "start": 5,
+          "end": 14,
+          "model": "sectors_1",
+          "timestamp": "2021-06-01T00:00:00Z",
+          "parent_concepts": [
+            {
+              "id": 72,
+              "name": "Q72"
+            },
+            {
+              "id": 73,
+              "name": "Q73"
+            }
+          ],
+          "parent_concept_ids_flat": "Q72,Q73,"
+        }
+      ]
     }
   },
   {
@@ -59344,7 +60877,28 @@
         ]
       },
       "family_document_ref": "id:doc_search:family_document::CCLW.executive.4934.1571",
-      "text_block": "14.1.2 MRD coordinates with MTC on standards/codes on fuel\nefficient vessels with possible regulated under the Domestic Water\nCraft Act"
+      "text_block": "14.1.2 MRD coordinates with MTC on standards/codes on fuel\nefficient vessels with possible regulated under the Domestic Water\nCraft Act",
+      "concepts": [
+        {
+          "name": "environment",
+          "id": 73,
+          "start": 9,
+          "end": 14,
+          "model": "sectors_1",
+          "timestamp": "2021-06-01T00:00:00Z",
+          "parent_concepts": [
+            {
+              "id": 73,
+              "name": "Q73"
+            },
+            {
+              "id": 74,
+              "name": "Q74"
+            }
+          ],
+          "parent_concept_ids_flat": "Q73,Q74,"
+        }
+      ]
     }
   },
   {
@@ -60146,7 +61700,28 @@
         ]
       },
       "family_document_ref": "id:doc_search:family_document::CCLW.executive.4934.1571",
-      "text_block": "The 2016 National Energy Policy was prepared by the Energy Planning Division of the\nMinistry of Resources and Development with the technical assistance of the Energy\nProgramme of the Economic Development Division of the Secretariat of the Pacific\nCommunity. This document was developed through extensive consultation within\ngovernment, development partners and the general public. It expresses the RMI's\ncommitment towards a new energy direction and serves as the foundation for planning and\ndevelopment in the energy sector over the medium term."
+      "text_block": "The 2016 National Energy Policy was prepared by the Energy Planning Division of the\nMinistry of Resources and Development with the technical assistance of the Energy\nProgramme of the Economic Development Division of the Secretariat of the Pacific\nCommunity. This document was developed through extensive consultation within\ngovernment, development partners and the general public. It expresses the RMI's\ncommitment towards a new energy direction and serves as the foundation for planning and\ndevelopment in the energy sector over the medium term.",
+      "concepts": [
+        {
+          "name": "manufacturing",
+          "id": 74,
+          "start": 6,
+          "end": 12,
+          "model": "sectors_1",
+          "timestamp": "2021-06-01T00:00:00Z",
+          "parent_concepts": [
+            {
+              "id": 74,
+              "name": "Q74"
+            },
+            {
+              "id": 75,
+              "name": "Q75"
+            }
+          ],
+          "parent_concept_ids_flat": "Q74,Q75,"
+        }
+      ]
     }
   },
   {
@@ -60948,7 +62523,28 @@
         ]
       },
       "family_document_ref": "id:doc_search:family_document::CCLW.executive.4934.1571",
-      "text_block": "Private sector participation in the electric power supply in RMI shall be allowed under"
+      "text_block": "Private sector participation in the electric power supply in RMI shall be allowed under",
+      "concepts": [
+        {
+          "name": "manufacturing",
+          "id": 75,
+          "start": 5,
+          "end": 11,
+          "model": "sectors_1",
+          "timestamp": "2021-06-01T00:00:00Z",
+          "parent_concepts": [
+            {
+              "id": 75,
+              "name": "Q75"
+            },
+            {
+              "id": 76,
+              "name": "Q76"
+            }
+          ],
+          "parent_concept_ids_flat": "Q75,Q76,"
+        }
+      ]
     }
   },
   {
@@ -61750,7 +63346,28 @@
         ]
       },
       "family_document_ref": "id:doc_search:family_document::CCLW.executive.4934.1571",
-      "text_block": "Honorable Alfred Alfred, Jr.\nMinister of Resources and Development"
+      "text_block": "Honorable Alfred Alfred, Jr.\nMinister of Resources and Development",
+      "concepts": [
+        {
+          "name": "manufacturing",
+          "id": 76,
+          "start": 10,
+          "end": 20,
+          "model": "sectors_1",
+          "timestamp": "2021-06-01T00:00:00Z",
+          "parent_concepts": [
+            {
+              "id": 76,
+              "name": "Q76"
+            },
+            {
+              "id": 77,
+              "name": "Q77"
+            }
+          ],
+          "parent_concept_ids_flat": "Q76,Q77,"
+        }
+      ]
     }
   },
   {
@@ -62552,7 +64169,28 @@
         ]
       },
       "family_document_ref": "id:doc_search:family_document::CCLW.executive.4934.1571",
-      "text_block": "National Energy Policy and Energy Action Plan"
+      "text_block": "National Energy Policy and Energy Action Plan",
+      "concepts": [
+        {
+          "name": "sectors",
+          "id": 77,
+          "start": 5,
+          "end": 12,
+          "model": "sectors_1",
+          "timestamp": "2021-06-01T00:00:00Z",
+          "parent_concepts": [
+            {
+              "id": 77,
+              "name": "Q77"
+            },
+            {
+              "id": 78,
+              "name": "Q78"
+            }
+          ],
+          "parent_concept_ids_flat": "Q77,Q78,"
+        }
+      ]
     }
   },
   {
@@ -63354,7 +64992,28 @@
         ]
       },
       "family_document_ref": "id:doc_search:family_document::CCLW.executive.4934.1571",
-      "text_block": "Strategy 17.2: Develop policy regime including incentives and a marketing plan to increase private sector involvement and facilitate introduction of renewable energy\nsystems"
+      "text_block": "Strategy 17.2: Develop policy regime including incentives and a marketing plan to increase private sector involvement and facilitate introduction of renewable energy\nsystems",
+      "concepts": [
+        {
+          "name": "environment",
+          "id": 78,
+          "start": 5,
+          "end": 14,
+          "model": "sectors_1",
+          "timestamp": "2021-06-01T00:00:00Z",
+          "parent_concepts": [
+            {
+              "id": 78,
+              "name": "Q78"
+            },
+            {
+              "id": 79,
+              "name": "Q79"
+            }
+          ],
+          "parent_concept_ids_flat": "Q78,Q79,"
+        }
+      ]
     }
   },
   {
@@ -64156,7 +65815,28 @@
         ]
       },
       "family_document_ref": "id:doc_search:family_document::CCLW.executive.4934.1571",
-      "text_block": "In the arrows showing linkages in this and other graphics, the following conventions have been used:"
+      "text_block": "In the arrows showing linkages in this and other graphics, the following conventions have been used:",
+      "concepts": [
+        {
+          "name": "just transition",
+          "id": 79,
+          "start": 7,
+          "end": 12,
+          "model": "sectors_1",
+          "timestamp": "2021-06-01T00:00:00Z",
+          "parent_concepts": [
+            {
+              "id": 79,
+              "name": "Q79"
+            },
+            {
+              "id": 80,
+              "name": "Q80"
+            }
+          ],
+          "parent_concept_ids_flat": "Q79,Q80,"
+        }
+      ]
     }
   },
   {
@@ -64958,7 +66638,28 @@
         ]
       },
       "family_document_ref": "id:doc_search:family_document::CCLW.executive.4934.1571",
-      "text_block": ".\nTo strengthen financial, policy and legislative frameworks for the energy sector;\nTo supply 100% of urban households with electricity by 2015;"
+      "text_block": ".\nTo strengthen financial, policy and legislative frameworks for the energy sector;\nTo supply 100% of urban households with electricity by 2015;",
+      "concepts": [
+        {
+          "name": "just transition",
+          "id": 80,
+          "start": 8,
+          "end": 14,
+          "model": "sectors_1",
+          "timestamp": "2021-06-01T00:00:00Z",
+          "parent_concepts": [
+            {
+              "id": 80,
+              "name": "Q80"
+            },
+            {
+              "id": 81,
+              "name": "Q81"
+            }
+          ],
+          "parent_concept_ids_flat": "Q80,Q81,"
+        }
+      ]
     }
   },
   {
@@ -65760,7 +67461,28 @@
         ]
       },
       "family_document_ref": "id:doc_search:family_document::CCLW.executive.4934.1571",
-      "text_block": "Carry out energy audits on the remaining government facilities, business\ncommunities and households and implementation of recommended\nenergy efficient measures\nExpected Output .13: Increased the number of energy efficient vehicles into the country\nthrough appropriate fiscal incentives for business, private sectors, households and\ngovernment\nStrategy 13.1\nStrategy 13.2\nStrategy 12.1\nEstablish guidelines for the maintenance of government vehicles with\nadequate budget allocation\nPromote, increase awareness and create incentives (in the private\nsector) on efficient mode of transport, e.g. bicycles, sail boats, fuel\nefficient taxis\nExpected Output 14 Government developed a more energy efficient transport network\nthrough collaborations with various stakeholders and adopting best practices that are\napplicable in the RMI\nStrategy 14.1\nInvestigate the practicality of retrofits to reduce fuel use in sea transport,\ne.g. more efficient propellers, sail-assist technologies, and other alternate\nenergy sources"
+      "text_block": "Carry out energy audits on the remaining government facilities, business\ncommunities and households and implementation of recommended\nenergy efficient measures\nExpected Output .13: Increased the number of energy efficient vehicles into the country\nthrough appropriate fiscal incentives for business, private sectors, households and\ngovernment\nStrategy 13.1\nStrategy 13.2\nStrategy 12.1\nEstablish guidelines for the maintenance of government vehicles with\nadequate budget allocation\nPromote, increase awareness and create incentives (in the private\nsector) on efficient mode of transport, e.g. bicycles, sail boats, fuel\nefficient taxis\nExpected Output 14 Government developed a more energy efficient transport network\nthrough collaborations with various stakeholders and adopting best practices that are\napplicable in the RMI\nStrategy 14.1\nInvestigate the practicality of retrofits to reduce fuel use in sea transport,\ne.g. more efficient propellers, sail-assist technologies, and other alternate\nenergy sources",
+      "concepts": [
+        {
+          "name": "just transition",
+          "id": 81,
+          "start": 5,
+          "end": 14,
+          "model": "sectors_1",
+          "timestamp": "2021-06-01T00:00:00Z",
+          "parent_concepts": [
+            {
+              "id": 81,
+              "name": "Q81"
+            },
+            {
+              "id": 82,
+              "name": "Q82"
+            }
+          ],
+          "parent_concept_ids_flat": "Q81,Q82,"
+        }
+      ]
     }
   },
   {
@@ -66562,7 +68284,28 @@
         ]
       },
       "family_document_ref": "id:doc_search:family_document::CCLW.executive.4934.1571",
-      "text_block": "Strategy 15.2 Quantify reduction in the national energy import bill for power generation"
+      "text_block": "Strategy 15.2 Quantify reduction in the national energy import bill for power generation",
+      "concepts": [
+        {
+          "name": "manufacturing",
+          "id": 82,
+          "start": 9,
+          "end": 18,
+          "model": "sectors_1",
+          "timestamp": "2021-06-01T00:00:00Z",
+          "parent_concepts": [
+            {
+              "id": 82,
+              "name": "Q82"
+            },
+            {
+              "id": 83,
+              "name": "Q83"
+            }
+          ],
+          "parent_concept_ids_flat": "Q82,Q83,"
+        }
+      ]
     }
   },
   {
@@ -67364,7 +69107,28 @@
         ]
       },
       "family_document_ref": "id:doc_search:family_document::CCLW.executive.4934.1571",
-      "text_block": "The vision for energy sector is aligned to the national vision:"
+      "text_block": "The vision for energy sector is aligned to the national vision:",
+      "concepts": [
+        {
+          "name": "just transition",
+          "id": 83,
+          "start": 4,
+          "end": 13,
+          "model": "sectors_1",
+          "timestamp": "2021-06-01T00:00:00Z",
+          "parent_concepts": [
+            {
+              "id": 83,
+              "name": "Q83"
+            },
+            {
+              "id": 84,
+              "name": "Q84"
+            }
+          ],
+          "parent_concept_ids_flat": "Q83,Q84,"
+        }
+      ]
     }
   },
   {
@@ -68166,7 +69930,28 @@
         ]
       },
       "family_document_ref": "id:doc_search:family_document::CCLW.executive.4934.1571",
-      "text_block": "The goal of the energy policy is to lower the amount of fuel imported for transport by 20% by 2020,\nrelative to a 2009 baseline. Two types of efforts will assist to meet this goal: (1) reducing energy\nintensity of travel by improving average vehicle fuel efficiency in miles per gallon (mpg) of fuel used;\n(2) reducing the amount of travel (or the need for travel) by improving efficiency of management of"
+      "text_block": "The goal of the energy policy is to lower the amount of fuel imported for transport by 20% by 2020,\nrelative to a 2009 baseline. Two types of efforts will assist to meet this goal: (1) reducing energy\nintensity of travel by improving average vehicle fuel efficiency in miles per gallon (mpg) of fuel used;\n(2) reducing the amount of travel (or the need for travel) by improving efficiency of management of",
+      "concepts": [
+        {
+          "name": "sectors",
+          "id": 84,
+          "start": 9,
+          "end": 10,
+          "model": "sectors_1",
+          "timestamp": "2021-06-01T00:00:00Z",
+          "parent_concepts": [
+            {
+              "id": 84,
+              "name": "Q84"
+            },
+            {
+              "id": 85,
+              "name": "Q85"
+            }
+          ],
+          "parent_concept_ids_flat": "Q84,Q85,"
+        }
+      ]
     }
   },
   {
@@ -68968,7 +70753,28 @@
         ]
       },
       "family_document_ref": "id:doc_search:family_document::CCLW.executive.4934.1571",
-      "text_block": "The strategies laid out in this chapter provide the links between the policy outcomes, expected\noutputs to the planned activities. The strategies are ideas that are then linked to the committed plan\nof action that have been identified to achieve the key priority outcomes, goals and vision. These\nstrategies are provided for each of the policy outputs under the six thematic areas - energy policy\nadministration and coordination, petroleum, electric power, transport and energy use, energy\nefficiency, and renewable energy. The planned activities or action plan for the three years, 2015 -\n2019 is included as part of the policy and attached as Annex 1."
+      "text_block": "The strategies laid out in this chapter provide the links between the policy outcomes, expected\noutputs to the planned activities. The strategies are ideas that are then linked to the committed plan\nof action that have been identified to achieve the key priority outcomes, goals and vision. These\nstrategies are provided for each of the policy outputs under the six thematic areas - energy policy\nadministration and coordination, petroleum, electric power, transport and energy use, energy\nefficiency, and renewable energy. The planned activities or action plan for the three years, 2015 -\n2019 is included as part of the policy and attached as Annex 1.",
+      "concepts": [
+        {
+          "name": "sectors",
+          "id": 85,
+          "start": 1,
+          "end": 8,
+          "model": "sectors_1",
+          "timestamp": "2021-06-01T00:00:00Z",
+          "parent_concepts": [
+            {
+              "id": 85,
+              "name": "Q85"
+            },
+            {
+              "id": 86,
+              "name": "Q86"
+            }
+          ],
+          "parent_concept_ids_flat": "Q85,Q86,"
+        }
+      ]
     }
   },
   {
@@ -69770,7 +71576,28 @@
         ]
       },
       "family_document_ref": "id:doc_search:family_document::CCLW.executive.4934.1571",
-      "text_block": "11.2.2 Introduce incentives to encourage importation of energy\nefficient appliances (this activity is ongoing and will be refined\nbased on local and region experiences)"
+      "text_block": "11.2.2 Introduce incentives to encourage importation of energy\nefficient appliances (this activity is ongoing and will be refined\nbased on local and region experiences)",
+      "concepts": [
+        {
+          "name": "just transition",
+          "id": 86,
+          "start": 3,
+          "end": 7,
+          "model": "sectors_1",
+          "timestamp": "2021-06-01T00:00:00Z",
+          "parent_concepts": [
+            {
+              "id": 86,
+              "name": "Q86"
+            },
+            {
+              "id": 87,
+              "name": "Q87"
+            }
+          ],
+          "parent_concept_ids_flat": "Q86,Q87,"
+        }
+      ]
     }
   },
   {
@@ -70572,7 +72399,28 @@
         ]
       },
       "family_document_ref": "id:doc_search:family_document::CCLW.executive.4934.1571",
-      "text_block": "Table 1: Indicative Ranking Matrix"
+      "text_block": "Table 1: Indicative Ranking Matrix",
+      "concepts": [
+        {
+          "name": "sectors",
+          "id": 87,
+          "start": 3,
+          "end": 4,
+          "model": "sectors_1",
+          "timestamp": "2021-06-01T00:00:00Z",
+          "parent_concepts": [
+            {
+              "id": 87,
+              "name": "Q87"
+            },
+            {
+              "id": 88,
+              "name": "Q88"
+            }
+          ],
+          "parent_concept_ids_flat": "Q87,Q88,"
+        }
+      ]
     }
   },
   {
@@ -71374,7 +73222,28 @@
         ]
       },
       "family_document_ref": "id:doc_search:family_document::CCLW.executive.4934.1571",
-      "text_block": "\u00b92014 NEP vision is the same as the 2009 NEP vision."
+      "text_block": "\u00b92014 NEP vision is the same as the 2009 NEP vision.",
+      "concepts": [
+        {
+          "name": "environment",
+          "id": 88,
+          "start": 10,
+          "end": 14,
+          "model": "sectors_1",
+          "timestamp": "2021-06-01T00:00:00Z",
+          "parent_concepts": [
+            {
+              "id": 88,
+              "name": "Q88"
+            },
+            {
+              "id": 89,
+              "name": "Q89"
+            }
+          ],
+          "parent_concept_ids_flat": "Q88,Q89,"
+        }
+      ]
     }
   },
   {
@@ -72176,7 +74045,28 @@
         ]
       },
       "family_document_ref": "id:doc_search:family_document::CCLW.executive.4934.1571",
-      "text_block": "Policy Outputs as defined in the NEP\n\u2022 Strategies that links the NEP to the Action Plan\nActivities under each strategy\n\u2022 Organization responsible for each activities\n\u2022 Support or participating organizations for implementing the activities\n\u2022 Activity priority and year the priority and the importance of each activity to progress towards the desired\nobjectives and these are ranked as 1 as high therefore needs to be implemented in the first year of\nendorsing the plan\n\u2022 Estimated budget and potential sources based on available information. This is expected to be change on\nyearly basis when new information and projects are implemented."
+      "text_block": "Policy Outputs as defined in the NEP\n\u2022 Strategies that links the NEP to the Action Plan\nActivities under each strategy\n\u2022 Organization responsible for each activities\n\u2022 Support or participating organizations for implementing the activities\n\u2022 Activity priority and year the priority and the importance of each activity to progress towards the desired\nobjectives and these are ranked as 1 as high therefore needs to be implemented in the first year of\nendorsing the plan\n\u2022 Estimated budget and potential sources based on available information. This is expected to be change on\nyearly basis when new information and projects are implemented.",
+      "concepts": [
+        {
+          "name": "environment",
+          "id": 89,
+          "start": 4,
+          "end": 8,
+          "model": "sectors_1",
+          "timestamp": "2021-06-01T00:00:00Z",
+          "parent_concepts": [
+            {
+              "id": 89,
+              "name": "Q89"
+            },
+            {
+              "id": 90,
+              "name": "Q90"
+            }
+          ],
+          "parent_concept_ids_flat": "Q89,Q90,"
+        }
+      ]
     }
   },
   {
@@ -72978,7 +74868,28 @@
         ]
       },
       "family_document_ref": "id:doc_search:family_document::CCLW.executive.4934.1571",
-      "text_block": "Expected Output/Result 4: Decision making regarding the importation, consumption and pricing of petroleum products based on reliable data on petroleum\nimports, sales and end-use"
+      "text_block": "Expected Output/Result 4: Decision making regarding the importation, consumption and pricing of petroleum products based on reliable data on petroleum\nimports, sales and end-use",
+      "concepts": [
+        {
+          "name": "manufacturing",
+          "id": 90,
+          "start": 10,
+          "end": 12,
+          "model": "sectors_1",
+          "timestamp": "2021-06-01T00:00:00Z",
+          "parent_concepts": [
+            {
+              "id": 90,
+              "name": "Q90"
+            },
+            {
+              "id": 91,
+              "name": "Q91"
+            }
+          ],
+          "parent_concept_ids_flat": "Q90,Q91,"
+        }
+      ]
     }
   },
   {
@@ -73780,7 +75691,28 @@
         ]
       },
       "family_document_ref": "id:doc_search:family_document::CCLW.executive.4934.1571",
-      "text_block": "Outcome 1 - Improved enabling frameworks for reducing dependence on imported fossil fuel"
+      "text_block": "Outcome 1 - Improved enabling frameworks for reducing dependence on imported fossil fuel",
+      "concepts": [
+        {
+          "name": "environment",
+          "id": 91,
+          "start": 2,
+          "end": 9,
+          "model": "sectors_1",
+          "timestamp": "2021-06-01T00:00:00Z",
+          "parent_concepts": [
+            {
+              "id": 91,
+              "name": "Q91"
+            },
+            {
+              "id": 92,
+              "name": "Q92"
+            }
+          ],
+          "parent_concept_ids_flat": "Q91,Q92,"
+        }
+      ]
     }
   },
   {
@@ -74582,7 +76514,28 @@
         ]
       },
       "family_document_ref": "id:doc_search:family_document::CCLW.executive.4934.1571",
-      "text_block": "Public enterprises and state-owned companies"
+      "text_block": "Public enterprises and state-owned companies",
+      "concepts": [
+        {
+          "name": "just transition",
+          "id": 92,
+          "start": 10,
+          "end": 11,
+          "model": "sectors_1",
+          "timestamp": "2021-06-01T00:00:00Z",
+          "parent_concepts": [
+            {
+              "id": 92,
+              "name": "Q92"
+            },
+            {
+              "id": 93,
+              "name": "Q93"
+            }
+          ],
+          "parent_concept_ids_flat": "Q92,Q93,"
+        }
+      ]
     }
   },
   {
@@ -75384,7 +77337,28 @@
         ]
       },
       "family_document_ref": "id:doc_search:family_document::CCLW.executive.4934.1571",
-      "text_block": "In the fiscal year 2011 (October 2010 through September 2011), MEC generated 62,639 MWh of\nelectricity, used 4,098,283 US gallons (15,513 689 liters) of fuel for an overall fuel efficiency of 15.24\nkWh/US gal (4.038 kWh/liter). The peak load during that period was 8.75 MW."
+      "text_block": "In the fiscal year 2011 (October 2010 through September 2011), MEC generated 62,639 MWh of\nelectricity, used 4,098,283 US gallons (15,513 689 liters) of fuel for an overall fuel efficiency of 15.24\nkWh/US gal (4.038 kWh/liter). The peak load during that period was 8.75 MW.",
+      "concepts": [
+        {
+          "name": "just transition",
+          "id": 93,
+          "start": 3,
+          "end": 4,
+          "model": "sectors_1",
+          "timestamp": "2021-06-01T00:00:00Z",
+          "parent_concepts": [
+            {
+              "id": 93,
+              "name": "Q93"
+            },
+            {
+              "id": 94,
+              "name": "Q94"
+            }
+          ],
+          "parent_concept_ids_flat": "Q93,Q94,"
+        }
+      ]
     }
   },
   {
@@ -76186,7 +78160,28 @@
         ]
       },
       "family_document_ref": "id:doc_search:family_document::CCLW.executive.4934.1571",
-      "text_block": "Strategy 10.1:Effective implementation of the RMI Sustainable Renewable Energy and Energy Efficiency Measures in Micronesia including RMI"
+      "text_block": "Strategy 10.1:Effective implementation of the RMI Sustainable Renewable Energy and Energy Efficiency Measures in Micronesia including RMI",
+      "concepts": [
+        {
+          "name": "environment",
+          "id": 94,
+          "start": 6,
+          "end": 9,
+          "model": "sectors_1",
+          "timestamp": "2021-06-01T00:00:00Z",
+          "parent_concepts": [
+            {
+              "id": 94,
+              "name": "Q94"
+            },
+            {
+              "id": 95,
+              "name": "Q95"
+            }
+          ],
+          "parent_concept_ids_flat": "Q94,Q95,"
+        }
+      ]
     }
   },
   {
@@ -76988,7 +78983,28 @@
         ]
       },
       "family_document_ref": "id:doc_search:family_document::CCLW.executive.4934.1571",
-      "text_block": "Strategy 1.1: A new energy law (Energy Sector Management Act) will be considered as appropriate to clarify powers and responsibilities within government for energy\n(1st priority)"
+      "text_block": "Strategy 1.1: A new energy law (Energy Sector Management Act) will be considered as appropriate to clarify powers and responsibilities within government for energy\n(1st priority)",
+      "concepts": [
+        {
+          "name": "sectors",
+          "id": 95,
+          "start": 4,
+          "end": 8,
+          "model": "sectors_1",
+          "timestamp": "2021-06-01T00:00:00Z",
+          "parent_concepts": [
+            {
+              "id": 95,
+              "name": "Q95"
+            },
+            {
+              "id": 96,
+              "name": "Q96"
+            }
+          ],
+          "parent_concept_ids_flat": "Q95,Q96,"
+        }
+      ]
     }
   },
   {
@@ -77790,7 +79806,28 @@
         ]
       },
       "family_document_ref": "id:doc_search:family_document::CCLW.executive.4934.1571",
-      "text_block": "A special thanks for their generous assistance in preparing this document goes to Ms.\nAngeline Heine, Mr. Walter Myazoe, Jr., Ms. Dolores deBrum-Kattil, the Secretariat of the\nPacific Community and the ADMIRE Program, as well as the many people and organization\nlisted in Annex 3 of this document."
+      "text_block": "A special thanks for their generous assistance in preparing this document goes to Ms.\nAngeline Heine, Mr. Walter Myazoe, Jr., Ms. Dolores deBrum-Kattil, the Secretariat of the\nPacific Community and the ADMIRE Program, as well as the many people and organization\nlisted in Annex 3 of this document.",
+      "concepts": [
+        {
+          "name": "sectors",
+          "id": 96,
+          "start": 3,
+          "end": 8,
+          "model": "sectors_1",
+          "timestamp": "2021-06-01T00:00:00Z",
+          "parent_concepts": [
+            {
+              "id": 96,
+              "name": "Q96"
+            },
+            {
+              "id": 97,
+              "name": "Q97"
+            }
+          ],
+          "parent_concept_ids_flat": "Q96,Q97,"
+        }
+      ]
     }
   },
   {
@@ -78592,7 +80629,28 @@
         ]
       },
       "family_document_ref": "id:doc_search:family_document::CCLW.executive.4934.1571",
-      "text_block": "Outcome 3 - All Marshallese have equitable access to modern energy services"
+      "text_block": "Outcome 3 - All Marshallese have equitable access to modern energy services",
+      "concepts": [
+        {
+          "name": "manufacturing",
+          "id": 97,
+          "start": 5,
+          "end": 10,
+          "model": "sectors_1",
+          "timestamp": "2021-06-01T00:00:00Z",
+          "parent_concepts": [
+            {
+              "id": 97,
+              "name": "Q97"
+            },
+            {
+              "id": 98,
+              "name": "Q98"
+            }
+          ],
+          "parent_concept_ids_flat": "Q97,Q98,"
+        }
+      ]
     }
   },
   {
@@ -79394,7 +81452,28 @@
         ]
       },
       "family_document_ref": "id:doc_search:family_document::CCLW.executive.4934.1571",
-      "text_block": "The private sector was to play a leading role in introducing renewable energy. Changes to energy legislation, fiscal\nincentives, data collection and feasibility studies were to be undertaken to contribute to an enabling environment to\nattract private sector investments in the renewable energy sectors. Limited progress and mixed results were made in\nthis area. As part of the new EAP a national energy model will be developed to forecast the level of energy to be\nsupplied by renewable energy and quantify the level of required investment to meet the targets. As part of the\nrevised EAP GRMI will also consider developing a strategy to proactively market these opportunities available to the\nprivate sector in the energy sector. This will be included as part of the national inward investment strategy/Plan.\nOtherwise the required investment might not materialize and the GRMI would be in a weak position, having to react\nto ad hoc proposals from investors, which very often are speculative and not viable."
+      "text_block": "The private sector was to play a leading role in introducing renewable energy. Changes to energy legislation, fiscal\nincentives, data collection and feasibility studies were to be undertaken to contribute to an enabling environment to\nattract private sector investments in the renewable energy sectors. Limited progress and mixed results were made in\nthis area. As part of the new EAP a national energy model will be developed to forecast the level of energy to be\nsupplied by renewable energy and quantify the level of required investment to meet the targets. As part of the\nrevised EAP GRMI will also consider developing a strategy to proactively market these opportunities available to the\nprivate sector in the energy sector. This will be included as part of the national inward investment strategy/Plan.\nOtherwise the required investment might not materialize and the GRMI would be in a weak position, having to react\nto ad hoc proposals from investors, which very often are speculative and not viable.",
+      "concepts": [
+        {
+          "name": "sectors",
+          "id": 98,
+          "start": 5,
+          "end": 7,
+          "model": "sectors_1",
+          "timestamp": "2021-06-01T00:00:00Z",
+          "parent_concepts": [
+            {
+              "id": 98,
+              "name": "Q98"
+            },
+            {
+              "id": 99,
+              "name": "Q99"
+            }
+          ],
+          "parent_concept_ids_flat": "Q98,Q99,"
+        }
+      ]
     }
   },
   {
@@ -80196,7 +82275,28 @@
         ]
       },
       "family_document_ref": "id:doc_search:family_document::CCLW.executive.4934.1571",
-      "text_block": "10 MEC is included only due to lack of data for KAJUR and other outstations in the atoll islands\n\u00b91 Sourced from the KEMA reports. Note data is specifically for Majuro alone."
+      "text_block": "10 MEC is included only due to lack of data for KAJUR and other outstations in the atoll islands\n\u00b91 Sourced from the KEMA reports. Note data is specifically for Majuro alone.",
+      "concepts": [
+        {
+          "name": "just transition",
+          "id": 99,
+          "start": 1,
+          "end": 4,
+          "model": "sectors_1",
+          "timestamp": "2021-06-01T00:00:00Z",
+          "parent_concepts": [
+            {
+              "id": 99,
+              "name": "Q99"
+            },
+            {
+              "id": 100,
+              "name": "Q100"
+            }
+          ],
+          "parent_concept_ids_flat": "Q99,Q100,"
+        }
+      ]
     }
   },
   {
@@ -80998,7 +83098,28 @@
         ]
       },
       "family_document_ref": "id:doc_search:family_document::CCLW.executive.4934.1571",
-      "text_block": "The 2015 National Energy Policy is presented as follows:"
+      "text_block": "The 2015 National Energy Policy is presented as follows:",
+      "concepts": [
+        {
+          "name": "just transition",
+          "id": 100,
+          "start": 10,
+          "end": 17,
+          "model": "sectors_1",
+          "timestamp": "2021-06-01T00:00:00Z",
+          "parent_concepts": [
+            {
+              "id": 100,
+              "name": "Q100"
+            },
+            {
+              "id": 101,
+              "name": "Q101"
+            }
+          ],
+          "parent_concept_ids_flat": "Q100,Q101,"
+        }
+      ]
     }
   },
   {
@@ -81800,7 +83921,28 @@
         ]
       },
       "family_document_ref": "id:doc_search:family_document::CCLW.executive.4934.1571",
-      "text_block": "Because energy is an input to all government and private development efforts, there is inevitably a\nrange of overlapping, fragmented and sometimes unclear energy sector responsibilities, and these\nresponsibilities will change over time."
+      "text_block": "Because energy is an input to all government and private development efforts, there is inevitably a\nrange of overlapping, fragmented and sometimes unclear energy sector responsibilities, and these\nresponsibilities will change over time.",
+      "concepts": [
+        {
+          "name": "sectors",
+          "id": 101,
+          "start": 7,
+          "end": 17,
+          "model": "sectors_1",
+          "timestamp": "2021-06-01T00:00:00Z",
+          "parent_concepts": [
+            {
+              "id": 101,
+              "name": "Q101"
+            },
+            {
+              "id": 102,
+              "name": "Q102"
+            }
+          ],
+          "parent_concept_ids_flat": "Q101,Q102,"
+        }
+      ]
     }
   },
   {
@@ -82602,7 +84744,28 @@
         ]
       },
       "family_document_ref": "id:doc_search:family_document::CCLW.executive.4934.1571",
-      "text_block": "1.4\nGoals, baseline indicators and targets"
+      "text_block": "1.4\nGoals, baseline indicators and targets",
+      "concepts": [
+        {
+          "name": "just transition",
+          "id": 102,
+          "start": 3,
+          "end": 8,
+          "model": "sectors_1",
+          "timestamp": "2021-06-01T00:00:00Z",
+          "parent_concepts": [
+            {
+              "id": 102,
+              "name": "Q102"
+            },
+            {
+              "id": 103,
+              "name": "Q103"
+            }
+          ],
+          "parent_concept_ids_flat": "Q102,Q103,"
+        }
+      ]
     }
   },
   {
@@ -83404,7 +85567,28 @@
         ]
       },
       "family_document_ref": "id:doc_search:family_document::CCLW.executive.4934.1571",
-      "text_block": "The table below, taken from the 2009 National Energy Policy Framework, is still relevant as it\nsummarizes the main stakeholders and their responsibilities for the energy sector within\ngovernment, in particular those responsibilities related to policy. This remains reasonably valid in\n2015, although there was discussion at the first consultation about a Cabinet paper that had been\nsubmitted for housing the EPD under the Office of the President. If this happens, then the EPD will\nbe housed with the Office of Environmental Planning and Policy Coordination and the Economic\nPolicy, Planning and Statistics Office. The formation of the national Energy Task Force (ETF) as a key\nadvisory body reporting directly to Cabinet was one of the achievements of the past years. However,\nthis Energy Task Force and its membership needs a legal mandate to strengthen its powers and\ncoordination role, in particular collating information, and coordinating and delineating its role as a\ncoordinating body for the energy sector. This is another priority activity under the revised EAP."
+      "text_block": "The table below, taken from the 2009 National Energy Policy Framework, is still relevant as it\nsummarizes the main stakeholders and their responsibilities for the energy sector within\ngovernment, in particular those responsibilities related to policy. This remains reasonably valid in\n2015, although there was discussion at the first consultation about a Cabinet paper that had been\nsubmitted for housing the EPD under the Office of the President. If this happens, then the EPD will\nbe housed with the Office of Environmental Planning and Policy Coordination and the Economic\nPolicy, Planning and Statistics Office. The formation of the national Energy Task Force (ETF) as a key\nadvisory body reporting directly to Cabinet was one of the achievements of the past years. However,\nthis Energy Task Force and its membership needs a legal mandate to strengthen its powers and\ncoordination role, in particular collating information, and coordinating and delineating its role as a\ncoordinating body for the energy sector. This is another priority activity under the revised EAP.",
+      "concepts": [
+        {
+          "name": "manufacturing",
+          "id": 103,
+          "start": 5,
+          "end": 8,
+          "model": "sectors_1",
+          "timestamp": "2021-06-01T00:00:00Z",
+          "parent_concepts": [
+            {
+              "id": 103,
+              "name": "Q103"
+            },
+            {
+              "id": 104,
+              "name": "Q104"
+            }
+          ],
+          "parent_concept_ids_flat": "Q103,Q104,"
+        }
+      ]
     }
   },
   {
@@ -84206,7 +86390,28 @@
         ]
       },
       "family_document_ref": "id:doc_search:family_document::CCLW.executive.4934.1571",
-      "text_block": "A 40% reduction in CO\u2082 emissions below 2009 levels by 2020;\nElectrification of 100% of urban households and 95% of rural outer atoll households by 2015;\nThe provision of 20% of energy through indigenous renewable resources by 2020;\nImproved efficiency of energy use in 50% of households and businesses, and 75% of\ngovernment buildings by 2020;\nA 20% efficiency improvement in transportation sector fuel use by 2020;\nFeasibility studies and internationally supported financing plans for innovative game-\nchanging' renewable energy and sustainable development opportunities including Majuro\natoll waste-to-energy and Kwajalein/Ebeye atoll OTEC (Ocean Tidal Energy Conversion)\nplants undertaken by 2015\n40% reduction of CO\u2082 emissions below 2009 levels by 2020, pursuant to the 2009 National\nEnergy Policy and Energy Action Plan, and with subject to the provision of adequate\ninternational support. \u00b94"
+      "text_block": "A 40% reduction in CO\u2082 emissions below 2009 levels by 2020;\nElectrification of 100% of urban households and 95% of rural outer atoll households by 2015;\nThe provision of 20% of energy through indigenous renewable resources by 2020;\nImproved efficiency of energy use in 50% of households and businesses, and 75% of\ngovernment buildings by 2020;\nA 20% efficiency improvement in transportation sector fuel use by 2020;\nFeasibility studies and internationally supported financing plans for innovative game-\nchanging' renewable energy and sustainable development opportunities including Majuro\natoll waste-to-energy and Kwajalein/Ebeye atoll OTEC (Ocean Tidal Energy Conversion)\nplants undertaken by 2015\n40% reduction of CO\u2082 emissions below 2009 levels by 2020, pursuant to the 2009 National\nEnergy Policy and Energy Action Plan, and with subject to the provision of adequate\ninternational support. \u00b94",
+      "concepts": [
+        {
+          "name": "sectors",
+          "id": 104,
+          "start": 10,
+          "end": 16,
+          "model": "sectors_1",
+          "timestamp": "2021-06-01T00:00:00Z",
+          "parent_concepts": [
+            {
+              "id": 104,
+              "name": "Q104"
+            },
+            {
+              "id": 105,
+              "name": "Q105"
+            }
+          ],
+          "parent_concept_ids_flat": "Q104,Q105,"
+        }
+      ]
     }
   },
   {
@@ -85008,7 +87213,28 @@
         ]
       },
       "family_document_ref": "id:doc_search:family_document::CCLW.executive.4934.1571",
-      "text_block": "Rationale for revising the National Energy Policy"
+      "text_block": "Rationale for revising the National Energy Policy",
+      "concepts": [
+        {
+          "name": "sectors",
+          "id": 105,
+          "start": 10,
+          "end": 15,
+          "model": "sectors_1",
+          "timestamp": "2021-06-01T00:00:00Z",
+          "parent_concepts": [
+            {
+              "id": 105,
+              "name": "Q105"
+            },
+            {
+              "id": 106,
+              "name": "Q106"
+            }
+          ],
+          "parent_concept_ids_flat": "Q105,Q106,"
+        }
+      ]
     }
   },
   {
@@ -85810,7 +88036,28 @@
         ]
       },
       "family_document_ref": "id:doc_search:family_document::CCLW.executive.4934.1571",
-      "text_block": "1. It should be useful\n2. It should be simple\n3. It will strengthen government's ability to track its progress and assess effectiveness and\nefficiency\n4.\nIt provides a sound basis for purposes - evidence and contestability\n5. It enhances transparency and accountability"
+      "text_block": "1. It should be useful\n2. It should be simple\n3. It will strengthen government's ability to track its progress and assess effectiveness and\nefficiency\n4.\nIt provides a sound basis for purposes - evidence and contestability\n5. It enhances transparency and accountability",
+      "concepts": [
+        {
+          "name": "sectors",
+          "id": 106,
+          "start": 1,
+          "end": 10,
+          "model": "sectors_1",
+          "timestamp": "2021-06-01T00:00:00Z",
+          "parent_concepts": [
+            {
+              "id": 106,
+              "name": "Q106"
+            },
+            {
+              "id": 107,
+              "name": "Q107"
+            }
+          ],
+          "parent_concept_ids_flat": "Q106,Q107,"
+        }
+      ]
     }
   },
   {
@@ -86612,7 +88859,28 @@
         ]
       },
       "family_document_ref": "id:doc_search:family_document::CCLW.executive.4934.1571",
-      "text_block": "broad goals, 4 outcomes and 18 expected outputs or results as shown below."
+      "text_block": "broad goals, 4 outcomes and 18 expected outputs or results as shown below.",
+      "concepts": [
+        {
+          "name": "sectors",
+          "id": 107,
+          "start": 9,
+          "end": 16,
+          "model": "sectors_1",
+          "timestamp": "2021-06-01T00:00:00Z",
+          "parent_concepts": [
+            {
+              "id": 107,
+              "name": "Q107"
+            },
+            {
+              "id": 108,
+              "name": "Q108"
+            }
+          ],
+          "parent_concept_ids_flat": "Q107,Q108,"
+        }
+      ]
     }
   },
   {
@@ -87414,7 +89682,28 @@
         ]
       },
       "family_document_ref": "id:doc_search:family_document::CCLW.executive.4934.1571",
-      "text_block": "b. Financial sustainability: The following principles should be considered in assessing the financing"
+      "text_block": "b. Financial sustainability: The following principles should be considered in assessing the financing",
+      "concepts": [
+        {
+          "name": "manufacturing",
+          "id": 108,
+          "start": 9,
+          "end": 17,
+          "model": "sectors_1",
+          "timestamp": "2021-06-01T00:00:00Z",
+          "parent_concepts": [
+            {
+              "id": 108,
+              "name": "Q108"
+            },
+            {
+              "id": 109,
+              "name": "Q109"
+            }
+          ],
+          "parent_concept_ids_flat": "Q108,Q109,"
+        }
+      ]
     }
   },
   {
@@ -88216,7 +90505,28 @@
         ]
       },
       "family_document_ref": "id:doc_search:family_document::CCLW.executive.4934.1571",
-      "text_block": "Expected Output/Result 17: The technical capacity of government (EPD) and MEC to plan, develop, implement and manage renewable energy systems (small and\nmedium-scale rural; large-scale urban) continuously updated and enhanced"
+      "text_block": "Expected Output/Result 17: The technical capacity of government (EPD) and MEC to plan, develop, implement and manage renewable energy systems (small and\nmedium-scale rural; large-scale urban) continuously updated and enhanced",
+      "concepts": [
+        {
+          "name": "just transition",
+          "id": 109,
+          "start": 5,
+          "end": 10,
+          "model": "sectors_1",
+          "timestamp": "2021-06-01T00:00:00Z",
+          "parent_concepts": [
+            {
+              "id": 109,
+              "name": "Q109"
+            },
+            {
+              "id": 110,
+              "name": "Q110"
+            }
+          ],
+          "parent_concept_ids_flat": "Q109,Q110,"
+        }
+      ]
     }
   },
   {
@@ -89018,7 +91328,28 @@
         ]
       },
       "family_document_ref": "id:doc_search:family_document::CCLW.executive.4934.1571",
-      "text_block": "Expected Output 9: Initiatives on provision of access to clean and efficient fuels and\nappliances ensured the incorporation of interventions that promotes sustainable livelihoods,\nhealth and safety and environmental protection"
+      "text_block": "Expected Output 9: Initiatives on provision of access to clean and efficient fuels and\nappliances ensured the incorporation of interventions that promotes sustainable livelihoods,\nhealth and safety and environmental protection",
+      "concepts": [
+        {
+          "name": "just transition",
+          "id": 110,
+          "start": 4,
+          "end": 14,
+          "model": "sectors_1",
+          "timestamp": "2021-06-01T00:00:00Z",
+          "parent_concepts": [
+            {
+              "id": 110,
+              "name": "Q110"
+            },
+            {
+              "id": 111,
+              "name": "Q111"
+            }
+          ],
+          "parent_concept_ids_flat": "Q110,Q111,"
+        }
+      ]
     }
   },
   {
@@ -89820,7 +92151,28 @@
         ]
       },
       "family_document_ref": "id:doc_search:family_document::CCLW.executive.4934.1571",
-      "text_block": "Ensure universal access to modern energy services\nDouble the rate of improvement in energy efficiency\nDouble the share of renewable energy in the global energy mix"
+      "text_block": "Ensure universal access to modern energy services\nDouble the rate of improvement in energy efficiency\nDouble the share of renewable energy in the global energy mix",
+      "concepts": [
+        {
+          "name": "environment",
+          "id": 111,
+          "start": 10,
+          "end": 18,
+          "model": "sectors_1",
+          "timestamp": "2021-06-01T00:00:00Z",
+          "parent_concepts": [
+            {
+              "id": 111,
+              "name": "Q111"
+            },
+            {
+              "id": 112,
+              "name": "Q112"
+            }
+          ],
+          "parent_concept_ids_flat": "Q111,Q112,"
+        }
+      ]
     }
   },
   {
@@ -90622,7 +92974,28 @@
         ]
       },
       "family_document_ref": "id:doc_search:family_document::CCLW.executive.4934.1571",
-      "text_block": "Expected Output/Result 8: A transparent tariff structure established for those receiving full electricity supplies that cover the real costs at each island system, with a\nlifeline tariff that genuinely benefits low-income consumers without adversely affecting MEC income"
+      "text_block": "Expected Output/Result 8: A transparent tariff structure established for those receiving full electricity supplies that cover the real costs at each island system, with a\nlifeline tariff that genuinely benefits low-income consumers without adversely affecting MEC income",
+      "concepts": [
+        {
+          "name": "manufacturing",
+          "id": 112,
+          "start": 8,
+          "end": 10,
+          "model": "sectors_1",
+          "timestamp": "2021-06-01T00:00:00Z",
+          "parent_concepts": [
+            {
+              "id": 112,
+              "name": "Q112"
+            },
+            {
+              "id": 113,
+              "name": "Q113"
+            }
+          ],
+          "parent_concept_ids_flat": "Q112,Q113,"
+        }
+      ]
     }
   },
   {
@@ -91424,7 +93797,28 @@
         ]
       },
       "family_document_ref": "id:doc_search:family_document::CCLW.executive.4934.1571",
-      "text_block": "Expected Output/Result 12: The energy use consumption monitored and improved through energy auditing and demand side management"
+      "text_block": "Expected Output/Result 12: The energy use consumption monitored and improved through energy auditing and demand side management",
+      "concepts": [
+        {
+          "name": "just transition",
+          "id": 113,
+          "start": 4,
+          "end": 6,
+          "model": "sectors_1",
+          "timestamp": "2021-06-01T00:00:00Z",
+          "parent_concepts": [
+            {
+              "id": 113,
+              "name": "Q113"
+            },
+            {
+              "id": 114,
+              "name": "Q114"
+            }
+          ],
+          "parent_concept_ids_flat": "Q113,Q114,"
+        }
+      ]
     }
   },
   {
@@ -92226,7 +94620,28 @@
         ]
       },
       "family_document_ref": "id:doc_search:family_document::CCLW.executive.4934.1571",
-      "text_block": "RMI national development plan vision"
+      "text_block": "RMI national development plan vision",
+      "concepts": [
+        {
+          "name": "environment",
+          "id": 114,
+          "start": 4,
+          "end": 10,
+          "model": "sectors_1",
+          "timestamp": "2021-06-01T00:00:00Z",
+          "parent_concepts": [
+            {
+              "id": 114,
+              "name": "Q114"
+            },
+            {
+              "id": 115,
+              "name": "Q115"
+            }
+          ],
+          "parent_concept_ids_flat": "Q114,Q115,"
+        }
+      ]
     }
   },
   {
@@ -93028,7 +95443,28 @@
         ]
       },
       "family_document_ref": "id:doc_search:family_document::CCLW.executive.4934.1571",
-      "text_block": "Foreword"
+      "text_block": "Foreword",
+      "concepts": [
+        {
+          "name": "environment",
+          "id": 115,
+          "start": 2,
+          "end": 6,
+          "model": "sectors_1",
+          "timestamp": "2021-06-01T00:00:00Z",
+          "parent_concepts": [
+            {
+              "id": 115,
+              "name": "Q115"
+            },
+            {
+              "id": 116,
+              "name": "Q116"
+            }
+          ],
+          "parent_concept_ids_flat": "Q115,Q116,"
+        }
+      ]
     }
   },
   {
@@ -93830,7 +96266,28 @@
         ]
       },
       "family_document_ref": "id:doc_search:family_document::CCLW.executive.4934.1571",
-      "text_block": "\"to become a country within an inter-dependent world, with an enhanced socio-economic self-\nreliance, and an educated, healthy, productive, law-abiding and God-loving people in which individual\nfreedom and fundamental human rights are protected, and culture and traditions are respected, and\ndevelopment and environmental sustainability are in harmony.\""
+      "text_block": "\"to become a country within an inter-dependent world, with an enhanced socio-economic self-\nreliance, and an educated, healthy, productive, law-abiding and God-loving people in which individual\nfreedom and fundamental human rights are protected, and culture and traditions are respected, and\ndevelopment and environmental sustainability are in harmony.\"",
+      "concepts": [
+        {
+          "name": "sectors",
+          "id": 116,
+          "start": 10,
+          "end": 14,
+          "model": "sectors_1",
+          "timestamp": "2021-06-01T00:00:00Z",
+          "parent_concepts": [
+            {
+              "id": 116,
+              "name": "Q116"
+            },
+            {
+              "id": 117,
+              "name": "Q117"
+            }
+          ],
+          "parent_concept_ids_flat": "Q116,Q117,"
+        }
+      ]
     }
   },
   {
@@ -94632,7 +97089,28 @@
         ]
       },
       "family_document_ref": "id:doc_search:family_document::CCLW.executive.4934.1571",
-      "text_block": "Expected Output/Result 11: The number of efficient electric appliances imported into the country through appropriate fiscal incentives for business, private sectors,\nhouseholds and government sectors increased"
+      "text_block": "Expected Output/Result 11: The number of efficient electric appliances imported into the country through appropriate fiscal incentives for business, private sectors,\nhouseholds and government sectors increased",
+      "concepts": [
+        {
+          "name": "sectors",
+          "id": 117,
+          "start": 3,
+          "end": 5,
+          "model": "sectors_1",
+          "timestamp": "2021-06-01T00:00:00Z",
+          "parent_concepts": [
+            {
+              "id": 117,
+              "name": "Q117"
+            },
+            {
+              "id": 118,
+              "name": "Q118"
+            }
+          ],
+          "parent_concept_ids_flat": "Q117,Q118,"
+        }
+      ]
     }
   },
   {
@@ -95434,7 +97912,28 @@
         ]
       },
       "family_document_ref": "id:doc_search:family_document::CCLW.executive.4934.1571",
-      "text_block": "Expected Output/Result 15: Private sector participation in the electric power supply in RMI shall be allowed under conditions that are fair to MEC and the supplier (i.e.\nindependent power producer's agreement)"
+      "text_block": "Expected Output/Result 15: Private sector participation in the electric power supply in RMI shall be allowed under conditions that are fair to MEC and the supplier (i.e.\nindependent power producer's agreement)",
+      "concepts": [
+        {
+          "name": "environment",
+          "id": 118,
+          "start": 5,
+          "end": 6,
+          "model": "sectors_1",
+          "timestamp": "2021-06-01T00:00:00Z",
+          "parent_concepts": [
+            {
+              "id": 118,
+              "name": "Q118"
+            },
+            {
+              "id": 119,
+              "name": "Q119"
+            }
+          ],
+          "parent_concept_ids_flat": "Q118,Q119,"
+        }
+      ]
     }
   },
   {
@@ -96236,7 +98735,28 @@
         ]
       },
       "family_document_ref": "id:doc_search:family_document::CCLW.executive.4934.1571",
-      "text_block": "Contents"
+      "text_block": "Contents",
+      "concepts": [
+        {
+          "name": "manufacturing",
+          "id": 119,
+          "start": 10,
+          "end": 16,
+          "model": "sectors_1",
+          "timestamp": "2021-06-01T00:00:00Z",
+          "parent_concepts": [
+            {
+              "id": 119,
+              "name": "Q119"
+            },
+            {
+              "id": 120,
+              "name": "Q120"
+            }
+          ],
+          "parent_concept_ids_flat": "Q119,Q120,"
+        }
+      ]
     }
   },
   {
@@ -97038,7 +99558,28 @@
         ]
       },
       "family_document_ref": "id:doc_search:family_document::CCLW.executive.4934.1571",
-      "text_block": "Priority outcomes\u00b2"
+      "text_block": "Priority outcomes\u00b2",
+      "concepts": [
+        {
+          "name": "environment",
+          "id": 120,
+          "start": 5,
+          "end": 10,
+          "model": "sectors_1",
+          "timestamp": "2021-06-01T00:00:00Z",
+          "parent_concepts": [
+            {
+              "id": 120,
+              "name": "Q120"
+            },
+            {
+              "id": 121,
+              "name": "Q121"
+            }
+          ],
+          "parent_concept_ids_flat": "Q120,Q121,"
+        }
+      ]
     }
   },
   {
@@ -97840,7 +100381,28 @@
         ]
       },
       "family_document_ref": "id:doc_search:family_document::CCLW.executive.4934.1571",
-      "text_block": "10.1.9 Prepare guides/manuals for EE power plant operations, power\nplant testing and load optimization designed for the MEC Power\nPlants"
+      "text_block": "10.1.9 Prepare guides/manuals for EE power plant operations, power\nplant testing and load optimization designed for the MEC Power\nPlants",
+      "concepts": [
+        {
+          "name": "manufacturing",
+          "id": 121,
+          "start": 10,
+          "end": 14,
+          "model": "sectors_1",
+          "timestamp": "2021-06-01T00:00:00Z",
+          "parent_concepts": [
+            {
+              "id": 121,
+              "name": "Q121"
+            },
+            {
+              "id": 122,
+              "name": "Q122"
+            }
+          ],
+          "parent_concept_ids_flat": "Q121,Q122,"
+        }
+      ]
     }
   },
   {
@@ -98642,7 +101204,28 @@
         ]
       },
       "family_document_ref": "id:doc_search:family_document::CCLW.executive.4934.1571",
-      "text_block": "The following chapter provides a brief explanation of the current status of each thematic policy area,\nincluding institutional settings and stakeholders, as well as policy outputs aligning the policy areas to\nthe four outcomes of the NEP."
+      "text_block": "The following chapter provides a brief explanation of the current status of each thematic policy area,\nincluding institutional settings and stakeholders, as well as policy outputs aligning the policy areas to\nthe four outcomes of the NEP.",
+      "concepts": [
+        {
+          "name": "just transition",
+          "id": 122,
+          "start": 6,
+          "end": 10,
+          "model": "sectors_1",
+          "timestamp": "2021-06-01T00:00:00Z",
+          "parent_concepts": [
+            {
+              "id": 122,
+              "name": "Q122"
+            },
+            {
+              "id": 123,
+              "name": "Q123"
+            }
+          ],
+          "parent_concept_ids_flat": "Q122,Q123,"
+        }
+      ]
     }
   },
   {
@@ -99444,7 +102027,28 @@
         ]
       },
       "family_document_ref": "id:doc_search:family_document::CCLW.executive.4934.1571",
-      "text_block": "The testing and maintenance process set in 2009 was mandatory for government vehicles, and\nvehicles owned by government-owned corporations. This action was not, however, kept up or\nmonitored; only the Ministry of Education participated and continues to enforce the maintenance of\nits fleet. In addition, the replacing of existing vehicles with more fuel efficient models was a slow\nprocess and therefore the goal set in 2009 was not met. It was also noted during the first\nconsultation that there is an increased number of vehicles on the road. One of the targets that are\nincluded in this policy is to work with Ministry of Finance and Customs Division to monitor and\nrestrict the importation of certain engine sizes and to create incentives for importing larger vehicles\n(eight or more seats) for public transportation around Majuro."
+      "text_block": "The testing and maintenance process set in 2009 was mandatory for government vehicles, and\nvehicles owned by government-owned corporations. This action was not, however, kept up or\nmonitored; only the Ministry of Education participated and continues to enforce the maintenance of\nits fleet. In addition, the replacing of existing vehicles with more fuel efficient models was a slow\nprocess and therefore the goal set in 2009 was not met. It was also noted during the first\nconsultation that there is an increased number of vehicles on the road. One of the targets that are\nincluded in this policy is to work with Ministry of Finance and Customs Division to monitor and\nrestrict the importation of certain engine sizes and to create incentives for importing larger vehicles\n(eight or more seats) for public transportation around Majuro.",
+      "concepts": [
+        {
+          "name": "environment",
+          "id": 123,
+          "start": 5,
+          "end": 9,
+          "model": "sectors_1",
+          "timestamp": "2021-06-01T00:00:00Z",
+          "parent_concepts": [
+            {
+              "id": 123,
+              "name": "Q123"
+            },
+            {
+              "id": 124,
+              "name": "Q124"
+            }
+          ],
+          "parent_concept_ids_flat": "Q123,Q124,"
+        }
+      ]
     }
   },
   {
@@ -100246,7 +102850,28 @@
         ]
       },
       "family_document_ref": "id:doc_search:family_document::CCLW.executive.4934.1571",
-      "text_block": "Expected Output/Result 7: The management and financial system for outer islands PV electrification regularly reviewed and enhanced to ensure sustainability, and\nmake certain that recovery of O&M and battery replacement costs, for household and institutional systems (e.g. health, fisheries, telecoms, and school installations)"
+      "text_block": "Expected Output/Result 7: The management and financial system for outer islands PV electrification regularly reviewed and enhanced to ensure sustainability, and\nmake certain that recovery of O&M and battery replacement costs, for household and institutional systems (e.g. health, fisheries, telecoms, and school installations)",
+      "concepts": [
+        {
+          "name": "just transition",
+          "id": 124,
+          "start": 3,
+          "end": 11,
+          "model": "sectors_1",
+          "timestamp": "2021-06-01T00:00:00Z",
+          "parent_concepts": [
+            {
+              "id": 124,
+              "name": "Q124"
+            },
+            {
+              "id": 125,
+              "name": "Q125"
+            }
+          ],
+          "parent_concept_ids_flat": "Q124,Q125,"
+        }
+      ]
     }
   },
   {
@@ -101048,7 +103673,28 @@
         ]
       },
       "family_document_ref": "id:doc_search:family_document::CCLW.executive.4934.1571",
-      "text_block": "A monitoring logical framework for this national plan is provided in Annex 2. It focuses on tracking\nthe key outcome indicators outlined above."
+      "text_block": "A monitoring logical framework for this national plan is provided in Annex 2. It focuses on tracking\nthe key outcome indicators outlined above.",
+      "concepts": [
+        {
+          "name": "sectors",
+          "id": 125,
+          "start": 5,
+          "end": 11,
+          "model": "sectors_1",
+          "timestamp": "2021-06-01T00:00:00Z",
+          "parent_concepts": [
+            {
+              "id": 125,
+              "name": "Q125"
+            },
+            {
+              "id": 126,
+              "name": "Q126"
+            }
+          ],
+          "parent_concept_ids_flat": "Q125,Q126,"
+        }
+      ]
     }
   },
   {
@@ -101850,7 +104496,28 @@
         ]
       },
       "family_document_ref": "id:doc_search:family_document::CCLW.executive.4934.1571",
-      "text_block": "Annex 3: Organizations and people consulted"
+      "text_block": "Annex 3: Organizations and people consulted",
+      "concepts": [
+        {
+          "name": "sectors",
+          "id": 126,
+          "start": 8,
+          "end": 10,
+          "model": "sectors_1",
+          "timestamp": "2021-06-01T00:00:00Z",
+          "parent_concepts": [
+            {
+              "id": 126,
+              "name": "Q126"
+            },
+            {
+              "id": 127,
+              "name": "Q127"
+            }
+          ],
+          "parent_concept_ids_flat": "Q126,Q127,"
+        }
+      ]
     }
   },
   {
@@ -102652,7 +105319,28 @@
         ]
       },
       "family_document_ref": "id:doc_search:family_document::CCLW.executive.4934.1571",
-      "text_block": "Strategy 10.1\nExpected Output 11 The number of efficient electric appliances imported into the country\nthrough appropriate fiscal incentives for business, private households and government\nsectors increased\nStrategy 11.1\nStrategy 11.2\nStrategy 11.3\nEffective implementation of the RMI Sustainable Renewable Energy and\nEnergy Efficiency Measures in Micronesia including RM1\u00b98\nEffective implementation of the SIDS DOCK project titled Energy\nEfficiency Loan Schemes (EELS) \u00b99\n19\nRevise taxation system to encourage the import of energy efficient air\nconditioners/major household appliances and introduce mandatory\nstandards and labeling system\nDevelop energy efficiency standards for new buildings and renovations\nincluding homes, businesses and government premises, with financing on\nsubsidized terms for designs and construction/renovation meeting the\nstandards"
+      "text_block": "Strategy 10.1\nExpected Output 11 The number of efficient electric appliances imported into the country\nthrough appropriate fiscal incentives for business, private households and government\nsectors increased\nStrategy 11.1\nStrategy 11.2\nStrategy 11.3\nEffective implementation of the RMI Sustainable Renewable Energy and\nEnergy Efficiency Measures in Micronesia including RM1\u00b98\nEffective implementation of the SIDS DOCK project titled Energy\nEfficiency Loan Schemes (EELS) \u00b99\n19\nRevise taxation system to encourage the import of energy efficient air\nconditioners/major household appliances and introduce mandatory\nstandards and labeling system\nDevelop energy efficiency standards for new buildings and renovations\nincluding homes, businesses and government premises, with financing on\nsubsidized terms for designs and construction/renovation meeting the\nstandards",
+      "concepts": [
+        {
+          "name": "environment",
+          "id": 127,
+          "start": 10,
+          "end": 18,
+          "model": "sectors_1",
+          "timestamp": "2021-06-01T00:00:00Z",
+          "parent_concepts": [
+            {
+              "id": 127,
+              "name": "Q127"
+            },
+            {
+              "id": 128,
+              "name": "Q128"
+            }
+          ],
+          "parent_concept_ids_flat": "Q127,Q128,"
+        }
+      ]
     }
   },
   {
@@ -103454,7 +106142,28 @@
         ]
       },
       "family_document_ref": "id:doc_search:family_document::CCLW.executive.4934.1571",
-      "text_block": "3.1 Monitoring"
+      "text_block": "3.1 Monitoring",
+      "concepts": [
+        {
+          "name": "manufacturing",
+          "id": 128,
+          "start": 2,
+          "end": 6,
+          "model": "sectors_1",
+          "timestamp": "2021-06-01T00:00:00Z",
+          "parent_concepts": [
+            {
+              "id": 128,
+              "name": "Q128"
+            },
+            {
+              "id": 129,
+              "name": "Q129"
+            }
+          ],
+          "parent_concept_ids_flat": "Q128,Q129,"
+        }
+      ]
     }
   },
   {
@@ -104256,7 +106965,28 @@
         ]
       },
       "family_document_ref": "id:doc_search:family_document::CCLW.executive.4934.1571",
-      "text_block": "Expected Output 3: Coordination and communication on energy issues at national, regional\n(within Micronesia and wider Pacific) and global levels shall always be strengthened"
+      "text_block": "Expected Output 3: Coordination and communication on energy issues at national, regional\n(within Micronesia and wider Pacific) and global levels shall always be strengthened",
+      "concepts": [
+        {
+          "name": "manufacturing",
+          "id": 129,
+          "start": 3,
+          "end": 10,
+          "model": "sectors_1",
+          "timestamp": "2021-06-01T00:00:00Z",
+          "parent_concepts": [
+            {
+              "id": 129,
+              "name": "Q129"
+            },
+            {
+              "id": 130,
+              "name": "Q130"
+            }
+          ],
+          "parent_concept_ids_flat": "Q129,Q130,"
+        }
+      ]
     }
   },
   {
@@ -105058,7 +107788,28 @@
         ]
       },
       "family_document_ref": "id:doc_search:family_document::CCLW.executive.4934.1571",
-      "text_block": "Assessment, which will also link to this policy targets and activities."
+      "text_block": "Assessment, which will also link to this policy targets and activities.",
+      "concepts": [
+        {
+          "name": "sectors",
+          "id": 130,
+          "start": 3,
+          "end": 4,
+          "model": "sectors_1",
+          "timestamp": "2021-06-01T00:00:00Z",
+          "parent_concepts": [
+            {
+              "id": 130,
+              "name": "Q130"
+            },
+            {
+              "id": 131,
+              "name": "Q131"
+            }
+          ],
+          "parent_concept_ids_flat": "Q130,Q131,"
+        }
+      ]
     }
   },
   {
@@ -105860,7 +108611,28 @@
         ]
       },
       "family_document_ref": "id:doc_search:family_document::CCLW.executive.4934.1571",
-      "text_block": "1.6.4 Energy efficiency (Supply and Demand)"
+      "text_block": "1.6.4 Energy efficiency (Supply and Demand)",
+      "concepts": [
+        {
+          "name": "just transition",
+          "id": 131,
+          "start": 4,
+          "end": 7,
+          "model": "sectors_1",
+          "timestamp": "2021-06-01T00:00:00Z",
+          "parent_concepts": [
+            {
+              "id": 131,
+              "name": "Q131"
+            },
+            {
+              "id": 132,
+              "name": "Q132"
+            }
+          ],
+          "parent_concept_ids_flat": "Q131,Q132,"
+        }
+      ]
     }
   },
   {
@@ -106662,7 +109434,28 @@
         ]
       },
       "family_document_ref": "id:doc_search:family_document::CCLW.executive.4934.1571",
-      "text_block": "The Energy Planning Division continuously developed its capacity and skills set to enable it to\nreview and manage the energy policy frameworks\n\u2022 A national energy database is developed and managed (for analysis and policy development)\nand maintained\nCoordination and communication on energy issues at national, regional (within Micronesia and\nwider Pacific) and global levels shall always be strengthened"
+      "text_block": "The Energy Planning Division continuously developed its capacity and skills set to enable it to\nreview and manage the energy policy frameworks\n\u2022 A national energy database is developed and managed (for analysis and policy development)\nand maintained\nCoordination and communication on energy issues at national, regional (within Micronesia and\nwider Pacific) and global levels shall always be strengthened",
+      "concepts": [
+        {
+          "name": "environment",
+          "id": 132,
+          "start": 1,
+          "end": 5,
+          "model": "sectors_1",
+          "timestamp": "2021-06-01T00:00:00Z",
+          "parent_concepts": [
+            {
+              "id": 132,
+              "name": "Q132"
+            },
+            {
+              "id": 133,
+              "name": "Q133"
+            }
+          ],
+          "parent_concept_ids_flat": "Q132,Q133,"
+        }
+      ]
     }
   },
   {
@@ -107464,7 +110257,28 @@
         ]
       },
       "family_document_ref": "id:doc_search:family_document::CCLW.executive.4934.1571",
-      "text_block": "Strategy 11.3: Develop energy efficiency standards for new buildings and renovations including homes, businesses and government premises, with financing on subsidized\nterms for designs and construction/renovation meeting the standards"
+      "text_block": "Strategy 11.3: Develop energy efficiency standards for new buildings and renovations including homes, businesses and government premises, with financing on subsidized\nterms for designs and construction/renovation meeting the standards",
+      "concepts": [
+        {
+          "name": "environment",
+          "id": 133,
+          "start": 4,
+          "end": 6,
+          "model": "sectors_1",
+          "timestamp": "2021-06-01T00:00:00Z",
+          "parent_concepts": [
+            {
+              "id": 133,
+              "name": "Q133"
+            },
+            {
+              "id": 134,
+              "name": "Q134"
+            }
+          ],
+          "parent_concept_ids_flat": "Q133,Q134,"
+        }
+      ]
     }
   },
   {
@@ -108266,7 +111080,28 @@
         ]
       },
       "family_document_ref": "id:doc_search:family_document::CCLW.executive.4934.1571",
-      "text_block": "Safe storage, handling and distribution shall be ensured for all petroleum products"
+      "text_block": "Safe storage, handling and distribution shall be ensured for all petroleum products",
+      "concepts": [
+        {
+          "name": "manufacturing",
+          "id": 134,
+          "start": 6,
+          "end": 15,
+          "model": "sectors_1",
+          "timestamp": "2021-06-01T00:00:00Z",
+          "parent_concepts": [
+            {
+              "id": 134,
+              "name": "Q134"
+            },
+            {
+              "id": 135,
+              "name": "Q135"
+            }
+          ],
+          "parent_concept_ids_flat": "Q134,Q135,"
+        }
+      ]
     }
   },
   {
@@ -109068,7 +111903,28 @@
         ]
       },
       "family_document_ref": "id:doc_search:family_document::CCLW.executive.4934.1571",
-      "text_block": "The following guiding principles for implementing this policy are aligned to the principles adopted\nfor national, sub-regional, regional and international initiatives, including the SE4All initiative goals,\nthe regional Framework for Action on Energy Security in the Pacific (FAESP) and Micronesia's Energy\nInitiative. These six guiding principles need to be embraced in the implementation of this national\nenergy policy and energy action plan."
+      "text_block": "The following guiding principles for implementing this policy are aligned to the principles adopted\nfor national, sub-regional, regional and international initiatives, including the SE4All initiative goals,\nthe regional Framework for Action on Energy Security in the Pacific (FAESP) and Micronesia's Energy\nInitiative. These six guiding principles need to be embraced in the implementation of this national\nenergy policy and energy action plan.",
+      "concepts": [
+        {
+          "name": "just transition",
+          "id": 135,
+          "start": 4,
+          "end": 6,
+          "model": "sectors_1",
+          "timestamp": "2021-06-01T00:00:00Z",
+          "parent_concepts": [
+            {
+              "id": 135,
+              "name": "Q135"
+            },
+            {
+              "id": 136,
+              "name": "Q136"
+            }
+          ],
+          "parent_concept_ids_flat": "Q135,Q136,"
+        }
+      ]
     }
   },
   {
@@ -109870,7 +112726,28 @@
         ]
       },
       "family_document_ref": "id:doc_search:family_document::CCLW.executive.4934.1571",
-      "text_block": "The strategic links to the action plans, when they are effectively implemented, should achieve the\nfour policy outcomes;"
+      "text_block": "The strategic links to the action plans, when they are effectively implemented, should achieve the\nfour policy outcomes;",
+      "concepts": [
+        {
+          "name": "sectors",
+          "id": 136,
+          "start": 1,
+          "end": 11,
+          "model": "sectors_1",
+          "timestamp": "2021-06-01T00:00:00Z",
+          "parent_concepts": [
+            {
+              "id": 136,
+              "name": "Q136"
+            },
+            {
+              "id": 137,
+              "name": "Q137"
+            }
+          ],
+          "parent_concept_ids_flat": "Q136,Q137,"
+        }
+      ]
     }
   },
   {
@@ -110672,7 +113549,28 @@
         ]
       },
       "family_document_ref": "id:doc_search:family_document::CCLW.executive.4934.1571",
-      "text_block": "The goals and objectives of the MEC recovery plan are being considered in the development of this\npolicy and action plan. Electricity pricing and monitoring is important if MEC operates in a\ncommercial way. However, MEC is a state-owned enterprise and its role (as is being developed\nunder the Article of Association) is to provide electrical or energy services to the population. The\nMarshall Islands is the only country in the Pacific that has no electricity act and therefore legal\nmandates and clear responsibilities and functions of the MEC Board and MEC are not mandated\nthrough the Nitijela (Parliament)."
+      "text_block": "The goals and objectives of the MEC recovery plan are being considered in the development of this\npolicy and action plan. Electricity pricing and monitoring is important if MEC operates in a\ncommercial way. However, MEC is a state-owned enterprise and its role (as is being developed\nunder the Article of Association) is to provide electrical or energy services to the population. The\nMarshall Islands is the only country in the Pacific that has no electricity act and therefore legal\nmandates and clear responsibilities and functions of the MEC Board and MEC are not mandated\nthrough the Nitijela (Parliament).",
+      "concepts": [
+        {
+          "name": "sectors",
+          "id": 137,
+          "start": 10,
+          "end": 18,
+          "model": "sectors_1",
+          "timestamp": "2021-06-01T00:00:00Z",
+          "parent_concepts": [
+            {
+              "id": 137,
+              "name": "Q137"
+            },
+            {
+              "id": 138,
+              "name": "Q138"
+            }
+          ],
+          "parent_concept_ids_flat": "Q137,Q138,"
+        }
+      ]
     }
   },
   {
@@ -111474,7 +114372,28 @@
         ]
       },
       "family_document_ref": "id:doc_search:family_document::CCLW.executive.4934.1571",
-      "text_block": "This 2015 National Energy Policy of Republic of the Marshall Islands (RMI) integrates the findings and\nrecommendations of the review of the National Energy Policy and Energy Action Plan 2009, and the\noutcomes of two national consultations held in Majuro in January 2014 and in October 2014. In\nreviewing the 2009 national energy policy (NEP), the issues listed below were considered important\nand will form part of the 2015 NEP undertakings and commitments. There is a need to:"
+      "text_block": "This 2015 National Energy Policy of Republic of the Marshall Islands (RMI) integrates the findings and\nrecommendations of the review of the National Energy Policy and Energy Action Plan 2009, and the\noutcomes of two national consultations held in Majuro in January 2014 and in October 2014. In\nreviewing the 2009 national energy policy (NEP), the issues listed below were considered important\nand will form part of the 2015 NEP undertakings and commitments. There is a need to:",
+      "concepts": [
+        {
+          "name": "environment",
+          "id": 138,
+          "start": 9,
+          "end": 10,
+          "model": "sectors_1",
+          "timestamp": "2021-06-01T00:00:00Z",
+          "parent_concepts": [
+            {
+              "id": 138,
+              "name": "Q138"
+            },
+            {
+              "id": 139,
+              "name": "Q139"
+            }
+          ],
+          "parent_concept_ids_flat": "Q138,Q139,"
+        }
+      ]
     }
   }
 ]
