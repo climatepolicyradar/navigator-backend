@@ -267,9 +267,10 @@ def download_all_search_documents(
         PIPELINE_BUCKET, INGEST_TRIGGER_ROOT
     )
 
-    # TODO Update filename based on theme from app token.
     s3_prefix = "navigator/dumps"
-    data_dump_s3_key = f"{s3_prefix}/whole_data_dump-{latest_ingest_start}.zip"
+    data_dump_s3_key = (
+        f"{s3_prefix}/{token.sub}-whole_data_dump-{latest_ingest_start}.zip"
+    )
 
     valid_credentials = s3_client.is_connected()
     if not valid_credentials:
