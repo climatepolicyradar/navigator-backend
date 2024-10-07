@@ -17,7 +17,7 @@ from sqlalchemy_utils import create_database, database_exists, drop_database
 
 from app.core import security
 from app.core.aws import S3Client, get_s3_client
-from app.core.custom_app import create_configuration_token
+from app.core.custom_app import AppTokenFactory
 from app.db.session import get_db
 from app.main import app
 
@@ -117,7 +117,9 @@ def valid_token():
     subject = "CCLW"
     audience = "localhost"
     input_str = f"{corpora_ids};{subject};{audience}"
-    return create_configuration_token(input_str)
+
+    af = AppTokenFactory()
+    return af.create_configuration_token(input_str)
 
 
 @pytest.fixture
