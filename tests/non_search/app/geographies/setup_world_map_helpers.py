@@ -1,9 +1,7 @@
+from db_client.functions.dfce_helpers import add_collections, add_document, add_families
 from sqlalchemy.orm import Session
 
-from tests.non_search.dfce_helpers import add_document
 from tests.non_search.setup_helpers import (
-    add_collections,
-    add_families,
     get_default_collections,
     get_default_documents,
 )
