@@ -1,6 +1,7 @@
 """Functions to support browsing the RDS document structure"""
 
 import zipfile
+from functools import lru_cache
 from io import BytesIO, StringIO
 from logging import getLogger
 from typing import Optional
@@ -13,6 +14,12 @@ from app.db.session import get_db
 _LOGGER = getLogger(__name__)
 
 
+@lru_cache()
+def _get_query_template():
+    with open("./app/core/download.sql", "r") as file:
+        return file.read()
+
+
 def create_query(ingest_cycle_start: str, allowed_corpora_ids: list[str]) -> str:
     """Create download whole database query, replacing variables.
 
@@ -21,11 +28,7 @@ def create_query(ingest_cycle_start: str, allowed_corpora_ids: list[str]) -> str
         should allow the data to be dumped.
     :return str: The SQL query to perform on the database session.
     """
-
-    # Read the download.sql file
-    if create_query.cache is None:  # type: ignore
-        with open("./app/core/download.sql", "r") as file:
-            create_query.cache = file.read()  # type: ignore
+    template_query = _get_query_template()
 
     # TODO: Hide MCF from data dump until after COP.
     mcf_corpora_ids = [
@@ -40,14 +43,11 @@ def create_query(ingest_cycle_start: str, allowed_corpora_ids: list[str]) -> str
         if corpus_id not in mcf_corpora_ids
     ]
     corpora_ids = "'" + "','".join(corpora_ids) + "'"
-    return create_query.cache.replace(  # type: ignore
+    return template_query.replace(  # type: ignore
         "{ingest_cycle_start}", ingest_cycle_start
     ).replace(
         "{allowed_corpora_ids}", corpora_ids
     )  # type: ignore
-
-
-create_query.cache = None  # type: ignore
 
 
 def get_whole_database_dump(
