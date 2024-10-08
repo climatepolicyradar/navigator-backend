@@ -8,7 +8,7 @@ for the type of document search being performed.
 
 import logging
 from io import BytesIO
-from typing import Annotated, Sequence, cast
+from typing import Annotated, Optional, Sequence, cast
 
 from cpr_sdk.exceptions import QueryError
 from cpr_sdk.search_adaptors import VespaSearchAdapter
@@ -18,7 +18,7 @@ from sqlalchemy.orm import Session
 from starlette.responses import RedirectResponse
 
 from app.api.api_v1.schemas.search import SearchRequestBody, SearchResponse
-from app.core.aws import S3Document, get_s3_client
+from app.core.aws import S3Client, S3Document, get_s3_client
 from app.core.config import (
     AWS_REGION,
     CDN_DOMAIN,
@@ -230,6 +230,16 @@ def download_search_documents(
     )
 
 
+def _get_s3_doc_url_from_cdn(
+    s3_client: S3Client, s3_document: S3Document, data_dump_s3_key: str
+) -> Optional[str]:
+    redirect_url = None
+    if s3_client.document_exists(s3_document):
+        _LOGGER.info("Redirecting to CDN data dump location...")
+        redirect_url = f"https://{CDN_DOMAIN}/{data_dump_s3_key}"
+    return redirect_url
+
+
 @search_router.get("/searches/download-all-data", include_in_schema=False)
 def download_all_search_documents(
     request: Request, app_token: Annotated[str, Header()], db=Depends(get_db)
@@ -311,9 +321,8 @@ def download_all_search_documents(
             _LOGGER.error(e)
 
     s3_document = S3Document(DOC_CACHE_BUCKET, AWS_REGION, data_dump_s3_key)
-    if s3_client.document_exists(s3_document):
-        _LOGGER.info("Redirecting to CDN data dump location...")
-        redirect_url = f"https://{CDN_DOMAIN}/{data_dump_s3_key}"
+    redirect_url = _get_s3_doc_url_from_cdn(s3_client, s3_document, data_dump_s3_key)
+    if redirect_url is not None:
         return RedirectResponse(redirect_url, status_code=status.HTTP_303_SEE_OTHER)
 
     _LOGGER.info(
