@@ -24,8 +24,6 @@ class AppTokenFactory:
         """
         :param Session db: The DB session to connect to.
         """
-        self.db: Optional[Session] = None
-
         # TODO: revisit/configure access token expiry
         self.custom_app_token_expire_years: int = 10  # token valid for 10 years
         self.expected_args_length: int = 3
