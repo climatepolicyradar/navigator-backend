@@ -26,7 +26,7 @@ class AppTokenFactory:
         self.expected_args_length: int = 3
 
         # These will only be populated after a token has been decoded.
-        self.allowed_corpora_ids: Optional[list[str]] = None
+        self.allowed_corpora_ids: list[str] = []
         self.exp: Optional[datetime] = None
         self.iat: Optional[datetime] = None
         self.iss: str = "Climate Policy Radar"
