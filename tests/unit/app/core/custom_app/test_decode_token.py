@@ -21,7 +21,6 @@ def test_decoding_expired_token_raise_expired_signature_token_error(
         assert response.status_code == status.HTTP_400_BAD_REQUEST
         data = response.json()  # pyright: ignore
         assert str(data["detail"]) == "Could not decode configuration token"
-    # FIXME assert "Signature has expired" in caplog.text
 
 
 @pytest.mark.skip("Re-implement this as part of PDCT-1509")
