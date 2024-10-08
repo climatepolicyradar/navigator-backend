@@ -21,9 +21,6 @@ TOKEN_SECRET_KEY = os.environ["TOKEN_SECRET_KEY"]
 
 class AppTokenFactory:
     def __init__(self) -> None:
-        """
-        :param Session db: The DB session to connect to.
-        """
         # TODO: revisit/configure access token expiry
         self.custom_app_token_expire_years: int = 10  # token valid for 10 years
         self.expected_args_length: int = 3
@@ -119,6 +116,7 @@ class AppTokenFactory:
 
     @staticmethod
     def get_origin(request: Request) -> Optional[str]:
+        """Get the origin from the request headers."""
         origin = request.headers.get("origin")
 
         if origin is not None:
@@ -128,8 +126,9 @@ class AppTokenFactory:
     def verify_corpora_in_db(self, db: Session, any_exist: bool = True) -> bool:
         """Validate given corpus IDs against the existing corpora in DB.
 
+        :param Session db: A session to query against.
         :param bool any_exist: Whether to check any or all corpora are
-            valid.
+            valid. True by default.
         :return bool: Return whether or not the corpora are valid.
         """
         if self.allowed_corpora_ids is None:
@@ -213,6 +212,12 @@ class AppTokenFactory:
         return decoded_token
 
     def validate(self, db: Session, any_exist: bool = True) -> None:
+        """Validate that any or all corpora IDs exist in the database.
+
+        :param Session db: A session to query against.
+        :param bool any_exist: Whether to check any or all corpora are
+            valid. True by default.
+        """
         if not self.verify_corpora_in_db(db, any_exist):
             msg = "Error verifying corpora IDs."
             raise HTTPException(
@@ -224,6 +229,13 @@ class AppTokenFactory:
     def validate_subset(
         self, corpora_ids: set[str], valid_corpora_ids: set[str]
     ) -> None:
+        """Validate that a set of corpora IDs is a subset of another.
+
+        :param set[str] corpora_ids: The corpus import IDs we want to
+            validate.
+        :param set[str] valid_corpora_ids: The corpus import IDs
+            we want to validate against.
+        """
         if not self.validate_corpora_ids(corpora_ids, valid_corpora_ids):
             msg = "Error validating corpora IDs."
             raise HTTPException(
@@ -235,6 +247,13 @@ class AppTokenFactory:
     def decode_and_validate(
         self, db: Session, request: Request, token: str, any_exist: bool = True
     ):
+        """Decode a JWT app token and validate 1+ corpora IDs exist.
+
+        :param Session db: A session to query against.
+        :param Request request: A request object containing headers.
+        :param bool any_exist: Whether to check any or all corpora are
+            valid. True by default.
+        """
         origin = self.get_origin(request)
 
         # Decode the app token and validate it.
