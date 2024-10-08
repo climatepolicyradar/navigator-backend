@@ -229,6 +229,5 @@ LEFT JOIN most_recent_doc_slugs ds
 on ds.family_document_import_id = d.import_id 
 LEFT JOIN most_recent_family_slugs fs on fs.family_import_id = f.import_id 
 LEFT JOIN event_dates fp on fp.family_import_id = f.import_id 
-WHERE d.last_modified < '{ingest_cycle_start}' 
-ORDER BY 
-d.last_modified desc, d.created desc, d.ctid desc, n1.family_import_id
+WHERE d.last_modified < '{ingest_cycle_start}' AND fc.corpus_import_id in ({allowed_corpora_ids})
+ORDER BY d.last_modified desc, d.created desc, d.ctid desc, n1.family_import_id

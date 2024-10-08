@@ -293,7 +293,7 @@ def download_all_search_documents(
     if valid_credentials is True and (not s3_client.document_exists(s3_document)):
         aws_env = "production" if "dev" not in PUBLIC_APP_URL else "staging"
         _LOGGER.info(
-            f"Generating {aws_env} dump for ingest cycle w/c {latest_ingest_start}..."
+            f"Generating {token.sub} {aws_env} dump for ingest cycle w/c {latest_ingest_start}..."
         )
 
         # After writing to a file buffer the position stays at the end whereas when you
@@ -302,7 +302,9 @@ def download_all_search_documents(
         # to S3 to avoid creating an empty file.
         #
         # FIXME Add where clause to filter out MCF data
-        zip_buffer = create_data_download_zip_archive(latest_ingest_start, db)
+        zip_buffer = create_data_download_zip_archive(
+            latest_ingest_start, token.allowed_corpora_ids, db
+        )
         zip_buffer.seek(0)
 
         try:
