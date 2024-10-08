@@ -1,8 +1,10 @@
 import csv
 from io import StringIO
+from typing import Any, Mapping
 from unittest.mock import patch
 
 import pytest
+from fastapi import status
 
 from app.api.api_v1.routers import search
 from tests.search.vespa.setup_search_tests import (
@@ -14,8 +16,29 @@ SEARCH_ENDPOINT = "/api/v1/searches"
 CSV_DOWNLOAD_ENDPOINT = "/api/v1/searches/download-csv"
 
 
+def _make_download_request(
+    client,
+    token,
+    params: Mapping[str, Any],
+    expected_status_code: int = status.HTTP_200_OK,
+):
+    headers = {"app-token": token}
+
+    response = client.post(
+        CSV_DOWNLOAD_ENDPOINT,
+        json=params,
+        headers=headers,
+    )
+    assert response is not None
+    assert response.status_code == expected_status_code, response.text
+    return response
+
+
 @pytest.mark.search
-@patch("app.api.api_v1.routers.search.verify_any_corpora_ids_in_db", return_value=True)
+@patch(
+    "app.api.api_v1.routers.search.AppTokenFactory.verify_corpora_in_db",
+    return_value=True,
+)
 @pytest.mark.parametrize("exact_match", [True, False])
 @pytest.mark.parametrize("query_string", ["", "local"])
 def test_csv_content(
@@ -39,14 +62,14 @@ def test_csv_content(
     families = body["families"]
     assert len(families) > 0
 
-    csv_response = data_client.post(
-        CSV_DOWNLOAD_ENDPOINT,
-        json={
+    csv_response = _make_download_request(
+        data_client,
+        valid_token,
+        params={
             "exact_match": exact_match,
             "query_string": query_string,
         },
     )
-    assert csv_response.status_code == 200
 
     csv_content = csv.DictReader(StringIO(csv_response.text))
     for row, family in zip(csv_content, families):
@@ -62,7 +85,10 @@ def test_csv_content(
 
 
 @pytest.mark.search
-@patch("app.api.api_v1.routers.search.verify_any_corpora_ids_in_db", return_value=True)
+@patch(
+    "app.api.api_v1.routers.search.AppTokenFactory.verify_corpora_in_db",
+    return_value=True,
+)
 @pytest.mark.parametrize("label, query", [("search", "the"), ("browse", "")])
 @pytest.mark.parametrize("limit", [100, 250, 500])
 def test_csv_download_search_variable_limit(
@@ -75,6 +101,7 @@ def test_csv_download_search_variable_limit(
     monkeypatch,
     data_client,
     mocker,
+    valid_token,
 ):
     monkeypatch.setattr(search, "_VESPA_CONNECTION", test_vespa)
     _populate_db_families(data_db)
@@ -88,11 +115,7 @@ def test_csv_download_search_variable_limit(
         "offset": 0,
     }
 
-    download_response = data_client.post(
-        CSV_DOWNLOAD_ENDPOINT,
-        json=params,
-    )
-    assert download_response.status_code == 200
+    _make_download_request(data_client, valid_token, params=params)
 
     actual_params = query_spy.call_args.kwargs["parameters"].model_dump()
 
@@ -104,9 +127,12 @@ def test_csv_download_search_variable_limit(
 
 
 @pytest.mark.search
-@patch("app.api.api_v1.routers.search.verify_any_corpora_ids_in_db", return_value=True)
+@patch(
+    "app.api.api_v1.routers.search.AppTokenFactory.verify_corpora_in_db",
+    return_value=True,
+)
 def test_csv_download__ignore_extra_fields(
-    mock_corpora_exist_in_db, test_vespa, data_db, monkeypatch, data_client, mocker
+    mock_corpora_exist_in_db, test_vespa, data_db, monkeypatch, data_client, valid_token
 ):
     monkeypatch.setattr(search, "_VESPA_CONNECTION", test_vespa)
     _populate_db_families(data_db)
@@ -118,10 +144,6 @@ def test_csv_download__ignore_extra_fields(
     # Ensure extra, unspecified fields don't cause an error
     fields = []
     with patch("app.core.search._CSV_SEARCH_RESPONSE_COLUMNS", fields):
-        download_response = data_client.post(
-            CSV_DOWNLOAD_ENDPOINT,
-            json=params,
-        )
-    assert download_response.status_code == 200
+        _make_download_request(data_client, valid_token, params=params)
 
     assert mock_corpora_exist_in_db.assert_called
