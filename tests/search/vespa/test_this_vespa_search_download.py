@@ -3,6 +3,7 @@ from io import StringIO
 from typing import Any, Mapping
 from unittest.mock import patch
 
+import jwt
 import pytest
 from fastapi import status
 
@@ -147,3 +148,69 @@ def test_csv_download__ignore_extra_fields(
         _make_download_request(data_client, valid_token, params=params)
 
     assert mock_corpora_exist_in_db.assert_called
+
+
+@pytest.mark.search
+@pytest.mark.parametrize(
+    "side_effect",
+    [
+        jwt.exceptions.InvalidAudienceError,
+        jwt.exceptions.ExpiredSignatureError,
+        jwt.exceptions.InvalidTokenError,
+    ],
+)
+def test_csv_download_fails_when_decoding_token_raises_PyJWTError(
+    side_effect, data_client, data_db, valid_token, monkeypatch, test_vespa
+):
+    """
+    GIVEN a request to download the whole database
+    WHEN the decode() function call raises a PyJWTError
+    THEN raise a 400 HTTP error
+    """
+    monkeypatch.setattr(search, "_VESPA_CONNECTION", test_vespa)
+    _populate_db_families(data_db)
+
+    params = {
+        "query_string": "winter",
+    }
+
+    with patch("app.core.custom_app.jwt.decode", side_effect=side_effect):
+        response = _make_download_request(
+            data_client,
+            valid_token,
+            params=params,
+            expected_status_code=status.HTTP_400_BAD_REQUEST,
+        )
+        assert response.json()["detail"] == "Could not decode configuration token"
+
+
+@pytest.mark.search
+def test_csv_download_fails_when_corpus_ids_in_token_not_in_db(
+    data_client, data_db, monkeypatch, test_vespa
+):
+    """
+    GIVEN a list of corpora IDs decoded from an app config token
+    WHEN one or more of those corpora IDs are not in our database
+    THEN raise a 400 HTTP error
+    """
+    monkeypatch.setattr(search, "_VESPA_CONNECTION", test_vespa)
+    _populate_db_families(data_db)
+
+    params = {
+        "query_string": "winter",
+    }
+
+    with patch(
+        "app.api.api_v1.routers.search.AppTokenFactory.decode",
+        return_value=True,
+    ), patch(
+        "app.api.api_v1.routers.search.AppTokenFactory.verify_corpora_in_db",
+        return_value=False,
+    ):
+        response = _make_download_request(
+            data_client,
+            "some_token",
+            params=params,
+            expected_status_code=status.HTTP_400_BAD_REQUEST,
+        )
+        assert response.json()["detail"] == "Error verifying corpora IDs."
