@@ -14,7 +14,13 @@ _LOGGER = getLogger(__name__)
 
 
 def create_query(ingest_cycle_start: str, allowed_corpora_ids: list[str]) -> str:
-    """Browse RDS"""
+    """Create download whole database query, replacing variables.
+
+    :param str ingest_cycle_start: The current ingest cycle date.
+    :param list[str] allowed_corpora_ids: The corpora from which we
+        should allow the data to be dumped.
+    :return str: The SQL query to perform on the database session.
+    """
 
     # Read the download.sql file
     if create_query.cache is None:  # type: ignore
