@@ -207,7 +207,6 @@ class AppTokenFactory:
         self.iat = decoded_token.get("iat")
         self.iss = decoded_token.get("iss")
         self.sub = decoded_token.get("sub")
-        self.iat = decoded_token.get("iat")
 
         return decoded_token
 
