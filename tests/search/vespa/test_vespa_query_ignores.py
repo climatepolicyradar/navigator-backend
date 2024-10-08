@@ -11,7 +11,10 @@ from tests.search.vespa.setup_search_tests import (
 
 
 @pytest.mark.search
-@patch("app.api.api_v1.routers.search.verify_any_corpora_ids_in_db", return_value=True)
+@patch(
+    "app.api.api_v1.routers.search.AppTokenFactory.verify_corpora_in_db",
+    return_value=True,
+)
 def test_case_insensitivity(
     mock_corpora_exist_in_db, test_vespa, data_db, monkeypatch, data_client, valid_token
 ):
@@ -26,7 +29,10 @@ def test_case_insensitivity(
 
 
 @pytest.mark.search
-@patch("app.api.api_v1.routers.search.verify_any_corpora_ids_in_db", return_value=True)
+@patch(
+    "app.api.api_v1.routers.search.AppTokenFactory.verify_corpora_in_db",
+    return_value=True,
+)
 def test_punctuation_ignored(
     mock_corpora_exist_in_db, test_vespa, data_db, monkeypatch, data_client, valid_token
 ):
@@ -53,7 +59,10 @@ def test_punctuation_ignored(
 
 
 @pytest.mark.search
-@patch("app.api.api_v1.routers.search.verify_any_corpora_ids_in_db", return_value=True)
+@patch(
+    "app.api.api_v1.routers.search.AppTokenFactory.verify_corpora_in_db",
+    return_value=True,
+)
 def test_accents_ignored(
     mock_corpora_exist_in_db, test_vespa, data_db, monkeypatch, data_client, valid_token
 ):
