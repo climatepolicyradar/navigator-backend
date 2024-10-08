@@ -22,7 +22,7 @@ from app.core.aws import S3Client, S3Document, get_s3_client
 from app.core.config import (
     AWS_REGION,
     CDN_DOMAIN,
-    DOC_CACHE_BUCKET,
+    DOCUMENT_CACHE_BUCKET,
     INGEST_TRIGGER_ROOT,
     PIPELINE_BUCKET,
     PUBLIC_APP_URL,
@@ -260,13 +260,17 @@ def download_all_search_documents(
     token = AppTokenFactory()
     token.decode_and_validate(db, request, app_token)
 
-    if PIPELINE_BUCKET is None or PUBLIC_APP_URL is None or DOC_CACHE_BUCKET is None:
+    if (
+        PIPELINE_BUCKET is None
+        or PUBLIC_APP_URL is None
+        or DOCUMENT_CACHE_BUCKET is None
+    ):
         if PIPELINE_BUCKET is None:
             _LOGGER.error("{PIPELINE_BUCKET} is not set")
         if PUBLIC_APP_URL is None:
             _LOGGER.error("{PUBLIC_APP_URL} is not set")
-        if DOC_CACHE_BUCKET is None:
-            _LOGGER.error("{DOC_CACHE_BUCKET} is not set")
+        if DOCUMENT_CACHE_BUCKET is None:
+            _LOGGER.error("{DOCUMENT_CACHE_BUCKET} is not set")
         raise HTTPException(
             status_code=status.HTTP_503_SERVICE_UNAVAILABLE,
             detail="Missing required environment variables",
@@ -289,7 +293,7 @@ def download_all_search_documents(
             status_code=status.HTTP_401_UNAUTHORIZED, detail="Error connecting to AWS"
         )
 
-    s3_document = S3Document(DOC_CACHE_BUCKET, AWS_REGION, data_dump_s3_key)
+    s3_document = S3Document(DOCUMENT_CACHE_BUCKET, AWS_REGION, data_dump_s3_key)
     if valid_credentials is True and (not s3_client.document_exists(s3_document)):
         aws_env = "production" if "dev" not in PUBLIC_APP_URL else "staging"
         _LOGGER.info(
@@ -309,7 +313,7 @@ def download_all_search_documents(
 
         try:
             response = s3_client.upload_fileobj(
-                bucket=DOC_CACHE_BUCKET,
+                bucket=DOCUMENT_CACHE_BUCKET,
                 key=data_dump_s3_key,
                 content_type="application/zip",
                 fileobj=zip_buffer,
@@ -317,17 +321,19 @@ def download_all_search_documents(
             if response is False:
                 _LOGGER.error("Failed to upload archive to s3: %s", response)
             else:
-                _LOGGER.info(f"Finished uploading data archive to {DOC_CACHE_BUCKET}")
+                _LOGGER.info(
+                    f"Finished uploading data archive to {DOCUMENT_CACHE_BUCKET}"
+                )
 
         except Exception as e:
             _LOGGER.error(e)
 
-    s3_document = S3Document(DOC_CACHE_BUCKET, AWS_REGION, data_dump_s3_key)
+    s3_document = S3Document(DOCUMENT_CACHE_BUCKET, AWS_REGION, data_dump_s3_key)
     redirect_url = _get_s3_doc_url_from_cdn(s3_client, s3_document, data_dump_s3_key)
     if redirect_url is not None:
         return RedirectResponse(redirect_url, status_code=status.HTTP_303_SEE_OTHER)
 
     _LOGGER.info(
-        f"Can't find data dump for {latest_ingest_start} in {DOC_CACHE_BUCKET}"
+        f"Can't find data dump for {latest_ingest_start} in {DOCUMENT_CACHE_BUCKET}"
     )
     raise HTTPException(status_code=status.HTTP_404_NOT_FOUND)

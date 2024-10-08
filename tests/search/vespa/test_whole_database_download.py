@@ -36,7 +36,7 @@ def test_whole_database_download_fails_when_decoding_token_raises_PyJWTError(
     ), patch(
         "app.api.api_v1.routers.search.PIPELINE_BUCKET", "test_pipeline_bucket"
     ), patch(
-        "app.api.api_v1.routers.search.DOC_CACHE_BUCKET", "test_cdn_bucket"
+        "app.api.api_v1.routers.search.DOCUMENT_CACHE_BUCKET", "test_cdn_bucket"
     ), patch(
         "app.core.aws.S3Client.is_connected", return_value=True
     ):
@@ -72,7 +72,7 @@ def test_whole_database_download_fails_when_corpus_ids_in_token_not_in_db(
     ), patch(
         "app.api.api_v1.routers.search.PIPELINE_BUCKET", "test_pipeline_bucket"
     ), patch(
-        "app.api.api_v1.routers.search.DOC_CACHE_BUCKET", "test_cdn_bucket"
+        "app.api.api_v1.routers.search.DOCUMENT_CACHE_BUCKET", "test_cdn_bucket"
     ):
         response = data_client.get(
             ALL_DATA_DOWNLOAD_ENDPOINT,
@@ -95,7 +95,7 @@ def test_all_data_download(mock_corpora_exist_in_db, data_db, data_client, valid
 
     with (
         patch("app.api.api_v1.routers.search.PIPELINE_BUCKET", "test_pipeline_bucket"),
-        patch("app.api.api_v1.routers.search.DOC_CACHE_BUCKET", "test_cdn_bucket"),
+        patch("app.api.api_v1.routers.search.DOCUMENT_CACHE_BUCKET", "test_cdn_bucket"),
         patch("app.core.aws.S3Client.is_connected", return_value=True),
     ):
         data_client.follow_redirects = False
@@ -125,7 +125,7 @@ def test_all_data_download_fails_when_s3_upload_failed(
 
     with (
         patch("app.api.api_v1.routers.search.PIPELINE_BUCKET", "test_pipeline_bucket"),
-        patch("app.api.api_v1.routers.search.DOC_CACHE_BUCKET", "test_cdn_bucket"),
+        patch("app.api.api_v1.routers.search.DOCUMENT_CACHE_BUCKET", "test_cdn_bucket"),
         patch("app.core.aws.S3Client.is_connected", return_value=True),
         patch(
             "app.api.api_v1.routers.search._get_s3_doc_url_from_cdn", return_value=None

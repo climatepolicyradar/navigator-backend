@@ -35,7 +35,7 @@ def mock_aws_creds():
 def s3_document_bucket_names() -> dict:
     return {
         "queue": os.environ.get("DOCUMENT_BUCKET", "cpr-document-queue"),
-        "cdn": os.environ.get("DOC_CACHE_BUCKET", "test_cdn_bucket"),
+        "cdn": os.environ.get("DOCUMENT_CACHE_BUCKET", "test_cdn_bucket"),
         "pipeline": os.environ.get("PIPELINE_BUCKET", "test_pipeline_bucket"),
     }
 
@@ -61,7 +61,7 @@ def test_s3_client(s3_document_bucket_names, mock_aws_creds):
             Body=bytes(1024),
         )
         # Test setup for cdn test bucket
-        os.environ["DOC_CACHE_BUCKET"] = "test_cdn_bucket"
+        os.environ["DOCUMENT_CACHE_BUCKET"] = "test_cdn_bucket"
 
         # Test setup for Pipeline
         os.environ["PIPELINE_BUCKET"] = "test_pipeline_bucket"
