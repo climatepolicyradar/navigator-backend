@@ -20,3 +20,6 @@
 
 # Ignore all trunk auto-fixable errors
 4eeb41cc40914cbc7ea254687239849fce5ac6b8
+
+# Updating the test data file for document passages to be indent=2
+44624dcd1fa0835708bd9187a39bb0da8a31cd03
