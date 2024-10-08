@@ -56,9 +56,13 @@ search_router = APIRouter()
 
 def _search_request(db: Session, search_body: SearchRequestBody) -> SearchResponse:
     is_browse_request = not search_body.query_string
-    if is_browse_request:
+    if is_browse_request and not search_body.concept_filters:
         search_body.all_results = True
         search_body.documents_only = True
+        search_body.exact_match = False
+    if is_browse_request and search_body.concept_filters:
+        search_body.documents_only = False
+        search_body.all_results = True
         search_body.exact_match = False
     try:
         cpr_sdk_search_params = create_vespa_search_params(db, search_body)
