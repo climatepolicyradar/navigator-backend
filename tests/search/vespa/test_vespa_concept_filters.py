@@ -11,13 +11,12 @@ from tests.search.vespa.setup_search_tests import (
 
 
 @pytest.mark.search
-@patch("app.api.api_v1.routers.search.verify_any_corpora_ids_in_db", return_value=True)
+@patch("app.db.crud.helpers.verify_any_corpora_ids_in_db", return_value=True)
 @pytest.mark.parametrize(
     "label,query,concept_filters",
     [
-        ("search", "the", [{"name": "name", "value": "environment"}]),
+        ("the", [{"name": "name", "value": "environment"}]),
         (
-            "search",
             "the",
             [
                 {"name": "parent_concept_ids_flat", "value": "Q0,"},
@@ -25,7 +24,6 @@ from tests.search.vespa.setup_search_tests import (
             ],
         ),
         (
-            "browse",
             "",
             [
                 {"name": "model", "value": "sectors_1"},
@@ -36,7 +34,6 @@ from tests.search.vespa.setup_search_tests import (
 )
 def test_concept_filters(
     mock_corpora_exist_in_db,
-    label,
     query,
     concept_filters,
     test_vespa,
