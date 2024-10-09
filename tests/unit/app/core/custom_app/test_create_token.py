@@ -4,7 +4,7 @@ import jwt
 import pytest
 from dateutil.relativedelta import relativedelta
 
-from app.core.custom_app import create_configuration_token
+from app.core.custom_app import AppTokenFactory
 from tests.unit.app.core.custom_app.conftest import ALGORITHM, TOKEN_SECRET_KEY
 
 EXPIRE_AFTER_1_YEAR = 1
@@ -43,8 +43,9 @@ def has_expected_keys(keys: list[str]) -> bool:
     ],
 )
 def test_create_configuration_token_incorrect_num_args_in_input(input_str: str):
+    af = AppTokenFactory()
     with pytest.raises(ValueError):
-        token = create_configuration_token(input_str)
+        token = af.create_configuration_token(input_str)
         assert token is None
 
         data = jwt.decode(token, TOKEN_SECRET_KEY, algorithms=[ALGORITHM])
@@ -59,8 +60,9 @@ def test_create_configuration_token_incorrect_num_args_in_input(input_str: str):
     ],
 )
 def test_create_configuration_token_subject_contains_special_chars(input_str: str):
+    af = AppTokenFactory()
     with pytest.raises(ValueError):
-        token = create_configuration_token(input_str)
+        token = af.create_configuration_token(input_str)
         assert token is None
 
         data = jwt.decode(token, TOKEN_SECRET_KEY, algorithms=[ALGORITHM])
@@ -85,7 +87,8 @@ def test_create_configuration_token_default_expiry(
     expected_subject: str,
     expected_audience: str,
 ):
-    token = create_configuration_token(input_str)
+    af = AppTokenFactory()
+    token = af.create_configuration_token(input_str)
     assert token is not None
     assert isinstance(token, str)
 
@@ -136,7 +139,8 @@ def test_create_configuration_token_specific_expiry(
     expected_subject: str,
     expected_audience: str,
 ):
-    token = create_configuration_token(input_str, expiry_years)
+    af = AppTokenFactory()
+    token = af.create_configuration_token(input_str, expiry_years)
     assert token is not None
     assert isinstance(token, str)
 

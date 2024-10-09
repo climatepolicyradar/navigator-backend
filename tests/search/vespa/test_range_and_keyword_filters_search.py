@@ -14,7 +14,10 @@ from tests.search.vespa.setup_search_tests import (
 
 
 @pytest.mark.search
-@patch("app.api.api_v1.routers.search.verify_any_corpora_ids_in_db", return_value=True)
+@patch(
+    "app.api.api_v1.routers.search.AppTokenFactory.verify_corpora_in_db",
+    return_value=True,
+)
 @pytest.mark.parametrize("label,query", [("search", "the"), ("browse", "")])
 def test_keyword_country_filters__geography(
     mock_corpora_exist_in_db,
@@ -57,7 +60,10 @@ def test_keyword_country_filters__geography(
 
 
 @pytest.mark.search
-@patch("app.api.api_v1.routers.search.verify_any_corpora_ids_in_db", return_value=True)
+@patch(
+    "app.api.api_v1.routers.search.AppTokenFactory.verify_corpora_in_db",
+    return_value=True,
+)
 @pytest.mark.parametrize("label,query", [("search", "the"), ("browse", "")])
 def test_keyword_country_filters__geographies(
     mock_corpora_exist_in_db,
@@ -102,7 +108,10 @@ def test_keyword_country_filters__geographies(
 
 
 @pytest.mark.search
-@patch("app.api.api_v1.routers.search.verify_any_corpora_ids_in_db", return_value=True)
+@patch(
+    "app.api.api_v1.routers.search.AppTokenFactory.verify_corpora_in_db",
+    return_value=True,
+)
 @pytest.mark.parametrize("label,query", [("search", "the"), ("browse", "")])
 def test_keyword_region_filters(
     mock_corpora_exist_in_db,
@@ -152,7 +161,10 @@ def test_keyword_region_filters(
 
 
 @pytest.mark.search
-@patch("app.api.api_v1.routers.search.verify_any_corpora_ids_in_db", return_value=True)
+@patch(
+    "app.api.api_v1.routers.search.AppTokenFactory.verify_corpora_in_db",
+    return_value=True,
+)
 @pytest.mark.parametrize("label,query", [("search", "the"), ("browse", "")])
 def test_keyword_region_and_country_filters(
     mock_corpora_exist_in_db,
@@ -185,7 +197,10 @@ def test_keyword_region_and_country_filters(
 
 
 @pytest.mark.search
-@patch("app.api.api_v1.routers.search.verify_any_corpora_ids_in_db", return_value=True)
+@patch(
+    "app.api.api_v1.routers.search.AppTokenFactory.verify_corpora_in_db",
+    return_value=True,
+)
 @pytest.mark.parametrize("label,query", [("search", "the"), ("browse", "")])
 def test_invalid_keyword_filters(
     mock_corpora_exist_in_db,
@@ -218,7 +233,10 @@ def test_invalid_keyword_filters(
 
 
 @pytest.mark.search
-@patch("app.api.api_v1.routers.search.verify_any_corpora_ids_in_db", return_value=True)
+@patch(
+    "app.api.api_v1.routers.search.AppTokenFactory.verify_corpora_in_db",
+    return_value=True,
+)
 @pytest.mark.parametrize(
     "year_range", [(None, None), (1900, None), (None, 2020), (1900, 2020)]
 )
@@ -248,7 +266,10 @@ def test_year_range_filtered_in(
 
 
 @pytest.mark.search
-@patch("app.api.api_v1.routers.search.verify_any_corpora_ids_in_db", return_value=True)
+@patch(
+    "app.api.api_v1.routers.search.AppTokenFactory.verify_corpora_in_db",
+    return_value=True,
+)
 @pytest.mark.parametrize("year_range", [(None, 2010), (2024, None)])
 def test_year_range_filtered_out(
     mock_corpora_exist_in_db,
@@ -276,7 +297,10 @@ def test_year_range_filtered_out(
 
 
 @pytest.mark.search
-@patch("app.api.api_v1.routers.search.verify_any_corpora_ids_in_db", return_value=True)
+@patch(
+    "app.api.api_v1.routers.search.AppTokenFactory.verify_corpora_in_db",
+    return_value=True,
+)
 @pytest.mark.parametrize("label, query", [("search", "the"), ("browse", "")])
 def test_multiple_filters(
     mock_corpora_exist_in_db,
@@ -306,7 +330,10 @@ def test_multiple_filters(
 
 
 @pytest.mark.search
-@patch("app.api.api_v1.routers.search.verify_any_corpora_ids_in_db", return_value=True)
+@patch(
+    "app.api.api_v1.routers.search.AppTokenFactory.verify_corpora_in_db",
+    return_value=True,
+)
 def test_geo_filter_with_exact(
     mock_corpora_exist_in_db, test_vespa, data_db, monkeypatch, data_client, valid_token
 ):

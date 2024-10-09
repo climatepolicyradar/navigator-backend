@@ -4,7 +4,7 @@ from datetime import datetime, timedelta
 import jwt
 import pytest
 
-from app.core.custom_app import create_configuration_token
+from app.core.custom_app import AppTokenFactory
 
 TOKEN_SECRET_KEY = os.environ["TOKEN_SECRET_KEY"]
 ALGORITHM = "HS256"
@@ -42,4 +42,5 @@ def token_with_invalid_aud(request) -> str:
 
 @pytest.fixture
 def valid_token() -> str:
-    return create_configuration_token(f"mango,apple;subject;{VALID_AUDIENCE}")
+    af = AppTokenFactory()
+    return af.create_configuration_token(f"mango,apple;subject;{VALID_AUDIENCE}")
