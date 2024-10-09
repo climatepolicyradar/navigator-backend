@@ -7,8 +7,9 @@ for the type of document search being performed.
 """
 
 import logging
+from enum import Enum
 from io import BytesIO
-from typing import Annotated, Enum, Sequence, cast
+from typing import Annotated, Sequence, cast
 
 from cpr_sdk.exceptions import QueryError
 from cpr_sdk.search_adaptors import VespaSearchAdapter
