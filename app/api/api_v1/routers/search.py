@@ -72,9 +72,10 @@ def identify_search_type(search_body: SearchRequestBody) -> str:
 
 
 def mutate_search_body_for_search_type(
-    search_type: str, search_body: SearchRequestBody
+    search_body: SearchRequestBody,
 ) -> SearchRequestBody:
     """Mutate the search body in line with the search params"""
+    search_type = identify_search_type(search_body=search_body)
     if search_type == SearchType.browse:
         search_body.all_results = True
         search_body.documents_only = True
@@ -88,10 +89,7 @@ def mutate_search_body_for_search_type(
 
 def _search_request(db: Session, search_body: SearchRequestBody) -> SearchResponse:
     """Perform a search request against the Vespa search engine"""
-    search_type = identify_search_type(search_body=search_body)
-    search_body = mutate_search_body_for_search_type(
-        search_type=search_type, search_body=search_body
-    )
+    search_body = mutate_search_body_for_search_type(search_body=search_body)
 
     try:
         cpr_sdk_search_params = create_vespa_search_params(db, search_body)
