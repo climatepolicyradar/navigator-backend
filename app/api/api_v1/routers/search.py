@@ -63,9 +63,9 @@ class SearchType(str, Enum):
 
 def identify_search_type(search_body: SearchRequestBody) -> str:
     """Identify the search type from parameters"""
-    if not search_body.query_string and not search_body.concepts:
+    if not search_body.query_string and not search_body.concept_filters:
         return SearchType.browse
-    elif not search_body.query_string and search_body.concepts:
+    elif not search_body.query_string and search_body.concept_filters:
         return SearchType.browse_with_concepts
     else:
         return SearchType.standard
