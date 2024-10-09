@@ -17,7 +17,7 @@ VESPA_URL: str = os.environ["VESPA_URL"]
 
 # Whole database dump
 INGEST_CYCLE_START = os.getenv("INGEST_CYCLE_START")
-DOC_CACHE_BUCKET = os.getenv("DOCUMENT_CACHE_BUCKET")
+DOCUMENT_CACHE_BUCKET = os.getenv("DOCUMENT_CACHE_BUCKET")
 PIPELINE_BUCKET: str = os.getenv("PIPELINE_BUCKET", "not_set")
 INGEST_TRIGGER_ROOT: Final = "input"
 DEVELOPMENT_MODE: bool = os.getenv("DEVELOPMENT_MODE", "False").lower() == "true"

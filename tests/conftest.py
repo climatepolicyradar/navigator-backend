@@ -15,9 +15,9 @@ from sqlalchemy.engine import Engine
 from sqlalchemy.orm import sessionmaker
 from sqlalchemy_utils import create_database, database_exists, drop_database
 
-from app.core import security
+from app.core import custom_app, security
 from app.core.aws import S3Client, get_s3_client
-from app.core.custom_app import create_configuration_token
+from app.core.custom_app import AppTokenFactory
 from app.db.session import get_db
 from app.main import app
 
@@ -35,7 +35,7 @@ def mock_aws_creds():
 def s3_document_bucket_names() -> dict:
     return {
         "queue": os.environ.get("DOCUMENT_BUCKET", "cpr-document-queue"),
-        "cdn": os.environ.get("DOC_CACHE_BUCKET", "test_cdn_bucket"),
+        "cdn": os.environ.get("DOCUMENT_CACHE_BUCKET", "test_cdn_bucket"),
         "pipeline": os.environ.get("PIPELINE_BUCKET", "test_pipeline_bucket"),
     }
 
@@ -61,7 +61,7 @@ def test_s3_client(s3_document_bucket_names, mock_aws_creds):
             Body=bytes(1024),
         )
         # Test setup for cdn test bucket
-        os.environ["DOC_CACHE_BUCKET"] = "test_cdn_bucket"
+        os.environ["DOCUMENT_CACHE_BUCKET"] = "test_cdn_bucket"
 
         # Test setup for Pipeline
         os.environ["PIPELINE_BUCKET"] = "test_pipeline_bucket"
@@ -104,7 +104,7 @@ def get_test_db_url() -> str:
 
 
 @pytest.fixture
-def valid_token():
+def valid_token(monkeypatch):
     """Generate valid config token using TOKEN_SECRET_KEY.
 
     Need to generate the config token using the token secret key from
@@ -113,11 +113,18 @@ def valid_token():
     might be different (e.g., the one for staging). This fixture works
     around this.
     """
+
+    def mock_return(_, __, ___):
+        return True
+
     corpora_ids = "CCLW.corpus.1.0,CCLW.corpus.2.0"
     subject = "CCLW"
     audience = "localhost"
     input_str = f"{corpora_ids};{subject};{audience}"
-    return create_configuration_token(input_str)
+
+    af = AppTokenFactory()
+    monkeypatch.setattr(custom_app.AppTokenFactory, "validate", mock_return)
+    return af.create_configuration_token(input_str)
 
 
 @pytest.fixture

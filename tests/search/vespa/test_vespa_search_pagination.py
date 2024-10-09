@@ -11,7 +11,10 @@ from tests.search.vespa.setup_search_tests import (
 
 
 @pytest.mark.search
-@patch("app.api.api_v1.routers.search.verify_any_corpora_ids_in_db", return_value=True)
+@patch(
+    "app.api.api_v1.routers.search.AppTokenFactory.verify_corpora_in_db",
+    return_value=True,
+)
 def test_simple_pagination_families(
     mock_corpora_exist_in_db, test_vespa, data_client, data_db, monkeypatch, valid_token
 ):
@@ -60,7 +63,10 @@ def test_simple_pagination_families(
 
 
 @pytest.mark.search
-@patch("app.api.api_v1.routers.search.verify_any_corpora_ids_in_db", return_value=True)
+@patch(
+    "app.api.api_v1.routers.search.AppTokenFactory.verify_corpora_in_db",
+    return_value=True,
+)
 def test_continuation_token__families(
     mock_corpora_exist_in_db, test_vespa, data_db, monkeypatch, data_client, valid_token
 ):
@@ -100,7 +106,10 @@ def test_continuation_token__families(
 
 
 @pytest.mark.search
-@patch("app.api.api_v1.routers.search.verify_any_corpora_ids_in_db", return_value=True)
+@patch(
+    "app.api.api_v1.routers.search.AppTokenFactory.verify_corpora_in_db",
+    return_value=True,
+)
 def test_continuation_token__passages(
     mock_corpora_exist_in_db, test_vespa, data_db, monkeypatch, data_client, valid_token
 ):

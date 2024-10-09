@@ -32,6 +32,7 @@ def test_corpus_filtering(
     corpus_import_id: str,
     corpus_type_name: str,
     expected_hits: int,
+    valid_token,
 ):
     monkeypatch.setattr(search, "_VESPA_CONNECTION", test_vespa)
     _populate_db_families(data_db)
@@ -43,14 +44,12 @@ def test_corpus_filtering(
         params["corpus_type_names"] = [corpus_type_name]
 
     with patch(
-        "app.api.api_v1.routers.search.decode_config_token",
-        return_value=["CCLW.corpus.1.0", "CCLW.corpus.2.0"],
-    ), patch(
-        "app.api.api_v1.routers.search.verify_any_corpora_ids_in_db", return_value=True
+        "app.api.api_v1.routers.search.AppTokenFactory.verify_corpora_in_db",
+        return_value=True,
     ):
         response = _make_search_request(
             data_client,
-            token="foo",
+            token=valid_token,
             params=params,
         )
 
@@ -65,7 +64,7 @@ def test_corpus_filtering(
 
 @pytest.mark.search
 def test_search_with_corpus_ids_in_token_not_in_db(
-    data_client, data_db, valid_token, monkeypatch, test_vespa
+    data_client, data_db, monkeypatch, test_vespa
 ):
     """
     GIVEN a list of corpora IDs decoded from an app config token
@@ -75,12 +74,12 @@ def test_search_with_corpus_ids_in_token_not_in_db(
     monkeypatch.setattr(search, "_VESPA_CONNECTION", test_vespa)
     _populate_db_families(data_db)
 
-    with patch(
-        "app.api.api_v1.routers.search.verify_any_corpora_ids_in_db", return_value=False
+    with patch("app.core.custom_app.AppTokenFactory.decode", return_value=True), patch(
+        "app.core.custom_app.AppTokenFactory.verify_corpora_in_db", return_value=False
     ):
         response = _make_search_request(
             data_client,
-            valid_token,
+            "test_token",
             params={"query_string": ""},
             expected_status_code=status.HTTP_400_BAD_REQUEST,
         )
@@ -107,15 +106,13 @@ def test_search_decoding_token_raises_PyJWTError(
 ):
     """
     GIVEN a request to the search endpoint
-    WHEN the decode_config_token() function call raises a PyJWTError
+    WHEN the decode() function call raises a PyJWTError
     THEN raise a 400 HTTP error
     """
     monkeypatch.setattr(search, "_VESPA_CONNECTION", test_vespa)
     _populate_db_families(data_db)
 
-    with patch(
-        "app.api.api_v1.routers.search.decode_config_token", side_effect=side_effect
-    ):
+    with patch("jwt.decode", side_effect=side_effect):
         response = _make_search_request(
             data_client,
             valid_token,
@@ -167,9 +164,8 @@ def test_search_with_invalid_corpus_id_in_search_request_params(
     _populate_db_families(data_db)
 
     with patch(
-        "app.api.api_v1.routers.search.verify_any_corpora_ids_in_db",
-        return_value=True,
-    ), patch("app.api.api_v1.routers.search.validate_corpora_ids", return_value=False):
+        "app.core.custom_app.AppTokenFactory.validate_corpora_ids", return_value=False
+    ):
         response = _make_search_request(
             data_client,
             valid_token,
