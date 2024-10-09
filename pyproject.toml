@@ -44,7 +44,7 @@ pytest = "^7.0.1"
 pytest-asyncio = "^0.18.3"
 python-dotenv = "^0.19.2"
 pytest-mock = "^3.7.0"
-pyright = "^1.1.294"
+pyright = "^1.1.384"
 ruff = "^0.2.1"
 types-SQLAlchemy = "^1.4.31"
 
