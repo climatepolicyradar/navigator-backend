@@ -16,7 +16,7 @@ from sqlalchemy.orm import Session
 
 from app.api.api_v1.schemas.document import DocumentParserInput
 from app.core.lookups import doc_type_from_family_document_metadata
-from app.db.crud.geography import get_geo_subquery
+from app.repository.geography import get_geo_subquery
 
 _LOGGER = logging.getLogger(__name__)
 
