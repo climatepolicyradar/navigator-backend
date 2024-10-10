@@ -11,7 +11,10 @@ from tests.search.vespa.setup_search_tests import (
 
 
 @pytest.mark.search
-@patch("app.db.crud.helpers.verify_any_corpora_ids_in_db", return_value=True)
+@patch(
+    "app.api.api_v1.routers.search.AppTokenFactory.verify_corpora_in_db",
+    return_value=True,
+)
 @pytest.mark.parametrize(
     "query,concept_filters",
     [
