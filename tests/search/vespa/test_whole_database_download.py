@@ -31,7 +31,7 @@ def test_whole_database_download_fails_when_decoding_token_raises_PyJWTError(
     _populate_db_families(data_db)
 
     with patch(
-        "app.core.custom_app.jwt.decode",
+        "app.service.custom_app.jwt.decode",
         side_effect=side_effect,
     ), patch(
         "app.api.api_v1.routers.search.PIPELINE_BUCKET", "test_pipeline_bucket"

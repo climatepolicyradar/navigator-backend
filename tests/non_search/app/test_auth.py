@@ -1,4 +1,4 @@
-from app.core import security
+from app.service import security
 
 
 # Monkey patch function we can use to shave a second off our tests by skipping the password hashing check

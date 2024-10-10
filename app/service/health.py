@@ -4,8 +4,8 @@ from fastapi import Depends
 from sqlalchemy.orm import Session
 
 from app.api.api_v1.routers.search import _VESPA_CONNECTION
+from app.clients.db.session import get_db
 from app.core.config import DEVELOPMENT_MODE
-from app.db.session import get_db
 
 _LOGGER = logging.getLogger(__file__)
 

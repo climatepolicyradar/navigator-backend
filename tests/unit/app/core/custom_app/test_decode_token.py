@@ -6,7 +6,7 @@ import jwt
 import pytest
 from fastapi import HTTPException, status
 
-from app.core.custom_app import AppTokenFactory
+from app.service.custom_app import AppTokenFactory
 from tests.unit.app.core.custom_app.conftest import VALID_AUDIENCE
 
 

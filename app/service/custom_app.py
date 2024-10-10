@@ -13,7 +13,7 @@ from sqlalchemy import distinct, select
 from sqlalchemy.orm import Session
 
 from app.api.api_v1.schemas.custom_app import CustomAppConfigDTO
-from app.core import security
+from app.service import security
 
 _LOGGER = logging.getLogger(__name__)
 TOKEN_SECRET_KEY = os.environ["TOKEN_SECRET_KEY"]

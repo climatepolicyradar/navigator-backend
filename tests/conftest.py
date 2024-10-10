@@ -15,11 +15,11 @@ from sqlalchemy.engine import Engine
 from sqlalchemy.orm import sessionmaker
 from sqlalchemy_utils import create_database, database_exists, drop_database
 
-from app.core import custom_app, security
+from app.clients.db.session import get_db
 from app.core.aws import S3Client, get_s3_client
-from app.core.custom_app import AppTokenFactory
-from app.db.session import get_db
 from app.main import app
+from app.service import custom_app, security
+from app.service.custom_app import AppTokenFactory
 
 
 @pytest.fixture(scope="function")

@@ -174,7 +174,7 @@ def test_csv_download_fails_when_decoding_token_raises_PyJWTError(
         "query_string": "winter",
     }
 
-    with patch("app.core.custom_app.jwt.decode", side_effect=side_effect):
+    with patch("app.service.custom_app.jwt.decode", side_effect=side_effect):
         response = _make_download_request(
             data_client,
             valid_token,
