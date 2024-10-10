@@ -59,7 +59,6 @@ def to_search_response_family(
         family_source=cast(str, organisation.name),
         corpus_import_id=cast(str, corpus.import_id),
         corpus_type_name=cast(str, corpus.corpus_type_name),
-        family_geography=geography_value,
         family_geographies=[row.value for row in family.geographies],
         family_title_match=False,
         family_description_match=False,

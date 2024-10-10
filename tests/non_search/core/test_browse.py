@@ -29,7 +29,6 @@ def test_browse_rds_families(data_db):
     assert family.family_source == "CCLW"
     assert family.corpus_import_id == "CCLW.corpus.i00000001.n0000"
     assert family.corpus_type_name == "Laws and Policies"
-    assert family.family_geography == "South Asia"
     assert family.family_geographies == ["South Asia"]
     assert family.family_metadata == {}
     assert family.total_passage_hits == 0
