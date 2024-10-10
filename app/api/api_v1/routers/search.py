@@ -18,8 +18,10 @@ from sqlalchemy.orm import Session
 from starlette.responses import RedirectResponse
 
 from app.api.api_v1.schemas.search import SearchRequestBody, SearchResponse
-from app.core.aws import S3Client, S3Document, get_s3_client
-from app.core.config import (
+from app.clients.aws.client import S3Client, get_s3_client
+from app.clients.aws.s3_document import S3Document
+from app.clients.db.session import get_db
+from app.config import (
     AWS_REGION,
     CDN_DOMAIN,
     DOCUMENT_CACHE_BUCKET,
@@ -36,7 +38,6 @@ from app.core.search import (
     process_result_into_csv,
     process_vespa_search_response,
 )
-from app.db.session import get_db
 
 _LOGGER = logging.getLogger(__name__)
 

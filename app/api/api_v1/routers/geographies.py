@@ -3,8 +3,8 @@ import logging
 from fastapi import APIRouter, Depends, HTTPException, status
 
 from app.api.api_v1.schemas.geography import GeographyStatsDTO
+from app.clients.db.session import get_db
 from app.db.crud.geography import get_world_map_stats
-from app.db.session import get_db
 from app.errors import RepositoryError
 
 _LOGGER = logging.getLogger(__file__)

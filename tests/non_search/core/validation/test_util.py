@@ -6,7 +6,7 @@ from unittest import mock
 import pytest
 
 from app.api.api_v1.schemas.document import DocumentParserInput
-from app.core.config import PIPELINE_BUCKET
+from app.config import PIPELINE_BUCKET
 from app.core.validation import IMPORT_ID_MATCHER
 from app.core.validation.util import _flatten_maybe_tree, write_documents_to_s3
 

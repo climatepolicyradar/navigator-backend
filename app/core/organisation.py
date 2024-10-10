@@ -5,8 +5,8 @@ from db_client.models.organisation import CorpusType, Organisation
 from sqlalchemy import func
 from sqlalchemy.orm import Session
 
+from app import config
 from app.api.api_v1.schemas.metadata import CorpusData, OrganisationConfig
-from app.core import config
 
 
 def _to_corpus_data(row) -> CorpusData:

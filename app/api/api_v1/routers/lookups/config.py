@@ -2,8 +2,8 @@ from fastapi import Depends, Request
 
 from app.api.api_v1.routers.lookups.router import lookups_router
 from app.api.api_v1.schemas.metadata import ApplicationConfig
+from app.clients.db.session import get_db
 from app.core.lookups import get_config
-from app.db.session import get_db
 
 
 @lookups_router.get("/config", response_model=ApplicationConfig)
