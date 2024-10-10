@@ -19,7 +19,7 @@ from starlette.responses import RedirectResponse
 
 from app.api.api_v1.schemas.search import SearchRequestBody, SearchResponse
 from app.clients.aws.client import S3Client, get_s3_client
-from app.clients.aws.s3 import S3Document
+from app.clients.aws.s3_document import S3Document
 from app.clients.db.session import get_db
 from app.config import (
     AWS_REGION,

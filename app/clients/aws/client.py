@@ -10,7 +10,7 @@ import botocore.client
 from botocore.exceptions import ClientError, UnauthorizedSSOTokenError
 from botocore.response import StreamingBody
 
-from app.clients.aws.s3 import S3Document
+from app.clients.aws.s3_document import S3Document
 from app.config import AWS_REGION, DEVELOPMENT_MODE
 
 logger = logging.getLogger(__name__)
