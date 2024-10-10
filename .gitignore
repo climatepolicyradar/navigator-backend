@@ -193,3 +193,6 @@ backend/models
 .idea/
 
 requirements.txt
+
+# Vespa secrets directory
+secrets/*

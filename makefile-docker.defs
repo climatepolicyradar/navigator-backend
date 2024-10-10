@@ -3,7 +3,14 @@
 # ----------------------------------
 # starting, stopping, migrating DB
 # ----------------------------------
-start:
+
+create_mock_vespa_certs:
+	mkdir -p secrets
+	[ -f secrets/cert.pem ] || touch secrets/cert.pem
+	[ -f secrets/key.pem ] || touch secrets/key.pem
+
+
+start: create_mock_vespa_certs
 	# Build & run containers and setup vespa
 	docker compose -f docker-compose.yml -f docker-compose.dev.yml up -d --remove-orphans
 	$(MAKE) vespa_setup
