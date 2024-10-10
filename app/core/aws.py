@@ -11,7 +11,7 @@ import botocore.client
 from botocore.exceptions import ClientError, UnauthorizedSSOTokenError
 from botocore.response import StreamingBody
 
-from app.core.config import AWS_REGION, DEVELOPMENT_MODE
+from app.config import AWS_REGION, DEVELOPMENT_MODE
 
 logger = logging.getLogger(__name__)
 

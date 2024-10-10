@@ -37,7 +37,7 @@ from app.api.api_v1.schemas.search import (
     SearchResponseFamily,
     SearchResponseFamilyDocument,
 )
-from app.core.config import PUBLIC_APP_URL
+from app.config import PUBLIC_APP_URL
 from app.core.lookups import (
     doc_type_from_family_document_metadata,
     get_countries_for_region,

@@ -19,8 +19,7 @@ from starlette.responses import RedirectResponse
 
 from app.api.api_v1.schemas.search import SearchRequestBody, SearchResponse
 from app.clients.db.session import get_db
-from app.core.aws import S3Client, S3Document, get_s3_client
-from app.core.config import (
+from app.config import (
     AWS_REGION,
     CDN_DOMAIN,
     DOCUMENT_CACHE_BUCKET,
@@ -30,6 +29,7 @@ from app.core.config import (
     VESPA_SECRETS_LOCATION,
     VESPA_URL,
 )
+from app.core.aws import S3Client, S3Document, get_s3_client
 from app.core.custom_app import AppTokenFactory
 from app.core.download import create_data_download_zip_archive
 from app.core.search import (
