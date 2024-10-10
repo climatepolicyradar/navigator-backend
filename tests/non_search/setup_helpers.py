@@ -1,13 +1,12 @@
 from typing import Any, Dict, Optional
 
-from db_client.models.organisation.corpus import Corpus, CorpusType
-from sqlalchemy.orm import Session
-
-from tests.non_search.dfce_helpers import (
+from db_client.functions.dfce_helpers import (
     add_collections,
     add_families,
     link_collection_family,
 )
+from db_client.models.organisation.corpus import Corpus, CorpusType
+from sqlalchemy.orm import Session
 
 
 def get_default_collections():

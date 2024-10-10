@@ -42,7 +42,10 @@ def _fam_ids_from_response(test_db, response) -> list[str]:
     return family_ids
 
 
-@patch("app.api.api_v1.routers.search.verify_any_corpora_ids_in_db", return_value=True)
+@patch(
+    "app.api.api_v1.routers.search.AppTokenFactory.verify_corpora_in_db",
+    return_value=True,
+)
 @pytest.mark.parametrize(
     "family_ids",
     [
@@ -76,7 +79,10 @@ def test_family_ids_search(
     assert mock_corpora_exist_in_db.assert_called
 
 
-@patch("app.api.api_v1.routers.search.verify_any_corpora_ids_in_db", return_value=True)
+@patch(
+    "app.api.api_v1.routers.search.AppTokenFactory.verify_corpora_in_db",
+    return_value=True,
+)
 @pytest.mark.parametrize(
     "document_ids",
     [
@@ -113,7 +119,10 @@ def test_document_ids_search(
     assert mock_corpora_exist_in_db.assert_called
 
 
-@patch("app.api.api_v1.routers.search.verify_any_corpora_ids_in_db", return_value=True)
+@patch(
+    "app.api.api_v1.routers.search.AppTokenFactory.verify_corpora_in_db",
+    return_value=True,
+)
 @pytest.mark.search
 def test_document_ids_and_family_ids_search(
     mock_corpora_exist_in_db, test_vespa, data_db, monkeypatch, data_client, valid_token
@@ -135,7 +144,10 @@ def test_document_ids_and_family_ids_search(
     assert mock_corpora_exist_in_db.assert_called
 
 
-@patch("app.api.api_v1.routers.search.verify_any_corpora_ids_in_db", return_value=True)
+@patch(
+    "app.api.api_v1.routers.search.AppTokenFactory.verify_corpora_in_db",
+    return_value=True,
+)
 @pytest.mark.search
 def test_empty_ids_dont_limit_result(
     mock_corpora_exist_in_db, test_vespa, data_db, monkeypatch, data_client, valid_token

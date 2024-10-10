@@ -155,7 +155,7 @@ def get_family_and_documents(db: Session, import_id: str) -> FamilyAndDocumentsR
         .join(Organisation, Corpus.organisation_id == Organisation.id)
         .filter(Family.import_id == import_id)
         .filter(geo_subquery.c.family_import_id == Family.import_id)  # type: ignore
-    ).one_or_none()
+    ).first()  # TODO Fix as part of PDCT-1440
 
     if not db_objects:
         _LOGGER.warning("No family found for import_id", extra={"slug": import_id})

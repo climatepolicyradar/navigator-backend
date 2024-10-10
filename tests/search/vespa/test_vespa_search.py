@@ -17,7 +17,10 @@ from tests.search.vespa.setup_search_tests import (
 
 
 @pytest.mark.search
-@patch("app.api.api_v1.routers.search.verify_any_corpora_ids_in_db", return_value=True)
+@patch(
+    "app.api.api_v1.routers.search.AppTokenFactory.verify_corpora_in_db",
+    return_value=True,
+)
 def test_empty_search_term_performs_browse(
     mock_corpora_exist_in_db,
     test_vespa,
@@ -45,7 +48,10 @@ def test_empty_search_term_performs_browse(
 
 
 @pytest.mark.search
-@patch("app.api.api_v1.routers.search.verify_any_corpora_ids_in_db", return_value=True)
+@patch(
+    "app.api.api_v1.routers.search.AppTokenFactory.verify_corpora_in_db",
+    return_value=True,
+)
 @pytest.mark.parametrize("exact_match", [True, False])
 def test_search_body_valid(
     mock_corpora_exist_in_db,
@@ -86,7 +92,10 @@ def test_search_body_valid(
 
 
 @pytest.mark.search
-@patch("app.api.api_v1.routers.search.verify_any_corpora_ids_in_db", return_value=True)
+@patch(
+    "app.api.api_v1.routers.search.AppTokenFactory.verify_corpora_in_db",
+    return_value=True,
+)
 def test_no_doc_if_in_postgres_but_not_vespa(
     mock_corpora_exist_in_db, test_vespa, data_client, data_db, monkeypatch, valid_token
 ):
@@ -143,7 +152,10 @@ def test_no_doc_if_in_postgres_but_not_vespa(
 
 
 @pytest.mark.search
-@patch("app.api.api_v1.routers.search.verify_any_corpora_ids_in_db", return_value=True)
+@patch(
+    "app.api.api_v1.routers.search.AppTokenFactory.verify_corpora_in_db",
+    return_value=True,
+)
 @pytest.mark.parametrize("label,query", [("search", "the"), ("browse", "")])
 def test_benchmark_families_search(
     mock_corpora_exist_in_db,
@@ -178,7 +190,10 @@ def test_benchmark_families_search(
     assert mock_corpora_exist_in_db.assert_called
 
 
-@patch("app.api.api_v1.routers.search.verify_any_corpora_ids_in_db", return_value=True)
+@patch(
+    "app.api.api_v1.routers.search.AppTokenFactory.verify_corpora_in_db",
+    return_value=True,
+)
 @pytest.mark.search
 def test_specific_doc_returned(
     mock_corpora_exist_in_db, test_vespa, monkeypatch, data_client, data_db, valid_token
@@ -202,7 +217,10 @@ def test_specific_doc_returned(
     assert mock_corpora_exist_in_db.assert_called
 
 
-@patch("app.api.api_v1.routers.search.verify_any_corpora_ids_in_db", return_value=True)
+@patch(
+    "app.api.api_v1.routers.search.AppTokenFactory.verify_corpora_in_db",
+    return_value=True,
+)
 @pytest.mark.parametrize(
     ("extra_params", "invalid_field"),
     [
@@ -241,7 +259,10 @@ def test_search_params_backend_limits(
 
 
 @pytest.mark.search
-@patch("app.api.api_v1.routers.search.verify_any_corpora_ids_in_db", return_value=True)
+@patch(
+    "app.api.api_v1.routers.search.AppTokenFactory.verify_corpora_in_db",
+    return_value=True,
+)
 def test_search_with_deleted_docs(
     mock_corpora_exist_in_db, test_vespa, monkeypatch, data_client, data_db, valid_token
 ):
