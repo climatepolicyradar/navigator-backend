@@ -13,8 +13,8 @@ from sqlalchemy import Column, update
 
 from app.api.api_v1.schemas.document import DocumentUpdateRequest
 from app.clients.db.session import get_db
-from app.core.auth import get_superuser_details
 from app.core.lookups import get_family_document_by_import_id_or_slug
+from app.service.auth import get_superuser_details
 
 _LOGGER = logging.getLogger(__name__)
 

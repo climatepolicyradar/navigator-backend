@@ -22,8 +22,8 @@ from app.api.api_v1.routers.search import search_router
 from app.api.api_v1.routers.summaries import summary_router
 from app.clients.db.session import SessionLocal, engine
 from app.core import config
-from app.core.auth import get_superuser_details
 from app.core.health import is_database_online
+from app.service.auth import get_superuser_details
 
 os.environ["SKIP_ALEMBIC_LOGGING"] = "1"
 
