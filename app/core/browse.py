@@ -16,7 +16,7 @@ from app.api.api_v1.schemas.search import (
     SortField,
     SortOrder,
 )
-from app.db.crud.geography import get_geo_subquery
+from app.repository.geography import get_geo_subquery
 
 _LOGGER = getLogger(__name__)
 

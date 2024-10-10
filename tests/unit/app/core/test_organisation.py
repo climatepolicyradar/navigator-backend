@@ -3,7 +3,7 @@ from typing import cast
 import pytest
 from sqlalchemy.orm import Session
 
-from app.core.organisation import get_all_organisations, get_corpora_for_org
+from app.repository.organisation import get_all_organisations, get_corpora_for_org
 from tests.non_search.setup_helpers import setup_new_corpus, setup_with_docs
 
 CCLW_EXPECTED_NUM_CORPORA = 1

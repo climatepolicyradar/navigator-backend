@@ -7,7 +7,7 @@ from jwt import PyJWTError
 
 from app.api.api_v1.schemas.user import JWTUser
 from app.core import security
-from app.db.crud.user import get_app_user_by_email
+from app.repository.user import get_app_user_by_email
 
 CREDENTIALS_EXCEPTION = HTTPException(
     status_code=status.HTTP_401_UNAUTHORIZED,
