@@ -134,11 +134,13 @@ def test_keyword_region_filters(
     assert len(families) == VESPA_FIXTURE_COUNT
 
     for family in families:
-        country_code = family["family_geography"]
+        country_codes = family["family_geographies"]
 
         # Fixture for UNFCCC.non-party.1267.0 has a non geography (XAA)
-        if country_code == "Other":
+        if country_codes == ["Other"]:
             return
+
+        country_code = country_codes[0]
 
         parent_id = (
             data_db.query(Geography)
