@@ -168,6 +168,12 @@ def process_result_into_csv(
             collection_name = collection.title
             collection_summary = collection.description
 
+        family_geos = ";".join(
+            [cast(str, geo) for geo in family.family_geographies]
+            if family is not None
+            else []
+        )
+
         family_documents: Sequence[FamilyDocument] = extra_required_info["documents"][
             family.family_slug
         ]
@@ -210,6 +216,7 @@ def process_result_into_csv(
                     if physical_document is not None
                     else []
                 )
+
                 row = {
                     "Collection Name": collection_name,
                     "Collection Summary": collection_summary,
@@ -222,7 +229,7 @@ def process_result_into_csv(
                     "Document Content URL": document_content,
                     "Document Type": doc_type_from_family_document_metadata(document),
                     "Document Content Matches Search Phrase": document_match,
-                    "Geography": family.family_geography,
+                    "Geographies": family_geos,
                     "Category": family.family_category,
                     "Languages": document_languages,
                     "Source": family_source,
@@ -243,7 +250,7 @@ def process_result_into_csv(
                 "Document Content URL": "",
                 "Document Type": "",
                 "Document Content Matches Search Phrase": "n/a",
-                "Geography": family.family_geography,
+                "Geographies": family_geos,
                 "Category": family.family_category,
                 "Languages": "",
                 "Source": family_source,
@@ -389,7 +396,6 @@ def _process_vespa_search_response_families(
                 or hit.family_name is None
                 or hit.family_category is None
                 or hit.family_source is None
-                or hit.family_geography is None
                 or hit.family_geographies is None
             ):
                 _LOGGER.error(
@@ -425,7 +431,6 @@ def _process_vespa_search_response_families(
                     continuation_token=vespa_family.continuation_token,
                     prev_continuation_token=vespa_family.prev_continuation_token,
                     family_documents=[],
-                    family_geography=hit.family_geography,
                     family_geographies=hit.family_geographies,
                     family_metadata=cast(dict, db_family_metadata.value),
                 )
