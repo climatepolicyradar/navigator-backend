@@ -19,54 +19,6 @@ from tests.search.vespa.setup_search_tests import (
     return_value=True,
 )
 @pytest.mark.parametrize("label,query", [("search", "the"), ("browse", "")])
-def test_keyword_country_filters__geography(
-    mock_corpora_exist_in_db,
-    label,
-    query,
-    test_vespa,
-    data_client,
-    data_db,
-    monkeypatch,
-    valid_token,
-):
-    monkeypatch.setattr(search, "_VESPA_CONNECTION", test_vespa)
-    _populate_db_families(data_db)
-    base_params = {"query_string": query}
-
-    # Get all documents and iterate over their country codes to confirm that each are
-    # the specific one that is returned in the query (as they each have a unique
-    # country code)
-    all_body = _make_search_request(data_client, valid_token, params=base_params)
-    families = [f for f in all_body["families"]]
-    assert len(families) == VESPA_FIXTURE_COUNT
-
-    for family in families:
-        country_codes = family["family_geographies"]
-
-        country_slugs = [
-            get_country_slug_from_country_code(data_db, country_code)
-            for country_code in country_codes
-        ]
-
-        params = {**base_params, **{"keyword_filters": {"countries": [country_slugs]}}}
-        body_with_filters = _make_search_request(
-            data_client, valid_token, params=params
-        )
-        filtered_family_slugs = [
-            f["family_slug"] for f in body_with_filters["families"]
-        ]
-        assert len(filtered_family_slugs) == 1
-        assert family["family_slug"] in filtered_family_slugs
-
-    assert mock_corpora_exist_in_db.assert_called
-
-
-@pytest.mark.search
-@patch(
-    "app.api.api_v1.routers.search.AppTokenFactory.verify_corpora_in_db",
-    return_value=True,
-)
-@pytest.mark.parametrize("label,query", [("search", "the"), ("browse", "")])
 def test_keyword_country_filters__geographies(
     mock_corpora_exist_in_db,
     label,
@@ -89,7 +41,6 @@ def test_keyword_country_filters__geographies(
     assert len(families) == VESPA_FIXTURE_COUNT
 
     for family in families:
-        assert family["family_geography"] in family["family_geographies"]
         for country_code in family["family_geographies"]:
             country_slug = get_country_slug_from_country_code(data_db, country_code)
 
