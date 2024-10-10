@@ -13,7 +13,7 @@ from tests.search.vespa.setup_search_tests import (
 @pytest.mark.search
 @patch("app.db.crud.helpers.verify_any_corpora_ids_in_db", return_value=True)
 @pytest.mark.parametrize(
-    "label,query,concept_filters",
+    "query,concept_filters",
     [
         ("the", [{"name": "name", "value": "environment"}]),
         (
