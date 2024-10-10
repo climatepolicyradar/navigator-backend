@@ -1,7 +1,7 @@
 import pytest
 from db_client.models.dfce import FamilyDocument
 
-from app.core.lookups import doc_type_from_family_document_metadata
+from app.repository.lookups import doc_type_from_family_document_metadata
 
 
 @pytest.mark.parametrize(
