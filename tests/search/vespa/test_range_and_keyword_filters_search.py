@@ -41,12 +41,14 @@ def test_keyword_country_filters__geography(
     assert len(families) == VESPA_FIXTURE_COUNT
 
     for family in families:
-        assert family["family_geography"] in family["family_geographies"]
-        country_code = family["family_geography"]
+        country_codes = family["family_geographies"]
 
-        country_slug = get_country_slug_from_country_code(data_db, country_code)
+        country_slugs = [
+            get_country_slug_from_country_code(data_db, country_code)
+            for country_code in country_codes
+        ]
 
-        params = {**base_params, **{"keyword_filters": {"countries": [country_slug]}}}
+        params = {**base_params, **{"keyword_filters": {"countries": [country_slugs]}}}
         body_with_filters = _make_search_request(
             data_client, valid_token, params=params
         )
