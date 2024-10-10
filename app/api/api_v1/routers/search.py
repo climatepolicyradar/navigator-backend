@@ -30,13 +30,13 @@ from app.core.config import (
     VESPA_SECRETS_LOCATION,
     VESPA_URL,
 )
-from app.core.custom_app import AppTokenFactory
 from app.core.download import create_data_download_zip_archive
 from app.core.search import (
     create_vespa_search_params,
     process_result_into_csv,
     process_vespa_search_response,
 )
+from app.service.custom_app import AppTokenFactory
 
 _LOGGER = logging.getLogger(__name__)
 
