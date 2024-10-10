@@ -20,10 +20,10 @@ from app.api.api_v1.routers.lookups import lookups_router
 from app.api.api_v1.routers.pipeline_trigger import pipeline_trigger_router
 from app.api.api_v1.routers.search import search_router
 from app.api.api_v1.routers.summaries import summary_router
+from app.clients.db.session import SessionLocal, engine
 from app.core import config
 from app.core.auth import get_superuser_details
 from app.core.health import is_database_online
-from app.db.session import SessionLocal, engine
 
 os.environ["SKIP_ALEMBIC_LOGGING"] = "1"
 
