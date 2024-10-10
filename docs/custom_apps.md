@@ -6,7 +6,7 @@ Custom app configuration tokens can be generated from the root of the backend
 repository, using the following code snippet
 
 ```bash
-python -c "from app.core import config; from app.core.custom_app import create_configuration_token; print(create_configuration_token('CORPORA_IDS;THEME;APP_DOMAIN'))"
+python -c "from app.core import config; from app.service.custom_app import create_configuration_token; print(create_configuration_token('CORPORA_IDS;THEME;APP_DOMAIN'))"
 ```
 
 where:
@@ -30,7 +30,7 @@ export TOKEN_SECRET_KEY=secret_key
 export CORPORA_IDS=CCLW.corpus.i00000001.n0000,UNFCCC.corpus.i00000001.n0000
 export THEME=CPR
 export AUDIENCE=app.dev.climatepolicyradar.org
-python -c "from app.core import config; from app.core.custom_app import create_configuration_token; print(create_configuration_token('$CORPORA_IDS;$THEME;$AUDIENCE'))"
+python -c "from app.core import config; from app.service.custom_app import create_configuration_token; print(create_configuration_token('$CORPORA_IDS;$THEME;$AUDIENCE'))"
 ```
 
 ### Decoding
@@ -42,5 +42,5 @@ repo:
 docker compose build
 docker compose up -d
 export TOKEN=token
-docker exec -it navigator-backend-backend-1 python -c "from app.core import config; from app.core.custom_app import decode_configuration_token; print(decode_configuration_token('$TOKEN', '$APP_DOMAIN'))"
+docker exec -it navigator-backend-backend-1 python -c "from app.core import config; from app.service.custom_app import decode_configuration_token; print(decode_configuration_token('$TOKEN', '$APP_DOMAIN'))"
 ```
