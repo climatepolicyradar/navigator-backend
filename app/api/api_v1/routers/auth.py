@@ -7,7 +7,7 @@ from fastapi.security import OAuth2PasswordRequestForm
 from app.clients.db.session import get_db
 from app.core.auth import authenticate_user
 from app.core.security import create_access_token
-from app.db.crud.user import get_app_user_authorisation
+from app.repository.user import get_app_user_authorisation
 
 auth_router = r = APIRouter()
 
