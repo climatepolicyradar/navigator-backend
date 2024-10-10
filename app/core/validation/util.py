@@ -7,7 +7,8 @@ from io import BytesIO
 from typing import Any, Collection, Mapping, Optional, Sequence, Union
 
 from app.api.api_v1.schemas.document import DocumentParserInput
-from app.clients.aws.aws import S3Client, S3Document
+from app.clients.aws.client import S3Client
+from app.clients.aws.s3 import S3Document
 from app.config import INGEST_TRIGGER_ROOT, PIPELINE_BUCKET
 
 _LOGGER = logging.getLogger(__file__)
