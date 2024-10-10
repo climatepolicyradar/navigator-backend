@@ -54,7 +54,7 @@ _CSV_SEARCH_RESPONSE_COLUMNS = [
     "Family Summary",
     "Family URL",
     "Family Publication Date",
-    "Geography",
+    "Geographies",
     "Document Title",
     "Document URL",
     "Document Content URL",
@@ -157,6 +157,12 @@ def process_result_into_csv(
             metadata_keys[family_source] = list(
                 [key.title() for key in family_metadata.keys()]
             )
+
+        family_geos = ";".join(
+            [cast(str, geo) for geo in family.family_geographies]
+            if family is not None
+            else []
+        )
         metadata: dict[str, str] = defaultdict(str)
         for k in family_metadata:
             metadata[k.title()] = ";".join(family_metadata.get(k, []))
@@ -167,12 +173,6 @@ def process_result_into_csv(
         if collection is not None:
             collection_name = collection.title
             collection_summary = collection.description
-
-        family_geos = ";".join(
-            [cast(str, geo) for geo in family.family_geographies]
-            if family is not None
-            else []
-        )
 
         family_documents: Sequence[FamilyDocument] = extra_required_info["documents"][
             family.family_slug
