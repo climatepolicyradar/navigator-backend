@@ -178,8 +178,6 @@ def download_search_documents(
     db=Depends(get_db),
 ) -> StreamingResponse:
     """Download a CSV containing details of documents matching the search criteria."""
-    token = AppTokenFactory()
-
     _LOGGER.info(
         "Search download request",
         extra={
@@ -245,8 +243,6 @@ def download_all_search_documents(
     request: Request, app_token: Annotated[str, Header()], db=Depends(get_db)
 ) -> RedirectResponse:
     """Download a CSV containing details of all the documents in the corpus."""
-    token = AppTokenFactory()
-
     _LOGGER.info(
         "Whole data download request",
         extra={
