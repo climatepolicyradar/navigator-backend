@@ -8,9 +8,9 @@ from sqlalchemy.exc import MultipleResultsFound
 from sqlalchemy.orm import Session
 
 from app.api.api_v1.schemas.metadata import ApplicationConfig
-from app.core.organisation import get_all_organisations, get_organisation_config
 from app.core.util import tree_table_to_json
 from app.core.validation import IMPORT_ID_MATCHER
+from app.repository.organisation import get_all_organisations, get_organisation_config
 
 _LOGGER = logging.getLogger(__name__)
 
