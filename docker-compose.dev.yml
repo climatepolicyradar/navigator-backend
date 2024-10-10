@@ -17,7 +17,7 @@ services:
       PYTHONDONTWRITEBYTECODE: 0
       VESPA_URL: http://vespatest:8080
     volumes:
-      - ./:/cpr-backend/:ro
+      - ./:/cpr-backend/
     depends_on:
       vespatest:
         condition: service_healthy
