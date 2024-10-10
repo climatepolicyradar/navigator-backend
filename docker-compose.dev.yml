@@ -15,7 +15,8 @@ services:
   backend:
     environment:
       PYTHONDONTWRITEBYTECODE: 0
-      VESPA_URL: http://vespatest:8080
+      VESPA_URL: http://vespatest:8080 # Search and Feed Interfaces
+      VESPA_CONFIG_URL: http://vespatest:19071 # Config Server
     volumes:
       - ./:/cpr-backend/:ro
     depends_on:
