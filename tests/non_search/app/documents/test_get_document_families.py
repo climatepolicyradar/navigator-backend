@@ -1,4 +1,5 @@
 from db_client.models.dfce.family import Family, FamilyDocument, FamilyEvent
+from fastapi import status
 from fastapi.testclient import TestClient
 from sqlalchemy import update
 from sqlalchemy.orm import Session
@@ -13,61 +14,67 @@ N_FAMILY_KEYS = 15
 N_FAMILY_OVERVIEW_KEYS = 8
 N_DOCUMENT_KEYS = 12
 
+DOCUMENTS_ENDPOINT = "/api/v1/documents"
+
+
+def _make_get_family_or_doc_via_slug_request(
+    client,
+    token,
+    family_slug: str,
+    expected_status_code: int = status.HTTP_200_OK,
+):
+    headers = {"app-token": token}
+
+    response = client.get(
+        f"{DOCUMENTS_ENDPOINT}/{family_slug}",
+        headers=headers,
+    )
+    assert response is not None
+    assert response.status_code == expected_status_code, response.text
+    return response.json()
+
 
 def test_documents_family_slug_returns_not_found(
-    data_db: Session,
-    data_client: TestClient,
+    data_db: Session, data_client: TestClient, valid_token
 ):
     setup_with_docs(data_db)
     assert data_db.query(Family).count() == 1
     assert data_db.query(FamilyEvent).count() == 1
 
     # Test by slug
-    response = data_client.get(
-        "/api/v1/documents/FamSlug100",
+    response = _make_get_family_or_doc_via_slug_request(
+        data_client, valid_token, "FamSlug100", status.HTTP_404_NOT_FOUND
     )
-    assert response.status_code == 404
-    assert response.json()["detail"] == "Nothing found for FamSlug100"
+    assert response["detail"] == "Nothing found for FamSlug100"
 
 
 def test_documents_family_slug_returns_correct_family(
-    data_db: Session,
-    data_client: TestClient,
+    data_db: Session, data_client: TestClient, valid_token
 ):
     setup_with_two_docs(data_db)
 
     # Test by slug
-    response = data_client.get(
-        "/api/v1/documents/FamSlug1",
+    response = _make_get_family_or_doc_via_slug_request(
+        data_client, valid_token, "FamSlug1", status.HTTP_200_OK
     )
-
-    json_response = response.json()
-    assert response.status_code == 200
-    assert json_response["import_id"] == "CCLW.family.1001.0"
+    assert response["import_id"] == "CCLW.family.1001.0"
 
     # Ensure a different family is returned
-    response = data_client.get(
-        "/api/v1/documents/FamSlug2",
+    response = _make_get_family_or_doc_via_slug_request(
+        data_client, valid_token, "FamSlug2", status.HTTP_200_OK
     )
-
-    json_response = response.json()
-    assert response.status_code == 200
-    assert json_response["import_id"] == "CCLW.family.2002.0"
+    assert response["import_id"] == "CCLW.family.2002.0"
 
 
 def test_documents_family_slug_returns_correct_json(
-    data_client: TestClient,
-    data_db: Session,
+    data_client: TestClient, data_db: Session, valid_token
 ):
     setup_with_two_docs(data_db)
 
     # Test associations
-    response = data_client.get(
-        "/api/v1/documents/FamSlug1",
+    json_response = _make_get_family_or_doc_via_slug_request(
+        data_client, valid_token, "FamSlug1", status.HTTP_200_OK
     )
-    json_response = response.json()
-
-    assert response.status_code == 200
     assert len(json_response) == N_FAMILY_KEYS
     assert json_response["organisation"] == "CCLW"
     assert json_response["import_id"] == "CCLW.family.1001.0"
@@ -104,23 +111,18 @@ def test_documents_family_slug_returns_correct_json(
 
 
 def test_documents_family_slug_returns_multiple_docs(
-    data_client: TestClient,
-    data_db: Session,
+    data_client: TestClient, data_db: Session, valid_token
 ):
     setup_with_two_docs_one_family(data_db)
 
-    response = data_client.get(
-        "/api/v1/documents/FamSlug1",
+    json_response = _make_get_family_or_doc_via_slug_request(
+        data_client, valid_token, "FamSlug1", status.HTTP_200_OK
     )
-    json_response = response.json()
-
-    assert response.status_code == 200
     assert len(json_response["documents"]) == 2
 
 
 def test_documents_family_slug_returns_only_published_docs(
-    data_client: TestClient,
-    data_db: Session,
+    data_client: TestClient, data_db: Session, valid_token
 ):
     setup_with_two_docs_one_family(data_db)
     data_db.execute(
@@ -130,18 +132,14 @@ def test_documents_family_slug_returns_only_published_docs(
     )
 
     # Test associations
-    response = data_client.get(
-        "/api/v1/documents/FamSlug1",
+    json_response = _make_get_family_or_doc_via_slug_request(
+        data_client, valid_token, "FamSlug1", status.HTTP_200_OK
     )
-    json_response = response.json()
-
-    assert response.status_code == 200
     assert len(json_response["documents"]) == 1
 
 
 def test_documents_family_slug_returns_404_when_all_docs_deleted(
-    data_client: TestClient,
-    data_db: Session,
+    data_client: TestClient, data_db: Session, valid_token
 ):
     setup_with_two_docs_one_family(data_db)
     data_db.execute(
@@ -156,42 +154,34 @@ def test_documents_family_slug_returns_404_when_all_docs_deleted(
     )
 
     # Test associations
-    response = data_client.get(
-        "/api/v1/documents/FamSlug1",
+    json_response = _make_get_family_or_doc_via_slug_request(
+        data_client, valid_token, "FamSlug1", status.HTTP_404_NOT_FOUND
     )
-    json_response = response.json()
-
-    assert response.status_code == 404
     assert json_response["detail"] == "Family CCLW.family.1001.0 is not published"
 
 
 def test_documents_doc_slug_returns_not_found(
-    data_client: TestClient,
-    data_db: Session,
+    data_client: TestClient, data_db: Session, valid_token
 ):
     setup_with_docs(data_db)
     assert data_db.query(Family).count() == 1
     assert data_db.query(FamilyEvent).count() == 1
 
     # Test associations
-    response = data_client.get(
-        "/api/v1/documents/DocSlug100",
+    response = _make_get_family_or_doc_via_slug_request(
+        data_client, valid_token, "DocSlug100", status.HTTP_404_NOT_FOUND
     )
-    assert response.status_code == 404
-    assert response.json()["detail"] == "Nothing found for DocSlug100"
+    assert response["detail"] == "Nothing found for DocSlug100"
 
 
 def test_documents_doc_slug_preexisting_objects(
-    data_client: TestClient,
-    data_db: Session,
+    data_client: TestClient, data_db: Session, valid_token
 ):
     setup_with_two_docs(data_db)
 
-    response = data_client.get(
-        "/api/v1/documents/DocSlug2",
+    json_response = _make_get_family_or_doc_via_slug_request(
+        data_client, valid_token, "DocSlug2", status.HTTP_200_OK
     )
-    json_response = response.json()
-    assert response.status_code == 200
     assert len(json_response) == 2
 
     family = json_response["family"]
@@ -224,8 +214,7 @@ def test_documents_doc_slug_preexisting_objects(
 
 
 def test_documents_doc_slug_when_deleted(
-    data_client: TestClient,
-    data_db: Session,
+    data_client: TestClient, data_db: Session, valid_token
 ):
     setup_with_two_docs(data_db)
     data_db.execute(
@@ -233,9 +222,7 @@ def test_documents_doc_slug_when_deleted(
         .where(FamilyDocument.import_id == "CCLW.executive.2.2")
         .values(document_status="Deleted")
     )
-    response = data_client.get(
-        "/api/v1/documents/DocSlug2",
+    json_response = _make_get_family_or_doc_via_slug_request(
+        data_client, valid_token, "DocSlug2", status.HTTP_404_NOT_FOUND
     )
-    json_response = response.json()
-    assert response.status_code == 404
     assert json_response["detail"] == "The document CCLW.executive.2.2 is not published"
