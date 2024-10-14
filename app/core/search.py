@@ -37,7 +37,7 @@ from app.api.api_v1.schemas.search import (
     SearchResponseFamily,
     SearchResponseFamilyDocument,
 )
-from app.core.config import PUBLIC_APP_URL
+from app.config import PUBLIC_APP_URL
 from app.core.util import to_cdn_url
 from app.repository.lookups import (
     doc_type_from_family_document_metadata,
@@ -54,7 +54,7 @@ _CSV_SEARCH_RESPONSE_COLUMNS = [
     "Family Summary",
     "Family URL",
     "Family Publication Date",
-    "Geography",
+    "Geographies",
     "Document Title",
     "Document URL",
     "Document Content URL",
@@ -157,6 +157,12 @@ def process_result_into_csv(
             metadata_keys[family_source] = list(
                 [key.title() for key in family_metadata.keys()]
             )
+
+        family_geos = ";".join(
+            [cast(str, geo) for geo in family.family_geographies]
+            if family is not None
+            else []
+        )
         metadata: dict[str, str] = defaultdict(str)
         for k in family_metadata:
             metadata[k.title()] = ";".join(family_metadata.get(k, []))
@@ -210,6 +216,7 @@ def process_result_into_csv(
                     if physical_document is not None
                     else []
                 )
+
                 row = {
                     "Collection Name": collection_name,
                     "Collection Summary": collection_summary,
@@ -222,7 +229,7 @@ def process_result_into_csv(
                     "Document Content URL": document_content,
                     "Document Type": doc_type_from_family_document_metadata(document),
                     "Document Content Matches Search Phrase": document_match,
-                    "Geography": family.family_geography,
+                    "Geographies": family_geos,
                     "Category": family.family_category,
                     "Languages": document_languages,
                     "Source": family_source,
@@ -243,7 +250,7 @@ def process_result_into_csv(
                 "Document Content URL": "",
                 "Document Type": "",
                 "Document Content Matches Search Phrase": "n/a",
-                "Geography": family.family_geography,
+                "Geographies": family_geos,
                 "Category": family.family_category,
                 "Languages": "",
                 "Source": family_source,
@@ -389,7 +396,6 @@ def _process_vespa_search_response_families(
                 or hit.family_name is None
                 or hit.family_category is None
                 or hit.family_source is None
-                or hit.family_geography is None
                 or hit.family_geographies is None
             ):
                 _LOGGER.error(
@@ -425,7 +431,6 @@ def _process_vespa_search_response_families(
                     continuation_token=vespa_family.continuation_token,
                     prev_continuation_token=vespa_family.prev_continuation_token,
                     family_documents=[],
-                    family_geography=hit.family_geography,
                     family_geographies=hit.family_geographies,
                     family_metadata=cast(dict, db_family_metadata.value),
                 )

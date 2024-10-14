@@ -16,6 +16,24 @@ from tests.search.vespa.setup_search_tests import (
 SEARCH_ENDPOINT = "/api/v1/searches"
 CSV_DOWNLOAD_ENDPOINT = "/api/v1/searches/download-csv"
 
+_CSV_SEARCH_RESPONSE_COLUMNS = [
+    "Collection Name",
+    "Collection Summary",
+    "Family Name",
+    "Family Summary",
+    "Family URL",
+    "Family Publication Date",
+    "Geographies",
+    "Document Title",
+    "Document URL",
+    "Document Content URL",
+    "Document Type",
+    "Document Content Matches Search Phrase",
+    "Category",
+    "Languages",
+    "Source",
+]
+
 
 def _make_download_request(
     client,
@@ -74,11 +92,18 @@ def test_csv_content(
 
     csv_content = csv.DictReader(StringIO(csv_response.text))
     for row, family in zip(csv_content, families):
+        assert all(col in row.keys() for col in _CSV_SEARCH_RESPONSE_COLUMNS)
+
         assert row["Family Name"] == family["family_name"]
         assert row["Family Summary"] == family["family_description"]
         assert row["Family Publication Date"] == family["family_date"]
         assert row["Category"] == family["family_category"]
-        assert row["Geography"] == family["family_geography"]
+
+        assert isinstance(row["Geographies"], str)
+        if len(family["family_geographies"]) > 1:
+            assert (
+                row["Geographies"].count(";") == len(family["family_geographies"]) - 1
+            )
 
         # TODO: Add collections to test db setup to provide document level coverage
 
