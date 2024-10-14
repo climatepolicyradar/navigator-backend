@@ -4,11 +4,11 @@ from fastapi import APIRouter, BackgroundTasks, Depends, Request, status
 from sqlalchemy.orm import Session
 
 from app.api.api_v1.schemas.document import BulkIngestResult
+from app.clients.aws.client import S3Client, get_s3_client
 from app.clients.db.session import get_db
 from app.core.ingestion.pipeline import generate_pipeline_ingest_input
 from app.core.validation.util import get_new_s3_prefix, write_documents_to_s3
 from app.service.auth import get_superuser_details
-from app.clients.aws.client import S3Client, get_s3_client
 
 _LOGGER = logging.getLogger(__name__)
 
