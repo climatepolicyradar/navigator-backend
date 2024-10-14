@@ -258,11 +258,6 @@ class SearchResponseFamily(BaseModel):
     The name given to the type of corpus the family belongs to. E.G. 'Laws and Policies'
     """
 
-    family_geography: str
-    """
-    The geographical location of the family in ISO 3166-1 alpha-3
-    """
-
     family_geographies: List[str]
     """
     The geographical locations of the family in ISO 3166-1 alpha-3

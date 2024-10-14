@@ -9,7 +9,7 @@ from typing import Optional
 import pandas as pd
 from fastapi import Depends
 
-from app.db.session import get_db
+from app.clients.db.session import get_db
 
 _LOGGER = getLogger(__name__)
 

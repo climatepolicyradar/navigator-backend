@@ -155,7 +155,7 @@ A list of family objects, each following the scheme below:
   "family_date": "string",
   "family_last_updated_date": "string",
   "family_source": "string",
-  "family_geography": "string",
+  "family_geographies": "string[]",
   "family_metadata": {},
   "family_title_match": true,
   "family_description_match": true,
@@ -197,9 +197,9 @@ event of this family of documents.
 
 The source, currently organisation name. Either “CCLW” or “UNFCCC”
 
-##### family_geography
+##### family_geographies
 
-The geographical location of the family in [ISO 3166-1 alpha-3](https://en.wikipedia.org/wiki/ISO_3166-1_alpha-3)
+The geographical location(s) of the family in [ISO 3166-1 alpha-3](https://en.wikipedia.org/wiki/ISO_3166-1_alpha-3)
 
 ##### family_metadata
 
