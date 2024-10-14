@@ -331,11 +331,6 @@ def test_create_vespa_search_params(
         assert converted_keyword_filters is not None
         assert produced_search_parameters.filters is not None
         assert produced_search_parameters.filters == CprSdkFilters(
-            family_geography=(
-                converted_keyword_filters["family_geography"]
-                if "family_geography" in converted_keyword_filters.keys()
-                else []
-            ),
             family_category=(
                 converted_keyword_filters["family_category"]
                 if "family_category" in converted_keyword_filters.keys()
@@ -624,7 +619,6 @@ def _generate_search_response_hits(spec: FamSpec) -> Sequence[CprSdkHit]:
                 family_slug=slugify(spec.family_name),
                 family_category=spec.family_category,
                 family_publication_ts=datetime.fromisoformat(spec.family_ts),
-                family_geography=spec.family_geo,
                 family_geographies=spec.family_geos,
                 corpus_import_id=spec.corpus_import_id,
                 corpus_type_name=spec.corpus_type_name,
@@ -658,7 +652,6 @@ def _generate_search_response_hits(spec: FamSpec) -> Sequence[CprSdkHit]:
                 family_slug=slugify(spec.family_name),
                 family_category=spec.family_category,
                 family_publication_ts=datetime.fromisoformat(spec.family_ts),
-                family_geography=spec.family_geo,
                 family_geographies=spec.family_geos,
                 corpus_import_id=spec.corpus_import_id,
                 corpus_type_name=spec.corpus_type_name,
