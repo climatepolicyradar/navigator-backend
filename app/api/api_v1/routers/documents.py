@@ -9,7 +9,7 @@ from app.api.api_v1.schemas.document import (
     FamilyDocumentWithContextResponse,
 )
 from app.clients.db.session import get_db
-from app.db.crud.document import (
+from app.repository.document import (
     get_family_and_documents,
     get_family_document_and_context,
     get_slugged_objects,

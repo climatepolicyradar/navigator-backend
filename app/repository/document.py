@@ -32,9 +32,9 @@ from app.api.api_v1.schemas.document import (
     FamilyEventsResponse,
     LinkableFamily,
 )
-from app.core.lookups import doc_type_from_family_document_metadata
 from app.core.util import to_cdn_url
-from app.db.crud.geography import get_geo_subquery
+from app.repository.geography import get_geo_subquery
+from app.repository.lookups import doc_type_from_family_document_metadata
 
 _LOGGER = logging.getLogger(__file__)
 

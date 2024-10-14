@@ -4,7 +4,7 @@ from db_client.models.dfce import FamilyDocument, FamilyGeography
 from sqlalchemy.orm import Session
 
 from app.api.api_v1.schemas.document import FamilyDocumentWithContextResponse
-from app.db.crud.document import get_family_document_and_context
+from app.repository.document import get_family_document_and_context
 from tests.non_search.setup_helpers import setup_with_documents_large_with_families
 
 

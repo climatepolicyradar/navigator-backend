@@ -38,12 +38,12 @@ from app.api.api_v1.schemas.search import (
     SearchResponseFamilyDocument,
 )
 from app.config import PUBLIC_APP_URL
-from app.core.lookups import (
+from app.core.util import to_cdn_url
+from app.repository.lookups import (
     doc_type_from_family_document_metadata,
     get_countries_for_region,
     get_countries_for_slugs,
 )
-from app.core.util import to_cdn_url
 
 _LOGGER = logging.getLogger(__name__)
 
