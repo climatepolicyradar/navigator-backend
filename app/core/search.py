@@ -478,6 +478,7 @@ def _process_vespa_search_response_families(
                         text_block_id=hit.text_block_id,
                         text_block_page=hit.text_block_page,
                         text_block_coords=hit.text_block_coords,
+                        concepts=hit.concepts,
                     )
                 )
 
