@@ -4,7 +4,7 @@ from datetime import datetime, timedelta
 import jwt
 import pytest
 
-from app.core.custom_app import AppTokenFactory
+from app.service.custom_app import AppTokenFactory
 
 TOKEN_SECRET_KEY = os.environ["TOKEN_SECRET_KEY"]
 ALGORITHM = "HS256"

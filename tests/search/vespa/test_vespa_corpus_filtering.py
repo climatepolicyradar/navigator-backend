@@ -74,8 +74,11 @@ def test_search_with_corpus_ids_in_token_not_in_db(
     monkeypatch.setattr(search, "_VESPA_CONNECTION", test_vespa)
     _populate_db_families(data_db)
 
-    with patch("app.core.custom_app.AppTokenFactory.decode", return_value=True), patch(
-        "app.core.custom_app.AppTokenFactory.verify_corpora_in_db", return_value=False
+    with patch(
+        "app.service.custom_app.AppTokenFactory.decode", return_value=True
+    ), patch(
+        "app.service.custom_app.AppTokenFactory.verify_corpora_in_db",
+        return_value=False,
     ):
         response = _make_search_request(
             data_client,
@@ -164,7 +167,8 @@ def test_search_with_invalid_corpus_id_in_search_request_params(
     _populate_db_families(data_db)
 
     with patch(
-        "app.core.custom_app.AppTokenFactory.validate_corpora_ids", return_value=False
+        "app.service.custom_app.AppTokenFactory.validate_corpora_ids",
+        return_value=False,
     ):
         response = _make_search_request(
             data_client,
