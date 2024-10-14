@@ -12,6 +12,7 @@ from fastapi_health import health
 from fastapi_pagination import add_pagination
 from starlette.requests import Request
 
+from app import config
 from app.api.api_v1.routers.admin import admin_document_router
 from app.api.api_v1.routers.auth import auth_router
 from app.api.api_v1.routers.documents import documents_router
@@ -21,7 +22,6 @@ from app.api.api_v1.routers.pipeline_trigger import pipeline_trigger_router
 from app.api.api_v1.routers.search import search_router
 from app.api.api_v1.routers.summaries import summary_router
 from app.clients.db.session import SessionLocal, engine
-from app.core import config
 from app.core.auth import get_superuser_details
 from app.core.health import is_database_online
 
