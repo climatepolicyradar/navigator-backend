@@ -7,6 +7,7 @@ for the type of document search being performed.
 """
 
 import logging
+from enum import Enum
 from io import BytesIO
 from typing import Annotated, Optional, Sequence, cast
 
@@ -50,12 +51,42 @@ _VESPA_CONNECTION = VespaSearchAdapter(
 search_router = APIRouter()
 
 
-def _search_request(db: Session, search_body: SearchRequestBody) -> SearchResponse:
-    is_browse_request = not search_body.query_string
-    if is_browse_request:
+class SearchType(str, Enum):
+    standard = "standard"
+    browse = "browse"
+    browse_with_concepts = "browse_with_concepts"
+
+
+def identify_search_type(search_body: SearchRequestBody) -> str:
+    """Identify the search type from parameters"""
+    if not search_body.query_string and not search_body.concept_filters:
+        return SearchType.browse
+    elif not search_body.query_string and search_body.concept_filters:
+        return SearchType.browse_with_concepts
+    else:
+        return SearchType.standard
+
+
+def mutate_search_body_for_search_type(
+    search_body: SearchRequestBody,
+) -> SearchRequestBody:
+    """Mutate the search body in line with the search params"""
+    search_type = identify_search_type(search_body=search_body)
+    if search_type == SearchType.browse:
         search_body.all_results = True
         search_body.documents_only = True
         search_body.exact_match = False
+    elif search_type == SearchType.browse_with_concepts:
+        search_body.all_results = True
+        search_body.documents_only = False
+        search_body.exact_match = False
+    return search_body
+
+
+def _search_request(db: Session, search_body: SearchRequestBody) -> SearchResponse:
+    """Perform a search request against the Vespa search engine"""
+    search_body = mutate_search_body_for_search_type(search_body=search_body)
+
     try:
         cpr_sdk_search_params = create_vespa_search_params(db, search_body)
         cpr_sdk_search_response = _VESPA_CONNECTION.search(
