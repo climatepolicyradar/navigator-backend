@@ -24,9 +24,10 @@ jobs:
   code-quality:
     if: |
       ! cancelled() && always() &&
+      (needs.check-auto-tagging-will-work.result == 'skipped' || needs.check-auto-tagging-will-work.result == 'success') &&
       ! startsWith(github.ref, 'refs/tags')
-    # needs:
-    #   - check-auto-tagging-will-work
+    needs:
+      - check-auto-tagging-will-work
     permissions:
       # For trunk to post annotations
       checks: write
