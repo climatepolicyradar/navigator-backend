@@ -1,6 +1,7 @@
 """Functions to support the geographies endpoint."""
 
 import logging
+from typing import Optional
 
 from db_client.models.dfce.family import (
     Family,
@@ -21,30 +22,21 @@ _LOGGER = logging.getLogger(__file__)
 
 def get_geo_subquery(
     db: Session,
-    allowed_geo_slugs=None,
-    allowed_geo_values=None,
-    family_document_import_id=None,
+    allowed_geo_slugs: Optional[list[str]] = None,
+    allowed_geo_values: Optional[list[str]] = None,
+    family_document_import_id: Optional[str] = None,
 ) -> Query:
     """
     Create a subquery to fetch geographies associated with families.
 
-    :param db: Database session.
-    :param allowed_geo_slugs: Optional list of allowed geography slugs.
-    :param allowed_geo_values: Optional list of allowed geography values.
-    :param family_document_import_id: Optional family document import ID.
-    :return: A subquery for geographies.
-    """
-
-    """ NOTE: This is an intermediate step to migrate to multi-geography support.
-    We grab the minimum geography value for each family to use as a fallback for a single geography.
-    This is because there is no rank for geography values and we need to pick one.
-
-    This also looks dodgy as the "value" and "slug" may not match up.
-    However, the browse code only uses one of these values, so it should be fine.
-
-    Don't forget this is temporary and will be removed once multi-geography support is implemented.
-
-    Also remember to update the pipeline query to pass these in when changing this.
+    :param Session db: Database session.
+    :param Optional[list[str]] allowed_geo_slugs: Optional list of
+        allowed geography slugs.
+    :param Optional[list[str]] allowed_geo_values: Optional list of
+        allowed geography values.
+    :param Optional[str] family_document_import_id: Optional family
+        document import ID.
+    :return Query: A subquery for geographies.
     """
     geo_subquery = (
         db.query(
