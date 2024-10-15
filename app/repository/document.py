@@ -21,6 +21,7 @@ from db_client.models.dfce.family import (
 from db_client.models.dfce.metadata import FamilyMetadata
 from db_client.models.document.physical_document import PhysicalDocument
 from db_client.models.organisation.organisation import Organisation
+from sqlalchemy import func
 from sqlalchemy.orm import Session
 
 from app.api.api_v1.schemas.document import (
@@ -66,14 +67,21 @@ def get_family_document_and_context(
     )
     db_objects = (
         db.query(
-            Family, FamilyDocument, PhysicalDocument, geo_subquery.c.value, FamilyCorpus  # type: ignore
+            Family,
+            FamilyDocument,
+            PhysicalDocument,
+            func.array_agg(geo_subquery.c.value).label(  # type: ignore
+                "geographies"
+            ),  # Aggregate geographies
+            FamilyCorpus,
         )
         .filter(FamilyDocument.import_id == family_document_import_id)
         .filter(Family.import_id == FamilyDocument.family_import_id)
         .filter(FamilyDocument.physical_document_id == PhysicalDocument.id)
         .filter(FamilyCorpus.family_import_id == Family.import_id)
         .filter(geo_subquery.c.family_import_id == Family.import_id)  # type: ignore
-    ).first()  # TODO: Fix when handling multiple geographies /PDCT-1510
+        .group_by(Family, FamilyDocument, PhysicalDocument, FamilyCorpus)
+    ).first()
 
     if not db_objects:
         _LOGGER.warning(
@@ -84,7 +92,7 @@ def get_family_document_and_context(
             f"No family document found for import_id: {family_document_import_id}"
         )
 
-    family, document, physical_document, geography_value, family_corpus = db_objects
+    family, document, physical_document, geographies, family_corpus = db_objects
 
     if (
         family.family_status != FamilyStatus.PUBLISHED
@@ -95,7 +103,8 @@ def get_family_document_and_context(
     family_context = FamilyContext(
         title=cast(str, family.title),
         import_id=cast(str, family.import_id),
-        geography=geography_value,
+        geography=geographies[0],  # First geography for backward compatibility
+        geographies=geographies,
         slug=family.slugs[0].name,
         category=family.family_category,
         published_date=family.published_date,
@@ -147,7 +156,13 @@ def get_family_and_documents(db: Session, import_id: str) -> FamilyAndDocumentsR
     geo_subquery = get_geo_subquery(db)
     db_objects = (
         db.query(
-            Family, geo_subquery.c.value, FamilyMetadata, Organisation, FamilyCorpus  # type: ignore
+            Family,
+            func.array_agg(geo_subquery.c.value).label(  # type: ignore
+                "geographies"
+            ),  # Aggregate geographies
+            FamilyMetadata,
+            Organisation,
+            FamilyCorpus,
         )
         .join(FamilyMetadata, Family.import_id == FamilyMetadata.family_import_id)
         .join(FamilyCorpus, Family.import_id == FamilyCorpus.family_import_id)
@@ -155,14 +170,14 @@ def get_family_and_documents(db: Session, import_id: str) -> FamilyAndDocumentsR
         .join(Organisation, Corpus.organisation_id == Organisation.id)
         .filter(Family.import_id == import_id)
         .filter(geo_subquery.c.family_import_id == Family.import_id)  # type: ignore
-    ).first()  # TODO Fix as part of PDCT-1440
+        .group_by(Family, FamilyMetadata, Organisation, FamilyCorpus)
+    ).first()
 
     if not db_objects:
         _LOGGER.warning("No family found for import_id", extra={"slug": import_id})
         raise ValueError(f"No family found for import_id: {import_id}")
 
-    family: Family
-    (family, geography_value, family_metadata, organisation, family_corpus) = db_objects
+    family, geographies, family_metadata, organisation, family_corpus = db_objects
 
     if family.family_status != FamilyStatus.PUBLISHED:
         raise ValueError(f"Family {import_id} is not published")
@@ -175,7 +190,8 @@ def get_family_and_documents(db: Session, import_id: str) -> FamilyAndDocumentsR
         import_id=import_id,
         title=cast(str, family.title),
         summary=cast(str, family.description),
-        geography=geography_value,
+        geography=geographies[0],  # First geography for backward compatibility
+        geographies=geographies,
         category=cast(str, family.family_category),
         status=cast(str, family.family_status),
         metadata=cast(dict, family_metadata.value),

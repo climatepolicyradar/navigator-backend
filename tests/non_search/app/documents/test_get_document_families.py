@@ -9,8 +9,8 @@ from tests.non_search.setup_helpers import (
     setup_with_two_docs_one_family,
 )
 
-N_FAMILY_KEYS = 15
-N_FAMILY_OVERVIEW_KEYS = 8
+N_FAMILY_KEYS = 16  # TODO: Replace with 15 as part of PDCT-1440
+N_FAMILY_OVERVIEW_KEYS = 9  # TODO: Replace with 8 part of PDCT-1440
 N_DOCUMENT_KEYS = 12
 
 
@@ -73,7 +73,10 @@ def test_documents_family_slug_returns_correct_json(
     assert json_response["import_id"] == "CCLW.family.1001.0"
     assert json_response["title"] == "Fam1"
     assert json_response["summary"] == "Summary1"
-    assert json_response["geography"] == "South Asia"
+    assert (
+        json_response["geography"] == "South Asia"
+    )  # TODO: Replace with 15 as part of PDCT-1440
+    assert json_response["geographies"] == ["South Asia"]
     assert json_response["category"] == "Executive"
     assert json_response["status"] == "Published"
     assert json_response["corpus_id"] == "CCLW.corpus.i00000001.n0000"
@@ -199,7 +202,8 @@ def test_documents_doc_slug_preexisting_objects(
     assert len(family.keys()) == N_FAMILY_OVERVIEW_KEYS
     assert family["title"] == "Fam2"
     assert family["import_id"] == "CCLW.family.2002.0"
-    assert family["geography"] == "AFG"
+    assert family["geography"] == "AFG"  # TODO: Replace with 15 as part of PDCT-1440
+    assert family["geographies"] == ["AFG"]
     assert family["category"] == "Executive"
     assert family["slug"] == "FamSlug2"
     assert family["corpus_id"] == "CCLW.corpus.i00000001.n0000"

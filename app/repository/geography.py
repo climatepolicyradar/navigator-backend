@@ -34,16 +34,7 @@ def get_geo_subquery(
     :param family_document_import_id: Optional family document import ID.
     :return: A subquery for geographies.
     """
-    geo_subquery = (
-        db.query(
-            Geography.value.label("value"),
-            Geography.slug.label("slug"),
-            FamilyGeography.family_import_id,
-        )
-        .join(FamilyGeography, FamilyGeography.geography_id == Geography.id)
-        .filter(FamilyGeography.family_import_id == Family.import_id)
-        .group_by(Geography.value, Geography.slug, FamilyGeography.family_import_id)
-    )
+
     """ NOTE: This is an intermediate step to migrate to multi-geography support.
     We grab the minimum geography value for each family to use as a fallback for a single geography.
     This is because there is no rank for geography values and we need to pick one.
@@ -55,6 +46,15 @@ def get_geo_subquery(
 
     Also remember to update the pipeline query to pass these in when changing this.
     """
+    geo_subquery = (
+        db.query(
+            Geography.value.label("value"),
+            Geography.slug.label("slug"),
+            FamilyGeography.family_import_id,
+        )
+        .join(FamilyGeography, FamilyGeography.geography_id == Geography.id)
+        .filter(FamilyGeography.family_import_id == Family.import_id)
+    )
 
     if allowed_geo_slugs is not None:
         geo_subquery = geo_subquery.filter(Geography.slug.in_(allowed_geo_slugs))
