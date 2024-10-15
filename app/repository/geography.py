@@ -25,11 +25,19 @@ def get_geo_subquery(
     allowed_geo_values=None,
     family_document_import_id=None,
 ) -> Query:
+    """
+    Create a subquery to fetch geographies associated with families.
 
+    :param db: Database session.
+    :param allowed_geo_slugs: Optional list of allowed geography slugs.
+    :param allowed_geo_values: Optional list of allowed geography values.
+    :param family_document_import_id: Optional family document import ID.
+    :return: A subquery for geographies.
+    """
     geo_subquery = (
         db.query(
-            func.min(Geography.value).label("value"),
-            func.min(Geography.slug).label("slug"),
+            Geography.value.label("value"),
+            Geography.slug.label("slug"),
             FamilyGeography.family_import_id,
         )
         .join(FamilyGeography, FamilyGeography.geography_id == Geography.id)
