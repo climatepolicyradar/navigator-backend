@@ -174,7 +174,12 @@ def generate_pipeline_ingest_input_query(
 
 
 def generate_pipeline_ingest_input(db: Session) -> Sequence[DocumentParserInput]:
-    """Generates a complete view of the current document database as pipeline input"""
+    """Generate a view of the current document db as pipeline input.
+
+    :param Session db: The db session to query against.
+    :return Sequence[DocumentParserInput]: A list of DocumentParserInput
+        objects that can be used by the pipeline.
+    """
 
     results = generate_pipeline_ingest_input_query(db)
 
