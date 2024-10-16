@@ -13,7 +13,7 @@ from db_client.models.dfce.family import (
 from db_client.models.dfce.metadata import FamilyMetadata
 from db_client.models.organisation import Organisation
 from sqlalchemy import func
-from sqlalchemy.orm import Session
+from sqlalchemy.orm import Session, lazyload
 
 from app.api.api_v1.schemas.document import DocumentParserInput
 from app.repository.geography import get_geo_subquery
@@ -43,6 +43,7 @@ def fetch_family_and_metadata(
     _LOGGER.info("Running pipeline family query")
     return (
         db.query(
+            Family.import_id.label("family_import_id"),
             Family,
             FamilyMetadata,
             Organisation,
@@ -52,8 +53,7 @@ def fetch_family_and_metadata(
         .join(FamilyCorpus, Family.import_id == FamilyCorpus.family_import_id)
         .join(Corpus, Corpus.import_id == FamilyCorpus.corpus_import_id)
         .join(Organisation, Corpus.organisation_id == Organisation.id)
-        .distinct()
-        .all()
+        .subquery()
     )
 
 
@@ -71,6 +71,7 @@ def fetch_documents(db: Session) -> Sequence[Tuple[FamilyDocument, PhysicalDocum
     _LOGGER.info("Running pipeline document query")
     return (
         db.query(
+            FamilyDocument.import_id.label("doc_import_id"),
             FamilyDocument,
             PhysicalDocument,
         )
@@ -78,8 +79,7 @@ def fetch_documents(db: Session) -> Sequence[Tuple[FamilyDocument, PhysicalDocum
             PhysicalDocument, PhysicalDocument.id == FamilyDocument.physical_document_id
         )
         .filter(FamilyDocument.document_status != DocumentStatus.DELETED)
-        .distinct()
-        .all()
+        .subquery()
     )
 
 
@@ -103,7 +103,7 @@ def fetch_geographies(db: Session) -> Sequence[Tuple[str, list[str]]]:
             func.json_agg(func.distinct(geo_subquery.c.value)).label("geographies"),  # type: ignore
         )
         .group_by(geo_subquery.c.family_import_id)  # type: ignore
-        .all()
+        .subquery()
     )
 
 
@@ -111,13 +111,13 @@ def generate_pipeline_ingest_input_query(
     db: Session,
 ) -> Sequence[
     Tuple[
-        Family,
         FamilyDocument,
+        Family,
         FamilyMetadata,
-        list[str],
         Organisation,
         Corpus,
         PhysicalDocument,
+        list[str],
     ]
 ]:
     """Get a list of non-deleted docs and their associated meta & geos.
@@ -141,37 +141,45 @@ def generate_pipeline_ingest_input_query(
     ]]: A list of tuples containing the information needed to populate
         a DocumentParserInput object.
     """
-    families = fetch_family_and_metadata(db)
-    documents = fetch_documents(db)
-    geographies = fetch_geographies(db)
 
-    # Combine results of above queries.
     _LOGGER.info("Combining results of pipeline subqueries")
-    db_objects = []
-    for family, family_metadata, organisation, corpus in families:
-        for family_document, physical_document in documents:
-            if family.import_id == family_document.family_import_id:
-                geo_list = next(
-                    (
-                        geo.geographies  # type:ignore
-                        for geo in geographies
-                        if geo.family_import_id == family.import_id  # type:ignore
-                    ),
-                    [],
-                )
-                db_objects.append(
-                    (
-                        family,
-                        family_document,
-                        family_metadata,
-                        geo_list,
-                        organisation,
-                        corpus,
-                        physical_document,
-                    )
-                )
 
-    return db_objects
+    # Subquery to aggregate geographies
+    geography_subquery = fetch_geographies(db)
+
+    # Main query
+    query = (
+        db.query(
+            FamilyDocument,
+            Family,
+            FamilyMetadata,
+            Organisation,
+            Corpus,
+            PhysicalDocument,
+            geography_subquery.c.geographies,  # type: ignore
+        )
+        .select_from(FamilyDocument)
+        .join(Family, Family.import_id == FamilyDocument.family_import_id)
+        .join(FamilyMetadata, Family.import_id == FamilyMetadata.family_import_id)
+        .join(FamilyCorpus, Family.import_id == FamilyCorpus.family_import_id)
+        .join(Corpus, Corpus.import_id == FamilyCorpus.corpus_import_id)
+        .join(Organisation, Organisation.id == Corpus.organisation_id)
+        .join(
+            PhysicalDocument, PhysicalDocument.id == FamilyDocument.physical_document_id
+        )
+        .join(
+            geography_subquery,
+            geography_subquery.c.family_import_id == Family.import_id,  # type: ignore
+        )
+        .filter(FamilyDocument.document_status != DocumentStatus.DELETED)
+        .options(
+            # Disable any default eager loading
+            lazyload("*")
+        )
+    )
+    print(query)
+    results = query.all()
+    return results
 
 
 def generate_pipeline_ingest_input(db: Session) -> Sequence[DocumentParserInput]:
@@ -228,13 +236,13 @@ def generate_pipeline_ingest_input(db: Session) -> Sequence[DocumentParserInput]
             ),
         )
         for (
-            family,
             family_document,
+            family,
             family_metadata,
-            geographies,
             organisation,
             corpus,
             physical_document,
+            geographies,
         ) in results
     ]
 
