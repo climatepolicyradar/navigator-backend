@@ -120,13 +120,14 @@ def generate_pipeline_ingest_input_query(
         PhysicalDocument,
     ]
 ]:
-    """
-    Generates a comprehensive list of non-deleted documents with associated metadata and geographies.
+    """Get a list of non-deleted docs and their associated meta & geos.
 
-    This function combines the results of three separate queries: family and metadata, documents, and geographies.
-    It iterates over the results of these queries, matching families with their documents and geographies based on
-    the family_import_id. The final result is a list of tuples, each containing all the necessary information to
-    construct a DocumentParserInput object.
+    This function combines the results of three separate queries:
+    family and metadata, documents, and geographies by iterating over
+    the results of these queries, matching families with their documents
+    and geographies based on the family_import_id. The final result is a
+    list of tuples, containing the required information to construct a
+    DocumentParserInput object.
 
     :param Session db: The db session to query against.
     :return Sequence[Tuple[
