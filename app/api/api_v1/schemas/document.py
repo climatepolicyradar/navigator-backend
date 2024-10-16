@@ -82,7 +82,7 @@ class FamilyContext(BaseModel):
     title: str
     import_id: str
     geography: str  # Keep this for backward compatibility PDCT-1440
-    geographies: list[str]  # New property
+    geographies: list[str]
     category: str
     slug: str
     published_date: Optional[datetime] = None
@@ -105,7 +105,7 @@ class FamilyAndDocumentsResponse(BaseModel):
     title: str
     summary: str
     geography: str  # Keep this for backward compatibility PDCT-1440
-    geographies: list[str]  # New property
+    geographies: list[str]
     category: str
     status: str
     metadata: dict
