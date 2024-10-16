@@ -12,6 +12,7 @@ from db_client.models.dfce.family import (
 )
 from db_client.models.dfce.metadata import FamilyMetadata
 from db_client.models.organisation import Organisation
+from sqlalchemy import func
 from sqlalchemy.orm import Session
 
 from app.api.api_v1.schemas.document import DocumentParserInput
@@ -23,43 +24,163 @@ _LOGGER = logging.getLogger(__name__)
 MetadataType = dict[str, list[str]]
 
 
-def generate_pipeline_ingest_input(db: Session) -> Sequence[DocumentParserInput]:
-    """Generates a complete view of the current document database as pipeline input"""
-    _LOGGER.info("Running pipeline family query")
-    geo_subquery = get_geo_subquery(db)
+def fetch_family_and_metadata(
+    db: Session,
+) -> Sequence[Tuple[Family, FamilyMetadata, Organisation, Corpus]]:
+    """Fetch distinct family & family metadata information from the db.
 
-    query = (
+    This function queries the database to retrieve a list of families
+    along with their associated metadata, organisation, and corpus info.
+    It ensures that only distinct combinations of these entities are
+    returned.
+
+    :param Session db: The db session to query against.
+    :return Sequence[
+        Tuple[Family, FamilyMetadata, Organisation, Corpus]
+    ]: A list of tuples, each containing a Family, FamilyMetadata,
+        Organisation, and Corpus object.
+    """
+    _LOGGER.info("Running pipeline family query")
+    return (
         db.query(
-            Family, FamilyDocument, FamilyMetadata, geo_subquery.c.value, Organisation, Corpus, PhysicalDocument  # type: ignore
+            Family,
+            FamilyMetadata,
+            Organisation,
+            Corpus,
         )
-        .join(Family, Family.import_id == FamilyDocument.family_import_id)
-        .join(FamilyCorpus, FamilyCorpus.family_import_id == Family.import_id)
-        .join(Corpus, Corpus.import_id == FamilyCorpus.corpus_import_id)
         .join(FamilyMetadata, Family.import_id == FamilyMetadata.family_import_id)
-        .join(Organisation, Organisation.id == Corpus.organisation_id)
+        .join(FamilyCorpus, Family.import_id == FamilyCorpus.family_import_id)
+        .join(Corpus, Corpus.import_id == FamilyCorpus.corpus_import_id)
+        .join(Organisation, Corpus.organisation_id == Organisation.id)
+        .distinct()
+        .all()
+    )
+
+
+def fetch_documents(db: Session) -> Sequence[Tuple[FamilyDocument, PhysicalDocument]]:
+    """Fetch non-deleted documents and their associated physical docs.
+
+    This function queries the database to retrieve a list of family
+    documents that are not marked as deleted and any associated physical
+    documents. Only distinct combinations are returned.
+
+    :param Session db: The db session to query against.
+    :return Sequence[Tuple[FamilyDocument, PhysicalDocument]]: A list of
+        tuples, each containing a FamilyDocument and PhysicalDocument.
+    """
+    _LOGGER.info("Running pipeline document query")
+    return (
+        db.query(
+            FamilyDocument,
+            PhysicalDocument,
+        )
         .join(
             PhysicalDocument, PhysicalDocument.id == FamilyDocument.physical_document_id
         )
         .filter(FamilyDocument.document_status != DocumentStatus.DELETED)
-        .filter(geo_subquery.c.family_import_id == Family.import_id)  # type: ignore
+        .distinct()
+        .all()
     )
 
-    query_result = cast(
-        Sequence[
-            Tuple[
-                Family,
-                FamilyDocument,
-                FamilyMetadata,
-                str,
-                Organisation,
-                Corpus,
-                PhysicalDocument,
-            ]
-        ],
-        query.all(),
+
+def fetch_geographies(db: Session) -> Sequence[Tuple[str, list[str]]]:
+    """Fetch unique geographies associated with each family.
+
+    This function queries the database to retrieve a list of geographies
+    associated with each family. It aggregates the geographies into a
+    JSON array for each family, as one family can now have multiple
+    associated geographies.
+
+    :param Session db: The db session to query against.
+    :return Sequence[Tuple[str, list[str]]]: A list of tuples, each
+        containing a family_import_id and a list of associated geos.
+    """
+    _LOGGER.info("Running pipeline geographies query")
+    geo_subquery = get_geo_subquery(db)
+    return (
+        db.query(
+            geo_subquery.c.family_import_id,  # type: ignore
+            func.json_agg(func.distinct(geo_subquery.c.value)).label("geographies"),  # type: ignore
+        )
+        .group_by(geo_subquery.c.family_import_id)  # type: ignore
+        .all()
     )
+
+
+def generate_pipeline_ingest_input_query(
+    db: Session,
+) -> Sequence[
+    Tuple[
+        Family,
+        FamilyDocument,
+        FamilyMetadata,
+        list[str],
+        Organisation,
+        Corpus,
+        PhysicalDocument,
+    ]
+]:
+    """
+    Generates a comprehensive list of non-deleted documents with associated metadata and geographies.
+
+    This function combines the results of three separate queries: family and metadata, documents, and geographies.
+    It iterates over the results of these queries, matching families with their documents and geographies based on
+    the family_import_id. The final result is a list of tuples, each containing all the necessary information to
+    construct a DocumentParserInput object.
+
+    :param Session db: The db session to query against.
+    :return Sequence[Tuple[
+        Family,
+        FamilyDocument,
+        FamilyMetadata,
+        list[str],
+        Organisation,
+        Corpus,
+        PhysicalDocument
+    ]]: A list of tuples containing the information needed to populate
+        a DocumentParserInput object.
+    """
+    families = fetch_family_and_metadata(db)
+    documents = fetch_documents(db)
+    geographies = fetch_geographies(db)
+
+    # Combine results of above queries.
+    _LOGGER.info("Combining results of pipeline subqueries")
+    db_objects = []
+    for family, family_metadata, organisation, corpus in families:
+        for family_document, physical_document in documents:
+            if family.import_id == family_document.family_import_id:
+                geo_list = next(
+                    (
+                        geo.geographies  # type:ignore
+                        for geo in geographies
+                        if geo.family_import_id == family.import_id  # type:ignore
+                    ),
+                    [],
+                )
+                db_objects.append(
+                    (
+                        family,
+                        family_document,
+                        family_metadata,
+                        geo_list,
+                        organisation,
+                        corpus,
+                        physical_document,
+                    )
+                )
+
+    return db_objects
+
+
+def generate_pipeline_ingest_input(db: Session) -> Sequence[DocumentParserInput]:
+    """Generates a complete view of the current document database as pipeline input"""
+
+    results = generate_pipeline_ingest_input_query(db)
+
+    _LOGGER.info("Parsing pipeline query data")
+
     fallback_date = datetime(1900, 1, 1, tzinfo=timezone.utc)
-    _LOGGER.info("Running pipeline document query")
     documents: Sequence[DocumentParserInput] = [
         DocumentParserInput(
             name=cast(str, family.title),  # All documents in a family indexed by title
@@ -79,8 +200,10 @@ def generate_pipeline_ingest_input(db: Session) -> Sequence[DocumentParserInput]
             download_url=None,
             type=doc_type_from_family_document_metadata(family_document),
             source=cast(str, organisation.name),
-            geography=cast(str, geography),
-            geographies=[cast(str, geography)],
+            geography=cast(
+                str, geographies[0]
+            ),  # First geography for backward compatibility
+            geographies=geographies,
             corpus_import_id=cast(str, corpus.import_id),
             corpus_type_name=cast(str, corpus.corpus_type_name),
             collection_title=None,
@@ -102,11 +225,11 @@ def generate_pipeline_ingest_input(db: Session) -> Sequence[DocumentParserInput]
             family,
             family_document,
             family_metadata,
-            geography,
+            geographies,
             organisation,
             corpus,
             physical_document,
-        ) in query_result
+        ) in results
     ]
 
     # TODO: Revert to raise a ValueError when the issue is resolved
