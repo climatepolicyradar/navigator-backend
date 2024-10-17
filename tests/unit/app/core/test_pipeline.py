@@ -1,14 +1,21 @@
+import json
 from typing import Dict
+from unittest.mock import patch
 
+from click.testing import CliRunner
 from sqlalchemy.orm import Session
 
 from app.core.ingestion.pipeline import (
     flatten_pipeline_metadata,
+    format_pipeline_ingest_input,
     generate_pipeline_ingest_input,
+    get_db_state_content,
 )
+from scripts.db_state_validator_click import main as db_state_validator_main
 from tests.non_search.setup_helpers import (
     setup_docs_with_two_orgs,
     setup_with_documents_large_with_families,
+    setup_with_two_docs_multiple_languages,
     setup_with_two_docs_one_family,
     setup_with_two_unpublished_docs,
 )
@@ -84,3 +91,214 @@ def test_flatten_pipeline_metadata():
     assert result["family.b"] == ["2"]
     assert result["document.a"] == ["3"]
     assert result["document.b"] == ["4"]
+
+
+def test_get_db_state_content_success(data_db: Session, caplog):
+    """
+    GIVEN an expected db state file
+    WHEN the branch db state content is identical (bar ordering)
+    THEN the db state validator should succeed
+    """
+    setup_with_two_docs_multiple_languages(data_db)
+
+    expected_db_state_contents = {
+        "documents": {
+            "CCLW.executive.1.2": {
+                "name": "Fam1",
+                "document_title": "Document1",
+                "description": "Summary1",
+                "import_id": "CCLW.executive.1.2",
+                "slug": "DocSlug1",
+                "family_import_id": "CCLW.family.1001.0",
+                "family_slug": "FamSlug1",
+                "publication_ts": "2019-12-25T00:00:00+00:00",
+                "date": None,
+                "source_url": "http://somewhere1",
+                "download_url": None,
+                "corpus_import_id": "CCLW.corpus.i00000001.n0000",
+                "corpus_type_name": "Laws and Policies",
+                "collection_title": None,
+                "collection_summary": None,
+                "type": "Plan",
+                "source": "CCLW",
+                "category": "Executive",
+                "geography": "South Asia",
+                "geographies": ["South Asia"],
+                "languages": ["French", "English"],
+                "metadata": {
+                    "family.size": "big",
+                    "family.color": "pink",
+                    "document.role": ["MAIN"],
+                    "document.type": ["Plan"],
+                },
+            },
+            "CCLW.executive.2.2": {
+                "name": "Fam2",
+                "document_title": "Document2",
+                "description": "Summary2",
+                "import_id": "CCLW.executive.2.2",
+                "slug": "DocSlug2",
+                "family_import_id": "CCLW.family.2002.0",
+                "family_slug": "FamSlug2",
+                "publication_ts": "2019-12-25T00:00:00+00:00",
+                "date": None,
+                "source_url": "http://another_somewhere",
+                "download_url": None,
+                "corpus_import_id": "CCLW.corpus.i00000001.n0000",
+                "corpus_type_name": "Laws and Policies",
+                "collection_title": None,
+                "collection_summary": None,
+                "type": "Order",
+                "source": "CCLW",
+                "category": "Executive",
+                "geography": "AFG",
+                "geographies": ["AFG", "IND"],
+                "languages": [],
+                "metadata": {
+                    "family.size": "small",
+                    "family.color": "blue",
+                    "document.role": ["MAIN"],
+                    "document.type": ["Order"],
+                },
+            },
+        }
+    }
+
+    actual_db_state_content = get_db_state_content(data_db)
+
+    # Use the db_state_validator to verify the db_state files are alike.
+    runner = CliRunner()
+    with runner.isolated_filesystem():
+        with open("expected.json", "w") as f:
+            f.write(json.dumps(expected_db_state_contents))
+
+        with open("actual.json", "w") as f:
+            f.write(json.dumps(actual_db_state_content))
+
+        result = runner.invoke(
+            db_state_validator_main, ["expected.json", "actual.json"]
+        )
+
+    assert result.exit_code == 0
+    assert "🎉 DB states are equivalent!" in caplog.messages
+
+
+@patch("json.dump")
+def test_get_db_state_content_fails_when_mismatch(
+    mock_json_dump, data_db: Session, caplog
+):
+    """
+    GIVEN a db state file where the doc CCLW.executive.1.2 has 2 langs
+    WHEN the branch db state contains a third lang for this document
+    THEN fail the db state validator & output the differences
+    """
+    setup_with_two_docs_multiple_languages(data_db)
+
+    expected_main_db_state = generate_pipeline_ingest_input(data_db)
+
+    modified_branch_db_state = {
+        "documents": {
+            "CCLW.executive.1.2": {
+                "name": "Fam1",
+                "document_title": "Document1",
+                "description": "Summary1",
+                "import_id": "CCLW.executive.1.2",
+                "slug": "DocSlug1",
+                "family_import_id": "CCLW.family.1001.0",
+                "family_slug": "FamSlug1",
+                "publication_ts": "2019-12-25T00:00:00+00:00",
+                "date": None,
+                "source_url": "http://somewhere1",
+                "download_url": None,
+                "corpus_import_id": "CCLW.corpus.i00000001.n0000",
+                "corpus_type_name": "Laws and Policies",
+                "collection_title": None,
+                "collection_summary": None,
+                "type": "Plan",
+                "source": "CCLW",
+                "category": "Executive",
+                "geography": "South Asia",
+                "geographies": ["South Asia"],
+                "languages": ["French", "English", "NewLanguage"],
+                "metadata": {
+                    "family.size": "big",
+                    "family.color": "pink",
+                    "document.role": ["MAIN"],
+                    "document.type": ["Plan"],
+                },
+            },
+            "CCLW.executive.2.2": {
+                "name": "Fam2",
+                "document_title": "Document2",
+                "description": "Summary2",
+                "import_id": "CCLW.executive.2.2",
+                "slug": "DocSlug2",
+                "family_import_id": "CCLW.family.2002.0",
+                "family_slug": "FamSlug2",
+                "publication_ts": "2019-12-25T00:00:00+00:00",
+                "date": None,
+                "source_url": "http://another_somewhere",
+                "download_url": None,
+                "corpus_import_id": "CCLW.corpus.i00000001.n0000",
+                "corpus_type_name": "Laws and Policies",
+                "collection_title": None,
+                "collection_summary": None,
+                "type": "Order",
+                "source": "CCLW",
+                "category": "Executive",
+                "geography": "AFG",
+                "geographies": ["AFG", "IND"],
+                "languages": [],
+                "metadata": {
+                    "family.size": "small",
+                    "family.color": "blue",
+                    "document.role": ["MAIN"],
+                    "document.type": ["Order"],
+                },
+            },
+        }
+    }
+
+    # Use the db_state_validator to verify the db_state files are alike.
+    runner = CliRunner()
+    with runner.isolated_filesystem():
+        with open("expected.json", "w") as f:
+            f.write(json.dumps(format_pipeline_ingest_input(expected_main_db_state)))
+
+        with open("actual.json", "w") as f:
+            f.write(json.dumps(modified_branch_db_state))
+
+        result = runner.invoke(
+            db_state_validator_main, ["expected.json", "actual.json"]
+        )
+
+    assert result.exit_code == 1
+    assert "Field 'languages' differs" in caplog.text
+
+    # Check the JSON differences were written
+    mock_json_dump.assert_called_once()
+    differences = mock_json_dump.call_args[0][0]
+    assert "differences" in differences
+
+    assert "CCLW.executive.1.2" in differences["differences"]
+    assert (
+        "languages"
+        in differences["differences"][
+            modified_branch_db_state["documents"]["CCLW.executive.1.2"]
+        ]
+    )
+    assert all(
+        k
+        in differences["differences"][
+            modified_branch_db_state["documents"]["CCLW.executive.1.2"]["languages"]
+        ]
+        for k in ["main", "branch"]
+    )
+    assert ["English", "French"] == differences["differences"][
+        modified_branch_db_state["documents"]["CCLW.executive.1.2"]["languages"]["main"]
+    ]
+    assert ["English", "French", "NewLanguage"] == differences["differences"][
+        modified_branch_db_state["documents"]["CCLW.executive.1.2"]["languages"][
+            "branch"
+        ]
+    ]
