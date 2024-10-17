@@ -114,7 +114,8 @@ def generate_pipeline_ingest_input_query(
         )
         .filter(FamilyDocument.document_status != DocumentStatus.DELETED)
         .options(
-            # Disable any default eager loading
+            # Disable any default eager loading as this was causing multiplicity due to
+            # implicit joins due to relationships between the selected models.
             lazyload("*")
         )
     )
