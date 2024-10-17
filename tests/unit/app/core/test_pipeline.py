@@ -281,24 +281,14 @@ def test_get_db_state_content_fails_when_mismatch(
     assert "differences" in differences
 
     assert "CCLW.executive.1.2" in differences["differences"]
-    assert (
-        "languages"
-        in differences["differences"][
-            modified_branch_db_state["documents"]["CCLW.executive.1.2"]
-        ]
-    )
+    assert "languages" in differences["differences"]["CCLW.executive.1.2"]
     assert all(
-        k
-        in differences["differences"][
-            modified_branch_db_state["documents"]["CCLW.executive.1.2"]["languages"]
-        ]
+        k in differences["differences"]["CCLW.executive.1.2"]["languages"]
         for k in ["main", "branch"]
     )
-    assert ["English", "French"] == differences["differences"][
-        modified_branch_db_state["documents"]["CCLW.executive.1.2"]["languages"]["main"]
-    ]
+    assert ["English", "French"] == differences["differences"]["CCLW.executive.1.2"][
+        "languages"
+    ]["main"]
     assert ["English", "French", "NewLanguage"] == differences["differences"][
-        modified_branch_db_state["documents"]["CCLW.executive.1.2"]["languages"][
-            "branch"
-        ]
-    ]
+        "CCLW.executive.1.2"
+    ]["languages"]["branch"]
