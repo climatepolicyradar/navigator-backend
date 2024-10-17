@@ -246,3 +246,15 @@ def flatten_pipeline_metadata(
         metadata[f"document.{k}"] = v
 
     return metadata
+
+
+def get_db_state_content(db: Session):
+    """Get the db_state.json content in JSON form.
+
+    :param Session db: The db session to query against.
+    :return: A list of DocumentParserInput objects in the JSON format
+        that will be written to the db_state.json file used by the
+        pipeline.
+    """
+    pipeline_ingest_input = generate_pipeline_ingest_input(db)
+    return format_pipeline_ingest_input(pipeline_ingest_input)
