@@ -1,67 +1,19 @@
 import json
 import logging
 import sys
-from typing import List, Mapping, Optional
+from typing import List
 
 import click
-from pydantic import BaseModel, ValidationError
+from pydantic import ValidationError
+from cpr_sdk.pipeline_general_models import InputData
+from cpr_sdk.parser_models import BackendDocument
 
 # Setup logger
 logging.basicConfig(level=logging.INFO)
 logger = logging.getLogger(__name__)
 
 
-class DocumentMetadata(BaseModel):
-    """Model for document metadata."""
-
-    family_topic: List[str] = []
-    family_hazard: List[str] = []
-    family_sector: List[str] = []
-    family_keyword: List[str] = []
-    family_framework: List[str] = []
-    family_instrument: List[str] = []
-    document_role: List[str] = []
-    document_type: List[str] = []
-
-
-class Document(BaseModel):
-    """Model for a DocumentParserInput document."""
-
-    name: str
-    document_title: str
-    description: str
-    import_id: str
-    slug: str
-    family_import_id: str
-    family_slug: str
-    publication_ts: str
-    date: Optional[str] = None
-    source_url: Optional[str] = None
-    download_url: Optional[str] = None
-    corpus_import_id: str
-    corpus_type_name: str
-    collection_title: Optional[str] = None
-    collection_summary: Optional[str] = None
-    type: str
-    source: str
-    category: str
-    geography: str
-    geographies: List[str] = []
-    languages: List[str] = []
-    metadata: DocumentMetadata
-
-
-class DBState(BaseModel):
-    """Model for the database state.
-
-    :param documents: Mapping of documents where their import ID is key
-    :type documents: Mapping[str, Document]
-    """
-
-    documents: Mapping[str, Document]
-
-
-def load_json(file_path: str) -> DBState:
+def load_json(file_path: str) -> InputData:
     """Load JSON from a file and validate it against the DBState model.
 
     :param file_path: Path to the JSON file
@@ -73,14 +25,14 @@ def load_json(file_path: str) -> DBState:
     try:
         with open(file_path, "r") as file:
             data = json.load(file)
-        return DBState(**data)
+        return InputData(**data)
     except (json.JSONDecodeError, ValidationError) as e:
         logger.error(f"💥 Error loading JSON from {file_path}: {e}")
         sys.exit(1)
 
 
 def find_differing_doc_import_ids(
-    main_sorted: List[Document], branch_sorted: List[Document]
+    main_sorted: List[BackendDocument], branch_sorted: List[BackendDocument]
 ) -> bool:
     main_set = {doc.import_id for doc in main_sorted}
     branch_set = {doc.import_id for doc in branch_sorted}
@@ -99,7 +51,7 @@ def find_differing_doc_import_ids(
 
 
 def find_document_differences(
-    main_sorted: List[Document], branch_sorted: List[Document]
+    main_sorted: List[BackendDocument], branch_sorted: List[BackendDocument]
 ) -> bool:
     """Compare each document in two sorted lists and log differences.
 
@@ -152,7 +104,7 @@ def find_document_differences(
     return differences_found
 
 
-def compare_db_states(main_db: DBState, branch_db: DBState):
+def compare_db_states(main_db: InputData, branch_db: InputData):
     """Compare two DB state files and log differences.
 
     :param main_db: The main database state (source of truth)
