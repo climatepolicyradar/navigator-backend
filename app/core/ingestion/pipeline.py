@@ -159,8 +159,10 @@ def generate_pipeline_ingest_input(db: Session) -> Sequence[DocumentParserInput]
             category=str(family.family_category),
             publication_ts=family.published_date or fallback_date,
             import_id=cast(str, family_document.import_id),
+            # This gets the most recent document slug.
             slug=cast(str, family_document.slugs[-1].name),
             family_import_id=cast(str, family.import_id),
+            # This gets the most recent family slug.
             family_slug=cast(str, family.slugs[-1].name),
             source_url=(
                 cast(str, family_document.physical_document.source_url)
