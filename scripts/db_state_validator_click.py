@@ -126,8 +126,8 @@ def find_document_differences(
                 main_value = getattr(main_doc, field)
                 branch_value = getattr(branch_doc, field)
 
-                # Special handling for 'languages' field
-                if field == "languages":
+                # Special handling for 'languages' and 'geographies' fields
+                if field in ["languages", "geographies"]:
                     main_value = sorted(main_value)
                     branch_value = sorted(branch_value)
 
