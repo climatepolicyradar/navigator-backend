@@ -113,13 +113,28 @@ def generate_pipeline_ingest_input_query(
             geography_subquery.c.family_import_id == Family.import_id,  # type: ignore
         )
         .filter(FamilyDocument.document_status != DocumentStatus.DELETED)
+        .filter(geography_subquery.c.family_import_id == Family.import_id)  # type: ignore
         .options(
             # Disable any default eager loading as this was causing multiplicity due to
-            # implicit joins due to relationships between the selected models.
+            # implicit joins in relationships on the selected models.
             lazyload("*")
         )
     )
-    results = query.all()
+
+    results = cast(
+        Sequence[
+            Tuple[
+                Family,
+                FamilyDocument,
+                FamilyMetadata,
+                list[str],
+                Organisation,
+                Corpus,
+                PhysicalDocument,
+            ]
+        ],
+        query.all(),
+    )
     return results
 
 
