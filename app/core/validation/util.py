@@ -6,7 +6,6 @@ from datetime import datetime
 from io import BytesIO
 from typing import Any, Collection, Mapping, Optional, Sequence, Union
 
-from app.api.api_v1.schemas.document import DocumentParserInput
 from app.clients.aws.client import S3Client
 from app.clients.aws.s3_document import S3Document
 from app.config import INGEST_TRIGGER_ROOT, PIPELINE_BUCKET
@@ -40,9 +39,7 @@ def _flatten_maybe_tree(
 
 
 def write_documents_to_s3(
-    s3_client: S3Client,
-    s3_prefix: str,
-    documents: Sequence[DocumentParserInput],
+    s3_client: S3Client, s3_prefix: str, content
 ) -> Union[S3Document, bool]:
     """
     Write current state of documents into S3 to trigger a pipeline run after bulk ingest
@@ -52,10 +49,7 @@ def write_documents_to_s3(
     :param [Sequence[DocumentCreateRequest]] documents: a sequence of document
         specifications to write to S3
     """
-    json_content = json.dumps(
-        {"documents": {d.import_id: d.to_json() for d in documents}},
-        indent=2,
-    )
+    json_content = json.dumps(content, indent=2)
     bytes_content = BytesIO(json_content.encode("utf8"))
     documents_object_key = f"{s3_prefix}/db_state.json"
     _LOGGER.info("Writing Documents file into S3")

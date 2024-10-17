@@ -93,7 +93,7 @@ def get_default_families():
         "title": "Fam2",
         "slug": "FamSlug2",
         "description": "Summary2",
-        "geography_id": 2,
+        "geography_id": [2, 5],
         "category": "Executive",
         "documents": [],
         "metadata": {

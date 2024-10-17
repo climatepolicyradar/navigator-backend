@@ -84,7 +84,7 @@ def _add_published_fams_and_docs(db: Session):
         "title": "Fam3",
         "slug": "FamSlug3",
         "description": "Summary3",
-        "geography_id": 5,
+        "geography_id": [2, 5],
         "category": "UNFCCC",
         "documents": [],
         "metadata": {

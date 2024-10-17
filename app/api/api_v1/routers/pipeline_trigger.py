@@ -6,7 +6,7 @@ from sqlalchemy.orm import Session
 from app.api.api_v1.schemas.document import BulkIngestResult
 from app.clients.aws.client import S3Client, get_s3_client
 from app.clients.db.session import get_db
-from app.core.ingestion.pipeline import generate_pipeline_ingest_input
+from app.core.ingestion.pipeline import get_db_state_content
 from app.core.validation.util import get_new_s3_prefix, write_documents_to_s3
 from app.service.auth import get_superuser_details
 
@@ -22,11 +22,11 @@ def _start_ingest(
 ):
     """Writes a db state file to s3 which will trigger an ingest."""
     try:
-        pipeline_ingest_input = generate_pipeline_ingest_input(db)
+        pipeline_ingest_input_content = get_db_state_content(db)
         write_documents_to_s3(
             s3_client=s3_client,
             s3_prefix=s3_prefix,
-            documents=pipeline_ingest_input,
+            content=pipeline_ingest_input_content,
         )
     except Exception as e:
         _LOGGER.exception(
