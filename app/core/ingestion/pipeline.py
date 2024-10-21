@@ -222,16 +222,6 @@ def generate_pipeline_ingest_input(db: Session) -> Sequence[DocumentParserInput]
     return documents
 
 
-def format_pipeline_ingest_input(documents: Sequence[DocumentParserInput]):
-    """Format the DocumentParserInput objects for the db_state.json file.
-
-    :param Sequence[DocumentParserInput] documents: A list of
-        DocumentParserInput objects that can be used by the pipeline.
-    :return: The contents of the db_state.json file in JSON form.
-    """
-    return {"documents": {d.import_id: d.to_json() for d in documents}}
-
-
 def _flatten_pipeline_metadata(
     family_metadata: MetadataType, document_metadata: MetadataType
 ) -> MetadataType:
