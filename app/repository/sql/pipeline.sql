@@ -115,7 +115,10 @@ SELECT
   f.title as "family_title",
   p.title as "physical_document_title",
   f.description as "family_description",
-  f.family_category as "family_category",
+  CASE
+    WHEN f.family_category in ('UNFCCC', 'MCF') THEN UPPER(f.family_category::TEXT)
+    ELSE INITCAP(f.family_category::TEXT)
+  END "family_category",
   fp.published_date as "family_published_date",
   d.import_id as "family_document_import_id",
   ds.name as "family_document_slug",
