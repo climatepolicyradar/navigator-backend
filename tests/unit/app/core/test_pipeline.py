@@ -6,11 +6,11 @@ from click.testing import CliRunner
 from sqlalchemy.orm import Session
 
 from app.core.ingestion.pipeline import (
-    flatten_pipeline_metadata,
+    _flatten_pipeline_metadata,
     format_pipeline_ingest_input,
     generate_pipeline_ingest_input,
-    get_db_state_content,
 )
+from app.service.pipeline import get_db_state_content
 from scripts.db_state_validator_click import main as db_state_validator_main
 from tests.non_search.setup_helpers import (
     setup_docs_with_two_orgs,
@@ -84,7 +84,7 @@ def test_generate_pipeline_ingest_input__deleted(data_db: Session):
 def test_flatten_pipeline_metadata():
     family_metadata = {"a": ["1"], "b": ["2"]}
     doc_metadata = {"a": ["3"], "b": ["4"]}
-    result = flatten_pipeline_metadata(family_metadata, doc_metadata)
+    result = _flatten_pipeline_metadata(family_metadata, doc_metadata)
 
     assert len(result) == 4
     assert result["family.a"] == ["1"]

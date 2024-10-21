@@ -21,22 +21,6 @@ def format_pipeline_ingest_input(documents: Sequence[DocumentParserInput]):
     return {"documents": {d.import_id: d.to_json() for d in documents}}
 
 
-def flatten_pipeline_metadata(
-    family_metadata: MetadataType, document_metadata: MetadataType
-) -> MetadataType:
-    """Combines metadata objects ready for the pipeline"""
-
-    metadata = {}
-
-    for k, v in family_metadata.items():
-        metadata[f"family.{k}"] = v
-
-    for k, v in document_metadata.items():
-        metadata[f"document.{k}"] = v
-
-    return metadata
-
-
 def get_db_state_content(db: Session):
     """Get the db_state.json content in JSON form.
 
