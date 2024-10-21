@@ -52,6 +52,11 @@ def parse_document_object(row: pd.Series) -> DocumentParserInput:
     :return DocumentParserInput: A DocumentParserInput object
         representing the family document record & its context.
     """
+    published_date = row.family_published_date
+    published_date = datetime(
+        published_date.year, published_date.month, published_date.day
+    ).astimezone(timezone.utc)
+
     fallback_date = datetime(1900, 1, 1, tzinfo=timezone.utc)
     return DocumentParserInput(
         # All documents in a family indexed by title
@@ -59,7 +64,7 @@ def parse_document_object(row: pd.Series) -> DocumentParserInput:
         document_title=cast(str, row.physical_document_title),
         description=cast(str, row.family_description),
         category=str(row.family_category),
-        publication_ts=row.family_published_date or fallback_date,
+        publication_ts=published_date or fallback_date,
         import_id=cast(str, row.family_document_import_id),
         # This gets the most recently added document slug.
         slug=cast(str, row.family_document_slug),
