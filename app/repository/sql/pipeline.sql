@@ -115,19 +115,14 @@ SELECT
   f.title as "family_title",
   p.title as "physical_document_title",
   f.description as "family_description",
-  CASE
-    WHEN f.family_category in ('UNFCCC', 'MCF') THEN UPPER(f.family_category::TEXT)
-    ELSE INITCAP(f.family_category::TEXT)
-  END "family_category",
+  f.family_category as "family_category",
   fp.published_date as "family_published_date",
   d.import_id as "family_document_import_id",
   ds.name as "family_document_slug",
   f.import_id as "family_import_id",
   fs.name as "family_slug",
   p.source_url as "physical_document_source_url",
-  INITCAP(d.valid_metadata::json#>>'{
-    type,0}') as
-  "family_document_type",
+  d.valid_metadata::json#>>'{type,0}' as "family_document_type",
   o.name as "organisation_name",
   geos.geographies as "geographies",
   c.import_id as "corpus_import_id",
