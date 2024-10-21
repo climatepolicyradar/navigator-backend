@@ -46,6 +46,7 @@ def write_documents_to_s3(
 
     :param [S3Client] s3_client: an S3 client to use to write data
     :param [str] s3_prefix: prefix into which to write the document updates in s3
+    :param [dict[str, Any]] content: db state document content
     :param [Sequence[DocumentCreateRequest]] documents: a sequence of document
         specifications to write to S3
     """
