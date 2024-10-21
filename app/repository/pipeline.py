@@ -55,31 +55,31 @@ def parse_document_object(row: pd.Series) -> DocumentParserInput:
     fallback_date = datetime(1900, 1, 1, tzinfo=timezone.utc)
     return DocumentParserInput(
         # All documents in a family indexed by title
-        name=cast(str, row.get("family_title")),
-        document_title=cast(str, row.get("physical_document_title")),
-        description=cast(str, row.get("family_description")),
-        category=str(row.get("family_category")),
-        publication_ts=row.get("family_published_date") or fallback_date,
-        import_id=cast(str, row.get("family_document_import_id")),
+        name=cast(str, row.family_title),
+        document_title=cast(str, row.physical_document_title),
+        description=cast(str, row.family_description),
+        category=str(row.family_category),
+        publication_ts=row.family_published_date or fallback_date,
+        import_id=cast(str, row.family_document_import_id),
         # This gets the most recently added document slug.
-        slug=cast(str, row.get("family_document_slug")),
-        family_import_id=cast(str, row.get("family_import_id")),
+        slug=cast(str, row.family_document_slug),
+        family_import_id=cast(str, row.family_import_id),
         # This gets the most recently added family slug.
-        family_slug=cast(str, row.get("family_slug")),
+        family_slug=cast(str, row.family_slug),
         source_url=(
-            cast(str, row.get("physical_document_source_url"))
-            if row.get("physical_document_source_url") is not None
+            cast(str, row.physical_document_source_url)
+            if row.physical_document_source_url is not None
             else None
         ),
         download_url=None,
         type=cast(str, row.get("family_document_type", default="")),
-        source=cast(str, row.get("organisation_name")),
+        source=cast(str, row.organisation_name),
         geography=cast(list, row.get("geographies", default=[""]))[
             0
         ],  # First geography for backward compatibility
-        geographies=row.get("geographies"),
-        corpus_import_id=cast(str, row.get("corpus_import_id")),
-        corpus_type_name=cast(str, row.get("corpus_type_name")),
+        geographies=row.geographies,
+        corpus_import_id=cast(str, row.corpus_import_id),
+        corpus_type_name=cast(str, row.corpus_type_name),
         collection_title=None,
         collection_summary=None,
         languages=[
@@ -92,8 +92,8 @@ def parse_document_object(row: pd.Series) -> DocumentParserInput:
             )
         ],
         metadata=_flatten_pipeline_metadata(
-            cast(MetadataType, row.get("family_metadata")),
-            cast(MetadataType, row.get("family_document_metadata")),
+            cast(MetadataType, row.family_metadata),
+            cast(MetadataType, row.family_document_metadata),
         ),
     )
 
