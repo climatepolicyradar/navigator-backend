@@ -1,5 +1,6 @@
 """Functions to support browsing the RDS document structure"""
 
+import os
 import zipfile
 from functools import lru_cache
 from io import BytesIO, StringIO
@@ -16,7 +17,7 @@ _LOGGER = getLogger(__name__)
 
 @lru_cache()
 def _get_query_template():
-    with open("./app/core/download.sql", "r") as file:
+    with open(os.path.join("app", "core", "download.sql"), "r") as file:
         return file.read()
 
 
