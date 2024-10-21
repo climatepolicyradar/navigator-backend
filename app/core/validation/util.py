@@ -39,7 +39,7 @@ def _flatten_maybe_tree(
 
 
 def write_documents_to_s3(
-    s3_client: S3Client, s3_prefix: str, content
+    s3_client: S3Client, s3_prefix: str, content: dict[str, Any]
 ) -> Union[S3Document, bool]:
     """
     Write current state of documents into S3 to trigger a pipeline run after bulk ingest
