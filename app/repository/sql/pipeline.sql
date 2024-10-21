@@ -1,181 +1,181 @@
-WITH deduplicated_family_slugs as (   SELECT
-        distinct
+WITH deduplicated_family_slugs AS (   SELECT
+        DISTINCT
             ON (slug.family_import_id)   slug.family_import_id,
             slug.created,
             slug.name
     FROM
         (     SELECT
-            slug.family_import_id as "family_import_id",
-            count(*) as count
+            slug.family_import_id AS "family_import_id",
+            Count(*) AS count
         FROM
             slug
         WHERE
-            slug.family_import_id is not null
-        group by
+            slug.family_import_id IS NOT NULL
+        GROUP BY
             slug.family_import_id
-        having
-            count(*) > 1   ) duplicates
+        HAVING
+            Count(*) > 1   ) duplicates
     left join
         slug
-            on duplicates.family_import_id = slug.family_import_id
-    order by
-        slug.family_import_id desc,
-        slug.created desc,
-        slug.ctid desc ),
-        unique_family_slugs as (   SELECT
-            distinct
+            ON duplicates.family_import_id = slug.family_import_id
+    ORDER BY
+        slug.family_import_id DESC,
+        slug.created DESC,
+        slug.ctid DESC ),
+        unique_family_slugs AS (   SELECT
+            DISTINCT
                 ON (slug.family_import_id)   slug.family_import_id,
                 slug.created,
                 slug.name
         FROM
             (     SELECT
-                slug.family_import_id as "family_import_id",
-                count(*) as count
+                slug.family_import_id AS "family_import_id",
+                Count(*) AS count
             FROM
                 slug
             WHERE
-                slug.family_import_id is not null
-            group by
+                slug.family_import_id IS NOT NULL
+            GROUP BY
                 slug.family_import_id
-            having
-                count(*) = 1   ) non_duplicates
+            HAVING
+                Count(*) = 1   ) non_duplicates
         left join
             slug
-                on non_duplicates.family_import_id = slug.family_import_id
-        order by
-            slug.family_import_id desc,
-            slug.created desc,
-            slug.ctid desc   ),
-            most_recent_family_slugs as (   SELECT
-                deduplicated_family_slugs.family_import_id as "family_import_id",
-                deduplicated_family_slugs.created as "created",
-                deduplicated_family_slugs.name as "name"
+                ON non_duplicates.family_import_id = slug.family_import_id
+        ORDER BY
+            slug.family_import_id DESC,
+            slug.created DESC,
+            slug.ctid DESC   ),
+            most_recent_family_slugs AS (   SELECT
+                deduplicated_family_slugs.family_import_id AS "family_import_id",
+                deduplicated_family_slugs.created AS "created",
+                deduplicated_family_slugs.name AS "name"
             FROM
                 deduplicated_family_slugs
             UNION
             ALL   SELECT
-                unique_family_slugs.family_import_id as "family_import_id",
-                unique_family_slugs.created as "created",
-                unique_family_slugs.name as "name"
+                unique_family_slugs.family_import_id AS "family_import_id",
+                unique_family_slugs.created AS "created",
+                unique_family_slugs.name AS "name"
             FROM
                 unique_family_slugs
-            order by
-                family_import_id desc,
-                created desc   ), deduplicated_doc_slugs as (   SELECT
-                distinct
+            ORDER BY
+                family_import_id DESC,
+                created DESC   ), deduplicated_doc_slugs AS (   SELECT
+                DISTINCT
                     ON (slug.family_document_import_id)   slug.family_document_import_id,
                     slug.created,
                     slug.name
             FROM
                 (     SELECT
-                    slug.family_document_import_id as "family_document_import_id",
-                    count(*) as count
+                    slug.family_document_import_id AS "family_document_import_id",
+                    Count(*) AS count
                 FROM
                     slug
                 WHERE
-                    slug.family_document_import_id is not null
-                group by
+                    slug.family_document_import_id IS NOT NULL
+                GROUP BY
                     slug.family_document_import_id
-                having
-                    count(*) >  1   ) duplicates
+                HAVING
+                    Count(*) >  1   ) duplicates
             left join
                 slug
-                    on duplicates.family_document_import_id = slug.family_document_import_id
-            order by
-                slug.family_document_import_id desc,
-                slug.created desc,
-                slug.ctid desc ),
-                unique_doc_slugs as (   SELECT
-                    distinct
+                    ON duplicates.family_document_import_id = slug.family_document_import_id
+            ORDER BY
+                slug.family_document_import_id DESC,
+                slug.created DESC,
+                slug.ctid DESC ),
+                unique_doc_slugs AS (   SELECT
+                    DISTINCT
                         ON (slug.family_document_import_id)   slug.family_document_import_id,
                         slug.created,
                         slug.name
                 FROM
                     (     SELECT
-                        slug.family_document_import_id as "family_document_import_id",
-                        count(*) as count
+                        slug.family_document_import_id AS "family_document_import_id",
+                        Count(*) AS count
                     FROM
                         slug
                     WHERE
-                        slug.family_document_import_id is not null
-                    group by
+                        slug.family_document_import_id IS NOT NULL
+                    GROUP BY
                         slug.family_document_import_id
-                    having
-                        count(*) = 1   ) non_duplicates
+                    HAVING
+                        Count(*) = 1   ) non_duplicates
                 left join
                     slug
-                        on non_duplicates.family_document_import_id = slug.family_document_import_id
-                order by
-                    slug.family_document_import_id desc,
-                    slug.created desc,
-                    slug.ctid desc   ),
-                    most_recent_doc_slugs as (   SELECT
-                        deduplicated_doc_slugs.family_document_import_id   as "family_document_import_id",
+                        ON non_duplicates.family_document_import_id = slug.family_document_import_id
+                ORDER BY
+                    slug.family_document_import_id DESC,
+                    slug.created DESC,
+                    slug.ctid DESC   ),
+                    most_recent_doc_slugs AS (   SELECT
+                        deduplicated_doc_slugs.family_document_import_id   AS "family_document_import_id",
                         deduplicated_doc_slugs.created,
                         deduplicated_doc_slugs.name
                     FROM
                         deduplicated_doc_slugs
                     UNION
                     ALL   SELECT
-                        unique_doc_slugs.family_document_import_id as "family_document_import_id",
+                        unique_doc_slugs.family_document_import_id AS "family_document_import_id",
                         unique_doc_slugs.created,
                         unique_doc_slugs.name
                     FROM
                         unique_doc_slugs
-                    order by
-                        family_document_import_id desc,
-                        created desc   ), event_dates as (   SELECT
-                        family_event.family_import_id as family_import_id,
-                        min(CASE
-                            WHEN family_event.event_type_name='Passed/Approved' then     family_event.date::date
-                            ELSE family_event.date::date
-                        end) published_date,
-                        max(family_event.date::date) last_changed
+                    ORDER BY
+                        family_document_import_id DESC,
+                        created DESC   ), event_dates AS (   SELECT
+                        family_event.family_import_id AS family_import_id,
+                        Min(CASE
+                            WHEN family_event.event_type_name='Passed/Approved' THEN     family_event.DATE::DATE
+                            ELSE family_event.DATE::DATE
+                        END) published_date,
+                        Max(family_event.DATE::DATE) last_changed
                     FROM
                         family_event
-                    group by
+                    GROUP BY
                         family_import_id )  SELECT
-                        f.title as "family_title",
-                        p.title as "physical_document_title",
-                        f.description as "family_description",
+                        f.title AS "family_title",
+                        p.title AS "physical_document_title",
+                        f.description AS "family_description",
                         CASE
-                            WHEN f.family_category in ('UNFCCC',
-                            'MCF') THEN UPPER(f.family_category::TEXT)
-                            ELSE INITCAP(f.family_category::TEXT)
+                            WHEN f.family_category IN ('UNFCCC',
+                            'MCF') THEN Upper(f.family_category::text)
+                            ELSE Initcap(f.family_category::text)
                         END "family_category",
-                        fp.published_date as "family_published_date",
-                        d.import_id as "family_document_import_id",
-                        ds.name as "family_document_slug",
-                        f.import_id as "family_import_id",
-                        fs.name as "family_slug",
-                        p.source_url as "physical_document_source_url",
-                        d.valid_metadata::json#>>'{type,0}' as "family_document_type",
-                        o.name as "organisation_name",
-                        geos.geographies as "geographies",
-                        c.import_id as "corpus_import_id",
-                        c.corpus_type_name as "corpus_type_name",
+                        fp.published_date AS "family_published_date",
+                        d.import_id AS "family_document_import_id",
+                        ds.name AS "family_document_slug",
+                        f.import_id AS "family_import_id",
+                        fs.name AS "family_slug",
+                        p.source_url AS "physical_document_source_url",
+                        d.valid_metadata::json#>>'{type,0}' AS "family_document_type",
+                        o.name AS "organisation_name",
+                        geos.geographies AS "geographies",
+                        c.import_id AS "corpus_import_id",
+                        c.corpus_type_name AS "corpus_type_name",
                         langs.languages AS "languages",
-                        fm.value as "family_metadata",
-                        d.valid_metadata as "family_document_metadata"
+                        fm.value AS "family_metadata",
+                        d.valid_metadata AS "family_document_metadata"
                     FROM
                         physical_document p
-                    JOIN
+                    join
                         family_document d
                             ON p.id = d.physical_document_id
-                    JOIN
+                    join
                         family f
-                            ON d.family_import_id = f.import_id FULL
-                    JOIN
+                            ON d.family_import_id = f.import_id full
+                    join
                         (
                             SELECT
-                                family_geography.family_import_id as "family_import_id",
+                                family_geography.family_import_id AS "family_import_id",
                                 string_agg(geography.value,
                                 ';') AS geo_isos,
                                 string_agg(geography.display_value,
                                 ';') AS geo_display_values
                             FROM
                                 geography
-                            INNER JOIN
+                            inner join
                                 family_geography
                                     ON geography.id = family_geography.geography_id
                             GROUP BY
@@ -184,61 +184,61 @@ WITH deduplicated_family_slugs as (   SELECT
                             ON fg.family_import_id=f.import_id
                     join
                         family_corpus fc
-                            on f.import_id = fc.family_import_id
+                            ON f.import_id = fc.family_import_id
                     join
                         corpus c
-                            on fc.corpus_import_id = c.import_id
+                            ON fc.corpus_import_id = c.import_id
                     join
                         organisation o
-                            on c.organisation_id = o.id
+                            ON c.organisation_id = o.id
                     join
                         family_metadata fm
-                            on fm.family_import_id = f.import_id
-                    LEFT OUTER JOIN
+                            ON fm.family_import_id = f.import_id
+                    left outer join
                         (
                             SELECT
                                 family_document.import_id AS family_document_import_id,
-                                json_agg(distinct(language.name)) AS languages
+                                json_agg(DISTINCT(LANGUAGE.name)) AS languages
                             FROM
                                 family_document
-                            JOIN
+                            join
                                 physical_document_language
                                     ON physical_document_language.document_id = family_document.physical_document_id
-                            JOIN
-                                language
-                                    ON language.id = physical_document_language.language_id
+                            join
+                                LANGUAGE
+                                    ON LANGUAGE.id = physical_document_language.language_id
                             GROUP BY
                                 family_document.import_id
                         ) AS langs
                             ON langs.family_document_import_id = d.import_id
-                    LEFT OUTER JOIN
+                    left outer join
                         (
                             SELECT
                                 family_geography.family_import_id AS family_import_id,
-                                json_agg(distinct(geography.value)) AS geographies
+                                json_agg(DISTINCT(geography.value)) AS geographies
                             FROM
                                 family_geography
-                            JOIN
+                            join
                                 geography
                                     ON geography.id = family_geography.geography_id
                             GROUP BY
                                 family_geography.family_import_id
                         ) AS geos
                             ON geos.family_import_id = f.import_id
-                    LEFT JOIN
+                    left join
                         most_recent_doc_slugs ds
-                            on ds.family_document_import_id = d.import_id
-                    LEFT JOIN
+                            ON ds.family_document_import_id = d.import_id
+                    left join
                         most_recent_family_slugs fs
-                            on fs.family_import_id = f.import_id
-                    LEFT JOIN
+                            ON fs.family_import_id = f.import_id
+                    left join
                         event_dates fp
-                            on fp.family_import_id = f.import_id
+                            ON fp.family_import_id = f.import_id
                     WHERE
                         d.document_status != 'DELETED'
                         AND fg.family_import_id = f.import_id
                     ORDER BY
-                        d.last_modified desc,
-                        d.created desc,
-                        d.ctid desc,
+                        d.last_modified DESC,
+                        d.created DESC,
+                        d.ctid DESC,
                         f.import_id
