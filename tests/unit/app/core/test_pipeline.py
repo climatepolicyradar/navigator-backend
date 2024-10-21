@@ -20,7 +20,7 @@ from tests.non_search.setup_helpers import (
 )
 
 
-def test_generate_pipeline_ingest_input(data_db: Session):
+def test_generate_pipeline_ingest_input(data_db: Session, data_client):
     setup_with_two_docs_one_family(data_db)
 
     state_rows = generate_pipeline_ingest_input(data_db)
@@ -54,8 +54,7 @@ def test_generate_pipeline_ingest_input(data_db: Session):
 
 
 def test_generate_pipeline_ingest_input_with_fixture(
-    documents_large: list[Dict],
-    data_db: Session,
+    documents_large: list[Dict], data_db: Session, data_client
 ):
     setup_with_documents_large_with_families(documents_large, data_db)
 
@@ -64,14 +63,16 @@ def test_generate_pipeline_ingest_input_with_fixture(
     assert len(state_rows) == 23
 
 
-def test_generate_pipeline_ingest_input_no_collection_family_link(data_db: Session):
+def test_generate_pipeline_ingest_input_no_collection_family_link(
+    data_db: Session, data_client
+):
     setup_docs_with_two_orgs(data_db)
 
     state_rows = generate_pipeline_ingest_input(data_db)
     assert len(state_rows) == 2
 
 
-def test_generate_pipeline_ingest_input__deleted(data_db: Session):
+def test_generate_pipeline_ingest_input__deleted(data_db: Session, data_client):
     setup_with_two_unpublished_docs(data_db)
 
     documents = generate_pipeline_ingest_input(data_db)
@@ -92,7 +93,7 @@ def test_flatten_pipeline_metadata():
     assert result["document.b"] == ["4"]
 
 
-def test_get_db_state_content_success(data_db: Session, caplog):
+def test_get_db_state_content_success(data_db: Session, data_client, caplog):
     """
     GIVEN an expected db state file
     WHEN the branch db state content is identical (bar ordering)
@@ -184,7 +185,7 @@ def test_get_db_state_content_success(data_db: Session, caplog):
 
 @patch("json.dump")
 def test_get_db_state_content_fails_when_mismatch(
-    mock_json_dump, data_db: Session, caplog
+    mock_json_dump, data_db: Session, data_client, caplog
 ):
     """
     GIVEN a db state file where the doc CCLW.executive.1.2 has 2 langs

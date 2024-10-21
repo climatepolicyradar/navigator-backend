@@ -7,7 +7,6 @@ import pandas as pd
 from db_client.models.dfce import DocumentStatus
 from db_client.models.dfce.family import FamilyDocument
 from fastapi import Depends
-from sqlalchemy.orm import Session
 
 from app.api.api_v1.schemas.document import DocumentParserInput
 from app.clients.db.session import get_db
@@ -110,14 +109,13 @@ def parse_document_object(row: pd.Series) -> DocumentParserInput:
     )
 
 
-def generate_pipeline_ingest_input(db: Session) -> Sequence[DocumentParserInput]:
+def generate_pipeline_ingest_input(db=Depends(get_db)) -> Sequence[DocumentParserInput]:
     """Generate a view of the current document db as pipeline input.
 
     :param Session db: The db session to query against.
     :return Sequence[DocumentParserInput]: A list of DocumentParserInput
         objects that can be used by the pipeline.
     """
-
     results = get_pipeline_data(db)
 
     _LOGGER.info("Parsing pipeline query data")
