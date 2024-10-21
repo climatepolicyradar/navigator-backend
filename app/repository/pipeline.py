@@ -1,141 +1,113 @@
 import logging
 from datetime import datetime, timezone
-from typing import Sequence, Tuple, cast
+from functools import lru_cache
+from typing import Sequence, cast
 
+import pandas as pd
 from db_client.models.dfce import DocumentStatus
-from db_client.models.dfce.family import (
-    Corpus,
-    Family,
-    FamilyCorpus,
-    FamilyDocument,
-    PhysicalDocument,
-)
-from db_client.models.dfce.metadata import FamilyMetadata
-from db_client.models.organisation import Organisation
-from sqlalchemy import func
-from sqlalchemy.orm import Session, lazyload
+from db_client.models.dfce.family import FamilyDocument
+from fastapi import Depends
+from sqlalchemy.orm import Session
 
 from app.api.api_v1.schemas.document import DocumentParserInput
-from app.repository.geography import get_geo_subquery
-from app.repository.lookups import doc_type_from_family_document_metadata
+from app.clients.db.session import get_db
 
 _LOGGER = logging.getLogger(__name__)
 
 MetadataType = dict[str, list[str]]
 
 
-def fetch_geographies(db: Session) -> Sequence[Tuple[str, list[str]]]:
-    """Fetch unique geographies associated with each family.
-
-    This function queries the database to retrieve a list of geographies
-    associated with each family. It aggregates the geographies into a
-    JSON array for each family, as one family can now have multiple
-    associated geographies.
-
-    :param Session db: The db session to query against.
-    :return Sequence[Tuple[str, list[str]]]: A list of tuples, each
-        containing a family_import_id and a list of associated geos.
-    """
-    _LOGGER.info("Running pipeline geographies query")
-    geo_subquery = get_geo_subquery(db)
-    return (
-        db.query(
-            geo_subquery.c.family_import_id,  # type: ignore
-            func.json_agg(func.distinct(geo_subquery.c.value)).label("geographies"),  # type: ignore
-        )
-        .group_by(geo_subquery.c.family_import_id)  # type: ignore
-        .subquery()
-    )
+@lru_cache()
+def generate_pipeline_ingest_input_query():
+    """Read query for non-deleted docs and their associated data."""
+    with open("./app/repository/sql/pipeline.sql", "r") as file:
+        return file.read()
 
 
-def generate_pipeline_ingest_input_query(
-    db: Session,
-) -> Sequence[
-    Tuple[
-        Family,
-        FamilyDocument,
-        FamilyMetadata,
-        list[str],
-        Organisation,
-        Corpus,
-        PhysicalDocument,
-    ]
-]:
-    """Get a list of non-deleted docs and their associated meta & geos.
+def get_pipeline_data(db=Depends(get_db)):
+    """Get non-deleted docs and their associated data from the db.
 
-    This function combines the results of three separate queries:
-    family and metadata, documents, and geographies by iterating over
-    the results of these queries, matching families with their documents
-    and geographies based on the family_import_id. The final result is a
-    list of tuples, containing the required information to construct a
-    DocumentParserInput object.
+    Use the pipeline query to query the current database to get a list
+    of non deleted documents and their associated data, family info,
+    metadata, languages, and geographies.
+
+    The final result is a DataFrame containing the required information
+    to construct a DocumentParserInput object.
 
     :param Session db: The db session to query against.
-    :return Sequence[Tuple[
-        Family,
-        FamilyDocument,
-        FamilyMetadata,
-        list[str],
-        Organisation,
-        Corpus,
-        PhysicalDocument
-    ]]: A list of tuples containing the information needed to populate
-        a DocumentParserInput object.
+    :return pd.DataFrame: DataFrame containing current view of documents
+        in database.
     """
+    _LOGGER.info("Running pipeline query")
+    query = generate_pipeline_ingest_input_query()
+    with db.connection() as conn:
+        df = pd.read_sql(query, conn.connection)
+        return df
 
-    _LOGGER.info("Combining results of pipeline subqueries")
 
-    # Subquery to aggregate geographies
-    geography_subquery = fetch_geographies(db)
+def parse_document_object(row: pd.Series) -> DocumentParserInput:
+    """Parse DataFrame row into DocumentParserInput object.
 
-    # Main query
-    query = (
-        db.query(
-            Family,
-            FamilyDocument,
-            FamilyMetadata,
-            geography_subquery.c.geographies,  # type: ignore
-            Organisation,
-            Corpus,
-            PhysicalDocument,
-        )
-        .select_from(FamilyDocument)
-        .join(Family, Family.import_id == FamilyDocument.family_import_id)
-        .join(FamilyMetadata, Family.import_id == FamilyMetadata.family_import_id)
-        .join(FamilyCorpus, Family.import_id == FamilyCorpus.family_import_id)
-        .join(Corpus, Corpus.import_id == FamilyCorpus.corpus_import_id)
-        .join(Organisation, Organisation.id == Corpus.organisation_id)
-        .join(
-            PhysicalDocument, PhysicalDocument.id == FamilyDocument.physical_document_id
-        )
-        .join(
-            geography_subquery,
-            geography_subquery.c.family_import_id == Family.import_id,  # type: ignore
-        )
-        .filter(FamilyDocument.document_status != DocumentStatus.DELETED)
-        .filter(geography_subquery.c.family_import_id == Family.import_id)  # type: ignore
-        .options(
-            # Disable any default eager loading as this was causing multiplicity due to
-            # implicit joins in relationships on the selected models.
-            lazyload("*")
-        )
-    )
-
-    results = cast(
-        Sequence[
-            Tuple[
-                Family,
-                FamilyDocument,
-                FamilyMetadata,
-                list[str],
-                Organisation,
-                Corpus,
-                PhysicalDocument,
-            ]
+    :param pd.Series row: A pandas series containing a row that
+        represents a family document and its related context.
+    :return DocumentParserInput: A DocumentParserInput object
+        representing the family document record & its context.
+    """
+    fallback_date = datetime(1900, 1, 1, tzinfo=timezone.utc)
+    return DocumentParserInput(
+        # All documents in a family indexed by title
+        name=cast(str, row.get("family_title")),
+        document_title=cast(str, row.get("physical_document_title")),
+        description=cast(str, row.get("family_description")),
+        category=str(row.get("family_category")),
+        publication_ts=cast(
+            datetime,
+            (
+                pd.to_datetime(cast(str, row.get("family_published_date")))
+                if row.get("family_published_date") is not None
+                else fallback_date
+            ),
+        ),
+        import_id=cast(str, row.get("family_document_import_id")),
+        # This gets the most recently added document slug.
+        slug=cast(str, row.get("family_document_slug")),
+        family_import_id=cast(str, row.get("family_import_id")),
+        # This gets the most recently added family slug.
+        family_slug=cast(str, row.get("family_slug")),
+        source_url=(
+            cast(str, row.get("physical_document_source_url"))
+            if row.get("physical_document_source_url") is not None
+            else None
+        ),
+        download_url=None,
+        type=cast(str, row.get("family_document_type", default="")),
+        source=cast(str, row.get("organisation_name")),
+        geography=cast(
+            str,
+            (
+                cast(list, row.get("geographies", default=[""]))[0]
+                if row.get("geographies", default=[""]) is not None
+                else []
+            ),
+        ),  # First geography for backward compatibility
+        geographies=cast(list, row.get("geographies")),
+        corpus_import_id=cast(str, row.get("corpus_import_id")),
+        corpus_type_name=cast(str, row.get("corpus_type_name")),
+        collection_title=None,
+        collection_summary=None,
+        languages=[
+            cast(str, lang)
+            for lang in (
+                cast(list, row.get("languages"))
+                if row.get("languages") is not None
+                else []
+            )
         ],
-        query.all(),
+        metadata=_flatten_pipeline_metadata(
+            cast(MetadataType, row.get("family_metadata")),
+            cast(MetadataType, row.get("family_document_metadata")),
+        ),
     )
-    return results
 
 
 def generate_pipeline_ingest_input(db: Session) -> Sequence[DocumentParserInput]:
@@ -146,62 +118,11 @@ def generate_pipeline_ingest_input(db: Session) -> Sequence[DocumentParserInput]
         objects that can be used by the pipeline.
     """
 
-    results = generate_pipeline_ingest_input_query(db)
+    results = get_pipeline_data(db)
 
     _LOGGER.info("Parsing pipeline query data")
-
-    fallback_date = datetime(1900, 1, 1, tzinfo=timezone.utc)
     documents: Sequence[DocumentParserInput] = [
-        DocumentParserInput(
-            name=cast(str, family.title),  # All documents in a family indexed by title
-            document_title=cast(str, physical_document.title),
-            description=cast(str, family.description),
-            category=str(family.family_category),
-            publication_ts=family.published_date or fallback_date,
-            import_id=cast(str, family_document.import_id),
-            # This gets the most recent document slug.
-            slug=cast(str, family_document.slugs[-1].name),
-            family_import_id=cast(str, family.import_id),
-            # This gets the most recent family slug.
-            family_slug=cast(str, family.slugs[-1].name),
-            source_url=(
-                cast(str, family_document.physical_document.source_url)
-                if family_document.physical_document is not None
-                else None
-            ),
-            download_url=None,
-            type=doc_type_from_family_document_metadata(family_document),
-            source=cast(str, organisation.name),
-            geography=cast(
-                str, geographies[0]
-            ),  # First geography for backward compatibility
-            geographies=geographies,
-            corpus_import_id=cast(str, corpus.import_id),
-            corpus_type_name=cast(str, corpus.corpus_type_name),
-            collection_title=None,
-            collection_summary=None,
-            languages=[
-                cast(str, lang.name)
-                for lang in (
-                    family_document.physical_document.languages
-                    if family_document.physical_document is not None
-                    else []
-                )
-            ],
-            metadata=_flatten_pipeline_metadata(
-                cast(MetadataType, family_metadata.value),
-                cast(MetadataType, family_document.valid_metadata),
-            ),
-        )
-        for (
-            family,
-            family_document,
-            family_metadata,
-            geographies,
-            organisation,
-            corpus,
-            physical_document,
-        ) in results
+        parse_document_object(row) for index, row in results.iterrows()
     ]
 
     # TODO: Revert to raise a ValueError when the issue is resolved
