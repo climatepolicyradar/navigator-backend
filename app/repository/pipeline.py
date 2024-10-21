@@ -1,4 +1,5 @@
 import logging
+import os
 from datetime import datetime, timezone
 from functools import lru_cache
 from typing import Sequence, cast
@@ -19,11 +20,11 @@ MetadataType = dict[str, list[str]]
 @lru_cache()
 def generate_pipeline_ingest_input_query():
     """Read query for non-deleted docs and their associated data."""
-    with open("./app/repository/sql/pipeline.sql", "r") as file:
+    with open(os.path.join("app", "repository", "sql", "pipeline.sql"), "r") as file:
         return file.read()
 
 
-def get_pipeline_data(db=Depends(get_db)):
+def get_pipeline_data(db=Depends(get_db)) -> pd.DataFrame:
     """Get non-deleted docs and their associated data from the db.
 
     Use the pipeline query to query the current database to get a list
@@ -39,9 +40,8 @@ def get_pipeline_data(db=Depends(get_db)):
     """
     _LOGGER.info("Running pipeline query")
     query = generate_pipeline_ingest_input_query()
-    with db.connection() as conn:
-        df = pd.read_sql(query, conn.connection)
-        return df
+    df = pd.read_sql(query, db.connection().connection)
+    return df
 
 
 def parse_document_object(row: pd.Series) -> DocumentParserInput:
@@ -59,14 +59,7 @@ def parse_document_object(row: pd.Series) -> DocumentParserInput:
         document_title=cast(str, row.get("physical_document_title")),
         description=cast(str, row.get("family_description")),
         category=str(row.get("family_category")),
-        publication_ts=cast(
-            datetime,
-            (
-                pd.to_datetime(cast(str, row.get("family_published_date")))
-                if row.get("family_published_date") is not None
-                else fallback_date
-            ),
-        ),
+        publication_ts=row.get("family_published_date") or fallback_date,
         import_id=cast(str, row.get("family_document_import_id")),
         # This gets the most recently added document slug.
         slug=cast(str, row.get("family_document_slug")),
@@ -81,27 +74,15 @@ def parse_document_object(row: pd.Series) -> DocumentParserInput:
         download_url=None,
         type=cast(str, row.get("family_document_type", default="")),
         source=cast(str, row.get("organisation_name")),
-        geography=cast(
-            str,
-            (
-                cast(list, row.get("geographies", default=[""]))[0]
-                if row.get("geographies", default=[""]) is not None
-                else []
-            ),
-        ),  # First geography for backward compatibility
-        geographies=cast(list, row.get("geographies")),
+        geography=cast(list, row.get("geographies", default=[""]))[
+            0
+        ],  # First geography for backward compatibility
+        geographies=row.get("geographies"),
         corpus_import_id=cast(str, row.get("corpus_import_id")),
         corpus_type_name=cast(str, row.get("corpus_type_name")),
         collection_title=None,
         collection_summary=None,
-        languages=[
-            cast(str, lang)
-            for lang in (
-                cast(list, row.get("languages"))
-                if row.get("languages") is not None
-                else []
-            )
-        ],
+        languages=[lang for lang in (cast(list, row.get("languages", default=[])))],
         metadata=_flatten_pipeline_metadata(
             cast(MetadataType, row.get("family_metadata")),
             cast(MetadataType, row.get("family_document_metadata")),
@@ -120,7 +101,7 @@ def generate_pipeline_ingest_input(db=Depends(get_db)) -> Sequence[DocumentParse
 
     _LOGGER.info("Parsing pipeline query data")
     documents: Sequence[DocumentParserInput] = [
-        parse_document_object(row) for index, row in results.iterrows()
+        parse_document_object(row) for _, row in results.iterrows()
     ]
 
     # TODO: Revert to raise a ValueError when the issue is resolved
