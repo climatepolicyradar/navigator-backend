@@ -82,7 +82,15 @@ def parse_document_object(row: pd.Series) -> DocumentParserInput:
         corpus_type_name=cast(str, row.get("corpus_type_name")),
         collection_title=None,
         collection_summary=None,
-        languages=[lang for lang in (cast(list, row.get("languages", default=[])))],
+        languages=[
+            lang
+            for lang in (
+                cast(
+                    list,
+                    row.get("languages") if row.get("languages") is not None else [],
+                )
+            )
+        ],
         metadata=_flatten_pipeline_metadata(
             cast(MetadataType, row.get("family_metadata")),
             cast(MetadataType, row.get("family_document_metadata")),
