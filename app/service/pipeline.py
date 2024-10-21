@@ -4,7 +4,7 @@ from typing import Sequence
 from sqlalchemy.orm import Session
 
 from app.api.api_v1.schemas.document import DocumentParserInput
-from app.core.ingestion.pipeline import generate_pipeline_ingest_input
+from app.repository.pipeline import generate_pipeline_ingest_input
 
 _LOGGER = logging.getLogger(__name__)
 

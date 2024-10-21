@@ -5,12 +5,11 @@ from unittest.mock import patch
 from click.testing import CliRunner
 from sqlalchemy.orm import Session
 
-from app.core.ingestion.pipeline import (
+from app.repository.pipeline import (
     _flatten_pipeline_metadata,
-    format_pipeline_ingest_input,
     generate_pipeline_ingest_input,
 )
-from app.service.pipeline import get_db_state_content
+from app.service.pipeline import format_pipeline_ingest_input, get_db_state_content
 from scripts.db_state_validator_click import main as db_state_validator_main
 from tests.non_search.setup_helpers import (
     setup_docs_with_two_orgs,
