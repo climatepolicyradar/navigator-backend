@@ -1,5 +1,5 @@
 import logging
-from typing import Sequence
+from typing import Any, Sequence
 
 from fastapi import Depends
 
@@ -12,12 +12,15 @@ _LOGGER = logging.getLogger(__name__)
 MetadataType = dict[str, list[str]]
 
 
-def format_pipeline_ingest_input(documents: Sequence[DocumentParserInput]):
+def format_pipeline_ingest_input(
+    documents: Sequence[DocumentParserInput],
+) -> dict[str, Any]:
     """Format the DocumentParserInput objects for the db_state.json file.
 
     :param Sequence[DocumentParserInput] documents: A list of
         DocumentParserInput objects that can be used by the pipeline.
-    :return: The contents of the db_state.json file in JSON form.
+    :return dict[str, Any]: The contents of the db_state.json file in
+        JSON form.
     """
     return {"documents": {d.import_id: d.to_json() for d in documents}}
 
