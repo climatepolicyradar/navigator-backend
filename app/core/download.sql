@@ -99,14 +99,17 @@ unique_doc_slugs as (
   FROM unique_doc_slugs 
   order by family_document_import_id desc, created desc
   ), event_dates as (
-  SELECT 
-  family_event.family_import_id as family_import_id, 
-  min(CASE 
-  WHEN family_event.event_type_name='Passed/Approved' then 
-    family_event.date::date 
-  ELSE family_event.date::date 
-end) published_date, 
-max(family_event.date::date) last_changed 
+  SELECT
+  family_event.family_import_id as family_import_id,
+  CASE
+      WHEN COUNT(*) FILTER (WHERE family_event.event_type_name = 'Passed/Approved') > 0 THEN
+          MIN(CASE
+              WHEN family_event.event_type_name = 'Passed/Approved' THEN family_event.date::TIMESTAMPTZ
+          END)
+      ELSE
+          MIN(family_event.date::TIMESTAMPTZ)
+  END AS published_date,
+  max(family_event.date::date) last_changed 
 FROM family_event 
 group by family_import_id 
 ) 

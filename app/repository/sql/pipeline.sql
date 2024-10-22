@@ -109,32 +109,39 @@ WITH deduplicated_family_slugs AS (   SELECT
                     slug.family_document_import_id DESC,
                     slug.created DESC,
                     slug.ctid DESC   ),
-                    most_recent_doc_slugs AS (   SELECT
-                        deduplicated_doc_slugs.family_document_import_id   AS "family_document_import_id",
-                        deduplicated_doc_slugs.created,
-                        deduplicated_doc_slugs.name
-                    FROM
-                        deduplicated_doc_slugs
-                    UNION
-                    ALL   SELECT
-                        unique_doc_slugs.family_document_import_id AS "family_document_import_id",
-                        unique_doc_slugs.created,
-                        unique_doc_slugs.name
-                    FROM
-                        unique_doc_slugs
-                    ORDER BY
-                        family_document_import_id DESC,
-                        created DESC   ), event_dates AS (   SELECT
-                        family_event.family_import_id AS family_import_id,
-                        Min(CASE
-                            WHEN family_event.event_type_name='Passed/Approved' THEN     family_event.DATE::DATE
-                            ELSE family_event.DATE::DATE
-                        END) published_date,
-                        Max(family_event.DATE::DATE) last_changed
-                    FROM
-                        family_event
-                    GROUP BY
-                        family_import_id )  SELECT
+                    most_recent_doc_slugs AS (
+                        SELECT
+                            deduplicated_doc_slugs.family_document_import_id   AS "family_document_import_id",
+                            deduplicated_doc_slugs.created,
+                            deduplicated_doc_slugs.name
+                        FROM
+                            deduplicated_doc_slugs
+                        UNION
+                        ALL   SELECT
+                            unique_doc_slugs.family_document_import_id AS "family_document_import_id",
+                            unique_doc_slugs.created,
+                            unique_doc_slugs.name
+                        FROM
+                            unique_doc_slugs
+                        ORDER BY
+                            family_document_import_id DESC,
+                            created DESC
+                    ), event_dates AS (
+                        SELECT
+                            family_event.family_import_id AS family_import_id,
+                            CASE
+                                WHEN COUNT(*) FILTER (WHERE family_event.event_type_name = 'Passed/Approved') > 0 THEN
+                                    MIN(CASE
+                                        WHEN family_event.event_type_name = 'Passed/Approved' THEN family_event.date::TIMESTAMPTZ
+                                    END)
+                                ELSE
+                                    MIN(family_event.date::TIMESTAMPTZ)
+                            END AS published_date
+                        FROM
+                            family_event
+                        GROUP BY
+                            family_import_id
+                    )  SELECT
                         f.title AS "family_title",
                         p.title AS "physical_document_title",
                         f.description AS "family_description",
