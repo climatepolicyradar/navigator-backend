@@ -53,11 +53,13 @@ def parse_document_object(row: pd.Series) -> DocumentParserInput:
         representing the family document record & its context.
     """
     published_date = row.family_published_date
-    published_date = datetime(
-        published_date.year, published_date.month, published_date.day
-    ).astimezone(timezone.utc)
-
     fallback_date = datetime(1900, 1, 1, tzinfo=timezone.utc)
+    published_date = (
+        pd.to_datetime(row.family_published_date, format="ISO8601", errors="ignore")
+        if published_date is not None
+        else fallback_date
+    )
+
     return DocumentParserInput(
         # All documents in a family indexed by title
         name=cast(str, row.family_title),
