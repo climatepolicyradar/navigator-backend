@@ -1,12 +1,13 @@
 import json
 import logging
 import sys
-from typing import List
+from datetime import datetime
+from typing import List, cast
 
 import click
-from pydantic import ValidationError
-from cpr_sdk.pipeline_general_models import InputData
 from cpr_sdk.parser_models import BackendDocument
+from cpr_sdk.pipeline_general_models import InputData
+from pydantic import ValidationError
 
 # Setup logger
 logging.basicConfig(level=logging.INFO)
@@ -82,6 +83,10 @@ def find_document_differences(
                 if field in ["languages", "geographies"]:
                     main_value = sorted(main_value)
                     branch_value = sorted(branch_value)
+
+                if field == "publication_ts":
+                    main_value = cast(datetime, main_value).isoformat()
+                    branch_value = cast(datetime, branch_value).isoformat()
 
                 if main_value != branch_value:
                     doc_differences[field] = {
