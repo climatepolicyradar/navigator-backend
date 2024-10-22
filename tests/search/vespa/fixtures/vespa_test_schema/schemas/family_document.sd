@@ -192,13 +192,31 @@ schema family_document {
             expression: attribute(name_weight) * bm25(family_name_index)
         }
         function description_score() {
-            expression: attribute(description_weight) * (bm25(family_description_index) + closeness(family_description_embedding))
+            expression: attribute(description_weight) * bm25(family_description_index)
         }
         first-phase {
             expression: name_score() + description_score()
         }
         match-features: name_score() description_score()
     }
+
+    rank-profile hybrid_custom_weight inherits default {
+        inputs {
+            query(query_embedding) tensor<float>(x[768])
+            query(bm25_weight) double
+        }
+        function name_score() {
+            expression: attribute(name_weight) * bm25(family_name_index)
+        }
+        function description_score() {
+            expression: attribute(description_weight) * bm25(family_description_index)
+        }
+        first-phase {
+            expression: name_score() + description_score()
+        }
+        match-features: name_score() description_score()
+    }
+
 
     document-summary search_summary {
         summary family_name {}
