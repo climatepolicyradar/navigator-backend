@@ -108,8 +108,10 @@ echo $(python -m extract_document_import_ids $family_document_sample.jsonl | xar
 
 ### Set your vespa cli to point to local
 
-Vespa config set target local
+```shell
+vespa config set target local
 vespa config set application default.application.default
+```
 
 ### Feed the documents into the local instance
 

@@ -196,3 +196,5 @@ requirements.txt
 
 # Vespa secrets directory
 secrets/*
+
+scripts/*.json
