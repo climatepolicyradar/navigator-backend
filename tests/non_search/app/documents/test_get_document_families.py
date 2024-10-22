@@ -10,8 +10,8 @@ from tests.non_search.setup_helpers import (
     setup_with_two_docs_one_family,
 )
 
-N_FAMILY_KEYS = 16  # TODO: Replace with 15 as part of PDCT-1440
-N_FAMILY_OVERVIEW_KEYS = 9  # TODO: Replace with 8 part of PDCT-1440
+N_FAMILY_KEYS = 15
+N_FAMILY_OVERVIEW_KEYS = 8
 N_DOCUMENT_KEYS = 12
 
 
@@ -64,7 +64,6 @@ def test_documents_family_slug_returns_correct_family(
             {
                 "title": "Fam1",
                 "import_id": "CCLW.family.1001.0",
-                "geography": "South Asia",
                 "geographies": ["South Asia"],
                 "category": "Executive",
                 "slug": "FamSlug1",
@@ -96,7 +95,6 @@ def test_documents_family_slug_returns_correct_family(
             {
                 "title": "Fam2",
                 "import_id": "CCLW.family.2002.0",
-                "geography": "AFG",
                 "geographies": ["AFG", "IND"],
                 "category": "Executive",
                 "slug": "FamSlug2",
@@ -257,7 +255,6 @@ def test_documents_doc_slug_returns_not_found(
             {
                 "title": "Fam1",
                 "import_id": "CCLW.family.1001.0",
-                "geography": "South Asia",
                 "geographies": ["South Asia"],
                 "category": "Executive",
                 "slug": "FamSlug1",
@@ -285,7 +282,6 @@ def test_documents_doc_slug_returns_not_found(
             {
                 "title": "Fam2",
                 "import_id": "CCLW.family.2002.0",
-                "geography": "AFG",
                 "geographies": ["AFG", "IND"],
                 "category": "Executive",
                 "slug": "FamSlug2",
