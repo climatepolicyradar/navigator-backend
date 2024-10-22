@@ -88,6 +88,7 @@ def test_document_parser_input_type():
         family_slug="geo_2008_family_1234_5679",
         category="category",
         geography="GEO",
+        geographies=["GEO"],
         languages=[],
         metadata={},
     )
@@ -110,6 +111,7 @@ def test_write_documents_to_s3(test_s3_client, mocker):
         family_slug="geo_2008_family_1234_5679",
         category="category",
         geography="GEO",
+        geographies=["GEO"],
         languages=[],
         metadata={},
     )

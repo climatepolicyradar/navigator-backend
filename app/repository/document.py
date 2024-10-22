@@ -103,9 +103,6 @@ def get_family_document_and_context(
     family_context = FamilyContext(
         title=cast(str, family.title),
         import_id=cast(str, family.import_id),
-        geography=geographies[
-            0
-        ],  # First geography for backward compatibility PDCT-1440
         geographies=geographies,
         slug=family.slugs[0].name,
         category=family.family_category,
@@ -192,9 +189,6 @@ def get_family_and_documents(db: Session, import_id: str) -> FamilyAndDocumentsR
         import_id=import_id,
         title=cast(str, family.title),
         summary=cast(str, family.description),
-        geography=geographies[
-            0
-        ],  # First geography for backward compatibility PDCT-1440
         geographies=geographies,
         category=cast(str, family.family_category),
         status=cast(str, family.family_status),
