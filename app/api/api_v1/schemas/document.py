@@ -77,11 +77,11 @@ class FamilyDocumentResponse(BaseModel):
 
 
 class FamilyContext(BaseModel):
-    """Used to given the family context when returning a FamilyDocument"""
+    """Used to give the family context when returning a FamilyDocument"""
 
     title: str
     import_id: str
-    geography: str
+    geographies: list[str]
     category: str
     slug: str
     published_date: Optional[datetime] = None
@@ -103,7 +103,7 @@ class FamilyAndDocumentsResponse(BaseModel):
     import_id: str
     title: str
     summary: str
-    geography: str
+    geographies: list[str]
     category: str
     status: str
     metadata: dict

@@ -1,3 +1,4 @@
+import pytest
 from db_client.models.dfce.family import Family, FamilyDocument, FamilyEvent
 from fastapi.testclient import TestClient
 from sqlalchemy import update
@@ -55,49 +56,114 @@ def test_documents_family_slug_returns_correct_family(
     assert json_response["import_id"] == "CCLW.family.2002.0"
 
 
+@pytest.mark.parametrize(
+    ("slug", "expected_fam", "expected_doc"),
+    [
+        (
+            "FamSlug1",
+            {
+                "title": "Fam1",
+                "import_id": "CCLW.family.1001.0",
+                "geographies": ["South Asia"],
+                "category": "Executive",
+                "slug": "FamSlug1",
+                "corpus_id": "CCLW.corpus.i00000001.n0000",
+                "published_date": "2019-12-25T00:00:00Z",
+                "last_updated_date": "2019-12-25T00:00:00Z",
+                "metadata": {"color": "pink", "size": "big"},
+                "organisation": "CCLW",
+                "status": "Published",
+                "summary": "Summary1",
+            },
+            {
+                "import_id": "CCLW.executive.1.2",
+                "variant": "Original Language",
+                "slug": "DocSlug1",
+                "title": "Document1",
+                "md5_sum": "111",
+                "cdn_object": None,
+                "content_type": "application/pdf",
+                "source_url": "http://somewhere1",
+                "language": "eng",
+                "languages": ["eng"],
+                "document_type": "Plan",
+                "document_role": "MAIN",
+            },
+        ),
+        (
+            "FamSlug2",
+            {
+                "title": "Fam2",
+                "import_id": "CCLW.family.2002.0",
+                "geographies": ["AFG", "IND"],
+                "category": "Executive",
+                "slug": "FamSlug2",
+                "corpus_id": "CCLW.corpus.i00000001.n0000",
+                "published_date": "2019-12-25T00:00:00Z",
+                "last_updated_date": "2019-12-25T00:00:00Z",
+                "metadata": {"color": "blue", "size": "small"},
+                "organisation": "CCLW",
+                "status": "Published",
+                "summary": "Summary2",
+            },
+            {
+                "import_id": "CCLW.executive.2.2",
+                "variant": None,
+                "slug": "DocSlug2",
+                "title": "Document2",
+                "md5_sum": None,
+                "cdn_object": None,
+                "content_type": None,
+                "source_url": "http://another_somewhere",
+                "language": "",
+                "languages": [],
+                "document_type": "Order",
+                "document_role": "MAIN",
+            },
+        ),
+    ],
+)
 def test_documents_family_slug_returns_correct_json(
-    data_client: TestClient,
-    data_db: Session,
+    data_client: TestClient, data_db: Session, slug, expected_fam, expected_doc
 ):
     setup_with_two_docs(data_db)
 
     # Test associations
     response = data_client.get(
-        "/api/v1/documents/FamSlug1",
+        f"/api/v1/documents/{slug}",
     )
     json_response = response.json()
 
     assert response.status_code == 200
+
+    # Verify family data correct.
     assert len(json_response) == N_FAMILY_KEYS
-    assert json_response["organisation"] == "CCLW"
-    assert json_response["import_id"] == "CCLW.family.1001.0"
-    assert json_response["title"] == "Fam1"
-    assert json_response["summary"] == "Summary1"
-    assert json_response["geography"] == "South Asia"
-    assert json_response["category"] == "Executive"
-    assert json_response["status"] == "Published"
-    assert json_response["corpus_id"] == "CCLW.corpus.i00000001.n0000"
-    assert json_response["published_date"] == "2019-12-25T00:00:00Z"
-    assert json_response["last_updated_date"] == "2019-12-25T00:00:00Z"
+    actual_family_data = {
+        k: v
+        for k, v in json_response.items()
+        if k not in ["events", "documents", "collections"]
+    }
+    assert actual_family_data == expected_fam
 
-    # TODO: https://linear.app/climate-policy-radar/issue/PDCT-1017
-    assert len(json_response["metadata"]) == 2
-    assert json_response["metadata"]["size"] == "big"
-
-    assert json_response["slug"] == "FamSlug1"
-
+    # Verify events data correct.
+    events = json_response["events"]
     assert len(json_response["events"]) == 1
-    assert json_response["events"][0]["title"] == "Published"
+    event = events[0]
+    assert event["title"] == "Published"
 
-    assert len(json_response["documents"]) == 1
-    assert json_response["documents"][0]["title"] == "Document1"
-    assert json_response["documents"][0]["slug"] == "DocSlug1"
-    assert json_response["documents"][0]["import_id"] == "CCLW.executive.1.2"
+    # Verify documents data correct.
+    docs = json_response["documents"]
+    assert len(docs) == 1
+    doc = docs[0]
+    assert len(doc.keys()) == N_DOCUMENT_KEYS
+    assert doc == expected_doc
 
+    # Verify collections data correct.
+    collections = json_response["collections"]
     assert len(json_response["collections"]) == 1
-    assert json_response["collections"][0]["title"] == "Collection1"
-
-    assert json_response["collections"][0]["families"] == [
+    collection = collections[0]
+    assert collection["title"] == "Collection1"
+    assert collection["families"] == [
         {"title": "Fam1", "slug": "FamSlug1", "description": "Summary1"},
         {"title": "Fam2", "slug": "FamSlug2", "description": "Summary2"},
     ]
@@ -181,14 +247,72 @@ def test_documents_doc_slug_returns_not_found(
     assert response.json()["detail"] == "Nothing found for DocSlug100"
 
 
+@pytest.mark.parametrize(
+    ("slug", "expected_fam", "expected_doc"),
+    [
+        (
+            "DocSlug1",
+            {
+                "title": "Fam1",
+                "import_id": "CCLW.family.1001.0",
+                "geographies": ["South Asia"],
+                "category": "Executive",
+                "slug": "FamSlug1",
+                "corpus_id": "CCLW.corpus.i00000001.n0000",
+                "published_date": "2019-12-25T00:00:00Z",
+                "last_updated_date": "2019-12-25T00:00:00Z",
+            },
+            {
+                "import_id": "CCLW.executive.1.2",
+                "variant": "Original Language",
+                "slug": "DocSlug1",
+                "title": "Document1",
+                "md5_sum": "111",
+                "cdn_object": None,
+                "content_type": "application/pdf",
+                "source_url": "http://somewhere1",
+                "language": "eng",
+                "languages": ["eng"],
+                "document_type": "Plan",
+                "document_role": "MAIN",
+            },
+        ),
+        (
+            "DocSlug2",
+            {
+                "title": "Fam2",
+                "import_id": "CCLW.family.2002.0",
+                "geographies": ["AFG", "IND"],
+                "category": "Executive",
+                "slug": "FamSlug2",
+                "corpus_id": "CCLW.corpus.i00000001.n0000",
+                "published_date": "2019-12-25T00:00:00Z",
+                "last_updated_date": "2019-12-25T00:00:00Z",
+            },
+            {
+                "import_id": "CCLW.executive.2.2",
+                "variant": None,
+                "slug": "DocSlug2",
+                "title": "Document2",
+                "md5_sum": None,
+                "cdn_object": None,
+                "content_type": None,
+                "source_url": "http://another_somewhere",
+                "language": "",
+                "languages": [],
+                "document_type": "Order",
+                "document_role": "MAIN",
+            },
+        ),
+    ],
+)
 def test_documents_doc_slug_preexisting_objects(
-    data_client: TestClient,
-    data_db: Session,
+    data_client: TestClient, data_db: Session, slug, expected_fam, expected_doc
 ):
     setup_with_two_docs(data_db)
 
     response = data_client.get(
-        "/api/v1/documents/DocSlug2",
+        f"/api/v1/documents/{slug}",
     )
     json_response = response.json()
     assert response.status_code == 200
@@ -197,30 +321,12 @@ def test_documents_doc_slug_preexisting_objects(
     family = json_response["family"]
     assert family
     assert len(family.keys()) == N_FAMILY_OVERVIEW_KEYS
-    assert family["title"] == "Fam2"
-    assert family["import_id"] == "CCLW.family.2002.0"
-    assert family["geography"] == "AFG"
-    assert family["category"] == "Executive"
-    assert family["slug"] == "FamSlug2"
-    assert family["corpus_id"] == "CCLW.corpus.i00000001.n0000"
-    assert family["published_date"] == "2019-12-25T00:00:00Z"
-    assert family["last_updated_date"] == "2019-12-25T00:00:00Z"
+    assert family == expected_fam
 
     doc = json_response["document"]
     assert doc
     assert len(doc) == N_DOCUMENT_KEYS
-    assert doc["import_id"] == "CCLW.executive.2.2"
-    assert doc["variant"] is None
-    assert doc["slug"] == "DocSlug2"
-    assert doc["title"] == "Document2"
-    assert doc["md5_sum"] is None
-    assert doc["cdn_object"] is None
-    assert doc["content_type"] is None
-    assert doc["source_url"] == "http://another_somewhere"
-    assert doc["language"] == ""
-    assert doc["languages"] == []
-    assert doc["document_type"] == "Order"
-    assert doc["document_role"] == "MAIN"
+    assert doc == expected_doc
 
 
 def test_documents_doc_slug_when_deleted(

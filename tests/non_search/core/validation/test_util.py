@@ -88,6 +88,7 @@ def test_document_parser_input_type():
         family_slug="geo_2008_family_1234_5679",
         category="category",
         geography="GEO",
+        geographies=["GEO"],
         languages=[],
         metadata={},
     )
@@ -110,6 +111,7 @@ def test_write_documents_to_s3(test_s3_client, mocker):
         family_slug="geo_2008_family_1234_5679",
         category="category",
         geography="GEO",
+        geographies=["GEO"],
         languages=[],
         metadata={},
     )
@@ -121,7 +123,11 @@ def test_write_documents_to_s3(test_s3_client, mocker):
 
     expected_folder_name = every_now.isoformat().replace(":", ".")
     test_s3_prefix = f"input/{expected_folder_name}"
-    write_documents_to_s3(test_s3_client, test_s3_prefix, documents=[d])
+    write_documents_to_s3(
+        test_s3_client,
+        test_s3_prefix,
+        content={"documents": {d.import_id: d.to_json() for d in [d]}},
+    )
     upload_file_mock.assert_called_once_with(
         bucket=PIPELINE_BUCKET,
         key=f"{test_s3_prefix}/db_state.json",

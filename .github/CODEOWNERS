@@ -17,7 +17,9 @@
 app/api/api_v1/routers/pipeline_trigger.py       @climatepolicyradar/deng
 tests/unit/app/core/test_pipeline.py             @climatepolicyradar/deng
 tests/non_search/app/test_pipeline_trigger.py    @climatepolicyradar/deng
-app/core/ingestion/                              @climatepolicyradar/deng
+app/repository/pipeline.py                       @climatepolicyradar/deng
+app/service/pipeline.py                          @climatepolicyradar/deng
+app/service/pipeline.sql                         @climatepolicyradar/deng
 tests/search/search_fixtures/vespa_test_schema/  @climatepolicyradar/deng
 app/api/api_v1/routers/search.py                 @climatepolicyradar/tech-devs
 tests/search/                                    @climatepolicyradar/tech-devs
