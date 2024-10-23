@@ -183,6 +183,7 @@ jobs:
       ! cancelled() && always() &&
       (needs.code-quality.result == 'success' &&
       needs.non-search-tests.result == 'success' &&
+      needs.use-case-tests.result == 'success' &&
       needs.search-tests.result == 'success' &&
       needs.integration-tests.result == 'success') &&
       ! startsWith(github.ref, 'refs/tags')
@@ -190,6 +191,7 @@ jobs:
     needs:
       - code-quality
       - non-search-tests
+      - use-case-tests
       - search-tests
       - integration-tests
     steps:
