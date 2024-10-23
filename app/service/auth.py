@@ -5,8 +5,8 @@ from db_client.models.organisation import AppUser
 from fastapi import Depends, HTTPException, status
 from jwt import PyJWTError
 
-from app.repository.user import get_app_user_by_email
 from app.models.user import JWTUser
+from app.repository.user import get_app_user_by_email
 from app.service import security
 
 CREDENTIALS_EXCEPTION = HTTPException(

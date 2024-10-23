@@ -30,11 +30,6 @@ from sqlalchemy.orm import Session
 
 from app.config import PUBLIC_APP_URL
 from app.core.util import to_cdn_url
-from app.repository.lookups import (
-    doc_type_from_family_document_metadata,
-    get_countries_for_region,
-    get_countries_for_slugs,
-)
 from app.models.search import (
     BackendFilterValues,
     FilterField,
@@ -43,6 +38,11 @@ from app.models.search import (
     SearchResponseDocumentPassage,
     SearchResponseFamily,
     SearchResponseFamilyDocument,
+)
+from app.repository.lookups import (
+    doc_type_from_family_document_metadata,
+    get_countries_for_region,
+    get_countries_for_slugs,
 )
 
 _LOGGER = logging.getLogger(__name__)

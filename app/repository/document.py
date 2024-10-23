@@ -25,8 +25,6 @@ from sqlalchemy import func
 from sqlalchemy.orm import Session
 
 from app.core.util import to_cdn_url
-from app.repository.geography import get_geo_subquery
-from app.repository.lookups import doc_type_from_family_document_metadata
 from app.models.document import (
     CollectionOverviewResponse,
     FamilyAndDocumentsResponse,
@@ -36,6 +34,8 @@ from app.models.document import (
     FamilyEventsResponse,
     LinkableFamily,
 )
+from app.repository.geography import get_geo_subquery
+from app.repository.lookups import doc_type_from_family_document_metadata
 
 _LOGGER = logging.getLogger(__file__)
 
