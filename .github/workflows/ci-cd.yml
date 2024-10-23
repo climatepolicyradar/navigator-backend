@@ -118,7 +118,7 @@ jobs:
       - name: Build docker-compose stack & Setup vespa for search
         run: make start
 
-      - name: Run backend search tests for vespa
+      - name: Run backend Use Case tests
         run: make test_use_cases
 
       - name: Log Dump
