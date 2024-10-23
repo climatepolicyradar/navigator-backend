@@ -23,6 +23,6 @@ app/service/pipeline.sql                         @climatepolicyradar/deng
 tests/search/search_fixtures/vespa_test_schema/  @climatepolicyradar/deng
 app/api/api_v1/routers/search.py                 @climatepolicyradar/tech-devs
 tests/search/                                    @climatepolicyradar/tech-devs
-app/api/api_v1/schemas/                          @climatepolicyradar/tech-devs
+app/schemas/                                     @climatepolicyradar/tech-devs
 tests/unit/app/schemas/                          @climatepolicyradar/tech-devs
 app/api/api_v1/schemas/search.py                 @climatepolicyradar/deng
