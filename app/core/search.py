@@ -28,7 +28,14 @@ from db_client.models.dfce.family import (
 from db_client.models.organisation import Organisation
 from sqlalchemy.orm import Session
 
-from app.api.api_v1.schemas.search import (
+from app.config import PUBLIC_APP_URL
+from app.core.util import to_cdn_url
+from app.repository.lookups import (
+    doc_type_from_family_document_metadata,
+    get_countries_for_region,
+    get_countries_for_slugs,
+)
+from app.schemas.search import (
     BackendFilterValues,
     FilterField,
     SearchRequestBody,
@@ -36,13 +43,6 @@ from app.api.api_v1.schemas.search import (
     SearchResponseDocumentPassage,
     SearchResponseFamily,
     SearchResponseFamilyDocument,
-)
-from app.config import PUBLIC_APP_URL
-from app.core.util import to_cdn_url
-from app.repository.lookups import (
-    doc_type_from_family_document_metadata,
-    get_countries_for_region,
-    get_countries_for_slugs,
 )
 
 _LOGGER = logging.getLogger(__name__)

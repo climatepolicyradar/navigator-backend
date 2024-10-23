@@ -2,8 +2,8 @@ from datetime import datetime
 
 import pytest
 
-from app.api.api_v1.schemas.document import FamilyDocumentResponse
-from app.api.api_v1.schemas.search import (
+from app.schemas.document import FamilyDocumentResponse
+from app.schemas.search import (
     SearchResponse,
     SearchResponseDocumentPassage,
     SearchResponseFamily,

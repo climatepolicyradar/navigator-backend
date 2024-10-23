@@ -12,7 +12,7 @@ from pydantic_core import Url
 from sqlalchemy import distinct, select
 from sqlalchemy.orm import Session
 
-from app.api.api_v1.schemas.custom_app import CustomAppConfigDTO
+from app.schemas.custom_app import CustomAppConfigDTO
 from app.service import security
 
 _LOGGER = logging.getLogger(__name__)

@@ -24,7 +24,10 @@ from db_client.models.organisation.organisation import Organisation
 from sqlalchemy import func
 from sqlalchemy.orm import Session
 
-from app.api.api_v1.schemas.document import (
+from app.core.util import to_cdn_url
+from app.repository.geography import get_geo_subquery
+from app.repository.lookups import doc_type_from_family_document_metadata
+from app.schemas.document import (
     CollectionOverviewResponse,
     FamilyAndDocumentsResponse,
     FamilyContext,
@@ -33,9 +36,6 @@ from app.api.api_v1.schemas.document import (
     FamilyEventsResponse,
     LinkableFamily,
 )
-from app.core.util import to_cdn_url
-from app.repository.geography import get_geo_subquery
-from app.repository.lookups import doc_type_from_family_document_metadata
 
 _LOGGER = logging.getLogger(__file__)
 

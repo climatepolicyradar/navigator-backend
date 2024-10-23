@@ -16,7 +16,7 @@ from pydantic.json_schema import JsonSchemaValue
 from pydantic_core.core_schema import CoreSchema
 from typing_extensions import Annotated
 
-from app.api.api_v1.schemas import CLIMATE_LAWS_MATCH
+from app.schemas import CLIMATE_LAWS_MATCH
 
 Coord = tuple[float, float]
 
@@ -60,8 +60,7 @@ class SearchRequestBody(CprSdkSearchParameters):
     )
 
     # Query string should be required in backend (its not in dal)
-    # trunk-ignore(pyright/reportIncompatibleVariableOverride)
-    query_string: str
+    query_string: str  # type: ignore
     """
     A string representation of the search to be performed.
     For example: 'Adaptation strategy'"

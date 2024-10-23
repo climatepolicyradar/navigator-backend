@@ -9,8 +9,8 @@ from db_client.models.dfce import DocumentStatus
 from db_client.models.dfce.family import FamilyDocument
 from fastapi import Depends
 
-from app.api.api_v1.schemas.document import DocumentParserInput
 from app.clients.db.session import get_db
+from app.schemas.document import DocumentParserInput
 
 _LOGGER = logging.getLogger(__name__)
 
