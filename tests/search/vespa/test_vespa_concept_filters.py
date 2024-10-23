@@ -3,7 +3,7 @@ from unittest.mock import patch
 import pytest
 
 from app.api.api_v1.routers import search
-from app.schemas.search import SearchResponse
+from app.models.search import SearchResponse
 from tests.search.vespa.setup_search_tests import (
     _make_search_request,
     _populate_db_families,

@@ -37,7 +37,7 @@ from app.core.search import (
     process_result_into_csv,
     process_vespa_search_response,
 )
-from app.schemas.search import SearchRequestBody, SearchResponse
+from app.models.search import SearchRequestBody, SearchResponse
 from app.service.custom_app import AppTokenFactory
 
 _LOGGER = logging.getLogger(__name__)

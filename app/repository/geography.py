@@ -15,7 +15,7 @@ from sqlalchemy.exc import OperationalError
 from sqlalchemy.orm import Query, Session
 
 from app.errors import RepositoryError
-from app.schemas.geography import GeographyStatsDTO
+from app.models.geography import GeographyStatsDTO
 
 _LOGGER = logging.getLogger(__file__)
 

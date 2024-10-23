@@ -27,7 +27,7 @@ from sqlalchemy.orm import Session
 from app.core.util import to_cdn_url
 from app.repository.geography import get_geo_subquery
 from app.repository.lookups import doc_type_from_family_document_metadata
-from app.schemas.document import (
+from app.models.document import (
     CollectionOverviewResponse,
     FamilyAndDocumentsResponse,
     FamilyContext,

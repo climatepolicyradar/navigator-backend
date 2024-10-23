@@ -16,7 +16,7 @@ from pydantic.json_schema import JsonSchemaValue
 from pydantic_core.core_schema import CoreSchema
 from typing_extensions import Annotated
 
-from app.schemas import CLIMATE_LAWS_MATCH
+from app.models import CLIMATE_LAWS_MATCH
 
 Coord = tuple[float, float]
 

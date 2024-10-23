@@ -10,7 +10,7 @@ from app.repository.document import (
     get_family_document_and_context,
     get_slugged_objects,
 )
-from app.schemas.document import (
+from app.models.document import (
     FamilyAndDocumentsResponse,
     FamilyDocumentWithContextResponse,
 )

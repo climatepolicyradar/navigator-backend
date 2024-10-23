@@ -4,7 +4,7 @@ from typing import Any, Mapping, Optional, Sequence, Union
 from cpr_sdk.pipeline_general_models import BackendDocument
 from pydantic import BaseModel, ConfigDict, field_validator
 
-from app.schemas import CLIMATE_LAWS_MATCH
+from app.models import CLIMATE_LAWS_MATCH
 
 Json = dict[str, Any]
 

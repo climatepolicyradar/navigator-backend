@@ -35,7 +35,7 @@ from app.repository.lookups import (
     get_countries_for_region,
     get_countries_for_slugs,
 )
-from app.schemas.search import (
+from app.models.search import (
     BackendFilterValues,
     FilterField,
     SearchRequestBody,
