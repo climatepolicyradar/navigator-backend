@@ -29,7 +29,11 @@ def to_cdn_url(s3_object_key: Optional[str]) -> Optional[str]:
 
 
 def random_string(length=12):
-    return "".join(random.choice(string.ascii_lowercase) for i in range(length))
+    return "".join(
+        # trunk-ignore(bandit/B311)
+        random.choice(string.ascii_lowercase)
+        for i in range(length)
+    )
 
 
 def table_to_json(
