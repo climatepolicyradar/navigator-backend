@@ -26,6 +26,22 @@ IMPORT_ID_MATCHER = re.compile(
 )
 
 
+class ResultType(str, enum.Enum):
+    """Result type used when processing metadata values."""
+
+    OK = "Ok"
+    RESOLVED = "Resolved"
+    ERROR = "Error"
+
+
+@dataclass
+class Result:
+    """Augmented result class for reporting extra details about processed metadata."""
+
+    type: ResultType = ResultType.OK
+    details: str = ""
+
+
 def format_pipeline_ingest_input(
     documents: Sequence[DocumentParserInput],
 ) -> dict[str, Any]:
@@ -97,22 +113,6 @@ def write_documents_to_s3(
         s3_object_key=documents_object_key,
         bytes_content=bytes_content,
     )
-
-
-class ResultType(str, enum.Enum):
-    """Result type used when processing metadata values."""
-
-    OK = "Ok"
-    RESOLVED = "Resolved"
-    ERROR = "Error"
-
-
-@dataclass
-class Result:
-    """Augmented result class for reporting extra details about processed metadata."""
-
-    type: ResultType = ResultType.OK
-    details: str = ""
 
 
 def write_ingest_results_to_s3(
