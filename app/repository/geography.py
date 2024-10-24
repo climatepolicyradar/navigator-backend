@@ -1,7 +1,7 @@
 """Functions to support the geographies endpoint."""
 
 import logging
-from typing import Optional
+from typing import Optional, Sequence
 
 from db_client.models.dfce.family import (
     Family,
@@ -22,17 +22,17 @@ _LOGGER = logging.getLogger(__file__)
 
 def get_geo_subquery(
     db: Session,
-    allowed_geo_slugs: Optional[list[str]] = None,
-    allowed_geo_values: Optional[list[str]] = None,
+    allowed_geo_slugs: Optional[Sequence[str]] = None,
+    allowed_geo_values: Optional[Sequence[str]] = None,
     family_document_import_id: Optional[str] = None,
 ) -> Query:
     """
     Create a subquery to fetch geographies associated with families.
 
     :param Session db: Database session.
-    :param Optional[list[str]] allowed_geo_slugs: Optional list of
+    :param Optional[Sequence[str]] allowed_geo_slugs: Optional list of
         allowed geography slugs.
-    :param Optional[list[str]] allowed_geo_values: Optional list of
+    :param Optional[Sequence[str]] allowed_geo_values: Optional list of
         allowed geography values.
     :param Optional[str] family_document_import_id: Optional family
         document import ID.
