@@ -25,4 +25,6 @@ app/api/api_v1/routers/search.py                 @climatepolicyradar/tech-devs
 tests/search/                                    @climatepolicyradar/tech-devs
 app/models/                                      @climatepolicyradar/tech-devs
 tests/unit/app/schemas/                          @climatepolicyradar/tech-devs
-app/api/api_v1/schemas/search.py                 @climatepolicyradar/deng
+app/models/search.py                             @climatepolicyradar/deng
+app/service/search.py                            @climatepolicyradar/deng
+app/repository/search.py                         @climatepolicyradar/deng

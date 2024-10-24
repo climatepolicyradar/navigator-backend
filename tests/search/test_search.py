@@ -27,7 +27,7 @@ from db_client.models.document import PhysicalDocument
 from slugify import slugify
 from sqlalchemy.orm import Session
 
-from app.core.search import (
+from app.service.search import (
     SearchRequestBody,
     _convert_filters,
     create_vespa_search_params,
