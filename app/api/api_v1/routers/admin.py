@@ -11,8 +11,8 @@ from db_client.models.document.physical_document import (
 from fastapi import APIRouter, Depends, HTTPException, Request, status
 from sqlalchemy import Column, update
 
-from app.api.api_v1.schemas.document import DocumentUpdateRequest
 from app.clients.db.session import get_db
+from app.models.document import DocumentUpdateRequest
 from app.repository.lookups import get_family_document_by_import_id_or_slug
 from app.service.auth import get_superuser_details
 

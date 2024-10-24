@@ -10,12 +10,7 @@ from db_client.models.organisation import Organisation
 from pydantic import BaseModel
 from sqlalchemy.orm import Session
 
-from app.api.api_v1.schemas.search import (
-    SearchResponse,
-    SearchResponseFamily,
-    SortField,
-    SortOrder,
-)
+from app.models.search import SearchResponse, SearchResponseFamily, SortField, SortOrder
 from app.repository.geography import get_geo_subquery
 
 _LOGGER = getLogger(__name__)

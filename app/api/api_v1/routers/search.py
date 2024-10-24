@@ -18,7 +18,6 @@ from fastapi.responses import StreamingResponse
 from sqlalchemy.orm import Session
 from starlette.responses import RedirectResponse
 
-from app.api.api_v1.schemas.search import SearchRequestBody, SearchResponse
 from app.clients.aws.client import S3Client, get_s3_client
 from app.clients.aws.s3_document import S3Document
 from app.clients.db.session import get_db
@@ -38,6 +37,7 @@ from app.core.search import (
     process_result_into_csv,
     process_vespa_search_response,
 )
+from app.models.search import SearchRequestBody, SearchResponse
 from app.service.custom_app import AppTokenFactory
 
 _LOGGER = logging.getLogger(__name__)

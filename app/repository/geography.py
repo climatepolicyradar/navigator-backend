@@ -14,8 +14,8 @@ from sqlalchemy import func
 from sqlalchemy.exc import OperationalError
 from sqlalchemy.orm import Query, Session
 
-from app.api.api_v1.schemas.geography import GeographyStatsDTO
 from app.errors import RepositoryError
+from app.models.geography import GeographyStatsDTO
 
 _LOGGER = logging.getLogger(__file__)
 

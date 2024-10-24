@@ -3,8 +3,8 @@ from typing import Any, Sequence
 
 from fastapi import Depends
 
-from app.api.api_v1.schemas.document import DocumentParserInput
 from app.clients.db.session import get_db
+from app.models.document import DocumentParserInput
 from app.repository.pipeline import generate_pipeline_ingest_input
 
 _LOGGER = logging.getLogger(__name__)

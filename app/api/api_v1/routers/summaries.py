@@ -9,9 +9,9 @@ import logging
 from db_client.models.dfce import FamilyCategory, Geography
 from fastapi import APIRouter, Depends, HTTPException, Request, status
 
-from app.api.api_v1.schemas.search import GeographySummaryFamilyResponse
 from app.clients.db.session import get_db
 from app.core.browse import BrowseArgs, browse_rds_families
+from app.models.search import GeographySummaryFamilyResponse
 from app.repository.lookups import get_country_slug_from_country_code, is_country_code
 
 _LOGGER = logging.getLogger(__name__)
