@@ -1,8 +1,6 @@
 """Functions to support browsing the RDS document structure"""
 
-import os
 import zipfile
-from functools import lru_cache
 from io import BytesIO, StringIO
 from logging import getLogger
 from typing import Optional
@@ -11,17 +9,14 @@ import pandas as pd
 from fastapi import Depends
 
 from app.clients.db.session import get_db
+from app.repository.download import _get_query_template, get_whole_database_dump
 
 _LOGGER = getLogger(__name__)
 
 
-@lru_cache()
-def _get_query_template():
-    with open(os.path.join("app", "core", "download.sql"), "r") as file:
-        return file.read()
-
-
-def create_query(ingest_cycle_start: str, allowed_corpora_ids: list[str]) -> str:
+def create_query(
+    template_query, ingest_cycle_start: str, allowed_corpora_ids: list[str]
+) -> str:
     """Create download whole database query, replacing variables.
 
     :param str ingest_cycle_start: The current ingest cycle date.
@@ -29,8 +24,6 @@ def create_query(ingest_cycle_start: str, allowed_corpora_ids: list[str]) -> str
         should allow the data to be dumped.
     :return str: The SQL query to perform on the database session.
     """
-    template_query = _get_query_template()
-
     # TODO: Hide MCF from data dump until after COP.
     mcf_corpora_ids = [
         "MCF.corpus.AF.n0000",
@@ -49,15 +42,6 @@ def create_query(ingest_cycle_start: str, allowed_corpora_ids: list[str]) -> str
     ).replace(
         "{allowed_corpora_ids}", corpora_ids
     )  # type: ignore
-
-
-def get_whole_database_dump(
-    ingest_cycle_start: str, allowed_corpora_ids: list[str], db=Depends(get_db)
-):
-    query = create_query(ingest_cycle_start, allowed_corpora_ids)
-    with db.connection() as conn:
-        df = pd.read_sql(query, conn.connection)
-        return df
 
 
 def replace_slug_with_qualified_url(
@@ -89,10 +73,8 @@ def convert_dump_to_csv(df: pd.DataFrame):
     return csv_buffer
 
 
-def generate_data_dump_as_csv(
-    ingest_cycle_start: str, allowed_corpora_ids: list[str], db=Depends(get_db)
-):
-    df = get_whole_database_dump(ingest_cycle_start, allowed_corpora_ids, db)
+def generate_data_dump_as_csv(query, db=Depends(get_db)):
+    df = get_whole_database_dump(query, db)
     csv = convert_dump_to_csv(df)
     csv.seek(0)
     return csv
@@ -120,7 +102,9 @@ def create_data_download_zip_archive(
     ingest_cycle_start: str, allowed_corpora_ids: list[str], db=Depends(get_db)
 ):
     readme_buffer = generate_data_dump_readme(ingest_cycle_start)
-    csv_buffer = generate_data_dump_as_csv(ingest_cycle_start, allowed_corpora_ids, db)
+    query_template = _get_query_template()
+    query = create_query(query_template, ingest_cycle_start, allowed_corpora_ids)
+    csv_buffer = generate_data_dump_as_csv(query, db)
 
     zip_buffer = BytesIO()
     with zipfile.ZipFile(zip_buffer, "a", zipfile.ZIP_DEFLATED, False) as zip_file:
