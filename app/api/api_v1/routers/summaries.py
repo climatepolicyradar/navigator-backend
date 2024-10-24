@@ -11,8 +11,8 @@ from fastapi import APIRouter, Depends, HTTPException, Request, status
 
 from app.clients.db.session import get_db
 from app.models.search import GeographySummaryFamilyResponse
-from app.repository.browse import BrowseArgs, browse_rds_families
 from app.repository.lookups import get_country_slug_from_country_code, is_country_code
+from app.repository.search import BrowseArgs, browse_rds_families
 
 _LOGGER = logging.getLogger(__name__)
 

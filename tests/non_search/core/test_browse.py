@@ -1,7 +1,7 @@
 from db_client.models.dfce import Geography
 
 from app.models.search import SearchResponse
-from app.repository.browse import BrowseArgs, browse_rds_families
+from app.repository.search import BrowseArgs, browse_rds_families
 from tests.non_search.setup_helpers import setup_with_two_docs
 
 
