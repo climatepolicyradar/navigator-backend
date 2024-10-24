@@ -5,10 +5,13 @@ from sqlalchemy.orm import Session
 
 from app.clients.aws.client import S3Client, get_s3_client
 from app.clients.db.session import get_db
-from app.core.validation.util import get_new_s3_prefix, write_documents_to_s3
 from app.models.document import BulkIngestResult
 from app.service.auth import get_superuser_details
-from app.service.pipeline import get_db_state_content
+from app.service.pipeline import (
+    get_db_state_content,
+    get_new_s3_prefix,
+    write_documents_to_s3,
+)
 
 _LOGGER = logging.getLogger(__name__)
 

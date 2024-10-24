@@ -7,10 +7,10 @@ from db_client.models.document.physical_document import Language
 from sqlalchemy.exc import MultipleResultsFound
 from sqlalchemy.orm import Session
 
-from app.core.util import tree_table_to_json
-from app.core.validation import IMPORT_ID_MATCHER
 from app.models.metadata import ApplicationConfig
 from app.repository.organisation import get_all_organisations, get_organisation_config
+from app.service.pipeline import IMPORT_ID_MATCHER
+from app.service.util import tree_table_to_json
 
 _LOGGER = logging.getLogger(__name__)
 

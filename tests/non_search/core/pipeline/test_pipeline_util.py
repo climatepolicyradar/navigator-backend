@@ -6,9 +6,12 @@ from unittest import mock
 import pytest
 
 from app.config import PIPELINE_BUCKET
-from app.core.validation import IMPORT_ID_MATCHER
-from app.core.validation.util import _flatten_maybe_tree, write_documents_to_s3
 from app.models.document import DocumentParserInput
+from app.service.pipeline import (
+    IMPORT_ID_MATCHER,
+    _flatten_maybe_tree,
+    write_documents_to_s3,
+)
 
 NOT_A_TREE_1 = [{"name": 1}, {"name": 2}, {"name": 3}]
 NOT_A_TREE_2 = [
@@ -117,7 +120,7 @@ def test_write_documents_to_s3(test_s3_client, mocker):
     )
 
     upload_file_mock = mocker.patch.object(test_s3_client, "upload_fileobj")
-    datetime_mock = mocker.patch("app.core.validation.util.datetime")
+    datetime_mock = mocker.patch("app.service.pipeline.datetime")
     every_now = datetime.datetime(year=2001, month=12, day=25)
     datetime_mock.now.return_value = every_now
 

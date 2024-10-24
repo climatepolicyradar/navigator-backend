@@ -29,7 +29,6 @@ from db_client.models.organisation import Organisation
 from sqlalchemy.orm import Session
 
 from app.config import PUBLIC_APP_URL
-from app.core.util import to_cdn_url
 from app.models.search import (
     BackendFilterValues,
     FilterField,
@@ -44,6 +43,7 @@ from app.repository.lookups import (
     get_countries_for_region,
     get_countries_for_slugs,
 )
+from app.service.util import to_cdn_url
 
 _LOGGER = logging.getLogger(__name__)
 
