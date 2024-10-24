@@ -3,31 +3,22 @@
 from datetime import datetime
 from logging import getLogger
 from time import perf_counter_ns
-from typing import Optional, Sequence, cast
+from typing import cast
 
 from db_client.models.dfce.family import Corpus, Family, FamilyCorpus, FamilyStatus
 from db_client.models.organisation import Organisation
-from pydantic import BaseModel
 from sqlalchemy.orm import Session
 
-from app.models.search import SearchResponse, SearchResponseFamily, SortField, SortOrder
+from app.models.search import (
+    BrowseArgs,
+    SearchResponse,
+    SearchResponseFamily,
+    SortField,
+    SortOrder,
+)
 from app.repository.geography import get_geo_subquery
 
 _LOGGER = getLogger(__name__)
-
-
-class BrowseArgs(BaseModel):
-    """Arguments for the browse_rds function"""
-
-    geography_slugs: Optional[Sequence[str]] = None
-    country_codes: Optional[Sequence[str]] = None
-    start_year: Optional[int] = None
-    end_year: Optional[int] = None
-    categories: Optional[Sequence[str]] = None
-    sort_field: SortField = SortField.DATE
-    sort_order: SortOrder = SortOrder.DESCENDING
-    offset: Optional[int] = 0
-    limit: Optional[int] = 10
 
 
 def to_search_response_family(
@@ -64,10 +55,7 @@ def to_search_response_family(
     )
 
 
-def browse_rds_families(
-    db: Session,
-    req: BrowseArgs,
-) -> SearchResponse:
+def browse_rds_families(db: Session, req: BrowseArgs) -> SearchResponse:
     """Browse RDS"""
 
     t0 = perf_counter_ns()
