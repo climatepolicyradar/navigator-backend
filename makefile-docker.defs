@@ -113,7 +113,18 @@ test_search:
 		-vvv tests/search \
 		-m 'search' ${ARGS}
 
-test_cors: 
+.ONESHELL:
+test_use_cases:
+	docker compose \
+		-f docker-compose.yml \
+		-f docker-compose.dev.yml \
+		run --rm --name search_test \
+		-v "${PWD}/data:/data" \
+		backend pytest \
+		-vvv tests/use-cases \
+		-m 'use_case' ${ARGS}
+
+test_cors:
 	docker compose -f docker-compose.yml -f docker-compose.dev.yml run --rm backend pytest -vvv -m 'cors' ${ARGS}
 
 test_unit:
