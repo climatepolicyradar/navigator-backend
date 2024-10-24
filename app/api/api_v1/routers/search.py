@@ -31,14 +31,14 @@ from app.config import (
     VESPA_SECRETS_LOCATION,
     VESPA_URL,
 )
-from app.core.search import (
+from app.models.search import SearchRequestBody, SearchResponse
+from app.service.custom_app import AppTokenFactory
+from app.service.download import create_data_download_zip_archive
+from app.service.search import (
     create_vespa_search_params,
     process_result_into_csv,
     process_vespa_search_response,
 )
-from app.models.search import SearchRequestBody, SearchResponse
-from app.service.custom_app import AppTokenFactory
-from app.service.download import create_data_download_zip_archive
 
 _LOGGER = logging.getLogger(__name__)
 
