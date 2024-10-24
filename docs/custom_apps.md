@@ -6,7 +6,7 @@ Custom app configuration tokens can be generated from the root of the backend
 repository, using the following code snippet
 
 ```bash
-python -c "from app.core import config; from app.service.custom_app import create_configuration_token; print(create_configuration_token('CORPORA_IDS;THEME;APP_DOMAIN'))"
+python -c "from app import config; from app.service.custom_app import AppTokenFactory; t = AppTokenFactory(); print(t.create_configuration_token('$CORPORA_IDS;$THEME;$AUDIENCE'))"
 ```
 
 where:

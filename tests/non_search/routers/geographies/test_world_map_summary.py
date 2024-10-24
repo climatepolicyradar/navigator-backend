@@ -3,7 +3,7 @@ from db_client.models.dfce.family import Family, FamilyGeography, FamilyStatus
 from db_client.models.dfce.geography import Geography
 from fastapi import status
 
-from tests.non_search.app.geographies.setup_world_map_helpers import (
+from tests.non_search.routers.geographies.setup_world_map_helpers import (
     setup_all_docs_published_world_map,
     setup_mixed_doc_statuses_world_map,
 )
