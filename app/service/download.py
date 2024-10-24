@@ -39,7 +39,9 @@ def create_query(
     corpora_ids = "'" + "','".join(corpora_ids) + "'"
     return template_query.replace(  # type: ignore
         "{ingest_cycle_start}", ingest_cycle_start
-    ).replace("{allowed_corpora_ids}", corpora_ids)  # type: ignore
+    ).replace(
+        "{allowed_corpora_ids}", corpora_ids
+    )  # type: ignore
 
 
 def replace_slug_with_qualified_url(
