@@ -125,6 +125,9 @@ test_non_search:
 test:
 	docker compose -f docker-compose.yml -f docker-compose.dev.yml run --rm backend pytest -vvv ${ARGS}
 
+test-snapshot-update:
+	docker compose -f docker-compose.yml -f docker-compose.dev.yml run --rm backend pytest --snapshot-update -vvv ${ARGS}
+
 # ----------------------------------
 # tasks
 # ----------------------------------

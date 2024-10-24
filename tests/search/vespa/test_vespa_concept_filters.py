@@ -44,6 +44,7 @@ def test_concept_filters(
     monkeypatch,
     data_client,
     valid_token,
+    snapshot,
 ):
     monkeypatch.setattr(search, "_VESPA_CONNECTION", test_vespa)
 
@@ -58,29 +59,15 @@ def test_concept_filters(
         },
         expected_status_code=200,
     )
-    response: SearchResponse = SearchResponse.model_validate(response)
+    actual: SearchResponse = SearchResponse.model_validate(response)
 
-    assert len(response.families) > 0
-    for concept_filter in concept_filters:
-        for family in response.families:
-            for family_document in family.family_documents:
-                for passage_match in family_document.document_passage_matches:
-                    assert passage_match.concepts
-                    if concept_filter["name"] == "parent_concept_ids_flat":
-                        assert any(
-                            [
-                                concept_filter["value"]
-                                in concept.parent_concept_ids_flat
-                                for concept in passage_match.concepts
-                            ]
-                        )
-                    else:
-                        assert any(
-                            [
-                                concept.__getattribute__(concept_filter["name"])
-                                == concept_filter["value"]
-                                for concept in passage_match.concepts
-                            ]
-                        )
+    # Set arbitrary values, since we don't care about these changing.
+    #
+    # The snapshot testing library, syrupy, does provide other ways to achieve
+    # this, but I was struggling with getting it working at the time.
+    actual.total_time_ms = 0
+    actual.query_time_ms = 0
+
+    assert actual == snapshot()
 
     assert mock_corpora_exist_in_db.assert_called
