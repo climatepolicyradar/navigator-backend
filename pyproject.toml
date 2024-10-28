@@ -1,6 +1,6 @@
 [tool.poetry]
 name = "navigator_backend"
-version = "1.19.3"
+version = "1.19.4"
 description = ""
 authors = ["CPR-dev-team <tech@climatepolicyradar.org>"]
 packages = [{ include = "app" }, { include = "tests" }]
@@ -31,7 +31,7 @@ starlette = "^0.27.0"
 tenacity = "^8.0.1"
 uvicorn = { extras = ["standard"], version = "^0.20.0" }
 botocore = "^1.34.19"
-db-client = { git = "https://github.com/climatepolicyradar/navigator-db-client.git", tag = "v3.8.19" }
+db-client = { git = "https://github.com/climatepolicyradar/navigator-db-client.git", tag = "v3.8.20" }
 urllib3 = "<2"
 apscheduler = "^3.10.4"
 numpy = "1.26.4"
