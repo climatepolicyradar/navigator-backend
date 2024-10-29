@@ -16,7 +16,7 @@ from pydantic.json_schema import JsonSchemaValue
 from pydantic_core.core_schema import CoreSchema
 from typing_extensions import Annotated
 
-from app.api.api_v1.schemas import CLIMATE_LAWS_MATCH
+from app.models import CLIMATE_LAWS_MATCH
 
 Coord = tuple[float, float]
 
@@ -60,8 +60,7 @@ class SearchRequestBody(CprSdkSearchParameters):
     )
 
     # Query string should be required in backend (its not in dal)
-    # trunk-ignore(pyright/reportIncompatibleVariableOverride)
-    query_string: str
+    query_string: str  # type: ignore
     """
     A string representation of the search to be performed.
     For example: 'Adaptation strategy'"
@@ -366,3 +365,17 @@ class GeographySummaryFamilyResponse(BaseModel):
     family_counts: Mapping[FamilyCategory, int]
     top_families: Mapping[FamilyCategory, _T5FamL]
     targets: Sequence[str]  # TODO: Placeholder for later
+
+
+class BrowseArgs(BaseModel):
+    """Arguments for the browse_rds function"""
+
+    geography_slugs: Optional[Sequence[str]] = None
+    country_codes: Optional[Sequence[str]] = None
+    start_year: Optional[int] = None
+    end_year: Optional[int] = None
+    categories: Optional[Sequence[str]] = None
+    sort_field: SortField = SortField.DATE
+    sort_order: SortOrder = SortOrder.DESCENDING
+    offset: Optional[int] = 0
+    limit: Optional[int] = 10

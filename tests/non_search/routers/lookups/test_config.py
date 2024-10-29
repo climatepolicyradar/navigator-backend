@@ -12,7 +12,7 @@ from db_client.models.dfce.family import (
 from db_client.models.organisation import Corpus, Organisation
 
 from app.clients.db.session import SessionLocal
-from app.core.util import tree_table_to_json
+from app.service.util import tree_table_to_json
 
 LEN_ORG_CONFIG = 3
 EXPECTED_CCLW_TAXONOMY = {
