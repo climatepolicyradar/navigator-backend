@@ -12,6 +12,7 @@ from tests.search.vespa.setup_search_tests import (
 
 
 @pytest.mark.use_case
+@pytest.mark.search
 @patch(
     "app.api.api_v1.routers.search.AppTokenFactory.verify_corpora_in_db",
     return_value=True,
