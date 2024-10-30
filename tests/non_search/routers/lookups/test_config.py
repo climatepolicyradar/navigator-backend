@@ -23,6 +23,7 @@ EXPECTED_CCLW_TAXONOMY = {
     "framework",
     "hazard",
     "_document",
+    "_event",
     "event_type",
 }
 EXPECTED_CCLW_EVENTS = [
@@ -46,7 +47,13 @@ EXPECTED_CCLW_EVENTS = [
 ]
 
 
-EXPECTED_UNFCCC_TAXONOMY = {"author", "author_type", "event_type", "_document"}
+EXPECTED_UNFCCC_TAXONOMY = {
+    "author",
+    "author_type",
+    "event_type",
+    "_document",
+    "_event",
+}
 
 
 def _add_family(test_db, import_id: str, cat: FamilyCategory, corpus_import_id):
@@ -146,6 +153,15 @@ def test_config_endpoint_content(data_client, data_db):
     assert (
         "Adaptation Communication"
         in cclw_corpora[0]["taxonomy"]["_document"]["type"]["allowed_values"]
+    )
+
+    # Check event types.
+    assert (
+        len(cclw_corpora[0]["taxonomy"]["_event"]["event_type"]["allowed_values"]) == 17
+    )
+    assert (
+        "Passed/Approved"
+        in cclw_corpora[0]["taxonomy"]["_event"]["event_type"]["allowed_values"]
     )
 
 

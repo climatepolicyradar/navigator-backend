@@ -16,6 +16,7 @@ CCLW_METADATA_KEYS = set(
         "framework",
         "instrument",
         "_document",
+        "_event",
         "event_type",
     ]
 )
@@ -25,6 +26,7 @@ UNFCCC_METADATA_KEYS = set(
         "author",
         "author_type",
         "_document",
+        "_event",
         "event_type",
     ]
 )
