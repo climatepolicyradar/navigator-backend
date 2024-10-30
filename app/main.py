@@ -100,7 +100,9 @@ _ALLOW_ORIGIN_REGEX = (
     r"https://.+\.dev.climatepolicyradar\.org|"
     r"https://.+\.sandbox\.climatepolicyradar\.org|"
     r"https://climate-laws\.org|"
-    r"https://.+\.climate-laws\.org"
+    r"https://.+\.climate-laws\.org|"
+    r"https://climateprojectexplorer\.org|"
+    r"https://.+\.climateprojectexplorer\.org"
 )
 
 # Add CORS middleware to allow cross origin requests from any port
