@@ -834,7 +834,7 @@ vision = ["Pillow (>=9.4.0)"]
 
 [[package]]
 name = "db-client"
-version = "3.8.21"
+version = "3.8.22"
 description = "All things to do with the datamodel and its storage. Including alembic migrations and datamodel code."
 optional = false
 python-versions = "^3.9"
@@ -854,8 +854,8 @@ SQLAlchemy-Utils = "^0.38.2"
 [package.source]
 type = "git"
 url = "https://github.com/climatepolicyradar/navigator-db-client.git"
-reference = "v3.8.21"
-resolved_reference = "f3d47fd379dbac51ef0d6db5b1654429b386d583"
+reference = "v3.8.22"
+resolved_reference = "92b71b8f39eb578287a03cd657853244c0bc0e1b"
 
 [[package]]
 name = "deprecation"
@@ -4250,4 +4250,4 @@ type = ["pytest-mypy"]
 [metadata]
 lock-version = "2.0"
 python-versions = "^3.10"
-content-hash = "42635456c923243b7f3717cc0406e4d1418954ac34824565749f6dfd237a569f"
+content-hash = "0d986525b8dd7a5cee02896eaaa6f248f3167e05eec0ef1e695bf282d8b8c904"
