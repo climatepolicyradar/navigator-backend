@@ -809,6 +809,10 @@ def populate_data_db(db: Session, fam_specs: Sequence[FamSpec]) -> None:
             family_import_id=fam_spec.family_import_id,
             family_document_import_id=None,
             status=EventStatus.OK,
+            valid_metadata={
+                "event_type": ["Passed/Approved"],
+                "datetime_event_name": ["Passed/Approved"],
+            },
         )
         db.add(family_event)
         family_metadata = FamilyMetadata(

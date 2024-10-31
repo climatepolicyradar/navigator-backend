@@ -71,7 +71,7 @@ class SearchRequestBody(CprSdkSearchParameters):
     keyword_filters: BackendKeywordFilter = None
     """
     This is an object containing a map of fields and their values "
-    to filter on. The allowed fields for the keys are: 
+    to filter on. The allowed fields for the keys are:
     "sources", "countries", "regions", "categories", "languages"
     """
 
@@ -81,7 +81,7 @@ class SearchRequestBody(CprSdkSearchParameters):
         le=500,
     )
     """
-    Where to start from in the number of query result that was 
+    Where to start from in the number of query result that was
     retrieved from the search database.
     """
 
@@ -189,7 +189,7 @@ class SearchResponseFamilyDocument(BaseModel):
     document_passage_matches: list[SearchResponseDocumentPassage]
     """
     This is a list of passages that match the search criteria within this document.
-    
+
     The length of which is affected by max_passages_per_doc in the request.
     """
 
@@ -210,7 +210,7 @@ class SearchResponseFamily(BaseModel):
     family_slug: str
     """
     The slug that forms part of the URL to navigate to the family.
-    
+
     Example, with a slug of  climate-change-adaptation-strategy_1882, a URL can be
     created to this family of documents as: https://app.climatepolicyradar.org/document/climate-change-adaptation-strategy_1882
     """
@@ -232,8 +232,9 @@ class SearchResponseFamily(BaseModel):
 
     family_date: str
     """
-    The date the family of documents was published, this is from the corresponding
-    Passed/Approved event for this family.
+    The date the family of documents was published, this date is found by looking for
+    the date associated with the datetime_event_name value from the event taxonomy for
+    this family (e.g., Passed/Approved, Project Approved or Concept Approved).
     """
 
     family_last_updated_date: str
@@ -286,13 +287,13 @@ class SearchResponseFamily(BaseModel):
 
     continuation_token: Optional[str] = None
     """
-    Passage level continuation token. Can be used in conjunction with the family level 
+    Passage level continuation token. Can be used in conjunction with the family level
     `this continuation_token` to get the next page of passages for this specific family
     """
 
     prev_continuation_token: Optional[str] = None
     """
-    Passage level continuation token. Can be used in conjunction with the family level 
+    Passage level continuation token. Can be used in conjunction with the family level
     `this continuation_token` to get the previous page of passages for this specific
     family
     """
