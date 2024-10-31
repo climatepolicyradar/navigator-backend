@@ -113,7 +113,8 @@ unique_doc_slugs as (
               END)
           ELSE
               MIN(family_event.date::TIMESTAMPTZ)
-      END AS published_date
+      END AS published_date,
+      max(family_event.date::date) last_changed
   FROM
       family_event
   GROUP BY
