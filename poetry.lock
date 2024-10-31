@@ -855,7 +855,7 @@ SQLAlchemy-Utils = "^0.38.2"
 type = "git"
 url = "https://github.com/climatepolicyradar/navigator-db-client.git"
 reference = "v3.8.25"
-resolved_reference = "3205c037087593126037d1a9a322c9304d957ee8"
+resolved_reference = "654ce6ab5e76e6cfeb71d0a57376bc084d14c694"
 
 [[package]]
 name = "deprecation"
