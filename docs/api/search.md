@@ -185,8 +185,10 @@ The family category, for example: Executive (see list in [code here](https://git
 
 ##### family_date
 
-The date the family of documents was published, this is from the corresponding
-“Passed/Approved” event for this family.
+The date the family of documents was published, this date is found by looking
+for the date associated with the datetime_event_name value from the event
+taxonomy for this family (e.g., Passed/Approved, Project Approved or Concept
+Approved).
 
 ##### family_last_updated_date
 

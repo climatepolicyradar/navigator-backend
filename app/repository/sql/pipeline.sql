@@ -130,9 +130,14 @@ WITH deduplicated_family_slugs AS (   SELECT
                         SELECT
                             family_event.family_import_id AS family_import_id,
                             CASE
-                                WHEN COUNT(*) FILTER (WHERE family_event.event_type_name = 'Passed/Approved') > 0 THEN
+                                WHEN COUNT(*) FILTER (
+                                    WHERE family_event.event_type_name =
+                                    (family_event.valid_metadata->'datetime_event_name'->>0)
+                                ) > 0 THEN
                                     MIN(CASE
-                                        WHEN family_event.event_type_name = 'Passed/Approved' THEN family_event.date::TIMESTAMPTZ
+                                        WHEN family_event.event_type_name =
+                                        (family_event.valid_metadata->'datetime_event_name'->>0)
+                                        THEN family_event.date::TIMESTAMPTZ
                                     END)
                                 ELSE
                                     MIN(family_event.date::TIMESTAMPTZ)
