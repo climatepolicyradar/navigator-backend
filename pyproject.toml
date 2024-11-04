@@ -1,6 +1,6 @@
 [tool.poetry]
 name = "navigator_backend"
-version = "1.19.9"
+version = "1.19.10"
 description = ""
 authors = ["CPR-dev-team <tech@climatepolicyradar.org>"]
 packages = [{ include = "app" }, { include = "tests" }]
