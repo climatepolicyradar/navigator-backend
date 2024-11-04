@@ -166,6 +166,10 @@ def _create_family_event(db: Session, family: VespaFixture):
         family_import_id=family_import_id,
         family_document_import_id=None,
         status=EventStatus.OK,
+        valid_metadata={
+            "event_type": ["Passed/Approved"],
+            "datetime_event_name": ["Passed/Approved"],
+        },
     )
     db.add(family_event)
     db.commit()

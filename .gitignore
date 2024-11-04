@@ -148,6 +148,7 @@ venv/
 ENV/
 env.bak/
 venv.bak/
+.env.staging
 
 # Spyder project settings
 .spyderproject
@@ -196,3 +197,5 @@ requirements.txt
 
 # Vespa secrets directory
 secrets/*
+
+scripts/*.json

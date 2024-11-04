@@ -4,7 +4,7 @@ from typing import Any, Mapping, Optional, Sequence, Union
 from cpr_sdk.pipeline_general_models import BackendDocument
 from pydantic import BaseModel, ConfigDict, field_validator
 
-from app.api.api_v1.schemas import CLIMATE_LAWS_MATCH
+from app.models import CLIMATE_LAWS_MATCH
 
 Json = dict[str, Any]
 
@@ -77,11 +77,11 @@ class FamilyDocumentResponse(BaseModel):
 
 
 class FamilyContext(BaseModel):
-    """Used to given the family context when returning a FamilyDocument"""
+    """Used to give the family context when returning a FamilyDocument"""
 
     title: str
     import_id: str
-    geography: str
+    geographies: list[str]
     category: str
     slug: str
     published_date: Optional[datetime] = None
@@ -103,7 +103,7 @@ class FamilyAndDocumentsResponse(BaseModel):
     import_id: str
     title: str
     summary: str
-    geography: str
+    geographies: list[str]
     category: str
     status: str
     metadata: dict

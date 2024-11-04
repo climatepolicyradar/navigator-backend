@@ -1,17 +1,70 @@
 import enum
 import json
 import logging
+import re
 from dataclasses import dataclass
 from datetime import datetime
 from io import BytesIO
 from typing import Any, Collection, Mapping, Optional, Sequence, Union
 
-from app.api.api_v1.schemas.document import DocumentParserInput
+from fastapi import Depends
+
 from app.clients.aws.client import S3Client
 from app.clients.aws.s3_document import S3Document
+from app.clients.db.session import get_db
 from app.config import INGEST_TRIGGER_ROOT, PIPELINE_BUCKET
+from app.models.document import DocumentParserInput
+from app.repository.pipeline import generate_pipeline_ingest_input
 
-_LOGGER = logging.getLogger(__file__)
+_LOGGER = logging.getLogger(__name__)
+
+MetadataType = dict[str, list[str]]
+
+_ID_ELEMENT = r"[a-zA-Z0-9]+([-_]?[a-zA-Z0-9]+)*"
+IMPORT_ID_MATCHER = re.compile(
+    rf"^{_ID_ELEMENT}\.{_ID_ELEMENT}\.{_ID_ELEMENT}\.{_ID_ELEMENT}$"
+)
+
+
+class ResultType(str, enum.Enum):
+    """Result type used when processing metadata values."""
+
+    OK = "Ok"
+    RESOLVED = "Resolved"
+    ERROR = "Error"
+
+
+@dataclass
+class Result:
+    """Augmented result class for reporting extra details about processed metadata."""
+
+    type: ResultType = ResultType.OK
+    details: str = ""
+
+
+def format_pipeline_ingest_input(
+    documents: Sequence[DocumentParserInput],
+) -> dict[str, Any]:
+    """Format the DocumentParserInput objects for the db_state.json file.
+
+    :param Sequence[DocumentParserInput] documents: A list of
+        DocumentParserInput objects that can be used by the pipeline.
+    :return dict[str, Any]: The contents of the db_state.json file in
+        JSON form.
+    """
+    return {"documents": {d.import_id: d.to_json() for d in documents}}
+
+
+def get_db_state_content(db=Depends(get_db)):
+    """Get the db_state.json content in JSON form.
+
+    :param Session db: The db session to query against.
+    :return: A list of DocumentParserInput objects in the JSON format
+        that will be written to the db_state.json file used by the
+        pipeline.
+    """
+    pipeline_ingest_input = generate_pipeline_ingest_input(db)
+    return format_pipeline_ingest_input(pipeline_ingest_input)
 
 
 def _flatten_maybe_tree(
@@ -40,22 +93,18 @@ def _flatten_maybe_tree(
 
 
 def write_documents_to_s3(
-    s3_client: S3Client,
-    s3_prefix: str,
-    documents: Sequence[DocumentParserInput],
+    s3_client: S3Client, s3_prefix: str, content: dict[str, Any]
 ) -> Union[S3Document, bool]:
     """
     Write current state of documents into S3 to trigger a pipeline run after bulk ingest
 
     :param [S3Client] s3_client: an S3 client to use to write data
     :param [str] s3_prefix: prefix into which to write the document updates in s3
+    :param [dict[str, Any]] content: db state document content
     :param [Sequence[DocumentCreateRequest]] documents: a sequence of document
         specifications to write to S3
     """
-    json_content = json.dumps(
-        {"documents": {d.import_id: d.to_json() for d in documents}},
-        indent=2,
-    )
+    json_content = json.dumps(content, indent=2)
     bytes_content = BytesIO(json_content.encode("utf8"))
     documents_object_key = f"{s3_prefix}/db_state.json"
     _LOGGER.info("Writing Documents file into S3")
@@ -64,22 +113,6 @@ def write_documents_to_s3(
         s3_object_key=documents_object_key,
         bytes_content=bytes_content,
     )
-
-
-class ResultType(str, enum.Enum):
-    """Result type used when processing metadata values."""
-
-    OK = "Ok"
-    RESOLVED = "Resolved"
-    ERROR = "Error"
-
-
-@dataclass
-class Result:
-    """Augmented result class for reporting extra details about processed metadata."""
-
-    type: ResultType = ResultType.OK
-    details: str = ""
 
 
 def write_ingest_results_to_s3(

@@ -16,7 +16,7 @@ from pydantic.json_schema import JsonSchemaValue
 from pydantic_core.core_schema import CoreSchema
 from typing_extensions import Annotated
 
-from app.api.api_v1.schemas import CLIMATE_LAWS_MATCH
+from app.models import CLIMATE_LAWS_MATCH
 
 Coord = tuple[float, float]
 
@@ -60,8 +60,7 @@ class SearchRequestBody(CprSdkSearchParameters):
     )
 
     # Query string should be required in backend (its not in dal)
-    # trunk-ignore(pyright/reportIncompatibleVariableOverride)
-    query_string: str
+    query_string: str  # type: ignore
     """
     A string representation of the search to be performed.
     For example: 'Adaptation strategy'"
@@ -72,7 +71,7 @@ class SearchRequestBody(CprSdkSearchParameters):
     keyword_filters: BackendKeywordFilter = None
     """
     This is an object containing a map of fields and their values "
-    to filter on. The allowed fields for the keys are: 
+    to filter on. The allowed fields for the keys are:
     "sources", "countries", "regions", "categories", "languages"
     """
 
@@ -82,7 +81,7 @@ class SearchRequestBody(CprSdkSearchParameters):
         le=500,
     )
     """
-    Where to start from in the number of query result that was 
+    Where to start from in the number of query result that was
     retrieved from the search database.
     """
 
@@ -190,7 +189,7 @@ class SearchResponseFamilyDocument(BaseModel):
     document_passage_matches: list[SearchResponseDocumentPassage]
     """
     This is a list of passages that match the search criteria within this document.
-    
+
     The length of which is affected by max_passages_per_doc in the request.
     """
 
@@ -211,7 +210,7 @@ class SearchResponseFamily(BaseModel):
     family_slug: str
     """
     The slug that forms part of the URL to navigate to the family.
-    
+
     Example, with a slug of  climate-change-adaptation-strategy_1882, a URL can be
     created to this family of documents as: https://app.climatepolicyradar.org/document/climate-change-adaptation-strategy_1882
     """
@@ -233,8 +232,9 @@ class SearchResponseFamily(BaseModel):
 
     family_date: str
     """
-    The date the family of documents was published, this is from the corresponding
-    Passed/Approved event for this family.
+    The date the family of documents was published, this date is found by looking for
+    the date associated with the datetime_event_name value from the event taxonomy for
+    this family (e.g., Passed/Approved, Project Approved or Concept Approved).
     """
 
     family_last_updated_date: str
@@ -287,13 +287,13 @@ class SearchResponseFamily(BaseModel):
 
     continuation_token: Optional[str] = None
     """
-    Passage level continuation token. Can be used in conjunction with the family level 
+    Passage level continuation token. Can be used in conjunction with the family level
     `this continuation_token` to get the next page of passages for this specific family
     """
 
     prev_continuation_token: Optional[str] = None
     """
-    Passage level continuation token. Can be used in conjunction with the family level 
+    Passage level continuation token. Can be used in conjunction with the family level
     `this continuation_token` to get the previous page of passages for this specific
     family
     """
@@ -366,3 +366,17 @@ class GeographySummaryFamilyResponse(BaseModel):
     family_counts: Mapping[FamilyCategory, int]
     top_families: Mapping[FamilyCategory, _T5FamL]
     targets: Sequence[str]  # TODO: Placeholder for later
+
+
+class BrowseArgs(BaseModel):
+    """Arguments for the browse_rds function"""
+
+    geography_slugs: Optional[Sequence[str]] = None
+    country_codes: Optional[Sequence[str]] = None
+    start_year: Optional[int] = None
+    end_year: Optional[int] = None
+    categories: Optional[Sequence[str]] = None
+    sort_field: SortField = SortField.DATE
+    sort_order: SortOrder = SortOrder.DESCENDING
+    offset: Optional[int] = 0
+    limit: Optional[int] = 10

@@ -2,8 +2,8 @@ from datetime import datetime
 
 import pytest
 
-from app.api.api_v1.schemas.document import FamilyDocumentResponse
-from app.api.api_v1.schemas.search import (
+from app.models.document import DocumentParserInput, FamilyDocumentResponse
+from app.models.search import (
     SearchResponse,
     SearchResponseDocumentPassage,
     SearchResponseFamily,
@@ -200,3 +200,26 @@ def test_search_response() -> None:
             expected_pages.append(page + 1)
 
     assert expected_pages == first_document_incremented_pages
+
+
+def test_document_parser_input_type():
+    """Check type is converted to string when null"""
+    d = DocumentParserInput(
+        publication_ts=datetime(year=2008, month=12, day=25),
+        name="name",
+        description="description",
+        source_url=None,
+        download_url=None,
+        type=None,  # pyright: ignore[reportArgumentType]
+        source="CCLW",
+        import_id="1234-5678",
+        slug="geo_2008_name_1234_5678",
+        family_import_id="family_1234-5678",
+        family_slug="geo_2008_family_1234_5679",
+        category="category",
+        geography="GEO",
+        geographies=["GEO"],
+        languages=[],
+        metadata={},
+    )
+    assert d.type == ""

@@ -4,11 +4,11 @@ from typing import Union
 
 from fastapi import APIRouter, Depends, HTTPException
 
-from app.api.api_v1.schemas.document import (
+from app.clients.db.session import get_db
+from app.models.document import (
     FamilyAndDocumentsResponse,
     FamilyDocumentWithContextResponse,
 )
-from app.clients.db.session import get_db
 from app.repository.document import (
     get_family_and_documents,
     get_family_document_and_context,

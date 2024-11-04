@@ -40,7 +40,6 @@ lint:
         # Ignore test data JSON files
         - tests/data/**/*.json
         - tests/search/vespa/fixtures/**/*.json
-        - scripts/**
     - linters: [markdownlint]
       paths:
         - LICENSE.md
