@@ -40,20 +40,27 @@ from app.service.util import to_cdn_url
 _LOGGER = logging.getLogger(__file__)
 
 
-def get_slugged_objects(db: Session, slug: str) -> tuple[Optional[str], Optional[str]]:
-    """
-    Matches the slug name to a FamilyDocument or Family import_id
+def get_slugged_objects(
+    db: Session, slug: str, allowed_corpora: Optional[list[str]] = None
+) -> tuple[Optional[str], Optional[str]]:
+    """Match the slug name to a FamilyDocument or Family import ID.
 
     :param Session db: connection to db
     :param str slug: slug name to match
-    :return tuple[Optional[str], Optional[str]]: the FamilyDocument import id or
-    the Family import_id
+    :param Optional[list[str]] allowed_corpora: The corpora IDs to look
+        for the slugged object in.
+    :return tuple[Optional[str], Optional[str]]: the FamilyDocument
+        import id or the Family import_id.
     """
-    result = (
-        db.query(Slug.family_document_import_id, Slug.family_import_id).filter(
-            Slug.name == slug
-        )
-    ).one_or_none()
+    query = db.query(Slug.family_document_import_id, Slug.family_import_id).filter(
+        Slug.name == slug
+    )
+
+    # # Only get slug for the fam/doc if it belongs to the list of allowed corpora.
+    # if allowed_corpora is not None:
+    #     query = query.filter()
+
+    result = query.one_or_none()
     if result is None:
         return (None, None)
     return result
