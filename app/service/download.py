@@ -24,19 +24,7 @@ def create_query(
         should allow the data to be dumped.
     :return str: The SQL query to perform on the database session.
     """
-    # TODO: Hide MCF from data dump until after COP.
-    mcf_corpora_ids = [
-        "MCF.corpus.AF.n0000",
-        "MCF.corpus.CIF.n0000",
-        "MCF.corpus.GCF.n0000",
-        "MCF.corpus.GEF.n0000",
-    ]
-    corpora_ids = [
-        corpus_id
-        for corpus_id in allowed_corpora_ids
-        if corpus_id not in mcf_corpora_ids
-    ]
-    corpora_ids = "'" + "','".join(corpora_ids) + "'"
+    corpora_ids = "'" + "','".join(allowed_corpora_ids) + "'"
     return template_query.replace(  # type: ignore
         "{ingest_cycle_start}", ingest_cycle_start
     ).replace(
