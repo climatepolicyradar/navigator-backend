@@ -702,13 +702,13 @@ files = [
 
 [[package]]
 name = "cpr-sdk"
-version = "1.9.1"
+version = "1.0.1730719241"
 description = ""
 optional = false
-python-versions = "<4.0,>=3.10"
+python-versions = ">=3.10,<4.0"
 files = [
-    {file = "cpr_sdk-1.9.1-py3-none-any.whl", hash = "sha256:f5ac11da4ccc09fc75ebc9438f4ca46c68191e2c8b9d42d485f2ca734a799a7e"},
-    {file = "cpr_sdk-1.9.1.tar.gz", hash = "sha256:22ec7385829b96be5939df13e0336ca9e1a72cbd5ca669ea7dba9b210a153415"},
+    {file = "cpr_sdk-1.0.1730719241-py3-none-any.whl", hash = "sha256:95e4353ab0153c1b42ad3ff3be8a0fffa38b1950364ae10c9cd98d7351e04ee4"},
+    {file = "cpr_sdk-1.0.1730719241.tar.gz", hash = "sha256:559c22e34c2a8b2d6c08141859abbce22176e3af0b233ffe40807fa1ae8b8655"},
 ]
 
 [package.dependencies]
@@ -729,6 +729,11 @@ tqdm = ">=4.66.5,<5.0.0"
 [package.extras]
 spacy = ["spacy (>=3.5.1,<4.0.0)"]
 vespa = ["pyvespa (>=0.45.0,<0.46.0)", "pyyaml (>=6.0.2,<7.0.0)"]
+
+[package.source]
+type = "legacy"
+url = "https://test.pypi.org/simple"
+reference = "test_pypi"
 
 [[package]]
 name = "crashtest"
@@ -4250,4 +4255,4 @@ type = ["pytest-mypy"]
 [metadata]
 lock-version = "2.0"
 python-versions = "^3.10"
-content-hash = "bc6587895ac9daa65512c4e6dfcc47ea3fb8fb0e3cb8ac420308a596def410ea"
+content-hash = "3b52dab7a81911481bf6f320d7a9818f1e21e91921c318b332822dd33bb02801"
