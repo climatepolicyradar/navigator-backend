@@ -5,6 +5,14 @@ version: 0.1
 cli:
   version: 1.22.0
 
+tools:
+  definitions:
+    - name: sql-formatter
+      runtime: node
+      package: sql-formatter
+      shims: [sql-formatter]
+      known_good_version: 7.0.1
+
 # Trunk provides extensibility via plugins.
 # (https://docs.trunk.io/plugins)
 plugins:
@@ -34,6 +42,24 @@ lint:
         - name: lint
           run: bandit --exit-zero -c bandit.yaml --format json --output ${tmpfile} ${target}
 
+    - name: sql-formatter
+      files: [sql]
+      description: A SQL formatter
+      commands:
+        - output: rewrite
+          # Force postgresql dialect
+          run: sql-formatter -l postgresql
+          success_codes: [0]
+          formatter: true
+          stdin: true
+          # Linter does not support batching.
+      tools: [sql-formatter]
+      known_good_version: 7.0.1
+      suggest_if: never
+      version_command:
+        parse_regex: ${semver}
+        run: sql-formatter --version
+
   ignore:
     - linters: [ALL]
       paths:
@@ -45,6 +71,7 @@ lint:
         - LICENSE.md
 
   enabled:
+    - sql-formatter@15.4.5
     - actionlint@1.6.27
     - bandit@1.7.8
     - black@24.4.2
