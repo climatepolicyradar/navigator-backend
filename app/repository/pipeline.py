@@ -1,7 +1,6 @@
 import logging
 import os
 from datetime import datetime, timezone
-from functools import lru_cache
 from typing import Sequence, cast
 
 import pandas as pd
@@ -11,17 +10,11 @@ from fastapi import Depends
 
 from app.clients.db.session import get_db
 from app.models.document import DocumentParserInput
+from app.repository.helpers import get_query_template
 
 _LOGGER = logging.getLogger(__name__)
 
 MetadataType = dict[str, list[str]]
-
-
-@lru_cache()
-def generate_pipeline_ingest_input_query():
-    """Read query for non-deleted docs and their associated data."""
-    with open(os.path.join("app", "repository", "sql", "pipeline.sql"), "r") as file:
-        return file.read()
 
 
 def get_pipeline_data(db=Depends(get_db)) -> pd.DataFrame:
@@ -39,7 +32,7 @@ def get_pipeline_data(db=Depends(get_db)) -> pd.DataFrame:
         in database.
     """
     _LOGGER.info("Running pipeline query")
-    query = generate_pipeline_ingest_input_query()
+    query = get_query_template(os.path.join("app", "repository", "sql", "pipeline.sql"))
     df = pd.read_sql(query, db.connection().connection)
     return df
 

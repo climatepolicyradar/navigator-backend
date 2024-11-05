@@ -5,6 +5,7 @@ old functions (non DFC) are moved to the deprecated_documents.py file.
 """
 
 import logging
+import os
 from datetime import datetime
 from typing import Optional, Sequence, cast
 
@@ -34,29 +35,69 @@ from app.models.document import (
     LinkableFamily,
 )
 from app.repository.geography import get_geo_subquery
+from app.repository.helpers import get_query_template
 from app.repository.lookups import doc_type_from_family_document_metadata
 from app.service.util import to_cdn_url
 
 _LOGGER = logging.getLogger(__file__)
 
 
-def get_slugged_objects(db: Session, slug: str) -> tuple[Optional[str], Optional[str]]:
+def get_slugged_object_from_allowed_corpora_query(
+    template_query, slug_name: str, allowed_corpora_ids: list[str]
+) -> str:
+    """Create download whole database query, replacing variables.
+
+    :param str ingest_cycle_start: The current ingest cycle date.
+    :param list[str] allowed_corpora_ids: The corpora from which we
+        should allow the data to be dumped.
+    :return str: The SQL query to perform on the database session.
     """
-    Matches the slug name to a FamilyDocument or Family import_id
+    corpora_ids = "'" + "','".join(allowed_corpora_ids) + "'"
+    return template_query.replace("{slug_name}", slug_name).replace(  # type: ignore
+        "{allowed_corpora_ids}", corpora_ids
+    )  # type: ignore
+
+
+def get_slugged_objects(
+    db: Session, slug: str, allowed_corpora: Optional[list[str]] = None
+) -> tuple[Optional[str], Optional[str]]:
+    """Match the slug name to a FamilyDocument or Family import ID.
+
+    This function also contains logic to only get the import ID for the
+    family or document if the slug given is associated with a family
+    that belongs to the list of allowed corpora.
 
     :param Session db: connection to db
     :param str slug: slug name to match
-    :return tuple[Optional[str], Optional[str]]: the FamilyDocument import id or
-    the Family import_id
+    :param Optional[list[str]] allowed_corpora: The corpora IDs to look
+        for the slugged object in.
+    :return tuple[Optional[str], Optional[str]]: the FamilyDocument
+        import id or the Family import_id.
     """
-    result = (
-        db.query(Slug.family_document_import_id, Slug.family_import_id).filter(
+    if allowed_corpora is not None:
+        query_template = get_query_template(
+            os.path.join("app", "repository", "sql", "slug_lookup.sql")
+        )
+        query = get_slugged_object_from_allowed_corpora_query(
+            query_template, slug, allowed_corpora
+        )
+        query = db.execute(query)
+    else:
+        query = db.query(Slug.family_document_import_id, Slug.family_import_id).filter(
             Slug.name == slug
         )
-    ).one_or_none()
+
+    result = query.one_or_none()
     if result is None:
         return (None, None)
-    return result
+
+    DOC_INDEX = 0
+    doc_id = cast(str, result[DOC_INDEX]) if result[DOC_INDEX] is not None else None
+
+    FAM_INDEX = 1
+    fam_id = cast(str, result[FAM_INDEX]) if result[FAM_INDEX] is not None else None
+
+    return doc_id, fam_id
 
 
 def get_family_document_and_context(

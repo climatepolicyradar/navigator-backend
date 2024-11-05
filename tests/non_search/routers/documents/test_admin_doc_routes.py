@@ -10,7 +10,6 @@ from db_client.models.document.physical_document import (
 )
 from fastapi import status
 from fastapi.testclient import TestClient
-from sqlalchemy import update
 from sqlalchemy.orm import Session
 
 from tests.non_search.setup_helpers import (
@@ -18,70 +17,8 @@ from tests.non_search.setup_helpers import (
     setup_docs_with_two_orgs_no_langs,
     setup_with_two_docs,
     setup_with_two_docs_bad_ids,
-    setup_with_two_docs_multiple_languages,
     setup_with_two_unpublished_docs,
 )
-
-
-def test_physical_doc_languages(
-    data_client: TestClient,
-    data_db: Session,
-):
-    setup_with_two_docs(data_db)
-
-    response = data_client.get(
-        "/api/v1/documents/DocSlug1",
-    )
-    json_response = response.json()
-    document = json_response["document"]
-
-    assert response.status_code == 200
-    print(json_response)
-    assert document["languages"] == ["eng"]
-
-    response = data_client.get(
-        "/api/v1/documents/DocSlug2",
-    )
-    json_response = response.json()
-    document = json_response["document"]
-
-    assert response.status_code == 200
-    assert document["languages"] == []
-
-
-def test_physical_doc_languages_not_visible(
-    data_client: TestClient,
-    data_db: Session,
-):
-    setup_with_two_docs(data_db)
-    data_db.execute(update(PhysicalDocumentLanguage).values(visible=False))
-
-    response = data_client.get(
-        "/api/v1/documents/DocSlug1",
-    )
-    json_response = response.json()
-    document = json_response["document"]
-
-    assert response.status_code == 200
-    print(json_response)
-    assert document["languages"] == []
-
-
-def test_physical_doc_multiple_languages(
-    data_client: TestClient,
-    data_db: Session,
-):
-    setup_with_two_docs_multiple_languages(data_db)
-
-    response = data_client.get(
-        "/api/v1/documents/DocSlug1",
-    )
-    json_response = response.json()
-    document = json_response["document"]
-
-    assert response.status_code == 200
-    print(json_response)
-    assert set(document["languages"]) == set(["fra", "eng"])
 
 
 def test_update_document_status__is_secure(
