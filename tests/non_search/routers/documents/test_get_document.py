@@ -176,3 +176,18 @@ def test_documents_doc_slug_when_deleted(
         expected_status_code=status.HTTP_404_NOT_FOUND,
     )
     assert json_response["detail"] == "The document CCLW.executive.2.2 is not published"
+
+
+def test_documents_doc_slug_returns_404_when_corpora_mismatch(
+    data_client: TestClient, data_db: Session, alternative_token
+):
+    setup_with_two_docs(data_db)
+
+    # Test associations
+    json_response = _make_doc_fam_lookup_request(
+        data_client,
+        alternative_token,
+        "DocSlug1",
+        expected_status_code=status.HTTP_404_NOT_FOUND,
+    )
+    assert json_response["detail"] == "Nothing found for DocSlug1"

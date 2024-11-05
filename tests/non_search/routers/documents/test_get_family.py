@@ -229,3 +229,18 @@ def test_documents_family_slug_returns_404_when_all_docs_deleted(
         expected_status_code=status.HTTP_404_NOT_FOUND,
     )
     assert json_response["detail"] == "Family CCLW.family.1001.0 is not published"
+
+
+def test_documents_family_slug_returns_404_when_corpora_mismatch(
+    data_client: TestClient, data_db: Session, alternative_token
+):
+    setup_with_two_docs_one_family(data_db)
+
+    # Test associations
+    json_response = _make_doc_fam_lookup_request(
+        data_client,
+        alternative_token,
+        "FamSlug1",
+        expected_status_code=status.HTTP_404_NOT_FOUND,
+    )
+    assert json_response["detail"] == "Nothing found for FamSlug1"
