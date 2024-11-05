@@ -23,3 +23,6 @@
 
 # Updating the test data file for document passages to be indent=2
 44624dcd1fa0835708bd9187a39bb0da8a31cd03
+
+# Fix SQL query formatting
+047766a85f086fc0986a6f2b49fee9d73fa219e8
