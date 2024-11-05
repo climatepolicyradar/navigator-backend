@@ -1,8 +1,11 @@
 {
   "language": "postgresql",
   "dialect": "postgresql",
-  "tabWidth": 2,
+  "tabWidth": 4,
   "keywordCase": "upper",
+  "dataTypeCase": "upper",
+  "identifierCase": "lower",
+  "functionCase": "upper",
   "linesBetweenQueries": 2,
   "denseOperators": false
 }
