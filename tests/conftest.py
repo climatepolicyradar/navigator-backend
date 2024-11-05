@@ -128,6 +128,30 @@ def valid_token(monkeypatch):
 
 
 @pytest.fixture
+def alternative_token(monkeypatch):
+    """Generate a valid alternative config token using TOKEN_SECRET_KEY.
+
+    Need to generate the config token using the token secret key from
+    your local env file. For tests in CI, this will be the secret key in
+    the .env.example file, but for local development this secret key
+    might be different (e.g., the one for staging). This fixture works
+    around this.
+    """
+
+    def mock_return(_, __, ___):
+        return True
+
+    corpora_ids = "UNFCCC.corpus.i00000001.n0000"
+    subject = "CPR"
+    audience = "localhost"
+    input_str = f"{corpora_ids};{subject};{audience}"
+
+    af = AppTokenFactory()
+    monkeypatch.setattr(custom_app.AppTokenFactory, "validate", mock_return)
+    return af.create_configuration_token(input_str)
+
+
+@pytest.fixture
 def create_test_db():
     """Create a test database and use it for the whole test session."""
 
