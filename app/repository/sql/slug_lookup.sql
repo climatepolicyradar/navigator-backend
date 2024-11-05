@@ -7,8 +7,8 @@ FROM
   LEFT JOIN family_corpus ON family_corpus.family_import_id = family.import_id
   LEFT JOIN corpus ON corpus.import_id = family_corpus.corpus_import_id
 WHERE
-  slug.name = '{slug_name}'
-  AND corpus.import_id IN ({allowed_corpora_ids})
+  slug.name = ':slug_name'
+  AND corpus.import_id IN ':allowed_corpora_ids'
 UNION
 SELECT
   slug.family_document_import_id,
@@ -20,5 +20,5 @@ FROM
   LEFT JOIN family_corpus ON family_corpus.family_import_id = family.import_id
   LEFT JOIN corpus ON corpus.import_id = family_corpus.corpus_import_id
 WHERE
-  slug.name = '{slug_name}'
-  AND corpus.import_id IN ({allowed_corpora_ids});
+  slug.name = ':slug_name'
+  AND corpus.import_id IN ':allowed_corpora_ids';

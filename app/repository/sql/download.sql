@@ -310,8 +310,8 @@ FROM
   LEFT JOIN most_recent_family_slugs fs ON fs.family_import_id = f.import_id
   LEFT JOIN event_dates fp ON fp.family_import_id = f.import_id
 WHERE
-  d.last_modified < '{ingest_cycle_start}'
-  AND fc.corpus_import_id IN ({allowed_corpora_ids})
+  d.last_modified < ':ingest_cycle_start'
+  AND fc.corpus_import_id in ':allowed_corpora_ids'
 ORDER BY
   d.last_modified DESC,
   d.created DESC,
