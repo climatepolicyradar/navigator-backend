@@ -117,7 +117,7 @@ def valid_token(monkeypatch):
     def mock_return(_, __, ___):
         return True
 
-    corpora_ids = "CCLW.corpus.1.0,CCLW.corpus.2.0"
+    corpora_ids = "CCLW.corpus.1.0,CCLW.corpus.2.0,CCLW.corpus.i00000001.n0000"
     subject = "CCLW"
     audience = "localhost"
     input_str = f"{corpora_ids};{subject};{audience}"
