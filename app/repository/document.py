@@ -7,7 +7,6 @@ old functions (non DFC) are moved to the deprecated_documents.py file.
 import logging
 import os
 from datetime import datetime
-from functools import lru_cache
 from typing import Optional, Sequence, cast
 
 from db_client.models.dfce.collection import Collection, CollectionFamily
@@ -36,17 +35,11 @@ from app.models.document import (
     LinkableFamily,
 )
 from app.repository.geography import get_geo_subquery
+from app.repository.helpers import get_query_template
 from app.repository.lookups import doc_type_from_family_document_metadata
 from app.service.util import to_cdn_url
 
 _LOGGER = logging.getLogger(__file__)
-
-
-@lru_cache()
-def _get_query_template():
-    """Read query for non-deleted docs and their associated data."""
-    with open(os.path.join("app", "repository", "sql", "slug_lookup.sql"), "r") as file:
-        return file.read()
 
 
 def get_slugged_object_from_allowed_corpora_query(
@@ -82,7 +75,9 @@ def get_slugged_objects(
         import id or the Family import_id.
     """
     if allowed_corpora is not None:
-        query_template = _get_query_template()
+        query_template = get_query_template(
+            os.path.join("app", "repository", "sql", "slug_lookup.sql")
+        )
         query = get_slugged_object_from_allowed_corpora_query(
             query_template, slug, allowed_corpora
         )

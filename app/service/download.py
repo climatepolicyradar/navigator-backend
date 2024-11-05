@@ -1,5 +1,6 @@
 """Functions to support browsing the RDS document structure"""
 
+import os
 import zipfile
 from io import BytesIO, StringIO
 from logging import getLogger
@@ -9,7 +10,8 @@ import pandas as pd
 from fastapi import Depends
 
 from app.clients.db.session import get_db
-from app.repository.download import _get_query_template, get_whole_database_dump
+from app.repository.download import get_whole_database_dump
+from app.repository.helpers import get_query_template
 
 _LOGGER = getLogger(__name__)
 
@@ -90,7 +92,9 @@ def create_data_download_zip_archive(
     ingest_cycle_start: str, allowed_corpora_ids: list[str], db=Depends(get_db)
 ):
     readme_buffer = generate_data_dump_readme(ingest_cycle_start)
-    query_template = _get_query_template()
+    query_template = get_query_template(
+        os.path.join("app", "repository", "sql", "download.sql")
+    )
     query = create_query(query_template, ingest_cycle_start, allowed_corpora_ids)
     csv_buffer = generate_data_dump_as_csv(query, db)
 
