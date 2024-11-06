@@ -46,7 +46,7 @@ lint:
 
   enabled:
     - sqlfluff@3.2.5:
-        commands: [lint]
+        commands: [lint, fix]
     - actionlint@1.6.27
     - bandit@1.7.8
     - black@24.4.2
