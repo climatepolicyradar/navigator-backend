@@ -346,8 +346,8 @@ FROM
         ON f.import_id = fs.family_import_id
     LEFT JOIN event_dates AS fp ON f.import_id = fp.family_import_id
 WHERE
-    d.last_modified < ':ingest_cycle_start'
-    AND fc.corpus_import_id IN ':allowed_corpora_ids'
+    d.last_modified < %(ingest_cycle_start)s
+    AND fc.corpus_import_id IN %(allowed_corpora_ids)s
 ORDER BY
     d.last_modified DESC,
     d.created DESC,

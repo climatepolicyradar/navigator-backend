@@ -18,7 +18,7 @@ def get_whole_database_dump(
     """Get  whole database dump and bind variables.
 
     :param str ingest_cycle_start: The current ingest cycle date.
-    :param list[str] allowed_corpora_ids: The corpora from which we
+    :param list[str] corpora_ids: The corpora from which we
         should allow the data to be dumped.
     :return str: The SQL query to perform on the database session.
     """
@@ -32,7 +32,7 @@ def get_whole_database_dump(
             conn.connection,
             params={
                 "ingest_cycle_start": ingest_cycle_start,
-                "allowed_corpora_ids": allowed_corpora_ids,
+                "allowed_corpora_ids": tuple(allowed_corpora_ids),
             },
         )
         return df
