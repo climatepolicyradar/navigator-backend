@@ -84,9 +84,9 @@ Assumptions:
 
 3. Load the sql dump into the postgres database.
 
-    ```shell
-    psql --host=0.0.0.0 --port=5432 --dbname=postgres --username=navigator --password -f ${path_to_sql_dump}/sql_dump.sql
-    ```
+   ```shell
+   psql --host=0.0.0.0 --port=5432 --dbname=postgres --username=navigator --password -f ${path_to_sql_dump}/sql_dump.sql
+   ```
 
 ### Authenticate with Vespa
 
