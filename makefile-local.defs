@@ -1,34 +1,4 @@
-# definitions for local development
-
-poetry_environment: create_venv
-	poetry install
-
-check_dev_environment:
-ifneq (,$(wildcard ./.env))
-	echo "Dev environment already configured."
-	exit 1
-endif
-
-configure_pyright:
-	trunk actions run configure-pyright-with-pyenv
-
-dev_install: install_trunk check_dev_environment
-	# Sets up a local dev environment
-
-	# Copy .env
-	cp .env.example .env
-	# Install pip
-	pip install --upgrade pip
-	# Install poetry
-	pip install "poetry==1.8.1"
-
-	make poetry_environment
-	make configure_pyright
-
-create_venv:
-	-pyenv deactivate
-	pyenv virtualenv 3.10 backend
-	pyenv activate backend
+# Definitions for local development
 
 install_trunk:
 	$(eval trunk_installed=$(shell trunk --version > /dev/null 2>&1 ; echo $$? ))
@@ -40,3 +10,32 @@ endif
 uninstall_trunk:
 	sudo rm -if `which trunk`
 	rm -ifr ${HOME}/.cache/trunk
+
+configure_pyright:
+	trunk actions run configure-pyright
+
+create_env:
+	# Copy .env
+	cp .env.example .env
+
+setup: install_trunk create_env ## Sets up a local dev environment using Poetry
+	# Install pip
+	pip install --upgrade pip
+
+	# Install poetry & dependencies
+	pip install "poetry==1.8.1"
+	poetry install
+
+	make configure_pyright
+
+setup_with_pyenv: install_trunk create_env ## Sets up a local dev environment using Pyenv
+	$(eval venv_name=$(shell  grep 'venv =' pyproject.toml | cut -d '"' -f 2 ))
+	if [ -n "$(venv_name)" ] && ! pyenv versions --bare | grep -q "^$(venv_name)$$"; then \
+		$(eval python_version=$(shell pyenv versions --bare | grep 3.10 )) \
+		pyenv virtualenv $(python_version) $(venv_name); \
+	fi
+	@eval "$$(pyenv init -)" && \
+	pyenv activate $(venv_name) && \
+	poetry install
+
+	make configure_pyright
