@@ -31,8 +31,9 @@ setup: install_trunk create_env ## Sets up a local dev environment using Poetry
 setup_with_pyenv: install_trunk create_env ## Sets up a local dev environment using Pyenv
 	$(eval venv_name=$(shell  grep 'venv =' pyproject.toml | cut -d '"' -f 2 ))
 	if [ -n "$(venv_name)" ] && ! pyenv versions --bare | grep -q "^$(venv_name)$$"; then \
-		$(eval python_version=$(shell pyenv versions --bare | grep 3.10 )) \
-		pyenv virtualenv $(python_version) $(venv_name); \
+		$(eval python_version=$(shell grep 'python =' pyproject.toml | cut -d '"' -f 2 | sed 's/^\^//')) \
+		$(eval pyenv_version=$(shell pyenv versions --bare | grep$(python_version) )) \
+		pyenv virtualenv $(pyenv_version) $(venv_name); \
 	fi
 	@eval "$$(pyenv init -)" && \
 	pyenv activate $(venv_name) && \
