@@ -104,7 +104,7 @@ vespa_setup: vespa_confirm_cli_installed vespa_healthy vespa_deploy_schema vespa
 
 .ONESHELL:
 test_search:
-	docker compose \
+	SQLALCHEMY_WARN_20=1 docker compose \
 		-f docker-compose.yml \
 		-f docker-compose.dev.yml \
 		run --rm --name search_test \
@@ -114,17 +114,18 @@ test_search:
 		-m 'search' ${ARGS}
 
 test_cors: 
-	docker compose -f docker-compose.yml -f docker-compose.dev.yml run --rm backend pytest -vvv -m 'cors' ${ARGS}
+	SQLALCHEMY_WARN_20=1 docker compose -f docker-compose.yml -f docker-compose.dev.yml run --rm backend pytest -vvv -m 'cors' ${ARGS}
 
 test_unit:
-	docker compose -f docker-compose.yml -f docker-compose.dev.yml run --rm backend pytest -vvv tests/unit ${ARGS}
+	SQLALCHEMY_WARN_20=1 docker compose -f docker-compose.yml -f docker-compose.dev.yml run --rm backend pytest -vvv tests/unit ${ARGS}
 
 test_non_search:
-	docker compose -f docker-compose.yml -f docker-compose.dev.yml run --rm backend pytest -vvv -m 'not search' ${ARGS}
+	SQLALCHEMY_WARN_20=1 docker compose -f docker-compose.yml -f docker-compose.dev.yml run --rm backend pytest -vvv -m 'not search' ${ARGS}
 
 test:
-	docker compose -f docker-compose.yml -f docker-compose.dev.yml run --rm backend pytest -vvv ${ARGS}
+	SQLALCHEMY_WARN_20=1 docker compose -f docker-compose.yml -f docker-compose.dev.yml run --rm backend pytest -vvv tests/non_search/routers/documents/test_get_document.py ${ARGS}
 
+#docker compose -f docker-compose.yml -f docker-compose.dev.yml run --rm backend pytest -vvv tests/search/vespa/test_whole_database_download.py ${ARGS}
 # ----------------------------------
 # tasks
 # ----------------------------------
