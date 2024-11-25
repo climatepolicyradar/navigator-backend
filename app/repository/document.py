@@ -23,6 +23,7 @@ from db_client.models.dfce.metadata import FamilyMetadata
 from db_client.models.document.physical_document import PhysicalDocument
 from db_client.models.organisation.organisation import Organisation
 from sqlalchemy import func
+from sqlalchemy.engine import Result
 from sqlalchemy.orm import Session
 
 from app.models.document import (
@@ -43,8 +44,8 @@ _LOGGER = logging.getLogger(__file__)
 
 
 def get_slugged_object_from_allowed_corpora_query(
-    template_query, slug_name: str, allowed_corpora_ids: list[str]
-) -> str:
+    db: Session, slug_name: str, allowed_corpora_ids: list[str]
+) -> Result:
     """Create download whole database query, replacing variables.
 
     :param str ingest_cycle_start: The current ingest cycle date.
@@ -52,10 +53,13 @@ def get_slugged_object_from_allowed_corpora_query(
         should allow the data to be dumped.
     :return str: The SQL query to perform on the database session.
     """
-    corpora_ids = "'" + "','".join(allowed_corpora_ids) + "'"
-    return template_query.replace("{slug_name}", slug_name).replace(  # type: ignore
-        "{allowed_corpora_ids}", corpora_ids
-    )  # type: ignore
+    query_template = get_query_template(
+        os.path.join("app", "repository", "sql", "slug_lookup.sql")
+    )
+    return db.execute(
+        query_template,
+        {"slug_name": slug_name, "allowed_corpora_ids": allowed_corpora_ids},
+    )
 
 
 def get_slugged_objects(
@@ -75,13 +79,7 @@ def get_slugged_objects(
         import id or the Family import_id.
     """
     if allowed_corpora is not None:
-        query_template = get_query_template(
-            os.path.join("app", "repository", "sql", "slug_lookup.sql")
-        )
-        query = get_slugged_object_from_allowed_corpora_query(
-            query_template, slug, allowed_corpora
-        )
-        query = db.execute(query)
+        query = get_slugged_object_from_allowed_corpora_query(db, slug, allowed_corpora)
     else:
         query = db.query(Slug.family_document_import_id, Slug.family_import_id).filter(
             Slug.name == slug

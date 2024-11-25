@@ -1,11 +1,13 @@
 import logging
+from typing import Annotated
 
-from fastapi import APIRouter, Depends, HTTPException, status
+from fastapi import APIRouter, Depends, Header, HTTPException, Request, status
 
 from app.clients.db.session import get_db
 from app.errors import RepositoryError
 from app.models.geography import GeographyStatsDTO
 from app.repository.geography import get_world_map_stats
+from app.service.custom_app import AppTokenFactory
 
 _LOGGER = logging.getLogger(__file__)
 
@@ -13,12 +15,23 @@ geographies_router = APIRouter()
 
 
 @geographies_router.get("/geographies", response_model=list[GeographyStatsDTO])
-async def geographies(db=Depends(get_db)):
+async def geographies(
+    request: Request, app_token: Annotated[str, Header()], db=Depends(get_db)
+):
     """Get a summary of fam stats for all geographies for world map."""
-    _LOGGER.info("Getting detailed information on all geographies")
+    _LOGGER.info(
+        "Getting world map counts for all geographies",
+        extra={
+            "props": {"app_token": str(app_token)},
+        },
+    )
+
+    # Decode the app token and validate it.
+    token = AppTokenFactory()
+    token.decode_and_validate(db, request, app_token)
 
     try:
-        world_map_stats = get_world_map_stats(db)
+        world_map_stats = get_world_map_stats(db, token.allowed_corpora_ids)
 
         if world_map_stats == []:
             _LOGGER.error("No stats for world map found")

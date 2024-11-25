@@ -4,13 +4,16 @@ import logging
 from typing import Optional, Sequence
 
 from db_client.models.dfce.family import (
+    Corpus,
     Family,
+    FamilyCorpus,
     FamilyDocument,
     FamilyGeography,
     FamilyStatus,
 )
 from db_client.models.dfce.geography import Geography
 from sqlalchemy import func
+from sqlalchemy.dialects import postgresql
 from sqlalchemy.exc import OperationalError
 from sqlalchemy.orm import Query, Session
 
@@ -63,7 +66,9 @@ def get_geo_subquery(
     return geo_subquery.subquery("geo_subquery")
 
 
-def _db_count_fams_in_category_and_geo(db: Session) -> Query:
+def _db_count_fams_in_category_and_geo(
+    db: Session, allowed_corpora: Optional[list[str]]
+) -> Query:
     """
     Query the database for the fam count per category per geo.
 
@@ -72,6 +77,8 @@ def _db_count_fams_in_category_and_geo(db: Session) -> Query:
     returned.
 
     :param Session db: DB Session to perform query on.
+    :param Optional[list[str]] allowed_corpora: The list of allowed
+        corpora IDs to filter on.
     :return Query: A Query object containing the queries to perform.
     """
     # Get the required Geography information and cross join each with all of the unique
@@ -94,10 +101,18 @@ def _db_count_fams_in_category_and_geo(db: Session) -> Query:
             func.count().label("records_count"),
         )
         .join(FamilyGeography, Family.import_id == FamilyGeography.family_import_id)
+        # .join(FamilyCorpus, Family.import_id == FamilyCorpus.family_import_id)
+        # .join(Corpus, Corpus.import_id == FamilyCorpus.family_import_id)
         .filter(Family.family_status == FamilyStatus.PUBLISHED)
         .group_by(Family.family_category, FamilyGeography.geography_id)
         .subquery("counts")
     )
+    # if allowed_corpora is not None:
+    #     counts = counts.where(Corpus.import_id.in_(allowed_corpora))
+    # counts = counts.group_by(
+    #     Family.family_category, FamilyGeography.geography_id
+    # ).subquery("counts")
+    # _LOGGER.info(counts)
 
     # Aggregate family_category counts per geography into a JSONB object, and if a
     # family_category count is missing, set the count for that category to 0 so each
@@ -130,6 +145,9 @@ def _db_count_fams_in_category_and_geo(db: Session) -> Query:
         )
         .order_by(geo_family_combinations.c.display_value)
     )
+    print(query.statement.compile(dialect=postgresql.dialect()))
+    # print(str(query.statement.compile(compile_kwargs={"literal_binds": True})))
+    print(render_query(query, db))
     return query
 
 
@@ -150,15 +168,19 @@ def _to_dto(family_doc_geo_stats) -> GeographyStatsDTO:
     )
 
 
-def get_world_map_stats(db: Session) -> list[GeographyStatsDTO]:
+def get_world_map_stats(
+    db: Session, allowed_corpora: Optional[list[str]]
+) -> list[GeographyStatsDTO]:
     """
     Get a count of fam per category per geography for all geographies.
 
     :param db Session: The database session.
+    :param Optional[list[str]] allowed_corpora: The list of allowed
+        corpora IDs to filter on.
     :return list[GeographyStatsDTO]: A list of Geography stats objects
     """
     try:
-        family_geo_stats = _db_count_fams_in_category_and_geo(db).all()
+        family_geo_stats = _db_count_fams_in_category_and_geo(db, allowed_corpora).all()
     except OperationalError as e:
         _LOGGER.error(e)
         raise RepositoryError("Error querying the database for geography stats")
@@ -168,3 +190,50 @@ def get_world_map_stats(db: Session) -> list[GeographyStatsDTO]:
 
     result = [_to_dto(fgs) for fgs in family_geo_stats]
     return result
+
+
+from datetime import date, datetime, timedelta
+
+from sqlalchemy.orm import Query
+
+
+def render_query(statement, db_session):
+    """
+    Generate an SQL expression string with bound parameters rendered inline
+    for the given SQLAlchemy statement.
+    WARNING: This method of escaping is insecure, incomplete, and for debugging
+    purposes only. Executing SQL statements with inline-rendered user values is
+    extremely insecure.
+    Based on http://stackoverflow.com/questions/5631078/sqlalchemy-print-the-actual-query
+    """
+    if isinstance(statement, Query):
+        statement = statement.statement
+    dialect = db_session.bind.dialect
+
+    class LiteralCompiler(dialect.statement_compiler):
+        def visit_bindparam(
+            self, bindparam, within_columns_clause=False, literal_binds=False, **kwargs
+        ):
+            return self.render_literal_value(bindparam.value, bindparam.type)
+
+        def render_array_value(self, val, item_type):
+            if isinstance(val, list):
+                return "{}".format(
+                    ",".join([self.render_array_value(x, item_type) for x in val])
+                )
+            return self.render_literal_value(val, item_type)
+
+        def render_literal_value(self, value, type_):
+            if isinstance(value, int):
+                return str(value)
+            elif isinstance(value, (str, date, datetime, timedelta)):
+                return "'{}'".format(str(value).replace("'", "''"))
+            elif isinstance(value, list):
+                return "'{{{}}}'".format(
+                    ",".join(
+                        [self.render_array_value(x, type_.item_type) for x in value]
+                    )
+                )
+            return super(LiteralCompiler, self).render_literal_value(value, type_)
+
+    return LiteralCompiler(dialect, statement).process(statement)
