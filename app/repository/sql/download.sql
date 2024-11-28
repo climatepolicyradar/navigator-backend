@@ -227,7 +227,7 @@ SELECT
     n3.event_type_names AS "Full timeline of events (types)",
     n3.event_dates AS "Full timeline of events (dates)",
     d.created::DATE AS "Date Added to System",
-    f.last_modified::DATE AS "Last ModIFied on System",
+    f.last_modified::DATE AS "Last Modified on System",
     d.import_id AS "Internal Document ID",
     f.import_id AS "Internal Family ID",
     n1.collection_import_ids AS "Internal Collection ID(s)",
