@@ -1,10 +1,33 @@
+from typing import Optional
+
 from db_client.functions.dfce_helpers import add_collections, add_document, add_families
+from fastapi import status
 from sqlalchemy.orm import Session
 
 from tests.non_search.setup_helpers import (
     get_default_collections,
     get_default_documents,
 )
+
+WORLD_MAP_STATS_ENDPOINT = "/api/v1/geographies"
+TEST_HOST = "http://localhost:3000/"
+
+
+def _make_world_map_lookup_request(
+    client,
+    token,
+    expected_status_code: int = status.HTTP_200_OK,
+    origin: Optional[str] = TEST_HOST,
+):
+    headers = (
+        {"app-token": token}
+        if origin is None
+        else {"app-token": token, "origin": origin}
+    )
+
+    response = client.get(f"{WORLD_MAP_STATS_ENDPOINT}", headers=headers)
+    assert response.status_code == expected_status_code, response.text
+    return response.json()
 
 
 def _add_published_fams_and_docs(db: Session):
@@ -13,6 +36,27 @@ def _add_published_fams_and_docs(db: Session):
     add_collections(db, collections=[collection1])
 
     # Family + Document + events
+    document0 = {
+        "title": "UnfcccDocument0",
+        "slug": "UnfcccDocSlug0",
+        "md5_sum": None,
+        "url": "http://another_somewhere",
+        "content_type": None,
+        "import_id": "UNFCCC.executive.3.3",
+        "language_variant": None,
+        "status": "PUBLISHED",
+        "metadata": {"role": ["MAIN"], "type": ["Order"]},
+        "languages": [],
+        "events": [
+            {
+                "import_id": "UNFCCC.Event.3.0",
+                "title": "Published",
+                "date": "2019-12-25",
+                "type": "Passed/Approved",
+                "status": "OK",
+            }
+        ],
+    }
     document1, document2 = get_default_documents()
     document3 = {
         "title": "Document3",
@@ -36,6 +80,20 @@ def _add_published_fams_and_docs(db: Session):
         ],
     }
 
+    unfccc_fam = {
+        "import_id": "UNFCCC.family.0000.0",
+        "corpus_import_id": "UNFCCC.corpus.i00000001.n0000",
+        "title": "UnfcccFam0",
+        "slug": "UnfcccFamSlug0",
+        "description": "Summary0",
+        "geography_id": [2, 5],
+        "category": "UNFCCC",
+        "documents": [],
+        "metadata": {
+            "size": "small",
+            "color": "blue",
+        },
+    }
     family0 = {
         "import_id": "CCLW.family.0000.0",
         "corpus_import_id": "CCLW.corpus.i00000001.n0000",
@@ -93,11 +151,12 @@ def _add_published_fams_and_docs(db: Session):
         },
     }
 
+    unfccc_fam["documents"] = [document0]
     family0["documents"] = []
     family1["documents"] = [document1]
     family2["documents"] = [document2]
     family3["documents"] = [document3]
-    add_families(db, families=[family0, family1, family2, family3])
+    add_families(db, families=[family0, family1, family2, family3, unfccc_fam])
 
 
 def setup_all_docs_published_world_map(db: Session):

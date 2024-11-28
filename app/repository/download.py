@@ -20,7 +20,7 @@ def get_whole_database_dump(
     """Get whole database dump and bind variables.
 
     :param str ingest_cycle_start: The current ingest cycle date.
-    :param list[str] corpora_ids: The corpora from which we
+    :param list[str] allowed_corpora_ids: The corpora from which we
         should allow the data to be dumped.
     :return pd.DataFrame: A DataFrame containing the results of the SQL
         query that gets the whole database dump in our desired format.
