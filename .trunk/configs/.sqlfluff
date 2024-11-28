@@ -5,9 +5,17 @@ exclude_rules = LT02, LT09
 [sqlfluff:indentation]
 indented_ctes = True
 
+[sqlfluff:layout:type:colon]
+spacing_before = single
+spacing_after = single
+
+[sqlfluff:layout:type:parameter]
+spacing_before = touch
+spacing_after = any
+
 [sqlfluff:rules:references.special_chars]
 allow_space_in_identifier = True
-additional_allowed_characters = ["/"]
+additional_allowed_characters = ["/", "_", "-", "(", ")"]
 
 [sqlfluff:rules:capitalisation.keywords]
 capitalisation_policy = upper
