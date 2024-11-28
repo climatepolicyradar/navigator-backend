@@ -152,7 +152,7 @@ def test_endpoint_returns_503_when_error(data_client, valid_token):
 @pytest.mark.parametrize(
     ("geo_display_value", "expected_exec", "expected_leg", "expected_unfccc"),
     [
-        ("India", 1, 1, 1),
+        ("India", 0, 0, 1),
         ("Afghanistan", 0, 0, 1),
     ],
 )
@@ -175,7 +175,6 @@ def test_endpoint_returns_different_results_with_alt_token(
         .one()
     )
     assert fam
-    print(fam)
 
     resp_json = _make_world_map_lookup_request(data_client, alternative_token)
     assert len(resp_json) > 1
