@@ -22,7 +22,7 @@ from db_client.models.dfce.family import (
 from db_client.models.dfce.metadata import FamilyMetadata
 from db_client.models.document.physical_document import PhysicalDocument
 from db_client.models.organisation.organisation import Organisation
-from sqlalchemy import ARRAY, bindparam, func, text
+from sqlalchemy import bindparam, func, text
 from sqlalchemy.orm import Session
 from sqlalchemy.types import String
 
@@ -36,7 +36,7 @@ from app.models.document import (
     LinkableFamily,
 )
 from app.repository.geography import get_geo_subquery
-from app.repository.helpers import get_query_template, render_query
+from app.repository.helpers import get_query_template
 from app.repository.lookups import doc_type_from_family_document_metadata
 from app.service.util import to_cdn_url
 
@@ -59,23 +59,14 @@ def get_slugged_objects(
     :return tuple[Optional[str], Optional[str]]: the FamilyDocument
         import id or the Family import_id.
     """
-    if allowed_corpora is not None:
+    if allowed_corpora not in [None, []]:
         query_template = get_query_template(
             os.path.join("app", "repository", "sql", "slug_lookup.sql")
         )
-        # query_template = text(query_template).bindparams(
-        #     bindparam("slug_name", value=slug, type_=String),
-        #     bindparam(
-        #         "allowed_corpora_ids", value=allowed_corpora
-        #         # , type_=ARRAY(String)
-        #     ),
-        # )
-
-        # # Log the compiled SQL query
-        # compiled_query = query_template.compile(
-        #     dialect=db.bind.dialect, compile_kwargs={"literal_binds": True}
-        # )
-        # _LOGGER.info("🔍 Compiled SQL Query: %s", render_query(compiled_query, db))
+        query_template = text(query_template).bindparams(
+            bindparam("slug_name", type_=String),
+            bindparam("allowed_corpora_ids", value=allowed_corpora, expanding=True),
+        )
         query = db.execute(
             query_template, {"slug_name": slug, "allowed_corpora_ids": allowed_corpora}
         )
