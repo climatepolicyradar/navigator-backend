@@ -15,10 +15,10 @@ world_map_router = APIRouter()
 
 
 @world_map_router.get("/geographies", response_model=list[GeographyStatsDTO])
-async def geographies(
+async def world_map_stats(
     request: Request, app_token: Annotated[str, Header()], db=Depends(get_db)
 ):
-    """Get a summary of family stats for all geographies for world map."""
+    """Get a summary of family counts for all geographies for world map."""
     _LOGGER.info(
         "Getting world map counts for all geographies",
         extra={
