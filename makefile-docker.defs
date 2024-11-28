@@ -114,18 +114,17 @@ test_search:
 		-m 'search' ${ARGS}
 
 test_cors: 
-	SQLALCHEMY_WARN_20=1 docker compose -f docker-compose.yml -f docker-compose.dev.yml run --rm backend pytest -vvv -m 'cors' ${ARGS}
+	docker compose -f docker-compose.yml -f docker-compose.dev.yml run --rm backend pytest -vvv -m 'cors' ${ARGS}
 
 test_unit:
-	SQLALCHEMY_WARN_20=1 docker compose -f docker-compose.yml -f docker-compose.dev.yml run --rm backend pytest -vvv tests/unit ${ARGS}
+	docker compose -f docker-compose.yml -f docker-compose.dev.yml run --rm backend pytest -vvv tests/unit ${ARGS}
 
 test_non_search:
-	SQLALCHEMY_WARN_20=1 docker compose -f docker-compose.yml -f docker-compose.dev.yml run --rm backend pytest -vvv -m 'not search' ${ARGS}
+	docker compose -f docker-compose.yml -f docker-compose.dev.yml run --rm backend pytest -vvv -m 'not search' ${ARGS}
 
 test:
-	SQLALCHEMY_WARN_20=1 docker compose -f docker-compose.yml -f docker-compose.dev.yml run --rm backend pytest -vvv tests/non_search/routers/documents/test_get_document.py ${ARGS}
+	docker compose -f docker-compose.yml -f docker-compose.dev.yml run --rm backend pytest -vvv tests ${ARGS}
 
-#docker compose -f docker-compose.yml -f docker-compose.dev.yml run --rm backend pytest -vvv tests/search/vespa/test_whole_database_download.py ${ARGS}
 # ----------------------------------
 # tasks
 # ----------------------------------
