@@ -47,6 +47,47 @@ cp .env.example .env
 make start
 ```
 
+### Load the postgres database from an sql dump
+
+This section outlines steps for loading a database dump from an sql file in to a
+local postgres database. This should be done if you want for example the latest
+production data locally.
+
+Assumptions:
+
+- You've created a `.env` and exported the variables to your local terminal.
+- You've run `make build` and `make start`
+- You have no open connections to the database.
+- You have `psql` installed.
+
+1. Export the postgres db variables from the .env
+
+   ```shell
+   export $(cat .env | xargs)
+   ```
+
+2. Drop and recreate the navigator database.
+
+   ```shell
+   psql --host=0.0.0.0 --port=5432 --dbname=postgres --username=navigator --password
+   ```
+
+   _Note enter the password from the .env when prompted._
+
+   When in the postgres shell run:
+
+   ```shell
+   postgres=# drop database navigator
+   postgres=# create database navigator
+   postgres=# \q
+   ```
+
+3. Load the sql dump into the postgres database.
+
+   ```shell
+   psql --host=0.0.0.0 --port=5432 --dbname=postgres --username=navigator --password -f ${path_to_sql_dump}/sql_dump.sql
+   ```
+
 ### Authenticate with Vespa
 
 ```shell
