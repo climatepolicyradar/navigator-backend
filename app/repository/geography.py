@@ -60,7 +60,7 @@ def get_geo_subquery(
     return geo_subquery.subquery("geo_subquery")
 
 
-def _count_families_per_category_in_each_geo(
+def count_families_per_category_in_each_geo(
     db: Session, allowed_corpora: list[str]
 ) -> list[GeographyStatsDTO]:
     """Query the database for the family count per category per geo.

@@ -8,7 +8,7 @@ from sqlalchemy.orm import Session
 
 from app.errors import RepositoryError, ValidationError
 from app.models.geography import GeographyStatsDTO
-from app.repository.geography import _count_families_per_category_in_each_geo
+from app.repository.geography import count_families_per_category_in_each_geo
 
 _LOGGER = logging.getLogger(__file__)
 
@@ -28,7 +28,7 @@ def get_world_map_stats(
         raise ValidationError("No allowed corpora provided")
 
     try:
-        family_geo_stats = _count_families_per_category_in_each_geo(db, allowed_corpora)
+        family_geo_stats = count_families_per_category_in_each_geo(db, allowed_corpora)
     except OperationalError as e:
         _LOGGER.error(e)
         raise RepositoryError("Error querying the database for geography stats")
