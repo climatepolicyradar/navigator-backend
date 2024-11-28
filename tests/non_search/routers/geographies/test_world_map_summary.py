@@ -85,7 +85,7 @@ def test_endpoint_returns_ok_all_docs_per_family_published(
 @pytest.mark.parametrize(
     ("geo_display_value", "expected_exec", "expected_leg", "expected_unfccc"),
     [
-        ("India", 0, 0, 2),
+        ("India", 1, 1, 3),
         ("Afghanistan", 0, 0, 2),
     ],
 )
@@ -152,7 +152,7 @@ def test_endpoint_returns_503_when_error(data_client, valid_token):
 @pytest.mark.parametrize(
     ("geo_display_value", "expected_exec", "expected_leg", "expected_unfccc"),
     [
-        ("India", 0, 0, 1),
+        ("India", 1, 1, 1),
         ("Afghanistan", 0, 0, 1),
     ],
 )
@@ -191,7 +191,7 @@ def test_endpoint_returns_different_results_with_alt_token(
         .filter(Geography.display_value == geo_display_value)
         .join(FamilyGeography, Family.import_id == FamilyGeography.family_import_id)
         .join(FamilyCorpus, Family.import_id == FamilyCorpus.family_import_id)
-        .join(Corpus, Corpus.import_id == FamilyCorpus.family_import_id)
+        .join(Corpus, Corpus.import_id == FamilyCorpus.corpus_import_id)
         .join(Geography, Geography.id == FamilyGeography.geography_id)
         .filter(Corpus.import_id == "UNFCCC.corpus.i00000001.n0000")
         .all()
