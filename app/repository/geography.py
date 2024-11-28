@@ -7,11 +7,10 @@ from typing import Optional, Sequence
 from db_client.models.dfce.family import Family, FamilyDocument, FamilyGeography
 from db_client.models.dfce.geography import Geography
 from sqlalchemy import bindparam, text
-from sqlalchemy.exc import OperationalError
 from sqlalchemy.orm import Query, Session
 from sqlalchemy.types import ARRAY, String
 
-from app.errors import RepositoryError, ValidationError
+from app.errors import ValidationError
 from app.models.geography import GeographyStatsDTO
 from app.repository.helpers import get_query_template
 
@@ -61,14 +60,14 @@ def get_geo_subquery(
     return geo_subquery.subquery("geo_subquery")
 
 
-def _db_count_fams_in_category_and_geo(
-    db: Session, allowed_corpora: Optional[list[str]]
+def _count_families_per_category_in_each_geo(
+    db: Session, allowed_corpora: list[str]
 ) -> list[GeographyStatsDTO]:
     """Query the database for the family count per category per geo.
 
     :param Session db: DB Session to perform query on.
-    :param Optional[list[str]] allowed_corpora: The list of allowed
-        corpora IDs to filter on.
+    :param list[str] allowed_corpora: The list of allowed corpora IDs to
+        filter on.
     :return list[GeographyStatsDTO]: A list of counts of families by
         category per geography.
     """
@@ -104,25 +103,3 @@ def _to_dto(family_doc_geo_stats) -> GeographyStatsDTO:
         slug=family_doc_geo_stats.slug,
         family_counts=family_doc_geo_stats.counts,
     )
-
-
-def get_world_map_stats(
-    db: Session, allowed_corpora: Optional[list[str]]
-) -> list[GeographyStatsDTO]:
-    """
-    Get a count of fam per category per geography for all geographies.
-
-    :param db Session: The database session.
-    :param Optional[list[str]] allowed_corpora: The list of allowed
-        corpora IDs to filter on.
-    :return list[GeographyStatsDTO]: A list of Geography stats objects
-    """
-    try:
-        family_geo_stats = _db_count_fams_in_category_and_geo(db, allowed_corpora)
-    except OperationalError as e:
-        _LOGGER.error(e)
-        raise RepositoryError("Error querying the database for geography stats")
-
-    if not family_geo_stats:
-        return []
-    return family_geo_stats
