@@ -6,10 +6,15 @@ WITH counts AS (
     FROM
       family
       INNER JOIN
+          family_corpus
+          ON family.import_id = family_corpus.family_import_id
+      INNER JOIN corpus ON family_corpus.corpus_import_id = corpus.import_id
+      INNER JOIN
           family_geography
           ON family.import_id = family_geography.family_import_id
     WHERE
-      CASE
+      family_corpus.corpus_import_id = ANY(:allowed_corpora_ids)
+      AND CASE
         WHEN (
           NOT (
             EXISTS (
