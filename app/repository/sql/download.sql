@@ -218,7 +218,7 @@ SELECT
     n1.collection_descriptions AS "Collection Description(s)",
     d.variant_name AS "Document Variant",
     p.source_url AS "Document Content URL",
-    n2.language AS "Language",
+    language_agg.display_name AS "Language",
     o.name AS "Source",
     fg.geo_isos AS "Geography ISOs",
     fg.geo_display_values AS "Geographies",
@@ -313,7 +313,7 @@ FROM
                 ';'
                 ORDER BY
                     l.name
-            ) AS language
+            ) AS display_name
         FROM
             physical_document AS p
             LEFT JOIN
@@ -322,7 +322,7 @@ FROM
             LEFT JOIN language AS l ON pdl.language_id = l.id
         GROUP BY
             p.id
-    ) AS n2 ON d.physical_document_id = n2.id
+    ) AS language_agg ON d.physical_document_id = language_agg.id
     FULL JOIN (
         SELECT
             family_event.family_import_id,
