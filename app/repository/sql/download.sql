@@ -237,6 +237,7 @@ SELECT
   type,0}') AS "Document Type",
     CASE
         WHEN f.family_category = 'UNFCCC' THEN 'UNFCCC'
+        WHEN f.family_category = 'MCF' THEN 'MCF'
         ELSE INITCAP(f.family_category::TEXT)
     END AS "Category",
     ARRAY_TO_STRING(
