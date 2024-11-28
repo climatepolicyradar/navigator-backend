@@ -7,12 +7,15 @@ from sqlalchemy.orm import Query
 
 
 def render_query(statement, db_session):
-    """
-    Generate an SQL expression string with bound parameters rendered inline
-    for the given SQLAlchemy statement.
-    WARNING: This method of escaping is insecure, incomplete, and for debugging
-    purposes only. Executing SQL statements with inline-rendered user values is
-    extremely insecure.
+    """Generate a string representing a query with bound parameters.
+
+    Generate an SQL expression string with bound parameters rendered
+    inline inline for the given SQLAlchemy statement.
+
+    WARNING: This method of escaping is insecure, incomplete, and for
+    debugging purposes only. Executing SQL statements with
+    inline-rendered user values is extremely insecure.
+
     Based on http://stackoverflow.com/questions/5631078/sqlalchemy-print-the-actual-query
     """
     if isinstance(statement, Query):

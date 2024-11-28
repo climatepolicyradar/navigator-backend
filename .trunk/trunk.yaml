@@ -12,6 +12,7 @@ tools:
       package: sqlfluff
       shims: [sqlfluff]
       known_good_version: 1.4.5
+
 # Trunk provides extensibility via plugins.
 # (https://docs.trunk.io/plugins)
 plugins:
@@ -34,6 +35,7 @@ lint:
   disabled:
     - hadolint
     - oxipng
+
   definitions:
     - name: bandit
       direct_configs: [bandit.yaml]
@@ -60,6 +62,7 @@ lint:
           parser:
             runtime: python
             run: python3 ${plugin}/linters/sqlfluff/sqlfluff_to_sarif.py
+
         - name: fix
           version: ">=3.0.0"
           run: sqlfluff fix ${target} --disable-progress-bar
@@ -69,6 +72,7 @@ lint:
           success_codes: [0, 1]
           enabled: false
           batch: true
+
         - name: format
           run: sqlfluff format ${target} --disable-progress-bar
           output: rewrite
