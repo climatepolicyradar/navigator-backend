@@ -1,8 +1,4 @@
-"""
-Functions to support the documents endpoints
-
-old functions (non DFC) are moved to the deprecated_documents.py file.
-"""
+"""Database helper functions for the documents entity."""
 
 import logging
 import os
@@ -24,7 +20,7 @@ from db_client.models.document.physical_document import PhysicalDocument
 from db_client.models.organisation.organisation import Organisation
 from sqlalchemy import bindparam, func, text
 from sqlalchemy.orm import Session
-from sqlalchemy.types import String
+from sqlalchemy.types import ARRAY, String
 
 from app.models.document import (
     CollectionOverviewResponse,
@@ -60,12 +56,17 @@ def get_slugged_objects(
         import id or the Family import_id.
     """
     if allowed_corpora not in [None, []]:
-        query_template = get_query_template(
-            os.path.join("app", "repository", "sql", "slug_lookup.sql")
+        query_template = text(
+            get_query_template(
+                os.path.join("app", "repository", "sql", "slug_lookup.sql")
+            )
         )
-        query_template = text(query_template).bindparams(
+
+        query_template = query_template.bindparams(
             bindparam("slug_name", type_=String),
-            bindparam("allowed_corpora_ids", value=allowed_corpora, expanding=True),
+            bindparam(
+                "allowed_corpora_ids", value=allowed_corpora, type_=ARRAY(String)
+            ),
         )
         query = db.execute(
             query_template, {"slug_name": slug, "allowed_corpora_ids": allowed_corpora}

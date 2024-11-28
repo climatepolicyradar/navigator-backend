@@ -13,7 +13,7 @@ FROM slug
         ON family_corpus.corpus_import_id = corpus.import_id
 WHERE
     slug.name = :slug_name
-    AND corpus.import_id IN :allowed_corpora_ids
+    AND corpus.import_id = ANY(:allowed_corpora_ids)
 
 UNION
 
@@ -30,4 +30,4 @@ FROM slug
         ON family_corpus.corpus_import_id = corpus.import_id
 WHERE
     slug.name = :slug_name
-    AND corpus.import_id IN :allowed_corpora_ids
+    AND corpus.import_id = ANY(:allowed_corpora_ids)
