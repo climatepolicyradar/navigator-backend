@@ -104,7 +104,7 @@ vespa_setup: vespa_confirm_cli_installed vespa_healthy vespa_deploy_schema vespa
 
 .ONESHELL:
 test_search:
-	SQLALCHEMY_WARN_20=1 docker compose \
+	docker compose \
 		-f docker-compose.yml \
 		-f docker-compose.dev.yml \
 		run --rm --name search_test \
