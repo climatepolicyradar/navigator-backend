@@ -50,7 +50,6 @@ def test_endpoint_returns_ok_all_docs_per_family_published(
     expected_unfccc,
     valid_token,
 ):
-    """Check endpoint returns 200 on success"""
     setup_all_docs_published_world_map(data_db)
 
     resp_json = _make_world_map_lookup_request(data_client, valid_token)
@@ -165,7 +164,7 @@ def test_endpoint_returns_different_results_with_alt_token(
     expected_unfccc,
     alternative_token,
 ):
-    """Check endpoint returns 200 & only counts CCLW docs"""
+    """Check endpoint returns 200 & only counts UNFCCC docs"""
     setup_all_docs_published_world_map(data_db)
 
     fam = (
@@ -195,7 +194,6 @@ def test_endpoint_returns_different_results_with_alt_token(
         .filter(Corpus.import_id == "UNFCCC.corpus.i00000001.n0000")
         .all()
     )
-    print(fams)
 
     assert len(resp["family_counts"]) == EXPECTED_NUM_FAM_CATEGORIES
     assert sum(resp["family_counts"].values()) == len(fams)
