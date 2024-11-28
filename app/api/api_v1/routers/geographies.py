@@ -6,8 +6,8 @@ from fastapi import APIRouter, Depends, Header, HTTPException, Request, status
 from app.clients.db.session import get_db
 from app.errors import RepositoryError
 from app.models.geography import GeographyStatsDTO
-from app.repository.geography import get_world_map_stats
 from app.service.custom_app import AppTokenFactory
+from app.service.world_map import get_world_map_stats
 
 _LOGGER = logging.getLogger(__file__)
 
@@ -18,7 +18,7 @@ geographies_router = APIRouter()
 async def geographies(
     request: Request, app_token: Annotated[str, Header()], db=Depends(get_db)
 ):
-    """Get a summary of fam stats for all geographies for world map."""
+    """Get a summary of family stats for all geographies for world map."""
     _LOGGER.info(
         "Getting world map counts for all geographies",
         extra={
