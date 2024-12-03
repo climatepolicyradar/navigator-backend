@@ -9,7 +9,7 @@ from db_client.models.dfce.family import (
     FamilyCorpus,
     FamilyGeography,
 )
-from db_client.models.organisation import Corpus, Organisation
+from db_client.models.organisation import Corpus, CorpusType, Organisation
 
 from app.clients.db.session import SessionLocal
 from app.service.util import tree_table_to_json
@@ -71,15 +71,13 @@ def _add_family(test_db, import_id: str, cat: FamilyCategory, corpus_import_id):
     )
 
 
-def test_config_endpoint_content(data_client, data_db):
+def test_config_endpoint_content(data_client, data_db, valid_token):
     """Tests whether we get the expected content when the /config endpoint is called."""
     # TODO: this test is fragile, we should look into validation according to the
     #       supporting data, rather than counts & fixed lists
     url_under_test = "/api/v1/config"
 
-    response = data_client.get(
-        url_under_test,
-    )
+    response = data_client.get(url_under_test, headers={"app-token": valid_token})
 
     response_json = response.json()
 
@@ -165,7 +163,7 @@ def test_config_endpoint_content(data_client, data_db):
     )
 
 
-def test_config_endpoint_cclw_stats(data_client, data_db):
+def test_config_endpoint_cclw_stats(data_client, data_db, valid_token):
     url_under_test = "/api/v1/config"
 
     cclw = (
@@ -191,9 +189,7 @@ def test_config_endpoint_cclw_stats(data_client, data_db):
     _add_family(data_db, "T.0.0.6", FamilyCategory.UNFCCC, unfccc.import_id)
     data_db.flush()
 
-    response = data_client.get(
-        url_under_test,
-    )
+    response = data_client.get(url_under_test, headers={"app-token": valid_token})
 
     response_json = response.json()
 
@@ -209,6 +205,84 @@ def test_config_endpoint_cclw_stats(data_client, data_db):
     assert unfccc == 1
 
     assert org_config["total"] == laws + policies + unfccc
+
+
+@pytest.mark.parametrize(
+    "allowed_corpora_ids, expected_organisation, other_organisation",
+    [
+        ("UNFCCC.corpus.i00000001.n0000", "UNFCCC", "CCLW"),
+        ("CCLW.corpus.i00000001.n0000", "CCLW", "UNFCCC"),
+    ],
+)
+def test_config_endpoint_returns_stats_for_allowed_corpora_only(
+    allowed_corpora_ids,
+    expected_organisation,
+    other_organisation,
+    app_token_factory,
+    data_client,
+    data_db,
+):
+    app_token = app_token_factory(allowed_corpora_ids)
+    url_under_test = "/api/v1/config"
+
+    other_corpus = (
+        data_db.query(Corpus)
+        .join(Organisation, Organisation.id == Corpus.organisation_id)
+        .filter(Organisation.name == other_organisation)
+        .one()
+    )
+    expected_corpus = (
+        data_db.query(Corpus)
+        .join(Organisation, Organisation.id == Corpus.organisation_id)
+        .filter(Organisation.name == expected_organisation)
+        .one()
+    )
+    expected_corpus_type = (
+        data_db.query(CorpusType)
+        .join(Corpus, Corpus.corpus_type_name == CorpusType.name)
+        .filter(CorpusType.name == expected_corpus.corpus_type_name)
+        .one()
+    )
+
+    _add_family(data_db, "T.0.0.1", FamilyCategory.EXECUTIVE, other_corpus.import_id)
+    _add_family(
+        data_db, "T.0.0.2", FamilyCategory.LEGISLATIVE, expected_corpus.import_id
+    )
+    data_db.flush()
+
+    response = data_client.get(url_under_test, headers={"app-token": app_token})
+
+    response_json = response.json()
+
+    org_config = response_json["organisations"]
+    expected_org_config = {
+        expected_organisation: {
+            "corpora": [
+                {
+                    "corpus_import_id": expected_corpus.import_id,
+                    "title": expected_corpus.title,
+                    "description": expected_corpus.description,
+                    "corpus_type": expected_corpus.corpus_type_name,
+                    "corpus_type_description": expected_corpus_type.description,
+                    "taxonomy": expected_corpus_type.valid_metadata,
+                    "text": expected_corpus.corpus_text,
+                    "image_url": (
+                        f"https://cdn.climatepolicyradar.org/{expected_corpus.corpus_image_url}"
+                        if expected_corpus.corpus_image_url
+                        else ""
+                    ),
+                }
+            ],
+            "total": 1,
+            "count_by_category": {
+                "Executive": 0,
+                "Legislative": 1,
+                "MCF": 0,
+                "UNFCCC": 0,
+            },
+        }
+    }
+    assert org_config == expected_org_config
 
 
 class _MockColumn:

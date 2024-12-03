@@ -3,7 +3,7 @@ from typing import cast
 import pytest
 from sqlalchemy.orm import Session
 
-from app.repository.organisation import get_all_organisations, get_corpora_for_org
+from app.repository.organisation import get_corpora_for_org, get_organisations
 from tests.non_search.setup_helpers import setup_new_corpus, setup_with_docs
 
 CCLW_EXPECTED_NUM_CORPORA = 1
@@ -34,7 +34,7 @@ EXPECTED_NUM_ORGS = 2
 
 
 def test_expected_organisations_present(data_db: Session):
-    orgs = get_all_organisations(data_db)
+    orgs = get_organisations(data_db)
     assert len(orgs) == EXPECTED_NUM_ORGS
 
     org_names = set([cast(str, org.name) for org in orgs])
