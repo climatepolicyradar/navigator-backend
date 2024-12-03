@@ -5,14 +5,16 @@ Like searches but with pre-defined results based on the summary context.
 """
 
 import logging
+from typing import Annotated
 
 from db_client.models.dfce import FamilyCategory, Geography
-from fastapi import APIRouter, Depends, HTTPException, Request, status
+from fastapi import APIRouter, Depends, Header, HTTPException, Request, status
 
 from app.clients.db.session import get_db
 from app.models.search import BrowseArgs, GeographySummaryFamilyResponse
 from app.repository.lookups import get_country_slug_from_country_code, is_country_code
 from app.repository.search import browse_rds_families
+from app.service.custom_app import AppTokenFactory
 
 _LOGGER = logging.getLogger(__name__)
 
@@ -24,8 +26,17 @@ summary_router = APIRouter()
     summary="Gets a summary of the documents associated with a geography.",
     response_model=GeographySummaryFamilyResponse,
 )
-def search_by_geography(request: Request, geography_string: str, db=Depends(get_db)):
+def search_by_geography(
+    request: Request,
+    geography_string: str,
+    app_token: Annotated[str, Header()],
+    db=Depends(get_db),
+):
     """Searches the documents filtering by geography and grouping by category."""
+
+    # Decode the app token and validate it.
+    token = AppTokenFactory()
+    token.decode_and_validate(db, request, app_token)
 
     geography_slug = None
     if is_country_code(db, geography_string):
@@ -36,7 +47,10 @@ def search_by_geography(request: Request, geography_string: str, db=Depends(get_
 
     _LOGGER.info(
         f"Getting geography summary for {geography_slug}",
-        extra={"props": {"geography_slug": geography_slug}},
+        extra={
+            "props": {"geography_slug": geography_slug},
+            "allowed_corpora_ids": token.allowed_corpora_ids,
+        },
     )
 
     exists = bool(
@@ -60,6 +74,7 @@ def search_by_geography(request: Request, geography_string: str, db=Depends(get_
                 categories=[cat],
                 offset=0,
                 limit=None,
+                corpora_ids=token.allowed_corpora_ids,
             ),
         )
         family_counts[cat] = len(results.families)
