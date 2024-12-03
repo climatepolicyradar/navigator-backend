@@ -1,8 +1,12 @@
+import os
+from datetime import datetime
 from http.client import OK
 from typing import Any
 from unittest.mock import MagicMock
 
+import jwt
 import pytest
+from dateutil.relativedelta import relativedelta
 from db_client.models.dfce.family import (
     Family,
     FamilyCategory,
@@ -12,6 +16,7 @@ from db_client.models.dfce.family import (
 from db_client.models.organisation import Corpus, CorpusType, Organisation
 
 from app.clients.db.session import SessionLocal
+from app.service import security
 from app.service.util import tree_table_to_json
 
 LEN_ORG_CONFIG = 3
@@ -283,6 +288,65 @@ def test_config_endpoint_returns_stats_for_allowed_corpora_only(
         }
     }
     assert org_config == expected_org_config
+
+
+def test_config_endpoint_returns_stats_for_all_orgs_if_no_allowed_corpora_in_app_token(
+    data_client,
+    data_db,
+):
+    issued_at = datetime.utcnow()
+    to_encode = {
+        "allowed_corpora_ids": [],
+        "exp": issued_at + relativedelta(years=10),
+        "iat": int(datetime.timestamp(issued_at.replace(microsecond=0))),
+        "iss": "Climate Policy Radar",
+        "sub": "CPR",
+        "aud": "localhost",
+    }
+    app_token = jwt.encode(
+        to_encode, os.environ["TOKEN_SECRET_KEY"], algorithm=security.ALGORITHM
+    )
+    # app_token = app_token_factory(",")
+    url_under_test = "/api/v1/config"
+
+    cclw_corpus = (
+        data_db.query(Corpus)
+        .join(Organisation, Organisation.id == Corpus.organisation_id)
+        .filter(Organisation.name == "CCLW")
+        .one()
+    )
+
+    unfccc_corpus = (
+        data_db.query(Corpus)
+        .join(Organisation, Organisation.id == Corpus.organisation_id)
+        .filter(Organisation.name == "UNFCCC")
+        .one()
+    )
+
+    _add_family(data_db, "T.0.0.1", FamilyCategory.EXECUTIVE, cclw_corpus.import_id)
+    _add_family(data_db, "T.0.0.2", FamilyCategory.LEGISLATIVE, unfccc_corpus.import_id)
+    data_db.flush()
+
+    response = data_client.get(url_under_test, headers={"app-token": app_token})
+
+    response_json = response.json()
+    org_config = response_json["organisations"]
+
+    assert list(org_config.keys()) == ["CCLW", "UNFCCC"]
+    assert org_config["CCLW"]["total"] == 1
+    assert org_config["UNFCCC"]["total"] == 1
+    assert org_config["UNFCCC"]["count_by_category"] == {
+        "Executive": 0,
+        "Legislative": 1,
+        "MCF": 0,
+        "UNFCCC": 0,
+    }
+    assert org_config["CCLW"]["count_by_category"] == {
+        "Executive": 1,
+        "Legislative": 0,
+        "MCF": 0,
+        "UNFCCC": 0,
+    }
 
 
 class _MockColumn:

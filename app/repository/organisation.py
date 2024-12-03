@@ -88,9 +88,9 @@ def get_organisation_config(db: Session, org: Organisation) -> OrganisationConfi
 
 
 def get_organisations(db: Session, allowed_corpora: list[str]) -> list[Organisation]:
-    return (
-        db.query(Organisation)
-        .join(Corpus, Corpus.organisation_id == Organisation.id)
-        .filter(Corpus.import_id.in_(allowed_corpora))
-        .all()
+    query = db.query(Organisation).join(
+        Corpus, Corpus.organisation_id == Organisation.id
     )
+    if allowed_corpora != []:
+        query = query.filter(Corpus.import_id.in_(allowed_corpora))
+    return query.all()
