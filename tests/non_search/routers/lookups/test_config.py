@@ -306,7 +306,6 @@ def test_config_endpoint_returns_stats_for_all_orgs_if_no_allowed_corpora_in_app
     app_token = jwt.encode(
         to_encode, os.environ["TOKEN_SECRET_KEY"], algorithm=security.ALGORITHM
     )
-    # app_token = app_token_factory(",")
     url_under_test = "/api/v1/config"
 
     cclw_corpus = (
