@@ -35,7 +35,7 @@ EXPECTED_NUM_ORGS = 2
 
 def test_expected_organisations_present(data_db: Session):
     orgs = get_organisations(
-        data_db, ["UNFCCC.corpus.i00000001.n0000,CCLW.corpus.i00000001.n0000"]
+        data_db, ["UNFCCC.corpus.i00000001.n0000", "CCLW.corpus.i00000001.n0000"]
     )
     assert len(orgs) == EXPECTED_NUM_ORGS
 

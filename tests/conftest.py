@@ -165,7 +165,7 @@ def app_token_factory(monkeypatch):
     def mock_return(_, __, ___):
         return True
 
-    def _app_token(allowed_corpora_ids):
+    def _app_token(allowed_corpora_ids: list[str]):
         subject = "CCLW"
         audience = "localhost"
         input_str = f"{allowed_corpora_ids};{subject};{audience}"

@@ -210,8 +210,8 @@ def test_config_endpoint_cclw_stats(data_client, data_db, valid_token):
 @pytest.mark.parametrize(
     "allowed_corpora_ids, expected_organisation, other_organisation",
     [
-        ("UNFCCC.corpus.i00000001.n0000", "UNFCCC", "CCLW"),
-        ("CCLW.corpus.i00000001.n0000", "CCLW", "UNFCCC"),
+        (["UNFCCC.corpus.i00000001.n0000"], "UNFCCC", "CCLW"),
+        (["CCLW.corpus.i00000001.n0000"], "CCLW", "UNFCCC"),
     ],
 )
 def test_config_endpoint_returns_stats_for_allowed_corpora_only(
