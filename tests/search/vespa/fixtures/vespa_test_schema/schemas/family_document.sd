@@ -178,7 +178,7 @@ schema family_document {
         first-phase {
             expression: name_score() + description_score()
         }
-        match-features: name_score() description_score()
+        summary-features: name_score() description_score()
     }
     
     rank-profile exact_not_stemmed inherits default {
@@ -191,7 +191,7 @@ schema family_document {
         first-phase {
             expression: name_score() + description_score()
         }
-        match-features: name_score() description_score()
+        summary-features: name_score() description_score()
     }
 
     rank-profile hybrid_no_closeness inherits default {
@@ -204,7 +204,7 @@ schema family_document {
         first-phase {
             expression: name_score() + description_score()
         }
-        match-features: name_score() description_score()
+        summary-features: name_score() description_score()
     }
 
     rank-profile hybrid inherits default {
@@ -220,7 +220,7 @@ schema family_document {
         first-phase {
             expression: name_score() + description_score()
         }
-        match-features: name_score() description_score()
+        summary-features: name_score() description_score()
     }
     
     rank-profile hybrid_no_description_embedding inherits default {
@@ -236,7 +236,7 @@ schema family_document {
         first-phase {
             expression: name_score() + description_score()
         }
-        match-features: name_score() description_score()
+        summary-features: name_score() description_score()
     }
 
     rank-profile hybrid_custom_weight inherits default {
@@ -253,7 +253,7 @@ schema family_document {
         first-phase {
             expression: name_score() + description_score()
         }
-        match-features: name_score() description_score()
+        summary-features: name_score() description_score()
     }
 
 
