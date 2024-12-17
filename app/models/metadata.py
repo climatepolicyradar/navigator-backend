@@ -25,6 +25,20 @@ class OrganisationConfig(BaseModel):
     count_by_category: Mapping[str, int]
 
 
+class CorpusConfig(BaseModel):
+    """Contains the Corpus, Organisation and CorpusType info
+    as well as stats used on homepage"""
+
+    corpus_import_id: str
+    title: str
+    description: str
+    corpus_type: str
+    corpus_type_description: str
+    taxonomy: TaxonomyData
+    text: str
+    image_url: str
+
+
 class ApplicationConfig(BaseModel):
     """Definition of the new Config which just includes taxonomy."""
 
@@ -32,3 +46,4 @@ class ApplicationConfig(BaseModel):
     organisations: Mapping[str, OrganisationConfig]
     languages: Mapping[str, str]
     document_variants: Sequence[str]
+    corpora: Sequence[CorpusConfig]

@@ -76,25 +76,23 @@ def _add_family(test_db, import_id: str, cat: FamilyCategory, corpus_import_id):
     )
 
 
-def test_config_endpoint_content(data_client, data_db, valid_token):
+def test_config_endpoint_content(data_client, data_db, app_token_factory, valid_token):
     """Tests whether we get the expected content when the /config endpoint is called."""
     # TODO: this test is fragile, we should look into validation according to the
     #       supporting data, rather than counts & fixed lists
     url_under_test = "/api/v1/config"
+    app_token = app_token_factory(
+        "CCLW.corpus.i00000001.n0000,UNFCCC.corpus.i00000001.n0000"
+    )
 
-    response = data_client.get(url_under_test, headers={"app-token": valid_token})
+    response = data_client.get(url_under_test, headers={"app-token": app_token})
 
     response_json = response.json()
 
     assert response.status_code == OK
     assert (
         set(response_json.keys())
-        ^ {
-            "geographies",
-            "organisations",
-            "document_variants",
-            "languages",
-        }
+        ^ {"geographies", "organisations", "document_variants", "languages", "corpora"}
         == set()
     )
 
@@ -111,9 +109,43 @@ def test_config_endpoint_content(data_client, data_db, valid_token):
     assert len(response_json["document_variants"]) == 2
     assert "Original Language" in response_json["document_variants"]
 
-    # Now test organisations
-    assert "organisations" in response_json
+    corpora = response_json["corpora"]
+    assert len(corpora) == 2
 
+    assert corpora[0]["corpus_import_id"] == "CCLW.corpus.i00000001.n0000"
+    assert corpora[0]["corpus_type"] == "Laws and Policies"
+    assert (
+        corpora[0]["image_url"]
+        == "https://cdn.climatepolicyradar.org/corpora/CCLW.corpus.i00000001.n0000/logo.png"
+    )
+    assert "Grantham Research Institute" in corpora[0]["text"]
+    assert corpora[0]["corpus_type_description"] == "Laws and policies"
+    assert corpora[0]["description"] == "CCLW national policies"
+    assert corpora[0]["title"] == "CCLW national policies"
+    assert set(corpora[0]["taxonomy"]) ^ EXPECTED_CCLW_TAXONOMY == set()
+
+    # Check document roles.
+    assert "role" in corpora[0]["taxonomy"]["_document"].keys()
+    assert len(corpora[0]["taxonomy"]["_document"]["role"]["allowed_values"]) == 10
+    assert "MAIN" in corpora[0]["taxonomy"]["_document"]["role"]["allowed_values"]
+
+    # Check document roles.
+    assert "type" in corpora[0]["taxonomy"]["_document"].keys()
+    assert len(corpora[0]["taxonomy"]["_document"]["type"]["allowed_values"]) == 76
+    assert (
+        "Adaptation Communication"
+        in corpora[0]["taxonomy"]["_document"]["type"]["allowed_values"]
+    )
+
+    # Check event types.
+    assert len(corpora[0]["taxonomy"]["_event"]["event_type"]["allowed_values"]) == 17
+    assert (
+        "Passed/Approved"
+        in corpora[0]["taxonomy"]["_event"]["event_type"]["allowed_values"]
+    )
+
+    # Below to be removed as part of PDCT-1759
+    # Now test organisations
     assert "CCLW" in response_json["organisations"]
     cclw_org = response_json["organisations"]["CCLW"]
     assert len(cclw_org) == LEN_ORG_CONFIG
