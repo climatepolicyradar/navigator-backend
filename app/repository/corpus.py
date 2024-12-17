@@ -1,5 +1,5 @@
 from db_client.models.dfce.family import Corpus
-from db_client.models.organisation import CorpusType
+from db_client.models.organisation import CorpusType, Organisation
 from sqlalchemy.orm import Session
 
 from app import config
@@ -22,22 +22,30 @@ def _to_corpus_data(row) -> CorpusConfig:
         taxonomy={**row.taxonomy},
         text=corpus_text,
         image_url=image_url,
+        organisation_id=row.organisation_id,
+        organisation_name=row.organisation_name,
     )
 
 
 def get_allowed_corpora(db: Session, allowed_corpora: list[str]) -> list[CorpusConfig]:
-    query = db.query(
-        Corpus.import_id.label("corpus_import_id"),
-        Corpus.title.label("title"),
-        Corpus.description.label("description"),
-        Corpus.corpus_image_url.label("image_url"),
-        Corpus.corpus_text.label("text"),
-        Corpus.corpus_type_name.label("corpus_type"),
-        CorpusType.description.label("corpus_type_description"),
-        CorpusType.valid_metadata.label("taxonomy"),
-    ).join(
-        Corpus,
-        Corpus.corpus_type_name == CorpusType.name,
+    query = (
+        db.query(
+            Corpus.import_id.label("corpus_import_id"),
+            Corpus.title.label("title"),
+            Corpus.description.label("description"),
+            Corpus.corpus_image_url.label("image_url"),
+            Corpus.corpus_text.label("text"),
+            Corpus.corpus_type_name.label("corpus_type"),
+            CorpusType.description.label("corpus_type_description"),
+            CorpusType.valid_metadata.label("taxonomy"),
+            Organisation.id.label("organisation_id"),
+            Organisation.name.label("organisation_name"),
+        )
+        .join(
+            CorpusType,
+            Corpus.corpus_type_name == CorpusType.name,
+        )
+        .join(Organisation, Corpus.organisation_id == Organisation.id)
     )
     if allowed_corpora != []:
         query = query.filter(Corpus.import_id.in_(allowed_corpora))

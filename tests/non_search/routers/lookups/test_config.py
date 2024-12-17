@@ -114,6 +114,8 @@ def test_config_endpoint_content(data_client, data_db, app_token_factory, valid_
 
     assert corpora[0]["corpus_import_id"] == "CCLW.corpus.i00000001.n0000"
     assert corpora[0]["corpus_type"] == "Laws and Policies"
+    assert corpora[0]["organisation_name"] == "CCLW"
+    assert corpora[0]["organisation_id"] == 1
     assert (
         corpora[0]["image_url"]
         == "https://cdn.climatepolicyradar.org/corpora/CCLW.corpus.i00000001.n0000/logo.png"

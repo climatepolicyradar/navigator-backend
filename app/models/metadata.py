@@ -37,6 +37,8 @@ class CorpusConfig(BaseModel):
     taxonomy: TaxonomyData
     text: str
     image_url: str
+    organisation_name: str
+    organisation_id: int
 
 
 class ApplicationConfig(BaseModel):
