@@ -112,6 +112,13 @@ def test_config_endpoint_content(data_client, data_db, app_token_factory, valid_
     corpora = response_json["corpora"]
     assert len(corpora) == 2
 
+    assert corpora[0]["count_by_category"] == {
+        "Executive": 0,
+        "Legislative": 0,
+        "UNFCCC": 0,
+        "MCF": 0,
+    }
+
     assert corpora[0]["corpus_import_id"] == "CCLW.corpus.i00000001.n0000"
     assert corpora[0]["corpus_type"] == "Laws and Policies"
     assert corpora[0]["organisation_name"] == "CCLW"
@@ -232,6 +239,21 @@ def test_config_endpoint_cclw_stats(data_client, data_db, valid_token):
 
     response_json = response.json()
 
+    corpora = response_json["corpora"]
+    assert len(corpora) == 2
+    cclw_corpus_config = next(
+        (corpus for corpus in corpora if "CCLW" in corpus["corpus_import_id"]), {}
+    )
+    laws = cclw_corpus_config["count_by_category"]["Legislative"]
+    policies = cclw_corpus_config["count_by_category"]["Executive"]
+    unfccc = cclw_corpus_config["count_by_category"]["UNFCCC"]
+    assert laws == 2
+    assert policies == 3
+    assert unfccc == 1
+
+    assert cclw_corpus_config["total"] == laws + policies + unfccc
+
+    # Below to be removed as part of PDCT-1759
     org_config = response_json["organisations"]["CCLW"]
     assert len(org_config) == LEN_ORG_CONFIG
     assert org_config["total"] == 6
@@ -293,6 +315,17 @@ def test_config_endpoint_returns_stats_for_allowed_corpora_only(
 
     response_json = response.json()
 
+    assert len(response_json["corpora"]) == 1
+    corpus_config = response_json["corpora"][0]
+    assert corpus_config["total"] == 1
+    assert corpus_config["count_by_category"] == {
+        "Executive": 0,
+        "Legislative": 1,
+        "MCF": 0,
+        "UNFCCC": 0,
+    }
+
+    #  Below to be removed as part of PDCT-1759
     org_config = response_json["organisations"]
     expected_org_config = {
         expected_organisation: {
@@ -319,7 +352,7 @@ def test_config_endpoint_returns_stats_for_allowed_corpora_only(
                 "MCF": 0,
                 "UNFCCC": 0,
             },
-        }
+        },
     }
     assert org_config == expected_org_config
 
@@ -357,20 +390,33 @@ def test_config_endpoint_returns_stats_for_all_orgs_if_no_allowed_corpora_in_app
     )
 
     _add_family(data_db, "T.0.0.1", FamilyCategory.EXECUTIVE, cclw_corpus.import_id)
-    _add_family(data_db, "T.0.0.2", FamilyCategory.LEGISLATIVE, unfccc_corpus.import_id)
+    _add_family(data_db, "T.0.0.2", FamilyCategory.EXECUTIVE, unfccc_corpus.import_id)
     data_db.flush()
 
     response = data_client.get(url_under_test, headers={"app-token": app_token})
 
     response_json = response.json()
+
+    assert len(response_json["corpora"]) == 2
+    corpora = response_json["corpora"]
+    for corpus in corpora:
+        assert corpus["total"] == 1
+        assert corpus["count_by_category"] == {
+            "Executive": 1,
+            "Legislative": 0,
+            "MCF": 0,
+            "UNFCCC": 0,
+        }
+
+    #  Below to be removed as part of PDCT-1759
     org_config = response_json["organisations"]
 
     assert list(org_config.keys()) == ["CCLW", "UNFCCC"]
     assert org_config["CCLW"]["total"] == 1
     assert org_config["UNFCCC"]["total"] == 1
     assert org_config["UNFCCC"]["count_by_category"] == {
-        "Executive": 0,
-        "Legislative": 1,
+        "Executive": 1,
+        "Legislative": 0,
         "MCF": 0,
         "UNFCCC": 0,
     }

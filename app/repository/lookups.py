@@ -8,7 +8,7 @@ from sqlalchemy.exc import MultipleResultsFound
 from sqlalchemy.orm import Session
 
 from app.models.metadata import ApplicationConfig
-from app.repository.corpus import get_allowed_corpora
+from app.repository.corpus import get_config_for_allowed_corpora
 from app.repository.organisation import get_organisation_config, get_organisations
 from app.service.pipeline import IMPORT_ID_MATCHER
 from app.service.util import tree_table_to_json
@@ -29,7 +29,7 @@ def get_config(db: Session, allowed_corpora: list[str]) -> ApplicationConfig:
             variant.variant_name
             for variant in db.query(Variant).order_by(Variant.variant_name).all()
         ],
-        corpora=get_allowed_corpora(db, allowed_corpora),
+        corpora=get_config_for_allowed_corpora(db, allowed_corpora),
     )
 
 

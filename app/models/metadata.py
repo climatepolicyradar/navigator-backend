@@ -29,16 +29,22 @@ class CorpusConfig(BaseModel):
     """Contains the Corpus, Organisation and CorpusType info
     as well as stats used on homepage"""
 
+    # From corpus
     corpus_import_id: str
     title: str
     description: str
+    image_url: str
+    text: str
+    # From corpus_type
     corpus_type: str
     corpus_type_description: str
     taxonomy: TaxonomyData
-    text: str
-    image_url: str
+    # From organisation
     organisation_name: str
     organisation_id: int
+    # No of families in corpus
+    total: int
+    count_by_category: Mapping[str, int]
 
 
 class ApplicationConfig(BaseModel):
