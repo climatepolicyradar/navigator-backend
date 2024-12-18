@@ -90,11 +90,13 @@ def test_config_endpoint_content(data_client, data_db, app_token_factory, valid_
     response_json = response.json()
 
     assert response.status_code == OK
-    assert (
-        set(response_json.keys())
-        ^ {"geographies", "organisations", "document_variants", "languages", "corpora"}
-        == set()
-    )
+    assert set(response_json.keys()) == {
+        "geographies",
+        "organisations",
+        "document_variants",
+        "languages",
+        "corpus_types",
+    }
 
     assert "geographies" in response_json
     assert len(response_json["geographies"]) == 8
@@ -109,49 +111,47 @@ def test_config_endpoint_content(data_client, data_db, app_token_factory, valid_
     assert len(response_json["document_variants"]) == 2
     assert "Original Language" in response_json["document_variants"]
 
-    corpora = response_json["corpora"]
-    assert len(corpora) == 2
+    corpus_types = response_json["corpus_types"]
+    assert list(corpus_types.keys()) == ["Laws and Policies", "Intl. agreements"]
 
-    assert corpora[0]["count_by_category"] == {
+    laws_and_policies = corpus_types["Laws and Policies"]
+    assert laws_and_policies["corpus_type_description"] == "Laws and policies"
+
+    taxonomy = laws_and_policies["taxonomy"]
+    assert set(taxonomy) ^ EXPECTED_CCLW_TAXONOMY == set()
+    # Check document roles.
+    assert "role" in taxonomy["_document"].keys()
+    assert len(taxonomy["_document"]["role"]["allowed_values"]) == 10
+    assert "MAIN" in taxonomy["_document"]["role"]["allowed_values"]
+    # Check document roles.
+    assert "type" in taxonomy["_document"].keys()
+    assert len(taxonomy["_document"]["type"]["allowed_values"]) == 76
+    assert "Adaptation Communication" in taxonomy["_document"]["type"]["allowed_values"]
+    # Check event types.
+    assert len(taxonomy["_event"]["event_type"]["allowed_values"]) == 17
+    assert "Passed/Approved" in taxonomy["_event"]["event_type"]["allowed_values"]
+
+    assert len(laws_and_policies["corpora"]) == 1
+    cclw_corpus = laws_and_policies["corpora"][0]
+
+    assert cclw_corpus["total"] == 0
+    assert cclw_corpus["count_by_category"] == {
         "Executive": 0,
         "Legislative": 0,
         "UNFCCC": 0,
         "MCF": 0,
     }
 
-    assert corpora[0]["corpus_import_id"] == "CCLW.corpus.i00000001.n0000"
-    assert corpora[0]["corpus_type"] == "Laws and Policies"
-    assert corpora[0]["organisation_name"] == "CCLW"
-    assert corpora[0]["organisation_id"] == 1
+    assert cclw_corpus["corpus_import_id"] == "CCLW.corpus.i00000001.n0000"
+    assert cclw_corpus["organisation_name"] == "CCLW"
+    assert cclw_corpus["organisation_id"] == 1
     assert (
-        corpora[0]["image_url"]
+        cclw_corpus["image_url"]
         == "https://cdn.climatepolicyradar.org/corpora/CCLW.corpus.i00000001.n0000/logo.png"
     )
-    assert "Grantham Research Institute" in corpora[0]["text"]
-    assert corpora[0]["corpus_type_description"] == "Laws and policies"
-    assert corpora[0]["description"] == "CCLW national policies"
-    assert corpora[0]["title"] == "CCLW national policies"
-    assert set(corpora[0]["taxonomy"]) ^ EXPECTED_CCLW_TAXONOMY == set()
-
-    # Check document roles.
-    assert "role" in corpora[0]["taxonomy"]["_document"].keys()
-    assert len(corpora[0]["taxonomy"]["_document"]["role"]["allowed_values"]) == 10
-    assert "MAIN" in corpora[0]["taxonomy"]["_document"]["role"]["allowed_values"]
-
-    # Check document roles.
-    assert "type" in corpora[0]["taxonomy"]["_document"].keys()
-    assert len(corpora[0]["taxonomy"]["_document"]["type"]["allowed_values"]) == 76
-    assert (
-        "Adaptation Communication"
-        in corpora[0]["taxonomy"]["_document"]["type"]["allowed_values"]
-    )
-
-    # Check event types.
-    assert len(corpora[0]["taxonomy"]["_event"]["event_type"]["allowed_values"]) == 17
-    assert (
-        "Passed/Approved"
-        in corpora[0]["taxonomy"]["_event"]["event_type"]["allowed_values"]
-    )
+    assert "Grantham Research Institute" in cclw_corpus["text"]
+    assert cclw_corpus["description"] == "CCLW national policies"
+    assert cclw_corpus["title"] == "CCLW national policies"
 
     # Below to be removed as part of PDCT-1759
     # Now test organisations

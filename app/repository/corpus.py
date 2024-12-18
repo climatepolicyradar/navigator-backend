@@ -1,4 +1,4 @@
-from typing import Any
+from typing import Any, Mapping
 
 from db_client.models.dfce.family import Corpus, Family, FamilyCategory, FamilyCorpus
 from db_client.models.organisation import CorpusType, Organisation
@@ -6,7 +6,7 @@ from sqlalchemy import func
 from sqlalchemy.orm import Session
 
 from app import config
-from app.models.metadata import CorpusConfig
+from app.models.metadata import CorpusConfig, CorpusTypeConfig
 
 
 def _get_family_stats_per_corpus(db: Session, corpus_import_id: str) -> dict[str, Any]:
@@ -37,32 +37,42 @@ def _get_family_stats_per_corpus(db: Session, corpus_import_id: str) -> dict[str
     return {"total": total, "count_by_category": count_by_category}
 
 
-def _to_corpus_config(row, stats: dict[str, Any]) -> CorpusConfig:
+def _to_corpus_type_config(row, stats: dict[str, Any]) -> dict[str, CorpusTypeConfig]:
     image_url = (
         f"https://{config.CDN_DOMAIN}/{row.image_url}"
         if row.image_url is not None and len(row.image_url) > 0
         else ""
     )
     corpus_text = row.text if row.text is not None else ""
-    return CorpusConfig(
-        corpus_import_id=row.corpus_import_id,
-        title=row.title,
-        description=row.description,
-        corpus_type=row.corpus_type,
-        corpus_type_description=row.corpus_type_description,
-        taxonomy={**row.taxonomy},
-        text=corpus_text,
-        image_url=image_url,
-        organisation_id=row.organisation_id,
-        organisation_name=row.organisation_name,
-        total=stats["total"],
-        count_by_category=stats["count_by_category"],
-    )
+    return {
+        row.corpus_type: CorpusTypeConfig(
+            corpus_type_description=row.corpus_type_description,
+            taxonomy={**row.taxonomy},
+            corpora=[
+                CorpusConfig(
+                    title=row.title,
+                    description=row.description,
+                    corpus_import_id=row.corpus_import_id,
+                    text=corpus_text,
+                    image_url=image_url,
+                    organisation_id=row.organisation_id,
+                    organisation_name=row.organisation_name,
+                    total=stats["total"],
+                    count_by_category=stats["count_by_category"],
+                )
+            ],
+        )
+    }
+
+
+def _get_config_for_corpus(db: Session, row) -> dict[str, CorpusTypeConfig]:
+    stats = _get_family_stats_per_corpus(db, row.corpus_import_id)
+    return _to_corpus_type_config(row, stats)
 
 
 def get_config_for_allowed_corpora(
     db: Session, allowed_corpora: list[str]
-) -> list[CorpusConfig]:
+) -> Mapping[str, CorpusTypeConfig]:
     query = (
         db.query(
             Corpus.import_id.label("corpus_import_id"),
@@ -86,10 +96,11 @@ def get_config_for_allowed_corpora(
         query = query.filter(Corpus.import_id.in_(allowed_corpora))
 
     corpora = query.all()
+    configs_for_each_allowed_corpus = (
+        _get_config_for_corpus(db, row) for row in corpora
+    )
+    config_for_allowed_corpora = {
+        k: v for d in configs_for_each_allowed_corpus for k, v in d.items()
+    }
 
-    return [
-        _to_corpus_config(
-            row, _get_family_stats_per_corpus(db=db, corpus_import_id=row[0])
-        )
-        for row in corpora
-    ]
+    return config_for_allowed_corpora

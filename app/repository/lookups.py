@@ -29,7 +29,7 @@ def get_config(db: Session, allowed_corpora: list[str]) -> ApplicationConfig:
             variant.variant_name
             for variant in db.query(Variant).order_by(Variant.variant_name).all()
         ],
-        corpora=get_config_for_allowed_corpora(db, allowed_corpora),
+        corpus_types=get_config_for_allowed_corpora(db, allowed_corpora),
     )
 
 

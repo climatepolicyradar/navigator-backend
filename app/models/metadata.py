@@ -26,8 +26,7 @@ class OrganisationConfig(BaseModel):
 
 
 class CorpusConfig(BaseModel):
-    """Contains the Corpus, Organisation and CorpusType info
-    as well as stats used on homepage"""
+    """Contains the Corpus and Organisation info as well as stats used on homepage"""
 
     # From corpus
     corpus_import_id: str
@@ -35,16 +34,20 @@ class CorpusConfig(BaseModel):
     description: str
     image_url: str
     text: str
-    # From corpus_type
-    corpus_type: str
-    corpus_type_description: str
-    taxonomy: TaxonomyData
     # From organisation
     organisation_name: str
     organisation_id: int
     # No of families in corpus
     total: int
     count_by_category: Mapping[str, int]
+
+
+class CorpusTypeConfig(BaseModel):
+    """Contains the CorpusType info as well as data of any corpora of that type"""
+
+    corpus_type_description: str
+    taxonomy: TaxonomyData
+    corpora: Sequence[CorpusConfig]
 
 
 class ApplicationConfig(BaseModel):
@@ -54,4 +57,4 @@ class ApplicationConfig(BaseModel):
     organisations: Mapping[str, OrganisationConfig]
     languages: Mapping[str, str]
     document_variants: Sequence[str]
-    corpora: Sequence[CorpusConfig]
+    corpus_types: Mapping[str, CorpusTypeConfig]
