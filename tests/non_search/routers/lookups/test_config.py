@@ -239,11 +239,10 @@ def test_config_endpoint_cclw_stats(data_client, data_db, valid_token):
 
     response_json = response.json()
 
-    corpora = response_json["corpora"]
-    assert len(corpora) == 2
-    cclw_corpus_config = next(
-        (corpus for corpus in corpora if "CCLW" in corpus["corpus_import_id"]), {}
-    )
+    corpus_types = response_json["corpus_types"]
+    assert len(corpus_types) == 2
+
+    cclw_corpus_config = corpus_types["Laws and Policies"]["corpora"][0]
     laws = cclw_corpus_config["count_by_category"]["Legislative"]
     policies = cclw_corpus_config["count_by_category"]["Executive"]
     unfccc = cclw_corpus_config["count_by_category"]["UNFCCC"]
@@ -315,10 +314,11 @@ def test_config_endpoint_returns_stats_for_allowed_corpora_only(
 
     response_json = response.json()
 
-    assert len(response_json["corpora"]) == 1
-    corpus_config = response_json["corpora"][0]
-    assert corpus_config["total"] == 1
-    assert corpus_config["count_by_category"] == {
+    assert len(response_json["corpus_types"]) == 1
+
+    corpus = response_json["corpus_types"][expected_corpus_type.name]["corpora"][0]
+    assert corpus["total"] == 1
+    assert corpus["count_by_category"] == {
         "Executive": 0,
         "Legislative": 1,
         "MCF": 0,
@@ -397,16 +397,18 @@ def test_config_endpoint_returns_stats_for_all_orgs_if_no_allowed_corpora_in_app
 
     response_json = response.json()
 
-    assert len(response_json["corpora"]) == 2
-    corpora = response_json["corpora"]
-    for corpus in corpora:
-        assert corpus["total"] == 1
-        assert corpus["count_by_category"] == {
-            "Executive": 1,
-            "Legislative": 0,
-            "MCF": 0,
-            "UNFCCC": 0,
-        }
+    assert len(response_json["corpus_types"]) == 2
+    corpus_types = response_json["corpus_types"]
+
+    for corpus_type in list(corpus_types.values()):
+        for corpus in corpus_type["corpora"]:
+            assert corpus["total"] == 1
+            assert corpus["count_by_category"] == {
+                "Executive": 1,
+                "Legislative": 0,
+                "MCF": 0,
+                "UNFCCC": 0,
+            }
 
     #  Below to be removed as part of PDCT-1759
     org_config = response_json["organisations"]
