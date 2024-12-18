@@ -177,7 +177,7 @@ schema document_passage {
         first-phase {
             expression: text_score()
         }
-        match-features: text_score() fieldMatch(text_block)
+        summary-features: text_score() fieldMatch(text_block)
     }
     
     rank-profile exact_not_stemmed inherits default {
@@ -187,7 +187,7 @@ schema document_passage {
         first-phase {
             expression: text_score()
         }
-        match-features: text_score() fieldMatch(text_block)
+        summary-features: text_score() fieldMatch(text_block)
     }
 
     rank-profile hybrid_no_closeness inherits default {
@@ -197,7 +197,7 @@ schema document_passage {
         first-phase {
             expression: text_score()
         }
-        match-features: text_score() bm25(text_block)
+        summary-features: text_score() bm25(text_block)
     }
 
     rank-profile hybrid inherits default {
@@ -210,7 +210,7 @@ schema document_passage {
         first-phase {
             expression: text_score()
         }
-        match-features: text_score() bm25(text_block) closeness(text_embedding)
+        summary-features: text_score() bm25(text_block) closeness(text_embedding)
     }
     
     rank-profile hybrid_custom_weight inherits default {
@@ -224,6 +224,6 @@ schema document_passage {
         first-phase {
             expression: text_score()
         }
-        match-features: text_score() bm25(text_block) closeness(text_embedding)
+        summary-features: text_score() bm25(text_block) closeness(text_embedding)
     }
 }
