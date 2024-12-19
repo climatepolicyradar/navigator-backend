@@ -6,7 +6,7 @@ from sqlalchemy import func
 from sqlalchemy.orm import Session
 
 from app import config
-from app.models.metadata import CorpusData, OrganisationConfig
+from app.models.config import CorpusData, OrganisationConfig
 
 
 def _to_corpus_data(row) -> CorpusData:

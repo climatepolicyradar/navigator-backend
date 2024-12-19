@@ -7,7 +7,7 @@ from db_client.models.document.physical_document import Language
 from sqlalchemy.exc import MultipleResultsFound
 from sqlalchemy.orm import Session
 
-from app.models.metadata import ApplicationConfig
+from app.models.config import ApplicationConfig
 from app.repository.corpus import get_config_for_allowed_corpora
 from app.repository.organisation import get_organisation_config, get_organisations
 from app.service.pipeline import IMPORT_ID_MATCHER

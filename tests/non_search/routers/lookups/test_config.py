@@ -115,6 +115,7 @@ def test_config_endpoint_content(data_client, data_db, app_token_factory, valid_
     assert list(corpus_types.keys()) == ["Laws and Policies", "Intl. agreements"]
 
     laws_and_policies = corpus_types["Laws and Policies"]
+    assert laws_and_policies["corpus_type_name"] == "Laws and Policies"
     assert laws_and_policies["corpus_type_description"] == "Laws and policies"
 
     taxonomy = laws_and_policies["taxonomy"]

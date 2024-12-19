@@ -6,7 +6,7 @@ from sqlalchemy import func
 from sqlalchemy.orm import Session
 
 from app import config
-from app.models.metadata import CorpusConfig, CorpusTypeConfig
+from app.models.config import CorpusConfig, CorpusTypeConfig
 
 
 def _get_family_stats_per_corpus(db: Session, corpus_import_id: str) -> dict[str, Any]:
@@ -46,6 +46,7 @@ def _to_corpus_type_config(row, stats: dict[str, Any]) -> dict[str, CorpusTypeCo
     corpus_text = row.text if row.text is not None else ""
     return {
         row.corpus_type: CorpusTypeConfig(
+            corpus_type_name=row.corpus_type_name,
             corpus_type_description=row.corpus_type_description,
             taxonomy={**row.taxonomy},
             corpora=[
@@ -81,6 +82,7 @@ def get_config_for_allowed_corpora(
             Corpus.corpus_image_url.label("image_url"),
             Corpus.corpus_text.label("text"),
             Corpus.corpus_type_name.label("corpus_type"),
+            CorpusType.name.label("corpus_type_name"),
             CorpusType.description.label("corpus_type_description"),
             CorpusType.valid_metadata.label("taxonomy"),
             Organisation.id.label("organisation_id"),

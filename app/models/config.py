@@ -45,6 +45,7 @@ class CorpusConfig(BaseModel):
 class CorpusTypeConfig(BaseModel):
     """Contains the CorpusType info as well as data of any corpora of that type"""
 
+    corpus_type_name: str
     corpus_type_description: str
     taxonomy: TaxonomyData
     corpora: Sequence[CorpusConfig]
