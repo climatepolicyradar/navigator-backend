@@ -8,8 +8,8 @@ from sqlalchemy.exc import MultipleResultsFound
 from sqlalchemy.orm import Session
 
 from app.models.config import ApplicationConfig
-from app.repository.corpus import get_config_for_allowed_corpora
 from app.repository.organisation import get_organisation_config, get_organisations
+from app.service.config import get_corpus_type_config_for_allowed_corpora
 from app.service.pipeline import IMPORT_ID_MATCHER
 from app.service.util import tree_table_to_json
 
@@ -17,7 +17,6 @@ _LOGGER = logging.getLogger(__name__)
 
 
 def get_config(db: Session, allowed_corpora: list[str]) -> ApplicationConfig:
-    # First get the CCLW stats
     return ApplicationConfig(
         geographies=tree_table_to_json(table=Geography, db=db),
         organisations={
@@ -29,7 +28,7 @@ def get_config(db: Session, allowed_corpora: list[str]) -> ApplicationConfig:
             variant.variant_name
             for variant in db.query(Variant).order_by(Variant.variant_name).all()
         ],
-        corpus_types=get_config_for_allowed_corpora(db, allowed_corpora),
+        corpus_types=get_corpus_type_config_for_allowed_corpora(db, allowed_corpora),
     )
 
 

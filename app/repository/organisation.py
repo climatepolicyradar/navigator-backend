@@ -94,3 +94,7 @@ def get_organisations(db: Session, allowed_corpora: list[str]) -> list[Organisat
     if allowed_corpora != []:
         query = query.filter(Corpus.import_id.in_(allowed_corpora))
     return query.all()
+
+
+def get(db: Session, org_id: int) -> Organisation:
+    return db.query(Organisation).filter(Organisation.id == org_id).one()
