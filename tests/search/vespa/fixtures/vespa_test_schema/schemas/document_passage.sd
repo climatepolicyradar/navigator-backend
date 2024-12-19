@@ -1,10 +1,5 @@
 schema document_passage {
 
-    field text_block_not_stemmed type string {
-        indexing: input text_block | summary | index
-        stemming: none
-    }
-
     document document_passage {
 
         field search_weights_ref type reference<search_weights> {
