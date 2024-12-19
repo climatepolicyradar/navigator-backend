@@ -4,7 +4,7 @@ from fastapi import Depends, Header, Request
 
 from app.api.api_v1.routers.lookups.router import lookups_router
 from app.clients.db.session import get_db
-from app.models.metadata import ApplicationConfig
+from app.models.config import ApplicationConfig
 from app.repository.lookups import get_config
 from app.service.custom_app import AppTokenFactory
 

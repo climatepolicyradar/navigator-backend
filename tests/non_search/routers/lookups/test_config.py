@@ -76,27 +76,27 @@ def _add_family(test_db, import_id: str, cat: FamilyCategory, corpus_import_id):
     )
 
 
-def test_config_endpoint_content(data_client, data_db, valid_token):
+def test_config_endpoint_content(data_client, data_db, app_token_factory, valid_token):
     """Tests whether we get the expected content when the /config endpoint is called."""
     # TODO: this test is fragile, we should look into validation according to the
     #       supporting data, rather than counts & fixed lists
     url_under_test = "/api/v1/config"
+    app_token = app_token_factory(
+        "CCLW.corpus.i00000001.n0000,UNFCCC.corpus.i00000001.n0000"
+    )
 
-    response = data_client.get(url_under_test, headers={"app-token": valid_token})
+    response = data_client.get(url_under_test, headers={"app-token": app_token})
 
     response_json = response.json()
 
     assert response.status_code == OK
-    assert (
-        set(response_json.keys())
-        ^ {
-            "geographies",
-            "organisations",
-            "document_variants",
-            "languages",
-        }
-        == set()
-    )
+    assert set(response_json.keys()) == {
+        "geographies",
+        "organisations",
+        "document_variants",
+        "languages",
+        "corpus_types",
+    }
 
     assert "geographies" in response_json
     assert len(response_json["geographies"]) == 8
@@ -111,9 +111,51 @@ def test_config_endpoint_content(data_client, data_db, valid_token):
     assert len(response_json["document_variants"]) == 2
     assert "Original Language" in response_json["document_variants"]
 
-    # Now test organisations
-    assert "organisations" in response_json
+    corpus_types = response_json["corpus_types"]
+    assert list(corpus_types.keys()) == ["Laws and Policies", "Intl. agreements"]
 
+    laws_and_policies = corpus_types["Laws and Policies"]
+    assert laws_and_policies["corpus_type_name"] == "Laws and Policies"
+    assert laws_and_policies["corpus_type_description"] == "Laws and policies"
+
+    taxonomy = laws_and_policies["taxonomy"]
+    assert set(taxonomy) ^ EXPECTED_CCLW_TAXONOMY == set()
+    # Check document roles.
+    assert "role" in taxonomy["_document"].keys()
+    assert len(taxonomy["_document"]["role"]["allowed_values"]) == 10
+    assert "MAIN" in taxonomy["_document"]["role"]["allowed_values"]
+    # Check document roles.
+    assert "type" in taxonomy["_document"].keys()
+    assert len(taxonomy["_document"]["type"]["allowed_values"]) == 76
+    assert "Adaptation Communication" in taxonomy["_document"]["type"]["allowed_values"]
+    # Check event types.
+    assert len(taxonomy["_event"]["event_type"]["allowed_values"]) == 17
+    assert "Passed/Approved" in taxonomy["_event"]["event_type"]["allowed_values"]
+
+    assert len(laws_and_policies["corpora"]) == 1
+    cclw_corpus = laws_and_policies["corpora"][0]
+
+    assert cclw_corpus["total"] == 0
+    assert cclw_corpus["count_by_category"] == {
+        "Executive": 0,
+        "Legislative": 0,
+        "UNFCCC": 0,
+        "MCF": 0,
+    }
+
+    assert cclw_corpus["corpus_import_id"] == "CCLW.corpus.i00000001.n0000"
+    assert cclw_corpus["organisation_name"] == "CCLW"
+    assert cclw_corpus["organisation_id"] == 1
+    assert (
+        cclw_corpus["image_url"]
+        == "https://cdn.climatepolicyradar.org/corpora/CCLW.corpus.i00000001.n0000/logo.png"
+    )
+    assert "Grantham Research Institute" in cclw_corpus["text"]
+    assert cclw_corpus["description"] == "CCLW national policies"
+    assert cclw_corpus["title"] == "CCLW national policies"
+
+    # Below to be removed as part of PDCT-1759
+    # Now test organisations
     assert "CCLW" in response_json["organisations"]
     cclw_org = response_json["organisations"]["CCLW"]
     assert len(cclw_org) == LEN_ORG_CONFIG
@@ -198,6 +240,20 @@ def test_config_endpoint_cclw_stats(data_client, data_db, valid_token):
 
     response_json = response.json()
 
+    corpus_types = response_json["corpus_types"]
+    assert len(corpus_types) == 2
+
+    cclw_corpus_config = corpus_types["Laws and Policies"]["corpora"][0]
+    laws = cclw_corpus_config["count_by_category"]["Legislative"]
+    policies = cclw_corpus_config["count_by_category"]["Executive"]
+    unfccc = cclw_corpus_config["count_by_category"]["UNFCCC"]
+    assert laws == 2
+    assert policies == 3
+    assert unfccc == 1
+
+    assert cclw_corpus_config["total"] == laws + policies + unfccc
+
+    # Below to be removed as part of PDCT-1759
     org_config = response_json["organisations"]["CCLW"]
     assert len(org_config) == LEN_ORG_CONFIG
     assert org_config["total"] == 6
@@ -259,6 +315,18 @@ def test_config_endpoint_returns_stats_for_allowed_corpora_only(
 
     response_json = response.json()
 
+    assert len(response_json["corpus_types"]) == 1
+
+    corpus = response_json["corpus_types"][expected_corpus_type.name]["corpora"][0]
+    assert corpus["total"] == 1
+    assert corpus["count_by_category"] == {
+        "Executive": 0,
+        "Legislative": 1,
+        "MCF": 0,
+        "UNFCCC": 0,
+    }
+
+    #  Below to be removed as part of PDCT-1759
     org_config = response_json["organisations"]
     expected_org_config = {
         expected_organisation: {
@@ -285,7 +353,7 @@ def test_config_endpoint_returns_stats_for_allowed_corpora_only(
                 "MCF": 0,
                 "UNFCCC": 0,
             },
-        }
+        },
     }
     assert org_config == expected_org_config
 
@@ -323,20 +391,35 @@ def test_config_endpoint_returns_stats_for_all_orgs_if_no_allowed_corpora_in_app
     )
 
     _add_family(data_db, "T.0.0.1", FamilyCategory.EXECUTIVE, cclw_corpus.import_id)
-    _add_family(data_db, "T.0.0.2", FamilyCategory.LEGISLATIVE, unfccc_corpus.import_id)
+    _add_family(data_db, "T.0.0.2", FamilyCategory.EXECUTIVE, unfccc_corpus.import_id)
     data_db.flush()
 
     response = data_client.get(url_under_test, headers={"app-token": app_token})
 
     response_json = response.json()
+
+    assert len(response_json["corpus_types"]) == 2
+    corpus_types = response_json["corpus_types"]
+
+    for corpus_type in list(corpus_types.values()):
+        for corpus in corpus_type["corpora"]:
+            assert corpus["total"] == 1
+            assert corpus["count_by_category"] == {
+                "Executive": 1,
+                "Legislative": 0,
+                "MCF": 0,
+                "UNFCCC": 0,
+            }
+
+    #  Below to be removed as part of PDCT-1759
     org_config = response_json["organisations"]
 
     assert list(org_config.keys()) == ["CCLW", "UNFCCC"]
     assert org_config["CCLW"]["total"] == 1
     assert org_config["UNFCCC"]["total"] == 1
     assert org_config["UNFCCC"]["count_by_category"] == {
-        "Executive": 0,
-        "Legislative": 1,
+        "Executive": 1,
+        "Legislative": 0,
         "MCF": 0,
         "UNFCCC": 0,
     }
