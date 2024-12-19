@@ -40,24 +40,23 @@ def _to_corpus_type_config(
 ) -> CorpusTypeConfig:
     image_url = (
         f"https://{config.CDN_DOMAIN}/{corpus.corpus_image_url}"
-        if corpus.corpus_image_url is not None and len(corpus.corpus_image_url) > 0
+        if corpus.corpus_image_url is not None and len(str(corpus.corpus_image_url)) > 0
         else ""
     )
     corpus_text = corpus.corpus_text if corpus.corpus_text is not None else ""
-
     return CorpusTypeConfig(
-        corpus_type_name=corpus_type.name,
-        corpus_type_description=corpus_type.description,
+        corpus_type_name=str(corpus_type.name),
+        corpus_type_description=str(corpus_type.description),
         taxonomy={**corpus_type.valid_metadata},
         corpora=[
             CorpusConfig(
-                title=corpus.title,
-                description=corpus.description,
-                corpus_import_id=corpus.import_id,
-                text=corpus_text,
+                title=str(corpus.title),
+                description=str(corpus.description),
+                corpus_import_id=str(corpus.import_id),
+                text=str(corpus_text),
                 image_url=image_url,
-                organisation_id=organisation.id,
-                organisation_name=organisation.name,
+                organisation_id=int(str(organisation.id)),
+                organisation_name=str(organisation.name),
                 total=stats["total"],
                 count_by_category=stats["count_by_category"],
             )
@@ -68,11 +67,11 @@ def _to_corpus_type_config(
 def _get_config_for_corpus_type(
     db: Session, corpus: Corpus
 ) -> dict[str, CorpusTypeConfig]:
-    stats = _get_family_stats_per_corpus(db, corpus.import_id)
-    corpus_type = corpus_type_repo.get(db, corpus.corpus_type_name)
-    organisation = org_repo.get(db, corpus.organisation_id)
+    stats = _get_family_stats_per_corpus(db, str(corpus.import_id))
+    corpus_type = corpus_type_repo.get(db, str(corpus.corpus_type_name))
+    organisation = org_repo.get(db, int(str(corpus.organisation_id)))
     return {
-        corpus_type.name: _to_corpus_type_config(
+        str(corpus_type.name): _to_corpus_type_config(
             corpus, corpus_type, organisation, stats
         )
     }
