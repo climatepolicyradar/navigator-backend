@@ -170,16 +170,6 @@ schema document_passage {
         }
     }
 
-    rank-profile exact inherits default {
-        function text_score() {
-            expression: attribute(passage_weight) * fieldMatch(text_block)
-        }
-        first-phase {
-            expression: text_score()
-        }
-        summary-features: text_score() fieldMatch(text_block)
-    }
-    
     rank-profile exact_not_stemmed inherits default {
         function text_score() {
             expression: attribute(passage_weight) * fieldMatch(text_block_not_stemmed)
