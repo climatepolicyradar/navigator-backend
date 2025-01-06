@@ -6,7 +6,7 @@ from sqlalchemy import func
 from sqlalchemy.orm import Session
 
 from app import config
-from app.models.metadata import CorpusData, OrganisationConfig
+from app.models.config import CorpusData, OrganisationConfig
 
 
 def _to_corpus_data(row) -> CorpusData:
@@ -94,3 +94,7 @@ def get_organisations(db: Session, allowed_corpora: list[str]) -> list[Organisat
     if allowed_corpora != []:
         query = query.filter(Corpus.import_id.in_(allowed_corpora))
     return query.all()
+
+
+def get(db: Session, org_id: int) -> Organisation:
+    return db.query(Organisation).filter(Organisation.id == org_id).one()
