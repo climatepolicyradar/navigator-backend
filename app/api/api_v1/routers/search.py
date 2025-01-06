@@ -7,102 +7,37 @@ for the type of document search being performed.
 """
 
 import logging
-from enum import Enum
 from io import BytesIO
-from typing import Annotated, Optional, Sequence, cast
+from typing import Annotated, Sequence, cast
 
-from cpr_sdk.exceptions import QueryError
-from cpr_sdk.search_adaptors import VespaSearchAdapter
 from fastapi import APIRouter, Body, Depends, Header, HTTPException, Request, status
 from fastapi.responses import StreamingResponse
-from sqlalchemy.orm import Session
 from starlette.responses import RedirectResponse
 
-from app.clients.aws.client import S3Client, get_s3_client
+from app.clients.aws.client import get_s3_client
 from app.clients.aws.s3_document import S3Document
 from app.clients.db.session import get_db
 from app.config import (
     AWS_REGION,
-    CDN_DOMAIN,
     DOCUMENT_CACHE_BUCKET,
     INGEST_TRIGGER_ROOT,
     PIPELINE_BUCKET,
     PUBLIC_APP_URL,
-    VESPA_SECRETS_LOCATION,
-    VESPA_URL,
 )
+from app.errors import ValidationError
 from app.models.search import SearchRequestBody, SearchResponse
 from app.service.custom_app import AppTokenFactory
 from app.service.download import create_data_download_zip_archive
 from app.service.search import (
-    create_vespa_search_params,
+    get_s3_doc_url_from_cdn,
+    make_search_request,
     process_result_into_csv,
-    process_vespa_search_response,
 )
 
 _LOGGER = logging.getLogger(__name__)
 
-_VESPA_CONNECTION = VespaSearchAdapter(
-    instance_url=VESPA_URL,
-    cert_directory=VESPA_SECRETS_LOCATION,
-)
-
 
 search_router = APIRouter()
-
-
-class SearchType(str, Enum):
-    standard = "standard"
-    browse = "browse"
-    browse_with_concepts = "browse_with_concepts"
-
-
-def identify_search_type(search_body: SearchRequestBody) -> str:
-    """Identify the search type from parameters"""
-    if not search_body.query_string and not search_body.concept_filters:
-        return SearchType.browse
-    elif not search_body.query_string and search_body.concept_filters:
-        return SearchType.browse_with_concepts
-    else:
-        return SearchType.standard
-
-
-def mutate_search_body_for_search_type(
-    search_body: SearchRequestBody,
-) -> SearchRequestBody:
-    """Mutate the search body in line with the search params"""
-    search_type = identify_search_type(search_body=search_body)
-    if search_type == SearchType.browse:
-        search_body.all_results = True
-        search_body.documents_only = True
-        search_body.exact_match = False
-    elif search_type == SearchType.browse_with_concepts:
-        search_body.all_results = True
-        search_body.documents_only = False
-        search_body.exact_match = False
-    return search_body
-
-
-def _search_request(db: Session, search_body: SearchRequestBody) -> SearchResponse:
-    """Perform a search request against the Vespa search engine"""
-    search_body = mutate_search_body_for_search_type(search_body=search_body)
-
-    try:
-        cpr_sdk_search_params = create_vespa_search_params(db, search_body)
-        cpr_sdk_search_response = _VESPA_CONNECTION.search(
-            parameters=cpr_sdk_search_params
-        )
-    except QueryError as e:
-        raise HTTPException(
-            status_code=status.HTTP_400_BAD_REQUEST,
-            detail=f"Invalid Query: {' '.join(e.args)}",
-        )
-    return process_vespa_search_response(
-        db,
-        cpr_sdk_search_response,
-        limit=search_body.page_size,
-        offset=search_body.offset,
-    ).increment_pages()
 
 
 @search_router.post("/searches")
@@ -199,7 +134,7 @@ def search_documents(
         "Starting search...",
         extra={"props": {"search_request": search_body.model_dump()}},
     )
-    return _search_request(db=db, search_body=search_body)
+    return make_search_request(db=db, search_body=search_body)
 
 
 @search_router.post("/searches/download-csv", include_in_schema=False)
@@ -246,10 +181,17 @@ def download_search_documents(
         "Starting search...",
         extra={"props": {"search_request": search_body.model_dump()}},
     )
-    search_response = _search_request(
-        db=db,
-        search_body=search_body,
-    )
+    try:
+        search_response = make_search_request(
+            db=db,
+            search_body=search_body,
+        )
+    except ValidationError as e:
+        raise HTTPException(
+            status_code=status.HTTP_400_BAD_REQUEST,
+            detail=f"Invalid Query: {' '.join(e.args)}",
+        )
+
     content_str = process_result_into_csv(db, search_response, is_browse=is_browse)
 
     _LOGGER.debug(f"Downloading search results as CSV: {content_str}")
@@ -260,16 +202,6 @@ def download_search_documents(
             "Content-Disposition": "attachment; filename=results.csv",
         },
     )
-
-
-def _get_s3_doc_url_from_cdn(
-    s3_client: S3Client, s3_document: S3Document, data_dump_s3_key: str
-) -> Optional[str]:
-    redirect_url = None
-    if s3_client.document_exists(s3_document):
-        _LOGGER.info("Redirecting to CDN data dump location...")
-        redirect_url = f"https://{CDN_DOMAIN}/{data_dump_s3_key}"
-    return redirect_url
 
 
 @search_router.get("/searches/download-all-data", include_in_schema=False)
@@ -325,7 +257,9 @@ def download_all_search_documents(
 
     s3_document = S3Document(DOCUMENT_CACHE_BUCKET, AWS_REGION, data_dump_s3_key)
     if valid_credentials is True and (not s3_client.document_exists(s3_document)):
-        aws_env = "production" if "dev" not in PUBLIC_APP_URL else "staging"
+        aws_env = (
+            "production" if "dev" not in PUBLIC_APP_URL and "localhost" else "staging"
+        )
         _LOGGER.info(
             f"Generating {token.sub} {aws_env} dump for ingest cycle w/c {latest_ingest_start}..."
         )
@@ -357,7 +291,7 @@ def download_all_search_documents(
             _LOGGER.error(e)
 
     s3_document = S3Document(DOCUMENT_CACHE_BUCKET, AWS_REGION, data_dump_s3_key)
-    redirect_url = _get_s3_doc_url_from_cdn(s3_client, s3_document, data_dump_s3_key)
+    redirect_url = get_s3_doc_url_from_cdn(s3_client, s3_document, data_dump_s3_key)
     if redirect_url is not None:
         return RedirectResponse(redirect_url, status_code=status.HTTP_303_SEE_OTHER)
 

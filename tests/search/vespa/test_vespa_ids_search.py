@@ -5,7 +5,7 @@ from db_client.models.dfce import Slug
 from db_client.models.dfce.family import FamilyDocument
 from sqlalchemy.orm import Session
 
-from app.api.api_v1.routers import search
+from app.service import search
 from tests.search.vespa.setup_search_tests import (
     _make_search_request,
     _populate_db_families,
