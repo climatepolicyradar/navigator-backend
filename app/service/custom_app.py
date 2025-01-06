@@ -260,4 +260,5 @@ class AppTokenFactory:
 
         # First corpora validation is app token against DB. At least one of the app token
         # corpora IDs must be present in the DB to continue the search request.
+        any_exist = False if not self.allowed_corpora_ids else True
         self.validate(db, any_exist)

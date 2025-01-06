@@ -71,6 +71,9 @@ def browse_rds_families(db: Session, req: BrowseArgs) -> SearchResponse:
     if req.categories is not None:
         query = query.filter(Family.family_category.in_(req.categories))
 
+    if req.corpora_ids is not None and req.corpora_ids != []:
+        query = query.filter(Corpus.import_id.in_(req.corpora_ids))
+
     if req.sort_field == SortField.TITLE:
         if req.sort_order == SortOrder.DESCENDING:
             query = query.order_by(Family.title.desc())

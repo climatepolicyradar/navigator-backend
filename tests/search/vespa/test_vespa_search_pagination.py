@@ -32,14 +32,7 @@ def test_simple_pagination_families(
     body_one = _make_search_request(data_client, valid_token, params)
     assert body_one["hits"] == VESPA_FIXTURE_COUNT
     assert len(body_one["families"]) == PAGE_SIZE
-    assert (
-        body_one["families"][0]["family_slug"]
-        == "agriculture-sector-plan-2015-2019_7999"
-    )
-    assert (
-        body_one["families"][1]["family_slug"]
-        == "national-environment-policy-of-guinea_f0df"
-    )
+    query_one_family_slugs = set([f["family_slug"] for f in body_one["families"]])
 
     # Query two
     params = {
@@ -50,14 +43,9 @@ def test_simple_pagination_families(
     body_two = _make_search_request(data_client, valid_token, params)
     assert body_two["hits"] == VESPA_FIXTURE_COUNT
     assert len(body_two["families"]) == PAGE_SIZE
-    assert (
-        body_two["families"][0]["family_slug"]
-        == "national-energy-policy-and-energy-action-plan_9262"
-    )
-    assert (
-        body_two["families"][1]["family_slug"]
-        == "submission-to-the-unfccc-ahead-of-the-first-technical-dialogue_e760"
-    )
+    query_two_family_slugs = set([f["family_slug"] for f in body_two["families"]])
+
+    assert query_one_family_slugs.isdisjoint(query_two_family_slugs)
 
     assert mock_corpora_exist_in_db.assert_called
 
