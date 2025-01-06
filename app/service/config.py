@@ -1,8 +1,7 @@
-from typing import Any, Mapping
+from typing import Any, Mapping, cast
 
 from db_client.models.dfce.family import FamilyCategory
 from db_client.models.organisation import Corpus, CorpusType, Organisation
-from sqlalchemy import cast
 from sqlalchemy.orm import Session
 
 from app import config
