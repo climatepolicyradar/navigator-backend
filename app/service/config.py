@@ -17,6 +17,13 @@ from app.repository.corpus import (
 
 
 def _get_family_stats_per_corpus(db: Session, corpus_import_id: str) -> dict[str, Any]:
+    """
+    Get family statistics per corpus.
+
+    :param db: Database session
+    :param corpus_import_id: The import ID of the corpus
+    :return: A dictionary containing total families and count by category
+    """
     total = get_total_families_per_corpus(db, corpus_import_id)
 
     counts = get_family_count_by_category_per_corpus(db, corpus_import_id)
@@ -39,6 +46,15 @@ def _to_corpus_type_config(
     organisation: Organisation,
     stats: dict[str, Any],
 ) -> CorpusTypeConfig:
+    """
+    Convert corpus, corpus type, organisation, and stats to CorpusTypeConfig.
+
+    :param corpus: Corpus object
+    :param corpus_type: CorpusType object
+    :param organisation: Organisation object
+    :param stats: A dictionary containing statistics
+    :return: A CorpusTypeConfig object
+    """
     image_url = (
         f"https://{config.CDN_DOMAIN}/{corpus.corpus_image_url}"
         if corpus.corpus_image_url is not None and len(str(corpus.corpus_image_url)) > 0
@@ -48,7 +64,7 @@ def _to_corpus_type_config(
     return CorpusTypeConfig(
         corpus_type_name=str(corpus_type.name),
         corpus_type_description=str(corpus_type.description),
-        taxonomy={**cast(corpus_type.valid_metadata)},
+        taxonomy={**cast(dict, corpus_type.valid_metadata)},
         corpora=[
             CorpusConfig(
                 title=str(corpus.title),
@@ -68,6 +84,13 @@ def _to_corpus_type_config(
 def _get_config_for_corpus_type(
     db: Session, corpus: Corpus
 ) -> dict[str, CorpusTypeConfig]:
+    """
+    Get configuration for a corpus type.
+
+    :param db: Database session
+    :param corpus: Corpus object
+    :return: A dictionary containing CorpusTypeConfig
+    """
     stats = _get_family_stats_per_corpus(db, str(corpus.import_id))
     corpus_type = corpus_type_repo.get(db, str(corpus.corpus_type_name))
     organisation = org_repo.get(db, int(str(corpus.organisation_id)))
@@ -81,7 +104,13 @@ def _get_config_for_corpus_type(
 def get_corpus_type_config_for_allowed_corpora(
     db: Session, allowed_corpora: list[str]
 ) -> Mapping[str, CorpusTypeConfig]:
+    """
+    Get CorpusTypeConfig for allowed corpora.
 
+    :param db: Database session
+    :param allowed_corpora: A list of allowed corpora
+    :return: A mapping of CorpusTypeConfig for allowed corpora
+    """
     corpora = get_allowed_corpora(db, allowed_corpora)
 
     configs_for_each_allowed_corpus = (
