@@ -257,7 +257,9 @@ def download_all_search_documents(
 
     s3_document = S3Document(DOCUMENT_CACHE_BUCKET, AWS_REGION, data_dump_s3_key)
     if valid_credentials is True and (not s3_client.document_exists(s3_document)):
-        aws_env = "production" if "dev" not in PUBLIC_APP_URL else "staging"
+        aws_env = (
+            "production" if "dev" not in PUBLIC_APP_URL and "localhost" else "staging"
+        )
         _LOGGER.info(
             f"Generating {token.sub} {aws_env} dump for ingest cycle w/c {latest_ingest_start}..."
         )

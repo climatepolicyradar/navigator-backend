@@ -102,7 +102,7 @@ def test_all_data_download(mock_corpora_exist_in_db, data_db, data_client, valid
         download_response = data_client.get(ALL_DATA_DOWNLOAD_ENDPOINT, headers=headers)
 
     # Redirects to cdn
-    assert download_response.status_code == 303
+    assert download_response.status_code == status.HTTP_303_SEE_OTHER
     assert download_response.headers["location"] == (
         "https://cdn.climatepolicyradar.org/"
         "navigator/dumps/CCLW-whole_data_dump-2024-03-22.zip"
@@ -127,7 +127,9 @@ def test_all_data_download_fails_when_s3_upload_failed(
         patch("app.api.api_v1.routers.search.PIPELINE_BUCKET", "test_pipeline_bucket"),
         patch("app.api.api_v1.routers.search.DOCUMENT_CACHE_BUCKET", "test_cdn_bucket"),
         patch("app.clients.aws.client.S3Client.is_connected", return_value=True),
-        patch("app.service.search.get_s3_doc_url_from_cdn", return_value=None),
+        patch(
+            "app.api.api_v1.routers.search.get_s3_doc_url_from_cdn", return_value=None
+        ),
     ):
         data_client.follow_redirects = False
         download_response = data_client.get(ALL_DATA_DOWNLOAD_ENDPOINT, headers=headers)
