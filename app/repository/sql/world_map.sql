@@ -13,7 +13,12 @@ WITH counts AS (
           family_geography
           ON family.import_id = family_geography.family_import_id
     WHERE
-      family_corpus.corpus_import_id = ANY(:allowed_corpora_ids)
+      CASE
+        WHEN ARRAY_LENGTH(:allowed_corpora_ids, 1) > 0 THEN
+          family_corpus.corpus_import_id = ANY(:allowed_corpora_ids)
+        ELSE
+          TRUE  -- Return all results when array is empty or null
+      END
       AND CASE
         WHEN (
           NOT (
