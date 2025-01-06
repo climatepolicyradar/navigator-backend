@@ -4,8 +4,8 @@ import pytest
 from db_client.models.dfce import Geography
 from fastapi import status
 
-from app.api.api_v1.routers import search
 from app.repository.lookups import get_country_slug_from_country_code
+from app.service import search
 from tests.search.vespa.setup_search_tests import (
     VESPA_FIXTURE_COUNT,
     _make_search_request,
