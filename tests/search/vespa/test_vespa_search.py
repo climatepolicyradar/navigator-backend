@@ -5,7 +5,7 @@ from db_client.models.dfce.family import FamilyDocument
 from fastapi import status
 from sqlalchemy import update
 
-from app.api.api_v1.routers import search
+from app.service import search
 from tests.search.vespa.setup_search_tests import (
     _create_document,
     _create_family,
