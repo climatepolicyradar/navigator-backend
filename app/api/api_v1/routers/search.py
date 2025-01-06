@@ -24,10 +24,15 @@ from app.config import (
     PIPELINE_BUCKET,
     PUBLIC_APP_URL,
 )
+from app.errors import ValidationError
 from app.models.search import SearchRequestBody, SearchResponse
 from app.service.custom_app import AppTokenFactory
 from app.service.download import create_data_download_zip_archive
-from app.service.search import get_s3_doc_url_from_cdn, process_result_into_csv, search
+from app.service.search import (
+    get_s3_doc_url_from_cdn,
+    make_search_request,
+    process_result_into_csv,
+)
 
 _LOGGER = logging.getLogger(__name__)
 
@@ -129,7 +134,7 @@ def search_documents(
         "Starting search...",
         extra={"props": {"search_request": search_body.model_dump()}},
     )
-    return search(db=db, search_body=search_body)
+    return make_search_request(db=db, search_body=search_body)
 
 
 @search_router.post("/searches/download-csv", include_in_schema=False)
@@ -176,10 +181,17 @@ def download_search_documents(
         "Starting search...",
         extra={"props": {"search_request": search_body.model_dump()}},
     )
-    search_response = search(
-        db=db,
-        search_body=search_body,
-    )
+    try:
+        search_response = make_search_request(
+            db=db,
+            search_body=search_body,
+        )
+    except ValidationError as e:
+        raise HTTPException(
+            status_code=status.HTTP_400_BAD_REQUEST,
+            detail=f"Invalid Query: {' '.join(e.args)}",
+        )
+
     content_str = process_result_into_csv(db, search_response, is_browse=is_browse)
 
     _LOGGER.debug(f"Downloading search results as CSV: {content_str}")

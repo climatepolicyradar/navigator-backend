@@ -29,12 +29,12 @@ from db_client.models.dfce.family import (
     FamilyStatus,
 )
 from db_client.models.organisation import Organisation
-from fastapi import HTTPException, status
 from sqlalchemy.orm import Session
 
 from app.clients.aws.client import S3Client
 from app.clients.aws.s3_document import S3Document
 from app.config import CDN_DOMAIN, PUBLIC_APP_URL, VESPA_SECRETS_LOCATION, VESPA_URL
+from app.errors import ValidationError
 from app.models.search import (
     BackendFilterValues,
     FilterField,
@@ -571,7 +571,7 @@ def mutate_search_body_for_search_type(
     return search_body
 
 
-def _search_request(db: Session, search_body: SearchRequestBody) -> SearchResponse:
+def make_search_request(db: Session, search_body: SearchRequestBody) -> SearchResponse:
     """Perform a search request against the Vespa search engine"""
     search_body = mutate_search_body_for_search_type(search_body=search_body)
 
@@ -581,20 +581,14 @@ def _search_request(db: Session, search_body: SearchRequestBody) -> SearchRespon
             parameters=cpr_sdk_search_params
         )
     except QueryError as e:
-        raise HTTPException(
-            status_code=status.HTTP_400_BAD_REQUEST,
-            detail=f"Invalid Query: {' '.join(e.args)}",
-        )
+        raise ValidationError(e)
+
     return process_vespa_search_response(
         db,
         cpr_sdk_search_response,
         limit=search_body.page_size,
         offset=search_body.offset,
     ).increment_pages()
-
-
-def search(db: Session, search_body: SearchRequestBody) -> SearchResponse:
-    return _search_request(db, search_body)
 
 
 def get_s3_doc_url_from_cdn(
