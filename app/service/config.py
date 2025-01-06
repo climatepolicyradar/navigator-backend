@@ -2,6 +2,7 @@ from typing import Any, Mapping
 
 from db_client.models.dfce.family import FamilyCategory
 from db_client.models.organisation import Corpus, CorpusType, Organisation
+from sqlalchemy import cast
 from sqlalchemy.orm import Session
 
 from app import config
@@ -47,7 +48,7 @@ def _to_corpus_type_config(
     return CorpusTypeConfig(
         corpus_type_name=str(corpus_type.name),
         corpus_type_description=str(corpus_type.description),
-        taxonomy={**corpus_type.valid_metadata},
+        taxonomy={**cast(corpus_type.valid_metadata)},
         corpora=[
             CorpusConfig(
                 title=str(corpus.title),
