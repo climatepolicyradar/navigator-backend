@@ -10,7 +10,6 @@ from sqlalchemy import bindparam, text
 from sqlalchemy.orm import Query, Session
 from sqlalchemy.types import ARRAY, String
 
-from app.errors import ValidationError
 from app.models.geography import GeographyStatsDTO
 from app.repository.helpers import get_query_template
 
@@ -61,18 +60,17 @@ def get_geo_subquery(
 
 
 def count_families_per_category_in_each_geo(
-    db: Session, allowed_corpora: list[str]
+    db: Session,
+    allowed_corpora: Optional[list[str]],
 ) -> list[GeographyStatsDTO]:
-    """Query the database for the family count per category per geo.
+    """Get a list of counts of families by category per geography.
 
-    :param Session db: DB Session to perform query on.
-    :param list[str] allowed_corpora: The list of allowed corpora IDs to
-        filter on.
+    :param db: Database session
+    :param allowed_corpora: A list of corpora IDs to filter on. If None or empty,
+        returns data for all corpora.
     :return list[GeographyStatsDTO]: A list of counts of families by
         category per geography.
     """
-    if allowed_corpora in [None, []]:
-        raise ValidationError("No allowed corpora provided")
 
     query_template = text(
         get_query_template(os.path.join("app", "repository", "sql", "world_map.sql"))

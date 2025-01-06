@@ -6,6 +6,8 @@ from typing import Any, Optional
 from db_client.models import AnyModel
 from sqlalchemy.orm import Session
 
+from app.service.custom_app import AppTokenFactory
+
 CDN_DOMAIN: str = os.getenv("CDN_DOMAIN", "cdn.climatepolicyradar.org")
 # TODO: remove & replace with proper content-type handling through pipeline
 CONTENT_TYPE_MAP = {
@@ -73,3 +75,17 @@ def tree_table_to_json(
             append_list.append(node_row_object)
 
     return json_out
+
+
+def get_allowed_corpora_from_token(
+    token: Optional[AppTokenFactory],
+) -> list[str]:
+    return token.allowed_corpora_ids if token is not None else []
+
+
+def get_subject_from_token(
+    token: Optional[AppTokenFactory],
+) -> str:
+    if token is not None and token.sub is not None:
+        return str(token.sub)
+    return ""

@@ -7,10 +7,8 @@ import json_logging
 import uvicorn
 from db_client import run_migrations
 from fastapi import APIRouter, Depends, FastAPI
-from fastapi.middleware.cors import CORSMiddleware
 from fastapi_health import health
 from fastapi_pagination import add_pagination
-from starlette.requests import Request
 
 from app import config
 from app.api.api_v1.routers.admin import admin_document_router
@@ -21,7 +19,7 @@ from app.api.api_v1.routers.pipeline_trigger import pipeline_trigger_router
 from app.api.api_v1.routers.search import search_router
 from app.api.api_v1.routers.summaries import summary_router
 from app.api.api_v1.routers.world_map import world_map_router
-from app.clients.db.session import SessionLocal, engine
+from app.clients.db.session import engine
 from app.service.auth import get_superuser_details
 from app.service.health import is_database_online
 
@@ -94,36 +92,9 @@ json_logging.init_fastapi(enable_json=True)
 json_logging.init_request_instrument(app)
 json_logging.config_root_logger()
 
-_ALLOW_ORIGIN_REGEX = (
-    r"http://localhost:3000|"
-    r"https://.+\.climatepolicyradar\.org|"
-    r"https://.+\.dev.climatepolicyradar\.org|"
-    r"https://.+\.sandbox\.climatepolicyradar\.org|"
-    r"https://climate-laws\.org|"
-    r"https://.+\.climate-laws\.org|"
-    r"https://climateprojectexplorer\.org|"
-    r"https://.+\.climateprojectexplorer\.org"
-)
-
-# Add CORS middleware to allow cross origin requests from any port
-app.add_middleware(
-    CORSMiddleware,
-    allow_origin_regex=_ALLOW_ORIGIN_REGEX,
-    allow_credentials=True,
-    allow_methods=["*"],
-    allow_headers=["*"],
-)
 
 # add health endpoint
 app.add_api_route("/health", health([is_database_online]), include_in_schema=False)
-
-
-@app.middleware("http")
-async def db_session_middleware(request: Request, call_next):
-    request.state.db = SessionLocal()
-    response = await call_next(request)
-    request.state.db.close()
-    return response
 
 
 @app.get("/api/v1", include_in_schema=False)

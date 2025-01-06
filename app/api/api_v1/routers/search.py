@@ -13,7 +13,7 @@ from typing import Annotated, Optional, Sequence, cast
 
 from cpr_sdk.exceptions import QueryError
 from cpr_sdk.search_adaptors import VespaSearchAdapter
-from fastapi import APIRouter, Body, Depends, Header, HTTPException, Request, status
+from fastapi import APIRouter, Body, Depends, HTTPException, Request, status
 from fastapi.responses import StreamingResponse
 from sqlalchemy.orm import Session
 from starlette.responses import RedirectResponse
@@ -39,6 +39,7 @@ from app.service.search import (
     process_result_into_csv,
     process_vespa_search_response,
 )
+from app.service.util import get_allowed_corpora_from_token, get_subject_from_token
 
 _LOGGER = logging.getLogger(__name__)
 
@@ -144,7 +145,6 @@ def search_documents(
             }
         ),
     ],
-    app_token: Annotated[str, Header()],
     db=Depends(get_db),
 ) -> SearchResponse:
     """
@@ -153,6 +153,14 @@ def search_documents(
     There is no authentication required for using this interface. We ask that users be
     respectful of its use and remind users that data is available to download on
     request.
+
+    First corpora validation is app token against DB. At least one of the app token
+    corpora IDs must be present in the DB to continue the search request. This is done
+    in the middleware.
+
+    For the second validation, search request corpora Ids are validated against the
+    app token corpora IDs if the search request param 'corpus_import_ids' is not None.
+    corpus_import_ids must be a subset of app token IDs.
 
     The search endpoint behaves in two distinct ways:
         - "Browse" mode is when an empty `query_string` is provided. This is intended
@@ -167,32 +175,30 @@ def search_documents(
     the search database. The continuation token can be used to get the next set of
     results from the search database. See the request schema for more details.
     """
+    # Get the app token from the middleware & determine allowed corpora.
+    app_token: Optional[AppTokenFactory] = request.state.token
+    allowed_corpora_ids = get_allowed_corpora_from_token(app_token)
+
     _LOGGER.info(
         "Search request",
         extra={
             "props": {
                 "search_request": search_body.model_dump(),
-                "app_token": str(app_token),
+                "allowed_corpora_ids": str(allowed_corpora_ids),
             }
         },
     )
 
-    # Decode the app token and validate it.
-    #
-    # First corpora validation is app token against DB. At least one of the app token
-    # corpora IDs must be present in the DB to continue the search request.
-    token = AppTokenFactory()
-    token.decode_and_validate(db, request, app_token)
-
     # If the search request IDs are null, we want to search using the app token corpora.
     if search_body.corpus_import_ids == [] or search_body.corpus_import_ids is None:
-        search_body.corpus_import_ids = cast(Sequence, token.allowed_corpora_ids)
+        search_body.corpus_import_ids = cast(Sequence, allowed_corpora_ids)
 
     # For the second validation, search request corpora Ids are validated against the
     # app token corpora IDs if the search request param 'corpus_import_ids' is not None.
     # corpus_import_ids must be a subset of app token IDs.
+    token = AppTokenFactory()
     token.validate_subset(
-        set(search_body.corpus_import_ids), cast(set, token.allowed_corpora_ids)
+        set(search_body.corpus_import_ids), cast(set, allowed_corpora_ids)
     )
 
     _LOGGER.info(
@@ -204,38 +210,32 @@ def search_documents(
 
 @search_router.post("/searches/download-csv", include_in_schema=False)
 def download_search_documents(
-    request: Request,
-    search_body: SearchRequestBody,
-    app_token: Annotated[str, Header()],
-    db=Depends(get_db),
+    request: Request, search_body: SearchRequestBody, db=Depends(get_db)
 ) -> StreamingResponse:
     """Download a CSV containing details of documents matching the search criteria."""
-    token = AppTokenFactory()
+
+    # Get the app token from the middleware & determine allowed corpora.
+    app_token: Optional[AppTokenFactory] = request.state.token
+    allowed_corpora_ids = get_allowed_corpora_from_token(app_token)
 
     _LOGGER.info(
         "Search download request",
         extra={
             "props": {
                 "search_request": search_body.model_dump(),
-                "app_token": str(app_token),
+                "allowed_corpora_ids": str(allowed_corpora_ids),
             }
         },
     )
 
-    # Decode the app token and validate it.
-    #
-    # First corpora validation is app token against DB. At least one of the app token
-    # corpora IDs must be present in the DB to continue the search request.
-    token = AppTokenFactory()
-    token.decode_and_validate(db, request, app_token)
-
     # If the search request IDs are null, we want to search using the app token corpora.
-    if search_body.corpus_import_ids is None:
-        search_body.corpus_import_ids = cast(Sequence, token.allowed_corpora_ids)
+    if search_body.corpus_import_ids == [] or search_body.corpus_import_ids is None:
+        search_body.corpus_import_ids = cast(Sequence, allowed_corpora_ids)
 
     # For the second validation, search request corpora Ids are validated against the
     # app token corpora IDs if the search request param 'corpus_import_ids' is not None.
     # corpus_import_ids must be a subset of app token IDs.
+    token = AppTokenFactory()
     token.validate_subset(
         set(search_body.corpus_import_ids), cast(set, token.allowed_corpora_ids)
     )
@@ -274,21 +274,22 @@ def _get_s3_doc_url_from_cdn(
 
 @search_router.get("/searches/download-all-data", include_in_schema=False)
 def download_all_search_documents(
-    request: Request, app_token: Annotated[str, Header()], db=Depends(get_db)
+    request: Request, db=Depends(get_db)
 ) -> RedirectResponse:
     """Download a CSV containing details of all the documents in the corpus."""
+
+    # Get the app token from the middleware & determine allowed corpora.
+    app_token: Optional[AppTokenFactory] = request.state.token
+    allowed_corpora_ids = get_allowed_corpora_from_token(app_token)
+
     _LOGGER.info(
         "Whole data download request",
         extra={
             "props": {
-                "app_token": str(app_token),
+                "allowed_corpora_ids": str(allowed_corpora_ids),
             }
         },
     )
-
-    # Decode the app token and validate it.
-    token = AppTokenFactory()
-    token.decode_and_validate(db, request, app_token)
 
     if (
         PIPELINE_BUCKET is None
@@ -312,9 +313,8 @@ def download_all_search_documents(
     )
 
     s3_prefix = "navigator/dumps"
-    data_dump_s3_key = (
-        f"{s3_prefix}/{token.sub}-whole_data_dump-{latest_ingest_start}.zip"
-    )
+    subject = get_subject_from_token(app_token)
+    data_dump_s3_key = f"{s3_prefix}/{f'{subject}-' if subject != '' else ''}whole_data_dump-{latest_ingest_start}.zip"
 
     valid_credentials = s3_client.is_connected()
     if not valid_credentials:
@@ -327,7 +327,7 @@ def download_all_search_documents(
     if valid_credentials is True and (not s3_client.document_exists(s3_document)):
         aws_env = "production" if "dev" not in PUBLIC_APP_URL else "staging"
         _LOGGER.info(
-            f"Generating {token.sub} {aws_env} dump for ingest cycle w/c {latest_ingest_start}..."
+            f"Generating {'entire' if subject == '' else subject} {aws_env} dump for ingest cycle w/c {latest_ingest_start}..."
         )
 
         # After writing to a file buffer the position stays at the end whereas when you
@@ -335,7 +335,7 @@ def download_all_search_documents(
         # add the seek(0) to reset the buffer position to the beginning before writing
         # to S3 to avoid creating an empty file.
         zip_buffer = create_data_download_zip_archive(
-            latest_ingest_start, token.allowed_corpora_ids, db
+            latest_ingest_start, allowed_corpora_ids, db
         )
         zip_buffer.seek(0)
 
