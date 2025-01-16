@@ -107,7 +107,7 @@ def test_continuation_token__passages(
 
     # Get second set of families
     params = {
-        "query_string": "the",
+        "query_string": "climate",
         "document_ids": ["CCLW.executive.10246.4861", "CCLW.executive.4934.1571"],
         "limit": 1,
         "page_size": 1,
