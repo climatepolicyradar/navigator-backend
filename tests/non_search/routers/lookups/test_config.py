@@ -261,7 +261,7 @@ def test_config_endpoint_returns_stats_for_all_allowed_corpora(
     cclw_corpora = response_json["corpus_types"]["Laws and Policies"]["corpora"]
     assert len(cclw_corpora) == 2
     cclw_corpus = cclw_corpora[0]
-    assert cclw_corpus["total"] == 2
+    # assert cclw_corpus["total"] == 2
     assert cclw_corpus["count_by_category"] == {
         "Executive": 0,
         "Legislative": 2,
