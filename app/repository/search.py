@@ -3,12 +3,19 @@
 from datetime import datetime
 from logging import getLogger
 from time import perf_counter_ns
-from typing import cast
+from typing import Optional, cast
 
-from db_client.models.dfce.family import Corpus, Family, FamilyCorpus, FamilyStatus
+from db_client.models.dfce.family import (
+    Corpus,
+    Family,
+    FamilyCorpus,
+    FamilyStatus,
+    Slug,
+)
 from db_client.models.organisation import Organisation
 from sqlalchemy.orm import Session
 
+from app.errors import RepositoryError
 from app.models.search import (
     BrowseArgs,
     SearchResponse,
@@ -126,3 +133,18 @@ def browse_rds_families(db: Session, req: BrowseArgs) -> SearchResponse:
         total_time_ms=time_taken,
         families=families[offset : offset + limit],
     )
+
+
+def get_family_from_slug(
+    slug: str, db: Session, allowed_corpora_ids: list[str]
+) -> Optional[Family]:
+    query = db.query(Slug.family_import_id).filter(Slug.name == slug)
+    if allowed_corpora_ids:
+        query = query.join(
+            FamilyCorpus, FamilyCorpus.family_import_id == Slug.family_import_id
+        ).filter(FamilyCorpus.corpus_import_id.in_(allowed_corpora_ids))
+
+    try:
+        return query.scalar()
+    except Exception as e:
+        raise RepositoryError(e)

@@ -10,6 +10,7 @@ from cpr_sdk.exceptions import QueryError
 from cpr_sdk.models.search import Document as CprSdkResponseDocument
 from cpr_sdk.models.search import Family as CprSdkResponseFamily
 from cpr_sdk.models.search import Filters as CprSdkKeywordFilters
+from cpr_sdk.models.search import Hit
 from cpr_sdk.models.search import Passage as CprSdkResponsePassage
 from cpr_sdk.models.search import SearchResponse as CprSdkSearchResponse
 from cpr_sdk.models.search import filter_fields
@@ -589,6 +590,16 @@ def make_search_request(db: Session, search_body: SearchRequestBody) -> SearchRe
         limit=search_body.page_size,
         offset=search_body.offset,
     ).increment_pages()
+
+
+def get_family_from_vespa(family_id: str, db: Session) -> Optional[Hit]:
+    try:
+        # Will this function work for family import IDs, or only document import IDs?
+        cpr_sdk_family = _VESPA_CONNECTION.get_by_id(family_id)
+    except QueryError as e:
+        raise ValidationError(e)
+
+    return cpr_sdk_family
 
 
 def get_s3_doc_url_from_cdn(
