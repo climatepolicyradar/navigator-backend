@@ -2,6 +2,7 @@ import logging
 from http.client import NOT_FOUND
 from typing import Annotated, Union
 
+from cpr_sdk.models.search import Hit
 from fastapi import APIRouter, Depends, Header, HTTPException, Request
 
 from app.clients.db.session import get_db
@@ -61,10 +62,7 @@ async def family_or_document_detail(
         raise HTTPException(status_code=NOT_FOUND, detail=str(err))
 
 
-@documents_router.get(
-    "/families/{slug}",
-    response_model=FamilyAndDocumentsResponse,
-)
+@documents_router.get("/families/{slug}", response_model=Hit)
 async def family_detail_from_vespa(
     slug: str, request: Request, app_token: Annotated[str, Header()], db=Depends(get_db)
 ):
