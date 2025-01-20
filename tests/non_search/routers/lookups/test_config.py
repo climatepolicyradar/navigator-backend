@@ -270,6 +270,85 @@ def test_config_endpoint_returns_stats_for_all_allowed_corpora(
     }
 
 
+def test_config_endpoint_returns_stats_for_all_allowed_corpora(
+    app_token_factory,
+    data_client,
+    data_db,
+):
+    app_token = app_token_factory(
+        "UNFCCC.corpus.i00000001.n0000,CCLW.corpus.i00000001.n0000,CCLW.corpus.i00000002.n0000"
+    )
+    url_under_test = "/api/v1/config"
+
+    unfccc_corpus = (
+        data_db.query(Corpus)
+        .join(Organisation, Organisation.id == Corpus.organisation_id)
+        .filter(Organisation.name == "UNFCCC")
+        .one()
+    )
+    cclw_corpus_1 = (
+        data_db.query(Corpus)
+        .join(Organisation, Organisation.id == Corpus.organisation_id)
+        .filter(Organisation.name == "CCLW")
+        .first()
+    )
+    cclw_corpus_2 = "CCLW.corpus.i00000002.n0000"
+    data_db.add(
+        Corpus(
+            import_id=cclw_corpus_2,
+            title="",
+            description="",
+            corpus_text="",
+            corpus_image_url="",
+            organisation_id=1,
+            corpus_type_name="Laws and Policies",
+        )
+    )
+    data_db.flush()
+
+    _add_family(data_db, "T.0.0.1", FamilyCategory.EXECUTIVE, unfccc_corpus.import_id)
+    _add_family(data_db, "T.0.0.2", FamilyCategory.LEGISLATIVE, cclw_corpus_1.import_id)
+    _add_family(data_db, "T.0.0.3", FamilyCategory.LEGISLATIVE, cclw_corpus_2)
+    data_db.flush()
+
+    response = data_client.get(url_under_test, headers={"app-token": app_token})
+
+    response_json = response.json()
+
+    assert len(response_json["corpus_types"]) == 2
+
+    unfccc_corpus_type = response_json["corpus_types"]["Intl. agreements"]
+    assert len(unfccc_corpus_type["corpora"]) == 1
+    unfccc_corpus = unfccc_corpus_type["corpora"][0]
+    assert unfccc_corpus["total"] == 1
+    assert unfccc_corpus["count_by_category"] == {
+        "Executive": 1,
+        "Legislative": 0,
+        "MCF": 0,
+        "UNFCCC": 0,
+    }
+
+    cclw_corpora = response_json["corpus_types"]["Laws and Policies"]["corpora"]
+    assert len(cclw_corpora) == 2
+
+    first_cclw_corpus = cclw_corpora[0]
+    assert first_cclw_corpus["total"] == 1
+    assert first_cclw_corpus["count_by_category"] == {
+        "Executive": 0,
+        "Legislative": 1,
+        "MCF": 0,
+        "UNFCCC": 0,
+    }
+    second_cclw_corpus = cclw_corpora[0]
+    assert second_cclw_corpus["total"] == 1
+    assert second_cclw_corpus["count_by_category"] == {
+        "Executive": 0,
+        "Legislative": 1,
+        "MCF": 0,
+        "UNFCCC": 0,
+    }
+
+
 @pytest.mark.parametrize(
     "allowed_corpora_ids, expected_organisation, other_organisation",
     [
