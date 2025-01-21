@@ -1,8 +1,4 @@
-"""
-Functions to support the documents endpoints
-
-old functions (non DFC) are moved to the deprecated_documents.py file.
-"""
+"""Helper functions for the repository layer."""
 
 from functools import lru_cache
 
