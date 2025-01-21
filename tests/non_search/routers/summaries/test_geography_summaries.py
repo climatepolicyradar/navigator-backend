@@ -7,13 +7,14 @@ TEST_HOST = "http://localhost:3000/"
 GEOGRAPHY_PAGE_ENDPOINT = "/api/v1/summaries/geography"
 
 EXPECTED_NUM_FAMILY_CATEGORIES = 5
-EXPECTED_FAMILY_CATEGORIES = [
+EXPECTED_FAMILY_CATEGORIES = {
     "Executive",
     "Legislative",
     "UNFCCC",
     "MCF",
     "Reports",
-]
+}
+
 
 def _make_request(
     client,
@@ -40,6 +41,9 @@ def test_endpoint_returns_families_ok_with_slug(data_client, valid_token):
     assert len(resp["family_counts"]) == EXPECTED_NUM_FAMILY_CATEGORIES
     assert len(resp["top_families"]) == EXPECTED_NUM_FAMILY_CATEGORIES
 
+    assert set(resp["family_counts"].keys()) == EXPECTED_FAMILY_CATEGORIES
+    assert set(resp["top_families"].keys()) == EXPECTED_FAMILY_CATEGORIES
+
     assert resp["family_counts"]["Executive"] == 0
     assert resp["family_counts"]["Legislative"] == 0
     assert resp["family_counts"]["UNFCCC"] == 0
@@ -61,6 +65,9 @@ def test_endpoint_returns_families_ok_with_code(data_client, valid_token):
 
     assert len(resp["family_counts"]) == EXPECTED_NUM_FAMILY_CATEGORIES
     assert len(resp["top_families"]) == EXPECTED_NUM_FAMILY_CATEGORIES
+
+    assert set(resp["family_counts"].keys()) == EXPECTED_FAMILY_CATEGORIES
+    assert set(resp["top_families"].keys()) == EXPECTED_FAMILY_CATEGORIES
 
     assert resp["family_counts"]["Executive"] == 0
     assert resp["family_counts"]["Legislative"] == 0
