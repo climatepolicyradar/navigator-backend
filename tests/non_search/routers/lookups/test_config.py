@@ -92,7 +92,6 @@ def test_config_endpoint_content(data_client, data_db, app_token_factory, valid_
     assert response.status_code == OK
     assert set(response_json.keys()) == {
         "geographies",
-        "organisations",
         "document_variants",
         "languages",
         "corpus_types",
@@ -154,61 +153,6 @@ def test_config_endpoint_content(data_client, data_db, app_token_factory, valid_
     assert cclw_corpus["description"] == "CCLW national policies"
     assert cclw_corpus["title"] == "CCLW national policies"
 
-    # Below to be removed as part of PDCT-1759
-    # Now test organisations
-    assert "CCLW" in response_json["organisations"]
-    cclw_org = response_json["organisations"]["CCLW"]
-    assert len(cclw_org) == LEN_ORG_CONFIG
-
-    # Test the counts are there (just CCLW)
-    assert cclw_org["total"] == 0
-    assert cclw_org["count_by_category"] == {
-        "Executive": 0,
-        "Legislative": 0,
-        "UNFCCC": 0,
-        "MCF": 0,
-    }
-
-    assert "UNFCCC" in response_json["organisations"]
-    unfccc_org = response_json["organisations"]["UNFCCC"]
-    assert len(unfccc_org) == LEN_ORG_CONFIG
-
-    cclw_corpora = cclw_org["corpora"]
-    assert len(cclw_corpora) == 1
-    assert cclw_corpora[0]["corpus_import_id"] == "CCLW.corpus.i00000001.n0000"
-    assert cclw_corpora[0]["corpus_type"] == "Laws and Policies"
-    assert (
-        cclw_corpora[0]["image_url"]
-        == "https://cdn.climatepolicyradar.org/corpora/CCLW.corpus.i00000001.n0000/logo.png"
-    )
-    assert "Grantham Research Institute" in cclw_corpora[0]["text"]
-    assert cclw_corpora[0]["corpus_type_description"] == "Laws and policies"
-    assert cclw_corpora[0]["description"] == "CCLW national policies"
-    assert cclw_corpora[0]["title"] == "CCLW national policies"
-    assert set(cclw_corpora[0]["taxonomy"]) ^ EXPECTED_CCLW_TAXONOMY == set()
-
-    # Check document roles.
-    assert "role" in cclw_corpora[0]["taxonomy"]["_document"].keys()
-    assert len(cclw_corpora[0]["taxonomy"]["_document"]["role"]["allowed_values"]) == 10
-    assert "MAIN" in cclw_corpora[0]["taxonomy"]["_document"]["role"]["allowed_values"]
-
-    # Check document roles.
-    assert "type" in cclw_corpora[0]["taxonomy"]["_document"].keys()
-    assert len(cclw_corpora[0]["taxonomy"]["_document"]["type"]["allowed_values"]) == 76
-    assert (
-        "Adaptation Communication"
-        in cclw_corpora[0]["taxonomy"]["_document"]["type"]["allowed_values"]
-    )
-
-    # Check event types.
-    assert (
-        len(cclw_corpora[0]["taxonomy"]["_event"]["event_type"]["allowed_values"]) == 17
-    )
-    assert (
-        "Passed/Approved"
-        in cclw_corpora[0]["taxonomy"]["_event"]["event_type"]["allowed_values"]
-    )
-
 
 def test_config_endpoint_cclw_stats(data_client, data_db, valid_token):
     url_under_test = "/api/v1/config"
@@ -253,19 +197,84 @@ def test_config_endpoint_cclw_stats(data_client, data_db, valid_token):
 
     assert cclw_corpus_config["total"] == laws + policies + unfccc
 
-    # Below to be removed as part of PDCT-1759
-    org_config = response_json["organisations"]["CCLW"]
-    assert len(org_config) == LEN_ORG_CONFIG
-    assert org_config["total"] == 6
 
-    laws = org_config["count_by_category"]["Legislative"]
-    policies = org_config["count_by_category"]["Executive"]
-    unfccc = org_config["count_by_category"]["UNFCCC"]
-    assert laws == 2
-    assert policies == 3
-    assert unfccc == 1
+def test_config_endpoint_returns_stats_for_all_allowed_corpora(
+    app_token_factory,
+    data_client,
+    data_db,
+):
+    app_token = app_token_factory(
+        "UNFCCC.corpus.i00000001.n0000,CCLW.corpus.i00000001.n0000,CCLW.corpus.i00000002.n0000"
+    )
+    url_under_test = "/api/v1/config"
 
-    assert org_config["total"] == laws + policies + unfccc
+    unfccc_corpus = (
+        data_db.query(Corpus)
+        .join(Organisation, Organisation.id == Corpus.organisation_id)
+        .filter(Organisation.name == "UNFCCC")
+        .one()
+    )
+    cclw_corpus_1 = (
+        data_db.query(Corpus)
+        .join(Organisation, Organisation.id == Corpus.organisation_id)
+        .filter(Organisation.name == "CCLW")
+        .first()
+    )
+    cclw_corpus_2 = "CCLW.corpus.i00000002.n0000"
+    data_db.add(
+        Corpus(
+            import_id=cclw_corpus_2,
+            title="",
+            description="",
+            corpus_text="",
+            corpus_image_url="",
+            organisation_id=1,
+            corpus_type_name="Laws and Policies",
+        )
+    )
+    data_db.flush()
+
+    _add_family(data_db, "T.0.0.1", FamilyCategory.EXECUTIVE, unfccc_corpus.import_id)
+    _add_family(data_db, "T.0.0.2", FamilyCategory.LEGISLATIVE, cclw_corpus_1.import_id)
+    _add_family(data_db, "T.0.0.3", FamilyCategory.LEGISLATIVE, cclw_corpus_2)
+    data_db.flush()
+
+    response = data_client.get(url_under_test, headers={"app-token": app_token})
+
+    response_json = response.json()
+
+    assert len(response_json["corpus_types"]) == 2
+
+    unfccc_corpus_type = response_json["corpus_types"]["Intl. agreements"]
+    assert len(unfccc_corpus_type["corpora"]) == 1
+    unfccc_corpus = unfccc_corpus_type["corpora"][0]
+    assert unfccc_corpus["total"] == 1
+    assert unfccc_corpus["count_by_category"] == {
+        "Executive": 1,
+        "Legislative": 0,
+        "MCF": 0,
+        "UNFCCC": 0,
+    }
+
+    cclw_corpora = response_json["corpus_types"]["Laws and Policies"]["corpora"]
+    assert len(cclw_corpora) == 2
+
+    first_cclw_corpus = cclw_corpora[0]
+    assert first_cclw_corpus["total"] == 1
+    assert first_cclw_corpus["count_by_category"] == {
+        "Executive": 0,
+        "Legislative": 1,
+        "MCF": 0,
+        "UNFCCC": 0,
+    }
+    second_cclw_corpus = cclw_corpora[0]
+    assert second_cclw_corpus["total"] == 1
+    assert second_cclw_corpus["count_by_category"] == {
+        "Executive": 0,
+        "Legislative": 1,
+        "MCF": 0,
+        "UNFCCC": 0,
+    }
 
 
 @pytest.mark.parametrize(
@@ -275,7 +284,7 @@ def test_config_endpoint_cclw_stats(data_client, data_db, valid_token):
         ("CCLW.corpus.i00000001.n0000", "CCLW", "UNFCCC"),
     ],
 )
-def test_config_endpoint_returns_stats_for_allowed_corpora_only(
+def test_config_endpoint_does_not_return_stats_for_not_allowed_corpora(
     allowed_corpora_ids,
     expected_organisation,
     other_organisation,
@@ -317,7 +326,9 @@ def test_config_endpoint_returns_stats_for_allowed_corpora_only(
 
     assert len(response_json["corpus_types"]) == 1
 
-    corpus = response_json["corpus_types"][expected_corpus_type.name]["corpora"][0]
+    corpora = response_json["corpus_types"][expected_corpus_type.name]["corpora"]
+    assert len(corpora) == 1
+    corpus = corpora[0]
     assert corpus["total"] == 1
     assert corpus["count_by_category"] == {
         "Executive": 0,
@@ -325,37 +336,6 @@ def test_config_endpoint_returns_stats_for_allowed_corpora_only(
         "MCF": 0,
         "UNFCCC": 0,
     }
-
-    #  Below to be removed as part of PDCT-1759
-    org_config = response_json["organisations"]
-    expected_org_config = {
-        expected_organisation: {
-            "corpora": [
-                {
-                    "corpus_import_id": expected_corpus.import_id,
-                    "title": expected_corpus.title,
-                    "description": expected_corpus.description,
-                    "corpus_type": expected_corpus.corpus_type_name,
-                    "corpus_type_description": expected_corpus_type.description,
-                    "taxonomy": expected_corpus_type.valid_metadata,
-                    "text": expected_corpus.corpus_text,
-                    "image_url": (
-                        f"https://cdn.climatepolicyradar.org/{expected_corpus.corpus_image_url}"
-                        if expected_corpus.corpus_image_url
-                        else ""
-                    ),
-                }
-            ],
-            "total": 1,
-            "count_by_category": {
-                "Executive": 0,
-                "Legislative": 1,
-                "MCF": 0,
-                "UNFCCC": 0,
-            },
-        },
-    }
-    assert org_config == expected_org_config
 
 
 def test_config_endpoint_returns_stats_for_all_orgs_if_no_allowed_corpora_in_app_token(
@@ -410,25 +390,6 @@ def test_config_endpoint_returns_stats_for_all_orgs_if_no_allowed_corpora_in_app
                 "MCF": 0,
                 "UNFCCC": 0,
             }
-
-    #  Below to be removed as part of PDCT-1759
-    org_config = response_json["organisations"]
-
-    assert list(org_config.keys()) == ["CCLW", "UNFCCC"]
-    assert org_config["CCLW"]["total"] == 1
-    assert org_config["UNFCCC"]["total"] == 1
-    assert org_config["UNFCCC"]["count_by_category"] == {
-        "Executive": 1,
-        "Legislative": 0,
-        "MCF": 0,
-        "UNFCCC": 0,
-    }
-    assert org_config["CCLW"]["count_by_category"] == {
-        "Executive": 1,
-        "Legislative": 0,
-        "MCF": 0,
-        "UNFCCC": 0,
-    }
 
 
 class _MockColumn:

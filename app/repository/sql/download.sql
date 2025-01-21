@@ -349,6 +349,7 @@ FROM
 WHERE
     d.last_modified < :ingest_cycle_start
     AND fc.corpus_import_id = ANY(:allowed_corpora_ids)
+    AND d.document_status = 'PUBLISHED'
 ORDER BY
     d.last_modified DESC,
     d.created DESC,
