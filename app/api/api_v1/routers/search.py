@@ -165,7 +165,7 @@ def download_search_documents(
     token.decode_and_validate(db, request, app_token)
 
     # If the search request IDs are null, we want to search using the app token corpora.
-    if search_body.corpus_import_ids is None:
+    if search_body.corpus_import_ids == [] or search_body.corpus_import_ids is None:
         search_body.corpus_import_ids = cast(Sequence, token.allowed_corpora_ids)
 
     # For the second validation, search request corpora Ids are validated against the
