@@ -230,6 +230,7 @@ SELECT
     f.last_modified::DATE AS "Last Modified on System",
     d.import_id AS "Internal Document ID",
     f.import_id AS "Internal Family ID",
+    fc.corpus_import_id AS "Internal Corpus ID",
     n1.collection_import_ids AS "Internal Collection ID(s)",
     INITCAP(d.valid_metadata::JSON #>> '{
   role,0}') AS "Document Role",
