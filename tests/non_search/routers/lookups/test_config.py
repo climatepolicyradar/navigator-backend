@@ -140,6 +140,7 @@ def test_config_endpoint_content(data_client, data_db, app_token_factory, valid_
         "Legislative": 0,
         "UNFCCC": 0,
         "MCF": 0,
+        "Reports": 0,
     }
 
     assert cclw_corpus["corpus_import_id"] == "CCLW.corpus.i00000001.n0000"
@@ -254,6 +255,7 @@ def test_config_endpoint_returns_stats_for_all_allowed_corpora(
         "Legislative": 0,
         "MCF": 0,
         "UNFCCC": 0,
+        "Reports": 0,
     }
 
     cclw_corpora = response_json["corpus_types"]["Laws and Policies"]["corpora"]
@@ -266,6 +268,7 @@ def test_config_endpoint_returns_stats_for_all_allowed_corpora(
         "Legislative": 1,
         "MCF": 0,
         "UNFCCC": 0,
+        "Reports": 0,
     }
     second_cclw_corpus = cclw_corpora[0]
     assert second_cclw_corpus["total"] == 1
@@ -274,6 +277,7 @@ def test_config_endpoint_returns_stats_for_all_allowed_corpora(
         "Legislative": 1,
         "MCF": 0,
         "UNFCCC": 0,
+        "Reports": 0,
     }
 
 
@@ -335,6 +339,7 @@ def test_config_endpoint_does_not_return_stats_for_not_allowed_corpora(
         "Legislative": 1,
         "MCF": 0,
         "UNFCCC": 0,
+        "Reports": 0,
     }
 
 
@@ -389,6 +394,7 @@ def test_config_endpoint_returns_stats_for_all_orgs_if_no_allowed_corpora_in_app
                 "Legislative": 0,
                 "MCF": 0,
                 "UNFCCC": 0,
+                "Reports": 0,
             }
 
 
