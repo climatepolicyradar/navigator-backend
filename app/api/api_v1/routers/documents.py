@@ -1,7 +1,8 @@
 import logging
 from http.client import NOT_FOUND
-from typing import Annotated, Any, Union, cast
+from typing import Annotated, Union
 
+from cpr_sdk.models.search import SearchResponse
 from fastapi import APIRouter, Depends, Header, HTTPException, Request
 
 from app.clients.db.session import get_db
@@ -9,13 +10,11 @@ from app.models.document import (
     FamilyAndDocumentsResponse,
     FamilyDocumentWithContextResponse,
 )
-from app.models.search import SearchRequestBody
 from app.repository.document import (
     get_family_and_documents,
     get_family_document_and_context,
     get_slugged_objects,
 )
-from app.repository.search import get_family_from_slug
 from app.service.custom_app import AppTokenFactory
 from app.service.search import get_family_from_vespa
 
@@ -62,9 +61,12 @@ async def family_or_document_detail(
         raise HTTPException(status_code=NOT_FOUND, detail=str(err))
 
 
-@documents_router.get("/families/{slug}", response_model=Any)
+@documents_router.get("/families/{import_id}", response_model=SearchResponse)
 async def family_detail_from_vespa(
-    slug: str, request: Request, app_token: Annotated[str, Header()], db=Depends(get_db)
+    import_id: str,
+    request: Request,
+    app_token: Annotated[str, Header()],
+    db=Depends(get_db),
 ):
     """Get details of the family associated with a slug from vespa.
 
@@ -73,18 +75,19 @@ async def family_detail_from_vespa(
     endpoint alongside the `/documents` endpoint if feature flags are
     enabled.
 
-    :param str slug: Family slug to get details for.
+    :param str import_id: Family import id to get vespa representation
+        for.
     :param Request request: Request object.
     :param Annotated[str, Header()] app_token: App token containing
         allowed corpora.
     :param Depends[get_db] db: Database session to query against.
-    :return VespaFamilyResponse: An object representing the family in
+    :return SearchResponse: An object representing the family in
         Vespa - including concepts.
     """
     _LOGGER.info(
-        f"Getting detailed information for vespa family '{slug}'",
+        f"Getting detailed information for vespa family '{import_id}'",
         extra={
-            "props": {"import_id_or_slug": slug, "app_token": str(app_token)},
+            "props": {"import_id_or_slug": import_id, "app_token": str(app_token)},
         },
     )
 
@@ -92,32 +95,13 @@ async def family_detail_from_vespa(
     token = AppTokenFactory()
     token.decode_and_validate(db, request, app_token)
 
-    family_import_id = get_family_from_slug(slug, db, token.allowed_corpora_ids)
-    if family_import_id is None:
-        raise HTTPException(
-            status_code=NOT_FOUND, detail=f"Nothing found for {slug} in RDS"
-        )
-
-    _LOGGER.info(
-        f"Getting detailed information for family '{slug}' from vespa",
-        extra={
-            "props": {"family_import_id": family_import_id, "import_id_or_slug": slug}
-        },
-    )
-
-    # Use search to return family/documents only given a specific ID.
-    # Give array of len 1 containing family ID.
-
-    params = {"family_ids": [family_import_id], "documents_only": True}
-
     try:
-        family = get_family_from_vespa(
-            family_id=family_import_id, db=db, params=cast(SearchRequestBody, params)
-        )
-        if family is None:
+        # TODO: Make this respect the allowed corpora from the decoded token.
+        hits = get_family_from_vespa(family_id=import_id, db=db)
+        if hits.total_family_hits == 0:
             raise HTTPException(
-                status_code=NOT_FOUND, detail=f"Nothing found for {slug} in Vespa"
+                status_code=NOT_FOUND, detail=f"Nothing found for {import_id} in Vespa"
             )
-        return family
+        return hits
     except ValueError as err:
         raise HTTPException(status_code=NOT_FOUND, detail=str(err))

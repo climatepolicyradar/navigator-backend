@@ -11,6 +11,7 @@ from cpr_sdk.models.search import Document as CprSdkResponseDocument
 from cpr_sdk.models.search import Family as CprSdkResponseFamily
 from cpr_sdk.models.search import Filters as CprSdkKeywordFilters
 from cpr_sdk.models.search import Passage as CprSdkResponsePassage
+from cpr_sdk.models.search import SearchParameters
 from cpr_sdk.models.search import SearchResponse as CprSdkSearchResponse
 from cpr_sdk.models.search import filter_fields
 from cpr_sdk.search_adaptors import VespaSearchAdapter
@@ -591,25 +592,25 @@ def make_search_request(db: Session, search_body: SearchRequestBody) -> SearchRe
     ).increment_pages()
 
 
-def get_family_from_vespa(
-    family_id: str, db: Session, params: SearchRequestBody
-) -> Any:
-    try:
-        cpr_sdk_search_response = _VESPA_CONNECTION.search(parameters=params)
+def get_family_from_vespa(family_id: str, db: Session) -> CprSdkSearchResponse:
+    """Get a family from vespa.
 
+    :param str family_id: The id of the family to get.
+    :param Session db: Database session to query against.
+    :return CprSdkSearchResponse: The family from vespa.
+    """
+    search_body = SearchParameters(
+        family_ids=[family_id], documents_only=True, all_results=True
+    )
+
+    _LOGGER.info(
+        f"Getting vespa family '{family_id}'",
+        extra={"props": {"search_body": search_body.model_dump()}},
+    )
+    try:
+        result = _VESPA_CONNECTION.search(parameters=search_body)
     except QueryError as e:
         raise ValidationError(e)
-
-    # Try to use this function instead of doing your own post-processing so when we
-    # refactor the SDK we aren't affected.
-    result: SearchResponse = process_vespa_search_response(
-        db,
-        cpr_sdk_search_response,
-        limit=params.page_size,
-        offset=params.offset,
-    ).increment_pages()
-
-    # if you need to post process do it on the result of process_vespa_search_response
     return result
 
 
