@@ -1,8 +1,7 @@
 import logging
 from http.client import NOT_FOUND
-from typing import Annotated, Union
+from typing import Annotated, Any, Union, cast
 
-from cpr_sdk.models.search import Hit
 from fastapi import APIRouter, Depends, Header, HTTPException, Request
 
 from app.clients.db.session import get_db
@@ -10,6 +9,7 @@ from app.models.document import (
     FamilyAndDocumentsResponse,
     FamilyDocumentWithContextResponse,
 )
+from app.models.search import SearchRequestBody
 from app.repository.document import (
     get_family_and_documents,
     get_family_document_and_context,
@@ -62,7 +62,7 @@ async def family_or_document_detail(
         raise HTTPException(status_code=NOT_FOUND, detail=str(err))
 
 
-@documents_router.get("/families/{slug}", response_model=Hit)
+@documents_router.get("/families/{slug}", response_model=Any)
 async def family_detail_from_vespa(
     slug: str, request: Request, app_token: Annotated[str, Header()], db=Depends(get_db)
 ):
@@ -104,8 +104,16 @@ async def family_detail_from_vespa(
             "props": {"family_import_id": family_import_id, "import_id_or_slug": slug}
         },
     )
+
+    # Use search to return family/documents only given a specific ID.
+    # Give array of len 1 containing family ID.
+
+    params = {"family_ids": [family_import_id], "documents_only": True}
+
     try:
-        family = get_family_from_vespa(family_id=family_import_id, db=db)
+        family = get_family_from_vespa(
+            family_id=family_import_id, db=db, params=cast(SearchRequestBody, params)
+        )
         if family is None:
             raise HTTPException(
                 status_code=NOT_FOUND, detail=f"Nothing found for {slug} in Vespa"
