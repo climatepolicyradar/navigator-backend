@@ -11,6 +11,7 @@ from cpr_sdk.models.search import Document as CprSdkResponseDocument
 from cpr_sdk.models.search import Family as CprSdkResponseFamily
 from cpr_sdk.models.search import Filters as CprSdkKeywordFilters
 from cpr_sdk.models.search import Passage as CprSdkResponsePassage
+from cpr_sdk.models.search import SearchParameters
 from cpr_sdk.models.search import SearchResponse as CprSdkSearchResponse
 from cpr_sdk.models.search import filter_fields
 from cpr_sdk.search_adaptors import VespaSearchAdapter
@@ -589,6 +590,28 @@ def make_search_request(db: Session, search_body: SearchRequestBody) -> SearchRe
         limit=search_body.page_size,
         offset=search_body.offset,
     ).increment_pages()
+
+
+def get_family_from_vespa(family_id: str, db: Session) -> CprSdkSearchResponse:
+    """Get a family from vespa.
+
+    :param str family_id: The id of the family to get.
+    :param Session db: Database session to query against.
+    :return CprSdkSearchResponse: The family from vespa.
+    """
+    search_body = SearchParameters(
+        family_ids=[family_id], documents_only=True, all_results=True
+    )
+
+    _LOGGER.info(
+        f"Getting vespa family '{family_id}'",
+        extra={"props": {"search_body": search_body.model_dump()}},
+    )
+    try:
+        result = _VESPA_CONNECTION.search(parameters=search_body)
+    except QueryError as e:
+        raise ValidationError(e)
+    return result
 
 
 def get_s3_doc_url_from_cdn(

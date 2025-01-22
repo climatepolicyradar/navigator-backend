@@ -2,6 +2,7 @@ import logging
 from http.client import NOT_FOUND
 from typing import Annotated, Union
 
+from cpr_sdk.models.search import SearchResponse
 from fastapi import APIRouter, Depends, Header, HTTPException, Request
 
 from app.clients.db.session import get_db
@@ -15,6 +16,7 @@ from app.repository.document import (
     get_slugged_objects,
 )
 from app.service.custom_app import AppTokenFactory
+from app.service.search import get_family_from_vespa
 
 _LOGGER = logging.getLogger(__file__)
 
@@ -55,5 +57,51 @@ async def family_or_document_detail(
             return get_family_and_documents(db, family_import_id)
         elif family_document_import_id:
             return get_family_document_and_context(db, family_document_import_id)
+    except ValueError as err:
+        raise HTTPException(status_code=NOT_FOUND, detail=str(err))
+
+
+@documents_router.get("/families/{import_id}", response_model=SearchResponse)
+async def family_detail_from_vespa(
+    import_id: str,
+    request: Request,
+    app_token: Annotated[str, Header()],
+    db=Depends(get_db),
+):
+    """Get details of the family associated with a slug from vespa.
+
+    NOTE: As part of our concepts spike, we're going to use this endpoint
+    to get the family data from Vespa. The frontend will use this
+    endpoint alongside the `/documents` endpoint if feature flags are
+    enabled.
+
+    :param str import_id: Family import id to get vespa representation
+        for.
+    :param Request request: Request object.
+    :param Annotated[str, Header()] app_token: App token containing
+        allowed corpora.
+    :param Depends[get_db] db: Database session to query against.
+    :return SearchResponse: An object representing the family in
+        Vespa - including concepts.
+    """
+    _LOGGER.info(
+        f"Getting detailed information for vespa family '{import_id}'",
+        extra={
+            "props": {"import_id_or_slug": import_id, "app_token": str(app_token)},
+        },
+    )
+
+    # Decode the app token and validate it.
+    token = AppTokenFactory()
+    token.decode_and_validate(db, request, app_token)
+
+    try:
+        # TODO: Make this respect the allowed corpora from the decoded token.
+        hits = get_family_from_vespa(family_id=import_id, db=db)
+        if hits.total_family_hits == 0:
+            raise HTTPException(
+                status_code=NOT_FOUND, detail=f"Nothing found for {import_id} in Vespa"
+            )
+        return hits
     except ValueError as err:
         raise HTTPException(status_code=NOT_FOUND, detail=str(err))
