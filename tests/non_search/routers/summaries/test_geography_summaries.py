@@ -6,6 +6,15 @@ from fastapi import status
 TEST_HOST = "http://localhost:3000/"
 GEOGRAPHY_PAGE_ENDPOINT = "/api/v1/summaries/geography"
 
+EXPECTED_NUM_FAMILY_CATEGORIES = 5
+EXPECTED_FAMILY_CATEGORIES = {
+    "Executive",
+    "Legislative",
+    "UNFCCC",
+    "MCF",
+    "Reports",
+}
+
 
 def _make_request(
     client,
@@ -29,18 +38,23 @@ def test_endpoint_returns_families_ok_with_slug(data_client, valid_token):
     """Test the endpoint returns an empty sets of data"""
     resp = _make_request(data_client, valid_token, "moldova")
 
-    assert len(resp["family_counts"]) == 4
-    assert len(resp["top_families"]) == 4
+    assert len(resp["family_counts"]) == EXPECTED_NUM_FAMILY_CATEGORIES
+    assert len(resp["top_families"]) == EXPECTED_NUM_FAMILY_CATEGORIES
+
+    assert set(resp["family_counts"].keys()) == EXPECTED_FAMILY_CATEGORIES
+    assert set(resp["top_families"].keys()) == EXPECTED_FAMILY_CATEGORIES
 
     assert resp["family_counts"]["Executive"] == 0
     assert resp["family_counts"]["Legislative"] == 0
     assert resp["family_counts"]["UNFCCC"] == 0
     assert resp["family_counts"]["MCF"] == 0
+    assert resp["family_counts"]["Reports"] == 0
 
     assert len(resp["top_families"]["Executive"]) == 0
     assert len(resp["top_families"]["Legislative"]) == 0
     assert len(resp["top_families"]["UNFCCC"]) == 0
     assert len(resp["top_families"]["MCF"]) == 0
+    assert len(resp["top_families"]["Reports"]) == 0
 
     assert len(resp["targets"]) == 0
 
@@ -49,18 +63,23 @@ def test_endpoint_returns_families_ok_with_code(data_client, valid_token):
     """Test the endpoint returns an empty sets of data"""
     resp = _make_request(data_client, valid_token, "MDA")
 
-    assert len(resp["family_counts"]) == 4
-    assert len(resp["top_families"]) == 4
+    assert len(resp["family_counts"]) == EXPECTED_NUM_FAMILY_CATEGORIES
+    assert len(resp["top_families"]) == EXPECTED_NUM_FAMILY_CATEGORIES
+
+    assert set(resp["family_counts"].keys()) == EXPECTED_FAMILY_CATEGORIES
+    assert set(resp["top_families"].keys()) == EXPECTED_FAMILY_CATEGORIES
 
     assert resp["family_counts"]["Executive"] == 0
     assert resp["family_counts"]["Legislative"] == 0
     assert resp["family_counts"]["UNFCCC"] == 0
     assert resp["family_counts"]["MCF"] == 0
+    assert resp["family_counts"]["Reports"] == 0
 
     assert len(resp["top_families"]["Executive"]) == 0
     assert len(resp["top_families"]["Legislative"]) == 0
     assert len(resp["top_families"]["UNFCCC"]) == 0
     assert len(resp["top_families"]["MCF"]) == 0
+    assert len(resp["top_families"]["Reports"]) == 0
 
     assert len(resp["targets"]) == 0
 
