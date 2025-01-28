@@ -7,7 +7,7 @@ packages = [{ include = "app" }, { include = "tests" }]
 
 [tool.poetry.dependencies]
 python = "^3.10"
-Authlib = "^0.15.5"
+Authlib = "^1.4.0"
 bcrypt = "^3.2.0"
 boto3 = "^1.26"
 cpr_sdk = { version = "1.16.0", extras = ["vespa", "datasets"] }
@@ -40,7 +40,7 @@ python-dateutil = "^2.9.0.post0"
 [tool.poetry.dev-dependencies]
 black = "^23.1.0"
 moto = { version = "^3.0.3", extras = ["s3"] }
-pytest = "^7.0.1"
+pytest = "^8.3.4"
 pytest-asyncio = "^0.23.8"
 python-dotenv = "^0.19.2"
 pytest-mock = "^3.7.0"
