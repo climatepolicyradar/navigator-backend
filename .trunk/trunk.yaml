@@ -5,6 +5,14 @@ version: 0.1
 cli:
   version: 1.22.0
 
+tools:
+  definitions:
+    - name: sqlfluff
+      runtime: python
+      package: sqlfluff
+      shims: [sqlfluff]
+      known_good_version: 1.4.5
+
 # Trunk provides extensibility via plugins.
 # (https://docs.trunk.io/plugins)
 plugins:
@@ -27,12 +35,52 @@ lint:
   disabled:
     - hadolint
     - oxipng
+
   definitions:
     - name: bandit
       direct_configs: [bandit.yaml]
       commands:
         - name: lint
           run: bandit --exit-zero -c bandit.yaml --format json --output ${tmpfile} ${target}
+
+    - name: sqlfluff
+      files: [sql, sql-j2, dml, ddl]
+      tools: [sqlfluff]
+      description: A dialect-flexible and configurable SQL linter
+      known_good_version: 1.4.5
+      direct_configs:
+        - .sqlfluff
+      affects_cache:
+        - pyproject.toml
+      suggest_if: config_present
+      commands:
+        - name: lint
+          run: sqlfluff lint ${target} --format json --nofail
+          output: sarif
+          success_codes: [0]
+          read_output_from: stdout
+          parser:
+            runtime: python
+            run: python3 ${plugin}/linters/sqlfluff/sqlfluff_to_sarif.py
+
+        - name: fix
+          version: ">=3.0.0"
+          run: sqlfluff fix ${target} --disable-progress-bar
+          output: rewrite
+          formatter: true
+          in_place: true
+          success_codes: [0, 1]
+          enabled: false
+          batch: true
+
+        - name: format
+          run: sqlfluff format ${target} --disable-progress-bar
+          output: rewrite
+          formatter: true
+          in_place: true
+          success_codes: [0, 1]
+          enabled: false
+          batch: true
 
   ignore:
     - linters: [ALL]
@@ -45,6 +93,8 @@ lint:
         - LICENSE.md
 
   enabled:
+    - sqlfluff@3.2.5:
+        commands: [lint, fix, format]
     - actionlint@1.6.27
     - bandit@1.7.8
     - black@24.4.2
@@ -74,7 +124,7 @@ lint:
     - taplo@0.8.1
     - terrascan@1.19.1
     - trivy@0.50.4
-    - trufflehog@3.74.0
+    - trufflehog@3.73.0
     - yamllint@1.35.1
 
 actions:

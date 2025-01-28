@@ -123,7 +123,7 @@ test_non_search:
 	docker compose -f docker-compose.yml -f docker-compose.dev.yml run --rm backend pytest -vvv -m 'not search' ${ARGS}
 
 test:
-	docker compose -f docker-compose.yml -f docker-compose.dev.yml run --rm backend pytest -vvv ${ARGS}
+	docker compose -f docker-compose.yml -f docker-compose.dev.yml run --rm backend pytest -vvv tests ${ARGS}
 
 # ----------------------------------
 # tasks

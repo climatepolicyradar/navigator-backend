@@ -2,15 +2,19 @@ import csv
 import itertools
 import logging
 from collections import defaultdict
+from enum import Enum
 from io import StringIO
 from typing import Any, Mapping, Optional, Sequence, cast
 
+from cpr_sdk.exceptions import QueryError
 from cpr_sdk.models.search import Document as CprSdkResponseDocument
 from cpr_sdk.models.search import Family as CprSdkResponseFamily
 from cpr_sdk.models.search import Filters as CprSdkKeywordFilters
 from cpr_sdk.models.search import Passage as CprSdkResponsePassage
+from cpr_sdk.models.search import SearchParameters
 from cpr_sdk.models.search import SearchResponse as CprSdkSearchResponse
 from cpr_sdk.models.search import filter_fields
+from cpr_sdk.search_adaptors import VespaSearchAdapter
 from db_client.models.dfce import (
     Collection,
     CollectionFamily,
@@ -28,7 +32,10 @@ from db_client.models.dfce.family import (
 from db_client.models.organisation import Organisation
 from sqlalchemy.orm import Session
 
-from app.config import PUBLIC_APP_URL
+from app.clients.aws.client import S3Client
+from app.clients.aws.s3_document import S3Document
+from app.config import CDN_DOMAIN, PUBLIC_APP_URL, VESPA_SECRETS_LOCATION, VESPA_URL
+from app.errors import ValidationError
 from app.models.search import (
     BackendFilterValues,
     FilterField,
@@ -46,6 +53,18 @@ from app.repository.lookups import (
 from app.service.util import to_cdn_url
 
 _LOGGER = logging.getLogger(__name__)
+
+_VESPA_CONNECTION = VespaSearchAdapter(
+    instance_url=VESPA_URL,
+    cert_directory=VESPA_SECRETS_LOCATION,
+)
+
+
+class SearchType(str, Enum):
+    standard = "standard"
+    browse = "browse"
+    browse_with_concepts = "browse_with_concepts"
+
 
 _CSV_SEARCH_RESPONSE_COLUMNS = [
     "Collection Name",
@@ -525,3 +544,81 @@ def create_vespa_search_params(
     else:
         search_body.filters = None
     return search_body
+
+
+def identify_search_type(search_body: SearchRequestBody) -> str:
+    """Identify the search type from parameters"""
+    if not search_body.query_string and not search_body.concept_filters:
+        return SearchType.browse
+    elif not search_body.query_string and search_body.concept_filters:
+        return SearchType.browse_with_concepts
+    else:
+        return SearchType.standard
+
+
+def mutate_search_body_for_search_type(
+    search_body: SearchRequestBody,
+) -> SearchRequestBody:
+    """Mutate the search body in line with the search params"""
+    search_type = identify_search_type(search_body=search_body)
+    if search_type == SearchType.browse:
+        search_body.all_results = True
+        search_body.documents_only = True
+        search_body.exact_match = False
+    elif search_type == SearchType.browse_with_concepts:
+        search_body.all_results = True
+        search_body.documents_only = False
+        search_body.exact_match = False
+    return search_body
+
+
+def make_search_request(db: Session, search_body: SearchRequestBody) -> SearchResponse:
+    """Perform a search request against the Vespa search engine"""
+    search_body = mutate_search_body_for_search_type(search_body=search_body)
+
+    try:
+        cpr_sdk_search_params = create_vespa_search_params(db, search_body)
+        cpr_sdk_search_response = _VESPA_CONNECTION.search(
+            parameters=cpr_sdk_search_params
+        )
+    except QueryError as e:
+        raise ValidationError(e)
+
+    return process_vespa_search_response(
+        db,
+        cpr_sdk_search_response,
+        limit=search_body.page_size,
+        offset=search_body.offset,
+    ).increment_pages()
+
+
+def get_family_from_vespa(family_id: str, db: Session) -> CprSdkSearchResponse:
+    """Get a family from vespa.
+
+    :param str family_id: The id of the family to get.
+    :param Session db: Database session to query against.
+    :return CprSdkSearchResponse: The family from vespa.
+    """
+    search_body = SearchParameters(
+        family_ids=[family_id], documents_only=True, all_results=True
+    )
+
+    _LOGGER.info(
+        f"Getting vespa family '{family_id}'",
+        extra={"props": {"search_body": search_body.model_dump()}},
+    )
+    try:
+        result = _VESPA_CONNECTION.search(parameters=search_body)
+    except QueryError as e:
+        raise ValidationError(e)
+    return result
+
+
+def get_s3_doc_url_from_cdn(
+    s3_client: S3Client, s3_document: S3Document, data_dump_s3_key: str
+) -> Optional[str]:
+    redirect_url = None
+    if s3_client.document_exists(s3_document):
+        _LOGGER.info("Redirecting to CDN data dump location...")
+        redirect_url = f"https://{CDN_DOMAIN}/{data_dump_s3_key}"
+    return redirect_url

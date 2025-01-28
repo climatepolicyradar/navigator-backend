@@ -7,27 +7,23 @@ from db_client.models.document.physical_document import Language
 from sqlalchemy.exc import MultipleResultsFound
 from sqlalchemy.orm import Session
 
-from app.models.metadata import ApplicationConfig
-from app.repository.organisation import get_all_organisations, get_organisation_config
+from app.models.config import ApplicationConfig
+from app.service.config import get_corpus_type_config_for_allowed_corpora
 from app.service.pipeline import IMPORT_ID_MATCHER
 from app.service.util import tree_table_to_json
 
 _LOGGER = logging.getLogger(__name__)
 
 
-def get_config(db: Session) -> ApplicationConfig:
-    # First get the CCLW stats
+def get_config(db: Session, allowed_corpora: list[str]) -> ApplicationConfig:
     return ApplicationConfig(
         geographies=tree_table_to_json(table=Geography, db=db),
-        organisations={
-            cast(str, org.name): get_organisation_config(db, org)
-            for org in get_all_organisations(db)
-        },
         languages={lang.language_code: lang.name for lang in db.query(Language).all()},
         document_variants=[
             variant.variant_name
             for variant in db.query(Variant).order_by(Variant.variant_name).all()
         ],
+        corpus_types=get_corpus_type_config_for_allowed_corpora(db, allowed_corpora),
     )
 
 

@@ -16,11 +16,11 @@ from app import config
 from app.api.api_v1.routers.admin import admin_document_router
 from app.api.api_v1.routers.auth import auth_router
 from app.api.api_v1.routers.documents import documents_router
-from app.api.api_v1.routers.geographies import geographies_router
 from app.api.api_v1.routers.lookups import lookups_router
 from app.api.api_v1.routers.pipeline_trigger import pipeline_trigger_router
 from app.api.api_v1.routers.search import search_router
 from app.api.api_v1.routers.summaries import summary_router
+from app.api.api_v1.routers.world_map import world_map_router
 from app.clients.db.session import SessionLocal, engine
 from app.service.auth import get_superuser_details
 from app.service.health import is_database_online
@@ -158,7 +158,7 @@ app.include_router(
     summary_router, prefix="/api/v1", tags=["Summaries"], include_in_schema=False
 )
 app.include_router(
-    geographies_router, prefix="/api/v1", tags=["Geographies"], include_in_schema=False
+    world_map_router, prefix="/api/v1", tags=["Geographies"], include_in_schema=False
 )
 
 # add pagination support to all routes that ask for it

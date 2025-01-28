@@ -1,6 +1,6 @@
 [tool.poetry]
 name = "navigator_backend"
-version = "1.19.14"
+version = "1.23.2"
 description = ""
 authors = ["CPR-dev-team <tech@climatepolicyradar.org>"]
 packages = [{ include = "app" }, { include = "tests" }]
@@ -10,8 +10,8 @@ python = "^3.10"
 Authlib = "^0.15.5"
 bcrypt = "^3.2.0"
 boto3 = "^1.26"
-cpr_sdk = { version = "1.9.5", extras = ["vespa"] }
-fastapi = "^0.104.1"
+cpr_sdk = { version = "1.16.0", extras = ["vespa", "datasets"] }
+fastapi = "^0.106.0"
 fastapi-health = "^0.4.0"
 fastapi-pagination = { extras = ["sqlalchemy"], version = "^0.12.19" }
 httpx = "^0.22.0"
@@ -31,7 +31,7 @@ starlette = "^0.27.0"
 tenacity = "^9.0.0"
 uvicorn = { extras = ["standard"], version = "^0.20.0" }
 botocore = "^1.34.19"
-db-client = { git = "https://github.com/climatepolicyradar/navigator-db-client.git", tag = "v3.8.25" }
+db-client = { git = "https://github.com/climatepolicyradar/navigator-db-client.git", tag = "v3.8.28" }
 urllib3 = "<2"
 apscheduler = "^3.10.4"
 numpy = "1.26.4"
@@ -41,7 +41,7 @@ python-dateutil = "^2.9.0.post0"
 black = "^23.1.0"
 moto = { version = "^3.0.3", extras = ["s3"] }
 pytest = "^7.0.1"
-pytest-asyncio = "^0.18.3"
+pytest-asyncio = "^0.23.8"
 python-dotenv = "^0.19.2"
 pytest-mock = "^3.7.0"
 pyright = "^1.1.384"
