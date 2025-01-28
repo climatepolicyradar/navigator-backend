@@ -7,6 +7,13 @@ updates:
     ignore:
       - dependency-name: cpr_sdk
       - dependency-name: db-client
+    reviewers:
+      - climatepolicyradar/software
+    groups:
+      all:
+        applies-to: version-updates
+        patterns:
+          - "*"
   - package-ecosystem: github-actions
     directory: /
     schedule:
@@ -14,10 +21,28 @@ updates:
     ignore:
       - dependency-name: cpr_sdk
       - dependency-name: db-client
+    reviewers:
+      - climatepolicyradar/software
+    groups:
+      all:
+        applies-to: version-updates
+        patterns:
+          - "*"
   - package-ecosystem: pip
     directory: /
     schedule:
       interval: daily
     allow:
       - dependency-name: cpr_sdk
+    reviewers:
+      - climatepolicyradar/deng
+    target-branch: main
+  - package-ecosystem: pip
+    directory: /
+    schedule:
+      interval: daily
+    allow:
+      - dependency-name: db-client
+    reviewers:
+      - climatepolicyradar/software
     target-branch: main
