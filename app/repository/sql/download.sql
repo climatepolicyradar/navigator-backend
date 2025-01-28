@@ -230,6 +230,7 @@ SELECT
     f.last_modified::DATE AS "Last Modified on System",
     d.import_id AS "Internal Document ID",
     f.import_id AS "Internal Family ID",
+    fc.corpus_import_id AS "Internal Corpus ID",
     n1.collection_import_ids AS "Internal Collection ID(s)",
     INITCAP(d.valid_metadata::JSON #>> '{
   role,0}') AS "Document Role",
@@ -349,6 +350,7 @@ FROM
 WHERE
     d.last_modified < :ingest_cycle_start
     AND fc.corpus_import_id = ANY(:allowed_corpora_ids)
+    AND d.document_status = 'PUBLISHED'
 ORDER BY
     d.last_modified DESC,
     d.created DESC,
