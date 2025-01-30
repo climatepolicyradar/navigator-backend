@@ -1,6 +1,6 @@
 [tool.poetry]
 name = "navigator_backend"
-version = "1.23.3"
+version = "1.23.4"
 description = ""
 authors = ["CPR-dev-team <tech@climatepolicyradar.org>"]
 packages = [{ include = "app" }, { include = "tests" }]
@@ -37,7 +37,8 @@ apscheduler = "^3.10.4"
 numpy = "1.26.4"
 python-dateutil = "^2.9.0.post0"
 
-[tool.poetry.dev-dependencies]
+
+[tool.poetry.group.dev.dependencies]
 black = "^23.1.0"
 moto = { version = "^3.0.3", extras = ["s3"] }
 pytest = "^8.3.4"
@@ -46,10 +47,8 @@ python-dotenv = "^0.19.2"
 pytest-mock = "^3.7.0"
 pyright = "^1.1.384"
 ruff = "^0.6.9"
-types-SQLAlchemy = "^1.4.31"
-
-[tool.poetry.group.dev.dependencies]
 surrogate = "^0.1"
+types-SQLAlchemy = "^1.4.31"
 
 [build-system]
 requires = ["poetry-core>=1.0.0"]
