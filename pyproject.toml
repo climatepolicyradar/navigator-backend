@@ -38,7 +38,7 @@ numpy = "1.26.4"
 python-dateutil = "^2.9.0.post0"
 
 [tool.poetry.dev-dependencies]
-black = "^23.1.0"
+black = "^25.1.0"
 moto = { version = "^3.0.3", extras = ["s3"] }
 pytest = "^8.3.4"
 pytest-asyncio = "^0.23.8"
