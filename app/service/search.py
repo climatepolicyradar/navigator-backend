@@ -614,6 +614,28 @@ def get_family_from_vespa(family_id: str, db: Session) -> CprSdkSearchResponse:
     return result
 
 
+def get_document_from_vespa(document_id: str, db: Session) -> CprSdkSearchResponse:
+    """Get a document from vespa.
+
+    :param str document_id: The id of the document to get.
+    :param Session db: Database session to query against.
+    :return CprSdkSearchResponse: The document from vespa.
+    """
+    search_body = SearchParameters(
+        document_ids=[document_id], documents_only=True, all_results=True
+    )
+
+    _LOGGER.info(
+        f"Getting vespa document '{document_id}'",
+        extra={"props": {"search_body": search_body.model_dump()}},
+    )
+    try:
+        result = _VESPA_CONNECTION.search(parameters=search_body)
+    except QueryError as e:
+        raise ValidationError(e)
+    return result
+
+
 def get_s3_doc_url_from_cdn(
     s3_client: S3Client, s3_document: S3Document, data_dump_s3_key: str
 ) -> Optional[str]:
