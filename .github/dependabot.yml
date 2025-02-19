@@ -6,7 +6,6 @@ updates:
       interval: monthly
     ignore:
       - dependency-name: cpr_sdk
-      - dependency-name: db-client
     reviewers:
       - climatepolicyradar/software
     groups:
@@ -18,9 +17,6 @@ updates:
     directory: /
     schedule:
       interval: monthly
-    ignore:
-      - dependency-name: cpr_sdk
-      - dependency-name: db-client
     reviewers:
       - climatepolicyradar/software
     groups:
@@ -36,13 +32,4 @@ updates:
       - dependency-name: cpr_sdk
     reviewers:
       - climatepolicyradar/deng
-    target-branch: main
-  - package-ecosystem: pip
-    directory: /
-    schedule:
-      interval: daily
-    allow:
-      - dependency-name: db-client
-    reviewers:
-      - climatepolicyradar/software
     target-branch: main
