@@ -14,14 +14,14 @@ def get_default_collections():
         "import_id": "CPR.Collection.1.0",
         "title": "Collection1",
         "description": "CollectionSummary1",
-        "valid_metadata": {},
+        "metadata": {},
     }
 
     collection2 = {
         "import_id": "CPR.Collection.2.0",
         "title": "Collection2",
         "description": "CollectionSummary2",
-        "valid_metadata": {},
+        "metadata": {},
     }
     return collection1, collection2
 
