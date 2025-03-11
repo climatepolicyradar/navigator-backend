@@ -6,7 +6,7 @@ authors = ["CPR-dev-team <tech@climatepolicyradar.org>"]
 packages = [{ include = "app" }, { include = "tests" }]
 
 [tool.poetry.dependencies]
-python = "^3.11"
+python = "^3.10"
 Authlib = "^1.4.0"
 bcrypt = "^3.2.0"
 boto3 = "^1.26"
@@ -69,6 +69,6 @@ ignore = """
 include = ["app", "tests"]
 exclude = ["**/__pycache__"]
 ignore = ["scripts/**/*"]
-pythonVersion = "3.11"
+pythonVersion = "3.10"
 pythonPlatform = "Linux"
 venv = "backend"
