@@ -6,13 +6,14 @@ from fastapi import status
 TEST_HOST = "http://localhost:3000/"
 GEOGRAPHY_PAGE_ENDPOINT = "/api/v1/summaries/geography"
 
-EXPECTED_NUM_FAMILY_CATEGORIES = 5
+EXPECTED_NUM_FAMILY_CATEGORIES = 6
 EXPECTED_FAMILY_CATEGORIES = {
     "Executive",
     "Legislative",
     "UNFCCC",
     "MCF",
     "Reports",
+    "Litigation",
 }
 
 
@@ -49,12 +50,14 @@ def test_endpoint_returns_families_ok_with_slug(data_client, valid_token):
     assert resp["family_counts"]["UNFCCC"] == 0
     assert resp["family_counts"]["MCF"] == 0
     assert resp["family_counts"]["Reports"] == 0
+    assert resp["family_counts"]["Litigation"] == 0
 
     assert len(resp["top_families"]["Executive"]) == 0
     assert len(resp["top_families"]["Legislative"]) == 0
     assert len(resp["top_families"]["UNFCCC"]) == 0
     assert len(resp["top_families"]["MCF"]) == 0
     assert len(resp["top_families"]["Reports"]) == 0
+    assert len(resp["top_families"]["Litigation"]) == 0
 
     assert len(resp["targets"]) == 0
 
@@ -74,12 +77,14 @@ def test_endpoint_returns_families_ok_with_code(data_client, valid_token):
     assert resp["family_counts"]["UNFCCC"] == 0
     assert resp["family_counts"]["MCF"] == 0
     assert resp["family_counts"]["Reports"] == 0
+    assert resp["family_counts"]["Litigation"] == 0
 
     assert len(resp["top_families"]["Executive"]) == 0
     assert len(resp["top_families"]["Legislative"]) == 0
     assert len(resp["top_families"]["UNFCCC"]) == 0
     assert len(resp["top_families"]["MCF"]) == 0
     assert len(resp["top_families"]["Reports"]) == 0
+    assert len(resp["top_families"]["Litigation"]) == 0
 
     assert len(resp["targets"]) == 0
 
