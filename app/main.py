@@ -5,7 +5,6 @@ from contextlib import asynccontextmanager
 
 import json_logging
 import uvicorn
-from db_client import run_migrations
 from fastapi import APIRouter, Depends, FastAPI
 from fastapi.middleware.cors import CORSMiddleware
 from fastapi_health import health
@@ -21,7 +20,7 @@ from app.api.api_v1.routers.pipeline_trigger import pipeline_trigger_router
 from app.api.api_v1.routers.search import search_router
 from app.api.api_v1.routers.summaries import summary_router
 from app.api.api_v1.routers.world_map import world_map_router
-from app.clients.db.session import SessionLocal, engine
+from app.clients.db.session import SessionLocal
 from app.service.auth import get_superuser_details
 from app.service.health import is_database_online
 
@@ -76,9 +75,7 @@ _openapi_url = "/api" if ENABLE_API_DOCS else None
 
 @asynccontextmanager
 async def lifespan(app_: FastAPI):
-    """Run startup and shutdown events."""
     _LOGGER.info("Starting up...")
-    run_migrations(engine)
     yield
     _LOGGER.info("Shutting down...")
 
