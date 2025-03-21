@@ -5,6 +5,7 @@ from typing import Optional
 
 import pytest
 from cpr_sdk.search_adaptors import Vespa, VespaSearchAdapter
+from db_client import run_migrations
 from db_client.models import Base
 from db_client.models.organisation import AppUser
 from fastapi.testclient import TestClient
@@ -254,7 +255,7 @@ def data_db_engine() -> t.Generator[Engine, None, None]:
 
     test_engine = create_engine(test_db_url)
 
-    Base.metadata.create_all(test_engine)
+    run_migrations(test_engine)
 
     yield test_engine
 
