@@ -3,10 +3,9 @@ FROM python:3.11-slim
 RUN mkdir /cpr-backend
 WORKDIR /cpr-backend
 
+# we need libpq-dev gcc as we using the non-binary version of psycopg2
 RUN apt update && \
-    apt install -y postgresql-client curl git \
-    # we need this as we using the non-binary version of psycopg2
-    apt-get install -y libpq-dev gcc \
+    apt install -y postgresql-client curl git libpq-dev gcc \
     && rm -rf /var/lib/apt/lists/*
 
 # Install pip and poetry
