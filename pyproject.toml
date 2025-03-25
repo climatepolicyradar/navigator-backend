@@ -1,6 +1,6 @@
 [tool.poetry]
 name = "navigator_backend"
-version = "1.23.14"
+version = "1.23.15"
 description = ""
 authors = ["CPR-dev-team <tech@climatepolicyradar.org>"]
 packages = [{ include = "app" }, { include = "tests" }]
@@ -19,7 +19,7 @@ itsdangerous = "^2.1.0"
 json-logging = "^1.3.0"
 pandas = "^2.2.2"
 passlib = "^1.7.4"
-psycopg2-binary = "^2.9.3"
+psycopg2 = "^2.9.10"
 PyJWT = "^2.3.0"
 python-multipart = "^0.0.5"
 python-slugify = "^6.1.2"

@@ -3,8 +3,9 @@ FROM python:3.11-slim
 RUN mkdir /cpr-backend
 WORKDIR /cpr-backend
 
+# we need libpq-dev gcc as we using the non-binary version of psycopg2
 RUN apt update && \
-    apt install -y postgresql-client curl git \
+    apt install -y postgresql-client curl git libpq-dev gcc \
     && rm -rf /var/lib/apt/lists/*
 
 # Install pip and poetry
@@ -17,6 +18,7 @@ COPY poetry.lock pyproject.toml ./
 
 RUN poetry config virtualenvs.create false
 RUN poetry install --no-root
+
 
 # Download the sentence transformer model
 RUN mkdir /models
