@@ -20,4 +20,4 @@ else
 fi
 
 echo "Starting backend app"
-python3 app/main.py
+exec python3 app/main.py
