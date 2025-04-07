@@ -20,4 +20,4 @@ else
 fi
 
 echo "Starting backend app"
-exec python3 app/main.py
+exec uvicorn app.main:app --host 0.0.0.0 --port 8000
