@@ -8,6 +8,14 @@ RUN apt update && \
     apt install -y postgresql-client curl git libpq-dev gcc \
     && rm -rf /var/lib/apt/lists/*
 
+# TODO: Remove this once we've debugged 👇
+RUN apt install -y gdb
+ENV PYTHONFAULTHANDLER=1
+ENV PYTHONMALLOC=debug
+ENV MALLOC_CHECK_=3
+ENV MALLOC_TRACE=/tmp/malloc.trace
+# TODO: Remove this once we've debugged 👆
+
 # Install pip and poetry
 RUN pip install --no-cache --upgrade pip
 RUN pip install --no-cache "poetry==1.7.1"
