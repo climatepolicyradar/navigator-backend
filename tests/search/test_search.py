@@ -1095,8 +1095,6 @@ def test_process_vespa_search_response_sorting_across_all_passages(
     # Verify that passages are NOT sorted across all documents
     # We expect this to fail because we're sorting within documents, not across them
     all_pages = [pm.text_block_page for pm in all_passages]
-    print()
-    print(all_pages)
     assert all_pages != sorted(
         all_pages, key=lambda page: page or float("inf")
     ), "Passages should NOT be sorted across all documents when sort_within_page=True"
