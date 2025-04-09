@@ -355,6 +355,7 @@ def _process_vespa_search_response_families(
     vespa_families: Sequence[CprSdkResponseFamily],
     limit: int,
     offset: int,
+    sort_within_page: bool,
 ) -> Sequence[SearchResponseFamily]:
     """
     Process a list of cpr sdk results into a list of SearchResponse Families
@@ -500,6 +501,10 @@ def _process_vespa_search_response_families(
                         concepts=hit.concepts,
                     )
                 )
+                if sort_within_page:
+                    response_document.document_passage_matches.sort(
+                        key=lambda x: x.text_block_page or float("inf")
+                    )
 
             else:
                 _LOGGER.error(f"Unknown hit type: {type(hit)}")
@@ -514,6 +519,7 @@ def process_vespa_search_response(
     vespa_search_response: CprSdkSearchResponse,
     limit: int,
     offset: int,
+    sort_within_page: bool = False,
 ) -> SearchResponse:
     """Process a Vespa search response into a F/E search response"""
 
@@ -530,6 +536,7 @@ def process_vespa_search_response(
             vespa_search_response.families,
             limit=limit,
             offset=offset,
+            sort_within_page=sort_within_page,
         ),
     )
 
@@ -589,6 +596,14 @@ def make_search_request(db: Session, search_body: SearchRequestBody) -> SearchRe
         cpr_sdk_search_response,
         limit=search_body.page_size,
         offset=search_body.offset,
+        # Set default sort to within page.
+        sort_within_page=(
+            True
+            if search_body.sort_by is None
+            or search_body.concept_filters is not None
+            or search_body.exact_match
+            else False
+        ),
     ).increment_pages()
 
 
