@@ -270,6 +270,23 @@ from app.service.search import (
             None,
             ["CCLW.corpus.1.0", "CCLW.corpus.2.0"],
         ),
+        (
+            "test_sorting",
+            False,
+            None,
+            None,
+            "asc",
+            None,
+            10,
+            10,
+            0,
+            None,
+            None,
+            None,
+            None,
+            None,
+            None,
+        ),
     ],
 )
 def test_create_vespa_search_params(
@@ -952,3 +969,134 @@ def test_process_vespa_search_response(
                 assert all(
                     [pm.text_block_coords is None for pm in fd.document_passage_matches]
                 )
+
+
+@pytest.mark.search
+@pytest.mark.parametrize(
+    "fam_specs,offset,page_size",
+    [
+        # Just one family, one document, 10 hits
+        ([_FAM_SPEC_0], 0, 10),
+        # Multiple families
+        ([_FAM_SPEC_0, _FAM_SPEC_1], 0, 10),
+        # Multiple families, mixed results (some docs in FAM_2 must be missing)
+        ([_FAM_SPEC_0, _FAM_SPEC_2, _FAM_SPEC_1], 0, 5),
+        # Test page_size, offset
+        ([_FAM_SPEC_3, _FAM_SPEC_1, _FAM_SPEC_2, _FAM_SPEC_0], 2, 1),
+    ],
+)
+def test_process_vespa_search_response_sorting(
+    data_db: Session,
+    fam_specs: Sequence[FamSpec],
+    offset: int,
+    page_size: int,
+):
+    """
+    Test that passages are sorted by text_block_page within each document when sort_within_page is True
+    and that they are not sorted across documents
+
+    :param data_db: Database session fixture
+    :type data_db: Session
+    :param fam_specs: Family specifications for test data
+    :type fam_specs: Sequence[FamSpec]
+    :param offset: Offset for pagination
+    :type offset: int
+    :param page_size: Page size for pagination
+    :type page_size: int
+    """
+    # Make sure we process a response without error
+    populate_data_db(data_db, fam_specs=fam_specs)
+
+    vespa_response = _generate_search_response(fam_specs)
+    search_response = process_vespa_search_response(
+        db=data_db,
+        vespa_search_response=vespa_response,
+        limit=page_size,
+        offset=offset,
+        sort_within_page=True,
+    )
+
+    # Verify that passages are sorted by page number within each document
+    for family in search_response.families:
+        for document in family.family_documents:
+            # Get all pages for this document
+            pages = [pm.text_block_page for pm in document.document_passage_matches]
+
+            # Verify that pages are sorted within this document
+            assert pages == sorted(
+                pages, key=lambda page: page or float("inf")
+            ), f"Passages in document {document.document_slug} are not sorted by page number"
+
+            # Verify that the content matches the expected order within this document
+            # Since we don't know the exact content of test documents, we'll verify that
+            # the order is consistent with the page numbers
+            sorted_content = [
+                pm.text
+                for pm in sorted(
+                    document.document_passage_matches,
+                    key=lambda pm: pm.text_block_page or float("inf"),
+                )
+            ]
+            actual_content = [pm.text for pm in document.document_passage_matches]
+            assert (
+                sorted_content == actual_content
+            ), f"Content order doesn't match page order in document {document.document_slug}"
+
+
+@pytest.mark.search
+@pytest.mark.parametrize(
+    "fam_specs,offset,page_size",
+    [
+        # Multiple families
+        ([_FAM_SPEC_0, _FAM_SPEC_1], 0, 10),
+        # Multiple families, mixed results (some docs in FAM_2 must be missing)
+        ([_FAM_SPEC_0, _FAM_SPEC_2, _FAM_SPEC_1], 0, 5),
+        # Test page_size, offset
+        ([_FAM_SPEC_3, _FAM_SPEC_1, _FAM_SPEC_2, _FAM_SPEC_0], 2, 1),
+    ],
+)
+def test_process_vespa_search_response_sorting_across_all_passages(
+    data_db: Session, fam_specs: Sequence[FamSpec], offset: int, page_size: int
+):
+    """
+    Test that passages are NOT sorted across all documents when sort_within_page is True
+
+    :param data_db: Database session fixture
+    :type data_db: Session
+    """
+    # Make sure we process a response without error
+    populate_data_db(data_db, fam_specs=fam_specs)
+
+    vespa_response = _generate_search_response(fam_specs)
+    search_response = process_vespa_search_response(
+        db=data_db,
+        vespa_search_response=vespa_response,
+        limit=page_size,
+        offset=offset,
+        sort_within_page=True,
+    )
+
+    # Verify that passages are sorted within each document
+    for family in search_response.families:
+        for document in family.family_documents:
+            document_pages = [
+                pm.text_block_page for pm in document.document_passage_matches
+            ]
+            assert document_pages == sorted(
+                document_pages, key=lambda page: page or float("inf")
+            ), f"Passages in document {document.document_slug} are not sorted by page number"
+
+    # Get all passages across all documents
+    all_passages = []
+    for family in search_response.families:
+        for document in family.family_documents:
+            all_passages.extend(document.document_passage_matches)
+
+    # Verify that passages are NOT sorted across all documents
+    # We expect this to fail because we're sorting within documents, not across them
+    all_pages = [pm.text_block_page for pm in all_passages]
+    print()
+    print(all_pages)
+    assert all_pages != sorted(
+        all_pages, key=lambda page: page or float("inf")
+    ), "Passages should NOT be sorted across all documents when sort_within_page=True"
