@@ -992,17 +992,8 @@ def test_process_vespa_search_response_sorting(
     page_size: int,
 ):
     """
-    Test that passages are sorted by text_block_page within each document when sort_within_page is True
-    and that they are not sorted across documents
-
-    :param data_db: Database session fixture
-    :type data_db: Session
-    :param fam_specs: Family specifications for test data
-    :type fam_specs: Sequence[FamSpec]
-    :param offset: Offset for pagination
-    :type offset: int
-    :param page_size: Page size for pagination
-    :type page_size: int
+    Test that passages are sorted by text_block_page and text_block_id
+    within each document when sort_within_page is True
     """
     # Make sure we process a response without error
     populate_data_db(data_db, fam_specs=fam_specs)
@@ -1016,31 +1007,48 @@ def test_process_vespa_search_response_sorting(
         sort_within_page=True,
     )
 
-    # Verify that passages are sorted by page number within each document
+    # Verify that passages are sorted by page number and text block ID within each document
     for family in search_response.families:
         for document in family.family_documents:
-            # Get all pages for this document
-            pages = [pm.text_block_page for pm in document.document_passage_matches]
+            # Get all passages for this document
+            passages = document.document_passage_matches
 
-            # Verify that pages are sorted within this document
+            # Verify that passages are sorted by page number first
+            pages = [pm.text_block_page for pm in passages]
             assert pages == sorted(
                 pages, key=lambda page: page or float("inf")
             ), f"Passages in document {document.document_slug} are not sorted by page number"
 
+            # Verify that within each page, passages are sorted by text block ID
+            for page in set(pages):
+                page_passages = [pm for pm in passages if pm.text_block_page == page]
+                if page_passages:
+                    block_ids = [
+                        _parse_text_block_id(pm.text_block_id) for pm in page_passages
+                    ]
+                    assert block_ids == sorted(
+                        block_ids
+                    ), f"Passages on page {page} in document {document.document_slug} are not sorted by text block ID"
+
             # Verify that the content matches the expected order within this document
-            # Since we don't know the exact content of test documents, we'll verify that
-            # the order is consistent with the page numbers
             sorted_content = [
                 pm.text
                 for pm in sorted(
-                    document.document_passage_matches,
-                    key=lambda pm: pm.text_block_page or float("inf"),
+                    passages,
+                    key=lambda pm: (
+                        pm.text_block_page or float("inf"),
+                        _parse_text_block_id(pm.text_block_id),
+                    ),
                 )
             ]
-            actual_content = [pm.text for pm in document.document_passage_matches]
+            actual_content = [pm.text for pm in passages]
             assert (
                 sorted_content == actual_content
-            ), f"Content order doesn't match page order in document {document.document_slug}"
+            ), f"Content order doesn't match page and block order in document {document.document_slug}"
+
+
+def _parse_text_block_id(text_block_id: str) -> int:
+    return int(text_block_id.split("_")[-1])
 
 
 @pytest.mark.search
@@ -1059,10 +1067,8 @@ def test_process_vespa_search_response_sorting_across_all_passages(
     data_db: Session, fam_specs: Sequence[FamSpec], offset: int, page_size: int
 ):
     """
-    Test that passages are NOT sorted across all documents when sort_within_page is True
-
-    :param data_db: Database session fixture
-    :type data_db: Session
+    Test that passages are NOT sorted across all documents when
+    sort_within_page is True
     """
     # Make sure we process a response without error
     populate_data_db(data_db, fam_specs=fam_specs)
@@ -1093,7 +1099,6 @@ def test_process_vespa_search_response_sorting_across_all_passages(
             all_passages.extend(document.document_passage_matches)
 
     # Verify that passages are NOT sorted across all documents
-    # We expect this to fail because we're sorting within documents, not across them
     all_pages = [pm.text_block_page for pm in all_passages]
     assert all_pages != sorted(
         all_pages, key=lambda page: page or float("inf")
