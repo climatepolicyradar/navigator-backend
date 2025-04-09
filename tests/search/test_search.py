@@ -990,11 +990,18 @@ def test_process_vespa_search_response_sorting(
     fam_specs: Sequence[FamSpec],
     offset: int,
     page_size: int,
+    mocker,
 ):
     """
     Test that passages are sorted by text_block_page and text_block_id
     within each document when sort_within_page is True
     """
+    # Mock the text block ID parsing function
+    mock_parse_text_block_id = mocker.patch(
+        "app.service.search._parse_text_block_id",
+        side_effect=lambda x: int(x.split("_")[-1]) if x else 0,
+    )
+
     # Make sure we process a response without error
     populate_data_db(data_db, fam_specs=fam_specs)
 
@@ -1024,7 +1031,8 @@ def test_process_vespa_search_response_sorting(
                 page_passages = [pm for pm in passages if pm.text_block_page == page]
                 if page_passages:
                     block_ids = [
-                        _parse_text_block_id(pm.text_block_id) for pm in page_passages
+                        mock_parse_text_block_id(pm.text_block_id)
+                        for pm in page_passages
                     ]
                     assert block_ids == sorted(
                         block_ids
@@ -1037,7 +1045,7 @@ def test_process_vespa_search_response_sorting(
                     passages,
                     key=lambda pm: (
                         pm.text_block_page or float("inf"),
-                        _parse_text_block_id(pm.text_block_id),
+                        mock_parse_text_block_id(pm.text_block_id),
                     ),
                 )
             ]
@@ -1045,10 +1053,6 @@ def test_process_vespa_search_response_sorting(
             assert (
                 sorted_content == actual_content
             ), f"Content order doesn't match page and block order in document {document.document_slug}"
-
-
-def _parse_text_block_id(text_block_id: str) -> int:
-    return int(text_block_id.split("_")[-1])
 
 
 @pytest.mark.search
