@@ -24,7 +24,7 @@ from app.api.api_v1.routers.world_map import world_map_router
 from app.clients.db.session import SessionLocal
 from app.service.auth import get_superuser_details
 from app.service.health import is_database_online
-from app.service.search import make_vespa_search_adapter
+from app.service.vespa import make_vespa_search_adapter
 
 os.environ["SKIP_ALEMBIC_LOGGING"] = "1"
 

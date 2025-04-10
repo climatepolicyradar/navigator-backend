@@ -61,13 +61,6 @@ _VESPA_CONNECTION = VespaSearchAdapter(
 )
 
 
-def make_vespa_search_adapter() -> VespaSearchAdapter:
-    return VespaSearchAdapter(
-        instance_url=VESPA_URL,
-        cert_directory=VESPA_SECRETS_LOCATION,
-    )
-
-
 class SearchType(str, Enum):
     standard = "standard"
     browse = "browse"
