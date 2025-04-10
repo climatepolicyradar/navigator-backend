@@ -270,6 +270,23 @@ from app.service.search import (
             None,
             ["CCLW.corpus.1.0", "CCLW.corpus.2.0"],
         ),
+        (
+            "test_sorting",
+            False,
+            None,
+            None,
+            "asc",
+            None,
+            10,
+            10,
+            0,
+            None,
+            None,
+            None,
+            None,
+            None,
+            None,
+        ),
     ],
 )
 def test_create_vespa_search_params(
@@ -952,3 +969,154 @@ def test_process_vespa_search_response(
                 assert all(
                     [pm.text_block_coords is None for pm in fd.document_passage_matches]
                 )
+
+
+@pytest.mark.search
+@pytest.mark.parametrize(
+    "fam_specs,offset,page_size",
+    [
+        # Just one family, one document, 10 hits
+        ([_FAM_SPEC_0], 0, 10),
+        # Multiple families
+        ([_FAM_SPEC_0, _FAM_SPEC_1], 0, 10),
+        # Multiple families, mixed results (some docs in FAM_2 must be missing)
+        ([_FAM_SPEC_0, _FAM_SPEC_2, _FAM_SPEC_1], 0, 5),
+        # Test page_size, offset
+        ([_FAM_SPEC_3, _FAM_SPEC_1, _FAM_SPEC_2, _FAM_SPEC_0], 2, 1),
+    ],
+)
+def test_process_vespa_search_response_sorting(
+    data_db: Session,
+    fam_specs: Sequence[FamSpec],
+    offset: int,
+    page_size: int,
+    mocker,
+):
+    """
+    Test that passages are sorted by text_block_page and text_block_id
+    within each document when sort_within_page is True
+    """
+    # Mock the text block ID parsing function
+    mock_parse_text_block_id = mocker.patch(
+        "app.service.search._parse_text_block_id",
+        side_effect=lambda x: (0, int(x.split("_")[-1])) if x else (0, 0),
+    )
+
+    # Make sure we process a response without error
+    populate_data_db(data_db, fam_specs=fam_specs)
+
+    vespa_response = _generate_search_response(fam_specs)
+    search_response = process_vespa_search_response(
+        db=data_db,
+        vespa_search_response=vespa_response,
+        limit=page_size,
+        offset=offset,
+        sort_within_page=True,
+    )
+
+    # Verify that passages are sorted by page number and then by text block ID within each page
+    for family in search_response.families:
+        for document in family.family_documents:
+            # Get all passages for this document
+            passages = document.document_passage_matches
+
+            # Verify that passages are sorted by page number first
+            pages = [
+                pm.text_block_page or mock_parse_text_block_id(pm.text_block_id)[0]
+                for pm in passages
+            ]
+            assert pages == sorted(
+                pages, key=lambda page: page or float("inf")
+            ), f"Passages in document {document.document_slug} are not sorted by page number"
+
+            # Verify that within each page, passages are sorted by text block ID
+            for page in set(pages):
+                page_passages = [
+                    pm
+                    for pm in passages
+                    if (
+                        pm.text_block_page
+                        or mock_parse_text_block_id(pm.text_block_id)[0]
+                    )
+                    == page
+                ]
+                if page_passages:
+                    block_ids = [
+                        mock_parse_text_block_id(pm.text_block_id)[1]
+                        for pm in page_passages
+                    ]
+                    assert block_ids == sorted(
+                        block_ids
+                    ), f"Passages on page {page} in document {document.document_slug} are not sorted by text block ID"
+
+            # Verify that the content matches the expected order within this document
+            sorted_content = [
+                pm.text
+                for pm in sorted(
+                    passages,
+                    key=lambda pm: (
+                        pm.text_block_page
+                        or mock_parse_text_block_id(pm.text_block_id)[0]
+                        or float("inf"),
+                        mock_parse_text_block_id(pm.text_block_id)[1],
+                    ),
+                )
+            ]
+            actual_content = [pm.text for pm in passages]
+            assert (
+                sorted_content == actual_content
+            ), f"Content order doesn't match page and block order in document {document.document_slug}"
+
+
+@pytest.mark.search
+@pytest.mark.parametrize(
+    "fam_specs,offset,page_size",
+    [
+        # Multiple families
+        ([_FAM_SPEC_0, _FAM_SPEC_1], 0, 10),
+        # Multiple families, mixed results (some docs in FAM_2 must be missing)
+        ([_FAM_SPEC_0, _FAM_SPEC_2, _FAM_SPEC_1], 0, 5),
+        # Test page_size, offset
+        ([_FAM_SPEC_3, _FAM_SPEC_1, _FAM_SPEC_2, _FAM_SPEC_0], 2, 1),
+    ],
+)
+def test_process_vespa_search_response_sorting_across_all_passages(
+    data_db: Session, fam_specs: Sequence[FamSpec], offset: int, page_size: int
+):
+    """
+    Test that passages are NOT sorted across all documents when
+    sort_within_page is True
+    """
+    # Make sure we process a response without error
+    populate_data_db(data_db, fam_specs=fam_specs)
+
+    vespa_response = _generate_search_response(fam_specs)
+    search_response = process_vespa_search_response(
+        db=data_db,
+        vespa_search_response=vespa_response,
+        limit=page_size,
+        offset=offset,
+        sort_within_page=True,
+    )
+
+    # Verify that passages are sorted within each document
+    for family in search_response.families:
+        for document in family.family_documents:
+            document_pages = [
+                pm.text_block_page for pm in document.document_passage_matches
+            ]
+            assert document_pages == sorted(
+                document_pages, key=lambda page: page or float("inf")
+            ), f"Passages in document {document.document_slug} are not sorted by page number"
+
+    # Get all passages across all documents
+    all_passages = []
+    for family in search_response.families:
+        for document in family.family_documents:
+            all_passages.extend(document.document_passage_matches)
+
+    # Verify that passages are NOT sorted across all documents
+    all_pages = [pm.text_block_page for pm in all_passages]
+    assert all_pages != sorted(
+        all_pages, key=lambda page: page or float("inf")
+    ), "Passages should NOT be sorted across all documents when sort_within_page=True"

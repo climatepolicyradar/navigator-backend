@@ -19,5 +19,10 @@ else
 	echo "No Vespa key supplied, skipping file creation"
 fi
 
+# TODO: Remove this once we've debugged 👇
+# Enable core dumps
+ulimit -c unlimited
+# TODO: Remove this once we've debugged 👆
+
 echo "Starting backend app"
-exec python3 app/main.py
+exec uvicorn app.main:app --host 0.0.0.0 --port 8888
