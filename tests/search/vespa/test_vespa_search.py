@@ -292,5 +292,3 @@ def test_search_with_deleted_docs(
     assert len(all_deleted_body["families"]) == 0
 
     assert mock_corpora_exist_in_db.assert_called
-
-

@@ -46,5 +46,3 @@ def test_families_slug_returns_correct_family(
     assert len(body["families"]) > 0
 
     assert body["families"][0]["id"].split("::")[-1] == "CCLW.family.10246.0"
-
-

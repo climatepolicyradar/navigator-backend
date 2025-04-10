@@ -714,4 +714,3 @@ def get_s3_doc_url_from_cdn(
         _LOGGER.info("Redirecting to CDN data dump location...")
         redirect_url = f"https://{CDN_DOMAIN}/{data_dump_s3_key}"
     return redirect_url
-

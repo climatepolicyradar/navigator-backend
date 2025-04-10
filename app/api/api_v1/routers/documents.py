@@ -159,4 +159,3 @@ async def doc_detail_from_vespa(
         return hits
     except ValueError as err:
         raise HTTPException(status_code=NOT_FOUND, detail=str(err))
-

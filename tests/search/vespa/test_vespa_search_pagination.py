@@ -167,4 +167,3 @@ def test_continuation_token__passages(
     )
 
     assert mock_corpora_exist_in_db.assert_called
-

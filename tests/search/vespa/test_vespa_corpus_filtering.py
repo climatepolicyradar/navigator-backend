@@ -178,4 +178,3 @@ def test_search_with_invalid_corpus_id_in_search_request_params(
         )
 
         assert response["detail"] == "Error validating corpora IDs."
-

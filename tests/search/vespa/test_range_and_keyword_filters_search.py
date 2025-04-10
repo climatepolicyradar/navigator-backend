@@ -310,4 +310,3 @@ def test_geo_filter_with_exact(
         assert "ITA" in family["family_geographies"]
 
     assert mock_corpora_exist_in_db.assert_called
-

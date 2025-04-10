@@ -405,6 +405,3 @@ def data_superuser_token_headers(
     a_token = tokens["access_token"]
     headers = {"Authorization": f"Bearer {a_token}"}
     return headers
-
-
-

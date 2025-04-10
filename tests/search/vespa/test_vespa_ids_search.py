@@ -170,4 +170,3 @@ def test_empty_ids_dont_limit_result(
     assert len(got_family_ids) > 1
     assert len(got_document_ids) > 1
     assert mock_corpora_exist_in_db.assert_called
-
