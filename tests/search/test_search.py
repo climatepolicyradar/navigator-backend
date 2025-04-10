@@ -999,7 +999,7 @@ def test_process_vespa_search_response_sorting(
     # Mock the text block ID parsing function
     mock_parse_text_block_id = mocker.patch(
         "app.service.search._parse_text_block_id",
-        side_effect=lambda x: int(x.split("_")[-1]) if x else 0,
+        side_effect=lambda x: (0, int(x.split("_")[-1])) if x else (0, 0),
     )
 
     # Make sure we process a response without error
@@ -1021,17 +1021,25 @@ def test_process_vespa_search_response_sorting(
             passages = document.document_passage_matches
 
             # Verify that passages are sorted by page number first
-            pages = [pm.text_block_page for pm in passages]
+            pages = [
+                pm.text_block_page or mock_parse_text_block_id(pm.text_block_id)[0]
+                for pm in passages
+            ]
             assert pages == sorted(
                 pages, key=lambda page: page or float("inf")
             ), f"Passages in document {document.document_slug} are not sorted by page number"
 
             # Verify that within each page, passages are sorted by text block ID
             for page in set(pages):
-                page_passages = [pm for pm in passages if pm.text_block_page == page]
+                page_passages = [
+                    pm
+                    for pm in passages
+                    if pm.text_block_page
+                    or mock_parse_text_block_id(pm.text_block_id)[0] == page
+                ]
                 if page_passages:
                     block_ids = [
-                        mock_parse_text_block_id(pm.text_block_id)
+                        mock_parse_text_block_id(pm.text_block_id)[1]
                         for pm in page_passages
                     ]
                     assert block_ids == sorted(
@@ -1044,8 +1052,10 @@ def test_process_vespa_search_response_sorting(
                 for pm in sorted(
                     passages,
                     key=lambda pm: (
-                        pm.text_block_page or float("inf"),
-                        mock_parse_text_block_id(pm.text_block_id),
+                        pm.text_block_page
+                        or mock_parse_text_block_id(pm.text_block_id)[0]
+                        or float("inf"),
+                        mock_parse_text_block_id(pm.text_block_id)[1],
                     ),
                 )
             ]
