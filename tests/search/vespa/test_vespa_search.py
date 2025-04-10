@@ -39,6 +39,7 @@ def test_empty_search_term_performs_browse(
     assert len(body["families"]) > 0
 
     # Should automatically use vespa `all_results` parameter for browse requests
+    query_spy = mocker.spy(test_vespa, "search")
     assert query_spy.call_args.kwargs["parameters"].all_results
     query_spy.assert_called_once()
 
