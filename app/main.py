@@ -23,6 +23,7 @@ from app.api.api_v1.routers.world_map import world_map_router
 from app.clients.db.session import SessionLocal
 from app.service.auth import get_superuser_details
 from app.service.health import is_database_online
+from app.service.vespa import make_vespa_search_adapter
 
 os.environ["SKIP_ALEMBIC_LOGGING"] = "1"
 
@@ -76,6 +77,7 @@ _openapi_url = "/api" if ENABLE_API_DOCS else None
 @asynccontextmanager
 async def lifespan(app_: FastAPI):
     _LOGGER.info("Starting up...")
+    app.state.vespa_search_adapter = make_vespa_search_adapter()
     yield
     _LOGGER.info("Shutting down...")
 

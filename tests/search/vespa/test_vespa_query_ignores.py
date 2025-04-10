@@ -3,7 +3,6 @@ from unittest.mock import patch
 
 import pytest
 
-from app.service import search
 from tests.search.vespa.setup_search_tests import (
     _make_search_request,
     _populate_db_families,
@@ -18,7 +17,6 @@ from tests.search.vespa.setup_search_tests import (
 def test_case_insensitivity(
     mock_corpora_exist_in_db, test_vespa, data_db, monkeypatch, data_client, valid_token
 ):
-    monkeypatch.setattr(search, "_VESPA_CONNECTION", test_vespa)
     _populate_db_families(data_db)
 
     lower_body = _make_search_request(data_client, valid_token, {"query_string": "the"})
@@ -36,7 +34,6 @@ def test_case_insensitivity(
 def test_punctuation_ignored(
     mock_corpora_exist_in_db, test_vespa, data_db, monkeypatch, data_client, valid_token
 ):
-    monkeypatch.setattr(search, "_VESPA_CONNECTION", test_vespa)
     _populate_db_families(data_db)
 
     regular_body = _make_search_request(
@@ -66,7 +63,6 @@ def test_punctuation_ignored(
 def test_accents_ignored(
     mock_corpora_exist_in_db, test_vespa, data_db, monkeypatch, data_client, valid_token
 ):
-    monkeypatch.setattr(search, "_VESPA_CONNECTION", test_vespa)
     _populate_db_families(data_db)
 
     start = time.time()

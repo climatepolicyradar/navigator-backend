@@ -2,7 +2,6 @@ from unittest.mock import patch
 
 import pytest
 
-from app.service import search
 from tests.search.vespa.setup_search_tests import (
     _make_search_request,
     _populate_db_families,
@@ -39,8 +38,6 @@ def test_metadata_filter(
     data_client,
     valid_token,
 ):
-    monkeypatch.setattr(search, "_VESPA_CONNECTION", test_vespa)
-
     _populate_db_families(data_db, deterministic_metadata=True)
 
     response = _make_search_request(

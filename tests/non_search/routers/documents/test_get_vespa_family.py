@@ -3,7 +3,6 @@ from fastapi import status
 from fastapi.testclient import TestClient
 from sqlalchemy.orm import Session
 
-from app.service import search
 from tests.non_search.routers.documents.setup_doc_fam_lookup import (
     _make_vespa_fam_lookup_request,
 )
@@ -15,7 +14,6 @@ def test_families_slug_returns_not_found(
     data_db: Session, data_client: TestClient, valid_token, monkeypatch, test_vespa
 ):
     _populate_db_families(data_db)
-    monkeypatch.setattr(search, "_VESPA_CONNECTION", test_vespa)
 
     # Test by slug
     json_response = _make_vespa_fam_lookup_request(
@@ -34,8 +32,6 @@ def test_families_slug_returns_correct_family(
     data_db: Session, data_client: TestClient, valid_token, monkeypatch, test_vespa
 ):
     _populate_db_families(data_db)
-
-    monkeypatch.setattr(search, "_VESPA_CONNECTION", test_vespa)
 
     # Test by slug
     body = _make_vespa_fam_lookup_request(
