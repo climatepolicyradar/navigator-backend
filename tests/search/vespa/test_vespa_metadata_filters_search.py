@@ -39,8 +39,6 @@ def test_metadata_filter(
     data_client,
     valid_token,
 ):
-    monkeypatch.setattr(search, "_VESPA_CONNECTION", test_vespa)
-
     _populate_db_families(data_db, deterministic_metadata=True)
 
     response = _make_search_request(

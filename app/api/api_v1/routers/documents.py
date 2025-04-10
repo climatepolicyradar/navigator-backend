@@ -3,6 +3,7 @@ from http.client import NOT_FOUND
 from typing import Annotated, Union
 
 from cpr_sdk.models.search import SearchResponse
+from cpr_sdk.search_adaptors import VespaSearchAdapter
 from fastapi import APIRouter, Depends, Header, HTTPException, Request
 
 from app.clients.db.session import get_db
@@ -17,6 +18,7 @@ from app.repository.document import (
 )
 from app.service.custom_app import AppTokenFactory
 from app.service.search import get_document_from_vespa, get_family_from_vespa
+from app.service.vespa import get_vespa_search_adapter
 
 _LOGGER = logging.getLogger(__file__)
 
@@ -67,6 +69,7 @@ async def family_detail_from_vespa(
     request: Request,
     app_token: Annotated[str, Header()],
     db=Depends(get_db),
+    vespa_search_adapter: VespaSearchAdapter = Depends(get_vespa_search_adapter),
 ):
     """Get details of the family associated with a slug from vespa.
 
@@ -97,7 +100,9 @@ async def family_detail_from_vespa(
 
     try:
         # TODO: Make this respect the allowed corpora from the decoded token.
-        hits = get_family_from_vespa(family_id=import_id, db=db)
+        hits = get_family_from_vespa(
+            family_id=import_id, db=db, vespa_search_adapter=vespa_search_adapter
+        )
         if hits.total_family_hits == 0:
             raise HTTPException(
                 status_code=NOT_FOUND, detail=f"Nothing found for {import_id} in Vespa"
@@ -113,6 +118,7 @@ async def doc_detail_from_vespa(
     request: Request,
     app_token: Annotated[str, Header()],
     db=Depends(get_db),
+    vespa_search_adapter: VespaSearchAdapter = Depends(get_vespa_search_adapter),
 ):
     """Get details of the document associated with a slug from vespa.
 
@@ -143,7 +149,9 @@ async def doc_detail_from_vespa(
 
     try:
         # TODO: Make this respect the allowed corpora from the decoded token.
-        hits = get_document_from_vespa(document_id=import_id, db=db)
+        hits = get_document_from_vespa(
+            document_id=import_id, db=db, vespa_search_adapter=vespa_search_adapter
+        )
         if hits.total_family_hits == 0:
             raise HTTPException(
                 status_code=NOT_FOUND, detail=f"Nothing found for {import_id} in Vespa"
@@ -151,3 +159,4 @@ async def doc_detail_from_vespa(
         return hits
     except ValueError as err:
         raise HTTPException(status_code=NOT_FOUND, detail=str(err))
+

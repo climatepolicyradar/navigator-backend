@@ -55,11 +55,6 @@ from app.service.util import to_cdn_url
 
 _LOGGER = logging.getLogger(__name__)
 
-_VESPA_CONNECTION = VespaSearchAdapter(
-    instance_url=VESPA_URL,
-    cert_directory=VESPA_SECRETS_LOCATION,
-)
-
 
 class SearchType(str, Enum):
     standard = "standard"
@@ -627,13 +622,17 @@ def mutate_search_body_for_search_type(
     return search_body
 
 
-def make_search_request(db: Session, search_body: SearchRequestBody) -> SearchResponse:
+def make_search_request(
+    db: Session,
+    vespa_search_adapter: VespaSearchAdapter,
+    search_body: SearchRequestBody,
+) -> SearchResponse:
     """Perform a search request against the Vespa search engine"""
     search_body = mutate_search_body_for_search_type(search_body=search_body)
 
     try:
         cpr_sdk_search_params = create_vespa_search_params(db, search_body)
-        cpr_sdk_search_response = _VESPA_CONNECTION.search(
+        cpr_sdk_search_response = vespa_search_adapter.search(
             parameters=cpr_sdk_search_params
         )
     except QueryError as e:
@@ -655,7 +654,11 @@ def make_search_request(db: Session, search_body: SearchRequestBody) -> SearchRe
     ).increment_pages()
 
 
-def get_family_from_vespa(family_id: str, db: Session) -> CprSdkSearchResponse:
+def get_family_from_vespa(
+    family_id: str,
+    db: Session,
+    vespa_search_adapter: VespaSearchAdapter,
+) -> CprSdkSearchResponse:
     """Get a family from vespa.
 
     :param str family_id: The id of the family to get.
@@ -671,13 +674,17 @@ def get_family_from_vespa(family_id: str, db: Session) -> CprSdkSearchResponse:
         extra={"props": {"search_body": search_body.model_dump()}},
     )
     try:
-        result = _VESPA_CONNECTION.search(parameters=search_body)
+        result = vespa_search_adapter.search(parameters=search_body)
     except QueryError as e:
         raise ValidationError(e)
     return result
 
 
-def get_document_from_vespa(document_id: str, db: Session) -> CprSdkSearchResponse:
+def get_document_from_vespa(
+    document_id: str,
+    db: Session,
+    vespa_search_adapter: VespaSearchAdapter,
+) -> CprSdkSearchResponse:
     """Get a document from vespa.
 
     :param str document_id: The id of the document to get.
@@ -693,7 +700,7 @@ def get_document_from_vespa(document_id: str, db: Session) -> CprSdkSearchRespon
         extra={"props": {"search_body": search_body.model_dump()}},
     )
     try:
-        result = _VESPA_CONNECTION.search(parameters=search_body)
+        result = vespa_search_adapter.search(parameters=search_body)
     except QueryError as e:
         raise ValidationError(e)
     return result
@@ -707,3 +714,4 @@ def get_s3_doc_url_from_cdn(
         _LOGGER.info("Redirecting to CDN data dump location...")
         redirect_url = f"https://{CDN_DOMAIN}/{data_dump_s3_key}"
     return redirect_url
+

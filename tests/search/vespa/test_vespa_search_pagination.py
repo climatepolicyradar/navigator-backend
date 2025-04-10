@@ -18,7 +18,6 @@ from tests.search.vespa.setup_search_tests import (
 def test_simple_pagination_families(
     mock_corpora_exist_in_db, test_vespa, data_client, data_db, monkeypatch, valid_token
 ):
-    monkeypatch.setattr(search, "_VESPA_CONNECTION", test_vespa)
     _populate_db_families(data_db)
 
     PAGE_SIZE = 2
@@ -58,7 +57,6 @@ def test_simple_pagination_families(
 def test_continuation_token__families(
     mock_corpora_exist_in_db, test_vespa, data_db, monkeypatch, data_client, valid_token
 ):
-    monkeypatch.setattr(search, "_VESPA_CONNECTION", test_vespa)
 
     _populate_db_families(data_db)
 
@@ -101,7 +99,6 @@ def test_continuation_token__families(
 def test_continuation_token__passages(
     mock_corpora_exist_in_db, test_vespa, data_db, monkeypatch, data_client, valid_token
 ):
-    monkeypatch.setattr(search, "_VESPA_CONNECTION", test_vespa)
 
     _populate_db_families(data_db)
 
@@ -170,3 +167,4 @@ def test_continuation_token__passages(
     )
 
     assert mock_corpora_exist_in_db.assert_called
+

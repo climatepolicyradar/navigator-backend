@@ -26,7 +26,6 @@ def test_result_order_score(
     data_client,
     valid_token,
 ):
-    monkeypatch.setattr(search, "_VESPA_CONNECTION", test_vespa)
     _populate_db_families(data_db)
 
     params = {
@@ -65,7 +64,6 @@ def test_result_order_title(
     data_client,
     valid_token,
 ):
-    monkeypatch.setattr(search, "_VESPA_CONNECTION", test_vespa)
     _populate_db_families(data_db)
 
     params = {

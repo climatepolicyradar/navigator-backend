@@ -15,7 +15,6 @@ def test_families_slug_returns_not_found(
     data_db: Session, data_client: TestClient, valid_token, monkeypatch, test_vespa
 ):
     _populate_db_families(data_db)
-    monkeypatch.setattr(search, "_VESPA_CONNECTION", test_vespa)
 
     # Test by slug
     json_response = _make_vespa_fam_lookup_request(
@@ -35,8 +34,6 @@ def test_families_slug_returns_correct_family(
 ):
     _populate_db_families(data_db)
 
-    monkeypatch.setattr(search, "_VESPA_CONNECTION", test_vespa)
-
     # Test by slug
     body = _make_vespa_fam_lookup_request(
         data_client,
@@ -49,3 +46,5 @@ def test_families_slug_returns_correct_family(
     assert len(body["families"]) > 0
 
     assert body["families"][0]["id"].split("::")[-1] == "CCLW.family.10246.0"
+
+

@@ -64,7 +64,7 @@ def test_family_ids_search(
     family_ids,
     valid_token,
 ):
-    monkeypatch.setattr(search, "_VESPA_CONNECTION", test_vespa)
+
     _populate_db_families(data_db)
 
     params = {
@@ -105,7 +105,7 @@ def test_document_ids_search(
     document_ids,
     valid_token,
 ):
-    monkeypatch.setattr(search, "_VESPA_CONNECTION", test_vespa)
+
     _populate_db_families(data_db)
 
     params = {
@@ -127,7 +127,7 @@ def test_document_ids_search(
 def test_document_ids_and_family_ids_search(
     mock_corpora_exist_in_db, test_vespa, data_db, monkeypatch, data_client, valid_token
 ):
-    monkeypatch.setattr(search, "_VESPA_CONNECTION", test_vespa)
+
     _populate_db_families(data_db)
 
     # The doc doesnt belong to the family, so we should get no results
@@ -152,7 +152,7 @@ def test_document_ids_and_family_ids_search(
 def test_empty_ids_dont_limit_result(
     mock_corpora_exist_in_db, test_vespa, data_db, monkeypatch, data_client, valid_token
 ):
-    monkeypatch.setattr(search, "_VESPA_CONNECTION", test_vespa)
+
     _populate_db_families(data_db)
 
     # We'd expect this to be interpreted as 'unlimited'
@@ -170,3 +170,4 @@ def test_empty_ids_dont_limit_result(
     assert len(got_family_ids) > 1
     assert len(got_document_ids) > 1
     assert mock_corpora_exist_in_db.assert_called
+

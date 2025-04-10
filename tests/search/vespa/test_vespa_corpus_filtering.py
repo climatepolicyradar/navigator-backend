@@ -34,7 +34,7 @@ def test_corpus_filtering(
     expected_hits: int,
     valid_token,
 ):
-    monkeypatch.setattr(search, "_VESPA_CONNECTION", test_vespa)
+
     _populate_db_families(data_db)
 
     params: dict[str, Any] = {"query_string": "and"}
@@ -71,7 +71,7 @@ def test_search_with_corpus_ids_in_token_not_in_db(
     WHEN one or more of those corpora IDs are not in our database
     THEN raise a 400 HTTP error
     """
-    monkeypatch.setattr(search, "_VESPA_CONNECTION", test_vespa)
+
     _populate_db_families(data_db)
 
     with patch(
@@ -112,7 +112,7 @@ def test_search_decoding_token_raises_PyJWTError(
     WHEN the decode() function call raises a PyJWTError
     THEN raise a 400 HTTP error
     """
-    monkeypatch.setattr(search, "_VESPA_CONNECTION", test_vespa)
+
     _populate_db_families(data_db)
 
     with patch("jwt.decode", side_effect=side_effect):
@@ -140,7 +140,7 @@ def test_search_decoding_token_with_none_origin_passed_to_audience(
     WHEN the decode_config_token() function is passed a None origin
     THEN raise a 400 HTTP error
     """
-    monkeypatch.setattr(search, "_VESPA_CONNECTION", test_vespa)
+
     _populate_db_families(data_db)
 
     response = _make_search_request(
@@ -163,7 +163,7 @@ def test_search_with_invalid_corpus_id_in_search_request_params(
     WHEN those corpora IDs are not a subset of the app token corpora IDs
     THEN raise a 403 HTTP error
     """
-    monkeypatch.setattr(search, "_VESPA_CONNECTION", test_vespa)
+
     _populate_db_families(data_db)
 
     with patch(
@@ -178,3 +178,4 @@ def test_search_with_invalid_corpus_id_in_search_request_params(
         )
 
         assert response["detail"] == "Error validating corpora IDs."
+

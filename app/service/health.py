@@ -6,7 +6,7 @@ from sqlalchemy.orm import Session
 
 from app.clients.db.session import get_db
 from app.config import DEVELOPMENT_MODE
-from app.main import get_vespa_search_adapter
+from app.service.vespa import get_vespa_search_adapter
 
 _LOGGER = logging.getLogger(__file__)
 

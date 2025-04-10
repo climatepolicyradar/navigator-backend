@@ -10,6 +10,7 @@ import logging
 from io import BytesIO
 from typing import Annotated, Sequence, cast
 
+from cpr_sdk.search_adaptors import VespaSearchAdapter
 from fastapi import APIRouter, Body, Depends, Header, HTTPException, Request, status
 from fastapi.responses import StreamingResponse
 from starlette.responses import RedirectResponse
@@ -33,6 +34,7 @@ from app.service.search import (
     make_search_request,
     process_result_into_csv,
 )
+from app.service.vespa import get_vespa_search_adapter
 
 _LOGGER = logging.getLogger(__name__)
 
@@ -81,6 +83,7 @@ def search_documents(
     ],
     app_token: Annotated[str, Header()],
     db=Depends(get_db),
+    vespa_search_adapter: VespaSearchAdapter = Depends(get_vespa_search_adapter),
 ) -> SearchResponse:
     """
     Search for documents matching the search criteria and filters.
@@ -134,7 +137,11 @@ def search_documents(
         "Starting search...",
         extra={"props": {"search_request": search_body.model_dump()}},
     )
-    return make_search_request(db=db, search_body=search_body)
+    return make_search_request(
+        db=db,
+        search_body=search_body,
+        vespa_search_adapter=vespa_search_adapter,
+    )
 
 
 @search_router.post("/searches/download-csv", include_in_schema=False)
@@ -143,6 +150,7 @@ def download_search_documents(
     search_body: SearchRequestBody,
     app_token: Annotated[str, Header()],
     db=Depends(get_db),
+    vespa_search_adapter: VespaSearchAdapter = Depends(get_vespa_search_adapter),
 ) -> StreamingResponse:
     """Download a CSV containing details of documents matching the search criteria."""
     token = AppTokenFactory()
@@ -185,6 +193,7 @@ def download_search_documents(
         search_response = make_search_request(
             db=db,
             search_body=search_body,
+            vespa_search_adapter=vespa_search_adapter,
         )
     except ValidationError as e:
         raise HTTPException(

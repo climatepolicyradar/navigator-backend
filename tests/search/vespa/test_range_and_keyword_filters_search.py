@@ -29,7 +29,7 @@ def test_keyword_country_filters__geographies(
     monkeypatch,
     valid_token,
 ):
-    monkeypatch.setattr(search, "_VESPA_CONNECTION", test_vespa)
+
     _populate_db_families(data_db)
     base_params = {"query_string": query}
 
@@ -76,7 +76,7 @@ def test_keyword_region_filters(
     monkeypatch,
     valid_token,
 ):
-    monkeypatch.setattr(search, "_VESPA_CONNECTION", test_vespa)
+
     _populate_db_families(data_db)
     base_params = {"query_string": query}
 
@@ -131,7 +131,7 @@ def test_keyword_region_and_country_filters(
     monkeypatch,
     valid_token,
 ):
-    monkeypatch.setattr(search, "_VESPA_CONNECTION", test_vespa)
+
     _populate_db_families(data_db)
 
     # Filtering on one region and one country should return the one match
@@ -167,7 +167,7 @@ def test_invalid_keyword_filters(
     data_client,
     valid_token,
 ):
-    monkeypatch.setattr(search, "_VESPA_CONNECTION", test_vespa)
+
     _populate_db_families(data_db)
 
     params = {
@@ -204,7 +204,7 @@ def test_year_range_filtered_in(
     data_client,
     valid_token,
 ):
-    monkeypatch.setattr(search, "_VESPA_CONNECTION", test_vespa)
+
     _populate_db_families(data_db)
 
     # Search
@@ -235,7 +235,7 @@ def test_year_range_filtered_out(
     data_client,
     valid_token,
 ):
-    monkeypatch.setattr(search, "_VESPA_CONNECTION", test_vespa)
+
     _populate_db_families(data_db)
 
     # Search
@@ -267,7 +267,7 @@ def test_multiple_filters(
     data_client,
     valid_token,
 ):
-    monkeypatch.setattr(search, "_VESPA_CONNECTION", test_vespa)
+
     _populate_db_families(data_db)
 
     params = {
@@ -292,7 +292,7 @@ def test_multiple_filters(
 def test_geo_filter_with_exact(
     mock_corpora_exist_in_db, test_vespa, data_db, monkeypatch, data_client, valid_token
 ):
-    monkeypatch.setattr(search, "_VESPA_CONNECTION", test_vespa)
+
     _populate_db_families(data_db)
 
     params = {
@@ -310,3 +310,4 @@ def test_geo_filter_with_exact(
         assert "ITA" in family["family_geographies"]
 
     assert mock_corpora_exist_in_db.assert_called
+

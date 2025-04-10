@@ -27,7 +27,6 @@ def test_whole_database_download_fails_when_decoding_token_raises_PyJWTError(
     WHEN the decode() function call raises a PyJWTError
     THEN raise a 400 HTTP error
     """
-    monkeypatch.setattr(search, "_VESPA_CONNECTION", test_vespa)
     _populate_db_families(data_db)
 
     with patch(
@@ -58,7 +57,6 @@ def test_whole_database_download_fails_when_corpus_ids_in_token_not_in_db(
     WHEN one or more of those corpora IDs are not in our database
     THEN raise a 400 HTTP error
     """
-    monkeypatch.setattr(search, "_VESPA_CONNECTION", test_vespa)
     _populate_db_families(data_db)
 
     with patch(

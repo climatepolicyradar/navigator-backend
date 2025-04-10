@@ -75,10 +75,6 @@ _docs_url = "/api/docs" if ENABLE_API_DOCS else None
 _openapi_url = "/api" if ENABLE_API_DOCS else None
 
 
-def get_vespa_search_adapter(request: Request) -> VespaSearchAdapter:
-    return request.app.state.vespa_search_adapter
-
-
 @asynccontextmanager
 async def lifespan(app_: FastAPI):
     _LOGGER.info("Starting up...")
@@ -176,3 +172,4 @@ if __name__ == "__main__":
         port=8888,
         log_config=DEFAULT_LOGGING,
     )  # type: ignore
+
