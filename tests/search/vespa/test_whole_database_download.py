@@ -4,7 +4,6 @@ import jwt
 import pytest
 from fastapi import status
 
-from app.service import search
 from tests.search.vespa.setup_search_tests import _populate_db_families
 
 ALL_DATA_DOWNLOAD_ENDPOINT = "/api/v1/searches/download-all-data"

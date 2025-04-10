@@ -5,7 +5,6 @@ from contextlib import asynccontextmanager
 
 import json_logging
 import uvicorn
-from cpr_sdk.search_adaptors import VespaSearchAdapter
 from fastapi import APIRouter, Depends, FastAPI
 from fastapi.middleware.cors import CORSMiddleware
 from fastapi_health import health

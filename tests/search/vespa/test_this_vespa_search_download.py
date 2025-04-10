@@ -7,7 +7,6 @@ import jwt
 import pytest
 from fastapi import status
 
-from app.service import search
 from tests.search.vespa.setup_search_tests import (
     _make_search_request,
     _populate_db_families,

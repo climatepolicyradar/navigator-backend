@@ -35,7 +35,7 @@ from sqlalchemy.orm import Session
 
 from app.clients.aws.client import S3Client
 from app.clients.aws.s3_document import S3Document
-from app.config import CDN_DOMAIN, PUBLIC_APP_URL, VESPA_SECRETS_LOCATION, VESPA_URL
+from app.config import CDN_DOMAIN, PUBLIC_APP_URL
 from app.errors import ValidationError
 from app.models.search import (
     BackendFilterValues,
