@@ -1,10 +1,11 @@
 import csv
 import itertools
 import logging
+import re
 from collections import defaultdict
 from enum import Enum
 from io import StringIO
-from typing import Any, Mapping, Optional, Sequence, cast
+from typing import Any, Mapping, Optional, Sequence, Tuple, cast
 
 from cpr_sdk.exceptions import QueryError
 from cpr_sdk.models.search import Document as CprSdkResponseDocument
@@ -292,6 +293,49 @@ def process_result_into_csv(
     return csv_result_io.read()
 
 
+def _parse_text_block_id(text_block_id: Optional[str]) -> Tuple[int, int]:
+    """
+    Parse a text block ID into its page and block numbers.
+
+    Supports the following formats:
+    - p{page}_b{block}
+    - b{block}
+    - {block}
+    - block_{block}
+
+    :param text_block_id: The text block ID string to parse
+    :return: Tuple of (page number, block ID)
+    """
+    if text_block_id is None:
+        return 0, 0
+
+    # Try to match the p{page}_b{block} format
+    page_block_match = re.match(r"p(\d+)_b(\d+)", text_block_id)
+    if page_block_match:
+        return int(page_block_match.group(1)), int(page_block_match.group(2))
+
+    # Try to match b{block} format
+    block_match = re.match(r"b(\d+)", text_block_id)
+    if block_match:
+        return 0, int(block_match.group(1))
+
+    # Try to match {block} format
+    simple_block_match = re.match(r"^\d+$", text_block_id)
+    if simple_block_match:
+        return 0, int(text_block_id)
+
+    # Try to match block_{block} format
+    block_prefix_match = re.match(r"block_(\d+)", text_block_id)
+    if block_prefix_match:
+        return 0, int(block_prefix_match.group(1))
+
+    # If no match, treat as block 0
+    _LOGGER.warning(
+        f"No match for text block ID: {text_block_id}. Defaulting to (0, 0)"
+    )
+    return 0, 0
+
+
 def _convert_filter_field(filter_field: str) -> Optional[str]:
     if filter_field == FilterField.CATEGORY:
         return filter_fields["category"]
@@ -349,7 +393,6 @@ def _convert_filters(
         return None
 
 
-# TODO: Add a test for this function
 def _process_vespa_search_response_families(
     db: Session,
     vespa_families: Sequence[CprSdkResponseFamily],
@@ -503,7 +546,10 @@ def _process_vespa_search_response_families(
                 )
                 if sort_within_page:
                     response_document.document_passage_matches.sort(
-                        key=lambda x: x.text_block_page or float("inf")
+                        key=lambda x: (
+                            x.text_block_page or float("inf"),
+                            _parse_text_block_id(x.text_block_id),
+                        )
                     )
 
             else:
