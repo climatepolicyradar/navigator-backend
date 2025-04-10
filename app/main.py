@@ -5,6 +5,7 @@ from contextlib import asynccontextmanager
 
 import json_logging
 import uvicorn
+from cpr_sdk.search_adaptors import VespaSearchAdapter
 from fastapi import APIRouter, Depends, FastAPI
 from fastapi.middleware.cors import CORSMiddleware
 from fastapi_health import health
@@ -23,6 +24,7 @@ from app.api.api_v1.routers.world_map import world_map_router
 from app.clients.db.session import SessionLocal
 from app.service.auth import get_superuser_details
 from app.service.health import is_database_online
+from app.service.search import make_vespa_search_adapter
 
 os.environ["SKIP_ALEMBIC_LOGGING"] = "1"
 
@@ -73,9 +75,14 @@ _docs_url = "/api/docs" if ENABLE_API_DOCS else None
 _openapi_url = "/api" if ENABLE_API_DOCS else None
 
 
+def get_vespa_search_adapter(request: Request) -> VespaSearchAdapter:
+    return request.app.state.vespa_search_adapter
+
+
 @asynccontextmanager
 async def lifespan(app_: FastAPI):
     _LOGGER.info("Starting up...")
+    app.state.vespa_search_adapter = make_vespa_search_adapter()
     yield
     _LOGGER.info("Shutting down...")
 
