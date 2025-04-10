@@ -1014,7 +1014,7 @@ def test_process_vespa_search_response_sorting(
         sort_within_page=True,
     )
 
-    # Verify that passages are sorted by page number and text block ID within each document
+    # Verify that passages are sorted by page number and then by text block ID within each page
     for family in search_response.families:
         for document in family.family_documents:
             # Get all passages for this document
@@ -1034,8 +1034,11 @@ def test_process_vespa_search_response_sorting(
                 page_passages = [
                     pm
                     for pm in passages
-                    if pm.text_block_page
-                    or mock_parse_text_block_id(pm.text_block_id)[0] == page
+                    if (
+                        pm.text_block_page
+                        or mock_parse_text_block_id(pm.text_block_id)[0]
+                    )
+                    == page
                 ]
                 if page_passages:
                     block_ids = [
