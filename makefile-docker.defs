@@ -123,7 +123,7 @@ test_non_search:
 	docker compose -f docker-compose.yml -f docker-compose.dev.yml run --rm backend pytest -vvv -m 'not search' ${ARGS}
 
 test:
-	docker compose -f docker-compose.yml -f docker-compose.dev.yml run --rm backend pytest -vvv ./tests/search/vespa/test_whole_database_download.py::test_all_data_download_fails_when_s3_upload_failed
+	docker compose -f docker-compose.yml -f docker-compose.dev.yml run --rm backend pytest -vvv tests ${ARGS}
 
 # ----------------------------------
 # tasks
