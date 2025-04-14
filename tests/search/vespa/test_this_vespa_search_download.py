@@ -138,9 +138,9 @@ def test_csv_download_search_variable_limit(
         "offset": 0,
     }
 
+    query_spy = mocker.spy(test_vespa, "search")
     _make_download_request(data_client, valid_token, params=params)
 
-    query_spy = mocker.spy(test_vespa, "search")
     actual_params = query_spy.call_args.kwargs["parameters"].model_dump()
 
     # Check requested params are not changed

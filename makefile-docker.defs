@@ -123,8 +123,7 @@ test_non_search:
 	docker compose -f docker-compose.yml -f docker-compose.dev.yml run --rm backend pytest -vvv -m 'not search' ${ARGS}
 
 test:
-	docker compose -f docker-compose.yml -f docker-compose.dev.yml run --rm backend pytest -vvv ./tests/search/vespa/test_vespa_metadata_filters_search.py::test_metadata_filter
-
+	docker compose -f docker-compose.yml -f docker-compose.dev.yml run --rm backend pytest -vvv ./tests/search/vespa/test_this_vespa_search_download.py::test_csv_download_search_variable_limit
 # ----------------------------------
 # tasks
 # ----------------------------------
