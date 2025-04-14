@@ -648,7 +648,10 @@ def make_search_request(db: Session, search_body: SearchRequestBody) -> SearchRe
         sort_within_page=(
             True
             if search_body.sort_by is None
-            or search_body.concept_filters is not None
+            or (
+                search_body.concept_filters is not None
+                and len(search_body.concept_filters) > 0
+            )
             or search_body.exact_match
             else False
         ),
