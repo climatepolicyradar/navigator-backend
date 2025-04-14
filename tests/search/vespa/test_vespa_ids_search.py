@@ -5,7 +5,6 @@ from db_client.models.dfce import Slug
 from db_client.models.dfce.family import FamilyDocument
 from sqlalchemy.orm import Session
 
-from app.service import search
 from tests.search.vespa.setup_search_tests import (
     _make_search_request,
     _populate_db_families,
@@ -64,7 +63,7 @@ def test_family_ids_search(
     family_ids,
     valid_token,
 ):
-    monkeypatch.setattr(search, "_VESPA_CONNECTION", test_vespa)
+
     _populate_db_families(data_db)
 
     params = {
@@ -105,7 +104,7 @@ def test_document_ids_search(
     document_ids,
     valid_token,
 ):
-    monkeypatch.setattr(search, "_VESPA_CONNECTION", test_vespa)
+
     _populate_db_families(data_db)
 
     params = {
@@ -127,7 +126,7 @@ def test_document_ids_search(
 def test_document_ids_and_family_ids_search(
     mock_corpora_exist_in_db, test_vespa, data_db, monkeypatch, data_client, valid_token
 ):
-    monkeypatch.setattr(search, "_VESPA_CONNECTION", test_vespa)
+
     _populate_db_families(data_db)
 
     # The doc doesnt belong to the family, so we should get no results
@@ -152,7 +151,7 @@ def test_document_ids_and_family_ids_search(
 def test_empty_ids_dont_limit_result(
     mock_corpora_exist_in_db, test_vespa, data_db, monkeypatch, data_client, valid_token
 ):
-    monkeypatch.setattr(search, "_VESPA_CONNECTION", test_vespa)
+
     _populate_db_families(data_db)
 
     # We'd expect this to be interpreted as 'unlimited'

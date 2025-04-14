@@ -5,7 +5,6 @@ from db_client.models.dfce.family import FamilyDocument
 from fastapi import status
 from sqlalchemy import update
 
-from app.service import search
 from tests.search.vespa.setup_search_tests import (
     _create_document,
     _create_family,
@@ -27,14 +26,12 @@ def test_empty_search_term_performs_browse(
     data_client,
     data_db,
     mocker,
-    monkeypatch,
     valid_token,
 ):
     """Make sure that empty search term returns results in browse mode."""
     _populate_db_families(data_db)
-    monkeypatch.setattr(search, "_VESPA_CONNECTION", test_vespa)
 
-    query_spy = mocker.spy(search._VESPA_CONNECTION, "search")
+    query_spy = mocker.spy(test_vespa, "search")
     body = _make_search_request(data_client, valid_token, {"query_string": ""})
 
     assert body["hits"] > 0
@@ -63,7 +60,7 @@ def test_search_body_valid(
     valid_token,
 ):
     """Test a simple known valid search responds with success."""
-    monkeypatch.setattr(search, "_VESPA_CONNECTION", test_vespa)
+
     _populate_db_families(data_db)
 
     body = _make_search_request(
@@ -100,7 +97,7 @@ def test_no_doc_if_in_postgres_but_not_vespa(
     mock_corpora_exist_in_db, test_vespa, data_client, data_db, monkeypatch, valid_token
 ):
     """Test a simple known valid search responds with success."""
-    monkeypatch.setattr(search, "_VESPA_CONNECTION", test_vespa)
+
     _populate_db_families(data_db)
 
     # Add an extra postgres family that won't be in vespa
@@ -167,7 +164,7 @@ def test_benchmark_families_search(
     data_db,
     valid_token,
 ):
-    monkeypatch.setattr(search, "_VESPA_CONNECTION", test_vespa)
+
     _populate_db_families(data_db)
 
     # This is high as it's meant as a last resort for catching new performance problems
@@ -198,7 +195,7 @@ def test_benchmark_families_search(
 def test_specific_doc_returned(
     mock_corpora_exist_in_db, test_vespa, monkeypatch, data_client, data_db, valid_token
 ):
-    monkeypatch.setattr(search, "_VESPA_CONNECTION", test_vespa)
+
     _populate_db_families(data_db)
 
     family_name_query = "Agriculture Sector Plan 2015-2019"
@@ -241,7 +238,7 @@ def test_search_params_backend_limits(
     invalid_field,
     valid_token,
 ):
-    monkeypatch.setattr(search, "_VESPA_CONNECTION", test_vespa)
+
     _populate_db_families(data_db)
 
     params = {"query_string": "the", **extra_params}
@@ -266,7 +263,7 @@ def test_search_params_backend_limits(
 def test_search_with_deleted_docs(
     mock_corpora_exist_in_db, test_vespa, monkeypatch, data_client, data_db, valid_token
 ):
-    monkeypatch.setattr(search, "_VESPA_CONNECTION", test_vespa)
+
     _populate_db_families(data_db)
 
     start_body = _make_search_request(

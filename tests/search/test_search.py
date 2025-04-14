@@ -1125,8 +1125,7 @@ def test_process_vespa_search_response_sorting_across_all_passages(
 
 @pytest.mark.search
 def test_process_vespa_search_response_page_ordering_regression(
-    data_db: Session,
-    mocker,
+    data_db: Session, mocker, test_vespa
 ):
     """Test that passages are correctly ordered by page number when using numeric text_block_ids."""
     # Create our test data
@@ -1251,9 +1250,9 @@ def test_process_vespa_search_response_page_ordering_regression(
         ),
     ]
 
-    # Mock the Vespa search to return our test response
-    mock_vespa_search = mocker.patch("app.service.search._VESPA_CONNECTION.search")
-    mock_vespa_search.return_value = CprSdkSearchResponse(
+    # Mock the search method on the test_vespa instance
+    mock_search = mocker.patch.object(test_vespa, "search")
+    mock_search.return_value = CprSdkSearchResponse(
         total_hits=1,
         total_family_hits=1,
         query_time_ms=100,
@@ -1288,7 +1287,10 @@ def test_process_vespa_search_response_page_ordering_regression(
         document_ids=[f"{test_spec.family_import_id}"],
         continuation_tokens=[],
     )
-    response = make_search_request(db=data_db, search_body=search_body)
+
+    response = make_search_request(
+        db=data_db, vespa_search_adapter=test_vespa, search_body=search_body
+    )
 
     # Verify that passages are ordered correctly by page number
     assert len(response.families) == 1
