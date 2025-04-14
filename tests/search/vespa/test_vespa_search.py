@@ -31,13 +31,13 @@ def test_empty_search_term_performs_browse(
     """Make sure that empty search term returns results in browse mode."""
     _populate_db_families(data_db)
 
+    query_spy = mocker.spy(test_vespa, "search")
     body = _make_search_request(data_client, valid_token, {"query_string": ""})
 
     assert body["hits"] > 0
     assert len(body["families"]) > 0
 
     # Should automatically use vespa `all_results` parameter for browse requests
-    query_spy = mocker.spy(test_vespa, "search")
     assert query_spy.call_args.kwargs["parameters"].all_results
     query_spy.assert_called_once()
 
