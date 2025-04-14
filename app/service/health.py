@@ -11,13 +11,13 @@ from app.service.vespa import get_vespa_search_adapter
 _LOGGER = logging.getLogger(__file__)
 
 
-def is_rds_online(db):
+def is_rds_online(db: Session):
     """Runs a sql query against the db"""
     return db.execute("SELECT 1") is not None
 
 
 def is_vespa_online(
-    vespa_search_adapter: VespaSearchAdapter = Depends(get_vespa_search_adapter),
+    vespa_search_adapter: VespaSearchAdapter,
 ):
     """Check queries work against the vespa instance"""
     try:
@@ -30,6 +30,9 @@ def is_vespa_online(
     return True
 
 
-def is_database_online(db: Session = Depends(get_db)) -> bool:
+def is_database_online(
+    db: Session = Depends(get_db),
+    vespa_search_adapter: VespaSearchAdapter = Depends(get_vespa_search_adapter),
+) -> bool:
     """Checks database health."""
-    return all([is_rds_online(db), is_vespa_online()])
+    return all([is_rds_online(db), is_vespa_online(vespa_search_adapter)])
