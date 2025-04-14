@@ -547,9 +547,16 @@ def _process_vespa_search_response_families(
                 if sort_within_page:
                     response_document.document_passage_matches.sort(
                         key=lambda x: (
-                            x.text_block_page
-                            or _parse_text_block_id(x.text_block_id)[0]
-                            or float("inf"),
+                            (
+                                x.text_block_page
+                                if x.text_block_page is not None
+                                else (
+                                    _parse_text_block_id(x.text_block_id)[0]
+                                    if _parse_text_block_id(x.text_block_id)[0]
+                                    is not None
+                                    else float("inf")
+                                )
+                            ),
                             _parse_text_block_id(x.text_block_id)[1],
                         )
                     )
