@@ -1,3 +1,4 @@
+import json
 import logging
 import logging.config
 import os
@@ -24,11 +25,21 @@ from app.clients.db.session import SessionLocal
 from app.service.auth import get_superuser_details
 from app.service.health import is_database_online
 from app.service.vespa import make_vespa_search_adapter
+from app.telemetry import Telemetry
+from app.telemetry_config import TelemetryConfig
 
 os.environ["SKIP_ALEMBIC_LOGGING"] = "1"
 
+
+otel_config = TelemetryConfig.from_service_manifest(
+    json.load(open("service-manifest.json")), "staging", "0.1.0"
+)
+
+telemetry = Telemetry(otel_config)
+tracer = telemetry.get_tracer()
+
 # Clear existing log handlers so we always log in structured JSON
-root_logger = logging.getLogger()
+root_logger = telemetry.get_logger()
 if root_logger.handlers:
     for handler in root_logger.handlers:
         root_logger.removeHandler(handler)
@@ -171,3 +182,7 @@ if __name__ == "__main__":
         port=8888,
         log_config=DEFAULT_LOGGING,
     )  # type: ignore
+
+
+telemetry.instrument_fastapi(app)
+telemetry.setup_exception_hook()

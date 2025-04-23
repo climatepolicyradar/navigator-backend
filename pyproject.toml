@@ -36,13 +36,18 @@ urllib3 = "<2"
 apscheduler = "^3.10.4"
 numpy = "1.26.4"
 python-dateutil = "^2.9.0.post0"
+opentelemetry-instrumentation-fastapi = "^0.53b1"
+opentelemetry-sdk = "^1.32.1"
+python-dotenv = "^1.1.0"
+pydantic-settings = "^2.9.1"
+opentelemetry-exporter-otlp = "^1.32.1"
 
 [tool.poetry.dev-dependencies]
 black = "^23.1.0"
 moto = { version = "^3.0.3", extras = ["s3"] }
 pytest = "^8.3.4"
 pytest-asyncio = "^0.23.8"
-python-dotenv = "^0.19.2"
+
 pytest-mock = "^3.7.0"
 pyright = "^1.1.384"
 ruff = "^0.6.9"
