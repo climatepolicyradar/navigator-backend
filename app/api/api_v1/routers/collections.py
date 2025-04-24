@@ -39,10 +39,6 @@ async def collection_detail(
     if collection_import_id is None:
         raise HTTPException(status_code=NOT_FOUND, detail=f"Nothing found for {slug}")
 
-    _LOGGER.info(
-        f"This is getting here to the collection import Id {collection_import_id}"
-    )
-
     try:
         if collection_import_id:
             return get_collection(db, collection_import_id)
