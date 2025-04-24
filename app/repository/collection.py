@@ -1,5 +1,5 @@
 import os
-from typing import Optional, cast
+from typing import Optional
 
 from db_client.models.dfce.collection import Collection, CollectionFamily
 from db_client.models.dfce.family import Family, Slug
@@ -15,7 +15,7 @@ from app.repository.helpers import get_query_template
 def get_id_from_slug(
     db: Session, slug: str, allowed_corpora: Optional[list[str]] = None
 ) -> str | None:
-    """Match the slug name to a FamilyDocument or Family import ID.
+    """Match the slug name to a Collection Import ID
 
     This function also contains logic to only get the import ID for the
     family or document if the slug given is associated with a family
@@ -25,39 +25,38 @@ def get_id_from_slug(
     :param str slug: slug name to match
     :param Optional[list[str]] allowed_corpora: The corpora IDs to look
         for the slugged object in.
-    :return tuple[Optional[str], Optional[str]]: the Collection import_id.
+    :return str | None : the Collection import_id or None if not found
+    :raises Exception: if multiple rows are found for the slug
     """
-    if allowed_corpora not in [None, []]:
-        query_template = text(
-            get_query_template(
-                os.path.join("app", "repository", "sql", "slug_lookup.sql")
+    try:
+        if allowed_corpora not in [None, []]:
+            query_template = text(
+                get_query_template(
+                    os.path.join(
+                        "app", "repository", "sql", "slug_lookup_collections.sql"
+                    )
+                )
             )
-        )
 
-        query_template = query_template.bindparams(
-            bindparam("slug_name", type_=String),
-            bindparam(
-                "allowed_corpora_ids", value=allowed_corpora, type_=ARRAY(String)
-            ),
-        )
-        query = db.execute(
-            query_template, {"slug_name": slug, "allowed_corpora_ids": allowed_corpora}
-        )
-    else:
-        query = db.query(Slug.collection_import_id).filter(Slug.name == slug)
+            query_template = query_template.bindparams(
+                bindparam("slug_name", type_=String),
+                bindparam(
+                    "allowed_corpora_ids", value=allowed_corpora, type_=ARRAY(String)
+                ),
+            )
+            query = db.execute(
+                query_template,
+                {"slug_name": slug, "allowed_corpora_ids": allowed_corpora},
+            )
+        else:
+            query = db.query(Slug.collection_import_id).filter(Slug.name == slug)
 
-    result = query.one_or_none()
-    if result is None:
-        return None
+        result = query.one_or_none()
+        # result return a tuple with the collection import id
+        return str(result[0]) if result is not None else None
 
-    COLLECTION_INDEX = 0
-    collection_id = (
-        cast(str, result[COLLECTION_INDEX])
-        if result[COLLECTION_INDEX] is not None
-        else None
-    )
-
-    return collection_id
+    except MultipleResultsFound:
+        raise Exception(f"Multiple rows found for slug: {slug}. Expected only one.")
 
 
 def get_collection(
