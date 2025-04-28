@@ -1,10 +1,38 @@
-import os
+import json
 import socket
-from typing import Any, Dict, Optional
+from pathlib import Path
 
 from opentelemetry.sdk.resources import Resource
-from pydantic import Field, field_validator
+from pydantic import BaseModel, Field, ValidationError, field_validator
 from pydantic_settings import BaseSettings
+
+
+class ServiceManifest(BaseModel):
+    class Input(BaseModel):
+        type: str
+        name: str
+
+    service_name: str = Field(alias="service.name")
+    service_namespace: str = Field(alias="service.namespace")
+    team: str
+    inputs: list[Input]
+    outputs: list[str]
+    repos: list[str]
+
+    @classmethod
+    def from_file(cls, file_path: str | Path) -> "ServiceManifest":
+        try:
+            with open(file_path, "r") as f:
+                data = json.load(f)
+                return cls.model_validate(data)
+        except FileNotFoundError:
+            raise FileNotFoundError(f"Manifest file not found: {file_path}")
+        except json.JSONDecodeError as e:
+            raise json.JSONDecodeError(
+                f"Invalid JSON in manifest file: {str(e)}", e.doc, e.pos
+            )
+        except ValidationError as e:
+            raise ValueError(f"Invalid manifest schema: {str(e)}")
 
 
 class TelemetryConfig(BaseSettings):
@@ -32,12 +60,12 @@ class TelemetryConfig(BaseSettings):
     log_level: str = Field(default="INFO")
 
     # Automatic attributes
-    hostname: str = None
-    service_instance_id: str = None
+    hostname: str = Field(default="")
+    service_instance_id: str = Field(default="")
 
     @classmethod
     def from_service_manifest(
-        cls, service_manifest: dict, environment: str, version: str
+        cls, service_manifest: ServiceManifest, environment: str, version: str
     ):
         """
         Create a TelemetryConfig from a service manifest.
@@ -46,19 +74,20 @@ class TelemetryConfig(BaseSettings):
         :return: A TelemetryConfig instance
         """
 
-        # TODO better way to handle this
         otel_endpoint = (
-            "https://otel.staging.climatepolicyradar.org"
-            if environment == "staging"
-            else "https://otel.prod.climatepolicyradar.org"
+            "https://otel.prod.climatepolicyradar.org"
+            if environment == "production"
+            else "https://otel.staging.climatepolicyradar.org"
         )
 
-        service_instance_id = f"{service_manifest.get('service.name')}-{environment}-{socket.gethostname()}"
+        service_instance_id = (
+            f"{service_manifest.service_name}-{environment}-{socket.gethostname()}"
+        )
 
         return cls(
-            service_name=service_manifest.get("service.name"),
+            service_name=service_manifest.service_name,
+            namespace_name=service_manifest.service_namespace,
             environment=environment,
-            namespace_name=service_manifest.get("service.namespace"),
             service_instance_id=service_instance_id,
             otlp_endpoint=otel_endpoint,
             service_version=version,

@@ -1,15 +1,11 @@
-import asyncio
-import hashlib
 import logging
 import logging.config
-from functools import wraps
-from time import perf_counter
 
 # For fastapi auto-instrumentation
 from fastapi import FastAPI
 
 ## Tracing imports - stable
-from opentelemetry import metrics, trace
+from opentelemetry import trace
 from opentelemetry._logs import set_logger_provider
 from opentelemetry.exporter.otlp.proto.http._log_exporter import OTLPLogExporter
 from opentelemetry.exporter.otlp.proto.http.trace_exporter import OTLPSpanExporter
@@ -20,13 +16,9 @@ from opentelemetry.sdk._logs import LoggerProvider, LoggingHandler
 from opentelemetry.sdk._logs.export import BatchLogRecordProcessor
 from opentelemetry.sdk.trace import TracerProvider
 from opentelemetry.sdk.trace.export import BatchSpanProcessor
-from opentelemetry.trace import Status, StatusCode
 
 from app.telemetry_config import TelemetryConfig
-from app.telemetry_exceptions import (
-    add_telemetry_for_exception,
-    install_exception_hooks,
-)
+from app.telemetry_exceptions import install_exception_hooks
 
 
 class Telemetry:
@@ -71,7 +63,7 @@ class Telemetry:
         :param instrumentor: An object that implements the integration with __call__ method.
         :param details: A dictionary of details for the integration.
         """
-        instrumentor(self)
+        instrumentor(self)  # type: ignore
 
     def get_tracer(self):
         """Returns the otel tracer"""
@@ -83,14 +75,20 @@ class Telemetry:
         set_logger_provider(logger_provider)
 
         log_exporter = BatchLogRecordProcessor(
-            OTLPLogExporter(endpoint=f"{self.config.otlp_endpoint}/v1/logs")
+            OTLPLogExporter(
+                endpoint=(
+                    f"{self.config.otlp_endpoint}/v1/logs"
+                    if self.config.otlp_endpoint
+                    else None
+                )
+            )
         )
         logger_provider.add_log_record_processor(log_exporter)
         self.logger = logging.getLogger(self.config.service_name)
         self.logger.setLevel(self.config.log_level)
 
         log_handler = LoggingHandler(
-            level=self.config.log_level, logger_provider=logger_provider
+            level=self.config.log_level, logger_provider=logger_provider  # type: ignore
         )
 
         # We'll attach the OTLP handler to the root logger

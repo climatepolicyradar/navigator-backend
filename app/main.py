@@ -1,4 +1,3 @@
-import json
 import logging
 import logging.config
 import os
@@ -26,30 +25,9 @@ from app.service.auth import get_superuser_details
 from app.service.health import is_database_online
 from app.service.vespa import make_vespa_search_adapter
 from app.telemetry import Telemetry
-from app.telemetry_config import TelemetryConfig
+from app.telemetry_config import ServiceManifest, TelemetryConfig
 
 os.environ["SKIP_ALEMBIC_LOGGING"] = "1"
-
-
-otel_config = TelemetryConfig.from_service_manifest(
-    json.load(open("service-manifest.json")), "staging", "0.1.0"
-)
-
-telemetry = Telemetry(otel_config)
-tracer = telemetry.get_tracer()
-
-# Clear existing log handlers so we always log in structured JSON
-root_logger = telemetry.get_logger()
-if root_logger.handlers:
-    for handler in root_logger.handlers:
-        root_logger.removeHandler(handler)
-
-for _, logger in logging.root.manager.loggerDict.items():
-    if isinstance(logger, logging.Logger):
-        logger.propagate = True
-        if logger.handlers:
-            for handler in logger.handlers:
-                logger.removeHandler(handler)
 
 LOG_LEVEL = os.getenv("LOG_LEVEL", "INFO").upper()
 DEFAULT_LOGGING = {
@@ -69,6 +47,37 @@ DEFAULT_LOGGING = {
 }
 _LOGGER = logging.getLogger(__name__)
 logging.config.dictConfig(DEFAULT_LOGGING)
+
+
+try:
+    otel_config = TelemetryConfig.from_service_manifest(
+        ServiceManifest.from_file("service-manifest.json"), config.ENV, "0.1.0"
+    )
+except Exception as _:
+    _LOGGER.error("Failed to load service manifest, using defaults")
+    otel_config = TelemetryConfig(
+        service_name="navigator-backend",
+        namespace_name="navigator",
+        service_version="0.0.0",
+        environment=config.ENV,
+    )
+
+telemetry = Telemetry(otel_config)
+tracer = telemetry.get_tracer()
+
+# Clear existing log handlers so we always log in structured JSON
+root_logger = telemetry.get_logger()
+if root_logger.handlers:
+    for handler in root_logger.handlers:
+        root_logger.removeHandler(handler)
+
+for _, logger in logging.root.manager.loggerDict.items():
+    if isinstance(logger, logging.Logger):
+        logger.propagate = True
+        if logger.handlers:
+            for handler in logger.handlers:
+                logger.removeHandler(handler)
+
 
 _docs_description = """
 This documentation is intended to explain the use of our search API for external 

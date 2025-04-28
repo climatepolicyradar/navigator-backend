@@ -62,7 +62,7 @@ def _enrich_with_exception(e_type, e_value, e_traceback):
             },
         )
     else:
-        with trace.start_as_current_span("exception_without_span") as new_span:
+        with trace.start_as_current_span("exception_without_span") as new_span:  # type: ignore
             new_span.set_status(Status(StatusCode.ERROR))
             new_span.add_event(
                 name="exception",
