@@ -4,7 +4,7 @@ from db_client.models.dfce import Slug
 from fastapi import status
 from sqlalchemy.orm import Session
 
-from tests.non_search.setup_helpers import get_default_collections
+from tests.non_search.setup_helpers import get_default_collections, setup_with_two_docs
 
 COLLECTIONS_ENDPOINT = "/api/v1/collections"
 TEST_HOST = "http://localhost:3000/"
@@ -14,6 +14,7 @@ def _setup_collection_data(db: Session):
     # Collection
     collection1, _ = get_default_collections()
     import_id = collection1["import_id"]
+    setup_with_two_docs(db)
 
     new_slug = Slug(
         collection_import_id=import_id,
@@ -48,5 +49,31 @@ def test_endpoint_returns_collections_ok_with_slug(data_db, data_client, valid_t
     _setup_collection_data(data_db)
     resp = _collection_lookup_request(data_client, valid_token, "collection_slug")
 
-    print(resp)
-    assert resp
+    expected_response = {
+        "import_id": "CPR.Collection.1.0",
+        "title": "Collection1",
+        "description": "CollectionSummary1",
+        "families": [
+            {"title": "Fam1", "slug": "FamSlug1", "description": "Summary1"},
+            {"title": "Fam2", "slug": "FamSlug2", "description": "Summary2"},
+        ],
+    }
+
+    assert resp == expected_response
+
+
+def test_endpoint_returns_404_with_invalid_slug(
+    data_db,
+    data_client,
+    valid_token,
+):
+    _setup_collection_data(data_db)
+    resp = _collection_lookup_request(
+        data_client,
+        valid_token,
+        "invalid_slug",
+        status.HTTP_404_NOT_FOUND,
+    )
+
+    expected_response = {"detail": "Nothing found for invalid_slug"}
+    assert resp == expected_response
