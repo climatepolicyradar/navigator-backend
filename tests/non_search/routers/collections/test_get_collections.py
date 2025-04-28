@@ -19,7 +19,7 @@ def _setup_collection_data(db: Session):
         collection_import_id=import_id,
         family_import_id=None,
         family_document_import_id=None,
-        name=["collection_slug"],
+        name="collection_slug",
     )
 
     db.add(new_slug)
