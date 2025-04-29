@@ -635,33 +635,36 @@ def make_search_request(
     search_body: SearchRequestBody,
 ) -> SearchResponse:
     """Perform a search request against the Vespa search engine"""
-    search_body = mutate_search_body_for_search_type(search_body=search_body)
 
     try:
+        search_body = mutate_search_body_for_search_type(search_body=search_body)
         cpr_sdk_search_params = create_vespa_search_params(db, search_body)
         cpr_sdk_search_response = vespa_search_adapter.search(
             parameters=cpr_sdk_search_params
         )
+        return process_vespa_search_response(
+            db,
+            cpr_sdk_search_response,
+            limit=search_body.page_size,
+            offset=search_body.offset,
+            # Set default sort to within page.
+            sort_within_page=(
+                True
+                if search_body.sort_by is None
+                or (
+                    search_body.concept_filters is not None
+                    and len(search_body.concept_filters) > 0
+                )
+                or search_body.exact_match
+                else False
+            ),
+        ).increment_pages()
     except QueryError as e:
+        _LOGGER.error(f"make_search_request QueryError: {e}")
         raise ValidationError(e)
-
-    return process_vespa_search_response(
-        db,
-        cpr_sdk_search_response,
-        limit=search_body.page_size,
-        offset=search_body.offset,
-        # Set default sort to within page.
-        sort_within_page=(
-            True
-            if search_body.sort_by is None
-            or (
-                search_body.concept_filters is not None
-                and len(search_body.concept_filters) > 0
-            )
-            or search_body.exact_match
-            else False
-        ),
-    ).increment_pages()
+    except Exception as e:
+        _LOGGER.error(f"make_search_request Exception: {e}")
+        raise Exception(e)
 
 
 def get_family_from_vespa(
