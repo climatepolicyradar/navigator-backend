@@ -26,12 +26,6 @@ def test_read_docs(test_client):
         assert openapi_response.status_code == 404
 
 
-def test_health_endpoint_returns_200_when_all_healthy(test_client):
-    """Test health endpoint returns 200 when all services are healthy."""
-    response = test_client.get(HEALTH_ENDPOINT)
-    assert response.status_code == status.HTTP_200_OK
-
-
 @pytest.mark.parametrize(
     "rds_online,vespa_online,expected_status",
     [
