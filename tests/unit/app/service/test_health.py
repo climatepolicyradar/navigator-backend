@@ -26,17 +26,6 @@ def test_is_rds_online_returns_false_when_db_error(caplog):
     assert "🔴 RDS health check failed: Database error" in caplog.text
 
 
-def test_is_vespa_online_returns_true_when_vespa_healthy():
-    """Test Vespa health check returns True when Vespa is responsive."""
-    mock_vespa = Mock()
-    mock_vespa.client.query.return_value = Mock()
-
-    assert is_vespa_online(mock_vespa) is True
-
-    expected_query = {"yql": "select * from sources * where true", "hits": "0"}
-    mock_vespa.client.query.assert_called_once_with(expected_query)
-
-
 @pytest.mark.parametrize("dev_mode", [True, False])
 def test_is_vespa_online_returns_false_when_vespa_error(dev_mode, monkeypatch, caplog):
     """Test Vespa health check returns False when Vespa throws error."""
@@ -63,7 +52,7 @@ def test_is_vespa_online_returns_false_when_vespa_error(dev_mode, monkeypatch, c
         (False, False, False),
     ],
 )
-def test_is_database_online(rds_health, vespa_health, expected_health):
+def test_is_database_online(rds_health, vespa_health, expected_health, monkeypatch):
     """Test overall database health check returns correct status."""
     mock_db = Mock()
     mock_vespa = Mock()
@@ -73,12 +62,41 @@ def test_is_database_online(rds_health, vespa_health, expected_health):
     mock_vespa_check = Mock(return_value=vespa_health)
 
     # Patch the individual health check functions
-    with pytest.MonkeyPatch().context() as m:
-        m.setattr("app.service.health.is_rds_online", mock_rds_check)
-        m.setattr("app.service.health.is_vespa_online", mock_vespa_check)
+    monkeypatch.setattr("app.service.health.is_rds_online", mock_rds_check)
+    monkeypatch.setattr("app.service.health.is_vespa_online", mock_vespa_check)
 
-        assert is_database_online(mock_db, mock_vespa) is expected_health
+    assert is_database_online(mock_db, mock_vespa) is expected_health
 
-        # Verify the mocked functions were called with correct arguments
-        mock_rds_check.assert_called_once_with(mock_db)
-        mock_vespa_check.assert_called_once_with(mock_vespa)
+    # Verify the mocked functions were called with correct arguments
+    mock_rds_check.assert_called_once_with(mock_db)
+    mock_vespa_check.assert_called_once_with(mock_vespa)
+
+
+def test_is_vespa_online_with_timeout():
+    """Test Vespa health check uses correct timeout in query."""
+    mock_vespa = Mock()
+    mock_vespa.client.query.return_value = Mock()
+
+    assert is_vespa_online(mock_vespa, timeout_seconds=5) is True
+
+    expected_query = {
+        "yql": "select * from sources * where true",
+        "hits": "0",
+        "timeout": "5",
+    }
+    mock_vespa.client.query.assert_called_once_with(expected_query)
+
+
+def test_is_vespa_online_with_default_timeout():
+    """Test Vespa health check uses default timeout in query."""
+    mock_vespa = Mock()
+    mock_vespa.client.query.return_value = Mock()
+
+    assert is_vespa_online(mock_vespa) is True
+
+    expected_query = {
+        "yql": "select * from sources * where true",
+        "hits": "0",
+        "timeout": "1",  # default
+    }
+    mock_vespa.client.query.assert_called_once_with(expected_query)

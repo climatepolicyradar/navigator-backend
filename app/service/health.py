@@ -26,22 +26,30 @@ def is_rds_online(db: Session) -> bool:
         return False
 
 
-def is_vespa_online(vespa_search_adapter: VespaSearchAdapter) -> bool:
+def is_vespa_online(
+    vespa_search_adapter: VespaSearchAdapter, timeout_seconds: int = 1
+) -> bool:
     """Check queries work against the vespa instance
 
     :param vespa_search_adapter: Vespa search adapter
     :type vespa_search_adapter: VespaSearchAdapter
+    :param timeout_seconds: Timeout for the query
+    :type timeout_seconds: int
     :return: True if Vespa is responsive
     :rtype: bool
     """
     try:
-        query_body = {"yql": "select * from sources * where true", "hits": "0"}
+        query_body = {
+            "yql": "select * from sources * where true",
+            "hits": "0",
+            "timeout": f"{timeout_seconds}",  # Default unit is seconds, otherwise specify unit
+        }
         vespa_search_adapter.client.query(query_body)
         return True
     except Exception as e:
         if DEVELOPMENT_MODE is False:
             _LOGGER.error(f"🔴 Vespa health check failed: {e}")
-        return False
+    return False
 
 
 def is_database_online(
