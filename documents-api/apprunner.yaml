@@ -3,6 +3,7 @@ runtime: python311
 build:
   commands:
     build:
+      - cd documents-api
       - pip3 install -r requirements.txt
 run:
   runtime-version: 3.11
