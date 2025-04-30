@@ -1,6 +1,6 @@
 FROM python:3.11-slim
 
-WORKDIR /app
+WORKDIR /
 
 # Install system dependencies required for psycopg2
 RUN apt-get update && apt-get install -y \
@@ -8,10 +8,10 @@ RUN apt-get update && apt-get install -y \
     libpq-dev \
     && rm -rf /var/lib/apt/lists/*
 
-COPY ./requirements.txt /app/requirements.txt
+COPY ./requirements.txt /requirements.txt
 
-RUN pip install --no-cache-dir --upgrade -r /app/requirements.txt
+RUN pip install --no-cache-dir --upgrade -r /requirements.txt
 
-COPY ./app /app/app
+COPY ./app /app
 
 CMD ["fastapi", "run", "app/main.py", "--port", "8080"]
