@@ -5,4 +5,4 @@ build:
     build:
       - pip install -r requirements.txt
 run:
-  command: fastapi run app/main.py --port 8000
+  command: fastapi run app/main.py --port 8080

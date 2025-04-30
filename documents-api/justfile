@@ -1,5 +1,5 @@
 dev:
-    NAVIGATOR_DATABASE_URL=postgresql://navigator:navigator@localhost/navigator poetry run fastapi dev app/main.py
+    NAVIGATOR_DATABASE_URL=postgresql://navigator:navigator@localhost/navigator poetry run fastapi dev app/main.py --port 8080
 
 requirements:
     poetry export --without-hashes --format requirements.txt > requirements.txt
