@@ -210,4 +210,16 @@ def docs_by_geo(session: Session = Depends(get_navigator_session)):
     )
 
 
+class HealthCheck(SQLModel):
+    status: str
+
+
+@router.get(
+    "/health",
+    response_model=HealthCheck,
+)
+def health_check():
+    return HealthCheck(status="ok")
+
+
 app.include_router(router)
