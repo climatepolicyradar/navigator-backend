@@ -1,0 +1,22 @@
+services:
+  navigator-db:
+    image: postgres:14.12
+    environment:
+      POSTGRES_USER: navigator
+      POSTGRES_PASSWORD: navigator
+      POSTGRES_DB: navigator
+    ports:
+      - 5432:5432
+    volumes:
+      - navigator_postgres_data:/var/lib/postgresql/data
+      - ./sql-init:/docker-entrypoint-initdb.d
+  documents-api:
+    build:
+      context: .
+      dockerfile: Dockerfile
+    ports:
+      - 8000:8000
+    volumes:
+      - .:/app
+volumes:
+  navigator_postgres_data: {}
