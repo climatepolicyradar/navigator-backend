@@ -1,6 +1,8 @@
+import os
 from typing import Generic, Optional, TypeVar
 
-from fastapi import Depends, FastAPI
+from fastapi import APIRouter, Depends, FastAPI
+from pydantic_settings import BaseSettings
 from sqlalchemy import create_engine
 from sqlmodel import Field, Relationship, Session, SQLModel, func, select
 
@@ -112,9 +114,7 @@ class PhysicalDocumentBase(RDSModel):
 
 class PhysicalDocument(PhysicalDocumentBase, table=True):
     __tablename__ = "physical_document"
-    family_document: FamilyDocument | None = Relationship(
-        back_populates="physical_document"
-    )
+    family_document: FamilyDocument = Relationship(back_populates="physical_document")
 
 
 class PhysicalDocumentPublic(PhysicalDocumentBase):
@@ -131,12 +131,19 @@ class APIResponse(SQLModel, Generic[APIDataType]):
     page_size: int
 
 
+class Settings(BaseSettings):
+    navigator_database_url: str
+
+
+settings = Settings()
+
+
+router = APIRouter(
+    prefix="/documents",
+)
 app = FastAPI()
 
-navigator_engine = create_engine(
-    # This just matches the docker-compose.yml file
-    str("postgresql://navigator:navigator@localhost/navigator")
-)
+navigator_engine = create_engine(settings.navigator_database_url)
 
 
 def get_navigator_session():
@@ -144,7 +151,7 @@ def get_navigator_session():
         yield session
 
 
-@app.get("/", response_model=APIResponse[PhysicalDocumentPublic])
+@router.get("/", response_model=APIResponse[PhysicalDocumentPublic])
 def read_documents(*, session: Session = Depends(get_navigator_session)):
     documents = session.exec(
         select(PhysicalDocument)
@@ -170,8 +177,8 @@ class GeographyDocumentCount(SQLModel):
     count: int
 
 
-@app.get(
-    "/aggregations/documents-by-geography",
+@router.get(
+    "/aggregations/by-geography",
     response_model=APIResponse[GeographyDocumentCount],
 )
 def docs_by_geo(session: Session = Depends(get_navigator_session)):
@@ -203,15 +210,4 @@ def docs_by_geo(session: Session = Depends(get_navigator_session)):
     )
 
 
-
-
-
-
-
-
-
-
-
-
-
-
+app.include_router(router)
