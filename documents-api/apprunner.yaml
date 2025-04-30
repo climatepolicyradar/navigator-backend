@@ -12,4 +12,5 @@ run:
   network:
     port: 8080
   env:
-    NAVIGATOR_DATABASE_URL: postgresql://navigator:navigator@localhost/navigator
+    - name: NAVIGATOR_DATABASE_URL
+      value: postgresql://navigator:navigator@localhost/navigator
