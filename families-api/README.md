@@ -41,27 +41,31 @@ pulumi up --stack production
 - [ ] JSON logging
 - [ ] OTel implementation
 
-## POtential end-game
+## Potential middle-game
 
 ```mermaid
-flowchart LR
+flowchart RL
     subgraph production
         direction LR
         Rouet53["api.policyradar.io"]-->CloudFront
-        CloudFront-->CloudFrontOrigin/concepts-->AppRunner/concepts
-        CloudFront-->CloudFrontOrigin/families-->AppRunner/families
-        CloudFront-->CloudFrontOrigin/documents-->AppRunner/documents
-        CloudFront-->CloudFrontOrigin/passages-->AppRunner/passages
-        CloudFront-->CloudFrontOrigin/labels-->AppRunner/labels
+        CloudFront-->CloudFrontOrigin/concepts-->AppRunner/concepts-->BakedDuckDB-->ConceptsRespone
+        CloudFront-->CloudFrontOrigin/families-->AppRunner/families-->RDS-->FamiliesResponse
+        CloudFront-->CloudFrontOrigin/documents-->AppRunner/documents-->NewRDS-->DocumentsResponse
+        CloudFront-->CloudFrontOrigin/passages-->AppRunner/passages-->DataLake-->PassagesRespons
+        CloudFront-->CloudFrontOrigin/labels-->AppRunner/labels-->???-->LabelsResponse
     end
 
     subgraph staging
         direction LR
         StagingRouet53["api.policyradar.dev"]-->StagingCloudFront
-        StagingCloudFront-->StagingCloudFrontOrigin/concepts-->StagingAppRunner/concepts
-        StagingCloudFront-->StagingCloudFrontOrigin/families-->StagingAppRunner/families
-        StagingCloudFront-->StagingCloudFrontOrigin/documents-->StagingAppRunner/documents
-        StagingCloudFront-->StagingCloudFrontOrigin/passages-->StagingAppRunner/passages
-        StagingCloudFront-->StagingCloudFrontOrigin/labels-->StagingAppRunner/labels
+        StagingCloudFront-->StagingCloudFrontOrigin/concepts-->...
+        StagingCloudFront-->StagingCloudFrontOrigin/families-->....
+        StagingCloudFront-->StagingCloudFrontOrigin/documents-->.....
+        StagingCloudFront-->StagingCloudFrontOrigin/passages-->......
+        StagingCloudFront-->StagingCloudFrontOrigin/labels-->.......
     end
 ```
+
+## Potential datalake-game
+
+TBD
