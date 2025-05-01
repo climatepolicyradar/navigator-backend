@@ -25,6 +25,13 @@
 
 - [ ] the `main` branch will always be what's on production
 
+**infra**
+
+```bash
+cd infra
+pulumi up --stack production
+```
+
 ## TODO
 
 ### Infra (things added manually)
