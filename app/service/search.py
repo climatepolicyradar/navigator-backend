@@ -569,7 +569,7 @@ def process_vespa_search_response(
     vespa_search_response: CprSdkSearchResponse,
     limit: int,
     offset: int,
-    sort_within_page: bool = False,
+    sort_within_page: bool,
 ) -> SearchResponse:
     """Process a Vespa search response into a F/E search response"""
 
@@ -647,17 +647,7 @@ def make_search_request(
             cpr_sdk_search_response,
             limit=search_body.page_size,
             offset=search_body.offset,
-            # Set default sort to within page.
-            sort_within_page=(
-                True
-                if search_body.sort_by is None
-                or (
-                    search_body.concept_filters is not None
-                    and len(search_body.concept_filters) > 0
-                )
-                or search_body.exact_match
-                else False
-            ),
+            sort_within_page=search_body.sort_within_page,
         ).increment_pages()
     except QueryError as e:
         _LOGGER.error(f"make_search_request QueryError: {e}")

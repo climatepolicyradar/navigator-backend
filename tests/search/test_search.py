@@ -891,6 +891,7 @@ def test_process_vespa_search_response(
         vespa_search_response=vespa_response,
         limit=page_size,
         offset=offset,
+        sort_within_page=False,
     )
 
     assert len(search_response.families) == min(len(fam_specs), page_size)
@@ -1286,6 +1287,7 @@ def test_process_vespa_search_response_page_ordering_regression(
         concept_filters=[],  # Empty list, not None
         document_ids=[f"{test_spec.family_import_id}"],
         continuation_tokens=[],
+        sort_within_page=True,
     )
 
     response = make_search_request(
