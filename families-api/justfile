@@ -1,0 +1,33 @@
+# should be used for first run
+bootstrap:
+    # TODO: find a way to ensure we're using the latest dump
+    @echo "🔄 downloading latest dump from s3"
+    aws s3 cp s3://cpr-production-rds/dumps/2025-04-23-navigator-production.sql ./initial-data/2025-04-23-navigator-production.sql
+
+    @echo "🚀 starting db docker container to load in data"
+    docker compose up -d db
+
+    @echo "⏳ waiting for Postgres to become healthy"
+    @bash just-scripts/is-container-healthy.sh db
+
+    @echo "✅ Bootstrap complete — shutting down"
+    docker compose down
+
+dev:
+    docker compose up
+
+# TODO: this needs to be tied into a lifecycle somewhere to make sure it is run if something is added
+# sed is used here to remove a whole bunch of gumpf you can not remove with poetry v1 
+requirements:
+    poetry export --without-hashes --without-urls --format requirements.txt | sed 's/ ;.*//'  > requirements.txt
+
+# Local docker development
+ecr-login:
+    aws ecr get-login-password --region eu-west-1 --profile $AWS_PROFILE | docker login --username AWS --password-stdin $(aws sts get-caller-identity --query 'Account' --output text --profile $AWS_PROFILE).dkr.ecr.eu-west-1.amazonaws.com
+
+docker-build:
+    docker buildx build --platform linux/amd64 --output type=docker -t families-api:latest .
+
+docker-push:
+    docker tag families-api:latest $(aws sts get-caller-identity --query 'Account' --output text --profile $AWS_PROFILE).dkr.ecr.eu-west-1.amazonaws.com/families-api:latest
+    docker push $(aws sts get-caller-identity --query 'Account' --output text --profile $AWS_PROFILE).dkr.ecr.eu-west-1.amazonaws.com/families-api:latest
