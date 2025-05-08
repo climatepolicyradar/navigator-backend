@@ -52,6 +52,7 @@ from app.repository.lookups import (
     get_countries_for_slugs,
 )
 from app.service.util import to_cdn_url
+from app.telemetry import observe
 
 _LOGGER = logging.getLogger(__name__)
 
@@ -135,6 +136,7 @@ def _get_extra_csv_info(
     return extra_csv_info
 
 
+@observe("process_result_into_csv")
 def process_result_into_csv(
     db: Session,
     search_response: SearchResponse,
@@ -564,6 +566,7 @@ def _process_vespa_search_response_families(
     return response_families
 
 
+@observe("process_vespa_search_response")
 def process_vespa_search_response(
     db: Session,
     vespa_search_response: CprSdkSearchResponse,
@@ -591,6 +594,7 @@ def process_vespa_search_response(
     )
 
 
+@observe("create_vespa_search_params")
 def create_vespa_search_params(
     db: Session, search_body: SearchRequestBody
 ) -> SearchRequestBody:
@@ -603,6 +607,7 @@ def create_vespa_search_params(
     return search_body
 
 
+@observe("identify_search_type")
 def identify_search_type(search_body: SearchRequestBody) -> str:
     """Identify the search type from parameters"""
     if not search_body.query_string and not search_body.concept_filters:
@@ -613,6 +618,7 @@ def identify_search_type(search_body: SearchRequestBody) -> str:
         return SearchType.standard
 
 
+@observe("mutate_search_body_for_search_type")
 def mutate_search_body_for_search_type(
     search_body: SearchRequestBody,
 ) -> SearchRequestBody:
@@ -629,6 +635,7 @@ def mutate_search_body_for_search_type(
     return search_body
 
 
+@observe("make_search_request")
 def make_search_request(
     db: Session,
     vespa_search_adapter: VespaSearchAdapter,
@@ -664,6 +671,7 @@ def make_search_request(
     ).increment_pages()
 
 
+@observe("get_family_from_vespa")
 def get_family_from_vespa(
     family_id: str,
     db: Session,
@@ -690,6 +698,7 @@ def get_family_from_vespa(
     return result
 
 
+@observe("get_document_from_vespa")
 def get_document_from_vespa(
     document_id: str,
     db: Session,
@@ -716,6 +725,7 @@ def get_document_from_vespa(
     return result
 
 
+@observe("get_s3_doc_url_from_cdn")
 def get_s3_doc_url_from_cdn(
     s3_client: S3Client, s3_document: S3Document, data_dump_s3_key: str
 ) -> Optional[str]:

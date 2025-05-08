@@ -2,7 +2,9 @@ import logging
 import logging.config
 import os
 from contextlib import asynccontextmanager
+from typing import Callable
 
+from fastapi.routing import APIRoute
 import json_logging
 import uvicorn
 from fastapi import APIRouter, Depends, FastAPI
@@ -26,6 +28,7 @@ from app.service.health import is_database_online
 from app.service.vespa import make_vespa_search_adapter
 from app.telemetry import Telemetry
 from app.telemetry_config import ServiceManifest, TelemetryConfig
+from app.telemetry_exceptions import ExceptionHandlingTelemetryRoute
 
 os.environ["SKIP_ALEMBIC_LOGGING"] = "1"
 
@@ -150,8 +153,9 @@ async def root():
     return {"message": "CPR API v1"}
 
 
+    
 # Create an admin router that is a combination of:
-admin_router = APIRouter()
+admin_router = APIRouter(route_class=ExceptionHandlingTelemetryRoute)
 admin_router.include_router(pipeline_trigger_router)
 admin_router.include_router(admin_document_router)
 
@@ -161,7 +165,7 @@ app.include_router(
     prefix="/api/v1/admin",
     tags=["Admin"],
     dependencies=[Depends(get_superuser_details)],
-    include_in_schema=False,
+    include_in_schema=False
 )
 app.include_router(
     auth_router, prefix="/api", tags=["Authentication"], include_in_schema=False

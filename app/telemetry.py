@@ -20,6 +20,12 @@ from opentelemetry.sdk.trace.export import BatchSpanProcessor
 from app.telemetry_config import TelemetryConfig
 from app.telemetry_exceptions import install_exception_hooks
 
+import functools
+from contextlib import nullcontext
+from typing import Callable
+
+from opentelemetry import trace
+from opentelemetry.trace import NonRecordingSpan
 
 class Telemetry:
     """
@@ -55,15 +61,6 @@ class Telemetry:
         Last called wins so call this as the last thing in your main
         """
         install_exception_hooks()
-
-    def integrate(self, instrumentor: object):
-        """
-        Integrate with a specific library, framework, etc.
-
-        :param instrumentor: An object that implements the integration with __call__ method.
-        :param details: A dictionary of details for the integration.
-        """
-        instrumentor(self)  # type: ignore
 
     def get_tracer(self):
         """Returns the otel tracer"""
@@ -107,3 +104,23 @@ class Telemetry:
         FastAPIInstrumentor.instrument_app(
             app, tracer_provider=self.tracer_provider, excluded_urls="/health"
         )
+        app.state.telemetry = self
+
+
+def observe(name: str) -> Callable:
+    """Decorator to wrap a function in an OTel span."""
+
+    def decorator(func: Callable):
+        @functools.wraps(func)
+        def wraps(*args, **kwargs):
+            if isinstance(trace.get_current_span(), NonRecordingSpan):
+                span = nullcontext()
+            else:
+                span = trace.get_tracer(func.__module__).start_as_current_span(name)
+            
+            with span:
+                return func(*args, **kwargs)
+
+        return wraps
+
+    return decorator
