@@ -8,7 +8,6 @@ import json_logging
 import uvicorn
 from fastapi import APIRouter, Depends, FastAPI
 from fastapi.middleware.cors import CORSMiddleware
-from fastapi.routing import APIRoute
 from fastapi_health import health
 from fastapi_pagination import add_pagination
 from starlette.requests import Request
