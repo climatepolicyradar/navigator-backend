@@ -188,6 +188,24 @@ api_certificate_validation_dns_record = aws.route53.Record(
     ttl=600,  # 10 minutes in seconds
 )
 
+api_cache_policy = aws.cloudfront.CachePolicy(
+    "api-climatepolicyradar-org-cache-policy",
+    name="api-cache-policy",
+    default_ttl=3600,
+    max_ttl=86400,
+    min_ttl=0,
+    parameters_in_cache_key_and_forwarded_to_origin={
+        "cookies_config": {
+            "cookie_behavior": "none",
+        },
+        "headers_config": {
+            "header_behavior": "none",
+        },
+        "query_strings_config": {
+            "query_string_behavior": "all",
+        },
+    },
+)
 
 api_distribution = aws.cloudfront.Distribution(
     "api.climatepolicyradar.org",
@@ -230,16 +248,8 @@ api_distribution = aws.cloudfront.Distribution(
             "OPTIONS",
         ],
         "target_origin_id": "families-api-apprunner",
-        "forwarded_values": {
-            "query_string": True,
-            "cookies": {
-                "forward": "none",
-            },
-        },
         "viewer_protocol_policy": "redirect-to-https",
-        "min_ttl": 0,
-        "default_ttl": 3600,
-        "max_ttl": 86400,
+        "cache_policy_id": api_cache_policy.id,
     },
     ordered_cache_behaviors=[
         {
@@ -255,16 +265,8 @@ api_distribution = aws.cloudfront.Distribution(
                 "OPTIONS",
             ],
             "target_origin_id": "families-api-apprunner",
-            "forwarded_values": {
-                "query_string": True,
-                "cookies": {
-                    "forward": "none",
-                },
-            },
             "viewer_protocol_policy": "redirect-to-https",
-            "min_ttl": 0,
-            "default_ttl": 3600,
-            "max_ttl": 86400,
+            "cache_policy_id": api_cache_policy.id,
         },
         {
             "path_pattern": "/concepts/*",
@@ -279,16 +281,8 @@ api_distribution = aws.cloudfront.Distribution(
                 "OPTIONS",
             ],
             "target_origin_id": "concepts-api-apprunner",
-            "forwarded_values": {
-                "query_string": True,
-                "cookies": {
-                    "forward": "none",
-                },
-            },
             "viewer_protocol_policy": "redirect-to-https",
-            "min_ttl": 0,
-            "default_ttl": 3600,
-            "max_ttl": 86400,
+            "cache_policy_id": api_cache_policy.id,
         },
     ],
     restrictions={
