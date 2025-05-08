@@ -163,3 +163,157 @@ families_api_apprunner_service = aws.apprunner.Service(
     },
     opts=pulumi.ResourceOptions(protect=True),
 )
+
+# URLs
+api_route53_zone = aws.route53.Zone(
+    "api.climatepolicyradar.org", name="api.climatepolicyradar.org"
+)
+
+api_certificate = aws.acm.Certificate(
+    "api-climatepolicyradar-org-cert",
+    domain_name="api.climatepolicyradar.org",
+    validation_method="DNS",
+    opts=pulumi.ResourceOptions(
+        provider=aws.Provider("us-east-1", region="us-east-1")
+    ),  # CloudFront requires certificates in us-east-1
+)
+
+# We are fine to use the first in the list as we know this will be a DNS validation from the certificate generated above
+api_certificate_validation_dns_record = aws.route53.Record(
+    "api-climatepolicyradar-org-cert-validation-dns-record",
+    zone_id=api_route53_zone.zone_id,
+    name=api_certificate.domain_validation_options[0].resource_record_name,
+    type=api_certificate.domain_validation_options[0].resource_record_type,
+    records=[api_certificate.domain_validation_options[0].resource_record_value],
+    ttl=600,  # 10 minutes in seconds
+)
+
+
+api_distribution = aws.cloudfront.Distribution(
+    "api.climatepolicyradar.org",
+    origins=[
+        {
+            "domain_name": families_api_apprunner_service.service_url,
+            "origin_id": "families-api-apprunner",
+            "custom_origin_config": {
+                "http_port": 80,
+                "https_port": 443,
+                "origin_protocol_policy": "https-only",
+                "origin_ssl_protocols": ["TLSv1.2"],
+            },
+        },
+        {
+            "domain_name": "9qn3mjdan3.eu-west-1.awsapprunner.com",
+            "origin_id": "concepts-api-apprunner",
+            "custom_origin_config": {
+                "http_port": 80,
+                "https_port": 443,
+                "origin_protocol_policy": "https-only",
+                "origin_ssl_protocols": ["TLSv1.2"],
+            },
+        },
+    ],
+    enabled=True,
+    is_ipv6_enabled=True,
+    aliases=[
+        "api.climatepolicyradar.org",
+    ],
+    default_cache_behavior={
+        "allowed_methods": [
+            "HEAD",
+            "GET",
+            "OPTIONS",
+        ],
+        "cached_methods": [
+            "HEAD",
+            "GET",
+            "OPTIONS",
+        ],
+        "target_origin_id": "families-api-apprunner",
+        "forwarded_values": {
+            "query_string": False,
+            "cookies": {
+                "forward": "none",
+            },
+        },
+        "viewer_protocol_policy": "redirect-to-https",
+        "min_ttl": 0,
+        "default_ttl": 3600,
+        "max_ttl": 86400,
+    },
+    ordered_cache_behaviors=[
+        {
+            "path_pattern": "/families/*",
+            "allowed_methods": [
+                "HEAD",
+                "GET",
+                "OPTIONS",
+            ],
+            "cached_methods": [
+                "HEAD",
+                "GET",
+                "OPTIONS",
+            ],
+            "target_origin_id": "families-api-apprunner",
+            "forwarded_values": {
+                "query_string": False,
+                "cookies": {
+                    "forward": "none",
+                },
+            },
+            "viewer_protocol_policy": "redirect-to-https",
+            "min_ttl": 0,
+            "default_ttl": 3600,
+            "max_ttl": 86400,
+        },
+        {
+            "path_pattern": "/concepts/*",
+            "allowed_methods": [
+                "HEAD",
+                "GET",
+                "OPTIONS",
+            ],
+            "cached_methods": [
+                "HEAD",
+                "GET",
+                "OPTIONS",
+            ],
+            "target_origin_id": "concepts-api-apprunner",
+            "forwarded_values": {
+                "query_string": False,
+                "cookies": {
+                    "forward": "none",
+                },
+            },
+            "viewer_protocol_policy": "redirect-to-https",
+            "min_ttl": 0,
+            "default_ttl": 3600,
+            "max_ttl": 86400,
+        },
+    ],
+    restrictions={
+        "geo_restriction": {
+            "restriction_type": "none",
+        }
+    },
+    viewer_certificate={
+        "acm_certificate_arn": api_certificate.arn,
+        "ssl_support_method": "sni-only",
+        "minimum_protocol_version": "TLSv1.2_2021",
+    },
+)
+
+
+api_certificate_validation_dns_record = aws.route53.Record(
+    "api-climatepolicyradar-org-alias",
+    zone_id=api_route53_zone.zone_id,
+    name="api.climatepolicyradar.org",
+    type="A",
+    aliases=[
+        {
+            "name": api_distribution.domain_name,
+            "zone_id": api_distribution.hosted_zone_id,
+            "evaluate_target_health": False,
+        }
+    ],
+)

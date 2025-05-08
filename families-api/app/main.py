@@ -139,9 +139,11 @@ settings = Settings()
 
 
 router = APIRouter(
-    prefix="/documents",
+    prefix="/families",
 )
-app = FastAPI()
+app = FastAPI(
+    docs_url="/families/docs",
+)
 
 
 navigator_engine = create_engine(settings.navigator_database_url)
