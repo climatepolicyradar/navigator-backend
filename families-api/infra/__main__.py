@@ -231,7 +231,7 @@ api_distribution = aws.cloudfront.Distribution(
         ],
         "target_origin_id": "families-api-apprunner",
         "forwarded_values": {
-            "query_string": False,
+            "query_string": True,
             "cookies": {
                 "forward": "none",
             },
@@ -256,7 +256,7 @@ api_distribution = aws.cloudfront.Distribution(
             ],
             "target_origin_id": "families-api-apprunner",
             "forwarded_values": {
-                "query_string": False,
+                "query_string": True,
                 "cookies": {
                     "forward": "none",
                 },
@@ -280,7 +280,7 @@ api_distribution = aws.cloudfront.Distribution(
             ],
             "target_origin_id": "concepts-api-apprunner",
             "forwarded_values": {
-                "query_string": False,
+                "query_string": True,
                 "cookies": {
                     "forward": "none",
                 },
