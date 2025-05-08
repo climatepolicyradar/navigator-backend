@@ -137,7 +137,8 @@ class Settings(BaseSettings):
 
 settings = Settings()
 
-
+# TODO: Use JSON logging - https://linear.app/climate-policy-radar/issue/APP-571/add-json-logging-to-families-api
+# TODO: Add OTel - https://linear.app/climate-policy-radar/issue/APP-572/add-otel-to-families-api
 router = APIRouter(
     prefix="/families",
 )
