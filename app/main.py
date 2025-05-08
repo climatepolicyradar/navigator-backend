@@ -4,11 +4,11 @@ import os
 from contextlib import asynccontextmanager
 from typing import Callable
 
-from fastapi.routing import APIRoute
 import json_logging
 import uvicorn
 from fastapi import APIRouter, Depends, FastAPI
 from fastapi.middleware.cors import CORSMiddleware
+from fastapi.routing import APIRoute
 from fastapi_health import health
 from fastapi_pagination import add_pagination
 from starlette.requests import Request
@@ -154,7 +154,6 @@ async def root():
     return {"message": "CPR API v1"}
 
 
-    
 # Create an admin router that is a combination of:
 admin_router = APIRouter(route_class=ExceptionHandlingTelemetryRoute)
 admin_router.include_router(pipeline_trigger_router)
@@ -166,7 +165,7 @@ app.include_router(
     prefix="/api/v1/admin",
     tags=["Admin"],
     dependencies=[Depends(get_superuser_details)],
-    include_in_schema=False
+    include_in_schema=False,
 )
 app.include_router(
     auth_router, prefix="/api", tags=["Authentication"], include_in_schema=False

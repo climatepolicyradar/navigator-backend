@@ -34,11 +34,13 @@ from fastapi.routing import APIRoute
 from opentelemetry import trace
 from opentelemetry.trace import Status, StatusCode
 
+
 class ExceptionHandlingTelemetryRoute(APIRoute):
     """Used in FastAPI router to add telemetry to exceptions"""
+
     def get_route_handler(self) -> Callable:
         original_route_handler = super().get_route_handler()
-        
+
         async def custom_route_handler(request: Request):
             try:
                 tracer = request.app.state.telemetry.get_tracer()
@@ -47,8 +49,9 @@ class ExceptionHandlingTelemetryRoute(APIRoute):
             except Exception as exc:
                 add_telemetry_for_exception(exc)
                 raise exc
-            
+
         return custom_route_handler
+
 
 def add_telemetry_for_exception(exc):
     """

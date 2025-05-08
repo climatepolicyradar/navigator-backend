@@ -1,5 +1,8 @@
+import functools
 import logging
 import logging.config
+from contextlib import nullcontext
+from typing import Callable
 
 # For fastapi auto-instrumentation
 from fastapi import FastAPI
@@ -16,16 +19,11 @@ from opentelemetry.sdk._logs import LoggerProvider, LoggingHandler
 from opentelemetry.sdk._logs.export import BatchLogRecordProcessor
 from opentelemetry.sdk.trace import TracerProvider
 from opentelemetry.sdk.trace.export import BatchSpanProcessor
+from opentelemetry.trace import NonRecordingSpan
 
 from app.telemetry_config import TelemetryConfig
 from app.telemetry_exceptions import install_exception_hooks
 
-import functools
-from contextlib import nullcontext
-from typing import Callable
-
-from opentelemetry import trace
-from opentelemetry.trace import NonRecordingSpan
 
 class Telemetry:
     """
@@ -117,7 +115,7 @@ def observe(name: str) -> Callable:
                 span = nullcontext()
             else:
                 span = trace.get_tracer(func.__module__).start_as_current_span(name)
-            
+
             with span:
                 return func(*args, **kwargs)
 
