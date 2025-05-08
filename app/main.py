@@ -2,7 +2,6 @@ import logging
 import logging.config
 import os
 from contextlib import asynccontextmanager
-from typing import Callable
 
 import json_logging
 import uvicorn
