@@ -11,9 +11,6 @@ uninstall_trunk:
 	sudo rm -if `which trunk`
 	rm -ifr ${HOME}/.cache/trunk
 
-configure_pyright:
-	trunk actions run configure-pyright
-
 create_env:
 	# Copy .env
 	cp .env.example .env
@@ -26,8 +23,6 @@ setup: install_trunk create_env ## Sets up a local dev environment using Poetry
 	pip install "poetry==1.8.1"
 	poetry install
 
-	make configure_pyright
-
 setup_with_pyenv: install_trunk create_env ## Sets up a local dev environment using Pyenv
 	$(eval venv_name=$(shell  grep 'venv =' pyproject.toml | cut -d '"' -f 2 ))
 	if [ -n "$(venv_name)" ] && ! pyenv versions --bare | grep -q "^$(venv_name)$$"; then \
@@ -38,5 +33,3 @@ setup_with_pyenv: install_trunk create_env ## Sets up a local dev environment us
 	@eval "$$(pyenv init -)" && \
 	pyenv activate $(venv_name) && \
 	poetry install
-
-	make configure_pyright
