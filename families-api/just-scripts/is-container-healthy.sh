@@ -18,7 +18,7 @@ container_id=$(docker compose ps -q "${container_name}") ||
 # Loop until the container reports healthy
 health_status=$(docker inspect --format='{{.State.Health.Status}}' "${container_id}")
 until [[ ${health_status} == "healthy" ]]; do
-	sleep 1
+	sleep 10
 done
 
 echo "Container ${container_name} is healthy"
