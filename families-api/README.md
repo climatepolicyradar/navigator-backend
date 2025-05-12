@@ -1,31 +1,30 @@
 # families-api
 
-## Decisions checklist
-
-### Local development
+## Local development
 
 **`just dev`**
 
-- [x] To run the service locally, you should run `just dev`
-- [x] We use docker compose to start up local services
-- [x] For python code, we should also be able to run the framework's (FastAPI) native dev environment (`fastapi dev app/main.py`)
-- [x] Data for seeing the service locally should be pre-loaded and prod-like
-- [x] Any changes to code should be reflected immediately in the running service, no reloads needed
-
-**`just test`**
-
-- [ ] All tests should run when running `just test`
-- [ ] Testing should be stateless and predictable at every run
-- [ ] Tests should run the same locally and in CI
-- [ ] Local tests should run on a watch
+- To run the service locally, run `just dev`
+- We use docker compose to start up local services
+- We are able to run the framework's (FastAPI) native dev environment
+  (`fastapi dev app/main.py`)
+- Local data for the service is pre-loaded and prod-like
+- Any changes to code are reflected immediately in the running service.
+  No reloads needed
 
 **`just build`**
 
+TBD
+
+**`just test`**
+
+TBD
+
 **`just deploy`**
 
-- [ ] the `main` branch will always be what's on production
+TBD
 
-**infra**
+## infra
 
 ```bash
 cd infra
@@ -34,14 +33,9 @@ pulumi up --stack production
 
 ## TODO
 
-### Python App
+[Linear project](https://linear.app/climate-policy-radar/project/isolate-services-within-navigator-backend-abeb5f150aa4/issues)
 
-**these can / shoudl be added when we have another service in to ensure we get the right abstraction**
-
-- [ ] JSON logging
-- [ ] OTel implementation
-
-## Potential middle-game
+## Architecture di
 
 ```mermaid
 flowchart RL
