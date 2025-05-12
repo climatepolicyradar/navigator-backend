@@ -67,7 +67,7 @@ ignore = """
 
 [tool.pyright]
 include = ["app", "tests"]
-exclude = ["**/__pycache__"]
+exclude = ["**/__pycache__", "families-api/**"]
 ignore = ["scripts/**/*"]
 pythonVersion = "3.10"
 pythonPlatform = "Linux"
