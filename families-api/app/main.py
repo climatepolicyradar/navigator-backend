@@ -6,12 +6,8 @@ from sqlalchemy import create_engine
 from sqlmodel import Field, Relationship, Session, SQLModel, func, select
 
 
-class RDSModel(SQLModel):
-    model_config = {"json_schema_extra": {"exclude": True}}
-
-
-class FamilyCorpusLink(RDSModel, table=True):
-    __tablename__ = "family_corpus"
+class FamilyCorpusLink(SQLModel, table=True):
+    __tablename__ = "family_corpus"  # type: ignore[assignment]
     corpus_import_id: int | None = Field(
         default=None, foreign_key="corpus.import_id", primary_key=True
     )
@@ -20,8 +16,8 @@ class FamilyCorpusLink(RDSModel, table=True):
     )
 
 
-class Corpus(RDSModel, table=True):
-    __tablename__ = "corpus"
+class Corpus(SQLModel, table=True):
+    __tablename__ = "corpus"  # type: ignore[assignment]
     import_id: str | None = Field(default=None, primary_key=True)
     title: str
     families: list["Family"] = Relationship(
@@ -29,8 +25,8 @@ class Corpus(RDSModel, table=True):
     )
 
 
-class FamilyGeographyLink(RDSModel, table=True):
-    __tablename__ = "family_geography"
+class FamilyGeographyLink(SQLModel, table=True):
+    __tablename__ = "family_geography"  # type: ignore[assignment]
     geography_id: int | None = Field(
         default=None, foreign_key="geography.id", primary_key=True
     )
@@ -39,7 +35,7 @@ class FamilyGeographyLink(RDSModel, table=True):
     )
 
 
-class GeographyBase(RDSModel):
+class GeographyBase(SQLModel):
     id: int | None = Field(default=None, primary_key=True)
     display_value: str
     value: str
@@ -48,11 +44,11 @@ class GeographyBase(RDSModel):
 
 
 class Geography(GeographyBase, table=True):
-    __tablename__ = "geography"
+    __tablename__ = "geography"  # type: ignore[assignment]
     value: str
     parent_id: int = Field(foreign_key="geography.id")
     # the relationship stuff here is a little non-standard
-    # there doesn't seem to be an easier way to do this with RDSModel
+    # there doesn't seem to be an easier way to do this with SQLModel
     parent: Optional["Geography"] = Relationship(
         back_populates="children",
         sa_relationship_kwargs={"remote_side": "[Geography.id]"},
@@ -63,13 +59,13 @@ class Geography(GeographyBase, table=True):
     )
 
 
-class FamilyBase(RDSModel):
+class FamilyBase(SQLModel):
     import_id: str | None = Field(default=None, primary_key=True)
     description: str | None
 
 
 class Family(FamilyBase, table=True):
-    __tablename__ = "family"
+    __tablename__ = "family"  # type: ignore[assignment]
     geographies: list[Geography] = Relationship(
         back_populates="families", link_model=FamilyGeographyLink
     )
@@ -84,13 +80,13 @@ class FamilyPublic(FamilyBase):
     geographies: list[Geography]
 
 
-class FamilyDocumentBase(RDSModel):
+class FamilyDocumentBase(SQLModel):
     import_id: str | None = Field(default=None, primary_key=True)
     variant_name: str | None
 
 
 class FamilyDocument(FamilyDocumentBase, table=True):
-    __tablename__ = "family_document"
+    __tablename__ = "family_document"  # type: ignore[assignment]
     family_import_id: str | None = Field(default=None, foreign_key="family.import_id")
     family: Family = Relationship(back_populates="family_documents")
     physical_document_id: int = Field(foreign_key="physical_document.id", unique=True)
@@ -103,7 +99,7 @@ class FamilyDocumentPublic(FamilyDocumentBase):
     family: FamilyPublic
 
 
-class PhysicalDocumentBase(RDSModel):
+class PhysicalDocumentBase(SQLModel):
     id: int | None = Field(default=None, primary_key=True)
     title: str = Field(index=True)
     md5_sum: str | None
@@ -113,7 +109,7 @@ class PhysicalDocumentBase(RDSModel):
 
 
 class PhysicalDocument(PhysicalDocumentBase, table=True):
-    __tablename__ = "physical_document"
+    __tablename__ = "physical_document"  # type: ignore[assignment]
     family_document: FamilyDocument = Relationship(back_populates="physical_document")
 
 
