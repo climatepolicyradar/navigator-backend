@@ -71,4 +71,4 @@ exclude = ["**/__pycache__"]
 ignore = ["scripts/**/*"]
 pythonVersion = "3.10"
 pythonPlatform = "Linux"
-venv = "backend"
+venvPath = ".venv"
