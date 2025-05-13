@@ -25,21 +25,11 @@ from app.clients.db.session import SessionLocal
 from app.service.auth import get_superuser_details
 from app.service.health import is_database_online
 from app.service.vespa import make_vespa_search_adapter
+from app.telemetry import Telemetry
+from app.telemetry_config import ServiceManifest, TelemetryConfig
+from app.telemetry_exceptions import ExceptionHandlingTelemetryRoute
 
 os.environ["SKIP_ALEMBIC_LOGGING"] = "1"
-
-# Clear existing log handlers so we always log in structured JSON
-root_logger = logging.getLogger()
-if root_logger.handlers:
-    for handler in root_logger.handlers:
-        root_logger.removeHandler(handler)
-
-for _, logger in logging.root.manager.loggerDict.items():
-    if isinstance(logger, logging.Logger):
-        logger.propagate = True
-        if logger.handlers:
-            for handler in logger.handlers:
-                logger.removeHandler(handler)
 
 LOG_LEVEL = os.getenv("LOG_LEVEL", "INFO").upper()
 DEFAULT_LOGGING = {
@@ -59,6 +49,37 @@ DEFAULT_LOGGING = {
 }
 _LOGGER = logging.getLogger(__name__)
 logging.config.dictConfig(DEFAULT_LOGGING)
+
+
+try:
+    otel_config = TelemetryConfig.from_service_manifest(
+        ServiceManifest.from_file("service-manifest.json"), config.ENV, "0.1.0"
+    )
+except Exception as _:
+    _LOGGER.error("Failed to load service manifest, using defaults")
+    otel_config = TelemetryConfig(
+        service_name="navigator-backend",
+        namespace_name="navigator",
+        service_version="0.0.0",
+        environment=config.ENV,
+    )
+
+telemetry = Telemetry(otel_config)
+tracer = telemetry.get_tracer()
+
+# Clear existing log handlers so we always log in structured JSON
+root_logger = telemetry.get_logger()
+if root_logger.handlers:
+    for handler in root_logger.handlers:
+        root_logger.removeHandler(handler)
+
+for _, logger in logging.root.manager.loggerDict.items():
+    if isinstance(logger, logging.Logger):
+        logger.propagate = True
+        if logger.handlers:
+            for handler in logger.handlers:
+                logger.removeHandler(handler)
+
 
 _docs_description = """
 This documentation is intended to explain the use of our search API for external 
@@ -133,7 +154,7 @@ async def root():
 
 
 # Create an admin router that is a combination of:
-admin_router = APIRouter()
+admin_router = APIRouter(route_class=ExceptionHandlingTelemetryRoute)
 admin_router.include_router(pipeline_trigger_router)
 admin_router.include_router(admin_document_router)
 
@@ -176,3 +197,7 @@ if __name__ == "__main__":
         port=8888,
         log_config=DEFAULT_LOGGING,
     )  # type: ignore
+
+
+telemetry.instrument_fastapi(app)
+telemetry.setup_exception_hook()

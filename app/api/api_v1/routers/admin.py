@@ -15,10 +15,11 @@ from app.clients.db.session import get_db
 from app.models.document import DocumentUpdateRequest
 from app.repository.lookups import get_family_document_by_import_id_or_slug
 from app.service.auth import get_superuser_details
+from app.telemetry_exceptions import ExceptionHandlingTelemetryRoute
 
 _LOGGER = logging.getLogger(__name__)
 
-admin_document_router = r = APIRouter()
+admin_document_router = r = APIRouter(route_class=ExceptionHandlingTelemetryRoute)
 
 
 @r.post("/documents/{import_id_or_slug}/processed", status_code=status.HTTP_200_OK)

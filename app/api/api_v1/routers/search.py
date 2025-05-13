@@ -35,11 +35,12 @@ from app.service.search import (
     process_result_into_csv,
 )
 from app.service.vespa import get_vespa_search_adapter
+from app.telemetry_exceptions import ExceptionHandlingTelemetryRoute
 
 _LOGGER = logging.getLogger(__name__)
 
 
-search_router = APIRouter()
+search_router = APIRouter(route_class=ExceptionHandlingTelemetryRoute)
 
 
 @search_router.post("/searches")
