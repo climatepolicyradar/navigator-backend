@@ -117,6 +117,7 @@ json_logging.config_root_logger()
 
 _ALLOW_ORIGIN_REGEX = (
     r"http://localhost:3000|"
+    r"http://bs-local.com:3000|"
     r"https://.+\.climatepolicyradar\.org|"
     r"https://.+\.dev.climatepolicyradar\.org|"
     r"https://.+\.sandbox\.climatepolicyradar\.org|"
