@@ -19,10 +19,11 @@ from app.repository.document import (
 from app.service.custom_app import AppTokenFactory
 from app.service.search import get_document_from_vespa, get_family_from_vespa
 from app.service.vespa import get_vespa_search_adapter
+from app.telemetry_exceptions import ExceptionHandlingTelemetryRoute
 
 _LOGGER = logging.getLogger(__file__)
 
-documents_router = APIRouter()
+documents_router = APIRouter(route_class=ExceptionHandlingTelemetryRoute)
 
 
 @documents_router.get(

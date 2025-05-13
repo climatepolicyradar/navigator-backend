@@ -12,10 +12,11 @@ from app.service.pipeline import (
     get_new_s3_prefix,
     write_documents_to_s3,
 )
+from app.telemetry_exceptions import ExceptionHandlingTelemetryRoute
 
 _LOGGER = logging.getLogger(__name__)
 
-pipeline_trigger_router = r = APIRouter()
+pipeline_trigger_router = r = APIRouter(route_class=ExceptionHandlingTelemetryRoute)
 
 
 def _start_ingest(

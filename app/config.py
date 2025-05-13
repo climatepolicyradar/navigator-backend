@@ -23,3 +23,4 @@ INGEST_TRIGGER_ROOT: Final = "input"
 DEVELOPMENT_MODE: bool = os.getenv("DEVELOPMENT_MODE", "False").lower() == "true"
 AWS_REGION = os.getenv("AWS_REGION", "eu-west-1")
 CDN_DOMAIN = os.getenv("CDN_DOMAIN")
+ENV = os.getenv("ENV", "development")
