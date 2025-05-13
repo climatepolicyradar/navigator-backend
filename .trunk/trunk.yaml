@@ -128,13 +128,7 @@ actions:
   disabled:
     - trunk-check-pre-push
   enabled:
-    - configure-pyright
     - trunk-check-pre-commit
     - trunk-announce
     - trunk-fmt-pre-commit
     - trunk-upgrade-available
-  definitions:
-    - id: configure-pyright
-      run: source .trunk/configure-pyright.sh
-      triggers:
-        - git_hooks: [pre-commit]
