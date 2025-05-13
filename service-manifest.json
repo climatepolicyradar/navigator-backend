@@ -1,0 +1,15 @@
+{
+  "service.name": "navigator-backend",
+  "service.namespace": "data-fetching",
+  "team": "application",
+  "inputs": [
+    { "type": "service", "name": "db-client" },
+    { "type": "service", "name": "rds" },
+    { "type": "service", "name": "search" },
+    { "type": "s3", "name": "cpr-production-document-cache" },
+    { "type": "s3", "name": "cpr-prod-data-pipeline-cache" },
+    { "type": "service", "name": "navigator-infra" }
+  ],
+  "outputs": [],
+  "repos": ["https://github.com/climatepolicyradar/navigator-backend"]
+}

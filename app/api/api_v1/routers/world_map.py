@@ -8,10 +8,11 @@ from app.errors import RepositoryError, ValidationError
 from app.models.geography import GeographyStatsDTO
 from app.service.custom_app import AppTokenFactory
 from app.service.world_map import get_world_map_stats
+from app.telemetry_exceptions import ExceptionHandlingTelemetryRoute
 
 _LOGGER = logging.getLogger(__file__)
 
-world_map_router = APIRouter()
+world_map_router = APIRouter(route_class=ExceptionHandlingTelemetryRoute)
 
 
 @world_map_router.get("/geographies", response_model=list[GeographyStatsDTO])
