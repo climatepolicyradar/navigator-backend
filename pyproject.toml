@@ -1,6 +1,6 @@
 [tool.poetry]
 name = "navigator_backend"
-version = "1.24.9"
+version = "1.24.10"
 description = ""
 authors = ["CPR-dev-team <tech@climatepolicyradar.org>"]
 packages = [{ include = "app" }, { include = "tests" }]
@@ -72,7 +72,7 @@ ignore = """
 
 [tool.pyright]
 include = ["app", "tests"]
-exclude = ["**/__pycache__"]
+exclude = ["**/__pycache__", "families-api/**"]
 ignore = ["scripts/**/*"]
 pythonVersion = "3.10"
 pythonPlatform = "Linux"
