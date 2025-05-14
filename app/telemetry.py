@@ -36,7 +36,7 @@ class Telemetry:
         """Initialise telemetry! ENGAGE"""
         self.config = config
         self.resource = self.config.to_resource()
-        print(f"Telemetry config: {self.resource.__dict__}")
+        print(f"Telemetry config: {str(self.config)}")
 
         self.tracer_provider = TracerProvider(resource=self.resource)
         trace.set_tracer_provider(self.tracer_provider)
