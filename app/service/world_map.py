@@ -9,10 +9,12 @@ from sqlalchemy.orm import Session
 from app.errors import RepositoryError, ValidationError
 from app.models.geography import GeographyStatsDTO
 from app.repository.geography import count_families_per_category_in_each_geo
+from app.telemetry import observe
 
 _LOGGER = logging.getLogger(__file__)
 
 
+@observe(name="get_world_map_stats")
 def get_world_map_stats(
     db: Session, allowed_corpora: Optional[list[str]]
 ) -> list[GeographyStatsDTO]:

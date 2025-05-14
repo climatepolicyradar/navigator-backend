@@ -1,3 +1,4 @@
+from opentelemetry.instrumentation.sqlalchemy import SQLAlchemyInstrumentor
 from sqlalchemy import create_engine
 from sqlalchemy.orm import sessionmaker
 
@@ -10,6 +11,10 @@ engine = create_engine(
     pool_size=10,
     max_overflow=240,
 )
+
+# Lets generate some telemetry for the db calls!
+SQLAlchemyInstrumentor().instrument()
+
 SessionLocal = sessionmaker(autocommit=False, autoflush=False, bind=engine)
 
 
