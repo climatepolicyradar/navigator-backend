@@ -93,6 +93,9 @@ class TelemetryConfig(BaseSettings):
             service_version=version,
         )
 
+    def __str__(self):
+        return f"TelemetryConfig(service_name={self.service_name}, namespace_name={self.namespace_name}, environment={self.environment}, service_instance_id={self.service_instance_id}, otlp_endpoint={self.otlp_endpoint}, service_version={self.service_version})"
+
     class Config:
         """Pydantic config"""
 

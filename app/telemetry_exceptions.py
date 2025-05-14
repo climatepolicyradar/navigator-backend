@@ -44,6 +44,7 @@ class ExceptionHandlingTelemetryRoute(APIRoute):
         async def custom_route_handler(request: Request):
             try:
                 tracer = request.app.state.telemetry.get_tracer()
+
                 with tracer.start_as_current_span("route_handler"):
                     return await original_route_handler(request)
             except Exception as exc:
