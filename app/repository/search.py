@@ -17,10 +17,12 @@ from app.models.search import (
     SortOrder,
 )
 from app.repository.geography import get_geo_subquery
+from app.telemetry import observe
 
 _LOGGER = getLogger(__name__)
 
 
+@observe(name="to_search_response_family")
 def to_search_response_family(
     family: Family,
     corpus: Corpus,
@@ -55,6 +57,7 @@ def to_search_response_family(
     )
 
 
+@observe(name="browse_rds_families")
 def browse_rds_families(db: Session, req: BrowseArgs) -> SearchResponse:
     """Browse RDS"""
 

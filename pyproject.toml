@@ -1,6 +1,6 @@
 [tool.poetry]
 name = "navigator_backend"
-version = "1.24.10"
+version = "1.24.11"
 description = ""
 authors = ["CPR-dev-team <tech@climatepolicyradar.org>"]
 packages = [{ include = "app" }, { include = "tests" }]
@@ -36,11 +36,12 @@ urllib3 = "<2"
 apscheduler = "^3.10.4"
 numpy = "1.26.4"
 python-dateutil = "^2.9.0.post0"
-opentelemetry-instrumentation-fastapi = "^0.53b1"
+opentelemetry-instrumentation-fastapi = "^0.54b0"
 opentelemetry-sdk = "^1.32.1"
 python-dotenv = "^1.1.0"
 pydantic-settings = "^2.9.1"
 opentelemetry-exporter-otlp = "^1.32.1"
+opentelemetry-instrumentation-sqlalchemy = "^0.54b0"
 
 [tool.poetry.dev-dependencies]
 black = "^23.1.0"

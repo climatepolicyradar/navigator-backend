@@ -13,10 +13,12 @@ from sqlalchemy.types import ARRAY, String
 from app.errors import ValidationError
 from app.models.geography import GeographyStatsDTO
 from app.repository.helpers import get_query_template
+from app.telemetry import observe
 
 _LOGGER = logging.getLogger(__file__)
 
 
+@observe(name="get_geo_subquery")
 def get_geo_subquery(
     db: Session,
     allowed_geo_slugs: Optional[Sequence[str]] = None,
@@ -60,6 +62,7 @@ def get_geo_subquery(
     return geo_subquery.subquery("geo_subquery")
 
 
+@observe(name="count_families_per_category_in_each_geo")
 def count_families_per_category_in_each_geo(
     db: Session, allowed_corpora: list[str]
 ) -> list[GeographyStatsDTO]:
