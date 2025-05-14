@@ -1,0 +1,25 @@
+name: Merge to Main
+on:
+  push:
+    branches:
+      - main
+      - geographies-api-deploy
+
+permissions: read-all
+
+jobs:
+  merge-to-main:
+    runs-on: ubuntu-latest
+    environment: production
+    steps:
+      - uses: actions/checkout@v4
+      - uses: extractions/setup-just@v2
+      - uses: actions/checkout@v4
+      - name: configure aws credentials
+        uses: aws-actions/configure-aws-credentials@v4.2.0
+        with:
+          role-to-assume: arn:aws:iam::${{ secrets.AWS_ACCOUNT_ID }}:role/navigator-backend-github-actions
+          role-session-name: GitHub_to_AWS_via_FederatedOIDC
+          aws-region: eu-west-1
+      - working-directory: families-api
+        run: just deploy
