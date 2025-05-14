@@ -13,7 +13,7 @@ engine = create_engine(
 )
 
 # Lets generate some telemetry for the db calls!
-SQLAlchemyInstrumentor().instrument()
+SQLAlchemyInstrumentor().instrument(engine=engine)
 
 SessionLocal = sessionmaker(autocommit=False, autoflush=False, bind=engine)
 
