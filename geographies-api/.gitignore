@@ -1,0 +1,12 @@
+__pycache__
+.DS_Store
+.env
+.venv
+.pytest_cache
+.ruff_cache
+
+# we never want to commit DB dumps, even though they are provbably public somewhere
+initial-data/*.sql
+
+# we want and need this for building the Dockerfile
+!requirements.txt
