@@ -30,6 +30,7 @@ from app.telemetry_config import ServiceManifest, TelemetryConfig
 from app.telemetry_exceptions import ExceptionHandlingTelemetryRoute
 
 os.environ["SKIP_ALEMBIC_LOGGING"] = "1"
+os.environ["OTEL_PYTHON_LOG_CORRELATION"] = "True"
 
 LOG_LEVEL = os.getenv("LOG_LEVEL", "INFO").upper()
 DEFAULT_LOGGING = {
@@ -50,7 +51,6 @@ DEFAULT_LOGGING = {
 _LOGGER = logging.getLogger(__name__)
 logging.config.dictConfig(DEFAULT_LOGGING)
 
-
 try:
     otel_config = TelemetryConfig.from_service_manifest(
         ServiceManifest.from_file("service-manifest.json"), config.ENV, "0.1.0"
@@ -66,20 +66,6 @@ except Exception as _:
 
 telemetry = Telemetry(otel_config)
 tracer = telemetry.get_tracer()
-
-# Clear existing log handlers so we always log in structured JSON
-root_logger = telemetry.get_logger()
-if root_logger.handlers:
-    for handler in root_logger.handlers:
-        root_logger.removeHandler(handler)
-
-for _, logger in logging.root.manager.loggerDict.items():
-    if isinstance(logger, logging.Logger):
-        logger.propagate = True
-        if logger.handlers:
-            for handler in logger.handlers:
-                logger.removeHandler(handler)
-
 
 _docs_description = """
 This documentation is intended to explain the use of our search API for external 
@@ -119,7 +105,8 @@ _ALLOW_ORIGIN_REGEX = (
     r"http://localhost:3000|"
     r"http://bs-local.com:3000|"
     r"https://.+\.climatepolicyradar\.org|"
-    r"https://.+\.dev.climatepolicyradar\.org|"
+    r"https://.+\.staging.climatepolicyradar\.org|"
+    r"https://.+\.production.climatepolicyradar\.org|"
     r"https://.+\.sandbox\.climatepolicyradar\.org|"
     r"https://climate-laws\.org|"
     r"https://.+\.climate-laws\.org|"
