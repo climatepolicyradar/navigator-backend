@@ -1,0 +1,8 @@
+{
+  "service.name": "geographies-api",
+  "service.namespace": "data-fetching",
+  "team": "application",
+  "inputs": [],
+  "outputs": [],
+  "repos": ["https://github.com/climatepolicyradar/navigator-backend"]
+}

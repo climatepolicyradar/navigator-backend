@@ -136,6 +136,8 @@ router = APIRouter(
 )
 app = FastAPI(
     docs_url="/families/docs",
+    redoc_url="/families/redoc",
+    openapi_url="/families/openapi.json",
 )
 
 
