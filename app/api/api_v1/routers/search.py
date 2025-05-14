@@ -35,6 +35,7 @@ from app.service.search import (
     process_result_into_csv,
 )
 from app.service.vespa import get_vespa_search_adapter
+from app.telemetry import convert_to_loggable_string
 from app.telemetry_exceptions import ExceptionHandlingTelemetryRoute
 
 _LOGGER = logging.getLogger(__name__)
@@ -110,7 +111,7 @@ def search_documents(
         "Search request",
         extra={
             "props": {
-                "search_request": search_body.model_dump(),
+                "search_request": convert_to_loggable_string(search_body.model_dump()),
                 "app_token": str(app_token),
             }
         },
@@ -136,7 +137,11 @@ def search_documents(
 
     _LOGGER.info(
         "Starting search...",
-        extra={"props": {"search_request": search_body.model_dump()}},
+        extra={
+            "props": {
+                "search_request": convert_to_loggable_string(search_body.model_dump())
+            }
+        },
     )
     return make_search_request(
         db=db,
@@ -160,7 +165,7 @@ def download_search_documents(
         "Search download request",
         extra={
             "props": {
-                "search_request": search_body.model_dump(),
+                "search_request": convert_to_loggable_string(search_body.model_dump()),
                 "app_token": str(app_token),
             }
         },
@@ -188,7 +193,11 @@ def download_search_documents(
 
     _LOGGER.info(
         "Starting search...",
-        extra={"props": {"search_request": search_body.model_dump()}},
+        extra={
+            "props": {
+                "search_request": convert_to_loggable_string(search_body.model_dump())
+            }
+        },
     )
     try:
         search_response = make_search_request(

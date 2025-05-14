@@ -35,10 +35,12 @@ from app.repository.geography import get_geo_subquery
 from app.repository.helpers import get_query_template
 from app.repository.lookups import doc_type_from_family_document_metadata
 from app.service.util import to_cdn_url
+from app.telemetry import observe
 
 _LOGGER = logging.getLogger(__file__)
 
 
+@observe(name="get_slugged_objects")
 def get_slugged_objects(
     db: Session, slug: str, allowed_corpora: Optional[list[str]] = None
 ) -> tuple[Optional[str], Optional[str]]:
@@ -89,6 +91,7 @@ def get_slugged_objects(
     return doc_id, fam_id
 
 
+@observe(name="get_family_document_and_context")
 def get_family_document_and_context(
     db: Session, family_document_import_id: str
 ) -> FamilyDocumentWithContextResponse:
@@ -173,6 +176,7 @@ def _get_visible_languages_for_phys_doc(
     ]
 
 
+@observe(name="get_family_and_documents")
 def get_family_and_documents(db: Session, import_id: str) -> FamilyAndDocumentsResponse:
     """
     Get a document along with the family information.
@@ -233,6 +237,7 @@ def get_family_and_documents(db: Session, import_id: str) -> FamilyAndDocumentsR
     )
 
 
+@observe(name="get_collections_for_family_import_id")
 def _get_collections_for_family_import_id(
     db: Session, import_id: str
 ) -> list[CollectionOverviewResponse]:
@@ -263,6 +268,7 @@ def _get_collections_for_family_import_id(
     ]
 
 
+@observe(name="get_events_for_family")
 def _get_events_for_family(family: Family) -> list[FamilyEventsResponse]:
     events = [
         FamilyEventsResponse(
