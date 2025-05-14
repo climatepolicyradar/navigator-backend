@@ -39,8 +39,12 @@ class Geography(GeographyBase, table=True):
     __tablename__ = "geography"  # type: ignore[assignment]
     value: str
     parent_id: int = Field(foreign_key="geography.id")
-    # the relationship stuff here is a little non-standard
-    # there doesn't seem to be an easier way to do this with SQLModel
+    """
+    the relationship stuff here is a little non-standard and inherited from the
+    previous implementation
+    if we were to do this again we'd follow the standard SQLModel approach
+    @see https://sqlmodel.tiangolo.com/tutorial/many-to-many/create-models-with-link/#link-table-model
+    """
     parent: Optional["Geography"] = Relationship(
         back_populates="children",
         sa_relationship_kwargs={"remote_side": "[Geography.id]"},
