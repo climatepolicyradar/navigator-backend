@@ -8,17 +8,13 @@ from sqlmodel import Field, Relationship, Session, SQLModel, func, select
 
 class FamilyCorpusLink(SQLModel, table=True):
     __tablename__ = "family_corpus"  # type: ignore[assignment]
-    corpus_import_id: int | None = Field(
-        default=None, foreign_key="corpus.import_id", primary_key=True
-    )
-    family_import_id: int | None = Field(
-        default=None, foreign_key="family.import_id", primary_key=True
-    )
+    corpus_import_id: int = Field(foreign_key="corpus.import_id", primary_key=True)
+    family_import_id: int = Field(foreign_key="family.import_id", primary_key=True)
 
 
 class Corpus(SQLModel, table=True):
     __tablename__ = "corpus"  # type: ignore[assignment]
-    import_id: str | None = Field(default=None, primary_key=True)
+    import_id: str = Field(primary_key=True)
     title: str
     families: list["Family"] = Relationship(
         back_populates="corpus", link_model=FamilyCorpusLink
@@ -27,16 +23,12 @@ class Corpus(SQLModel, table=True):
 
 class FamilyGeographyLink(SQLModel, table=True):
     __tablename__ = "family_geography"  # type: ignore[assignment]
-    geography_id: int | None = Field(
-        default=None, foreign_key="geography.id", primary_key=True
-    )
-    family_import_id: int | None = Field(
-        default=None, foreign_key="family.import_id", primary_key=True
-    )
+    geography_id: int = Field(foreign_key="geography.id", primary_key=True)
+    family_import_id: int = Field(foreign_key="family.import_id", primary_key=True)
 
 
 class GeographyBase(SQLModel):
-    id: int | None = Field(default=None, primary_key=True)
+    id: int = Field(primary_key=True)
     display_value: str
     value: str
     type: str
@@ -60,7 +52,7 @@ class Geography(GeographyBase, table=True):
 
 
 class FamilyBase(SQLModel):
-    import_id: str | None = Field(default=None, primary_key=True)
+    import_id: str = Field(primary_key=True)
     description: str | None
 
 
@@ -81,13 +73,13 @@ class FamilyPublic(FamilyBase):
 
 
 class FamilyDocumentBase(SQLModel):
-    import_id: str | None = Field(default=None, primary_key=True)
+    import_id: str = Field(primary_key=True)
     variant_name: str | None
 
 
 class FamilyDocument(FamilyDocumentBase, table=True):
     __tablename__ = "family_document"  # type: ignore[assignment]
-    family_import_id: str | None = Field(default=None, foreign_key="family.import_id")
+    family_import_id: str = Field(foreign_key="family.import_id")
     family: Family = Relationship(back_populates="family_documents")
     physical_document_id: int = Field(foreign_key="physical_document.id", unique=True)
     physical_document: Optional["PhysicalDocument"] = Relationship(
@@ -100,7 +92,7 @@ class FamilyDocumentPublic(FamilyDocumentBase):
 
 
 class PhysicalDocumentBase(SQLModel):
-    id: int | None = Field(default=None, primary_key=True)
+    id: int = Field(primary_key=True)
     title: str = Field(index=True)
     md5_sum: str | None
     source_url: str | None
