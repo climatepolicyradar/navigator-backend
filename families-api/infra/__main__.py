@@ -6,6 +6,7 @@ import pulumi_aws as aws
 account_id = aws.get_caller_identity().account_id
 
 
+# TODO: https://linear.app/climate-policy-radar/issue/APP-584/standardise-naming-in-infra
 def generate_secret_key(project: str, aws_service: str, name: str):
     return f"/{project}/{aws_service}/{name}"
 
