@@ -18,7 +18,7 @@ jobs:
       - uses: aws-actions/configure-aws-credentials@v4.2.0
         with:
           role-to-assume: arn:aws:iam::${{ secrets.AWS_ACCOUNT_ID }}:role/navigator-backend-github-actions-deploy
-          role-session-name: GitHub_to_AWS_via_FederatedOIDC
+          role-session-name: GitHub_to_AWS_via_FederatedOIDC_staging
           aws-region: eu-west-1
       - uses: aws-actions/amazon-ecr-login@v1
       - working-directory: families-api
@@ -33,8 +33,8 @@ jobs:
       - uses: aws-actions/configure-aws-credentials@v4.2.0
         with:
           role-to-assume: arn:aws:iam::${{ secrets.AWS_ACCOUNT_ID }}:role/navigator-backend-github-actions-deploy
-          role-session-name: GitHub_to_AWS_via_FederatedOIDC
+          role-session-name: GitHub_to_AWS_via_FederatedOIDC_production
           aws-region: eu-west-1
       - uses: aws-actions/amazon-ecr-login@v1
       - working-directory: families-api
-        run: just deploy latest
+        run: just deploy latestz
