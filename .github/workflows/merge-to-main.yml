@@ -8,7 +8,22 @@ permissions:
   id-token: write
   contents: read
 jobs:
-  merge-to-main:
+  deploy-families-api-staging:
+    runs-on: ubuntu-latest
+    environment: staging
+    steps:
+      - uses: actions/checkout@v4
+      - uses: extractions/setup-just@v2
+      - uses: actions/checkout@v4
+      - uses: aws-actions/configure-aws-credentials@v4.2.0
+        with:
+          role-to-assume: arn:aws:iam::${{ secrets.AWS_ACCOUNT_ID }}:role/navigator-backend-github-actions-deploy
+          role-session-name: GitHub_to_AWS_via_FederatedOIDC
+          aws-region: eu-west-1
+      - uses: aws-actions/amazon-ecr-login@v1
+      - working-directory: families-api
+        run: just deploy staging
+  deploy-families-api-production:
     runs-on: ubuntu-latest
     environment: production
     steps:
@@ -22,4 +37,4 @@ jobs:
           aws-region: eu-west-1
       - uses: aws-actions/amazon-ecr-login@v1
       - working-directory: families-api
-        run: just deploy staging
+        run: just deploy latest
