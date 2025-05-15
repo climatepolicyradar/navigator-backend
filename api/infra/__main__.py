@@ -191,8 +191,8 @@ api_certificate_validation_dns_record = aws.route53.Record(
 )
 
 # deployment
-navigator_backend_github_actions = aws.iam.Role(
-    "navigator-backend-github-actions",
+navigator_backend_github_actions_deploy = aws.iam.Role(
+    "navigator-backend-github-actions-deploy",
     assume_role_policy=json.dumps(
         {
             "Statement": [
@@ -217,7 +217,7 @@ navigator_backend_github_actions = aws.iam.Role(
     ),
     inline_policies=[
         {
-            "name": "navigator-backend-github-actions",
+            "name": "navigator-backend-github-actions-deploy",
             "policy": json.dumps(
                 {
                     "Version": "2012-10-17",
@@ -235,5 +235,5 @@ navigator_backend_github_actions = aws.iam.Role(
         }
     ],
     managed_policy_arns=["arn:aws:iam::aws:policy/AWSAppRunnerFullAccess"],
-    name="navigator-backend-github-actions",
+    name="navigator-backend-github-actions-deploy",
 )

@@ -15,11 +15,10 @@ jobs:
       - uses: actions/checkout@v4
       - uses: extractions/setup-just@v2
       - uses: actions/checkout@v4
-      - name: configure aws credentials
-        uses: aws-actions/configure-aws-credentials@v4.2.0
+      - uses: aws-actions/configure-aws-credentials@v4.2.0
         with:
-          role-to-assume: arn:aws:iam::${{ secrets.AWS_ACCOUNT_ID }}:role/navigator-backend-github-actions
+          role-to-assume: arn:aws:iam::${{ secrets.AWS_ACCOUNT_ID }}:role/navigator-backend-github-actions-deploy
           role-session-name: GitHub_to_AWS_via_FederatedOIDC
           aws-region: eu-west-1
       - working-directory: families-api
-        run: just deploy
+        run: just deploy staging
