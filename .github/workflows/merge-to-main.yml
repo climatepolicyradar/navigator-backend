@@ -4,9 +4,9 @@ on:
     branches:
       - main
       - geographies-api-deploy
-
-permissions: read-all
-
+permissions:
+  id-token: write
+  contents: read
 jobs:
   merge-to-main:
     runs-on: ubuntu-latest
