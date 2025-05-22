@@ -1,0 +1,4 @@
+config:
+  aws:region: eu-west-1
+  geographies-api:apprunner_vpc_connector_arn:
+    secure: AAABABpMQuXds4AEFspNqWq92sU1amcgm8S35QhPCrtFdEGBNUTRvTZl2zar7gSWrpY+fhIiZb/iinULQeXU010iEGhmeEFae58F0O65kbXsQkKxwibg5oeX+RIazc8MXfg2ANkZeCEEX+NgeGQYU3RgtwToRh99Oh3TKsOYwhpve5Z3LxqnZ4KXQTqX8WC3PuQiRiFkjJ+r

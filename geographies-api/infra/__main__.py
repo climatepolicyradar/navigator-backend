@@ -17,8 +17,8 @@ apprunner_vpc_connector_arn = pulumi_config.require("apprunner_vpc_connector_arn
 
 # This stuff is being encapsulated in navigator-infra and we should use that once it is ready
 # IAM role trusted by App Runner
-families_api_role = aws.iam.Role(
-    "families-api-role",
+geographies_api_role = aws.iam.Role(
+    "geographies-api-role",
     assume_role_policy=json.dumps(
         {
             "Version": "2012-10-17",
@@ -34,9 +34,9 @@ families_api_role = aws.iam.Role(
 )
 
 # Attach ECR access policy to the role
-families_api_role_policy = aws.iam.RolePolicy(
-    "families-api-role-ecr-policy",
-    role=families_api_role.id,
+geographies_api_role_policy = aws.iam.RolePolicy(
+    "geographies-api-role-ecr-policy",
+    role=geographies_api_role.id,
     policy=json.dumps(
         {
             "Version": "2012-10-17",
@@ -57,8 +57,8 @@ families_api_role_policy = aws.iam.RolePolicy(
     ),
 )
 
-families_api_instance_role = aws.iam.Role(
-    "families-api-instance-role",
+geographies_api_instance_role = aws.iam.Role(
+    "geographies-api-instance-role",
     assume_role_policy=json.dumps(
         {
             "Version": "2012-10-17",
@@ -74,9 +74,9 @@ families_api_instance_role = aws.iam.Role(
 )
 
 # Allow access to specific SSM Parameter Store secrets
-families_api_ssm_policy = aws.iam.RolePolicy(
-    "families-api-instance-role-ssm-policy",
-    role=families_api_instance_role.id,
+geographies_api_ssm_policy = aws.iam.RolePolicy(
+    "geographies-api-instance-role-ssm-policy",
+    role=geographies_api_instance_role.id,
     policy=json.dumps(
         {
             "Version": "2012-10-17",
@@ -85,7 +85,7 @@ families_api_ssm_policy = aws.iam.RolePolicy(
                     "Effect": "Allow",
                     "Action": ["ssm:GetParameters"],
                     "Resource": [
-                        f"arn:aws:ssm:eu-west-1:{account_id}:parameter/families-api/apprunner/*"
+                        f"arn:aws:ssm:eu-west-1:{account_id}:parameter/geographies-api/apprunner/*"
                     ],
                 }
             ],
@@ -93,21 +93,9 @@ families_api_ssm_policy = aws.iam.RolePolicy(
     ),
 )
 
-families_api_apprunner_navigator_database_url = aws.ssm.Parameter(
-    "families-api-apprunner-navigator-database-url",
-    name=generate_secret_key("families-api", "apprunner", "NAVIGATOR_DATABASE_URL"),
-    description="The URL string to connect to the navigator database",
-    type=aws.ssm.ParameterType.SECURE_STRING,
-    # This value is managed directly in SSM
-    value="PLACEHOLDER",
-    opts=pulumi.ResourceOptions(
-        # This value is managed directly in SSM
-        ignore_changes=["value"]
-    ),
-)
 
-families_api_ecr_repository = aws.ecr.Repository(
-    "families-api-ecr-repository",
+geographies_api_ecr_repository = aws.ecr.Repository(
+    "geographies-api-ecr-repository",
     encryption_configurations=[
         {
             "encryption_type": "AES256",
@@ -117,13 +105,13 @@ families_api_ecr_repository = aws.ecr.Repository(
         "scan_on_push": False,
     },
     image_tag_mutability="MUTABLE",
-    name="families-api",
+    name="geographies-api",
     opts=pulumi.ResourceOptions(protect=True),
 )
 
 
-families_api_apprunner_service = aws.apprunner.Service(
-    "families-api-apprunner-service",
+geographies_api_apprunner_service = aws.apprunner.Service(
+    "geographies-api-apprunner-service",
     auto_scaling_configuration_arn=f"arn:aws:apprunner:eu-west-1:{account_id}:autoscalingconfiguration/DefaultConfiguration/1/00000000000000000000000000000001",
     health_check_configuration={
         "interval": 10,
@@ -131,7 +119,7 @@ families_api_apprunner_service = aws.apprunner.Service(
         "timeout": 5,
     },
     instance_configuration={
-        "instance_role_arn": families_api_instance_role.arn,
+        "instance_role_arn": geographies_api_instance_role.arn,
     },
     network_configuration={
         "egress_configuration": {
@@ -147,22 +135,18 @@ families_api_apprunner_service = aws.apprunner.Service(
     observability_configuration={
         "observability_enabled": False,
     },
-    service_name="families-api",
+    service_name="geographies-api",
     source_configuration={
         "authentication_configuration": {
-            "access_role_arn": families_api_role.arn,
+            "access_role_arn": geographies_api_role.arn,
         },
         "image_repository": {
-            "image_configuration": {
-                "runtime_environment_secrets": {
-                    "NAVIGATOR_DATABASE_URL": families_api_apprunner_navigator_database_url.arn,
-                },
-            },
-            "image_identifier": f"{account_id}.dkr.ecr.eu-west-1.amazonaws.com/families-api:latest",
+            "image_configuration": {},
+            "image_identifier": f"{account_id}.dkr.ecr.eu-west-1.amazonaws.com/geographies-api:latest",
             "image_repository_type": "ECR",
         },
     },
     opts=pulumi.ResourceOptions(protect=True),
 )
 
-pulumi.export("apprunner_service_url", families_api_apprunner_service.service_url)
+pulumi.export("apprunner_service_url", geographies_api_apprunner_service.service_url)
