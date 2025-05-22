@@ -23,7 +23,7 @@ jobs:
       - uses: aws-actions/amazon-ecr-login@v1
       - working-directory: families-api
         run: just deploy staging
-  deploy-families-api-github-sha:
+  deploy-families-api-staging-github-sha:
     runs-on: ubuntu-latest
     environment: staging
     steps:
@@ -53,3 +53,18 @@ jobs:
       - uses: aws-actions/amazon-ecr-login@v1
       - working-directory: families-api
         run: just deploy latest
+  deploy-families-api-production-github-sha:
+    runs-on: ubuntu-latest
+    environment: production
+    steps:
+      - uses: actions/checkout@v4
+      - uses: extractions/setup-just@v2
+      - uses: actions/checkout@v4
+      - uses: aws-actions/configure-aws-credentials@v4.2.0
+        with:
+          role-to-assume: arn:aws:iam::${{ secrets.AWS_ACCOUNT_ID }}:role/navigator-backend-github-actions-deploy
+          role-session-name: GitHub_to_AWS_via_FederatedOIDC_production
+          aws-region: eu-west-1
+      - uses: aws-actions/amazon-ecr-login@v1
+      - working-directory: families-api
+        run: just deploy ${{ github.sha }}
