@@ -3,7 +3,6 @@ on:
   push:
     branches:
       - main
-      - geographies-api-deploy
 permissions:
   id-token: write
   contents: read
