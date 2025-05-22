@@ -16,13 +16,14 @@ geographies_stack = pulumi.StackReference(f"climatepolicyradar/geographies-api/{
 families_stack = pulumi.StackReference(f"climatepolicyradar/families-api/{stack}")
 
 # URLs
-api_route53_zone = aws.route53.Zone(
-    "api.climatepolicyradar.org", name="api.climatepolicyradar.org"
-)
+config = pulumi.Config()
+url = config.require("url")
+
+api_route53_zone = aws.route53.Zone(url, name=url)
 
 api_certificate = aws.acm.Certificate(
     "api-climatepolicyradar-org-cert",
-    domain_name="api.climatepolicyradar.org",
+    domain_name=url,
     validation_method="DNS",
     opts=pulumi.ResourceOptions(
         provider=aws.Provider("us-east-1", region="us-east-1")
@@ -59,7 +60,7 @@ api_cache_policy = aws.cloudfront.CachePolicy(
 )
 
 api_distribution = aws.cloudfront.Distribution(
-    "api.climatepolicyradar.org",
+    url,
     comment="API",
     origins=[
         {
@@ -96,7 +97,7 @@ api_distribution = aws.cloudfront.Distribution(
     enabled=True,
     is_ipv6_enabled=True,
     aliases=[
-        "api.climatepolicyradar.org",
+        url,
     ],
     default_cache_behavior={
         "allowed_methods": [
@@ -179,7 +180,7 @@ api_distribution = aws.cloudfront.Distribution(
 api_certificate_validation_dns_record = aws.route53.Record(
     "api-climatepolicyradar-org-alias",
     zone_id=api_route53_zone.zone_id,
-    name="api.climatepolicyradar.org",
+    name=url,
     type="A",
     aliases=[
         {

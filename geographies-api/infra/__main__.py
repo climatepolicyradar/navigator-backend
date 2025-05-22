@@ -11,10 +11,6 @@ def generate_secret_key(project: str, aws_service: str, name: str):
     return f"/{project}/{aws_service}/{name}"
 
 
-# TODO: once we get VPS info from the aws_env in navigator-infra, we should use that once it is ready
-pulumi_config = pulumi.Config()
-apprunner_vpc_connector_arn = pulumi_config.require("apprunner_vpc_connector_arn")
-
 # This stuff is being encapsulated in navigator-infra and we should use that once it is ready
 # IAM role trusted by App Runner
 geographies_api_role = aws.iam.Role(
@@ -122,11 +118,6 @@ geographies_api_apprunner_service = aws.apprunner.Service(
         "instance_role_arn": geographies_api_instance_role.arn,
     },
     network_configuration={
-        "egress_configuration": {
-            "egress_type": "VPC",
-            # This is only needed because we have hidden the RDS store in a different VPC to all our other resources
-            "vpc_connector_arn": apprunner_vpc_connector_arn,
-        },
         "ingress_configuration": {
             "is_publicly_accessible": True,
         },

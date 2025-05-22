@@ -102,7 +102,9 @@ families_api_apprunner_navigator_database_url = aws.ssm.Parameter(
     value="PLACEHOLDER",
     opts=pulumi.ResourceOptions(
         # This value is managed directly in SSM
-        ignore_changes=["value"]
+        ignore_changes=["value"],
+        # For a new environment, you need to import a manually created parameter
+        # import_=f"arn:aws:ssm:eu-west-1:{account_id}:parameter{generate_secret_key('families-api', 'apprunner', 'NAVIGATOR_DATABASE_URL')}",
     ),
 )
 
