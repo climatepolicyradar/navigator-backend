@@ -1,3 +1,5 @@
+import json
+
 import pulumi
 import pulumi_aws as aws
 
@@ -186,4 +188,52 @@ api_certificate_validation_dns_record = aws.route53.Record(
             "evaluate_target_health": False,
         }
     ],
+)
+
+# deployment
+navigator_backend_github_actions_deploy = aws.iam.Role(
+    "navigator-backend-github-actions-deploy",
+    assume_role_policy=json.dumps(
+        {
+            "Statement": [
+                {
+                    "Action": "sts:AssumeRoleWithWebIdentity",
+                    "Condition": {
+                        "StringEquals": {
+                            "token.actions.githubusercontent.com:aud": "sts.amazonaws.com"
+                        },
+                        "StringLike": {
+                            "token.actions.githubusercontent.com:sub": "repo:climatepolicyradar/*"
+                        },
+                    },
+                    "Effect": "Allow",
+                    "Principal": {
+                        "Federated": f"arn:aws:iam::{account_id}:oidc-provider/token.actions.githubusercontent.com"
+                    },
+                }
+            ],
+            "Version": "2012-10-17",
+        }
+    ),
+    inline_policies=[
+        {
+            "name": "navigator-backend-github-actions-deploy",
+            "policy": json.dumps(
+                {
+                    "Version": "2012-10-17",
+                    "Statement": [
+                        {
+                            "Action": [
+                                "ecr:*",
+                            ],
+                            "Effect": "Allow",
+                            "Resource": "*",
+                        }
+                    ],
+                }
+            ),
+        }
+    ],
+    managed_policy_arns=["arn:aws:iam::aws:policy/AWSAppRunnerFullAccess"],
+    name="navigator-backend-github-actions-deploy",
 )
