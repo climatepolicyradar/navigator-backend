@@ -36,9 +36,9 @@ docker-push tag:
 
 deploy-local tag:
     just ecr-login
+    just requirements
     just deploy {{tag}}
 
 deploy tag:
-    just requirements
     just docker-build {{tag}}
     just docker-push {{tag}}
