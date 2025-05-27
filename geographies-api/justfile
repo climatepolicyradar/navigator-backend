@@ -16,15 +16,18 @@ requirements:
 ecr-login:
     aws ecr get-login-password --region eu-west-1 | docker login --username AWS --password-stdin $(aws sts get-caller-identity --query 'Account' --output text).dkr.ecr.eu-west-1.amazonaws.com
 
-docker-build:
-    docker buildx build --platform linux/amd64 --output type=docker -t geographies-api:latest .
+docker-build tag:
+    docker buildx build --platform linux/amd64 --output type=docker -t geographies-api:{{tag}} .
 
-docker-push:
-    docker tag geographies-api:latest $(aws sts get-caller-identity --query 'Account' --output text).dkr.ecr.eu-west-1.amazonaws.com/geographies-api:latest
-    docker push $(aws sts get-caller-identity --query 'Account' --output text).dkr.ecr.eu-west-1.amazonaws.com/geographies-api:latest
+docker-push tag:
+    docker tag geographies-api:{{tag}} $(aws sts get-caller-identity --query 'Account' --output text).dkr.ecr.eu-west-1.amazonaws.com/geographies-api:{{tag}}
+    docker push $(aws sts get-caller-identity --query 'Account' --output text).dkr.ecr.eu-west-1.amazonaws.com/geographies-api:{{tag}}
 
-deploy:
-    just requirements
-    just docker-build
+deploy-local tag:
     just ecr-login
-    just docker-push
+    just requirements
+    just deploy {{tag}}
+
+deploy tag:
+    just docker-build {{tag}}
+    just docker-push {{tag}}
