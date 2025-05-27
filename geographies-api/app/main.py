@@ -15,7 +15,8 @@ class APIResponse(SQLModel, Generic[APIDataType]):
 
 
 class Settings(BaseSettings):
-    pass
+    # @related: GITHUB_SHA_ENV_VAR
+    github_sha: str = "unknown"
 
 
 settings = Settings()
@@ -60,6 +61,8 @@ class GeographyDocumentCount(SQLModel):
 def health_check():
     return {
         "status": "ok",
+        # @related: GITHUB_SHA_ENV_VAR
+        "version": settings.github_sha,
     }
 
 

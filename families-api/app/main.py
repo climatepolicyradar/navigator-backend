@@ -125,6 +125,8 @@ class APIResponse(SQLModel, Generic[APIDataType]):
 
 class Settings(BaseSettings):
     navigator_database_url: str
+    # @related: GITHUB_SHA_ENV_VAR
+    github_sha: str = "unknown"
 
 
 settings = Settings()
@@ -217,6 +219,8 @@ def docs_by_geo(
 def health_check():
     return {
         "status": "ok",
+        # @related: GITHUB_SHA_ENV_VAR
+        "version": settings.github_sha,
     }
 
 
