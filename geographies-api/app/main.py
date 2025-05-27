@@ -15,7 +15,8 @@ class APIResponse(SQLModel, Generic[APIDataType]):
 
 
 class Settings(BaseSettings):
-    pass
+    # @related: GITHUB_SHA_ENV_VAR
+    github_sha: str = "unknown"
 
 
 settings = Settings()
