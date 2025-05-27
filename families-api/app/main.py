@@ -219,6 +219,8 @@ def docs_by_geo(
 def health_check():
     return {
         "status": "ok",
+        # @related: GITHUB_SHA_ENV_VAR
+        "version": settings.github_sha,
     }
 
 
