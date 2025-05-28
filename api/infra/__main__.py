@@ -12,8 +12,11 @@ def generate_secret_key(project: str, aws_service: str, name: str):
 
 
 stack = pulumi.get_stack()
-geographies_stack = pulumi.StackReference(f"climatepolicyradar/geographies-api/{stack}")
-families_stack = pulumi.StackReference(f"climatepolicyradar/families-api/{stack}")
+geographies_api_stack = pulumi.StackReference(
+    f"climatepolicyradar/geographies-api/{stack}"
+)
+families_api_stack = pulumi.StackReference(f"climatepolicyradar/families-api/{stack}")
+concepts_api_stack = pulumi.StackReference(f"climatepolicyradar/concepts-api/{stack}")
 
 # URLs
 config = pulumi.Config()
@@ -64,7 +67,7 @@ api_distribution = aws.cloudfront.Distribution(
     comment="API",
     origins=[
         {
-            "domain_name": families_stack.get_output("apprunner_service_url"),
+            "domain_name": families_api_stack.get_output("apprunner_service_url"),
             "origin_id": "families-api-apprunner",
             "custom_origin_config": {
                 "http_port": 80,
@@ -74,7 +77,7 @@ api_distribution = aws.cloudfront.Distribution(
             },
         },
         {
-            "domain_name": geographies_stack.get_output("apprunner_service_url"),
+            "domain_name": geographies_api_stack.get_output("apprunner_service_url"),
             "origin_id": "geographies-api-apprunner",
             "custom_origin_config": {
                 "http_port": 80,
@@ -84,7 +87,7 @@ api_distribution = aws.cloudfront.Distribution(
             },
         },
         {
-            "domain_name": "9qn3mjdan3.eu-west-1.awsapprunner.com",
+            "domain_name": concepts_api_stack.get_output("apprunner_service_url"),
             "origin_id": "concepts-api-apprunner",
             "custom_origin_config": {
                 "http_port": 80,
