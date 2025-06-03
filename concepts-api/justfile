@@ -1,9 +1,15 @@
 # dev
 # should be used for first run
 bootstrap:
-    @echo "Nothing to bootstrap"
+    just initial-data
+
+initial-data environment:
+    @echo "🔄 downloading latest data from s3"
+    aws s3 sync s3://cpr-{{environment}}-document-cache/concepts initial-data
+    poetry run python create_duckdb.py
 
 dev:
+    just initial-data production
     docker compose up
 
 # build
@@ -16,12 +22,8 @@ requirements:
 ecr-login:
     aws ecr get-login-password --region eu-west-1 | docker login --username AWS --password-stdin $(aws sts get-caller-identity --query 'Account' --output text).dkr.ecr.eu-west-1.amazonaws.com
 
-docker-build tag:
-    # Concepts API specific
-    mkdir -p s3-concepts
-    aws s3 sync s3://cpr-staging-document-cache/concepts s3-concepts
-    poetry run python create_duckdb.py
-    # Build the docker image
+docker-build tag environment:
+    just initial-data {{environment}}
     # @related: GITHUB_SHA_ENV_VAR
     docker buildx build --platform linux/amd64 --output type=docker --build-arg GITHUB_SHA=$(git rev-parse HEAD) -t concepts-api:{{tag}} .
 
@@ -29,11 +31,11 @@ docker-push tag:
     docker tag concepts-api:{{tag}} $(aws sts get-caller-identity --query 'Account' --output text).dkr.ecr.eu-west-1.amazonaws.com/concepts-api:{{tag}}
     docker push $(aws sts get-caller-identity --query 'Account' --output text).dkr.ecr.eu-west-1.amazonaws.com/concepts-api:{{tag}}
 
-deploy-local tag:
+deploy-local tag environment:
     just ecr-login
     just requirements
-    just deploy {{tag}}
+    just deploy {{tag}} {{environment}}
 
-deploy tag:
-    just docker-build {{tag}}
+deploy tag environment:
+    just docker-build {{tag}} {{environment}}
     just docker-push {{tag}}

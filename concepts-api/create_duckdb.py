@@ -97,7 +97,7 @@ def get_classifier_specs() -> List[str]:
 
 
 def main():
-    con = duckdb.connect("concepts.db")
+    con = duckdb.connect("initial-data/concepts.db")
     con.execute(
         """
     DROP TABLE IF EXISTS concept_related_relations;
@@ -149,7 +149,7 @@ def main():
         raise
 
     # First pass: Insert all concepts into the database
-    json_files = glob.glob("s3-concepts/*.json")
+    json_files = glob.glob("initial-data/*.json")
     for file_path in json_files:
         with open(file_path, "r") as f:
             data = json.load(f)
