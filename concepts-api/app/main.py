@@ -27,7 +27,7 @@ async def lifespan(app: FastAPI):
     # Startup
     global conn
     try:
-        conn = duckdb.connect("concepts.db", read_only=True)
+        conn = duckdb.connect("initial-data/concepts.db", read_only=True)
         _LOGGER.info("🔌 Database connection established")
         yield
     except Exception as e:

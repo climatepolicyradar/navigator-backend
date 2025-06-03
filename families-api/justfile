@@ -1,9 +1,7 @@
 # dev
 # should be used for first run
 bootstrap:
-    # TODO: find a way to ensure we're using the latest dump
-    @echo "🔄 downloading latest dump from s3"
-    aws s3 cp s3://cpr-production-rds/dumps/2025-04-23-navigator-production.sql ./initial-data/2025-04-23-navigator-production.sql
+    just initial-data
 
     @echo "🚀 starting db docker container to load in data"
     docker compose up -d db
@@ -13,6 +11,14 @@ bootstrap:
 
     @echo "✅ Bootstrap complete — shutting down"
     docker compose down
+
+initial-data:
+    # TODO: find a way to ensure we're using the latest dump
+    # TODO: we should make this environment specific when we know the locations of these files
+    # this isn't used for building the actual image though, so it's OK for now
+    @echo "🔄 downloading latest dump from s3"
+    aws s3 cp s3://cpr-production-rds/dumps/2025-04-23-navigator-production.sql ./initial-data/2025-04-23-navigator-production.sql
+
 
 dev:
     docker compose up
