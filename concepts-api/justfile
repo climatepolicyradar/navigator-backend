@@ -5,7 +5,13 @@ bootstrap:
 
 initial-data environment:
     @echo "🔄 downloading latest data from s3"
-    aws s3 sync s3://cpr-{{environment}}-document-cache/concepts initial-data
+    echo "Current AWS identity:"
+    aws sts get-caller-identity  --region eu-west-1
+    echo "Checking role policies..."
+    aws iam list-attached-role-policies --role-name navigator-backend-github-actions-deploy  --region eu-west-1 || echo "Cannot list policies"
+    aws s3 ls s3://cpr-{{environment}}-document-cache/  --region eu-west-1 || echo "List bucket failed"
+    aws s3 ls s3://cpr-{{environment}}-document-cache/concepts/  --region eu-west-1 || echo "List concepts prefix failed"
+    aws s3 sync s3://cpr-{{environment}}-document-cache/concepts initial-data --region eu-west-1
     poetry run python create_duckdb.py
 
 dev:

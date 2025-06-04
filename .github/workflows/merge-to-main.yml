@@ -3,7 +3,6 @@ on:
   push:
     branches:
       - main
-      - api-deployment
 permissions:
   id-token: write
   contents: read
@@ -12,7 +11,7 @@ jobs:
     runs-on: ubuntu-latest
     strategy:
       matrix:
-        service: [families-api, geographies-api, concepts-api]
+        service: [families-api, geographies-api]
         environment: [staging, production]
     environment: ${{ matrix.environment }}
     steps:
