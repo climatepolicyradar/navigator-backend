@@ -28,5 +28,3 @@ jobs:
         run: |
           just deploy latest ${{ matrix.environment }}
           just deploy ${{ github.sha }} ${{ matrix.environment }}
-
-
