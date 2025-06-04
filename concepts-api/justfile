@@ -7,19 +7,19 @@ initial-data environment:
     @echo "🔄 downloading latest data from s3"
     echo "=== AWS Identity Check ==="
     aws sts get-caller-identity
-    
+
     echo "=== Testing basic AWS access ==="
     aws s3 ls || echo "Cannot list any S3 buckets"
-    
+
     echo "=== Testing ECR access (which should work) ==="
     aws ecr describe-repositories --region eu-west-1 || echo "ECR access failed"
-    
+
     echo "=== Testing if the bucket exists at all ==="
     aws s3api head-bucket --bucket cpr-staging-document-cache --region eu-west-1 || echo "Bucket doesn't exist or no access"
-    
+
     echo "=== Testing with explicit region ==="
     aws s3 ls s3://cpr-staging-document-cache/ --region eu-west-1 || echo "Regional access failed"
-    
+
     echo "=== Check what account we're in ==="
     aws sts get-caller-identity --query 'Account' --output text
     aws s3 sync s3://cpr-{{environment}}-document-cache/concepts initial-data

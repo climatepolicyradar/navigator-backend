@@ -3,7 +3,7 @@ on:
   push:
     branches:
       - main
-      - api-deployment
+      - api-deployment--debug
 permissions:
   id-token: write
   contents: read
