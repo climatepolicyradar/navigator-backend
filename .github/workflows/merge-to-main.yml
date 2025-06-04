@@ -29,7 +29,8 @@ jobs:
         with:
           python-version: "3.12"
       - uses: snok/install-poetry@v1
-      - run: poetry install
+      - working-directory: ${{ matrix.service }}
+        run: poetry install
       - working-directory: ${{ matrix.service }}
         run: |
           just deploy latest ${{ matrix.environment }}
