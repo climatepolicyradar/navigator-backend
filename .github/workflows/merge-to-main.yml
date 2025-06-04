@@ -3,67 +3,27 @@ on:
   push:
     branches:
       - main
+      - api-deployment
 permissions:
   id-token: write
   contents: read
 jobs:
-  deploy-families-api-staging:
+  deploy:
     runs-on: ubuntu-latest
-    environment: staging
+    strategy:
+      matrix:
+        service: [families-api, geographies-api, concepts-api]
+        environment: [staging, production]
     steps:
       - uses: actions/checkout@v4
       - uses: extractions/setup-just@v2
-      - uses: actions/checkout@v4
       - uses: aws-actions/configure-aws-credentials@v4.2.0
         with:
           role-to-assume: arn:aws:iam::${{ secrets.AWS_ACCOUNT_ID }}:role/navigator-backend-github-actions-deploy
-          role-session-name: GitHub_to_AWS_via_FederatedOIDC_staging
+          role-session-name: GitHub_to_AWS_via_FederatedOIDC_${{ matrix.environment }}_${{ matrix.service }}
           aws-region: eu-west-1
       - uses: aws-actions/amazon-ecr-login@v1
-      - working-directory: families-api
-        run: just deploy staging
-  deploy-families-api-staging-github-sha:
-    runs-on: ubuntu-latest
-    environment: staging
-    steps:
-      - uses: actions/checkout@v4
-      - uses: extractions/setup-just@v2
-      - uses: actions/checkout@v4
-      - uses: aws-actions/configure-aws-credentials@v4.2.0
-        with:
-          role-to-assume: arn:aws:iam::${{ secrets.AWS_ACCOUNT_ID }}:role/navigator-backend-github-actions-deploy
-          role-session-name: GitHub_to_AWS_via_FederatedOIDC_staging
-          aws-region: eu-west-1
-      - uses: aws-actions/amazon-ecr-login@v1
-      - working-directory: families-api
-        run: just deploy ${{ github.sha }}
-  deploy-families-api-production:
-    runs-on: ubuntu-latest
-    environment: production
-    steps:
-      - uses: actions/checkout@v4
-      - uses: extractions/setup-just@v2
-      - uses: actions/checkout@v4
-      - uses: aws-actions/configure-aws-credentials@v4.2.0
-        with:
-          role-to-assume: arn:aws:iam::${{ secrets.AWS_ACCOUNT_ID }}:role/navigator-backend-github-actions-deploy
-          role-session-name: GitHub_to_AWS_via_FederatedOIDC_production
-          aws-region: eu-west-1
-      - uses: aws-actions/amazon-ecr-login@v1
-      - working-directory: families-api
-        run: just deploy latest
-  deploy-families-api-production-github-sha:
-    runs-on: ubuntu-latest
-    environment: production
-    steps:
-      - uses: actions/checkout@v4
-      - uses: extractions/setup-just@v2
-      - uses: actions/checkout@v4
-      - uses: aws-actions/configure-aws-credentials@v4.2.0
-        with:
-          role-to-assume: arn:aws:iam::${{ secrets.AWS_ACCOUNT_ID }}:role/navigator-backend-github-actions-deploy
-          role-session-name: GitHub_to_AWS_via_FederatedOIDC_production
-          aws-region: eu-west-1
-      - uses: aws-actions/amazon-ecr-login@v1
-      - working-directory: families-api
-        run: just deploy ${{ github.sha }}
+      - working-directory: ${{ matrix.service }}
+        run: |
+          just deploy latest
+          just deploy ${{ github.sha }}
