@@ -3,6 +3,7 @@ on:
   pull_request:
     # a.
     types: [labeled]
+  workflow_dispatch: {}
 permissions:
   id-token: write
   contents: read
