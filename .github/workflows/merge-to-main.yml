@@ -26,5 +26,5 @@ jobs:
       - uses: aws-actions/amazon-ecr-login@v1
       - working-directory: ${{ matrix.service }}
         run: |
-          just deploy latest
-          just deploy ${{ github.sha }}
+          just deploy latest ${{ matrix.environment }}
+          just deploy ${{ github.sha }} ${{ matrix.environment }}
