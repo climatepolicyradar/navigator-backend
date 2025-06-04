@@ -232,7 +232,18 @@ navigator_backend_github_actions_deploy = aws.iam.Role(
                             ],
                             "Effect": "Allow",
                             "Resource": "*",
-                        }
+                        },
+                        {
+                            "Action": ["s3:ListBucket"],
+                            "Effect": "Allow",
+                            "Resource": "arn:aws:s3:::cpr-staging-document-cache",
+                            "Condition": {"StringLike": {"s3:prefix": ["concepts/*"]}},
+                        },
+                        {
+                            "Action": ["s3:GetObject"],
+                            "Effect": "Allow",
+                            "Resource": "arn:aws:s3:::cpr-staging-document-cache/concepts/*",
+                        },
                     ],
                 }
             ),
