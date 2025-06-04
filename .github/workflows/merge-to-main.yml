@@ -3,6 +3,7 @@ on:
   push:
     branches:
       - main
+      - api-deployment
 permissions:
   id-token: write
   contents: read
@@ -12,7 +13,7 @@ jobs:
     strategy:
       matrix:
         service: [families-api, geographies-api, concepts-api]
-        environment: [staging, production]
+        environment: [staging]
     environment: ${{ matrix.environment }}
     steps:
       - uses: actions/checkout@v4
@@ -27,3 +28,5 @@ jobs:
         run: |
           just deploy latest ${{ matrix.environment }}
           just deploy ${{ github.sha }} ${{ matrix.environment }}
+
+
