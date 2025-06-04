@@ -132,7 +132,10 @@ concepts_api_apprunner_service = aws.apprunner.Service(
             "access_role_arn": concepts_api_role.arn,
         },
         "image_repository": {
-            "image_configuration": {},
+            "image_configuration": aws.apprunner.ServiceSourceConfigurationImageRepositoryImageConfigurationArgs(
+                port="8080",
+                runtime_environment_variables={"Environment": pulumi.get_stack()},
+            ),
             "image_identifier": f"{account_id}.dkr.ecr.eu-west-1.amazonaws.com/concepts-api:latest",
             "image_repository_type": "ECR",
         },
