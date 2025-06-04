@@ -81,7 +81,7 @@ concepts_api_ssm_policy = aws.iam.RolePolicy(
                     "Effect": "Allow",
                     "Action": ["ssm:GetParameters"],
                     "Resource": [
-                        f"arn:aws:ssm:eu-west-1:{account_id}:parameter/geographies-api/apprunner/*"
+                        f"arn:aws:ssm:eu-west-1:{account_id}:parameter/concepts-api/apprunner/*"
                     ],
                 }
             ],

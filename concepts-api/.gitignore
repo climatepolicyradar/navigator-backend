@@ -5,8 +5,10 @@ __pycache__
 .pytest_cache
 .ruff_cache
 
-# we never want to commit DB dumps, even though they are provbably public somewhere
+# we never want to commit data, even though it is probably public somewhere
 initial-data/*.sql
+initial-data/*.json
+initial-data/*.db
 
 # we want and need this for building the Dockerfile
 !requirements.txt

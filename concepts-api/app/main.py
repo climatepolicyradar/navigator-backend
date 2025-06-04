@@ -27,7 +27,7 @@ async def lifespan(app: FastAPI):
     # Startup
     global conn
     try:
-        conn = duckdb.connect("concepts.db", read_only=True)
+        conn = duckdb.connect("initial-data/concepts.db", read_only=True)
         _LOGGER.info("🔌 Database connection established")
         yield
     except Exception as e:
@@ -62,11 +62,11 @@ app = FastAPI(
 
 @router.get("/search")
 async def search_concepts(
-    q: str | None = None, limit: int = 10, has_classifier: bool | None = False
+    q: str | None = None, limit: int = 10, has_classifier: bool = False
 ):
     db = get_db()
     if not q:
-        if has_classifier is not None:
+        if has_classifier:
             result = db.execute(
                 """
                 SELECT
@@ -102,7 +102,7 @@ async def search_concepts(
                 [limit],
             )
     else:
-        if has_classifier is not None:
+        if has_classifier:
             result = db.execute(
                 """
                 SELECT
@@ -140,11 +140,7 @@ async def search_concepts(
                 [f"{q}%", limit],
             )
 
-    if (
-        result is not None
-        and result.description is not None
-        and (rows := result.fetchall())
-    ):
+    if result.description is not None and (rows := result.fetchall()):
         columns = [desc[0] for desc in result.description]
         return [dict(zip(columns, row, strict=False)) for row in rows]
 

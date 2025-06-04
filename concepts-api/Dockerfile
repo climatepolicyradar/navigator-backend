@@ -2,6 +2,10 @@ FROM python:3.12-slim
 
 WORKDIR /app
 
+# @related: GITHUB_SHA_ENV_VAR
+ARG GITHUB_SHA
+ENV GITHUB_SHA=${GITHUB_SHA}
+
 # Install system dependencies required for psycopg2
 RUN apt-get update && apt-get install -y \
     gcc \
