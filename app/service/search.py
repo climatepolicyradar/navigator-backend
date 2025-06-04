@@ -35,7 +35,7 @@ from sqlalchemy.orm import Session
 
 from app.clients.aws.client import S3Client
 from app.clients.aws.s3_document import S3Document
-from app.config import CDN_DOMAIN, PUBLIC_APP_URL
+from app.config import CDN_DOMAIN
 from app.errors import ValidationError
 from app.models.search import (
     BackendFilterValues,
@@ -140,6 +140,7 @@ def _get_extra_csv_info(
 def process_result_into_csv(
     db: Session,
     search_response: SearchResponse,
+    base_url: str,
     is_browse: bool,
 ) -> str:
     """
@@ -158,7 +159,8 @@ def process_result_into_csv(
         if d.document_passage_matches
     }
 
-    url_base = f"{PUBLIC_APP_URL}/documents"
+    scheme = "https" if "localhost" in base_url else "http"
+    url_base = f"{scheme}://{base_url}/documents"
     metadata_keys = {}
     rows = []
     for family in search_response.families:
