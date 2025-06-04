@@ -211,7 +211,9 @@ def download_search_documents(
             detail=f"Invalid Query: {' '.join(e.args)}",
         )
 
-    content_str = process_result_into_csv(db, search_response, is_browse=is_browse)
+    content_str = process_result_into_csv(
+        db, search_response, token.aud, is_browse=is_browse
+    )
 
     _LOGGER.debug(f"Downloading search results as CSV: {content_str}")
     return StreamingResponse(
@@ -277,7 +279,9 @@ def download_all_search_documents(
     s3_document = S3Document(DOCUMENT_CACHE_BUCKET, AWS_REGION, data_dump_s3_key)
     if valid_credentials is True and (not s3_client.document_exists(s3_document)):
         aws_env = (
-            "production" if "dev" not in PUBLIC_APP_URL and "localhost" else "staging"
+            "production"
+            if "staging" not in PUBLIC_APP_URL and "localhost"
+            else "staging"
         )
         _LOGGER.info(
             f"Generating {token.sub} {aws_env} dump for ingest cycle w/c {latest_ingest_start}..."
