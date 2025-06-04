@@ -29,7 +29,7 @@ want to generate the token for.
 export TOKEN_SECRET_KEY=secret_key
 export CORPORA_IDS=CCLW.corpus.i00000001.n0000,UNFCCC.corpus.i00000001.n0000
 export THEME=CPR
-export AUDIENCE=app.dev.climatepolicyradar.org
+export AUDIENCE=cpr.staging.climatepolicyradar.org
 poetry shell
 python -c "from app import config; from app.service.custom_app import AppTokenFactory; t = AppTokenFactory(); print(t.create_configuration_token('$CORPORA_IDS;$THEME;$AUDIENCE'))"
 ```

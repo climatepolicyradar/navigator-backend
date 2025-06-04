@@ -20,7 +20,12 @@ def fetch_classifier_specs_file() -> Tuple[str, bool]:
     owner = "climatepolicyradar"
     repo = "knowledge-graph"
     branch = "main"
-    path = "flows/classifier_specs/prod.yaml"
+
+    classifier_file_name = "prod.yaml"
+    if os.getenv("Environment") == "staging":
+        classifier_file_name = "staging.yaml"
+
+    path = f"flows/classifier_specs/{classifier_file_name}"
     github_url = f"https://raw.githubusercontent.com/{owner}/{repo}/{branch}/{path}"
 
     try:
@@ -31,17 +36,9 @@ def fetch_classifier_specs_file() -> Tuple[str, bool]:
         return response.text, False
 
     except requests.RequestException as req_err:
-        # If GitHub fetch fails, fall back to local file
-        print(
-            f"GitHub fetch failed: {req_err}. Falling back to local file for concept classifier specs."
-        )
-        local_file = "concepts_with_classifiers.json"
-        if not os.path.exists(local_file):
-            raise ValueError(
-                "Fallback to local file failed: file does not exist"
-            ) from None
+        print(f"GitHub fetch failed: {req_err}.")
 
-        return local_file, True
+    raise ValueError("Failed to fetch classifiers") from None
 
 
 def parse_classifier_specs(classifier_specs_file: str, fallback: bool) -> List[str]:
