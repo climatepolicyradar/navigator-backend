@@ -163,7 +163,7 @@ def process_result_into_csv(
         raise ValidationError("Error creating CSV")
 
     scheme = "http" if "localhost" in base_url else "https"
-    url_base = f"{scheme}://{base_url}/documents"
+    url_base = f"{scheme}://{base_url}"
     metadata_keys = {}
     rows = []
     for family in search_response.families:
@@ -245,9 +245,9 @@ def process_result_into_csv(
                     "Family Name": family.family_name,
                     "Family Summary": family.family_description,
                     "Family Publication Date": family.family_date,
-                    "Family URL": f"{url_base}/{family.family_slug}",
+                    "Family URL": f"{url_base}/document/{family.family_slug}",
                     "Document Title": document_title,
-                    "Document URL": f"{url_base}/{document.slugs[-1].name}",
+                    "Document URL": f"{url_base}/documents/{document.slugs[-1].name}",
                     "Document Content URL": document_content,
                     "Document Type": doc_type_from_family_document_metadata(document),
                     "Document Content Matches Search Phrase": document_match,
@@ -266,7 +266,7 @@ def process_result_into_csv(
                 "Family Name": family.family_name,
                 "Family Summary": family.family_description,
                 "Family Publication Date": family.family_date,
-                "Family URL": f"{url_base}/{family.family_slug}",
+                "Family URL": f"{url_base}/document/{family.family_slug}",
                 "Document Title": "",
                 "Document URL": "",
                 "Document Content URL": "",
