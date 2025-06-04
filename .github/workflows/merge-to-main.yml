@@ -14,6 +14,7 @@ jobs:
       matrix:
         service: [families-api, geographies-api, concepts-api]
         environment: [staging, production]
+    environment: ${{ matrix.environment }}
     steps:
       - uses: actions/checkout@v4
       - uses: extractions/setup-just@v2
