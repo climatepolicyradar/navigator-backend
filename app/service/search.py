@@ -140,7 +140,7 @@ def _get_extra_csv_info(
 def process_result_into_csv(
     db: Session,
     search_response: SearchResponse,
-    base_url: str,
+    base_url: Optional[str],
     is_browse: bool,
 ) -> str:
     """
@@ -159,7 +159,10 @@ def process_result_into_csv(
         if d.document_passage_matches
     }
 
-    scheme = "https" if "localhost" in base_url else "http"
+    if base_url is None:
+        raise ValidationError("Error creating CSV")
+
+    scheme = "http" if "localhost" in base_url else "https"
     url_base = f"{scheme}://{base_url}/documents"
     metadata_keys = {}
     rows = []
