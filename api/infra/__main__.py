@@ -236,13 +236,13 @@ navigator_backend_github_actions_deploy = aws.iam.Role(
                         {
                             "Action": ["s3:ListBucket"],
                             "Effect": "Allow",
-                            "Resource": "arn:aws:s3:::cpr-{stack}-document-cache",
+                            "Resource": f"arn:aws:s3:::cpr-{stack}-document-cache",
                             "Condition": {"StringLike": {"s3:prefix": ["concepts/*"]}},
                         },
                         {
                             "Action": ["s3:GetObject"],
                             "Effect": "Allow",
-                            "Resource": "arn:aws:s3:::cpr-{stack}-document-cache/concepts/*",
+                            "Resource": f"arn:aws:s3:::cpr-{stack}-document-cache/concepts/*",
                         },
                     ],
                 }
