@@ -1,4 +1,5 @@
 import logging
+import os
 from contextlib import asynccontextmanager
 from typing import Any
 
@@ -7,10 +8,33 @@ from fastapi import APIRouter, Depends, FastAPI, HTTPException, Query
 from pydantic import BaseModel, Field
 from pydantic_settings import BaseSettings
 
+from api.telemetry import Telemetry
+from api.telemetry_config import ServiceManifest, TelemetryConfig
+from api.telemetry_exceptions import ExceptionHandlingTelemetryRoute
+
 # Global connection variable
 conn = None
 
+os.environ["SKIP_ALEMBIC_LOGGING"] = "1"
+os.environ["OTEL_PYTHON_LOG_CORRELATION"] = "True"
+
 _LOGGER = logging.getLogger(__name__)
+
+try:
+    otel_config = TelemetryConfig.from_service_manifest(
+        ServiceManifest.from_file("service-manifest.json"), os.getenv("ENV", "development"), "0.1.0"
+    )
+except Exception as _:
+    _LOGGER.error("Failed to load service manifest, using defaults")
+    otel_config = TelemetryConfig(
+        service_name="concepts-api",
+        namespace_name="navigator",
+        service_version="0.0.0",
+        environment=os.getenv("ENV", "development"),
+    )
+
+telemetry = Telemetry(otel_config)
+tracer = telemetry.get_tracer()
 
 
 def get_db():
@@ -50,6 +74,7 @@ settings = Settings()
 
 router = APIRouter(
     prefix="/concepts",
+    route_class=ExceptionHandlingTelemetryRoute,
 )
 app = FastAPI(
     title="Concepts API",
@@ -287,3 +312,6 @@ async def health_check():
 
 
 app.include_router(router)
+
+telemetry.instrument_fastapi(app)
+telemetry.setup_exception_hook()

@@ -1,9 +1,14 @@
+import os
 from typing import Generic, Optional, TypeVar
 
 from fastapi import APIRouter, Depends, FastAPI
 from pydantic_settings import BaseSettings
 from sqlalchemy import create_engine
 from sqlmodel import Field, Relationship, Session, SQLModel, func, select
+
+from api.telemetry import Telemetry
+from api.telemetry_config import ServiceManifest, TelemetryConfig
+from api.telemetry_exceptions import ExceptionHandlingTelemetryRoute
 
 
 class FamilyCorpusLink(SQLModel, table=True):
@@ -131,10 +136,28 @@ class Settings(BaseSettings):
 
 settings = Settings()
 
+os.environ["SKIP_ALEMBIC_LOGGING"] = "1"
+os.environ["OTEL_PYTHON_LOG_CORRELATION"] = "True"
+
+try:
+    otel_config = TelemetryConfig.from_service_manifest(
+        ServiceManifest.from_file("service-manifest.json"), os.getenv("ENV", "development"), "0.1.0"
+    )
+except Exception as _:
+    otel_config = TelemetryConfig(
+        service_name="families-api",
+        namespace_name="navigator",
+        service_version="0.0.0",
+        environment=os.getenv("ENV", "development"),
+    )
+
+telemetry = Telemetry(otel_config)
+tracer = telemetry.get_tracer()
+
 # TODO: Use JSON logging - https://linear.app/climate-policy-radar/issue/APP-571/add-json-logging-to-families-api
-# TODO: Add OTel - https://linear.app/climate-policy-radar/issue/APP-572/add-otel-to-families-api
 router = APIRouter(
     prefix="/families",
+    route_class=ExceptionHandlingTelemetryRoute,
 )
 app = FastAPI(
     docs_url="/families/docs",
@@ -225,3 +248,6 @@ def health_check():
 
 
 app.include_router(router)
+
+telemetry.instrument_fastapi(app)
+telemetry.setup_exception_hook()
