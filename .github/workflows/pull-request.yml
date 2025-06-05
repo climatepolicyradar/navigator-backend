@@ -1,18 +1,21 @@
-name: Merge to main
+name: Pull request
 on:
-  push:
-    branches:
-      - main
+  pull_request:
+    # a.
+    types: [labeled]
+  workflow_dispatch: {}
 permissions:
   id-token: write
   contents: read
 jobs:
   deploy:
+    # a. deploys the service to staging if the pull request is (re)labeled with 'deploy:staging'
+    if: github.event.label.name == 'deploy:staging'
     runs-on: ubuntu-latest
     strategy:
       matrix:
         service: [families-api, geographies-api, concepts-api]
-        environment: [production]
+        environment: [staging]
     environment: ${{ matrix.environment }}
     steps:
       - uses: actions/checkout@v4
@@ -33,4 +36,3 @@ jobs:
       - working-directory: ${{ matrix.service }}
         run: |
           just deploy latest ${{ matrix.environment }}
-          just deploy ${{ github.sha }} ${{ matrix.environment }}

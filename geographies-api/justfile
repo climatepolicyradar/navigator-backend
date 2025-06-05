@@ -29,6 +29,7 @@ deploy-local tag:
     just requirements
     just deploy {{tag}}
 
-deploy tag:
+# environment is not used here, but is required for the github deploy action
+deploy tag _:
     just docker-build {{tag}}
     just docker-push {{tag}}
