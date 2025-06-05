@@ -4,13 +4,13 @@ bootstrap:
     @echo "Nothing to bootstrap"
 
 dev:
-    docker compose up
+    docker compose up --build
 
 # build
 # TODO: this needs to be tied into a lifecycle somewhere to make sure it is run if something is added
 # sed is used here to remove a whole bunch of gumpf you can not remove with poetry v1 
 requirements:
-    poetry export --without-hashes --without-urls --format requirements.txt | sed 's/ ;.*//'  > requirements.txt
+    poetry export --without-hashes --without-urls --format requirements.txt | grep -v "^-e file://" | sed 's/ ;.*//' > requirements.txt
 
 # Local docker development
 ecr-login:

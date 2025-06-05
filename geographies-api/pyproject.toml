@@ -13,6 +13,7 @@ sqlmodel = "^0.0.24"
 pydantic-settings = "^2.9.1"
 pulumi = "^3.166.0"
 pulumi-aws = "^6.78.0"
+api = { path = "../api", develop = true }
 
 
 [build-system]

@@ -2,13 +2,14 @@ services:
   app:
     container_name: geographies-api-app
     build:
-      context: .
-      dockerfile: Dockerfile
+      context: ..
+      dockerfile: geographies-api/Dockerfile
     ports:
       - 8080:8080
     volumes:
-      - .:/app
-    working_dir: /app
+      - .:/app/geographies-api
+      - ../api:/app/api
+    working_dir: /app/geographies-api
     command: [fastapi, dev, app/main.py, --port, "8080", --host, 0.0.0.0]
 
 volumes:

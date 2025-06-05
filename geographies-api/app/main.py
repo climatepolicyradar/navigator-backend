@@ -4,6 +4,10 @@ from fastapi import APIRouter, FastAPI
 from pydantic_settings import BaseSettings
 from sqlmodel import SQLModel
 
+from .startup_message import hello
+
+hello()
+
 APIDataType = TypeVar("APIDataType")
 
 
@@ -67,3 +71,10 @@ def health_check():
 
 
 app.include_router(router)
+
+
+
+
+
+
+
