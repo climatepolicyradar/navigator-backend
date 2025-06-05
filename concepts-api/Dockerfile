@@ -13,9 +13,16 @@ RUN apt-get update && apt-get install -y \
     && rm -rf /var/lib/apt/lists/*
 
 # This is generated via the justfile with `just requirements`
-COPY ./requirements.txt /app/requirements.txt
+COPY ./concepts-api/requirements.txt /app/requirements.txt
 RUN pip install --no-cache-dir --upgrade -r /app/requirements.txt
 
-COPY ./ /app/
+# Copy shared API utilities
+COPY ./api /app/api
+
+# Copy the concepts-api application
+COPY ./concepts-api /app/concepts-api
+
+# Set the working directory to concepts-api
+WORKDIR /app/concepts-api
 
 CMD ["fastapi", "run", "./app/main.py", "--port", "8080", "--host", "0.0.0.0"]

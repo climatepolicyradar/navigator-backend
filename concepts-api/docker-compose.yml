@@ -2,13 +2,14 @@ services:
   app:
     container_name: concepts-api-app
     build:
-      context: .
-      dockerfile: Dockerfile
+      context: ..
+      dockerfile: concepts-api/Dockerfile
     ports:
       - 8080:8080
     volumes:
-      - .:/app
-    working_dir: /app
+      - .:/app/concepts-api
+      - ../api:/app/api
+    working_dir: /app/concepts-api
     command: [fastapi, dev, app/main.py, --port, "8080", --host, 0.0.0.0]
 
 volumes:
