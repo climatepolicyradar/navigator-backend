@@ -1,41 +1,78 @@
-# geographies-api
+# Concepts API
 
-## Local development
+## Prerequisites
 
-**`just dev`**
+- Python 3.11 or higher
+- Poetry (Python package manager)
+- Docker and Docker Compose
+- AWS CLI configured with appropriate credentials
+- `just` command runner
 
-- To run the service locally, run `just dev`
-- We use docker compose to start up local services
-- We are able to run the framework's (FastAPI) native dev environment
-  (`fastapi dev app/main.py`)
-- Local data for the service is pre-loaded and prod-like
-- Any changes to code are reflected immediately in the running service.
-  No reloads needed
+## Local Development Setup
 
-**`just build`**
+1. **Install Poetry Dependencies**
 
-TBD
+   ```bash
+   poetry install
+   ```
 
-**`just test`**
+2. **Bootstrap Initial Data**
 
-TBD
+   ```bash
+   just bootstrap
+   ```
 
-**`just deploy`**
+   This will download the latest concept data from S3 (prod) and create the
+   DuckDB database.
 
-TBD
+3. **Start Development Server**
 
-## infra
+   ```bash
+   just dev
+   ```
+
+   This will:
+
+   - Sync latest data from staging environment
+   - Start the service using Docker Compose
+   - Enable hot-reload for code changes
+
+For rebuilding after requirements changes:
 
 ```bash
-cd infra
-pulumi up --stack production
+just dev-rebuild
 ```
 
-## TODO
+## Local Deployment to AWS App Runner
 
-[Linear project](https://linear.app/climate-policy-radar/project/isolate-services-within-navigator-backend-abeb5f150aa4/issues)
+To deploy the service locally to App Runner (without GitHub):
 
-## Architecture di
+1. **Update Requirements**
+
+   ```bash
+   just requirements
+   ```
+
+2. **Deploy to App Runner**
+
+   ```bash
+   just deploy-local [tag] [environment]
+   ```
+
+   Example:
+
+   ```bash
+   just deploy-local latest staging
+   ```
+
+   This command will:
+
+   - Log into ECR
+   - Build the Docker image
+   - Push to ECR
+   - Deploy to App Runner
+
+## Architecture
 
 ```mermaid
 flowchart RL
@@ -60,16 +97,55 @@ flowchart RL
     end
 ```
 
+## Known Issues and Gotchas
+
+1. **ECR Repository Setup**
+
+   - The ECR repository must exist before deploying
+   - Create ECR repo first
+   - Run `just deploy`
+   - Create remaining AWS infrastructure
+
+2. **VPC Connector**
+
+   - App Runner VPC connector must be created before stack deployment
+
+3. **AWS Credentials**
+   - Ensure your AWS CLI is configured with appropriate credentials
+   - Required permissions: ECR, App Runner, S3 access
+
+## Environment Variables
+
+The service requires the following environment variables:
+
+- AWS credentials (if deploying)
+- Environment-specific configurations are handled via the deployment process
+
+## Troubleshooting
+
+If you encounter issues:
+
+1. **Docker Build Failures**
+
+   - Ensure Docker daemon is running
+   - Check available disk space
+   - Verify AWS credentials
+
+2. **Data Sync Issues**
+
+   - Verify AWS credentials and S3 access
+   - Check network connectivity
+   - Ensure sufficient disk space for data
+
+3. **Development Server Issues**
+   - Check port conflicts
+   - Verify Python version
+   - Ensure all dependencies are installed
+
+## TODO
+
+[Linear project](https://linear.app/climate-policy-radar/project/isolate-services-within-navigator-backend-abeb5f150aa4/issues)
+
 ## Potential datalake-game
 
 TBD
-
-## GOTCHAS
-
-- needing to create the ecr-repo and have a image to
-  deploy before spinning up a whole stack i.e.
-  - create ecr repo
-  - just deploy
-  - create rest of AWS stack
-- needing the app runner vpc connector to be created before the stack is spun up
-- renaming from families-api to geographies-api is a little cumbersome
