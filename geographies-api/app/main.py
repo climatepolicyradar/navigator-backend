@@ -1,31 +1,17 @@
-from typing import Generic, TypeVar
+from typing import TypeVar
 
-from fastapi import APIRouter, FastAPI
-from pydantic_settings import BaseSettings
-from sqlmodel import SQLModel
+from fastapi import FastAPI
+
+from app.model import Settings
+from app.router import router as geographies_router
 
 APIDataType = TypeVar("APIDataType")
-
-
-class APIResponse(SQLModel, Generic[APIDataType]):
-    data: list[APIDataType]
-    total: int
-    page: int
-    page_size: int
-
-
-class Settings(BaseSettings):
-    # @related: GITHUB_SHA_ENV_VAR
-    github_sha: str = "unknown"
-
 
 settings = Settings()
 
 # TODO: Use JSON logging - https://linear.app/climate-policy-radar/issue/APP-571/add-json-logging-to-families-api
 # TODO: Add OTel - https://linear.app/climate-policy-radar/issue/APP-572/add-otel-to-families-api
-router = APIRouter(
-    prefix="/geographies",
-)
+
 app = FastAPI(
     docs_url="/geographies/docs",
     redoc_url="/geographies/redoc",
@@ -33,31 +19,8 @@ app = FastAPI(
 )
 
 
-class Geography(SQLModel):
-    id: int
-
-
-@router.get("/", response_model=APIResponse[Geography])
-def read_documents():
-
-    return APIResponse(
-        data=[Geography(id=1)],
-        total=1,
-        page=1,
-        page_size=1,
-    )
-
-
-class GeographyDocumentCount(SQLModel):
-    alpha3: str
-    name: str
-    count: int
-
-
-# we use both to make sure we can have /geographies/health available publically
-# and /health available to the internal network / AppRunner healthcheck
 @app.get("/health")
-@router.get("/health")
+@geographies_router.get("/health")
 def health_check():
     return {
         "status": "ok",
@@ -66,4 +29,9 @@ def health_check():
     }
 
 
-app.include_router(router)
+app.include_router(
+    geographies_router,
+    prefix="/geographies",
+    tags=["Geographies"],
+    include_in_schema=True,
+)
