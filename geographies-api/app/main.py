@@ -1,6 +1,8 @@
-from typing import Generic, TypeVar
+from typing import Generic, Optional, TypeVar
 
-from fastapi import APIRouter, FastAPI
+import pycountry
+from fastapi import APIRouter, FastAPI, HTTPException, Path
+from pydantic import BaseModel
 from pydantic_settings import BaseSettings
 from sqlmodel import SQLModel
 
@@ -39,7 +41,6 @@ class Geography(SQLModel):
 
 @router.get("/", response_model=APIResponse[Geography])
 def read_documents():
-
     return APIResponse(
         data=[Geography(id=1)],
         total=1,
@@ -64,6 +65,69 @@ def health_check():
         # @related: GITHUB_SHA_ENV_VAR
         "version": settings.github_sha,
     }
+
+
+class CountryResponse(BaseModel):
+    alpha_2: str
+    alpha_3: str
+    name: str
+    official_name: Optional[str] = None
+    numeric: str
+    flag: Optional[str] = None
+
+
+def get_country_by_code(code: str) -> CountryResponse:
+    """
+    Retrieve country information using ISO alpha-3 code.
+
+    NOTE: This utility function is used to fetch country metadata from
+    the `pycountry` library using a standard alpha-3 code. It includes
+    flag emoji generation and handles missing countries gracefully.
+
+    :param str code: ISO alpha-3 country code (e.g., 'USA', 'GBR').
+    :return CountryResponse: An object containing country details,
+        including name, codes, and emoji flag.
+    :raises HTTPException: If the provided code does not match any
+        known country.
+    """
+    country = pycountry.countries.get(alpha_3=code.upper())
+
+    if not country:
+        raise HTTPException(
+            status_code=404, detail=f"Country with alpha-3 code '{code}' not found"
+        )
+
+    # Get flag emoji (Unicode flag representation)
+    flag_emoji = "".join(chr(ord(c) + 127397) for c in country.alpha_2)
+
+    return CountryResponse(
+        alpha_2=country.alpha_2,
+        alpha_3=country.alpha_3,
+        name=country.name,
+        official_name=getattr(country, "official_name", None),
+        numeric=country.numeric,
+        flag=flag_emoji,
+    )
+
+
+@app.get("/countries/{code}", response_model=CountryResponse)
+async def get_country(
+    code: str = Path(
+        ..., description="ISO alpha-3 country code", min_length=3, max_length=3
+    ),
+) -> CountryResponse:
+    """
+    Get country information by ISO alpha-3 code.
+
+    NOTE: This endpoint retrieves metadata about a country by its
+    alpha-3 code (e.g., 'USA'). It can be used to populate region-level
+    UI components or to enrich geographic data.
+
+    :param str code: ISO alpha-3 country code (e.g., 'USA', 'GBR', 'CAN').
+    :return CountryResponse: An object representing the country,
+        including name, codes, and flag emoji.
+    """
+    return get_country_by_code(code)
 
 
 app.include_router(router)
