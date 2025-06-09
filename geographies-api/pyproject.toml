@@ -14,6 +14,7 @@ pydantic-settings = "^2.9.1"
 pulumi = "^3.166.0"
 pulumi-aws = "^6.78.0"
 pycountry = "^24.6.1"
+boto3 = "^1.38.32"
 
 
 [build-system]

@@ -2,6 +2,7 @@ annotated-types==0.7.0
 anyio==4.9.0
 arpeggio==2.0.2
 attrs==25.3.0
+boto3==1.38.0
 certifi==2025.4.26
 click==8.2.0
 colorama==0.4.6
