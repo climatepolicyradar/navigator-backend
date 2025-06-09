@@ -27,6 +27,7 @@ pip==25.1.1
 protobuf==4.25.7
 pulumi-aws==6.80.0
 pulumi==3.169.0
+pycountry==24.6.1
 pydantic-core==2.33.2
 pydantic-settings==2.9.1
 pydantic==2.11.4
