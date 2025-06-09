@@ -11,6 +11,9 @@ def generate_secret_key(project: str, aws_service: str, name: str):
     return f"/{project}/{aws_service}/{name}"
 
 
+config = pulumi.Config()
+
+
 # This stuff is being encapsulated in navigator-infra and we should use that once it is ready
 # IAM role trusted by App Runner
 geographies_api_role = aws.iam.Role(
@@ -132,7 +135,12 @@ geographies_api_apprunner_service = aws.apprunner.Service(
             "access_role_arn": geographies_api_role.arn,
         },
         "image_repository": {
-            "image_configuration": {},
+            "image_configuration": aws.apprunner.ServiceSourceConfigurationImageRepositoryImageConfigurationArgs(
+                port="8080",  # @related: PORT_NUMBER
+                runtime_environment_variables={
+                    "GEOGRAPHIES_BUCKET": config.require("geographies_bucket")
+                },
+            ),
             "image_identifier": f"{account_id}.dkr.ecr.eu-west-1.amazonaws.com/geographies-api:latest",
             "image_repository_type": "ECR",
         },
