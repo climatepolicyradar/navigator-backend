@@ -30,7 +30,7 @@ def fetch_classifier_specs_file() -> Tuple[str, bool]:
 
     try:
         # Attempt to fetch the file
-        response = requests.get(github_url, timeout=10)
+        response = requests.get(github_url, timeout=10)  # seconds
         response.raise_for_status()  # Raise an error for bad HTTP responses
 
         return response.text, False
