@@ -1,7 +1,11 @@
 # dev
 # should be used for first run
 bootstrap:
-    @echo "Nothing to bootstrap"
+    just initial-data
+
+initial-data environment:
+    @echo "downloading latest data from s3"
+    aws s3 sync s3://cpr-{{environment}}-document-cache/geographies initial-data
 
 dev:
     docker compose up
@@ -27,9 +31,9 @@ docker-push tag:
 deploy-local tag:
     just ecr-login
     just requirements
-    just deploy {{tag}}
+    just deploy {{tag}} {{environment}}
 
 # environment is not used here, but is required for the github deploy action
 deploy tag _:
-    just docker-build {{tag}}
+    just docker-build {{tag}} {{environment}}
     just docker-push {{tag}}
