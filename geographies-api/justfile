@@ -20,20 +20,20 @@ requirements:
 ecr-login:
     aws ecr get-login-password --region eu-west-1 | docker login --username AWS --password-stdin $(aws sts get-caller-identity --query 'Account' --output text).dkr.ecr.eu-west-1.amazonaws.com
 
-docker-build tag:
+docker-build tag environment:
     # @related: GITHUB_SHA_ENV_VAR
-    docker buildx build --platform linux/amd64 --output type=docker --build-arg GITHUB_SHA=$(git rev-parse HEAD) -t geographies-api:{{tag}} .
+    docker buildx build --platform linux/amd64 --output type=docker --build-arg ENV={{environment}} --build-arg GITHUB_SHA=$(git rev-parse HEAD) -t geographies-api:{{tag}} .
 
 docker-push tag:
     docker tag geographies-api:{{tag}} $(aws sts get-caller-identity --query 'Account' --output text).dkr.ecr.eu-west-1.amazonaws.com/geographies-api:{{tag}}
     docker push $(aws sts get-caller-identity --query 'Account' --output text).dkr.ecr.eu-west-1.amazonaws.com/geographies-api:{{tag}}
 
-deploy-local tag:
+deploy-local tag environment:
     just ecr-login
     just requirements
     just deploy {{tag}} {{environment}}
 
 # environment is not used here, but is required for the github deploy action
-deploy tag _:
+deploy tag environment:
     just docker-build {{tag}} {{environment}}
     just docker-push {{tag}}
