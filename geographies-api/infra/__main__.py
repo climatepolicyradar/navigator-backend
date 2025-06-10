@@ -32,6 +32,7 @@ geographies_api_role = aws.iam.Role(
     ),
 )
 
+
 # Attach ECR access policy to the role
 geographies_api_role_policy = aws.iam.RolePolicy(
     "geographies-api-role-ecr-policy",
@@ -108,6 +109,42 @@ geographies_api_ecr_repository = aws.ecr.Repository(
     opts=pulumi.ResourceOptions(protect=True),
 )
 
+
+# Define the S3 access policy
+_S3_ACCESS_POLICY = {
+    "Version": "2012-10-17",
+    "Statement": [
+        {
+            "Effect": "Allow",
+            "Action": [
+                "s3:PutObject",
+                "s3:PutObjectAcl",
+                "s3:GetObject",
+                "s3:DeleteObject",
+            ],
+            "Resource": [f"arn:aws:s3:::{config.require('geographies_bucket')}/*"],
+        },
+        {
+            "Effect": "Allow",
+            "Action": ["s3:ListBucket"],
+            "Resource": [f"arn:aws:s3:::{config.require('geographies_bucket')}"],
+        },
+    ],
+}
+
+# Create the S3 access policy
+s3_access_policy = aws.iam.Policy(
+    "geographies-api-s3-access-policy",
+    policy=json.dumps(_S3_ACCESS_POLICY),
+    description="Policy to allow geographies API to access S3 bucket",
+)
+
+# Attach the policy to the instance role
+aws.iam.RolePolicyAttachment(
+    "geographies-api-instance-role-s3-policy-attachment",
+    role=geographies_api_instance_role.name,
+    policy_arn=s3_access_policy.arn,
+)
 
 geographies_api_apprunner_service = aws.apprunner.Service(
     "geographies-api-apprunner-service",
