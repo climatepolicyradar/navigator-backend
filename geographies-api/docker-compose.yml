@@ -5,11 +5,11 @@ services:
       context: .
       dockerfile: Dockerfile
     ports:
-      - 8080:8080
+      - 8080:8080 # @related: PORT_NUMBER
     volumes:
       - .:/app
     working_dir: /app
-    command: [fastapi, dev, app/main.py, --port, "8080", --host, 0.0.0.0]
+    command: [fastapi, dev, app/main.py, --port, "8080", --host, 0.0.0.0] # @related: PORT_NUMBER
 
 volumes:
   navigator_postgres_data: {}
