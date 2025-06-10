@@ -336,7 +336,7 @@ class S3Client:
 
         except Exception as e:
             logger.error(f"Failed to upload JSON to s3://{bucket}/{key}: {str(e)}")
-            return False
+            raise e
 
 
 def get_s3_client():
