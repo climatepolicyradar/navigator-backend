@@ -107,7 +107,7 @@ def list_all_countries() -> list[CountryResponse]:
                 official_name=getattr(country, "official_name", None),
                 numeric=country.numeric,  # type: ignore[arg-type]
                 flag="".join(chr(ord(c) + 127397) for c in country.alpha_2),  # type: ignore[arg-type]
-            )
+            ).model_dump()
         }
         for country in pycountry.countries
     ]
@@ -126,12 +126,9 @@ def populate_initial_countries_data():
     countries_data = {
         "countries": all_countries,
         "version": "1.0",
-        "timestamp": datetime.now(timezone.utc),
+        "timestamp": datetime.now(timezone.utc).isoformat(),
     }
 
-    # output_file = "countries.json"
-    # with open(output_file, "w", encoding="utf-8") as f:
-    #     json.dump(countries_data, f, indent=2, ensure_ascii=False)
     if os.environ["GEOGRAPHIES_BUCKET"] is None:
         raise ValueError("GEOGRAPHIES_BUCKET is not set")
 

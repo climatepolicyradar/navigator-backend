@@ -25,9 +25,7 @@ settings = Settings()
 
 # TODO: Use JSON logging - https://linear.app/climate-policy-radar/issue/APP-571/add-json-logging-to-families-api
 # TODO: Add OTel - https://linear.app/climate-policy-radar/issue/APP-572/add-otel-to-families-api
-router = APIRouter(
-    prefix="/geographies",
-)
+router = APIRouter()
 
 
 @router.get("/", response_model=APIResponse[Geography])
@@ -82,7 +80,7 @@ async def get_country_subdivisions(
     return get_subdivisions_by_country(country_code)
 
 
-@router.get("populate-s3-bucket")
+@router.get("/populate-s3-bucket")
 def populate_s3_bucket():
     """
     Populate the S3 bucket with geographies data.

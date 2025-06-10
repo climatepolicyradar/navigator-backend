@@ -24,6 +24,25 @@ TBD
 
 TBD
 
+**`just deploy-local`**
+
+```bash
+just deploy-local [tag] [environment]
+```
+
+Example:
+
+```bash
+just deploy-local latest staging
+```
+
+This command will:
+
+- Log into ECR
+- Build the Docker image
+- Push to ECR
+- Deploy to App Runner
+
 ## infra
 
 ```bash
