@@ -6,8 +6,6 @@ updates:
       interval: monthly
     ignore:
       - dependency-name: cpr_sdk
-    reviewers:
-      - climatepolicyradar/software
     groups:
       all:
         applies-to: version-updates
@@ -17,8 +15,6 @@ updates:
     directory: /
     schedule:
       interval: monthly
-    reviewers:
-      - climatepolicyradar/software
     groups:
       all:
         applies-to: version-updates
@@ -30,6 +26,4 @@ updates:
       interval: daily
     allow:
       - dependency-name: cpr_sdk
-    reviewers:
-      - climatepolicyradar/deng
     target-branch: main
