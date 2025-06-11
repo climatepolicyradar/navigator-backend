@@ -87,7 +87,45 @@ def get_subdivisions_by_country(country_code: str) -> list[SubdivisionResponse]:
     return subdivisions
 
 
-def list_all_countries() -> list[CountryResponse]:
+def get_all_subdivisions_grouped_by_country() -> dict[str, list[dict]]:
+    """
+    Retrieve all subdivisions grouped by country (using ISO alpha-3 codes).
+
+    NOTE: This utility function collects all administrative subdivisions
+    available in the `pycountry` library and organizes them by their
+    parent country (alpha-3 code).
+
+    :return dict[str, list[SubdivisionResponse]]: A dictionary mapping
+        alpha-3 country codes to their respective list of subdivisions.
+    """
+    subdivisions_by_country: dict[str, list[dict]] = {}
+
+    for py_subdivision in pycountry.subdivisions:
+        country_alpha_2 = py_subdivision.country_code  # type: ignore[attr-defined]
+        country = pycountry.countries.get(alpha_2=country_alpha_2)
+
+        if not country:
+            continue  # Skip unrecognized country codes
+
+        alpha_3 = country.alpha_3
+
+        subdivision = SubdivisionResponse(
+            code=py_subdivision.code,  # type: ignore[arg-type]
+            name=py_subdivision.name,  # type: ignore[arg-type]
+            type=py_subdivision.type,  # type: ignore[arg-type]
+            country_alpha_2=country.alpha_2,
+            country_alpha_3=country.alpha_3,
+        ).model_dump()
+
+        if alpha_3 not in subdivisions_by_country:
+            subdivisions_by_country[alpha_3] = []
+
+        subdivisions_by_country[alpha_3].append(subdivision)
+
+    return subdivisions_by_country
+
+
+def list_all_countries() -> dict[str, dict]:
     """
     List all countries with their metadata.
 
@@ -98,22 +136,34 @@ def list_all_countries() -> list[CountryResponse]:
 
     :return list[CountryResponse]: A list of country objects with metadata.
     """
-    return [
-        {
-            country.alpha_3: CountryResponse(  # type: ignore[arg-type]
-                alpha_2=country.alpha_2,  # type: ignore[arg-type]
-                alpha_3=country.alpha_3,  # type: ignore[arg-type]
-                name=country.name,  # type: ignore[arg-type]
-                official_name=getattr(country, "official_name", None),
-                numeric=country.numeric,  # type: ignore[arg-type]
-                flag="".join(chr(ord(c) + 127397) for c in country.alpha_2),  # type: ignore[arg-type]
-            ).model_dump()
-        }
+
+    return {
+        country.alpha_3: CountryResponse(  # type: ignore[arg-type]
+            alpha_2=country.alpha_2,  # type: ignore[arg-type]
+            alpha_3=country.alpha_3,  # type: ignore[arg-type]
+            name=country.name,  # type: ignore[arg-type]
+            official_name=getattr(country, "official_name", None),
+            numeric=country.numeric,  # type: ignore[arg-type]
+            flag="".join(chr(ord(c) + 127397) for c in country.alpha_2),  # type: ignore[arg-type]
+        ).model_dump()
         for country in pycountry.countries
-    ]
+    }
 
 
 def populate_initial_countries_data():
+    """
+    Populate and upload initial country and subdivision reference data to S3.
+
+    NOTE: This utility function compiles structured country and subdivision
+    metadata using the `pycountry` library. It retrieves all countries and their
+    associated subdivisions (grouped by ISO alpha-3 code), adds versioning and
+    a timestamp, and uploads the resulting JSON document to a configured S3 bucket.
+
+
+    :raises ConnectionError: If the S3 client is not connected.
+    :raises ValueError: If the required GEOGRAPHIES_BUCKET environment variable is not set.
+    """
+
     s3_client = get_s3_client()
     if s3_client.is_connected():
         _LOGGER.info("S3 client is connected")
@@ -123,8 +173,10 @@ def populate_initial_countries_data():
 
     # Create the object
     all_countries = list_all_countries()
+    all_subdivisons = get_all_subdivisions_grouped_by_country()
     countries_data = {
         "countries": all_countries,
+        "subdivisions": all_subdivisons,
         "version": "1.0",
         "timestamp": datetime.now(timezone.utc).isoformat(),
     }
