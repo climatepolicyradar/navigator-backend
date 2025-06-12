@@ -12,10 +12,10 @@ from .s3_client import get_s3_client
 
 _LOGGER = logging.getLogger(__name__)
 
-DOCUMENT_URL = os.environ.get(
-    "GEOGRAPHIES_DOCUMENT_URL",
-    "https://cdn.dev.climatepolicyradar.org/geographies/countries.json",
-)
+CDN_URL = os.environ.get("CDN_URL")
+GEOGRAPHIES_DOCUMENT_PATH = "geographies/countries.json"
+
+DOCUMENT_URL = os.environ.get(f"{CDN_URL}/{GEOGRAPHIES_DOCUMENT_PATH}")
 
 
 def get_country_by_code(code: str) -> CountryResponse:
@@ -200,7 +200,7 @@ def populate_initial_countries_data():
     s3_client.upload_json(countries_data, bucket_name, file_key)
 
 
-def get_countries_data(url: str = DOCUMENT_URL) -> Dict[str, Any]:
+def get_countries_data(url: str | None) -> Dict[str, Any]:
     """
     Retrieve all countries data from the Climate Policy Radar CDN.
 
@@ -216,6 +216,12 @@ def get_countries_data(url: str = DOCUMENT_URL) -> Dict[str, Any]:
         network issues, timeouts, or server errors.
     :raises ValueError: If the response is not valid JSON or not a list.
     """
+
+    url = DOCUMENT_URL if url is None else url
+
+    if not url:
+        raise ValueError("No URL provided for fetching countries data")
+
     try:
         response = requests.get(url, timeout=30)
         response.raise_for_status()
