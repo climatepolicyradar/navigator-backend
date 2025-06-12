@@ -200,7 +200,7 @@ def populate_initial_countries_data():
     s3_client.upload_json(countries_data, bucket_name, file_key)
 
 
-def get_countries_data(url: str | None) -> Dict[str, Any]:
+def get_countries_data(url: str | None = None) -> Dict[str, Any]:
     """
     Retrieve all countries data from the Climate Policy Radar CDN.
 
