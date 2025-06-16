@@ -15,7 +15,7 @@ _LOGGER = logging.getLogger(__name__)
 CDN_URL = os.environ.get("CDN_URL")
 GEOGRAPHIES_DOCUMENT_PATH = "geographies/countries.json"
 
-DOCUMENT_URL = os.environ.get(f"{CDN_URL}/{GEOGRAPHIES_DOCUMENT_PATH}")
+DOCUMENT_URL = f"{CDN_URL}/{GEOGRAPHIES_DOCUMENT_PATH}"
 
 
 def get_country_by_code(code: str) -> CountryResponse:
