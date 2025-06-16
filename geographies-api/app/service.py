@@ -1,14 +1,21 @@
 import logging
 import os
 from datetime import datetime, timezone
+from typing import Any, Dict
 
 import pycountry
+import requests
 from fastapi import HTTPException
 
 from .model import CountryResponse, SubdivisionResponse
 from .s3_client import get_s3_client
 
 _LOGGER = logging.getLogger(__name__)
+
+CDN_URL = os.environ.get("CDN_URL")
+GEOGRAPHIES_DOCUMENT_PATH = "geographies/countries.json"
+
+DOCUMENT_URL = f"{CDN_URL}/{GEOGRAPHIES_DOCUMENT_PATH}"
 
 
 def get_country_by_code(code: str) -> CountryResponse:
@@ -25,23 +32,25 @@ def get_country_by_code(code: str) -> CountryResponse:
     :raises HTTPException: If the provided code does not match any
         known country.
     """
-    country = pycountry.countries.get(alpha_3=code.upper())
+    data = get_countries_data()
+
+    countries = data.get("countries", {})
+    country = countries.get(code.upper())
 
     if not country:
         raise HTTPException(
             status_code=404, detail=f"Country with alpha-3 code '{code}' not found"
         )
 
-    # Get flag emoji (Unicode flag representation)
-    flag_emoji = "".join(chr(ord(c) + 127397) for c in country.alpha_2)
-
     return CountryResponse(
-        alpha_2=country.alpha_2,
-        alpha_3=country.alpha_3,
-        name=country.name,
-        official_name=getattr(country, "official_name", None),
-        numeric=country.numeric,
-        flag=flag_emoji,
+        alpha_2=country["alpha_2"],
+        alpha_3=country["alpha_3"],
+        name=country["name"],
+        official_name=(
+            country["official_name"] if country["official_name"] else country["name"]
+        ),
+        numeric=country["numeric"],
+        flag=country["flag"],
     )
 
 
@@ -63,7 +72,10 @@ def get_subdivisions_by_country(country_code: str) -> list[SubdivisionResponse]:
         known country.
     """
 
-    country = pycountry.countries.get(alpha_3=country_code.upper())
+    data = get_countries_data()
+
+    countries = data.get("subdivisions", {})
+    country = countries.get(country_code.upper())
     if not country:
         raise HTTPException(
             status_code=404,
@@ -71,18 +83,17 @@ def get_subdivisions_by_country(country_code: str) -> list[SubdivisionResponse]:
         )
 
     subdivisions = []
-    for py_subdivision in pycountry.subdivisions:
-        # pycountry does not have type hints nor play nicely with strict static analysis
-        if py_subdivision.country_code == country.alpha_2:  # type: ignore[arg-type]
-            subdivisions.append(
-                SubdivisionResponse(
-                    code=py_subdivision.code,  # type: ignore[arg-type]
-                    name=py_subdivision.name,  # type: ignore[arg-type]
-                    type=py_subdivision.type,  # type: ignore[arg-type]
-                    country_alpha_2=country.alpha_2,
-                    country_alpha_3=country.alpha_3,
-                )
+
+    for subdivision in country:
+        subdivisions.append(
+            SubdivisionResponse(
+                code=subdivision["code"],
+                name=subdivision["name"],
+                type=subdivision["type"],
+                country_alpha_2=subdivision["country_alpha_2"],
+                country_alpha_3=subdivision["country_alpha_3"],
             )
+        )
 
     return subdivisions
 
@@ -187,3 +198,38 @@ def populate_initial_countries_data():
     bucket_name = os.environ["GEOGRAPHIES_BUCKET"]
     file_key = "geographies/countries.json"
     s3_client.upload_json(countries_data, bucket_name, file_key)
+
+
+def get_countries_data(url: str | None = None) -> Dict[str, Any]:
+    """
+    Retrieve all countries data from the Climate Policy Radar CDN.
+
+    NOTE: This utility function fetches country geographic data from the
+    Climate Policy Radar CDN endpoint. It validates the response and handles
+    common HTTP and JSON parsing errors gracefully.
+
+    :param str url: The CDN URL to fetch countries data from. Defaults to
+        the Climate Policy Radar countries endpoint.
+    :return List[Dict[str, Any]]: A list of dictionaries containing country
+        information including codes, names, and geographic details.
+    :raises requests.RequestException: If the HTTP request fails due to
+        network issues, timeouts, or server errors.
+    :raises ValueError: If the response is not valid JSON or not a list.
+    """
+
+    url = DOCUMENT_URL if url is None else url
+
+    if not url:
+        raise ValueError("No URL provided for fetching countries data")
+
+    try:
+        response = requests.get(url, timeout=30)
+        response.raise_for_status()
+
+        data = response.json()
+        return data
+
+    except requests.RequestException as e:
+        raise requests.RequestException(f"Failed to fetch countries data: {e}")
+    except ValueError as e:
+        raise ValueError(f"Invalid response format: {e}")
