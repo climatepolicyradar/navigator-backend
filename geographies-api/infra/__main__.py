@@ -175,7 +175,8 @@ geographies_api_apprunner_service = aws.apprunner.Service(
             "image_configuration": aws.apprunner.ServiceSourceConfigurationImageRepositoryImageConfigurationArgs(
                 port="8080",  # @related: PORT_NUMBER
                 runtime_environment_variables={
-                    "GEOGRAPHIES_BUCKET": config.require("geographies_bucket")
+                    "GEOGRAPHIES_BUCKET": config.require("geographies_bucket"),
+                    "CDN_URL": config.require("cdn_url"),
                 },
             ),
             "image_identifier": f"{account_id}.dkr.ecr.eu-west-1.amazonaws.com/geographies-api:latest",

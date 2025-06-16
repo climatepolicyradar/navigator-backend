@@ -1,3 +1,4 @@
 config:
   aws:region: eu-west-1
   geographies-api:geographies_bucket: cpr-staging-document-cache
+  geographies-api:cdn_url: https://cdn.dev.climatepolicyradar.org
