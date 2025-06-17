@@ -59,7 +59,7 @@ def test_read_family_404(client: TestClient):
 
 
 def test_read_family_200(client: TestClient, session: Session):
-    organisation = Organisation(id="org_1", name="Test Org")
+    organisation = Organisation(id=123, name="Test Org")
     corpus = Corpus(
         import_id="corpus_1",
         title="Test Corpus",
@@ -71,6 +71,22 @@ def test_read_family_200(client: TestClient, session: Session):
         import_id="family_123",
         description="Test family",
         corpus=corpus,
+        concepts=[
+            {
+                "id": "test concepts 1",
+                "ids": [],
+                "type": "legal_entity",
+                "relation": "jurisdiction",
+                "preferred_label": "test concept 1",
+            },
+            {
+                "id": "test concepts 2",
+                "ids": [],
+                "type": "legal_entity",
+                "relation": "jurisdiction",
+                "preferred_label": "test concept 2",
+            },
+        ],
     )
     session.add(corpus)
     session.add(family)
