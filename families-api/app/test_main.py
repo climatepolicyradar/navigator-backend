@@ -1,3 +1,5 @@
+from datetime import datetime
+
 import pytest
 from fastapi.testclient import TestClient
 from sqlalchemy import create_engine
@@ -8,6 +10,7 @@ from .main import (
     APIItemResponse,
     Corpus,
     Family,
+    FamilyEvent,
     FamilyMetadata,
     FamilyPublic,
     Geography,
@@ -91,11 +94,13 @@ def test_read_family_200(client: TestClient, session: Session):
                 "preferred_label": "test concept 2",
             },
         ],
-        unparsed_slug=Slug(
-            name="test-family",
-            family_import_id="family_123",
-            family_document_import_id=None,
-        ),
+        unparsed_slug=[
+            Slug(
+                name="test-family",
+                family_import_id="family_123",
+                family_document_import_id=None,
+            )
+        ],
         unparsed_geographies=[
             Geography(
                 id=1,
@@ -140,6 +145,22 @@ def test_read_family_200(client: TestClient, session: Session):
                 ],
             },
         ),
+        unparsed_events=[
+            FamilyEvent(
+                import_id="event_1",
+                title="Law passed",
+                date=datetime.fromisoformat("2016-12-01T00:00:00+00:00"),
+                event_type_name="Passed/Approved",
+                status="OK",
+            ),
+            FamilyEvent(
+                import_id="event_2",
+                title="National Implementation Programme on Climate Adaptation (NUPKA)",
+                date=datetime.fromisoformat("2023-11-17T00:00:00+00:00"),
+                event_type_name="Updated",
+                status="OK",
+            ),
+        ],
     )
     session.add(corpus)
     session.add(family)
@@ -151,3 +172,9 @@ def test_read_family_200(client: TestClient, session: Session):
     assert response.status_code == 200  # nosec B101
     response = APIItemResponse[FamilyPublic].model_validate(response.json())
     assert response.data.import_id == "family_123"  # nosec B101
+
+
+
+
+
+

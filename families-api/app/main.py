@@ -81,6 +81,28 @@ class Geography(GeographyBase, table=True):
     )
 
 
+class FamilyEvent(SQLModel, table=True):
+    __tablename__ = "family_event"  # type: ignore[assignment]
+    import_id: str = Field(primary_key=True)
+    title: str
+    date: datetime
+    event_type_name: str
+    family_import_id: str | None = Field(
+        foreign_key="family.import_id", nullable=True, default=None
+    )
+    family: Optional["Family"] = Relationship(back_populates="unparsed_events")
+    family_document_import_id: str | None = Field(
+        foreign_key="family_document.import_id", nullable=True, default=None
+    )
+    family_document: Optional["FamilyDocument"] = Relationship(
+        back_populates="unparsed_events",
+    )
+    status: str
+    created: datetime = Field(default_factory=datetime.now)
+    last_modified: datetime = Field(default_factory=datetime.now)
+    # valid_metadata: dict[str, Any] = Field(default_factory=dict)
+
+
 class FamilyMetadata(SQLModel, table=True):
     __tablename__ = "family_metadata"  # type: ignore[assignment]
     family_import_id: str = Field(foreign_key="family.import_id", primary_key=True)
@@ -114,6 +136,7 @@ class Family(FamilyBase, table=True):
     )
     unparsed_slug: list[Slug] = Relationship()
     unparsed_metadata: Optional[FamilyMetadata] = Relationship()
+    unparsed_events: list[FamilyEvent] = Relationship(back_populates="family")
 
 
 class FamilyPublic(FamilyBase):
@@ -122,6 +145,7 @@ class FamilyPublic(FamilyBase):
     unparsed_geographies: list[Geography] = Field(default_factory=list, exclude=True)
     unparsed_slug: list[Slug] = Field(exclude=True, default=list())
     unparsed_metadata: Optional[FamilyMetadata] = Field(exclude=True, default=None)
+    unparsed_events: list[FamilyEvent] = Field(exclude=True, default=list())
     family_category: str = Field(exclude=True, default="")
     description: str = Field(exclude=True, default="")
 
@@ -170,7 +194,20 @@ class FamilyPublic(FamilyBase):
     def corpus_type_name(self) -> str:
         return self.corpus.corpus_type_name
 
-    # emtadata is reserved in SQLModel
+    @computed_field
+    @property
+    def events(self) -> list[dict[str, Any]]:
+        return [
+            {
+                "title": event.title,
+                "date": event.date,
+                "event_type": event.event_type_name,
+                "status": event.status,
+            }
+            for event in self.unparsed_events
+        ]
+
+    # metadata is reserved in SQLModel
     @computed_field(alias="metadata")
     @property
     def _metadata(self) -> dict[str, Any]:
@@ -192,7 +229,7 @@ class FamilyPublic(FamilyBase):
 #   category: TCategory; // Done
 #   corpus_type_name: TCorpusTypeSubCategory; // Done
 #   metadata: TFamilyMetadata; // Done
-#   events: TEvent[];
+#   events: TEvent[]; // Done
 #   documents: TDocumentPage[];
 #   collections: TCollection[];
 # };
@@ -237,6 +274,13 @@ class FamilyPublic(FamilyBase):
 #   document_type?: string;
 # };
 
+# export type TEvent = {
+#   title: string;
+#   date: string;
+#   event_type: string;
+#   status: string;
+# };
+
 # export type TCategory = "Legislative" | "Executive" | "Litigation" | "Policy" | "Law" | "UNFCCC" | "MCF" | "Reports";
 
 
@@ -253,6 +297,7 @@ class FamilyDocument(FamilyDocumentBase, table=True):
     physical_document: Optional["PhysicalDocument"] = Relationship(
         back_populates="family_document"
     )
+    unparsed_events: list[FamilyEvent] = Relationship(back_populates="family_document")
 
 
 class FamilyDocumentPublic(FamilyDocumentBase):
@@ -411,3 +456,38 @@ def health_check():
 
 
 app.include_router(router)
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
