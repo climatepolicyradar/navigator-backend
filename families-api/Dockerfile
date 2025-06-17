@@ -1,5 +1,10 @@
 FROM python:3.12-slim
 
+# Add build argument for GitHub SHA
+# @related: GITHUB_SHA_ENV_VAR
+ARG GITHUB_SHA
+ENV GITHUB_SHA=${GITHUB_SHA}
+
 WORKDIR /app
 
 # Install system dependencies required for psycopg2

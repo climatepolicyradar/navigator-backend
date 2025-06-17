@@ -1,0 +1,41 @@
+name: Pull request
+on:
+  pull_request:
+    # a.
+    types: [labeled]
+  workflow_dispatch: {}
+permissions:
+  id-token: write
+  contents: read
+jobs:
+  deploy:
+    # a. deploys the service to staging if the pull request is (re)labeled with 'deploy:staging'
+    if: github.event.label.name == 'deploy:staging'
+    runs-on: ubuntu-latest
+    strategy:
+      matrix:
+        service: [families-api, geographies-api, concepts-api]
+        environment: [staging]
+    environment: ${{ matrix.environment }}
+    steps:
+      - uses: actions/checkout@v4
+      - uses: extractions/setup-just@v2
+      - uses: aws-actions/configure-aws-credentials@v4.2.0
+        with:
+          role-to-assume: arn:aws:iam::${{ secrets.AWS_ACCOUNT_ID }}:role/navigator-backend-github-actions-deploy
+          role-session-name: GitHub_to_AWS_via_FederatedOIDC_${{ matrix.environment }}_${{ matrix.service }}
+          aws-region: eu-west-1
+      - uses: aws-actions/amazon-ecr-login@v1
+      # we use python / poetry in some build scripts and testing
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+      - uses: snok/install-poetry@v1
+      - working-directory: ${{ matrix.service }}
+        run: poetry install
+      - working-directory: ${{ matrix.service }}
+        run: |
+          just test
+      - working-directory: ${{ matrix.service }}
+        run: |
+          just deploy latest ${{ matrix.environment }}

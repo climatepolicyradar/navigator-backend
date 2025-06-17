@@ -1,0 +1,27 @@
+[tool.poetry]
+name = "geographies-api"
+version = "0.1.2"
+description = ""
+authors = ["CPR tech <tech@climatepolicyradar.org>"]
+readme = "README.md"
+package-mode = false
+
+[tool.poetry.dependencies]
+python = "^3.11"
+fastapi = { extras = ["standard"], version = "^0.115.12" }
+sqlmodel = "^0.0.24"
+pydantic-settings = "^2.9.1"
+pulumi = "^3.166.0"
+pulumi-aws = "^6.78.0"
+pycountry = "^24.6.1"
+boto3 = "^1.38.32"
+requests = "^2.32.4"
+
+
+[build-system]
+requires = ["poetry-core"]
+build-backend = "poetry.core.masonry.api"
+
+[tool.pyright]
+venvPath = ".venv"
+include = ["app"]

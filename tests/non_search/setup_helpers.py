@@ -45,6 +45,10 @@ def get_default_documents():
                 "date": "2019-12-25",
                 "type": "Passed/Approved",
                 "status": "OK",
+                "valid_metadata": {
+                    "event_type": ["Passed/Approved"],
+                    "datetime_event_name": ["Passed/Approved"],
+                },
             }
         ],
     }
@@ -67,6 +71,10 @@ def get_default_documents():
                 "date": "2019-12-25",
                 "type": "Passed/Approved",
                 "status": "OK",
+                "valid_metadata": {
+                    "event_type": ["Passed/Approved"],
+                    "datetime_event_name": ["Passed/Approved"],
+                },
             }
         ],
     }

@@ -30,7 +30,7 @@ from app.telemetry_config import ServiceManifest, TelemetryConfig
 from app.telemetry_exceptions import ExceptionHandlingTelemetryRoute
 
 os.environ["SKIP_ALEMBIC_LOGGING"] = "1"
-os.environ["OTEL_PYTHON_LOG_CORRELATION"] = "True"
+
 
 LOG_LEVEL = os.getenv("LOG_LEVEL", "INFO").upper()
 DEFAULT_LOGGING = {

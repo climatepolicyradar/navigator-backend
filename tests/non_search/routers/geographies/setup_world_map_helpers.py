@@ -54,6 +54,10 @@ def _add_published_fams_and_docs(db: Session):
                 "date": "2019-12-25",
                 "type": "Passed/Approved",
                 "status": "OK",
+                "valid_metadata": {
+                    "event_type": ["Passed/Approved"],
+                    "datetime_event_name": ["Passed/Approved"],
+                },
             }
         ],
     }
@@ -76,6 +80,10 @@ def _add_published_fams_and_docs(db: Session):
                 "date": "2019-12-25",
                 "type": "Passed/Approved",
                 "status": "OK",
+                "valid_metadata": {
+                    "event_type": ["Passed/Approved"],
+                    "datetime_event_name": ["Passed/Approved"],
+                },
             }
         ],
     }
@@ -185,6 +193,10 @@ def setup_mixed_doc_statuses_world_map(db: Session):
                 "date": "2019-12-25",
                 "type": "Passed/Approved",
                 "status": "OK",
+                "valid_metadata": {
+                    "event_type": ["Passed/Approved"],
+                    "datetime_event_name": ["Passed/Approved"],
+                },
             }
         ],
     }
@@ -206,6 +218,10 @@ def setup_mixed_doc_statuses_world_map(db: Session):
                 "date": "2019-12-25",
                 "type": "Passed/Approved",
                 "status": "OK",
+                "valid_metadata": {
+                    "event_type": ["Passed/Approved"],
+                    "datetime_event_name": ["Passed/Approved"],
+                },
             }
         ],
     }
@@ -227,6 +243,10 @@ def setup_mixed_doc_statuses_world_map(db: Session):
                 "date": "2019-12-25",
                 "type": "Passed/Approved",
                 "status": "OK",
+                "valid_metadata": {
+                    "event_type": ["Passed/Approved"],
+                    "datetime_event_name": ["Passed/Approved"],
+                },
             }
         ],
     }
@@ -248,6 +268,10 @@ def setup_mixed_doc_statuses_world_map(db: Session):
                 "date": "2019-12-25",
                 "type": "Passed/Approved",
                 "status": "OK",
+                "valid_metadata": {
+                    "event_type": ["Passed/Approved"],
+                    "datetime_event_name": ["Passed/Approved"],
+                },
             }
         ],
     }
@@ -269,6 +293,10 @@ def setup_mixed_doc_statuses_world_map(db: Session):
                 "date": "2019-12-25",
                 "type": "Passed/Approved",
                 "status": "OK",
+                "valid_metadata": {
+                    "event_type": ["Passed/Approved"],
+                    "datetime_event_name": ["Passed/Approved"],
+                },
             }
         ],
     }

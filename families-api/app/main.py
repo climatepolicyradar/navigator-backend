@@ -1,6 +1,7 @@
 from typing import Generic, Optional, TypeVar
 
-from fastapi import APIRouter, Depends, FastAPI
+from fastapi import APIRouter, Depends, FastAPI, HTTPException
+from pydantic import BaseModel
 from pydantic_settings import BaseSettings
 from sqlalchemy import create_engine
 from sqlmodel import Field, Relationship, Session, SQLModel, func, select
@@ -8,8 +9,8 @@ from sqlmodel import Field, Relationship, Session, SQLModel, func, select
 
 class FamilyCorpusLink(SQLModel, table=True):
     __tablename__ = "family_corpus"  # type: ignore[assignment]
-    corpus_import_id: int = Field(foreign_key="corpus.import_id", primary_key=True)
-    family_import_id: int = Field(foreign_key="family.import_id", primary_key=True)
+    corpus_import_id: str = Field(foreign_key="corpus.import_id", primary_key=True)
+    family_import_id: str = Field(foreign_key="family.import_id", primary_key=True)
 
 
 class Corpus(SQLModel, table=True):
@@ -24,7 +25,7 @@ class Corpus(SQLModel, table=True):
 class FamilyGeographyLink(SQLModel, table=True):
     __tablename__ = "family_geography"  # type: ignore[assignment]
     geography_id: int = Field(foreign_key="geography.id", primary_key=True)
-    family_import_id: int = Field(foreign_key="family.import_id", primary_key=True)
+    family_import_id: str = Field(foreign_key="family.import_id", primary_key=True)
 
 
 class GeographyBase(SQLModel):
@@ -116,15 +117,21 @@ class PhysicalDocumentPublic(PhysicalDocumentBase):
 APIDataType = TypeVar("APIDataType")
 
 
-class APIResponse(SQLModel, Generic[APIDataType]):
+class APIListResponse(BaseModel, Generic[APIDataType]):
     data: list[APIDataType]
     total: int
     page: int
     page_size: int
 
 
+class APIItemResponse(BaseModel, Generic[APIDataType]):
+    data: APIDataType
+
+
 class Settings(BaseSettings):
     navigator_database_url: str
+    # @related: GITHUB_SHA_ENV_VAR
+    github_sha: str = "unknown"
 
 
 settings = Settings()
@@ -136,19 +143,21 @@ router = APIRouter(
 )
 app = FastAPI(
     docs_url="/families/docs",
+    redoc_url="/families/redoc",
+    openapi_url="/families/openapi.json",
 )
 
 
 navigator_engine = create_engine(settings.navigator_database_url)
 
 
-def get_navigator_session():
+def get_session():
     with Session(navigator_engine) as session:
         yield session
 
 
-@router.get("/", response_model=APIResponse[PhysicalDocumentPublic])
-def read_documents(*, session: Session = Depends(get_navigator_session)):
+@router.get("/", response_model=APIListResponse[PhysicalDocumentPublic])
+def read_documents(*, session: Session = Depends(get_session)):
     documents = session.exec(
         select(PhysicalDocument)
         .where(
@@ -159,11 +168,77 @@ def read_documents(*, session: Session = Depends(get_navigator_session)):
 
     data = [PhysicalDocumentPublic.model_validate(doc) for doc in documents]
 
-    return APIResponse(
+    return APIListResponse(
         data=data,
         total=len(data),
         page=1,
         page_size=len(data),
+    )
+
+
+# TODO: implement these models for the frontend
+# export type TFamilyPage = {
+#   organisation: string;
+#   title: string;
+#   summary: string;
+#   geographies: string[];
+#   import_id: string;
+#   category: TCategory;
+#   corpus_type_name: TCorpusTypeSubCategory;
+#   metadata: TFamilyMetadata;
+#   slug: string;
+#   corpus_id: string;
+#   events: TEvent[];
+#   documents: TDocumentPage[];
+#   collections: TCollection[];
+#   published_date: string | null;
+#   last_updated_date: string | null;
+# };
+
+# export type TDocumentPage = {
+#   import_id: string;
+#   variant?: string | null;
+#   slug: string;
+#   title: string;
+#   md5_sum?: string | null;
+#   cdn_object?: string | null;
+#   source_url: string;
+#   content_type: TDocumentContentType;
+#   language: string;
+#   languages: string[];
+#   document_type: string | null;
+#   document_role: string;
+# };
+
+# export type TCollection = {
+#   import_id: string;
+#   title: string;
+#   description: string;
+#   families: TCollectionFamily[];
+# };
+
+# export type TCollectionFamily = {
+#   description: string;
+#   slug: string;
+#   title: string;
+# };
+
+
+@router.get("/{family_id}", response_model=APIItemResponse[FamilyPublic])
+def read_family(*, session: Session = Depends(get_session), family_id: str):
+    # When should this break?
+    # https://sqlmodel.tiangolo.com/tutorial/fastapi/read-one/#path-operation-for-one-hero
+    family = session.exec(
+        select(Family).where(Family.import_id == family_id)
+    ).one_or_none()
+
+    if family is None:
+        raise HTTPException(status_code=404, detail="Not found")
+
+    data = FamilyPublic.model_validate(family, from_attributes=True)
+
+    return APIItemResponse(
+        data=data,
     )
 
 
@@ -175,10 +250,10 @@ class GeographyDocumentCount(SQLModel):
 
 @router.get(
     "/aggregations/by-geography",
-    response_model=APIResponse[GeographyDocumentCount],
+    response_model=APIListResponse[GeographyDocumentCount],
 )
 def docs_by_geo(
-    session: Session = Depends(get_navigator_session),
+    session: Session = Depends(get_session),
 ):
     stmt = (
         select(
@@ -200,7 +275,7 @@ def docs_by_geo(
 
     data = [GeographyDocumentCount.model_validate(row._mapping) for row in results]
 
-    return APIResponse(
+    return APIListResponse(
         data=data,
         total=len(data),
         page=1,
@@ -215,6 +290,8 @@ def docs_by_geo(
 def health_check():
     return {
         "status": "ok",
+        # @related: GITHUB_SHA_ENV_VAR
+        "version": settings.github_sha,
     }
 
 

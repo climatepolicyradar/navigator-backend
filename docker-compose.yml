@@ -9,7 +9,7 @@ services:
     volumes:
       - db-data-backend:/var/lib/postgresql/data:cached
     healthcheck:
-      test: ["CMD-SHELL", "pg_isready -U ${POSTGRES_USER}"]
+      test: [CMD-SHELL, pg_isready -U navigator_admin]
       interval: 5s
       timeout: 3s
       retries: 30
@@ -39,4 +39,4 @@ services:
       retries: 30
 
 volumes:
-  db-data-backend:
+  db-data-backend: {}

@@ -187,14 +187,6 @@ jobs:
           repo-name: navigator-backend
           semver-tag: latest
 
-  manual-semver:
-    if: ${{ ! cancelled() && always() && startsWith(github.ref, 'refs/tags') }}
-    uses: climatepolicyradar/reusable-workflows/.github/workflows/semver.yml@v3
-    secrets: inherit
-    with:
-      repo-name: navigator-backend
-      semver-tag: main-${GITHUB_SHA::8}
-
   tag:
     if: ${{ ! cancelled() && always() && (needs.build.result == 'success')}}
     needs: build

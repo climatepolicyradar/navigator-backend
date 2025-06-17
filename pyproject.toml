@@ -1,6 +1,6 @@
 [tool.poetry]
 name = "navigator_backend"
-version = "1.24.11"
+version = "1.25.0"
 description = ""
 authors = ["CPR-dev-team <tech@climatepolicyradar.org>"]
 packages = [{ include = "app" }, { include = "tests" }]
@@ -10,7 +10,7 @@ python = "^3.11"
 Authlib = "^1.4.0"
 bcrypt = "^4.3.0"
 boto3 = "^1.26"
-cpr_sdk = { version = "1.17.0", extras = ["vespa", "datasets"] }
+cpr_sdk = { version = "1.20.1", extras = ["vespa", "datasets"] }
 fastapi = "^0.106.0"
 fastapi-health = "^0.4.0"
 fastapi-pagination = { extras = ["sqlalchemy"], version = "^0.13.1" }
@@ -31,7 +31,7 @@ starlette = "^0.27.0"
 tenacity = "^9.0.0"
 uvicorn = { extras = ["standard"], version = "^0.34.2" }
 botocore = "^1.34.19"
-db-client = { git = "https://github.com/climatepolicyradar/navigator-db-client.git", tag = "v3.9.10" }
+db-client = { git = "https://github.com/climatepolicyradar/navigator-db-client.git", tag = "v3.9.12" }
 urllib3 = "<3"
 apscheduler = "^3.10.4"
 numpy = "1.26.4"
@@ -63,6 +63,7 @@ build-backend = "poetry.core.masonry.api"
 
 [tool.pytest.ini_options]
 addopts = "-p no:cacheprovider"
+testpaths = ["tests"]
 
 markers = ["cors", "search", "unit"]
 asyncio_mode = "strict"
@@ -73,7 +74,13 @@ ignore = """
 
 [tool.pyright]
 include = ["app", "tests"]
-exclude = ["**/__pycache__", "families-api/**"]
+exclude = [
+  "**/__pycache__",
+  "concepts-api/**",
+  "families-api/**",
+  "geographies-api/**",
+  "api/**",
+]
 ignore = ["scripts/**/*"]
 pythonVersion = "3.10"
 pythonPlatform = "Linux"
