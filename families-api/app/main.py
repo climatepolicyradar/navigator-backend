@@ -1,15 +1,25 @@
-from typing import Generic, Optional, TypeVar
+from datetime import datetime
+from typing import Any, Generic, Optional, TypeVar
 
-from fastapi import APIRouter, Depends, FastAPI
+from fastapi import APIRouter, Depends, FastAPI, HTTPException
+from pydantic import BaseModel, computed_field
 from pydantic_settings import BaseSettings
 from sqlalchemy import create_engine
-from sqlmodel import Field, Relationship, Session, SQLModel, func, select
+from sqlalchemy.dialects.postgresql import ARRAY, JSONB
+from sqlmodel import Column, Field, Relationship, Session, SQLModel, func, select
+
+
+class Organisation(SQLModel, table=True):
+    __tablename__ = "organisation"  # type: ignore[assignment]
+    id: int = Field(primary_key=True)
+    name: str
+    corpora: list["Corpus"] = Relationship(back_populates="organisation")
 
 
 class FamilyCorpusLink(SQLModel, table=True):
     __tablename__ = "family_corpus"  # type: ignore[assignment]
-    corpus_import_id: int = Field(foreign_key="corpus.import_id", primary_key=True)
-    family_import_id: int = Field(foreign_key="family.import_id", primary_key=True)
+    corpus_import_id: str = Field(foreign_key="corpus.import_id", primary_key=True)
+    family_import_id: str = Field(foreign_key="family.import_id", primary_key=True)
 
 
 class Corpus(SQLModel, table=True):
@@ -19,12 +29,25 @@ class Corpus(SQLModel, table=True):
     families: list["Family"] = Relationship(
         back_populates="corpus", link_model=FamilyCorpusLink
     )
+    organisation: Organisation = Relationship(back_populates="corpora")
+    organisation_id: int = Field(foreign_key="organisation.id")
+
+
+class Slug(SQLModel, table=True):
+    __tablename__ = "slug"  # type: ignore[assignment]
+    name: str = Field(primary_key=True, index=True, unique=True)
+    family_import_id: str | None = Field(
+        index=True, foreign_key="family.import_id", nullable=True
+    )
+    family_document_import_id: str | None = Field(
+        index=True, unique=True, foreign_key="family_document.import_id", nullable=True
+    )
 
 
 class FamilyGeographyLink(SQLModel, table=True):
     __tablename__ = "family_geography"  # type: ignore[assignment]
     geography_id: int = Field(foreign_key="geography.id", primary_key=True)
-    family_import_id: int = Field(foreign_key="family.import_id", primary_key=True)
+    family_import_id: str = Field(foreign_key="family.import_id", primary_key=True)
 
 
 class GeographyBase(SQLModel):
@@ -38,7 +61,9 @@ class GeographyBase(SQLModel):
 class Geography(GeographyBase, table=True):
     __tablename__ = "geography"  # type: ignore[assignment]
     value: str
-    parent_id: int = Field(foreign_key="geography.id")
+    parent_id: int | None = Field(
+        foreign_key="geography.id", nullable=True, default=None
+    )
     """
     the relationship stuff here is a little non-standard and inherited from the
     previous implementation
@@ -51,29 +76,125 @@ class Geography(GeographyBase, table=True):
     )
     children: list["Geography"] = Relationship(back_populates="parent")
     families: list["Family"] = Relationship(
-        back_populates="geographies", link_model=FamilyGeographyLink
+        back_populates="unparsed_geographies", link_model=FamilyGeographyLink
     )
 
 
 class FamilyBase(SQLModel):
     import_id: str = Field(primary_key=True)
-    description: str | None
+    title: str
+    description: str
+    concepts: list[dict[str, Any]]
+    last_modified: datetime = Field(default_factory=datetime.now)
+    created: datetime = Field(default_factory=datetime.now)
 
 
 class Family(FamilyBase, table=True):
     __tablename__ = "family"  # type: ignore[assignment]
-    geographies: list[Geography] = Relationship(
+    unparsed_geographies: list[Geography] = Relationship(
         back_populates="families", link_model=FamilyGeographyLink
     )
     corpus: Corpus = Relationship(
         back_populates="families", link_model=FamilyCorpusLink
     )
     family_documents: list["FamilyDocument"] = Relationship(back_populates="family")
+    concepts: list[dict[str, Any]] = Field(
+        default_factory=list, sa_column=Column(ARRAY(JSONB))
+    )
+    unparsed_geographies: list[Geography] = Relationship(
+        back_populates="families", link_model=FamilyGeographyLink
+    )
+    unparsed_slug: Optional[Slug] = Relationship()
 
 
 class FamilyPublic(FamilyBase):
+    import_id: str
     corpus: Corpus
-    geographies: list[Geography]
+    unparsed_geographies: list[Geography] = Field(default_factory=list, exclude=True)
+    unparsed_slug: Optional[Slug] = Field(exclude=True, default=None)
+
+    @computed_field
+    @property
+    def corpus_id(self) -> str:
+        return self.corpus.import_id
+
+    @computed_field
+    @property
+    def organisation(self) -> str:
+        return self.corpus.organisation.name
+
+    @computed_field
+    @property
+    def summary(self) -> str:
+        return self.description
+
+    @computed_field
+    @property
+    def geographies(self) -> list[str]:
+        return [g.value for g in self.unparsed_geographies]
+
+    @computed_field
+    @property
+    def published_date(self) -> datetime:
+        return self.created
+
+    @computed_field
+    @property
+    def last_updated_date(self) -> datetime:
+        return self.last_modified
+
+    @computed_field
+    @property
+    def slug(self) -> str:
+        return self.unparsed_slug.name if self.unparsed_slug else ""
+
+
+# TODO: implement these models for the frontend
+# export type TFamilyPage = {
+#   organisation: string; // Done
+#   title: string; // Done
+#   summary: string; // Done
+#   geographies: string[]; // Done
+#   import_id: string; // Done
+#   slug: string; // Done
+#   corpus_id: string; // Done
+#   published_date: string | null; // Done
+#   last_updated_date: string | null; // Done
+#   category: TCategory;
+#   corpus_type_name: TCorpusTypeSubCategory;
+#   metadata: TFamilyMetadata;
+#   events: TEvent[];
+#   documents: TDocumentPage[];
+#   collections: TCollection[];
+# };
+
+# export type TDocumentPage = {
+#   import_id: string;
+#   variant?: string | null;
+#   slug: string;
+#   title: string;
+#   md5_sum?: string | null;
+#   cdn_object?: string | null;
+#   source_url: string;
+#   content_type: TDocumentContentType;
+#   language: string;
+#   languages: string[];
+#   document_type: string | null;
+#   document_role: string;
+# };
+
+# export type TCollection = {
+#   import_id: string;
+#   title: string;
+#   description: string;
+#   families: TCollectionFamily[];
+# };
+
+# export type TCollectionFamily = {
+#   description: string;
+#   slug: string;
+#   title: string;
+# };
 
 
 class FamilyDocumentBase(SQLModel):
@@ -92,7 +213,7 @@ class FamilyDocument(FamilyDocumentBase, table=True):
 
 
 class FamilyDocumentPublic(FamilyDocumentBase):
-    family: FamilyPublic
+    family: "FamilyPublic"
 
 
 class PhysicalDocumentBase(SQLModel):
@@ -116,11 +237,15 @@ class PhysicalDocumentPublic(PhysicalDocumentBase):
 APIDataType = TypeVar("APIDataType")
 
 
-class APIResponse(SQLModel, Generic[APIDataType]):
+class APIListResponse(BaseModel, Generic[APIDataType]):
     data: list[APIDataType]
     total: int
     page: int
     page_size: int
+
+
+class APIItemResponse(BaseModel, Generic[APIDataType]):
+    data: APIDataType
 
 
 class Settings(BaseSettings):
@@ -146,13 +271,13 @@ app = FastAPI(
 navigator_engine = create_engine(settings.navigator_database_url)
 
 
-def get_navigator_session():
+def get_session():
     with Session(navigator_engine) as session:
         yield session
 
 
-@router.get("/", response_model=APIResponse[PhysicalDocumentPublic])
-def read_documents(*, session: Session = Depends(get_navigator_session)):
+@router.get("/", response_model=APIListResponse[PhysicalDocumentPublic])
+def read_documents(*, session: Session = Depends(get_session)):
     documents = session.exec(
         select(PhysicalDocument)
         .where(
@@ -163,11 +288,29 @@ def read_documents(*, session: Session = Depends(get_navigator_session)):
 
     data = [PhysicalDocumentPublic.model_validate(doc) for doc in documents]
 
-    return APIResponse(
+    return APIListResponse(
         data=data,
         total=len(data),
         page=1,
         page_size=len(data),
+    )
+
+
+@router.get("/{family_id}", response_model=APIItemResponse[FamilyPublic])
+def read_family(*, session: Session = Depends(get_session), family_id: str):
+    # When should this break?
+    # https://sqlmodel.tiangolo.com/tutorial/fastapi/read-one/#path-operation-for-one-hero
+    family = session.exec(
+        select(Family).where(Family.import_id == family_id)
+    ).one_or_none()
+
+    if family is None:
+        raise HTTPException(status_code=404, detail="Not found")
+
+    data = FamilyPublic.model_validate(family, from_attributes=True)
+
+    return APIItemResponse(
+        data=data,
     )
 
 
@@ -179,10 +322,10 @@ class GeographyDocumentCount(SQLModel):
 
 @router.get(
     "/aggregations/by-geography",
-    response_model=APIResponse[GeographyDocumentCount],
+    response_model=APIListResponse[GeographyDocumentCount],
 )
 def docs_by_geo(
-    session: Session = Depends(get_navigator_session),
+    session: Session = Depends(get_session),
 ):
     stmt = (
         select(
@@ -204,7 +347,7 @@ def docs_by_geo(
 
     data = [GeographyDocumentCount.model_validate(row._mapping) for row in results]
 
-    return APIResponse(
+    return APIListResponse(
         data=data,
         total=len(data),
         page=1,

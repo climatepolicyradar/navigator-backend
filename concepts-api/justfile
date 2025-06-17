@@ -12,6 +12,9 @@ dev:
     just initial-data production
     docker compose up
 
+test:
+    @echo "😔 no tests yet"
+
 # You need to run this version if you have made changes to the requirements.txt file
 dev-rebuild:
     just initial-data production

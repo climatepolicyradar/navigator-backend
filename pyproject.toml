@@ -63,6 +63,7 @@ build-backend = "poetry.core.masonry.api"
 
 [tool.pytest.ini_options]
 addopts = "-p no:cacheprovider"
+testpaths = ["tests"]
 
 markers = ["cors", "search", "unit"]
 asyncio_mode = "strict"
