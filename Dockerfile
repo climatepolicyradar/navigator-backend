@@ -15,7 +15,7 @@ WORKDIR /app
 COPY pyproject.toml uv.lock ./
 # We may want to change this to --no-dev and have a testing stage
 # to avoid bloat, but this works for now as we use this container for testing
-RUN uv sync --frozen --no-install-project --all-extras
+RUN uv sync --frozen --no-install-project --extra dev
 COPY . .
 
 # Download the sentence transformer model
