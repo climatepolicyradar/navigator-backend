@@ -5,7 +5,6 @@ from pydantic import BaseModel, computed_field, field_serializer
 from pydantic_settings import BaseSettings
 from sqlalchemy import create_engine
 from sqlalchemy.dialects.postgresql import ARRAY, JSONB
-from sqlalchemy.orm import validates
 from sqlmodel import Column, Field, Relationship, Session, SQLModel, func, select
 
 
@@ -337,15 +336,3 @@ def health_check():
 
 
 app.include_router(router)
-
-
-
-
-
-
-
-
-
-
-
-
