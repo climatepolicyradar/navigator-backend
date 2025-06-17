@@ -67,6 +67,7 @@ def test_read_family_200(client: TestClient, session: Session):
         title="Test Corpus",
         organisation=organisation,
         organisation_id=organisation.id,
+        corpus_type_name="Intl. agreements",
     )
     family = Family(
         title="Test family",

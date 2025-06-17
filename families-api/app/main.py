@@ -31,6 +31,7 @@ class Corpus(SQLModel, table=True):
     )
     organisation: Organisation = Relationship(back_populates="corpora")
     organisation_id: int = Field(foreign_key="organisation.id")
+    corpus_type_name: str
 
 
 class Slug(SQLModel, table=True):
@@ -156,6 +157,11 @@ class FamilyPublic(FamilyBase):
     def category(self) -> str:
         return self.family_category
 
+    @computed_field
+    @property
+    def corpus_type_name(self) -> str:
+        return self.corpus.corpus_type_name
+
 
 # TODO: implement these models for the frontend
 # export type TFamilyPage = {
@@ -168,8 +174,8 @@ class FamilyPublic(FamilyBase):
 #   corpus_id: string; // Done
 #   published_date: string | null; // Done
 #   last_updated_date: string | null; // Done
-#   category: TCategory;
-#   corpus_type_name: TCorpusTypeSubCategory;
+#   category: TCategory; // Done
+#   corpus_type_name: TCorpusTypeSubCategory; // Done
 #   metadata: TFamilyMetadata;
 #   events: TEvent[];
 #   documents: TDocumentPage[];
@@ -378,3 +384,4 @@ def health_check():
 
 
 app.include_router(router)
+
