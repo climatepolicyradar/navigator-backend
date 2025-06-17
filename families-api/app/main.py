@@ -1,10 +1,11 @@
-from typing import Generic, Optional, TypeVar
+from typing import Any, Generic, Optional, TypeVar
 
 from fastapi import APIRouter, Depends, FastAPI, HTTPException
 from pydantic import BaseModel, computed_field
 from pydantic_settings import BaseSettings
 from sqlalchemy import create_engine
 from sqlalchemy.dialects.postgresql import ARRAY, JSONB
+from sqlalchemy.orm import validates
 from sqlmodel import Column, Field, Relationship, Session, SQLModel, func, select
 
 
@@ -78,7 +79,7 @@ class FamilyBase(SQLModel):
     import_id: str = Field(primary_key=True)
     title: str
     description: str
-    concepts: list[Concept]
+    concepts: list[dict[str, Any]]
 
 
 class Family(FamilyBase, table=True):
@@ -90,7 +91,7 @@ class Family(FamilyBase, table=True):
         back_populates="families", link_model=FamilyCorpusLink
     )
     family_documents: list["FamilyDocument"] = Relationship(back_populates="family")
-    concepts: list[Concept] = Field(
+    concepts: list[dict[str, Any]] = Field(
         default_factory=list, sa_column=Column(ARRAY(JSONB))
     )
 
@@ -255,8 +256,6 @@ class FamilyPublic(FamilyBase):
     def summary(self) -> str:
         return self.description
 
-    concepts: list[Concept]
-
 
 @router.get("/{family_id}", response_model=APIItemResponse[FamilyPublic])
 def read_family(*, session: Session = Depends(get_session), family_id: str):
@@ -330,3 +329,15 @@ def health_check():
 
 
 app.include_router(router)
+
+
+
+
+
+
+
+
+
+
+
+

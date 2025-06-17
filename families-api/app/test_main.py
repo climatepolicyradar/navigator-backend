@@ -73,20 +73,20 @@ def test_read_family_200(client: TestClient, session: Session):
         description="Test family",
         corpus=corpus,
         concepts=[
-            Concept(
-                id="test concepts 1",
-                ids=[],
-                type="legal_entity",
-                relation="jurisdiction",
-                preferred_label="test concept 1",
-            ),
-            Concept(
-                id="test concepts 2",
-                ids=[],
-                type="legal_entity",
-                relation="jurisdiction",
-                preferred_label="test concept 2",
-            ),
+            {
+                "id": "test concepts 1",
+                "ids": [],
+                "type": "legal_entity",
+                "relation": "jurisdiction",
+                "preferred_label": "test concept 1",
+            },
+            {
+                "id": "test concepts 2",
+                "ids": [],
+                "type": "legal_entity",
+                "relation": "jurisdiction",
+                "preferred_label": "test concept 2",
+            },
         ],
     )
     session.add(corpus)
