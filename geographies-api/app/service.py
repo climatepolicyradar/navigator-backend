@@ -161,6 +161,25 @@ def list_all_countries() -> dict[str, dict]:
     }
 
 
+def get_all_countries() -> list[CountryResponse]:
+    """
+    Retrieve all countries with their metadata.
+
+    NOTE: This utility function fetches all countries from the `pycountry`
+    library and returns a list of country objects containing their
+    alpha-2, alpha-3 codes, names, official names, numeric codes, and flags.
+    It can be used to populate dropdowns or selection lists in the UI.
+
+    :return list[CountryResponse]: A list of country objects with metadata.
+    """
+
+    data = get_countries_data()
+    if "countries" not in data:
+        raise ValueError("Invalid data format: 'countries' key not found")
+    result = list(data["countries"].values())
+    return result
+
+
 def populate_initial_countries_data():
     """
     Populate and upload initial country and subdivision reference data to S3.
