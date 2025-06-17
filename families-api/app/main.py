@@ -4,12 +4,13 @@ from fastapi import APIRouter, Depends, FastAPI, HTTPException
 from pydantic import BaseModel, computed_field
 from pydantic_settings import BaseSettings
 from sqlalchemy import create_engine
-from sqlmodel import Field, Relationship, Session, SQLModel, func, select
+from sqlalchemy.dialects.postgresql import ARRAY, JSONB
+from sqlmodel import Column, Field, Relationship, Session, SQLModel, func, select
 
 
 class Organisation(SQLModel, table=True):
     __tablename__ = "organisation"  # type: ignore[assignment]
-    id: str = Field(primary_key=True)
+    id: int = Field(primary_key=True)
     name: str
     corpora: list["Corpus"] = Relationship(back_populates="organisation")
 
@@ -65,10 +66,19 @@ class Geography(GeographyBase, table=True):
     )
 
 
+class Concept(BaseModel):
+    id: str
+    ids: list[str]
+    type: str
+    relation: str
+    preferred_label: str
+
+
 class FamilyBase(SQLModel):
     import_id: str = Field(primary_key=True)
     title: str
     description: str
+    concepts: list[Concept]
 
 
 class Family(FamilyBase, table=True):
@@ -80,6 +90,9 @@ class Family(FamilyBase, table=True):
         back_populates="families", link_model=FamilyCorpusLink
     )
     family_documents: list["FamilyDocument"] = Relationship(back_populates="family")
+    concepts: list[Concept] = Field(
+        default_factory=list, sa_column=Column(ARRAY(JSONB))
+    )
 
 
 class FamilyDocumentBase(SQLModel):
@@ -241,6 +254,8 @@ class FamilyPublic(FamilyBase):
     @property
     def summary(self) -> str:
         return self.description
+
+    concepts: list[Concept]
 
 
 @router.get("/{family_id}", response_model=APIItemResponse[FamilyPublic])
