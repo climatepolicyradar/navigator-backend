@@ -16,6 +16,13 @@ class Organisation(SQLModel, table=True):
     corpora: list["Corpus"] = Relationship(back_populates="organisation")
 
 
+class Organisation(SQLModel, table=True):
+    __tablename__ = "organisation"  # type: ignore[assignment]
+    id: str = Field(primary_key=True)
+    name: str
+    corpora: list["Corpus"] = Relationship(back_populates="organisation")
+
+
 class FamilyCorpusLink(SQLModel, table=True):
     __tablename__ = "family_corpus"  # type: ignore[assignment]
     corpus_import_id: str = Field(foreign_key="corpus.import_id", primary_key=True)
@@ -91,6 +98,7 @@ class Family(FamilyBase, table=True):
         back_populates="families", link_model=FamilyCorpusLink
     )
     family_documents: list["FamilyDocument"] = Relationship(back_populates="family")
+
     concepts: list[dict[str, Any]] = Field(
         default_factory=list, sa_column=Column(ARRAY(JSONB))
     )
