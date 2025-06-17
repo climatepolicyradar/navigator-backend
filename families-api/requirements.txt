@@ -12,7 +12,7 @@ email-validator==2.2.0
 fastapi-cli[standard]==0.0.7
 fastapi[standard]==0.115.12
 greenlet==3.2.3
-grpcio==1.66.2
+grpcio==1.73.0
 h11==0.16.0
 httpcore==1.0.9
 httptools==0.6.4
@@ -27,11 +27,11 @@ packaging==25.0
 parver==0.5
 pip==25.1.1
 pluggy==1.6.0
-protobuf==4.25.8
+protobuf==6.31.1
 psycopg2==2.9.10
 pulumi-aws==6.83.0
 pulumi==3.177.0
-pydantic-core==2.33.2
+pydantic-core==2.35.1
 pydantic-settings==2.9.1
 pydantic==2.11.7
 pygments==2.19.1
