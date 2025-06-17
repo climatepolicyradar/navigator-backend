@@ -9,6 +9,7 @@ from .main import (
     Corpus,
     Family,
     FamilyPublic,
+    Organisation,
     app,
     get_session,
     settings,
@@ -58,8 +59,19 @@ def test_read_family_404(client: TestClient):
 
 
 def test_read_family_200(client: TestClient, session: Session):
-    corpus = Corpus(import_id="corpus_1", title="Test Corpus")
-    family = Family(import_id="family_123", description="Test family", corpus=corpus)
+    organisation = Organisation(id="org_1", name="Test Org")
+    corpus = Corpus(
+        import_id="corpus_1",
+        title="Test Corpus",
+        organisation=organisation,
+        organisation_id=organisation.id,
+    )
+    family = Family(
+        title="Test family",
+        import_id="family_123",
+        description="Test family",
+        corpus=corpus,
+    )
     session.add(corpus)
     session.add(family)
     session.commit()
