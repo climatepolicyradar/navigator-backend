@@ -1,3 +1,4 @@
+from datetime import datetime
 from typing import Any, Generic, Optional, TypeVar
 
 from fastapi import APIRouter, Depends, FastAPI, HTTPException
@@ -73,6 +74,8 @@ class FamilyBase(SQLModel):
     title: str
     description: str
     concepts: list[dict[str, Any]]
+    last_modified: datetime
+    created: datetime
 
 
 class Family(FamilyBase, table=True):
@@ -84,7 +87,6 @@ class Family(FamilyBase, table=True):
         back_populates="families", link_model=FamilyCorpusLink
     )
     family_documents: list["FamilyDocument"] = Relationship(back_populates="family")
-
     concepts: list[dict[str, Any]] = Field(
         default_factory=list, sa_column=Column(ARRAY(JSONB))
     )
@@ -115,6 +117,16 @@ class FamilyPublic(FamilyBase):
     def geographies(self) -> list[str]:
         return [g.value for g in self.unparsed_geographies]
 
+    @computed_field
+    @property
+    def published_date(self) -> datetime:
+        return self.created
+
+    @computed_field
+    @property
+    def last_updated_date(self) -> datetime:
+        return self.last_modified
+
 
 # TODO: implement these models for the frontend
 # export type TFamilyPage = {
@@ -127,7 +139,7 @@ class FamilyPublic(FamilyBase):
 #   corpus_type_name: TCorpusTypeSubCategory;
 #   metadata: TFamilyMetadata;
 #   slug: string;
-#   corpus_id: string;
+#   corpus_id: string; // Done
 #   events: TEvent[];
 #   documents: TDocumentPage[];
 #   collections: TCollection[];
