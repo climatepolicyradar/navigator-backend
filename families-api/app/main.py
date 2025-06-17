@@ -81,6 +81,29 @@ class Geography(GeographyBase, table=True):
     )
 
 
+class CollectionFamilyLink(SQLModel, table=True):
+    __tablename__ = "collection_family"  # type: ignore[assignment]
+    collection_import_id: str = Field(
+        foreign_key="collection.import_id", primary_key=True
+    )
+    family_import_id: str = Field(foreign_key="family.import_id", primary_key=True)
+
+
+class Collection(SQLModel, table=True):
+    __tablename__ = "collection"  # type: ignore[assignment]
+    import_id: str = Field(primary_key=True)
+    title: str
+    description: str
+    created: datetime = Field(default_factory=datetime.now)
+    last_modified: datetime = Field(default_factory=datetime.now)
+    valid_metadata: dict[str, Any] = Field(
+        default_factory=dict, sa_column=Column(JSONB)
+    )
+    families: list["Family"] = Relationship(
+        back_populates="unparsed_collections", link_model=CollectionFamilyLink
+    )
+
+
 class FamilyEvent(SQLModel, table=True):
     __tablename__ = "family_event"  # type: ignore[assignment]
     import_id: str = Field(primary_key=True)
@@ -139,6 +162,9 @@ class Family(FamilyBase, table=True):
     unparsed_slug: list[Slug] = Relationship()
     unparsed_metadata: Optional[FamilyMetadata] = Relationship()
     unparsed_events: list[FamilyEvent] = Relationship(back_populates="family")
+    unparsed_collections: list[Collection] = Relationship(
+        back_populates="families", link_model=CollectionFamilyLink
+    )
 
 
 class FamilyPublic(FamilyBase):
@@ -148,6 +174,7 @@ class FamilyPublic(FamilyBase):
     unparsed_slug: list[Slug] = Field(exclude=True, default=list())
     unparsed_metadata: Optional[FamilyMetadata] = Field(exclude=True, default=None)
     unparsed_events: list[FamilyEvent] = Field(exclude=True, default=list())
+    unparsed_collections: list[Collection] = Field(exclude=True, default=list())
     family_category: str = Field(exclude=True, default="")
     description: str = Field(exclude=True, default="")
     family_documents: list["FamilyDocument"] = Field(exclude=True, default=list())
@@ -196,6 +223,30 @@ class FamilyPublic(FamilyBase):
     @property
     def corpus_type_name(self) -> str:
         return self.corpus.corpus_type_name
+
+    @computed_field
+    @property
+    def collections(self) -> list[dict[str, Any]]:
+        return [
+            {
+                "import_id": collection.import_id,
+                "title": collection.title,
+                "description": collection.description,
+                "families": [
+                    {
+                        "description": family.description,
+                        "slug": (
+                            family.unparsed_slug[0].name
+                            if len(family.unparsed_slug) > 0
+                            else ""
+                        ),
+                        "title": family.title,
+                    }
+                    for family in collection.families
+                ],
+            }
+            for collection in self.unparsed_collections
+        ]
 
     @computed_field
     @property
