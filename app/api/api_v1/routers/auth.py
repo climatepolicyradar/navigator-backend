@@ -8,8 +8,9 @@ from app.clients.db.session import get_db
 from app.repository.user import get_app_user_authorisation
 from app.service.auth import authenticate_user
 from app.service.security import create_access_token
+from app.telemetry_exceptions import ExceptionHandlingTelemetryRoute
 
-auth_router = r = APIRouter()
+auth_router = r = APIRouter(route_class=ExceptionHandlingTelemetryRoute)
 
 _LOGGER = logging.getLogger(__file__)
 

@@ -7,7 +7,6 @@ import jwt
 import pytest
 from fastapi import status
 
-from app.service import search
 from tests.search.vespa.setup_search_tests import (
     _make_search_request,
     _populate_db_families,
@@ -71,7 +70,7 @@ def test_csv_content(
     valid_token,
 ):
     """Make sure that downloaded CSV content matches a given search"""
-    monkeypatch.setattr(search, "_VESPA_CONNECTION", test_vespa)
+
     _populate_db_families(data_db)
     params = {
         "exact_match": exact_match,
@@ -129,10 +128,8 @@ def test_csv_download_search_variable_limit(
     mocker,
     valid_token,
 ):
-    monkeypatch.setattr(search, "_VESPA_CONNECTION", test_vespa)
-    _populate_db_families(data_db)
 
-    query_spy = mocker.spy(search._VESPA_CONNECTION, "search")
+    _populate_db_families(data_db)
 
     params = {
         "query_string": query,
@@ -141,6 +138,7 @@ def test_csv_download_search_variable_limit(
         "offset": 0,
     }
 
+    query_spy = mocker.spy(test_vespa, "search")
     _make_download_request(data_client, valid_token, params=params)
 
     actual_params = query_spy.call_args.kwargs["parameters"].model_dump()
@@ -160,7 +158,7 @@ def test_csv_download_search_variable_limit(
 def test_csv_download__ignore_extra_fields(
     mock_corpora_exist_in_db, test_vespa, data_db, monkeypatch, data_client, valid_token
 ):
-    monkeypatch.setattr(search, "_VESPA_CONNECTION", test_vespa)
+
     _populate_db_families(data_db)
 
     params = {
@@ -192,7 +190,7 @@ def test_csv_download_fails_when_decoding_token_raises_PyJWTError(
     WHEN the decode() function call raises a PyJWTError
     THEN raise a 400 HTTP error
     """
-    monkeypatch.setattr(search, "_VESPA_CONNECTION", test_vespa)
+
     _populate_db_families(data_db)
 
     params = {
@@ -218,7 +216,7 @@ def test_csv_download_fails_when_corpus_ids_in_token_not_in_db(
     WHEN one or more of those corpora IDs are not in our database
     THEN raise a 400 HTTP error
     """
-    monkeypatch.setattr(search, "_VESPA_CONNECTION", test_vespa)
+
     _populate_db_families(data_db)
 
     params = {

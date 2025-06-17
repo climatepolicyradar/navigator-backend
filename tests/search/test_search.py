@@ -31,6 +31,7 @@ from app.service.search import (
     SearchRequestBody,
     _convert_filters,
     create_vespa_search_params,
+    make_search_request,
     process_vespa_search_response,
 )
 
@@ -890,6 +891,7 @@ def test_process_vespa_search_response(
         vespa_search_response=vespa_response,
         limit=page_size,
         offset=offset,
+        sort_within_page=False,
     )
 
     assert len(search_response.families) == min(len(fam_specs), page_size)
@@ -1014,7 +1016,7 @@ def test_process_vespa_search_response_sorting(
         sort_within_page=True,
     )
 
-    # Verify that passages are sorted by page number and then by text block ID within each page
+    # Verify that passages are sorted by page number first
     for family in search_response.families:
         for document in family.family_documents:
             # Get all passages for this document
@@ -1120,3 +1122,201 @@ def test_process_vespa_search_response_sorting_across_all_passages(
     assert all_pages != sorted(
         all_pages, key=lambda page: page or float("inf")
     ), "Passages should NOT be sorted across all documents when sort_within_page=True"
+
+
+@pytest.mark.search
+def test_process_vespa_search_response_page_ordering_regression(
+    data_db: Session, mocker, test_vespa
+):
+    """Test that passages are correctly ordered by page number when using numeric text_block_ids."""
+    # Create our test data
+    test_spec = FamSpec(
+        random_seed=42,
+        family_import_id="TEST.family.0.0",
+        family_source="TEST",
+        family_name="Test Family",
+        family_description="Test description",
+        family_category="Executive",
+        family_ts="2023-12-12",
+        family_geo="france",
+        family_geos=["france"],
+        family_metadata={"keyword": ["Test"]},
+        corpus_import_id="TEST.corpus.i00000001.n0000",
+        corpus_type_name="Test Type",
+        description_hit=True,
+        family_document_count=1,
+        document_hit_count=4,
+    )
+
+    # Populate test data
+    populate_data_db(data_db, fam_specs=[test_spec])
+
+    # Create our test passages
+    test_passages = [
+        # Page 2 passage first
+        CprSdkPassage(
+            family_import_id=test_spec.family_import_id,
+            family_name=test_spec.family_name,
+            family_description=test_spec.family_description,
+            family_source=test_spec.family_source,
+            family_slug=slugify(test_spec.family_name),
+            family_category=test_spec.family_category,
+            family_publication_ts=datetime.fromisoformat(test_spec.family_ts),
+            family_geographies=test_spec.family_geos,
+            corpus_import_id=test_spec.corpus_import_id,
+            corpus_type_name=test_spec.corpus_type_name,
+            document_cdn_object=f"{test_spec.family_import_id}/doc_1",
+            document_content_type="application/pdf",
+            document_import_id=f"{test_spec.family_import_id}.1",
+            document_languages=["english"],
+            document_slug="test-doc-1",
+            document_source_url="https://example.com/doc1",
+            text_block="Page 2 content",
+            text_block_id="36",
+            text_block_page=1,
+            text_block_coords=[(0, 0), (100, 0), (100, 100), (0, 100)],
+            text_block_type="Paragraph",
+        ),
+        # Page 11 passage second
+        CprSdkPassage(
+            family_import_id=test_spec.family_import_id,
+            family_name=test_spec.family_name,
+            family_description=test_spec.family_description,
+            family_source=test_spec.family_source,
+            family_slug=slugify(test_spec.family_name),
+            family_category=test_spec.family_category,
+            family_publication_ts=datetime.fromisoformat(test_spec.family_ts),
+            family_geographies=test_spec.family_geos,
+            corpus_import_id=test_spec.corpus_import_id,
+            corpus_type_name=test_spec.corpus_type_name,
+            document_cdn_object=f"{test_spec.family_import_id}/doc_1",
+            document_content_type="application/pdf",
+            document_import_id=f"{test_spec.family_import_id}.1",
+            document_languages=["english"],
+            document_slug="test-doc-1",
+            document_source_url="https://example.com/doc1",
+            text_block="Page 11 content",
+            text_block_id="215",
+            text_block_page=11,
+            text_block_coords=[(0, 0), (100, 0), (100, 100), (0, 100)],
+            text_block_type="Paragraph",
+        ),
+        # Page 14 passage third
+        CprSdkPassage(
+            family_import_id=test_spec.family_import_id,
+            family_name=test_spec.family_name,
+            family_description=test_spec.family_description,
+            family_source=test_spec.family_source,
+            family_slug=slugify(test_spec.family_name),
+            family_category=test_spec.family_category,
+            family_publication_ts=datetime.fromisoformat(test_spec.family_ts),
+            family_geographies=test_spec.family_geos,
+            corpus_import_id=test_spec.corpus_import_id,
+            corpus_type_name=test_spec.corpus_type_name,
+            document_cdn_object=f"{test_spec.family_import_id}/doc_1",
+            document_content_type="application/pdf",
+            document_import_id=f"{test_spec.family_import_id}.1",
+            document_languages=["english"],
+            document_slug="test-doc-1",
+            document_source_url="https://example.com/doc1",
+            text_block="Page 14 content",
+            text_block_id="276",
+            text_block_page=14,
+            text_block_coords=[(0, 0), (100, 0), (100, 100), (0, 100)],
+            text_block_type="Paragraph",
+        ),
+        # Page 1 passage last
+        CprSdkPassage(
+            family_import_id=test_spec.family_import_id,
+            family_name=test_spec.family_name,
+            family_description=test_spec.family_description,
+            family_source=test_spec.family_source,
+            family_slug=slugify(test_spec.family_name),
+            family_category=test_spec.family_category,
+            family_publication_ts=datetime.fromisoformat(test_spec.family_ts),
+            family_geographies=test_spec.family_geos,
+            corpus_import_id=test_spec.corpus_import_id,
+            corpus_type_name=test_spec.corpus_type_name,
+            document_cdn_object=f"{test_spec.family_import_id}/doc_1",
+            document_content_type="application/pdf",
+            document_import_id=f"{test_spec.family_import_id}.1",
+            document_languages=["english"],
+            document_slug="test-doc-1",
+            document_source_url="https://example.com/doc1",
+            text_block="Page 1 content",
+            text_block_id="16",
+            text_block_page=0,
+            text_block_coords=[(0, 0), (100, 0), (100, 100), (0, 100)],
+            text_block_type="Paragraph",
+        ),
+    ]
+
+    # Mock the search method on the test_vespa instance
+    mock_search = mocker.patch.object(test_vespa, "search")
+    mock_search.return_value = CprSdkSearchResponse(
+        total_hits=1,
+        total_family_hits=1,
+        query_time_ms=100,
+        total_time_ms=110,
+        families=[
+            CprSdkFamily(
+                id=test_spec.family_import_id,
+                hits=test_passages,
+                total_passage_hits=4,
+            )
+        ],
+        continuation_token=None,
+        this_continuation_token="",
+        prev_continuation_token=None,
+    )
+
+    # Create a search request body that matches the production scenario
+    # where page 1 was being ordered at the end of the list of matches.
+    search_body = SearchRequestBody(
+        query_string="carbon footprint",
+        exact_match=False,
+        keyword_filters={},
+        year_range=(1947, 2025),
+        sort_by=None,
+        sort_order="desc",
+        page_size=20,
+        limit=100,
+        offset=0,
+        corpus_import_ids=[test_spec.corpus_import_id],
+        metadata=[],
+        concept_filters=[],  # Empty list, not None
+        document_ids=[f"{test_spec.family_import_id}"],
+        continuation_tokens=[],
+        sort_within_page=True,
+    )
+
+    response = make_search_request(
+        db=data_db, vespa_search_adapter=test_vespa, search_body=search_body
+    )
+
+    # Verify that passages are ordered correctly by page number
+    assert len(response.families) == 1
+    family = response.families[0]
+    assert len(family.family_documents) == 1
+    document = family.family_documents[0]
+    passages = document.document_passage_matches
+    assert len(passages) == 4
+
+    # Check that passages are in correct order by page number
+    expected_pages = [1, 2, 12, 15]
+    actual_pages = [p.text_block_page for p in passages]
+    assert (
+        actual_pages == expected_pages
+    ), f"Expected pages {expected_pages}, got {actual_pages}"
+
+    # Check the actual content matches the expected order
+    expected_content = [
+        "Page 1 content",
+        "Page 2 content",
+        "Page 11 content",
+        "Page 14 content",
+    ]
+    actual_content = [p.text for p in passages]
+    assert (
+        actual_content == expected_content
+    ), f"Expected content {expected_content}, got {actual_content}"

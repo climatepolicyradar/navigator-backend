@@ -91,6 +91,11 @@ class SearchRequestBody(CprSdkSearchParameters):
         le=500,
     )
 
+    """Whether or not to sort passage matches by the order in which they
+    appear in a document.
+    """
+    sort_within_page: bool = False
+
     @field_validator("offset", mode="after")
     @classmethod
     def offset_below_limit(cls, offset: int, info: ValidationInfo):

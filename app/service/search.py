@@ -35,7 +35,7 @@ from sqlalchemy.orm import Session
 
 from app.clients.aws.client import S3Client
 from app.clients.aws.s3_document import S3Document
-from app.config import CDN_DOMAIN, PUBLIC_APP_URL, VESPA_SECRETS_LOCATION, VESPA_URL
+from app.config import CDN_DOMAIN
 from app.errors import ValidationError
 from app.models.search import (
     BackendFilterValues,
@@ -52,13 +52,9 @@ from app.repository.lookups import (
     get_countries_for_slugs,
 )
 from app.service.util import to_cdn_url
+from app.telemetry import observe
 
 _LOGGER = logging.getLogger(__name__)
-
-_VESPA_CONNECTION = VespaSearchAdapter(
-    instance_url=VESPA_URL,
-    cert_directory=VESPA_SECRETS_LOCATION,
-)
 
 
 class SearchType(str, Enum):
@@ -140,9 +136,11 @@ def _get_extra_csv_info(
     return extra_csv_info
 
 
+@observe("process_result_into_csv")
 def process_result_into_csv(
     db: Session,
     search_response: SearchResponse,
+    base_url: Optional[str],
     is_browse: bool,
 ) -> str:
     """
@@ -161,7 +159,11 @@ def process_result_into_csv(
         if d.document_passage_matches
     }
 
-    url_base = f"{PUBLIC_APP_URL}/documents"
+    if base_url is None:
+        raise ValidationError("Error creating CSV")
+
+    scheme = "http" if "localhost" in base_url else "https"
+    url_base = f"{scheme}://{base_url}"
     metadata_keys = {}
     rows = []
     for family in search_response.families:
@@ -243,9 +245,9 @@ def process_result_into_csv(
                     "Family Name": family.family_name,
                     "Family Summary": family.family_description,
                     "Family Publication Date": family.family_date,
-                    "Family URL": f"{url_base}/{family.family_slug}",
+                    "Family URL": f"{url_base}/document/{family.family_slug}",
                     "Document Title": document_title,
-                    "Document URL": f"{url_base}/{document.slugs[-1].name}",
+                    "Document URL": f"{url_base}/documents/{document.slugs[-1].name}",
                     "Document Content URL": document_content,
                     "Document Type": doc_type_from_family_document_metadata(document),
                     "Document Content Matches Search Phrase": document_match,
@@ -264,7 +266,7 @@ def process_result_into_csv(
                 "Family Name": family.family_name,
                 "Family Summary": family.family_description,
                 "Family Publication Date": family.family_date,
-                "Family URL": f"{url_base}/{family.family_slug}",
+                "Family URL": f"{url_base}/document/{family.family_slug}",
                 "Document Title": "",
                 "Document URL": "",
                 "Document Content URL": "",
@@ -547,9 +549,16 @@ def _process_vespa_search_response_families(
                 if sort_within_page:
                     response_document.document_passage_matches.sort(
                         key=lambda x: (
-                            x.text_block_page
-                            or _parse_text_block_id(x.text_block_id)[0]
-                            or float("inf"),
+                            (
+                                x.text_block_page
+                                if x.text_block_page is not None
+                                else (
+                                    _parse_text_block_id(x.text_block_id)[0]
+                                    if _parse_text_block_id(x.text_block_id)[0]
+                                    is not None
+                                    else float("inf")
+                                )
+                            ),
                             _parse_text_block_id(x.text_block_id)[1],
                         )
                     )
@@ -562,12 +571,13 @@ def _process_vespa_search_response_families(
     return response_families
 
 
+@observe("process_vespa_search_response")
 def process_vespa_search_response(
     db: Session,
     vespa_search_response: CprSdkSearchResponse,
     limit: int,
     offset: int,
-    sort_within_page: bool = False,
+    sort_within_page: bool,
 ) -> SearchResponse:
     """Process a Vespa search response into a F/E search response"""
 
@@ -589,6 +599,7 @@ def process_vespa_search_response(
     )
 
 
+@observe("create_vespa_search_params")
 def create_vespa_search_params(
     db: Session, search_body: SearchRequestBody
 ) -> SearchRequestBody:
@@ -601,6 +612,7 @@ def create_vespa_search_params(
     return search_body
 
 
+@observe("identify_search_type")
 def identify_search_type(search_body: SearchRequestBody) -> str:
     """Identify the search type from parameters"""
     if not search_body.query_string and not search_body.concept_filters:
@@ -611,6 +623,7 @@ def identify_search_type(search_body: SearchRequestBody) -> str:
         return SearchType.standard
 
 
+@observe("mutate_search_body_for_search_type")
 def mutate_search_body_for_search_type(
     search_body: SearchRequestBody,
 ) -> SearchRequestBody:
@@ -627,35 +640,41 @@ def mutate_search_body_for_search_type(
     return search_body
 
 
-def make_search_request(db: Session, search_body: SearchRequestBody) -> SearchResponse:
+@observe("make_search_request")
+def make_search_request(
+    db: Session,
+    vespa_search_adapter: VespaSearchAdapter,
+    search_body: SearchRequestBody,
+) -> SearchResponse:
     """Perform a search request against the Vespa search engine"""
-    search_body = mutate_search_body_for_search_type(search_body=search_body)
 
     try:
+        search_body = mutate_search_body_for_search_type(search_body=search_body)
         cpr_sdk_search_params = create_vespa_search_params(db, search_body)
-        cpr_sdk_search_response = _VESPA_CONNECTION.search(
+        cpr_sdk_search_response = observe("vespa_search")(vespa_search_adapter.search)(
             parameters=cpr_sdk_search_params
         )
+        return process_vespa_search_response(
+            db,
+            cpr_sdk_search_response,
+            limit=search_body.page_size,
+            offset=search_body.offset,
+            sort_within_page=search_body.sort_within_page,
+        ).increment_pages()
     except QueryError as e:
+        _LOGGER.error(f"make_search_request QueryError: {e}")
         raise ValidationError(e)
-
-    return process_vespa_search_response(
-        db,
-        cpr_sdk_search_response,
-        limit=search_body.page_size,
-        offset=search_body.offset,
-        # Set default sort to within page.
-        sort_within_page=(
-            True
-            if search_body.sort_by is None
-            or search_body.concept_filters is not None
-            or search_body.exact_match
-            else False
-        ),
-    ).increment_pages()
+    except Exception as e:
+        _LOGGER.error(f"make_search_request Exception: {e}")
+        raise Exception(e)
 
 
-def get_family_from_vespa(family_id: str, db: Session) -> CprSdkSearchResponse:
+@observe("get_family_from_vespa")
+def get_family_from_vespa(
+    family_id: str,
+    db: Session,
+    vespa_search_adapter: VespaSearchAdapter,
+) -> CprSdkSearchResponse:
     """Get a family from vespa.
 
     :param str family_id: The id of the family to get.
@@ -671,13 +690,18 @@ def get_family_from_vespa(family_id: str, db: Session) -> CprSdkSearchResponse:
         extra={"props": {"search_body": search_body.model_dump()}},
     )
     try:
-        result = _VESPA_CONNECTION.search(parameters=search_body)
+        result = vespa_search_adapter.search(parameters=search_body)
     except QueryError as e:
         raise ValidationError(e)
     return result
 
 
-def get_document_from_vespa(document_id: str, db: Session) -> CprSdkSearchResponse:
+@observe("get_document_from_vespa")
+def get_document_from_vespa(
+    document_id: str,
+    db: Session,
+    vespa_search_adapter: VespaSearchAdapter,
+) -> CprSdkSearchResponse:
     """Get a document from vespa.
 
     :param str document_id: The id of the document to get.
@@ -693,12 +717,13 @@ def get_document_from_vespa(document_id: str, db: Session) -> CprSdkSearchRespon
         extra={"props": {"search_body": search_body.model_dump()}},
     )
     try:
-        result = _VESPA_CONNECTION.search(parameters=search_body)
+        result = vespa_search_adapter.search(parameters=search_body)
     except QueryError as e:
         raise ValidationError(e)
     return result
 
 
+@observe("get_s3_doc_url_from_cdn")
 def get_s3_doc_url_from_cdn(
     s3_client: S3Client, s3_document: S3Document, data_dump_s3_key: str
 ) -> Optional[str]:

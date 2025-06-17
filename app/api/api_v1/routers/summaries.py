@@ -15,10 +15,11 @@ from app.models.search import BrowseArgs, GeographySummaryFamilyResponse
 from app.repository.lookups import get_country_slug_from_country_code, is_country_code
 from app.repository.search import browse_rds_families
 from app.service.custom_app import AppTokenFactory
+from app.telemetry_exceptions import ExceptionHandlingTelemetryRoute
 
 _LOGGER = logging.getLogger(__name__)
 
-summary_router = APIRouter()
+summary_router = APIRouter(route_class=ExceptionHandlingTelemetryRoute)
 
 
 @summary_router.get(

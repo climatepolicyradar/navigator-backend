@@ -1,0 +1,16 @@
+__pycache__
+.DS_Store
+.env
+.venv
+.pytest_cache
+.ruff_cache
+
+# we never want to commit data, even though it is probably public somewhere
+initial-data/*.sql
+initial-data/*.json
+initial-data/*.db
+
+# we want and need this for building the Dockerfile
+!requirements.txt
+
+s3-concepts/

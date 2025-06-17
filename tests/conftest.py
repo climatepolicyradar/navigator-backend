@@ -279,7 +279,7 @@ def data_db(data_db_engine):
 
 
 @pytest.fixture
-def data_client(data_db, test_s3_client):
+def data_client(data_db, test_s3_client, test_vespa):
     """Get a TestClient instance that reads/write to the data_db database."""
 
     def get_data_db():
@@ -291,11 +291,13 @@ def data_client(data_db, test_s3_client):
     app.dependency_overrides[get_db] = get_data_db
     app.dependency_overrides[get_s3_client] = get_test_s3_client
 
+    app.state.vespa_search_adapter = test_vespa
+
     yield TestClient(app)
 
 
 @pytest.fixture
-def test_client(test_db, test_s3_client):
+def test_client(test_db, test_s3_client, test_vespa):
     """Get a TestClient instance that reads/write to the test_db database."""
 
     def get_test_db():
@@ -306,6 +308,8 @@ def test_client(test_db, test_s3_client):
 
     app.dependency_overrides[get_db] = get_test_db
     app.dependency_overrides[get_s3_client] = get_test_s3_client
+
+    app.state.vespa_search_adapter = test_vespa
 
     yield TestClient(app)
 

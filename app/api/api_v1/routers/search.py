@@ -10,6 +10,7 @@ import logging
 from io import BytesIO
 from typing import Annotated, Sequence, cast
 
+from cpr_sdk.search_adaptors import VespaSearchAdapter
 from fastapi import APIRouter, Body, Depends, Header, HTTPException, Request, status
 from fastapi.responses import StreamingResponse
 from starlette.responses import RedirectResponse
@@ -33,11 +34,14 @@ from app.service.search import (
     make_search_request,
     process_result_into_csv,
 )
+from app.service.vespa import get_vespa_search_adapter
+from app.telemetry import convert_to_loggable_string
+from app.telemetry_exceptions import ExceptionHandlingTelemetryRoute
 
 _LOGGER = logging.getLogger(__name__)
 
 
-search_router = APIRouter()
+search_router = APIRouter(route_class=ExceptionHandlingTelemetryRoute)
 
 
 @search_router.post("/searches")
@@ -81,6 +85,7 @@ def search_documents(
     ],
     app_token: Annotated[str, Header()],
     db=Depends(get_db),
+    vespa_search_adapter: VespaSearchAdapter = Depends(get_vespa_search_adapter),
 ) -> SearchResponse:
     """
     Search for documents matching the search criteria and filters.
@@ -106,7 +111,7 @@ def search_documents(
         "Search request",
         extra={
             "props": {
-                "search_request": search_body.model_dump(),
+                "search_request": convert_to_loggable_string(search_body.model_dump()),
                 "app_token": str(app_token),
             }
         },
@@ -132,9 +137,17 @@ def search_documents(
 
     _LOGGER.info(
         "Starting search...",
-        extra={"props": {"search_request": search_body.model_dump()}},
+        extra={
+            "props": {
+                "search_request": convert_to_loggable_string(search_body.model_dump())
+            }
+        },
     )
-    return make_search_request(db=db, search_body=search_body)
+    return make_search_request(
+        db=db,
+        search_body=search_body,
+        vespa_search_adapter=vespa_search_adapter,
+    )
 
 
 @search_router.post("/searches/download-csv", include_in_schema=False)
@@ -143,6 +156,7 @@ def download_search_documents(
     search_body: SearchRequestBody,
     app_token: Annotated[str, Header()],
     db=Depends(get_db),
+    vespa_search_adapter: VespaSearchAdapter = Depends(get_vespa_search_adapter),
 ) -> StreamingResponse:
     """Download a CSV containing details of documents matching the search criteria."""
     token = AppTokenFactory()
@@ -151,7 +165,7 @@ def download_search_documents(
         "Search download request",
         extra={
             "props": {
-                "search_request": search_body.model_dump(),
+                "search_request": convert_to_loggable_string(search_body.model_dump()),
                 "app_token": str(app_token),
             }
         },
@@ -179,12 +193,17 @@ def download_search_documents(
 
     _LOGGER.info(
         "Starting search...",
-        extra={"props": {"search_request": search_body.model_dump()}},
+        extra={
+            "props": {
+                "search_request": convert_to_loggable_string(search_body.model_dump())
+            }
+        },
     )
     try:
         search_response = make_search_request(
             db=db,
             search_body=search_body,
+            vespa_search_adapter=vespa_search_adapter,
         )
     except ValidationError as e:
         raise HTTPException(
@@ -192,7 +211,9 @@ def download_search_documents(
             detail=f"Invalid Query: {' '.join(e.args)}",
         )
 
-    content_str = process_result_into_csv(db, search_response, is_browse=is_browse)
+    content_str = process_result_into_csv(
+        db, search_response, token.aud, is_browse=is_browse
+    )
 
     _LOGGER.debug(f"Downloading search results as CSV: {content_str}")
     return StreamingResponse(
@@ -258,7 +279,9 @@ def download_all_search_documents(
     s3_document = S3Document(DOCUMENT_CACHE_BUCKET, AWS_REGION, data_dump_s3_key)
     if valid_credentials is True and (not s3_client.document_exists(s3_document)):
         aws_env = (
-            "production" if "dev" not in PUBLIC_APP_URL and "localhost" else "staging"
+            "production"
+            if "staging" not in PUBLIC_APP_URL and "localhost"
+            else "staging"
         )
         _LOGGER.info(
             f"Generating {token.sub} {aws_env} dump for ingest cycle w/c {latest_ingest_start}..."
