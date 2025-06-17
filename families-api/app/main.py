@@ -33,6 +33,17 @@ class Corpus(SQLModel, table=True):
     organisation_id: int = Field(foreign_key="organisation.id")
 
 
+class Slug(SQLModel, table=True):
+    __tablename__ = "slug"  # type: ignore[assignment]
+    name: str = Field(primary_key=True, index=True, unique=True)
+    family_import_id: str | None = Field(
+        index=True, foreign_key="family.import_id", nullable=True
+    )
+    family_document_import_id: str | None = Field(
+        index=True, unique=True, foreign_key="family_document.import_id", nullable=True
+    )
+
+
 class FamilyGeographyLink(SQLModel, table=True):
     __tablename__ = "family_geography"  # type: ignore[assignment]
     geography_id: int = Field(foreign_key="geography.id", primary_key=True)
@@ -74,8 +85,8 @@ class FamilyBase(SQLModel):
     title: str
     description: str
     concepts: list[dict[str, Any]]
-    last_modified: datetime
-    created: datetime
+    last_modified: datetime = Field(default_factory=datetime.now)
+    created: datetime = Field(default_factory=datetime.now)
 
 
 class Family(FamilyBase, table=True):
@@ -90,12 +101,17 @@ class Family(FamilyBase, table=True):
     concepts: list[dict[str, Any]] = Field(
         default_factory=list, sa_column=Column(ARRAY(JSONB))
     )
+    unparsed_geographies: list[Geography] = Relationship(
+        back_populates="families", link_model=FamilyGeographyLink
+    )
+    unparsed_slug: Optional[Slug] = Relationship()
 
 
 class FamilyPublic(FamilyBase):
     import_id: str
     corpus: Corpus
     unparsed_geographies: list[Geography] = Field(default_factory=list, exclude=True)
+    unparsed_slug: Optional[Slug] = Field(exclude=True, default=None)
 
     @computed_field
     @property
@@ -127,6 +143,11 @@ class FamilyPublic(FamilyBase):
     def last_updated_date(self) -> datetime:
         return self.last_modified
 
+    @computed_field
+    @property
+    def slug(self) -> str:
+        return self.unparsed_slug.name if self.unparsed_slug else ""
+
 
 # TODO: implement these models for the frontend
 # export type TFamilyPage = {
@@ -143,8 +164,8 @@ class FamilyPublic(FamilyBase):
 #   events: TEvent[];
 #   documents: TDocumentPage[];
 #   collections: TCollection[];
-#   published_date: string | null;
-#   last_updated_date: string | null;
+#   published_date: string | null; // Done
+#   last_updated_date: string | null; // Done
 # };
 
 # export type TDocumentPage = {
@@ -286,9 +307,6 @@ def read_family(*, session: Session = Depends(get_session), family_id: str):
     if family is None:
         raise HTTPException(status_code=404, detail="Not found")
 
-    print("FAMILIEFAMILIEFAMILIEFAMILIEFAMILIEFAMILIEFAMILIE")
-    print(family)
-
     data = FamilyPublic.model_validate(family, from_attributes=True)
 
     return APIItemResponse(
@@ -350,3 +368,21 @@ def health_check():
 
 
 app.include_router(router)
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
