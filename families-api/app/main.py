@@ -1,7 +1,7 @@
 from typing import Generic, Optional, TypeVar
 
 from fastapi import APIRouter, Depends, FastAPI, HTTPException
-from pydantic import BaseModel, computed_field, field_serializer
+from pydantic import BaseModel, computed_field
 from pydantic_settings import BaseSettings
 from sqlalchemy import create_engine
 from sqlmodel import Field, Relationship, Session, SQLModel, func, select
