@@ -1,7 +1,7 @@
 from typing import Any, Generic, Optional, TypeVar
 
 from fastapi import APIRouter, Depends, FastAPI, HTTPException
-from pydantic import BaseModel, computed_field
+from pydantic import BaseModel, computed_field, field_serializer
 from pydantic_settings import BaseSettings
 from sqlalchemy import create_engine
 from sqlalchemy.dialects.postgresql import ARRAY, JSONB
@@ -37,7 +37,7 @@ class Corpus(SQLModel, table=True):
         back_populates="corpus", link_model=FamilyCorpusLink
     )
     organisation: Organisation = Relationship(back_populates="corpora")
-    organisation_id: int = Field(foreign_key="organisation.id")
+    organisation_id: str = Field(foreign_key="organisation.id")
 
 
 class FamilyGeographyLink(SQLModel, table=True):
