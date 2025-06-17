@@ -9,6 +9,7 @@ from .main import (
     Corpus,
     Family,
     FamilyPublic,
+    Geography,
     Organisation,
     app,
     get_session,
@@ -86,6 +87,24 @@ def test_read_family_200(client: TestClient, session: Session):
                 "relation": "jurisdiction",
                 "preferred_label": "test concept 2",
             },
+        ],
+        geogeraphies=[
+            Geography(
+                id=1,
+                slug="germany",
+                value="DE",
+                display_value="Germany",
+                type="ISO 3166-1",
+                parent_id=0,
+            ),
+            Geography(
+                id=2,
+                slug="france",
+                value="FR",
+                display_value="France",
+                type="ISO 3166-1",
+                parent_id=0,
+            ),
         ],
     )
     session.add(corpus)

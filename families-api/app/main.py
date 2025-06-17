@@ -62,7 +62,7 @@ class Geography(GeographyBase, table=True):
     )
     children: list["Geography"] = Relationship(back_populates="parent")
     families: list["Family"] = Relationship(
-        back_populates="geographies", link_model=FamilyGeographyLink
+        back_populates="unparsed_geographies", link_model=FamilyGeographyLink
     )
 
 
@@ -75,7 +75,7 @@ class FamilyBase(SQLModel):
 
 class Family(FamilyBase, table=True):
     __tablename__ = "family"  # type: ignore[assignment]
-    geographies: list[Geography] = Relationship(
+    unparsed_geographies: list[Geography] = Relationship(
         back_populates="families", link_model=FamilyGeographyLink
     )
     corpus: Corpus = Relationship(
@@ -86,6 +86,26 @@ class Family(FamilyBase, table=True):
     concepts: list[dict[str, Any]] = Field(
         default_factory=list, sa_column=Column(ARRAY(JSONB))
     )
+
+
+class FamilyPublic(FamilyBase):
+    corpus: Corpus
+    unparsed_geographies: list[Geography] = Field(default_factory=list, exclude=True)
+
+    @computed_field
+    @property
+    def organisation(self) -> str:
+        return self.corpus.organisation.name
+
+    @computed_field
+    @property
+    def summary(self) -> str:
+        return self.description
+
+    @computed_field
+    @property
+    def geographies(self) -> list[str]:
+        return [g.value for g in self.unparsed_geographies]
 
 
 class FamilyDocumentBase(SQLModel):
@@ -235,20 +255,6 @@ def read_documents(*, session: Session = Depends(get_session)):
 # };
 
 
-class FamilyPublic(FamilyBase):
-    corpus: Corpus
-
-    @computed_field
-    @property
-    def organisation(self) -> str:
-        return self.corpus.organisation.name
-
-    @computed_field
-    @property
-    def summary(self) -> str:
-        return self.description
-
-
 @router.get("/{family_id}", response_model=APIItemResponse[FamilyPublic])
 def read_family(*, session: Session = Depends(get_session), family_id: str):
     # When should this break?
@@ -259,6 +265,9 @@ def read_family(*, session: Session = Depends(get_session), family_id: str):
 
     if family is None:
         raise HTTPException(status_code=404, detail="Not found")
+
+    print("FAMILIEFAMILIEFAMILIEFAMILIEFAMILIEFAMILIEFAMILIE")
+    print(family)
 
     data = FamilyPublic.model_validate(family, from_attributes=True)
 
