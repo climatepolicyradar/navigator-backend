@@ -43,6 +43,7 @@ class Slug(SQLModel, table=True):
     family_document_import_id: str | None = Field(
         index=True, unique=True, foreign_key="family_document.import_id", nullable=True
     )
+    created: datetime = Field(default_factory=datetime.now)
 
 
 class FamilyGeographyLink(SQLModel, table=True):
@@ -159,7 +160,9 @@ class Family(FamilyBase, table=True):
     unparsed_geographies: list[Geography] = Relationship(
         back_populates="families", link_model=FamilyGeographyLink
     )
-    unparsed_slug: list[Slug] = Relationship()
+    unparsed_slug: list[Slug] = Relationship(
+        sa_relationship_kwargs={"order_by": lambda: Slug.created.desc()}
+    )
     unparsed_metadata: Optional[FamilyMetadata] = Relationship()
     unparsed_events: list[FamilyEvent] = Relationship(back_populates="family")
     unparsed_collections: list[Collection] = Relationship(
@@ -285,12 +288,12 @@ class FamilyPublic(FamilyBase):
                     for language in document.physical_document.unparsed_languages
                 ],
                 "document_type": (
-                    document.valid_metadata.get("type", [])[0]
+                    document.valid_metadata.get("type", [None])[0]
                     if document.valid_metadata
                     else None
                 ),
                 "document_role": (
-                    document.valid_metadata.get("role", [])[0]
+                    document.valid_metadata.get("role", [None])[0]
                     if document.valid_metadata
                     else None
                 ),
@@ -570,3 +573,6 @@ def health_check():
 
 
 app.include_router(router)
+
+
+
