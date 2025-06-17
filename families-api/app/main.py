@@ -156,16 +156,16 @@ class FamilyPublic(FamilyBase):
 #   summary: string; // Done
 #   geographies: string[]; // Done
 #   import_id: string; // Done
+#   slug: string; // Done
+#   corpus_id: string; // Done
+#   published_date: string | null; // Done
+#   last_updated_date: string | null; // Done
 #   category: TCategory;
 #   corpus_type_name: TCorpusTypeSubCategory;
 #   metadata: TFamilyMetadata;
-#   slug: string;
-#   corpus_id: string; // Done
 #   events: TEvent[];
 #   documents: TDocumentPage[];
 #   collections: TCollection[];
-#   published_date: string | null; // Done
-#   last_updated_date: string | null; // Done
 # };
 
 # export type TDocumentPage = {
@@ -368,21 +368,3 @@ def health_check():
 
 
 app.include_router(router)
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
