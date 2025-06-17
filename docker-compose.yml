@@ -19,10 +19,10 @@ services:
       context: ./
       dockerfile: Dockerfile
     image: navigator-backend
-    command: /bin/bash /cpr-backend/startup.sh
+    command: /bin/bash /app/startup.sh
     tty: true
     volumes:
-      - ./:/cpr-backend/:cached
+      - ./:/app/:cached
     ports:
       - 8888:8888
     environment:
