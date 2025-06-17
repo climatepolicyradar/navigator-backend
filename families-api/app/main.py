@@ -150,6 +150,7 @@ class FamilyPublic(FamilyBase):
     unparsed_events: list[FamilyEvent] = Field(exclude=True, default=list())
     family_category: str = Field(exclude=True, default="")
     description: str = Field(exclude=True, default="")
+    family_documents: list["FamilyDocument"] = Field(exclude=True, default=list())
 
     @computed_field
     @property
@@ -210,11 +211,47 @@ class FamilyPublic(FamilyBase):
             for event in self.unparsed_events
         ]
 
+    @computed_field
+    @property
+    def documents(self) -> list[dict[str, Any]]:
+        return [
+            {
+                "import_id": document.import_id,
+                "variant": document.variant_name,
+                "slug": (
+                    document.unparsed_slug[0].name
+                    if len(document.unparsed_slug) > 0
+                    else ""
+                ),
+                "title": document.physical_document.title,
+                "md5_sum": document.physical_document.md5_sum,
+                "cdn_object": document.physical_document.cdn_object,
+                "source_url": document.physical_document.source_url,
+                "content_type": document.physical_document.content_type,
+                "language": document.physical_document.unparsed_languages[0],
+                "languages": [
+                    language.language_code
+                    for language in document.physical_document.unparsed_languages
+                ],
+                "document_type": (
+                    document.valid_metadata.get("type", [])[0]
+                    if document.valid_metadata
+                    else None
+                ),
+                "document_role": (
+                    document.valid_metadata.get("role", [])[0]
+                    if document.valid_metadata
+                    else None
+                ),
+            }
+            for document in self.family_documents
+            if document.physical_document
+        ]
+
     # metadata is reserved in SQLModel
     @computed_field(alias="metadata")
     @property
     def _metadata(self) -> dict[str, Any]:
-        print(self.unparsed_metadata)
         return self.unparsed_metadata.value if self.unparsed_metadata else {}
 
 
@@ -233,7 +270,7 @@ class FamilyPublic(FamilyBase):
 #   corpus_type_name: TCorpusTypeSubCategory; // Done
 #   metadata: TFamilyMetadata; // Done
 #   events: TEvent[]; // Done
-#   documents: TDocumentPage[];
+#   documents: TDocumentPage[]; // Done
 #   collections: TCollection[];
 # };
 
@@ -301,10 +338,30 @@ class FamilyDocument(FamilyDocumentBase, table=True):
         back_populates="family_document"
     )
     unparsed_events: list[FamilyEvent] = Relationship(back_populates="family_document")
+    valid_metadata: dict[str, Any] | None = Field(
+        default_factory=None, sa_column=Column(JSONB)
+    )
+    unparsed_slug: list[Slug] = Relationship()
 
 
 class FamilyDocumentPublic(FamilyDocumentBase):
     family: "FamilyPublic"
+
+
+class PhysicalDDocumentLanguageLink(SQLModel, table=True):
+    __tablename__ = "physical_document_language"  # type: ignore[assignment]
+    language_id: int = Field(foreign_key="language.id", primary_key=True)
+    document_id: int = Field(foreign_key="physical_document.id", primary_key=True)
+    source: str
+    visible: bool
+
+
+class Language(SQLModel, table=True):
+    id: int = Field(primary_key=True, index=True, unique=True)
+    language_code: str
+    part1_code: str | None
+    part2_code: str | None
+    name: str | None
 
 
 class PhysicalDocumentBase(SQLModel):
@@ -319,6 +376,9 @@ class PhysicalDocumentBase(SQLModel):
 class PhysicalDocument(PhysicalDocumentBase, table=True):
     __tablename__ = "physical_document"  # type: ignore[assignment]
     family_document: FamilyDocument = Relationship(back_populates="physical_document")
+    unparsed_languages: list[Language] = Relationship(
+        link_model=PhysicalDDocumentLanguageLink
+    )
 
 
 class PhysicalDocumentPublic(PhysicalDocumentBase):
