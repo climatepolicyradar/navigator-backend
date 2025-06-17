@@ -100,7 +100,9 @@ class FamilyEvent(SQLModel, table=True):
     status: str
     created: datetime = Field(default_factory=datetime.now)
     last_modified: datetime = Field(default_factory=datetime.now)
-    # valid_metadata: dict[str, Any] = Field(default_factory=dict)
+    valid_metadata: dict[str, Any] | None = Field(
+        default_factory=None, sa_column=Column(JSONB)
+    )
 
 
 class FamilyMetadata(SQLModel, table=True):
@@ -203,6 +205,7 @@ class FamilyPublic(FamilyBase):
                 "date": event.date,
                 "event_type": event.event_type_name,
                 "status": event.status,
+                "metadata": event.valid_metadata,
             }
             for event in self.unparsed_events
         ]
