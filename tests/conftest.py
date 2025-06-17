@@ -9,7 +9,7 @@ from db_client import run_migrations
 from db_client.models import Base
 from db_client.models.organisation import AppUser
 from fastapi.testclient import TestClient
-from moto import mock_s3
+from moto import mock_aws
 from sqlalchemy import create_engine
 from sqlalchemy.engine import Engine
 from sqlalchemy.orm import sessionmaker
@@ -44,7 +44,7 @@ def s3_document_bucket_names() -> dict:
 def test_s3_client(s3_document_bucket_names, mock_aws_creds):
     bucket_names = s3_document_bucket_names.values()
 
-    with mock_s3():
+    with mock_aws():
         s3_client = S3Client(dev_mode=False)
         for bucket in bucket_names:
             s3_client.client.create_bucket(
