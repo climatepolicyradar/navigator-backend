@@ -110,6 +110,7 @@ def test_read_family_200(client: TestClient, session: Session):
                 type="ISO 3166-1",
             ),
         ],
+        family_category="Legislative",
     )
     session.add(corpus)
     session.add(family)

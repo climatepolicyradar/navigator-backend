@@ -87,6 +87,7 @@ class FamilyBase(SQLModel):
     concepts: list[dict[str, Any]]
     last_modified: datetime = Field(default_factory=datetime.now)
     created: datetime = Field(default_factory=datetime.now)
+    family_category: str
 
 
 class Family(FamilyBase, table=True):
@@ -112,6 +113,8 @@ class FamilyPublic(FamilyBase):
     corpus: Corpus
     unparsed_geographies: list[Geography] = Field(default_factory=list, exclude=True)
     unparsed_slug: Optional[Slug] = Field(exclude=True, default=None)
+    family_category: str = Field(exclude=True, default="")
+    description: str = Field(exclude=True, default="")
 
     @computed_field
     @property
@@ -147,6 +150,11 @@ class FamilyPublic(FamilyBase):
     @property
     def slug(self) -> str:
         return self.unparsed_slug.name if self.unparsed_slug else ""
+
+    @computed_field
+    @property
+    def category(self) -> str:
+        return self.family_category
 
 
 # TODO: implement these models for the frontend
@@ -195,6 +203,8 @@ class FamilyPublic(FamilyBase):
 #   slug: string;
 #   title: string;
 # };
+
+# export type TCategory = "Legislative" | "Executive" | "Litigation" | "Policy" | "Law" | "UNFCCC" | "MCF" | "Reports";
 
 
 class FamilyDocumentBase(SQLModel):
