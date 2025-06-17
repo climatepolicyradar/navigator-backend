@@ -1,6 +1,7 @@
 from typing import Generic, Optional, TypeVar
 
 from fastapi import APIRouter, Depends, FastAPI, HTTPException
+from pydantic import BaseModel
 from pydantic_settings import BaseSettings
 from sqlalchemy import create_engine
 from sqlmodel import Field, Relationship, Session, SQLModel, func, select
@@ -116,14 +117,14 @@ class PhysicalDocumentPublic(PhysicalDocumentBase):
 APIDataType = TypeVar("APIDataType")
 
 
-class APIListResponse(SQLModel, Generic[APIDataType]):
+class APIListResponse(BaseModel, Generic[APIDataType]):
     data: list[APIDataType]
     total: int
     page: int
     page_size: int
 
 
-class APIItemResponse(SQLModel, Generic[APIDataType]):
+class APIItemResponse(BaseModel, Generic[APIDataType]):
     data: APIDataType
 
 

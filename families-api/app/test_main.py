@@ -4,7 +4,15 @@ from sqlalchemy import create_engine
 from sqlalchemy.orm import sessionmaker
 from sqlmodel import Session, SQLModel
 
-from .main import Corpus, Family, app, get_session, settings
+from .main import (
+    APIItemResponse,
+    Corpus,
+    Family,
+    FamilyPublic,
+    app,
+    get_session,
+    settings,
+)
 
 
 # Mostly inspired by
@@ -60,3 +68,5 @@ def test_read_family_200(client: TestClient, session: Session):
 
     # TODO: https://linear.app/climate-policy-radar/issue/APP-735/work-out-a-way-to-ignore-testpy-files-in-bandit
     assert response.status_code == 200  # nosec B101
+    response = APIItemResponse[FamilyPublic].model_validate(response.json())
+    assert response.data.import_id == "family_123"  # nosec B101
