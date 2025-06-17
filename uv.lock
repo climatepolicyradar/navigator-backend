@@ -1262,7 +1262,7 @@ wheels = [
 
 [[package]]
 name = "moto"
-version = "4.2.14"
+version = "5.1.6"
 source = { registry = "https://pypi.org/simple" }
 dependencies = [
     { name = "boto3" },
@@ -1275,9 +1275,9 @@ dependencies = [
     { name = "werkzeug" },
     { name = "xmltodict" },
 ]
-sdist = { url = "https://files.pythonhosted.org/packages/f8/b2/06671ae921e7c7ebf18a20a6218fb55e83c3784b026eaf3d5670f9315924/moto-4.2.14.tar.gz", hash = "sha256:8f9263ca70b646f091edcc93e97cda864a542e6d16ed04066b1370ed217bd190", size = 4933741 }
+sdist = { url = "https://files.pythonhosted.org/packages/39/c0/eb2c997ffb22af6878a5d369284ad0bf2356d6b22686b5350f749d7a7db7/moto-5.1.6.tar.gz", hash = "sha256:baf7afa9d4a92f07277b29cf466d0738f25db2ed2ee12afcb1dc3f2c540beebd", size = 6964053 }
 wheels = [
-    { url = "https://files.pythonhosted.org/packages/51/0f/ef410e6660d381e04cb6f33065d03b3aefd3444d558fcdd41ef235a1802c/moto-4.2.14-py2.py3-none-any.whl", hash = "sha256:6d242dbbabe925bb385ddb6958449e5c827670b13b8e153ed63f91dbdb50372c", size = 3312702 },
+    { url = "https://files.pythonhosted.org/packages/f9/2f/62f959b7412dc87c545b8139249f0cb97cd133777e56405d54581114507f/moto-5.1.6-py3-none-any.whl", hash = "sha256:e4a3092bc8fe9139caa77cd34cdcbad804de4d9671e2270ea3b4d53f5c645047", size = 5046471 },
 ]
 
 [package.optional-dependencies]
@@ -1432,7 +1432,7 @@ wheels = [
 
 [[package]]
 name = "navigator-backend"
-version = "1.25.1"
+version = "1.26.1"
 source = { editable = "." }
 dependencies = [
     { name = "apscheduler" },
@@ -1488,49 +1488,49 @@ dev = [
 [package.metadata]
 requires-dist = [
     { name = "apscheduler", specifier = ">=3.10.4" },
-    { name = "authlib", specifier = ">=1.4.0" },
-    { name = "bcrypt", specifier = ">=3.2.0" },
-    { name = "black", marker = "extra == 'dev'", specifier = ">=23.1.0" },
+    { name = "authlib", specifier = ">=1.6.0" },
+    { name = "bcrypt", specifier = ">=4.3.0" },
+    { name = "black", marker = "extra == 'dev'", specifier = ">=25.1.0" },
     { name = "boto3", specifier = ">=1.26" },
-    { name = "botocore", specifier = ">=1.34.19" },
+    { name = "botocore", specifier = ">=1.38.37" },
     { name = "cpr-sdk", extras = ["vespa", "datasets"], specifier = "==1.20.1" },
     { name = "db-client", git = "https://github.com/climatepolicyradar/navigator-db-client.git?rev=v3.9.12" },
-    { name = "fastapi", specifier = ">=0.106.0" },
+    { name = "fastapi", specifier = ">=0.115.8" },
     { name = "fastapi-health", specifier = ">=0.4.0" },
-    { name = "fastapi-pagination", extras = ["sqlalchemy"], specifier = ">=0.12.19" },
-    { name = "httpx", specifier = ">=0.22.0" },
+    { name = "fastapi-pagination", extras = ["sqlalchemy"], specifier = ">=0.13.2" },
+    { name = "httpx", specifier = ">=0.28.1" },
     { name = "itsdangerous", specifier = ">=2.1.0" },
     { name = "json-logging", specifier = ">=1.3.0" },
-    { name = "moto", extras = ["s3"], marker = "extra == 'dev'", specifier = ">=3.0.3,<5.0.0" },
+    { name = "moto", extras = ["s3"], marker = "extra == 'dev'", specifier = ">=5.1.6" },
     { name = "numpy", specifier = "==1.26.4" },
-    { name = "opentelemetry-exporter-otlp", specifier = ">=1.32.1" },
+    { name = "opentelemetry-exporter-otlp", specifier = ">=1.33.0" },
     { name = "opentelemetry-instrumentation-fastapi", specifier = ">=0.54b0" },
     { name = "opentelemetry-instrumentation-sqlalchemy", specifier = ">=0.54b0" },
-    { name = "opentelemetry-sdk", specifier = ">=1.32.1" },
-    { name = "pandas", specifier = ">=2.2.2" },
+    { name = "opentelemetry-sdk", specifier = ">=1.33.0" },
+    { name = "pandas", specifier = ">=2.3.0" },
     { name = "passlib", specifier = ">=1.7.4" },
     { name = "psycopg2", specifier = ">=2.9.10" },
     { name = "pydantic-settings", specifier = ">=2.9.1" },
     { name = "pyjwt", specifier = ">=2.3.0" },
-    { name = "pyright", marker = "extra == 'dev'", specifier = ">=1.1.384" },
-    { name = "pytest", marker = "extra == 'dev'", specifier = ">=8.3.4" },
-    { name = "pytest-asyncio", marker = "extra == 'dev'", specifier = ">=0.23.8" },
-    { name = "pytest-mock", marker = "extra == 'dev'", specifier = ">=3.7.0" },
+    { name = "pyright", marker = "extra == 'dev'", specifier = ">=1.1.402" },
+    { name = "pytest", marker = "extra == 'dev'", specifier = ">=8.4.0" },
+    { name = "pytest-asyncio", marker = "extra == 'dev'", specifier = ">=1.0.0" },
+    { name = "pytest-mock", marker = "extra == 'dev'", specifier = ">=3.14.1" },
     { name = "python-dateutil", specifier = ">=2.9.0.post0" },
     { name = "python-dotenv", specifier = ">=1.1.0" },
-    { name = "python-multipart", specifier = ">=0.0.5" },
+    { name = "python-multipart", specifier = ">=0.0.20" },
     { name = "python-slugify", specifier = ">=6.1.2" },
-    { name = "requests", specifier = ">=2.28" },
+    { name = "requests", specifier = ">=2.32" },
     { name = "requests-toolbelt", specifier = ">=1.0.0" },
-    { name = "ruff", marker = "extra == 'dev'", specifier = ">=0.6.9" },
+    { name = "ruff", marker = "extra == 'dev'", specifier = ">=0.11.13" },
     { name = "sqlalchemy", specifier = ">=1.4.31" },
     { name = "sqlalchemy-utils", specifier = ">=0.38.2" },
-    { name = "starlette", specifier = ">=0.27.0" },
+    { name = "starlette", specifier = "==0.40.0" },
     { name = "surrogate", marker = "extra == 'dev'", specifier = ">=0.1" },
     { name = "tenacity", specifier = ">=9.0.0" },
     { name = "types-sqlalchemy", marker = "extra == 'dev'", specifier = ">=1.4.31" },
-    { name = "urllib3", specifier = "<2" },
-    { name = "uvicorn", extras = ["standard"], specifier = ">=0.20.0" },
+    { name = "urllib3", specifier = "<3" },
+    { name = "uvicorn", extras = ["standard"], specifier = ">=0.34.3" },
 ]
 provides-extras = ["dev"]
 
@@ -2077,11 +2077,11 @@ wheels = [
 
 [[package]]
 name = "py-partiql-parser"
-version = "0.5.0"
+version = "0.6.1"
 source = { registry = "https://pypi.org/simple" }
-sdist = { url = "https://files.pythonhosted.org/packages/e9/80/47fab55e0c82c447ed2b5b484f4ae6a6c306365f16c4fd578fda56c93468/py-partiql-parser-0.5.0.tar.gz", hash = "sha256:427a662e87d51a0a50150fc8b75c9ebb4a52d49129684856c40c88b8c8e027e4", size = 25850 }
+sdist = { url = "https://files.pythonhosted.org/packages/58/a1/0a2867e48b232b4f82c4929ef7135f2a5d72c3886b957dccf63c70aa2fcb/py_partiql_parser-0.6.1.tar.gz", hash = "sha256:8583ff2a0e15560ef3bc3df109a7714d17f87d81d33e8c38b7fed4e58a63215d", size = 17120 }
 wheels = [
-    { url = "https://files.pythonhosted.org/packages/43/5d/e87d4f895af6eff98b0db75f4c7cbb61b58dde9f5bd52682dfe58639fc79/py_partiql_parser-0.5.0-py3-none-any.whl", hash = "sha256:dc454c27526adf62deca5177ea997bf41fac4fd109c5d4c8d81f984de738ba8f", size = 23016 },
+    { url = "https://files.pythonhosted.org/packages/97/84/0e410c20bbe9a504fc56e97908f13261c2b313d16cbb3b738556166f044a/py_partiql_parser-0.6.1-py2.py3-none-any.whl", hash = "sha256:ff6a48067bff23c37e9044021bf1d949c83e195490c17e020715e927fe5b2456", size = 23520 },
 ]
 
 [[package]]
@@ -2691,14 +2691,14 @@ wheels = [
 
 [[package]]
 name = "starlette"
-version = "0.46.2"
+version = "0.40.0"
 source = { registry = "https://pypi.org/simple" }
 dependencies = [
     { name = "anyio" },
 ]
-sdist = { url = "https://files.pythonhosted.org/packages/ce/20/08dfcd9c983f6a6f4a1000d934b9e6d626cff8d2eeb77a89a68eef20a2b7/starlette-0.46.2.tar.gz", hash = "sha256:7f7361f34eed179294600af672f565727419830b54b7b084efe44bb82d2fccd5", size = 2580846 }
+sdist = { url = "https://files.pythonhosted.org/packages/4b/cb/244daf0d7be4508099ad5bca3cdfe8b8b5538acd719c5f397f614e569fff/starlette-0.40.0.tar.gz", hash = "sha256:1a3139688fb298ce5e2d661d37046a66ad996ce94be4d4983be019a23a04ea35", size = 2573611 }
 wheels = [
-    { url = "https://files.pythonhosted.org/packages/8b/0c/9d30a4ebeb6db2b25a841afbb80f6ef9a854fc3b41be131d249a977b4959/starlette-0.46.2-py3-none-any.whl", hash = "sha256:595633ce89f8ffa71a015caed34a5b2dc1c0cdb3f0f1fbd1e69339cf2abeec35", size = 72037 },
+    { url = "https://files.pythonhosted.org/packages/0a/0f/64baf7a06492e8c12f5c4b49db286787a7255195df496fc21f5fd9eecffa/starlette-0.40.0-py3-none-any.whl", hash = "sha256:c494a22fae73805376ea6bf88439783ecfba9aac88a43911b48c653437e784c4", size = 73303 },
 ]
 
 [[package]]
