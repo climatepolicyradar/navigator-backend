@@ -8,6 +8,7 @@ from .main import (
     APIItemResponse,
     Corpus,
     Family,
+    FamilyMetadata,
     FamilyPublic,
     Geography,
     Organisation,
@@ -112,6 +113,33 @@ def test_read_family_200(client: TestClient, session: Session):
             ),
         ],
         family_category="Legislative",
+        unparsed_metadata=FamilyMetadata(
+            family_import_id="family_123",
+            value={
+                "topic": ["Adaptation"],
+                "hazard": [
+                    "Heat Waves And Heat Stress",
+                    "Storms",
+                    "Floods",
+                    "Droughts",
+                    "Sea Level Rise",
+                ],
+                "sector": [
+                    "Agriculture",
+                    "Energy",
+                    "Health",
+                    "LULUCF",
+                    "Tourism",
+                    "Transport",
+                    "Water",
+                ],
+                "keyword": ["Adaptation"],
+                "framework": ["Adaptation"],
+                "instrument": [
+                    "Research & Development, knowledge generation|Information"
+                ],
+            },
+        ),
     )
     session.add(corpus)
     session.add(family)

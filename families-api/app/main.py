@@ -81,6 +81,12 @@ class Geography(GeographyBase, table=True):
     )
 
 
+class FamilyMetadata(SQLModel, table=True):
+    __tablename__ = "family_metadata"  # type: ignore[assignment]
+    family_import_id: str = Field(foreign_key="family.import_id", primary_key=True)
+    value: dict[str, Any] = Field(default_factory=dict, sa_column=Column(JSONB))
+
+
 class FamilyBase(SQLModel):
     import_id: str = Field(primary_key=True)
     title: str
@@ -106,14 +112,16 @@ class Family(FamilyBase, table=True):
     unparsed_geographies: list[Geography] = Relationship(
         back_populates="families", link_model=FamilyGeographyLink
     )
-    unparsed_slug: Optional[Slug] = Relationship()
+    unparsed_slug: list[Slug] = Relationship()
+    unparsed_metadata: Optional[FamilyMetadata] = Relationship()
 
 
 class FamilyPublic(FamilyBase):
     import_id: str
     corpus: Corpus
     unparsed_geographies: list[Geography] = Field(default_factory=list, exclude=True)
-    unparsed_slug: Optional[Slug] = Field(exclude=True, default=None)
+    unparsed_slug: list[Slug] = Field(exclude=True, default=list())
+    unparsed_metadata: Optional[FamilyMetadata] = Field(exclude=True, default=None)
     family_category: str = Field(exclude=True, default="")
     description: str = Field(exclude=True, default="")
 
@@ -150,7 +158,7 @@ class FamilyPublic(FamilyBase):
     @computed_field
     @property
     def slug(self) -> str:
-        return self.unparsed_slug.name if self.unparsed_slug else ""
+        return self.unparsed_slug[0].name if len(self.unparsed_slug) > 0 else ""
 
     @computed_field
     @property
@@ -161,6 +169,13 @@ class FamilyPublic(FamilyBase):
     @property
     def corpus_type_name(self) -> str:
         return self.corpus.corpus_type_name
+
+    # emtadata is reserved in SQLModel
+    @computed_field(alias="metadata")
+    @property
+    def _metadata(self) -> dict[str, Any]:
+        print(self.unparsed_metadata)
+        return self.unparsed_metadata.value if self.unparsed_metadata else {}
 
 
 # TODO: implement these models for the frontend
@@ -176,7 +191,7 @@ class FamilyPublic(FamilyBase):
 #   last_updated_date: string | null; // Done
 #   category: TCategory; // Done
 #   corpus_type_name: TCorpusTypeSubCategory; // Done
-#   metadata: TFamilyMetadata;
+#   metadata: TFamilyMetadata; // Done
 #   events: TEvent[];
 #   documents: TDocumentPage[];
 #   collections: TCollection[];
@@ -208,6 +223,18 @@ class FamilyPublic(FamilyBase):
 #   description: string;
 #   slug: string;
 #   title: string;
+# };
+
+# export type TFamilyMetadata = {
+#   topic?: string[];
+#   hazard?: string[];
+#   sector?: string[];
+#   keyword?: string[];
+#   framework?: string[];
+#   instrument?: string[];
+#   author_type?: string[];
+#   author?: string[];
+#   document_type?: string;
 # };
 
 # export type TCategory = "Legislative" | "Executive" | "Litigation" | "Policy" | "Law" | "UNFCCC" | "MCF" | "Reports";
@@ -384,4 +411,3 @@ def health_check():
 
 
 app.include_router(router)
-
