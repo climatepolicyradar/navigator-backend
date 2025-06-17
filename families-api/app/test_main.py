@@ -6,7 +6,6 @@ from sqlmodel import Session, SQLModel
 
 from .main import (
     APIItemResponse,
-    Concept,
     Corpus,
     Family,
     FamilyPublic,
