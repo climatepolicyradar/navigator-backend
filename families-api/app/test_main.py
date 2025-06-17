@@ -172,9 +172,3 @@ def test_read_family_200(client: TestClient, session: Session):
     assert response.status_code == 200  # nosec B101
     response = APIItemResponse[FamilyPublic].model_validate(response.json())
     assert response.data.import_id == "family_123"  # nosec B101
-
-
-
-
-
-
