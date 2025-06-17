@@ -3,14 +3,9 @@ from typing import TypeVar
 
 from fastapi import APIRouter, HTTPException, Path
 
-from .model import (
-    APIResponse,
-    CountryResponse,
-    Geography,
-    Settings,
-    SubdivisionResponse,
-)
+from .model import CountryResponse, Settings, SubdivisionResponse
 from .service import (
+    get_all_countries,
     get_country_by_code,
     get_subdivisions_by_country,
     populate_initial_countries_data,
@@ -28,15 +23,19 @@ settings = Settings()
 router = APIRouter()
 
 
-@router.get("/", response_model=APIResponse[Geography])
-def read_documents():
-    """Test endpoint."""
-    return APIResponse(
-        data=[Geography(id=1)],
-        total=1,
-        page=1,
-        page_size=1,
-    )
+@router.get("/", response_model=list[CountryResponse])
+async def list_all_countries():
+    """
+    List all countries with their metadata.
+
+    NOTE: This endpoint retrieves a list of all countries, including
+    their ISO codes, names, and flag emojis. It can be used to populate
+    dropdowns or selection menus in user interfaces.
+
+    :return list[CountryResponse]: A list of country objects containing
+        alpha-2, alpha-3 codes, name, official name, numeric code, and flag emoji.
+    """
+    return get_all_countries()
 
 
 @router.get("/countries/{code}", response_model=CountryResponse)
