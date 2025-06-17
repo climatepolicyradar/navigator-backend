@@ -21,6 +21,9 @@ initial-data:
 
 
 dev:
+    docker compose --profile dev up
+
+test:
     docker compose --profile test up --abort-on-container-exit --exit-code-from test
 
 # build
