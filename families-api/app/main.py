@@ -15,13 +15,6 @@ class Organisation(SQLModel, table=True):
     corpora: list["Corpus"] = Relationship(back_populates="organisation")
 
 
-class Organisation(SQLModel, table=True):
-    __tablename__ = "organisation"  # type: ignore[assignment]
-    id: str = Field(primary_key=True)
-    name: str
-    corpora: list["Corpus"] = Relationship(back_populates="organisation")
-
-
 class FamilyCorpusLink(SQLModel, table=True):
     __tablename__ = "family_corpus"  # type: ignore[assignment]
     corpus_import_id: str = Field(foreign_key="corpus.import_id", primary_key=True)
@@ -336,3 +329,4 @@ def health_check():
 
 
 app.include_router(router)
+
