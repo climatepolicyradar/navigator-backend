@@ -88,14 +88,13 @@ def test_read_family_200(client: TestClient, session: Session):
                 "preferred_label": "test concept 2",
             },
         ],
-        geogeraphies=[
+        unparsed_geographies=[
             Geography(
                 id=1,
                 slug="germany",
                 value="DE",
                 display_value="Germany",
                 type="ISO 3166-1",
-                parent_id=0,
             ),
             Geography(
                 id=2,
@@ -103,7 +102,6 @@ def test_read_family_200(client: TestClient, session: Session):
                 value="FR",
                 display_value="France",
                 type="ISO 3166-1",
-                parent_id=0,
             ),
         ],
     )

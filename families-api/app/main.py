@@ -49,7 +49,9 @@ class GeographyBase(SQLModel):
 class Geography(GeographyBase, table=True):
     __tablename__ = "geography"  # type: ignore[assignment]
     value: str
-    parent_id: int = Field(foreign_key="geography.id")
+    parent_id: int | None = Field(
+        foreign_key="geography.id", nullable=True, default=None
+    )
     """
     the relationship stuff here is a little non-standard and inherited from the
     previous implementation
@@ -89,6 +91,7 @@ class Family(FamilyBase, table=True):
 
 
 class FamilyPublic(FamilyBase):
+    import_id: str
     corpus: Corpus
     unparsed_geographies: list[Geography] = Field(default_factory=list, exclude=True)
 
@@ -106,6 +109,54 @@ class FamilyPublic(FamilyBase):
     @property
     def geographies(self) -> list[str]:
         return [g.value for g in self.unparsed_geographies]
+
+
+# TODO: implement these models for the frontend
+# export type TFamilyPage = {
+#   organisation: string; // Done
+#   title: string; // Done
+#   summary: string; // Done
+#   geographies: string[]; // Done
+#   import_id: string; // Done
+#   category: TCategory;
+#   corpus_type_name: TCorpusTypeSubCategory;
+#   metadata: TFamilyMetadata;
+#   slug: string;
+#   corpus_id: string;
+#   events: TEvent[];
+#   documents: TDocumentPage[];
+#   collections: TCollection[];
+#   published_date: string | null;
+#   last_updated_date: string | null;
+# };
+
+# export type TDocumentPage = {
+#   import_id: string;
+#   variant?: string | null;
+#   slug: string;
+#   title: string;
+#   md5_sum?: string | null;
+#   cdn_object?: string | null;
+#   source_url: string;
+#   content_type: TDocumentContentType;
+#   language: string;
+#   languages: string[];
+#   document_type: string | null;
+#   document_role: string;
+# };
+
+# export type TCollection = {
+#   import_id: string;
+#   title: string;
+#   description: string;
+#   families: TCollectionFamily[];
+# };
+
+# export type TCollectionFamily = {
+#   description: string;
+#   slug: string;
+#   title: string;
+# };
 
 
 class FamilyDocumentBase(SQLModel):
@@ -205,54 +256,6 @@ def read_documents(*, session: Session = Depends(get_session)):
         page=1,
         page_size=len(data),
     )
-
-
-# TODO: implement these models for the frontend
-# export type TFamilyPage = {
-#   organisation: string; // Done
-#   title: string; // Done
-#   summary: string; // Done
-#   geographies: string[];
-#   import_id: string;
-#   category: TCategory;
-#   corpus_type_name: TCorpusTypeSubCategory;
-#   metadata: TFamilyMetadata;
-#   slug: string;
-#   corpus_id: string;
-#   events: TEvent[];
-#   documents: TDocumentPage[];
-#   collections: TCollection[];
-#   published_date: string | null;
-#   last_updated_date: string | null;
-# };
-
-# export type TDocumentPage = {
-#   import_id: string;
-#   variant?: string | null;
-#   slug: string;
-#   title: string;
-#   md5_sum?: string | null;
-#   cdn_object?: string | null;
-#   source_url: string;
-#   content_type: TDocumentContentType;
-#   language: string;
-#   languages: string[];
-#   document_type: string | null;
-#   document_role: string;
-# };
-
-# export type TCollection = {
-#   import_id: string;
-#   title: string;
-#   description: string;
-#   families: TCollectionFamily[];
-# };
-
-# export type TCollectionFamily = {
-#   description: string;
-#   slug: string;
-#   title: string;
-# };
 
 
 @router.get("/{family_id}", response_model=APIItemResponse[FamilyPublic])
