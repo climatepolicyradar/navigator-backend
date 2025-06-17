@@ -1,10 +1,17 @@
 from typing import Generic, Optional, TypeVar
 
 from fastapi import APIRouter, Depends, FastAPI, HTTPException
-from pydantic import BaseModel
+from pydantic import BaseModel, computed_field, field_serializer
 from pydantic_settings import BaseSettings
 from sqlalchemy import create_engine
 from sqlmodel import Field, Relationship, Session, SQLModel, func, select
+
+
+class Organisation(SQLModel, table=True):
+    __tablename__ = "organisation"  # type: ignore[assignment]
+    id: str = Field(primary_key=True)
+    name: str
+    corpora: list["Corpus"] = Relationship(back_populates="organisation")
 
 
 class FamilyCorpusLink(SQLModel, table=True):
@@ -20,6 +27,8 @@ class Corpus(SQLModel, table=True):
     families: list["Family"] = Relationship(
         back_populates="corpus", link_model=FamilyCorpusLink
     )
+    organisation: Organisation = Relationship(back_populates="corpora")
+    organisation_id: str = Field(foreign_key="organisation.id")
 
 
 class FamilyGeographyLink(SQLModel, table=True):
@@ -58,7 +67,8 @@ class Geography(GeographyBase, table=True):
 
 class FamilyBase(SQLModel):
     import_id: str = Field(primary_key=True)
-    description: str | None
+    title: str
+    description: str
 
 
 class Family(FamilyBase, table=True):
@@ -70,11 +80,6 @@ class Family(FamilyBase, table=True):
         back_populates="families", link_model=FamilyCorpusLink
     )
     family_documents: list["FamilyDocument"] = Relationship(back_populates="family")
-
-
-class FamilyPublic(FamilyBase):
-    corpus: Corpus
-    geographies: list[Geography]
 
 
 class FamilyDocumentBase(SQLModel):
@@ -93,7 +98,7 @@ class FamilyDocument(FamilyDocumentBase, table=True):
 
 
 class FamilyDocumentPublic(FamilyDocumentBase):
-    family: FamilyPublic
+    family: "FamilyPublic"
 
 
 class PhysicalDocumentBase(SQLModel):
@@ -178,9 +183,9 @@ def read_documents(*, session: Session = Depends(get_session)):
 
 # TODO: implement these models for the frontend
 # export type TFamilyPage = {
-#   organisation: string;
-#   title: string;
-#   summary: string;
+#   organisation: string; // Done
+#   title: string; // Done
+#   summary: string; // Done
 #   geographies: string[];
 #   import_id: string;
 #   category: TCategory;
@@ -222,6 +227,20 @@ def read_documents(*, session: Session = Depends(get_session)):
 #   slug: string;
 #   title: string;
 # };
+
+
+class FamilyPublic(FamilyBase):
+    corpus: Corpus
+
+    @computed_field
+    @property
+    def organisation(self) -> str:
+        return self.corpus.organisation.name
+
+    @computed_field
+    @property
+    def summary(self) -> str:
+        return self.description
 
 
 @router.get("/{family_id}", response_model=APIItemResponse[FamilyPublic])
