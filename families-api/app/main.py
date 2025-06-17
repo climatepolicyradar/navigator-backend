@@ -97,6 +97,11 @@ class FamilyPublic(FamilyBase):
 
     @computed_field
     @property
+    def corpus_id(self) -> str:
+        return self.corpus.import_id
+
+    @computed_field
+    @property
     def organisation(self) -> str:
         return self.corpus.organisation.name
 
