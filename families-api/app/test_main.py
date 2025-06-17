@@ -9,7 +9,9 @@ from .main import (
     Corpus,
     Family,
     FamilyPublic,
+    Geography,
     Organisation,
+    Slug,
     app,
     get_session,
     settings,
@@ -86,6 +88,27 @@ def test_read_family_200(client: TestClient, session: Session):
                 "relation": "jurisdiction",
                 "preferred_label": "test concept 2",
             },
+        ],
+        unparsed_slug=Slug(
+            name="test-family",
+            family_import_id="family_123",
+            family_document_import_id=None,
+        ),
+        unparsed_geographies=[
+            Geography(
+                id=1,
+                slug="germany",
+                value="DE",
+                display_value="Germany",
+                type="ISO 3166-1",
+            ),
+            Geography(
+                id=2,
+                slug="france",
+                value="FR",
+                display_value="France",
+                type="ISO 3166-1",
+            ),
         ],
     )
     session.add(corpus)

@@ -1,3 +1,4 @@
+from datetime import datetime
 from typing import Any, Generic, Optional, TypeVar
 
 from fastapi import APIRouter, Depends, FastAPI, HTTPException
@@ -32,6 +33,17 @@ class Corpus(SQLModel, table=True):
     organisation_id: int = Field(foreign_key="organisation.id")
 
 
+class Slug(SQLModel, table=True):
+    __tablename__ = "slug"  # type: ignore[assignment]
+    name: str = Field(primary_key=True, index=True, unique=True)
+    family_import_id: str | None = Field(
+        index=True, foreign_key="family.import_id", nullable=True
+    )
+    family_document_import_id: str | None = Field(
+        index=True, unique=True, foreign_key="family_document.import_id", nullable=True
+    )
+
+
 class FamilyGeographyLink(SQLModel, table=True):
     __tablename__ = "family_geography"  # type: ignore[assignment]
     geography_id: int = Field(foreign_key="geography.id", primary_key=True)
@@ -49,7 +61,9 @@ class GeographyBase(SQLModel):
 class Geography(GeographyBase, table=True):
     __tablename__ = "geography"  # type: ignore[assignment]
     value: str
-    parent_id: int = Field(foreign_key="geography.id")
+    parent_id: int | None = Field(
+        foreign_key="geography.id", nullable=True, default=None
+    )
     """
     the relationship stuff here is a little non-standard and inherited from the
     previous implementation
@@ -62,7 +76,7 @@ class Geography(GeographyBase, table=True):
     )
     children: list["Geography"] = Relationship(back_populates="parent")
     families: list["Family"] = Relationship(
-        back_populates="geographies", link_model=FamilyGeographyLink
+        back_populates="unparsed_geographies", link_model=FamilyGeographyLink
     )
 
 
@@ -71,21 +85,116 @@ class FamilyBase(SQLModel):
     title: str
     description: str
     concepts: list[dict[str, Any]]
+    last_modified: datetime = Field(default_factory=datetime.now)
+    created: datetime = Field(default_factory=datetime.now)
 
 
 class Family(FamilyBase, table=True):
     __tablename__ = "family"  # type: ignore[assignment]
-    geographies: list[Geography] = Relationship(
+    unparsed_geographies: list[Geography] = Relationship(
         back_populates="families", link_model=FamilyGeographyLink
     )
     corpus: Corpus = Relationship(
         back_populates="families", link_model=FamilyCorpusLink
     )
     family_documents: list["FamilyDocument"] = Relationship(back_populates="family")
-
     concepts: list[dict[str, Any]] = Field(
         default_factory=list, sa_column=Column(ARRAY(JSONB))
     )
+    unparsed_geographies: list[Geography] = Relationship(
+        back_populates="families", link_model=FamilyGeographyLink
+    )
+    unparsed_slug: Optional[Slug] = Relationship()
+
+
+class FamilyPublic(FamilyBase):
+    import_id: str
+    corpus: Corpus
+    unparsed_geographies: list[Geography] = Field(default_factory=list, exclude=True)
+    unparsed_slug: Optional[Slug] = Field(exclude=True, default=None)
+
+    @computed_field
+    @property
+    def corpus_id(self) -> str:
+        return self.corpus.import_id
+
+    @computed_field
+    @property
+    def organisation(self) -> str:
+        return self.corpus.organisation.name
+
+    @computed_field
+    @property
+    def summary(self) -> str:
+        return self.description
+
+    @computed_field
+    @property
+    def geographies(self) -> list[str]:
+        return [g.value for g in self.unparsed_geographies]
+
+    @computed_field
+    @property
+    def published_date(self) -> datetime:
+        return self.created
+
+    @computed_field
+    @property
+    def last_updated_date(self) -> datetime:
+        return self.last_modified
+
+    @computed_field
+    @property
+    def slug(self) -> str:
+        return self.unparsed_slug.name if self.unparsed_slug else ""
+
+
+# TODO: implement these models for the frontend
+# export type TFamilyPage = {
+#   organisation: string; // Done
+#   title: string; // Done
+#   summary: string; // Done
+#   geographies: string[]; // Done
+#   import_id: string; // Done
+#   slug: string; // Done
+#   corpus_id: string; // Done
+#   published_date: string | null; // Done
+#   last_updated_date: string | null; // Done
+#   category: TCategory;
+#   corpus_type_name: TCorpusTypeSubCategory;
+#   metadata: TFamilyMetadata;
+#   events: TEvent[];
+#   documents: TDocumentPage[];
+#   collections: TCollection[];
+# };
+
+# export type TDocumentPage = {
+#   import_id: string;
+#   variant?: string | null;
+#   slug: string;
+#   title: string;
+#   md5_sum?: string | null;
+#   cdn_object?: string | null;
+#   source_url: string;
+#   content_type: TDocumentContentType;
+#   language: string;
+#   languages: string[];
+#   document_type: string | null;
+#   document_role: string;
+# };
+
+# export type TCollection = {
+#   import_id: string;
+#   title: string;
+#   description: string;
+#   families: TCollectionFamily[];
+# };
+
+# export type TCollectionFamily = {
+#   description: string;
+#   slug: string;
+#   title: string;
+# };
 
 
 class FamilyDocumentBase(SQLModel):
@@ -185,68 +294,6 @@ def read_documents(*, session: Session = Depends(get_session)):
         page=1,
         page_size=len(data),
     )
-
-
-# TODO: implement these models for the frontend
-# export type TFamilyPage = {
-#   organisation: string; // Done
-#   title: string; // Done
-#   summary: string; // Done
-#   geographies: string[];
-#   import_id: string;
-#   category: TCategory;
-#   corpus_type_name: TCorpusTypeSubCategory;
-#   metadata: TFamilyMetadata;
-#   slug: string;
-#   corpus_id: string;
-#   events: TEvent[];
-#   documents: TDocumentPage[];
-#   collections: TCollection[];
-#   published_date: string | null;
-#   last_updated_date: string | null;
-# };
-
-# export type TDocumentPage = {
-#   import_id: string;
-#   variant?: string | null;
-#   slug: string;
-#   title: string;
-#   md5_sum?: string | null;
-#   cdn_object?: string | null;
-#   source_url: string;
-#   content_type: TDocumentContentType;
-#   language: string;
-#   languages: string[];
-#   document_type: string | null;
-#   document_role: string;
-# };
-
-# export type TCollection = {
-#   import_id: string;
-#   title: string;
-#   description: string;
-#   families: TCollectionFamily[];
-# };
-
-# export type TCollectionFamily = {
-#   description: string;
-#   slug: string;
-#   title: string;
-# };
-
-
-class FamilyPublic(FamilyBase):
-    corpus: Corpus
-
-    @computed_field
-    @property
-    def organisation(self) -> str:
-        return self.corpus.organisation.name
-
-    @computed_field
-    @property
-    def summary(self) -> str:
-        return self.description
 
 
 @router.get("/{family_id}", response_model=APIItemResponse[FamilyPublic])
