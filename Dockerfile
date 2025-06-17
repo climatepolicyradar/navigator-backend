@@ -16,8 +16,6 @@ COPY pyproject.toml uv.lock ./
 # We may want to change this to --no-dev and have a testing stage
 # to avoid bloat, but this works for now as we use this container for testing
 RUN uv sync --frozen --no-install-project --all-extras
-# Explicitly install moto[s3] to ensure the s3 extra is available
-RUN uv pip install "moto[s3]>=3.0.3"
 COPY . .
 
 # Download the sentence transformer model
