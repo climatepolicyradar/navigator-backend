@@ -28,7 +28,7 @@ class Corpus(SQLModel, table=True):
         back_populates="corpus", link_model=FamilyCorpusLink
     )
     organisation: Organisation = Relationship(back_populates="corpora")
-    organisation_id: str = Field(foreign_key="organisation.id")
+    organisation_id: int = Field(foreign_key="organisation.id")
 
 
 class FamilyGeographyLink(SQLModel, table=True):
