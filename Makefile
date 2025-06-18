@@ -1,11 +1,12 @@
 include .env
 
 ifdef CI
-    COMPOSE_FILE = docker-compose.yml
     COMPOSE_CMD = docker compose
 else
-    COMPOSE_FILE = docker-compose.dev.yml
-    COMPOSE_CMD = docker compose -f docker-compose.dev.yml
+    # merges docker-compose.yml and docker-compose.dev.yml for a better UX locally
+    # @see ./docker-compose.dev.yml
+    # @see https://docs.docker.com/compose/how-tos/multiple-compose-files/merge/
+    COMPOSE_CMD = docker compose -f docker-compose.yml -f docker-compose.dev.yml
 endif
 
 include ./makefile-local.defs

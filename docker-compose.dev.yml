@@ -1,8 +1,7 @@
-# this docker-compose file includes the stnadard docker compose file used for testing / CI
-# and overrides the backend service for a better UX locally
+# this file is only used when merged with the stadard docker-compose file
+# @see https://docs.docker.com/compose/how-tos/multiple-compose-files/merge/
+# it overrides the backend service for a better UX locally
 # e.g. mounting your local ./app for live updates
-include:
-  - docker-compose.yml
 services:
   backend:
     build:
