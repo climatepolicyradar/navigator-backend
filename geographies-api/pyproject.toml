@@ -17,7 +17,6 @@ pycountry = "^24.6.1"
 boto3 = "^1.38.32"
 requests = "^2.32.4"
 
-
 [build-system]
 requires = ["poetry-core"]
 build-backend = "poetry.core.masonry.api"
