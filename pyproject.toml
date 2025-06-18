@@ -1,5 +1,5 @@
 [project]
-name = "navigator-backend"
+name = "navigator_backend"
 version = "1.26.1"
 description = ""
 authors = [{ name = "CPR-dev-team", email = "tech@climatepolicyradar.org" }]
