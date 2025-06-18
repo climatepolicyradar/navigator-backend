@@ -7,6 +7,63 @@ permissions:
   id-token: write
   contents: read
 jobs:
+  release:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      # build
+      - run: make build
+
+      # release
+      # most of this is taken from
+      # https://docs.github.com/en/actions/use-cases-and-examples/deploying/deploying-to-amazon-elastic-container-service#creating-the-workflow
+      - name: Configure AWS credentials (staging)
+        uses: aws-actions/configure-aws-credentials@v4.1.0
+        with:
+          role-to-assume: arn:aws:iam::${{ secrets.AWS_ACCOUNT_ID_STAGING }}:role/navigator-backend-github-actions
+          role-session-name: GitHub_to_AWS_via_FederatedOIDC
+          aws-region: eu-west-1
+
+      - name: Login to Amazon ECR (staging)
+        id: login-ecr-staging
+        uses: aws-actions/amazon-ecr-login@62f4f872db3836360b72999f4b87f1ff13310f3a
+
+      - name: Build, tag, and push image to Amazon ECR (staging)
+        id: build-image-staging
+        env:
+          ECR_REGISTRY: ${{ secrets.DOCKER_REGISTRY_STAGING }}
+          IMAGE_TAG: ${{ github.sha }}
+          AWS_REGION: eu-west-1
+          ECR_REPOSITORY: navigator-backend
+        run: |
+          docker tag navigator-backend $ECR_REGISTRY/$ECR_REPOSITORY:$IMAGE_TAG
+          docker push $ECR_REGISTRY/$ECR_REPOSITORY:$IMAGE_TAG
+          echo "image=$ECR_REGISTRY/$ECR_REPOSITORY:$IMAGE_TAG" >> $GITHUB_OUTPUT
+
+      - name: Configure aws credentials (production)
+        uses: aws-actions/configure-aws-credentials@v4.1.0
+        with:
+          role-to-assume: arn:aws:iam::${{ secrets.AWS_ACCOUNT_ID_PROD }}:role/navigator-backend-github-actions
+          role-session-name: GitHub_to_AWS_via_FederatedOIDC
+          aws-region: eu-west-1
+
+      - name: Login to Amazon ECR (production)
+        id: login-ecr-prod
+        uses: aws-actions/amazon-ecr-login@62f4f872db3836360b72999f4b87f1ff13310f3a
+
+      - name: Build, tag, and push image to Amazon ECR (production)
+        id: build-image-prod
+        env:
+          ECR_REGISTRY: ${{ secrets.DOCKER_REGISTRY_PROD }}
+          IMAGE_TAG: ${{ github.sha }}
+          AWS_REGION: eu-west-1
+          ECR_REPOSITORY: navigator-backend
+        run: |
+          docker tag navigator-backend $ECR_REGISTRY/$ECR_REPOSITORY:$IMAGE_TAG
+          docker push $ECR_REGISTRY/$ECR_REPOSITORY:$IMAGE_TAG
+          echo "image=$ECR_REGISTRY/$ECR_REPOSITORY:$IMAGE_TAG" >> $GITHUB_OUTPUT
+
   deploy:
     runs-on: ubuntu-latest
     strategy:
