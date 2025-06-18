@@ -1,3 +1,5 @@
+from datetime import datetime
+
 import pytest
 from fastapi.testclient import TestClient
 from sqlalchemy import create_engine
@@ -8,6 +10,8 @@ from .main import (
     APIItemResponse,
     Corpus,
     Family,
+    FamilyEvent,
+    FamilyMetadata,
     FamilyPublic,
     Geography,
     Organisation,
@@ -67,6 +71,7 @@ def test_read_family_200(client: TestClient, session: Session):
         title="Test Corpus",
         organisation=organisation,
         organisation_id=organisation.id,
+        corpus_type_name="Intl. agreements",
     )
     family = Family(
         title="Test family",
@@ -89,11 +94,13 @@ def test_read_family_200(client: TestClient, session: Session):
                 "preferred_label": "test concept 2",
             },
         ],
-        unparsed_slug=Slug(
-            name="test-family",
-            family_import_id="family_123",
-            family_document_import_id=None,
-        ),
+        unparsed_slug=[
+            Slug(
+                name="test-family",
+                family_import_id="family_123",
+                family_document_import_id=None,
+            )
+        ],
         unparsed_geographies=[
             Geography(
                 id=1,
@@ -108,6 +115,50 @@ def test_read_family_200(client: TestClient, session: Session):
                 value="FR",
                 display_value="France",
                 type="ISO 3166-1",
+            ),
+        ],
+        family_category="Legislative",
+        unparsed_metadata=FamilyMetadata(
+            family_import_id="family_123",
+            value={
+                "topic": ["Adaptation"],
+                "hazard": [
+                    "Heat Waves And Heat Stress",
+                    "Storms",
+                    "Floods",
+                    "Droughts",
+                    "Sea Level Rise",
+                ],
+                "sector": [
+                    "Agriculture",
+                    "Energy",
+                    "Health",
+                    "LULUCF",
+                    "Tourism",
+                    "Transport",
+                    "Water",
+                ],
+                "keyword": ["Adaptation"],
+                "framework": ["Adaptation"],
+                "instrument": [
+                    "Research & Development, knowledge generation|Information"
+                ],
+            },
+        ),
+        unparsed_events=[
+            FamilyEvent(
+                import_id="event_1",
+                title="Law passed",
+                date=datetime.fromisoformat("2016-12-01T00:00:00+00:00"),
+                event_type_name="Passed/Approved",
+                status="OK",
+            ),
+            FamilyEvent(
+                import_id="event_2",
+                title="National Implementation Programme on Climate Adaptation (NUPKA)",
+                date=datetime.fromisoformat("2023-11-17T00:00:00+00:00"),
+                event_type_name="Updated",
+                status="OK",
             ),
         ],
     )

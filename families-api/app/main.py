@@ -31,6 +31,7 @@ class Corpus(SQLModel, table=True):
     )
     organisation: Organisation = Relationship(back_populates="corpora")
     organisation_id: int = Field(foreign_key="organisation.id")
+    corpus_type_name: str
 
 
 class Slug(SQLModel, table=True):
@@ -42,6 +43,7 @@ class Slug(SQLModel, table=True):
     family_document_import_id: str | None = Field(
         index=True, unique=True, foreign_key="family_document.import_id", nullable=True
     )
+    created: datetime = Field(default_factory=datetime.now)
 
 
 class FamilyGeographyLink(SQLModel, table=True):
@@ -80,6 +82,59 @@ class Geography(GeographyBase, table=True):
     )
 
 
+class CollectionFamilyLink(SQLModel, table=True):
+    __tablename__ = "collection_family"  # type: ignore[assignment]
+    collection_import_id: str = Field(
+        foreign_key="collection.import_id", primary_key=True
+    )
+    family_import_id: str = Field(foreign_key="family.import_id", primary_key=True)
+
+
+class Collection(SQLModel, table=True):
+    __tablename__ = "collection"  # type: ignore[assignment]
+    import_id: str = Field(primary_key=True)
+    title: str
+    description: str
+    created: datetime = Field(default_factory=datetime.now)
+    last_modified: datetime = Field(default_factory=datetime.now)
+    valid_metadata: dict[str, Any] = Field(
+        default_factory=dict, sa_column=Column(JSONB)
+    )
+    families: list["Family"] = Relationship(
+        back_populates="unparsed_collections", link_model=CollectionFamilyLink
+    )
+
+
+class FamilyEvent(SQLModel, table=True):
+    __tablename__ = "family_event"  # type: ignore[assignment]
+    import_id: str = Field(primary_key=True)
+    title: str
+    date: datetime
+    event_type_name: str
+    family_import_id: str | None = Field(
+        foreign_key="family.import_id", nullable=True, default=None
+    )
+    family: Optional["Family"] = Relationship(back_populates="unparsed_events")
+    family_document_import_id: str | None = Field(
+        foreign_key="family_document.import_id", nullable=True, default=None
+    )
+    family_document: Optional["FamilyDocument"] = Relationship(
+        back_populates="unparsed_events",
+    )
+    status: str
+    created: datetime = Field(default_factory=datetime.now)
+    last_modified: datetime = Field(default_factory=datetime.now)
+    valid_metadata: dict[str, Any] | None = Field(
+        default_factory=None, sa_column=Column(JSONB)
+    )
+
+
+class FamilyMetadata(SQLModel, table=True):
+    __tablename__ = "family_metadata"  # type: ignore[assignment]
+    family_import_id: str = Field(foreign_key="family.import_id", primary_key=True)
+    value: dict[str, Any] = Field(default_factory=dict, sa_column=Column(JSONB))
+
+
 class FamilyBase(SQLModel):
     import_id: str = Field(primary_key=True)
     title: str
@@ -87,6 +142,7 @@ class FamilyBase(SQLModel):
     concepts: list[dict[str, Any]]
     last_modified: datetime = Field(default_factory=datetime.now)
     created: datetime = Field(default_factory=datetime.now)
+    family_category: str
 
 
 class Family(FamilyBase, table=True):
@@ -104,14 +160,27 @@ class Family(FamilyBase, table=True):
     unparsed_geographies: list[Geography] = Relationship(
         back_populates="families", link_model=FamilyGeographyLink
     )
-    unparsed_slug: Optional[Slug] = Relationship()
+    unparsed_slug: list[Slug] = Relationship(
+        sa_relationship_kwargs={"order_by": lambda: Slug.created.desc()}
+    )
+    unparsed_metadata: Optional[FamilyMetadata] = Relationship()
+    unparsed_events: list[FamilyEvent] = Relationship(back_populates="family")
+    unparsed_collections: list[Collection] = Relationship(
+        back_populates="families", link_model=CollectionFamilyLink
+    )
 
 
 class FamilyPublic(FamilyBase):
     import_id: str
     corpus: Corpus
     unparsed_geographies: list[Geography] = Field(default_factory=list, exclude=True)
-    unparsed_slug: Optional[Slug] = Field(exclude=True, default=None)
+    unparsed_slug: list[Slug] = Field(exclude=True, default=list())
+    unparsed_metadata: Optional[FamilyMetadata] = Field(exclude=True, default=None)
+    unparsed_events: list[FamilyEvent] = Field(exclude=True, default=list())
+    unparsed_collections: list[Collection] = Field(exclude=True, default=list())
+    family_category: str = Field(exclude=True, default="")
+    description: str = Field(exclude=True, default="")
+    family_documents: list["FamilyDocument"] = Field(exclude=True, default=list())
 
     @computed_field
     @property
@@ -146,7 +215,98 @@ class FamilyPublic(FamilyBase):
     @computed_field
     @property
     def slug(self) -> str:
-        return self.unparsed_slug.name if self.unparsed_slug else ""
+        return self.unparsed_slug[0].name if len(self.unparsed_slug) > 0 else ""
+
+    @computed_field
+    @property
+    def category(self) -> str:
+        return self.family_category
+
+    @computed_field
+    @property
+    def corpus_type_name(self) -> str:
+        return self.corpus.corpus_type_name
+
+    @computed_field
+    @property
+    def collections(self) -> list[dict[str, Any]]:
+        return [
+            {
+                "import_id": collection.import_id,
+                "title": collection.title,
+                "description": collection.description,
+                "families": [
+                    {
+                        "description": family.description,
+                        "slug": (
+                            family.unparsed_slug[0].name
+                            if len(family.unparsed_slug) > 0
+                            else ""
+                        ),
+                        "title": family.title,
+                    }
+                    for family in collection.families
+                ],
+            }
+            for collection in self.unparsed_collections
+        ]
+
+    @computed_field
+    @property
+    def events(self) -> list[dict[str, Any]]:
+        return [
+            {
+                "title": event.title,
+                "date": event.date,
+                "event_type": event.event_type_name,
+                "status": event.status,
+                "metadata": event.valid_metadata,
+            }
+            for event in self.unparsed_events
+        ]
+
+    @computed_field
+    @property
+    def documents(self) -> list[dict[str, Any]]:
+        return [
+            {
+                "import_id": document.import_id,
+                "variant": document.variant_name,
+                "slug": (
+                    document.unparsed_slug[0].name
+                    if len(document.unparsed_slug) > 0
+                    else ""
+                ),
+                "title": document.physical_document.title,
+                "md5_sum": document.physical_document.md5_sum,
+                "cdn_object": document.physical_document.cdn_object,
+                "source_url": document.physical_document.source_url,
+                "content_type": document.physical_document.content_type,
+                "language": document.physical_document.unparsed_languages[0],
+                "languages": [
+                    language.language_code
+                    for language in document.physical_document.unparsed_languages
+                ],
+                "document_type": (
+                    document.valid_metadata.get("type", [None])[0]
+                    if document.valid_metadata
+                    else None
+                ),
+                "document_role": (
+                    document.valid_metadata.get("role", [None])[0]
+                    if document.valid_metadata
+                    else None
+                ),
+            }
+            for document in self.family_documents
+            if document.physical_document
+        ]
+
+    # metadata is reserved in SQLModel
+    @computed_field(alias="metadata")
+    @property
+    def _metadata(self) -> dict[str, Any]:
+        return self.unparsed_metadata.value if self.unparsed_metadata else {}
 
 
 # TODO: implement these models for the frontend
@@ -160,11 +320,11 @@ class FamilyPublic(FamilyBase):
 #   corpus_id: string; // Done
 #   published_date: string | null; // Done
 #   last_updated_date: string | null; // Done
-#   category: TCategory;
-#   corpus_type_name: TCorpusTypeSubCategory;
-#   metadata: TFamilyMetadata;
-#   events: TEvent[];
-#   documents: TDocumentPage[];
+#   category: TCategory; // Done
+#   corpus_type_name: TCorpusTypeSubCategory; // Done
+#   metadata: TFamilyMetadata; // Done
+#   events: TEvent[]; // Done
+#   documents: TDocumentPage[]; // Done
 #   collections: TCollection[];
 # };
 
@@ -196,6 +356,27 @@ class FamilyPublic(FamilyBase):
 #   title: string;
 # };
 
+# export type TFamilyMetadata = {
+#   topic?: string[];
+#   hazard?: string[];
+#   sector?: string[];
+#   keyword?: string[];
+#   framework?: string[];
+#   instrument?: string[];
+#   author_type?: string[];
+#   author?: string[];
+#   document_type?: string;
+# };
+
+# export type TEvent = {
+#   title: string;
+#   date: string;
+#   event_type: string;
+#   status: string;
+# };
+
+# export type TCategory = "Legislative" | "Executive" | "Litigation" | "Policy" | "Law" | "UNFCCC" | "MCF" | "Reports";
+
 
 class FamilyDocumentBase(SQLModel):
     import_id: str = Field(primary_key=True)
@@ -210,10 +391,31 @@ class FamilyDocument(FamilyDocumentBase, table=True):
     physical_document: Optional["PhysicalDocument"] = Relationship(
         back_populates="family_document"
     )
+    unparsed_events: list[FamilyEvent] = Relationship(back_populates="family_document")
+    valid_metadata: dict[str, Any] | None = Field(
+        default_factory=None, sa_column=Column(JSONB)
+    )
+    unparsed_slug: list[Slug] = Relationship()
 
 
 class FamilyDocumentPublic(FamilyDocumentBase):
     family: "FamilyPublic"
+
+
+class PhysicalDDocumentLanguageLink(SQLModel, table=True):
+    __tablename__ = "physical_document_language"  # type: ignore[assignment]
+    language_id: int = Field(foreign_key="language.id", primary_key=True)
+    document_id: int = Field(foreign_key="physical_document.id", primary_key=True)
+    source: str
+    visible: bool
+
+
+class Language(SQLModel, table=True):
+    id: int = Field(primary_key=True, index=True, unique=True)
+    language_code: str
+    part1_code: str | None
+    part2_code: str | None
+    name: str | None
 
 
 class PhysicalDocumentBase(SQLModel):
@@ -228,6 +430,9 @@ class PhysicalDocumentBase(SQLModel):
 class PhysicalDocument(PhysicalDocumentBase, table=True):
     __tablename__ = "physical_document"  # type: ignore[assignment]
     family_document: FamilyDocument = Relationship(back_populates="physical_document")
+    unparsed_languages: list[Language] = Relationship(
+        link_model=PhysicalDDocumentLanguageLink
+    )
 
 
 class PhysicalDocumentPublic(PhysicalDocumentBase):
