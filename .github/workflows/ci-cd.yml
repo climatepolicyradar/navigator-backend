@@ -214,4 +214,3 @@ jobs:
     uses: climatepolicyradar/reusable-workflows/.github/workflows/release.yml@v3
     with:
       new_tag: ${{ needs.tag.outputs.new_tag }}
-
