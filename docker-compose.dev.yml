@@ -1,18 +1,13 @@
+# this docker-compose file includes the stnadard docker compose file used for testing / CI
+# and overrides the backend service for a better UX locally
+# e.g. mounting your local ./app for live updates
+include:
+  - docker-compose.yml
 services:
-  vespatest:
-    image: vespaengine/vespa:8.396.18
-    container_name: vespatest
-    ports:
-      - 8080:8080
-      - 19071:19071
-    healthcheck:
-      test: curl -s -f http://vespatest:19071/status.html >/dev/null || exit 1
-      interval: 5s
-      timeout: 3s
-      retries: 30
-      start_period: 20s
-
   backend:
+    build:
+      context: ./
+      dockerfile: Dockerfile
     environment:
       PYTHONDONTWRITEBYTECODE: 0
       VESPA_URL: http://vespatest:8080

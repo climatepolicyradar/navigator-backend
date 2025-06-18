@@ -12,16 +12,16 @@ create_mock_vespa_certs:
 
 start: build_from_cached create_mock_vespa_certs
 	# Build & run containers and setup vespa
-	docker compose -f docker-compose.yml -f docker-compose.dev.yml up -d --remove-orphans
+	$(COMPOSE_CMD) up -d --remove-orphans
 	$(MAKE) vespa_setup
 
 start_without_vespa_setup:
 	# Build & run containers and setup vespa
-	docker compose -f docker-compose.yml -f docker-compose.dev.yml up -d --remove-orphans
+	$(COMPOSE_CMD) up -d --remove-orphans
 
 start_backend:
 	# Build and run containers
-	docker compose -f docker-compose.yml -f docker-compose.dev.yml up -d backend backend_db
+	$(COMPOSE_CMD) up -d backend backend_db
 
 show_logs:
 	docker compose logs -f
@@ -37,7 +37,7 @@ remove_volumes:
 
 up:
 	# docker-compose up, without -d
-	docker compose -f docker-compose.yml -f docker-compose.dev.yml up
+	$(COMPOSE_CMD) up
 
 restart:
 	docker compose build
@@ -52,7 +52,7 @@ restart:
 	@:
 
 new_migration_backend:
-	docker compose -f docker-compose.yml -f docker-compose.dev.yml run --rm backend alembic revision --autogenerate -m "$(filter-out $@,$(MAKECMDGOALS))"
+	$(COMPOSE_CMD) run --rm backend alembic revision --autogenerate -m "$(filter-out $@,$(MAKECMDGOALS))"
 
 refresh_all_dbs:
 	docker compose down -v
@@ -104,9 +104,7 @@ vespa_setup: vespa_confirm_cli_installed vespa_healthy vespa_deploy_schema vespa
 
 .ONESHELL:
 test_search:
-	docker compose \
-		-f docker-compose.yml \
-		-f docker-compose.dev.yml \
+	$(COMPOSE_CMD) \
 		run --rm --name search_test \
 		-v "${PWD}/data:/data" \
 		backend python -m pytest \
@@ -114,16 +112,16 @@ test_search:
 		-m 'search' ${ARGS}
 
 test_cors: 
-	docker compose -f docker-compose.yml -f docker-compose.dev.yml run --rm backend python -m pytest -m 'cors' ${ARGS}
+	$(COMPOSE_CMD) run --rm backend python -m pytest -m 'cors' ${ARGS}
 
 test_unit:
-	docker compose -f docker-compose.yml -f docker-compose.dev.yml run --rm backend python -m pytest -vvv tests/unit ${ARGS}
+	$(COMPOSE_CMD) run --rm backend python -m pytest -vvv tests/unit ${ARGS}
 
 test_non_search:
-	docker compose -f docker-compose.yml -f docker-compose.dev.yml run --build --rm backend python -m pytest -vvv -m 'not search' ${ARGS}
+	$(COMPOSE_CMD) run --build --rm backend python -m pytest -vvv -m 'not search' ${ARGS}
 
 test:
-	docker compose -f docker-compose.yml -f docker-compose.dev.yml run --rm backend python -m pytest -vvv tests ${ARGS}
+	$(COMPOSE_CMD) run --rm backend python -m pytest -vvv tests ${ARGS}
 
 # ----------------------------------
 # tasks
