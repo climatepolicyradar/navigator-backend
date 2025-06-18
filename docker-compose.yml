@@ -38,10 +38,13 @@ services:
       - 8888:8888
     environment:
       PYTHONPATH: .
+      VESPA_URL: http://vespatest:8080
     env_file:
       - .env
     depends_on:
       backend_db:
+        condition: service_healthy
+      vespatest:
         condition: service_healthy
     healthcheck:
       test: curl -s -f backend:8888/health >/dev/null || exit 1
