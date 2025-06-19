@@ -6,8 +6,16 @@ services:
       dockerfile: Dockerfile
     ports:
       - 8080:8080 # @related: PORT_NUMBER
+    environment:
+      - AWS_PROFILE=${AWS_PROFILE:-staging}
+      - AWS_ACCESS_KEY_ID=${AWS_ACCESS_KEY_ID}
+      - AWS_SECRET_ACCESS_KEY=${AWS_SECRET_ACCESS_KEY}
+      - AWS_SESSION_TOKEN=${AWS_SESSION_TOKEN}
+      - AWS_REGION=${AWS_REGION:-us-west-1}
+      - CDN_URL=${CDN_URL:-https://cdn.dev.climatepolicyradar.org}
     volumes:
       - .:/app
+      - ~/.aws:/root/.aws:ro
     working_dir: /app
     command: [fastapi, dev, app/main.py, --port, "8080", --host, 0.0.0.0] # @related: PORT_NUMBER
 
