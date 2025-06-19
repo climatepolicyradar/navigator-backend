@@ -1,0 +1,4 @@
+config:
+  aws:region: eu-west-1
+  families-api:apprunner_vpc_connector_arn:
+    secure: AAABAN5fxhgoFq8U+P3cOAhBuCLj3RPcpDORS4Ha3N1Btbked4EXV7igfZb7jh0Ptf5RGM0xjWXKYQrAjf814Vn3sGcBj2IzqZfIZjOn7LudgrwI6kpvSihYBzX0otJeRSmfW2mh9WZ7nSWJ4PhOTRuucA/gpOq4t8GWgbG5O+kX5F5y/h3oobZNT6jYf8nPiYJ1MFqgfr/j

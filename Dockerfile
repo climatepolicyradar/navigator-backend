@@ -38,6 +38,7 @@ COPY wait_for_port.sh ./scripts
 COPY LICENSE.md .
 COPY README.md .
 COPY startup.sh .
+COPY service-manifest.json .
 
 # ENV
 ENV PYTHONPATH=/cpr-backend

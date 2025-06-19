@@ -25,6 +25,27 @@ from app.telemetry_config import TelemetryConfig
 from app.telemetry_exceptions import install_exception_hooks
 
 
+def convert_to_loggable_string(obj):
+    """OpenTelemetry enforces strict conventions on what can be logged as additional structured data,
+    allowing only one of ['bool', 'str', 'bytes', 'int', 'float']. This function converts
+    arbitrary objects to a string if possible.
+    """
+    if isinstance(obj, (bool, int, float, str, bytes)):
+        return obj
+    elif isinstance(obj, dict):
+        return_str = ""
+        for key, value in obj.items():
+            return_str += f"{key}: {convert_to_loggable_string(value)} \n"
+        return return_str
+    elif isinstance(obj, list):
+        return_str = ""
+        for item in obj:
+            return_str += f"{convert_to_loggable_string(item)} \n"
+        return return_str
+    else:
+        return str(obj)
+
+
 class Telemetry:
     """
     Primary telemetry class.
@@ -36,7 +57,7 @@ class Telemetry:
         """Initialise telemetry! ENGAGE"""
         self.config = config
         self.resource = self.config.to_resource()
-        print(f"Telemetry config: {self.resource.__dict__}")
+        print(f"Telemetry config: {str(self.config)}")
 
         self.tracer_provider = TracerProvider(resource=self.resource)
         trace.set_tracer_provider(self.tracer_provider)

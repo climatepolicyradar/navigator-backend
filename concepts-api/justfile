@@ -1,0 +1,49 @@
+# dev
+# should be used for first run
+bootstrap:
+    just initial-data
+
+initial-data environment:
+    @echo "🔄 downloading latest data from s3"
+    aws s3 sync s3://cpr-{{environment}}-document-cache/concepts initial-data
+    poetry run python create_duckdb.py
+
+dev:
+    just initial-data production
+    docker compose up
+
+test:
+    @echo "😔 no tests yet"
+
+# You need to run this version if you have made changes to the requirements.txt file
+dev-rebuild:
+    just initial-data production
+    docker compose up --build
+
+# build
+# TODO: this needs to be tied into a lifecycle somewhere to make sure it is run if something is added
+# sed is used here to remove a whole bunch of gumpf you can not remove with poetry v1 
+requirements:
+    poetry export --without-hashes --without-urls --format requirements.txt | sed 's/ ;.*//'  > requirements.txt
+
+# Local docker development
+ecr-login:
+    aws ecr get-login-password --region eu-west-1 | docker login --username AWS --password-stdin $(aws sts get-caller-identity --query 'Account' --output text).dkr.ecr.eu-west-1.amazonaws.com
+
+docker-build tag environment:
+    just initial-data {{environment}}
+    # @related: GITHUB_SHA_ENV_VAR
+    docker buildx build --platform linux/amd64 --output type=docker --build-arg ENV={{environment}} --build-arg GITHUB_SHA=$(git rev-parse HEAD) -t concepts-api:{{tag}} .
+
+docker-push tag:
+    docker tag concepts-api:{{tag}} $(aws sts get-caller-identity --query 'Account' --output text).dkr.ecr.eu-west-1.amazonaws.com/concepts-api:{{tag}}
+    docker push $(aws sts get-caller-identity --query 'Account' --output text).dkr.ecr.eu-west-1.amazonaws.com/concepts-api:{{tag}}
+
+deploy-local tag environment:
+    just ecr-login
+    just requirements
+    just deploy {{tag}} {{environment}}
+
+deploy tag environment:
+    just docker-build {{tag}} {{environment}}
+    just docker-push {{tag}}

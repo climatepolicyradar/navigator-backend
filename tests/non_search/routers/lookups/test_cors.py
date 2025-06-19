@@ -7,8 +7,8 @@ import pytest
     [
         ("http://localhost:3000", True),  # local testing
         ("https://app.climatepolicyradar.org", True),  # main app URL
-        ("https://app.dev.climatepolicyradar.org", True),  # main staging URL
-        ("https://random.dev.climatepolicyradar.org", True),  # main staging URL
+        ("https://app.staging.climatepolicyradar.org", True),  # main staging URL
+        ("https://random.staging.climatepolicyradar.org", True),  # main staging URL
         ("https://some.sandbox.climatepolicyradar.org", True),  # sandbox test
         ("https://some-other.sandbox.climatepolicyradar.org", True),  # sandbox test
         ("https://climate-laws.org", True),  # base climate laws URL
@@ -16,7 +16,7 @@ import pytest
         ("http://app.climatepolicyradar.org", False),  # bad scheme
         ("https://.climatepolicyradar.org", False),  # empty subdomain
         ("https://app.climatepolicyradar.com", False),  # wrong domain
-        ("https://app.devclimatepolicyradar.com", False),  # prefixed wrong domain
+        ("https://app.stagingclimatepolicyradar.com", False),  # prefixed wrong domain
         ("https://app-climatepolicyradar.com", False),  # prefixed wrong domain
         ("https://prefix-climate-laws.org", False),  # climate laws prefixed domain
         ("https://.climateprojectexplorer.org", False),  # empty subdomain

@@ -29,7 +29,6 @@ EXPECTED_CCLW_TAXONOMY = {
     "hazard",
     "_document",
     "_event",
-    "event_type",
 }
 EXPECTED_CCLW_EVENTS = [
     "Amended",
@@ -55,7 +54,6 @@ EXPECTED_CCLW_EVENTS = [
 EXPECTED_UNFCCC_TAXONOMY = {
     "author",
     "author_type",
-    "event_type",
     "_document",
     "_event",
 }

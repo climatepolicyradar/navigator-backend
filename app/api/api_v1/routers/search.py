@@ -35,6 +35,7 @@ from app.service.search import (
     process_result_into_csv,
 )
 from app.service.vespa import get_vespa_search_adapter
+from app.telemetry import convert_to_loggable_string
 from app.telemetry_exceptions import ExceptionHandlingTelemetryRoute
 
 _LOGGER = logging.getLogger(__name__)
@@ -110,7 +111,7 @@ def search_documents(
         "Search request",
         extra={
             "props": {
-                "search_request": search_body.model_dump(),
+                "search_request": convert_to_loggable_string(search_body.model_dump()),
                 "app_token": str(app_token),
             }
         },
@@ -136,7 +137,11 @@ def search_documents(
 
     _LOGGER.info(
         "Starting search...",
-        extra={"props": {"search_request": search_body.model_dump()}},
+        extra={
+            "props": {
+                "search_request": convert_to_loggable_string(search_body.model_dump())
+            }
+        },
     )
     return make_search_request(
         db=db,
@@ -160,7 +165,7 @@ def download_search_documents(
         "Search download request",
         extra={
             "props": {
-                "search_request": search_body.model_dump(),
+                "search_request": convert_to_loggable_string(search_body.model_dump()),
                 "app_token": str(app_token),
             }
         },
@@ -188,7 +193,11 @@ def download_search_documents(
 
     _LOGGER.info(
         "Starting search...",
-        extra={"props": {"search_request": search_body.model_dump()}},
+        extra={
+            "props": {
+                "search_request": convert_to_loggable_string(search_body.model_dump())
+            }
+        },
     )
     try:
         search_response = make_search_request(
@@ -202,7 +211,9 @@ def download_search_documents(
             detail=f"Invalid Query: {' '.join(e.args)}",
         )
 
-    content_str = process_result_into_csv(db, search_response, is_browse=is_browse)
+    content_str = process_result_into_csv(
+        db, search_response, token.aud, is_browse=is_browse
+    )
 
     _LOGGER.debug(f"Downloading search results as CSV: {content_str}")
     return StreamingResponse(
@@ -268,7 +279,9 @@ def download_all_search_documents(
     s3_document = S3Document(DOCUMENT_CACHE_BUCKET, AWS_REGION, data_dump_s3_key)
     if valid_credentials is True and (not s3_client.document_exists(s3_document)):
         aws_env = (
-            "production" if "dev" not in PUBLIC_APP_URL and "localhost" else "staging"
+            "production"
+            if "staging" not in PUBLIC_APP_URL and "localhost"
+            else "staging"
         )
         _LOGGER.info(
             f"Generating {token.sub} {aws_env} dump for ingest cycle w/c {latest_ingest_start}..."
