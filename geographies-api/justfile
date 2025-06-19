@@ -8,7 +8,7 @@ initial-data environment:
     aws s3 sync s3://cpr-{{environment}}-document-cache/geographies initial-data
 
 dev:
-    docker compose up
+    docker compose -f docker-compose-dev.yml up
 
 test:
     @echo "😔 no tests yet"
