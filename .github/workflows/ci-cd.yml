@@ -24,7 +24,7 @@ jobs:
       checks: write
       # For repo checkout
       contents: read
-    uses: climatepolicyradar/reusable-workflows/.github/workflows/python-precommit-validator.yml@v13
+    uses: climatepolicyradar/reusable-workflows/.github/workflows/python-precommit-validator-without-version.yml@v21
     with:
       # These ignores are different, since for some reason, the
       # specific one isn't working on this field.
