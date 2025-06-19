@@ -2,14 +2,14 @@ name: Pull request
 on:
   pull_request:
     # a.
-    types: [labeled]
+    types: [labeled] # This needs to be the American spelling, don't change it
   workflow_dispatch: {}
 permissions:
   id-token: write
   contents: read
 jobs:
   deploy:
-    # a. deploys the service to staging if the pull request is (re)labeled with 'deploy:staging'
+    # a. deploys the service to staging if the pull request is (re)labelled with 'deploy:staging'
     if: github.event.label.name == 'deploy:staging'
     runs-on: ubuntu-latest
     strategy:
