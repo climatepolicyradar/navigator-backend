@@ -1,4 +1,17 @@
 services:
+  vespatest:
+    image: vespaengine/vespa:8.396.18
+    container_name: vespatest
+    ports:
+      - 8080:8080
+      - 19071:19071
+    healthcheck:
+      test: curl -s -f http://vespatest:19071/status.html >/dev/null || exit 1
+      interval: 5s
+      timeout: 3s
+      retries: 30
+      start_period: 20s
+
   backend_db:
     image: postgres:14
     restart: always
@@ -19,18 +32,19 @@ services:
       context: ./
       dockerfile: Dockerfile
     image: navigator-backend
-    command: /bin/bash /cpr-backend/startup.sh
+    command: /bin/bash /app/startup.sh
     tty: true
-    volumes:
-      - ./:/cpr-backend/:cached
     ports:
       - 8888:8888
     environment:
       PYTHONPATH: .
+      VESPA_URL: http://vespatest:8080
     env_file:
       - .env
     depends_on:
       backend_db:
+        condition: service_healthy
+      vespatest:
         condition: service_healthy
     healthcheck:
       test: curl -s -f backend:8888/health >/dev/null || exit 1
