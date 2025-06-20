@@ -19,9 +19,9 @@ jobs:
       # most of this is taken from
       # https://docs.github.com/en/actions/use-cases-and-examples/deploying/deploying-to-amazon-elastic-container-service#creating-the-workflow
       - name: Configure AWS credentials (staging)
-        uses: aws-actions/configure-aws-credentials@v4.1.0
+        uses: aws-actions/configure-aws-credentials@v4
         with:
-          role-to-assume: arn:aws:iam::${{ secrets.AWS_ACCOUNT_ID_STAGING }}:role/navigator-backend-github-actions
+          role-to-assume: arn:aws:iam::${{ secrets.AWS_ACCOUNT_ID_STAGING }}:role/navigator-backend-new-github-actions
           role-session-name: GitHub_to_AWS_via_FederatedOIDC
           aws-region: eu-west-1
 
@@ -42,9 +42,9 @@ jobs:
           echo "image=$ECR_REGISTRY/$ECR_REPOSITORY:$IMAGE_TAG" >> $GITHUB_OUTPUT
 
       - name: Configure aws credentials (production)
-        uses: aws-actions/configure-aws-credentials@v4.1.0
+        uses: aws-actions/configure-aws-credentials@v4
         with:
-          role-to-assume: arn:aws:iam::${{ secrets.AWS_ACCOUNT_ID_PROD }}:role/navigator-backend-github-actions
+          role-to-assume: arn:aws:iam::${{ secrets.AWS_ACCOUNT_ID_PROD }}:role/navigator-backend-new-github-actions
           role-session-name: GitHub_to_AWS_via_FederatedOIDC
           aws-region: eu-west-1
 
