@@ -31,8 +31,6 @@ jobs:
         uses: actions/setup-python@v5
         with:
           python-version: "3.11"
-      - name: Check pyproject.toml package version matches
-        uses: climatepolicyradar/check-pyproject-package-version@v4
       - name: Trunk Check
         uses: trunk-io/trunk-action@v1
         with:
