@@ -14,6 +14,17 @@
 - Any changes to code are reflected immediately in the running service.
   No reloads needed
 
+## AWS Access for Local Development
+
+The local containers are configured to pass AWS credentials from your host machine
+to enable testing of endpoints that access data via the CPR CDN.
+
+To use these features locally, you'll need to run the `just dev` command with AWS
+credentials set up.
+
+This setup allows you to test the geographies endpoint locally, which requires
+AWS access to retrieve data from the CPR CDN.
+
 **`just build`**
 
 TBD
