@@ -283,7 +283,11 @@ class FamilyPublic(FamilyBase):
                 "cdn_object": document.physical_document.cdn_object,
                 "source_url": document.physical_document.source_url,
                 "content_type": document.physical_document.content_type,
-                "language": document.physical_document.unparsed_languages[0],
+                "language": (
+                    document.physical_document.unparsed_languages[0].language_code
+                    if document.physical_document.unparsed_languages
+                    else None
+                ),
                 "languages": [
                     language.language_code
                     for language in document.physical_document.unparsed_languages
@@ -597,3 +601,4 @@ def health_check():
 
 
 app.include_router(router)
+
