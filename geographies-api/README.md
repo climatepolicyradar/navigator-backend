@@ -2,10 +2,12 @@
 
 ## Local development
 
-**`just dev`**
+**`just local`**
 
-- To run the service locally, run `just dev`
-- We use docker compose to start up local services
+- To run the service fully locally, run `just local`
+- We use docker compose to start up local services, including localstack to mock
+  AWS services like S3 (you can use the `awscli` tool to inspect and interact
+  with localstack from your terminal)
 - We are able to run the framework's (FastAPI) native dev environment
   (`fastapi dev app/main.py`)
 - Local data for the service is pre-loaded and prod-like
