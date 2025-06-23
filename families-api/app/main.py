@@ -141,8 +141,8 @@ class FamilyBase(SQLModel):
     title: str
     description: str
     concepts: list[dict[str, Any]]
-    last_modified: datetime = Field(default_factory=datetime.now)
-    created: datetime = Field(default_factory=datetime.now)
+    last_modified: datetime = Field(default_factory=datetime.now, exclude=True)
+    created: datetime = Field(default_factory=datetime.now, exclude=True)
     family_category: str
 
 
@@ -173,7 +173,7 @@ class Family(FamilyBase, table=True):
 
 class FamilyPublic(FamilyBase):
     import_id: str
-    corpus: Corpus
+    corpus: Corpus = Field(exclude=True)
     unparsed_geographies: list[Geography] = Field(default_factory=list, exclude=True)
     unparsed_slug: list[Slug] = Field(exclude=True, default=list())
     unparsed_metadata: Optional[FamilyMetadata] = Field(exclude=True, default=None)
@@ -206,12 +206,30 @@ class FamilyPublic(FamilyBase):
     @computed_field
     @property
     def published_date(self) -> datetime:
-        return self.created
+        published_event = next(
+            (
+                event
+                for event in self.unparsed_events
+                if event.event_type_name == "Passed/Approved"
+            ),
+            None,
+        )
+
+        return published_event.date if published_event else self.created
 
     @computed_field
     @property
     def last_updated_date(self) -> datetime:
-        return self.last_modified
+        updated_event = next(
+            (
+                event
+                for event in self.unparsed_events
+                if event.event_type_name == "Updated"
+            ),
+            None,
+        )
+
+        return updated_event.date if updated_event else self.last_modified
 
     @computed_field
     @property
