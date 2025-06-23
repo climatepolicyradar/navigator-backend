@@ -22,7 +22,17 @@ concepts_api_stack = pulumi.StackReference(f"climatepolicyradar/concepts-api/{st
 config = pulumi.Config()
 url = config.require("url")
 
-api_route53_zone = aws.route53.Zone(url, name=url)
+# as climatepolicyradar.org is still managed in the cpr AWS account
+# we need to create a whole new record for it as opposed to just an ALIAS
+
+if stack == "production":
+    api_route53_zone = aws.route53.Zone(url, name=url)
+    api_route53_zone_id = api_route53_zone.zone_id
+else:
+    aws_env_stack = pulumi.StackReference(f"climatepolicyradar/aws_env/{stack}")
+    api_route53_zone_id = aws_env_stack.get_output("root_zone_id")
+    # create an alias record
+
 
 api_certificate = aws.acm.Certificate(
     "api-climatepolicyradar-org-cert",
@@ -36,7 +46,7 @@ api_certificate = aws.acm.Certificate(
 # We are fine to use the first in the list as we know this will be a DNS validation from the certificate generated above
 api_certificate_validation_dns_record = aws.route53.Record(
     "api-climatepolicyradar-org-cert-validation-dns-record",
-    zone_id=api_route53_zone.zone_id,
+    zone_id=api_route53_zone_id,
     name=api_certificate.domain_validation_options[0].resource_record_name,
     type=api_certificate.domain_validation_options[0].resource_record_type,
     records=[api_certificate.domain_validation_options[0].resource_record_value],
@@ -62,7 +72,7 @@ api_cache_policy = aws.cloudfront.CachePolicy(
     },
 )
 
-api_distribution = aws.cloudfront.Distribution(
+api_cloudfront_distribution = aws.cloudfront.Distribution(
     url,
     comment="API",
     origins=[
@@ -180,15 +190,15 @@ api_distribution = aws.cloudfront.Distribution(
 )
 
 
-api_certificate_validation_dns_record = aws.route53.Record(
+api_alias_dns_record = aws.route53.Record(
     "api-climatepolicyradar-org-alias",
-    zone_id=api_route53_zone.zone_id,
+    zone_id=api_route53_zone_id,
     name=url,
     type="A",
     aliases=[
         {
-            "name": api_distribution.domain_name,
-            "zone_id": api_distribution.hosted_zone_id,
+            "name": api_cloudfront_distribution.domain_name,
+            "zone_id": api_cloudfront_distribution.hosted_zone_id,
             "evaluate_target_health": False,
         }
     ],
