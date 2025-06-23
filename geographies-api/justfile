@@ -8,7 +8,11 @@ initial-data environment:
     aws s3 sync s3://cpr-{{environment}}-document-cache/geographies initial-data
 
 dev:
-    docker compose -f docker-compose-dev.yml up
+    docker compose -f docker-compose.yml up
+
+# This is used for fully local development with localstack
+local:
+    docker compose -f docker-compose-dev.yml up --build
 
 test:
     @echo "😔 no tests yet"
