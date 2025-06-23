@@ -228,7 +228,7 @@ class FamilyPublic(FamilyBase):
         latest_event_date = max(
             (event.date for event in self.unparsed_events if event.date), default=None
         )
-        return latest_event_date or self.created
+        return latest_event_date or self.last_modified
 
     @computed_field
     @property
