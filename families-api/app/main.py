@@ -206,30 +206,29 @@ class FamilyPublic(FamilyBase):
     @computed_field
     @property
     def published_date(self) -> datetime:
-        published_event = next(
+        # datetime_event_name stores the value of the event.event_type_name that should be used for published_date
+        # otherwise we use the earliest date
+        published_event_date = next(
             (
-                event
+                event.date
                 for event in self.unparsed_events
-                if event.event_type_name == "Passed/Approved"
+                if event.valid_metadata is not None
+                and event.event_type_name == event.valid_metadata["datetime_event_name"]
             ),
             None,
         )
-
-        return published_event.date if published_event else self.created
+        earliest_event_date = min(
+            (event.date for event in self.unparsed_events if event.date), default=None
+        )
+        return published_event_date or earliest_event_date or self.created
 
     @computed_field
     @property
     def last_updated_date(self) -> datetime:
-        updated_event = next(
-            (
-                event
-                for event in self.unparsed_events
-                if event.event_type_name == "Updated"
-            ),
-            None,
+        latest_event_date = max(
+            (event.date for event in self.unparsed_events if event.date), default=None
         )
-
-        return updated_event.date if updated_event else self.last_modified
+        return latest_event_date or self.created
 
     @computed_field
     @property
