@@ -1,46 +1,28 @@
 FROM python:3.11-slim
 
-RUN mkdir /cpr-backend
-WORKDIR /cpr-backend
+# Taken from https://docs.astral.sh/uv/guides/integration/docker/#installing-uv
+COPY --from=ghcr.io/astral-sh/uv:0.7.13 /uv /uvx /bin/
 
-# we need libpq-dev gcc as we using the non-binary version of psycopg2
-RUN apt update && \
-    apt install -y postgresql-client curl git libpq-dev gcc \
+# git: for downloading the db-client in the pyproject.toml
+# gcc: for compiling psycopg2
+# libpq-dev: for building psycopg2
+RUN apt-get update && \
+    apt-get install -y git gcc libpq-dev \
     && rm -rf /var/lib/apt/lists/*
 
-# TODO: Remove this once we've debugged 👇
-RUN apt update && apt install -y gdb
-ENV PYTHONFAULTHANDLER=1
-ENV PYTHONMALLOC=debug
-ENV MALLOC_CHECK_=3
-ENV MALLOC_TRACE=/tmp/malloc.trace
-# TODO: Remove this once we've debugged 👆
+WORKDIR /app
 
-# Install pip and poetry
-RUN pip install --no-cache --upgrade pip
-RUN pip install --no-cache "poetry==1.7.1"
-
-# Create layer for dependencies
-# TODO: refine this as part of CI & test updates
-COPY poetry.lock pyproject.toml ./
-
-RUN poetry config virtualenvs.create false
-RUN poetry install --no-root
-
+COPY pyproject.toml uv.lock ./
+# We may want to change this to --no-dev and have a testing stage
+# to avoid bloat, but this works for now as we use this container for testing
+RUN uv sync --frozen --no-install-project --extra dev
+COPY . .
 
 # Download the sentence transformer model
-RUN mkdir /models
-RUN mkdir /secrets
+RUN mkdir -p /models /secrets
 
-# Copy files to image
-COPY app ./app
-COPY wait_for_port.sh ./scripts
-COPY LICENSE.md .
-COPY README.md .
-COPY startup.sh .
-COPY service-manifest.json .
+# This is needed to allow startup.sh uvicorn
+# as we're not using uv there
+ENV PATH="/app/.venv/bin:$PATH"
 
-# ENV
-ENV PYTHONPATH=/cpr-backend
-
-CMD [ "/bin/bash", "/cpr-backend/startup.sh" ]
+CMD [ "/bin/bash", "/app/startup.sh" ]
