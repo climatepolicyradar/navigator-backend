@@ -1,4 +1,4 @@
-from datetime import datetime
+from datetime import datetime, timezone
 from typing import Any, Generic, Optional, TypeVar
 
 from fastapi import APIRouter, Depends, FastAPI, HTTPException
@@ -225,8 +225,15 @@ class FamilyPublic(FamilyBase):
     @computed_field
     @property
     def last_updated_date(self) -> datetime:
+        # get the most recent date that is before now
+        now = datetime.now(tz=timezone.utc)
         latest_event_date = max(
-            (event.date for event in self.unparsed_events if event.date), default=None
+            (
+                event.date
+                for event in self.unparsed_events
+                if event.date and event.date < now
+            ),
+            default=None,
         )
         return latest_event_date or self.last_modified
 
