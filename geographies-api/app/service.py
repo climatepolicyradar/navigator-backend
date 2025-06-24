@@ -36,8 +36,6 @@ def load_cpr_custom_geographies() -> Dict[str, Any]:
 
     :return Dict[str, Any]: Dictionary of custom geography entries keyed
         by alpha-3 codes, containing metadata like names, codes, and flags.
-    :raises CustomCountriesError: If the JSON file cannot be found or
-        parsed successfully.
     """
 
     return countries
