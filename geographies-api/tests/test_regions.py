@@ -34,6 +34,11 @@ EXPECTED_REGIONS = [
         "type": "World Bank Region",
         "slug": "south-asia",
     },
+    {
+        "name": "Other",
+        "type": "Other",
+        "slug": "other",
+    },
 ]
 
 
@@ -63,3 +68,19 @@ def test_regions_endpoint_returns_404_when_no_regions_exist_for_slug(test_client
         response.json().get("detail")
         == f"Could not find a region for slug: {invalid_slug}"
     )
+
+
+# def test_regions_endpoint_returns_all_countries_for_requested_region(test_client):
+#     response = test_client.get("/geographies/regions/north-america/countries")
+
+#     assert response.status_code == 200
+#     assert response.json() == [
+#         {
+#             "alpha_2": "alpha_2",
+#             "alpha_3": "alpha_3",
+#             "name": "name",
+#             "official_name": ("official_name"),
+#             "numeric": "numeric",
+#             "flag": "flag",
+#         }
+#     ]

@@ -45,6 +45,39 @@ def get_region_by_slug(slug: str) -> RegionResponse | None:
     return None
 
 
+def get_countries_for_region(slug: str) -> list[CountryResponse] | None:
+    """
+    Get all countries for a requested region by its slug.
+
+    :param str slug: A slug representation of a region name.
+    :return list[CountryResponse]: A list of country objects containing
+        alpha-2, alpha-3 codes, name, official name, numeric code, and flag emoji,
+        belonging to the requested region or None if .
+    """
+    data = get_countries_data()
+
+    countries = data.get("countries", {})
+    country = countries.get(code.upper())
+
+    if not country:
+        return None
+
+    return [
+        CountryResponse(
+            alpha_2=country["alpha_2"],
+            alpha_3=country["alpha_3"],
+            name=country["name"],
+            official_name=(
+                country["official_name"]
+                if country["official_name"]
+                else country["name"]
+            ),
+            numeric=country["numeric"],
+            flag=country["flag"],
+        )
+    ]
+
+
 def get_country_by_code(code: str) -> CountryResponse | None:
     """
     Retrieve country information using ISO alpha-3 code.

@@ -36,4 +36,9 @@ regions = [
         "type": RegionType.WORLD_BANK_REGION,
         "slug": "south-asia",
     },
+    {
+        "name": "Other",
+        "type": RegionType.CPR_CUSTOM_REGION,
+        "slug": "other",
+    },
 ]

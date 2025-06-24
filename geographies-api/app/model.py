@@ -32,6 +32,7 @@ class GeographyDocumentCount(SQLModel):
 
 class RegionType(Enum):
     WORLD_BANK_REGION = "World Bank Region"
+    CPR_CUSTOM_REGION = "Other"
 
 
 class RegionResponse(BaseModel):
