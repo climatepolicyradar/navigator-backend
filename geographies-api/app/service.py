@@ -8,7 +8,7 @@ import requests
 from fastapi import HTTPException
 
 from .data.regions import regions
-from .model import CountryResponse, SubdivisionResponse
+from .model import CountryResponse, RegionResponse, SubdivisionResponse
 from .s3_client import get_s3_client
 
 _LOGGER = logging.getLogger(__name__)
@@ -19,8 +19,16 @@ GEOGRAPHIES_DOCUMENT_PATH = "geographies/countries.json"
 DOCUMENT_URL = f"{CDN_URL}/{GEOGRAPHIES_DOCUMENT_PATH}"
 
 
-def get_all_regions():
-    return regions
+def get_all_regions() -> list[RegionResponse]:
+    """
+    Retrieve all regions with their metadata.
+
+    :return list[RegionResponse]: A list of region objects with metadata.
+    """
+    return [
+        RegionResponse(name=region["name"], type=region["type"], slug=region["slug"])
+        for region in regions
+    ]
 
 
 def get_country_by_code(code: str) -> CountryResponse:
