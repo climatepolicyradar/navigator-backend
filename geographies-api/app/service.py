@@ -1,14 +1,13 @@
-import json
 import logging
 import os
 from datetime import datetime, timezone
-from pathlib import Path
 from typing import Any, Dict
 
 import pycountry
 import requests
 from fastapi import HTTPException
 
+from .initial_data.cpr_custom_geographies import countries
 from .model import CountryResponse, SubdivisionResponse
 from .s3_client import get_s3_client
 
@@ -32,8 +31,7 @@ def load_cpr_custom_geographies() -> Dict[str, Any]:
 
     NOTE: This utility function loads custom geography data that extends
     the standard ISO 3166 country codes with CPR-specific entries like
-    'International' and 'No Geography'. The data is stored in a static
-    JSON file that was migrated from the database for better performance
+    'International' and 'No Geography'. The data is stored in a python file that returns a dict with information was migrated from the database for better performance
     and deployment simplicity.
 
     :return Dict[str, Any]: Dictionary of custom geography entries keyed
@@ -42,16 +40,7 @@ def load_cpr_custom_geographies() -> Dict[str, Any]:
         parsed successfully.
     """
 
-    script_dir = Path(__file__).parent
-    file_path = script_dir / "initial_data" / "cpr_custom_geographies.json"
-
-    try:
-        with open(file_path, "r", encoding="utf-8") as f:
-            return json.load(f)
-    except FileNotFoundError:
-        raise CustomCountriesError(f"Custom countries file {file_path} not found")
-    except json.JSONDecodeError as e:
-        raise CustomCountriesError(f"Error parsing custom countries JSON: {e}")
+    return countries
 
 
 def get_country_by_code(code: str) -> CountryResponse:

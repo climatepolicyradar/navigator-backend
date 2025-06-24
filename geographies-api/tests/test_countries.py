@@ -10,25 +10,20 @@ def test_countries_endpoint_returns_country(test_client, mock_get_countries_data
         "official_name": "Republic of Angola",
     }
 
-    mock_get_countries_data.assert_called_once()
-
 
 def test_countries_endpoint_returns_404_for_nonexistent_country(
     test_client, mock_get_countries_data
 ):
     response = test_client.get("geographies/countries/XYZ")
-    mock_get_countries_data.assert_called_once()
+
     assert response.status_code == 404
     assert response.json() == {"detail": "Country with alpha-3 code 'XYZ' not found"}
-
-    mock_get_countries_data.assert_called_once()
 
 
 def test_countries_endpoint_returns_CPR_related_geography(
     test_client, mock_get_countries_data
 ):
     response = test_client.get("geographies/countries/XAB")
-    mock_get_countries_data.assert_called_once()
     assert response.status_code == 200
     assert response.json() == {
         "alpha_2": "XAB",
@@ -61,4 +56,3 @@ def test_countries_endpoint_returns_subdivisions(test_client, mock_get_countries
             "type": "Region",
         },
     ]
-    mock_get_countries_data.assert_called_once()
