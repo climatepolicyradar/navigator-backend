@@ -7,6 +7,7 @@ import pycountry
 import requests
 
 from .data.regions import regions
+from .data.cpr_custom_geographies import countries
 from .model import CountryResponse, RegionResponse, SubdivisionResponse
 from .s3_client import get_s3_client
 
@@ -57,7 +58,7 @@ def get_countries_for_region(slug: str) -> list[CountryResponse] | None:
     data = get_countries_data()
 
     countries = data.get("countries", {})
-    country = countries.get(code.upper())
+    country = countries.get(slug.upper())
 
     if not country:
         return None
@@ -76,6 +77,28 @@ def get_countries_for_region(slug: str) -> list[CountryResponse] | None:
             flag=country["flag"],
         )
     ]
+
+
+class CustomCountriesError(Exception):
+    """Custom exception for countries data loading errors"""
+
+    pass
+
+
+def load_cpr_custom_geographies() -> Dict[str, Any]:
+    """
+    Load custom CPR geography extensions from static JSON file.
+
+    NOTE: This utility function loads custom geography data that extends
+    the standard ISO 3166 country codes with CPR-specific entries like
+    'International' and 'No Geography'. The data is stored in a python file that returns a dict with information was migrated from the database for better performance
+    and deployment simplicity.
+
+    :return Dict[str, Any]: Dictionary of custom geography entries keyed
+        by alpha-3 codes, containing metadata like names, codes, and flags.
+    """
+
+    return countries
 
 
 def get_country_by_code(code: str) -> CountryResponse | None:
@@ -200,7 +223,7 @@ def list_all_countries() -> dict[str, dict]:
     :return list[CountryResponse]: A list of country objects with metadata.
     """
 
-    return {
+    countries = {
         country.alpha_3: CountryResponse(  # type: ignore[arg-type]
             alpha_2=country.alpha_2,  # type: ignore[arg-type]
             alpha_3=country.alpha_3,  # type: ignore[arg-type]
@@ -211,6 +234,12 @@ def list_all_countries() -> dict[str, dict]:
         ).model_dump()
         for country in pycountry.countries
     }
+
+    custom_countries = load_cpr_custom_geographies()
+    for alpha_3, custom_data in custom_countries.items():
+        countries[alpha_3] = custom_data
+
+    return countries
 
 
 def get_all_countries() -> list[CountryResponse]:
