@@ -1,4 +1,4 @@
-from datetime import datetime
+from datetime import datetime, timezone
 from typing import Any, Generic, Optional, TypeVar
 
 from fastapi import APIRouter, Depends, FastAPI, HTTPException
@@ -141,8 +141,8 @@ class FamilyBase(SQLModel):
     title: str
     description: str
     concepts: list[dict[str, Any]]
-    last_modified: datetime = Field(default_factory=datetime.now)
-    created: datetime = Field(default_factory=datetime.now)
+    last_modified: datetime = Field(default_factory=datetime.now, exclude=True)
+    created: datetime = Field(default_factory=datetime.now, exclude=True)
     family_category: str
 
 
@@ -173,7 +173,7 @@ class Family(FamilyBase, table=True):
 
 class FamilyPublic(FamilyBase):
     import_id: str
-    corpus: Corpus
+    corpus: Corpus = Field(exclude=True)
     unparsed_geographies: list[Geography] = Field(default_factory=list, exclude=True)
     unparsed_slug: list[Slug] = Field(exclude=True, default=list())
     unparsed_metadata: Optional[FamilyMetadata] = Field(exclude=True, default=None)
@@ -205,13 +205,37 @@ class FamilyPublic(FamilyBase):
 
     @computed_field
     @property
-    def published_date(self) -> datetime:
-        return self.created
+    def published_date(self) -> datetime | None:
+        # datetime_event_name stores the value of the event.event_type_name that should be used for published_date
+        # otherwise we use the earliest date
+        published_event_date = next(
+            (
+                event.date
+                for event in self.unparsed_events
+                if event.valid_metadata is not None
+                and event.event_type_name == event.valid_metadata["datetime_event_name"]
+            ),
+            None,
+        )
+        earliest_event_date = min(
+            (event.date for event in self.unparsed_events if event.date), default=None
+        )
+        return published_event_date or earliest_event_date
 
     @computed_field
     @property
-    def last_updated_date(self) -> datetime:
-        return self.last_modified
+    def last_updated_date(self) -> datetime | None:
+        # get the most recent date that is not in the future
+        now = datetime.now(tz=timezone.utc)
+        latest_event_date = max(
+            (
+                event.date
+                for event in self.unparsed_events
+                if event.date and event.date <= now
+            ),
+            default=None,
+        )
+        return latest_event_date
 
     @computed_field
     @property
