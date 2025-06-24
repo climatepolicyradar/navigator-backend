@@ -205,7 +205,7 @@ class FamilyPublic(FamilyBase):
 
     @computed_field
     @property
-    def published_date(self) -> datetime:
+    def published_date(self) -> datetime | None:
         # datetime_event_name stores the value of the event.event_type_name that should be used for published_date
         # otherwise we use the earliest date
         published_event_date = next(
@@ -220,7 +220,7 @@ class FamilyPublic(FamilyBase):
         earliest_event_date = min(
             (event.date for event in self.unparsed_events if event.date), default=None
         )
-        return published_event_date or earliest_event_date or self.created
+        return published_event_date or earliest_event_date
 
     @computed_field
     @property
