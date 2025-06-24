@@ -224,8 +224,8 @@ class FamilyPublic(FamilyBase):
 
     @computed_field
     @property
-    def last_updated_date(self) -> datetime:
-        # get the most recent date that is before now
+    def last_updated_date(self) -> datetime | None:
+        # get the most recent date that is not in the future
         now = datetime.now(tz=timezone.utc)
         latest_event_date = max(
             (
@@ -235,7 +235,7 @@ class FamilyPublic(FamilyBase):
             ),
             default=None,
         )
-        return latest_event_date or self.last_modified
+        return latest_event_date
 
     @computed_field
     @property
