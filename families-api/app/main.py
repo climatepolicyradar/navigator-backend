@@ -231,7 +231,7 @@ class FamilyPublic(FamilyBase):
             (
                 event.date
                 for event in self.unparsed_events
-                if event.date and event.date < now
+                if event.date and event.date <= now
             ),
             default=None,
         )
