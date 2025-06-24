@@ -7,7 +7,7 @@ from .model import CountryResponse, RegionResponse, Settings, SubdivisionRespons
 from .service import (
     get_all_countries,
     get_all_regions,
-    get_countries_for_region,
+    get_countries_by_region,
     get_country_by_code,
     get_region_by_slug,
     get_subdivisions_by_country,
@@ -56,26 +56,26 @@ async def get_region(
     return result
 
 
-# @router.get("/regions/{slug}/countries", response_model=list[CountryResponse])
-# async def get_countries_for_region(
-#     slug: str = Path(..., description="region slug")
-# ) -> RegionResponse:
-#     """
-#     Get all countries for a requested region by its slug.
+@router.get("/regions/{slug}/countries", response_model=list[CountryResponse])
+async def get_countries_for_region(
+    slug: str = Path(..., description="region slug")
+) -> RegionResponse:
+    """
+    Get all countries for a requested region by its slug.
 
-#     :param str slug: A slug representation of a region name.
-#     :return list[CountryResponse]: A list of country objects containing
-#         alpha-2, alpha-3 codes, name, official name, numeric code, and flag emoji,
-#         belonging to the requested region.
-#     """
+    :param str slug: A slug representation of a region name.
+    :return list[CountryResponse]: A list of country objects containing
+        alpha-2, alpha-3 codes, name, official name, numeric code, and flag emoji,
+        belonging to the requested region.
+    """
 
-#     result = get_countries_for_region(slug)
+    result = get_countries_by_region(slug)
 
-#     if not result:
-#         error_msg = f"Could not find a region for slug: {slug}"
-#         _LOGGER.error(error_msg)
-#         raise HTTPException(status_code=404, detail=str(error_msg))
-#     return result
+    if not result:
+        error_msg = f"Could not find a region for slug: {slug}"
+        _LOGGER.error(error_msg)
+        raise HTTPException(status_code=404, detail=str(error_msg))
+    return result
 
 
 @router.get("/", response_model=list[CountryResponse])

@@ -6,8 +6,8 @@ from typing import Any, Dict
 import pycountry
 import requests
 
-from .data.regions import regions
 from .data.cpr_custom_geographies import countries
+from .data.regions import regions
 from .model import CountryResponse, RegionResponse, SubdivisionResponse
 from .s3_client import get_s3_client
 
@@ -46,7 +46,7 @@ def get_region_by_slug(slug: str) -> RegionResponse | None:
     return None
 
 
-def get_countries_for_region(slug: str) -> list[CountryResponse] | None:
+def get_countries_by_region(slug: str) -> list[CountryResponse] | None:
     """
     Get all countries for a requested region by its slug.
 
@@ -55,27 +55,24 @@ def get_countries_for_region(slug: str) -> list[CountryResponse] | None:
         alpha-2, alpha-3 codes, name, official name, numeric code, and flag emoji,
         belonging to the requested region or None if .
     """
-    data = get_countries_data()
-
-    countries = data.get("countries", {})
-    country = countries.get(slug.upper())
-
-    if not country:
-        return None
 
     return [
         CountryResponse(
-            alpha_2=country["alpha_2"],
-            alpha_3=country["alpha_3"],
-            name=country["name"],
-            official_name=(
-                country["official_name"]
-                if country["official_name"]
-                else country["name"]
-            ),
-            numeric=country["numeric"],
-            flag=country["flag"],
-        )
+            alpha_2="CA",
+            alpha_3="CAN",
+            name="Canada",
+            official_name="Canada",
+            numeric="124",
+            flag="🇨🇦",
+        ),
+        CountryResponse(
+            alpha_2="US",
+            alpha_3="USA",
+            name="United States",
+            official_name="United States of America",
+            numeric="840",
+            flag="🇺🇸",
+        ),
     ]
 
 

@@ -70,17 +70,25 @@ def test_regions_endpoint_returns_404_when_no_regions_exist_for_slug(test_client
     )
 
 
-# def test_regions_endpoint_returns_all_countries_for_requested_region(test_client):
-#     response = test_client.get("/geographies/regions/north-america/countries")
+def test_regions_endpoint_returns_all_countries_for_requested_region(test_client):
+    response = test_client.get("/geographies/regions/north-america/countries")
 
-#     assert response.status_code == 200
-#     assert response.json() == [
-#         {
-#             "alpha_2": "alpha_2",
-#             "alpha_3": "alpha_3",
-#             "name": "name",
-#             "official_name": ("official_name"),
-#             "numeric": "numeric",
-#             "flag": "flag",
-#         }
-#     ]
+    assert response.status_code == 200
+    assert response.json() == [
+        {
+            "alpha_2": "CA",
+            "alpha_3": "CAN",
+            "name": "Canada",
+            "official_name": "Canada",
+            "numeric": "124",
+            "flag": "🇨🇦",
+        },
+        {
+            "alpha_2": "US",
+            "alpha_3": "USA",
+            "name": "United States",
+            "official_name": "United States of America",
+            "numeric": "840",
+            "flag": "🇺🇸",
+        },
+    ]
