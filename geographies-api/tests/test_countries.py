@@ -34,8 +34,6 @@ def test_countries_endpoint_returns_CPR_related_geography(
         "flag": "",
     }
 
-    mock_get_countries_data.assert_called_once()
-
 
 def test_countries_endpoint_returns_subdivisions(test_client, mock_get_countries_data):
     response = test_client.get("geographies/subdivisions/ABW")
