@@ -31,7 +31,7 @@ dev profile="staging":
     @docker compose up
 
 test:
-    @echo "😔 no tests yet"
+    pytest -vvv
 
 # build
 # TODO: this needs to be tied into a lifecycle somewhere to make sure it is run if something is added
