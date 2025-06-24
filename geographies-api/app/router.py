@@ -8,6 +8,7 @@ from .service import (
     get_all_countries,
     get_all_regions,
     get_country_by_code,
+    get_region_by_slug,
     get_subdivisions_by_country,
     populate_initial_countries_data,
 )
@@ -32,6 +33,26 @@ async def list_all_regions():
     :return list[RegionResponse]: A list of region objects containing name, type, and slug.
     """
     return get_all_regions()
+
+
+@router.get("/regions/{slug}", response_model=RegionResponse)
+async def get_region(
+    slug: str = Path(..., description="region slug")
+) -> RegionResponse:
+    """
+    Get region with metadata by its slug.
+
+    :param str slug: A slug representation of a region name.
+    :return RegionResponse: A region object containing name, type, and slug.
+    """
+
+    result = get_region_by_slug(slug)
+
+    if not result:
+        error_msg = f"Could not find a region for slug: {slug}"
+        _LOGGER.error(error_msg)
+        raise HTTPException(status_code=404, detail=str(error_msg))
+    return result
 
 
 @router.get("/", response_model=list[CountryResponse])
@@ -66,7 +87,13 @@ async def get_country(
     :return CountryResponse: An object representing the country,
         including name, codes, and flag emoji.
     """
-    return get_country_by_code(code)
+    result = get_country_by_code(code)
+
+    if not result:
+        raise HTTPException(
+            status_code=404, detail=f"Country with alpha-3 code '{code}' not found"
+        )
+    return result
 
 
 @router.get("/subdivisions/{country_code}", response_model=list[SubdivisionResponse])
@@ -87,7 +114,14 @@ async def get_country_subdivisions(
     :return list[SubdivisionResponse]: A list of subdivision objects representing
         the primary administrative divisions of the country.
     """
-    return get_subdivisions_by_country(country_code)
+    result = get_subdivisions_by_country(country_code)
+
+    if not result:
+        raise HTTPException(
+            status_code=404,
+            detail=f"Country with alpha-3 code '{country_code}' not found",
+        )
+    return result
 
 
 @router.get("/populate-s3-bucket")

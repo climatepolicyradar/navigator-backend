@@ -5,7 +5,6 @@ from typing import Any, Dict
 
 import pycountry
 import requests
-from fastapi import HTTPException
 
 from .data.regions import regions
 from .model import CountryResponse, RegionResponse, SubdivisionResponse
@@ -31,7 +30,22 @@ def get_all_regions() -> list[RegionResponse]:
     ]
 
 
-def get_country_by_code(code: str) -> CountryResponse:
+def get_region_by_slug(slug: str) -> RegionResponse | None:
+    """
+    Retrieve region information using a slug.
+
+    :param str slug: A slug representation of a region name.
+    :return regionResponse: An object containing region details,
+        including name, type, and slug or None if not found.
+    """
+    for region in get_all_regions():
+        if region.slug == slug:
+            return region
+
+    return None
+
+
+def get_country_by_code(code: str) -> CountryResponse | None:
     """
     Retrieve country information using ISO alpha-3 code.
 
@@ -41,9 +55,7 @@ def get_country_by_code(code: str) -> CountryResponse:
 
     :param str code: ISO alpha-3 country code (e.g., 'USA', 'GBR').
     :return CountryResponse: An object containing country details,
-        including name, codes, and emoji flag.
-    :raises HTTPException: If the provided code does not match any
-        known country.
+        including name, codes, and emoji flag or None if not found.
     """
     data = get_countries_data()
 
@@ -51,9 +63,7 @@ def get_country_by_code(code: str) -> CountryResponse:
     country = countries.get(code.upper())
 
     if not country:
-        raise HTTPException(
-            status_code=404, detail=f"Country with alpha-3 code '{code}' not found"
-        )
+        return None
 
     return CountryResponse(
         alpha_2=country["alpha_2"],
@@ -67,7 +77,7 @@ def get_country_by_code(code: str) -> CountryResponse:
     )
 
 
-def get_subdivisions_by_country(country_code: str) -> list[SubdivisionResponse]:
+def get_subdivisions_by_country(country_code: str) -> list[SubdivisionResponse] | None:
     """
     Retrieve all subdivisions for a given country using ISO alpha-3 code.
 
@@ -80,9 +90,8 @@ def get_subdivisions_by_country(country_code: str) -> list[SubdivisionResponse]:
     :param str country_code: ISO alpha-3 country code (e.g., 'AUS', 'USA').
     :return list[SubdivisionResponse]: A list of objects containing subdivision
         details including codes, names, types, and parent relationships.
-        Returns empty list if no subdivisions exist for the country.
-    :raises HTTPException: If the provided country code does not match any
-        known country.
+        Returns empty list if no subdivisions exist for the country or None
+        if country was not found for country_code.
     """
 
     data = get_countries_data()
@@ -90,10 +99,7 @@ def get_subdivisions_by_country(country_code: str) -> list[SubdivisionResponse]:
     countries = data.get("subdivisions", {})
     country = countries.get(country_code.upper())
     if not country:
-        raise HTTPException(
-            status_code=404,
-            detail=f"Country with alpha-3 code '{country_code}' not found",
-        )
+        return None
 
     subdivisions = []
 
