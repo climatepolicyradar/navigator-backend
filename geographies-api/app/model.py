@@ -1,3 +1,4 @@
+from enum import Enum
 from typing import Generic, Optional, TypeVar
 
 from pydantic import BaseModel
@@ -27,6 +28,16 @@ class GeographyDocumentCount(SQLModel):
     alpha3: str
     name: str
     count: int
+
+
+class RegionType(Enum):
+    WORLD_BANK_REGION = "World Bank Region"
+
+
+class RegionResponse(BaseModel):
+    name: str
+    type: RegionType
+    slug: str
 
 
 class CountryResponse(BaseModel):

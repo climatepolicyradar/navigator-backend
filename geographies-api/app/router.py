@@ -3,9 +3,10 @@ from typing import TypeVar
 
 from fastapi import APIRouter, HTTPException, Path
 
-from .model import CountryResponse, Settings, SubdivisionResponse
+from .model import CountryResponse, RegionResponse, Settings, SubdivisionResponse
 from .service import (
     get_all_countries,
+    get_all_regions,
     get_country_by_code,
     get_subdivisions_by_country,
     populate_initial_countries_data,
@@ -21,6 +22,16 @@ settings = Settings()
 # TODO: Use JSON logging - https://linear.app/climate-policy-radar/issue/APP-571/add-json-logging-to-families-api
 # TODO: Add OTel - https://linear.app/climate-policy-radar/issue/APP-572/add-otel-to-families-api
 router = APIRouter()
+
+
+@router.get("/regions", response_model=list[RegionResponse])
+async def list_all_regions():
+    """
+    List all regions with their metadata.
+
+    :return list[RegionResponse]: A list of region objects containing name, type, and slug.
+    """
+    return get_all_regions()
 
 
 @router.get("/", response_model=list[CountryResponse])

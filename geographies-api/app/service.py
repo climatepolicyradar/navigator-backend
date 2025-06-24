@@ -7,6 +7,7 @@ import pycountry
 import requests
 from fastapi import HTTPException
 
+from .data.regions import regions
 from .model import CountryResponse, SubdivisionResponse
 from .s3_client import get_s3_client
 
@@ -16,6 +17,10 @@ CDN_URL = os.environ.get("CDN_URL")
 GEOGRAPHIES_DOCUMENT_PATH = "geographies/countries.json"
 
 DOCUMENT_URL = f"{CDN_URL}/{GEOGRAPHIES_DOCUMENT_PATH}"
+
+
+def get_all_regions():
+    return regions
 
 
 def get_country_by_code(code: str) -> CountryResponse:
