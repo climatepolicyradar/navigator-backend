@@ -69,7 +69,10 @@ async def get_countries_for_region(
         belonging to the requested region.
     """
 
-    result = get_countries_by_region(slug)
+    try:
+        result = get_countries_by_region(slug)
+    except ValueError as e:
+        raise HTTPException(status_code=500, detail=str(e))
 
     if not result:
         error_msg = f"Could not find a region for slug: {slug}"

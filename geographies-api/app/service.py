@@ -8,6 +8,7 @@ import requests
 
 from .data.cpr_custom_geographies import countries
 from .data.regions import regions
+from .data.regions_to_countries_mapping import regions_to_countries
 from .model import CountryResponse, RegionResponse, SubdivisionResponse
 from .s3_client import get_s3_client
 
@@ -54,10 +55,9 @@ def get_countries_by_region(slug: str) -> list[CountryResponse] | None:
     :return list[CountryResponse]: A list of country objects containing
         alpha-2, alpha-3 codes, name, official name, numeric code, and flag emoji,
         belonging to the requested region or None if slug is invalid or does not exist.
+    :raises ValueError: If no country is returned for a code linked to the requested region.
     """
-    region_countries = {"north-america": ["CAN", "USA"]}
-
-    selected_region_country_codes = region_countries.get(slug)
+    selected_region_country_codes = regions_to_countries.get(slug)
     selected_countries = []
 
     if selected_region_country_codes:
