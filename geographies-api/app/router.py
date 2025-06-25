@@ -27,7 +27,7 @@ router = APIRouter()
 
 
 @router.get("/regions", response_model=list[RegionResponse])
-async def list_all_regions():
+async def list_all_regions() -> list[RegionResponse]:
     """
     List all regions with their metadata.
 
@@ -82,7 +82,7 @@ async def get_countries_for_region(
 
 
 @router.get("/", response_model=list[CountryResponse])
-async def list_all_countries():
+async def list_all_countries() -> list[CountryResponse]:
     """
     List all countries with their metadata.
 
@@ -151,7 +151,7 @@ async def get_country_subdivisions(
 
 
 @router.get("/populate-s3-bucket")
-def populate_s3_bucket():
+def populate_s3_bucket() -> dict[str, str]:
     """
     Populate the S3 bucket with geographies data.
 
