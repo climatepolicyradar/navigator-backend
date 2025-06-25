@@ -27,3 +27,6 @@
 # Fix SQL query formatting
 047766a85f086fc0986a6f2b49fee9d73fa219e8
 ab3476708920c5760f058ec40d14d008f94f5bad
+
+# Making app it's own microservice
+7938f3f6f994c391f54edf4dcf57b09c47fa5d6f
