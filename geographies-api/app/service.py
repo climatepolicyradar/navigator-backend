@@ -53,27 +53,25 @@ def get_countries_by_region(slug: str) -> list[CountryResponse] | None:
     :param str slug: A slug representation of a region name.
     :return list[CountryResponse]: A list of country objects containing
         alpha-2, alpha-3 codes, name, official name, numeric code, and flag emoji,
-        belonging to the requested region or None if .
+        belonging to the requested region or None if slug is invalid or does not exist.
     """
+    region_countries = {"north-america": ["CAN", "USA"]}
 
-    return [
-        CountryResponse(
-            alpha_2="CA",
-            alpha_3="CAN",
-            name="Canada",
-            official_name="Canada",
-            numeric="124",
-            flag="🇨🇦",
-        ),
-        CountryResponse(
-            alpha_2="US",
-            alpha_3="USA",
-            name="United States",
-            official_name="United States of America",
-            numeric="840",
-            flag="🇺🇸",
-        ),
-    ]
+    selected_region_country_codes = region_countries.get(slug)
+    selected_countries = []
+
+    if selected_region_country_codes:
+        for country_code in selected_region_country_codes:
+            selected_country = get_country_by_code(country_code)
+
+            if not selected_country:
+                raise ValueError(
+                    f"Invalid country code in the region countries list: {country_code}"
+                )
+            else:
+                selected_countries.append(selected_country)
+
+    return selected_countries or None
 
 
 class CustomCountriesError(Exception):
