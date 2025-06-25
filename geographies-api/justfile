@@ -27,7 +27,8 @@ dev:
     docker compose -f docker-compose.yml up --build
 
 test:
-    pytest -vvv
+    docker compose up test
+    # --abort-on-container-exit --exit-code-from test
 
 # build
 # TODO: this needs to be tied into a lifecycle somewhere to make sure it is run if something is added
