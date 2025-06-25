@@ -6,6 +6,49 @@ from fastapi.testclient import TestClient
 
 from app.main import app
 
+EXPECTED_REGIONS = [
+    {
+        "name": "North America",
+        "type": "World Bank Region",
+        "slug": "north-america",
+    },
+    {
+        "name": "East Asia & Pacific",
+        "type": "World Bank Region",
+        "slug": "east-asia-pacific",
+    },
+    {
+        "name": "Latin America & Caribbean",
+        "type": "World Bank Region",
+        "slug": "latin-america-caribbean",
+    },
+    {
+        "name": "Sub-Saharan Africa",
+        "type": "World Bank Region",
+        "slug": "sub-saharan-africa",
+    },
+    {
+        "name": "Middle East & North Africa",
+        "type": "World Bank Region",
+        "slug": "middle-east-north-africa",
+    },
+    {
+        "name": "Europe & Central Asia",
+        "type": "World Bank Region",
+        "slug": "europe-central-asia",
+    },
+    {
+        "name": "South Asia",
+        "type": "World Bank Region",
+        "slug": "south-asia",
+    },
+    {
+        "name": "Other",
+        "type": "Other",
+        "slug": "other",
+    },
+]
+
 
 @pytest.fixture
 def test_client():
@@ -47,6 +90,22 @@ def mock_get_countries_data():
             "official_name": None,
             "numeric": "660",
             "flag": "🇦🇮",
+        },
+        "CAN": {
+            "alpha_2": "CA",
+            "alpha_3": "CAN",
+            "name": "Canada",
+            "official_name": "Canada",
+            "numeric": "124",
+            "flag": "🇨🇦",
+        },
+        "USA": {
+            "alpha_2": "US",
+            "alpha_3": "USA",
+            "name": "United States",
+            "official_name": "United States of America",
+            "numeric": "840",
+            "flag": "🇺🇸",
         },
         "XAB": {
             "alpha_2": "XAB",
