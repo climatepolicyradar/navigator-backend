@@ -47,6 +47,7 @@ services:
       - ./init-s3.sh:/etc/localstack/init/ready.d/init-s3.sh
 
   test:
+    profiles: [test]
     container_name: geographies-api-test
     build:
       context: .
