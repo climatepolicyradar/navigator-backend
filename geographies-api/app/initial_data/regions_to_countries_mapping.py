@@ -1,5 +1,6 @@
 # World Bank Region to ISO Country Code Mapping
 # Generated automatically through extraction from the rds database
+# PR: https://github.com/climatepolicyradar/navigator-backend/pull/563
 
 regions_to_countries = {
     "sub-saharan-africa": [
