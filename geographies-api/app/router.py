@@ -59,7 +59,7 @@ async def get_region(
 @router.get("/regions/{slug}/countries", response_model=list[CountryResponse])
 async def get_countries_for_region(
     slug: str = Path(..., description="region slug")
-) -> RegionResponse:
+) -> list[CountryResponse]:
     """
     Get all countries for a requested region by its slug.
 
