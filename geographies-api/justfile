@@ -23,16 +23,8 @@ initial-data environment:
     aws s3 sync s3://cpr-{{environment}}-document-cache/geographies initial-data
 
 # This is used for fully local development with localstack
-local:
-    docker compose -f docker-compose-dev.yml up --build
-
-dev profile="staging":
-    # Start the service with AWS access
-    @echo "🚀 Starting development environment with AWS profile: {{profile}}"
-    @just aws-login {{profile}}
-    @just set-aws-profile {{profile}}
-    @echo "🐳 Starting Docker containers..."
-    @docker compose up
+dev:
+    docker compose -f docker-compose.yml up --build
 
 test:
     @echo "😔 no tests yet"
