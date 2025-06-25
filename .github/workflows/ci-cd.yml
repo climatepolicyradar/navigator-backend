@@ -38,7 +38,7 @@ jobs:
   non-search-tests:
     defaults:
       run:
-        working-directory: ./app
+        working-directory: app
     if: |
       ! cancelled() && always() &&
       ! startsWith(github.ref, 'refs/tags')
@@ -80,7 +80,7 @@ jobs:
   search-tests:
     defaults:
       run:
-        working-directory: ./app
+        working-directory: app
     if: |
       ! cancelled() && always() &&
       ! startsWith(github.ref, 'refs/tags')
@@ -121,7 +121,7 @@ jobs:
   integration-tests:
     defaults:
       run:
-        working-directory: ./app
+        working-directory: app
     if: |
       ! cancelled() && always() &&
       ! startsWith(github.ref, 'refs/tags')
