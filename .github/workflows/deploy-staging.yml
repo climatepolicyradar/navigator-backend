@@ -13,6 +13,9 @@ permissions:
 
 jobs:
   deploy-staging:
+    defaults:
+      run:
+        working-directory: ./app
     if: ${{ github.event.workflow_run.conclusion == 'success' }}
     runs-on: ubuntu-latest
     environment:

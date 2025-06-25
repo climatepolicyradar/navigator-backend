@@ -36,6 +36,9 @@ jobs:
         with:
           arguments: --ci
   non-search-tests:
+    defaults:
+      run:
+        working-directory: ./app
     if: |
       ! cancelled() && always() &&
       ! startsWith(github.ref, 'refs/tags')
@@ -75,6 +78,9 @@ jobs:
         run: docker compose logs
 
   search-tests:
+    defaults:
+      run:
+        working-directory: ./app
     if: |
       ! cancelled() && always() &&
       ! startsWith(github.ref, 'refs/tags')
@@ -113,6 +119,9 @@ jobs:
         run: docker compose logs
 
   integration-tests:
+    defaults:
+      run:
+        working-directory: ./app
     if: |
       ! cancelled() && always() &&
       ! startsWith(github.ref, 'refs/tags')
