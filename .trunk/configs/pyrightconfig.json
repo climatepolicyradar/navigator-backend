@@ -1,0 +1,5 @@
+{
+  "include": ["backend-api/app", "backend-api/tests"],
+  "venvPath": "backend-api",
+  "venv": ".venv"
+}

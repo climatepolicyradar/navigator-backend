@@ -8,6 +8,9 @@ permissions:
   contents: read
 jobs:
   release:
+    defaults:
+      run:
+        working-directory: backend-api
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
