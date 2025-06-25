@@ -10,7 +10,9 @@ from .conftest import EXPECTED_REGIONS
 
 def test_get_all_regions_successfully_returns_all_regions():
     expected_regions_response = [
-        RegionResponse(name=region["name"], type=region["type"], slug=region["slug"])
+        RegionResponse(
+            name=region["name"], type=RegionType(region["type"]), slug=region["slug"]
+        )
         for region in EXPECTED_REGIONS
     ]
 
