@@ -1,3 +1,4 @@
+import json
 import logging
 from typing import cast
 
@@ -18,7 +19,7 @@ from app.service.auth import get_superuser_details
 from app.telemetry_exceptions import ExceptionHandlingTelemetryRoute
 
 _LOGGER = logging.getLogger(__name__)
-
+print(json)
 admin_document_router = r = APIRouter(route_class=ExceptionHandlingTelemetryRoute)
 
 
