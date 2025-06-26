@@ -31,9 +31,7 @@ def test_get_region_by_slug_returns_none_if_slug_invalid():
     assert not get_region_by_slug("invalid")
 
 
-def test_get_countries_by_region_returns_all_countries_for_the_requested_region(
-    mock_get_countries_data,
-):
+def test_get_countries_by_region_returns_all_countries_for_the_requested_region():
     expected_countries = [
         CountryResponse(
             alpha_2="CA",

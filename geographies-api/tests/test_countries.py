@@ -1,4 +1,4 @@
-def test_countries_endpoint_returns_country(test_client, mock_get_countries_data):
+def test_countries_endpoint_returns_country(test_client):
     response = test_client.get("geographies/countries/AGO")
     assert response.status_code == 200
     assert response.json() == {
@@ -11,18 +11,14 @@ def test_countries_endpoint_returns_country(test_client, mock_get_countries_data
     }
 
 
-def test_countries_endpoint_returns_404_for_nonexistent_country(
-    test_client, mock_get_countries_data
-):
+def test_countries_endpoint_returns_404_for_nonexistent_country(test_client):
     response = test_client.get("geographies/countries/XYZ")
 
     assert response.status_code == 404
     assert response.json() == {"detail": "Country with alpha-3 code 'XYZ' not found"}
 
 
-def test_countries_endpoint_returns_CPR_related_geography(
-    test_client, mock_get_countries_data
-):
+def test_countries_endpoint_returns_CPR_related_geography(test_client):
     response = test_client.get("geographies/countries/XAB")
     assert response.status_code == 200
     assert response.json() == {
@@ -35,22 +31,43 @@ def test_countries_endpoint_returns_CPR_related_geography(
     }
 
 
-def test_countries_endpoint_returns_subdivisions(test_client, mock_get_countries_data):
-    response = test_client.get("geographies/subdivisions/ABW")
+def test_countries_endpoint_returns_subdivisions(test_client):
+    response = test_client.get("geographies/subdivisions/SGP")
     assert response.status_code == 200
     assert response.json() == [
         {
-            "code": "AW-01",
-            "country_alpha_2": "AW",
-            "country_alpha_3": "ABW",
-            "name": "Oranjestad",
-            "type": "Region",
+            "code": "SG-01",
+            "name": "Central Singapore",
+            "type": "District",
+            "country_alpha_2": "SG",
+            "country_alpha_3": "SGP",
         },
         {
-            "code": "AW-02",
-            "country_alpha_2": "AW",
-            "country_alpha_3": "ABW",
-            "name": "San Nicolas",
-            "type": "Region",
+            "code": "SG-02",
+            "name": "North East",
+            "type": "District",
+            "country_alpha_2": "SG",
+            "country_alpha_3": "SGP",
+        },
+        {
+            "code": "SG-03",
+            "name": "North West",
+            "type": "District",
+            "country_alpha_2": "SG",
+            "country_alpha_3": "SGP",
+        },
+        {
+            "code": "SG-04",
+            "name": "South East",
+            "type": "District",
+            "country_alpha_2": "SG",
+            "country_alpha_3": "SGP",
+        },
+        {
+            "code": "SG-05",
+            "name": "South West",
+            "type": "District",
+            "country_alpha_2": "SG",
+            "country_alpha_3": "SGP",
         },
     ]

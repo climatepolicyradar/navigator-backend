@@ -31,9 +31,7 @@ def test_regions_endpoint_returns_404_when_no_regions_exist_for_slug(test_client
     )
 
 
-def test_regions_endpoint_returns_all_countries_for_requested_region(
-    test_client, mock_get_countries_data
-):
+def test_regions_endpoint_returns_all_countries_for_requested_region(test_client):
     response = test_client.get("/geographies/regions/north-america/countries")
 
     assert response.status_code == 200
