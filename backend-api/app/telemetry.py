@@ -12,21 +12,13 @@ from fastapi import FastAPI
 
 ## Tracing imports - stable
 from opentelemetry import trace
-
-# GOTCHA: we trunk-ignore these imports as these libraries are still in RC - but we need them
-# trunk-ignore(pyright-backend-api/reportPrivateImportUsage)
 from opentelemetry._logs import set_logger_provider
-
-# trunk-ignore(pyright-backend-api/reportPrivateImportUsage)
 from opentelemetry.exporter.otlp.proto.http._log_exporter import OTLPLogExporter
 from opentelemetry.exporter.otlp.proto.http.trace_exporter import OTLPSpanExporter
 from opentelemetry.instrumentation.fastapi import FastAPIInstrumentor
 
 # These are beta still, so may change and break compatibility
-# trunk-ignore(pyright-backend-api/reportPrivateImportUsage)
 from opentelemetry.sdk._logs import LoggerProvider, LoggingHandler
-
-# trunk-ignore(pyright-backend-api/reportPrivateImportUsage)
 from opentelemetry.sdk._logs.export import BatchLogRecordProcessor
 from opentelemetry.sdk.trace import TracerProvider
 from opentelemetry.sdk.trace.export import BatchSpanProcessor
