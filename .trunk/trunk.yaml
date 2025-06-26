@@ -27,7 +27,7 @@ runtimes:
   enabled:
     - go@1.21.0
     - node@18.12.1
-    - python@3.10.3
+    - python@3.12.2
 
 # This is the section where you manage your linters.
 # (https://docs.trunk.io/check/configuration)
@@ -37,6 +37,22 @@ lint:
     - oxipng
 
   definitions:
+    # This was lifted directly from the pyright plugin
+    # @see https://github.com/trunk-io/plugins/blob/main/linters/pyright/plugin.yaml
+    # @related BACKEND_API_PYRIGHT_HACK
+    - name: pyright-backend-api
+      files: [python]
+      commands:
+        - name: lint
+          output: sarif
+          run: pyright --project .trunk/pyrightconfig.backend-api.json --outputjson ${target}
+          success_codes: [0, 1]
+          read_output_from: stdout
+          batch: true
+          cache_results: false
+          parser:
+            runtime: python
+            run: python3 .trunk/pyright_to_sarif.py
     - name: bandit
       direct_configs: [bandit.yaml]
       commands:
@@ -93,6 +109,8 @@ lint:
         - LICENSE.md
 
   enabled:
+    - pyright@1.1.361
+    - pyright-backend-api
     - sqlfluff@3.2.5:
         commands: [lint, fix, format]
     - actionlint@1.6.27
@@ -116,7 +134,6 @@ lint:
           - end-of-file-fixer
           - trailing-whitespace
     - prettier@3.2.5
-    - pyright@1.1.361
     - ruff@0.4.2
     - shellcheck@0.10.0
     - shfmt@3.6.0
