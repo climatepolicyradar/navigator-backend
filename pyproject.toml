@@ -9,7 +9,7 @@ dependencies = []
 dev = ["pyright==1.1.361"]
 
 [tool.uv.workspace]
-members = []
+members = ["backend-api"]
 
 [tool.pyright]
 venvPath = "."
