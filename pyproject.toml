@@ -5,13 +5,5 @@ readme = "README.md"
 requires-python = ">=3.12"
 dependencies = []
 
-[dependency-groups]
-dev = ["pyright==1.1.361"]
-
 [tool.uv.workspace]
 members = []
-
-[tool.pyright]
-venvPath = "."
-venv = ".venv"
-include = ["backend-api/app", "backend-api/tests"]
