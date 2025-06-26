@@ -5,6 +5,12 @@ from contextlib import asynccontextmanager
 
 import json_logging
 import uvicorn
+from fastapi import APIRouter, Depends, FastAPI
+from fastapi.middleware.cors import CORSMiddleware
+from fastapi_health import health
+from fastapi_pagination import add_pagination
+from starlette.requests import Request
+
 from app import config
 from app.api.api_v1.routers.admin import admin_document_router
 from app.api.api_v1.routers.auth import auth_router
@@ -22,11 +28,6 @@ from app.service.vespa import make_vespa_search_adapter
 from app.telemetry import Telemetry
 from app.telemetry_config import ServiceManifest, TelemetryConfig
 from app.telemetry_exceptions import ExceptionHandlingTelemetryRoute
-from fastapi import APIRouter, Depends, FastAPI
-from fastapi.middleware.cors import CORSMiddleware
-from fastapi_health import health
-from fastapi_pagination import add_pagination
-from starlette.requests import Request
 
 os.environ["SKIP_ALEMBIC_LOGGING"] = "1"
 

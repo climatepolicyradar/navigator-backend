@@ -1,6 +1,7 @@
-from app.config import VESPA_SECRETS_LOCATION, VESPA_URL
 from cpr_sdk.search_adaptors import VespaSearchAdapter
 from fastapi import Request
+
+from app.config import VESPA_SECRETS_LOCATION, VESPA_URL
 
 
 def make_vespa_search_adapter() -> VespaSearchAdapter:

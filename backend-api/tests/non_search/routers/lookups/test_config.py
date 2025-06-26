@@ -6,9 +6,6 @@ from unittest.mock import MagicMock
 
 import jwt
 import pytest
-from app.clients.db.session import SessionLocal
-from app.service import security
-from app.service.util import tree_table_to_json
 from dateutil.relativedelta import relativedelta
 from db_client.models.dfce.family import (
     Family,
@@ -17,6 +14,10 @@ from db_client.models.dfce.family import (
     FamilyGeography,
 )
 from db_client.models.organisation import Corpus, CorpusType, Organisation
+
+from app.clients.db.session import SessionLocal
+from app.service import security
+from app.service.util import tree_table_to_json
 
 LEN_ORG_CONFIG = 3
 EXPECTED_CCLW_TAXONOMY = {

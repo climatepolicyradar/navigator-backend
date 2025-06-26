@@ -1,13 +1,14 @@
 import logging
 from typing import cast
 
+from fastapi import APIRouter, Depends, HTTPException, status
+from fastapi.security import OAuth2PasswordRequestForm
+
 from app.clients.db.session import get_db
 from app.repository.user import get_app_user_authorisation
 from app.service.auth import authenticate_user
 from app.service.security import create_access_token
 from app.telemetry_exceptions import ExceptionHandlingTelemetryRoute
-from fastapi import APIRouter, Depends, HTTPException, status
-from fastapi.security import OAuth2PasswordRequestForm
 
 auth_router = r = APIRouter(route_class=ExceptionHandlingTelemetryRoute)
 

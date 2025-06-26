@@ -4,6 +4,7 @@ from fastapi import status
 from fastapi.testclient import TestClient
 from sqlalchemy import update
 from sqlalchemy.orm import Session
+
 from tests.non_search.routers.documents.setup_doc_fam_lookup import (
     _make_doc_fam_lookup_request,
 )

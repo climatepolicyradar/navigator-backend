@@ -1,13 +1,14 @@
 import logging
 from typing import Annotated
 
+from fastapi import APIRouter, Depends, Header, HTTPException, Request, status
+
 from app.clients.db.session import get_db
 from app.errors import RepositoryError, ValidationError
 from app.models.geography import GeographyStatsDTO
 from app.service.custom_app import AppTokenFactory
 from app.service.world_map import get_world_map_stats
 from app.telemetry_exceptions import ExceptionHandlingTelemetryRoute
-from fastapi import APIRouter, Depends, Header, HTTPException, Request, status
 
 _LOGGER = logging.getLogger(__file__)
 

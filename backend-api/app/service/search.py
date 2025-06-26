@@ -7,26 +7,6 @@ from enum import Enum
 from io import StringIO
 from typing import Any, Mapping, Optional, Sequence, Tuple, cast
 
-from app.clients.aws.client import S3Client
-from app.clients.aws.s3_document import S3Document
-from app.config import CDN_DOMAIN
-from app.errors import ValidationError
-from app.models.search import (
-    BackendFilterValues,
-    FilterField,
-    SearchRequestBody,
-    SearchResponse,
-    SearchResponseDocumentPassage,
-    SearchResponseFamily,
-    SearchResponseFamilyDocument,
-)
-from app.repository.lookups import (
-    doc_type_from_family_document_metadata,
-    get_countries_for_region,
-    get_countries_for_slugs,
-)
-from app.service.util import to_cdn_url
-from app.telemetry import observe
 from cpr_sdk.exceptions import QueryError
 from cpr_sdk.models.search import Document as CprSdkResponseDocument
 from cpr_sdk.models.search import Family as CprSdkResponseFamily
@@ -52,6 +32,27 @@ from db_client.models.dfce.family import (
 )
 from db_client.models.organisation import Organisation
 from sqlalchemy.orm import Session
+
+from app.clients.aws.client import S3Client
+from app.clients.aws.s3_document import S3Document
+from app.config import CDN_DOMAIN
+from app.errors import ValidationError
+from app.models.search import (
+    BackendFilterValues,
+    FilterField,
+    SearchRequestBody,
+    SearchResponse,
+    SearchResponseDocumentPassage,
+    SearchResponseFamily,
+    SearchResponseFamilyDocument,
+)
+from app.repository.lookups import (
+    doc_type_from_family_document_metadata,
+    get_countries_for_region,
+    get_countries_for_slugs,
+)
+from app.service.util import to_cdn_url
+from app.telemetry import observe
 
 _LOGGER = logging.getLogger(__name__)
 
