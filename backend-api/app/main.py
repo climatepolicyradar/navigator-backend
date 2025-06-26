@@ -179,6 +179,7 @@ add_pagination(app)
 if __name__ == "__main__":
     uvicorn.run(
         app,
+        # trunk-ignore(bandit/B104)
         host="0.0.0.0",
         port=8888,
         log_config=DEFAULT_LOGGING,
