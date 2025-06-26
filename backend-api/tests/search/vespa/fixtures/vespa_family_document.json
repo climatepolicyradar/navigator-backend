@@ -289,14 +289,14 @@
       "collection_title": "collection one",
       "collection_summary": "Sample collection used for tests",
       "metadata": [
-          {
-              "name": "sector",
-              "value": "Price"
-          },
-          {
-              "name": "sector",
-              "value": "Government"
-          }
+        {
+          "name": "sector",
+          "value": "Price"
+        },
+        {
+          "name": "sector",
+          "value": "Government"
+        }
       ]
     }
   },
@@ -590,22 +590,22 @@
       "collection_title": "collection two",
       "collection_summary": "Sample collection used for tests",
       "metadata": [
-          {
-              "name": "sector",
-              "value": "Price"
-          },
-          {
-              "name": "sector",
-              "value": "Government"
-          },
-          {
-              "name": "topic",
-              "value": "Mitigation"
-          },
-          {
-              "name": "instrument",
-              "value": "Capacity building"
-          }
+        {
+          "name": "sector",
+          "value": "Price"
+        },
+        {
+          "name": "sector",
+          "value": "Government"
+        },
+        {
+          "name": "topic",
+          "value": "Mitigation"
+        },
+        {
+          "name": "instrument",
+          "value": "Capacity building"
+        }
       ]
     }
   },
@@ -899,34 +899,34 @@
       "collection_title": "collection two",
       "collection_summary": "Sample collection used for tests",
       "metadata": [
-          {
-              "name": "sector",
-              "value": "Price"
-          },
-          {
-              "name": "sector",
-              "value": "Government"
-          },
-          {
-              "name": "topic",
-              "value": "Mitigation"
-          },
-          {
-              "name": "keyword",
-              "value": "Institutions"
-          },
-          {
-              "name": "topic",
-              "value": "Misc"
-          },
-          {
-              "name": "keyword",
-              "value": "Disaster Risk Management"
-          },
-          {
-              "name": "instrument",
-              "value": "Capacity building"
-          }
+        {
+          "name": "sector",
+          "value": "Price"
+        },
+        {
+          "name": "sector",
+          "value": "Government"
+        },
+        {
+          "name": "topic",
+          "value": "Mitigation"
+        },
+        {
+          "name": "keyword",
+          "value": "Institutions"
+        },
+        {
+          "name": "topic",
+          "value": "Misc"
+        },
+        {
+          "name": "keyword",
+          "value": "Disaster Risk Management"
+        },
+        {
+          "name": "instrument",
+          "value": "Capacity building"
+        }
       ]
     }
   },

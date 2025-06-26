@@ -17,10 +17,10 @@ create_env:
 
 setup: install_trunk create_env ## Sets up a local dev environment using uv
 	# Install uv & dependencies
-	uv sync
+	uv sync --all-packages --dev
 
 setup_with_pyenv: install_trunk create_env ## Sets up a local dev environment using Pyenv and uv
 	$(eval python_version=$(shell grep 'requires-python =' pyproject.toml | cut -d '"' -f 2 | sed 's/>=//')) \
 	$(eval pyenv_version=$(shell pyenv versions --bare | grep $(python_version) | head -1)) \
 	pyenv local $(pyenv_version)
-	uv sync
+	uv sync --all-packages --dev

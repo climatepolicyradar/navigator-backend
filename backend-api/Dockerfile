@@ -6,16 +6,17 @@ COPY --from=ghcr.io/astral-sh/uv:0.7.13 /uv /uvx /bin/
 # git: for downloading the db-client in the pyproject.toml
 # gcc: for compiling psycopg2
 # libpq-dev: for building psycopg2
+# g++: for numpy
 RUN apt-get update && \
-    apt-get install -y git gcc libpq-dev \
+    apt-get install -y git gcc libpq-dev g++ \
     && rm -rf /var/lib/apt/lists/*
 
 WORKDIR /app
 
-COPY pyproject.toml uv.lock ./
+COPY pyproject.toml uv.lock README.md ./
 # We may want to change this to --no-dev and have a testing stage
 # to avoid bloat, but this works for now as we use this container for testing
-RUN uv sync --frozen --no-install-project --extra dev
+RUN uv sync --frozen --no-install-project --dev
 COPY . .
 
 # Download the sentence transformer model

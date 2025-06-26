@@ -1,0 +1,6 @@
+{
+  "include": ["backend-api/app", "backend-api/tests"],
+  "venvPath": ".",
+  "venv": ".venv",
+  "pythonPath": ".venv/bin/python"
+}
