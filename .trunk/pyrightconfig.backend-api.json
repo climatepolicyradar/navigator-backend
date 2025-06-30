@@ -2,6 +2,7 @@
   "include": ["../backend-api/app", "../backend-api/tests"],
   "venvPath": "../backend-api",
   "venv": ".venv",
+  "executionEnvironments": [{ "root": "../backend-api" }],
   "comment-1": "This file is referenced in .trunk/trunk.yaml to run pyright-backend-api",
   "comment-2": "This is structured this way as backend-api has too many conflicting dependencies with other API microservices in the repo",
   "comment-3": "@related BACKEND_API_PYRIGHT_HACK"

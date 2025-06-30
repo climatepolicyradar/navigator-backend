@@ -32,6 +32,8 @@ jobs:
         with:
           python-version: "3.11"
       # @related BACKEND_API_PYRIGHT_HACK
+      - run: uv sync --frozen --no-install-project --dev
+        working-directory: backend-api
       - run: pip install pyright==1.1.361
       - name: Trunk Check
         uses: trunk-io/trunk-action@v1
@@ -128,3 +130,7 @@ jobs:
     steps:
       - name: Run Integration Tests
         run: echo TODO-TODO-TODO-TODO-TODO-TODO-TODO-TODO-TODO-TODO-TODO-TODO
+
+
+
+
