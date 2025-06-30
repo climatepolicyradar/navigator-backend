@@ -4,8 +4,6 @@ from datetime import datetime
 from typing import Optional, cast
 
 import jwt
-from app.models.custom_app import CustomAppConfigDTO
-from app.service import security
 from dateutil.relativedelta import relativedelta
 from db_client.models.dfce.family import Corpus
 from fastapi import HTTPException, Request, status
@@ -13,6 +11,9 @@ from jwt import PyJWTError
 from pydantic_core import Url
 from sqlalchemy import distinct, select
 from sqlalchemy.orm import Session
+
+from app.models.custom_app import CustomAppConfigDTO
+from app.service import security
 
 _LOGGER = logging.getLogger(__name__)
 TOKEN_SECRET_KEY = os.environ["TOKEN_SECRET_KEY"]

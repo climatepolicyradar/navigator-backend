@@ -4,12 +4,13 @@ from datetime import datetime, timezone
 from typing import Sequence, cast
 
 import pandas as pd
-from app.clients.db.session import get_db
-from app.models.document import DocumentParserInput
-from app.repository.helpers import get_query_template
 from db_client.models.dfce import DocumentStatus
 from db_client.models.dfce.family import FamilyDocument
 from fastapi import Depends
+
+from app.clients.db.session import get_db
+from app.models.document import DocumentParserInput
+from app.repository.helpers import get_query_template
 
 _LOGGER = logging.getLogger(__name__)
 

@@ -1,11 +1,6 @@
 import logging
 from typing import cast
 
-from app.clients.db.session import get_db
-from app.models.document import DocumentUpdateRequest
-from app.repository.lookups import get_family_document_by_import_id_or_slug
-from app.service.auth import get_superuser_details
-from app.telemetry_exceptions import ExceptionHandlingTelemetryRoute
 from db_client.models.dfce import DocumentStatus
 from db_client.models.document.physical_document import (
     Language,
@@ -15,6 +10,12 @@ from db_client.models.document.physical_document import (
 )
 from fastapi import APIRouter, Depends, HTTPException, Request, status
 from sqlalchemy import Column, update
+
+from app.clients.db.session import get_db
+from app.models.document import DocumentUpdateRequest
+from app.repository.lookups import get_family_document_by_import_id_or_slug
+from app.service.auth import get_superuser_details
+from app.telemetry_exceptions import ExceptionHandlingTelemetryRoute
 
 _LOGGER = logging.getLogger(__name__)
 

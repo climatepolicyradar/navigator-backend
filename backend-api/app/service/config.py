@@ -1,5 +1,9 @@
 from typing import Any, Mapping, cast
 
+from db_client.models.dfce.family import FamilyCategory
+from db_client.models.organisation import Corpus
+from sqlalchemy.orm import Session
+
 from app import config
 from app.models.config import CorpusConfig, CorpusTypeConfig
 from app.repository import corpus_type as corpus_type_repo
@@ -9,9 +13,6 @@ from app.repository.corpus import (
     get_family_count_by_category_per_corpus,
     get_total_families_per_corpus,
 )
-from db_client.models.dfce.family import FamilyCategory
-from db_client.models.organisation import Corpus
-from sqlalchemy.orm import Session
 
 
 def _get_family_stats_per_corpus(db: Session, corpus_import_id: str) -> dict[str, Any]:

@@ -4,11 +4,6 @@ import uuid
 from typing import Optional
 
 import pytest
-from app.clients.aws.client import S3Client, get_s3_client
-from app.clients.db.session import get_db
-from app.main import app
-from app.service import custom_app, security
-from app.service.custom_app import AppTokenFactory
 from cpr_sdk.search_adaptors import Vespa, VespaSearchAdapter
 from db_client import run_migrations
 from db_client.models import Base
@@ -19,6 +14,12 @@ from sqlalchemy import create_engine
 from sqlalchemy.engine import Engine
 from sqlalchemy.orm import sessionmaker
 from sqlalchemy_utils import create_database, database_exists, drop_database
+
+from app.clients.aws.client import S3Client, get_s3_client
+from app.clients.db.session import get_db
+from app.main import app
+from app.service import custom_app, security
+from app.service.custom_app import AppTokenFactory
 
 
 @pytest.fixture(scope="function")

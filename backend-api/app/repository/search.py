@@ -5,6 +5,10 @@ from logging import getLogger
 from time import perf_counter_ns
 from typing import cast
 
+from db_client.models.dfce.family import Corpus, Family, FamilyCorpus, FamilyStatus
+from db_client.models.organisation import Organisation
+from sqlalchemy.orm import Session
+
 from app.models.search import (
     BrowseArgs,
     SearchResponse,
@@ -14,9 +18,6 @@ from app.models.search import (
 )
 from app.repository.geography import get_geo_subquery
 from app.telemetry import observe
-from db_client.models.dfce.family import Corpus, Family, FamilyCorpus, FamilyStatus
-from db_client.models.organisation import Organisation
-from sqlalchemy.orm import Session
 
 _LOGGER = getLogger(__name__)
 

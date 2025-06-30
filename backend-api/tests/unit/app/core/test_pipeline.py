@@ -2,9 +2,10 @@ import json
 from typing import Dict
 from unittest.mock import patch
 
+from click.testing import CliRunner
+
 from app.repository.pipeline import generate_pipeline_ingest_input
 from app.service.pipeline import format_pipeline_ingest_input, get_db_state_content
-from click.testing import CliRunner
 from scripts.db_state_validator_click import main as db_state_validator_main
 from tests.non_search.setup_helpers import (
     setup_docs_with_two_orgs,

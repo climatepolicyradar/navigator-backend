@@ -4,8 +4,9 @@ from unittest.mock import patch
 
 import jwt
 import pytest
-from app.service.custom_app import AppTokenFactory
 from fastapi import HTTPException, status
+
+from app.service.custom_app import AppTokenFactory
 from tests.unit.app.core.custom_app.conftest import VALID_AUDIENCE
 
 

@@ -1,9 +1,10 @@
 from http.client import NOT_FOUND, OK
 from unittest.mock import Mock
 
+from db_client.models.dfce.geography import Geography, GeoStatistics
+
 from app.api.api_v1.routers.lookups import lookup_geo_stats
 from app.api.api_v1.routers.lookups.geo_stats import GeoStatsResponse
-from db_client.models.dfce.geography import Geography, GeoStatistics
 
 TEST_GEO_NAME = "test1"
 TEST_GEO_SLUG = "a"

@@ -1,5 +1,8 @@
 import logging
 
+from fastapi import APIRouter, BackgroundTasks, Depends, Request, status
+from sqlalchemy.orm import Session
+
 from app.clients.aws.client import S3Client, get_s3_client
 from app.clients.db.session import get_db
 from app.models.document import BulkIngestResult
@@ -10,8 +13,6 @@ from app.service.pipeline import (
     write_documents_to_s3,
 )
 from app.telemetry_exceptions import ExceptionHandlingTelemetryRoute
-from fastapi import APIRouter, BackgroundTasks, Depends, Request, status
-from sqlalchemy.orm import Session
 
 _LOGGER = logging.getLogger(__name__)
 

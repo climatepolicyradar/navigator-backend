@@ -1,7 +1,8 @@
 from datetime import datetime, timedelta
 
-from app.repository.download import get_whole_database_dump
 from db_client.models.dfce.family import Corpus
+
+from app.repository.download import get_whole_database_dump
 from tests.non_search.setup_helpers import setup_with_two_unpublished_docs
 
 

@@ -1,6 +1,7 @@
+from db_client.models.dfce import Geography
+
 from app.models.search import BrowseArgs, SearchResponse
 from app.repository.search import browse_rds_families
-from db_client.models.dfce import Geography
 from tests.non_search.setup_helpers import setup_with_two_docs
 
 

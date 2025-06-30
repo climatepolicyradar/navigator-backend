@@ -4,15 +4,16 @@ import logging
 import os
 from typing import Optional, Sequence
 
-from app.errors import ValidationError
-from app.models.geography import GeographyStatsDTO
-from app.repository.helpers import get_query_template
-from app.telemetry import observe
 from db_client.models.dfce.family import Family, FamilyDocument, FamilyGeography
 from db_client.models.dfce.geography import Geography
 from sqlalchemy import bindparam, text
 from sqlalchemy.orm import Query, Session
 from sqlalchemy.types import ARRAY, String
+
+from app.errors import ValidationError
+from app.models.geography import GeographyStatsDTO
+from app.repository.helpers import get_query_template
+from app.telemetry import observe
 
 _LOGGER = logging.getLogger(__file__)
 

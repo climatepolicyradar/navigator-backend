@@ -4,13 +4,6 @@ from datetime import datetime
 from typing import Mapping, Sequence, Union
 
 import pytest
-from app.service.search import (
-    SearchRequestBody,
-    _convert_filters,
-    create_vespa_search_params,
-    make_search_request,
-    process_vespa_search_response,
-)
 from cpr_sdk.models.search import Document as CprSdkDocument
 from cpr_sdk.models.search import Family as CprSdkFamily
 from cpr_sdk.models.search import Filters as CprSdkFilters
@@ -33,6 +26,14 @@ from db_client.models.dfce import (
 from db_client.models.document import PhysicalDocument
 from slugify import slugify
 from sqlalchemy.orm import Session
+
+from app.service.search import (
+    SearchRequestBody,
+    _convert_filters,
+    create_vespa_search_params,
+    make_search_request,
+    process_vespa_search_response,
+)
 
 
 @pytest.mark.search

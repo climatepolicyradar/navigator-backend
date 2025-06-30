@@ -7,13 +7,14 @@ from datetime import datetime
 from io import BytesIO
 from typing import Any, Collection, Mapping, Optional, Sequence, Union
 
+from fastapi import Depends
+
 from app.clients.aws.client import S3Client
 from app.clients.aws.s3_document import S3Document
 from app.clients.db.session import get_db
 from app.config import INGEST_TRIGGER_ROOT, PIPELINE_BUCKET
 from app.models.document import DocumentParserInput
 from app.repository.pipeline import generate_pipeline_ingest_input
-from fastapi import Depends
 
 _LOGGER = logging.getLogger(__name__)
 

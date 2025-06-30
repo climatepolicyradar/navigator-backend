@@ -5,20 +5,6 @@ import os
 from datetime import datetime
 from typing import Optional, Sequence, cast
 
-from app.models.document import (
-    CollectionOverviewResponse,
-    FamilyAndDocumentsResponse,
-    FamilyContext,
-    FamilyDocumentResponse,
-    FamilyDocumentWithContextResponse,
-    FamilyEventsResponse,
-    LinkableFamily,
-)
-from app.repository.geography import get_geo_subquery
-from app.repository.helpers import get_query_template
-from app.repository.lookups import doc_type_from_family_document_metadata
-from app.service.util import to_cdn_url
-from app.telemetry import observe
 from db_client.models.dfce.collection import Collection, CollectionFamily
 from db_client.models.dfce.family import (
     Corpus,
@@ -35,6 +21,21 @@ from db_client.models.organisation.organisation import Organisation
 from sqlalchemy import bindparam, func, text
 from sqlalchemy.orm import Session
 from sqlalchemy.types import ARRAY, String
+
+from app.models.document import (
+    CollectionOverviewResponse,
+    FamilyAndDocumentsResponse,
+    FamilyContext,
+    FamilyDocumentResponse,
+    FamilyDocumentWithContextResponse,
+    FamilyEventsResponse,
+    LinkableFamily,
+)
+from app.repository.geography import get_geo_subquery
+from app.repository.helpers import get_query_template
+from app.repository.lookups import doc_type_from_family_document_metadata
+from app.service.util import to_cdn_url
+from app.telemetry import observe
 
 _LOGGER = logging.getLogger(__file__)
 

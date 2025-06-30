@@ -10,6 +10,11 @@ import logging
 from io import BytesIO
 from typing import Annotated, Sequence, cast
 
+from cpr_sdk.search_adaptors import VespaSearchAdapter
+from fastapi import APIRouter, Body, Depends, Header, HTTPException, Request, status
+from fastapi.responses import StreamingResponse
+from starlette.responses import RedirectResponse
+
 from app.clients.aws.client import get_s3_client
 from app.clients.aws.s3_document import S3Document
 from app.clients.db.session import get_db
@@ -32,10 +37,6 @@ from app.service.search import (
 from app.service.vespa import get_vespa_search_adapter
 from app.telemetry import convert_to_loggable_string
 from app.telemetry_exceptions import ExceptionHandlingTelemetryRoute
-from cpr_sdk.search_adaptors import VespaSearchAdapter
-from fastapi import APIRouter, Body, Depends, Header, HTTPException, Request, status
-from fastapi.responses import StreamingResponse
-from starlette.responses import RedirectResponse
 
 _LOGGER = logging.getLogger(__name__)
 

@@ -2,6 +2,10 @@ import logging
 from http.client import NOT_FOUND
 from typing import Annotated, Union
 
+from cpr_sdk.models.search import SearchResponse
+from cpr_sdk.search_adaptors import VespaSearchAdapter
+from fastapi import APIRouter, Depends, Header, HTTPException, Request
+
 from app.clients.db.session import get_db
 from app.models.document import (
     FamilyAndDocumentsResponse,
@@ -16,9 +20,6 @@ from app.service.custom_app import AppTokenFactory
 from app.service.search import get_document_from_vespa, get_family_from_vespa
 from app.service.vespa import get_vespa_search_adapter
 from app.telemetry_exceptions import ExceptionHandlingTelemetryRoute
-from cpr_sdk.models.search import SearchResponse
-from cpr_sdk.search_adaptors import VespaSearchAdapter
-from fastapi import APIRouter, Depends, Header, HTTPException, Request
 
 _LOGGER = logging.getLogger(__file__)
 
