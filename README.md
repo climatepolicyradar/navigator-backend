@@ -3,9 +3,7 @@
 ## Installation
 
 ```bash
-# cd MICROSERVICE_FOLDER
-cd backend-api
-uv sync
+just install
 ```
 
 ### Prerequisites

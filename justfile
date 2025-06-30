@@ -1,4 +1,12 @@
 # dev
+install:
+    uv sync --all-packages
+    # currently backend-api dependencies are managed outside of the root repo
+    # because of sqlalchemy conflicts
+    pushd backend-api \
+        uv sync; \
+    popd
+
 aws-ecr-login:
     aws ecr get-login-password --region eu-west-1 | docker login --username AWS --password-stdin $(aws sts get-caller-identity --query 'Account' --output text).dkr.ecr.eu-west-1.amazonaws.com
 
