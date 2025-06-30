@@ -20,6 +20,3 @@ dependencies = [
 
 [dependency-groups]
 prebuild = ["duckdb>=1.3.0", "requests>=2.31.0", "pyyaml>=6.0.2"]
-
-
-
