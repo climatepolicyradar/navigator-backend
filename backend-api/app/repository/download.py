@@ -4,11 +4,12 @@ import os
 from logging import getLogger
 
 import pandas as pd
-from app.clients.db.session import get_db
-from app.repository.helpers import get_query_template
 from fastapi import Depends
 from sqlalchemy import bindparam, text
 from sqlalchemy.types import ARRAY, DATETIME, String
+
+from app.clients.db.session import get_db
+from app.repository.helpers import get_query_template
 
 _LOGGER = getLogger(__name__)
 

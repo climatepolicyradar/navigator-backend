@@ -3,6 +3,7 @@ from datetime import datetime, timedelta
 
 import jwt
 import pytest
+
 from app.service.custom_app import AppTokenFactory
 
 TOKEN_SECRET_KEY = os.environ["TOKEN_SECRET_KEY"]

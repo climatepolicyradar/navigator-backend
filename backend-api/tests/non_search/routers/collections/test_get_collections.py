@@ -3,6 +3,7 @@ from typing import Optional
 from db_client.models.dfce import Slug
 from fastapi import status
 from sqlalchemy.orm import Session
+
 from tests.non_search.setup_helpers import get_default_collections, setup_with_two_docs
 
 COLLECTIONS_ENDPOINT = "/api/v1/collections"

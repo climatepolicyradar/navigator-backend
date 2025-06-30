@@ -2,6 +2,7 @@ import time
 from unittest.mock import patch
 
 import pytest
+
 from tests.search.vespa.setup_search_tests import (
     _make_search_request,
     _populate_db_families,

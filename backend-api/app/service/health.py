@@ -1,11 +1,12 @@
 import logging
 
-from app.clients.db.session import get_db
-from app.config import DEVELOPMENT_MODE
-from app.service.vespa import get_vespa_search_adapter
 from cpr_sdk.search_adaptors import VespaSearchAdapter
 from fastapi import Depends
 from sqlalchemy.orm import Session
+
+from app.clients.db.session import get_db
+from app.config import DEVELOPMENT_MODE
+from app.service.vespa import get_vespa_search_adapter
 
 _LOGGER = logging.getLogger(__file__)
 

@@ -4,6 +4,7 @@ import pytest
 from db_client.models.dfce.family import FamilyDocument
 from fastapi import status
 from sqlalchemy import update
+
 from tests.search.vespa.setup_search_tests import (
     _create_document,
     _create_family,

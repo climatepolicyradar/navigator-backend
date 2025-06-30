@@ -1,6 +1,7 @@
 from typing import Collection, Sequence
 
 import pytest
+
 from app.service.pipeline import _flatten_maybe_tree
 
 NOT_A_TREE_1 = [{"name": 1}, {"name": 2}, {"name": 3}]

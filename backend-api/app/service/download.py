@@ -6,9 +6,10 @@ from logging import getLogger
 from typing import Optional
 
 import pandas as pd
+from fastapi import Depends
+
 from app.clients.db.session import get_db
 from app.repository.download import get_whole_database_dump
-from fastapi import Depends
 
 _LOGGER = getLogger(__name__)
 

@@ -2,11 +2,12 @@ import logging
 from http.client import NOT_FOUND
 from typing import Annotated
 
+from fastapi import APIRouter, Depends, Header, HTTPException, Request
+
 from app.clients.db.session import get_db
 from app.models.document import CollectionOverviewResponse
 from app.repository.collection import get_collection, get_id_from_slug
 from app.service.custom_app import AppTokenFactory
-from fastapi import APIRouter, Depends, Header, HTTPException, Request
 
 _LOGGER = logging.getLogger(__file__)
 
