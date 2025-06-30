@@ -4,9 +4,6 @@ import logging.config
 from contextlib import nullcontext
 from typing import Callable
 
-from app.telemetry_config import TelemetryConfig
-from app.telemetry_exceptions import install_exception_hooks
-
 # For fastapi auto-instrumentation
 from fastapi import FastAPI
 
@@ -23,6 +20,9 @@ from opentelemetry.sdk._logs.export import BatchLogRecordProcessor
 from opentelemetry.sdk.trace import TracerProvider
 from opentelemetry.sdk.trace.export import BatchSpanProcessor
 from opentelemetry.trace import NonRecordingSpan
+
+from app.telemetry_config import TelemetryConfig
+from app.telemetry_exceptions import install_exception_hooks
 
 
 def convert_to_loggable_string(obj):

@@ -1,7 +1,6 @@
 from enum import Enum
 from typing import List, Literal, Mapping, Optional, Sequence
 
-from app.models import CLIMATE_LAWS_MATCH
 from cpr_sdk.models.search import Concept
 from cpr_sdk.models.search import SearchParameters as CprSdkSearchParameters
 from db_client.models.dfce import FamilyCategory
@@ -16,6 +15,8 @@ from pydantic import (
 from pydantic.json_schema import JsonSchemaValue
 from pydantic_core.core_schema import CoreSchema
 from typing_extensions import Annotated
+
+from app.models import CLIMATE_LAWS_MATCH
 
 Coord = tuple[float, float]
 

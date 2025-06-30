@@ -3,6 +3,7 @@ from typing import Optional
 from db_client.functions.dfce_helpers import add_collections, add_document, add_families
 from fastapi import status
 from sqlalchemy.orm import Session
+
 from tests.non_search.setup_helpers import (
     get_default_collections,
     get_default_documents,

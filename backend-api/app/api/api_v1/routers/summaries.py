@@ -7,14 +7,15 @@ Like searches but with pre-defined results based on the summary context.
 import logging
 from typing import Annotated
 
+from db_client.models.dfce import FamilyCategory, Geography
+from fastapi import APIRouter, Depends, Header, HTTPException, Request, status
+
 from app.clients.db.session import get_db
 from app.models.search import BrowseArgs, GeographySummaryFamilyResponse
 from app.repository.lookups import get_country_slug_from_country_code, is_country_code
 from app.repository.search import browse_rds_families
 from app.service.custom_app import AppTokenFactory
 from app.telemetry_exceptions import ExceptionHandlingTelemetryRoute
-from db_client.models.dfce import FamilyCategory, Geography
-from fastapi import APIRouter, Depends, Header, HTTPException, Request, status
 
 _LOGGER = logging.getLogger(__name__)
 

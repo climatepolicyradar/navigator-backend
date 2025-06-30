@@ -1,8 +1,9 @@
 from unittest.mock import Mock
 
 import pytest
-from app.service.health import is_database_online, is_rds_online, is_vespa_online
 from sqlalchemy.exc import SQLAlchemyError
+
+from app.service.health import is_database_online, is_rds_online, is_vespa_online
 
 
 def test_is_rds_online_returns_true_when_db_healthy(caplog):

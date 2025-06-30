@@ -1,4 +1,5 @@
 import pytest
+
 from app.service.search import _parse_text_block_id
 
 

@@ -2,12 +2,13 @@ import logging
 from http.client import NOT_FOUND
 from typing import Any, Dict, Optional, Union
 
-from app.api.api_v1.routers.lookups.router import lookups_router
-from app.clients.db.session import get_db
 from db_client.models.dfce import Geography, GeoStatistics
 from fastapi import Depends, HTTPException
 from pydantic import BaseModel
 from sqlalchemy import exc
+
+from app.api.api_v1.routers.lookups.router import lookups_router
+from app.clients.db.session import get_db
 
 _LOGGER = logging.getLogger(__name__)
 

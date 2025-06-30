@@ -3,12 +3,13 @@
 import logging
 from typing import Optional
 
+from sqlalchemy.exc import OperationalError
+from sqlalchemy.orm import Session
+
 from app.errors import RepositoryError, ValidationError
 from app.models.geography import GeographyStatsDTO
 from app.repository.geography import count_families_per_category_in_each_geo
 from app.telemetry import observe
-from sqlalchemy.exc import OperationalError
-from sqlalchemy.orm import Session
 
 _LOGGER = logging.getLogger(__file__)
 

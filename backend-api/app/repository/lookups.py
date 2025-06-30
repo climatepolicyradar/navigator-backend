@@ -1,15 +1,16 @@
 import logging
 from typing import Optional, Sequence, cast
 
-from app.models.config import ApplicationConfig
-from app.service.config import get_corpus_type_config_for_allowed_corpora
-from app.service.pipeline import IMPORT_ID_MATCHER
-from app.service.util import tree_table_to_json
 from db_client.models.dfce import Geography, Variant
 from db_client.models.dfce.family import FamilyDocument, Slug
 from db_client.models.document.physical_document import Language
 from sqlalchemy.exc import MultipleResultsFound
 from sqlalchemy.orm import Session
+
+from app.models.config import ApplicationConfig
+from app.service.config import get_corpus_type_config_for_allowed_corpora
+from app.service.pipeline import IMPORT_ID_MATCHER
+from app.service.util import tree_table_to_json
 
 _LOGGER = logging.getLogger(__name__)
 

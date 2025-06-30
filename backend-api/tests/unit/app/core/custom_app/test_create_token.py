@@ -2,8 +2,9 @@ from datetime import datetime
 
 import jwt
 import pytest
-from app.service.custom_app import AppTokenFactory
 from dateutil.relativedelta import relativedelta
+
+from app.service.custom_app import AppTokenFactory
 from tests.unit.app.core.custom_app.conftest import ALGORITHM, TOKEN_SECRET_KEY
 
 EXPIRE_AFTER_1_YEAR = 1

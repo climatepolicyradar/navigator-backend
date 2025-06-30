@@ -1,14 +1,15 @@
 import os
 from typing import Optional
 
-from app.models.document import CollectionOverviewResponse, LinkableFamily
-from app.repository.helpers import get_query_template
 from db_client.models.dfce.collection import Collection, CollectionFamily
 from db_client.models.dfce.family import Family, Slug
 from sqlalchemy import bindparam, text
 from sqlalchemy.exc import MultipleResultsFound, NoResultFound
 from sqlalchemy.orm import Session
 from sqlalchemy.types import ARRAY, String
+
+from app.models.document import CollectionOverviewResponse, LinkableFamily
+from app.repository.helpers import get_query_template
 
 
 def get_id_from_slug(
