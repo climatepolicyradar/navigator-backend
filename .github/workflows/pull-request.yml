@@ -46,6 +46,5 @@ jobs:
       - working-directory: ${{ matrix.service }}
         run: |
           just test
-      - working-directory: ${{ matrix.service }}
-        run: |
-          just deploy latest ${{ matrix.environment }}
+      - run: |
+          just deploy ${{ matrix.service }} ${{ matrix.environment }} latest
