@@ -210,7 +210,8 @@ dependencies = [
     { name = "opentelemetry-sdk" },
     { name = "pandas" },
     { name = "passlib" },
-    { name = "psycopg2" },
+    { name = "psycopg2", marker = "sys_platform == 'linux'" },
+    { name = "psycopg2-binary", marker = "sys_platform != 'linux'" },
     { name = "pydantic-settings" },
     { name = "pyjwt" },
     { name = "python-dateutil" },
@@ -231,6 +232,8 @@ dependencies = [
 dev = [
     { name = "black" },
     { name = "moto", extra = ["s3"] },
+    { name = "psycopg2-binary" },
+    { name = "pyright" },
     { name = "pytest" },
     { name = "pytest-asyncio" },
     { name = "pytest-mock" },
@@ -261,7 +264,8 @@ requires-dist = [
     { name = "opentelemetry-sdk", specifier = ">=1.33.0" },
     { name = "pandas", specifier = ">=2.3.0" },
     { name = "passlib", specifier = ">=1.7.4" },
-    { name = "psycopg2", specifier = ">=2.9.10" },
+    { name = "psycopg2", marker = "sys_platform == 'linux'", specifier = ">=2.9.10" },
+    { name = "psycopg2-binary", marker = "sys_platform != 'linux'", specifier = ">=2.9.10" },
     { name = "pydantic-settings", specifier = ">=2.9.1" },
     { name = "pyjwt", specifier = ">=2.3.0" },
     { name = "python-dateutil", specifier = ">=2.9.0.post0" },
@@ -282,6 +286,8 @@ requires-dist = [
 dev = [
     { name = "black", specifier = ">=25.1.0" },
     { name = "moto", extras = ["s3"], specifier = ">=5.1.6" },
+    { name = "psycopg2-binary", specifier = ">=2.9.10" },
+    { name = "pyright", specifier = "==1.1.361" },
     { name = "pytest", specifier = ">=8.4.0" },
     { name = "pytest-asyncio", specifier = ">=1.0.0" },
     { name = "pytest-mock", specifier = ">=3.14.1" },
@@ -1382,6 +1388,15 @@ wheels = [
 ]
 
 [[package]]
+name = "nodeenv"
+version = "1.9.1"
+source = { registry = "https://pypi.org/simple" }
+sdist = { url = "https://files.pythonhosted.org/packages/43/16/fc88b08840de0e0a72a2f9d8c6bae36be573e475a6326ae854bcc549fc45/nodeenv-1.9.1.tar.gz", hash = "sha256:6ec12890a2dab7946721edbfbcd91f3319c6ccc9aec47be7c7e6b7011ee6645f", size = 47437 }
+wheels = [
+    { url = "https://files.pythonhosted.org/packages/d2/1d/1b658dbd2b9fa9c4c9f32accbfc0205d532c8c6194dc0f2a4c0428e7128a/nodeenv-1.9.1-py2.py3-none-any.whl", hash = "sha256:ba11c9782d29c27c70ffbdda2d7415098754709be8a7056d79a737cd901155c9", size = 22314 },
+]
+
+[[package]]
 name = "numpy"
 version = "1.26.4"
 source = { registry = "https://pypi.org/simple" }
@@ -1822,11 +1837,6 @@ name = "psycopg2"
 version = "2.9.10"
 source = { registry = "https://pypi.org/simple" }
 sdist = { url = "https://files.pythonhosted.org/packages/62/51/2007ea29e605957a17ac6357115d0c1a1b60c8c984951c19419b3474cdfd/psycopg2-2.9.10.tar.gz", hash = "sha256:12ec0b40b0273f95296233e8750441339298e6a572f7039da5b260e3c8b60e11", size = 385672 }
-wheels = [
-    { url = "https://files.pythonhosted.org/packages/3d/16/4623fad6076448df21c1a870c93a9774ad8a7b4dd1660223b59082dd8fec/psycopg2-2.9.10-cp312-cp312-win32.whl", hash = "sha256:65a63d7ab0e067e2cdb3cf266de39663203d38d6a8ed97f5ca0cb315c73fe067", size = 1025113 },
-    { url = "https://files.pythonhosted.org/packages/66/de/baed128ae0fc07460d9399d82e631ea31a1f171c0c4ae18f9808ac6759e3/psycopg2-2.9.10-cp312-cp312-win_amd64.whl", hash = "sha256:4a579d6243da40a7b3182e0430493dbd55950c493d8c68f4eec0b302f6bbf20e", size = 1163951 },
-    { url = "https://files.pythonhosted.org/packages/ae/49/a6cfc94a9c483b1fa401fbcb23aca7892f60c7269c5ffa2ac408364f80dc/psycopg2-2.9.10-cp313-cp313-win_amd64.whl", hash = "sha256:91fd603a2155da8d0cfcdbf8ab24a2d54bca72795b90d2a3ed2b6da8d979dee2", size = 2569060 },
-]
 
 [[package]]
 name = "psycopg2-binary"
@@ -2026,6 +2036,18 @@ source = { registry = "https://pypi.org/simple" }
 sdist = { url = "https://files.pythonhosted.org/packages/e7/82/28175b2414effca1cdac8dc99f76d660e7a4fb0ceefa4b4ab8f5f6742925/pyproject_hooks-1.2.0.tar.gz", hash = "sha256:1e859bd5c40fae9448642dd871adf459e5e2084186e8d2c2a79a824c970da1f8", size = 19228 }
 wheels = [
     { url = "https://files.pythonhosted.org/packages/bd/24/12818598c362d7f300f18e74db45963dbcb85150324092410c8b49405e42/pyproject_hooks-1.2.0-py3-none-any.whl", hash = "sha256:9e5c6bfa8dcc30091c74b0cf803c81fdd29d94f01992a7707bc97babb1141913", size = 10216 },
+]
+
+[[package]]
+name = "pyright"
+version = "1.1.361"
+source = { registry = "https://pypi.org/simple" }
+dependencies = [
+    { name = "nodeenv" },
+]
+sdist = { url = "https://files.pythonhosted.org/packages/42/65/21f87b9c6bc1e45583e66c155ba81d36c6685847395e604711059d7701b1/pyright-1.1.361.tar.gz", hash = "sha256:1d67933315666b05d230c85ea8fb97aaa2056e4092a13df87b7765bb9e8f1a8d", size = 17479 }
+wheels = [
+    { url = "https://files.pythonhosted.org/packages/26/84/7f04734caa42479632e15446a1d8054292c54bdeea76a86263f714bf0822/pyright-1.1.361-py3-none-any.whl", hash = "sha256:c50fc94ce92b5c958cfccbbe34142e7411d474da43d6c14a958667e35b9df7ea", size = 18224 },
 ]
 
 [[package]]
