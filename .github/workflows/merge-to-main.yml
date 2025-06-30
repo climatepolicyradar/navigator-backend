@@ -90,7 +90,6 @@ jobs:
       - uses: snok/install-poetry@v1
       - working-directory: ${{ matrix.service }}
         run: poetry install
-      - working-directory: ${{ matrix.service }}
-        run: |
-          just deploy latest ${{ matrix.environment }}
-          just deploy ${{ github.sha }} ${{ matrix.environment }}
+      - run: |
+          just deploy ${{ matrix.service }} ${{ matrix.environment }} latest
+          just deploy ${{ matrix.service }} ${{ matrix.environment }} ${{ github.sha }}

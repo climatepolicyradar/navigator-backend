@@ -6,6 +6,13 @@ WORKDIR /app
 ARG GITHUB_SHA
 ENV GITHUB_SHA=${GITHUB_SHA}
 
+# @related: ENV_ENV_VAR
+ARG ENV
+ENV ENV=${ENV}
+
+ARG SERVICE
+ENV SERVICE=${SERVICE}
+
 # Install system dependencies required for psycopg2
 RUN apt-get update && apt-get install -y \
     gcc \
@@ -13,9 +20,9 @@ RUN apt-get update && apt-get install -y \
     && rm -rf /var/lib/apt/lists/*
 
 # This is generated via the justfile with `just requirements`
-COPY ./requirements.txt /app/requirements.txt
+COPY ./$SERVICE/requirements.txt /app/requirements.txt
 RUN pip install --no-cache-dir --upgrade -r /app/requirements.txt
 
-COPY ./ /app/
+COPY ./$SERVICE /app/
 
 CMD ["fastapi", "run", "./app/main.py", "--port", "8080", "--host", "0.0.0.0"]
