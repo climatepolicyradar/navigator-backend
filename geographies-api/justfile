@@ -24,10 +24,10 @@ initial-data environment:
 
 # This is used for fully local development with localstack
 dev:
-    docker compose -f docker-compose.yml up --build
+    docker compose --profile dev up
 
 test:
-    pytest -vvv
+    docker compose --profile test up --abort-on-container-exit --exit-code-from test
 
 # build
 # TODO: this needs to be tied into a lifecycle somewhere to make sure it is run if something is added

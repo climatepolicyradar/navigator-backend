@@ -280,9 +280,11 @@ def populate_initial_countries_data():
     # Create the object
     all_countries = list_all_countries()
     all_subdivisons = get_all_subdivisions_grouped_by_country()
+    regions = get_all_regions()
     countries_data = {
         "countries": all_countries,
         "subdivisions": all_subdivisons,
+        "regions": regions,
         "version": "1.0",
         "timestamp": datetime.now(timezone.utc).isoformat(),
     }

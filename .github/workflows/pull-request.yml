@@ -8,6 +8,16 @@ permissions:
   id-token: write
   contents: read
 jobs:
+  test:
+    runs-on: ubuntu-latest
+    strategy:
+      matrix:
+        service: [families-api, geographies-api, concepts-api]
+        environment: [staging]
+    steps:
+      - working-directory: ${{ matrix.service }}
+        run: |
+          just test
   deploy:
     # a. deploys the service to staging if the pull request is (re)labelled with 'deploy:staging'
     if: github.event.label.name == 'deploy:staging'
