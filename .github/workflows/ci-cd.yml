@@ -35,6 +35,8 @@ jobs:
       # @related BACKEND_API_PYRIGHT_HACK
       - run: uv sync --frozen --no-install-project --dev
         working-directory: backend-api
+      # This is a little hack to make sure we have pyright available by the pyright-backend-api trunk definition
+      - run: pip install pyright==1.1.361
       - name: Trunk Check
         uses: trunk-io/trunk-action@v1
         with:
@@ -130,3 +132,5 @@ jobs:
     steps:
       - name: Run Integration Tests
         run: echo TODO-TODO-TODO-TODO-TODO-TODO-TODO-TODO-TODO-TODO-TODO-TODO
+
+
