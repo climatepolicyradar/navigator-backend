@@ -21,7 +21,7 @@ initial-data:
 
 
 dev:
-    poetry install
+    uv sync
     docker compose --profile dev up
 
 test:

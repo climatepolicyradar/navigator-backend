@@ -23,7 +23,7 @@ initial-data environment:
 
 # This is used for fully local development with localstack
 dev:
-    poetry install
+    uv sync
     docker compose --profile dev up
 
 test:

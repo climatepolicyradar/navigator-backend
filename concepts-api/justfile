@@ -9,7 +9,7 @@ initial-data environment:
     uv run python create_duckdb.py
 
 dev:
-    poetry install
+    uv sync
     just initial-data production
     docker compose up
 
@@ -22,7 +22,7 @@ dev-rebuild:
     docker compose up --build
 
 prebuild environment:
-    poetry install --only prebuild
+    uv sync --group prebuild
     just initial-data {{environment}}
 
 # build
