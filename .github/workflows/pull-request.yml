@@ -36,13 +36,10 @@ jobs:
           role-session-name: GitHub_to_AWS_via_FederatedOIDC_${{ matrix.environment }}_${{ matrix.service }}
           aws-region: eu-west-1
       - uses: aws-actions/amazon-ecr-login@v2
-      # we use python / poetry in some build scripts and testing
-      - uses: actions/setup-python@v5
-        with:
-          python-version: "3.12"
-      - uses: snok/install-poetry@v1
+      # we use python / uv in some build scripts and testing
+      - uses: astral-sh/setup-uv@v5
       - working-directory: ${{ matrix.service }}
-        run: poetry install
+        run: uv sync
       - working-directory: ${{ matrix.service }}
         run: |
           just test

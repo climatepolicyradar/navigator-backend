@@ -6,10 +6,10 @@ bootstrap:
 initial-data environment:
     @echo "🔄 downloading latest data from s3"
     aws s3 sync s3://cpr-{{environment}}-document-cache/concepts initial-data
-    poetry run python create_duckdb.py
+    uv run python create_duckdb.py
 
 dev:
-    poetry install
+    uv sync
     just initial-data production
     docker compose up
 
@@ -22,11 +22,10 @@ dev-rebuild:
     docker compose up --build
 
 prebuild environment:
-    poetry install --only prebuild
+    uv sync --group prebuild
     just initial-data {{environment}}
 
 # build
 # TODO: this needs to be tied into a lifecycle somewhere to make sure it is run if something is added
-# sed is used here to remove a whole bunch of gumpf you can not remove with poetry v1 
 requirements:
-    poetry export --without-hashes --without-urls --format requirements.txt | sed 's/ ;.*//'  > requirements.txt
+    uv pip freeze > requirements.txt

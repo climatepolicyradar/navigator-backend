@@ -3,7 +3,7 @@ description: A minimal AWS Python Pulumi program
 runtime:
   name: python
   options:
-    toolchain: poetry
+    toolchain: uv
 config:
   pulumi:tags:
     value:
