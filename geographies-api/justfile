@@ -31,6 +31,5 @@ test:
 
 # build
 # TODO: this needs to be tied into a lifecycle somewhere to make sure it is run if something is added
-# sed is used here to remove a whole bunch of gumpf you can not remove with poetry v1 
 requirements:
-    poetry export --without-hashes --without-urls --format requirements.txt | sed 's/ ;.*//'  > requirements.txt
+    uv pip freeze > requirements.txt

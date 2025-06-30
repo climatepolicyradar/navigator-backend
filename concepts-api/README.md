@@ -3,17 +3,17 @@
 ## Prerequisites
 
 - Python 3.11 or higher
-- Poetry (Python package manager)
+- uv (Python package manager)
 - Docker and Docker Compose
 - AWS CLI configured with appropriate credentials
 - `just` command runner
 
 ## Local Development Setup
 
-1. **Install Poetry Dependencies**
+1. **Install uv Dependencies**
 
    ```bash
-   poetry install
+   uv sync
    ```
 
 2. **Bootstrap Initial Data**

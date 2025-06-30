@@ -1,21 +1,7 @@
-[tool.poetry]
+[project]
 name = "api"
-version = "0.1.0"
-description = ""
-authors = ["CPR tech <tech@climatepolicyradar.org>"]
+version = "2.0.0"
 readme = "README.md"
-package-mode = false
+requires-python = ">=3.12"
 
-[tool.poetry.dependencies]
-python = "^3.11"
-pulumi = "^3.166.0"
-pulumi-aws = "^6.78.0"
-
-
-[build-system]
-requires = ["poetry-core"]
-build-backend = "poetry.core.masonry.api"
-
-[tool.pyright]
-venvPath = ".venv"
-include = ["infra"]
+dependencies = ["pulumi>=3.166.0,<4.0.0", "pulumi-aws>=6.78.0,<7.0.0"]

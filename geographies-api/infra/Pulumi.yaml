@@ -3,7 +3,7 @@ description: Geographies API
 runtime:
   name: python
   options:
-    toolchain: poetry
+    toolchain: uv
 config:
   pulumi:tags:
     value:
