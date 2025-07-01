@@ -852,7 +852,7 @@ def populate_data_db(db: Session, fam_specs: Sequence[FamSpec]) -> None:
                 FamilyGeography(
                     family_import_id=fam_spec.family_import_id,
                     geography_id=(
-                        db.query(Geography).filter(Geography.slug == fam_geo).one().id
+                        db.query(Geography).filter(Geography.value == fam_geo).one().id
                     ),
                 )
             )
