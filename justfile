@@ -1,4 +1,7 @@
 # dev
+dev service:
+    docker compose -f {{service}}/docker-compose.yml --profile dev up --build
+
 aws-ecr-login:
     aws ecr get-login-password --region eu-west-1 | docker login --username AWS --password-stdin $(aws sts get-caller-identity --query 'Account' --output text).dkr.ecr.eu-west-1.amazonaws.com
 

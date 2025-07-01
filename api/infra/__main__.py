@@ -64,13 +64,40 @@ api_cache_policy = aws.cloudfront.CachePolicy(
             "cookie_behavior": "none",
         },
         "headers_config": {
-            "header_behavior": "none",
+            "header_behavior": "whitelist",
+            "headers": {"items": ["Origin"]},
         },
         "query_strings_config": {
             "query_string_behavior": "all",
         },
     },
 )
+
+
+# Create the origin request policy directly with pulumi_aws
+api_cors_policy = aws.cloudfront.OriginRequestPolicy(
+    "api-cors-policy",
+    comment="API Origin Request Policy (no use of x-forwarded-host header)",
+    name="api-cors-policy",
+    headers_config={
+        "header_behavior": "whitelist",
+        "headers": {
+            "items": [
+                "Origin",
+                "Accept",
+                "Access-Control-Request-Method",
+                "Access-Control-Request-Headers",
+                "Access-Control-Allow-Origin",
+            ]
+        },
+    },
+    cookies_config={
+        "cookie_behavior": "whitelist",
+        "cookies": {"items": ["feature_flags"]},
+    },
+    query_strings_config={"query_string_behavior": "all"},
+)
+
 
 api_cloudfront_distribution = aws.cloudfront.Distribution(
     url,
@@ -143,6 +170,7 @@ api_cloudfront_distribution = aws.cloudfront.Distribution(
             "target_origin_id": "concepts-api-apprunner",
             "viewer_protocol_policy": "redirect-to-https",
             "cache_policy_id": api_cache_policy.id,
+            "origin_request_policy_id": api_cors_policy.id,
         },
         {
             "path_pattern": "/families/*",
@@ -159,6 +187,7 @@ api_cloudfront_distribution = aws.cloudfront.Distribution(
             "target_origin_id": "families-api-apprunner",
             "viewer_protocol_policy": "redirect-to-https",
             "cache_policy_id": api_cache_policy.id,
+            "origin_request_policy_id": api_cors_policy.id,
         },
         {
             "path_pattern": "/geographies/*",
@@ -175,6 +204,7 @@ api_cloudfront_distribution = aws.cloudfront.Distribution(
             "target_origin_id": "geographies-api-apprunner",
             "viewer_protocol_policy": "redirect-to-https",
             "cache_policy_id": api_cache_policy.id,
+            "origin_request_policy_id": api_cors_policy.id,
         },
     ],
     restrictions={

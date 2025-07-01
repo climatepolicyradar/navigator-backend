@@ -45,7 +45,7 @@ lint:
       commands:
         - name: lint
           output: sarif
-          run: pyright --project .trunk/pyrightconfig.backend-api.json --outputjson ${target}
+          run: pyright --project .trunk/pyrightconfig.backend-api.json --outputjson
           success_codes: [0, 1]
           read_output_from: stdout
           batch: true

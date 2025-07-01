@@ -6,4 +6,11 @@ requires-python = ">=3.12"
 dependencies = []
 
 [tool.uv.workspace]
-members = []
+members = ["api", "families-api"]
+
+[tool.pyright]
+venvPath = "."
+venv = ".venv"
+include = ["api/src", "families-api"]
+# this is needed to let pyright know we've installed api as a package
+extraPaths = ["api/src"]
