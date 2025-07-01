@@ -547,7 +547,7 @@ def test_create_browse_request_params(
         ),
         # Tests that region and country filters intersect correctly
         (
-            {"regions": ["north-america"], "countries": ["canada"]},
+            {"regions": ["north-america"], "countries": ["CAN"]},
             {"family_geographies": ["CAN"]},
         ),
         # Tests that valid ISO country codes work
