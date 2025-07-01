@@ -43,6 +43,7 @@ def test_keyword_country_filters__geographies(
             country_iso = (
                 data_db.query(Geography.value)
                 .filter(Geography.value == country_code)
+                .filter(Geography.parent_id.is_not(None))
                 .scalar()
             )
 
