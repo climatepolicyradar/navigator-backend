@@ -1,0 +1,28 @@
+{
+  "title": "National Energy and Climate Plan 2019 Draft ",
+  "slug": "national-energy-and-climate-plan-2019-draft_6002",
+  "md5_sum": "653834d6f224328bc3711f5a9d0db0a4",
+  "url": "https://www.energy-community.org/dam/jcr:a0c2b8a8-96c8-4423-993a-537cf51daa65/Draft_NECP_AL_%202021.pdf",
+  "content_type": "application/pdf",
+  "import_id": "CCLW.document.i00000002.n0000",
+  "language_variant": "Original Language",
+  "status": "PUBLISHED",
+  "metadata": {
+    "role": ["MAIN"],
+    "type": ["Plan"]
+  },
+  "languages": ["eng"],
+  "events": [
+    {
+      "import_id": "CPR.Event.13.0",
+      "title": "Published",
+      "date": "2019-12-25",
+      "type": "Passed/Approved",
+      "status": "OK",
+      "valid_metadata": {
+        "event_type": ["Passed/Approved"],
+        "datetime_event_name": ["Passed/Approved"]
+      }
+    }
+  ]
+}

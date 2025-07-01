@@ -1,0 +1,28 @@
+{
+  "title": "Decree",
+  "slug": "decree_dd6c",
+  "md5_sum": "78d5911a24f9c01b1b12671e5d1eb3e0",
+  "url": "https://www.tresor.economie.gouv.fr/Articles/80af1116-2fcd-47d0-ad1d-ea24352e6295/files/273f9026-bbc4-4fc2-ba60-f86f6fe16c1f",
+  "content_type": "application/pdf",
+  "import_id": "CCLW.document.i00000018.n0000",
+  "language_variant": "Original Language",
+  "status": "PUBLISHED",
+  "metadata": {
+    "role": ["MAIN"],
+    "type": ["Plan"]
+  },
+  "languages": ["eng"],
+  "events": [
+    {
+      "import_id": "CPR.Event.17.0",
+      "title": "Published",
+      "date": "2019-12-25",
+      "type": "Passed/Approved",
+      "status": "OK",
+      "valid_metadata": {
+        "event_type": ["Passed/Approved"],
+        "datetime_event_name": ["Passed/Approved"]
+      }
+    }
+  ]
+}

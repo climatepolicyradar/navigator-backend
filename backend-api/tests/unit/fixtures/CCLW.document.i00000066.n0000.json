@@ -1,0 +1,28 @@
+{
+  "title": "Commission Delegated Regulation (EU) 2019/807 of 13 March 2019 supplementing Directive (EU) 2018/2001 of the European Parliament and of the Council as regards the determination of high indirect land-use change-risk feedstock for which a significant expansion of the production area into land with high carbon stock is observed and the certification of low indirect land-use change-risk biofuels, bioliquids and biomass fuels",
+  "slug": "commission-delegated-regulation-eu-2019-807-of-13-march-2019-supplementing-directive-eu-2018-2001-of-the-european-parliament-and-of-the-council-as-regards-the-determination-of-high-indirect-land-use-change-risk-feedstock-for-which-a-significant-expansion-of-the-production-area-into-land-with-high-carbon-stock-is-observed-and-the-certification-of-low-indirect-land-use-change-risk-biofuels-bioliquids-and-biomass-fuels_3404",
+  "md5_sum": null,
+  "url": "https://eur-lex.europa.eu/legal-content/EN/TXT/?uri=uriserv:OJ.L_.2019.133.01.0001.01.ENG&toc=OJ:L:2019:133:TOC|en",
+  "content_type": "text/html",
+  "import_id": "CCLW.document.i00000066.n0000",
+  "language_variant": "Original Language",
+  "status": "PUBLISHED",
+  "metadata": {
+    "role": ["MAIN"],
+    "type": ["Plan"]
+  },
+  "languages": ["eng"],
+  "events": [
+    {
+      "import_id": "CPR.Event.23.0",
+      "title": "Published",
+      "date": "2019-12-25",
+      "type": "Passed/Approved",
+      "status": "OK",
+      "valid_metadata": {
+        "event_type": ["Passed/Approved"],
+        "datetime_event_name": ["Passed/Approved"]
+      }
+    }
+  ]
+}

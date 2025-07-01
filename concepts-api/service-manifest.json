@@ -1,0 +1,10 @@
+{
+  "service.name": "concepts-api",
+  "service.namespace": "data-fetching",
+  "team": "application",
+  "inputs": [
+    { "type": "s3", "name": "cpr-production-document-cache/concepts" }
+  ],
+  "outputs": [],
+  "repos": ["https://github.com/climatepolicyradar/navigator-backend"]
+}

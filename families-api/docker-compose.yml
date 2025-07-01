@@ -1,0 +1,75 @@
+services:
+  db:
+    profiles: [dev]
+    image: postgres:14.12
+    container_name: families-api-db
+    environment:
+      # we use navigator_admin to keep things simple
+      # as this is what is dumped from production RDS
+      POSTGRES_USER: navigator_admin
+      POSTGRES_PASSWORD: navigator_admin
+      POSTGRES_DB: navigator_admin
+    ports:
+      - 5432:5432
+    volumes:
+      # This will retain the data between container restarts
+      - navigator_postgres_data:/var/lib/postgresql/data
+      # This allows data to be loaded into the database on first run
+      - ./initial-data:/docker-entrypoint-initdb.d
+    healthcheck:
+      test: [CMD-SHELL, pg_isready -U navigator_admin -d navigator_admin]
+      interval: 5s
+      timeout: 5s
+      retries: 10
+  app:
+    profiles: [dev]
+    container_name: families-api-app
+    build:
+      context: .
+      dockerfile: Dockerfile
+    ports:
+      - 8080:8080
+    volumes:
+      - .:/app
+    working_dir: /app
+    environment:
+      NAVIGATOR_DATABASE_URL: postgresql://navigator_admin:navigator_admin@db:5432/navigator_admin
+    # override the command with `fastapi **dev**`
+    command: [fastapi, dev, app/main.py, --port, "8080", --host, 0.0.0.0]
+    depends_on:
+      - db
+  test-db:
+    profiles: [test]
+    image: postgres:14.12
+    container_name: families-api-test-db
+    environment:
+      # we use navigator_admin to keep things simple
+      # as this is what is dumped from production RDS
+      POSTGRES_USER: navigator_admin
+      POSTGRES_PASSWORD: navigator_admin
+      POSTGRES_DB: navigator_admin
+    ports:
+      - 5432:5432
+    healthcheck:
+      test: [CMD-SHELL, pg_isready -U navigator_admin -d navigator_admin]
+      interval: 5s
+      timeout: 5s
+      retries: 10
+  test:
+    profiles: [test]
+    container_name: families-api-test
+    build:
+      context: .
+      dockerfile: Dockerfile
+    ports:
+      - 8080:8080
+    volumes:
+      - .:/app
+    working_dir: /app
+    environment:
+      NAVIGATOR_DATABASE_URL: postgresql://navigator_admin:navigator_admin@test-db:5432/navigator_admin
+    command: [pytest, --color=yes]
+    depends_on:
+      - test-db
+volumes:
+  navigator_postgres_data: {}

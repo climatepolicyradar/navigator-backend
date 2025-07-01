@@ -1,0 +1,33 @@
+# dev
+# should be used for first run
+bootstrap:
+    just initial-data
+
+    @echo "🚀 starting db docker container to load in data"
+    docker compose up -d db
+
+    @echo "⏳ waiting for Postgres to become healthy"
+    @bash just-scripts/is-container-healthy.sh db
+
+    @echo "✅ Bootstrap complete — shutting down"
+    docker compose down
+
+initial-data:
+    # TODO: find a way to ensure we're using the latest dump
+    # TODO: we should make this environment specific when we know the locations of these files
+    # this isn't used for building the actual image though, so it's OK for now
+    @echo "🔄 downloading latest dump from s3"
+    aws s3 cp s3://cpr-production-rds/dumps/2025-04-23-navigator-production.sql ./initial-data/2025-04-23-navigator-production.sql
+
+
+dev:
+    uv sync
+    docker compose --profile dev up
+
+test:
+    docker compose --profile test up --abort-on-container-exit --exit-code-from test
+
+# build
+# TODO: this needs to be tied into a lifecycle somewhere to make sure it is run if something is added
+requirements:
+    uv pip freeze > requirements.txt

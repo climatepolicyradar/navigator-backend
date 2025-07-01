@@ -1,0 +1,28 @@
+{
+  "title": "Directive (EU) 2018/2001 of the European Parliament and of the Council of 11 December 2018 on the promotion of the use of energy from renewable sources",
+  "slug": "directive-eu-2018-2001-of-the-european-parliament-and-of-the-council-of-11-december-2018-on-the-promotion-of-the-use-of-energy-from-renewable-sources_2173",
+  "md5_sum": null,
+  "url": "https://eur-lex.europa.eu/legal-content/EN/TXT/?uri=CELEX%3A32018L2001|en",
+  "content_type": null,
+  "import_id": "CCLW.document.i00000067.n0000",
+  "language_variant": "Original Language",
+  "status": "PUBLISHED",
+  "metadata": {
+    "role": ["MAIN"],
+    "type": ["Plan"]
+  },
+  "languages": ["eng"],
+  "events": [
+    {
+      "import_id": "CPR.Event.24.0",
+      "title": "Published",
+      "date": "2019-12-25",
+      "type": "Passed/Approved",
+      "status": "OK",
+      "valid_metadata": {
+        "event_type": ["Passed/Approved"],
+        "datetime_event_name": ["Passed/Approved"]
+      }
+    }
+  ]
+}

@@ -1,0 +1,35 @@
+# AWS Local Development Setup
+aws-login profile="staging":
+    # Login to AWS SSO with the specified profile
+    @echo "🔐 Logging in to AWS SSO with profile: {{profile}}..."
+    @aws sso login --profile {{profile}} || (echo "❌ AWS SSO login failed"; exit 1)
+    @echo "✅ Successfully logged in to AWS SSO"
+
+set-aws-profile profile="staging":
+    # Set the AWS_PROFILE environment variable
+    @export AWS_PROFILE={{profile}}
+    @echo "🔄 Set AWS_PROFILE to: {{profile}}"
+    @echo "💡 Remember: This only affects the current shell session"
+
+
+# dev
+# should be used for first run
+bootstrap:
+    just initial-data
+
+initial-data environment:
+    @echo "downloading latest data from s3"
+    aws s3 sync s3://cpr-{{environment}}-document-cache/geographies initial-data
+
+# This is used for fully local development with localstack
+dev:
+    uv sync
+    docker compose --profile dev up
+
+test:
+    docker compose --profile test up --abort-on-container-exit --exit-code-from test
+
+# build
+# TODO: this needs to be tied into a lifecycle somewhere to make sure it is run if something is added
+requirements:
+    uv pip freeze > requirements.txt

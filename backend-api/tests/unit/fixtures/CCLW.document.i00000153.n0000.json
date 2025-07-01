@@ -1,0 +1,28 @@
+{
+  "title": "BCB Resolution 139/2021",
+  "slug": "bcb-resolution-139-2021_84e8",
+  "md5_sum": null,
+  "url": "https://www.bcb.gov.br/estabilidadefinanceira/exibenormativo?tipo=Resolu%C3%A7%C3%A3o%20BCB&numero=139",
+  "content_type": "text/html",
+  "import_id": "CCLW.document.i00000153.n0000",
+  "language_variant": "Original Language",
+  "status": "PUBLISHED",
+  "metadata": {
+    "role": ["MAIN"],
+    "type": ["Plan"]
+  },
+  "languages": ["eng"],
+  "events": [
+    {
+      "import_id": "CPR.Event.26.0",
+      "title": "Published",
+      "date": "2019-12-25",
+      "type": "Passed/Approved",
+      "status": "OK",
+      "valid_metadata": {
+        "event_type": ["Passed/Approved"],
+        "datetime_event_name": ["Passed/Approved"]
+      }
+    }
+  ]
+}

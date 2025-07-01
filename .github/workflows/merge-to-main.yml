@@ -1,0 +1,95 @@
+name: Merge to main
+on:
+  push:
+    branches:
+      - main
+permissions:
+  id-token: write
+  contents: read
+jobs:
+  release:
+    defaults:
+      run:
+        working-directory: backend-api
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      # build
+      - run: make build
+
+      # release
+      # most of this is taken from
+      # https://docs.github.com/en/actions/use-cases-and-examples/deploying/deploying-to-amazon-elastic-container-service#creating-the-workflow
+      - name: Configure AWS credentials (staging)
+        uses: aws-actions/configure-aws-credentials@v4
+        with:
+          role-to-assume: arn:aws:iam::${{ secrets.AWS_ACCOUNT_ID_STAGING }}:role/navigator-backend-new-github-actions
+          role-session-name: GitHub_to_AWS_via_FederatedOIDC
+          aws-region: eu-west-1
+
+      - name: Login to Amazon ECR (staging)
+        id: login-ecr-staging
+        uses: aws-actions/amazon-ecr-login@62f4f872db3836360b72999f4b87f1ff13310f3a
+
+      - name: Build, tag, and push image to Amazon ECR (staging)
+        id: build-image-staging
+        env:
+          ECR_REGISTRY: ${{ secrets.DOCKER_REGISTRY_STAGING }}
+          IMAGE_TAG: ${{ github.sha }}
+          AWS_REGION: eu-west-1
+          ECR_REPOSITORY: navigator-backend
+        run: |
+          docker tag navigator-backend $ECR_REGISTRY/$ECR_REPOSITORY:$IMAGE_TAG
+          docker push $ECR_REGISTRY/$ECR_REPOSITORY:$IMAGE_TAG
+          echo "image=$ECR_REGISTRY/$ECR_REPOSITORY:$IMAGE_TAG" >> $GITHUB_OUTPUT
+
+      - name: Configure aws credentials (production)
+        uses: aws-actions/configure-aws-credentials@v4
+        with:
+          role-to-assume: arn:aws:iam::${{ secrets.AWS_ACCOUNT_ID_PROD }}:role/navigator-backend-new-github-actions
+          role-session-name: GitHub_to_AWS_via_FederatedOIDC
+          aws-region: eu-west-1
+
+      - name: Login to Amazon ECR (production)
+        id: login-ecr-prod
+        uses: aws-actions/amazon-ecr-login@62f4f872db3836360b72999f4b87f1ff13310f3a
+
+      - name: Build, tag, and push image to Amazon ECR (production)
+        id: build-image-prod
+        env:
+          ECR_REGISTRY: ${{ secrets.DOCKER_REGISTRY_PROD }}
+          IMAGE_TAG: ${{ github.sha }}
+          AWS_REGION: eu-west-1
+          ECR_REPOSITORY: navigator-backend
+        run: |
+          docker tag navigator-backend $ECR_REGISTRY/$ECR_REPOSITORY:$IMAGE_TAG
+          docker push $ECR_REGISTRY/$ECR_REPOSITORY:$IMAGE_TAG
+          echo "image=$ECR_REGISTRY/$ECR_REPOSITORY:$IMAGE_TAG" >> $GITHUB_OUTPUT
+
+  deploy:
+    runs-on: ubuntu-latest
+    strategy:
+      matrix:
+        service: [families-api, geographies-api, concepts-api]
+        environment: [staging, production]
+    environment: ${{ matrix.environment }}
+    steps:
+      - uses: actions/checkout@v4
+      - uses: extractions/setup-just@v3
+      - uses: aws-actions/configure-aws-credentials@v4.2.0
+        with:
+          role-to-assume: arn:aws:iam::${{ secrets.AWS_ACCOUNT_ID }}:role/navigator-backend-github-actions-deploy
+          role-session-name: GitHub_to_AWS_via_FederatedOIDC_${{ matrix.environment }}_${{ matrix.service }}
+          aws-region: eu-west-1
+      - uses: aws-actions/amazon-ecr-login@v2
+      # we use python / uv in some build scripts and testing
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+      - uses: astral-sh/setup-uv@v5
+      - working-directory: ${{ matrix.service }}
+        run: uv sync
+      - run: |
+          just deploy ${{ matrix.service }} ${{ matrix.environment }} latest
+          just deploy ${{ matrix.service }} ${{ matrix.environment }} ${{ github.sha }}

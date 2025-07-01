@@ -1,0 +1,47 @@
+name: Pull request
+on:
+  pull_request:
+    # a.
+    types: [labeled] # This needs to be the American spelling, don't change it
+  workflow_dispatch: {}
+permissions:
+  id-token: write
+  contents: read
+jobs:
+  test:
+    runs-on: ubuntu-latest
+    strategy:
+      matrix:
+        service: [families-api, geographies-api, concepts-api]
+        environment: [staging]
+    steps:
+      - working-directory: ${{ matrix.service }}
+        run: |
+          just test
+  deploy:
+    # a. deploys the service to staging if the pull request is (re)labelled with 'deploy:staging'
+    if: github.event.label.name == 'deploy:staging'
+    runs-on: ubuntu-latest
+    strategy:
+      matrix:
+        service: [families-api, geographies-api, concepts-api]
+        environment: [staging]
+    environment: ${{ matrix.environment }}
+    steps:
+      - uses: actions/checkout@v4
+      - uses: extractions/setup-just@v3
+      - uses: aws-actions/configure-aws-credentials@v4.2.0
+        with:
+          role-to-assume: arn:aws:iam::${{ secrets.AWS_ACCOUNT_ID }}:role/navigator-backend-github-actions-deploy
+          role-session-name: GitHub_to_AWS_via_FederatedOIDC_${{ matrix.environment }}_${{ matrix.service }}
+          aws-region: eu-west-1
+      - uses: aws-actions/amazon-ecr-login@v2
+      # we use python / uv in some build scripts and testing
+      - uses: astral-sh/setup-uv@v5
+      - working-directory: ${{ matrix.service }}
+        run: uv sync
+      - working-directory: ${{ matrix.service }}
+        run: |
+          just test
+      - run: |
+          just deploy ${{ matrix.service }} ${{ matrix.environment }} latest

@@ -1,0 +1,28 @@
+{
+  "title": "Decree on the Types of Activities and Gases with a Greenhouse Effect ",
+  "slug": "decree-on-the-types-of-activities-and-gases-with-a-greenhouse-effect_ae49",
+  "md5_sum": null,
+  "url": "https://www.pravno-informacioni-sistem.rs/SlGlasnikPortal/eli/rep/sgrs/vlada/uredba/2022/13/1",
+  "content_type": "text/html",
+  "import_id": "CCLW.document.i00000040.n0000",
+  "language_variant": "Original Language",
+  "status": "PUBLISHED",
+  "metadata": {
+    "role": ["MAIN"],
+    "type": ["Plan"]
+  },
+  "languages": ["eng"],
+  "events": [
+    {
+      "import_id": "CPR.Event.21.0",
+      "title": "Published",
+      "date": "2019-12-25",
+      "type": "Passed/Approved",
+      "status": "OK",
+      "valid_metadata": {
+        "event_type": ["Passed/Approved"],
+        "datetime_event_name": ["Passed/Approved"]
+      }
+    }
+  ]
+}
