@@ -169,6 +169,7 @@ api_cloudfront_distribution = aws.cloudfront.Distribution(
             "target_origin_id": "concepts-api-apprunner",
             "viewer_protocol_policy": "redirect-to-https",
             "cache_policy_id": api_cache_policy.id,
+            "origin_request_policy_id": api_cors_policy.id,
         },
         {
             "path_pattern": "/families/*",
@@ -185,6 +186,7 @@ api_cloudfront_distribution = aws.cloudfront.Distribution(
             "target_origin_id": "families-api-apprunner",
             "viewer_protocol_policy": "redirect-to-https",
             "cache_policy_id": api_cache_policy.id,
+            "origin_request_policy_id": api_cors_policy.id,
         },
         {
             "path_pattern": "/geographies/*",
