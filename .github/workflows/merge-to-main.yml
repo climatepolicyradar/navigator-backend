@@ -75,7 +75,7 @@ jobs:
         environment: [staging, production]
     environment: ${{ matrix.environment }}
     env:
-      SERVICES: "families-api geographies-api concepts-api"
+      SERVICES: families-api geographies-api concepts-api
     steps:
       - uses: actions/checkout@v4
       - uses: extractions/setup-just@v3
