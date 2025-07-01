@@ -64,7 +64,8 @@ api_cache_policy = aws.cloudfront.CachePolicy(
             "cookie_behavior": "none",
         },
         "headers_config": {
-            "header_behavior": "none",
+            "header_behavior": "whitelist",
+            "headers": {"items": ["Origin"]},
         },
         "query_strings_config": {
             "query_string_behavior": "all",
