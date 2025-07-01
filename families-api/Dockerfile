@@ -1,5 +1,9 @@
 FROM python:3.12-slim
 COPY --from=ghcr.io/astral-sh/uv:latest /uv /uvx /bin/
+# most of this is effectively taken from the uv docs
+# @see: https://docs.astral.sh/uv/guides/integration/docker/
+# there are a whole tonne of optimisations we can make from those docs
+# but we're erring for simplicity for now
 
 # Add build argument for GitHub SHA
 # @related: GITHUB_SHA_ENV_VAR
