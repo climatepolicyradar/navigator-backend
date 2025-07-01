@@ -7,7 +7,7 @@ from fastapi import APIRouter, Depends, FastAPI, HTTPException
 from fastapi.middleware.cors import CORSMiddleware
 from pydantic import BaseModel, computed_field
 from pydantic_settings import BaseSettings
-from sqlalchemy import create_engine
+from sqlalchemy import create_engine, text
 from sqlalchemy.dialects.postgresql import ARRAY, JSONB
 from sqlmodel import Column, Field, Relationship, Session, SQLModel, func, select
 
@@ -498,8 +498,6 @@ class ConceptPublic(BaseModel):
 
 @router.get("/concepts")
 def read_concepts(*, session: Session = Depends(get_session)):
-    from sqlalchemy import text
-
     # Extract fields from the unnested JSONB objects
     stmt = text(
         """
