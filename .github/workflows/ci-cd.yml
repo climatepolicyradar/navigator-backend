@@ -109,11 +109,6 @@ jobs:
             tar -zxf - -C scripts/vespa-cli --strip-component=1
           echo "scripts/vespa-cli/bin" >> $GITHUB_PATH
 
-      - name: Build
-        run: |
-          docker compose build
-          docker images
-
       - name: Build docker-compose stack & Setup vespa for search
         run: make start
 
