@@ -1,6 +1,7 @@
 from datetime import datetime, timezone
 from typing import Any, Generic, Optional, TypeVar
 
+from api import log
 from fastapi import APIRouter, Depends, FastAPI, HTTPException
 from fastapi.middleware.cors import CORSMiddleware
 from pydantic import BaseModel, computed_field
@@ -489,6 +490,7 @@ class Settings(BaseSettings):
 
 
 settings = Settings()
+log.log("families-api")
 
 # TODO: Use JSON logging - https://linear.app/climate-policy-radar/issue/APP-571/add-json-logging-to-families-api
 # TODO: Add OTel - https://linear.app/climate-policy-radar/issue/APP-572/add-otel-to-families-api
