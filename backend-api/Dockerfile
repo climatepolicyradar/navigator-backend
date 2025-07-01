@@ -1,4 +1,4 @@
-FROM python:3.11-slim
+FROM python:3.12-slim
 
 # Taken from https://docs.astral.sh/uv/guides/integration/docker/#installing-uv
 COPY --from=ghcr.io/astral-sh/uv:0.7.13 /uv /uvx /bin/
