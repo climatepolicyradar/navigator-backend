@@ -1,6 +1,6 @@
 {
   "exclude": ["backend-api/*"],
-  "include": ["api/src", "families-api"],
+  "include": ["api/src", "concepts-api", "families-api"],
   "venvPath": ".",
   "venv": ".venv",
   "extraPaths": ["api/src"]
