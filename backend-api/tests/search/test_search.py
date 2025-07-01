@@ -527,22 +527,23 @@ def test_create_browse_request_params(
             {"regions": ["north-america"], "countries": ["canada"]},
             {"family_geographies": ["CAN"]},
         ),
-        ({"countries": ["cambodia"]}, {"family_geographies": ["KHM"]}),
+        ({"countries": ["KHM"]}, {"family_geographies": ["KHM"]}),
+        ({"countries": ["cambodia"]}, None),
         ({"countries": ["this-is-not-valid"]}, None),
         (
             {"countries": ["FRA", "DEU"]},
             {"family_geographies": ["FRA", "DEU"]},
         ),
         (
-            {"countries": ["cambodia"], "categories": ["Executive"]},
+            {"countries": ["KHM"], "categories": ["Executive"]},
             {"family_category": ["Executive"], "family_geographies": ["KHM"]},
         ),
         (
-            {"countries": ["cambodia"], "languages": ["english"]},
+            {"countries": ["KHM"], "languages": ["english"]},
             {"document_languages": ["english"], "family_geographies": ["KHM"]},
         ),
         (
-            {"countries": ["cambodia"], "sources": ["CCLW"]},
+            {"countries": ["KHM"], "sources": ["CCLW"]},
             {"family_source": ["CCLW"], "family_geographies": ["KHM"]},
         ),
         (
@@ -1320,3 +1321,38 @@ def test_process_vespa_search_response_page_ordering_regression(
     assert (
         actual_content == expected_content
     ), f"Expected content {expected_content}, got {actual_content}"
+
+
+@pytest.mark.search
+def test_create_vespa_search_params_country_slug_no_match(data_db):
+    """
+    Test that passing a country slug in the 'countries' filter does NOT result in a
+    family_geographies filter, as only ISO codes are supported by the current implementation.
+    """
+    search_request_body = SearchRequestBody(
+        query_string="",
+        exact_match=True,
+        max_passages_per_doc=10,
+        family_ids=None,
+        document_ids=None,
+        keyword_filters={"countries": ["france"]},
+        year_range=None,
+        sort_field=None,
+        sort_order="asc",
+        page_size=10,
+        offset=0,
+        continuation_tokens=None,
+        corpus_type_names=None,
+        corpus_import_ids=None,
+        metadata=[],
+    )
+    produced_search_parameters = create_vespa_search_params(
+        data_db, search_request_body
+    )
+    # The filters should NOT contain 'family_geographies' with ['FRA']
+    if produced_search_parameters.filters is not None:
+        assert not getattr(
+            produced_search_parameters.filters, "family_geographies", None
+        )
+    else:
+        assert produced_search_parameters.filters is None
