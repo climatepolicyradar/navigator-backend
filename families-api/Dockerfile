@@ -30,4 +30,4 @@ COPY ./api /app/api/
 WORKDIR /app
 RUN uv sync --project $SERVICE
 
-CMD ["uv", "run", "fastapi", "run", "./$SERVICE/app/main.py", "--port", "8080", "--host", "0.0.0.0"]
+CMD ["uv", "run", "fastapi", "run", "./families-api/app/main.py", "--port", "8080", "--host", "0.0.0.0"]
