@@ -41,16 +41,6 @@ def get_countries_for_region(db: Session, region_slug: str) -> Sequence[Geograph
     return db.query(Geography).filter(Geography.parent_id == geography.id).all()
 
 
-def get_countries_for_slugs(
-    db: Session,
-    country_slugs: Sequence[str],
-) -> Sequence[Geography]:
-    geographies = db.query(Geography).filter(Geography.slug.in_(country_slugs)).all()
-
-    # TODO: improve validity checking when we go beyond countries
-    return [geo for geo in geographies if geo.parent_id is not None]
-
-
 def get_countries_by_iso_codes(
     db: Session,
     country_iso_codes: Sequence[str],
