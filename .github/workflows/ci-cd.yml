@@ -32,9 +32,17 @@ jobs:
         with:
           python-version: "3.12"
       - uses: astral-sh/setup-uv@v5
-      # @related BACKEND_API_PYRIGHT_HACK
+      # Install dependencies for all Python projects in the monorepo
+      # Sync workspace members (api, families-api) from root
+      - run: uv sync --frozen --no-install-project --dev
+      # Sync standalone projects
+      - run: uv sync --frozen --no-install-project --dev
+        working-directory: geographies-api
+      - run: uv sync --frozen --no-install-project --dev
+        working-directory: concepts-api
       - run: uv sync --frozen --no-install-project --dev
         working-directory: backend-api
+      # @related BACKEND_API_PYRIGHT_HACK
       # This is a little hack to make sure we have pyright available by the pyright-backend-api trunk definition
       - run: pip install pyright==1.1.361
       - name: Trunk Check
