@@ -44,249 +44,260 @@ from app.service.search import (
         "family_ids,document_ids,metadata_filters,corpus_type_names,corpus_import_ids"
     ),
     [
+        # Tests simple exact match query with pagination offset
         (
-            "hello",
-            True,
-            None,
-            None,
-            "asc",
-            None,
-            10,
-            10,
-            10,
-            None,
-            None,
-            None,
-            None,
-            None,
-            None,
+            "hello",  # query_string
+            True,  # exact_match
+            None,  # year_range
+            None,  # sort_field
+            "asc",  # sort_order
+            None,  # keyword_filters
+            10,  # max_passages
+            10,  # page_size
+            10,  # offset
+            None,  # continuation_tokens
+            None,  # family_ids
+            None,  # document_ids
+            None,  # metadata_filters
+            None,  # corpus_type_names
+            None,  # corpus_import_ids
         ),
+        # Tests exact match with year range, title sorting, and multiple filters
         (
-            "world",
-            True,
-            (1940, 1960),
-            "title",
-            "desc",
-            {"categories": ["Legislative"], "regions": ["europe"]},
-            10,
-            10,
-            0,
-            ["ABC"],
-            None,
-            None,
-            None,
-            None,
-            None,
+            "world",  # query_string
+            True,  # exact_match
+            (1940, 1960),  # year_range
+            "title",  # sort_field
+            "desc",  # sort_order
+            {"categories": ["Legislative"], "regions": ["europe"]},  # keyword_filters
+            10,  # max_passages
+            10,  # page_size
+            0,  # offset
+            ["ABC"],  # continuation_tokens
+            None,  # family_ids
+            None,  # document_ids
+            None,  # metadata_filters
+            None,  # corpus_type_names
+            None,  # corpus_import_ids
         ),
+        # Tests semantic search with upper year bound and source filtering
         (
-            "hello",
-            False,
-            (None, 1960),
-            "date",
-            "asc",
-            {"sources": ["UNFCCC"]},
-            20,
-            10,
-            0,
-            None,
-            None,
-            None,
-            None,
-            None,
-            None,
+            "hello",  # query_string
+            False,  # exact_match
+            (None, 1960),  # year_range
+            "date",  # sort_field
+            "asc",  # sort_order
+            {"sources": ["UNFCCC"]},  # keyword_filters
+            20,  # max_passages
+            10,  # page_size
+            0,  # offset
+            None,  # continuation_tokens
+            None,  # family_ids
+            None,  # document_ids
+            None,  # metadata_filters
+            None,  # corpus_type_names
+            None,  # corpus_import_ids
         ),
+        # Tests semantic search with lower year bound and country/region filters
         (
-            "world",
-            False,
-            (1940, None),
-            None,
-            "desc",
-            {
-                "countries": ["germany", "france"],
-                "regions": ["europe"],
-            },
-            20,
-            10,
-            0,
-            ["ABC"],
-            None,
-            None,
-            None,
-            None,
-            None,
+            "world",  # query_string
+            False,  # exact_match
+            (1940, None),  # year_range
+            None,  # sort_field
+            "desc",  # sort_order
+            {"countries": ["DEU", "FRA"], "regions": ["europe"]},  # keyword_filters
+            20,  # max_passages
+            10,  # page_size
+            0,  # offset
+            ["ABC"],  # continuation_tokens
+            None,  # family_ids
+            None,  # document_ids
+            None,  # metadata_filters
+            None,  # corpus_type_names
+            None,  # corpus_import_ids
         ),
+        # Tests exact match with title-based sorting in ascending order
         (
-            "hello",
-            True,
-            None,
-            "title",
-            "asc",
-            None,
-            10,
-            10,
-            0,
-            None,
-            None,
-            None,
-            None,
-            None,
-            None,
+            "hello",  # query_string
+            True,  # exact_match
+            None,  # year_range
+            "title",  # sort_field
+            "asc",  # sort_order
+            None,  # keyword_filters
+            10,  # max_passages
+            10,  # page_size
+            0,  # offset
+            None,  # continuation_tokens
+            None,  # family_ids
+            None,  # document_ids
+            None,  # metadata_filters
+            None,  # corpus_type_names
+            None,  # corpus_import_ids
         ),
+        # Tests high passage limit with multiple continuation tokens and large page size
         (
-            "world",
-            True,
-            (1940, 1960),
-            "date",
-            "desc",
-            None,
-            50,
-            100,
-            10,
-            ["ABC", "ADDD"],
-            None,
-            None,
-            None,
-            None,
-            None,
+            "world",  # query_string
+            True,  # exact_match
+            (1940, 1960),  # year_range
+            "date",  # sort_field
+            "desc",  # sort_order
+            None,  # keyword_filters
+            50,  # max_passages
+            100,  # page_size
+            10,  # offset
+            ["ABC", "ADDD"],  # continuation_tokens
+            None,  # family_ids
+            None,  # document_ids
+            None,  # metadata_filters
+            None,  # corpus_type_names
+            None,  # corpus_import_ids
         ),
+        # Tests semantic search with language filter and specific document targeting
         (
-            "hello",
-            False,
-            (None, 1960),
-            None,
-            "asc",
-            {"languages": ["english"]},
-            500,
-            10,
-            0,
-            None,
-            None,
-            ["CCLW.document.1.0"],
-            None,
-            None,
-            None,
+            "hello",  # query_string
+            False,  # exact_match
+            (None, 1960),  # year_range
+            None,  # sort_field
+            "asc",  # sort_order
+            {"languages": ["english"]},  # keyword_filters
+            500,  # max_passages
+            10,  # page_size
+            0,  # offset
+            None,  # continuation_tokens
+            None,  # family_ids
+            ["CCLW.document.1.0"],  # document_ids
+            None,  # metadata_filters
+            None,  # corpus_type_names
+            None,  # corpus_import_ids
         ),
+        # Tests semantic search with specific family targeting and title-based sorting
         (
-            "world",
-            False,
-            (1940, None),
-            "title",
-            "desc",
-            None,
-            100,
-            10,
-            0,
-            ["ABC"],
-            ["CCLW.executive.1.0"],
-            None,
-            None,
-            None,
-            None,
+            "world",  # query_string
+            False,  # exact_match
+            (1940, None),  # year_range
+            "title",  # sort_field
+            "desc",  # sort_order
+            None,  # keyword_filters
+            100,  # max_passages
+            10,  # page_size
+            0,  # offset
+            ["ABC"],  # continuation_tokens
+            ["CCLW.executive.1.0"],  # family_ids
+            None,  # document_ids
+            None,  # metadata_filters
+            None,  # corpus_type_names
+            None,  # corpus_import_ids
         ),
+        # Tests exact match with both family and document filtering, date sorting
         (
-            "hello",
-            True,
-            None,
-            "date",
-            "asc",
-            None,
-            10,
-            15,
-            5,
-            None,
-            ["CCLW.executive.1.0"],
-            ["CCLW.document.1.0", "CCLW.document.2.0"],
-            None,
-            None,
-            None,
+            "hello",  # query_string
+            True,  # exact_match
+            None,  # year_range
+            "date",  # sort_field
+            "asc",  # sort_order
+            None,  # keyword_filters
+            10,  # max_passages
+            15,  # page_size
+            5,  # offset
+            None,  # continuation_tokens
+            ["CCLW.executive.1.0"],  # family_ids
+            ["CCLW.document.1.0", "CCLW.document.2.0"],  # document_ids
+            None,  # metadata_filters
+            None,  # corpus_type_names
+            None,  # corpus_import_ids
         ),
+        # Tests exact match with multiple families/documents and continuation tokens
         (
-            "world",
-            True,
-            (1940, 1960),
-            None,
-            "desc",
-            None,
-            10,
-            10,
-            0,
-            ["ABC"],
-            ["CCLW.executive.1.0", "CCLW.executive.2.0"],
-            ["CCLW.document.1.0", "CCLW.document.2.0"],
-            None,
-            None,
-            None,
+            "world",  # query_string
+            True,  # exact_match
+            (1940, 1960),  # year_range
+            None,  # sort_field
+            "desc",  # sort_order
+            None,  # keyword_filters
+            10,  # max_passages
+            10,  # page_size
+            0,  # offset
+            ["ABC"],  # continuation_tokens
+            ["CCLW.executive.1.0", "CCLW.executive.2.0"],  # family_ids
+            ["CCLW.document.1.0", "CCLW.document.2.0"],  # document_ids
+            None,  # metadata_filters
+            None,  # corpus_type_names
+            None,  # corpus_import_ids
         ),
+        # Tests exact match with metadata filters for sector and topic
         (
-            "world",
-            True,
-            None,
-            None,
-            "desc",
-            None,
-            10,
-            10,
-            0,
-            None,
-            None,
-            None,
+            "world",  # query_string
+            True,  # exact_match
+            None,  # year_range
+            None,  # sort_field
+            "desc",  # sort_order
+            None,  # keyword_filters
+            10,  # max_passages
+            10,  # page_size
+            0,  # offset
+            None,  # continuation_tokens
+            None,  # family_ids
+            None,  # document_ids
             [
                 {"name": "family.sector", "value": "Price"},
                 {"name": "family.topic", "value": "Mitigation"},
-            ],
-            None,
-            None,
+            ],  # metadata_filters
+            None,  # corpus_type_names
+            None,  # corpus_import_ids
         ),
+        # Tests exact match with corpus type name filtering
         (
-            "world",
-            True,
-            None,
-            None,
-            "desc",
-            None,
-            10,
-            10,
-            0,
-            None,
-            None,
-            None,
-            None,
-            ["UNFCCC Submissions", "Laws and Policies"],
-            None,
+            "world",  # query_string
+            True,  # exact_match
+            None,  # year_range
+            None,  # sort_field
+            "desc",  # sort_order
+            None,  # keyword_filters
+            10,  # max_passages
+            10,  # page_size
+            0,  # offset
+            None,  # continuation_tokens
+            None,  # family_ids
+            None,  # document_ids
+            None,  # metadata_filters
+            ["UNFCCC Submissions", "Laws and Policies"],  # corpus_type_names
+            None,  # corpus_import_ids
         ),
+        # Tests exact match with specific corpus import ID filtering
         (
-            "world",
-            True,
-            None,
-            None,
-            "desc",
-            None,
-            10,
-            10,
-            0,
-            None,
-            None,
-            None,
-            None,
-            None,
-            ["CCLW.corpus.1.0", "CCLW.corpus.2.0"],
+            "world",  # query_string
+            True,  # exact_match
+            None,  # year_range
+            None,  # sort_field
+            "desc",  # sort_order
+            None,  # keyword_filters
+            10,  # max_passages
+            10,  # page_size
+            0,  # offset
+            None,  # continuation_tokens
+            None,  # family_ids
+            None,  # document_ids
+            None,  # metadata_filters
+            None,  # corpus_type_names
+            ["CCLW.corpus.1.0", "CCLW.corpus.2.0"],  # corpus_import_ids
         ),
+        # Tests basic semantic search to validate sorting functionality
         (
-            "test_sorting",
-            False,
-            None,
-            None,
-            "asc",
-            None,
-            10,
-            10,
-            0,
-            None,
-            None,
-            None,
-            None,
-            None,
-            None,
+            "test_sorting",  # query_string
+            False,  # exact_match
+            None,  # year_range
+            None,  # sort_field
+            "asc",  # sort_order
+            None,  # keyword_filters
+            10,  # max_passages
+            10,  # page_size
+            0,  # offset
+            None,  # continuation_tokens
+            None,  # family_ids
+            None,  # document_ids
+            None,  # metadata_filters
+            None,  # corpus_type_names
+            None,  # corpus_import_ids
         ),
     ],
 )
@@ -398,6 +409,7 @@ def test_create_vespa_search_params(
         "family_ids,document_ids,metadata_filters,corpus_type_names,corpus_import_ids"
     ),
     [
+        # Tests exact match search with year range, metadata filtering, and continuation tokens
         (
             True,
             (1940, 1960),
@@ -417,13 +429,14 @@ def test_create_vespa_search_params(
             None,
             None,
         ),
+        # Tests semantic search with geographic filters, document IDs, and corpus type filtering
         (
             False,
             (1940, None),
             None,
             "desc",
             {
-                "countries": ["germany", "France"],
+                "countries": ["DEU", "fra"],
                 "regions": ["europe"],
             },
             20,
@@ -436,13 +449,14 @@ def test_create_vespa_search_params(
             ["UNFCCC Submissions", "Laws and Policies"],
             None,
         ),
+        # Tests semantic search with geographic filters, family/document IDs, and corpus import IDs
         (
             False,
             (1940, None),
             None,
             "desc",
             {
-                "countries": ["germany", "France"],
+                "countries": ["DEU", "fra"],
                 "regions": ["europe"],
             },
             20,
@@ -500,51 +514,69 @@ def test_create_browse_request_params(
 @pytest.mark.parametrize(
     "filters, expected",
     [
+        # Tests that None filters return None
         (None, None),
+        # Tests that empty filter dict returns None
         ({}, None),
+        # Tests that empty regions filter returns None
         ({"regions": {}}, None),
+        # Tests that valid category filter works even with empty regions
         (
             {"regions": {}, "categories": ["Executive"]},
             {"family_category": ["Executive"]},
         ),
+        # Tests that invalid region names return None
         ({"regions": ["this-is-not-a-region"]}, None),
+        # Tests that invalid region-country combinations return None
         (
             {
                 "regions": ["latin-america-caribbean"],
-                "countries": ["france"],
+                "countries": ["FRA"],
             },
             None,
         ),
+        # Tests that valid region maps to correct country codes
         ({"regions": ["north-america"]}, {"family_geographies": ["CAN", "USA"]}),
-        # (
-        #     {
-        #         "regions": ["north-america"],
-        #         "countries": ["not-a-country"],
-        #     },
-        #     {"family_geographies": ["CAN", "USA"]},
-        # ),  # TODO: re-enable this
+        # Tests that valid region works even with invalid country codes
         (
-            {"regions": ["north-america"], "countries": ["canada"]},
+            {
+                "regions": ["north-america"],
+                "countries": ["not-a-country"],
+            },
+            {"family_geographies": ["CAN", "USA"]},
+        ),
+        # Tests that region and country filters intersect correctly
+        (
+            {"regions": ["north-america"], "countries": ["CAN"]},
             {"family_geographies": ["CAN"]},
         ),
-        ({"countries": ["cambodia"]}, {"family_geographies": ["KHM"]}),
-        # ({"countries": ["this-is-not-valid"]}, None),  # TODO: re-enable this
+        # Tests that valid ISO country codes work
+        ({"countries": ["KHM"]}, {"family_geographies": ["KHM"]}),
+        # Tests that country names (not codes) return None
+        ({"countries": ["cambodia"]}, None),
+        # Tests that invalid country codes return None
+        ({"countries": ["this-is-not-valid"]}, None),
+        # Tests that multiple valid country codes work
         (
-            {"countries": ["france", "germany"]},
+            {"countries": ["FRA", "DEU"]},
             {"family_geographies": ["FRA", "DEU"]},
         ),
+        # Tests that country and category filters work together
         (
-            {"countries": ["cambodia"], "categories": ["Executive"]},
+            {"countries": ["KHM"], "categories": ["Executive"]},
             {"family_category": ["Executive"], "family_geographies": ["KHM"]},
         ),
+        # Tests that country and language filters work together
         (
-            {"countries": ["cambodia"], "languages": ["english"]},
+            {"countries": ["KHM"], "languages": ["english"]},
             {"document_languages": ["english"], "family_geographies": ["KHM"]},
         ),
+        # Tests that country and source filters work together
         (
-            {"countries": ["cambodia"], "sources": ["CCLW"]},
+            {"countries": ["KHM"], "sources": ["CCLW"]},
             {"family_source": ["CCLW"], "family_geographies": ["KHM"]},
         ),
+        # Tests that region and category filters work together
         (
             {
                 "regions": ["north-america"],
@@ -552,16 +584,21 @@ def test_create_browse_request_params(
             },
             {"family_category": ["Executive"], "family_geographies": ["CAN", "USA"]},
         ),
+        # Tests that region and language filters work together
         (
             {"regions": ["north-america"], "languages": ["english"]},
             {"document_languages": ["english"], "family_geographies": ["CAN", "USA"]},
         ),
+        # Tests that region and source filters work together
         (
             {"regions": ["north-america"], "sources": ["CCLW"]},
             {"family_source": ["CCLW"], "family_geographies": ["CAN", "USA"]},
         ),
+        # Tests that category filter works in isolation
         ({"categories": ["Executive"]}, {"family_category": ["Executive"]}),
+        # Tests that language filter works in isolation
         ({"languages": ["english"]}, {"document_languages": ["english"]}),
+        # Tests that source filter works in isolation
         ({"sources": ["CCLW"]}, {"family_source": ["CCLW"]}),
     ],
 )
@@ -737,8 +774,8 @@ _FAM_SPEC_0 = FamSpec(
     family_description="Family description 0 a b c d e f g h i j",
     family_category="Executive",
     family_ts="2023-12-12",
-    family_geo="france",
-    family_geos=["france"],
+    family_geo="FRA",
+    family_geos=["FRA"],
     family_metadata={"keyword": ["Spacial Planning"]},
     corpus_import_id="CCLW.corpus.i00000001.n0000",
     corpus_type_name="Intl. agreements",
@@ -754,8 +791,8 @@ _FAM_SPEC_1 = FamSpec(
     family_description="Family description 1 k l m n o p q r s t",
     family_category="Legislative",
     family_ts="2022-12-25",
-    family_geo="spain",
-    family_geos=["spain"],
+    family_geo="ESP",
+    family_geos=["ESP"],
     family_metadata={"sector": ["Urban", "Transportation"], "keyword": ["Hydrogen"]},
     corpus_import_id="CCLW.corpus.i00000001.n0000",
     corpus_type_name="Intl. agreements",
@@ -771,8 +808,8 @@ _FAM_SPEC_2 = FamSpec(
     family_description="Family description 2 u v w x y z A B C D",
     family_category="UNFCCC",
     family_ts="2019-01-01",
-    family_geo="ukraine",
-    family_geos=["ukraine"],
+    family_geo="UKR",
+    family_geos=["UKR"],
     family_metadata={"author_type": ["Non-Party"], "author": ["Anyone"]},
     corpus_import_id="CCLW.corpus.i00000001.n0000",
     corpus_type_name="Intl. agreements",
@@ -788,8 +825,8 @@ _FAM_SPEC_3 = FamSpec(
     family_description="Family description 3 E F G H I J K L M N",
     family_category="UNFCCC",
     family_ts="2010-03-14",
-    family_geo="norway",
-    family_geos=["norway"],
+    family_geo="NOR",
+    family_geos=["NOR"],
     family_metadata={"author_type": ["Party"], "author": ["Anyone Else"]},
     corpus_import_id="CCLW.corpus.i00000001.n0000",
     corpus_type_name="Intl. agreements",
@@ -815,7 +852,7 @@ def populate_data_db(db: Session, fam_specs: Sequence[FamSpec]) -> None:
                 FamilyGeography(
                     family_import_id=fam_spec.family_import_id,
                     geography_id=(
-                        db.query(Geography).filter(Geography.slug == fam_geo).one().id
+                        db.query(Geography).filter(Geography.value == fam_geo).one().id
                     ),
                 )
             )
@@ -1138,8 +1175,8 @@ def test_process_vespa_search_response_page_ordering_regression(
         family_description="Test description",
         family_category="Executive",
         family_ts="2023-12-12",
-        family_geo="france",
-        family_geos=["france"],
+        family_geo="FRA",
+        family_geos=["FRA"],
         family_metadata={"keyword": ["Test"]},
         corpus_import_id="TEST.corpus.i00000001.n0000",
         corpus_type_name="Test Type",
