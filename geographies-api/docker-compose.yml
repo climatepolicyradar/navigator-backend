@@ -3,8 +3,8 @@ services:
     profiles: [dev]
     container_name: geographies-api-app
     build:
-      context: .
-      dockerfile: Dockerfile.dev
+      context: ..
+      dockerfile: geographies-api/Dockerfile.dev
     ports:
       - 8080:8080 # @related: PORT_NUMBER
     environment:
@@ -15,11 +15,11 @@ services:
       GEOGRAPHIES_BUCKET: test-bucket
       CDN_URL: http://localstack:4566/test-bucket
     volumes:
-      - .:/app
+      - ..:/app
     working_dir: /app
     command: |
       sh -c '
-        fastapi dev app/main.py --port 8080 --host 0.0.0.0 &
+        uv run --project geographies-api fastapi dev geographies-api/app/main.py --port 8080 --host 0.0.0.0 &
         until curl -s http://localhost:8080/geographies/docs > /dev/null; do sleep 2; done;
         until aws --endpoint-url=http://localstack:4566 s3 ls s3://test-bucket; do
           echo "Waiting for geographies bucket to exist..."
@@ -33,6 +33,7 @@ services:
         condition: service_started
 
   localstack:
+    profiles: [dev, test]
     image: localstack/localstack:latest
     ports:
       - 4566:4566
@@ -50,10 +51,10 @@ services:
     profiles: [test]
     container_name: geographies-api-test
     build:
-      context: .
-      dockerfile: Dockerfile.dev
+      context: ..
+      dockerfile: geographies-api/Dockerfile.dev
     volumes:
-      - .:/app
+      - ..:/app
     working_dir: /app
     environment:
       AWS_ACCESS_KEY_ID: test
@@ -64,7 +65,7 @@ services:
       CDN_URL: http://localstack:4566/test-bucket
     command: |
       sh -c '
-        fastapi dev app/main.py --port 8080 --host 0.0.0.0 &
+        uv run --project geographies-api fastapi dev geographies-api/app/main.py --port 8080 --host 0.0.0.0 &
         until curl -s http://localhost:8080/geographies/docs > /dev/null; do sleep 2; done;
         until aws --endpoint-url=http://localstack:4566 s3 ls s3://test-bucket; do
           echo "Waiting for geographies bucket to exist..."

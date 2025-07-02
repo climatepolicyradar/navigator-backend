@@ -6,7 +6,7 @@ requires-python = ">=3.12"
 dependencies = []
 
 [tool.uv.workspace]
-members = ["api", "concepts-api", "families-api"]
+members = ["api", "concepts-api", "families-api", "geographies-api"]
 
 # this is replicated from ./.trunk/configs/pyrightconfig.json
 # this allows bypassing Trunk for quicker feedback in the IDE

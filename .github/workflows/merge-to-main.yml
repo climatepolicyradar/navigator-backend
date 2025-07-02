@@ -71,7 +71,6 @@ jobs:
     runs-on: ubuntu-latest
     strategy:
       matrix:
-        service: [families-api, geographies-api, concepts-api]
         environment: [staging, production]
     environment: ${{ matrix.environment }}
     env:
@@ -82,7 +81,7 @@ jobs:
       - uses: aws-actions/configure-aws-credentials@v4.2.0
         with:
           role-to-assume: arn:aws:iam::${{ secrets.AWS_ACCOUNT_ID }}:role/navigator-backend-github-actions-deploy
-          role-session-name: GitHub_to_AWS_via_FederatedOIDC_${{ matrix.environment }}_${{ matrix.service }}
+          role-session-name: GitHub_to_AWS_via_FederatedOIDC_${{ matrix.environment }}
           aws-region: eu-west-1
       - uses: aws-actions/amazon-ecr-login@v2
       # we use python / uv in some build scripts and testing
@@ -90,8 +89,7 @@ jobs:
         with:
           python-version: "3.12"
       - uses: astral-sh/setup-uv@v5
-      - working-directory: ${{ matrix.service }}
-        run: uv sync
+      - run: uv sync --all-packages
       - run: |
           for service in $SERVICES; do
             just deploy $service ${{ matrix.environment }} latest
