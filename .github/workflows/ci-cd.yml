@@ -40,13 +40,11 @@ jobs:
       # Sync standalone projects
       - run: uv sync --frozen --no-install-project --dev
         working-directory: geographies-api
-      # Set up backend-api virtual environment for its separate pyright config
-      - run: uv sync --frozen --dev
+      - run: uv sync --frozen --no-install-project --dev
         working-directory: backend-api
-      # Install pyright in both environments
-      - run: uv pip install pyright==1.1.361
-      - run: uv pip install pyright==1.1.361
-        working-directory: backend-api
+      # @related BACKEND_API_PYRIGHT_HACK
+      # This is a little hack to make sure we have pyright available by the pyright-backend-api trunk definition
+      - run: pip install pyright==1.1.361
       - name: Trunk Check
         uses: trunk-io/trunk-action@v1
         with:
