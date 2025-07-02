@@ -3,5 +3,25 @@
   "include": ["api/src", "concepts-api", "families-api"],
   "venvPath": ".",
   "venv": ".venv",
-  "extraPaths": ["api/src"]
+  "extraPaths": ["api/src", "concepts-api", "families-api"],
+  "executionEnvironments": [
+    {
+      "root": "api/src",
+      "pythonVersion": "3.12",
+      "pythonPlatform": "Linux",
+      "extraPaths": ["../concepts-api", "../families-api"]
+    },
+    {
+      "root": "concepts-api",
+      "pythonVersion": "3.12",
+      "pythonPlatform": "Linux",
+      "extraPaths": ["../api/src", "../families-api"]
+    },
+    {
+      "root": "families-api",
+      "pythonVersion": "3.12",
+      "pythonPlatform": "Linux",
+      "extraPaths": ["../api/src", "../concepts-api"]
+    }
+  ]
 }
