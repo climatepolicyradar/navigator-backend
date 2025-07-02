@@ -8,13 +8,14 @@ dependencies = []
 [tool.uv.workspace]
 members = ["api", "concepts-api", "families-api"]
 
+# this is replicated from ./.trunk/configs/pyrightconfig.json
+# this allows bypassing Trunk for quicker feedback in the IDE
+# any changes to pyrightconfig should be made there and replicated here
 [tool.pyright]
 venvPath = "."
 venv = ".venv"
-include = ["api/src", "concepts-api", "families-api/app"]
+include = ["api/src", "concepts-api", "families-api"]
 # Include all workspace packages for proper import resolution
-extraPaths = ["api/src", "concepts-api", "families-api/app"]
-# Enable workspace mode for better monorepo support
-workspaceMode = "auto"
+extraPaths = ["api/src", "concepts-api", "families-api"]
 # Ensure we can find all dependencies in the uv workspace
 pythonVersion = "3.12"
