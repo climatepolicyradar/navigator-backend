@@ -12,4 +12,8 @@ dependencies = [
   "pulumi>=3.166.0,<4.0.0",
   "pulumi-aws>=6.78.0,<7.0.0",
   "pytest>=8.4.0,<9.0.0",
+  "api",
 ]
+
+[tool.uv.sources]
+api = { workspace = true }

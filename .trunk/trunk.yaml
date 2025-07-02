@@ -42,10 +42,12 @@ lint:
     # @related BACKEND_API_PYRIGHT_HACK
     - name: pyright-backend-api
       files: [python]
+      tools: [pyright]
+      known_good_version: 1.1.361
       commands:
         - name: lint
           output: sarif
-          run: pyright --project .trunk/pyrightconfig.backend-api.json --outputjson ${target}
+          run: pyright --project .trunk/pyrightconfig.backend-api.json --outputjson
           success_codes: [0, 1]
           read_output_from: stdout
           batch: true
@@ -53,6 +55,7 @@ lint:
           parser:
             runtime: python
             run: python3 .trunk/pyright_to_sarif.py
+
     - name: bandit
       direct_configs: [bandit.yaml]
       commands:

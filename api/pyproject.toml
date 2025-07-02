@@ -5,3 +5,7 @@ readme = "README.md"
 requires-python = ">=3.12"
 
 dependencies = ["pulumi>=3.166.0,<4.0.0", "pulumi-aws>=6.78.0,<7.0.0"]
+
+[build-system]
+requires = ["hatchling"]
+build-backend = "hatchling.build"

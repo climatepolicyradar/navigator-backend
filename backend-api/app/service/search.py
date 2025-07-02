@@ -47,10 +47,8 @@ from app.models.search import (
     SearchResponseFamilyDocument,
 )
 from app.repository.lookups import (
-    get_geographies_as_iso_codes_with_fallback,  # TODO: remove this once frontend is updated to use ISO codes in favour of get_countries_by_iso_codes
-)
-from app.repository.lookups import (
     doc_type_from_family_document_metadata,
+    get_countries_by_iso_codes,
     get_countries_for_region,
 )
 from app.service.util import to_cdn_url
@@ -374,8 +372,7 @@ def _convert_filters(
                 )
         elif field == FilterField.COUNTRY:
             countries.extend(
-                # TODO: remove this once frontend is updated to use ISO codes in favour of get_countries_by_iso_codes
-                get_geographies_as_iso_codes_with_fallback(db, values)
+                [country.value for country in get_countries_by_iso_codes(db, values)]
             )
         else:
             new_values = values

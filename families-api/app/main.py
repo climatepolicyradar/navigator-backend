@@ -1,11 +1,13 @@
+import json
 from datetime import datetime, timezone
 from typing import Any, Generic, Optional, TypeVar
 
+from api import log
 from fastapi import APIRouter, Depends, FastAPI, HTTPException
 from fastapi.middleware.cors import CORSMiddleware
 from pydantic import BaseModel, computed_field
 from pydantic_settings import BaseSettings
-from sqlalchemy import create_engine
+from sqlalchemy import create_engine, text
 from sqlalchemy.dialects.postgresql import ARRAY, JSONB
 from sqlmodel import Column, Field, Relationship, Session, SQLModel, func, select
 
@@ -338,75 +340,6 @@ class FamilyPublic(FamilyBase):
         return self.unparsed_metadata.value if self.unparsed_metadata else {}
 
 
-# TODO: implement these models for the frontend
-# export type TFamilyPage = {
-#   organisation: string; // Done
-#   title: string; // Done
-#   summary: string; // Done
-#   geographies: string[]; // Done
-#   import_id: string; // Done
-#   slug: string; // Done
-#   corpus_id: string; // Done
-#   published_date: string | null; // Done
-#   last_updated_date: string | null; // Done
-#   category: TCategory; // Done
-#   corpus_type_name: TCorpusTypeSubCategory; // Done
-#   metadata: TFamilyMetadata; // Done
-#   events: TEvent[]; // Done
-#   documents: TDocumentPage[]; // Done
-#   collections: TCollection[];
-# };
-
-# export type TDocumentPage = {
-#   import_id: string;
-#   variant?: string | null;
-#   slug: string;
-#   title: string;
-#   md5_sum?: string | null;
-#   cdn_object?: string | null;
-#   source_url: string;
-#   content_type: TDocumentContentType;
-#   language: string;
-#   languages: string[];
-#   document_type: string | null;
-#   document_role: string;
-# };
-
-# export type TCollection = {
-#   import_id: string;
-#   title: string;
-#   description: string;
-#   families: TCollectionFamily[];
-# };
-
-# export type TCollectionFamily = {
-#   description: string;
-#   slug: string;
-#   title: string;
-# };
-
-# export type TFamilyMetadata = {
-#   topic?: string[];
-#   hazard?: string[];
-#   sector?: string[];
-#   keyword?: string[];
-#   framework?: string[];
-#   instrument?: string[];
-#   author_type?: string[];
-#   author?: string[];
-#   document_type?: string;
-# };
-
-# export type TEvent = {
-#   title: string;
-#   date: string;
-#   event_type: string;
-#   status: string;
-# };
-
-# export type TCategory = "Legislative" | "Executive" | "Litigation" | "Policy" | "Law" | "UNFCCC" | "MCF" | "Reports";
-
-
 class FamilyDocumentBase(SQLModel):
     import_id: str = Field(primary_key=True)
     variant_name: str | None
@@ -489,6 +422,7 @@ class Settings(BaseSettings):
 
 
 settings = Settings()
+log.log("families-api")
 
 # TODO: Use JSON logging - https://linear.app/climate-policy-radar/issue/APP-571/add-json-logging-to-families-api
 # TODO: Add OTel - https://linear.app/climate-policy-radar/issue/APP-572/add-otel-to-families-api
@@ -550,6 +484,60 @@ def read_documents(*, session: Session = Depends(get_session)):
         total=len(data),
         page=1,
         page_size=len(data),
+    )
+
+
+class ConceptPublic(BaseModel):
+    id: str
+    relation: str
+    preferred_label: str
+    type: str
+    ids: list[str]
+    subconcept_of_labels: list[str]
+
+
+@router.get("/concepts")
+def read_concepts(*, session: Session = Depends(get_session)):
+    # Extract fields from the unnested JSONB objects
+    stmt = text(
+        """
+      SELECT DISTINCT ON (concept->>'relation', concept->>'preferred_label')
+          concept->>'relation' as relation,
+          concept->>'preferred_label' as preferred_label,
+          concept->>'id' as id,
+          concept->>'ids' as ids,
+          concept->>'type' as type,
+          concept->>'subconcept_of_labels' as subconcept_of_labels
+      FROM family, unnest(concepts) as concept
+      WHERE concept->>'relation' IS NOT NULL 
+      AND concept->>'preferred_label' IS NOT NULL
+      ORDER BY concept->>'relation', concept->>'preferred_label'
+    """
+    )
+
+    results = session.connection().execute(stmt).all()
+
+    unique_concepts = [
+        ConceptPublic.model_validate(
+            {
+                **row._asdict(),
+                # This is needed to unpack the JSON arrays into Python lists
+                "ids": json.loads(row.ids) if row.ids else [],
+                "subconcept_of_labels": (
+                    json.loads(row.subconcept_of_labels)
+                    if row.subconcept_of_labels
+                    else []
+                ),
+            }
+        )
+        for row in results
+    ]
+
+    return APIListResponse(
+        data=unique_concepts,
+        total=len(unique_concepts),
+        page=1,
+        page_size=len(unique_concepts),
     )
 
 
