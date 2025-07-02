@@ -4,6 +4,7 @@ import pytest
 from db_client.models.dfce import Geography
 from fastapi import status
 
+from app.repository.lookups import get_country_slug_from_country_code
 from tests.search.vespa.setup_search_tests import (
     VESPA_FIXTURE_COUNT,
     _make_search_request,
@@ -40,16 +41,11 @@ def test_keyword_country_filters__geographies(
 
     for family in families:
         for country_code in family["family_geographies"]:
-            country_iso = (
-                data_db.query(Geography.value)
-                .filter(Geography.value == country_code)
-                .filter(Geography.parent_id.is_not(None))
-                .scalar()
-            )
+            country_slug = get_country_slug_from_country_code(data_db, country_code)
 
             params = {
                 **base_params,
-                **{"keyword_filters": {"countries": [country_iso]}},
+                **{"keyword_filters": {"countries": [country_slug]}},
             }
             body_with_filters = _make_search_request(
                 data_client, valid_token, params=params

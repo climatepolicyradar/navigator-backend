@@ -7,6 +7,7 @@ from db_client.models.document.physical_document import Language
 from sqlalchemy.exc import MultipleResultsFound
 from sqlalchemy.orm import Session
 
+from app.errors import ValidationError
 from app.models.config import ApplicationConfig
 from app.service.config import get_corpus_type_config_for_allowed_corpora
 from app.service.pipeline import IMPORT_ID_MATCHER
@@ -41,6 +42,16 @@ def get_countries_for_region(db: Session, region_slug: str) -> Sequence[Geograph
     return db.query(Geography).filter(Geography.parent_id == geography.id).all()
 
 
+def get_countries_for_slugs(
+    db: Session,
+    country_slugs: Sequence[str],
+) -> Sequence[Geography]:
+    geographies = db.query(Geography).filter(Geography.slug.in_(country_slugs)).all()
+
+    # TODO: improve validity checking when we go beyond countries
+    return [geo for geo in geographies if geo.parent_id is not None]
+
+
 def get_countries_by_iso_codes(
     db: Session,
     country_iso_codes: Sequence[str],
@@ -56,6 +67,75 @@ def get_countries_by_iso_codes(
         db.query(Geography).filter(Geography.value.in_(country_iso_codes)).all()
     )
     return [geo for geo in geographies if geo.parent_id is not None]
+
+
+def get_geographies_as_iso_codes_with_fallback(
+    db: Session,
+    geography_identifiers: Sequence[str],
+) -> list[str]:
+    """Temp function to handle mixed lists of ISO codes and slugs.
+
+    Retrieve geographies by trying ISO codes first, then falling back to slugs.
+    Handles mixed lists of ISO codes and slugs.
+
+    :param Session db: Database session.
+    :param Sequence[str] geography_identifiers: Sequence of geography identifiers
+        (could be ISO codes or slugs).
+    :return list[str]: List of ISO codes for valid countries.
+    """
+    if not geography_identifiers:
+        return []
+
+    found_geographies = []
+    remaining_identifiers = list(geography_identifiers)
+
+    # First attempt: try to find by ISO codes (Geography.value)
+    iso_geographies = (
+        db.query(Geography).filter(Geography.value.in_(geography_identifiers)).all()
+    )
+
+    if iso_geographies:
+        # Found some by ISO codes
+        iso_found_values = [geo.value for geo in iso_geographies]
+        found_geographies.extend(
+            [geo for geo in iso_geographies if geo.parent_id is not None]
+        )
+
+        # Remove found ISO codes from remaining identifiers
+        remaining_identifiers = [
+            id for id in geography_identifiers if id not in iso_found_values
+        ]
+
+    # Second attempt: try remaining identifiers as slugs (Geography.slug)
+    if remaining_identifiers:
+        slug_geographies = (
+            db.query(Geography).filter(Geography.slug.in_(remaining_identifiers)).all()
+        )
+
+        if slug_geographies:
+            found_geographies.extend(
+                [geo for geo in slug_geographies if geo.parent_id is not None]
+            )
+        else:
+            _LOGGER.warning(
+                f"No geographies found by slugs for: {remaining_identifiers}"
+            )
+
+    # Fail on unfound identifiers
+    all_found_values = [geo.value for geo in found_geographies]
+    all_found_slugs = [geo.slug for geo in found_geographies]
+    unfound = [
+        geo_id
+        for geo_id in geography_identifiers
+        if geo_id not in all_found_values and geo_id not in all_found_slugs
+    ]
+    if unfound:
+        _LOGGER.error(f"Could not find geographies for identifiers: {unfound}")
+        raise ValidationError(
+            f"Could not find geographies for the following identifiers: {unfound}"
+        )
+
+    return [geo.value for geo in found_geographies]
 
 
 def get_country_by_slug(db: Session, country_slug: str) -> Optional[Geography]:
