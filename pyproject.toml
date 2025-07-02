@@ -6,11 +6,15 @@ requires-python = ">=3.12"
 dependencies = []
 
 [tool.uv.workspace]
-members = ["api", "families-api"]
+members = ["api", "concepts-api", "families-api"]
 
 [tool.pyright]
 venvPath = "."
 venv = ".venv"
-include = ["api/src", "families-api"]
-# this is needed to let pyright know we've installed api as a package
-extraPaths = ["api/src"]
+include = ["api/src", "concepts-api", "families-api/app"]
+# Include all workspace packages for proper import resolution
+extraPaths = ["api/src", "concepts-api", "families-api/app"]
+# Enable workspace mode for better monorepo support
+workspaceMode = "auto"
+# Ensure we can find all dependencies in the uv workspace
+pythonVersion = "3.12"
