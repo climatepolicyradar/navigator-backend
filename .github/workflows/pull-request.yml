@@ -37,7 +37,7 @@ jobs:
           aws-region: eu-west-1
       - uses: aws-actions/amazon-ecr-login@v2
       # we use python / uv in some build scripts and testing
-      - uses: astral-sh/setup-uv@v5
+      - uses: astral-sh/setup-uv@v6
       - working-directory: ${{ matrix.service }}
         run: uv sync
       - working-directory: ${{ matrix.service }}
