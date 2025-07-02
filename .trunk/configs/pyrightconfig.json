@@ -1,7 +1,8 @@
 {
   "exclude": ["backend-api/*"],
-  "include": ["api/src", "concepts-api", "families-api"],
+  "include": ["api/src", "concepts-api", "families-api", "geographies-api"],
   "venvPath": ".",
   "venv": ".venv",
-  "extraPaths": ["api/src", "concepts-api", "families-api"]
+  "extraPaths": ["api/src", "concepts-api", "families-api", "geographies-api"],
+  "pythonVersion": "3.12"
 }

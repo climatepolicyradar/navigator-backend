@@ -6,7 +6,7 @@ requires-python = ">=3.12"
 dependencies = []
 
 [tool.uv.workspace]
-members = ["api", "concepts-api", "families-api"]
+members = ["api", "concepts-api", "families-api", "geographies-api"]
 
 [tool.pyright]
 venvPath = "."

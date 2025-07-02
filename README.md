@@ -15,6 +15,15 @@ uv sync
 - [just](https://github.com/casey/just?tab=readme-ov-file#installation)
 - [uv](<[https://](https://docs.astral.sh/uv/)>)
 
+## Development
+
+e.g.
+
+```bash
+# just dev {{service}}
+just dev concepts-api
+```
+
 ## Deployment
 
 e.g.
