@@ -33,13 +33,13 @@ jobs:
           python-version: "3.12"
       - uses: astral-sh/setup-uv@v5
       # Install dependencies for all Python projects in the monorepo
-      # Sync workspace members (api, families-api) from root
-      - run: uv sync --frozen --no-install-project --dev
+      # Sync workspace members (api, concepts-api, families-api) from root
+      - run: uv sync --frozen --dev
+      # Install workspace projects in editable mode for pyright
+      - run: uv pip install -e api -e concepts-api -e families-api
       # Sync standalone projects
       - run: uv sync --frozen --no-install-project --dev
         working-directory: geographies-api
-      - run: uv sync --frozen --no-install-project --dev
-        working-directory: concepts-api
       - run: uv sync --frozen --no-install-project --dev
         working-directory: backend-api
       # @related BACKEND_API_PYRIGHT_HACK
