@@ -232,7 +232,6 @@ dependencies = [
 dev = [
     { name = "black" },
     { name = "moto", extra = ["s3"] },
-    { name = "psycopg2-binary" },
     { name = "pyright" },
     { name = "pytest" },
     { name = "pytest-asyncio" },
@@ -286,7 +285,6 @@ requires-dist = [
 dev = [
     { name = "black", specifier = ">=25.1.0" },
     { name = "moto", extras = ["s3"], specifier = ">=5.1.6" },
-    { name = "psycopg2-binary", specifier = ">=2.9.10" },
     { name = "pyright", specifier = "==1.1.361" },
     { name = "pytest", specifier = ">=8.4.0" },
     { name = "pytest-asyncio", specifier = ">=1.0.0" },
