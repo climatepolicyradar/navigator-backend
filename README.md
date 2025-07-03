@@ -36,7 +36,7 @@ just deploy concepts-api production latest
 ## uv workspaces
 
 This repo makes use of [uv workspaces](https://docs.astral.sh/uv/concepts/projects/workspaces/)
-which are analgous to our [microservices](https://martinfowler.com/articles/microservices.html).
+which are analogous to our [microservices](https://martinfowler.com/articles/microservices.html).
 
 ### adding a workspace / microservice
 
