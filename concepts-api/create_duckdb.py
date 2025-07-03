@@ -21,7 +21,7 @@ def fetch_classifier_specs_file() -> str:
     branch = "main"
 
     classifier_file_name = "prod.yaml"
-    if os.getenv("Environment") == "staging":
+    if os.getenv("ENV") == "staging":
         classifier_file_name = "staging.yaml"
 
     path = f"flows/classifier_specs/{classifier_file_name}"

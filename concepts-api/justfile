@@ -6,7 +6,8 @@ bootstrap:
 initial-data environment:
     @echo "🔄 downloading latest data from s3"
     aws s3 sync s3://cpr-{{environment}}-document-cache/concepts initial-data
-    uv run python create_duckdb.py
+    # ENV is used in create_duckdb to calculate which classifier_spec file to use
+    ENV={{environment}} uv run python create_duckdb.py
 
 dev:
     uv sync
