@@ -32,3 +32,14 @@ e.g.
 # just deploy {{service}} {{environment}} {{tag}}
 just deploy concepts-api production latest
 ```
+
+## uv workspaces
+
+This repo makes use of [uv workspaces](https://docs.astral.sh/uv/concepts/projects/workspaces/)
+which are analgous to our [microservices](https://martinfowler.com/articles/microservices.html).
+
+### adding a workspace / microservice
+
+- add your service to the [tool.uv.workspace.members in pyproject.toml](./pyproject.toml#L8)
+- add the service to the relevant [.github/workflows](./.github/workflows/)
+- add it to the [.trunk/configs/pyrightconfig.json](.trunk/configs/pyrightconfig.json)
