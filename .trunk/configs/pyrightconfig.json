@@ -1,4 +1,6 @@
 {
+  "comment-1": "this is replicated to ./pyrightconfig.json",
+  "comment-2": "if you make any changes here, please keep them updated there",
   "exclude": ["backend-api/*"],
   "include": ["api/src", "concepts-api", "families-api", "geographies-api"],
   "venvPath": ".",
