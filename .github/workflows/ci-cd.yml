@@ -64,7 +64,7 @@ jobs:
         run: cp .env.example .env
 
       - name: Get python Container
-        run: docker pull python:3.11
+        run: docker pull python:3.12
 
       - name: Build
         run: |
@@ -106,7 +106,7 @@ jobs:
         run: cp .env.example .env
 
       - name: Get python Container
-        run: docker pull python:3.11
+        run: docker pull python:3.12
 
       - name: Install latest Vespa CLI
         env:
