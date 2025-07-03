@@ -14,7 +14,3 @@ venv = ".venv"
 include = ["api/src", "concepts-api", "families-api/app"]
 # Include all workspace packages for proper import resolution
 extraPaths = ["api/src", "concepts-api", "families-api/app"]
-# Enable workspace mode for better monorepo support
-workspaceMode = "auto"
-# Ensure we can find all dependencies in the uv workspace
-pythonVersion = "3.12"
