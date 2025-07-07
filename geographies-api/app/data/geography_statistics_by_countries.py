@@ -1,5 +1,6 @@
 # Geography statistics by countries
 # Generated automatically through extraction from the rds database
+# PR : https://github.com/climatepolicyradar/navigator-backend/pull/602
 
 geography_statistics_by_countries = {
     "AFG": {
