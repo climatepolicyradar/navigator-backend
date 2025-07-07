@@ -1,5 +1,3 @@
-import json
-
 import pulumi
 import pulumi_aws as aws
 
@@ -237,57 +235,66 @@ api_alias_dns_record = aws.route53.Record(
 # deployment
 navigator_backend_github_actions_deploy = aws.iam.Role(
     "navigator-backend-github-actions-deploy",
-    assume_role_policy=json.dumps(
-        {
-            "Statement": [
-                {
-                    "Action": "sts:AssumeRoleWithWebIdentity",
-                    "Condition": {
-                        "StringEquals": {
-                            "token.actions.githubusercontent.com:aud": "sts.amazonaws.com"
-                        },
-                        "StringLike": {
-                            "token.actions.githubusercontent.com:sub": "repo:climatepolicyradar/*"
-                        },
-                    },
-                    "Effect": "Allow",
-                    "Principal": {
-                        "Federated": f"arn:aws:iam::{account_id}:oidc-provider/token.actions.githubusercontent.com"
-                    },
-                }
-            ],
-            "Version": "2012-10-17",
-        }
-    ),
+    assume_role_policy=aws.iam.get_policy_document(
+        statements=[
+            aws.iam.GetPolicyDocumentStatementArgs(
+                actions=["sts:AssumeRoleWithWebIdentity"],
+                conditions=[
+                    aws.iam.GetPolicyDocumentStatementConditionArgs(
+                        test="StringEquals",
+                        variable="token.actions.githubusercontent.com:aud",
+                        values=["sts.amazonaws.com"],
+                    ),
+                    aws.iam.GetPolicyDocumentStatementConditionArgs(
+                        test="StringLike",
+                        variable="token.actions.githubusercontent.com:sub",
+                        values=["repo:climatepolicyradar/*"],
+                    ),
+                ],
+                effect="Allow",
+                principals=[
+                    aws.iam.GetPolicyDocumentStatementPrincipalArgs(
+                        type="Federated",
+                        identifiers=[
+                            f"arn:aws:iam::{account_id}:oidc-provider/token.actions.githubusercontent.com"
+                        ],
+                    )
+                ],
+            )
+        ]
+    ).json,
     inline_policies=[
-        {
-            "name": "navigator-backend-github-actions-deploy",
-            "policy": json.dumps(
-                {
-                    "Version": "2012-10-17",
-                    "Statement": [
-                        {
-                            "Action": [
-                                "ecr:*",
-                            ],
-                            "Effect": "Allow",
-                            "Resource": "*",
-                        },
-                        {
-                            "Action": ["s3:ListBucket"],
-                            "Effect": "Allow",
-                            "Resource": f"arn:aws:s3:::cpr-{stack}-document-cache",
-                            "Condition": {"StringLike": {"s3:prefix": ["concepts/*"]}},
-                        },
-                        {
-                            "Action": ["s3:GetObject"],
-                            "Effect": "Allow",
-                            "Resource": f"arn:aws:s3:::cpr-{stack}-document-cache/concepts/*",
-                        },
-                    ],
-                }
-            ),
-        }
+        aws.iam.RoleInlinePolicyArgs(
+            name="navigator-backend-github-actions-deploy",
+            policy=aws.iam.get_policy_document(
+                statements=[
+                    aws.iam.GetPolicyDocumentStatementArgs(
+                        actions=["ecr:*"],
+                        effect="Allow",
+                        resources=["*"],
+                    ),
+                    aws.iam.GetPolicyDocumentStatementArgs(
+                        actions=["s3:ListBucket"],
+                        effect="Allow",
+                        resources=[f"arn:aws:s3:::cpr-{stack}-document-cache"],
+                        conditions=[
+                            aws.iam.GetPolicyDocumentStatementConditionArgs(
+                                test="StringLike",
+                                variable="s3:prefix",
+                                values=["concepts/*"],
+                            )
+                        ],
+                    ),
+                    aws.iam.GetPolicyDocumentStatementArgs(
+                        actions=["s3:GetObject"],
+                        effect="Allow",
+                        resources=[
+                            f"arn:aws:s3:::cpr-{stack}-document-cache/concepts/*"
+                        ],
+                    ),
+                ]
+            ).json,
+        )
     ],
     managed_policy_arns=["arn:aws:iam::aws:policy/AWSAppRunnerFullAccess"],
     name="navigator-backend-github-actions-deploy",
