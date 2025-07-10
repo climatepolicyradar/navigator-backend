@@ -7,9 +7,15 @@ import pycountry
 import requests
 
 from .data.cpr_custom_geographies import countries
+from .data.geography_statistics_by_countries import geography_statistics_by_countries
 from .data.regions import regions
 from .data.regions_to_countries_mapping import regions_to_countries
-from .model import CountryResponse, RegionResponse, SubdivisionResponse
+from .model import (
+    CountryResponse,
+    CountryStatistics,
+    RegionResponse,
+    SubdivisionResponse,
+)
 from .s3_client import get_s3_client
 
 _LOGGER = logging.getLogger(__name__)
@@ -72,6 +78,30 @@ def get_countries_by_region(slug: str) -> list[CountryResponse] | None:
                 selected_countries.append(selected_country)
 
     return selected_countries or None
+
+
+def get_all_geography_statistics_by_countries() -> dict[str, CountryStatistics]:
+    """
+    Retrieve all geography statistics by countries.
+
+    :return Dict[str, CountryStatistics]: A list of dictionaries containing country
+        names, legislative processes, federal status, and federal details.
+    """
+
+    return {
+        alpha3: CountryStatistics(
+            name=country["name"],
+            legislative_process=country["legislative_process"],
+            federal=country["federal"],
+            federal_details=country["federal_details"],
+            political_groups=country["political_groups"],
+            global_emissions_percent=country["global_emissions_percent"],
+            climate_risk_index=country["climate_risk_index"],
+            worldbank_income_group=country["worldbank_income_group"],
+            visibility_status=country["visibility_status"],
+        )
+        for alpha3, country in geography_statistics_by_countries.items()
+    }
 
 
 class CustomCountriesError(Exception):
@@ -280,11 +310,13 @@ def populate_initial_countries_data():
     # Create the object
     all_countries = list_all_countries()
     all_subdivisons = get_all_subdivisions_grouped_by_country()
+    geography_statistics = get_all_geography_statistics_by_countries()
     regions = get_all_regions()
     countries_data = {
         "countries": all_countries,
         "subdivisions": all_subdivisons,
         "regions": regions,
+        "geography_statistics": geography_statistics,
         "version": "1.0",
         "timestamp": datetime.now(timezone.utc).isoformat(),
     }
