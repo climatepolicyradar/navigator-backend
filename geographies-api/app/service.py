@@ -12,7 +12,7 @@ from .data.regions import regions
 from .data.regions_to_countries_mapping import regions_to_countries
 from .model import (
     CountryResponse,
-    CountryStatistics,
+    CountryStatisticsResponse,
     RegionResponse,
     SubdivisionResponse,
 )
@@ -80,7 +80,7 @@ def get_countries_by_region(slug: str) -> list[CountryResponse] | None:
     return selected_countries or None
 
 
-def get_all_geography_statistics_by_countries() -> dict[str, CountryStatistics]:
+def get_all_geography_statistics_by_countries() -> dict[str, CountryStatisticsResponse]:
     """
     Retrieve all geography statistics by countries.
 
@@ -89,7 +89,7 @@ def get_all_geography_statistics_by_countries() -> dict[str, CountryStatistics]:
     """
 
     return {
-        alpha3: CountryStatistics(
+        alpha3: CountryStatisticsResponse(
             name=country["name"],
             legislative_process=country["legislative_process"],
             federal=country["federal"],

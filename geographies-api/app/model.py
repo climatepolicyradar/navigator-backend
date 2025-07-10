@@ -58,7 +58,7 @@ class SubdivisionResponse(BaseModel):
     country_alpha_3: str
 
 
-class CountryStatistics(BaseModel):
+class CountryStatisticsResponse(BaseModel):
     name: str
     legislative_process: str
     federal: bool
