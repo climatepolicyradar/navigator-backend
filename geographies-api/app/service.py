@@ -198,6 +198,26 @@ def get_subdivisions_by_country(country_code: str) -> list[SubdivisionResponse] 
     return subdivisions
 
 
+def get_all_country_subdivisions() -> list[SubdivisionResponse] | None:
+    """
+    Retrieve all subdivisions grouped by country (using ISO alpha-3 codes).
+
+    NOTE: This utility function collects all administrative subdivisions
+    available in the `pycountry` library and organizes them by their
+    parent country (alpha-3 code).
+
+    :return dict[str, list[SubdivisionResponse]]: A dictionary mapping
+        alpha-3 country codes to their respective list of subdivisions.
+    """
+
+    data = get_geographies_data()
+
+    subdivisions = data.get("subdivisions", [])
+    if not subdivisions:
+        return None
+    return subdivisions
+
+
 def get_all_pycountry_subdivisions_grouped_by_country() -> dict[str, list[dict]]:
     """
     Retrieve all subdivisions grouped by country (using ISO alpha-3 codes).

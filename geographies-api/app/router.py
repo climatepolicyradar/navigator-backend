@@ -6,6 +6,7 @@ from fastapi import APIRouter, HTTPException, Path
 from .model import CountryResponse, RegionResponse, Settings, SubdivisionResponse
 from .service import (
     get_all_countries,
+    get_all_country_subdivisions,
     get_all_regions,
     get_countries_by_region,
     get_country_by_code,
@@ -118,6 +119,33 @@ async def get_country(
     if not result:
         raise HTTPException(
             status_code=404, detail=f"Country with alpha-3 code '{code}' not found"
+        )
+    return result
+
+
+@router.get("/subdivisions", response_model=list[SubdivisionResponse])
+async def get_subdivisions(
+    country_code: str = Path(
+        ..., description="ISO alpha-3 country code", min_length=3, max_length=3
+    ),
+) -> list[SubdivisionResponse]:
+    """
+    Get subdivisions for all countries.
+
+    NOTE: This endpoint retrieves first-level administrative subdivisions
+    (such as states, provinces, or regions) for a given country using
+    its ISO alpha-3 code (e.g., 'USA', 'AUS', 'CAN'). This can be used to
+    support region-based filtering, selection menus, or geographic analysis.
+
+    :return list[SubdivisionResponse]: A list of subdivision objects representing
+        the primary administrative divisions of the country.
+    """
+    result = get_all_country_subdivisions()
+
+    if not result:
+        raise HTTPException(
+            status_code=404,
+            detail=f"Country with alpha-3 code '{country_code}' not found",
         )
     return result
 
