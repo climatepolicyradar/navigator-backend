@@ -177,7 +177,7 @@ def get_subdivisions_by_country(country_code: str) -> list[SubdivisionResponse] 
 
     data = get_geographies_data()
 
-    countries = data.get("subdivisions", {})
+    countries = data.get("subdivisions_grouped_by_countries", {})
     country = countries.get(country_code.upper())
     if not country:
         return None
@@ -198,7 +198,7 @@ def get_subdivisions_by_country(country_code: str) -> list[SubdivisionResponse] 
     return subdivisions
 
 
-def get_all_subdivisions_grouped_by_country() -> dict[str, list[dict]]:
+def get_all_pycountry_subdivisions_grouped_by_country() -> dict[str, list[dict]]:
     """
     Retrieve all subdivisions grouped by country (using ISO alpha-3 codes).
 
@@ -236,7 +236,22 @@ def get_all_subdivisions_grouped_by_country() -> dict[str, list[dict]]:
     return subdivisions_by_country
 
 
-def list_all_countries() -> dict[str, dict]:
+def list_all_pycountry_subdivisions() -> list[dict]:
+    """
+    Return a flat list of all subdivisions across all countries.
+
+    Each subdivision is represented as a dictionary (from model_dump()).
+    """
+    subdivisions_by_country = get_all_pycountry_subdivisions_grouped_by_country()
+    all_subdivisions: list[dict] = []
+
+    for subdivisions in subdivisions_by_country.values():
+        all_subdivisions.extend(subdivisions)
+
+    return all_subdivisions
+
+
+def return_a_list_of_all_pycountry_country_objects() -> dict[str, dict]:
     """
     List all countries with their metadata.
 
@@ -308,13 +323,17 @@ def populate_initial_countries_data():
         raise ConnectionError("Failed to connect to S3")
 
     # Create the object
-    all_countries = list_all_countries()
-    all_subdivisons = get_all_subdivisions_grouped_by_country()
+    all_countries = return_a_list_of_all_pycountry_country_objects()
+    subdivisions_grouped_by_countries = (
+        get_all_pycountry_subdivisions_grouped_by_country()
+    )
+    all_subdivisions = list_all_pycountry_subdivisions()
     geography_statistics = get_all_geography_statistics_by_countries()
     regions = get_all_regions()
     countries_data = {
         "countries": all_countries,
-        "subdivisions": all_subdivisons,
+        "subdivisions_grouped_by_countries": subdivisions_grouped_by_countries,
+        "subdivisions": all_subdivisions,
         "regions": regions,
         "geography_statistics": geography_statistics,
         "version": "1.0",
