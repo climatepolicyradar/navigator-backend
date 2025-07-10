@@ -108,7 +108,7 @@ def get_country_by_code(code: str) -> CountryResponse | None:
     :return CountryResponse: An object containing country details,
         including name, codes, and emoji flag or None if not found.
     """
-    data = get_countries_data()
+    data = get_geographies_data()
 
     countries = data.get("countries", {})
     country = countries.get(code.upper())
@@ -145,7 +145,7 @@ def get_subdivisions_by_country(country_code: str) -> list[SubdivisionResponse] 
         if country was not found for country_code.
     """
 
-    data = get_countries_data()
+    data = get_geographies_data()
 
     countries = data.get("subdivisions", {})
     country = countries.get(country_code.upper())
@@ -249,7 +249,7 @@ def get_all_countries() -> list[CountryResponse]:
     :return list[CountryResponse]: A list of country objects with metadata.
     """
 
-    data = get_countries_data()
+    data = get_geographies_data()
     if "countries" not in data:
         raise ValueError("Invalid data format: 'countries' key not found")
     result = list(data["countries"].values())
@@ -297,7 +297,7 @@ def populate_initial_countries_data():
     s3_client.upload_json(countries_data, bucket_name, file_key)
 
 
-def get_countries_data(url: str | None = None) -> Dict[str, Any]:
+def get_geographies_data(url: str | None = None) -> Dict[str, Any]:
     """
     Retrieve all countries data from the Climate Policy Radar CDN.
 
