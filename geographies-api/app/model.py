@@ -56,3 +56,15 @@ class SubdivisionResponse(BaseModel):
     type: str
     country_alpha_2: str
     country_alpha_3: str
+
+
+class CountryStatisticsResponse(BaseModel):
+    name: str
+    legislative_process: str
+    federal: bool
+    federal_details: str
+    political_groups: str
+    global_emissions_percent: str
+    climate_risk_index: str
+    worldbank_income_group: str
+    visibility_status: str
