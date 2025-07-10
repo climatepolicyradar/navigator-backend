@@ -26,19 +26,21 @@ GEOGRAPHIES_DOCUMENT_PATH = "geographies/countries.json"
 DOCUMENT_URL = f"{CDN_URL}/{GEOGRAPHIES_DOCUMENT_PATH}"
 
 
-def get_all_regions() -> list[RegionResponse]:
+def get_all_regions() -> list[dict[str, Any]]:
     """
     Retrieve all regions with their metadata.
 
     :return list[RegionResponse]: A list of region objects with metadata.
     """
     return [
-        RegionResponse(name=region["name"], type=region["type"], slug=region["slug"])
+        RegionResponse(
+            name=region["name"], type=region["type"], slug=region["slug"]
+        ).model_dump(mode="json")
         for region in regions
     ]
 
 
-def get_region_by_slug(slug: str) -> RegionResponse | None:
+def get_region_by_slug(slug: str) -> dict[str, Any] | None:
     """
     Retrieve region information using a slug.
 
@@ -47,7 +49,7 @@ def get_region_by_slug(slug: str) -> RegionResponse | None:
         including name, type, and slug or None if not found.
     """
     for region in get_all_regions():
-        if region.slug == slug:
+        if region["slug"] == slug:
             return region
 
     return None
@@ -80,7 +82,7 @@ def get_countries_by_region(slug: str) -> list[CountryResponse] | None:
     return selected_countries or None
 
 
-def get_all_geography_statistics_by_countries() -> dict[str, CountryStatisticsResponse]:
+def get_all_geography_statistics_by_countries() -> dict[str, Any]:
     """
     Retrieve all geography statistics by countries.
 
@@ -99,7 +101,7 @@ def get_all_geography_statistics_by_countries() -> dict[str, CountryStatisticsRe
             climate_risk_index=country["climate_risk_index"],
             worldbank_income_group=country["worldbank_income_group"],
             visibility_status=country["visibility_status"],
-        )
+        ).model_dump(mode="json")
         for alpha3, country in geography_statistics_by_countries.items()
     }
 
