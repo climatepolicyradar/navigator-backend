@@ -198,7 +198,7 @@ def get_subdivisions_by_country(country_code: str) -> list[SubdivisionResponse] 
     return subdivisions
 
 
-def get_all_country_subdivisions() -> list[SubdivisionResponse] | None:
+def get_all_country_subdivisions() -> list[SubdivisionResponse]:
     """
     Retrieve all subdivisions grouped by country (using ISO alpha-3 codes).
 
@@ -213,8 +213,7 @@ def get_all_country_subdivisions() -> list[SubdivisionResponse] | None:
     data = get_geographies_data()
 
     subdivisions = data.get("subdivisions", [])
-    if not subdivisions:
-        return None
+
     return subdivisions
 
 

@@ -124,11 +124,7 @@ async def get_country(
 
 
 @router.get("/subdivisions", response_model=list[SubdivisionResponse])
-async def get_subdivisions(
-    country_code: str = Path(
-        ..., description="ISO alpha-3 country code", min_length=3, max_length=3
-    ),
-) -> list[SubdivisionResponse]:
+async def get_subdivisions() -> list[SubdivisionResponse]:
     """
     Get subdivisions for all countries.
 
@@ -138,15 +134,10 @@ async def get_subdivisions(
     support region-based filtering, selection menus, or geographic analysis.
 
     :return list[SubdivisionResponse]: A list of subdivision objects representing
-        the primary administrative divisions of the country.
+        the primary administrative divisions of all countries.
     """
     result = get_all_country_subdivisions()
 
-    if not result:
-        raise HTTPException(
-            status_code=404,
-            detail=f"Country with alpha-3 code '{country_code}' not found",
-        )
     return result
 
 
