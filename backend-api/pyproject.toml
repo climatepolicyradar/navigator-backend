@@ -65,3 +65,6 @@ allow-direct-references = true
 
 [tool.hatch.build.targets.wheel]
 packages = ["app"]
+
+[tool.pytest.ini_options]
+markers = ["search: marks tests as search (deselect with '-m \"not search\"')"]
