@@ -8,12 +8,15 @@ import jwt
 import pytest
 from dateutil.relativedelta import relativedelta
 from db_client.models.dfce.family import (
+    DocumentStatus,
     Family,
     FamilyCategory,
     FamilyCorpus,
+    FamilyDocument,
     FamilyGeography,
     FamilyStatus,
 )
+from db_client.models.document.physical_document import PhysicalDocument
 from db_client.models.organisation import Corpus, CorpusType, Organisation
 
 from app.clients.db.session import SessionLocal
@@ -67,19 +70,54 @@ def _add_family(
     corpus_import_id,
     status: FamilyStatus = FamilyStatus.PUBLISHED,
 ):
+    """Add a family with the specified status by creating appropriate documents."""
+    # Create the family
     test_db.add(
         Family(
             title="f1",
             import_id=import_id,
             description="",
             family_category=cat,
-            family_status=status,
         )
     )
     test_db.add(FamilyGeography(family_import_id=import_id, geography_id=1))
     test_db.add(
         FamilyCorpus(family_import_id=import_id, corpus_import_id=corpus_import_id)
     )
+
+    # Create a physical document
+    physical_doc = PhysicalDocument(
+        title="Test Document",
+        md5_sum="test_md5",
+        cdn_object="test_cdn",
+        source_url="http://test.com",
+        content_type="application/pdf",
+    )
+    test_db.add(physical_doc)
+    test_db.flush()
+
+    # Create a family document with the appropriate status
+    # Convert FamilyStatus enum to DocumentStatus string
+    doc_status_map = {
+        FamilyStatus.PUBLISHED: DocumentStatus.PUBLISHED,
+        FamilyStatus.CREATED: DocumentStatus.CREATED,
+        FamilyStatus.DELETED: DocumentStatus.DELETED,
+    }
+    for fam_status in [
+        FamilyStatus.PUBLISHED,
+        FamilyStatus.CREATED,
+        FamilyStatus.DELETED,
+    ]:
+        if fam_status == status:
+            family_doc = FamilyDocument(
+                family_import_id=import_id,
+                physical_document_id=physical_doc.id,
+                import_id=f"{import_id}.doc",
+                variant_name="Original Language",
+                document_status=doc_status_map[fam_status],
+                valid_metadata={"role": ["MAIN"], "type": ["Law"]},
+            )
+            test_db.add(family_doc)
 
 
 def test_config_endpoint_content(data_client, data_db, app_token_factory, valid_token):
