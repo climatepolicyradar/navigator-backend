@@ -67,7 +67,17 @@ jobs:
           docker push $ECR_REGISTRY/$ECR_REPOSITORY:$IMAGE_TAG
           echo "image=$ECR_REGISTRY/$ECR_REPOSITORY:$IMAGE_TAG" >> $GITHUB_OUTPUT
 
+  test-microservices:
+    runs-on: ubuntu-latest
+    strategy:
+      matrix:
+        service: [families-api, geographies-api, concepts-api]
+    steps:
+      - working-directory: ${{ matrix.service }}
+        run: |
+          just test
   deploy-microservices:
+    needs: test-microservices
     runs-on: ubuntu-latest
     strategy:
       matrix:
