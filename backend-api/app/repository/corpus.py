@@ -1,4 +1,10 @@
-from db_client.models.dfce.family import Corpus, Family, FamilyCorpus, FamilyStatus
+from db_client.models.dfce.family import (
+    Corpus,
+    DocumentStatus,
+    Family,
+    FamilyCorpus,
+    FamilyDocument,
+)
 from sqlalchemy import func
 from sqlalchemy.orm import Session
 
@@ -11,11 +17,22 @@ def get_total_families_per_corpus(db: Session, corpus_import_id: str) -> int:
     :param corpus_import_id: The import ID of the corpus
     :return: The total number of families per corpus
     """
+    # Subquery to find families with at least one published document
+    # Avoid using calculated family_status field
+    published_families = (
+        db.query(FamilyDocument.family_import_id)
+        .filter(FamilyDocument.document_status == DocumentStatus.PUBLISHED)
+        .distinct()
+        .subquery()
+    )
     return (
         db.query(Family)
         .join(FamilyCorpus, FamilyCorpus.family_import_id == Family.import_id)
+        .join(
+            published_families,
+            published_families.c.family_import_id == Family.import_id,
+        )
         .filter(FamilyCorpus.corpus_import_id == corpus_import_id)
-        .filter(Family.family_status == FamilyStatus.PUBLISHED)
         .count()
     )
 
@@ -28,11 +45,22 @@ def get_family_count_by_category_per_corpus(db: Session, corpus_import_id: str):
     :param corpus_import_id: The import ID of the corpus
     :return: A list of tuples where each tuple contains a family category and its count
     """
+    # Subquery to find families with at least one published document
+    # Avoid using calculated family_status field
+    published_families = (
+        db.query(FamilyDocument.family_import_id)
+        .filter(FamilyDocument.document_status == DocumentStatus.PUBLISHED)
+        .distinct()
+        .subquery()
+    )
     return (
         db.query(Family.family_category, func.count())
         .join(FamilyCorpus, FamilyCorpus.family_import_id == Family.import_id)
+        .join(
+            published_families,
+            published_families.c.family_import_id == Family.import_id,
+        )
         .filter(FamilyCorpus.corpus_import_id == corpus_import_id)
-        .filter(Family.family_status == FamilyStatus.PUBLISHED)
         .group_by(Family.family_category)
         .all()
     )
