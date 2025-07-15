@@ -12,6 +12,7 @@ from db_client.models.dfce.family import (
     FamilyCategory,
     FamilyCorpus,
     FamilyGeography,
+    FamilyStatus,
 )
 from db_client.models.organisation import Corpus, CorpusType, Organisation
 
@@ -59,13 +60,20 @@ EXPECTED_UNFCCC_TAXONOMY = {
 }
 
 
-def _add_family(test_db, import_id: str, cat: FamilyCategory, corpus_import_id):
+def _add_family(
+    test_db,
+    import_id: str,
+    cat: FamilyCategory,
+    corpus_import_id,
+    status: FamilyStatus = FamilyStatus.PUBLISHED,
+):
     test_db.add(
         Family(
             title="f1",
             import_id=import_id,
             description="",
             family_category=cat,
+            family_status=status,
         )
     )
     test_db.add(FamilyGeography(family_import_id=import_id, geography_id=1))
@@ -400,6 +408,94 @@ def test_config_endpoint_returns_stats_for_all_orgs_if_no_allowed_corpora_in_app
                 "Reports": 0,
                 "Litigation": 0,
             }
+
+
+def test_config_endpoint_only_counts_published_families(
+    data_client, data_db, valid_token
+):
+    """Test that config endpoint only counts families with PUBLISHED status."""
+    url_under_test = "/api/v1/config"
+
+    cclw = (
+        data_db.query(Corpus)
+        .join(Organisation, Organisation.id == Corpus.organisation_id)
+        .filter(Organisation.name == "CCLW")
+        .one()
+    )
+
+    # Add families with different statuses
+    # Published families (should be counted)
+    _add_family(
+        data_db,
+        "T.0.0.1",
+        FamilyCategory.EXECUTIVE,
+        cclw.import_id,
+        FamilyStatus.PUBLISHED,
+    )
+    _add_family(
+        data_db,
+        "T.0.0.2",
+        FamilyCategory.LEGISLATIVE,
+        cclw.import_id,
+        FamilyStatus.PUBLISHED,
+    )
+    _add_family(
+        data_db,
+        "T.0.0.3",
+        FamilyCategory.UNFCCC,
+        cclw.import_id,
+        FamilyStatus.PUBLISHED,
+    )
+
+    # Created families (should NOT be counted)
+    _add_family(
+        data_db,
+        "T.0.0.4",
+        FamilyCategory.EXECUTIVE,
+        cclw.import_id,
+        FamilyStatus.CREATED,
+    )
+    _add_family(
+        data_db,
+        "T.0.0.5",
+        FamilyCategory.LEGISLATIVE,
+        cclw.import_id,
+        FamilyStatus.CREATED,
+    )
+
+    # Deleted families (should NOT be counted)
+    _add_family(
+        data_db,
+        "T.0.0.6",
+        FamilyCategory.EXECUTIVE,
+        cclw.import_id,
+        FamilyStatus.DELETED,
+    )
+    _add_family(
+        data_db, "T.0.0.7", FamilyCategory.UNFCCC, cclw.import_id, FamilyStatus.DELETED
+    )
+
+    data_db.flush()
+
+    response = data_client.get(url_under_test, headers={"app-token": valid_token})
+
+    response_json = response.json()
+
+    corpus_types = response_json["corpus_types"]
+    assert len(corpus_types) == 2
+
+    cclw_corpus_config = corpus_types["Laws and Policies"]["corpora"][0]
+
+    # Should only count the 3 published families
+    assert cclw_corpus_config["total"] == 3
+    assert cclw_corpus_config["count_by_category"] == {
+        "Executive": 1,  # 1 published
+        "Legislative": 1,  # 1 published
+        "UNFCCC": 1,  # 1 published
+        "MCF": 0,
+        "Reports": 0,
+        "Litigation": 0,
+    }
 
 
 class _MockColumn:
