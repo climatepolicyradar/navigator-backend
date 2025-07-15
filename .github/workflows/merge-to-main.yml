@@ -7,7 +7,7 @@ permissions:
   id-token: write
   contents: read
 jobs:
-  release:
+  release-backend-api:
     defaults:
       run:
         working-directory: backend-api
@@ -67,11 +67,11 @@ jobs:
           docker push $ECR_REGISTRY/$ECR_REPOSITORY:$IMAGE_TAG
           echo "image=$ECR_REGISTRY/$ECR_REPOSITORY:$IMAGE_TAG" >> $GITHUB_OUTPUT
 
-  deploy:
+  deploy-microservices:
     runs-on: ubuntu-latest
     strategy:
       matrix:
-        environment: [staging, production]
+        environment: [production]
     environment: ${{ matrix.environment }}
     env:
       SERVICES: families-api geographies-api concepts-api
