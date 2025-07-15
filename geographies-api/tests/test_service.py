@@ -16,7 +16,9 @@ def test_get_all_regions_successfully_returns_all_regions():
         for region in EXPECTED_REGIONS
     ]
 
-    assert get_all_regions() == expected_regions_response
+    actual_result = [RegionResponse(**region) for region in get_all_regions()]
+
+    assert actual_result == expected_regions_response
 
 
 def test_get_region_by_slug_returns_the_correct_region():
@@ -24,7 +26,15 @@ def test_get_region_by_slug_returns_the_correct_region():
         name="South Asia", type=RegionType.WORLD_BANK_REGION, slug="south-asia"
     )
 
-    assert get_region_by_slug("south-asia") == expected_region
+    result = get_region_by_slug("south-asia")
+
+    assert result is not None
+
+    actual_region = RegionResponse(
+        name=result["name"], type=RegionType(result["type"]), slug=result["slug"]
+    )
+
+    assert actual_region == expected_region
 
 
 def test_get_region_by_slug_returns_none_if_slug_invalid():
