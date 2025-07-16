@@ -1,93 +1,59 @@
-WITH counts AS (
-    SELECT
-      family.family_category,
-      family_geography.geography_id,
-      COUNT(*) AS records_count
-    FROM
-      family
-      INNER JOIN
-          family_corpus
-          ON family.import_id = family_corpus.family_import_id
-      INNER JOIN corpus ON family_corpus.corpus_import_id = corpus.import_id
-      INNER JOIN
-          family_geography
-          ON family.import_id = family_geography.family_import_id
-    WHERE
-      family_corpus.corpus_import_id = ANY(:allowed_corpora_ids)
-      AND CASE
-        WHEN (
-          NOT (
-            EXISTS (
-              SELECT
-                1
-              FROM
-                family_document
-              WHERE
-                family.import_id = family_document.family_import_id
-            )
-          )
-        ) THEN 'Created'
-        WHEN (
-            (
-              SELECT
-                COUNT(family_document.document_status) AS count_1
-              FROM
-                family_document
-              WHERE
-                family_document.family_import_id = family.import_id
-                AND family_document.document_status = 'PUBLISHED'
-            ) > 0
-          ) THEN 'Published'
-        WHEN (
-              (
-                SELECT
-                  COUNT(family_document.document_status) AS count_2
-                FROM
-                  family_document
-                WHERE
-                  family_document.family_import_id = family.import_id
-                  AND family_document.document_status = 'CREATED'
-              ) > 0
-            ) THEN 'Created'
-        ELSE 'Deleted'
-      END = 'Published'
-    GROUP BY
-      family.family_category,
-      family_geography.geography_id
-  )
-
-SELECT
-  geo_family_combinations.display_value,
-  geo_family_combinations.slug,
-  geo_family_combinations.value,
-  JSONB_OBJECT_AGG(
-    geo_family_combinations.family_category,
-    COALESCE(counts.records_count, 0)
-  ) AS counts
-FROM
-  (
-    SELECT
-      geography.id AS geography_id,
-      geography.display_value,
-      geography.slug,
-      geography.value,
-      anon_1.family_category
-    FROM
-      geography,
-      (
-        SELECT DISTINCT
-          family.family_category
-        FROM
-          family
-      ) AS anon_1
-  ) AS geo_family_combinations
-  LEFT OUTER JOIN
-      counts
-      ON geo_family_combinations.geography_id = counts.geography_id
-  AND geo_family_combinations.family_category = counts.family_category
-GROUP BY
-  geo_family_combinations.display_value,
-  geo_family_combinations.slug,
-  geo_family_combinations.value
-ORDER BY
-  geo_family_combinations.display_value;
+-- noqa: disable=all
+-- Filter to published families first
+WITH published_families AS (
+    SELECT f.import_id, f.family_category 
+    FROM family f
+    WHERE EXISTS (
+        SELECT 1 
+        FROM family_document fd 
+        WHERE fd.family_import_id = f.import_id 
+        AND fd.document_status = 'PUBLISHED'
+    )
+),
+-- And count how many families are in each geography, filtered by allowed corpuses
+geography_counts AS (
+    SELECT 
+        g.id AS geography_id,
+        g.display_value,
+        g.slug,
+        g.value,
+        pf.family_category,
+        COUNT(*) AS records_count
+    FROM geography g
+    JOIN family_geography fg ON g.id = fg.geography_id
+    JOIN published_families pf ON fg.family_import_id = pf.import_id
+    JOIN family_corpus fc ON pf.import_id = fc.family_import_id
+    WHERE fc.corpus_import_id =  ANY(:allowed_corpora_ids)
+    GROUP BY g.id, g.display_value, g.slug, g.value, pf.family_category
+),
+-- This builds a grid where each row is a unique geography/family_category combination
+-- This ensures even when a geography has no families in a category, it will still be included
+category_matrix AS (
+    SELECT DISTINCT
+        g.id AS geography_id,
+        g.display_value,
+        g.slug,
+        g.value,
+        f.family_category
+    FROM geography g
+    CROSS JOIN (SELECT DISTINCT family_category FROM family) f
+)
+--Now, we have filtered families that are published;
+-- from that we build a count of how many families are in each geography/family_category combination
+-- and we have a grid of all possible geography/family_category combinations for fast lookup
+-- SO if we left join the geog counts with the matrix, 
+-- we get an output that matches the old world map query without all the extra cruft
+SELECT 
+    cm.display_value,
+    cm.slug,
+    cm.value,
+    JSONB_OBJECT_AGG(
+        cm.family_category,
+        COALESCE(gc.records_count, 0)
+    ) AS counts
+FROM category_matrix cm
+LEFT JOIN geography_counts gc ON 
+    cm.geography_id = gc.geography_id AND 
+    cm.family_category = gc.family_category
+GROUP BY cm.display_value, cm.slug, cm.value
+ORDER BY cm.display_value;
