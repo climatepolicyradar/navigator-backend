@@ -1,8 +1,12 @@
+# This workflow **only** includes our microservices
+# ci-cd.yml controls the backend-api app
 name: Pull request
 on:
   pull_request:
-    # a.
-    types: [labeled] # This needs to be the American spelling, don't change it
+    # there is a micro-optimisation here in only running test if it's a relevant label
+    # but this isn't currently a performance bottleneck so we're leaving it to run on all labels to reduce complexity
+    # a. deploys the service to staging if the pull request is (re)labelled with 'deploy:staging'
+    types: [opened, synchronize, reopened, labeled] # This needs to be the American spelling, don't change it
   workflow_dispatch: {}
 permissions:
   id-token: write
@@ -13,35 +17,37 @@ jobs:
     strategy:
       matrix:
         service: [families-api, geographies-api, concepts-api]
-        environment: [staging]
     steps:
-      - working-directory: ${{ matrix.service }}
-        run: |
-          just test
+      - uses: actions/checkout@v4
+      - uses: extractions/setup-just@v3
+      - run: just test ${{ matrix.service }}
   deploy:
+    needs: test
     # a. deploys the service to staging if the pull request is (re)labelled with 'deploy:staging'
-    if: github.event.label.name == 'deploy:staging'
+    if: contains(github.event.pull_request.labels.*.name, 'deploy:staging')
     runs-on: ubuntu-latest
     strategy:
       matrix:
-        service: [families-api, geographies-api, concepts-api]
         environment: [staging]
     environment: ${{ matrix.environment }}
+    env:
+      SERVICES: families-api geographies-api concepts-api
     steps:
       - uses: actions/checkout@v4
       - uses: extractions/setup-just@v3
       - uses: aws-actions/configure-aws-credentials@v4.2.0
         with:
           role-to-assume: arn:aws:iam::${{ secrets.AWS_ACCOUNT_ID }}:role/navigator-backend-github-actions-deploy
-          role-session-name: GitHub_to_AWS_via_FederatedOIDC_${{ matrix.environment }}_${{ matrix.service }}
+          role-session-name: GitHub_to_AWS_via_FederatedOIDC_${{ matrix.environment }}
           aws-region: eu-west-1
       - uses: aws-actions/amazon-ecr-login@v2
       # we use python / uv in some build scripts and testing
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
       - uses: astral-sh/setup-uv@v6
-      - working-directory: ${{ matrix.service }}
-        run: uv sync
-      - working-directory: ${{ matrix.service }}
-        run: |
-          just test
+      - run: uv sync --all-packages
       - run: |
-          just deploy ${{ matrix.service }} ${{ matrix.environment }} latest
+          for service in $SERVICES; do
+            just deploy $service ${{ matrix.environment }} latest
+          done

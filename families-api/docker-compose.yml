@@ -81,7 +81,8 @@ services:
     working_dir: /app
     environment:
       NAVIGATOR_DATABASE_URL: postgresql://navigator_admin:navigator_admin@test-db:5432/navigator_admin
-    command: [uv, run, pytest, --color=yes]
+    command:
+      [uv, run, --project, families-api, pytest, families-api, --color=yes]
     depends_on:
       - test-db
 volumes:
