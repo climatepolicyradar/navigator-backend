@@ -377,6 +377,8 @@ def _convert_filters(
                 # TODO: remove this once frontend is updated to use ISO codes in favour of get_countries_by_iso_codes
                 get_geographies_as_iso_codes_with_fallback(db, values)
             )
+        elif field == FilterField.SUBDIVSION:
+            countries.append(get_geographies_as_iso_codes_with_fallback(db, values))
         else:
             new_values = values
             new_keyword_filters[new_field] = new_values
