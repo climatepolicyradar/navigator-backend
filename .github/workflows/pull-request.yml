@@ -20,9 +20,7 @@ jobs:
     steps:
       - uses: actions/checkout@v4
       - uses: extractions/setup-just@v3
-      - working-directory: ${{ matrix.service }}
-        run: |
-          just test
+      - run: just test ${{ matrix.service }}
   deploy:
     needs: test
     # a. deploys the service to staging if the pull request is (re)labelled with 'deploy:staging'
