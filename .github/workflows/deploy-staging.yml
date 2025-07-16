@@ -12,7 +12,7 @@ permissions:
   contents: read
 
 jobs:
-  deploy-staging:
+  deploy-backend-api-staging:
     defaults:
       run:
         working-directory: backend-api
