@@ -4,6 +4,10 @@ dev service environment="production":
     just _prebuild {{service}} {{environment}}
     docker compose -f {{service}}/docker-compose.yml --profile dev up --build
 
+# test
+test service:
+    docker compose -f {{service}}/docker-compose.yml --profile test up --abort-on-container-exit --exit-code-from test --remove-orphans
+
 # build/deploy
 build service environment tag:
     just _prebuild {{service}} {{environment}}
