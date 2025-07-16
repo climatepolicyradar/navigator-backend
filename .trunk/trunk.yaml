@@ -3,7 +3,7 @@
 # To learn more about the format of this file, see https://docs.trunk.io/reference/trunk-yaml
 version: 0.1
 cli:
-  version: 1.22.0
+  version: 1.24.0
 
 tools:
   definitions:
@@ -18,7 +18,7 @@ tools:
 plugins:
   sources:
     - id: trunk
-      ref: v1.5.0
+      ref: v1.7.1
       uri: https://github.com/trunk-io/plugins
 
 # Many linters and tools depend on runtimes - configure them here.
@@ -26,8 +26,8 @@ plugins:
 runtimes:
   enabled:
     - go@1.21.0
-    - node@18.12.1
-    - python@3.10.3
+    - node@22.16.0
+    - python@3.12.2
 
 # This is the section where you manage your linters.
 # (https://docs.trunk.io/check/configuration)
@@ -37,6 +37,25 @@ lint:
     - oxipng
 
   definitions:
+    # This was lifted directly from the pyright plugin
+    # @see https://github.com/trunk-io/plugins/blob/main/linters/pyright/plugin.yaml
+    # @related BACKEND_API_PYRIGHT_HACK
+    - name: pyright-backend-api
+      files: [python]
+      tools: [pyright]
+      known_good_version: 1.1.361
+      commands:
+        - name: lint
+          output: sarif
+          run: pyright --project .trunk/pyrightconfig.backend-api.json --outputjson
+          success_codes: [0, 1]
+          read_output_from: stdout
+          batch: true
+          cache_results: false
+          parser:
+            runtime: python
+            run: python3 .trunk/pyright_to_sarif.py
+
     - name: bandit
       direct_configs: [bandit.yaml]
       commands:
@@ -93,6 +112,8 @@ lint:
         - LICENSE.md
 
   enabled:
+    - pyright@1.1.361
+    - pyright-backend-api
     - sqlfluff@3.2.5:
         commands: [lint, fix, format]
     - actionlint@1.6.27
@@ -116,7 +137,6 @@ lint:
           - end-of-file-fixer
           - trailing-whitespace
     - prettier@3.2.5
-    - pyright@1.1.361
     - ruff@0.4.2
     - shellcheck@0.10.0
     - shfmt@3.6.0

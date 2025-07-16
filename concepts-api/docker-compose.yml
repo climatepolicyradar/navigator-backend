@@ -1,15 +1,36 @@
 services:
   app:
+    profiles: [dev]
     container_name: concepts-api-app
     build:
-      context: .
-      dockerfile: Dockerfile
+      context: ..
+      dockerfile: concepts-api/Dockerfile
     ports:
       - 8080:8080
     volumes:
-      - .:/app
+      - ..:/app
     working_dir: /app
-    command: [fastapi, dev, app/main.py, --port, "8080", --host, 0.0.0.0]
-
-volumes:
-  navigator_postgres_data: {}
+    command:
+      [
+        uv,
+        run,
+        --project,
+        concepts-api,
+        fastapi,
+        dev,
+        concepts-api/app/main.py,
+        --port,
+        "8080",
+        --host,
+        0.0.0.0,
+      ]
+  test:
+    profiles: [test]
+    container_name: concepts-api-test
+    build:
+      context: ..
+      dockerfile: concepts-api/Dockerfile
+    volumes:
+      - ..:/app
+    working_dir: /app
+    command: [echo, No tests]

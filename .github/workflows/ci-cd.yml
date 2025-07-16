@@ -24,16 +24,35 @@ jobs:
       checks: write
       # For repo checkout
       contents: read
-    uses: climatepolicyradar/reusable-workflows/.github/workflows/python-precommit-validator.yml@v13
-    with:
-      # These ignores are different, since for some reason, the
-      # specific one isn't working on this field.
-      # trunk-ignore-all: Sometimes the Python version is split at .'s in Actions
-      python-version: "3.11"
-      # trunk-ignore(yamllint/quoted-strings): Sometimes the Python version is split at .'s in Actions
-      poetry-version: "1.8.2"
-
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - name: Set up Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+      - uses: astral-sh/setup-uv@v6
+      # Install dependencies for all Python projects in the monorepo
+      # Sync workspace members (api, families-api) from root
+      - run: uv sync --frozen --no-install-project --dev
+      # Sync standalone projects
+      - run: uv sync --frozen --no-install-project --dev
+        working-directory: geographies-api
+      - run: uv sync --frozen --no-install-project --dev
+        working-directory: concepts-api
+      - run: uv sync --frozen --no-install-project --dev
+        working-directory: backend-api
+      # @related BACKEND_API_PYRIGHT_HACK
+      # This is a little hack to make sure we have pyright available by the pyright-backend-api trunk definition
+      - run: pip install pyright==1.1.361
+      - name: Trunk Check
+        uses: trunk-io/trunk-action@v1
+        with:
+          arguments: --ci
   non-search-tests:
+    defaults:
+      run:
+        working-directory: backend-api
     if: |
       ! cancelled() && always() &&
       ! startsWith(github.ref, 'refs/tags')
@@ -45,7 +64,7 @@ jobs:
         run: cp .env.example .env
 
       - name: Get python Container
-        run: docker pull python:3.11
+        run: docker pull python:3.12
 
       - name: Build
         run: |
@@ -73,6 +92,9 @@ jobs:
         run: docker compose logs
 
   search-tests:
+    defaults:
+      run:
+        working-directory: backend-api
     if: |
       ! cancelled() && always() &&
       ! startsWith(github.ref, 'refs/tags')
@@ -84,7 +106,7 @@ jobs:
         run: cp .env.example .env
 
       - name: Get python Container
-        run: docker pull python:3.11
+        run: docker pull python:3.12
 
       - name: Install latest Vespa CLI
         env:
@@ -94,11 +116,6 @@ jobs:
           curl -fsSL https://github.com/vespa-engine/vespa/releases/download/v${VESPA_CLI_VERSION}/vespa-cli_${VESPA_CLI_VERSION}_linux_amd64.tar.gz | \
             tar -zxf - -C scripts/vespa-cli --strip-component=1
           echo "scripts/vespa-cli/bin" >> $GITHUB_PATH
-
-      - name: Build
-        run: |
-          docker compose build
-          docker images
 
       - name: Build docker-compose stack & Setup vespa for search
         run: make start

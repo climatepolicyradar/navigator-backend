@@ -1,21 +1,19 @@
-[tool.poetry]
+[project]
 name = "api"
-version = "0.1.0"
-description = ""
-authors = ["CPR tech <tech@climatepolicyradar.org>"]
+version = "2.0.0"
 readme = "README.md"
-package-mode = false
+requires-python = ">=3.12"
 
-[tool.poetry.dependencies]
-python = "^3.11"
-pulumi = "^3.166.0"
-pulumi-aws = "^6.78.0"
-
+dependencies = [
+  "fastapi[standard]>=0.115.12,<0.116.0",
+  "pulumi>=3.166.0,<4.0.0",
+  "pulumi-aws>=6.78.0,<7.0.0",
+  "opentelemetry-instrumentation-fastapi>=0.45b0,<0.46.0",
+  "opentelemetry-exporter-otlp>=1.21.0,<2.0.0",
+  "opentelemetry-instrumentation-sqlalchemy>=0.45b0,<0.46.0",
+  "opentelemetry-sdk>=1.21.0,<2.0.0",
+]
 
 [build-system]
-requires = ["poetry-core"]
-build-backend = "poetry.core.masonry.api"
-
-[tool.pyright]
-venvPath = ".venv"
-include = ["infra"]
+requires = ["hatchling"]
+build-backend = "hatchling.build"

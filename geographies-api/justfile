@@ -1,3 +1,17 @@
+# AWS Local Development Setup
+aws-login profile="staging":
+    # Login to AWS SSO with the specified profile
+    @echo "🔐 Logging in to AWS SSO with profile: {{profile}}..."
+    @aws sso login --profile {{profile}} || (echo "❌ AWS SSO login failed"; exit 1)
+    @echo "✅ Successfully logged in to AWS SSO"
+
+set-aws-profile profile="staging":
+    # Set the AWS_PROFILE environment variable
+    @export AWS_PROFILE={{profile}}
+    @echo "🔄 Set AWS_PROFILE to: {{profile}}"
+    @echo "💡 Remember: This only affects the current shell session"
+
+
 # dev
 # should be used for first run
 bootstrap:
@@ -7,36 +21,12 @@ initial-data environment:
     @echo "downloading latest data from s3"
     aws s3 sync s3://cpr-{{environment}}-document-cache/geographies initial-data
 
+# This is used for fully local development with localstack
 dev:
-    docker compose up
-
-test:
-    @echo "😔 no tests yet"
+    uv sync
+    docker compose --profile dev up
 
 # build
 # TODO: this needs to be tied into a lifecycle somewhere to make sure it is run if something is added
-# sed is used here to remove a whole bunch of gumpf you can not remove with poetry v1 
 requirements:
-    poetry export --without-hashes --without-urls --format requirements.txt | sed 's/ ;.*//'  > requirements.txt
-
-# Local docker development
-ecr-login:
-    aws ecr get-login-password --region eu-west-1 | docker login --username AWS --password-stdin $(aws sts get-caller-identity --query 'Account' --output text).dkr.ecr.eu-west-1.amazonaws.com
-
-docker-build tag environment:
-    # @related: GITHUB_SHA_ENV_VAR
-    docker buildx build --platform linux/amd64 --output type=docker --build-arg ENV={{environment}} --build-arg GITHUB_SHA=$(git rev-parse HEAD) -t geographies-api:{{tag}} .
-
-docker-push tag:
-    docker tag geographies-api:{{tag}} $(aws sts get-caller-identity --query 'Account' --output text).dkr.ecr.eu-west-1.amazonaws.com/geographies-api:{{tag}}
-    docker push $(aws sts get-caller-identity --query 'Account' --output text).dkr.ecr.eu-west-1.amazonaws.com/geographies-api:{{tag}}
-
-deploy-local tag environment:
-    just ecr-login
-    just requirements
-    just deploy {{tag}} {{environment}}
-
-# environment is not used here, but is required for the github deploy action
-deploy tag environment:
-    just docker-build {{tag}} {{environment}}
-    just docker-push {{tag}}
+    uv pip freeze > requirements.txt

@@ -25,17 +25,30 @@ services:
     profiles: [dev]
     container_name: families-api-app
     build:
-      context: .
-      dockerfile: Dockerfile
+      context: ..
+      dockerfile: families-api/Dockerfile
     ports:
       - 8080:8080
     volumes:
-      - .:/app
+      - ..:/app
     working_dir: /app
     environment:
       NAVIGATOR_DATABASE_URL: postgresql://navigator_admin:navigator_admin@db:5432/navigator_admin
     # override the command with `fastapi **dev**`
-    command: [fastapi, dev, app/main.py, --port, "8080", --host, 0.0.0.0]
+    command:
+      [
+        uv,
+        run,
+        --project,
+        families-api,
+        fastapi,
+        dev,
+        families-api/app/main.py,
+        --port,
+        "8080",
+        --host,
+        0.0.0.0,
+      ]
     depends_on:
       - db
   test-db:
@@ -59,16 +72,16 @@ services:
     profiles: [test]
     container_name: families-api-test
     build:
-      context: .
-      dockerfile: Dockerfile
+      context: ..
+      dockerfile: families-api/Dockerfile
     ports:
       - 8080:8080
     volumes:
-      - .:/app
+      - ..:/app
     working_dir: /app
     environment:
       NAVIGATOR_DATABASE_URL: postgresql://navigator_admin:navigator_admin@test-db:5432/navigator_admin
-    command: [pytest, --color=yes]
+    command: [uv, run, pytest, --color=yes]
     depends_on:
       - test-db
 volumes:

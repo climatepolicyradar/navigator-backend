@@ -1,0 +1,131 @@
+# definitions for docker-based development
+
+# ----------------------------------
+# starting, stopping, migrating DB
+# ----------------------------------
+
+create_mock_vespa_certs:
+	mkdir -p secrets
+	[ -f secrets/cert.pem ] || touch secrets/cert.pem
+	[ -f secrets/key.pem ] || touch secrets/key.pem
+
+
+start: build_from_cached create_mock_vespa_certs
+	# Build & run containers and setup vespa
+	$(COMPOSE_CMD) up -d --remove-orphans
+	$(MAKE) vespa_setup
+
+start_without_vespa_setup:
+	# Build & run containers and setup vespa
+	$(COMPOSE_CMD) up -d --remove-orphans
+
+start_backend:
+	# Build and run containers
+	$(COMPOSE_CMD) up -d backend backend_db
+
+show_logs:
+	docker compose logs -f
+
+stop:
+	docker compose down --remove-orphans
+
+rm:
+	docker compose rm
+
+remove_volumes:
+	docker compose down -v
+
+up:
+	# docker-compose up, without -d
+	$(COMPOSE_CMD) up
+
+restart:
+	docker compose build
+	make start
+	make show_logs
+
+# ----------------------------------
+# database maintenance
+# ----------------------------------
+
+%:
+	@:
+
+new_migration_backend:
+	$(COMPOSE_CMD) run --rm backend alembic revision --autogenerate -m "$(filter-out $@,$(MAKECMDGOALS))"
+
+refresh_all_dbs:
+	docker compose down -v
+	make start
+
+# ----------------------------------
+# building images
+# ----------------------------------
+build_bats:
+	docker build bats -t bats-with-helpers:latest
+
+build:
+	docker compose build --no-cache backend
+
+build_from_cached:
+	docker compose build backend
+
+# ----------------------------------
+# testing
+# ----------------------------------
+
+vespa_confirm_cli_installed:
+	@if [ ! $$(which vespa) ]; then \
+		echo 'ERROR: The vespa cli is not installed, please install and try again:' ; \
+		echo 'https://docs.vespa.ai/en/vespa-cli.html'; \
+		exit 1; \
+	fi
+
+vespa_healthy:
+	@if [ ! $$(curl -f -s 'http://localhost:19071/status.html') ]; then \
+		echo 'ERROR: Bad response from local vespa cluster, is it running?'; \
+		exit 1; \
+	fi
+
+.ONESHELL:
+vespa_deploy_schema:
+	vespa config set target local
+	@vespa deploy tests/search/vespa/fixtures/vespa_test_schema --wait 300
+
+.ONESHELL:
+vespa_load_data:
+	vespa config set target local
+	vespa feed --progress=3 tests/search/vespa/fixtures/vespa_search_weights.json
+	vespa feed --progress=3 tests/search/vespa/fixtures/vespa_family_document.json
+	vespa feed --progress=3 tests/search/vespa/fixtures/vespa_document_passage.json
+
+vespa_setup: vespa_confirm_cli_installed vespa_healthy vespa_deploy_schema vespa_load_data
+	# Deploys a vespa application to a local vespa container and loads search fixtures
+
+.ONESHELL:
+test_search:
+	$(COMPOSE_CMD) \
+		run --rm --name search_test \
+		-v "${PWD}/data:/data" \
+		backend python -m pytest \
+		-vvv tests/search \
+		-m 'search' ${ARGS}
+
+test_cors: 
+	$(COMPOSE_CMD) run --rm backend python -m pytest -m 'cors' ${ARGS}
+
+test_unit:
+	$(COMPOSE_CMD) run --rm backend python -m pytest -vvv tests/unit ${ARGS}
+
+test_non_search:
+	$(COMPOSE_CMD) run --build --rm backend python -m pytest -vvv -m 'not search' ${ARGS}
+
+test:
+	$(COMPOSE_CMD) run --rm backend python -m pytest -vvv tests ${ARGS}
+
+# ----------------------------------
+# tasks
+# ----------------------------------
+
+postgres_dump:
+	docker compose run -v ${PWD}/backend:/app/data --rm backend_db pg_dump -d ${DATABASE_URL} --data-only -F c --file /app/data/backend_db_dump.dump

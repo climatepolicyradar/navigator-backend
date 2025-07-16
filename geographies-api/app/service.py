@@ -5,9 +5,17 @@ from typing import Any, Dict
 
 import pycountry
 import requests
-from fastapi import HTTPException
 
-from .model import CountryResponse, SubdivisionResponse
+from .data.cpr_custom_geographies import countries
+from .data.geography_statistics_by_countries import geography_statistics_by_countries
+from .data.regions import regions
+from .data.regions_to_countries_mapping import regions_to_countries
+from .model import (
+    CountryResponse,
+    CountryStatisticsResponse,
+    RegionResponse,
+    SubdivisionResponse,
+)
 from .s3_client import get_s3_client
 
 _LOGGER = logging.getLogger(__name__)
@@ -18,7 +26,109 @@ GEOGRAPHIES_DOCUMENT_PATH = "geographies/countries.json"
 DOCUMENT_URL = f"{CDN_URL}/{GEOGRAPHIES_DOCUMENT_PATH}"
 
 
-def get_country_by_code(code: str) -> CountryResponse:
+def get_all_regions() -> list[dict[str, Any]]:
+    """
+    Retrieve all regions with their metadata.
+
+    :return list[RegionResponse]: A list of region objects with metadata.
+    """
+    return [
+        RegionResponse(
+            name=region["name"], type=region["type"], slug=region["slug"]
+        ).model_dump(mode="json")
+        for region in regions
+    ]
+
+
+def get_region_by_slug(slug: str) -> dict[str, Any] | None:
+    """
+    Retrieve region information using a slug.
+
+    :param str slug: A slug representation of a region name.
+    :return regionResponse: An object containing region details,
+        including name, type, and slug or None if not found.
+    """
+    for region in get_all_regions():
+        if region["slug"] == slug:
+            return region
+
+    return None
+
+
+def get_countries_by_region(slug: str) -> list[CountryResponse] | None:
+    """
+    Get all countries for a requested region by its slug.
+
+    :param str slug: A slug representation of a region name.
+    :return list[CountryResponse]: A list of country objects containing
+        alpha-2, alpha-3 codes, name, official name, numeric code, and flag emoji,
+        belonging to the requested region or None if slug is invalid or does not exist.
+    :raises ValueError: If no country is returned for a code linked to the requested region.
+    """
+    selected_region_country_codes = regions_to_countries.get(slug)
+    selected_countries = []
+
+    if selected_region_country_codes:
+        for country_code in selected_region_country_codes:
+            selected_country = get_country_by_code(country_code)
+
+            if not selected_country:
+                raise ValueError(
+                    f"Invalid country code in the region countries list: {country_code}"
+                )
+            else:
+                selected_countries.append(selected_country)
+
+    return selected_countries or None
+
+
+def get_all_geography_statistics_by_countries() -> dict[str, Any]:
+    """
+    Retrieve all geography statistics by countries.
+
+    :return Dict[str, CountryStatistics]: A list of dictionaries containing country
+        names, legislative processes, federal status, and federal details.
+    """
+
+    return {
+        alpha3: CountryStatisticsResponse(
+            name=country["name"],
+            legislative_process=country["legislative_process"],
+            federal=country["federal"],
+            federal_details=country["federal_details"],
+            political_groups=country["political_groups"],
+            global_emissions_percent=country["global_emissions_percent"],
+            climate_risk_index=country["climate_risk_index"],
+            worldbank_income_group=country["worldbank_income_group"],
+            visibility_status=country["visibility_status"],
+        ).model_dump(mode="json")
+        for alpha3, country in geography_statistics_by_countries.items()
+    }
+
+
+class CustomCountriesError(Exception):
+    """Custom exception for countries data loading errors"""
+
+    pass
+
+
+def load_cpr_custom_geographies() -> Dict[str, Any]:
+    """
+    Load custom CPR geography extensions from static JSON file.
+
+    NOTE: This utility function loads custom geography data that extends
+    the standard ISO 3166 country codes with CPR-specific entries like
+    'International' and 'No Geography'. The data is stored in a python file that returns a dict with information was migrated from the database for better performance
+    and deployment simplicity.
+
+    :return Dict[str, Any]: Dictionary of custom geography entries keyed
+        by alpha-3 codes, containing metadata like names, codes, and flags.
+    """
+
+    return countries
+
+
+def get_country_by_code(code: str) -> CountryResponse | None:
     """
     Retrieve country information using ISO alpha-3 code.
 
@@ -28,19 +138,15 @@ def get_country_by_code(code: str) -> CountryResponse:
 
     :param str code: ISO alpha-3 country code (e.g., 'USA', 'GBR').
     :return CountryResponse: An object containing country details,
-        including name, codes, and emoji flag.
-    :raises HTTPException: If the provided code does not match any
-        known country.
+        including name, codes, and emoji flag or None if not found.
     """
-    data = get_countries_data()
+    data = get_geographies_data()
 
     countries = data.get("countries", {})
     country = countries.get(code.upper())
 
     if not country:
-        raise HTTPException(
-            status_code=404, detail=f"Country with alpha-3 code '{code}' not found"
-        )
+        return None
 
     return CountryResponse(
         alpha_2=country["alpha_2"],
@@ -54,7 +160,7 @@ def get_country_by_code(code: str) -> CountryResponse:
     )
 
 
-def get_subdivisions_by_country(country_code: str) -> list[SubdivisionResponse]:
+def get_subdivisions_by_country(country_code: str) -> list[SubdivisionResponse] | None:
     """
     Retrieve all subdivisions for a given country using ISO alpha-3 code.
 
@@ -67,20 +173,16 @@ def get_subdivisions_by_country(country_code: str) -> list[SubdivisionResponse]:
     :param str country_code: ISO alpha-3 country code (e.g., 'AUS', 'USA').
     :return list[SubdivisionResponse]: A list of objects containing subdivision
         details including codes, names, types, and parent relationships.
-        Returns empty list if no subdivisions exist for the country.
-    :raises HTTPException: If the provided country code does not match any
-        known country.
+        Returns empty list if no subdivisions exist for the country or None
+        if country was not found for country_code.
     """
 
-    data = get_countries_data()
+    data = get_geographies_data()
 
-    countries = data.get("subdivisions", {})
+    countries = data.get("subdivisions_grouped_by_countries", {})
     country = countries.get(country_code.upper())
     if not country:
-        raise HTTPException(
-            status_code=404,
-            detail=f"Country with alpha-3 code '{country_code}' not found",
-        )
+        return None
 
     subdivisions = []
 
@@ -98,7 +200,26 @@ def get_subdivisions_by_country(country_code: str) -> list[SubdivisionResponse]:
     return subdivisions
 
 
-def get_all_subdivisions_grouped_by_country() -> dict[str, list[dict]]:
+def get_all_country_subdivisions() -> list[SubdivisionResponse]:
+    """
+    Retrieve all subdivisions grouped by country (using ISO alpha-3 codes).
+
+    NOTE: This utility function collects all administrative subdivisions
+    available in the `pycountry` library and organizes them by their
+    parent country (alpha-3 code).
+
+    :return dict[str, list[SubdivisionResponse]]: A dictionary mapping
+        alpha-3 country codes to their respective list of subdivisions.
+    """
+
+    data = get_geographies_data()
+
+    subdivisions = data.get("subdivisions", [])
+
+    return subdivisions
+
+
+def get_all_pycountry_subdivisions_grouped_by_country() -> dict[str, list[dict]]:
     """
     Retrieve all subdivisions grouped by country (using ISO alpha-3 codes).
 
@@ -136,7 +257,22 @@ def get_all_subdivisions_grouped_by_country() -> dict[str, list[dict]]:
     return subdivisions_by_country
 
 
-def list_all_countries() -> dict[str, dict]:
+def list_all_pycountry_subdivisions() -> list[dict]:
+    """
+    Return a flat list of all subdivisions across all countries.
+
+    Each subdivision is represented as a dictionary (from model_dump()).
+    """
+    subdivisions_by_country = get_all_pycountry_subdivisions_grouped_by_country()
+    all_subdivisions: list[dict] = []
+
+    for subdivisions in subdivisions_by_country.values():
+        all_subdivisions.extend(subdivisions)
+
+    return all_subdivisions
+
+
+def return_a_list_of_all_pycountry_country_objects() -> dict[str, dict]:
     """
     List all countries with their metadata.
 
@@ -148,7 +284,7 @@ def list_all_countries() -> dict[str, dict]:
     :return list[CountryResponse]: A list of country objects with metadata.
     """
 
-    return {
+    countries = {
         country.alpha_3: CountryResponse(  # type: ignore[arg-type]
             alpha_2=country.alpha_2,  # type: ignore[arg-type]
             alpha_3=country.alpha_3,  # type: ignore[arg-type]
@@ -159,6 +295,12 @@ def list_all_countries() -> dict[str, dict]:
         ).model_dump()
         for country in pycountry.countries
     }
+
+    custom_countries = load_cpr_custom_geographies()
+    for alpha_3, custom_data in custom_countries.items():
+        countries[alpha_3] = custom_data
+
+    return countries
 
 
 def get_all_countries() -> list[CountryResponse]:
@@ -173,7 +315,7 @@ def get_all_countries() -> list[CountryResponse]:
     :return list[CountryResponse]: A list of country objects with metadata.
     """
 
-    data = get_countries_data()
+    data = get_geographies_data()
     if "countries" not in data:
         raise ValueError("Invalid data format: 'countries' key not found")
     result = list(data["countries"].values())
@@ -202,11 +344,19 @@ def populate_initial_countries_data():
         raise ConnectionError("Failed to connect to S3")
 
     # Create the object
-    all_countries = list_all_countries()
-    all_subdivisons = get_all_subdivisions_grouped_by_country()
+    all_countries = return_a_list_of_all_pycountry_country_objects()
+    subdivisions_grouped_by_countries = (
+        get_all_pycountry_subdivisions_grouped_by_country()
+    )
+    all_subdivisions = list_all_pycountry_subdivisions()
+    geography_statistics = get_all_geography_statistics_by_countries()
+    regions = get_all_regions()
     countries_data = {
         "countries": all_countries,
-        "subdivisions": all_subdivisons,
+        "subdivisions_grouped_by_countries": subdivisions_grouped_by_countries,
+        "subdivisions": all_subdivisions,
+        "regions": regions,
+        "geography_statistics": geography_statistics,
         "version": "1.0",
         "timestamp": datetime.now(timezone.utc).isoformat(),
     }
@@ -219,7 +369,7 @@ def populate_initial_countries_data():
     s3_client.upload_json(countries_data, bucket_name, file_key)
 
 
-def get_countries_data(url: str | None = None) -> Dict[str, Any]:
+def get_geographies_data(url: str | None = None) -> Dict[str, Any]:
     """
     Retrieve all countries data from the Climate Policy Radar CDN.
 

@@ -1,10 +1,13 @@
-from datetime import datetime
+import json
+from datetime import datetime, timezone
 from typing import Any, Generic, Optional, TypeVar
 
+from api import log
 from fastapi import APIRouter, Depends, FastAPI, HTTPException
+from fastapi.middleware.cors import CORSMiddleware
 from pydantic import BaseModel, computed_field
 from pydantic_settings import BaseSettings
-from sqlalchemy import create_engine
+from sqlalchemy import create_engine, text
 from sqlalchemy.dialects.postgresql import ARRAY, JSONB
 from sqlmodel import Column, Field, Relationship, Session, SQLModel, func, select
 
@@ -140,8 +143,8 @@ class FamilyBase(SQLModel):
     title: str
     description: str
     concepts: list[dict[str, Any]]
-    last_modified: datetime = Field(default_factory=datetime.now)
-    created: datetime = Field(default_factory=datetime.now)
+    last_modified: datetime = Field(default_factory=datetime.now, exclude=True)
+    created: datetime = Field(default_factory=datetime.now, exclude=True)
     family_category: str
 
 
@@ -172,7 +175,7 @@ class Family(FamilyBase, table=True):
 
 class FamilyPublic(FamilyBase):
     import_id: str
-    corpus: Corpus
+    corpus: Corpus = Field()
     unparsed_geographies: list[Geography] = Field(default_factory=list, exclude=True)
     unparsed_slug: list[Slug] = Field(exclude=True, default=list())
     unparsed_metadata: Optional[FamilyMetadata] = Field(exclude=True, default=None)
@@ -204,13 +207,37 @@ class FamilyPublic(FamilyBase):
 
     @computed_field
     @property
-    def published_date(self) -> datetime:
-        return self.created
+    def published_date(self) -> datetime | None:
+        # datetime_event_name stores the value of the event.event_type_name that should be used for published_date
+        # otherwise we use the earliest date
+        published_event_date = next(
+            (
+                event.date
+                for event in self.unparsed_events
+                if event.valid_metadata is not None
+                and event.event_type_name == event.valid_metadata["datetime_event_name"]
+            ),
+            None,
+        )
+        earliest_event_date = min(
+            (event.date for event in self.unparsed_events if event.date), default=None
+        )
+        return published_event_date or earliest_event_date
 
     @computed_field
     @property
-    def last_updated_date(self) -> datetime:
-        return self.last_modified
+    def last_updated_date(self) -> datetime | None:
+        # get the most recent date that is not in the future
+        now = datetime.now(tz=timezone.utc)
+        latest_event_date = max(
+            (
+                event.date
+                for event in self.unparsed_events
+                if event.date and event.date <= now
+            ),
+            default=None,
+        )
+        return latest_event_date
 
     @computed_field
     @property
@@ -282,7 +309,11 @@ class FamilyPublic(FamilyBase):
                 "cdn_object": document.physical_document.cdn_object,
                 "source_url": document.physical_document.source_url,
                 "content_type": document.physical_document.content_type,
-                "language": document.physical_document.unparsed_languages[0],
+                "language": (
+                    document.physical_document.unparsed_languages[0].language_code
+                    if document.physical_document.unparsed_languages
+                    else None
+                ),
                 "languages": [
                     language.language_code
                     for language in document.physical_document.unparsed_languages
@@ -307,75 +338,6 @@ class FamilyPublic(FamilyBase):
     @property
     def _metadata(self) -> dict[str, Any]:
         return self.unparsed_metadata.value if self.unparsed_metadata else {}
-
-
-# TODO: implement these models for the frontend
-# export type TFamilyPage = {
-#   organisation: string; // Done
-#   title: string; // Done
-#   summary: string; // Done
-#   geographies: string[]; // Done
-#   import_id: string; // Done
-#   slug: string; // Done
-#   corpus_id: string; // Done
-#   published_date: string | null; // Done
-#   last_updated_date: string | null; // Done
-#   category: TCategory; // Done
-#   corpus_type_name: TCorpusTypeSubCategory; // Done
-#   metadata: TFamilyMetadata; // Done
-#   events: TEvent[]; // Done
-#   documents: TDocumentPage[]; // Done
-#   collections: TCollection[];
-# };
-
-# export type TDocumentPage = {
-#   import_id: string;
-#   variant?: string | null;
-#   slug: string;
-#   title: string;
-#   md5_sum?: string | null;
-#   cdn_object?: string | null;
-#   source_url: string;
-#   content_type: TDocumentContentType;
-#   language: string;
-#   languages: string[];
-#   document_type: string | null;
-#   document_role: string;
-# };
-
-# export type TCollection = {
-#   import_id: string;
-#   title: string;
-#   description: string;
-#   families: TCollectionFamily[];
-# };
-
-# export type TCollectionFamily = {
-#   description: string;
-#   slug: string;
-#   title: string;
-# };
-
-# export type TFamilyMetadata = {
-#   topic?: string[];
-#   hazard?: string[];
-#   sector?: string[];
-#   keyword?: string[];
-#   framework?: string[];
-#   instrument?: string[];
-#   author_type?: string[];
-#   author?: string[];
-#   document_type?: string;
-# };
-
-# export type TEvent = {
-#   title: string;
-#   date: string;
-#   event_type: string;
-#   status: string;
-# };
-
-# export type TCategory = "Legislative" | "Executive" | "Litigation" | "Policy" | "Law" | "UNFCCC" | "MCF" | "Reports";
 
 
 class FamilyDocumentBase(SQLModel):
@@ -460,6 +422,7 @@ class Settings(BaseSettings):
 
 
 settings = Settings()
+log.log("families-api")
 
 # TODO: Use JSON logging - https://linear.app/climate-policy-radar/issue/APP-571/add-json-logging-to-families-api
 # TODO: Add OTel - https://linear.app/climate-policy-radar/issue/APP-572/add-otel-to-families-api
@@ -470,6 +433,29 @@ app = FastAPI(
     docs_url="/families/docs",
     redoc_url="/families/redoc",
     openapi_url="/families/openapi.json",
+)
+
+
+_ALLOW_ORIGIN_REGEX = (
+    r"http://localhost:3000|"
+    r"http://bs-local.com:3000|"
+    r"https://.+\.climatepolicyradar\.org|"
+    r"https://.+\.staging.climatepolicyradar\.org|"
+    r"https://.+\.production.climatepolicyradar\.org|"
+    r"https://.+\.sandbox\.climatepolicyradar\.org|"
+    r"https://climate-laws\.org|"
+    r"https://.+\.climate-laws\.org|"
+    r"https://climateprojectexplorer\.org|"
+    r"https://.+\.climateprojectexplorer\.org"
+)
+
+# Add CORS middleware to allow cross origin requests from any port
+app.add_middleware(
+    CORSMiddleware,
+    allow_origin_regex=_ALLOW_ORIGIN_REGEX,
+    allow_credentials=True,
+    allow_methods=["*"],
+    allow_headers=["*"],
 )
 
 
@@ -498,6 +484,60 @@ def read_documents(*, session: Session = Depends(get_session)):
         total=len(data),
         page=1,
         page_size=len(data),
+    )
+
+
+class ConceptPublic(BaseModel):
+    id: str
+    relation: str
+    preferred_label: str
+    type: str
+    ids: list[str]
+    subconcept_of_labels: list[str]
+
+
+@router.get("/concepts")
+def read_concepts(*, session: Session = Depends(get_session)):
+    # Extract fields from the unnested JSONB objects
+    stmt = text(
+        """
+      SELECT DISTINCT ON (concept->>'relation', concept->>'preferred_label')
+          concept->>'relation' as relation,
+          concept->>'preferred_label' as preferred_label,
+          concept->>'id' as id,
+          concept->>'ids' as ids,
+          concept->>'type' as type,
+          concept->>'subconcept_of_labels' as subconcept_of_labels
+      FROM family, unnest(concepts) as concept
+      WHERE concept->>'relation' IS NOT NULL 
+      AND concept->>'preferred_label' IS NOT NULL
+      ORDER BY concept->>'relation', concept->>'preferred_label'
+    """
+    )
+
+    results = session.connection().execute(stmt).all()
+
+    unique_concepts = [
+        ConceptPublic.model_validate(
+            {
+                **row._asdict(),
+                # This is needed to unpack the JSON arrays into Python lists
+                "ids": json.loads(row.ids) if row.ids else [],
+                "subconcept_of_labels": (
+                    json.loads(row.subconcept_of_labels)
+                    if row.subconcept_of_labels
+                    else []
+                ),
+            }
+        )
+        for row in results
+    ]
+
+    return APIListResponse(
+        data=unique_concepts,
+        total=len(unique_concepts),
+        page=1,
+        page_size=len(unique_concepts),
     )
 
 

@@ -1,18 +1,22 @@
 import logging
 import os
 from contextlib import asynccontextmanager
+from pathlib import Path
 from typing import Any
 
 import duckdb
+from api.telemetry import Telemetry
+from api.telemetry_config import ServiceManifest, TelemetryConfig
 from fastapi import APIRouter, Depends, FastAPI, HTTPException, Query
 from pydantic import BaseModel, Field
 from pydantic_settings import BaseSettings
 
-from .telemetry import Telemetry
-from .telemetry_config import ServiceManifest, TelemetryConfig
-
 # Global connection variable
 conn = None
+
+# we always use a path relative to the file as the calling process can come
+# from multiple locations
+root_dir = Path(__file__).parent.parent
 
 _LOGGER = logging.getLogger(__name__)
 
@@ -21,7 +25,7 @@ ENV = os.getenv("ENV", "development")
 os.environ["OTEL_PYTHON_LOG_CORRELATION"] = "True"
 try:
     otel_config = TelemetryConfig.from_service_manifest(
-        ServiceManifest.from_file("service-manifest.json"), ENV, "0.1.0"
+        ServiceManifest.from_file(f"{root_dir}/service-manifest.json"), ENV, "0.1.0"
     )
 except Exception as _:
     _LOGGER.error("Failed to load service manifest, using defaults")
@@ -50,7 +54,9 @@ async def lifespan(app: FastAPI):
     # Startup
     global conn
     try:
-        conn = duckdb.connect("initial-data/concepts.db", read_only=True)
+
+        db_path = root_dir / "initial-data" / "concepts.db"
+        conn = duckdb.connect(db_path, read_only=True)
         _LOGGER.info("🔌 Database connection established")
         yield
     except Exception as e:

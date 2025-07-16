@@ -21,35 +21,10 @@ initial-data:
 
 
 dev:
+    uv sync
     docker compose --profile dev up
-
-test:
-    docker compose --profile test up --abort-on-container-exit --exit-code-from test
 
 # build
 # TODO: this needs to be tied into a lifecycle somewhere to make sure it is run if something is added
-# sed is used here to remove a whole bunch of gumpf you can not remove with poetry v1 
 requirements:
-    poetry export --without-hashes --without-urls --format requirements.txt | sed 's/ ;.*//'  > requirements.txt
-
-# Local docker development
-ecr-login:
-    aws ecr get-login-password --region eu-west-1 | docker login --username AWS --password-stdin $(aws sts get-caller-identity --query 'Account' --output text).dkr.ecr.eu-west-1.amazonaws.com
-
-docker-build tag:
-    # @related: GITHUB_SHA_ENV_VAR
-    docker buildx build --platform linux/amd64 --output type=docker --build-arg GITHUB_SHA=$(git rev-parse HEAD) -t families-api:{{tag}} .
-
-docker-push tag:
-    docker tag families-api:{{tag}} $(aws sts get-caller-identity --query 'Account' --output text).dkr.ecr.eu-west-1.amazonaws.com/families-api:{{tag}}
-    docker push $(aws sts get-caller-identity --query 'Account' --output text).dkr.ecr.eu-west-1.amazonaws.com/families-api:{{tag}}
-
-deploy-local tag:
-    just ecr-login
-    just requirements
-    just deploy {{tag}}
-
-# environment is not used here, but is required for the github deploy action
-deploy tag _:
-    just docker-build {{tag}}
-    just docker-push {{tag}}
+    uv pip freeze > requirements.txt

@@ -1,0 +1,28 @@
+# this file is only used when merged with the standard docker-compose file
+# @see https://docs.docker.com/compose/how-tos/multiple-compose-files/merge/
+# it overrides the backend service for a better UX locally
+# e.g. mounting your local ./app for live updates
+services:
+  backend:
+    build:
+      context: ./
+      dockerfile: Dockerfile
+    environment:
+      PYTHONDONTWRITEBYTECODE: 0
+      VESPA_URL: http://vespatest:8080
+    volumes:
+      - ./:/app/:ro
+      - /app/.venv
+    depends_on:
+      vespatest:
+        condition: service_healthy
+
+  pgadmin:
+    image: dpage/pgadmin4
+    container_name: pgadmin4
+    restart: always
+    ports:
+      - 8000:80
+    environment:
+      PGADMIN_DEFAULT_EMAIL: dev@cpr.com
+      PGADMIN_DEFAULT_PASSWORD: climatepolicyradar
