@@ -1,8 +1,13 @@
 import json
+import logging
+import os
 from datetime import datetime, timezone
+from pathlib import Path
 from typing import Any, Generic, Optional, TypeVar
 
 from api import log
+from api.telemetry import Telemetry
+from api.telemetry_config import ServiceManifest, TelemetryConfig
 from fastapi import APIRouter, Depends, FastAPI, HTTPException
 from fastapi.middleware.cors import CORSMiddleware
 from pydantic import BaseModel, computed_field
@@ -10,6 +15,32 @@ from pydantic_settings import BaseSettings
 from sqlalchemy import create_engine, text
 from sqlalchemy.dialects.postgresql import ARRAY, JSONB
 from sqlmodel import Column, Field, Relationship, Session, SQLModel, func, select
+
+_LOGGER = logging.getLogger(__name__)
+
+# we always use a path relative to the file as the calling process can come
+# from multiple locations
+root_dir = Path(__file__).parent.parent
+
+
+# Open Telemetry initialisation
+ENV = os.getenv("ENV", "development")
+os.environ["OTEL_PYTHON_LOG_CORRELATION"] = "True"
+try:
+    otel_config = TelemetryConfig.from_service_manifest(
+        ServiceManifest.from_file(f"{root_dir}/service-manifest.json"), ENV, "0.1.0"
+    )
+except Exception as _:
+    _LOGGER.error("Failed to load service manifest, using defaults")
+    otel_config = TelemetryConfig(
+        service_name="navigator-backend",
+        namespace_name="navigator",
+        service_version="0.0.0",
+        environment=ENV,
+    )
+
+telemetry = Telemetry(otel_config)
+tracer = telemetry.get_tracer()
 
 
 class Organisation(SQLModel, table=True):
@@ -424,8 +455,6 @@ class Settings(BaseSettings):
 settings = Settings()
 log.log("families-api")
 
-# TODO: Use JSON logging - https://linear.app/climate-policy-radar/issue/APP-571/add-json-logging-to-families-api
-# TODO: Add OTel - https://linear.app/climate-policy-radar/issue/APP-572/add-otel-to-families-api
 router = APIRouter(
     prefix="/families",
 )
@@ -613,3 +642,7 @@ def health_check():
 
 
 app.include_router(router)
+
+# Open Telemetry instrumentation
+telemetry.instrument_fastapi(app)
+telemetry.setup_exception_hook()
