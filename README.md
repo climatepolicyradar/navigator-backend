@@ -24,6 +24,15 @@ e.g.
 just dev concepts-api
 ```
 
+## Testing
+
+e.g.
+
+```bash
+# just test {{service}}
+just test concepts-api
+```
+
 ## Deployment
 
 e.g.
