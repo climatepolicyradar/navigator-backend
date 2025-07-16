@@ -8,11 +8,15 @@ import jwt
 import pytest
 from dateutil.relativedelta import relativedelta
 from db_client.models.dfce.family import (
+    DocumentStatus,
     Family,
     FamilyCategory,
     FamilyCorpus,
+    FamilyDocument,
     FamilyGeography,
+    FamilyStatus,
 )
+from db_client.models.document.physical_document import PhysicalDocument
 from db_client.models.organisation import Corpus, CorpusType, Organisation
 
 from app.clients.db.session import SessionLocal
@@ -59,7 +63,15 @@ EXPECTED_UNFCCC_TAXONOMY = {
 }
 
 
-def _add_family(test_db, import_id: str, cat: FamilyCategory, corpus_import_id):
+def _add_family(
+    test_db,
+    import_id: str,
+    cat: FamilyCategory,
+    corpus_import_id,
+    status: FamilyStatus = FamilyStatus.PUBLISHED,
+):
+    """Add a family with the specified status by creating appropriate documents."""
+    # Create the family
     test_db.add(
         Family(
             title="f1",
@@ -72,6 +84,40 @@ def _add_family(test_db, import_id: str, cat: FamilyCategory, corpus_import_id):
     test_db.add(
         FamilyCorpus(family_import_id=import_id, corpus_import_id=corpus_import_id)
     )
+
+    # Create a physical document
+    physical_doc = PhysicalDocument(
+        title="Test Document",
+        md5_sum="test_md5",
+        cdn_object="test_cdn",
+        source_url="http://test.com",
+        content_type="application/pdf",
+    )
+    test_db.add(physical_doc)
+    test_db.flush()
+
+    # Create a family document with the appropriate status
+    # Convert FamilyStatus enum to DocumentStatus string
+    doc_status_map = {
+        FamilyStatus.PUBLISHED: DocumentStatus.PUBLISHED,
+        FamilyStatus.CREATED: DocumentStatus.CREATED,
+        FamilyStatus.DELETED: DocumentStatus.DELETED,
+    }
+    for fam_status in [
+        FamilyStatus.PUBLISHED,
+        FamilyStatus.CREATED,
+        FamilyStatus.DELETED,
+    ]:
+        if fam_status == status:
+            family_doc = FamilyDocument(
+                family_import_id=import_id,
+                physical_document_id=physical_doc.id,
+                import_id=f"{import_id}.doc",
+                variant_name="Original Language",
+                document_status=doc_status_map[fam_status],
+                valid_metadata={"role": ["MAIN"], "type": ["Law"]},
+            )
+            test_db.add(family_doc)
 
 
 def test_config_endpoint_content(data_client, data_db, app_token_factory, valid_token):
@@ -400,6 +446,94 @@ def test_config_endpoint_returns_stats_for_all_orgs_if_no_allowed_corpora_in_app
                 "Reports": 0,
                 "Litigation": 0,
             }
+
+
+def test_config_endpoint_only_counts_published_families(
+    data_client, data_db, valid_token
+):
+    """Test that config endpoint only counts families with PUBLISHED status."""
+    url_under_test = "/api/v1/config"
+
+    cclw = (
+        data_db.query(Corpus)
+        .join(Organisation, Organisation.id == Corpus.organisation_id)
+        .filter(Organisation.name == "CCLW")
+        .one()
+    )
+
+    # Add families with different statuses
+    # Published families (should be counted)
+    _add_family(
+        data_db,
+        "T.0.0.1",
+        FamilyCategory.EXECUTIVE,
+        cclw.import_id,
+        FamilyStatus.PUBLISHED,
+    )
+    _add_family(
+        data_db,
+        "T.0.0.2",
+        FamilyCategory.LEGISLATIVE,
+        cclw.import_id,
+        FamilyStatus.PUBLISHED,
+    )
+    _add_family(
+        data_db,
+        "T.0.0.3",
+        FamilyCategory.UNFCCC,
+        cclw.import_id,
+        FamilyStatus.PUBLISHED,
+    )
+
+    # Created families (should NOT be counted)
+    _add_family(
+        data_db,
+        "T.0.0.4",
+        FamilyCategory.EXECUTIVE,
+        cclw.import_id,
+        FamilyStatus.CREATED,
+    )
+    _add_family(
+        data_db,
+        "T.0.0.5",
+        FamilyCategory.LEGISLATIVE,
+        cclw.import_id,
+        FamilyStatus.CREATED,
+    )
+
+    # Deleted families (should NOT be counted)
+    _add_family(
+        data_db,
+        "T.0.0.6",
+        FamilyCategory.EXECUTIVE,
+        cclw.import_id,
+        FamilyStatus.DELETED,
+    )
+    _add_family(
+        data_db, "T.0.0.7", FamilyCategory.UNFCCC, cclw.import_id, FamilyStatus.DELETED
+    )
+
+    data_db.flush()
+
+    response = data_client.get(url_under_test, headers={"app-token": valid_token})
+
+    response_json = response.json()
+
+    corpus_types = response_json["corpus_types"]
+    assert len(corpus_types) == 2
+
+    cclw_corpus_config = corpus_types["Laws and Policies"]["corpora"][0]
+
+    # Should only count the 3 published families
+    assert cclw_corpus_config["total"] == 3
+    assert cclw_corpus_config["count_by_category"] == {
+        "Executive": 1,  # 1 published
+        "Legislative": 1,  # 1 published
+        "UNFCCC": 1,  # 1 published
+        "MCF": 0,
+        "Reports": 0,
+        "Litigation": 0,
+    }
 
 
 class _MockColumn:

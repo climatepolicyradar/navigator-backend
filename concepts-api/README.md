@@ -2,7 +2,7 @@
 
 ## Prerequisites
 
-- Python 3.11 or higher
+- Python 3.12 or higher
 - uv (Python package manager)
 - Docker and Docker Compose
 - AWS CLI configured with appropriate credentials

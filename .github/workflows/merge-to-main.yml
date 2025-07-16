@@ -7,7 +7,7 @@ permissions:
   id-token: write
   contents: read
 jobs:
-  release:
+  release-backend-api:
     defaults:
       run:
         working-directory: backend-api
@@ -67,12 +67,23 @@ jobs:
           docker push $ECR_REGISTRY/$ECR_REPOSITORY:$IMAGE_TAG
           echo "image=$ECR_REGISTRY/$ECR_REPOSITORY:$IMAGE_TAG" >> $GITHUB_OUTPUT
 
-  deploy:
+  test-microservices:
     runs-on: ubuntu-latest
     strategy:
       matrix:
         service: [families-api, geographies-api, concepts-api]
-        environment: [staging, production]
+    steps:
+      - uses: actions/checkout@v4
+      - uses: extractions/setup-just@v3
+      - working-directory: ${{ matrix.service }}
+        run: |
+          just test
+  deploy-microservices:
+    needs: test-microservices
+    runs-on: ubuntu-latest
+    strategy:
+      matrix:
+        environment: [production]
     environment: ${{ matrix.environment }}
     env:
       SERVICES: families-api geographies-api concepts-api
@@ -82,16 +93,15 @@ jobs:
       - uses: aws-actions/configure-aws-credentials@v4.2.0
         with:
           role-to-assume: arn:aws:iam::${{ secrets.AWS_ACCOUNT_ID }}:role/navigator-backend-github-actions-deploy
-          role-session-name: GitHub_to_AWS_via_FederatedOIDC_${{ matrix.environment }}_${{ matrix.service }}
+          role-session-name: GitHub_to_AWS_via_FederatedOIDC_${{ matrix.environment }}
           aws-region: eu-west-1
       - uses: aws-actions/amazon-ecr-login@v2
       # we use python / uv in some build scripts and testing
       - uses: actions/setup-python@v5
         with:
           python-version: "3.12"
-      - uses: astral-sh/setup-uv@v5
-      - working-directory: ${{ matrix.service }}
-        run: uv sync
+      - uses: astral-sh/setup-uv@v6
+      - run: uv sync --all-packages
       - run: |
           for service in $SERVICES; do
             just deploy $service ${{ matrix.environment }} latest

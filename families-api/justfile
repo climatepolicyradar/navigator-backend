@@ -24,9 +24,6 @@ dev:
     uv sync
     docker compose --profile dev up
 
-test:
-    docker compose --profile test up --abort-on-container-exit --exit-code-from test
-
 # build
 # TODO: this needs to be tied into a lifecycle somewhere to make sure it is run if something is added
 requirements:

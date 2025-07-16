@@ -175,7 +175,7 @@ class Family(FamilyBase, table=True):
 
 class FamilyPublic(FamilyBase):
     import_id: str
-    corpus: Corpus = Field(exclude=True)
+    corpus: Corpus = Field()
     unparsed_geographies: list[Geography] = Field(default_factory=list, exclude=True)
     unparsed_slug: list[Slug] = Field(exclude=True, default=list())
     unparsed_metadata: Optional[FamilyMetadata] = Field(exclude=True, default=None)

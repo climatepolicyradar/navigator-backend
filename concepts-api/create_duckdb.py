@@ -1,14 +1,13 @@
 import glob
 import json
 import os
-from typing import List, Tuple
 
 import duckdb
 import requests
 import yaml
 
 
-def fetch_classifier_specs_file() -> Tuple[str, bool]:
+def fetch_classifier_specs_file() -> str:
     """
     Fetch classifier specs file from GitHub repository.
 
@@ -22,7 +21,7 @@ def fetch_classifier_specs_file() -> Tuple[str, bool]:
     branch = "main"
 
     classifier_file_name = "prod.yaml"
-    if os.getenv("Environment") == "staging":
+    if os.getenv("ENV") == "staging":
         classifier_file_name = "staging.yaml"
 
     path = f"flows/classifier_specs/{classifier_file_name}"
@@ -33,7 +32,7 @@ def fetch_classifier_specs_file() -> Tuple[str, bool]:
         response = requests.get(github_url, timeout=10)  # seconds
         response.raise_for_status()  # Raise an error for bad HTTP responses
 
-        return response.text, False
+        return response.text
 
     except requests.RequestException as req_err:
         print(f"GitHub fetch failed: {req_err}.")
@@ -41,55 +40,43 @@ def fetch_classifier_specs_file() -> Tuple[str, bool]:
     raise ValueError("Failed to fetch classifiers") from None
 
 
-def parse_classifier_specs(classifier_specs_file: str, fallback: bool) -> List[str]:
+def parse_classifier_specs(classifier_specs_file: str) -> list[str]:
     """
     Parse classifier specs file.
 
     :param classifier_specs_file: Classifier specs file as text
     :type classifier_specs_file: str
-    :param fallback: Whether to use fallback
-    :type fallback: bool
-    :return: List of concept IDs with classifiers
-    :rtype: List[str]
+    :return: list of concept IDs with classifiers
+    :rtype: list[str]
     :raises ValueError: If unable to parse the YAML file
     """
-    if fallback:
-        try:
-            with open(classifier_specs_file, "r") as f:
-                return json.load(f)["targets_with_classifiers"]
-        except (FileNotFoundError, json.JSONDecodeError, KeyError) as local_err:
-            raise ValueError(
-                f"Fallback to local file failed: {local_err}"
-            ) from local_err
+    try:
+        # Parse the YAML content
+        classifier_specs = yaml.safe_load(classifier_specs_file)
 
-    else:
-        try:
-            # Parse the YAML content
-            classifier_specs = yaml.safe_load(classifier_specs_file)
+        # Extract concept IDs, removing version numbers
+        concepts_with_classifiers = [
+            concept.split(":")[0] for concept in classifier_specs if concept
+        ]
 
-            # Extract concept IDs, removing version numbers
-            concepts_with_classifiers = [
-                concept.split(":")[0] for concept in classifier_specs if concept
-            ]
+        if not concepts_with_classifiers:
+            raise ValueError("No concepts with classifiers found in the YAML file")
 
-            if not concepts_with_classifiers:
-                raise ValueError("No concepts with classifiers found in the YAML file")
+        return concepts_with_classifiers
 
-            return concepts_with_classifiers
-
-        except yaml.YAMLError as yaml_err:
-            raise ValueError(f"Failed to parse YAML file: {yaml_err}") from yaml_err
+    except yaml.YAMLError as yaml_err:
+        raise ValueError(f"Failed to parse YAML file: {yaml_err}") from yaml_err
 
 
-def get_classifier_specs() -> List[str]:
+def get_classifier_specs() -> list[str]:
     """
     Get concepts with classifiers from classifier specs file.
 
-    :return: List of concept IDs with classifiers
-    :rtype: List[str]
+    :return: list of concept IDs with classifiers
+    :rtype: list[str]
     """
-    classifier_specs_file, fallback = fetch_classifier_specs_file()
-    classifier_specs = parse_classifier_specs(classifier_specs_file, fallback)
+    classifier_specs_file = fetch_classifier_specs_file()
+    classifier_specs = parse_classifier_specs(classifier_specs_file)
     return classifier_specs
 
 
