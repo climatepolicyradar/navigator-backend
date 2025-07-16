@@ -1,0 +1,33 @@
+# This allows us to run the families API against the navigator-admin-backend DB
+# this is useful for things like e2e testing e.g.
+# litigation-data-mapper -- JSON --> bulk-import --> navigator-admin-backend --> families-api
+services:
+  app:
+    container_name: families-api-app
+    build:
+      context: ..
+      dockerfile: families-api/Dockerfile
+    ports:
+      - 8080:8080
+    volumes:
+      - ..:/app
+    working_dir: /app
+    environment:
+      # this is taken from
+      # @see: https://github.com/climatepolicyradar/navigator-admin-backend/blob/main/docker-compose-dev.yml#L47-L49
+      NAVIGATOR_DATABASE_URL: postgresql://navigator_admin:password@host.docker.internal:5432/navigator
+    # override the command with `fastapi **dev**`
+    command:
+      [
+        uv,
+        run,
+        --project,
+        families-api,
+        fastapi,
+        dev,
+        families-api/app/main.py,
+        --port,
+        "8080",
+        --host,
+        0.0.0.0,
+      ]
