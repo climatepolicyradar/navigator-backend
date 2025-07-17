@@ -50,7 +50,7 @@ from app.repository.lookups import (
     get_geographies_as_iso_codes_with_fallback,  # TODO: remove this once frontend is updated to use ISO codes in favour of get_countries_by_iso_codes
 )
 from app.repository.lookups import (
-    validate_subdivision_iso_codes,  # TODO: update this to use geographies api endpoint
+    validate_subdivision_iso_codes,  # TODO: update this to use geographies api endpoint when refactoring geographies
 )
 from app.repository.lookups import (
     doc_type_from_family_document_metadata,
