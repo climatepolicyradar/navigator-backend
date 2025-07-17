@@ -3,14 +3,13 @@ import os
 from pathlib import Path
 from typing import TypeVar
 
+from api.telemetry import Telemetry
+from api.telemetry_config import ServiceManifest, TelemetryConfig
 from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
 
 from app.model import Settings
 from app.router import router as geographies_router
-
-from ...api.telemetry import Telemetry
-from ...api.telemetry_config import ServiceManifest, TelemetryConfig
 
 _LOGGER = logging.getLogger(__name__)
 
