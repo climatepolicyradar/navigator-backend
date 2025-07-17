@@ -39,7 +39,7 @@ async def list_all_regions() -> list[RegionResponse]:
 
 @router.get("/regions/{slug}", response_model=RegionResponse)
 async def get_region(
-    slug: str = Path(..., description="region slug")
+    slug: str = Path(..., description="region slug"),
 ) -> RegionResponse:
     """
     Get region with metadata by its slug.
@@ -59,7 +59,7 @@ async def get_region(
 
 @router.get("/regions/{slug}/countries", response_model=list[CountryResponse])
 async def get_countries_for_region(
-    slug: str = Path(..., description="region slug")
+    slug: str = Path(..., description="region slug"),
 ) -> list[CountryResponse]:
     """
     Get all countries for a requested region by its slug.
@@ -129,8 +129,7 @@ async def get_subdivisions() -> list[SubdivisionResponse]:
     Get subdivisions for all countries.
 
     NOTE: This endpoint retrieves first-level administrative subdivisions
-    (such as states, provinces, or regions) for a given country using
-    its ISO alpha-3 code (e.g., 'USA', 'AUS', 'CAN'). This can be used to
+    (such as states, provinces, or regions) for all countries. This can be used to
     support region-based filtering, selection menus, or geographic analysis.
 
     :return list[SubdivisionResponse]: A list of subdivision objects representing
