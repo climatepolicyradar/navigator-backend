@@ -73,7 +73,7 @@ class SearchRequestBody(CprSdkSearchParameters):
     """
     This is an object containing a map of fields and their values "
     to filter on. The allowed fields for the keys are:
-    "sources", "countries", "regions", "categories", "languages"
+    "sources", "countries", "regions", "categories", "languages", "subdivisions".
     """
 
     offset: int = Field(
