@@ -43,6 +43,7 @@ class FilterField(str, Enum):
     REGION = "regions"
     CATEGORY = "categories"
     LANGUAGE = "languages"
+    SUBDIVSION = "subdivisions"
 
 
 BackendFilterValues = Literal[

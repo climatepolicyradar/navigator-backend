@@ -72,6 +72,32 @@ def get_countries_by_iso_codes(
     ]
 
 
+def validate_subdivision_iso_codes(db: Session, geography_identifiers: Sequence[str]):
+    """
+    Validates subdivision ISO codes against the database.
+
+    Retrieves subdivisions from the database using the provided ISO codes.
+    Only returns subdivisions (geographies with parent_id).
+
+    :param Session db: Database session.
+    :param Sequence[str] geography_identifiers: Sequence of subdivision ISO codes.
+    :return list[str]: List of valid subdivision ISO codes.
+    """
+    if not geography_identifiers:
+        return []
+
+    slug_geographies = (
+        db.query(Geography)
+        .filter(
+            Geography.value.in_(list(geography_identifiers)),
+            Geography.parent_id.is_not(None),
+        )
+        .all()
+    )
+
+    return [geo.value for geo in slug_geographies]
+
+
 def get_geographies_as_iso_codes_with_fallback(
     db: Session,
     geography_identifiers: Sequence[str],
