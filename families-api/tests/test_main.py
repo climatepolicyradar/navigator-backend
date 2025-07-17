@@ -6,7 +6,7 @@ from sqlalchemy import create_engine
 from sqlalchemy.orm import sessionmaker
 from sqlmodel import Session, SQLModel
 
-from .main import (
+from ..app.main import (
     APIItemResponse,
     Corpus,
     Family,
