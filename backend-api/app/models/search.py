@@ -47,7 +47,7 @@ class FilterField(str, Enum):
 
 
 BackendFilterValues = Literal[
-    "sources", "countries", "regions", "categories", "languages"
+    "sources", "countries", "regions", "categories", "languages", "subdivisions"
 ]
 BackendKeywordFilter = Optional[Mapping[BackendFilterValues, Sequence[str]]]
 
