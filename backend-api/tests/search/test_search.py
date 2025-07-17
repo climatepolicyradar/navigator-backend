@@ -553,6 +553,8 @@ def test_create_browse_request_params(
         ),
         # Tests that valid ISO country codes work
         ({"countries": ["KHM"]}, {"family_geographies": ["KHM"]}),
+        # Tests that subdivisions iso codes are mapped to family_geographies
+        ({"subdivisions": ["US-CA"]}, {"family_geographies": ["KHM"]}),
         # # Tests that country names (not codes) return None
         # TODO: Reenable this test
         # ({"countries": ["cambodia"]}, None),
@@ -753,7 +755,7 @@ def _generate_search_response_hits(spec: FamSpec) -> Sequence[CprSdkHit]:
                     if doc_data[document_number]["content_type"] == "text/html"
                     else _generate_coords()
                 ),
-                text_block_id=f"block_{random.randint(1,15000)}",
+                text_block_id=f"block_{random.randint(1, 15000)}",
                 text_block_page=(
                     None
                     if doc_data[document_number]["content_type"] == "text/html"
