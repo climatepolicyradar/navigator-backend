@@ -350,6 +350,8 @@ def _convert_filter_field(filter_field: str) -> Optional[str]:
         return filter_fields["geographies"]
     if filter_field == FilterField.REGION:
         return filter_fields["geographies"]
+    if filter_field == FilterField.SUBDIVISION:
+        return filter_fields["geographies"]
     if filter_field == FilterField.LANGUAGE:
         return filter_fields["language"]
     if filter_field == FilterField.SOURCE:
@@ -380,7 +382,7 @@ def _convert_filters(
                 # TODO: remove this once frontend is updated to use ISO codes in favour of get_countries_by_iso_codes
                 get_geographies_as_iso_codes_with_fallback(db, values)
             )
-        elif field == FilterField.SUBDIVSION:
+        elif field == FilterField.SUBDIVISION:
             countries.extend(validate_subdivision_iso_codes(db, values))
         else:
             new_values = values
