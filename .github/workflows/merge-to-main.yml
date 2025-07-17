@@ -75,9 +75,7 @@ jobs:
     steps:
       - uses: actions/checkout@v4
       - uses: extractions/setup-just@v3
-      - working-directory: ${{ matrix.service }}
-        run: |
-          just test
+      - run: just test ${{ matrix.service }}
   deploy-microservices:
     needs: test-microservices
     runs-on: ubuntu-latest

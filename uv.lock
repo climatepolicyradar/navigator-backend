@@ -389,6 +389,7 @@ name = "geographies-api"
 version = "2.0.0"
 source = { virtual = "geographies-api" }
 dependencies = [
+    { name = "api" },
     { name = "boto3" },
     { name = "fastapi", extra = ["standard"] },
     { name = "pulumi" },
@@ -402,6 +403,7 @@ dependencies = [
 
 [package.metadata]
 requires-dist = [
+    { name = "api", editable = "api" },
     { name = "boto3", specifier = ">=1.38.32,<2.0.0" },
     { name = "fastapi", extras = ["standard"], specifier = ">=0.115.12,<0.116.0" },
     { name = "pulumi", specifier = ">=3.166.0,<4.0.0" },
