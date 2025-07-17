@@ -43,7 +43,7 @@ class FilterField(str, Enum):
     REGION = "regions"
     CATEGORY = "categories"
     LANGUAGE = "languages"
-    SUBDIVSION = "subdivisions"
+    SUBDIVISION = "subdivisions"
 
 
 BackendFilterValues = Literal[
@@ -67,7 +67,7 @@ class SearchRequestBody(CprSdkSearchParameters):
     For example: 'Adaptation strategy'"
     """
 
-    # We need to add `keyword_filters` here because the items recieved from the frontend
+    # We need to add `keyword_filters` here because the items received from the frontend
     # need processing to be ready for vespa (key name change & geo slugs to geo codes)
     keyword_filters: BackendKeywordFilter = None
     """
