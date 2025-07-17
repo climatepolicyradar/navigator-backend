@@ -12,9 +12,8 @@ from cpr_sdk.models.search import Document as CprSdkResponseDocument
 from cpr_sdk.models.search import Family as CprSdkResponseFamily
 from cpr_sdk.models.search import Filters as CprSdkKeywordFilters
 from cpr_sdk.models.search import Passage as CprSdkResponsePassage
-from cpr_sdk.models.search import SearchParameters
+from cpr_sdk.models.search import SearchParameters, filter_fields
 from cpr_sdk.models.search import SearchResponse as CprSdkSearchResponse
-from cpr_sdk.models.search import filter_fields
 from cpr_sdk.search_adaptors import VespaSearchAdapter
 from db_client.models.dfce import (
     Collection,
@@ -47,14 +46,10 @@ from app.models.search import (
     SearchResponseFamilyDocument,
 )
 from app.repository.lookups import (
-    get_geographies_as_iso_codes_with_fallback,  # TODO: remove this once frontend is updated to use ISO codes in favour of get_countries_by_iso_codes
-)
-from app.repository.lookups import (
-    validate_subdivision_iso_codes,  # TODO: update this to use geographies api endpoint when refactoring geographies
-)
-from app.repository.lookups import (
     doc_type_from_family_document_metadata,
     get_countries_for_region,
+    get_geographies_as_iso_codes_with_fallback,  # TODO: remove this once frontend is updated to use ISO codes in favour of get_countries_by_iso_codes
+    validate_subdivision_iso_codes,  # TODO: update this to use geographies api endpoint when refactoring geographies
 )
 from app.service.util import to_cdn_url
 from app.telemetry import observe
