@@ -5,6 +5,7 @@ from typing import Any, Dict
 
 import pycountry
 import requests
+from api.telemetry import observe
 
 from .data.cpr_custom_geographies import countries
 from .data.geography_statistics_by_countries import geography_statistics_by_countries
@@ -26,6 +27,7 @@ GEOGRAPHIES_DOCUMENT_PATH = "geographies/countries.json"
 DOCUMENT_URL = f"{CDN_URL}/{GEOGRAPHIES_DOCUMENT_PATH}"
 
 
+@observe(name="get_all_regions")
 def get_all_regions() -> list[dict[str, Any]]:
     """
     Retrieve all regions with their metadata.
@@ -40,6 +42,7 @@ def get_all_regions() -> list[dict[str, Any]]:
     ]
 
 
+@observe(name="get_region_by_slug")
 def get_region_by_slug(slug: str) -> dict[str, Any] | None:
     """
     Retrieve region information using a slug.
@@ -55,6 +58,7 @@ def get_region_by_slug(slug: str) -> dict[str, Any] | None:
     return None
 
 
+@observe(name="get_countries_by_region")
 def get_countries_by_region(slug: str) -> list[CountryResponse] | None:
     """
     Get all countries for a requested region by its slug.
@@ -82,6 +86,7 @@ def get_countries_by_region(slug: str) -> list[CountryResponse] | None:
     return selected_countries or None
 
 
+@observe(name="get_all_geography_statistics_by_countries")
 def get_all_geography_statistics_by_countries() -> dict[str, Any]:
     """
     Retrieve all geography statistics by countries.
@@ -112,6 +117,7 @@ class CustomCountriesError(Exception):
     pass
 
 
+@observe(name="load_cpr_custom_geographies")
 def load_cpr_custom_geographies() -> Dict[str, Any]:
     """
     Load custom CPR geography extensions from static JSON file.
@@ -128,6 +134,7 @@ def load_cpr_custom_geographies() -> Dict[str, Any]:
     return countries
 
 
+@observe(name="get_country_by_code")
 def get_country_by_code(code: str) -> CountryResponse | None:
     """
     Retrieve country information using ISO alpha-3 code.
@@ -160,6 +167,7 @@ def get_country_by_code(code: str) -> CountryResponse | None:
     )
 
 
+@observe(name="get_subdivisions_by_country")
 def get_subdivisions_by_country(country_code: str) -> list[SubdivisionResponse] | None:
     """
     Retrieve all subdivisions for a given country using ISO alpha-3 code.
@@ -200,6 +208,7 @@ def get_subdivisions_by_country(country_code: str) -> list[SubdivisionResponse] 
     return subdivisions
 
 
+@observe(name="get_all_country_subdivisions")
 def get_all_country_subdivisions() -> list[SubdivisionResponse]:
     """
     Retrieve all subdivisions grouped by country (using ISO alpha-3 codes).
@@ -219,6 +228,7 @@ def get_all_country_subdivisions() -> list[SubdivisionResponse]:
     return subdivisions
 
 
+@observe(name="get_all_pycountry_subdivisions_grouped_by_country")
 def get_all_pycountry_subdivisions_grouped_by_country() -> dict[str, list[dict]]:
     """
     Retrieve all subdivisions grouped by country (using ISO alpha-3 codes).
@@ -257,6 +267,7 @@ def get_all_pycountry_subdivisions_grouped_by_country() -> dict[str, list[dict]]
     return subdivisions_by_country
 
 
+@observe(name="list_all_pycountry_subdivisions")
 def list_all_pycountry_subdivisions() -> list[dict]:
     """
     Return a flat list of all subdivisions across all countries.
@@ -272,6 +283,7 @@ def list_all_pycountry_subdivisions() -> list[dict]:
     return all_subdivisions
 
 
+@observe(name="return_a_list_of_all_pycountry_country_objects")
 def return_a_list_of_all_pycountry_country_objects() -> dict[str, dict]:
     """
     List all countries with their metadata.
@@ -303,6 +315,7 @@ def return_a_list_of_all_pycountry_country_objects() -> dict[str, dict]:
     return countries
 
 
+@observe(name="get_all_countries")
 def get_all_countries() -> list[CountryResponse]:
     """
     Retrieve all countries with their metadata.
@@ -322,6 +335,7 @@ def get_all_countries() -> list[CountryResponse]:
     return result
 
 
+@observe(name="populate_initial_countries_data")
 def populate_initial_countries_data():
     """
     Populate and upload initial country and subdivision reference data to S3.
@@ -369,6 +383,7 @@ def populate_initial_countries_data():
     s3_client.upload_json(countries_data, bucket_name, file_key)
 
 
+@observe(name="get_geographies_data")
 def get_geographies_data(url: str | None = None) -> Dict[str, Any]:
     """
     Retrieve all countries data from the Climate Policy Radar CDN.
