@@ -38,6 +38,7 @@ class CollectionOverviewResponse(BaseModel):
     title: str
     description: str
     families: list[LinkableFamily]
+    slug: str | None = None
 
 
 class FamilyEventsResponse(BaseModel):

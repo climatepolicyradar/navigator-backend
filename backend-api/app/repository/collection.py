@@ -84,12 +84,33 @@ def get_collection(
         )
 
     families = _get_families_for_collection(db, collection_import_id)
+    collection_slug = get_collection_slug_from_import_id(db, collection_import_id)
 
     return CollectionOverviewResponse(
         title=collection.title,
         description=collection.description,
         import_id=collection.import_id,
         families=families,
+        slug=collection_slug,
+    )
+
+
+def get_collection_slug_from_import_id(
+    db: Session, collection_import_id: str
+) -> str | None:
+    """
+    Get the slug for a collection based on its import ID.
+
+    :param Session db: connection to db
+    :param str collection_import_id: id of collection
+    :return str | None: slug of the collection or None if not found
+    """
+    return (
+        db.query(Slug.name)
+        .filter(Slug.collection_import_id == collection_import_id)
+        .filter(Slug.family_import_id.is_(None))
+        .filter(Slug.family_document_import_id.is_(None))
+        .scalar()
     )
 
 
