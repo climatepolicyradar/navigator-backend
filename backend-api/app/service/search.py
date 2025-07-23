@@ -393,6 +393,7 @@ def _convert_filters(
             new_values = values
             new_keyword_filters[new_field] = new_values
 
+    # Remove any subdivision parent slugs from countries
     if countries and subdivision_parent_slugs:
         countries = list(set(countries) - subdivision_parent_slugs)
 
