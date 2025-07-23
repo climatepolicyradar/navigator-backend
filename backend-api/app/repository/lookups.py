@@ -150,6 +150,36 @@ def get_country_by_slug(db: Session, country_slug: str) -> Optional[Geography]:
     return geography
 
 
+def get_parent_slugs_from_subdivision_iso_code(
+    db: Session, iso_codes: Sequence[str]
+) -> set[str]:
+    """
+    Retrieve parent slugs for given subdivision ISO codes.
+    Example: iso_codes=["AU-NSW", "AU-QLD"] -> {"australia", "australia"}
+        (deduplicated to {"australia"})
+
+    :param Session db: Database session.
+    :param Sequence[str] iso_codes: Sequence of subdivision ISO codes.
+    :return set[str]: set of parent slugs for valid subdivisions.
+
+    """
+    if not iso_codes:
+        return set()
+
+    parent_ids_subquery = (
+        db.query(Geography.parent_id)
+        .filter(Geography.value.in_(list(iso_codes)))
+        .filter(Geography.parent_id.is_not(None))
+        .subquery()
+    )
+
+    parent_slugs = (
+        db.query(Geography.slug).filter(Geography.id.in_(parent_ids_subquery)).all()
+    )
+
+    return {slug[0] for slug in parent_slugs}
+
+
 def get_country_slug_from_country_code(db: Session, country_code: str) -> Optional[str]:
     try:
         geography = db.query(Geography).filter_by(value=country_code).one_or_none()
