@@ -168,6 +168,7 @@ def test_documents_family_slug_returns_correct_json(
     assert len(json_response["collections"]) == 1
     collection = collections[0]
     assert collection["title"] == "Collection1"
+    assert collection["slug"] is None
     assert collection["families"] == [
         {"title": "Fam1", "slug": "FamSlug1", "description": "Summary1"},
         {"title": "Fam2", "slug": "FamSlug2", "description": "Summary2"},
