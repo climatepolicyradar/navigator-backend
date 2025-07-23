@@ -251,14 +251,12 @@ def _get_collections_for_family_import_id(
         .filter(CollectionFamily.family_import_id == import_id)
     ).all()
 
-    collection_slug = get_collection_slug_from_import_id(db, import_id)
-
     return [
         CollectionOverviewResponse(
             title=c.title,
             description=c.description,
             import_id=c.import_id,
-            slug=collection_slug,
+            slug=get_collection_slug_from_import_id(db, c.import_id),
             families=[
                 LinkableFamily(slug=data[0], title=data[1], description=data[2])
                 for data in db.query(Slug.name, Family.title, Family.description)
