@@ -55,7 +55,6 @@ from app.repository.lookups import (
 from app.repository.lookups import (
     doc_type_from_family_document_metadata,
     get_countries_for_region,
-    get_parent_iso_codes_from_subdivisions,
 )
 from app.service.util import to_cdn_url
 from app.telemetry import observe
@@ -368,7 +367,7 @@ def _convert_filters(
     new_keyword_filters = {}
     regions = []
     countries = []
-    subdivision_parent_codes = set()
+    subdivisions = []
     for field, values in keyword_filters.items():
         if not values:
             continue
@@ -385,23 +384,18 @@ def _convert_filters(
                 get_geographies_as_iso_codes_with_fallback(db, values)
             )
         elif field == FilterField.SUBDIVISION:
-            countries.extend(validate_subdivision_iso_codes(db, values))
-            subdivision_parent_codes.update(
-                get_parent_iso_codes_from_subdivisions(db, values)
-            )
+            subdivisions.extend(validate_subdivision_iso_codes(db, values))
+
         else:
             new_values = values
             new_keyword_filters[new_field] = new_values
 
-    # Remove any subdivision parent slugs from countries and regions.
-    if subdivision_parent_codes:
-        countries = list(set(countries) - subdivision_parent_codes)
-        regions = list(set(regions) - subdivision_parent_codes)
-
     # Regions and countries filters should only include the overlap
     geo_field = filter_fields["geographies"]
-    if regions and countries:
-        values = list(set(regions + countries) - subdivision_parent_codes)
+    if subdivisions:
+        new_keyword_filters[geo_field] = subdivisions
+    elif regions and countries:
+        values = list(set(countries).intersection(regions))
         if values:
             new_keyword_filters[geo_field] = values
     elif regions:
