@@ -393,14 +393,15 @@ def _convert_filters(
             new_values = values
             new_keyword_filters[new_field] = new_values
 
-    # Remove any subdivision parent slugs from countries
-    if countries and subdivision_parent_codes:
+    # Remove any subdivision parent slugs from countries and regions
+    if subdivision_parent_codes:
         countries = list(set(countries) - subdivision_parent_codes)
+        regions = list(set(regions) - subdivision_parent_codes)
 
     # Regions and countries filters should only include the overlap
     geo_field = filter_fields["geographies"]
     if regions and countries:
-        values = list(set(countries).intersection(regions))
+        values = list(set(regions + countries) - subdivision_parent_codes)
         if values:
             new_keyword_filters[geo_field] = values
     elif regions:

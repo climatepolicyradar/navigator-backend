@@ -571,6 +571,15 @@ def test_create_browse_request_params(
             },
             {"family_geographies": ["US-CA", "US-CO"]},
         ),
+        # Test that countries in the regions filter are respected and only parents of subdivisions are excluded in family_geographies
+        (
+            {
+                "regions": ["north-america"],
+                "countries": ["united-states-of-america"],
+                "subdivisions": ["US-CA", "US-CO"],
+            },
+            {"family_geographies": ["US-CA", "US-CO", "CAN"]},
+        ),
         # # Tests that country names (not codes) return None
         # TODO: Reenable this test
         # ({"countries": ["cambodia"]}, None),
