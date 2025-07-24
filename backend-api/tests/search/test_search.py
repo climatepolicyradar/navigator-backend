@@ -566,6 +566,14 @@ def test_create_browse_request_params(
         # Tests that subdivisions parent countries are not included in family_geographies
         (
             {
+                "countries": ["china", "united-states-of-america", "australia"],
+                "subdivisions": ["US-CA", "US-CO"],
+            },
+            {"family_geographies": ["CHN", "US-CA", "US-CO", "AUS"]},
+        ),
+        # Tests that subdivisions parent countries are not included in family_geographies
+        (
+            {
                 "countries": ["united-states-of-america"],
                 "subdivisions": ["US-CA", "US-CO"],
             },
