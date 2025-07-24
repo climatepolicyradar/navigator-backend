@@ -158,7 +158,7 @@ def get_parent_iso_codes_from_subdivisions(
 
     :param Session db: Database session.
     :param Sequence[str] iso_codes: Sequence of subdivision ISO codes.
-    :return set[str]: set of parent slugs for valid subdivisions.
+    :return set[str]: set of parent iso_codes for valid subdivisions.
 
     """
     if not iso_codes:
@@ -171,13 +171,13 @@ def get_parent_iso_codes_from_subdivisions(
         .subquery()
     )
 
-    parent_slugs = (
+    parent_iso_codes = (
         db.query(Geography.value)
         .filter(Geography.id.in_(db.query(parent_ids_subquery.c.parent_id)))
         .all()
     )
 
-    return {slug[0] for slug in parent_slugs}
+    return {code[0] for code in parent_iso_codes}
 
 
 def get_country_slug_from_country_code(db: Session, country_code: str) -> Optional[str]:
