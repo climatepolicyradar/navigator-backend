@@ -555,21 +555,30 @@ def test_create_browse_request_params(
         ({"countries": ["KHM"]}, {"family_geographies": ["KHM"]}),
         # Tests that subdivisions iso codes are mapped to family_geographies
         ({"subdivisions": ["US-CA"]}, {"family_geographies": ["US-CA"]}),
-        # Tests that subdivisions do not replace countries in family_geographies
+        # Tests that non-existent subdivisions iso codes are not mapped to family_geographies
+        ({"subdivisions": ["US-CA", "XX-ZZ-YY"]}, {"family_geographies": ["US-CA"]}),
+        # Tests that if selected only subdivisions are mapped to family_geographies
         (
             {
                 "countries": ["china", "united-states-of-america", "australia"],
-                "subdivisions": ["US-CA", "US-CO"],
+                "subdivisions": ["US-CA", "US-CO", "AU-NSW", "AU-QLD"],
             },
-            {"family_geographies": ["CHN", "US-CA", "US-CO", "AUS"]},
+            {
+                "family_geographies": [
+                    "US-CA",
+                    "US-CO",
+                    "AU-NSW",
+                    "AU-QLD",
+                ]
+            },
         ),
         # Tests that subdivisions parent countries are not included in family_geographies
         (
             {
                 "countries": ["united-states-of-america"],
-                "subdivisions": ["US-CA", "US-CO"],
+                "subdivisions": ["US-CA", "US-TX"],
             },
-            {"family_geographies": ["US-CA", "US-CO"]},
+            {"family_geographies": ["US-CA", "US-TX"]},
         ),
         # # Tests that country names (not codes) return None
         # TODO: Reenable this test
