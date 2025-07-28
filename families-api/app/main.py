@@ -589,8 +589,9 @@ def read_family(*, session: Session = Depends(get_session), family_id: str):
 
 
 class GeographyDocumentCount(SQLModel):
-    alpha3: str
+    code: str
     name: str
+    type: str
     count: int
 
 
@@ -603,8 +604,9 @@ def docs_by_geo(
 ):
     stmt = (
         select(
-            Geography.value.label("alpha3"),
+            Geography.value.label("code"),
             Geography.display_value.label("name"),
+            Geography.type,
             func.count(PhysicalDocument.id).label("count"),
         )
         .join(FamilyGeographyLink, Geography.id == FamilyGeographyLink.geography_id)
