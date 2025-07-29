@@ -47,6 +47,7 @@ class Organisation(SQLModel, table=True):
     __tablename__ = "organisation"  # type: ignore[assignment]
     id: int = Field(primary_key=True)
     name: str
+    attribution_url: str | None = None
     corpora: list["Corpus"] = Relationship(back_populates="organisation")
 
 
@@ -225,6 +226,11 @@ class FamilyPublic(FamilyBase):
     @property
     def organisation(self) -> str:
         return self.corpus.organisation.name
+
+    @computed_field
+    @property
+    def organisation_attribution_url(self) -> str | None:
+        return self.corpus.organisation.attribution_url
 
     @computed_field
     @property
