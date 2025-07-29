@@ -493,8 +493,10 @@ class APIItemResponse(BaseModel, Generic[APIDataType]):
 
 
 class Settings(BaseSettings):
-    navigator_database_url: str
-    cdn_url: str
+    navigator_database_url: str = (
+        "postgresql://navigator_admin:password@host.docker.internal:5432/navigator"
+    )
+    cdn_url: str = ""
     # @related: GITHUB_SHA_ENV_VAR
     github_sha: str = "unknown"
 
