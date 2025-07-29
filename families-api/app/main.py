@@ -325,41 +325,41 @@ class FamilyPublic(FamilyBase):
 
     @computed_field
     @property
-    def documents(self) -> list[dict[str, Any]]:
+    def documents(self) -> list["FamilyDocumentPublic"]:
         return [
-            {
-                "import_id": document.import_id,
-                "variant": document.variant_name,
-                "slug": (
+            FamilyDocumentPublic(
+                import_id=document.import_id,
+                variant=document.variant_name,
+                slug=(
                     document.unparsed_slug[0].name
                     if len(document.unparsed_slug) > 0
                     else ""
                 ),
-                "title": document.physical_document.title,
-                "md5_sum": document.physical_document.md5_sum,
-                "cdn_object": f"{settings.cdn_url}/{document.physical_document.cdn_object}",
-                "source_url": document.physical_document.source_url,
-                "content_type": document.physical_document.content_type,
-                "language": (
+                title=document.physical_document.title,
+                md5_sum=document.physical_document.md5_sum,
+                cdn_object=f"{settings.cdn_url}/{document.physical_document.cdn_object}",
+                source_url=document.physical_document.source_url,
+                content_type=document.physical_document.content_type,
+                language=(
                     document.physical_document.unparsed_languages[0].language_code
                     if document.physical_document.unparsed_languages
                     else None
                 ),
-                "languages": [
+                languages=[
                     language.language_code
                     for language in document.physical_document.unparsed_languages
                 ],
-                "document_type": (
+                document_type=(
                     document.valid_metadata.get("type", [None])[0]
                     if document.valid_metadata
                     else None
                 ),
-                "document_role": (
+                document_role=(
                     document.valid_metadata.get("role", [None])[0]
                     if document.valid_metadata
                     else None
                 ),
-                "events": [
+                events=[
                     {
                         "title": event.title,
                         "date": event.date,
@@ -369,7 +369,7 @@ class FamilyPublic(FamilyBase):
                     }
                     for event in document.unparsed_events
                 ],
-            }
+            )
             for document in self.family_documents
             if document.physical_document
         ]
@@ -383,7 +383,6 @@ class FamilyPublic(FamilyBase):
 
 class FamilyDocumentBase(SQLModel):
     import_id: str = Field(primary_key=True)
-    variant_name: str | None
 
 
 class FamilyDocument(FamilyDocumentBase, table=True):
@@ -399,10 +398,23 @@ class FamilyDocument(FamilyDocumentBase, table=True):
         default_factory=None, sa_column=Column(JSONB)
     )
     unparsed_slug: list[Slug] = Relationship()
+    variant_name: str | None
 
 
 class FamilyDocumentPublic(FamilyDocumentBase):
-    family: "FamilyPublic"
+    import_id: str
+    slug: str
+    title: str
+    cdn_object: str
+    variant: str | None
+    md5_sum: str | None
+    source_url: str | None
+    content_type: str | None
+    language: str | None
+    languages: list[str]
+    document_type: str | None
+    document_role: str | None
+    events: list[dict[str, Any]]
 
 
 class PhysicalDDocumentLanguageLink(SQLModel, table=True):
