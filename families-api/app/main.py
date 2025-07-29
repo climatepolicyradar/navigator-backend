@@ -337,7 +337,7 @@ class FamilyPublic(FamilyBase):
                 ),
                 "title": document.physical_document.title,
                 "md5_sum": document.physical_document.md5_sum,
-                "cdn_object": document.physical_document.cdn_object,
+                "cdn_object": f"{settings.cdn_url}/{document.physical_document.cdn_object}",
                 "source_url": document.physical_document.source_url,
                 "content_type": document.physical_document.content_type,
                 "language": (
@@ -448,6 +448,7 @@ class APIItemResponse(BaseModel, Generic[APIDataType]):
 
 class Settings(BaseSettings):
     navigator_database_url: str
+    cdn_url: str
     # @related: GITHUB_SHA_ENV_VAR
     github_sha: str = "unknown"
 
