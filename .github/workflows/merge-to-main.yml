@@ -81,7 +81,7 @@ jobs:
     runs-on: ubuntu-latest
     strategy:
       matrix:
-        environment: [production]
+        environment: [staging, production]
     environment: ${{ matrix.environment }}
     env:
       SERVICES: families-api geographies-api concepts-api
