@@ -359,6 +359,16 @@ class FamilyPublic(FamilyBase):
                     if document.valid_metadata
                     else None
                 ),
+                "events": [
+                    {
+                        "title": event.title,
+                        "date": event.date,
+                        "event_type": event.event_type_name,
+                        "status": event.status,
+                        "metadata": event.valid_metadata,
+                    }
+                    for event in document.unparsed_events
+                ],
             }
             for document in self.family_documents
             if document.physical_document
