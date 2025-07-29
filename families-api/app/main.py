@@ -140,7 +140,11 @@ class Collection(SQLModel, table=True):
     )
 
 
-class FamilyEvent(SQLModel, table=True):
+class FamilyEventBase(SQLModel):
+    pass
+
+
+class FamilyEvent(FamilyEventBase, table=True):
     __tablename__ = "family_event"  # type: ignore[assignment]
     import_id: str = Field(primary_key=True)
     title: str
@@ -162,6 +166,20 @@ class FamilyEvent(SQLModel, table=True):
     valid_metadata: dict[str, Any] | None = Field(
         default_factory=None, sa_column=Column(JSONB)
     )
+
+
+class FamilyEventPublic(FamilyEventBase):
+    title: str
+    date: datetime
+    event_type: str
+    status: str
+    unparsed_metadata: dict[str, Any] | None = Field(exclude=True, default=None)
+
+    # metadata is reserved in SQLModel
+    @computed_field(alias="metadata")
+    @property
+    def _metadata(self) -> dict[str, Any] | None:
+        return self.unparsed_metadata
 
 
 class FamilyMetadata(SQLModel, table=True):
@@ -317,15 +335,15 @@ class FamilyPublic(FamilyBase):
 
     @computed_field
     @property
-    def events(self) -> list[dict[str, Any]]:
+    def events(self) -> list[FamilyEventPublic]:
         return [
-            {
-                "title": event.title,
-                "date": event.date,
-                "event_type": event.event_type_name,
-                "status": event.status,
-                "metadata": event.valid_metadata,
-            }
+            FamilyEventPublic(
+                title=event.title,
+                date=event.date,
+                event_type=event.event_type_name,
+                status=event.status,
+                unparsed_metadata=event.valid_metadata,
+            )
             for event in self.unparsed_events
         ]
 
@@ -366,13 +384,13 @@ class FamilyPublic(FamilyBase):
                     else None
                 ),
                 events=[
-                    {
-                        "title": event.title,
-                        "date": event.date,
-                        "event_type": event.event_type_name,
-                        "status": event.status,
-                        "metadata": event.valid_metadata,
-                    }
+                    FamilyEventPublic(
+                        title=event.title,
+                        date=event.date,
+                        event_type=event.event_type_name,
+                        status=event.status,
+                        unparsed_metadata=event.valid_metadata,
+                    )
                     for event in document.unparsed_events
                 ],
             )
@@ -420,7 +438,7 @@ class FamilyDocumentPublic(FamilyDocumentBase):
     languages: list[str]
     document_type: str | None
     document_role: str | None
-    events: list[dict[str, Any]]
+    events: list[FamilyEventPublic]
 
 
 class PhysicalDDocumentLanguageLink(SQLModel, table=True):
