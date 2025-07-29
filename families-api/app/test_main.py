@@ -10,11 +10,13 @@ from .main import (
     APIItemResponse,
     Corpus,
     Family,
+    FamilyDocument,
     FamilyEvent,
     FamilyMetadata,
     FamilyPublic,
     Geography,
     Organisation,
+    PhysicalDocument,
     Slug,
     app,
     get_session,
@@ -72,6 +74,46 @@ def test_read_family_200(client: TestClient, session: Session):
         organisation=organisation,
         organisation_id=organisation.id,
         corpus_type_name="Intl. agreements",
+    )
+    physical_document = PhysicalDocument(
+        id=123,
+        title="Test Physical Document",
+        source_url="https://example.com/test-physical-document",
+        md5_sum="test_md5_sum",
+        cdn_object="https://cdn.example.com/test-physical-document",
+        content_type="application/pdf",
+    )
+    family_document = FamilyDocument(
+        import_id="family_document_1",
+        variant_name="MAIN",
+        family_import_id="family_123",
+        physical_document_id=123,
+        valid_metadata={
+            "title": "Test Family Document",
+            "slug": "test-family-document",
+            "corpus": "Test Corpus",
+            "corpus_id": "corpus_1",
+            "type": "Legislative",
+            "status": "Active",
+            "language": ["en"],
+            "jurisdiction": ["DE", "FR"],
+        },
+        unparsed_events=[
+            FamilyEvent(
+                import_id="family_document_event_1",
+                title="Family event 1",
+                date=datetime.fromisoformat("2016-12-01T00:00:00+00:00"),
+                event_type_name="Passed/Approved",
+                status="OK",
+            ),
+            FamilyEvent(
+                import_id="family_document_event_2",
+                title="Family event 2",
+                date=datetime.fromisoformat("2023-11-17T00:00:00+00:00"),
+                event_type_name="Updated",
+                status="OK",
+            ),
+        ],
     )
     family = Family(
         title="Test family",
@@ -164,6 +206,9 @@ def test_read_family_200(client: TestClient, session: Session):
     )
     session.add(corpus)
     session.add(family)
+    session.add(family_document)
+    session.add(physical_document)
+
     session.commit()
 
     response = client.get("/families/family_123")
