@@ -12,6 +12,7 @@ def generate_secret_key(project: str, aws_service: str, name: str):
 # TODO: once we get VPS info from the aws_env in navigator-infra, we should use that once it is ready
 pulumi_config = pulumi.Config()
 apprunner_vpc_connector_arn = pulumi_config.require("apprunner_vpc_connector_arn")
+stack = pulumi.get_stack()
 
 # This stuff is being encapsulated in navigator-infra and we should use that once it is ready
 # IAM role trusted by App Runner
@@ -104,6 +105,19 @@ families_api_apprunner_navigator_database_url = aws.ssm.Parameter(
     ),
 )
 
+families_api_apprunner_cdn_url = aws.ssm.Parameter(
+    "families-api-apprunner-cdn-url",
+    name=generate_secret_key("families-api", "apprunner", "CDN_URL"),
+    description="Root URL of the CDN",
+    type=aws.ssm.ParameterType.STRING,
+    # TODO: we could look this up based on the stack - but this is easy to change for now
+    value=(
+        "https://cdn.climatepolicyradar.org"
+        if stack == "production"
+        else "https://cdn.dev.climatepolicyradar.org"
+    ),
+)
+
 families_api_ecr_repository = aws.ecr.Repository(
     "families-api-ecr-repository",
     encryption_configurations=[
@@ -154,6 +168,7 @@ families_api_apprunner_service = aws.apprunner.Service(
             image_configuration=aws.apprunner.ServiceSourceConfigurationImageRepositoryImageConfigurationArgs(
                 runtime_environment_secrets={
                     "NAVIGATOR_DATABASE_URL": families_api_apprunner_navigator_database_url.arn,
+                    "CDN_URL": families_api_apprunner_cdn_url.arn,
                 },
             ),
             image_identifier=f"{account_id}.dkr.ecr.eu-west-1.amazonaws.com/families-api:latest",
