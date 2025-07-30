@@ -141,7 +141,7 @@ class Collection(SQLModel, table=True):
 
 
 class FamilyEventBase(SQLModel):
-    pass
+    import_id: str
 
 
 class FamilyEvent(FamilyEventBase, table=True):
@@ -169,6 +169,7 @@ class FamilyEvent(FamilyEventBase, table=True):
 
 
 class FamilyEventPublic(FamilyEventBase):
+    import_id: str
     title: str
     date: datetime
     event_type: str
@@ -338,6 +339,7 @@ class FamilyPublic(FamilyBase):
     def events(self) -> list[FamilyEventPublic]:
         return [
             FamilyEventPublic(
+                import_id=event.import_id,
                 title=event.title,
                 date=event.date,
                 event_type=event.event_type_name,
@@ -385,6 +387,7 @@ class FamilyPublic(FamilyBase):
                 ),
                 events=[
                     FamilyEventPublic(
+                        import_id=event.import_id,
                         title=event.title,
                         date=event.date,
                         event_type=event.event_type_name,
