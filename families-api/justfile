@@ -12,12 +12,16 @@ bootstrap:
     @echo "✅ Bootstrap complete — shutting down"
     docker compose down
 
+# TODO: we should make this environment specific when we know the locations of these files
+# this isn't used for building the actual image though, so it's OK for now
 initial-data:
-    # TODO: find a way to ensure we're using the latest dump
-    # TODO: we should make this environment specific when we know the locations of these files
-    # this isn't used for building the actual image though, so it's OK for now
-    @echo "🔄 downloading latest dump from s3"
-    aws s3 cp s3://cpr-production-rds/dumps/2025-04-23-navigator-production.sql ./initial-data/2025-04-23-navigator-production.sql
+    #!/usr/bin/env bash
+    set -euo pipefail
+    echo "🔄 downloading latest dump from s3"
+    LATEST_DUMP_KEY=$(aws s3api list-objects-v2 --bucket cpr-production-rds --prefix dumps/ --query 'sort_by(Contents, &LastModified)[-1].Key' --output=text)
+    LATEST_DUMP_FILENAME=$(basename ${LATEST_DUMP_KEY})
+    rm -r ./initial-data/*.sql
+    aws s3 cp s3://cpr-production-rds/${LATEST_DUMP_KEY} ./initial-data/${LATEST_DUMP_FILENAME}
 
 
 dev:
