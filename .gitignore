@@ -198,3 +198,5 @@ requirements.txt
 secrets/*
 
 scripts/*.json
+
+node_modules/

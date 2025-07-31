@@ -1,0 +1,685 @@
+{
+  "openapi": "3.1.0",
+  "info": {
+    "title": "FastAPI",
+    "version": "0.1.0"
+  },
+  "paths": {
+    "/health": {
+      "get": {
+        "summary": "Health Check",
+        "operationId": "health_check_health_get",
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {}
+              }
+            }
+          }
+        }
+      }
+    },
+    "/families/": {
+      "get": {
+        "summary": "Read Documents",
+        "operationId": "read_documents_families__get",
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/APIListResponse_PhysicalDocumentPublic_"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/families/concepts": {
+      "get": {
+        "summary": "Read Concepts",
+        "operationId": "read_concepts_families_concepts_get",
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {}
+              }
+            }
+          }
+        }
+      }
+    },
+    "/families/{family_id}": {
+      "get": {
+        "summary": "Read Family",
+        "operationId": "read_family_families__family_id__get",
+        "parameters": [
+          {
+            "name": "family_id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "title": "Family Id"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/APIItemResponse_FamilyPublic_"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/families/aggregations/by-geography": {
+      "get": {
+        "summary": "Docs By Geo",
+        "operationId": "docs_by_geo_families_aggregations_by_geography_get",
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/APIListResponse_GeographyDocumentCount_"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/families/health": {
+      "get": {
+        "summary": "Health Check",
+        "operationId": "health_check_families_health_get",
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {}
+              }
+            }
+          }
+        }
+      }
+    }
+  },
+  "components": {
+    "schemas": {
+      "APIItemResponse_FamilyPublic_": {
+        "properties": {
+          "data": {
+            "$ref": "#/components/schemas/FamilyPublic"
+          }
+        },
+        "type": "object",
+        "required": ["data"],
+        "title": "APIItemResponse[FamilyPublic]"
+      },
+      "APIListResponse_GeographyDocumentCount_": {
+        "properties": {
+          "data": {
+            "items": {
+              "$ref": "#/components/schemas/GeographyDocumentCount"
+            },
+            "type": "array",
+            "title": "Data"
+          },
+          "total": {
+            "type": "integer",
+            "title": "Total"
+          },
+          "page": {
+            "type": "integer",
+            "title": "Page"
+          },
+          "page_size": {
+            "type": "integer",
+            "title": "Page Size"
+          }
+        },
+        "type": "object",
+        "required": ["data", "total", "page", "page_size"],
+        "title": "APIListResponse[GeographyDocumentCount]"
+      },
+      "APIListResponse_PhysicalDocumentPublic_": {
+        "properties": {
+          "data": {
+            "items": {
+              "$ref": "#/components/schemas/PhysicalDocumentPublic"
+            },
+            "type": "array",
+            "title": "Data"
+          },
+          "total": {
+            "type": "integer",
+            "title": "Total"
+          },
+          "page": {
+            "type": "integer",
+            "title": "Page"
+          },
+          "page_size": {
+            "type": "integer",
+            "title": "Page Size"
+          }
+        },
+        "type": "object",
+        "required": ["data", "total", "page", "page_size"],
+        "title": "APIListResponse[PhysicalDocumentPublic]"
+      },
+      "Corpus": {
+        "properties": {
+          "import_id": {
+            "type": "string",
+            "title": "Import Id"
+          },
+          "title": {
+            "type": "string",
+            "title": "Title"
+          },
+          "organisation_id": {
+            "type": "integer",
+            "title": "Organisation Id"
+          },
+          "corpus_type_name": {
+            "type": "string",
+            "title": "Corpus Type Name"
+          }
+        },
+        "type": "object",
+        "required": [
+          "import_id",
+          "title",
+          "organisation_id",
+          "corpus_type_name"
+        ],
+        "title": "Corpus"
+      },
+      "FamilyDocumentPublic": {
+        "properties": {
+          "import_id": {
+            "type": "string",
+            "title": "Import Id"
+          },
+          "slug": {
+            "type": "string",
+            "title": "Slug"
+          },
+          "title": {
+            "type": "string",
+            "title": "Title"
+          },
+          "cdn_object": {
+            "type": "string",
+            "title": "Cdn Object"
+          },
+          "variant": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Variant"
+          },
+          "md5_sum": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Md5 Sum"
+          },
+          "source_url": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Source Url"
+          },
+          "content_type": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Content Type"
+          },
+          "language": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Language"
+          },
+          "languages": {
+            "items": {
+              "type": "string"
+            },
+            "type": "array",
+            "title": "Languages"
+          },
+          "document_type": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Document Type"
+          },
+          "document_role": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Document Role"
+          },
+          "events": {
+            "items": {
+              "$ref": "#/components/schemas/FamilyEventPublic"
+            },
+            "type": "array",
+            "title": "Events"
+          }
+        },
+        "type": "object",
+        "required": [
+          "import_id",
+          "slug",
+          "title",
+          "cdn_object",
+          "variant",
+          "md5_sum",
+          "source_url",
+          "content_type",
+          "language",
+          "languages",
+          "document_type",
+          "document_role",
+          "events"
+        ],
+        "title": "FamilyDocumentPublic"
+      },
+      "FamilyEventPublic": {
+        "properties": {
+          "title": {
+            "type": "string",
+            "title": "Title"
+          },
+          "date": {
+            "type": "string",
+            "format": "date-time",
+            "title": "Date"
+          },
+          "event_type": {
+            "type": "string",
+            "title": "Event Type"
+          },
+          "status": {
+            "type": "string",
+            "title": "Status"
+          },
+          "metadata": {
+            "anyOf": [
+              {
+                "additionalProperties": true,
+                "type": "object"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Metadata",
+            "readOnly": true
+          }
+        },
+        "type": "object",
+        "required": ["title", "date", "event_type", "status", "metadata"],
+        "title": "FamilyEventPublic"
+      },
+      "FamilyPublic": {
+        "properties": {
+          "import_id": {
+            "type": "string",
+            "title": "Import Id"
+          },
+          "title": {
+            "type": "string",
+            "title": "Title"
+          },
+          "concepts": {
+            "items": {
+              "additionalProperties": true,
+              "type": "object"
+            },
+            "type": "array",
+            "title": "Concepts"
+          },
+          "corpus": {
+            "$ref": "#/components/schemas/Corpus"
+          },
+          "corpus_id": {
+            "type": "string",
+            "title": "Corpus Id",
+            "readOnly": true
+          },
+          "organisation": {
+            "type": "string",
+            "title": "Organisation",
+            "readOnly": true
+          },
+          "organisation_attribution_url": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Organisation Attribution Url",
+            "readOnly": true
+          },
+          "summary": {
+            "type": "string",
+            "title": "Summary",
+            "readOnly": true
+          },
+          "geographies": {
+            "items": {
+              "type": "string"
+            },
+            "type": "array",
+            "title": "Geographies",
+            "readOnly": true
+          },
+          "published_date": {
+            "anyOf": [
+              {
+                "type": "string",
+                "format": "date-time"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Published Date",
+            "readOnly": true
+          },
+          "last_updated_date": {
+            "anyOf": [
+              {
+                "type": "string",
+                "format": "date-time"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Last Updated Date",
+            "readOnly": true
+          },
+          "slug": {
+            "type": "string",
+            "title": "Slug",
+            "readOnly": true
+          },
+          "category": {
+            "type": "string",
+            "title": "Category",
+            "readOnly": true
+          },
+          "corpus_type_name": {
+            "type": "string",
+            "title": "Corpus Type Name",
+            "readOnly": true
+          },
+          "collections": {
+            "items": {
+              "additionalProperties": true,
+              "type": "object"
+            },
+            "type": "array",
+            "title": "Collections",
+            "readOnly": true
+          },
+          "events": {
+            "items": {
+              "$ref": "#/components/schemas/FamilyEventPublic"
+            },
+            "type": "array",
+            "title": "Events",
+            "readOnly": true
+          },
+          "documents": {
+            "items": {
+              "$ref": "#/components/schemas/FamilyDocumentPublic"
+            },
+            "type": "array",
+            "title": "Documents",
+            "readOnly": true
+          },
+          "metadata": {
+            "additionalProperties": true,
+            "type": "object",
+            "title": "Metadata",
+            "readOnly": true
+          }
+        },
+        "type": "object",
+        "required": [
+          "import_id",
+          "title",
+          "concepts",
+          "corpus",
+          "corpus_id",
+          "organisation",
+          "organisation_attribution_url",
+          "summary",
+          "geographies",
+          "published_date",
+          "last_updated_date",
+          "slug",
+          "category",
+          "corpus_type_name",
+          "collections",
+          "events",
+          "documents",
+          "metadata"
+        ],
+        "title": "FamilyPublic"
+      },
+      "GeographyDocumentCount": {
+        "properties": {
+          "code": {
+            "type": "string",
+            "title": "Code"
+          },
+          "name": {
+            "type": "string",
+            "title": "Name"
+          },
+          "type": {
+            "type": "string",
+            "title": "Type"
+          },
+          "count": {
+            "type": "integer",
+            "title": "Count"
+          }
+        },
+        "type": "object",
+        "required": ["code", "name", "type", "count"],
+        "title": "GeographyDocumentCount"
+      },
+      "HTTPValidationError": {
+        "properties": {
+          "detail": {
+            "items": {
+              "$ref": "#/components/schemas/ValidationError"
+            },
+            "type": "array",
+            "title": "Detail"
+          }
+        },
+        "type": "object",
+        "title": "HTTPValidationError"
+      },
+      "PhysicalDocumentPublic": {
+        "properties": {
+          "id": {
+            "type": "integer",
+            "title": "Id"
+          },
+          "title": {
+            "type": "string",
+            "title": "Title"
+          },
+          "md5_sum": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Md5 Sum"
+          },
+          "source_url": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Source Url"
+          },
+          "content_type": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Content Type"
+          },
+          "cdn_object": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Cdn Object"
+          },
+          "family_document": {
+            "anyOf": [
+              {
+                "$ref": "#/components/schemas/FamilyDocumentPublic"
+              },
+              {
+                "type": "null"
+              }
+            ]
+          }
+        },
+        "type": "object",
+        "required": [
+          "id",
+          "title",
+          "md5_sum",
+          "source_url",
+          "content_type",
+          "cdn_object",
+          "family_document"
+        ],
+        "title": "PhysicalDocumentPublic"
+      },
+      "ValidationError": {
+        "properties": {
+          "loc": {
+            "items": {
+              "anyOf": [
+                {
+                  "type": "string"
+                },
+                {
+                  "type": "integer"
+                }
+              ]
+            },
+            "type": "array",
+            "title": "Location"
+          },
+          "msg": {
+            "type": "string",
+            "title": "Message"
+          },
+          "type": {
+            "type": "string",
+            "title": "Error Type"
+          }
+        },
+        "type": "object",
+        "required": ["loc", "msg", "type"],
+        "title": "ValidationError"
+      }
+    }
+  }
+}
