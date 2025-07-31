@@ -57,16 +57,28 @@ class FamilyCorpusLink(SQLModel, table=True):
     family_import_id: str = Field(foreign_key="family.import_id", primary_key=True)
 
 
-class Corpus(SQLModel, table=True):
+# Corpus
+class CorpusBase(SQLModel):
+    import_id: str
+    title: str
+    corpus_type_name: str
+
+
+class Corpus(CorpusBase, table=True):
     __tablename__ = "corpus"  # type: ignore[assignment]
     import_id: str = Field(primary_key=True)
-    title: str
     families: list["Family"] = Relationship(
         back_populates="corpus", link_model=FamilyCorpusLink
     )
     organisation: Organisation = Relationship(back_populates="corpora")
     organisation_id: int = Field(foreign_key="organisation.id")
-    corpus_type_name: str
+
+
+class CorpusPublic(CorpusBase):
+    organisation: Organisation
+
+
+# /Corpus
 
 
 class Slug(SQLModel, table=True):
@@ -226,7 +238,7 @@ class Family(FamilyBase, table=True):
 
 class FamilyPublic(FamilyBase):
     import_id: str
-    corpus: Corpus = Field()
+    corpus: CorpusPublic = Field()
     unparsed_geographies: list[Geography] = Field(default_factory=list, exclude=True)
     unparsed_slug: list[Slug] = Field(exclude=True, default=list())
     unparsed_metadata: Optional[FamilyMetadata] = Field(exclude=True, default=None)
@@ -546,23 +558,15 @@ def get_session():
         yield session
 
 
-@router.get("/", response_model=APIListResponse[PhysicalDocumentPublic])
-def read_documents(*, session: Session = Depends(get_session)):
-    documents = session.exec(
-        select(PhysicalDocument)
-        .where(
-            PhysicalDocument.cdn_object.is_not(None),
-        )
-        .limit(10)
-    ).all()
-
-    data = [PhysicalDocumentPublic.model_validate(doc) for doc in documents]
+@router.get("/", response_model=APIListResponse[FamilyPublic])
+def read_families(*, session: Session = Depends(get_session)):
+    families = session.exec(select(Family).limit(10)).all()
 
     return APIListResponse(
-        data=data,
-        total=len(data),
+        data=list(families),
+        total=len(families),
         page=1,
-        page_size=len(data),
+        page_size=len(families),
     )
 
 
