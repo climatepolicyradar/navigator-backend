@@ -90,6 +90,9 @@ class Slug(SQLModel, table=True):
     family_document_import_id: str | None = Field(
         index=True, unique=True, foreign_key="family_document.import_id", nullable=True
     )
+    collection_import_id: str | None = Field(
+        index=True, unique=True, foreign_key="collection.import_id", nullable=True
+    )
     created: datetime = Field(default_factory=datetime.now)
 
 
@@ -157,15 +160,24 @@ class Collection(CollectionBase, table=True):
     families: list["Family"] = Relationship(
         back_populates="unparsed_collections", link_model=CollectionFamilyLink
     )
+    unparsed_slug: list["Slug"] = Relationship(
+        sa_relationship_kwargs={"order_by": lambda: Slug.created.desc()}
+    )
 
 
 class CollectionPublic(CollectionBase):
     valid_metadata: dict[str, Any] = Field(exclude=True)
+    unparsed_slug: list[Slug] = Field(exclude=True)
 
     @computed_field(alias="metadata")
     @property
     def _metadata(self) -> dict[str, Any]:
         return self.valid_metadata
+
+    @computed_field
+    @property
+    def slug(self) -> str:
+        return self.unparsed_slug[0].name if len(self.unparsed_slug) > 0 else ""
 
 
 class CollectionPublicWithFamilies(CollectionPublic):
