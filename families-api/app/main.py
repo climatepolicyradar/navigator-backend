@@ -90,6 +90,9 @@ class Slug(SQLModel, table=True):
     family_document_import_id: str | None = Field(
         index=True, unique=True, foreign_key="family_document.import_id", nullable=True
     )
+    collection_import_id: str | None = Field(
+        index=True, unique=True, foreign_key="collection.import_id", nullable=True
+    )
     created: datetime = Field(default_factory=datetime.now)
 
 
@@ -137,11 +140,18 @@ class CollectionFamilyLink(SQLModel, table=True):
     family_import_id: str = Field(foreign_key="family.import_id", primary_key=True)
 
 
-class Collection(SQLModel, table=True):
-    __tablename__ = "collection"  # type: ignore[assignment]
-    import_id: str = Field(primary_key=True)
+# Collection
+class CollectionBase(SQLModel):
+    import_id: str
     title: str
     description: str
+    valid_metadata: dict[str, Any]
+
+
+class Collection(CollectionBase, table=True):
+    __tablename__ = "collection"  # type: ignore[assignment]
+    import_id: str = Field(primary_key=True)
+
     created: datetime = Field(default_factory=datetime.now)
     last_modified: datetime = Field(default_factory=datetime.now)
     valid_metadata: dict[str, Any] = Field(
@@ -150,6 +160,31 @@ class Collection(SQLModel, table=True):
     families: list["Family"] = Relationship(
         back_populates="unparsed_collections", link_model=CollectionFamilyLink
     )
+    unparsed_slug: list["Slug"] = Relationship(
+        sa_relationship_kwargs={"order_by": lambda: Slug.created.desc()}  # type: ignore
+    )
+
+
+class CollectionPublic(CollectionBase):
+    valid_metadata: dict[str, Any] = Field(exclude=True)
+    unparsed_slug: list[Slug] = Field(exclude=True)
+
+    @computed_field(alias="metadata")
+    @property
+    def _metadata(self) -> dict[str, Any]:
+        return self.valid_metadata
+
+    @computed_field
+    @property
+    def slug(self) -> str:
+        return self.unparsed_slug[0].name if len(self.unparsed_slug) > 0 else ""
+
+
+class CollectionPublicWithFamilies(CollectionPublic):
+    families: list["FamilyPublic"]
+
+
+# /Collection
 
 
 class FamilyEventBase(SQLModel):
@@ -324,25 +359,9 @@ class FamilyPublic(FamilyBase):
 
     @computed_field
     @property
-    def collections(self) -> list[dict[str, Any]]:
+    def collections(self) -> list[CollectionPublic]:
         return [
-            {
-                "import_id": collection.import_id,
-                "title": collection.title,
-                "description": collection.description,
-                "families": [
-                    {
-                        "description": family.description,
-                        "slug": (
-                            family.unparsed_slug[0].name
-                            if len(family.unparsed_slug) > 0
-                            else ""
-                        ),
-                        "title": family.title,
-                    }
-                    for family in collection.families
-                ],
-            }
+            CollectionPublic.model_validate(collection)
             for collection in self.unparsed_collections
         ]
 
@@ -680,6 +699,35 @@ def read_document(*, session: Session = Depends(get_session), document_id: str):
         raise HTTPException(status_code=404, detail="Not found")
 
     return APIItemResponse(data=document)
+
+
+@router.get(
+    "/collections", response_model=APIListResponse[CollectionPublicWithFamilies]
+)
+def read_collections(*, session: Session = Depends(get_session)):
+    collections = session.exec(select(Collection).limit(10)).all()
+
+    return APIListResponse(
+        data=list(collections),
+        total=len(collections),
+        page=1,
+        page_size=len(collections),
+    )
+
+
+@router.get(
+    "/collections/{collection_id}",
+    response_model=APIItemResponse[CollectionPublicWithFamilies],
+)
+def read_collection(*, session: Session = Depends(get_session), collection_id: str):
+    collection = session.exec(
+        select(Collection).where(Collection.import_id == collection_id)
+    ).one_or_none()
+
+    if collection is None:
+        raise HTTPException(status_code=404, detail="Not found")
+
+    return APIItemResponse(data=collection)
 
 
 @router.get("/{family_id}", response_model=APIItemResponse[FamilyPublic])
