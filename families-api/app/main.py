@@ -693,10 +693,8 @@ def read_family(*, session: Session = Depends(get_session), family_id: str):
     if family is None:
         raise HTTPException(status_code=404, detail="Not found")
 
-    data = FamilyPublic.model_validate(family, from_attributes=True)
-
     return APIItemResponse(
-        data=data,
+        data=family,
     )
 
 
