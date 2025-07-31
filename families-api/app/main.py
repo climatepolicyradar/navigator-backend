@@ -14,7 +14,7 @@ from pydantic import BaseModel, computed_field
 from pydantic_settings import BaseSettings
 from sqlalchemy import create_engine, text
 from sqlalchemy.dialects.postgresql import ARRAY, JSONB
-from sqlmodel import Column, Field, Relationship, Session, SQLModel, func, select
+from sqlmodel import Column, Field, Relationship, Session, SQLModel, select
 
 _LOGGER = logging.getLogger(__name__)
 
@@ -43,6 +43,7 @@ telemetry = Telemetry(otel_config)
 tracer = telemetry.get_tracer()
 
 
+# region: Organisation
 class Organisation(SQLModel, table=True):
     __tablename__ = "organisation"  # type: ignore[assignment]
     id: int = Field(primary_key=True)
@@ -51,13 +52,16 @@ class Organisation(SQLModel, table=True):
     corpora: list["Corpus"] = Relationship(back_populates="organisation")
 
 
+# endregion
+
+
+# region: Corpus
 class FamilyCorpusLink(SQLModel, table=True):
     __tablename__ = "family_corpus"  # type: ignore[assignment]
     corpus_import_id: str = Field(foreign_key="corpus.import_id", primary_key=True)
     family_import_id: str = Field(foreign_key="family.import_id", primary_key=True)
 
 
-# Corpus
 class CorpusBase(SQLModel):
     import_id: str
     title: str
@@ -78,9 +82,10 @@ class CorpusPublic(CorpusBase):
     organisation: Organisation
 
 
-# /Corpus
+# endregion
 
 
+# region: Slug
 class Slug(SQLModel, table=True):
     __tablename__ = "slug"  # type: ignore[assignment]
     name: str = Field(primary_key=True, index=True, unique=True)
@@ -96,6 +101,10 @@ class Slug(SQLModel, table=True):
     created: datetime = Field(default_factory=datetime.now)
 
 
+# endregion
+
+
+# region: Geography
 class FamilyGeographyLink(SQLModel, table=True):
     __tablename__ = "family_geography"  # type: ignore[assignment]
     geography_id: int = Field(foreign_key="geography.id", primary_key=True)
@@ -132,6 +141,10 @@ class Geography(GeographyBase, table=True):
     )
 
 
+# endregion
+
+
+# region: Collection
 class CollectionFamilyLink(SQLModel, table=True):
     __tablename__ = "collection_family"  # type: ignore[assignment]
     collection_import_id: str = Field(
@@ -140,7 +153,6 @@ class CollectionFamilyLink(SQLModel, table=True):
     family_import_id: str = Field(foreign_key="family.import_id", primary_key=True)
 
 
-# Collection
 class CollectionBase(SQLModel):
     import_id: str
     title: str
@@ -184,9 +196,10 @@ class CollectionPublicWithFamilies(CollectionPublic):
     families: list["FamilyPublic"]
 
 
-# /Collection
+# endregion
 
 
+# region: FamilyEvent
 class FamilyEventBase(SQLModel):
     import_id: str
 
@@ -230,12 +243,20 @@ class FamilyEventPublic(FamilyEventBase):
         return self.unparsed_metadata
 
 
+# endregion
+
+
+# region: FamilyMetadata
 class FamilyMetadata(SQLModel, table=True):
     __tablename__ = "family_metadata"  # type: ignore[assignment]
     family_import_id: str = Field(foreign_key="family.import_id", primary_key=True)
     value: dict[str, Any] = Field(default_factory=dict, sa_column=Column(JSONB))
 
 
+# endregion
+
+
+# region: Family
 class FamilyBase(SQLModel):
     import_id: str = Field(primary_key=True)
     title: str
@@ -396,7 +417,10 @@ class FamilyPublic(FamilyBase):
         return self.unparsed_metadata.value if self.unparsed_metadata else {}
 
 
-# FamilyDocument & PhysicalDocument
+# endregion
+
+
+# region: FamilyDocument & PhysicalDocument
 class FamilyDocumentBase(SQLModel):
     import_id: str = Field(primary_key=True)
     variant_name: str | None
@@ -549,7 +573,7 @@ class PhysicalDocumentPublic(PhysicalDocumentBase):
     family_document: FamilyDocumentPublic | None
 
 
-# /FamilyDocument & PhysicalDocument
+# endregion
 
 APIDataType = TypeVar("APIDataType")
 
@@ -761,42 +785,6 @@ class GeographyDocumentCount(SQLModel):
     name: str
     type: str
     count: int
-
-
-@router.get(
-    "/aggregations/by-geography",
-    response_model=APIListResponse[GeographyDocumentCount],
-)
-def docs_by_geo(
-    session: Session = Depends(get_session),
-):
-    stmt = (
-        select(
-            Geography.value.label("code"),
-            Geography.display_value.label("name"),
-            Geography.type,
-            func.count(PhysicalDocument.id).label("count"),
-        )
-        .join(FamilyGeographyLink, Geography.id == FamilyGeographyLink.geography_id)
-        .join(Family, FamilyGeographyLink.family_import_id == Family.import_id)
-        .join(FamilyDocument, Family.import_id == FamilyDocument.family_import_id)
-        .join(
-            PhysicalDocument, FamilyDocument.physical_document_id == PhysicalDocument.id
-        )
-        .group_by(Geography.id)
-        .order_by(func.count(PhysicalDocument.id).desc())
-    )
-
-    results = session.exec(stmt).all()
-
-    data = [GeographyDocumentCount.model_validate(row._mapping) for row in results]
-
-    return APIListResponse(
-        data=data,
-        total=len(data),
-        page=1,
-        page_size=len(data),
-    )
 
 
 # we use both to make sure we can have /families/health available publically
