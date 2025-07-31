@@ -668,6 +668,20 @@ def read_documents(*, session: Session = Depends(get_session)):
     )
 
 
+@router.get(
+    "/documents/{document_id}", response_model=APIItemResponse[FamilyDocumentPublic]
+)
+def read_document(*, session: Session = Depends(get_session), document_id: str):
+    document = session.exec(
+        select(FamilyDocument).where(FamilyDocument.import_id == document_id)
+    ).one_or_none()
+
+    if document is None:
+        raise HTTPException(status_code=404, detail="Not found")
+
+    return APIItemResponse(data=document)
+
+
 @router.get("/{family_id}", response_model=APIItemResponse[FamilyPublic])
 def read_family(*, session: Session = Depends(get_session), family_id: str):
     # When should this break?
