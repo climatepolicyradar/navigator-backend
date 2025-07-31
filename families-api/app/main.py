@@ -377,6 +377,7 @@ class FamilyPublic(FamilyBase):
         return self.unparsed_metadata.value if self.unparsed_metadata else {}
 
 
+# FamilyDocument & PhysicalDocument
 class FamilyDocumentBase(SQLModel):
     import_id: str = Field(primary_key=True)
     variant_name: str | None
@@ -488,6 +489,10 @@ class FamilyDocumentPublic(FamilyDocumentBase):
         ]
 
 
+class FamilyDocumentPublicWithFamily(FamilyDocumentBase):
+    family: FamilyPublic
+
+
 class PhysicalDDocumentLanguageLink(SQLModel, table=True):
     __tablename__ = "physical_document_language"  # type: ignore[assignment]
     language_id: int = Field(foreign_key="language.id", primary_key=True)
@@ -524,6 +529,8 @@ class PhysicalDocument(PhysicalDocumentBase, table=True):
 class PhysicalDocumentPublic(PhysicalDocumentBase):
     family_document: FamilyDocumentPublic | None
 
+
+# /FamilyDocument & PhysicalDocument
 
 APIDataType = TypeVar("APIDataType")
 
@@ -656,7 +663,9 @@ def read_concepts(*, session: Session = Depends(get_session)):
     )
 
 
-@router.get("/documents", response_model=APIListResponse[FamilyDocumentPublic])
+@router.get(
+    "/documents", response_model=APIListResponse[FamilyDocumentPublicWithFamily]
+)
 def read_documents(*, session: Session = Depends(get_session)):
     documents = session.exec(select(FamilyDocument).limit(10)).all()
 
@@ -669,7 +678,8 @@ def read_documents(*, session: Session = Depends(get_session)):
 
 
 @router.get(
-    "/documents/{document_id}", response_model=APIItemResponse[FamilyDocumentPublic]
+    "/documents/{document_id}",
+    response_model=APIItemResponse[FamilyDocumentPublicWithFamily],
 )
 def read_document(*, session: Session = Depends(get_session), document_id: str):
     document = session.exec(
