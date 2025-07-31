@@ -559,16 +559,14 @@ def get_session():
 
 
 @router.get("/", response_model=APIListResponse[FamilyPublic])
-def read_documents(*, session: Session = Depends(get_session)):
+def read_families(*, session: Session = Depends(get_session)):
     families = session.exec(select(Family).limit(10)).all()
 
-    data = families
-
     return APIListResponse(
-        data=list(data),
-        total=len(data),
+        data=list(families),
+        total=len(families),
         page=1,
-        page_size=len(data),
+        page_size=len(families),
     )
 
 
