@@ -161,7 +161,7 @@ class Collection(CollectionBase, table=True):
         back_populates="unparsed_collections", link_model=CollectionFamilyLink
     )
     unparsed_slug: list["Slug"] = Relationship(
-        sa_relationship_kwargs={"order_by": lambda: Slug.created.desc()}
+        sa_relationship_kwargs={"order_by": lambda: Slug.created.desc()}  # type: ignore
     )
 
 
