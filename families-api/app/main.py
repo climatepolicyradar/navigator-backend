@@ -365,52 +365,9 @@ class FamilyPublic(FamilyBase):
     @property
     def documents(self) -> list["FamilyDocumentPublic"]:
         return [
-            FamilyDocumentPublic(
-                import_id=document.import_id,
-                variant=document.variant_name,
-                slug=(
-                    document.unparsed_slug[0].name
-                    if len(document.unparsed_slug) > 0
-                    else ""
-                ),
-                title=document.physical_document.title,
-                md5_sum=document.physical_document.md5_sum,
-                cdn_object=f"{settings.cdn_url}/{document.physical_document.cdn_object}",
-                source_url=document.physical_document.source_url,
-                content_type=document.physical_document.content_type,
-                language=(
-                    document.physical_document.unparsed_languages[0].language_code
-                    if document.physical_document.unparsed_languages
-                    else None
-                ),
-                languages=[
-                    language.language_code
-                    for language in document.physical_document.unparsed_languages
-                ],
-                document_type=(
-                    document.valid_metadata.get("type", [None])[0]
-                    if document.valid_metadata
-                    else None
-                ),
-                document_role=(
-                    document.valid_metadata.get("role", [None])[0]
-                    if document.valid_metadata
-                    else None
-                ),
-                events=[
-                    FamilyEventPublic(
-                        import_id=event.import_id,
-                        title=event.title,
-                        date=event.date,
-                        event_type=event.event_type_name,
-                        status=event.status,
-                        unparsed_metadata=event.valid_metadata,
-                    )
-                    for event in document.unparsed_events
-                ],
-            )
-            for document in self.family_documents
-            if document.physical_document
+            FamilyDocumentPublic.model_validate(family_document)
+            for family_document in self.family_documents
+            if family_document.physical_document
         ]
 
     # metadata is reserved in SQLModel
@@ -422,6 +379,7 @@ class FamilyPublic(FamilyBase):
 
 class FamilyDocumentBase(SQLModel):
     import_id: str = Field(primary_key=True)
+    variant_name: str | None
 
 
 class FamilyDocument(FamilyDocumentBase, table=True):
@@ -437,23 +395,97 @@ class FamilyDocument(FamilyDocumentBase, table=True):
         default_factory=None, sa_column=Column(JSONB)
     )
     unparsed_slug: list[Slug] = Relationship()
-    variant_name: str | None
 
 
 class FamilyDocumentPublic(FamilyDocumentBase):
     import_id: str
-    slug: str
-    title: str
-    cdn_object: str
-    variant: str | None
-    md5_sum: str | None
-    source_url: str | None
-    content_type: str | None
-    language: str | None
-    languages: list[str]
-    document_type: str | None
-    document_role: str | None
-    events: list[FamilyEventPublic]
+    valid_metadata: dict[str, Any]
+    physical_document: "PhysicalDocument" = Field(exclude=True)
+    unparsed_slug: list[Slug] = Field(exclude=True)
+    unparsed_events: list[FamilyEvent] = Field(exclude=True)
+
+    # events: list[FamilyEventPublic]
+
+    @computed_field
+    @property
+    def slug(self) -> str:
+        return self.unparsed_slug[0].name if len(self.unparsed_slug) > 0 else ""
+
+    @computed_field
+    @property
+    def title(self) -> str:
+        return self.physical_document.title
+
+    @computed_field
+    @property
+    def cdn_object(self) -> str:
+        return f"{settings.cdn_url}/{self.physical_document.cdn_object}"
+
+    @computed_field
+    @property
+    def variant(self) -> str | None:
+        return self.variant_name
+
+    @computed_field
+    @property
+    def md5_sum(self) -> str | None:
+        return self.physical_document.md5_sum
+
+    @computed_field
+    @property
+    def source_url(self) -> str | None:
+        return self.physical_document.source_url
+
+    @computed_field
+    @property
+    def content_type(self) -> str | None:
+        return self.physical_document.content_type
+
+    @computed_field
+    @property
+    def language(self) -> str | None:
+        return (
+            self.physical_document.unparsed_languages[0].language_code
+            if self.physical_document.unparsed_languages
+            else None
+        )
+
+    @computed_field
+    @property
+    def languages(self) -> list[str]:
+        return [
+            language.language_code
+            for language in self.physical_document.unparsed_languages
+        ]
+
+    @computed_field
+    @property
+    def document_type(self) -> str | None:
+        return (
+            self.valid_metadata.get("type", [None])[0] if self.valid_metadata else None
+        )
+
+    @computed_field
+    @property
+    def document_role(self) -> str | None:
+        return (
+            self.valid_metadata.get("role", [None])[0] if self.valid_metadata else None
+        )
+
+    @computed_field
+    @property
+    def events(self) -> list[FamilyEventPublic]:
+        return [
+            FamilyEventPublic(
+                import_id=event.import_id,
+                title=event.title,
+                date=event.date,
+                event_type=event.event_type_name,
+                status=event.status,
+                unparsed_metadata=event.valid_metadata,
+            )
+            for event in self.unparsed_events
+        ]
 
 
 class PhysicalDDocumentLanguageLink(SQLModel, table=True):
@@ -621,6 +653,18 @@ def read_concepts(*, session: Session = Depends(get_session)):
         total=len(unique_concepts),
         page=1,
         page_size=len(unique_concepts),
+    )
+
+
+@router.get("/documents", response_model=APIListResponse[FamilyDocumentPublic])
+def read_documents(*, session: Session = Depends(get_session)):
+    documents = session.exec(select(FamilyDocument).limit(10)).all()
+
+    return APIListResponse(
+        data=list(documents),
+        total=len(documents),
+        page=1,
+        page_size=len(documents),
     )
 
 
