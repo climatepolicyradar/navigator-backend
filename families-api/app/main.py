@@ -740,6 +740,31 @@ def read_collection(*, session: Session = Depends(get_session), collection_id: s
     return APIItemResponse(data=collection)
 
 
+@router.get("/slugs", response_model=APIListResponse[Slug])
+def read_slugs(*, session: Session = Depends(get_session)):
+    slugs = session.exec(select(Slug).limit(10)).all()
+
+    return APIListResponse(
+        data=list(slugs),
+        total=len(slugs),
+        page=1,
+        page_size=len(slugs),
+    )
+
+
+@router.get(
+    "/slugs/{slug_name}",
+    response_model=APIItemResponse[Slug],
+)
+def read_slug(*, session: Session = Depends(get_session), slug_name: str):
+    slug = session.exec(select(Slug).where(Slug.name == slug_name)).one_or_none()
+
+    if slug is None:
+        raise HTTPException(status_code=404, detail="Not found")
+
+    return APIItemResponse(data=slug)
+
+
 @router.get("/{family_id}", response_model=APIItemResponse[FamilyPublic])
 def read_family(*, session: Session = Depends(get_session), family_id: str):
     # When should this break?
