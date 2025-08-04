@@ -25,7 +25,7 @@ jobs:
           echo "pr_number=$PR_NUMBER" >> $GITHUB_OUTPUT
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-      - uses: slackapi/slack-github-action@v2.1.0
+      - uses: slackapi/slack-github-action@v2.1.1
         with:
           webhook: ${{ steps.webhook_url.outputs.webhook_url }}
           webhook-type: incoming-webhook
