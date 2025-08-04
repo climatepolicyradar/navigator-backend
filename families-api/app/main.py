@@ -14,7 +14,7 @@ from pydantic import BaseModel, computed_field
 from pydantic_settings import BaseSettings
 from sqlalchemy import create_engine, text
 from sqlalchemy.dialects.postgresql import ARRAY, JSONB
-from sqlmodel import Column, Field, Relationship, Session, SQLModel, select
+from sqlmodel import Column, Field, Relationship, Session, SQLModel, func, select
 
 _LOGGER = logging.getLogger(__name__)
 
@@ -810,6 +810,40 @@ class GeographyDocumentCount(SQLModel):
     name: str
     type: str
     count: int
+
+
+@router.get(
+    "/aggregations/by-geography",
+    response_model=APIListResponse[GeographyDocumentCount],
+)
+def docs_by_geo(
+    session: Session = Depends(get_session),
+):
+    stmt = (
+        select(
+            Geography.value.label("code"),
+            Geography.display_value.label("name"),
+            Geography.type,
+            func.count(PhysicalDocument.id).label("count"),
+        )
+        .join(FamilyGeographyLink, Geography.id == FamilyGeographyLink.geography_id)
+        .join(Family, FamilyGeographyLink.family_import_id == Family.import_id)
+        .join(FamilyDocument, Family.import_id == FamilyDocument.family_import_id)
+        .join(
+            PhysicalDocument, FamilyDocument.physical_document_id == PhysicalDocument.id
+        )
+        .group_by(Geography.id)
+        .order_by(func.count(PhysicalDocument.id).desc())
+    )
+
+    data = session.exec(stmt).all()
+
+    return APIListResponse(
+        data=data,
+        total=len(data),
+        page=1,
+        page_size=len(data),
+    )
 
 
 # we use both to make sure we can have /families/health available publically
