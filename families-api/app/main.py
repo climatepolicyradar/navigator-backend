@@ -821,25 +821,25 @@ def docs_by_geo(
 ):
     stmt = (
         select(
-            Geography.value.label("code"),
-            Geography.display_value.label("name"),
+            Geography.value.label("code"),  # type: ignore
+            Geography.display_value.label("name"),  # type: ignore
             Geography.type,
-            func.count(PhysicalDocument.id).label("count"),
+            func.count(PhysicalDocument.id).label("count"),  # type: ignore
         )
-        .join(FamilyGeographyLink, Geography.id == FamilyGeographyLink.geography_id)
-        .join(Family, FamilyGeographyLink.family_import_id == Family.import_id)
-        .join(FamilyDocument, Family.import_id == FamilyDocument.family_import_id)
+        .join(FamilyGeographyLink, Geography.id == FamilyGeographyLink.geography_id)  # type: ignore
+        .join(Family, FamilyGeographyLink.family_import_id == Family.import_id)  # type: ignore
+        .join(FamilyDocument, Family.import_id == FamilyDocument.family_import_id)  # type: ignore
         .join(
-            PhysicalDocument, FamilyDocument.physical_document_id == PhysicalDocument.id
+            PhysicalDocument, FamilyDocument.physical_document_id == PhysicalDocument.id  # type: ignore
         )
-        .group_by(Geography.id)
-        .order_by(func.count(PhysicalDocument.id).desc())
+        .group_by(Geography.id)  # type: ignore
+        .order_by(func.count(PhysicalDocument.id).desc())  # type: ignore
     )
 
     data = session.exec(stmt).all()
 
     return APIListResponse(
-        data=data,
+        data=list(data),
         total=len(data),
         page=1,
         page_size=len(data),
