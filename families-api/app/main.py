@@ -532,7 +532,7 @@ class FamilyDocumentPublic(FamilyDocumentBase):
         ]
 
 
-class FamilyDocumentPublicWithFamily(FamilyDocumentBase):
+class FamilyDocumentPublicWithFamily(FamilyDocumentPublic):
     family: FamilyPublic
 
 
@@ -830,7 +830,8 @@ def docs_by_geo(
         .join(Family, FamilyGeographyLink.family_import_id == Family.import_id)  # type: ignore
         .join(FamilyDocument, Family.import_id == FamilyDocument.family_import_id)  # type: ignore
         .join(
-            PhysicalDocument, FamilyDocument.physical_document_id == PhysicalDocument.id  # type: ignore
+            PhysicalDocument,
+            FamilyDocument.physical_document_id == PhysicalDocument.id,  # type: ignore
         )
         .group_by(Geography.id)  # type: ignore
         .order_by(func.count(PhysicalDocument.id).desc())  # type: ignore
