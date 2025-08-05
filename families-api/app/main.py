@@ -463,7 +463,7 @@ class FamilyDocumentPublic(FamilyDocumentBase):
     @computed_field
     @property
     def cdn_object(self) -> str:
-        return f"{settings.cdn_url}/{self.physical_document.cdn_object}"
+        return f"{settings.cdn_url}/navigator/{self.physical_document.cdn_object}"
 
     @computed_field
     @property
