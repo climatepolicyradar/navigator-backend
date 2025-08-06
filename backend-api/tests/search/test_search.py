@@ -952,16 +952,16 @@ def populate_data_db(db: Session, fam_specs: Sequence[FamSpec]) -> None:
 
 @pytest.mark.search
 @pytest.mark.parametrize(
-    "fam_specs,offset,page_size",
+    "fam_specs,offset,page_size,expected_total_family_hits",
     [
         # Just one family, one document, 10 hits
-        ([_FAM_SPEC_0], 0, 10),
+        ([_FAM_SPEC_0], 0, 10, 1),
         # Multiple families
-        ([_FAM_SPEC_0, _FAM_SPEC_1], 0, 10),
+        ([_FAM_SPEC_0, _FAM_SPEC_1], 0, 10, 2),
         # Multiple families, mixed results (some docs in FAM_2 must be missing)
-        ([_FAM_SPEC_0, _FAM_SPEC_2, _FAM_SPEC_1], 0, 5),
+        ([_FAM_SPEC_0, _FAM_SPEC_2, _FAM_SPEC_1], 0, 5, 3),
         # Test page_size, offset
-        ([_FAM_SPEC_3, _FAM_SPEC_1, _FAM_SPEC_2, _FAM_SPEC_0], 2, 1),
+        ([_FAM_SPEC_3, _FAM_SPEC_1, _FAM_SPEC_2, _FAM_SPEC_0], 2, 1, 4),
     ],
 )
 def test_process_vespa_search_response(
@@ -969,6 +969,7 @@ def test_process_vespa_search_response(
     fam_specs: Sequence[FamSpec],
     offset: int,
     page_size: int,
+    expected_total_family_hits: int,
 ):
     # Make sure we process a response without error
     populate_data_db(data_db, fam_specs=fam_specs)
@@ -985,7 +986,7 @@ def test_process_vespa_search_response(
     assert len(search_response.families) == min(len(fam_specs), page_size)
     assert search_response.query_time_ms == vespa_response.query_time_ms
     assert search_response.total_time_ms == vespa_response.total_time_ms
-    assert search_response.total_family_hits == vespa_response.total_family_hits
+    assert search_response.total_family_hits == expected_total_family_hits
     assert search_response.continuation_token == vespa_response.continuation_token
     assert (
         search_response.this_continuation_token
