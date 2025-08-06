@@ -249,7 +249,7 @@ requires-dist = [
     { name = "boto3", specifier = ">=1.26" },
     { name = "botocore", specifier = ">=1.38.37" },
     { name = "cpr-sdk", extras = ["vespa", "datasets"], specifier = "==1.20.1" },
-    { name = "db-client", git = "https://github.com/climatepolicyradar/navigator-db-client.git?rev=v3.9.17" },
+    { name = "db-client", git = "https://github.com/climatepolicyradar/navigator-db-client.git?rev=v3.9.18" },
     { name = "fastapi", specifier = ">=0.115.8" },
     { name = "fastapi-health", specifier = ">=0.4.0" },
     { name = "fastapi-pagination", extras = ["sqlalchemy"], specifier = ">=0.13.2" },
@@ -640,8 +640,8 @@ wheels = [
 
 [[package]]
 name = "db-client"
-version = "3.9.17"
-source = { git = "https://github.com/climatepolicyradar/navigator-db-client.git?rev=v3.9.17#c82b9c30a3e617b1a78a8059f31ff76b23b0ee92" }
+version = "3.9.18"
+source = { git = "https://github.com/climatepolicyradar/navigator-db-client.git?rev=v3.9.18#fec1ccbdfde06c2a6371871a9d92eaf7bb9a684c" }
 dependencies = [
     { name = "alembic" },
     { name = "alembic-utils" },

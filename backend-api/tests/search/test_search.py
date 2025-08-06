@@ -774,7 +774,10 @@ def _generate_search_response_hits(spec: FamSpec) -> Sequence[CprSdkHit]:
                     f"_{document_number}"
                 ),
                 text_block=" ".join(
-                    random.sample(spec.family_description.split(" "), 10)
+                    random.sample(
+                        spec.family_description.split(" "),
+                        min(10, len(spec.family_description.split(" "))),
+                    )
                 ),
                 text_block_coords=(
                     None
@@ -788,7 +791,7 @@ def _generate_search_response_hits(spec: FamSpec) -> Sequence[CprSdkHit]:
                     else random.randint(1, 100)
                 ),
                 text_block_type=random.choice(_BLOCK_TYPES),
-            )
+            ),
         )
 
     return hits
@@ -886,6 +889,24 @@ _FAM_SPEC_3 = FamSpec(
     document_hit_count=40,
 )
 
+_FAM_SPEC_UNPUBLISHED = FamSpec(
+    random_seed=442,
+    family_import_id="CCLW.family.unpublished.0",
+    family_source="CCLW",
+    family_name="Unpublished Family",
+    family_description="This family should not be published",
+    family_category="Executive",
+    family_ts="2023-01-01",
+    family_geo="DEU",
+    family_geos=["DEU"],
+    family_metadata={"status": ["draft"]},
+    corpus_import_id="CCLW.corpus.i00000001.n0000",
+    corpus_type_name="Intl. agreements",
+    description_hit=True,
+    family_document_count=1,
+    document_hit_count=5,
+)
+
 
 def populate_data_db(db: Session, fam_specs: Sequence[FamSpec]) -> None:
     """Minimal population of family structures required for testing conversion below"""
@@ -907,20 +928,23 @@ def populate_data_db(db: Session, fam_specs: Sequence[FamSpec]) -> None:
                     ),
                 )
             )
-        family_event = FamilyEvent(
-            import_id=f"{fam_spec.family_source}.event.{fam_spec.family_import_id.split('.')[2]}.0",
-            title="Published",
-            date=datetime.fromisoformat(fam_spec.family_ts),
-            event_type_name="Passed/Approved",
-            family_import_id=fam_spec.family_import_id,
-            family_document_import_id=None,
-            status=EventStatus.OK,
-            valid_metadata={
-                "event_type": ["Passed/Approved"],
-                "datetime_event_name": ["Passed/Approved"],
-            },
-        )
-        db.add(family_event)
+
+        # Only create family event for published families (not for unpublished ones)
+        if fam_spec.family_import_id != "CCLW.family.unpublished.0":
+            family_event = FamilyEvent(
+                import_id=f"{fam_spec.family_source}.event.{fam_spec.family_import_id.split('.')[2]}.0",
+                title="Published",
+                date=datetime.fromisoformat(fam_spec.family_ts),
+                event_type_name="Passed/Approved",
+                family_import_id=fam_spec.family_import_id,
+                family_document_import_id=None,
+                status=EventStatus.OK,
+                valid_metadata={
+                    "event_type": ["Passed/Approved"],
+                    "datetime_event_name": ["Passed/Approved"],
+                },
+            )
+            db.add(family_event)
         family_metadata = FamilyMetadata(
             family_import_id=fam_spec.family_import_id,
             value=fam_spec.family_metadata,
@@ -937,12 +961,19 @@ def populate_data_db(db: Session, fam_specs: Sequence[FamSpec]) -> None:
             db.add(physical_document)
             db.flush()
             db.refresh(physical_document)
+            # Set document status based on whether it's the unpublished family
+            document_status = (
+                DocumentStatus.CREATED
+                if fam_spec.family_import_id == "CCLW.family.unpublished.0"
+                else DocumentStatus.PUBLISHED
+            )
+
             family_document = FamilyDocument(
                 family_import_id=fam_spec.family_import_id,
                 physical_document_id=physical_document.id,
                 import_id=f"{fam_spec.family_import_id}.{i}",
                 variant_name=None,
-                document_status=DocumentStatus.PUBLISHED,
+                document_status=document_status,
                 valid_metadata={"role": ["MAIN"], "type": ["Law"]},
             )
             db.add(family_document)
@@ -952,16 +983,18 @@ def populate_data_db(db: Session, fam_specs: Sequence[FamSpec]) -> None:
 
 @pytest.mark.search
 @pytest.mark.parametrize(
-    "fam_specs,offset,page_size",
+    "fam_specs,offset,page_size,expected_total_family_hits",
     [
         # Just one family, one document, 10 hits
-        ([_FAM_SPEC_0], 0, 10),
+        ([_FAM_SPEC_0], 0, 10, 1),
         # Multiple families
-        ([_FAM_SPEC_0, _FAM_SPEC_1], 0, 10),
+        ([_FAM_SPEC_0, _FAM_SPEC_1], 0, 10, 2),
         # Multiple families, mixed results (some docs in FAM_2 must be missing)
-        ([_FAM_SPEC_0, _FAM_SPEC_2, _FAM_SPEC_1], 0, 5),
+        ([_FAM_SPEC_0, _FAM_SPEC_2, _FAM_SPEC_1], 0, 5, 3),
         # Test page_size, offset
-        ([_FAM_SPEC_3, _FAM_SPEC_1, _FAM_SPEC_2, _FAM_SPEC_0], 2, 1),
+        ([_FAM_SPEC_3, _FAM_SPEC_1, _FAM_SPEC_2, _FAM_SPEC_0], 2, 1, 4),
+        # Test published and unpublished families - should only return published ones
+        ([_FAM_SPEC_0, _FAM_SPEC_UNPUBLISHED], 0, 10, 1),
     ],
 )
 def test_process_vespa_search_response(
@@ -969,6 +1002,7 @@ def test_process_vespa_search_response(
     fam_specs: Sequence[FamSpec],
     offset: int,
     page_size: int,
+    expected_total_family_hits: int,
 ):
     # Make sure we process a response without error
     populate_data_db(data_db, fam_specs=fam_specs)
@@ -982,10 +1016,14 @@ def test_process_vespa_search_response(
         sort_within_page=False,
     )
 
-    assert len(search_response.families) == min(len(fam_specs), page_size)
+    # Count only published families (those that will be returned)
+    published_family_count = sum(
+        1 for spec in fam_specs if spec.family_import_id != "CCLW.family.unpublished.0"
+    )
+    assert len(search_response.families) == min(published_family_count, page_size)
     assert search_response.query_time_ms == vespa_response.query_time_ms
     assert search_response.total_time_ms == vespa_response.total_time_ms
-    assert search_response.total_family_hits == vespa_response.total_family_hits
+    assert search_response.total_family_hits == expected_total_family_hits
     assert search_response.continuation_token == vespa_response.continuation_token
     assert (
         search_response.this_continuation_token
@@ -997,21 +1035,40 @@ def test_process_vespa_search_response(
     )
 
     # Now validate family results
-    for i, fam_spec in enumerate(fam_specs[offset : offset + page_size]):
-        search_response_family_i = search_response.families[i]
-        assert search_response_family_i.family_slug == slugify(fam_spec.family_name)
+    # Only validate families that are actually in the response (published ones)
+    for i, search_response_family in enumerate(search_response.families):
+        # Find the corresponding fam_spec for this family
+        fam_spec = None
+        for spec in fam_specs:
+            if slugify(spec.family_name) == search_response_family.family_slug:
+                fam_spec = spec
+                break
 
         assert (
-            search_response_family_i.total_passage_hits
-            == vespa_response.families[i + offset].total_passage_hits
+            fam_spec is not None
+        ), f"Could not find fam_spec for family {search_response_family.family_slug}"
+
+        assert search_response_family.family_slug == slugify(fam_spec.family_name)
+
+        # Find the corresponding vespa family
+        vespa_family = None
+        for vf in vespa_response.families:
+            if vf.id == fam_spec.family_import_id:
+                vespa_family = vf
+                break
+
+        assert (
+            vespa_family is not None
+        ), f"Could not find vespa family for {fam_spec.family_import_id}"
+
+        assert (
+            search_response_family.total_passage_hits == vespa_family.total_passage_hits
         )
 
         # Check that we have the correct document details in the response
-        expected_document_ids = set(
-            hit.document_import_id for hit in vespa_response.families[i + offset].hits
-        )
+        expected_document_ids = set(hit.document_import_id for hit in vespa_family.hits)
         assert expected_document_ids  # we always expect document ids
-        assert len(search_response_family_i.family_documents) == len(
+        assert len(search_response_family.family_documents) == len(
             expected_document_ids
         )
 
@@ -1019,12 +1076,12 @@ def test_process_vespa_search_response(
         assert fam_spec.document_hit_count == sum(
             [
                 len(fd.document_passage_matches)
-                for fd in search_response_family_i.family_documents
+                for fd in search_response_family.family_documents
             ]
         )
 
         # Validate data content
-        for fd in search_response_family_i.family_documents:
+        for fd in search_response_family.family_documents:
             assert fd.document_slug.startswith(f"{slugify(fam_spec.family_name)}_")
             assert fd.document_source_url == (
                 f"https://{fam_spec.family_import_id}/{fd.document_slug}"
