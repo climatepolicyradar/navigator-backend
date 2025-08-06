@@ -595,7 +595,6 @@ def process_vespa_search_response(
 ) -> SearchResponse:
     """Process a Vespa search response into a F/E search response"""
 
-    # Process families to get only published ones
     # Process all families once to get published ones
     all_processed_families = _process_vespa_search_response_families(
         db,
