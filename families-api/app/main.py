@@ -8,7 +8,7 @@ from typing import Any, Generic, Optional, TypeVar
 from api import log
 from api.telemetry import Telemetry
 from api.telemetry_config import ServiceManifest, TelemetryConfig
-from fastapi import APIRouter, Depends, FastAPI, HTTPException
+from fastapi import APIRouter, Depends, FastAPI, HTTPException, Query
 from fastapi.middleware.cors import CORSMiddleware
 from pydantic import BaseModel, computed_field
 from pydantic_settings import BaseSettings
@@ -639,13 +639,18 @@ def get_session():
 
 
 @router.get("/", response_model=APIListResponse[FamilyPublic])
-def read_families(*, session: Session = Depends(get_session)):
-    families = session.exec(select(Family).limit(10)).all()
+def read_families(
+    *, session: Session = Depends(get_session), page: int = Query(1, ge=1)
+):
+    limit = 10
+    offset = (page - 1) * limit
+
+    families = session.exec(select(Family).offset(offset).limit(10)).all()
 
     return APIListResponse(
         data=list(families),
         total=len(families),
-        page=1,
+        page=page,
         page_size=len(families),
     )
 
@@ -707,13 +712,17 @@ def read_concepts(*, session: Session = Depends(get_session)):
 @router.get(
     "/documents", response_model=APIListResponse[FamilyDocumentPublicWithFamily]
 )
-def read_documents(*, session: Session = Depends(get_session)):
-    documents = session.exec(select(FamilyDocument).limit(10)).all()
+def read_documents(
+    *, session: Session = Depends(get_session), page: int = Query(1, ge=1)
+):
+    limit = 10
+    offset = (page - 1) * limit
+    documents = session.exec(select(FamilyDocument).offset(offset).limit(limit)).all()
 
     return APIListResponse(
         data=list(documents),
         total=len(documents),
-        page=1,
+        page=page,
         page_size=len(documents),
     )
 
@@ -736,13 +745,17 @@ def read_document(*, session: Session = Depends(get_session), document_id: str):
 @router.get(
     "/collections", response_model=APIListResponse[CollectionPublicWithFamilies]
 )
-def read_collections(*, session: Session = Depends(get_session)):
-    collections = session.exec(select(Collection).limit(10)).all()
+def read_collections(
+    *, session: Session = Depends(get_session), page: int = Query(1, ge=1)
+):
+    limit = 10
+    offset = (page - 1) * limit
+    collections = session.exec(select(Collection).offset(offset).limit(limit)).all()
 
     return APIListResponse(
         data=list(collections),
         total=len(collections),
-        page=1,
+        page=page,
         page_size=len(collections),
     )
 
@@ -763,13 +776,15 @@ def read_collection(*, session: Session = Depends(get_session), collection_id: s
 
 
 @router.get("/slugs", response_model=APIListResponse[Slug])
-def read_slugs(*, session: Session = Depends(get_session)):
-    slugs = session.exec(select(Slug).limit(10)).all()
+def read_slugs(*, session: Session = Depends(get_session), page: int = Query(1, ge=1)):
+    limit = 10
+    offset = (page - 1) * limit
+    slugs = session.exec(select(Slug).offset(offset).limit(limit)).all()
 
     return APIListResponse(
         data=list(slugs),
         total=len(slugs),
-        page=1,
+        page=page,
         page_size=len(slugs),
     )
 
