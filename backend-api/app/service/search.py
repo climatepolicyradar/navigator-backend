@@ -596,16 +596,7 @@ def process_vespa_search_response(
     """Process a Vespa search response into a F/E search response"""
 
     # Process families to get only published ones
-    processed_families = _process_vespa_search_response_families(
-        db,
-        vespa_search_response.families,
-        limit=limit,
-        offset=offset,
-        sort_within_page=sort_within_page,
-    )
-
-    # Calculate total_family_hits based on published families only
-    # We need to process all families (not just the paginated ones) to get the correct total
+    # Process all families once to get published ones
     all_processed_families = _process_vespa_search_response_families(
         db,
         vespa_search_response.families,
@@ -614,8 +605,11 @@ def process_vespa_search_response(
         sort_within_page=sort_within_page,
     )
 
+    # Apply pagination to the processed results
+    processed_families = all_processed_families[offset : offset + limit]
+
     return SearchResponse(
-        hits=len(processed_families),  # Count only published families
+        hits=len(all_processed_families),  # Count only published families
         total_family_hits=len(all_processed_families),  # Count only published families
         query_time_ms=vespa_search_response.query_time_ms or 0,
         total_time_ms=vespa_search_response.total_time_ms or 0,
