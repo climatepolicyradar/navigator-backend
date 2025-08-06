@@ -886,6 +886,24 @@ _FAM_SPEC_3 = FamSpec(
     document_hit_count=40,
 )
 
+_FAM_SPEC_UNPUBLISHED = FamSpec(
+    random_seed=442,
+    family_import_id="CCLW.family.unpublished.0",
+    family_source="CCLW",
+    family_name="Unpublished Family",
+    family_description="This family should not be published",
+    family_category="Executive",
+    family_ts="2023-01-01",
+    family_geo="DEU",
+    family_geos=["DEU"],
+    family_metadata={"status": ["draft"]},
+    corpus_import_id="CCLW.corpus.i00000001.n0000",
+    corpus_type_name="Intl. agreements",
+    description_hit=True,
+    family_document_count=1,
+    document_hit_count=5,
+)
+
 
 def populate_data_db(db: Session, fam_specs: Sequence[FamSpec]) -> None:
     """Minimal population of family structures required for testing conversion below"""
@@ -907,20 +925,23 @@ def populate_data_db(db: Session, fam_specs: Sequence[FamSpec]) -> None:
                     ),
                 )
             )
-        family_event = FamilyEvent(
-            import_id=f"{fam_spec.family_source}.event.{fam_spec.family_import_id.split('.')[2]}.0",
-            title="Published",
-            date=datetime.fromisoformat(fam_spec.family_ts),
-            event_type_name="Passed/Approved",
-            family_import_id=fam_spec.family_import_id,
-            family_document_import_id=None,
-            status=EventStatus.OK,
-            valid_metadata={
-                "event_type": ["Passed/Approved"],
-                "datetime_event_name": ["Passed/Approved"],
-            },
-        )
-        db.add(family_event)
+
+        # Only create family event for published families (not for unpublished ones)
+        if fam_spec.family_import_id != "CCLW.family.unpublished.0":
+            family_event = FamilyEvent(
+                import_id=f"{fam_spec.family_source}.event.{fam_spec.family_import_id.split('.')[2]}.0",
+                title="Published",
+                date=datetime.fromisoformat(fam_spec.family_ts),
+                event_type_name="Passed/Approved",
+                family_import_id=fam_spec.family_import_id,
+                family_document_import_id=None,
+                status=EventStatus.OK,
+                valid_metadata={
+                    "event_type": ["Passed/Approved"],
+                    "datetime_event_name": ["Passed/Approved"],
+                },
+            )
+            db.add(family_event)
         family_metadata = FamilyMetadata(
             family_import_id=fam_spec.family_import_id,
             value=fam_spec.family_metadata,
@@ -962,6 +983,8 @@ def populate_data_db(db: Session, fam_specs: Sequence[FamSpec]) -> None:
         ([_FAM_SPEC_0, _FAM_SPEC_2, _FAM_SPEC_1], 0, 5, 3),
         # Test page_size, offset
         ([_FAM_SPEC_3, _FAM_SPEC_1, _FAM_SPEC_2, _FAM_SPEC_0], 2, 1, 4),
+        # Test published and unpublished families - should only return published ones
+        ([_FAM_SPEC_0, _FAM_SPEC_UNPUBLISHED], 0, 10, 1),
     ],
 )
 def test_process_vespa_search_response(
