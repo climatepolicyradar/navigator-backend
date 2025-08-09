@@ -1,0 +1,8 @@
+{
+  "name": "families-api",
+  "version": "1.0.0",
+  "dependencies": {
+    "@openapitools/openapi-generator-cli": "^2.21.4",
+    "openapi-typescript-codegen": "^0.29.0"
+  }
+}
