@@ -5,7 +5,7 @@ from typing import Any, Dict, Optional, Union
 from db_client.models.dfce import Geography, GeoStatistics
 from fastapi import Depends, HTTPException
 from pydantic import BaseModel
-from sqlalchemy import exc
+from sqlalchemy import exc, or_
 
 from app.api.api_v1.routers.lookups.router import lookups_router
 from app.clients.db.session import get_db
@@ -34,13 +34,13 @@ lookup_geo_stats_responses: Dict[Union[int, str], Dict[str, Any]] = {
 
 
 @lookups_router.get(
-    "/geo_stats/{geography_slug}",
+    "/o/{geography_key}",
     summary="Get climate statistics for a geography",
     response_model=GeoStatsResponse,
     responses=lookup_geo_stats_responses,
 )
 def lookup_geo_stats(
-    geography_slug: str,
+    geography_key: str,
     db=Depends(get_db),
 ):
     """
@@ -49,20 +49,26 @@ def lookup_geo_stats(
     **NOTE**: This requires the geography_id to refer to a geography of
               type ISO-3166
     """
-    _LOGGER.info(f"Getting geo stats for {geography_slug}")
-    not_found_msg = f"Unable to get geo stats for {geography_slug}"
+    _LOGGER.info(f"Getting geo stats for {geography_key}")
+    not_found_msg = f"Unable to get geo stats for {geography_key}"
 
     try:
-        existing_geography_id = (
-            db.query(Geography.id).filter(Geography.slug == geography_slug).scalar()
+        geography_id = (
+            db.query(Geography.id)
+            .filter(
+                or_(
+                    Geography.slug == geography_key,
+                    Geography.value == geography_key.upper(),
+                )
+            )
+            .scalar()
         )
-        if existing_geography_id is None:
+
+        if geography_id is None:
             raise HTTPException(status_code=NOT_FOUND, detail=not_found_msg)
 
         existing_geo_stats = (
-            db.query(GeoStatistics)
-            .filter_by(geography_id=existing_geography_id)
-            .first()
+            db.query(GeoStatistics).filter_by(geography_id=geography_id).first()
         )
         if existing_geo_stats is None:
             _LOGGER.error(not_found_msg)
@@ -73,7 +79,7 @@ def lookup_geo_stats(
 
     return GeoStatsResponse(
         name=existing_geo_stats.name,
-        geography_slug=geography_slug,
+        geography_slug=geography_key,
         legislative_process=existing_geo_stats.legislative_process,
         federal=existing_geo_stats.federal,
         federal_details=existing_geo_stats.federal_details,
