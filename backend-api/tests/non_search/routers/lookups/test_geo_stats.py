@@ -46,6 +46,7 @@ def test_endpoint_returns_correct_data(test_client, test_db):
         URL_UNDER_TEST,
     )
 
+
     stats = response.json()
     assert response.status_code == OK
     assert stats["geography_slug"] == TEST_GEO_SLUG
