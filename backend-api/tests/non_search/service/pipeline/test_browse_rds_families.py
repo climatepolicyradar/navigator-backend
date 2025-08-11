@@ -1,6 +1,6 @@
 from db_client.models.dfce import Geography
 
-from app.models.search import BrowseArgs, SearchResponse
+from app.models.search import BrowseArgs
 from app.repository.search import browse_rds_families
 from tests.non_search.setup_helpers import setup_with_two_docs
 
@@ -16,7 +16,7 @@ def test_browse_rds_families(data_db):
         offset=0,
         limit=10,
     )
-    result: SearchResponse = browse_rds_families(data_db, args)
+    (_, result) = browse_rds_families(data_db, args)
     assert result.hits == expected
 
     family = result.families[0]
