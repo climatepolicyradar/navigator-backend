@@ -5,7 +5,13 @@ from logging import getLogger
 from time import perf_counter_ns
 from typing import cast
 
-from db_client.models.dfce.family import Corpus, Family, FamilyCorpus, FamilyStatus
+from db_client.models.dfce.family import (
+    Corpus,
+    DocumentStatus,
+    Family,
+    FamilyCorpus,
+    FamilyDocument,
+)
 from db_client.models.organisation import Organisation
 from sqlalchemy.orm import Session
 
@@ -58,16 +64,28 @@ def to_search_response_family(
 
 
 @observe(name="browse_rds_families")
-def browse_rds_families(db: Session, req: BrowseArgs) -> SearchResponse:
+def browse_rds_families(db: Session, req: BrowseArgs) -> tuple[int, SearchResponse]:
     """Browse RDS"""
 
     t0 = perf_counter_ns()
     geo_subquery = get_geo_subquery(db, req.geography_slugs, req.country_codes)
+    # Subquery to find families with at least one published document
+    # Avoid using calculated family_status field
+    published_families = (
+        db.query(FamilyDocument.family_import_id)
+        .filter(FamilyDocument.document_status == DocumentStatus.PUBLISHED)
+        .distinct()
+        .subquery()
+    )
     query = (
         db.query(Family, Corpus, geo_subquery.c.value, Organisation)  # type: ignore
         .join(FamilyCorpus, FamilyCorpus.family_import_id == Family.import_id)
         .join(Corpus, FamilyCorpus.corpus_import_id == Corpus.import_id)
         .join(Organisation, Organisation.id == Corpus.organisation_id)
+        .join(
+            published_families,
+            published_families.c.family_import_id == Family.import_id,
+        )
         .filter(geo_subquery.c.family_import_id == Family.import_id)  # type: ignore
     )
 
@@ -84,10 +102,11 @@ def browse_rds_families(db: Session, req: BrowseArgs) -> SearchResponse:
             query = query.order_by(Family.title.asc())
 
     _LOGGER.debug("Starting families query")
+    families_count = query.count()
+    top_five_families = query.limit(5).all()
     families = [
         to_search_response_family(family, corpus, geography_value, organisation)
-        for (family, corpus, geography_value, organisation) in query.all()
-        if family.family_status == FamilyStatus.PUBLISHED
+        for (family, corpus, geography_value, organisation) in top_five_families
     ]
 
     _LOGGER.debug("Finished families query")
@@ -122,10 +141,13 @@ def browse_rds_families(db: Session, req: BrowseArgs) -> SearchResponse:
     limit = req.limit or len(families)
     time_taken = int((perf_counter_ns() - t0) / 1e6)
 
-    return SearchResponse(
-        hits=len(families),
-        total_family_hits=len(families),
-        query_time_ms=time_taken,
-        total_time_ms=time_taken,
-        families=families[offset : offset + limit],
+    return (
+        families_count,
+        SearchResponse(
+            hits=families_count,
+            total_family_hits=families_count,
+            query_time_ms=time_taken,
+            total_time_ms=time_taken,
+            families=families[offset : offset + limit],
+        ),
     )

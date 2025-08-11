@@ -93,7 +93,7 @@ def test_get_db_state_content_success(data_db, caplog):
                 "slug": "DocSlug1",
                 "family_import_id": "CCLW.family.1001.0",
                 "family_slug": "FamSlug1",
-                "publication_ts": "2019-12-25T00:00:00+00:00",
+                "publication_ts": "2020-12-25T00:00:00+00:00",
                 "date": None,
                 "source_url": "http://somewhere1",
                 "download_url": None,
