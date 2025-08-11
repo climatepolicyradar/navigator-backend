@@ -7,8 +7,10 @@ from app.api.api_v1.routers.lookups import lookup_geo_stats
 from app.api.api_v1.routers.lookups.geo_stats import GeoStatsResponse
 
 TEST_GEO_NAME = "test1"
-TEST_GEO_SLUG = "a"
+TEST_GEO_SLUG = "Angola"
+TEST_GEO_ISO = "AGO"
 URL_UNDER_TEST = f"/api/v1/geo_stats/{TEST_GEO_SLUG}"
+URL_WITH_ISO_CODE = f"/api/v1/geo_stats/{TEST_GEO_ISO}"
 
 TEST_GEO_SLUG_BAD = "this-is-not-a-geography"
 URL_UNDER_TEST_BAD = f"/api/v1/geo_stats/{TEST_GEO_SLUG_BAD}"
@@ -17,9 +19,9 @@ URL_UNDER_TEST_BAD = f"/api/v1/geo_stats/{TEST_GEO_SLUG_BAD}"
 def test_endpoint_returns_correct_data(test_client, test_db):
     """Tests when the db is populated we can get out the data as expected."""
 
-    test_db.add(Geography(id=1, slug="a", display_value="A"))
-    test_db.add(Geography(id=2, slug="b", display_value="B"))
-    test_db.add(Geography(id=3, slug="c", display_value="C"))
+    test_db.add(Geography(id=1, slug="Angola", display_value="AGO"))
+    test_db.add(Geography(id=2, slug="Belize", display_value="BLZ"))
+    test_db.add(Geography(id=3, slug="Canada", display_value="CAN"))
     test_db.flush()
 
     test_db.add(
@@ -43,9 +45,47 @@ def test_endpoint_returns_correct_data(test_client, test_db):
     response = test_client.get(
         URL_UNDER_TEST,
     )
+
     stats = response.json()
     assert response.status_code == OK
     assert stats["geography_slug"] == TEST_GEO_SLUG
+    assert stats["name"] == TEST_GEO_NAME
+    assert stats["federal"] is False
+
+
+def test_endpoint_returns_correct_data_for_iso_code(test_client, test_db):
+    """Tests when the db is populated we can get out the data as expected."""
+
+    test_db.add(Geography(id=1, slug="Angola", display_value="Angola", value="AGO"))
+    test_db.add(Geography(id=2, slug="Belize", display_value="Belize", value="BLZ"))
+    test_db.add(Geography(id=3, slug="Canada", display_value="Canada", value="CAN"))
+    test_db.flush()
+
+    test_db.add(
+        GeoStatistics(
+            id=1,
+            geography_id=1,
+            name="test1",
+            legislative_process="lp",
+            federal=False,
+            federal_details="fd",
+            political_groups="pg",
+            global_emissions_percent="gep",
+            climate_risk_index="cri",
+            worldbank_income_group="wb",
+            visibility_status="vs",
+        )
+    )
+
+    test_db.commit()
+
+    response = test_client.get(
+        URL_WITH_ISO_CODE,
+    )
+
+    stats = response.json()
+    assert response.status_code == OK
+    assert stats["geography_slug"] == TEST_GEO_ISO
     assert stats["name"] == TEST_GEO_NAME
     assert stats["federal"] is False
 
