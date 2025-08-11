@@ -34,7 +34,7 @@ lookup_geo_stats_responses: Dict[Union[int, str], Dict[str, Any]] = {
 
 
 @lookups_router.get(
-    "/o/{geography_key}",
+    "/geo_stats/{geography_key}",
     summary="Get climate statistics for a geography",
     response_model=GeoStatsResponse,
     responses=lookup_geo_stats_responses,
