@@ -47,6 +47,40 @@ def generate_documents(count, start_index=0, base_import_id="CCLW.executive"):
     return tuple(documents)
 
 
+def generate_families(count, start_index=0, base_import_id="CCLW.executive"):
+    """
+    Generate a specified number of families with incrementing import IDs and slugs.
+
+    Args:
+        count (int): Number of families to generate
+        start_index (int): Starting index for the import ID (default: 0)
+        base_import_id (str): Base import ID pattern (default: "CCLW.executive")
+        return_tuple (bool): If True, return tuple instead of list (default: False)
+
+    Returns:
+        list or tuple: List/tuple of families dictionaries
+    """
+    families = []
+
+    for i in range(count):
+        current_index = start_index + i
+
+        family = {
+            "title": f"Family{current_index + 1}",
+            "slug": f"FamSlug{current_index + 1}",
+            "import_id": f"{base_import_id}.{current_index}.0",
+            "corpus_import_id": "CCLW.corpus.i00000001.n0000",
+            "description": f"Summary{current_index + 1}",
+            "geography_id": [1],
+            "category": "Executive",
+            "documents": [],
+            "metadata": {},
+        }
+        families.append(family)
+
+    return tuple(families)
+
+
 def get_default_collections():
     collection1 = {
         "import_id": "CPR.Collection.1.0",
@@ -241,54 +275,26 @@ def setup_with_six_families(db: Session):
         generate_documents(6)
     )
 
-    family1, family2, family3 = get_default_families()
+    family1, family2, family3, family4, family5, family6 = generate_families(6)
+
     family1["documents"] = [document1]
     family2["documents"] = [document2]
     family3["documents"] = [document3]
-    family4 = {
-        "import_id": "CCLW.family.4004.0",
-        "corpus_import_id": "CCLW.corpus.i00000001.n0000",
-        "title": "Fam4",
-        "slug": "FamSlug4",
-        "description": "Summary4",
-        "geography_id": [2, 5],
-        "category": "Executive",
-        "documents": [document4],
-        "metadata": {
-            "size": "small",
-            "color": "blue",
-        },
-    }
-    family5 = {
-        "import_id": "CCLW.family.5005.0",
-        "corpus_import_id": "CCLW.corpus.i00000001.n0000",
-        "title": "Fam5",
-        "slug": "FamSlug5",
-        "description": "Summary5",
-        "geography_id": [2, 5],
-        "category": "Executive",
-        "documents": [document5],
-        "metadata": {
-            "size": "small",
-            "color": "blue",
-        },
-    }
-    family6 = {
-        "import_id": "CCLW.family.6006.0",
-        "corpus_import_id": "CCLW.corpus.i00000001.n0000",
-        "title": "Fam6",
-        "slug": "FamSlug6",
-        "description": "Summary6",
-        "geography_id": [2, 5],
-        "category": "Executive",
-        "documents": [document6],
-        "metadata": {
-            "size": "small",
-            "color": "blue",
-        },
-    }
+    family4["documents"] = [document4]
+    family5["documents"] = [document5]
+    family6["documents"] = [document6]
+
     families_list = [family1, family2, family3, family4, family5, family6]
     add_families(db, families=families_list)
+
+    dates = [
+        "2025-03-27T08:12:34.512983+00:00",
+        "2024-11-15T22:47:19.038271+00:00",
+        "2025-06-01T14:56:03.928374+00:00",
+        "2025-01-09T03:25:46.384752+00:00",
+        "2024-10-05T19:33:21.117384+00:00",
+        "2025-07-14T11:08:59.603827+00:00",
+    ]
 
     for i, family in enumerate(families_list):
         add_event(
@@ -298,7 +304,7 @@ def setup_with_six_families(db: Session):
             {
                 "import_id": family["import_id"],
                 "title": "Published",
-                "date": datetime.now() - timedelta(days=i),
+                "date": dates[i],
                 "type": "Passed/Approved",
                 "status": "OK",
                 "valid_metadata": {

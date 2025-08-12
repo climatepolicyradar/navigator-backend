@@ -70,16 +70,22 @@ def latest_published(
     )
     families = query.limit(5).all()
     return [
-        {
-            "import_id": family.import_id,
-            "title": family.title,
-            "description": family.description,
-            "family_category": family.family_category,
-            "published_date": family.published_date,
-            "last_modified": family.last_modified,
-            "metadata": metadata.value,
-            "geographies": geographies,
-            "slugs": family.slugs,
-        }
+        to_latest_published_response_family(family, geographies, metadata)
         for family, geographies, metadata in families
     ]
+
+
+def to_latest_published_response_family(
+    family: Family, geographies: list[str], metadata: FamilyMetadata
+):
+    return {
+        "import_id": family.import_id,
+        "title": family.title,
+        "description": family.description,
+        "family_category": family.family_category,
+        "published_date": family.published_date,
+        "last_modified": family.last_modified,
+        "metadata": metadata.value,
+        "geographies": geographies,
+        "slugs": family.slugs,
+    }
