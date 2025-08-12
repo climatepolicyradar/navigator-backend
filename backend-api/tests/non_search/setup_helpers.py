@@ -1,7 +1,9 @@
+from datetime import datetime, timedelta
 from typing import Any, Dict, Optional
 
 from db_client.functions.dfce_helpers import (
     add_collections,
+    add_event,
     add_families,
     link_collection_family,
 )
@@ -196,6 +198,86 @@ def setup_with_two_families_same_geography(db: Session):
             (collection1["import_id"], family3["import_id"]),
         ],
     )
+
+
+def setup_with_six_families(db: Session):
+    family1, family2, family3 = get_default_families()
+    family4 = {
+        "import_id": "CCLW.family.4004.0",
+        "corpus_import_id": "CCLW.corpus.i00000001.n0000",
+        "title": "Fam4",
+        "slug": "FamSlug4",
+        "description": "Summary4",
+        "geography_id": [2, 5],
+        "category": "Executive",
+        "documents": [],
+        "metadata": {
+            "size": "small",
+            "color": "blue",
+        },
+    }
+    family5 = {
+        "import_id": "CCLW.family.5005.0",
+        "corpus_import_id": "CCLW.corpus.i00000001.n0000",
+        "title": "Fam5",
+        "slug": "FamSlug5",
+        "description": "Summary5",
+        "geography_id": [2, 5],
+        "category": "Executive",
+        "documents": [],
+        "metadata": {
+            "size": "small",
+            "color": "blue",
+        },
+    }
+    family5 = {
+        "import_id": "CCLW.family.5005.0",
+        "corpus_import_id": "CCLW.corpus.i00000001.n0000",
+        "title": "Fam5",
+        "slug": "FamSlug5",
+        "description": "Summary5",
+        "geography_id": [2, 5],
+        "category": "Executive",
+        "documents": [],
+        "metadata": {
+            "size": "small",
+            "color": "blue",
+        },
+    }
+    family6 = {
+        "import_id": "CCLW.family.6006.0",
+        "corpus_import_id": "CCLW.corpus.i00000001.n0000",
+        "title": "Fam6",
+        "slug": "FamSlug6",
+        "description": "Summary6",
+        "geography_id": [2, 5],
+        "category": "Executive",
+        "documents": [],
+        "metadata": {
+            "size": "small",
+            "color": "blue",
+        },
+    }
+    families_list = [family1, family2, family3, family4, family5, family6]
+    add_families(db, families=families_list)
+
+    for i, family in enumerate(families_list):
+        add_event(
+            db,
+            family["import_id"],
+            None,
+            {
+                "import_id": family["import_id"],
+                "title": "Published",
+                "date": datetime.now() - timedelta(days=i),
+                "type": "Passed/Approved",
+                "status": "OK",
+                "valid_metadata": {
+                    "event_type": ["Passed/Approved"],
+                    "datetime_event_name": ["Passed/Approved"],
+                },
+            },
+        )
 
 
 def setup_with_documents_large_with_families(
