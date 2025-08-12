@@ -11,7 +11,7 @@ services:
       PYTHONDONTWRITEBYTECODE: 0
       VESPA_URL: http://vespatest:8080
     volumes:
-      - ./:/app/:ro
+      - ./:/app/
       - /app/.venv
     depends_on:
       vespatest:
