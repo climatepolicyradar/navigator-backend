@@ -11,6 +11,42 @@ from db_client.models.organisation.corpus import Corpus, CorpusType
 from sqlalchemy.orm import Session
 
 
+def generate_documents(count, start_index=0, base_import_id="CCLW.executive"):
+    """
+    Generate a specified number of documents with incrementing import IDs and slugs.
+
+    Args:
+        count (int): Number of documents to generate
+        start_index (int): Starting index for the import ID (default: 0)
+        base_import_id (str): Base import ID pattern (default: "CCLW.executive")
+        return_tuple (bool): If True, return tuple instead of list (default: False)
+
+    Returns:
+        list or tuple: List/tuple of document dictionaries
+    """
+    documents = []
+
+    for i in range(count):
+        current_index = start_index + i
+
+        document = {
+            "title": f"Document{current_index + 1}",
+            "slug": f"DocSlug{current_index + 1}",
+            "md5_sum": f"{(current_index + 1) * 111}",
+            "url": f"http://somewhere{current_index + 1}",
+            "content_type": "application/pdf",
+            "import_id": f"{base_import_id}.{current_index}.0",
+            "language_variant": "Original Language",
+            "status": "PUBLISHED",
+            "metadata": {"role": ["MAIN"], "type": ["Plan"]},
+            "languages": ["eng"],
+            "events": [],
+        }
+        documents.append(document)
+
+    return tuple(documents)
+
+
 def get_default_collections():
     collection1 = {
         "import_id": "CPR.Collection.1.0",
@@ -201,7 +237,14 @@ def setup_with_two_families_same_geography(db: Session):
 
 
 def setup_with_six_families(db: Session):
+    document1, document2, document3, document4, document5, document6 = (
+        generate_documents(6)
+    )
+
     family1, family2, family3 = get_default_families()
+    family1["documents"] = [document1]
+    family2["documents"] = [document2]
+    family3["documents"] = [document3]
     family4 = {
         "import_id": "CCLW.family.4004.0",
         "corpus_import_id": "CCLW.corpus.i00000001.n0000",
@@ -210,7 +253,7 @@ def setup_with_six_families(db: Session):
         "description": "Summary4",
         "geography_id": [2, 5],
         "category": "Executive",
-        "documents": [],
+        "documents": [document4],
         "metadata": {
             "size": "small",
             "color": "blue",
@@ -224,21 +267,7 @@ def setup_with_six_families(db: Session):
         "description": "Summary5",
         "geography_id": [2, 5],
         "category": "Executive",
-        "documents": [],
-        "metadata": {
-            "size": "small",
-            "color": "blue",
-        },
-    }
-    family5 = {
-        "import_id": "CCLW.family.5005.0",
-        "corpus_import_id": "CCLW.corpus.i00000001.n0000",
-        "title": "Fam5",
-        "slug": "FamSlug5",
-        "description": "Summary5",
-        "geography_id": [2, 5],
-        "category": "Executive",
-        "documents": [],
+        "documents": [document5],
         "metadata": {
             "size": "small",
             "color": "blue",
@@ -252,7 +281,7 @@ def setup_with_six_families(db: Session):
         "description": "Summary6",
         "geography_id": [2, 5],
         "category": "Executive",
-        "documents": [],
+        "documents": [document6],
         "metadata": {
             "size": "small",
             "color": "blue",
