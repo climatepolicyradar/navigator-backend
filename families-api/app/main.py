@@ -511,8 +511,8 @@ class FamilyDocumentPublic(FamilyDocumentBase):
 
     @computed_field
     @property
-    def document_role(self) -> str | None:
-        return self.valid_metadata.get("role", [None])[0] if self.valid_metadata else ""
+    def document_role(self) -> str:
+        return self.valid_metadata.get("role", [""])[0] if self.valid_metadata else ""
 
     @computed_field
     @property

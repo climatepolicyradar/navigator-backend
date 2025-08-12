@@ -84,8 +84,8 @@ def test_documents_doc_slug_returns_not_found(
                 "category": "Executive",
                 "slug": "FamSlug1",
                 "corpus_id": "CCLW.corpus.i00000001.n0000",
-                "published_date": "2019-12-25T00:00:00Z",
-                "last_updated_date": "2019-12-25T00:00:00Z",
+                "published_date": "2020-12-25T00:00:00Z",
+                "last_updated_date": "2020-12-25T00:00:00Z",
             },
             {
                 "import_id": "CCLW.executive.1.2",
