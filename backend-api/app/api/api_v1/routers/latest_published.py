@@ -19,4 +19,17 @@ def latest_published(
 ):
     """Gets five most recently published families."""
 
-    return ""
+    return [
+        {
+            "import_id": f"family_{i}",
+            "title": f"Family {i} Title",
+            "description": f"Description for family {i}",
+            "category": "Category A",
+            "published_date": "2023-10-01",
+            "last_modified": "2023-10-02",
+            "metadata": {"key": f"value_{i}"},
+            "geographies": ["Geo1", "Geo2"],
+            "slug": f"family-{i}",
+        }
+        for i in range(5)  # Placeholder for actual family data retrieval
+    ]
