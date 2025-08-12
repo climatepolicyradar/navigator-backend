@@ -1,31 +1,50 @@
+from db_client.models.dfce import Family
+
 from tests.non_search.setup_helpers import setup_with_six_families
 
 
-def test_latest_updates_returns_5_families(data_client, data_db, valid_token):
+def test_latest_updates_returns_5_most_recently_published_families(
+    data_client, data_db, valid_token
+):
     setup_with_six_families(data_db)
+
+    all_families = data_db.query(Family).all()
+    all_families.sort(key=lambda x: x.published_date, reverse=True)
+
+    # Make sure we have more than 5 families in the DB
+    assert len(all_families) > 5
 
     response = data_client.get(
         "/api/v1/latest_published", headers={"app-token": valid_token}
     )
 
     assert response.status_code == 200
+    # Check that the response is a list of only 5 families
     assert len(response.json()) == 5
 
     expected_fields = [
         "import_id",
         "title",
         "description",
-        "category",
+        "family_category",
         "published_date",
         "last_modified",
         "metadata",
         "geographies",
-        "slug",
+        "slugs",
     ]
 
+    # Check that the response contains the right data for families
     for i, family in enumerate(response.json()):
         missing_fields = [field for field in expected_fields if field not in family]
         family_id = family.get("id", f"index {i}")
         assert (
             not missing_fields
         ), f"Missing fields: {missing_fields} for family {family_id}: {family}"
+
+    expected_families = all_families[:5]
+    expected_family_import_ids = [f.import_id for f in expected_families]
+    # Check that the response contains most recently published families
+    assert sorted([f["import_id"] for f in response.json()]) == sorted(
+        expected_family_import_ids
+    )

@@ -278,6 +278,7 @@ def setup_with_six_families(db: Session):
                 },
             },
         )
+    db.commit()
 
 
 def setup_with_documents_large_with_families(
