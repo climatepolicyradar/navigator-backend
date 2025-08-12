@@ -1,6 +1,30 @@
+from db_client.functions.dfce_helpers import add_families
 from db_client.models.dfce import Family
 
 from tests.non_search.setup_helpers import setup_with_six_families
+
+
+def test_endpoint_does_not_unpublished_families(data_client, data_db, valid_token):
+    family_data = {
+        "import_id": "CCLW.family.1001.0",
+        "corpus_import_id": "CCLW.corpus.i00000001.n0000",
+        "title": "Fam1",
+        "slug": "FamSlug1",
+        "description": "Summary1",
+        "geography_id": 1,
+        "category": "Executive",
+        "documents": [],
+        "metadata": {},
+    }
+
+    add_families(data_db, families=[family_data])
+    response = data_client.get(
+        "/api/v1/latest_published", headers={"app-token": valid_token}
+    )
+
+    assert response.status_code == 200
+    assert isinstance(response.json(), list)
+    assert len(response.json()) == 0
 
 
 def test_latest_updates_returns_5_most_recently_published_families(
