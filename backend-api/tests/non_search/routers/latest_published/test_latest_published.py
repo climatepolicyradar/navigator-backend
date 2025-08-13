@@ -138,9 +138,8 @@ def test_returns_families_within_token_corpora(data_client, data_db, monkeypatch
 
     assert response.status_code == 200
     families = response.json()
-    breakpoint()
-    assert len(families) == 1  # Only one family should be returned
-    # Check that all returned families are from the expected corpus
+    assert len(families) == 1
+
     for family in families:
         assert family["import_id"].startswith("CCLW.family") or family[
             "import_id"
