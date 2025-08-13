@@ -17,3 +17,6 @@ dependencies = [
 
 [tool.uv.sources]
 api = { workspace = true }
+
+[dependency-groups]
+dev = ["testcontainers[postgresql]>=4.12.0"]
