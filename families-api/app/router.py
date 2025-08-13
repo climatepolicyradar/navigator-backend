@@ -8,7 +8,7 @@ from pydantic import BaseModel
 from sqlalchemy import text
 from sqlmodel import Session, SQLModel, func, select
 
-from app.main import get_session
+from app.database import get_session
 from app.model import (
     Collection,
     CollectionPublicWithFamilies,

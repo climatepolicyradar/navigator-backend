@@ -7,11 +7,9 @@ from api.telemetry import Telemetry
 from api.telemetry_config import ServiceManifest, TelemetryConfig
 from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
-from pydantic_settings import BaseSettings
-from sqlalchemy import create_engine
-from sqlmodel import Session
 
 from app.router import router as families_router
+from app.utils import settings
 
 _LOGGER = logging.getLogger(__name__)
 
@@ -38,27 +36,6 @@ except Exception as _:
 
 telemetry = Telemetry(otel_config)
 tracer = telemetry.get_tracer()
-
-
-class Settings(BaseSettings):
-    navigator_database_url: str
-    cdn_url: str
-    github_sha: str = "unknown"  # @related: GITHUB_SHA_ENV_VAR
-
-
-settings = Settings()
-
-
-def get_navigator_database_url():
-    return settings.navigator_database_url
-
-
-navigator_engine = create_engine(settings.navigator_database_url)
-
-
-def get_session():
-    with Session(navigator_engine) as session:
-        yield session
 
 
 # Create the FastAPI app

@@ -7,7 +7,7 @@ from pydantic import computed_field
 from sqlalchemy.dialects.postgresql import ARRAY, JSONB
 from sqlmodel import Column, Field, Relationship, SQLModel
 
-from app.main import get_navigator_database_url
+from app.utils import get_navigator_database_url
 
 _LOGGER = logging.getLogger(__name__)
 
