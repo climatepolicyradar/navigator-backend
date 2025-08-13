@@ -3,6 +3,7 @@ from typing import Optional
 from db_client.models.dfce.family import (
     DocumentStatus,
     Family,
+    FamilyCategory,
     FamilyCorpus,
     FamilyDocument,
 )
@@ -14,7 +15,7 @@ from app.service.util import get_latest_ingest_start
 
 def count_families_per_category_per_corpus(
     db: Session, allowed_corpora_ids: Optional[list[str]] = None
-) -> list[tuple[str, int]]:
+) -> list[tuple[FamilyCategory, int]]:
     """
     Get the count of families by category per corpus.
 
@@ -46,7 +47,7 @@ def count_families_per_category_per_corpus(
 
 def count_families_per_category_per_corpus_latest_ingest_cycle(
     db: Session, allowed_corpora_ids: list[str]
-) -> list[tuple[str, int]]:
+) -> list[tuple[FamilyCategory, int]]:
     """
     Get the count of families by category per corpus.
 
@@ -78,3 +79,7 @@ def count_families_per_category_per_corpus_latest_ingest_cycle(
         query = query.filter(FamilyDocument.last_modified < latest_ingest_start)
 
     return query.group_by(Family.family_category).all()
+
+
+def _convert_to_dto(counts: list[tuple[FamilyCategory, int]]) -> list[dict[str, int]]:
+    return [{count[0].value: int(count[1])} for count in counts]
