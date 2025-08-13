@@ -19,3 +19,6 @@ include = ["api/src", "concepts-api", "families-api"]
 extraPaths = ["api/src", "concepts-api", "families-api"]
 # Ensure we can find all dependencies in the uv workspace
 pythonVersion = "3.12"
+
+[dependency-groups]
+dev = ["freezegun>=1.5.5"]
