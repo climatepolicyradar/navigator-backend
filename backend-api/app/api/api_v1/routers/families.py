@@ -4,7 +4,6 @@ from typing import Annotated
 from fastapi import APIRouter, Depends, Header, Request
 
 from app.clients.db.session import get_db
-from app.models.family import HomepageCountsResponse
 from app.repository.family import (
     _convert_to_dto,
     count_families_per_category_per_corpus,
@@ -18,7 +17,7 @@ _LOGGER = logging.getLogger(__file__)
 families_router = APIRouter(route_class=ExceptionHandlingTelemetryRoute)
 
 
-@families_router.get("/homepage-counts", response_model=HomepageCountsResponse)
+@families_router.get("/homepage-counts", response_model=dict[str, int])
 def get_homepage_counts(
     request: Request, app_token: Annotated[str, Header()], db=Depends(get_db)
 ):
@@ -32,7 +31,7 @@ def get_homepage_counts(
 
 
 @families_router.get(
-    "/homepage-counts-latest-ingest-cycle", response_model=HomepageCountsResponse
+    "/homepage-counts-latest-ingest-cycle", response_model=dict[str, int]
 )
 def get_homepage_counts_latest_ingest_cycle(
     request: Request, app_token: Annotated[str, Header()], db=Depends(get_db)
