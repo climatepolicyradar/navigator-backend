@@ -81,5 +81,5 @@ def count_families_per_category_per_corpus_latest_ingest_cycle(
     return query.group_by(Family.family_category).all()
 
 
-def _convert_to_dto(counts: list[tuple[FamilyCategory, int]]) -> list[dict[str, int]]:
-    return [{count[0].value: int(count[1])} for count in counts]
+def _convert_to_dto(counts: list[tuple[FamilyCategory, int]]) -> dict[str, int]:
+    return {count[0].value: int(count[1]) for count in counts}
