@@ -6,8 +6,9 @@ from sqlalchemy import create_engine
 from sqlalchemy.orm import sessionmaker
 from sqlmodel import Session, SQLModel
 
-from .main import (
-    APIItemResponse,
+from app.database import get_session
+from app.main import app
+from app.models import (
     Corpus,
     Family,
     FamilyDocument,
@@ -18,16 +19,16 @@ from .main import (
     Organisation,
     PhysicalDocument,
     Slug,
-    app,
-    get_session,
-    settings,
 )
+from app.router import APIItemResponse
+from app.utils import settings
 
 
 # Mostly inspired by
 # @see: https://sqlmodel.tiangolo.com/tutorial/fastapi/tests/
 @pytest.fixture(scope="session")
 def engine():
+    # This gets the database URL for the test-db service from the docker-compose.yml.
     engine = create_engine(settings.navigator_database_url)
     SQLModel.metadata.create_all(engine)
     yield engine
@@ -141,6 +142,7 @@ def test_read_family_200(client: TestClient, session: Session):
                 name="test-family",
                 family_import_id="family_123",
                 family_document_import_id=None,
+                collection_import_id=None,
             )
         ],
         unparsed_geographies=[
