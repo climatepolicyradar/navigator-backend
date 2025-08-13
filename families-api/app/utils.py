@@ -7,7 +7,7 @@ class Settings(BaseSettings):
     github_sha: str = "unknown"
 
 
-settings = Settings()
+settings = Settings()  # type: ignore[call-arg] # TODO: Fix this.
 
 
 def get_navigator_database_url():
