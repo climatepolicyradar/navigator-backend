@@ -142,6 +142,7 @@ def test_read_family_200(client: TestClient, session: Session):
                 name="test-family",
                 family_import_id="family_123",
                 family_document_import_id=None,
+                collection_import_id=None,
             )
         ],
         unparsed_geographies=[
@@ -239,13 +240,16 @@ def test_homepage_counts_endpoint(client: TestClient, session: Session):
         description="Test family description",
         family_category="Executive",
         last_modified=datetime.now(timezone.utc),
-        corpus=[corpus],
+        corpus=corpus,
     )
 
     physical_document = PhysicalDocument(
         id=456,
         title="Test Physical Document 2",
         source_url="https://example.com/test-physical-document-2",
+        md5_sum="dummy_md5",
+        cdn_object="test_object",
+        content_type="application/pdf",
     )
 
     family_document = FamilyDocument(
@@ -253,10 +257,16 @@ def test_homepage_counts_endpoint(client: TestClient, session: Session):
         variant_name="MAIN",
         family_import_id="family_456",
         physical_document_id=456,
-        document_status="PUBLISHED",
-        created=datetime.now(timezone.utc),
-        last_modified=datetime.now(timezone.utc),
         valid_metadata={},
+    )
+
+    # Needed to mark the document as published.
+    family_event = FamilyEvent(
+        import_id="family_event_1",
+        title="Published family event 1",
+        date=datetime.now(timezone.utc),
+        event_type_name="Passed/Approved",
+        status="OK",
     )
 
     session.add(organisation)
@@ -264,6 +274,7 @@ def test_homepage_counts_endpoint(client: TestClient, session: Session):
     session.add(family)
     session.add(physical_document)
     session.add(family_document)
+    session.add(family_event)
     session.commit()
 
     # Test the endpoint
