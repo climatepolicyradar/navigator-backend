@@ -37,10 +37,6 @@ jobs:
       - run: uv sync --frozen --dev
       # Sync standalone projects
       - run: uv sync --frozen --no-install-project --dev
-        working-directory: geographies-api
-      - run: uv sync --frozen --no-install-project --dev
-        working-directory: concepts-api
-      - run: uv sync --frozen --no-install-project --dev
         working-directory: backend-api
       # @related BACKEND_API_PYRIGHT_HACK
       # This is a little hack to make sure we have pyright available by the pyright-backend-api trunk definition

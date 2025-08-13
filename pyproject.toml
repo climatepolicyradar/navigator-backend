@@ -14,8 +14,8 @@ members = ["api", "concepts-api", "families-api", "geographies-api"]
 [tool.pyright]
 venvPath = "."
 venv = ".venv"
-include = ["api/src", "concepts-api", "families-api"]
+include = ["api/src", "concepts-api", "families-api", "geographies-api"]
 # Include all workspace packages for proper import resolution
-extraPaths = ["api/src", "concepts-api", "families-api"]
+extraPaths = ["api/src", "concepts-api", "families-api", "geographies-api"]
 # Ensure we can find all dependencies in the uv workspace
 pythonVersion = "3.12"
