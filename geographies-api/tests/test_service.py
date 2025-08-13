@@ -2,7 +2,7 @@ from unittest.mock import patch
 
 import pytest
 
-from app.model import CountryResponse, RegionResponse, RegionType
+from app.models import CountryResponse, RegionResponse, RegionType
 from app.service import get_all_regions, get_countries_by_region, get_region_by_slug
 
 from .conftest import EXPECTED_REGIONS
