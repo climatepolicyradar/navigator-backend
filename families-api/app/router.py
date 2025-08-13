@@ -9,7 +9,7 @@ from sqlalchemy import text
 from sqlmodel import Session, SQLModel, func, select
 
 from app.database import get_session
-from app.model import (
+from app.models import (
     Collection,
     CollectionPublicWithFamilies,
     Family,

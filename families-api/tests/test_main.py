@@ -9,7 +9,7 @@ from testcontainers.postgres import PostgresContainer
 
 from app.database import get_session
 from app.main import app
-from app.model import (
+from app.models import (
     Corpus,
     Family,
     FamilyDocument,
