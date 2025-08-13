@@ -1,4 +1,3 @@
-from datetime import datetime, timedelta
 from typing import Any, Dict, Optional
 
 from db_client.functions.dfce_helpers import (
@@ -470,11 +469,12 @@ def setup_new_corpus(
     description: str,
     corpus_text: Optional[str],
     corpus_image_url: Optional[str],
+    import_id: str = "New.Corpus.0.0",
     organisation_id: int = 1,
     corpus_type_name: str = "Intl. agreements",
 ) -> CorpusType:
     c = Corpus(
-        import_id="name",
+        import_id=import_id,
         title=title,
         description=description,
         corpus_text=corpus_text,
