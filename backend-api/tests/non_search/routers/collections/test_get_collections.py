@@ -57,6 +57,7 @@ def test_endpoint_returns_collections_ok_with_slug(data_db, data_client, valid_t
             {"title": "Fam1", "slug": "FamSlug1", "description": "Summary1"},
             {"title": "Fam2", "slug": "FamSlug2", "description": "Summary2"},
         ],
+        "slug": "collection_slug",
     }
 
     assert resp == expected_response

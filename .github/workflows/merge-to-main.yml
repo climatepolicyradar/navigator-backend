@@ -75,15 +75,13 @@ jobs:
     steps:
       - uses: actions/checkout@v4
       - uses: extractions/setup-just@v3
-      - working-directory: ${{ matrix.service }}
-        run: |
-          just test
+      - run: just test ${{ matrix.service }}
   deploy-microservices:
     needs: test-microservices
     runs-on: ubuntu-latest
     strategy:
       matrix:
-        environment: [production]
+        environment: [staging, production]
     environment: ${{ matrix.environment }}
     env:
       SERVICES: families-api geographies-api concepts-api

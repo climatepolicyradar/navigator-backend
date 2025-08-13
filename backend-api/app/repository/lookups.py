@@ -72,6 +72,32 @@ def get_countries_by_iso_codes(
     ]
 
 
+def validate_subdivision_iso_codes(db: Session, geography_identifiers: Sequence[str]):
+    """
+    Validates subdivision ISO codes against the database.
+
+    Retrieves subdivisions from the database using the provided ISO codes.
+    Only returns subdivisions (geographies with parent_id).
+
+    :param Session db: Database session.
+    :param Sequence[str] geography_identifiers: Sequence of subdivision ISO codes.
+    :return list[str]: List of valid subdivision ISO codes.
+    """
+    if not geography_identifiers:
+        return []
+
+    slug_geographies = (
+        db.query(Geography)
+        .filter(
+            Geography.value.in_(list(geography_identifiers)),
+            Geography.parent_id.is_not(None),
+        )
+        .all()
+    )
+
+    return [geo.value for geo in slug_geographies]
+
+
 def get_geographies_as_iso_codes_with_fallback(
     db: Session,
     geography_identifiers: Sequence[str],
@@ -122,6 +148,36 @@ def get_country_by_slug(db: Session, country_slug: str) -> Optional[Geography]:
         return None
 
     return geography
+
+
+def get_parent_iso_codes_from_subdivisions(
+    db: Session, iso_codes: Sequence[str]
+) -> set[str]:
+    """
+    Retrieve parent iso codes for given subdivision ISO codes.
+
+    :param Session db: Database session.
+    :param Sequence[str] iso_codes: Sequence of subdivision ISO codes.
+    :return set[str]: set of parent iso_codes for valid subdivisions.
+
+    """
+    if not iso_codes:
+        return set()
+
+    parent_ids_subquery = (
+        db.query(Geography.parent_id)
+        .filter(Geography.value.in_(list(iso_codes)))
+        .filter(Geography.parent_id.is_not(None))
+        .subquery()
+    )
+
+    parent_iso_codes = (
+        db.query(Geography.value)
+        .filter(Geography.id.in_(db.query(parent_ids_subquery.c.parent_id)))
+        .all()
+    )
+
+    return {code[0] for code in parent_iso_codes}
 
 
 def get_country_slug_from_country_code(db: Session, country_code: str) -> Optional[str]:

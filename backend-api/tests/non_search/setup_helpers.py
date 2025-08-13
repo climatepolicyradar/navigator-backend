@@ -42,7 +42,7 @@ def get_default_documents():
             {
                 "import_id": "CPR.Event.1.0",
                 "title": "Published",
-                "date": "2019-12-25",
+                "date": "2020-12-25",
                 "type": "Passed/Approved",
                 "status": "OK",
                 "valid_metadata": {
@@ -111,17 +111,32 @@ def get_default_families():
             "color": "blue",
         },
     }
-    return family1, family2
+
+    family3 = {
+        "import_id": "CCLW.family.3003.0",
+        "corpus_import_id": "CCLW.corpus.i00000001.n0000",
+        "title": "Fam3",
+        "slug": "FamSlug3",
+        "description": "Summary3",
+        "geography_id": [2],
+        "category": "Executive",
+        "documents": [],
+        "metadata": {
+            "size": "small",
+            "color": "blue",
+        },
+    }
+    return family1, family2, family3
 
 
 def setup_with_docs(db: Session):
     # Collection
-    collection1, collection2 = get_default_collections()
+    collection1, _ = get_default_collections()
     add_collections(db, collections=[collection1])
 
     # Family + Document + events
-    document1, document2 = get_default_documents()
-    family1, family2 = get_default_families()
+    document1, _ = get_default_documents()
+    family1, _, _ = get_default_families()
     family1["documents"] = [document1]
 
     add_families(db, families=[family1])
@@ -139,12 +154,12 @@ def setup_with_two_docs(db: Session):
     """Creates 2 DFCEs"""
 
     # Collection
-    collection1, collection2 = get_default_collections()
+    collection1, _ = get_default_collections()
     add_collections(db, collections=[collection1])
 
     # Family + Document + events
     document1, document2 = get_default_documents()
-    family1, family2 = get_default_families()
+    family1, family2, _ = get_default_families()
     family1["documents"] = [document1]
     family2["documents"] = [document2]
     add_families(db, families=[family1, family2])
@@ -159,16 +174,40 @@ def setup_with_two_docs(db: Session):
     )
 
 
+def setup_with_two_families_same_geography(db: Session):
+    """Creates 2 DFCEs with the same geography"""
+
+    # Collection
+    collection1, _ = get_default_collections()
+    add_collections(db, collections=[collection1])
+
+    # Family + Document + events
+    document1, document2 = get_default_documents()
+    _, family2, family3 = get_default_families()
+    family2["documents"] = [document2]
+    family3["documents"] = [document1]
+    add_families(db, families=[family2, family3])
+
+    # Collection - Family
+    link_collection_family(
+        db,
+        [
+            (collection1["import_id"], family2["import_id"]),
+            (collection1["import_id"], family3["import_id"]),
+        ],
+    )
+
+
 def setup_with_documents_large_with_families(
     documents_large: list[Dict[str, Any]],
     db: Session,
 ):
     # Collection
-    collection1, collection2 = get_default_collections()
+    collection1, _ = get_default_collections()
     add_collections(db, collections=[collection1])
 
     # Family + Document + events
-    family1, family2 = get_default_families()
+    family1, family2, _ = get_default_families()
 
     family1["metadata"] = {
         "topic": "Mitigation",
@@ -192,12 +231,12 @@ def setup_with_documents_large_with_families(
 
 def setup_with_two_docs_one_family(db: Session):
     # Collection
-    collection1, collection2 = get_default_collections()
+    collection1, _ = get_default_collections()
     add_collections(db, collections=[collection1])
 
     # Family + Document + events
     document1, document2 = get_default_documents()
-    family1, family2 = get_default_families()
+    family1, _, _ = get_default_families()
     family1["documents"] = [document1, document2]
     add_families(db, families=[family1])
 
@@ -212,14 +251,14 @@ def setup_with_two_docs_one_family(db: Session):
 
 def setup_with_two_docs_multiple_languages(db: Session):
     # Collection
-    collection1, collection2 = get_default_collections()
+    collection1, _ = get_default_collections()
     add_collections(db, collections=[collection1])
 
     # Family + Document + events
     document1, document2 = get_default_documents()
     document1["languages"] = ["fra", "eng"]
 
-    family1, family2 = get_default_families()
+    family1, family2, _ = get_default_families()
     family1["documents"] = [document1]
     family2["documents"] = [document2]
     add_families(db, families=[family1, family2])
@@ -236,14 +275,14 @@ def setup_with_two_docs_multiple_languages(db: Session):
 
 def setup_with_two_docs_bad_ids(db: Session):
     # Collection
-    collection1, collection2 = get_default_collections()
+    collection1, _ = get_default_collections()
     add_collections(db, collections=[collection1])
 
     # Family + Document + events
     document1, document2 = get_default_documents()
     document1["import_id"] = "CCLW.executive.12"
     document2["import_id"] = "UNFCCC.s.ill.y.2.2"
-    family1, family2 = get_default_families()
+    family1, family2, _ = get_default_families()
     family1["documents"] = [document1]
     family2["documents"] = [document2]
     add_families(db, families=[family1, family2])
@@ -260,14 +299,14 @@ def setup_with_two_docs_bad_ids(db: Session):
 
 def setup_with_two_unpublished_docs(db: Session):
     # Collection
-    collection1, collection2 = get_default_collections()
+    collection1, _ = get_default_collections()
     add_collections(db, collections=[collection1])
 
     # Family + Document + events
     document1, document2 = get_default_documents()
     document1["status"] = "CREATED"
     document2["status"] = "DELETED"
-    family1, family2 = get_default_families()
+    family1, family2, _ = get_default_families()
     family1["documents"] = [document1]
     family2["documents"] = [document2]
     add_families(db, families=[family1, family2])
@@ -285,7 +324,7 @@ def setup_with_two_unpublished_docs(db: Session):
 def setup_docs_with_two_orgs(db: Session):
     document1, document2 = get_default_documents()
     document2["import_id"] = "UNFCCC.non-party.2.2"
-    family1, family2 = get_default_families()
+    family1, family2, _ = get_default_families()
     family1["documents"] = [document1]
     family2["documents"] = [document2]
     # Family + Document + events
@@ -300,7 +339,7 @@ def setup_docs_with_two_orgs_no_langs(db: Session):
     document2["languages"] = []
 
     # Family + Document + events
-    family1, family2 = get_default_families()
+    family1, family2, _ = get_default_families()
     family1["documents"] = [document1]
     family2["documents"] = [document2]
     add_families(db, families=[family1], org_id=1)

@@ -553,6 +553,33 @@ def test_create_browse_request_params(
         ),
         # Tests that valid ISO country codes work
         ({"countries": ["KHM"]}, {"family_geographies": ["KHM"]}),
+        # Tests that subdivisions iso codes are mapped to family_geographies
+        ({"subdivisions": ["US-CA"]}, {"family_geographies": ["US-CA"]}),
+        # Tests that non-existent subdivisions iso codes are not mapped to family_geographies
+        ({"subdivisions": ["US-CA", "XX-ZZ-YY"]}, {"family_geographies": ["US-CA"]}),
+        # Tests that if selected only subdivisions are mapped to family_geographies
+        (
+            {
+                "countries": ["china", "united-states-of-america", "australia"],
+                "subdivisions": ["US-CA", "US-CO", "AU-NSW", "AU-QLD"],
+            },
+            {
+                "family_geographies": [
+                    "US-CA",
+                    "US-CO",
+                    "AU-NSW",
+                    "AU-QLD",
+                ]
+            },
+        ),
+        # Tests that subdivisions parent countries are not included in family_geographies
+        (
+            {
+                "countries": ["united-states-of-america"],
+                "subdivisions": ["US-CA", "US-TX"],
+            },
+            {"family_geographies": ["US-CA", "US-TX"]},
+        ),
         # # Tests that country names (not codes) return None
         # TODO: Reenable this test
         # ({"countries": ["cambodia"]}, None),
@@ -631,6 +658,7 @@ def test__convert_filters(data_db, filters, expected):
         assert converted_filters == expected
 
     if converted_filters not in [None, []]:
+        print("This is the converted filters", converted_filters)
         assert isinstance(converted_filters, dict)
         assert set(converted_filters.keys()).issubset(filter_fields.values())
 
@@ -753,7 +781,7 @@ def _generate_search_response_hits(spec: FamSpec) -> Sequence[CprSdkHit]:
                     if doc_data[document_number]["content_type"] == "text/html"
                     else _generate_coords()
                 ),
-                text_block_id=f"block_{random.randint(1,15000)}",
+                text_block_id=f"block_{random.randint(1, 15000)}",
                 text_block_page=(
                     None
                     if doc_data[document_number]["content_type"] == "text/html"

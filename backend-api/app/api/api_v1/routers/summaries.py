@@ -68,7 +68,7 @@ def search_by_geography(
     family_counts = {}
 
     for cat in FamilyCategory:
-        results = browse_rds_families(
+        (families_count, results) = browse_rds_families(
             db,
             BrowseArgs(
                 geography_slugs=[geography_slug],
@@ -78,8 +78,8 @@ def search_by_geography(
                 corpora_ids=token.allowed_corpora_ids,
             ),
         )
-        family_counts[cat] = len(results.families)
-        top_families[cat] = list(results.families[:5])
+        family_counts[cat] = families_count
+        top_families[cat] = list(results.families)
 
     # TODO: Add targets
     targets = []

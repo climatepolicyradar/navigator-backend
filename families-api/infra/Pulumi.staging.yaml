@@ -1,4 +1,6 @@
 config:
   aws:region: eu-west-1
+  # GOTCHA: This is `.dev` as we're still migrating over URLs
+  families-api:cdn_url: https://cdn.dev.climatepolicyradar.org
   families-api:apprunner_vpc_connector_arn:
     secure: AAABAD/xHZIt/2+6hBlzs7MY3VgHn9+EyvM7X95lUUEgnuIVaGqT3JWe0wPoVQAtF84AMNL5U6xUby8wAdDO8+T1w6mhoz/nvIidCUgCrqb7RszPeDz+AvR5pnFQz/luxqGpppmVxSoK3OJ+s5PAeh7W3J/dc6VURKKRL6+/+K3RGRXnwelKE4ULh/zblrymZjlMekHt

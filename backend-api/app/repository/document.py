@@ -31,6 +31,7 @@ from app.models.document import (
     FamilyEventsResponse,
     LinkableFamily,
 )
+from app.repository.collection import get_collection_slug_from_import_id
 from app.repository.geography import get_geo_subquery
 from app.repository.helpers import get_query_template
 from app.repository.lookups import doc_type_from_family_document_metadata
@@ -255,6 +256,7 @@ def _get_collections_for_family_import_id(
             title=c.title,
             description=c.description,
             import_id=c.import_id,
+            slug=get_collection_slug_from_import_id(db, c.import_id),
             families=[
                 LinkableFamily(slug=data[0], title=data[1], description=data[2])
                 for data in db.query(Slug.name, Family.title, Family.description)

@@ -50,6 +50,9 @@ from app.repository.lookups import (
     get_geographies_as_iso_codes_with_fallback,  # TODO: remove this once frontend is updated to use ISO codes in favour of get_countries_by_iso_codes
 )
 from app.repository.lookups import (
+    validate_subdivision_iso_codes,  # TODO: update this to use geographies api endpoint when refactoring geographies to use iso codes
+)
+from app.repository.lookups import (
     doc_type_from_family_document_metadata,
     get_countries_for_region,
 )
@@ -347,6 +350,8 @@ def _convert_filter_field(filter_field: str) -> Optional[str]:
         return filter_fields["geographies"]
     if filter_field == FilterField.REGION:
         return filter_fields["geographies"]
+    if filter_field == FilterField.SUBDIVISION:
+        return filter_fields["geographies"]
     if filter_field == FilterField.LANGUAGE:
         return filter_fields["language"]
     if filter_field == FilterField.SOURCE:
@@ -362,6 +367,7 @@ def _convert_filters(
     new_keyword_filters = {}
     regions = []
     countries = []
+    subdivisions = []
     for field, values in keyword_filters.items():
         if not values:
             continue
@@ -377,13 +383,18 @@ def _convert_filters(
                 # TODO: remove this once frontend is updated to use ISO codes in favour of get_countries_by_iso_codes
                 get_geographies_as_iso_codes_with_fallback(db, values)
             )
+        elif field == FilterField.SUBDIVISION:
+            subdivisions.extend(validate_subdivision_iso_codes(db, values))
+
         else:
             new_values = values
             new_keyword_filters[new_field] = new_values
 
     # Regions and countries filters should only include the overlap
     geo_field = filter_fields["geographies"]
-    if regions and countries:
+    if subdivisions:
+        new_keyword_filters[geo_field] = subdivisions
+    elif regions and countries:
         values = list(set(countries).intersection(regions))
         if values:
             new_keyword_filters[geo_field] = values

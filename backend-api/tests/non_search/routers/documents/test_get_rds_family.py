@@ -69,8 +69,8 @@ def test_documents_family_slug_returns_correct_family(
                 "category": "Executive",
                 "slug": "FamSlug1",
                 "corpus_id": "CCLW.corpus.i00000001.n0000",
-                "published_date": "2019-12-25T00:00:00Z",
-                "last_updated_date": "2019-12-25T00:00:00Z",
+                "published_date": "2020-12-25T00:00:00Z",
+                "last_updated_date": "2020-12-25T00:00:00Z",
                 "metadata": {"color": "pink", "size": "big"},
                 "organisation": "CCLW",
                 "status": "Published",
@@ -168,6 +168,7 @@ def test_documents_family_slug_returns_correct_json(
     assert len(json_response["collections"]) == 1
     collection = collections[0]
     assert collection["title"] == "Collection1"
+    assert collection["slug"] is None
     assert collection["families"] == [
         {"title": "Fam1", "slug": "FamSlug1", "description": "Summary1"},
         {"title": "Fam2", "slug": "FamSlug2", "description": "Summary2"},

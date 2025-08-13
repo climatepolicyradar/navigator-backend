@@ -8,7 +8,7 @@ from typing import Any, Generic, Optional, TypeVar
 from api import log
 from api.telemetry import Telemetry
 from api.telemetry_config import ServiceManifest, TelemetryConfig
-from fastapi import APIRouter, Depends, FastAPI, HTTPException
+from fastapi import APIRouter, Depends, FastAPI, HTTPException, Query
 from fastapi.middleware.cors import CORSMiddleware
 from pydantic import BaseModel, computed_field
 from pydantic_settings import BaseSettings
@@ -43,31 +43,49 @@ telemetry = Telemetry(otel_config)
 tracer = telemetry.get_tracer()
 
 
+# region: Organisation
 class Organisation(SQLModel, table=True):
     __tablename__ = "organisation"  # type: ignore[assignment]
     id: int = Field(primary_key=True)
     name: str
+    attribution_url: str | None = None
     corpora: list["Corpus"] = Relationship(back_populates="organisation")
 
 
+# endregion
+
+
+# region: Corpus
 class FamilyCorpusLink(SQLModel, table=True):
     __tablename__ = "family_corpus"  # type: ignore[assignment]
     corpus_import_id: str = Field(foreign_key="corpus.import_id", primary_key=True)
     family_import_id: str = Field(foreign_key="family.import_id", primary_key=True)
 
 
-class Corpus(SQLModel, table=True):
+class CorpusBase(SQLModel):
+    import_id: str
+    title: str
+    corpus_type_name: str
+
+
+class Corpus(CorpusBase, table=True):
     __tablename__ = "corpus"  # type: ignore[assignment]
     import_id: str = Field(primary_key=True)
-    title: str
     families: list["Family"] = Relationship(
         back_populates="corpus", link_model=FamilyCorpusLink
     )
     organisation: Organisation = Relationship(back_populates="corpora")
     organisation_id: int = Field(foreign_key="organisation.id")
-    corpus_type_name: str
 
 
+class CorpusPublic(CorpusBase):
+    organisation: Organisation
+
+
+# endregion
+
+
+# region: Slug
 class Slug(SQLModel, table=True):
     __tablename__ = "slug"  # type: ignore[assignment]
     name: str = Field(primary_key=True, index=True, unique=True)
@@ -77,9 +95,16 @@ class Slug(SQLModel, table=True):
     family_document_import_id: str | None = Field(
         index=True, unique=True, foreign_key="family_document.import_id", nullable=True
     )
+    collection_import_id: str | None = Field(
+        index=True, unique=True, foreign_key="collection.import_id", nullable=True
+    )
     created: datetime = Field(default_factory=datetime.now)
 
 
+# endregion
+
+
+# region: Geography
 class FamilyGeographyLink(SQLModel, table=True):
     __tablename__ = "family_geography"  # type: ignore[assignment]
     geography_id: int = Field(foreign_key="geography.id", primary_key=True)
@@ -116,6 +141,10 @@ class Geography(GeographyBase, table=True):
     )
 
 
+# endregion
+
+
+# region: Collection
 class CollectionFamilyLink(SQLModel, table=True):
     __tablename__ = "collection_family"  # type: ignore[assignment]
     collection_import_id: str = Field(
@@ -124,11 +153,17 @@ class CollectionFamilyLink(SQLModel, table=True):
     family_import_id: str = Field(foreign_key="family.import_id", primary_key=True)
 
 
-class Collection(SQLModel, table=True):
-    __tablename__ = "collection"  # type: ignore[assignment]
-    import_id: str = Field(primary_key=True)
+class CollectionBase(SQLModel):
+    import_id: str
     title: str
     description: str
+    valid_metadata: dict[str, Any]
+
+
+class Collection(CollectionBase, table=True):
+    __tablename__ = "collection"  # type: ignore[assignment]
+    import_id: str = Field(primary_key=True)
+
     created: datetime = Field(default_factory=datetime.now)
     last_modified: datetime = Field(default_factory=datetime.now)
     valid_metadata: dict[str, Any] = Field(
@@ -137,9 +172,39 @@ class Collection(SQLModel, table=True):
     families: list["Family"] = Relationship(
         back_populates="unparsed_collections", link_model=CollectionFamilyLink
     )
+    unparsed_slug: list["Slug"] = Relationship(
+        sa_relationship_kwargs={"order_by": lambda: Slug.created.desc()}  # type: ignore
+    )
 
 
-class FamilyEvent(SQLModel, table=True):
+class CollectionPublic(CollectionBase):
+    valid_metadata: dict[str, Any] = Field(exclude=True)
+    unparsed_slug: list[Slug] = Field(exclude=True)
+
+    @computed_field(alias="metadata")
+    @property
+    def _metadata(self) -> dict[str, Any]:
+        return self.valid_metadata
+
+    @computed_field
+    @property
+    def slug(self) -> str:
+        return self.unparsed_slug[0].name if len(self.unparsed_slug) > 0 else ""
+
+
+class CollectionPublicWithFamilies(CollectionPublic):
+    families: list["FamilyPublic"]
+
+
+# endregion
+
+
+# region: FamilyEvent
+class FamilyEventBase(SQLModel):
+    import_id: str
+
+
+class FamilyEvent(FamilyEventBase, table=True):
     __tablename__ = "family_event"  # type: ignore[assignment]
     import_id: str = Field(primary_key=True)
     title: str
@@ -163,12 +228,35 @@ class FamilyEvent(SQLModel, table=True):
     )
 
 
+class FamilyEventPublic(FamilyEventBase):
+    import_id: str
+    title: str
+    date: datetime
+    event_type: str
+    status: str
+    unparsed_metadata: dict[str, Any] | None = Field(exclude=True, default=None)
+
+    # metadata is reserved in SQLModel
+    @computed_field(alias="metadata")
+    @property
+    def _metadata(self) -> dict[str, Any] | None:
+        return self.unparsed_metadata
+
+
+# endregion
+
+
+# region: FamilyMetadata
 class FamilyMetadata(SQLModel, table=True):
     __tablename__ = "family_metadata"  # type: ignore[assignment]
     family_import_id: str = Field(foreign_key="family.import_id", primary_key=True)
     value: dict[str, Any] = Field(default_factory=dict, sa_column=Column(JSONB))
 
 
+# endregion
+
+
+# region: Family
 class FamilyBase(SQLModel):
     import_id: str = Field(primary_key=True)
     title: str
@@ -206,7 +294,7 @@ class Family(FamilyBase, table=True):
 
 class FamilyPublic(FamilyBase):
     import_id: str
-    corpus: Corpus = Field()
+    corpus: CorpusPublic = Field()
     unparsed_geographies: list[Geography] = Field(default_factory=list, exclude=True)
     unparsed_slug: list[Slug] = Field(exclude=True, default=list())
     unparsed_metadata: Optional[FamilyMetadata] = Field(exclude=True, default=None)
@@ -225,6 +313,11 @@ class FamilyPublic(FamilyBase):
     @property
     def organisation(self) -> str:
         return self.corpus.organisation.name
+
+    @computed_field
+    @property
+    def organisation_attribution_url(self) -> str | None:
+        return self.corpus.organisation.attribution_url
 
     @computed_field
     @property
@@ -287,81 +380,34 @@ class FamilyPublic(FamilyBase):
 
     @computed_field
     @property
-    def collections(self) -> list[dict[str, Any]]:
+    def collections(self) -> list[CollectionPublic]:
         return [
-            {
-                "import_id": collection.import_id,
-                "title": collection.title,
-                "description": collection.description,
-                "families": [
-                    {
-                        "description": family.description,
-                        "slug": (
-                            family.unparsed_slug[0].name
-                            if len(family.unparsed_slug) > 0
-                            else ""
-                        ),
-                        "title": family.title,
-                    }
-                    for family in collection.families
-                ],
-            }
+            CollectionPublic.model_validate(collection)
             for collection in self.unparsed_collections
         ]
 
     @computed_field
     @property
-    def events(self) -> list[dict[str, Any]]:
+    def events(self) -> list[FamilyEventPublic]:
         return [
-            {
-                "title": event.title,
-                "date": event.date,
-                "event_type": event.event_type_name,
-                "status": event.status,
-                "metadata": event.valid_metadata,
-            }
+            FamilyEventPublic(
+                import_id=event.import_id,
+                title=event.title,
+                date=event.date,
+                event_type=event.event_type_name,
+                status=event.status,
+                unparsed_metadata=event.valid_metadata,
+            )
             for event in self.unparsed_events
         ]
 
     @computed_field
     @property
-    def documents(self) -> list[dict[str, Any]]:
+    def documents(self) -> list["FamilyDocumentPublic"]:
         return [
-            {
-                "import_id": document.import_id,
-                "variant": document.variant_name,
-                "slug": (
-                    document.unparsed_slug[0].name
-                    if len(document.unparsed_slug) > 0
-                    else ""
-                ),
-                "title": document.physical_document.title,
-                "md5_sum": document.physical_document.md5_sum,
-                "cdn_object": document.physical_document.cdn_object,
-                "source_url": document.physical_document.source_url,
-                "content_type": document.physical_document.content_type,
-                "language": (
-                    document.physical_document.unparsed_languages[0].language_code
-                    if document.physical_document.unparsed_languages
-                    else None
-                ),
-                "languages": [
-                    language.language_code
-                    for language in document.physical_document.unparsed_languages
-                ],
-                "document_type": (
-                    document.valid_metadata.get("type", [None])[0]
-                    if document.valid_metadata
-                    else None
-                ),
-                "document_role": (
-                    document.valid_metadata.get("role", [None])[0]
-                    if document.valid_metadata
-                    else None
-                ),
-            }
-            for document in self.family_documents
-            if document.physical_document
+            FamilyDocumentPublic.model_validate(family_document)
+            for family_document in self.family_documents
+            if family_document.physical_document
         ]
 
     # metadata is reserved in SQLModel
@@ -371,6 +417,10 @@ class FamilyPublic(FamilyBase):
         return self.unparsed_metadata.value if self.unparsed_metadata else {}
 
 
+# endregion
+
+
+# region: FamilyDocument & PhysicalDocument
 class FamilyDocumentBase(SQLModel):
     import_id: str = Field(primary_key=True)
     variant_name: str | None
@@ -392,7 +442,96 @@ class FamilyDocument(FamilyDocumentBase, table=True):
 
 
 class FamilyDocumentPublic(FamilyDocumentBase):
-    family: "FamilyPublic"
+    import_id: str
+    valid_metadata: dict[str, Any]
+    physical_document: "PhysicalDocument" = Field(exclude=True)
+    unparsed_slug: list[Slug] = Field(exclude=True)
+    unparsed_events: list[FamilyEvent] = Field(exclude=True)
+
+    # events: list[FamilyEventPublic]
+
+    @computed_field
+    @property
+    def slug(self) -> str:
+        return self.unparsed_slug[0].name if len(self.unparsed_slug) > 0 else ""
+
+    @computed_field
+    @property
+    def title(self) -> str:
+        return self.physical_document.title
+
+    @computed_field
+    @property
+    def cdn_object(self) -> str:
+        return f"{settings.cdn_url}/navigator/{self.physical_document.cdn_object}"
+
+    @computed_field
+    @property
+    def variant(self) -> str | None:
+        return self.variant_name
+
+    @computed_field
+    @property
+    def md5_sum(self) -> str | None:
+        return self.physical_document.md5_sum
+
+    @computed_field
+    @property
+    def source_url(self) -> str | None:
+        return self.physical_document.source_url
+
+    @computed_field
+    @property
+    def content_type(self) -> str | None:
+        return self.physical_document.content_type
+
+    @computed_field
+    @property
+    def language(self) -> str | None:
+        return (
+            self.physical_document.unparsed_languages[0].language_code
+            if self.physical_document.unparsed_languages
+            else None
+        )
+
+    @computed_field
+    @property
+    def languages(self) -> list[str]:
+        return [
+            language.language_code
+            for language in self.physical_document.unparsed_languages
+        ]
+
+    @computed_field
+    @property
+    def document_type(self) -> str | None:
+        return (
+            self.valid_metadata.get("type", [None])[0] if self.valid_metadata else None
+        )
+
+    @computed_field
+    @property
+    def document_role(self) -> str:
+        return self.valid_metadata.get("role", [""])[0] if self.valid_metadata else ""
+
+    @computed_field
+    @property
+    def events(self) -> list[FamilyEventPublic]:
+        return [
+            FamilyEventPublic(
+                import_id=event.import_id,
+                title=event.title,
+                date=event.date,
+                event_type=event.event_type_name,
+                status=event.status,
+                unparsed_metadata=event.valid_metadata,
+            )
+            for event in self.unparsed_events
+        ]
+
+
+class FamilyDocumentPublicWithFamily(FamilyDocumentPublic):
+    family: FamilyPublic
 
 
 class PhysicalDDocumentLanguageLink(SQLModel, table=True):
@@ -432,6 +571,8 @@ class PhysicalDocumentPublic(PhysicalDocumentBase):
     family_document: FamilyDocumentPublic | None
 
 
+# endregion
+
 APIDataType = TypeVar("APIDataType")
 
 
@@ -448,6 +589,7 @@ class APIItemResponse(BaseModel, Generic[APIDataType]):
 
 class Settings(BaseSettings):
     navigator_database_url: str
+    cdn_url: str
     # @related: GITHUB_SHA_ENV_VAR
     github_sha: str = "unknown"
 
@@ -496,23 +638,20 @@ def get_session():
         yield session
 
 
-@router.get("/", response_model=APIListResponse[PhysicalDocumentPublic])
-def read_documents(*, session: Session = Depends(get_session)):
-    documents = session.exec(
-        select(PhysicalDocument)
-        .where(
-            PhysicalDocument.cdn_object.is_not(None),
-        )
-        .limit(10)
-    ).all()
+@router.get("/", response_model=APIListResponse[FamilyPublic])
+def read_families(
+    *, session: Session = Depends(get_session), page: int = Query(1, ge=1)
+):
+    limit = 10
+    offset = (page - 1) * limit
 
-    data = [PhysicalDocumentPublic.model_validate(doc) for doc in documents]
+    families = session.exec(select(Family).offset(offset).limit(10)).all()
 
     return APIListResponse(
-        data=data,
-        total=len(data),
-        page=1,
-        page_size=len(data),
+        data=list(families),
+        total=len(families),
+        page=page,
+        page_size=len(families),
     )
 
 
@@ -570,6 +709,99 @@ def read_concepts(*, session: Session = Depends(get_session)):
     )
 
 
+@router.get(
+    "/documents", response_model=APIListResponse[FamilyDocumentPublicWithFamily]
+)
+def read_documents(
+    *, session: Session = Depends(get_session), page: int = Query(1, ge=1)
+):
+    limit = 10
+    offset = (page - 1) * limit
+    documents = session.exec(select(FamilyDocument).offset(offset).limit(limit)).all()
+
+    return APIListResponse(
+        data=list(documents),
+        total=len(documents),
+        page=page,
+        page_size=len(documents),
+    )
+
+
+@router.get(
+    "/documents/{document_id}",
+    response_model=APIItemResponse[FamilyDocumentPublicWithFamily],
+)
+def read_document(*, session: Session = Depends(get_session), document_id: str):
+    document = session.exec(
+        select(FamilyDocument).where(FamilyDocument.import_id == document_id)
+    ).one_or_none()
+
+    if document is None:
+        raise HTTPException(status_code=404, detail="Not found")
+
+    return APIItemResponse(data=document)
+
+
+@router.get(
+    "/collections", response_model=APIListResponse[CollectionPublicWithFamilies]
+)
+def read_collections(
+    *, session: Session = Depends(get_session), page: int = Query(1, ge=1)
+):
+    limit = 10
+    offset = (page - 1) * limit
+    collections = session.exec(select(Collection).offset(offset).limit(limit)).all()
+
+    return APIListResponse(
+        data=list(collections),
+        total=len(collections),
+        page=page,
+        page_size=len(collections),
+    )
+
+
+@router.get(
+    "/collections/{collection_id}",
+    response_model=APIItemResponse[CollectionPublicWithFamilies],
+)
+def read_collection(*, session: Session = Depends(get_session), collection_id: str):
+    collection = session.exec(
+        select(Collection).where(Collection.import_id == collection_id)
+    ).one_or_none()
+
+    if collection is None:
+        raise HTTPException(status_code=404, detail="Not found")
+
+    return APIItemResponse(data=collection)
+
+
+@router.get("/slugs", response_model=APIListResponse[Slug])
+def read_slugs(*, session: Session = Depends(get_session), page: int = Query(1, ge=1)):
+    limit = 10
+    offset = (page - 1) * limit
+    slugs = session.exec(select(Slug).offset(offset).limit(limit)).all()
+
+    return APIListResponse(
+        data=list(slugs),
+        total=len(slugs),
+        page=page,
+        page_size=len(slugs),
+    )
+
+
+@router.get(
+    "/slugs/{slug_name}",
+    response_model=APIItemResponse[Slug],
+)
+def read_slug(*, session: Session = Depends(get_session), slug_name: str):
+    slug = session.exec(select(Slug).where(Slug.name == slug_name)).one_or_none()
+
+    if slug is None:
+        raise HTTPException(status_code=404, detail="Not found")
+
+    return APIItemResponse(data=slug)
+
+
 @router.get("/{family_id}", response_model=APIItemResponse[FamilyPublic])
 def read_family(*, session: Session = Depends(get_session), family_id: str):
     # When should this break?
@@ -581,16 +813,15 @@ def read_family(*, session: Session = Depends(get_session), family_id: str):
     if family is None:
         raise HTTPException(status_code=404, detail="Not found")
 
-    data = FamilyPublic.model_validate(family, from_attributes=True)
-
     return APIItemResponse(
-        data=data,
+        data=family,
     )
 
 
 class GeographyDocumentCount(SQLModel):
-    alpha3: str
+    code: str
     name: str
+    type: str
     count: int
 
 
@@ -603,26 +834,26 @@ def docs_by_geo(
 ):
     stmt = (
         select(
-            Geography.value.label("alpha3"),
-            Geography.display_value.label("name"),
-            func.count(PhysicalDocument.id).label("count"),
+            Geography.value.label("code"),  # type: ignore
+            Geography.display_value.label("name"),  # type: ignore
+            Geography.type,
+            func.count(PhysicalDocument.id).label("count"),  # type: ignore
         )
-        .join(FamilyGeographyLink, Geography.id == FamilyGeographyLink.geography_id)
-        .join(Family, FamilyGeographyLink.family_import_id == Family.import_id)
-        .join(FamilyDocument, Family.import_id == FamilyDocument.family_import_id)
+        .join(FamilyGeographyLink, Geography.id == FamilyGeographyLink.geography_id)  # type: ignore
+        .join(Family, FamilyGeographyLink.family_import_id == Family.import_id)  # type: ignore
+        .join(FamilyDocument, Family.import_id == FamilyDocument.family_import_id)  # type: ignore
         .join(
-            PhysicalDocument, FamilyDocument.physical_document_id == PhysicalDocument.id
+            PhysicalDocument,
+            FamilyDocument.physical_document_id == PhysicalDocument.id,  # type: ignore
         )
-        .group_by(Geography.id)
-        .order_by(func.count(PhysicalDocument.id).desc())
+        .group_by(Geography.id)  # type: ignore
+        .order_by(func.count(PhysicalDocument.id).desc())  # type: ignore
     )
 
-    results = session.exec(stmt).all()
-
-    data = [GeographyDocumentCount.model_validate(row._mapping) for row in results]
+    data = session.exec(stmt).all()
 
     return APIListResponse(
-        data=data,
+        data=list(data),
         total=len(data),
         page=1,
         page_size=len(data),
