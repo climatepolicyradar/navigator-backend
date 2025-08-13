@@ -5,8 +5,10 @@ from fastapi.testclient import TestClient
 from sqlalchemy import create_engine
 from sqlalchemy.orm import sessionmaker
 from sqlmodel import Session, SQLModel
+from testcontainers.postgres import PostgresContainer
 
-from app.main import app, get_session, settings
+from app.database import get_session
+from app.main import app
 from app.model import (
     Corpus,
     Family,
@@ -26,10 +28,11 @@ from app.router import APIItemResponse
 # @see: https://sqlmodel.tiangolo.com/tutorial/fastapi/tests/
 @pytest.fixture(scope="session")
 def engine():
-    engine = create_engine(settings.navigator_database_url)
-    SQLModel.metadata.create_all(engine)
-    yield engine
-    SQLModel.metadata.drop_all(engine)
+    with PostgresContainer("postgres:15") as postgres:
+        engine = create_engine(postgres.get_connection_url())
+        SQLModel.metadata.create_all(engine)
+        yield engine
+        SQLModel.metadata.drop_all(engine)
 
 
 @pytest.fixture
