@@ -345,6 +345,7 @@ dependencies = [
 
 [package.dev-dependencies]
 dev = [
+    { name = "pytest" },
     { name = "testcontainers" },
 ]
 
@@ -361,7 +362,10 @@ requires-dist = [
 ]
 
 [package.metadata.requires-dev]
-dev = [{ name = "testcontainers", extras = ["postgresql"], specifier = ">=4.12.0" }]
+dev = [
+    { name = "pytest", specifier = ">=8.4.1" },
+    { name = "testcontainers", specifier = ">=4.12.0" },
+]
 
 [[package]]
 name = "fastapi"

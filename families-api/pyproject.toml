@@ -19,4 +19,4 @@ dependencies = [
 api = { workspace = true }
 
 [dependency-groups]
-dev = ["testcontainers[postgresql]>=4.12.0"]
+dev = ["pytest>=8.4.1", "testcontainers>=4.12.0"]
