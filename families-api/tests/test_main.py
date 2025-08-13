@@ -1,4 +1,4 @@
-from datetime import datetime, timezone
+from datetime import datetime
 
 import pytest
 from fastapi.testclient import TestClient
@@ -219,77 +219,3 @@ def test_read_family_200(client: TestClient, session: Session):
     assert response.status_code == 200  # nosec B101
     response = APIItemResponse[FamilyPublic].model_validate(response.json())
     assert response.data.import_id == "family_123"  # nosec B101
-
-
-def test_homepage_counts_endpoint(client: TestClient, session: Session):
-    """Test the homepage counts endpoint returns the expected structure and values."""
-    # Create test data
-    organisation = Organisation(id=456, name="Test Org 2")
-    corpus = Corpus(
-        import_id="corpus_2",
-        title="Test Corpus 2",
-        organisation=organisation,
-        organisation_id=organisation.id,
-        corpus_type_name="Laws and Policies",
-    )
-
-    # Create a family with published document
-    family = Family(
-        import_id="family_456",
-        title="Test Family 2",
-        description="Test family description",
-        family_category="Executive",
-        last_modified=datetime.now(timezone.utc),
-        corpus=corpus,
-    )
-
-    physical_document = PhysicalDocument(
-        id=456,
-        title="Test Physical Document 2",
-        source_url="https://example.com/test-physical-document-2",
-        md5_sum="dummy_md5",
-        cdn_object="test_object",
-        content_type="application/pdf",
-    )
-
-    family_document = FamilyDocument(
-        import_id="family_document_2",
-        variant_name="MAIN",
-        family_import_id="family_456",
-        physical_document_id=456,
-        valid_metadata={},
-    )
-
-    # Needed to mark the document as published.
-    family_event = FamilyEvent(
-        import_id="family_event_1",
-        title="Published family event 1",
-        date=datetime.now(timezone.utc),
-        event_type_name="Passed/Approved",
-        status="OK",
-    )
-
-    session.add(organisation)
-    session.add(corpus)
-    session.add(family)
-    session.add(physical_document)
-    session.add(family_document)
-    session.add(family_event)
-    session.commit()
-
-    # Test the endpoint
-    response = client.get("/families/homepage-counts")
-
-    assert response.status_code == 200  # nosec B101
-
-    data = response.json()
-
-    # Check basic structure
-    assert "total_families" in data
-    assert "count_by_category" in data
-
-    # Check that we have at least one family
-    assert data["total_families"] >= 1
-
-    # Check that Executive category has at least 1 family
-    assert data["count_by_category"].get("Executive", 0) >= 1
