@@ -20,7 +20,7 @@ _LOGGER = logging.getLogger(__name__)
 root_dir = Path(__file__).parent.parent
 
 
-# Open Telemetry initialisation
+# Configure Open Telemetry.
 ENV = os.getenv("ENV", "development")
 os.environ["OTEL_PYTHON_LOG_CORRELATION"] = "True"
 try:
@@ -43,25 +43,37 @@ tracer = telemetry.get_tracer()
 class Settings(BaseSettings):
     navigator_database_url: str
     cdn_url: str
-    # @related: GITHUB_SHA_ENV_VAR
-    github_sha: str = "unknown"
+    github_sha: str = "unknown"  # @related: GITHUB_SHA_ENV_VAR
 
 
 settings = Settings()
-log.log("families-api")
 
 
 def get_navigator_database_url():
     return settings.navigator_database_url
 
 
+navigator_engine = create_engine(settings.navigator_database_url)
+
+
+def get_session():
+    with Session(navigator_engine) as session:
+        yield session
+
+
+# Create the FastAPI app
+log.log("families-api")  # NOTE: This doesn't actually seem to be doing anything.
 app = FastAPI(
     docs_url="/families/docs",
     redoc_url="/families/redoc",
     openapi_url="/families/openapi.json",
 )
 
+# Include custom routers in our app
+app.include_router(families_router)
 
+
+# Add CORS middleware to allow cross origin requests from any port
 _ALLOW_ORIGIN_REGEX = (
     r"http://localhost:3000|"
     r"http://bs-local.com:3000|"
@@ -74,8 +86,6 @@ _ALLOW_ORIGIN_REGEX = (
     r"https://climateprojectexplorer\.org|"
     r"https://.+\.climateprojectexplorer\.org"
 )
-
-# Add CORS middleware to allow cross origin requests from any port
 app.add_middleware(
     CORSMiddleware,
     allow_origin_regex=_ALLOW_ORIGIN_REGEX,
@@ -85,28 +95,17 @@ app.add_middleware(
 )
 
 
-navigator_engine = create_engine(settings.navigator_database_url)
-
-
-def get_session():
-    with Session(navigator_engine) as session:
-        yield session
-
-
-# we use both to make sure we can have /families/health available publically
-# and /health available to the internal network / AppRunner healthcheck
+# We use both routers to make sure we can have /families/health available publicly
+# and /health available to the internal network & AppRunner health check.
 @app.get("/health")
 @families_router.get("/health")
 def health_check():
     return {
         "status": "ok",
-        # @related: GITHUB_SHA_ENV_VAR
-        "version": settings.github_sha,
+        "version": settings.github_sha,  # @related: GITHUB_SHA_ENV_VAR
     }
 
 
-app.include_router(families_router)
-
-# Open Telemetry instrumentation
+# Set up Open Telemetry instrumentation.
 telemetry.instrument_fastapi(app)
 telemetry.setup_exception_hook()
