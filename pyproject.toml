@@ -18,4 +18,4 @@ include = ["api/src", "concepts-api", "families-api"]
 # Include all workspace packages for proper import resolution
 extraPaths = ["api/src", "concepts-api", "families-api"]
 # Ensure we can find all dependencies in the uv workspace
-pythonVersion = "3.12"
+pythonVersion = "3.13"
