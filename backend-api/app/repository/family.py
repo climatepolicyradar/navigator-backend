@@ -36,7 +36,7 @@ def count_families_per_category_per_corpus(
         published_families.c.family_import_id == Family.import_id,
     )
 
-    if allowed_corpora_ids is not None and allowed_corpora_ids:
+    if allowed_corpora_ids is not None and allowed_corpora_ids != []:
         query = query.join(
             FamilyCorpus, FamilyCorpus.family_import_id == Family.import_id
         ).filter(FamilyCorpus.corpus_import_id.in_(allowed_corpora_ids))
@@ -68,7 +68,7 @@ def count_families_per_category_per_corpus_latest_ingest_cycle(
         published_families.c.family_import_id == Family.import_id,
     )
 
-    if allowed_corpora_ids is not None and allowed_corpora_ids:
+    if allowed_corpora_ids is not None and allowed_corpora_ids != []:
         query = query.join(
             FamilyCorpus, FamilyCorpus.family_import_id == Family.import_id
         ).filter(FamilyCorpus.corpus_import_id.in_(allowed_corpora_ids))
