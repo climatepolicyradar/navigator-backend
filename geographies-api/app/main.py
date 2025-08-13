@@ -8,8 +8,8 @@ from api.telemetry_config import ServiceManifest, TelemetryConfig
 from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
 
-from app.models import Settings
 from app.router import router as geographies_router
+from app.utils import settings
 
 _LOGGER = logging.getLogger(__name__)
 
@@ -18,7 +18,7 @@ _LOGGER = logging.getLogger(__name__)
 root_dir = Path(__file__).parent.parent
 
 
-# Configure Open Telemetry
+# Configure Open Telemetry.
 ENV = os.getenv("ENV", "development")
 os.environ["OTEL_PYTHON_LOG_CORRELATION"] = "True"
 try:
@@ -37,15 +37,15 @@ except Exception as _:
 telemetry = Telemetry(otel_config)
 tracer = telemetry.get_tracer()
 
-
-settings = Settings()
-
-log.log("geographies-api")  # TODO: This doesn't seem to be doing anything
+# Create the FastAPI app.
+log.log("geographies-api")  # NOTE: This doesn't seem to be doing anything
 app = FastAPI(
     docs_url="/geographies/docs",
     redoc_url="/geographies/redoc",
     openapi_url="/geographies/openapi.json",
 )
+
+# Include custom routers in our app
 app.include_router(
     geographies_router,
     prefix="/geographies",
@@ -53,6 +53,7 @@ app.include_router(
     include_in_schema=True,
 )
 
+# Add CORS middleware to allow cross origin requests from any port
 _ALLOW_ORIGIN_REGEX = (
     r"http://localhost:3000|"
     r"http://bs-local.com:3000|"
@@ -65,8 +66,6 @@ _ALLOW_ORIGIN_REGEX = (
     r"https://climateprojectexplorer\.org|"
     r"https://.+\.climateprojectexplorer\.org"
 )
-
-# Add CORS middleware to allow cross origin requests from any port
 app.add_middleware(
     CORSMiddleware,
     allow_origin_regex=_ALLOW_ORIGIN_REGEX,
@@ -76,6 +75,8 @@ app.add_middleware(
 )
 
 
+# We use both routers to make sure we can have /families/health available publicly
+# and /health available to the internal network & AppRunner health check.
 @app.get("/health")
 @geographies_router.get("/health")
 def health_check():
@@ -85,6 +86,6 @@ def health_check():
     }
 
 
-# Set up Open Telemetry instrumentation
+# Set up Open Telemetry instrumentation.
 telemetry.instrument_fastapi(app)
 telemetry.setup_exception_hook()
