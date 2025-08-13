@@ -1,10 +1,22 @@
+import logging
 import os
 import random
 import string
 from typing import Any, Optional
 
 from db_client.models import AnyModel
+from fastapi import HTTPException, status
 from sqlalchemy.orm import Session
+
+from app.clients.aws.client import get_s3_client
+from app.config import (
+    DOCUMENT_CACHE_BUCKET,
+    INGEST_TRIGGER_ROOT,
+    PIPELINE_BUCKET,
+    PUBLIC_APP_URL,
+)
+
+_LOGGER = logging.getLogger(__name__)
 
 CDN_DOMAIN: str = os.getenv("CDN_DOMAIN", "cdn.climatepolicyradar.org")
 # TODO: remove & replace with proper content-type handling through pipeline
@@ -73,3 +85,27 @@ def tree_table_to_json(
             append_list.append(node_row_object)
 
     return json_out
+
+
+def get_latest_ingest_start() -> str:
+    if (
+        PIPELINE_BUCKET is None
+        or PUBLIC_APP_URL is None
+        or DOCUMENT_CACHE_BUCKET is None
+    ):
+        if PIPELINE_BUCKET is None:
+            _LOGGER.error("{PIPELINE_BUCKET} is not set")
+        if PUBLIC_APP_URL is None:
+            _LOGGER.error("{PUBLIC_APP_URL} is not set")
+        if DOCUMENT_CACHE_BUCKET is None:
+            _LOGGER.error("{DOCUMENT_CACHE_BUCKET} is not set")
+        raise HTTPException(
+            status_code=status.HTTP_503_SERVICE_UNAVAILABLE,
+            detail="Missing required environment variables",
+        )
+
+    s3_client = get_s3_client()
+    latest_ingest_start = s3_client.get_latest_ingest_start(
+        PIPELINE_BUCKET, INGEST_TRIGGER_ROOT
+    )
+    return latest_ingest_start
