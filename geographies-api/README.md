@@ -12,7 +12,8 @@ TL;DR;
 - This data is colated into a JSON object
 - The JSON object is stored in S3
 - [This is made available via our CDN URL](https://cdn.climatepolicyradar.org/geographies/countries.json)
-- When a request is made we use requests to lookup this JSON and get the relevant data
+- When a request is made we use requests to lookup this JSON and get the
+  relevant data
 
 ```mermaid
 flowchart LR
