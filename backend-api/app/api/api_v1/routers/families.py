@@ -6,6 +6,7 @@ from fastapi import APIRouter, Depends, Header, Request
 from app.clients.db.session import get_db
 from app.models.family import HomepageCountsResponse
 from app.repository.family import (
+    _convert_to_dto,
     count_families_per_category_per_corpus,
     count_families_per_category_per_corpus_latest_ingest_cycle,
 )
@@ -25,7 +26,9 @@ def get_homepage_counts(
     token = AppTokenFactory()
     token.decode_and_validate(db, request, app_token)
 
-    return count_families_per_category_per_corpus(db, token.allowed_corpora_ids)
+    return _convert_to_dto(
+        count_families_per_category_per_corpus(db, token.allowed_corpora_ids)
+    )
 
 
 @families_router.get(
@@ -38,6 +41,8 @@ def get_homepage_counts_latest_ingest_cycle(
     token = AppTokenFactory()
     token.decode_and_validate(db, request, app_token)
 
-    return count_families_per_category_per_corpus_latest_ingest_cycle(
-        db, token.allowed_corpora_ids
+    return _convert_to_dto(
+        count_families_per_category_per_corpus_latest_ingest_cycle(
+            db, token.allowed_corpora_ids
+        )
     )
