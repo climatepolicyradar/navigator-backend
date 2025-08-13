@@ -34,7 +34,7 @@ jobs:
       - uses: astral-sh/setup-uv@v6
       # Install dependencies for all Python projects in the monorepo
       # Sync workspace members (api, families-api) from root
-      - run: uv sync --frozen --no-install-project --dev
+      - run: uv sync --frozen --dev
       # Sync standalone projects
       - run: uv sync --active --frozen --no-install-project --dev
         working-directory: backend-api
