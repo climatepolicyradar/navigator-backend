@@ -1,8 +1,8 @@
 from sqlmodel import Session, create_engine
 
-from app.utils import get_navigator_database_url
+from app.settings import settings
 
-navigator_engine = create_engine(get_navigator_database_url())
+navigator_engine = create_engine(settings.navigator_database_url.get_secret_value())
 
 
 def get_session():
