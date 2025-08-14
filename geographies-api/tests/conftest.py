@@ -51,3 +51,9 @@ EXPECTED_REGIONS = [
 def test_client():
     """Get a TestClient instance."""
     yield TestClient(app)
+
+
+@pytest.fixture
+def expected_regions():
+    """Get the expected regions as a fixture."""
+    yield EXPECTED_REGIONS

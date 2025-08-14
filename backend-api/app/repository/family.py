@@ -64,9 +64,13 @@ def count_families_per_category_per_corpus_latest_ingest_cycle(
         .subquery()
     )
 
-    query = db.query(Family.family_category, func.count()).join(
-        published_families,
-        published_families.c.family_import_id == Family.import_id,
+    query = (
+        db.query(Family.family_category, func.count())
+        .join(
+            published_families,
+            published_families.c.family_import_id == Family.import_id,
+        )
+        .join(FamilyDocument, FamilyDocument.family_import_id == Family.import_id)
     )
 
     if allowed_corpora_ids is not None and allowed_corpora_ids != []:
