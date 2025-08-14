@@ -10,7 +10,9 @@ from tests.non_search.setup_helpers import (
 )
 
 
-def test_endpoint_does_not_unpublished_families(data_client, data_db, valid_token):
+def test_endpoint_does_not_return_unpublished_families(
+    data_client, data_db, valid_token
+):
     family_data = {
         "import_id": "CCLW.family.1001.0",
         "corpus_import_id": "CCLW.corpus.i00000001.n0000",
@@ -33,7 +35,7 @@ def test_endpoint_does_not_unpublished_families(data_client, data_db, valid_toke
     assert len(response.json()) == 0
 
 
-def test_latest_updates_returns_five_families(data_client, data_db, valid_token):
+def test_endpoint_returns_five_families(data_client, data_db, valid_token):
     setup_with_six_families(data_db)
 
     all_families = data_db.query(Family).all()
@@ -46,7 +48,7 @@ def test_latest_updates_returns_five_families(data_client, data_db, valid_token)
     )
 
     assert response.status_code == 200
-    # Check that the response is a list of only 5 families
+
     assert len(response.json()) == 5
 
     expected_fields = [
@@ -61,7 +63,6 @@ def test_latest_updates_returns_five_families(data_client, data_db, valid_token)
         "slugs",
     ]
 
-    # Check that the response contains the right data for families
     for i, family in enumerate(response.json()):
         missing_fields = [field for field in expected_fields if field not in family]
         family_id = family.get("id", f"index {i}")
@@ -71,14 +72,7 @@ def test_latest_updates_returns_five_families(data_client, data_db, valid_token)
 
 
 def create_token(monkeypatch):
-    """Generate valid config token using TOKEN_SECRET_KEY.
-
-    Need to generate the config token using the token secret key from
-    your local env file. For tests in CI, this will be the secret key in
-    the .env.example file, but for local development this secret key
-    might be different (e.g., the one for staging). This fixture works
-    around this.
-    """
+    """Generate valid config token using TOKEN_SECRET_KEY."""
 
     def mock_return(_, __, ___):
         return True
@@ -141,6 +135,4 @@ def test_returns_families_within_token_corpora(data_client, data_db, monkeypatch
     assert len(families) == 1
 
     for family in families:
-        assert family["import_id"].startswith("CCLW.family") or family[
-            "import_id"
-        ].startswith("UNFCCC.family")
+        assert family["import_id"].startswith("CCLW.family")

@@ -1,7 +1,6 @@
 import logging
 from typing import Annotated
 
-import sqlalchemy
 from db_client.models.dfce.family import (
     Corpus,
     DocumentStatus,
@@ -12,9 +11,9 @@ from db_client.models.dfce.family import (
 )
 from db_client.models.dfce.geography import Geography
 from db_client.models.dfce.metadata import FamilyMetadata
-from db_client.models.organisation import Organisation
-from fastapi import APIRouter, Depends, Header, Request
-from sqlalchemy import ARRAY, String, func
+from fastapi import APIRouter, Depends, Header, HTTPException, Request
+from sqlalchemy import func
+from sqlalchemy.orm import lazyload
 
 from app.clients.db.session import get_db
 from app.service.custom_app import AppTokenFactory
@@ -34,13 +33,32 @@ def latest_published(
     app_token: Annotated[str, Header()],
     db=Depends(get_db),
 ):
-    """Gets five most recently published families."""
+    """Retrieves the five most recently modified published families."""
 
     # Decode the app token and validate it.
     token = AppTokenFactory()
     token.decode_and_validate(db, request, app_token)
 
     allowed_corpora_ids = token.allowed_corpora_ids
+
+    if allowed_corpora_ids is None or allowed_corpora_ids == []:
+        _LOGGER.error(
+            "No allowed corpora IDs found in the app token",
+            extra={
+                "props": {"allowed_corpora_ids": allowed_corpora_ids},
+            },
+        )
+        raise HTTPException(
+            status_code=400,
+            detail="No corpora ids provided.",
+        )
+
+    _LOGGER.info(
+        "Getting latest published families",
+        extra={
+            "allowed_corpora_ids": allowed_corpora_ids,
+        },
+    )
 
     published_families = (
         db.query(FamilyDocument.family_import_id)
@@ -59,34 +77,28 @@ def latest_published(
         .subquery()
     )
 
-    empty_array = sqlalchemy.cast([], ARRAY(String))
     query = (
         db.query(
             Family,
-            func.coalesce(geographies_subquery.c.geography_values, empty_array).label(
-                "geography_values"
-            ),
+            geographies_subquery.c.geography_values,
             FamilyMetadata,
         )
-        .outerjoin(
-            geographies_subquery,
-            geographies_subquery.c.family_import_id == Family.import_id,
-        )
         .join(FamilyMetadata, FamilyMetadata.family_import_id == Family.import_id)
+        .join(FamilyCorpus, FamilyCorpus.family_import_id == Family.import_id)
+        .join(Corpus, FamilyCorpus.corpus_import_id == Corpus.import_id)
         .join(
             published_families,
             published_families.c.family_import_id == Family.import_id,
         )
-        .join(FamilyCorpus, FamilyCorpus.family_import_id == Family.import_id)
-        .join(Corpus, FamilyCorpus.corpus_import_id == Corpus.import_id)
-        .join(Organisation, Organisation.id == Corpus.organisation_id)
+        .filter(geographies_subquery.c.family_import_id == Family.import_id)
+        .filter(Corpus.import_id.in_(allowed_corpora_ids))
         .order_by(Family.last_modified.desc())
+        .limit(5)
+        .options(lazyload("*"))
     )
 
-    if allowed_corpora_ids is not None and allowed_corpora_ids != []:
-        query = query.filter(Corpus.import_id.in_(allowed_corpora_ids))
+    families = query.all()
 
-    families = query.limit(5).all()
     return [
         to_latest_published_response_family(family, geographies, metadata)
         for family, geographies, metadata in families
