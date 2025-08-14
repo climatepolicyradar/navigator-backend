@@ -2,11 +2,82 @@ from typing import Any, Dict, Optional
 
 from db_client.functions.dfce_helpers import (
     add_collections,
+    add_event,
     add_families,
     link_collection_family,
 )
 from db_client.models.organisation.corpus import Corpus, CorpusType
 from sqlalchemy.orm import Session
+
+
+def generate_documents(count, start_index=0, base_import_id="CCLW.executive"):
+    """
+    Generate a specified number of documents with incrementing import IDs and slugs.
+
+    Args:
+        count (int): Number of documents to generate
+        start_index (int): Starting index for the import ID (default: 0)
+        base_import_id (str): Base import ID pattern (default: "CCLW.executive")
+        return_tuple (bool): If True, return tuple instead of list (default: False)
+
+    Returns:
+        list or tuple: List/tuple of document dictionaries
+    """
+    documents = []
+
+    for i in range(count):
+        current_index = start_index + i
+
+        document = {
+            "title": f"Document{current_index + 1}",
+            "slug": f"DocSlug{current_index + 1}",
+            "md5_sum": f"{(current_index + 1) * 111}",
+            "url": f"http://somewhere{current_index + 1}",
+            "content_type": "application/pdf",
+            "import_id": f"{base_import_id}.{current_index}.0",
+            "language_variant": "Original Language",
+            "status": "PUBLISHED",
+            "metadata": {"role": ["MAIN"], "type": ["Plan"]},
+            "languages": ["eng"],
+            "events": [],
+        }
+        documents.append(document)
+
+    return tuple(documents)
+
+
+def generate_families(count, start_index=0, base_import_id="CCLW.executive"):
+    """
+    Generate a specified number of families with incrementing import IDs and slugs.
+
+    Args:
+        count (int): Number of families to generate
+        start_index (int): Starting index for the import ID (default: 0)
+        base_import_id (str): Base import ID pattern (default: "CCLW.executive")
+        return_tuple (bool): If True, return tuple instead of list (default: False)
+
+    Returns:
+        list or tuple: List/tuple of families dictionaries
+    """
+    families = []
+
+    for i in range(count):
+        current_index = start_index + i
+
+        family = {
+            "title": f"Family{current_index + 1}",
+            "slug": f"FamSlug{current_index + 1}",
+            "import_id": f"{base_import_id}.{current_index}.0",
+            "corpus_import_id": "CCLW.corpus.i00000001.n0000",
+            "description": f"Summary{current_index + 1}",
+            "geography_id": [1],
+            "category": "Executive",
+            "documents": [],
+            "metadata": {},
+        }
+        families.append(family)
+
+    return tuple(families)
 
 
 def get_default_collections():
@@ -198,6 +269,52 @@ def setup_with_two_families_same_geography(db: Session):
     )
 
 
+def setup_with_six_families(db: Session):
+    document1, document2, document3, document4, document5, document6 = (
+        generate_documents(6)
+    )
+
+    family1, family2, family3, family4, family5, family6 = generate_families(6)
+
+    family1["documents"] = [document1]
+    family2["documents"] = [document2]
+    family3["documents"] = [document3]
+    family4["documents"] = [document4]
+    family5["documents"] = [document5]
+    family6["documents"] = [document6]
+
+    families_list = [family1, family2, family3, family4, family5, family6]
+    add_families(db, families=families_list)
+
+    dates = [
+        "2025-03-27T08:12:34.512983+00:00",
+        "2024-11-15T22:47:19.038271+00:00",
+        "2025-06-01T14:56:03.928374+00:00",
+        "2025-01-09T03:25:46.384752+00:00",
+        "2024-10-05T19:33:21.117384+00:00",
+        "2025-07-14T11:08:59.603827+00:00",
+    ]
+
+    for i, family in enumerate(families_list):
+        add_event(
+            db,
+            family["import_id"],
+            None,
+            {
+                "import_id": family["import_id"],
+                "title": "Published",
+                "date": dates[i],
+                "type": "Passed/Approved",
+                "status": "OK",
+                "valid_metadata": {
+                    "event_type": ["Passed/Approved"],
+                    "datetime_event_name": ["Passed/Approved"],
+                },
+            },
+        )
+    db.commit()
+
+
 def setup_with_documents_large_with_families(
     documents_large: list[Dict[str, Any]],
     db: Session,
@@ -352,11 +469,12 @@ def setup_new_corpus(
     description: str,
     corpus_text: Optional[str],
     corpus_image_url: Optional[str],
+    import_id: str = "New.Corpus.0.0",
     organisation_id: int = 1,
     corpus_type_name: str = "Intl. agreements",
 ) -> CorpusType:
     c = Corpus(
-        import_id="name",
+        import_id=import_id,
         title=title,
         description=description,
         corpus_text=corpus_text,
