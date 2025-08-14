@@ -17,7 +17,6 @@ from app.api.api_v1.routers.auth import auth_router
 from app.api.api_v1.routers.collections import collections_router
 from app.api.api_v1.routers.documents import documents_router
 from app.api.api_v1.routers.families import families_router
-from app.api.api_v1.routers.latest_published import latest_published_router
 from app.api.api_v1.routers.lookups import lookups_router
 from app.api.api_v1.routers.pipeline_trigger import pipeline_trigger_router
 from app.api.api_v1.routers.search import search_router
@@ -174,12 +173,7 @@ app.include_router(
 app.include_router(
     collections_router, prefix="/api/v1", tags=["Collections"], include_in_schema=False
 )
-app.include_router(
-    latest_published_router,
-    prefix="/api/v1",
-    tags=["Latest Published"],
-    include_in_schema=False,
-)
+
 app.include_router(
     families_router, prefix="/api/v1", tags=["Families"], include_in_schema=False
 )
