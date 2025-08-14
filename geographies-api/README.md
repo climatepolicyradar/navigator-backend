@@ -1,96 +1,35 @@
 # geographies-api
 
-## Local development
+## Development
 
-**`just dev`**
+[Please see the root README for instruction as this is managed at as a monorepo](../README.md).
 
-- To run the service fully locally, run `just dev`
-- We use docker compose to start up local services, including localstack to mock
-  AWS services like S3 (you can use the `awscli` tool to inspect and interact
-  with localstack from your terminal)
-- We are able to run the framework's (FastAPI) native dev environment
-  (`fastapi dev app/main.py`)
-- Local data for the service is pre-loaded and prod-like
-- Any changes to code are reflected immediately in the running service.
-  No reloads needed
+## Architecture
 
-**`just build`**
+TL;DR;
 
-TBD
-
-**`just test`**
-
-TBD
-
-**`just deploy`**
-
-TBD
-
-**`just deploy-local`**
-
-```bash
-just deploy-local [tag] [environment]
-```
-
-Example:
-
-```bash
-just deploy-local latest staging
-```
-
-This command will:
-
-- Log into ECR
-- Build the Docker image
-- Push to ECR
-- Deploy to App Runner
-
-## infra
-
-```bash
-cd infra
-pulumi up --stack production
-```
-
-## TODO
-
-[Linear project](https://linear.app/climate-policy-radar/project/isolate-services-within-navigator-backend-abeb5f150aa4/issues)
-
-## Architecture di
+- We generate the data from multiple sources
+- This data is colated into a JSON object
+- The JSON object is stored in S3
+- [This is made available via our CDN URL](https://cdn.climatepolicyradar.org/geographies/countries.json)
+- When a request is made we use requests to lookup this JSON and get the
+  relevant data
 
 ```mermaid
-flowchart RL
-    subgraph production
-        direction LR
-        Rouet53["api.policyradar.io"]-->CloudFront
-        CloudFront-->CloudFrontOrigin/concepts-->AppRunner/concepts-->BakedDuckDB-->ConceptsRespone
-        CloudFront-->CloudFrontOrigin/families-->AppRunner/families-->RDS-->FamiliesResponse
-        CloudFront-->CloudFrontOrigin/documents-->AppRunner/documents-->NewRDS-->DocumentsResponse
-        CloudFront-->CloudFrontOrigin/passages-->AppRunner/passages-->DataLake-->PassagesRespons
-        CloudFront-->CloudFrontOrigin/labels-->AppRunner/labels-->???-->LabelsResponse
+flowchart LR
+    subgraph api
+        direction RL
+        S3
+        geography_statistics_by_countries.py -- geography_statistics --> S3
+        regions.py -- regions --> S3
+        pycountry -- countries --> S3
+        pycountry -- subdivisions --> S3
+        S3 --> CDN["cdn.cpr.org/geographies/countries.json"]
+        ApiRoute
     end
 
-    subgraph staging
-        direction LR
-        StagingRouet53["api.policyradar.dev"]-->StagingCloudFront
-        StagingCloudFront-->StagingCloudFrontOrigin/concepts-->...
-        StagingCloudFront-->StagingCloudFrontOrigin/families-->....
-        StagingCloudFront-->StagingCloudFrontOrigin/documents-->.....
-        StagingCloudFront-->StagingCloudFrontOrigin/passages-->......
-        StagingCloudFront-->StagingCloudFrontOrigin/labels-->.......
+    subgraph request
+        Client -->
+        ApiRoute -- reads --> CDN
     end
 ```
-
-## Potential datalake-game
-
-TBD
-
-## GOTCHAS
-
-- needing to create the ecr-repo and have a image to
-  deploy before spinning up a whole stack i.e.
-  - create ecr repo
-  - just deploy
-  - create rest of AWS stack
-- needing the app runner vpc connector to be created before the stack is spun up
-- renaming from families-api to geographies-api is a little cumbersome
