@@ -33,7 +33,18 @@ def latest_published(
     app_token: Annotated[str, Header()],
     db=Depends(get_db),
 ):
-    """Retrieves the five most recently modified published families."""
+    """Retrieve the five most recently published families.
+
+    This endpoint returns the latest five published family records,
+    sorted by their modified date in descending order.
+
+    :param Request request: The incoming request object.
+    :param Annotated[str, Header()] app_token: App token containing
+        the allowed corpora access.
+    :param Depends[get_db] db: Database session dependency.
+    :return List[Family]: A list of the five most recently published
+        families.
+    """
 
     # Decode the app token and validate it.
     token = AppTokenFactory()
