@@ -1,6 +1,6 @@
 from unittest.mock import patch
 
-from .conftest import EXPECTED_REGIONS
+from conftest import EXPECTED_REGIONS
 
 
 def test_regions_endpoint_returns_all_regions(test_client):
