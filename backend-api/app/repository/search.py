@@ -103,7 +103,7 @@ def browse_rds_families(db: Session, req: BrowseArgs) -> tuple[int, SearchRespon
 
     _LOGGER.debug("Starting families query")
     families_count = query.count()
-    top_five_families = query.limit(5).all()
+    top_five_families = query.all()
     families = [
         to_search_response_family(family, corpus, geography_value, organisation)
         for (family, corpus, geography_value, organisation) in top_five_families

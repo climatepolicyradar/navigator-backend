@@ -1,11 +1,12 @@
 from typing import Optional
 
 import pytest
+from db_client.models.dfce.family import Family
 from fastapi import status
 
 from tests.non_search.setup_helpers import (
+    setup_with_six_families_same_geography,
     setup_with_two_docs,
-    setup_with_two_families_same_geography,
 )
 
 TEST_HOST = "http://localhost:3000/"
@@ -95,13 +96,24 @@ def test_endpoint_returns_summaries_ok(data_client, data_db, valid_token, geogra
 
 
 def test_geography_with_families_ordered(data_client, data_db, valid_token):
-    setup_with_two_families_same_geography(data_db)
+    setup_with_six_families_same_geography(data_db)
+
+    all_families = data_db.query(Family).all()
+
+    assert len(all_families) > 5
+
+    expected_family_dates = sorted(
+        all_families, key=lambda family: family.published_date
+    )[:5]
 
     resp = _make_request(data_client, valid_token, "afghanistan")
     top_families = resp["top_families"]["Executive"]
 
-    assert resp["family_counts"]["Executive"] == 2
-    assert top_families[0]["family_date"] > top_families[1]["family_date"]
+    assert resp["family_counts"]["Executive"] == 5
+
+    response_family_dates = [top_family.family_date for top_family in top_families]
+
+    assert response_family_dates == expected_family_dates
 
 
 @pytest.mark.parametrize(
