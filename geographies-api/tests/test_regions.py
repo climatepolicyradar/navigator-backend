@@ -1,19 +1,17 @@
 from unittest.mock import patch
 
-from conftest import EXPECTED_REGIONS
 
-
-def test_regions_endpoint_returns_all_regions(test_client):
+def test_regions_endpoint_returns_all_regions(test_client, expected_regions):
     response = test_client.get("/geographies/regions")
 
     assert response.status_code == 200
-    assert response.json() == EXPECTED_REGIONS
+    assert response.json() == expected_regions
 
 
 def test_regions_endpoint_returns_data_for_a_specific_region_when_requested(
-    test_client,
+    test_client, expected_regions
 ):
-    for region in EXPECTED_REGIONS:
+    for region in expected_regions:
         response = test_client.get(f"/geographies/regions/{region['slug']}")
 
         assert response.status_code == 200
