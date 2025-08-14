@@ -7,7 +7,7 @@ from pydantic import computed_field
 from sqlalchemy.dialects.postgresql import ARRAY, JSONB
 from sqlmodel import Column, Field, Relationship, SQLModel
 
-from app.utils import get_cdn_url
+from app.settings import settings
 
 _LOGGER = logging.getLogger(__name__)
 
@@ -436,8 +436,7 @@ class FamilyDocumentPublic(FamilyDocumentBase):
     @computed_field
     @property
     def cdn_object(self) -> str:
-        cdn_url = get_cdn_url()
-        return f"{cdn_url}/navigator/{self.physical_document.cdn_object}"
+        return f"{settings.cdn_url}/navigator/{self.physical_document.cdn_object}"
 
     @computed_field
     @property
