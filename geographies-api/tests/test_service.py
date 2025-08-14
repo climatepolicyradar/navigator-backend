@@ -5,15 +5,13 @@ import pytest
 from app.model import CountryResponse, RegionResponse, RegionType
 from app.service import get_all_regions, get_countries_by_region, get_region_by_slug
 
-from .conftest import EXPECTED_REGIONS
 
-
-def test_get_all_regions_successfully_returns_all_regions():
+def test_get_all_regions_successfully_returns_all_regions(expected_regions):
     expected_regions_response = [
         RegionResponse(
             name=region["name"], type=RegionType(region["type"]), slug=region["slug"]
         )
-        for region in EXPECTED_REGIONS
+        for region in expected_regions
     ]
 
     actual_result = [RegionResponse(**region) for region in get_all_regions()]

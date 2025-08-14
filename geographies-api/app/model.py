@@ -2,7 +2,6 @@ from enum import Enum
 from typing import Generic, Optional, TypeVar
 
 from pydantic import BaseModel
-from pydantic_settings import BaseSettings
 from sqlmodel import SQLModel
 
 APIDataType = TypeVar("APIDataType")
@@ -13,11 +12,6 @@ class APIResponse(SQLModel, Generic[APIDataType]):
     total: int
     page: int
     page_size: int
-
-
-class Settings(BaseSettings):
-    # @related: GITHUB_SHA_ENV_VAR
-    github_sha: str = "unknown"
 
 
 class Geography(SQLModel):

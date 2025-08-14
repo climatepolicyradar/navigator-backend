@@ -21,7 +21,7 @@ from app.models import (
     Slug,
 )
 from app.router import APIItemResponse
-from app.utils import settings
+from app.settings import settings
 
 
 # Mostly inspired by
@@ -29,7 +29,7 @@ from app.utils import settings
 @pytest.fixture(scope="session")
 def engine():
     # This gets the database URL for the test-db service from the docker-compose.yml.
-    engine = create_engine(settings.navigator_database_url)
+    engine = create_engine(settings.navigator_database_url.get_secret_value())
     SQLModel.metadata.create_all(engine)
     yield engine
     SQLModel.metadata.drop_all(engine)
