@@ -2,9 +2,8 @@ from unittest.mock import patch
 
 import pytest
 
+from app.model import CountryResponse, RegionResponse, RegionType
 from app.service import get_all_regions, get_countries_by_region, get_region_by_slug
-
-from ..app.models import CountryResponse, RegionResponse, RegionType
 
 
 def test_get_all_regions_successfully_returns_all_regions(expected_regions):

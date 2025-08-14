@@ -11,14 +11,13 @@ from app.data.cpr_custom_geographies import countries
 from app.data.geography_statistics_by_countries import geography_statistics_by_countries
 from app.data.regions import regions
 from app.data.regions_to_countries_mapping import regions_to_countries
-from app.s3_client import get_s3_client
-
-from .models import (
+from app.model import (
     CountryResponse,
     CountryStatisticsResponse,
     RegionResponse,
     SubdivisionResponse,
 )
+from app.s3_client import get_s3_client
 
 _LOGGER = logging.getLogger(__name__)
 

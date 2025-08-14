@@ -3,6 +3,7 @@ from typing import TypeVar
 
 from fastapi import APIRouter, HTTPException, Path
 
+from app.model import CountryResponse, RegionResponse, SubdivisionResponse
 from app.service import (
     get_all_countries,
     get_all_country_subdivisions,
@@ -13,8 +14,6 @@ from app.service import (
     get_subdivisions_by_country,
     populate_initial_countries_data,
 )
-
-from .models import CountryResponse, RegionResponse, SubdivisionResponse
 
 _LOGGER = logging.getLogger(__name__)
 
