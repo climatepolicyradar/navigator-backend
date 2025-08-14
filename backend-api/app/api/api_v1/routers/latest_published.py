@@ -16,6 +16,7 @@ from sqlalchemy import func
 from sqlalchemy.orm import lazyload
 
 from app.clients.db.session import get_db
+from app.models.search import LatestUpdatedFamilyResponse
 from app.service.custom_app import AppTokenFactory
 from app.telemetry_exceptions import ExceptionHandlingTelemetryRoute
 
@@ -32,7 +33,7 @@ def latest_published(
     request: Request,
     app_token: Annotated[str, Header()],
     db=Depends(get_db),
-):
+) -> list[LatestUpdatedFamilyResponse]:
     """Retrieve the five most recently published families.
 
     This endpoint returns the latest five published family records,
@@ -42,7 +43,7 @@ def latest_published(
     :param Annotated[str, Header()] app_token: App token containing
         the allowed corpora access.
     :param Depends[get_db] db: Database session dependency.
-    :return List[Family]: A list of the five most recently published
+    :return list[LatestUpdateFamilyResponse]: A list of the five most recently published
         families.
     """
 
@@ -118,15 +119,15 @@ def latest_published(
 
 def to_latest_published_response_family(
     family: Family, geographies: list[str], metadata: FamilyMetadata
-):
-    return {
-        "import_id": family.import_id,
-        "title": family.title,
-        "description": family.description,
-        "family_category": family.family_category,
-        "published_date": family.published_date,
-        "last_modified": family.last_modified,
-        "metadata": metadata.value,
-        "geographies": geographies,
-        "slugs": family.slugs,
-    }
+) -> LatestUpdatedFamilyResponse:
+    return LatestUpdatedFamilyResponse(
+        import_id=str(family.import_id),
+        title=str(family.title),
+        description=str(family.description),
+        family_category=str(family.family_category),
+        published_date=family.published_date.isoformat(),
+        last_modified=family.last_modified.isoformat(),
+        metadata=dict(metadata.values),
+        geographies=geographies,
+        slugs=[str(slug) for slug in family.slugs] if family.slugs is not None else [],
+    )
