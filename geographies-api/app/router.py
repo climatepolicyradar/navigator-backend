@@ -3,8 +3,8 @@ from typing import TypeVar
 
 from fastapi import APIRouter, HTTPException, Path
 
-from .model import CountryResponse, RegionResponse, Settings, SubdivisionResponse
-from .service import (
+from app.model import CountryResponse, RegionResponse, SubdivisionResponse
+from app.service import (
     get_all_countries,
     get_all_country_subdivisions,
     get_all_regions,
@@ -15,15 +15,11 @@ from .service import (
     populate_initial_countries_data,
 )
 
+_LOGGER = logging.getLogger(__name__)
+
 APIDataType = TypeVar("APIDataType")
 
 
-_LOGGER = logging.getLogger(__name__)
-
-settings = Settings()
-
-# TODO: Use JSON logging - https://linear.app/climate-policy-radar/issue/APP-571/add-json-logging-to-families-api
-# TODO: Add OTel - https://linear.app/climate-policy-radar/issue/APP-572/add-otel-to-families-api
 router = APIRouter()
 
 

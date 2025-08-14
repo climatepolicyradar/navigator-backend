@@ -7,17 +7,17 @@ import pycountry
 import requests
 from api.telemetry import observe
 
-from .data.cpr_custom_geographies import countries
-from .data.geography_statistics_by_countries import geography_statistics_by_countries
-from .data.regions import regions
-from .data.regions_to_countries_mapping import regions_to_countries
-from .model import (
+from app.data.cpr_custom_geographies import countries
+from app.data.geography_statistics_by_countries import geography_statistics_by_countries
+from app.data.regions import regions
+from app.data.regions_to_countries_mapping import regions_to_countries
+from app.model import (
     CountryResponse,
     CountryStatisticsResponse,
     RegionResponse,
     SubdivisionResponse,
 )
-from .s3_client import get_s3_client
+from app.s3_client import get_s3_client
 
 _LOGGER = logging.getLogger(__name__)
 
@@ -247,7 +247,7 @@ def get_all_pycountry_subdivisions_grouped_by_country() -> dict[str, list[dict]]
         country = pycountry.countries.get(alpha_2=country_alpha_2)
 
         if not country:
-            continue  # Skip unrecognized country codes
+            continue  # Skip unrecognised country codes
 
         alpha_3 = country.alpha_3
 
