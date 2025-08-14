@@ -45,7 +45,9 @@ def _make_request(
     ("geography"),
     ["india", "IND"],
 )
-def test_endpoint_returns_summaries_ok(data_client, data_db, valid_token, geography):
+def test_endpoint_returns_correct_data_for_given_geography_grouped_by_family_category(
+    data_client, data_db, valid_token, geography
+):
     setup_with_two_docs(data_db)
 
     resp = _make_request(data_client, valid_token, geography)
@@ -95,7 +97,7 @@ def test_endpoint_returns_summaries_ok(data_client, data_db, valid_token, geogra
     assert len(resp["targets"]) == 0
 
 
-def test_geography_with_families_ordered(data_client, data_db, valid_token):
+def test_top_5_families_ordered_by_published_date(data_client, data_db, valid_token):
     setup_with_six_families_same_geography(data_db)
 
     all_families = data_db.query(Family).all()
@@ -103,17 +105,20 @@ def test_geography_with_families_ordered(data_client, data_db, valid_token):
     assert len(all_families) > 5
 
     expected_family_dates = sorted(
-        all_families, key=lambda family: family.published_date
+        [f.published_date.isoformat() for f in all_families]
     )[:5]
 
-    resp = _make_request(data_client, valid_token, "afghanistan")
-    top_families = resp["top_families"]["Executive"]
+    resp = _make_request(data_client, valid_token, "south-asia")
+    top_executive_families = resp["top_families"]["Executive"]
 
-    assert resp["family_counts"]["Executive"] == 5
+    assert resp["family_counts"]["Executive"] == 6
+    assert len(top_executive_families) == 5
 
-    response_family_dates = [top_family.family_date for top_family in top_families]
+    response_family_dates = [
+        top_family["family_date"] for top_family in top_executive_families
+    ]
 
-    assert response_family_dates == expected_family_dates
+    assert expected_family_dates == response_family_dates
 
 
 @pytest.mark.parametrize(

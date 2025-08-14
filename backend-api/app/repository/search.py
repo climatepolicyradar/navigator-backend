@@ -11,9 +11,13 @@ from db_client.models.dfce.family import (
     Family,
     FamilyCorpus,
     FamilyDocument,
+    FamilyEvent,
 )
 from db_client.models.organisation import Organisation
+from sqlalchemy import func, literal_column, select
+from sqlalchemy.dialects.postgresql import JSONB
 from sqlalchemy.orm import Session
+from sqlalchemy.sql import exists, literal
 
 from app.models.search import (
     BrowseArgs,
@@ -77,6 +81,27 @@ def browse_rds_families(db: Session, req: BrowseArgs) -> tuple[int, SearchRespon
         .distinct()
         .subquery()
     )
+
+    # published_date subquery
+    published_date_subq = (
+        select(func.min(FamilyEvent.date))
+        .where(
+            FamilyEvent.family_import_id == Family.import_id,
+            exists(
+                select(literal(1))
+                .select_from(
+                    func.jsonb_array_elements_text(
+                        FamilyEvent.valid_metadata.cast(JSONB)["datetime_event_name"]
+                    ).alias("datetime_event_name")
+                )
+                .where(
+                    literal_column("datetime_event_name") == FamilyEvent.event_type_name
+                )
+            ),
+        )
+        .scalar_subquery()
+    )
+
     query = (
         db.query(Family, Corpus, geo_subquery.c.value, Organisation)  # type: ignore
         .join(FamilyCorpus, FamilyCorpus.family_import_id == Family.import_id)
@@ -100,6 +125,9 @@ def browse_rds_families(db: Session, req: BrowseArgs) -> tuple[int, SearchRespon
             query = query.order_by(Family.title.desc())
         else:
             query = query.order_by(Family.title.asc())
+
+    if req.sort_field == SortField.DATE:
+        query = query.order_by(published_date_subq.desc())
 
     _LOGGER.debug("Starting families query")
     families_count = query.count()
@@ -129,13 +157,6 @@ def browse_rds_families(db: Session, req: BrowseArgs) -> tuple[int, SearchRespon
                 families,
             )
         )
-
-    if req.sort_field == SortField.DATE:
-        families = sorted(
-            list(filter(lambda f: f.family_date != "", families)),
-            key=lambda f: f.family_date,
-            reverse=req.sort_order == SortOrder.DESCENDING,
-        ) + list(filter(lambda f: f.family_date == "", families))
 
     offset = req.offset or 0
     limit = req.limit or len(families)
