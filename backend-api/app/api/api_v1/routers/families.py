@@ -83,12 +83,12 @@ def latest_published(
     """
 
     # Decode the app token and validate it.
-    # token = AppTokenFactory()
-    # token.decode_and_validate(db, request, app_token)
+    token = AppTokenFactory()
+    token.decode_and_validate(db, request, app_token)
 
-    allowed_corpora_ids = ["Academic.corpus.Litigation.n0000"]
+    allowed_corpora_ids = token.allowed_corpora_ids
 
-    if allowed_corpora_ids is None or allowed_corpora_ids == []:
+    if not allowed_corpora_ids:
         _LOGGER.error(
             "No allowed corpora IDs found in the app token",
             extra={
@@ -160,9 +160,9 @@ def to_latest_published_response_family(
         title=str(family.title),
         description=str(family.description),
         family_category=str(family.family_category),
-        published_date=family.published_date.isoformat(),
-        last_modified=family.last_modified.isoformat(),
-        metadata=dict(metadata.value),
+        published_date=str(family.published_date),  # type: ignore
+        last_modified=str(family.last_modified),
+        metadata=dict(metadata.value),  # type: ignore
         geographies=geographies,
-        slugs=[str(slug) for slug in family.slugs] if family.slugs is not None else [],
+        slugs=[str(slug) for slug in family.slugs] if family.slugs else [],
     )

@@ -391,7 +391,7 @@ class LatestUpdatedFamilyResponse(BaseModel):
     """The date the family was published."""
     last_modified: str
     """The date the family was last modified."""
-    metadata: Mapping[str, Any]
+    metadata: dict[str, Any]
     """Metadata associated with the family."""
     geographies: list[str]
     """List of geographies associated with the family."""
