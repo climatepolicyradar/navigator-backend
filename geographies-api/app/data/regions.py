@@ -1,4 +1,4 @@
-from ..models import RegionType
+from app.model import RegionType
 
 regions = [
     {
