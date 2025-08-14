@@ -12,3 +12,7 @@ settings = Settings()  # type: ignore[call-arg] # TODO: Fix this.
 
 def get_navigator_database_url():
     return settings.navigator_database_url
+
+
+def get_cdn_url():
+    return settings.cdn_url
