@@ -436,8 +436,8 @@ class FamilyDocumentPublic(FamilyDocumentBase):
     @computed_field
     @property
     def cdn_object(self) -> str:
-        database_url = get_navigator_database_url()
-        return f"{database_url}/navigator/{self.physical_document.cdn_object}"
+        cdn_url = get_cdn_url()
+        return f"{cdn_url}/navigator/{self.physical_document.cdn_object}"
 
     @computed_field
     @property
