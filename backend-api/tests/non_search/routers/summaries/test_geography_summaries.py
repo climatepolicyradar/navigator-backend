@@ -97,12 +97,26 @@ def test_endpoint_returns_correct_data_for_given_geography_grouped_by_family_cat
     assert len(resp["targets"]) == 0
 
 
-def test_top_5_families_ordered_by_published_date(data_client, data_db, valid_token):
+def test_endpoint_returns_only_top_5_families_per_category(
+    data_client, data_db, valid_token
+):
     setup_with_six_families_same_geography(data_db)
 
     all_families = data_db.query(Family).all()
 
     assert len(all_families) > 5
+
+    resp = _make_request(data_client, valid_token, "south-asia")
+    top_executive_families = resp["top_families"]["Executive"]
+
+    assert resp["family_counts"]["Executive"] == 6
+    assert len(top_executive_families) == 5
+
+
+def test_top_5_families_ordered_by_published_date(data_client, data_db, valid_token):
+    setup_with_six_families_same_geography(data_db)
+
+    all_families = data_db.query(Family).all()
 
     expected_family_dates = sorted(
         [f.published_date.isoformat() for f in all_families]
@@ -110,9 +124,6 @@ def test_top_5_families_ordered_by_published_date(data_client, data_db, valid_to
 
     resp = _make_request(data_client, valid_token, "south-asia")
     top_executive_families = resp["top_families"]["Executive"]
-
-    assert resp["family_counts"]["Executive"] == 6
-    assert len(top_executive_families) == 5
 
     response_family_dates = [
         top_family["family_date"] for top_family in top_executive_families
@@ -131,7 +142,3 @@ def test_endpoint_returns_404_when_not_found(geo, data_client, valid_token):
         data_client, valid_token, geo, expected_status_code=status.HTTP_404_NOT_FOUND
     )
     assert resp
-
-
-# TODO: Additional test to confirm that summary result counts are correct when
-#       result count is larger than default BrowseArgs page size.

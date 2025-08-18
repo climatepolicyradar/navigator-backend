@@ -246,6 +246,37 @@ def setup_with_two_docs(db: Session):
     )
 
 
+def setup_with_two_families_same_geography(db: Session):
+    document1, document2 = generate_documents(2)
+
+    family1, family2 = generate_families(2)
+
+    family1["documents"] = [document1]
+    family2["documents"] = [document2]
+
+    families_list = [family1, family2]
+    add_families(db, families=families_list)
+
+    for i, family in enumerate(families_list):
+        add_event(
+            db,
+            family["import_id"],
+            None,
+            {
+                "import_id": family["import_id"],
+                "title": "Published",
+                "date": datetime(2000 + i, 1, 1, 0, 0, 0),
+                "type": "Passed/Approved",
+                "status": "OK",
+                "valid_metadata": {
+                    "event_type": ["Passed/Approved"],
+                    "datetime_event_name": ["Passed/Approved"],
+                },
+            },
+        )
+    db.commit()
+
+
 def setup_with_six_families_same_geography(db: Session):
     document1, document2, document3, document4, document5, document6 = (
         generate_documents(6)

@@ -1,6 +1,5 @@
 """Functions to support browsing the RDS document structure"""
 
-from datetime import datetime
 from logging import getLogger
 from time import perf_counter_ns
 from typing import cast
@@ -82,7 +81,7 @@ def browse_rds_families(db: Session, req: BrowseArgs) -> tuple[int, SearchRespon
         .subquery()
     )
 
-    # published_date subquery
+    # subquery to order by published_date
     published_date_subq = (
         select(func.min(FamilyEvent.date))
         .where(
@@ -131,32 +130,13 @@ def browse_rds_families(db: Session, req: BrowseArgs) -> tuple[int, SearchRespon
 
     _LOGGER.debug("Starting families query")
     families_count = query.count()
-    top_five_families = query.all()
+    top_five_families = query.limit(5).all()
     families = [
         to_search_response_family(family, corpus, geography_value, organisation)
         for (family, corpus, geography_value, organisation) in top_five_families
     ]
 
     _LOGGER.debug("Finished families query")
-
-    # Dates are calculated, and therefore sorting cannot be implemented in the query
-    if req.start_year is not None:
-        compare_date = datetime(year=req.start_year, month=1, day=1).isoformat()
-        families = list(
-            filter(
-                lambda f: f.family_date != "" and f.family_date >= compare_date,
-                families,
-            )
-        )
-
-    if req.end_year is not None:
-        compare_date = datetime(year=req.end_year, month=12, day=31).isoformat()
-        families = list(
-            filter(
-                lambda f: f.family_date != "" and f.family_date <= compare_date,
-                families,
-            )
-        )
 
     offset = req.offset or 0
     limit = req.limit or len(families)

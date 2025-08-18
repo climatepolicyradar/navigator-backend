@@ -79,7 +79,7 @@ def search_by_geography(
             ),
         )
         family_counts[cat] = families_count
-        top_families[cat] = list(results.families[:5])
+        top_families[cat] = list(results.families)
 
     # TODO: Add targets
     targets = []
