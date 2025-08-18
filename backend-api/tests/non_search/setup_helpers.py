@@ -314,6 +314,52 @@ def setup_with_six_families_same_geography(db: Session):
     db.commit()
 
 
+def setup_with_six_families(db: Session):
+    document1, document2, document3, document4, document5, document6 = (
+        generate_documents(6)
+    )
+
+    family1, family2, family3, family4, family5, family6 = generate_families(6)
+
+    family1["documents"] = [document1]
+    family2["documents"] = [document2]
+    family3["documents"] = [document3]
+    family4["documents"] = [document4]
+    family5["documents"] = [document5]
+    family6["documents"] = [document6]
+
+    families_list = [family1, family2, family3, family4, family5, family6]
+    add_families(db, families=families_list)
+
+    dates = [
+        "2025-03-27T08:12:34.512983+00:00",
+        "2024-11-15T22:47:19.038271+00:00",
+        "2025-06-01T14:56:03.928374+00:00",
+        "2025-01-09T03:25:46.384752+00:00",
+        "2024-10-05T19:33:21.117384+00:00",
+        "2025-07-14T11:08:59.603827+00:00",
+    ]
+
+    for i, family in enumerate(families_list):
+        add_event(
+            db,
+            family["import_id"],
+            None,
+            {
+                "import_id": family["import_id"],
+                "title": "Published",
+                "date": dates[i],
+                "type": "Passed/Approved",
+                "status": "OK",
+                "valid_metadata": {
+                    "event_type": ["Passed/Approved"],
+                    "datetime_event_name": ["Passed/Approved"],
+                },
+            },
+        )
+    db.commit()
+
+
 def setup_with_documents_large_with_families(
     documents_large: list[Dict[str, Any]],
     db: Session,
@@ -468,11 +514,12 @@ def setup_new_corpus(
     description: str,
     corpus_text: Optional[str],
     corpus_image_url: Optional[str],
+    import_id: str = "New.Corpus.0.0",
     organisation_id: int = 1,
     corpus_type_name: str = "Intl. agreements",
 ) -> CorpusType:
     c = Corpus(
-        import_id="name",
+        import_id=import_id,
         title=title,
         description=description,
         corpus_text=corpus_text,

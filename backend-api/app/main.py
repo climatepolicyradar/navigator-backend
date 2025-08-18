@@ -173,6 +173,7 @@ app.include_router(
 app.include_router(
     collections_router, prefix="/api/v1", tags=["Collections"], include_in_schema=False
 )
+
 app.include_router(
     families_router, prefix="/api/v1", tags=["Families"], include_in_schema=False
 )
