@@ -1,3 +1,4 @@
+from datetime import datetime
 from typing import Any, Dict, Optional
 
 from db_client.functions.dfce_helpers import (
@@ -246,27 +247,71 @@ def setup_with_two_docs(db: Session):
 
 
 def setup_with_two_families_same_geography(db: Session):
-    """Creates 2 DFCEs with the same geography"""
+    document1, document2 = generate_documents(2)
 
-    # Collection
-    collection1, _ = get_default_collections()
-    add_collections(db, collections=[collection1])
+    family1, family2 = generate_families(2)
 
-    # Family + Document + events
-    document1, document2 = get_default_documents()
-    _, family2, family3 = get_default_families()
+    family1["documents"] = [document1]
     family2["documents"] = [document2]
-    family3["documents"] = [document1]
-    add_families(db, families=[family2, family3])
 
-    # Collection - Family
-    link_collection_family(
-        db,
-        [
-            (collection1["import_id"], family2["import_id"]),
-            (collection1["import_id"], family3["import_id"]),
-        ],
+    families_list = [family1, family2]
+    add_families(db, families=families_list)
+
+    for i, family in enumerate(families_list):
+        add_event(
+            db,
+            family["import_id"],
+            None,
+            {
+                "import_id": family["import_id"],
+                "title": "Published",
+                "date": datetime(2000 + i, 1, 1, 0, 0, 0),
+                "type": "Passed/Approved",
+                "status": "OK",
+                "valid_metadata": {
+                    "event_type": ["Passed/Approved"],
+                    "datetime_event_name": ["Passed/Approved"],
+                },
+            },
+        )
+    db.commit()
+
+
+def setup_with_six_families_same_geography(db: Session):
+    document1, document2, document3, document4, document5, document6 = (
+        generate_documents(6)
     )
+
+    family1, family2, family3, family4, family5, family6 = generate_families(6)
+
+    family1["documents"] = [document1]
+    family2["documents"] = [document2]
+    family3["documents"] = [document3]
+    family4["documents"] = [document4]
+    family5["documents"] = [document5]
+    family6["documents"] = [document6]
+
+    families_list = [family1, family2, family3, family4, family5, family6]
+    add_families(db, families=families_list)
+
+    for i, family in enumerate(families_list):
+        add_event(
+            db,
+            family["import_id"],
+            None,
+            {
+                "import_id": family["import_id"],
+                "title": "Published",
+                "date": datetime(2000 + i, 1, 1, 0, 0, 0),
+                "type": "Passed/Approved",
+                "status": "OK",
+                "valid_metadata": {
+                    "event_type": ["Passed/Approved"],
+                    "datetime_event_name": ["Passed/Approved"],
+                },
+            },
+        )
+    db.commit()
 
 
 def setup_with_six_families(db: Session):

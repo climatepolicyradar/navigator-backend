@@ -405,8 +405,6 @@ class BrowseArgs(BaseModel):
     geography_slugs: Optional[Sequence[str]] = None
     country_codes: Optional[Sequence[str]] = None
     corpora_ids: Optional[Sequence[str]] = None
-    start_year: Optional[int] = None
-    end_year: Optional[int] = None
     categories: Optional[Sequence[str]] = None
     sort_field: SortField = SortField.DATE
     sort_order: SortOrder = SortOrder.DESCENDING

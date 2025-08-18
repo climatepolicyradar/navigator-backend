@@ -1,11 +1,12 @@
 from typing import Optional
 
 import pytest
+from db_client.models.dfce.family import Family
 from fastapi import status
 
 from tests.non_search.setup_helpers import (
+    setup_with_six_families_same_geography,
     setup_with_two_docs,
-    setup_with_two_families_same_geography,
 )
 
 TEST_HOST = "http://localhost:3000/"
@@ -44,7 +45,9 @@ def _make_request(
     ("geography"),
     ["india", "IND"],
 )
-def test_endpoint_returns_summaries_ok(data_client, data_db, valid_token, geography):
+def test_endpoint_returns_correct_data_for_given_geography_grouped_by_family_category(
+    data_client, data_db, valid_token, geography
+):
     setup_with_two_docs(data_db)
 
     resp = _make_request(data_client, valid_token, geography)
@@ -94,14 +97,39 @@ def test_endpoint_returns_summaries_ok(data_client, data_db, valid_token, geogra
     assert len(resp["targets"]) == 0
 
 
-def test_geography_with_families_ordered(data_client, data_db, valid_token):
-    setup_with_two_families_same_geography(data_db)
+def test_endpoint_returns_only_top_5_families_per_category(
+    data_client, data_db, valid_token
+):
+    setup_with_six_families_same_geography(data_db)
 
-    resp = _make_request(data_client, valid_token, "afghanistan")
-    top_families = resp["top_families"]["Executive"]
+    all_families = data_db.query(Family).all()
 
-    assert resp["family_counts"]["Executive"] == 2
-    assert top_families[0]["family_date"] > top_families[1]["family_date"]
+    assert len(all_families) > 5
+
+    resp = _make_request(data_client, valid_token, "south-asia")
+    top_executive_families = resp["top_families"]["Executive"]
+
+    assert resp["family_counts"]["Executive"] == 6
+    assert len(top_executive_families) == 5
+
+
+def test_top_5_families_ordered_by_published_date(data_client, data_db, valid_token):
+    setup_with_six_families_same_geography(data_db)
+
+    all_families = data_db.query(Family).all()
+
+    expected_family_dates = sorted(
+        [f.published_date.isoformat() for f in all_families]
+    )[:5]
+
+    resp = _make_request(data_client, valid_token, "south-asia")
+    top_executive_families = resp["top_families"]["Executive"]
+
+    response_family_dates = [
+        top_family["family_date"] for top_family in top_executive_families
+    ]
+
+    assert expected_family_dates == response_family_dates
 
 
 @pytest.mark.parametrize(
@@ -114,7 +142,3 @@ def test_endpoint_returns_404_when_not_found(geo, data_client, valid_token):
         data_client, valid_token, geo, expected_status_code=status.HTTP_404_NOT_FOUND
     )
     assert resp
-
-
-# TODO: Additional test to confirm that summary result counts are correct when
-#       result count is larger than default BrowseArgs page size.
