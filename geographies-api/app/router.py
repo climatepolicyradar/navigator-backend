@@ -92,7 +92,7 @@ async def get_countries_for_region(
     return result
 
 
-@router.get("/_", response_model=APIListResponse[Geography])
+@router.get("/", response_model=APIListResponse[Geography])
 async def read_regions(type: Annotated[list[GeographyType] | None, Query()] = None):
 
     regions = regions_data
@@ -127,21 +127,6 @@ async def read_regions(type: Annotated[list[GeographyType] | None, Query()] = No
         page=1,
         page_size=len(result),
     )
-
-
-@router.get("/", response_model=list[CountryResponse])
-async def list_all_countries() -> list[CountryResponse]:
-    """
-    List all countries with their metadata.
-
-    NOTE: This endpoint retrieves a list of all countries, including
-    their ISO codes, names, and flag emojis. It can be used to populate
-    dropdowns or selection menus in user interfaces.
-
-    :return list[CountryResponse]: A list of country objects containing
-        alpha-2, alpha-3 codes, name, official name, numeric code, and flag emoji.
-    """
-    return get_all_countries()
 
 
 @router.get("/countries", response_model=list[CountryResponse])
