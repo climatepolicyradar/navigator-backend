@@ -1,11 +1,24 @@
 import logging
-from typing import TypeVar
+from typing import Annotated, TypeVar, cast
 
-from fastapi import APIRouter, HTTPException, Path
+import pycountry
+from fastapi import APIRouter, HTTPException, Path, Query
+from pycountry.db import Country as PyCountryCountry
+from pycountry.db import Subdivision as PyCountrySubdivision
 
-from app.model import CountryResponse, RegionResponse, SubdivisionResponse
+from app.data.regions import regions as regions_data
+from app.model import (
+    APIListResponse,
+    Country,
+    CountryResponse,
+    Geography,
+    GeographyType,
+    Region,
+    RegionResponse,
+    Subdivision,
+    SubdivisionResponse,
+)
 from app.service import (
-    get_all_countries,
     get_all_country_subdivisions,
     get_all_regions,
     get_countries_by_region,
@@ -78,19 +91,41 @@ async def get_countries_for_region(
     return result
 
 
-@router.get("/", response_model=list[CountryResponse])
-async def list_all_countries() -> list[CountryResponse]:
-    """
-    List all countries with their metadata.
+@router.get("/", response_model=APIListResponse[Geography])
+async def read_regions(type: Annotated[list[GeographyType] | None, Query()] = None):
 
-    NOTE: This endpoint retrieves a list of all countries, including
-    their ISO codes, names, and flag emojis. It can be used to populate
-    dropdowns or selection menus in user interfaces.
+    regions = regions_data
+    countries = cast(list[PyCountryCountry], pycountry.countries)
+    subdivisions = cast(list[PyCountrySubdivision], pycountry.subdivisions)
 
-    :return list[CountryResponse]: A list of country objects containing
-        alpha-2, alpha-3 codes, name, official name, numeric code, and flag emoji.
-    """
-    return get_all_countries()
+    region_geographies = [
+        Region(id=region["slug"], name=region["name"]) for region in regions
+    ]
+    country_geographies = [
+        Country(id=country.alpha_3, name=country.name) for country in list(countries)
+    ]
+    subdivision_regions = [
+        Subdivision(id=subdivision.code, name=subdivision.name)
+        for subdivision in list(subdivisions)
+    ]
+
+    result = []
+    if not type:
+        result = region_geographies + country_geographies + subdivision_regions
+    else:
+        if GeographyType.region in type:
+            result = region_geographies
+        elif GeographyType.country in type:
+            result = country_geographies
+        elif GeographyType.subdivision in type:
+            result = subdivision_regions
+
+    return APIListResponse(
+        data=cast(list[Geography], result),
+        total=len(result),
+        page=1,
+        page_size=len(result),
+    )
 
 
 @router.get("/countries/{code}", response_model=CountryResponse)
