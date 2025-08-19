@@ -3,17 +3,15 @@ from typing import Annotated, TypeVar, cast
 
 import pycountry
 from fastapi import APIRouter, HTTPException, Path, Query
-from pycountry.db import Country as PyCountryCountry
 from pycountry.db import Subdivision as PyCountrySubdivision
 
-from app.data.regions import regions as regions_data
 from app.model import (
+    APIItemResponse,
     APIListResponse,
     Country,
     CountryResponse,
     Geography,
     GeographyType,
-    Region,
     RegionResponse,
     Subdivision,
     SubdivisionResponse,
@@ -23,6 +21,7 @@ from app.service import (
     get_all_regions,
     get_countries_by_region,
     get_country_by_code,
+    get_geographies,
     get_region_by_slug,
     get_subdivisions_by_country,
     populate_initial_countries_data,
@@ -89,43 +88,6 @@ async def get_countries_for_region(
         _LOGGER.error(error_msg)
         raise HTTPException(status_code=404, detail=str(error_msg))
     return result
-
-
-@router.get("/", response_model=APIListResponse[Geography])
-async def read_regions(type: Annotated[list[GeographyType] | None, Query()] = None):
-
-    regions = regions_data
-    countries = cast(list[PyCountryCountry], pycountry.countries)
-    subdivisions = cast(list[PyCountrySubdivision], pycountry.subdivisions)
-
-    region_geographies = [
-        Region(id=region["slug"], name=region["name"]) for region in regions
-    ]
-    country_geographies = [
-        Country(id=country.alpha_3, name=country.name) for country in list(countries)
-    ]
-    subdivision_regions = [
-        Subdivision(id=subdivision.code, name=subdivision.name)
-        for subdivision in list(subdivisions)
-    ]
-
-    result = []
-    if not type:
-        result = region_geographies + country_geographies + subdivision_regions
-    else:
-        if GeographyType.region in type:
-            result = region_geographies
-        elif GeographyType.country in type:
-            result = country_geographies
-        elif GeographyType.subdivision in type:
-            result = subdivision_regions
-
-    return APIListResponse(
-        data=cast(list[Geography], result),
-        total=len(result),
-        page=1,
-        page_size=len(result),
-    )
 
 
 @router.get("/countries/{code}", response_model=CountryResponse)
@@ -215,3 +177,58 @@ def populate_s3_bucket() -> dict[str, str]:
         raise HTTPException(status_code=500, detail=str(e))
 
     return {"message": "S3 bucket populated with geographies data"}
+
+
+@router.get("/", response_model=APIListResponse[Geography])
+async def read_regions(type: Annotated[list[GeographyType] | None, Query()] = None):
+
+    geographies = get_geographies()
+
+    result = []
+    if not type:
+        result = geographies.regions + geographies.countries + geographies.subdivisions
+    else:
+        if GeographyType.region in type:
+            result = geographies.regions
+        elif GeographyType.country in type:
+            result = geographies.countries
+        elif GeographyType.subdivision in type:
+            result = geographies.subdivisions
+
+    return APIListResponse(
+        data=cast(list[Geography], result),
+        total=len(result),
+        page=1,
+        page_size=len(result),
+    )
+
+
+@router.get("/{slug}", response_model=APIItemResponse[Geography])
+async def read_region(slug: str):
+
+    geographies = get_geographies()
+    all_geographies = (
+        geographies.regions + geographies.countries + geographies.subdivisions
+    )
+
+    result = next(
+        (geo for geo in all_geographies if geo.slug == slug),
+        None,
+    )
+
+    if not result:
+        raise HTTPException(status_code=404, detail="Not found")
+
+    if isinstance(result, Country):
+        result.has_subconcept = [
+            Subdivision(id=subdivision.code, name=subdivision.name)
+            for subdivision in cast(
+                list[PyCountrySubdivision],
+                pycountry.subdivisions.get(country_code=result.alpha_2),
+            )
+            if subdivision
+        ]
+
+    return APIItemResponse(
+        data=result,
+    )

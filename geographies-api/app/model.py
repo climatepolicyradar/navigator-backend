@@ -90,12 +90,6 @@ class GeographyV2Base(BaseModel):
     id: str
     name: str
 
-    # This language is useful because we use it in multiple ways to express graph/hierarchical data
-    # @see: https://github.com/climatepolicyradar/knowledge-graph/blob/main/src/concept.py#L51-L60
-    has_subconcept: list["GeographyV2Base"] = []
-    subconcept_of: list["GeographyV2Base"] = []
-    related_concepts: list["GeographyV2Base"] = []
-
     # these are currently different / type while we work out how we want to standardise on this
     @computed_field
     @property
@@ -114,6 +108,10 @@ class Region(GeographyV2Base):
 
 class Country(GeographyV2Base):
     type: Literal["country"] = "country"
+    alpha_2: str
+    # This language is useful because we use it in multiple ways to express graph/hierarchical data
+    # @see: https://github.com/climatepolicyradar/knowledge-graph/blob/main/src/concept.py#L51-L60
+    has_subconcept: list["Subdivision"] = []
 
     @computed_field
     @property
