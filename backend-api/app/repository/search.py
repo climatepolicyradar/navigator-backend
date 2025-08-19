@@ -1,6 +1,5 @@
 """Functions to support browsing the RDS document structure"""
 
-from datetime import datetime
 from logging import getLogger
 from time import perf_counter_ns
 from typing import cast
@@ -11,9 +10,13 @@ from db_client.models.dfce.family import (
     Family,
     FamilyCorpus,
     FamilyDocument,
+    FamilyEvent,
 )
 from db_client.models.organisation import Organisation
+from sqlalchemy import func, literal_column, select
+from sqlalchemy.dialects.postgresql import JSONB
 from sqlalchemy.orm import Session
+from sqlalchemy.sql import exists, literal
 
 from app.models.search import (
     BrowseArgs,
@@ -77,6 +80,27 @@ def browse_rds_families(db: Session, req: BrowseArgs) -> tuple[int, SearchRespon
         .distinct()
         .subquery()
     )
+
+    # subquery to order by published_date
+    published_date_subq = (
+        select(func.min(FamilyEvent.date))
+        .where(
+            FamilyEvent.family_import_id == Family.import_id,
+            exists(
+                select(literal(1))
+                .select_from(
+                    func.jsonb_array_elements_text(
+                        FamilyEvent.valid_metadata.cast(JSONB)["datetime_event_name"]
+                    ).alias("datetime_event_name")
+                )
+                .where(
+                    literal_column("datetime_event_name") == FamilyEvent.event_type_name
+                )
+            ),
+        )
+        .scalar_subquery()
+    )
+
     query = (
         db.query(Family, Corpus, geo_subquery.c.value, Organisation)  # type: ignore
         .join(FamilyCorpus, FamilyCorpus.family_import_id == Family.import_id)
@@ -101,6 +125,9 @@ def browse_rds_families(db: Session, req: BrowseArgs) -> tuple[int, SearchRespon
         else:
             query = query.order_by(Family.title.asc())
 
+    if req.sort_field == SortField.DATE:
+        query = query.order_by(published_date_subq.desc())
+
     _LOGGER.debug("Starting families query")
     families_count = query.count()
     top_five_families = query.limit(5).all()
@@ -110,32 +137,6 @@ def browse_rds_families(db: Session, req: BrowseArgs) -> tuple[int, SearchRespon
     ]
 
     _LOGGER.debug("Finished families query")
-
-    # Dates are calculated, and therefore sorting cannot be implemented in the query
-    if req.start_year is not None:
-        compare_date = datetime(year=req.start_year, month=1, day=1).isoformat()
-        families = list(
-            filter(
-                lambda f: f.family_date != "" and f.family_date >= compare_date,
-                families,
-            )
-        )
-
-    if req.end_year is not None:
-        compare_date = datetime(year=req.end_year, month=12, day=31).isoformat()
-        families = list(
-            filter(
-                lambda f: f.family_date != "" and f.family_date <= compare_date,
-                families,
-            )
-        )
-
-    if req.sort_field == SortField.DATE:
-        families = sorted(
-            list(filter(lambda f: f.family_date != "", families)),
-            key=lambda f: f.family_date,
-            reverse=req.sort_order == SortOrder.DESCENDING,
-        ) + list(filter(lambda f: f.family_date == "", families))
 
     offset = req.offset or 0
     limit = req.limit or len(families)
