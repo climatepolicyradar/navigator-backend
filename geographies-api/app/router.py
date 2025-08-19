@@ -8,6 +8,7 @@ from pycountry.db import Subdivision as PyCountrySubdivision
 
 from app.data.regions import regions as regions_data
 from app.model import (
+    APIListResponse,
     Country,
     CountryResponse,
     Geography,
@@ -92,7 +93,7 @@ async def get_countries_for_region(
     return result
 
 
-@router.get("/", response_model=list[Geography])
+@router.get("/", response_model=APIListResponse[Geography])
 async def read_regions(type: Annotated[list[GeographyType] | None, Query()] = None):
 
     regions = regions_data
@@ -110,15 +111,23 @@ async def read_regions(type: Annotated[list[GeographyType] | None, Query()] = No
         for subdivision in list(subdivisions)
     ]
 
+    result = []
     if not type:
-        return region_geographies + country_geographies + subdivision_regions
+        result = region_geographies + country_geographies + subdivision_regions
+    else:
+        if GeographyType.region in type:
+            result = region_geographies
+        elif GeographyType.country in type:
+            result = country_geographies
+        elif GeographyType.subdivision in type:
+            result = subdivision_regions
 
-    if GeographyType.region in type:
-        return region_geographies
-    elif GeographyType.country in type:
-        return country_geographies
-    elif GeographyType.subdivision in type:
-        return subdivision_regions
+    return APIListResponse(
+        data=cast(list[Geography], result),
+        total=len(result),
+        page=1,
+        page_size=len(result),
+    )
 
 
 @router.get("/countries/{code}", response_model=CountryResponse)

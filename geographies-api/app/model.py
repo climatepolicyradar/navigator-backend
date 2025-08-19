@@ -1,5 +1,5 @@
 from enum import Enum
-from typing import Generic, Literal, Optional, TypeVar
+from typing import Annotated, Generic, Literal, Optional, TypeVar, Union
 
 from pydantic import BaseModel, Field, computed_field
 from slugify import slugify
@@ -66,6 +66,18 @@ class CountryStatisticsResponse(BaseModel):
 
 
 # V2 - as per https://www.notion.so/climatepolicyradar/RFC-Geography-API-model-and-route-simplification-24f9109609a4803e8018e1509c86e270GeographyType = Literal["region", "country", "subdivision"]
+APIDataType = TypeVar("APIDataType")
+
+
+class APIListResponse(BaseModel, Generic[APIDataType]):
+    data: list[APIDataType]
+    total: int
+    page: int
+    page_size: int
+
+
+class APIItemResponse(BaseModel, Generic[APIDataType]):
+    data: APIDataType
 
 
 class GeographyType(str, Enum):
@@ -77,7 +89,6 @@ class GeographyType(str, Enum):
 class GeographyBase(BaseModel):
     id: str
     name: str
-    type: GeographyType
 
     # This language is useful because we use it in multiple ways to express graph/hierarchical data
     # @see: https://github.com/climatepolicyradar/knowledge-graph/blob/main/src/concept.py#L51-L60
@@ -93,7 +104,7 @@ class GeographyBase(BaseModel):
 
 
 class Region(GeographyBase):
-    type: GeographyType = GeographyType.region
+    type: Literal["region"] = "region"
 
     @computed_field
     @property
@@ -102,7 +113,7 @@ class Region(GeographyBase):
 
 
 class Country(GeographyBase):
-    type: GeographyType = GeographyType.country
+    type: Literal["country"] = "country"
 
     @computed_field
     @property
@@ -111,7 +122,7 @@ class Country(GeographyBase):
 
 
 class Subdivision(GeographyBase):
-    type: GeographyType = GeographyType.subdivision
+    type: Literal["subdivision"] = "subdivision"
 
     @computed_field
     @property
@@ -119,4 +130,4 @@ class Subdivision(GeographyBase):
         return f"{slugify(self.id)}"
 
 
-Geography = Region | Country | Subdivision
+Geography = Annotated[Union[Region, Country, Subdivision], Field(discriminator="type")]
