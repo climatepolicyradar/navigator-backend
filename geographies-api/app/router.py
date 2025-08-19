@@ -1,5 +1,5 @@
 import logging
-from typing import Annotated, Sequence, TypeVar, cast
+from typing import Annotated, TypeVar, cast
 
 import pycountry
 from fastapi import APIRouter, HTTPException, Path, Query
@@ -12,7 +12,6 @@ from app.model import (
     Country,
     CountryResponse,
     Geography,
-    GeographyBase,
     GeographyType,
     Region,
     RegionResponse,
@@ -20,7 +19,6 @@ from app.model import (
     SubdivisionResponse,
 )
 from app.service import (
-    get_all_countries,
     get_all_country_subdivisions,
     get_all_regions,
     get_countries_by_region,

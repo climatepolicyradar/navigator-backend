@@ -1,7 +1,7 @@
 from enum import Enum
-from typing import Annotated, Generic, Literal, Optional, TypeVar, Union
+from typing import Generic, Literal, Optional, TypeVar
 
-from pydantic import BaseModel, Field, computed_field
+from pydantic import BaseModel, computed_field
 from slugify import slugify
 from sqlmodel import SQLModel
 
@@ -86,15 +86,15 @@ class GeographyType(str, Enum):
     subdivision = "subdivision"
 
 
-class GeographyBase(BaseModel):
+class GeographyV2Base(BaseModel):
     id: str
     name: str
 
     # This language is useful because we use it in multiple ways to express graph/hierarchical data
     # @see: https://github.com/climatepolicyradar/knowledge-graph/blob/main/src/concept.py#L51-L60
-    has_subconcept: list[GeographyBase] = []
-    subconcept_of: list[GeographyBase] = []
-    related_concepts: list[GeographyBase] = []
+    has_subconcept: list["GeographyV2Base"] = []
+    subconcept_of: list["GeographyV2Base"] = []
+    related_concepts: list["GeographyV2Base"] = []
 
     # these are currently different / type while we work out how we want to standardise on this
     @computed_field
@@ -103,7 +103,7 @@ class GeographyBase(BaseModel):
         return f"{self.id.lower()}--{slugify(self.name)}"
 
 
-class Region(GeographyBase):
+class Region(GeographyV2Base):
     type: Literal["region"] = "region"
 
     @computed_field
@@ -112,7 +112,7 @@ class Region(GeographyBase):
         return f"{slugify(self.name)}"
 
 
-class Country(GeographyBase):
+class Country(GeographyV2Base):
     type: Literal["country"] = "country"
 
     @computed_field
@@ -121,7 +121,7 @@ class Country(GeographyBase):
         return f"{slugify(self.name)}"
 
 
-class Subdivision(GeographyBase):
+class Subdivision(GeographyV2Base):
     type: Literal["subdivision"] = "subdivision"
 
     @computed_field
@@ -130,4 +130,4 @@ class Subdivision(GeographyBase):
         return f"{slugify(self.id)}"
 
 
-Geography = Annotated[Union[Region, Country, Subdivision], Field(discriminator="type")]
+Geography = Region | Country | Subdivision
