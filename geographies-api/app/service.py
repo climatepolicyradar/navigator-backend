@@ -1,20 +1,27 @@
 import logging
 import os
 from datetime import datetime, timezone
-from typing import Any, Dict
+from typing import Any, Dict, cast
 
 import pycountry
 import requests
 from api.telemetry import observe
+from pycountry.db import Country as PyCountryCountry
+from pycountry.db import Subdivision as PyCountrySubdivision
+from pydantic import BaseModel
 
 from app.data.cpr_custom_geographies import countries
 from app.data.geography_statistics_by_countries import geography_statistics_by_countries
 from app.data.regions import regions
+from app.data.regions import regions as regions_data
 from app.data.regions_to_countries_mapping import regions_to_countries
 from app.model import (
+    Country,
     CountryResponse,
     CountryStatisticsResponse,
+    Region,
     RegionResponse,
+    Subdivision,
     SubdivisionResponse,
 )
 from app.s3_client import get_s3_client
@@ -417,3 +424,34 @@ def get_geographies_data(url: str | None = None) -> Dict[str, Any]:
         raise requests.RequestException(f"Failed to fetch countries data: {e}")
     except ValueError as e:
         raise ValueError(f"Invalid response format: {e}")
+
+
+class Geographies(BaseModel):
+    regions: list[Region]
+    countries: list[Country]
+    subdivisions: list[Subdivision]
+
+
+@observe(name="get_geographies")
+def get_geographies() -> Geographies:
+    regions = regions_data
+    countries = cast(list[PyCountryCountry], pycountry.countries)
+    subdivisions = cast(list[PyCountrySubdivision], pycountry.subdivisions)
+
+    region_geographies = [
+        Region(id=region["slug"], name=region["name"]) for region in regions
+    ]
+    country_geographies = [
+        Country(id=country.alpha_3, name=country.name, alpha_2=country.alpha_2)
+        for country in list(countries)
+    ]
+    subdivision_regions = [
+        Subdivision(id=subdivision.code, name=subdivision.name)
+        for subdivision in list(subdivisions)
+    ]
+
+    return Geographies(
+        regions=region_geographies,
+        countries=country_geographies,
+        subdivisions=subdivision_regions,
+    )
