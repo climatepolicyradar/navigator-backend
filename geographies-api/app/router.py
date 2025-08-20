@@ -195,8 +195,14 @@ def populate_s3_bucket() -> dict[str, str]:
     return {"message": "S3 bucket populated with geographies data"}
 
 
+GeographySlug = str
+
+
 @router.get("/", response_model=APIListResponse[Geography])
-async def read_regions(type: Annotated[list[GeographyType] | None, Query()] = None):
+async def read_regions(
+    subconcept_of: Annotated[list[GeographySlug], Query()],
+    type: Annotated[list[GeographyType] | None, Query()] = None,
+):
 
     geographies = get_geographies()
 
@@ -210,6 +216,17 @@ async def read_regions(type: Annotated[list[GeographyType] | None, Query()] = No
             result = geographies.countries
         elif GeographyType.subdivision in type:
             result = geographies.subdivisions
+
+    if subconcept_of:
+        result = [
+            geography
+            for geography in result
+            # search for any subconcept_of in the geography that matches the query string param
+            if any(
+                slug in [subconcept.slug for subconcept in geography.subconcept_of]
+                for slug in subconcept_of
+            )
+        ]
 
     return APIListResponse(
         data=cast(list[Geography], result),

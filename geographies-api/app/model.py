@@ -1,7 +1,7 @@
 from enum import Enum
 from typing import Generic, Literal, Optional, TypeVar
 
-from pydantic import BaseModel, computed_field
+from pydantic import BaseModel, Field, computed_field
 from slugify import slugify
 from sqlmodel import SQLModel
 
@@ -99,6 +99,7 @@ class GeographyV2Base(BaseModel):
 
 class Region(GeographyV2Base):
     type: Literal["region"] = "region"
+    subconcept_of: list["Region"] = []
 
     @computed_field
     @property
@@ -113,6 +114,7 @@ class Country(GeographyV2Base):
     # This language is useful because we use it in multiple ways to express graph/hierarchical data
     # @see: https://github.com/climatepolicyradar/knowledge-graph/blob/main/src/concept.py#L51-L60
     has_subconcept: list["Subdivision"] = []
+    subconcept_of: list["Region"] = []
 
     @computed_field
     @property
@@ -122,6 +124,8 @@ class Country(GeographyV2Base):
 
 class Subdivision(GeographyV2Base):
     type: Literal["subdivision"] = "subdivision"
+
+    subconcept_of: list["Country"] = Field(default_factory=list, exclude=True)
 
     @computed_field
     @property

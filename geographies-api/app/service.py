@@ -446,7 +446,15 @@ def get_geographies() -> Geographies:
         for country in list(countries)
     ]
     subdivision_regions = [
-        Subdivision(id=subdivision.code, name=subdivision.name)
+        Subdivision(
+            id=subdivision.code,
+            name=subdivision.name,
+            subconcept_of=[
+                country
+                for country in country_geographies
+                if country.alpha_2 == subdivision.country_code
+            ],
+        )
         for subdivision in list(subdivisions)
     ]
 
