@@ -11,7 +11,9 @@ from db_client.models.dfce.family import (
     FamilyCorpus,
     FamilyDocument,
     FamilyEvent,
+    FamilyGeography,
 )
+from db_client.models.dfce.geography import Geography
 from db_client.models.organisation import Organisation
 from sqlalchemy import func, literal_column, select
 from sqlalchemy.dialects.postgresql import JSONB
@@ -25,7 +27,6 @@ from app.models.search import (
     SortField,
     SortOrder,
 )
-from app.repository.geography import get_geo_subquery
 from app.telemetry import observe
 
 _LOGGER = getLogger(__name__)
@@ -71,7 +72,26 @@ def browse_rds_families(db: Session, req: BrowseArgs) -> tuple[int, SearchRespon
     """Browse RDS"""
 
     t0 = perf_counter_ns()
-    geo_subquery = get_geo_subquery(db, req.geography_slugs, req.country_codes)
+    # geo_subquery = get_geo_subquery(db, req.geography_slugs, req.country_codes)
+
+    geo_filter_subquery = db.query(FamilyGeography.family_import_id).join(
+        Geography, FamilyGeography.geography_id == Geography.id
+    )
+
+    # Apply geography filters if provided
+    if req.geography_slugs is not None:
+        geo_filter_subquery = geo_filter_subquery.filter(
+            Geography.slug.in_(req.geography_slugs)
+        )
+
+    if req.country_codes is not None:
+        geo_filter_subquery = geo_filter_subquery.filter(
+            Geography.value.in_(req.country_codes)
+        )
+
+    # Make it a distinct subquery to avoid duplicates
+    geo_filter_subquery = geo_filter_subquery.distinct().subquery()
+
     # Subquery to find families with at least one published document
     # Avoid using calculated family_status field
     published_families = (
@@ -102,7 +122,7 @@ def browse_rds_families(db: Session, req: BrowseArgs) -> tuple[int, SearchRespon
     )
 
     query = (
-        db.query(Family, Corpus, geo_subquery.c.value, Organisation)  # type: ignore
+        db.query(Family, Corpus, Organisation)  # type: ignore
         .join(FamilyCorpus, FamilyCorpus.family_import_id == Family.import_id)
         .join(Corpus, FamilyCorpus.corpus_import_id == Corpus.import_id)
         .join(Organisation, Organisation.id == Corpus.organisation_id)
@@ -110,7 +130,11 @@ def browse_rds_families(db: Session, req: BrowseArgs) -> tuple[int, SearchRespon
             published_families,
             published_families.c.family_import_id == Family.import_id,
         )
-        .filter(geo_subquery.c.family_import_id == Family.import_id)  # type: ignore
+        .join(
+            geo_filter_subquery,
+            geo_filter_subquery.c.family_import_id == Family.import_id,
+        )
+        # .filter(geo_subquery.c.family_import_id == Family.import_id)  # type: ignore
     )
 
     if req.categories is not None:
@@ -132,8 +156,8 @@ def browse_rds_families(db: Session, req: BrowseArgs) -> tuple[int, SearchRespon
     families_count = query.count()
     top_five_families = query.limit(5).all()
     families = [
-        to_search_response_family(family, corpus, geography_value, organisation)
-        for (family, corpus, geography_value, organisation) in top_five_families
+        to_search_response_family(family, corpus, "geography_value", organisation)
+        for (family, corpus, organisation) in top_five_families
     ]
 
     _LOGGER.debug("Finished families query")
