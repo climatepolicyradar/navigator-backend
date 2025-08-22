@@ -15,7 +15,7 @@ from db_client.models.dfce.family import (
 )
 from db_client.models.dfce.geography import Geography
 from db_client.models.organisation import Organisation
-from sqlalchemy import func, literal_column, select
+from sqlalchemy import String, func, literal_column, select
 from sqlalchemy.dialects.postgresql import JSONB
 from sqlalchemy.orm import Session
 from sqlalchemy.sql import exists, literal
@@ -102,24 +102,29 @@ def browse_rds_families(db: Session, req: BrowseArgs) -> tuple[int, SearchRespon
     )
 
     # subquery to order by published_date
-    published_date_subq = (
-        select(func.min(FamilyEvent.date))
-        .where(
-            FamilyEvent.family_import_id == Family.import_id,
-            exists(
-                select(literal(1))
-                .select_from(
-                    func.jsonb_array_elements_text(
-                        FamilyEvent.valid_metadata.cast(JSONB)["datetime_event_name"]
-                    ).alias("datetime_event_name")
+    published_date_subq = select(
+        func.coalesce(
+            # First try to find exact match (early return equivalent)
+            select(FamilyEvent.date)
+            .where(
+                FamilyEvent.family_import_id == Family.import_id,
+                FamilyEvent.valid_metadata.cast(JSONB)["datetime_event_name"][0].cast(
+                    String
                 )
-                .where(
-                    literal_column("datetime_event_name") == FamilyEvent.event_type_name
-                )
-            ),
+                == FamilyEvent.event_type_name,
+            )
+            .order_by(FamilyEvent.date)
+            .limit(1)
+            .scalar_subquery(),
+            # Fallback: minimum date from any event with datetime_event_name
+            select(func.min(FamilyEvent.date))
+            .where(
+                FamilyEvent.family_import_id == Family.import_id,
+                FamilyEvent.valid_metadata.cast(JSONB).has_key("datetime_event_name"),
+            )
+            .scalar_subquery(),
         )
-        .scalar_subquery()
-    )
+    ).scalar_subquery()
 
     query = (
         db.query(Family, Corpus, Organisation)  # type: ignore
