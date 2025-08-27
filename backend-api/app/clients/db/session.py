@@ -1,11 +1,6 @@
-from opentelemetry.instrumentation.sqlalchemy import SQLAlchemyInstrumentor
-from sqlalchemy import create_engine
-from sqlalchemy.orm import sessionmaker
-from sqlalchemy.pool import NullPool
-
-from app import config
-
 """
+Code for DB session management.
+
 Notes: August 27th 2025.
 
 We have been trying to trace segfault issues for months. They're 
@@ -18,6 +13,13 @@ The following code is a bit hacky, but ensures the engine is lazily
 initialised and therefore after uvicorn has spawned the worker 
 processes.
 """
+
+from opentelemetry.instrumentation.sqlalchemy import SQLAlchemyInstrumentor
+from sqlalchemy import create_engine
+from sqlalchemy.orm import sessionmaker
+from sqlalchemy.pool import NullPool
+
+from app import config
 
 # Lazy initialisation - created once per worker
 _engine = None
