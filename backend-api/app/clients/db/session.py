@@ -48,6 +48,10 @@ def create_session():
     return _SessionLocal
 
 
+# Export callable for tests
+SessionLocal = create_session
+
+
 def get_db():
     """Get the database session.
 
