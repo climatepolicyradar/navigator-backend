@@ -1,43 +1,44 @@
 from opentelemetry.instrumentation.sqlalchemy import SQLAlchemyInstrumentor
 from sqlalchemy import create_engine
 from sqlalchemy.orm import sessionmaker
+from sqlalchemy.pool import NullPool
 
 from app import config
 
-engine = create_engine(
-    config.SQLALCHEMY_DATABASE_URI,
-    pool_pre_ping=True,
-    # TODO: configure as part of scaling work
-    pool_size=10,
-    max_overflow=240,
-)
-
-# Lets generate some telemetry for the db calls!
-SQLAlchemyInstrumentor().instrument(engine=engine)
-
-SessionLocal = sessionmaker(autocommit=False, autoflush=False, bind=engine)
+# Lazy initialisation - created once per worker
+_engine = None
+SessionLocal = None
 
 
-# Dependency
+def get_engine():
+    global _engine
+    if _engine is None:
+        _engine = create_engine(
+            config.SQLALCHEMY_DATABASE_URI,
+            pool_pre_ping=True,
+            poolclass=NullPool,  # Safe for multiprocess
+        )
+        # OpenTelemetry instrumentation
+        SQLAlchemyInstrumentor().instrument(engine=_engine)
+    return _engine
+
+
 def get_db():
+    """Get the database session.
+
+    Tries to get a database session. If there is no session, it will
+    create one AFTER the uvicorn stuff has started.
+    """
+    global SessionLocal
+    if SessionLocal is None:
+        SessionLocal = sessionmaker(
+            # Get the engine using thread-safe initialisation.
+            autocommit=False,
+            autoflush=False,
+            bind=get_engine(),
+        )
     db = SessionLocal()
     try:
         yield db
     finally:
         db.close()
-
-
-# TODO: Update to async db connection
-# https://fastapi.tiangolo.com/advanced/async-sql-databases/
-# async def get_session() -> AsyncSession:
-#     async with async_session() as session:
-#         yield session
-#         await session.commit()
-#
-# class DB(AsyncSession):
-#     def __new__(cls,db:AsyncSession = Depends(get_session)):
-#         return db
-#
-# # in the route:
-# @app.post("/my-route/")
-# async def do_something(db: DB = Depends()): ...
