@@ -7,7 +7,7 @@ from app import config
 
 # Lazy initialisation - created once per worker
 _engine = None
-SessionLocal = None
+_SessionLocal = None
 
 
 def get_engine():
@@ -23,21 +23,28 @@ def get_engine():
     return _engine
 
 
+def create_session():
+    global _SessionLocal
+    if _SessionLocal is None:
+        _SessionLocal = sessionmaker(
+            autocommit=False,
+            autoflush=False,
+            bind=get_engine(),
+        )
+    return _SessionLocal
+
+
+# Export callable for tests
+SessionLocal = create_session
+
+
 def get_db():
     """Get the database session.
 
     Tries to get a database session. If there is no session, it will
     create one AFTER the uvicorn stuff has started.
     """
-    global SessionLocal
-    if SessionLocal is None:
-        SessionLocal = sessionmaker(
-            # Get the engine using thread-safe initialisation.
-            autocommit=False,
-            autoflush=False,
-            bind=get_engine(),
-        )
-    db = SessionLocal()
+    db = create_session()()
     try:
         yield db
     finally:
