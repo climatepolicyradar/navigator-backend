@@ -130,7 +130,7 @@ app.add_api_route("/health", health([is_database_online]), include_in_schema=Fal
 
 @app.middleware("http")
 async def db_session_middleware(request: Request, call_next):
-    request.state.db = get_db()
+    request.state.db = SessionLocal()
     response = await call_next(request)
     request.state.db.close()
     return response
