@@ -1,5 +1,5 @@
 import logging
-from typing import Annotated, TypeVar, cast
+from typing import TypeVar, cast
 
 import pycountry
 from fastapi import APIRouter, HTTPException, Path, Query
@@ -200,8 +200,10 @@ GeographySlug = str
 
 @router.get("/", response_model=APIListResponse[Geography])
 async def read_regions(
-    subconcept_of: Annotated[list[GeographySlug], Query()],
-    type: Annotated[list[GeographyType] | None, Query()] = None,
+    subconcept_of: list[GeographySlug] = Query(
+        default=[],
+    ),
+    type: list[GeographyType] | None = Query(default=None),
 ):
 
     geographies = get_geographies()
