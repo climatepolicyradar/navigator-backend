@@ -152,7 +152,7 @@ def make_family():
             ],
         )
 
-        return (corpus, physical_document, family_document, family)
+        return (corpus, family, family_document, physical_document)
 
     return _make_family
 
@@ -237,13 +237,17 @@ def test_read_family_corpus_import_id_filter(
     session.commit()
 
     # joins on OR
+    expected_family_ids1 = [family1.import_id, family2.import_id]
     response1 = client.get(
         f"/families/?corpus.import_id={corpus1.import_id}&corpus.import_id={corpus2.import_id}"
     )
     assert response1.status_code == 200  # nosec B101
     data1 = APIListResponse[FamilyPublic].model_validate(response1.json())
     assert len(data1.data) == 2
+    assert {family.import_id for family in data1.data} == set(expected_family_ids1)
 
+    expected_family_ids2 = [family1.import_id]
     response2 = client.get(f"/families/?corpus.import_id={corpus1.import_id}")
     data2 = APIListResponse[FamilyPublic].model_validate(response2.json())
     assert len(data2.data) == 1
+    assert {family.import_id for family in data2.data} == set(expected_family_ids2)
