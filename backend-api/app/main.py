@@ -22,7 +22,7 @@ from app.api.api_v1.routers.pipeline_trigger import pipeline_trigger_router
 from app.api.api_v1.routers.search import search_router
 from app.api.api_v1.routers.summaries import summary_router
 from app.api.api_v1.routers.world_map import world_map_router
-from app.clients.db.session import SessionLocal
+from app.clients.db.session import get_db
 from app.service.auth import get_superuser_details
 from app.service.health import is_database_online
 from app.service.vespa import make_vespa_search_adapter
@@ -130,7 +130,7 @@ app.add_api_route("/health", health([is_database_online]), include_in_schema=Fal
 
 @app.middleware("http")
 async def db_session_middleware(request: Request, call_next):
-    request.state.db = SessionLocal()
+    request.state.db = get_db()
     response = await call_next(request)
     request.state.db.close()
     return response
