@@ -6,6 +6,7 @@ def test_FamilyDocumentPublic_cdn_object_computed_field_prepends_cdn_url_and_nav
 
     family = FamilyDocumentPublic(
         import_id="123",
+        document_status="CREATED",
         valid_metadata={},
         physical_document=PhysicalDocument(
             id=123,
