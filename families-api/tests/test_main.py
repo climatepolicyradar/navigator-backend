@@ -488,7 +488,7 @@ def test_aggregations_by_geography_response_filtered_by_document_status(
     session.commit()
 
     response = client.get(
-        "/families/aggregations/by-geography?document-status=published"
+        "/families/aggregations/by-geography?document.status=published"
     )
     assert response.status_code == 200
     response = APIListResponse[GeographyDocumentCount].model_validate(response.json())
