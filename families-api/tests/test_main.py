@@ -313,7 +313,7 @@ def test_aggregations_by_geography_does_not_include_geographies_without_document
     assert response.data == []
 
 
-def test_aggregations_by_geography_response_filters_by_corpus(
+def test_aggregations_by_geography_filters_response_by_corpus(
     client: TestClient, session: Session, make_family
 ):
     (corpus1, family1, family_document1, physical_document1) = make_family(3)
@@ -352,7 +352,7 @@ def test_aggregations_by_geography_response_filters_by_corpus(
     ]
 
 
-def test_aggregations_by_geography_response_filters_by_multiple_corpora(
+def test_aggregations_by_geography_filters_response_by_multiple_corpora(
     client: TestClient, session: Session, make_family
 ):
     (corpus1, family1, family_document1, physical_document1) = make_family(3)
@@ -458,7 +458,7 @@ def test_aggregations_by_geography_returns_200_with_empty_body_when_corpus_does_
     assert response.json()["data"] == []
 
 
-def test_aggregations_by_geography_response_filtered_by_document_status(
+def test_aggregations_by_geography_response_filters_response_by_document_status(
     client: TestClient, session: Session, make_family
 ):
     (corpus1, family1, family_document1, physical_document1) = make_family(5)
@@ -492,6 +492,58 @@ def test_aggregations_by_geography_response_filtered_by_document_status(
     )
     assert response.status_code == 200
     response = APIListResponse[GeographyDocumentCount].model_validate(response.json())
+    assert response.data == [
+        GeographyDocumentCount(code="DE", name="Germany", type="ISO 3166-1", count=1)
+    ]
+
+
+def test_aggregations_by_geography_filters_response_by_corpus_AND_document_status(
+    client: TestClient, session: Session, make_family
+):
+    (corpus1, family1, family_document1, physical_document1) = make_family(7)
+    (corpus2, family2, family_document2, physical_document2) = make_family(8)
+    (_, family3, family_document3, physical_document3) = make_family(9)
+
+    geography = Geography(
+        id=1,
+        slug="germany",
+        value="DE",
+        display_value="Germany",
+        type="ISO 3166-1",
+    )
+    # make family2 and family3 belong to the same corpus
+    family3.corpus = corpus2
+
+    family1.unparsed_geographies = [geography]
+    family2.unparsed_geographies = [geography]
+
+    # make documents from family1 and family2 published
+    family_document1.document_status = "PUBLISHED"
+    family_document2.document_status = "PUBLISHED"
+
+    session.add(corpus1)
+    session.add(family1)
+    session.add(family_document1)
+    session.add(physical_document1)
+
+    session.add(corpus2)
+    session.add(family2)
+    session.add(family_document2)
+    session.add(physical_document2)
+
+    session.add(family3)
+    session.add(family_document3)
+    session.add(physical_document3)
+
+    session.commit()
+
+    response = client.get(
+        f"/families/aggregations/by-geography?corpus.import_id={corpus2.import_id}&document.status=published"
+    )
+    assert response.status_code == 200
+    response = APIListResponse[GeographyDocumentCount].model_validate(response.json())
+
+    # only documents from family2 should be counted
     assert response.data == [
         GeographyDocumentCount(code="DE", name="Germany", type="ISO 3166-1", count=1)
     ]
