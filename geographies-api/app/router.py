@@ -1,5 +1,5 @@
 import logging
-from typing import Annotated, TypeVar, cast
+from typing import TypeVar, cast
 
 import pycountry
 from fastapi import APIRouter, HTTPException, Path, Query
