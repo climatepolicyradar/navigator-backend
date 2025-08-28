@@ -288,6 +288,83 @@ def test_aggregations_by_geography_returns_a_count_of_documents_per_geography(
     ]
 
 
+def test_aggregations_by_geography_returns_a_count_for_each_geo_when_document_has_multiple_geos(
+    client: TestClient, session: Session
+):
+    organisation = Organisation(id=123, name="Test Org")
+    corpus = Corpus(
+        import_id="corpus_1",
+        title="Test Corpus",
+        organisation=organisation,
+        organisation_id=organisation.id,
+        corpus_type_name="Intl. agreements",
+    )
+    physical_document = PhysicalDocument(
+        id=123,
+        title="Test Physical Document",
+        source_url="https://example.com/test-physical-document",
+        md5_sum="test_md5_sum",
+        cdn_object="https://cdn.example.com/test-physical-document",
+        content_type="application/pdf",
+    )
+    family_document = FamilyDocument(
+        import_id="family_document_1",
+        variant_name="MAIN",
+        family_import_id="family_123",
+        physical_document_id=123,
+        valid_metadata={"title": "Test Family Document"},
+        unparsed_events=[],
+    )
+    family = Family(
+        title="Test family",
+        import_id="family_123",
+        description="Test family",
+        corpus=corpus,
+        concepts=[],
+        unparsed_slug=[],
+        unparsed_geographies=[
+            Geography(
+                id=1,
+                slug="germany",
+                value="DE",
+                display_value="Germany",
+                type="ISO 3166-1",
+            ),
+            Geography(
+                id=2,
+                slug="france",
+                value="FR",
+                display_value="France",
+                type="ISO 3166-1",
+            ),
+        ],
+        family_category="Legislative",
+        unparsed_metadata=FamilyMetadata(
+            family_import_id="family_123",
+            value={
+                "topic": ["Adaptation"],
+            },
+        ),
+        unparsed_events=[],
+    )
+
+    session.add(corpus)
+    session.add(family)
+    session.add(family_document)
+    session.add(physical_document)
+
+    response = client.get("/families/aggregations/by-geography")
+
+    assert response.status_code == 200
+    response = APIListResponse[GeographyDocumentCount].model_validate(response.json())
+    assert len(response.data) == 2
+
+    assert response.data == [
+        GeographyDocumentCount(code="FR", name="France", type="ISO 3166-1", count=1),
+        GeographyDocumentCount(code="DE", name="Germany", type="ISO 3166-1", count=1),
+    ]
+
+
 def test_aggregations_by_geography_does_not_include_geographies_without_documents_in_response(
     client: TestClient, session: Session
 ):
