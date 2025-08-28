@@ -4,6 +4,7 @@ from typing import Annotated, TypeVar, cast
 import pycountry
 from fastapi import APIRouter, HTTPException, Path, Query
 from pycountry.db import Subdivision as PyCountrySubdivision
+from sqlmodel import Field
 
 from app.model import (
     APIItemResponse,
@@ -12,6 +13,7 @@ from app.model import (
     CountryResponse,
     Geography,
     GeographyType,
+    Region,
     RegionResponse,
     Subdivision,
     SubdivisionResponse,
@@ -198,8 +200,17 @@ def populate_s3_bucket() -> dict[str, str]:
 GeographySlug = str
 
 
-@router.get("/", response_model=APIListResponse[Geography])
-async def read_regions(
+# We exclude the subconcept_of field here to avoid recurrsion
+# @see: https://sqlmodel.tiangolo.com/tutorial/fastapi/relationships/#dont-include-all-the-data
+class SubdivisionWithoutSubconcept(Subdivision):
+    subconcept_of: list["Country"] = Field(default_factory=list, exclude=True)
+
+
+ReadGeographiesResponse = Region | Country | SubdivisionWithoutSubconcept
+
+
+@router.get("/", response_model=APIListResponse[ReadGeographiesResponse])
+async def read_geographies(
     subconcept_of: Annotated[list[GeographySlug], Query()],
     type: Annotated[list[GeographyType] | None, Query()] = None,
 ):
@@ -237,7 +248,7 @@ async def read_regions(
 
 
 @router.get("/{slug}", response_model=APIItemResponse[Geography])
-async def read_region(slug: str):
+async def read_geography(slug: str):
 
     geographies = get_geographies()
     all_geographies = (
