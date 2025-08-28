@@ -312,6 +312,123 @@ def test_aggregations_by_geography_does_not_include_geographies_without_document
     assert response.data == []
 
 
+def test_aggregations_by_geography_response_filters_by_corpus(
+    client: TestClient, session: Session, make_family
+):
+    (corpus1, family1, family_document1, physical_document1) = make_family(3)
+    (corpus2, family2, family_document2, physical_document2) = make_family(4)
+
+    assert corpus1.import_id != corpus2.import_id
+    geography = Geography(
+        id=1,
+        slug="germany",
+        value="DE",
+        display_value="Germany",
+        type="ISO 3166-1",
+    )
+    family1.unparsed_geographies = [geography]
+    family2.unparsed_geographies = [geography]
+
+    session.add(corpus1)
+    session.add(family1)
+    session.add(family_document1)
+    session.add(physical_document1)
+
+    session.add(corpus2)
+    session.add(family2)
+    session.add(family_document2)
+    session.add(physical_document2)
+
+    session.commit()
+
+    response = client.get(
+        f"/families/aggregations/by-geography?corpus.import_id={corpus1.import_id}"
+    )
+    assert response.status_code == 200
+    response = APIListResponse[GeographyDocumentCount].model_validate(response.json())
+    assert response.data == [
+        GeographyDocumentCount(code="DE", name="Germany", type="ISO 3166-1", count=1)
+    ]
+
+
+def test_aggregations_by_geography_response_filters_by_multiple_corpora(
+    client: TestClient, session: Session, make_family
+):
+    (corpus1, family1, family_document1, physical_document1) = make_family(3)
+    (corpus2, family2, family_document2, physical_document2) = make_family(4)
+
+    assert corpus1.import_id != corpus2.import_id
+    geography = Geography(
+        id=1,
+        slug="germany",
+        value="DE",
+        display_value="Germany",
+        type="ISO 3166-1",
+    )
+    family1.unparsed_geographies = [geography]
+    family2.unparsed_geographies = [geography]
+
+    session.add(corpus1)
+    session.add(family1)
+    session.add(family_document1)
+    session.add(physical_document1)
+
+    session.add(corpus2)
+    session.add(family2)
+    session.add(family_document2)
+    session.add(physical_document2)
+
+    session.commit()
+
+    response = client.get(
+        f"/families/aggregations/by-geography?corpus.import_id={corpus1.import_id}&corpus.import_id={corpus2.import_id}"
+    )
+    assert response.status_code == 200
+    response = APIListResponse[GeographyDocumentCount].model_validate(response.json())
+
+    assert response.data == [
+        GeographyDocumentCount(code="DE", name="Germany", type="ISO 3166-1", count=2),
+    ]
+
+
+def test_aggregations_by_geography_defaults_to_returning_counts_for_all_corpora_when_corpus_filter_not_supplied(
+    client: TestClient, session: Session, make_family
+):
+    (corpus1, family1, family_document1, physical_document1) = make_family(3)
+    (corpus2, family2, family_document2, physical_document2) = make_family(4)
+
+    assert corpus1.import_id != corpus2.import_id
+    geography = Geography(
+        id=1,
+        slug="germany",
+        value="DE",
+        display_value="Germany",
+        type="ISO 3166-1",
+    )
+    family1.unparsed_geographies = [geography]
+    family2.unparsed_geographies = [geography]
+
+    session.add(corpus1)
+    session.add(family1)
+    session.add(family_document1)
+    session.add(physical_document1)
+
+    session.add(corpus2)
+    session.add(family2)
+    session.add(family_document2)
+    session.add(physical_document2)
+
+    session.commit()
+
+    response = client.get("/families/aggregations/by-geography")
+    assert response.status_code == 200
+    response = APIListResponse[GeographyDocumentCount].model_validate(response.json())
+
+    assert response.data == [
+        GeographyDocumentCount(code="DE", name="Germany", type="ISO 3166-1", count=2),
+    ]
+
+
 def test_read_family_corpus_import_id_filter(
     client: TestClient, session: Session, make_family
 ):

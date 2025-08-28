@@ -242,9 +242,6 @@ class FamilyBase(SQLModel):
 
 class Family(FamilyBase, table=True):
     __tablename__ = "family"  # type: ignore[assignment]
-    unparsed_geographies: list[Geography] = Relationship(
-        back_populates="families", link_model=FamilyGeographyLink
-    )
     corpus: Corpus = Relationship(
         back_populates="families", link_model=FamilyCorpusLink
     )
