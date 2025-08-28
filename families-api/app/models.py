@@ -394,6 +394,7 @@ class FamilyPublic(FamilyBase):
 class FamilyDocumentBase(SQLModel):
     import_id: str = Field(primary_key=True)
     variant_name: str | None
+    document_status: str
 
 
 class FamilyDocument(FamilyDocumentBase, table=True):
