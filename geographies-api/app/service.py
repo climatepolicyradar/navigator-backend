@@ -10,7 +10,7 @@ from pycountry.db import Country as PyCountryCountry
 from pycountry.db import Subdivision as PyCountrySubdivision
 from pydantic import BaseModel
 
-from app.data.cpr_custom_geographies import countries
+from app.data.cpr_custom_geographies import countries as custom_countries
 from app.data.geography_statistics_by_countries import geography_statistics_by_countries
 from app.data.regions import regions
 from app.data.regions import regions as regions_data
@@ -138,7 +138,7 @@ def load_cpr_custom_geographies() -> Dict[str, Any]:
         by alpha-3 codes, containing metadata like names, codes, and flags.
     """
 
-    return countries
+    return custom_countries
 
 
 @observe(name="get_country_by_code")
@@ -434,18 +434,40 @@ class Geographies(BaseModel):
 
 @observe(name="get_geographies")
 def get_geographies() -> Geographies:
+    for custom_country in custom_countries.values():
+        pycountry.countries.add_entry(
+            alpha_2=custom_country["alpha_2"],
+            alpha_3=custom_country["alpha_3"],
+            name=custom_country["name"],
+            numeric=custom_country["numeric"],
+        )
+
     regions = regions_data
     countries = cast(list[PyCountryCountry], pycountry.countries)
     subdivisions = cast(list[PyCountrySubdivision], pycountry.subdivisions)
 
-    region_geographies = [
-        Region(id=region["slug"], name=region["name"]) for region in regions
+    region_geographies: list[Region] = [
+        Region(id=region["slug"], name=region["name"], statistics=None)
+        for region in regions
     ]
-    country_geographies = [
-        Country(id=country.alpha_3, name=country.name, alpha_2=country.alpha_2)
-        for country in list(countries)
+
+    country_geographies: list[Country] = [
+        Country(
+            id=country.alpha_3,
+            name=country.name,
+            alpha_2=country.alpha_2,
+            statistics=(
+                CountryStatisticsResponse(
+                    **geography_statistics_by_countries[country.alpha_3]
+                )
+                if geography_statistics_by_countries.get(country.alpha_3)
+                else None
+            ),
+        )
+        for country in countries
     ]
-    subdivision_regions = [
+
+    subdivision_regions: list[Subdivision] = [
         Subdivision(
             id=subdivision.code,
             name=subdivision.name,
@@ -454,6 +476,7 @@ def get_geographies() -> Geographies:
                 for country in country_geographies
                 if country.alpha_2 == subdivision.country_code
             ],
+            statistics=None,
         )
         for subdivision in list(subdivisions)
     ]
