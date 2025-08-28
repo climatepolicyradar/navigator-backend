@@ -12,6 +12,7 @@ from app.database import get_session
 from app.models import (
     Collection,
     CollectionPublicWithFamilies,
+    Corpus,
     Family,
     FamilyDocument,
     FamilyDocumentPublicWithFamily,
@@ -47,12 +48,27 @@ class APIItemResponse(BaseModel, Generic[APIDataType]):
 
 @router.get("/", response_model=APIListResponse[FamilyPublic])
 def read_families(
-    *, session: Session = Depends(get_session), page: int = Query(1, ge=1)
+    *,
+    session: Session = Depends(get_session),
+    page: int = Query(1, ge=1),
+    corpus_import_ids: list[str] = Query(
+        default=[],
+        alias="corpus.import_id",
+    )
 ):
     limit = 10
     offset = (page - 1) * limit
 
-    families = session.exec(select(Family).offset(offset).limit(10)).all()
+    filters = []
+    if corpus_import_ids:
+        # We're filtering `Families.corpus` to tell SQLModel to generate the right SQL for filtering.
+        # Direct attribute access e.g. Corpus.import_id doesn't work because the ORM
+        # doesn't auto-join related tables in filters.
+        filters.append(Family.corpus.has(Corpus.import_id.in_(corpus_import_ids)))  # type: ignore
+
+    families = session.exec(
+        select(Family).offset(offset).limit(10).where(*filters)
+    ).all()
 
     return APIListResponse(
         data=list(families),
