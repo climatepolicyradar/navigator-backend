@@ -1,7 +1,7 @@
 from enum import Enum
 from typing import Generic, Literal, Optional, TypeVar
 
-from pydantic import BaseModel, Field, computed_field
+from pydantic import BaseModel, computed_field
 from slugify import slugify
 from sqlmodel import SQLModel
 
@@ -125,7 +125,7 @@ class Country(GeographyV2Base):
 class Subdivision(GeographyV2Base):
     type: Literal["subdivision"] = "subdivision"
 
-    subconcept_of: list["Country"] = Field(default_factory=list, exclude=True)
+    subconcept_of: list["Country"] = []
 
     @computed_field
     @property
