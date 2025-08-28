@@ -89,6 +89,7 @@ class GeographyType(str, Enum):
 class GeographyV2Base(BaseModel):
     id: str
     name: str
+    statistics: CountryStatisticsResponse | None
 
     # these are currently different / type while we work out how we want to standardise on this
     @computed_field
