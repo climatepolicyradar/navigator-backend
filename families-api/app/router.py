@@ -14,6 +14,7 @@ from app.models import (
     CollectionPublicWithFamilies,
     Corpus,
     Family,
+    FamilyCorpusLink,
     FamilyDocument,
     FamilyDocumentPublicWithFamily,
     FamilyGeographyLink,
@@ -254,7 +255,18 @@ class GeographyDocumentCount(SQLModel):
 )
 def docs_by_geo(
     session: Session = Depends(get_session),
+    corpus_import_ids: list[str] = Query(
+        default=[],
+        alias="corpus.import_id",
+    ),
 ):
+    filters = []
+    if corpus_import_ids:
+        # We're filtering `Families.corpus` to tell SQLModel to generate the right SQL for filtering.
+        # Direct attribute access e.g. Corpus.import_id doesn't work because the ORM
+        # doesn't auto-join related tables in filters.
+        filters.append(Corpus.import_id.in_(corpus_import_ids))  # type: ignore
+
     stmt = (
         select(
             Geography.value.label("code"),  # type: ignore
@@ -269,6 +281,9 @@ def docs_by_geo(
             PhysicalDocument,
             FamilyDocument.physical_document_id == PhysicalDocument.id,  # type: ignore
         )
+        .join(FamilyCorpusLink, Family.import_id == FamilyCorpusLink.family_import_id)  # type: ignore
+        .join(Corpus, FamilyCorpusLink.corpus_import_id == Corpus.import_id)  # type: ignore
+        .where(*filters)
         .group_by(Geography.id)  # type: ignore
         .order_by(func.count(PhysicalDocument.id).desc())  # type: ignore
     )
