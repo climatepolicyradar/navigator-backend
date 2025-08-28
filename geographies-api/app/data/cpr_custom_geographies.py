@@ -15,4 +15,12 @@ countries = {
         "numeric": "",
         "flag": "",
     },
+    "EUR": {
+        "alpha_2": "EU",
+        "alpha_3": "EUR",
+        "name": "European Union",
+        "official_name": "European Union",
+        "numeric": "",
+        "flag": "🇪🇺",
+    },
 }
