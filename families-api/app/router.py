@@ -262,7 +262,7 @@ def docs_by_geo(
     ),
     document_statuses: list[FamilyDocumentStatus] = Query(
         default=[],
-        alias="document.document_status",
+        alias="documents.document_status",
     ),
 ):
     filters = []

@@ -392,7 +392,7 @@ class FamilyPublic(FamilyBase):
 
 
 # region: FamilyDocument & PhysicalDocument
-class FamilyDocumentStatus(Enum):
+class FamilyDocumentStatus(str, Enum):
     CREATED = "created"
     PUBLISHED = "published"
     DELETED = "deleted"

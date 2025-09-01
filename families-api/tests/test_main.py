@@ -491,7 +491,7 @@ def test_aggregations_by_geography_response_filters_response_by_document_status(
     session.commit()
 
     response = client.get(
-        "/families/aggregations/by-geography?document.document_status=published"
+        "/families/aggregations/by-geography?documents.document_status=published"
     )
     assert response.status_code == 200
     response = APIListResponse[GeographyDocumentCount].model_validate(response.json())
@@ -540,7 +540,7 @@ def test_aggregations_by_geography_response_filters_response_by_multiple_documen
     session.commit()
 
     response = client.get(
-        "/families/aggregations/by-geography?document.document_status=published&document.document_status=created"
+        "/families/aggregations/by-geography?documents.document_status=published&documents.document_status=created"
     )
     assert response.status_code == 200
     response = APIListResponse[GeographyDocumentCount].model_validate(response.json())
@@ -611,7 +611,7 @@ def test_aggregations_by_geography_returns_422_unprocessable_entity_when_documen
     session.commit()
 
     response = client.get(
-        "/families/aggregations/by-geography?document.document_status=invalid"
+        "/families/aggregations/by-geography?documents.document_status=invalid"
     )
 
     assert response.status_code == 422
