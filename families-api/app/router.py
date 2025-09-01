@@ -17,6 +17,7 @@ from app.models import (
     FamilyCorpusLink,
     FamilyDocument,
     FamilyDocumentPublicWithFamily,
+    FamilyDocumentStatus,
     FamilyGeographyLink,
     FamilyPublic,
     Geography,
@@ -259,19 +260,15 @@ def docs_by_geo(
         default=[],
         alias="corpus.import_id",
     ),
-    document_statuses: list[str] = Query(
+    document_statuses: list[FamilyDocumentStatus] = Query(
         default=[],
-        alias="document.status",
+        alias="document.document_status",
     ),
 ):
     filters = []
     if corpus_import_ids:
-        # We're filtering `Families.corpus` to tell SQLModel to generate the right SQL for filtering.
-        # Direct attribute access e.g. Corpus.import_id doesn't work because the ORM
-        # doesn't auto-join related tables in filters.
         filters.append(Corpus.import_id.in_(corpus_import_ids))  # type: ignore
     if document_statuses:
-        document_statuses = [status.upper() for status in document_statuses]
         filters.append(FamilyDocument.document_status.in_(document_statuses))  # type: ignore
 
     stmt = (

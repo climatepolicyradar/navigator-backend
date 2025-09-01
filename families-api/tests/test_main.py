@@ -12,6 +12,7 @@ from app.models import (
     Corpus,
     Family,
     FamilyDocument,
+    FamilyDocumentStatus,
     FamilyEvent,
     FamilyMetadata,
     FamilyPublic,
@@ -48,7 +49,7 @@ def make_family():
         family_document = FamilyDocument(
             import_id=f"family_document_{id}",
             variant_name="MAIN",
-            document_status="CREATED",
+            document_status=FamilyDocumentStatus.CREATED,
             family_import_id=f"family_{id}",
             physical_document_id=id,
             valid_metadata={
@@ -474,8 +475,8 @@ def test_aggregations_by_geography_response_filters_response_by_document_status(
     family1.unparsed_geographies = [geography]
     family2.unparsed_geographies = [geography]
 
-    family_document1.document_status = "PUBLISHED"
-    family_document2.document_status = "CREATED"
+    family_document1.document_status = FamilyDocumentStatus.PUBLISHED
+    family_document2.document_status = FamilyDocumentStatus.CREATED
 
     session.add(corpus1)
     session.add(family1)
@@ -490,7 +491,7 @@ def test_aggregations_by_geography_response_filters_response_by_document_status(
     session.commit()
 
     response = client.get(
-        "/families/aggregations/by-geography?document.status=published"
+        "/families/aggregations/by-geography?document.document_status=published"
     )
     assert response.status_code == 200
     response = APIListResponse[GeographyDocumentCount].model_validate(response.json())
@@ -517,9 +518,9 @@ def test_aggregations_by_geography_response_filters_response_by_multiple_documen
     family2.unparsed_geographies = [geography]
     family3.unparsed_geographies = [geography]
 
-    family_document1.document_status = "PUBLISHED"
-    family_document2.document_status = "DELETED"
-    family_document3.document_status = "CREATED"
+    family_document1.document_status = FamilyDocumentStatus.PUBLISHED
+    family_document2.document_status = FamilyDocumentStatus.DELETED
+    family_document3.document_status = FamilyDocumentStatus.CREATED
 
     session.add(corpus1)
     session.add(family1)
@@ -539,7 +540,7 @@ def test_aggregations_by_geography_response_filters_response_by_multiple_documen
     session.commit()
 
     response = client.get(
-        "/families/aggregations/by-geography?document.status=published&document.status=created"
+        "/families/aggregations/by-geography?document.document_status=published&document.document_status=created"
     )
     assert response.status_code == 200
     response = APIListResponse[GeographyDocumentCount].model_validate(response.json())
@@ -565,8 +566,8 @@ def test_aggregations_by_geography_defaults_to_returning_counts_for_all_statuses
     family1.unparsed_geographies = [geography]
     family2.unparsed_geographies = [geography]
 
-    family_document1.document_status = "PUBLISHED"
-    family_document2.document_status = "DELETED"
+    family_document1.document_status = FamilyDocumentStatus.PUBLISHED
+    family_document2.document_status = FamilyDocumentStatus.DELETED
 
     session.add(corpus1)
     session.add(family1)
@@ -589,7 +590,7 @@ def test_aggregations_by_geography_defaults_to_returning_counts_for_all_statuses
     ]
 
 
-def test_aggregations_by_geography_returns_200_with_empty_body_when_document_status_invalid(
+def test_aggregations_by_geography_returns_422_unprocessable_entity_when_document_status_invalid(
     client: TestClient, session: Session, make_family
 ):
     (corpus1, family1, family_document1, physical_document1) = make_family(12)
@@ -609,10 +610,15 @@ def test_aggregations_by_geography_returns_200_with_empty_body_when_document_sta
     session.add(physical_document1)
     session.commit()
 
-    response = client.get("/families/aggregations/by-geography?document.status=invalid")
+    response = client.get(
+        "/families/aggregations/by-geography?document.document_status=invalid"
+    )
 
-    assert response.status_code == 200
-    assert response.json()["data"] == []
+    assert response.status_code == 422
+    assert (
+        response.json()["detail"][0]["msg"]
+        == "Input should be 'created', 'published' or 'deleted'"
+    )
 
 
 def test_aggregations_by_geography_filters_response_by_corpus_AND_document_status(
@@ -636,8 +642,8 @@ def test_aggregations_by_geography_filters_response_by_corpus_AND_document_statu
     family2.unparsed_geographies = [geography]
 
     # make documents from family1 and family2 published
-    family_document1.document_status = "PUBLISHED"
-    family_document2.document_status = "PUBLISHED"
+    family_document1.document_status = FamilyDocumentStatus.PUBLISHED
+    family_document2.document_status = FamilyDocumentStatus.PUBLISHED
 
     session.add(corpus1)
     session.add(family1)
@@ -656,7 +662,7 @@ def test_aggregations_by_geography_filters_response_by_corpus_AND_document_statu
     session.commit()
 
     response = client.get(
-        f"/families/aggregations/by-geography?corpus.import_id={corpus2.import_id}&document.status=published"
+        f"/families/aggregations/by-geography?corpus.import_id={corpus2.import_id}&document.document_status=published"
     )
     assert response.status_code == 200
     response = APIListResponse[GeographyDocumentCount].model_validate(response.json())

@@ -1,5 +1,6 @@
 import logging
 from datetime import datetime, timezone
+from enum import Enum
 from pathlib import Path
 from typing import Any, Optional
 
@@ -391,10 +392,16 @@ class FamilyPublic(FamilyBase):
 
 
 # region: FamilyDocument & PhysicalDocument
+class FamilyDocumentStatus(Enum):
+    CREATED = "created"
+    PUBLISHED = "published"
+    DELETED = "deleted"
+
+
 class FamilyDocumentBase(SQLModel):
     import_id: str = Field(primary_key=True)
     variant_name: str | None
-    document_status: str
+    document_status: FamilyDocumentStatus
 
 
 class FamilyDocument(FamilyDocumentBase, table=True):
