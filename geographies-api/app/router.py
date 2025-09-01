@@ -267,7 +267,7 @@ async def read_geography(slug: str):
 
     if isinstance(result, Country):
         result.has_subconcept = [
-            Subdivision(id=subdivision.code, name=subdivision.name)
+            Subdivision(id=subdivision.code, name=subdivision.name, statistics=None)
             for subdivision in cast(
                 list[PyCountrySubdivision],
                 pycountry.subdivisions.get(country_code=result.alpha_2),
