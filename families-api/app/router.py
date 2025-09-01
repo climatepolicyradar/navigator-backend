@@ -14,8 +14,10 @@ from app.models import (
     CollectionPublicWithFamilies,
     Corpus,
     Family,
+    FamilyCorpusLink,
     FamilyDocument,
     FamilyDocumentPublicWithFamily,
+    FamilyDocumentStatus,
     FamilyGeographyLink,
     FamilyPublic,
     Geography,
@@ -254,7 +256,21 @@ class GeographyDocumentCount(SQLModel):
 )
 def docs_by_geo(
     session: Session = Depends(get_session),
+    corpus_import_ids: list[str] = Query(
+        default=[],
+        alias="corpus.import_id",
+    ),
+    document_statuses: list[FamilyDocumentStatus] = Query(
+        default=[],
+        alias="documents.document_status",
+    ),
 ):
+    filters = []
+    if corpus_import_ids:
+        filters.append(Corpus.import_id.in_(corpus_import_ids))  # type: ignore
+    if document_statuses:
+        filters.append(FamilyDocument.document_status.in_(document_statuses))  # type: ignore
+
     stmt = (
         select(
             Geography.value.label("code"),  # type: ignore
@@ -269,6 +285,9 @@ def docs_by_geo(
             PhysicalDocument,
             FamilyDocument.physical_document_id == PhysicalDocument.id,  # type: ignore
         )
+        .join(FamilyCorpusLink, Family.import_id == FamilyCorpusLink.family_import_id)  # type: ignore
+        .join(Corpus, FamilyCorpusLink.corpus_import_id == Corpus.import_id)  # type: ignore
+        .where(*filters)
         .group_by(Geography.id)  # type: ignore
         .order_by(func.count(PhysicalDocument.id).desc())  # type: ignore
     )

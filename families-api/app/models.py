@@ -1,5 +1,6 @@
 import logging
 from datetime import datetime, timezone
+from enum import Enum
 from pathlib import Path
 from typing import Any, Optional
 
@@ -242,9 +243,6 @@ class FamilyBase(SQLModel):
 
 class Family(FamilyBase, table=True):
     __tablename__ = "family"  # type: ignore[assignment]
-    unparsed_geographies: list[Geography] = Relationship(
-        back_populates="families", link_model=FamilyGeographyLink
-    )
     corpus: Corpus = Relationship(
         back_populates="families", link_model=FamilyCorpusLink
     )
@@ -394,9 +392,16 @@ class FamilyPublic(FamilyBase):
 
 
 # region: FamilyDocument & PhysicalDocument
+class FamilyDocumentStatus(str, Enum):
+    CREATED = "created"
+    PUBLISHED = "published"
+    DELETED = "deleted"
+
+
 class FamilyDocumentBase(SQLModel):
     import_id: str = Field(primary_key=True)
     variant_name: str | None
+    document_status: FamilyDocumentStatus
 
 
 class FamilyDocument(FamilyDocumentBase, table=True):
