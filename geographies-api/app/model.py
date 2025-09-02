@@ -1,25 +1,24 @@
 from enum import Enum
 from typing import Generic, Literal, Optional, TypeVar
 
-from pydantic import BaseModel, computed_field
+from pydantic import BaseModel, Field, computed_field
 from slugify import slugify
-from sqlmodel import SQLModel
 
 APIDataType = TypeVar("APIDataType")
 
 
-class APIResponse(SQLModel, Generic[APIDataType]):
+class APIResponse(BaseModel, Generic[APIDataType]):
     data: list[APIDataType]
     total: int
     page: int
     page_size: int
 
 
-class GeographyBase(SQLModel):
+class GeographyBase(BaseModel):
     id: int
 
 
-class GeographyDocumentCount(SQLModel):
+class GeographyDocumentCount(BaseModel):
     alpha3: str
     name: str
     count: int
@@ -86,10 +85,17 @@ class GeographyType(str, Enum):
     subdivision = "subdivision"
 
 
-class GeographyV2Base(BaseModel):
+Subconcept = TypeVar("Subconcept", bound="GeographyV2Base")
+
+
+class GeographyV2Base(BaseModel, Generic[Subconcept]):
     id: str
     name: str
     statistics: CountryStatisticsResponse | None
+
+    @property
+    def subconcept_of(self) -> list[Subconcept]:
+        return []  # default initialisation
 
     # these are currently different / type while we work out how we want to standardise on this
     @computed_field
@@ -100,7 +106,6 @@ class GeographyV2Base(BaseModel):
 
 class Region(GeographyV2Base):
     type: Literal["region"] = "region"
-    subconcept_of: list["Region"] = []
 
     @computed_field
     @property
@@ -108,14 +113,10 @@ class Region(GeographyV2Base):
         return f"{slugify(self.name)}"
 
 
-class Country(GeographyV2Base):
+class Country(GeographyV2Base[Region]):
     type: Literal["country"] = "country"
 
-    alpha_2: str
-    # This language is useful because we use it in multiple ways to express graph/hierarchical data
-    # @see: https://github.com/climatepolicyradar/knowledge-graph/blob/main/src/concept.py#L51-L60
-    has_subconcept: list["Subdivision"] = []
-    subconcept_of: list["Region"] = []
+    alpha_2: str = Field(exclude=True)
 
     @computed_field
     @property
@@ -123,10 +124,10 @@ class Country(GeographyV2Base):
         return f"{slugify(self.name)}"
 
 
-class Subdivision(GeographyV2Base):
+class Subdivision(GeographyV2Base[Country]):
     type: Literal["subdivision"] = "subdivision"
 
-    subconcept_of: list["Country"] = []
+    country_code: str = Field(exclude=True)
 
     @computed_field
     @property

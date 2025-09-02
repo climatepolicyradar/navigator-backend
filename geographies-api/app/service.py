@@ -1,6 +1,7 @@
 import logging
 import os
 from datetime import datetime, timezone
+from functools import lru_cache
 from typing import Any, Dict, cast
 
 import pycountry
@@ -8,7 +9,7 @@ import requests
 from api.telemetry import observe
 from pycountry.db import Country as PyCountryCountry
 from pycountry.db import Subdivision as PyCountrySubdivision
-from pydantic import BaseModel
+from pydantic import BaseModel, computed_field
 
 from app.data.cpr_custom_geographies import countries as custom_countries
 from app.data.geography_statistics_by_countries import geography_statistics_by_countries
@@ -432,6 +433,57 @@ class Geographies(BaseModel):
     subdivisions: list[Subdivision]
 
 
+class SubdivisionWithCalculatedRelationships(Subdivision):
+    @computed_field
+    @property
+    def related_concepts(self) -> list["Subdivision"]:
+        return [
+            Subdivision(
+                id=subdivision_item.code,
+                name=subdivision_item.name,
+                statistics=None,
+                country_code=subdivision_item.country_code,
+            )
+            for country in self.subconcept_of
+            for subdivision_item in cast(
+                list[PyCountrySubdivision],
+                pycountry.subdivisions.get(country_code=country.alpha_2),
+            )
+            # filter out self
+            if subdivision_item and subdivision_item.code != self.id
+        ]
+
+    @computed_field
+    @property
+    def subconcept_of(self) -> list[Country]:
+        return [
+            country
+            for country in get_geographies().countries
+            if country.alpha_2 == self.country_code
+        ]
+
+
+class CountryWithCalculatedRelationships(Country):
+    @computed_field
+    @property
+    def has_subconcept(self) -> list[Subdivision]:
+        return [
+            Subdivision(
+                id=subdivision.code,
+                name=subdivision.name,
+                statistics=None,
+                country_code=subdivision.country_code,
+            )
+            for subdivision in cast(
+                list[PyCountrySubdivision],
+                pycountry.subdivisions.get(country_code=self.alpha_2),
+            )
+            if subdivision
+        ]
+
+
+# memoize the geographies data to avoid repeated loading
+@lru_cache(maxsize=1)
 @observe(name="get_geographies")
 def get_geographies() -> Geographies:
     for custom_country in custom_countries.values():
@@ -467,15 +519,11 @@ def get_geographies() -> Geographies:
         for country in countries
     ]
 
-    subdivision_regions: list[Subdivision] = [
+    subdivision_geographies: list[Subdivision] = [
         Subdivision(
             id=subdivision.code,
             name=subdivision.name,
-            subconcept_of=[
-                country
-                for country in country_geographies
-                if country.alpha_2 == subdivision.country_code
-            ],
+            country_code=subdivision.country_code,
             statistics=None,
         )
         for subdivision in list(subdivisions)
@@ -484,5 +532,5 @@ def get_geographies() -> Geographies:
     return Geographies(
         regions=region_geographies,
         countries=country_geographies,
-        subdivisions=subdivision_regions,
+        subdivisions=subdivision_geographies,
     )
