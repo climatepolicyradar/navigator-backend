@@ -42,7 +42,7 @@ opentelemetry-util-http==0.57b0
 packaging==25.0
 parver==0.5
 pip==25.2
-protobuf==4.25.8
+protobuf==6.32.0
 pulumi==3.192.0
 pulumi-aws==6.83.0
 pydantic==2.11.7

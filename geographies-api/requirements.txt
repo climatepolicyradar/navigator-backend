@@ -43,7 +43,7 @@ packaging==25.0
 parver==0.5
 pip==25.2
 pluggy==1.6.0
-protobuf==4.25.8
+protobuf==6.32.0
 psycopg2==2.9.10
 pulumi==3.192.0
 pulumi-aws==6.83.0
