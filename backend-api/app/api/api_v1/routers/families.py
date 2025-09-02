@@ -61,7 +61,7 @@ def get_homepage_counts_latest_ingest_cycle(
 
 
 @families_router.get(
-    "/latest_published",
+    "/latest-published",
     summary="Gets five most recently published families.",
 )
 def latest_published(

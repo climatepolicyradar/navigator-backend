@@ -27,7 +27,7 @@ def test_endpoint_does_not_return_unpublished_families(
 
     add_families(data_db, families=[family_data])
     response = data_client.get(
-        "/api/v1/latest_published", headers={"app-token": valid_token}
+        "/api/v1/latest-published", headers={"app-token": valid_token}
     )
 
     assert response.status_code == 200
@@ -44,7 +44,7 @@ def test_endpoint_returns_five_families(data_client, data_db, valid_token):
     assert len(all_families) > 5
 
     response = data_client.get(
-        "/api/v1/latest_published", headers={"app-token": valid_token}
+        "/api/v1/latest-published", headers={"app-token": valid_token}
     )
 
     assert response.status_code == 200
@@ -128,7 +128,7 @@ def test_returns_families_within_token_corpora(data_client, data_db, monkeypatch
     # Create a token that includes only one corpus
     token = create_token(monkeypatch)
 
-    response = data_client.get("/api/v1/latest_published", headers={"app-token": token})
+    response = data_client.get("/api/v1/latest-published", headers={"app-token": token})
 
     assert response.status_code == 200
     families = response.json()
