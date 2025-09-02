@@ -90,3 +90,8 @@ def test_read_geography_related_concepts(slug: str, has_related_concepts: bool):
     item_json = item_response.json()
     geography = item_json["data"]
     assert ("related_concepts" in geography) == has_related_concepts
+
+    # ensure if we have related_concepts, we do not include self
+    if "related_concepts" in geography:
+        for related_concept in geography["related_concepts"]:
+            assert related_concept["slug"] != slug
