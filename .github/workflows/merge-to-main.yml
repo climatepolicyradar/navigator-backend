@@ -13,7 +13,7 @@ jobs:
         working-directory: backend-api
     runs-on: ubuntu-latest
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@v5
 
       # build
       - run: make build
@@ -73,7 +73,7 @@ jobs:
       matrix:
         service: [families-api, geographies-api, concepts-api]
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@v5
       - uses: extractions/setup-just@v3
       - run: just test ${{ matrix.service }}
   deploy-microservices:
@@ -86,7 +86,7 @@ jobs:
     env:
       SERVICES: families-api geographies-api concepts-api
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@v5
       - uses: extractions/setup-just@v3
       - uses: aws-actions/configure-aws-credentials@v4.2.0
         with:
