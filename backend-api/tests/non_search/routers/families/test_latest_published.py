@@ -26,9 +26,7 @@ def test_endpoint_does_not_return_unpublished_families(
     }
 
     add_families(data_db, families=[family_data])
-    response = data_client.get(
-        "/api/v1/latest-published", headers={"app-token": valid_token}
-    )
+    response = data_client.get("/api/v1/latest", headers={"app-token": valid_token})
 
     assert response.status_code == 200
     assert isinstance(response.json(), list)
@@ -43,9 +41,7 @@ def test_endpoint_returns_five_families(data_client, data_db, valid_token):
     # Make sure we have more than 5 families in the DB
     assert len(all_families) > 5
 
-    response = data_client.get(
-        "/api/v1/latest-published", headers={"app-token": valid_token}
-    )
+    response = data_client.get("/api/v1/latest", headers={"app-token": valid_token})
 
     assert response.status_code == 200
 
@@ -58,6 +54,7 @@ def test_endpoint_returns_five_families(data_client, data_db, valid_token):
         "family_category",
         "published_date",
         "last_modified",
+        "created",
         "metadata",
         "geographies",
         "slugs",
@@ -88,7 +85,7 @@ def create_token(monkeypatch):
 
 
 def test_returns_families_within_token_corpora(data_client, data_db, monkeypatch):
-    """Test that the latest_published endpoint returns families within the token corpora."""
+    """Test that the latest endpoint returns families within the token corpora."""
 
     corpus = setup_new_corpus(
         data_db,
@@ -128,7 +125,7 @@ def test_returns_families_within_token_corpora(data_client, data_db, monkeypatch
     # Create a token that includes only one corpus
     token = create_token(monkeypatch)
 
-    response = data_client.get("/api/v1/latest-published", headers={"app-token": token})
+    response = data_client.get("/api/v1/latest", headers={"app-token": token})
 
     assert response.status_code == 200
     families = response.json()
