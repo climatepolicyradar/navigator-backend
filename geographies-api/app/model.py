@@ -93,7 +93,6 @@ class GeographyV2Base(BaseModel, Generic[Subconcept]):
     name: str
     statistics: CountryStatisticsResponse | None
 
-    @computed_field
     @property
     def subconcept_of(self) -> list[Subconcept]:
         return []  # default initialisation
