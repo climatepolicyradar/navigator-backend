@@ -139,7 +139,7 @@ def latest_published(
         )
         .filter(geographies_subquery.c.family_import_id == Family.import_id)
         .filter(Corpus.import_id.in_(allowed_corpora_ids))
-        .order_by(Family.last_modified.desc())
+        .order_by(Family.created.desc())
         .limit(5)
         .options(lazyload("*"))
     )
