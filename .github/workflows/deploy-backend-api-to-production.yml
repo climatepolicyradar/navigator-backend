@@ -11,7 +11,7 @@ jobs:
         working-directory: backend-api
     runs-on: ubuntu-latest
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@v5
       - run: make build
       - name: Configure AWS credentials
         uses: aws-actions/configure-aws-credentials@v4

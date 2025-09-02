@@ -7,10 +7,12 @@ updates:
     ignore:
       - dependency-name: cpr_sdk
     groups:
-      all:
-        applies-to: version-updates
+      minor-and-patch:
         patterns:
           - "*"
+        update-types:
+          - minor
+          - patch
   - package-ecosystem: github-actions
     directory: /
     schedule:
