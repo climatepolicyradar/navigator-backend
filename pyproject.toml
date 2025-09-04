@@ -3,7 +3,9 @@ name = "navigator-backend"
 version = "0.1.0"
 readme = "README.md"
 requires-python = ">=3.12"
-dependencies = []
+dependencies = [
+    "grafana-foundation-sdk>=1753978229!10.1.0",
+]
 
 [tool.uv.workspace]
 members = ["api", "concepts-api", "families-api", "geographies-api"]

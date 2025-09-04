@@ -442,6 +442,15 @@ wheels = [
 ]
 
 [[package]]
+name = "grafana-foundation-sdk"
+version = "1753978229!10.1.0"
+source = { registry = "https://pypi.org/simple" }
+sdist = { url = "https://files.pythonhosted.org/packages/8f/bd/da15dd853d80cdfe436074082482634ee46d01a7289b4976fba0b3a4b40b/grafana_foundation_sdk-1753978229!10.1.0.tar.gz", hash = "sha256:d3be2b85655c5165d9de225bf27276ed5ed180085c8a9bd8fb4a9324830fdbed", size = 409973 }
+wheels = [
+    { url = "https://files.pythonhosted.org/packages/e8/19/ab27922ffd48c192c1e2c2826eb22950e0e263465b16732e6310a7cb08bb/grafana_foundation_sdk-1753978229!10.1.0-py3-none-any.whl", hash = "sha256:153125e7f438d549c10cb0d4d85edef22d6d4458da95aa75786fa4e513239471", size = 317763 },
+]
+
+[[package]]
 name = "greenlet"
 version = "3.2.3"
 source = { registry = "https://pypi.org/simple" }
@@ -673,6 +682,12 @@ wheels = [
 name = "navigator-backend"
 version = "0.1.0"
 source = { virtual = "." }
+dependencies = [
+    { name = "grafana-foundation-sdk" },
+]
+
+[package.metadata]
+requires-dist = [{ name = "grafana-foundation-sdk", specifier = ">=1753978229!10.1.0" }]
 
 [[package]]
 name = "opentelemetry-api"
