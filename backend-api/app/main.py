@@ -128,14 +128,6 @@ app.add_middleware(
 app.add_api_route("/health", health([is_database_online]), include_in_schema=False)
 
 
-@app.middleware("http")
-async def db_session_middleware(request: Request, call_next):
-    request.state.db = get_db()
-    response = await call_next(request)
-    request.state.db.close()
-    return response
-
-
 @app.get("/api/v1", include_in_schema=False)
 async def root():
     return {"message": "CPR API v1"}

@@ -16,7 +16,7 @@ _LOGGER = logging.getLogger(__file__)
 
 
 @r.post("/tokens")
-async def login(db=Depends(get_db), form_data: OAuth2PasswordRequestForm = Depends()):
+def login(db=Depends(get_db), form_data: OAuth2PasswordRequestForm = Depends()):
     _LOGGER.info(
         "Auth token requested",
         extra={"props": {"user_id": form_data.username}},

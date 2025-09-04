@@ -16,7 +16,7 @@ world_map_router = APIRouter(route_class=ExceptionHandlingTelemetryRoute)
 
 
 @world_map_router.get("/geographies", response_model=list[GeographyStatsDTO])
-async def world_map_stats(
+def world_map_stats(
     request: Request, app_token: Annotated[str, Header()], db=Depends(get_db)
 ):
     """Get a summary of family counts for all geographies for world map."""
