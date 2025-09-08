@@ -1,8 +1,8 @@
 import logging
 import logging.config
-from contextlib import asynccontextmanager
-import threading
 import os
+import threading
+from contextlib import asynccontextmanager
 
 import json_logging
 import uvicorn
@@ -23,10 +23,10 @@ from app.api.api_v1.routers.pipeline_trigger import pipeline_trigger_router
 from app.api.api_v1.routers.search import search_router
 from app.api.api_v1.routers.summaries import summary_router
 from app.api.api_v1.routers.world_map import world_map_router
-from app.service.vespa import make_vespa_search_adapter
 from app.clients.db.session import get_db
 from app.service.auth import get_superuser_details
 from app.service.health import is_database_online
+from app.service.vespa import make_vespa_search_adapter
 from app.telemetry import Telemetry
 from app.telemetry_config import ServiceManifest, TelemetryConfig
 from app.telemetry_exceptions import ExceptionHandlingTelemetryRoute
@@ -88,11 +88,14 @@ _openapi_url = "/api" if ENABLE_API_DOCS else None
 @asynccontextmanager
 async def lifespan(app: FastAPI):
     # Startup
-    _LOGGER.info(f"Starting FastAPI application | PID: {os.getpid()} | Main Thread: {threading.current_thread().name}")
+    _LOGGER.info(
+        f"Starting FastAPI application | PID: {os.getpid()} | Main Thread: {threading.current_thread().name}"
+    )
     _LOGGER.info(f"Thread count at startup: {threading.active_count()}")
     app.state.vespa_search_adapter = make_vespa_search_adapter()
     yield
     # Shutdown
+
 
 app = FastAPI(
     title=config.PROJECT_NAME,

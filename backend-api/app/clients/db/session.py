@@ -15,12 +15,13 @@ processes.
 """
 
 import logging
+import os
+import threading
+
 from opentelemetry.instrumentation.sqlalchemy import SQLAlchemyInstrumentor
 from sqlalchemy import create_engine
 from sqlalchemy.orm import sessionmaker
 from sqlalchemy.pool import NullPool
-import threading
-import os
 
 from app import config
 
@@ -32,15 +33,18 @@ _engine = create_engine(config.SQLALCHEMY_DATABASE_URI)
 # OpenTelemetry instrumentation
 SQLAlchemyInstrumentor().instrument(engine=_engine)
 
+
 def create_session():
     return sessionmaker(
-            autocommit=False,
-            autoflush=False,
-            bind=_engine,
-        )
+        autocommit=False,
+        autoflush=False,
+        bind=_engine,
+    )
+
 
 # Export callable for tests
 SessionLocal = create_session
+
 
 def get_db():
     """Get the database session.
@@ -48,7 +52,9 @@ def get_db():
     Tries to get a database session. If there is no session, it will
     create one AFTER the uvicorn stuff has started.
     """
-    _LOGGER.info(f"Creating DB session | PID: {os.getpid()} | Main Thread: {threading.current_thread().name}")
+    _LOGGER.info(
+        f"Creating DB session | PID: {os.getpid()} | Main Thread: {threading.current_thread().name}"
+    )
     _LOGGER.info(f"Thread count: {threading.active_count()}")
     db = create_session()()
     try:

@@ -21,6 +21,7 @@ _LOGGER = logging.getLogger(__name__)
 
 admin_document_router = r = APIRouter(route_class=ExceptionHandlingTelemetryRoute)
 
+
 @r.post("/documents/{import_id_or_slug}/processed", status_code=status.HTTP_200_OK)
 def update_document_status(
     request: Request,

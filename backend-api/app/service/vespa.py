@@ -3,6 +3,7 @@ from fastapi import Request
 
 from app.config import VESPA_SECRETS_LOCATION, VESPA_URL
 
+
 def make_vespa_search_adapter() -> VespaSearchAdapter:
     return VespaSearchAdapter(
         instance_url=VESPA_URL,
