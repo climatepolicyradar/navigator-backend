@@ -16,7 +16,7 @@ from sqlalchemy import func
 from sqlalchemy.orm import lazyload
 
 from app.clients.db.session import get_db
-from app.models.search import LatestUpdatedFamilyResponse
+from app.models.search import LatestFamilyResponse
 from app.repository.family import (
     _convert_to_dto,
     count_families_per_category_per_corpus,
@@ -61,24 +61,24 @@ def get_homepage_counts_latest_ingest_cycle(
 
 
 @families_router.get(
-    "/latest_published",
-    summary="Gets five most recently published families.",
+    "/latest",
+    summary="Gets five most recently added families.",
 )
-def latest_published(
+def latest(
     request: Request,
     app_token: Annotated[str, Header()],
     db=Depends(get_db),
-) -> list[LatestUpdatedFamilyResponse]:
-    """Retrieve the five most recently published families.
+) -> list[LatestFamilyResponse]:
+    """Retrieve the five most recently added families.
 
-    This endpoint returns the latest five published family records,
-    sorted by their modified date in descending order.
+    This endpoint returns the five most recently added family records,
+    sorted by their created date in descending order.
 
     :param Request request: The incoming request object.
     :param Annotated[str, Header()] app_token: App token containing
         the allowed corpora access.
     :param Depends[get_db] db: Database session dependency.
-    :return list[LatestUpdateFamilyResponse]: A list of the five most recently published
+    :return list[LatestFamilyResponse]: A list of the five most recently added
         families.
     """
 
@@ -101,7 +101,7 @@ def latest_published(
         )
 
     _LOGGER.info(
-        "Getting latest published families",
+        "Getting latest families",
         extra={
             "allowed_corpora_ids": allowed_corpora_ids,
         },
@@ -139,7 +139,7 @@ def latest_published(
         )
         .filter(geographies_subquery.c.family_import_id == Family.import_id)
         .filter(Corpus.import_id.in_(allowed_corpora_ids))
-        .order_by(Family.last_modified.desc())
+        .order_by(Family.created.desc())
         .limit(5)
         .options(lazyload("*"))
     )
@@ -147,21 +147,22 @@ def latest_published(
     families = query.all()
 
     return [
-        to_latest_published_response_family(family, geographies, metadata)
+        to_latest_response_family(family, geographies, metadata)
         for family, geographies, metadata in families
     ]
 
 
-def to_latest_published_response_family(
+def to_latest_response_family(
     family: Family, geographies: list[str], metadata: FamilyMetadata
-) -> LatestUpdatedFamilyResponse:
-    return LatestUpdatedFamilyResponse(
+) -> LatestFamilyResponse:
+    return LatestFamilyResponse(
         import_id=str(family.import_id),
         title=str(family.title),
         description=str(family.description),
         family_category=str(family.family_category),
         published_date=str(family.published_date),  # type: ignore
         last_modified=str(family.last_modified),
+        created=str(family.created),
         metadata=dict(metadata.value),  # type: ignore
         geographies=geographies,
         slugs=[str(slug) for slug in family.slugs] if family.slugs else [],

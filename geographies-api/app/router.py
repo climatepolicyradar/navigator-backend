@@ -1,10 +1,7 @@
 import logging
-from typing import TypeVar, cast
+from typing import Sequence, TypeVar, cast
 
-import pycountry
 from fastapi import APIRouter, HTTPException, Path, Query
-from pycountry.db import Subdivision as PyCountrySubdivision
-from sqlmodel import Field
 
 from app.model import (
     APIItemResponse,
@@ -19,6 +16,8 @@ from app.model import (
     SubdivisionResponse,
 )
 from app.service import (
+    CountryWithCalculatedRelationships,
+    SubdivisionWithCalculatedRelationships,
     get_all_countries,
     get_all_country_subdivisions,
     get_all_regions,
@@ -200,13 +199,7 @@ def populate_s3_bucket() -> dict[str, str]:
 GeographySlug = str
 
 
-# We exclude the subconcept_of field here to avoid recurrsion
-# @see: https://sqlmodel.tiangolo.com/tutorial/fastapi/relationships/#dont-include-all-the-data
-class SubdivisionWithoutSubconcept(Subdivision):
-    subconcept_of: list["Country"] = Field(default_factory=list, exclude=True)
-
-
-ReadGeographiesResponse = Region | Country | SubdivisionWithoutSubconcept
+ReadGeographiesResponse = Region | Country | Subdivision
 
 
 @router.get("/", response_model=APIListResponse[ReadGeographiesResponse])
@@ -216,10 +209,9 @@ async def read_geographies(
     ),
     type: list[GeographyType] | None = Query(default=None),
 ):
-
     geographies = get_geographies()
 
-    result = []
+    result: Sequence[Geography] = []
     if not type:
         result = geographies.regions + geographies.countries + geographies.subdivisions
     else:
@@ -249,7 +241,12 @@ async def read_geographies(
     )
 
 
-@router.get("/{slug}", response_model=APIItemResponse[Geography])
+ReadGeographyResponse = (
+    Region | CountryWithCalculatedRelationships | SubdivisionWithCalculatedRelationships
+)
+
+
+@router.get("/{slug}", response_model=APIItemResponse[ReadGeographyResponse])
 async def read_geography(slug: str):
 
     geographies = get_geographies()
@@ -264,16 +261,6 @@ async def read_geography(slug: str):
 
     if not result:
         raise HTTPException(status_code=404, detail="Not found")
-
-    if isinstance(result, Country):
-        result.has_subconcept = [
-            Subdivision(id=subdivision.code, name=subdivision.name, statistics=None)
-            for subdivision in cast(
-                list[PyCountrySubdivision],
-                pycountry.subdivisions.get(country_code=result.alpha_2),
-            )
-            if subdivision
-        ]
 
     return APIItemResponse(
         data=result,
