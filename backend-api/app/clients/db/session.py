@@ -14,45 +14,33 @@ initialised and therefore after uvicorn has spawned the worker
 processes.
 """
 
+import logging
 from opentelemetry.instrumentation.sqlalchemy import SQLAlchemyInstrumentor
 from sqlalchemy import create_engine
 from sqlalchemy.orm import sessionmaker
 from sqlalchemy.pool import NullPool
+import threading
+import os
 
 from app import config
 
+_LOGGER = logging.getLogger(__name__)
+
 # Lazy initialisation - created once per worker
-_engine = None
-_SessionLocal = None
+_engine = create_engine(config.SQLALCHEMY_DATABASE_URI)
 
-
-def get_engine():
-    global _engine
-    if _engine is None:
-        _engine = create_engine(
-            config.SQLALCHEMY_DATABASE_URI,
-            pool_pre_ping=True,
-            poolclass=NullPool,  # Safe for multiprocess
-        )
-        # OpenTelemetry instrumentation
-        SQLAlchemyInstrumentor().instrument(engine=_engine)
-    return _engine
-
+# OpenTelemetry instrumentation
+SQLAlchemyInstrumentor().instrument(engine=_engine)
 
 def create_session():
-    global _SessionLocal
-    if _SessionLocal is None:
-        _SessionLocal = sessionmaker(
+    return sessionmaker(
             autocommit=False,
             autoflush=False,
-            bind=get_engine(),
+            bind=_engine,
         )
-    return _SessionLocal
-
 
 # Export callable for tests
 SessionLocal = create_session
-
 
 def get_db():
     """Get the database session.
@@ -60,6 +48,8 @@ def get_db():
     Tries to get a database session. If there is no session, it will
     create one AFTER the uvicorn stuff has started.
     """
+    _LOGGER.info(f"Creating DB session | PID: {os.getpid()} | Main Thread: {threading.current_thread().name}")
+    _LOGGER.info(f"Thread count: {threading.active_count()}")
     db = create_session()()
     try:
         yield db
