@@ -109,7 +109,6 @@ _CCC_CSV_SEARCH_RESPONSE_COLUMNS = [
     "Document type",
     "Document filing date",
     "Document summary",
-    "Document outcome",
     "Document headline",
     "Geographies",
     "Document Content Matches Search Phrase",
@@ -322,7 +321,6 @@ def process_result_into_csv(
                         extra_required_info["document_events"],
                     )
                 else:
-                    # Standard theme columns
                     row = _create_standard_csv_row(
                         family,
                         document,
@@ -356,7 +354,6 @@ def process_result_into_csv(
                     extra_required_info["document_events"],
                 )
             else:
-                # Standard theme columns
                 row = _create_standard_csv_row(
                     family,
                     None,
