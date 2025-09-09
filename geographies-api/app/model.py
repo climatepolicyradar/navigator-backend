@@ -4,6 +4,8 @@ from typing import Generic, Literal, Optional, TypeVar
 from pydantic import BaseModel, Field, computed_field
 from slugify import slugify
 
+from app.data.country_id_to_slugs_hack import country_id_to_slugs_hack
+
 APIDataType = TypeVar("APIDataType")
 
 
@@ -121,6 +123,8 @@ class Country(GeographyV2Base[Region]):
     @computed_field
     @property
     def slug(self) -> str:
+        if self.id in country_id_to_slugs_hack:
+            return country_id_to_slugs_hack[self.id]
         return f"{slugify(self.name)}"
 
 
