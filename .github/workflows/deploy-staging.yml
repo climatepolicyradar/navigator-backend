@@ -1,5 +1,6 @@
 name: Deploy to staging
 on:
+  workflow_dispatch: {}
   workflow_run:
     workflows: [CI/CD]
     types:
