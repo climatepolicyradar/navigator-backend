@@ -89,6 +89,34 @@ schema document_passage {
                 indexing: attribute
             }
         }
+
+        struct concept_v2 {
+             # E.g. Q880
+             field concept_id      type string {}
+             # E.g. 3220
+             field concept_version type string {}
+             # E.g. n2nuerdn
+             field classifier_id   type string {}
+        }
+
+        struct span {
+            field start               type int {}
+            field end                 type int {}
+            # E.g. <Q880, <..>>
+            field concepts_v2         type array<concept_v2> {}
+            # A searchable field for concepts that are in the spans
+            #
+            # E.g. "Q880:n2nuerdn,.."
+            field concepts_v2_flat type string {}
+        }
+
+        field spans type array<span> {
+            indexing: summary
+            struct-field concepts_v2_flat {
+                indexing: attribute
+                attribute: fast-search
+            }
+        }
     }
 
     import field family_document_ref.family_name as family_name {}
@@ -140,6 +168,7 @@ schema document_passage {
         summary text_block_page {}
         summary text_block_coords {}
         summary concepts {}
+        summary spans {}
     }
 
     document-summary search_summary_with_tokens inherits search_summary {

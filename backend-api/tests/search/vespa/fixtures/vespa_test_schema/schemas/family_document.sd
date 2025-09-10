@@ -179,6 +179,37 @@ schema family_document {
             struct-field key { indexing: attribute }
             struct-field value { indexing: attribute }
         }
+
+        struct concept_v2 {
+            # E.g. Q880
+            field concept_id type string {}
+            # E.g. 4403
+            field concept_version type string {}
+            # E.g. n2nuerdn
+            field classifier_id type string {}
+            # E.g. 7
+            field count type int {}
+        }
+
+        field concepts_v2 type array<concept_v2> {
+            indexing: summary
+
+            struct-field concept_id {
+                indexing: attribute
+                attribute: fast-search
+                rank: filter
+            }
+            struct-field concept_version {
+                indexing: attribute
+                attribute: fast-search
+                rank: filter
+            }
+            struct-field classifier_id {
+                indexing: attribute
+                attribute: fast-search
+                rank: filter
+            }
+        }
     }
 
     fieldset default {
@@ -280,6 +311,7 @@ schema family_document {
         summary corpus_type_name {}
         summary collection_title {}
         summary collection_summary {}
+        summary concepts_v2 {}
     }
 
     document-summary search_summary_with_tokens inherits search_summary {
