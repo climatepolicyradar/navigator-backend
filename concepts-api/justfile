@@ -14,7 +14,7 @@ dev:
     just initial-data production
     docker compose up
 
-# You need to run this version if you have made changes to the requirements.txt file
+# Run if you've changed the dependencies.
 dev-rebuild:
     just initial-data production
     docker compose up --build
@@ -22,8 +22,3 @@ dev-rebuild:
 prebuild environment:
     uv sync --group prebuild
     just initial-data {{environment}}
-
-# build
-# TODO: this needs to be tied into a lifecycle somewhere to make sure it is run if something is added
-requirements:
-    uv pip freeze > requirements.txt
