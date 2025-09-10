@@ -61,7 +61,7 @@ def search_by_geography(
         msg = (
             f"No geography with slug or country code matching '{geography_slug}' found"
         )
-        _LOGGER.error(msg)
+        _LOGGER.info(msg)
         raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail=msg)
 
     top_families = {}
