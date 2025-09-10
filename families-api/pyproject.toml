@@ -12,6 +12,8 @@ dependencies = [
   "pulumi>=3.166.0,<4.0.0",
   "pulumi-aws>=6.78.0,<7.0.0",
   "api",
+  "pycountry>=24.6.1",
+  "python-slugify>=8.0.4",
 ]
 
 [tool.uv.sources]
