@@ -4,6 +4,20 @@ Searches for documents.
 All endpoints should perform document searches using the SearchRequestBody as
 its input. The individual endpoints will return different responses tailored
 for the type of document search being performed.
+
+
+FastAPI docs:
+> If you are using third party libraries that tell you to call them with await, like:
+
+> results = await some_library()
+> Then, declare your path operation functions with async def like:
+
+> @app.get('/')
+> async def read_results():
+>     results = await some_library()
+>     return results
+
+https://fastapi.tiangolo.com/async/
 """
 
 import logging
@@ -212,7 +226,7 @@ def download_search_documents(
         )
 
     content_str = process_result_into_csv(
-        db, search_response, token.aud, is_browse=is_browse
+        db, search_response, token.aud, is_browse=is_browse, theme=token.sub
     )
 
     _LOGGER.debug(f"Downloading search results as CSV: {content_str}")

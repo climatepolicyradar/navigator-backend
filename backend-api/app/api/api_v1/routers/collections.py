@@ -17,7 +17,7 @@ collections_router = APIRouter()
 @collections_router.get(
     "/collections/{slug}", response_model=CollectionOverviewResponse
 )
-async def collection_detail(
+def collection_detail(
     slug: str,
     request: Request,
     app_token: Annotated[str, Header()],

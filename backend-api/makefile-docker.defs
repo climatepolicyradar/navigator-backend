@@ -108,7 +108,8 @@ test_search:
 		run --rm --name search_test \
 		-v "${PWD}/data:/data" \
 		backend python -m pytest \
-		-vvv tests/search \
+		-o log_cli=true \
+		-vvvv tests/search \
 		-m 'search' ${ARGS}
 
 test_cors: 

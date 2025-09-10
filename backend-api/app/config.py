@@ -24,3 +24,5 @@ DEVELOPMENT_MODE: bool = os.getenv("DEVELOPMENT_MODE", "False").lower() == "true
 AWS_REGION = os.getenv("AWS_REGION", "eu-west-1")
 CDN_DOMAIN = os.getenv("CDN_DOMAIN")
 ENV = os.getenv("ENV", "development")
+VESPA_INSTANCE_URL = os.getenv("VESPA_INSTANCE_URL", "NOTSET")
+VESPA_CLOUD_SECRET_TOKEN = os.getenv("VESPA_CLOUD_SECRET_TOKEN", "NOTSET")

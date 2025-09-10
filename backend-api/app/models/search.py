@@ -1,5 +1,5 @@
 from enum import Enum
-from typing import Any, List, Literal, Mapping, Optional, Sequence
+from typing import List, Literal, Mapping, Optional, Sequence
 
 from cpr_sdk.models.search import Concept
 from cpr_sdk.models.search import SearchParameters as CprSdkSearchParameters
@@ -374,8 +374,8 @@ class GeographySummaryFamilyResponse(BaseModel):
     targets: Sequence[str]  # TODO: Placeholder for later
 
 
-class LatestUpdatedFamilyResponse(BaseModel):
-    """Response model for the latest updated families endpoint."""
+class LatestFamilyResponse(BaseModel):
+    """Response model for the latest created families endpoint."""
 
     model_config = ConfigDict(use_attribute_docstrings=True)
 
@@ -383,20 +383,10 @@ class LatestUpdatedFamilyResponse(BaseModel):
     """The import ID of the family."""
     title: str
     """The title of the family."""
-    description: str
-    """The description of the family."""
-    family_category: str
-    """The category of the family."""
-    published_date: str
-    """The date the family was published."""
-    last_modified: str
-    """The date the family was last modified."""
-    metadata: dict[str, Any]
-    """Metadata associated with the family."""
-    geographies: list[str]
-    """List of geographies associated with the family."""
-    slugs: list[str]
-    """List of slugs associated with the family."""
+    created: str
+    """The date the family was created."""
+    slug: str | None
+    """The latest slug of the family."""
 
 
 class BrowseArgs(BaseModel):

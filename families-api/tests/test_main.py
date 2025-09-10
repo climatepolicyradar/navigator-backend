@@ -10,6 +10,7 @@ from app.database import get_session
 from app.main import app
 from app.models import (
     Corpus,
+    CorpusType,
     Family,
     FamilyDocument,
     FamilyDocumentStatus,
@@ -31,12 +32,15 @@ from app.settings import settings
 def make_family():
     def _make_family(id: int):
         organisation = Organisation(id=id, name="Test Org")
+        corpus_type = CorpusType(
+            name=f"Corpus type {id}", description=f"Test corpus type {id}"
+        )
         corpus = Corpus(
             import_id=f"corpus_{id}",
             title=f"Test Corpus {id}",
             organisation=organisation,
             organisation_id=organisation.id,
-            corpus_type_name="Intl. agreements",
+            corpus_type_name=corpus_type.name,
         )
         physical_document = PhysicalDocument(
             id=id,
@@ -155,7 +159,7 @@ def make_family():
             ],
         )
 
-        return (corpus, family, family_document, physical_document)
+        return (corpus_type, corpus, family, family_document, physical_document)
 
     return _make_family
 
@@ -204,8 +208,9 @@ def test_read_family_404(client: TestClient):
 
 
 def test_read_family_200(client: TestClient, session: Session, make_family):
-    (corpus, family, family_document, physical_document) = make_family(123)
+    (corpus_type, corpus, family, family_document, physical_document) = make_family(123)
 
+    session.add(corpus_type)
     session.add(corpus)
     session.add(family)
     session.add(family_document)
@@ -224,7 +229,7 @@ def test_read_family_200(client: TestClient, session: Session, make_family):
 def test_aggregations_by_geography_returns_a_count_of_documents_per_geography(
     client: TestClient, session: Session, make_family
 ):
-    (corpus, family, family_document, physical_document) = make_family(456)
+    (corpus_type, corpus, family, family_document, physical_document) = make_family(456)
     family.unparsed_geographies = [
         Geography(
             id=1,
@@ -235,6 +240,7 @@ def test_aggregations_by_geography_returns_a_count_of_documents_per_geography(
         ),
     ]
 
+    session.add(corpus_type)
     session.add(corpus)
     session.add(family)
     session.add(family_document)
@@ -253,7 +259,7 @@ def test_aggregations_by_geography_returns_a_count_of_documents_per_geography(
 def test_aggregations_by_geography_returns_a_count_for_each_geo_when_document_has_multiple_geos(
     client: TestClient, session: Session, make_family
 ):
-    (corpus, family, family_document, physical_document) = make_family(789)
+    (corpus_type, corpus, family, family_document, physical_document) = make_family(789)
     family.unparsed_geographies = [
         Geography(
             id=1,
@@ -270,7 +276,7 @@ def test_aggregations_by_geography_returns_a_count_for_each_geo_when_document_ha
             type="ISO 3166-1",
         ),
     ]
-
+    session.add(corpus_type)
     session.add(corpus)
     session.add(family)
     session.add(family_document)
@@ -317,8 +323,12 @@ def test_aggregations_by_geography_does_not_include_geographies_without_document
 def test_aggregations_by_geography_filters_response_by_corpus(
     client: TestClient, session: Session, make_family
 ):
-    (corpus1, family1, family_document1, physical_document1) = make_family(3)
-    (corpus2, family2, family_document2, physical_document2) = make_family(4)
+    (corpus_type1, corpus1, family1, family_document1, physical_document1) = (
+        make_family(3)
+    )
+    (corpus_type2, corpus2, family2, family_document2, physical_document2) = (
+        make_family(4)
+    )
 
     assert corpus1.import_id != corpus2.import_id
     geography = Geography(
@@ -331,11 +341,13 @@ def test_aggregations_by_geography_filters_response_by_corpus(
     family1.unparsed_geographies = [geography]
     family2.unparsed_geographies = [geography]
 
+    session.add(corpus_type1)
     session.add(corpus1)
     session.add(family1)
     session.add(family_document1)
     session.add(physical_document1)
 
+    session.add(corpus_type2)
     session.add(corpus2)
     session.add(family2)
     session.add(family_document2)
@@ -356,8 +368,12 @@ def test_aggregations_by_geography_filters_response_by_corpus(
 def test_aggregations_by_geography_filters_response_by_multiple_corpora(
     client: TestClient, session: Session, make_family
 ):
-    (corpus1, family1, family_document1, physical_document1) = make_family(3)
-    (corpus2, family2, family_document2, physical_document2) = make_family(4)
+    (corpus_type1, corpus1, family1, family_document1, physical_document1) = (
+        make_family(3)
+    )
+    (corpus_type2, corpus2, family2, family_document2, physical_document2) = (
+        make_family(4)
+    )
 
     assert corpus1.import_id != corpus2.import_id
     geography = Geography(
@@ -370,11 +386,13 @@ def test_aggregations_by_geography_filters_response_by_multiple_corpora(
     family1.unparsed_geographies = [geography]
     family2.unparsed_geographies = [geography]
 
+    session.add(corpus_type1)
     session.add(corpus1)
     session.add(family1)
     session.add(family_document1)
     session.add(physical_document1)
 
+    session.add(corpus_type2)
     session.add(corpus2)
     session.add(family2)
     session.add(family_document2)
@@ -396,8 +414,12 @@ def test_aggregations_by_geography_filters_response_by_multiple_corpora(
 def test_aggregations_by_geography_defaults_to_returning_counts_for_all_corpora_when_corpus_filter_not_supplied(
     client: TestClient, session: Session, make_family
 ):
-    (corpus1, family1, family_document1, physical_document1) = make_family(3)
-    (corpus2, family2, family_document2, physical_document2) = make_family(4)
+    (corpus_type1, corpus1, family1, family_document1, physical_document1) = (
+        make_family(3)
+    )
+    (corpus_type2, corpus2, family2, family_document2, physical_document2) = (
+        make_family(4)
+    )
 
     assert corpus1.import_id != corpus2.import_id
     geography = Geography(
@@ -410,11 +432,13 @@ def test_aggregations_by_geography_defaults_to_returning_counts_for_all_corpora_
     family1.unparsed_geographies = [geography]
     family2.unparsed_geographies = [geography]
 
+    session.add(corpus_type1)
     session.add(corpus1)
     session.add(family1)
     session.add(family_document1)
     session.add(physical_document1)
 
+    session.add(corpus_type2)
     session.add(corpus2)
     session.add(family2)
     session.add(family_document2)
@@ -434,7 +458,9 @@ def test_aggregations_by_geography_defaults_to_returning_counts_for_all_corpora_
 def test_aggregations_by_geography_returns_200_with_empty_body_when_corpus_does_not_exist(
     client: TestClient, session: Session, make_family
 ):
-    (corpus1, family1, family_document1, physical_document1) = make_family(3)
+    (corpus_type1, corpus1, family1, family_document1, physical_document1) = (
+        make_family(3)
+    )
 
     geography = Geography(
         id=1,
@@ -445,6 +471,7 @@ def test_aggregations_by_geography_returns_200_with_empty_body_when_corpus_does_
     )
     family1.unparsed_geographies = [geography]
 
+    session.add(corpus_type1)
     session.add(corpus1)
     session.add(family1)
     session.add(family_document1)
@@ -462,8 +489,12 @@ def test_aggregations_by_geography_returns_200_with_empty_body_when_corpus_does_
 def test_aggregations_by_geography_response_filters_response_by_document_status(
     client: TestClient, session: Session, make_family
 ):
-    (corpus1, family1, family_document1, physical_document1) = make_family(5)
-    (corpus2, family2, family_document2, physical_document2) = make_family(6)
+    (corpus_type1, corpus1, family1, family_document1, physical_document1) = (
+        make_family(5)
+    )
+    (corpus_type2, corpus2, family2, family_document2, physical_document2) = (
+        make_family(6)
+    )
 
     geography = Geography(
         id=1,
@@ -478,11 +509,13 @@ def test_aggregations_by_geography_response_filters_response_by_document_status(
     family_document1.document_status = FamilyDocumentStatus.PUBLISHED
     family_document2.document_status = FamilyDocumentStatus.CREATED
 
+    session.add(corpus_type1)
     session.add(corpus1)
     session.add(family1)
     session.add(family_document1)
     session.add(physical_document1)
 
+    session.add(corpus_type2)
     session.add(corpus2)
     session.add(family2)
     session.add(family_document2)
@@ -503,9 +536,15 @@ def test_aggregations_by_geography_response_filters_response_by_document_status(
 def test_aggregations_by_geography_response_filters_response_by_multiple_document_statuses(
     client: TestClient, session: Session, make_family
 ):
-    (corpus1, family1, family_document1, physical_document1) = make_family(7)
-    (corpus2, family2, family_document2, physical_document2) = make_family(8)
-    (corpus3, family3, family_document3, physical_document3) = make_family(9)
+    (corpus_type1, corpus1, family1, family_document1, physical_document1) = (
+        make_family(7)
+    )
+    (corpus_type2, corpus2, family2, family_document2, physical_document2) = (
+        make_family(8)
+    )
+    (corpus_type3, corpus3, family3, family_document3, physical_document3) = (
+        make_family(9)
+    )
 
     geography = Geography(
         id=1,
@@ -522,16 +561,19 @@ def test_aggregations_by_geography_response_filters_response_by_multiple_documen
     family_document2.document_status = FamilyDocumentStatus.DELETED
     family_document3.document_status = FamilyDocumentStatus.CREATED
 
+    session.add(corpus_type1)
     session.add(corpus1)
     session.add(family1)
     session.add(family_document1)
     session.add(physical_document1)
 
+    session.add(corpus_type2)
     session.add(corpus2)
     session.add(family2)
     session.add(family_document2)
     session.add(physical_document2)
 
+    session.add(corpus_type3)
     session.add(corpus3)
     session.add(family3)
     session.add(family_document3)
@@ -552,8 +594,12 @@ def test_aggregations_by_geography_response_filters_response_by_multiple_documen
 def test_aggregations_by_geography_defaults_to_returning_counts_for_all_statuses_when_document_status_filter_not_supplied(
     client: TestClient, session: Session, make_family
 ):
-    (corpus1, family1, family_document1, physical_document1) = make_family(10)
-    (corpus2, family2, family_document2, physical_document2) = make_family(11)
+    (corpus_type1, corpus1, family1, family_document1, physical_document1) = (
+        make_family(10)
+    )
+    (corpus_type2, corpus2, family2, family_document2, physical_document2) = (
+        make_family(11)
+    )
 
     assert corpus1.import_id != corpus2.import_id
     geography = Geography(
@@ -569,11 +615,13 @@ def test_aggregations_by_geography_defaults_to_returning_counts_for_all_statuses
     family_document1.document_status = FamilyDocumentStatus.PUBLISHED
     family_document2.document_status = FamilyDocumentStatus.DELETED
 
+    session.add(corpus_type1)
     session.add(corpus1)
     session.add(family1)
     session.add(family_document1)
     session.add(physical_document1)
 
+    session.add(corpus_type2)
     session.add(corpus2)
     session.add(family2)
     session.add(family_document2)
@@ -593,7 +641,9 @@ def test_aggregations_by_geography_defaults_to_returning_counts_for_all_statuses
 def test_aggregations_by_geography_returns_422_unprocessable_entity_when_document_status_invalid(
     client: TestClient, session: Session, make_family
 ):
-    (corpus1, family1, family_document1, physical_document1) = make_family(12)
+    (corpus_type1, corpus1, family1, family_document1, physical_document1) = (
+        make_family(12)
+    )
 
     geography = Geography(
         id=1,
@@ -604,6 +654,7 @@ def test_aggregations_by_geography_returns_422_unprocessable_entity_when_documen
     )
     family1.unparsed_geographies = [geography]
 
+    session.add(corpus_type1)
     session.add(corpus1)
     session.add(family1)
     session.add(family_document1)
@@ -624,9 +675,13 @@ def test_aggregations_by_geography_returns_422_unprocessable_entity_when_documen
 def test_aggregations_by_geography_filters_response_by_corpus_AND_document_status(
     client: TestClient, session: Session, make_family
 ):
-    (corpus1, family1, family_document1, physical_document1) = make_family(13)
-    (corpus2, family2, family_document2, physical_document2) = make_family(14)
-    (_, family3, family_document3, physical_document3) = make_family(15)
+    (corpus_type1, corpus1, family1, family_document1, physical_document1) = (
+        make_family(13)
+    )
+    (corpus_type2, corpus2, family2, family_document2, physical_document2) = (
+        make_family(14)
+    )
+    (_, _, family3, family_document3, physical_document3) = make_family(15)
 
     geography = Geography(
         id=1,
@@ -645,11 +700,13 @@ def test_aggregations_by_geography_filters_response_by_corpus_AND_document_statu
     family_document1.document_status = FamilyDocumentStatus.PUBLISHED
     family_document2.document_status = FamilyDocumentStatus.PUBLISHED
 
+    session.add(corpus_type1)
     session.add(corpus1)
     session.add(family1)
     session.add(family_document1)
     session.add(physical_document1)
 
+    session.add(corpus_type2)
     session.add(corpus2)
     session.add(family2)
     session.add(family_document2)
@@ -676,14 +733,20 @@ def test_aggregations_by_geography_filters_response_by_corpus_AND_document_statu
 def test_read_family_corpus_import_id_filter(
     client: TestClient, session: Session, make_family
 ):
-    (corpus1, family1, family_document1, physical_document1) = make_family(1)
-    (corpus2, family2, family_document2, physical_document2) = make_family(2)
+    (corpus_type1, corpus1, family1, family_document1, physical_document1) = (
+        make_family(1)
+    )
+    (corpus_type2, corpus2, family2, family_document2, physical_document2) = (
+        make_family(2)
+    )
 
+    session.add(corpus_type1)
     session.add(corpus1)
     session.add(family1)
     session.add(family_document1)
     session.add(physical_document1)
 
+    session.add(corpus_type2)
     session.add(corpus2)
     session.add(family2)
     session.add(family_document2)
