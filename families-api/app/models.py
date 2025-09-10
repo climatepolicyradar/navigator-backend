@@ -28,6 +28,28 @@ class Organisation(SQLModel, table=True):
 
 # endregion
 
+# region: CorpusType
+
+
+class BaseCorpusType(SQLModel):
+    name: str
+    description: str
+
+
+class CorpusType(BaseCorpusType, table=True):
+    __tablename__ = "corpus_type"  # type: ignore[assignment]
+    name: str = Field(primary_key=True)
+    valid_metadata: dict[str, Any] = Field(
+        default_factory=dict, sa_column=Column(JSONB)
+    )
+
+
+class CorpusTypePublic(BaseCorpusType):
+    pass
+
+
+# endregion
+
 
 # region: Corpus
 class FamilyCorpusLink(SQLModel, table=True):
@@ -50,10 +72,13 @@ class Corpus(CorpusBase, table=True):
     )
     organisation: Organisation = Relationship(back_populates="corpora")
     organisation_id: int = Field(foreign_key="organisation.id")
+    corpus_type: CorpusType = Relationship()
+    corpus_type_name: str = Field(foreign_key="corpus_type.name")
 
 
 class CorpusPublic(CorpusBase):
     organisation: Organisation
+    corpus_type: CorpusTypePublic
 
 
 # endregion
