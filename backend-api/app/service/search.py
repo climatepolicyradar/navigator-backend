@@ -2,7 +2,6 @@ import csv
 import logging
 import re
 from collections import defaultdict
-from enum import Enum
 from io import StringIO
 from typing import Any, Mapping, Optional, Sequence, Tuple, cast
 
@@ -60,12 +59,6 @@ from app.service.util import to_cdn_url
 from app.telemetry import observe
 
 _LOGGER = logging.getLogger(__name__)
-
-
-class SearchType(str, Enum):
-    standard = "standard"
-    browse = "browse"
-    browse_with_concepts = "browse_with_concepts"
 
 
 _CSV_SEARCH_RESPONSE_COLUMNS = [
@@ -850,32 +843,35 @@ def create_vespa_search_params(
     return search_body
 
 
-@observe("identify_search_type")
-def identify_search_type(search_body: SearchRequestBody) -> str:
-    """Identify the search type from parameters"""
-    if not search_body.query_string and not search_body.concept_filters:
-        return SearchType.browse
-    elif not search_body.query_string and search_body.concept_filters:
-        return SearchType.browse_with_concepts
-    else:
-        return SearchType.standard
+def set_all_results_default_on_search_request_body(
+    search_request_body: SearchRequestBody,
+):
+    # use the defaults set in the SDK
+    all_results = search_request_body.all_results
+
+    # if we are not text searching we can get all the results
+    # this includes if we have filters applied
+    # otherwise we are limited to the first 500 relevant results
+    if not search_request_body.query_string:
+        all_results = True
+
+    return search_request_body.model_copy(update={"all_results": all_results})
 
 
-@observe("mutate_search_body_for_search_type")
-def mutate_search_body_for_search_type(
-    search_body: SearchRequestBody,
-) -> SearchRequestBody:
-    """Mutate the search body in line with the search params"""
-    search_type = identify_search_type(search_body=search_body)
-    if search_type == SearchType.browse:
-        search_body.all_results = True
-        search_body.documents_only = True
-        search_body.exact_match = False
-    elif search_type == SearchType.browse_with_concepts:
-        search_body.all_results = True
-        search_body.documents_only = False
-        search_body.exact_match = False
-    return search_body
+def set_documents_only_default_on_search_request_body(
+    search_request_body: SearchRequestBody,
+):
+    # use the defaults set in the SDK
+    documents_only = search_request_body.documents_only
+
+    # if we do not have a query string and do have concept filters
+    # we do not need to fetch the documents and passages
+    # which are a substatial loads size as we do not surface
+    # results in them
+    if not search_request_body.query_string and not search_request_body.concept_filters:
+        documents_only = True
+
+    return search_request_body.model_copy(update={"documents_only": documents_only})
 
 
 @observe("make_search_request")
@@ -887,7 +883,11 @@ def make_search_request(
     """Perform a search request against the Vespa search engine"""
 
     try:
-        search_body = mutate_search_body_for_search_type(search_body=search_body)
+        # mutate the search_body with some sensible defaults
+        # see methods for those descriptions
+        search_body = set_all_results_default_on_search_request_body(search_body)
+        search_body = set_documents_only_default_on_search_request_body(search_body)
+
         cpr_sdk_search_params = create_vespa_search_params(db, search_body)
         cpr_sdk_search_response = observe("vespa_search")(vespa_search_adapter.search)(
             parameters=cpr_sdk_search_params
