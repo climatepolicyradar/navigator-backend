@@ -7,7 +7,7 @@ from app.router import APIItemResponse, APIListResponse, GeographyDocumentCount
 
 def test_read_family_404(client: TestClient):
     response = client.get("/families/family_123")
-    assert response.status_code == 404  # nosec B101
+    assert response.status_code == 404
 
 
 def test_read_family_200(client: TestClient, session: Session, make_family):
@@ -23,10 +23,9 @@ def test_read_family_200(client: TestClient, session: Session, make_family):
 
     response = client.get("/families/family_123")
 
-    # TODO: https://linear.app/climate-policy-radar/issue/APP-735/work-out-a-way-to-ignore-testpy-files-in-bandit
-    assert response.status_code == 200  # nosec B101
+    assert response.status_code == 200
     response = APIItemResponse[FamilyPublic].model_validate(response.json())
-    assert response.data.import_id == "family_123"  # nosec B101
+    assert response.data.import_id == "family_123"
 
 
 def test_aggregations_by_geography_returns_a_count_of_documents_per_geography(
