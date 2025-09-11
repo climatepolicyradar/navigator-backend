@@ -8,7 +8,8 @@ from app.router import APIListResponse, ConceptPublic
 def test_returns_a_list_of_concepts_we_have_data_for(
     client: TestClient, session: Session, make_family
 ):
-    (corpus_type, corpus, family, family_document, physical_document) = make_family(1)
+    id = 1
+    (corpus_type, corpus, family, family_document, physical_document) = make_family(id)
 
     session.add(corpus_type)
     session.add(corpus)
@@ -29,9 +30,11 @@ def test_returns_a_list_of_concepts_we_have_data_for(
 def test_does_not_include_duplicate_concepts_in_the_response(
     client: TestClient, session: Session, make_family
 ):
-    (corpus_type1, corpus1, family1, _, _) = make_family(1)
+    id1 = 1
+    (corpus_type1, corpus1, family1, _, _) = make_family(id1)
     # add another family with the same concepts
-    (corpus_type2, corpus2, family2, _, _) = make_family(2)
+    id2 = 2
+    (corpus_type2, corpus2, family2, _, _) = make_family(id2)
 
     session.add(corpus_type1)
     session.add(corpus_type2)
@@ -55,7 +58,8 @@ def test_does_not_include_duplicate_concepts_in_the_response(
 def test_does_not_include_concepts_with_no_relation(
     client: TestClient, session: Session, make_family, relation
 ):
-    (corpus_type, corpus, family, _, _) = make_family(1)
+    id = 1
+    (corpus_type, corpus, family, _, _) = make_family(id)
     family.concepts = {
         "id": "test concepts 1",
         "ids": [],
@@ -81,7 +85,8 @@ def test_does_not_include_concepts_with_no_relation(
 def test_does_not_include_concepts_with_no_concept_preferred_label(
     client: TestClient, session: Session, make_family, preferred_label
 ):
-    (corpus_type, corpus, family, _, _) = make_family(1)
+    id = 1
+    (corpus_type, corpus, family, _, _) = make_family(id)
     family.concepts = {
         "id": "test concepts 1",
         "ids": [],
@@ -106,7 +111,8 @@ def test_does_not_include_concepts_with_no_concept_preferred_label(
 def test_returns_a_list_of_concepts_ordered_by_relation_and_then_preferred_label(
     client: TestClient, session: Session, make_family
 ):
-    (corpus_type, corpus, family, family_document, physical_document) = make_family(1)
+    id = 1
+    (corpus_type, corpus, family, family_document, physical_document) = make_family(id)
     family.concepts = (
         {
             "id": "test concepts 3",
@@ -156,7 +162,8 @@ def test_returns_a_list_of_concepts_ordered_by_relation_and_then_preferred_label
 def test_concepts_with_the_same_relation_and_preferred_label_are_included_in_the_response_if_subconcept_of_labels_is_different(
     client: TestClient, session: Session, make_family
 ):
-    (corpus_type, corpus, family, _, _) = make_family(1)
+    id = 1
+    (corpus_type, corpus, family, _, _) = make_family(id)
     concept_base = {
         "id": "test concepts 1",
         "ids": [],
