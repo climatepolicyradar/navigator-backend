@@ -167,7 +167,7 @@ def test_csv_download__ignore_extra_fields(
 
     # Ensure extra, unspecified fields don't cause an error
     fields = []
-    with patch("app.service.search._CSV_SEARCH_RESPONSE_COLUMNS", fields):
+    with patch("app.service.download._CSV_SEARCH_RESPONSE_COLUMNS", fields):
         _make_download_request(data_client, valid_token, params=params)
 
     assert mock_corpora_exist_in_db.assert_called
