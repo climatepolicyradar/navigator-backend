@@ -95,25 +95,32 @@ _CCC_CSV_SEARCH_RESPONSE_COLUMNS = [
     "Non-English Case Name",
     "Case URL",
     "At Issue",
-    "Case summary",
-    "Case number",
+    "Case Summary",
+    "Case Number",
     "Case Filing Year for Action",
     "Status",
     "Jurisdictions",
     "Case Categories",
     "Principal Laws",
-    "Court number",
-    "Document title",
-    "Document url",
-    "Document content url",
-    "Document type",
-    "Document filing date",
-    "Document summary",
-    "Document headline",
+    "Court Number",
+    "Document Title",
+    "Document URL",
+    "Document Content URL",
+    "Document Type",
+    "Document Filing Date",
+    "Document Summary",
     "Geographies",
     "Document Content Matches Search Phrase",
-    "Category",
 ]
+
+
+def parse_concept_labels(concept_labels: Sequence[str], prefix: str) -> str:
+    """Extracts and joins concept labels with a given prefix."""
+    return ";".join(
+        label.split("/", 1)[1]
+        for label in concept_labels
+        if label.startswith(prefix + "/")
+    )
 
 
 def _get_extra_csv_info(
@@ -312,7 +319,6 @@ def process_result_into_csv(
                         document,
                         collection,
                         family_metadata,
-                        family_source,
                         family_geos,
                         document_title,
                         document_content,
@@ -345,7 +351,6 @@ def process_result_into_csv(
                     None,
                     collection,
                     family_metadata,
-                    family_source,
                     family_geos,
                     "",  # Document title
                     "",  # Document content
@@ -393,7 +398,6 @@ def _create_ccc_csv_row(
     document: Optional[FamilyDocument],
     collection: Optional[Collection],
     family_metadata: dict,
-    family_source: str,
     family_geos: str,
     document_title: str,
     document_content: str,
@@ -405,14 +409,16 @@ def _create_ccc_csv_row(
 
     # Extract CCC-specific metadata
     case_number = ";".join(family_metadata.get("case_number", []))
+    concept_labels = family_metadata.get("concept_preferred_label", [])
+    case_categories = parse_concept_labels(concept_labels, "category")
+    principal_laws = parse_concept_labels(concept_labels, "principal_law")
+    jurisdictions = parse_concept_labels(concept_labels, "jurisdiction")
     status = ";".join(family_metadata.get("status", []))
-    at_issue = ";".join(family_metadata.get("core_object", []))
-    case_categories = ";".join(family_metadata.get("legal_category", []))
-    principal_laws = ";".join(family_metadata.get("law", []))
     court_number = ";".join(family_metadata.get("court_number", []))
     non_english_case_name = ";".join(family_metadata.get("original_case_name", []))
 
-    # Get collection info
+    # This currently assumes that a family can only be associated with a single
+    # collection - multi collection support to come.
     collection_id = collection.import_id if collection else ""
     collection_name = collection.title if collection else ""
     collection_url = f"{url_base}/collection/{collection_id}" if collection_id else ""
@@ -428,9 +434,25 @@ def _create_ccc_csv_row(
     else:
         year = ""
 
+    # For USA, we need to get the collection description & for non-USA, we need to get
+    # the core_object labels for the at issue value.
+    #
+    # We are assuming in this block of code that a case is only associated with a single
+    # country, even if it is associated with multiple subdivisions within that country
+    # for now.
+    core_object = family_metadata.get("core_object", [])
+    if "USA" in family_geos and collection is not None:
+        at_issue = collection.description
+    # !isUSA
+    elif "USA" not in family_geos and core_object.length > 0:
+        at_issue = ";".join([label for label in core_object])
+    else:
+        at_issue = ""
+
     # Get document event data
     document_filing_date = ""
     document_summary = ""
+    document_type = ""
     if document and document_events:
         doc_events = document_events.get(str(document.import_id), [])
         if doc_events:
@@ -438,6 +460,19 @@ def _create_ccc_csv_row(
             earliest_event = doc_events[0]
             document_filing_date = earliest_event.date.isoformat()
             document_summary = earliest_event.title or ""
+
+            # Get document type - which is not the same as the document_type field in
+            # our database for litigation document. Instead this is the type of the
+            # event associated with the document.
+            document_type = earliest_event.type or ""
+
+    # Another silly US vs non US piece of logic for the document title. US documents
+    # have document titles but some non US documents don't. Where that is the case we
+    # use the family name as the document title.
+    if "USA" not in family_geos:
+        document_title = f"{family.family_name} - {document_type}"
+    else:
+        document_title = document_title
 
     return {
         "Bundle ID": collection_id,
@@ -452,12 +487,11 @@ def _create_ccc_csv_row(
         "Case Number": case_number,
         "Case Filing Year for Action": year,
         "Status": status,
-        "Jurisdictions": family_geos,
+        "Jurisdictions": jurisdictions,
         "Case Categories": case_categories,
         "Principal Laws": principal_laws,
         "Court Number": court_number,
         "Document Title": document_title,
-        "Document Headline": document_title,  # TODO: check with Dominyka whether this is the title.
         "Document Filing Date": document_filing_date,
         "Document Summary": document_summary,
         "Document URL": (
@@ -466,12 +500,9 @@ def _create_ccc_csv_row(
             else ""
         ),
         "Document Content URL": document_content,
-        "Document Type": (
-            doc_type_from_family_document_metadata(document) if document else ""
-        ),
+        "Document Type": document_type,
         "Geographies": family_geos,
         "Document Content Matches Search Phrase": document_match,
-        "Category": family.family_category,
     }
 
 
