@@ -94,7 +94,7 @@ def read_concepts(*, session: Session = Depends(get_session)):
     # Extract fields from the unnested JSONB objects
     stmt = text(
         """
-      SELECT DISTINCT ON (concept->>'relation', concept->>'preferred_label')
+      SELECT DISTINCT ON (concept->>'relation', concept->>'preferred_label', concept->>'subconcept_of_labels')
           concept->>'relation' as relation,
           concept->>'preferred_label' as preferred_label,
           concept->>'id' as id,
