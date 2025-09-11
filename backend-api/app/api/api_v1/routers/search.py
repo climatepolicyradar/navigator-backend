@@ -42,12 +42,11 @@ from app.config import (
 from app.errors import ValidationError
 from app.models.search import SearchRequestBody, SearchResponse
 from app.service.custom_app import AppTokenFactory
-from app.service.download import create_data_download_zip_archive
-from app.service.search import (
-    get_s3_doc_url_from_cdn,
-    make_search_request,
+from app.service.download import (
+    create_data_download_zip_archive,
     process_result_into_csv,
 )
+from app.service.search import get_s3_doc_url_from_cdn, make_search_request
 from app.service.vespa import get_vespa_search_adapter
 from app.telemetry import convert_to_loggable_string
 from app.telemetry_exceptions import ExceptionHandlingTelemetryRoute
