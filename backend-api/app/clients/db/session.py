@@ -9,45 +9,31 @@ and session were initialised on module import, before uvicorn
 spawned the worker processes. This meant that the engine and session
 were shared across all workers. Ruh roh. SQLALCHEMY ISNT THREAD SAFE.
 
-The following code is a bit hacky, but ensures the engine is lazily
-initialised and therefore after uvicorn has spawned the worker 
-processes.
 """
+
+import logging
 
 from opentelemetry.instrumentation.sqlalchemy import SQLAlchemyInstrumentor
 from sqlalchemy import create_engine
 from sqlalchemy.orm import sessionmaker
-from sqlalchemy.pool import NullPool
 
 from app import config
 
+_LOGGER = logging.getLogger(__name__)
+
 # Lazy initialisation - created once per worker
-_engine = None
-_SessionLocal = None
+_engine = create_engine(config.SQLALCHEMY_DATABASE_URI)
 
-
-def get_engine():
-    global _engine
-    if _engine is None:
-        _engine = create_engine(
-            config.SQLALCHEMY_DATABASE_URI,
-            pool_pre_ping=True,
-            poolclass=NullPool,  # Safe for multiprocess
-        )
-        # OpenTelemetry instrumentation
-        SQLAlchemyInstrumentor().instrument(engine=_engine)
-    return _engine
+# OpenTelemetry instrumentation
+SQLAlchemyInstrumentor().instrument(engine=_engine)
 
 
 def create_session():
-    global _SessionLocal
-    if _SessionLocal is None:
-        _SessionLocal = sessionmaker(
-            autocommit=False,
-            autoflush=False,
-            bind=get_engine(),
-        )
-    return _SessionLocal
+    return sessionmaker(
+        autocommit=False,
+        autoflush=False,
+        bind=_engine,
+    )
 
 
 # Export callable for tests

@@ -33,7 +33,7 @@ documents_router = APIRouter(route_class=ExceptionHandlingTelemetryRoute)
         FamilyDocumentWithContextResponse,
     ],
 )
-async def family_or_document_detail(
+def family_or_document_detail(
     slug: str, request: Request, app_token: Annotated[str, Header()], db=Depends(get_db)
 ):
     """Get details of the family or document associated with the slug."""
@@ -65,7 +65,7 @@ async def family_or_document_detail(
 
 
 @documents_router.get("/families/{import_id}", response_model=SearchResponse)
-async def family_detail_from_vespa(
+def family_detail_from_vespa(
     import_id: str,
     request: Request,
     app_token: Annotated[str, Header()],
@@ -114,7 +114,7 @@ async def family_detail_from_vespa(
 
 
 @documents_router.get("/document/{import_id}", response_model=SearchResponse)
-async def doc_detail_from_vespa(
+def doc_detail_from_vespa(
     import_id: str,
     request: Request,
     app_token: Annotated[str, Header()],
