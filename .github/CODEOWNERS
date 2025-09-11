@@ -13,15 +13,15 @@
 # be identified in the format @org/team-name. Teams must have
 # explicit write access to the repository.
 
-*                                                            @climatepolicyradar/software
-backend-api/app/api/api_v1/routers/pipeline_trigger.py       @climatepolicyradar/deng
-backend-api/tests/unit/app/core/test_pipeline.py             @climatepolicyradar/deng
-backend-api/tests/non_search/app/test_pipeline_trigger.py    @climatepolicyradar/deng
-backend-api/app/repository/pipeline.py                       @climatepolicyradar/deng
-backend-api/app/service/pipeline.py                          @climatepolicyradar/deng
-backend-api/app/service/pipeline.sql                         @climatepolicyradar/deng
-backend-api/tests/search/vespa/fixtures/                     @climatepolicyradar/deng
-backend-api/tests/search/search_fixtures/vespa_test_schema/  @climatepolicyradar/deng
-backend-api/app/models/search.py                             @climatepolicyradar/deng
-backend-api/app/service/search.py                            @climatepolicyradar/deng
-backend-api/app/repository/search.py                         @climatepolicyradar/deng
+*                                                               @climatepolicyradar/software
+backend-api/app/api/api_v1/routers/pipeline_trigger.py          @climatepolicyradar/deng
+backend-api/tests/unit/app/core/test_pipeline.py                @climatepolicyradar/deng
+backend-api/tests/non_search/app/test_pipeline_trigger.py       @climatepolicyradar/deng
+backend-api/app/repository/pipeline.py                          @climatepolicyradar/deng
+backend-api/app/service/pipeline.py                             @climatepolicyradar/deng
+backend-api/app/service/pipeline.sql                            @climatepolicyradar/deng
+backend-api/tests/search/vespa/fixtures/**                      @climatepolicyradar/deng
+backend-api/tests/search/search_fixtures/vespa_test_schema/**   @climatepolicyradar/deng
+backend-api/app/models/search.py                                @climatepolicyradar/deng
+backend-api/app/service/search.py                               @climatepolicyradar/deng
+backend-api/app/repository/search.py                            @climatepolicyradar/deng
