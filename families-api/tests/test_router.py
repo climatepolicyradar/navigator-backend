@@ -49,7 +49,8 @@ def test_does_not_include_duplicate_concepts_in_the_response(
 
     assert response.status_code == 200
     response = APIListResponse[ConceptPublic].model_validate(response.json())
-    assert len(response.data) == 2
+    expected_number_of_concepts = 2
+    assert len(response.data) == expected_number_of_concepts
     assert response.data[0].id == "test concepts 1"
     assert response.data[1].id == "test concepts 2"
 
@@ -186,7 +187,9 @@ def test_concepts_with_the_same_relation_and_preferred_label_are_included_in_the
 
     assert response.status_code == 200
     response = APIListResponse[ConceptPublic].model_validate(response.json())
-    assert len(response.data) == 2
+    expected_number_of_concepts = 2
+    assert len(response.data) == expected_number_of_concepts
+
     assert response.data[0].id == concept_base["id"]
     assert response.data[0].relation == concept_base["relation"]
     assert response.data[0].subconcept_of_labels == ["parent concept 1"]
