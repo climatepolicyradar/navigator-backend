@@ -23,7 +23,7 @@ from app.models import (
 from app.settings import settings
 
 
-# Base on
+# Based on
 # @see: https://docs.pytest.org/en/stable/how-to/fixtures.html#factories-as-fixtures
 @pytest.fixture
 def make_family():
