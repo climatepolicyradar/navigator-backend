@@ -426,7 +426,15 @@ def _create_ccc_csv_row(
             # Get the earliest event (first in the list since we ordered by date asc)
             earliest_event = doc_events[0]
             document_filing_date = earliest_event.date.isoformat()
-            document_summary = earliest_event.description or ""
+            document_summary = ""
+            if earliest_event.valid_metadata:
+                description = earliest_event.valid_metadata.get("description")
+                if (
+                    description
+                    and isinstance(description, list)
+                    and len(description) > 0
+                ):
+                    document_summary = description[0]
 
             # Get document type - which is not the same as the document_type field in
             # our database for litigation document. Instead this is the type of the
