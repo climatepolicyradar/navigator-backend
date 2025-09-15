@@ -4,6 +4,22 @@ This directory contains initial load test scripts for the navigator backend.
 
 We use k6 and grafana cloud to run the tests.
 
+## Structure
+
+- `config/tests.json` contains the test scenarios.
+- `main.js` is the entry point for the tests.
+- `scenarios` contains the individual test scenarios. These are entry points for
+  scripts defined in `./scripts/`. This allows us to reuse the same scripts for
+  different scenarios.
+  - To add a new scenario, create a new file in `./scenarios/`, add it to the
+    `scenarios` object in `./config/tests.json`, and add it to the exports in
+    `./main.js`.
+- `data/static.json` contains static data for the tests. Add whatever you need
+  to the here.
+- `common/utils.js` contains utility functions for the tests.
+- `browser-basic.js` is an example of a browser-based test. Illustrative only.
+- `hello-world.js` is a simple non-functional test template.
+
 ## Running the tests
 
 You'll need a
