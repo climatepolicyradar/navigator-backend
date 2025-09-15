@@ -450,7 +450,7 @@ def _create_ccc_csv_row(
     # Another silly US vs non US piece of logic for the document title. US documents
     # have document titles but some non US documents don't. Where that is the case we
     # use the family name as the document title.
-    if "USA" not in family_geos:
+    if not is_usa:
         document_title = f"{family.family_name} - {document_type}"
     else:
         document_title = document_title
