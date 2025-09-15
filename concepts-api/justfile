@@ -22,3 +22,8 @@ dev-rebuild:
 prebuild environment:
     uv sync --group prebuild
     just initial-data {{environment}}
+
+# build
+# TODO: this needs to be tied into a lifecycle somewhere to make sure it is run if something is added
+requirements:
+    uv pip freeze > requirements.txt
