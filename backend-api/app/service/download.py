@@ -430,6 +430,7 @@ def _create_ccc_csv_row(
             earliest_event = doc_events[0]
             document_filing_date = earliest_event.date.isoformat()
             document_summary = ""
+            document_type = ""
             if earliest_event.valid_metadata:
                 description = earliest_event.valid_metadata.get("description")
                 if (
@@ -439,10 +440,12 @@ def _create_ccc_csv_row(
                 ):
                     document_summary = description[0]
 
-            # Get document type - which is not the same as the document_type field in
-            # our database for litigation document. Instead this is the type of the
-            # event associated with the document.
-            document_type = earliest_event.event_type or ""
+                # Get document type - which is not the same as the document_type field
+                # in our database for litigation document. Instead this is the type of
+                # the event associated with the document.
+                event_type = earliest_event.valid_metadata.get("event_type")
+                if event_type and isinstance(event_type, list) and len(event_type) > 0:
+                    document_type = event_type[0]
 
     # Another silly US vs non US piece of logic for the document title. US documents
     # have document titles but some non US documents don't. Where that is the case we
