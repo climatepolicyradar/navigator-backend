@@ -402,16 +402,19 @@ def _create_ccc_csv_row(
         year = ""
 
     # For USA, we need to get the collection description & for non-USA, we need to get
-    # the core_object labels for the at issue value.
+    # the core_object labels for the at issue value. If the family is associated with
+    # multiple different countries including the US it is classed as global.
     #
     # We are assuming in this block of code that a case is only associated with a single
     # country, even if it is associated with multiple subdivisions within that country
     # for now.
     core_object = family_metadata.get("core_object", [])
-    if "USA" in family_geos and collection is not None:
+    is_usa = "USA" in family_geos and all(
+        geo == "USA" or geo.startswith("US-") for geo in family_geos
+    )
+    if is_usa and collection is not None:
         at_issue = collection.description
-    # !isUSA
-    elif "USA" not in family_geos and core_object.length > 0:
+    elif not is_usa and len(core_object) > 0:
         at_issue = ";".join([label for label in core_object])
     else:
         at_issue = ""
