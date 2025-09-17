@@ -574,10 +574,23 @@ def generate_data_dump_as_csv(
     return csv
 
 
-def generate_data_dump_readme(ingest_cycle_start: str):
+def generate_data_dump_readme(ingest_cycle_start: str, theme: Optional[str] = None):
+    partner_name = ""
+    match theme:
+        case "cclw":
+            partner_name = " and Climate Change Laws of the World"
+        case "mcf":
+            partner_name = (
+                " and the Multilateral Climate Funds' Climate Project Explorer"
+            )
+        case "ccc":
+            partner_name = " and the Sabin Center's Climate Litigation Database"
+        case _:
+            partner_name = ""
+
     file_buffer = StringIO(
-        "Thank you for downloading the full document dataset from Climate Policy Radar "
-        "and Climate Change Laws of the World!"
+        "Thank you for downloading the full document dataset from Climate Policy Radar"
+        f"{partner_name}!"
         "\n\n"
         "For more information including our data dictionary, methodology and "
         "information about how to cite us, visit "
@@ -593,9 +606,12 @@ def generate_data_dump_readme(ingest_cycle_start: str):
 
 
 def create_data_download_zip_archive(
-    ingest_cycle_start: str, allowed_corpora_ids: list[str], db=Depends(get_db)
+    ingest_cycle_start: str,
+    allowed_corpora_ids: list[str],
+    db=Depends(get_db),
+    theme: Optional[str] = None,
 ):
-    readme_buffer = generate_data_dump_readme(ingest_cycle_start)
+    readme_buffer = generate_data_dump_readme(ingest_cycle_start, theme)
 
     csv_buffer = generate_data_dump_as_csv(ingest_cycle_start, allowed_corpora_ids, db)
 
