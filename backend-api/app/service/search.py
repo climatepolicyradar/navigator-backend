@@ -169,10 +169,10 @@ def _vespa_hit_to_search_response_family(
 ) -> SearchResponseFamily:
     """Convert a Vespa hit into a SearchResponseFamily"""
     return SearchResponseFamily(
-        family_slug=hit.family_slug,
-        family_name=hit.family_name,
+        family_slug=hit.family_slug or "",
+        family_name=hit.family_name or "",
         family_description=hit.family_description or "",
-        family_category=hit.family_category,
+        family_category=hit.family_category or "",
         family_date=(
             db_family.published_date.isoformat()
             if db_family.published_date is not None
@@ -183,7 +183,7 @@ def _vespa_hit_to_search_response_family(
             if db_family.last_updated_date is not None
             else ""
         ),
-        family_source=hit.family_source,
+        family_source=hit.family_source or "",
         corpus_import_id=hit.corpus_import_id or "",
         corpus_type_name=hit.corpus_type_name or "",
         family_description_match=False,
@@ -192,7 +192,7 @@ def _vespa_hit_to_search_response_family(
         continuation_token=vespa_family.continuation_token,
         prev_continuation_token=vespa_family.prev_continuation_token,
         family_documents=[],
-        family_geographies=hit.family_geographies,
+        family_geographies=hit.family_geographies or [],
         family_metadata=cast(dict, db_family_metadata.value),
     )
 
@@ -240,7 +240,7 @@ def _vespa_passage_hit_to_search_familydocument(
 ) -> SearchResponseFamilyDocument:
     return SearchResponseFamilyDocument(
         document_title=str(db_family_document.physical_document.title),
-        document_slug=hit.document_slug,
+        document_slug=hit.document_slug or "",
         document_type=doc_type_from_family_document_metadata(db_family_document),
         document_source_url=hit.document_source_url,
         document_url=to_cdn_url(hit.document_cdn_object),
@@ -262,7 +262,7 @@ def _hit_is_missing_required_fields(hit: CprSdkResponseHit) -> bool:
 
 
 def _family_is_not_found_or_not_published(
-    fam_tuple: tuple[Family, FamilyMetadata]
+    fam_tuple: Optional[tuple[Family, FamilyMetadata]]
 ) -> bool:
     return fam_tuple is None or fam_tuple[0].family_status != FamilyStatus.PUBLISHED
 
@@ -330,8 +330,8 @@ def _process_vespa_search_response_families(
     response_families = []
     response_family = None
 
-    response_family_lookup = {}
-    response_document_lookup = {}
+    response_family_lookup: Mapping[str, SearchResponseFamily] = {}
+    response_document_lookup: Mapping[str, SearchResponseFamilyDocument] = {}
 
     for vespa_family in vespa_families_to_process:
         db_family_tuple = db_family_lookup.get(vespa_family.id)
@@ -342,8 +342,8 @@ def _process_vespa_search_response_families(
             )
             continue
 
-        db_family = db_family_tuple[0]
-        db_family_metadata = db_family_tuple[1]
+        db_family = db_family_tuple[0]  # type: ignore -- we know it exists from check above
+        db_family_metadata = db_family_tuple[1]  # type: ignore -- we know it exists
 
         for hit in vespa_family.hits:
             if _hit_is_missing_required_fields(hit):
@@ -356,7 +356,7 @@ def _process_vespa_search_response_families(
             response_family = _cached_or_new_family(
                 hit, response_family_lookup, vespa_family, db_family, db_family_metadata
             )
-            response_family_lookup[hit.family_import_id] = response_family
+            response_family_lookup[hit.family_import_id] = response_family  # type: ignore -- we know it exists from check above
 
             if isinstance(hit, CprSdkResponsePassage):
                 if hit.document_import_id is None:
