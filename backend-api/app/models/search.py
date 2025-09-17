@@ -1,7 +1,7 @@
 from enum import Enum
 from typing import List, Literal, Mapping, Optional, Sequence
 
-from cpr_sdk.models.search import Concept
+from cpr_sdk.models.search import Passage
 from cpr_sdk.models.search import SearchParameters as CprSdkSearchParameters
 from db_client.models.dfce import FamilyCategory
 from pydantic import (
@@ -150,8 +150,8 @@ class SearchResponseDocumentPassage(BaseModel):
     text_block_id: str
     text_block_page: Optional[int] = None
     text_block_coords: Optional[Sequence[Coord]] = None
-    concepts: Optional[Sequence[Concept]] = None
     block_id_sort_key: Optional[int] = None
+    concepts: Optional[Sequence[Passage.Concept]] = None
 
 
 class SearchResponseFamilyDocument(BaseModel):
