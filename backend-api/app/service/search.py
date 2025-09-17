@@ -200,12 +200,38 @@ def _vespa_hit_to_search_response_family(
 def _vespa_passage_hit_to_search_passage(
     hit: CprSdkResponsePassage,
 ) -> SearchResponseDocumentPassage:
+    """Converts a Vespa hit into a SearchResponseDocumentPassage
+
+    Sorting logic has been moved into this function.
+
+    The sorting logic of passages within a document is as follows:
+    1. Find page number -- either from text_block_page or parse text_block_id and extract
+    2. If page number is not found, set to inf
+    3. Find block number -- parsed from text_block_id
+    4. Store both for sort.
+    """
+
+    parsed_text_block_id = _parse_text_block_id(hit.text_block_id)
+
+    # If we don't have a page number, add in what we can
+    if hit.text_block_page is None:
+        if parsed_text_block_id is None or parsed_text_block_id[0] is None:
+            hit.text_block_page = 999999
+        else:
+            hit.text_block_page = parsed_text_block_id[0]
+
+    # Now we can set the sort key, for within-page sorting
+    block_id_sort_key = parsed_text_block_id[
+        1
+    ]  # The _parse_text_block_id function is assumed, in original code, to return this...
+
     return SearchResponseDocumentPassage(
         text=hit.text_block,
         text_block_id=hit.text_block_id,
         text_block_page=hit.text_block_page,
         text_block_coords=hit.text_block_coords,
         concepts=hit.concepts,
+        block_id_sort_key=block_id_sort_key,
     )
 
 
@@ -347,20 +373,15 @@ def _process_vespa_search_response_families(
                 )
 
                 # TODO THIS IS SORTING EVERY LOOP!!!!!!
+                # If there are 50 text passages per document, and 10 documents,
+                # it will sort 500 times.
                 if sort_within_page:
+                    # Updated to use keys from _vespa_passage_hit_to_search_passage
+                    # So we don't need defensive logic here.
                     response_document.document_passage_matches.sort(
                         key=lambda x: (
-                            (
-                                x.text_block_page
-                                if x.text_block_page is not None
-                                else (
-                                    _parse_text_block_id(x.text_block_id)[0]
-                                    if _parse_text_block_id(x.text_block_id)[0]
-                                    is not None
-                                    else float("inf")
-                                )
-                            ),
-                            _parse_text_block_id(x.text_block_id)[1],
+                            x.text_block_page,
+                            x.block_id_sort_key,
                         )
                     )
 
