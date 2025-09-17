@@ -1,4 +1,3 @@
--- Optimised version with improved performance
 WITH recent_slugs AS (
     SELECT DISTINCT ON (
         COALESCE(family_import_id::TEXT, '')
