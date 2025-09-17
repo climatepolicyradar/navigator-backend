@@ -384,25 +384,26 @@ def _process_vespa_search_response_families(
                 response_document.document_passage_matches.append(
                     _vespa_passage_hit_to_search_passage(hit)
                 )
-
-                # TODO THIS IS SORTING EVERY LOOP!!!!!!
-                # If there are 50 text passages per document, and 10 documents,
-                # it will sort 500 times.
-                if sort_within_page:
-                    # Updated to use keys from _vespa_passage_hit_to_search_passage
-                    # So we don't need defensive logic here.
-                    response_document.document_passage_matches.sort(
-                        key=lambda x: (
-                            x.text_block_page,
-                            x.block_id_sort_key,
-                        )
-                    )
-
             else:
                 _LOGGER.error(f"Unknown hit type: {type(hit)}")
 
         response_families.append(response_family)
         response_family = None
+
+    # OK NOW lets sort the passages within each document
+
+    if sort_within_page:
+        for response_family in response_families:
+            for response_document in response_family.family_documents:
+                # Updated to use keys from _vespa_passage_hit_to_search_passage
+                # So we don't need defensive logic here.
+                response_document.document_passage_matches.sort(
+                    key=lambda x: (
+                        x.text_block_page,
+                        x.block_id_sort_key,
+                    )
+                )
+
     return response_families
 
 
