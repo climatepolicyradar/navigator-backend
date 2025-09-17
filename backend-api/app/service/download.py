@@ -566,9 +566,12 @@ def convert_dump_to_csv(df: pd.DataFrame):
 
 
 def generate_data_dump_as_csv(
-    ingest_cycle_start: str, allowed_corpora_ids: list[str], db=Depends(get_db)
+    ingest_cycle_start: str,
+    allowed_corpora_ids: list[str],
+    db=Depends(get_db),
+    theme: Optional[str] = None,
 ):
-    df = get_whole_database_dump(ingest_cycle_start, allowed_corpora_ids, db)
+    df = get_whole_database_dump(ingest_cycle_start, allowed_corpora_ids, db, theme)
     csv = convert_dump_to_csv(df)
     csv.seek(0)
     return csv
@@ -613,7 +616,9 @@ def create_data_download_zip_archive(
 ):
     readme_buffer = generate_data_dump_readme(ingest_cycle_start, theme)
 
-    csv_buffer = generate_data_dump_as_csv(ingest_cycle_start, allowed_corpora_ids, db)
+    csv_buffer = generate_data_dump_as_csv(
+        ingest_cycle_start, allowed_corpora_ids, db, theme
+    )
 
     zip_buffer = BytesIO()
     with zipfile.ZipFile(zip_buffer, "a", zipfile.ZIP_DEFLATED, False) as zip_file:
