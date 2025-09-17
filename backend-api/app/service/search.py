@@ -267,6 +267,27 @@ def _family_is_not_found_or_not_published(
     return fam_tuple is None or fam_tuple[0].family_status != FamilyStatus.PUBLISHED
 
 
+def _cached_or_new_family(
+    hit: CprSdkResponseHit,
+    lookup_table: dict,
+    vespa_family: CprSdkResponseFamily,
+    db_family: Family,
+    db_family_metadata: FamilyMetadata,
+) -> SearchResponseFamily:
+    response_family = lookup_table.get(hit.family_import_id)
+    # All hits contain required family info to create response
+    if response_family is None:
+        response_family = _vespa_hit_to_search_response_family(
+            hit, vespa_family, db_family, db_family_metadata
+        )
+
+    if isinstance(hit, CprSdkResponseDocument):
+        response_family.family_description_match = True
+        response_family.family_title_match = True
+
+    return response_family
+
+
 def _process_vespa_search_response_families(
     db: Session,
     vespa_families: Sequence[CprSdkResponseFamily],
@@ -309,6 +330,9 @@ def _process_vespa_search_response_families(
     response_families = []
     response_family = None
 
+    response_family_lookup = {}
+    response_document_lookup = {}
+
     for vespa_family in vespa_families_to_process:
         db_family_tuple = db_family_lookup.get(vespa_family.id)
 
@@ -321,9 +345,6 @@ def _process_vespa_search_response_families(
         db_family = db_family_tuple[0]
         db_family_metadata = db_family_tuple[1]
 
-        response_family_lookup = {}
-        response_document_lookup = {}
-
         for hit in vespa_family.hits:
             if _hit_is_missing_required_fields(hit):
                 _LOGGER.error(
@@ -332,40 +353,32 @@ def _process_vespa_search_response_families(
                 )
                 continue
 
-            response_family = response_family_lookup.get(hit.family_import_id)
-            # All hits contain required family info to create response
-            if response_family is None:
-                response_family = _vespa_hit_to_search_response_family(
-                    hit, vespa_family, db_family, db_family_metadata
-                )
-                response_family_lookup[hit.family_import_id] = response_family
+            response_family = _cached_or_new_family(
+                hit, response_family_lookup, vespa_family, db_family, db_family_metadata
+            )
+            response_family_lookup[hit.family_import_id] = response_family
 
-            if isinstance(hit, CprSdkResponseDocument):
-                response_family.family_description_match = True
-                response_family.family_title_match = True
-
-            elif isinstance(hit, CprSdkResponsePassage):
-                document_import_id = hit.document_import_id
-                if document_import_id is None:
+            if isinstance(hit, CprSdkResponsePassage):
+                if hit.document_import_id is None:
                     _LOGGER.error("Skipping hit with empty document import id")
                     continue
 
-                response_document = response_document_lookup.get(document_import_id)
+                response_document = response_document_lookup.get(hit.document_import_id)
                 if response_document is None:
                     db_family_document = db_family_document_lookup.get(
-                        document_import_id
+                        hit.document_import_id
                     )
                     if db_family_document is None:
                         _LOGGER.error(
                             "Skipping unknown family document with id "
-                            f"'{document_import_id}'"
+                            f"'{hit.document_import_id}'"
                         )
                         continue
 
                     response_document = _vespa_passage_hit_to_search_familydocument(
                         hit, db_family_document
                     )
-                    response_document_lookup[document_import_id] = response_document
+                    response_document_lookup[hit.document_import_id] = response_document
                     response_family.family_documents.append(response_document)
 
                 response_document.document_passage_matches.append(
