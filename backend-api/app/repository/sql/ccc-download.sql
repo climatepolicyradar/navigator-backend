@@ -223,17 +223,17 @@ SELECT
     fc.corpus_import_id AS "Internal Corpus ID",
     fca.collection_import_ids AS "Internal Bundle ID(s)",
     CONCAT(
-        'https://app.climatepolicyradar.org/documents/', rs_doc.name
+        :url_base, '/documents/', rs_doc.name
     ) AS "Document URL",
     CONCAT(
-        'https://app.climatepolicyradar.org/document/', rs_fam.name
+        :url_base, '/document/', rs_fam.name
     ) AS "Case URL",
 
     CASE
         WHEN fca.collection_import_ids IS NOT NULL THEN
-            'https://app.climatepolicyradar.org/collection/' || REPLACE(
+            :url_base || '/collection/' || REPLACE(
                 fca.collection_import_ids, ';',
-                ';https://app.climatepolicyradar.org/collection/'
+                ';' || :url_base || '/collection/'
             )
         ELSE ''
     END AS "Bundle URL(s)",

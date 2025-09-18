@@ -304,8 +304,10 @@ def download_all_search_documents(
         # upload a buffer, it starts from the position it is currently in. We need to
         # add the seek(0) to reset the buffer position to the beginning before writing
         # to S3 to avoid creating an empty file.
+        scheme = "http" if "localhost" in PUBLIC_APP_URL else "https"
+        url_base = f"{scheme}://{PUBLIC_APP_URL}"
         zip_buffer = create_data_download_zip_archive(
-            latest_ingest_start, token.allowed_corpora_ids, db, token.sub
+            latest_ingest_start, token.allowed_corpora_ids, db, token.sub, url_base
         )
         zip_buffer.seek(0)
 

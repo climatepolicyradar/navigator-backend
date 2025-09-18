@@ -17,6 +17,7 @@ def test_get_whole_db_dump_does_not_return_data_for_documents_that_are_not_publi
         ingest_cycle_date,
         all_corpora,
         data_db,
+        url_base="https://test.example.com",
     )
 
     assert db_dump.empty
