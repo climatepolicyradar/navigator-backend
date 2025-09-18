@@ -570,8 +570,11 @@ def generate_data_dump_as_csv(
     allowed_corpora_ids: list[str],
     db=Depends(get_db),
     theme: Optional[str] = None,
+    url_base: Optional[str] = None,
 ):
-    df = get_whole_database_dump(ingest_cycle_start, allowed_corpora_ids, db, theme)
+    df = get_whole_database_dump(
+        ingest_cycle_start, allowed_corpora_ids, db, theme, url_base
+    )
     csv = convert_dump_to_csv(df)
     csv.seek(0)
     return csv
@@ -613,11 +616,12 @@ def create_data_download_zip_archive(
     allowed_corpora_ids: list[str],
     db=Depends(get_db),
     theme: Optional[str] = None,
+    url_base: Optional[str] = None,
 ):
     readme_buffer = generate_data_dump_readme(ingest_cycle_start, theme)
 
     csv_buffer = generate_data_dump_as_csv(
-        ingest_cycle_start, allowed_corpora_ids, db, theme
+        ingest_cycle_start, allowed_corpora_ids, db, theme, url_base
     )
 
     zip_buffer = BytesIO()
