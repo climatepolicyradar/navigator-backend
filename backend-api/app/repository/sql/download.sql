@@ -165,6 +165,12 @@ SELECT
     fme.instrument AS "Instrument",
     fme.author AS "Author",
     fme.author_type AS "Author Type",
+    CONCAT(
+        :url_base, '/documents/', rs_doc.name
+    ) AS "Document URL",
+    CONCAT(
+        :url_base, '/document/', rs_fam.name
+    ) AS "Family URL",
     INITCAP(d.valid_metadata::JSON #>> '{role,0}') AS "Document Role",
     INITCAP(d.valid_metadata::JSON #>> '{type,0}') AS "Document Type",
     CASE
