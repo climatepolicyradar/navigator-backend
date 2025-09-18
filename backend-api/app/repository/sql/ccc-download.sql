@@ -145,38 +145,30 @@ concept_labels AS (
 
 concept_labels_parsed AS (
     SELECT
-        fm.family_import_id,
-        ARRAY_TO_STRING(
-            ARRAY(SELECT
-                CASE
-                    WHEN concept_label LIKE 'jurisdiction/%'
-                    THEN SPLIT_PART(concept_label, '/', 2)
-                END
-            ),
+        cl.family_import_id,
+        STRING_AGG(
+            CASE
+                WHEN cl.concept_label LIKE 'jurisdiction/%'
+                THEN SPLIT_PART(cl.concept_label, '/', 2)
+            END,
             ';'
         ) AS jurisdictions,
-        ARRAY_TO_STRING(
-            ARRAY(SELECT
-                CASE
-                    WHEN concept_label LIKE 'category/%'
-                    THEN SPLIT_PART(concept_label, '/', 2)
-                END
-            ),
+        STRING_AGG(
+            CASE
+                WHEN cl.concept_label LIKE 'category/%'
+                THEN SPLIT_PART(cl.concept_label, '/', 2)
+            END,
             ';'
         ) AS case_categories,
-        ARRAY_TO_STRING(
-            ARRAY(SELECT
-                CASE
-                    WHEN concept_label LIKE 'principal_law/%'
-                    THEN SPLIT_PART(concept_label, '/', 2)
-                END
-            ),
+        STRING_AGG(
+            CASE
+                WHEN cl.concept_label LIKE 'principal_law/%'
+                THEN SPLIT_PART(cl.concept_label, '/', 2)
+            END,
             ';'
         ) AS principal_laws
-    FROM family_metadata AS fm
-    INNER JOIN eligible_families AS ef ON fm.family_import_id = ef.import_id
-    CROSS JOIN concept_labels
-    GROUP BY fm.family_import_id
+    FROM concept_labels AS cl
+    GROUP BY cl.family_import_id
 )
 
 SELECT
