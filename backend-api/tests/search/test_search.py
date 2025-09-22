@@ -1053,14 +1053,8 @@ def test_process_vespa_search_response(
                     ]
                 )
             else:
-                # Update 2025-09-17: text_block_page is now populated by _vespa_passage_hit_to_search_passage
-                # This originally checked for None. I do not know if that is a semantically meaningful check.
-                # I've changed it to check for not None, to capture this new behaviour.
                 assert all(
-                    [
-                        pm.text_block_page is not None
-                        for pm in fd.document_passage_matches
-                    ]
+                    [pm.text_block_page is None for pm in fd.document_passage_matches]
                 )
                 assert all(
                     [pm.text_block_coords is None for pm in fd.document_passage_matches]
