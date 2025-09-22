@@ -151,6 +151,7 @@ class SearchResponseDocumentPassage(BaseModel):
     text_block_page: Optional[int] = None
     text_block_coords: Optional[Sequence[Coord]] = None
     concepts: Optional[Sequence[Passage.Concept]] = None
+    block_id_sort_key: Optional[int] = None
 
 
 class SearchResponseFamilyDocument(BaseModel):

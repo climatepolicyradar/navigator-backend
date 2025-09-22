@@ -7,6 +7,7 @@ from cpr_sdk.exceptions import QueryError
 from cpr_sdk.models.search import Document as CprSdkResponseDocument
 from cpr_sdk.models.search import Family as CprSdkResponseFamily
 from cpr_sdk.models.search import Filters as CprSdkKeywordFilters
+from cpr_sdk.models.search import Hit as CprSdkResponseHit
 from cpr_sdk.models.search import Passage as CprSdkResponsePassage
 from cpr_sdk.models.search import SearchParameters
 from cpr_sdk.models.search import SearchResponse as CprSdkSearchResponse
@@ -160,6 +161,133 @@ def _convert_filters(
         return None
 
 
+def _vespa_hit_to_search_response_family(
+    hit: CprSdkResponseHit,
+    vespa_family: CprSdkResponseFamily,
+    db_family: Family,
+    db_family_metadata: FamilyMetadata,
+) -> SearchResponseFamily:
+    """Convert a Vespa hit into a SearchResponseFamily"""
+    return SearchResponseFamily(
+        family_slug=hit.family_slug or "",
+        family_name=hit.family_name or "",
+        family_description=hit.family_description or "",
+        family_category=hit.family_category or "",
+        family_date=(
+            db_family.published_date.isoformat()
+            if db_family.published_date is not None
+            else ""
+        ),
+        family_last_updated_date=(
+            db_family.last_updated_date.isoformat()
+            if db_family.last_updated_date is not None
+            else ""
+        ),
+        family_source=hit.family_source or "",
+        corpus_import_id=hit.corpus_import_id or "",
+        corpus_type_name=hit.corpus_type_name or "",
+        family_description_match=False,
+        family_title_match=False,
+        total_passage_hits=vespa_family.total_passage_hits,
+        continuation_token=vespa_family.continuation_token,
+        prev_continuation_token=vespa_family.prev_continuation_token,
+        family_documents=[],
+        family_geographies=hit.family_geographies or [],
+        family_metadata=cast(dict, db_family_metadata.value),
+    )
+
+
+def _vespa_passage_hit_to_search_passage(
+    hit: CprSdkResponsePassage,
+) -> SearchResponseDocumentPassage:
+    """Converts a Vespa hit into a SearchResponseDocumentPassage
+
+    Sorting logic has been moved into this function.
+
+    The sorting logic of passages within a document is as follows:
+    1. Find page number -- either from text_block_page or parse text_block_id and extract
+    2. If page number is not found, set to inf
+    3. Find block number -- parsed from text_block_id
+    4. Store both for sort.
+    """
+
+    parsed_text_block_id = _parse_text_block_id(hit.text_block_id)
+
+    # If we don't have a page number, add in what we can
+    if hit.text_block_page is None:
+        if parsed_text_block_id is None or parsed_text_block_id[0] is None:
+            hit.text_block_page = None
+        else:
+            hit.text_block_page = parsed_text_block_id[0]
+
+    # Now we can set the sort key, for within-page sorting
+    block_id_sort_key = parsed_text_block_id[
+        1
+    ]  # The _parse_text_block_id function is assumed, in original code, to return this...
+
+    return SearchResponseDocumentPassage(
+        text=hit.text_block,
+        text_block_id=hit.text_block_id,
+        text_block_page=hit.text_block_page,
+        text_block_coords=hit.text_block_coords,
+        concepts=hit.concepts,
+        block_id_sort_key=block_id_sort_key,
+    )
+
+
+def _vespa_passage_hit_to_search_familydocument(
+    hit: CprSdkResponsePassage, db_family_document: FamilyDocument
+) -> SearchResponseFamilyDocument:
+    return SearchResponseFamilyDocument(
+        document_title=str(db_family_document.physical_document.title),
+        document_slug=hit.document_slug or "",
+        document_type=doc_type_from_family_document_metadata(db_family_document),
+        document_source_url=hit.document_source_url,
+        document_url=to_cdn_url(hit.document_cdn_object),
+        document_content_type=hit.document_content_type,
+        document_passage_matches=[],
+    )
+
+
+def _hit_is_missing_required_fields(hit: CprSdkResponseHit) -> bool:
+    return (
+        hit.family_slug is None
+        or hit.document_slug is None
+        or hit.family_name is None
+        or hit.family_category is None
+        or hit.family_source is None
+        or hit.family_geographies is None
+        or hit.family_import_id is None
+    )
+
+
+def _family_is_not_found_or_not_published(
+    fam_tuple: Optional[tuple[Family, FamilyMetadata]]
+) -> bool:
+    return fam_tuple is None or fam_tuple[0].family_status != FamilyStatus.PUBLISHED
+
+
+def _cached_or_new_family(
+    hit: CprSdkResponseHit,
+    lookup_table: dict,
+    vespa_family: CprSdkResponseFamily,
+    db_family: Family,
+    db_family_metadata: FamilyMetadata,
+) -> SearchResponseFamily:
+    response_family = lookup_table.get(hit.family_import_id)
+    # All hits contain required family info to create response
+    if response_family is None:
+        response_family = _vespa_hit_to_search_response_family(
+            hit, vespa_family, db_family, db_family_metadata
+        )
+
+    if isinstance(hit, CprSdkResponseDocument):
+        response_family.family_description_match = True
+        response_family.family_title_match = True
+
+    return response_family
+
+
 def _process_vespa_search_response_families(
     db: Session,
     vespa_families: Sequence[CprSdkResponseFamily],
@@ -169,6 +297,12 @@ def _process_vespa_search_response_families(
 ) -> Sequence[SearchResponseFamily]:
     """
     Process a list of cpr sdk results into a list of SearchResponse Families
+
+    We receive a flat list of hits per family. We have to transform each
+    family into a SearchResponseFamily, with a list of SearchResponseFamilyDocuments, each
+    with a list of SearchResponseDocumentPassages that have been hit. That list may be sorted.
+
+    Only results that have a published family are included in the response.
 
     Note: this function requires that results from the cpr sdk library are grouped
           by family_import_id.
@@ -197,142 +331,83 @@ def _process_vespa_search_response_families(
     response_family = None
 
     for vespa_family in vespa_families_to_process:
+        response_family_lookup: Mapping[str, SearchResponseFamily] = {}
+        response_document_lookup: Mapping[str, SearchResponseFamilyDocument] = {}
+
         db_family_tuple = db_family_lookup.get(vespa_family.id)
-        if db_family_tuple is None:
-            _LOGGER.error(f"Could not locate family with import id '{vespa_family.id}'")
-            continue
-        if db_family_tuple[0].family_status != FamilyStatus.PUBLISHED:
-            _LOGGER.debug(
-                f"Skipping unpublished family with id '{vespa_family.id}' "
-                "in search results"
+
+        if _family_is_not_found_or_not_published(db_family_tuple):
+            _LOGGER.info(
+                f"Skipping unfound or unpublished family with id '{vespa_family.id}' in search results"
             )
             continue
-        db_family = db_family_tuple[0]
-        db_family_metadata = db_family_tuple[1]
 
-        response_family_lookup = {}
-        response_document_lookup = {}
+        db_family = db_family_tuple[0]  # type: ignore -- we know it exists from check above
+        db_family_metadata = db_family_tuple[1]  # type: ignore -- we know it exists
 
         for hit in vespa_family.hits:
-            family_import_id = hit.family_import_id
-            if family_import_id is None:
-                _LOGGER.error("Skipping hit with empty family import id")
-                continue
-
-            # Check for all required family/document fields in the hit
-            if (
-                hit.family_slug is None
-                or hit.document_slug is None
-                or hit.family_name is None
-                or hit.family_category is None
-                or hit.family_source is None
-                or hit.family_geographies is None
-            ):
-                _LOGGER.error(
-                    "Skipping hit with empty required family info for import "
-                    f"id: {family_import_id}"
+            if _hit_is_missing_required_fields(hit):
+                _LOGGER.info(
+                    "Skipping hit with empty required family import_id OR info for import "
+                    f"id: {hit.family_import_id}"
                 )
                 continue
 
-            response_family = response_family_lookup.get(family_import_id)
-            # All hits contain required family info to create response
-            if response_family is None:
-                response_family = SearchResponseFamily(
-                    family_slug=hit.family_slug,
-                    family_name=hit.family_name,
-                    family_description=hit.family_description or "",
-                    family_category=hit.family_category,
-                    family_date=(
-                        db_family.published_date.isoformat()
-                        if db_family.published_date is not None
-                        else ""
-                    ),
-                    family_last_updated_date=(
-                        db_family.last_updated_date.isoformat()
-                        if db_family.last_updated_date is not None
-                        else ""
-                    ),
-                    family_source=hit.family_source,
-                    corpus_import_id=hit.corpus_import_id or "",
-                    corpus_type_name=hit.corpus_type_name or "",
-                    family_description_match=False,
-                    family_title_match=False,
-                    total_passage_hits=vespa_family.total_passage_hits,
-                    continuation_token=vespa_family.continuation_token,
-                    prev_continuation_token=vespa_family.prev_continuation_token,
-                    family_documents=[],
-                    family_geographies=hit.family_geographies,
-                    family_metadata=cast(dict, db_family_metadata.value),
-                )
-                response_family_lookup[family_import_id] = response_family
+            response_family = _cached_or_new_family(
+                hit, response_family_lookup, vespa_family, db_family, db_family_metadata
+            )
+            response_family_lookup[hit.family_import_id] = response_family  # type: ignore -- we know it exists from check above
 
-            if isinstance(hit, CprSdkResponseDocument):
-                response_family.family_description_match = True
-                response_family.family_title_match = True
-
-            elif isinstance(hit, CprSdkResponsePassage):
-                document_import_id = hit.document_import_id
-                if document_import_id is None:
+            if isinstance(hit, CprSdkResponsePassage):
+                if hit.document_import_id is None:
                     _LOGGER.error("Skipping hit with empty document import id")
                     continue
 
-                response_document = response_document_lookup.get(document_import_id)
+                response_document = response_document_lookup.get(hit.document_import_id)
                 if response_document is None:
                     db_family_document = db_family_document_lookup.get(
-                        document_import_id
+                        hit.document_import_id
                     )
                     if db_family_document is None:
                         _LOGGER.error(
                             "Skipping unknown family document with id "
-                            f"'{document_import_id}'"
+                            f"'{hit.document_import_id}'"
                         )
                         continue
 
-                    response_document = SearchResponseFamilyDocument(
-                        document_title=str(db_family_document.physical_document.title),
-                        document_slug=hit.document_slug,
-                        document_type=doc_type_from_family_document_metadata(
-                            db_family_document
-                        ),
-                        document_source_url=hit.document_source_url,
-                        document_url=to_cdn_url(hit.document_cdn_object),
-                        document_content_type=hit.document_content_type,
-                        document_passage_matches=[],
+                    response_document = _vespa_passage_hit_to_search_familydocument(
+                        hit, db_family_document
                     )
-                    response_document_lookup[document_import_id] = response_document
+                    response_document_lookup[hit.document_import_id] = response_document
                     response_family.family_documents.append(response_document)
 
                 response_document.document_passage_matches.append(
-                    SearchResponseDocumentPassage(
-                        text=hit.text_block,
-                        text_block_id=hit.text_block_id,
-                        text_block_page=hit.text_block_page,
-                        text_block_coords=hit.text_block_coords,
-                        concepts=hit.concepts,
-                    )
+                    _vespa_passage_hit_to_search_passage(hit)
                 )
-                if sort_within_page:
-                    response_document.document_passage_matches.sort(
-                        key=lambda x: (
-                            (
-                                x.text_block_page
-                                if x.text_block_page is not None
-                                else (
-                                    _parse_text_block_id(x.text_block_id)[0]
-                                    if _parse_text_block_id(x.text_block_id)[0]
-                                    is not None
-                                    else float("inf")
-                                )
-                            ),
-                            _parse_text_block_id(x.text_block_id)[1],
-                        )
-                    )
-
             else:
-                _LOGGER.error(f"Unknown hit type: {type(hit)}")
+                _LOGGER.info(f"Unknown hit type: {type(hit)}")
 
         response_families.append(response_family)
         response_family = None
+
+    # OK NOW lets sort the passages within each document
+
+    if sort_within_page:
+        for response_family in response_families:
+            for response_document in response_family.family_documents:
+                # Updated to use keys from _vespa_passage_hit_to_search_passage
+                # So we don't need defensive logic here.
+                response_document.document_passage_matches.sort(
+                    key=lambda x: (
+                        (
+                            x.text_block_page
+                            if x.text_block_page is not None
+                            else float("inf")
+                        ),
+                        x.block_id_sort_key,
+                    )
+                )
+
     return response_families
 
 
