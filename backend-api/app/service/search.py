@@ -337,7 +337,7 @@ def _process_vespa_search_response_families(
         db_family_tuple = db_family_lookup.get(vespa_family.id)
 
         if _family_is_not_found_or_not_published(db_family_tuple):
-            _LOGGER.error(
+            _LOGGER.info(
                 f"Skipping unfound or unpublished family with id '{vespa_family.id}' in search results"
             )
             continue
@@ -347,7 +347,7 @@ def _process_vespa_search_response_families(
 
         for hit in vespa_family.hits:
             if _hit_is_missing_required_fields(hit):
-                _LOGGER.error(
+                _LOGGER.info(
                     "Skipping hit with empty required family import_id OR info for import "
                     f"id: {hit.family_import_id}"
                 )
@@ -385,7 +385,7 @@ def _process_vespa_search_response_families(
                     _vespa_passage_hit_to_search_passage(hit)
                 )
             else:
-                _LOGGER.error(f"Unknown hit type: {type(hit)}")
+                _LOGGER.info(f"Unknown hit type: {type(hit)}")
 
         response_families.append(response_family)
         response_family = None
