@@ -216,7 +216,7 @@ def _vespa_passage_hit_to_search_passage(
     # If we don't have a page number, add in what we can
     if hit.text_block_page is None:
         if parsed_text_block_id is None or parsed_text_block_id[0] is None:
-            hit.text_block_page = 999999
+            hit.text_block_page = None
         else:
             hit.text_block_page = parsed_text_block_id[0]
 
@@ -330,10 +330,10 @@ def _process_vespa_search_response_families(
     response_families = []
     response_family = None
 
-    response_family_lookup: Mapping[str, SearchResponseFamily] = {}
-    response_document_lookup: Mapping[str, SearchResponseFamilyDocument] = {}
-
     for vespa_family in vespa_families_to_process:
+        response_family_lookup: Mapping[str, SearchResponseFamily] = {}
+        response_document_lookup: Mapping[str, SearchResponseFamilyDocument] = {}
+
         db_family_tuple = db_family_lookup.get(vespa_family.id)
 
         if _family_is_not_found_or_not_published(db_family_tuple):
@@ -399,7 +399,11 @@ def _process_vespa_search_response_families(
                 # So we don't need defensive logic here.
                 response_document.document_passage_matches.sort(
                     key=lambda x: (
-                        x.text_block_page,
+                        (
+                            x.text_block_page
+                            if x.text_block_page is not None
+                            else float("inf")
+                        ),
                         x.block_id_sort_key,
                     )
                 )
