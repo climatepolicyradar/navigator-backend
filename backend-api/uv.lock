@@ -248,7 +248,7 @@ requires-dist = [
     { name = "bcrypt", specifier = ">=4.3.0" },
     { name = "boto3", specifier = ">=1.26" },
     { name = "botocore", specifier = ">=1.38.37" },
-    { name = "cpr-sdk", extras = ["vespa", "datasets"], specifier = "==1.22.1" },
+    { name = "cpr-sdk", extras = ["vespa", "datasets"], specifier = "==1.23.4" },
     { name = "db-client", git = "https://github.com/climatepolicyradar/navigator-db-client.git?rev=v3.9.18" },
     { name = "fastapi", specifier = ">=0.115.8" },
     { name = "fastapi-health", specifier = ">=0.4.0" },
@@ -496,7 +496,7 @@ wheels = [
 
 [[package]]
 name = "cpr-sdk"
-version = "1.22.1"
+version = "1.23.4"
 source = { registry = "https://pypi.org/simple" }
 dependencies = [
     { name = "aws-error-utils" },
@@ -512,9 +512,9 @@ dependencies = [
     { name = "rich" },
     { name = "tqdm" },
 ]
-sdist = { url = "https://files.pythonhosted.org/packages/45/90/daa8e8c1f967c72c5fbd7c08e73a2cf3c47035d8e821212e88578964fce3/cpr_sdk-1.22.1.tar.gz", hash = "sha256:08f24f5157fccf1a60d5f0815b162bc9af34ef7b42a2870124083ba4bf8ce1b2", size = 70110 }
+sdist = { url = "https://files.pythonhosted.org/packages/b8/cc/3699abf8e0923ec68ba9318fd04deee770ea87f77fb619a05dc00e557815/cpr_sdk-1.23.4.tar.gz", hash = "sha256:80ee764c8fc2bd9857fc57e6d294df10b770e647d754cb5976b8eaa949685c03", size = 71568 }
 wheels = [
-    { url = "https://files.pythonhosted.org/packages/45/f4/d4efbe96391187b8c25c1602808f5d60e88966db9ff67c2fa7d991b013da/cpr_sdk-1.22.1-py3-none-any.whl", hash = "sha256:20884978c9d773199ed482b2b0dde8423c06406035bae5b5467c73ded9a0d0ed", size = 75460 },
+    { url = "https://files.pythonhosted.org/packages/75/c6/3d11a7a73d841cbede86911677a4af77d52476f0f3f68e86355dcfb64264/cpr_sdk-1.23.4-py3-none-any.whl", hash = "sha256:300fb7ba72a934e6f500d6563a4447a23662e01b9cebf927a0ac2925ec977a8d", size = 76924 },
 ]
 
 [package.optional-dependencies]

@@ -1,7 +1,4 @@
--- Optimised version with improved performance
-WITH
--- Single CTE for all slug deduplication (family and document)
-recent_slugs AS (
+WITH recent_slugs AS (
     SELECT DISTINCT ON (
         COALESCE(family_import_id::TEXT, '')
         || '|'
@@ -21,7 +18,6 @@ recent_slugs AS (
         ctid DESC
 ),
 
--- Pre-filter families based on corpus membership and document status
 eligible_families AS (
     SELECT DISTINCT f.import_id
     FROM family AS f
@@ -32,7 +28,6 @@ eligible_families AS (
       AND fd.last_modified < :ingest_cycle_start
 ),
 
--- Combine event aggregations
 family_events_agg AS (
     SELECT
         fe.family_import_id,
@@ -61,7 +56,6 @@ family_events_agg AS (
     GROUP BY fe.family_import_id
 ),
 
--- Geography aggregation
 family_geo_agg AS (
     SELECT
         fg.family_import_id,
@@ -73,7 +67,6 @@ family_geo_agg AS (
     GROUP BY fg.family_import_id
 ),
 
--- Collection aggregation
 family_collections_agg AS (
     SELECT
         cf.family_import_id,
@@ -86,7 +79,6 @@ family_collections_agg AS (
     GROUP BY cf.family_import_id
 ),
 
--- Language aggregation
 doc_languages AS (
     SELECT
         pd.id,
@@ -97,87 +89,168 @@ doc_languages AS (
     GROUP BY pd.id
 ),
 
--- Pre-compute metadata extractions to avoid repeated JSONB operations
 family_metadata_extracted AS (
     SELECT
         fm.family_import_id,
         ARRAY_TO_STRING(
-            ARRAY(SELECT JSONB_ARRAY_ELEMENTS_TEXT(fm.value -> 'framework')),
+            ARRAY(SELECT JSONB_ARRAY_ELEMENTS_TEXT(
+                    fm.value -> 'original_case_name'
+                )),
             ';'
-        ) AS framework,
+        ) AS original_case_name,
         ARRAY_TO_STRING(
-            ARRAY(SELECT JSONB_ARRAY_ELEMENTS_TEXT(fm.value -> 'topic')), ';'
-        ) AS topic,
-        ARRAY_TO_STRING(
-            ARRAY(SELECT JSONB_ARRAY_ELEMENTS_TEXT(fm.value -> 'hazard')), ';'
-        ) AS hazard,
-        ARRAY_TO_STRING(
-            ARRAY(SELECT JSONB_ARRAY_ELEMENTS_TEXT(fm.value -> 'sector')), ';'
-        ) AS sector,
-        ARRAY_TO_STRING(
-            ARRAY(SELECT JSONB_ARRAY_ELEMENTS_TEXT(fm.value -> 'keyword')), ';'
-        ) AS keyword,
-        ARRAY_TO_STRING(
-            ARRAY(SELECT JSONB_ARRAY_ELEMENTS_TEXT(fm.value -> 'instrument')),
+            ARRAY(SELECT JSONB_ARRAY_ELEMENTS_TEXT(
+                fm.value -> 'case_number'
+                )),
             ';'
-        ) AS instrument,
+        ) AS case_number,
         ARRAY_TO_STRING(
-            ARRAY(SELECT JSONB_ARRAY_ELEMENTS_TEXT(fm.value -> 'author')), ';'
-        ) AS author,
-        ARRAY_TO_STRING(
-            ARRAY(SELECT JSONB_ARRAY_ELEMENTS_TEXT(fm.value -> 'author_type')),
+            ARRAY(SELECT JSONB_ARRAY_ELEMENTS_TEXT(
+                fm.value -> 'status'
+                )),
             ';'
-        ) AS author_type
+        ) AS status,
+        ARRAY_TO_STRING(
+            ARRAY(SELECT JSONB_ARRAY_ELEMENTS_TEXT(
+                fm.value -> 'court_number'
+                )),
+            ';'
+        ) AS court_number,
+        ARRAY_TO_STRING(
+            ARRAY(SELECT JSONB_ARRAY_ELEMENTS_TEXT(
+                fm.value -> 'core_object'
+                )),
+            ';'
+        ) AS core_object,
+        ARRAY_TO_STRING(
+            ARRAY(SELECT JSONB_ARRAY_ELEMENTS_TEXT(
+                fm.value -> 'concept_preferred_label'
+                )),
+            ';'
+        ) AS concept_preferred_label
     FROM family_metadata AS fm
     INNER JOIN eligible_families AS ef ON fm.family_import_id = ef.import_id
+),
+
+concept_labels AS (
+    SELECT
+        fm.family_import_id,
+        JSONB_ARRAY_ELEMENTS_TEXT(
+            fm.value -> 'concept_preferred_label'
+        ) AS concept_label
+    FROM family_metadata AS fm
+    INNER JOIN eligible_families AS ef ON fm.family_import_id = ef.import_id
+    WHERE fm.value ? 'concept_preferred_label'
+),
+
+concept_labels_parsed AS (
+    SELECT
+        cl.family_import_id,
+        STRING_AGG(
+            CASE
+                WHEN cl.concept_label LIKE 'jurisdiction/%'
+                THEN SPLIT_PART(cl.concept_label, '/', 2)
+            END,
+            ';'
+        ) AS jurisdictions,
+        STRING_AGG(
+            CASE
+                WHEN cl.concept_label LIKE 'category/%'
+                THEN SPLIT_PART(cl.concept_label, '/', 2)
+            END,
+            ';'
+        ) AS case_categories,
+        STRING_AGG(
+            CASE
+                WHEN cl.concept_label LIKE 'principal_law/%'
+                THEN SPLIT_PART(cl.concept_label, '/', 2)
+            END,
+            ';'
+        ) AS principal_laws
+    FROM concept_labels AS cl
+    GROUP BY cl.family_import_id
 )
 
--- Main query with optimised joins
 SELECT
     rs_doc.name AS "Document ID",
     p.title AS "Document Title",
-    rs_fam.name AS "Family ID",
-    f.title AS "Family Title",
-    f.description AS "Family Summary",
-    fca.collection_titles AS "Collection Title(s)",
-    fca.collection_descriptions AS "Collection Description(s)",
-    d.variant_name AS "Document Variant",
+    rs_fam.name AS "Case ID",
+
+    f.title AS "Case Name",
+    fme.original_case_name AS "Non-English Case Name",
+    f.description AS "Case Summary",
+    EXTRACT(
+        YEAR FROM fea.published_date
+    )::TEXT AS "Case Filing Year for Action",
+    fca.collection_import_ids AS "Bundle ID(s)",
+    fca.collection_titles AS "Bundle Name(s)",
+
+    fea.published_date::DATE AS "Document Filing Date",
     p.source_url AS "Document Content URL",
-    dl.display_name AS "Language",
-    o.name AS "Source",
+    -- Generate semicolon-separated URLs for each bundle ID
+    d.variant_name AS "Document Variant",
+
+    dl.display_name AS "Language(s)",
+    -- Document Type comes from event type, not doc metadata
+    fme.case_number AS "Case Number",
+    -- Document Summary from event metadata (first event description)
+    fme.status AS "Status",
+    clp.jurisdictions AS "Jurisdictions",
+    clp.case_categories AS "Case Categories",
+    clp.principal_laws AS "Principal Laws",
+    -- At Issue logic: collection description for USA, core_object for non-USA
+    fme.court_number AS "Court Number",
     fga.geo_isos AS "Geography ISOs",
     fga.geo_display_values AS "Geographies",
     fea.published_date AS "First event in timeline",
     fea.last_changed AS "Last event in timeline",
     fea.event_type_names AS "Full timeline of events (types)",
     fea.event_dates AS "Full timeline of events (dates)",
+
     d.created::DATE AS "Date Added to System",
     f.last_modified::DATE AS "Last Modified on System",
+
     d.import_id AS "Internal Document ID",
-    f.import_id AS "Internal Family ID",
+    f.import_id AS "Internal Case ID",
     fc.corpus_import_id AS "Internal Corpus ID",
-    fca.collection_import_ids AS "Internal Collection ID(s)",
-    fme.framework AS "Framework",
-    fme.topic AS "Topic/Response",
-    fme.hazard AS "Hazard",
-    fme.sector AS "Sector",
-    fme.keyword AS "Keyword",
-    fme.instrument AS "Instrument",
-    fme.author AS "Author",
-    fme.author_type AS "Author Type",
+    fca.collection_import_ids AS "Internal Bundle ID(s)",
     CONCAT(
         :url_base, '/documents/', rs_doc.name
     ) AS "Document URL",
     CONCAT(
         :url_base, '/document/', rs_fam.name
-    ) AS "Family URL",
-    INITCAP(d.valid_metadata::JSON #>> '{role,0}') AS "Document Role",
-    INITCAP(d.valid_metadata::JSON #>> '{type,0}') AS "Document Type",
+    ) AS "Case URL",
+
     CASE
-        WHEN f.family_category = 'UNFCCC' THEN 'UNFCCC'
-        WHEN f.family_category = 'MCF' THEN 'MCF'
-        ELSE INITCAP(f.family_category::TEXT)
-    END AS "Category"
+        WHEN fca.collection_import_ids IS NOT NULL THEN
+            :url_base || '/collection/' || REPLACE(
+                fca.collection_import_ids, ';',
+                ';' || :url_base || '/collection/'
+            )
+        ELSE ''
+    END AS "Bundle URL(s)",
+    CASE
+        WHEN fea.event_import_ids IS NOT NULL THEN
+            (SELECT fe.valid_metadata -> 'event_type' ->> 0
+             FROM family_event AS fe
+             WHERE fe.import_id = SPLIT_PART(fea.event_import_ids, ';', 1)
+             LIMIT 1)
+        ELSE ''
+    END AS "Document Type",
+    CASE
+        WHEN fea.event_import_ids IS NOT NULL THEN
+            (SELECT fe.valid_metadata -> 'description' ->> 0
+             FROM family_event AS fe
+             WHERE fe.import_id = SPLIT_PART(fea.event_import_ids, ';', 1)
+             LIMIT 1)
+        ELSE ''
+    END AS "Document Summary",
+    CASE
+        WHEN
+            fga.geo_isos LIKE '%USA%' AND fga.geo_isos NOT LIKE '%;%'
+            THEN fca.collection_descriptions
+        ELSE fme.core_object
+    END AS "At Issue"
 FROM family_document AS d
 INNER JOIN physical_document AS p ON d.physical_document_id = p.id
 INNER JOIN family AS f ON d.family_import_id = f.import_id
@@ -187,6 +260,7 @@ INNER JOIN organisation AS o ON c.organisation_id = o.id
 INNER JOIN
     family_metadata_extracted AS fme
     ON f.import_id = fme.family_import_id
+LEFT JOIN concept_labels_parsed AS clp ON f.import_id = clp.family_import_id
 LEFT JOIN family_collections_agg AS fca ON f.import_id = fca.family_import_id
 LEFT JOIN family_geo_agg AS fga ON f.import_id = fga.family_import_id
 LEFT JOIN family_events_agg AS fea ON f.import_id = fea.family_import_id
