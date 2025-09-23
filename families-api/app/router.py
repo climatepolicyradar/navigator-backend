@@ -235,7 +235,7 @@ def read_family(*, session: Session = Depends(get_session), family_id: str):
     # When should this break?
     # https://sqlmodel.tiangolo.com/tutorial/fastapi/read-one/#path-operation-for-one-hero
     family = session.exec(
-        select(Family).where(Family.import_id == family_id)
+        Family.eager_loaded_select().where(Family.import_id == family_id)
     ).one_or_none()
 
     if family is None:
