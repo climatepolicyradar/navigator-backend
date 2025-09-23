@@ -69,7 +69,7 @@ def read_families(
         filters.append(Family.corpus.has(Corpus.import_id.in_(corpus_import_ids)))  # type: ignore
 
     families = session.exec(
-        select(Family).offset(offset).limit(10).where(*filters)
+        Family.eager_loaded_select().offset(offset).limit(10).where(*filters)
     ).all()
 
     return APIListResponse(
@@ -157,8 +157,11 @@ def read_documents(
     response_model=APIItemResponse[FamilyDocumentPublicWithFamily],
 )
 def read_document(*, session: Session = Depends(get_session), document_id: str):
+
     document = session.exec(
-        select(FamilyDocument).where(FamilyDocument.import_id == document_id)
+        FamilyDocument.eager_loaded_select().where(
+            FamilyDocument.import_id == document_id
+        )
     ).one_or_none()
 
     if document is None:
@@ -232,7 +235,7 @@ def read_family(*, session: Session = Depends(get_session), family_id: str):
     # When should this break?
     # https://sqlmodel.tiangolo.com/tutorial/fastapi/read-one/#path-operation-for-one-hero
     family = session.exec(
-        select(Family).where(Family.import_id == family_id)
+        Family.eager_loaded_select().where(Family.import_id == family_id)
     ).one_or_none()
 
     if family is None:
