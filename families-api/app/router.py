@@ -6,7 +6,6 @@ from typing import Generic, TypeVar
 from fastapi import APIRouter, Depends, HTTPException, Query
 from pydantic import BaseModel
 from sqlalchemy import text
-from sqlalchemy.dialects import postgresql  # or sqlite, mysql, etc.
 from sqlmodel import Session, SQLModel, func, select
 
 from app.database import get_session
