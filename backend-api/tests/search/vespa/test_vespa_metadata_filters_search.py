@@ -55,7 +55,9 @@ def test_metadata_filter(
 
         for f in response["families"]:
             matched_metadata = [
-                m for m in f["metadata"] if m["name"] == metadata_filter["name"]
+                m
+                for m in f["metadata"]
+                if m["name"] == f"family.{metadata_filter["name"]}"
             ]
             assert len(matched_metadata) > 0
 
