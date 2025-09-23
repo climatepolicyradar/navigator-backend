@@ -6,6 +6,7 @@ from typing import Generic, TypeVar
 from fastapi import APIRouter, Depends, HTTPException, Query
 from pydantic import BaseModel
 from sqlalchemy import text
+from sqlalchemy.orm import joinedload, selectinload
 from sqlmodel import Session, SQLModel, func, select
 
 from app.database import get_session
@@ -157,8 +158,31 @@ def read_documents(
     response_model=APIItemResponse[FamilyDocumentPublicWithFamily],
 )
 def read_document(*, session: Session = Depends(get_session), document_id: str):
+
+    # I know all the pyright errors are ridiculous and annoying
+    # but it's a pain to fix them all right now.
+    # It makes the code absolutely unreadable.
+    # Which seems against the point of static type checking.
+    # I'm just going to ignore them for now.
+
+    # pyright: ignore[reportArgumentType]
     document = session.exec(
-        select(FamilyDocument).where(FamilyDocument.import_id == document_id)
+        select(FamilyDocument)
+        .where(FamilyDocument.import_id == document_id)
+        .options(
+            joinedload(FamilyDocument.physical_document).selectinload(  # type: ignore
+                PhysicalDocument.unparsed_languages
+            ),  # type: ignore
+            joinedload(FamilyDocument.family).options(  # type: ignore
+                selectinload(Family.unparsed_events),  # type: ignore
+                selectinload(Family.unparsed_geographies),  # type: ignore
+                joinedload(Family.unparsed_metadata),  # type: ignore
+                selectinload(Family.unparsed_collections),  # type: ignore
+                selectinload(Family.family_documents),  # type: ignore
+            ),
+            selectinload(FamilyDocument.unparsed_slug),  # type: ignore
+            selectinload(FamilyDocument.unparsed_events),  # type: ignore
+        )
     ).one_or_none()
 
     if document is None:
