@@ -6,7 +6,6 @@ from typing import Generic, TypeVar
 from fastapi import APIRouter, Depends, HTTPException, Query
 from pydantic import BaseModel
 from sqlalchemy import text
-from sqlalchemy.orm import joinedload, selectinload
 from sqlmodel import Session, SQLModel, func, select
 
 from app.database import get_session
@@ -70,7 +69,7 @@ def read_families(
         filters.append(Family.corpus.has(Corpus.import_id.in_(corpus_import_ids)))  # type: ignore
 
     families = session.exec(
-        select(Family).offset(offset).limit(10).where(*filters)
+        Family.eager_loaded_select().offset(offset).limit(10).where(*filters)
     ).all()
 
     return APIListResponse(
@@ -159,29 +158,9 @@ def read_documents(
 )
 def read_document(*, session: Session = Depends(get_session), document_id: str):
 
-    # I know all the pyright errors are ridiculous and annoying
-    # but it's a pain to fix them all right now.
-    # It makes the code absolutely unreadable.
-    # Which seems against the point of static type checking.
-    # I'm just going to ignore them for now.
-
-    # pyright: ignore[reportArgumentType]
     document = session.exec(
-        select(FamilyDocument)
-        .where(FamilyDocument.import_id == document_id)
-        .options(
-            joinedload(FamilyDocument.physical_document).selectinload(  # type: ignore
-                PhysicalDocument.unparsed_languages
-            ),  # type: ignore
-            joinedload(FamilyDocument.family).options(  # type: ignore
-                selectinload(Family.unparsed_events),  # type: ignore
-                selectinload(Family.unparsed_geographies),  # type: ignore
-                joinedload(Family.unparsed_metadata),  # type: ignore
-                selectinload(Family.unparsed_collections),  # type: ignore
-                selectinload(Family.family_documents),  # type: ignore
-            ),
-            selectinload(FamilyDocument.unparsed_slug),  # type: ignore
-            selectinload(FamilyDocument.unparsed_events),  # type: ignore
+        FamilyDocument.eager_loaded_select().where(
+            FamilyDocument.import_id == document_id
         )
     ).one_or_none()
 

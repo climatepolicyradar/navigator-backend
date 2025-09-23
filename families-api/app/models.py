@@ -5,8 +5,10 @@ from pathlib import Path
 from typing import Any, Optional
 
 from pydantic import computed_field
+from sqlalchemy import Select
 from sqlalchemy.dialects.postgresql import ARRAY, JSONB
-from sqlmodel import Column, Field, Relationship, SQLModel
+from sqlalchemy.orm import joinedload, selectinload
+from sqlmodel import Column, Field, Relationship, SQLModel, select
 
 from app.settings import settings
 
@@ -287,6 +289,21 @@ class Family(FamilyBase, table=True):
         back_populates="families", link_model=CollectionFamilyLink
     )
 
+    @staticmethod
+    def eager_loaded_select():
+        return select(Family).options(
+            selectinload(Family.unparsed_geographies),  # type: ignore
+            selectinload(Family.unparsed_slug),  # type: ignore
+            joinedload(Family.unparsed_metadata),  # type: ignore
+            selectinload(Family.unparsed_events),  # type: ignore
+            selectinload(Family.unparsed_collections),  # type: ignore
+            selectinload(Family.family_documents),  # type: ignore
+            selectinload(Family.corpus).options(  # type: ignore
+                joinedload(Corpus.organisation),  # type: ignore
+                joinedload(Corpus.corpus_type),  # type: ignore
+            ),
+        )
+
 
 class FamilyPublic(FamilyBase):
     import_id: str
@@ -442,6 +459,30 @@ class FamilyDocument(FamilyDocumentBase, table=True):
         default_factory=None, sa_column=Column(JSONB)
     )
     unparsed_slug: list[Slug] = Relationship()
+
+    @staticmethod
+    def eager_loaded_select():
+        # I know all the pyright ignores are ridiculous and annoying
+        # but it's a pain to fix them all right now.
+        # It makes the code absolutely unreadable.
+        # Which seems against the point of static type checking.
+        # I'm just going to ignore them for now.
+
+        # pyright: ignore[reportArgumentType]
+        return select(FamilyDocument).options(
+            joinedload(FamilyDocument.physical_document).selectinload(  # type: ignore
+                PhysicalDocument.unparsed_languages  # type: ignore
+            ),  # type: ignore
+            joinedload(FamilyDocument.family).options(  # type: ignore
+                selectinload(Family.unparsed_events),  # type: ignore
+                selectinload(Family.unparsed_geographies),  # type: ignore
+                joinedload(Family.unparsed_metadata),  # type: ignore
+                selectinload(Family.unparsed_collections),  # type: ignore
+                selectinload(Family.family_documents),  # type: ignore
+            ),
+            selectinload(FamilyDocument.unparsed_slug),  # type: ignore
+            selectinload(FamilyDocument.unparsed_events),  # type: ignore
+        )
 
 
 class FamilyDocumentPublic(FamilyDocumentBase):
