@@ -1,7 +1,7 @@
 import logging
 import re
 from enum import Enum
-from typing import Mapping, Optional, Sequence, Tuple, cast
+from typing import Mapping, Optional, Sequence, Tuple
 
 from cpr_sdk.exceptions import QueryError
 from cpr_sdk.models.search import Document as CprSdkResponseDocument
@@ -165,7 +165,6 @@ def _vespa_hit_to_search_response_family(
     hit: CprSdkResponseHit,
     vespa_family: CprSdkResponseFamily,
     db_family: Family,
-    db_family_metadata: FamilyMetadata,
 ) -> SearchResponseFamily:
     """Convert a Vespa hit into a SearchResponseFamily"""
     return SearchResponseFamily(
@@ -193,7 +192,7 @@ def _vespa_hit_to_search_response_family(
         prev_continuation_token=vespa_family.prev_continuation_token,
         family_documents=[],
         family_geographies=hit.family_geographies or [],
-        family_metadata=cast(dict, db_family_metadata.value),
+        family_metadata={},
         metadata=hit.metadata,
     )
 
@@ -279,7 +278,7 @@ def _cached_or_new_family(
     # All hits contain required family info to create response
     if response_family is None:
         response_family = _vespa_hit_to_search_response_family(
-            hit, vespa_family, db_family, db_family_metadata
+            hit, vespa_family, db_family
         )
 
     if isinstance(hit, CprSdkResponseDocument):
