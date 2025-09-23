@@ -54,14 +54,10 @@ def test_metadata_filter(
     for metadata_filter in metadata_filters:
 
         for f in response["families"]:
-            matched_metadata = [
-                m
-                for m in f["metadata"]
-                if m["name"] == f"family.{metadata_filter["name"]}"
-            ]
-            assert len(matched_metadata) > 0
-
-            matched_metadata_values = [m["value"] for m in matched_metadata]
-            assert metadata_filter["value"] in matched_metadata_values
+            assert metadata_filter["name"] in f["family_metadata"]
+            assert (
+                metadata_filter["value"]
+                in f["family_metadata"][metadata_filter["name"]]
+            )
 
     assert mock_corpora_exist_in_db.assert_called
