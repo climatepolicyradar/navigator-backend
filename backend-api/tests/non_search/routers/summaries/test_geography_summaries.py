@@ -81,6 +81,7 @@ def test_endpoint_returns_correct_data_for_given_geography_grouped_by_family_cat
             "family_slug": "FamSlug2",
             "family_source": "CCLW",
             "family_title_match": False,
+            "metadata": None,
             "prev_continuation_token": None,
             "total_passage_hits": 0,
         }

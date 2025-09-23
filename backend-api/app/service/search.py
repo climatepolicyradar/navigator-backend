@@ -189,6 +189,7 @@ def _vespa_hit_to_search_response_family(
         family_documents=[],
         family_geographies=hit.family_geographies or [],
         family_metadata=cast(dict, db_family_metadata.value),
+        metadata=hit.metadata,
     )
 
 

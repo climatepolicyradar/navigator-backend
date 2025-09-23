@@ -299,6 +299,11 @@ class SearchResponseFamily(BaseModel):
     family
     """
 
+    metadata: Optional[Sequence[dict[str, str]]] = None
+    """
+    This is the metadata is from Vespa which is a mixture of document and family metadata.
+    """
+
 
 class SearchResponse(BaseModel):
     """The response body produced by the search API endpoint."""
