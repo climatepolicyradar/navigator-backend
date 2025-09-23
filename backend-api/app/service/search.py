@@ -288,6 +288,29 @@ def _cached_or_new_family(
     return response_family
 
 
+@observe("_get_rds_data_for_vespa_response")
+def _get_rds_data_for_vespa_response(db: Session, all_response_family_ids: list[str]):
+    # TODO: Potential disparity between what's in postgres and vespa
+    family_and_family_metadata: Sequence[tuple[Family, FamilyMetadata]] = (
+        db.query(Family, FamilyMetadata)
+        .filter(Family.import_id.in_(all_response_family_ids))
+        .join(FamilyMetadata, FamilyMetadata.family_import_id == Family.import_id)
+        .all()
+    )  # type: ignore
+    db_family_lookup: Mapping[str, tuple[Family, FamilyMetadata]] = {
+        str(family.import_id): (family, family_metadata)
+        for (family, family_metadata) in family_and_family_metadata
+    }
+    db_family_document_lookup: Mapping[str, FamilyDocument] = {
+        str(fd.import_id): fd
+        for (fam, _) in family_and_family_metadata
+        for fd in fam.family_documents
+    }
+
+    return db_family_lookup, db_family_document_lookup
+
+
+@observe("_process_vespa_search_response_families")
 def _process_vespa_search_response_families(
     db: Session,
     vespa_families: Sequence[CprSdkResponseFamily],
@@ -309,23 +332,9 @@ def _process_vespa_search_response_families(
     """
     vespa_families_to_process = vespa_families[offset : limit + offset]
     all_response_family_ids = [vf.id for vf in vespa_families_to_process]
-
-    # TODO: Potential disparity between what's in postgres and vespa
-    family_and_family_metadata: Sequence[tuple[Family, FamilyMetadata]] = (
-        db.query(Family, FamilyMetadata)
-        .filter(Family.import_id.in_(all_response_family_ids))
-        .join(FamilyMetadata, FamilyMetadata.family_import_id == Family.import_id)
-        .all()
-    )  # type: ignore
-    db_family_lookup: Mapping[str, tuple[Family, FamilyMetadata]] = {
-        str(family.import_id): (family, family_metadata)
-        for (family, family_metadata) in family_and_family_metadata
-    }
-    db_family_document_lookup: Mapping[str, FamilyDocument] = {
-        str(fd.import_id): fd
-        for (fam, _) in family_and_family_metadata
-        for fd in fam.family_documents
-    }
+    db_family_lookup, db_family_document_lookup = _get_rds_data_for_vespa_response(
+        db, all_response_family_ids
+    )
 
     response_families = []
     response_family = None
