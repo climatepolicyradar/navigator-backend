@@ -5,7 +5,6 @@ from pathlib import Path
 from typing import Any, Optional
 
 from pydantic import computed_field
-from sqlalchemy import Select
 from sqlalchemy.dialects.postgresql import ARRAY, JSONB
 from sqlalchemy.orm import joinedload, selectinload
 from sqlmodel import Column, Field, Relationship, SQLModel, select
