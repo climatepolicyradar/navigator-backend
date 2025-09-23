@@ -162,16 +162,6 @@ def read_document(*, session: Session = Depends(get_session), document_id: str):
         select(FamilyDocument).where(FamilyDocument.import_id == document_id)
     ).one_or_none()
 
-    print("--------------------")
-    query = select(FamilyDocument).where(FamilyDocument.import_id == document_id)
-    sql_string = str(
-        query.compile(
-            dialect=postgresql.dialect(), compile_kwargs={"literal_binds": True}
-        )
-    )
-    print(sql_string)
-    print("--------------------")
-
     if document is None:
         raise HTTPException(status_code=404, detail="Not found")
 
