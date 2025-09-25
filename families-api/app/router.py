@@ -6,7 +6,7 @@ from typing import Generic, TypeVar
 from fastapi import APIRouter, Depends, HTTPException, Query
 from pydantic import BaseModel
 from sqlalchemy import text
-from sqlmodel import Session, SQLModel, func, select
+from sqlmodel import Session, SQLModel, desc, func, select
 
 from app.database import get_session
 from app.models import (
@@ -69,7 +69,11 @@ def read_families(
         filters.append(Family.corpus.has(Corpus.import_id.in_(corpus_import_ids)))  # type: ignore
 
     families = session.exec(
-        Family.eager_loaded_select().offset(offset).limit(10).where(*filters)
+        Family.eager_loaded_select()
+        .order_by(desc(Family.last_modified))
+        .offset(offset)
+        .limit(limit)
+        .where(*filters)
     ).all()
 
     return APIListResponse(

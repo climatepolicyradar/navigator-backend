@@ -1,3 +1,5 @@
+from datetime import datetime
+
 from fastapi.testclient import TestClient
 from sqlmodel import Session
 
@@ -26,6 +28,54 @@ def test_read_family_200(client: TestClient, session: Session, make_family):
     assert response.status_code == 200
     response = APIItemResponse[FamilyPublic].model_validate(response.json())
     assert response.data.import_id == "family_123"
+
+
+def test_read_families_ordering(client: TestClient, session: Session, make_family):
+    # we order by last_modified
+    (corpus_type1, corpus1, family1, family_document1, physical_document1) = (
+        make_family(1)
+    )
+    (corpus_type2, corpus2, family2, family_document2, physical_document2) = (
+        make_family(2)
+    )
+
+    session.add(corpus_type1)
+    session.add(corpus1)
+    session.add(family1)
+    session.add(family_document1)
+    session.add(physical_document1)
+
+    session.add(corpus_type2)
+    session.add(corpus2)
+    session.add(family2)
+    session.add(family_document2)
+    session.add(physical_document2)
+
+    session.commit()
+
+    # explicitly update the last_modified
+    family2.last_modified = datetime.now()
+    session.add(family2)
+    session.commit()
+
+    response = client.get("/families/")
+    assert response.status_code == 200
+    response = APIListResponse[FamilyPublic].model_validate(response.json())
+
+    ids = ["family_2", "family_1"]
+    assert [family.import_id for family in response.data] == ids
+
+    # explicitly update family 1 to be the most recent last_modified
+    family1.last_modified = datetime.now()
+    session.add(family1)
+    session.commit()
+
+    response = client.get("/families/")
+    assert response.status_code == 200
+    response = APIListResponse[FamilyPublic].model_validate(response.json())
+
+    updated_ids = ["family_1", "family_2"]
+    assert [family.import_id for family in response.data] == updated_ids
 
 
 def test_aggregations_by_geography_returns_a_count_of_documents_per_geography(
