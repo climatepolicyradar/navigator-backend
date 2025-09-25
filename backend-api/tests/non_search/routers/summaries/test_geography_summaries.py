@@ -76,7 +76,6 @@ def test_endpoint_returns_correct_data_for_given_geography_grouped_by_family_cat
             "family_description_match": False,
             "family_documents": [],
             "family_geographies": ["AFG", "IND"],
-            "family_last_updated_date": "2019-12-25T00:00:00+00:00",
             "family_metadata": {},
             "family_name": "Fam2",
             "family_slug": "FamSlug2",
