@@ -61,7 +61,7 @@ def test_read_families_ordering(client: TestClient, session: Session, make_famil
     response = client.get("/families/")
     assert response.status_code == 200
     response = APIListResponse[FamilyPublic].model_validate(response.json())
-    
+
     ids = ["family_2", "family_1"]
     assert [family.import_id for family in response.data] == ids
 
