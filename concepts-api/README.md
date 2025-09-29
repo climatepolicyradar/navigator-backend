@@ -19,11 +19,12 @@
 2. **Bootstrap Initial Data**
 
    ```bash
-   just bootstrap
+   just bootstrap $environment
    ```
 
-   This will download the latest concept data from S3 (prod) and create the
-   DuckDB database.
+   This will download the latest concept data from S3 and create the DuckDB
+   database. The `environment` argument should be something like `production`.
+   You can optionally specify an AWS profile too with the `profile` argument.
 
 3. **Start Development Server**
 
