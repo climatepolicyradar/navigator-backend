@@ -1,11 +1,11 @@
 # dev
 # should be used for first run
-bootstrap:
-    just initial-data
+bootstrap environment profile="":
+    just initial-data {{environment}} {{profile}}
 
-initial-data environment:
+initial-data environment profile="":
     @echo "🔄 downloading latest data from s3"
-    aws s3 sync s3://cpr-{{environment}}-document-cache/concepts initial-data
+    {{ if profile != "" { "AWS_PROFILE=" + profile } else { "" } }} aws s3 sync s3://cpr-{{environment}}-document-cache/concepts initial-data
     # ENV is used in create_duckdb to calculate which classifier_spec file to use
     ENV={{environment}} uv run python create_duckdb.py
 
