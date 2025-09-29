@@ -244,12 +244,6 @@ class SearchResponseFamily(BaseModel):
     this family (e.g., Passed/Approved, Project Approved or Concept Approved).
     """
 
-    family_last_updated_date: str
-    """
-    The date the family of documents was published, this is from the most recent event
-    of this family of documents.
-    """
-
     family_source: str
     """
     The source, currently organisation name. Either “CCLW” or “UNFCCC”
