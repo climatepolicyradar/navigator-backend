@@ -293,7 +293,7 @@ def download_all_search_documents(
     if valid_credentials is True and (not s3_client.document_exists(s3_document)):
         aws_env = (
             "production"
-            if "staging" not in PUBLIC_APP_URL and "localhost"
+            if all(x not in PUBLIC_APP_URL.lower() for x in ["staging", "localhost"])
             else "staging"
         )
         _LOGGER.info(
@@ -304,14 +304,29 @@ def download_all_search_documents(
         # upload a buffer, it starts from the position it is currently in. We need to
         # add the seek(0) to reset the buffer position to the beginning before writing
         # to S3 to avoid creating an empty file.
-        # Handle case where PUBLIC_APP_URL might already include protocol
-        if PUBLIC_APP_URL.startswith(("http://", "https://")):
-            url_base = PUBLIC_APP_URL
+        # Handle case where PUBLIC_APP_URL and token audience might already include
+        # protocol
+        is_localhost = "localhost" in PUBLIC_APP_URL.lower()
+        scheme = "http" if is_localhost else "https"
+        if is_localhost or token.aud is None:
+            if PUBLIC_APP_URL.lower().startswith(("http://", "https://")):
+                url_base = PUBLIC_APP_URL.lower()
+            else:
+                url_base = f"{scheme}://{PUBLIC_APP_URL.lower()}"
+
         else:
-            scheme = "http" if "localhost" in PUBLIC_APP_URL else "https"
-            url_base = f"{scheme}://{PUBLIC_APP_URL}"
+            url_base = (
+                f"{scheme}://{token.aud.lower()}"
+                if not token.aud.lower().startswith(("http://", "https://"))
+                else token.aud.lower()
+            )
+
         zip_buffer = create_data_download_zip_archive(
-            latest_ingest_start, token.allowed_corpora_ids, db, token.sub, url_base
+            latest_ingest_start,
+            token.allowed_corpora_ids,
+            db,
+            token.sub.lower() if token.sub else None,
+            url_base,
         )
         zip_buffer.seek(0)
 
