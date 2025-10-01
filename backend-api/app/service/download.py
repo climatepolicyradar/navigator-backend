@@ -567,13 +567,21 @@ def convert_dump_to_csv(df: pd.DataFrame):
 
 def convert_dump_to_xlsx(df: pd.DataFrame):
     """Convert DataFrame to XLSX format in memory."""
+    # Create a copy to avoid modifying the original DataFrame
+    df_copy = df.copy()
+
+    # Strip timezone info from datetime columns for Excel compatibility
+    for col in df_copy.columns:
+        if pd.api.types.is_datetime64_any_dtype(df_copy[col]):
+            df_copy[col] = df_copy[col].dt.tz_localize(None)
+
     xlsx_buffer = BytesIO()
     # There is a known issue with pandas' type stubs and the way that Pyright checks
     # protocol compatibility for file like objects. Pandas' `WriteExcelBuffer` protocol
     # is stricter than the actual requirements, and the signature of `truncate` in
     # `BytesIO` does not match the protocol exactly, so we will ignore the type error.
     with pd.ExcelWriter(xlsx_buffer, engine="openpyxl") as writer:  # type: ignore
-        df.to_excel(writer, index=False, sheet_name="Data")
+        df_copy.to_excel(writer, index=False, sheet_name="Data")
     return xlsx_buffer
 
 
