@@ -63,11 +63,13 @@ class CorpusBase(SQLModel):
     import_id: str
     title: str
     corpus_type_name: str
+    attribution_url: str | None
 
 
 class Corpus(CorpusBase, table=True):
     __tablename__ = "corpus"  # type: ignore[assignment]
     import_id: str = Field(primary_key=True)
+    attribution_url: str | None
     families: list["Family"] = Relationship(
         back_populates="corpus", link_model=FamilyCorpusLink
     )
@@ -80,6 +82,7 @@ class Corpus(CorpusBase, table=True):
 class CorpusPublic(CorpusBase):
     organisation: Organisation
     corpus_type: CorpusTypePublic
+    attribution_url: str | None
 
 
 # endregion
