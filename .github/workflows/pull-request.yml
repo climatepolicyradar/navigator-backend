@@ -35,14 +35,14 @@ jobs:
     steps:
       - uses: actions/checkout@v5
       - uses: extractions/setup-just@v3
-      - uses: aws-actions/configure-aws-credentials@v4.2.0
+      - uses: aws-actions/configure-aws-credentials@v5
         with:
           role-to-assume: arn:aws:iam::${{ secrets.AWS_ACCOUNT_ID }}:role/navigator-backend-github-actions-deploy
           role-session-name: GitHub_to_AWS_via_FederatedOIDC_${{ matrix.environment }}
           aws-region: eu-west-1
       - uses: aws-actions/amazon-ecr-login@v2
       # we use python / uv in some build scripts and testing
-      - uses: actions/setup-python@v5
+      - uses: actions/setup-python@v6
         with:
           python-version: "3.12"
       - uses: astral-sh/setup-uv@v6
