@@ -565,19 +565,38 @@ def convert_dump_to_csv(df: pd.DataFrame):
     return csv_buffer
 
 
-def generate_data_dump_as_csv(
+def convert_dump_to_xlsx(df: pd.DataFrame):
+    """Convert DataFrame to XLSX format in memory."""
+    xlsx_buffer = BytesIO()
+    # There is a known issue with pandas' type stubs and the way that Pyright checks
+    # protocol compatibility for file like objects. Pandas' `WriteExcelBuffer` protocol
+    # is stricter than the actual requirements, and the signature of `truncate` in
+    # `BytesIO` does not match the protocol exactly, so we will ignore the type error.
+    with pd.ExcelWriter(xlsx_buffer, engine="openpyxl") as writer:  # type: ignore
+        df.to_excel(writer, index=False, sheet_name="Data")
+    return xlsx_buffer
+
+
+def generate_data_dump_as_file(
     ingest_cycle_start: str,
     allowed_corpora_ids: list[str],
     db=Depends(get_db),
     theme: Optional[str] = None,
     url_base: Optional[str] = None,
+    convert_to_xlsx: bool = False,
 ):
+    """Generate data dump as CSV or XLSX based on theme."""
     df = get_whole_database_dump(
         ingest_cycle_start, allowed_corpora_ids, db, theme, url_base
     )
-    csv = convert_dump_to_csv(df)
-    csv.seek(0)
-    return csv
+
+    if convert_to_xlsx:
+        file_buffer = convert_dump_to_xlsx(df)
+    else:
+        file_buffer = convert_dump_to_csv(df)
+
+    file_buffer.seek(0)
+    return file_buffer
 
 
 def generate_data_dump_readme(ingest_cycle_start: str, theme: Optional[str] = None):
@@ -620,15 +639,20 @@ def create_data_download_zip_archive(
 ):
     readme_buffer = generate_data_dump_readme(ingest_cycle_start, theme)
 
-    csv_buffer = generate_data_dump_as_csv(
-        ingest_cycle_start, allowed_corpora_ids, db, theme, url_base
+    convert_to_xlsx = True if theme and theme.upper() == "CCC" else False
+    file_buffer = generate_data_dump_as_file(
+        ingest_cycle_start, allowed_corpora_ids, db, theme, url_base, convert_to_xlsx
     )
 
     zip_buffer = BytesIO()
+    file_extension = "xlsx" if convert_to_xlsx else "csv"
     with zipfile.ZipFile(zip_buffer, "a", zipfile.ZIP_DEFLATED, False) as zip_file:
         for file_name, data in [
             ("README.txt", readme_buffer),
-            (f"Document_Data_Download-{ingest_cycle_start}.csv", csv_buffer),
+            (
+                f"Document_Data_Download-{ingest_cycle_start}.{file_extension}",
+                file_buffer,
+            ),
         ]:
             zip_file.writestr(file_name, data.getvalue())
 
