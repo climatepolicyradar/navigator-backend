@@ -35,7 +35,6 @@ from app.telemetry import observe
 
 _LOGGER = getLogger(__name__)
 
-
 _CSV_SEARCH_RESPONSE_COLUMNS = [
     "Collection Name",
     "Collection Summary",

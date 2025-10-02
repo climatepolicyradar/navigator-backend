@@ -1,4 +1,3 @@
--- Optimised version with improved performance
 WITH
 -- Single CTE for all slug deduplication (family and document)
 recent_slugs AS (
