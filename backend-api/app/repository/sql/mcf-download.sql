@@ -188,8 +188,6 @@ SELECT
     CONCAT(
         :url_base, '/documents/', rs_doc.name
     ) AS "Document URL",
-    INITCAP(d.valid_metadata::JSON #>> '{role,0}') AS "Document Role",
-    INITCAP(d.valid_metadata::JSON #>> '{type,0}') AS "Document Type",
     CASE
         WHEN f.family_category = 'UNFCCC' THEN 'UNFCCC'
         WHEN f.family_category = 'MCF' THEN 'MCF'
