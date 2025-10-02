@@ -40,6 +40,7 @@ dependencies = [
   "pydantic-settings>=2.9.1",
   "opentelemetry-exporter-otlp>=1.33.0",
   "opentelemetry-instrumentation-sqlalchemy>=0.54b0",
+  "xlsxwriter>=3.2.9",
 ]
 
 [dependency-groups]
