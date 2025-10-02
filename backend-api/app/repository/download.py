@@ -32,6 +32,8 @@ def get_whole_database_dump(
     """
     if theme and theme.upper() == "CCC":
         filename = "ccc-download.sql"
+    elif theme and theme.upper() == "MCF":
+        filename = "mcf-download.sql"
     else:
         filename = "download.sql"
 
