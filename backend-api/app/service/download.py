@@ -35,6 +35,7 @@ from app.telemetry import observe
 
 _LOGGER = getLogger(__name__)
 
+
 _CSV_SEARCH_RESPONSE_COLUMNS = [
     "Collection Name",
     "Collection Summary",
@@ -576,11 +577,9 @@ def convert_dump_to_xlsx(df: pd.DataFrame):
             df_copy[col] = df_copy[col].dt.tz_localize(None)
 
     xlsx_buffer = BytesIO()
-    # There is a known issue with pandas' type stubs and the way that Pyright checks
-    # protocol compatibility for file like objects. Pandas' `WriteExcelBuffer` protocol
-    # is stricter than the actual requirements, and the signature of `truncate` in
-    # `BytesIO` does not match the protocol exactly, so we will ignore the type error.
-    with pd.ExcelWriter(xlsx_buffer, engine="openpyxl") as writer:  # type: ignore
+    # Use XlsxWriter as its lenient with special characters and doesn't require
+    # sanitisation
+    with pd.ExcelWriter(xlsx_buffer, engine="xlsxwriter") as writer:  # type: ignore
         df_copy.to_excel(writer, index=False, sheet_name="Data")
     return xlsx_buffer
 
