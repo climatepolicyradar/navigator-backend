@@ -216,11 +216,11 @@ async def read_geographies(
         result = geographies.regions + geographies.countries + geographies.subdivisions
     else:
         if GeographyType.region in type:
-            result = geographies.regions
-        elif GeographyType.country in type:
-            result = geographies.countries
-        elif GeographyType.subdivision in type:
-            result = geographies.subdivisions
+            result.extend(geographies.regions)
+        if GeographyType.country in type:
+            result.extend(geographies.countries)
+        if GeographyType.subdivision in type:
+            result.extend(geographies.subdivisions)
 
     if subconcept_of:
         result = [
