@@ -128,6 +128,41 @@ family_metadata_extracted AS (
         ARRAY_TO_STRING(
             ARRAY(
                 SELECT
+                    JSONB_ARRAY_ELEMENTS_TEXT(fm.value -> 'result_area')
+            ),
+            ';'
+        ) AS result_area,
+        ARRAY_TO_STRING(
+            ARRAY(
+                SELECT
+                    JSONB_ARRAY_ELEMENTS_TEXT(fm.value -> 'result_type')
+            ),
+            ';'
+        ) AS result_type,
+        ARRAY_TO_STRING(
+            ARRAY(
+                SELECT
+                    JSONB_ARRAY_ELEMENTS_TEXT(fm.value -> 'focal_area')
+            ),
+            ';'
+        ) AS focal_area,
+        ARRAY_TO_STRING(
+            ARRAY(
+                SELECT
+                    JSONB_ARRAY_ELEMENTS_TEXT(fm.value -> 'theme')
+            ),
+            ';'
+        ) AS theme,
+        ARRAY_TO_STRING(
+            ARRAY(
+                SELECT
+                    JSONB_ARRAY_ELEMENTS_TEXT(fm.value -> 'approved_ref')
+            ),
+            ';'
+        ) AS approved_ref,
+        ARRAY_TO_STRING(
+            ARRAY(
+                SELECT
                     JSONB_ARRAY_ELEMENTS_TEXT(
                         fm.value -> 'project_value_fund_spend'
                     )
@@ -172,6 +207,11 @@ SELECT
         AS "Project Value $ (Co-financing)", -- noqa:disable=RF05
     fme.project_value_fund_spend
         AS "Project Value $ (Fund Spend)", -- noqa:disable=RF05
+    fme.result_area AS "Result Area",
+    fme.result_type AS "Result Type",
+    fme.focal_area AS "Focal Area",
+    fme.theme AS "Theme",
+    fme.approved_ref AS "Approved Reference",
     fea.published_date AS "First event in timeline",
     fea.last_changed AS "Last event in timeline",
     fea.event_type_names AS "Full timeline of events (types)",
