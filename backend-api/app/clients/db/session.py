@@ -37,7 +37,7 @@ def create_session():
 
 
 # Export callable for tests
-SessionLocal = create_session
+SessionLocal = create_session()
 
 
 def get_db():
@@ -46,7 +46,7 @@ def get_db():
     Tries to get a database session. If there is no session, it will
     create one AFTER the uvicorn stuff has started.
     """
-    db = create_session()()
+    db = SessionLocal()
     try:
         yield db
     finally:
