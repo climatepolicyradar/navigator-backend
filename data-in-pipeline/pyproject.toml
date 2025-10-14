@@ -7,3 +7,9 @@ dependencies = ["prefect>=3.4", "api"]
 
 [tool.uv.sources]
 api = { workspace = true }
+
+[dependency-groups]
+dev = ["pytest>=8.4.2"]
+
+[tool.pytest.ini_options]
+pythonpath = ["."]
