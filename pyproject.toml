@@ -19,7 +19,7 @@ include = [
   "concepts-api",
   "families-api",
   "geographies-api",
-  "documents-pipeline",
+  "data-in-pipeline",
 ]
 
 # Include all workspace packages for proper import resolution
@@ -28,7 +28,7 @@ extraPaths = [
   "concepts-api",
   "families-api",
   "geographies-api",
-  "documents-pipeline",
+  "data-in-pipeline",
 ]
 
 # Ensure we can find all dependencies in the uv workspace

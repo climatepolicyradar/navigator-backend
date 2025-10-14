@@ -7,7 +7,7 @@
     "concepts-api",
     "families-api",
     "geographies-api",
-    "documents-pipeline"
+    "data-in-pipeline"
   ],
   "venvPath": ".",
   "venv": ".venv",
@@ -16,7 +16,7 @@
     "concepts-api",
     "families-api",
     "geographies-api",
-    "documents-pipeline"
+    "data-in-pipeline"
   ],
   "pythonVersion": "3.12"
 }
