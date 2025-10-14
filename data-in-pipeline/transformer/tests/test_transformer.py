@@ -4,6 +4,7 @@ from transformer.app.transformer import (
     Label,
     NavigatorDocument,
     NavigatorFamily,
+    NavigatorGeography,
     transform,
 )
 
@@ -15,7 +16,16 @@ def test_successfully_transforms_navigator_document_into_document():
         family=NavigatorFamily(
             title="Federal Law No. 14.119/2021 on the National Policy for Payment for Environmental Services",
             summary="This law defines the concepts, objectives, guidelines, actions and criteria for implementing the National Policy for Payment for Environmental Services (PNPSA)",
-            geographies=["BRA"],
+            geographies=[
+                NavigatorGeography(
+                    id=1,
+                    display_value="Brazil",
+                    value="BRA",
+                    type="ISO-3166",
+                    parent_id=None,
+                    slug="brazil",
+                ),
+            ],
         ),
     )
 

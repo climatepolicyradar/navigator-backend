@@ -1,10 +1,19 @@
 from pydantic import BaseModel
 
 
+class NavigatorGeography(BaseModel):
+    id: int
+    display_value: str
+    value: str
+    type: str
+    parent_id: int | None
+    slug: str
+
+
 class NavigatorFamily(BaseModel):
     title: str
     summary: str
-    geographies: list[str]
+    geographies: list[NavigatorGeography]
 
 
 class NavigatorDocument(BaseModel):
@@ -32,7 +41,8 @@ class Document(BaseModel):
 def transform(input: NavigatorDocument) -> Document:
     geography_document_label_relationships = [
         DocumentLabelRelationship(
-            label=Label(type="geography", title=geography), relationship="part_of"
+            label=Label(type="geography", title=geography.display_value),
+            relationship="part_of",
         )
         for geography in input.family.geographies
     ]
