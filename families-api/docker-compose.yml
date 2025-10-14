@@ -1,7 +1,7 @@
 services:
   db:
     profiles: [dev]
-    image: postgres:14.12
+    image: postgres:17
     container_name: families-api-db
     environment:
       # we use navigator_admin to keep things simple
@@ -54,7 +54,7 @@ services:
       - db
   test-db:
     profiles: [test]
-    image: postgres:14.12
+    image: postgres:17
     container_name: families-api-test-db
     environment:
       # we use navigator_admin to keep things simple
