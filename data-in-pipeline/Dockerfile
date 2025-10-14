@@ -16,8 +16,8 @@ ENV UV_PROJECT_ENVIRONMENT="/usr/local/"
 COPY pyproject.toml uv.lock ./
 
 # Copy your source code
-RUN mkdir app
-COPY src ./app
+COPY ./data-in-pipeline /app/data-in-pipeline/
+COPY ./api /app/api/
 
 # Install uv (fast Python dependency manager)
 RUN UV_VERSION=$(grep "uv>=" pyproject.toml | cut -d'=' -f2 | tr -d '"' | tr -d ' ' | tr -d ',') && \
