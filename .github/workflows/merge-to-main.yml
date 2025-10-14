@@ -71,7 +71,7 @@ jobs:
     runs-on: ubuntu-latest
     strategy:
       matrix:
-        service: [families-api, geographies-api, concepts-api]
+        service: [families-api, geographies-api, concepts-api, data-in-pipeline]
     steps:
       - uses: actions/checkout@v5
       - uses: extractions/setup-just@v3
@@ -84,7 +84,7 @@ jobs:
         environment: [staging, production]
     environment: ${{ matrix.environment }}
     env:
-      SERVICES: families-api geographies-api concepts-api
+      SERVICES: families-api geographies-api concepts-api, data-in-pipeline
     steps:
       - uses: actions/checkout@v5
       - uses: extractions/setup-just@v3
