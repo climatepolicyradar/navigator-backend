@@ -16,6 +16,7 @@ ENV UV_PROJECT_ENVIRONMENT="/usr/local/"
 COPY pyproject.toml uv.lock ./
 
 # Copy your source code
+RUN mkdir src
 COPY src src
 
 # Install uv (fast Python dependency manager)
