@@ -1,5 +1,6 @@
 from transformer.app.transformer import (
     Document,
+    DocumentLabelRelationship,
     Label,
     NavigatorDocument,
     NavigatorFamily,
@@ -22,11 +23,17 @@ def test_successfully_transforms_navigator_document_into_document():
         id=7015,
         title="Law",
         labels=[
-            Label(
-                type="family",
-                title="Federal Law No. 14.119/2021 on the National Policy for Payment for Environmental Services",
+            DocumentLabelRelationship(
+                label=Label(
+                    type="family",
+                    title="Federal Law No. 14.119/2021 on the National Policy for Payment for Environmental Services",
+                ),
+                relationship="part_of",
             ),
-            Label(type="geography", title="BRA"),
+            DocumentLabelRelationship(
+                label=Label(type="geography", title="BRA"),
+                relationship="part_of",
+            ),
         ],
     )
 
