@@ -8,7 +8,7 @@ def add(a: int, b: int) -> int:
 
 
 @flow(log_prints=True)
-def main() -> list[int]:
+def pipeline() -> list[int]:
     x = [1, 2, 3]
     y = [10, 20, 30]
 
@@ -17,4 +17,4 @@ def main() -> list[int]:
 
 
 if __name__ == "__main__":
-    main()
+    pipeline()
