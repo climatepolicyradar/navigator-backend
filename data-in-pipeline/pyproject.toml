@@ -3,7 +3,13 @@ name = "data-in-pipeline"
 version = "1.0.0"
 readme = "README.md"
 requires-python = ">=3.12,<3.14"
-dependencies = ["prefect>=3.4", "api"]
+dependencies = [
+  "prefect>=3.4",
+  "api",
+  "uv>=0.9.2",
+  "pulumi>=3.202.0",
+  "pulumi-aws>=6.83.0",
+]
 
 [tool.uv.sources]
 api = { workspace = true }
