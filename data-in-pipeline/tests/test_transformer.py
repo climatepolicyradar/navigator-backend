@@ -1,4 +1,4 @@
-from transformer.app.transformer import (
+from app.transformer.main import (
     Document,
     DocumentLabelRelationship,
     Label,
@@ -41,7 +41,7 @@ def test_successfully_transforms_navigator_document_into_document():
                 relationship="part_of",
             ),
             DocumentLabelRelationship(
-                label=Label(type="geography", title="BRA"),
+                label=Label(type="geography", title="Brazil"),
                 relationship="part_of",
             ),
         ],

@@ -1,5 +1,6 @@
 import pytest
-from src.main import add
+
+from app.flow import add
 
 
 @pytest.mark.parametrize("x, y, expected", [(1, 1, 2), (2, 2, 4), (3, 3, 6)])

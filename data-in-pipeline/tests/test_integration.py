@@ -1,5 +1,5 @@
-from src.main import main
+from app.flow import pipeline
 
 
 def test_add_flow():
-    assert main() == [11, 22, 33]
+    assert pipeline() == [11, 22, 33]
