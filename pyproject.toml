@@ -2,11 +2,17 @@
 name = "navigator-backend"
 version = "0.1.0"
 readme = "README.md"
-requires-python = ">=3.12"
+requires-python = ">=3.12,<3.14"
 dependencies = []
 
 [tool.uv.workspace]
-members = ["api", "concepts-api", "families-api", "geographies-api"]
+members = [
+  "api",
+  "concepts-api",
+  "families-api",
+  "geographies-api",
+  "data-in-pipeline",
+]
 
 # this is replicated from ./.trunk/configs/pyrightconfig.json
 # this allows bypassing Trunk for quicker feedback in the IDE
