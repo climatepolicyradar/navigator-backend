@@ -26,6 +26,8 @@ COPY --from=ghcr.io/astral-sh/uv:latest /uv /uvx /bin/
 # Install dependencies using the lockfile
 RUN uv sync --project data-in-pipeline
 
+WORKDIR /app/data-in-pipeline
+
 # Set up permissions for prefect_user
 RUN mkdir -p /opt/prefect && \
     chown -R prefect_user:prefect_user /opt/prefect && \
