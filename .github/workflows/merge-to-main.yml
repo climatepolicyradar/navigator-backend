@@ -107,12 +107,14 @@ jobs:
           done
 
   deploy-prefect:
-    needs: deploy-microservices
+    # needs: deploy-microservices
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v5
       - uses: astral-sh/setup-uv@v6
-      - run: cd data-in-pipeline && uv sync
+      - name: Sync dependencies
+        working-directory: data-in-pipeline
+        run: uv sync
       - name: Deploy the updated data in pipeline to Prefect
         working-directory: data-in-pipeline
         env:
@@ -123,4 +125,4 @@ jobs:
           DOCKER_TAG: latest
           PREFECT_API_KEY: ${{ secrets.PREFECT_API_KEY }}
           PREFECT_API_URL: ${{ secrets.PREFECT_API_URL }}
-        run: uv run python app/deploy.py
+        run: uv run python -m app.deploy
