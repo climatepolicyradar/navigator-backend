@@ -18,13 +18,13 @@ COPY pyproject.toml uv.lock ./
 # Copy your source code
 COPY ./data-in-pipeline /app/data-in-pipeline/
 COPY ./api /app/api/
+WORKDIR /app
 
 # Install uv (fast Python dependency manager)
-RUN UV_VERSION=$(grep "uv>=" pyproject.toml | cut -d'=' -f2 | tr -d '"' | tr -d ' ' | tr -d ',') && \
-    pip install --no-cache-dir uv==${UV_VERSION}
+COPY --from=ghcr.io/astral-sh/uv:latest /uv /uvx /bin/
 
 # Install dependencies using the lockfile
-RUN uv sync --frozen
+RUN uv sync --project data-in-pipeline
 
 # Set up permissions for prefect_user
 RUN mkdir -p /opt/prefect && \
