@@ -114,6 +114,7 @@ jobs:
       - uses: astral-sh/setup-uv@v6
       - run: cd data-in-pipeline && uv sync
       - name: Deploy the updated data in pipeline to Prefect
+        working-directory: data-in-pipeline
         env:
           AWS_ENV: prod
           AWS_REGION: eu-west-1
@@ -122,4 +123,4 @@ jobs:
           DOCKER_TAG: latest
           PREFECT_API_KEY: ${{ secrets.PREFECT_API_KEY }}
           PREFECT_API_URL: ${{ secrets.PREFECT_API_URL }}
-        run: uv run python data-in-pipeline/app/deploy.py
+        run: uv run python app/deploy.py
