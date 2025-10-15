@@ -12,13 +12,13 @@ RUN useradd -m -u 1000 prefect_user
 # without having to activate a venv
 ENV UV_PROJECT_ENVIRONMENT="/usr/local/"
 
-# Copy dependency files
-COPY pyproject.toml uv.lock ./
-
 # Copy your source code
 COPY ./data-in-pipeline /app/data-in-pipeline/
 COPY ./api /app/api/
 WORKDIR /app
+
+# Copy dependency files
+COPY pyproject.toml uv.lock ./
 
 # Install uv (fast Python dependency manager)
 COPY --from=ghcr.io/astral-sh/uv:latest /uv /uvx /bin/
