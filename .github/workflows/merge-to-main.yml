@@ -122,4 +122,4 @@ jobs:
           DOCKER_TAG: latest
           PREFECT_API_KEY: ${{ secrets.PREFECT_API_KEY }}
           PREFECT_API_URL: ${{ secrets.PREFECT_API_URL }}
-        run: uv run python app/deploy.py
+        run: uv run python data-in-pipeline/app/deploy.py
