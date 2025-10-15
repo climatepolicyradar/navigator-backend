@@ -2,6 +2,7 @@ import logging
 import os
 
 from prefect import Flow
+from prefect.blocks.system import JSON
 from prefect.docker.docker_image import DockerImage
 
 from app.flow import pipeline as test_flow
@@ -29,10 +30,13 @@ def create_deployment(flow: Flow) -> None:
         f"Creating deployment for flow `{flow}` in `{aws_env}` with docker registry `{docker_registry}`"
     )
 
-    # Work pool will provide its base job variables automatically
+    # Work pool will provide its base job variables automatically.
     # Job variables - our custom defaults will override the work pool's CPU and memory
     # whilst keeping the work pool's other variables.
-    job_variables = DEFAULT_FLOW_VARIABLES
+    default_job_variables = JSON.load(
+        f"default-job-variables-prefect-mvp-{aws_env}"
+    ).value  # type: ignore
+    job_variables = {**DEFAULT_FLOW_VARIABLES, **default_job_variables}
 
     # Deploy our flow to Prefect cloud.
     _ = flow.deploy(

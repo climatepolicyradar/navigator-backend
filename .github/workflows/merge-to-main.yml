@@ -107,7 +107,7 @@ jobs:
           done
 
   deploy-prefect:
-    needs: deploy-microservices
+    # needs: deploy-microservices
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v5
