@@ -690,6 +690,7 @@ class FamSpec:
     description_hit: bool
     family_document_count: int
     document_hit_count: int
+    document_title: str | None = None
 
 
 _CONTENT_TYPES = ["application/pdf", "text/html"]
@@ -740,6 +741,7 @@ def _generate_search_response_hits(spec: FamSpec) -> Sequence[CprSdkHit]:
                     f"https://{spec.family_import_id}/{slugify(spec.family_name)}"
                     f"_{document_number}"
                 ),
+                document_title=spec.document_title,
             )
         )
     for _ in range(0, spec.document_hit_count):
@@ -773,6 +775,7 @@ def _generate_search_response_hits(spec: FamSpec) -> Sequence[CprSdkHit]:
                     f"https://{spec.family_import_id}/{slugify(spec.family_name)}"
                     f"_{document_number}"
                 ),
+                document_title=spec.document_title,
                 text_block=" ".join(
                     random.sample(spec.family_description.split(" "), 10)
                 ),
@@ -833,6 +836,7 @@ _FAM_SPEC_0 = FamSpec(
     description_hit=True,
     family_document_count=1,
     document_hit_count=10,
+    document_title="Family name 0 1",
 )
 _FAM_SPEC_1 = FamSpec(
     random_seed=142,
@@ -850,6 +854,7 @@ _FAM_SPEC_1 = FamSpec(
     description_hit=False,
     family_document_count=3,
     document_hit_count=25,
+    document_title="Family name 1 3",
 )
 _FAM_SPEC_2 = FamSpec(
     random_seed=242,
@@ -867,6 +872,7 @@ _FAM_SPEC_2 = FamSpec(
     description_hit=True,
     family_document_count=5,
     document_hit_count=4,
+    document_title="Family name 2 1",
 )
 _FAM_SPEC_3 = FamSpec(
     random_seed=342,
@@ -884,6 +890,7 @@ _FAM_SPEC_3 = FamSpec(
     description_hit=False,
     family_document_count=2,
     document_hit_count=40,
+    document_title="Family name 3 2",
 )
 
 
@@ -1029,7 +1036,7 @@ def test_process_vespa_search_response(
             assert fd.document_source_url == (
                 f"https://{fam_spec.family_import_id}/{fd.document_slug}"
             )
-            assert fd.document_title == f"{fam_spec.family_name} {fd.document_slug[-1]}"
+            assert fd.document_title == fam_spec.document_title
             assert fd.document_url is not None
             assert fd.document_url.endswith(
                 f"{fam_spec.family_import_id}/{slugify(fam_spec.family_name)}"
