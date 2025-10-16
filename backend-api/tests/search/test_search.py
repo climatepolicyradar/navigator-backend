@@ -690,6 +690,7 @@ class FamSpec:
     description_hit: bool
     family_document_count: int
     document_hit_count: int
+    document_title: str | None = None
 
 
 _CONTENT_TYPES = ["application/pdf", "text/html"]
@@ -740,6 +741,7 @@ def _generate_search_response_hits(spec: FamSpec) -> Sequence[CprSdkHit]:
                     f"https://{spec.family_import_id}/{slugify(spec.family_name)}"
                     f"_{document_number}"
                 ),
+                document_title=spec.document_title,
             )
         )
     for _ in range(0, spec.document_hit_count):
@@ -773,6 +775,7 @@ def _generate_search_response_hits(spec: FamSpec) -> Sequence[CprSdkHit]:
                     f"https://{spec.family_import_id}/{slugify(spec.family_name)}"
                     f"_{document_number}"
                 ),
+                document_title=spec.document_title,
                 text_block=" ".join(
                     random.sample(spec.family_description.split(" "), 10)
                 ),
@@ -833,6 +836,7 @@ _FAM_SPEC_0 = FamSpec(
     description_hit=True,
     family_document_count=1,
     document_hit_count=10,
+    document_title="Family name 0 1",
 )
 _FAM_SPEC_1 = FamSpec(
     random_seed=142,
@@ -850,6 +854,7 @@ _FAM_SPEC_1 = FamSpec(
     description_hit=False,
     family_document_count=3,
     document_hit_count=25,
+    document_title="Family name 1 3",
 )
 _FAM_SPEC_2 = FamSpec(
     random_seed=242,
@@ -867,6 +872,7 @@ _FAM_SPEC_2 = FamSpec(
     description_hit=True,
     family_document_count=5,
     document_hit_count=4,
+    document_title="Family name 2 1",
 )
 _FAM_SPEC_3 = FamSpec(
     random_seed=342,
@@ -884,6 +890,7 @@ _FAM_SPEC_3 = FamSpec(
     description_hit=False,
     family_document_count=2,
     document_hit_count=40,
+    document_title="Family name 3 2",
 )
 
 
@@ -1029,7 +1036,7 @@ def test_process_vespa_search_response(
             assert fd.document_source_url == (
                 f"https://{fam_spec.family_import_id}/{fd.document_slug}"
             )
-            assert fd.document_title == f"{fam_spec.family_name} {fd.document_slug[-1]}"
+            assert fd.document_title == fam_spec.document_title
             assert fd.document_url is not None
             assert fd.document_url.endswith(
                 f"{fam_spec.family_import_id}/{slugify(fam_spec.family_name)}"
@@ -1115,9 +1122,9 @@ def test_process_vespa_search_response_sorting(
                 pm.text_block_page or mock_parse_text_block_id(pm.text_block_id)[0]
                 for pm in passages
             ]
-            assert pages == sorted(
-                pages, key=lambda page: page or float("inf")
-            ), f"Passages in document {document.document_slug} are not sorted by page number"
+            assert pages == sorted(pages, key=lambda page: page or float("inf")), (
+                f"Passages in document {document.document_slug} are not sorted by page number"
+            )
 
             # Verify that within each page, passages are sorted by text block ID
             for page in set(pages):
@@ -1135,9 +1142,9 @@ def test_process_vespa_search_response_sorting(
                         mock_parse_text_block_id(pm.text_block_id)[1]
                         for pm in page_passages
                     ]
-                    assert block_ids == sorted(
-                        block_ids
-                    ), f"Passages on page {page} in document {document.document_slug} are not sorted by text block ID"
+                    assert block_ids == sorted(block_ids), (
+                        f"Passages on page {page} in document {document.document_slug} are not sorted by text block ID"
+                    )
 
             # Verify that the content matches the expected order within this document
             sorted_content = [
@@ -1153,9 +1160,9 @@ def test_process_vespa_search_response_sorting(
                 )
             ]
             actual_content = [pm.text for pm in passages]
-            assert (
-                sorted_content == actual_content
-            ), f"Content order doesn't match page and block order in document {document.document_slug}"
+            assert sorted_content == actual_content, (
+                f"Content order doesn't match page and block order in document {document.document_slug}"
+            )
 
 
 @pytest.mark.search
@@ -1197,7 +1204,9 @@ def test_process_vespa_search_response_sorting_across_all_passages(
             ]
             assert document_pages == sorted(
                 document_pages, key=lambda page: page or float("inf")
-            ), f"Passages in document {document.document_slug} are not sorted by page number"
+            ), (
+                f"Passages in document {document.document_slug} are not sorted by page number"
+            )
 
     # Get all passages across all documents
     all_passages = []
@@ -1207,9 +1216,9 @@ def test_process_vespa_search_response_sorting_across_all_passages(
 
     # Verify that passages are NOT sorted across all documents
     all_pages = [pm.text_block_page for pm in all_passages]
-    assert all_pages != sorted(
-        all_pages, key=lambda page: page or float("inf")
-    ), "Passages should NOT be sorted across all documents when sort_within_page=True"
+    assert all_pages != sorted(all_pages, key=lambda page: page or float("inf")), (
+        "Passages should NOT be sorted across all documents when sort_within_page=True"
+    )
 
 
 @pytest.mark.search
@@ -1393,9 +1402,9 @@ def test_process_vespa_search_response_page_ordering_regression(
     # Check that passages are in correct order by page number
     expected_pages = [1, 2, 12, 15]
     actual_pages = [p.text_block_page for p in passages]
-    assert (
-        actual_pages == expected_pages
-    ), f"Expected pages {expected_pages}, got {actual_pages}"
+    assert actual_pages == expected_pages, (
+        f"Expected pages {expected_pages}, got {actual_pages}"
+    )
 
     # Check the actual content matches the expected order
     expected_content = [
@@ -1405,6 +1414,6 @@ def test_process_vespa_search_response_page_ordering_regression(
         "Page 14 content",
     ]
     actual_content = [p.text for p in passages]
-    assert (
-        actual_content == expected_content
-    ), f"Expected content {expected_content}, got {actual_content}"
+    assert actual_content == expected_content, (
+        f"Expected content {expected_content}, got {actual_content}"
+    )
