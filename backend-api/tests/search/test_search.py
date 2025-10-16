@@ -1122,9 +1122,9 @@ def test_process_vespa_search_response_sorting(
                 pm.text_block_page or mock_parse_text_block_id(pm.text_block_id)[0]
                 for pm in passages
             ]
-            assert pages == sorted(pages, key=lambda page: page or float("inf")), (
-                f"Passages in document {document.document_slug} are not sorted by page number"
-            )
+            assert pages == sorted(
+                pages, key=lambda page: page or float("inf")
+            ), f"Passages in document {document.document_slug} are not sorted by page number"
 
             # Verify that within each page, passages are sorted by text block ID
             for page in set(pages):
@@ -1142,9 +1142,9 @@ def test_process_vespa_search_response_sorting(
                         mock_parse_text_block_id(pm.text_block_id)[1]
                         for pm in page_passages
                     ]
-                    assert block_ids == sorted(block_ids), (
-                        f"Passages on page {page} in document {document.document_slug} are not sorted by text block ID"
-                    )
+                    assert block_ids == sorted(
+                        block_ids
+                    ), f"Passages on page {page} in document {document.document_slug} are not sorted by text block ID"
 
             # Verify that the content matches the expected order within this document
             sorted_content = [
@@ -1160,9 +1160,9 @@ def test_process_vespa_search_response_sorting(
                 )
             ]
             actual_content = [pm.text for pm in passages]
-            assert sorted_content == actual_content, (
-                f"Content order doesn't match page and block order in document {document.document_slug}"
-            )
+            assert (
+                sorted_content == actual_content
+            ), f"Content order doesn't match page and block order in document {document.document_slug}"
 
 
 @pytest.mark.search
@@ -1204,9 +1204,7 @@ def test_process_vespa_search_response_sorting_across_all_passages(
             ]
             assert document_pages == sorted(
                 document_pages, key=lambda page: page or float("inf")
-            ), (
-                f"Passages in document {document.document_slug} are not sorted by page number"
-            )
+            ), f"Passages in document {document.document_slug} are not sorted by page number"
 
     # Get all passages across all documents
     all_passages = []
@@ -1216,9 +1214,9 @@ def test_process_vespa_search_response_sorting_across_all_passages(
 
     # Verify that passages are NOT sorted across all documents
     all_pages = [pm.text_block_page for pm in all_passages]
-    assert all_pages != sorted(all_pages, key=lambda page: page or float("inf")), (
-        "Passages should NOT be sorted across all documents when sort_within_page=True"
-    )
+    assert all_pages != sorted(
+        all_pages, key=lambda page: page or float("inf")
+    ), "Passages should NOT be sorted across all documents when sort_within_page=True"
 
 
 @pytest.mark.search
@@ -1402,9 +1400,9 @@ def test_process_vespa_search_response_page_ordering_regression(
     # Check that passages are in correct order by page number
     expected_pages = [1, 2, 12, 15]
     actual_pages = [p.text_block_page for p in passages]
-    assert actual_pages == expected_pages, (
-        f"Expected pages {expected_pages}, got {actual_pages}"
-    )
+    assert (
+        actual_pages == expected_pages
+    ), f"Expected pages {expected_pages}, got {actual_pages}"
 
     # Check the actual content matches the expected order
     expected_content = [
@@ -1414,6 +1412,6 @@ def test_process_vespa_search_response_page_ordering_regression(
         "Page 14 content",
     ]
     actual_content = [p.text for p in passages]
-    assert actual_content == expected_content, (
-        f"Expected content {expected_content}, got {actual_content}"
-    )
+    assert (
+        actual_content == expected_content
+    ), f"Expected content {expected_content}, got {actual_content}"
