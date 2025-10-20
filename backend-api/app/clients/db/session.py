@@ -3,7 +3,7 @@ Code for DB session management.
 
 Notes: August 27th 2025.
 
-We have been trying to trace segfault issues for months. They're 
+We have been trying to trace segfault issues for months. They're
 our white whale. We identified a hypothesis: the sqlalchemy engine
 and session were initialised on module import, before uvicorn
 spawned the worker processes. This meant that the engine and session
