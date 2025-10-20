@@ -44,7 +44,7 @@ _engine = create_engine(
     SQLALCHEMY_DATABASE_URI,
     pool_pre_ping=True,  # Verify connections before use
     pool_size=10,  # Base connection pool size
-    max_overflow=20,  # Additional connections when pool exhausted
+    max_overflow=100,  # Additional connections when pool exhausted
     pool_recycle=1800,  # Recycle connections after 30 minutes
     pool_timeout=30,  # Wait up to 30s for a connection before error
     connect_args={"options": f"-c statement_timeout={STATEMENT_TIMEOUT}"},
