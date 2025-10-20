@@ -25,7 +25,7 @@ from sqlalchemy.orm import Session
 
 from app.clients.db.session import get_db
 from app.errors import ValidationError
-from app.models.search import SearchResponse, SearchResponseFamily
+from app.models.search import SearchResponseFamily
 from app.repository.download import get_whole_database_dump
 from app.repository.lookups import (
     doc_type_from_family_document_metadata,  # TODO: update this to use geographies api endpoint when refactoring geographies to use iso codes
@@ -187,7 +187,7 @@ def _get_document_events(
 @observe("process_result_into_csv")
 def process_result_into_csv(
     db: Session,
-    search_response: SearchResponse,
+    search_response_families: Sequence[SearchResponseFamily],
     base_url: Optional[str],
     is_browse: bool,
     theme: Optional[str] = None,
@@ -196,7 +196,7 @@ def process_result_into_csv(
     Process a search/browse result into a CSV file for download.
 
     :param Session db: database session for supplementary queries
-    :param SearchResponse search_response: the search result to process
+    :param Sequence[SearchResponseFamily] search_response_families: the families search result to process
     :param bool is_browse: a flag indicating whether this is a search/browse result
     :param Optional[str] theme: the theme to determine CSV column format
     :return str: the search result represented as CSV
@@ -204,10 +204,10 @@ def process_result_into_csv(
     # Check if theme is CCC (case insensitive)
     is_ccc_theme = theme and theme.upper() == "CCC"
 
-    extra_required_info = _get_extra_csv_info(db, search_response.families)
+    extra_required_info = _get_extra_csv_info(db, search_response_families)
     all_matching_document_slugs = {
         d.document_slug
-        for f in search_response.families
+        for f in search_response_families
         for d in f.family_documents
         if d.document_passage_matches
     }
@@ -219,7 +219,7 @@ def process_result_into_csv(
     url_base = f"{scheme}://{base_url}"
     rows = []
 
-    for family in search_response.families:
+    for family in search_response_families:
         _LOGGER.debug(f"Family: {family}")
         family_metadata = extra_required_info["metadata"].get(family.family_slug, {})
         if not family_metadata:
