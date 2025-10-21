@@ -3,7 +3,7 @@ from typing import Final, Optional
 
 PROJECT_NAME = "navigator"
 
-
+STATEMENT_TIMEOUT = os.getenv("STATEMENT_TIMEOUT", 10000)  # ms
 SQLALCHEMY_DATABASE_URI = os.getenv("DATABASE_URL", "")
 if not SQLALCHEMY_DATABASE_URI:
     raise RuntimeError("'{DATABASE_URL}' environment variable must be set")
