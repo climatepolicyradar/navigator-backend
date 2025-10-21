@@ -221,18 +221,9 @@ def process_result_into_csv(
 
     for family in search_response_families:
         _LOGGER.debug(f"Family: {family}")
-        family_metadata = extra_required_info["metadata"].get(family.family_slug, {})
-        if not family_metadata:
-            _LOGGER.error(f"Failed to find metadata for '{family.family_slug}'")
         family_source = extra_required_info["source"].get(family.family_slug, "")
         if not family_source:
             _LOGGER.error(f"Failed to identify organisation for '{family.family_slug}'")
-
-        family_geos = ";".join(
-            [cast(str, geo) for geo in family.family_geographies]
-            if family is not None
-            else []
-        )
 
         collection = extra_required_info["collection"].get(family.family_slug)
 
@@ -285,8 +276,7 @@ def process_result_into_csv(
                         family,
                         document,
                         collection,
-                        family_metadata,
-                        family_geos,
+                        family.family_metadata,
                         document_title,
                         document_content,
                         document_match,
@@ -298,9 +288,8 @@ def process_result_into_csv(
                         family,
                         document,
                         collection,
-                        family_metadata,
+                        family.family_metadata,
                         family_source,
-                        family_geos,
                         document_title,
                         document_content,
                         document_match,
@@ -317,8 +306,7 @@ def process_result_into_csv(
                     family,
                     None,
                     collection,
-                    family_metadata,
-                    family_geos,
+                    family.family_metadata,
                     "",  # Document title
                     "",  # Document content
                     "n/a",
@@ -330,9 +318,8 @@ def process_result_into_csv(
                     family,
                     None,
                     collection,
-                    family_metadata,
+                    family.family_metadata,
                     family_source,
-                    family_geos,
                     "",  # Document title
                     "",  # Document content
                     "n/a",
@@ -365,7 +352,6 @@ def _create_ccc_csv_row(
     document: Optional[FamilyDocument],
     collection: Optional[Collection],
     family_metadata: dict,
-    family_geos: str,
     document_title: str,
     document_content: str,
     document_match: str,
@@ -381,7 +367,9 @@ def _create_ccc_csv_row(
     principal_laws = parse_concept_labels(concept_labels, "principal_law")
     jurisdictions = parse_concept_labels(concept_labels, "jurisdiction")
     status = ";".join(family_metadata.get("status", []))
-    court_number = ";".join(family_metadata.get("court_number", []))
+    court_number = ";".join(
+        family_metadata.get("court_number", [])
+    )  # TODO - no such thing in metadata; we can infer court name from jurisdiction concepts if we need to
     non_english_case_name = ";".join(family_metadata.get("original_case_name", []))
 
     # This currently assumes that a family can only be associated with a single
@@ -389,6 +377,8 @@ def _create_ccc_csv_row(
     collection_id = collection.import_id if collection else ""
     collection_name = collection.title if collection else ""
     collection_url = f"{url_base}/collection/{collection_id}" if collection_id else ""
+
+    family_geos = family.family_geographies
 
     # Get family dates
     family_date = family.family_date or ""
@@ -412,6 +402,7 @@ def _create_ccc_csv_row(
     is_usa = "USA" in family_geos and all(
         geo == "USA" or geo.startswith("US-") for geo in family_geos
     )
+
     if is_usa and collection is not None:
         at_issue = collection.description
     elif not is_usa and len(core_object) > 0:
@@ -429,8 +420,6 @@ def _create_ccc_csv_row(
             # Get the earliest event (first in the list since we ordered by date asc)
             earliest_event = doc_events[0]
             document_filing_date = earliest_event.date.isoformat()
-            document_summary = ""
-            document_type = ""
             if earliest_event.valid_metadata:
                 description = earliest_event.valid_metadata.get("description")
                 if (
@@ -446,14 +435,6 @@ def _create_ccc_csv_row(
                 event_type = earliest_event.valid_metadata.get("event_type")
                 if event_type and isinstance(event_type, list) and len(event_type) > 0:
                     document_type = event_type[0]
-
-    # Another silly US vs non US piece of logic for the document title. US documents
-    # have document titles but some non US documents don't. Where that is the case we
-    # use the family name as the document title.
-    if not is_usa:
-        document_title = f"{family.family_name} - {document_type}"
-    else:
-        document_title = document_title
 
     return {
         "Bundle ID": collection_id,
@@ -482,7 +463,7 @@ def _create_ccc_csv_row(
         ),
         "Document Content URL": document_content,
         "Document Type": document_type,
-        "Geographies": family_geos,
+        "Geographies": ";".join(family_geos),
         "Document Content Matches Search Phrase": document_match,
     }
 
@@ -543,7 +524,6 @@ def _create_standard_csv_row(
     collection: Optional[Collection],
     family_metadata: dict,
     family_source: str,
-    family_geos: str,
     document_title: str,
     document_content: str,
     document_match: str,
@@ -578,7 +558,7 @@ def _create_standard_csv_row(
             doc_type_from_family_document_metadata(document) if document else ""
         ),
         "Document Content Matches Search Phrase": document_match,
-        "Geographies": family_geos,
+        "Geographies": ";".join(family.family_geographies),
         "Category": family.family_category,
         "Languages": document_languages,
         "Source": family_source,
