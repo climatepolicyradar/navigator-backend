@@ -221,6 +221,9 @@ def process_result_into_csv(
 
     for family in search_response_families:
         _LOGGER.debug(f"Family: {family}")
+        family_metadata = extra_required_info["metadata"].get(family.family_slug, {})
+        if not family_metadata:
+            _LOGGER.error(f"Failed to find metadata for '{family.family_slug}'")
         family_source = extra_required_info["source"].get(family.family_slug, "")
         if not family_source:
             _LOGGER.error(f"Failed to identify organisation for '{family.family_slug}'")
@@ -276,7 +279,7 @@ def process_result_into_csv(
                         family,
                         document,
                         collection,
-                        family.family_metadata,
+                        family_metadata,
                         document_title,
                         document_content,
                         document_match,
@@ -288,7 +291,7 @@ def process_result_into_csv(
                         family,
                         document,
                         collection,
-                        family.family_metadata,
+                        family_metadata,
                         family_source,
                         document_title,
                         document_content,
@@ -306,7 +309,7 @@ def process_result_into_csv(
                     family,
                     None,
                     collection,
-                    family.family_metadata,
+                    family_metadata,
                     "",  # Document title
                     "",  # Document content
                     "n/a",
@@ -318,7 +321,7 @@ def process_result_into_csv(
                     family,
                     None,
                     collection,
-                    family.family_metadata,
+                    family_metadata,
                     family_source,
                     "",  # Document title
                     "",  # Document content

@@ -150,6 +150,28 @@ def test_process_result_into_csv_returns_correct_data_for_CCC_search_in_csv_form
     mock_document_content_type = "application/pdf"
 
     mock_get_extra_csv_info.return_value = {
+        "metadata": {
+            mock_family_slug_us: {
+                "case_number": ["00-1111"],
+                "status": ["Decided"],
+                "concept_preferred_label": [
+                    "category/Test Category US",
+                    "principal_law/Test Principal Law US",
+                    "jurisdiction/Test Jurisdiction US",
+                ],
+            },
+            mock_family_slug_global: {
+                "case_number": ["00-2222"],
+                "status": ["Filed"],
+                "core_object": ["Test Core Object"],
+                "original_case_name": ["Test Non-English Case Name"],
+                "concept_preferred_label": [
+                    "category/Test Category Global",
+                    "principal_law/Test Principal Law Global",
+                    "jurisdiction/Test Jurisdiction Global",
+                ],
+            },
+        },
         "source": {mock_family_slug_us: mock_organisation},
         "documents": {
             mock_family_slug_us: [
@@ -218,15 +240,7 @@ def test_process_result_into_csv_returns_correct_data_for_CCC_search_in_csv_form
             corpus_import_id=f"Test.{mock_organisation}.corpus.0",
             corpus_type_name="Litigation",
             family_geographies=["USA"],
-            family_metadata={
-                "case_number": ["00-1111"],
-                "status": ["Decided"],
-                "concept_preferred_label": [
-                    "category/Test Category US",
-                    "principal_law/Test Principal Law US",
-                    "jurisdiction/Test Jurisdiction US",
-                ],
-            },
+            family_metadata={},
             family_title_match=True,
             family_description_match=False,
             total_passage_hits=1,
@@ -257,17 +271,7 @@ def test_process_result_into_csv_returns_correct_data_for_CCC_search_in_csv_form
             corpus_import_id=f"Test.{mock_organisation}.corpus.0",
             corpus_type_name="Litigation",
             family_geographies=["BRA"],
-            family_metadata={
-                "case_number": ["00-2222"],
-                "status": ["Filed"],
-                "core_object": ["Test Core Object"],
-                "original_case_name": ["Test Non-English Case Name"],
-                "concept_preferred_label": [
-                    "category/Test Category Global",
-                    "principal_law/Test Principal Law Global",
-                    "jurisdiction/Test Jurisdiction Global",
-                ],
-            },
+            family_metadata={},
             family_title_match=True,
             family_description_match=False,
             total_passage_hits=1,
