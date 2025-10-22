@@ -117,7 +117,7 @@ def test_process_result_into_csv_returns_correct_data_for_CPR_search_in_csv_form
 
     assert (
         process_result_into_csv(
-            db=None,
+            db=None,  # type: ignore
             search_response_families=families,
             base_url="test.com",
             is_browse=False,
@@ -374,7 +374,7 @@ def test_process_result_into_csv_returns_correct_data_for_CCC_search_in_csv_form
 
     assert (
         process_result_into_csv(
-            db=None,
+            db=None,  # type: ignore
             search_response_families=families,
             base_url="test.com",
             is_browse=False,
