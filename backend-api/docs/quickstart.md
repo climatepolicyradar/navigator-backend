@@ -26,7 +26,8 @@ pip install git+https://github.com/climatepolicyradar/navigator-db-client@v3.4.0
 
 ## Docker-based development
 
-The only dependencies for docker-based development should be docker and docker-compose.
+The only dependencies for docker-based development should be docker and
+docker-compose.
 
 Firstly, copy the sample [environment](./environment.md) file:
 
