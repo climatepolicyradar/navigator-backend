@@ -1,6 +1,6 @@
 # Search API Specification
 
-**3<sup>**rd**</sup> October 2023**
+> **_NOTE:_** Last updated October 2023
 
 ---
 
@@ -18,7 +18,8 @@ developers and integrators.
 
 ## **BACKGROUND**
 
-The API  is a typical REST API where the requests and responses are encoded as `application/json`
+The API  is a typical REST API where the requests and responses are encoded as
+`application/json`
 
 ## **SEARCH ENDPOINT**
 
@@ -37,13 +38,14 @@ The search endpoint behaves in two distinct ways:
    does not use Vespa, rather queries the structured data (postgresql) directly,
    using the other supplied filter fields.
 2. In “Search” mode - when a `query_string`is provided. A query is constructed
-   and sent to Vespa and the response is augmented with the structured data before
-   being returned in the same response scheme.
+   and sent to Vespa and the response is augmented with the structured data
+   before being returned in the same response scheme.
 
 ### **Request Payload**
 
 The payload is a JSON object representing the search to be performed. This can
-be seen in [code here](https://github.com/climatepolicyradar/navigator-backend/blob/ddebbd17f6b62cf7909e6e4c575285b8b00a41b2/app/api/api_v1/schemas/search.py#L62)
+be seen in
+[code here](https://github.com/climatepolicyradar/navigator-backend/blob/ddebbd17f6b62cf7909e6e4c575285b8b00a41b2/app/api/api_v1/schemas/search.py#L62)
 and is described in further detail below.
 
 ```json
@@ -83,7 +85,8 @@ The maximum number of matched passages to be returned for a single document.
 ##### keyword_filters (optional)
 
 This is an object containing a map of fields and their values to filter on. The
-allowed fields can be found in [code here](https://github.com/climatepolicyradar/navigator-backend/blob/ddebbd17f6b62cf7909e6e4c575285b8b00a41b2/app/api/api_v1/schemas/search.py#L34).
+allowed fields can be found in
+[code here](https://github.com/climatepolicyradar/navigator-backend/blob/ddebbd17f6b62cf7909e6e4c575285b8b00a41b2/app/api/api_v1/schemas/search.py#L34).
 
 ##### year_range
 
@@ -98,11 +101,13 @@ representing the years to search between. Examples:
 
 `[null, null]` - Does not filter by date.
 
-Further information and understanding can be found by [reading the tests here](https://github.com/climatepolicyradar/navigator-backend/blob/ddebbd17f6b62cf7909e6e4c575285b8b00a41b2/tests/routes/test_search.py#L634).
+Further information and understanding can be found by
+[reading the tests here](https://github.com/climatepolicyradar/navigator-backend/blob/ddebbd17f6b62cf7909e6e4c575285b8b00a41b2/tests/routes/test_search.py#L634).
 
 ##### sort_field (optional) & sort_order (optional, defaults to descending)
 
-The field to sort by can be chosen from “date” or “title” [see related code](https://github.com/climatepolicyradar/navigator-backend/blob/ddebbd17f6b62cf7909e6e4c575285b8b00a41b2/app/api/api_v1/schemas/search.py#L20).
+The field to sort by can be chosen from “date” or “title”
+[see related code](https://github.com/climatepolicyradar/navigator-backend/blob/ddebbd17f6b62cf7909e6e4c575285b8b00a41b2/app/api/api_v1/schemas/search.py#L20).
 
 The order can be chosen from ascending (use “asc”) or descending (use “desc”),
 [see related code.](https://github.com/climatepolicyradar/navigator-backend/blob/ddebbd17f6b62cf7909e6e4c575285b8b00a41b2/app/api/api_v1/schemas/search.py#L13)
@@ -181,7 +186,8 @@ The description of the family.
 
 ##### family_category
 
-The family category, for example: Executive (see list in [code here](https://github.com/climatepolicyradar/navigator-backend/blob/1529e0ff85b73a8e52a94e7eb510e3882307e64e/app/db/models/law_policy/family.py#L15))
+The family category, for example: Executive (see list in
+[code here](https://github.com/climatepolicyradar/navigator-backend/blob/1529e0ff85b73a8e52a94e7eb510e3882307e64e/app/db/models/law_policy/family.py#L15))
 
 ##### family_date
 
@@ -201,11 +207,13 @@ The source, currently organisation name. Either “CCLW” or “UNFCCC”
 
 ##### family_geographies
 
-The geographical location(s) of the family in [ISO 3166-1 alpha-3](https://en.wikipedia.org/wiki/ISO_3166-1_alpha-3)
+The geographical location(s) of the family in
+[ISO 3166-1 alpha-3](https://en.wikipedia.org/wiki/ISO_3166-1_alpha-3)
 
 ##### family_metadata
 
-An object if metadata for the family, the schema will change given the `family_source.`
+An object if metadata for the family, the schema will change given the
+`family_source.`
 
 ##### family_title_match
 
@@ -253,7 +261,8 @@ example, with a slug of  \``national-climate-change-adaptation-strategy_06f8`, 
 
 ##### document_type
 
-The type of document, for example: “Strategy”, see the [loaded metadata here](https://github.com/climatepolicyradar/navigator-backend/blob/1529e0ff85b73a8e52a94e7eb510e3882307e64e/app/data_migrations/data/law_policy/document_type_data.json).
+The type of document, for example: “Strategy”, see the
+[loaded metadata here](https://github.com/climatepolicyradar/navigator-backend/blob/1529e0ff85b73a8e52a94e7eb510e3882307e64e/app/data_migrations/data/law_policy/document_type_data.json).
 
 ##### document_source_url
 

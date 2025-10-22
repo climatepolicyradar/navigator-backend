@@ -99,6 +99,7 @@ def _get_extra_csv_info(
         .join(FamilyCorpus, FamilyCorpus.family_import_id == Slug.family_import_id)
         .join(Corpus, Corpus.import_id == FamilyCorpus.corpus_import_id)
         .join(Organisation, Organisation.id == Corpus.organisation_id)
+        .all()
     )
     slug_and_family_document = (
         db.query(Slug, FamilyDocument)

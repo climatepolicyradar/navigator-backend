@@ -268,14 +268,23 @@ def data_db(data_db_engine):
     connection = data_db_engine.connect()
     transaction = connection.begin()
 
-    SessionLocal = sessionmaker(autocommit=False, autoflush=False, bind=connection)
+    # Prevent connection from being closed by context managers within tests
+    _original_close = connection.close
+    connection.close = lambda: None  # type: ignore
+
+    SessionLocal = sessionmaker(
+        autocommit=False,
+        autoflush=False,
+        bind=connection,
+        expire_on_commit=False,
+    )
     session = SessionLocal()
 
     yield session
 
     session.close()
     transaction.rollback()
-    connection.close()
+    _original_close()  # Now actually close it
 
 
 @pytest.fixture
