@@ -225,7 +225,7 @@ def download_search_documents(
         )
 
     content_str = process_result_into_csv(
-        db, search_response, token.aud, is_browse=is_browse, theme=token.sub
+        db, search_response.families, token.aud, is_browse=is_browse, theme=token.sub
     )
 
     _LOGGER.debug(f"Downloading search results as CSV: {content_str}")
