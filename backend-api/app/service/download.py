@@ -367,9 +367,7 @@ def _create_ccc_csv_row(
     principal_laws = parse_concept_labels(concept_labels, "principal_law")
     jurisdictions = parse_concept_labels(concept_labels, "jurisdiction")
     status = ";".join(family_metadata.get("status", []))
-    court_number = ";".join(
-        family_metadata.get("court_number", [])
-    )  # TODO - no such thing in metadata; we can infer court name from jurisdiction concepts if we need to
+    court_number = ";".join(family_metadata.get("court_number", []))
     non_english_case_name = ";".join(family_metadata.get("original_case_name", []))
 
     # This currently assumes that a family can only be associated with a single
@@ -465,56 +463,6 @@ def _create_ccc_csv_row(
         "Document Type": document_type,
         "Geographies": ";".join(family_geos),
         "Document Content Matches Search Phrase": document_match,
-    }
-
-
-def _create_mcf_csv_row(
-    family: SearchResponseFamily,
-    document: Optional[FamilyDocument],
-    collection: Optional[Collection],
-    family_metadata: dict,
-    family_source: str,
-    family_geos: str,
-    document_title: str,
-    document_content: str,
-    document_match: str,
-    url_base: str,
-    document_languages: str,
-) -> dict:
-    """Create a CSV row for MCF theme format."""
-
-    # collection_name = collection.title if collection else ""
-    # collection_summary = collection.description if collection else ""
-
-    # # Process metadata for mcf CSV format
-    # metadata: dict[str, str] = defaultdict(str)
-    # for k in family_metadata:
-    #     metadata[k.title()] = ";".join(family_metadata.get(k, []))
-
-    return {
-        "Document ID": "test",
-        # "Collection Name": collection_name,
-        # "Collection Summary": collection_summary,
-        # "Family Name": family.family_name,
-        # "Family Summary": family.family_description,
-        # "Family Publication Date": family.family_date,
-        # "Family URL": f"{url_base}/document/{family.family_slug}",
-        # "Document Title": document_title,
-        # "Document URL": (
-        #     f"{url_base}/documents/{document.slugs[-1].name}"
-        #     if document and document.slugs
-        #     else ""
-        # ),
-        # "Document Content URL": document_content,
-        # "Document Type": (
-        #     doc_type_from_family_document_metadata(document) if document else ""
-        # ),
-        # "Document Content Matches Search Phrase": document_match,
-        # "Geographies": family_geos,
-        # "Category": family.family_category,
-        # "Languages": document_languages,
-        # "Source": family_source,
-        # **metadata,
     }
 
 

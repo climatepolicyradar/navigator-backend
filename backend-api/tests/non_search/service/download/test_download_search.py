@@ -53,11 +53,11 @@ def test_process_result_into_csv_returns_correct_data_for_CPR_search_in_csv_form
             family_description=f"{mock_organisation} Test Family Description",
             family_category="Legislative",
             family_date="2025-01-01",
-            family_source=mock_organisation,  # ORG
+            family_source=mock_organisation,
             corpus_import_id=f"Test.{mock_organisation}.corpus.0",
             corpus_type_name="Laws and Policies",
             family_geographies=["BRA"],
-            family_metadata={},  # TODO fix this
+            family_metadata={},
             family_title_match=True,
             family_description_match=False,
             total_passage_hits=1,
@@ -214,7 +214,7 @@ def test_process_result_into_csv_returns_correct_data_for_CCC_search_in_csv_form
             family_description=f"{mock_organisation} Test Family Description US",
             family_category="Litigation",
             family_date="2025-01-01",
-            family_source=mock_organisation,  # ORG
+            family_source=mock_organisation,
             corpus_import_id=f"Test.{mock_organisation}.corpus.0",
             corpus_type_name="Litigation",
             family_geographies=["USA"],
@@ -253,7 +253,7 @@ def test_process_result_into_csv_returns_correct_data_for_CCC_search_in_csv_form
             family_description=f"{mock_organisation} Test Family Description Global",
             family_category="Litigation",
             family_date="2024-01-01",
-            family_source=mock_organisation,  # ORG
+            family_source=mock_organisation,
             corpus_import_id=f"Test.{mock_organisation}.corpus.0",
             corpus_type_name="Litigation",
             family_geographies=["BRA"],
@@ -297,7 +297,7 @@ def test_process_result_into_csv_returns_correct_data_for_CCC_search_in_csv_form
         "Bundle URL,"  # 3
         "Case ID,"  # 4
         "Case Name,"  # 5
-        "Non-English Case Name,"  # 6 metadata -> original_case_name GLOBAL
+        "Non-English Case Name,"  # 6
         "Case URL,"  # 7
         "At Issue,"  # 8
         "Case Summary,"  # 9
@@ -307,7 +307,7 @@ def test_process_result_into_csv_returns_correct_data_for_CCC_search_in_csv_form
         "Jurisdictions,"  # 13
         "Case Categories,"  # 14
         "Principal Laws,"  # 15
-        "Court Number,"  # 16 ?????????????? that's not a thing...
+        "Court Number,"  # 16
         "Document Title,"  # 17
         "Document URL,"  # 18
         "Document Content URL,"  # 19
@@ -332,7 +332,7 @@ def test_process_result_into_csv_returns_correct_data_for_CCC_search_in_csv_form
         "Test Jurisdiction US,"  # 13
         "Test Category US,"  # 14
         "Test Principal Law US,"  # 15
-        ","  # 16 court number is not a thing
+        ","  # 16
         "CCC Test Document US,"  # 17
         "https://test.com/documents/ccc-test-document-us,"  # 18
         "www.ccc-test-document-us.pdf,"  # 19
@@ -357,7 +357,7 @@ def test_process_result_into_csv_returns_correct_data_for_CCC_search_in_csv_form
         "Test Jurisdiction Global,"  # 13
         "Test Category Global,"  # 14
         "Test Principal Law Global,"  # 15
-        ","  # 16 court number is not a thing
+        ","  # 16
         "CCC Test Document Global,"  # 17
         "https://test.com/documents/ccc-test-document-global,"  # 18
         "www.ccc-test-document-global.pdf,"  # 19
@@ -378,90 +378,3 @@ def test_process_result_into_csv_returns_correct_data_for_CCC_search_in_csv_form
         )
         == expected_search_csv
     )
-
-
-# def test_process_result_into_csv_returns_correct_data_for_mcf_in_csv_format(data_db):
-#     families = [
-#         SearchResponseFamily(
-#             family_slug="mcf-test-family",
-#             family_name="MCF Test Family",
-#             family_description="MCF Test Family Description",
-#             family_category="MCF",
-#             family_date="2025-01-01",
-#             family_source="GCF",
-#             corpus_import_id="Test.MCF.corpus.0",
-#             corpus_type_name="MCF",
-#             family_geographies=["BRA"],
-#             family_metadata={
-#                 "region": ["Latin America & Caribbean"],
-#                 "sector": ["Test Sector"],
-#                 "status": ["Project Completed"],
-#                 "project_id": ["000000"],
-#                 "project_url": ["https://www.test.org/project/mcf-test-family/"],
-#                 "implementing_agency": ["Test Agency"],
-#                 "project_value_fund_spend": ["1000000"],
-#                 "project_value_co_financing": ["0"],
-#                 "theme": ["Test Theme"],
-#                 "result_area": ["Test Result Area"],
-#                 "result_type": ["Test"],
-#                 "approved_ref": ["FP123"],
-#                 "focal_area": ["Climate Change"],
-#             },
-#             family_title_match=False,
-#             family_description_match=False,
-#             total_passage_hits=1,
-#             family_documents=[],
-#             continuation_token=None,
-#             prev_continuation_token=None,
-#             metadata=None,
-#         )
-#     ]
-
-#     expected_mcf_search_csv = "Document ID,"
-# Status,Implementing Agency,Sector,Result Area,Result Type,Focal Area,Theme,Approved Ref,External Project ID,Project URL,Project Value $ (Co-financing),Project Value $ (Fund Spend),,,,,,,,,,,,,MCF,,,BRA"
-# "Document ID,"
-# "Document Title",
-# "Family ID",
-# "Family Title",
-# "Family Summary",
-# "Collection Title(s)",
-# "Collection Description(s)",
-# "Document Variant",
-# "Document Content URL",
-# "Language",
-# "Source",
-# "Type", # Guidance or Project
-# "Geographies",
-# "Geography ISOs",
-# "First event in timeline",
-# "Last event in timeline",
-# "Full timeline of events (types)",
-# "Full timeline of events (dates)",
-# "Date Added to System",
-# "Last Modified on System",
-# "Internal Document ID",
-# "Internal Family ID",
-# "Internal Corpus ID",
-# "Internal Collection ID(s)",
-# "Family URL",
-# "Document URL",
-# "Document Type", # from document metadata where present
-# "Category",
-
-# "Region",
-# "Status",
-# "Implementing Agency",
-# "Sector",
-# "Result Area",
-# "Result Type",
-# "Focal Area",
-# "Theme",
-# "Approved Ref",
-# "External Project ID",
-# "Project URL",
-# "Project Value $ (Co-financing)",
-# "Project Value $ (Fund Spend)",
-
-# assert process_result_into_csv(
-#         data_db, families, base_url="", is_browse=False, theme="MCF"
-#     ) == expected_mcf_search_csv
