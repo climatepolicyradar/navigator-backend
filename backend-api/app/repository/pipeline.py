@@ -33,8 +33,7 @@ def get_pipeline_data(db=Depends(get_db)) -> pd.DataFrame:
     """
     _LOGGER.info("Running pipeline query")
     query = get_query_template(os.path.join("app", "repository", "sql", "pipeline.sql"))
-    with db.connection() as conn:
-        df = pd.read_sql(query, conn.connection)
+    df = pd.read_sql(query, db.connection().connection)
     return df
 
 
