@@ -335,7 +335,6 @@ def test_process_result_into_csv_returns_correct_data_for_CCC_search_in_csv_form
         "Test Jurisdiction US,"  # 13
         "Test Category US,"  # 14
         "Test Principal Law US,"  # 15
-        ","  # 16
         "CCC Test Document US,"  # 17
         "https://test.com/documents/ccc-test-document-us,"  # 18
         "www.ccc-test-document-us.pdf,"  # 19
