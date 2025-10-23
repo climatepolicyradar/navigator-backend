@@ -3,7 +3,7 @@ from datetime import datetime
 from fastapi.testclient import TestClient
 from sqlmodel import Session
 
-from app.models import FamilyDocumentPublicWithFamily, FamilyDocumentStatus, FamilyPublic, Geography
+from app.models import FamilyDocumentStatus, FamilyPublic, Geography
 from app.router import APIItemResponse, APIListResponse, GeographyDocumentCount
 
 
@@ -76,6 +76,7 @@ def test_read_families_ordering(client: TestClient, session: Session, make_famil
 
     updated_ids = ["family_1", "family_2"]
     assert [family.import_id for family in response.data] == updated_ids
+
 
 def test_read_documents_ordering(client: TestClient, session: Session, make_family):
     # we order by last_modified
