@@ -335,14 +335,14 @@ def test_process_result_into_csv_returns_correct_data_for_CCC_search_in_csv_form
         "Test Jurisdiction US,"  # 13
         "Test Category US,"  # 14
         "Test Principal Law US,"  # 15
-        "CCC Test Document US,"  # 17
-        "https://test.com/documents/ccc-test-document-us,"  # 18
-        "www.ccc-test-document-us.pdf,"  # 19
-        "Test Type US,"  # 20
-        "2025-02-02T00:00:00,"  # 21
-        "Test Description US,"  # 22
-        "USA,"  # 23
-        "Yes\r\n"  # 24
+        "CCC Test Document US,"  # 16
+        "https://test.com/documents/ccc-test-document-us,"  # 17
+        "www.ccc-test-document-us.pdf,"  # 18
+        "Test Type US,"  # 19
+        "2025-02-02T00:00:00,"  # 20
+        "Test Description US,"  # 21
+        "USA,"  # 22
+        "Yes\r\n"  # 23
         # Row 2 - Corresponding values - GLOBAL family
         ","  # 1
         ","  # 2
