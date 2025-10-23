@@ -84,7 +84,7 @@ services:
       NAVIGATOR_DATABASE_URL: postgresql://navigator_admin:navigator_admin@test-db:5432/navigator_admin
       CDN_URL: https://cdn.climatepolicyradar.org
     command:
-      [uv, run, --project, families-api, pytest, families-api, --color=yes]
+      [uv, run, --project, families-api, pytest, families-api, --color=yes, -v]
     depends_on:
       - test-db
 volumes:

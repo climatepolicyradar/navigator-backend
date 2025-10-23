@@ -446,6 +446,7 @@ class FamilyDocumentBase(SQLModel):
     import_id: str = Field(primary_key=True)
     variant_name: str | None
     document_status: FamilyDocumentStatus
+    last_modified: datetime
 
 
 class FamilyDocument(FamilyDocumentBase, table=True):

@@ -146,7 +146,12 @@ def read_documents(
 ):
     limit = 10
     offset = (page - 1) * limit
-    documents = session.exec(select(FamilyDocument).offset(offset).limit(limit)).all()
+    documents = session.exec(
+        select(FamilyDocument)
+        .offset(offset)
+        .limit(limit)
+        .order_by(desc(FamilyDocument.last_modified))
+    ).all()
 
     return APIListResponse(
         data=list(documents),
