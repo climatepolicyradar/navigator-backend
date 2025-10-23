@@ -69,7 +69,6 @@ _CCC_CSV_SEARCH_RESPONSE_COLUMNS = [
     "Jurisdictions",
     "Case Categories",
     "Principal Laws",
-    "Court Number",
     "Document Title",
     "Document URL",
     "Document Content URL",
@@ -371,7 +370,6 @@ def _create_ccc_csv_row(
     principal_laws = parse_concept_labels(concept_labels, "principal_law")
     jurisdictions = parse_concept_labels(concept_labels, "jurisdiction")
     status = ";".join(family_metadata.get("status", []))
-    court_number = ";".join(family_metadata.get("court_number", []))
     non_english_case_name = ";".join(family_metadata.get("original_case_name", []))
 
     # This currently assumes that a family can only be associated with a single
@@ -454,7 +452,6 @@ def _create_ccc_csv_row(
         "Jurisdictions": jurisdictions,
         "Case Categories": case_categories,
         "Principal Laws": principal_laws,
-        "Court Number": court_number,
         "Document Title": document_title,
         "Document Filing Date": document_filing_date,
         "Document Summary": document_summary,

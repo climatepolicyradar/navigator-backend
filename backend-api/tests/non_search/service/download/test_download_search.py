@@ -311,15 +311,14 @@ def test_process_result_into_csv_returns_correct_data_for_CCC_search_in_csv_form
         "Jurisdictions,"  # 13
         "Case Categories,"  # 14
         "Principal Laws,"  # 15
-        "Court Number,"  # 16
-        "Document Title,"  # 17
-        "Document URL,"  # 18
-        "Document Content URL,"  # 19
-        "Document Type,"  # 20
-        "Document Filing Date,"  # 21
-        "Document Summary,"  # 22
-        "Geographies,"  # 23
-        "Document Content Matches Search Phrase\r\n"  # 24
+        "Document Title,"  # 16
+        "Document URL,"  # 17
+        "Document Content URL,"  # 18
+        "Document Type,"  # 19
+        "Document Filing Date,"  # 20
+        "Document Summary,"  # 21
+        "Geographies,"  # 22
+        "Document Content Matches Search Phrase\r\n"  # 23
         # Row 1 - Corresponding values - US family
         "Test.CCC.collection.0,"  # 1
         "Test CCC Collection,"  # 2

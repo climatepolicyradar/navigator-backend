@@ -112,12 +112,6 @@ family_metadata_extracted AS (
         ) AS status,
         ARRAY_TO_STRING(
             ARRAY(SELECT JSONB_ARRAY_ELEMENTS_TEXT(
-                fm.value -> 'court_number'
-                )),
-            ';'
-        ) AS court_number,
-        ARRAY_TO_STRING(
-            ARRAY(SELECT JSONB_ARRAY_ELEMENTS_TEXT(
                 fm.value -> 'core_object'
                 )),
             ';'
@@ -199,7 +193,6 @@ SELECT
     clp.case_categories AS "Case Categories",
     clp.principal_laws AS "Principal Laws",
     -- At Issue logic: collection description for USA, core_object for non-USA
-    fme.court_number AS "Court Number",
     fga.geo_isos AS "Geography ISOs",
     fga.geo_display_values AS "Geographies",
     fea.published_date AS "First event in timeline",
