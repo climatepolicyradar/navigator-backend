@@ -12,27 +12,15 @@ were shared across all workers. Ruh roh. SQLALCHEMY ISNT THREAD SAFE.
 Update: October 2025.
 Stray connection leaks are being caused by services calling get_db()
 without closing sessions, particularly via the defensive programming
-pattern we were using in the admin service (shown below) where cleanup
+pattern we were using in the admin service where cleanup
 wasn't implemented properly.
-
-if db is None:
-    db = db_session.get_db()
-...
-
-rather than
-
-if db is None:
-    with db_session.get_db() as session:
-        ...
 """
 
 import logging
-from contextlib import contextmanager
-from typing import Generator
 
 from opentelemetry.instrumentation.sqlalchemy import SQLAlchemyInstrumentor
 from sqlalchemy import create_engine
-from sqlalchemy.orm import Session, sessionmaker
+from sqlalchemy.orm import sessionmaker
 
 from app.config import SQLALCHEMY_DATABASE_URI, STATEMENT_TIMEOUT
 
@@ -50,6 +38,7 @@ _engine = create_engine(
     connect_args={"options": f"-c statement_timeout={STATEMENT_TIMEOUT}"},
 )
 
+
 # OpenTelemetry instrumentation
 SQLAlchemyInstrumentor().instrument(engine=_engine)
 
@@ -57,23 +46,11 @@ SQLAlchemyInstrumentor().instrument(engine=_engine)
 SessionLocal = sessionmaker(autocommit=False, autoflush=False, bind=_engine)
 
 
-@contextmanager
-def get_db() -> Generator[Session, None, None]:
-    """
-    Context manager for database sessions in service layer.
+def get_db():
+    """Get the database session.
 
     Tries to get a database session. If there is no session, it will
     create one AFTER the uvicorn stuff has started.
-
-    Ensures sessions are properly closed via context management.
-
-    Usage:
-        with get_db() as db:
-            # Use db here
-            ...
-
-    :return: Database session generator
-    :rtype: Generator[Session, None, None]
     """
     db = SessionLocal()
     try:
