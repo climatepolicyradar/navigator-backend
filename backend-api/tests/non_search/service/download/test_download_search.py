@@ -359,15 +359,14 @@ def test_process_result_into_csv_returns_correct_data_for_CCC_search_in_csv_form
         "Test Jurisdiction Global,"  # 13
         "Test Category Global,"  # 14
         "Test Principal Law Global,"  # 15
-        ","  # 16
-        "CCC Test Document Global,"  # 17
-        "https://test.com/documents/ccc-test-document-global,"  # 18
-        "www.ccc-test-document-global.pdf,"  # 19
-        "Test Type Global,"  # 20
-        "2024-02-02T00:00:00,"  # 21
-        "Test Description Global,"  # 22
-        "BRA,"  # 23
-        "Yes\r\n"  # 24
+        "CCC Test Document Global,"  # 16
+        "https://test.com/documents/ccc-test-document-global,"  # 17
+        "www.ccc-test-document-global.pdf,"  # 18
+        "Test Type Global,"  # 19
+        "2024-02-02T00:00:00,"  # 20
+        "Test Description Global,"  # 21
+        "BRA,"  # 22
+        "Yes\r\n"  # 23
     )
 
     assert (
