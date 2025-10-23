@@ -1,3 +1,4 @@
+from datetime import datetime
 from app.models import FamilyDocumentPublic, FamilyDocumentStatus, PhysicalDocument
 from app.settings import settings
 
@@ -19,6 +20,7 @@ def test_FamilyDocumentPublic_cdn_object_computed_field_prepends_cdn_url_and_nav
         variant_name=None,
         unparsed_slug=[],
         unparsed_events=[],
+        last_modified=datetime.now(),
     )
 
     assert family.cdn_object.startswith(settings.cdn_url)

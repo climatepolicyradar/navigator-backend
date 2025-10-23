@@ -3,7 +3,7 @@ from datetime import datetime
 from fastapi.testclient import TestClient
 from sqlmodel import Session
 
-from app.models import FamilyDocumentStatus, FamilyPublic, Geography
+from app.models import FamilyDocumentPublicWithFamily, FamilyDocumentStatus, FamilyPublic, Geography
 from app.router import APIItemResponse, APIListResponse, GeographyDocumentCount
 
 
@@ -76,6 +76,53 @@ def test_read_families_ordering(client: TestClient, session: Session, make_famil
 
     updated_ids = ["family_1", "family_2"]
     assert [family.import_id for family in response.data] == updated_ids
+
+def test_read_documents_ordering(client: TestClient, session: Session, make_family):
+    # we order by last_modified
+    (corpus_type1, corpus1, family1, family_document1, physical_document1) = (
+        make_family(1)
+    )
+    (corpus_type2, corpus2, family2, family_document2, physical_document2) = (
+        make_family(2)
+    )
+
+    session.add(corpus_type1)
+    session.add(corpus1)
+    session.add(family1)
+    session.add(family_document1)
+    session.add(physical_document1)
+
+    session.add(corpus_type2)
+    session.add(corpus2)
+    session.add(family2)
+    session.add(family_document2)
+    session.add(physical_document2)
+
+    session.commit()
+
+    # explicitly update the last_modified
+    family2.last_modified = datetime.now()
+    session.add(family2)
+    session.commit()
+
+    response = client.get("/families/documents")
+    assert response.status_code == 200
+    response = response.json()
+
+    ids = ["family_document_2", "family_document_1"]
+    assert [document["import_id"] for document in response["data"]] == ids
+
+    # explicitly update family 1 to be the most recent last_modified
+    family_document1.last_modified = datetime.now()
+    session.add(family_document1)
+    session.commit()
+
+    response = client.get("/families/documents")
+    assert response.status_code == 200
+    response = response.json()
+
+    updated_ids = ["family_document_1", "family_document_2"]
+    assert [document["import_id"] for document in response["data"]] == updated_ids
 
 
 def test_aggregations_by_geography_returns_a_count_of_documents_per_geography(

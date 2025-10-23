@@ -38,6 +38,7 @@ def make_family():
             organisation=organisation,
             organisation_id=organisation.id,
             corpus_type_name=corpus_type.name,
+            attribution_url="https://policyradar.org",
         )
         physical_document = PhysicalDocument(
             id=id,
@@ -79,6 +80,7 @@ def make_family():
                     status="OK",
                 ),
             ],
+            last_modified=datetime.now(),
         )
         family = Family(
             title=f"Test family {id}",
