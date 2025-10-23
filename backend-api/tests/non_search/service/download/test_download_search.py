@@ -311,15 +311,14 @@ def test_process_result_into_csv_returns_correct_data_for_CCC_search_in_csv_form
         "Jurisdictions,"  # 13
         "Case Categories,"  # 14
         "Principal Laws,"  # 15
-        "Court Number,"  # 16
-        "Document Title,"  # 17
-        "Document URL,"  # 18
-        "Document Content URL,"  # 19
-        "Document Type,"  # 20
-        "Document Filing Date,"  # 21
-        "Document Summary,"  # 22
-        "Geographies,"  # 23
-        "Document Content Matches Search Phrase\r\n"  # 24
+        "Document Title,"  # 16
+        "Document URL,"  # 17
+        "Document Content URL,"  # 18
+        "Document Type,"  # 19
+        "Document Filing Date,"  # 20
+        "Document Summary,"  # 21
+        "Geographies,"  # 22
+        "Document Content Matches Search Phrase\r\n"  # 23
         # Row 1 - Corresponding values - US family
         "Test.CCC.collection.0,"  # 1
         "Test CCC Collection,"  # 2
@@ -336,15 +335,14 @@ def test_process_result_into_csv_returns_correct_data_for_CCC_search_in_csv_form
         "Test Jurisdiction US,"  # 13
         "Test Category US,"  # 14
         "Test Principal Law US,"  # 15
-        ","  # 16
-        "CCC Test Document US,"  # 17
-        "https://test.com/documents/ccc-test-document-us,"  # 18
-        "www.ccc-test-document-us.pdf,"  # 19
-        "Test Type US,"  # 20
-        "2025-02-02T00:00:00,"  # 21
-        "Test Description US,"  # 22
-        "USA,"  # 23
-        "Yes\r\n"  # 24
+        "CCC Test Document US,"  # 16
+        "https://test.com/documents/ccc-test-document-us,"  # 17
+        "www.ccc-test-document-us.pdf,"  # 18
+        "Test Type US,"  # 19
+        "2025-02-02T00:00:00,"  # 20
+        "Test Description US,"  # 21
+        "USA,"  # 22
+        "Yes\r\n"  # 23
         # Row 2 - Corresponding values - GLOBAL family
         ","  # 1
         ","  # 2
@@ -361,15 +359,14 @@ def test_process_result_into_csv_returns_correct_data_for_CCC_search_in_csv_form
         "Test Jurisdiction Global,"  # 13
         "Test Category Global,"  # 14
         "Test Principal Law Global,"  # 15
-        ","  # 16
-        "CCC Test Document Global,"  # 17
-        "https://test.com/documents/ccc-test-document-global,"  # 18
-        "www.ccc-test-document-global.pdf,"  # 19
-        "Test Type Global,"  # 20
-        "2024-02-02T00:00:00,"  # 21
-        "Test Description Global,"  # 22
-        "BRA,"  # 23
-        "Yes\r\n"  # 24
+        "CCC Test Document Global,"  # 16
+        "https://test.com/documents/ccc-test-document-global,"  # 17
+        "www.ccc-test-document-global.pdf,"  # 18
+        "Test Type Global,"  # 19
+        "2024-02-02T00:00:00,"  # 20
+        "Test Description Global,"  # 21
+        "BRA,"  # 22
+        "Yes\r\n"  # 23
     )
 
     assert (
