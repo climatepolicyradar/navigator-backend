@@ -1,0 +1,15 @@
+AWS_ACCOUNT_ID := `aws sts get-caller-identity --query 'Account' --output text`
+
+dev:
+    # TODO (katy)
+    echo "TODO"
+
+test:
+    uv run pytest -vv
+
+deploy-to-prefect-local:
+    # TODO (james)
+    deploy-to-prefect
+
+deploy-to-prefect:
+    uv run python -m app.deploy
