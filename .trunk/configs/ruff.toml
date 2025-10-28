@@ -1,5 +1,5 @@
 # Generic, formatter-friendly config.
-select = ["D3", "E", "F"]
+select = ["D3", "E", "F", "TID252"]
 
 # Never enforce `E501` (line length violations). This should be handled by formatters.
 ignore = ["E501"]
