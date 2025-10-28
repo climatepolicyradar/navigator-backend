@@ -21,7 +21,3 @@ def document_pipeline(id: str):
     document = transform(identified_source_document)
     load_rds(document)
     return document
-
-
-if __name__ == "__main__":
-    process_document_updates.serve()
