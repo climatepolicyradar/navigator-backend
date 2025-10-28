@@ -23,17 +23,11 @@ venv = ".venv"
 pythonVersion = "3.12"
 exclude = ["backend-api/**"]
 
-[[tool.pyright.executionEnvironments]]
-root = "api/src"
-
-[[tool.pyright.executionEnvironments]]
-root = "concepts-api"
-
-[[tool.pyright.executionEnvironments]]
-root = "families-api"
-
-[[tool.pyright.executionEnvironments]]
-root = "geographies-api"
-
-[[tool.pyright.executionEnvironments]]
-root = "data-in-pipeline"
+[tool.pyright.executionEnvironments]
+root = [
+  "api/src",
+  "concepts-api",
+  "families-api",
+  "geographies-api",
+  "data-in-pipeline",
+]
