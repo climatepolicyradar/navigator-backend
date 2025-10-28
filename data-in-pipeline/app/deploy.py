@@ -5,7 +5,7 @@ from prefect import Flow
 from prefect.blocks.system import JSON
 from prefect.docker.docker_image import DockerImage
 
-from app.flow import pipeline as test_flow
+from .flow import process_document_updates
 
 _LOGGER = logging.getLogger(__name__)
 
@@ -50,8 +50,9 @@ def create_deployment(flow: Flow) -> None:
         job_variables=job_variables,
         build=False,
         push=False,
+        parameters={"ids": list[str]},
     )
 
 
 if __name__ == "__main__":
-    create_deployment(test_flow)
+    create_deployment(process_document_updates)
