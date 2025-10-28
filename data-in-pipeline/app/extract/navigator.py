@@ -28,7 +28,7 @@ def extract_navigator_document(import_id: str) -> SourceDocument[NavigatorDocume
 
     print(f"Creating source document {import_id}...")
     source_document = SourceDocument[NavigatorDocument](
-        source_data=source_data, source="navigator"
+        data=source_data, id="navigator"
     )
 
     print("Done")

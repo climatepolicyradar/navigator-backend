@@ -12,8 +12,8 @@ class SourceDocument(BaseModel, Generic[InputData]):
     specific type to build a more specific source document.
     """
 
-    source_data: InputData
-    source: str
+    data: InputData
+    id: str
 
 
 class IdentifiedSourceDocument(BaseModel, Generic[InputData]):
