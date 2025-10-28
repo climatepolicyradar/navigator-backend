@@ -17,16 +17,21 @@ class NavigatorDocument(BaseModel):
 API_BASE_URL = get_api_url()
 
 
-def extract_navigator_document(id: str) -> SourceDocument[NavigatorDocument]:
+def extract_navigator_document(import_id: str) -> SourceDocument[NavigatorDocument]:
+    print(
+        f"Fetching navigator document {import_id} from {API_BASE_URL}/families/documents/{import_id}"
+    )
+    json = fetch_document(import_id)
 
-    json = fetch_document(id)
-
+    print(f"Validating navigator document {import_id}...")
     source_data = NavigatorDocument.model_validate(json)
 
+    print(f"Creating source document {import_id}...")
     source_document = SourceDocument[NavigatorDocument](
         source_data=source_data, source="navigator"
     )
 
+    print("Done")
     return source_document
 
 
