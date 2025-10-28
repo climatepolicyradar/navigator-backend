@@ -1,4 +1,4 @@
-from ..models import Document, IdentifiedSourceDocument
+from app.models import Document, IdentifiedSourceDocument
 
 
 def transform(input: IdentifiedSourceDocument) -> Document:

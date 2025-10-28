@@ -1,4 +1,4 @@
-from ..models import IdentifiedSourceDocument, SourceDocument
+from app.models import IdentifiedSourceDocument, SourceDocument
 
 
 def identify_source_document(

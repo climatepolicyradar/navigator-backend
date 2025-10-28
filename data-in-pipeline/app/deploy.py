@@ -5,7 +5,7 @@ from prefect import Flow
 from prefect.blocks.system import JSON
 from prefect.docker.docker_image import DockerImage
 
-from .flow import process_document_updates
+from app.flow import process_document_updates
 
 _LOGGER = logging.getLogger(__name__)
 

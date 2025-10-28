@@ -1,10 +1,10 @@
 from prefect import flow, task
 
-from .extract.navigator import extract_navigator_document
-from .identify.main import identify_source_document
-from .load.rds import load_rds
-from .models import SourceDocument
-from .transform.main import transform
+from app.extract.navigator import extract_navigator_document
+from app.identify.main import identify_source_document
+from app.load.rds import load_rds
+from app.models import SourceDocument
+from app.transform.main import transform
 
 
 @flow()
