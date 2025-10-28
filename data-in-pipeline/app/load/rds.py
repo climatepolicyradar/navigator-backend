@@ -1,4 +1,4 @@
-from ..models import Document
+from app.models import Document
 
 
 def load_rds(
