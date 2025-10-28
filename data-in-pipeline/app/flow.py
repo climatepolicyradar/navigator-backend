@@ -19,5 +19,7 @@ def document_pipeline(id: str):
     identified_source_document = identify_source_document(navigator_document)
 
     document = transform(identified_source_document)
+
     load_rds(document)
+
     return document
