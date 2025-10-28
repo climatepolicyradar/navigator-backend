@@ -2,22 +2,22 @@ from typing import Generic, TypeVar
 
 from pydantic import BaseModel
 
-InputData = TypeVar("InputData")
+ExtractedData = TypeVar("ExtractedData")
 
 
-class SourceDocument(BaseModel, Generic[InputData]):
+class Extracted(BaseModel, Generic[ExtractedData]):
     """Generic type for a source document.
 
     We can inherit this later down the line and augment it with the more
     specific type to build a more specific source document.
     """
 
-    data: InputData
-    id: str
+    data: ExtractedData
+    source: str
 
 
-class IdentifiedSourceDocument(BaseModel, Generic[InputData]):
-    source: InputData
+class Identified(BaseModel, Generic[ExtractedData]):
+    data: Extracted[ExtractedData]
     id: str
 
 

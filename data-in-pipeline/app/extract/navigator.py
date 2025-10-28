@@ -5,7 +5,7 @@ import requests
 # from families_api.app.models import FamilyDocumentPublic
 from pydantic import BaseModel
 
-from app.models import SourceDocument
+from app.models import Extracted
 from app.util import get_api_url
 
 
@@ -17,7 +17,7 @@ class NavigatorDocument(BaseModel):
 API_BASE_URL = get_api_url()
 
 
-def extract_navigator_document(import_id: str) -> SourceDocument[NavigatorDocument]:
+def extract_navigator_document(import_id: str) -> Extracted[NavigatorDocument]:
     print(
         f"Fetching navigator document {import_id} from {API_BASE_URL}/families/documents/{import_id}"
     )
@@ -27,9 +27,7 @@ def extract_navigator_document(import_id: str) -> SourceDocument[NavigatorDocume
     source_data = NavigatorDocument.model_validate(json)
 
     print(f"Creating source document {import_id}...")
-    source_document = SourceDocument[NavigatorDocument](
-        data=source_data, id="navigator"
-    )
+    source_document = Extracted(data=source_data, source="navigator")
 
     print("Done")
     return source_document
