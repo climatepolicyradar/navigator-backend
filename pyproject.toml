@@ -20,22 +20,20 @@ members = [
 [tool.pyright]
 venvPath = "."
 venv = ".venv"
-include = [
-  "api/src",
-  "concepts-api",
-  "families-api",
-  "geographies-api",
-  "data-in-pipeline",
-]
-
-# Include all workspace packages for proper import resolution
-extraPaths = [
-  "api/src",
-  "concepts-api",
-  "families-api",
-  "geographies-api",
-  "data-in-pipeline",
-]
-
-# Ensure we can find all dependencies in the uv workspace
 pythonVersion = "3.12"
+exclude = ["backend-api/**"]
+
+[[tool.pyright.executionEnvironments]]
+root = "api/src"
+
+[[tool.pyright.executionEnvironments]]
+root = "concepts-api"
+
+[[tool.pyright.executionEnvironments]]
+root = "families-api"
+
+[[tool.pyright.executionEnvironments]]
+root = "geographies-api"
+
+[[tool.pyright.executionEnvironments]]
+root = "data-in-pipeline"
