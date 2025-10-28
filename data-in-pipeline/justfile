@@ -2,8 +2,7 @@ AWS_ACCOUNT_ID := `aws sts get-caller-identity --query 'Account' --output text`
 DOCKER_REGISTRY := env_var_or_default("DOCKER_REGISTRY", AWS_ACCOUNT_ID + ".dkr.ecr.eu-west-1.amazonaws.com")
 
 dev:
-    # TODO (katy)
-    echo "TODO"
+    uv run python -m app.dev
 
 test:
     uv run pytest -vv

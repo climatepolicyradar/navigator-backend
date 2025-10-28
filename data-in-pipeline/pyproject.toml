@@ -10,6 +10,7 @@ dependencies = [
   "pulumi>=3.202.0",
   "pulumi-aws>=6.83.0",
   "pydantic>=2.12.1",
+  "requests>=2.32.5",
 ]
 
 [tool.uv.sources]
