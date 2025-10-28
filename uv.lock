@@ -567,7 +567,7 @@ wheels = [
 [[package]]
 name = "families-api"
 version = "2.0.0"
-source = { editable = "families-api" }
+source = { virtual = "families-api" }
 dependencies = [
     { name = "api" },
     { name = "fastapi", extra = ["standard"] },
