@@ -9,9 +9,7 @@ flowchart LR
 
 ```
 
-## Next steps
+## Notes
 
-- Dockerise prefect flow
-- Deploy workflow locally to cloud?
-- Trigger it in cloud & locally
-- Get access to prefect
+- The Prefect `AWS_ENV` is always `prod` for `staging` and `production` Pulumi
+  stacks

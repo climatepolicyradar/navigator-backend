@@ -19,12 +19,10 @@ DEFAULT_FLOW_VARIABLES = {
 def create_deployment(flow: Flow) -> None:
     """Create a deployment for the specified flow"""
 
-    if os.environ.get("AWS_ENV") is None:
-        raise RuntimeError("AWS_ENV environment variable is not set")
     if os.environ.get("DOCKER_REGISTRY") is None:
         raise RuntimeError("DOCKER_REGISTRY environment variable is not set")
 
-    aws_env = os.environ["AWS_ENV"]
+    aws_env = os.environ.get("AWS_ENV", "prod")
     docker_registry = os.environ["DOCKER_REGISTRY"]
     _LOGGER.info(
         f"Creating deployment for flow `{flow}` in `{aws_env}` with docker registry `{docker_registry}`"

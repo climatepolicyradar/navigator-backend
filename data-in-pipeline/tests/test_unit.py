@@ -1,8 +1,8 @@
 import pytest
 
-from app.flow import add
+from app.flow import process_document_updates
 
 
-@pytest.mark.parametrize("x, y, expected", [(1, 1, 2), (2, 2, 4), (3, 3, 6)])
-def test_add_flow(x, y, expected):
-    assert add.fn(x, y) == expected
+@pytest.mark.parametrize("ids, expected", [(["11", "22", "33"], ["11", "22", "33"])])
+def test_add_flow(ids, expected):
+    assert process_document_updates(ids) == expected

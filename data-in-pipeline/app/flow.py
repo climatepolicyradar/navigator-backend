@@ -9,7 +9,8 @@ from .transform.main import transform
 
 @flow()
 def process_document_updates(ids: list[str] = []):
-    document_pipline.map(ids)
+    result = document_pipline.map(ids)
+    return [result.result().id for result in result]
 
 
 @task(log_prints=True)
@@ -19,3 +20,4 @@ def document_pipline(id: str):
     identified_source_document = identify_source_document(source_document)
     document = transform(identified_source_document)
     load_rds(document)
+    return document
