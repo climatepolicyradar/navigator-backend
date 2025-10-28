@@ -4,6 +4,7 @@ from app.extract.navigator import extract_navigator_document
 from app.identify.main import identify_source_document
 from app.load.rds import load_rds
 from app.transform.main import transform
+from app.upload.aws_bucket import upload_to_s3
 
 
 @flow()
@@ -15,6 +16,12 @@ def process_document_updates(ids: list[str] = []):
 @task(log_prints=True)
 def document_pipeline(id: str):
     navigator_document = extract_navigator_document(id)
+
+    upload_to_s3(
+        navigator_document,
+        bucket="cpr-production-document-cache",
+        key=f"navigator/{navigator_document.data.import_id}.json",
+    )
 
     identified_source_document = identify_source_document(navigator_document)
 
