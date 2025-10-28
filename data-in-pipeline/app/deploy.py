@@ -48,7 +48,6 @@ def create_deployment(flow: Flow) -> None:
         job_variables=job_variables,
         build=False,
         push=False,
-        parameters={"ids": list[str]},
     )
 
 
