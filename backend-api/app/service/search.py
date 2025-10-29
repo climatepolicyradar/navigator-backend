@@ -36,10 +36,7 @@ from app.repository.lookups import (
 from app.repository.lookups import (
     validate_subdivision_iso_codes,  # TODO: update this to use geographies api endpoint when refactoring geographies to use iso codes
 )
-from app.repository.lookups import (
-    doc_type_from_family_document_metadata,
-    get_countries_for_region,
-)
+from app.repository.lookups import get_countries_for_region
 from app.service.util import to_cdn_url
 from app.telemetry import observe
 
@@ -231,12 +228,20 @@ def _vespa_passage_hit_to_search_passage(
 
 
 def _vespa_passage_hit_to_search_familydocument(
-    hit: CprSdkResponsePassage, db_family_document: FamilyDocument
+    hit: CprSdkResponsePassage, doc_title: Optional[str] = None
 ) -> SearchResponseFamilyDocument:
+    document_type = next(
+        (
+            item["value"]
+            for item in (hit.metadata or [])
+            if item["name"] == "document.type"
+        ),
+        "",
+    )
     return SearchResponseFamilyDocument(
-        document_title=str(db_family_document.physical_document.title),
+        document_title=doc_title or "",  # This doesn't exist on CprSdkResponsePassage
         document_slug=hit.document_slug or "",
-        document_type=doc_type_from_family_document_metadata(db_family_document),
+        document_type=document_type,
         document_source_url=hit.document_source_url,
         document_url=to_cdn_url(hit.document_cdn_object),
         document_content_type=hit.document_content_type,
@@ -380,7 +385,7 @@ def _process_vespa_search_response_families(
                         continue
 
                     response_document = _vespa_passage_hit_to_search_familydocument(
-                        hit, db_family_document
+                        hit, db_family_document.physical_document.title
                     )
                     response_document_lookup[hit.document_import_id] = response_document
                     response_family.family_documents.append(response_document)
