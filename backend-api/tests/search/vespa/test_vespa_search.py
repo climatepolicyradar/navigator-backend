@@ -298,7 +298,7 @@ def test_search_with_deleted_docs(
     "app.api.api_v1.routers.search.AppTokenFactory.verify_corpora_in_db",
     return_value=True,
 )
-def test_passage_hit_doc_titles_not_empty(
+def test_passage_hit_doc_titles_not_none(
     mock_corpora_exist_in_db,
     test_vespa,
     data_db,
