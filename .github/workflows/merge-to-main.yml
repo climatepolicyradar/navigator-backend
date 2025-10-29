@@ -111,6 +111,7 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v5
+      - uses: extractions/setup-just@v3
       - uses: astral-sh/setup-uv@v6
       - name: Sync dependencies
         working-directory: data-in-pipeline
