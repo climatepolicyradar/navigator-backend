@@ -2,7 +2,7 @@ import os
 from datetime import datetime
 from http.client import OK
 from typing import Any
-from unittest.mock import MagicMock
+from unittest.mock import MagicMock, patch
 
 import jwt
 import pytest
@@ -18,6 +18,7 @@ from db_client.models.dfce.family import (
 )
 from db_client.models.document.physical_document import PhysicalDocument
 from db_client.models.organisation import Corpus, CorpusType, Organisation
+from sqlalchemy import select
 
 from app.clients.db.session import SessionLocal
 from app.service import security
@@ -203,19 +204,20 @@ def test_config_endpoint_content(data_client, data_db, app_token_factory, valid_
 def test_config_endpoint_cclw_stats(data_client, data_db, valid_token):
     url_under_test = "/api/v1/config"
 
-    cclw = (
-        data_db.query(Corpus)
+    stmt = (
+        select(Corpus)
         .join(Organisation, Organisation.id == Corpus.organisation_id)
-        .filter(Organisation.name == "CCLW")
-        .one()
+        .where(Organisation.name == "CCLW")
     )
-    unfccc = (
-        data_db.query(Corpus)
+    cclw = data_db.execute(stmt).scalar_one()
+    stmt = (
+        select(Corpus)
         .join(Organisation, Organisation.id == Corpus.organisation_id)
-        .filter(Organisation.name == "UNFCCC")
-        .one()
+        .where(Organisation.name == "UNFCCC")
     )
-    unfccc = data_db.query(Corpus).filter(Corpus.organisation_id == 1).one()
+    unfccc = data_db.execute(stmt).scalar_one()
+    stmt = select(Corpus).where(Corpus.organisation_id == 1)
+    unfccc = data_db.execute(stmt).scalar_one()
 
     # Add some data here
     _add_family(data_db, "T.0.0.1", FamilyCategory.EXECUTIVE, cclw.import_id)
@@ -254,18 +256,18 @@ def test_config_endpoint_returns_stats_for_all_allowed_corpora(
     )
     url_under_test = "/api/v1/config"
 
-    unfccc_corpus = (
-        data_db.query(Corpus)
+    stmt = (
+        select(Corpus)
         .join(Organisation, Organisation.id == Corpus.organisation_id)
-        .filter(Organisation.name == "UNFCCC")
-        .one()
+        .where(Organisation.name == "UNFCCC")
     )
-    cclw_corpus_1 = (
-        data_db.query(Corpus)
+    unfccc_corpus = data_db.execute(stmt).scalar_one()
+    stmt = (
+        select(Corpus)
         .join(Organisation, Organisation.id == Corpus.organisation_id)
-        .filter(Organisation.name == "CCLW")
-        .first()
+        .where(Organisation.name == "CCLW")
     )
+    cclw_corpus_1 = data_db.execute(stmt).scalar_one_or_none()
     cclw_corpus_2 = "CCLW.corpus.i00000002.n0000"
     data_db.add(
         Corpus(
@@ -347,24 +349,24 @@ def test_config_endpoint_does_not_return_stats_for_not_allowed_corpora(
     app_token = app_token_factory(allowed_corpora_ids)
     url_under_test = "/api/v1/config"
 
-    other_corpus = (
-        data_db.query(Corpus)
+    stmt = (
+        select(Corpus)
         .join(Organisation, Organisation.id == Corpus.organisation_id)
-        .filter(Organisation.name == other_organisation)
-        .one()
+        .where(Organisation.name == other_organisation)
     )
-    expected_corpus = (
-        data_db.query(Corpus)
+    other_corpus = data_db.execute(stmt).scalar_one()
+    stmt = (
+        select(Corpus)
         .join(Organisation, Organisation.id == Corpus.organisation_id)
-        .filter(Organisation.name == expected_organisation)
-        .one()
+        .where(Organisation.name == expected_organisation)
     )
-    expected_corpus_type = (
-        data_db.query(CorpusType)
+    expected_corpus = data_db.execute(stmt).scalar_one()
+    stmt = (
+        select(CorpusType)
         .join(Corpus, Corpus.corpus_type_name == CorpusType.name)
-        .filter(CorpusType.name == expected_corpus.corpus_type_name)
-        .one()
+        .where(CorpusType.name == expected_corpus.corpus_type_name)
     )
+    expected_corpus_type = data_db.execute(stmt).scalar_one()
 
     _add_family(data_db, "T.0.0.1", FamilyCategory.EXECUTIVE, other_corpus.import_id)
     _add_family(
@@ -410,19 +412,18 @@ def test_config_endpoint_returns_stats_for_all_orgs_if_no_allowed_corpora_in_app
     )
     url_under_test = "/api/v1/config"
 
-    cclw_corpus = (
-        data_db.query(Corpus)
+    stmt = (
+        select(Corpus)
         .join(Organisation, Organisation.id == Corpus.organisation_id)
-        .filter(Organisation.name == "CCLW")
-        .one()
+        .where(Organisation.name == "CCLW")
     )
-
-    unfccc_corpus = (
-        data_db.query(Corpus)
+    cclw_corpus = data_db.execute(stmt).scalar_one()
+    stmt = (
+        select(Corpus)
         .join(Organisation, Organisation.id == Corpus.organisation_id)
-        .filter(Organisation.name == "UNFCCC")
-        .one()
+        .where(Organisation.name == "UNFCCC")
     )
+    unfccc_corpus = data_db.execute(stmt).scalar_one()
 
     _add_family(data_db, "T.0.0.1", FamilyCategory.EXECUTIVE, cclw_corpus.import_id)
     _add_family(data_db, "T.0.0.2", FamilyCategory.EXECUTIVE, unfccc_corpus.import_id)
@@ -454,12 +455,12 @@ def test_config_endpoint_only_counts_published_families(
     """Test that config endpoint only counts families with PUBLISHED status."""
     url_under_test = "/api/v1/config"
 
-    cclw = (
-        data_db.query(Corpus)
+    stmt = (
+        select(Corpus)
         .join(Organisation, Organisation.id == Corpus.organisation_id)
-        .filter(Organisation.name == "CCLW")
-        .one()
+        .where(Organisation.name == "CCLW")
     )
+    cclw = data_db.execute(stmt).scalar_one()
 
     # Add families with different statuses
     # Published families (should be counted)
@@ -574,12 +575,31 @@ EXPECTED_TREE_1 = [_EX_ONE]
 @pytest.mark.parametrize("data,expected", [(TREE_TABLE_DATA_1, EXPECTED_TREE_1)])
 def test_tree_table_to_json(data, expected):
     db = MagicMock(spec=SessionLocal)
-    db_query_mock = MagicMock()
-    db_query_mock.order_by = lambda _: _MockQuery(data)
-    db.query = lambda _: db_query_mock
+    result_mock = MagicMock()
+    scalars_mock = MagicMock()
+    scalars_mock.all.return_value = [_MockRow(rd) for rd in data]
+    result_mock.scalars.return_value = scalars_mock
+
+    # Mock select() to return a chainable select statement mock
+    select_stmt_mock = MagicMock()
+    select_stmt_mock.order_by.return_value = select_stmt_mock
+
+    # Mock db.execute to return our result mock
+    def mock_execute(stmt):
+        return result_mock
+
+    db.execute = mock_execute
 
     table_mock = MagicMock()
     table_mock.id = 1
-    processed_data = tree_table_to_json(table_mock, db)
+    # Mock __table__ attribute that SQLAlchemy uses for introspection
+    table_mock.__table__ = MagicMock()
+    table_mock.__table__.columns = [
+        MagicMock(name=k) for k in (_DATA_1.keys() if data else [])
+    ]
+
+    # Patch select() at the module level where it's used
+    with patch("app.service.util.select", return_value=select_stmt_mock):
+        processed_data = tree_table_to_json(table_mock, db)
 
     assert processed_data == expected

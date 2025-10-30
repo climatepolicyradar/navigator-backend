@@ -7,6 +7,7 @@ import pandas as pd
 from db_client.models.dfce import DocumentStatus
 from db_client.models.dfce.family import FamilyDocument
 from fastapi import Depends
+from sqlalchemy import func, select
 
 from app.clients.db.session import get_db
 from app.models.document import DocumentParserInput
@@ -113,11 +114,12 @@ def generate_pipeline_ingest_input(db=Depends(get_db)) -> Sequence[DocumentParse
     ]
 
     # TODO: Revert to raise a ValueError when the issue is resolved
-    database_doc_count = (
-        db.query(FamilyDocument)
-        .filter(FamilyDocument.document_status != DocumentStatus.DELETED)
-        .count()
+    stmt = (
+        select(func.count())
+        .select_from(FamilyDocument)
+        .where(FamilyDocument.document_status != DocumentStatus.DELETED)
     )
+    database_doc_count = db.execute(stmt).scalar_one()
     if len(documents) > database_doc_count:
         _LOGGER.warning(
             "Potential Row Explosion. Ingest input is returning more documents than exist in the database",

@@ -70,8 +70,8 @@ def browse_rds_families(db: Session, req: BrowseArgs) -> tuple[int, SearchRespon
     # Subquery to find families with at least one published document
     # Avoid using calculated family_status field
     published_families = (
-        db.query(FamilyDocument.family_import_id)
-        .filter(FamilyDocument.document_status == DocumentStatus.PUBLISHED)
+        select(FamilyDocument.family_import_id)
+        .where(FamilyDocument.document_status == DocumentStatus.PUBLISHED)
         .distinct()
         .subquery()
     )
@@ -96,8 +96,8 @@ def browse_rds_families(db: Session, req: BrowseArgs) -> tuple[int, SearchRespon
         .scalar_subquery()
     )
 
-    query = (
-        db.query(Family, Corpus, geo_subquery.c.value, Organisation)  # type: ignore
+    stmt = (
+        select(Family, Corpus, geo_subquery.c.value, Organisation)  # type: ignore
         .join(FamilyCorpus, FamilyCorpus.family_import_id == Family.import_id)
         .join(Corpus, FamilyCorpus.corpus_import_id == Corpus.import_id)
         .join(Organisation, Organisation.id == Corpus.organisation_id)
@@ -105,27 +105,29 @@ def browse_rds_families(db: Session, req: BrowseArgs) -> tuple[int, SearchRespon
             published_families,
             published_families.c.family_import_id == Family.import_id,
         )
-        .filter(geo_subquery.c.family_import_id == Family.import_id)  # type: ignore
+        .where(geo_subquery.c.family_import_id == Family.import_id)  # type: ignore
     )
 
     if req.categories is not None:
-        query = query.filter(Family.family_category.in_(req.categories))
+        stmt = stmt.where(Family.family_category.in_(req.categories))
 
     if req.corpora_ids is not None and req.corpora_ids != []:
-        query = query.filter(Corpus.import_id.in_(req.corpora_ids))
+        stmt = stmt.where(Corpus.import_id.in_(req.corpora_ids))
 
     if req.sort_field == SortField.TITLE:
         if req.sort_order == SortOrder.DESCENDING:
-            query = query.order_by(Family.title.desc())
+            stmt = stmt.order_by(Family.title.desc())
         else:
-            query = query.order_by(Family.title.asc())
+            stmt = stmt.order_by(Family.title.asc())
 
     if req.sort_field == SortField.DATE:
-        query = query.order_by(published_date_subq.desc())
+        stmt = stmt.order_by(published_date_subq.desc())
 
     _LOGGER.debug("Starting families query")
-    families_count = query.count()
-    top_five_families = query.limit(5).all()
+    families_count = db.execute(
+        select(func.count()).select_from(stmt.subquery())
+    ).scalar_one()
+    top_five_families = db.execute(stmt.limit(5)).unique().all()
     families = [
         to_search_response_family(family, corpus, geography_value, organisation)
         for (family, corpus, geography_value, organisation) in top_five_families

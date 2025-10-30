@@ -26,6 +26,7 @@ from db_client.models.document.physical_document import (
 )
 from db_client.models.organisation.corpus import Corpus, CorpusType, Organisation
 from fastapi import status
+from sqlalchemy import select
 from sqlalchemy.orm import Session
 
 SEARCH_ENDPOINT = "/api/v1/searches"
@@ -128,7 +129,8 @@ def _create_family(db: Session, family: VespaFixture):
     db.commit()
 
     for geo in family["fields"]["family_geographies"]:
-        geography = db.query(Geography).filter(Geography.value == geo).one()
+        stmt = select(Geography).where(Geography.value == geo)
+        geography = db.execute(stmt).scalar_one()
         db.add(
             FamilyGeography(
                 family_import_id=family_object.import_id, geography_id=geography.id
@@ -142,7 +144,8 @@ def _create_family(db: Session, family: VespaFixture):
     )
 
     org = family["fields"]["family_source"]
-    corpus = db.query(Corpus).filter(Corpus.import_id.like(f"{org}%")).one()
+    stmt = select(Corpus).where(Corpus.import_id.like(f"{org}%"))
+    corpus = db.execute(stmt).scalar_one()
     db.add(
         FamilyCorpus(
             family_import_id=family_object.import_id, corpus_import_id=corpus.import_id
@@ -189,16 +192,16 @@ def _generate_synthetic_metadata(
 
 
 def _get_taxonomy(db: Session, org_name: str):
-    return (
-        db.query(CorpusType.valid_metadata)
+    stmt = (
+        select(CorpusType.valid_metadata)
         .join(
             Corpus,
             Corpus.corpus_type_name == CorpusType.name,
         )
         .join(Organisation, Organisation.id == Corpus.organisation_id)
-        .filter(Organisation.name == org_name)
-        .scalar()
+        .where(Organisation.name == org_name)
     )
+    return db.execute(stmt).scalar_one()
 
 
 def _create_family_metadata(db: Session, family: VespaFixture):
