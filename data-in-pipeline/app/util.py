@@ -3,7 +3,6 @@ import os
 from typing import Optional
 
 import boto3
-import botocore
 from botocore.config import Config
 
 _LOGGER = logging.getLogger(__name__)
@@ -29,7 +28,7 @@ def get_api_url() -> str:
 
 
 def upload_file(
-    client: botocore.client.S3,
+    client,
     json_content,
     bucket: str,
     key: str,
@@ -44,7 +43,6 @@ def upload_file(
         the file extension. If not provided, the name of the local file is used.
     :param [str | None] content_type: optional content-type of the file
     """
-    json_content = json_content.encode("utf-8")
 
     # Upload the file
     try:
@@ -55,5 +53,5 @@ def upload_file(
         else:
             client.put_object(Body=json_content, Bucket=bucket, Key=key)
 
-    except botocore.exceptions.ClientError:
+    except Exception:
         _LOGGER.exception(f"Uploading {key} encountered an error")
