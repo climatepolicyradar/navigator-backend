@@ -12,6 +12,7 @@ dependencies = [
   "pydantic>=2.12.1",
   "requests>=2.32.5",
   "boto3>=1.40.51",
+  "botocore>=1.40.51",
 ]
 
 [tool.uv.sources]

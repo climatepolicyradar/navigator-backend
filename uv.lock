@@ -429,6 +429,7 @@ source = { virtual = "data-in-pipeline" }
 dependencies = [
     { name = "api" },
     { name = "boto3" },
+    { name = "botocore" },
     { name = "prefect" },
     { name = "pulumi" },
     { name = "pulumi-aws" },
@@ -446,6 +447,7 @@ dev = [
 requires-dist = [
     { name = "api", editable = "api" },
     { name = "boto3", specifier = ">=1.40.51" },
+    { name = "botocore", specifier = ">=1.40.51" },
     { name = "prefect", specifier = ">=3.4" },
     { name = "pulumi", specifier = ">=3.202.0" },
     { name = "pulumi-aws", specifier = ">=6.83.0" },
