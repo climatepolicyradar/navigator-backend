@@ -5,7 +5,7 @@ from db_client.models.dfce.family import (
     FamilyCorpus,
     FamilyDocument,
 )
-from sqlalchemy import func
+from sqlalchemy import func, select
 from sqlalchemy.orm import Session
 
 
@@ -20,21 +20,22 @@ def get_total_families_per_corpus(db: Session, corpus_import_id: str) -> int:
     # Subquery to find families with at least one published document
     # Avoid using calculated family_status field
     published_families = (
-        db.query(FamilyDocument.family_import_id)
-        .filter(FamilyDocument.document_status == DocumentStatus.PUBLISHED)
+        select(FamilyDocument.family_import_id)
+        .where(FamilyDocument.document_status == DocumentStatus.PUBLISHED)
         .distinct()
         .subquery()
     )
-    return (
-        db.query(Family)
+    stmt = (
+        select(func.count())
+        .select_from(Family)
         .join(FamilyCorpus, FamilyCorpus.family_import_id == Family.import_id)
         .join(
             published_families,
             published_families.c.family_import_id == Family.import_id,
         )
-        .filter(FamilyCorpus.corpus_import_id == corpus_import_id)
-        .count()
+        .where(FamilyCorpus.corpus_import_id == corpus_import_id)
     )
+    return db.execute(stmt).scalar_one()
 
 
 def get_family_count_by_category_per_corpus(db: Session, corpus_import_id: str):
@@ -48,22 +49,23 @@ def get_family_count_by_category_per_corpus(db: Session, corpus_import_id: str):
     # Subquery to find families with at least one published document
     # Avoid using calculated family_status field
     published_families = (
-        db.query(FamilyDocument.family_import_id)
-        .filter(FamilyDocument.document_status == DocumentStatus.PUBLISHED)
+        select(FamilyDocument.family_import_id)
+        .where(FamilyDocument.document_status == DocumentStatus.PUBLISHED)
         .distinct()
         .subquery()
     )
-    return (
-        db.query(Family.family_category, func.count())
+    stmt = (
+        select(Family.family_category, func.count())
+        .select_from(Family)
         .join(FamilyCorpus, FamilyCorpus.family_import_id == Family.import_id)
         .join(
             published_families,
             published_families.c.family_import_id == Family.import_id,
         )
-        .filter(FamilyCorpus.corpus_import_id == corpus_import_id)
+        .where(FamilyCorpus.corpus_import_id == corpus_import_id)
         .group_by(Family.family_category)
-        .all()
     )
+    return db.execute(stmt).all()
 
 
 def get_allowed_corpora(db: Session, allowed_corpora: list[str]) -> list[Corpus]:
@@ -74,8 +76,8 @@ def get_allowed_corpora(db: Session, allowed_corpora: list[str]) -> list[Corpus]
     :param allowed_corpora: A list of allowed corpora
     :return: A list of Corpus objects that are allowed
     """
-    query = db.query(Corpus)
+    stmt = select(Corpus)
     if allowed_corpora != []:
-        query = query.filter(Corpus.import_id.in_(allowed_corpora))
+        stmt = stmt.where(Corpus.import_id.in_(allowed_corpora))
 
-    return query.all()
+    return db.execute(stmt).scalars().all()

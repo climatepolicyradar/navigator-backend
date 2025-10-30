@@ -4,6 +4,7 @@ from typing import Optional, Sequence, cast
 from db_client.models.dfce import Geography, Variant
 from db_client.models.dfce.family import FamilyDocument, Slug
 from db_client.models.document.physical_document import Language
+from sqlalchemy import select
 from sqlalchemy.exc import MultipleResultsFound
 from sqlalchemy.orm import Session
 
@@ -19,17 +20,23 @@ _LOGGER = logging.getLogger(__name__)
 def get_config(db: Session, allowed_corpora: list[str]) -> ApplicationConfig:
     return ApplicationConfig(
         geographies=tree_table_to_json(table=Geography, db=db),
-        languages={lang.language_code: lang.name for lang in db.query(Language).all()},
+        languages={
+            lang.language_code: lang.name
+            for lang in db.execute(select(Language)).scalars().all()
+        },
         document_variants=[
             variant.variant_name
-            for variant in db.query(Variant).order_by(Variant.variant_name).all()
+            for variant in db.execute(select(Variant).order_by(Variant.variant_name))
+            .scalars()
+            .all()
         ],
         corpus_types=get_corpus_type_config_for_allowed_corpora(db, allowed_corpora),
     )
 
 
 def get_countries_for_region(db: Session, region_slug: str) -> Sequence[Geography]:
-    geography = db.query(Geography).filter(Geography.slug == region_slug).first()
+    stmt = select(Geography).where(Geography.slug == region_slug)
+    geography = db.execute(stmt).scalar_one_or_none()
     if geography is None:
         return []
 
@@ -39,14 +46,16 @@ def get_countries_for_region(db: Session, region_slug: str) -> Sequence[Geograph
 
     cast(Geography, geography)
 
-    return db.query(Geography).filter(Geography.parent_id == geography.id).all()
+    stmt = select(Geography).where(Geography.parent_id == geography.id)
+    return db.execute(stmt).scalars().all()
 
 
 def get_countries_for_slugs(
     db: Session,
     country_slugs: Sequence[str],
 ) -> Sequence[Geography]:
-    geographies = db.query(Geography).filter(Geography.slug.in_(country_slugs)).all()
+    stmt = select(Geography).where(Geography.slug.in_(country_slugs))
+    geographies = db.execute(stmt).scalars().all()
 
     # TODO: improve validity checking when we go beyond countries
     return [geo for geo in geographies if geo.parent_id is not None]
@@ -86,14 +95,11 @@ def validate_subdivision_iso_codes(db: Session, geography_identifiers: Sequence[
     if not geography_identifiers:
         return []
 
-    slug_geographies = (
-        db.query(Geography)
-        .filter(
-            Geography.value.in_(list(geography_identifiers)),
-            Geography.parent_id.is_not(None),
-        )
-        .all()
+    stmt = select(Geography).where(
+        Geography.value.in_(list(geography_identifiers)),
+        Geography.parent_id.is_not(None),
     )
+    slug_geographies = db.execute(stmt).scalars().all()
 
     return [geo.value for geo in slug_geographies]
 
@@ -128,16 +134,14 @@ def get_geographies_as_iso_codes_with_fallback(
         return [geo["alpha_3"] for geo in geographies]
 
     # Fallback: try to find by slugs using DB
-    slug_geographies = (
-        db.query(Geography)
-        .filter(Geography.slug.in_(list(geography_identifiers)))
-        .all()
-    )
+    stmt = select(Geography).where(Geography.slug.in_(list(geography_identifiers)))
+    slug_geographies = db.execute(stmt).scalars().all()
     return [geo.value for geo in slug_geographies if geo.parent_id is not None]
 
 
 def get_country_by_slug(db: Session, country_slug: str) -> Optional[Geography]:
-    geography = db.query(Geography).filter(Geography.slug == country_slug).first()
+    stmt = select(Geography).where(Geography.slug == country_slug)
+    geography = db.execute(stmt).scalar_one_or_none()
 
     if geography is None:
         return None
@@ -165,24 +169,24 @@ def get_parent_iso_codes_from_subdivisions(
         return set()
 
     parent_ids_subquery = (
-        db.query(Geography.parent_id)
-        .filter(Geography.value.in_(list(iso_codes)))
-        .filter(Geography.parent_id.is_not(None))
+        select(Geography.parent_id)
+        .where(Geography.value.in_(list(iso_codes)))
+        .where(Geography.parent_id.is_not(None))
         .subquery()
     )
 
-    parent_iso_codes = (
-        db.query(Geography.value)
-        .filter(Geography.id.in_(db.query(parent_ids_subquery.c.parent_id)))
-        .all()
+    stmt = select(Geography.value).where(
+        Geography.id.in_(select(parent_ids_subquery.c.parent_id))
     )
+    parent_iso_codes = db.execute(stmt).all()
 
-    return {code[0] for code in parent_iso_codes}
+    return {str(code[0]) for code in parent_iso_codes}
 
 
 def get_country_slug_from_country_code(db: Session, country_code: str) -> Optional[str]:
     try:
-        geography = db.query(Geography).filter_by(value=country_code).one_or_none()
+        stmt = select(Geography).where(Geography.value == country_code)
+        geography = db.execute(stmt).scalar_one_or_none()
     except MultipleResultsFound:
         _LOGGER.exception(
             "Multiple geographies with country code '%s' found.", country_code
@@ -202,33 +206,33 @@ def is_country_code(db: Session, country_code: str) -> bool:
         return False
 
     try:
-        country_code = (
-            db.query(Geography).filter(Geography.value == country_code).one_or_none()
-        )
+        stmt = select(Geography).where(Geography.value == country_code)
+        geography = db.execute(stmt).scalar_one_or_none()
     except MultipleResultsFound:
         _LOGGER.exception(
             "Multiple geographies with country code '%s' found.", country_code
         )
         return False
 
-    return bool(country_code is not None)
+    return bool(geography is not None)
 
 
 def get_family_document_by_import_id_or_slug(
     db: Session, import_id_or_slug: str
 ) -> Optional[FamilyDocument]:
-    query = db.query(FamilyDocument)
     is_import_id = IMPORT_ID_MATCHER.match(import_id_or_slug) is not None
     if is_import_id:
-        family_document = query.filter(
+        stmt = select(FamilyDocument).where(
             FamilyDocument.import_id == import_id_or_slug
-        ).one_or_none()
-    else:
-        family_document = (
-            query.join(Slug, Slug.family_document_import_id == FamilyDocument.import_id)
-            .filter(Slug.name == import_id_or_slug)
-            .one_or_none()
         )
+        family_document = db.execute(stmt).unique().scalar_one_or_none()
+    else:
+        stmt = (
+            select(FamilyDocument)
+            .join(Slug, Slug.family_document_import_id == FamilyDocument.import_id)
+            .where(Slug.name == import_id_or_slug)
+        )
+        family_document = db.execute(stmt).unique().scalar_one_or_none()
     return family_document
 
 

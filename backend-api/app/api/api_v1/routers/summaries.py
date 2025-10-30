@@ -9,6 +9,7 @@ from typing import Annotated
 
 from db_client.models.dfce import FamilyCategory, Geography
 from fastapi import APIRouter, Depends, Header, HTTPException, Request, status
+from sqlalchemy import select
 
 from app.clients.db.session import get_db
 from app.models.search import BrowseArgs, GeographySummaryFamilyResponse
@@ -54,9 +55,8 @@ def search_by_geography(
         },
     )
 
-    exists = bool(
-        db.query(Geography).filter_by(slug=geography_slug).one_or_none() is not None
-    )
+    stmt = select(Geography).where(Geography.slug == geography_slug)
+    exists = bool(db.execute(stmt).scalar_one_or_none() is not None)
     if not exists:
         msg = (
             f"No geography with slug or country code matching '{geography_slug}' found"

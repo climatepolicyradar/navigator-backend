@@ -1,5 +1,6 @@
 from db_client.functions.dfce_helpers import add_families
 from db_client.models.dfce import Family, Slug
+from sqlalchemy import select
 
 from app.api.api_v1.routers.families import get_latest_slug
 from app.service import custom_app
@@ -15,7 +16,7 @@ from tests.non_search.setup_helpers import (
 def test_endpoint_returns_five_families_as_default(data_client, data_db, valid_token):
     setup_with_six_families(data_db)
 
-    all_families = data_db.query(Family).all()
+    all_families = data_db.execute(select(Family)).unique().scalars().all()
 
     # Make sure we have more than 5 families in the DB
     assert len(all_families) > 5
@@ -44,7 +45,7 @@ def test_endpoint_returns_five_families_as_default(data_client, data_db, valid_t
 def test_endpoint_returns_families_with_limit_passed(data_client, data_db, valid_token):
     setup_with_six_families(data_db)
 
-    all_families = data_db.query(Family).all()
+    all_families = data_db.execute(select(Family)).unique().scalars().all()
 
     # Make sure we have more than 5 families in the DB
     assert len(all_families) > 5
@@ -159,9 +160,8 @@ def test_returns_one_slug_from_slugs(data_db):
 
     data_db.flush()
 
-    family = (
-        data_db.query(Family).filter(Family.import_id == "CCLW.family.1001.0").one()
-    )
+    stmt = select(Family).where(Family.import_id == "CCLW.family.1001.0")
+    family = data_db.execute(stmt).unique().scalar_one()
 
     # We can't reliably test that the slug is the latest unless we control the created timestamp
     # This is not possible in a test environment as all modifications and additions to the test db are ran as one transaction

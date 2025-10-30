@@ -9,7 +9,7 @@ from db_client.models.document.physical_document import (
     PhysicalDocumentLanguage,
 )
 from fastapi import APIRouter, Depends, HTTPException, Request, status
-from sqlalchemy import Column, update
+from sqlalchemy import Column, select, update
 
 from app.clients.db.session import get_db
 from app.models.document import DocumentUpdateRequest
@@ -117,29 +117,23 @@ def update_document(
             },
         )
 
-        physical_document_languages = (
-            db.query(PhysicalDocumentLanguage, Language)
-            .filter(PhysicalDocumentLanguage.document_id == physical_document.id)
+        stmt = (
+            select(PhysicalDocumentLanguage, Language)
+            .where(PhysicalDocumentLanguage.document_id == physical_document.id)
             .join(Language, Language.id == PhysicalDocumentLanguage.language_id)
-            .all()
         )
+        physical_document_languages = db.execute(stmt).all()
         existing_language_codes = {
             lang.language_code for _, lang in physical_document_languages
         }
 
         for language in meta_data.languages:
             if len(language) == 2:  # iso639-1 two letter language code
-                lang = (
-                    db.query(Language)
-                    .filter(Language.part1_code == language)
-                    .one_or_none()
-                )
+                stmt = select(Language).where(Language.part1_code == language)
+                lang = db.execute(stmt).scalar_one_or_none()
             elif len(language) == 3:  # iso639-2/3 three letter language code
-                lang = (
-                    db.query(Language)
-                    .filter(Language.language_code == language)
-                    .one_or_none()
-                )
+                stmt = select(Language).where(Language.language_code == language)
+                lang = db.execute(stmt).scalar_one_or_none()
             else:
                 _LOGGER.warning(
                     "Retrieved no language from database for meta_data object language",

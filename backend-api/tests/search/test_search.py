@@ -25,6 +25,7 @@ from db_client.models.dfce import (
 )
 from db_client.models.document import PhysicalDocument
 from slugify import slugify
+from sqlalchemy import select
 from sqlalchemy.orm import Session
 
 from app.service.search import (
@@ -910,7 +911,9 @@ def populate_data_db(db: Session, fam_specs: Sequence[FamSpec]) -> None:
                 FamilyGeography(
                     family_import_id=fam_spec.family_import_id,
                     geography_id=(
-                        db.query(Geography).filter(Geography.value == fam_geo).one().id
+                        db.execute(select(Geography).where(Geography.value == fam_geo))
+                        .scalar_one()
+                        .id
                     ),
                 )
             )

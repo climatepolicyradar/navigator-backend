@@ -3,6 +3,7 @@ from typing import Optional
 import pytest
 from db_client.models.dfce.family import Family
 from fastapi import status
+from sqlalchemy import select
 
 from tests.non_search.setup_helpers import (
     setup_with_six_families_same_geography,
@@ -102,7 +103,7 @@ def test_endpoint_returns_only_top_5_families_per_category(
 ):
     setup_with_six_families_same_geography(data_db)
 
-    all_families = data_db.query(Family).all()
+    all_families = data_db.execute(select(Family)).unique().scalars().all()
 
     assert len(all_families) > 5
 
@@ -116,7 +117,7 @@ def test_endpoint_returns_only_top_5_families_per_category(
 def test_top_5_families_ordered_by_published_date(data_client, data_db, valid_token):
     setup_with_six_families_same_geography(data_db)
 
-    all_families = data_db.query(Family).all()
+    all_families = data_db.execute(select(Family)).unique().scalars().all()
 
     expected_family_dates = sorted(
         [f.published_date.isoformat() for f in all_families]

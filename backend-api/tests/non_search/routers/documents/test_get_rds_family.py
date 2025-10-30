@@ -2,7 +2,7 @@ import pytest
 from db_client.models.dfce.family import Family, FamilyDocument, FamilyEvent
 from fastapi import status
 from fastapi.testclient import TestClient
-from sqlalchemy import update
+from sqlalchemy import func, select, update
 from sqlalchemy.orm import Session
 
 from tests.non_search.routers.documents.setup_doc_fam_lookup import (
@@ -22,8 +22,10 @@ def test_documents_family_slug_returns_not_found(
     data_db: Session, data_client: TestClient, valid_token
 ):
     setup_with_docs(data_db)
-    assert data_db.query(Family).count() == 1
-    assert data_db.query(FamilyEvent).count() == 1
+    assert data_db.execute(select(func.count()).select_from(Family)).scalar_one() == 1
+    assert (
+        data_db.execute(select(func.count()).select_from(FamilyEvent)).scalar_one() == 1
+    )
 
     # Test by slug
     json_response = _make_doc_fam_lookup_request(

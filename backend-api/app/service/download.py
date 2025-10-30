@@ -21,6 +21,7 @@ from db_client.models.dfce import (
 from db_client.models.dfce.family import Corpus, FamilyCorpus
 from db_client.models.organisation import Organisation
 from fastapi import Depends
+from sqlalchemy import select
 from sqlalchemy.orm import Session
 
 from app.clients.db.session import get_db
@@ -86,38 +87,38 @@ def _get_extra_csv_info(
 ) -> Mapping[str, Any]:
     all_family_slugs = [f.family_slug for f in families]
 
-    slug_and_family_metadata = (
-        db.query(Slug, FamilyMetadata)
-        .filter(Slug.name.in_(all_family_slugs))
+    stmt = (
+        select(Slug, FamilyMetadata)
+        .where(Slug.name.in_(all_family_slugs))
         .join(FamilyMetadata, FamilyMetadata.family_import_id == Slug.family_import_id)
-        .all()
     )
-    slug_and_organisation = (
-        db.query(Slug, Organisation)
-        .filter(Slug.name.in_(all_family_slugs))
+    slug_and_family_metadata = db.execute(stmt).unique().all()
+    stmt = (
+        select(Slug, Organisation)
+        .where(Slug.name.in_(all_family_slugs))
         .join(FamilyCorpus, FamilyCorpus.family_import_id == Slug.family_import_id)
         .join(Corpus, Corpus.import_id == FamilyCorpus.corpus_import_id)
         .join(Organisation, Organisation.id == Corpus.organisation_id)
-        .all()
     )
-    slug_and_family_document = (
-        db.query(Slug, FamilyDocument)
-        .filter(Slug.name.in_(all_family_slugs))
+    slug_and_organisation = db.execute(stmt).unique().all()
+    stmt = (
+        select(Slug, FamilyDocument)
+        .where(Slug.name.in_(all_family_slugs))
         .join(Family, Family.import_id == Slug.family_import_id)
         .join(FamilyDocument, Family.import_id == FamilyDocument.family_import_id)
-        .filter(FamilyDocument.document_status == DocumentStatus.PUBLISHED)
-        .all()
+        .where(FamilyDocument.document_status == DocumentStatus.PUBLISHED)
     )
+    slug_and_family_document = db.execute(stmt).unique().all()
     # For now there is max one collection per family
-    slug_and_collection = (
-        db.query(Slug, Collection)
-        .filter(Slug.name.in_(all_family_slugs))
+    stmt = (
+        select(Slug, Collection)
+        .where(Slug.name.in_(all_family_slugs))
         .join(
             CollectionFamily, CollectionFamily.family_import_id == Slug.family_import_id
         )
         .join(Collection, Collection.import_id == CollectionFamily.collection_import_id)
-        .all()
     )
+    slug_and_collection = db.execute(stmt).unique().all()
     family_slug_to_documents = defaultdict(list)
     all_document_import_ids = []
     for slug, document in slug_and_family_document:
@@ -165,15 +166,15 @@ def _get_document_events(
         return {}
 
     # Query for events that are associated with documents (not families)
-    document_events = (
-        db.query(FamilyEvent)
-        .filter(
+    stmt = (
+        select(FamilyEvent)
+        .where(
             FamilyEvent.family_document_import_id.in_(document_import_ids),
             FamilyEvent.family_document_import_id.isnot(None),
         )
-        .order_by(FamilyEvent.date.asc())  # Order by date ascending for earliest first
-        .all()
+        .order_by(FamilyEvent.date.asc())
     )
+    document_events = db.execute(stmt).unique().scalars().all()
 
     # Group events by document import ID
     document_events_map = defaultdict(list)

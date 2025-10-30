@@ -8,6 +8,7 @@ from db_client.models.dfce.family import (
 )
 from db_client.models.dfce.geography import Geography
 from fastapi import status
+from sqlalchemy import select
 
 from tests.non_search.routers.geographies.setup_world_map_helpers import (
     _make_world_map_lookup_request,
@@ -30,7 +31,7 @@ def _find_geography_index(lst, key, value):
 
 
 def test_geo_table_populated(data_db):
-    lst = data_db.query(Geography).all()
+    lst = data_db.execute(select(Geography)).unique().scalars().all()
     assert len(lst) > 0
 
 
@@ -60,14 +61,14 @@ def test_endpoint_returns_ok_all_docs_per_family_published(
 
     assert _test_has_expected_keys(resp.keys())
 
-    family_geos = (
-        data_db.query(Family)
-        .filter(Family.family_status == FamilyStatus.PUBLISHED)
-        .filter(Geography.display_value == geo_display_value)
+    stmt = (
+        select(Family)
+        .where(Family.family_status == FamilyStatus.PUBLISHED)
+        .where(Geography.display_value == geo_display_value)
         .join(FamilyGeography, Family.import_id == FamilyGeography.family_import_id)
         .join(Geography, Geography.id == FamilyGeography.geography_id)
-        .all()
     )
+    family_geos = data_db.execute(stmt).unique().scalars().all()
 
     assert len(resp["family_counts"]) == EXPECTED_NUM_FAM_CATEGORIES
     assert sum(resp["family_counts"].values()) == len(family_geos)
@@ -108,14 +109,14 @@ def test_endpoint_returns_ok_some_docs_per_published_family_unpublished(
 
     assert _test_has_expected_keys(resp.keys())
 
-    fams = (
-        data_db.query(Family)
-        .filter(Family.family_status == FamilyStatus.PUBLISHED)
-        .filter(Geography.display_value == geo_display_value)
+    stmt = (
+        select(Family)
+        .where(Family.family_status == FamilyStatus.PUBLISHED)
+        .where(Geography.display_value == geo_display_value)
         .join(FamilyGeography, Family.import_id == FamilyGeography.family_import_id)
         .join(Geography, Geography.id == FamilyGeography.geography_id)
-        .all()
     )
+    fams = data_db.execute(stmt).unique().scalars().all()
 
     assert len(resp["family_counts"]) == EXPECTED_NUM_FAM_CATEGORIES
     assert sum(resp["family_counts"].values()) == len(fams)
@@ -167,12 +168,12 @@ def test_endpoint_returns_different_results_with_alt_token(
     """Check endpoint returns 200 & only counts UNFCCC docs"""
     setup_all_docs_published_world_map(data_db)
 
-    fam = (
-        data_db.query(Family, FamilyCorpus.corpus_import_id)
-        .filter(Family.import_id == "UNFCCC.family.0000.0")
+    stmt = (
+        select(Family, FamilyCorpus.corpus_import_id)
+        .where(Family.import_id == "UNFCCC.family.0000.0")
         .join(FamilyCorpus, Family.import_id == FamilyCorpus.family_import_id)
-        .one()
     )
+    fam = data_db.execute(stmt).first()
     assert fam
 
     resp_json = _make_world_map_lookup_request(data_client, alternative_token)
@@ -183,17 +184,17 @@ def test_endpoint_returns_different_results_with_alt_token(
 
     assert _test_has_expected_keys(resp.keys())
 
-    fams = (
-        data_db.query(Family.import_id)
-        .filter(Family.family_status == FamilyStatus.PUBLISHED)
-        .filter(Geography.display_value == geo_display_value)
+    stmt = (
+        select(Family.import_id)
+        .where(Family.family_status == FamilyStatus.PUBLISHED)
+        .where(Geography.display_value == geo_display_value)
         .join(FamilyGeography, Family.import_id == FamilyGeography.family_import_id)
         .join(FamilyCorpus, Family.import_id == FamilyCorpus.family_import_id)
         .join(Corpus, Corpus.import_id == FamilyCorpus.corpus_import_id)
         .join(Geography, Geography.id == FamilyGeography.geography_id)
-        .filter(Corpus.import_id == "UNFCCC.corpus.i00000001.n0000")
-        .all()
+        .where(Corpus.import_id == "UNFCCC.corpus.i00000001.n0000")
     )
+    fams = data_db.execute(stmt).all()
 
     assert len(resp["family_counts"]) == EXPECTED_NUM_FAM_CATEGORIES
     assert sum(resp["family_counts"].values()) == len(fams)

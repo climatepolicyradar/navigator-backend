@@ -3,6 +3,7 @@ from unittest.mock import patch
 import pytest
 from db_client.models.dfce import Slug
 from db_client.models.dfce.family import FamilyDocument
+from sqlalchemy import select
 from sqlalchemy.orm import Session
 
 from tests.search.vespa.setup_search_tests import (
@@ -16,12 +17,12 @@ def _doc_ids_from_response(test_db: Session, response: dict) -> list[str]:
     document_ids = []
     for fam in response["families"]:
         for doc in fam["family_documents"]:
-            family_document = (
-                test_db.query(FamilyDocument)
+            stmt = (
+                select(FamilyDocument)
                 .join(Slug, Slug.family_document_import_id == FamilyDocument.import_id)
-                .filter(Slug.name == doc["document_slug"])
-                .one()
+                .where(Slug.name == doc["document_slug"])
             )
+            family_document = test_db.execute(stmt).unique().scalar_one()
             document_ids.append(family_document.import_id)
 
     return document_ids
@@ -31,12 +32,12 @@ def _fam_ids_from_response(test_db, response) -> list[str]:
     """The response doesnt know about ids, so we look them up using the slug"""
     family_ids = []
     for fam in response["families"]:
-        family_document = (
-            test_db.query(FamilyDocument)
+        stmt = (
+            select(FamilyDocument)
             .join(Slug, Slug.family_import_id == FamilyDocument.family_import_id)
-            .filter(Slug.name == fam["family_slug"])
-            .one()
+            .where(Slug.name == fam["family_slug"])
         )
+        family_document = test_db.execute(stmt).unique().scalar_one()
         family_ids.append(family_document.family_import_id)
     return family_ids
 

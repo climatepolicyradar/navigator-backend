@@ -18,7 +18,7 @@ from db_client.models.dfce.family import (
 from db_client.models.dfce.metadata import FamilyMetadata
 from db_client.models.document.physical_document import PhysicalDocument
 from db_client.models.organisation.organisation import Organisation
-from sqlalchemy import bindparam, func, text
+from sqlalchemy import bindparam, func, select, text
 from sqlalchemy.orm import Session
 from sqlalchemy.types import ARRAY, String
 
@@ -71,15 +71,14 @@ def get_slugged_objects(
                 "allowed_corpora_ids", value=allowed_corpora, type_=ARRAY(String)
             ),
         )
-        query = db.execute(
+        result = db.execute(
             query_template, {"slug_name": slug, "allowed_corpora_ids": allowed_corpora}
-        )
+        ).one_or_none()
     else:
-        query = db.query(Slug.family_document_import_id, Slug.family_import_id).filter(
+        stmt = select(Slug.family_document_import_id, Slug.family_import_id).where(
             Slug.name == slug
         )
-
-    result = query.one_or_none()
+        result = db.execute(stmt).one_or_none()
     if result is None:
         return (None, None)
 
@@ -99,8 +98,8 @@ def get_family_document_and_context(
     geo_subquery = get_geo_subquery(
         db, family_document_import_id=family_document_import_id
     )
-    db_objects = (
-        db.query(
+    stmt = (
+        select(
             Family,
             FamilyDocument,
             PhysicalDocument,
@@ -109,13 +108,14 @@ def get_family_document_and_context(
             ),  # Aggregate geographies
             FamilyCorpus,
         )
-        .filter(FamilyDocument.import_id == family_document_import_id)
-        .filter(Family.import_id == FamilyDocument.family_import_id)
-        .filter(FamilyDocument.physical_document_id == PhysicalDocument.id)
-        .filter(FamilyCorpus.family_import_id == Family.import_id)
-        .filter(geo_subquery.c.family_import_id == Family.import_id)  # type: ignore
+        .where(FamilyDocument.import_id == family_document_import_id)
+        .where(Family.import_id == FamilyDocument.family_import_id)
+        .where(FamilyDocument.physical_document_id == PhysicalDocument.id)
+        .where(FamilyCorpus.family_import_id == Family.import_id)
+        .where(geo_subquery.c.family_import_id == Family.import_id)  # type: ignore
         .group_by(Family, FamilyDocument, PhysicalDocument, FamilyCorpus)
-    ).first()
+    )
+    db_objects = db.execute(stmt).unique().first()
 
     if not db_objects:
         _LOGGER.warning(
@@ -188,8 +188,8 @@ def get_family_and_documents(db: Session, import_id: str) -> FamilyAndDocumentsR
     """
 
     geo_subquery = get_geo_subquery(db)
-    db_objects = (
-        db.query(
+    stmt = (
+        select(
             Family,
             func.array_agg(geo_subquery.c.value).label(  # type: ignore
                 "geographies"
@@ -202,10 +202,11 @@ def get_family_and_documents(db: Session, import_id: str) -> FamilyAndDocumentsR
         .join(FamilyCorpus, Family.import_id == FamilyCorpus.family_import_id)
         .join(Corpus, Corpus.import_id == FamilyCorpus.corpus_import_id)
         .join(Organisation, Corpus.organisation_id == Organisation.id)
-        .filter(Family.import_id == import_id)
-        .filter(geo_subquery.c.family_import_id == Family.import_id)  # type: ignore
+        .where(Family.import_id == import_id)
+        .where(geo_subquery.c.family_import_id == Family.import_id)  # type: ignore
         .group_by(Family, FamilyMetadata, Organisation, FamilyCorpus)
-    ).first()
+    )
+    db_objects = db.execute(stmt).unique().first()
 
     if not db_objects:
         _LOGGER.warning("No family found for import_id", extra={"slug": import_id})
@@ -242,14 +243,26 @@ def get_family_and_documents(db: Session, import_id: str) -> FamilyAndDocumentsR
 def _get_collections_for_family_import_id(
     db: Session, import_id: str
 ) -> list[CollectionOverviewResponse]:
-    db_collections = (
-        db.query(Collection)
+    stmt = (
+        select(Collection)
         .join(
             CollectionFamily,
             Collection.import_id == CollectionFamily.collection_import_id,
         )
-        .filter(CollectionFamily.family_import_id == import_id)
-    ).all()
+        .where(CollectionFamily.family_import_id == import_id)
+    )
+    db_collections = db.execute(stmt).unique().scalars().all()
+
+    families_data = {}
+    for c in db_collections:
+        family_stmt = (
+            select(Slug.name, Family.title, Family.description)
+            .select_from(CollectionFamily)
+            .join(Family, Family.import_id == CollectionFamily.family_import_id)
+            .join(Slug, Slug.family_import_id == Family.import_id)
+            .where(CollectionFamily.collection_import_id == c.import_id)
+        )
+        families_data[c.import_id] = db.execute(family_stmt).all()
 
     return [
         CollectionOverviewResponse(
@@ -259,11 +272,7 @@ def _get_collections_for_family_import_id(
             slug=get_collection_slug_from_import_id(db, c.import_id),
             families=[
                 LinkableFamily(slug=data[0], title=data[1], description=data[2])
-                for data in db.query(Slug.name, Family.title, Family.description)
-                .filter(CollectionFamily.collection_import_id == c.import_id)
-                .filter(CollectionFamily.family_import_id == Family.import_id)
-                .join(Slug, Slug.family_import_id == Family.import_id)
-                .all()
+                for data in families_data.get(c.import_id, [])
             ],
         )
         for c in db_collections
@@ -288,11 +297,12 @@ def _get_events_for_family(family: Family) -> list[FamilyEventsResponse]:
 def _get_documents_for_family_import_id(
     db: Session, import_id: str
 ) -> list[FamilyDocumentResponse]:
-    db_documents = (
-        db.query(FamilyDocument)
-        .filter(FamilyDocument.family_import_id == import_id)
-        .filter(FamilyDocument.document_status == DocumentStatus.PUBLISHED)
+    stmt = (
+        select(FamilyDocument)
+        .where(FamilyDocument.family_import_id == import_id)
+        .where(FamilyDocument.document_status == DocumentStatus.PUBLISHED)
     )
+    db_documents = db.execute(stmt).unique().scalars().all()
 
     def make_response(d: FamilyDocument) -> FamilyDocumentResponse:
         visible_languages = _get_visible_languages_for_phys_doc(d.physical_document)

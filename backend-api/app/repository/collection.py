@@ -3,7 +3,7 @@ from typing import Optional
 
 from db_client.models.dfce.collection import Collection, CollectionFamily
 from db_client.models.dfce.family import Family, Slug
-from sqlalchemy import bindparam, text
+from sqlalchemy import bindparam, select, text
 from sqlalchemy.exc import MultipleResultsFound, NoResultFound
 from sqlalchemy.orm import Session
 from sqlalchemy.types import ARRAY, String
@@ -44,14 +44,14 @@ def get_id_from_slug(
                     "allowed_corpora_ids", value=allowed_corpora, type_=ARRAY(String)
                 ),
             )
-            query = db.execute(
+            result = db.execute(
                 query_template,
                 {"slug_name": slug, "allowed_corpora_ids": allowed_corpora},
-            )
+            ).one_or_none()
         else:
-            query = db.query(Slug.collection_import_id).filter(Slug.name == slug)
+            stmt = select(Slug.collection_import_id).where(Slug.name == slug)
+            result = db.execute(stmt).one_or_none()
 
-        result = query.one_or_none()
         # result return a tuple with the collection import id
         return str(result[0]) if result is not None else None
 
@@ -71,11 +71,8 @@ def get_collection(
     """
 
     try:
-        collection = (
-            db.query(Collection)
-            .filter(Collection.import_id == collection_import_id)
-            .one()
-        )
+        stmt = select(Collection).where(Collection.import_id == collection_import_id)
+        collection = db.execute(stmt).unique().scalar_one()
     except NoResultFound:
         raise ValueError(f"No collection found for import_id: {collection_import_id}")
     except MultipleResultsFound:
@@ -105,13 +102,13 @@ def get_collection_slug_from_import_id(
     :param str collection_import_id: id of collection
     :return str | None: slug of the collection or None if not found
     """
-    return (
-        db.query(Slug.name)
-        .filter(Slug.collection_import_id == collection_import_id)
-        .filter(Slug.family_import_id.is_(None))
-        .filter(Slug.family_document_import_id.is_(None))
-        .scalar()
+    stmt = (
+        select(Slug.name)
+        .where(Slug.collection_import_id == collection_import_id)
+        .where(Slug.family_import_id.is_(None))
+        .where(Slug.family_document_import_id.is_(None))
     )
+    return db.execute(stmt).scalar_one_or_none()
 
 
 def _get_families_for_collection(
@@ -124,16 +121,16 @@ def _get_families_for_collection(
     :param str collection_import_id: id of collection
     :return list[LinkableFamily]: list of families in the collection
     """
-    families = (
-        db.query(Slug.name, Family.title, Family.description)
+    stmt = (
+        select(Slug.name, Family.title, Family.description)
         .select_from(CollectionFamily)
         .join(Family, Family.import_id == CollectionFamily.family_import_id)
         .join(Slug, Slug.family_import_id == Family.import_id)
-        .filter(CollectionFamily.collection_import_id == collection_import_id)
-        .all()
+        .where(CollectionFamily.collection_import_id == collection_import_id)
     )
+    families = db.execute(stmt).all()
 
     return [
-        LinkableFamily(slug=data[0], title=data[1], description=data[2])
+        LinkableFamily(slug=str(data[0]), title=str(data[1]), description=str(data[2]))
         for data in families
     ]
