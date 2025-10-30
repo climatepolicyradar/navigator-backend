@@ -1,0 +1,55 @@
+name: Label PRs
+
+on:
+  pull_request:
+    types: [opened, synchronize, reopened, ready_for_review]
+
+permissions:
+  contents: read
+  pull-requests: write
+
+jobs:
+  label:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Check out
+        uses: actions/checkout@v4
+
+      - name: Detect changes
+        id: diff
+        run: |
+          # Compare PR head with base to list changed files
+          git fetch --no-tags --prune --depth=1 origin "+refs/heads/*:refs/remotes/origin/*"
+          BASE_SHA="${{ github.event.pull_request.base.sha }}"
+          HEAD_SHA="${{ github.event.pull_request.head.sha }}"
+          git diff --name-only "$BASE_SHA" "$HEAD_SHA" > changed_files.txt
+
+          # Create a multiline list of changes files that we can split later
+          echo "files<<EOF" >> $GITHUB_OUTPUT
+          cat changed_files.txt >> $GITHUB_OUTPUT
+          echo "EOF" >> $GITHUB_OUTPUT
+
+      - name: Apply labels based on path
+        if: ${{ steps.diff.outputs.files != '' }}
+        uses: actions/github-script@v7
+        with:
+          script: |
+            const files = `\n${{ steps.diff.outputs.files }}`.trim().split('\n').filter(Boolean);
+            const rules = [
+              { glob: /^data-in-pipeline\//, label: 'service/data-in-pipeline' },
+            ];
+            const labels = files
+              .flatMap(f => rules.filter(r => r.glob.test(f)).map(r => r.label))
+              .reduce((acc, label) => acc.add(label), new Set());
+
+            if (labels.size > 0) {
+              await github.rest.issues.addLabels({
+                owner: context.repo.owner,
+                repo: context.repo.repo,
+                issue_number: context.issue.number,
+                labels: Array.from(labels),
+              });
+              core.info(`Applied labels: ${Array.from(labels).join(', ')}`);
+            } else {
+              core.info('No labels to apply');
+            }

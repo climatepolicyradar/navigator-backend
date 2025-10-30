@@ -228,7 +228,7 @@ def _vespa_passage_hit_to_search_passage(
 
 
 def _vespa_passage_hit_to_search_familydocument(
-    hit: CprSdkResponsePassage,
+    hit: CprSdkResponsePassage, doc_title: Optional[str] = None
 ) -> SearchResponseFamilyDocument:
     document_type = next(
         (
@@ -239,7 +239,7 @@ def _vespa_passage_hit_to_search_familydocument(
         "",
     )
     return SearchResponseFamilyDocument(
-        document_title=str(hit.document_title),
+        document_title=doc_title or "",  # This doesn't exist on CprSdkResponsePassage
         document_slug=hit.document_slug or "",
         document_type=document_type,
         document_source_url=hit.document_source_url,
@@ -262,7 +262,7 @@ def _hit_is_missing_required_fields(hit: CprSdkResponseHit) -> bool:
 
 
 def _family_is_not_found_or_not_published(
-    fam_tuple: Optional[tuple[Family, FamilyMetadata]],
+    fam_tuple: Optional[tuple[Family, FamilyMetadata]]
 ) -> bool:
     return fam_tuple is None or fam_tuple[0].family_status != FamilyStatus.PUBLISHED
 
@@ -384,7 +384,9 @@ def _process_vespa_search_response_families(
                         )
                         continue
 
-                    response_document = _vespa_passage_hit_to_search_familydocument(hit)
+                    response_document = _vespa_passage_hit_to_search_familydocument(
+                        hit, db_family_document.physical_document.title
+                    )
                     response_document_lookup[hit.document_import_id] = response_document
                     response_family.family_documents.append(response_document)
 
