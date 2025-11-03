@@ -2,9 +2,9 @@ from prefect import flow, task
 
 from app.extract.navigator import extract_navigator_document
 from app.identify.main import identify_source_document
+from app.load.aws_bucket import upload_to_s3
 from app.load.rds import load_rds
 from app.transform.main import transform
-from app.upload.aws_bucket import upload_to_s3
 
 
 @task(log_prints=True)
@@ -14,7 +14,7 @@ def extract_document(document_id: str):
 
 
 @task(log_prints=True)
-def cache_document(navigator_document):
+def upload_document_to_s3(navigator_document):
     """Upload raw document to S3 cache."""
     upload_to_s3(
         navigator_document.model_dump_json(),
@@ -46,7 +46,7 @@ def load_document(document):
 def document_pipeline(id: str):
     """Process a single document through the pipeline."""
     navigator_document = extract_document(id)
-    cache_document(navigator_document)
+    upload_document_to_s3(navigator_document)
     identified_source_document = identify_document(navigator_document)
     document = transform_document(identified_source_document)
     load_document(document)
