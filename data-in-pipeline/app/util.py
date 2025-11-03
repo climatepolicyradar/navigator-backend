@@ -46,12 +46,9 @@ def upload_file(
 
     # Upload the file
     try:
-        if content_type:
-            client.put_object(
-                Body=json_content, Bucket=bucket, Key=key, ContentType=content_type
-            )
-        else:
-            client.put_object(Body=json_content, Bucket=bucket, Key=key)
+        client.put_object(
+            Body=json_content, Bucket=bucket, Key=key, ContentType=content_type
+        )
 
     except Exception:
         _LOGGER.exception(f"Uploading {key} encountered an error")
