@@ -2,7 +2,7 @@ from unittest.mock import MagicMock, patch
 
 import pytest
 
-from app.flow import process_document_updates, upload_document_to_s3
+from app.flow import load_document_to_s3, process_document_updates
 
 
 @pytest.mark.parametrize("ids, expected", [(["11", "22", "33"], ["11", "22", "33"])])
@@ -20,7 +20,7 @@ def test_cache_document_success(mock_upload):
     mock_navigator_doc.data.import_id = "test-123"
     mock_upload.return_value = True
 
-    upload_document_to_s3.fn(mock_navigator_doc)
+    load_document_to_s3.fn(mock_navigator_doc)
 
     mock_upload.assert_called_once_with(
         '{"data": "test"}',
@@ -39,4 +39,4 @@ def test_cache_document_handles_upload_failure(mock_upload):
     mock_upload.side_effect = Exception("S3 connection failed")
 
     with pytest.raises(Exception, match="S3 connection failed"):
-        upload_document_to_s3.fn(mock_navigator_doc)
+        load_document_to_s3.fn(mock_navigator_doc)

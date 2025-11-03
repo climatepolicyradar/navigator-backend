@@ -14,7 +14,7 @@ def extract_document(document_id: str):
 
 
 @task(log_prints=True)
-def upload_document_to_s3(navigator_document):
+def load_document_to_s3(navigator_document):
     """Upload raw document to S3 cache."""
     upload_to_s3(
         navigator_document.model_dump_json(),
@@ -36,7 +36,7 @@ def transform_document(identified_source_document):
 
 
 @task(log_prints=True)
-def load_document(document):
+def load_document_to_rds(document):
     """Load document to RDS."""
     load_rds(document)
     return document
@@ -46,10 +46,9 @@ def load_document(document):
 def document_pipeline(id: str):
     """Process a single document through the pipeline."""
     navigator_document = extract_document(id)
-    upload_document_to_s3(navigator_document)
     identified_source_document = identify_document(navigator_document)
     document = transform_document(identified_source_document)
-    load_document(document)
+    load_document_to_s3(document)
     return document
 
 
