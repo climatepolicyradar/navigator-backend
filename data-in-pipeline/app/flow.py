@@ -15,11 +15,11 @@ def extract_document(document_id: str):
 
 @task(log_prints=True)
 def load_document_to_s3(navigator_document):
-    """Upload raw document to S3 cache."""
+    """Upload transformed document to S3 cache."""
     upload_to_s3(
         navigator_document.model_dump_json(),
         bucket="cpr-production-document-cache",
-        key=f"navigator/{navigator_document.data.import_id}.json",
+        key=f"navigator/{navigator_document.id}.json",
     )
 
 
