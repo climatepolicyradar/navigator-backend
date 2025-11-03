@@ -1,4 +1,4 @@
-from unittest.mock import Mock, patch
+from unittest.mock import MagicMock, patch
 
 import pytest
 
@@ -15,7 +15,7 @@ def test_process_document_updates_flow(ids: list[str], expected: list[str]):
 def test_cache_document_success(mock_upload):
     """Test successful document caching."""
 
-    mock_navigator_doc = Mock()
+    mock_navigator_doc = MagicMock()
     mock_navigator_doc.model_dump_json.return_value = '{"data": "test"}'
     mock_navigator_doc.data.import_id = "test-123"
     mock_upload.return_value = True
@@ -33,7 +33,7 @@ def test_cache_document_success(mock_upload):
 def test_cache_document_handles_upload_failure(mock_upload):
     """Test handling of S3 upload failure."""
 
-    mock_navigator_doc = Mock()
+    mock_navigator_doc = MagicMock()
     mock_navigator_doc.model_dump_json.return_value = '{"data": "test"}'
     mock_navigator_doc.data.import_id = "test-123"
     mock_upload.side_effect = Exception("S3 connection failed")
