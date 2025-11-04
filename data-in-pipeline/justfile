@@ -12,13 +12,7 @@ deploy-to-prefect-local:
     AWS_ACCOUNT_ID=$(aws sts get-caller-identity --query 'Account' --output text)
     DOCKER_REGISTRY="${AWS_ACCOUNT_ID}.dkr.ecr.eu-west-1.amazonaws.com"
     uv run prefect cloud login
-    just deploy-to-prefect
+    DOCKER_REGISTRY=${DOCKER_REGISTRY} just deploy-to-prefect
 
 deploy-to-prefect:
-    #!/usr/bin/env bash
-    # we use a bash script here to have inline env variables
-    # @see: https://just.systems/man/en/setting-variables-in-a-recipe.html
-    set -euxo pipefail
-    AWS_ACCOUNT_ID=$(aws sts get-caller-identity --query 'Account' --output text)
-    DOCKER_REGISTRY="${AWS_ACCOUNT_ID}.dkr.ecr.eu-west-1.amazonaws.com"
     uv run python -m app.deploy
