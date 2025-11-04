@@ -1,6 +1,6 @@
 from prefect import flow, task
 
-from app.extract.navigator import extract_navigator_document
+from app.extract.navigator_document import extract_navigator_document
 from app.identify.main import identify_source_document
 from app.load.aws_bucket import upload_to_s3
 from app.load.rds import load_rds
