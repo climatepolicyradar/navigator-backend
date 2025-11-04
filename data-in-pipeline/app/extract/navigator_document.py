@@ -14,12 +14,12 @@ API_BASE_URL = get_api_url()
 
 def extract_navigator_document(import_id: str) -> Extracted[NavigatorDocument]:
     print(f"Fetching {import_id} from {API_BASE_URL}/families/{import_id}")
-    data = fetch(import_id)
+    data = _fetch(import_id)
     extacted = Extracted(data=data, source="navigator_document")
     return extacted
 
 
-def fetch(id: str) -> NavigatorDocument:
+def _fetch(id: str) -> NavigatorDocument:
     """Fetch a document from the API.
 
     :param id: The id of the document.
