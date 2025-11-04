@@ -27,7 +27,7 @@ def extract_navigator_document(import_id: str) -> Extracted[NavigatorDocument]:
     source_data = NavigatorDocument.model_validate(json)
 
     print(f"Creating source document {import_id}...")
-    source_document = Extracted(data=source_data, source="navigator")
+    source_document = Extracted(data=source_data, source="navigator_document")
 
     print("Done")
     return source_document

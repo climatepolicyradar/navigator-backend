@@ -1,4 +1,4 @@
-from app.extract.navigator import NavigatorDocument
+from app.extract.navigator_document import NavigatorDocument
 from app.models import Extracted, Identified
 
 
