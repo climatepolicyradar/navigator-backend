@@ -17,8 +17,9 @@ class Extracted(BaseModel, Generic[ExtractedData]):
 
 
 class Identified(BaseModel, Generic[ExtractedData]):
-    data: Extracted[ExtractedData]
+    data: ExtractedData
     id: str
+    source: str
 
 
 class Document(BaseModel):

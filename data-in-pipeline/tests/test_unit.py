@@ -2,16 +2,16 @@ from unittest.mock import MagicMock, patch
 
 import pytest
 
-from app.flow import load_document_to_s3, process_document_updates
+from app.navigator_document_etl_pipeline import load_to_s3, process_updates
 
 
 @pytest.mark.parametrize("ids, expected", [(["11", "22", "33"], ["11", "22", "33"])])
 @pytest.mark.skip(reason="Not implemented")
 def test_process_document_updates_flow(ids: list[str], expected: list[str]):
-    assert process_document_updates.fn(ids) == expected
+    assert process_updates.fn(ids) == expected
 
 
-@patch("app.flow.upload_to_s3")
+@patch("app.navigator_document_etl_pipeline.upload_to_s3")
 def test_load_document_success(mock_upload):
     """Test successful document caching."""
 
@@ -20,7 +20,7 @@ def test_load_document_success(mock_upload):
     mock_navigator_doc.id = "test-123"
     mock_upload.return_value = True
 
-    load_document_to_s3.fn(mock_navigator_doc)
+    load_to_s3.fn(mock_navigator_doc)
 
     mock_upload.assert_called_once_with(
         '{"id": "test-123"}',
@@ -29,7 +29,7 @@ def test_load_document_success(mock_upload):
     )
 
 
-@patch("app.flow.upload_to_s3")
+@patch("app.navigator_document_etl_pipeline.upload_to_s3")
 def test_load_document_handles_upload_failure(mock_upload):
     """Test handling of S3 upload failure."""
 
@@ -39,4 +39,4 @@ def test_load_document_handles_upload_failure(mock_upload):
     mock_upload.side_effect = Exception("S3 connection failed")
 
     with pytest.raises(Exception, match="S3 connection failed"):
-        load_document_to_s3.fn(mock_navigator_doc)
+        load_to_s3.fn(mock_navigator_doc)
