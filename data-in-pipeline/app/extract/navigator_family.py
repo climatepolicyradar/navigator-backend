@@ -20,7 +20,7 @@ def extract_navigator_family(import_id: str) -> Extracted[NavigatorFamily]:
 
 
 def _fetch(id: str) -> NavigatorFamily:
-    """Fetch a document from the API.
+    """Fetch a family from the API.
 
     :param id: The id of the document.
     :type id: str
