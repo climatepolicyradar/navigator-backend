@@ -1,0 +1,12 @@
+from app.extract.navigator_family import NavigatorFamily
+from app.models import Extracted, Identified
+
+
+def identify_navigator_family(
+    extracted: Extracted[NavigatorFamily],
+) -> Identified[NavigatorFamily]:
+    return Identified(
+        data=extracted.data,
+        source=extracted.source,
+        id=extracted.data.import_id,
+    )
