@@ -5,7 +5,8 @@
 ```mermaid
 
 flowchart LR
-    SourceSystem -- SourceDocument --> Identifier -- IdentifiedSourceDocument --> Transformer -- Document --> DocumentStore
+    SourceSystemA -- Extracted --> IdentifierA -- Identified --> Transformer -- Document --> DocumentStore
+    SourceSystemB -- Extracted --> IdentifierB -- Identified --> Transformer
 
 ```
 
