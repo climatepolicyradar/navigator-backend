@@ -3,6 +3,10 @@ from app.models import Extracted, Identified
 
 
 def identify_navigator_family(
-    extracted_document: Extracted[NavigatorFamily],
+    extracted: Extracted[NavigatorFamily],
 ) -> Identified[NavigatorFamily]:
-    return Identified(data=extracted_document, id=extracted_document.data.import_id)
+    return Identified(
+        data=extracted.data,
+        source=extracted.source,
+        id=extracted.data.import_id,
+    )
