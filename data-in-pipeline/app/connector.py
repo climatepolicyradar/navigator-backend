@@ -1,7 +1,26 @@
 from datetime import datetime
 from typing import Dict, List, Literal, Optional
 
-from pydantic import AnyHttpUrl, BaseModel, Field, HttpUrl
+from pydantic import BaseModel, Field, HttpUrl
+
+from app.util import get_api_url
+
+
+class HttpEndpointConfig(BaseModel):
+    path: str
+    method: Literal["GET", "POST"] = "GET"
+    headers: Dict[str, str] = Field(default_factory=dict)
+    params: Dict[str, str] = Field(default_factory=dict)
+    body_template: Optional[str] = None
+
+
+class PaginationConfig(BaseModel):
+    style: Literal["page_number", "offset_limit", "cursor", "link_header"]
+    page_param: str = "page"
+    size_param: str = "size"
+    initial_value: int = 1
+    page_size: int = 100
+    next_page_path: Optional[str] = None
 
 
 class BaseConnectorConfig(BaseModel):
@@ -26,7 +45,9 @@ class NavigatorConnectorConfig(BaseConnectorConfig):
     connector_name = "navigator"
 
     # API specifics
-    base_url: AnyHttpUrl = "https://api.staging.climatepolicyradar.org/families/"
+    base_url: HttpUrl = HttpUrl(
+        url=get_api_url(),
+    )
     api_version: str = "v1"
 
     # Pagination (Navigator uses page number + offset)
@@ -54,20 +75,3 @@ class HttpConnectorConfig(BaseConnectorConfig):
 
     response_parser: Literal["json", "xml", "csv", "raw"] = "json"
     data_path: Optional[str] = None
-
-
-class HttpEndpointConfig(BaseModel):
-    path: str
-    method: Literal["GET", "POST"] = "GET"
-    headers: Dict[str, str] = Field(default_factory=dict)
-    params: Dict[str, str] = Field(default_factory=dict)
-    body_template: Optional[str] = None
-
-
-class PaginationConfig(BaseModel):
-    style: Literal["page_number", "offset_limit", "cursor", "link_header"]
-    page_param: str = "page"
-    size_param: str = "size"
-    initial_value: int = 1
-    page_size: int = 100
-    next_page_path: Optional[str] = None
