@@ -38,7 +38,7 @@ RUN mkdir -p /opt/prefect && \
     chown -R prefect_user:prefect_user /home/prefect_user && \
     chown -R prefect_user:prefect_user /usr/local/lib/python3.13/site-packages
 
-# OTEL config: values sourced from service-manifest.json (source of truth)
+# OTEL config
 ENV OTEL_SERVICE_NAME="data-in-pipeline" \
     OTEL_TRACES_EXPORTER="otlp" \
     OTEL_METRICS_EXPORTER="otlp" \
