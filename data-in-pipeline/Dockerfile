@@ -28,6 +28,9 @@ RUN uv sync --project data-in-pipeline
 
 WORKDIR /app/data-in-pipeline
 
+ARG ENV
+ENV ENV=${ENV}
+
 # Set up permissions for prefect_user
 RUN mkdir -p /opt/prefect && \
     chown -R prefect_user:prefect_user /opt/prefect && \
