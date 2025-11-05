@@ -1,5 +1,6 @@
 import logging
 import os
+import uuid
 from typing import Optional
 
 import boto3
@@ -8,6 +9,11 @@ from botocore.config import Config
 _LOGGER = logging.getLogger(__name__)
 
 AWS_REGION = "eu-west-1"
+
+
+def generate_envelope_uuid() -> str:
+    """Generate a unique UUID for an extracted envelope."""
+    return str(uuid.uuid4())
 
 
 def get_s3_client():
