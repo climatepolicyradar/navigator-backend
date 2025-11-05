@@ -56,3 +56,5 @@ ENV PREFECT_CLOUD_ENABLE_ORCHESTRATION_TELEMETRY="True"
 
 # Switch to non-root user
 USER prefect_user
+
+CMD ["opentelemetry-instrument", "python", "-m", "app.run_flow_entrypoint"]
