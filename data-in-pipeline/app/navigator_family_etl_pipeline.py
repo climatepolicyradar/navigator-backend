@@ -1,5 +1,6 @@
 from prefect import flow, task
 
+from app.connector import NavigatorConnectorConfig
 from app.extract.navigator_family import NavigatorFamily, extract_navigator_family
 from app.identify.navigator_family import identify_navigator_family
 from app.load.aws_bucket import upload_to_s3
@@ -8,9 +9,15 @@ from app.transform.navigator_family import transform_navigator_family
 
 
 @task(log_prints=True)
-def extract(document_id: str):
+def extract(family_id: str):
     """Extract"""
-    return extract_navigator_family(document_id)
+
+    connector = NavigatorConnectorConfig(
+        source_id="navigator/default",
+        checkpoint_storage="s3",
+        checkpoint_key_prefix="navigator/families/",
+    )
+    return extract_navigator_family(family_id, connector)
 
 
 @task(log_prints=True)
