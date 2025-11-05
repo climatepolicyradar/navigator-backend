@@ -14,5 +14,4 @@ deploy-to-prefect-local:
     uv run prefect cloud login
     DOCKER_REGISTRY=${DOCKER_REGISTRY} just deploy-to-prefect
 
-deploy-to-prefect:
-    uv run python -m app.deploy
+deploy-to-prefect: opentelemetry-instrument uv run python -m app.deploy
