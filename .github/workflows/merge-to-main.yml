@@ -80,11 +80,11 @@ jobs:
     needs: test-microservices
     runs-on: ubuntu-latest
     strategy:
+      fail-fast: false
       matrix:
         environment: [staging, production]
+        service: [families-api, geographies-api, concepts-api, data-in-pipeline]
     environment: ${{ matrix.environment }}
-    env:
-      SERVICES: families-api geographies-api concepts-api data-in-pipeline
     steps:
       - uses: actions/checkout@v5
       - uses: extractions/setup-just@v3
@@ -101,10 +101,8 @@ jobs:
       - uses: astral-sh/setup-uv@v6
       - run: uv sync --all-packages
       - run: |
-          for service in $SERVICES; do
-            just deploy $service ${{ matrix.environment }} latest
-            just deploy $service ${{ matrix.environment }} ${{ github.sha }}
-          done
+          just deploy ${{ matrix.service }} ${{ matrix.environment }} latest
+          just deploy ${{ matrix.service }} ${{ matrix.environment }} ${{ github.sha }}
 
   deploy-prefect:
     needs: deploy-microservices
