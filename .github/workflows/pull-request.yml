@@ -21,6 +21,17 @@ jobs:
       - uses: actions/checkout@v5
       - uses: extractions/setup-just@v3
       - run: just test ${{ matrix.service }}
+
+  test-data-in-pipeline:
+    runs-on: ubuntu-latest
+    defaults:
+      run:
+        working-directory: data-in-pipeline
+    steps:
+      - uses: actions/checkout@v5
+      - uses: extractions/setup-just@v3
+      - run: just test-ci
+
   deploy:
     needs: test
     # a. deploys the service to staging if the pull request is (re)labelled with 'deploy:staging'
