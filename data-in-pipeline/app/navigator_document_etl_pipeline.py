@@ -1,16 +1,23 @@
 from prefect import flow, task
 
+from app.connector import NavigatorConnectorConfig
 from app.extract.navigator_document import NavigatorDocument, extract_navigator_document
 from app.identify.navigator_document import identify_navigator_document
 from app.load.aws_bucket import upload_to_s3
-from app.models import Document, Extracted, Identified
+from app.models import Document, ExtractedEnvelope, Identified
 from app.transform.navigator_document import transform_navigator_document
 
 
 @task(log_prints=True)
 def extract(document_id: str):
     """Extract"""
-    return extract_navigator_document(document_id)
+
+    connector = NavigatorConnectorConfig(
+        source_id="navigator/default",
+        checkpoint_storage="s3",
+        checkpoint_key_prefix="navigator/documents/",
+    )
+    return extract_navigator_document(document_id, connector)
 
 
 @task(log_prints=True)
@@ -24,7 +31,7 @@ def load_to_s3(document: Document):
 
 
 @task(log_prints=True)
-def identify(extracted: Extracted[NavigatorDocument]):
+def identify(extracted: ExtractedEnvelope[NavigatorDocument]):
     """Identify"""
     return identify_navigator_document(extracted)
 

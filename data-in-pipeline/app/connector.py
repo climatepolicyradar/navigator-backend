@@ -1,7 +1,7 @@
 from datetime import datetime
 from typing import Dict, List, Literal, Optional
 
-from pydantic import BaseModel, Field, HttpUrl
+from pydantic import BaseModel, Field
 
 from app.util import get_api_url
 
@@ -40,11 +40,9 @@ class BaseConnectorConfig(BaseModel):
 
 
 class NavigatorConnectorConfig(BaseConnectorConfig):
-    connector_name = "navigator"
+    connector_name: str = "navigator"
 
-    base_url: HttpUrl = HttpUrl(
-        url=get_api_url(),
-    )
+    base_url: str = get_api_url()
     api_version: str = "v1"
 
     initial_page: int = 1
@@ -58,9 +56,9 @@ class NavigatorConnectorConfig(BaseConnectorConfig):
 
 # Generic HTTP connector config
 class HttpConnectorConfig(BaseConnectorConfig):
-    connector_name = "http"
+    connector_name: str = "http"
 
-    base_url: HttpUrl
+    base_url: str
     endpoints: List[HttpEndpointConfig]
 
     default_headers: Dict[str, str] = Field(default_factory=dict)

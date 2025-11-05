@@ -1,9 +1,9 @@
 from app.extract.navigator_document import NavigatorDocument
-from app.models import Extracted, Identified
+from app.models import ExtractedEnvelope, Identified
 
 
 def identify_navigator_document(
-    extracted: Extracted[NavigatorDocument],
+    extracted: ExtractedEnvelope[NavigatorDocument],
 ) -> Identified[NavigatorDocument]:
     return Identified(
         data=extracted.data,

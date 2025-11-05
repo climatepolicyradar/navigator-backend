@@ -42,7 +42,8 @@ def extract_navigator_document(
         envelope = ExtractedEnvelope(
             data=document,
             envelope_id=generate_envelope_uuid(),
-            source_name="navigator",
+            source_name="navigator-documents",
+            source="navigator",
             source_record_id=import_id,
             raw_payload=document.model_dump_json(),
             content_type="application/json",
@@ -100,7 +101,7 @@ def _fetch_with_retry(
     session.mount("http://", adapter)
 
     # Construct URL
-    url = f"{config.base_url}/documents/{import_id}"
+    url = f"{config.base_url}/families/documents/{import_id}"
 
     logger.debug(f"Fetching from: {url}")
 

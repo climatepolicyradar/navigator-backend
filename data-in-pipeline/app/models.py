@@ -22,7 +22,7 @@ class ExtractedEnvelope(BaseModel, Generic[ExtractedData]):
     metadata: Dict[str, Any] = Field(default_factory=dict)
 
     # A simple source identifier (like "navigator")
-    source: Optional[str] = None
+    source: str
 
 
 class Identified(BaseModel, Generic[ExtractedData]):
