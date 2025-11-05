@@ -18,7 +18,7 @@ COPY ./api /app/api/
 WORKDIR /app
 
 # Copy dependency files
-COPY pyproject.toml uv.lock service-manifest.json ./
+COPY pyproject.toml uv.lock ./
 
 # Install uv (fast Python dependency manager)
 COPY --from=ghcr.io/astral-sh/uv:latest /uv /uvx /bin/
