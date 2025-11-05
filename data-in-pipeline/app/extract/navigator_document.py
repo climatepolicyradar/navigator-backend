@@ -26,7 +26,7 @@ def _fetch(id: str) -> NavigatorDocument:
     :type id: str
     :rtype: NavigatorDocument
     """
-    url = f"{API_BASE_URL}/families/{id}"
+    url = f"{API_BASE_URL}/families/documents/{id}"
     response = requests.get(url, timeout=1)
     response.raise_for_status()
 
