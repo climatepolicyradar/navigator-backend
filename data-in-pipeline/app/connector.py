@@ -27,8 +27,6 @@ class BaseConnectorConfig(BaseModel):
     connector_name: str
     source_id: str  # canonical identifier like "litigation/Sabin"
 
-    # Auth  - I don't think this will be necessary at this point
-
     timeout_seconds: int = 30
     max_retries: int = 3
     retry_backoff_seconds: int = 5
@@ -44,18 +42,16 @@ class BaseConnectorConfig(BaseModel):
 class NavigatorConnectorConfig(BaseConnectorConfig):
     connector_name = "navigator"
 
-    # API specifics
     base_url: HttpUrl = HttpUrl(
         url=get_api_url(),
     )
     api_version: str = "v1"
 
-    # Pagination (Navigator uses page number + offset)
     initial_page: int = 1
     page_size: int = 100
     max_pages: Optional[int] = None
 
-    endpoints: List[str] = ["documents"]  # What to extract
+    endpoints: List[str] = ["documents"]  # Todo implement utilisation of this field
     modified_since: Optional[datetime] = None  # Delta extraction
     include_deleted: bool = False
 
@@ -64,7 +60,6 @@ class NavigatorConnectorConfig(BaseConnectorConfig):
 class HttpConnectorConfig(BaseConnectorConfig):
     connector_name = "http"
 
-    # Generic HTTP settings
     base_url: HttpUrl
     endpoints: List[HttpEndpointConfig]
 

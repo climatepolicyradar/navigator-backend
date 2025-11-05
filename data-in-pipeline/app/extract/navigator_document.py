@@ -76,13 +76,11 @@ def _fetch_with_retry(
     Fetch document with automatic retries.
 
     Args:
-        import_id: Document identifier
-        config: Connector configuration with retry settings
+    :param import_id: Document identifier
+    :param config: Connector configuration with retry settings
 
-    Returns:
-        Validated NavigatorDocument
+    :return    Validated NavigatorDocument
     """
-    # Create session with retry logic
     session = requests.Session()
 
     retry_strategy = Retry(
@@ -125,29 +123,3 @@ def _fetch_with_retry(
 
     finally:
         session.close()
-
-
-# def extract_navigator_document(import_id: str) -> ExtractedEnvelope[NavigatorDocument]:
-#     print(f"Fetching {import_id} from {API_BASE_URL}/families/{import_id}")
-#     data = _fetch(import_id)
-#     extacted = ExtractedEnvelope(data=data, source="navigator_document")
-#     return extacted
-
-
-# def _fetch(id: str) -> NavigatorDocument:
-#     """Fetch a document from the API.
-
-#     :param id: The id of the document.
-#     :type id: str
-#     :rtype: NavigatorDocument
-#     """
-#     url = f"{API_BASE_URL}/families/documents/{id}"
-#     response = requests.get(url, timeout=1)
-#     response.raise_for_status()
-
-#     response_json = response.json()
-#     response_data = response_json["data"]
-
-#     data = NavigatorDocument.model_validate(response_data)
-
-#     return data
