@@ -1,5 +1,6 @@
+import datetime
 import logging
-from datetime import datetime
+from http import HTTPStatus
 
 import requests
 from pydantic import BaseModel
@@ -45,11 +46,10 @@ def extract_navigator_family(
             raw_payload=family.model_dump_json(),
             content_type="application/json",
             connector_version="1.0.0",
-            run_id="",  # Retrieve from Prefect context
-            extracted_at=datetime.utcnow(),
+            extracted_at=datetime.datetime.now(datetime.timezone.utc),
             metadata={
                 "endpoint": f"/families/{import_id}",
-                "http_status": 200,
+                "http_status": HTTPStatus.OK,
             },
         )
 
@@ -84,8 +84,14 @@ def _fetch_with_retry(
     retry_strategy = Retry(
         total=config.max_retries,
         backoff_factor=config.retry_backoff_seconds,
-        status_forcelist=[429, 500, 502, 503, 504],  # Retry on these status codes
         allowed_methods=["GET"],
+        status_forcelist=[
+            HTTPStatus.TOO_MANY_REQUESTS,
+            HTTPStatus.INTERNAL_SERVER_ERROR,
+            HTTPStatus.BAD_GATEWAY,
+            HTTPStatus.SERVICE_UNAVAILABLE,
+            HTTPStatus.GATEWAY_TIMEOUT,
+        ],
     )
 
     adapter = HTTPAdapter(

@@ -3,6 +3,7 @@ from typing import Dict, List, Literal, Optional
 
 from pydantic import BaseModel, Field
 
+from app.enums import CheckPointStorageType, PaginationStyle
 from app.util import get_api_url
 
 
@@ -15,7 +16,7 @@ class HttpEndpointConfig(BaseModel):
 
 
 class PaginationConfig(BaseModel):
-    style: Literal["page_number", "offset_limit", "cursor", "link_header"]
+    style: PaginationStyle
     page_param: str = "page"
     size_param: str = "size"
     initial_value: int = 1
@@ -32,7 +33,7 @@ class BaseConnectorConfig(BaseModel):
     retry_backoff_seconds: int = 5
     connection_pool_size: int = 10
 
-    checkpoint_storage: Literal["prefect_state", "database", "s3"]
+    checkpoint_storage: CheckPointStorageType
     checkpoint_key_prefix: str
 
     emit_metrics: bool = True
