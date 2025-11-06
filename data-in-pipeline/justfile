@@ -4,7 +4,14 @@ dev:
 test:
     uv run pytest -vv
 
-deploy-to-prefect-local:
+test-ci:
+    #!/usr/bin/env bash
+    # Build and test against the Docker image
+    set -euxo pipefail
+    docker build -t data-in-pipeline:test -f Dockerfile ..
+    docker run --rm data-in-pipeline:test uv run pytest -vv
+
+deploy-to-prefect-from-local:
     #!/usr/bin/env bash
     # we use a bash script here to have inline env variables
     # @see: https://just.systems/man/en/setting-variables-in-a-recipe.html

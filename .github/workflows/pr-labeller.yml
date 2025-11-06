@@ -13,28 +13,22 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - name: Check out
-        uses: actions/checkout@v4
-
-      - name: Detect changes
-        id: diff
-        run: |
-          # Compare PR head with base to list changed files
-          git fetch --no-tags --prune --depth=1 origin "+refs/heads/*:refs/remotes/origin/*"
-          BASE_SHA="${{ github.event.pull_request.base.sha }}"
-          HEAD_SHA="${{ github.event.pull_request.head.sha }}"
-          git diff --name-only "$BASE_SHA" "$HEAD_SHA" > changed_files.txt
-
-          # Create a multiline list of changes files that we can split later
-          echo "files<<EOF" >> $GITHUB_OUTPUT
-          cat changed_files.txt >> $GITHUB_OUTPUT
-          echo "EOF" >> $GITHUB_OUTPUT
+        uses: actions/checkout@v5
 
       - name: Apply labels based on path
-        if: ${{ steps.diff.outputs.files != '' }}
-        uses: actions/github-script@v7
+        uses: actions/github-script@v8
         with:
           script: |
-            const files = `\n${{ steps.diff.outputs.files }}`.trim().split('\n').filter(Boolean);
+            const prNumber = context.issue.number;
+            const changed = await github.paginate(github.rest.pulls.listFiles, {
+              owner: context.repo.owner,
+              repo: context.repo.repo,
+              pull_number: prNumber,
+              per_page: 100,
+            });
+
+            const files = changed.map(f => f.filename);
+
             const rules = [
               { glob: /^data-in-pipeline\//, label: 'service/data-in-pipeline' },
             ];
