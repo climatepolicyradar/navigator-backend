@@ -1,8 +1,9 @@
 from prefect import flow, task
 
 from app.connector_config import NavigatorConnectorConfig
+from app.connectors import NavigatorConnector
 from app.enums import CheckPointStorageType
-from app.extract.navigator_family import NavigatorFamily, extract_navigator_family
+from app.extract.navigator_family import NavigatorFamily
 from app.identify.navigator_family import identify_navigator_family
 from app.load.aws_bucket import upload_to_s3
 from app.models import Document, ExtractedEnvelope, Identified
@@ -10,7 +11,7 @@ from app.transform.navigator_family import transform_navigator_family
 
 
 @task(log_prints=True)
-def extract(family_id: str):
+def extract(family_id: str) -> ExtractedEnvelope[NavigatorFamily]:
     """Extract"""
 
     connector_config = NavigatorConnectorConfig(
@@ -18,7 +19,12 @@ def extract(family_id: str):
         checkpoint_storage=CheckPointStorageType.S3,
         checkpoint_key_prefix="navigator/families/",  # TODO : Implement convention for checkpoint keys APP-1409
     )
-    return extract_navigator_family(family_id, connector_config)
+
+    connector = NavigatorConnector(connector_config)
+    envelope = connector.fetch_family(family_id)
+    connector.close()
+
+    return envelope
 
 
 @task(log_prints=True)
