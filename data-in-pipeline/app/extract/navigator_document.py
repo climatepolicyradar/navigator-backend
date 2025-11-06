@@ -51,7 +51,7 @@ def extract_navigator_document(
             connector_version="1.0.0",
             extracted_at=datetime.datetime.now(datetime.timezone.utc),
             metadata={
-                "endpoint": f"/families/documents/{import_id}",
+                "endpoint": f"{config.base_url}/families/documents/{import_id}",
                 "http_status": HTTPStatus.OK,
             },
         )
