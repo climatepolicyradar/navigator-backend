@@ -58,11 +58,8 @@ def extract_navigator_document(
         logger.info(f"Successfully extracted document {import_id}")
         return envelope
 
-    except requests.HTTPError as e:
-        logger.error(f"HTTP error fetching {import_id}: {e}")
-        raise e
-    except requests.Timeout as e:
-        logger.error(f"Timeout fetching {import_id}: {e}")
+    except requests.RequestException as e:
+        logger.error(f"Request failed fetching {import_id}: {e}")
         raise e
     except Exception as e:
         logger.error(f"Unexpected error fetching {import_id}: {e}")
