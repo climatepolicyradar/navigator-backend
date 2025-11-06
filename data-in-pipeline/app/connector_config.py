@@ -1,22 +1,22 @@
 from datetime import datetime
-from typing import Dict, List, Literal, Optional
+from typing import Literal, Optional
 
-from pydantic import BaseModel, Field
+from pydantic import BaseModel
 
 from app.enums import CheckPointStorageType, PaginationStyle
 from app.util import get_api_url
 
 
-class HttpEndpointConfig(BaseModel):
-    path: str
-    method: Literal["GET", "POST"] = "GET"
-    headers: Dict[str, str] = Field(default_factory=dict)
-    params: Dict[str, str] = Field(default_factory=dict)
-    body_template: Optional[str] = None
-
-
 class PaginationConfig(BaseModel):
-    style: PaginationStyle
+    """
+    Configuration for paginated API requests.
+
+    Defines how pagination is handled when fetching data from an HTTP source.
+    Supports multiple pagination styles (e.g. page-number, offset-limit, cursor, link-header),
+    along with parameter names and defaults.
+    """
+
+    style: PaginationStyle = PaginationStyle.PAGE_NUMBER
     page_param: str = "page"
     size_param: str = "size"
     initial_value: int = 1
@@ -24,7 +24,14 @@ class PaginationConfig(BaseModel):
     next_page_path: Optional[str] = None
 
 
-class BaseConnectorConfig(BaseModel):
+class HttpBaseConnectorConfig(BaseModel):
+    """
+    Base configuration shared by all HTTP-based connectors.
+
+    Encapsulates connection, retry, and checkpointing behaviour for any connector
+    that interacts with HTTP APIs. Used as the foundation for connector-specific configs.
+    """
+
     connector_name: str
     source_id: str  # canonical identifier like "litigation/Sabin"
 
@@ -41,7 +48,16 @@ class BaseConnectorConfig(BaseModel):
     log_level: Literal["DEBUG", "INFO", "WARN", "ERROR"] = "INFO"
 
 
-class NavigatorConnectorConfig(BaseConnectorConfig):
+class NavigatorConnectorConfig(HttpBaseConnectorConfig):
+    """
+    Configuration for the Navigator data connector.
+
+    Extends the generic HTTP connector configuration with Navigator-specific (e.g interacting
+    with the families and documents endpoints) settings, such as API versioning, pagination,
+    and delta extraction options.
+
+    """
+
     connector_name: str = "navigator"
 
     base_url: str = get_api_url()
@@ -54,18 +70,4 @@ class NavigatorConnectorConfig(BaseConnectorConfig):
     modified_since: Optional[datetime] = None  # Delta extraction
     include_deleted: bool = False
 
-
-# Generic HTTP connector config
-class HttpConnectorConfig(BaseConnectorConfig):
-    connector_name: str = "http"
-
-    base_url: str
-    endpoints: List[HttpEndpointConfig]
-
-    default_headers: Dict[str, str] = Field(default_factory=dict)
-    default_params: Dict[str, str] = Field(default_factory=dict)
-
     pagination: PaginationConfig
-
-    response_parser: Literal["json", "xml", "csv", "raw"] = "json"
-    data_path: Optional[str] = None
