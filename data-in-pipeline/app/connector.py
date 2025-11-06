@@ -49,7 +49,6 @@ class NavigatorConnectorConfig(BaseConnectorConfig):
     page_size: int = 100
     max_pages: Optional[int] = None
 
-    endpoints: List[str] = ["documents"]  # Todo implement utilisation of this field
     modified_since: Optional[datetime] = None  # Delta extraction
     include_deleted: bool = False
 

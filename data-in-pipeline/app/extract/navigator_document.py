@@ -16,7 +16,7 @@ class NavigatorDocument(BaseModel):
     import_id: str
 
 
-# Todo : Implement batch extraction later
+# TODO : Implement batch extraction APP-1337
 
 
 def extract_navigator_document(
