@@ -1,6 +1,6 @@
 from prefect import flow, task
 
-from app.connector import NavigatorConnectorConfig
+from app.connectors import NavigatorConnectorConfig
 from app.extract.navigator_document import NavigatorDocument, extract_navigator_document
 from app.identify.navigator_document import identify_navigator_document
 from app.load.aws_bucket import upload_to_s3

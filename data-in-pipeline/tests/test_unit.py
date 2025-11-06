@@ -2,7 +2,7 @@ from unittest.mock import MagicMock, patch
 
 import pytest
 
-from app.connector import NavigatorConnectorConfig
+from app.connectors import NavigatorConnectorConfig
 from app.extract.navigator_document import (
     NavigatorDocument,
     _fetch_with_retry,
