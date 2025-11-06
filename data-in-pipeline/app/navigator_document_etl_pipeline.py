@@ -1,9 +1,8 @@
 from prefect import flow, task
 
-from app.connector_config import NavigatorConnectorConfig
-from app.connectors import NavigatorConnector
 from app.enums import CheckPointStorageType
-from app.extract.navigator_document import NavigatorDocument
+from app.extract.connector_config import NavigatorConnectorConfig
+from app.extract.connectors import NavigatorConnector, NavigatorDocument
 from app.identify.navigator_document import identify_navigator_document
 from app.load.aws_bucket import upload_to_s3
 from app.models import Document, ExtractedEnvelope, Identified

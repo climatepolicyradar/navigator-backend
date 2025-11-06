@@ -6,7 +6,7 @@ import requests
 from pydantic import BaseModel
 from requests.adapters import HTTPAdapter, Retry
 
-from app.connector_config import NavigatorConnectorConfig
+from app.extract.connector_config import NavigatorConnectorConfig
 from app.models import ExtractedEnvelope
 from app.util import generate_envelope_uuid
 
