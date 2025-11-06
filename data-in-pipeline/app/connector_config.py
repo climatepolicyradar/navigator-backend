@@ -32,6 +32,8 @@ class HttpBaseConnectorConfig(BaseModel):
     that interacts with HTTP APIs. Used as the foundation for connector-specific configs.
     """
 
+    base_url: str
+
     connector_name: str
     source_id: str  # canonical identifier like "litigation/Sabin"
 
@@ -46,6 +48,8 @@ class HttpBaseConnectorConfig(BaseModel):
 
     emit_metrics: bool = True
     log_level: Literal["DEBUG", "INFO", "WARN", "ERROR"] = "INFO"
+
+    pagination: PaginationConfig = PaginationConfig()
 
 
 class NavigatorConnectorConfig(HttpBaseConnectorConfig):
@@ -69,5 +73,3 @@ class NavigatorConnectorConfig(HttpBaseConnectorConfig):
 
     modified_since: Optional[datetime] = None  # Delta extraction
     include_deleted: bool = False
-
-    pagination: PaginationConfig
