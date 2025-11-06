@@ -33,6 +33,7 @@ class BaseConnectorConfig(BaseModel):
     retry_backoff_seconds: int = 5
     connection_pool_size: int = 10
 
+    # TODO : Implement convention for checkpoint keys and storage APP-1409
     checkpoint_storage: CheckPointStorageType
     checkpoint_key_prefix: str
 

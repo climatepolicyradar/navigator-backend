@@ -16,7 +16,7 @@ def extract(document_id: str):
     connector = NavigatorConnectorConfig(
         source_id="navigator_document",
         checkpoint_storage=CheckPointStorageType.S3,
-        checkpoint_key_prefix="navigator/documents/",
+        checkpoint_key_prefix="navigator/documents/",  # TODO : Implement convention for checkpoint keys APP-1409
     )
     return extract_navigator_document(document_id, connector)
 
