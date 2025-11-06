@@ -43,8 +43,7 @@ def extract_navigator_document(
         envelope = ExtractedEnvelope(
             data=document,
             envelope_id=generate_envelope_uuid(),
-            source_name="navigator-documents",
-            source="navigator",
+            source_name="navigator_document",
             source_record_id=import_id,
             raw_payload=document.model_dump_json(),
             content_type="application/json",

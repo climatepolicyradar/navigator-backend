@@ -7,6 +7,6 @@ def identify_navigator_document(
 ) -> Identified[NavigatorDocument]:
     return Identified(
         data=extracted.data,
-        source=extracted.source,
+        source=extracted.source_name,
         id=extracted.data.import_id,
     )

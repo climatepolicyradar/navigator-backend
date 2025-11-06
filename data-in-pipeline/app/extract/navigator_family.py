@@ -40,8 +40,7 @@ def extract_navigator_family(
         envelope = ExtractedEnvelope(
             data=family,
             envelope_id=generate_envelope_uuid(),
-            source_name="navigator-families",
-            source="navigator",
+            source_name="navigator_family",
             source_record_id=import_id,
             raw_payload=family.model_dump_json(),
             content_type="application/json",

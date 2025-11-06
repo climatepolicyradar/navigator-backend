@@ -3,6 +3,7 @@ from unittest.mock import MagicMock, patch
 import pytest
 
 from app.connectors import NavigatorConnectorConfig
+from app.enums import CheckPointStorageType
 from app.extract.navigator_document import (
     NavigatorDocument,
     _fetch_with_retry,
@@ -54,7 +55,7 @@ def test_fetch_with_retry_success(monkeypatch):
     config = NavigatorConnectorConfig(
         base_url="test-url",
         source_id="navigator-docs",
-        checkpoint_storage="database",
+        checkpoint_storage=CheckPointStorageType.DATABASE,
         checkpoint_key_prefix="navigator",
     )
 
@@ -85,7 +86,7 @@ def test_fetch_with_retry_no_data(monkeypatch):
     config = NavigatorConnectorConfig(
         base_url="test-url",
         source_id="navigator-docs",
-        checkpoint_storage="database",
+        checkpoint_storage=CheckPointStorageType.DATABASE,
         checkpoint_key_prefix="navigator",
     )
 
@@ -109,7 +110,7 @@ def test_extract_navigator_document_success(monkeypatch):
     config = NavigatorConnectorConfig(
         base_url="test-url",
         source_id="navigator-docs",
-        checkpoint_storage="database",
+        checkpoint_storage=CheckPointStorageType.DATABASE,
         checkpoint_key_prefix="navigator",
     )
 
@@ -128,7 +129,7 @@ def test_extract_navigator_document_success(monkeypatch):
 
     assert isinstance(result, ExtractedEnvelope)
     assert result.source_record_id == import_id
-    assert result.source_name == "navigator-documents"
+    assert result.source_name == "navigator_document"
     assert result.metadata["http_status"] == 200
 
 
@@ -138,7 +139,7 @@ def test_extract_navigator_document_http_error(monkeypatch):
     config = NavigatorConnectorConfig(
         base_url="test-url",
         source_id="navigator-docs",
-        checkpoint_storage="database",
+        checkpoint_storage=CheckPointStorageType.DATABASE,
         checkpoint_key_prefix="navigator",
     )
 

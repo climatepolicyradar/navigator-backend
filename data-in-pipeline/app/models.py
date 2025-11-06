@@ -21,9 +21,6 @@ class ExtractedEnvelope(BaseModel, Generic[ExtractedData]):
     extracted_at: datetime = Field(default_factory=datetime.utcnow)
     metadata: Dict[str, Any] = Field(default_factory=dict)
 
-    # A simple source identifier (like "navigator")
-    source: str
-
 
 class Identified(BaseModel, Generic[ExtractedData]):
     data: ExtractedData
