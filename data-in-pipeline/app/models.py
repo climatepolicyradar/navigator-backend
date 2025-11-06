@@ -1,6 +1,6 @@
 import uuid
 from datetime import datetime
-from typing import Any, Dict, Generic, Optional, TypeVar
+from typing import Any, Generic, TypeVar
 
 from pydantic import BaseModel, Field
 
@@ -17,9 +17,9 @@ class ExtractedEnvelope(BaseModel, Generic[ExtractedData]):
     raw_payload: str
     content_type: str = "application/json"
     connector_version: str
-    run_id: Optional[str] = None
+    run_id: str | None = None
     extracted_at: datetime = Field(default_factory=datetime.utcnow)
-    metadata: Dict[str, Any] = Field(default_factory=dict)
+    metadata: dict[str, Any] = Field(default_factory=dict)
 
 
 class Identified(BaseModel, Generic[ExtractedData]):
