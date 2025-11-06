@@ -1,6 +1,7 @@
 from prefect import flow, task
 
 from app.connectors import NavigatorConnectorConfig
+from app.enums import CheckPointStorageType
 from app.extract.navigator_family import NavigatorFamily, extract_navigator_family
 from app.identify.navigator_family import identify_navigator_family
 from app.load.aws_bucket import upload_to_s3
@@ -13,8 +14,8 @@ def extract(family_id: str):
     """Extract"""
 
     connector = NavigatorConnectorConfig(
-        source_id="navigator/default",
-        checkpoint_storage="s3",
+        source_id="navigator_family",
+        checkpoint_storage=CheckPointStorageType.S3,
         checkpoint_key_prefix="navigator/families/",
     )
     return extract_navigator_family(family_id, connector)

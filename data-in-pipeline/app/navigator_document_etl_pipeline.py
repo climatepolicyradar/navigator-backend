@@ -14,7 +14,7 @@ def extract(document_id: str):
     """Extract"""
 
     connector = NavigatorConnectorConfig(
-        source_id="navigator/default",
+        source_id="navigator_document",
         checkpoint_storage=CheckPointStorageType.S3,
         checkpoint_key_prefix="navigator/documents/",
     )
