@@ -52,7 +52,7 @@ ENV OTEL_SERVICE_NAME="data-in-pipeline" \
 
 # If you do not want the extra orchestration spans, set to "False".
 # Leave as True to keep Prefect’s built-in flow/task spans.
-ENV PREFECT_CLOUD_ENABLE_ORCHESTRATION_TELEMETRY="true"
+ENV PREFECT_CLOUD_ENABLE_ORCHESTRATION_TELEMETRY="True"
 ENV OTEL_PYTHON_LOGGING_AUTO_INSTRUMENTATION_ENABLED="true"
 
 # Switch to non-root user
