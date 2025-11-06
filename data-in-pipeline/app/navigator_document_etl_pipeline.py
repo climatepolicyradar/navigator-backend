@@ -1,6 +1,6 @@
 from prefect import flow, task
 
-from app.connectors import NavigatorConnectorConfig
+from app.connector_config import NavigatorConnectorConfig
 from app.enums import CheckPointStorageType
 from app.extract.navigator_document import NavigatorDocument, extract_navigator_document
 from app.identify.navigator_document import identify_navigator_document
@@ -13,12 +13,12 @@ from app.transform.navigator_document import transform_navigator_document
 def extract(document_id: str):
     """Extract"""
 
-    connector = NavigatorConnectorConfig(
+    connector_config = NavigatorConnectorConfig(
         source_id="navigator_document",
         checkpoint_storage=CheckPointStorageType.S3,
         checkpoint_key_prefix="navigator/documents/",  # TODO : Implement convention for checkpoint keys APP-1409
     )
-    return extract_navigator_document(document_id, connector)
+    return extract_navigator_document(document_id, connector_config)
 
 
 @task(log_prints=True)

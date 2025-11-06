@@ -2,7 +2,7 @@ from unittest.mock import MagicMock, patch
 
 import pytest
 
-from app.connectors import NavigatorConnectorConfig
+from app.connector_config import NavigatorConnectorConfig
 from app.enums import CheckPointStorageType
 from app.extract.navigator_document import (
     NavigatorDocument,
