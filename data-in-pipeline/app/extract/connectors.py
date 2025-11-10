@@ -11,15 +11,18 @@ from app.extract.connector_config import NavigatorConnectorConfig
 from app.models import ExtractedEnvelope, ExtractedMetadata
 from app.util import generate_envelope_uuid
 
-logger = logging.getLogger(__name__)
+_LOGGER = logging.getLogger(__name__)
 
 
 class NavigatorDocument(BaseModel):
     import_id: str
+    title: str
 
 
 class NavigatorFamily(BaseModel):
     import_id: str
+    title: str
+    documents: list[NavigatorDocument]
 
 
 class HTTPConnector:
@@ -59,7 +62,7 @@ class HTTPConnector:
     def get(self, path: str, **kwargs):
         """Perform a GET request and handle retries and errors."""
         url = f"{self.config.base_url}/{path.lstrip('/')}"
-        logger.debug(f"Fetching from {url}")
+        _LOGGER.debug(f"Fetching from {url}")
 
         response = self.session.get(url, timeout=self.config.timeout_seconds, **kwargs)
         response.raise_for_status()
@@ -81,9 +84,10 @@ class NavigatorConnector(HTTPConnector):
         try:
             response_json = self.get(f"families/documents/{import_id}")
             document_data = response_json.get("data")
+            _LOGGER.info(f"Successfully fetched document data for '{import_id}'")
 
             if not document_data:
-                raise ValueError(f"No data in response for {import_id}")
+                raise ValueError(f"No document data in response for {import_id}")
 
             document = NavigatorDocument.model_validate(document_data)
 
@@ -104,10 +108,10 @@ class NavigatorConnector(HTTPConnector):
                 )
             )
         except requests.RequestException as e:
-            logger.exception(f"Request failed fetching {import_id}: {e}")
+            _LOGGER.exception(f"Request failed fetching document {import_id}")
             return Failure(e)
         except Exception as e:
-            logger.exception(f"Unexpected error fetching {import_id}: {e}")
+            _LOGGER.exception(f"Unexpected error fetching document {import_id}")
             return Failure(e)
 
     def fetch_family(self, import_id: str) -> Result[ExtractedEnvelope, Exception]:
@@ -117,7 +121,7 @@ class NavigatorConnector(HTTPConnector):
             family_data = response_json.get("data")
 
             if not family_data:
-                raise ValueError(f"No data in response for {import_id}")
+                raise ValueError(f"No family data in response for {import_id}")
 
             family = NavigatorFamily.model_validate(family_data)
 
@@ -138,8 +142,8 @@ class NavigatorConnector(HTTPConnector):
                 )
             )
         except requests.RequestException as e:
-            logger.exception(f"Request failed fetching {import_id}: {e}")
+            _LOGGER.exception(f"Request failed fetching family {import_id}")
             return Failure(e)
         except Exception as e:
-            logger.exception(f"Unexpected error fetching {import_id}: {e}")
+            _LOGGER.exception(f"Unexpected error fetching family {import_id}")
             return Failure(e)

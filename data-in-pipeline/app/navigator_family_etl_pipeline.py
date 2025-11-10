@@ -10,6 +10,7 @@ from app.extract.enums import CheckPointStorageType
 from app.identify.navigator_family import identify_navigator_family
 from app.load.aws_bucket import upload_to_s3
 from app.models import Document, ExtractedEnvelope, Identified
+from app.transform.models import NoMatchingTransformations
 from app.transform.navigator_family import transform_navigator_family
 
 logger = logging.getLogger(__name__)
@@ -54,7 +55,9 @@ def identify(
 
 
 @task(log_prints=True)
-def transform(identified: Identified[NavigatorFamily]) -> Document:
+def transform(
+    identified: Identified[NavigatorFamily],
+) -> Result[Document, NoMatchingTransformations]:
     """Transform document to target format."""
     return transform_navigator_family(identified)
 
@@ -69,13 +72,19 @@ def etl_pipeline(id: str) -> Document | None:
         return extracted_result
     extracted = extracted_result.unwrap()
     identified = identify(extracted)
-    document = transform(identified)
-    load_to_s3(document)
-    return document
+    transformed = transform(identified)
+
+    match transformed:
+        case Success(document):
+            load_to_s3(document)
+        case Failure(error):
+            # TODO: do not swallow errors
+            print(error)
+
+    return transformed
 
 
 @flow
 def process_updates(ids: list[str] = []):
-    results = etl_pipeline.map(ids)
-    families = [r.result() for r in results]
-    return [family.id for family in families if is_successful(family)]
+    result = etl_pipeline.map(ids)
+    return result

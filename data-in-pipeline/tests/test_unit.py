@@ -69,7 +69,11 @@ def test_fetch_document_success(base_config):
     connector = NavigatorConnector(base_config)
     import_id = "DOC-123"
 
-    mock_response = {"data": {"import_id": import_id}}
+    mock_response = {
+        "data": NavigatorDocument(
+            import_id=import_id, title="Test Document"
+        ).model_dump()
+    }
 
     with (
         patch.object(connector, "get", return_value=mock_response),
@@ -89,7 +93,7 @@ def test_fetch_document_no_data(base_config):
     import_id = "DOC-456"
 
     with patch.object(connector, "get", return_value={}):
-        with pytest.raises(ValueError, match="No data in response"):
+        with pytest.raises(ValueError, match="No document data in response"):
             connector.fetch_document(import_id)
     connector.close()
 
@@ -110,7 +114,13 @@ def test_fetch_family_success(base_config):
     connector = NavigatorConnector(base_config)
     import_id = "FAM-111"
 
-    mock_response = {"data": {"import_id": import_id}}
+    mock_response = {
+        "data": NavigatorFamily(
+            import_id=import_id,
+            title="Test Family",
+            documents=[NavigatorDocument(import_id=import_id, title="Test Document")],
+        ).model_dump()
+    }
 
     with (
         patch.object(connector, "get", return_value=mock_response),
@@ -235,3 +245,25 @@ def test_extracting_document_handles_invalid_id_failure():
     assert isinstance(failure_exception, ConnectionError)
     assert "API timeout" in str(failure_exception)
     mock_connector_instance.fetch_document.assert_called_once_with(invalid_id)
+
+
+def test_fetch_family_no_data(base_config):
+    """Ensure ValueError is raised when no data key is present in response."""
+    connector = NavigatorConnector(base_config)
+    import_id = "FAM-456"
+
+    with patch.object(connector, "get", return_value={}):
+        with pytest.raises(ValueError, match="No family data in response"):
+            connector.fetch_family(import_id)
+    connector.close()
+
+
+def test_fetch_family_http_error(base_config):
+    """Ensure RequestException is caught and re-raised."""
+    connector = NavigatorConnector(base_config)
+    import_id = "FAM-789"
+
+    with patch.object(connector, "get", side_effect=Exception("Boom!")):
+        with pytest.raises(Exception, match="Boom!"):
+            connector.fetch_family(import_id)
+    connector.close()
