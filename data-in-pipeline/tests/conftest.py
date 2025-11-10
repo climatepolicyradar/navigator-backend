@@ -29,4 +29,7 @@ def disable_otel_logging(monkeypatch: pytest.MonkeyPatch):
 
     monkeypatch.setenv("OTEL_PYTHON_LOGGING_AUTO_INSTRUMENTATION_ENABLED", "false")
     monkeypatch.setenv("PREFECT_CLOUD_ENABLE_ORCHESTRATION_TELEMETRY", "False")
+    monkeypatch.setenv("PREFECT_LOGGING_TO_API_WHEN_MISSING_FLOW", "ignore")
+    monkeypatch.setenv("PREFECT_LOGGING_TO_API_WHEN_MISSING_TASK", "ignore")
+    monkeypatch.setenv("PREFECT_LOGGING_TO_API_WHEN_MISSING_WORKER", "ignore")
     yield
