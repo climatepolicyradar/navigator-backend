@@ -82,7 +82,7 @@ def test_fetch_document_no_data(base_config):
     import_id = "DOC-456"
 
     with patch.object(connector, "get", return_value={}):
-        with pytest.raises(ValueError, match="No data in response"):
+        with pytest.raises(ValueError, match="No document data in response"):
             connector.fetch_document(import_id)
     connector.close()
 
@@ -115,4 +115,26 @@ def test_fetch_family_success(base_config):
     assert result.source_record_id == import_id
     assert result.source_name == "navigator_family"
     assert result.metadata.http_status == HTTPStatus.OK
+    connector.close()
+
+
+def test_fetch_family_no_data(base_config):
+    """Ensure ValueError is raised when no data key is present in response."""
+    connector = NavigatorConnector(base_config)
+    import_id = "FAM-456"
+
+    with patch.object(connector, "get", return_value={}):
+        with pytest.raises(ValueError, match="No family data in response"):
+            connector.fetch_family(import_id)
+    connector.close()
+
+
+def test_fetch_family_http_error(base_config):
+    """Ensure RequestException is caught and re-raised."""
+    connector = NavigatorConnector(base_config)
+    import_id = "FAM-789"
+
+    with patch.object(connector, "get", side_effect=Exception("Boom!")):
+        with pytest.raises(Exception, match="Boom!"):
+            connector.fetch_family(import_id)
     connector.close()
