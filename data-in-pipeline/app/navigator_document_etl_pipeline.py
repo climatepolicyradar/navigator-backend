@@ -2,7 +2,7 @@ import logging
 
 from prefect import flow, task
 from returns.pipeline import is_successful
-from returns.result import Result
+from returns.result import Failure, Result
 
 from app.extract.connector_config import NavigatorConnectorConfig
 from app.extract.connectors import NavigatorConnector, NavigatorDocument
@@ -57,12 +57,12 @@ def transform(identified: Identified[NavigatorDocument]):
 @task(log_prints=True)
 def etl_pipeline(
     id: str,
-) -> Document | Result[ExtractedEnvelope[NavigatorDocument], Exception]:
+) -> Result[Document, Exception]:
     """ETL pipeline"""
     extracted_result = extract(id)
     if not is_successful(extracted_result):
         logger.exception(f"Extraction failed for {id}: {extracted_result.failure()}")
-        return extracted_result
+        return Failure(extracted_result.failure())
     extracted = extracted_result.unwrap()
     identified = identify(extracted)
     document = transform(identified)
@@ -74,4 +74,4 @@ def etl_pipeline(
 def process_updates(ids: list[str] = []):
     results = etl_pipeline.map(ids)
     documents = [r.result() for r in results]
-    return [doc.id for doc in documents if doc is is_successful(doc)]
+    return [documents]

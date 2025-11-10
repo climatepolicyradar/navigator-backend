@@ -20,20 +20,17 @@ logger = logging.getLogger(__name__)
 def extract(family_id: str) -> Result[ExtractedEnvelope[NavigatorFamily], Exception]:
     """Extract"""
 
-    try:
-        connector_config = NavigatorConnectorConfig(
-            source_id="navigator_family",
-            checkpoint_storage=CheckPointStorageType.S3,
-            checkpoint_key_prefix="navigator/families/",  # TODO : Implement convention for checkpoint keys APP-1409
-        )
+    connector_config = NavigatorConnectorConfig(
+        source_id="navigator_family",
+        checkpoint_storage=CheckPointStorageType.S3,
+        checkpoint_key_prefix="navigator/families/",  # TODO : Implement convention for checkpoint keys APP-1409
+    )
 
-        connector = NavigatorConnector(connector_config)
-        envelope = connector.fetch_family(family_id)
-        connector.close()
+    connector = NavigatorConnector(connector_config)
+    envelope = connector.fetch_family(family_id)
+    connector.close()
 
-        return Success(envelope)
-    except Exception as e:
-        return Failure(e)
+    return envelope
 
 
 @task(log_prints=True)
@@ -63,13 +60,15 @@ def transform(
 
 
 @task(log_prints=True)
-def etl_pipeline(id: str) -> Document | None:
+def etl_pipeline(
+    id: str,
+) -> Result[Document, Exception]:
     """Process a single document through the pipeline."""
 
     extracted_result = extract(id)
     if not is_successful(extracted_result):
         logger.exception(f"Extraction failed for {id}: {extracted_result.failure()}")
-        return extracted_result
+        return Failure(extracted_result.failure())
     extracted = extracted_result.unwrap()
     identified = identify(extracted)
     transformed = transform(identified)

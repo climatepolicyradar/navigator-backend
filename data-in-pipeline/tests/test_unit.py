@@ -149,7 +149,11 @@ def test_extracting_family_handles_valid_id_success():
         mock_connector_instance.fetch_family.return_value = ExtractedEnvelope(
             source_record_id=valid_id,
             source_name="navigator_family",
-            data=NavigatorFamily(import_id=valid_id),
+            data=NavigatorFamily(
+                import_id=valid_id,
+                title="Test Family",
+                documents=[],
+            ),
             metadata=ExtractedMetadata(
                 endpoint="www.capsule-corp.com", http_status=HTTPStatus.OK
             ),
@@ -204,7 +208,7 @@ def test_extracting_document_handles_valid_id_success():
         mock_connector_instance.fetch_document.return_value = ExtractedEnvelope(
             source_record_id=valid_id,
             source_name="navigator_document",
-            data=NavigatorDocument(import_id=valid_id),
+            data=NavigatorDocument(import_id=valid_id, title="Test Doc"),
             metadata=ExtractedMetadata(
                 endpoint="www.capsule-corp.com", http_status=HTTPStatus.OK
             ),
