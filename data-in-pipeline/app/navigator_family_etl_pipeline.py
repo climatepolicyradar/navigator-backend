@@ -1,5 +1,6 @@
 from prefect import flow, task
-from returns.result import Result, Success
+from returns.pipeline import is_successful
+from returns.result import Failure, Result, Success
 
 from app.extract.connector_config import NavigatorConnectorConfig
 from app.extract.connectors import NavigatorConnector, NavigatorFamily
@@ -14,17 +15,20 @@ from app.transform.navigator_family import transform_navigator_family
 def extract(family_id: str) -> Result[ExtractedEnvelope[NavigatorFamily], Exception]:
     """Extract"""
 
-    connector_config = NavigatorConnectorConfig(
-        source_id="navigator_family",
-        checkpoint_storage=CheckPointStorageType.S3,
-        checkpoint_key_prefix="navigator/families/",  # TODO : Implement convention for checkpoint keys APP-1409
-    )
+    try:
+        connector_config = NavigatorConnectorConfig(
+            source_id="navigator_family",
+            checkpoint_storage=CheckPointStorageType.S3,
+            checkpoint_key_prefix="navigator/families/",  # TODO : Implement convention for checkpoint keys APP-1409
+        )
 
-    connector = NavigatorConnector(connector_config)
-    envelope = connector.fetch_family(family_id)
-    connector.close()
+        connector = NavigatorConnector(connector_config)
+        envelope = connector.fetch_family(family_id)
+        connector.close()
 
-    return Success(envelope)
+        return Success(envelope)
+    except Exception as e:
+        return Failure(e)
 
 
 @task(log_prints=True)
@@ -56,9 +60,9 @@ def etl_pipeline(id: str):
     """Process a single document through the pipeline."""
 
     extracted_result_type = extract(id)
-
+    if not is_successful(extracted_result_type):
+        raise Exception("Extraction failed")
     extracted = extracted_result_type.unwrap()
-
     identified = identify(extracted)
     document = transform(identified)
     load_to_s3(document)
