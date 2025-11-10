@@ -43,8 +43,8 @@ def test_load_document_success(mock_upload):
 
     mock_upload.assert_called_once_with(
         '{"id": "test-123"}',
-        bucket="cpr-production-document-cache",
-        key="navigator/test-123.json",
+        bucket="cpr-cache",
+        key="pipelines/data-in-pipeline/navigator_document/test-123.json",
     )
 
 
