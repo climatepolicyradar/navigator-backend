@@ -1,16 +1,29 @@
 from prefect import flow, task
 
-from app.extract.navigator_family import NavigatorFamily, extract_navigator_family
+from app.extract.connector_config import NavigatorConnectorConfig
+from app.extract.connectors import NavigatorConnector, NavigatorFamily
+from app.extract.enums import CheckPointStorageType
 from app.identify.navigator_family import identify_navigator_family
 from app.load.aws_bucket import upload_to_s3
-from app.models import Document, Extracted, Identified
+from app.models import Document, ExtractedEnvelope, Identified
 from app.transform.navigator_family import transform_navigator_family
 
 
 @task(log_prints=True)
-def extract(document_id: str):
+def extract(family_id: str) -> ExtractedEnvelope[NavigatorFamily]:
     """Extract"""
-    return extract_navigator_family(document_id)
+
+    connector_config = NavigatorConnectorConfig(
+        source_id="navigator_family",
+        checkpoint_storage=CheckPointStorageType.S3,
+        checkpoint_key_prefix="navigator/families/",  # TODO : Implement convention for checkpoint keys APP-1409
+    )
+
+    connector = NavigatorConnector(connector_config)
+    envelope = connector.fetch_family(family_id)
+    connector.close()
+
+    return envelope
 
 
 @task(log_prints=True)
@@ -25,7 +38,7 @@ def load_to_s3(document: Document):
 
 @task(log_prints=True)
 def identify(
-    extracted: Extracted[NavigatorFamily],
+    extracted: ExtractedEnvelope[NavigatorFamily],
 ) -> Identified[NavigatorFamily]:
     """Identify source document type."""
     return identify_navigator_family(extracted)
