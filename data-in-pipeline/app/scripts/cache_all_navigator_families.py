@@ -11,7 +11,7 @@ def cache_all_navigator_families():
     while True:
         response = requests.get(
             f"https://api.climatepolicyradar.org/families/?page={page}",
-            timeout=5,
+            timeout=5,  # seconds
         )
         response.raise_for_status()
         data = response.json()
