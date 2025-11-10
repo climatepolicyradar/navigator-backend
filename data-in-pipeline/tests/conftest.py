@@ -22,6 +22,7 @@ def disable_otel_logging(monkeypatch: pytest.MonkeyPatch):
     :return: Yields control back to the test.
     :rtype: typing.Iterator[None]
     """
+    monkeypatch.setenv("OTEL_SDK_DISABLED", "true")
     monkeypatch.setenv("OTEL_LOGS_EXPORTER", "none")
     monkeypatch.setenv("OTEL_METRICS_EXPORTER", "none")
     monkeypatch.setenv("OTEL_TRACES_EXPORTER", "none")
