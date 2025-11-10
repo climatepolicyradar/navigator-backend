@@ -2,7 +2,7 @@ import logging
 
 from prefect import flow, task
 from returns.pipeline import is_successful
-from returns.result import Failure, Result, Success
+from returns.result import Result
 
 from app.extract.connector_config import NavigatorConnectorConfig
 from app.extract.connectors import NavigatorConnector, NavigatorDocument
@@ -20,19 +20,16 @@ def extract(
     document_id: str,
 ) -> Result[ExtractedEnvelope[NavigatorDocument], Exception]:
     """Extract"""
-    try:
-        connector_config = NavigatorConnectorConfig(
-            source_id="navigator_document",
-            checkpoint_storage=CheckPointStorageType.S3,
-            checkpoint_key_prefix="navigator/documents/",  # TODO : Implement convention for checkpoint keys APP-1409
-        )
+    connector_config = NavigatorConnectorConfig(
+        source_id="navigator_document",
+        checkpoint_storage=CheckPointStorageType.S3,
+        checkpoint_key_prefix="navigator/documents/",  # TODO : Implement convention for checkpoint keys APP-1409
+    )
 
-        connector = NavigatorConnector(connector_config)
-        envelope = connector.fetch_document(document_id)
-        connector.close()
-        return Success(envelope)
-    except Exception as e:
-        return Failure(e)
+    connector = NavigatorConnector(connector_config)
+    envelope = connector.fetch_document(document_id)
+    connector.close()
+    return envelope
 
 
 @task(log_prints=True)
@@ -58,15 +55,15 @@ def transform(identified: Identified[NavigatorDocument]):
 
 
 @task(log_prints=True)
-def etl_pipeline(id: str) -> Document | None:
+def etl_pipeline(
+    id: str,
+) -> Document | Result[ExtractedEnvelope[NavigatorDocument], Exception]:
     """ETL pipeline"""
-    extracted_result_type = extract(id)
-    if not is_successful(extracted_result_type):
-        logger.exception(
-            f"Extraction failed for {id}: {extracted_result_type.failure()}"
-        )
-        return None
-    extracted = extracted_result_type.unwrap()
+    extracted_result = extract(id)
+    if not is_successful(extracted_result):
+        logger.exception(f"Extraction failed for {id}: {extracted_result.failure()}")
+        return extracted_result
+    extracted = extracted_result.unwrap()
     identified = identify(extracted)
     document = transform(identified)
     load_to_s3(document)
@@ -77,4 +74,4 @@ def etl_pipeline(id: str) -> Document | None:
 def process_updates(ids: list[str] = []):
     results = etl_pipeline.map(ids)
     documents = [r.result() for r in results]
-    return [doc.id for doc in documents if doc is not None]
+    return [doc.id for doc in documents if doc is is_successful(doc)]

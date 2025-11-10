@@ -5,6 +5,7 @@ from http import HTTPStatus
 import requests
 from pydantic import BaseModel
 from requests.adapters import HTTPAdapter, Retry
+from returns.result import Failure, Result, Success
 
 from app.extract.connector_config import NavigatorConnectorConfig
 from app.models import ExtractedEnvelope, ExtractedMetadata
@@ -75,7 +76,7 @@ class NavigatorConnector(HTTPConnector):
     def __init__(self, config: NavigatorConnectorConfig):
         super().__init__(config)
 
-    def fetch_document(self, import_id: str) -> ExtractedEnvelope:
+    def fetch_document(self, import_id: str) -> Result[ExtractedEnvelope, Exception]:
         """Fetch a single document from Navigator API."""
         try:
             response_json = self.get(f"families/documents/{import_id}")
@@ -86,28 +87,30 @@ class NavigatorConnector(HTTPConnector):
 
             document = NavigatorDocument.model_validate(document_data)
 
-            return ExtractedEnvelope(
-                data=document,
-                id=generate_envelope_uuid(),
-                source_name="navigator_document",
-                source_record_id=import_id,
-                raw_payload=document.model_dump_json(),
-                content_type="application/json",
-                connector_version="1.0.0",
-                extracted_at=datetime.datetime.now(datetime.timezone.utc),
-                metadata=ExtractedMetadata(
-                    endpoint=f"{self.config.base_url}/families/documents/{import_id}",
-                    http_status=HTTPStatus.OK,
-                ),
+            return Success(
+                ExtractedEnvelope(
+                    data=document,
+                    id=generate_envelope_uuid(),
+                    source_name="navigator_document",
+                    source_record_id=import_id,
+                    raw_payload=document.model_dump_json(),
+                    content_type="application/json",
+                    connector_version="1.0.0",
+                    extracted_at=datetime.datetime.now(datetime.timezone.utc),
+                    metadata=ExtractedMetadata(
+                        endpoint=f"{self.config.base_url}/families/documents/{import_id}",
+                        http_status=HTTPStatus.OK,
+                    ),
+                )
             )
         except requests.RequestException as e:
             logger.exception(f"Request failed fetching {import_id}: {e}")
-            raise e
+            return Failure(e)
         except Exception as e:
             logger.exception(f"Unexpected error fetching {import_id}: {e}")
-            raise e
+            return Failure(e)
 
-    def fetch_family(self, import_id: str) -> ExtractedEnvelope:
+    def fetch_family(self, import_id: str) -> Result[ExtractedEnvelope, Exception]:
         """Fetch a single family from Navigator API."""
         try:
             response_json = self.get(f"families/{import_id}")
@@ -118,23 +121,25 @@ class NavigatorConnector(HTTPConnector):
 
             family = NavigatorFamily.model_validate(family_data)
 
-            return ExtractedEnvelope(
-                data=family,
-                id=generate_envelope_uuid(),
-                source_name="navigator_family",
-                source_record_id=import_id,
-                raw_payload=family.model_dump_json(),
-                content_type="application/json",
-                connector_version="1.0.0",
-                extracted_at=datetime.datetime.now(datetime.timezone.utc),
-                metadata=ExtractedMetadata(
-                    endpoint=f"{self.config.base_url}/families/documents/{import_id}",
-                    http_status=HTTPStatus.OK,
-                ),
+            return Success(
+                ExtractedEnvelope(
+                    data=family,
+                    id=generate_envelope_uuid(),
+                    source_name="navigator_family",
+                    source_record_id=import_id,
+                    raw_payload=family.model_dump_json(),
+                    content_type="application/json",
+                    connector_version="1.0.0",
+                    extracted_at=datetime.datetime.now(datetime.timezone.utc),
+                    metadata=ExtractedMetadata(
+                        endpoint=f"{self.config.base_url}/families/documents/{import_id}",
+                        http_status=HTTPStatus.OK,
+                    ),
+                )
             )
         except requests.RequestException as e:
             logger.exception(f"Request failed fetching {import_id}: {e}")
-            raise e
+            return Failure(e)
         except Exception as e:
             logger.exception(f"Unexpected error fetching {import_id}: {e}")
-            raise e
+            return Failure(e)

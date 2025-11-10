@@ -63,13 +63,11 @@ def transform(identified: Identified[NavigatorFamily]) -> Document:
 def etl_pipeline(id: str) -> Document | None:
     """Process a single document through the pipeline."""
 
-    extracted_result_type = extract(id)
-    if not is_successful(extracted_result_type):
-        logger.exception(
-            f"Extraction failed for {id}: {extracted_result_type.failure()}"
-        )
-        return None
-    extracted = extracted_result_type.unwrap()
+    extracted_result = extract(id)
+    if not is_successful(extracted_result):
+        logger.exception(f"Extraction failed for {id}: {extracted_result.failure()}")
+        return extracted_result
+    extracted = extracted_result.unwrap()
     identified = identify(extracted)
     document = transform(identified)
     load_to_s3(document)
@@ -80,4 +78,4 @@ def etl_pipeline(id: str) -> Document | None:
 def process_updates(ids: list[str] = []):
     results = etl_pipeline.map(ids)
     families = [r.result() for r in results]
-    return [doc.id for doc in families if doc is not None]
+    return [family.id for family in families if is_successful(family)]
