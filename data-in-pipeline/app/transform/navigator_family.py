@@ -1,4 +1,4 @@
-from app.extract.navigator_family import NavigatorFamily
+from app.extract.connectors import NavigatorFamily
 from app.models import Document, Identified
 
 
