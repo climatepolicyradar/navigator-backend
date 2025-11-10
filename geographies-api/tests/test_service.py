@@ -1,9 +1,15 @@
 from unittest.mock import patch
 
 import pytest
+from slugify import slugify
 
 from app.model import CountryResponse, RegionResponse, RegionType
-from app.service import get_all_regions, get_countries_by_region, get_region_by_slug
+from app.service import (
+    get_all_regions,
+    get_countries_by_region,
+    get_geographies,
+    get_region_by_slug,
+)
 
 
 def test_get_all_regions_successfully_returns_all_regions(expected_regions):
@@ -70,3 +76,29 @@ def test_get_countries_by_region_raises_if_region_countries_list_contains_invali
     with patch("app.service.get_country_by_code", return_value=None):
         with pytest.raises(ValueError):
             get_countries_by_region("north-america")
+
+
+@pytest.mark.parametrize(
+    ("id", "name", "slug", "slugifies"),
+    [
+        # hacks
+        ("MDA", "Moldova, Republic of", "moldova", False),
+        ("IRN", "Iran, Islamic Republic of", "iran", False),
+        ("SYR", "Syrian Arab Republic", "syria", False),
+        # non hacks
+        ("STP", "São Tomé and Príncipe", "sao-tome-and-principe", True),
+        ("BIH", "Bosnia and Herzegovina", "bosnia-and-herzegovina", True),
+    ],
+)
+def test_country_id_to_slug_hack(id: str, name: str, slug: str, slugifies: bool):
+    geographies = get_geographies().countries
+
+    country = next((c for c in geographies if c.id == id), None)
+    assert country is not None
+
+    if not slugifies:
+        assert slugify(country.name) != slug
+        assert country.slug == slug
+    else:
+        assert country.slug == slugify(country.name)
+        assert country.slug == slug

@@ -2,12 +2,12 @@
 name = "backend-api"
 version = "0.1.0"
 readme = "README.md"
-requires-python = ">=3.12"
+requires-python = ">=3.12,<3.14"
 dependencies = [
   "Authlib>=1.6.0",
-  "bcrypt>=4.3.0",
+  "bcrypt>=4.3.0,<5.0.0",
   "boto3>=1.26",
-  "cpr-sdk[vespa,datasets]==1.20.1",
+  "cpr-sdk[vespa,datasets]==1.23.4",
   "fastapi>=0.115.8",
   "fastapi-health>=0.4.0",
   "fastapi-pagination[sqlalchemy]>=0.13.2",
@@ -29,7 +29,7 @@ dependencies = [
   "tenacity>=9.0.0",
   "uvicorn[standard]>=0.34.3",
   "botocore>=1.38.37",
-  "db-client @ git+https://github.com/climatepolicyradar/navigator-db-client.git@v3.9.18",
+  "db-client @ git+https://github.com/climatepolicyradar/navigator-db-client.git@v3.9.21",
   "urllib3<3",
   "apscheduler>=3.10.4",
   "numpy==1.26.4",
@@ -40,6 +40,7 @@ dependencies = [
   "pydantic-settings>=2.9.1",
   "opentelemetry-exporter-otlp>=1.33.0",
   "opentelemetry-instrumentation-sqlalchemy>=0.54b0",
+  "xlsxwriter>=3.2.9",
 ]
 
 [dependency-groups]

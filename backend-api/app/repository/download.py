@@ -2,6 +2,7 @@
 
 import os
 from logging import getLogger
+from typing import Optional
 
 import pandas as pd
 from fastapi import Depends
@@ -15,7 +16,11 @@ _LOGGER = getLogger(__name__)
 
 
 def get_whole_database_dump(
-    ingest_cycle_start: str, allowed_corpora_ids: list[str], db=Depends(get_db)
+    ingest_cycle_start: str,
+    allowed_corpora_ids: list[str],
+    db=Depends(get_db),
+    theme: Optional[str] = None,
+    url_base: Optional[str] = None,
 ):
     """Get whole database dump and bind variables.
 
@@ -25,13 +30,21 @@ def get_whole_database_dump(
     :return pd.DataFrame: A DataFrame containing the results of the SQL
         query that gets the whole database dump in our desired format.
     """
+    if theme and theme.upper() == "CCC":
+        filename = "ccc-download.sql"
+    elif theme and theme.upper() == "MCF":
+        filename = "mcf-download.sql"
+    else:
+        filename = "download.sql"
+
     query = text(
-        get_query_template(os.path.join("app", "repository", "sql", "download.sql"))
+        get_query_template(os.path.join("app", "repository", "sql", filename))
     ).bindparams(
         bindparam("ingest_cycle_start", type_=DATETIME),
         bindparam(
             "allowed_corpora_ids", value=allowed_corpora_ids, type_=ARRAY(String)
         ),
+        bindparam("url_base", type_=String),
     )
 
     with db.connection() as conn:
@@ -40,6 +53,7 @@ def get_whole_database_dump(
             {
                 "ingest_cycle_start": ingest_cycle_start,
                 "allowed_corpora_ids": allowed_corpora_ids,
+                "url_base": url_base or "https://app.climatepolicyradar.org",
             },
         )
         columns = result.keys()

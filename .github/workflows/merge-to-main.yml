@@ -13,7 +13,7 @@ jobs:
         working-directory: backend-api
     runs-on: ubuntu-latest
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@v5
 
       # build
       - run: make build
@@ -22,7 +22,7 @@ jobs:
       # most of this is taken from
       # https://docs.github.com/en/actions/use-cases-and-examples/deploying/deploying-to-amazon-elastic-container-service#creating-the-workflow
       - name: Configure AWS credentials (staging)
-        uses: aws-actions/configure-aws-credentials@v4
+        uses: aws-actions/configure-aws-credentials@v5
         with:
           role-to-assume: arn:aws:iam::${{ secrets.AWS_ACCOUNT_ID_STAGING }}:role/navigator-backend-new-github-actions
           role-session-name: GitHub_to_AWS_via_FederatedOIDC
@@ -45,7 +45,7 @@ jobs:
           echo "image=$ECR_REGISTRY/$ECR_REPOSITORY:$IMAGE_TAG" >> $GITHUB_OUTPUT
 
       - name: Configure aws credentials (production)
-        uses: aws-actions/configure-aws-credentials@v4
+        uses: aws-actions/configure-aws-credentials@v5
         with:
           role-to-assume: arn:aws:iam::${{ secrets.AWS_ACCOUNT_ID_PROD }}:role/navigator-backend-new-github-actions
           role-session-name: GitHub_to_AWS_via_FederatedOIDC
@@ -73,7 +73,7 @@ jobs:
       matrix:
         service: [families-api, geographies-api, concepts-api]
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@v5
       - uses: extractions/setup-just@v3
       - run: just test ${{ matrix.service }}
   deploy-microservices:
@@ -84,24 +84,44 @@ jobs:
         environment: [staging, production]
     environment: ${{ matrix.environment }}
     env:
-      SERVICES: families-api geographies-api concepts-api
+      SERVICES: families-api geographies-api concepts-api data-in-pipeline
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@v5
       - uses: extractions/setup-just@v3
-      - uses: aws-actions/configure-aws-credentials@v4.2.0
+      - uses: aws-actions/configure-aws-credentials@v5
         with:
           role-to-assume: arn:aws:iam::${{ secrets.AWS_ACCOUNT_ID }}:role/navigator-backend-github-actions-deploy
           role-session-name: GitHub_to_AWS_via_FederatedOIDC_${{ matrix.environment }}
           aws-region: eu-west-1
       - uses: aws-actions/amazon-ecr-login@v2
       # we use python / uv in some build scripts and testing
-      - uses: actions/setup-python@v5
+      - uses: actions/setup-python@v6
         with:
           python-version: "3.12"
-      - uses: astral-sh/setup-uv@v6
+      - uses: astral-sh/setup-uv@v7
       - run: uv sync --all-packages
       - run: |
           for service in $SERVICES; do
             just deploy $service ${{ matrix.environment }} latest
             just deploy $service ${{ matrix.environment }} ${{ github.sha }}
           done
+
+  deploy-prefect:
+    needs: deploy-microservices
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v5
+      - uses: extractions/setup-just@v3
+      - uses: astral-sh/setup-uv@v7
+      - name: Sync dependencies
+        working-directory: data-in-pipeline
+        run: uv sync
+      - name: Deploy the updated data in pipeline to Prefect
+        working-directory: data-in-pipeline
+        env:
+          AWS_ENV: prod
+          AWS_REGION: eu-west-1
+          DOCKER_REGISTRY: ${{ secrets.DOCKER_REGISTRY_PRODUCTION }}
+          PREFECT_API_KEY: ${{ secrets.PREFECT_API_KEY }}
+          PREFECT_API_URL: ${{ secrets.PREFECT_API_URL }}
+        run: just deploy-to-prefect

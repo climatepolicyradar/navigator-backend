@@ -2,9 +2,24 @@
   "comment-1": "this is replicated to ./pyrightconfig.json",
   "comment-2": "if you make any changes here, please keep them updated there",
   "exclude": ["backend-api/*"],
-  "include": ["api/src", "concepts-api", "families-api", "geographies-api"],
   "venvPath": ".",
   "venv": ".venv",
-  "extraPaths": ["api/src", "concepts-api", "families-api", "geographies-api"],
-  "pythonVersion": "3.12"
+  "pythonVersion": "3.12",
+  "executionEnvironments": [
+    {
+      "root": "api/src"
+    },
+    {
+      "root": "concepts-api"
+    },
+    {
+      "root": "families-api"
+    },
+    {
+      "root": "geographies-api"
+    },
+    {
+      "root": "data-in-pipeline"
+    }
+  ]
 }

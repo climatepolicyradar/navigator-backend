@@ -1,22 +1,12 @@
 import logging
 from typing import Annotated
 
-from db_client.models.dfce.family import (
-    Corpus,
-    DocumentStatus,
-    Family,
-    FamilyCorpus,
-    FamilyDocument,
-    FamilyGeography,
-)
-from db_client.models.dfce.geography import Geography
-from db_client.models.dfce.metadata import FamilyMetadata
+from db_client.models.dfce.family import Corpus, Family, FamilyCorpus
 from fastapi import APIRouter, Depends, Header, HTTPException, Request
-from sqlalchemy import func
 from sqlalchemy.orm import lazyload
 
 from app.clients.db.session import get_db
-from app.models.search import LatestUpdatedFamilyResponse
+from app.models.search import LatestFamilyResponse
 from app.repository.family import (
     _convert_to_dto,
     count_families_per_category_per_corpus,
@@ -61,24 +51,25 @@ def get_homepage_counts_latest_ingest_cycle(
 
 
 @families_router.get(
-    "/latest_published",
-    summary="Gets five most recently published families.",
+    "/latest",
+    summary="Gets five most recently added families.",
 )
-def latest_published(
+def latest(
     request: Request,
     app_token: Annotated[str, Header()],
+    limit: int = 5,
     db=Depends(get_db),
-) -> list[LatestUpdatedFamilyResponse]:
-    """Retrieve the five most recently published families.
+) -> list[LatestFamilyResponse]:
+    """Retrieve the five most recently added families.
 
-    This endpoint returns the latest five published family records,
-    sorted by their modified date in descending order.
+    This endpoint returns the five most recently added family records,
+    sorted by their created date in descending order.
 
     :param Request request: The incoming request object.
     :param Annotated[str, Header()] app_token: App token containing
         the allowed corpora access.
     :param Depends[get_db] db: Database session dependency.
-    :return list[LatestUpdateFamilyResponse]: A list of the five most recently published
+    :return list[LatestFamilyResponse]: A list of the five most recently added
         families.
     """
 
@@ -101,68 +92,44 @@ def latest_published(
         )
 
     _LOGGER.info(
-        "Getting latest published families",
+        "Getting latest families",
         extra={
             "allowed_corpora_ids": allowed_corpora_ids,
         },
     )
 
-    published_families = (
-        db.query(FamilyDocument.family_import_id)
-        .filter(FamilyDocument.document_status == DocumentStatus.PUBLISHED)
-        .distinct()
-        .subquery()
-    )
-
-    geographies_subquery = (
-        db.query(
-            FamilyGeography.family_import_id,
-            func.array_agg(Geography.value).label("geography_values"),
-        )
-        .join(Geography, Geography.id == FamilyGeography.geography_id)
-        .group_by(FamilyGeography.family_import_id)
-        .subquery()
-    )
-
     query = (
         db.query(
             Family,
-            geographies_subquery.c.geography_values,
-            FamilyMetadata,
         )
-        .join(FamilyMetadata, FamilyMetadata.family_import_id == Family.import_id)
         .join(FamilyCorpus, FamilyCorpus.family_import_id == Family.import_id)
         .join(Corpus, FamilyCorpus.corpus_import_id == Corpus.import_id)
-        .join(
-            published_families,
-            published_families.c.family_import_id == Family.import_id,
-        )
-        .filter(geographies_subquery.c.family_import_id == Family.import_id)
         .filter(Corpus.import_id.in_(allowed_corpora_ids))
-        .order_by(Family.last_modified.desc())
-        .limit(5)
+        .order_by(Family.created.desc())
+        .limit(limit)
         .options(lazyload("*"))
     )
 
     families = query.all()
 
-    return [
-        to_latest_published_response_family(family, geographies, metadata)
-        for family, geographies, metadata in families
-    ]
+    return [to_latest_response_family(family) for family in families]
 
 
-def to_latest_published_response_family(
-    family: Family, geographies: list[str], metadata: FamilyMetadata
-) -> LatestUpdatedFamilyResponse:
-    return LatestUpdatedFamilyResponse(
+def get_latest_slug(slugs) -> str | None:
+    if not slugs:
+        return None
+
+    if len(slugs) == 1:
+        return slugs[0].name
+
+    latest_slug = max(slugs, key=lambda slug: slug.created)
+    return latest_slug.name
+
+
+def to_latest_response_family(family: Family) -> LatestFamilyResponse:
+    return LatestFamilyResponse(
         import_id=str(family.import_id),
         title=str(family.title),
-        description=str(family.description),
-        family_category=str(family.family_category),
-        published_date=str(family.published_date),  # type: ignore
-        last_modified=str(family.last_modified),
-        metadata=dict(metadata.value),  # type: ignore
-        geographies=geographies,
-        slugs=[str(slug) for slug in family.slugs] if family.slugs else [],
+        created=str(family.created),
+        slug=get_latest_slug(family.slugs),
     )

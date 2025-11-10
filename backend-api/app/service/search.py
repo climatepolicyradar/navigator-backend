@@ -1,36 +1,20 @@
-import csv
-import itertools
 import logging
 import re
-from collections import defaultdict
 from enum import Enum
-from io import StringIO
-from typing import Any, Mapping, Optional, Sequence, Tuple, cast
+from typing import Mapping, Optional, Sequence, Tuple
 
 from cpr_sdk.exceptions import QueryError
 from cpr_sdk.models.search import Document as CprSdkResponseDocument
 from cpr_sdk.models.search import Family as CprSdkResponseFamily
 from cpr_sdk.models.search import Filters as CprSdkKeywordFilters
+from cpr_sdk.models.search import Hit as CprSdkResponseHit
 from cpr_sdk.models.search import Passage as CprSdkResponsePassage
 from cpr_sdk.models.search import SearchParameters
 from cpr_sdk.models.search import SearchResponse as CprSdkSearchResponse
 from cpr_sdk.models.search import filter_fields
 from cpr_sdk.search_adaptors import VespaSearchAdapter
-from db_client.models.dfce import (
-    Collection,
-    CollectionFamily,
-    Family,
-    FamilyDocument,
-    FamilyMetadata,
-    Slug,
-)
-from db_client.models.dfce.family import (
-    Corpus,
-    DocumentStatus,
-    FamilyCorpus,
-    FamilyStatus,
-)
-from db_client.models.organisation import Organisation
+from db_client.models.dfce import Family, FamilyDocument, FamilyMetadata
+from db_client.models.dfce.family import FamilyStatus
 from sqlalchemy.orm import Session
 
 from app.clients.aws.client import S3Client
@@ -52,10 +36,7 @@ from app.repository.lookups import (
 from app.repository.lookups import (
     validate_subdivision_iso_codes,  # TODO: update this to use geographies api endpoint when refactoring geographies to use iso codes
 )
-from app.repository.lookups import (
-    doc_type_from_family_document_metadata,
-    get_countries_for_region,
-)
+from app.repository.lookups import get_countries_for_region
 from app.service.util import to_cdn_url
 from app.telemetry import observe
 
@@ -66,238 +47,6 @@ class SearchType(str, Enum):
     standard = "standard"
     browse = "browse"
     browse_with_concepts = "browse_with_concepts"
-
-
-_CSV_SEARCH_RESPONSE_COLUMNS = [
-    "Collection Name",
-    "Collection Summary",
-    "Family Name",
-    "Family Summary",
-    "Family URL",
-    "Family Publication Date",
-    "Geographies",
-    "Document Title",
-    "Document URL",
-    "Document Content URL",
-    "Document Type",
-    "Document Content Matches Search Phrase",
-    "Category",
-    "Languages",
-    "Source",
-]
-
-
-def _get_extra_csv_info(
-    db: Session,
-    families: Sequence[SearchResponseFamily],
-) -> Mapping[str, Any]:
-    all_family_slugs = [f.family_slug for f in families]
-
-    slug_and_family_metadata = (
-        db.query(Slug, FamilyMetadata)
-        .filter(Slug.name.in_(all_family_slugs))
-        .join(FamilyMetadata, FamilyMetadata.family_import_id == Slug.family_import_id)
-        .all()
-    )
-    slug_and_organisation = (
-        db.query(Slug, Organisation)
-        .filter(Slug.name.in_(all_family_slugs))
-        .join(FamilyCorpus, FamilyCorpus.family_import_id == Slug.family_import_id)
-        .join(Corpus, Corpus.import_id == FamilyCorpus.corpus_import_id)
-        .join(Organisation, Organisation.id == Corpus.organisation_id)
-    )
-    slug_and_family_document = (
-        db.query(Slug, FamilyDocument)
-        .filter(Slug.name.in_(all_family_slugs))
-        .join(Family, Family.import_id == Slug.family_import_id)
-        .join(FamilyDocument, Family.import_id == FamilyDocument.family_import_id)
-        .filter(FamilyDocument.document_status == DocumentStatus.PUBLISHED)
-        .all()
-    )
-    # For now there is max one collection per family
-    slug_and_collection = (
-        db.query(Slug, Collection)
-        .filter(Slug.name.in_(all_family_slugs))
-        .join(
-            CollectionFamily, CollectionFamily.family_import_id == Slug.family_import_id
-        )
-        .join(Collection, Collection.import_id == CollectionFamily.collection_import_id)
-        .all()
-    )
-    family_slug_to_documents = defaultdict(list)
-    for slug, document in slug_and_family_document:
-        family_slug_to_documents[slug.name].append(document)
-    extra_csv_info = {
-        "metadata": {
-            slug.name: meta.value for (slug, meta) in slug_and_family_metadata
-        },
-        "source": {slug.name: org.name for (slug, org) in slug_and_organisation},
-        "documents": family_slug_to_documents,
-        "collection": {
-            slug.name: collection for (slug, collection) in slug_and_collection
-        },
-    }
-
-    return extra_csv_info
-
-
-@observe("process_result_into_csv")
-def process_result_into_csv(
-    db: Session,
-    search_response: SearchResponse,
-    base_url: Optional[str],
-    is_browse: bool,
-) -> str:
-    """
-    Process a search/browse result into a CSV file for download.
-
-    :param Session db: database session for supplementary queries
-    :param SearchResponse search_response: the search result to process
-    :param bool is_browse: a flag indicating whether this is a search/browse result
-    :return str: the search result represented as CSV
-    """
-    extra_required_info = _get_extra_csv_info(db, search_response.families)
-    all_matching_document_slugs = {
-        d.document_slug
-        for f in search_response.families
-        for d in f.family_documents
-        if d.document_passage_matches
-    }
-
-    if base_url is None:
-        raise ValidationError("Error creating CSV")
-
-    scheme = "http" if "localhost" in base_url else "https"
-    url_base = f"{scheme}://{base_url}"
-    metadata_keys = {}
-    rows = []
-    for family in search_response.families:
-        _LOGGER.debug(f"Family: {family}")
-        family_metadata = extra_required_info["metadata"].get(family.family_slug, {})
-        if not family_metadata:
-            _LOGGER.error(f"Failed to find metadata for '{family.family_slug}'")
-        family_source = extra_required_info["source"].get(family.family_slug, "")
-        if not family_source:
-            _LOGGER.error(f"Failed to identify organisation for '{family.family_slug}'")
-
-        if family_source not in metadata_keys:
-            metadata_keys[family_source] = list(
-                [key.title() for key in family_metadata.keys()]
-            )
-
-        family_geos = ";".join(
-            [cast(str, geo) for geo in family.family_geographies]
-            if family is not None
-            else []
-        )
-        metadata: dict[str, str] = defaultdict(str)
-        for k in family_metadata:
-            metadata[k.title()] = ";".join(family_metadata.get(k, []))
-
-        collection_name = ""
-        collection_summary = ""
-        collection = extra_required_info["collection"].get(family.family_slug)
-        if collection is not None:
-            collection_name = collection.title
-            collection_summary = collection.description
-
-        family_documents: Sequence[FamilyDocument] = extra_required_info["documents"][
-            family.family_slug
-        ]
-        if family_documents:
-            for document in family_documents:
-                _LOGGER.info(f"Document: {document}")
-                physical_document = document.physical_document
-
-                if physical_document is None:
-                    document_content = ""
-                    document_title = ""
-                else:
-                    document_content = (
-                        to_cdn_url(cast(str, physical_document.cdn_object))
-                        or physical_document.source_url
-                        or ""
-                    )
-                    document_title = physical_document.title
-
-                if is_browse:
-                    document_match = "n/a"
-                else:
-                    if physical_document is None:
-                        document_match = "No"
-                    else:
-                        document_match = (
-                            "Yes"
-                            if bool(
-                                {slug.name for slug in document.slugs}
-                                & all_matching_document_slugs
-                            )
-                            else "No"
-                        )
-
-                document_languages = ";".join(
-                    [
-                        cast(str, language.name)
-                        for language in physical_document.languages
-                    ]
-                    if physical_document is not None
-                    else []
-                )
-
-                row = {
-                    "Collection Name": collection_name,
-                    "Collection Summary": collection_summary,
-                    "Family Name": family.family_name,
-                    "Family Summary": family.family_description,
-                    "Family Publication Date": family.family_date,
-                    "Family URL": f"{url_base}/document/{family.family_slug}",
-                    "Document Title": document_title,
-                    "Document URL": f"{url_base}/documents/{document.slugs[-1].name}",
-                    "Document Content URL": document_content,
-                    "Document Type": doc_type_from_family_document_metadata(document),
-                    "Document Content Matches Search Phrase": document_match,
-                    "Geographies": family_geos,
-                    "Category": family.family_category,
-                    "Languages": document_languages,
-                    "Source": family_source,
-                    **metadata,
-                }
-                rows.append(row)
-        else:
-            # Always write a row, even if the Family contains no documents
-            row = {
-                "Collection Name": collection_name,
-                "Collection Summary": collection_summary,
-                "Family Name": family.family_name,
-                "Family Summary": family.family_description,
-                "Family Publication Date": family.family_date,
-                "Family URL": f"{url_base}/document/{family.family_slug}",
-                "Document Title": "",
-                "Document URL": "",
-                "Document Content URL": "",
-                "Document Type": "",
-                "Document Content Matches Search Phrase": "n/a",
-                "Geographies": family_geos,
-                "Category": family.family_category,
-                "Languages": "",
-                "Source": family_source,
-                **metadata,
-            }
-            rows.append(row)
-
-    csv_result_io = StringIO("")
-    csv_fieldnames = list(
-        itertools.chain(_CSV_SEARCH_RESPONSE_COLUMNS, *metadata_keys.values())
-    )
-    writer = csv.DictWriter(
-        csv_result_io, fieldnames=csv_fieldnames, extrasaction="ignore"
-    )
-    writer.writeheader()
-    for row in rows:
-        writer.writerow(row)
-
-    csv_result_io.seek(0)
-    return csv_result_io.read()
 
 
 def _parse_text_block_id(text_block_id: Optional[str]) -> Tuple[Optional[int], int]:
@@ -409,22 +158,138 @@ def _convert_filters(
         return None
 
 
-def _process_vespa_search_response_families(
-    db: Session,
-    vespa_families: Sequence[CprSdkResponseFamily],
-    limit: int,
-    offset: int,
-    sort_within_page: bool,
-) -> Sequence[SearchResponseFamily]:
-    """
-    Process a list of cpr sdk results into a list of SearchResponse Families
+def _vespa_hit_to_search_response_family(
+    hit: CprSdkResponseHit,
+    vespa_family: CprSdkResponseFamily,
+    db_family: Family,
+) -> SearchResponseFamily:
+    """Convert a Vespa hit into a SearchResponseFamily"""
+    return SearchResponseFamily(
+        family_slug=hit.family_slug or "",
+        family_name=hit.family_name or "",
+        family_description=hit.family_description or "",
+        family_category=hit.family_category or "",
+        family_date=(
+            db_family.published_date.isoformat()
+            if db_family.published_date is not None
+            else ""
+        ),
+        family_source=hit.family_source or "",
+        corpus_import_id=hit.corpus_import_id or "",
+        corpus_type_name=hit.corpus_type_name or "",
+        family_description_match=False,
+        family_title_match=False,
+        total_passage_hits=vespa_family.total_passage_hits,
+        continuation_token=vespa_family.continuation_token,
+        prev_continuation_token=vespa_family.prev_continuation_token,
+        family_documents=[],
+        family_geographies=hit.family_geographies or [],
+        family_metadata={},
+        metadata=hit.metadata,
+    )
 
-    Note: this function requires that results from the cpr sdk library are grouped
-          by family_import_id.
-    """
-    vespa_families_to_process = vespa_families[offset : limit + offset]
-    all_response_family_ids = [vf.id for vf in vespa_families_to_process]
 
+def _vespa_passage_hit_to_search_passage(
+    hit: CprSdkResponsePassage,
+) -> SearchResponseDocumentPassage:
+    """Converts a Vespa hit into a SearchResponseDocumentPassage
+
+    Sorting logic has been moved into this function.
+
+    The sorting logic of passages within a document is as follows:
+    1. Find page number -- either from text_block_page or parse text_block_id and extract
+    2. If page number is not found, set to inf
+    3. Find block number -- parsed from text_block_id
+    4. Store both for sort.
+    """
+
+    parsed_text_block_id = _parse_text_block_id(hit.text_block_id)
+
+    # If we don't have a page number, add in what we can
+    if hit.text_block_page is None:
+        if parsed_text_block_id is None or parsed_text_block_id[0] is None:
+            hit.text_block_page = None
+        else:
+            hit.text_block_page = parsed_text_block_id[0]
+
+    # Now we can set the sort key, for within-page sorting
+    block_id_sort_key = parsed_text_block_id[
+        1
+    ]  # The _parse_text_block_id function is assumed, in original code, to return this...
+
+    return SearchResponseDocumentPassage(
+        text=hit.text_block,
+        text_block_id=hit.text_block_id,
+        text_block_page=hit.text_block_page,
+        text_block_coords=hit.text_block_coords,
+        concepts=hit.concepts,
+        block_id_sort_key=block_id_sort_key,
+    )
+
+
+def _vespa_passage_hit_to_search_familydocument(
+    hit: CprSdkResponsePassage, doc_title: Optional[str] = None
+) -> SearchResponseFamilyDocument:
+    document_type = next(
+        (
+            item["value"]
+            for item in (hit.metadata or [])
+            if item["name"] == "document.type"
+        ),
+        "",
+    )
+    return SearchResponseFamilyDocument(
+        document_title=doc_title or "",  # This doesn't exist on CprSdkResponsePassage
+        document_slug=hit.document_slug or "",
+        document_type=document_type,
+        document_source_url=hit.document_source_url,
+        document_url=to_cdn_url(hit.document_cdn_object),
+        document_content_type=hit.document_content_type,
+        document_passage_matches=[],
+    )
+
+
+def _hit_is_missing_required_fields(hit: CprSdkResponseHit) -> bool:
+    return (
+        hit.family_slug is None
+        or hit.document_slug is None
+        or hit.family_name is None
+        or hit.family_category is None
+        or hit.family_source is None
+        or hit.family_geographies is None
+        or hit.family_import_id is None
+    )
+
+
+def _family_is_not_found_or_not_published(
+    fam_tuple: Optional[tuple[Family, FamilyMetadata]]
+) -> bool:
+    return fam_tuple is None or fam_tuple[0].family_status != FamilyStatus.PUBLISHED
+
+
+def _cached_or_new_family(
+    hit: CprSdkResponseHit,
+    lookup_table: dict,
+    vespa_family: CprSdkResponseFamily,
+    db_family: Family,
+    db_family_metadata: FamilyMetadata,
+) -> SearchResponseFamily:
+    response_family = lookup_table.get(hit.family_import_id)
+    # All hits contain required family info to create response
+    if response_family is None:
+        response_family = _vespa_hit_to_search_response_family(
+            hit, vespa_family, db_family
+        )
+
+    if isinstance(hit, CprSdkResponseDocument):
+        response_family.family_description_match = True
+        response_family.family_title_match = True
+
+    return response_family
+
+
+@observe("_get_rds_data_for_vespa_response")
+def _get_rds_data_for_vespa_response(db: Session, all_response_family_ids: list[str]):
     # TODO: Potential disparity between what's in postgres and vespa
     family_and_family_metadata: Sequence[tuple[Family, FamilyMetadata]] = (
         db.query(Family, FamilyMetadata)
@@ -442,146 +307,116 @@ def _process_vespa_search_response_families(
         for fd in fam.family_documents
     }
 
+    return db_family_lookup, db_family_document_lookup
+
+
+@observe("_process_vespa_search_response_families")
+def _process_vespa_search_response_families(
+    db: Session,
+    vespa_families: Sequence[CprSdkResponseFamily],
+    limit: int,
+    offset: int,
+    sort_within_page: bool,
+) -> Sequence[SearchResponseFamily]:
+    """
+    Process a list of cpr sdk results into a list of SearchResponse Families
+
+    We receive a flat list of hits per family. We have to transform each
+    family into a SearchResponseFamily, with a list of SearchResponseFamilyDocuments, each
+    with a list of SearchResponseDocumentPassages that have been hit. That list may be sorted.
+
+    Only results that have a published family are included in the response.
+
+    Note: this function requires that results from the cpr sdk library are grouped
+          by family_import_id.
+    """
+    vespa_families_to_process = vespa_families[offset : limit + offset]
+    all_response_family_ids = [vf.id for vf in vespa_families_to_process]
+    db_family_lookup, db_family_document_lookup = _get_rds_data_for_vespa_response(
+        db, all_response_family_ids
+    )
+
     response_families = []
     response_family = None
 
     for vespa_family in vespa_families_to_process:
+        response_family_lookup: Mapping[str, SearchResponseFamily] = {}
+        response_document_lookup: Mapping[str, SearchResponseFamilyDocument] = {}
+
         db_family_tuple = db_family_lookup.get(vespa_family.id)
-        if db_family_tuple is None:
-            _LOGGER.error(f"Could not locate family with import id '{vespa_family.id}'")
-            continue
-        if db_family_tuple[0].family_status != FamilyStatus.PUBLISHED:
-            _LOGGER.debug(
-                f"Skipping unpublished family with id '{vespa_family.id}' "
-                "in search results"
+
+        if _family_is_not_found_or_not_published(db_family_tuple):
+            _LOGGER.info(
+                f"Skipping unfound or unpublished family with id '{vespa_family.id}' in search results"
             )
             continue
-        db_family = db_family_tuple[0]
-        db_family_metadata = db_family_tuple[1]
 
-        response_family_lookup = {}
-        response_document_lookup = {}
+        db_family = db_family_tuple[0]  # type: ignore -- we know it exists from check above
+        db_family_metadata = db_family_tuple[1]  # type: ignore -- we know it exists
 
         for hit in vespa_family.hits:
-            family_import_id = hit.family_import_id
-            if family_import_id is None:
-                _LOGGER.error("Skipping hit with empty family import id")
-                continue
-
-            # Check for all required family/document fields in the hit
-            if (
-                hit.family_slug is None
-                or hit.document_slug is None
-                or hit.family_name is None
-                or hit.family_category is None
-                or hit.family_source is None
-                or hit.family_geographies is None
-            ):
-                _LOGGER.error(
-                    "Skipping hit with empty required family info for import "
-                    f"id: {family_import_id}"
+            if _hit_is_missing_required_fields(hit):
+                _LOGGER.info(
+                    "Skipping hit with empty required family import_id OR info for import "
+                    f"id: {hit.family_import_id}"
                 )
                 continue
 
-            response_family = response_family_lookup.get(family_import_id)
-            # All hits contain required family info to create response
-            if response_family is None:
-                response_family = SearchResponseFamily(
-                    family_slug=hit.family_slug,
-                    family_name=hit.family_name,
-                    family_description=hit.family_description or "",
-                    family_category=hit.family_category,
-                    family_date=(
-                        db_family.published_date.isoformat()
-                        if db_family.published_date is not None
-                        else ""
-                    ),
-                    family_last_updated_date=(
-                        db_family.last_updated_date.isoformat()
-                        if db_family.last_updated_date is not None
-                        else ""
-                    ),
-                    family_source=hit.family_source,
-                    corpus_import_id=hit.corpus_import_id or "",
-                    corpus_type_name=hit.corpus_type_name or "",
-                    family_description_match=False,
-                    family_title_match=False,
-                    total_passage_hits=vespa_family.total_passage_hits,
-                    continuation_token=vespa_family.continuation_token,
-                    prev_continuation_token=vespa_family.prev_continuation_token,
-                    family_documents=[],
-                    family_geographies=hit.family_geographies,
-                    family_metadata=cast(dict, db_family_metadata.value),
-                )
-                response_family_lookup[family_import_id] = response_family
+            response_family = _cached_or_new_family(
+                hit, response_family_lookup, vespa_family, db_family, db_family_metadata
+            )
+            response_family_lookup[hit.family_import_id] = response_family  # type: ignore -- we know it exists from check above
 
-            if isinstance(hit, CprSdkResponseDocument):
-                response_family.family_description_match = True
-                response_family.family_title_match = True
-
-            elif isinstance(hit, CprSdkResponsePassage):
-                document_import_id = hit.document_import_id
-                if document_import_id is None:
+            if isinstance(hit, CprSdkResponsePassage):
+                if hit.document_import_id is None:
                     _LOGGER.error("Skipping hit with empty document import id")
                     continue
 
-                response_document = response_document_lookup.get(document_import_id)
+                response_document = response_document_lookup.get(hit.document_import_id)
                 if response_document is None:
                     db_family_document = db_family_document_lookup.get(
-                        document_import_id
+                        hit.document_import_id
                     )
                     if db_family_document is None:
                         _LOGGER.error(
                             "Skipping unknown family document with id "
-                            f"'{document_import_id}'"
+                            f"'{hit.document_import_id}'"
                         )
                         continue
 
-                    response_document = SearchResponseFamilyDocument(
-                        document_title=str(db_family_document.physical_document.title),
-                        document_slug=hit.document_slug,
-                        document_type=doc_type_from_family_document_metadata(
-                            db_family_document
-                        ),
-                        document_source_url=hit.document_source_url,
-                        document_url=to_cdn_url(hit.document_cdn_object),
-                        document_content_type=hit.document_content_type,
-                        document_passage_matches=[],
+                    response_document = _vespa_passage_hit_to_search_familydocument(
+                        hit, db_family_document.physical_document.title
                     )
-                    response_document_lookup[document_import_id] = response_document
+                    response_document_lookup[hit.document_import_id] = response_document
                     response_family.family_documents.append(response_document)
 
                 response_document.document_passage_matches.append(
-                    SearchResponseDocumentPassage(
-                        text=hit.text_block,
-                        text_block_id=hit.text_block_id,
-                        text_block_page=hit.text_block_page,
-                        text_block_coords=hit.text_block_coords,
-                        concepts=hit.concepts,
-                    )
+                    _vespa_passage_hit_to_search_passage(hit)
                 )
-                if sort_within_page:
-                    response_document.document_passage_matches.sort(
-                        key=lambda x: (
-                            (
-                                x.text_block_page
-                                if x.text_block_page is not None
-                                else (
-                                    _parse_text_block_id(x.text_block_id)[0]
-                                    if _parse_text_block_id(x.text_block_id)[0]
-                                    is not None
-                                    else float("inf")
-                                )
-                            ),
-                            _parse_text_block_id(x.text_block_id)[1],
-                        )
-                    )
-
             else:
-                _LOGGER.error(f"Unknown hit type: {type(hit)}")
+                _LOGGER.info(f"Unknown hit type: {type(hit)}")
 
         response_families.append(response_family)
         response_family = None
+
+    # OK NOW lets sort the passages within each document
+
+    if sort_within_page:
+        for response_family in response_families:
+            for response_document in response_family.family_documents:
+                # Updated to use keys from _vespa_passage_hit_to_search_passage
+                # So we don't need defensive logic here.
+                response_document.document_passage_matches.sort(
+                    key=lambda x: (
+                        (
+                            x.text_block_page
+                            if x.text_block_page is not None
+                            else float("inf")
+                        ),
+                        x.block_id_sort_key,
+                    )
+                )
+
     return response_families
 
 

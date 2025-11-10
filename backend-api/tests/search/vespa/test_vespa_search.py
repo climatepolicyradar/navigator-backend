@@ -291,3 +291,33 @@ def test_search_with_deleted_docs(
     assert len(all_deleted_body["families"]) == 0
 
     assert mock_corpora_exist_in_db.assert_called
+
+
+@pytest.mark.search
+@patch(
+    "app.api.api_v1.routers.search.AppTokenFactory.verify_corpora_in_db",
+    return_value=True,
+)
+def test_passage_hit_doc_titles_not_none(
+    mock_corpora_exist_in_db,
+    test_vespa,
+    data_db,
+    monkeypatch,
+    data_client,
+    valid_token,
+):
+    _populate_db_families(data_db)
+
+    params = {
+        "query_string": "and",
+        "exact_match": True,
+    }
+    body = _make_search_request(data_client, valid_token, params)
+
+    assert len(body["families"]) > 0
+
+    for family in body["families"]:
+        for document in family["family_documents"]:
+            assert document["document_title"] not in ["None", None]
+
+    assert mock_corpora_exist_in_db.assert_called

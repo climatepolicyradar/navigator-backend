@@ -1,11 +1,11 @@
 # dev
 # should be used for first run
-bootstrap:
-    just initial-data
+bootstrap environment profile="":
+    just initial-data {{environment}} {{profile}}
 
-initial-data environment:
+initial-data environment profile="":
     @echo "🔄 downloading latest data from s3"
-    aws s3 sync s3://cpr-{{environment}}-document-cache/concepts initial-data
+    {{ if profile != "" { "AWS_PROFILE=" + profile } else { "" } }} aws s3 sync s3://cpr-{{environment}}-document-cache/concepts initial-data
     # ENV is used in create_duckdb to calculate which classifier_spec file to use
     ENV={{environment}} uv run python create_duckdb.py
 
@@ -14,7 +14,7 @@ dev:
     just initial-data production
     docker compose up
 
-# You need to run this version if you have made changes to the requirements.txt file
+# Run if you've changed the dependencies.
 dev-rebuild:
     just initial-data production
     docker compose up --build
@@ -22,8 +22,3 @@ dev-rebuild:
 prebuild environment:
     uv sync --group prebuild
     just initial-data {{environment}}
-
-# build
-# TODO: this needs to be tied into a lifecycle somewhere to make sure it is run if something is added
-requirements:
-    uv pip freeze > requirements.txt

@@ -4,6 +4,20 @@ Searches for documents.
 All endpoints should perform document searches using the SearchRequestBody as
 its input. The individual endpoints will return different responses tailored
 for the type of document search being performed.
+
+
+FastAPI docs:
+> If you are using third party libraries that tell you to call them with await, like:
+
+> results = await some_library()
+> Then, declare your path operation functions with async def like:
+
+> @app.get('/')
+> async def read_results():
+>     results = await some_library()
+>     return results
+
+https://fastapi.tiangolo.com/async/
 """
 
 import logging
@@ -28,12 +42,11 @@ from app.config import (
 from app.errors import ValidationError
 from app.models.search import SearchRequestBody, SearchResponse
 from app.service.custom_app import AppTokenFactory
-from app.service.download import create_data_download_zip_archive
-from app.service.search import (
-    get_s3_doc_url_from_cdn,
-    make_search_request,
+from app.service.download import (
+    create_data_download_zip_archive,
     process_result_into_csv,
 )
+from app.service.search import get_s3_doc_url_from_cdn, make_search_request
 from app.service.vespa import get_vespa_search_adapter
 from app.telemetry import convert_to_loggable_string
 from app.telemetry_exceptions import ExceptionHandlingTelemetryRoute
@@ -212,7 +225,7 @@ def download_search_documents(
         )
 
     content_str = process_result_into_csv(
-        db, search_response, token.aud, is_browse=is_browse
+        db, search_response.families, token.aud, is_browse=is_browse, theme=token.sub
     )
 
     _LOGGER.debug(f"Downloading search results as CSV: {content_str}")
@@ -280,7 +293,7 @@ def download_all_search_documents(
     if valid_credentials is True and (not s3_client.document_exists(s3_document)):
         aws_env = (
             "production"
-            if "staging" not in PUBLIC_APP_URL and "localhost"
+            if all(x not in PUBLIC_APP_URL.lower() for x in ["staging", "localhost"])
             else "staging"
         )
         _LOGGER.info(
@@ -291,8 +304,29 @@ def download_all_search_documents(
         # upload a buffer, it starts from the position it is currently in. We need to
         # add the seek(0) to reset the buffer position to the beginning before writing
         # to S3 to avoid creating an empty file.
+        # Handle case where PUBLIC_APP_URL and token audience might already include
+        # protocol
+        is_localhost = "localhost" in PUBLIC_APP_URL.lower()
+        scheme = "http" if is_localhost else "https"
+        if is_localhost or token.aud is None:
+            if PUBLIC_APP_URL.lower().startswith(("http://", "https://")):
+                url_base = PUBLIC_APP_URL.lower()
+            else:
+                url_base = f"{scheme}://{PUBLIC_APP_URL.lower()}"
+
+        else:
+            url_base = (
+                f"{scheme}://{token.aud.lower()}"
+                if not token.aud.lower().startswith(("http://", "https://"))
+                else token.aud.lower()
+            )
+
         zip_buffer = create_data_download_zip_archive(
-            latest_ingest_start, token.allowed_corpora_ids, db
+            latest_ingest_start,
+            token.allowed_corpora_ids,
+            db,
+            token.sub.lower() if token.sub else None,
+            url_base,
         )
         zip_buffer.seek(0)
 

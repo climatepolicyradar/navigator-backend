@@ -1,6 +1,7 @@
 import logging
 import logging.config
 import os
+import threading
 from contextlib import asynccontextmanager
 
 import json_logging
@@ -9,7 +10,6 @@ from fastapi import APIRouter, Depends, FastAPI
 from fastapi.middleware.cors import CORSMiddleware
 from fastapi_health import health
 from fastapi_pagination import add_pagination
-from starlette.requests import Request
 
 from app import config
 from app.api.api_v1.routers.admin import admin_document_router
@@ -22,7 +22,6 @@ from app.api.api_v1.routers.pipeline_trigger import pipeline_trigger_router
 from app.api.api_v1.routers.search import search_router
 from app.api.api_v1.routers.summaries import summary_router
 from app.api.api_v1.routers.world_map import world_map_router
-from app.clients.db.session import get_db
 from app.service.auth import get_superuser_details
 from app.service.health import is_database_online
 from app.service.vespa import make_vespa_search_adapter
@@ -83,12 +82,17 @@ _docs_url = "/api/docs" if ENABLE_API_DOCS else None
 _openapi_url = "/api" if ENABLE_API_DOCS else None
 
 
+# Lifespan context manager for startup/shutdown events
 @asynccontextmanager
-async def lifespan(app_: FastAPI):
-    _LOGGER.info("Starting up...")
+async def lifespan(app: FastAPI):
+    # Startup
+    _LOGGER.info(
+        f"Starting FastAPI application | PID: {os.getpid()} | Main Thread: {threading.current_thread().name}"
+    )
+    _LOGGER.info(f"Thread count at startup: {threading.active_count()}")
     app.state.vespa_search_adapter = make_vespa_search_adapter()
     yield
-    _LOGGER.info("Shutting down...")
+    # Shutdown
 
 
 app = FastAPI(
@@ -112,7 +116,8 @@ _ALLOW_ORIGIN_REGEX = (
     r"https://climate-laws\.org|"
     r"https://.+\.climate-laws\.org|"
     r"https://climateprojectexplorer\.org|"
-    r"https://.+\.climateprojectexplorer\.org"
+    r"https://.+\.climateprojectexplorer\.org|"
+    r"https://.+\.climatecasechart\.com"
 )
 
 # Add CORS middleware to allow cross origin requests from any port
@@ -126,14 +131,6 @@ app.add_middleware(
 
 # add health endpoint
 app.add_api_route("/health", health([is_database_online]), include_in_schema=False)
-
-
-@app.middleware("http")
-async def db_session_middleware(request: Request, call_next):
-    request.state.db = get_db()
-    response = await call_next(request)
-    request.state.db.close()
-    return response
 
 
 @app.get("/api/v1", include_in_schema=False)

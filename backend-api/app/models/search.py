@@ -1,7 +1,7 @@
 from enum import Enum
-from typing import Any, List, Literal, Mapping, Optional, Sequence
+from typing import List, Literal, Mapping, Optional, Sequence
 
-from cpr_sdk.models.search import Concept
+from cpr_sdk.models.search import Passage
 from cpr_sdk.models.search import SearchParameters as CprSdkSearchParameters
 from db_client.models.dfce import FamilyCategory
 from pydantic import (
@@ -150,7 +150,8 @@ class SearchResponseDocumentPassage(BaseModel):
     text_block_id: str
     text_block_page: Optional[int] = None
     text_block_coords: Optional[Sequence[Coord]] = None
-    concepts: Optional[Sequence[Concept]] = None
+    concepts: Optional[Sequence[Passage.Concept]] = None
+    block_id_sort_key: Optional[int] = None
 
 
 class SearchResponseFamilyDocument(BaseModel):
@@ -243,12 +244,6 @@ class SearchResponseFamily(BaseModel):
     this family (e.g., Passed/Approved, Project Approved or Concept Approved).
     """
 
-    family_last_updated_date: str
-    """
-    The date the family of documents was published, this is from the most recent event
-    of this family of documents.
-    """
-
     family_source: str
     """
     The source, currently organisation name. Either “CCLW” or “UNFCCC”
@@ -302,6 +297,11 @@ class SearchResponseFamily(BaseModel):
     Passage level continuation token. Can be used in conjunction with the family level
     `this continuation_token` to get the previous page of passages for this specific
     family
+    """
+
+    metadata: Optional[Sequence[dict[str, str]]] = None
+    """
+    This is the metadata is from Vespa which is a mixture of document and family metadata.
     """
 
 
@@ -374,8 +374,8 @@ class GeographySummaryFamilyResponse(BaseModel):
     targets: Sequence[str]  # TODO: Placeholder for later
 
 
-class LatestUpdatedFamilyResponse(BaseModel):
-    """Response model for the latest updated families endpoint."""
+class LatestFamilyResponse(BaseModel):
+    """Response model for the latest created families endpoint."""
 
     model_config = ConfigDict(use_attribute_docstrings=True)
 
@@ -383,20 +383,10 @@ class LatestUpdatedFamilyResponse(BaseModel):
     """The import ID of the family."""
     title: str
     """The title of the family."""
-    description: str
-    """The description of the family."""
-    family_category: str
-    """The category of the family."""
-    published_date: str
-    """The date the family was published."""
-    last_modified: str
-    """The date the family was last modified."""
-    metadata: dict[str, Any]
-    """Metadata associated with the family."""
-    geographies: list[str]
-    """List of geographies associated with the family."""
-    slugs: list[str]
-    """List of slugs associated with the family."""
+    created: str
+    """The date the family was created."""
+    slug: str | None
+    """The latest slug of the family."""
 
 
 class BrowseArgs(BaseModel):

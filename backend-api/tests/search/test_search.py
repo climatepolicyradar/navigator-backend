@@ -1029,6 +1029,7 @@ def test_process_vespa_search_response(
             assert fd.document_source_url == (
                 f"https://{fam_spec.family_import_id}/{fd.document_slug}"
             )
+            assert fd.document_title not in ["None", None]
             assert fd.document_title == f"{fam_spec.family_name} {fd.document_slug[-1]}"
             assert fd.document_url is not None
             assert fd.document_url.endswith(

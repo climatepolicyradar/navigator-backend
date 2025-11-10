@@ -36,8 +36,8 @@ python -c "from app import config; from app.service.custom_app import AppTokenFa
 
 ### Decoding
 
-Assuming you have your Docker containers running locally in your `navigator-backend`
-repo:
+Assuming you have your Docker containers running locally in your
+`navigator-backend` repo:
 
 ```bash
 docker compose build

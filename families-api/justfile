@@ -20,15 +20,11 @@ initial-data:
     echo "🔄 downloading latest dump from s3"
     LATEST_DUMP_KEY=$(aws s3api list-objects-v2 --bucket cpr-production-rds --prefix dumps/ --query 'sort_by(Contents, &LastModified)[-1].Key' --output=text)
     LATEST_DUMP_FILENAME=$(basename ${LATEST_DUMP_KEY})
-    rm -r ./initial-data/*.sql
+    # we just pass if there is no SQL file
+    rm -r ./initial-data/*.sql || true
     aws s3 cp s3://cpr-production-rds/${LATEST_DUMP_KEY} ./initial-data/${LATEST_DUMP_FILENAME}
 
 
 dev:
     uv sync
     docker compose --profile dev up
-
-# build
-# TODO: this needs to be tied into a lifecycle somewhere to make sure it is run if something is added
-requirements:
-    uv pip freeze > requirements.txt

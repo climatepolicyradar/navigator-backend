@@ -10,7 +10,4 @@ initial-data/*.sql
 initial-data/*.json
 initial-data/*.db
 
-# we want and need this for building the Dockerfile
-!requirements.txt
-
 s3-concepts/

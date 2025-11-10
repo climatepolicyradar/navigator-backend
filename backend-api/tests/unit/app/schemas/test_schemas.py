@@ -127,9 +127,6 @@ def test_search_response() -> None:
                 family_date=str(
                     datetime.now()
                 ),  # You can replace this with an actual date string
-                family_last_updated_date=str(
-                    datetime.now()
-                ),  # You can replace this with an actual date string
                 family_source="Example Source",
                 family_geographies=["Example Geography"],
                 family_metadata={"key1": "value1", "key2": "value2"},
