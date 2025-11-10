@@ -48,7 +48,7 @@ ENV OTEL_SERVICE_NAME="data-in-pipeline" \
     OTEL_EXPORTER_OTLP_TRACES_ENDPOINT="https://otel.prod.climatepolicyradar.org/v1/traces" \
     OTEL_EXPORTER_OTLP_METRICS_ENDPOINT="https://otel.prod.climatepolicyradar.org/v1/metrics" \
     OTEL_EXPORTER_OTLP_LOGS_ENDPOINT="https://otel.prod.climatepolicyradar.org/v1/logs" \
-    PREFECT_LOGGING_LEVEL="DEBUG" \
+    PREFECT_LOGGING_LEVEL="WARNING" \
     OTEL_RESOURCE_ATTRIBUTES="resource.environment=production,resource.service.namespace=data-fetching"
 
 # If you do not want the extra orchestration spans, set to "False".
