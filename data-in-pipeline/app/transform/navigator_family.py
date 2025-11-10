@@ -1,6 +1,7 @@
 from app.extract.connectors import NavigatorFamily
 from returns.result import Failure, Result, Success
 
+from app.extract.connectors import NavigatorFamily
 from app.models import Document, Identified
 from app.transform.models import CouldNotTransform, NoMatchingTransformations
 
