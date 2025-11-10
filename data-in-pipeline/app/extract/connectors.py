@@ -80,7 +80,7 @@ class NavigatorConnector(HTTPConnector):
         try:
             response_json = self.get(f"families/documents/{import_id}")
             document_data = response_json.get("data")
-            _LOGGER.debug(f"Successfully fetched document data for '{import_id}'")
+            _LOGGER.info(f"Successfully fetched document data for '{import_id}'")
 
             if not document_data:
                 raise ValueError(f"No document data in response for {import_id}")
