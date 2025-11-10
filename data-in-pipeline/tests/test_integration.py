@@ -14,9 +14,21 @@ def test_process_document_updates_flow(mock_upload):
     ]
 
 
+@patch("app.navigator_document_etl_pipeline.upload_to_s3")
+def test_process_document_updates_flow_with_invalid_id(mock_upload):
+    mock_upload.return_value = None
+    assert process_document_updates(["CCLW.INVALID_ID"]) == []
+
+
 @patch("app.navigator_family_etl_pipeline.upload_to_s3")
 def test_process_family_updates_flow(mock_upload):
     mock_upload.return_value = None
     assert process_family_updates(["UNFCCC.family.i00000314.n0000"]) == [
         "UNFCCC.family.i00000314.n0000"
     ]
+
+
+@patch("app.navigator_family_etl_pipeline.upload_to_s3")
+def test_process_family_updates_flow_with_invalid_id(mock_upload):
+    mock_upload.return_value = None
+    assert process_family_updates(["UNFCCC.INVALID_ID"]) == []
