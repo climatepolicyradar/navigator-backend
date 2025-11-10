@@ -1,10 +1,16 @@
 import uuid
 from datetime import datetime
-from typing import Any, Generic, TypeVar
+from http import HTTPStatus
+from typing import Generic, TypeVar
 
 from pydantic import BaseModel, Field
 
 ExtractedData = TypeVar("ExtractedData")
+
+
+class ExtractedMetadata(BaseModel):
+    endpoint: str
+    http_status: HTTPStatus
 
 
 class ExtractedEnvelope(BaseModel, Generic[ExtractedData]):
@@ -19,7 +25,7 @@ class ExtractedEnvelope(BaseModel, Generic[ExtractedData]):
     connector_version: str
     run_id: str | None = None
     extracted_at: datetime = Field(default_factory=datetime.utcnow)
-    metadata: dict[str, Any] = Field(default_factory=dict)
+    metadata: ExtractedMetadata
 
 
 class Identified(BaseModel, Generic[ExtractedData]):

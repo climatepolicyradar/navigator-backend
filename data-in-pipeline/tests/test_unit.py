@@ -72,7 +72,7 @@ def test_fetch_document_success(base_config):
 
     assert isinstance(result, ExtractedEnvelope)
     assert result.source_record_id == import_id
-    assert result.metadata["http_status"] == HTTPStatus.OK
+    assert result.metadata.http_status == HTTPStatus.OK
     connector.close()
 
 
@@ -114,5 +114,5 @@ def test_fetch_family_success(base_config):
     assert isinstance(result, ExtractedEnvelope)
     assert result.source_record_id == import_id
     assert result.source_name == "navigator_family"
-    assert result.metadata["http_status"] == HTTPStatus.OK
+    assert result.metadata.http_status == HTTPStatus.OK
     connector.close()
