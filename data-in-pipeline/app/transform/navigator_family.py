@@ -1,4 +1,3 @@
-from app.extract.connectors import NavigatorFamily
 from returns.result import Failure, Result, Success
 
 from app.extract.connectors import NavigatorFamily
