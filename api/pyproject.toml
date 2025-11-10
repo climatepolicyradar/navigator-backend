@@ -12,6 +12,7 @@ dependencies = [
   "opentelemetry-exporter-otlp>=1.21.0,<2.0.0",
   "opentelemetry-instrumentation-sqlalchemy>=0.45b0",
   "opentelemetry-sdk>=1.21.0,<2.0.0",
+  "opentelemetry-distro>=0.59b0",
 ]
 
 # This is needed as we want to include this member as a package in another member of the workspace.
