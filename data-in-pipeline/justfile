@@ -8,7 +8,7 @@ test-ci:
     #!/usr/bin/env bash
     # Build and test against the Docker image
     set -euxo pipefail
-    docker build -t data-in-pipeline:test -f Dockerfile.test ..
+    docker build -t data-in-pipeline:test -f Dockerfile ..
     docker run --rm data-in-pipeline:test uv run pytest -vv
 
 deploy-to-prefect-from-local:
