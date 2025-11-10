@@ -12,7 +12,7 @@ def prefect_backend():
         yield
 
 
-@pytest.fixture(autouse=True)
+@pytest.fixture(autouse=True, scope="module")
 def disable_otel_logging(monkeypatch: pytest.MonkeyPatch):
     """
     Disable OTEL log exporting during tests.
