@@ -27,7 +27,7 @@ logging.config.dictConfig(DEFAULT_LOGGING)
 
 try:
     LoggingInstrumentor().instrument(set_logging_format=False)
-    _LOGGER.debug("🛸 Enabled OpenTelemetry logging instrumentor")
+    _LOGGER.debug("Enabled OpenTelemetry logging instrumentor")
 except Exception as exc:  # noqa: BLE001
     _LOGGER.exception("Failed to enable OpenTelemetry logging instrumentor")
     raise RuntimeError("OpenTelemetry logging instrumentor failed") from exc

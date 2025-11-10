@@ -49,12 +49,13 @@ ENV OTEL_SERVICE_NAME="data-in-pipeline" \
     OTEL_EXPORTER_OTLP_METRICS_ENDPOINT="https://otel.prod.climatepolicyradar.org/v1/metrics" \
     OTEL_EXPORTER_OTLP_LOGS_ENDPOINT="https://otel.prod.climatepolicyradar.org/v1/logs" \
     OTEL_PYTHON_LOG_LEVEL="debug" \
+    OTEL_PYTHON_LOGGER_PROVIDER="sdk" \
     OTEL_RESOURCE_ATTRIBUTES="resource.environment=production,resource.service.namespace=data-fetching"
 
 # If you do not want the extra orchestration spans, set to "False".
 # Leave as True to keep Prefect’s built-in flow/task spans.
 ENV PREFECT_CLOUD_ENABLE_ORCHESTRATION_TELEMETRY="True" \
-    PREFECT_LOGGING_LEVEL="WARNING" \
+    PREFECT_LOGGING_LEVEL="DEBUG" \
     PREFECT_LOGGING_EXTRA_LOGGERS="app"
 
 # Automatically capture Python logging and forward to OTLP
