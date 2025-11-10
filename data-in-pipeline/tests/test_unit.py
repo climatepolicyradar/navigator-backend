@@ -82,7 +82,7 @@ def test_fetch_document_no_data(base_config):
     import_id = "DOC-456"
 
     with patch.object(connector, "get", return_value={}):
-        with pytest.raises(ValueError, match="No data in response"):
+        with pytest.raises(ValueError, match="No document data in response"):
             connector.fetch_document(import_id)
     connector.close()
 
