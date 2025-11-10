@@ -14,10 +14,6 @@ def pytest_configure(config: pytest.Config) -> None:
     :return: None.
     :rtype: None
     """
-    os.environ.setdefault("OTEL_SDK_DISABLED", "true")
-    os.environ.setdefault("OTEL_LOGS_EXPORTER", "none")
-    os.environ.setdefault("OTEL_METRICS_EXPORTER", "none")
-    os.environ.setdefault("OTEL_TRACES_EXPORTER", "none")
     os.environ.setdefault(
         "OTEL_PYTHON_LOGGING_AUTO_INSTRUMENTATION_ENABLED",
         "false",
@@ -26,6 +22,18 @@ def pytest_configure(config: pytest.Config) -> None:
     os.environ.setdefault("PREFECT_LOGGING_TO_API_WHEN_MISSING_FLOW", "ignore")
     os.environ.setdefault("PREFECT_LOGGING_TO_API_WHEN_MISSING_TASK", "ignore")
     os.environ.setdefault("PREFECT_LOGGING_TO_API_WHEN_MISSING_WORKER", "ignore")
+    os.environ.setdefault("OTEL_SDK_DISABLED", "true")
+    os.environ.setdefault("OTEL_LOGS_EXPORTER", "none")
+    os.environ.setdefault("OTEL_METRICS_EXPORTER", "none")
+    os.environ.setdefault("OTEL_TRACES_EXPORTER", "none")
+    os.environ.setdefault("OTEL_EXPORTER_OTLP_ENDPOINT", "none")
+    os.environ.setdefault("OTEL_PYTHON_LOGGING_AUTO_INSTRUMENTATION_ENABLED", "false")
+    os.environ.setdefault("PREFECT_CLOUD_ENABLE_ORCHESTRATION_TELEMETRY", "False")
+    os.environ.setdefault("PREFECT_LOGGING_TO_API_ENABLED", "false")
+    os.environ.setdefault("PREFECT_LOGGING_TO_API_WHEN_MISSING_FLOW", "ignore")
+    os.environ.setdefault("PREFECT_LOGGING_TO_API_WHEN_MISSING_TASK", "ignore")
+    os.environ.setdefault("PREFECT_LOGGING_TO_API_WHEN_MISSING_WORKER", "ignore")
+    os.environ.setdefault("PREFECT_API_URL", "http://127.0.0.1:80/api")
 
 
 @pytest.fixture(autouse=True, scope="session")
