@@ -1,3 +1,5 @@
+import logging
+
 from prefect import flow, task
 from returns.pipeline import is_successful
 from returns.result import Failure, Result, Success
@@ -9,6 +11,8 @@ from app.identify.navigator_family import identify_navigator_family
 from app.load.aws_bucket import upload_to_s3
 from app.models import Document, ExtractedEnvelope, Identified
 from app.transform.navigator_family import transform_navigator_family
+
+logger = logging.getLogger(__name__)
 
 
 @task(log_prints=True)
@@ -56,12 +60,15 @@ def transform(identified: Identified[NavigatorFamily]) -> Document:
 
 
 @task(log_prints=True)
-def etl_pipeline(id: str):
+def etl_pipeline(id: str) -> Document | None:
     """Process a single document through the pipeline."""
 
     extracted_result_type = extract(id)
     if not is_successful(extracted_result_type):
-        raise Exception("Extraction failed")
+        logger.exception(
+            f"Extraction failed for {id}: {extracted_result_type.failure()}"
+        )
+        return None
     extracted = extracted_result_type.unwrap()
     identified = identify(extracted)
     document = transform(identified)
@@ -71,5 +78,6 @@ def etl_pipeline(id: str):
 
 @flow
 def process_updates(ids: list[str] = []):
-    result = etl_pipeline.map(ids)
-    return [result.result().id for result in result]
+    results = etl_pipeline.map(ids)
+    families = [r.result() for r in results]
+    return [doc.id for doc in families if doc is not None]

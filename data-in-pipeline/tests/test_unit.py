@@ -2,12 +2,19 @@ from http import HTTPStatus
 from unittest.mock import MagicMock, patch
 
 import pytest
+from returns.pipeline import is_successful
 
 from app.extract.connector_config import NavigatorConnectorConfig
-from app.extract.connectors import NavigatorConnector
+from app.extract.connectors import (
+    NavigatorConnector,
+    NavigatorDocument,
+    NavigatorFamily,
+)
 from app.extract.enums import CheckPointStorageType
-from app.models import ExtractedEnvelope
+from app.models import ExtractedEnvelope, ExtractedMetadata
+from app.navigator_document_etl_pipeline import extract as extract_document
 from app.navigator_document_etl_pipeline import load_to_s3, process_updates
+from app.navigator_family_etl_pipeline import extract as extract_family
 
 
 @pytest.fixture
@@ -116,3 +123,115 @@ def test_fetch_family_success(base_config):
     assert result.source_name == "navigator_family"
     assert result.metadata.http_status == HTTPStatus.OK
     connector.close()
+
+
+def test_extracting_family_handles_valid_id_success():
+    """Test extract task successfully processes a valid family ID."""
+
+    valid_id = "VALID_ID"
+
+    with patch(
+        "app.navigator_family_etl_pipeline.NavigatorConnector"
+    ) as mock_connector_class:
+        mock_connector_instance = MagicMock()
+        mock_connector_class.return_value = mock_connector_instance
+
+        mock_connector_instance.fetch_family.return_value = ExtractedEnvelope(
+            source_record_id=valid_id,
+            source_name="navigator_family",
+            data=NavigatorFamily(import_id=valid_id),
+            metadata=ExtractedMetadata(
+                endpoint="www.capsule-corp.com", http_status=HTTPStatus.OK
+            ),
+            raw_payload="{}",
+            connector_version="1.0.0",
+        )
+
+        result = extract_family(valid_id)
+
+    assert is_successful(result)
+    extracted = result.unwrap()
+    assert extracted.source_record_id == valid_id
+    assert extracted.source_name == "navigator_family"
+    mock_connector_instance.fetch_family.assert_called_once_with(valid_id)
+
+
+def test_extracting_family_handles_invalid_id_failure():
+    """Test extract task handles failure when connector raises exception."""
+
+    invalid_id = "INVALID_ID"
+
+    with patch(
+        "app.navigator_family_etl_pipeline.NavigatorConnector"
+    ) as mock_connector_class:
+        mock_connector_instance = MagicMock()
+        mock_connector_class.return_value = mock_connector_instance
+
+        expected_error = ConnectionError("Failed to fetch family: API unavailable")
+        mock_connector_instance.fetch_family.side_effect = expected_error
+
+        result = extract_family(invalid_id)
+
+    assert not is_successful(result)
+
+    failure_exception = result.failure()
+    assert isinstance(failure_exception, ConnectionError)
+    assert "API unavailable" in str(failure_exception)
+    mock_connector_instance.fetch_family.assert_called_once_with(invalid_id)
+
+
+def test_extracting_document_handles_valid_id_success():
+    """Test extract task successfully processes a valid family ID."""
+
+    valid_id = "VALID_ID"
+
+    with patch(
+        "app.navigator_document_etl_pipeline.NavigatorConnector"
+    ) as mock_connector_class:
+        mock_connector_instance = MagicMock()
+        mock_connector_class.return_value = mock_connector_instance
+
+        mock_connector_instance.fetch_document.return_value = ExtractedEnvelope(
+            source_record_id=valid_id,
+            source_name="navigator_document",
+            data=NavigatorDocument(import_id=valid_id),
+            metadata=ExtractedMetadata(
+                endpoint="www.capsule-corp.com", http_status=HTTPStatus.OK
+            ),
+            raw_payload="{}",
+            connector_version="1.0.0",
+        )
+
+        result = extract_document(valid_id)
+
+    assert is_successful(result)
+    extracted = result.unwrap()
+    assert extracted.source_record_id == valid_id
+    assert extracted.source_name == "navigator_document"
+    mock_connector_instance.fetch_document.assert_called_once_with(valid_id)
+
+
+def test_extracting_document_handles_invalid_id_failure():
+    """Test extract task handles failure when connector raises exception."""
+
+    invalid_id = "INVALID_ID"
+
+    with patch(
+        "app.navigator_document_etl_pipeline.NavigatorConnector"
+    ) as mock_connector_class:
+        mock_connector_instance = MagicMock()
+        mock_connector_class.return_value = mock_connector_instance
+
+        mock_connector_instance.close.return_value = None
+
+        expected_error = ConnectionError("Failed to fetch document: API timeout")
+        mock_connector_instance.fetch_document.side_effect = expected_error
+
+        result = extract_document(invalid_id)
+
+    assert not is_successful(result)
+
+    failure_exception = result.failure()
+    assert isinstance(failure_exception, ConnectionError)
+    assert "API timeout" in str(failure_exception)
+    mock_connector_instance.fetch_document.assert_called_once_with(invalid_id)
