@@ -1,11 +1,22 @@
 from unittest.mock import patch
 
-from app.navigator_document_etl_pipeline import process_updates
+from app.navigator_document_etl_pipeline import (
+    process_updates as process_document_updates,
+)
+from app.navigator_family_etl_pipeline import process_updates as process_family_updates
 
 
 @patch("app.navigator_document_etl_pipeline.upload_to_s3")
 def test_process_document_updates_flow(mock_upload):
     mock_upload.return_value = None
-    assert process_updates(["CCLW.legislative.10695.6311"]) == [
+    assert process_document_updates(["CCLW.legislative.10695.6311"]) == [
         "CCLW.legislative.10695.6311"
+    ]
+
+
+@patch("app.navigator_family_etl_pipeline.upload_to_s3")
+def test_process_family_updates_flow(mock_upload):
+    mock_upload.return_value = None
+    assert process_family_updates(["UNFCCC.family.i00000314.n0000"]) == [
+        "UNFCCC.family.i00000314.n0000"
     ]

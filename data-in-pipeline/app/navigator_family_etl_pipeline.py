@@ -1,4 +1,5 @@
 from prefect import flow, task
+from returns.result import Result, Success
 
 from app.extract.connector_config import NavigatorConnectorConfig
 from app.extract.connectors import NavigatorConnector, NavigatorFamily
@@ -10,7 +11,7 @@ from app.transform.navigator_family import transform_navigator_family
 
 
 @task(log_prints=True)
-def extract(family_id: str) -> ExtractedEnvelope[NavigatorFamily]:
+def extract(family_id: str) -> Result[ExtractedEnvelope[NavigatorFamily], Exception]:
     """Extract"""
 
     connector_config = NavigatorConnectorConfig(
@@ -23,7 +24,7 @@ def extract(family_id: str) -> ExtractedEnvelope[NavigatorFamily]:
     envelope = connector.fetch_family(family_id)
     connector.close()
 
-    return envelope
+    return Success(envelope)
 
 
 @task(log_prints=True)
@@ -53,7 +54,11 @@ def transform(identified: Identified[NavigatorFamily]) -> Document:
 @task(log_prints=True)
 def etl_pipeline(id: str):
     """Process a single document through the pipeline."""
-    extracted = extract(id)
+
+    extracted_result_type = extract(id)
+
+    extracted = extracted_result_type.unwrap()
+
     identified = identify(extracted)
     document = transform(identified)
     load_to_s3(document)
