@@ -3,9 +3,9 @@ from unittest.mock import MagicMock, patch
 
 import pytest
 
-from app.enums import CheckPointStorageType
 from app.extract.connector_config import NavigatorConnectorConfig
 from app.extract.connectors import NavigatorConnector
+from app.extract.enums import CheckPointStorageType
 from app.models import ExtractedEnvelope
 from app.navigator_document_etl_pipeline import load_to_s3, process_updates
 

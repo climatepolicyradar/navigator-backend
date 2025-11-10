@@ -3,7 +3,7 @@ from typing import Literal, Optional
 
 from pydantic import BaseModel
 
-from app.enums import CheckPointStorageType, PaginationStyle
+from app.extract.enums import CheckPointStorageType, PaginationStyle
 from app.util import get_api_url
 
 
