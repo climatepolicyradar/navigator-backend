@@ -11,7 +11,7 @@ class ExtractedEnvelope(BaseModel, Generic[ExtractedData]):
     """Envelope for extracted data from any source document."""
 
     data: ExtractedData
-    envelope_id: str = Field(default_factory=lambda: str(uuid.uuid4()))
+    id: str = Field(default_factory=lambda: str(uuid.uuid4()))
     source_name: str
     source_record_id: str
     raw_payload: str

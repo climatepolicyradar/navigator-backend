@@ -88,7 +88,7 @@ class NavigatorConnector(HTTPConnector):
 
             return ExtractedEnvelope(
                 data=document,
-                envelope_id=generate_envelope_uuid(),
+                id=generate_envelope_uuid(),
                 source_name="navigator_document",
                 source_record_id=import_id,
                 raw_payload=document.model_dump_json(),
@@ -120,7 +120,7 @@ class NavigatorConnector(HTTPConnector):
 
             return ExtractedEnvelope(
                 data=family,
-                envelope_id=generate_envelope_uuid(),
+                id=generate_envelope_uuid(),
                 source_name="navigator_family",
                 source_record_id=import_id,
                 raw_payload=family.model_dump_json(),
