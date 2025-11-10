@@ -7,7 +7,14 @@ from app.models import Identified
 from app.transform.navigator_family import transform_navigator_family
 
 if __name__ == "__main__":
-    # You will need to run cache_all_navigator_families.py first if you have not previously.
+    """
+    This script is used to assess how many families will be trasnformed when adding new trasnformations.
+    This helps speed up the development process by making the data available locally.
+
+    You will need to run `uv run python -m app.scripts.cache_all_navigator_families` at least once to make the data available locally.
+
+    We don't run that command as part of this one, as that defeats the poijnt of caching.
+    """
     with open(".data_cache/navigator_families.json", "r") as f:
         families = json.load(f)
 
