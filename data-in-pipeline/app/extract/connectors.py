@@ -7,7 +7,7 @@ from pydantic import BaseModel
 from requests.adapters import HTTPAdapter, Retry
 
 from app.extract.connector_config import NavigatorConnectorConfig
-from app.models import ExtractedEnvelope
+from app.models import ExtractedEnvelope, ExtractedMetadata
 from app.util import generate_envelope_uuid
 
 logger = logging.getLogger(__name__)
@@ -95,10 +95,10 @@ class NavigatorConnector(HTTPConnector):
                 content_type="application/json",
                 connector_version="1.0.0",
                 extracted_at=datetime.datetime.now(datetime.timezone.utc),
-                metadata={
-                    "endpoint": f"{self.config.base_url}/families/documents/{import_id}",
-                    "http_status": HTTPStatus.OK,
-                },
+                metadata=ExtractedMetadata(
+                    endpoint=f"{self.config.base_url}/families/documents/{import_id}",
+                    http_status=HTTPStatus.OK,
+                ),
             )
         except requests.RequestException as e:
             logger.exception(f"Request failed fetching {import_id}: {e}")
@@ -127,10 +127,10 @@ class NavigatorConnector(HTTPConnector):
                 content_type="application/json",
                 connector_version="1.0.0",
                 extracted_at=datetime.datetime.now(datetime.timezone.utc),
-                metadata={
-                    "endpoint": f"{self.config.base_url}/families/{import_id}",
-                    "http_status": HTTPStatus.OK,
-                },
+                metadata=ExtractedMetadata(
+                    endpoint=f"{self.config.base_url}/families/documents/{import_id}",
+                    http_status=HTTPStatus.OK,
+                ),
             )
         except requests.RequestException as e:
             logger.exception(f"Request failed fetching {import_id}: {e}")
