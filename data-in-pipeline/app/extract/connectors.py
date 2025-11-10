@@ -15,10 +15,13 @@ _LOGGER = logging.getLogger(__name__)
 
 class NavigatorDocument(BaseModel):
     import_id: str
+    title: str
 
 
 class NavigatorFamily(BaseModel):
     import_id: str
+    title: str
+    documents: list[NavigatorDocument]
 
 
 class HTTPConnector:

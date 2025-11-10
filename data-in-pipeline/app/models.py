@@ -36,3 +36,4 @@ class Identified(BaseModel, Generic[ExtractedData]):
 
 class Document(BaseModel):
     id: str
+    title: str
