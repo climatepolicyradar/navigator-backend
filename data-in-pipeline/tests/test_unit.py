@@ -4,7 +4,11 @@ from unittest.mock import MagicMock, patch
 import pytest
 
 from app.extract.connector_config import NavigatorConnectorConfig
-from app.extract.connectors import NavigatorConnector
+from app.extract.connectors import (
+    NavigatorConnector,
+    NavigatorDocument,
+    NavigatorFamily,
+)
 from app.extract.enums import CheckPointStorageType
 from app.models import ExtractedEnvelope
 from app.navigator_document_etl_pipeline import load_to_s3, process_updates
@@ -62,7 +66,11 @@ def test_fetch_document_success(base_config):
     connector = NavigatorConnector(base_config)
     import_id = "DOC-123"
 
-    mock_response = {"data": {"import_id": import_id}}
+    mock_response = {
+        "data": NavigatorDocument(
+            import_id=import_id, title="Test Document"
+        ).model_dump()
+    }
 
     with (
         patch.object(connector, "get", return_value=mock_response),
@@ -103,7 +111,13 @@ def test_fetch_family_success(base_config):
     connector = NavigatorConnector(base_config)
     import_id = "FAM-111"
 
-    mock_response = {"data": {"import_id": import_id}}
+    mock_response = {
+        "data": NavigatorFamily(
+            import_id=import_id,
+            title="Test Family",
+            documents=[NavigatorDocument(import_id=import_id, title="Test Document")],
+        ).model_dump()
+    }
 
     with (
         patch.object(connector, "get", return_value=mock_response),
