@@ -80,8 +80,6 @@ class NavigatorConnector(HTTPConnector):
     def __init__(self, config: NavigatorConnectorConfig):
         super().__init__(config)
 
-    def fetch_document(self, import_id: str) -> Result[ExtractedEnvelope, Exception]:
-        """Fetch a single document from Navigator API."""
         _LOGGER.info("OTEL_SERVICE_NAME: " + os.getenv("OTEL_SERVICE_NAME", "not set"))
         _LOGGER.info(
             "OTEL_TRACES_EXPORTER: " + os.getenv("OTEL_TRACES_EXPORTER", "not set")
@@ -150,6 +148,8 @@ class NavigatorConnector(HTTPConnector):
             + os.getenv("OTEL_PYTHON_LOGGING_AUTO_INSTRUMENTATION_ENABLED", "not set")
         )
 
+    def fetch_document(self, import_id: str) -> Result[ExtractedEnvelope, Exception]:
+        """Fetch a single document from Navigator API."""
         try:
             response_json = self.get(f"families/documents/{import_id}")
             document_data = response_json.get("data")
