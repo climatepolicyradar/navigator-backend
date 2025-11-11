@@ -1,7 +1,5 @@
-"""
-Application package initialisation including logging configuration.
-"""
+"""Application package initialisation including logging configuration."""
 
-import app.logging_config as configure_logging
+from app.logging_config import ensure_logging_active
 
-__all__ = ["configure_logging"]
+ensure_logging_active(force_instrumentation=True)
