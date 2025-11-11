@@ -51,11 +51,14 @@ def _resource_config() -> Dict[str, str]:
     }
     manifest_attributes = _load_manifest_attributes()
     attributes.update(manifest_attributes)
+
     raw_attributes = os.getenv("OTEL_RESOURCE_ATTRIBUTES")
     if raw_attributes:
         attributes.update(_parse_resource_attributes(raw_attributes))
+
     attributes["service.version"] = os.getenv("OTEL_SERVICE_VERSION", "unknown")
     _RESOURCE_ATTRIBUTES.update(attributes)
+
     return _RESOURCE_ATTRIBUTES
 
 
