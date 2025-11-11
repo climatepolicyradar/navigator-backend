@@ -74,8 +74,8 @@ def etl_pipeline(
     transformed = transform(identified)
 
     match transformed:
-        case Success(document):
-            load_to_s3(document)
+        case Success(documents):
+            load_to_s3.map(documents)
         case Failure(error):
             # TODO: do not swallow errors
             print(error)
