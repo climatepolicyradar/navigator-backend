@@ -2,7 +2,7 @@ import json
 
 from returns.result import Failure, Success
 
-from app.extract.connectors import NavigatorDocument, NavigatorFamily
+from app.extract.connectors import NavigatorCorpus, NavigatorDocument, NavigatorFamily
 from app.models import Identified
 from app.transform.navigator_family import transform_navigator_family
 
@@ -27,9 +27,13 @@ if __name__ == "__main__":
                 data=NavigatorFamily(
                     import_id=family["import_id"],
                     title=family["title"],
+                    corpus=NavigatorCorpus(
+                        import_id=family["corpus"]["import_id"],
+                    ),
                     documents=[
                         NavigatorDocument(
-                            import_id=doc["import_id"], title=doc["title"]
+                            import_id=doc["import_id"],
+                            title=doc["title"],
                         )
                         for doc in family["documents"]
                     ],

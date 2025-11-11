@@ -8,6 +8,7 @@ from returns.result import Failure, Success
 from app.extract.connector_config import NavigatorConnectorConfig
 from app.extract.connectors import (
     NavigatorConnector,
+    NavigatorCorpus,
     NavigatorDocument,
     NavigatorFamily,
 )
@@ -129,6 +130,7 @@ def test_fetch_family_success(base_config):
         "data": NavigatorFamily(
             import_id=import_id,
             title="Test Family",
+            corpus=NavigatorCorpus(import_id="COR-111"),
             documents=[NavigatorDocument(import_id=import_id, title="Test Document")],
         ).model_dump()
     }
@@ -199,7 +201,10 @@ def test_extract_document_handles_valid_id_success():
             ExtractedEnvelope(
                 source_record_id=valid_id,
                 source_name="navigator_document",
-                data=NavigatorDocument(import_id=valid_id, title="A Valid Document"),
+                data=NavigatorDocument(
+                    import_id=valid_id,
+                    title="A Valid Document",
+                ),
                 metadata=ExtractedMetadata(
                     endpoint="www.capsule-corp.com", http_status=HTTPStatus.OK
                 ),

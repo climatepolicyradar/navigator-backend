@@ -54,7 +54,7 @@ def identify(
 @task(log_prints=True)
 def transform(
     identified: Identified[NavigatorFamily],
-) -> Result[Document, NoMatchingTransformations]:
+) -> Result[list[Document], NoMatchingTransformations]:
     """Transform document to target format."""
     return transform_navigator_family(identified)
 
@@ -62,7 +62,7 @@ def transform(
 @task(log_prints=True)
 def etl_pipeline(
     id: str,
-) -> Result[Document, Exception]:
+) -> Result[list[Document], Exception]:
     """Process a single document through the pipeline."""
 
     extracted_result = extract(id)
