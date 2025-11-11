@@ -18,12 +18,13 @@ COPY ./api /app/api/
 WORKDIR /app
 
 # Copy dependency files
-COPY pyproject.toml uv.lock ./
+COPY pyproject.toml ./
 
 # Install uv (fast Python dependency manager)
 COPY --from=ghcr.io/astral-sh/uv:latest /uv /uvx /bin/
 
 # Install dependencies using the lockfile
+RUN uv lock
 RUN uv sync --project data-in-pipeline
 
 WORKDIR /app/data-in-pipeline
@@ -49,8 +50,6 @@ ENV OTEL_SERVICE_NAME="data-in-pipeline" \
     OTEL_EXPORTER_OTLP_METRICS_ENDPOINT="https://otel.prod.climatepolicyradar.org/v1/metrics" \
     OTEL_EXPORTER_OTLP_LOGS_ENDPOINT="https://otel.prod.climatepolicyradar.org/v1/logs" \
     OTEL_PYTHON_LOG_LEVEL="debug" \
-    OTEL_PYTHON_LOGGING_EXPORT_LEVEL="debug" \
-    OTEL_PYTHON_LOGGER_PROVIDER="sdk" \
     OTEL_RESOURCE_ATTRIBUTES="resource.environment=production,resource.service.namespace=data-fetching"
 
 # If you do not want the extra orchestration spans, set to "False".
@@ -61,7 +60,6 @@ ENV PREFECT_CLOUD_ENABLE_ORCHESTRATION_TELEMETRY="True" \
 
 # Automatically capture Python logging and forward to OTLP
 ENV OTEL_PYTHON_LOGGING_AUTO_INSTRUMENTATION_ENABLED="true"
-ENV DISABLE_OTEL_LOGGING="false"
 
 # Switch to non-root user
 USER prefect_user
