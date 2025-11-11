@@ -4,6 +4,9 @@ import os
 
 from opentelemetry.instrumentation.logging import LoggingInstrumentor
 
+LOG_LEVEL = os.getenv("OTEL_PYTHON_LOG_LEVEL", "INFO").upper()
+ENV = os.getenv("ENV", "production")
+
 # LOG_LEVEL = os.getenv("OTEL_PYTHON_LOG_LEVEL", "INFO").upper()
 ENV = os.getenv("ENV", "development")
 
