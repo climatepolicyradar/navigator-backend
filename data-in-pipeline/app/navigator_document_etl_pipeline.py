@@ -66,12 +66,17 @@ def etl_pipeline(
     extracted = extracted_result.unwrap()
     identified = identify(extracted)
     document = transform(identified)
-    load_to_s3(document)
+    load_to_s3(document.unwrap())
     return document
 
 
 @flow
 def process_updates(ids: list[str] = []):
     results = etl_pipeline.map(ids)
-    documents = [r.result() for r in results]
-    return [documents]
+    documents = []
+    for r in results:
+        result = r.result()
+        if is_successful(result):
+            documents.append(result.unwrap())
+
+    return documents

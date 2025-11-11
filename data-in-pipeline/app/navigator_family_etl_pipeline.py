@@ -86,4 +86,9 @@ def etl_pipeline(
 @flow
 def process_updates(ids: list[str] = []):
     result = etl_pipeline.map(ids)
-    return result
+    families = []
+    for r in result:
+        res = r.result()
+        if is_successful(res):
+            families.append(res.unwrap())
+    return families
