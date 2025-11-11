@@ -8,9 +8,9 @@ from app.transform.navigator_family import transform_navigator_family
 
 
 @pytest.fixture
-def navigator_family_with_single_matching_title_document() -> Identified[
-    NavigatorFamily
-]:
+def navigator_family_with_single_matching_title_document() -> (
+    Identified[NavigatorFamily]
+):
     return Identified(
         id="123",
         source="navigator_family",
