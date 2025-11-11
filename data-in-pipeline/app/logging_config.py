@@ -2,8 +2,9 @@ import logging
 import logging.config
 import os
 
-LOG_LEVEL = os.getenv("LOG_LEVEL", "INFO").upper()
+LOG_LEVEL = os.getenv("OTEL_PYTHON_LOG_LEVEL", "INFO").upper()
 ENV = os.getenv("ENV", "production")
+
 DEFAULT_LOGGING = {
     "version": 1,
     "disable_existing_loggers": False,
