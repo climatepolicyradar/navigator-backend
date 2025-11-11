@@ -60,6 +60,7 @@ ENV PREFECT_CLOUD_ENABLE_ORCHESTRATION_TELEMETRY="True" \
 
 # Automatically capture Python logging and forward to OTLP
 ENV OTEL_PYTHON_LOGGING_AUTO_INSTRUMENTATION_ENABLED="true"
+ENV DISABLE_OTEL_LOGGING="false"
 
 # Switch to non-root user
 USER prefect_user

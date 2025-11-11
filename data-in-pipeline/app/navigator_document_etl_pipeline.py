@@ -12,7 +12,7 @@ from app.load.aws_bucket import upload_to_s3
 from app.models import Document, ExtractedEnvelope, Identified
 from app.transform.navigator_document import transform_navigator_document
 
-logger = logging.getLogger(__name__)
+_LOGGER = logging.getLogger(__name__)
 
 
 @task(log_prints=True)
@@ -61,7 +61,7 @@ def etl_pipeline(
     """ETL pipeline"""
     extracted_result = extract(id)
     if not is_successful(extracted_result):
-        logger.exception(f"Extraction failed for {id}: {extracted_result.failure()}")
+        _LOGGER.exception(f"Extraction failed for {id}: {extracted_result.failure()}")
         return Failure(extracted_result.failure())
     extracted = extracted_result.unwrap()
     identified = identify(extracted)
