@@ -1,6 +1,7 @@
 import logging
 
 from prefect import flow, task
+from prefect.runtime import flow_run, task_run
 from returns.pipeline import is_successful
 from returns.result import Failure, Result
 
@@ -26,8 +27,11 @@ def extract(
         checkpoint_key_prefix="navigator/documents/",  # TODO : Implement convention for checkpoint keys APP-1409
     )
 
+    task_run_id = task_run.get_id()
+    flow_run_id = flow_run.get_id()
+
     connector = NavigatorConnector(connector_config)
-    envelope = connector.fetch_document(document_id)
+    envelope = connector.fetch_document(document_id, task_run_id, flow_run_id)
     connector.close()
     return envelope
 

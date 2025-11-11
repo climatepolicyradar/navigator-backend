@@ -26,8 +26,8 @@ class ExtractedEnvelope(BaseModel, Generic[ExtractedData]):
     run_id: str | None = None
     extracted_at: datetime = Field(default_factory=datetime.utcnow)
     metadata: ExtractedMetadata
-    task_run_id: str
-    flow_run_id: str
+    task_run_id: str | None
+    flow_run_id: str | None
 
 
 class Identified(BaseModel, Generic[ExtractedData]):

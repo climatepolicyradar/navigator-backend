@@ -31,7 +31,7 @@ class NavigatorFamily(BaseModel):
 class PageFailure(BaseModel):
     page: int
     error: str
-    task_run_id: str
+    task_run_id: str | None
 
 
 class FetchResult(BaseModel):
@@ -93,7 +93,9 @@ class NavigatorConnector(HTTPConnector):
     def __init__(self, config: NavigatorConnectorConfig):
         super().__init__(config)
 
-    def fetch_document(self, import_id: str) -> Result[ExtractedEnvelope, Exception]:
+    def fetch_document(
+        self, import_id: str, task_run_id: str | None, flow_run_id: str | None
+    ) -> Result[ExtractedEnvelope, Exception]:
         """Fetch a single document from Navigator API."""
         try:
             response_json = self.get(f"families/documents/{import_id}")
@@ -119,6 +121,8 @@ class NavigatorConnector(HTTPConnector):
                         endpoint=f"{self.config.base_url}/families/documents/{import_id}",
                         http_status=HTTPStatus.OK,
                     ),
+                    task_run_id=task_run_id,
+                    flow_run_id=flow_run_id,
                 )
             )
         except requests.RequestException as e:
@@ -128,7 +132,9 @@ class NavigatorConnector(HTTPConnector):
             _LOGGER.exception(f"Unexpected error fetching document {import_id}")
             return Failure(e)
 
-    def fetch_family(self, import_id: str) -> Result[ExtractedEnvelope, Exception]:
+    def fetch_family(
+        self, import_id: str, task_run_id: str | None, flow_run_id: str | None
+    ) -> Result[ExtractedEnvelope, Exception]:
         """Fetch a single family from Navigator API."""
         try:
             response_json = self.get(f"families/{import_id}")
@@ -153,6 +159,8 @@ class NavigatorConnector(HTTPConnector):
                         endpoint=f"{self.config.base_url}/families/documents/{import_id}",
                         http_status=HTTPStatus.OK,
                     ),
+                    task_run_id=task_run_id,
+                    flow_run_id=flow_run_id,
                 )
             )
         except requests.RequestException as e:
@@ -163,7 +171,7 @@ class NavigatorConnector(HTTPConnector):
             return Failure(e)
 
     def fetch_all_families(
-        self, task_run_id: str, flow_run_id: str
+        self, task_run_id: str | None, flow_run_id: str | None
     ) -> Result[FetchResult, Exception]:
         """Fetch all family records from the Navigator API with pagination.
 
