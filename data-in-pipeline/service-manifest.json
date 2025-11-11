@@ -13,7 +13,7 @@
     },
     {
       "type": "s3",
-      "name": "cpr-production-document-cache"
+      "name": "cpr-cache"
     }
   ],
   "outputs": [],

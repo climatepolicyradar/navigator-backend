@@ -1,5 +1,6 @@
 import datetime
 import logging
+import os
 from http import HTTPStatus
 
 import requests
@@ -83,6 +84,74 @@ class NavigatorConnector(HTTPConnector):
 
     def __init__(self, config: NavigatorConnectorConfig):
         super().__init__(config)
+
+        _LOGGER.info("OTEL_SERVICE_NAME: " + os.getenv("OTEL_SERVICE_NAME", "not set"))
+        _LOGGER.info(
+            "OTEL_TRACES_EXPORTER: " + os.getenv("OTEL_TRACES_EXPORTER", "not set")
+        )
+        _LOGGER.info(
+            "OTEL_METRICS_EXPORTER: " + os.getenv("OTEL_METRICS_EXPORTER", "not set")
+        )
+        _LOGGER.info(
+            "OTEL_LOGS_EXPORTER: " + os.getenv("OTEL_LOGS_EXPORTER", "not set")
+        )
+        _LOGGER.info(
+            "OTEL_EXPORTER_OTLP_ENDPOINT: "
+            + os.getenv("OTEL_EXPORTER_OTLP_ENDPOINT", "not set")
+        )
+        _LOGGER.info(
+            "OTEL_EXPORTER_OTLP_PROTOCOL: "
+            + os.getenv("OTEL_EXPORTER_OTLP_PROTOCOL", "not set")
+        )
+        _LOGGER.info(
+            "OTEL_EXPORTER_OTLP_TRACES_ENDPOINT: "
+            + os.getenv("OTEL_EXPORTER_OTLP_TRACES_ENDPOINT", "not set")
+        )
+        _LOGGER.info(
+            "OTEL_EXPORTER_OTLP_METRICS_ENDPOINT: "
+            + os.getenv("OTEL_EXPORTER_OTLP_METRICS_ENDPOINT", "not set")
+        )
+        _LOGGER.info(
+            "OTEL_EXPORTER_OTLP_LOGS_ENDPOINT: "
+            + os.getenv("OTEL_EXPORTER_OTLP_LOGS_ENDPOINT", "not set")
+        )
+        _LOGGER.info(
+            "OTEL_PYTHON_LOG_LEVEL: " + os.getenv("OTEL_PYTHON_LOG_LEVEL", "not set")
+        )
+        _LOGGER.info(
+            "OTEL_RESOURCE_ATTRIBUTES: "
+            + os.getenv("OTEL_RESOURCE_ATTRIBUTES", "not set")
+        )
+        _LOGGER.info(
+            "PREFECT_CLOUD_ENABLE_ORCHESTRATION_TELEMETRY: "
+            + os.getenv("PREFECT_CLOUD_ENABLE_ORCHESTRATION_TELEMETRY", "not set")
+        )
+        _LOGGER.info(
+            "PREFECT_LOGGING_LEVEL: " + os.getenv("PREFECT_LOGGING_LEVEL", "not set")
+        )
+        _LOGGER.info(
+            "PREFECT_LOGGING_EXTRA_LOGGERS: "
+            + os.getenv("PREFECT_LOGGING_EXTRA_LOGGERS", "not set")
+        )
+        _LOGGER.info(
+            "OTEL_PYTHON_LOGGING_AUTO_INSTRUMENTATION_ENABLED: "
+            + os.getenv("OTEL_PYTHON_LOGGING_AUTO_INSTRUMENTATION_ENABLED", "not set")
+        )
+        _LOGGER.info(
+            "PREFECT_CLOUD_ENABLE_ORCHESTRATION_TELEMETRY: "
+            + os.getenv("PREFECT_CLOUD_ENABLE_ORCHESTRATION_TELEMETRY", "not set")
+        )
+        _LOGGER.info(
+            "PREFECT_LOGGING_LEVEL: " + os.getenv("PREFECT_LOGGING_LEVEL", "not set")
+        )
+        _LOGGER.info(
+            "PREFECT_LOGGING_EXTRA_LOGGERS: "
+            + os.getenv("PREFECT_LOGGING_EXTRA_LOGGERS", "not set")
+        )
+        _LOGGER.info(
+            "OTEL_PYTHON_LOGGING_AUTO_INSTRUMENTATION_ENABLED: "
+            + os.getenv("OTEL_PYTHON_LOGGING_AUTO_INSTRUMENTATION_ENABLED", "not set")
+        )
 
     def fetch_document(self, import_id: str) -> Result[ExtractedEnvelope, Exception]:
         """Fetch a single document from Navigator API."""
