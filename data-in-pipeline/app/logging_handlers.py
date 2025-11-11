@@ -51,11 +51,14 @@ def _resource_config() -> Dict[str, str]:
     }
     manifest_attributes = _load_manifest_attributes()
     attributes.update(manifest_attributes)
+
     raw_attributes = os.getenv("OTEL_RESOURCE_ATTRIBUTES")
     if raw_attributes:
         attributes.update(_parse_resource_attributes(raw_attributes))
+
     attributes["service.version"] = os.getenv("OTEL_SERVICE_VERSION", "unknown")
     _RESOURCE_ATTRIBUTES.update(attributes)
+
     return _RESOURCE_ATTRIBUTES
 
 
@@ -71,7 +74,7 @@ def _load_manifest_attributes() -> Dict[str, str]:
 
     if not _SERVICE_MANIFEST_PATH.exists():
         _LOGGER.debug(
-            "🗃️ Service manifest not found at %s.",
+            "Service manifest not found at %s.",
             _SERVICE_MANIFEST_PATH,
         )
         return {}
@@ -80,7 +83,7 @@ def _load_manifest_attributes() -> Dict[str, str]:
         manifest = json.loads(_SERVICE_MANIFEST_PATH.read_text(encoding="utf-8"))
     except (json.JSONDecodeError, OSError) as error:
         _LOGGER.exception(
-            "🧨 Failed to parse service manifest at %s.",
+            "Failed to parse service manifest at %s.",
             _SERVICE_MANIFEST_PATH,
         )
         raise RuntimeError("Service manifest parsing failed.") from error
@@ -123,7 +126,7 @@ class OTLPLogHandler(logging.Handler):
         """
         provider = get_logger_provider()
         if isinstance(provider, LoggerProvider):
-            _LOGGER.debug("🛰️ Reusing existing OTLP logger provider.")
+            _LOGGER.debug("Reusing existing OTLP logger provider.")
             return provider
 
         resource = Resource.create(_resource_config())
@@ -134,7 +137,7 @@ class OTLPLogHandler(logging.Handler):
         )
         set_logger_provider(provider)
         _LOGGER.debug(
-            "🧩 Registered OTLP logger provider with resource %s.",
+            "Registered OTLP logger provider with resource %s.",
             resource.attributes,
         )
         return provider
@@ -165,7 +168,7 @@ class OTLPLogHandler(logging.Handler):
                 or "default"
             )
             _LOGGER.debug(
-                "🛰️ Created OTLP logging handler forwarding to %s.",
+                "Created OTLP logging handler forwarding to %s.",
                 endpoint,
             )
             _HANDLER = handler

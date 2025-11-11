@@ -7,6 +7,8 @@ from opentelemetry.instrumentation.logging import LoggingInstrumentor
 LOG_LEVEL = os.getenv("OTEL_PYTHON_LOG_LEVEL", "INFO").upper()
 ENV = os.getenv("ENV", "development")
 
+_LOGGER = logging.getLogger(__name__)
+
 _INSTRUMENTED = False
 
 
@@ -18,7 +20,7 @@ def configure_logging() -> None:
     """
     root_logger = logging.getLogger()
     if root_logger.handlers:
-        _LOGGER.debug("Root logging already configured; skipping setup.")
+        _LOGGER.debug("Root logging already configured. Skipping setup.")
         return
 
     logging.basicConfig(level=LOG_LEVEL)
@@ -49,6 +51,7 @@ def _enable_logging_instrumentor(force: bool = False) -> None:
         _LOGGER.debug("OpenTelemetry logging instrumentor disabled.")
         return
 
+    global _INSTRUMENTED
     if _INSTRUMENTED and not force:
         _LOGGER.debug("OpenTelemetry logging instrumentor already enabled.")
         return
