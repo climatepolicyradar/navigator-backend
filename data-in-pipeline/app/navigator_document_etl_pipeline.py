@@ -1,4 +1,8 @@
+import logging
+
 from prefect import flow, task
+from returns.pipeline import is_successful
+from returns.result import Failure, Result
 
 from app.extract.connector_config import NavigatorConnectorConfig
 from app.extract.connectors import NavigatorConnector, NavigatorDocument
@@ -8,11 +12,14 @@ from app.load.aws_bucket import upload_to_s3
 from app.models import Document, ExtractedEnvelope, Identified
 from app.transform.navigator_document import transform_navigator_document
 
+logger = logging.getLogger(__name__)
+
 
 @task(log_prints=True)
-def extract(document_id: str) -> ExtractedEnvelope[NavigatorDocument]:
+def extract(
+    document_id: str,
+) -> Result[ExtractedEnvelope[NavigatorDocument], Exception]:
     """Extract"""
-
     connector_config = NavigatorConnectorConfig(
         source_id="navigator_document",
         checkpoint_storage=CheckPointStorageType.S3,
@@ -48,16 +55,28 @@ def transform(identified: Identified[NavigatorDocument]):
 
 
 @task(log_prints=True)
-def etl_pipeline(id: str):
+def etl_pipeline(
+    id: str,
+) -> Result[Document, Exception]:
     """ETL pipeline"""
-    extracted = extract(id)
+    extracted_result = extract(id)
+    if not is_successful(extracted_result):
+        logger.exception(f"Extraction failed for {id}: {extracted_result.failure()}")
+        return Failure(extracted_result.failure())
+    extracted = extracted_result.unwrap()
     identified = identify(extracted)
     document = transform(identified)
-    load_to_s3(document)
+    load_to_s3(document.unwrap())
     return document
 
 
 @flow
 def process_updates(ids: list[str] = []):
-    result = etl_pipeline.map(ids)
-    return [result.result().id for result in result]
+    results = etl_pipeline.map(ids)
+    documents = []
+    for r in results:
+        result = r.result()
+        if is_successful(result):
+            documents.append(result.unwrap())
+
+    return documents

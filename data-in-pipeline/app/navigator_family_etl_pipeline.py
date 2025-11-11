@@ -1,4 +1,7 @@
+import logging
+
 from prefect import flow, task
+from returns.pipeline import is_successful
 from returns.result import Failure, Result, Success
 
 from app.extract.connector_config import NavigatorConnectorConfig
@@ -10,9 +13,11 @@ from app.models import Document, ExtractedEnvelope, Identified
 from app.transform.models import NoMatchingTransformations
 from app.transform.navigator_family import transform_navigator_family
 
+logger = logging.getLogger(__name__)
+
 
 @task(log_prints=True)
-def extract(family_id: str) -> ExtractedEnvelope[NavigatorFamily]:
+def extract(family_id: str) -> Result[ExtractedEnvelope[NavigatorFamily], Exception]:
     """Extract"""
 
     connector_config = NavigatorConnectorConfig(
@@ -55,9 +60,16 @@ def transform(
 
 
 @task(log_prints=True)
-def etl_pipeline(id: str):
+def etl_pipeline(
+    id: str,
+) -> Result[Document, Exception]:
     """Process a single document through the pipeline."""
-    extracted = extract(id)
+
+    extracted_result = extract(id)
+    if not is_successful(extracted_result):
+        logger.exception(f"Extraction failed for {id}: {extracted_result.failure()}")
+        return Failure(extracted_result.failure())
+    extracted = extracted_result.unwrap()
     identified = identify(extracted)
     transformed = transform(identified)
 
@@ -74,4 +86,9 @@ def etl_pipeline(id: str):
 @flow
 def process_updates(ids: list[str] = []):
     result = etl_pipeline.map(ids)
-    return result
+    families = []
+    for r in result:
+        res = r.result()
+        if is_successful(res):
+            families.append(res.unwrap())
+    return families
