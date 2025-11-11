@@ -1,22 +1,23 @@
 import pytest
 from returns.result import Success
 
-from app.extract.connectors import NavigatorDocument, NavigatorFamily
-from app.models import Document, Identified
+from app.extract.connectors import NavigatorCorpus, NavigatorDocument, NavigatorFamily
+from app.models import Document, DocumentLabelRelationship, Identified, Label
 from app.transform.models import NoMatchingTransformations
 from app.transform.navigator_family import transform_navigator_family
 
 
 @pytest.fixture
-def navigator_family_with_single_matching_title_document() -> (
-    Identified[NavigatorFamily]
-):
+def navigator_family_with_single_matching_title_document() -> Identified[
+    NavigatorFamily
+]:
     return Identified(
         id="123",
         source="navigator_family",
         data=NavigatorFamily(
             import_id="123",
             title="Matching title on family and document",
+            corpus=NavigatorCorpus(import_id="123"),
             documents=[
                 NavigatorDocument(
                     import_id="456",
@@ -35,6 +36,7 @@ def navigator_family_with_no_matching_transformations() -> Identified[NavigatorF
         data=NavigatorFamily(
             import_id="123",
             title="No matches for this family or documents",
+            corpus=NavigatorCorpus(import_id="123"),
             documents=[
                 NavigatorDocument(
                     import_id="456",
@@ -52,10 +54,22 @@ def test_transform_navigator_document_with_single_matching_family(
         navigator_family_with_single_matching_title_document
     )
     assert result == Success(
-        Document(
-            id=navigator_family_with_single_matching_title_document.id,
-            title=navigator_family_with_single_matching_title_document.data.title,
-        )
+        [
+            Document(
+                id="456",
+                title=navigator_family_with_single_matching_title_document.data.title,
+                labels=[
+                    DocumentLabelRelationship(
+                        type="family",
+                        label=Label(
+                            id=navigator_family_with_single_matching_title_document.data.import_id,
+                            title=navigator_family_with_single_matching_title_document.data.title,
+                            type="family",
+                        ),
+                    )
+                ],
+            )
+        ]
     )
 
 
@@ -67,5 +81,5 @@ def test_no_matching_transformations(
     )
 
     result_failure = result.failure()
-    print(result_failure)
+
     assert isinstance(result_failure, NoMatchingTransformations)

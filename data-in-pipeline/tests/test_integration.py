@@ -1,6 +1,6 @@
 from unittest.mock import patch
 
-from app.models import Document
+from app.models import Document, DocumentLabelRelationship, Label
 from app.navigator_document_etl_pipeline import (
     process_updates as process_document_updates,
 )
@@ -25,9 +25,22 @@ def test_process_document_updates_flow_with_invalid_id(mock_upload):
 def test_process_family_updates_flow(mock_upload):
     mock_upload.return_value = None
     assert process_family_updates(["UNFCCC.family.i00000314.n0000"]) == [
-        Document(
-            id="UNFCCC.family.i00000314.n0000", title="Belgium UNCBD National Targets"
-        )
+        [
+            Document(
+                id="UNFCCC.document.i00000315.n0000",
+                title="Belgium UNCBD National Targets",
+                labels=[
+                    DocumentLabelRelationship(
+                        type="family",
+                        label=Label(
+                            id="UNFCCC.family.i00000314.n0000",
+                            title="Belgium UNCBD National Targets",
+                            type="family",
+                        ),
+                    )
+                ],
+            )
+        ]
     ]
 
 
