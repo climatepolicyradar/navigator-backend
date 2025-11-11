@@ -25,9 +25,12 @@ DEFAULT_LOGGING = {
 _LOGGER = logging.getLogger(__name__)
 logging.config.dictConfig(DEFAULT_LOGGING)
 
-try:
-    LoggingInstrumentor().instrument(set_logging_format=False)
-    _LOGGER.debug("Enabled OpenTelemetry logging instrumentor")
-except Exception as exc:  # noqa: BLE001
-    _LOGGER.exception("Failed to enable OpenTelemetry logging instrumentor")
-    raise RuntimeError("OpenTelemetry logging instrumentor failed") from exc
+if os.getenv("DISABLE_OTEL_LOGGING", "true").lower() == "false":
+    try:
+        LoggingInstrumentor().instrument(set_logging_format=False)
+        _LOGGER.debug("Enabled OpenTelemetry logging instrumentor")
+    except Exception as exc:  # noqa: BLE001
+        _LOGGER.exception("Failed to enable OpenTelemetry logging instrumentor")
+        raise RuntimeError("OpenTelemetry logging instrumentor failed") from exc
+else:
+    _LOGGER.debug("OpenTelemetry logging instrumentor disabled")
