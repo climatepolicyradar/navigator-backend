@@ -37,8 +37,8 @@ def load_to_s3(document: Document):
     """Upload to S3 cache"""
     upload_to_s3(
         document.model_dump_json(),
-        bucket="cpr-production-document-cache",
-        key=f"navigator/{document.id}.json",
+        bucket="cpr-cache",
+        key=f"pipelines/data-in-pipeline/navigator_document/{document.id}.json",
     )
 
 
