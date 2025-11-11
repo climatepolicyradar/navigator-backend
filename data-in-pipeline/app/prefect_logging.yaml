@@ -1,0 +1,32 @@
+version: 1 # Prefect logging configuration schema version; see https://docs.prefect.io/latest/overview/configuration/logging/#custom-logging-configuration
+disable_existing_loggers: false # Keep Prefect's existing loggers active while adding ours
+formatters:
+  standard:
+    format: "%(asctime)s | %(levelname)s | %(name)s | %(message)s" # Log format applied to all handlers
+handlers:
+  console:
+    class: prefect.logging.handlers.PrefectConsoleHandler # Prefect console handler; defaults documented at https://docs.prefect.io/latest/guides/logs/
+    level: INFO
+    formatter: standard
+  otlp:
+    class: app.logging_handlers.OTLPLogHandler # Custom handler forwarding to OTLP collector
+    level: DEBUG
+    formatter: standard
+loggers:
+  prefect:
+    level: INFO
+    handlers:
+      - console
+      - otlp
+    propagate: false # Prevent duplicate emission upwards
+  app:
+    level: DEBUG
+    handlers:
+      - console
+      - otlp
+    propagate: false
+root:
+  level: INFO
+  handlers:
+    - console
+    - otlp
