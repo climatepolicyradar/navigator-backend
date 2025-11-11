@@ -18,13 +18,12 @@ COPY ./api /app/api/
 WORKDIR /app
 
 # Copy dependency files
-COPY pyproject.toml ./
+COPY pyproject.toml uv.lock ./
 
 # Install uv (fast Python dependency manager)
 COPY --from=ghcr.io/astral-sh/uv:latest /uv /uvx /bin/
 
 # Install dependencies using the lockfile
-RUN uv lock
 RUN uv sync --project data-in-pipeline
 
 WORKDIR /app/data-in-pipeline
