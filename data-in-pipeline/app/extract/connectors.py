@@ -1,6 +1,7 @@
 import datetime
 import logging
 from http import HTTPStatus
+from typing import List
 
 import requests
 from pydantic import BaseModel
@@ -23,6 +24,17 @@ class NavigatorFamily(BaseModel):
     import_id: str
     title: str
     documents: list[NavigatorDocument]
+
+
+class PageFailure(BaseModel):
+    page: int
+    error: str
+    task_run_id: str
+
+
+class FetchResult(BaseModel):
+    envelopes: List[ExtractedEnvelope]
+    failures: List[PageFailure]
 
 
 class HTTPConnector:
