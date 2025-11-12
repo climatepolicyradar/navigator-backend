@@ -23,9 +23,7 @@ from app.transform.navigator_family import transform_navigator_family
 _LOGGER = logging.getLogger(__name__)
 
 
-def generate_s3_cache_key(
-    step: Literal["extract", "identify", "transform"], flow_run_id: str
-) -> str:
+def generate_s3_cache_key(step: Literal["extract", "identify", "transform"]) -> str:
     flow_run_id = flow_run.get_id() or "flow-run-etl-pipeline-families"
     return f"pipelines/data-in-pipeline/navigator_family/{step}/{flow_run_id}/result_{datetime.now().isoformat()}.json"
 
