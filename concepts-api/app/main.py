@@ -5,7 +5,7 @@ from pathlib import Path
 from typing import Any
 
 import duckdb
-from api.telemetry import Telemetry
+from api.telemetry import FastAPITelemetry
 from api.telemetry_config import ServiceManifest, TelemetryConfig
 from fastapi import APIRouter, Depends, FastAPI, HTTPException, Query
 from pydantic import BaseModel, Field
@@ -36,7 +36,7 @@ except Exception as _:
         environment=ENV,
     )
 
-telemetry = Telemetry(otel_config)
+telemetry = FastAPITelemetry(otel_config)
 tracer = telemetry.get_tracer()
 
 

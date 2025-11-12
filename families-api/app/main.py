@@ -3,7 +3,7 @@ import os
 from pathlib import Path
 
 from api import otel
-from api.telemetry import Telemetry
+from api.telemetry import FastAPITelemetry
 from api.telemetry_config import ServiceManifest, TelemetryConfig
 from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
@@ -34,7 +34,7 @@ except Exception as _:
         environment=ENV,
     )
 
-telemetry = Telemetry(otel_config)
+telemetry = FastAPITelemetry(otel_config)
 tracer = telemetry.get_tracer()
 
 
