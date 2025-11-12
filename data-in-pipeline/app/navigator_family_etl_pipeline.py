@@ -1,5 +1,6 @@
 import logging
 from datetime import datetime
+from typing import Literal
 
 from prefect import flow, task
 from prefect.runtime import flow_run, task_run
@@ -20,6 +21,13 @@ from app.transform.models import NoMatchingTransformations
 from app.transform.navigator_family import transform_navigator_family
 
 _LOGGER = logging.getLogger(__name__)
+
+
+def generate_s3_cache_key(
+    step: Literal["extract", "identify", "transform"], flow_run_id: str
+) -> str:
+    flow_run_id = flow_run.get_id() or "flow-run-etl-pipeline-families"
+    return f"pipelines/data-in-pipeline/navigator_family/{step}/{flow_run_id}/result_{datetime.now().isoformat()}.json"
 
 
 # ---------------------------------------------------------------------
@@ -79,11 +87,10 @@ def load_to_s3(document: Document):
 @task(log_prints=True)
 def cache_extraction_result(result: FamilyFetchResult):
     """Cache extraction result to S3 for debugging purposes."""
-    flow_run_id = flow_run.get_id() or "flow-run-etl-pipeline-families"
     upload_to_s3(
         result.model_dump_json(),
         bucket="cpr-cache",
-        key=f"pipelines/data-in-pipeline/navigator_family/{flow_run_id}_extraction_result_{datetime.now().isoformat()}.json",
+        key=generate_s3_cache_key("extract"),
     )
 
 
