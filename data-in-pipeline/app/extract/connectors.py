@@ -1,5 +1,4 @@
 import datetime
-import logging
 import os
 from http import HTTPStatus
 
@@ -9,11 +8,11 @@ from requests.adapters import HTTPAdapter, Retry
 from returns.result import Failure, Result, Success
 
 from app.extract.connector_config import NavigatorConnectorConfig
-from app.logging_config import ensure_logging_active
+from app.logging_config import ensure_logging_active, get_logger
 from app.models import ExtractedEnvelope, ExtractedMetadata
 from app.util import generate_envelope_uuid
 
-_LOGGER = logging.getLogger(__name__)
+_LOGGER = get_logger()
 ensure_logging_active()
 
 
@@ -184,10 +183,10 @@ class NavigatorConnector(HTTPConnector):
                 )
             )
         except requests.RequestException as e:
-            _LOGGER.exception(f"Request failed fetching document {import_id}")
+            _LOGGER.error(f"Request failed fetching document {import_id}")
             return Failure(e)
         except Exception as e:
-            _LOGGER.exception(f"Unexpected error fetching document {import_id}")
+            _LOGGER.error(f"Unexpected error fetching document {import_id}")
             return Failure(e)
 
     def fetch_family(self, import_id: str) -> Result[ExtractedEnvelope, Exception]:
@@ -218,8 +217,8 @@ class NavigatorConnector(HTTPConnector):
                 )
             )
         except requests.RequestException as e:
-            _LOGGER.exception(f"Request failed fetching family {import_id}")
+            _LOGGER.error(f"Request failed fetching family {import_id}")
             return Failure(e)
         except Exception as e:
-            _LOGGER.exception(f"Unexpected error fetching family {import_id}")
+            _LOGGER.error(f"Unexpected error fetching family {import_id}")
             return Failure(e)

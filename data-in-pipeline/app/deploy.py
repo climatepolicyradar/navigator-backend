@@ -1,13 +1,13 @@
-import logging
 import os
 
 from prefect import Flow
 from prefect.blocks.system import JSON
 from prefect.docker.docker_image import DockerImage
 
+from app.logging_config import get_logger
 from app.navigator_document_etl_pipeline import process_updates
 
-_LOGGER = logging.getLogger(__name__)
+_LOGGER = get_logger()
 
 MEGABYTES_PER_GIGABYTE = 1024
 DEFAULT_FLOW_VARIABLES = {

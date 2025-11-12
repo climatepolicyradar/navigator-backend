@@ -1,5 +1,3 @@
-import logging
-
 from prefect import flow, task
 from returns.pipeline import is_successful
 from returns.result import Failure, Result, Success
@@ -9,12 +7,12 @@ from app.extract.connectors import NavigatorConnector, NavigatorFamily
 from app.extract.enums import CheckPointStorageType
 from app.identify.navigator_family import identify_navigator_family
 from app.load.aws_bucket import upload_to_s3
-from app.logging_config import ensure_logging_active
+from app.logging_config import ensure_logging_active, get_logger
 from app.models import Document, ExtractedEnvelope, Identified
 from app.transform.models import NoMatchingTransformations
 from app.transform.navigator_family import transform_navigator_family
 
-logger = logging.getLogger(__name__)
+logger = get_logger()
 
 ensure_logging_active()
 
@@ -70,7 +68,7 @@ def etl_pipeline(
 
     extracted_result = extract(id)
     if not is_successful(extracted_result):
-        logger.exception(f"Extraction failed for {id}: {extracted_result.failure()}")
+        logger.error(f"Extraction failed for {id}: {extracted_result.failure()}")
         return Failure(extracted_result.failure())
     extracted = extracted_result.unwrap()
     identified = identify(extracted)
