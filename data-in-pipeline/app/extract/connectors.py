@@ -15,8 +15,6 @@ from app.util import generate_envelope_uuid
 
 _LOGGER = logging.getLogger(__name__)
 
-FATAL_HTTP_CODES = [HTTPStatus.NOT_FOUND, HTTPStatus.UNAUTHORIZED]
-
 
 class NavigatorDocument(BaseModel):
     import_id: str
@@ -281,8 +279,12 @@ class NavigatorConnector(HTTPConnector):
                     )
                     break
 
+                validated_families = [
+                    NavigatorFamily.model_validate(family) for family in families_data
+                ]
+
                 envelope = ExtractedEnvelope(
-                    data=families_data,
+                    data=validated_families,
                     id=generate_envelope_uuid(),
                     source_name="navigator_family",
                     source_record_id=f"{task_run_id}-families-endpoint-page-{page}",
