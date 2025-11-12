@@ -77,6 +77,17 @@ def load_to_s3(document: Document):
 
 
 @task(log_prints=True)
+def cache_extraction_result(result: FamilyFetchResult):
+    """Cache extraction result to S3 for debugging purposes."""
+    flow_run_id = flow_run.get_id() or "flow-run-etl-pipeline-families"
+    upload_to_s3(
+        result.model_dump_json(),
+        bucket="cpr-cache",
+        key=f"pipelines/data-in-pipeline/navigator_family/{flow_run_id}_extraction_result_{datetime.now().isoformat()}.json",
+    )
+
+
+@task(log_prints=True)
 def identify(
     extracted: list[ExtractedEnvelope[list[NavigatorFamily]]],
 ) -> Identified[NavigatorFamily]:
@@ -115,6 +126,7 @@ def etl_pipeline() -> list[Document] | Exception:
     """
 
     extracted_result = extract()
+    cache_extraction_result(extracted_result)
 
     if extracted_result.failure is not None:
         _LOGGER.error(f"Extraction failed: {extracted_result.failure}")
