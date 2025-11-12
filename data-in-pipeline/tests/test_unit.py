@@ -2,6 +2,7 @@ from http import HTTPStatus
 from unittest.mock import ANY, MagicMock, patch
 
 import pytest
+import requests
 from requests.exceptions import HTTPError
 from returns.pipeline import is_successful
 from returns.result import Failure, Success
@@ -12,6 +13,7 @@ from app.extract.connectors import (
     NavigatorCorpus,
     NavigatorDocument,
     NavigatorFamily,
+    PageFetchFailure,
 )
 from app.extract.enums import CheckPointStorageType
 from app.models import ExtractedEnvelope, ExtractedMetadata
@@ -280,3 +282,131 @@ def test_extract_document_handles_http_error():
     failure_exception = result.failure()
     assert isinstance(failure_exception, HTTPError)
     assert "404" in str(failure_exception)
+
+
+def test_fetch_all_families_successfully(base_config):
+    """Test successfully fetching families across multiple pages."""
+    connector = NavigatorConnector(base_config)
+    task_run_id = "task-001"
+    flow_run_id = "flow-001"
+
+    mock_page_1 = {
+        "data": [
+            NavigatorFamily(
+                import_id="FAM-001",
+                title="Family 1",
+                corpus=NavigatorCorpus(import_id="COR-001"),
+                documents=[],
+            ).model_dump(),
+            NavigatorFamily(
+                import_id="FAM-002",
+                title="Family 2",
+                corpus=NavigatorCorpus(import_id="COR-001"),
+                documents=[],
+            ).model_dump(),
+        ]
+    }
+    mock_page_2 = {
+        "data": [
+            NavigatorFamily(
+                import_id="FAM-003",
+                title="Family 3",
+                corpus=NavigatorCorpus(import_id="COR-002"),
+                documents=[],
+            ).model_dump()
+        ]
+    }
+    mock_page_3 = {"data": []}
+
+    with (
+        patch.object(
+            connector,
+            "get",
+            side_effect=[mock_page_1, mock_page_2, mock_page_3],
+        ),
+        patch("app.extract.connectors.generate_envelope_uuid", return_value="uuid-123"),
+    ):
+        result = connector.fetch_all_families(task_run_id, flow_run_id)
+
+    assert result.failure is None
+    assert len(result.envelopes) == 2
+    assert (
+        result.envelopes[0].source_record_id
+        == f"{task_run_id}-families-endpoint-page-1"
+    )
+    assert (
+        result.envelopes[1].source_record_id
+        == f"{task_run_id}-families-endpoint-page-2"
+    )
+    connector.close()
+
+
+def test_fetch_all_families_no_data_returned_from_endpoint(base_config):
+    """Test fetching when the first page is empty (no families exist)."""
+    connector = NavigatorConnector(base_config)
+    task_run_id = "task-001"
+    flow_run_id = "flow-001"
+
+    mock_empty_page = {"data": []}
+
+    with patch.object(connector, "get", return_value=mock_empty_page):
+        result = connector.fetch_all_families(task_run_id, flow_run_id)
+
+    assert result.failure is None
+    assert len(result.envelopes) == 0
+    connector.close()
+
+
+def test_fetch_all_families_handles_successful_retrievals_and_errors(base_config):
+    """Test that HTTP error on second page returns partial results and failure."""
+    connector = NavigatorConnector(base_config)
+    task_run_id = "task-001"
+    flow_run_id = "flow-001"
+
+    mock_page_1 = {
+        "data": [
+            NavigatorFamily(
+                import_id="FAM-001",
+                title="Family 1",
+                corpus=NavigatorCorpus(import_id="COR-001"),
+                documents=[],
+            ).model_dump()
+        ]
+    }
+    http_error = requests.HTTPError("500 Internal Server Error")
+
+    with (
+        patch.object(connector, "get", side_effect=[mock_page_1, http_error]),
+        patch("app.extract.connectors.generate_envelope_uuid", return_value="uuid-123"),
+    ):
+        result = connector.fetch_all_families(task_run_id, flow_run_id)
+
+    assert result.failure is not None
+    assert isinstance(result.failure, PageFetchFailure)
+    assert result.failure.page == 2
+    assert "500 Internal Server Error" in result.failure.error
+    assert len(result.envelopes) == 1
+    assert (
+        result.envelopes[0].source_record_id
+        == f"{task_run_id}-families-endpoint-page-1"
+    )
+    connector.close()
+
+
+def test_fetch_all_families_handles_errors(base_config):
+    """Test that unexpected exceptions are caught and returned as failures."""
+    connector = NavigatorConnector(base_config)
+    task_run_id = "task-001"
+    flow_run_id = "flow-001"
+
+    unexpected_error = ValueError("Unexpected parsing error")
+
+    with patch.object(connector, "get", side_effect=unexpected_error):
+        result = connector.fetch_all_families(task_run_id, flow_run_id)
+
+    assert result.failure is not None
+    assert isinstance(result.failure, PageFetchFailure)
+    assert result.failure.page == 1
+    assert "Unexpected parsing error" in result.failure.error
+    assert len(result.envelopes) == 0
+    connector.close()
