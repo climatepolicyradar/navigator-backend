@@ -1,6 +1,7 @@
 import logging
 import logging.config
 import os
+import sys
 
 from opentelemetry.instrumentation.logging import LoggingInstrumentor
 
@@ -23,7 +24,7 @@ def configure_logging() -> None:
         _LOGGER.debug("Root logging already configured. Skipping setup.")
         return
 
-    logging.basicConfig(level=LOG_LEVEL)
+    logging.basicConfig(level=LOG_LEVEL, stream=sys.stdout)
     current_level = logging.getLevelName(root_logger.level)
     _LOGGER.debug("Configured root logging at %s level.", current_level)
 
@@ -67,11 +68,11 @@ def _enable_logging_instrumentor(force: bool = False) -> None:
         raise RuntimeError("OpenTelemetry logging instrumentor failed.") from exc
 
 
-def ensure_logging_active(force_instrumentation: bool = False) -> None:
+def ensure_logging_active(force_instrumentation: bool = True) -> None:
     """Ensure logging configuration and instrumentation remain active.
 
     :param force_instrumentation: Whether to reinitialise instrumentation
-        even when it has already been enabled, defaults to False
+        even when it has already been enabled, defaults to True
     :type force_instrumentation: bool, optional
     :return: The function does not return anything.
     :rtype: None

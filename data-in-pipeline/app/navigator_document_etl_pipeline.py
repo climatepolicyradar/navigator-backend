@@ -15,7 +15,7 @@ from app.transform.navigator_document import transform_navigator_document
 
 _LOGGER = logging.getLogger(__name__)
 
-ensure_logging_active(force_instrumentation=True)
+ensure_logging_active()
 
 
 @task(log_prints=True)

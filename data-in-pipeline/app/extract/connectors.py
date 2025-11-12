@@ -14,7 +14,7 @@ from app.models import ExtractedEnvelope, ExtractedMetadata
 from app.util import generate_envelope_uuid
 
 _LOGGER = logging.getLogger(__name__)
-ensure_logging_active(force_instrumentation=True)
+ensure_logging_active()
 
 
 class NavigatorDocument(BaseModel):
@@ -22,10 +22,15 @@ class NavigatorDocument(BaseModel):
     title: str
 
 
+class NavigatorCorpus(BaseModel):
+    import_id: str
+
+
 class NavigatorFamily(BaseModel):
     import_id: str
     title: str
     documents: list[NavigatorDocument]
+    corpus: NavigatorCorpus
 
 
 class HTTPConnector:
