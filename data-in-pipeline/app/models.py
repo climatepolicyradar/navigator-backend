@@ -46,13 +46,20 @@ class DocumentLabelRelationship(BaseModel):
     label: Label
 
 
-class DocumentDocumentRelationship(BaseModel):
-    type: str
-    document: "Document"
-
-
-class Document(BaseModel):
+class BaseDocument(BaseModel):
     id: str
     title: str
     labels: list[DocumentLabelRelationship] = []
+
+
+class DocumentDocumentRelationship(BaseModel):
+    type: str
+    document: "DocumentWithoutRelationships"
+
+
+class Document(BaseDocument):
     relationships: list[DocumentDocumentRelationship] = []
+
+
+class DocumentWithoutRelationships(BaseDocument):
+    pass
