@@ -1,3 +1,5 @@
+target-version = "py312"
+
 # Generic, formatter-friendly config.
 select = ["D3", "E", "F", "TID252", "UP006"]
 
