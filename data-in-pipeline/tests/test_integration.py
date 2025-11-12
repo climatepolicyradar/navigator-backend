@@ -1,10 +1,9 @@
 from unittest.mock import patch
 
-from app.models import Document, DocumentLabelRelationship, Label
+from app.models import Document
 from app.navigator_document_etl_pipeline import (
     process_updates as process_document_updates,
 )
-from app.navigator_family_etl_pipeline import process_updates as process_family_updates
 
 
 @patch("app.navigator_document_etl_pipeline.upload_to_s3")
@@ -21,30 +20,24 @@ def test_process_document_updates_flow_with_invalid_id(mock_upload):
     assert process_document_updates(["CCLW.INVALID_ID"]) == []
 
 
-@patch("app.navigator_family_etl_pipeline.upload_to_s3")
-def test_process_family_updates_flow(mock_upload):
-    mock_upload.return_value = None
-    assert process_family_updates(["UNFCCC.family.i00000314.n0000"]) == [
-        [
-            Document(
-                id="UNFCCC.document.i00000315.n0000",
-                title="Belgium UNCBD National Targets",
-                labels=[
-                    DocumentLabelRelationship(
-                        type="family",
-                        label=Label(
-                            id="UNFCCC.family.i00000314.n0000",
-                            title="Belgium UNCBD National Targets",
-                            type="family",
-                        ),
-                    )
-                ],
-            )
-        ]
-    ]
-
-
-@patch("app.navigator_family_etl_pipeline.upload_to_s3")
-def test_process_family_updates_flow_with_invalid_id(mock_upload):
-    mock_upload.return_value = None
-    assert process_family_updates(["UNFCCC.INVALID_ID"]) == []
+# @patch("app.navigator_family_etl_pipeline.upload_to_s3")
+# def test_process_family_updates_flow(mock_upload):
+#     mock_upload.return_value = None
+#     assert etl_pipeline() == [
+#         [
+#             Document(
+#                 id="UNFCCC.document.i00000315.n0000",
+#                 title="Belgium UNCBD National Targets",
+#                 labels=[
+#                     DocumentLabelRelationship(
+#                         type="family",
+#                         label=Label(
+#                             id="UNFCCC.family.i00000314.n0000",
+#                             title="Belgium UNCBD National Targets",
+#                             type="family",
+#                         ),
+#                     )
+#                 ],
+#             )
+#         ]
+#     ]

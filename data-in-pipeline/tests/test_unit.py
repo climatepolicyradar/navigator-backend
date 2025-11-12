@@ -1,7 +1,8 @@
 from http import HTTPStatus
-from unittest.mock import MagicMock, patch
+from unittest.mock import ANY, MagicMock, patch
 
 import pytest
+from requests.exceptions import HTTPError
 from returns.pipeline import is_successful
 from returns.result import Failure, Success
 
@@ -14,7 +15,7 @@ from app.extract.connectors import (
 )
 from app.extract.enums import CheckPointStorageType
 from app.models import ExtractedEnvelope, ExtractedMetadata
-from app.navigator_document_etl_pipeline import load_to_s3, process_updates
+from app.navigator_document_etl_pipeline import extract, load_to_s3, process_updates
 
 
 @pytest.fixture
@@ -196,10 +197,6 @@ def test_fetch_family_http_error(base_config):
 
 def test_extract_document_handles_valid_id_success():
     """Test extract task successfully processes a valid document ID."""
-    from returns.pipeline import is_successful
-
-    from app.navigator_document_etl_pipeline import extract
-
     valid_id = "VALID_ID"
 
     with patch(
@@ -235,15 +232,12 @@ def test_extract_document_handles_valid_id_success():
     extracted = result.unwrap()
     assert extracted.source_record_id == valid_id
     assert extracted.source_name == "navigator_document"
-    mock_connector_instance.fetch_document.assert_called_once_with(valid_id)
+    # The task run id and flow run are generated inside extract by prefect so we can't assert their exact values here
+    mock_connector_instance.fetch_document.assert_called_once_with(valid_id, ANY, ANY)
 
 
 def test_extract_document_propagates_connector_failure():
     """Test extract propagates Failure when connector returns Failure."""
-    from returns.pipeline import is_successful
-
-    from app.navigator_document_etl_pipeline import extract
-
     invalid_id = "INVALID_ID"
 
     with patch(
@@ -262,16 +256,12 @@ def test_extract_document_propagates_connector_failure():
     failure_exception = result.failure()
     assert isinstance(failure_exception, ConnectionError)
     assert "API timeout" in str(failure_exception)
-    mock_connector_instance.fetch_document.assert_called_once_with(invalid_id)
+    # The task run id and flow run are generated inside extract by prefect so we can't assert their exact values here
+    mock_connector_instance.fetch_document.assert_called_once_with(invalid_id, ANY, ANY)
 
 
 def test_extract_document_handles_http_error():
     """Test extract propagates HTTPError failures from connector."""
-    from requests.exceptions import HTTPError
-    from returns.pipeline import is_successful
-
-    from app.navigator_document_etl_pipeline import extract
-
     invalid_id = "NOT_FOUND_ID"
 
     with patch(
