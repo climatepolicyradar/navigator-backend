@@ -3,7 +3,6 @@ import logging
 import os
 from pathlib import Path
 from threading import Lock
-from typing import Dict, Optional
 
 from opentelemetry._logs import get_logger_provider, set_logger_provider
 from opentelemetry.exporter.otlp.proto.http._log_exporter import OTLPLogExporter
@@ -13,22 +12,22 @@ from opentelemetry.sdk._logs.export import BatchLogRecordProcessor
 from opentelemetry.sdk.resources import Resource
 
 _LOGGER = logging.getLogger(__name__)
-_RESOURCE_ATTRIBUTES: Dict[str, str] = {}
-_MANIFEST_ATTRIBUTES: Dict[str, str] = {}
+_RESOURCE_ATTRIBUTES: dict[str, str] = {}
+_MANIFEST_ATTRIBUTES: dict[str, str] = {}
 _LOCK = Lock()
-_HANDLER: Optional[OTelLoggingHandler] = None
+_HANDLER: OTelLoggingHandler | None = None
 _SERVICE_MANIFEST_PATH = Path(__file__).resolve().parents[1] / "service-manifest.json"
 
 
-def _parse_resource_attributes(raw_attributes: str) -> Dict[str, str]:
+def _parse_resource_attributes(raw_attributes: str) -> dict[str, str]:
     """Parse OTEL resource attributes from an environment variable string.
 
     :param raw_attributes: The raw comma separated resource attributes.
     :type raw_attributes: str
     :return: Parsed key-value pairs representing resource attributes.
-    :rtype: Dict[str, str]
+    :rtype: dict[str, str]
     """
-    parsed_attributes: Dict[str, str] = {}
+    parsed_attributes: dict[str, str] = {}
     for fragment in raw_attributes.split(","):
         if "=" not in fragment:
             continue
@@ -37,16 +36,16 @@ def _parse_resource_attributes(raw_attributes: str) -> Dict[str, str]:
     return parsed_attributes
 
 
-def _resource_config() -> Dict[str, str]:
+def _resource_config() -> dict[str, str]:
     """Compose the resource attributes used for OpenTelemetry logging.
 
     :return: The resource attributes mapping.
-    :rtype: Dict[str, str]
+    :rtype: dict[str, str]
     """
     if _RESOURCE_ATTRIBUTES:
         return _RESOURCE_ATTRIBUTES
 
-    attributes: Dict[str, str] = {
+    attributes: dict[str, str] = {
         "service.name": os.getenv("OTEL_SERVICE_NAME", "data-in-pipeline"),
     }
     manifest_attributes = _load_manifest_attributes()
@@ -62,11 +61,11 @@ def _resource_config() -> Dict[str, str]:
     return _RESOURCE_ATTRIBUTES
 
 
-def _load_manifest_attributes() -> Dict[str, str]:
+def _load_manifest_attributes() -> dict[str, str]:
     """Load service metadata from the service manifest file.
 
     :return: Resource attributes derived from the manifest.
-    :rtype: Dict[str, str]
+    :rtype: dict[str, str]
     :raises RuntimeError: When the manifest cannot be parsed.
     """
     if _MANIFEST_ATTRIBUTES:
