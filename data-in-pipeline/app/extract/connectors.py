@@ -14,7 +14,7 @@ from app.models import ExtractedEnvelope, ExtractedMetadata
 from app.util import generate_envelope_uuid
 
 _LOGGER = logging.getLogger(__name__)
-ensure_logging_active(force_instrumentation=True)
+ensure_logging_active()
 
 
 class NavigatorDocument(BaseModel):

@@ -2,4 +2,4 @@
 
 from app.logging_config import ensure_logging_active
 
-ensure_logging_active(force_instrumentation=True)
+ensure_logging_active()
