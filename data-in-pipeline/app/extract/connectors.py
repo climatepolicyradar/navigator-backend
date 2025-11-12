@@ -22,10 +22,15 @@ class NavigatorDocument(BaseModel):
     title: str
 
 
+class NavigatorCorpus(BaseModel):
+    import_id: str
+
+
 class NavigatorFamily(BaseModel):
     import_id: str
     title: str
     documents: list[NavigatorDocument]
+    corpus: NavigatorCorpus
 
 
 class HTTPConnector:

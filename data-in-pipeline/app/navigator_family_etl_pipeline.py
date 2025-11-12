@@ -57,7 +57,7 @@ def identify(
 @task(log_prints=True)
 def transform(
     identified: Identified[NavigatorFamily],
-) -> Result[Document, NoMatchingTransformations]:
+) -> Result[list[Document], NoMatchingTransformations]:
     """Transform document to target format."""
     return transform_navigator_family(identified)
 
@@ -65,7 +65,7 @@ def transform(
 @task(log_prints=True)
 def etl_pipeline(
     id: str,
-) -> Result[Document, Exception]:
+) -> Result[list[Document], Exception]:
     """Process a single document through the pipeline."""
 
     extracted_result = extract(id)
@@ -77,8 +77,8 @@ def etl_pipeline(
     transformed = transform(identified)
 
     match transformed:
-        case Success(document):
-            load_to_s3(document)
+        case Success(documents):
+            load_to_s3.map(documents)
         case Failure(error):
             # TODO: do not swallow errors
             print(error)

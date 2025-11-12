@@ -23,3 +23,11 @@ deploy-to-prefect-from-local:
 
 deploy-to-prefect:
     uv run python -m app.deploy
+
+# DuckDB to serve transformation results
+# This is currently a spike to be able to better analyse, validate and share with others how the transformations are working
+duckdb-build:
+    uv run python -m app.scripts.build_duckdb
+
+duckdb-dev:
+    uv run fastapi dev ./app/scripts/serve_duckdb.py
