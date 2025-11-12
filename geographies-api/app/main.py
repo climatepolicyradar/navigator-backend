@@ -2,7 +2,7 @@ import logging
 import os
 from pathlib import Path
 
-from api import log
+from api import otel
 from api.telemetry import Telemetry
 from api.telemetry_config import ServiceManifest, TelemetryConfig
 from fastapi import FastAPI
@@ -38,7 +38,7 @@ telemetry = Telemetry(otel_config)
 tracer = telemetry.get_tracer()
 
 # Create the FastAPI app.
-log.log("geographies-api")  # NOTE: This doesn't seem to be doing anything
+otel.log("geographies-api")
 app = FastAPI(
     docs_url="/geographies/docs",
     redoc_url="/geographies/redoc",

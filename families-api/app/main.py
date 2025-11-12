@@ -2,7 +2,7 @@ import logging
 import os
 from pathlib import Path
 
-from api import log
+from api import otel
 from api.telemetry import Telemetry
 from api.telemetry_config import ServiceManifest, TelemetryConfig
 from fastapi import FastAPI
@@ -39,7 +39,7 @@ tracer = telemetry.get_tracer()
 
 
 # Create the FastAPI app
-log.log("families-api")  # NOTE: This doesn't actually seem to be doing anything.
+otel.log("families-api")
 app = FastAPI(
     docs_url="/families/docs",
     redoc_url="/families/redoc",

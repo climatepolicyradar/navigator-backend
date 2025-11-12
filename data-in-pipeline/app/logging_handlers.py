@@ -157,8 +157,13 @@ class OTLPLogHandler(logging.Handler):
                 return _HANDLER
 
             provider = cls._ensure_logger_provider()
+            level = getattr(
+                logging,
+                os.getenv("OTEL_PYTHON_LOG_LEVEL", "INFO").upper(),
+                logging.INFO,
+            )
             handler = OTelLoggingHandler(
-                level=logging.NOTSET,
+                level=level,
                 logger_provider=provider,
             )
             endpoint = (
