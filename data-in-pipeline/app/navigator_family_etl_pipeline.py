@@ -75,7 +75,7 @@ def load_to_s3(document: Document):
 
 @task(log_prints=True)
 def identify(
-    extracted: ExtractedEnvelope[NavigatorFamily],
+    extracted: list[ExtractedEnvelope[list[NavigatorFamily]]],
 ) -> Identified[NavigatorFamily]:
     """Identify source document type."""
     return identify_navigator_family(extracted)
@@ -113,22 +113,18 @@ def etl_pipeline() -> list[Document] | Exception:
 
     extracted_result = extract()
 
-    envelopes: list[ExtractedEnvelope[list[NavigatorFamily]]] = []
+    if extracted_result.failure is not None:
+        _LOGGER.error(f"Extraction failed: {extracted_result.failure}")
+        return Exception(f"Extraction failed at page {extracted_result.failure.page}")
 
-    match extracted_result:
-        case Failure(error):
-            _LOGGER.error(f"Extraction failed: {error}")
-            return error
-        case Success(fetch_result):
-            if fetch_result.failures:
-                _LOGGER.warning(
-                    f"Some pages failed to extract: {fetch_result.failures}"
-                )
+    envelopes = extracted_result.envelopes
 
-            envelopes = fetch_result.envelopes
+    if not envelopes:
+        _LOGGER.info("No families found to process")
+        return []
 
     identified = identify(envelopes)
-    transformed = transform(identified).result()
+    transformed = transform(identified)
 
     match transformed:
         case Success(documents):
