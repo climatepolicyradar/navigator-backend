@@ -56,9 +56,9 @@ def read_families(
     corpus_import_ids: list[str] = Query(
         default=[],
         alias="corpus.import_id",
-    )
+    ),
 ):
-    limit = 10
+    limit = 50
     offset = (page - 1) * limit
 
     filters = []
@@ -166,7 +166,6 @@ def read_documents(
     response_model=APIItemResponse[FamilyDocumentPublicWithFamily],
 )
 def read_document(*, session: Session = Depends(get_session), document_id: str):
-
     document = session.exec(
         FamilyDocument.eager_loaded_select().where(
             FamilyDocument.import_id == document_id
