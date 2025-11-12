@@ -36,6 +36,18 @@ class Identified(BaseModel, Generic[ExtractedData]):
     source: str
 
 
+class Label(BaseModel):
+    id: str
+    title: str
+    type: str
+
+
+class DocumentLabelRelationship(BaseModel):
+    type: str
+    label: Label
+
+
 class Document(BaseModel):
     id: str
     title: str
+    labels: list[DocumentLabelRelationship] = []
