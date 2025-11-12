@@ -68,6 +68,8 @@ def test_fetch_document_success(base_config):
     """Ensure fetch_document returns an ExtractedEnvelope with valid data."""
     connector = NavigatorConnector(base_config)
     import_id = "DOC-123"
+    task_run_id = "task-001"
+    flow_run_id = "flow-001"
 
     mock_response = {
         "data": NavigatorDocument(
@@ -79,7 +81,7 @@ def test_fetch_document_success(base_config):
         patch.object(connector, "get", return_value=mock_response),
         patch("app.extract.connectors.generate_envelope_uuid", return_value="uuid-123"),
     ):
-        result = connector.fetch_document(import_id).unwrap()
+        result = connector.fetch_document(import_id, task_run_id, flow_run_id).unwrap()
 
     assert isinstance(result, ExtractedEnvelope)
     assert result.source_record_id == import_id
@@ -91,11 +93,13 @@ def test_fetch_document_no_data(base_config):
     """Ensure ValueError is raised when no data key is present in response."""
     connector = NavigatorConnector(base_config)
     import_id = "DOC-456"
+    task_run_id = "task-001"
+    flow_run_id = "flow-001"
 
     with patch.object(
         connector, "get", side_effect=ValueError("No document data in response")
     ):
-        result = connector.fetch_document(import_id)
+        result = connector.fetch_document(import_id, task_run_id, flow_run_id)
 
     assert not is_successful(result)
     failure_exception = result.failure()
@@ -109,9 +113,11 @@ def test_fetch_document_http_error(base_config):
     """Ensure RequestException is caught and re-raised."""
     connector = NavigatorConnector(base_config)
     import_id = "DOC-789"
+    task_run_id = "task-001"
+    flow_run_id = "flow-001"
 
     with patch.object(connector, "get", side_effect=Exception("Boom!")):
-        result = connector.fetch_document(import_id)
+        result = connector.fetch_document(import_id, task_run_id, flow_run_id)
 
     assert not is_successful(result)
 
@@ -125,6 +131,8 @@ def test_fetch_family_success(base_config):
     """Ensure fetch_family returns an ExtractedEnvelope correctly."""
     connector = NavigatorConnector(base_config)
     import_id = "FAM-111"
+    task_run_id = "task-001"
+    flow_run_id = "flow-001"
 
     mock_response = {
         "data": NavigatorFamily(
@@ -139,7 +147,7 @@ def test_fetch_family_success(base_config):
         patch.object(connector, "get", return_value=mock_response),
         patch("app.extract.connectors.generate_envelope_uuid", return_value="uuid-xyz"),
     ):
-        result = connector.fetch_family(import_id).unwrap()
+        result = connector.fetch_family(import_id, task_run_id, flow_run_id).unwrap()
 
     assert isinstance(result, ExtractedEnvelope)
     assert result.source_record_id == import_id
@@ -152,11 +160,13 @@ def test_fetch_family_no_data(base_config):
     """Ensure ValueError is raised when no data key is present in response and returned as a Failure."""
     connector = NavigatorConnector(base_config)
     import_id = "FAM-456"
+    task_run_id = "task-001"
+    flow_run_id = "flow-001"
 
     with patch.object(
         connector, "get", side_effect=ValueError("No family data in response")
     ):
-        result = connector.fetch_family(import_id)
+        result = connector.fetch_family(import_id, task_run_id, flow_run_id)
 
     assert not is_successful(result)
     failure_exception = result.failure()
@@ -169,9 +179,11 @@ def test_fetch_family_http_error(base_config):
     """Ensure RequestException is caught and returned as Failure."""
     connector = NavigatorConnector(base_config)
     import_id = "FAM-789"
+    task_run_id = "task-001"
+    flow_run_id = "flow-001"
 
     with patch.object(connector, "get", side_effect=Exception("Boom!")):
-        result = connector.fetch_family(import_id)
+        result = connector.fetch_family(import_id, task_run_id, flow_run_id)
 
     assert not is_successful(result)
 
@@ -196,6 +208,8 @@ def test_extract_document_handles_valid_id_success():
         mock_connector_instance = MagicMock()
         mock_connector_class.return_value = mock_connector_instance
         mock_connector_instance.close.return_value = None
+        task_run_id = "task-001"
+        flow_run_id = "flow-001"
 
         mock_connector_instance.fetch_document.return_value = Success(
             ExtractedEnvelope(
@@ -210,6 +224,8 @@ def test_extract_document_handles_valid_id_success():
                 ),
                 raw_payload="{}",
                 connector_version="1.0.0",
+                task_run_id=task_run_id,
+                flow_run_id=flow_run_id,
             )
         )
 
