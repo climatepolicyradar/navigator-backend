@@ -14,7 +14,6 @@ from app.navigator_document_etl_pipeline import (
     process_updates as process_document_updates,
 )
 from app.navigator_family_etl_pipeline import etl_pipeline
-from app.transform.navigator_family import TransformerLabel
 
 
 @patch("app.navigator_document_etl_pipeline.upload_to_s3")
