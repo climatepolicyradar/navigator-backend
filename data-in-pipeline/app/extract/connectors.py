@@ -10,10 +10,12 @@ from requests.adapters import HTTPAdapter, Retry
 from returns.result import Failure, Result, Success
 
 from app.extract.connector_config import NavigatorConnectorConfig
+from app.logging_config import ensure_logging_active
 from app.models import ExtractedEnvelope, ExtractedMetadata
 from app.util import generate_envelope_uuid
 
 _LOGGER = logging.getLogger(__name__)
+ensure_logging_active()
 
 
 class NavigatorDocument(BaseModel):
