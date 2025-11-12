@@ -1,6 +1,7 @@
 import logging
 import logging.config
 import os
+import sys
 
 from opentelemetry.instrumentation.logging import LoggingInstrumentor
 
@@ -23,7 +24,7 @@ def configure_logging() -> None:
         _LOGGER.debug("Root logging already configured. Skipping setup.")
         return
 
-    logging.basicConfig(level=LOG_LEVEL)
+    logging.basicConfig(level=LOG_LEVEL, stream=sys.stdout)
     current_level = logging.getLevelName(root_logger.level)
     _LOGGER.debug("Configured root logging at %s level.", current_level)
 
