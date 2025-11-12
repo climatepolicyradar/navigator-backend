@@ -1,4 +1,5 @@
 import logging
+from datetime import datetime
 
 from prefect import flow, task
 from prefect.runtime import flow_run, task_run
@@ -22,9 +23,7 @@ _LOGGER = logging.getLogger(__name__)
 
 
 @task(log_prints=True)
-def extract(
-    family_id: str,
-) -> Result[FetchResult, Exception]:
+def extract() -> Result[FetchResult, Exception]:
     """Extract family data from the Navigator API.
 
     This task connects to the Navigator API and retrieves all family records
@@ -39,8 +38,13 @@ def extract(
           completion of the extraction process.
     """
 
-    task_run_id = task_run.get_id()
-    flow_run_id = flow_run.get_id()
+    task_run_id = (
+        task_run.get_id() or f"task-run-extract-families-{datetime.now().isoformat()}"
+    )
+    flow_run_id = (
+        flow_run.get_id()
+        or f"flow-run-etl-pipeline-families-{datetime.now().isoformat()}"
+    )
 
     connector_config = NavigatorConnectorConfig(
         source_id="navigator_family",

@@ -1,4 +1,5 @@
 import logging
+from datetime import datetime
 
 from prefect import flow, task
 from prefect.runtime import flow_run, task_run
@@ -27,8 +28,14 @@ def extract(
         checkpoint_key_prefix="navigator/documents/",  # TODO : Implement convention for checkpoint keys APP-1409
     )
 
-    task_run_id = task_run.get_id()
-    flow_run_id = flow_run.get_id()
+    task_run_id = (
+        task_run.get_id()
+        or f"task-run-extract-{document_id}-{datetime.now().isoformat()}"
+    )
+    flow_run_id = (
+        flow_run.get_id()
+        or f"flow-run-etl-pipeline-{document_id}-{datetime.now().isoformat()}"
+    )
 
     connector = NavigatorConnector(connector_config)
     envelope = connector.fetch_document(document_id, task_run_id, flow_run_id)

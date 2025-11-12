@@ -94,7 +94,7 @@ class NavigatorConnector(HTTPConnector):
         super().__init__(config)
 
     def fetch_document(
-        self, import_id: str, task_run_id: str | None, flow_run_id: str | None
+        self, import_id: str, task_run_id: str, flow_run_id: str
     ) -> Result[ExtractedEnvelope, Exception]:
         """Fetch a single document from Navigator API."""
         try:
@@ -133,7 +133,7 @@ class NavigatorConnector(HTTPConnector):
             return Failure(e)
 
     def fetch_family(
-        self, import_id: str, task_run_id: str | None, flow_run_id: str | None
+        self, import_id: str, task_run_id: str, flow_run_id: str
     ) -> Result[ExtractedEnvelope, Exception]:
         """Fetch a single family from Navigator API."""
         try:
@@ -171,7 +171,7 @@ class NavigatorConnector(HTTPConnector):
             return Failure(e)
 
     def fetch_all_families(
-        self, task_run_id: str | None, flow_run_id: str | None
+        self, task_run_id: str, flow_run_id: str
     ) -> Result[FetchResult, Exception]:
         """Fetch all family records from the Navigator API with pagination.
 
