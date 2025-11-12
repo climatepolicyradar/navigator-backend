@@ -6,7 +6,11 @@ from prefect.runtime import flow_run, task_run
 from returns.result import Failure, Result, Success
 
 from app.extract.connector_config import NavigatorConnectorConfig
-from app.extract.connectors import FetchResult, NavigatorConnector, NavigatorFamily
+from app.extract.connectors import (
+    FamilyFetchResult,
+    NavigatorConnector,
+    NavigatorFamily,
+)
 from app.extract.enums import CheckPointStorageType
 from app.identify.navigator_family import identify_navigator_family
 from app.load.aws_bucket import upload_to_s3
@@ -23,18 +27,18 @@ _LOGGER = logging.getLogger(__name__)
 
 
 @task(log_prints=True)
-def extract() -> Result[FetchResult, Exception]:
+def extract() -> FamilyFetchResult:
     """Extract family data from the Navigator API.
 
     This task connects to the Navigator API and retrieves all family records
     using the paginated `/families` endpoint. Each page of data is validated
     and wrapped into an :class:`ExtractedEnvelope` object. The function
     returns both successful results and transient page-level failures
-    (e.g., network timeouts), packaged into a :class:`FetchResult`.
+    (e.g., network timeouts), packaged into a :class:`FamilyFetchResult`.
 
     :return Result[FetchResult, Exception]:
-        - **Success(FetchResult)** – Extraction succeeded (may include transient failures).
-        - **Failure(Exception)** – A fatal error occurred that prevented
+        - **envelopes** – Successful page extractions.
+        - **failure** – An error occurred that prevented
           completion of the extraction process.
     """
 
@@ -91,7 +95,7 @@ def transform(
 
 
 @flow(log_prints=True)
-def etl_pipeline() -> Document | Exception:
+def etl_pipeline() -> list[Document] | Exception:
     """Run the full Navigator ETL pipeline.
 
     Steps:
@@ -109,7 +113,7 @@ def etl_pipeline() -> Document | Exception:
 
     extracted_result = extract()
 
-    envelopes: list[ExtractedEnvelope[NavigatorFamily]] = []
+    envelopes: list[ExtractedEnvelope[list[NavigatorFamily]]] = []
 
     match extracted_result:
         case Failure(error):

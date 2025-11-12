@@ -20,7 +20,7 @@ class ExtractedEnvelope(BaseModel, Generic[ExtractedData]):
     id: str = Field(default_factory=lambda: str(uuid.uuid4()))
     source_name: str
     source_record_id: str
-    raw_payload: str
+    raw_payload: ExtractedData
     content_type: str = "application/json"
     connector_version: str
     extracted_at: datetime = Field(default_factory=datetime.utcnow)

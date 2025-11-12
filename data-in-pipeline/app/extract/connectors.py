@@ -34,15 +34,15 @@ class NavigatorFamily(BaseModel):
     corpus: NavigatorCorpus
 
 
-class PageFailure(BaseModel):
+class PageFetchFailure(BaseModel):
     page: int
     error: str
     task_run_id: str | None
 
 
-class FetchResult(BaseModel):
+class FamilyFetchResult(BaseModel):
     envelopes: List[ExtractedEnvelope]
-    failures: List[PageFailure]
+    failure: PageFetchFailure | None = None
 
 
 class HTTPConnector:
@@ -246,35 +246,28 @@ class NavigatorConnector(HTTPConnector):
 
     def fetch_all_families(
         self, task_run_id: str, flow_run_id: str
-    ) -> Result[FetchResult, Exception]:
+    ) -> FamilyFetchResult:
         """Fetch all family records from the Navigator API with pagination.
 
         This method iterates through all available pages of the Navigator API's
         `/families` endpoint. Each page of results is fetched and transformed into
         an :class:`ExtractedEnvelope` object.
 
-        Non-fatal (transient) errors, such as temporary network issues, are
+        Errors, such as temporary network issues, are
         recorded as :class:`PageFailure` objects and returned alongside the
-        successfully fetched results. Fatal errors (e.g., authorization issues or
-        unexpected exceptions) immediately terminate execution and return a
-        :class:`Failure`.
-
+        successfully fetched results.
         :param str task_run_id: The unique Prefect task run identifier associated
             with this extraction.
         :param str flow_run_id: The unique Prefect flow run identifier for the
             current pipeline run.
-        :return Result[tuple[list[ExtractedEnvelope], list[PageFailure]], Exception]:
+        :return FetchResult:
             - **Success((envelopes, failures))** if all (or some) pages are fetched successfully.
             - **Failure(exception)** if a fatal error prevents completion of the operation.
 
-        :raises requests.RequestException: If a fatal HTTP or network error occurs
-            (e.g., 401 Unauthorized, 404 Not Found).
-        :raises Exception: For any unexpected unhandled error during pagination.
         """
 
         page = 1
-        all_envelopes: List[ExtractedEnvelope] = []
-        transient_failures: list[PageFailure] = []
+        successful_envelopes: List[ExtractedEnvelope] = []
         while True:
             try:
                 _LOGGER.info(f"Fetching families page {page}")
@@ -284,7 +277,7 @@ class NavigatorConnector(HTTPConnector):
                 # Break the loop if no more families are returned from the endpoint
                 if not families_data:
                     _LOGGER.info(
-                        f"No more families found at page {page}. Total pages fetched: {len(all_envelopes)}"
+                        f"No more families found at page {page}. Total pages fetched: {len(successful_envelopes)}"
                     )
                     break
 
@@ -305,33 +298,32 @@ class NavigatorConnector(HTTPConnector):
                     ),
                 )
 
-                all_envelopes.append(envelope)
+                successful_envelopes.append(envelope)
                 page += 1
 
             except requests.RequestException as e:
                 _LOGGER.exception(
                     f"Request failed while fetching all families at page {page}"
                 )
-                transient_failures.append(
-                    PageFailure(page=page, error=str(e), task_run_id=task_run_id)
+                return FamilyFetchResult(
+                    envelopes=successful_envelopes,
+                    failure=PageFetchFailure(
+                        page=page, error=str(e), task_run_id=task_run_id
+                    ),
                 )
-                if (
-                    isinstance(e, requests.HTTPError)
-                    and e.response.status_code in FATAL_HTTP_CODES
-                ):
-                    return Failure(e)
-                page += 1
-                continue
 
             except Exception as e:
                 _LOGGER.exception(
                     f"Unexpected error {e} while fetching page {page} of families"
                 )
-                return Failure(e)
+                return FamilyFetchResult(
+                    envelopes=successful_envelopes,
+                    failure=PageFetchFailure(
+                        page=page, error=str(e), task_run_id=task_run_id
+                    ),
+                )
 
         _LOGGER.info(
-            f"Fetch families completed: {len(all_envelopes)} pages succeeded, {len(transient_failures)} failed."
+            f"Fetch families completed: {len(successful_envelopes)} pages succeeded"
         )
-        return Success(
-            FetchResult(envelopes=all_envelopes, failures=transient_failures)
-        )
+        return FamilyFetchResult(envelopes=successful_envelopes)
