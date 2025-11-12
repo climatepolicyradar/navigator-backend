@@ -1,6 +1,6 @@
 import duckdb
 from fastapi import Depends, FastAPI, HTTPException, Query
-from pydantic import BaseModel
+from pydantic import BaseModel, Field
 
 DB_PATH = ".data_cache/documents.duckdb"
 
@@ -18,10 +18,23 @@ class DocumentLabelRelationship(BaseModel):
     label: Label
 
 
-class Document(BaseModel):
+class BaseDocument(BaseModel):
     id: str
     title: str
-    labels: list[DocumentLabelRelationship]
+    labels: list[DocumentLabelRelationship] = []
+
+
+class DocumentDocumentRelationship(BaseModel):
+    type: str
+    document: "DocumentWithoutRelationships"
+
+
+class Document(BaseDocument):
+    relationships: list[DocumentDocumentRelationship] = []
+
+
+class DocumentWithoutRelationships(BaseDocument):
+    pass
 
 
 def get_connection():
@@ -55,7 +68,7 @@ def list_documents(
     params: list = [limit, offset]
 
     base_query = """
-        SELECT id, title, labels
+        SELECT id, title, labels, relationships
         FROM documents
         WHERE 1=1
     """
