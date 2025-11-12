@@ -12,7 +12,7 @@ def identify_navigator_family(
 
     TODO: This currently only processes the first envelope and first family.
     Should be refactored to handle multiple envelopes/families properly.
-    See ticket: [TICKET-NUMBER]
+    See ticket: APP-1419
     """
     if not extracted:
         raise ValueError("Cannot identify from empty extracted list")
