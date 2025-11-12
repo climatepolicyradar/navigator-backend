@@ -1,4 +1,3 @@
-import logging
 from datetime import datetime
 
 from prefect import flow, task
@@ -19,14 +18,12 @@ from app.models import Document, ExtractedEnvelope, Identified
 from app.transform.models import NoMatchingTransformations
 from app.transform.navigator_family import transform_navigator_family
 
-logger = get_logger()
 ensure_logging_active()
 
 
 # ---------------------------------------------------------------------
 #  ETL TASKS
 # ---------------------------------------------------------------------
-
 
 
 @task(log_prints=True)
@@ -57,6 +54,7 @@ def extract() -> FamilyFetchResult:
         source_id="navigator_family",
         checkpoint_storage=CheckPointStorageType.S3,
         checkpoint_key_prefix="navigator/families/",  # TODO : Implement convention for checkpoint keys APP-1409
+        logger=get_logger(),
     )
 
     connector = NavigatorConnector(connector_config)
@@ -113,17 +111,19 @@ def etl_pipeline() -> list[Document] | Exception:
             In real use, you may want to return all transformed Results
             or push them to a downstream Prefect block.
     """
+    logger = get_logger()
+    logger.info("ETL pipeline started")
 
     extracted_result = extract()
 
     if extracted_result.failure is not None:
-        _LOGGER.error(f"Extraction failed: {extracted_result.failure}")
+        logger.error(f"Extraction failed: {extracted_result.failure}")
         return Exception(f"Extraction failed at page {extracted_result.failure.page}")
 
     envelopes = extracted_result.envelopes
 
     if not envelopes:
-        _LOGGER.info("No families found to process")
+        logger.info("No families found to process")
         return []
 
     identified = identify(envelopes)
@@ -135,7 +135,7 @@ def etl_pipeline() -> list[Document] | Exception:
             return documents
         case Failure(error):
             # TODO: do not swallow errors
-            _LOGGER.warning(f"Transformation failed: {error}")
+            logger.warning(f"Transformation failed: {error}")
             return error
         case _:
             return Exception("Unexpected transformed result state")

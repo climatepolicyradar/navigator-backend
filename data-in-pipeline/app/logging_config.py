@@ -6,7 +6,7 @@ import prefect.logging
 
 LOG_LEVEL = os.getenv("OTEL_LOG_LEVEL", "INFO").upper()
 NUMERIC_LOG_LEVEL = getattr(logging, LOG_LEVEL, logging.INFO)
-DISABLED = os.getenv("DISABLE_OTEL_LOGGING", "true").lower() == "true"
+DISABLED = os.getenv("DISABLE_OTEL_LOGGING", "false").lower() == "true"
 _LOGGER = logging.getLogger(__name__)
 
 LoggingAdapter = logging.LoggerAdapter[logging.Logger]

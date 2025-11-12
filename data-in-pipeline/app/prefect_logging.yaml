@@ -15,12 +15,12 @@ handlers:
     # Prefect console handler.
     # Defaults documented at https://docs.prefect.io/latest/guides/logs/
     class: prefect.logging.handlers.PrefectConsoleHandler
-    level: INFO
+    level: DEBUG
     formatter: standard
 
 loggers:
   prefect:
-    level: INFO
+    level: DEBUG
     handlers:
       - console
     propagate: true
@@ -31,6 +31,6 @@ loggers:
     propagate: true
 
 root:
-  level: INFO
+  level: DEBUG
   handlers:
     - console
