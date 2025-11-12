@@ -1,6 +1,6 @@
 import duckdb
 from fastapi import Depends, FastAPI, HTTPException, Query
-from pydantic import BaseModel, Field
+from pydantic import BaseModel
 
 DB_PATH = ".data_cache/documents.duckdb"
 
