@@ -2,7 +2,6 @@ import datetime
 import logging
 import os
 from http import HTTPStatus
-from typing import List
 
 import requests
 from pydantic import BaseModel
@@ -41,7 +40,7 @@ class PageFetchFailure(BaseModel):
 
 
 class FamilyFetchResult(BaseModel):
-    envelopes: List[ExtractedEnvelope]
+    envelopes: list[ExtractedEnvelope]
     failure: PageFetchFailure | None = None
 
 
@@ -267,7 +266,7 @@ class NavigatorConnector(HTTPConnector):
         """
 
         page = 1
-        successful_envelopes: List[ExtractedEnvelope] = []
+        successful_envelopes: list[ExtractedEnvelope] = []
         while True:
             try:
                 _LOGGER.info(f"Fetching families page {page}")
