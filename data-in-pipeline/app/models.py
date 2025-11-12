@@ -46,7 +46,13 @@ class DocumentLabelRelationship(BaseModel):
     label: Label
 
 
+class DocumentDocumentRelationship(BaseModel):
+    type: str
+    document: "Document"
+
+
 class Document(BaseModel):
     id: str
     title: str
     labels: list[DocumentLabelRelationship] = []
+    relationships: list[DocumentDocumentRelationship] = []

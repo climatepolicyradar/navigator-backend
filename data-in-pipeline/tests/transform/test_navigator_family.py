@@ -76,6 +76,7 @@ def test_transform_navigator_document_with_single_matching_family(
                         ),
                     ),
                 ],
+                relationships=[],
             )
         ]
     )

@@ -20,6 +20,7 @@ ensure_logging_active()
 class NavigatorDocument(BaseModel):
     import_id: str
     title: str
+    valid_metadata: dict[str, list[str]] = {}
 
 
 class NavigatorCorpus(BaseModel):
