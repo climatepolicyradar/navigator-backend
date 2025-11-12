@@ -1,5 +1,9 @@
-"""Application package initialisation including logging configuration."""
+"""Application bootstrap configuring logging and telemetry."""
 
-from app.logging_config import ensure_logging_active
+from __future__ import annotations
+
+from app.logging_config import TELEMETRY, ensure_logging_active
 
 ensure_logging_active()
+
+__all__ = ["TELEMETRY", "ensure_logging_active"]
