@@ -9,10 +9,13 @@ from app.extract.connectors import NavigatorConnector, NavigatorDocument
 from app.extract.enums import CheckPointStorageType
 from app.identify.navigator_document import identify_navigator_document
 from app.load.aws_bucket import upload_to_s3
+from app.logging_config import ensure_logging_active
 from app.models import Document, ExtractedEnvelope, Identified
 from app.transform.navigator_document import transform_navigator_document
 
 _LOGGER = logging.getLogger(__name__)
+
+ensure_logging_active()
 
 
 @task(log_prints=True)
