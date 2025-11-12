@@ -17,30 +17,20 @@ handlers:
     class: prefect.logging.handlers.PrefectConsoleHandler
     level: INFO
     formatter: standard
-  otlp:
-    # Custom handler forwarding to OTLP collector
-    class: app.logging_handlers.OTLPLogHandler
-    level: DEBUG
-    formatter: standard
 
 loggers:
   prefect:
     level: INFO
     handlers:
       - console
-      - otlp
-
-    # Prevent duplicate emission upwards
-    propagate: false
+    propagate: true
   app:
     level: DEBUG
     handlers:
       - console
-      - otlp
-    propagate: false
+    propagate: true
 
 root:
   level: INFO
   handlers:
     - console
-    - otlp

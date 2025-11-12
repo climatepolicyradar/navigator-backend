@@ -51,6 +51,8 @@ ENV OTEL_SERVICE_NAME="data-in-pipeline" \
     OTEL_PYTHON_LOG_LEVEL="debug" \
     OTEL_PYTHON_LOGGING_EXPORT_LEVEL="debug" \
     OTEL_PYTHON_LOGGER_PROVIDER="sdk" \
+    OTEL_PYTHON_LOG_CORRELATION="true" \
+    OTEL_DIAGNOSTICS="DEBUG" \
     OTEL_RESOURCE_ATTRIBUTES="resource.environment=production,resource.service.namespace=data-fetching"
 
 # If you do not want the extra orchestration spans, set to "False".
