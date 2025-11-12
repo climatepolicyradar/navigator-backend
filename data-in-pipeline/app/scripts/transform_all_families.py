@@ -1,4 +1,5 @@
 import json
+import os
 
 from returns.result import Failure, Success
 
@@ -44,9 +45,17 @@ if __name__ == "__main__":
         )
         match result:
             case Success(document):
-                successes.append(document)
+                successes.extend(document)
             case Failure(error):
                 failures.append(error)
+
+    os.makedirs(".data_cache/transformed_navigator_families", exist_ok=True)
+    for document in successes:
+        model_dump = document.model_dump()
+        with open(
+            f".data_cache/transformed_navigator_families/{document.id}.json", "w"
+        ) as f:
+            json.dump(model_dump, f, indent=4)
 
     print(f"Successes: {len(successes)}")
     print(f"Failures: {len(failures)}")
