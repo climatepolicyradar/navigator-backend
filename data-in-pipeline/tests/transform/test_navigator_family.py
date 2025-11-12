@@ -4,7 +4,7 @@ from returns.result import Success
 from app.extract.connectors import NavigatorCorpus, NavigatorDocument, NavigatorFamily
 from app.models import Document, DocumentLabelRelationship, Identified, Label
 from app.transform.models import NoMatchingTransformations
-from app.transform.navigator_family import transform_navigator_family
+from app.transform.navigator_family import TransformerLabel, transform_navigator_family
 
 
 @pytest.fixture
@@ -66,7 +66,15 @@ def test_transform_navigator_document_with_single_matching_family(
                             title=navigator_family_with_single_matching_title_document.data.title,
                             type="family",
                         ),
-                    )
+                    ),
+                    DocumentLabelRelationship(
+                        type="transformer",
+                        label=TransformerLabel(
+                            id="transform_navigator_family_with_single_matching_document",
+                            title="transform_navigator_family_with_single_matching_document",
+                            type="transformer",
+                        ),
+                    ),
                 ],
             )
         ]

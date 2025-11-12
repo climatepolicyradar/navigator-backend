@@ -5,6 +5,7 @@ from app.navigator_document_etl_pipeline import (
     process_updates as process_document_updates,
 )
 from app.navigator_family_etl_pipeline import process_updates as process_family_updates
+from app.transform.navigator_family import TransformerLabel
 
 
 @patch("app.navigator_document_etl_pipeline.upload_to_s3")
@@ -37,7 +38,15 @@ def test_process_family_updates_flow(mock_upload):
                             title="Belgium UNCBD National Targets",
                             type="family",
                         ),
-                    )
+                    ),
+                    DocumentLabelRelationship(
+                        type="transformer",
+                        label=TransformerLabel(
+                            id="transform_navigator_family_with_single_matching_document",
+                            title="transform_navigator_family_with_single_matching_document",
+                            type="transformer",
+                        ),
+                    ),
                 ],
             )
         ]
