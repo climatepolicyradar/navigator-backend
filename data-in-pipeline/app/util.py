@@ -57,5 +57,5 @@ def upload_file(
         )
 
     except Exception:
-        _LOGGER.exception(f"Uploading {key} encountered an error")
+        _LOGGER.error(f"Uploading {key} encountered an error")
         raise
