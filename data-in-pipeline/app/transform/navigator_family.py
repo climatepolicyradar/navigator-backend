@@ -1,7 +1,13 @@
 from returns.result import Failure, Result, Success
 
 from app.extract.connectors import NavigatorDocument, NavigatorFamily
-from app.models import Document, DocumentLabelRelationship, Identified, Label
+from app.models import (
+    Document,
+    DocumentDocumentRelationship,
+    DocumentLabelRelationship,
+    Identified,
+    Label,
+)
 from app.transform.models import CouldNotTransform, NoMatchingTransformations
 
 
@@ -95,22 +101,53 @@ def transform_navigator_family_with_matching_document_title_and_siblings(
             None,
         )
         if matching_document:
-            matching_transformation = transform_navigator_family_document(
+            """
+            Transform
+            """
+            transformed_matching_document = transform_navigator_family_document(
                 input,
                 matching_document,
                 "transform_navigator_family_with_matching_document_title_and_siblings",
             )
-            siblings = [
-                document
+            transformed_sibling_documents = [
+                Document(
+                    id=document.import_id,
+                    title=document.title,
+                    relationships=[
+                        DocumentDocumentRelationship(
+                            type="main", document=transformed_matching_document
+                        )
+                    ],
+                )
                 for document in input.data.documents
                 if document.import_id != matching_document.import_id
             ]
-            transformed_siblings = [
-                Document(id=document.import_id, title=document.title)
-                for document in siblings
+
+            """
+            Generate relationships
+
+            This is mutation-y as we need the sibling_documents first, and using model_copy(update=dict) is not type safe.
+            Setting the property directly is.
+            """
+            transformed_matching_document.relationships = [
+                DocumentDocumentRelationship(
+                    type=next(
+                        # search for a document with a role, or default to "sibling"
+                        (
+                            label.label.title.lower()
+                            for label in sibling.labels
+                            if label.type == "role"
+                        ),
+                        "sibling",
+                    ),
+                    document=sibling,
+                )
+                for sibling in transformed_sibling_documents
             ]
 
-            return Success([matching_transformation, *transformed_siblings])
+            return Success(
+                [transformed_matching_document, *transformed_sibling_documents]
+            )
 
     return Failure(
         CouldNotTransform(
@@ -124,17 +161,37 @@ def transform_navigator_family_document(
     document: NavigatorDocument,
     transformer_label_title: str,
 ) -> Document:
-    transformer_label = TransformerLabel(
-        id=transformer_label_title,
-        title=transformer_label_title,
+    # Labels
+    labels: list[DocumentLabelRelationship] = []
+
+    labels.append(
+        DocumentLabelRelationship(
+            type="family",
+            label=Label(
+                id=family.data.import_id, title=family.data.title, type="family"
+            ),
+        )
     )
-    family_label = Label(
-        id=family.data.import_id, title=family.data.title, type="family"
+
+    labels.append(
+        DocumentLabelRelationship(
+            type="transformer",
+            label=TransformerLabel(
+                id=transformer_label_title, title=transformer_label_title
+            ),
+        )
     )
-    labels = [
-        DocumentLabelRelationship(type="family", label=family_label),
-        DocumentLabelRelationship(type="transformer", label=transformer_label),
-    ]
+
+    role = document.valid_metadata.get("role")
+    if role is not None and len(role) > 0:
+        normalised_role = role[0].capitalize()
+        labels.append(
+            DocumentLabelRelationship(
+                type="role",
+                label=Label(id=normalised_role, title=normalised_role, type="role"),
+            )
+        )
+
     return Document(id=document.import_id, title=document.title, labels=labels)
 
 
