@@ -5,8 +5,7 @@ from pathlib import Path
 from typing import Any
 
 import duckdb
-from api import FastAPITelemetry
-from api.telemetry_config import ServiceManifest, TelemetryConfig
+from api import FastAPITelemetry, ServiceManifest, TelemetryConfig
 from fastapi import APIRouter, Depends, FastAPI, HTTPException, Query
 from pydantic import BaseModel, Field
 from pydantic_settings import BaseSettings

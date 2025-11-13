@@ -2,8 +2,7 @@ import logging
 import os
 from pathlib import Path
 
-from api import FastAPITelemetry
-from api.telemetry_config import ServiceManifest, TelemetryConfig
+from api import FastAPITelemetry, ServiceManifest, TelemetryConfig
 from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
 

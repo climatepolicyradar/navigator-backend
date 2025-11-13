@@ -6,7 +6,7 @@ import sys
 from types import TracebackType
 from typing import Any, Awaitable, Callable, Optional, cast
 
-from api.telemetry_base import BaseTelemetry
+from api.base_telemetry import BaseTelemetry
 from fastapi import FastAPI, Request
 from fastapi.routing import APIRoute
 from opentelemetry.instrumentation.fastapi import FastAPIInstrumentor
