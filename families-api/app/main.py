@@ -2,9 +2,7 @@ import logging
 import os
 from pathlib import Path
 
-from api import FastAPITelemetry
-from api.otel import log
-from api.telemetry_config import ServiceManifest, TelemetryConfig
+from api import FastAPITelemetry, ServiceManifest, TelemetryConfig
 from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
 
@@ -39,7 +37,6 @@ tracer = telemetry.get_tracer()
 
 
 # Create the FastAPI app
-log("families-api")
 app = FastAPI(
     docs_url="/families/docs",
     redoc_url="/families/redoc",
