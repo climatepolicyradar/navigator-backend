@@ -38,36 +38,6 @@ RUN mkdir -p /opt/prefect && \
     chown -R prefect_user:prefect_user /home/prefect_user && \
     chown -R prefect_user:prefect_user /usr/local/lib/python3.13/site-packages
 
-# OTEL config
-ENV OTEL_SERVICE_NAME="data-in-pipeline" \
-    OTEL_TRACES_EXPORTER="otlp" \
-    OTEL_EXPORTER_OTLP_TRACES_PROTOCOL="http/protobuf" \
-    OTEL_EXPORTER_OTLP_TRACES_ENDPOINT="https://otel.prod.climatepolicyradar.org/v1/traces" \
-    OTEL_METRICS_EXPORTER="otlp" \
-    OTEL_EXPORTER_OTLP_METRICS_PROTOCOL="http/protobuf" \
-    OTEL_EXPORTER_OTLP_METRICS_ENDPOINT="https://otel.prod.climatepolicyradar.org/v1/metrics" \
-    OTEL_LOGS_EXPORTER="otlp" \
-    OTEL_EXPORTER_OTLP_LOGS_PROTOCOL="http/protobuf" \
-    OTEL_EXPORTER_OTLP_LOGS_ENDPOINT="https://otel.prod.climatepolicyradar.org/v1/logs" \
-    OTEL_LOG_LEVEL="debug" \
-    OTEL_PYTHON_LOGGER_PROVIDER="sdk" \
-    OTEL_PYTHON_LOG_CORRELATION="true" \
-    OTEL_DIAGNOSTICS="DEBUG" \
-    OTEL_RESOURCE_ATTRIBUTES="deployment.environment=production,service.namespace=data-fetching"
-
-
-# If you do not want the extra orchestration spans, set to "False".
-# Leave as True to keep Prefect’s built-in flow/task spans.
-ENV PREFECT_CLOUD_ENABLE_ORCHESTRATION_TELEMETRY="True" \
-    PREFECT_LOGGING_LEVEL="DEBUG" \
-    PREFECT_LOGGING_TO_API_ENABLED="True" \
-    PREFECT_LOGGING_EXTRA_LOGGERS="app"
-
-# Automatically capture Python logging and forward to OTLP
-ENV OTEL_PYTHON_LOGGING_AUTO_INSTRUMENTATION_ENABLED="true"
-# ENV DISABLE_OTEL_LOGGING="false"
-ENV PREFECT_LOGGING_SETTINGS_PATH="/app/data-in-pipeline/app/prefect_logging.yaml"
-
 # Switch to non-root user
 USER prefect_user
 
