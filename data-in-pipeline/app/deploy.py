@@ -16,6 +16,8 @@ DEFAULT_FLOW_VARIABLES = {
     "memory": MEGABYTES_PER_GIGABYTE * 2,
 }
 REQUIRED_RUNTIME_ENVIRONMENT_VARIABLES = (
+    ("API_BASE_URL", "https://api.climatepolicyradar.org"),
+    ("DISABLE_OTEL_LOGGING", "false"),
     ("OTEL_EXPORTER_OTLP_PROTOCOL", "http/protobuf"),
     ("OTEL_EXPORTER_OTLP_ENDPOINT", "https://otel.prod.climatepolicyradar.org"),
     ("OTEL_EXPORTER_OTLP_PROTOCOL", "otlp"),
@@ -27,7 +29,6 @@ REQUIRED_RUNTIME_ENVIRONMENT_VARIABLES = (
         "deployment.environment=production,service.namespace=data-fetching",
     ),
     ("OTEL_PYTHON_LOGGING_AUTO_INSTRUMENTATION_ENABLED", True),
-    ("DISABLE_OTEL_LOGGING", "false"),
     (
         # https://docs.prefect.io/v3/api-ref/settings-ref#enable-orchestration-telemetry
         "PREFECT_CLOUD_ENABLE_ORCHESTRATION_TELEMETRY",
