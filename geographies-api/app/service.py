@@ -6,7 +6,7 @@ from typing import Any, Dict, cast
 
 import pycountry
 import requests
-from api.telemetry import observe
+from api.telemetry_utils import observe
 from pycountry.db import Country as PyCountryCountry
 from pycountry.db import Subdivision as PyCountrySubdivision
 from pydantic import BaseModel, computed_field
