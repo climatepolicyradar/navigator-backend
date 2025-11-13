@@ -4,8 +4,7 @@ import sys
 from pathlib import Path
 
 import prefect.logging
-from api.telemetry_config import ServiceManifest, TelemetryConfig
-from api.telemetry_prefect import PrefectTelemetry
+from api import PrefectTelemetry, ServiceManifest, TelemetryConfig
 
 LOG_LEVEL = os.getenv("OTEL_PYTHON_LOG_LEVEL", "INFO").upper()
 NUMERIC_LOG_LEVEL = getattr(logging, LOG_LEVEL, logging.INFO)
