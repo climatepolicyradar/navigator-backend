@@ -8,11 +8,10 @@ from requests.adapters import HTTPAdapter, Retry
 from returns.result import Failure, Result, Success
 
 from app.extract.connector_config import NavigatorConnectorConfig
-from app.logging_config import ensure_logging_active, get_logger
+from app.logging_config import ensure_logging_active
 from app.models import ExtractedEnvelope, ExtractedMetadata
 from app.util import generate_envelope_uuid
 
-_LOGGER = get_logger()
 ensure_logging_active()
 
 
@@ -50,7 +49,7 @@ class HTTPConnector:
     def __init__(self, config):
         self.config = config
         self.session = self._init_session()
-        self.logger = config.logger
+        self._LOGGER = config.logger
 
     def _init_session(self) -> requests.Session:
         """Initialize a requests session with retry and pooling configuration."""
@@ -82,7 +81,7 @@ class HTTPConnector:
     def get(self, path: str, **kwargs):
         """Perform a GET request and handle retries and errors."""
         url = f"{self.config.base_url}/{path.lstrip('/')}"
-        self.logger.debug(f"Fetching from {url}")
+        self._LOGGER.debug(f"Fetching from {url}")
 
         response = self.session.get(url, timeout=self.config.timeout_seconds, **kwargs)
         response.raise_for_status()
@@ -99,72 +98,72 @@ class NavigatorConnector(HTTPConnector):
     def __init__(self, config: NavigatorConnectorConfig):
         super().__init__(config)
 
-        self.logger.info(
+        self._LOGGER.info(
             "OTEL_SERVICE_NAME: " + os.getenv("OTEL_SERVICE_NAME", "not set")
         )
-        self.logger.info(
+        self._LOGGER.info(
             "OTEL_TRACES_EXPORTER: " + os.getenv("OTEL_TRACES_EXPORTER", "not set")
         )
-        self.logger.info(
+        self._LOGGER.info(
             "OTEL_METRICS_EXPORTER: " + os.getenv("OTEL_METRICS_EXPORTER", "not set")
         )
-        self.logger.info(
+        self._LOGGER.info(
             "OTEL_LOGS_EXPORTER: " + os.getenv("OTEL_LOGS_EXPORTER", "not set")
         )
-        self.logger.info(
+        self._LOGGER.info(
             "OTEL_EXPORTER_OTLP_ENDPOINT: "
             + os.getenv("OTEL_EXPORTER_OTLP_ENDPOINT", "not set")
         )
-        self.logger.info(
+        self._LOGGER.info(
             "OTEL_EXPORTER_OTLP_PROTOCOL: "
             + os.getenv("OTEL_EXPORTER_OTLP_PROTOCOL", "not set")
         )
-        self.logger.info(
+        self._LOGGER.info(
             "OTEL_EXPORTER_OTLP_TRACES_ENDPOINT: "
             + os.getenv("OTEL_EXPORTER_OTLP_TRACES_ENDPOINT", "not set")
         )
-        self.logger.info(
+        self._LOGGER.info(
             "OTEL_EXPORTER_OTLP_METRICS_ENDPOINT: "
             + os.getenv("OTEL_EXPORTER_OTLP_METRICS_ENDPOINT", "not set")
         )
-        self.logger.info(
+        self._LOGGER.info(
             "OTEL_EXPORTER_OTLP_LOGS_ENDPOINT: "
             + os.getenv("OTEL_EXPORTER_OTLP_LOGS_ENDPOINT", "not set")
         )
-        self.logger.info(
+        self._LOGGER.info(
             "OTEL_PYTHON_LOG_LEVEL: " + os.getenv("OTEL_PYTHON_LOG_LEVEL", "not set")
         )
-        self.logger.info(
+        self._LOGGER.info(
             "OTEL_RESOURCE_ATTRIBUTES: "
             + os.getenv("OTEL_RESOURCE_ATTRIBUTES", "not set")
         )
-        self.logger.info(
+        self._LOGGER.info(
             "PREFECT_CLOUD_ENABLE_ORCHESTRATION_TELEMETRY: "
             + os.getenv("PREFECT_CLOUD_ENABLE_ORCHESTRATION_TELEMETRY", "not set")
         )
-        self.logger.info(
+        self._LOGGER.info(
             "PREFECT_LOGGING_LEVEL: " + os.getenv("PREFECT_LOGGING_LEVEL", "not set")
         )
-        self.logger.info(
+        self._LOGGER.info(
             "PREFECT_LOGGING_EXTRA_LOGGERS: "
             + os.getenv("PREFECT_LOGGING_EXTRA_LOGGERS", "not set")
         )
-        self.logger.info(
+        self._LOGGER.info(
             "OTEL_PYTHON_LOGGING_AUTO_INSTRUMENTATION_ENABLED: "
             + os.getenv("OTEL_PYTHON_LOGGING_AUTO_INSTRUMENTATION_ENABLED", "not set")
         )
-        self.logger.info(
+        self._LOGGER.info(
             "PREFECT_CLOUD_ENABLE_ORCHESTRATION_TELEMETRY: "
             + os.getenv("PREFECT_CLOUD_ENABLE_ORCHESTRATION_TELEMETRY", "not set")
         )
-        self.logger.info(
+        self._LOGGER.info(
             "PREFECT_LOGGING_LEVEL: " + os.getenv("PREFECT_LOGGING_LEVEL", "not set")
         )
-        self.logger.info(
+        self._LOGGER.info(
             "PREFECT_LOGGING_EXTRA_LOGGERS: "
             + os.getenv("PREFECT_LOGGING_EXTRA_LOGGERS", "not set")
         )
-        self.logger.info(
+        self._LOGGER.info(
             "OTEL_PYTHON_LOGGING_AUTO_INSTRUMENTATION_ENABLED: "
             + os.getenv("OTEL_PYTHON_LOGGING_AUTO_INSTRUMENTATION_ENABLED", "not set")
         )
@@ -176,7 +175,7 @@ class NavigatorConnector(HTTPConnector):
         try:
             response_json = self.get(f"families/documents/{import_id}")
             document_data = response_json.get("data")
-            self.logger.info(f"Successfully fetched document data for '{import_id}'")
+            self._LOGGER.info(f"Successfully fetched document data for '{import_id}'")
 
             if not document_data:
                 raise ValueError(f"No document data in response for {import_id}")
@@ -202,10 +201,10 @@ class NavigatorConnector(HTTPConnector):
                 )
             )
         except requests.RequestException as e:
-            self.logger.error(f"Request failed fetching document {import_id}")
+            self._LOGGER.error(f"Request failed fetching document {import_id}")
             return Failure(e)
         except Exception as e:
-            self.logger.error(f"Unexpected error fetching document {import_id}")
+            self._LOGGER.error(f"Unexpected error fetching document {import_id}")
             return Failure(e)
 
     def fetch_family(
@@ -240,10 +239,10 @@ class NavigatorConnector(HTTPConnector):
                 )
             )
         except requests.RequestException as e:
-            self.logger.error(f"Request failed fetching family {import_id}")
+            self._LOGGER.error(f"Request failed fetching family {import_id}")
             return Failure(e)
         except Exception as e:
-            self.logger.error(f"Unexpected error fetching family {import_id}")
+            self._LOGGER.error(f"Unexpected error fetching family {import_id}")
             return Failure(e)
 
     def fetch_all_families(
@@ -272,13 +271,13 @@ class NavigatorConnector(HTTPConnector):
         successful_envelopes: list[ExtractedEnvelope] = []
         while True:
             try:
-                self.logger.info(f"Fetching families page {page}")
+                self._LOGGER.info(f"Fetching families page {page}")
                 response_json = self.get(f"families/?page={page}")
                 families_data = response_json.get("data", [])
 
                 # Break the loop if no more families are returned from the endpoint
                 if not families_data:
-                    self.logger.info(
+                    self._LOGGER.info(
                         f"No more families found at page {page}. Total pages fetched: {len(successful_envelopes)}"
                     )
                     break
@@ -308,7 +307,7 @@ class NavigatorConnector(HTTPConnector):
                 page += 1
 
             except requests.RequestException as e:
-                self.logger.error(
+                self._LOGGER.error(
                     f"Request failed while fetching all families at page {page}"
                 )
                 return FamilyFetchResult(
@@ -319,7 +318,7 @@ class NavigatorConnector(HTTPConnector):
                 )
 
             except Exception as e:
-                self.logger.error(
+                self._LOGGER.error(
                     f"Unexpected error {e} while fetching page {page} of families"
                 )
                 return FamilyFetchResult(
@@ -329,7 +328,7 @@ class NavigatorConnector(HTTPConnector):
                     ),
                 )
 
-        self.logger.info(
+        self._LOGGER.info(
             f"Fetch families completed: {len(successful_envelopes)} pages succeeded"
         )
         return FamilyFetchResult(envelopes=successful_envelopes)

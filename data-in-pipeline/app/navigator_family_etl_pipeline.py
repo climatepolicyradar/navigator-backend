@@ -127,20 +127,20 @@ def etl_pipeline() -> list[Document] | Exception:
             In real use, you may want to return all transformed Results
             or push them to a downstream Prefect block.
     """
-    logger = get_logger()
-    logger.info("ETL pipeline started")
+    _LOGGER = get_logger()
+    _LOGGER.info("ETL pipeline started")
 
     extracted_result = extract()
     cache_extraction_result(extracted_result)
 
     if extracted_result.failure is not None:
-        logger.error(f"Extraction failed: {extracted_result.failure}")
+        _LOGGER.error(f"Extraction failed: {extracted_result.failure}")
         return Exception(f"Extraction failed at page {extracted_result.failure.page}")
 
     envelopes = extracted_result.envelopes
 
     if not envelopes:
-        logger.info("No families found to process")
+        _LOGGER.info("No families found to process")
         return []
 
     identified = identify(envelopes)
@@ -152,7 +152,7 @@ def etl_pipeline() -> list[Document] | Exception:
             return documents
         case Failure(error):
             # TODO: do not swallow errors
-            logger.warning(f"Transformation failed: {error}")
+            _LOGGER.warning(f"Transformation failed: {error}")
             return error
         case _:
             return Exception("Unexpected transformed result state")

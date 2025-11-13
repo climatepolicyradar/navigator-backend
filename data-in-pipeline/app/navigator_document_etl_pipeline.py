@@ -79,11 +79,11 @@ def etl_pipeline(
     id: str,
 ) -> Result[Document, Exception]:
     """ETL pipeline"""
-    logger = get_logger()
-    logger.info("ETL pipeline started")
+    _LOGGER = get_logger()
+    _LOGGER.info("ETL pipeline started")
     extracted_result = extract(id)
     if not is_successful(extracted_result):
-        logger.error(f"Extraction failed for {id}: {extracted_result.failure()}")
+        _LOGGER.error(f"Extraction failed for {id}: {extracted_result.failure()}")
         return Failure(extracted_result.failure())
     extracted = extracted_result.unwrap()
     identified = identify(extracted)
@@ -94,8 +94,8 @@ def etl_pipeline(
 
 @flow
 def process_updates(ids: list[str] = []):
-    logger = get_logger()
-    logger.info("Processing document updates started")
+    _LOGGER = get_logger()
+    _LOGGER.info("Processing document updates started")
     results = etl_pipeline.map(ids)
     documents = []
     for r in results:
