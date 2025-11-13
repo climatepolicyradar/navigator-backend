@@ -7,7 +7,7 @@ import logging.config
 import sys
 import traceback
 from types import TracebackType
-from typing import Callable, Optional, Type
+from typing import Callable, Optional
 
 # Tracing imports - stable
 from opentelemetry import trace
@@ -27,7 +27,7 @@ from .telemetry_config import TelemetryConfig
 LOGGER = logging.getLogger(__name__)
 
 ExceptionHook = Callable[
-    [Type[BaseException], BaseException, Optional[TracebackType]], None
+    [type[BaseException], BaseException, Optional[TracebackType]], None
 ]
 
 
@@ -150,7 +150,7 @@ class BaseTelemetry:
 
     def _enrich_with_exception(
         self,
-        exc_type: Type[BaseException],
+        exc_type: type[BaseException],
         exc_value: BaseException,
         exc_traceback: Optional[TracebackType],
     ) -> None:
@@ -206,7 +206,7 @@ class BaseTelemetry:
         """
 
         def catch_exception(
-            exc_type: Type[BaseException],
+            exc_type: type[BaseException],
             exc_value: BaseException,
             exc_traceback: Optional[TracebackType],
         ) -> None:
