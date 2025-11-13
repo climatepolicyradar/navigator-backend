@@ -35,6 +35,7 @@ if __name__ == "__main__":
                         NavigatorDocument(
                             import_id=doc["import_id"],
                             title=doc["title"],
+                            valid_metadata=doc["valid_metadata"],
                         )
                         for doc in family["documents"]
                     ],

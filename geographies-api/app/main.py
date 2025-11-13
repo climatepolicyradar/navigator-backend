@@ -2,8 +2,8 @@ import logging
 import os
 from pathlib import Path
 
-from api import otel
-from api.telemetry import FastAPITelemetry
+from api import FastAPITelemetry
+from api.otel import log
 from api.telemetry_config import ServiceManifest, TelemetryConfig
 from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
@@ -38,7 +38,7 @@ telemetry = FastAPITelemetry(otel_config)
 tracer = telemetry.get_tracer()
 
 # Create the FastAPI app.
-otel.log("geographies-api")
+log("geographies-api")
 app = FastAPI(
     docs_url="/geographies/docs",
     redoc_url="/geographies/redoc",

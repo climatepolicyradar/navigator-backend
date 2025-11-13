@@ -6,15 +6,13 @@ import sys
 from types import TracebackType
 from typing import Any, Awaitable, Callable, Optional, cast
 
+from api.telemetry_base import BaseTelemetry
 from fastapi import FastAPI, Request
 from fastapi.routing import APIRoute
 from opentelemetry.instrumentation.fastapi import FastAPIInstrumentor
 
-from .telemetry_base import BaseTelemetry
-
 AsyncExceptionHandler = Callable[[asyncio.AbstractEventLoop, dict[str, Any]], None]
 
-__all__ = ["FastAPITelemetry", "ExceptionHandlingTelemetryRoute"]
 
 LOGGER = logging.getLogger(__name__)
 

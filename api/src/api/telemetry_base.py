@@ -9,6 +9,8 @@ import traceback
 from types import TracebackType
 from typing import Callable, Optional
 
+from api.telemetry_config import TelemetryConfig
+
 # Tracing imports - stable
 from opentelemetry import trace
 from opentelemetry._logs import set_logger_provider
@@ -21,8 +23,6 @@ from opentelemetry.sdk._logs.export import BatchLogRecordProcessor
 from opentelemetry.sdk.trace import TracerProvider
 from opentelemetry.sdk.trace.export import BatchSpanProcessor
 from opentelemetry.trace import Span, Status, StatusCode, Tracer
-
-from .telemetry_config import TelemetryConfig
 
 LOGGER = logging.getLogger(__name__)
 
