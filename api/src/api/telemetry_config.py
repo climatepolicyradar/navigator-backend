@@ -1,3 +1,13 @@
+"""
+Telemetry configuration helpers for Navigator instrumentation.
+
+This module provides `TelemetryConfig`, the pydantic settings object
+that supplies `BaseTelemetry` subclasses with core data e.g., 
+service metadata, OTLP endpoints, and logging configuration. It bridges 
+manifest data and environment values into the shape expected by the 
+OpenTelemetry SDK.
+"""
+
 import socket
 
 from api.service_manifest import ServiceManifest

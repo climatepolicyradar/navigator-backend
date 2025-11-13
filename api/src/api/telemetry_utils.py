@@ -1,7 +1,3 @@
-"""
-Utility helpers for OpenTelemetry integration.
-"""
-
 import functools
 from contextlib import nullcontext
 from typing import Callable

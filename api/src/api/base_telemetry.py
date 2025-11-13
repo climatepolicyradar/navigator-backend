@@ -1,5 +1,10 @@
 """
-Base OpenTelemetry wiring shared across Navigator services.
+Telemetry primitives shared across Navigator services.
+
+This module defines `BaseTelemetry`, the abstraction that bootstraps
+OpenTelemetry clients for downstream frameworks. It establishes tracing,
+structured logging, and exception enrichment that concrete instrumenters
+extend, ensuring each service inherits a consistent baseline configuration.
 """
 
 import logging

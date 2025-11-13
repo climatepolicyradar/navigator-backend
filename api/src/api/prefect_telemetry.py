@@ -1,5 +1,10 @@
 """
-Prefect-specific OpenTelemetry wiring.
+Prefect integration for Navigator telemetry.
+
+This module defines `PrefectTelemetry`, a lightweight subclass of
+`BaseTelemetry` that reuses the shared OpenTelemetry bootstrap whilst
+wiring up Prefect worker logging into the same export pipeline for
+operational parity with service runtimes.
 """
 
 import logging

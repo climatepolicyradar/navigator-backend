@@ -1,3 +1,11 @@
+"""
+Service manifest parsing utilities.
+
+This module defines `ServiceManifest`, a pydantic model that loads
+Navigator service metadata from manifest files so telemetry
+configuration can share a consistent source of truth across services.
+"""
+
 import json
 from pathlib import Path
 
