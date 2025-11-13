@@ -1,84 +1,152 @@
 import logging
-import logging.config
 import os
 import sys
+from pathlib import Path
 
-from opentelemetry.instrumentation.logging import LoggingInstrumentor
+import prefect.logging
+from api import PrefectTelemetry, ServiceManifest, TelemetryConfig
 
 LOG_LEVEL = os.getenv("OTEL_PYTHON_LOG_LEVEL", "INFO").upper()
+NUMERIC_LOG_LEVEL = getattr(logging, LOG_LEVEL, logging.INFO)
 ENV = os.getenv("ENV", "development")
+DISABLED = os.getenv("DISABLE_OTEL_LOGGING", "false").lower() == "true"
+
+_APP_DIR = Path(__file__).resolve().parent
+_ROOT_DIR = _APP_DIR.parent
+_SERVICE_MANIFEST_PATH = _ROOT_DIR / "service-manifest.json"
+_PREFECT_LOGGING_CONFIG_PATH = _APP_DIR / "prefect_logging.yaml"
+
+_TELEMETRY: PrefectTelemetry | None = None
 
 _LOGGER = logging.getLogger(__name__)
-
-_INSTRUMENTED = False
+LoggingAdapter = logging.LoggerAdapter[logging.Logger]
 
 
 def configure_logging() -> None:
-    """Configure root logging for the application.
+    """Configure the root logger for stdout streaming.
 
     :return: The function does not return anything.
     :rtype: None
     """
-    root_logger = logging.getLogger()
-    if root_logger.handlers:
-        _LOGGER.debug("Root logging already configured. Skipping setup.")
-        return
-
-    logging.basicConfig(level=LOG_LEVEL, stream=sys.stdout)
-    current_level = logging.getLevelName(root_logger.level)
-    _LOGGER.debug("Configured root logging at %s level.", current_level)
+    root = logging.getLogger()
+    if not root.handlers:
+        logging.basicConfig(level=LOG_LEVEL, stream=sys.stdout)
+        _LOGGER.debug("🧵 Configured basic logging with level %s.", LOG_LEVEL)
 
 
 def _is_logging_enabled() -> bool:
     """Determine whether OpenTelemetry logging should be enabled.
 
-    :return: True when logging instrumentation is enabled.
+    :return: Whether OTEL logging instrumentation is enabled.
     :rtype: bool
     """
     flag = os.getenv("DISABLE_OTEL_LOGGING", "true").lower()
     is_enabled = flag == "false"
-    _LOGGER.debug("OpenTelemetry logging enabled flag evaluated to %s.", is_enabled)
+    _LOGGER.debug("🛰️ OTEL logging enabled flag is %s.", is_enabled)
     return is_enabled
 
 
-def _enable_logging_instrumentor(force: bool = False) -> None:
-    """Enable the OpenTelemetry logging instrumentor when configured.
+def _set_prefect_logging_config_path() -> None:
+    """Ensure Prefect uses the shared logging configuration.
 
     :return: The function does not return anything.
     :rtype: None
-    :raises RuntimeError: When instrumentation initialisation fails.
     """
-    if not _is_logging_enabled():
-        _LOGGER.debug("OpenTelemetry logging instrumentor disabled.")
-        return
-
-    global _INSTRUMENTED
-    if _INSTRUMENTED and not force:
-        _LOGGER.debug("OpenTelemetry logging instrumentor already enabled.")
-        return
-
-    try:
-        LoggingInstrumentor().instrument(set_logging_format=False)
-        _LOGGER.debug("Enabled OpenTelemetry logging instrumentor.")
-        _INSTRUMENTED = True
-    except Exception as exc:  # noqa: BLE001
-        _LOGGER.exception(
-            "Failed to enable OpenTelemetry logging instrumentor.",
+    if os.path.exists(_PREFECT_LOGGING_CONFIG_PATH):
+        os.environ.setdefault(
+            "PREFECT_LOGGING_CONF_PATH",
+            str(_PREFECT_LOGGING_CONFIG_PATH),
         )
-        raise RuntimeError("OpenTelemetry logging instrumentor failed.") from exc
+        _LOGGER.debug(
+            "🪄 Prefect logging config path set to %s.",
+            _PREFECT_LOGGING_CONFIG_PATH,
+        )
+    else:
+        _LOGGER.warning("🫧 Prefect logging configuration missing.")
 
 
-def ensure_logging_active(force_instrumentation: bool = True) -> None:
-    """Ensure logging configuration and instrumentation remain active.
+def _load_telemetry_config() -> TelemetryConfig:
+    """Load telemetry configuration from manifest or fall back to defaults.
 
-    :param force_instrumentation: Whether to reinitialise instrumentation
-        even when it has already been enabled, defaults to True
-    :type force_instrumentation: bool, optional
-    :return: The function does not return anything.
-    :rtype: None
+    :return: Telemetry configuration for Prefect telemetry.
+    :rtype: TelemetryConfig
     """
+    service_version = os.getenv("SERVICE_VERSION", "0.0.0")
+    try:
+        manifest = ServiceManifest.from_file(_SERVICE_MANIFEST_PATH)
+    except Exception as error:  # noqa: BLE001
+        _LOGGER.warning(
+            "🫧 Failed to load service manifest for telemetry: %s",
+            error,
+        )
+        return TelemetryConfig(
+            service_name="data-in-pipeline",
+            namespace_name="data-fetching",
+            service_version=service_version,
+            environment=ENV,
+        )
+    return TelemetryConfig.from_service_manifest(
+        manifest,
+        ENV,
+        service_version,
+    )
+
+
+def _ensure_prefect_telemetry() -> PrefectTelemetry | None:
+    """Initialise Prefect telemetry if OTEL logging is enabled.
+
+    :return: Prefect telemetry instance when configured.
+    :rtype: PrefectTelemetry | None
+    """
+    global _TELEMETRY
+    if not _is_logging_enabled():
+        _LOGGER.debug("🪨 OTEL logging disabled by configuration.")
+        return None
+    if _TELEMETRY is not None:
+        _LOGGER.debug("🧩 Prefect telemetry already initialised.")
+        return _TELEMETRY
+
+    telemetry_config = _load_telemetry_config()
+    _TELEMETRY = PrefectTelemetry(config=telemetry_config)
+    prefect_logger = _TELEMETRY.attach_to_prefect_logger()
+    if not isinstance(prefect_logger, logging.Logger):
+        _LOGGER.error("🫧 Prefect logger initialisation failed.")
+        return None
+    _LOGGER.debug("🛰️ Prefect telemetry attached to %s.", prefect_logger.name)
+    return _TELEMETRY
+
+
+def ensure_logging_active(
+    force_instrumentation: bool = True,
+) -> PrefectTelemetry | None:
+    """Ensure logging configuration and telemetry remain active.
+
+    :param force_instrumentation: Retained for compatibility; ignored.
+    :type force_instrumentation: bool, optional
+    :return: Prefect telemetry instance when available.
+    :rtype: PrefectTelemetry | None
+    """
+    _ = force_instrumentation
     configure_logging()
-    _enable_logging_instrumentor(force=force_instrumentation)
+    _set_prefect_logging_config_path()
+    return _ensure_prefect_telemetry()
 
 
-ensure_logging_active()
+def get_logger() -> logging.Logger | LoggingAdapter:
+    """Return a Prefect-aware logger at the configured level.
+
+    :return: Logger configured for Prefect flows or stdlib logging.
+    :rtype: logging.Logger | LoggingAdapter
+    """
+    try:
+        logger = prefect.logging.get_run_logger()
+    except prefect.exceptions.MissingContextError:
+        logger = prefect.logging.get_logger()
+    logger.setLevel(NUMERIC_LOG_LEVEL)
+    _LOGGER.debug("🪪 Provided logger %s at level %s.", logger.name, LOG_LEVEL)
+    return logger
+
+
+TELEMETRY = ensure_logging_active()
+
+__all__ = ["ensure_logging_active", "get_logger", "TELEMETRY"]

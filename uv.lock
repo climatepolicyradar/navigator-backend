@@ -71,6 +71,7 @@ version = "2.0.0"
 source = { editable = "api" }
 dependencies = [
     { name = "fastapi", extra = ["standard"] },
+    { name = "opentelemetry-api" },
     { name = "opentelemetry-distro" },
     { name = "opentelemetry-exporter-otlp" },
     { name = "opentelemetry-instrumentation-fastapi" },
@@ -84,12 +85,13 @@ dependencies = [
 [package.metadata]
 requires-dist = [
     { name = "fastapi", extras = ["standard"], specifier = ">=0.115.12,<0.116.0" },
+    { name = "opentelemetry-api", specifier = ">=1.38.0,<2.0.0" },
     { name = "opentelemetry-distro", specifier = ">=0.59b0" },
-    { name = "opentelemetry-exporter-otlp", specifier = ">=1.21.0,<2.0.0" },
-    { name = "opentelemetry-instrumentation-fastapi", specifier = ">=0.45b0" },
+    { name = "opentelemetry-exporter-otlp", specifier = ">=1.38.0,<2.0.0" },
+    { name = "opentelemetry-instrumentation-fastapi", specifier = ">=0.59b0" },
     { name = "opentelemetry-instrumentation-logging", specifier = ">=0.59b0" },
-    { name = "opentelemetry-instrumentation-sqlalchemy", specifier = ">=0.45b0" },
-    { name = "opentelemetry-sdk", specifier = ">=1.21.0,<2.0.0" },
+    { name = "opentelemetry-instrumentation-sqlalchemy", specifier = ">=0.59b0" },
+    { name = "opentelemetry-sdk", specifier = ">=1.38.0,<2.0.0" },
     { name = "pulumi", specifier = ">=3.166.0,<4.0.0" },
     { name = "pulumi-aws", specifier = ">=6.78.0,<7.0.0" },
 ]

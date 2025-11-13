@@ -1,6 +1,7 @@
 from returns.result import Failure, Result, Success
 
 from app.extract.connectors import NavigatorDocument, NavigatorFamily
+from app.logging_config import get_logger
 from app.models import (
     Document,
     DocumentDocumentRelationship,
@@ -10,6 +11,8 @@ from app.models import (
     Label,
 )
 from app.transform.models import CouldNotTransform, NoMatchingTransformations
+
+_LOGGER = get_logger()
 
 
 class TransformerLabel(Label):

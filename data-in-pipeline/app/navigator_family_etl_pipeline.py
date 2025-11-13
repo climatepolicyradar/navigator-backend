@@ -1,4 +1,3 @@
-import logging
 from datetime import datetime
 from typing import Literal
 
@@ -15,12 +14,12 @@ from app.extract.connectors import (
 from app.extract.enums import CheckPointStorageType
 from app.identify.navigator_family import identify_navigator_family
 from app.load.aws_bucket import upload_to_s3
-from app.logging_config import ensure_logging_active
+from app.logging_config import ensure_logging_active, get_logger
 from app.models import Document, ExtractedEnvelope, Identified
 from app.transform.models import NoMatchingTransformations
 from app.transform.navigator_family import transform_navigator_family
 
-_LOGGER = logging.getLogger(__name__)
+ensure_logging_active()
 
 
 def generate_s3_cache_key(step: Literal["extract", "identify", "transform"]) -> str:
@@ -31,8 +30,6 @@ def generate_s3_cache_key(step: Literal["extract", "identify", "transform"]) -> 
 # ---------------------------------------------------------------------
 #  ETL TASKS
 # ---------------------------------------------------------------------
-
-ensure_logging_active()
 
 
 @task(log_prints=True)
@@ -63,6 +60,7 @@ def extract() -> FamilyFetchResult:
         source_id="navigator_family",
         checkpoint_storage=CheckPointStorageType.S3,
         checkpoint_key_prefix="navigator/families/",  # TODO : Implement convention for checkpoint keys APP-1409
+        logger=get_logger(),
     )
 
     connector = NavigatorConnector(connector_config)
@@ -129,6 +127,8 @@ def etl_pipeline() -> list[Document] | Exception:
             In real use, you may want to return all transformed Results
             or push them to a downstream Prefect block.
     """
+    _LOGGER = get_logger()
+    _LOGGER.info("ETL pipeline started")
 
     extracted_result = extract()
     cache_extraction_result(extracted_result)

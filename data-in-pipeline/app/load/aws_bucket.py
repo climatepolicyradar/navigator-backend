@@ -1,5 +1,7 @@
-from app.logging_config import ensure_logging_active
+from app.logging_config import ensure_logging_active, get_logger
 from app.util import get_s3_client, upload_file
+
+_LOGGER = get_logger()
 
 ensure_logging_active()
 
