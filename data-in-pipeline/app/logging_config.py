@@ -4,21 +4,22 @@ import sys
 from pathlib import Path
 
 import prefect.logging
-
 from api.telemetry_config import ServiceManifest, TelemetryConfig
 from api.telemetry_prefect import PrefectTelemetry
 
 LOG_LEVEL = os.getenv("OTEL_PYTHON_LOG_LEVEL", "INFO").upper()
-ENV = os.getenv("ENV", "development")
 NUMERIC_LOG_LEVEL = getattr(logging, LOG_LEVEL, logging.INFO)
+ENV = os.getenv("ENV", "development")
 DISABLED = os.getenv("DISABLE_OTEL_LOGGING", "false").lower() == "true"
-_LOGGER = logging.getLogger(__name__)
+
 _APP_DIR = Path(__file__).resolve().parent
 _ROOT_DIR = _APP_DIR.parent
 _SERVICE_MANIFEST_PATH = _ROOT_DIR / "service-manifest.json"
 _PREFECT_LOGGING_CONFIG_PATH = _APP_DIR / "prefect_logging.yaml"
+
 _TELEMETRY: PrefectTelemetry | None = None
 
+_LOGGER = logging.getLogger(__name__)
 LoggingAdapter = logging.LoggerAdapter[logging.Logger]
 
 
@@ -52,17 +53,17 @@ def _set_prefect_logging_config_path() -> None:
     :return: The function does not return anything.
     :rtype: None
     """
-    assert _PREFECT_LOGGING_CONFIG_PATH.exists(), (
-        "Prefect logging configuration missing."
-    )
-    os.environ.setdefault(
-        "PREFECT_LOGGING_CONF_PATH",
-        str(_PREFECT_LOGGING_CONFIG_PATH),
-    )
-    _LOGGER.debug(
-        "🪄 Prefect logging config path set to %s.",
-        _PREFECT_LOGGING_CONFIG_PATH,
-    )
+    if os.path.exists(_PREFECT_LOGGING_CONFIG_PATH):
+        os.environ.setdefault(
+            "PREFECT_LOGGING_CONF_PATH",
+            str(_PREFECT_LOGGING_CONFIG_PATH),
+        )
+        _LOGGER.debug(
+            "🪄 Prefect logging config path set to %s.",
+            _PREFECT_LOGGING_CONFIG_PATH,
+        )
+    else:
+        _LOGGER.warning("🫧 Prefect logging configuration missing.")
 
 
 def _load_telemetry_config() -> TelemetryConfig:
@@ -109,14 +110,16 @@ def _ensure_prefect_telemetry() -> PrefectTelemetry | None:
     telemetry_config = _load_telemetry_config()
     _TELEMETRY = PrefectTelemetry(config=telemetry_config)
     prefect_logger = _TELEMETRY.attach_to_prefect_logger()
-    assert isinstance(prefect_logger, logging.Logger), (
-        "Prefect logger initialisation failed."
-    )
+    if not isinstance(prefect_logger, logging.Logger):
+        _LOGGER.error("🫧 Prefect logger initialisation failed.")
+        return None
     _LOGGER.debug("🛰️ Prefect telemetry attached to %s.", prefect_logger.name)
     return _TELEMETRY
 
 
-def ensure_logging_active(force_instrumentation: bool = True) -> PrefectTelemetry | None:
+def ensure_logging_active(
+    force_instrumentation: bool = True,
+) -> PrefectTelemetry | None:
     """Ensure logging configuration and telemetry remain active.
 
     :param force_instrumentation: Retained for compatibility; ignored.
