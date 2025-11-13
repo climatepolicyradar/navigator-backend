@@ -57,7 +57,7 @@ class FastAPITelemetry(BaseTelemetry):
 
         :param original_handler: Original FastAPI route handler.
         :type original_handler: Callable[[Request], Awaitable[Any]]
-        :raises AssertionError: If telemetry is not attached to the app.
+        :raises RuntimeError: If telemetry is not attached to the app.
         :return: Awaitable route handler that enriches spans.
         :rtype: Callable[[Request], Awaitable[Any]]
         """
@@ -65,17 +65,7 @@ class FastAPITelemetry(BaseTelemetry):
         async def custom_route_handler(request: Request):
             telemetry: Optional[FastAPITelemetry] = None
             try:
-                telemetry = getattr(request.app.state, "telemetry", None)
-                if telemetry is None:
-                    LOGGER.error("🌀 Telemetry missing on FastAPI application state.")
-                    raise RuntimeError(
-                        "Telemetry missing on FastAPI application state."
-                    )
-
-                if not isinstance(telemetry, FastAPITelemetry):
-                    LOGGER.error("FastAPITelemetry missing on application state.")
-                    raise RuntimeError("FastAPITelemetry missing on application state.")
-
+                telemetry = FastAPITelemetry._extract_telemetry(request)
                 tracer = telemetry.get_tracer()
                 with tracer.start_as_current_span("route_handler"):
                     return await original_handler(request)
@@ -85,6 +75,27 @@ class FastAPITelemetry(BaseTelemetry):
                 raise
 
         return custom_route_handler
+
+    @staticmethod
+    def _extract_telemetry(request: Request) -> "FastAPITelemetry":
+        """Retrieve telemetry from the FastAPI application state.
+
+        :param request: FastAPI request carrying application state.
+        :type request: Request
+        :raises RuntimeError: If telemetry is missing or incorrectly typed.
+        :return: FastAPI telemetry instance from the application.
+        :rtype: FastAPITelemetry
+        """
+        telemetry = getattr(request.app.state, "telemetry", None)
+        if telemetry is None:
+            LOGGER.error("🌀 Telemetry missing on FastAPI application state.")
+            raise RuntimeError("Telemetry missing on FastAPI application state.")
+
+        if not isinstance(telemetry, FastAPITelemetry):
+            LOGGER.error("FastAPITelemetry missing on application state.")
+            raise RuntimeError("FastAPITelemetry missing on application state.")
+
+        return telemetry
 
     def install_async_exception_hooks(
         self,
