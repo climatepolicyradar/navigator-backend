@@ -36,13 +36,14 @@ def disable_telemetry():
         # Shutdown logger provider
         logger_provider = get_logger_provider()
         if logger_provider and hasattr(logger_provider, "shutdown"):
-            logger_provider.shutdown()
+            logger_provider.shutdown()  # type: ignore[attr-defined]
 
         # Shutdown tracer provider
         tracer_provider = trace.get_tracer_provider()
         if tracer_provider and hasattr(tracer_provider, "shutdown"):
-            tracer_provider.shutdown()
+            tracer_provider.shutdown()  # type: ignore[attr-defined]
     except Exception:
+        # Silently ignore shutdown errors in test cleanup
         pass
 
 

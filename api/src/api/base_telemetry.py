@@ -29,7 +29,7 @@ from opentelemetry.sdk.trace import TracerProvider
 from opentelemetry.sdk.trace.export import BatchSpanProcessor
 from opentelemetry.trace import Span, Status, StatusCode, Tracer
 
-LOGGER = logging.getLogger(__name__)
+_LOGGER = logging.getLogger(__name__)
 
 ExceptionHook = Callable[
     [type[BaseException], BaseException, Optional[TracebackType]], None
@@ -254,15 +254,15 @@ class BaseTelemetry:
         """
         try:
             if self.logger_provider:
-                self.logger_provider.shutdown()
-        except Exception:
-            pass
+                self.logger_provider.shutdown()  # type: ignore[attr-defined]
+        except Exception as exc:
+            _LOGGER.debug("Failed to shutdown logger provider: %s", exc)
 
         try:
             if self.tracer_provider:
                 self.tracer_provider.shutdown()
-        except Exception:
-            pass
+        except Exception as exc:
+            _LOGGER.debug("Failed to shutdown tracer provider: %s", exc)
 
         # Also shutdown global providers in case Prefect or other services
         # initialised them. This is needed as otherwise tests will try to
@@ -275,9 +275,9 @@ class BaseTelemetry:
                 global_logger_provider
                 and global_logger_provider != self.logger_provider
             ):
-                global_logger_provider.shutdown()
-        except Exception:
-            pass
+                global_logger_provider.shutdown()  # type: ignore[attr-defined]
+        except Exception as exc:
+            _LOGGER.debug("Failed to shutdown global logger provider: %s", exc)
 
         try:
             global_tracer_provider = trace.get_tracer_provider()
@@ -286,6 +286,6 @@ class BaseTelemetry:
                 and global_tracer_provider != self.tracer_provider
                 and hasattr(global_tracer_provider, "shutdown")
             ):
-                global_tracer_provider.shutdown()
-        except Exception:
-            pass
+                global_tracer_provider.shutdown()  # type: ignore[attr-defined]
+        except Exception as exc:
+            _LOGGER.debug("Failed to shutdown global tracer provider: %s", exc)
