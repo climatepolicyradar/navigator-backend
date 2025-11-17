@@ -1,9 +1,7 @@
-# api/prefect_telemetry.py
-
 """
 Prefect integration for Navigator telemetry.
 
-PrefectTelemetry specializes BaseTelemetry for Prefect workers/runs.
+PrefectTelemetry specialises BaseTelemetry for Prefect workers/runs.
 It injects Prefect runtime context (flow_run_id, flow_name, task_run_id, task_name)
 into:
 - Python logging records via a logging.Filter (so Prefect's get_run_logger and stdlib logs carry fields),
