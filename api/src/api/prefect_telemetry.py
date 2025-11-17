@@ -12,39 +12,36 @@ This ensures Grafana can filter logs/spans by selected run_id or flow_name.
 """
 
 import logging
+from typing import Optional, TypedDict
 
+import prefect
 from api.base_telemetry import BaseTelemetry
 from api.telemetry_config import TelemetryConfig
 from opentelemetry.sdk._logs import LogRecord
 from opentelemetry.sdk._logs.export import BatchLogRecordProcessor
 from opentelemetry.sdk.trace import Span, SpanProcessor
 
-"""
-Helpers to safely read Prefect 3.x runtime context for flows/tasks.
-"""
-
-from typing import Optional, TypedDict
-
-import prefect
-
 
 class FlowContext(TypedDict, total=False):
     flow_run_id: Optional[str]
-    flow_name: Optional[str]
+    flow_run_name: Optional[str]
 
 
 class TaskContext(TypedDict, total=False):
     task_run_id: Optional[str]
-    task_name: Optional[str]
+    task_run_name: Optional[str]
 
 
 def get_flow_context() -> FlowContext:
     """Returns current flow context if available, else empty dict."""
     try:
         fr = prefect.runtime.flow_run
+        flow_run_id = getattr(fr, "id", None)
+        flow_run_name = getattr(fr, "name", None)
+
         return {
-            "flow_run_id": getattr(fr, "id", None),
-            "flow_name": getattr(fr, "name", None),
+            "flow_run_id": flow_run_id,
+            "flow_run_name": flow_run_name,
         }
     except Exception:
         return {}
@@ -56,7 +53,7 @@ def get_task_context() -> TaskContext:
         tr = prefect.runtime.task_run
         return {
             "task_run_id": getattr(tr, "id", None),
-            "task_name": getattr(tr, "name", None),
+            "task_run_name": getattr(tr, "name", None),
         }
     except Exception:
         return {}
@@ -70,9 +67,9 @@ class PrefectContextFilter(logging.Filter):
         tc = get_task_context()
         # Attach as attributes so formatters/handlers can use them
         setattr(record, "flow_run_id", fc.get("flow_run_id"))
-        setattr(record, "flow_name", fc.get("flow_name"))
+        setattr(record, "flow_run_name", fc.get("flow_run_name"))
         setattr(record, "task_run_id", tc.get("task_run_id"))
-        setattr(record, "task_name", tc.get("task_name"))
+        setattr(record, "task_run_name", tc.get("task_run_name"))
         return True
 
 
@@ -82,9 +79,9 @@ class PrefectLogContextProcessor(BatchLogRecordProcessor):
 
     Downstream exporter/collector should promote these attributes to Loki labels:
       - flow_run_id
-      - flow_name
+      - flow_run_name
       - task_run_id
-      - task_name
+      - task_run_name
     """
 
     def on_emit(self, record: LogRecord) -> None:
@@ -93,12 +90,12 @@ class PrefectLogContextProcessor(BatchLogRecordProcessor):
             tc = get_task_context()
             if fc.get("flow_run_id"):
                 record.attributes["flow_run_id"] = fc["flow_run_id"]
-            if fc.get("flow_name"):
-                record.attributes["flow_name"] = fc["flow_name"]
+            if fc.get("flow_run_name"):
+                record.attributes["flow_run_name"] = fc["flow_run_name"]
             if tc.get("task_run_id"):
                 record.attributes["task_run_id"] = tc["task_run_id"]
-            if tc.get("task_name"):
-                record.attributes["task_name"] = tc["task_name"]
+            if tc.get("task_run_name"):
+                record.attributes["task_run_name"] = tc["task_run_name"]
         except Exception:
             # Avoid breaking logging on enrichment failure
             pass
@@ -114,12 +111,12 @@ class PrefectSpanContextProcessor(SpanProcessor):
         tc = get_task_context()
         if fc.get("flow_run_id"):
             span.set_attribute("flow_run_id", fc["flow_run_id"])
-        if fc.get("flow_name"):
-            span.set_attribute("flow_name", fc["flow_name"])
+        if fc.get("flow_run_name"):
+            span.set_attribute("flow_run_name", fc["flow_run_name"])
         if tc.get("task_run_id"):
             span.set_attribute("task_run_id", tc["task_run_id"])
-        if tc.get("task_name"):
-            span.set_attribute("task_name", tc["task_name"])
+        if tc.get("task_run_name"):
+            span.set_attribute("task_run_name", tc["task_run_name"])
 
     def on_end(self, span: Span) -> None:
         pass
