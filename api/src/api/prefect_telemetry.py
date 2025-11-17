@@ -20,9 +20,7 @@ from api.telemetry_config import TelemetryConfig
 from opentelemetry import trace
 from opentelemetry._logs import get_logger_provider
 from opentelemetry.context.context import Context
-from opentelemetry.exporter.otlp.proto.http._log_exporter import (  # Find the OTLP exporter used by BaseTelemetry via existing processors (best effort).
-    OTLPLogExporter,
-)
+from opentelemetry.exporter.otlp.proto.http._log_exporter import OTLPLogExporter
 from opentelemetry.sdk._logs._internal import LogData
 from opentelemetry.sdk._logs.export import BatchLogRecordProcessor
 from opentelemetry.sdk.trace import ReadableSpan, Span, SpanProcessor
