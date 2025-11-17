@@ -29,7 +29,7 @@ from opentelemetry.sdk.trace import TracerProvider
 from opentelemetry.sdk.trace.export import BatchSpanProcessor
 from opentelemetry.trace import Span, Status, StatusCode, Tracer
 
-LOGGER = logging.getLogger(__name__)
+_LOGGER = logging.getLogger(__name__)
 
 ExceptionHook = Callable[
     [type[BaseException], BaseException, Optional[TracebackType]], None
@@ -48,8 +48,13 @@ class BaseTelemetry:
         self.resource = self.config.to_resource()
         self.tracer_provider = self._configure_tracing()
         self.tracer = trace.get_tracer(self.config.service_instance_id)
+        self.logger_provider: Optional[LoggerProvider] = (
+            None  # Set in _configure_logging
+        )
         self.logger = self._configure_logging()
         self.logger.info("🛰️ Telemetry initialised.")
+        self.trace_endpoint = None
+        self.log_endpoint = None
 
     def _configure_tracing(self) -> TracerProvider:
         """Configure tracer provider and OTLP exporter.
@@ -64,6 +69,7 @@ class BaseTelemetry:
             if self.config.otlp_endpoint
             else None
         )
+        self.trace_endpoint = trace_endpoint
         span_exporter = OTLPSpanExporter(endpoint=trace_endpoint)
         provider.add_span_processor(BatchSpanProcessor(span_exporter))
         return provider
@@ -75,12 +81,14 @@ class BaseTelemetry:
         :rtype: logging.Logger
         """
         logger_provider = LoggerProvider(resource=self.resource)
+        self.logger_provider = logger_provider
         set_logger_provider(logger_provider)
         log_endpoint: Optional[str] = (
             f"{self.config.otlp_endpoint}/v1/logs"
             if self.config.otlp_endpoint
             else None
         )
+        self.log_endpoint = log_endpoint
         log_exporter = BatchLogRecordProcessor(
             OTLPLogExporter(endpoint=log_endpoint),
         )
@@ -241,3 +249,47 @@ class BaseTelemetry:
         """
         previous_hook = sys.excepthook
         sys.excepthook = custom_excepthook or self._make_exception_hook(previous_hook)
+
+    def shutdown(self) -> None:
+        """Shutdown telemetry providers to prevent export errors on exit.
+
+        :return: The function does not return anything.
+        :rtype: None
+        """
+        try:
+            if self.logger_provider:
+                self.logger_provider.shutdown()  # type: ignore[attr-defined]
+        except Exception as exc:
+            _LOGGER.debug("Failed to shutdown logger provider: %s", exc)
+
+        try:
+            if self.tracer_provider:
+                self.tracer_provider.shutdown()
+        except Exception as exc:
+            _LOGGER.debug("Failed to shutdown tracer provider: %s", exc)
+
+        # Also shutdown global providers in case Prefect or other services
+        # initialised them. This is needed as otherwise tests will try to
+        # export logs and traces to our OTLP endpoint, which will fail.
+        try:
+            from opentelemetry._logs import get_logger_provider
+
+            global_logger_provider = get_logger_provider()
+            if (
+                global_logger_provider
+                and global_logger_provider != self.logger_provider
+            ):
+                global_logger_provider.shutdown()  # type: ignore[attr-defined]
+        except Exception as exc:
+            _LOGGER.debug("Failed to shutdown global logger provider: %s", exc)
+
+        try:
+            global_tracer_provider = trace.get_tracer_provider()
+            if (
+                global_tracer_provider
+                and global_tracer_provider != self.tracer_provider
+                and hasattr(global_tracer_provider, "shutdown")
+            ):
+                global_tracer_provider.shutdown()  # type: ignore[attr-defined]
+        except Exception as exc:
+            _LOGGER.debug("Failed to shutdown global tracer provider: %s", exc)
