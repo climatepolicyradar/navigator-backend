@@ -1,5 +1,49 @@
+import os
+
 import pytest
+from opentelemetry import trace
+from opentelemetry._logs import get_logger_provider
 from prefect.testing.utilities import prefect_test_harness
+
+# Set environment variables before any imports that might initialise telemetry
+os.environ.setdefault("DISABLE_OTEL_LOGGING", "true")
+os.environ.setdefault("OTEL_TRACES_EXPORTER", "none")
+os.environ.setdefault("OTEL_LOGS_EXPORTER", "none")
+os.environ.setdefault("OTEL_METRICS_EXPORTER", "none")
+
+
+@pytest.fixture(autouse=True, scope="session")
+def disable_telemetry():
+    """Disable OpenTelemetry logging during tests to prevent export errors.
+
+    :return: The function does not return anything.
+    :rtype: None
+    """
+    # Set before any imports that might initialise telemetry
+    os.environ["DISABLE_OTEL_LOGGING"] = "true"
+    yield
+    # Cleanup: ensure telemetry is shut down if it was initialised
+    try:
+        from app.logging_config import TELEMETRY
+
+        if TELEMETRY:
+            TELEMETRY.shutdown()
+    except Exception:
+        pass
+
+    # Force shutdown all global OpenTelemetry providers
+    try:
+        # Shutdown logger provider
+        logger_provider = get_logger_provider()
+        if logger_provider and hasattr(logger_provider, "shutdown"):
+            logger_provider.shutdown()
+
+        # Shutdown tracer provider
+        tracer_provider = trace.get_tracer_provider()
+        if tracer_provider and hasattr(tracer_provider, "shutdown"):
+            tracer_provider.shutdown()
+    except Exception:
+        pass
 
 
 @pytest.fixture(autouse=True, scope="session")

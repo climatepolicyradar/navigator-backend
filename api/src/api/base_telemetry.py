@@ -48,6 +48,9 @@ class BaseTelemetry:
         self.resource = self.config.to_resource()
         self.tracer_provider = self._configure_tracing()
         self.tracer = trace.get_tracer(self.config.service_instance_id)
+        self.logger_provider: Optional[LoggerProvider] = (
+            None  # Set in _configure_logging
+        )
         self.logger = self._configure_logging()
         self.logger.info("🛰️ Telemetry initialised.")
 
@@ -75,6 +78,7 @@ class BaseTelemetry:
         :rtype: logging.Logger
         """
         logger_provider = LoggerProvider(resource=self.resource)
+        self.logger_provider = logger_provider
         set_logger_provider(logger_provider)
         log_endpoint: Optional[str] = (
             f"{self.config.otlp_endpoint}/v1/logs"
@@ -241,3 +245,46 @@ class BaseTelemetry:
         """
         previous_hook = sys.excepthook
         sys.excepthook = custom_excepthook or self._make_exception_hook(previous_hook)
+
+    def shutdown(self) -> None:
+        """Shutdown telemetry providers to prevent export errors on exit.
+
+        :return: The function does not return anything.
+        :rtype: None
+        """
+        try:
+            if self.logger_provider:
+                self.logger_provider.shutdown()
+        except Exception:
+            pass
+
+        try:
+            if self.tracer_provider:
+                self.tracer_provider.shutdown()
+        except Exception:
+            pass
+
+        # Also shutdown global providers in case Prefect or other code
+        # initialised them
+        try:
+            from opentelemetry._logs import get_logger_provider
+
+            global_logger_provider = get_logger_provider()
+            if (
+                global_logger_provider
+                and global_logger_provider != self.logger_provider
+            ):
+                global_logger_provider.shutdown()
+        except Exception:
+            pass
+
+        try:
+            global_tracer_provider = trace.get_tracer_provider()
+            if (
+                global_tracer_provider
+                and global_tracer_provider != self.tracer_provider
+                and hasattr(global_tracer_provider, "shutdown")
+            ):
+                global_tracer_provider.shutdown()
+        except Exception:
+            pass
