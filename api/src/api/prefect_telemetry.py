@@ -209,15 +209,12 @@ class PrefectTelemetry(BaseTelemetry):
             lp = get_logger_provider()
 
             # If not introspectable, instantiate one more exporter pointing at the same
-            # endpoint using config.otlp_endpoint to avoid guesswork.
-            endpoint = (
-                f"{self.config.otlp_endpoint}/v1/logs"
-                if self.config.otlp_endpoint
-                else None
-            )
+            # endpoint.
             if hasattr(lp, "add_log_record_processor"):
                 lp.add_log_record_processor(  # type: ignore[attr-defined]
-                    PrefectLogContextProcessor(OTLPLogExporter(endpoint=endpoint))
+                    PrefectLogContextProcessor(
+                        OTLPLogExporter(endpoint=self.log_endpoint)
+                    )
                 )
         except Exception as exc:
             # As a fallback we rely on the logging.Filter to carry context on Python logs.

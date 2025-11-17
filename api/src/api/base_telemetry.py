@@ -53,6 +53,8 @@ class BaseTelemetry:
         )
         self.logger = self._configure_logging()
         self.logger.info("🛰️ Telemetry initialised.")
+        self.trace_endpoint = None
+        self.log_endpoint = None
 
     def _configure_tracing(self) -> TracerProvider:
         """Configure tracer provider and OTLP exporter.
@@ -67,6 +69,7 @@ class BaseTelemetry:
             if self.config.otlp_endpoint
             else None
         )
+        self.trace_endpoint = trace_endpoint
         span_exporter = OTLPSpanExporter(endpoint=trace_endpoint)
         provider.add_span_processor(BatchSpanProcessor(span_exporter))
         return provider
@@ -85,6 +88,7 @@ class BaseTelemetry:
             if self.config.otlp_endpoint
             else None
         )
+        self.log_endpoint = log_endpoint
         log_exporter = BatchLogRecordProcessor(
             OTLPLogExporter(endpoint=log_endpoint),
         )
