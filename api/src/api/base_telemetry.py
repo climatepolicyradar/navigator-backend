@@ -264,8 +264,9 @@ class BaseTelemetry:
         except Exception:
             pass
 
-        # Also shutdown global providers in case Prefect or other code
-        # initialised them
+        # Also shutdown global providers in case Prefect or other services
+        # initialised them. This is needed as otherwise tests will try to
+        # export logs and traces to our OTLP endpoint, which will fail.
         try:
             from opentelemetry._logs import get_logger_provider
 
