@@ -17,11 +17,18 @@ from typing import Optional
 import prefect
 from api.base_telemetry import BaseTelemetry
 from api.telemetry_config import TelemetryConfig
+from opentelemetry import trace
+from opentelemetry._logs import get_logger_provider
 from opentelemetry.context.context import Context
+from opentelemetry.exporter.otlp.proto.http._log_exporter import (  # Find the OTLP exporter used by BaseTelemetry via existing processors (best effort).
+    OTLPLogExporter,
+)
 from opentelemetry.sdk._logs._internal import LogData
 from opentelemetry.sdk._logs.export import BatchLogRecordProcessor
 from opentelemetry.sdk.trace import ReadableSpan, Span, SpanProcessor
 from pydantic import BaseModel
+
+_LOGGER = logging.getLogger(__name__)
 
 
 class FlowContext(BaseModel):
@@ -143,9 +150,7 @@ class PrefectLogContextProcessor(BatchLogRecordProcessor):
 
         except Exception as exc:
             # Avoid breaking logging on enrichment failure
-            logging.getLogger(__name__).debug(
-                "⚠️ Failed to enrich log record with Prefect context: %s", exc
-            )
+            _LOGGER.debug("Failed to enrich log record with Prefect context: %s", exc)
         finally:
             super().on_emit(log_data)
 
@@ -176,9 +181,7 @@ class PrefectSpanContextProcessor(SpanProcessor):
             if task_name is not None:
                 span.set_attribute("task_name", task_name)
         except Exception as exc:
-            logging.getLogger(__name__).debug(
-                "⚠️ Failed to enrich span with Prefect context: %s", exc
-            )
+            _LOGGER.debug("Failed to enrich span with Prefect context: %s", exc)
 
     def on_end(self, span: ReadableSpan) -> None:
         pass
@@ -192,31 +195,21 @@ class PrefectTelemetry(BaseTelemetry):
         super().__init__(config)
 
         # Add a filter so stdlib/Pefect loggers carry context
-
         root = logging.getLogger()
         root.addFilter(PrefectContextFilter())
 
         # Replace the default OTEL log processor with our enriching one
-        # by re-registering processors after BaseTelemetry set up.
+        # by reregistering processors after BaseTelemetry set up.
         #
         # NOTE: BaseTelemetry adds a BatchLogRecordProcessor(OTLPLogExporter).
-        # We add an additional processor that enriches then calls exporter.
-        # If you need to replace instead of add, patch BaseTelemetry to expose logger_provider.
-        # Here we add our processor in addition.
+        # We add an additional processor that enriches then calls the exporter.
         try:
-            # Access the logger provider via the logging handler
-            # If not accessible, you can reconfigure logging in BaseTelemetry to store it.
-            from opentelemetry._logs import get_logger_provider
-
+            # Find the OTLP exporter used by BaseTelemetry via the existing logging
+            # handler.
             lp = get_logger_provider()
 
-            # Find the OTLP exporter used by BaseTelemetry via existing processors (best effort).
-            # If not introspectable, instantiate one more exporter pointing at the same endpoint.
-            # We reuse config.otlp_endpoint to avoid guessing.
-            from opentelemetry.exporter.otlp.proto.http._log_exporter import (
-                OTLPLogExporter,
-            )
-
+            # If not introspectable, instantiate one more exporter pointing at the same
+            # endpoint using config.otlp_endpoint to avoid guesswork.
             endpoint = (
                 f"{self.config.otlp_endpoint}/v1/logs"
                 if self.config.otlp_endpoint
@@ -229,23 +222,18 @@ class PrefectTelemetry(BaseTelemetry):
         except Exception as exc:
             # As a fallback we rely on the logging.Filter to carry context on Python logs.
             # The OTEL log enrichment may be missing if logger provider is not accessible.
-            logging.getLogger(__name__).debug(
-                "⚠️ Failed to add Prefect log context processor: %s", exc
-            )
+            _LOGGER.debug("Failed to add Prefect log context processor: %s", exc)
 
         # Enrich spans for Prefect runs
         try:
-            from opentelemetry import trace
-
             provider = trace.get_tracer_provider()
+
             if hasattr(provider, "add_span_processor"):
                 provider.add_span_processor(  # type: ignore[attr-defined]
                     PrefectSpanContextProcessor()
                 )
         except Exception as exc:
-            logging.getLogger(__name__).debug(
-                "⚠️ Failed to add Prefect span context processor: %s", exc
-            )
+            _LOGGER.debug("Failed to add Prefect span context processor: %s", exc)
 
     def attach_to_prefect_logger(self, logger_name: str = "prefect") -> logging.Logger:
         """
