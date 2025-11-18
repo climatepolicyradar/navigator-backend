@@ -1,5 +1,7 @@
 """Generate test metrics for dashboard exploration."""
 
+# nosec: B311
+
 import os
 import random
 import time
