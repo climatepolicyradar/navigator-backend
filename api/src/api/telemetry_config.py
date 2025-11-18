@@ -12,7 +12,7 @@ import socket
 
 from api.service_manifest import ServiceManifest
 from opentelemetry.sdk.resources import Resource
-from pydantic import Field, field_validator
+from pydantic import ConfigDict, Field, field_validator
 from pydantic_settings import BaseSettings
 
 
@@ -88,11 +88,10 @@ class TelemetryConfig(BaseSettings):
     def __str__(self):
         return f"TelemetryConfig(service_name={self.service_name}, namespace_name={self.namespace_name}, environment={self.environment}, service_instance_id={self.service_instance_id}, otlp_endpoint={self.otlp_endpoint}, service_version={self.service_version})"
 
-    class Config:
-        """Pydantic config"""
-
-        env_prefix = ""  # Use exact environment variable names (e.g., SERVICE_NAME)
-        case_sensitive = False  # So we can uppercase our env vars
+    model_config = ConfigDict( 
+        env_prefix="",  # Use exact environment variable names (e.g., SERVICE_NAME)
+        case_sensitive=False  # So we can uppercase our env var
+    )
 
     @field_validator("hostname", mode="before")
     @classmethod
