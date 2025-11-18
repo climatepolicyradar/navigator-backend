@@ -35,7 +35,6 @@ ExceptionHook = Callable[
     [type[BaseException], BaseException, Optional[TracebackType]], None
 ]
 
-
 class BaseTelemetry:
     """Shared OpenTelemetry bootstrap for Navigator services.
 
@@ -46,13 +45,18 @@ class BaseTelemetry:
     def __init__(self, config: TelemetryConfig) -> None:
         self.config = config
         self.resource = self.config.to_resource()
-        self.tracer_provider = self._configure_tracing()
+        self._configure_tracing()
+
+        # TODO why set this after tracing config? 
         self.tracer = trace.get_tracer(self.config.service_instance_id)
+        
         self.logger_provider: Optional[LoggerProvider] = (
             None  # Set in _configure_logging
         )
-        self.logger = self._configure_logging()
-        self.logger.info("🛰️ Telemetry initialised.")
+        
+        self._configure_logging()
+
+        # TODO why set these to none after weve set them up hmmm? 
         self.trace_endpoint = None
         self.log_endpoint = None
 
@@ -64,15 +68,19 @@ class BaseTelemetry:
         """
         provider = TracerProvider(resource=self.resource)
         trace.set_tracer_provider(provider)
+
         trace_endpoint: Optional[str] = (
             f"{self.config.otlp_endpoint}/v1/traces"
             if self.config.otlp_endpoint
             else None
         )
+
         self.trace_endpoint = trace_endpoint
+
         span_exporter = OTLPSpanExporter(endpoint=trace_endpoint)
         provider.add_span_processor(BatchSpanProcessor(span_exporter))
-        return provider
+
+        self.tracer_provider = provider
 
     def _configure_logging(self) -> logging.Logger:
         """Configure logging providers and attach OTLP handlers.
@@ -80,32 +88,45 @@ class BaseTelemetry:
         :return: Logger configured for the current service.
         :rtype: logging.Logger
         """
-        logger_provider = LoggerProvider(resource=self.resource)
-        self.logger_provider = logger_provider
-        set_logger_provider(logger_provider)
+ 
+        # First, we set up the logger provider 
+        otel_logger_provider = LoggerProvider(resource=self.resource)
+        self.logger_provider = otel_logger_provider
+        set_logger_provider(otel_logger_provider)
+
+        # Then lets set up the things to process the logs in the provider,
+        # ie batch them up and send them to the collector at the right endpoint
         log_endpoint: Optional[str] = (
             f"{self.config.otlp_endpoint}/v1/logs"
             if self.config.otlp_endpoint
             else None
         )
         self.log_endpoint = log_endpoint
+
         log_exporter = BatchLogRecordProcessor(
             OTLPLogExporter(endpoint=log_endpoint),
         )
-        logger_provider.add_log_record_processor(log_exporter)
 
+        otel_logger_provider.add_log_record_processor(log_exporter)
+
+        # Now our logger provider is setup, we can start hooking into python's logging setup
+        # and setting up our configuration -- which needs to log stdout, prefect, and otel. 
         logging.config.dictConfig(self.config.get_logging_config())
         log_level_value = self._resolve_log_level()
+
         log_handler = LoggingHandler(
             level=log_level_value,
-            logger_provider=logger_provider,
+            logger_provider=otel_logger_provider,
         )
+
         root_logger = logging.getLogger()
         root_logger.addHandler(log_handler)
 
         service_logger = logging.getLogger(self.config.service_name)
         service_logger.setLevel(log_level_value)
-        return service_logger
+
+        self.logger = service_logger
+        self.logger.info("🛰️ Telemetry initialised.")
 
     def _resolve_log_level(self) -> int:
         """Translate configured log level to ``logging`` constants.
