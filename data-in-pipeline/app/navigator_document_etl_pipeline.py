@@ -11,12 +11,14 @@ from app.extract.connectors import NavigatorConnector, NavigatorDocument
 from app.extract.enums import CheckPointStorageType
 from app.identify.navigator_document import identify_navigator_document
 from app.load.aws_bucket import upload_to_s3
-from app.bootstrap_telemetry import get_logger
+from app.bootstrap_telemetry import get_logger, pipeline_metrics
 from app.models import Document, ExtractedEnvelope, Identified
+from app.pipeline_metrics import Operation, PipelineType, Status
 from app.transform.navigator_document import transform_navigator_document
 
 
 @task(log_prints=True)
+@pipeline_metrics.timed_operation(Operation.EXTRACT)
 def extract(
     document_id: str,
 ) -> Result[ExtractedEnvelope[NavigatorDocument], Exception]:
@@ -46,6 +48,7 @@ def extract(
 
 
 @task(log_prints=True)
+@pipeline_metrics.timed_operation(Operation.LOAD)
 def load_to_s3(document: Document):
     """Upload to S3 cache"""
     _LOGGER = get_logger()
@@ -59,6 +62,7 @@ def load_to_s3(document: Document):
 
 
 @task(log_prints=True)
+@pipeline_metrics.timed_operation(Operation.IDENTIFY)
 def identify(extracted: ExtractedEnvelope[NavigatorDocument]):
     """Identify"""
     _LOGGER = get_logger()
@@ -68,6 +72,7 @@ def identify(extracted: ExtractedEnvelope[NavigatorDocument]):
 
 
 @task(log_prints=True)
+@pipeline_metrics.timed_operation(Operation.TRANSFORM)
 def transform(identified: Identified[NavigatorDocument]):
     """Transform"""
     _LOGGER = get_logger()
@@ -88,8 +93,9 @@ def etl_pipeline(
 
     if not is_successful(extracted_result):
         _LOGGER.error(f"Extraction failed for {id}: {extracted_result.failure()}")
+        pipeline_metrics.record_processed(PipelineType.DOCUMENT, Status.FAILURE)
         return Failure(extracted_result.failure())
-    
+
     extracted = extracted_result.unwrap()
 
     identified = identify(extracted)
@@ -98,6 +104,7 @@ def etl_pipeline(
 
     load_to_s3(document.unwrap())
 
+    pipeline_metrics.record_processed(PipelineType.DOCUMENT, Status.SUCCESS)
     return document
 
 

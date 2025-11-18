@@ -10,7 +10,8 @@ from returns.result import Failure, Result, Success
 from app.extract.connector_config import NavigatorConnectorConfig
 from app.models import ExtractedEnvelope, ExtractedMetadata
 from app.util import generate_envelope_uuid
-from app.bootstrap_telemetry import get_logger
+from app.bootstrap_telemetry import get_logger, pipeline_metrics
+from app.pipeline_metrics import ErrorType, Operation
 
 class NavigatorDocument(BaseModel):
     import_id: str
@@ -95,63 +96,7 @@ class NavigatorConnector(HTTPConnector):
 
     def __init__(self, config: NavigatorConnectorConfig):
         super().__init__(config)
-        logger = get_logger()
-
-        logger.info(
-            "OTEL_SERVICE_NAME: " + os.getenv("OTEL_SERVICE_NAME", "not set")
-        )
-        logger.info(
-            "OTEL_TRACES_EXPORTER: " + os.getenv("OTEL_TRACES_EXPORTER", "not set")
-        )
-        logger.info(
-            "OTEL_METRICS_EXPORTER: " + os.getenv("OTEL_METRICS_EXPORTER", "not set")
-        )
-        logger.info(
-            "OTEL_LOGS_EXPORTER: " + os.getenv("OTEL_LOGS_EXPORTER", "not set")
-        )
-        logger.info(
-            "OTEL_EXPORTER_OTLP_ENDPOINT: "
-            + os.getenv("OTEL_EXPORTER_OTLP_ENDPOINT", "not set")
-        )
-        logger.info(
-            "OTEL_EXPORTER_OTLP_PROTOCOL: "
-            + os.getenv("OTEL_EXPORTER_OTLP_PROTOCOL", "not set")
-        )
-        logger.info(
-            "OTEL_EXPORTER_OTLP_TRACES_ENDPOINT: "
-            + os.getenv("OTEL_EXPORTER_OTLP_TRACES_ENDPOINT", "not set")
-        )
-        logger.info(
-            "OTEL_EXPORTER_OTLP_METRICS_ENDPOINT: "
-            + os.getenv("OTEL_EXPORTER_OTLP_METRICS_ENDPOINT", "not set")
-        )
-        logger.info(
-            "OTEL_EXPORTER_OTLP_LOGS_ENDPOINT: "
-            + os.getenv("OTEL_EXPORTER_OTLP_LOGS_ENDPOINT", "not set")
-        )
-        logger.info(
-            "OTEL_PYTHON_LOG_LEVEL: " + os.getenv("OTEL_PYTHON_LOG_LEVEL", "not set")
-        )
-        logger.info(
-            "OTEL_RESOURCE_ATTRIBUTES: "
-            + os.getenv("OTEL_RESOURCE_ATTRIBUTES", "not set")
-        )
-        logger.info(
-            "PREFECT_CLOUD_ENABLE_ORCHESTRATION_TELEMETRY: "
-            + os.getenv("PREFECT_CLOUD_ENABLE_ORCHESTRATION_TELEMETRY", "not set")
-        )
-        logger.info(
-            "PREFECT_LOGGING_LEVEL: " + os.getenv("PREFECT_LOGGING_LEVEL", "not set")
-        )
-        logger.info(
-            "PREFECT_LOGGING_EXTRA_LOGGERS: "
-            + os.getenv("PREFECT_LOGGING_EXTRA_LOGGERS", "not set")
-        )
-        logger.info(
-            "OTEL_PYTHON_LOGGING_AUTO_INSTRUMENTATION_ENABLED: "
-            + os.getenv("OTEL_PYTHON_LOGGING_AUTO_INSTRUMENTATION_ENABLED", "not set")
-        )
-
+        
     def fetch_document(
         self, import_id: str, task_run_id: str, flow_run_id: str
     ) -> Result[ExtractedEnvelope, Exception]:
@@ -188,9 +133,11 @@ class NavigatorConnector(HTTPConnector):
             )
         except requests.RequestException as e:
             logger.error(f"Request failed fetching document {import_id}")
+            pipeline_metrics.record_error(Operation.EXTRACT, ErrorType.NETWORK)
             return Failure(e)
         except Exception as e:
             logger.error(f"Unexpected error fetching document {import_id}")
+            pipeline_metrics.record_error(Operation.EXTRACT, ErrorType.UNKNOWN)
             return Failure(e)
 
     def fetch_family(

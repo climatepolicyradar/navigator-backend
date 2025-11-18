@@ -9,7 +9,7 @@ import logging
 import os
 from pathlib import Path
 
-from api import ServiceManifest, TelemetryConfig
+from api import MetricsService, ServiceManifest, TelemetryConfig
 from api.prefect_telemetry import PrefectTelemetry, get_logger
 
 _APP_DIR = Path(__file__).resolve().parent
@@ -31,7 +31,70 @@ _config = TelemetryConfig.from_service_manifest(_manifest, _ENV, _SERVICE_VERSIO
 # Initialize telemetry
 telemetry = PrefectTelemetry(config=_config)
 
+# Initialize metrics
+metrics_service = MetricsService(config=_config)
+
+# Import PipelineMetrics here to avoid circular import
+from app.pipeline_metrics import PipelineMetrics
+pipeline_metrics = PipelineMetrics(metrics_service=metrics_service)
+
 if telemetry.logger:
     telemetry.logger.info("Telemetry bootstrap complete for %s", _config.service_name)
+    
+    telemetry.logger.info(
+        "OTEL_SERVICE_NAME: " + os.getenv("OTEL_SERVICE_NAME", "not set")
+    )
+    telemetry.logger.info(
+        "OTEL_TRACES_EXPORTER: " + os.getenv("OTEL_TRACES_EXPORTER", "not set")
+    )
+    telemetry.logger.info(
+        "OTEL_METRICS_EXPORTER: " + os.getenv("OTEL_METRICS_EXPORTER", "not set")
+    )
+    telemetry.logger.info(
+        "OTEL_LOGS_EXPORTER: " + os.getenv("OTEL_LOGS_EXPORTER", "not set")
+    )
+    telemetry.logger.info(
+        "OTEL_EXPORTER_OTLP_ENDPOINT: "
+        + os.getenv("OTEL_EXPORTER_OTLP_ENDPOINT", "not set")
+    )
+    telemetry.logger.info(
+        "OTEL_EXPORTER_OTLP_PROTOCOL: "
+        + os.getenv("OTEL_EXPORTER_OTLP_PROTOCOL", "not set")
+    )
+    telemetry.logger.info(
+        "OTEL_EXPORTER_OTLP_TRACES_ENDPOINT: "
+        + os.getenv("OTEL_EXPORTER_OTLP_TRACES_ENDPOINT", "not set")
+    )
+    telemetry.logger.info(
+        "OTEL_EXPORTER_OTLP_METRICS_ENDPOINT: "
+        + os.getenv("OTEL_EXPORTER_OTLP_METRICS_ENDPOINT", "not set")
+    )
+    telemetry.logger.info(
+        "OTEL_EXPORTER_OTLP_LOGS_ENDPOINT: "
+        + os.getenv("OTEL_EXPORTER_OTLP_LOGS_ENDPOINT", "not set")
+    )
+    telemetry.logger.info(
+        "OTEL_PYTHON_LOG_LEVEL: " + os.getenv("OTEL_PYTHON_LOG_LEVEL", "not set")
+    )
+    telemetry.logger.info(
+        "OTEL_RESOURCE_ATTRIBUTES: "
+        + os.getenv("OTEL_RESOURCE_ATTRIBUTES", "not set")
+    )
+    telemetry.logger.info(
+        "PREFECT_CLOUD_ENABLE_ORCHESTRATION_TELEMETRY: "
+        + os.getenv("PREFECT_CLOUD_ENABLE_ORCHESTRATION_TELEMETRY", "not set")
+    )
+    telemetry.logger.info(
+        "PREFECT_LOGGING_LEVEL: " + os.getenv("PREFECT_LOGGING_LEVEL", "not set")
+    )
+    telemetry.logger.info(
+        "PREFECT_LOGGING_EXTRA_LOGGERS: "
+        + os.getenv("PREFECT_LOGGING_EXTRA_LOGGERS", "not set")
+    )
+    telemetry.logger.info(
+        "OTEL_PYTHON_LOGGING_AUTO_INSTRUMENTATION_ENABLED: "
+        + os.getenv("OTEL_PYTHON_LOGGING_AUTO_INSTRUMENTATION_ENABLED", "not set")
+    )
 
-__all__ = ["telemetry", "get_logger"]
+
+__all__ = ["telemetry", "get_logger", "metrics_service", "pipeline_metrics"]
