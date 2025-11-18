@@ -269,10 +269,11 @@ class NavigatorConnector(HTTPConnector):
 
         page = 1
         successful_envelopes: list[ExtractedEnvelope] = []
+        page_size = 100
         while True:
             try:
                 self._LOGGER.info(f"Fetching families page {page}")
-                response_json = self.get(f"families/?page={page}")
+                response_json = self.get(f"families/?page={page}&page_size={page_size}")
                 families_data = response_json.get("data", [])
 
                 # Break the loop if no more families are returned from the endpoint
