@@ -16,20 +16,20 @@ os.environ["ENV"] = "development"
 NUM_ITERATIONS = 1000
 for i in range(NUM_ITERATIONS):
     # Simulate successful/failed processing
-    status = random.choice(
+    status = random.choice(  # nosec
         [Status.SUCCESS, Status.SUCCESS, Status.SUCCESS, Status.FAILURE]
     )
     pipeline_metrics.record_processed(PipelineType.DOCUMENT, status)
 
     # Simulate operation durations
     for op in Operation:
-        duration = random.uniform(0.1, 5.0)
+        duration = random.uniform(0.1, 5.0)  # nosec
         pipeline_metrics.record_duration(op, duration)
 
     # Simulate some errors
-    if random.random() < 0.1:
-        op = random.choice(list(Operation))
-        err = random.choice(list(ErrorType))
+    if random.random() < 0.1:  # nosec
+        op = random.choice(list(Operation))  # nosec
+        err = random.choice(list(ErrorType))  # nosec
         pipeline_metrics.record_error(op, err)
 
     if i % 10 == 0:
