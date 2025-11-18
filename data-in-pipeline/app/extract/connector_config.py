@@ -4,8 +4,8 @@ from typing import Annotated, Literal, Optional
 
 from pydantic import BaseModel, ConfigDict, Field
 
+from app.bootstrap_telemetry import get_logger
 from app.extract.enums import CheckPointStorageType, PaginationStyle
-from app.logging_config import get_logger
 from app.util import get_api_url
 
 LoggingAdapter = logging.LoggerAdapter[logging.Logger]

@@ -24,10 +24,10 @@ def disable_telemetry():
     yield
     # Cleanup: ensure telemetry is shut down if it was initialised
     try:
-        from app.logging_config import TELEMETRY
+        from app.bootstrap_telemetry import telemetry
 
-        if TELEMETRY:
-            TELEMETRY.shutdown()
+        if telemetry:
+            telemetry.shutdown()
     except Exception:
         pass
 

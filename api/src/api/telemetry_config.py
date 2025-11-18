@@ -39,6 +39,17 @@ class TelemetryConfig(BaseSettings):
     otlp_endpoint: str = Field(default="")
     resource_attributes: str = Field(default="")
     log_level: str = Field(default="INFO")
+    disabled: bool = Field(default=False, validation_alias="DISABLE_OTEL_LOGGING")
+
+    @field_validator("disabled", mode="before")
+    @classmethod
+    def parse_disabled(cls, v):
+        """Parse DISABLE_OTEL_LOGGING env var (string 'true'/'false' to bool)."""
+        if isinstance(v, bool):
+            return v
+        if isinstance(v, str):
+            return v.lower() == "true"
+        return bool(v)
 
     # Automatic attributes
     hostname: str = Field(default="")

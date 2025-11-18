@@ -45,20 +45,20 @@ class BaseTelemetry:
     def __init__(self, config: TelemetryConfig) -> None:
         self.config = config
         self.resource = self.config.to_resource()
+        self._disabled = config.disabled
+
+        if self._disabled:
+            _LOGGER.debug("Telemetry disabled by configuration.")
+            self.tracer_provider = None
+            self.logger_provider = None
+            self.tracer = None
+            self.logger = _LOGGER
+            self.trace_endpoint = None
+            self.log_endpoint = None
+            return
+
         self._configure_tracing()
-
-        # TODO why set this after tracing config? 
-        self.tracer = trace.get_tracer(self.config.service_instance_id)
-        
-        self.logger_provider: Optional[LoggerProvider] = (
-            None  # Set in _configure_logging
-        )
-        
         self._configure_logging()
-
-        # TODO why set these to none after weve set them up hmmm? 
-        self.trace_endpoint = None
-        self.log_endpoint = None
 
     def _configure_tracing(self) -> TracerProvider:
         """Configure tracer provider and OTLP exporter.
@@ -81,6 +81,7 @@ class BaseTelemetry:
         provider.add_span_processor(BatchSpanProcessor(span_exporter))
 
         self.tracer_provider = provider
+        self.tracer = trace.get_tracer(self.config.service_instance_id)
 
     def _configure_logging(self) -> logging.Logger:
         """Configure logging providers and attach OTLP handlers.
@@ -88,6 +89,10 @@ class BaseTelemetry:
         :return: Logger configured for the current service.
         :rtype: logging.Logger
         """
+
+        self.logger_provider: Optional[LoggerProvider] = (
+            None  # Set in _configure_logging
+        )
  
         # First, we set up the logger provider 
         otel_logger_provider = LoggerProvider(resource=self.resource)
@@ -109,9 +114,12 @@ class BaseTelemetry:
 
         otel_logger_provider.add_log_record_processor(log_exporter)
 
-        # Now our logger provider is setup, we can start hooking into python's logging setup
-        # and setting up our configuration -- which needs to log stdout, prefect, and otel. 
-        logging.config.dictConfig(self.config.get_logging_config())
+        # Now our logger provider is setup, we can start hooking into python's logging setup.
+        #
+        # Note: For Prefect flows, use prefect_logging.yaml to configure Python logging.
+        # For FastAPI services, call logging.config.dictConfig(self.config.get_logging_config()).
+        # These are separate because Prefect has its own logging handlers/formatters.
+        
         log_level_value = self._resolve_log_level()
 
         log_handler = LoggingHandler(
@@ -277,6 +285,9 @@ class BaseTelemetry:
         :return: The function does not return anything.
         :rtype: None
         """
+        if self._disabled:
+            return
+
         try:
             if self.logger_provider:
                 self.logger_provider.shutdown()  # type: ignore[attr-defined]

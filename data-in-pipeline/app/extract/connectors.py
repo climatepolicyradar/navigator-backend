@@ -8,11 +8,8 @@ from requests.adapters import HTTPAdapter, Retry
 from returns.result import Failure, Result, Success
 
 from app.extract.connector_config import NavigatorConnectorConfig
-from app.logging_config import ensure_logging_active
 from app.models import ExtractedEnvelope, ExtractedMetadata
 from app.util import generate_envelope_uuid
-
-ensure_logging_active()
 
 
 class NavigatorDocument(BaseModel):
@@ -136,21 +133,6 @@ class NavigatorConnector(HTTPConnector):
         self._LOGGER.info(
             "OTEL_RESOURCE_ATTRIBUTES: "
             + os.getenv("OTEL_RESOURCE_ATTRIBUTES", "not set")
-        )
-        self._LOGGER.info(
-            "PREFECT_CLOUD_ENABLE_ORCHESTRATION_TELEMETRY: "
-            + os.getenv("PREFECT_CLOUD_ENABLE_ORCHESTRATION_TELEMETRY", "not set")
-        )
-        self._LOGGER.info(
-            "PREFECT_LOGGING_LEVEL: " + os.getenv("PREFECT_LOGGING_LEVEL", "not set")
-        )
-        self._LOGGER.info(
-            "PREFECT_LOGGING_EXTRA_LOGGERS: "
-            + os.getenv("PREFECT_LOGGING_EXTRA_LOGGERS", "not set")
-        )
-        self._LOGGER.info(
-            "OTEL_PYTHON_LOGGING_AUTO_INSTRUMENTATION_ENABLED: "
-            + os.getenv("OTEL_PYTHON_LOGGING_AUTO_INSTRUMENTATION_ENABLED", "not set")
         )
         self._LOGGER.info(
             "PREFECT_CLOUD_ENABLE_ORCHESTRATION_TELEMETRY: "
