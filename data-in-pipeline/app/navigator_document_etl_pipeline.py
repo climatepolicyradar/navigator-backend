@@ -28,7 +28,6 @@ def extract(
         source_id="navigator_document",
         checkpoint_storage=CheckPointStorageType.S3,
         checkpoint_key_prefix="navigator/documents/",  # TODO : Implement convention for checkpoint keys APP-1409
-        logger=_LOGGER,
     )
 
     task_run_id = (

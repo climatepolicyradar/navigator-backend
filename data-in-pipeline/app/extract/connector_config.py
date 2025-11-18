@@ -8,9 +8,6 @@ from app.bootstrap_telemetry import get_logger
 from app.extract.enums import CheckPointStorageType, PaginationStyle
 from app.util import get_api_url
 
-LoggingAdapter = logging.LoggerAdapter[logging.Logger]
-
-
 class PaginationConfig(BaseModel):
     """
     Configuration for paginated API requests.
@@ -53,14 +50,8 @@ class HttpBaseConnectorConfig(BaseModel):
     checkpoint_key_prefix: str
 
     emit_metrics: bool = True
-    log_level: Literal["DEBUG", "INFO", "WARN", "ERROR"] = "INFO"
 
     pagination: PaginationConfig = PaginationConfig()
-
-    logger: Annotated[
-        logging.Logger | LoggingAdapter, Field(default_factory=get_logger)
-    ]
-
 
 class NavigatorConnectorConfig(HttpBaseConnectorConfig):
     """
