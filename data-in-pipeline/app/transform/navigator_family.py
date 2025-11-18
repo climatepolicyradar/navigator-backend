@@ -1,14 +1,18 @@
 from returns.result import Failure, Result, Success
 
 from app.extract.connectors import NavigatorDocument, NavigatorFamily
+from app.logging_config import get_logger
 from app.models import (
     Document,
     DocumentDocumentRelationship,
     DocumentLabelRelationship,
+    DocumentWithoutRelationships,
     Identified,
     Label,
 )
 from app.transform.models import CouldNotTransform, NoMatchingTransformations
+
+_LOGGER = get_logger()
 
 
 class TransformerLabel(Label):
@@ -110,14 +114,10 @@ def transform_navigator_family_with_matching_document_title_and_siblings(
                 "transform_navigator_family_with_matching_document_title_and_siblings",
             )
             transformed_sibling_documents = [
-                Document(
-                    id=document.import_id,
-                    title=document.title,
-                    relationships=[
-                        DocumentDocumentRelationship(
-                            type="main", document=transformed_matching_document
-                        )
-                    ],
+                transform_navigator_family_document(
+                    input,
+                    document,
+                    "transform_navigator_family_with_matching_document_title_and_siblings",
                 )
                 for document in input.data.documents
                 if document.import_id != matching_document.import_id
@@ -129,6 +129,16 @@ def transform_navigator_family_with_matching_document_title_and_siblings(
             This is mutation-y as we need the sibling_documents first, and using model_copy(update=dict) is not type safe.
             Setting the property directly is.
             """
+            for sibling in transformed_sibling_documents:
+                sibling.relationships = [
+                    DocumentDocumentRelationship(
+                        type="main",
+                        document=DocumentWithoutRelationships(
+                            **transformed_matching_document.model_dump()
+                        ),
+                    )
+                ]
+
             transformed_matching_document.relationships = [
                 DocumentDocumentRelationship(
                     type=next(
@@ -140,7 +150,7 @@ def transform_navigator_family_with_matching_document_title_and_siblings(
                         ),
                         "sibling",
                     ),
-                    document=sibling,
+                    document=DocumentWithoutRelationships(**sibling.model_dump()),
                 )
                 for sibling in transformed_sibling_documents
             ]

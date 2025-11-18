@@ -1,10 +1,14 @@
+import logging
 from datetime import datetime
-from typing import Literal, Optional
+from typing import Annotated, Literal, Optional
 
-from pydantic import BaseModel
+from pydantic import BaseModel, ConfigDict, Field
 
 from app.extract.enums import CheckPointStorageType, PaginationStyle
+from app.logging_config import get_logger
 from app.util import get_api_url
+
+LoggingAdapter = logging.LoggerAdapter[logging.Logger]
 
 
 class PaginationConfig(BaseModel):
@@ -32,6 +36,8 @@ class HttpBaseConnectorConfig(BaseModel):
     that interacts with HTTP APIs. Used as the foundation for connector-specific configs.
     """
 
+    model_config = ConfigDict(arbitrary_types_allowed=True)
+
     base_url: str
 
     connector_name: str
@@ -50,6 +56,10 @@ class HttpBaseConnectorConfig(BaseModel):
     log_level: Literal["DEBUG", "INFO", "WARN", "ERROR"] = "INFO"
 
     pagination: PaginationConfig = PaginationConfig()
+
+    logger: Annotated[
+        logging.Logger | LoggingAdapter, Field(default_factory=get_logger)
+    ]
 
 
 class NavigatorConnectorConfig(HttpBaseConnectorConfig):

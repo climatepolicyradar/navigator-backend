@@ -9,6 +9,7 @@ def cache_all_navigator_families():
     family_import_ids = []
     families = []
     while True:
+        print(f"Fetching page {page}")
         response = requests.get(
             f"https://api.climatepolicyradar.org/families/?page={page}",
             timeout=5,  # seconds
@@ -27,3 +28,7 @@ def cache_all_navigator_families():
     with open(".data_cache/navigator_families.json", "w") as f:
         json.dump(families, f, indent=4)
     return family_import_ids
+
+
+if __name__ == "__main__":
+    cache_all_navigator_families()
