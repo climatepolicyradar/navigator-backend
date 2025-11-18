@@ -24,6 +24,7 @@ from app.models import (
     PhysicalDocument,
     Slug,
 )
+from app.settings import settings
 
 _LOGGER = logging.getLogger(__name__)
 
@@ -53,12 +54,17 @@ def read_families(
     *,
     session: Session = Depends(get_session),
     page: int = Query(1, ge=1),
+    page_size: int = Query(
+        default=settings.families_default_page_size,
+        ge=1,
+        le=settings.families_max_page_size,
+    ),
     corpus_import_ids: list[str] = Query(
         default=[],
         alias="corpus.import_id",
-    )
+    ),
 ):
-    limit = 10
+    limit = page_size
     offset = (page - 1) * limit
 
     filters = []
@@ -166,7 +172,6 @@ def read_documents(
     response_model=APIItemResponse[FamilyDocumentPublicWithFamily],
 )
 def read_document(*, session: Session = Depends(get_session), document_id: str):
-
     document = session.exec(
         FamilyDocument.eager_loaded_select().where(
             FamilyDocument.import_id == document_id
