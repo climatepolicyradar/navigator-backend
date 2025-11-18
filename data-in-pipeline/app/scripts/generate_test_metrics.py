@@ -4,11 +4,11 @@ import os
 import random
 import time
 
-# Ensure we're in development environment
-os.environ["ENV"] = "development"
-
 from app.bootstrap_telemetry import pipeline_metrics
 from app.pipeline_metrics import ErrorType, Operation, PipelineType, Status
+
+# Ensure we're in development environment
+os.environ["ENV"] = "development"
 
 # Generate some test data
 NUM_ITERATIONS = 1000

@@ -1,5 +1,4 @@
 import datetime
-import os
 from http import HTTPStatus
 
 import requests

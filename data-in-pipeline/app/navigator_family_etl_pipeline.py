@@ -58,7 +58,6 @@ def extract() -> FamilyFetchResult:
         source_id="navigator_family",
         checkpoint_storage=CheckPointStorageType.S3,
         checkpoint_key_prefix="navigator/families/",  # TODO : Implement convention for checkpoint keys APP-1409
-        logger=get_logger(),
     )
 
     connector = NavigatorConnector(connector_config)

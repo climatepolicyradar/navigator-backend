@@ -12,6 +12,8 @@ from pathlib import Path
 from api import MetricsService, ServiceManifest, TelemetryConfig
 from api.prefect_telemetry import PrefectTelemetry, get_logger
 
+from app.pipeline_metrics import PipelineMetrics
+
 # Suppress verbose HTTP client logs to prevent OTEL export feedback loop
 # These libraries generate DEBUG logs for every HTTP request, which when
 # captured by OTEL creates an infinite loop of log exports
@@ -42,9 +44,6 @@ telemetry = PrefectTelemetry(config=_config)
 
 # Initialize metrics
 metrics_service = MetricsService(config=_config)
-
-# Import PipelineMetrics here to avoid circular import
-from app.pipeline_metrics import PipelineMetrics
 
 pipeline_metrics = PipelineMetrics(metrics_service=metrics_service)
 

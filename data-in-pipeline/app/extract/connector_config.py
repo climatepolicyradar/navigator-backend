@@ -1,10 +1,9 @@
 import logging
 from datetime import datetime
-from typing import Annotated, Literal, Optional
+from typing import Optional
 
-from pydantic import BaseModel, ConfigDict, Field
+from pydantic import BaseModel, ConfigDict
 
-from app.bootstrap_telemetry import get_logger
 from app.extract.enums import CheckPointStorageType, PaginationStyle
 from app.util import get_api_url
 

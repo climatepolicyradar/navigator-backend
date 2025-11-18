@@ -61,7 +61,7 @@ class BaseTelemetry:
         self._configure_tracing()
         self._configure_logging()
 
-    def _configure_tracing(self) -> TracerProvider:
+    def _configure_tracing(self) -> None:
         """Configure tracer provider and OTLP exporter.
 
         :return: The configured tracer provider.
@@ -84,7 +84,7 @@ class BaseTelemetry:
         self.tracer_provider = provider
         self.tracer = trace.get_tracer(self.config.service_instance_id)
 
-    def _configure_logging(self) -> logging.Logger:
+    def _configure_logging(self) -> None:
         """Configure logging providers and attach OTLP handlers.
 
         :return: Logger configured for the current service.
@@ -166,7 +166,7 @@ class BaseTelemetry:
         """
         self.install_exception_hooks()
 
-    def get_tracer(self) -> Tracer:
+    def get_tracer(self) -> Tracer | None:
         """Return the configured tracer.
 
         :return: OpenTelemetry tracer instance.
