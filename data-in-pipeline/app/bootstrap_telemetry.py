@@ -12,6 +12,13 @@ from pathlib import Path
 from api import MetricsService, ServiceManifest, TelemetryConfig
 from api.prefect_telemetry import PrefectTelemetry, get_logger
 
+# Suppress verbose HTTP client logs to prevent OTEL export feedback loop
+# These libraries generate DEBUG logs for every HTTP request, which when
+# captured by OTEL creates an infinite loop of log exports
+logging.getLogger("urllib3").setLevel(logging.WARNING)
+logging.getLogger("urllib3.connectionpool").setLevel(logging.WARNING)
+logging.getLogger("requests").setLevel(logging.WARNING)
+
 _APP_DIR = Path(__file__).resolve().parent
 _ROOT_DIR = _APP_DIR.parent
 _SERVICE_MANIFEST_PATH = _ROOT_DIR / "service-manifest.json"

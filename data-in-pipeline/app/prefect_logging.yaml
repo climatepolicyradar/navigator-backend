@@ -46,6 +46,13 @@ loggers:
     handlers:
       - console
     propagate: true
+  # Suppress verbose HTTP client logs to prevent OTEL export feedback loop
+  urllib3:
+    level: WARNING
+    propagate: false
+  requests:
+    level: WARNING
+    propagate: false
 
 root:
   level: DEBUG
