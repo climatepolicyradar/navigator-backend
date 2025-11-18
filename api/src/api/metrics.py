@@ -9,13 +9,12 @@ and provides factory methods for creating counters and histograms.
 import logging
 from typing import Optional, Sequence
 
+from api.telemetry_config import TelemetryConfig
 from opentelemetry import metrics
 from opentelemetry.exporter.otlp.proto.http.metric_exporter import OTLPMetricExporter
 from opentelemetry.metrics import Counter, Histogram, Meter
 from opentelemetry.sdk.metrics import MeterProvider
 from opentelemetry.sdk.metrics.export import PeriodicExportingMetricReader
-
-from api.telemetry_config import TelemetryConfig
 
 
 class MetricsService:
@@ -66,10 +65,7 @@ class MetricsService:
         metric_exporter = OTLPMetricExporter(endpoint=metrics_endpoint)
         metric_reader = PeriodicExportingMetricReader(metric_exporter)
 
-        provider = MeterProvider(
-            resource=resource,
-            metric_readers=[metric_reader]
-        )
+        provider = MeterProvider(resource=resource, metric_readers=[metric_reader])
         metrics.set_meter_provider(provider)
 
         self.meter_provider = provider

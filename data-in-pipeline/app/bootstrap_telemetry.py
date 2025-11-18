@@ -26,7 +26,9 @@ _PREFECT_LOGGING_CONFIG_PATH = _APP_DIR / "prefect_logging.yaml"
 
 # Set Prefect logging config path
 if _PREFECT_LOGGING_CONFIG_PATH.exists():
-    os.environ.setdefault("PREFECT_LOGGING_CONF_PATH", str(_PREFECT_LOGGING_CONFIG_PATH))
+    os.environ.setdefault(
+        "PREFECT_LOGGING_CONF_PATH", str(_PREFECT_LOGGING_CONFIG_PATH)
+    )
 
 # Load configuration
 _ENV = os.getenv("ENV", "development")
@@ -43,11 +45,12 @@ metrics_service = MetricsService(config=_config)
 
 # Import PipelineMetrics here to avoid circular import
 from app.pipeline_metrics import PipelineMetrics
+
 pipeline_metrics = PipelineMetrics(metrics_service=metrics_service)
 
 if telemetry.logger:
     telemetry.logger.info("Telemetry bootstrap complete for %s", _config.service_name)
-    
+
     telemetry.logger.info(
         "OTEL_SERVICE_NAME: " + os.getenv("OTEL_SERVICE_NAME", "not set")
     )
@@ -84,8 +87,7 @@ if telemetry.logger:
         "OTEL_PYTHON_LOG_LEVEL: " + os.getenv("OTEL_PYTHON_LOG_LEVEL", "not set")
     )
     telemetry.logger.info(
-        "OTEL_RESOURCE_ATTRIBUTES: "
-        + os.getenv("OTEL_RESOURCE_ATTRIBUTES", "not set")
+        "OTEL_RESOURCE_ATTRIBUTES: " + os.getenv("OTEL_RESOURCE_ATTRIBUTES", "not set")
     )
     telemetry.logger.info(
         "PREFECT_CLOUD_ENABLE_ORCHESTRATION_TELEMETRY: "

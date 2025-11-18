@@ -8,6 +8,7 @@ from app.bootstrap_telemetry import get_logger
 from app.extract.enums import CheckPointStorageType, PaginationStyle
 from app.util import get_api_url
 
+
 class PaginationConfig(BaseModel):
     """
     Configuration for paginated API requests.
@@ -52,6 +53,7 @@ class HttpBaseConnectorConfig(BaseModel):
     emit_metrics: bool = True
 
     pagination: PaginationConfig = PaginationConfig()
+
 
 class NavigatorConnectorConfig(HttpBaseConnectorConfig):
     """

@@ -11,27 +11,29 @@ import time
 from enum import StrEnum
 from typing import Callable, Optional, TypeVar
 
-from opentelemetry.metrics import Counter, Histogram
-
 from api import MetricsService
+from opentelemetry.metrics import Counter, Histogram
 
 F = TypeVar("F", bound=Callable)
 
 
 class PipelineType(StrEnum):
     """Types of pipelines that process data."""
+
     DOCUMENT = "document"
     FAMILY = "family"
 
 
 class Status(StrEnum):
     """Processing status outcomes."""
+
     SUCCESS = "success"
     FAILURE = "failure"
 
 
 class Operation(StrEnum):
     """Pipeline operations/stages."""
+
     EXTRACT = "extract"
     IDENTIFY = "identify"
     TRANSFORM = "transform"
@@ -41,6 +43,7 @@ class Operation(StrEnum):
 
 class ErrorType(StrEnum):
     """Categories of errors that can occur during pipeline operations."""
+
     NETWORK = "network"
     VALIDATION = "validation"
     TRANSFORM = "transform"
@@ -83,6 +86,7 @@ class PipelineMetrics:
     def _create_instruments(self) -> None:
         """Create the pipeline-specific metric instruments."""
         from app.bootstrap_telemetry import get_logger
+
         logger = get_logger()
 
         self._documents_processed = self._metrics_service.create_counter(
@@ -172,6 +176,7 @@ class PipelineMetrics:
         :return: A decorator that wraps the function with timing.
         :rtype: Callable[[F], F]
         """
+
         def decorator(func: F) -> F:
             @functools.wraps(func)
             def wrapper(*args, **kwargs):
@@ -180,5 +185,7 @@ class PipelineMetrics:
                     return func(*args, **kwargs)
                 finally:
                     self.record_duration(operation, time.time() - start)
+
             return wrapper  # type: ignore
+
         return decorator

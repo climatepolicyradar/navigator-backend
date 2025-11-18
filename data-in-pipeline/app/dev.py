@@ -1,5 +1,4 @@
 import app.bootstrap_telemetry  # noqa: F401 - Initialize telemetry first
-
 from app.navigator_document_etl_pipeline import process_updates
 
 if __name__ == "__main__":

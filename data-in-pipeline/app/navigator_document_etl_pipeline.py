@@ -2,16 +2,15 @@ from datetime import datetime
 
 from prefect import flow, task
 from prefect.runtime import flow_run, task_run
-
 from returns.pipeline import is_successful
 from returns.result import Failure, Result
 
+from app.bootstrap_telemetry import get_logger, pipeline_metrics
 from app.extract.connector_config import NavigatorConnectorConfig
 from app.extract.connectors import NavigatorConnector, NavigatorDocument
 from app.extract.enums import CheckPointStorageType
 from app.identify.navigator_document import identify_navigator_document
 from app.load.aws_bucket import upload_to_s3
-from app.bootstrap_telemetry import get_logger, pipeline_metrics
 from app.models import Document, ExtractedEnvelope, Identified
 from app.pipeline_metrics import Operation, PipelineType, Status
 from app.transform.navigator_document import transform_navigator_document

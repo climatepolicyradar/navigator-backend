@@ -7,11 +7,12 @@ from pydantic import BaseModel
 from requests.adapters import HTTPAdapter, Retry
 from returns.result import Failure, Result, Success
 
+from app.bootstrap_telemetry import get_logger, pipeline_metrics
 from app.extract.connector_config import NavigatorConnectorConfig
 from app.models import ExtractedEnvelope, ExtractedMetadata
-from app.util import generate_envelope_uuid
-from app.bootstrap_telemetry import get_logger, pipeline_metrics
 from app.pipeline_metrics import ErrorType, Operation
+from app.util import generate_envelope_uuid
+
 
 class NavigatorDocument(BaseModel):
     import_id: str
@@ -96,7 +97,7 @@ class NavigatorConnector(HTTPConnector):
 
     def __init__(self, config: NavigatorConnectorConfig):
         super().__init__(config)
-        
+
     def fetch_document(
         self, import_id: str, task_run_id: str, flow_run_id: str
     ) -> Result[ExtractedEnvelope, Exception]:

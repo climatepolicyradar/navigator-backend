@@ -35,6 +35,7 @@ ExceptionHook = Callable[
     [type[BaseException], BaseException, Optional[TracebackType]], None
 ]
 
+
 class BaseTelemetry:
     """Shared OpenTelemetry bootstrap for Navigator services.
 
@@ -93,8 +94,8 @@ class BaseTelemetry:
         self.logger_provider: Optional[LoggerProvider] = (
             None  # Set in _configure_logging
         )
- 
-        # First, we set up the logger provider 
+
+        # First, we set up the logger provider
         otel_logger_provider = LoggerProvider(resource=self.resource)
         self.logger_provider = otel_logger_provider
         set_logger_provider(otel_logger_provider)
@@ -119,7 +120,7 @@ class BaseTelemetry:
         # Note: For Prefect flows, use prefect_logging.yaml to configure Python logging.
         # For FastAPI services, call logging.config.dictConfig(self.config.get_logging_config()).
         # These are separate because Prefect has its own logging handlers/formatters.
-        
+
         log_level_value = self._resolve_log_level()
 
         log_handler = LoggingHandler(

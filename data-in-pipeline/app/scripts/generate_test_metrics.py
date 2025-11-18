@@ -1,19 +1,22 @@
 """Generate test metrics for dashboard exploration."""
+
 import os
-import time
 import random
+import time
 
 # Ensure we're in development environment
 os.environ["ENV"] = "development"
 
 from app.bootstrap_telemetry import pipeline_metrics
-from app.pipeline_metrics import Operation, PipelineType, Status, ErrorType
+from app.pipeline_metrics import ErrorType, Operation, PipelineType, Status
 
 # Generate some test data
 NUM_ITERATIONS = 1000
 for i in range(NUM_ITERATIONS):
     # Simulate successful/failed processing
-    status = random.choice([Status.SUCCESS, Status.SUCCESS, Status.SUCCESS, Status.FAILURE])
+    status = random.choice(
+        [Status.SUCCESS, Status.SUCCESS, Status.SUCCESS, Status.FAILURE]
+    )
     pipeline_metrics.record_processed(PipelineType.DOCUMENT, status)
 
     # Simulate operation durations
