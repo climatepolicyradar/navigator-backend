@@ -24,6 +24,7 @@ from app.models import (
     PhysicalDocument,
     Slug,
 )
+from app.settings import settings
 
 _LOGGER = logging.getLogger(__name__)
 
@@ -58,7 +59,7 @@ def read_families(
         alias="corpus.import_id",
     ),
 ):
-    limit = 50
+    limit = settings.families_default_page_size
     offset = (page - 1) * limit
 
     filters = []

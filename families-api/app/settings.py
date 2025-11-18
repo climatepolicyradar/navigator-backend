@@ -6,6 +6,7 @@ class Settings(BaseSettings):
     navigator_database_url: SecretStr
     cdn_url: str
     github_sha: str = "unknown"
+    families_default_page_size: int = 50
 
 
 # pydantic settings are set from the env variables passed in via docker / apprunner
