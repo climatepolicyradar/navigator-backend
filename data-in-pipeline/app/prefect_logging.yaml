@@ -35,16 +35,33 @@ handlers:
       log.flow_run_name: magenta
       log.flow_name: bold magenta
 
+  otel:
+    # OTEL handler that forwards logs to OpenTelemetry
+    class: api.prefect_telemetry.OTELLoggingHandler
+    level: 0
+    formatter: standard
+
+  api:
+    # Prefect API handler - sends logs to Prefect Cloud/Server UI
+    class: prefect.logging.handlers.APILogHandler
+    level: 0
+
 loggers:
   prefect:
     level: NOTSET
+    propagate: true
+  prefect.flow_runs:
+    level: NOTSET
     handlers:
-      - console
+      - api
+    propagate: true
+  prefect.task_runs:
+    level: NOTSET
+    handlers:
+      - api
     propagate: true
   app:
     level: NOTSET
-    handlers:
-      - console
     propagate: true
   # Suppress verbose HTTP client logs to prevent OTEL export feedback loop
   urllib3:
@@ -55,6 +72,7 @@ loggers:
     propagate: false
 
 root:
-  level: DEBUG
+  level: INFO
   handlers:
     - console
+    - otel
