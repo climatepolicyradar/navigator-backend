@@ -17,7 +17,7 @@ from app.transform.navigator_document import transform_navigator_document
 
 
 @task(log_prints=True)
-@pipeline_metrics.timed_operation(Operation.EXTRACT)
+@pipeline_metrics.tracked_operation(Operation.EXTRACT)
 def extract(
     document_id: str,
 ) -> Result[ExtractedEnvelope[NavigatorDocument], Exception]:
@@ -47,7 +47,7 @@ def extract(
 
 
 @task(log_prints=True)
-@pipeline_metrics.timed_operation(Operation.LOAD)
+@pipeline_metrics.tracked_operation(Operation.LOAD)
 def load_to_s3(document: Document):
     """Upload to S3 cache"""
     _LOGGER = get_logger()
@@ -61,7 +61,7 @@ def load_to_s3(document: Document):
 
 
 @task(log_prints=True)
-@pipeline_metrics.timed_operation(Operation.IDENTIFY)
+@pipeline_metrics.tracked_operation(Operation.IDENTIFY)
 def identify(extracted: ExtractedEnvelope[NavigatorDocument]):
     """Identify"""
     _LOGGER = get_logger()
@@ -71,7 +71,7 @@ def identify(extracted: ExtractedEnvelope[NavigatorDocument]):
 
 
 @task(log_prints=True)
-@pipeline_metrics.timed_operation(Operation.TRANSFORM)
+@pipeline_metrics.tracked_operation(Operation.TRANSFORM)
 def transform(identified: Identified[NavigatorDocument]):
     """Transform"""
     _LOGGER = get_logger()

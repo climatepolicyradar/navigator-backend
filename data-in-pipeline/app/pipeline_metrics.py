@@ -7,14 +7,19 @@ error tracking, and operation durations.
 """
 
 import functools
+import os
 import time
 from enum import StrEnum
 from typing import Callable, Optional, TypeVar
 
 from api import MetricsService
-from opentelemetry.metrics import Counter, Histogram
+from opentelemetry.metrics import Counter, Gauge, Histogram
 
 F = TypeVar("F", bound=Callable)
+
+# Default ECS Fargate allocation values (can be overridden via env vars)
+DEFAULT_CPU_ALLOCATION_UNITS = 1024  # 1 vCPU
+DEFAULT_MEMORY_ALLOCATION_MB = 2048  # 2 GB
 
 
 class PipelineType(StrEnum):
@@ -80,6 +85,23 @@ class PipelineMetrics:
         self._document_errors: Optional[Counter] = None
         self._operation_duration: Optional[Histogram] = None
 
+        # Cost component instruments
+        self._cpu_allocation: Optional[Gauge] = None
+        self._memory_allocation: Optional[Gauge] = None
+
+        # Resource utilization instruments
+        self._memory_usage: Optional[Histogram] = None
+        self._memory_utilization: Optional[Histogram] = None
+        self._cpu_utilization: Optional[Histogram] = None
+
+        # Allocation values (from env vars or defaults)
+        self._cpu_allocation_units = int(
+            os.getenv("ECS_CPU_ALLOCATION", DEFAULT_CPU_ALLOCATION_UNITS)
+        )
+        self._memory_allocation_mb = int(
+            os.getenv("ECS_MEMORY_ALLOCATION", DEFAULT_MEMORY_ALLOCATION_MB)
+        )
+
         if not self._disabled:
             self._create_instruments()
 
@@ -106,6 +128,53 @@ class PipelineMetrics:
             description="Duration of pipeline operations in seconds",
             unit="s",
         )
+
+        # Cost component gauges
+        self._cpu_allocation = (
+            self._metrics_service.meter.create_gauge(
+                name=self._metrics_service.full_metric_name(
+                    "task_cpu_allocation_units"
+                ),
+                description="CPU units allocated to the task (1024 = 1 vCPU)",
+                unit="1",
+            )
+            if self._metrics_service.meter
+            else None
+        )
+
+        self._memory_allocation = (
+            self._metrics_service.meter.create_gauge(
+                name=self._metrics_service.full_metric_name(
+                    "task_memory_allocation_mb"
+                ),
+                description="Memory allocated to the task in MB",
+                unit="MiB",
+            )
+            if self._metrics_service.meter
+            else None
+        )
+
+        # Resource utilization histograms
+        self._memory_usage = self._metrics_service.create_histogram(
+            name="task_memory_usage_bytes",
+            description="Actual memory used by the task in bytes",
+            unit="By",
+        )
+
+        self._memory_utilization = self._metrics_service.create_histogram(
+            name="task_memory_utilization_ratio",
+            description="Memory usage as ratio of allocated (0.0-1.0)",
+            unit="1",
+        )
+
+        self._cpu_utilization = self._metrics_service.create_histogram(
+            name="task_cpu_utilization_percent",
+            description="CPU utilization percentage during task execution",
+            unit="%",
+        )
+
+        # Record initial allocation values
+        self._record_allocation()
 
         logger.info("Pipeline metrics instruments created")
 
@@ -185,6 +254,107 @@ class PipelineMetrics:
                     return func(*args, **kwargs)
                 finally:
                     self.record_duration(operation, time.time() - start)
+
+            return wrapper  # type: ignore
+
+        return decorator
+
+    def _record_allocation(self) -> None:
+        """Record the current allocation values as gauges."""
+        if self._disabled:
+            return
+
+        if self._cpu_allocation is not None:
+            self._cpu_allocation.set(
+                self._cpu_allocation_units,
+                attributes=self._base_attributes,
+            )
+
+        if self._memory_allocation is not None:
+            self._memory_allocation.set(
+                self._memory_allocation_mb,
+                attributes=self._base_attributes,
+            )
+
+    def record_resource_usage(
+        self,
+        operation: Operation,
+        memory_usage_bytes: int,
+        memory_utilization_ratio: float,
+        cpu_percent: float,
+    ) -> None:
+        """Record resource utilization metrics for an operation.
+
+        :param operation: The pipeline operation that was measured.
+        :type operation: Operation
+        :param memory_usage_bytes: Actual memory used in bytes.
+        :type memory_usage_bytes: int
+        :param memory_utilization_ratio: Memory used as ratio of allocated (0.0-1.0).
+        :type memory_utilization_ratio: float
+        :param cpu_percent: CPU utilization percentage.
+        :type cpu_percent: float
+        """
+        if self._disabled:
+            return
+
+        attributes = {
+            **self._base_attributes,
+            "operation": operation.value,
+        }
+
+        if self._memory_usage is not None:
+            self._memory_usage.record(memory_usage_bytes, attributes=attributes)
+
+        if self._memory_utilization is not None:
+            self._memory_utilization.record(
+                memory_utilization_ratio, attributes=attributes
+            )
+
+        if self._cpu_utilization is not None:
+            self._cpu_utilization.record(cpu_percent, attributes=attributes)
+
+    def tracked_operation(self, operation: Operation) -> Callable[[F], F]:
+        """Decorator to time a function and record resource usage.
+
+        Combines timing and resource utilization tracking. Records:
+        - Operation duration
+        - Memory usage and utilization
+        - CPU utilization
+
+        :param operation: The pipeline operation being tracked.
+        :type operation: Operation
+        :return: A decorator that wraps the function with tracking.
+        :rtype: Callable[[F], F]
+        """
+        from app.ecs_metadata import get_resource_usage
+
+        def decorator(func: F) -> F:
+            @functools.wraps(func)
+            def wrapper(*args, **kwargs):
+                start = time.time()
+
+                # Sample resource usage at start
+                start_usage = get_resource_usage()
+
+                try:
+                    return func(*args, **kwargs)
+                finally:
+                    # Record duration
+                    duration = time.time() - start
+                    self.record_duration(operation, duration)
+
+                    # Sample resource usage at end and record
+                    end_usage = get_resource_usage()
+
+                    # Use end usage if available, otherwise try start usage
+                    usage = end_usage or start_usage
+                    if usage is not None:
+                        self.record_resource_usage(
+                            operation=operation,
+                            memory_usage_bytes=usage.memory_usage_bytes,
+                            memory_utilization_ratio=usage.memory_utilization_ratio,
+                            cpu_percent=usage.cpu_percent,
+                        )
 
             return wrapper  # type: ignore
 
