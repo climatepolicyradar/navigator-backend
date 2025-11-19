@@ -5,30 +5,30 @@ from prefect.runtime import flow_run, task_run
 from returns.pipeline import is_successful
 from returns.result import Failure, Result
 
+from app.bootstrap_telemetry import get_logger, pipeline_metrics
 from app.extract.connector_config import NavigatorConnectorConfig
 from app.extract.connectors import NavigatorConnector, NavigatorDocument
 from app.extract.enums import CheckPointStorageType
 from app.identify.navigator_document import identify_navigator_document
 from app.load.aws_bucket import upload_to_s3
-from app.logging_config import ensure_logging_active, get_logger
 from app.models import Document, ExtractedEnvelope, Identified
+from app.pipeline_metrics import Operation, PipelineType, Status
 from app.transform.navigator_document import transform_navigator_document
-
-ensure_logging_active()
 
 
 @task(log_prints=True)
+@pipeline_metrics.timed_operation(Operation.EXTRACT)
 def extract(
     document_id: str,
 ) -> Result[ExtractedEnvelope[NavigatorDocument], Exception]:
     """Extract"""
     _LOGGER = get_logger()
     _LOGGER.info("Extract step initiated")
+
     connector_config = NavigatorConnectorConfig(
         source_id="navigator_document",
         checkpoint_storage=CheckPointStorageType.S3,
         checkpoint_key_prefix="navigator/documents/",  # TODO : Implement convention for checkpoint keys APP-1409
-        logger=_LOGGER,
     )
 
     task_run_id = (
@@ -47,10 +47,12 @@ def extract(
 
 
 @task(log_prints=True)
+@pipeline_metrics.timed_operation(Operation.LOAD)
 def load_to_s3(document: Document):
     """Upload to S3 cache"""
     _LOGGER = get_logger()
     _LOGGER.info("Load step initiated")
+
     upload_to_s3(
         document.model_dump_json(),
         bucket="cpr-cache",
@@ -59,18 +61,22 @@ def load_to_s3(document: Document):
 
 
 @task(log_prints=True)
+@pipeline_metrics.timed_operation(Operation.IDENTIFY)
 def identify(extracted: ExtractedEnvelope[NavigatorDocument]):
     """Identify"""
     _LOGGER = get_logger()
     _LOGGER.info("Identify step initiated")
+
     return identify_navigator_document(extracted)
 
 
 @task(log_prints=True)
+@pipeline_metrics.timed_operation(Operation.TRANSFORM)
 def transform(identified: Identified[NavigatorDocument]):
     """Transform"""
     _LOGGER = get_logger()
     _LOGGER.info("Transform step initiated")
+
     return transform_navigator_document(identified)
 
 
@@ -81,14 +87,23 @@ def etl_pipeline(
     """ETL pipeline"""
     _LOGGER = get_logger()
     _LOGGER.info("ETL pipeline started")
+
     extracted_result = extract(id)
+
     if not is_successful(extracted_result):
         _LOGGER.error(f"Extraction failed for {id}: {extracted_result.failure()}")
+        pipeline_metrics.record_processed(PipelineType.DOCUMENT, Status.FAILURE)
         return Failure(extracted_result.failure())
+
     extracted = extracted_result.unwrap()
+
     identified = identify(extracted)
+
     document = transform(identified)
+
     load_to_s3(document.unwrap())
+
+    pipeline_metrics.record_processed(PipelineType.DOCUMENT, Status.SUCCESS)
     return document
 
 
@@ -96,8 +111,11 @@ def etl_pipeline(
 def process_updates(ids: list[str] = []):
     _LOGGER = get_logger()
     _LOGGER.info("Processing document updates started")
+
     results = etl_pipeline.map(ids)
+
     documents = []
+
     for r in results:
         result = r.result()
         if is_successful(result):

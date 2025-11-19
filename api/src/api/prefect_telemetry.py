@@ -12,9 +12,12 @@ This ensures Grafana can filter logs/spans by selected flow_name, run_id or run_
 """
 
 import logging
+import os
 from typing import Optional
 
 import prefect
+import prefect.exceptions
+import prefect.logging
 from api.base_telemetry import BaseTelemetry
 from api.telemetry_config import TelemetryConfig
 from opentelemetry import trace
@@ -27,6 +30,29 @@ from opentelemetry.sdk.trace import ReadableSpan, Span, SpanProcessor
 from pydantic import BaseModel
 
 _LOGGER = logging.getLogger(__name__)
+
+LoggingAdapter = logging.LoggerAdapter[logging.Logger]
+
+
+def get_logger() -> logging.Logger | LoggingAdapter:
+    """Return a Prefect-aware logger at the configured level.
+
+    Uses Prefect's run logger when inside a flow/task context,
+    falls back to standard Prefect logger otherwise.
+
+    :return: Logger configured for Prefect flows or stdlib logging.
+    :rtype: logging.Logger | LoggingAdapter
+    """
+    log_level = os.getenv("OTEL_PYTHON_LOG_LEVEL", "INFO").upper()
+    numeric_level = getattr(logging, log_level, logging.INFO)
+
+    try:
+        logger = prefect.logging.get_run_logger()
+    except prefect.exceptions.MissingContextError:
+        logger = prefect.logging.get_logger()
+
+    logger.setLevel(numeric_level)
+    return logger
 
 
 class FlowContext(BaseModel):
@@ -191,6 +217,9 @@ class PrefectTelemetry(BaseTelemetry):
     def __init__(self, config: TelemetryConfig) -> None:
         # Initialise base wiring first
         super().__init__(config)
+
+        if self._disabled:
+            return
 
         # Add a filter so stdlib/Pefect loggers carry context
         root = logging.getLogger()

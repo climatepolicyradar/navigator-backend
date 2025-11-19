@@ -15,22 +15,46 @@ handlers:
     # Prefect console handler.
     # Defaults documented at https://docs.prefect.io/latest/guides/logs/
     class: prefect.logging.handlers.PrefectConsoleHandler
-    level: INFO
+    level: 0
     formatter: standard
+    styles:
+      log.web_url: bright_blue
+      log.local_url: bright_blue
+
+      log.info_level: cyan
+      log.warning_level: yellow3
+      log.error_level: red3
+      log.critical_level: bright_red
+
+      log.completed_state: green
+      log.cancelled_state: yellow3
+      log.failed_state: red3
+      log.crashed_state: bright_red
+      log.cached_state: bright_blue
+
+      log.flow_run_name: magenta
+      log.flow_name: bold magenta
 
 loggers:
   prefect:
-    level: INFO
+    level: NOTSET
     handlers:
       - console
     propagate: true
   app:
-    level: DEBUG
+    level: NOTSET
     handlers:
       - console
     propagate: true
+  # Suppress verbose HTTP client logs to prevent OTEL export feedback loop
+  urllib3:
+    level: WARNING
+    propagate: false
+  requests:
+    level: WARNING
+    propagate: false
 
 root:
-  level: INFO
+  level: DEBUG
   handlers:
     - console

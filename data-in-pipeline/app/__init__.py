@@ -1,7 +1,5 @@
 """Application bootstrap configuring logging and telemetry."""
 
-from app.logging_config import TELEMETRY, ensure_logging_active
+from app.bootstrap_telemetry import get_logger, telemetry
 
-ensure_logging_active()
-
-__all__ = ["TELEMETRY", "ensure_logging_active"]
+__all__ = ["telemetry", "get_logger"]

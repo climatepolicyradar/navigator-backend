@@ -5,10 +5,8 @@ from prefect import Flow
 from prefect.blocks.system import JSON
 from prefect.docker.docker_image import DockerImage
 
-from app.logging_config import get_logger
+from app.bootstrap_telemetry import get_logger
 from app.navigator_document_etl_pipeline import process_updates
-
-_LOGGER = get_logger()
 
 MEGABYTES_PER_GIGABYTE = 1024
 DEFAULT_FLOW_VARIABLES = {
@@ -20,7 +18,6 @@ REQUIRED_RUNTIME_ENVIRONMENT_VARIABLES = (
     ("DISABLE_OTEL_LOGGING", "false"),
     ("OTEL_EXPORTER_OTLP_PROTOCOL", "http/protobuf"),
     ("OTEL_EXPORTER_OTLP_ENDPOINT", "https://otel.prod.climatepolicyradar.org"),
-    ("OTEL_EXPORTER_OTLP_PROTOCOL", "otlp"),
     ("OTEL_PYTHON_LOGGER_PROVIDER", "sdk"),
     ("OTEL_PYTHON_LOG_CORRELATION", True),
     ("OTEL_PYTHON_LOG_LEVEL", "INFO"),
@@ -53,6 +50,7 @@ def _ensure_environment_variables() -> dict[str, Any]:
     :return: Mapping of environment variables to forward to Prefect jobs.
     :rtype: dict[str, Any]
     """
+    logger = get_logger()
     resolved = {}
 
     for variable, default_value in REQUIRED_RUNTIME_ENVIRONMENT_VARIABLES:
@@ -63,7 +61,7 @@ def _ensure_environment_variables() -> dict[str, Any]:
             value = default_value
         resolved[variable] = value
 
-    _LOGGER.debug(
+    logger.debug(
         "Forwarding %s runtime environment variables to Prefect worker.",
         len(resolved),
     )
@@ -83,6 +81,7 @@ def _merge_job_environments(
     :return: Job variables with the ``env`` section overwritten.
     :rtype: dict[str, Any]
     """
+    logger = get_logger()
     merged = {**base_job_variables}
     existing_env = {
         key: str(value)
@@ -91,7 +90,7 @@ def _merge_job_environments(
     }
     merged["env"] = {**existing_env, **runtime_environment}
 
-    _LOGGER.debug(
+    logger.debug(
         "Job environment now contains %s variables.",
         len(merged["env"]),
     )
@@ -106,13 +105,15 @@ def create_deployment(flow: Flow) -> None:
     :return: The function does not return anything.
     :rtype: None
     """
+    logger = get_logger()
+
     if os.environ.get("DOCKER_REGISTRY") is None:
         raise RuntimeError("DOCKER_REGISTRY environment variable is not set.")
 
     aws_env = os.environ.get("AWS_ENV", "prod")
     docker_registry = os.environ["DOCKER_REGISTRY"]
     runtime_environment = _ensure_environment_variables()
-    _LOGGER.info(
+    logger.info(
         "Creating deployment for flow `%s` in `%s` with docker registry `%s`.",
         flow.name,
         aws_env,
@@ -126,7 +127,7 @@ def create_deployment(flow: Flow) -> None:
         {**DEFAULT_FLOW_VARIABLES, **default_job_variables},
         runtime_environment,
     )
-    _LOGGER.info("Job variables: %s", job_variables)
+    logger.info("Job variables: %s", job_variables)
 
     _ = flow.deploy(
         "data-in-pipeline-deployment",
@@ -140,7 +141,7 @@ def create_deployment(flow: Flow) -> None:
         build=False,
         push=False,
     )
-    _LOGGER.info("Deployment registration completed.")
+    logger.info("Deployment registration completed.")
 
 
 if __name__ == "__main__":

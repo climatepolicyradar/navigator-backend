@@ -6,6 +6,9 @@ from typing import Optional
 import boto3
 from botocore.config import Config
 
+from app.bootstrap_telemetry import pipeline_metrics
+from app.pipeline_metrics import ErrorType, Operation
+
 _LOGGER = logging.getLogger(__name__)
 
 AWS_REGION = "eu-west-1"
@@ -58,4 +61,5 @@ def upload_file(
 
     except Exception:
         _LOGGER.error(f"Uploading {key} encountered an error")
+        pipeline_metrics.record_error(Operation.LOAD, ErrorType.STORAGE)
         raise

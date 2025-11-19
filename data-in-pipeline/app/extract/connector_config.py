@@ -1,14 +1,10 @@
-import logging
 from datetime import datetime
-from typing import Annotated, Literal, Optional
+from typing import Optional
 
-from pydantic import BaseModel, ConfigDict, Field
+from pydantic import BaseModel, ConfigDict
 
 from app.extract.enums import CheckPointStorageType, PaginationStyle
-from app.logging_config import get_logger
 from app.util import get_api_url
-
-LoggingAdapter = logging.LoggerAdapter[logging.Logger]
 
 
 class PaginationConfig(BaseModel):
@@ -53,13 +49,8 @@ class HttpBaseConnectorConfig(BaseModel):
     checkpoint_key_prefix: str
 
     emit_metrics: bool = True
-    log_level: Literal["DEBUG", "INFO", "WARN", "ERROR"] = "INFO"
 
     pagination: PaginationConfig = PaginationConfig()
-
-    logger: Annotated[
-        logging.Logger | LoggingAdapter, Field(default_factory=get_logger)
-    ]
 
 
 class NavigatorConnectorConfig(HttpBaseConnectorConfig):

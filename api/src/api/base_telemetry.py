@@ -46,17 +46,22 @@ class BaseTelemetry:
     def __init__(self, config: TelemetryConfig) -> None:
         self.config = config
         self.resource = self.config.to_resource()
-        self.tracer_provider = self._configure_tracing()
-        self.tracer = trace.get_tracer(self.config.service_instance_id)
-        self.logger_provider: Optional[LoggerProvider] = (
-            None  # Set in _configure_logging
-        )
-        self.logger = self._configure_logging()
-        self.logger.info("🛰️ Telemetry initialised.")
-        self.trace_endpoint = None
-        self.log_endpoint = None
+        self._disabled = config.disabled
 
-    def _configure_tracing(self) -> TracerProvider:
+        if self._disabled:
+            _LOGGER.debug("Telemetry disabled by configuration.")
+            self.tracer_provider = None
+            self.logger_provider = None
+            self.tracer = None
+            self.logger = _LOGGER
+            self.trace_endpoint = None
+            self.log_endpoint = None
+            return
+
+        self._configure_tracing()
+        self._configure_logging()
+
+    def _configure_tracing(self) -> None:
         """Configure tracer provider and OTLP exporter.
 
         :return: The configured tracer provider.
@@ -64,48 +69,73 @@ class BaseTelemetry:
         """
         provider = TracerProvider(resource=self.resource)
         trace.set_tracer_provider(provider)
+
         trace_endpoint: Optional[str] = (
             f"{self.config.otlp_endpoint}/v1/traces"
             if self.config.otlp_endpoint
             else None
         )
+
         self.trace_endpoint = trace_endpoint
+
         span_exporter = OTLPSpanExporter(endpoint=trace_endpoint)
         provider.add_span_processor(BatchSpanProcessor(span_exporter))
-        return provider
 
-    def _configure_logging(self) -> logging.Logger:
+        self.tracer_provider = provider
+        self.tracer = trace.get_tracer(self.config.service_instance_id)
+
+    def _configure_logging(self) -> None:
         """Configure logging providers and attach OTLP handlers.
 
         :return: Logger configured for the current service.
         :rtype: logging.Logger
         """
-        logger_provider = LoggerProvider(resource=self.resource)
-        self.logger_provider = logger_provider
-        set_logger_provider(logger_provider)
+
+        self.logger_provider: Optional[LoggerProvider] = (
+            None  # Set in _configure_logging
+        )
+
+        # First, we set up the logger provider
+        otel_logger_provider = LoggerProvider(resource=self.resource)
+        self.logger_provider = otel_logger_provider
+        set_logger_provider(otel_logger_provider)
+
+        # Then lets set up the things to process the logs in the provider,
+        # ie batch them up and send them to the collector at the right endpoint
         log_endpoint: Optional[str] = (
             f"{self.config.otlp_endpoint}/v1/logs"
             if self.config.otlp_endpoint
             else None
         )
         self.log_endpoint = log_endpoint
+
         log_exporter = BatchLogRecordProcessor(
             OTLPLogExporter(endpoint=log_endpoint),
         )
-        logger_provider.add_log_record_processor(log_exporter)
 
-        logging.config.dictConfig(self.config.get_logging_config())
+        otel_logger_provider.add_log_record_processor(log_exporter)
+
+        # Now our logger provider is setup, we can start hooking into python's logging setup.
+        #
+        # Note: For Prefect flows, use prefect_logging.yaml to configure Python logging.
+        # For FastAPI services, call logging.config.dictConfig(self.config.get_logging_config()).
+        # These are separate because Prefect has its own logging handlers/formatters.
+
         log_level_value = self._resolve_log_level()
+
         log_handler = LoggingHandler(
             level=log_level_value,
-            logger_provider=logger_provider,
+            logger_provider=otel_logger_provider,
         )
+
         root_logger = logging.getLogger()
         root_logger.addHandler(log_handler)
 
         service_logger = logging.getLogger(self.config.service_name)
         service_logger.setLevel(log_level_value)
-        return service_logger
+
+        self.logger = service_logger
+        self.logger.info("🛰️ Telemetry initialised.")
 
     def _resolve_log_level(self) -> int:
         """Translate configured log level to ``logging`` constants.
@@ -136,7 +166,7 @@ class BaseTelemetry:
         """
         self.install_exception_hooks()
 
-    def get_tracer(self) -> Tracer:
+    def get_tracer(self) -> Tracer | None:
         """Return the configured tracer.
 
         :return: OpenTelemetry tracer instance.
@@ -256,6 +286,9 @@ class BaseTelemetry:
         :return: The function does not return anything.
         :rtype: None
         """
+        if self._disabled:
+            return
+
         try:
             if self.logger_provider:
                 self.logger_provider.shutdown()  # type: ignore[attr-defined]

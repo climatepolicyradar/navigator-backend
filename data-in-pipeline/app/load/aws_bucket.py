@@ -1,9 +1,4 @@
-from app.logging_config import ensure_logging_active, get_logger
 from app.util import get_s3_client, upload_file
-
-_LOGGER = get_logger()
-
-ensure_logging_active()
 
 
 def upload_to_s3(json_content, bucket: str, key: str) -> None:

@@ -13,7 +13,7 @@ import socket
 from api.service_manifest import ServiceManifest
 from opentelemetry.sdk.resources import Resource
 from pydantic import Field, field_validator
-from pydantic_settings import BaseSettings
+from pydantic_settings import BaseSettings, SettingsConfigDict
 
 
 class TelemetryConfig(BaseSettings):
@@ -39,6 +39,17 @@ class TelemetryConfig(BaseSettings):
     otlp_endpoint: str = Field(default="")
     resource_attributes: str = Field(default="")
     log_level: str = Field(default="INFO")
+    disabled: bool = Field(default=False, validation_alias="DISABLE_OTEL_LOGGING")
+
+    @field_validator("disabled", mode="before")
+    @classmethod
+    def parse_disabled(cls, v):
+        """Parse DISABLE_OTEL_LOGGING env var (string 'true'/'false' to bool)."""
+        if isinstance(v, bool):
+            return v
+        if isinstance(v, str):
+            return v.lower() == "true"
+        return bool(v)
 
     # Automatic attributes
     hostname: str = Field(default="")
@@ -77,11 +88,10 @@ class TelemetryConfig(BaseSettings):
     def __str__(self):
         return f"TelemetryConfig(service_name={self.service_name}, namespace_name={self.namespace_name}, environment={self.environment}, service_instance_id={self.service_instance_id}, otlp_endpoint={self.otlp_endpoint}, service_version={self.service_version})"
 
-    class Config:
-        """Pydantic config"""
-
-        env_prefix = ""  # Use exact environment variable names (e.g., SERVICE_NAME)
-        case_sensitive = False  # So we can uppercase our env vars
+    model_config = SettingsConfigDict(
+        env_prefix="",  # Use exact environment variable names (e.g., SERVICE_NAME)
+        case_sensitive=False,  # So we can uppercase our env var
+    )
 
     @field_validator("hostname", mode="before")
     @classmethod
