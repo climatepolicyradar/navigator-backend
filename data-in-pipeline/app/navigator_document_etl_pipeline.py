@@ -110,7 +110,10 @@ def etl_pipeline(
 @flow
 def process_updates(ids: list[str] = []):
     _LOGGER = get_logger()
-    _LOGGER.info("Processing document updates started")
+    _LOGGER.info(
+        "Processing document updates started | documents=%d",
+        len(ids),
+    )
 
     results = etl_pipeline.map(ids)
 

@@ -34,7 +34,7 @@ REQUIRED_RUNTIME_ENVIRONMENT_VARIABLES = (
     (
         # https://docs.prefect.io/v3/api-ref/settings-ref#enabled-2
         "PREFECT_LOGGING_TO_API_ENABLED",
-        False,
+        True,
     ),
     (
         # https://docs.prefect.io/v3/api-ref/settings-ref#extra-loggers
