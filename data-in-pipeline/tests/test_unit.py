@@ -76,7 +76,7 @@ def test_fetch_document_success(base_config):
 
     mock_response = {
         "data": NavigatorDocument(
-            import_id=import_id, title="Test Document"
+            import_id=import_id, title="Test Document", events=[]
         ).model_dump()
     }
 
@@ -142,8 +142,10 @@ def test_fetch_family_success(base_config):
             import_id=import_id,
             title="Test Family",
             corpus=NavigatorCorpus(import_id="COR-111"),
-            documents=[NavigatorDocument(import_id=import_id, title="Test Document")],
-        ).model_dump()
+            documents=[
+                NavigatorDocument(import_id=import_id, title="Test Document", events=[])
+            ],
+        ).model_dump(),
     }
 
     with (
@@ -217,6 +219,7 @@ def test_extract_document_handles_valid_id_success():
                 data=NavigatorDocument(
                     import_id=valid_id,
                     title="A Valid Document",
+                    events=[],
                 ),
                 metadata=ExtractedMetadata(
                     endpoint="www.capsule-corp.com", http_status=HTTPStatus.OK

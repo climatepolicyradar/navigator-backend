@@ -36,6 +36,7 @@ if __name__ == "__main__":
                             import_id=doc["import_id"],
                             title=doc["title"],
                             valid_metadata=doc["valid_metadata"],
+                            events=[],
                         )
                         for doc in family["documents"]
                     ],
