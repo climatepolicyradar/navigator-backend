@@ -34,8 +34,42 @@ _LOGGER = logging.getLogger(__name__)
 LoggingAdapter = logging.LoggerAdapter[logging.Logger]
 
 
+class OTELLoggingHandler(logging.Handler):
+    """A logging handler that forwards logs to OTEL.
+
+    This handler can be referenced in logging config YAML files.
+    It lazily retrieves the OTEL logger provider from the global context.
+    """
+
+    def __init__(self, level: int = logging.NOTSET) -> None:
+        super().__init__(level)
+        self._otel_handler: logging.Handler | None = None
+
+    def _get_otel_handler(self) -> logging.Handler | None:
+        """Lazily create the OTEL handler using the global logger provider."""
+        if self._otel_handler is None:
+            try:
+                from opentelemetry.sdk._logs import LoggingHandler
+
+                provider = get_logger_provider()
+                if provider:
+                    self._otel_handler = LoggingHandler(
+                        level=self.level,
+                        logger_provider=provider,
+                    )
+            except Exception as exc:
+                _LOGGER.debug("Failed to create OTEL handler: %s", exc)
+        return self._otel_handler
+
+    def emit(self, record: logging.LogRecord) -> None:
+        """Forward the log record to OTEL."""
+        handler = self._get_otel_handler()
+        if handler:
+            handler.emit(record)
+
+
 def get_logger() -> logging.Logger | LoggingAdapter:
-    """Return a Prefect-aware logger at the configured level.
+    """Return a Prefect-aware logger that logs to console, OTEL, and Prefect.
 
     Uses Prefect's run logger when inside a flow/task context,
     falls back to standard Prefect logger otherwise.
@@ -221,7 +255,7 @@ class PrefectTelemetry(BaseTelemetry):
         if self._disabled:
             return
 
-        # Add a filter so stdlib/Pefect loggers carry context
+        # Add a filter so stdlib/Prefect loggers carry context
         root = logging.getLogger()
         root.addFilter(PrefectContextFilter())
 
