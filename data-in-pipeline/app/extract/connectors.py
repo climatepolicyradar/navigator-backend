@@ -13,9 +13,15 @@ from app.pipeline_metrics import ErrorType, Operation
 from app.util import generate_envelope_uuid
 
 
+class NavigatorEvent(BaseModel):
+    import_id: str
+    event_type: str
+
+
 class NavigatorDocument(BaseModel):
     import_id: str
     title: str
+    events: list[NavigatorEvent]
     valid_metadata: dict[str, list[str]] = {}
 
 

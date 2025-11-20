@@ -49,7 +49,9 @@ def test_process_family_updates_flow_multiple_families(
             corpus=NavigatorCorpus(import_id="UNFCCC"),
             documents=[
                 NavigatorDocument(
-                    import_id="i00000315", title="Belgium UNCBD National Targets"
+                    import_id="i00000315",
+                    title="Belgium UNCBD National Targets",
+                    events=[],
                 )
             ],
         )
@@ -62,7 +64,9 @@ def test_process_family_updates_flow_multiple_families(
             corpus=NavigatorCorpus(import_id="UNFCCC"),
             documents=[
                 NavigatorDocument(
-                    import_id="i00000316", title="France UNCBD National Targets"
+                    import_id="i00000316",
+                    title="France UNCBD National Targets",
+                    events=[],
                 )
             ],
         )

@@ -214,10 +214,52 @@ def transform_navigator_family_never(
     )
 
 
+def transform_navigator_family_with_litigation_corpus_type_document(
+    document: NavigatorDocument,
+) -> Document:
+    """
+    Values are controlled
+    @see: https://github.com/climatepolicyradar/data-migrations/blob/main/taxonomies/Litigation.json#L11-L113
+    """
+
+    labels: list[DocumentLabelRelationship] = []
+
+    if document.events:
+        event_type = document.events[0].event_type
+
+        labels.append(
+            DocumentLabelRelationship(
+                type="entity_type",
+                label=Label(
+                    id=event_type,
+                    title=event_type,
+                    type="entity_type",
+                ),
+            )
+        )
+
+    labels.append(
+        DocumentLabelRelationship(
+            type="transformer",
+            label=TransformerLabel(
+                id="transform_navigator_family_with_litigation_corpus_type",
+                title="transform_navigator_family_with_litigation_corpus_type",
+                type="transformer",
+            ),
+        )
+    )
+
+    return Document(id=document.import_id, title=document.title, labels=labels)
+
+
 def transform_navigator_family_with_litigation_corpus_type(
     input: Identified[NavigatorFamily],
 ) -> Result[list[Document], CouldNotTransform]:
     if input.data.corpus.import_id == "Academic.corpus.Litigation.n0000":
+        related_documents = [
+            transform_navigator_family_with_litigation_corpus_type_document(document)
+            for document in input.data.documents
+        ]
         case_label = DocumentLabelRelationship(
             type="entity_type",
             label=Label(
@@ -239,7 +281,7 @@ def transform_navigator_family_with_litigation_corpus_type(
             title=input.data.title,
             labels=[case_label, transformer_label],
         )
-        return Success([document_from_family])
+        return Success([document_from_family, *related_documents])
 
     return Failure(
         CouldNotTransform(
