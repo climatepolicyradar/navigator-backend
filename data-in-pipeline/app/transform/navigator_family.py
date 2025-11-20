@@ -21,7 +21,9 @@ class TransformerLabel(Label):
 def transform_navigator_family(
     input: Identified[NavigatorFamily],
 ) -> Result[list[Document], NoMatchingTransformations]:
+    # order here matters - if there is a match, we will stop searching for a transformer
     transformers = [
+        transform_navigator_family_with_litigation_corpus_type,
         transform_navigator_family_with_single_matching_document,
         transform_navigator_family_with_matching_document_title_and_siblings,
         transform_navigator_family_never,
@@ -208,5 +210,39 @@ def transform_navigator_family_never(
     return Failure(
         CouldNotTransform(
             f"transform_navigator_family_never could not transform {input.id}"
+        )
+    )
+
+
+def transform_navigator_family_with_litigation_corpus_type(
+    input: Identified[NavigatorFamily],
+) -> Result[list[Document], CouldNotTransform]:
+    if input.data.corpus.import_id == "Academic.corpus.Litigation.n0000":
+        case_label = DocumentLabelRelationship(
+            type="entity_type",
+            label=Label(
+                id="Legal case",
+                title="Legal case",
+                type="entity_type",
+            ),
+        )
+        transformer_label = DocumentLabelRelationship(
+            type="transformer",
+            label=TransformerLabel(
+                id="transform_navigator_family_with_litigation_corpus_type",
+                title="transform_navigator_family_with_litigation_corpus_type",
+                type="transformer",
+            ),
+        )
+        document_from_family = Document(
+            id=input.data.import_id,
+            title=input.data.title,
+            labels=[case_label, transformer_label],
+        )
+        return Success([document_from_family])
+
+    return Failure(
+        CouldNotTransform(
+            f"transform_navigator_family_with_litigation_corpus_type could not transform {input.id}"
         )
     )
