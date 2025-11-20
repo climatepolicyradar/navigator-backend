@@ -7,7 +7,14 @@ from app.extract.connectors import (
     NavigatorEvent,
     NavigatorFamily,
 )
-from app.models import Document, DocumentLabelRelationship, Identified, Label
+from app.models import (
+    Document,
+    DocumentDocumentRelationship,
+    DocumentLabelRelationship,
+    DocumentWithoutRelationships,
+    Identified,
+    Label,
+)
 from app.transform.models import NoMatchingTransformations
 from app.transform.navigator_family import TransformerLabel, transform_navigator_family
 
@@ -144,7 +151,33 @@ def test_transform_navigator_family_with_litigation_corpus_type(
                         ),
                     ),
                 ],
-                relationships=[],
+                relationships=[
+                    DocumentDocumentRelationship(
+                        type="decision",
+                        document=DocumentWithoutRelationships(
+                            id="Litigation family document",
+                            title="Litigation family document",
+                            labels=[
+                                DocumentLabelRelationship(
+                                    type="entity_type",
+                                    label=Label(
+                                        id="Decision",
+                                        title="Decision",
+                                        type="entity_type",
+                                    ),
+                                ),
+                                DocumentLabelRelationship(
+                                    type="transformer",
+                                    label=Label(
+                                        id="transform_navigator_family_with_litigation_corpus_type",
+                                        title="transform_navigator_family_with_litigation_corpus_type",
+                                        type="transformer",
+                                    ),
+                                ),
+                            ],
+                        ),
+                    )
+                ],
             ),
             Document(
                 id="Litigation family document",
@@ -167,7 +200,33 @@ def test_transform_navigator_family_with_litigation_corpus_type(
                         ),
                     ),
                 ],
-                relationships=[],
+                relationships=[
+                    DocumentDocumentRelationship(
+                        type="member_of",
+                        document=DocumentWithoutRelationships(
+                            id="123",
+                            title="Litigation family",
+                            labels=[
+                                DocumentLabelRelationship(
+                                    type="entity_type",
+                                    label=Label(
+                                        id="Legal case",
+                                        title="Legal case",
+                                        type="entity_type",
+                                    ),
+                                ),
+                                DocumentLabelRelationship(
+                                    type="transformer",
+                                    label=Label(
+                                        id="transform_navigator_family_with_litigation_corpus_type",
+                                        title="transform_navigator_family_with_litigation_corpus_type",
+                                        type="transformer",
+                                    ),
+                                ),
+                            ],
+                        ),
+                    )
+                ],
             ),
         ],
     )
