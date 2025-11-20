@@ -25,7 +25,7 @@ def transform_navigator_family(
     transformers = [
         transform_navigator_family_with_litigation_corpus_type,
         transform_navigator_family_with_single_matching_document,
-        transform_navigator_family_with_matching_document_title_and_siblings,
+        transform_navigator_family_with_matching_document_title_and_related_documents,
         transform_navigator_family_never,
     ]
 
@@ -81,7 +81,7 @@ def transform_navigator_family_with_single_matching_document(
         )
 
 
-def transform_navigator_family_with_matching_document_title_and_siblings(
+def transform_navigator_family_with_matching_document_title_and_related_documents(
     input: Identified[NavigatorFamily],
 ) -> Result[list[Document], CouldNotTransform]:
     """
@@ -90,7 +90,7 @@ def transform_navigator_family_with_matching_document_title_and_siblings(
 
     We can use this 1-1 mapping and put the data from the family and store on the document.
 
-    We will also need to generate the relationships between the sibling documents.
+    We will also need to generate the relationships between the related documents.
 
     At time of counting this was ~1096 documents.
     """
@@ -110,13 +110,13 @@ def transform_navigator_family_with_matching_document_title_and_siblings(
             transformed_matching_document = transform_navigator_family_document(
                 input,
                 matching_document,
-                "transform_navigator_family_with_matching_document_title_and_siblings",
+                "transform_navigator_family_with_matching_document_title_and_related_documents",
             )
-            transformed_sibling_documents = [
+            transformed_related_documents = [
                 transform_navigator_family_document(
                     input,
                     document,
-                    "transform_navigator_family_with_matching_document_title_and_siblings",
+                    "transform_navigator_family_with_matching_document_title_and_related_documents",
                 )
                 for document in input.data.documents
                 if document.import_id != matching_document.import_id
@@ -125,13 +125,13 @@ def transform_navigator_family_with_matching_document_title_and_siblings(
             """
             Generate relationships
 
-            This is mutation-y as we need the sibling_documents first, and using model_copy(update=dict) is not type safe.
+            This is mutation-y as we need the `transformed_related_documents` first, and using model_copy(update=dict) is not type safe.
             Setting the property directly is.
             """
-            for sibling in transformed_sibling_documents:
-                sibling.relationships = [
+            for related_document in transformed_related_documents:
+                related_document.relationships = [
                     DocumentDocumentRelationship(
-                        type="main",
+                        type="member_of",
                         document=DocumentWithoutRelationships(
                             **transformed_matching_document.model_dump()
                         ),
@@ -141,21 +141,23 @@ def transform_navigator_family_with_matching_document_title_and_siblings(
             transformed_matching_document.relationships = [
                 DocumentDocumentRelationship(
                     type=next(
-                        # search for a document with a role, or default to "sibling"
+                        # search for a document with a role, or default to `has_member``
                         (
                             label.label.title.lower()
-                            for label in sibling.labels
-                            if label.type == "role"
+                            for label in related_document.labels
+                            if label.type == "entity_type"
                         ),
-                        "sibling",
+                        "has_member",
                     ),
-                    document=DocumentWithoutRelationships(**sibling.model_dump()),
+                    document=DocumentWithoutRelationships(
+                        **related_document.model_dump()
+                    ),
                 )
-                for sibling in transformed_sibling_documents
+                for related_document in transformed_related_documents
             ]
 
             return Success(
-                [transformed_matching_document, *transformed_sibling_documents]
+                [transformed_matching_document, *transformed_related_documents]
             )
 
     return Failure(
@@ -191,13 +193,19 @@ def transform_navigator_family_document(
         )
     )
 
+    """
+    These values are controlled
+    @see: https://github.com/climatepolicyradar/data-migrations/blob/main/taxonomies/Intl.%20agreements.json#L42-L51
+    """
     role = document.valid_metadata.get("role")
     if role is not None and len(role) > 0:
         normalised_role = role[0].capitalize()
         labels.append(
             DocumentLabelRelationship(
-                type="role",
-                label=Label(id=normalised_role, title=normalised_role, type="role"),
+                type="entity_type",
+                label=Label(
+                    id=normalised_role, title=normalised_role, type="entity_type"
+                ),
             )
         )
 
@@ -218,10 +226,9 @@ def transform_navigator_family_with_litigation_corpus_type_document(
     document: NavigatorDocument,
 ) -> Document:
     """
-    Values are controlled
+    These values are controlled
     @see: https://github.com/climatepolicyradar/data-migrations/blob/main/taxonomies/Litigation.json#L11-L113
     """
-
     labels: list[DocumentLabelRelationship] = []
 
     if document.events:
@@ -256,10 +263,6 @@ def transform_navigator_family_with_litigation_corpus_type(
     input: Identified[NavigatorFamily],
 ) -> Result[list[Document], CouldNotTransform]:
     if input.data.corpus.import_id == "Academic.corpus.Litigation.n0000":
-        related_documents = [
-            transform_navigator_family_with_litigation_corpus_type_document(document)
-            for document in input.data.documents
-        ]
         case_label = DocumentLabelRelationship(
             type="entity_type",
             label=Label(
@@ -281,6 +284,43 @@ def transform_navigator_family_with_litigation_corpus_type(
             title=input.data.title,
             labels=[case_label, transformer_label],
         )
+        related_documents = [
+            transform_navigator_family_with_litigation_corpus_type_document(document)
+            for document in input.data.documents
+        ]
+
+        """
+        Generate relationships
+
+        This is mutation-y as we need the `transformed_related_documents` first, and using model_copy(update=dict) is not type safe.
+        Setting the property directly is.
+        """
+        for related_document in related_documents:
+            related_document.relationships = [
+                DocumentDocumentRelationship(
+                    type="member_of",
+                    document=DocumentWithoutRelationships(
+                        **document_from_family.model_dump()
+                    ),
+                )
+            ]
+
+        document_from_family.relationships = [
+            DocumentDocumentRelationship(
+                type=next(
+                    # search for a document with a `entity_type`, or default to `has_member`
+                    (
+                        label.label.title.lower()
+                        for label in related_document.labels
+                        if label.type == "entity_type"
+                    ),
+                    "has_member",
+                ),
+                document=DocumentWithoutRelationships(**related_document.model_dump()),
+            )
+            for related_document in related_documents
+        ]
+
         return Success([document_from_family, *related_documents])
 
     return Failure(
