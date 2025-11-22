@@ -5,7 +5,7 @@ from typing import Any, Dict, Optional, Union
 from db_client.models.dfce import Geography, GeoStatistics
 from fastapi import Depends, HTTPException
 from pydantic import BaseModel
-from sqlalchemy import exc, or_
+from sqlalchemy import exc, or_, select
 
 from app.api.api_v1.routers.lookups.router import lookups_router
 from app.clients.db.session import get_db
@@ -53,23 +53,19 @@ def lookup_geo_stats(
     not_found_msg = f"Unable to get geo stats for {geography_key}"
 
     try:
-        geography_id = (
-            db.query(Geography.id)
-            .filter(
-                or_(
-                    Geography.slug == geography_key,
-                    Geography.value == geography_key.upper(),
-                )
+        stmt = select(Geography.id).where(
+            or_(
+                Geography.slug == geography_key,
+                Geography.value == geography_key.upper(),
             )
-            .scalar()
         )
+        geography_id = db.execute(stmt).scalar_one_or_none()
 
         if geography_id is None:
             raise HTTPException(status_code=NOT_FOUND, detail=not_found_msg)
 
-        existing_geo_stats = (
-            db.query(GeoStatistics).filter_by(geography_id=geography_id).first()
-        )
+        stmt = select(GeoStatistics).where(GeoStatistics.geography_id == geography_id)
+        existing_geo_stats = db.execute(stmt).scalar_one_or_none()
         if existing_geo_stats is None:
             _LOGGER.error(not_found_msg)
             raise HTTPException(status_code=NOT_FOUND, detail=not_found_msg)

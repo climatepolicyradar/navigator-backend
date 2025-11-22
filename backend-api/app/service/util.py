@@ -6,6 +6,7 @@ from typing import Any, Optional
 
 from db_client.models import AnyModel
 from fastapi import HTTPException, status
+from sqlalchemy import select
 from sqlalchemy.orm import Session
 
 from app.clients.aws.client import get_s3_client
@@ -54,7 +55,7 @@ def table_to_json(
 ) -> list[dict]:
     json_out = []
 
-    for row in db.query(table).all():
+    for row in db.execute(select(table)).scalars().all():
         row_object = {col.name: getattr(row, col.name) for col in row.__table__.columns}
         json_out.append(row_object)
 
@@ -68,7 +69,7 @@ def tree_table_to_json(
     json_out = []
     child_list_map: dict[int, Any] = {}
 
-    for row in db.query(table).order_by(table.id).all():
+    for row in db.execute(select(table).order_by(table.id)).scalars().all():
         row_object = {col.name: getattr(row, col.name) for col in row.__table__.columns}
         row_children: list[dict[str, Any]] = []
         child_list_map[row_object["id"]] = row_children

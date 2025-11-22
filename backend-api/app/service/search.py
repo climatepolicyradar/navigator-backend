@@ -15,6 +15,7 @@ from cpr_sdk.models.search import filter_fields
 from cpr_sdk.search_adaptors import VespaSearchAdapter
 from db_client.models.dfce import Family, FamilyDocument, FamilyMetadata
 from db_client.models.dfce.family import FamilyStatus
+from sqlalchemy import select
 from sqlalchemy.orm import Session
 
 from app.clients.aws.client import S3Client
@@ -291,12 +292,12 @@ def _cached_or_new_family(
 @observe("_get_rds_data_for_vespa_response")
 def _get_rds_data_for_vespa_response(db: Session, all_response_family_ids: list[str]):
     # TODO: Potential disparity between what's in postgres and vespa
-    family_and_family_metadata: Sequence[tuple[Family, FamilyMetadata]] = (
-        db.query(Family, FamilyMetadata)
-        .filter(Family.import_id.in_(all_response_family_ids))
+    stmt = (
+        select(Family, FamilyMetadata)
+        .where(Family.import_id.in_(all_response_family_ids))
         .join(FamilyMetadata, FamilyMetadata.family_import_id == Family.import_id)
-        .all()
-    )  # type: ignore
+    )
+    family_and_family_metadata = db.execute(stmt).unique().all()  # type: ignore
     db_family_lookup: Mapping[str, tuple[Family, FamilyMetadata]] = {
         str(family.import_id): (family, family_metadata)
         for (family, family_metadata) in family_and_family_metadata
