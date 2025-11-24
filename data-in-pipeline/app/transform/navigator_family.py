@@ -36,6 +36,7 @@ def transform_navigator_family(
         match result:
             case Success(document):
                 success = document
+                break
             case Failure(error):
                 failures.append(error)
 
@@ -214,11 +215,41 @@ def transform_navigator_family_document(
 
 def transform_navigator_family_never(
     input: Identified[NavigatorFamily],
-) -> Result[Document, CouldNotTransform]:
-    return Failure(
-        CouldNotTransform(
-            f"transform_navigator_family_never could not transform {input.id}"
+) -> Result[list[Document], CouldNotTransform]:
+    related_documents = [
+        transform_navigator_family_document(
+            family=input,
+            document=document,
+            transformer_label_title="transform_navigator_family_never",
         )
+        for document in input.data.documents
+    ]
+    return Success(
+        [
+            Document(
+                id=input.data.import_id,
+                title=input.data.title,
+                labels=[
+                    DocumentLabelRelationship(
+                        type="family",
+                        label=Label(
+                            id=input.data.import_id,
+                            title=input.data.title,
+                            type="family",
+                        ),
+                    ),
+                    DocumentLabelRelationship(
+                        type="transformer",
+                        label=TransformerLabel(
+                            id="transform_navigator_family_never",
+                            title="transform_navigator_family_never",
+                            type="transformer",
+                        ),
+                    ),
+                ],
+            ),
+            *related_documents,
+        ]
     )
 
 
