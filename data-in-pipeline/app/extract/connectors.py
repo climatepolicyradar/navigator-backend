@@ -25,6 +25,10 @@ class NavigatorDocument(BaseModel):
     valid_metadata: dict[str, list[str]] = {}
 
 
+class NavigatorCorpusType(BaseModel):
+    name: str
+
+
 class NavigatorCorpus(BaseModel):
     import_id: str
 
