@@ -26,6 +26,7 @@ def transform_navigator_family(
         transform_navigator_family_with_litigation_corpus_type,
         transform_navigator_family_with_single_matching_document,
         transform_navigator_family_with_matching_document_title_and_related_documents,
+        transform_navigator_family_multilateral_climate_fund_project,
         transform_navigator_family_never,
     ]
 
@@ -357,5 +358,94 @@ def transform_navigator_family_with_litigation_corpus_type(
     return Failure(
         CouldNotTransform(
             f"transform_navigator_family_with_litigation_corpus_type could not transform {input.id}"
+        )
+    )
+
+
+def transform_navigator_family_multilateral_climate_fund_project(
+    input: Identified[NavigatorFamily],
+) -> Result[list[Document], CouldNotTransform]:
+
+    if (
+        input.data.corpus.import_id
+        in [
+            "MCF.corpus.AF.Guidance",
+            "MCF.corpus.AF.n0000",
+            "MCF.corpus.CIF.Guidance",
+            "MCF.corpus.CIF.n0000",
+            "MCF.corpus.GEF.Guidance",
+            "MCF.corpus.GEF.n0000",
+            "MCF.corpus.GCF.Guidance",
+            "MCF.corpus.GCF.n0000",
+        ]
+        and len(input.data.documents) > 0
+    ):
+
+        transformer_label = DocumentLabelRelationship(
+            type="transformer",
+            label=TransformerLabel(
+                id="transform_navigator_family_multilateral_climate_fund_project",
+                title="transform_navigator_family_multilateral_climate_fund_project",
+                type="transformer",
+            ),
+        )
+        multilateral_climate_fund_project_entity_type_label = DocumentLabelRelationship(
+            type="entity_type",
+            label=Label(
+                id="Multilateral climate fund project",
+                title="Multilateral climate fund project",
+                type="entity_type",
+            ),
+        )
+
+        document_from_family = Document(
+            id=input.data.import_id,
+            title=input.data.title,
+            labels=[
+                transformer_label,
+                multilateral_climate_fund_project_entity_type_label,
+            ],
+        )
+
+        related_documents = [
+            transform_navigator_family_document(
+                input,
+                document,
+                "transform_navigator_family_multilateral_climate_fund_project",
+            )
+            for document in input.data.documents
+            # we exclude the `project document``, as the family covers this as the main document
+            if document.title.lower() != "project document"
+        ]
+
+        """
+        Generate relationships
+
+        This is mutation-y as we need the `transformed_related_documents` first, and using model_copy(update=dict) is not type safe.
+        Setting the property directly is.
+        """
+        for related_document in related_documents:
+            related_document.relationships = [
+                DocumentDocumentRelationship(
+                    type="member_of",
+                    document=DocumentWithoutRelationships(
+                        **document_from_family.model_dump()
+                    ),
+                )
+            ]
+
+        document_from_family.relationships = [
+            DocumentDocumentRelationship(
+                type="has_member",
+                document=DocumentWithoutRelationships(**related_document.model_dump()),
+            )
+            for related_document in related_documents
+        ]
+
+        return Success([document_from_family, *related_documents])
+
+    return Failure(
+        CouldNotTransform(
+            f"transform_navigator_family_multilateral_climate_fund_project could not transform {input.id}"
         )
     )

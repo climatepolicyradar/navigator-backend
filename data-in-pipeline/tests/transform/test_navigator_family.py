@@ -77,6 +77,31 @@ def navigator_family_with_litigation_corpus_type() -> Identified[NavigatorFamily
     )
 
 
+@pytest.fixture
+def navigator_family_multilateral_climate_fund_project() -> Identified[NavigatorFamily]:
+    return Identified(
+        id="123",
+        source="navigator_family",
+        data=NavigatorFamily(
+            import_id="123",
+            title="Multilateral climate fund project",
+            corpus=NavigatorCorpus(import_id="MCF.corpus.AF.n0000"),
+            documents=[
+                NavigatorDocument(
+                    import_id="456",
+                    title="Multilateral climate fund project document",
+                    events=[],
+                ),
+                NavigatorDocument(
+                    import_id="789",
+                    title="Project document",
+                    events=[],
+                ),
+            ],
+        ),
+    )
+
+
 def test_transform_navigator_document_with_single_matching_family(
     navigator_family_with_single_matching_title_document: Identified[NavigatorFamily],
 ):
@@ -234,4 +259,112 @@ def test_transform_navigator_family_with_litigation_corpus_type(
         ],
     )
 
-    def test_transform_navigator_family_with_litigation_corpus_type_document(): ...
+
+def test_transform_navigator_family_with_multilateral_climate_fund_project(
+    navigator_family_multilateral_climate_fund_project: Identified[NavigatorFamily],
+):
+    result = transform_navigator_family(
+        navigator_family_multilateral_climate_fund_project
+    )
+    assert result == Success(
+        [
+            Document(
+                id="123",
+                title="Multilateral climate fund project",
+                labels=[
+                    DocumentLabelRelationship(
+                        type="transformer",
+                        label=TransformerLabel(
+                            id="transform_navigator_family_multilateral_climate_fund_project",
+                            title="transform_navigator_family_multilateral_climate_fund_project",
+                            type="transformer",
+                        ),
+                    ),
+                    DocumentLabelRelationship(
+                        type="entity_type",
+                        label=Label(
+                            id="Multilateral climate fund project",
+                            title="Multilateral climate fund project",
+                            type="entity_type",
+                        ),
+                    ),
+                ],
+                relationships=[
+                    DocumentDocumentRelationship(
+                        document=DocumentWithoutRelationships(
+                            id="456",
+                            title="Multilateral climate fund project document",
+                            labels=[
+                                DocumentLabelRelationship(
+                                    type="family",
+                                    label=Label(
+                                        id="123",
+                                        title="Multilateral climate fund project",
+                                        type="family",
+                                    ),
+                                ),
+                                DocumentLabelRelationship(
+                                    type="transformer",
+                                    label=Label(
+                                        id="transform_navigator_family_multilateral_climate_fund_project",
+                                        title="transform_navigator_family_multilateral_climate_fund_project",
+                                        type="transformer",
+                                    ),
+                                ),
+                            ],
+                        ),
+                        type="has_member",
+                    )
+                ],
+            ),
+            Document(
+                id="456",
+                title="Multilateral climate fund project document",
+                labels=[
+                    DocumentLabelRelationship(
+                        type="family",
+                        label=Label(
+                            id="123",
+                            title="Multilateral climate fund project",
+                            type="family",
+                        ),
+                    ),
+                    DocumentLabelRelationship(
+                        type="transformer",
+                        label=TransformerLabel(
+                            id="transform_navigator_family_multilateral_climate_fund_project",
+                            title="transform_navigator_family_multilateral_climate_fund_project",
+                            type="transformer",
+                        ),
+                    ),
+                ],
+                relationships=[
+                    DocumentDocumentRelationship(
+                        document=DocumentWithoutRelationships(
+                            id="123",
+                            title="Multilateral climate fund project",
+                            labels=[
+                                DocumentLabelRelationship(
+                                    type="transformer",
+                                    label=Label(
+                                        id="transform_navigator_family_multilateral_climate_fund_project",
+                                        title="transform_navigator_family_multilateral_climate_fund_project",
+                                        type="transformer",
+                                    ),
+                                ),
+                                DocumentLabelRelationship(
+                                    type="entity_type",
+                                    label=Label(
+                                        id="Multilateral climate fund project",
+                                        title="Multilateral climate fund project",
+                                        type="entity_type",
+                                    ),
+                                ),
+                            ],
+                        ),
+                        type="member_of",
+                    )
+                ],
+            ),
+        ]
+    )
