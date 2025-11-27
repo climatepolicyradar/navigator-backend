@@ -52,6 +52,9 @@ if __name__ == "__main__":
                 failures.append(error)
 
     os.makedirs(".data_cache/transformed_navigator_families", exist_ok=True)
+    for file in os.listdir(".data_cache/transformed_navigator_families"):
+        os.remove(f".data_cache/transformed_navigator_families/{file}")
+
     for document in successes:
         model_dump = document.model_dump()
         with open(
