@@ -90,6 +90,13 @@ def transform(
 
     """
     Relationships
+
+    We are using the Dublin Core Metadata Initiative (DCMI) Metadata Terms vocabulary.
+    @see: https://www.dublincore.org/specifications/dublin-core/dcmi-terms/#http://purl.org/dc/dcam/memberOf
+    @see: https://www.dublincore.org/specifications/dublin-core/dcmi-terms/#http://purl.org/dc/dcam/hasMember
+
+    `has_member` implies that this is the "container" document that has a member document.
+    `member_of` implies that this is the "member" document that is a member of a container document.
     """
     document_from_family.relationships = [
         DocumentDocumentRelationship(
@@ -114,6 +121,15 @@ def transform(
 
     """
     Versions
+
+    We are using the Dublin Core Metadata Initiative (DCMI) Metadata Terms vocabulary.
+    @see: https://www.dublincore.org/specifications/dublin-core/dcmi-terms/#http://purl.org/dc/terms/isVersionOf
+    @see: https://www.dublincore.org/specifications/dublin-core/dcmi-terms/#http://purl.org/dc/terms/hasVersion
+
+    `has_version` implies that this is the `latest` version of the document.
+    This might be better to have as an explicit flag or label, but it felt that this would do for the moment without adding extra complexity.
+
+    `is_version_of` means that this is a version of document, which is useful for timetravelling, but is better represented as the `is_version_of` relationship.
     """
     document_from_document: Document | None
     if is_version_of_document:
