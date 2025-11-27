@@ -3,6 +3,7 @@ from unittest.mock import patch
 import pytest
 from db_client.models.dfce import Geography
 from fastapi import status
+from sqlalchemy import select
 
 from app.repository.lookups import get_country_slug_from_country_code
 from tests.search.vespa.setup_search_tests import (
@@ -94,13 +95,12 @@ def test_keyword_region_filters(
 
         country_code = country_codes[0]
 
-        parent_id = (
-            data_db.query(Geography)
-            .filter(Geography.value == country_code)
-            .first()
-            .parent_id
-        )
-        region = data_db.query(Geography).filter(Geography.id == parent_id).first()
+        stmt = select(Geography).where(Geography.value == country_code)
+        geo = data_db.execute(stmt).scalar_one_or_none()
+        assert geo is not None
+        parent_id = geo.parent_id
+        stmt = select(Geography).where(Geography.id == parent_id)
+        region = data_db.execute(stmt).scalar_one_or_none()
 
         params = {**base_params, **{"keyword_filters": {"regions": [region.slug]}}}
         body_with_filters = _make_search_request(

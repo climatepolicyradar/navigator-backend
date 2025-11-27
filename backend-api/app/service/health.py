@@ -2,6 +2,7 @@ import logging
 
 from cpr_sdk.search_adaptors import VespaSearchAdapter
 from fastapi import Depends
+from sqlalchemy import text
 from sqlalchemy.orm import Session
 
 from app.clients.db.session import get_db
@@ -20,7 +21,7 @@ def is_rds_online(db: Session) -> bool:
     :rtype: bool
     """
     try:
-        return db.execute("SELECT 1") is not None
+        return db.execute(text("SELECT 1")) is not None
     except Exception as e:
         _LOGGER.error(f"🔴 RDS health check failed: {e}")
         return False

@@ -6,8 +6,9 @@ from typing import Optional, Sequence
 
 from db_client.models.dfce.family import Family, FamilyDocument, FamilyGeography
 from db_client.models.dfce.geography import Geography
-from sqlalchemy import bindparam, text
-from sqlalchemy.orm import Query, Session
+from sqlalchemy import bindparam, select, text
+from sqlalchemy.orm import Session
+from sqlalchemy.sql import Select
 from sqlalchemy.types import ARRAY, String
 
 from app.errors import ValidationError
@@ -24,7 +25,7 @@ def get_geo_subquery(
     allowed_geo_slugs: Optional[Sequence[str]] = None,
     allowed_geo_values: Optional[Sequence[str]] = None,
     family_document_import_id: Optional[str] = None,
-) -> Query:
+) -> Select:
     """
     Create a subquery to fetch geographies associated with families.
 
@@ -35,29 +36,29 @@ def get_geo_subquery(
         allowed geography values.
     :param Optional[str] family_document_import_id: Optional family
         document import ID.
-    :return Query: A subquery for geographies.
+    :return Select: A subquery for geographies.
     """
     geo_subquery = (
-        db.query(
+        select(
             Geography.value.label("value"),
             Geography.slug.label("slug"),
             FamilyGeography.family_import_id,
         )
         .join(FamilyGeography, FamilyGeography.geography_id == Geography.id)
-        .filter(FamilyGeography.family_import_id == Family.import_id)
+        .where(FamilyGeography.family_import_id == Family.import_id)
     )
 
     if allowed_geo_slugs is not None:
-        geo_subquery = geo_subquery.filter(Geography.slug.in_(allowed_geo_slugs))
+        geo_subquery = geo_subquery.where(Geography.slug.in_(allowed_geo_slugs))
 
     if allowed_geo_values is not None:
-        geo_subquery = geo_subquery.filter(Geography.value.in_(allowed_geo_values))
+        geo_subquery = geo_subquery.where(Geography.value.in_(allowed_geo_values))
 
     if family_document_import_id is not None:
         geo_subquery = geo_subquery.join(
             FamilyDocument,
             FamilyDocument.family_import_id == FamilyGeography.family_import_id,
-        ).filter(FamilyDocument.import_id == family_document_import_id)
+        ).where(FamilyDocument.import_id == family_document_import_id)
 
     return geo_subquery.subquery("geo_subquery")
 

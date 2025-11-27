@@ -1,4 +1,5 @@
 from db_client.models.dfce import Geography
+from sqlalchemy import select
 
 from app.models.search import BrowseArgs
 from app.repository.search import browse_rds_families
@@ -7,7 +8,9 @@ from tests.non_search.setup_helpers import setup_with_two_docs
 
 def test_browse_rds_families(data_db):
     setup_with_two_docs(data_db)
-    geo = data_db.query(Geography).get(1)
+    geo = data_db.execute(
+        select(Geography).where(Geography.id == 1)
+    ).scalar_one_or_none()
     expected = 1
 
     args = BrowseArgs(

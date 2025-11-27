@@ -1,6 +1,7 @@
 from unittest.mock import Mock
 
 import pytest
+from sqlalchemy import text
 from sqlalchemy.exc import SQLAlchemyError
 
 from app.service.health import is_database_online, is_rds_online, is_vespa_online
@@ -12,7 +13,12 @@ def test_is_rds_online_returns_true_when_db_healthy(caplog):
     mock_db.execute.return_value = Mock()
 
     assert is_rds_online(mock_db) is True
-    mock_db.execute.assert_called_once_with("SELECT 1")
+    # Check that execute was called with a text clause containing "SELECT 1"
+    assert mock_db.execute.call_count == 1
+    call_args = mock_db.execute.call_args[0]
+    assert len(call_args) == 1
+    assert isinstance(call_args[0], type(text("SELECT 1")))
+    assert str(call_args[0]) == "SELECT 1"
     assert "🔴 RDS health check failed" not in caplog.text
 
 
@@ -22,7 +28,12 @@ def test_is_rds_online_returns_false_when_db_error(caplog):
     mock_db.execute.side_effect = SQLAlchemyError("Database error")
 
     assert is_rds_online(mock_db) is False
-    mock_db.execute.assert_called_once_with("SELECT 1")
+    # Check that execute was called with a text clause containing "SELECT 1"
+    assert mock_db.execute.call_count == 1
+    call_args = mock_db.execute.call_args[0]
+    assert len(call_args) == 1
+    assert isinstance(call_args[0], type(text("SELECT 1")))
+    assert str(call_args[0]) == "SELECT 1"
     assert "🔴 RDS health check failed: Database error" in caplog.text
 
 

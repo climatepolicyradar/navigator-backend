@@ -4,7 +4,6 @@ from unittest.mock import Mock
 from db_client.models.dfce.geography import Geography, GeoStatistics
 
 from app.api.api_v1.routers.lookups import lookup_geo_stats
-from app.api.api_v1.routers.lookups.geo_stats import GeoStatsResponse
 
 TEST_GEO_NAME = "test1"
 TEST_GEO_SLUG = "Angola"
@@ -110,14 +109,16 @@ def test_endpoint_returns_not_found_empty_db(test_client):
 
 def test_queries_db():
     db = Mock()
-    query = Mock()
-    filter_by = Mock()
+    result1 = Mock()
+    result2 = Mock()
 
-    db.query.return_value = query
-    query.filter_by.return_value = filter_by
-    filter_by.first.return_value = GeoStatsResponse(
+    # First query returns geography_id = 1
+    result1.scalar_one_or_none.return_value = 1
+    # Second query returns GeoStatistics object
+    geo_stats = GeoStatistics(
+        id=1,
+        geography_id=1,
         name=TEST_GEO_NAME,
-        geography_slug=TEST_GEO_SLUG,
         legislative_process="row.legislative_process",
         federal=True,
         federal_details="row.federal_details",
@@ -127,8 +128,12 @@ def test_queries_db():
         worldbank_income_group="row.worldbank_income_group",
         visibility_status="row.visibility_status",
     )
+    result2.scalar_one_or_none.return_value = geo_stats
+
+    # Mock db.execute to return different results for different calls
+    db.execute.side_effect = [result1, result2]
 
     response = lookup_geo_stats(TEST_GEO_SLUG, db=db)
-    assert db.query.call_count == 2  # lookup geography, then stats
+    assert db.execute.call_count == 2  # lookup geography, then stats
     assert response.geography_slug == TEST_GEO_SLUG
     assert response.name == TEST_GEO_NAME

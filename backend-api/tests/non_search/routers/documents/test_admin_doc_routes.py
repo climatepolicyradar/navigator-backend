@@ -10,6 +10,7 @@ from db_client.models.document.physical_document import (
 )
 from fastapi import status
 from fastapi.testclient import TestClient
+from sqlalchemy import select
 from sqlalchemy.orm import Session
 
 from tests.non_search.setup_helpers import (
@@ -66,12 +67,8 @@ def test_update_document_status__publishes_document(
     UNCHANGED_IMPORT_ID = "CCLW.executive.2.2"
 
     # State of db beforehand
-    pre_family_status = (
-        data_db.query(FamilyDocument)
-        .filter(FamilyDocument.import_id == UPDATE_IMPORT_ID)
-        .one()
-        .document_status
-    )
+    stmt = select(FamilyDocument).where(FamilyDocument.import_id == UPDATE_IMPORT_ID)
+    pre_family_status = data_db.execute(stmt).unique().scalar_one().document_status
 
     response = data_client.post(
         f"/api/v1/admin/documents/{UPDATE_IMPORT_ID}/processed",
@@ -85,19 +82,13 @@ def test_update_document_status__publishes_document(
     assert json_object["document_status"] == "Published"
 
     # Now Check the db
-    updated_family = (
-        data_db.query(FamilyDocument)
-        .filter(FamilyDocument.import_id == UPDATE_IMPORT_ID)
-        .one()
-    )
+    stmt = select(FamilyDocument).where(FamilyDocument.import_id == UPDATE_IMPORT_ID)
+    updated_family = data_db.execute(stmt).unique().scalar_one()
     assert updated_family.document_status == "Published"
     assert updated_family.document_status != pre_family_status
 
-    unchanged_family = (
-        data_db.query(FamilyDocument)
-        .filter(FamilyDocument.import_id == UNCHANGED_IMPORT_ID)
-        .one()
-    )
+    stmt = select(FamilyDocument).where(FamilyDocument.import_id == UNCHANGED_IMPORT_ID)
+    unchanged_family = data_db.execute(stmt).unique().scalar_one()
     assert unchanged_family.document_status == "Deleted"
 
 
@@ -182,12 +173,8 @@ def test_update_document__works_on_import_id(
     assert json_object["cdn_object"] == "folder/file"
 
     # Now Check the db
-    doc = (
-        data_db.query(FamilyDocument)
-        .filter(FamilyDocument.import_id == import_id)
-        .one()
-        .physical_document
-    )
+    stmt = select(FamilyDocument).where(FamilyDocument.import_id == import_id)
+    doc = data_db.execute(stmt).unique().scalar_one().physical_document
     assert doc.md5_sum == "c184214e-4870-48e0-adab-3e064b1b0e76"
     assert doc.content_type == "updated/content_type"
     assert doc.cdn_object == "folder/file"
@@ -231,24 +218,21 @@ def test_update_document__works_on_new_language(
     assert json_object["languages"] == ["eng"]
 
     # Now Check the db
-    doc = (
-        data_db.query(FamilyDocument)
-        .filter(FamilyDocument.import_id == import_id)
-        .one()
-        .physical_document
-    )
+    stmt = select(FamilyDocument).where(FamilyDocument.import_id == import_id)
+    doc = data_db.execute(stmt).unique().scalar_one().physical_document
     assert doc.md5_sum == "c184214e-4870-48e0-adab-3e064b1b0e76"
     assert doc.content_type == "updated/content_type"
     assert doc.cdn_object == "folder/file"
 
-    languages = (
-        data_db.query(PhysicalDocumentLanguage)
-        .filter(PhysicalDocumentLanguage.document_id == doc.id)
-        .filter(PhysicalDocumentLanguage.source == LanguageSource.MODEL)
-        .all()
+    stmt = (
+        select(PhysicalDocumentLanguage)
+        .where(PhysicalDocumentLanguage.document_id == doc.id)
+        .where(PhysicalDocumentLanguage.source == LanguageSource.MODEL)
     )
+    languages = data_db.execute(stmt).scalars().all()
     assert len(languages) == 1
-    lang = data_db.query(Language).filter(Language.id == languages[0].language_id).one()
+    stmt = select(Language).where(Language.id == languages[0].language_id)
+    lang = data_db.execute(stmt).scalar_one()
     assert lang.language_code == "eng"
 
     # NOW ADD A NEW LANGUAGE TO CHECK THAT THE UPDATE IS ADDITIVE
@@ -274,25 +258,22 @@ def test_update_document__works_on_new_language(
     assert json_object["languages"] == expected_languages
 
     # Now Check the db
-    doc = (
-        data_db.query(FamilyDocument)
-        .filter(FamilyDocument.import_id == import_id)
-        .one()
-        .physical_document
-    )
+    stmt = select(FamilyDocument).where(FamilyDocument.import_id == import_id)
+    doc = data_db.execute(stmt).unique().scalar_one().physical_document
     assert doc.md5_sum == "c184214e-4870-48e0-adab-3e064b1b0e76"
     assert doc.content_type == "updated/content_type"
     assert doc.cdn_object == "folder/file"
 
-    doc_languages = (
-        data_db.query(PhysicalDocumentLanguage)
-        .filter(PhysicalDocumentLanguage.document_id == doc.id)
-        .filter(PhysicalDocumentLanguage.source == LanguageSource.MODEL)
-        .all()
+    stmt = (
+        select(PhysicalDocumentLanguage)
+        .where(PhysicalDocumentLanguage.document_id == doc.id)
+        .where(PhysicalDocumentLanguage.source == LanguageSource.MODEL)
     )
+    doc_languages = data_db.execute(stmt).scalars().all()
     assert len(doc_languages) == 2
     for doc_lang in doc_languages:
-        lang = data_db.query(Language).filter(Language.id == doc_lang.language_id).one()
+        stmt = select(Language).where(Language.id == doc_lang.language_id)
+        lang = data_db.execute(stmt).scalar_one()
         assert lang.language_code in expected_languages
 
 
@@ -334,24 +315,21 @@ def test_update_document__works_on_new_iso_639_1_language(
     assert json_object["languages"] == ["bod"]
 
     # Now Check the db
-    doc = (
-        data_db.query(FamilyDocument)
-        .filter(FamilyDocument.import_id == import_id)
-        .one()
-        .physical_document
-    )
+    stmt = select(FamilyDocument).where(FamilyDocument.import_id == import_id)
+    doc = data_db.execute(stmt).unique().scalar_one().physical_document
     assert doc.md5_sum == "c184214e-4870-48e0-adab-3e064b1b0e76"
     assert doc.content_type == "updated/content_type"
     assert doc.cdn_object == "folder/file"
 
-    languages = (
-        data_db.query(PhysicalDocumentLanguage)
-        .filter(PhysicalDocumentLanguage.document_id == doc.id)
-        .filter(PhysicalDocumentLanguage.source == LanguageSource.MODEL)
-        .all()
+    stmt = (
+        select(PhysicalDocumentLanguage)
+        .where(PhysicalDocumentLanguage.document_id == doc.id)
+        .where(PhysicalDocumentLanguage.source == LanguageSource.MODEL)
     )
+    languages = data_db.execute(stmt).scalars().all()
     assert len(languages) == 1
-    lang = data_db.query(Language).filter(Language.id == languages[0].language_id).one()
+    stmt = select(Language).where(Language.id == languages[0].language_id)
+    lang = data_db.execute(stmt).scalar_one()
     assert lang.language_code == "bod"
 
     # NOW ADD A NEW LANGUAGE TO CHECK THAT THE UPDATE IS ADDITIVE
@@ -377,25 +355,22 @@ def test_update_document__works_on_new_iso_639_1_language(
     assert set(json_object["languages"]) == expected_languages
 
     # Now Check the db
-    doc = (
-        data_db.query(FamilyDocument)
-        .filter(FamilyDocument.import_id == import_id)
-        .one()
-        .physical_document
-    )
+    stmt = select(FamilyDocument).where(FamilyDocument.import_id == import_id)
+    doc = data_db.execute(stmt).unique().scalar_one().physical_document
     assert doc.md5_sum == "c184214e-4870-48e0-adab-3e064b1b0e76"
     assert doc.content_type == "updated/content_type"
     assert doc.cdn_object == "folder/file"
 
-    doc_languages = (
-        data_db.query(PhysicalDocumentLanguage)
-        .filter(PhysicalDocumentLanguage.document_id == doc.id)
-        .filter(PhysicalDocumentLanguage.source == LanguageSource.MODEL)
-        .all()
+    stmt = (
+        select(PhysicalDocumentLanguage)
+        .where(PhysicalDocumentLanguage.document_id == doc.id)
+        .where(PhysicalDocumentLanguage.source == LanguageSource.MODEL)
     )
+    doc_languages = data_db.execute(stmt).scalars().all()
     assert len(doc_languages) == 2
     for doc_lang in doc_languages:
-        lang = data_db.query(Language).filter(Language.id == doc_lang.language_id).one()
+        stmt = select(Language).where(Language.id == doc_lang.language_id)
+        lang = data_db.execute(stmt).scalar_one()
         assert lang.language_code in expected_languages
 
 
@@ -444,24 +419,21 @@ def test_update_document__works_on_existing_iso_639_1_language(
     assert json_object["languages"] == ["bod"]
 
     # Now Check the db
-    doc = (
-        data_db.query(FamilyDocument)
-        .filter(FamilyDocument.import_id == import_id)
-        .one()
-        .physical_document
-    )
+    stmt = select(FamilyDocument).where(FamilyDocument.import_id == import_id)
+    doc = data_db.execute(stmt).unique().scalar_one().physical_document
     assert doc.md5_sum == "c184214e-4870-48e0-adab-3e064b1b0e76"
     assert doc.content_type == "updated/content_type"
     assert doc.cdn_object == "folder/file"
 
-    languages = (
-        data_db.query(PhysicalDocumentLanguage)
-        .filter(PhysicalDocumentLanguage.document_id == doc.id)
-        .filter(PhysicalDocumentLanguage.source == LanguageSource.MODEL)
-        .all()
+    stmt = (
+        select(PhysicalDocumentLanguage)
+        .where(PhysicalDocumentLanguage.document_id == doc.id)
+        .where(PhysicalDocumentLanguage.source == LanguageSource.MODEL)
     )
+    languages = data_db.execute(stmt).scalars().all()
     assert len(languages) == 1
-    lang = data_db.query(Language).filter(Language.id == languages[0].language_id).one()
+    stmt = select(Language).where(Language.id == languages[0].language_id)
+    lang = data_db.execute(stmt).scalar_one()
     assert lang.language_code == "bod"
 
     # NOW ADD THE SAME LANGUAGE AGAIN TO CHECK THAT THE UPDATE IS ADDITIVE AND WE SKIP OVER EXISTING LANGUAGES
@@ -487,25 +459,22 @@ def test_update_document__works_on_existing_iso_639_1_language(
     assert json_object["languages"] == expected_languages
 
     # Now Check the db
-    doc = (
-        data_db.query(FamilyDocument)
-        .filter(FamilyDocument.import_id == import_id)
-        .one()
-        .physical_document
-    )
+    stmt = select(FamilyDocument).where(FamilyDocument.import_id == import_id)
+    doc = data_db.execute(stmt).unique().scalar_one().physical_document
     assert doc.md5_sum == "c184214e-4870-48e0-adab-3e064b1b0e76"
     assert doc.content_type == "updated/content_type"
     assert doc.cdn_object == "folder/file"
 
-    doc_languages = (
-        data_db.query(PhysicalDocumentLanguage)
-        .filter(PhysicalDocumentLanguage.document_id == doc.id)
-        .filter(PhysicalDocumentLanguage.source == LanguageSource.MODEL)
-        .all()
+    stmt = (
+        select(PhysicalDocumentLanguage)
+        .where(PhysicalDocumentLanguage.document_id == doc.id)
+        .where(PhysicalDocumentLanguage.source == LanguageSource.MODEL)
     )
+    doc_languages = data_db.execute(stmt).scalars().all()
     assert len(doc_languages) == 1
     for doc_lang in doc_languages:
-        lang = data_db.query(Language).filter(Language.id == doc_lang.language_id).one()
+        stmt = select(Language).where(Language.id == doc_lang.language_id)
+        lang = data_db.execute(stmt).scalar_one()
         assert lang.language_code in expected_languages
 
 
@@ -553,24 +522,21 @@ def test_update_document__works_on_existing_iso_639_3_language(
     assert json_object["languages"] == ["bod"]
 
     # Now Check the db
-    doc = (
-        data_db.query(FamilyDocument)
-        .filter(FamilyDocument.import_id == import_id)
-        .one()
-        .physical_document
-    )
+    stmt = select(FamilyDocument).where(FamilyDocument.import_id == import_id)
+    doc = data_db.execute(stmt).unique().scalar_one().physical_document
     assert doc.md5_sum == "c184214e-4870-48e0-adab-3e064b1b0e76"
     assert doc.content_type == "updated/content_type"
     assert doc.cdn_object == "folder/file"
 
-    languages = (
-        data_db.query(PhysicalDocumentLanguage)
-        .filter(PhysicalDocumentLanguage.document_id == doc.id)
-        .filter(PhysicalDocumentLanguage.source == LanguageSource.MODEL)
-        .all()
+    stmt = (
+        select(PhysicalDocumentLanguage)
+        .where(PhysicalDocumentLanguage.document_id == doc.id)
+        .where(PhysicalDocumentLanguage.source == LanguageSource.MODEL)
     )
+    languages = data_db.execute(stmt).scalars().all()
     assert len(languages) == 1
-    lang = data_db.query(Language).filter(Language.id == languages[0].language_id).one()
+    stmt = select(Language).where(Language.id == languages[0].language_id)
+    lang = data_db.execute(stmt).scalar_one()
     assert lang.language_code == "bod"
 
     # NOW ADD THE SAME LANGUAGE AGAIN TO CHECK THAT THE UPDATE IS ADDITIVE AND WE SKIP OVER EXISTING LANGUAGES
@@ -596,25 +562,22 @@ def test_update_document__works_on_existing_iso_639_3_language(
     assert json_object["languages"] == expected_languages
 
     # Now Check the db
-    doc = (
-        data_db.query(FamilyDocument)
-        .filter(FamilyDocument.import_id == import_id)
-        .one()
-        .physical_document
-    )
+    stmt = select(FamilyDocument).where(FamilyDocument.import_id == import_id)
+    doc = data_db.execute(stmt).unique().scalar_one().physical_document
     assert doc.md5_sum == "c184214e-4870-48e0-adab-3e064b1b0e76"
     assert doc.content_type == "updated/content_type"
     assert doc.cdn_object == "folder/file"
 
-    doc_languages = (
-        data_db.query(PhysicalDocumentLanguage)
-        .filter(PhysicalDocumentLanguage.document_id == doc.id)
-        .filter(PhysicalDocumentLanguage.source == LanguageSource.MODEL)
-        .all()
+    stmt = (
+        select(PhysicalDocumentLanguage)
+        .where(PhysicalDocumentLanguage.document_id == doc.id)
+        .where(PhysicalDocumentLanguage.source == LanguageSource.MODEL)
     )
+    doc_languages = data_db.execute(stmt).scalars().all()
     assert len(doc_languages) == 1
     for doc_lang in doc_languages:
-        lang = data_db.query(Language).filter(Language.id == doc_lang.language_id).one()
+        stmt = select(Language).where(Language.id == doc_lang.language_id)
+        lang = data_db.execute(stmt).scalar_one()
         assert lang.language_code in expected_languages
 
 
@@ -663,22 +626,18 @@ def test_update_document__logs_warning_on_four_letter_language(
     )
 
     # Now Check the db
-    doc = (
-        data_db.query(FamilyDocument)
-        .filter(FamilyDocument.import_id == import_id)
-        .one()
-        .physical_document
-    )
+    stmt = select(FamilyDocument).where(FamilyDocument.import_id == import_id)
+    doc = data_db.execute(stmt).unique().scalar_one().physical_document
     assert doc.md5_sum == "c184214e-4870-48e0-adab-3e064b1b0e76"
     assert doc.content_type == "updated/content_type"
     assert doc.cdn_object == "folder/file"
 
-    languages = (
-        data_db.query(PhysicalDocumentLanguage)
-        .filter(PhysicalDocumentLanguage.document_id == doc.id)
-        .filter(PhysicalDocumentLanguage.source == LanguageSource.MODEL)
-        .all()
+    stmt = (
+        select(PhysicalDocumentLanguage)
+        .where(PhysicalDocumentLanguage.document_id == doc.id)
+        .where(PhysicalDocumentLanguage.source == LanguageSource.MODEL)
     )
+    languages = data_db.execute(stmt).scalars().all()
     assert len(languages) == 0
 
 
@@ -725,22 +684,18 @@ def test_update_document__works_with_no_language(
     assert json_object["languages"] == []
 
     # Now Check the db
-    doc = (
-        data_db.query(FamilyDocument)
-        .filter(FamilyDocument.import_id == import_id)
-        .one()
-        .physical_document
-    )
+    stmt = select(FamilyDocument).where(FamilyDocument.import_id == import_id)
+    doc = data_db.execute(stmt).unique().scalar_one().physical_document
     assert doc.md5_sum == "c184214e-4870-48e0-adab-3e064b1b0e76"
     assert doc.content_type == "updated/content_type"
     assert doc.cdn_object == "folder/file"
 
-    db_languages = (
-        data_db.query(PhysicalDocumentLanguage)
-        .filter(PhysicalDocumentLanguage.document_id == doc.id)
-        .filter(PhysicalDocumentLanguage.source == LanguageSource.MODEL)
-        .all()
+    stmt = (
+        select(PhysicalDocumentLanguage)
+        .where(PhysicalDocumentLanguage.document_id == doc.id)
+        .where(PhysicalDocumentLanguage.source == LanguageSource.MODEL)
     )
+    db_languages = data_db.execute(stmt).scalars().all()
     assert len(db_languages) == 0
     assert set([lang.language_id for lang in db_languages]) == set()
 
@@ -767,15 +722,10 @@ def test_update_document__works_existing_languages(
     setup_docs_with_two_orgs_no_langs(data_db)
 
     for lang_code in existing_languages:
-        existing_doc = (
-            data_db.query(FamilyDocument)
-            .filter(FamilyDocument.import_id == import_id)
-            .one()
-            .physical_document
-        )
-        existing_lang = (
-            data_db.query(Language).filter(Language.language_code == lang_code).one()
-        )
+        stmt = select(FamilyDocument).where(FamilyDocument.import_id == import_id)
+        existing_doc = data_db.execute(stmt).unique().scalar_one().physical_document
+        stmt = select(Language).where(Language.language_code == lang_code)
+        existing_lang = data_db.execute(stmt).scalar_one()
         existing_doc_lang = PhysicalDocumentLanguage(
             language_id=existing_lang.id,
             document_id=existing_doc.id,
@@ -809,25 +759,22 @@ def test_update_document__works_existing_languages(
     assert set(json_object["languages"]) == expected_languages
 
     # Now Check the db
-    doc = (
-        data_db.query(FamilyDocument)
-        .filter(FamilyDocument.import_id == import_id)
-        .one()
-        .physical_document
-    )
+    stmt = select(FamilyDocument).where(FamilyDocument.import_id == import_id)
+    doc = data_db.execute(stmt).unique().scalar_one().physical_document
     assert doc.md5_sum == "c184214e-4870-48e0-adab-3e064b1b0e76"
     assert doc.content_type == "updated/content_type"
     assert doc.cdn_object == "folder/file"
 
-    doc_languages = (
-        data_db.query(PhysicalDocumentLanguage)
-        .filter(PhysicalDocumentLanguage.document_id == doc.id)
-        .filter(PhysicalDocumentLanguage.source == LanguageSource.MODEL)
-        .all()
+    stmt = (
+        select(PhysicalDocumentLanguage)
+        .where(PhysicalDocumentLanguage.document_id == doc.id)
+        .where(PhysicalDocumentLanguage.source == LanguageSource.MODEL)
     )
+    doc_languages = data_db.execute(stmt).scalars().all()
     assert len(doc_languages) == len(expected_languages)
     for doc_lang in doc_languages:
-        lang = data_db.query(Language).filter(Language.id == doc_lang.language_id).one()
+        stmt = select(Language).where(Language.id == doc_lang.language_id)
+        lang = data_db.execute(stmt).scalar_one()
         assert lang.language_code in expected_languages
 
 
@@ -864,12 +811,8 @@ def test_update_document__idempotent(
     assert json_object["cdn_object"] == "folder/file"
 
     # Now Check the db
-    doc = (
-        data_db.query(FamilyDocument)
-        .filter(FamilyDocument.import_id == import_id)
-        .one()
-        .physical_document
-    )
+    stmt = select(FamilyDocument).where(FamilyDocument.import_id == import_id)
+    doc = data_db.execute(stmt).unique().scalar_one().physical_document
     assert doc.md5_sum == "c184214e-4870-48e0-adab-3e064b1b0e76"
     assert doc.content_type == "updated/content_type"
     assert doc.cdn_object == "folder/file"
@@ -903,12 +846,8 @@ def test_update_document__works_on_slug(
 
     # Now Check the db
     import_id = "CCLW.executive.1.2"
-    doc = (
-        data_db.query(FamilyDocument)
-        .filter(FamilyDocument.import_id == import_id)
-        .one()
-        .physical_document
-    )
+    stmt = select(FamilyDocument).where(FamilyDocument.import_id == import_id)
+    doc = data_db.execute(stmt).unique().scalar_one().physical_document
     assert doc.md5_sum == "c184214e-4870-48e0-adab-3e064b1b0e76"
     assert doc.content_type == "updated/content_type"
     assert doc.cdn_object == "folder/file"

@@ -3,6 +3,7 @@ from typing import Annotated
 
 from db_client.models.dfce.family import Corpus, Family, FamilyCorpus
 from fastapi import APIRouter, Depends, Header, HTTPException, Request
+from sqlalchemy import select
 from sqlalchemy.orm import lazyload
 
 from app.clients.db.session import get_db
@@ -98,19 +99,17 @@ def latest(
         },
     )
 
-    query = (
-        db.query(
-            Family,
-        )
+    stmt = (
+        select(Family)
         .join(FamilyCorpus, FamilyCorpus.family_import_id == Family.import_id)
         .join(Corpus, FamilyCorpus.corpus_import_id == Corpus.import_id)
-        .filter(Corpus.import_id.in_(allowed_corpora_ids))
+        .where(Corpus.import_id.in_(allowed_corpora_ids))
         .order_by(Family.created.desc())
         .limit(limit)
         .options(lazyload("*"))
     )
 
-    families = query.all()
+    families = db.execute(stmt).unique().scalars().all()
 
     return [to_latest_response_family(family) for family in families]
 

@@ -117,7 +117,7 @@ def read_concepts(*, session: Session = Depends(get_session)):
     """
     )
 
-    results = session.connection().execute(stmt).all()
+    results = session.execute(stmt).all()
 
     unique_concepts = [
         ConceptPublic.model_validate(
