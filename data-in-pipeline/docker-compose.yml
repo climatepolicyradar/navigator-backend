@@ -1,0 +1,21 @@
+services:
+  test:
+    profiles: [test]
+    container_name: data-in-pipeline-test
+    build:
+      context: ..
+      dockerfile: data-in-pipeline/Dockerfile
+    volumes:
+      - ..:/app
+    working_dir: /app
+    command:
+      [
+        uv,
+        run,
+        --project,
+        data-in-pipeline,
+        pytest,
+        data-in-pipeline,
+        --color=yes,
+        -v,
+      ]

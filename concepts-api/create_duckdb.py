@@ -20,11 +20,11 @@ def fetch_classifier_specs_file() -> str:
     repo = "knowledge-graph"
     branch = "main"
 
-    classifier_file_name = "prod.yaml"
+    classifier_file_name = "production.yaml"
     if os.getenv("ENV") == "staging":
         classifier_file_name = "staging.yaml"
 
-    path = f"flows/classifier_specs/{classifier_file_name}"
+    path = f"flows/classifier_specs/v2/{classifier_file_name}"
     github_url = f"https://raw.githubusercontent.com/{owner}/{repo}/{branch}/{path}"
 
     try:
@@ -56,7 +56,7 @@ def parse_classifier_specs(classifier_specs_file: str) -> list[str]:
 
         # Extract concept IDs, removing version numbers
         concepts_with_classifiers = [
-            concept.split(":")[0] for concept in classifier_specs if concept
+            concept["wikibase_id"] for concept in classifier_specs if concept
         ]
 
         if not concepts_with_classifiers:
