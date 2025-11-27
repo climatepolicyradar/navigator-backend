@@ -53,7 +53,7 @@ def transform(
 
     2) In the world of MCFs - we often have a "project document" that is a 1-1 mapping of the family.
     """
-    matching_document = next(
+    is_version_of_document = next(
         (
             document
             for document in input.data.documents
@@ -67,10 +67,13 @@ def transform(
         ),
         None,
     )
-    non_matching_documents = [
+    member_of_documents = [
         document
         for document in input.data.documents
-        if not (matching_document and document.import_id == matching_document.import_id)
+        if not (
+            is_version_of_document
+            and document.import_id == is_version_of_document.import_id
+        )
     ]
 
     """
@@ -82,7 +85,7 @@ def transform(
             document,
             input.data,
         )
-        for document in non_matching_documents
+        for document in member_of_documents
     ]
 
     """
@@ -113,9 +116,9 @@ def transform(
     Versions
     """
     document_from_document: Document | None
-    if matching_document:
+    if is_version_of_document:
         document_from_document = _transform_navigator_document(
-            matching_document, input.data
+            is_version_of_document, input.data
         )
         document_from_document.relationships = [
             DocumentDocumentRelationship(
