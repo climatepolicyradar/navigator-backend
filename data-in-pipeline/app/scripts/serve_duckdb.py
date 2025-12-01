@@ -1,6 +1,6 @@
 import duckdb
 from fastapi import Depends, FastAPI, HTTPException, Query
-from pydantic import BaseModel
+from pydantic import BaseModel, Field
 
 DB_PATH = ".data_cache/documents.duckdb"
 
@@ -21,7 +21,7 @@ class DocumentLabelRelationship(BaseModel):
 class BaseDocument(BaseModel):
     id: str
     title: str
-    labels: list[DocumentLabelRelationship] = []
+    labels: list[DocumentLabelRelationship] = Field(default_factory=list)
 
 
 class DocumentDocumentRelationship(BaseModel):
@@ -30,7 +30,7 @@ class DocumentDocumentRelationship(BaseModel):
 
 
 class Document(BaseDocument):
-    relationships: list[DocumentDocumentRelationship] = []
+    relationships: list[DocumentDocumentRelationship] = Field(default_factory=list)
 
 
 class DocumentWithoutRelationships(BaseDocument):
@@ -65,31 +65,30 @@ def list_documents(
     """
     Query documents directly by nested labels JSON fields.
     """
-    params: list = [limit, offset]
-
     base_query = """
-        SELECT id, title, labels, relationships
-        FROM documents
+        SELECT d.id, d.title, d.labels, d.relationships
+        FROM documents AS d
         WHERE 1=1
     """
+    params: list[str | int] = []
 
     if label_id or label_type:
-        base_query += " AND id IN ("
         base_query += """
-            SELECT d.id
-            FROM documents d
-            CROSS JOIN UNNEST(d.labels) AS t(l)
-            WHERE 1=1
+            AND EXISTS (
+                SELECT 1
+                FROM UNNEST(d.labels) AS l(lbl)
+                WHERE 1=1
         """
         if label_id:
-            base_query += " AND l.label.id = ?"
-            params.insert(0, label_id)
+            base_query += " AND lbl.label.id = ?"
+            params.append(label_id)
         if label_type:
-            base_query += " AND l.label.type = ?"
-            params.insert(0, label_type)
+            base_query += " AND lbl.label.type = ?"
+            params.append(label_type)
         base_query += ")"
 
-    base_query += " ORDER BY title LIMIT ? OFFSET ?"
+    base_query += " ORDER BY d.title LIMIT ? OFFSET ?"
+    params.extend([limit, offset])
 
     try:
         result = con.execute(base_query, params)
@@ -103,6 +102,7 @@ def list_documents(
     docs = []
     for row in rows:
         record = dict(zip(colnames, row))
+        print(record)
         docs.append(Document(**record))
 
     return docs

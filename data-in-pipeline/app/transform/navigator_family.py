@@ -205,8 +205,8 @@ def _transform_navigator_family(navigator_family: NavigatorFamily) -> Document:
             DocumentLabelRelationship(
                 type="debug",
                 label=Label(
-                    id="no_labels",
-                    title="no_labels",
+                    id="no_family_labels",
+                    title="no_family_labels",
                     type="debug",
                 ),
             )
@@ -250,6 +250,19 @@ def _transform_navigator_document(
                 type="entity_type",
                 label=Label(
                     id=normalised_role, title=normalised_role, type="entity_type"
+                ),
+            )
+        )
+
+    # this is for debugging
+    if not labels:
+        labels.append(
+            DocumentLabelRelationship(
+                type="debug",
+                label=Label(
+                    id="no_document_labels",
+                    title="no_document_labels",
+                    type="debug",
                 ),
             )
         )
