@@ -113,8 +113,8 @@ def test_transform_navigator_family_with_single_matching_document(
                         type="debug",
                         label=Label(
                             type="debug",
-                            id="no_labels",
-                            title="no_labels",
+                            id="no_family_labels",
+                            title="no_family_labels",
                         ),
                     ),
                 ],
@@ -124,7 +124,16 @@ def test_transform_navigator_family_with_single_matching_document(
                         document=DocumentWithoutRelationships(
                             id="document",
                             title=navigator_family_with_single_matching_document.data.title,
-                            labels=[],
+                            labels=[
+                                DocumentLabelRelationship(
+                                    type="debug",
+                                    label=Label(
+                                        type="debug",
+                                        id="no_document_labels",
+                                        title="no_document_labels",
+                                    ),
+                                ),
+                            ],
                         ),
                     ),
                 ],
@@ -132,7 +141,16 @@ def test_transform_navigator_family_with_single_matching_document(
             Document(
                 id="document",
                 title=navigator_family_with_single_matching_document.data.title,
-                labels=[],
+                labels=[
+                    DocumentLabelRelationship(
+                        type="debug",
+                        label=Label(
+                            type="debug",
+                            id="no_document_labels",
+                            title="no_document_labels",
+                        ),
+                    ),
+                ],
                 relationships=[
                     DocumentDocumentRelationship(
                         type="is_version_of",
@@ -144,8 +162,8 @@ def test_transform_navigator_family_with_single_matching_document(
                                     type="debug",
                                     label=Label(
                                         type="debug",
-                                        id="no_labels",
-                                        title="no_labels",
+                                        id="no_family_labels",
+                                        title="no_family_labels",
                                     ),
                                 ),
                             ],
@@ -268,7 +286,16 @@ def test_transform_navigator_family_with_multilateral_climate_fund_project(
                         document=DocumentWithoutRelationships(
                             id="document_1",
                             title="Multilateral climate fund project document",
-                            labels=[],
+                            labels=[
+                                DocumentLabelRelationship(
+                                    type="debug",
+                                    label=Label(
+                                        type="debug",
+                                        id="no_document_labels",
+                                        title="no_document_labels",
+                                    ),
+                                ),
+                            ],
                         ),
                     ),
                     DocumentDocumentRelationship(
@@ -276,7 +303,16 @@ def test_transform_navigator_family_with_multilateral_climate_fund_project(
                         document=DocumentWithoutRelationships(
                             id="document_2",
                             title="Project document",
-                            labels=[],
+                            labels=[
+                                DocumentLabelRelationship(
+                                    type="debug",
+                                    label=Label(
+                                        type="debug",
+                                        id="no_document_labels",
+                                        title="no_document_labels",
+                                    ),
+                                ),
+                            ],
                         ),
                     ),
                 ],
@@ -284,7 +320,16 @@ def test_transform_navigator_family_with_multilateral_climate_fund_project(
             Document(
                 id="document_1",
                 title="Multilateral climate fund project document",
-                labels=[],
+                labels=[
+                    DocumentLabelRelationship(
+                        type="debug",
+                        label=Label(
+                            type="debug",
+                            id="no_document_labels",
+                            title="no_document_labels",
+                        ),
+                    ),
+                ],
                 relationships=[
                     DocumentDocumentRelationship(
                         type="member_of",
@@ -308,7 +353,16 @@ def test_transform_navigator_family_with_multilateral_climate_fund_project(
             Document(
                 id="document_2",
                 title="Project document",
-                labels=[],
+                labels=[
+                    DocumentLabelRelationship(
+                        type="debug",
+                        label=Label(
+                            type="debug",
+                            id="no_document_labels",
+                            title="no_document_labels",
+                        ),
+                    ),
+                ],
                 relationships=[
                     DocumentDocumentRelationship(
                         type="is_version_of",
