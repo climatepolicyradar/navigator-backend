@@ -71,7 +71,7 @@ pulumi.export("ecr_repository_url", data_in_pipeline_ecr_repository.repository_u
 environment = pulumi.get_stack()
 
 config = pulumi.Config()
-username = config.require("db_username")
+username = config.require("db_user")
 
 name = "document-store"
 tags = {
