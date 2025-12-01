@@ -149,8 +149,8 @@ private_subnets = vpc.id.apply(
                 values=[vpc_id],
             ),
             aws.ec2.GetSubnetsFilterArgs(
-                name="tag:Type",
-                values=["private"],
+                name="tag:Name",
+                values=["*private*"],
             ),
         ]
     )
