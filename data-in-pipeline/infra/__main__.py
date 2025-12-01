@@ -70,6 +70,9 @@ pulumi.export("ecr_repository_url", data_in_pipeline_ecr_repository.repository_u
 #######################################################################
 environment = pulumi.get_stack()
 
+config = pulumi.Config()
+username = config.require("db_username")
+
 name = "document-store"
 tags = {
     "CPR-Created-By": "pulumi",
@@ -125,7 +128,7 @@ secret_value = aws.secretsmanager.SecretVersion(
     secret_string=pulumi.Output.secret(
         json.dumps(
             {
-                "username": "pgadmin",
+                "username": username,
                 "password": aws.secretsmanager.get_random_password(
                     password_length=20,
                     exclude_punctuation=True,
