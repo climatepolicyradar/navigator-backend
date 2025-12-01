@@ -1,2 +1,4 @@
 config:
   aws:region: eu-west-1
+  document_store:validation_account_id:
+    secure: AAABAPkKFGCaVPTx2TiLyJsW2237VGrflttKoFQyQmHwUbcBs+SQnUj3kdc=
