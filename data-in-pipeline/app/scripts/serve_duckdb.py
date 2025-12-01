@@ -102,7 +102,6 @@ def list_documents(
     docs = []
     for row in rows:
         record = dict(zip(colnames, row))
-        print(record)
         docs.append(Document(**record))
 
     return docs
