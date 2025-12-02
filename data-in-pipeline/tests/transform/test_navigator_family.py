@@ -69,6 +69,11 @@ def navigator_family_with_litigation_corpus_type() -> Identified[NavigatorFamily
                     title="Litigation family document",
                     events=[NavigatorEvent(import_id="123", event_type="Decision")],
                 ),
+                NavigatorDocument(
+                    import_id="1.2.3.placeholder",
+                    title="Placeholder litigation family document",
+                    events=[],
+                ),
             ],
         ),
     )
@@ -219,7 +224,24 @@ def test_transform_navigator_family_with_litigation_corpus_type(
                                 ),
                             ],
                         ),
-                    )
+                    ),
+                    DocumentDocumentRelationship(
+                        type="has_member",
+                        document=DocumentWithoutRelationships(
+                            id="1.2.3.placeholder",
+                            title="Placeholder litigation family document",
+                            labels=[
+                                DocumentLabelRelationship(
+                                    type="status",
+                                    label=Label(
+                                        id="obsolete",
+                                        title="obsolete",
+                                        type="status",
+                                    ),
+                                ),
+                            ],
+                        ),
+                    ),
                 ],
             ),
             Document(
@@ -232,6 +254,39 @@ def test_transform_navigator_family_with_litigation_corpus_type(
                             id="Decision",
                             title="Decision",
                             type="entity_type",
+                        ),
+                    ),
+                ],
+                relationships=[
+                    DocumentDocumentRelationship(
+                        type="member_of",
+                        document=DocumentWithoutRelationships(
+                            id="family",
+                            title="Litigation family",
+                            labels=[
+                                DocumentLabelRelationship(
+                                    type="entity_type",
+                                    label=Label(
+                                        id="Legal case",
+                                        title="Legal case",
+                                        type="entity_type",
+                                    ),
+                                ),
+                            ],
+                        ),
+                    )
+                ],
+            ),
+            Document(
+                id="1.2.3.placeholder",
+                title="Placeholder litigation family document",
+                labels=[
+                    DocumentLabelRelationship(
+                        type="status",
+                        label=Label(
+                            id="obsolete",
+                            title="obsolete",
+                            type="status",
                         ),
                     ),
                 ],

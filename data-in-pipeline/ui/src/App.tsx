@@ -26,7 +26,7 @@ const baseProvider = dataProvider(
 const documentsDataProvider: DataProvider = {
   ...baseProvider,
 
-  getList: async ({ resource, pagination }) => {
+  getList: async ({ resource, pagination, filters }) => {
     const { currentPage = 1, pageSize = 100 } = pagination ?? {};
 
     const offset = (currentPage - 1) * pageSize;
@@ -38,6 +38,21 @@ const documentsDataProvider: DataProvider = {
     url.searchParams.set("offset", offset.toString());
     url.searchParams.set("limit", limit.toString());
 
+    if (filters) {
+      const labelsLabelFields = filters.find((filter) => {
+        return "field" in filter && filter.field === "labels.label.id";
+      });
+
+      if (labelsLabelFields) {
+        if (Array.isArray(labelsLabelFields.value)) {
+          labelsLabelFields.value.forEach((value) => {
+            url.searchParams.append("labels.label.id", value);
+          });
+        }
+      }
+    }
+
+    console.info(url.toString());
     const response = await fetch(url.toString());
     const responseJson = await response.json();
 

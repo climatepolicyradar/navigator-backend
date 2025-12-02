@@ -254,6 +254,17 @@ def _transform_navigator_document(
             )
         )
 
+    """
+    These were added to allow families to be parsed if they did not have any documents.
+    """
+    if navigator_document.import_id.endswith("placeholder"):
+        labels.append(
+            DocumentLabelRelationship(
+                type="status",
+                label=Label(id="obsolete", title="obsolete", type="status"),
+            )
+        )
+
     # this is for debugging
     if not labels:
         labels.append(
