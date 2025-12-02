@@ -107,6 +107,18 @@ class PipelineMetrics:
         if not self._disabled:
             self._create_instruments()
 
+    def set_flow_run_name(self, flow_run_name: str) -> None:
+        """Set the flow_run_name attribute for all metrics.
+
+        Call at the start of each flow run to tag all metrics with the run identifier.
+        This ensures counters and histograms are scoped to the flow run lifetime,
+        enabling proper aggregation with max_over_time across runs.
+
+        :param flow_run_name: The Prefect flow run name (e.g., "maroon-swan").
+        :type flow_run_name: str
+        """
+        self._base_attributes["flow_run_name"] = flow_run_name
+
     def _create_instruments(self) -> None:
         """Create the data-in-pipeline-specific metric instruments."""
         from app.bootstrap_telemetry import get_logger

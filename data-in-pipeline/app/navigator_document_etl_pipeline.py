@@ -114,6 +114,7 @@ def etl_pipeline(
 )
 def process_updates(ids: list[str] = []):
     run_id = flow_run.get_name()
+    pipeline_metrics.set_flow_run_name(run_id)
     pipeline_metrics.log_run_info(PipelineType.DOCUMENT, len(ids), run_id)
 
     results = etl_pipeline.map(ids)

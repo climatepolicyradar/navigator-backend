@@ -35,9 +35,9 @@ _PREFECT_LOGGING_CONFIG_PATH = _APP_DIR / "prefect_logging.yaml"
 
 os.environ["OTEL_PYTHON_LOGGING_AUTO_INSTRUMENTATION_ENABLED"] = "True"
 
-# Set short export interval for batch jobs (1 second instead of default 60s)
+# Set short export interval for batch jobs (instead of default 60s)
 # This ensures metrics are exported even if the process is terminated abruptly
-os.environ.setdefault("METRICS_EXPORT_INTERVAL_MS", "1000")
+os.environ.setdefault("METRICS_EXPORT_INTERVAL_MS", "5000")
 
 # Set Prefect logging config path
 if _PREFECT_LOGGING_CONFIG_PATH.exists():

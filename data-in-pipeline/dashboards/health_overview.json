@@ -60,7 +60,7 @@
         "orientation": "auto",
         "percentChangeColorMode": "standard",
         "reduceOptions": {
-          "calcs": ["sum"],
+          "calcs": ["lastNotNull"],
           "fields": "",
           "values": false
         },
@@ -76,7 +76,7 @@
             "uid": "grafanacloud-prom"
           },
           "editorMode": "code",
-          "expr": "sum(cpr_data_fetching_data_in_pipeline_main_documents_processed_total{environment=\"$environment\"})",
+          "expr": "sum by (pipeline_type, status) (max by(flow_run_name, pipeline_type, status) (max_over_time(cpr_data_fetching_data_in_pipeline_main_documents_processed_total{environment=\"$environment\"}[$__range])))",
           "instant": false,
           "legendFormat": "__auto",
           "range": true,
@@ -124,7 +124,7 @@
         "orientation": "auto",
         "percentChangeColorMode": "standard",
         "reduceOptions": {
-          "calcs": ["sum"],
+          "calcs": ["lastNotNull"],
           "fields": "",
           "values": false
         },
@@ -140,7 +140,7 @@
             "uid": "grafanacloud-prom"
           },
           "editorMode": "code",
-          "expr": "sum(cpr_data_fetching_data_in_pipeline_main_document_errors_total{environment=\"$environment\"})",
+          "expr": "sum by (pipeline_type, status) (max by(flow_run_name, pipeline_type, status) (max_over_time(cpr_data_fetching_data_in_pipeline_main_document_errors_total{environment=\"$environment\"}[$__range])))",
           "instant": false,
           "legendFormat": "__auto",
           "range": true,
@@ -206,7 +206,7 @@
             "uid": "grafanacloud-prom"
           },
           "editorMode": "code",
-          "expr": "cpr_data_fetching_data_in_pipeline_main_pipeline_run_duration_seconds_sum{scope=\"batch\"} / cpr_data_fetching_data_in_pipeline_main_pipeline_run_duration_seconds_count{scope=\"batch\"} ",
+          "expr": "avg(cpr_data_fetching_data_in_pipeline_main_pipeline_run_duration_seconds_sum{scope=\"batch\"}/cpr_data_fetching_data_in_pipeline_main_pipeline_run_duration_seconds_count{scope=\"batch\"})",
           "instant": false,
           "legendFormat": "__auto",
           "range": true,
@@ -272,7 +272,7 @@
             "uid": "grafanacloud-prom"
           },
           "editorMode": "code",
-          "expr": "cpr_data_fetching_data_in_pipeline_main_pipeline_run_duration_seconds_sum{scope=\"document\"} / cpr_data_fetching_data_in_pipeline_main_pipeline_run_duration_seconds_count{scope=\"document\"} ",
+          "expr": "avg(cpr_data_fetching_data_in_pipeline_main_pipeline_run_duration_seconds_sum{scope=\"document\"} / cpr_data_fetching_data_in_pipeline_main_pipeline_run_duration_seconds_count{scope=\"document\"}) ",
           "instant": false,
           "legendFormat": "__auto",
           "range": true,
@@ -391,7 +391,7 @@
         "orientation": "auto",
         "percentChangeColorMode": "standard",
         "reduceOptions": {
-          "calcs": ["sum"],
+          "calcs": ["lastNotNull"],
           "fields": "",
           "values": false
         },
@@ -406,8 +406,8 @@
             "type": "prometheus",
             "uid": "grafanacloud-prom"
           },
-          "editorMode": "builder",
-          "expr": "sum(cpr_data_fetching_data_in_pipeline_main_document_errors_total{environment=\"$environment\", error_type=\"validation\"})",
+          "editorMode": "code",
+          "expr": "sum by (pipeline_type, status) (max by(flow_run_name, pipeline_type, status) (max_over_time(cpr_data_fetching_data_in_pipeline_main_document_errors_total{environment=\"$environment\", error_type=\"validation\"}[$__range])))",
           "instant": false,
           "legendFormat": "__auto",
           "range": true,
@@ -480,7 +480,7 @@
         "overrides": []
       },
       "gridPos": {
-        "h": 16,
+        "h": 15,
         "w": 12,
         "x": 3,
         "y": 3
@@ -583,11 +583,35 @@
                 "value": true
               }
             ]
+          },
+          {
+            "matcher": {
+              "id": "byName",
+              "options": "Start time"
+            },
+            "properties": [
+              {
+                "id": "custom.width",
+                "value": 159
+              }
+            ]
+          },
+          {
+            "matcher": {
+              "id": "byName",
+              "options": "Trace ID"
+            },
+            "properties": [
+              {
+                "id": "custom.width",
+                "value": 156
+              }
+            ]
           }
         ]
       },
       "gridPos": {
-        "h": 16,
+        "h": 15,
         "w": 9,
         "x": 15,
         "y": 3
@@ -680,7 +704,7 @@
         "orientation": "auto",
         "percentChangeColorMode": "standard",
         "reduceOptions": {
-          "calcs": ["sum"],
+          "calcs": ["lastNotNull"],
           "fields": "",
           "values": false
         },
@@ -695,8 +719,8 @@
             "type": "prometheus",
             "uid": "grafanacloud-prom"
           },
-          "editorMode": "builder",
-          "expr": "sum(cpr_data_fetching_data_in_pipeline_main_document_errors_total{environment=\"$environment\", error_type=\"network\"})",
+          "editorMode": "code",
+          "expr": "sum by (pipeline_type, status) (max by(flow_run_name, pipeline_type, status) (max_over_time(cpr_data_fetching_data_in_pipeline_main_document_errors_total{environment=\"$environment\", error_type=\"network\"}[$__range])))",
           "instant": false,
           "legendFormat": "__auto",
           "range": true,
@@ -749,7 +773,7 @@
         "orientation": "auto",
         "percentChangeColorMode": "standard",
         "reduceOptions": {
-          "calcs": ["sum"],
+          "calcs": ["lastNotNull"],
           "fields": "",
           "values": false
         },
@@ -764,8 +788,8 @@
             "type": "prometheus",
             "uid": "grafanacloud-prom"
           },
-          "editorMode": "builder",
-          "expr": "sum(cpr_data_fetching_data_in_pipeline_main_document_errors_total{environment=\"$environment\", error_type=\"storage\"})",
+          "editorMode": "code",
+          "expr": "sum by (pipeline_type, status) (max by(flow_run_name, pipeline_type, status) (max_over_time(cpr_data_fetching_data_in_pipeline_main_document_errors_total{environment=\"$environment\", error_type=\"storage\"}[$__range])))",
           "instant": false,
           "legendFormat": "__auto",
           "range": true,
@@ -818,7 +842,7 @@
         "orientation": "auto",
         "percentChangeColorMode": "standard",
         "reduceOptions": {
-          "calcs": ["sum"],
+          "calcs": ["lastNotNull"],
           "fields": "",
           "values": false
         },
@@ -833,8 +857,8 @@
             "type": "prometheus",
             "uid": "grafanacloud-prom"
           },
-          "editorMode": "builder",
-          "expr": "sum(cpr_data_fetching_data_in_pipeline_main_document_errors_total{environment=\"$environment\", error_type=\"transform\"})",
+          "editorMode": "code",
+          "expr": "sum by (pipeline_type, status) (max by(flow_run_name, pipeline_type, status) (max_over_time(cpr_data_fetching_data_in_pipeline_main_document_errors_total{environment=\"$environment\", error_type=\"transform\"}[$__range])))",
           "instant": false,
           "legendFormat": "__auto",
           "range": true,
@@ -887,7 +911,7 @@
         "orientation": "auto",
         "percentChangeColorMode": "standard",
         "reduceOptions": {
-          "calcs": ["sum"],
+          "calcs": ["lastNotNull"],
           "fields": "",
           "values": false
         },
@@ -902,8 +926,8 @@
             "type": "prometheus",
             "uid": "grafanacloud-prom"
           },
-          "editorMode": "builder",
-          "expr": "sum(cpr_data_fetching_data_in_pipeline_main_document_errors_total{environment=\"$environment\", error_type=\"unknown\"})",
+          "editorMode": "code",
+          "expr": "sum by (pipeline_type, status) (max by(flow_run_name, pipeline_type, status) (max_over_time(cpr_data_fetching_data_in_pipeline_main_document_errors_total{environment=\"$environment\", error_type=\"unknown\"}[$__range])))",
           "instant": false,
           "legendFormat": "__auto",
           "range": true,
@@ -944,12 +968,12 @@
     ]
   },
   "time": {
-    "from": "now-3h",
+    "from": "now-30m",
     "to": "now"
   },
   "timepicker": {},
   "timezone": "browser",
   "title": "Health overview",
   "uid": "hejrqth",
-  "version": 30
+  "version": 33
 }

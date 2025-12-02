@@ -135,6 +135,10 @@ def etl_pipeline() -> list[Document] | Exception:
     _LOGGER = get_logger()
     _LOGGER.info("ETL pipeline started")
 
+    # Set flow_run_name early so all metrics (including extract) have it
+    run_id = flow_run.get_name() or "unknown"
+    pipeline_metrics.set_flow_run_name(run_id)
+
     extracted_result = extract()
     cache_extraction_result(extracted_result)
 
@@ -146,7 +150,6 @@ def etl_pipeline() -> list[Document] | Exception:
     envelopes = extracted_result.envelopes
 
     family_count = sum(len(env.data) for env in envelopes)
-    run_id = flow_run.get_name() or "unknown"
     pipeline_metrics.log_run_info(PipelineType.FAMILY, family_count, run_id)
 
     if not envelopes:
