@@ -114,7 +114,7 @@ def test_process_family_updates_flow_multiple_families(
 
     assert isinstance(result, list)
     assert (
-        len(result) == 1
+        len(result) == 2
     )  # Only one family should be processed, as per current logic TODO: APP-1419
     assert result[0].id == "i00000315"
 

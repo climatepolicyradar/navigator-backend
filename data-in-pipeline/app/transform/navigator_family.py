@@ -11,83 +11,38 @@ from app.models import (
 )
 from app.transform.models import CouldNotTransform, NoMatchingTransformations
 
+mcf_projects_corpus_import_ids = [
+    "MCF.corpus.AF.n0000",
+    "MCF.corpus.CIF.n0000",
+    "MCF.corpus.GEF.n0000",
+    "MCF.corpus.GCF.n0000",
+]
 
-class TransformerLabel(Label):
-    id: str
-    title: str
-    type: str = "transformer"
+mcf_reports_corpus_import_ids = [
+    "MCF.corpus.AF.Guidance",
+    "MCF.corpus.CIF.Guidance",
+    "MCF.corpus.GEF.Guidance",
+    "MCF.corpus.GCF.Guidance",
+]
 
 
 def transform_navigator_family(
     input: Identified[NavigatorFamily],
 ) -> Result[list[Document], NoMatchingTransformations]:
-    # order here matters - if there is a match, we will stop searching for a transformer
-    transformers = [
-        transform_navigator_family_with_litigation_corpus_type,
-        transform_navigator_family_with_single_matching_document,
-        transform_navigator_family_with_matching_document_title_and_related_documents,
-        transform_navigator_family_multilateral_climate_fund_project,
-        transform_navigator_family_never,
-    ]
+    match transform(input):
+        case Success(d):
+            return Success(d)
 
-    success = None
-    failures = []
-    for transformer in transformers:
-        result = transformer(input)
-        match result:
-            case Success(document):
-                success = document
-                break
-            case Failure(error):
-                failures.append(error)
-
-    if success:
-        return Success(success)
-    else:
-        return Failure(
-            NoMatchingTransformations(
-                f"No matching transformations found for {input.id}"
-            )
-        )
+    return Failure(NoMatchingTransformations())
 
 
-def transform_navigator_family_with_single_matching_document(
+def transform(
     input: Identified[NavigatorFamily],
 ) -> Result[list[Document], CouldNotTransform]:
+    documents: list[Document] = []
+
     """
-    We have some document <=> family relationships that are essentially just a
-    repeat of each other.
-
-    We can use this 1-1 mapping and put the data from the family and store on the document.
-
-    At time of counting this was ~9000 documents.
-    """
-    if (
-        len(input.data.documents) == 1
-        and input.data.documents[0].title == input.data.title
-    ):
-        return Success(
-            [
-                transform_navigator_family_document(
-                    input,
-                    input.data.documents[0],
-                    "transform_navigator_family_with_single_matching_document",
-                )
-            ]
-        )
-    else:
-        return Failure(
-            CouldNotTransform(
-                f"transform_navigator_family_with_single_matching_document could not transform {input.id}"
-            )
-        )
-
-
-def transform_navigator_family_with_matching_document_title_and_related_documents(
-    input: Identified[NavigatorFamily],
-) -> Result[list[Document], CouldNotTransform]:
-    """
-    We have some document <=> family relationships that are essentially just a
+    1) We have some document <=> family relationships that are essentially just a
     repeat of each other.
 
     We can use this 1-1 mapping and put the data from the family and store on the document.
@@ -95,111 +50,199 @@ def transform_navigator_family_with_matching_document_title_and_related_document
     We will also need to generate the relationships between the related documents.
 
     At time of counting this was ~1096 documents.
+
+    2) In the world of MCFs - we often have a "project document" that is a 1-1 mapping of the family.
     """
-    if len(input.data.documents) > 1:
-        matching_document = next(
-            (
-                document
-                for document in input.data.documents
-                if document.title == input.data.title
-            ),
-            None,
-        )
-        if matching_document:
-            """
-            Transform
-            """
-            transformed_matching_document = transform_navigator_family_document(
-                input,
-                matching_document,
-                "transform_navigator_family_with_matching_document_title_and_related_documents",
+    is_version_of_document = next(
+        (
+            document
+            for document in input.data.documents
+            # 1)
+            if document.title == input.data.title
+            # 2)
+            or (
+                input.data.corpus.import_id in mcf_projects_corpus_import_ids
+                and document.title.lower() == "project document"
             )
-            transformed_related_documents = [
-                transform_navigator_family_document(
-                    input,
-                    document,
-                    "transform_navigator_family_with_matching_document_title_and_related_documents",
-                )
-                for document in input.data.documents
-                if document.import_id != matching_document.import_id
-            ]
-
-            """
-            Generate relationships
-
-            This is mutation-y as we need the `transformed_related_documents` first, and using model_copy(update=dict) is not type safe.
-            Setting the property directly is.
-            """
-            for related_document in transformed_related_documents:
-                related_document.relationships = [
-                    DocumentDocumentRelationship(
-                        type="member_of",
-                        document=DocumentWithoutRelationships(
-                            **transformed_matching_document.model_dump()
-                        ),
-                    )
-                ]
-
-            transformed_matching_document.relationships = [
-                DocumentDocumentRelationship(
-                    type=next(
-                        # search for a document with a role, or default to `has_member``
-                        (
-                            label.label.title.lower()
-                            for label in related_document.labels
-                            if label.type == "entity_type"
-                        ),
-                        "has_member",
-                    ),
-                    document=DocumentWithoutRelationships(
-                        **related_document.model_dump()
-                    ),
-                )
-                for related_document in transformed_related_documents
-            ]
-
-            return Success(
-                [transformed_matching_document, *transformed_related_documents]
-            )
-
-    return Failure(
-        CouldNotTransform(
-            f"transform_navigator_family_with_single_matching_document could not transform {input.id}"
-        )
+        ),
+        None,
     )
+    member_of_documents = [
+        document
+        for document in input.data.documents
+        if not (
+            is_version_of_document
+            and document.import_id == is_version_of_document.import_id
+        )
+    ]
+
+    """
+    Transform
+    """
+    document_from_family = _transform_navigator_family(input.data)
+    documents_from_documents = [
+        _transform_navigator_document(
+            document,
+            input.data,
+        )
+        for document in member_of_documents
+    ]
+
+    """
+    Relationships
+
+    We are using the Dublin Core Metadata Initiative (DCMI) Metadata Terms vocabulary.
+    @see: https://www.dublincore.org/specifications/dublin-core/dcmi-terms/#http://purl.org/dc/dcam/memberOf
+    @see: https://www.dublincore.org/specifications/dublin-core/dcmi-terms/#http://purl.org/dc/dcam/hasMember
+
+    `has_member` implies that this is the "container" document that has a member document.
+    `member_of` implies that this is the "member" document that is a member of a container document.
+    """
+    document_from_family.relationships = [
+        DocumentDocumentRelationship(
+            type="has_member",
+            document=DocumentWithoutRelationships(**document.model_dump()),
+        )
+        for document in documents_from_documents
+    ]
+
+    for document in documents_from_documents:
+        document.relationships = [
+            DocumentDocumentRelationship(
+                type="member_of",
+                document=DocumentWithoutRelationships(
+                    **document_from_family.model_dump()
+                ),
+            )
+        ]
+
+    documents.append(document_from_family)
+    documents.extend(documents_from_documents)
+
+    """
+    Versions
+
+    We are using the Dublin Core Metadata Initiative (DCMI) Metadata Terms vocabulary.
+    @see: https://www.dublincore.org/specifications/dublin-core/dcmi-terms/#http://purl.org/dc/terms/isVersionOf
+    @see: https://www.dublincore.org/specifications/dublin-core/dcmi-terms/#http://purl.org/dc/terms/hasVersion
+
+    `has_version` implies that this is the `latest` version of the document.
+    This might be better to have as an explicit flag or label, but it felt that this would do for the moment without adding extra complexity.
+
+    `is_version_of` means that this is a version of document, which is useful for timetravelling, but is better represented as the `is_version_of` relationship.
+    """
+    document_from_document: Document | None
+    if is_version_of_document:
+        document_from_document = _transform_navigator_document(
+            is_version_of_document, input.data
+        )
+        document_from_document.relationships = [
+            DocumentDocumentRelationship(
+                type="is_version_of",
+                document=DocumentWithoutRelationships(
+                    **document_from_family.model_dump()
+                ),
+            )
+        ]
+        document_from_family.relationships.append(
+            DocumentDocumentRelationship(
+                type="has_version",
+                document=DocumentWithoutRelationships(
+                    **document_from_document.model_dump()
+                ),
+            ),
+        )
+        documents.append(document_from_document)
+    else:
+        # this is for debugging
+        document_from_family.labels.append(
+            DocumentLabelRelationship(
+                type="debug",
+                label=Label(
+                    id="no_versions",
+                    title="no_versions",
+                    type="debug",
+                ),
+            )
+        )
+
+    return Success(documents)
 
 
-def transform_navigator_family_document(
-    family: Identified[NavigatorFamily],
-    document: NavigatorDocument,
-    transformer_label_title: str,
-) -> Document:
-    # Labels
+def _transform_navigator_family(navigator_family: NavigatorFamily) -> Document:
     labels: list[DocumentLabelRelationship] = []
 
-    labels.append(
-        DocumentLabelRelationship(
-            type="family",
-            label=Label(
-                id=family.data.import_id, title=family.data.title, type="family"
-            ),
+    if navigator_family.corpus.import_id == "Academic.corpus.Litigation.n0000":
+        labels.append(
+            DocumentLabelRelationship(
+                type="entity_type",
+                label=Label(
+                    id="Legal case",
+                    title="Legal case",
+                    type="entity_type",
+                ),
+            )
         )
+
+    if (
+        navigator_family.corpus.import_id in mcf_projects_corpus_import_ids
+        and len(navigator_family.documents) > 0
+    ):
+        labels.append(
+            DocumentLabelRelationship(
+                type="entity_type",
+                label=Label(
+                    id="Multilateral climate fund project",
+                    title="Multilateral climate fund project",
+                    type="entity_type",
+                ),
+            )
+        )
+
+    # this is for debugging
+    if not labels:
+        labels.append(
+            DocumentLabelRelationship(
+                type="debug",
+                label=Label(
+                    id="no_family_labels",
+                    title="no_family_labels",
+                    type="debug",
+                ),
+            )
+        )
+
+    return Document(
+        id=navigator_family.import_id,
+        title=navigator_family.title,
+        labels=labels,
     )
 
-    labels.append(
-        DocumentLabelRelationship(
-            type="transformer",
-            label=TransformerLabel(
-                id=transformer_label_title, title=transformer_label_title
-            ),
-        )
-    )
+
+def _transform_navigator_document(
+    navigator_document: NavigatorDocument, navigator_family: NavigatorFamily
+) -> Document:
+    labels: list[DocumentLabelRelationship] = []
+
+    if navigator_family.corpus.import_id == "Academic.corpus.Litigation.n0000":
+        if navigator_document.events:
+            event_type = navigator_document.events[0].event_type
+            labels.append(
+                DocumentLabelRelationship(
+                    type="entity_type",
+                    label=Label(
+                        id=event_type,
+                        title=event_type,
+                        type="entity_type",
+                    ),
+                )
+            )
 
     """
     These values are controlled
     @see: https://github.com/climatepolicyradar/data-migrations/blob/main/taxonomies/Intl.%20agreements.json#L42-L51
     """
-    role = document.valid_metadata.get("role")
+    role = navigator_document.valid_metadata.get("role")
     if role is not None and len(role) > 0:
         normalised_role = role[0].capitalize()
         labels.append(
@@ -211,241 +254,21 @@ def transform_navigator_family_document(
             )
         )
 
-    return Document(id=document.import_id, title=document.title, labels=labels)
-
-
-def transform_navigator_family_never(
-    input: Identified[NavigatorFamily],
-) -> Result[list[Document], CouldNotTransform]:
-    related_documents = [
-        transform_navigator_family_document(
-            family=input,
-            document=document,
-            transformer_label_title="transform_navigator_family_never",
-        )
-        for document in input.data.documents
-    ]
-    return Success(
-        [
-            Document(
-                id=input.data.import_id,
-                title=input.data.title,
-                labels=[
-                    DocumentLabelRelationship(
-                        type="family",
-                        label=Label(
-                            id=input.data.import_id,
-                            title=input.data.title,
-                            type="family",
-                        ),
-                    ),
-                    DocumentLabelRelationship(
-                        type="transformer",
-                        label=TransformerLabel(
-                            id="transform_navigator_family_never",
-                            title="transform_navigator_family_never",
-                            type="transformer",
-                        ),
-                    ),
-                ],
-            ),
-            *related_documents,
-        ]
-    )
-
-
-def transform_navigator_family_with_litigation_corpus_type_document(
-    document: NavigatorDocument,
-) -> Document:
-    """
-    These values are controlled
-    @see: https://github.com/climatepolicyradar/data-migrations/blob/main/taxonomies/Litigation.json#L11-L113
-    """
-    labels: list[DocumentLabelRelationship] = []
-
-    if document.events:
-        event_type = document.events[0].event_type
-
+    # this is for debugging
+    if not labels:
         labels.append(
             DocumentLabelRelationship(
-                type="entity_type",
+                type="debug",
                 label=Label(
-                    id=event_type,
-                    title=event_type,
-                    type="entity_type",
+                    id="no_document_labels",
+                    title="no_document_labels",
+                    type="debug",
                 ),
             )
         )
 
-    labels.append(
-        DocumentLabelRelationship(
-            type="transformer",
-            label=TransformerLabel(
-                id="transform_navigator_family_with_litigation_corpus_type",
-                title="transform_navigator_family_with_litigation_corpus_type",
-                type="transformer",
-            ),
-        )
-    )
-
-    return Document(id=document.import_id, title=document.title, labels=labels)
-
-
-def transform_navigator_family_with_litigation_corpus_type(
-    input: Identified[NavigatorFamily],
-) -> Result[list[Document], CouldNotTransform]:
-    if input.data.corpus.import_id == "Academic.corpus.Litigation.n0000":
-        case_label = DocumentLabelRelationship(
-            type="entity_type",
-            label=Label(
-                id="Legal case",
-                title="Legal case",
-                type="entity_type",
-            ),
-        )
-        transformer_label = DocumentLabelRelationship(
-            type="transformer",
-            label=TransformerLabel(
-                id="transform_navigator_family_with_litigation_corpus_type",
-                title="transform_navigator_family_with_litigation_corpus_type",
-                type="transformer",
-            ),
-        )
-        document_from_family = Document(
-            id=input.data.import_id,
-            title=input.data.title,
-            labels=[case_label, transformer_label],
-        )
-        related_documents = [
-            transform_navigator_family_with_litigation_corpus_type_document(document)
-            for document in input.data.documents
-        ]
-
-        """
-        Generate relationships
-
-        This is mutation-y as we need the `transformed_related_documents` first, and using model_copy(update=dict) is not type safe.
-        Setting the property directly is.
-        """
-        for related_document in related_documents:
-            related_document.relationships = [
-                DocumentDocumentRelationship(
-                    type="member_of",
-                    document=DocumentWithoutRelationships(
-                        **document_from_family.model_dump()
-                    ),
-                )
-            ]
-
-        document_from_family.relationships = [
-            DocumentDocumentRelationship(
-                type=next(
-                    # search for a document with a `entity_type`, or default to `has_member`
-                    (
-                        label.label.title.lower()
-                        for label in related_document.labels
-                        if label.type == "entity_type"
-                    ),
-                    "has_member",
-                ),
-                document=DocumentWithoutRelationships(**related_document.model_dump()),
-            )
-            for related_document in related_documents
-        ]
-
-        return Success([document_from_family, *related_documents])
-
-    return Failure(
-        CouldNotTransform(
-            f"transform_navigator_family_with_litigation_corpus_type could not transform {input.id}"
-        )
-    )
-
-
-def transform_navigator_family_multilateral_climate_fund_project(
-    input: Identified[NavigatorFamily],
-) -> Result[list[Document], CouldNotTransform]:
-
-    if (
-        input.data.corpus.import_id
-        in [
-            "MCF.corpus.AF.Guidance",
-            "MCF.corpus.AF.n0000",
-            "MCF.corpus.CIF.Guidance",
-            "MCF.corpus.CIF.n0000",
-            "MCF.corpus.GEF.Guidance",
-            "MCF.corpus.GEF.n0000",
-            "MCF.corpus.GCF.Guidance",
-            "MCF.corpus.GCF.n0000",
-        ]
-        and len(input.data.documents) > 0
-    ):
-
-        transformer_label = DocumentLabelRelationship(
-            type="transformer",
-            label=TransformerLabel(
-                id="transform_navigator_family_multilateral_climate_fund_project",
-                title="transform_navigator_family_multilateral_climate_fund_project",
-                type="transformer",
-            ),
-        )
-        multilateral_climate_fund_project_entity_type_label = DocumentLabelRelationship(
-            type="entity_type",
-            label=Label(
-                id="Multilateral climate fund project",
-                title="Multilateral climate fund project",
-                type="entity_type",
-            ),
-        )
-
-        document_from_family = Document(
-            id=input.data.import_id,
-            title=input.data.title,
-            labels=[
-                transformer_label,
-                multilateral_climate_fund_project_entity_type_label,
-            ],
-        )
-
-        related_documents = [
-            transform_navigator_family_document(
-                input,
-                document,
-                "transform_navigator_family_multilateral_climate_fund_project",
-            )
-            for document in input.data.documents
-            # we exclude the `project document``, as the family covers this as the main document
-            if document.title.lower() != "project document"
-        ]
-
-        """
-        Generate relationships
-
-        This is mutation-y as we need the `transformed_related_documents` first, and using model_copy(update=dict) is not type safe.
-        Setting the property directly is.
-        """
-        for related_document in related_documents:
-            related_document.relationships = [
-                DocumentDocumentRelationship(
-                    type="member_of",
-                    document=DocumentWithoutRelationships(
-                        **document_from_family.model_dump()
-                    ),
-                )
-            ]
-
-        document_from_family.relationships = [
-            DocumentDocumentRelationship(
-                type="has_member",
-                document=DocumentWithoutRelationships(**related_document.model_dump()),
-            )
-            for related_document in related_documents
-        ]
-
-        return Success([document_from_family, *related_documents])
-
-    return Failure(
-        CouldNotTransform(
-            f"transform_navigator_family_multilateral_climate_fund_project could not transform {input.id}"
-        )
+    return Document(
+        id=navigator_document.import_id,
+        title=navigator_document.title,
+        labels=labels,
     )
