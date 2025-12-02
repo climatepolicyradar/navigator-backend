@@ -6,20 +6,17 @@ to define and manage pipeline-specific metrics like document processing counts,
 error tracking, and operation durations.
 """
 
+import datetime
 import functools
 import os
 import time
 from enum import StrEnum
-from typing import Callable, Optional, TypeVar
+from typing import Callable, Literal, Optional, TypeVar
 
 from api import MetricsService
-from opentelemetry.metrics import Counter, Gauge, Histogram
+from opentelemetry.metrics import Counter, Histogram
 
 F = TypeVar("F", bound=Callable)
-
-# Default ECS Fargate allocation values (can be overridden via env vars)
-DEFAULT_CPU_ALLOCATION_UNITS = 1024  # 1 vCPU
-DEFAULT_MEMORY_ALLOCATION_MB = 2048  # 2 GB
 
 
 class PipelineType(StrEnum):
@@ -56,6 +53,28 @@ class ErrorType(StrEnum):
     UNKNOWN = "unknown"
 
 
+def get_logs_url_for_run(run_id: str) -> str:
+    """Get the logs URL for a run.
+
+    It just builds up from a copied and pasted grafana URL so it's a little messy.
+    """
+    base_url = "https://climatepolicyradar.grafana.net/a/grafana-lokiexplore-app/explore/service/data-in-pipeline/logs"
+
+    from_time = datetime.datetime.now() - datetime.timedelta(minutes=15)
+    to_time = datetime.datetime.now() + datetime.timedelta(hours=6)
+
+    # Convert to Unix timestamps in milliseconds (Grafana's expected format)
+    from_ts = int(from_time.timestamp() * 1000)
+    to_ts = int(to_time.timestamp() * 1000)
+
+    time_string = f"&from={from_ts}&to={to_ts}"
+
+    preset_query_vars = "&var-lineFormat=&var-ds=grafanacloud-logs&var-filters=service_name%7C%3D%7Cdata-in-pipeline&var-fields=&var-levels="
+
+    query = f"patterns=%5B%5D{time_string}{preset_query_vars}&var-metadata=flow_run_name%7C%3D%7C{run_id}&var-jsonFields=&var-patterns=&var-lineFilterV2=&var-lineFilters=&timezone=browser&var-all-fields=flow_run_name%7C%3D%7C{run_id}&displayedFields=%5B%5D&urlColumns=%5B%5D&visualizationType=%22logs%22&prettifyLogMessage=false&sortOrder=%22Ascending%22&wrapLogMessage=true"
+    return f"{base_url}?{query}"
+
+
 class PipelineMetrics:
     """Pipeline-specific metrics using the MetricsService.
 
@@ -74,39 +93,22 @@ class PipelineMetrics:
         self._metrics_service = metrics_service
         self._disabled = metrics_service._disabled
 
-        # Base attributes included in all metrics
-        self._base_attributes = {
-            "environment": metrics_service.config.environment,
-            "service": metrics_service.config.service_name,
-        }
+        # These get included in all metrics. So be SUPER careful
+        # because we don't want to explode cardinality of metrics
+        # that we track.
+        self._base_attributes = {"environment": metrics_service.config.environment}
 
-        # Initialize instruments
+        # Operational health metrics
         self._documents_processed: Optional[Counter] = None
         self._document_errors: Optional[Counter] = None
         self._operation_duration: Optional[Histogram] = None
-
-        # Cost component instruments
-        self._cpu_allocation: Optional[Gauge] = None
-        self._memory_allocation: Optional[Gauge] = None
-
-        # Resource utilization instruments
-        self._memory_usage: Optional[Histogram] = None
-        self._memory_utilization: Optional[Histogram] = None
-        self._cpu_utilization: Optional[Histogram] = None
-
-        # Allocation values (from env vars or defaults)
-        self._cpu_allocation_units = int(
-            os.getenv("ECS_CPU_ALLOCATION", DEFAULT_CPU_ALLOCATION_UNITS)
-        )
-        self._memory_allocation_mb = int(
-            os.getenv("ECS_MEMORY_ALLOCATION", DEFAULT_MEMORY_ALLOCATION_MB)
-        )
+        self._pipeline_run_duration: Optional[Histogram] = None
 
         if not self._disabled:
             self._create_instruments()
 
     def _create_instruments(self) -> None:
-        """Create the pipeline-specific metric instruments."""
+        """Create the data-in-pipeline-specific metric instruments."""
         from app.bootstrap_telemetry import get_logger
 
         logger = get_logger()
@@ -129,52 +131,11 @@ class PipelineMetrics:
             unit="s",
         )
 
-        # Cost component gauges
-        self._cpu_allocation = (
-            self._metrics_service.meter.create_gauge(
-                name=self._metrics_service.full_metric_name(
-                    "task_cpu_allocation_units"
-                ),
-                description="CPU units allocated to the task (1024 = 1 vCPU)",
-                unit="1",
-            )
-            if self._metrics_service.meter
-            else None
+        self._pipeline_run_duration = self._metrics_service.create_histogram(
+            name="pipeline_run_duration_seconds",
+            description="End-to-end duration of pipeline runs",
+            unit="s",
         )
-
-        self._memory_allocation = (
-            self._metrics_service.meter.create_gauge(
-                name=self._metrics_service.full_metric_name(
-                    "task_memory_allocation_mb"
-                ),
-                description="Memory allocated to the task in MB",
-                unit="MiB",
-            )
-            if self._metrics_service.meter
-            else None
-        )
-
-        # Resource utilization histograms
-        self._memory_usage = self._metrics_service.create_histogram(
-            name="task_memory_usage_bytes",
-            description="Actual memory used by the task in bytes",
-            unit="By",
-        )
-
-        self._memory_utilization = self._metrics_service.create_histogram(
-            name="task_memory_utilization_ratio",
-            description="Memory usage as ratio of allocated (0.0-1.0)",
-            unit="1",
-        )
-
-        self._cpu_utilization = self._metrics_service.create_histogram(
-            name="task_cpu_utilization_percent",
-            description="CPU utilization percentage during task execution",
-            unit="%",
-        )
-
-        # Record initial allocation values
-        self._record_allocation()
 
         logger.info("Pipeline metrics instruments created")
 
@@ -237,125 +198,154 @@ class PipelineMetrics:
             },
         )
 
-    def timed_operation(self, operation: Operation) -> Callable[[F], F]:
-        """Decorator to time a function and record its duration.
+    def record_run_duration(
+        self,
+        pipeline_type: PipelineType,
+        duration_seconds: float,
+        scope: str = "batch",
+    ) -> None:
+        """Record the end-to-end duration of a pipeline run.
 
-        :param operation: The pipeline operation being timed.
-        :type operation: Operation
+        :param pipeline_type: The type of pipeline (document or family).
+        :type pipeline_type: PipelineType
+        :param duration_seconds: The duration in seconds.
+        :type duration_seconds: float
+        :param scope: The scope of measurement - "batch" for entire flow, "document" for single item.
+        :type scope: str
+        """
+        if self._disabled or self._pipeline_run_duration is None:
+            return
+
+        self._pipeline_run_duration.record(
+            duration_seconds,
+            attributes={
+                **self._base_attributes,
+                "pipeline_type": pipeline_type.value,
+                "scope": scope,
+            },
+        )
+
+    def track(
+        self,
+        operation: Optional[Operation] = None,
+        pipeline_type: Optional[PipelineType] = None,
+        scope: Literal["operation", "document", "batch"] = "operation",
+        flush_on_exit: bool = False,
+    ) -> Callable[[F], F]:
+        """Unified decorator for timing and metrics tracking.
+
+        Records timing metrics and optionally sets log context for the decorated function.
+
+        :param operation: If provided, records operation duration and sets
+                         log_context(pipeline_stage=operation.value) for log enrichment.
+        :type operation: Optional[Operation]
+        :param pipeline_type: If provided, records run duration metric.
+        :type pipeline_type: Optional[PipelineType]
+        :param scope: The scope of measurement - "operation" for stage timing,
+                     "document" or "batch" for e2e timing.
+        :type scope: Literal["operation", "document", "batch"]
+        :param flush_on_exit: If True, flushes metrics after completion (use for flows).
+        :type flush_on_exit: bool
         :return: A decorator that wraps the function with timing.
         :rtype: Callable[[F], F]
+
+        Usage examples:
+            # Simple operation timing (replaces @timed_operation)
+            @pipeline_metrics.track(operation=Operation.EXTRACT)
+            def extract(): ...
+
+            # Operation timing with log context (replaces @tracked_operation)
+            @pipeline_metrics.track(operation=Operation.TRANSFORM)
+            def transform(): ...
+
+            # Per-document e2e timing (replaces @tracked_document)
+            @pipeline_metrics.track(pipeline_type=PipelineType.DOCUMENT, scope="document")
+            def etl_pipeline(doc_id): ...
+
+            # Batch-level timing with flush (replaces @tracked_flow)
+            @flow
+            @pipeline_metrics.track(pipeline_type=PipelineType.FAMILY, scope="batch", flush_on_exit=True)
+            def process_batch(): ...
         """
+        from app.log_context import log_context
 
         def decorator(func: F) -> F:
             @functools.wraps(func)
             def wrapper(*args, **kwargs):
+                # Set up log context if operation is provided
+                context_mgr = (
+                    log_context(pipeline_stage=operation.value) if operation else None
+                )
+
                 start = time.time()
                 try:
-                    return func(*args, **kwargs)
+                    if context_mgr:
+                        with context_mgr:
+                            return func(*args, **kwargs)
+                    else:
+                        return func(*args, **kwargs)
                 finally:
-                    self.record_duration(operation, time.time() - start)
-
-            return wrapper  # type: ignore
-
-        return decorator
-
-    def _record_allocation(self) -> None:
-        """Record the current allocation values as gauges."""
-        if self._disabled:
-            return
-
-        if self._cpu_allocation is not None:
-            self._cpu_allocation.set(
-                self._cpu_allocation_units,
-                attributes=self._base_attributes,
-            )
-
-        if self._memory_allocation is not None:
-            self._memory_allocation.set(
-                self._memory_allocation_mb,
-                attributes=self._base_attributes,
-            )
-
-    def record_resource_usage(
-        self,
-        operation: Operation,
-        memory_usage_bytes: int,
-        memory_utilization_ratio: float,
-        cpu_percent: float,
-    ) -> None:
-        """Record resource utilization metrics for an operation.
-
-        :param operation: The pipeline operation that was measured.
-        :type operation: Operation
-        :param memory_usage_bytes: Actual memory used in bytes.
-        :type memory_usage_bytes: int
-        :param memory_utilization_ratio: Memory used as ratio of allocated (0.0-1.0).
-        :type memory_utilization_ratio: float
-        :param cpu_percent: CPU utilization percentage.
-        :type cpu_percent: float
-        """
-        if self._disabled:
-            return
-
-        attributes = {
-            **self._base_attributes,
-            "operation": operation.value,
-        }
-
-        if self._memory_usage is not None:
-            self._memory_usage.record(memory_usage_bytes, attributes=attributes)
-
-        if self._memory_utilization is not None:
-            self._memory_utilization.record(
-                memory_utilization_ratio, attributes=attributes
-            )
-
-        if self._cpu_utilization is not None:
-            self._cpu_utilization.record(cpu_percent, attributes=attributes)
-
-    def tracked_operation(self, operation: Operation) -> Callable[[F], F]:
-        """Decorator to time a function and record resource usage.
-
-        Combines timing and resource utilization tracking. Records:
-        - Operation duration
-        - Memory usage and utilization
-        - CPU utilization
-
-        :param operation: The pipeline operation being tracked.
-        :type operation: Operation
-        :return: A decorator that wraps the function with tracking.
-        :rtype: Callable[[F], F]
-        """
-        from app.ecs_metadata import get_resource_usage
-
-        def decorator(func: F) -> F:
-            @functools.wraps(func)
-            def wrapper(*args, **kwargs):
-                start = time.time()
-
-                # Sample resource usage at start
-                start_usage = get_resource_usage()
-
-                try:
-                    return func(*args, **kwargs)
-                finally:
-                    # Record duration
                     duration = time.time() - start
-                    self.record_duration(operation, duration)
 
-                    # Sample resource usage at end and record
-                    end_usage = get_resource_usage()
+                    # Record operation duration if operation provided
+                    if operation:
+                        self.record_duration(operation, duration)
 
-                    # Use end usage if available, otherwise try start usage
-                    usage = end_usage or start_usage
-                    if usage is not None:
-                        self.record_resource_usage(
-                            operation=operation,
-                            memory_usage_bytes=usage.memory_usage_bytes,
-                            memory_utilization_ratio=usage.memory_utilization_ratio,
-                            cpu_percent=usage.cpu_percent,
-                        )
+                    # Record run duration if pipeline_type provided
+                    if pipeline_type:
+                        self.record_run_duration(pipeline_type, duration, scope)
+
+                    # Flush metrics if requested
+                    if flush_on_exit:
+                        self.save_metrics()
 
             return wrapper  # type: ignore
 
         return decorator
+
+    def log_run_info(
+        self, pipeline_type: PipelineType, item_count: int, run_id: str
+    ) -> None:
+        """Log structured run info for dashboard parsing.
+
+        Emits a log with marker 'PIPELINE_RUN_INFO' and structured fields
+        as OTEL attributes for reliable LogQL extraction.
+
+        :param pipeline_type: The type of pipeline (document or family).
+        :param item_count: Number of items to process.
+        """
+        from app.bootstrap_telemetry import get_logger
+        from app.log_context import log_context
+
+        with log_context(
+            pipeline_type=pipeline_type.value,
+            item_count=item_count,
+            environment=self._base_attributes.get("environment", "unknown"),
+            service_version=os.getenv("SERVICE_VERSION", "unknown"),
+        ):
+            get_logger().info(
+                f"You can view logs for this run at {get_logs_url_for_run(run_id)}"
+            )
+            get_logger().info("PIPELINE_RUN_INFO")
+
+    def save_metrics(self, timeout_ms: int = 10000) -> bool:
+        """Force flush and ensure all metrics are exported.
+
+        Call this before process exit to guarantee metrics delivery.
+
+        :param timeout_ms: Maximum time to wait for flush in milliseconds.
+        :type timeout_ms: int
+        :return: True if successful, False otherwise.
+        :rtype: bool
+        """
+        if self._disabled:
+            return True
+
+        try:
+            success = self._metrics_service.force_flush(timeout_ms)
+            return success
+        except Exception as exc:
+            from app.bootstrap_telemetry import get_logger
+
+            get_logger().warning(f"Failed to flush metrics: {exc}")
+            return False

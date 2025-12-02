@@ -1,5 +1,6 @@
 from returns.result import Failure, Result, Success
 
+from app.bootstrap_telemetry import get_logger, log_context
 from app.extract.connectors import NavigatorDocument, NavigatorFamily
 from app.models import (
     Document,
@@ -21,32 +22,42 @@ class TransformerLabel(Label):
 def transform_navigator_family(
     input: Identified[NavigatorFamily],
 ) -> Result[list[Document], NoMatchingTransformations]:
-    # order here matters - if there is a match, we will stop searching for a transformer
-    transformers = [
-        transform_navigator_family_with_litigation_corpus_type,
-        transform_navigator_family_with_single_matching_document,
-        transform_navigator_family_with_matching_document_title_and_siblings,
-        transform_navigator_family_never,
-    ]
+    logger = get_logger()
 
-    success = None
-    failures = []
-    for transformer in transformers:
-        result = transformer(input)
-        match result:
-            case Success(document):
-                success = document
-            case Failure(error):
-                failures.append(error)
+    with log_context(import_id=input.id):
+        logger.info(f"Transforming family with {len(input.data.documents)} documents")
 
-    if success:
-        return Success(success)
-    else:
-        return Failure(
-            NoMatchingTransformations(
-                f"No matching transformations found for {input.id}"
+        # order here matters - if there is a match, we will stop searching for a transformer
+        transformers = [
+            transform_navigator_family_with_litigation_corpus_type,
+            transform_navigator_family_with_single_matching_document,
+            transform_navigator_family_with_matching_document_title_and_siblings,
+            transform_navigator_family_never,
+        ]
+
+        success = None
+        failures = []
+        for transformer in transformers:
+            result = transformer(input)
+            match result:
+                case Success(document):
+                    logger.info(f"Transformer {transformer.__name__} succeeded")
+                    success = document
+                case Failure(error):
+                    failures.append(error)
+
+        if success:
+            logger.info(f"Transform completed, produced {len(success)} documents")
+            return Success(success)
+        else:
+            logger.warning(
+                f"No matching transformer found after {len(failures)} attempts"
             )
-        )
+            return Failure(
+                NoMatchingTransformations(
+                    f"No matching transformations found for {input.id}"
+                )
+            )
 
 
 def transform_navigator_family_with_single_matching_document(

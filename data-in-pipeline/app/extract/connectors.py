@@ -6,7 +6,7 @@ from pydantic import BaseModel
 from requests.adapters import HTTPAdapter, Retry
 from returns.result import Failure, Result, Success
 
-from app.bootstrap_telemetry import get_logger, pipeline_metrics
+from app.bootstrap_telemetry import get_logger, log_context, pipeline_metrics
 from app.extract.connector_config import NavigatorConnectorConfig
 from app.models import ExtractedEnvelope, ExtractedMetadata
 from app.pipeline_metrics import ErrorType, Operation
@@ -205,63 +205,65 @@ class NavigatorConnector(HTTPConnector):
         page = 1
         successful_envelopes: list[ExtractedEnvelope] = []
         while True:
-            try:
-                logger.info(f"Fetching families page {page}")
-                response_json = self.get(f"families/?page={page}")
-                families_data = response_json.get("data", [])
+            with log_context(page_number=page):
+                try:
+                    logger.info(f"Fetching families page {page}")
+                    response_json = self.get(f"families/?page={page}")
+                    families_data = response_json.get("data", [])
 
-                # Break the loop if no more families are returned from the endpoint
-                if not families_data:
-                    logger.info(
-                        f"No more families found at page {page}. Total pages fetched: {len(successful_envelopes)}"
+                    # Break the loop if no more families are returned from the endpoint
+                    if not families_data:
+                        logger.info(
+                            f"No more families found at page {page}. Total pages fetched: {len(successful_envelopes)}"
+                        )
+                        break
+
+                    validated_families = [
+                        NavigatorFamily.model_validate(family)
+                        for family in families_data
+                    ]
+
+                    envelope = ExtractedEnvelope(
+                        data=validated_families,
+                        id=generate_envelope_uuid(),
+                        source_name="navigator_family",
+                        source_record_id=f"{task_run_id}-families-endpoint-page-{page}",
+                        raw_payload=families_data,
+                        content_type="application/json",
+                        connector_version="1.0.0",
+                        extracted_at=datetime.datetime.now(datetime.timezone.utc),
+                        task_run_id=task_run_id,
+                        flow_run_id=flow_run_id,
+                        metadata=ExtractedMetadata(
+                            endpoint=f"{self.config.base_url}/families/?page={page}",
+                            http_status=HTTPStatus.OK,
+                        ),
                     )
-                    break
 
-                validated_families = [
-                    NavigatorFamily.model_validate(family) for family in families_data
-                ]
+                    successful_envelopes.append(envelope)
+                    page += 1
 
-                envelope = ExtractedEnvelope(
-                    data=validated_families,
-                    id=generate_envelope_uuid(),
-                    source_name="navigator_family",
-                    source_record_id=f"{task_run_id}-families-endpoint-page-{page}",
-                    raw_payload=families_data,
-                    content_type="application/json",
-                    connector_version="1.0.0",
-                    extracted_at=datetime.datetime.now(datetime.timezone.utc),
-                    task_run_id=task_run_id,
-                    flow_run_id=flow_run_id,
-                    metadata=ExtractedMetadata(
-                        endpoint=f"{self.config.base_url}/families/?page={page}",
-                        http_status=HTTPStatus.OK,
-                    ),
-                )
+                except requests.RequestException as e:
+                    logger.error(
+                        f"Request failed while fetching all families at page {page}"
+                    )
+                    return FamilyFetchResult(
+                        envelopes=successful_envelopes,
+                        failure=PageFetchFailure(
+                            page=page, error=str(e), task_run_id=task_run_id
+                        ),
+                    )
 
-                successful_envelopes.append(envelope)
-                page += 1
-
-            except requests.RequestException as e:
-                logger.error(
-                    f"Request failed while fetching all families at page {page}"
-                )
-                return FamilyFetchResult(
-                    envelopes=successful_envelopes,
-                    failure=PageFetchFailure(
-                        page=page, error=str(e), task_run_id=task_run_id
-                    ),
-                )
-
-            except Exception as e:
-                logger.error(
-                    f"Unexpected error {e} while fetching page {page} of families"
-                )
-                return FamilyFetchResult(
-                    envelopes=successful_envelopes,
-                    failure=PageFetchFailure(
-                        page=page, error=str(e), task_run_id=task_run_id
-                    ),
-                )
+                except Exception as e:
+                    logger.error(
+                        f"Unexpected error {e} while fetching page {page} of families"
+                    )
+                    return FamilyFetchResult(
+                        envelopes=successful_envelopes,
+                        failure=PageFetchFailure(
+                            page=page, error=str(e), task_run_id=task_run_id
+                        ),
+                    )
 
         logger.info(
             f"Fetch families completed: {len(successful_envelopes)} pages succeeded"

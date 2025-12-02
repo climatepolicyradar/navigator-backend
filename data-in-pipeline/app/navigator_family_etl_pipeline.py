@@ -32,7 +32,7 @@ def generate_s3_cache_key(step: Literal["extract", "identify", "transform"]) -> 
 
 
 @task(log_prints=True)
-@pipeline_metrics.tracked_operation(Operation.EXTRACT)
+@pipeline_metrics.track(operation=Operation.EXTRACT)
 def extract() -> FamilyFetchResult:
     """Extract family data from the Navigator API.
 
@@ -70,7 +70,7 @@ def extract() -> FamilyFetchResult:
 
 
 @task(log_prints=True)
-@pipeline_metrics.tracked_operation(Operation.LOAD)
+@pipeline_metrics.track(operation=Operation.LOAD)
 def load_to_s3(document: Document):
     """Upload transformed to S3 cache."""
     upload_to_s3(
@@ -91,7 +91,7 @@ def cache_extraction_result(result: FamilyFetchResult):
 
 
 @task(log_prints=True)
-@pipeline_metrics.tracked_operation(Operation.IDENTIFY)
+@pipeline_metrics.track(operation=Operation.IDENTIFY)
 def identify(
     extracted: list[ExtractedEnvelope[list[NavigatorFamily]]],
 ) -> Identified[NavigatorFamily]:
@@ -100,7 +100,7 @@ def identify(
 
 
 @task(log_prints=True)
-@pipeline_metrics.tracked_operation(Operation.TRANSFORM)
+@pipeline_metrics.track(operation=Operation.TRANSFORM)
 def transform(
     identified: Identified[NavigatorFamily],
 ) -> Result[list[Document], NoMatchingTransformations]:
@@ -114,6 +114,9 @@ def transform(
 
 
 @flow(log_prints=True)
+@pipeline_metrics.track(
+    pipeline_type=PipelineType.FAMILY, scope="batch", flush_on_exit=True
+)
 def etl_pipeline() -> list[Document] | Exception:
     """Run the full Navigator ETL pipeline.
 
@@ -141,6 +144,10 @@ def etl_pipeline() -> list[Document] | Exception:
         return Exception(f"Extraction failed at page {extracted_result.failure.page}")
 
     envelopes = extracted_result.envelopes
+
+    family_count = sum(len(env.data) for env in envelopes)
+    run_id = flow_run.get_name() or "unknown"
+    pipeline_metrics.log_run_info(PipelineType.FAMILY, family_count, run_id)
 
     if not envelopes:
         _LOGGER.info("No families found to process")
