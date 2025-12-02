@@ -1,4 +1,5 @@
 import { useMemo, useState, useEffect } from "react";
+import { useSearchParams } from "react-router";
 import { useTable } from "@refinedev/react-table";
 import type { ColumnDef } from "@tanstack/react-table";
 import { DataTable } from "@/components/refine-ui/data-table/data-table";
@@ -38,20 +39,6 @@ type Document = {
 };
 
 export default function Documents() {
-  const [labelFilters, setLabelFilters] = useState<string[]>([]);
-  const [labelInput, setLabelInput] = useState("");
-
-  const handleAddLabel = () => {
-    if (labelInput.trim() && !labelFilters.includes(labelInput.trim())) {
-      setLabelFilters([...labelFilters, labelInput.trim()]);
-      setLabelInput("");
-    }
-  };
-
-  const handleRemoveLabel = (labelToRemove: string) => {
-    setLabelFilters(labelFilters.filter((label) => label !== labelToRemove));
-  };
-
   const columns = useMemo<ColumnDef<Document>[]>(
     () => [
       {
@@ -128,6 +115,25 @@ export default function Documents() {
       },
     },
   });
+
+  const initialLabelFilters = table.refineCore.filters.find((filter) => {
+    return "field" in filter && filter.field === "labels.label.id";
+  });
+  const [labelFilters, setLabelFilters] = useState<string[]>(
+    initialLabelFilters?.value || [],
+  );
+  const [labelInput, setLabelInput] = useState("");
+
+  const handleAddLabel = () => {
+    if (labelInput.trim() && !labelFilters.includes(labelInput.trim())) {
+      setLabelFilters([...labelFilters, labelInput.trim()]);
+      setLabelInput("");
+    }
+  };
+
+  const handleRemoveLabel = (labelToRemove: string) => {
+    setLabelFilters(labelFilters.filter((label) => label !== labelToRemove));
+  };
 
   // Update filters whenever labelFilters changes
   useEffect(() => {
