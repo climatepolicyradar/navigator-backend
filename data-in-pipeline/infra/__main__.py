@@ -60,3 +60,107 @@ data_in_pipeline_ecr_repository = aws.ecr.Repository(
 
 # Export the name of the bucket
 pulumi.export("ecr_repository_url", data_in_pipeline_ecr_repository.repository_url)
+
+
+#######################################################################
+# Create the Aurora service for the Document Store.
+#######################################################################
+environment = pulumi.get_stack()
+aws_env_stack = pulumi.StackReference(f"climatepolicyradar/aws_env/{environment}")
+
+config = pulumi.Config()
+name = pulumi.get_project()
+
+tags = {
+    "CPR-Created-By": "pulumi",
+    "CPR-Pulumi-Stack-Name": pulumi.get_stack(),
+    "CPR-Pulumi-Project-Name": pulumi.get_project(),
+    "CPR-Tag": f"{environment}-{name}-store",
+    "Environment": environment,
+}
+
+
+vpc_id = aws_env_stack.get_output("vpc_id")
+
+aurora_security_group = aws.ec2.SecurityGroup(
+    f"{name}-aurora-sg",
+    vpc_id=vpc_id,
+    description=f"Security group for {name} Aurora DB",
+    ingress=[
+        aws.ec2.SecurityGroupIngressArgs(
+            description="Allow PostgreSQL access",
+            protocol="tcp",
+            from_port=5432,
+            to_port=5432,
+            security_groups=[],  # TODO
+        )
+    ],
+    egress=[
+        aws.ec2.SecurityGroupEgressArgs(
+            from_port=0,
+            to_port=0,
+            protocol="-1",
+            cidr_blocks=["0.0.0.0/0"],
+        ),
+    ],
+    tags=tags,
+)
+
+
+eu_west_1a_private_subnet_id = aws_env_stack.get_output("eu_west_1a_private_subnet_id")
+eu_west_1b_private_subnet_id = aws_env_stack.get_output("eu_west_1b_private_subnet_id")
+eu_west_1c_private_subnet_id = aws_env_stack.get_output("eu_west_1c_private_subnet_id")
+private_subnets = [
+    eu_west_1a_private_subnet_id,
+    eu_west_1b_private_subnet_id,
+    eu_west_1c_private_subnet_id,
+]
+
+aurora_subnet_group = aws.rds.SubnetGroup(
+    f"{name}-aurora-subnet-group",
+    subnet_ids=private_subnets,
+    tags=tags,
+)
+
+
+aurora_cluster = aws.rds.Cluster(
+    f"{name}-{environment}-aurora-cluster",
+    cluster_identifier=f"{name}-{environment}-aurora-cluster",
+    engine="aurora-postgresql",
+    engine_version="17.6",
+    manage_master_user_password=True,
+    db_subnet_group_name=aurora_subnet_group.name,
+    vpc_security_group_ids=[aurora_security_group.id],
+    backup_retention_period=7,  # Retention is included in Aurora pricing for up to 7 days. Longer retention would add charges.
+    preferred_backup_window="02:00-03:00",
+    preferred_maintenance_window="sun:04:00-sun:05:00",
+    deletion_protection=True,
+    serverlessv2_scaling_configuration=aws.rds.ClusterServerlessv2ScalingConfigurationArgs(
+        min_capacity=0,
+        max_capacity=2,
+    ),
+    tags=tags,
+)
+
+aurora_instances = [
+    aws.rds.ClusterInstance(
+        f"{name}-{environment}-aurora-instance-{i}",
+        identifier=f"{name}-{environment}-aurora-instance-{i}",
+        cluster_identifier=aurora_cluster.id,
+        instance_class="db.serverless",
+        engine=aurora_cluster.engine,
+        publicly_accessible=False,
+        auto_minor_version_upgrade=True,
+        tags=tags,
+    )
+    for i in range(2)
+]
+
+
+pulumi.export(f"{name}-aurora-cluster-name", aurora_cluster._name)
+pulumi.export(
+    f"{name}-aurora-instance-ids",
+    [instance.id for instance in aurora_instances],
+)
+pulumi.export(f"{name}-aurora-endpoint", aurora_cluster.endpoint)
+pulumi.export(f"{name}-aurora-reader-endpoint", aurora_cluster.reader_endpoint)

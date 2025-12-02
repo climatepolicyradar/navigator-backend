@@ -1,2 +1,4 @@
 config:
   aws:region: eu-west-1
+  data-in-pipeline:validation_account_id:
+    secure: AAABAPkKFGCaVPTx2TiLyJsW2237VGrflttKoFQyQmHwUbcBs+SQnUj3kdc=
