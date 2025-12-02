@@ -150,24 +150,19 @@ credentials = secret_value.secret_string.apply(lambda s: json.loads(cast(str, s)
 # Look up the private subnets in the selected VPC.
 # Resolve the VPC ID inside an apply so the underlying AWS call
 # receives a plain string.
-private_subnets = vpc.id.apply(
-    lambda vpc_id: aws.ec2.get_subnets(
-        filters=[
-            aws.ec2.GetSubnetsFilterArgs(
-                name="vpc-id",
-                values=[vpc_id],
-            ),
-            aws.ec2.GetSubnetsFilterArgs(
-                name="tag:Name",
-                values=["*private*"],
-            ),
-        ]
-    )
-)
+aws_env_stack = pulumi.StackReference(f"climatepolicyradar/aws_env/{environment}")
+eu_west_1a_private_subnet_id = aws_env_stack.get_output("eu_west_1a_private_subnet_id")
+eu_west_1b_private_subnet_id = aws_env_stack.get_output("eu_west_1b_private_subnet_id")
+eu_west_1c_private_subnet_id = aws_env_stack.get_output("eu_west_1c_private_subnet_id")
+private_subnets = [
+    eu_west_1a_private_subnet_id,
+    eu_west_1b_private_subnet_id,
+    eu_west_1c_private_subnet_id,
+]
 
 aurora_subnet_group = aws.rds.SubnetGroup(
     f"{name}-aurora-subnet-group",
-    subnet_ids=private_subnets.apply(lambda result: result.ids),
+    subnet_ids=private_subnets,
     tags=tags,
 )
 
