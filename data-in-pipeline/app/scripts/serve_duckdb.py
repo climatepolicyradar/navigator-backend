@@ -77,18 +77,18 @@ class DocumentResponse(BaseModel):
 
 @app.get("/documents", response_model=DocumentResponse)
 def list_documents(
-    label_id: list[str] | None = Query(
+    label_ids: list[str] | None = Query(
         None, description="Filter by labels.label.id", alias="labels.label.id"
     ),
-    label_id_exclude: list[str] | None = Query(None, alias="-labels.label.id"),
-    label_type: list[str] | None = Query(
+    label_ids_exclude: list[str] | None = Query(None, alias="-labels.label.id"),
+    label_types: list[str] | None = Query(
         None, description="Filter by labels.label.type", alias="labels.label.type"
     ),
-    label_type_exclude: list[str] | None = Query(None, alias="-labels.label.type"),
-    relationship_type: list[str] | None = Query(
+    label_types_exclude: list[str] | None = Query(None, alias="-labels.label.type"),
+    relationship_types: list[str] | None = Query(
         None, description="Filter by relationships.type", alias="relationships.type"
     ),
-    relationship_type_exclude: list[str] | None = Query(
+    relationship_types_exclude: list[str] | None = Query(
         None, alias="-relationships.type"
     ),
     limit: int = Query(100, le=500),
@@ -99,67 +99,35 @@ def list_documents(
     where = "WHERE 1=1"
     params = []
 
-    # Build inclusion filter (documents that have ALL of these - AND)
-    if label_id or label_type or relationship_type:
-        include_parts = []
-        if label_id:
-            placeholders = ",".join("?" * len(label_id))
-            include_parts.append(f"l.label.id IN ({placeholders})")
-            params.extend(label_id)
-        if label_type:
-            placeholders = ",".join("?" * len(label_type))
-            include_parts.append(f"l.label.type IN ({placeholders})")
-            params.extend(label_type)
-        if relationship_type:
-            placeholders = ",".join("?" * len(relationship_type))
-            include_parts.append(f"r.type IN ({placeholders})")
-            params.extend(relationship_type)
+    for label_id in label_ids or []:
+        where += " AND list_contains(list_transform(labels, l -> l.label.id), ?)"
+        params.append(label_id)
 
-        # we use nosec B608 as there is never any user input injected into the SQL
-        # and any fix makes it really unreadable
-        where += f"""
-            AND id IN (
-                SELECT d.id
-                FROM documents d
-                CROSS JOIN UNNEST(d.labels) AS t(l)
-                CROSS JOIN UNNEST(d.relationships) AS t(r)
-                WHERE {" AND ".join(include_parts)}
-            )
-        """  # nosec B608
+    for label_type in label_types or []:
+        where += " AND list_contains(list_transform(labels, l -> l.label.type), ?)"
+        params.append(label_type)
 
-    # Build exclusion filter (documents that DON'T have ALL of these - NOT (a AND b AND c))
-    if label_id_exclude or label_type_exclude or relationship_type_exclude:
-        exclude_parts = []
-        if label_id_exclude:
-            placeholders = ",".join("?" * len(label_id_exclude))
-            exclude_parts.append(f"l.label.id IN ({placeholders})")
-            params.extend(label_id_exclude)
-        if label_type_exclude:
-            placeholders = ",".join("?" * len(label_type_exclude))
-            exclude_parts.append(f"l.label.type IN ({placeholders})")
-            params.extend(label_type_exclude)
-        if relationship_type_exclude:
-            placeholders = ",".join("?" * len(relationship_type_exclude))
-            exclude_parts.append(f"r.type IN ({placeholders})")
-            params.extend(relationship_type_exclude)
+    for relationship_type in relationship_types or []:
+        where += " AND list_contains(list_transform(relationships, r -> r.type), ?)"
+        params.append(relationship_type)
 
-        # we use nosec B608 as there is never any user input injected into the SQL
-        # and any fix makes it really unreadable
-        where += f"""
-            AND id NOT IN (
-                SELECT d.id
-                FROM documents d
-                CROSS JOIN UNNEST(d.labels) AS t(l)
-                CROSS JOIN UNNEST(d.relationships) AS t(r)
-                WHERE {" AND ".join(exclude_parts)}
-            )
-        """  # nosec B608
+    for label_id in label_ids_exclude or []:
+        where += " AND NOT list_contains(list_transform(labels, l -> l.label.id), ?)"
+        params.append(label_id)
+
+    for label_type in label_types_exclude or []:
+        where += " AND NOT list_contains(list_transform(labels, l -> l.label.type), ?)"
+        params.append(label_type)
+
+    for relationship_type in relationship_types_exclude or []:
+        where += " AND NOT list_contains(list_transform(relationships, r -> r.type), ?)"
+        params.append(relationship_type)
 
     # aggregations
     # labels aggregation
     labels_result = con.execute(
         """
-        SELECT 
+        SELECT
             l.label.id,
             l.label.type,
             COUNT(*) AS count
@@ -178,7 +146,7 @@ def list_documents(
     # relationships aggregation
     relationships_result = con.execute(
         """
-        SELECT 
+        SELECT
             r.type as id,
             r.type,
             COUNT(*) AS count
