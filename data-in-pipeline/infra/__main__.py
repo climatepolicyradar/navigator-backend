@@ -160,7 +160,8 @@ aurora_subnet_group = aws.rds.SubnetGroup(
 
 
 aurora_cluster = aws.rds.Cluster(
-    f"{name}-aurora-cluster",
+    f"{name}-{environment}-aurora-cluster",
+    cluster_identifier=f"{name}-{environment}-aurora-cluster",
     engine="aurora-postgresql",
     engine_version="17.6",
     master_username=credentials.apply(lambda creds: creds["username"]),
