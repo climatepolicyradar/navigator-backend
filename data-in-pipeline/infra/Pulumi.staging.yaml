@@ -1,6 +1,4 @@
 config:
   aws:region: eu-west-1
-  data-in-pipeline:db_user:
-    secure: AAABAEWLkaZGcd63YisRhzAP+PgvS2WBffUaIDedZ/3+Mhp0ln4LXOGnRkX4sbzp
   data-in-pipeline:validation_account_id:
     secure: AAABAPkKFGCaVPTx2TiLyJsW2237VGrflttKoFQyQmHwUbcBs+SQnUj3kdc=
