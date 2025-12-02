@@ -129,6 +129,7 @@ aurora_cluster = aws.rds.Cluster(
     engine="aurora-postgresql",
     engine_version="17.6",
     manage_master_user_password=True,
+    master_username=config.get("aurora_master_username"),
     db_subnet_group_name=aurora_subnet_group.name,
     vpc_security_group_ids=[aurora_security_group.id],
     backup_retention_period=7,  # Retention is included in Aurora pricing for up to 7 days. Longer retention would add charges.

@@ -2,3 +2,5 @@ config:
   aws:region: eu-west-1
   data-in-pipeline:validation_account_id:
     secure: AAABAPGWHTErH0p8pyqdHr42w//zgxbpPGsAjB/+28C0e9TSVlvwyGE1z8E=
+  data-in-pipeline:aurora_master_username:
+    secure: AAABAMR9VhjLr01UsR8/xq2cSGF0k1+YTGIkyydskF4yCqNahFrAyV7zTVGAl4/v
