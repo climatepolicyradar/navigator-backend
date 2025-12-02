@@ -180,7 +180,8 @@ aurora_cluster = aws.rds.Cluster(
 
 aurora_instances = [
     aws.rds.ClusterInstance(
-        f"{name}-aurora-instance-{i}",
+        f"{name}-{environment}-aurora-instance-{i}",
+        identifier=f"{name}-{environment}-aurora-instance-{i}",
         cluster_identifier=aurora_cluster.id,
         instance_class="db.serverless",
         engine=aurora_cluster.engine,
