@@ -75,6 +75,7 @@ pulumi.export("ecr_repository_url", data_in_pipeline_ecr_repository.repository_u
 # Create the Aurora service for the Document Store.
 #######################################################################
 environment = pulumi.get_stack()
+aws_env_stack = pulumi.StackReference(f"climatepolicyradar/aws_env/{environment}")
 
 config = pulumi.Config()
 username = config.require("db_user")
@@ -89,17 +90,12 @@ tags = {
     "Environment": environment,
 }
 
-vpc_per_env = {"staging": "staging-vpc", "production": "NavigatorProd-vpc"}
 
-vpc = aws.ec2.get_vpc_output(
-    tags={
-        "Name": vpc_per_env[environment],
-    }
-)
+vpc_id = aws_env_stack.get_output("vpc_id")
 
 aurora_security_group = aws.ec2.SecurityGroup(
     f"{name}-aurora-sg",
-    vpc_id=vpc.id,
+    vpc_id=vpc_id,
     description=f"Security group for {name} Aurora DB",
     ingress=[
         aws.ec2.SecurityGroupIngressArgs(
@@ -147,10 +143,6 @@ secret_value = aws.secretsmanager.SecretVersion(
 # Extract values from the JSON secret to use in the Aurora cluster
 credentials = secret_value.secret_string.apply(lambda s: json.loads(cast(str, s)))
 
-# Look up the private subnets in the selected VPC.
-# Resolve the VPC ID inside an apply so the underlying AWS call
-# receives a plain string.
-aws_env_stack = pulumi.StackReference(f"climatepolicyradar/aws_env/{environment}")
 eu_west_1a_private_subnet_id = aws_env_stack.get_output("eu_west_1a_private_subnet_id")
 eu_west_1b_private_subnet_id = aws_env_stack.get_output("eu_west_1b_private_subnet_id")
 eu_west_1c_private_subnet_id = aws_env_stack.get_output("eu_west_1c_private_subnet_id")
