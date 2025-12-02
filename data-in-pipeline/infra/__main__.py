@@ -157,10 +157,12 @@ aurora_instances = [
 ]
 
 
-pulumi.export(f"{name}-aurora-cluster-name", aurora_cluster._name)
+pulumi.export(f"{name}-{environment}-aurora-cluster-name", aurora_cluster._name)
 pulumi.export(
-    f"{name}-aurora-instance-ids",
+    f"{name}-{environment}-aurora-instance-ids",
     [instance.id for instance in aurora_instances],
 )
-pulumi.export(f"{name}-aurora-endpoint", aurora_cluster.endpoint)
-pulumi.export(f"{name}-aurora-reader-endpoint", aurora_cluster.reader_endpoint)
+pulumi.export(f"{name}-{environment}-aurora-endpoint", aurora_cluster.endpoint)
+pulumi.export(
+    f"{name}-{environment}-aurora-reader-endpoint", aurora_cluster.reader_endpoint
+)
