@@ -15,24 +15,21 @@ from app.models import (
     Identified,
     Label,
 )
-from app.transform.models import NoMatchingTransformations
-from app.transform.navigator_family import TransformerLabel, transform_navigator_family
+from app.transform.navigator_family import transform_navigator_family
 
 
 @pytest.fixture
-def navigator_family_with_single_matching_title_document() -> (
-    Identified[NavigatorFamily]
-):
+def navigator_family_with_single_matching_document() -> Identified[NavigatorFamily]:
     return Identified(
-        id="123",
+        id="family",
         source="navigator_family",
         data=NavigatorFamily(
-            import_id="123",
+            import_id="family",
             title="Matching title on family and document",
-            corpus=NavigatorCorpus(import_id="123"),
+            corpus=NavigatorCorpus(import_id="corpus"),
             documents=[
                 NavigatorDocument(
-                    import_id="456",
+                    import_id="document",
                     title="Matching title on family and document",
                     events=[],
                 ),
@@ -60,17 +57,22 @@ def navigator_family_with_no_matching_transformations() -> Identified[NavigatorF
 @pytest.fixture
 def navigator_family_with_litigation_corpus_type() -> Identified[NavigatorFamily]:
     return Identified(
-        id="123",
+        id="family",
         source="navigator_family",
         data=NavigatorFamily(
-            import_id="123",
+            import_id="family",
             title="Litigation family",
             corpus=NavigatorCorpus(import_id="Academic.corpus.Litigation.n0000"),
             documents=[
                 NavigatorDocument(
-                    import_id="Litigation family document",
+                    import_id="document",
                     title="Litigation family document",
                     events=[NavigatorEvent(import_id="123", event_type="Decision")],
+                ),
+                NavigatorDocument(
+                    import_id="1.2.3.placeholder",
+                    title="Placeholder litigation family document",
+                    events=[],
                 ),
             ],
         ),
@@ -80,20 +82,20 @@ def navigator_family_with_litigation_corpus_type() -> Identified[NavigatorFamily
 @pytest.fixture
 def navigator_family_multilateral_climate_fund_project() -> Identified[NavigatorFamily]:
     return Identified(
-        id="123",
+        id="family",
         source="navigator_family",
         data=NavigatorFamily(
-            import_id="123",
+            import_id="family",
             title="Multilateral climate fund project",
             corpus=NavigatorCorpus(import_id="MCF.corpus.AF.n0000"),
             documents=[
                 NavigatorDocument(
-                    import_id="456",
+                    import_id="document_1",
                     title="Multilateral climate fund project document",
                     events=[],
                 ),
                 NavigatorDocument(
-                    import_id="789",
+                    import_id="document_2",
                     title="Project document",
                     events=[],
                 ),
@@ -102,54 +104,80 @@ def navigator_family_multilateral_climate_fund_project() -> Identified[Navigator
     )
 
 
-def test_transform_navigator_document_with_single_matching_family(
-    navigator_family_with_single_matching_title_document: Identified[NavigatorFamily],
+def test_transform_navigator_family_with_single_matching_document(
+    navigator_family_with_single_matching_document: Identified[NavigatorFamily],
 ):
-    result = transform_navigator_family(
-        navigator_family_with_single_matching_title_document
-    )
+    result = transform_navigator_family(navigator_family_with_single_matching_document)
     assert result == Success(
         [
             Document(
-                id="456",
-                title=navigator_family_with_single_matching_title_document.data.title,
+                id="family",
+                title=navigator_family_with_single_matching_document.data.title,
                 labels=[
                     DocumentLabelRelationship(
-                        type="family",
+                        type="debug",
                         label=Label(
-                            id=navigator_family_with_single_matching_title_document.data.import_id,
-                            title=navigator_family_with_single_matching_title_document.data.title,
-                            type="family",
-                        ),
-                    ),
-                    DocumentLabelRelationship(
-                        type="transformer",
-                        label=TransformerLabel(
-                            id="transform_navigator_family_with_single_matching_document",
-                            title="transform_navigator_family_with_single_matching_document",
-                            type="transformer",
+                            type="debug",
+                            id="no_family_labels",
+                            title="no_family_labels",
                         ),
                     ),
                 ],
-                relationships=[],
-            )
+                relationships=[
+                    DocumentDocumentRelationship(
+                        type="has_version",
+                        document=DocumentWithoutRelationships(
+                            id="document",
+                            title=navigator_family_with_single_matching_document.data.title,
+                            labels=[
+                                DocumentLabelRelationship(
+                                    type="debug",
+                                    label=Label(
+                                        type="debug",
+                                        id="no_document_labels",
+                                        title="no_document_labels",
+                                    ),
+                                ),
+                            ],
+                        ),
+                    ),
+                ],
+            ),
+            Document(
+                id="document",
+                title=navigator_family_with_single_matching_document.data.title,
+                labels=[
+                    DocumentLabelRelationship(
+                        type="debug",
+                        label=Label(
+                            type="debug",
+                            id="no_document_labels",
+                            title="no_document_labels",
+                        ),
+                    ),
+                ],
+                relationships=[
+                    DocumentDocumentRelationship(
+                        type="is_version_of",
+                        document=DocumentWithoutRelationships(
+                            id="family",
+                            title=navigator_family_with_single_matching_document.data.title,
+                            labels=[
+                                DocumentLabelRelationship(
+                                    type="debug",
+                                    label=Label(
+                                        type="debug",
+                                        id="no_family_labels",
+                                        title="no_family_labels",
+                                    ),
+                                ),
+                            ],
+                        ),
+                    ),
+                ],
+            ),
         ]
     )
-
-
-@pytest.mark.skip(
-    reason="The return type here should be a failure, but successing it for now while we do some analysis"
-)
-def test_no_matching_transformations(
-    navigator_family_with_no_matching_transformations: Identified[NavigatorFamily],
-):
-    result = transform_navigator_family(
-        navigator_family_with_no_matching_transformations
-    )
-
-    result_failure = result.failure()
-
-    assert isinstance(result_failure, NoMatchingTransformations)
 
 
 def test_transform_navigator_family_with_litigation_corpus_type(
@@ -159,7 +187,7 @@ def test_transform_navigator_family_with_litigation_corpus_type(
     assert result == Success(
         [
             Document(
-                id="123",
+                id="family",
                 title="Litigation family",
                 labels=[
                     DocumentLabelRelationship(
@@ -171,19 +199,19 @@ def test_transform_navigator_family_with_litigation_corpus_type(
                         ),
                     ),
                     DocumentLabelRelationship(
-                        type="transformer",
-                        label=TransformerLabel(
-                            id="transform_navigator_family_with_litigation_corpus_type",
-                            title="transform_navigator_family_with_litigation_corpus_type",
-                            type="transformer",
+                        type="debug",
+                        label=Label(
+                            id="no_versions",
+                            title="no_versions",
+                            type="debug",
                         ),
                     ),
                 ],
                 relationships=[
                     DocumentDocumentRelationship(
-                        type="decision",
+                        type="has_member",
                         document=DocumentWithoutRelationships(
-                            id="Litigation family document",
+                            id="document",
                             title="Litigation family document",
                             labels=[
                                 DocumentLabelRelationship(
@@ -194,21 +222,30 @@ def test_transform_navigator_family_with_litigation_corpus_type(
                                         type="entity_type",
                                     ),
                                 ),
+                            ],
+                        ),
+                    ),
+                    DocumentDocumentRelationship(
+                        type="has_member",
+                        document=DocumentWithoutRelationships(
+                            id="1.2.3.placeholder",
+                            title="Placeholder litigation family document",
+                            labels=[
                                 DocumentLabelRelationship(
-                                    type="transformer",
+                                    type="status",
                                     label=Label(
-                                        id="transform_navigator_family_with_litigation_corpus_type",
-                                        title="transform_navigator_family_with_litigation_corpus_type",
-                                        type="transformer",
+                                        id="obsolete",
+                                        title="obsolete",
+                                        type="status",
                                     ),
                                 ),
                             ],
                         ),
-                    )
+                    ),
                 ],
             ),
             Document(
-                id="Litigation family document",
+                id="document",
                 title="Litigation family document",
                 labels=[
                     DocumentLabelRelationship(
@@ -219,20 +256,12 @@ def test_transform_navigator_family_with_litigation_corpus_type(
                             type="entity_type",
                         ),
                     ),
-                    DocumentLabelRelationship(
-                        type="transformer",
-                        label=TransformerLabel(
-                            id="transform_navigator_family_with_litigation_corpus_type",
-                            title="transform_navigator_family_with_litigation_corpus_type",
-                            type="transformer",
-                        ),
-                    ),
                 ],
                 relationships=[
                     DocumentDocumentRelationship(
                         type="member_of",
                         document=DocumentWithoutRelationships(
-                            id="123",
+                            id="family",
                             title="Litigation family",
                             labels=[
                                 DocumentLabelRelationship(
@@ -243,12 +272,37 @@ def test_transform_navigator_family_with_litigation_corpus_type(
                                         type="entity_type",
                                     ),
                                 ),
+                            ],
+                        ),
+                    )
+                ],
+            ),
+            Document(
+                id="1.2.3.placeholder",
+                title="Placeholder litigation family document",
+                labels=[
+                    DocumentLabelRelationship(
+                        type="status",
+                        label=Label(
+                            id="obsolete",
+                            title="obsolete",
+                            type="status",
+                        ),
+                    ),
+                ],
+                relationships=[
+                    DocumentDocumentRelationship(
+                        type="member_of",
+                        document=DocumentWithoutRelationships(
+                            id="family",
+                            title="Litigation family",
+                            labels=[
                                 DocumentLabelRelationship(
-                                    type="transformer",
+                                    type="entity_type",
                                     label=Label(
-                                        id="transform_navigator_family_with_litigation_corpus_type",
-                                        title="transform_navigator_family_with_litigation_corpus_type",
-                                        type="transformer",
+                                        id="Legal case",
+                                        title="Legal case",
+                                        type="entity_type",
                                     ),
                                 ),
                             ],
@@ -269,17 +323,9 @@ def test_transform_navigator_family_with_multilateral_climate_fund_project(
     assert result == Success(
         [
             Document(
-                id="123",
+                id="family",
                 title="Multilateral climate fund project",
                 labels=[
-                    DocumentLabelRelationship(
-                        type="transformer",
-                        label=TransformerLabel(
-                            id="transform_navigator_family_multilateral_climate_fund_project",
-                            title="transform_navigator_family_multilateral_climate_fund_project",
-                            type="transformer",
-                        ),
-                    ),
                     DocumentLabelRelationship(
                         type="entity_type",
                         label=Label(
@@ -291,67 +337,61 @@ def test_transform_navigator_family_with_multilateral_climate_fund_project(
                 ],
                 relationships=[
                     DocumentDocumentRelationship(
+                        type="has_member",
                         document=DocumentWithoutRelationships(
-                            id="456",
+                            id="document_1",
                             title="Multilateral climate fund project document",
                             labels=[
                                 DocumentLabelRelationship(
-                                    type="family",
+                                    type="debug",
                                     label=Label(
-                                        id="123",
-                                        title="Multilateral climate fund project",
-                                        type="family",
-                                    ),
-                                ),
-                                DocumentLabelRelationship(
-                                    type="transformer",
-                                    label=Label(
-                                        id="transform_navigator_family_multilateral_climate_fund_project",
-                                        title="transform_navigator_family_multilateral_climate_fund_project",
-                                        type="transformer",
+                                        type="debug",
+                                        id="no_document_labels",
+                                        title="no_document_labels",
                                     ),
                                 ),
                             ],
                         ),
-                        type="has_member",
-                    )
+                    ),
+                    DocumentDocumentRelationship(
+                        type="has_version",
+                        document=DocumentWithoutRelationships(
+                            id="document_2",
+                            title="Project document",
+                            labels=[
+                                DocumentLabelRelationship(
+                                    type="debug",
+                                    label=Label(
+                                        type="debug",
+                                        id="no_document_labels",
+                                        title="no_document_labels",
+                                    ),
+                                ),
+                            ],
+                        ),
+                    ),
                 ],
             ),
             Document(
-                id="456",
+                id="document_1",
                 title="Multilateral climate fund project document",
                 labels=[
                     DocumentLabelRelationship(
-                        type="family",
+                        type="debug",
                         label=Label(
-                            id="123",
-                            title="Multilateral climate fund project",
-                            type="family",
-                        ),
-                    ),
-                    DocumentLabelRelationship(
-                        type="transformer",
-                        label=TransformerLabel(
-                            id="transform_navigator_family_multilateral_climate_fund_project",
-                            title="transform_navigator_family_multilateral_climate_fund_project",
-                            type="transformer",
+                            type="debug",
+                            id="no_document_labels",
+                            title="no_document_labels",
                         ),
                     ),
                 ],
                 relationships=[
                     DocumentDocumentRelationship(
+                        type="member_of",
                         document=DocumentWithoutRelationships(
-                            id="123",
+                            id="family",
                             title="Multilateral climate fund project",
                             labels=[
-                                DocumentLabelRelationship(
-                                    type="transformer",
-                                    label=Label(
-                                        id="transform_navigator_family_multilateral_climate_fund_project",
-                                        title="transform_navigator_family_multilateral_climate_fund_project",
-                                        type="transformer",
-                                    ),
-                                ),
                                 DocumentLabelRelationship(
                                     type="entity_type",
                                     label=Label(
@@ -362,7 +402,39 @@ def test_transform_navigator_family_with_multilateral_climate_fund_project(
                                 ),
                             ],
                         ),
-                        type="member_of",
+                    )
+                ],
+            ),
+            Document(
+                id="document_2",
+                title="Project document",
+                labels=[
+                    DocumentLabelRelationship(
+                        type="debug",
+                        label=Label(
+                            type="debug",
+                            id="no_document_labels",
+                            title="no_document_labels",
+                        ),
+                    ),
+                ],
+                relationships=[
+                    DocumentDocumentRelationship(
+                        type="is_version_of",
+                        document=DocumentWithoutRelationships(
+                            id="family",
+                            title="Multilateral climate fund project",
+                            labels=[
+                                DocumentLabelRelationship(
+                                    type="entity_type",
+                                    label=Label(
+                                        id="Multilateral climate fund project",
+                                        title="Multilateral climate fund project",
+                                        type="entity_type",
+                                    ),
+                                ),
+                            ],
+                        ),
                     )
                 ],
             ),

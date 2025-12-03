@@ -1,10 +1,7 @@
 import duckdb
-from fastapi import Depends, FastAPI, HTTPException, Query
+from fastapi import Depends, FastAPI, Query
+from fastapi.middleware.cors import CORSMiddleware
 from pydantic import BaseModel
-
-DB_PATH = ".data_cache/documents.duckdb"
-
-app = FastAPI(title="Documents API (DuckDB)")
 
 
 class Label(BaseModel):
@@ -37,6 +34,22 @@ class DocumentWithoutRelationships(BaseDocument):
     pass
 
 
+DB_PATH = ".data_cache/documents.duckdb"
+
+app = FastAPI(title="Documents API (DuckDB)")
+origins = [
+    "*",
+]
+
+app.add_middleware(
+    CORSMiddleware,
+    allow_origins=origins,
+    allow_credentials=True,
+    allow_methods=["*"],
+    allow_headers=["*"],
+)
+
+
 def get_connection():
     con = duckdb.connect(DB_PATH, read_only=True)
     try:
@@ -50,59 +63,134 @@ def health():
     return {"status": "ok"}
 
 
-@app.get("/documents", response_model=list[Document])
+class Aggregation(BaseModel):
+    id: str
+    type: str
+    count: int
+
+
+class DocumentResponse(BaseModel):
+    total: int
+    aggregations: dict[str, list[Aggregation]]
+    data: list[Document]
+
+
+@app.get("/documents", response_model=DocumentResponse)
 def list_documents(
-    label_id: str | None = Query(
+    label_ids: list[str] | None = Query(
         None, description="Filter by labels.label.id", alias="labels.label.id"
     ),
-    label_type: str | None = Query(
+    label_ids_exclude: list[str] | None = Query(None, alias="-labels.label.id"),
+    label_types: list[str] | None = Query(
         None, description="Filter by labels.label.type", alias="labels.label.type"
     ),
+    label_types_exclude: list[str] | None = Query(None, alias="-labels.label.type"),
+    relationship_types: list[str] | None = Query(
+        None, description="Filter by relationships.type", alias="relationships.type"
+    ),
+    relationship_types_exclude: list[str] | None = Query(
+        None, alias="-relationships.type"
+    ),
+    relationships_len: int | None = Query(None, alias="len(relationships)"),
+    labels_len: int | None = Query(None, alias="len(labels)"),
     limit: int = Query(100, le=500),
     offset: int = 0,
     con=Depends(get_connection),
 ):
-    """
-    Query documents directly by nested labels JSON fields.
-    """
-    params: list = [limit, offset]
 
-    base_query = """
-        SELECT id, title, labels, relationships
-        FROM documents
-        WHERE 1=1
-    """
+    where = "WHERE 1=1"
+    params = []
 
-    if label_id or label_type:
-        base_query += " AND id IN ("
-        base_query += """
-            SELECT d.id
-            FROM documents d
-            CROSS JOIN UNNEST(d.labels) AS t(l)
-            WHERE 1=1
+    for label_id in label_ids or []:
+        where += " AND list_contains(list_transform(labels, l -> l.label.id), ?)"
+        params.append(label_id)
+    for label_id in label_ids_exclude or []:
+        where += " AND NOT list_contains(list_transform(labels, l -> l.label.id), ?)"
+        params.append(label_id)
+
+    for label_type in label_types or []:
+        where += " AND list_contains(list_transform(labels, l -> l.label.type), ?)"
+        params.append(label_type)
+    for label_type in label_types_exclude or []:
+        where += " AND NOT list_contains(list_transform(labels, l -> l.label.type), ?)"
+        params.append(label_type)
+
+    for relationship_type in relationship_types or []:
+        where += " AND list_contains(list_transform(relationships, r -> r.type), ?)"
+        params.append(relationship_type)
+    for relationship_type in relationship_types_exclude or []:
+        where += " AND NOT list_contains(list_transform(relationships, r -> r.type), ?)"
+        params.append(relationship_type)
+
+    if relationships_len is not None:
+        where += " AND array_length(relationships) = ?"
+        params.append(relationships_len)
+
+    if labels_len is not None:
+        where += " AND array_length(labels) = ?"
+        params.append(labels_len)
+
+    # aggregations - these are never filtered as filter logic on aggregations is hard
+    # labels aggregation
+    labels_result = con.execute(
         """
-        if label_id:
-            base_query += " AND l.label.id = ?"
-            params.insert(0, label_id)
-        if label_type:
-            base_query += " AND l.label.type = ?"
-            params.insert(0, label_type)
-        base_query += ")"
+        SELECT
+            l.label.id,
+            l.label.type,
+            COUNT(*) AS count
+        FROM documents
+        CROSS JOIN UNNEST(labels) AS t(l)
+        GROUP BY l.label.id, l.label.type
+        """
+    )
+    labels_colnames = [c[0] for c in labels_result.description]
+    labels_rows = labels_result.fetchall()
+    labels = []
+    for label_row in labels_rows:
+        record = dict(zip(labels_colnames, label_row))
+        labels.append(Aggregation(**record))
 
-    base_query += " ORDER BY title LIMIT ? OFFSET ?"
+    # relationships aggregation
+    relationships_result = con.execute(
+        """
+        SELECT
+            r.type as id,
+            r.type,
+            COUNT(*) AS count
+        FROM documents
+        CROSS JOIN UNNEST(relationships) AS t(r)
+        GROUP BY r.type, r.type
+        """
+    )
+    relationships_colnames = [c[0] for c in relationships_result.description]
+    relationships_rows = relationships_result.fetchall()
+    relationships = []
+    for relationship_row in relationships_rows:
+        record = dict(zip(relationships_colnames, relationship_row))
+        relationships.append(Aggregation(**record))
 
-    try:
-        result = con.execute(base_query, params)
-    except duckdb.Error as e:
-        raise HTTPException(status_code=500, detail=f"DuckDB error: {e!s}")
+    # total
+    total = con.execute(
+        f"SELECT COUNT(*) FROM documents {where}", params  # nosec B608
+    ).fetchone()[0]
 
-    # Turn tuples into dicts
+    # data
+    result = con.execute(
+        f"SELECT id, title, labels, relationships FROM documents {where} ORDER BY title, id LIMIT ? OFFSET ?",  # nosec B608
+        params + [limit, offset],
+    )
     colnames = [c[0] for c in result.description]
     rows = result.fetchall()
-
     docs = []
     for row in rows:
         record = dict(zip(colnames, row))
         docs.append(Document(**record))
 
-    return docs
+    return {
+        "aggregations": {
+            "labels": labels,
+            "relationships": relationships,
+        },
+        "total": total,
+        "data": docs,
+    }

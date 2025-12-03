@@ -22,7 +22,7 @@ jobs:
     environment:
       name: staging
     steps:
-      - uses: actions/checkout@v5
+      - uses: actions/checkout@v6
 
       - name: Configure AWS credentials (staging)
         uses: aws-actions/configure-aws-credentials@v5

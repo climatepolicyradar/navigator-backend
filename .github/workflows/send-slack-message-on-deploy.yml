@@ -9,7 +9,7 @@ jobs:
   send-slack-message-staging-updates:
     runs-on: ubuntu-latest
     steps:
-      - uses: actions/checkout@v5
+      - uses: actions/checkout@v6
       # we can't use the github.event.deployment.environment directly in the environment property
       # so we need to switch on this case to get the secret.
       - id: webhook_url

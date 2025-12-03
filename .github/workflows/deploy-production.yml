@@ -11,7 +11,7 @@ jobs:
       matrix:
         service: [families-api, geographies-api, concepts-api, data-in-pipeline]
     steps:
-      - uses: actions/checkout@v5
+      - uses: actions/checkout@v6
       - uses: extractions/setup-just@v3
       - run: just test ${{ matrix.service }}
   deploy-microservices:
@@ -24,7 +24,7 @@ jobs:
     env:
       SERVICES: families-api geographies-api concepts-api data-in-pipeline
     steps:
-      - uses: actions/checkout@v5
+      - uses: actions/checkout@v6
       - uses: extractions/setup-just@v3
       - uses: aws-actions/configure-aws-credentials@v5
         with:
