@@ -53,7 +53,6 @@ const documentsDataProvider: DataProvider = {
       }
     }
 
-    console.log(url.toString());
     const response = await fetch(url.toString());
     const responseJson = await response.json();
 
