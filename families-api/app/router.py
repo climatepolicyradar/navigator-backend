@@ -171,7 +171,7 @@ def read_documents(
     response_model=APIItemResponse[FamilyDocumentPublicWithFamily],
 )
 def read_document(*, session: Session = Depends(get_session), document_id: str):
-    document = session.exec(
+    document: FamilyDocument | None = session.exec(
         FamilyDocument.eager_loaded_select().where(
             FamilyDocument.import_id == document_id
         )
@@ -179,6 +179,9 @@ def read_document(*, session: Session = Depends(get_session), document_id: str):
 
     if document is None:
         raise HTTPException(status_code=404, detail="Not found")
+
+    if document.document_status == FamilyDocumentStatus.DELETED:
+        raise HTTPException(status_code=410, detail="Gone")
 
     return APIItemResponse(data=document)
 

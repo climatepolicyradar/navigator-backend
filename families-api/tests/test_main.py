@@ -669,3 +669,23 @@ def test_read_family_corpus_import_id_filter(
     data2 = APIListResponse[FamilyPublic].model_validate(response2.json())
     assert len(data2.data) == 1
     assert {family.import_id for family in data2.data} == set(expected_family_ids2)
+
+
+def test_read_family_document_status_deleted(
+    client: TestClient, session: Session, make_family
+):
+    (corpus_type1, corpus1, family1, family_document1, physical_document1) = (
+        make_family(1)
+    )
+
+    family_document1.document_status = FamilyDocumentStatus.DELETED
+
+    session.add(corpus_type1)
+    session.add(corpus1)
+    session.add(family1)
+    session.add(family_document1)
+    session.add(physical_document1)
+
+    session.commit()
+    response1 = client.get(f"/families/documents/{family_document1.import_id}")
+    assert response1.status_code == 410
