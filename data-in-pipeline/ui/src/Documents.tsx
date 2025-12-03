@@ -12,6 +12,14 @@ import {
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
+import { Form } from "@/components/ui/form";
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from "@/components/ui/select";
 
 type Label = {
   type: string;
@@ -116,68 +124,86 @@ export default function Documents() {
     },
   });
 
-  const initialLabelFilters = table.refineCore.filters.find((filter) => {
-    return "field" in filter && filter.field === "labels.label.id";
+  const initialFilters = table.refineCore.filters.find((filter) => {
+    return "field" in filter && filter.field === "all";
   });
-  const [labelFilters, setLabelFilters] = useState<string[]>(
-    initialLabelFilters?.value || [],
-  );
-  const [labelInput, setLabelInput] = useState("");
+  const [filters, setFilters] = useState<string[]>(initialFilters?.value || []);
 
-  const handleAddLabel = () => {
-    if (labelInput.trim() && !labelFilters.includes(labelInput.trim())) {
-      setLabelFilters([...labelFilters, labelInput.trim()]);
-      setLabelInput("");
-    }
-  };
-
-  const handleRemoveLabel = (labelToRemove: string) => {
-    setLabelFilters(labelFilters.filter((label) => label !== labelToRemove));
-  };
-
-  // Update filters whenever labelFilters changes
   useEffect(() => {
-    if (labelFilters.length === 0) {
+    if (filters.length === 0) {
       table.refineCore.setFilters([], "replace");
     } else {
-      const filters = {
-        field: "labels.label.id",
+      const filter = {
+        field: "all",
         operator: "in" as const,
-        value: labelFilters.map((labelId) => labelId),
+        value: filters,
       };
 
-      table.refineCore.setFilters([filters]);
+      table.refineCore.setFilters([filter]);
     }
-  }, [labelFilters]);
+  }, [filters]);
 
   return (
     <ListView>
       <ListViewHeader title="Documents" />
       <div className="mb-4 space-y-2">
         <div className="flex gap-2">
-          <Input
-            placeholder="Enter label ID (e.g., no_family_labels)"
-            value={labelInput}
-            onChange={(e) => setLabelInput(e.target.value)}
-            onKeyDown={(e) => {
-              if (e.key === "Enter") {
-                handleAddLabel();
-              }
+          <form
+            onSubmit={(e) => {
+              e.preventDefault();
+              const operatorValue = e.currentTarget.operator.value;
+              const operator = operatorValue === "+" ? "" : operatorValue;
+              const field = e.currentTarget.field.value;
+              const value = e.currentTarget.value.value;
+              setFilters([...filters, `${operator}${field}=${value}`]);
             }}
-            className="max-w-md"
-          />
-          <Button onClick={handleAddLabel}>Add Filter</Button>
+          >
+            <Select name="operator">
+              <SelectTrigger>
+                <SelectValue placeholder="+/-" />
+              </SelectTrigger>
+              <SelectContent>
+                <SelectItem value="+">+</SelectItem>
+                <SelectItem value="-">-</SelectItem>
+              </SelectContent>
+            </Select>
+            <Select name="field">
+              <SelectTrigger>
+                <SelectValue placeholder="field" />
+              </SelectTrigger>
+              <SelectContent>
+                <SelectItem value="labels.label.id">labels.label.id</SelectItem>
+                <SelectItem value="labels.label.type">
+                  labels.label.type
+                </SelectItem>
+                <SelectItem value="relationships.type">
+                  relationships.type
+                </SelectItem>
+                <SelectItem value="len(relationships)">
+                  len(relationships)
+                </SelectItem>
+                <SelectItem value="len(labels)">len(labels)</SelectItem>
+              </SelectContent>
+            </Select>
+            <Input name="value" className="max-w-md" />
+            <Button type="submit">Add Filter</Button>
+          </form>
         </div>
-        {labelFilters.length > 0 && (
+        {filters.length > 0 && (
           <div className="flex flex-wrap gap-2">
-            {labelFilters.map((labelId) => (
+            {filters.map((filter) => (
               <Badge
-                key={labelId}
+                key={filter}
                 variant="default"
                 className="cursor-pointer"
-                onClick={() => handleRemoveLabel(labelId)}
+                onClick={() => {
+                  const filterToRemove = filter;
+                  setFilters(
+                    filters.filter((filter) => filter !== filterToRemove),
+                  );
+                }}
               >
-                {labelId} ×
+                {filter} ×
               </Badge>
             ))}
           </div>

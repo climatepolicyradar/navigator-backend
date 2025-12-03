@@ -39,20 +39,21 @@ const documentsDataProvider: DataProvider = {
     url.searchParams.set("limit", limit.toString());
 
     if (filters) {
-      const labelsLabelFields = filters.find((filter) => {
-        return "field" in filter && filter.field === "labels.label.id";
+      const allFilter = filters.find((filter) => {
+        return "field" in filter && filter.field === "all";
       });
 
-      if (labelsLabelFields) {
-        if (Array.isArray(labelsLabelFields.value)) {
-          labelsLabelFields.value.forEach((value) => {
-            url.searchParams.append("labels.label.id", value);
+      if (allFilter) {
+        if (Array.isArray(allFilter.value)) {
+          allFilter.value.forEach((filterString) => {
+            const [field, value] = filterString.split("=");
+            url.searchParams.append(field, value);
           });
         }
       }
     }
 
-    console.info(url.toString());
+    console.log(url.toString());
     const response = await fetch(url.toString());
     const responseJson = await response.json();
 

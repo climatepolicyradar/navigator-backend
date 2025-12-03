@@ -91,6 +91,8 @@ def list_documents(
     relationship_types_exclude: list[str] | None = Query(
         None, alias="-relationships.type"
     ),
+    relationships_len: int | None = Query(None, alias="len(relationships)"),
+    labels_len: int | None = Query(None, alias="len(labels)"),
     limit: int = Query(100, le=500),
     offset: int = 0,
     con=Depends(get_connection),
@@ -102,28 +104,33 @@ def list_documents(
     for label_id in label_ids or []:
         where += " AND list_contains(list_transform(labels, l -> l.label.id), ?)"
         params.append(label_id)
+    for label_id in label_ids_exclude or []:
+        where += " AND NOT list_contains(list_transform(labels, l -> l.label.id), ?)"
+        params.append(label_id)
 
     for label_type in label_types or []:
         where += " AND list_contains(list_transform(labels, l -> l.label.type), ?)"
+        params.append(label_type)
+    for label_type in label_types_exclude or []:
+        where += " AND NOT list_contains(list_transform(labels, l -> l.label.type), ?)"
         params.append(label_type)
 
     for relationship_type in relationship_types or []:
         where += " AND list_contains(list_transform(relationships, r -> r.type), ?)"
         params.append(relationship_type)
-
-    for label_id in label_ids_exclude or []:
-        where += " AND NOT list_contains(list_transform(labels, l -> l.label.id), ?)"
-        params.append(label_id)
-
-    for label_type in label_types_exclude or []:
-        where += " AND NOT list_contains(list_transform(labels, l -> l.label.type), ?)"
-        params.append(label_type)
-
     for relationship_type in relationship_types_exclude or []:
         where += " AND NOT list_contains(list_transform(relationships, r -> r.type), ?)"
         params.append(relationship_type)
 
-    # aggregations
+    if relationships_len is not None:
+        where += " AND array_length(relationships) = ?"
+        params.append(relationships_len)
+
+    if labels_len is not None:
+        where += " AND array_length(labels) = ?"
+        params.append(labels_len)
+
+    # aggregations - these are never filtered as filter logic on aggregations is hard
     # labels aggregation
     labels_result = con.execute(
         """

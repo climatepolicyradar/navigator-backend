@@ -184,10 +184,7 @@ def _transform_navigator_family(navigator_family: NavigatorFamily) -> Document:
             )
         )
 
-    if (
-        navigator_family.corpus.import_id in mcf_projects_corpus_import_ids
-        and len(navigator_family.documents) > 0
-    ):
+    if navigator_family.corpus.import_id in mcf_projects_corpus_import_ids:
         labels.append(
             DocumentLabelRelationship(
                 type="entity_type",
