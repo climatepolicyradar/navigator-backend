@@ -184,10 +184,7 @@ def _transform_navigator_family(navigator_family: NavigatorFamily) -> Document:
             )
         )
 
-    if (
-        navigator_family.corpus.import_id in mcf_projects_corpus_import_ids
-        and len(navigator_family.documents) > 0
-    ):
+    if navigator_family.corpus.import_id in mcf_projects_corpus_import_ids:
         labels.append(
             DocumentLabelRelationship(
                 type="entity_type",
@@ -251,6 +248,17 @@ def _transform_navigator_document(
                 label=Label(
                     id=normalised_role, title=normalised_role, type="entity_type"
                 ),
+            )
+        )
+
+    """
+    These were added to allow families to be parsed if they did not have any documents.
+    """
+    if navigator_document.import_id.endswith("placeholder"):
+        labels.append(
+            DocumentLabelRelationship(
+                type="status",
+                label=Label(id="obsolete", title="obsolete", type="status"),
             )
         )
 
