@@ -1,47 +1,6 @@
 import pulumi
 import pulumi_aws as aws
 
-# This stuff is being encapsulated in navigator-infra and we should use that once it is ready
-# IAM role trusted by App Runner
-data_in_pipeline_role = aws.iam.Role(
-    "data-in-pipeline-role",
-    assume_role_policy=aws.iam.get_policy_document(
-        statements=[
-            aws.iam.GetPolicyDocumentStatementArgs(
-                effect="Allow",
-                principals=[
-                    aws.iam.GetPolicyDocumentStatementPrincipalArgs(
-                        type="Service",
-                        identifiers=["build.apprunner.amazonaws.com"],
-                    )
-                ],
-                actions=["sts:AssumeRole"],
-            )
-        ]
-    ).json,
-)
-
-# Attach ECR access policy to the role
-data_in_pipeline_role_policy = aws.iam.RolePolicy(
-    "data-in-pipeline-role-ecr-policy",
-    role=data_in_pipeline_role.id,
-    policy=aws.iam.get_policy_document(
-        statements=[
-            aws.iam.GetPolicyDocumentStatementArgs(
-                effect="Allow",
-                actions=[
-                    "ecr:GetDownloadUrlForLayer",
-                    "ecr:BatchGetImage",
-                    "ecr:DescribeImages",
-                    "ecr:GetAuthorizationToken",
-                    "ecr:BatchCheckLayerAvailability",
-                ],
-                resources=["*"],
-            )
-        ]
-    ).json,
-)
-
 data_in_pipeline_ecr_repository = aws.ecr.Repository(
     "data-in-pipeline-ecr-repository",
     encryption_configurations=[
@@ -70,6 +29,8 @@ aws_env_stack = pulumi.StackReference(f"climatepolicyradar/aws_env/{environment}
 
 config = pulumi.Config()
 name = pulumi.get_project()
+db_name = config.require("db_name")
+account_id = config.require("validation_account_id")
 
 tags = {
     "CPR-Created-By": "pulumi",
@@ -78,7 +39,6 @@ tags = {
     "CPR-Tag": f"{environment}-{name}-store",
     "Environment": environment,
 }
-
 
 vpc_id = aws_env_stack.get_output("vpc_id")
 
@@ -122,18 +82,22 @@ aurora_subnet_group = aws.rds.SubnetGroup(
     tags=tags,
 )
 
+cluster_name = f"{name}-{environment}-aurora-cluster"
+load_db_user = config.require("load_db_user")
 
 aurora_cluster = aws.rds.Cluster(
-    f"{name}-{environment}-aurora-cluster",
-    cluster_identifier=f"{name}-{environment}-aurora-cluster",
+    cluster_name,
+    cluster_identifier=cluster_name,
     engine="aurora-postgresql",
     engine_version="17.6",
+    database_name=db_name,
     manage_master_user_password=True,
     master_username=config.get("aurora_master_username"),
     db_subnet_group_name=aurora_subnet_group.name,
     vpc_security_group_ids=[aurora_security_group.id],
     backup_retention_period=7,  # Retention is included in Aurora pricing for up to 7 days. Longer retention would add charges.
     preferred_backup_window="02:00-03:00",
+    iam_database_authentication_enabled=True,
     preferred_maintenance_window="sun:04:00-sun:05:00",
     deletion_protection=True,
     serverlessv2_scaling_configuration=aws.rds.ClusterServerlessv2ScalingConfigurationArgs(
@@ -158,7 +122,79 @@ aurora_instances = [
 ]
 
 
+data_in_pipeline_role = data_in_pipeline_role = aws.iam.Role(
+    "prefect-data-in-pipeline-load-aurora-role",
+    assume_role_policy=aws.iam.get_policy_document(
+        statements=[
+            aws.iam.GetPolicyDocumentStatementArgs(
+                effect="Allow",
+                principals=[
+                    aws.iam.GetPolicyDocumentStatementPrincipalArgs(
+                        type="Service",
+                        identifiers=[
+                            "ecs-tasks.amazonaws.com"
+                        ],  # ECS task execution environment
+                    )
+                ],
+                actions=["sts:AssumeRole"],
+            )
+        ]
+    ).json,
+    tags=tags,
+)
+
+data_in_pipeline_role_policy = aws.iam.RolePolicy(
+    "data-in-pipeline-role-ecr-policy",
+    role=data_in_pipeline_role.id,
+    policy=aws.iam.get_policy_document(
+        statements=[
+            aws.iam.GetPolicyDocumentStatementArgs(
+                effect="Allow",
+                actions=[
+                    "ecr:GetDownloadUrlForLayer",
+                    "ecr:BatchGetImage",
+                    "ecr:DescribeImages",
+                    "ecr:GetAuthorizationToken",
+                    "ecr:BatchCheckLayerAvailability",
+                ],
+                resources=["*"],
+            )
+        ]
+    ).json,
+)
+
+app_runner_connect_role_policy = aws.iam.RolePolicy(
+    f"{name}-aurora-iam-connect-policy",
+    role=data_in_pipeline_role.id,
+    policy=aws.iam.get_policy_document(
+        statements=[
+            aws.iam.GetPolicyDocumentStatementArgs(
+                effect="Allow",
+                actions=["rds-db:connect"],
+                resources=[
+                    f"arn:aws:rds-db:eu-west-1:{account_id}:dbuser:{aurora_cluster.cluster_resource_id}/{load_db_user}"
+                ],
+            ),
+            # Optional: discovery permissions
+            aws.iam.GetPolicyDocumentStatementArgs(
+                effect="Allow",
+                actions=[
+                    "rds:DescribeDBClusters",
+                    "rds:DescribeDBInstances",
+                ],
+                resources=["*"],
+            ),
+        ]
+    ).json,
+)
+
+
 pulumi.export(f"{name}-{environment}-aurora-cluster-name", aurora_cluster._name)
+pulumi.export(f"{name}-{environment}-aurora-cluster-arn", aurora_cluster.arn)
+pulumi.export(
+    f"{name}-{environment}-aurora-cluster-resource-id",
+    aurora_cluster.cluster_resource_id,
+)
 pulumi.export(
     f"{name}-{environment}-aurora-instance-ids",
     [instance.id for instance in aurora_instances],
