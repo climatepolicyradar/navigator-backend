@@ -63,7 +63,10 @@ class MetricsService:
         self.metrics_endpoint = metrics_endpoint
 
         metric_exporter = OTLPMetricExporter(endpoint=metrics_endpoint)
-        metric_reader = PeriodicExportingMetricReader(metric_exporter)
+        metric_reader = PeriodicExportingMetricReader(
+            metric_exporter,
+            export_interval_millis=self.config.metrics_export_interval_ms,
+        )
 
         provider = MeterProvider(resource=resource, metric_readers=[metric_reader])
         metrics.set_meter_provider(provider)
@@ -146,6 +149,23 @@ class MetricsService:
             description=description,
             unit=unit,
         )
+
+    def force_flush(self, timeout_millis: int = 10000) -> bool:
+        """Force flush all pending metrics.
+
+        :param timeout_millis: Maximum time to wait for flush in milliseconds.
+        :type timeout_millis: int
+        :return: True if successful, False otherwise.
+        :rtype: bool
+        """
+        if self._disabled or self.meter_provider is None:
+            return True
+        try:
+            return self.meter_provider.force_flush(timeout_millis)
+        except Exception as exc:
+            logger = logging.getLogger(__name__)
+            logger.debug("Failed to flush metrics: %s", exc)
+            return False
 
     def shutdown(self) -> None:
         """Shutdown the meter provider to flush pending metrics.
