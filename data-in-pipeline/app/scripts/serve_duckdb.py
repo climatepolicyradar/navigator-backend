@@ -194,3 +194,66 @@ def list_documents(
         "total": total,
         "data": docs,
     }
+
+
+class AggregationResponse(BaseModel):
+    total: int
+    data: list[Aggregation]
+
+
+@app.get("/labels", response_model=AggregationResponse)
+def list_labels(
+    con=Depends(get_connection),
+):
+    labels_result = con.execute(
+        """
+        SELECT
+            l.label.id,
+            l.label.type,
+            COUNT(*) AS count
+        FROM documents
+        CROSS JOIN UNNEST(labels) AS t(l)
+        GROUP BY l.label.id, l.label.type
+        """
+    )
+    labels_colnames = [c[0] for c in labels_result.description]
+    labels_rows = labels_result.fetchall()
+    labels = []
+
+    for label_row in labels_rows:
+        record = dict(zip(labels_colnames, label_row))
+        labels.append(Aggregation(**record))
+
+    return {
+        "total": 10,
+        "data": labels,
+    }
+
+
+@app.get("/relationships", response_model=AggregationResponse)
+def list_relationships(
+    con=Depends(get_connection),
+):
+    relationships_result = con.execute(
+        """
+        SELECT
+            r.type as id,
+            r.type,
+            COUNT(*) AS count
+        FROM documents
+        CROSS JOIN UNNEST(relationships) AS t(r)
+        GROUP BY r.type, r.type
+        """
+    )
+    relationships_colnames = [c[0] for c in relationships_result.description]
+    relationships_rows = relationships_result.fetchall()
+    relationships = []
+
+    for relationship_row in relationships_rows:
+        record = dict(zip(relationships_colnames, relationship_row))
+        relationships.append(Aggregation(**record))
+
+    return {
+        "total": 10,
+        "data": relationships,
+    }
