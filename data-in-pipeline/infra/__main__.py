@@ -1,47 +1,6 @@
 import pulumi
 import pulumi_aws as aws
 
-# This stuff is being encapsulated in navigator-infra and we should use that once it is ready
-# IAM role trusted by App Runner
-data_in_pipeline_role = aws.iam.Role(
-    "data-in-pipeline-role",
-    assume_role_policy=aws.iam.get_policy_document(
-        statements=[
-            aws.iam.GetPolicyDocumentStatementArgs(
-                effect="Allow",
-                principals=[
-                    aws.iam.GetPolicyDocumentStatementPrincipalArgs(
-                        type="Service",
-                        identifiers=["build.apprunner.amazonaws.com"],
-                    )
-                ],
-                actions=["sts:AssumeRole"],
-            )
-        ]
-    ).json,
-)
-
-# Attach ECR access policy to the role
-data_in_pipeline_role_policy = aws.iam.RolePolicy(
-    "data-in-pipeline-role-ecr-policy",
-    role=data_in_pipeline_role.id,
-    policy=aws.iam.get_policy_document(
-        statements=[
-            aws.iam.GetPolicyDocumentStatementArgs(
-                effect="Allow",
-                actions=[
-                    "ecr:GetDownloadUrlForLayer",
-                    "ecr:BatchGetImage",
-                    "ecr:DescribeImages",
-                    "ecr:GetAuthorizationToken",
-                    "ecr:BatchCheckLayerAvailability",
-                ],
-                resources=["*"],
-            )
-        ]
-    ).json,
-)
-
 data_in_pipeline_ecr_repository = aws.ecr.Repository(
     "data-in-pipeline-ecr-repository",
     encryption_configurations=[
@@ -163,21 +122,75 @@ aurora_instances = [
 ]
 
 
-access_policy = {
-    "Version": "2012-10-17",
-    "Statement": [
-        {
-            "Effect": "Allow",
-            "Action": ["rds-db:connect"],
-            "Resource": [
-                f"arn:aws:rds-db:eu-west-1:{account_id}:dbuser:{aurora_cluster.cluster_resource_id}/{load_db_user}"
-            ],
-        }
-    ],
-}
+data_in_pipeline_role = data_in_pipeline_role = aws.iam.Role(
+    "prefect-data-in-pipeline-load-aurora-role",
+    assume_role_policy=aws.iam.get_policy_document(
+        statements=[
+            aws.iam.GetPolicyDocumentStatementArgs(
+                effect="Allow",
+                principals=[
+                    aws.iam.GetPolicyDocumentStatementPrincipalArgs(
+                        type="Service",
+                        identifiers=[
+                            "ecs-tasks.amazonaws.com"
+                        ],  # ECS task execution environment
+                    )
+                ],
+                actions=["sts:AssumeRole"],
+            )
+        ]
+    ).json,
+    tags=tags,
+)
+
+data_in_pipeline_role_policy = aws.iam.RolePolicy(
+    "data-in-pipeline-role-ecr-policy",
+    role=data_in_pipeline_role.id,
+    policy=aws.iam.get_policy_document(
+        statements=[
+            aws.iam.GetPolicyDocumentStatementArgs(
+                effect="Allow",
+                actions=[
+                    "ecr:GetDownloadUrlForLayer",
+                    "ecr:BatchGetImage",
+                    "ecr:DescribeImages",
+                    "ecr:GetAuthorizationToken",
+                    "ecr:BatchCheckLayerAvailability",
+                ],
+                resources=["*"],
+            )
+        ]
+    ).json,
+)
+
+app_runner_connect_role_policy = aws.iam.RolePolicy(
+    f"{name}-aurora-iam-connect-policy",
+    role=data_in_pipeline_role.id,
+    policy=aws.iam.get_policy_document(
+        statements=[
+            aws.iam.GetPolicyDocumentStatementArgs(
+                effect="Allow",
+                actions=["rds-db:connect"],
+                resources=[
+                    f"arn:aws:rds-db:eu-west-1:{account_id}:dbuser:{aurora_cluster.cluster_resource_id}/{load_db_user}"
+                ],
+            ),
+            # Optional: discovery permissions
+            aws.iam.GetPolicyDocumentStatementArgs(
+                effect="Allow",
+                actions=[
+                    "rds:DescribeDBClusters",
+                    "rds:DescribeDBInstances",
+                ],
+                resources=["*"],
+            ),
+        ]
+    ).json,
+)
 
 
 pulumi.export(f"{name}-{environment}-aurora-cluster-name", aurora_cluster._name)
+pulumi.export(f"{name}-{environment}-aurora-cluster-arn", aurora_cluster.arn)
 pulumi.export(
     f"{name}-{environment}-aurora-cluster-resource-id",
     aurora_cluster.cluster_resource_id,
