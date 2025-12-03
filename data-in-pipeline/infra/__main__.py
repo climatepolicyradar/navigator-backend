@@ -70,6 +70,7 @@ aws_env_stack = pulumi.StackReference(f"climatepolicyradar/aws_env/{environment}
 
 config = pulumi.Config()
 name = pulumi.get_project()
+db_name = config.require("db_name")
 account_id = config.require("validation_account_id")
 
 tags = {
@@ -123,13 +124,14 @@ aurora_subnet_group = aws.rds.SubnetGroup(
 )
 
 cluster_name = f"{name}-{environment}-aurora-cluster"
-load_user = config.require("load_user")
+load_db_user = config.require("load_db_user")
 
 aurora_cluster = aws.rds.Cluster(
     cluster_name,
     cluster_identifier=cluster_name,
     engine="aurora-postgresql",
     engine_version="17.6",
+    database_name=db_name,
     manage_master_user_password=True,
     db_subnet_group_name=aurora_subnet_group.name,
     vpc_security_group_ids=[aurora_security_group.id],
@@ -167,7 +169,7 @@ access_policy = {
             "Effect": "Allow",
             "Action": ["rds-db:connect"],
             "Resource": [
-                f"arn:aws:rds-db:eu-west-1:{account_id}:dbuser:{aurora_cluster.cluster_resource_id}/{load_user}"
+                f"arn:aws:rds-db:eu-west-1:{account_id}:dbuser:{aurora_cluster.cluster_resource_id}/{load_db_user}"
             ],
         }
     ],
