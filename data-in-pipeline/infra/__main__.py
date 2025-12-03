@@ -70,6 +70,7 @@ aws_env_stack = pulumi.StackReference(f"climatepolicyradar/aws_env/{environment}
 
 config = pulumi.Config()
 name = pulumi.get_project()
+account_id = config.require("validation_account_id")
 
 tags = {
     "CPR-Created-By": "pulumi",
@@ -78,7 +79,6 @@ tags = {
     "CPR-Tag": f"{environment}-{name}-store",
     "Environment": environment,
 }
-
 
 vpc_id = aws_env_stack.get_output("vpc_id")
 
@@ -122,10 +122,12 @@ aurora_subnet_group = aws.rds.SubnetGroup(
     tags=tags,
 )
 
+cluster_name = f"{name}-{environment}-aurora-cluster"
+load_user = config.require("load_user")
 
 aurora_cluster = aws.rds.Cluster(
-    f"{name}-{environment}-aurora-cluster",
-    cluster_identifier=f"{name}-{environment}-aurora-cluster",
+    cluster_name,
+    cluster_identifier=cluster_name,
     engine="aurora-postgresql",
     engine_version="17.6",
     manage_master_user_password=True,
@@ -133,6 +135,7 @@ aurora_cluster = aws.rds.Cluster(
     vpc_security_group_ids=[aurora_security_group.id],
     backup_retention_period=7,  # Retention is included in Aurora pricing for up to 7 days. Longer retention would add charges.
     preferred_backup_window="02:00-03:00",
+    iam_database_authentication_enabled=True,
     preferred_maintenance_window="sun:04:00-sun:05:00",
     deletion_protection=True,
     serverlessv2_scaling_configuration=aws.rds.ClusterServerlessv2ScalingConfigurationArgs(
@@ -157,7 +160,25 @@ aurora_instances = [
 ]
 
 
+access_policy = {
+    "Version": "2012-10-17",
+    "Statement": [
+        {
+            "Effect": "Allow",
+            "Action": ["rds-db:connect"],
+            "Resource": [
+                f"arn:aws:rds-db:eu-west-1:{account_id}:dbuser:{aurora_cluster.cluster_resource_id}/{load_user}"
+            ],
+        }
+    ],
+}
+
+
 pulumi.export(f"{name}-{environment}-aurora-cluster-name", aurora_cluster._name)
+pulumi.export(
+    f"{name}-{environment}-aurora-cluster-resource-id",
+    aurora_cluster.cluster_resource_id,
+)
 pulumi.export(
     f"{name}-{environment}-aurora-instance-ids",
     [instance.id for instance in aurora_instances],
