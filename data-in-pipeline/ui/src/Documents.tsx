@@ -158,35 +158,39 @@ export default function Documents() {
               setFilters([...filters, `${operator}${field}=${value}`]);
             }}
           >
-            <Select name="operator">
-              <SelectTrigger>
-                <SelectValue placeholder="+/-" />
-              </SelectTrigger>
-              <SelectContent>
-                <SelectItem value="+">+</SelectItem>
-                <SelectItem value="-">-</SelectItem>
-              </SelectContent>
-            </Select>
-            <Select name="field">
-              <SelectTrigger>
-                <SelectValue placeholder="field" />
-              </SelectTrigger>
-              <SelectContent>
-                <SelectItem value="labels.label.id">labels.label.id</SelectItem>
-                <SelectItem value="labels.label.type">
-                  labels.label.type
-                </SelectItem>
-                <SelectItem value="relationships.type">
-                  relationships.type
-                </SelectItem>
-                <SelectItem value="len(relationships)">
-                  len(relationships)
-                </SelectItem>
-                <SelectItem value="len(labels)">len(labels)</SelectItem>
-              </SelectContent>
-            </Select>
-            <Input name="value" className="max-w-md" />
-            <Button type="submit">Add Filter</Button>
+            <div className="flex gap-2 items-center">
+              <Select name="operator">
+                <SelectTrigger>
+                  <SelectValue placeholder="+/-" />
+                </SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="+">+</SelectItem>
+                  <SelectItem value="-">-</SelectItem>
+                </SelectContent>
+              </Select>
+              <Select name="field">
+                <SelectTrigger>
+                  <SelectValue placeholder="field" />
+                </SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="labels.label.id">
+                    labels.label.id
+                  </SelectItem>
+                  <SelectItem value="labels.label.type">
+                    labels.label.type
+                  </SelectItem>
+                  <SelectItem value="relationships.type">
+                    relationships.type
+                  </SelectItem>
+                  <SelectItem value="len(relationships)">
+                    len(relationships)
+                  </SelectItem>
+                  <SelectItem value="len(labels)">len(labels)</SelectItem>
+                </SelectContent>
+              </Select>
+              <Input name="value" className="max-w-md" />
+              <Button type="submit">Add Filter</Button>
+            </div>
           </form>
         </div>
         {filters.length > 0 && (
