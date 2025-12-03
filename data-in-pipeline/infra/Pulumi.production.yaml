@@ -4,3 +4,5 @@ config:
     secure: AAABAPGWHTErH0p8pyqdHr42w//zgxbpPGsAjB/+28C0e9TSVlvwyGE1z8E=
   data-in-pipeline:aurora_master_username:
     secure: AAABAMR9VhjLr01UsR8/xq2cSGF0k1+YTGIkyydskF4yCqNahFrAyV7zTVGAl4/v
+  data-in-pipeline:db_name:
+    secure: AAABAPmVsIdTcRyjWjkOHZnMjwlEfcjoSUc6bc267PLiKxJqG1rhzhQqQyc4DwZQG8DU8to=
