@@ -3,7 +3,12 @@ import os
 
 from returns.result import Failure, Success
 
-from app.extract.connectors import NavigatorCorpus, NavigatorDocument, NavigatorFamily
+from app.extract.connectors import (
+    NavigatorCorpus,
+    NavigatorDocument,
+    NavigatorEvent,
+    NavigatorFamily,
+)
 from app.models import Identified
 from app.transform.navigator_family import transform_navigator_family
 
@@ -40,6 +45,14 @@ if __name__ == "__main__":
                         )
                         for doc in family["documents"]
                     ],
+                    events=[
+                        NavigatorEvent(
+                            import_id=event["import_id"],
+                            event_type=event["event_type"],
+                            date=event["date"],
+                        )
+                        for event in family["events"]
+                    ],
                 ),
                 id=family["import_id"],
                 source="navigator_family",
@@ -56,11 +69,11 @@ if __name__ == "__main__":
         os.remove(f".data_cache/transformed_navigator_families/{file}")
 
     for document in successes:
-        model_dump = document.model_dump()
+        model_dump = document.model_dump_json(indent=4)
         with open(
             f".data_cache/transformed_navigator_families/{document.id}.json", "w"
         ) as f:
-            json.dump(model_dump, f, indent=4)
+            f.write(model_dump)
 
     print(f"Successes: {len(successes)}")
     print(f"Failures: {len(failures)}")

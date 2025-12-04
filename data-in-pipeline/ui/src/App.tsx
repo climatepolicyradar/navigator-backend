@@ -17,9 +17,7 @@ import { Navigation } from "./components/navigation";
 import Labels from "./Labels";
 import Relationships from "./Relationships";
 
-const baseProvider = dataProvider(
-  "https://skillful-analysis-production.up.railway.app",
-);
+const baseProvider = dataProvider("http://localhost:8000");
 
 const documentsDataProvider: DataProvider = {
   ...baseProvider,
@@ -30,9 +28,7 @@ const documentsDataProvider: DataProvider = {
     const offset = (currentPage - 1) * pageSize;
     const limit = pageSize;
 
-    const url = new URL(
-      `https://skillful-analysis-production.up.railway.app/${resource}`,
-    );
+    const url = new URL(`http://localhost:8000/${resource}`);
     url.searchParams.set("offset", offset.toString());
     url.searchParams.set("limit", limit.toString());
 
