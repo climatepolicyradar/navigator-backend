@@ -218,7 +218,7 @@ def _transform_navigator_family(navigator_family: NavigatorFamily) -> Document:
         @see: https://github.com/climatepolicyradar/data-migrations/blob/main/taxonomies/CIF.json#L7-L10
         @see: https://github.com/climatepolicyradar/data-migrations/blob/main/taxonomies/GEF.json#L7-L11
         """
-        mcf_project_status_value_map = {
+        mcf_project_event_type_to_activity_status_map = {
             "Concept Approved": "Concept approved",
             "Project Approved": "Approved",
             "Under Implementation": "Under implementation",
@@ -226,8 +226,38 @@ def _transform_navigator_family(navigator_family: NavigatorFamily) -> Document:
             "Cancelled": "Cancelled",
         }
 
+        """
+        Values from Navigator are controlled
+        @see: https://github.com/climatepolicyradar/data-migrations/blob/main/taxonomies/Laws%20and%20Policies.json#L17-L33
+        @see: https://github.com/climatepolicyradar/data-migrations/blob/main/taxonomies/Intl.%20agreements.json#L7-L24
+        """
+        laws_and_policies_event_type_to_activity_status_map = {
+            "Amended": "Amended",
+            "Appealed": "Appealed",
+            "Closed": "Closed",
+            "Declaration Of Climate Emergency": "Declaration of climate emergency",
+            "Dismissed": "Dismissed",
+            "Entered Into Force": "Entered into force",
+            "Filing": "Filing",
+            "Granted": "Granted",
+            "Implementation Details": "Implementation details",
+            "International Agreement": "International agreement",
+            "Net Zero Pledge": "Net zero pledge",
+            "Other": "Other",
+            "Passed/Approved": "Passed/Approved",
+            "Repealed/Replaced": "Repealed/Replaced",
+            "Set": "Set",
+            "Settled": "Settled",
+            "Updated": "Updated",
+        }
+
+        event_type_to_activity_status_map = (
+            mcf_project_event_type_to_activity_status_map
+            | laws_and_policies_event_type_to_activity_status_map
+        )
+
         for event in navigator_family.events:
-            label_id = mcf_project_status_value_map.get(
+            label_id = event_type_to_activity_status_map.get(
                 event.event_type,
                 "Unknown",
             )
