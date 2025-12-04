@@ -196,6 +196,53 @@ def _transform_navigator_family(navigator_family: NavigatorFamily) -> Document:
             )
         )
 
+    # We skip litigation as we hijacked the event_type for document type
+    if navigator_family.corpus.import_id != "Academic.corpus.Litigation.n0000":
+        """
+        Activity status
+
+        This is loosely inspired by the IATI ontology
+        @see: https://iatistandard.org/en/iati-standard/203/activity-standard/iati-activities/iati-activity/activity-status/
+        @see: https://iatistandard.org/en/iati-standard/203/codelists/activitystatus/
+
+        e.g.
+        Project Approved => Pipeline/identification
+        Under Implementation => Implementation
+        Project Completed => Closed
+        """
+
+        """
+        Values from Navigator are controlled
+        @see: https://github.com/climatepolicyradar/data-migrations/blob/main/taxonomies/AF.json#L7C9-L9C28
+        @see: https://github.com/climatepolicyradar/data-migrations/blob/main/taxonomies/CIF.json#L7-L10
+        @see: https://github.com/climatepolicyradar/data-migrations/blob/main/taxonomies/CIF.json#L7-L10
+        @see: https://github.com/climatepolicyradar/data-migrations/blob/main/taxonomies/GEF.json#L7-L11
+        """
+        mcf_project_status_value_map = {
+            "Concept Approved": "Concept approved",
+            "Project Approved": "Approved",
+            "Under Implementation": "Under implementation",
+            "Project Completed": "Completed",
+            "Cancelled": "Cancelled",
+        }
+
+        for event in navigator_family.events:
+            label_id = mcf_project_status_value_map.get(
+                event.event_type,
+                "Unknown",
+            )
+            labels.append(
+                DocumentLabelRelationship(
+                    type="activity_status",
+                    timestamp=event.date,
+                    label=Label(
+                        id=label_id,
+                        title=label_id,
+                        type="activity_status",
+                    ),
+                )
+            )
+
     # this is for debugging
     if not labels:
         labels.append(
@@ -258,7 +305,7 @@ def _transform_navigator_document(
         labels.append(
             DocumentLabelRelationship(
                 type="status",
-                label=Label(id="obsolete", title="obsolete", type="status"),
+                label=Label(id="Obsolete", title="Obsolete", type="status"),
             )
         )
 
