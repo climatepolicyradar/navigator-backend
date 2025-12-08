@@ -1,3 +1,5 @@
+import datetime
+
 import pytest
 from returns.result import Success
 
@@ -34,6 +36,7 @@ def navigator_family_with_single_matching_document() -> Identified[NavigatorFami
                     events=[],
                 ),
             ],
+            events=[],
         ),
     )
 
@@ -50,6 +53,7 @@ def navigator_family_with_no_matching_transformations() -> Identified[NavigatorF
             documents=[
                 NavigatorDocument(import_id="456", title="Test document 1", events=[]),
             ],
+            events=[],
         ),
     )
 
@@ -67,12 +71,25 @@ def navigator_family_with_litigation_corpus_type() -> Identified[NavigatorFamily
                 NavigatorDocument(
                     import_id="document",
                     title="Litigation family document",
-                    events=[NavigatorEvent(import_id="123", event_type="Decision")],
+                    events=[
+                        NavigatorEvent(
+                            import_id="123",
+                            event_type="Decision",
+                            date=datetime.datetime(2020, 1, 1),
+                        )
+                    ],
                 ),
                 NavigatorDocument(
                     import_id="1.2.3.placeholder",
                     title="Placeholder litigation family document",
                     events=[],
+                ),
+            ],
+            events=[
+                NavigatorEvent(
+                    import_id="123",
+                    event_type="Decision",
+                    date=datetime.datetime(2020, 1, 1),
                 ),
             ],
         ),
@@ -98,6 +115,33 @@ def navigator_family_multilateral_climate_fund_project() -> Identified[Navigator
                     import_id="document_2",
                     title="Project document",
                     events=[],
+                ),
+            ],
+            events=[
+                NavigatorEvent(
+                    import_id="concept_approved",
+                    event_type="Concept Approved",
+                    date=datetime.datetime(2020, 1, 1),
+                ),
+                NavigatorEvent(
+                    import_id="project_approved",
+                    event_type="Project Approved",
+                    date=datetime.datetime(2020, 1, 1),
+                ),
+                NavigatorEvent(
+                    import_id="under_implementation",
+                    event_type="Under Implementation",
+                    date=datetime.datetime(2020, 1, 1),
+                ),
+                NavigatorEvent(
+                    import_id="project_completed",
+                    event_type="Project Completed",
+                    date=datetime.datetime(2020, 1, 1),
+                ),
+                NavigatorEvent(
+                    import_id="cancelled",
+                    event_type="Cancelled",
+                    date=datetime.datetime(2020, 1, 1),
                 ),
             ],
         ),
@@ -234,8 +278,8 @@ def test_transform_navigator_family_with_litigation_corpus_type(
                                 DocumentLabelRelationship(
                                     type="status",
                                     label=Label(
-                                        id="obsolete",
-                                        title="obsolete",
+                                        id="Obsolete",
+                                        title="Obsolete",
                                         type="status",
                                     ),
                                 ),
@@ -284,8 +328,8 @@ def test_transform_navigator_family_with_litigation_corpus_type(
                     DocumentLabelRelationship(
                         type="status",
                         label=Label(
-                            id="obsolete",
-                            title="obsolete",
+                            id="Obsolete",
+                            title="Obsolete",
                             type="status",
                         ),
                     ),
@@ -333,6 +377,51 @@ def test_transform_navigator_family_with_multilateral_climate_fund_project(
                             title="Multilateral climate fund project",
                             type="entity_type",
                         ),
+                    ),
+                    DocumentLabelRelationship(
+                        type="activity_status",
+                        label=Label(
+                            id="Concept approved",
+                            title="Concept approved",
+                            type="activity_status",
+                        ),
+                        timestamp=datetime.datetime(2020, 1, 1),
+                    ),
+                    DocumentLabelRelationship(
+                        type="activity_status",
+                        label=Label(
+                            id="Approved",
+                            title="Approved",
+                            type="activity_status",
+                        ),
+                        timestamp=datetime.datetime(2020, 1, 1),
+                    ),
+                    DocumentLabelRelationship(
+                        type="activity_status",
+                        label=Label(
+                            id="Under implementation",
+                            title="Under implementation",
+                            type="activity_status",
+                        ),
+                        timestamp=datetime.datetime(2020, 1, 1),
+                    ),
+                    DocumentLabelRelationship(
+                        type="activity_status",
+                        label=Label(
+                            id="Completed",
+                            title="Completed",
+                            type="activity_status",
+                        ),
+                        timestamp=datetime.datetime(2020, 1, 1),
+                    ),
+                    DocumentLabelRelationship(
+                        type="activity_status",
+                        label=Label(
+                            id="Cancelled",
+                            title="Cancelled",
+                            type="activity_status",
+                        ),
+                        timestamp=datetime.datetime(2020, 1, 1),
                     ),
                 ],
                 relationships=[
@@ -400,6 +489,51 @@ def test_transform_navigator_family_with_multilateral_climate_fund_project(
                                         type="entity_type",
                                     ),
                                 ),
+                                DocumentLabelRelationship(
+                                    type="activity_status",
+                                    label=Label(
+                                        id="Concept approved",
+                                        title="Concept approved",
+                                        type="activity_status",
+                                    ),
+                                    timestamp=datetime.datetime(2020, 1, 1),
+                                ),
+                                DocumentLabelRelationship(
+                                    type="activity_status",
+                                    label=Label(
+                                        id="Approved",
+                                        title="Approved",
+                                        type="activity_status",
+                                    ),
+                                    timestamp=datetime.datetime(2020, 1, 1),
+                                ),
+                                DocumentLabelRelationship(
+                                    type="activity_status",
+                                    label=Label(
+                                        id="Under implementation",
+                                        title="Under implementation",
+                                        type="activity_status",
+                                    ),
+                                    timestamp=datetime.datetime(2020, 1, 1),
+                                ),
+                                DocumentLabelRelationship(
+                                    type="activity_status",
+                                    label=Label(
+                                        id="Completed",
+                                        title="Completed",
+                                        type="activity_status",
+                                    ),
+                                    timestamp=datetime.datetime(2020, 1, 1),
+                                ),
+                                DocumentLabelRelationship(
+                                    type="activity_status",
+                                    label=Label(
+                                        id="Cancelled",
+                                        title="Cancelled",
+                                        type="activity_status",
+                                    ),
+                                    timestamp=datetime.datetime(2020, 1, 1),
+                                ),
                             ],
                         ),
                     )
@@ -432,6 +566,51 @@ def test_transform_navigator_family_with_multilateral_climate_fund_project(
                                         title="Multilateral climate fund project",
                                         type="entity_type",
                                     ),
+                                ),
+                                DocumentLabelRelationship(
+                                    type="activity_status",
+                                    label=Label(
+                                        id="Concept approved",
+                                        title="Concept approved",
+                                        type="activity_status",
+                                    ),
+                                    timestamp=datetime.datetime(2020, 1, 1),
+                                ),
+                                DocumentLabelRelationship(
+                                    type="activity_status",
+                                    label=Label(
+                                        id="Approved",
+                                        title="Approved",
+                                        type="activity_status",
+                                    ),
+                                    timestamp=datetime.datetime(2020, 1, 1),
+                                ),
+                                DocumentLabelRelationship(
+                                    type="activity_status",
+                                    label=Label(
+                                        id="Under implementation",
+                                        title="Under implementation",
+                                        type="activity_status",
+                                    ),
+                                    timestamp=datetime.datetime(2020, 1, 1),
+                                ),
+                                DocumentLabelRelationship(
+                                    type="activity_status",
+                                    label=Label(
+                                        id="Completed",
+                                        title="Completed",
+                                        type="activity_status",
+                                    ),
+                                    timestamp=datetime.datetime(2020, 1, 1),
+                                ),
+                                DocumentLabelRelationship(
+                                    type="activity_status",
+                                    label=Label(
+                                        id="Cancelled",
+                                        title="Cancelled",
+                                        type="activity_status",
+                                    ),
+                                    timestamp=datetime.datetime(2020, 1, 1),
                                 ),
                             ],
                         ),

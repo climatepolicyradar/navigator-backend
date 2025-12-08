@@ -145,6 +145,7 @@ def test_fetch_family_success(base_config):
             documents=[
                 NavigatorDocument(import_id=import_id, title="Test Document", events=[])
             ],
+            events=[],
         ).model_dump(),
     }
 
@@ -300,12 +301,14 @@ def test_fetch_all_families_successfully(base_config):
                 title="Family 1",
                 corpus=NavigatorCorpus(import_id="COR-001"),
                 documents=[],
+                events=[],
             ).model_dump(),
             NavigatorFamily(
                 import_id="FAM-002",
                 title="Family 2",
                 corpus=NavigatorCorpus(import_id="COR-001"),
                 documents=[],
+                events=[],
             ).model_dump(),
         ]
     }
@@ -316,6 +319,7 @@ def test_fetch_all_families_successfully(base_config):
                 title="Family 3",
                 corpus=NavigatorCorpus(import_id="COR-002"),
                 documents=[],
+                events=[],
             ).model_dump()
         ]
     }
@@ -373,6 +377,7 @@ def test_fetch_all_families_handles_successful_retrievals_and_errors(base_config
                 title="Family 1",
                 corpus=NavigatorCorpus(import_id="COR-001"),
                 documents=[],
+                events=[],
             ).model_dump()
         ]
     }
