@@ -120,7 +120,7 @@ cluster_name = f"{name}-{environment}-aurora-cluster"
 load_db_user = config.require("load_db_user")
 
 min_instances = int(config.require("aurora_min_instances"))
-max_instances = int(config.require("aurora_max_instances"))
+max_instances: int = int(config.require("aurora_max_instances"))
 retention_period_days = int(config.require("aurora_retention_period_days"))
 aurora_cluster = aws.rds.Cluster(
     cluster_name,
@@ -147,15 +147,7 @@ aurora_cluster = aws.rds.Cluster(
         # after importing existing clusters. These properties may differ
         # between code definition and actual AWS state.
         ignore_changes=[
-            "manage_master_user_password",
-            "master_username",
-            "master_password",
-            "engine_version",
             "db_subnet_group_name",  # May differ if subnet group was imported separately
-            "vpc_security_group_ids",  # Security group IDs may differ
-            "preferred_backup_window",
-            "preferred_maintenance_window",
-            "serverlessv2_scaling_configuration",
         ],
     ),
 )
@@ -170,12 +162,8 @@ aurora_instances = [
         publicly_accessible=False,
         auto_minor_version_upgrade=True,
         tags=tags,
-        opts=pulumi.ResourceOptions(
-            # Ignore engine version changes after import to prevent conflicts
-            ignore_changes=["engine_version"],
-        ),
     )
-    for i in range(int(max_instances))
+    for i in range(max_instances)
 ]
 
 pulumi.export(
