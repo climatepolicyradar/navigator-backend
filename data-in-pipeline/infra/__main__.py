@@ -44,6 +44,7 @@ vpc_id = aws_env_stack.get_output("vpc_id")
 
 aurora_security_group = aws.ec2.SecurityGroup(
     f"{name}-aurora-sg",
+    name=f"{name}-aurora-sg",
     vpc_id=vpc_id,
     description=f"Security group for {name} Aurora DB",
     ingress=[
@@ -77,6 +78,8 @@ private_subnets = [
 
 aurora_subnet_group = aws.rds.SubnetGroup(
     f"{name}-aurora-subnet-group",
+    name=f"{name}-aurora-subnet-group",
+    description="Subnet group for Data in Pipeline Aurora DB",
     subnet_ids=private_subnets,
     tags=tags,
 )
@@ -98,6 +101,9 @@ bastion_ingress_to_rds = aws.ec2.SecurityGroupRule(
     security_group_id=aurora_security_group.id,
     source_security_group_id=backend_stack.get_output("bastion_security_group_id"),
     description="Allow Postgres from bastion SG",
+    opts=pulumi.ResourceOptions(
+        depends_on=[aurora_security_group],
+    ),
 )
 
 # Allow bastion SG egress to RDS SG (needed for socat tunnel)
@@ -110,6 +116,9 @@ bastion_egress_to_rds = aws.ec2.SecurityGroupRule(
     security_group_id=backend_stack.get_output("bastion_security_group_id"),
     source_security_group_id=aurora_security_group.id,
     description="Allow Postgres to RDS SG from bastion",
+    opts=pulumi.ResourceOptions(
+        depends_on=[aurora_security_group],
+    ),
 )
 
 #######################################################################
@@ -143,12 +152,7 @@ aurora_cluster = aws.rds.Cluster(
     ),
     tags=tags,
     opts=pulumi.ResourceOptions(
-        # Ignore AWS-managed and computed properties to prevent conflicts
-        # after importing existing clusters. These properties may differ
-        # between code definition and actual AWS state.
-        ignore_changes=[
-            "db_subnet_group_name",  # May differ if subnet group was imported separately
-        ],
+        depends_on=[aurora_subnet_group, aurora_security_group],
     ),
 )
 
@@ -162,6 +166,9 @@ aurora_instances = [
         publicly_accessible=False,
         auto_minor_version_upgrade=True,
         tags=tags,
+        opts=pulumi.ResourceOptions(
+            depends_on=[aurora_cluster],
+        ),
     )
     for i in range(max_instances)
 ]
@@ -189,6 +196,8 @@ pulumi.export(
 
 data_in_pipeline_role = aws.iam.Role(
     "prefect-data-in-pipeline-load-aurora-role",
+    name="prefect-data-in-pipeline-load-aurora-role",
+    description="IAM role for Data In Pipeline Aurora",
     assume_role_policy=aws.iam.get_policy_document(
         statements=[
             aws.iam.GetPolicyDocumentStatementArgs(
@@ -210,6 +219,7 @@ data_in_pipeline_role = aws.iam.Role(
 
 data_in_pipeline_role_policy = aws.iam.RolePolicy(
     "data-in-pipeline-role-ecr-policy",
+    name="data-in-pipeline-role-ecr-policy",
     role=data_in_pipeline_role.id,
     policy=aws.iam.get_policy_document(
         statements=[
@@ -231,6 +241,7 @@ data_in_pipeline_role_policy = aws.iam.RolePolicy(
 # Construct IAM policy with cluster resource ID using apply to handle Output
 app_runner_connect_role_policy = aws.iam.RolePolicy(
     f"{name}-aurora-iam-connect-policy",
+    name="data-in-pipeline-aurora-iam-connect-policy",
     role=data_in_pipeline_role.id,
     policy=aurora_cluster.cluster_resource_id.apply(
         lambda resource_id: aws.iam.get_policy_document(
