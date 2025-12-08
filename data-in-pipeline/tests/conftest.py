@@ -38,7 +38,7 @@ def alembic_config():
 # Configuration of pytest mock postgres fixtures
 @pytest.fixture(scope="session")
 def pmr_postgres_config():
-    return PostgresConfig(image="postgres:14")
+    return PostgresConfig(image="postgres:17")
 
 
 # Engine Postgres fixture for alembic tests
