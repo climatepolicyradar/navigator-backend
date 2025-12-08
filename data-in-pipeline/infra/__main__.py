@@ -139,6 +139,22 @@ aurora_cluster = aws.rds.Cluster(
         max_capacity=2,
     ),
     tags=tags,
+    opts=pulumi.ResourceOptions(
+        # Ignore AWS-managed and computed properties to prevent conflicts
+        # after importing existing clusters. These properties may differ
+        # between code definition and actual AWS state.
+        ignore_changes=[
+            "manage_master_user_password",
+            "master_username",
+            "master_password",
+            "engine_version",
+            "db_subnet_group_name",  # May differ if subnet group was imported separately
+            "vpc_security_group_ids",  # Security group IDs may differ
+            "preferred_backup_window",
+            "preferred_maintenance_window",
+            "serverlessv2_scaling_configuration",
+        ],
+    ),
 )
 
 aurora_instances = [
@@ -151,11 +167,17 @@ aurora_instances = [
         publicly_accessible=False,
         auto_minor_version_upgrade=True,
         tags=tags,
+        opts=pulumi.ResourceOptions(
+            # Ignore engine version changes after import to prevent conflicts
+            ignore_changes=["engine_version"],
+        ),
     )
     for i in range(2)
 ]
 
-pulumi.export(f"{name}-{environment}-aurora-cluster-name", aurora_cluster._name)
+pulumi.export(
+    f"{name}-{environment}-aurora-cluster-name", aurora_cluster.cluster_identifier
+)
 pulumi.export(f"{name}-{environment}-aurora-cluster-arn", aurora_cluster.arn)
 pulumi.export(
     f"{name}-{environment}-aurora-cluster-resource-id",
@@ -163,7 +185,7 @@ pulumi.export(
 )
 pulumi.export(
     f"{name}-{environment}-aurora-instance-ids",
-    [instance.id for instance in aurora_instances],
+    [instance.identifier for instance in aurora_instances],
 )
 pulumi.export(f"{name}-{environment}-aurora-endpoint", aurora_cluster.endpoint)
 pulumi.export(
@@ -174,7 +196,7 @@ pulumi.export(
 # Create the IAM role for the Data In Pipeline.
 #######################################################################
 
-data_in_pipeline_role = data_in_pipeline_role = aws.iam.Role(
+data_in_pipeline_role = aws.iam.Role(
     "prefect-data-in-pipeline-load-aurora-role",
     assume_role_policy=aws.iam.get_policy_document(
         statements=[
@@ -215,27 +237,30 @@ data_in_pipeline_role_policy = aws.iam.RolePolicy(
     ).json,
 )
 
+# Construct IAM policy with cluster resource ID using apply to handle Output
 app_runner_connect_role_policy = aws.iam.RolePolicy(
     f"{name}-aurora-iam-connect-policy",
     role=data_in_pipeline_role.id,
-    policy=aws.iam.get_policy_document(
-        statements=[
-            aws.iam.GetPolicyDocumentStatementArgs(
-                effect="Allow",
-                actions=["rds-db:connect"],
-                resources=[
-                    f"arn:aws:rds-db:eu-west-1:{account_id}:dbuser:{aurora_cluster.cluster_resource_id}/{load_db_user}"
-                ],
-            ),
-            # Optional: discovery permissions
-            aws.iam.GetPolicyDocumentStatementArgs(
-                effect="Allow",
-                actions=[
-                    "rds:DescribeDBClusters",
-                    "rds:DescribeDBInstances",
-                ],
-                resources=["*"],
-            ),
-        ]
-    ).json,
+    policy=aurora_cluster.cluster_resource_id.apply(
+        lambda resource_id: aws.iam.get_policy_document(
+            statements=[
+                aws.iam.GetPolicyDocumentStatementArgs(
+                    effect="Allow",
+                    actions=["rds-db:connect"],
+                    resources=[
+                        f"arn:aws:rds-db:eu-west-1:{account_id}:dbuser:{resource_id}/{load_db_user}"
+                    ],
+                ),
+                # Optional: discovery permissions
+                aws.iam.GetPolicyDocumentStatementArgs(
+                    effect="Allow",
+                    actions=[
+                        "rds:DescribeDBClusters",
+                        "rds:DescribeDBInstances",
+                    ],
+                    resources=["*"],
+                ),
+            ]
+        ).json
+    ),
 )
