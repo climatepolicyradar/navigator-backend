@@ -119,9 +119,9 @@ bastion_egress_to_rds = aws.ec2.SecurityGroupRule(
 cluster_name = f"{name}-{environment}-aurora-cluster"
 load_db_user = config.require("load_db_user")
 
-min_instances = config.require("aurora_min_instances")
-max_instances = config.require("aurora_max_instances")
-retention_period_days = config.require("aurora_retention_period_days")
+min_instances = int(config.require("aurora_min_instances"))
+max_instances = int(config.require("aurora_max_instances"))
+retention_period_days = int(config.require("aurora_retention_period_days"))
 aurora_cluster = aws.rds.Cluster(
     cluster_name,
     cluster_identifier=cluster_name,
@@ -132,16 +132,14 @@ aurora_cluster = aws.rds.Cluster(
     master_username=config.get("aurora_master_username"),
     db_subnet_group_name=aurora_subnet_group.name,
     vpc_security_group_ids=[aurora_security_group.id],
-    backup_retention_period=int(
-        retention_period_days
-    ),  # Retention is included in Aurora pricing for up to 7 days. Longer retention would add charges.
+    backup_retention_period=retention_period_days,  # Retention is included in Aurora pricing for up to 7 days. Longer retention would add charges.
     preferred_backup_window="02:00-03:00",
     iam_database_authentication_enabled=True,
     preferred_maintenance_window="sun:04:00-sun:05:00",
     deletion_protection=True,
     serverlessv2_scaling_configuration=aws.rds.ClusterServerlessv2ScalingConfigurationArgs(
-        min_capacity=int(min_instances),
-        max_capacity=int(max_instances),
+        min_capacity=min_instances,
+        max_capacity=max_instances,
     ),
     tags=tags,
     opts=pulumi.ResourceOptions(
