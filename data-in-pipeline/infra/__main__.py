@@ -1,6 +1,14 @@
 import pulumi
 import pulumi_aws as aws
 
+config = pulumi.Config()
+environment = pulumi.get_stack()
+name = pulumi.get_project()
+
+#######################################################################
+# Create the ECR repository for the Data In Pipeline.
+#######################################################################
+
 data_in_pipeline_ecr_repository = aws.ecr.Repository(
     "data-in-pipeline-ecr-repository",
     encryption_configurations=[
@@ -24,11 +32,9 @@ pulumi.export("ecr_repository_url", data_in_pipeline_ecr_repository.repository_u
 #######################################################################
 # Create the Aurora service for the Document Store.
 #######################################################################
-environment = pulumi.get_stack()
 aws_env_stack = pulumi.StackReference(f"climatepolicyradar/aws_env/{environment}")
 
-config = pulumi.Config()
-name = pulumi.get_project()
+db_port = 5432
 db_name = config.require("db_name")
 account_id = config.require("validation_account_id")
 
@@ -51,8 +57,8 @@ aurora_security_group = aws.ec2.SecurityGroup(
         aws.ec2.SecurityGroupIngressArgs(
             description="Allow PostgreSQL access",
             protocol="tcp",
-            from_port=5432,
-            to_port=5432,
+            from_port=db_port,
+            to_port=db_port,
             security_groups=[],  # TODO
         )
     ],
@@ -95,8 +101,8 @@ backend_stack = pulumi.StackReference(f"climatepolicyradar/backend/{environment}
 bastion_ingress_to_rds = aws.ec2.SecurityGroupRule(
     f"{name}-{environment}-bastion-ingress-to-rds",
     type="ingress",
-    from_port=5432,
-    to_port=5432,
+    from_port=db_port,
+    to_port=db_port,
     protocol="tcp",
     security_group_id=aurora_security_group.id,
     source_security_group_id=backend_stack.get_output("bastion_security_group_id"),
@@ -110,8 +116,8 @@ bastion_ingress_to_rds = aws.ec2.SecurityGroupRule(
 bastion_egress_to_rds = aws.ec2.SecurityGroupRule(
     f"{name}-{environment}-bastion-egress-to-rds",
     type="egress",
-    from_port=5432,
-    to_port=5432,
+    from_port=db_port,
+    to_port=db_port,
     protocol="tcp",
     security_group_id=backend_stack.get_output("bastion_security_group_id"),
     source_security_group_id=aurora_security_group.id,
