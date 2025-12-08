@@ -32,5 +32,6 @@ dev = [
   "pytest>=8.4.2",
   "pytest-alembic>=0.12.1",
   "pytest-mock-resources>=2.12.4",
+  "python-on-whales>=0.79.0",
   "types-sqlalchemy>=1.4.53.38",
 ]
