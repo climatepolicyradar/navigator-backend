@@ -18,10 +18,14 @@ dependencies = [
   "fastapi>=0.115.14",
   "numpy>=2.3.4",
   "pandas>=2.3.3",
+  "sqlalchemy>=2.0.44",
+  "sqlalchemy-utils>=0.42.0",
+  "alembic>=1.17.0",
+  "alembic-utils>=0.8.8",
 ]
 
 [tool.uv.sources]
 api = { workspace = true }
 
 [dependency-groups]
-dev = ["pytest>=8.4.2"]
+dev = ["pytest>=8.4.2", "pytest-alembic>=0.12.1", "types-sqlalchemy>=1.4.53.38"]
