@@ -10,3 +10,7 @@ config:
     secure: AAABACQex+ad8JyaHf4RhQwwW0gyldnaMYe1Nur/7VUJuIixcguI1Of5mgIkNFMT
   data-in-pipeline:aurora_master_password:
     secure: AAABAJqCx88PoAha5zj46WHq4zx0zefZ7GzXDh7NJ4jdSDmznClcKiejKOp68pkX87s6z4LvGJkAnxIf
+  data-in-pipeline:aurora_min_instances: "0"
+  data-in-pipeline:aurora_max_instances: "2"
+  # Retention is included in Aurora pricing for up to 7 days. Longer retention would add charges.
+  data-in-pipeline:aurora_retention_period_days: "7"
