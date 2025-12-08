@@ -66,7 +66,6 @@ aurora_security_group = aws.ec2.SecurityGroup(
     tags=tags,
 )
 
-
 eu_west_1a_private_subnet_id = aws_env_stack.get_output("eu_west_1a_private_subnet_id")
 eu_west_1b_private_subnet_id = aws_env_stack.get_output("eu_west_1b_private_subnet_id")
 eu_west_1c_private_subnet_id = aws_env_stack.get_output("eu_west_1c_private_subnet_id")
@@ -113,6 +112,10 @@ bastion_egress_to_rds = aws.ec2.SecurityGroupRule(
     description="Allow Postgres to RDS SG from bastion",
 )
 
+#######################################################################
+# Create the Aurora cluster for the Data In Pipeline.
+#######################################################################
+
 cluster_name = f"{name}-{environment}-aurora-cluster"
 load_db_user = config.require("load_db_user")
 
@@ -152,6 +155,24 @@ aurora_instances = [
     for i in range(2)
 ]
 
+pulumi.export(f"{name}-{environment}-aurora-cluster-name", aurora_cluster._name)
+pulumi.export(f"{name}-{environment}-aurora-cluster-arn", aurora_cluster.arn)
+pulumi.export(
+    f"{name}-{environment}-aurora-cluster-resource-id",
+    aurora_cluster.cluster_resource_id,
+)
+pulumi.export(
+    f"{name}-{environment}-aurora-instance-ids",
+    [instance.id for instance in aurora_instances],
+)
+pulumi.export(f"{name}-{environment}-aurora-endpoint", aurora_cluster.endpoint)
+pulumi.export(
+    f"{name}-{environment}-aurora-reader-endpoint", aurora_cluster.reader_endpoint
+)
+
+#######################################################################
+# Create the IAM role for the Data In Pipeline.
+#######################################################################
 
 data_in_pipeline_role = data_in_pipeline_role = aws.iam.Role(
     "prefect-data-in-pipeline-load-aurora-role",
@@ -217,20 +238,4 @@ app_runner_connect_role_policy = aws.iam.RolePolicy(
             ),
         ]
     ).json,
-)
-
-
-pulumi.export(f"{name}-{environment}-aurora-cluster-name", aurora_cluster._name)
-pulumi.export(f"{name}-{environment}-aurora-cluster-arn", aurora_cluster.arn)
-pulumi.export(
-    f"{name}-{environment}-aurora-cluster-resource-id",
-    aurora_cluster.cluster_resource_id,
-)
-pulumi.export(
-    f"{name}-{environment}-aurora-instance-ids",
-    [instance.id for instance in aurora_instances],
-)
-pulumi.export(f"{name}-{environment}-aurora-endpoint", aurora_cluster.endpoint)
-pulumi.export(
-    f"{name}-{environment}-aurora-reader-endpoint", aurora_cluster.reader_endpoint
 )
