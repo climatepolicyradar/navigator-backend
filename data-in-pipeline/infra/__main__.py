@@ -22,7 +22,7 @@ pulumi.export("ecr_repository_url", data_in_pipeline_ecr_repository.repository_u
 
 
 #######################################################################
-# Create the Aurora service for the Document Store.
+# Create the Aurora service.
 #######################################################################
 environment = pulumi.get_stack()
 aws_env_stack = pulumi.StackReference(f"climatepolicyradar/aws_env/{environment}")
@@ -122,7 +122,7 @@ aurora_instances = [
 ]
 
 
-data_in_pipeline_role = data_in_pipeline_role = aws.iam.Role(
+data_in_pipeline_role = aws.iam.Role(
     "prefect-data-in-pipeline-load-aurora-role",
     assume_role_policy=aws.iam.get_policy_document(
         statements=[
