@@ -71,6 +71,7 @@ aurora_security_group = aws.ec2.SecurityGroup(
         ),
     ],
     tags=tags,
+    opts=pulumi.ResourceOptions(depends_on=[aws_env_stack]),
 )
 
 eu_west_1a_private_subnet_id = aws_env_stack.get_output("eu_west_1a_private_subnet_id")
