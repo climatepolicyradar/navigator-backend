@@ -473,6 +473,7 @@ dependencies = [
 dev = [
     { name = "pytest" },
     { name = "pytest-alembic" },
+    { name = "pytest-mock-resources" },
     { name = "types-sqlalchemy" },
 ]
 
@@ -502,6 +503,7 @@ requires-dist = [
 dev = [
     { name = "pytest", specifier = ">=8.4.2" },
     { name = "pytest-alembic", specifier = ">=0.12.1" },
+    { name = "pytest-mock-resources", specifier = ">=2.12.4" },
     { name = "types-sqlalchemy", specifier = ">=1.4.53.38" },
 ]
 
@@ -1875,6 +1877,20 @@ dependencies = [
 sdist = { url = "https://files.pythonhosted.org/packages/f9/37/ad095d92242fe5c6b4b793191240375c01f6508960f31179de7f0e22cb96/pytest_alembic-0.12.1.tar.gz", hash = "sha256:4e2b477d93464d0cfe80487fdf63922bfd22f29153ca980c1bccf1dbf833cf12", size = 30635, upload-time = "2025-05-27T14:15:29.85Z" }
 wheels = [
     { url = "https://files.pythonhosted.org/packages/8b/f4/ded73992f972360adf84781b7e58729a3778e4358d482e1fe375c83948b4/pytest_alembic-0.12.1-py3-none-any.whl", hash = "sha256:d0d6be79f1c597278fbeda08c5558e7b8770af099521b0aa164e0df4aed945da", size = 36571, upload-time = "2025-05-27T14:15:28.817Z" },
+]
+
+[[package]]
+name = "pytest-mock-resources"
+version = "2.12.4"
+source = { registry = "https://pypi.org/simple" }
+dependencies = [
+    { name = "pytest" },
+    { name = "sqlalchemy" },
+    { name = "typing-extensions" },
+]
+sdist = { url = "https://files.pythonhosted.org/packages/c5/9a/6ca1cc045dd45a2c0793b8d997e649a7e06c805a98a1d50ab1dab1aa3c4d/pytest_mock_resources-2.12.4.tar.gz", hash = "sha256:f3734b2f1eb851bc3c44375bd1fccc1571770a190ad16f1efa7655f436be2bf3", size = 41959, upload-time = "2025-09-17T18:32:53.204Z" }
+wheels = [
+    { url = "https://files.pythonhosted.org/packages/75/ce/8ec6e58bd916f215b45ab8c1f4f99d3a2470ff7dfb63b70bc8026ce5740e/pytest_mock_resources-2.12.4-py3-none-any.whl", hash = "sha256:9e737cdf9e67b7ce1b9b1da0373b377339b65d206ef5e1237ac8591934429e7e", size = 58849, upload-time = "2025-09-17T18:32:51.695Z" },
 ]
 
 [[package]]
