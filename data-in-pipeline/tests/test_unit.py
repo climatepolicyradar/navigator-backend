@@ -11,6 +11,7 @@ from app.extract.connector_config import NavigatorConnectorConfig
 from app.extract.connectors import (
     NavigatorConnector,
     NavigatorCorpus,
+    NavigatorCorpusType,
     NavigatorDocument,
     NavigatorFamily,
     PageFetchFailure,
@@ -141,7 +142,9 @@ def test_fetch_family_success(base_config):
         "data": NavigatorFamily(
             import_id=import_id,
             title="Test Family",
-            corpus=NavigatorCorpus(import_id="COR-111"),
+            corpus=NavigatorCorpus(
+                import_id="COR-111", corpus_type=NavigatorCorpusType(name="corpus_type")
+            ),
             documents=[
                 NavigatorDocument(import_id=import_id, title="Test Document", events=[])
             ],
@@ -299,14 +302,20 @@ def test_fetch_all_families_successfully(base_config):
             NavigatorFamily(
                 import_id="FAM-001",
                 title="Family 1",
-                corpus=NavigatorCorpus(import_id="COR-001"),
+                corpus=NavigatorCorpus(
+                    import_id="COR-001",
+                    corpus_type=NavigatorCorpusType(name="corpus_type"),
+                ),
                 documents=[],
                 events=[],
             ).model_dump(),
             NavigatorFamily(
                 import_id="FAM-002",
                 title="Family 2",
-                corpus=NavigatorCorpus(import_id="COR-001"),
+                corpus=NavigatorCorpus(
+                    import_id="COR-001",
+                    corpus_type=NavigatorCorpusType(name="corpus_type"),
+                ),
                 documents=[],
                 events=[],
             ).model_dump(),
@@ -317,7 +326,10 @@ def test_fetch_all_families_successfully(base_config):
             NavigatorFamily(
                 import_id="FAM-003",
                 title="Family 3",
-                corpus=NavigatorCorpus(import_id="COR-002"),
+                corpus=NavigatorCorpus(
+                    import_id="COR-002",
+                    corpus_type=NavigatorCorpusType(name="corpus_type"),
+                ),
                 documents=[],
                 events=[],
             ).model_dump()
@@ -375,7 +387,10 @@ def test_fetch_all_families_handles_successful_retrievals_and_errors(base_config
             NavigatorFamily(
                 import_id="FAM-001",
                 title="Family 1",
-                corpus=NavigatorCorpus(import_id="COR-001"),
+                corpus=NavigatorCorpus(
+                    import_id="COR-001",
+                    corpus_type=NavigatorCorpusType(name="corpus_type"),
+                ),
                 documents=[],
                 events=[],
             ).model_dump()

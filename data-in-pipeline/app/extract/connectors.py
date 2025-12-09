@@ -32,6 +32,7 @@ class NavigatorCorpusType(BaseModel):
 
 class NavigatorCorpus(BaseModel):
     import_id: str
+    corpus_type: NavigatorCorpusType
 
 
 class NavigatorFamily(BaseModel):

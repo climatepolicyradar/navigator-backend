@@ -11,11 +11,11 @@ from app.models import (
 )
 from app.transform.models import CouldNotTransform, NoMatchingTransformations
 
-mcf_projects_corpus_import_ids = [
-    "MCF.corpus.AF.n0000",
-    "MCF.corpus.CIF.n0000",
-    "MCF.corpus.GEF.n0000",
-    "MCF.corpus.GCF.n0000",
+mcf_projects_corpus_types = [
+    "AF",
+    "CIF",
+    "GEF",
+    "GCF",
 ]
 
 mcf_reports_corpus_import_ids = [
@@ -61,7 +61,7 @@ def transform(
             if document.title == input.data.title
             # 2)
             or (
-                input.data.corpus.import_id in mcf_projects_corpus_import_ids
+                input.data.corpus.corpus_type.name in mcf_projects_corpus_types
                 and document.title.lower() == "project document"
             )
         ),
@@ -172,25 +172,28 @@ def transform(
 def _transform_navigator_family(navigator_family: NavigatorFamily) -> Document:
     labels: list[DocumentLabelRelationship] = []
 
-    if navigator_family.corpus.import_id == "Academic.corpus.Litigation.n0000":
-        labels.append(
-            DocumentLabelRelationship(
-                type="entity_type",
-                label=Label(
-                    id="Legal case",
-                    title="Legal case",
-                    type="entity_type",
-                ),
-            )
-        )
+    corpus_type_to_entity_type_map = {
+        "Laws and Policies": "Laws and policies",
+        "Litigation": "Legal case",
+        "Reports": "Report",
+        "Intl. agreements": "International agreement",
+        "AF": "Multilateral climate fund project",
+        "CIF": "Multilateral climate fund project",
+        "GEF": "Multilateral climate fund project",
+        "GCF": "Multilateral climate fund project",
+    }
+    labels = []
 
-    if navigator_family.corpus.import_id in mcf_projects_corpus_import_ids:
+    entity_type = corpus_type_to_entity_type_map.get(
+        navigator_family.corpus.corpus_type.name
+    )
+    if entity_type:
         labels.append(
             DocumentLabelRelationship(
                 type="entity_type",
                 label=Label(
-                    id="Multilateral climate fund project",
-                    title="Multilateral climate fund project",
+                    id=entity_type,
+                    title=entity_type,
                     type="entity_type",
                 ),
             )
