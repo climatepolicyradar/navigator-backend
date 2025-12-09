@@ -44,6 +44,7 @@ class Label(BaseModel):
 class DocumentLabelRelationship(BaseModel):
     type: str
     label: Label
+    timestamp: datetime | None = None
 
 
 class BaseDocument(BaseModel):
@@ -55,6 +56,7 @@ class BaseDocument(BaseModel):
 class DocumentDocumentRelationship(BaseModel):
     type: str
     document: "DocumentWithoutRelationships"
+    timestamp: datetime | None = None
 
 
 class Document(BaseDocument):

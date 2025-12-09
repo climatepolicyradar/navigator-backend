@@ -1,3 +1,5 @@
+from datetime import datetime
+
 import duckdb
 from fastapi import Depends, FastAPI, Query
 from fastapi.middleware.cors import CORSMiddleware
@@ -8,6 +10,7 @@ class Label(BaseModel):
     id: str
     title: str
     type: str
+    timestamp: datetime | None = None
 
 
 class DocumentLabelRelationship(BaseModel):
@@ -214,6 +217,7 @@ def list_labels(
         FROM documents
         CROSS JOIN UNNEST(labels) AS t(l)
         GROUP BY l.label.id, l.label.type
+        ORDER BY l.label.type, l.label.id
         """
     )
     labels_colnames = [c[0] for c in labels_result.description]
@@ -243,6 +247,7 @@ def list_relationships(
         FROM documents
         CROSS JOIN UNNEST(relationships) AS t(r)
         GROUP BY r.type, r.type
+        ORDER BY r.type
         """
     )
     relationships_colnames = [c[0] for c in relationships_result.description]

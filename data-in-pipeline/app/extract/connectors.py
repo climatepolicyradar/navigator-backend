@@ -16,6 +16,7 @@ from app.util import generate_envelope_uuid
 class NavigatorEvent(BaseModel):
     import_id: str
     event_type: str
+    date: datetime.datetime
 
 
 class NavigatorDocument(BaseModel):
@@ -31,6 +32,7 @@ class NavigatorCorpusType(BaseModel):
 
 class NavigatorCorpus(BaseModel):
     import_id: str
+    corpus_type: NavigatorCorpusType
 
 
 class NavigatorFamily(BaseModel):
@@ -38,6 +40,7 @@ class NavigatorFamily(BaseModel):
     title: str
     documents: list[NavigatorDocument]
     corpus: NavigatorCorpus
+    events: list[NavigatorEvent]
 
 
 class PageFetchFailure(BaseModel):
