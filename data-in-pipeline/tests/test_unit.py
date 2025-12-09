@@ -18,7 +18,11 @@ from app.extract.connectors import (
 )
 from app.extract.enums import CheckPointStorageType
 from app.models import ExtractedEnvelope, ExtractedMetadata
-from app.navigator_document_etl_pipeline import extract, load_to_s3, process_updates
+from app.navigator_document_etl_pipeline import (
+    extract,
+    load_to_s3,
+    process_document_updates,
+)
 
 
 @pytest.fixture
@@ -34,7 +38,7 @@ def base_config():
 @pytest.mark.parametrize("ids, expected", [(["11", "22", "33"], ["11", "22", "33"])])
 @pytest.mark.skip(reason="Not implemented")
 def test_process_document_updates_flow(ids: list[str], expected: list[str]):
-    assert process_updates.fn(ids) == expected
+    assert process_document_updates.fn(ids) == expected
 
 
 @patch("app.navigator_document_etl_pipeline.upload_to_s3")

@@ -112,7 +112,7 @@ def etl_pipeline(
 @pipeline_metrics.track(
     pipeline_type=PipelineType.DOCUMENT, scope="batch", flush_on_exit=True
 )
-def process_updates(ids: list[str] = []):
+def process_document_updates(ids: list[str] = []):
     run_id = (
         flow_run.get_name() or f"flow-run-etl-pipeline-{datetime.now().isoformat()}"
     )

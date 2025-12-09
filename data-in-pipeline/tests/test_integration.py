@@ -11,9 +11,7 @@ from app.extract.connectors import (
     PageFetchFailure,
 )
 from app.models import Document, ExtractedEnvelope, ExtractedMetadata
-from app.navigator_document_etl_pipeline import (
-    process_updates as process_document_updates,
-)
+from app.navigator_document_etl_pipeline import process_document_updates
 from app.navigator_family_etl_pipeline import etl_pipeline
 
 
