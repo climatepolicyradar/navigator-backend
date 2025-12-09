@@ -1,3 +1,5 @@
+from datetime import datetime
+
 import duckdb
 from fastapi import Depends, FastAPI, Query
 from fastapi.middleware.cors import CORSMiddleware
@@ -8,6 +10,7 @@ class Label(BaseModel):
     id: str
     title: str
     type: str
+    timestamp: datetime | None = None
 
 
 class DocumentLabelRelationship(BaseModel):
@@ -63,19 +66,36 @@ def health():
     return {"status": "ok"}
 
 
+class Aggregation(BaseModel):
+    id: str
+    type: str
+    count: int
+
+
 class DocumentResponse(BaseModel):
-    data: list[Document]
     total: int
+    aggregations: dict[str, list[Aggregation]]
+    data: list[Document]
 
 
 @app.get("/documents", response_model=DocumentResponse)
 def list_documents(
-    label_id: str | None = Query(
+    label_ids: list[str] | None = Query(
         None, description="Filter by labels.label.id", alias="labels.label.id"
     ),
-    label_type: str | None = Query(
+    label_ids_exclude: list[str] | None = Query(None, alias="-labels.label.id"),
+    label_types: list[str] | None = Query(
         None, description="Filter by labels.label.type", alias="labels.label.type"
     ),
+    label_types_exclude: list[str] | None = Query(None, alias="-labels.label.type"),
+    relationship_types: list[str] | None = Query(
+        None, description="Filter by relationships.type", alias="relationships.type"
+    ),
+    relationship_types_exclude: list[str] | None = Query(
+        None, alias="-relationships.type"
+    ),
+    relationships_len: int | None = Query(None, alias="len(relationships)"),
+    labels_len: int | None = Query(None, alias="len(labels)"),
     limit: int = Query(100, le=500),
     offset: int = 0,
     con=Depends(get_connection),
@@ -84,25 +104,73 @@ def list_documents(
     where = "WHERE 1=1"
     params = []
 
-    if label_id or label_type:
-        subquery_parts = []
-        if label_id:
-            subquery_parts.append("l.label.id = ?")
-            params.append(label_id)
-        if label_type:
-            subquery_parts.append("l.label.type = ?")
-            params.append(label_type)
+    for label_id in label_ids or []:
+        where += " AND list_contains(list_transform(labels, l -> l.label.id), ?)"
+        params.append(label_id)
+    for label_id in label_ids_exclude or []:
+        where += " AND NOT list_contains(list_transform(labels, l -> l.label.id), ?)"
+        params.append(label_id)
 
-        # we use nosec B608 as there is never any user input injected into the SQL
-        # and any fix makes it really unreadable
-        where += f"""
-            AND id IN (
-                SELECT d.id 
-                FROM documents d
-                CROSS JOIN UNNEST(d.labels) AS t(l)
-                WHERE {" AND ".join(subquery_parts)}
-            )
-        """  # nosec B608
+    for label_type in label_types or []:
+        where += " AND list_contains(list_transform(labels, l -> l.label.type), ?)"
+        params.append(label_type)
+    for label_type in label_types_exclude or []:
+        where += " AND NOT list_contains(list_transform(labels, l -> l.label.type), ?)"
+        params.append(label_type)
+
+    for relationship_type in relationship_types or []:
+        where += " AND list_contains(list_transform(relationships, r -> r.type), ?)"
+        params.append(relationship_type)
+    for relationship_type in relationship_types_exclude or []:
+        where += " AND NOT list_contains(list_transform(relationships, r -> r.type), ?)"
+        params.append(relationship_type)
+
+    if relationships_len is not None:
+        where += " AND array_length(relationships) = ?"
+        params.append(relationships_len)
+
+    if labels_len is not None:
+        where += " AND array_length(labels) = ?"
+        params.append(labels_len)
+
+    # aggregations - these are never filtered as filter logic on aggregations is hard
+    # labels aggregation
+    labels_result = con.execute(
+        """
+        SELECT
+            l.label.id,
+            l.label.type,
+            COUNT(*) AS count
+        FROM documents
+        CROSS JOIN UNNEST(labels) AS t(l)
+        GROUP BY l.label.id, l.label.type
+        """
+    )
+    labels_colnames = [c[0] for c in labels_result.description]
+    labels_rows = labels_result.fetchall()
+    labels = []
+    for label_row in labels_rows:
+        record = dict(zip(labels_colnames, label_row))
+        labels.append(Aggregation(**record))
+
+    # relationships aggregation
+    relationships_result = con.execute(
+        """
+        SELECT
+            r.type as id,
+            r.type,
+            COUNT(*) AS count
+        FROM documents
+        CROSS JOIN UNNEST(relationships) AS t(r)
+        GROUP BY r.type, r.type
+        """
+    )
+    relationships_colnames = [c[0] for c in relationships_result.description]
+    relationships_rows = relationships_result.fetchall()
+    relationships = []
+    for relationship_row in relationships_rows:
+        record = dict(zip(relationships_colnames, relationship_row))
+        relationships.append(Aggregation(**record))
 
     # total
     total = con.execute(
@@ -122,6 +190,75 @@ def list_documents(
         docs.append(Document(**record))
 
     return {
-        "data": docs,
+        "aggregations": {
+            "labels": labels,
+            "relationships": relationships,
+        },
         "total": total,
+        "data": docs,
+    }
+
+
+class AggregationResponse(BaseModel):
+    total: int
+    data: list[Aggregation]
+
+
+@app.get("/labels", response_model=AggregationResponse)
+def list_labels(
+    con=Depends(get_connection),
+):
+    labels_result = con.execute(
+        """
+        SELECT
+            l.label.id,
+            l.label.type,
+            COUNT(*) AS count
+        FROM documents
+        CROSS JOIN UNNEST(labels) AS t(l)
+        GROUP BY l.label.id, l.label.type
+        ORDER BY l.label.type, l.label.id
+        """
+    )
+    labels_colnames = [c[0] for c in labels_result.description]
+    labels_rows = labels_result.fetchall()
+    labels = []
+
+    for label_row in labels_rows:
+        record = dict(zip(labels_colnames, label_row))
+        labels.append(Aggregation(**record))
+
+    return {
+        "total": 10,
+        "data": labels,
+    }
+
+
+@app.get("/relationships", response_model=AggregationResponse)
+def list_relationships(
+    con=Depends(get_connection),
+):
+    relationships_result = con.execute(
+        """
+        SELECT
+            r.type as id,
+            r.type,
+            COUNT(*) AS count
+        FROM documents
+        CROSS JOIN UNNEST(relationships) AS t(r)
+        GROUP BY r.type, r.type
+        ORDER BY r.type
+        """
+    )
+    relationships_colnames = [c[0] for c in relationships_result.description]
+    relationships_rows = relationships_result.fetchall()
+    relationships = []
+
+    for relationship_row in relationships_rows:
+        record = dict(zip(relationships_colnames, relationship_row))
+        relationships.append(Aggregation(**record))
+
+    return {
+        "total": 10,
+        "data": relationships,
     }

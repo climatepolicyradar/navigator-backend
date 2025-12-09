@@ -5,6 +5,7 @@ from unittest.mock import MagicMock, patch
 from app.extract.connectors import (
     FamilyFetchResult,
     NavigatorCorpus,
+    NavigatorCorpusType,
     NavigatorDocument,
     NavigatorFamily,
     PageFetchFailure,
@@ -46,7 +47,9 @@ def test_process_family_updates_flow_multiple_families(
         NavigatorFamily(
             import_id="i00000315",
             title="Belgium UNCBD National Targets",
-            corpus=NavigatorCorpus(import_id="UNFCCC"),
+            corpus=NavigatorCorpus(
+                import_id="UNFCCC", corpus_type=NavigatorCorpusType(name="corpus_type")
+            ),
             documents=[
                 NavigatorDocument(
                     import_id="i00000315",
@@ -54,6 +57,7 @@ def test_process_family_updates_flow_multiple_families(
                     events=[],
                 )
             ],
+            events=[],
         )
     ]
 
@@ -61,7 +65,9 @@ def test_process_family_updates_flow_multiple_families(
         NavigatorFamily(
             import_id="i00000316",
             title="France UNCBD National Targets",
-            corpus=NavigatorCorpus(import_id="UNFCCC"),
+            corpus=NavigatorCorpus(
+                import_id="UNFCCC", corpus_type=NavigatorCorpusType(name="corpus_type")
+            ),
             documents=[
                 NavigatorDocument(
                     import_id="i00000316",
@@ -69,6 +75,7 @@ def test_process_family_updates_flow_multiple_families(
                     events=[],
                 )
             ],
+            events=[],
         )
     ]
 

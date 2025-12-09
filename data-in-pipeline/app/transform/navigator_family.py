@@ -12,11 +12,11 @@ from app.models import (
 )
 from app.transform.models import CouldNotTransform, NoMatchingTransformations
 
-mcf_projects_corpus_import_ids = [
-    "MCF.corpus.AF.n0000",
-    "MCF.corpus.CIF.n0000",
-    "MCF.corpus.GEF.n0000",
-    "MCF.corpus.GCF.n0000",
+mcf_projects_corpus_types = [
+    "AF",
+    "CIF",
+    "GEF",
+    "GCF",
 ]
 
 mcf_reports_corpus_import_ids = [
@@ -69,7 +69,7 @@ def transform(
             if document.title == input.data.title
             # 2)
             or (
-                input.data.corpus.import_id in mcf_projects_corpus_import_ids
+                input.data.corpus.corpus_type.name in mcf_projects_corpus_types
                 and document.title.lower() == "project document"
             )
         ),
@@ -180,32 +180,109 @@ def transform(
 def _transform_navigator_family(navigator_family: NavigatorFamily) -> Document:
     labels: list[DocumentLabelRelationship] = []
 
-    if navigator_family.corpus.import_id == "Academic.corpus.Litigation.n0000":
+    corpus_type_to_entity_type_map = {
+        "Laws and Policies": "Laws and policies",
+        "Litigation": "Legal case",
+        "Reports": "Report",
+        "Intl. agreements": "International agreement",
+        "AF": "Multilateral climate fund project",
+        "CIF": "Multilateral climate fund project",
+        "GEF": "Multilateral climate fund project",
+        "GCF": "Multilateral climate fund project",
+    }
+    labels = []
+
+    entity_type = corpus_type_to_entity_type_map.get(
+        navigator_family.corpus.corpus_type.name
+    )
+    if entity_type:
         labels.append(
             DocumentLabelRelationship(
                 type="entity_type",
                 label=Label(
-                    id="Legal case",
-                    title="Legal case",
+                    id=entity_type,
+                    title=entity_type,
                     type="entity_type",
                 ),
             )
         )
 
-    if (
-        navigator_family.corpus.import_id in mcf_projects_corpus_import_ids
-        and len(navigator_family.documents) > 0
-    ):
-        labels.append(
-            DocumentLabelRelationship(
-                type="entity_type",
-                label=Label(
-                    id="Multilateral climate fund project",
-                    title="Multilateral climate fund project",
-                    type="entity_type",
-                ),
-            )
+    # We skip litigation as we hijacked the event_type for document type
+    if navigator_family.corpus.import_id != "Academic.corpus.Litigation.n0000":
+        """
+        Activity status
+
+        This is loosely inspired by the IATI ontology
+        @see: https://iatistandard.org/en/iati-standard/203/activity-standard/iati-activities/iati-activity/activity-status/
+        @see: https://iatistandard.org/en/iati-standard/203/codelists/activitystatus/
+
+        e.g.
+        Project Approved => Pipeline/identification
+        Under Implementation => Implementation
+        Project Completed => Closed
+        """
+
+        """
+        Values from Navigator are controlled
+        @see: https://github.com/climatepolicyradar/data-migrations/blob/main/taxonomies/AF.json#L7C9-L9C28
+        @see: https://github.com/climatepolicyradar/data-migrations/blob/main/taxonomies/CIF.json#L7-L10
+        @see: https://github.com/climatepolicyradar/data-migrations/blob/main/taxonomies/CIF.json#L7-L10
+        @see: https://github.com/climatepolicyradar/data-migrations/blob/main/taxonomies/GEF.json#L7-L11
+        """
+        mcf_project_event_type_to_activity_status_map = {
+            "Concept Approved": "Concept approved",
+            "Project Approved": "Approved",
+            "Under Implementation": "Under implementation",
+            "Project Completed": "Completed",
+            "Cancelled": "Cancelled",
+        }
+
+        """
+        Values from Navigator are controlled
+        @see: https://github.com/climatepolicyradar/data-migrations/blob/main/taxonomies/Laws%20and%20Policies.json#L17-L33
+        @see: https://github.com/climatepolicyradar/data-migrations/blob/main/taxonomies/Intl.%20agreements.json#L7-L24
+        """
+        laws_and_policies_event_type_to_activity_status_map = {
+            "Amended": "Amended",
+            "Appealed": "Appealed",
+            "Closed": "Closed",
+            "Declaration Of Climate Emergency": "Declaration of climate emergency",
+            "Dismissed": "Dismissed",
+            "Entered Into Force": "Entered into force",
+            "Filing": "Filing",
+            "Granted": "Granted",
+            "Implementation Details": "Implementation details",
+            "International Agreement": "International agreement",
+            "Net Zero Pledge": "Net zero pledge",
+            "Other": "Other",
+            "Passed/Approved": "Passed/Approved",
+            "Repealed/Replaced": "Repealed/Replaced",
+            "Set": "Set",
+            "Settled": "Settled",
+            "Updated": "Updated",
+        }
+
+        event_type_to_activity_status_map = (
+            mcf_project_event_type_to_activity_status_map
+            | laws_and_policies_event_type_to_activity_status_map
         )
+
+        for event in navigator_family.events:
+            label_id = event_type_to_activity_status_map.get(
+                event.event_type,
+                "Unknown",
+            )
+            labels.append(
+                DocumentLabelRelationship(
+                    type="activity_status",
+                    timestamp=event.date,
+                    label=Label(
+                        id=label_id,
+                        title=label_id,
+                        type="activity_status",
+                    ),
+                )
+            )
 
     # this is for debugging
     if not labels:
@@ -259,6 +336,17 @@ def _transform_navigator_document(
                 label=Label(
                     id=normalised_role, title=normalised_role, type="entity_type"
                 ),
+            )
+        )
+
+    """
+    These were added to allow families to be parsed if they did not have any documents.
+    """
+    if navigator_document.import_id.endswith("placeholder"):
+        labels.append(
+            DocumentLabelRelationship(
+                type="status",
+                label=Label(id="Obsolete", title="Obsolete", type="status"),
             )
         )
 
