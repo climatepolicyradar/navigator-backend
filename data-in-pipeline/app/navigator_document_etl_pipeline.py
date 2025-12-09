@@ -117,6 +117,7 @@ def process_document_updates(ids: list[str] = []):
         flow_run.get_name() or f"flow-run-etl-pipeline-{datetime.now().isoformat()}"
     )
     pipeline_metrics.set_flow_run_name(run_id)
+    pipeline_metrics.measure_resource_allocations()
     pipeline_metrics.log_run_info(PipelineType.DOCUMENT, len(ids), run_id)
 
     results = etl_pipeline.map(ids)
