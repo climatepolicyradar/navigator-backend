@@ -37,6 +37,10 @@ def navigator_family_with_single_matching_document() -> Identified[NavigatorFami
                     import_id="document",
                     title="Matching title on family and document",
                     events=[],
+                    valid_metadata={
+                        "role": ["SUPPORTING LEGISLATION"],
+                        "type": ["National Drought Plan (NDP)"],
+                    },
                 ),
             ],
             events=[
@@ -253,7 +257,7 @@ def test_transform_navigator_family_with_single_matching_document(
         [
             Document(
                 id="family",
-                title=navigator_family_with_single_matching_document.data.title,
+                title="Matching title on family and document",
                 labels=[
                     DocumentLabelRelationship(
                         type="activity_status",
@@ -396,14 +400,22 @@ def test_transform_navigator_family_with_single_matching_document(
                         type="has_version",
                         document=DocumentWithoutRelationships(
                             id="document",
-                            title=navigator_family_with_single_matching_document.data.title,
+                            title="Matching title on family and document",
                             labels=[
                                 DocumentLabelRelationship(
-                                    type="debug",
+                                    type="entity_type",
                                     label=Label(
-                                        type="debug",
-                                        id="no_document_labels",
-                                        title="no_document_labels",
+                                        type="entity_type",
+                                        id="Supporting legislation",
+                                        title="Supporting legislation",
+                                    ),
+                                ),
+                                DocumentLabelRelationship(
+                                    type="entity_type",
+                                    label=Label(
+                                        type="entity_type",
+                                        id="National drought plan (ndp)",
+                                        title="National drought plan (ndp)",
                                     ),
                                 ),
                             ],
@@ -413,14 +425,22 @@ def test_transform_navigator_family_with_single_matching_document(
             ),
             Document(
                 id="document",
-                title=navigator_family_with_single_matching_document.data.title,
+                title="Matching title on family and document",
                 labels=[
                     DocumentLabelRelationship(
-                        type="debug",
+                        type="entity_type",
                         label=Label(
-                            type="debug",
-                            id="no_document_labels",
-                            title="no_document_labels",
+                            type="entity_type",
+                            id="Supporting legislation",
+                            title="Supporting legislation",
+                        ),
+                    ),
+                    DocumentLabelRelationship(
+                        type="entity_type",
+                        label=Label(
+                            type="entity_type",
+                            id="National drought plan (ndp)",
+                            title="National drought plan (ndp)",
                         ),
                     ),
                 ],
@@ -429,7 +449,7 @@ def test_transform_navigator_family_with_single_matching_document(
                         type="is_version_of",
                         document=DocumentWithoutRelationships(
                             id="family",
-                            title=navigator_family_with_single_matching_document.data.title,
+                            title="Matching title on family and document",
                             labels=[
                                 DocumentLabelRelationship(
                                     type="activity_status",
