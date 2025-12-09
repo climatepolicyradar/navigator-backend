@@ -5,7 +5,7 @@ from prefect import flow, task
 from prefect.runtime import flow_run, task_run
 from returns.result import Failure, Result, Success
 
-from app.bootstrap_telemetry import get_logger
+from app.bootstrap_telemetry import get_logger, pipeline_metrics
 from app.extract.connector_config import NavigatorConnectorConfig
 from app.extract.connectors import (
     FamilyFetchResult,
@@ -16,6 +16,7 @@ from app.extract.enums import CheckPointStorageType
 from app.identify.navigator_family import identify_navigator_family
 from app.load.aws_bucket import upload_to_s3
 from app.models import Document, ExtractedEnvelope, Identified
+from app.pipeline_metrics import ErrorType, Operation, PipelineType, Status
 from app.transform.models import NoMatchingTransformations
 from app.transform.navigator_family import transform_navigator_family
 
@@ -31,6 +32,7 @@ def generate_s3_cache_key(step: Literal["extract", "identify", "transform"]) -> 
 
 
 @task(log_prints=True)
+@pipeline_metrics.track(operation=Operation.EXTRACT)
 def extract() -> FamilyFetchResult:
     """Extract family data from the Navigator API.
 
@@ -68,6 +70,7 @@ def extract() -> FamilyFetchResult:
 
 
 @task(log_prints=True)
+@pipeline_metrics.track(operation=Operation.LOAD)
 def load_to_s3(document: Document):
     """Upload transformed to S3 cache."""
     upload_to_s3(
@@ -88,6 +91,7 @@ def cache_extraction_result(result: FamilyFetchResult):
 
 
 @task(log_prints=True)
+@pipeline_metrics.track(operation=Operation.IDENTIFY)
 def identify(
     extracted: list[ExtractedEnvelope[list[NavigatorFamily]]],
 ) -> Identified[NavigatorFamily]:
@@ -96,6 +100,7 @@ def identify(
 
 
 @task(log_prints=True)
+@pipeline_metrics.track(operation=Operation.TRANSFORM)
 def transform(
     identified: Identified[NavigatorFamily],
 ) -> Result[list[Document], NoMatchingTransformations]:
@@ -109,6 +114,9 @@ def transform(
 
 
 @flow(log_prints=True)
+@pipeline_metrics.track(
+    pipeline_type=PipelineType.FAMILY, scope="batch", flush_on_exit=True
+)
 def etl_pipeline() -> list[Document] | Exception:
     """Run the full Navigator ETL pipeline.
 
@@ -127,14 +135,22 @@ def etl_pipeline() -> list[Document] | Exception:
     _LOGGER = get_logger()
     _LOGGER.info("ETL pipeline started")
 
+    # Set flow_run_name early so all metrics (including extract) have it
+    run_id = flow_run.get_name() or "unknown"
+    pipeline_metrics.set_flow_run_name(run_id)
+
     extracted_result = extract()
     cache_extraction_result(extracted_result)
 
     if extracted_result.failure is not None:
         _LOGGER.error(f"Extraction failed: {extracted_result.failure}")
+        pipeline_metrics.record_processed(PipelineType.FAMILY, Status.FAILURE)
         return Exception(f"Extraction failed at page {extracted_result.failure.page}")
 
     envelopes = extracted_result.envelopes
+
+    family_count = sum(len(env.data) for env in envelopes)
+    pipeline_metrics.log_run_info(PipelineType.FAMILY, family_count, run_id)
 
     if not envelopes:
         _LOGGER.info("No families found to process")
@@ -146,10 +162,14 @@ def etl_pipeline() -> list[Document] | Exception:
     match transformed:
         case Success(documents):
             load_to_s3.map(documents)
+            pipeline_metrics.record_processed(PipelineType.FAMILY, Status.SUCCESS)
             return documents
         case Failure(error):
             # TODO: do not swallow errors
             _LOGGER.warning(f"Transformation failed: {error}")
+            pipeline_metrics.record_error(Operation.TRANSFORM, ErrorType.TRANSFORM)
+            pipeline_metrics.record_processed(PipelineType.FAMILY, Status.FAILURE)
             return error
         case _:
+            pipeline_metrics.record_processed(PipelineType.FAMILY, Status.FAILURE)
             return Exception("Unexpected transformed result state")

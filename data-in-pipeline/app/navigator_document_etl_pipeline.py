@@ -17,7 +17,7 @@ from app.transform.navigator_document import transform_navigator_document
 
 
 @task(log_prints=True)
-@pipeline_metrics.timed_operation(Operation.EXTRACT)
+@pipeline_metrics.track(operation=Operation.EXTRACT)
 def extract(
     document_id: str,
 ) -> Result[ExtractedEnvelope[NavigatorDocument], Exception]:
@@ -47,7 +47,7 @@ def extract(
 
 
 @task(log_prints=True)
-@pipeline_metrics.timed_operation(Operation.LOAD)
+@pipeline_metrics.track(operation=Operation.LOAD)
 def load_to_s3(document: Document):
     """Upload to S3 cache"""
     _LOGGER = get_logger()
@@ -61,7 +61,7 @@ def load_to_s3(document: Document):
 
 
 @task(log_prints=True)
-@pipeline_metrics.timed_operation(Operation.IDENTIFY)
+@pipeline_metrics.track(operation=Operation.IDENTIFY)
 def identify(extracted: ExtractedEnvelope[NavigatorDocument]):
     """Identify"""
     _LOGGER = get_logger()
@@ -71,7 +71,7 @@ def identify(extracted: ExtractedEnvelope[NavigatorDocument]):
 
 
 @task(log_prints=True)
-@pipeline_metrics.timed_operation(Operation.TRANSFORM)
+@pipeline_metrics.track(operation=Operation.TRANSFORM)
 def transform(identified: Identified[NavigatorDocument]):
     """Transform"""
     _LOGGER = get_logger()
@@ -81,6 +81,7 @@ def transform(identified: Identified[NavigatorDocument]):
 
 
 @task(log_prints=True)
+@pipeline_metrics.track(pipeline_type=PipelineType.DOCUMENT, scope="document")
 def etl_pipeline(
     id: str,
 ) -> Result[Document, Exception]:
@@ -108,12 +109,15 @@ def etl_pipeline(
 
 
 @flow
+@pipeline_metrics.track(
+    pipeline_type=PipelineType.DOCUMENT, scope="batch", flush_on_exit=True
+)
 def process_updates(ids: list[str] = []):
-    _LOGGER = get_logger()
-    _LOGGER.info(
-        "Processing document updates started | documents=%d",
-        len(ids),
+    run_id = (
+        flow_run.get_name() or f"flow-run-etl-pipeline-{datetime.now().isoformat()}"
     )
+    pipeline_metrics.set_flow_run_name(run_id)
+    pipeline_metrics.log_run_info(PipelineType.DOCUMENT, len(ids), run_id)
 
     results = etl_pipeline.map(ids)
 

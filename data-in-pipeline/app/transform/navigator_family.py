@@ -1,5 +1,6 @@
 from returns.result import Failure, Result, Success
 
+from app.bootstrap_telemetry import get_logger, log_context
 from app.extract.connectors import NavigatorDocument, NavigatorFamily
 from app.models import (
     Document,
@@ -29,11 +30,18 @@ mcf_reports_corpus_import_ids = [
 def transform_navigator_family(
     input: Identified[NavigatorFamily],
 ) -> Result[list[Document], NoMatchingTransformations]:
-    match transform(input):
-        case Success(d):
-            return Success(d)
+    logger = get_logger()
 
-    return Failure(NoMatchingTransformations())
+    with log_context(import_id=input.id):
+        logger.info(f"Transforming family with {len(input.data.documents)} documents")
+
+        match transform(input):
+            case Success(d):
+                logger.info(f"Transform completed, produced {len(d)} documents")
+                return Success(d)
+
+        logger.warning("No matching transformation found")
+        return Failure(NoMatchingTransformations())
 
 
 def transform(
