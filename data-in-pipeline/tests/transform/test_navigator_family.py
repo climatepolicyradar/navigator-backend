@@ -5,6 +5,7 @@ from returns.result import Success
 
 from app.extract.connectors import (
     NavigatorCorpus,
+    NavigatorCorpusType,
     NavigatorDocument,
     NavigatorEvent,
     NavigatorFamily,
@@ -28,7 +29,9 @@ def navigator_family_with_single_matching_document() -> Identified[NavigatorFami
         data=NavigatorFamily(
             import_id="family",
             title="Matching title on family and document",
-            corpus=NavigatorCorpus(import_id="corpus"),
+            corpus=NavigatorCorpus(
+                import_id="corpus", corpus_type=NavigatorCorpusType(name="corpus_type")
+            ),
             documents=[
                 NavigatorDocument(
                     import_id="document",
@@ -135,7 +138,9 @@ def navigator_family_with_no_matching_transformations() -> Identified[NavigatorF
         data=NavigatorFamily(
             import_id="123",
             title="No matches for this family or documents",
-            corpus=NavigatorCorpus(import_id="123"),
+            corpus=NavigatorCorpus(
+                import_id="123", corpus_type=NavigatorCorpusType(name="corpus_type")
+            ),
             documents=[
                 NavigatorDocument(import_id="456", title="Test document 1", events=[]),
             ],
@@ -152,7 +157,10 @@ def navigator_family_with_litigation_corpus_type() -> Identified[NavigatorFamily
         data=NavigatorFamily(
             import_id="family",
             title="Litigation family",
-            corpus=NavigatorCorpus(import_id="Academic.corpus.Litigation.n0000"),
+            corpus=NavigatorCorpus(
+                import_id="Academic.corpus.Litigation.n0000",
+                corpus_type=NavigatorCorpusType(name="Litigation"),
+            ),
             documents=[
                 NavigatorDocument(
                     import_id="document",
@@ -190,7 +198,10 @@ def navigator_family_multilateral_climate_fund_project() -> Identified[Navigator
         data=NavigatorFamily(
             import_id="family",
             title="Multilateral climate fund project",
-            corpus=NavigatorCorpus(import_id="MCF.corpus.AF.n0000"),
+            corpus=NavigatorCorpus(
+                import_id="MCF.corpus.AF.n0000",
+                corpus_type=NavigatorCorpusType(name="AF"),
+            ),
             documents=[
                 NavigatorDocument(
                     import_id="document_1",

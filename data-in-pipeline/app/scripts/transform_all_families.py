@@ -5,6 +5,7 @@ from returns.result import Failure, Success
 
 from app.extract.connectors import (
     NavigatorCorpus,
+    NavigatorCorpusType,
     NavigatorDocument,
     NavigatorEvent,
     NavigatorFamily,
@@ -35,6 +36,9 @@ if __name__ == "__main__":
                     title=family["title"],
                     corpus=NavigatorCorpus(
                         import_id=family["corpus"]["import_id"],
+                        corpus_type=NavigatorCorpusType(
+                            name=family["corpus"]["corpus_type"]["name"],
+                        ),
                     ),
                     documents=[
                         NavigatorDocument(
