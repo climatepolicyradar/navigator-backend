@@ -184,9 +184,11 @@ class NavigatorConnector(HTTPConnector):
             )
         except requests.RequestException as e:
             logger.error(f"Request failed fetching family {import_id}")
+            pipeline_metrics.record_error(Operation.EXTRACT, ErrorType.NETWORK)
             return Failure(e)
         except Exception as e:
             logger.error(f"Unexpected error fetching family {import_id}")
+            pipeline_metrics.record_error(Operation.EXTRACT, ErrorType.UNKNOWN)
             return Failure(e)
 
     def fetch_all_families(
@@ -257,6 +259,9 @@ class NavigatorConnector(HTTPConnector):
                     logger.error(
                         f"Request failed while fetching all families at page {page}"
                     )
+                    pipeline_metrics.record_error(
+                        Operation.PAGINATION, ErrorType.NETWORK
+                    )
                     return FamilyFetchResult(
                         envelopes=successful_envelopes,
                         failure=PageFetchFailure(
@@ -267,6 +272,9 @@ class NavigatorConnector(HTTPConnector):
                 except Exception as e:
                     logger.error(
                         f"Unexpected error {e} while fetching page {page} of families"
+                    )
+                    pipeline_metrics.record_error(
+                        Operation.PAGINATION, ErrorType.UNKNOWN
                     )
                     return FamilyFetchResult(
                         envelopes=successful_envelopes,

@@ -16,7 +16,7 @@ from app.extract.enums import CheckPointStorageType
 from app.identify.navigator_family import identify_navigator_family
 from app.load.aws_bucket import upload_to_s3
 from app.models import Document, ExtractedEnvelope, Identified
-from app.pipeline_metrics import Operation, PipelineType, Status
+from app.pipeline_metrics import ErrorType, Operation, PipelineType, Status
 from app.transform.models import NoMatchingTransformations
 from app.transform.navigator_family import transform_navigator_family
 
@@ -167,6 +167,7 @@ def etl_pipeline() -> list[Document] | Exception:
         case Failure(error):
             # TODO: do not swallow errors
             _LOGGER.warning(f"Transformation failed: {error}")
+            pipeline_metrics.record_error(Operation.TRANSFORM, ErrorType.TRANSFORM)
             pipeline_metrics.record_processed(PipelineType.FAMILY, Status.FAILURE)
             return error
         case _:
