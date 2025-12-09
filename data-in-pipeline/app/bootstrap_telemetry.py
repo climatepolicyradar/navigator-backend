@@ -74,7 +74,7 @@ if not telemetry._disabled:
     try:
         lp = get_logger_provider()
         if hasattr(lp, "add_log_record_processor"):
-            lp.add_log_record_processor(
+            lp.add_log_record_processor(  # type: ignore (pyright will complain we can't access this member but we've just checked we can)
                 PipelineLogContextProcessor(
                     OTLPLogExporter(endpoint=telemetry.log_endpoint)
                 )

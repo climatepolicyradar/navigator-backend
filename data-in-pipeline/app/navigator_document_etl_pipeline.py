@@ -113,7 +113,9 @@ def etl_pipeline(
     pipeline_type=PipelineType.DOCUMENT, scope="batch", flush_on_exit=True
 )
 def process_updates(ids: list[str] = []):
-    run_id = flow_run.get_name()
+    run_id = (
+        flow_run.get_name() or f"flow-run-etl-pipeline-{datetime.now().isoformat()}"
+    )
     pipeline_metrics.set_flow_run_name(run_id)
     pipeline_metrics.log_run_info(PipelineType.DOCUMENT, len(ids), run_id)
 
