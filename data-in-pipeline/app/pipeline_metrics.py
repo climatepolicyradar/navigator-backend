@@ -13,6 +13,7 @@ import time
 from enum import StrEnum
 from typing import Callable, Literal, Optional, TypeVar
 
+import requests
 from api import MetricsService
 from opentelemetry.metrics import Counter, Histogram
 
@@ -103,6 +104,8 @@ class PipelineMetrics:
         self._document_errors: Optional[Counter] = None
         self._operation_duration: Optional[Histogram] = None
         self._pipeline_run_duration: Optional[Histogram] = None
+        self._memory_allocated: Optional[Counter] = None
+        self._cpu_allocated: Optional[Counter] = None
 
         if not self._disabled:
             self._create_instruments()
@@ -149,7 +152,69 @@ class PipelineMetrics:
             unit="s",
         )
 
+        self._memory_allocated = self._metrics_service.create_counter(
+            name="allocated_memory_megabytes",
+            description="Allocated memory in megabytes",
+            unit="mb",
+        )
+
+        self._cpu_allocated = self._metrics_service.create_counter(
+            name="allocated_cpu_units",
+            description="Allocated CPU units",
+            unit="units",
+        )
+
         logger.info("Pipeline metrics instruments created")
+
+    def _get_allocated_task_resources(self) -> dict[str, float]:
+        """Get the CPU and memory allocated by the pipeline task.
+
+        :return: A dictionary with the CPU and memory allocated by the
+            pipeline task.
+        :raises RuntimeError: If the metadata env var is unavailable.
+        """
+
+        metadata_uri = os.environ.get("ECS_CONTAINER_METADATA_URI_V4")
+        if not metadata_uri:
+            raise RuntimeError("Not running in ECS or metadata endpoint unavailable")
+
+        # Get task level metadata
+        timeout_secs = 2
+        response = requests.get(f"{metadata_uri}/task", timeout=timeout_secs)
+        response.raise_for_status()
+        task_metadata = response.json()
+
+        # Task-level limits
+        cpu = float(
+            task_metadata.get("Limits", {}).get("CPU")
+        )  # CPU units (1024 = 1 vCPU)
+        memory = float(task_metadata.get("Limits", {}).get("Memory"))  # Memory in MB
+        return {"cpu_units": cpu, "memory_mb": memory}
+
+    def measure_resource_allocations(self) -> None:
+        """Measure the resource allocations of the pipeline."""
+        if (
+            self._disabled
+            or self._memory_allocated is None
+            or self._cpu_allocated is None
+        ):
+            return
+
+        # Get the CPU and memory allocated by the pipeline flow from the environment
+        # variables AWS inject into ECS tasks.
+        self._memory_allocated.add(
+            self._get_allocated_task_resources()["memory_mb"],
+            attributes={
+                **self._base_attributes,
+            },
+        )
+
+        self._cpu_allocated.add(
+            self._get_allocated_task_resources()["cpu_units"],
+            attributes={
+                **self._base_attributes,
+            },
+        )
 
     def record_processed(self, pipeline_type: PipelineType, status: Status) -> None:
         """Record a document processing event.
