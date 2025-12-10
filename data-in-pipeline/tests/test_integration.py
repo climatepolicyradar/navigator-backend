@@ -59,6 +59,7 @@ def test_process_family_updates_flow_multiple_families(
                 )
             ],
             events=[],
+            collections=[],
         )
     ]
 
@@ -79,6 +80,7 @@ def test_process_family_updates_flow_multiple_families(
                 )
             ],
             events=[],
+            collections=[],
         )
     ]
 

@@ -133,6 +133,7 @@ def navigator_family_with_single_matching_document() -> Identified[NavigatorFami
                     date=datetime.datetime(2020, 1, 1),
                 ),
             ],
+            collections=[],
         ),
     )
 
@@ -154,6 +155,7 @@ def navigator_family_with_no_matching_transformations() -> Identified[NavigatorF
                 NavigatorDocument(import_id="456", title="Test document 1", events=[]),
             ],
             events=[],
+            collections=[],
         ),
     )
 
@@ -196,6 +198,7 @@ def navigator_family_with_litigation_corpus_type() -> Identified[NavigatorFamily
                     date=datetime.datetime(2020, 1, 1),
                 ),
             ],
+            collections=[],
         ),
     )
 
@@ -252,6 +255,7 @@ def navigator_family_multilateral_climate_fund_project() -> Identified[Navigator
                     date=datetime.datetime(2020, 1, 1),
                 ),
             ],
+            collections=[],
         ),
     )
 

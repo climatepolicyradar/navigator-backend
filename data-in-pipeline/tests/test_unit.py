@@ -156,6 +156,7 @@ def test_fetch_family_success(base_config):
                 NavigatorDocument(import_id=import_id, title="Test Document", events=[])
             ],
             events=[],
+            collections=[],
         ).model_dump(),
     }
 
@@ -316,6 +317,7 @@ def test_fetch_all_families_successfully(base_config):
                 ),
                 documents=[],
                 events=[],
+                collections=[],
             ).model_dump(),
             NavigatorFamily(
                 import_id="FAM-002",
@@ -327,6 +329,7 @@ def test_fetch_all_families_successfully(base_config):
                 ),
                 documents=[],
                 events=[],
+                collections=[],
             ).model_dump(),
         ]
     }
@@ -342,6 +345,7 @@ def test_fetch_all_families_successfully(base_config):
                 ),
                 documents=[],
                 events=[],
+                collections=[],
             ).model_dump()
         ]
     }
@@ -404,6 +408,7 @@ def test_fetch_all_families_handles_successful_retrievals_and_errors(base_config
                 ),
                 documents=[],
                 events=[],
+                collections=[],
             ).model_dump()
         ]
     }

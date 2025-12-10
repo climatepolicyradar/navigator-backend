@@ -42,12 +42,19 @@ class NavigatorCorpus(BaseModel):
     organisation: NavigatorOrganisation
 
 
+class NavigatorCollection(BaseModel):
+    import_id: str
+    title: str
+    description: str
+
+
 class NavigatorFamily(BaseModel):
     import_id: str
     title: str
     documents: list[NavigatorDocument]
     corpus: NavigatorCorpus
     events: list[NavigatorEvent]
+    collections: list[NavigatorCollection]
 
 
 class PageFetchFailure(BaseModel):
