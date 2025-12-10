@@ -581,6 +581,9 @@ class PipelineMetrics:
                         actual_resources = self.measure_resource_usage(start)
                         if actual_resources:
                             actual_cpu, actual_memory = actual_resources
+                            self.record_run_cost(
+                                pipeline_type, duration, actual_cpu, actual_memory
+                            )
 
                     # Flush metrics if requested
                     if flush_on_exit:
