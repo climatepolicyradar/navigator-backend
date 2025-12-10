@@ -33,4 +33,4 @@ def health_check():
 
 @router.post("/")
 def create_document():
-    _LOGGER.info("Received POST request to the /documents/ endpoint")
+    return "Received POST request to the /documents/ endpoint"
