@@ -5,6 +5,7 @@ from api.settings import settings
 from fastapi import APIRouter, FastAPI
 
 _LOGGER = logging.getLogger(__name__)
+_LOGGER.setLevel("INFO")
 
 # we always use a path relative to the file as the calling process can come
 # from multiple locations
@@ -32,4 +33,4 @@ def health_check():
 
 @router.post("/")
 def create_document():
-    return ""
+    _LOGGER.info("Received POST request to the /documents/ endpoint")
