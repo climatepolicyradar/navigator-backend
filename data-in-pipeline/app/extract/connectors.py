@@ -30,9 +30,16 @@ class NavigatorCorpusType(BaseModel):
     name: str
 
 
+class NavigatorOrganisation(BaseModel):
+    id: int
+    name: str
+    attribution_url: str | None = None
+
+
 class NavigatorCorpus(BaseModel):
     import_id: str
     corpus_type: NavigatorCorpusType
+    organisation: NavigatorOrganisation
 
 
 class NavigatorFamily(BaseModel):
