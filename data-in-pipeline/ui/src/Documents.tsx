@@ -1,5 +1,5 @@
 import { useMemo, useState, useEffect } from "react";
-import { useSearchParams } from "react-router";
+import { Link, useSearchParams } from "react-router";
 import { useTable } from "@refinedev/react-table";
 import type { ColumnDef } from "@tanstack/react-table";
 import { DataTable } from "@/components/refine-ui/data-table/data-table";
@@ -38,7 +38,7 @@ type Relationship = {
   };
 };
 
-type Document = {
+export type Document = {
   id: string;
   title: string;
   labels: Label[];
@@ -57,6 +57,17 @@ export default function Documents() {
             <DataTableSorter column={column} />
           </div>
         ),
+        cell: ({ row }) => {
+          const document = row.original;
+          return (
+            <Link
+              to={`/documents/${document.id}`}
+              className="text-primary underline hover:opacity-80"
+            >
+              {document.id}
+            </Link>
+          );
+        },
       },
       {
         id: "title",
@@ -74,6 +85,17 @@ export default function Documents() {
             </div>
           </div>
         ),
+        cell: ({ row }) => {
+          const document = row.original;
+          return (
+            <Link
+              to={`/documents/${document.id}`}
+              className="text-primary underline hover:opacity-80"
+            >
+              {document.title}
+            </Link>
+          );
+        },
       },
       {
         id: "labels",
