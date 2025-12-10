@@ -367,7 +367,7 @@ documents_api_load_database_url = aws.ssm.Parameter(
 
 documents_api_cdn_url = aws.ssm.Parameter(
     "documents-api-cdn-url",
-    name="documents-api/cdn-url",
+    name="/documents-api/cdn-url",
     description="Root URL of the CDN",
     type=aws.ssm.ParameterType.STRING,
     value=config.require("cdn-url"),
