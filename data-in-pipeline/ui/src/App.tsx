@@ -13,11 +13,14 @@ import { Toaster } from "./components/refine-ui/notification/toaster";
 import { useNotificationProvider } from "./components/refine-ui/notification/use-notification-provider";
 import { ThemeProvider } from "./components/refine-ui/theme/theme-provider";
 import Documents from "./Documents";
+import Document from "./Document";
 import { Navigation } from "./components/navigation";
 import Labels from "./Labels";
 import Relationships from "./Relationships";
 
-const baseProvider = dataProvider("http://localhost:8000");
+const baseProvider = dataProvider(
+  "https://skillful-analysis-production.up.railway.app",
+);
 
 const documentsDataProvider: DataProvider = {
   ...baseProvider,
@@ -28,7 +31,9 @@ const documentsDataProvider: DataProvider = {
     const offset = (currentPage - 1) * pageSize;
     const limit = pageSize;
 
-    const url = new URL(`http://localhost:8000/${resource}`);
+    const url = new URL(
+      `https://skillful-analysis-production.up.railway.app/${resource}`,
+    );
     url.searchParams.set("offset", offset.toString());
     url.searchParams.set("limit", limit.toString());
 
@@ -53,6 +58,14 @@ const documentsDataProvider: DataProvider = {
     return {
       data: responseJson.data,
       total: responseJson.total,
+    };
+  },
+  getOne: async ({ resource, id }) => {
+    const url = new URL(`http://localhost:8000/${resource}/${id}`);
+    const response = await fetch(url.toString());
+    const responseJson = await response.json();
+    return {
+      data: responseJson.data,
     };
   },
 };
@@ -80,6 +93,7 @@ function App() {
                 <Routes>
                   <Route index element={<Navigate to="/documents" replace />} />
                   <Route path="documents" element={<Documents />} />
+                  <Route path="documents/:id" element={<Document />} />
                   <Route path="labels" element={<Labels />} />
                   <Route path="relationships" element={<Relationships />} />
                 </Routes>

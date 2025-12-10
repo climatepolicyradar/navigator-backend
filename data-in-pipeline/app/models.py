@@ -59,8 +59,19 @@ class DocumentDocumentRelationship(BaseModel):
     timestamp: datetime | None = None
 
 
+class Item(BaseModel):
+    url: str | None = None
+
+
 class Document(BaseDocument):
     relationships: list[DocumentDocumentRelationship] = []
+    """
+    This needs work, but is a decent placeholder while we work through the model.
+    It is lightly based on the FRBR ontology.
+
+    @see: https://en.wikipedia.org/wiki/Functional_Requirements_for_Bibliographic_Records
+    """
+    items: list[Item] = []
 
 
 class DocumentWithoutRelationships(BaseDocument):

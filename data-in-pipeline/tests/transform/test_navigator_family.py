@@ -5,6 +5,7 @@ from returns.result import Success
 
 from app.extract.connectors import (
     NavigatorCorpus,
+    NavigatorCorpusType,
     NavigatorDocument,
     NavigatorEvent,
     NavigatorFamily,
@@ -28,15 +29,107 @@ def navigator_family_with_single_matching_document() -> Identified[NavigatorFami
         data=NavigatorFamily(
             import_id="family",
             title="Matching title on family and document",
-            corpus=NavigatorCorpus(import_id="corpus"),
+            corpus=NavigatorCorpus(
+                import_id="corpus", corpus_type=NavigatorCorpusType(name="corpus_type")
+            ),
             documents=[
                 NavigatorDocument(
                     import_id="document",
                     title="Matching title on family and document",
                     events=[],
+                    valid_metadata={
+                        "role": ["SUPPORTING LEGISLATION"],
+                        "type": ["National Drought Plan (NDP)"],
+                    },
                 ),
             ],
-            events=[],
+            events=[
+                NavigatorEvent(
+                    import_id="Amended",
+                    event_type="Amended",
+                    date=datetime.datetime(2020, 1, 1),
+                ),
+                NavigatorEvent(
+                    import_id="Appealed",
+                    event_type="Appealed",
+                    date=datetime.datetime(2020, 1, 1),
+                ),
+                NavigatorEvent(
+                    import_id="Closed",
+                    event_type="Closed",
+                    date=datetime.datetime(2020, 1, 1),
+                ),
+                NavigatorEvent(
+                    import_id="Declaration Of Climate Emergency",
+                    event_type="Declaration Of Climate Emergency",
+                    date=datetime.datetime(2020, 1, 1),
+                ),
+                NavigatorEvent(
+                    import_id="Dismissed",
+                    event_type="Dismissed",
+                    date=datetime.datetime(2020, 1, 1),
+                ),
+                NavigatorEvent(
+                    import_id="Entered Into Force",
+                    event_type="Entered Into Force",
+                    date=datetime.datetime(2020, 1, 1),
+                ),
+                NavigatorEvent(
+                    import_id="Filing",
+                    event_type="Filing",
+                    date=datetime.datetime(2020, 1, 1),
+                ),
+                NavigatorEvent(
+                    import_id="Granted",
+                    event_type="Granted",
+                    date=datetime.datetime(2020, 1, 1),
+                ),
+                NavigatorEvent(
+                    import_id="Implementation Details",
+                    event_type="Implementation Details",
+                    date=datetime.datetime(2020, 1, 1),
+                ),
+                NavigatorEvent(
+                    import_id="International Agreement",
+                    event_type="International Agreement",
+                    date=datetime.datetime(2020, 1, 1),
+                ),
+                NavigatorEvent(
+                    import_id="Net Zero Pledge",
+                    event_type="Net Zero Pledge",
+                    date=datetime.datetime(2020, 1, 1),
+                ),
+                NavigatorEvent(
+                    import_id="Other",
+                    event_type="Other",
+                    date=datetime.datetime(2020, 1, 1),
+                ),
+                NavigatorEvent(
+                    import_id="Passed/Approved",
+                    event_type="Passed/Approved",
+                    date=datetime.datetime(2020, 1, 1),
+                ),
+                NavigatorEvent(
+                    import_id="Repealed/Replaced",
+                    event_type="Repealed/Replaced",
+                    date=datetime.datetime(2020, 1, 1),
+                ),
+                NavigatorEvent(
+                    import_id="Set",
+                    event_type="Set",
+                    date=datetime.datetime(2020, 1, 1),
+                ),
+                NavigatorEvent(
+                    import_id="Settled",
+                    event_type="Settled",
+                    date=datetime.datetime(2020, 1, 1),
+                ),
+                NavigatorEvent(
+                    import_id="Updated",
+                    event_type="Updated",
+                    date=datetime.datetime(2020, 1, 1),
+                ),
+            ],
         ),
     )
 
@@ -49,7 +142,9 @@ def navigator_family_with_no_matching_transformations() -> Identified[NavigatorF
         data=NavigatorFamily(
             import_id="123",
             title="No matches for this family or documents",
-            corpus=NavigatorCorpus(import_id="123"),
+            corpus=NavigatorCorpus(
+                import_id="123", corpus_type=NavigatorCorpusType(name="corpus_type")
+            ),
             documents=[
                 NavigatorDocument(import_id="456", title="Test document 1", events=[]),
             ],
@@ -66,7 +161,10 @@ def navigator_family_with_litigation_corpus_type() -> Identified[NavigatorFamily
         data=NavigatorFamily(
             import_id="family",
             title="Litigation family",
-            corpus=NavigatorCorpus(import_id="Academic.corpus.Litigation.n0000"),
+            corpus=NavigatorCorpus(
+                import_id="Academic.corpus.Litigation.n0000",
+                corpus_type=NavigatorCorpusType(name="Litigation"),
+            ),
             documents=[
                 NavigatorDocument(
                     import_id="document",
@@ -104,7 +202,10 @@ def navigator_family_multilateral_climate_fund_project() -> Identified[Navigator
         data=NavigatorFamily(
             import_id="family",
             title="Multilateral climate fund project",
-            corpus=NavigatorCorpus(import_id="MCF.corpus.AF.n0000"),
+            corpus=NavigatorCorpus(
+                import_id="MCF.corpus.AF.n0000",
+                corpus_type=NavigatorCorpusType(name="AF"),
+            ),
             documents=[
                 NavigatorDocument(
                     import_id="document_1",
@@ -156,14 +257,141 @@ def test_transform_navigator_family_with_single_matching_document(
         [
             Document(
                 id="family",
-                title=navigator_family_with_single_matching_document.data.title,
+                title="Matching title on family and document",
                 labels=[
                     DocumentLabelRelationship(
-                        type="debug",
+                        type="activity_status",
+                        timestamp=datetime.datetime(2020, 1, 1),
                         label=Label(
-                            type="debug",
-                            id="no_family_labels",
-                            title="no_family_labels",
+                            type="activity_status",
+                            id="Amended",
+                            title="Amended",
+                        ),
+                    ),
+                    DocumentLabelRelationship(
+                        type="activity_status",
+                        timestamp=datetime.datetime(2020, 1, 1),
+                        label=Label(
+                            type="activity_status",
+                            id="Appealed",
+                            title="Appealed",
+                        ),
+                    ),
+                    DocumentLabelRelationship(
+                        type="activity_status",
+                        timestamp=datetime.datetime(2020, 1, 1),
+                        label=Label(
+                            type="activity_status",
+                            id="Closed",
+                            title="Closed",
+                        ),
+                    ),
+                    DocumentLabelRelationship(
+                        type="activity_status",
+                        timestamp=datetime.datetime(2020, 1, 1),
+                        label=Label(
+                            type="activity_status",
+                            id="Declaration of climate emergency",
+                            title="Declaration of climate emergency",
+                        ),
+                    ),
+                    DocumentLabelRelationship(
+                        type="activity_status",
+                        timestamp=datetime.datetime(2020, 1, 1),
+                        label=Label(
+                            type="activity_status", id="Dismissed", title="Dismissed"
+                        ),
+                    ),
+                    DocumentLabelRelationship(
+                        type="activity_status",
+                        timestamp=datetime.datetime(2020, 1, 1),
+                        label=Label(
+                            type="activity_status",
+                            id="Entered into force",
+                            title="Entered into force",
+                        ),
+                    ),
+                    DocumentLabelRelationship(
+                        type="activity_status",
+                        timestamp=datetime.datetime(2020, 1, 1),
+                        label=Label(
+                            type="activity_status", id="Filing", title="Filing"
+                        ),
+                    ),
+                    DocumentLabelRelationship(
+                        type="activity_status",
+                        timestamp=datetime.datetime(2020, 1, 1),
+                        label=Label(
+                            type="activity_status", id="Granted", title="Granted"
+                        ),
+                    ),
+                    DocumentLabelRelationship(
+                        type="activity_status",
+                        timestamp=datetime.datetime(2020, 1, 1),
+                        label=Label(
+                            type="activity_status",
+                            id="Implementation details",
+                            title="Implementation details",
+                        ),
+                    ),
+                    DocumentLabelRelationship(
+                        type="activity_status",
+                        timestamp=datetime.datetime(2020, 1, 1),
+                        label=Label(
+                            type="activity_status",
+                            id="International agreement",
+                            title="International agreement",
+                        ),
+                    ),
+                    DocumentLabelRelationship(
+                        type="activity_status",
+                        timestamp=datetime.datetime(2020, 1, 1),
+                        label=Label(
+                            type="activity_status",
+                            id="Net zero pledge",
+                            title="Net zero pledge",
+                        ),
+                    ),
+                    DocumentLabelRelationship(
+                        type="activity_status",
+                        timestamp=datetime.datetime(2020, 1, 1),
+                        label=Label(type="activity_status", id="Other", title="Other"),
+                    ),
+                    DocumentLabelRelationship(
+                        type="activity_status",
+                        timestamp=datetime.datetime(2020, 1, 1),
+                        label=Label(
+                            type="activity_status",
+                            id="Passed/Approved",
+                            title="Passed/Approved",
+                        ),
+                    ),
+                    DocumentLabelRelationship(
+                        type="activity_status",
+                        timestamp=datetime.datetime(2020, 1, 1),
+                        label=Label(
+                            type="activity_status",
+                            id="Repealed/Replaced",
+                            title="Repealed/Replaced",
+                        ),
+                    ),
+                    DocumentLabelRelationship(
+                        type="activity_status",
+                        timestamp=datetime.datetime(2020, 1, 1),
+                        label=Label(type="activity_status", id="Set", title="Set"),
+                    ),
+                    DocumentLabelRelationship(
+                        type="activity_status",
+                        timestamp=datetime.datetime(2020, 1, 1),
+                        label=Label(
+                            type="activity_status", id="Settled", title="Settled"
+                        ),
+                    ),
+                    DocumentLabelRelationship(
+                        type="activity_status",
+                        timestamp=datetime.datetime(2020, 1, 1),
+                        label=Label(
+                            type="activity_status", id="Updated", title="Updated"
                         ),
                     ),
                 ],
@@ -172,14 +400,22 @@ def test_transform_navigator_family_with_single_matching_document(
                         type="has_version",
                         document=DocumentWithoutRelationships(
                             id="document",
-                            title=navigator_family_with_single_matching_document.data.title,
+                            title="Matching title on family and document",
                             labels=[
                                 DocumentLabelRelationship(
-                                    type="debug",
+                                    type="entity_type",
                                     label=Label(
-                                        type="debug",
-                                        id="no_document_labels",
-                                        title="no_document_labels",
+                                        type="entity_type",
+                                        id="Supporting legislation",
+                                        title="Supporting legislation",
+                                    ),
+                                ),
+                                DocumentLabelRelationship(
+                                    type="entity_type",
+                                    label=Label(
+                                        type="entity_type",
+                                        id="National drought plan (ndp)",
+                                        title="National drought plan (ndp)",
                                     ),
                                 ),
                             ],
@@ -189,14 +425,22 @@ def test_transform_navigator_family_with_single_matching_document(
             ),
             Document(
                 id="document",
-                title=navigator_family_with_single_matching_document.data.title,
+                title="Matching title on family and document",
                 labels=[
                     DocumentLabelRelationship(
-                        type="debug",
+                        type="entity_type",
                         label=Label(
-                            type="debug",
-                            id="no_document_labels",
-                            title="no_document_labels",
+                            type="entity_type",
+                            id="Supporting legislation",
+                            title="Supporting legislation",
+                        ),
+                    ),
+                    DocumentLabelRelationship(
+                        type="entity_type",
+                        label=Label(
+                            type="entity_type",
+                            id="National drought plan (ndp)",
+                            title="National drought plan (ndp)",
                         ),
                     ),
                 ],
@@ -205,14 +449,157 @@ def test_transform_navigator_family_with_single_matching_document(
                         type="is_version_of",
                         document=DocumentWithoutRelationships(
                             id="family",
-                            title=navigator_family_with_single_matching_document.data.title,
+                            title="Matching title on family and document",
                             labels=[
                                 DocumentLabelRelationship(
-                                    type="debug",
+                                    type="activity_status",
+                                    timestamp=datetime.datetime(2020, 1, 1),
                                     label=Label(
-                                        type="debug",
-                                        id="no_family_labels",
-                                        title="no_family_labels",
+                                        type="activity_status",
+                                        id="Amended",
+                                        title="Amended",
+                                    ),
+                                ),
+                                DocumentLabelRelationship(
+                                    type="activity_status",
+                                    timestamp=datetime.datetime(2020, 1, 1),
+                                    label=Label(
+                                        type="activity_status",
+                                        id="Appealed",
+                                        title="Appealed",
+                                    ),
+                                ),
+                                DocumentLabelRelationship(
+                                    type="activity_status",
+                                    timestamp=datetime.datetime(2020, 1, 1),
+                                    label=Label(
+                                        type="activity_status",
+                                        id="Closed",
+                                        title="Closed",
+                                    ),
+                                ),
+                                DocumentLabelRelationship(
+                                    type="activity_status",
+                                    timestamp=datetime.datetime(2020, 1, 1),
+                                    label=Label(
+                                        type="activity_status",
+                                        id="Declaration of climate emergency",
+                                        title="Declaration of climate emergency",
+                                    ),
+                                ),
+                                DocumentLabelRelationship(
+                                    type="activity_status",
+                                    timestamp=datetime.datetime(2020, 1, 1),
+                                    label=Label(
+                                        type="activity_status",
+                                        id="Dismissed",
+                                        title="Dismissed",
+                                    ),
+                                ),
+                                DocumentLabelRelationship(
+                                    type="activity_status",
+                                    timestamp=datetime.datetime(2020, 1, 1),
+                                    label=Label(
+                                        type="activity_status",
+                                        id="Entered into force",
+                                        title="Entered into force",
+                                    ),
+                                ),
+                                DocumentLabelRelationship(
+                                    type="activity_status",
+                                    timestamp=datetime.datetime(2020, 1, 1),
+                                    label=Label(
+                                        type="activity_status",
+                                        id="Filing",
+                                        title="Filing",
+                                    ),
+                                ),
+                                DocumentLabelRelationship(
+                                    type="activity_status",
+                                    timestamp=datetime.datetime(2020, 1, 1),
+                                    label=Label(
+                                        type="activity_status",
+                                        id="Granted",
+                                        title="Granted",
+                                    ),
+                                ),
+                                DocumentLabelRelationship(
+                                    type="activity_status",
+                                    timestamp=datetime.datetime(2020, 1, 1),
+                                    label=Label(
+                                        type="activity_status",
+                                        id="Implementation details",
+                                        title="Implementation details",
+                                    ),
+                                ),
+                                DocumentLabelRelationship(
+                                    type="activity_status",
+                                    timestamp=datetime.datetime(2020, 1, 1),
+                                    label=Label(
+                                        type="activity_status",
+                                        id="International agreement",
+                                        title="International agreement",
+                                    ),
+                                ),
+                                DocumentLabelRelationship(
+                                    type="activity_status",
+                                    timestamp=datetime.datetime(2020, 1, 1),
+                                    label=Label(
+                                        type="activity_status",
+                                        id="Net zero pledge",
+                                        title="Net zero pledge",
+                                    ),
+                                ),
+                                DocumentLabelRelationship(
+                                    type="activity_status",
+                                    timestamp=datetime.datetime(2020, 1, 1),
+                                    label=Label(
+                                        type="activity_status",
+                                        id="Other",
+                                        title="Other",
+                                    ),
+                                ),
+                                DocumentLabelRelationship(
+                                    type="activity_status",
+                                    timestamp=datetime.datetime(2020, 1, 1),
+                                    label=Label(
+                                        type="activity_status",
+                                        id="Passed/Approved",
+                                        title="Passed/Approved",
+                                    ),
+                                ),
+                                DocumentLabelRelationship(
+                                    type="activity_status",
+                                    timestamp=datetime.datetime(2020, 1, 1),
+                                    label=Label(
+                                        type="activity_status",
+                                        id="Repealed/Replaced",
+                                        title="Repealed/Replaced",
+                                    ),
+                                ),
+                                DocumentLabelRelationship(
+                                    type="activity_status",
+                                    timestamp=datetime.datetime(2020, 1, 1),
+                                    label=Label(
+                                        type="activity_status", id="Set", title="Set"
+                                    ),
+                                ),
+                                DocumentLabelRelationship(
+                                    type="activity_status",
+                                    timestamp=datetime.datetime(2020, 1, 1),
+                                    label=Label(
+                                        type="activity_status",
+                                        id="Settled",
+                                        title="Settled",
+                                    ),
+                                ),
+                                DocumentLabelRelationship(
+                                    type="activity_status",
+                                    timestamp=datetime.datetime(2020, 1, 1),
+                                    label=Label(
+                                        type="activity_status",
+                                        id="Updated",
+                                        title="Updated",
                                     ),
                                 ),
                             ],

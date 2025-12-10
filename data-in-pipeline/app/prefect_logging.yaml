@@ -1,5 +1,6 @@
 # Prefect logging configuration schema version.
 # See https://docs.prefect.io/latest/overview/configuration/logging/#custom-logging-configuration
+# PREFECT OVERWRITES LOGGING CONFIG WHEN IT LOADS THIS FILE
 version: 1
 
 # Keep Prefect's existing loggers active while adding ours
