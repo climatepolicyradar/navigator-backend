@@ -4,6 +4,7 @@ import os
 from returns.result import Failure, Success
 
 from app.extract.connectors import (
+    NavigatorCollection,
     NavigatorCorpus,
     NavigatorCorpusType,
     NavigatorDocument,
@@ -69,6 +70,14 @@ if __name__ == "__main__":
                             date=event["date"],
                         )
                         for event in family["events"]
+                    ],
+                    collections=[
+                        NavigatorCollection(
+                            import_id=collection["import_id"],
+                            title=collection["title"],
+                            description=collection["description"],
+                        )
+                        for collection in family["collections"]
                     ],
                 ),
                 id=family["import_id"],
