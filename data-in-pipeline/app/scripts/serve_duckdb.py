@@ -72,13 +72,13 @@ class Aggregation(BaseModel):
     count: int
 
 
-class DocumentResponse(BaseModel):
+class DocumentsResponse(BaseModel):
     total: int
     aggregations: dict[str, list[Aggregation]]
     data: list[Document]
 
 
-@app.get("/documents", response_model=DocumentResponse)
+@app.get("/documents", response_model=DocumentsResponse)
 def list_documents(
     label_ids: list[str] | None = Query(
         None, description="Filter by labels.label.id", alias="labels.label.id"
@@ -262,3 +262,31 @@ def list_relationships(
         "total": 10,
         "data": relationships,
     }
+
+
+class DocumentResponse(BaseModel):
+    data: Document
+
+
+@app.get("/documents/{id}", response_model=DocumentResponse)
+def read_document(
+    id: str,
+    con=Depends(get_connection),
+):
+    document_result = con.execute(
+        """
+        SELECT
+            id,
+            title,
+            labels,
+            relationships
+        FROM documents
+        WHERE id = ?
+        """,
+        (id,),
+    )
+    document_colnames = [c[0] for c in document_result.description]
+    document_row = document_result.fetchone()
+    document = Document(**dict(zip(document_colnames, document_row)))
+
+    return {"data": document}
