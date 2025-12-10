@@ -326,15 +326,36 @@ def _transform_navigator_document(
     """
     These values are controlled
     @see: https://github.com/climatepolicyradar/data-migrations/blob/main/taxonomies/Intl.%20agreements.json#L42-L51
+    @see: https://github.com/climatepolicyradar/data-migrations/blob/main/taxonomies/Laws%20and%20Policies.json#L381-L396
     """
-    role = navigator_document.valid_metadata.get("role")
-    if role is not None and len(role) > 0:
-        normalised_role = role[0].capitalize()
+    metadata_role = navigator_document.valid_metadata.get("role")
+    if metadata_role is not None and len(metadata_role) > 0:
+        normalised_role = metadata_role[0].capitalize()
         labels.append(
             DocumentLabelRelationship(
                 type="entity_type",
                 label=Label(
                     id=normalised_role, title=normalised_role, type="entity_type"
+                ),
+            )
+        )
+
+    """
+    These values are controlled
+    @see: https://github.com/climatepolicyradar/data-migrations/blob/main/taxonomies/Reports.json#L16-L26
+    @see: https://github.com/climatepolicyradar/data-migrations/blob/main/taxonomies/GCF.json#L52-L67
+    @see: https://github.com/climatepolicyradar/data-migrations/blob/main/taxonomies/Intl.%20agreements.json#L54-L144
+    """
+    metadata_type = navigator_document.valid_metadata.get("type")
+    if metadata_type is not None and len(metadata_type) > 0:
+        normalised_metadata_type = metadata_type[0].capitalize()
+        labels.append(
+            DocumentLabelRelationship(
+                type="entity_type",
+                label=Label(
+                    id=normalised_metadata_type,
+                    title=normalised_metadata_type,
+                    type="entity_type",
                 ),
             )
         )
