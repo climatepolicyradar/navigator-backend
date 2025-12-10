@@ -5,8 +5,8 @@ from http import HTTPStatus
 from typing import Any
 
 import boto3
-import psycopg2  # type: ignore
-from psycopg2 import sql  # type: ignore
+import psycopg2
+from psycopg2 import sql
 
 _LOGGER = logging.getLogger(__name__)
 
