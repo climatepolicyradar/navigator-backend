@@ -1,5 +1,6 @@
 from returns.result import Failure, Result, Success
 
+from app.bootstrap_telemetry import get_logger, log_context
 from app.extract.connectors import NavigatorDocument, NavigatorFamily
 from app.models import (
     Document,
@@ -11,11 +12,11 @@ from app.models import (
 )
 from app.transform.models import CouldNotTransform, NoMatchingTransformations
 
-mcf_projects_corpus_import_ids = [
-    "MCF.corpus.AF.n0000",
-    "MCF.corpus.CIF.n0000",
-    "MCF.corpus.GEF.n0000",
-    "MCF.corpus.GCF.n0000",
+mcf_projects_corpus_types = [
+    "AF",
+    "CIF",
+    "GEF",
+    "GCF",
 ]
 
 mcf_reports_corpus_import_ids = [
@@ -29,11 +30,18 @@ mcf_reports_corpus_import_ids = [
 def transform_navigator_family(
     input: Identified[NavigatorFamily],
 ) -> Result[list[Document], NoMatchingTransformations]:
-    match transform(input):
-        case Success(d):
-            return Success(d)
+    logger = get_logger()
 
-    return Failure(NoMatchingTransformations())
+    with log_context(import_id=input.id):
+        logger.info(f"Transforming family with {len(input.data.documents)} documents")
+
+        match transform(input):
+            case Success(d):
+                logger.info(f"Transform completed, produced {len(d)} documents")
+                return Success(d)
+
+        logger.warning("No matching transformation found")
+        return Failure(NoMatchingTransformations())
 
 
 def transform(
@@ -61,7 +69,7 @@ def transform(
             if document.title == input.data.title
             # 2)
             or (
-                input.data.corpus.import_id in mcf_projects_corpus_import_ids
+                input.data.corpus.corpus_type.name in mcf_projects_corpus_types
                 and document.title.lower() == "project document"
             )
         ),
@@ -172,25 +180,28 @@ def transform(
 def _transform_navigator_family(navigator_family: NavigatorFamily) -> Document:
     labels: list[DocumentLabelRelationship] = []
 
-    if navigator_family.corpus.import_id == "Academic.corpus.Litigation.n0000":
-        labels.append(
-            DocumentLabelRelationship(
-                type="entity_type",
-                label=Label(
-                    id="Legal case",
-                    title="Legal case",
-                    type="entity_type",
-                ),
-            )
-        )
+    corpus_type_to_entity_type_map = {
+        "Laws and Policies": "Laws and policies",
+        "Litigation": "Legal case",
+        "Reports": "Report",
+        "Intl. agreements": "International agreement",
+        "AF": "Multilateral climate fund project",
+        "CIF": "Multilateral climate fund project",
+        "GEF": "Multilateral climate fund project",
+        "GCF": "Multilateral climate fund project",
+    }
+    labels = []
 
-    if navigator_family.corpus.import_id in mcf_projects_corpus_import_ids:
+    entity_type = corpus_type_to_entity_type_map.get(
+        navigator_family.corpus.corpus_type.name
+    )
+    if entity_type:
         labels.append(
             DocumentLabelRelationship(
                 type="entity_type",
                 label=Label(
-                    id="Multilateral climate fund project",
-                    title="Multilateral climate fund project",
+                    id=entity_type,
+                    title=entity_type,
                     type="entity_type",
                 ),
             )
@@ -218,7 +229,7 @@ def _transform_navigator_family(navigator_family: NavigatorFamily) -> Document:
         @see: https://github.com/climatepolicyradar/data-migrations/blob/main/taxonomies/CIF.json#L7-L10
         @see: https://github.com/climatepolicyradar/data-migrations/blob/main/taxonomies/GEF.json#L7-L11
         """
-        mcf_project_status_value_map = {
+        mcf_project_event_type_to_activity_status_map = {
             "Concept Approved": "Concept approved",
             "Project Approved": "Approved",
             "Under Implementation": "Under implementation",
@@ -226,8 +237,38 @@ def _transform_navigator_family(navigator_family: NavigatorFamily) -> Document:
             "Cancelled": "Cancelled",
         }
 
+        """
+        Values from Navigator are controlled
+        @see: https://github.com/climatepolicyradar/data-migrations/blob/main/taxonomies/Laws%20and%20Policies.json#L17-L33
+        @see: https://github.com/climatepolicyradar/data-migrations/blob/main/taxonomies/Intl.%20agreements.json#L7-L24
+        """
+        laws_and_policies_event_type_to_activity_status_map = {
+            "Amended": "Amended",
+            "Appealed": "Appealed",
+            "Closed": "Closed",
+            "Declaration Of Climate Emergency": "Declaration of climate emergency",
+            "Dismissed": "Dismissed",
+            "Entered Into Force": "Entered into force",
+            "Filing": "Filing",
+            "Granted": "Granted",
+            "Implementation Details": "Implementation details",
+            "International Agreement": "International agreement",
+            "Net Zero Pledge": "Net zero pledge",
+            "Other": "Other",
+            "Passed/Approved": "Passed/Approved",
+            "Repealed/Replaced": "Repealed/Replaced",
+            "Set": "Set",
+            "Settled": "Settled",
+            "Updated": "Updated",
+        }
+
+        event_type_to_activity_status_map = (
+            mcf_project_event_type_to_activity_status_map
+            | laws_and_policies_event_type_to_activity_status_map
+        )
+
         for event in navigator_family.events:
-            label_id = mcf_project_status_value_map.get(
+            label_id = event_type_to_activity_status_map.get(
                 event.event_type,
                 "Unknown",
             )
@@ -285,15 +326,36 @@ def _transform_navigator_document(
     """
     These values are controlled
     @see: https://github.com/climatepolicyradar/data-migrations/blob/main/taxonomies/Intl.%20agreements.json#L42-L51
+    @see: https://github.com/climatepolicyradar/data-migrations/blob/main/taxonomies/Laws%20and%20Policies.json#L381-L396
     """
-    role = navigator_document.valid_metadata.get("role")
-    if role is not None and len(role) > 0:
-        normalised_role = role[0].capitalize()
+    metadata_role = navigator_document.valid_metadata.get("role")
+    if metadata_role is not None and len(metadata_role) > 0:
+        normalised_role = metadata_role[0].capitalize()
         labels.append(
             DocumentLabelRelationship(
                 type="entity_type",
                 label=Label(
                     id=normalised_role, title=normalised_role, type="entity_type"
+                ),
+            )
+        )
+
+    """
+    These values are controlled
+    @see: https://github.com/climatepolicyradar/data-migrations/blob/main/taxonomies/Reports.json#L16-L26
+    @see: https://github.com/climatepolicyradar/data-migrations/blob/main/taxonomies/GCF.json#L52-L67
+    @see: https://github.com/climatepolicyradar/data-migrations/blob/main/taxonomies/Intl.%20agreements.json#L54-L144
+    """
+    metadata_type = navigator_document.valid_metadata.get("type")
+    if metadata_type is not None and len(metadata_type) > 0:
+        normalised_metadata_type = metadata_type[0].capitalize()
+        labels.append(
+            DocumentLabelRelationship(
+                type="entity_type",
+                label=Label(
+                    id=normalised_metadata_type,
+                    title=normalised_metadata_type,
+                    type="entity_type",
                 ),
             )
         )

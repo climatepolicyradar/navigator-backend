@@ -6,7 +6,7 @@ from prefect.blocks.system import JSON
 from prefect.docker.docker_image import DockerImage
 
 from app.bootstrap_telemetry import get_logger
-from app.navigator_document_etl_pipeline import process_updates
+from app.navigator_document_etl_pipeline import process_document_updates
 
 MEGABYTES_PER_GIGABYTE = 1024
 DEFAULT_FLOW_VARIABLES = {
@@ -145,4 +145,4 @@ def create_deployment(flow: Flow) -> None:
 
 
 if __name__ == "__main__":
-    create_deployment(process_updates)
+    create_deployment(process_document_updates)
