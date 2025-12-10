@@ -9,6 +9,7 @@ from app.extract.connectors import (
     NavigatorDocument,
     NavigatorEvent,
     NavigatorFamily,
+    NavigatorOrganisation,
 )
 from app.models import (
     Document,
@@ -30,7 +31,9 @@ def navigator_family_with_single_matching_document() -> Identified[NavigatorFami
             import_id="family",
             title="Matching title on family and document",
             corpus=NavigatorCorpus(
-                import_id="corpus", corpus_type=NavigatorCorpusType(name="corpus_type")
+                import_id="corpus",
+                corpus_type=NavigatorCorpusType(name="corpus_type"),
+                organisation=NavigatorOrganisation(id=1, name="CCLW"),
             ),
             documents=[
                 NavigatorDocument(
@@ -143,7 +146,9 @@ def navigator_family_with_no_matching_transformations() -> Identified[NavigatorF
             import_id="123",
             title="No matches for this family or documents",
             corpus=NavigatorCorpus(
-                import_id="123", corpus_type=NavigatorCorpusType(name="corpus_type")
+                import_id="123",
+                corpus_type=NavigatorCorpusType(name="corpus_type"),
+                organisation=NavigatorOrganisation(id=1, name="CCLW"),
             ),
             documents=[
                 NavigatorDocument(import_id="456", title="Test document 1", events=[]),
@@ -164,6 +169,7 @@ def navigator_family_with_litigation_corpus_type() -> Identified[NavigatorFamily
             corpus=NavigatorCorpus(
                 import_id="Academic.corpus.Litigation.n0000",
                 corpus_type=NavigatorCorpusType(name="Litigation"),
+                organisation=NavigatorOrganisation(id=1, name="CCLW"),
             ),
             documents=[
                 NavigatorDocument(
@@ -205,6 +211,7 @@ def navigator_family_multilateral_climate_fund_project() -> Identified[Navigator
             corpus=NavigatorCorpus(
                 import_id="MCF.corpus.AF.n0000",
                 corpus_type=NavigatorCorpusType(name="AF"),
+                organisation=NavigatorOrganisation(id=1, name="CCLW"),
             ),
             documents=[
                 NavigatorDocument(
@@ -394,6 +401,14 @@ def test_transform_navigator_family_with_single_matching_document(
                             type="activity_status", id="Updated", title="Updated"
                         ),
                     ),
+                    DocumentLabelRelationship(
+                        type="provider",
+                        label=Label(
+                            type="agent",
+                            id="Grantham Research Institute",
+                            title="Grantham Research Institute",
+                        ),
+                    ),
                 ],
                 relationships=[
                     DocumentDocumentRelationship(
@@ -416,6 +431,14 @@ def test_transform_navigator_family_with_single_matching_document(
                                         type="entity_type",
                                         id="National drought plan (ndp)",
                                         title="National drought plan (ndp)",
+                                    ),
+                                ),
+                                DocumentLabelRelationship(
+                                    type="provider",
+                                    label=Label(
+                                        type="agent",
+                                        id="Grantham Research Institute",
+                                        title="Grantham Research Institute",
                                     ),
                                 ),
                             ],
@@ -441,6 +464,14 @@ def test_transform_navigator_family_with_single_matching_document(
                             type="entity_type",
                             id="National drought plan (ndp)",
                             title="National drought plan (ndp)",
+                        ),
+                    ),
+                    DocumentLabelRelationship(
+                        type="provider",
+                        label=Label(
+                            type="agent",
+                            id="Grantham Research Institute",
+                            title="Grantham Research Institute",
                         ),
                     ),
                 ],
@@ -602,6 +633,14 @@ def test_transform_navigator_family_with_single_matching_document(
                                         title="Updated",
                                     ),
                                 ),
+                                DocumentLabelRelationship(
+                                    type="provider",
+                                    label=Label(
+                                        type="agent",
+                                        id="Grantham Research Institute",
+                                        title="Grantham Research Institute",
+                                    ),
+                                ),
                             ],
                         ),
                     ),
@@ -630,11 +669,11 @@ def test_transform_navigator_family_with_litigation_corpus_type(
                         ),
                     ),
                     DocumentLabelRelationship(
-                        type="debug",
+                        type="provider",
                         label=Label(
-                            id="no_versions",
-                            title="no_versions",
-                            type="debug",
+                            type="agent",
+                            id="Grantham Research Institute",
+                            title="Grantham Research Institute",
                         ),
                     ),
                 ],
@@ -651,6 +690,14 @@ def test_transform_navigator_family_with_litigation_corpus_type(
                                         id="Decision",
                                         title="Decision",
                                         type="entity_type",
+                                    ),
+                                ),
+                                DocumentLabelRelationship(
+                                    type="provider",
+                                    label=Label(
+                                        type="agent",
+                                        id="Grantham Research Institute",
+                                        title="Grantham Research Institute",
                                     ),
                                 ),
                             ],
@@ -670,6 +717,14 @@ def test_transform_navigator_family_with_litigation_corpus_type(
                                         type="status",
                                     ),
                                 ),
+                                DocumentLabelRelationship(
+                                    type="provider",
+                                    label=Label(
+                                        type="agent",
+                                        id="Grantham Research Institute",
+                                        title="Grantham Research Institute",
+                                    ),
+                                ),
                             ],
                         ),
                     ),
@@ -687,6 +742,14 @@ def test_transform_navigator_family_with_litigation_corpus_type(
                             type="entity_type",
                         ),
                     ),
+                    DocumentLabelRelationship(
+                        type="provider",
+                        label=Label(
+                            type="agent",
+                            id="Grantham Research Institute",
+                            title="Grantham Research Institute",
+                        ),
+                    ),
                 ],
                 relationships=[
                     DocumentDocumentRelationship(
@@ -701,6 +764,14 @@ def test_transform_navigator_family_with_litigation_corpus_type(
                                         id="Legal case",
                                         title="Legal case",
                                         type="entity_type",
+                                    ),
+                                ),
+                                DocumentLabelRelationship(
+                                    type="provider",
+                                    label=Label(
+                                        type="agent",
+                                        id="Grantham Research Institute",
+                                        title="Grantham Research Institute",
                                     ),
                                 ),
                             ],
@@ -720,6 +791,14 @@ def test_transform_navigator_family_with_litigation_corpus_type(
                             type="status",
                         ),
                     ),
+                    DocumentLabelRelationship(
+                        type="provider",
+                        label=Label(
+                            type="agent",
+                            id="Grantham Research Institute",
+                            title="Grantham Research Institute",
+                        ),
+                    ),
                 ],
                 relationships=[
                     DocumentDocumentRelationship(
@@ -734,6 +813,14 @@ def test_transform_navigator_family_with_litigation_corpus_type(
                                         id="Legal case",
                                         title="Legal case",
                                         type="entity_type",
+                                    ),
+                                ),
+                                DocumentLabelRelationship(
+                                    type="provider",
+                                    label=Label(
+                                        type="agent",
+                                        id="Grantham Research Institute",
+                                        title="Grantham Research Institute",
                                     ),
                                 ),
                             ],
@@ -810,6 +897,14 @@ def test_transform_navigator_family_with_multilateral_climate_fund_project(
                         ),
                         timestamp=datetime.datetime(2020, 1, 1),
                     ),
+                    DocumentLabelRelationship(
+                        type="provider",
+                        label=Label(
+                            type="agent",
+                            id="Grantham Research Institute",
+                            title="Grantham Research Institute",
+                        ),
+                    ),
                 ],
                 relationships=[
                     DocumentDocumentRelationship(
@@ -819,11 +914,11 @@ def test_transform_navigator_family_with_multilateral_climate_fund_project(
                             title="Multilateral climate fund project document",
                             labels=[
                                 DocumentLabelRelationship(
-                                    type="debug",
+                                    type="provider",
                                     label=Label(
-                                        type="debug",
-                                        id="no_document_labels",
-                                        title="no_document_labels",
+                                        type="agent",
+                                        id="Grantham Research Institute",
+                                        title="Grantham Research Institute",
                                     ),
                                 ),
                             ],
@@ -836,11 +931,11 @@ def test_transform_navigator_family_with_multilateral_climate_fund_project(
                             title="Project document",
                             labels=[
                                 DocumentLabelRelationship(
-                                    type="debug",
+                                    type="provider",
                                     label=Label(
-                                        type="debug",
-                                        id="no_document_labels",
-                                        title="no_document_labels",
+                                        type="agent",
+                                        id="Grantham Research Institute",
+                                        title="Grantham Research Institute",
                                     ),
                                 ),
                             ],
@@ -853,11 +948,11 @@ def test_transform_navigator_family_with_multilateral_climate_fund_project(
                 title="Multilateral climate fund project document",
                 labels=[
                     DocumentLabelRelationship(
-                        type="debug",
+                        type="provider",
                         label=Label(
-                            type="debug",
-                            id="no_document_labels",
-                            title="no_document_labels",
+                            type="agent",
+                            id="Grantham Research Institute",
+                            title="Grantham Research Institute",
                         ),
                     ),
                 ],
@@ -921,6 +1016,14 @@ def test_transform_navigator_family_with_multilateral_climate_fund_project(
                                     ),
                                     timestamp=datetime.datetime(2020, 1, 1),
                                 ),
+                                DocumentLabelRelationship(
+                                    type="provider",
+                                    label=Label(
+                                        type="agent",
+                                        id="Grantham Research Institute",
+                                        title="Grantham Research Institute",
+                                    ),
+                                ),
                             ],
                         ),
                     )
@@ -931,11 +1034,11 @@ def test_transform_navigator_family_with_multilateral_climate_fund_project(
                 title="Project document",
                 labels=[
                     DocumentLabelRelationship(
-                        type="debug",
+                        type="provider",
                         label=Label(
-                            type="debug",
-                            id="no_document_labels",
-                            title="no_document_labels",
+                            type="agent",
+                            id="Grantham Research Institute",
+                            title="Grantham Research Institute",
                         ),
                     ),
                 ],
@@ -998,6 +1101,14 @@ def test_transform_navigator_family_with_multilateral_climate_fund_project(
                                         type="activity_status",
                                     ),
                                     timestamp=datetime.datetime(2020, 1, 1),
+                                ),
+                                DocumentLabelRelationship(
+                                    type="provider",
+                                    label=Label(
+                                        type="agent",
+                                        id="Grantham Research Institute",
+                                        title="Grantham Research Institute",
+                                    ),
                                 ),
                             ],
                         ),
