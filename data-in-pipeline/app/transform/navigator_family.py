@@ -161,20 +161,44 @@ def transform(
             ),
         )
         documents.append(document_from_document)
-    else:
-        # this is for debugging
-        document_from_family.labels.append(
-            DocumentLabelRelationship(
-                type="debug",
-                label=Label(
-                    id="no_versions",
-                    title="no_versions",
-                    type="debug",
-                ),
-            )
-        )
 
     return Success(documents)
+
+
+def _transform_family_corpus_organisation(
+    navigator_family: NavigatorFamily,
+) -> list[DocumentLabelRelationship]:
+    """
+    Related ontologies
+    @see: https://schema.org/provider
+    """
+    labels: list[DocumentLabelRelationship] = []
+    organisation_to_agent_map = {
+        "AF": "Adapation Fund",
+        "CCLW": "Grantham Research Institute",
+        "CIF": "The Climate Investment Funds",
+        "CPR": "Policy Radar",
+        "GCF": "Green Climate Fund",
+        "GEF": "Global Environment Facility",
+        "Ocean Energy Pathways": "Ocean Energy Pathway",
+        "Sabin": "Sabin Center for Climate Change Law",
+        "UNFCCC": "UNFCCC",
+    }
+
+    organisation_name = organisation_to_agent_map.get(
+        navigator_family.corpus.organisation.name, "Unknown"
+    )
+    labels.append(
+        DocumentLabelRelationship(
+            type="provider",
+            label=Label(
+                type="agent",
+                id=organisation_name,
+                title=organisation_name,
+            ),
+        )
+    )
+    return labels
 
 
 def _transform_navigator_family(navigator_family: NavigatorFamily) -> Document:
@@ -284,18 +308,10 @@ def _transform_navigator_family(navigator_family: NavigatorFamily) -> Document:
                 )
             )
 
-    # this is for debugging
-    if not labels:
-        labels.append(
-            DocumentLabelRelationship(
-                type="debug",
-                label=Label(
-                    id="no_family_labels",
-                    title="no_family_labels",
-                    type="debug",
-                ),
-            )
-        )
+    """
+    Provider labels
+    """
+    labels.extend(_transform_family_corpus_organisation(navigator_family))
 
     return Document(
         id=navigator_family.import_id,
@@ -371,18 +387,10 @@ def _transform_navigator_document(
             )
         )
 
-    # this is for debugging
-    if not labels:
-        labels.append(
-            DocumentLabelRelationship(
-                type="debug",
-                label=Label(
-                    id="no_document_labels",
-                    title="no_document_labels",
-                    type="debug",
-                ),
-            )
-        )
+    """
+    Provider labels
+    """
+    labels.extend(_transform_family_corpus_organisation(navigator_family))
 
     return Document(
         id=navigator_document.import_id,

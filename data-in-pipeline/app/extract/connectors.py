@@ -30,9 +30,22 @@ class NavigatorCorpusType(BaseModel):
     name: str
 
 
+class NavigatorOrganisation(BaseModel):
+    id: int
+    name: str
+    attribution_url: str | None = None
+
+
 class NavigatorCorpus(BaseModel):
     import_id: str
     corpus_type: NavigatorCorpusType
+    organisation: NavigatorOrganisation
+
+
+class NavigatorCollection(BaseModel):
+    import_id: str
+    title: str
+    description: str
 
 
 class NavigatorFamily(BaseModel):
@@ -41,6 +54,7 @@ class NavigatorFamily(BaseModel):
     documents: list[NavigatorDocument]
     corpus: NavigatorCorpus
     events: list[NavigatorEvent]
+    collections: list[NavigatorCollection]
 
 
 class PageFetchFailure(BaseModel):

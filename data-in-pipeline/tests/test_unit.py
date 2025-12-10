@@ -14,6 +14,7 @@ from app.extract.connectors import (
     NavigatorCorpusType,
     NavigatorDocument,
     NavigatorFamily,
+    NavigatorOrganisation,
     PageFetchFailure,
 )
 from app.extract.enums import CheckPointStorageType
@@ -147,12 +148,15 @@ def test_fetch_family_success(base_config):
             import_id=import_id,
             title="Test Family",
             corpus=NavigatorCorpus(
-                import_id="COR-111", corpus_type=NavigatorCorpusType(name="corpus_type")
+                import_id="COR-111",
+                corpus_type=NavigatorCorpusType(name="corpus_type"),
+                organisation=NavigatorOrganisation(id=1, name="UNFCCC"),
             ),
             documents=[
                 NavigatorDocument(import_id=import_id, title="Test Document", events=[])
             ],
             events=[],
+            collections=[],
         ).model_dump(),
     }
 
@@ -309,9 +313,11 @@ def test_fetch_all_families_successfully(base_config):
                 corpus=NavigatorCorpus(
                     import_id="COR-001",
                     corpus_type=NavigatorCorpusType(name="corpus_type"),
+                    organisation=NavigatorOrganisation(id=1, name="UNFCCC"),
                 ),
                 documents=[],
                 events=[],
+                collections=[],
             ).model_dump(),
             NavigatorFamily(
                 import_id="FAM-002",
@@ -319,9 +325,11 @@ def test_fetch_all_families_successfully(base_config):
                 corpus=NavigatorCorpus(
                     import_id="COR-001",
                     corpus_type=NavigatorCorpusType(name="corpus_type"),
+                    organisation=NavigatorOrganisation(id=1, name="UNFCCC"),
                 ),
                 documents=[],
                 events=[],
+                collections=[],
             ).model_dump(),
         ]
     }
@@ -333,9 +341,11 @@ def test_fetch_all_families_successfully(base_config):
                 corpus=NavigatorCorpus(
                     import_id="COR-002",
                     corpus_type=NavigatorCorpusType(name="corpus_type"),
+                    organisation=NavigatorOrganisation(id=1, name="UNFCCC"),
                 ),
                 documents=[],
                 events=[],
+                collections=[],
             ).model_dump()
         ]
     }
@@ -394,9 +404,11 @@ def test_fetch_all_families_handles_successful_retrievals_and_errors(base_config
                 corpus=NavigatorCorpus(
                     import_id="COR-001",
                     corpus_type=NavigatorCorpusType(name="corpus_type"),
+                    organisation=NavigatorOrganisation(id=1, name="UNFCCC"),
                 ),
                 documents=[],
                 events=[],
+                collections=[],
             ).model_dump()
         ]
     }
