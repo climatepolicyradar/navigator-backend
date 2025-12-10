@@ -9,6 +9,7 @@ error tracking, and operation durations.
 import datetime
 import functools
 import os
+import resource
 import time
 from enum import StrEnum
 from typing import Callable, Literal, Optional, TypeVar
@@ -106,6 +107,10 @@ class PipelineMetrics:
         self._pipeline_run_duration: Optional[Histogram] = None
         self._memory_allocated: Optional[Counter] = None
         self._cpu_allocated: Optional[Counter] = None
+        self._billable_cost_of_run: Optional[Counter] = None
+        self._memory_actual: Optional[Counter] = None
+        self._cpu_actual: Optional[Counter] = None
+        self._cost_of_used_resources: Optional[Counter] = None
 
         if not self._disabled:
             self._create_instruments()
@@ -159,14 +164,33 @@ class PipelineMetrics:
         )
 
         self._cpu_allocated = self._metrics_service.create_counter(
-            name="allocated_cpu_units",
-            description="Allocated CPU units",
-            unit="units",
+            name="allocated_cpu_vcpus",
+            description="Allocated CPU vCPUs",
+            unit="vCPUs",
+        )
+
+        self._billable_cost_of_run = self._metrics_service.create_counter(
+            name="cost_of_run_dollars",
+            description="Cost of run in dollars",
+            unit="$",
+        )
+
+        self._memory_actual = self._metrics_service.create_counter(
+            name="actual_memory_megabytes",
+            description="Actual memory in megabytes",
+            unit="mb",
+        )
+
+        self._cpu_actual = self._metrics_service.create_counter(
+            name="actual_cpu_vcpus",
+            description="Actual CPU vCPUs",
+            unit="vCPUs",
         )
 
         logger.info("Pipeline metrics instruments created")
 
-    def _get_allocated_task_resources(self) -> dict[str, float]:
+    @functools.cache
+    def _get_allocated_task_resources(self) -> tuple[float, float]:
         """Get the CPU and memory allocated by the pipeline task.
 
         :return: A dictionary with the CPU and memory allocated by the
@@ -187,12 +211,43 @@ class PipelineMetrics:
         # Task-level limits
         cpu = float(
             task_metadata.get("Limits", {}).get("CPU")
-        )  # CPU units (1024 = 1 vCPU)
+        )  # vCPU units (1024 units = 1 vCPU)
         memory = float(task_metadata.get("Limits", {}).get("Memory"))  # Memory in MB
-        return {"cpu_units": cpu, "memory_mb": memory}
+        return (cpu, memory)
 
-    def measure_resource_allocations(self) -> None:
-        """Measure the resource allocations of the pipeline."""
+    def get_actual_task_resources(self, start_wall: float) -> tuple[float, float]:
+        """Get the actual CPU and memory used by the pipeline task.
+
+        NB: We measure average CPU rather than peak CPU for now, because
+        to get peak CPU would require regular sampling (or external
+        measurement eg by container insights).
+        To make this more accurate for right-sizing, average CPU is
+        preferred; peak CPU should more be interpreted as the upper
+        bound on CPU requirements.
+
+        :param start_wall: The wall time at the start of the task.
+        :type start_wall: float
+        :return: A tuple with the average CPU and peak memory.
+        :rtype: tuple[float, float]
+        """
+        # Get memory
+        peak_memory = resource.getrusage(resource.RUSAGE_SELF)
+        bytes_to_megabytes = 1024
+        peak_memory_mb = peak_memory.ru_maxrss / bytes_to_megabytes
+
+        # Get average vCPUs used (instead of peak vCPUs - see docstring)
+        wall_time = time.time() - start_wall
+        cpu_time = peak_memory.ru_utime + peak_memory.ru_stime
+        avg_vcpus = cpu_time / wall_time  # average vCPUs/cores used
+
+        return (avg_vcpus, peak_memory_mb)
+
+    def measure_resource_allocations(self) -> tuple[float, float] | None:
+        """Measure the resource allocations of the pipeline.
+
+        :return: A tuple with the average CPU and peak memory.
+        :rtype: tuple[float, float]
+        """
         if (
             self._disabled
             or self._memory_allocated is None
@@ -200,21 +255,54 @@ class PipelineMetrics:
         ):
             return
 
+        cpu, memory = self._get_allocated_task_resources()
+
         # Get the CPU and memory allocated by the pipeline flow from the environment
         # variables AWS inject into ECS tasks.
         self._memory_allocated.add(
-            self._get_allocated_task_resources()["memory_mb"],
+            memory,
             attributes={
                 **self._base_attributes,
             },
         )
 
         self._cpu_allocated.add(
-            self._get_allocated_task_resources()["cpu_units"],
+            cpu,
             attributes={
                 **self._base_attributes,
             },
         )
+
+        return (cpu, memory)
+
+    def measure_resource_usage(self, start_wall: float) -> tuple[float, float] | None:
+        """Measure the resource usage of the pipeline.
+
+        :param start_wall: The wall time at the start of the task.
+        :type start_wall: float
+        :return: A tuple with the average CPU and peak memory.
+        :rtype: tuple[float, float]
+        """
+        if self._disabled or self._memory_actual is None or self._cpu_actual is None:
+            return
+
+        cpu, memory = self.get_actual_task_resources(start_wall)
+
+        self._memory_actual.add(
+            memory,
+            attributes={
+                **self._base_attributes,
+            },
+        )
+
+        self._cpu_actual.add(
+            cpu,
+            attributes={
+                **self._base_attributes,
+            },
+        )
+
+        return (cpu, memory)
 
     def record_processed(self, pipeline_type: PipelineType, status: Status) -> None:
         """Record a document processing event.
@@ -256,7 +344,9 @@ class PipelineMetrics:
             },
         )
 
-    def record_duration(self, operation: Operation, duration_seconds: float) -> None:
+    def record_operation_duration(
+        self, operation: Operation, duration_seconds: float
+    ) -> None:
         """Record the duration of a pipeline operation.
 
         :param operation: The pipeline operation that was timed.
@@ -299,6 +389,115 @@ class PipelineMetrics:
                 **self._base_attributes,
                 "pipeline_type": pipeline_type.value,
                 "scope": scope,
+            },
+        )
+
+    def record_billable_cost(
+        self,
+        pipeline_type: PipelineType,
+        duration_seconds: float,
+        cpu: float,
+        memory: float,
+        fargate_cost_per_vcpu_hour: float = 0.04048,
+        fargate_cost_per_mem_gb_hour: float = 0.004445,
+    ) -> None:
+        """Record the billable cost of a pipeline run based on allocated resources.
+
+        In Fargate, the cost is calculated based on the allocated number
+        of vCPUs and memory rather than what is actually used. This is
+        why we have decided to try and separately track actual usage -
+        so we can get insights and see whether we are rightsizing
+        resources or not, and potentially predict costs in advance.
+        To get an accurate cost, we should multiply each of measurements
+        by the total duration (which includes the provisioning time), as
+        this is what Fargate uses. However, we are unable to do this for
+        now, so we are accepting the duration as the execution time
+        (time taken to run the Prefect tasks excluding provisioning time)
+        as the difference will be negligible, especially when running on
+        large inputs in production. To measure inclusive of provisioning time
+        use the spanmetrics processor on the otel collector to convert trace durations
+        from flows into metrics.
+
+        :param pipeline_type: The type of pipeline (document or family).
+        :type pipeline_type: PipelineType
+        :param duration_seconds: The duration in seconds.
+        :type duration_seconds: float
+        :param cpu: The allocated vCPUs.
+        :type cpu: float
+        :param memory: The allocated memory in megabytes.
+        :type memory: float
+        :param fargate_cost_per_vcpu_hour: The cost per vCPU hour in dollars.
+        :type fargate_cost_per_vcpu_hour: float
+        :param fargate_cost_per_mem_gb_hour: The cost per memory GB hour in dollars.
+        :type fargate_cost_per_mem_gb_hour: float
+        """
+        if self._disabled or self._billable_cost_of_run is None:
+            return
+
+        megabytes_to_gigabytes = 1024
+        memory_cost = (
+            duration_seconds
+            * (memory / megabytes_to_gigabytes)
+            * fargate_cost_per_mem_gb_hour
+        )
+        cpu_cost = duration_seconds * cpu * fargate_cost_per_vcpu_hour
+        total_cost = memory_cost + cpu_cost
+
+        self._billable_cost_of_run.add(
+            total_cost,
+            attributes={
+                **self._base_attributes,
+                "pipeline_type": pipeline_type.value,
+            },
+        )
+
+    def record_run_cost(
+        self,
+        pipeline_type: PipelineType,
+        duration_seconds: float,
+        cpu: float,
+        memory: float,
+        fargate_cost_per_vcpu_hour: float = 0.04048,
+        fargate_cost_per_mem_gb_hour: float = 0.004445,
+    ) -> None:
+        """Record the hypothetical cost of used resources for a given run.
+
+        In Fargate, the cost is calculated based on the allocated number
+        of vCPUs and memory rather than what is actually used. This
+        function attempts to separately track actual usage, so we can
+        get insights and see whether we are rightsizing
+        resources or not, and potentially predict costs in advance.
+
+        :param pipeline_type: The type of pipeline (document or family).
+        :type pipeline_type: PipelineType
+        :param duration_seconds: The duration in seconds.
+        :type duration_seconds: float
+        :param cpu: The average vCPUs used by the run.
+        :type cpu: float
+        :param memory: The peak memory in megabytes used by the run.
+        :type memory: float
+        :param fargate_cost_per_vcpu_hour: The cost per vCPU hour in dollars.
+        :type fargate_cost_per_vcpu_hour: float
+        :param fargate_cost_per_mem_gb_hour: The cost per memory GB hour in dollars.
+        :type fargate_cost_per_mem_gb_hour: float
+        """
+        if self._disabled or self._cost_of_used_resources is None:
+            return
+
+        megabytes_to_gigabytes = 1024
+        memory_cost = (
+            duration_seconds
+            * (memory / megabytes_to_gigabytes)
+            * fargate_cost_per_mem_gb_hour
+        )
+        cpu_cost = duration_seconds * cpu * fargate_cost_per_vcpu_hour
+        total_cost = memory_cost + cpu_cost
+
+        self._cost_of_used_resources.add(
+            total_cost,
+            attributes={
+                **self._base_attributes,
+                "pipeline_type": pipeline_type.value,
             },
         )
 
@@ -366,11 +565,25 @@ class PipelineMetrics:
 
                     # Record operation duration if operation provided
                     if operation:
-                        self.record_duration(operation, duration)
+                        self.record_operation_duration(operation, duration)
 
-                    # Record run duration if pipeline_type provided
+                    # Record run duration and approximate cost if pipeline_type provided
                     if pipeline_type:
                         self.record_run_duration(pipeline_type, duration, scope)
+
+                        allocated_resources = self.measure_resource_allocations()
+                        if allocated_resources:
+                            allocated_cpu, allocated_memory = allocated_resources
+                            self.record_billable_cost(
+                                pipeline_type, duration, allocated_cpu, allocated_memory
+                            )
+
+                        actual_resources = self.measure_resource_usage(start)
+                        if actual_resources:
+                            actual_cpu, actual_memory = actual_resources
+                            self.record_run_cost(
+                                pipeline_type, duration, actual_cpu, actual_memory
+                            )
 
                     # Flush metrics if requested
                     if flush_on_exit:
