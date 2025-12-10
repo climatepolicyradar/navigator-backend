@@ -26,7 +26,7 @@ app.include_router(router)
 def health_check():
     return {
         "status": "ok",
-        "version": settings.github_sha,  # @related: GITHUB_SHA_ENV_VAR
+        "version": settings.github_sha,
     }
 
 

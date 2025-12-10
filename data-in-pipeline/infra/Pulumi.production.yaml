@@ -14,3 +14,4 @@ config:
   data-in-pipeline:aurora_max_instances: "2"
   # Retention is included in Aurora pricing for up to 7 days. Longer retention would add charges.
   data-in-pipeline:aurora_retention_period_days: "7"
+  data-in-pipeline:cdn-url: https://cdn.climatepolicyradar.org

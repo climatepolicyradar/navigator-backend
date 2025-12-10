@@ -40,7 +40,7 @@ account_id = config.require("validation_account_id")
 
 tags = {
     "CPR-Created-By": "pulumi",
-    "CPR-Pulumi-Stack-Name": pulumi.get_stack(),
+    "CPR-Pulumi-Stack-Name": environment,
     "CPR-Pulumi-Project-Name": pulumi.get_project(),
     "CPR-Tag": f"{environment}-{name}-store",
     "Environment": environment,
@@ -272,4 +272,165 @@ app_runner_connect_role_policy = aws.iam.RolePolicy(
             ]
         ).json
     ),
+)
+
+#######################################################################
+# Create the Documents Service.
+#######################################################################
+
+documents_api_role = aws.iam.Role(
+    "documents-api-role",
+    assume_role_policy=aws.iam.get_policy_document(
+        statements=[
+            aws.iam.GetPolicyDocumentStatementArgs(
+                effect="Allow",
+                principals=[
+                    aws.iam.GetPolicyDocumentStatementPrincipalArgs(
+                        type="Service",
+                        identifiers=["build.apprunner.amazonaws.com"],
+                    )
+                ],
+                actions=["sts:AssumeRole"],
+            )
+        ]
+    ).json,
+)
+
+# Attach ECR access policy to the role
+documents_api_role_policy = aws.iam.RolePolicy(
+    "documents-api-role-ecr-policy",
+    role=documents_api_role.id,
+    policy=aws.iam.get_policy_document(
+        statements=[
+            aws.iam.GetPolicyDocumentStatementArgs(
+                effect="Allow",
+                actions=[
+                    "ecr:GetDownloadUrlForLayer",
+                    "ecr:BatchGetImage",
+                    "ecr:DescribeImages",
+                    "ecr:GetAuthorizationToken",
+                    "ecr:BatchCheckLayerAvailability",
+                ],
+                resources=["*"],
+            )
+        ]
+    ).json,
+)
+
+documents_api_instance_role = aws.iam.Role(
+    "documents-api-instance-role",
+    assume_role_policy=aws.iam.get_policy_document(
+        statements=[
+            aws.iam.GetPolicyDocumentStatementArgs(
+                effect="Allow",
+                principals=[
+                    aws.iam.GetPolicyDocumentStatementPrincipalArgs(
+                        type="Service",
+                        identifiers=["tasks.apprunner.amazonaws.com"],
+                    )
+                ],
+                actions=["sts:AssumeRole"],
+            )
+        ]
+    ).json,
+)
+
+# Allow access to specific SSM Parameter Store secrets
+documents_api_ssm_policy = aws.iam.RolePolicy(
+    "documents-api-instance-role-ssm-policy",
+    role=documents_api_instance_role.id,
+    policy=aws.iam.get_policy_document(
+        statements=[
+            aws.iam.GetPolicyDocumentStatementArgs(
+                effect="Allow",
+                actions=["ssm:GetParameters"],
+                resources=[
+                    f"arn:aws:ssm:eu-west-1:{account_id}:parameter/documents-api/apprunner/*"
+                ],
+            )
+        ]
+    ).json,
+)
+
+documents_api_load_database_url = aws.ssm.Parameter(
+    "documents-api-load-database-url",
+    name="documents-api/load-database-url",
+    description="The URL string to connect to the load database",
+    type=aws.ssm.ParameterType.SECURE_STRING,
+    # This value is managed directly in SSM
+    value=aurora_cluster.endpoint,
+    opts=pulumi.ResourceOptions(
+        # This value is managed directly in SSM
+        ignore_changes=["value"],
+    ),
+)
+
+documents_api_cdn_url = aws.ssm.Parameter(
+    "documents-api-cdn-url",
+    name="documents-api/cdn-url",
+    description="Root URL of the CDN",
+    type=aws.ssm.ParameterType.STRING,
+    value=config.require("cdn-url"),
+)
+
+documents_api_ecr_repository = aws.ecr.Repository(
+    "documents-api-ecr-repository",
+    encryption_configurations=[
+        aws.ecr.RepositoryEncryptionConfigurationArgs(
+            encryption_type="AES256",
+        )
+    ],
+    image_scanning_configuration=aws.ecr.RepositoryImageScanningConfigurationArgs(
+        scan_on_push=False,
+    ),
+    image_tag_mutability="MUTABLE",
+    name="documents-api",
+    opts=pulumi.ResourceOptions(protect=True),
+)
+
+
+documents_api_apprunner_service = aws.apprunner.Service(
+    "documents-api-apprunner-service",
+    auto_scaling_configuration_arn=f"arn:aws:apprunner:eu-west-1:{account_id}:autoscalingconfiguration/DefaultConfiguration/1/00000000000000000000000000000001",
+    health_check_configuration=aws.apprunner.ServiceHealthCheckConfigurationArgs(
+        interval=10,
+        protocol="TCP",
+        timeout=5,
+    ),
+    instance_configuration=aws.apprunner.ServiceInstanceConfigurationArgs(
+        instance_role_arn=documents_api_instance_role.arn,
+    ),
+    network_configuration=aws.apprunner.ServiceNetworkConfigurationArgs(
+        egress_configuration=aws.apprunner.ServiceNetworkConfigurationEgressConfigurationArgs(
+            egress_type="VPC",
+        ),
+        ingress_configuration=aws.apprunner.ServiceNetworkConfigurationIngressConfigurationArgs(
+            is_publicly_accessible=True,
+        ),
+        ip_address_type="IPV4",
+    ),
+    observability_configuration=aws.apprunner.ServiceObservabilityConfigurationArgs(
+        observability_enabled=False,
+    ),
+    service_name="documents-api",
+    source_configuration=aws.apprunner.ServiceSourceConfigurationArgs(
+        authentication_configuration=aws.apprunner.ServiceSourceConfigurationAuthenticationConfigurationArgs(
+            access_role_arn=documents_api_role.arn,
+        ),
+        image_repository=aws.apprunner.ServiceSourceConfigurationImageRepositoryArgs(
+            image_configuration=aws.apprunner.ServiceSourceConfigurationImageRepositoryImageConfigurationArgs(
+                runtime_environment_secrets={
+                    "LOAD_DATABASE_URL": documents_api_load_database_url.arn,
+                    "CDN_URL": documents_api_cdn_url.arn,
+                },
+            ),
+            image_identifier=f"{account_id}.dkr.ecr.eu-west-1.amazonaws.com/documents-api:latest",
+            image_repository_type="ECR",
+        ),
+    ),
+    opts=pulumi.ResourceOptions(protect=True),
+)
+
+pulumi.export(
+    "documents-api-apprunner_service_url", documents_api_apprunner_service.service_url
 )
