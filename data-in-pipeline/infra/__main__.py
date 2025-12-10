@@ -354,7 +354,7 @@ documents_api_ssm_policy = aws.iam.RolePolicy(
 
 documents_api_load_database_url = aws.ssm.Parameter(
     "documents-api-load-database-url",
-    name="documents-api/load-database-url",
+    name="/documents-api/load-database-url",
     description="The URL string to connect to the load database",
     type=aws.ssm.ParameterType.SECURE_STRING,
     # This value is managed directly in SSM
