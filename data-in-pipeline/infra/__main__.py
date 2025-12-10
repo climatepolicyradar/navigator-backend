@@ -388,6 +388,34 @@ documents_api_ecr_repository = aws.ecr.Repository(
     opts=pulumi.ResourceOptions(protect=True),
 )
 
+documents_api_vpc_sg = aws.ec2.SecurityGroup(
+    "documents-api-vpc-sg",
+    vpc_id=vpc_id,
+    egress=[
+        aws.ec2.SecurityGroupEgressArgs(
+            protocol="-1", from_port=0, to_port=0, cidr_blocks=["0.0.0.0/0"]
+        )
+    ],
+)
+
+vpc_connector = aws.apprunner.VpcConnector(
+    "documents-api-vpc-connector",
+    vpc_connector_name="documents-api-vpc-connector",
+    subnets=private_subnets,
+    security_groups=[documents_api_vpc_sg.id],
+)
+
+# Allow Documents API connector to reach Aurora
+aws.ec2.SecurityGroupRule(
+    "allow-documents-api-to-aurora",
+    type="ingress",
+    security_group_id=aurora_security_group.id,
+    source_security_group_id=documents_api_vpc_sg.id,
+    protocol="tcp",
+    from_port=5432,
+    to_port=5432,
+)
+
 
 documents_api_apprunner_service = aws.apprunner.Service(
     "documents-api-apprunner-service",
@@ -403,6 +431,7 @@ documents_api_apprunner_service = aws.apprunner.Service(
     network_configuration=aws.apprunner.ServiceNetworkConfigurationArgs(
         egress_configuration=aws.apprunner.ServiceNetworkConfigurationEgressConfigurationArgs(
             egress_type="VPC",
+            vpc_connector_arn=vpc_connector.arn,
         ),
         ingress_configuration=aws.apprunner.ServiceNetworkConfigurationIngressConfigurationArgs(
             is_publicly_accessible=True,
