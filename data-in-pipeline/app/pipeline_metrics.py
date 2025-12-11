@@ -221,7 +221,7 @@ class PipelineMetrics:
         memory = float(task_metadata.get("Limits", {}).get("Memory"))  # Memory in MB
         return (cpu, memory)
 
-    def get_actual_task_resources(self, start_wall: float) -> tuple[float, float]:
+    def _get_actual_task_resources(self, start_wall: float) -> tuple[float, float]:
         """Get the actual CPU and memory used by the pipeline task.
 
         NB: We measure average CPU rather than peak CPU for now, because
@@ -230,6 +230,12 @@ class PipelineMetrics:
         To make this more accurate for right-sizing, average CPU is
         preferred; peak CPU should more be interpreted as the upper
         bound on CPU requirements.
+
+        The calculated avg_vcpus is capped at the allocated vCPUs, as
+        getrusage can accumulate CPU time across threads/processes in
+        ways that exceed the actual allocated capacity.
+
+        TODO APP-1531: The logic here needs a total overhaul.
 
         :param start_wall: The wall time at the start of the task.
         :type start_wall: float
@@ -245,6 +251,18 @@ class PipelineMetrics:
         wall_time = time.time() - start_wall
         cpu_time = peak_memory.ru_utime + peak_memory.ru_stime
         avg_vcpus = cpu_time / wall_time  # average vCPUs/cores used
+
+        # Cap at allocated vCPUs to prevent exceeding limits due to
+        # getrusage accumulation across threads/processes
+        try:
+            allocated_cpu, _ = self._get_allocated_task_resources()
+            avg_vcpus = min(avg_vcpus, allocated_cpu)
+        except (RuntimeError, requests.RequestException):
+            # If we can't get allocated resources, log but continue
+            # with uncapped value
+            from app.bootstrap_telemetry import get_logger
+
+            get_logger().warning("⚠️ Could not fetch allocated CPU to cap avg_vcpus")
 
         return (avg_vcpus, peak_memory_mb)
 
@@ -292,7 +310,7 @@ class PipelineMetrics:
         if self._disabled or self._memory_actual is None or self._cpu_actual is None:
             return
 
-        cpu, memory = self.get_actual_task_resources(start_wall)
+        cpu, memory = self._get_actual_task_resources(start_wall)
 
         self._memory_actual.add(
             memory,
