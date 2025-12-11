@@ -170,8 +170,8 @@ class PipelineMetrics:
         )
 
         self._billable_cost_of_run = self._metrics_service.create_counter(
-            name="cost_of_run_dollars",
-            description="Cost of run in dollars",
+            name="billable_cost_of_run_dollars",
+            description="Billable cost of run in dollars",
             unit="$",
         )
 
@@ -185,6 +185,12 @@ class PipelineMetrics:
             name="actual_cpu_vcpus",
             description="Actual CPU vCPUs",
             unit="vCPUs",
+        )
+
+        self._cost_of_used_resources = self._metrics_service.create_counter(
+            name="cost_of_used_resources_dollars",
+            description="Cost of used resources in dollars",
+            unit="$",
         )
 
         logger.info("Pipeline metrics instruments created")
