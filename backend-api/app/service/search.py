@@ -36,7 +36,9 @@ from app.repository.lookups import (
 from app.repository.lookups import (
     validate_subdivision_iso_codes,  # TODO: update this to use geographies api endpoint when refactoring geographies to use iso codes
 )
-from app.repository.lookups import get_countries_for_region
+from app.repository.lookups import (
+    get_countries_for_region,
+)
 from app.service.util import to_cdn_url
 from app.telemetry import observe
 
@@ -262,7 +264,7 @@ def _hit_is_missing_required_fields(hit: CprSdkResponseHit) -> bool:
 
 
 def _family_is_not_found_or_not_published(
-    fam_tuple: Optional[tuple[Family, FamilyMetadata]]
+    fam_tuple: Optional[tuple[Family, FamilyMetadata]],
 ) -> bool:
     return fam_tuple is None or fam_tuple[0].family_status != FamilyStatus.PUBLISHED
 
