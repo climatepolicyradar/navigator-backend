@@ -26,7 +26,7 @@ DO $$
 BEGIN
   IF NOT EXISTS (SELECT 1 FROM pg_roles WHERE rolname = '{LOAD_DB_USER}') THEN  -- noqa: PRS
     CREATE ROLE {LOAD_DB_USER} LOGIN;  -- noqa: PRS
-    GRANT rds_iam TO {LOAD_DB_USER};
+    GRANT rds_iam TO {LOAD_DB_USER};  -- noqa: PRS
   END IF;
 END
 $$;
