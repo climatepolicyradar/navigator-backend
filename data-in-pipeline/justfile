@@ -31,3 +31,22 @@ duckdb-build:
 
 duckdb-dev:
     uv run fastapi dev ./app/scripts/serve_duckdb.py
+
+# Commands for our IAM user lambda function
+build-lambda-code: clean-lambda-build-folder
+    set -e
+    mkdir -p .lambda_build
+    echo "🐳 Building Lambda package with Docker..."
+    docker build --platform linux/amd64 -f infra/Dockerfile -t iam-user-lambda-builder .
+    echo "📦 Extracting built package..."
+    docker create --name iam-user-lambda-extract iam-user-lambda-builder
+    docker cp iam-user-lambda-extract:/build/. .lambda_build/
+    docker rm iam-user-lambda-extract
+    echo "✅ Lambda package built at .lambda_build/"
+
+clean-lambda-build-folder:
+    echo "🧹 Cleaning build directory..."
+    rm -rf .lambda_build
+
+deploy-lambda-code: build-lambda-code
+    pulumi up -ry
