@@ -1,7 +1,20 @@
 target-version = "py312"
 
 # Generic, formatter-friendly config.
-select = ["D3", "E", "F", "TID252", "UP", "PL", "TRY"]
+select = [
+  "D103",
+  "D205",
+  "D212",
+  "D202",
+  "D400",
+  "D200",
+  "E",
+  "F",
+  "TID252",
+  "UP",
+  "PL",
+  "TRY",
+]
 
 # Never enforce `E501` (line length violations). This should be handled by formatters.
 ignore = ["E501", "TRY003"]
