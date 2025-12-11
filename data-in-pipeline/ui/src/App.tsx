@@ -61,7 +61,9 @@ const documentsDataProvider: DataProvider = {
     };
   },
   getOne: async ({ resource, id }) => {
-    const url = new URL(`http://localhost:8000/${resource}/${id}`);
+    const url = new URL(
+      `https://skillful-analysis-production.up.railway.app/${resource}/${id}`,
+    );
     const response = await fetch(url.toString());
     const responseJson = await response.json();
     return {

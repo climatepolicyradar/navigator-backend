@@ -10,6 +10,7 @@ from app.extract.connectors import (
     NavigatorDocument,
     NavigatorEvent,
     NavigatorFamily,
+    NavigatorOrganisation,
 )
 from app.models import Identified
 from app.transform.data import (
@@ -52,6 +53,13 @@ if __name__ == "__main__":
                         import_id=family["corpus"]["import_id"],
                         corpus_type=NavigatorCorpusType(
                             name=family["corpus"]["corpus_type"]["name"],
+                        ),
+                        organisation=NavigatorOrganisation(
+                            id=family["corpus"]["organisation"]["id"],
+                            name=family["corpus"]["organisation"]["name"],
+                            attribution_url=family["corpus"]["organisation"][
+                                "attribution_url"
+                            ],
                         ),
                     ),
                     documents=[
@@ -96,6 +104,7 @@ if __name__ == "__main__":
 
     for document in successes:
         model_dump = document.model_dump_json(indent=4)
+
         with open(
             f".data_cache/transformed_navigator_families/{document.id}.json", "w"
         ) as f:
