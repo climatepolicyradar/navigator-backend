@@ -270,6 +270,18 @@ def _transform_navigator_family(navigator_family: NavigatorFamily) -> Document:
     }
     labels = []
 
+    # All families are currently canonical
+    labels.append(
+        DocumentLabelRelationship(
+            type="status",
+            label=Label(
+                type="status",
+                id="Canonical",
+                title="Canonical",
+            ),
+        )
+    )
+
     entity_type = corpus_type_to_entity_type_map.get(
         navigator_family.corpus.corpus_type.name
     )
