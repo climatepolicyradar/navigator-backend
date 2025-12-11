@@ -9,8 +9,8 @@
 - We are able to run the framework's (FastAPI) native dev environment
   (`fastapi dev app/main.py`)
 - Local data for the service is pre-loaded and prod-like
-- Any changes to code are reflected immediately in the running service. No
-  reloads needed
+- Any changes to code are reflected immediately in the running service.
+  No reloads needed
 
 **`just build`**
 
