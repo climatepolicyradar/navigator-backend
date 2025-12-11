@@ -184,25 +184,25 @@ unfccc_paris_agreement_document = Document(
 
 unfccc_document.relationships = [
     DocumentDocumentRelationship(
-        type="has_part",
+        type="has_member",
         document=DocumentWithoutRelationships(
             **unfccc_kyoto_protocol_document.model_dump()
         ),
     ),
     DocumentDocumentRelationship(
-        type="has_part",
+        type="has_member",
         document=DocumentWithoutRelationships(
             **unfccc_copenhagen_accord_document.model_dump()
         ),
     ),
     DocumentDocumentRelationship(
-        type="has_part",
+        type="has_member",
         document=DocumentWithoutRelationships(
             **unfccc_kyoto_protocol_doha_amendment_document.model_dump()
         ),
     ),
     DocumentDocumentRelationship(
-        type="has_part",
+        type="has_member",
         document=DocumentWithoutRelationships(
             **unfccc_paris_agreement_document.model_dump()
         ),
