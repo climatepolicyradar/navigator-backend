@@ -64,7 +64,9 @@ class Item(BaseModel):
 
 
 class Document(BaseDocument):
+    description: str | None = None
     relationships: list[DocumentDocumentRelationship] = []
+
     """
     This needs work, but is a decent placeholder while we work through the model.
     It is lightly based on the FRBR ontology.
