@@ -77,7 +77,7 @@ def _flatten_maybe_tree(
     def get_value(data_node: Mapping[str, str]) -> str:
         value = data_node.get("name") or data_node.get("value")
         if value is None:
-            raise Exception(f"No value found in '{data_node}'")
+            raise ValueError(f"No value found in '{data_node}'")
         return value
 
     values = values or []
@@ -191,7 +191,7 @@ def _write_content_to_s3(
     :param [BytesIO] content: bytes to write into the given object path
     """
     if not PIPELINE_BUCKET:
-        raise Exception("PIPELINE_BUCKET not set")
+        raise RuntimeError("PIPELINE_BUCKET not set")
 
     _LOGGER.info(
         "Writing content into S3",
