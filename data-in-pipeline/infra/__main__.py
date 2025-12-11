@@ -278,8 +278,8 @@ app_runner_connect_role_policy = aws.iam.RolePolicy(
 # Create the Documents Service.
 #######################################################################
 
-documents_api_role = aws.iam.Role(
-    "documents-api-role",
+load_api_role = aws.iam.Role(
+    "load-api-role",
     assume_role_policy=aws.iam.get_policy_document(
         statements=[
             aws.iam.GetPolicyDocumentStatementArgs(
@@ -297,9 +297,9 @@ documents_api_role = aws.iam.Role(
 )
 
 # Attach ECR access policy to the role
-documents_api_role_policy = aws.iam.RolePolicy(
-    "documents-api-role-ecr-policy",
-    role=documents_api_role.id,
+load_api_role_policy = aws.iam.RolePolicy(
+    "load-api-role-ecr-policy",
+    role=load_api_role.id,
     policy=aws.iam.get_policy_document(
         statements=[
             aws.iam.GetPolicyDocumentStatementArgs(
@@ -317,8 +317,8 @@ documents_api_role_policy = aws.iam.RolePolicy(
     ).json,
 )
 
-documents_api_instance_role = aws.iam.Role(
-    "documents-api-instance-role",
+load_api_instance_role = aws.iam.Role(
+    "load-api-instance-role",
     assume_role_policy=aws.iam.get_policy_document(
         statements=[
             aws.iam.GetPolicyDocumentStatementArgs(
@@ -336,25 +336,25 @@ documents_api_instance_role = aws.iam.Role(
 )
 
 # Allow access to specific SSM Parameter Store secrets
-documents_api_ssm_policy = aws.iam.RolePolicy(
-    "documents-api-instance-role-ssm-policy",
-    role=documents_api_instance_role.id,
+load_api_ssm_policy = aws.iam.RolePolicy(
+    "load-api-instance-role-ssm-policy",
+    role=load_api_instance_role.id,
     policy=aws.iam.get_policy_document(
         statements=[
             aws.iam.GetPolicyDocumentStatementArgs(
                 effect="Allow",
                 actions=["ssm:GetParameters"],
                 resources=[
-                    f"arn:aws:ssm:eu-west-1:{account_id}:parameter/documents-api/apprunner/*"
+                    f"arn:aws:ssm:eu-west-1:{account_id}:parameter/load-api/apprunner/*"
                 ],
             )
         ]
     ).json,
 )
 
-documents_api_load_database_url = aws.ssm.Parameter(
-    "documents-api-load-database-url",
-    name="/documents-api/load-database-url",
+load_api_load_database_url = aws.ssm.Parameter(
+    "load-api-load-database-url",
+    name="/load-api/load-database-url",
     description="The URL string to connect to the load database",
     type=aws.ssm.ParameterType.SECURE_STRING,
     # This value is managed directly in SSM
@@ -365,16 +365,16 @@ documents_api_load_database_url = aws.ssm.Parameter(
     ),
 )
 
-documents_api_cdn_url = aws.ssm.Parameter(
-    "documents-api-cdn-url",
-    name="/documents-api/cdn-url",
+load_api_cdn_url = aws.ssm.Parameter(
+    "load-api-cdn-url",
+    name="/load-api/cdn-url",
     description="Root URL of the CDN",
     type=aws.ssm.ParameterType.STRING,
     value=config.require("cdn-url"),
 )
 
-documents_api_ecr_repository = aws.ecr.Repository(
-    "documents-api-ecr-repository",
+load_api_ecr_repository = aws.ecr.Repository(
+    "load-api-ecr-repository",
     encryption_configurations=[
         aws.ecr.RepositoryEncryptionConfigurationArgs(
             encryption_type="AES256",
@@ -384,12 +384,12 @@ documents_api_ecr_repository = aws.ecr.Repository(
         scan_on_push=False,
     ),
     image_tag_mutability="MUTABLE",
-    name="documents-api",
+    name="load-api",
     opts=pulumi.ResourceOptions(protect=True),
 )
 
-documents_api_vpc_sg = aws.ec2.SecurityGroup(
-    "documents-api-vpc-sg",
+load_api_vpc_sg = aws.ec2.SecurityGroup(
+    "load-api-vpc-sg",
     vpc_id=vpc_id,
     egress=[
         aws.ec2.SecurityGroupEgressArgs(
@@ -399,34 +399,34 @@ documents_api_vpc_sg = aws.ec2.SecurityGroup(
 )
 
 vpc_connector = aws.apprunner.VpcConnector(
-    "documents-api-vpc-connector",
-    vpc_connector_name="documents-api-vpc-connector",
+    "load-api-vpc-connector",
+    vpc_connector_name="load-api-vpc-connector",
     subnets=private_subnets,
-    security_groups=[documents_api_vpc_sg.id],
+    security_groups=[load_api_vpc_sg.id],
 )
 
 # Allow Documents API connector to reach Aurora
 aws.ec2.SecurityGroupRule(
-    "allow-documents-api-to-aurora",
+    "allow-load-api-to-aurora",
     type="ingress",
     security_group_id=aurora_security_group.id,
-    source_security_group_id=documents_api_vpc_sg.id,
+    source_security_group_id=load_api_vpc_sg.id,
     protocol="tcp",
     from_port=5432,
     to_port=5432,
 )
 
 
-documents_api_apprunner_service = aws.apprunner.Service(
-    "documents-api-apprunner-service",
-    auto_scaling_configuration_arn=f"arn:aws:apprunner:eu-west-1:{account_id}:autoscalingconfiguration/DefaultConfiguration/1/00000000000000000000000000000001",
+load_api_apprunner_service = aws.apprunner.Service(
+    "load-api-apprunner-service",
+    auto_scaling_configuration_arn=f"arn:aws:apprunner:eu-west-1:{account_id}:autoscalingconfiguration/DefaultConfiguration/1/00000000000000000000000000000001",  # TODO put in config
     health_check_configuration=aws.apprunner.ServiceHealthCheckConfigurationArgs(
         interval=10,
         protocol="TCP",
         timeout=5,
     ),
     instance_configuration=aws.apprunner.ServiceInstanceConfigurationArgs(
-        instance_role_arn=documents_api_instance_role.arn,
+        instance_role_arn=load_api_instance_role.arn,
     ),
     network_configuration=aws.apprunner.ServiceNetworkConfigurationArgs(
         egress_configuration=aws.apprunner.ServiceNetworkConfigurationEgressConfigurationArgs(
@@ -441,25 +441,23 @@ documents_api_apprunner_service = aws.apprunner.Service(
     observability_configuration=aws.apprunner.ServiceObservabilityConfigurationArgs(
         observability_enabled=False,
     ),
-    service_name="documents-api",
+    service_name="load-api",
     source_configuration=aws.apprunner.ServiceSourceConfigurationArgs(
         authentication_configuration=aws.apprunner.ServiceSourceConfigurationAuthenticationConfigurationArgs(
-            access_role_arn=documents_api_role.arn,
+            access_role_arn=load_api_role.arn,
         ),
         image_repository=aws.apprunner.ServiceSourceConfigurationImageRepositoryArgs(
             image_configuration=aws.apprunner.ServiceSourceConfigurationImageRepositoryImageConfigurationArgs(
                 runtime_environment_secrets={
-                    "LOAD_DATABASE_URL": documents_api_load_database_url.arn,
-                    "CDN_URL": documents_api_cdn_url.arn,
+                    "LOAD_DATABASE_URL": load_api_load_database_url.arn,
+                    "CDN_URL": load_api_cdn_url.arn,
                 },
             ),
-            image_identifier=f"{account_id}.dkr.ecr.eu-west-1.amazonaws.com/documents-api:latest",
+            image_identifier=f"{account_id}.dkr.ecr.eu-west-1.amazonaws.com/load-api:latest",
             image_repository_type="ECR",
         ),
     ),
     opts=pulumi.ResourceOptions(protect=True),
 )
 
-pulumi.export(
-    "documents-api-apprunner_service_url", documents_api_apprunner_service.service_url
-)
+pulumi.export("load-api-apprunner_service_url", load_api_apprunner_service.service_url)
