@@ -1,10 +1,10 @@
 target-version = "py312"
 
 # Generic, formatter-friendly config.
-select = ["D3", "E", "F", "TID252", "UP", "PL"]
+select = ["D3", "E", "F", "TID252", "UP", "PL", "TRY"]
 
 # Never enforce `E501` (line length violations). This should be handled by formatters.
-ignore = ["E501"]
+ignore = ["E501", "TRY003"]
 
 [lint]
 ignore-init-module-imports = true
