@@ -419,7 +419,7 @@ aws.ec2.SecurityGroupRule(
 
 load_api_apprunner_service = aws.apprunner.Service(
     "load-api-apprunner-service",
-    auto_scaling_configuration_arn=f"arn:aws:apprunner:eu-west-1:{account_id}:autoscalingconfiguration/DefaultConfiguration/1/00000000000000000000000000000001",  # TODO put in config
+    auto_scaling_configuration_arn=config.require("auto_scaling_configuration_arn"),
     health_check_configuration=aws.apprunner.ServiceHealthCheckConfigurationArgs(
         interval=10,
         protocol="TCP",
