@@ -211,8 +211,6 @@ export default function Documents() {
               </Select>
               <Input name="value" className="max-w-md" />
               <Button type="submit">Add Filter</Button>
-<<<<<<< Updated upstream
-=======
               <Button
                 type="submit"
                 variant="ghost"
@@ -227,7 +225,6 @@ export default function Documents() {
               >
                 e.g. +labels.label.id=Canonical
               </Button>
->>>>>>> Stashed changes
             </div>
           </form>
         </div>
