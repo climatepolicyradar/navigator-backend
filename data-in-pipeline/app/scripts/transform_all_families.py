@@ -62,6 +62,7 @@ if __name__ == "__main__":
                             ],
                         ),
                     ),
+                    summary=family["summary"],
                     documents=[
                         NavigatorDocument(
                             import_id=doc["import_id"],
