@@ -41,6 +41,11 @@ def navigator_family_with_single_matching_document() -> Identified[NavigatorFami
                 NavigatorDocument(
                     import_id="document",
                     title="Matching title on family and document and collection",
+                    cdn_object="https://cdn.climatepolicyradar.org/path/to/file.pdf",
+                    variant="Original language",
+                    source_url="https://source.climatepolicyradar.org/path/to/file.pdf",
+                    language="en",
+                    languages=["en"],
                     events=[],
                     valid_metadata={
                         "role": ["SUPPORTING LEGISLATION"],
@@ -166,7 +171,16 @@ def navigator_family_with_no_matching_transformations() -> Identified[NavigatorF
                 organisation=NavigatorOrganisation(id=1, name="CCLW"),
             ),
             documents=[
-                NavigatorDocument(import_id="456", title="Test document 1", events=[]),
+                NavigatorDocument(
+                    import_id="456",
+                    title="Test document 1",
+                    cdn_object="https://cdn.climatepolicyradar.org/path/to/file.pdf",
+                    variant="Original language",
+                    source_url="https://source.climatepolicyradar.org/path/to/file.pdf",
+                    language="en",
+                    languages=["en"],
+                    events=[],
+                ),
             ],
             events=[],
             collections=[],
@@ -192,6 +206,11 @@ def navigator_family_with_litigation_corpus_type() -> Identified[NavigatorFamily
                 NavigatorDocument(
                     import_id="document",
                     title="Litigation family document",
+                    cdn_object="https://cdn.climatepolicyradar.org/path/to/file.pdf",
+                    variant="Original language",
+                    source_url="https://source.climatepolicyradar.org/path/to/file.pdf",
+                    language="en",
+                    languages=["en"],
                     events=[
                         NavigatorEvent(
                             import_id="123",
@@ -203,6 +222,11 @@ def navigator_family_with_litigation_corpus_type() -> Identified[NavigatorFamily
                 NavigatorDocument(
                     import_id="1.2.3.placeholder",
                     title="Placeholder litigation family document",
+                    cdn_object="https://cdn.climatepolicyradar.org/path/to/file.pdf",
+                    variant="Original language",
+                    source_url="https://source.climatepolicyradar.org/path/to/file.pdf",
+                    language="en",
+                    languages=["en"],
                     events=[],
                 ),
             ],
@@ -236,11 +260,21 @@ def navigator_family_multilateral_climate_fund_project() -> Identified[Navigator
                 NavigatorDocument(
                     import_id="document_1",
                     title="Multilateral climate fund project document",
+                    cdn_object="https://cdn.climatepolicyradar.org/path/to/file.pdf",
+                    variant="Original language",
+                    source_url="https://source.climatepolicyradar.org/path/to/file.pdf",
+                    language="en",
+                    languages=["en"],
                     events=[],
                 ),
                 NavigatorDocument(
                     import_id="document_2",
                     title="Project document",
+                    cdn_object="https://cdn.climatepolicyradar.org/path/to/file.pdf",
+                    variant="Original language",
+                    source_url="https://source.climatepolicyradar.org/path/to/file.pdf",
+                    language="en",
+                    languages=["en"],
                     events=[],
                 ),
             ],

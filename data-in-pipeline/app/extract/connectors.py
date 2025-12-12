@@ -25,6 +25,16 @@ class NavigatorDocument(BaseModel):
     events: list[NavigatorEvent]
     valid_metadata: dict[str, list[str]] = {}
 
+    """
+    These values come from the `physical_document` table, but are flattened into the document via the families-api.
+    They are nullable because a `Document` does not need to have an attached `PhysicalDocument`.
+    """
+    languages: list[str] = []
+    language: str | None = None
+    cdn_object: str | None = None
+    source_url: str | None = None
+    variant: str | None = None
+
 
 class NavigatorCorpusType(BaseModel):
     name: str

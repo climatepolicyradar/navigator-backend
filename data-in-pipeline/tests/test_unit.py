@@ -82,7 +82,14 @@ def test_fetch_document_success(base_config):
 
     mock_response = {
         "data": NavigatorDocument(
-            import_id=import_id, title="Test Document", events=[]
+            import_id=import_id,
+            title="Test Document",
+            cdn_object="https://cdn.climatepolicyradar.org/path/to/file.pdf",
+            variant="Original language",
+            source_url="https://source.climatepolicyradar.org/path/to/file.pdf",
+            language="en",
+            languages=["en"],
+            events=[],
         ).model_dump()
     }
 
@@ -154,7 +161,16 @@ def test_fetch_family_success(base_config):
                 organisation=NavigatorOrganisation(id=1, name="UNFCCC"),
             ),
             documents=[
-                NavigatorDocument(import_id=import_id, title="Test Document", events=[])
+                NavigatorDocument(
+                    import_id=import_id,
+                    title="Test Document",
+                    cdn_object="https://cdn.climatepolicyradar.org/path/to/file.pdf",
+                    variant="Original language",
+                    source_url="https://source.climatepolicyradar.org/path/to/file.pdf",
+                    language="en",
+                    languages=["en"],
+                    events=[],
+                )
             ],
             events=[],
             collections=[],
@@ -232,6 +248,11 @@ def test_extract_document_handles_valid_id_success():
                 data=NavigatorDocument(
                     import_id=valid_id,
                     title="A Valid Document",
+                    cdn_object="https://cdn.climatepolicyradar.org/path/to/file.pdf",
+                    variant="Original language",
+                    source_url="https://source.climatepolicyradar.org/path/to/file.pdf",
+                    language="en",
+                    languages=["en"],
                     events=[],
                 ),
                 metadata=ExtractedMetadata(

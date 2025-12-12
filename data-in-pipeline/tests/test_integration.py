@@ -56,6 +56,11 @@ def test_process_family_updates_flow_multiple_families(
                 NavigatorDocument(
                     import_id="i00000315",
                     title="Belgium UNCBD National Targets",
+                    cdn_object="https://cdn.climatepolicyradar.org/path/to/file.pdf",
+                    variant="Original language",
+                    source_url="https://source.climatepolicyradar.org/path/to/file.pdf",
+                    language="en",
+                    languages=["en"],
                     events=[],
                 )
             ],
@@ -78,6 +83,11 @@ def test_process_family_updates_flow_multiple_families(
                 NavigatorDocument(
                     import_id="i00000316",
                     title="France UNCBD National Targets",
+                    cdn_object="https://cdn.climatepolicyradar.org/path/to/file.pdf",
+                    variant="Original language",
+                    source_url="https://source.climatepolicyradar.org/path/to/file.pdf",
+                    language="en",
+                    languages=["en"],
                     events=[],
                 )
             ],
