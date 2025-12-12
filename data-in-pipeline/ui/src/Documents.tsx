@@ -211,6 +211,20 @@ export default function Documents() {
               </Select>
               <Input name="value" className="max-w-md" />
               <Button type="submit">Add Filter</Button>
+              <Button
+                type="submit"
+                variant="ghost"
+                onClick={(event) => {
+                  const form = event.currentTarget.form;
+                  if (form) {
+                    form.operator.value = "+";
+                    form.field.value = "labels.label.id";
+                    form.value.value = "Canonical";
+                  }
+                }}
+              >
+                e.g. +labels.label.id=Canonical
+              </Button>
             </div>
           </form>
         </div>
