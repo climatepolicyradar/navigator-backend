@@ -29,8 +29,6 @@ jobs:
         with:
           filters: |
             families-api:
-              - 'families-api/**'
-              - 'api/**'
               - '**'
               - '!geographies-api/**'
               - '!concepts-api/**'
@@ -38,8 +36,6 @@ jobs:
               - '!backend-api/**'
 
             geographies-api:
-              - 'geographies-api/**'
-              - 'api/**'
               - '**'
               - '!families-api/**'
               - '!concepts-api/**'
@@ -47,8 +43,6 @@ jobs:
               - '!backend-api/**'
 
             concepts-api:
-              - 'concepts-api/**'
-              - 'api/**'
               - '**'
               - '!families-api/**'
               - '!geographies-api/**'
@@ -56,8 +50,6 @@ jobs:
               - '!backend-api/**'
 
             data-in-pipeline:
-              - 'data-in-pipeline/**'
-              - 'api/**'
               - '**'
               - '!families-api/**'
               - '!geographies-api/**'
