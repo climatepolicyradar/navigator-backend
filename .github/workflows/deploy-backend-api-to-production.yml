@@ -1,6 +1,12 @@
 name: Deploy backend-api to production
 on:
   workflow_dispatch: {}
+  workflow_run:
+    workflows: [Deploy backend-api to staging]
+    types:
+      - completed
+    branches:
+      - main
 
 permissions:
   id-token: write
