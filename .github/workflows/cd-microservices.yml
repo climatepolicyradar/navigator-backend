@@ -121,14 +121,11 @@ jobs:
           if [ -n "${{ steps.pr_data.outputs.pr_link }}" ]; then
             PR_URL="https://github.com/${{ github.repository }}/pull/${{ steps.pr_data.outputs.pr_number }}"
             PR_NUM="${{ steps.pr_data.outputs.pr_number }}"
-            echo "message<<EOF" >> $GITHUB_OUTPUT
-            echo "🚀 Deploying <$PR_URL|PR #$PR_NUM> (<$COMMIT_URL|$COMMIT_SHORT>) to the ${{ matrix.environment }} ${{ matrix.service }}" >> $GITHUB_OUTPUT
-            echo "EOF" >> $GITHUB_OUTPUT
+            MESSAGE="🚀 Deploying <$PR_URL|PR #$PR_NUM> (<$COMMIT_URL|$COMMIT_SHORT>) to the ${{ matrix.environment }} ${{ matrix.service }}"
           else
-            echo "message<<EOF" >> $GITHUB_OUTPUT
-            echo "🚀 Deploying <$COMMIT_URL|$COMMIT_SHORT> to the ${{ matrix.environment }} ${{ matrix.service }}" >> $GITHUB_OUTPUT
-            echo "EOF" >> $GITHUB_OUTPUT
+            MESSAGE="🚀 Deploying <$COMMIT_URL|$COMMIT_SHORT> to the ${{ matrix.environment }} ${{ matrix.service }}"
           fi
+          jq -n --arg msg "$MESSAGE" '{text: $msg, mrkdwn: true}' > slack-payload.json
 
       - id: webhook_url
         run: |
@@ -142,9 +139,7 @@ jobs:
         with:
           webhook: ${{ steps.webhook_url.outputs.webhook_url }}
           webhook-type: incoming-webhook
-          payload: |
-            text: ${{ steps.slack_message.outputs.message }}
-            mrkdwn: true
+          payload-file-path: slack-payload.json
 
       - run: |
           just deploy ${{ matrix.service }} ${{ matrix.environment }} latest
