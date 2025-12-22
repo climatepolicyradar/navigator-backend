@@ -116,12 +116,18 @@ jobs:
 
       - id: slack_message
         run: |
-          COMMIT_LINK="<https://github.com/${{ github.repository }}/commit/${{ github.sha }}|${{ github.sha }}>"
+          COMMIT_URL="https://github.com/${{ github.repository }}/commit/${{ github.sha }}"
+          COMMIT_SHORT=$(echo "${{ github.sha }}" | cut -c1-7)
           if [ -n "${{ steps.pr_data.outputs.pr_link }}" ]; then
-            PR_LINK="<https://github.com/${{ github.repository }}/pull/${{ steps.pr_data.outputs.pr_number }}|PR #${{ steps.pr_data.outputs.pr_number }}>"
-            echo "message=🚀 Deploying $PR_LINK ($COMMIT_LINK) to the ${{ matrix.environment }} ${{ matrix.service }}" >> $GITHUB_OUTPUT
+            PR_URL="https://github.com/${{ github.repository }}/pull/${{ steps.pr_data.outputs.pr_number }}"
+            PR_NUM="${{ steps.pr_data.outputs.pr_number }}"
+            echo "message<<EOF" >> $GITHUB_OUTPUT
+            echo "🚀 Deploying <$PR_URL|PR #$PR_NUM> (<$COMMIT_URL|$COMMIT_SHORT>) to the ${{ matrix.environment }} ${{ matrix.service }}" >> $GITHUB_OUTPUT
+            echo "EOF" >> $GITHUB_OUTPUT
           else
-            echo "message=🚀 Deploying $COMMIT_LINK to the ${{ matrix.environment }} ${{ matrix.service }}" >> $GITHUB_OUTPUT
+            echo "message<<EOF" >> $GITHUB_OUTPUT
+            echo "🚀 Deploying <$COMMIT_URL|$COMMIT_SHORT> to the ${{ matrix.environment }} ${{ matrix.service }}" >> $GITHUB_OUTPUT
+            echo "EOF" >> $GITHUB_OUTPUT
           fi
 
       - id: webhook_url
@@ -138,6 +144,7 @@ jobs:
           webhook-type: incoming-webhook
           payload: |
             text: ${{ steps.slack_message.outputs.message }}
+            mrkdwn: true
 
       - run: |
           just deploy ${{ matrix.service }} ${{ matrix.environment }} latest
