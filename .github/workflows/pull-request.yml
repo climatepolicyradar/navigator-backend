@@ -7,10 +7,15 @@ on:
     # but this isn't currently a performance bottleneck so we're leaving it to run on all labels to reduce complexity
     # a. deploys the service to staging if the pull request is (re)labelled with 'deploy:staging'
     types: [opened, synchronize, reopened, labeled] # This needs to be the American spelling, don't change it
+    paths:
+      - "!backend-api/**"
+      - "**"
   workflow_dispatch: {}
+
 permissions:
   id-token: write
   contents: read
+
 jobs:
   test:
     runs-on: ubuntu-latest
