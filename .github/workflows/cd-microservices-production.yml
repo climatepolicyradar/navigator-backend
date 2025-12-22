@@ -1,0 +1,78 @@
+name: Deploy microservices to production
+on:
+  workflow_dispatch: {}
+permissions:
+  id-token: write
+  contents: read
+jobs:
+  test-microservices:
+    runs-on: ubuntu-latest
+    strategy:
+      matrix:
+        service: [families-api, geographies-api, concepts-api, data-in-pipeline]
+    steps:
+      - uses: actions/checkout@v6
+      - uses: extractions/setup-just@v3
+      - run: just test ${{ matrix.service }}
+
+  deploy-microservices:
+    needs: test-microservices
+    runs-on: ubuntu-latest
+    strategy:
+      matrix:
+        environment: [production]
+        service: [families-api, geographies-api, concepts-api, data-in-pipeline]
+    environment: ${{ matrix.environment }}
+
+    steps:
+      - uses: actions/checkout@v6
+      - uses: extractions/setup-just@v3
+      - uses: aws-actions/configure-aws-credentials@v5
+        with:
+          role-to-assume: arn:aws:iam::${{ secrets.AWS_ACCOUNT_ID }}:role/navigator-backend-github-actions-deploy
+          role-session-name: GitHub_to_AWS_via_FederatedOIDC_${{ matrix.environment }}
+          aws-region: eu-west-1
+
+      - uses: aws-actions/amazon-ecr-login@v2
+
+      # we use python / uv in some build scripts and testing
+      - uses: actions/setup-python@v6
+        with:
+          python-version: "3.12"
+      - uses: astral-sh/setup-uv@v7
+      - run: uv sync --all-packages
+
+      - id: pr_data
+        run: |
+          COMMIT_SHA=$(git rev-parse HEAD)
+          PR_NUMBER=$(gh api repos/${{ github.repository }}/commits/$COMMIT_SHA/pulls --jq '.[0].number' || echo "")
+          if [ -z "$PR_NUMBER" ]; then
+            echo "pr_number=" >> $GITHUB_OUTPUT
+            echo "pr_link=" >> $GITHUB_OUTPUT
+          else
+            echo "pr_number=$PR_NUMBER" >> $GITHUB_OUTPUT
+            echo "pr_link=https://github.com/${{ github.repository }}/pull/$PR_NUMBER" >> $GITHUB_OUTPUT
+          fi
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+
+      - id: slack_message
+        run: |
+          COMMIT_LINK="<https://github.com/${{ github.repository }}/commit/${{ github.sha }}|${{ github.sha }}>"
+          if [ -n "${{ steps.pr_data.outputs.pr_link }}" ]; then
+            PR_LINK="<https://github.com/${{ github.repository }}/pull/${{ steps.pr_data.outputs.pr_number }}|PR #${{ steps.pr_data.outputs.pr_number }}>"
+            echo "message=🚀 Deploying $PR_LINK ($COMMIT_LINK) to the production ${{ matrix.service }}" >> $GITHUB_OUTPUT
+          else
+            echo "message=🚀 Deploying $COMMIT_LINK to the production ${{ matrix.service }}" >> $GITHUB_OUTPUT
+          fi
+
+      - uses: slackapi/slack-github-action@v2.1.1
+        with:
+          webhook: ${{ secrets.SLACK_WEBHOOK_URL_PRODUCTION_UPDATES_CHANNEL }}
+          webhook-type: incoming-webhook
+          payload: |
+            text: ${{ steps.slack_message.outputs.message }}
+
+      - run: |
+          just deploy ${{ matrix.service }} ${{ matrix.environment }} latest
+          just deploy ${{ matrix.service }} ${{ matrix.environment }} ${{ github.sha }}
