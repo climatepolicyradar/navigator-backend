@@ -45,4 +45,4 @@ clean-lambda-build-folder: echo "🧹 Cleaning build directory..."
 deploy-lambda-code: build-lambda-code
     pulumi up -ry
 
-build-load-api: docker build --tag load-api --platform="linux/amd64" .
+build-load-api: docker build -f infra/Dockerfile.load_api -t load-api --platform linux/amd64 ..
