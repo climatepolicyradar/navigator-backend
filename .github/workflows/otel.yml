@@ -4,7 +4,7 @@ on:
   workflow_run:
     workflows:
       - Merge to main
-      - Deploy to staging
+      - Deploy backend-api to staging
     types: [completed]
 
 permissions:
