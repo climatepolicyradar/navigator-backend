@@ -35,15 +35,16 @@ jobs:
         id: login-ecr-staging
         uses: aws-actions/amazon-ecr-login@62f4f872db3836360b72999f4b87f1ff13310f3a
 
-      - name: Build, tag, and push to ECR with 'latest' tag
+      - name: Build, tag, and push to ECR with commit hash and 'latest' tags (staging)
         id: build-image
         env:
           ECR_REGISTRY: ${{ secrets.DOCKER_REGISTRY }}
-          IMAGE_TAG: latest
+          IMAGE_TAG: ${{ github.sha }}
           AWS_REGION: eu-west-1
           ECR_REPOSITORY: navigator-backend
         run: |
-          make build
           docker tag navigator-backend $ECR_REGISTRY/$ECR_REPOSITORY:$IMAGE_TAG
           docker push $ECR_REGISTRY/$ECR_REPOSITORY:$IMAGE_TAG
-          echo "image=$ECR_REGISTRY/$ECR_REPOSITORY:$IMAGE_TAG"
+          docker tag navigator-backend $ECR_REGISTRY/$ECR_REPOSITORY:latest
+          docker push $ECR_REGISTRY/$ECR_REPOSITORY:latest
+          echo "image=$ECR_REGISTRY/$ECR_REPOSITORY:$IMAGE_TAG" >> $GITHUB_OUTPUT
