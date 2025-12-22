@@ -31,18 +31,38 @@ jobs:
             families-api:
               - 'families-api/**'
               - 'api/**'
+              - '**'
+              - '!geographies-api/**'
+              - '!concepts-api/**'
+              - '!data-in-pipeline/**'
+              - '!backend-api/**'
 
             geographies-api:
               - 'geographies-api/**'
               - 'api/**'
+              - '**'
+              - '!families-api/**'
+              - '!concepts-api/**'
+              - '!data-in-pipeline/**'
+              - '!backend-api/**'
 
             concepts-api:
               - 'concepts-api/**'
               - 'api/**'
+              - '**'
+              - '!families-api/**'
+              - '!geographies-api/**'
+              - '!data-in-pipeline/**'
+              - '!backend-api/**'
 
             data-in-pipeline:
               - 'data-in-pipeline/**'
               - 'api/**'
+              - '**'
+              - '!families-api/**'
+              - '!geographies-api/**'
+              - '!concepts-api/**'
+              - '!backend-api/**'
 
       - id: services
         run: |
