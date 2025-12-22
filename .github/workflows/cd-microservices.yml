@@ -15,7 +15,7 @@ jobs:
     runs-on: ubuntu-latest
     outputs:
       services: ${{ steps.services.outputs.services }}
-      data-in-pipeline: ${{ steps.changes.outputs.data-in-pipeline }}
+      data-in-pipeline: ${{ steps.services.outputs.data-in-pipeline }}
     steps:
       - uses: actions/checkout@v6
       - uses: dorny/paths-filter@v3
