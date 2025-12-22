@@ -17,17 +17,78 @@ permissions:
   contents: read
 
 jobs:
+  determine-changed-services:
+    runs-on: ubuntu-latest
+    outputs:
+      microservices: ${{ steps.services.outputs.microservices }}
+      data-in-pipeline: ${{ steps.changes.outputs.data-in-pipeline }}
+    steps:
+      - uses: actions/checkout@v6
+      - uses: dorny/paths-filter@v3
+        id: changes
+        with:
+          filters: |
+            families-api:
+              - 'families-api/**'
+              - 'api/**'
+              - '**'
+
+            geographies-api:
+              - 'geographies-api/**'
+              - 'api/**'
+              - '**'
+
+            concepts-api:
+              - 'concepts-api/**'
+              - 'api/**'
+              - '**'
+
+            data-in-pipeline:
+              - 'data-in-pipeline/**'
+              - '**'
+
+      - id: services
+        run: |
+          MICROSERVICES=()
+          DATA_IN_PIPELINE=false
+          if [ "${{ steps.changes.outputs.families-api }}" == "true" ]; then
+            MICROSERVICES+=("families-api")
+          fi
+          if [ "${{ steps.changes.outputs.geographies-api }}" == "true" ]; then
+            MICROSERVICES+=("geographies-api")
+          fi
+          if [ "${{ steps.changes.outputs.concepts-api }}" == "true" ]; then
+            MICROSERVICES+=("concepts-api")
+          fi
+          if [ "${{ steps.changes.outputs.data-in-pipeline }}" == "true" ]; then
+            DATA_IN_PIPELINE=true
+          fi
+
+          if [ ${#MICROSERVICES[@]} -eq 0 ] && [ "$DATA_IN_PIPELINE" == "false" ]; then
+            echo "microservices=[]" >> $GITHUB_OUTPUT
+            echo "data-in-pipeline=$DATA_IN_PIPELINE" >> $GITHUB_OUTPUT
+            echo "No microservices changed, skipping deployment"
+          else
+            echo "microservices=$(jq -c -n '$ARGS.positional' --args "${MICROSERVICES[@]}")" >> $GITHUB_OUTPUT
+            echo "data-in-pipeline=$DATA_IN_PIPELINE" >> $GITHUB_OUTPUT
+            echo "Changed microservices: ${MICROSERVICES[@]}"
+          fi
+
   test-microservices:
+    needs: determine-changed-services
+    if: needs.determine-changed-services.outputs.microservices != '[]'
     runs-on: ubuntu-latest
     strategy:
       matrix:
-        service: [families-api, geographies-api, concepts-api]
+        service: ${{ fromJSON(needs.determine-changed-services.outputs.microservices) }}
     steps:
       - uses: actions/checkout@v6
       - uses: extractions/setup-just@v3
       - run: just test ${{ matrix.service }}
 
   test-data-in-pipeline:
+    needs: determine-changed-services
+    if: needs.determine-changed-services.outputs.data-in-pipeline == 'true'
     runs-on: ubuntu-latest
     defaults:
       run:
@@ -38,16 +99,15 @@ jobs:
       - run: just test-ci
 
   deploy-feature-branch:
-    needs: test-microservices
+    needs: [test-microservices, determine-changed-services]
     # a. deploys the service to staging if the pull request is (re)labelled with 'deploy:staging'
-    if: contains(github.event.pull_request.labels.*.name, 'deploy:staging')
+    if: contains(github.event.pull_request.labels.*.name, 'deploy:staging') && needs.determine-changed-services.outputs.microservices != '[]'
     runs-on: ubuntu-latest
     strategy:
       matrix:
         environment: [staging]
+        service: ${{ fromJSON(needs.determine-changed-services.outputs.microservices) }}
     environment: ${{ matrix.environment }}
-    env:
-      SERVICES: families-api geographies-api concepts-api
     steps:
       - uses: actions/checkout@v6
       - uses: extractions/setup-just@v3
@@ -63,7 +123,4 @@ jobs:
           python-version: "3.12"
       - uses: astral-sh/setup-uv@v7
       - run: uv sync --all-packages
-      - run: |
-          for service in $SERVICES; do
-            just deploy $service ${{ matrix.environment }} latest
-          done
+      - run: just deploy ${{ matrix.service }} ${{ matrix.environment }} latest
