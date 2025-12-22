@@ -331,9 +331,7 @@ load_api_ssm_policy = aws.iam.RolePolicy(
             aws.iam.GetPolicyDocumentStatementArgs(
                 effect="Allow",
                 actions=["ssm:GetParameters"],
-                resources=[
-                    f"arn:aws:ssm:eu-west-1:{account_id}:parameter/load-api/apprunner/*"
-                ],
+                resources=[f"arn:aws:ssm:eu-west-1:{account_id}:parameter/load-api/*"],
             )
         ]
     ).json,
