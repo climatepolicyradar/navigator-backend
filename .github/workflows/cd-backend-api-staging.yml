@@ -1,7 +1,10 @@
 name: Deploy backend-api to staging
 on:
   workflow_dispatch: {}
-  push:
+  workflow_run:
+    workflows: [CI for backend-api]
+    types:
+      - completed
     branches:
       - main
 
