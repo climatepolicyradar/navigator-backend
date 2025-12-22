@@ -1,4 +1,4 @@
-name: Deploy backend to production
+name: Deploy backend-api to production
 on:
   workflow_dispatch: {}
 permissions:
