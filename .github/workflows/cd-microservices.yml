@@ -25,21 +25,18 @@ jobs:
             families-api:
               - 'families-api/**'
               - 'api/**'
-              - '**'
 
             geographies-api:
               - 'geographies-api/**'
               - 'api/**'
-              - '**'
 
             concepts-api:
               - 'concepts-api/**'
               - 'api/**'
-              - '**'
 
             data-in-pipeline:
               - 'data-in-pipeline/**'
-              - '**'
+              - 'api/**'
 
       - id: services
         run: |
