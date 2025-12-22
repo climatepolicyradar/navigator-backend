@@ -354,7 +354,7 @@ data_in_pipeline_load_api_load_database_url = aws.ssm.Parameter(
 
 data_in_pipeline_load_api_cdn_url = aws.ssm.Parameter(
     "data-in-pipeline-load-api-cdn-url",
-    name="/data-in-pipeline/load-api/cdn-url",
+    name="/data-in-pipeline-load-api/cdn-url",
     description="Root URL of the CDN",
     type=aws.ssm.ParameterType.STRING,
     value=config.require("cdn-url"),
