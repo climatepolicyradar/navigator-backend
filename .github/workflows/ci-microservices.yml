@@ -1,6 +1,6 @@
 # This workflow **only** includes our microservices
 # ci-cd.yml controls the backend-api app
-name: Pull request
+name: CI for microservices
 on:
   pull_request:
     # there is a micro-optimisation here in only running test if it's a relevant label
@@ -17,7 +17,7 @@ permissions:
   contents: read
 
 jobs:
-  test:
+  test-microservices:
     runs-on: ubuntu-latest
     strategy:
       matrix:
@@ -37,8 +37,8 @@ jobs:
       - uses: extractions/setup-just@v3
       - run: just test-ci
 
-  deploy:
-    needs: test
+  deploy-feature-branch:
+    needs: test-microservices
     # a. deploys the service to staging if the pull request is (re)labelled with 'deploy:staging'
     if: contains(github.event.pull_request.labels.*.name, 'deploy:staging')
     runs-on: ubuntu-latest
