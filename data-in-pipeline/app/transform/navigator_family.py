@@ -1,7 +1,11 @@
 from returns.result import Failure, Result, Success
 
 from app.bootstrap_telemetry import get_logger, log_context
-from app.extract.connectors import NavigatorDocument, NavigatorFamily
+from app.extract.connectors import (
+    NavigatorCollection,
+    NavigatorDocument,
+    NavigatorFamily,
+)
 from app.models import (
     Document,
     DocumentDocumentRelationship,
@@ -44,45 +48,29 @@ def transform_navigator_family(
         return Failure(NoMatchingTransformations())
 
 
+def _documents_match(
+    documentA: Document,
+    documentB: Document,
+) -> bool:
+    """
+    In the world of MCFs - we often have a "project document" that is a 1-1 mapping of the family.
+    """
+    if documentA.title.lower() == "project document":
+        return True
+
+    """
+    We have some document <=> family relationships that are essentially just a
+    repeat of each other.
+
+    We can use this 1-1 mapping and put the data from the family and store on the document.
+    """
+    return documentA.title.lower() == documentB.title.lower()
+
+
 def transform(
     input: Identified[NavigatorFamily],
 ) -> Result[list[Document], CouldNotTransform]:
     documents: list[Document] = []
-
-    """
-    1) We have some document <=> family relationships that are essentially just a
-    repeat of each other.
-
-    We can use this 1-1 mapping and put the data from the family and store on the document.
-
-    We will also need to generate the relationships between the related documents.
-
-    At time of counting this was ~1096 documents.
-
-    2) In the world of MCFs - we often have a "project document" that is a 1-1 mapping of the family.
-    """
-    is_version_of_document = next(
-        (
-            document
-            for document in input.data.documents
-            # 1)
-            if document.title == input.data.title
-            # 2)
-            or (
-                input.data.corpus.corpus_type.name in mcf_projects_corpus_types
-                and document.title.lower() == "project document"
-            )
-        ),
-        None,
-    )
-    member_of_documents = [
-        document
-        for document in input.data.documents
-        if not (
-            is_version_of_document
-            and document.import_id == is_version_of_document.import_id
-        )
-    ]
 
     """
     Transform
@@ -93,7 +81,14 @@ def transform(
             document,
             input.data,
         )
-        for document in member_of_documents
+        for document in input.data.documents
+    ]
+    documents_from_collections = [
+        _transform_navigator_collection(
+            collection,
+            input.data,
+        )
+        for collection in input.data.collections
     ]
 
     """
@@ -106,26 +101,60 @@ def transform(
     `has_member` implies that this is the "container" document that has a member document.
     `member_of` implies that this is the "member" document that is a member of a container document.
     """
-    document_from_family.relationships = [
-        DocumentDocumentRelationship(
-            type="has_member",
-            document=DocumentWithoutRelationships(**document.model_dump()),
-        )
-        for document in documents_from_documents
-    ]
+
+    """
+    NavigatorDocuments
+    - document_from_document -- member_of --> document_from_family
+    - document_from_family -- has_member --> document_from_document
+    """
+    document_from_family.relationships.extend(
+        [
+            DocumentDocumentRelationship(
+                type="has_member",
+                document=DocumentWithoutRelationships(**document.model_dump()),
+            )
+            for document in documents_from_documents
+            if not _documents_match(document, document_from_family)
+        ]
+    )
 
     for document in documents_from_documents:
-        document.relationships = [
+        if not _documents_match(document, document_from_family):
+            document.relationships = [
+                DocumentDocumentRelationship(
+                    type="member_of",
+                    document=DocumentWithoutRelationships(
+                        **document_from_family.model_dump()
+                    ),
+                )
+            ]
+
+    """
+    NavigatorCollections
+    - document_from_collection -- has_member --> document_from_family
+    - document_from_family -- member_of --> document_from_collection
+    """
+    document_from_family.relationships.extend(
+        [
             DocumentDocumentRelationship(
                 type="member_of",
-                document=DocumentWithoutRelationships(
-                    **document_from_family.model_dump()
-                ),
+                document=DocumentWithoutRelationships(**document.model_dump()),
             )
+            for document in documents_from_collections
+            if not _documents_match(document, document_from_family)
         ]
+    )
 
-    documents.append(document_from_family)
-    documents.extend(documents_from_documents)
+    for document in documents_from_collections:
+        if not _documents_match(document, document_from_family):
+            document.relationships = [
+                DocumentDocumentRelationship(
+                    type="has_member",
+                    document=DocumentWithoutRelationships(
+                        **document_from_family.model_dump()
+                    ),
+                )
+            ]
 
     """
     Versions
@@ -139,46 +168,107 @@ def transform(
 
     `is_version_of` means that this is a version of document, which is useful for timetravelling, but is better represented as the `is_version_of` relationship.
     """
-    document_from_document: Document | None
-    if is_version_of_document:
-        document_from_document = _transform_navigator_document(
-            is_version_of_document, input.data
+
+    # documents
+    document_from_family.relationships.extend(
+        DocumentDocumentRelationship(
+            type="has_version",
+            document=DocumentWithoutRelationships(**document.model_dump()),
         )
-        document_from_document.relationships = [
-            DocumentDocumentRelationship(
-                type="is_version_of",
-                document=DocumentWithoutRelationships(
-                    **document_from_family.model_dump()
-                ),
+        for document in documents_from_documents
+        if _documents_match(document, document_from_family)
+    )
+    for document in documents_from_documents:
+        if _documents_match(document, document_from_family):
+            document.relationships.append(
+                DocumentDocumentRelationship(
+                    type="is_version_of",
+                    document=DocumentWithoutRelationships(
+                        **document_from_family.model_dump()
+                    ),
+                )
             )
-        ]
-        document_from_family.relationships.append(
-            DocumentDocumentRelationship(
-                type="has_version",
-                document=DocumentWithoutRelationships(
-                    **document_from_document.model_dump()
-                ),
-            ),
+
+    # collections
+    document_from_family.relationships.extend(
+        DocumentDocumentRelationship(
+            type="has_version",
+            document=DocumentWithoutRelationships(**collection.model_dump()),
         )
-        documents.append(document_from_document)
-    else:
-        # this is for debugging
-        document_from_family.labels.append(
-            DocumentLabelRelationship(
-                type="debug",
-                label=Label(
-                    id="no_versions",
-                    title="no_versions",
-                    type="debug",
-                ),
+        for collection in documents_from_collections
+        if _documents_match(collection, document_from_family)
+    )
+    for collection in documents_from_collections:
+        if _documents_match(collection, document_from_family):
+            collection.relationships.append(
+                DocumentDocumentRelationship(
+                    type="is_version_of",
+                    document=DocumentWithoutRelationships(
+                        **document_from_family.model_dump()
+                    ),
+                )
             )
-        )
+
+    """
+    Return the documents
+    """
+    documents.append(document_from_family)
+    documents.extend(documents_from_documents)
+    documents.extend(documents_from_collections)
 
     return Success(documents)
 
 
+def _transform_family_corpus_organisation(
+    navigator_family: NavigatorFamily,
+) -> list[DocumentLabelRelationship]:
+    """
+    Related ontologies
+    @see: https://schema.org/provider
+    """
+    labels: list[DocumentLabelRelationship] = []
+    organisation_to_agent_map = {
+        "AF": "Adapation Fund",
+        "CCLW": "Grantham Research Institute",
+        "CIF": "The Climate Investment Funds",
+        "CPR": "Policy Radar",
+        "GCF": "Green Climate Fund",
+        "GEF": "Global Environment Facility",
+        "Ocean Energy Pathways": "Ocean Energy Pathway",
+        "Sabin": "Sabin Center for Climate Change Law",
+        "UNFCCC": "UNFCCC",
+    }
+
+    organisation_name = organisation_to_agent_map.get(
+        navigator_family.corpus.organisation.name, "Unknown"
+    )
+    labels.append(
+        DocumentLabelRelationship(
+            type="provider",
+            label=Label(
+                type="agent",
+                id=organisation_name,
+                title=organisation_name,
+            ),
+        )
+    )
+    return labels
+
+
 def _transform_navigator_family(navigator_family: NavigatorFamily) -> Document:
     labels: list[DocumentLabelRelationship] = []
+
+    # All families are currently canonical
+    labels.append(
+        DocumentLabelRelationship(
+            type="status",
+            label=Label(
+                type="status",
+                id="Canonical",
+                title="Canonical",
+            ),
+        )
+    )
 
     corpus_type_to_entity_type_map = {
         "Laws and Policies": "Laws and policies",
@@ -190,8 +280,6 @@ def _transform_navigator_family(navigator_family: NavigatorFamily) -> Document:
         "GEF": "Multilateral climate fund project",
         "GCF": "Multilateral climate fund project",
     }
-    labels = []
-
     entity_type = corpus_type_to_entity_type_map.get(
         navigator_family.corpus.corpus_type.name
     )
@@ -284,22 +372,15 @@ def _transform_navigator_family(navigator_family: NavigatorFamily) -> Document:
                 )
             )
 
-    # this is for debugging
-    if not labels:
-        labels.append(
-            DocumentLabelRelationship(
-                type="debug",
-                label=Label(
-                    id="no_family_labels",
-                    title="no_family_labels",
-                    type="debug",
-                ),
-            )
-        )
+    """
+    Provider labels
+    """
+    labels.extend(_transform_family_corpus_organisation(navigator_family))
 
     return Document(
         id=navigator_family.import_id,
         title=navigator_family.title,
+        description=navigator_family.summary,
         labels=labels,
     )
 
@@ -371,21 +452,23 @@ def _transform_navigator_document(
             )
         )
 
-    # this is for debugging
-    if not labels:
-        labels.append(
-            DocumentLabelRelationship(
-                type="debug",
-                label=Label(
-                    id="no_document_labels",
-                    title="no_document_labels",
-                    type="debug",
-                ),
-            )
-        )
+    """
+    Provider labels
+    """
+    labels.extend(_transform_family_corpus_organisation(navigator_family))
 
     return Document(
         id=navigator_document.import_id,
         title=navigator_document.title,
         labels=labels,
+    )
+
+
+def _transform_navigator_collection(
+    navigator_collection: NavigatorCollection, navigator_family: NavigatorFamily
+) -> Document:
+    return Document(
+        id=navigator_collection.import_id,
+        title=navigator_collection.title,
+        labels=[],
     )

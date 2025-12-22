@@ -71,7 +71,6 @@ aurora_security_group = aws.ec2.SecurityGroup(
         ),
     ],
     tags=tags,
-    opts=pulumi.ResourceOptions(depends_on=[aws_env_stack]),
 )
 
 eu_west_1a_private_subnet_id = aws_env_stack.get_output("eu_west_1a_private_subnet_id")
@@ -108,9 +107,6 @@ bastion_ingress_to_rds = aws.ec2.SecurityGroupRule(
     security_group_id=aurora_security_group.id,
     source_security_group_id=backend_stack.get_output("bastion_security_group_id"),
     description="Allow Postgres from bastion SG",
-    opts=pulumi.ResourceOptions(
-        depends_on=[aurora_security_group],
-    ),
 )
 
 # Allow bastion SG egress to RDS SG (needed for socat tunnel)
@@ -123,9 +119,6 @@ bastion_egress_to_rds = aws.ec2.SecurityGroupRule(
     security_group_id=backend_stack.get_output("bastion_security_group_id"),
     source_security_group_id=aurora_security_group.id,
     description="Allow Postgres to RDS SG from bastion",
-    opts=pulumi.ResourceOptions(
-        depends_on=[aurora_security_group],
-    ),
 )
 
 #######################################################################
@@ -158,9 +151,6 @@ aurora_cluster = aws.rds.Cluster(
         max_capacity=max_instances,
     ),
     tags=tags,
-    opts=pulumi.ResourceOptions(
-        depends_on=[aurora_subnet_group, aurora_security_group],
-    ),
 )
 
 aurora_instances = [
@@ -173,9 +163,6 @@ aurora_instances = [
         publicly_accessible=False,
         auto_minor_version_upgrade=True,
         tags=tags,
-        opts=pulumi.ResourceOptions(
-            depends_on=[aurora_cluster],
-        ),
     )
     for i in range(max_instances)
 ]
