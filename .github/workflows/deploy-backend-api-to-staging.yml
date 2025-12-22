@@ -1,8 +1,8 @@
-name: Deploy to staging
+name: Deploy backend-api to staging
 on:
   workflow_dispatch: {}
   workflow_run:
-    workflows: [CI/CD]
+    workflows: [CI/CD for backend-api]
     types:
       - completed
     branches:
