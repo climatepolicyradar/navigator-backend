@@ -42,32 +42,12 @@ jobs:
       - uses: astral-sh/setup-uv@v7
       - run: uv sync --all-packages
 
-      - id: pr_data
-        run: |
-          COMMIT_SHA=$(git rev-parse HEAD)
-          PR_NUMBER=$(gh api repos/${{ github.repository }}/commits/$COMMIT_SHA/pulls --jq '.[0].number' || echo "")
-          if [ -z "$PR_NUMBER" ]; then
-            echo "pr_number=" >> $GITHUB_OUTPUT
-            echo "pr_link=" >> $GITHUB_OUTPUT
-          else
-            echo "pr_number=$PR_NUMBER" >> $GITHUB_OUTPUT
-            echo "pr_link=https://github.com/${{ github.repository }}/pull/$PR_NUMBER" >> $GITHUB_OUTPUT
-          fi
-        env:
-          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-
       - id: slack_message
         working-directory: ${{ github.workspace }}
         run: |
           COMMIT_URL="https://github.com/${{ github.repository }}/commit/${{ github.sha }}"
           COMMIT_SHORT=$(echo "${{ github.sha }}" | cut -c1-7)
-          if [ -n "${{ steps.pr_data.outputs.pr_link }}" ]; then
-            PR_URL="https://github.com/${{ github.repository }}/pull/${{ steps.pr_data.outputs.pr_number }}"
-            PR_NUM="${{ steps.pr_data.outputs.pr_number }}"
-            MESSAGE="🚀 Deploying <$PR_URL|PR #$PR_NUM> (<$COMMIT_URL|$COMMIT_SHORT>) to the production *${{ matrix.service }}*"
-          else
-            MESSAGE="🚀 Deploying <$COMMIT_URL|$COMMIT_SHORT> to the production *${{ matrix.service }}*"
-          fi
+          MESSAGE="🚀 Deploying <$COMMIT_URL|$COMMIT_SHORT> to the production *${{ matrix.service }}*"
           jq -n --arg msg "$MESSAGE" '{text: $msg, mrkdwn: true}' > slack-payload.json
 
       - uses: slackapi/slack-github-action@v2.1.1
