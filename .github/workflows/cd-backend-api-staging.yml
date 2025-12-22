@@ -51,7 +51,7 @@ jobs:
 
       - id: slack_message
         run: |
-          COMMIT_LINK="<https://github.com/${{ github.repository }}/commit/${{ github.sha }}|`${{ github.sha }}`>"
+          COMMIT_LINK="<https://github.com/${{ github.repository }}/commit/${{ github.sha }}|${{ github.sha }}>"
           if [ -n "${{ steps.pr_data.outputs.pr_link }}" ]; then
             PR_LINK="<https://github.com/${{ github.repository }}/pull/${{ steps.pr_data.outputs.pr_number }}|PR #${{ steps.pr_data.outputs.pr_number }}>"
             echo "message=🚀 Deploying $PR_LINK ($COMMIT_LINK) to the staging backend-api" >> $GITHUB_OUTPUT
