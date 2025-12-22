@@ -29,32 +29,20 @@ jobs:
         with:
           filters: |
             families-api:
-              - '**'
-              - '!geographies-api/**'
-              - '!concepts-api/**'
-              - '!data-in-pipeline/**'
-              - '!backend-api/**'
+              - families-api/**
+              - api/**
 
             geographies-api:
-              - '**'
-              - '!families-api/**'
-              - '!concepts-api/**'
-              - '!data-in-pipeline/**'
-              - '!backend-api/**'
+              - geographies-api/**
+              - api/**
 
             concepts-api:
-              - '**'
-              - '!families-api/**'
-              - '!geographies-api/**'
-              - '!data-in-pipeline/**'
-              - '!backend-api/**'
+              - concepts-api/**
+              - api/**
 
             data-in-pipeline:
-              - '**'
-              - '!families-api/**'
-              - '!geographies-api/**'
-              - '!concepts-api/**'
-              - '!backend-api/**'
+              - data-in-pipeline/**
+              - api/**
 
       - id: services
         run: |
@@ -73,15 +61,17 @@ jobs:
             DATA_IN_PIPELINE=true
           fi
 
+          # If no services detected but workflow was triggered (changes outside backend-api),
+          # assume root-level changes and trigger all services as a safety measure
           if [ ${#MICROSERVICES[@]} -eq 0 ] && [ "$DATA_IN_PIPELINE" == "false" ]; then
-            echo "microservices=[]" >> $GITHUB_OUTPUT
-            echo "data-in-pipeline=$DATA_IN_PIPELINE" >> $GITHUB_OUTPUT
-            echo "No microservices changed, skipping deployment"
-          else
-            echo "microservices=$(jq -c -n '$ARGS.positional' --args "${MICROSERVICES[@]}")" >> $GITHUB_OUTPUT
-            echo "data-in-pipeline=$DATA_IN_PIPELINE" >> $GITHUB_OUTPUT
-            echo "Changed microservices: ${MICROSERVICES[@]}"
+            MICROSERVICES+=("families-api" "geographies-api" "concepts-api")
+            DATA_IN_PIPELINE=true
+            echo "No specific services changes detected, but workflow was triggered - assuming root-level changes, triggering all services"
           fi
+
+          echo "microservices=$(jq -c -n '$ARGS.positional' --args "${MICROSERVICES[@]}")" >> $GITHUB_OUTPUT
+          echo "data-in-pipeline=$DATA_IN_PIPELINE" >> $GITHUB_OUTPUT
+          echo "Changed microservices: ${MICROSERVICES[@]}"
 
   test-microservices:
     needs: determine-changed-services
