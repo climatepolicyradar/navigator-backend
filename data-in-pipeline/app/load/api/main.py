@@ -1,7 +1,7 @@
 from pathlib import Path
 
-from api.settings import settings
-from fastapi import APIRouter, FastAPI
+from fastapi import FastAPI
+from settings import settings
 
 # we always use a path relative to the file as the calling process can come
 # from multiple locations
@@ -9,17 +9,13 @@ root_dir = Path(__file__).parent.parent
 
 # Create the FastAPI app
 app = FastAPI(
-    docs_url="/documents/docs",
-    redoc_url="/documents/redoc",
-    openapi_url="/documents/openapi.json",
+    docs_url="/load/docs",
+    redoc_url="/load/redoc",
+    openapi_url="/load/openapi.json",
 )
 
-router = APIRouter(prefix="/documents")
-app.include_router(router)
 
-
-@app.get("/health")
-@router.get("/health")
+@app.get("/load/health")
 def health_check():
     return {
         "status": "ok",
@@ -27,6 +23,6 @@ def health_check():
     }
 
 
-@router.post("/")
+@app.post("/load")
 def create_document():
-    return "Received POST request to the /documents/ endpoint"
+    return "Received POST request to the /load endpoint"

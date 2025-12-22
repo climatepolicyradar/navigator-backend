@@ -262,7 +262,7 @@ app_runner_connect_role_policy = aws.iam.RolePolicy(
 )
 
 #######################################################################
-# Create the Documents Service.
+# Create the Load API Service.
 #######################################################################
 
 load_api_role = aws.iam.Role(
@@ -404,47 +404,47 @@ aws.ec2.SecurityGroupRule(
 )
 
 
-load_api_apprunner_service = aws.apprunner.Service(
-    "load-api-apprunner-service",
-    auto_scaling_configuration_arn=config.require("auto_scaling_configuration_arn"),
-    health_check_configuration=aws.apprunner.ServiceHealthCheckConfigurationArgs(
-        interval=10,
-        protocol="TCP",
-        timeout=5,
-    ),
-    instance_configuration=aws.apprunner.ServiceInstanceConfigurationArgs(
-        instance_role_arn=load_api_instance_role.arn,
-    ),
-    network_configuration=aws.apprunner.ServiceNetworkConfigurationArgs(
-        egress_configuration=aws.apprunner.ServiceNetworkConfigurationEgressConfigurationArgs(
-            egress_type="VPC",
-            vpc_connector_arn=vpc_connector.arn,
-        ),
-        ingress_configuration=aws.apprunner.ServiceNetworkConfigurationIngressConfigurationArgs(
-            is_publicly_accessible=True,
-        ),
-        ip_address_type="IPV4",
-    ),
-    observability_configuration=aws.apprunner.ServiceObservabilityConfigurationArgs(
-        observability_enabled=False,
-    ),
-    service_name="load-api",
-    source_configuration=aws.apprunner.ServiceSourceConfigurationArgs(
-        authentication_configuration=aws.apprunner.ServiceSourceConfigurationAuthenticationConfigurationArgs(
-            access_role_arn=load_api_role.arn,
-        ),
-        image_repository=aws.apprunner.ServiceSourceConfigurationImageRepositoryArgs(
-            image_configuration=aws.apprunner.ServiceSourceConfigurationImageRepositoryImageConfigurationArgs(
-                runtime_environment_secrets={
-                    "LOAD_DATABASE_URL": load_api_load_database_url.arn,
-                    "CDN_URL": load_api_cdn_url.arn,
-                },
-            ),
-            image_identifier=f"{account_id}.dkr.ecr.eu-west-1.amazonaws.com/load-api:latest",
-            image_repository_type="ECR",
-        ),
-    ),
-    opts=pulumi.ResourceOptions(protect=True),
-)
+# load_api_apprunner_service = aws.apprunner.Service(
+#     "load-api-apprunner-service",
+#     auto_scaling_configuration_arn=config.require("auto_scaling_configuration_arn"),
+#     health_check_configuration=aws.apprunner.ServiceHealthCheckConfigurationArgs(
+#         interval=10,
+#         protocol="TCP",
+#         timeout=5,
+#     ),
+#     instance_configuration=aws.apprunner.ServiceInstanceConfigurationArgs(
+#         instance_role_arn=load_api_instance_role.arn,
+#     ),
+#     network_configuration=aws.apprunner.ServiceNetworkConfigurationArgs(
+#         egress_configuration=aws.apprunner.ServiceNetworkConfigurationEgressConfigurationArgs(
+#             egress_type="VPC",
+#             vpc_connector_arn=vpc_connector.arn,
+#         ),
+#         ingress_configuration=aws.apprunner.ServiceNetworkConfigurationIngressConfigurationArgs(
+#             is_publicly_accessible=True,
+#         ),
+#         ip_address_type="IPV4",
+#     ),
+#     observability_configuration=aws.apprunner.ServiceObservabilityConfigurationArgs(
+#         observability_enabled=False,
+#     ),
+#     service_name="load-api",
+#     source_configuration=aws.apprunner.ServiceSourceConfigurationArgs(
+#         authentication_configuration=aws.apprunner.ServiceSourceConfigurationAuthenticationConfigurationArgs(
+#             access_role_arn=load_api_role.arn,
+#         ),
+#         image_repository=aws.apprunner.ServiceSourceConfigurationImageRepositoryArgs(
+#             image_configuration=aws.apprunner.ServiceSourceConfigurationImageRepositoryImageConfigurationArgs(
+#                 runtime_environment_secrets={
+#                     "LOAD_DATABASE_URL": load_api_load_database_url.arn,
+#                     "CDN_URL": load_api_cdn_url.arn,
+#                 },
+#             ),
+#             image_identifier=f"{account_id}.dkr.ecr.eu-west-1.amazonaws.com/load-api:latest",
+#             image_repository_type="ECR",
+#         ),
+#     ),
+#     opts=pulumi.ResourceOptions(protect=True),
+# )
 
-pulumi.export("load-api-apprunner_service_url", load_api_apprunner_service.service_url)
+# pulumi.export("load-api-apprunner_service_url", load_api_apprunner_service.service_url)
