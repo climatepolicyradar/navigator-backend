@@ -27,6 +27,8 @@ jobs:
       - uses: dorny/paths-filter@v3
         id: changes
         with:
+          # These provide dynamic outputs, which aren't recognised by the IDE for
+          # some reason but are very much valid.
           filters: |
             families-api:
               - families-api/**
