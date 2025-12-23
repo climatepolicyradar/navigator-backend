@@ -1,6 +1,7 @@
 from pathlib import Path
 
-from fastapi import FastAPI
+from fastapi import Depends, FastAPI
+from session import get_db
 from settings import settings
 
 # we always use a path relative to the file as the calling process can come
@@ -16,7 +17,14 @@ app = FastAPI(
 
 
 @app.get("/load/health")
-def health_check():
+def health_check(db=Depends(get_db)):
+    try:
+        with db as session:
+            session.execute("SELECT 1")
+
+    except Exception as e:
+        return {"status": "error", "error": e}
+
     return {
         "status": "ok",
         "version": settings.github_sha,

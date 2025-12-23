@@ -138,12 +138,12 @@ aurora_cluster = aws.rds.Cluster(
     engine_version="17.6",
     database_name=db_name,
     manage_master_user_password=True,
-    master_username=config.get("aurora_master_username"),
+    master_username=config.require("aurora_master_username"),
     db_subnet_group_name=aurora_subnet_group.name,
     vpc_security_group_ids=[aurora_security_group.id],
     backup_retention_period=retention_period_days,  # Retention is included in Aurora pricing for up to 7 days. Longer retention would add charges.
     preferred_backup_window="02:00-03:00",
-    iam_database_authentication_enabled=True,
+    iam_database_authentication_enabled=False,  # TODO: Reenable later
     preferred_maintenance_window="sun:04:00-sun:05:00",
     deletion_protection=True,
     serverlessv2_scaling_configuration=aws.rds.ClusterServerlessv2ScalingConfigurationArgs(
@@ -333,6 +333,7 @@ data_in_pipeline_load_api_ssm_policy = aws.iam.RolePolicy(
                 actions=["ssm:GetParameters"],
                 resources=[
                     f"arn:aws:ssm:eu-west-1:{account_id}:parameter/data-in-pipeline-load-api/*"
+                    f"arn:aws:ssm:eu-west-1:{account_id}:parameter/data_in_pipeline/*"
                 ],
             )
         ]
@@ -438,6 +439,10 @@ data_in_pipeline_load_api_apprunner_service = aws.apprunner.Service(
                 runtime_environment_secrets={
                     "LOAD_DATABASE_URL": data_in_pipeline_load_api_load_database_url.arn,
                     "CDN_URL": data_in_pipeline_load_api_cdn_url.arn,
+                    "DB_MASTER_USERNAME": config.require("aurora_master_username"),
+                    "DB_PORT": "5432",
+                    "DB_NAME": config.require("db_name"),
+                    "AWS_REGION": "eu-west-1",
                 },
             ),
             image_identifier=f"{account_id}.dkr.ecr.eu-west-1.amazonaws.com/data-in-pipeline-load-api:latest",
