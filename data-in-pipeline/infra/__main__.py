@@ -322,6 +322,24 @@ data_in_pipeline_load_api_instance_role = aws.iam.Role(
     ).json,
 )
 
+# Allow access to specific SSM Parameter Store secrets
+data_in_pipeline_load_api_ssm_policy = aws.iam.RolePolicy(
+    "data-in-pipeline-load-api-instance-role-ssm-policy",
+    role=data_in_pipeline_load_api_instance_role.id,
+    policy=aws.iam.get_policy_document(
+        statements=[
+            aws.iam.GetPolicyDocumentStatementArgs(
+                effect="Allow",
+                actions=["ssm:GetParameters"],
+                resources=[
+                    f"arn:aws:ssm:eu-west-1:{account_id}:parameter/data-in-pipeline-load-api/*",
+                    f"arn:aws:ssm:eu-west-1:{account_id}:parameter/data_in_pipeline/*",
+                ],
+            )
+        ]
+    ).json,
+)
+
 data_in_pipeline_load_api_load_database_url = aws.ssm.Parameter(
     "data-in-pipeline-load-api-load-database-url",
     name="/data-in-pipeline-load-api/load-database-url",
