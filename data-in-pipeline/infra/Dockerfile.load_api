@@ -23,7 +23,7 @@ RUN apt-get update && apt-get install -y \
     && rm -rf /var/lib/apt/lists/*
 
 # Install
-COPY uv.lock data-in-pipeline/pyproject.toml /app/
+COPY uv.lock data-in-pipeline/app/load/api/pyproject.toml /app/
 COPY data-in-pipeline/app/load /app/$SERVICE/
 
 WORKDIR /app
