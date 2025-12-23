@@ -21,12 +21,14 @@ jobs:
     runs-on: ubuntu-latest
     outputs:
       microservices: ${{ steps.services.outputs.microservices }}
-      data-in-pipeline: ${{ steps.changes.outputs.data-in-pipeline }}
+      data-in-pipeline: ${{ steps.services.outputs.data-in-pipeline }}
     steps:
       - uses: actions/checkout@v6
       - uses: dorny/paths-filter@v3
         id: changes
         with:
+          # These provide dynamic outputs, which aren't recognised by the IDE for
+          # some reason but are very much valid.
           filters: |
             families-api:
               - families-api/**

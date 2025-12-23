@@ -3,7 +3,7 @@ name: Export OpenTelemetry Trace for CI
 on:
   workflow_run:
     workflows:
-      - Merge to main
+      - Deploy microservices to staging and production
       - Deploy backend-api to staging
     types: [completed]
 
