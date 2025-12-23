@@ -322,24 +322,6 @@ data_in_pipeline_load_api_instance_role = aws.iam.Role(
     ).json,
 )
 
-# Allow access to specific SSM Parameter Store secrets
-data_in_pipeline_load_api_ssm_policy = aws.iam.RolePolicy(
-    "data-in-pipeline-load-api-instance-role-ssm-policy",
-    role=data_in_pipeline_load_api_instance_role.id,
-    policy=aws.iam.get_policy_document(
-        statements=[
-            aws.iam.GetPolicyDocumentStatementArgs(
-                effect="Allow",
-                actions=["ssm:GetParameters"],
-                resources=[
-                    f"arn:aws:ssm:eu-west-1:{account_id}:parameter/data-in-pipeline-load-api/*"
-                    f"arn:aws:ssm:eu-west-1:{account_id}:parameter/data_in_pipeline/*"
-                ],
-            )
-        ]
-    ).json,
-)
-
 data_in_pipeline_load_api_load_database_url = aws.ssm.Parameter(
     "data-in-pipeline-load-api-load-database-url",
     name="/data-in-pipeline-load-api/load-database-url",
@@ -359,6 +341,35 @@ data_in_pipeline_load_api_cdn_url = aws.ssm.Parameter(
     description="Root URL of the CDN",
     type=aws.ssm.ParameterType.STRING,
     value=config.require("cdn-url"),
+)
+
+# Allow access to specific SSM Parameter Store secrets
+data_in_pipeline_load_api_ssm_policy = aws.iam.RolePolicy(
+    "data-in-pipeline-load-api-instance-role-ssm-policy",
+    role=data_in_pipeline_load_api_instance_role.id,
+    policy=pulumi.Output.all(
+        data_in_pipeline_load_api_load_database_url.arn,
+        data_in_pipeline_load_api_cdn_url.arn,
+    ).apply(
+        lambda arns: aws.iam.get_policy_document(
+            statements=[
+                aws.iam.GetPolicyDocumentStatementArgs(
+                    effect="Allow",
+                    actions=[
+                        "ssm:GetParameter",
+                        "ssm:GetParameters",
+                        "ssm:DescribeParameters",
+                    ],
+                    resources=[
+                        arns[0],  # data_in_pipeline_load_api_load_database_url.arn
+                        arns[1],  # data_in_pipeline_load_api_cdn_url.arn
+                        f"arn:aws:ssm:eu-west-1:{account_id}:parameter/data-in-pipeline-load-api/*",
+                        f"arn:aws:ssm:eu-west-1:{account_id}:parameter/data_in_pipeline/*",
+                    ],
+                )
+            ]
+        ).json
+    ),
 )
 
 data_in_pipeline_load_api_ecr_repository = aws.ecr.Repository(
@@ -439,6 +450,8 @@ data_in_pipeline_load_api_apprunner_service = aws.apprunner.Service(
                 runtime_environment_secrets={
                     "LOAD_DATABASE_URL": data_in_pipeline_load_api_load_database_url.arn,
                     "CDN_URL": data_in_pipeline_load_api_cdn_url.arn,
+                },
+                runtime_environment_variables={
                     "DB_MASTER_USERNAME": config.require("aurora_master_username"),
                     "DB_PORT": "5432",
                     "DB_NAME": config.require("db_name"),
