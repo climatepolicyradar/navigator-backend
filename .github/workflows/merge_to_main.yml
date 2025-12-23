@@ -1,4 +1,4 @@
-name: Merge to main
+name: Deploy microservices to staging and production
 on:
   push:
     branches:
