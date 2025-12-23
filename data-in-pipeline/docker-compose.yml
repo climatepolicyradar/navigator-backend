@@ -19,3 +19,11 @@ services:
         --color=yes,
         -v,
       ]
+  load-api:
+    container_name: load-api
+    build:
+      context: ..
+      dockerfile: data-in-pipeline/infra/Dockerfile.load_api
+    ports:
+      - 8080:8080
+    working_dir: /app

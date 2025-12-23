@@ -30,7 +30,7 @@ pulumi.export("ecr_repository_url", data_in_pipeline_ecr_repository.repository_u
 
 
 #######################################################################
-# Create the Aurora service for the Document Store.
+# Create the Aurora service.
 #######################################################################
 aws_env_stack = pulumi.StackReference(f"climatepolicyradar/aws_env/{environment}")
 
@@ -40,7 +40,7 @@ account_id = config.require("validation_account_id")
 
 tags = {
     "CPR-Created-By": "pulumi",
-    "CPR-Pulumi-Stack-Name": pulumi.get_stack(),
+    "CPR-Pulumi-Stack-Name": environment,
     "CPR-Pulumi-Project-Name": pulumi.get_project(),
     "CPR-Tag": f"{environment}-{name}-store",
     "Environment": environment,
@@ -259,4 +259,309 @@ app_runner_connect_role_policy = aws.iam.RolePolicy(
             ]
         ).json
     ),
+)
+
+#######################################################################
+# Create the Load API Service.
+#######################################################################
+
+data_in_pipeline_load_api_role = aws.iam.Role(
+    "data-in-pipeline-load-api-role",
+    assume_role_policy=aws.iam.get_policy_document(
+        statements=[
+            aws.iam.GetPolicyDocumentStatementArgs(
+                effect="Allow",
+                principals=[
+                    aws.iam.GetPolicyDocumentStatementPrincipalArgs(
+                        type="Service",
+                        identifiers=["build.apprunner.amazonaws.com"],
+                    )
+                ],
+                actions=["sts:AssumeRole"],
+            )
+        ]
+    ).json,
+)
+
+# Attach ECR access policy to the role
+data_in_pipeline_load_api_role_policy = aws.iam.RolePolicy(
+    "data-in-pipeline-load-api-role-ecr-policy",
+    role=data_in_pipeline_load_api_role.id,
+    policy=aws.iam.get_policy_document(
+        statements=[
+            aws.iam.GetPolicyDocumentStatementArgs(
+                effect="Allow",
+                actions=[
+                    "ecr:GetDownloadUrlForLayer",
+                    "ecr:BatchGetImage",
+                    "ecr:DescribeImages",
+                    "ecr:GetAuthorizationToken",
+                    "ecr:BatchCheckLayerAvailability",
+                ],
+                resources=["*"],
+            )
+        ]
+    ).json,
+)
+
+data_in_pipeline_load_api_instance_role = aws.iam.Role(
+    "data-in-pipeline-load-api-instance-role",
+    assume_role_policy=aws.iam.get_policy_document(
+        statements=[
+            aws.iam.GetPolicyDocumentStatementArgs(
+                effect="Allow",
+                principals=[
+                    aws.iam.GetPolicyDocumentStatementPrincipalArgs(
+                        type="Service",
+                        identifiers=["tasks.apprunner.amazonaws.com"],
+                    )
+                ],
+                actions=["sts:AssumeRole"],
+            )
+        ]
+    ).json,
+)
+
+# Allow access to specific SSM Parameter Store secrets
+data_in_pipeline_load_api_ssm_policy = aws.iam.RolePolicy(
+    "data-in-pipeline-load-api-instance-role-ssm-policy",
+    role=data_in_pipeline_load_api_instance_role.id,
+    policy=aws.iam.get_policy_document(
+        statements=[
+            aws.iam.GetPolicyDocumentStatementArgs(
+                effect="Allow",
+                actions=["ssm:GetParameters"],
+                resources=[
+                    f"arn:aws:ssm:eu-west-1:{account_id}:parameter/data-in-pipeline-load-api/*"
+                ],
+            )
+        ]
+    ).json,
+)
+
+data_in_pipeline_load_api_load_database_url = aws.ssm.Parameter(
+    "data-in-pipeline-load-api-load-database-url",
+    name="/data-in-pipeline-load-api/load-database-url",
+    description="The URL string to connect to the load database",
+    type=aws.ssm.ParameterType.SECURE_STRING,
+    # This value is managed directly in SSM
+    value=aurora_cluster.endpoint,
+    opts=pulumi.ResourceOptions(
+        # This value is managed directly in SSM
+        ignore_changes=["value"],
+    ),
+)
+
+data_in_pipeline_load_api_cdn_url = aws.ssm.Parameter(
+    "data-in-pipeline-load-api-cdn-url",
+    name="/data-in-pipeline-load-api/cdn-url",
+    description="Root URL of the CDN",
+    type=aws.ssm.ParameterType.STRING,
+    value=config.require("cdn-url"),
+)
+
+data_in_pipeline_load_api_ecr_repository = aws.ecr.Repository(
+    "data-in-pipeline-load-api-ecr-repository",
+    encryption_configurations=[
+        aws.ecr.RepositoryEncryptionConfigurationArgs(
+            encryption_type="AES256",
+        )
+    ],
+    image_scanning_configuration=aws.ecr.RepositoryImageScanningConfigurationArgs(
+        scan_on_push=False,
+    ),
+    image_tag_mutability="MUTABLE",
+    name="data-in-pipeline-load-api",
+    opts=pulumi.ResourceOptions(protect=True),
+)
+
+data_in_pipeline_load_api_vpc_sg = aws.ec2.SecurityGroup(
+    "data-in-pipeline-load-api-vpc-sg",
+    vpc_id=vpc_id,
+    egress=[
+        aws.ec2.SecurityGroupEgressArgs(
+            protocol="-1", from_port=0, to_port=0, cidr_blocks=["0.0.0.0/0"]
+        )
+    ],
+)
+
+vpc_connector = aws.apprunner.VpcConnector(
+    "data-in-pipeline-load-api-vpc-connector",
+    vpc_connector_name="data-in-pipeline-load-api-vpc-connector",
+    subnets=private_subnets,
+    security_groups=[data_in_pipeline_load_api_vpc_sg.id],
+)
+
+# Allow load API connector to reach Aurora
+aws.ec2.SecurityGroupRule(
+    "allow-data-in-pipeline-load-api-to-aurora",
+    type="ingress",
+    security_group_id=aurora_security_group.id,
+    source_security_group_id=data_in_pipeline_load_api_vpc_sg.id,
+    protocol="tcp",
+    from_port=5432,
+    to_port=5432,
+)
+
+
+data_in_pipeline_load_api_apprunner_service = aws.apprunner.Service(
+    "data-in-pipeline-load-api-apprunner-service",
+    auto_scaling_configuration_arn=config.require("auto_scaling_configuration_arn"),
+    health_check_configuration=aws.apprunner.ServiceHealthCheckConfigurationArgs(
+        interval=10,
+        protocol="TCP",
+        timeout=5,
+    ),
+    instance_configuration=aws.apprunner.ServiceInstanceConfigurationArgs(
+        instance_role_arn=data_in_pipeline_load_api_instance_role.arn,
+    ),
+    network_configuration=aws.apprunner.ServiceNetworkConfigurationArgs(
+        egress_configuration=aws.apprunner.ServiceNetworkConfigurationEgressConfigurationArgs(
+            egress_type="VPC",
+            vpc_connector_arn=vpc_connector.arn,
+        ),
+        ingress_configuration=aws.apprunner.ServiceNetworkConfigurationIngressConfigurationArgs(
+            is_publicly_accessible=False,  # enforces IAM auth
+        ),
+        ip_address_type="IPV4",
+    ),
+    observability_configuration=aws.apprunner.ServiceObservabilityConfigurationArgs(
+        observability_enabled=False,
+    ),
+    service_name="data-in-pipeline-load-api",
+    source_configuration=aws.apprunner.ServiceSourceConfigurationArgs(
+        authentication_configuration=aws.apprunner.ServiceSourceConfigurationAuthenticationConfigurationArgs(
+            access_role_arn=data_in_pipeline_load_api_role.arn,
+        ),
+        image_repository=aws.apprunner.ServiceSourceConfigurationImageRepositoryArgs(
+            image_configuration=aws.apprunner.ServiceSourceConfigurationImageRepositoryImageConfigurationArgs(
+                runtime_environment_secrets={
+                    "LOAD_DATABASE_URL": data_in_pipeline_load_api_load_database_url.arn,
+                    "CDN_URL": data_in_pipeline_load_api_cdn_url.arn,
+                },
+            ),
+            image_identifier=f"{account_id}.dkr.ecr.eu-west-1.amazonaws.com/data-in-pipeline-load-api:latest",
+            image_repository_type="ECR",
+        ),
+    ),
+    opts=pulumi.ResourceOptions(protect=True),
+)
+
+pulumi.export(
+    "data-in-pipeline-load-api-apprunner_service_url",
+    data_in_pipeline_load_api_apprunner_service.service_url,
+)
+
+
+#######################################################################
+# Add API Gateway to enable IAM authentication for the load API.
+#######################################################################
+
+data_in_pipeline_load_api_vpc_link_sg = aws.ec2.SecurityGroup(
+    "data-in-pipeline-load-api-vpc-link-sg",
+    vpc_id=vpc_id,
+    description="Security group for API Gateway VPC Link",
+    egress=[
+        aws.ec2.SecurityGroupEgressArgs(
+            protocol="tcp",
+            from_port=8080,  # or 443 or 8080 depending on backend
+            to_port=8080,
+            # cidr_blocks=["10.0.0.0/16"],  # your VPC CIDR
+        )
+    ],
+)
+
+
+data_in_pipeline_load_api_vpc_link = aws.apigatewayv2.VpcLink(
+    "data-in-pipeline-load-api-vpc-link",
+    name="data-in-pipeline-load-api-vpc-link",
+    subnet_ids=private_subnets,
+    security_group_ids=[data_in_pipeline_load_api_vpc_sg.id],
+)
+
+
+data_in_pipeline_load_api_gateway = aws.apigatewayv2.Api(
+    "data-in-pipeline-load-api-gateway",
+    protocol_type="HTTP",
+    name="data-in-pipeline-load-api-gateway",
+)
+
+
+data_in_pipeline_load_api_integration = aws.apigatewayv2.Integration(
+    "data-in-pipeline-load-api-app-runner-integration",
+    api_id=data_in_pipeline_load_api_gateway.id,
+    integration_type="HTTP_PROXY",
+    integration_method="ANY",
+    integration_uri=data_in_pipeline_load_api_apprunner_service.service_url.apply(
+        lambda url: f"https://{url}"
+    ),
+    connection_type="VPC_LINK",
+    connection_id=data_in_pipeline_load_api_vpc_link.id,
+    payload_format_version="2.0",
+)
+
+data_in_pipeline_load_api_route = aws.apigatewayv2.Route(
+    "data-in-pipeline-load-api-app-runner-route",
+    api_id=data_in_pipeline_load_api_gateway.id,
+    route_key="ANY /{proxy+}",  # catch-all route
+    target=data_in_pipeline_load_api_integration.id.apply(
+        lambda id: f"integrations/{id}"
+    ),
+    authorization_type="AWS_IAM",  # this enforces IAM authentication
+)
+
+data_in_pipeline_load_api_stage = aws.apigatewayv2.Stage(
+    "prod",
+    api_id=data_in_pipeline_load_api_gateway.id,
+    name="$default",
+    auto_deploy=True,
+)
+
+pulumi.export(
+    "data_in_pipeline_load_api_endpoint",
+    data_in_pipeline_load_api_gateway.api_endpoint,
+)
+
+
+#######################################################################
+# Add client IAM role and policy for the DIP to access the load API.
+#######################################################################
+
+data_in_pipeline_load_api_access_role = aws.iam.Role(
+    "data-in-pipeline-load-api-access-role",
+    name="data-in-pipeline-load-api-access-role",
+    description="IAM role for the data in pipeline to access the load API",
+    assume_role_policy=aws.iam.get_policy_document(
+        statements=[
+            aws.iam.GetPolicyDocumentStatementArgs(
+                effect="Allow",
+                principals=[
+                    aws.iam.GetPolicyDocumentStatementPrincipalArgs(
+                        type="AWS",
+                        identifiers=[f"arn:aws:iam::{account_id}:root"],
+                    )
+                ],
+                actions=["sts:AssumeRole"],
+            )
+        ]
+    ).json,
+)
+
+
+# Attach the inline policy
+data_in_pipeline_load_api_role_policy = aws.iam.RolePolicy(
+    "data-in-pipeline-load-api-role-policy",
+    name="data-in-pipeline-load-api-role-policy",
+    role=data_in_pipeline_load_api_access_role.id,
+    policy=aws.iam.get_policy_document(
+        statements=[
+            aws.iam.GetPolicyDocumentStatementArgs(
+                effect="Allow",
+                actions=["execute-api:Invoke"],
+                resources=[
+                    f"arn:aws:execute-api:eu-west-1:{account_id}:{data_in_pipeline_load_api_gateway.id}/*/*/*"
+                ],
+            )
+        ]
+    ).json,
 )
