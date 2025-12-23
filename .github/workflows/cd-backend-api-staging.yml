@@ -1,0 +1,84 @@
+name: Deploy backend-api to staging
+on:
+  workflow_dispatch: {}
+  workflow_run:
+    workflows: [CI for backend-api]
+    types:
+      - completed
+    branches:
+      - main
+
+permissions:
+  id-token: write
+  contents: read
+
+jobs:
+  deploy-backend-api-staging:
+    defaults:
+      run:
+        working-directory: backend-api
+    if: ${{ github.event.workflow_run.conclusion == 'success' || github.event_name == 'workflow_dispatch'}}
+    runs-on: ubuntu-latest
+    environment:
+      name: staging
+    steps:
+      - uses: actions/checkout@v6
+
+      - name: Configure AWS credentials (staging)
+        uses: aws-actions/configure-aws-credentials@v5
+        with:
+          role-to-assume: arn:aws:iam::${{ secrets.AWS_ACCOUNT_ID }}:role/navigator-backend-new-github-actions
+          role-session-name: GitHub_to_AWS_via_FederatedOIDC
+          aws-region: eu-west-1
+
+      - name: Login to Amazon ECR (staging)
+        id: login-ecr-staging
+        uses: aws-actions/amazon-ecr-login@62f4f872db3836360b72999f4b87f1ff13310f3a
+
+      - id: pr_data
+        run: |
+          COMMIT_SHA=$(git rev-parse HEAD)
+          PR_NUMBER=$(gh api repos/${{ github.repository }}/commits/$COMMIT_SHA/pulls --jq '.[0].number' || echo "")
+          if [ -z "$PR_NUMBER" ]; then
+            echo "pr_number=" >> $GITHUB_OUTPUT
+            echo "pr_link=" >> $GITHUB_OUTPUT
+          else
+            echo "pr_number=$PR_NUMBER" >> $GITHUB_OUTPUT
+            echo "pr_link=https://github.com/${{ github.repository }}/pull/$PR_NUMBER" >> $GITHUB_OUTPUT
+          fi
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+
+      - id: slack_message
+        working-directory: ${{ github.workspace }}
+        run: |
+          COMMIT_URL="https://github.com/${{ github.repository }}/commit/${{ github.sha }}"
+          COMMIT_SHORT=$(echo "${{ github.sha }}" | cut -c1-7)
+          if [ -n "${{ steps.pr_data.outputs.pr_link }}" ]; then
+            PR_URL="https://github.com/${{ github.repository }}/pull/${{ steps.pr_data.outputs.pr_number }}"
+            PR_NUM="${{ steps.pr_data.outputs.pr_number }}"
+            MESSAGE="🚀 Deploying <$PR_URL|PR #$PR_NUM> (<$COMMIT_URL|$COMMIT_SHORT>) to the staging *backend-api*"
+          else
+            MESSAGE="🚀 Deploying <$COMMIT_URL|$COMMIT_SHORT> to the staging *backend-api*"
+          fi
+          jq -n --arg msg "$MESSAGE" '{text: $msg, mrkdwn: true}' > slack-payload.json
+
+      - uses: slackapi/slack-github-action@v2.1.1
+        with:
+          webhook: ${{ secrets.SLACK_WEBHOOK_URL_STAGING_UPDATES_CHANNEL }}
+          webhook-type: incoming-webhook
+          payload-file-path: slack-payload.json
+
+      - name: Build, tag, and push to ECR with commit hash and 'latest' tags (staging)
+        id: build-image
+        env:
+          ECR_REGISTRY: ${{ secrets.DOCKER_REGISTRY }}
+          IMAGE_TAG: ${{ github.sha }}
+          AWS_REGION: eu-west-1
+          ECR_REPOSITORY: navigator-backend
+        run: |
+          docker tag navigator-backend $ECR_REGISTRY/$ECR_REPOSITORY:$IMAGE_TAG
+          docker push $ECR_REGISTRY/$ECR_REPOSITORY:$IMAGE_TAG
+          echo "image=$ECR_REGISTRY/$ECR_REPOSITORY:$IMAGE_TAG" >> $GITHUB_OUTPUT
+          docker tag navigator-backend $ECR_REGISTRY/$ECR_REPOSITORY:latest
+          docker push $ECR_REGISTRY/$ECR_REPOSITORY:latest
