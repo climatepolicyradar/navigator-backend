@@ -9,15 +9,17 @@ usage.
 """
 
 import logging
-from typing import Any
 
 from opentelemetry import trace
 from opentelemetry.instrumentation.sqlalchemy import (
     SQLAlchemyInstrumentor,
 )
+from opentelemetry.sdk.trace import TracerProvider
+from opentelemetry.trace import Tracer
 from sqlalchemy import event
-from sqlalchemy.engine import Engine
-from sqlalchemy.pool import Pool
+from sqlalchemy.engine import Connection, Engine
+from sqlalchemy.engine.interfaces import DBAPIConnection
+from sqlalchemy.pool import ConnectionPoolEntry, Pool
 
 LOGGER = logging.getLogger(__name__)
 
@@ -30,21 +32,23 @@ class SQLAlchemyTelemetry:
     performance and diagnose connection leaks.
     """
 
-    def __init__(self, tracer: Any, tracer_provider: Any | None = None) -> None:
+    def __init__(
+        self, tracer: Tracer | None, tracer_provider: TracerProvider | None = None
+    ) -> None:
         """Initialise SQLAlchemy telemetry.
 
         :param tracer: OpenTelemetry tracer instance.
-        :type tracer: Any
+        :type tracer: Tracer | None
         :param tracer_provider: Optional tracer provider for query
             instrumentation.
-        :type tracer_provider: Any, optional
+        :type tracer_provider: TracerProvider | None, optional
         """
         self.tracer = tracer
         self.tracer_provider = tracer_provider
         self._pool_instrumented = False
-        self._query_instrumentor: Any | None = None
+        self._query_instrumentor: SQLAlchemyInstrumentor | None = None
 
-    def instrument_pool(self, engine: Any) -> None:
+    def instrument_pool(self, engine: Engine) -> None:
         """Instrument SQLAlchemy engine with connection pool event tracking.
 
         Sets up event listeners on the engine's connection pool to track
@@ -53,7 +57,7 @@ class SQLAlchemyTelemetry:
         monitor pool usage.
 
         :param engine: SQLAlchemy engine to instrument.
-        :type engine: Any
+        :type engine: Engine
         """
         if self.tracer is None:
             LOGGER.debug("🔌 SQLAlchemy pool instrumentation skipped (tracer disabled)")
@@ -64,8 +68,18 @@ class SQLAlchemyTelemetry:
             return
 
         @event.listens_for(Pool, "connect")
-        def _on_connect(dbapi_conn: Any, connection_record: Any) -> None:
-            """Track new database connection establishment."""
+        def _on_connect(
+            dbapi_conn: DBAPIConnection, connection_record: ConnectionPoolEntry
+        ) -> None:
+            """Track new database connection establishment.
+
+            :param dbapi_conn: The raw DBAPI connection object from the
+                database driver.
+            :type dbapi_conn: DBAPIConnection
+            :param connection_record: The connection pool entry being
+                created for the new connection.
+            :type connection_record: ConnectionPoolEntry
+            """
             span = trace.get_current_span()
             if span and span.is_recording():
                 span.add_event(
@@ -78,9 +92,22 @@ class SQLAlchemyTelemetry:
 
         @event.listens_for(Pool, "checkout")
         def _on_checkout(
-            dbapi_conn: Any, connection_record: Any, connection_proxy: Any
+            dbapi_conn: DBAPIConnection,
+            connection_record: ConnectionPoolEntry,
+            connection_proxy: Connection,
         ) -> None:
-            """Track connection checkout from pool."""
+            """Track connection checkout from pool.
+
+            :param dbapi_conn: The raw DBAPI connection object from the
+                database driver.
+            :type dbapi_conn: DBAPIConnection
+            :param connection_record: The connection pool entry being
+                checked out from the pool.
+            :type connection_record: ConnectionPoolEntry
+            :param connection_proxy: The SQLAlchemy Connection proxy
+                object wrapping the DBAPI connection.
+            :type connection_proxy: Connection
+            """
             span = trace.get_current_span()
             if span and span.is_recording():
                 span.add_event(
@@ -92,8 +119,18 @@ class SQLAlchemyTelemetry:
                 )
 
         @event.listens_for(Pool, "checkin")
-        def _on_checkin(dbapi_conn: Any, connection_record: Any) -> None:
-            """Track connection return to pool."""
+        def _on_checkin(
+            dbapi_conn: DBAPIConnection, connection_record: ConnectionPoolEntry
+        ) -> None:
+            """Track connection return to pool.
+
+            :param dbapi_conn: The raw DBAPI connection object from the
+                database driver.
+            :type dbapi_conn: DBAPIConnection
+            :param connection_record: The connection pool entry being
+                returned to the pool.
+            :type connection_record: ConnectionPoolEntry
+            """
             span = trace.get_current_span()
             if span and span.is_recording():
                 span.add_event(
@@ -105,8 +142,16 @@ class SQLAlchemyTelemetry:
                 )
 
         @event.listens_for(Engine, "connect")
-        def _on_engine_connect(conn: Any, branch: Any) -> None:
-            """Track engine-level connection events."""
+        def _on_engine_connect(conn: Connection, branch: bool) -> None:
+            """Track engine-level connection events.
+
+            :param conn: The SQLAlchemy Connection object.
+            :type conn: Connection
+            :param branch: True if this connection was created from an
+                existing connection (branched), False if obtained directly
+                from the pool.
+            :type branch: bool
+            """
             span = trace.get_current_span()
             if span and span.is_recording():
                 span.add_event(
@@ -119,7 +164,7 @@ class SQLAlchemyTelemetry:
 
         self._pool_instrumented = True
 
-    def instrument_queries(self, engine: Any) -> None:
+    def instrument_queries(self, engine: Engine) -> None:
         """Instrument SQLAlchemy engine with query tracking.
 
         Uses `SQLAlchemyInstrumentor` to track SQL queries and operations.
@@ -127,7 +172,7 @@ class SQLAlchemyTelemetry:
         events.
 
         :param engine: SQLAlchemy engine to instrument.
-        :type engine: Any
+        :type engine: Engine
         """
         if self._query_instrumentor is not None:
             LOGGER.debug("🔌 SQLAlchemy queries already instrumented")
@@ -138,14 +183,14 @@ class SQLAlchemyTelemetry:
             engine=engine, tracer_provider=self.tracer_provider
         )
 
-    def instrument(self, engine: Any) -> None:
+    def instrument(self, engine: Engine) -> None:
         """Instrument SQLAlchemy engine with both pool and query tracking.
 
         Convenience method that calls both `instrument_pool()` and
         `instrument_queries()` for comprehensive database telemetry.
 
         :param engine: SQLAlchemy engine to instrument.
-        :type engine: Any
+        :type engine: Engine
         """
         self.instrument_pool(engine)
         self.instrument_queries(engine)
