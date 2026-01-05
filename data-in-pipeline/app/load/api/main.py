@@ -1,5 +1,6 @@
 import logging
 import os
+import sys
 from pathlib import Path
 
 from api import FastAPITelemetry, ServiceManifest, SQLAlchemyTelemetry, TelemetryConfig
@@ -7,6 +8,12 @@ from fastapi import FastAPI
 from routers import router
 from session import get_engine
 
+# Configure logging before anything else
+logging.basicConfig(
+    level=logging.INFO,
+    format="%(asctime)s [%(levelname)s] %(name)s: %(message)s",
+    stream=sys.stdout,
+)
 _LOGGER = logging.getLogger(__name__)
 
 # We always use a path relative to the file as the calling process can come
@@ -44,3 +51,4 @@ app = FastAPI(
 
 # Include router in app
 app.include_router(router)
+_LOGGER.info("✅ FastAPI application initialised")

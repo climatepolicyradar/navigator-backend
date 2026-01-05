@@ -6,10 +6,10 @@ sessions. Use get_db_context() for all database operations.
 """
 
 import logging
-import os
 from collections.abc import Generator
 from contextlib import contextmanager
 
+from settings import settings
 from sqlalchemy import create_engine, text
 from sqlalchemy.engine import Engine
 from sqlalchemy.exc import DisconnectionError, OperationalError
@@ -17,34 +17,23 @@ from sqlalchemy.orm import Session, sessionmaker
 
 _LOGGER = logging.getLogger(__name__)
 
-# Connection parameter validation
-STATEMENT_TIMEOUT = os.getenv("STATEMENT_TIMEOUT", "10000")  # ms
-DB_USERNAME = os.getenv("DB_MASTER_USERNAME")
-DB_PASSWORD = os.getenv("MANAGED_DB_PASSWORD")
-CLUSTER_URL = os.getenv("LOAD_DATABASE_URL")
-DB_PORT = os.getenv("DB_PORT", "5432")
-DB_NAME = os.getenv("DB_NAME")
-
-# Validate required connection parameters
-_required_params = {
-    "DB_MASTER_USERNAME": DB_USERNAME,
-    "MANAGED_DB_PASSWORD": DB_PASSWORD,
-    "LOAD_DATABASE_URL": CLUSTER_URL,
-    "DB_NAME": DB_NAME,
-}
-_missing_params = [name for name, value in _required_params.items() if not value]
-if _missing_params:
-    raise RuntimeError(
-        f"Missing required database environment variables: "
-        f"{', '.join(_missing_params)}"
+# Connection parameters from pydantic settings (validated on import)
+try:
+    SQLALCHEMY_DATABASE_URI = (
+        f"postgresql://{settings.db_master_username}:"
+        f"{settings.managed_db_password.get_secret_value()}@"
+        f"{settings.load_database_url.get_secret_value()}:"
+        f"{settings.db_port}/{settings.db_name}?sslmode=no-verify"
     )
 
-SQLALCHEMY_DATABASE_URI = (
-    f"postgresql://{DB_USERNAME}:{DB_PASSWORD}@{CLUSTER_URL}:"
-    f"{DB_PORT}/{DB_NAME}?sslmode=no-verify"
-)
-
-_LOGGER.debug(f"Initialising database engine for {CLUSTER_URL}:{DB_PORT}/{DB_NAME}")
+    _LOGGER.info(
+        f"🔌 Initialising database engine for "
+        f"{settings.load_database_url.get_secret_value()}:"
+        f"{settings.db_port}/{settings.db_name}"
+    )
+except Exception:
+    _LOGGER.exception("❌ Failed to construct database URI")
+    raise
 
 # Engine with connection pooling to prevent connection leaks
 # Lazy initialisation - created once per worker
@@ -56,7 +45,7 @@ _engine = create_engine(
     pool_recycle=1800,  # Recycle connections after 30 minutes
     pool_timeout=30,  # Wait up to 30s for a connection before error
     isolation_level="READ COMMITTED",  # PostgreSQL default, explicit
-    connect_args={"options": f"-c statement_timeout={STATEMENT_TIMEOUT}"},
+    connect_args={"options": f"-c statement_timeout={settings.statement_timeout}"},
     echo=False,  # Set to True for SQL query logging in debug
 )
 
