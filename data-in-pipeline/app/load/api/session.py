@@ -10,12 +10,10 @@ import os
 from collections.abc import Generator
 from contextlib import contextmanager
 
-from opentelemetry.instrumentation.sqlalchemy import SQLAlchemyInstrumentor
-from sqlalchemy import create_engine, event, text
+from sqlalchemy import create_engine, text
 from sqlalchemy.engine import Engine
 from sqlalchemy.exc import DisconnectionError, OperationalError
 from sqlalchemy.orm import Session, sessionmaker
-from sqlalchemy.pool import Pool
 
 _LOGGER = logging.getLogger(__name__)
 
@@ -48,32 +46,6 @@ SQLALCHEMY_DATABASE_URI = (
 
 _LOGGER.debug(f"Initialising database engine for {CLUSTER_URL}:{DB_PORT}/{DB_NAME}")
 
-# Connection pool event listeners for logging (debug mode only)
-# Helpful for debugging connection leak issues - but log level needs updating for these
-# to be visible.
-if _LOGGER.isEnabledFor(logging.DEBUG):
-
-    @event.listens_for(Pool, "connect")
-    def _on_connect(dbapi_conn, connection_record):
-        """Log when a new connection is established."""
-        _LOGGER.debug("New database connection established")
-
-    @event.listens_for(Pool, "checkout")
-    def _on_checkout(dbapi_conn, connection_record, connection_proxy):
-        """Log when a connection is checked out from the pool."""
-        _LOGGER.debug("Connection checked out from pool")
-
-    @event.listens_for(Pool, "checkin")
-    def _on_checkin(dbapi_conn, connection_record):
-        """Log when a connection is returned to the pool."""
-        _LOGGER.debug("Connection returned to pool")
-
-    @event.listens_for(Engine, "connect")
-    def _on_engine_connect(conn, branch):
-        """Log engine-level connection events."""
-        _LOGGER.debug("Engine connection event")
-
-
 # Engine with connection pooling to prevent connection leaks
 # Lazy initialisation - created once per worker
 _engine = create_engine(
@@ -87,10 +59,6 @@ _engine = create_engine(
     connect_args={"options": f"-c statement_timeout={STATEMENT_TIMEOUT}"},
     echo=False,  # Set to True for SQL query logging in debug
 )
-
-
-# OpenTelemetry instrumentation
-SQLAlchemyInstrumentor().instrument(engine=_engine)
 
 # Session factory, exported callable for tests
 SessionLocal = sessionmaker(autocommit=False, autoflush=False, bind=_engine)
