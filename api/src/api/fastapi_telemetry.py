@@ -3,7 +3,7 @@ FastAPI integration for Navigator telemetry.
 
 This module defines `FastAPITelemetry`, the first concrete extension of
 `BaseTelemetry`. It adapts the shared bootstrap for FastAPI runtimes by
-binding instrumentation, enriching async exception handling, and 
+binding instrumentation, enriching async exception handling, and
 wrapping routes so we obtain uniform OpenTelemetry behaviour with
 minimal framework specific code.
 """
