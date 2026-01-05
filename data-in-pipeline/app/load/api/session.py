@@ -21,7 +21,7 @@ STATEMENT_TIMEOUT = os.getenv("STATEMENT_TIMEOUT", "10000")  # ms
 DB_USERNAME = os.getenv("DB_MASTER_USERNAME")
 DB_PASSWORD = os.getenv("MANAGED_DB_PASSWORD")
 CLUSTER_URL = os.getenv("LOAD_DATABASE_URL")
-DB_PORT = os.getenv("DB_PORT", "5432")
+DB_PORT = os.getenv("DB_PORT")
 DB_NAME = os.getenv("DB_NAME")
 
 # Validate required connection parameters
