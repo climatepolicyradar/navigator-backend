@@ -184,6 +184,14 @@ pulumi.export(
     f"{name}-{environment}-aurora-reader-endpoint", aurora_cluster.reader_endpoint
 )
 
+# Get the ARN of the secret holding the master password
+# When manage_master_user_password=True, master_user_secrets contains exactly one secret
+data_in_pipeline_load_api_cluster_password_secret = (
+    aurora_cluster.master_user_secrets.apply(
+        lambda secrets: (secrets[0] if secrets and len(secrets) == 1 else None)
+    )
+)
+
 #######################################################################
 # Create the IAM role for the Data In Pipeline.
 #######################################################################
@@ -343,15 +351,16 @@ data_in_pipeline_load_api_cdn_url = aws.ssm.Parameter(
     value=config.require("cdn-url"),
 )
 
-# Allow access to specific SSM Parameter Store secrets
-data_in_pipeline_load_api_ssm_policy = aws.iam.RolePolicy(
-    "data-in-pipeline-load-api-instance-role-ssm-policy",
+# Allow access to SSM Parameter Store and Secrets Manager
+data_in_pipeline_load_api_instance_role_policy = aws.iam.RolePolicy(
+    "data-in-pipeline-load-api-instance-role-policy",
     role=data_in_pipeline_load_api_instance_role.id,
     policy=pulumi.Output.all(
         data_in_pipeline_load_api_load_database_url.arn,
         data_in_pipeline_load_api_cdn_url.arn,
+        data_in_pipeline_load_api_cluster_password_secret.secret_arn,
     ).apply(
-        lambda arns: aws.iam.get_policy_document(
+        lambda args: aws.iam.get_policy_document(
             statements=[
                 aws.iam.GetPolicyDocumentStatementArgs(
                     effect="Allow",
@@ -361,16 +370,23 @@ data_in_pipeline_load_api_ssm_policy = aws.iam.RolePolicy(
                         "ssm:DescribeParameters",
                     ],
                     resources=[
-                        arns[0],  # data_in_pipeline_load_api_load_database_url.arn
-                        arns[1],  # data_in_pipeline_load_api_cdn_url.arn
                         f"arn:aws:ssm:eu-west-1:{account_id}:parameter/data-in-pipeline-load-api/*",
                         f"arn:aws:ssm:eu-west-1:{account_id}:parameter/data_in_pipeline/*",
                     ],
-                )
+                ),
+                aws.iam.GetPolicyDocumentStatementArgs(
+                    effect="Allow",
+                    actions=[
+                        "secretsmanager:GetSecretValue",
+                        "secretsmanager:DescribeSecret",
+                    ],
+                    resources=args,
+                ),
             ]
         ).json
     ),
 )
+
 
 data_in_pipeline_load_api_ecr_repository = aws.ecr.Repository(
     "data-in-pipeline-load-api-ecr-repository",
@@ -450,6 +466,7 @@ data_in_pipeline_load_api_apprunner_service = aws.apprunner.Service(
                 runtime_environment_secrets={
                     "LOAD_DATABASE_URL": data_in_pipeline_load_api_load_database_url.arn,
                     "CDN_URL": data_in_pipeline_load_api_cdn_url.arn,
+                    "MANAGED_DB_PASSWORD": data_in_pipeline_load_api_cluster_password_secret.secret_arn,
                 },
                 runtime_environment_variables={
                     "DB_MASTER_USERNAME": config.require("aurora_master_username"),

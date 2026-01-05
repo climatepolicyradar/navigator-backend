@@ -11,7 +11,6 @@ wasn't implemented properly.
 import logging
 import os
 
-from aws import get_secret, get_ssm_parameter
 from sqlalchemy import create_engine
 from sqlalchemy.orm import sessionmaker
 
@@ -19,8 +18,8 @@ _LOGGER = logging.getLogger(__name__)
 
 STATEMENT_TIMEOUT = os.getenv("STATEMENT_TIMEOUT", "10000")  # ms
 DB_USERNAME = os.getenv("DB_MASTER_USERNAME")
-DB_PASSWORD = get_secret("rds!cluster-ffd99c57-1457-431d-a3eb-c99aa15b58d9")
-CLUSTER_URL = get_ssm_parameter("/data-in-pipeline-load-api/load-database-url")
+DB_PASSWORD = os.getenv("MANAGED_DB_PASSWORD")
+CLUSTER_URL = os.getenv("LOAD_DATABASE_URL")
 DB_PORT = os.getenv("DB_PORT")
 DB_NAME = os.getenv("DB_NAME")
 SQLALCHEMY_DATABASE_URI = f"postgresql://{DB_USERNAME}:{DB_PASSWORD}@{CLUSTER_URL}:{DB_PORT}/{DB_NAME}?sslmode=no-verify"
