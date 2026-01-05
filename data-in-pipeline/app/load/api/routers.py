@@ -1,5 +1,5 @@
 from fastapi import APIRouter, Depends
-from session import get_db
+from session import get_db, test_db_connection
 from settings import settings
 
 # Create router with /load prefix
@@ -22,4 +22,5 @@ def health_check(db=Depends(get_db)):
 
 @router.post("/")
 def create_document():
+    test_db_connection()
     return "Received POST request to the /load endpoint"
