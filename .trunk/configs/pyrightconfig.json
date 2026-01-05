@@ -19,10 +19,6 @@
       "root": "geographies-api"
     },
     {
-      "root": "data-in-pipeline/app/load/api",
-      "extraPaths": ["api/src"]
-    },
-    {
       "root": "data-in-pipeline"
     }
   ]
