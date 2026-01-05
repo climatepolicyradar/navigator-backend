@@ -1,5 +1,5 @@
 [project]
-name = "load-api"
+name = "data-in-pipeline-load-api"
 version = "1.0.0"
 requires-python = ">=3.12,<3.14"
 dependencies = [
@@ -11,7 +11,11 @@ dependencies = [
   "sqlalchemy>=2.0.44",
   "sqlalchemy-utils>=0.42.0",
   "psycopg2-binary>=2.9.11",
+  "api",
 ]
+
+[tool.uv.sources]
+api = { workspace = true }
 
 [dependency-groups]
 dev = ["pytest>=8.4.2", "types-sqlalchemy>=1.4.53.38", "uv>=0.9.2"]
