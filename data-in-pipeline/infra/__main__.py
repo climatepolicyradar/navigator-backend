@@ -1,3 +1,4 @@
+import components.aws as components_aws
 import pulumi
 import pulumi_aws as aws
 
@@ -8,25 +9,21 @@ name = pulumi.get_project()
 #######################################################################
 # Create the ECR repository for the Data In Pipeline.
 #######################################################################
-
-data_in_pipeline_ecr_repository = aws.ecr.Repository(
-    "data-in-pipeline-ecr-repository",
-    encryption_configurations=[
-        aws.ecr.RepositoryEncryptionConfigurationArgs(
-            encryption_type="AES256",
-        )
-    ],
-    image_scanning_configuration=aws.ecr.RepositoryImageScanningConfigurationArgs(
-        scan_on_push=False,
+data_in_pipeline_aws_ecr_repository = components_aws.ecr.Repository(
+    name="data-in-pipeline-ecr-repository",
+    aws_ecr_repository_args=aws.ecr.RepositoryArgs(
+        encryption_configurations=[
+            aws.ecr.RepositoryEncryptionConfigurationArgs(
+                encryption_type="AES256",
+            )
+        ],
+        image_scanning_configuration=aws.ecr.RepositoryImageScanningConfigurationArgs(
+            scan_on_push=False,
+        ),
+        image_tag_mutability="MUTABLE",
+        name="data-in-pipeline",
     ),
-    image_tag_mutability="MUTABLE",
-    name="data-in-pipeline",
-    opts=pulumi.ResourceOptions(protect=True),
 )
-
-
-# Export the name of the bucket
-pulumi.export("ecr_repository_url", data_in_pipeline_ecr_repository.repository_url)
 
 
 #######################################################################
