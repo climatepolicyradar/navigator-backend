@@ -10,7 +10,7 @@ from contextlib import contextmanager
 from contextvars import ContextVar
 from typing import Any
 
-from opentelemetry.sdk._logs._internal import LogData
+from opentelemetry.sdk._logs._internal import ReadWriteLogRecord
 from opentelemetry.sdk._logs.export import BatchLogRecordProcessor
 
 _context: ContextVar[dict[str, Any]] = ContextVar("pipeline_context", default={})
@@ -55,15 +55,15 @@ _LOGGER = logging.getLogger(__name__)
 class PipelineLogContextProcessor(BatchLogRecordProcessor):
     """Adds pipeline context to OTEL log records before export."""
 
-    def on_emit(self, log_data: LogData) -> None:
+    def on_emit(self, log_record: ReadWriteLogRecord) -> None:
         try:
             ctx = get_context()
-            if ctx and log_data.log_record.attributes is not None:
+            if ctx and log_record.log_record.attributes is not None:
                 for key, value in ctx.items():
                     if value is not None:
-                        log_data.log_record.attributes[key] = value  # type: ignore[index]
+                        log_record.log_record.attributes[key] = value  # type: ignore[index]
         except Exception as exc:
             # Don't break logging on enrichment failure
             _LOGGER.debug("Failed to enrich log with pipeline context: %s", exc)
         finally:
-            super().on_emit(log_data)
+            super().on_emit(log_record)
