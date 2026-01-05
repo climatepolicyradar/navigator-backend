@@ -1,5 +1,17 @@
-from pydantic import SecretStr
+import logging
+import sys
+
+from pydantic import SecretStr, ValidationError
 from pydantic_settings import BaseSettings
+
+# Configure logging before anything else - this module is imported early
+logging.basicConfig(
+    level=logging.INFO,
+    format="%(asctime)s [%(levelname)s] %(name)s: %(message)s",
+    stream=sys.stdout,
+    force=True,  # Override any existing configuration
+)
+_LOGGER = logging.getLogger(__name__)
 
 
 class Settings(BaseSettings):
@@ -28,4 +40,13 @@ class Settings(BaseSettings):
 # pyright: reportCallIssue=false
 # Pyright doesn't recognize that BaseSettings loads from environment variables, so it
 # flags required fields as missing constructor arguments. This is a false positive.
-settings = Settings()
+try:
+    settings = Settings()
+    _LOGGER.info("✅ Settings loaded successfully")
+except ValidationError as e:
+    _LOGGER.error("❌ Failed to load settings: %s", e)
+    _LOGGER.error("Missing or invalid environment variables")
+    raise
+except Exception as e:
+    _LOGGER.exception("❌ Unexpected error loading settings: %s", e)
+    raise
