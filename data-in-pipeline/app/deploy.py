@@ -2,8 +2,9 @@ import os
 from typing import Any
 
 from prefect import Flow
-from prefect.blocks.core import JSON
+from prefect.blocks.core import Block
 from prefect.docker.docker_image import DockerImage
+from prefect_aws.workers.ecs_worker import ECSVariables
 
 from app.bootstrap_telemetry import get_logger
 from app.navigator_document_etl_pipeline import process_document_updates
@@ -97,6 +98,10 @@ def _merge_job_environments(
     return merged
 
 
+class ECSVariablesBlock(Block, ECSVariables):  # type: ignore
+    pass
+
+
 def create_deployment(flow: Flow) -> None:
     """Create a deployment for the specified flow.
 
@@ -120,9 +125,10 @@ def create_deployment(flow: Flow) -> None:
         docker_registry,
     )
 
-    default_job_variables = JSON.load(
-        f"default-job-variables-prefect-mvp-{aws_env}"
-    ).value  # type: ignore
+    default_job_variables = ECSVariablesBlock.load(
+        "ecs-default-job-variables-prefect-mvp-prod"
+    ).model_dump()  # type: ignore
+
     job_variables = _merge_job_environments(
         {**DEFAULT_FLOW_VARIABLES, **default_job_variables},
         runtime_environment,
