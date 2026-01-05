@@ -17,18 +17,22 @@ from sqlalchemy.orm import Session, sessionmaker
 _LOGGER = logging.getLogger(__name__)
 
 # Connection parameters from pydantic settings (validated on import)
-SQLALCHEMY_DATABASE_URI = (
-    f"postgresql://{settings.db_master_username}:"
-    f"{settings.managed_db_password.get_secret_value()}@"
-    f"{settings.load_database_url.get_secret_value()}:"
-    f"{settings.db_port}/{settings.db_name}?sslmode=no-verify"
-)
+try:
+    SQLALCHEMY_DATABASE_URI = (
+        f"postgresql://{settings.db_master_username}:"
+        f"{settings.managed_db_password.get_secret_value()}@"
+        f"{settings.load_database_url.get_secret_value()}:"
+        f"{settings.db_port}/{settings.db_name}?sslmode=no-verify"
+    )
 
-_LOGGER.debug(
-    f"Initialising database engine for "
-    f"{settings.load_database_url.get_secret_value()}:"
-    f"{settings.db_port}/{settings.db_name}"
-)
+    _LOGGER.info(
+        f"🔌 Initialising database engine for "
+        f"{settings.load_database_url.get_secret_value()}:"
+        f"{settings.db_port}/{settings.db_name}"
+    )
+except Exception:
+    _LOGGER.exception("❌ Failed to construct database URI")
+    raise
 
 # Engine with connection pooling to prevent connection leaks
 # Lazy initialisation - created once per worker
