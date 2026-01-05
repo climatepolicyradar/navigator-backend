@@ -12,8 +12,7 @@ import logging
 import os
 
 import psycopg2
-
-from app.load.api.aws import get_aws_session, get_ssm_parameter
+from aws import get_aws_session, get_ssm_parameter
 
 _LOGGER = logging.getLogger(__name__)
 
