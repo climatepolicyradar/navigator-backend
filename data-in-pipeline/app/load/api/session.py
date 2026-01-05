@@ -11,7 +11,6 @@ from collections.abc import Generator
 from contextlib import contextmanager
 
 from sqlalchemy import create_engine, text
-from sqlalchemy.engine import Engine
 from sqlalchemy.exc import DisconnectionError, OperationalError
 from sqlalchemy.orm import Session, sessionmaker
 
@@ -122,15 +121,3 @@ def check_db_health() -> bool:
     except Exception:
         _LOGGER.exception("Unexpected error during health check")
     return False
-
-
-def get_engine() -> Engine:
-    """Get the database engine instance.
-
-    Exposed for testing and advanced use cases. Generally prefer
-    get_db_context() for normal operations.
-
-    :return: SQLAlchemy engine instance
-    :rtype: Engine
-    """
-    return _engine
