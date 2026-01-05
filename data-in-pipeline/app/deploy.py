@@ -2,7 +2,7 @@ import os
 from typing import Any
 
 from prefect import Flow
-from prefect.blocks.system import JSON
+from prefect.blocks.core import JSON
 from prefect.docker.docker_image import DockerImage
 
 from app.bootstrap_telemetry import get_logger
