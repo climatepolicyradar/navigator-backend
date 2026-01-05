@@ -1,11 +1,14 @@
 """AWS utility functions for interacting with S3 and SSM."""
 
 import json
+import logging
 import os
 
 import boto3
 from botocore.client import BaseClient
 from botocore.exceptions import ClientError
+
+_LOGGER = logging.getLogger(__name__)
 
 
 def get_aws_session() -> boto3.Session:
@@ -77,7 +80,6 @@ def get_secret(secret_name: str, parse_json: bool = False) -> str | dict:
     :rtype: str | dict
     """
     try:
-        # logger.debug(f"🔍 Retrieving secret: {secret_name}")
         secrets_client = get_secretsmanager_client()
         response = secrets_client.get_secret_value(SecretId=secret_name)
 
@@ -88,20 +90,16 @@ def get_secret(secret_name: str, parse_json: bool = False) -> str | dict:
         if parse_json:
             try:
                 parsed = json.loads(secret_string)
-                # logger.debug(
-                #     f"✅ Successfully retrieved and parsed secret: {secret_name}"
-                # )
                 return parsed
             except json.JSONDecodeError as e:
-                # logger.error(f"❌ Failed to parse secret '{secret_name}' as JSON: {e}")
+                _LOGGER.error(f"❌ Failed to parse secret '{secret_name}' as JSON: {e}")
                 raise ValueError(f"Secret '{secret_name}' is not valid JSON") from e
 
-        # logger.debug(f"✅ Successfully retrieved secret: {secret_name}")
         return secret_string
 
     except ClientError as e:
         error_code = e.response.get("Error", {}).get("Code", "Unknown")
-        # logger.error(f"❌ Failed to retrieve secret '{secret_name}': {error_code}")
+        _LOGGER.error(f"❌ Failed to retrieve secret '{secret_name}': {error_code}")
         raise ValueError(
             f"Failed to retrieve secret '{secret_name}': {error_code}"
         ) from e

@@ -19,6 +19,7 @@ services:
         --color=yes,
         -v,
       ]
+
   load-api:
     container_name: load-api
     build:

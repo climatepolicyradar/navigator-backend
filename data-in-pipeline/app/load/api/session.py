@@ -1,15 +1,7 @@
 """
 Code for DB session management.
 
-Notes: August 27th 2025.
-
-We have been trying to trace segfault issues for months. They're
-our white whale. We identified a hypothesis: the sqlalchemy engine
-and session were initialised on module import, before uvicorn
-spawned the worker processes. This meant that the engine and session
-were shared across all workers. Ruh roh. SQLALCHEMY ISNT THREAD SAFE.
-
-Update: October 2025.
+Notes: October 2025.
 Stray connection leaks are being caused by services calling get_db()
 without closing sessions, particularly via the defensive programming
 pattern we were using in the admin service where cleanup
@@ -24,6 +16,7 @@ from sqlalchemy import create_engine
 from sqlalchemy.orm import sessionmaker
 
 _LOGGER = logging.getLogger(__name__)
+
 STATEMENT_TIMEOUT = os.getenv("STATEMENT_TIMEOUT", "10000")  # ms
 DB_USERNAME = os.getenv("DB_MASTER_USERNAME")
 DB_PASSWORD = get_secret("rds!cluster-ffd99c57-1457-431d-a3eb-c99aa15b58d9")
