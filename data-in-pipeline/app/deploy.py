@@ -126,8 +126,11 @@ def create_deployment(flow: Flow) -> None:
     )
 
     default_job_variables = ECSVariablesBlock.load(
-        "ecs-default-job-variables-prefect-mvp-prod"
-    ).model_dump()  # type: ignore
+        f"ecs-default-job-variables-prefect-mvp-{aws_env}"
+    ).model_dump(  # type: ignore
+        # We have to exclude None for now as sending over values like container_name=None vs the key missing affects functionality
+        exclude_none=True
+    )
 
     job_variables = _merge_job_environments(
         {**DEFAULT_FLOW_VARIABLES, **default_job_variables},
