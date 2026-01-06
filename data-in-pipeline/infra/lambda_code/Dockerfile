@@ -4,16 +4,6 @@
 
 FROM public.ecr.aws/lambda/python:3.12
 
-# Install build dependencies required for psycopg2
-RUN dnf install -y \
-    postgresql-devel \
-    gcc \
-    postgresql-libs \
- && dnf clean all
-
-
-ENV LD_LIBRARY_PATH=/usr/lib64:$LD_LIBRARY_PATH
-
 # Lambda task root
 WORKDIR /build
 
@@ -21,15 +11,16 @@ WORKDIR /build
 COPY requirements.txt .
 
 # Install dependencies into Lambda task root
+# psycopg2-binary includes all its dependencies
 RUN pip install -r requirements.txt -t . --quiet
 
 # Copy application code
 COPY . .
 
-# (Optional but recommended) sanity check during build
+# (Optional) sanity check - this should work without any system dependencies
 RUN python - <<'EOF'
 import psycopg2
-print("psycopg2 OK:", psycopg2.__version__)
+print("psycopg2-binary OK:", psycopg2.__version__)
 EOF
 
 # Lambda entrypoint is provided by base image
