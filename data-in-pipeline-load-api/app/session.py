@@ -63,8 +63,6 @@ def get_db_context() -> Generator[Session, None, None]:
     try:
         _LOGGER.debug("Database session created (context manager)")
         yield db
-        db.commit()
-        _LOGGER.debug("Database session committed")
     except Exception:
         db.rollback()
         _LOGGER.exception("Database session rolled back")
