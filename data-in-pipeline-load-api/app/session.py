@@ -10,9 +10,8 @@ from collections.abc import Generator
 from contextlib import contextmanager
 
 from settings import settings
-from sqlalchemy import create_engine, text
+from sqlalchemy import create_engine
 from sqlalchemy.engine import Engine
-from sqlalchemy.exc import DisconnectionError, OperationalError
 from sqlalchemy.orm import Session, sessionmaker
 
 _LOGGER = logging.getLogger(__name__)
