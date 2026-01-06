@@ -20,11 +20,11 @@ config = context.config
 # ... etc.
 
 # Allow overriding URL via env vars (use writer endpoint in eu-west-1)
-db_host = os.getenv("AURORA_WRITER_ENDPOINT", "localhost")
-db_name = os.getenv("DB_NAME", "postgres")
-db_user = os.getenv("DB_ADMIN_USER", "postgres")  # an admin/superuser for migrations
-db_password = os.getenv("DB_ADMIN_PASSWORD", "")
-db_port = os.getenv("DB_PORT", "5432")
+db_host = os.getenv("AURORA_WRITER_ENDPOINT")
+db_name = os.getenv("DB_NAME")
+db_user = os.getenv("DB_ADMIN_USER")  # an admin/superuser for migrations
+db_password = os.getenv("DB_ADMIN_PASSWORD")
+db_port = os.getenv("DB_PORT")
 
 # Logging
 if config.config_file_name is not None:
