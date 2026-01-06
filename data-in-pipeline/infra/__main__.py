@@ -521,7 +521,7 @@ aws.iam.RolePolicyAttachment(
 lambda_fn = aws.lambda_.Function(
     "data-in-pipeline-create-aurora-user-lambda",
     role=lambda_role.arn,
-    runtime="python3.13",
+    runtime="python3.12",
     handler="handler.handler",
     timeout=15,
     memory_size=256,
