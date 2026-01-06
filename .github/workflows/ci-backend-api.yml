@@ -8,6 +8,7 @@ on:
     paths:
       - backend-api/**
       - "**"
+      - "!.trunk/**"
       - "!api/**"
       - "!data-in-pipeline/**"
       - "!families-api/**"

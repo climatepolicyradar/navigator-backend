@@ -33,18 +33,22 @@ jobs:
             families-api:
               - families-api/**
               - api/**
+              - !.trunk/**
 
             geographies-api:
               - geographies-api/**
               - api/**
+              - !.trunk/**
 
             concepts-api:
               - concepts-api/**
               - api/**
+              - !.trunk/**
 
             data-in-pipeline:
               - data-in-pipeline/**
               - api/**
+              - !.trunk/**
 
       - id: services
         run: |
