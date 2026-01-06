@@ -1,7 +1,6 @@
 import logging
 import os
 from logging.config import fileConfig
-from typing import cast
 
 from alembic import context
 from sqlalchemy import engine_from_config, pool
@@ -38,11 +37,11 @@ target_metadata = Base.metadata
 
 def get_url() -> str:
     # Standard TLS; IAM tokens apply only to app user, not migrations admin
-    # DATABASE_URL is the equivalent of:
-    # f"postgresql+psycopg://{db_user}:{db_password}@{db_host}:{db_port}/{db_name}?sslmode=require"
-    db_url = cast(str, os.getenv("DATABASE_URL"))
-    if db_url is None:
-        raise ValueError("Environment variable DATABASE_URL not set")
+    if any(
+        value is None for value in [db_user, db_password, db_host, db_port, db_name]
+    ):
+        raise ValueError("Environment variables not set")
+    db_url = f"postgresql+psycopg://{db_user}:{db_password}@{db_host}:{db_port}/{db_name}?sslmode=require"
     config.set_main_option("sqlalchemy.url", db_url)
     return db_url
 
