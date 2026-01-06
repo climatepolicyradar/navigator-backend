@@ -6,6 +6,7 @@ from typing import Any
 
 import boto3
 import psycopg2
+from mangum import Mangum
 from psycopg2 import sql
 
 _LOGGER = logging.getLogger(__name__)
@@ -92,3 +93,7 @@ def handler(event, context):
             conn.close()
 
     return {"statusCode": HTTPStatus.OK, "body": json.dumps({"status": "ok"})}
+
+
+# AWS Lambda entrypoint
+handler = Mangum(handler)
