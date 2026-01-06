@@ -46,6 +46,10 @@ jobs:
               - data-in-pipeline/**
               - api/**
 
+            data-in-pipeline-load-api:
+              - data-in-pipeline-load-api/**
+              - api/**
+
       - id: services
         run: |
           MICROSERVICES=()
