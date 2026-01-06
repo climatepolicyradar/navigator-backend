@@ -21,6 +21,12 @@ deploy-to-prefect-from-local:
     uv run prefect cloud login
     DOCKER_REGISTRY=${DOCKER_REGISTRY} just deploy-to-prefect
 
+# We do not have staging 
+deploy-override service environment tag:
+    # TODO: deploy to staging and production
+    # https://linear.app/climate-policy-radar/issue/APP-1549/create-data-in-pipeline-deployments-for-production-and-staging
+    just deploy-to-prefect
+
 deploy-to-prefect:
     uv run python -m app.deploy
 
