@@ -116,7 +116,7 @@ jobs:
           webhook-type: incoming-webhook
           payload-file-path: slack-payload.json
 
-      - uses: extractions/setup-just@v3x
+      - uses: extractions/setup-just@v3
       - run: |
           just deploy ${{ matrix.service }} ${{ matrix.environment }} latest
           just deploy ${{ matrix.service }} ${{ matrix.environment }} ${{ github.sha }}
