@@ -22,7 +22,6 @@ RUN apt-get update && apt-get install -y \
 COPY data-in-pipeline/app/load/api/pyproject.toml /app/
 
 # Copy application code
-COPY ./api /app/api/
 COPY data-in-pipeline/app/load/api /app/$SERVICE/
 
 WORKDIR /app
@@ -32,4 +31,4 @@ RUN uv sync --project $SERVICE
 EXPOSE 8080
 
 # Run the FastAPI application
-CMD ["uv", "run", "fastapi", "run", "./$SERVICE/main.py", "--port", "8080", "--host", "0.0.0.0"]
+CMD ["sh", "-c", "uv run fastapi run ./$SERVICE/main.py --port 8080 --host 0.0.0.0"]
