@@ -11,7 +11,7 @@ members = [
   "concepts-api",
   "families-api",
   "geographies-api",
-  "data-in-pipeline/app/load/api",
+  "data-in-pipeline-load-api",
   "data-in-pipeline",
 ]
 
@@ -30,6 +30,6 @@ root = [
   "concepts-api",
   "families-api",
   "geographies-api",
-  "data-in-pipeline/app/load/api",
+  "data-in-pipeline-load-api",
   "data-in-pipeline",
 ]
