@@ -1,3 +1,7 @@
+import json
+import os
+from pathlib import Path
+
 import components.aws as components_aws
 import pulumi
 import pulumi_aws as aws
@@ -5,6 +9,8 @@ import pulumi_aws as aws
 config = pulumi.Config()
 environment = pulumi.get_stack()
 name = pulumi.get_project()
+
+ROOT_DIR = Path(__file__).parent
 
 #######################################################################
 # Create the ECR repository for the Data In Pipeline.
@@ -482,4 +488,59 @@ data_in_pipeline_load_api_apprunner_service = aws.apprunner.Service(
 pulumi.export(
     "data-in-pipeline-load-api-apprunner_service_url",
     data_in_pipeline_load_api_apprunner_service.service_url,
+)
+
+
+#######################################################################
+# Lambda to create aurora user.
+#######################################################################
+
+
+lambda_role = aws.iam.Role(
+    "aurora-user-creation-lambda-role",
+    assume_role_policy=json.dumps(
+        {
+            "Version": "2012-10-17",
+            "Statement": [
+                {
+                    "Action": "sts:AssumeRole",
+                    "Principal": {"Service": "lambda.amazonaws.com"},
+                    "Effect": "Allow",
+                }
+            ],
+        }
+    ),
+)
+
+aws.iam.RolePolicyAttachment(
+    "lambdaBasicExecution",
+    role=lambda_role.name,
+    policy_arn="arn:aws:iam::aws:policy/service-role/AWSLambdaBasicExecutionRole",
+)
+
+lambda_fn = aws.lambda_.Function(
+    "data-in-pipeline-create-aurora-user-lambda",
+    role=lambda_role.arn,
+    runtime="python3.13",
+    handler="main.lambda_handler",
+    timeout=15,
+    memory_size=256,
+    code=pulumi.AssetArchive(
+        {
+            ".": pulumi.FileArchive(
+                os.path.join(ROOT_DIR, "lambda_code", ".lambda_build")
+            )
+        }
+    ),
+    environment=aws.lambda_.FunctionEnvironmentArgs(
+        variables={
+            "AURORA_WRITER_ENDPOINT": aurora_cluster.endpoint,
+            "DB_NAME": db_name,
+            "DB_PORT": str(db_port),
+            "ADMIN_SECRET_ARN": data_in_pipeline_load_api_cluster_password_secret.secret_arn,
+            "SQL_PATH": "/var/task/create_iam_user.sql",
+            "LOAD_DB_USER": load_db_user,
+            "APP_SCHEMA": "public",
+        }
+    ),
 )
