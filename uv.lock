@@ -461,7 +461,7 @@ dependencies = [
     { name = "opentelemetry-api" },
     { name = "opentelemetry-sdk" },
     { name = "pandas" },
-    { name = "prefect" },
+    { name = "prefect", extra = ["aws"] },
     { name = "psycopg2-binary" },
     { name = "pulumi" },
     { name = "pulumi-aws" },
@@ -488,7 +488,7 @@ requires-dist = [
     { name = "opentelemetry-api", specifier = ">=1.38.0" },
     { name = "opentelemetry-sdk", specifier = ">=1.38.0" },
     { name = "pandas", specifier = ">=2.3.3" },
-    { name = "prefect", specifier = ">=3.4" },
+    { name = "prefect", extras = ["aws"], specifier = ">=3.4" },
     { name = "psycopg2-binary", specifier = ">=2.9.11" },
     { name = "pulumi", specifier = ">=3.202.0" },
     { name = "pulumi-aws", specifier = ">=6.83.0" },
@@ -1277,6 +1277,24 @@ wheels = [
 ]
 
 [[package]]
+name = "mypy-boto3-s3"
+version = "1.42.21"
+source = { registry = "https://pypi.org/simple" }
+sdist = { url = "https://files.pythonhosted.org/packages/a0/32/aa7208348dc8db8bd4ea357e5e6e1e8bcba44419033d03456c3b767a6c98/mypy_boto3_s3-1.42.21.tar.gz", hash = "sha256:cab71c918aac7d98c4d742544c722e37d8e7178acb8bc88a0aead7b1035026d2", size = 76024 }
+wheels = [
+    { url = "https://files.pythonhosted.org/packages/f1/c0/01babfa8cef5f992a2a0f3d52fc1123fbbc336ab6decfdfc8f702e88a8af/mypy_boto3_s3-1.42.21-py3-none-any.whl", hash = "sha256:f5b7d1ed718ba5b00f67e95a9a38c6a021159d3071ea235e6cf496e584115ded", size = 83169 },
+]
+
+[[package]]
+name = "mypy-boto3-secretsmanager"
+version = "1.42.8"
+source = { registry = "https://pypi.org/simple" }
+sdist = { url = "https://files.pythonhosted.org/packages/f7/58/ccae71b7b7f550eab01d600e956d57e6e6bb9148dbf5d116696d0dc43369/mypy_boto3_secretsmanager-1.42.8.tar.gz", hash = "sha256:5ab42f35ce932765ebb1684146f478a87cc4b83bef950fd1aa0e268b88d59c81", size = 19863 }
+wheels = [
+    { url = "https://files.pythonhosted.org/packages/1a/42/90cef7241c98f6e504cabc9a99d89dd38b84e4d40ff0774c89bc871ffb18/mypy_boto3_secretsmanager-1.42.8-py3-none-any.whl", hash = "sha256:50c891a88e725a8dba7444018e47590ea63d8e938abe2b1c0b25e5413f39d51d", size = 27243 },
+]
+
+[[package]]
 name = "navigator-backend"
 version = "0.1.0"
 source = { virtual = "." }
@@ -1776,6 +1794,29 @@ wheels = [
     { url = "https://files.pythonhosted.org/packages/6f/72/28aa605670e80c517d3d4814617d2c9719c467282960e09d426367a938a1/prefect-3.6.9-py3-none-any.whl", hash = "sha256:7d83b3244b53fe23ac934d7bba16428573439e078443bbd3b79d9daf7fb739bc", size = 11305594, upload-time = "2025-12-31T22:41:58.046Z" },
 ]
 
+[package.optional-dependencies]
+aws = [
+    { name = "prefect-aws" },
+]
+
+[[package]]
+name = "prefect-aws"
+version = "0.5.13"
+source = { registry = "https://pypi.org/simple" }
+dependencies = [
+    { name = "boto3" },
+    { name = "botocore" },
+    { name = "mypy-boto3-s3" },
+    { name = "mypy-boto3-secretsmanager" },
+    { name = "prefect" },
+    { name = "pyparsing" },
+    { name = "tenacity" },
+]
+sdist = { url = "https://files.pythonhosted.org/packages/a0/d7/aa050e34e7b7870098566ce6452fe373da83096e09c0be1b117c91d05812/prefect_aws-0.5.13.tar.gz", hash = "sha256:d67bd445df4d2d6dc6c216e4f8740d6bd2c2431b9f332bad590c30a2e8fcf077", size = 83935 }
+wheels = [
+    { url = "https://files.pythonhosted.org/packages/ae/26/5471e954b098059b5b42bb71feba3e05d76cc17b20a2502cbde229aaf0a3/prefect_aws-0.5.13-py3-none-any.whl", hash = "sha256:1e95cb57e70e24ffb40b950305ba5e08d8f163a7d3c182f7a951cb2fbdeee80d", size = 56068 },
+]
+
 [[package]]
 name = "prometheus-client"
 version = "0.23.1"
@@ -2042,6 +2083,15 @@ source = { registry = "https://pypi.org/simple" }
 sdist = { url = "https://files.pythonhosted.org/packages/b0/77/a5b8c569bf593b0140bde72ea885a803b82086995367bf2037de0159d924/pygments-2.19.2.tar.gz", hash = "sha256:636cb2477cec7f8952536970bc533bc43743542f70392ae026374600add5b887", size = 4968631, upload-time = "2025-06-21T13:39:12.283Z" }
 wheels = [
     { url = "https://files.pythonhosted.org/packages/c7/21/705964c7812476f378728bdf590ca4b771ec72385c533964653c68e86bdc/pygments-2.19.2-py3-none-any.whl", hash = "sha256:86540386c03d588bb81d44bc3928634ff26449851e99741617ecb9037ee5ec0b", size = 1225217, upload-time = "2025-06-21T13:39:07.939Z" },
+]
+
+[[package]]
+name = "pyparsing"
+version = "3.3.1"
+source = { registry = "https://pypi.org/simple" }
+sdist = { url = "https://files.pythonhosted.org/packages/33/c1/1d9de9aeaa1b89b0186e5fe23294ff6517fce1bc69149185577cd31016b2/pyparsing-3.3.1.tar.gz", hash = "sha256:47fad0f17ac1e2cad3de3b458570fbc9b03560aa029ed5e16ee5554da9a2251c", size = 1550512 }
+wheels = [
+    { url = "https://files.pythonhosted.org/packages/8b/40/2614036cdd416452f5bf98ec037f38a1afb17f327cb8e6b652d4729e0af8/pyparsing-3.3.1-py3-none-any.whl", hash = "sha256:023b5e7e5520ad96642e2c6db4cb683d3970bd640cdf7115049a6e9c3682df82", size = 121793 },
 ]
 
 [[package]]
@@ -2599,6 +2649,15 @@ dependencies = [
 sdist = { url = "https://files.pythonhosted.org/packages/ce/20/08dfcd9c983f6a6f4a1000d934b9e6d626cff8d2eeb77a89a68eef20a2b7/starlette-0.46.2.tar.gz", hash = "sha256:7f7361f34eed179294600af672f565727419830b54b7b084efe44bb82d2fccd5", size = 2580846, upload-time = "2025-04-13T13:56:17.942Z" }
 wheels = [
     { url = "https://files.pythonhosted.org/packages/8b/0c/9d30a4ebeb6db2b25a841afbb80f6ef9a854fc3b41be131d249a977b4959/starlette-0.46.2-py3-none-any.whl", hash = "sha256:595633ce89f8ffa71a015caed34a5b2dc1c0cdb3f0f1fbd1e69339cf2abeec35", size = 72037, upload-time = "2025-04-13T13:56:16.21Z" },
+]
+
+[[package]]
+name = "tenacity"
+version = "9.1.2"
+source = { registry = "https://pypi.org/simple" }
+sdist = { url = "https://files.pythonhosted.org/packages/0a/d4/2b0cd0fe285e14b36db076e78c93766ff1d529d70408bd1d2a5a84f1d929/tenacity-9.1.2.tar.gz", hash = "sha256:1169d376c297e7de388d18b4481760d478b0e99a777cad3a9c86e556f4b697cb", size = 48036 }
+wheels = [
+    { url = "https://files.pythonhosted.org/packages/e5/30/643397144bfbfec6f6ef821f36f33e57d35946c44a2352d3c9f0ae847619/tenacity-9.1.2-py3-none-any.whl", hash = "sha256:f77bf36710d8b73a50b2dd155c97b870017ad21afe6ab300326b0371b3b05138", size = 28248 },
 ]
 
 [[package]]
