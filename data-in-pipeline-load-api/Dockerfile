@@ -18,8 +18,8 @@ RUN apt-get update && apt-get install -y \
     libpq-dev \
     && rm -rf /var/lib/apt/lists/*
 
-# Copy dependency files (build context should be navigator-backend root)
-COPY $SERVICE/pyproject.toml /app/
+# Copy workspace root pyproject.toml (required for uv workspace resolution)
+COPY pyproject.toml uv.lock /app/
 
 # Copy application code
 COPY $SERVICE /app/$SERVICE/
