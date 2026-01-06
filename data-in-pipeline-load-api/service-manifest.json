@@ -1,0 +1,21 @@
+{
+  "service.name": "data-in-pipeline-load-api",
+  "service.namespace": "data-fetching",
+  "team": "application",
+  "inputs": [
+    {
+      "type": "service",
+      "name": "rds"
+    },
+    {
+      "type": "service",
+      "name": "data-in-pipeline"
+    },
+    {
+      "type": "s3",
+      "name": "cpr-cache"
+    }
+  ],
+  "outputs": [],
+  "repos": ["https://github.com/climatepolicyradar/navigator-backend"]
+}
