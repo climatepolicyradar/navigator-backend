@@ -47,6 +47,12 @@ jobs:
               - 'uv.lock'
               - pyproject.toml
 
+            data-in-pipeline-load-api:
+              - 'data-in-pipeline-load-api/**'
+              - 'api/**'
+              - 'uv.lock'
+              - pyproject.toml
+
   test:
     needs: changes
     runs-on: ubuntu-latest
