@@ -10,6 +10,7 @@ on:
       - "**"
       - "!api/**"
       - "!data-in-pipeline/**"
+      - "!data-in-pipeline-load-api/**"
       - "!families-api/**"
       - "!geographies-api/**"
       - "!concepts-api/**"
