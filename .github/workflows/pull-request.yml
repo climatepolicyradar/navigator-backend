@@ -63,6 +63,9 @@ jobs:
           if [ "${{ steps.changes.outputs.concepts-api }}" == "true" ]; then
             MICROSERVICES+=("concepts-api")
           fi
+          if [ "${{ steps.changes.outputs.data-in-pipeline-load-api }}" == "true" ]; then
+            MICROSERVICES+=("data-in-pipeline-load-api")
+          fi
           if [ "${{ steps.changes.outputs.data-in-pipeline }}" == "true" ]; then
             DATA_IN_PIPELINE=true
           fi
