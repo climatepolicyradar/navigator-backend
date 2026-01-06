@@ -9,7 +9,12 @@ dev service environment="production":
 
 # test
 test service:
-    docker compose -f {{service}}/docker-compose.yml --profile test up --abort-on-container-exit --exit-code-from test --remove-orphans
+    # search for any override steps
+    if just -f {{service}}/justfile --summary | grep -qe 'test-override'; then \
+        just -f {{service}}/justfile test-override; \
+    else \
+        docker compose -f {{service}}/docker-compose.yml --profile test up --abort-on-container-exit --exit-code-from test --remove-orphans; \
+    fi
 
 # build/deploy
 build service environment tag:

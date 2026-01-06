@@ -11,6 +11,10 @@ test-ci:
     docker build -t data-in-pipeline:test -f Dockerfile ..
     docker run --rm data-in-pipeline:test uv run pytest -vv
 
+test-override:
+    # this is run from the root justfile in CI
+    just test-ci
+
 deploy-to-prefect-from-local:
     #!/usr/bin/env bash
     # we use a bash script here to have inline env variables
@@ -21,8 +25,8 @@ deploy-to-prefect-from-local:
     uv run prefect cloud login
     DOCKER_REGISTRY=${DOCKER_REGISTRY} just deploy-to-prefect
 
-# We do not have staging 
 deploy-override service environment tag:
+    # this is run from the root justfile in CI
     # TODO: deploy to staging and production
     # https://linear.app/climate-policy-radar/issue/APP-1549/create-data-in-pipeline-deployments-for-production-and-staging
     just deploy-to-prefect
