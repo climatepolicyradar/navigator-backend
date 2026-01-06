@@ -10,29 +10,24 @@ from collections.abc import Generator
 from contextlib import contextmanager
 
 from settings import settings
-from sqlalchemy import create_engine, text
-from sqlalchemy.exc import DisconnectionError, OperationalError
+from sqlalchemy import create_engine
 from sqlalchemy.orm import Session, sessionmaker
 
 _LOGGER = logging.getLogger(__name__)
 
 # Connection parameters from pydantic settings (validated on import)
-try:
-    SQLALCHEMY_DATABASE_URI = (
-        f"postgresql://{settings.db_master_username}:"
-        f"{settings.managed_db_password.get_secret_value()}@"
-        f"{settings.load_database_url.get_secret_value()}:"
-        f"{settings.db_port}/{settings.db_name}?sslmode=no-verify"
-    )
+SQLALCHEMY_DATABASE_URI = (
+    f"postgresql://{settings.db_master_username}:"
+    f"{settings.managed_db_password.get_secret_value()}@"
+    f"{settings.load_database_url.get_secret_value()}:"
+    f"{settings.db_port}/{settings.db_name}?sslmode=no-verify"
+)
 
-    _LOGGER.info(
-        f"🔌 Initialising database engine for "
-        f"{settings.load_database_url.get_secret_value()}:"
-        f"{settings.db_port}/{settings.db_name}"
-    )
-except Exception:
-    _LOGGER.exception("❌ Failed to construct database URI")
-    raise
+_LOGGER.info(
+    f"🔌 Initialising database engine for "
+    f"{settings.load_database_url.get_secret_value()}:"
+    f"{settings.db_port}/{settings.db_name}"
+)
 
 # Engine with connection pooling to prevent connection leaks
 # Lazy initialisation - created once per worker
@@ -90,23 +85,3 @@ def get_db() -> Generator[Session, None, None]:
     """
     with get_db_context() as db:
         yield db
-
-
-def check_db_health() -> bool:
-    """Check database connection health.
-
-    Performs a simple query to verify the database is accessible
-    and responsive.
-
-    :return: True if database is healthy, False otherwise
-    :rtype: bool
-    """
-    try:
-        with _engine.connect() as conn:
-            result = conn.execute(text("SELECT 1"))
-            return result.one_or_none() is not None
-    except (OperationalError, DisconnectionError):
-        _LOGGER.exception("Database health check failed")
-    except Exception:
-        _LOGGER.exception("Unexpected error during health check")
-    return False
