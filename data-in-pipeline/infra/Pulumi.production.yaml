@@ -8,3 +8,12 @@ config:
     secure: AAABACcxF2c+HAqRVwfI7uaJKRSe1FMd+5+8DNA2itiOEFl8Xd1z5zaadkTW1veHE7H/Kf0=
   data-in-pipeline:load_db_user:
     secure: AAABAKcpksXMNNRrhwJ59OK5gSxWQ26GEJp5djEPBFTbVlZffD8+NcZBn2nE3LRVhQxU5gg=
+  data-in-pipeline:aurora_master_password:
+    secure: AAABALxQhibqE01VzQYwo9Kg0HWot2IHyT2PM6DeMneI2RiM0HsUYlaTeb3s3+3perIICxRTXBWBxNvr
+  data-in-pipeline:aurora_min_instances: "0"
+  data-in-pipeline:aurora_max_instances: "2"
+  # Retention is included in Aurora pricing for up to 7 days. Longer retention would add charges.
+  data-in-pipeline:aurora_retention_period_days: "7"
+  data-in-pipeline:cdn-url: https://cdn.climatepolicyradar.org
+  data-in-pipeline:auto_scaling_configuration_arn:
+    secure: AAABAPtqH86JGx6RULSUH+oNOsmDbECaTZJzk3FC1/HSrix5pfGhsow/xAoucc+zejtxon76wt4xr3oHXBlL/Av7k9WiZls60UukfCKfbMEGJuTPh0B6mh9s7vO1gIbkd9kxTqz+r2HVlFGIi6XuIUR8Xdg6/THVf6/he15Max5F1bOJ6yztOPI/yMKZpdTkJLvJdEKB/qkO

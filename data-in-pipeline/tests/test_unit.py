@@ -11,13 +11,19 @@ from app.extract.connector_config import NavigatorConnectorConfig
 from app.extract.connectors import (
     NavigatorConnector,
     NavigatorCorpus,
+    NavigatorCorpusType,
     NavigatorDocument,
     NavigatorFamily,
+    NavigatorOrganisation,
     PageFetchFailure,
 )
 from app.extract.enums import CheckPointStorageType
 from app.models import ExtractedEnvelope, ExtractedMetadata
-from app.navigator_document_etl_pipeline import extract, load_to_s3, process_updates
+from app.navigator_document_etl_pipeline import (
+    extract,
+    load_to_s3,
+    process_document_updates,
+)
 
 
 @pytest.fixture
@@ -33,7 +39,7 @@ def base_config():
 @pytest.mark.parametrize("ids, expected", [(["11", "22", "33"], ["11", "22", "33"])])
 @pytest.mark.skip(reason="Not implemented")
 def test_process_document_updates_flow(ids: list[str], expected: list[str]):
-    assert process_updates.fn(ids) == expected
+    assert process_document_updates.fn(ids) == expected
 
 
 @patch("app.navigator_document_etl_pipeline.upload_to_s3")
@@ -141,11 +147,17 @@ def test_fetch_family_success(base_config):
         "data": NavigatorFamily(
             import_id=import_id,
             title="Test Family",
-            corpus=NavigatorCorpus(import_id="COR-111"),
+            summary="Family summary",
+            corpus=NavigatorCorpus(
+                import_id="COR-111",
+                corpus_type=NavigatorCorpusType(name="corpus_type"),
+                organisation=NavigatorOrganisation(id=1, name="UNFCCC"),
+            ),
             documents=[
                 NavigatorDocument(import_id=import_id, title="Test Document", events=[])
             ],
             events=[],
+            collections=[],
         ).model_dump(),
     }
 
@@ -299,16 +311,28 @@ def test_fetch_all_families_successfully(base_config):
             NavigatorFamily(
                 import_id="FAM-001",
                 title="Family 1",
-                corpus=NavigatorCorpus(import_id="COR-001"),
+                summary="Family 1 summary",
+                corpus=NavigatorCorpus(
+                    import_id="COR-001",
+                    corpus_type=NavigatorCorpusType(name="corpus_type"),
+                    organisation=NavigatorOrganisation(id=1, name="UNFCCC"),
+                ),
                 documents=[],
                 events=[],
+                collections=[],
             ).model_dump(),
             NavigatorFamily(
                 import_id="FAM-002",
                 title="Family 2",
-                corpus=NavigatorCorpus(import_id="COR-001"),
+                summary="Family summary",
+                corpus=NavigatorCorpus(
+                    import_id="COR-001",
+                    corpus_type=NavigatorCorpusType(name="corpus_type"),
+                    organisation=NavigatorOrganisation(id=1, name="UNFCCC"),
+                ),
                 documents=[],
                 events=[],
+                collections=[],
             ).model_dump(),
         ]
     }
@@ -317,9 +341,15 @@ def test_fetch_all_families_successfully(base_config):
             NavigatorFamily(
                 import_id="FAM-003",
                 title="Family 3",
-                corpus=NavigatorCorpus(import_id="COR-002"),
+                summary="Family 3 summary",
+                corpus=NavigatorCorpus(
+                    import_id="COR-002",
+                    corpus_type=NavigatorCorpusType(name="corpus_type"),
+                    organisation=NavigatorOrganisation(id=1, name="UNFCCC"),
+                ),
                 documents=[],
                 events=[],
+                collections=[],
             ).model_dump()
         ]
     }
@@ -375,9 +405,15 @@ def test_fetch_all_families_handles_successful_retrievals_and_errors(base_config
             NavigatorFamily(
                 import_id="FAM-001",
                 title="Family 1",
-                corpus=NavigatorCorpus(import_id="COR-001"),
+                summary="Family summary",
+                corpus=NavigatorCorpus(
+                    import_id="COR-001",
+                    corpus_type=NavigatorCorpusType(name="corpus_type"),
+                    organisation=NavigatorOrganisation(id=1, name="UNFCCC"),
+                ),
                 documents=[],
                 events=[],
+                collections=[],
             ).model_dump()
         ]
     }

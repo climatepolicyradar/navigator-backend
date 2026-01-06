@@ -4,12 +4,22 @@ import os
 from returns.result import Failure, Success
 
 from app.extract.connectors import (
+    NavigatorCollection,
     NavigatorCorpus,
+    NavigatorCorpusType,
     NavigatorDocument,
     NavigatorEvent,
     NavigatorFamily,
+    NavigatorOrganisation,
 )
 from app.models import Identified
+from app.transform.data import (
+    unfccc_copenhagen_accord_document,
+    unfccc_document,
+    unfccc_kyoto_protocol_document,
+    unfccc_kyoto_protocol_doha_amendment_document,
+    unfccc_paris_agreement_document,
+)
 from app.transform.navigator_family import transform_navigator_family
 
 if __name__ == "__main__":
@@ -19,13 +29,19 @@ if __name__ == "__main__":
 
     You will need to run `uv run python -m app.scripts.cache_all_navigator_families` at least once to make the data available locally.
 
-    We don't run that command as part of this one, as that defeats the poijnt of caching.
+    We don't run that command as part of this one, as that defeats the point of caching.
     """
     with open(".data_cache/navigator_families.json", "r") as f:
         families = json.load(f)
 
     results = []
-    successes = []
+    successes = [
+        unfccc_document,
+        unfccc_kyoto_protocol_document,
+        unfccc_copenhagen_accord_document,
+        unfccc_kyoto_protocol_doha_amendment_document,
+        unfccc_paris_agreement_document,
+    ]
     failures = []
     for family in families:
         result = transform_navigator_family(
@@ -35,7 +51,18 @@ if __name__ == "__main__":
                     title=family["title"],
                     corpus=NavigatorCorpus(
                         import_id=family["corpus"]["import_id"],
+                        corpus_type=NavigatorCorpusType(
+                            name=family["corpus"]["corpus_type"]["name"],
+                        ),
+                        organisation=NavigatorOrganisation(
+                            id=family["corpus"]["organisation"]["id"],
+                            name=family["corpus"]["organisation"]["name"],
+                            attribution_url=family["corpus"]["organisation"][
+                                "attribution_url"
+                            ],
+                        ),
                     ),
+                    summary=family["summary"],
                     documents=[
                         NavigatorDocument(
                             import_id=doc["import_id"],
@@ -52,6 +79,14 @@ if __name__ == "__main__":
                             date=event["date"],
                         )
                         for event in family["events"]
+                    ],
+                    collections=[
+                        NavigatorCollection(
+                            import_id=collection["import_id"],
+                            title=collection["title"],
+                            description=collection["description"],
+                        )
+                        for collection in family["collections"]
                     ],
                 ),
                 id=family["import_id"],
@@ -70,6 +105,7 @@ if __name__ == "__main__":
 
     for document in successes:
         model_dump = document.model_dump_json(indent=4)
+
         with open(
             f".data_cache/transformed_navigator_families/{document.id}.json", "w"
         ) as f:

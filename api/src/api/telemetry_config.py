@@ -41,6 +41,9 @@ class TelemetryConfig(BaseSettings):
     log_level: str = Field(default="INFO")
     disabled: bool = Field(default=False, validation_alias="DISABLE_OTEL_LOGGING")
 
+    # Metrics export interval in milliseconds (default 60s, use lower for batch jobs)
+    metrics_export_interval_ms: int = Field(default=60000)
+
     @field_validator("disabled", mode="before")
     @classmethod
     def parse_disabled(cls, v):

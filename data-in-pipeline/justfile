@@ -11,6 +11,10 @@ test-ci:
     docker build -t data-in-pipeline:test -f Dockerfile ..
     docker run --rm data-in-pipeline:test uv run pytest -vv
 
+test-override:
+    # this is run from the root justfile in CI
+    just test-ci
+
 deploy-to-prefect-from-local:
     #!/usr/bin/env bash
     # we use a bash script here to have inline env variables
@@ -20,6 +24,12 @@ deploy-to-prefect-from-local:
     DOCKER_REGISTRY="${AWS_ACCOUNT_ID}.dkr.ecr.eu-west-1.amazonaws.com"
     uv run prefect cloud login
     DOCKER_REGISTRY=${DOCKER_REGISTRY} just deploy-to-prefect
+
+deploy-override service environment tag:
+    # this is run from the root justfile in CI
+    # TODO: deploy to staging and production
+    # https://linear.app/climate-policy-radar/issue/APP-1549/create-data-in-pipeline-deployments-for-production-and-staging
+    just deploy-to-prefect
 
 deploy-to-prefect:
     uv run python -m app.deploy
@@ -31,3 +41,25 @@ duckdb-build:
 
 duckdb-dev:
     uv run fastapi dev ./app/scripts/serve_duckdb.py
+
+# Commands for our IAM user lambda function
+build-lambda-code: clean-lambda-build-folder
+    set -e
+    mkdir -p .lambda_build
+    echo "🐳 Building Lambda package with Docker..."
+    docker build --platform linux/amd64 -f infra/Dockerfile -t iam-user-lambda-builder .
+    echo "📦 Extracting built package..."
+    docker create --name iam-user-lambda-extract iam-user-lambda-builder
+    docker cp iam-user-lambda-extract:/build/. .lambda_build/
+    docker rm iam-user-lambda-extract
+    echo "✅ Lambda package built at .lambda_build/"
+
+clean-lambda-build-folder:
+    echo "🧹 Cleaning build directory..."
+    rm -rf .lambda_build
+
+deploy-lambda-code: build-lambda-code
+    pulumi up -ry
+
+build-load-api: 
+    docker build -f infra/Dockerfile.load_api -t load-api --platform linux/amd64 ..

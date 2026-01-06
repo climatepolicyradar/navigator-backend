@@ -4,10 +4,13 @@ import pytest
 from returns.result import Success
 
 from app.extract.connectors import (
+    NavigatorCollection,
     NavigatorCorpus,
+    NavigatorCorpusType,
     NavigatorDocument,
     NavigatorEvent,
     NavigatorFamily,
+    NavigatorOrganisation,
 )
 from app.models import (
     Document,
@@ -27,16 +30,123 @@ def navigator_family_with_single_matching_document() -> Identified[NavigatorFami
         source="navigator_family",
         data=NavigatorFamily(
             import_id="family",
-            title="Matching title on family and document",
-            corpus=NavigatorCorpus(import_id="corpus"),
+            title="Matching title on family and document and collection",
+            summary="Family summary",
+            corpus=NavigatorCorpus(
+                import_id="corpus",
+                corpus_type=NavigatorCorpusType(name="corpus_type"),
+                organisation=NavigatorOrganisation(id=1, name="CCLW"),
+            ),
             documents=[
                 NavigatorDocument(
                     import_id="document",
-                    title="Matching title on family and document",
+                    title="Matching title on family and document and collection",
                     events=[],
+                    valid_metadata={
+                        "role": ["SUPPORTING LEGISLATION"],
+                        "type": ["National Drought Plan (NDP)"],
+                    },
                 ),
             ],
-            events=[],
+            events=[
+                NavigatorEvent(
+                    import_id="Amended",
+                    event_type="Amended",
+                    date=datetime.datetime(2020, 1, 1),
+                ),
+                NavigatorEvent(
+                    import_id="Appealed",
+                    event_type="Appealed",
+                    date=datetime.datetime(2020, 1, 1),
+                ),
+                NavigatorEvent(
+                    import_id="Closed",
+                    event_type="Closed",
+                    date=datetime.datetime(2020, 1, 1),
+                ),
+                NavigatorEvent(
+                    import_id="Declaration Of Climate Emergency",
+                    event_type="Declaration Of Climate Emergency",
+                    date=datetime.datetime(2020, 1, 1),
+                ),
+                NavigatorEvent(
+                    import_id="Dismissed",
+                    event_type="Dismissed",
+                    date=datetime.datetime(2020, 1, 1),
+                ),
+                NavigatorEvent(
+                    import_id="Entered Into Force",
+                    event_type="Entered Into Force",
+                    date=datetime.datetime(2020, 1, 1),
+                ),
+                NavigatorEvent(
+                    import_id="Filing",
+                    event_type="Filing",
+                    date=datetime.datetime(2020, 1, 1),
+                ),
+                NavigatorEvent(
+                    import_id="Granted",
+                    event_type="Granted",
+                    date=datetime.datetime(2020, 1, 1),
+                ),
+                NavigatorEvent(
+                    import_id="Implementation Details",
+                    event_type="Implementation Details",
+                    date=datetime.datetime(2020, 1, 1),
+                ),
+                NavigatorEvent(
+                    import_id="International Agreement",
+                    event_type="International Agreement",
+                    date=datetime.datetime(2020, 1, 1),
+                ),
+                NavigatorEvent(
+                    import_id="Net Zero Pledge",
+                    event_type="Net Zero Pledge",
+                    date=datetime.datetime(2020, 1, 1),
+                ),
+                NavigatorEvent(
+                    import_id="Other",
+                    event_type="Other",
+                    date=datetime.datetime(2020, 1, 1),
+                ),
+                NavigatorEvent(
+                    import_id="Passed/Approved",
+                    event_type="Passed/Approved",
+                    date=datetime.datetime(2020, 1, 1),
+                ),
+                NavigatorEvent(
+                    import_id="Repealed/Replaced",
+                    event_type="Repealed/Replaced",
+                    date=datetime.datetime(2020, 1, 1),
+                ),
+                NavigatorEvent(
+                    import_id="Set",
+                    event_type="Set",
+                    date=datetime.datetime(2020, 1, 1),
+                ),
+                NavigatorEvent(
+                    import_id="Settled",
+                    event_type="Settled",
+                    date=datetime.datetime(2020, 1, 1),
+                ),
+                NavigatorEvent(
+                    import_id="Updated",
+                    event_type="Updated",
+                    date=datetime.datetime(2020, 1, 1),
+                ),
+            ],
+            collections=[
+                NavigatorCollection(
+                    import_id="collection_matching",
+                    title="Matching title on family and document and collection",
+                    description="Collection description",
+                ),
+                NavigatorCollection(
+                    import_id="collection",
+                    title="Collection title",
+                    description="Collection description",
+                ),
+            ],
         ),
     )
 
@@ -49,11 +159,17 @@ def navigator_family_with_no_matching_transformations() -> Identified[NavigatorF
         data=NavigatorFamily(
             import_id="123",
             title="No matches for this family or documents",
-            corpus=NavigatorCorpus(import_id="123"),
+            summary="Family summary",
+            corpus=NavigatorCorpus(
+                import_id="123",
+                corpus_type=NavigatorCorpusType(name="corpus_type"),
+                organisation=NavigatorOrganisation(id=1, name="CCLW"),
+            ),
             documents=[
                 NavigatorDocument(import_id="456", title="Test document 1", events=[]),
             ],
             events=[],
+            collections=[],
         ),
     )
 
@@ -66,7 +182,12 @@ def navigator_family_with_litigation_corpus_type() -> Identified[NavigatorFamily
         data=NavigatorFamily(
             import_id="family",
             title="Litigation family",
-            corpus=NavigatorCorpus(import_id="Academic.corpus.Litigation.n0000"),
+            summary="Family summary",
+            corpus=NavigatorCorpus(
+                import_id="Academic.corpus.Litigation.n0000",
+                corpus_type=NavigatorCorpusType(name="Litigation"),
+                organisation=NavigatorOrganisation(id=1, name="CCLW"),
+            ),
             documents=[
                 NavigatorDocument(
                     import_id="document",
@@ -92,6 +213,7 @@ def navigator_family_with_litigation_corpus_type() -> Identified[NavigatorFamily
                     date=datetime.datetime(2020, 1, 1),
                 ),
             ],
+            collections=[],
         ),
     )
 
@@ -104,7 +226,12 @@ def navigator_family_multilateral_climate_fund_project() -> Identified[Navigator
         data=NavigatorFamily(
             import_id="family",
             title="Multilateral climate fund project",
-            corpus=NavigatorCorpus(import_id="MCF.corpus.AF.n0000"),
+            summary="Family summary",
+            corpus=NavigatorCorpus(
+                import_id="MCF.corpus.AF.n0000",
+                corpus_type=NavigatorCorpusType(name="AF"),
+                organisation=NavigatorOrganisation(id=1, name="CCLW"),
+            ),
             documents=[
                 NavigatorDocument(
                     import_id="document_1",
@@ -144,6 +271,7 @@ def navigator_family_multilateral_climate_fund_project() -> Identified[Navigator
                     date=datetime.datetime(2020, 1, 1),
                 ),
             ],
+            collections=[],
         ),
     )
 
@@ -152,51 +280,234 @@ def test_transform_navigator_family_with_single_matching_document(
     navigator_family_with_single_matching_document: Identified[NavigatorFamily],
 ):
     result = transform_navigator_family(navigator_family_with_single_matching_document)
+    expected_document_from_family = Document(
+        id="family",
+        title="Matching title on family and document and collection",
+        description="Family summary",
+        labels=[
+            DocumentLabelRelationship(
+                type="status",
+                label=Label(
+                    type="status",
+                    id="Canonical",
+                    title="Canonical",
+                ),
+            ),
+            DocumentLabelRelationship(
+                type="activity_status",
+                timestamp=datetime.datetime(2020, 1, 1),
+                label=Label(
+                    type="activity_status",
+                    id="Amended",
+                    title="Amended",
+                ),
+            ),
+            DocumentLabelRelationship(
+                type="activity_status",
+                timestamp=datetime.datetime(2020, 1, 1),
+                label=Label(
+                    type="activity_status",
+                    id="Appealed",
+                    title="Appealed",
+                ),
+            ),
+            DocumentLabelRelationship(
+                type="activity_status",
+                timestamp=datetime.datetime(2020, 1, 1),
+                label=Label(
+                    type="activity_status",
+                    id="Closed",
+                    title="Closed",
+                ),
+            ),
+            DocumentLabelRelationship(
+                type="activity_status",
+                timestamp=datetime.datetime(2020, 1, 1),
+                label=Label(
+                    type="activity_status",
+                    id="Declaration of climate emergency",
+                    title="Declaration of climate emergency",
+                ),
+            ),
+            DocumentLabelRelationship(
+                type="activity_status",
+                timestamp=datetime.datetime(2020, 1, 1),
+                label=Label(type="activity_status", id="Dismissed", title="Dismissed"),
+            ),
+            DocumentLabelRelationship(
+                type="activity_status",
+                timestamp=datetime.datetime(2020, 1, 1),
+                label=Label(
+                    type="activity_status",
+                    id="Entered into force",
+                    title="Entered into force",
+                ),
+            ),
+            DocumentLabelRelationship(
+                type="activity_status",
+                timestamp=datetime.datetime(2020, 1, 1),
+                label=Label(type="activity_status", id="Filing", title="Filing"),
+            ),
+            DocumentLabelRelationship(
+                type="activity_status",
+                timestamp=datetime.datetime(2020, 1, 1),
+                label=Label(type="activity_status", id="Granted", title="Granted"),
+            ),
+            DocumentLabelRelationship(
+                type="activity_status",
+                timestamp=datetime.datetime(2020, 1, 1),
+                label=Label(
+                    type="activity_status",
+                    id="Implementation details",
+                    title="Implementation details",
+                ),
+            ),
+            DocumentLabelRelationship(
+                type="activity_status",
+                timestamp=datetime.datetime(2020, 1, 1),
+                label=Label(
+                    type="activity_status",
+                    id="International agreement",
+                    title="International agreement",
+                ),
+            ),
+            DocumentLabelRelationship(
+                type="activity_status",
+                timestamp=datetime.datetime(2020, 1, 1),
+                label=Label(
+                    type="activity_status",
+                    id="Net zero pledge",
+                    title="Net zero pledge",
+                ),
+            ),
+            DocumentLabelRelationship(
+                type="activity_status",
+                timestamp=datetime.datetime(2020, 1, 1),
+                label=Label(type="activity_status", id="Other", title="Other"),
+            ),
+            DocumentLabelRelationship(
+                type="activity_status",
+                timestamp=datetime.datetime(2020, 1, 1),
+                label=Label(
+                    type="activity_status",
+                    id="Passed/Approved",
+                    title="Passed/Approved",
+                ),
+            ),
+            DocumentLabelRelationship(
+                type="activity_status",
+                timestamp=datetime.datetime(2020, 1, 1),
+                label=Label(
+                    type="activity_status",
+                    id="Repealed/Replaced",
+                    title="Repealed/Replaced",
+                ),
+            ),
+            DocumentLabelRelationship(
+                type="activity_status",
+                timestamp=datetime.datetime(2020, 1, 1),
+                label=Label(type="activity_status", id="Set", title="Set"),
+            ),
+            DocumentLabelRelationship(
+                type="activity_status",
+                timestamp=datetime.datetime(2020, 1, 1),
+                label=Label(type="activity_status", id="Settled", title="Settled"),
+            ),
+            DocumentLabelRelationship(
+                type="activity_status",
+                timestamp=datetime.datetime(2020, 1, 1),
+                label=Label(type="activity_status", id="Updated", title="Updated"),
+            ),
+            DocumentLabelRelationship(
+                type="provider",
+                label=Label(
+                    type="agent",
+                    id="Grantham Research Institute",
+                    title="Grantham Research Institute",
+                ),
+            ),
+        ],
+        relationships=[
+            DocumentDocumentRelationship(
+                type="member_of",
+                document=DocumentWithoutRelationships(
+                    id="collection",
+                    title="Collection title",
+                    labels=[],
+                ),
+            ),
+            DocumentDocumentRelationship(
+                type="has_version",
+                document=DocumentWithoutRelationships(
+                    id="document",
+                    title="Matching title on family and document and collection",
+                    labels=[
+                        DocumentLabelRelationship(
+                            type="entity_type",
+                            label=Label(
+                                type="entity_type",
+                                id="Supporting legislation",
+                                title="Supporting legislation",
+                            ),
+                        ),
+                        DocumentLabelRelationship(
+                            type="entity_type",
+                            label=Label(
+                                type="entity_type",
+                                id="National drought plan (ndp)",
+                                title="National drought plan (ndp)",
+                            ),
+                        ),
+                        DocumentLabelRelationship(
+                            type="provider",
+                            label=Label(
+                                type="agent",
+                                id="Grantham Research Institute",
+                                title="Grantham Research Institute",
+                            ),
+                        ),
+                    ],
+                ),
+            ),
+            DocumentDocumentRelationship(
+                type="has_version",
+                document=DocumentWithoutRelationships(
+                    id="collection_matching",
+                    title="Matching title on family and document and collection",
+                    labels=[],
+                ),
+            ),
+        ],
+    )
     assert result == Success(
         [
-            Document(
-                id="family",
-                title=navigator_family_with_single_matching_document.data.title,
-                labels=[
-                    DocumentLabelRelationship(
-                        type="debug",
-                        label=Label(
-                            type="debug",
-                            id="no_family_labels",
-                            title="no_family_labels",
-                        ),
-                    ),
-                ],
-                relationships=[
-                    DocumentDocumentRelationship(
-                        type="has_version",
-                        document=DocumentWithoutRelationships(
-                            id="document",
-                            title=navigator_family_with_single_matching_document.data.title,
-                            labels=[
-                                DocumentLabelRelationship(
-                                    type="debug",
-                                    label=Label(
-                                        type="debug",
-                                        id="no_document_labels",
-                                        title="no_document_labels",
-                                    ),
-                                ),
-                            ],
-                        ),
-                    ),
-                ],
-            ),
+            expected_document_from_family,
             Document(
                 id="document",
-                title=navigator_family_with_single_matching_document.data.title,
+                title="Matching title on family and document and collection",
                 labels=[
                     DocumentLabelRelationship(
-                        type="debug",
+                        type="entity_type",
                         label=Label(
-                            type="debug",
-                            id="no_document_labels",
-                            title="no_document_labels",
+                            type="entity_type",
+                            id="Supporting legislation",
+                            title="Supporting legislation",
+                        ),
+                    ),
+                    DocumentLabelRelationship(
+                        type="entity_type",
+                        label=Label(
+                            type="entity_type",
+                            id="National drought plan (ndp)",
+                            title="National drought plan (ndp)",
+                        ),
+                    ),
+                    DocumentLabelRelationship(
+                        type="provider",
+                        label=Label(
+                            type="agent",
+                            id="Grantham Research Institute",
+                            title="Grantham Research Institute",
                         ),
                     ),
                 ],
@@ -204,18 +515,33 @@ def test_transform_navigator_family_with_single_matching_document(
                     DocumentDocumentRelationship(
                         type="is_version_of",
                         document=DocumentWithoutRelationships(
-                            id="family",
-                            title=navigator_family_with_single_matching_document.data.title,
-                            labels=[
-                                DocumentLabelRelationship(
-                                    type="debug",
-                                    label=Label(
-                                        type="debug",
-                                        id="no_family_labels",
-                                        title="no_family_labels",
-                                    ),
-                                ),
-                            ],
+                            **expected_document_from_family.model_dump()
+                        ),
+                    ),
+                ],
+            ),
+            Document(
+                id="collection_matching",
+                title="Matching title on family and document and collection",
+                labels=[],
+                relationships=[
+                    DocumentDocumentRelationship(
+                        type="is_version_of",
+                        document=DocumentWithoutRelationships(
+                            **expected_document_from_family.model_dump()
+                        ),
+                    ),
+                ],
+            ),
+            Document(
+                id="collection",
+                title="Collection title",
+                labels=[],
+                relationships=[
+                    DocumentDocumentRelationship(
+                        type="has_member",
+                        document=DocumentWithoutRelationships(
+                            **expected_document_from_family.model_dump()
                         ),
                     ),
                 ],
@@ -228,66 +554,92 @@ def test_transform_navigator_family_with_litigation_corpus_type(
     navigator_family_with_litigation_corpus_type: Identified[NavigatorFamily],
 ):
     result = transform_navigator_family(navigator_family_with_litigation_corpus_type)
+    expected_document_from_family = Document(
+        id="family",
+        title="Litigation family",
+        description="Family summary",
+        labels=[
+            DocumentLabelRelationship(
+                type="status",
+                label=Label(
+                    type="status",
+                    id="Canonical",
+                    title="Canonical",
+                ),
+            ),
+            DocumentLabelRelationship(
+                type="entity_type",
+                label=Label(
+                    id="Legal case",
+                    title="Legal case",
+                    type="entity_type",
+                ),
+            ),
+            DocumentLabelRelationship(
+                type="provider",
+                label=Label(
+                    type="agent",
+                    id="Grantham Research Institute",
+                    title="Grantham Research Institute",
+                ),
+            ),
+        ],
+        relationships=[
+            DocumentDocumentRelationship(
+                type="has_member",
+                document=DocumentWithoutRelationships(
+                    id="document",
+                    title="Litigation family document",
+                    labels=[
+                        DocumentLabelRelationship(
+                            type="entity_type",
+                            label=Label(
+                                id="Decision",
+                                title="Decision",
+                                type="entity_type",
+                            ),
+                        ),
+                        DocumentLabelRelationship(
+                            type="provider",
+                            label=Label(
+                                type="agent",
+                                id="Grantham Research Institute",
+                                title="Grantham Research Institute",
+                            ),
+                        ),
+                    ],
+                ),
+            ),
+            DocumentDocumentRelationship(
+                type="has_member",
+                document=DocumentWithoutRelationships(
+                    id="1.2.3.placeholder",
+                    title="Placeholder litigation family document",
+                    labels=[
+                        DocumentLabelRelationship(
+                            type="status",
+                            label=Label(
+                                id="Obsolete",
+                                title="Obsolete",
+                                type="status",
+                            ),
+                        ),
+                        DocumentLabelRelationship(
+                            type="provider",
+                            label=Label(
+                                type="agent",
+                                id="Grantham Research Institute",
+                                title="Grantham Research Institute",
+                            ),
+                        ),
+                    ],
+                ),
+            ),
+        ],
+    )
     assert result == Success(
         [
-            Document(
-                id="family",
-                title="Litigation family",
-                labels=[
-                    DocumentLabelRelationship(
-                        type="entity_type",
-                        label=Label(
-                            id="Legal case",
-                            title="Legal case",
-                            type="entity_type",
-                        ),
-                    ),
-                    DocumentLabelRelationship(
-                        type="debug",
-                        label=Label(
-                            id="no_versions",
-                            title="no_versions",
-                            type="debug",
-                        ),
-                    ),
-                ],
-                relationships=[
-                    DocumentDocumentRelationship(
-                        type="has_member",
-                        document=DocumentWithoutRelationships(
-                            id="document",
-                            title="Litigation family document",
-                            labels=[
-                                DocumentLabelRelationship(
-                                    type="entity_type",
-                                    label=Label(
-                                        id="Decision",
-                                        title="Decision",
-                                        type="entity_type",
-                                    ),
-                                ),
-                            ],
-                        ),
-                    ),
-                    DocumentDocumentRelationship(
-                        type="has_member",
-                        document=DocumentWithoutRelationships(
-                            id="1.2.3.placeholder",
-                            title="Placeholder litigation family document",
-                            labels=[
-                                DocumentLabelRelationship(
-                                    type="status",
-                                    label=Label(
-                                        id="Obsolete",
-                                        title="Obsolete",
-                                        type="status",
-                                    ),
-                                ),
-                            ],
-                        ),
-                    ),
-                ],
-            ),
+            expected_document_from_family,
             Document(
                 id="document",
                 title="Litigation family document",
@@ -300,25 +652,22 @@ def test_transform_navigator_family_with_litigation_corpus_type(
                             type="entity_type",
                         ),
                     ),
+                    DocumentLabelRelationship(
+                        type="provider",
+                        label=Label(
+                            type="agent",
+                            id="Grantham Research Institute",
+                            title="Grantham Research Institute",
+                        ),
+                    ),
                 ],
                 relationships=[
                     DocumentDocumentRelationship(
                         type="member_of",
                         document=DocumentWithoutRelationships(
-                            id="family",
-                            title="Litigation family",
-                            labels=[
-                                DocumentLabelRelationship(
-                                    type="entity_type",
-                                    label=Label(
-                                        id="Legal case",
-                                        title="Legal case",
-                                        type="entity_type",
-                                    ),
-                                ),
-                            ],
+                            **expected_document_from_family.model_dump()
                         ),
-                    )
+                    ),
                 ],
             ),
             Document(
@@ -333,23 +682,20 @@ def test_transform_navigator_family_with_litigation_corpus_type(
                             type="status",
                         ),
                     ),
+                    DocumentLabelRelationship(
+                        type="provider",
+                        label=Label(
+                            type="agent",
+                            id="Grantham Research Institute",
+                            title="Grantham Research Institute",
+                        ),
+                    ),
                 ],
                 relationships=[
                     DocumentDocumentRelationship(
                         type="member_of",
                         document=DocumentWithoutRelationships(
-                            id="family",
-                            title="Litigation family",
-                            labels=[
-                                DocumentLabelRelationship(
-                                    type="entity_type",
-                                    label=Label(
-                                        id="Legal case",
-                                        title="Legal case",
-                                        type="entity_type",
-                                    ),
-                                ),
-                            ],
+                            **expected_document_from_family.model_dump()
                         ),
                     )
                 ],
@@ -364,113 +710,131 @@ def test_transform_navigator_family_with_multilateral_climate_fund_project(
     result = transform_navigator_family(
         navigator_family_multilateral_climate_fund_project
     )
+    expected_document_from_family = Document(
+        id="family",
+        title="Multilateral climate fund project",
+        description="Family summary",
+        labels=[
+            DocumentLabelRelationship(
+                type="status",
+                label=Label(
+                    type="status",
+                    id="Canonical",
+                    title="Canonical",
+                ),
+            ),
+            DocumentLabelRelationship(
+                type="entity_type",
+                label=Label(
+                    id="Multilateral climate fund project",
+                    title="Multilateral climate fund project",
+                    type="entity_type",
+                ),
+            ),
+            DocumentLabelRelationship(
+                type="activity_status",
+                label=Label(
+                    id="Concept approved",
+                    title="Concept approved",
+                    type="activity_status",
+                ),
+                timestamp=datetime.datetime(2020, 1, 1),
+            ),
+            DocumentLabelRelationship(
+                type="activity_status",
+                label=Label(
+                    id="Approved",
+                    title="Approved",
+                    type="activity_status",
+                ),
+                timestamp=datetime.datetime(2020, 1, 1),
+            ),
+            DocumentLabelRelationship(
+                type="activity_status",
+                label=Label(
+                    id="Under implementation",
+                    title="Under implementation",
+                    type="activity_status",
+                ),
+                timestamp=datetime.datetime(2020, 1, 1),
+            ),
+            DocumentLabelRelationship(
+                type="activity_status",
+                label=Label(
+                    id="Completed",
+                    title="Completed",
+                    type="activity_status",
+                ),
+                timestamp=datetime.datetime(2020, 1, 1),
+            ),
+            DocumentLabelRelationship(
+                type="activity_status",
+                label=Label(
+                    id="Cancelled",
+                    title="Cancelled",
+                    type="activity_status",
+                ),
+                timestamp=datetime.datetime(2020, 1, 1),
+            ),
+            DocumentLabelRelationship(
+                type="provider",
+                label=Label(
+                    type="agent",
+                    id="Grantham Research Institute",
+                    title="Grantham Research Institute",
+                ),
+            ),
+        ],
+        relationships=[
+            DocumentDocumentRelationship(
+                type="has_member",
+                document=DocumentWithoutRelationships(
+                    id="document_1",
+                    title="Multilateral climate fund project document",
+                    labels=[
+                        DocumentLabelRelationship(
+                            type="provider",
+                            label=Label(
+                                type="agent",
+                                id="Grantham Research Institute",
+                                title="Grantham Research Institute",
+                            ),
+                        ),
+                    ],
+                ),
+            ),
+            DocumentDocumentRelationship(
+                type="has_version",
+                document=DocumentWithoutRelationships(
+                    id="document_2",
+                    title="Project document",
+                    labels=[
+                        DocumentLabelRelationship(
+                            type="provider",
+                            label=Label(
+                                type="agent",
+                                id="Grantham Research Institute",
+                                title="Grantham Research Institute",
+                            ),
+                        ),
+                    ],
+                ),
+            ),
+        ],
+    )
     assert result == Success(
         [
-            Document(
-                id="family",
-                title="Multilateral climate fund project",
-                labels=[
-                    DocumentLabelRelationship(
-                        type="entity_type",
-                        label=Label(
-                            id="Multilateral climate fund project",
-                            title="Multilateral climate fund project",
-                            type="entity_type",
-                        ),
-                    ),
-                    DocumentLabelRelationship(
-                        type="activity_status",
-                        label=Label(
-                            id="Concept approved",
-                            title="Concept approved",
-                            type="activity_status",
-                        ),
-                        timestamp=datetime.datetime(2020, 1, 1),
-                    ),
-                    DocumentLabelRelationship(
-                        type="activity_status",
-                        label=Label(
-                            id="Approved",
-                            title="Approved",
-                            type="activity_status",
-                        ),
-                        timestamp=datetime.datetime(2020, 1, 1),
-                    ),
-                    DocumentLabelRelationship(
-                        type="activity_status",
-                        label=Label(
-                            id="Under implementation",
-                            title="Under implementation",
-                            type="activity_status",
-                        ),
-                        timestamp=datetime.datetime(2020, 1, 1),
-                    ),
-                    DocumentLabelRelationship(
-                        type="activity_status",
-                        label=Label(
-                            id="Completed",
-                            title="Completed",
-                            type="activity_status",
-                        ),
-                        timestamp=datetime.datetime(2020, 1, 1),
-                    ),
-                    DocumentLabelRelationship(
-                        type="activity_status",
-                        label=Label(
-                            id="Cancelled",
-                            title="Cancelled",
-                            type="activity_status",
-                        ),
-                        timestamp=datetime.datetime(2020, 1, 1),
-                    ),
-                ],
-                relationships=[
-                    DocumentDocumentRelationship(
-                        type="has_member",
-                        document=DocumentWithoutRelationships(
-                            id="document_1",
-                            title="Multilateral climate fund project document",
-                            labels=[
-                                DocumentLabelRelationship(
-                                    type="debug",
-                                    label=Label(
-                                        type="debug",
-                                        id="no_document_labels",
-                                        title="no_document_labels",
-                                    ),
-                                ),
-                            ],
-                        ),
-                    ),
-                    DocumentDocumentRelationship(
-                        type="has_version",
-                        document=DocumentWithoutRelationships(
-                            id="document_2",
-                            title="Project document",
-                            labels=[
-                                DocumentLabelRelationship(
-                                    type="debug",
-                                    label=Label(
-                                        type="debug",
-                                        id="no_document_labels",
-                                        title="no_document_labels",
-                                    ),
-                                ),
-                            ],
-                        ),
-                    ),
-                ],
-            ),
+            expected_document_from_family,
             Document(
                 id="document_1",
                 title="Multilateral climate fund project document",
                 labels=[
                     DocumentLabelRelationship(
-                        type="debug",
+                        type="provider",
                         label=Label(
-                            type="debug",
-                            id="no_document_labels",
-                            title="no_document_labels",
+                            type="agent",
+                            id="Grantham Research Institute",
+                            title="Grantham Research Institute",
                         ),
                     ),
                 ],
@@ -478,63 +842,7 @@ def test_transform_navigator_family_with_multilateral_climate_fund_project(
                     DocumentDocumentRelationship(
                         type="member_of",
                         document=DocumentWithoutRelationships(
-                            id="family",
-                            title="Multilateral climate fund project",
-                            labels=[
-                                DocumentLabelRelationship(
-                                    type="entity_type",
-                                    label=Label(
-                                        id="Multilateral climate fund project",
-                                        title="Multilateral climate fund project",
-                                        type="entity_type",
-                                    ),
-                                ),
-                                DocumentLabelRelationship(
-                                    type="activity_status",
-                                    label=Label(
-                                        id="Concept approved",
-                                        title="Concept approved",
-                                        type="activity_status",
-                                    ),
-                                    timestamp=datetime.datetime(2020, 1, 1),
-                                ),
-                                DocumentLabelRelationship(
-                                    type="activity_status",
-                                    label=Label(
-                                        id="Approved",
-                                        title="Approved",
-                                        type="activity_status",
-                                    ),
-                                    timestamp=datetime.datetime(2020, 1, 1),
-                                ),
-                                DocumentLabelRelationship(
-                                    type="activity_status",
-                                    label=Label(
-                                        id="Under implementation",
-                                        title="Under implementation",
-                                        type="activity_status",
-                                    ),
-                                    timestamp=datetime.datetime(2020, 1, 1),
-                                ),
-                                DocumentLabelRelationship(
-                                    type="activity_status",
-                                    label=Label(
-                                        id="Completed",
-                                        title="Completed",
-                                        type="activity_status",
-                                    ),
-                                    timestamp=datetime.datetime(2020, 1, 1),
-                                ),
-                                DocumentLabelRelationship(
-                                    type="activity_status",
-                                    label=Label(
-                                        id="Cancelled",
-                                        title="Cancelled",
-                                        type="activity_status",
-                                    ),
-                                    timestamp=datetime.datetime(2020, 1, 1),
-                                ),
-                            ],
+                            **expected_document_from_family.model_dump()
                         ),
                     )
                 ],
@@ -544,11 +852,11 @@ def test_transform_navigator_family_with_multilateral_climate_fund_project(
                 title="Project document",
                 labels=[
                     DocumentLabelRelationship(
-                        type="debug",
+                        type="provider",
                         label=Label(
-                            type="debug",
-                            id="no_document_labels",
-                            title="no_document_labels",
+                            type="agent",
+                            id="Grantham Research Institute",
+                            title="Grantham Research Institute",
                         ),
                     ),
                 ],
@@ -556,63 +864,7 @@ def test_transform_navigator_family_with_multilateral_climate_fund_project(
                     DocumentDocumentRelationship(
                         type="is_version_of",
                         document=DocumentWithoutRelationships(
-                            id="family",
-                            title="Multilateral climate fund project",
-                            labels=[
-                                DocumentLabelRelationship(
-                                    type="entity_type",
-                                    label=Label(
-                                        id="Multilateral climate fund project",
-                                        title="Multilateral climate fund project",
-                                        type="entity_type",
-                                    ),
-                                ),
-                                DocumentLabelRelationship(
-                                    type="activity_status",
-                                    label=Label(
-                                        id="Concept approved",
-                                        title="Concept approved",
-                                        type="activity_status",
-                                    ),
-                                    timestamp=datetime.datetime(2020, 1, 1),
-                                ),
-                                DocumentLabelRelationship(
-                                    type="activity_status",
-                                    label=Label(
-                                        id="Approved",
-                                        title="Approved",
-                                        type="activity_status",
-                                    ),
-                                    timestamp=datetime.datetime(2020, 1, 1),
-                                ),
-                                DocumentLabelRelationship(
-                                    type="activity_status",
-                                    label=Label(
-                                        id="Under implementation",
-                                        title="Under implementation",
-                                        type="activity_status",
-                                    ),
-                                    timestamp=datetime.datetime(2020, 1, 1),
-                                ),
-                                DocumentLabelRelationship(
-                                    type="activity_status",
-                                    label=Label(
-                                        id="Completed",
-                                        title="Completed",
-                                        type="activity_status",
-                                    ),
-                                    timestamp=datetime.datetime(2020, 1, 1),
-                                ),
-                                DocumentLabelRelationship(
-                                    type="activity_status",
-                                    label=Label(
-                                        id="Cancelled",
-                                        title="Cancelled",
-                                        type="activity_status",
-                                    ),
-                                    timestamp=datetime.datetime(2020, 1, 1),
-                                ),
-                            ],
+                            **expected_document_from_family.model_dump()
                         ),
                     )
                 ],

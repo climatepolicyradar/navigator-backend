@@ -5,14 +5,14 @@ from unittest.mock import MagicMock, patch
 from app.extract.connectors import (
     FamilyFetchResult,
     NavigatorCorpus,
+    NavigatorCorpusType,
     NavigatorDocument,
     NavigatorFamily,
+    NavigatorOrganisation,
     PageFetchFailure,
 )
 from app.models import Document, ExtractedEnvelope, ExtractedMetadata
-from app.navigator_document_etl_pipeline import (
-    process_updates as process_document_updates,
-)
+from app.navigator_document_etl_pipeline import process_document_updates
 from app.navigator_family_etl_pipeline import etl_pipeline
 
 
@@ -46,7 +46,12 @@ def test_process_family_updates_flow_multiple_families(
         NavigatorFamily(
             import_id="i00000315",
             title="Belgium UNCBD National Targets",
-            corpus=NavigatorCorpus(import_id="UNFCCC"),
+            summary="Family summary",
+            corpus=NavigatorCorpus(
+                import_id="UNFCCC",
+                corpus_type=NavigatorCorpusType(name="corpus_type"),
+                organisation=NavigatorOrganisation(id=1, name="UNFCCC"),
+            ),
             documents=[
                 NavigatorDocument(
                     import_id="i00000315",
@@ -55,6 +60,7 @@ def test_process_family_updates_flow_multiple_families(
                 )
             ],
             events=[],
+            collections=[],
         )
     ]
 
@@ -62,7 +68,12 @@ def test_process_family_updates_flow_multiple_families(
         NavigatorFamily(
             import_id="i00000316",
             title="France UNCBD National Targets",
-            corpus=NavigatorCorpus(import_id="UNFCCC"),
+            summary="Family summary",
+            corpus=NavigatorCorpus(
+                import_id="UNFCCC",
+                corpus_type=NavigatorCorpusType(name="corpus_type"),
+                organisation=NavigatorOrganisation(id=1, name="UNFCCC"),
+            ),
             documents=[
                 NavigatorDocument(
                     import_id="i00000316",
@@ -71,6 +82,7 @@ def test_process_family_updates_flow_multiple_families(
                 )
             ],
             events=[],
+            collections=[],
         )
     ]
 

@@ -1,10 +1,19 @@
-name: CI/CD
+name: CI for backend-api
 
 on:
   push:
     tags: [v*]
     branches:
       - main
+    paths:
+      - backend-api/**
+      - "**"
+      - "!api/**"
+      - "!data-in-pipeline/**"
+      - "!families-api/**"
+      - "!geographies-api/**"
+      - "!concepts-api/**"
+
   pull_request:
     # By default, a workflow only runs when a pull_request event's activity type is opened,
     # synchronize, or reopened.

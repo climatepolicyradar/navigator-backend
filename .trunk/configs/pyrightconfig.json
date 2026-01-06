@@ -19,6 +19,9 @@
       "root": "geographies-api"
     },
     {
+      "root": "data-in-pipeline-load-api"
+    },
+    {
       "root": "data-in-pipeline"
     }
   ]

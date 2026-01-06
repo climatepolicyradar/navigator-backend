@@ -10,12 +10,12 @@ class Label(BaseModel):
     id: str
     title: str
     type: str
-    timestamp: datetime | None = None
 
 
 class DocumentLabelRelationship(BaseModel):
     type: str
     label: Label
+    timestamp: datetime | None = None
 
 
 class BaseDocument(BaseModel):
@@ -27,10 +27,22 @@ class BaseDocument(BaseModel):
 class DocumentDocumentRelationship(BaseModel):
     type: str
     document: "DocumentWithoutRelationships"
+    timestamp: datetime | None = None
+
+
+class Item(BaseModel):
+    url: str | None = None
 
 
 class Document(BaseDocument):
     relationships: list[DocumentDocumentRelationship] = []
+    """
+    This needs work, but is a decent placeholder while we work through the model.
+    It is lightly based on the FRBR ontology.
+
+    @see: https://en.wikipedia.org/wiki/Functional_Requirements_for_Bibliographic_Records
+    """
+    items: list[Item] = []
 
 
 class DocumentWithoutRelationships(BaseDocument):
@@ -72,13 +84,13 @@ class Aggregation(BaseModel):
     count: int
 
 
-class DocumentResponse(BaseModel):
+class DocumentsResponse(BaseModel):
     total: int
     aggregations: dict[str, list[Aggregation]]
     data: list[Document]
 
 
-@app.get("/documents", response_model=DocumentResponse)
+@app.get("/documents", response_model=DocumentsResponse)
 def list_documents(
     label_ids: list[str] | None = Query(
         None, description="Filter by labels.label.id", alias="labels.label.id"
@@ -262,3 +274,31 @@ def list_relationships(
         "total": 10,
         "data": relationships,
     }
+
+
+class DocumentResponse(BaseModel):
+    data: Document
+
+
+@app.get("/documents/{id}", response_model=DocumentResponse)
+def read_document(
+    id: str,
+    con=Depends(get_connection),
+):
+    document_result = con.execute(
+        """
+        SELECT
+            id,
+            title,
+            labels,
+            relationships
+        FROM documents
+        WHERE id = ?
+        """,
+        (id,),
+    )
+    document_colnames = [c[0] for c in document_result.description]
+    document_row = document_result.fetchone()
+    document = Document(**dict(zip(document_colnames, document_row)))
+
+    return {"data": document}

@@ -1,0 +1,9 @@
+test:
+    uv run pytest -vv
+
+test-ci:
+    #!/usr/bin/env bash
+    # Build and test against the Docker image
+    set -euxo pipefail
+    docker build -t data-in-pipeline-load-api:test -f Dockerfile ..
+    docker run --rm data-in-pipeline-load-api:test uv run pytest -vv
