@@ -15,14 +15,12 @@ members = [
   "data-in-pipeline",
 ]
 
-# this is replicated from ./.trunk/configs/pyrightconfig.json
-# this allows bypassing Trunk for quicker feedback in the IDE
-# any changes to pyrightconfig should be made there and replicated here
 [tool.pyright]
 venvPath = "."
 venv = ".venv"
 pythonVersion = "3.12"
 exclude = ["backend-api/**"]
+extraPaths = ["api/src"]
 
 [tool.pyright.executionEnvironments]
 root = [
