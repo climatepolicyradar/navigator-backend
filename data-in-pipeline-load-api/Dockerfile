@@ -23,6 +23,7 @@ COPY $SERVICE/pyproject.toml /app/
 
 # Copy application code
 COPY $SERVICE /app/$SERVICE/
+COPY ./api /app/api/
 
 WORKDIR /app
 RUN uv sync --project $SERVICE
