@@ -6,7 +6,7 @@ requires-python = ">=3.12,<3.14"
 dependencies = [
   "api",
   "components>=1.0.3",
-  "prefect>=3.4",
+  "prefect[aws]>=3.4",
   "uv>=0.9.2",
   "pulumi>=3.202.0",
   "pulumi-aws>=6.83.0",
