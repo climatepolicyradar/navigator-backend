@@ -2,7 +2,7 @@ from alembic import command
 from alembic.config import Config
 from sqlalchemy.engine import Engine
 
-from app.load.db.base import get_library_path
+from app.db.base import get_library_path
 
 
 def run_migrations(engine: Engine) -> None:
