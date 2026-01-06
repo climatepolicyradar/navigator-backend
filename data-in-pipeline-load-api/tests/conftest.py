@@ -6,16 +6,6 @@ from sqlalchemy_utils import create_database, database_exists, drop_database
 
 from app.db.run_migrations import run_migrations
 
-# from opentelemetry import trace
-# from opentelemetry._logs import get_logger_provider
-
-
-# Set environment variables before any imports that might initialise telemetry
-# os.environ.setdefault("DISABLE_OTEL_LOGGING", "true")
-# os.environ.setdefault("OTEL_TRACES_EXPORTER", "none")
-# os.environ.setdefault("OTEL_LOGS_EXPORTER", "none")
-# os.environ.setdefault("OTEL_METRICS_EXPORTER", "none")
-
 
 # Configuration of pytest mock postgres fixtures
 @pytest.fixture(scope="session")
@@ -96,38 +86,3 @@ def test_db(template_db_engine, test_engine_fixture):
 
         # Drop the test database
         drop_database(db_url)
-
-
-# @pytest.fixture(autouse=True, scope="session")
-# def disable_telemetry():
-#     """Disable OpenTelemetry logging during tests to prevent export errors.
-
-#     :return: The function does not return anything.
-#     :rtype: None
-#     """
-#     # Set before any imports that might initialise telemetry
-#     os.environ["DISABLE_OTEL_LOGGING"] = "true"
-#     yield
-#     # Cleanup: ensure telemetry is shut down if it was initialised
-#     try:
-#         from app.bootstrap_telemetry import telemetry
-
-#         if telemetry:
-#             telemetry.shutdown()
-#     except Exception:
-#         pass
-
-#     # Force shutdown all global OpenTelemetry providers
-#     try:
-#         # Shutdown logger provider
-#         logger_provider = get_logger_provider()
-#         if logger_provider and hasattr(logger_provider, "shutdown"):
-#             logger_provider.shutdown()  # type: ignore[attr-defined]
-
-#         # Shutdown tracer provider
-#         tracer_provider = trace.get_tracer_provider()
-#         if tracer_provider and hasattr(tracer_provider, "shutdown"):
-#             tracer_provider.shutdown()  # type: ignore[attr-defined]
-#     except Exception:
-#         # Silently ignore shutdown errors in test cleanup
-#         pass
