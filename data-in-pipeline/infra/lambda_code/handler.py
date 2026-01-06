@@ -5,9 +5,9 @@ from http import HTTPStatus
 from typing import Any
 
 import boto3
-import psycopg2
+import psycopg
 from mangum import Mangum
-from psycopg2 import sql
+from psycopg import sql
 
 _LOGGER = logging.getLogger(__name__)
 
@@ -25,7 +25,7 @@ def _get_secret(arn: str) -> dict[str, Any]:
 
 
 def _load_sql(path: str, identifiers: dict[str, str]):
-    """Load SQL file and safely inject identifiers using psycopg2.sql.
+    """Load SQL file and safely inject identifiers using psycopg.sql.
 
     :param path: Path to the SQL file
     :type path: str
@@ -70,7 +70,7 @@ def handler(event, context):
     _LOGGER.info(
         f"Connecting to Aurora cluster at {host} with database {db} and user {master_creds['username']}"
     )
-    conn = psycopg2.connect(
+    conn = psycopg.connect(
         host=host,
         port=port,
         dbname=db,
