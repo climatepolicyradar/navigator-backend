@@ -28,28 +28,24 @@ jobs:
               - 'api/**'
               - 'uv.lock'
               - pyproject.toml
-              - !.trunk/**
 
             geographies-api:
               - 'geographies-api/**'
               - 'api/**'
               - 'uv.lock'
               - pyproject.toml
-              - !.trunk/**
 
             concepts-api:
               - 'concepts-api/**'
               - 'api/**'
               - 'uv.lock'
               - pyproject.toml
-              - !.trunk/**
 
             data-in-pipeline:
               - 'data-in-pipeline/**'
               - 'api/**'
               - 'uv.lock'
               - pyproject.toml
-              - !.trunk/**
 
   test:
     needs: changes
