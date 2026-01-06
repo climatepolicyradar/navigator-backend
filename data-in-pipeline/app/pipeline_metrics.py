@@ -104,13 +104,13 @@ class PipelineMetrics:
         self._documents_processed: Optional[Counter] = None
         self._document_errors: Optional[Counter] = None
         self._operation_duration: Optional[Histogram] = None
-        self._pipeline_run_duration: Optional[Histogram] = None
-        self._memory_allocated: Optional[Counter] = None
-        self._cpu_allocated: Optional[Counter] = None
-        self._billable_cost_of_run: Optional[Counter] = None
-        self._memory_actual: Optional[Counter] = None
-        self._cpu_actual: Optional[Counter] = None
-        self._cost_of_used_resources: Optional[Counter] = None
+        self._pipeline_run_duration: Histogram | None = None
+        self._memory_allocated: Counter | None = None
+        self._cpu_allocated: Counter | None = None
+        self._billable_cost_of_run: Counter | None = None
+        self._memory_actual: Counter | None = None
+        self._cpu_actual: Counter | None = None
+        self._cost_of_used_resources: Counter | None = None
 
         if not self._disabled:
             self._create_instruments()
@@ -527,8 +527,8 @@ class PipelineMetrics:
 
     def track(
         self,
-        operation: Optional[Operation] = None,
-        pipeline_type: Optional[PipelineType] = None,
+        operation: Operation | None = None,
+        pipeline_type: PipelineType | None = None,
         scope: Literal["operation", "document", "batch"] = "operation",
         flush_on_exit: bool = False,
     ) -> Callable[[F], F]:

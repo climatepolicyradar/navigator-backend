@@ -53,7 +53,7 @@ def generate_incremental_revision_id(context, revision, directives) -> None:
         # current version
         cur_rev = max([int(rev) for rev in context.get_current_heads()], default=0)
         # force new version
-        script.rev_id = "{:04d}".format(cur_rev + 1)
+        script.rev_id = f"{cur_rev + 1:04d}"
         if script.upgrade_ops.is_empty():
             directives[:] = []
             _LOGGER.info("No changes in schema detected.")
