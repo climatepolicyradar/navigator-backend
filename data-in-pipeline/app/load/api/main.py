@@ -3,6 +3,7 @@ import sys
 from pathlib import Path
 
 from fastapi import FastAPI
+from routers import router
 
 # Configure logging before anything else
 logging.basicConfig(
@@ -16,13 +17,8 @@ _LOGGER = logging.getLogger(__name__)
 # from multiple locations
 root_dir = Path(__file__).parent.parent
 
-_LOGGER.info("🚀 Starting FastAPI application")
+_LOGGER.debug("🚀 Starting FastAPI application")
 
-try:
-    from routers import router
-except Exception as e:
-    _LOGGER.exception("❌ Failed to import routers: %s", e)
-    raise
 
 # Create the FastAPI app
 app = FastAPI(
@@ -33,4 +29,4 @@ app = FastAPI(
 
 # Include router in app
 app.include_router(router)
-_LOGGER.info("✅ FastAPI application initialised")
+_LOGGER.debug("✅ FastAPI application initialised")
