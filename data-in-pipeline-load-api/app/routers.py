@@ -1,5 +1,5 @@
 from fastapi import APIRouter, Depends, HTTPException, status
-from service import check_db_health
+from repository import check_db_health
 from session import get_db
 from settings import settings
 
