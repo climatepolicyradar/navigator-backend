@@ -23,6 +23,7 @@ venvPath = "."
 venv = ".venv"
 pythonVersion = "3.12"
 exclude = ["backend-api/**"]
+extraPaths = ["api/src"]
 
 [tool.pyright.executionEnvironments]
 root = [
