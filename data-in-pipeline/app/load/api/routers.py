@@ -1,4 +1,5 @@
-from fastapi import APIRouter, Depends
+from fastapi import APIRouter, Depends, HTTPException, status
+from repository import check_db_health
 from session import get_db
 from settings import settings
 
@@ -8,16 +9,21 @@ router = APIRouter(prefix="/load")
 
 @router.get("/health")
 def health_check(db=Depends(get_db)):
+    """Health check endpoint using session module's health check."""
     try:
-        with db as session:
-            is_online = session.execute("SELECT 1") is not None
-            return {
-                "status": "ok" if is_online else "error",
-                "version": settings.github_sha,
-            }
+        is_healthy = check_db_health(db)
 
     except Exception as e:
-        return {"status": "error", "error": e}
+        raise HTTPException(
+            status_code=status.HTTP_500_INTERNAL_SERVER_ERROR, detail=str(e)
+        )
+
+    if not is_healthy:
+        raise HTTPException(
+            status_code=status.HTTP_503_SERVICE_UNAVAILABLE,
+            detail="Database connection unhealthy",
+        )
+    return {"status": "ok", "version": settings.github_sha}
 
 
 @router.post("/")

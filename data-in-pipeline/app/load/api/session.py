@@ -1,28 +1,33 @@
 """
 Code for DB session management.
 
-Notes: October 2025.
-Stray connection leaks are being caused by services calling get_db()
-without closing sessions, particularly via the defensive programming
-pattern we were using in the admin service where cleanup
-wasn't implemented properly.
+Stray connections can be caused by services not properly closing
+sessions. Use get_db_context() for all database operations.
 """
 
 import logging
-import os
+from collections.abc import Generator
+from contextlib import contextmanager
 
+from settings import settings
 from sqlalchemy import create_engine
-from sqlalchemy.orm import sessionmaker
+from sqlalchemy.orm import Session, sessionmaker
 
 _LOGGER = logging.getLogger(__name__)
 
-STATEMENT_TIMEOUT = os.getenv("STATEMENT_TIMEOUT", "10000")  # ms
-DB_USERNAME = os.getenv("DB_MASTER_USERNAME")
-DB_PASSWORD = os.getenv("MANAGED_DB_PASSWORD")
-CLUSTER_URL = os.getenv("LOAD_DATABASE_URL")
-DB_PORT = os.getenv("DB_PORT")
-DB_NAME = os.getenv("DB_NAME")
-SQLALCHEMY_DATABASE_URI = f"postgresql://{DB_USERNAME}:{DB_PASSWORD}@{CLUSTER_URL}:{DB_PORT}/{DB_NAME}?sslmode=no-verify"
+# Connection parameters from pydantic settings (validated on import)
+SQLALCHEMY_DATABASE_URI = (
+    f"postgresql://{settings.db_master_username}:"
+    f"{settings.managed_db_password.get_secret_value()}@"
+    f"{settings.load_database_url.get_secret_value()}:"
+    f"{settings.db_port}/{settings.db_name}?sslmode=no-verify"
+)
+
+_LOGGER.info(
+    f"🔌 Initialising database engine for "
+    f"{settings.load_database_url.get_secret_value()}:"
+    f"{settings.db_port}/{settings.db_name}"
+)
 
 # Engine with connection pooling to prevent connection leaks
 # Lazy initialisation - created once per worker
@@ -33,21 +38,50 @@ _engine = create_engine(
     max_overflow=100,  # Additional connections when pool exhausted
     pool_recycle=1800,  # Recycle connections after 30 minutes
     pool_timeout=30,  # Wait up to 30s for a connection before error
-    connect_args={"options": f"-c statement_timeout={STATEMENT_TIMEOUT}"},
+    isolation_level="READ COMMITTED",  # PostgreSQL default, explicit
+    connect_args={"options": f"-c statement_timeout={settings.statement_timeout}"},
+    echo=False,  # Set to True for SQL query logging in debug
 )
 
 # Session factory, exported callable for tests
 SessionLocal = sessionmaker(autocommit=False, autoflush=False, bind=_engine)
 
 
-def get_db():
-    """Get the database session.
+@contextmanager
+def get_db_context() -> Generator[Session, None, None]:
+    """Context manager for database session lifecycle.
 
-    Tries to get a database session. If there is no session, it will
-    create one AFTER the uvicorn stuff has started.
+    Use this for all database operations. Ensures proper cleanup
+    even if operations are retried or fail. Automatically commits
+    on success and rolls back on error.
+
+    :yields: Database session
+    :rtype: Generator[Session, None, None]
     """
     db = SessionLocal()
     try:
+        _LOGGER.debug("Database session created (context manager)")
         yield db
+        db.commit()
+        _LOGGER.debug("Database session committed")
+    except Exception:
+        db.rollback()
+        _LOGGER.exception("Database session rolled back")
+        raise
     finally:
         db.close()
+        _LOGGER.debug("Database session closed (context manager)")
+
+
+def get_db() -> Generator[Session, None, None]:
+    """FastAPI dependency wrapper for get_db_context().
+
+    This function provides FastAPI-compatible dependency injection
+    using the context manager internally. Use get_db_context()
+    directly for non-FastAPI code.
+
+    :yields: Database session
+    :rtype: Generator[Session, None, None]
+    """
+    with get_db_context() as db:
+        yield db
