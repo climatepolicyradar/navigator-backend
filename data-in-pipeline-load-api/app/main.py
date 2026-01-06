@@ -3,7 +3,8 @@ import sys
 from pathlib import Path
 
 from fastapi import FastAPI
-from routers import router
+
+from app.routers import router
 
 # Configure logging before anything else
 logging.basicConfig(
