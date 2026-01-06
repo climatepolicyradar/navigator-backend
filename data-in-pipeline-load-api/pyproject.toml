@@ -19,4 +19,9 @@ dependencies = [
 api = { workspace = true }
 
 [dependency-groups]
-dev = ["pytest>=8.4.2", "types-sqlalchemy>=1.4.53.38", "uv>=0.9.2"]
+dev = [
+  "pytest>=8.4.2",
+  "types-sqlalchemy>=1.4.53.38",
+  "uv>=0.9.2",
+  "moto[s3,ssm,secretsmanager]>=5.1.6",
+]

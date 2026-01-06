@@ -6,7 +6,7 @@ test-ci:
     # Build and test against the Docker image
     set -euxo pipefail
     docker build -t data-in-pipeline-load-api:test -f Dockerfile ..
-    docker run --rm data-in-pipeline-load-api:test uv run pytest -vv
+    docker run --rm data-in-pipeline-load-api:test uv run --project data-in-pipeline-load-api pytest -vv
 
 test-override:
     # this is run from the root justfile in CI
