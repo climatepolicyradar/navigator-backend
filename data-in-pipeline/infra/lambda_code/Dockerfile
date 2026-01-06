@@ -1,8 +1,8 @@
 # trunk-ignore-all(checkov/CKV_DOCKER_3)
 # Build Lambda package with dependencies
-# Uses AWS Lambda Python 3.12 base image to match runtime environment
+# Uses AWS Lambda Python 3.14 base image to match runtime environment
 
-FROM public.ecr.aws/lambda/python:3.12
+FROM public.ecr.aws/lambda/python:3.14
 
 WORKDIR /build
 
