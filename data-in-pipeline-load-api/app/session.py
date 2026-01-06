@@ -87,3 +87,15 @@ def get_db() -> Generator[Session, None, None]:
     """
     with get_db_context() as db:
         yield db
+
+
+def get_engine() -> Engine:
+    """Get the database engine instance.
+
+    Exposed for testing and advanced use cases. Generally prefer
+    get_db_context() for normal operations.
+
+    :return: SQLAlchemy engine instance
+    :rtype: Engine
+    """
+    return _engine
