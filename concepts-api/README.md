@@ -2,7 +2,7 @@
 
 ## Prerequisites
 
-- Python 3.12 or higher
+- Python 3.12 or 3.13
 - uv (Python package manager)
 - Docker and Docker Compose
 - AWS CLI configured with appropriate credentials
@@ -33,7 +33,6 @@
    ```
 
    This will:
-
    - Sync latest data from staging environment
    - Start the service using Docker Compose
    - Enable hot-reload for code changes
@@ -67,7 +66,6 @@ To deploy the service locally to App Runner (without GitHub):
    ```
 
    This command will:
-
    - Log into ECR
    - Build the Docker image
    - Push to ECR
@@ -101,14 +99,12 @@ flowchart RL
 ## Known Issues and Gotchas
 
 1. **ECR Repository Setup**
-
    - The ECR repository must exist before deploying
    - Create ECR repo first
    - Run `just deploy`
    - Create remaining AWS infrastructure
 
 2. **VPC Connector**
-
    - App Runner VPC connector must be created before stack deployment
 
 3. **AWS Credentials**
@@ -127,13 +123,11 @@ The service requires the following environment variables:
 If you encounter issues:
 
 1. **Docker Build Failures**
-
    - Ensure Docker daemon is running
    - Check available disk space
    - Verify AWS credentials
 
 2. **Data Sync Issues**
-
    - Verify AWS credentials and S3 access
    - Check network connectivity
    - Ensure sufficient disk space for data
