@@ -1,12 +1,11 @@
 import logging
-import os
 from logging.config import fileConfig
-from typing import cast
 
 from alembic import context
 from sqlalchemy import engine_from_config, pool
 
 from app.db.base import Base
+from app.settings import settings
 
 _LOGGER = logging.getLogger(__name__)
 
@@ -18,13 +17,6 @@ config = context.config
 # can be acquired:
 # my_important_option = config.get_main_option("my_important_option")
 # ... etc.
-
-# Allow overriding URL via env vars (use writer endpoint in eu-west-1)
-db_host = os.getenv("AURORA_WRITER_ENDPOINT", "localhost")
-db_name = os.getenv("DB_NAME", "postgres")
-db_user = os.getenv("DB_ADMIN_USER", "postgres")  # an admin/superuser for migrations
-db_password = os.getenv("DB_ADMIN_PASSWORD", "")
-db_port = os.getenv("DB_PORT", "5432")
 
 # Logging
 if config.config_file_name is not None:
@@ -40,7 +32,12 @@ def get_url() -> str:
     # Standard TLS; IAM tokens apply only to app user, not migrations admin
     # DATABASE_URL is the equivalent of:
     # f"postgresql+psycopg://{db_user}:{db_password}@{db_host}:{db_port}/{db_name}?sslmode=require"
-    db_url = cast(str, os.getenv("DATABASE_URL"))
+    db_url = (
+        f"postgresql://{settings.db_master_username}:"
+        f"{settings.managed_db_password.get_secret_value()}@"
+        f"{settings.load_database_url.get_secret_value()}:"
+        f"{settings.db_port}/{settings.db_name}?sslmode=require"
+    )
     if db_url is None:
         raise ValueError("Environment variable DATABASE_URL not set")
     config.set_main_option("sqlalchemy.url", db_url)
