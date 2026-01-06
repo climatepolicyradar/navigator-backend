@@ -19,11 +19,10 @@ RUN apt-get update && apt-get install -y \
     && rm -rf /var/lib/apt/lists/*
 
 # Copy dependency files (build context should be navigator-backend root)
-COPY data-in-pipeline/app/load/api/pyproject.toml /app/
+COPY $SERVICE/pyproject.toml /app/
 
 # Copy application code
-COPY ./api /app/api/
-COPY data-in-pipeline/app/load/api /app/$SERVICE/
+COPY $SERVICE /app/$SERVICE/
 
 WORKDIR /app
 RUN uv sync --project $SERVICE
