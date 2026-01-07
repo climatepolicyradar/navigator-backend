@@ -518,6 +518,21 @@ aws.iam.RolePolicyAttachment(
     policy_arn="arn:aws:iam::aws:policy/service-role/AWSLambdaBasicExecutionRole",
 )
 
+lambda_sg = aws.ec2.SecurityGroup(
+    "aurora-user-creation-lambda-sg",
+    vpc_id=vpc_id,
+    description="Lambda access to Aurora",
+    egress=[
+        {
+            "protocol": "-1",
+            "from_port": 0,
+            "to_port": 0,
+            "cidr_blocks": ["0.0.0.0/0"],
+        }
+    ],
+)
+
+
 aws.iam.RolePolicy(
     "aurora-user-creation-lambda-ssm-read-policy",
     role=lambda_role.id,
@@ -547,6 +562,22 @@ aws.iam.RolePolicy(
     ),
 )
 
+aws.ec2.SecurityGroupRule(
+    "aurora-allow-lambda",
+    type="ingress",
+    security_group_id=aurora_security_group.id,
+    from_port=5432,
+    to_port=5432,
+    protocol="tcp",
+    source_security_group_id=lambda_sg.id,
+)
+
+aws.iam.RolePolicyAttachment(
+    "aurora-user-creation-lambda-vpc-access",
+    role=lambda_role.name,
+    policy_arn="arn:aws:iam::aws:policy/service-role/AWSLambdaVPCAccessExecutionRole",
+)
+
 lambda_fn = aws.lambda_.Function(
     "data-in-pipeline-create-aurora-user-lambda",
     role=lambda_role.arn,
@@ -554,6 +585,10 @@ lambda_fn = aws.lambda_.Function(
     handler="handler.handler",
     timeout=15,
     memory_size=256,
+    vpc_config={
+        "subnet_ids": private_subnets,
+        "security_group_ids": [lambda_sg.id],
+    },
     code=pulumi.AssetArchive(
         {
             ".": pulumi.FileArchive(
