@@ -1,7 +1,7 @@
 import uuid
 from datetime import datetime, timezone
 from http import HTTPStatus
-from typing import Generic, TypeVar
+from typing import TypeVar
 
 from pydantic import BaseModel, Field
 
@@ -13,7 +13,7 @@ class ExtractedMetadata(BaseModel):
     http_status: HTTPStatus
 
 
-class ExtractedEnvelope(BaseModel, Generic[ExtractedData]):
+class ExtractedEnvelope[ExtractedData](BaseModel):
     """Envelope for extracted data from any source document."""
 
     data: ExtractedData
@@ -29,7 +29,7 @@ class ExtractedEnvelope(BaseModel, Generic[ExtractedData]):
     flow_run_id: str
 
 
-class Identified(BaseModel, Generic[ExtractedData]):
+class Identified[ExtractedData](BaseModel):
     data: ExtractedData
     id: str
     source: str
