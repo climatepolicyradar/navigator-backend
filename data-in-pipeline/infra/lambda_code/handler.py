@@ -34,7 +34,7 @@ def _load_sql(path: str, identifiers: dict[str, str]):
     :return: SQL object with safely injected identifiers
     :rtype: sql.SQL
     """
-    with open(path, "r", encoding="utf-8") as f:
+    with open(path, encoding="utf-8") as f:
         sql_template = f.read()
 
     # For string comparison in DO block, we need a literal
