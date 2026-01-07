@@ -10,7 +10,7 @@ config = pulumi.Config()
 environment = pulumi.get_stack()
 name = pulumi.get_project()
 
-ROOT_DIR = Path(__file__).parent
+ROOT_DIR = Path(__file__).parent.parent
 
 #######################################################################
 # Create the ECR repository for the Data In Pipeline.
@@ -591,11 +591,7 @@ lambda_fn = aws.lambda_.Function(
         "security_group_ids": [lambda_sg.id],
     },
     code=pulumi.AssetArchive(
-        {
-            ".": pulumi.FileArchive(
-                os.path.join(ROOT_DIR, "lambda_code", ".lambda_build")
-            )
-        }
+        {".": pulumi.FileArchive(os.path.join(ROOT_DIR, ".lambda_build"))}
     ),
     environment=aws.lambda_.FunctionEnvironmentArgs(
         variables={
