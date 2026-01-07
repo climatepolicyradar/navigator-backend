@@ -242,6 +242,7 @@ data_in_pipeline_role_policy = aws.iam.RolePolicy(
         ]
     ).json,
 )
+pulumi.export("data_in_pipeline_role_id", data_in_pipeline_role.id)
 
 # Construct IAM policy with cluster resource ID using apply to handle Output
 app_runner_connect_role_policy = aws.iam.RolePolicy(
