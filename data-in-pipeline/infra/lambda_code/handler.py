@@ -24,7 +24,7 @@ def _get_secret(arn: str) -> dict[str, Any]:
 
 
 def _load_sql(path: str, identifiers: dict[str, str]):
-    """Load SQL file and safely inject identifiers using psycopg.sql.
+    """Load SQL file and safely inject identifiers using psycopg2.sql.
 
     :param path: Path to the SQL file
     :type path: str
