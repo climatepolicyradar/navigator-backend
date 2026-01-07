@@ -17,118 +17,140 @@ permissions:
   contents: read
 
 jobs:
-  determine-changed-services:
+  code-quality:
+    permissions:
+      # For trunk to post annotations
+      checks: write
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v6
+      - uses: astral-sh/setup-uv@v7
+      - run: uv sync --all-packages
+      - name: Trunk Check
+        uses: trunk-io/trunk-action@v1
+        with:
+          arguments: --ci
+
+  changes:
     runs-on: ubuntu-latest
     outputs:
-      microservices: ${{ steps.services.outputs.microservices }}
-      data-in-pipeline: ${{ steps.services.outputs.data-in-pipeline }}
+      services: ${{ steps.filter.outputs.changes }}
+
     steps:
       - uses: actions/checkout@v6
       - uses: dorny/paths-filter@v3
-        id: changes
+        id: filter
         with:
-          # These provide dynamic outputs, which aren't recognised by the IDE for
-          # some reason but are very much valid.
           filters: |
             families-api:
-              - families-api/**
-              - api/**
+              - 'families-api/**'
+              - 'api/**'
+              - 'uv.lock'
+              - pyproject.toml
 
             geographies-api:
-              - geographies-api/**
-              - api/**
+              - 'geographies-api/**'
+              - 'api/**'
+              - 'uv.lock'
+              - pyproject.toml
 
             concepts-api:
-              - concepts-api/**
-              - api/**
+              - 'concepts-api/**'
+              - 'api/**'
+              - 'uv.lock'
+              - pyproject.toml
 
             data-in-pipeline:
-              - data-in-pipeline/**
-              - api/**
+              - 'data-in-pipeline/**'
+              - 'api/**'
+              - 'uv.lock'
+              - pyproject.toml
 
             data-in-pipeline-load-api:
-              - data-in-pipeline-load-api/**
-              - api/**
+              - 'data-in-pipeline-load-api/**'
+              - 'api/**'
+              - 'uv.lock'
+              - pyproject.toml
 
-      - id: services
-        run: |
-          MICROSERVICES=()
-          DATA_IN_PIPELINE=false
-          if [ "${{ steps.changes.outputs.families-api }}" == "true" ]; then
-            MICROSERVICES+=("families-api")
-          fi
-          if [ "${{ steps.changes.outputs.geographies-api }}" == "true" ]; then
-            MICROSERVICES+=("geographies-api")
-          fi
-          if [ "${{ steps.changes.outputs.concepts-api }}" == "true" ]; then
-            MICROSERVICES+=("concepts-api")
-          fi
-          if [ "${{ steps.changes.outputs.data-in-pipeline-load-api }}" == "true" ]; then
-            MICROSERVICES+=("data-in-pipeline-load-api")
-          fi
-          if [ "${{ steps.changes.outputs.data-in-pipeline }}" == "true" ]; then
-            DATA_IN_PIPELINE=true
-          fi
-
-          # If no services detected but workflow was triggered (changes outside backend-api),
-          # assume root-level changes and trigger all services as a safety measure
-          if [ ${#MICROSERVICES[@]} -eq 0 ] && [ "$DATA_IN_PIPELINE" == "false" ]; then
-            MICROSERVICES+=("families-api" "geographies-api" "concepts-api")
-            DATA_IN_PIPELINE=true
-            echo "No specific services changes detected, but workflow was triggered - assuming root-level changes, triggering all services"
-          fi
-
-          echo "microservices=$(jq -c -n '$ARGS.positional' --args "${MICROSERVICES[@]}")" >> $GITHUB_OUTPUT
-          echo "data-in-pipeline=$DATA_IN_PIPELINE" >> $GITHUB_OUTPUT
-          echo "Changed microservices: ${MICROSERVICES[@]}"
-
-  test-microservices:
-    needs: determine-changed-services
-    if: needs.determine-changed-services.outputs.microservices != '[]'
+  test:
+    needs: changes
     runs-on: ubuntu-latest
     strategy:
       matrix:
-        service: ${{ fromJSON(needs.determine-changed-services.outputs.microservices) }}
+        service: ${{ fromJSON(needs.changes.outputs.services) }}
+      fail-fast: false
     steps:
       - uses: actions/checkout@v6
       - uses: extractions/setup-just@v3
       - run: just test ${{ matrix.service }}
 
-  test-data-in-pipeline:
-    needs: determine-changed-services
-    if: needs.determine-changed-services.outputs.data-in-pipeline == 'true'
-    runs-on: ubuntu-latest
-    defaults:
-      run:
-        working-directory: data-in-pipeline
-    steps:
-      - uses: actions/checkout@v6
-      - uses: extractions/setup-just@v3
-      - run: just test-ci
-
-  deploy-feature-branch:
-    needs: [test-microservices, determine-changed-services]
-    # a. deploys the service to staging if the pull request is (re)labelled with 'deploy:staging'
-    if: contains(github.event.pull_request.labels.*.name, 'deploy:staging') && needs.determine-changed-services.outputs.microservices != '[]'
+  deploy:
+    needs: [changes, test]
     runs-on: ubuntu-latest
     strategy:
       matrix:
         environment: [staging]
-        service: ${{ fromJSON(needs.determine-changed-services.outputs.microservices) }}
+        service: ${{ fromJSON(needs.changes.outputs.services) }}
+      fail-fast: false
     environment: ${{ matrix.environment }}
+
     steps:
       - uses: actions/checkout@v6
-      - uses: extractions/setup-just@v3
       - uses: aws-actions/configure-aws-credentials@v5
         with:
           role-to-assume: arn:aws:iam::${{ secrets.AWS_ACCOUNT_ID }}:role/navigator-backend-github-actions-deploy
           role-session-name: GitHub_to_AWS_via_FederatedOIDC_${{ matrix.environment }}
           aws-region: eu-west-1
+
       - uses: aws-actions/amazon-ecr-login@v2
+
       # we use python / uv in some build scripts and testing
       - uses: actions/setup-python@v6
         with:
           python-version: "3.12"
+
       - uses: astral-sh/setup-uv@v7
       - run: uv sync --all-packages
-      - run: just deploy ${{ matrix.service }} ${{ matrix.environment }} latest
+
+      - id: pr_data
+        run: |
+          COMMIT_SHA=$(git rev-parse HEAD)
+          PR_NUMBER=$(gh api repos/${{ github.repository }}/commits/$COMMIT_SHA/pulls --jq '.[0].number' || echo "")
+          if [ -z "$PR_NUMBER" ]; then
+            echo "pr_number=" >> $GITHUB_OUTPUT
+            echo "pr_link=" >> $GITHUB_OUTPUT
+          else
+            echo "pr_number=$PR_NUMBER" >> $GITHUB_OUTPUT
+            echo "pr_link=https://github.com/${{ github.repository }}/pull/$PR_NUMBER" >> $GITHUB_OUTPUT
+          fi
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+
+      - run: |
+          COMMIT_URL="https://github.com/${{ github.repository }}/commit/${{ github.sha }}"
+          COMMIT_SHORT=$(echo "${{ github.sha }}" | cut -c1-7)
+          if [ -n "${{ steps.pr_data.outputs.pr_link }}" ]; then
+            PR_URL="https://github.com/${{ github.repository }}/pull/${{ steps.pr_data.outputs.pr_number }}"
+            PR_NUM="${{ steps.pr_data.outputs.pr_number }}"
+            MESSAGE="🚀 Deploying feature-branch <$PR_URL|PR #$PR_NUM> (<$COMMIT_URL|$COMMIT_SHORT>) *${{ matrix.service }}* to ${{ matrix.environment }}"
+          else
+            MESSAGE="🚀 Deploying feature-branch <$COMMIT_URL|$COMMIT_SHORT> *${{ matrix.service }}* to ${{ matrix.environment }}"
+          fi
+          jq -n --arg msg "$MESSAGE" '{text: $msg, mrkdwn: true}' > slack-payload.json
+
+      - uses: slackapi/slack-github-action@v2.1.1
+        with:
+          webhook: ${{ secrets.ENV_UPDATES_CHANNEL_SLACK_WEBHOOK_URL }}
+          webhook-type: incoming-webhook
+          payload-file-path: slack-payload.json
+
+      - uses: extractions/setup-just@v3
+      - run: |
+          just deploy ${{ matrix.service }} ${{ matrix.environment }} latest
+          just deploy ${{ matrix.service }} ${{ matrix.environment }} ${{ github.sha }}
+        env:
+          AWS_ENV: prod
+          AWS_REGION: eu-west-1
+          DOCKER_REGISTRY: ${{ secrets.DOCKER_REGISTRY_PRODUCTION }}
+          PREFECT_API_KEY: ${{ secrets.PREFECT_API_KEY }}
+          PREFECT_API_URL: ${{ secrets.PREFECT_API_URL }}
