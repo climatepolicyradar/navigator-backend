@@ -8,7 +8,7 @@ target-version = "py312"
 # https://docs.astral.sh/ruff/rules/#pyupgrade-up
 # https://docs.astral.sh/ruff/rules/#pylint-pl
 # https://docs.astral.sh/ruff/rules/#tryceratops-try
-select = ["D", "E", "F", "TID252", "UP", "PL", "TRY400"]
+select = ["D3", "E", "F", "TID252", "UP", "PL", "TRY400"]
 
 # Never enforce `E501` (line length violations). This should be handled by formatters.
 ignore = ["E501", "TRY003", "D213", "D415"]
