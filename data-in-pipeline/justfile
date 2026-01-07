@@ -1,6 +1,8 @@
-dev: uv run python -m app.dev
+dev: 
+    uv run python -m app.dev
 
-test: uv run pytest -vv
+test: 
+    uv run pytest -vv
 
 test-ci:
     #!/usr/bin/env bash
