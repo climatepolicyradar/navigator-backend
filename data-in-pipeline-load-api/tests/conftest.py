@@ -1,9 +1,13 @@
+import os
+
 import pytest
+from alembic.config import Config
 from pytest_mock_resources import PostgresConfig, create_postgres_fixture
 from sqlalchemy import create_engine
 from sqlalchemy.orm import sessionmaker
 from sqlalchemy_utils import create_database, database_exists, drop_database
 
+from app.db.base import get_library_path
 from app.db.run_migrations import run_migrations
 
 
@@ -17,6 +21,15 @@ def pmr_postgres_config():
 test_engine_fixture = create_postgres_fixture()
 
 template_engine_fixture = create_postgres_fixture(scope="session")
+
+
+@pytest.fixture
+def alembic_config():
+    """Configure pytest-alembic to use our alembic.ini location."""
+    script_directory = get_library_path()
+    alembic_ini_path = os.path.join(script_directory, "alembic.ini")
+    alembic_cfg = Config(alembic_ini_path)
+    return alembic_cfg
 
 
 @pytest.fixture(scope="session")
