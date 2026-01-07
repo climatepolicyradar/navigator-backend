@@ -132,9 +132,9 @@ jobs:
           if [ -n "${{ steps.pr_data.outputs.pr_link }}" ]; then
             PR_URL="https://github.com/${{ github.repository }}/pull/${{ steps.pr_data.outputs.pr_number }}"
             PR_NUM="${{ steps.pr_data.outputs.pr_number }}"
-            MESSAGE="🚀 Deploying <$PR_URL|PR #$PR_NUM> (<$COMMIT_URL|$COMMIT_SHORT>) *${{ matrix.service }}* to ${{ matrix.environment }}"
+            MESSAGE="🚀 Deploying feature-branch <$PR_URL|PR #$PR_NUM> (<$COMMIT_URL|$COMMIT_SHORT>) *${{ matrix.service }}* to ${{ matrix.environment }}"
           else
-            MESSAGE="🚀 Deploying <$COMMIT_URL|$COMMIT_SHORT> *${{ matrix.service }}* to ${{ matrix.environment }}"
+            MESSAGE="🚀 Deploying feature-branch <$COMMIT_URL|$COMMIT_SHORT> *${{ matrix.service }}* to ${{ matrix.environment }}"
           fi
           jq -n --arg msg "$MESSAGE" '{text: $msg, mrkdwn: true}' > slack-payload.json
 
