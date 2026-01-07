@@ -289,8 +289,8 @@ def test_transform_navigator_family_with_single_matching_document(
                 type="status",
                 label=Label(
                     type="status",
-                    id="Canonical",
-                    title="Canonical",
+                    id="Principal",
+                    title="Principal",
                 ),
             ),
             DocumentLabelRelationship(
@@ -563,8 +563,8 @@ def test_transform_navigator_family_with_litigation_corpus_type(
                 type="status",
                 label=Label(
                     type="status",
-                    id="Canonical",
-                    title="Canonical",
+                    id="Principal",
+                    title="Principal",
                 ),
             ),
             DocumentLabelRelationship(
@@ -719,8 +719,8 @@ def test_transform_navigator_family_with_multilateral_climate_fund_project(
                 type="status",
                 label=Label(
                     type="status",
-                    id="Canonical",
-                    title="Canonical",
+                    id="Principal",
+                    title="Principal",
                 ),
             ),
             DocumentLabelRelationship(
