@@ -440,7 +440,8 @@ data_in_pipeline_load_api_apprunner_service = aws.apprunner.Service(
     auto_scaling_configuration_arn=config.require("auto_scaling_configuration_arn"),
     health_check_configuration=aws.apprunner.ServiceHealthCheckConfigurationArgs(
         interval=10,
-        protocol="TCP",
+        protocol="HTTP",
+        path="/load/health",
         timeout=5,
     ),
     instance_configuration=aws.apprunner.ServiceInstanceConfigurationArgs(
