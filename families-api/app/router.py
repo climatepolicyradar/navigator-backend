@@ -75,7 +75,7 @@ def read_families(
 
     families = session.exec(
         Family.eager_loaded_select()
-        .order_by(desc(Family.last_modified))
+        .order_by(desc(Family.last_modified), desc(Family.import_id))
         .offset(offset)
         .limit(limit)
         .where(*filters)

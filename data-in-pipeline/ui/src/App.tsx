@@ -103,7 +103,9 @@ function App() {
               <Toaster />
               <RefineKbar />
               <UnsavedChangesNotifier />
-              <DocumentTitleHandler />
+              <DocumentTitleHandler
+                handler={() => `Policy Radar | Documents explorer`}
+              />
             </Refine>
             <DevtoolsPanel />
           </DevtoolsProvider>

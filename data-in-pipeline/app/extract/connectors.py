@@ -51,6 +51,7 @@ class NavigatorCollection(BaseModel):
 class NavigatorFamily(BaseModel):
     import_id: str
     title: str
+    summary: str
     documents: list[NavigatorDocument]
     corpus: NavigatorCorpus
     events: list[NavigatorEvent]

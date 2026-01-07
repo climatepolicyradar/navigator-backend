@@ -1,127 +1,137 @@
 name: Merge to main
 on:
+  workflow_dispatch: {}
   push:
     branches:
       - main
+    paths:
+      - "!backend-api/**"
+      - "**"
+
 permissions:
   id-token: write
   contents: read
 jobs:
-  release-backend-api:
-    defaults:
-      run:
-        working-directory: backend-api
+  changes:
     runs-on: ubuntu-latest
+    outputs:
+      services: ${{ steps.filter.outputs.changes }}
+
     steps:
       - uses: actions/checkout@v6
-
-      # build
-      - run: make build
-
-      # release
-      # most of this is taken from
-      # https://docs.github.com/en/actions/use-cases-and-examples/deploying/deploying-to-amazon-elastic-container-service#creating-the-workflow
-      - name: Configure AWS credentials (staging)
-        uses: aws-actions/configure-aws-credentials@v5
+      - uses: dorny/paths-filter@v3
+        id: filter
         with:
-          role-to-assume: arn:aws:iam::${{ secrets.AWS_ACCOUNT_ID_STAGING }}:role/navigator-backend-new-github-actions
-          role-session-name: GitHub_to_AWS_via_FederatedOIDC
-          aws-region: eu-west-1
+          filters: |
+            families-api:
+              - 'families-api/**'
+              - 'api/**'
+              - 'uv.lock'
+              - pyproject.toml
 
-      - name: Login to Amazon ECR (staging)
-        id: login-ecr-staging
-        uses: aws-actions/amazon-ecr-login@62f4f872db3836360b72999f4b87f1ff13310f3a
+            geographies-api:
+              - 'geographies-api/**'
+              - 'api/**'
+              - 'uv.lock'
+              - pyproject.toml
 
-      - name: Build, tag, and push image to Amazon ECR (staging)
-        id: build-image-staging
-        env:
-          ECR_REGISTRY: ${{ secrets.DOCKER_REGISTRY_STAGING }}
-          IMAGE_TAG: ${{ github.sha }}
-          AWS_REGION: eu-west-1
-          ECR_REPOSITORY: navigator-backend
-        run: |
-          docker tag navigator-backend $ECR_REGISTRY/$ECR_REPOSITORY:$IMAGE_TAG
-          docker push $ECR_REGISTRY/$ECR_REPOSITORY:$IMAGE_TAG
-          echo "image=$ECR_REGISTRY/$ECR_REPOSITORY:$IMAGE_TAG" >> $GITHUB_OUTPUT
+            concepts-api:
+              - 'concepts-api/**'
+              - 'api/**'
+              - 'uv.lock'
+              - pyproject.toml
 
-      - name: Configure aws credentials (production)
-        uses: aws-actions/configure-aws-credentials@v5
-        with:
-          role-to-assume: arn:aws:iam::${{ secrets.AWS_ACCOUNT_ID_PROD }}:role/navigator-backend-new-github-actions
-          role-session-name: GitHub_to_AWS_via_FederatedOIDC
-          aws-region: eu-west-1
+            data-in-pipeline:
+              - 'data-in-pipeline/**'
+              - 'api/**'
+              - 'uv.lock'
+              - pyproject.toml
 
-      - name: Login to Amazon ECR (production)
-        id: login-ecr-prod
-        uses: aws-actions/amazon-ecr-login@62f4f872db3836360b72999f4b87f1ff13310f3a
+            data-in-pipeline-load-api:
+              - 'data-in-pipeline-load-api/**'
+              - 'api/**'
+              - 'uv.lock'
+              - pyproject.toml
 
-      - name: Build, tag, and push image to Amazon ECR (production)
-        id: build-image-prod
-        env:
-          ECR_REGISTRY: ${{ secrets.DOCKER_REGISTRY_PROD }}
-          IMAGE_TAG: ${{ github.sha }}
-          AWS_REGION: eu-west-1
-          ECR_REPOSITORY: navigator-backend
-        run: |
-          docker tag navigator-backend $ECR_REGISTRY/$ECR_REPOSITORY:$IMAGE_TAG
-          docker push $ECR_REGISTRY/$ECR_REPOSITORY:$IMAGE_TAG
-          echo "image=$ECR_REGISTRY/$ECR_REPOSITORY:$IMAGE_TAG" >> $GITHUB_OUTPUT
-
-  test-microservices:
+  test:
+    needs: changes
     runs-on: ubuntu-latest
     strategy:
       matrix:
-        service: [families-api, geographies-api, concepts-api]
+        service: ${{ fromJSON(needs.changes.outputs.services) }}
+      fail-fast: false
     steps:
       - uses: actions/checkout@v6
       - uses: extractions/setup-just@v3
       - run: just test ${{ matrix.service }}
-  deploy-microservices:
-    needs: test-microservices
+
+  deploy:
+    needs: [changes, test]
     runs-on: ubuntu-latest
     strategy:
       matrix:
-        environment: [staging, production]
+        environment: [production]
+        service: ${{ fromJSON(needs.changes.outputs.services) }}
+      fail-fast: false
     environment: ${{ matrix.environment }}
-    env:
-      SERVICES: families-api geographies-api concepts-api data-in-pipeline
+
     steps:
       - uses: actions/checkout@v6
-      - uses: extractions/setup-just@v3
       - uses: aws-actions/configure-aws-credentials@v5
         with:
           role-to-assume: arn:aws:iam::${{ secrets.AWS_ACCOUNT_ID }}:role/navigator-backend-github-actions-deploy
           role-session-name: GitHub_to_AWS_via_FederatedOIDC_${{ matrix.environment }}
           aws-region: eu-west-1
+
       - uses: aws-actions/amazon-ecr-login@v2
+
       # we use python / uv in some build scripts and testing
       - uses: actions/setup-python@v6
         with:
           python-version: "3.12"
+
       - uses: astral-sh/setup-uv@v7
       - run: uv sync --all-packages
-      - run: |
-          for service in $SERVICES; do
-            just deploy $service ${{ matrix.environment }} latest
-            just deploy $service ${{ matrix.environment }} ${{ github.sha }}
-          done
 
-  deploy-prefect:
-    needs: deploy-microservices
-    runs-on: ubuntu-latest
-    steps:
-      - uses: actions/checkout@v6
+      - id: pr_data
+        run: |
+          COMMIT_SHA=$(git rev-parse HEAD)
+          PR_NUMBER=$(gh api repos/${{ github.repository }}/commits/$COMMIT_SHA/pulls --jq '.[0].number' || echo "")
+          if [ -z "$PR_NUMBER" ]; then
+            echo "pr_number=" >> $GITHUB_OUTPUT
+            echo "pr_link=" >> $GITHUB_OUTPUT
+          else
+            echo "pr_number=$PR_NUMBER" >> $GITHUB_OUTPUT
+            echo "pr_link=https://github.com/${{ github.repository }}/pull/$PR_NUMBER" >> $GITHUB_OUTPUT
+          fi
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+
+      - run: |
+          COMMIT_URL="https://github.com/${{ github.repository }}/commit/${{ github.sha }}"
+          COMMIT_SHORT=$(echo "${{ github.sha }}" | cut -c1-7)
+          if [ -n "${{ steps.pr_data.outputs.pr_link }}" ]; then
+            PR_URL="https://github.com/${{ github.repository }}/pull/${{ steps.pr_data.outputs.pr_number }}"
+            PR_NUM="${{ steps.pr_data.outputs.pr_number }}"
+            MESSAGE="🚀 Deploying <$PR_URL|PR #$PR_NUM> (<$COMMIT_URL|$COMMIT_SHORT>) *${{ matrix.service }}* to ${{ matrix.environment }}"
+          else
+            MESSAGE="🚀 Deploying <$COMMIT_URL|$COMMIT_SHORT> *${{ matrix.service }}* to ${{ matrix.environment }}"
+          fi
+          jq -n --arg msg "$MESSAGE" '{text: $msg, mrkdwn: true}' > slack-payload.json
+
+      - uses: slackapi/slack-github-action@v2.1.1
+        with:
+          webhook: ${{ secrets.ENV_UPDATES_CHANNEL_SLACK_WEBHOOK_URL }}
+          webhook-type: incoming-webhook
+          payload-file-path: slack-payload.json
+
       - uses: extractions/setup-just@v3
-      - uses: astral-sh/setup-uv@v7
-      - name: Sync dependencies
-        working-directory: data-in-pipeline
-        run: uv sync
-      - name: Deploy the updated data in pipeline to Prefect
-        working-directory: data-in-pipeline
+      - run: |
+          just deploy ${{ matrix.service }} ${{ matrix.environment }} latest
+          just deploy ${{ matrix.service }} ${{ matrix.environment }} ${{ github.sha }}
         env:
           AWS_ENV: prod
           AWS_REGION: eu-west-1
           DOCKER_REGISTRY: ${{ secrets.DOCKER_REGISTRY_PRODUCTION }}
           PREFECT_API_KEY: ${{ secrets.PREFECT_API_KEY }}
           PREFECT_API_URL: ${{ secrets.PREFECT_API_URL }}
-        run: just deploy-to-prefect

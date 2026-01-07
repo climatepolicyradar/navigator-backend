@@ -258,6 +258,18 @@ def _transform_family_corpus_organisation(
 def _transform_navigator_family(navigator_family: NavigatorFamily) -> Document:
     labels: list[DocumentLabelRelationship] = []
 
+    # All families are currently canonical
+    labels.append(
+        DocumentLabelRelationship(
+            type="status",
+            label=Label(
+                type="status",
+                id="Canonical",
+                title="Canonical",
+            ),
+        )
+    )
+
     corpus_type_to_entity_type_map = {
         "Laws and Policies": "Laws and policies",
         "Litigation": "Legal case",
@@ -268,8 +280,6 @@ def _transform_navigator_family(navigator_family: NavigatorFamily) -> Document:
         "GEF": "Multilateral climate fund project",
         "GCF": "Multilateral climate fund project",
     }
-    labels = []
-
     entity_type = corpus_type_to_entity_type_map.get(
         navigator_family.corpus.corpus_type.name
     )
@@ -370,6 +380,7 @@ def _transform_navigator_family(navigator_family: NavigatorFamily) -> Document:
     return Document(
         id=navigator_family.import_id,
         title=navigator_family.title,
+        description=navigator_family.summary,
         labels=labels,
     )
 

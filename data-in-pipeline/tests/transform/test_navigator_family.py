@@ -31,6 +31,7 @@ def navigator_family_with_single_matching_document() -> Identified[NavigatorFami
         data=NavigatorFamily(
             import_id="family",
             title="Matching title on family and document and collection",
+            summary="Family summary",
             corpus=NavigatorCorpus(
                 import_id="corpus",
                 corpus_type=NavigatorCorpusType(name="corpus_type"),
@@ -158,6 +159,7 @@ def navigator_family_with_no_matching_transformations() -> Identified[NavigatorF
         data=NavigatorFamily(
             import_id="123",
             title="No matches for this family or documents",
+            summary="Family summary",
             corpus=NavigatorCorpus(
                 import_id="123",
                 corpus_type=NavigatorCorpusType(name="corpus_type"),
@@ -180,6 +182,7 @@ def navigator_family_with_litigation_corpus_type() -> Identified[NavigatorFamily
         data=NavigatorFamily(
             import_id="family",
             title="Litigation family",
+            summary="Family summary",
             corpus=NavigatorCorpus(
                 import_id="Academic.corpus.Litigation.n0000",
                 corpus_type=NavigatorCorpusType(name="Litigation"),
@@ -223,6 +226,7 @@ def navigator_family_multilateral_climate_fund_project() -> Identified[Navigator
         data=NavigatorFamily(
             import_id="family",
             title="Multilateral climate fund project",
+            summary="Family summary",
             corpus=NavigatorCorpus(
                 import_id="MCF.corpus.AF.n0000",
                 corpus_type=NavigatorCorpusType(name="AF"),
@@ -276,208 +280,208 @@ def test_transform_navigator_family_with_single_matching_document(
     navigator_family_with_single_matching_document: Identified[NavigatorFamily],
 ):
     result = transform_navigator_family(navigator_family_with_single_matching_document)
+    expected_document_from_family = Document(
+        id="family",
+        title="Matching title on family and document and collection",
+        description="Family summary",
+        labels=[
+            DocumentLabelRelationship(
+                type="status",
+                label=Label(
+                    type="status",
+                    id="Canonical",
+                    title="Canonical",
+                ),
+            ),
+            DocumentLabelRelationship(
+                type="activity_status",
+                timestamp=datetime.datetime(2020, 1, 1),
+                label=Label(
+                    type="activity_status",
+                    id="Amended",
+                    title="Amended",
+                ),
+            ),
+            DocumentLabelRelationship(
+                type="activity_status",
+                timestamp=datetime.datetime(2020, 1, 1),
+                label=Label(
+                    type="activity_status",
+                    id="Appealed",
+                    title="Appealed",
+                ),
+            ),
+            DocumentLabelRelationship(
+                type="activity_status",
+                timestamp=datetime.datetime(2020, 1, 1),
+                label=Label(
+                    type="activity_status",
+                    id="Closed",
+                    title="Closed",
+                ),
+            ),
+            DocumentLabelRelationship(
+                type="activity_status",
+                timestamp=datetime.datetime(2020, 1, 1),
+                label=Label(
+                    type="activity_status",
+                    id="Declaration of climate emergency",
+                    title="Declaration of climate emergency",
+                ),
+            ),
+            DocumentLabelRelationship(
+                type="activity_status",
+                timestamp=datetime.datetime(2020, 1, 1),
+                label=Label(type="activity_status", id="Dismissed", title="Dismissed"),
+            ),
+            DocumentLabelRelationship(
+                type="activity_status",
+                timestamp=datetime.datetime(2020, 1, 1),
+                label=Label(
+                    type="activity_status",
+                    id="Entered into force",
+                    title="Entered into force",
+                ),
+            ),
+            DocumentLabelRelationship(
+                type="activity_status",
+                timestamp=datetime.datetime(2020, 1, 1),
+                label=Label(type="activity_status", id="Filing", title="Filing"),
+            ),
+            DocumentLabelRelationship(
+                type="activity_status",
+                timestamp=datetime.datetime(2020, 1, 1),
+                label=Label(type="activity_status", id="Granted", title="Granted"),
+            ),
+            DocumentLabelRelationship(
+                type="activity_status",
+                timestamp=datetime.datetime(2020, 1, 1),
+                label=Label(
+                    type="activity_status",
+                    id="Implementation details",
+                    title="Implementation details",
+                ),
+            ),
+            DocumentLabelRelationship(
+                type="activity_status",
+                timestamp=datetime.datetime(2020, 1, 1),
+                label=Label(
+                    type="activity_status",
+                    id="International agreement",
+                    title="International agreement",
+                ),
+            ),
+            DocumentLabelRelationship(
+                type="activity_status",
+                timestamp=datetime.datetime(2020, 1, 1),
+                label=Label(
+                    type="activity_status",
+                    id="Net zero pledge",
+                    title="Net zero pledge",
+                ),
+            ),
+            DocumentLabelRelationship(
+                type="activity_status",
+                timestamp=datetime.datetime(2020, 1, 1),
+                label=Label(type="activity_status", id="Other", title="Other"),
+            ),
+            DocumentLabelRelationship(
+                type="activity_status",
+                timestamp=datetime.datetime(2020, 1, 1),
+                label=Label(
+                    type="activity_status",
+                    id="Passed/Approved",
+                    title="Passed/Approved",
+                ),
+            ),
+            DocumentLabelRelationship(
+                type="activity_status",
+                timestamp=datetime.datetime(2020, 1, 1),
+                label=Label(
+                    type="activity_status",
+                    id="Repealed/Replaced",
+                    title="Repealed/Replaced",
+                ),
+            ),
+            DocumentLabelRelationship(
+                type="activity_status",
+                timestamp=datetime.datetime(2020, 1, 1),
+                label=Label(type="activity_status", id="Set", title="Set"),
+            ),
+            DocumentLabelRelationship(
+                type="activity_status",
+                timestamp=datetime.datetime(2020, 1, 1),
+                label=Label(type="activity_status", id="Settled", title="Settled"),
+            ),
+            DocumentLabelRelationship(
+                type="activity_status",
+                timestamp=datetime.datetime(2020, 1, 1),
+                label=Label(type="activity_status", id="Updated", title="Updated"),
+            ),
+            DocumentLabelRelationship(
+                type="provider",
+                label=Label(
+                    type="agent",
+                    id="Grantham Research Institute",
+                    title="Grantham Research Institute",
+                ),
+            ),
+        ],
+        relationships=[
+            DocumentDocumentRelationship(
+                type="member_of",
+                document=DocumentWithoutRelationships(
+                    id="collection",
+                    title="Collection title",
+                    labels=[],
+                ),
+            ),
+            DocumentDocumentRelationship(
+                type="has_version",
+                document=DocumentWithoutRelationships(
+                    id="document",
+                    title="Matching title on family and document and collection",
+                    labels=[
+                        DocumentLabelRelationship(
+                            type="entity_type",
+                            label=Label(
+                                type="entity_type",
+                                id="Supporting legislation",
+                                title="Supporting legislation",
+                            ),
+                        ),
+                        DocumentLabelRelationship(
+                            type="entity_type",
+                            label=Label(
+                                type="entity_type",
+                                id="National drought plan (ndp)",
+                                title="National drought plan (ndp)",
+                            ),
+                        ),
+                        DocumentLabelRelationship(
+                            type="provider",
+                            label=Label(
+                                type="agent",
+                                id="Grantham Research Institute",
+                                title="Grantham Research Institute",
+                            ),
+                        ),
+                    ],
+                ),
+            ),
+            DocumentDocumentRelationship(
+                type="has_version",
+                document=DocumentWithoutRelationships(
+                    id="collection_matching",
+                    title="Matching title on family and document and collection",
+                    labels=[],
+                ),
+            ),
+        ],
+    )
     assert result == Success(
         [
-            Document(
-                id="family",
-                title="Matching title on family and document and collection",
-                labels=[
-                    DocumentLabelRelationship(
-                        type="activity_status",
-                        timestamp=datetime.datetime(2020, 1, 1),
-                        label=Label(
-                            type="activity_status",
-                            id="Amended",
-                            title="Amended",
-                        ),
-                    ),
-                    DocumentLabelRelationship(
-                        type="activity_status",
-                        timestamp=datetime.datetime(2020, 1, 1),
-                        label=Label(
-                            type="activity_status",
-                            id="Appealed",
-                            title="Appealed",
-                        ),
-                    ),
-                    DocumentLabelRelationship(
-                        type="activity_status",
-                        timestamp=datetime.datetime(2020, 1, 1),
-                        label=Label(
-                            type="activity_status",
-                            id="Closed",
-                            title="Closed",
-                        ),
-                    ),
-                    DocumentLabelRelationship(
-                        type="activity_status",
-                        timestamp=datetime.datetime(2020, 1, 1),
-                        label=Label(
-                            type="activity_status",
-                            id="Declaration of climate emergency",
-                            title="Declaration of climate emergency",
-                        ),
-                    ),
-                    DocumentLabelRelationship(
-                        type="activity_status",
-                        timestamp=datetime.datetime(2020, 1, 1),
-                        label=Label(
-                            type="activity_status", id="Dismissed", title="Dismissed"
-                        ),
-                    ),
-                    DocumentLabelRelationship(
-                        type="activity_status",
-                        timestamp=datetime.datetime(2020, 1, 1),
-                        label=Label(
-                            type="activity_status",
-                            id="Entered into force",
-                            title="Entered into force",
-                        ),
-                    ),
-                    DocumentLabelRelationship(
-                        type="activity_status",
-                        timestamp=datetime.datetime(2020, 1, 1),
-                        label=Label(
-                            type="activity_status", id="Filing", title="Filing"
-                        ),
-                    ),
-                    DocumentLabelRelationship(
-                        type="activity_status",
-                        timestamp=datetime.datetime(2020, 1, 1),
-                        label=Label(
-                            type="activity_status", id="Granted", title="Granted"
-                        ),
-                    ),
-                    DocumentLabelRelationship(
-                        type="activity_status",
-                        timestamp=datetime.datetime(2020, 1, 1),
-                        label=Label(
-                            type="activity_status",
-                            id="Implementation details",
-                            title="Implementation details",
-                        ),
-                    ),
-                    DocumentLabelRelationship(
-                        type="activity_status",
-                        timestamp=datetime.datetime(2020, 1, 1),
-                        label=Label(
-                            type="activity_status",
-                            id="International agreement",
-                            title="International agreement",
-                        ),
-                    ),
-                    DocumentLabelRelationship(
-                        type="activity_status",
-                        timestamp=datetime.datetime(2020, 1, 1),
-                        label=Label(
-                            type="activity_status",
-                            id="Net zero pledge",
-                            title="Net zero pledge",
-                        ),
-                    ),
-                    DocumentLabelRelationship(
-                        type="activity_status",
-                        timestamp=datetime.datetime(2020, 1, 1),
-                        label=Label(type="activity_status", id="Other", title="Other"),
-                    ),
-                    DocumentLabelRelationship(
-                        type="activity_status",
-                        timestamp=datetime.datetime(2020, 1, 1),
-                        label=Label(
-                            type="activity_status",
-                            id="Passed/Approved",
-                            title="Passed/Approved",
-                        ),
-                    ),
-                    DocumentLabelRelationship(
-                        type="activity_status",
-                        timestamp=datetime.datetime(2020, 1, 1),
-                        label=Label(
-                            type="activity_status",
-                            id="Repealed/Replaced",
-                            title="Repealed/Replaced",
-                        ),
-                    ),
-                    DocumentLabelRelationship(
-                        type="activity_status",
-                        timestamp=datetime.datetime(2020, 1, 1),
-                        label=Label(type="activity_status", id="Set", title="Set"),
-                    ),
-                    DocumentLabelRelationship(
-                        type="activity_status",
-                        timestamp=datetime.datetime(2020, 1, 1),
-                        label=Label(
-                            type="activity_status", id="Settled", title="Settled"
-                        ),
-                    ),
-                    DocumentLabelRelationship(
-                        type="activity_status",
-                        timestamp=datetime.datetime(2020, 1, 1),
-                        label=Label(
-                            type="activity_status", id="Updated", title="Updated"
-                        ),
-                    ),
-                    DocumentLabelRelationship(
-                        type="provider",
-                        label=Label(
-                            type="agent",
-                            id="Grantham Research Institute",
-                            title="Grantham Research Institute",
-                        ),
-                    ),
-                ],
-                relationships=[
-                    DocumentDocumentRelationship(
-                        type="member_of",
-                        document=DocumentWithoutRelationships(
-                            id="collection",
-                            title="Collection title",
-                            labels=[],
-                        ),
-                    ),
-                    DocumentDocumentRelationship(
-                        type="has_version",
-                        document=DocumentWithoutRelationships(
-                            id="document",
-                            title="Matching title on family and document and collection",
-                            labels=[
-                                DocumentLabelRelationship(
-                                    type="entity_type",
-                                    label=Label(
-                                        type="entity_type",
-                                        id="Supporting legislation",
-                                        title="Supporting legislation",
-                                    ),
-                                ),
-                                DocumentLabelRelationship(
-                                    type="entity_type",
-                                    label=Label(
-                                        type="entity_type",
-                                        id="National drought plan (ndp)",
-                                        title="National drought plan (ndp)",
-                                    ),
-                                ),
-                                DocumentLabelRelationship(
-                                    type="provider",
-                                    label=Label(
-                                        type="agent",
-                                        id="Grantham Research Institute",
-                                        title="Grantham Research Institute",
-                                    ),
-                                ),
-                            ],
-                        ),
-                    ),
-                    DocumentDocumentRelationship(
-                        type="has_version",
-                        document=DocumentWithoutRelationships(
-                            id="collection_matching",
-                            title="Matching title on family and document and collection",
-                            labels=[],
-                        ),
-                    ),
-                ],
-            ),
+            expected_document_from_family,
             Document(
                 id="document",
                 title="Matching title on family and document and collection",
@@ -511,169 +515,7 @@ def test_transform_navigator_family_with_single_matching_document(
                     DocumentDocumentRelationship(
                         type="is_version_of",
                         document=DocumentWithoutRelationships(
-                            id="family",
-                            title="Matching title on family and document and collection",
-                            labels=[
-                                DocumentLabelRelationship(
-                                    type="activity_status",
-                                    timestamp=datetime.datetime(2020, 1, 1),
-                                    label=Label(
-                                        type="activity_status",
-                                        id="Amended",
-                                        title="Amended",
-                                    ),
-                                ),
-                                DocumentLabelRelationship(
-                                    type="activity_status",
-                                    timestamp=datetime.datetime(2020, 1, 1),
-                                    label=Label(
-                                        type="activity_status",
-                                        id="Appealed",
-                                        title="Appealed",
-                                    ),
-                                ),
-                                DocumentLabelRelationship(
-                                    type="activity_status",
-                                    timestamp=datetime.datetime(2020, 1, 1),
-                                    label=Label(
-                                        type="activity_status",
-                                        id="Closed",
-                                        title="Closed",
-                                    ),
-                                ),
-                                DocumentLabelRelationship(
-                                    type="activity_status",
-                                    timestamp=datetime.datetime(2020, 1, 1),
-                                    label=Label(
-                                        type="activity_status",
-                                        id="Declaration of climate emergency",
-                                        title="Declaration of climate emergency",
-                                    ),
-                                ),
-                                DocumentLabelRelationship(
-                                    type="activity_status",
-                                    timestamp=datetime.datetime(2020, 1, 1),
-                                    label=Label(
-                                        type="activity_status",
-                                        id="Dismissed",
-                                        title="Dismissed",
-                                    ),
-                                ),
-                                DocumentLabelRelationship(
-                                    type="activity_status",
-                                    timestamp=datetime.datetime(2020, 1, 1),
-                                    label=Label(
-                                        type="activity_status",
-                                        id="Entered into force",
-                                        title="Entered into force",
-                                    ),
-                                ),
-                                DocumentLabelRelationship(
-                                    type="activity_status",
-                                    timestamp=datetime.datetime(2020, 1, 1),
-                                    label=Label(
-                                        type="activity_status",
-                                        id="Filing",
-                                        title="Filing",
-                                    ),
-                                ),
-                                DocumentLabelRelationship(
-                                    type="activity_status",
-                                    timestamp=datetime.datetime(2020, 1, 1),
-                                    label=Label(
-                                        type="activity_status",
-                                        id="Granted",
-                                        title="Granted",
-                                    ),
-                                ),
-                                DocumentLabelRelationship(
-                                    type="activity_status",
-                                    timestamp=datetime.datetime(2020, 1, 1),
-                                    label=Label(
-                                        type="activity_status",
-                                        id="Implementation details",
-                                        title="Implementation details",
-                                    ),
-                                ),
-                                DocumentLabelRelationship(
-                                    type="activity_status",
-                                    timestamp=datetime.datetime(2020, 1, 1),
-                                    label=Label(
-                                        type="activity_status",
-                                        id="International agreement",
-                                        title="International agreement",
-                                    ),
-                                ),
-                                DocumentLabelRelationship(
-                                    type="activity_status",
-                                    timestamp=datetime.datetime(2020, 1, 1),
-                                    label=Label(
-                                        type="activity_status",
-                                        id="Net zero pledge",
-                                        title="Net zero pledge",
-                                    ),
-                                ),
-                                DocumentLabelRelationship(
-                                    type="activity_status",
-                                    timestamp=datetime.datetime(2020, 1, 1),
-                                    label=Label(
-                                        type="activity_status",
-                                        id="Other",
-                                        title="Other",
-                                    ),
-                                ),
-                                DocumentLabelRelationship(
-                                    type="activity_status",
-                                    timestamp=datetime.datetime(2020, 1, 1),
-                                    label=Label(
-                                        type="activity_status",
-                                        id="Passed/Approved",
-                                        title="Passed/Approved",
-                                    ),
-                                ),
-                                DocumentLabelRelationship(
-                                    type="activity_status",
-                                    timestamp=datetime.datetime(2020, 1, 1),
-                                    label=Label(
-                                        type="activity_status",
-                                        id="Repealed/Replaced",
-                                        title="Repealed/Replaced",
-                                    ),
-                                ),
-                                DocumentLabelRelationship(
-                                    type="activity_status",
-                                    timestamp=datetime.datetime(2020, 1, 1),
-                                    label=Label(
-                                        type="activity_status", id="Set", title="Set"
-                                    ),
-                                ),
-                                DocumentLabelRelationship(
-                                    type="activity_status",
-                                    timestamp=datetime.datetime(2020, 1, 1),
-                                    label=Label(
-                                        type="activity_status",
-                                        id="Settled",
-                                        title="Settled",
-                                    ),
-                                ),
-                                DocumentLabelRelationship(
-                                    type="activity_status",
-                                    timestamp=datetime.datetime(2020, 1, 1),
-                                    label=Label(
-                                        type="activity_status",
-                                        id="Updated",
-                                        title="Updated",
-                                    ),
-                                ),
-                                DocumentLabelRelationship(
-                                    type="provider",
-                                    label=Label(
-                                        type="agent",
-                                        id="Grantham Research Institute",
-                                        title="Grantham Research Institute",
-                                    ),
-                                ),
-                            ],
+                            **expected_document_from_family.model_dump()
                         ),
                     ),
                 ],
@@ -686,169 +528,7 @@ def test_transform_navigator_family_with_single_matching_document(
                     DocumentDocumentRelationship(
                         type="is_version_of",
                         document=DocumentWithoutRelationships(
-                            id="family",
-                            title="Matching title on family and document and collection",
-                            labels=[
-                                DocumentLabelRelationship(
-                                    type="activity_status",
-                                    timestamp=datetime.datetime(2020, 1, 1),
-                                    label=Label(
-                                        type="activity_status",
-                                        id="Amended",
-                                        title="Amended",
-                                    ),
-                                ),
-                                DocumentLabelRelationship(
-                                    type="activity_status",
-                                    timestamp=datetime.datetime(2020, 1, 1),
-                                    label=Label(
-                                        type="activity_status",
-                                        id="Appealed",
-                                        title="Appealed",
-                                    ),
-                                ),
-                                DocumentLabelRelationship(
-                                    type="activity_status",
-                                    timestamp=datetime.datetime(2020, 1, 1),
-                                    label=Label(
-                                        type="activity_status",
-                                        id="Closed",
-                                        title="Closed",
-                                    ),
-                                ),
-                                DocumentLabelRelationship(
-                                    type="activity_status",
-                                    timestamp=datetime.datetime(2020, 1, 1),
-                                    label=Label(
-                                        type="activity_status",
-                                        id="Declaration of climate emergency",
-                                        title="Declaration of climate emergency",
-                                    ),
-                                ),
-                                DocumentLabelRelationship(
-                                    type="activity_status",
-                                    timestamp=datetime.datetime(2020, 1, 1),
-                                    label=Label(
-                                        type="activity_status",
-                                        id="Dismissed",
-                                        title="Dismissed",
-                                    ),
-                                ),
-                                DocumentLabelRelationship(
-                                    type="activity_status",
-                                    timestamp=datetime.datetime(2020, 1, 1),
-                                    label=Label(
-                                        type="activity_status",
-                                        id="Entered into force",
-                                        title="Entered into force",
-                                    ),
-                                ),
-                                DocumentLabelRelationship(
-                                    type="activity_status",
-                                    timestamp=datetime.datetime(2020, 1, 1),
-                                    label=Label(
-                                        type="activity_status",
-                                        id="Filing",
-                                        title="Filing",
-                                    ),
-                                ),
-                                DocumentLabelRelationship(
-                                    type="activity_status",
-                                    timestamp=datetime.datetime(2020, 1, 1),
-                                    label=Label(
-                                        type="activity_status",
-                                        id="Granted",
-                                        title="Granted",
-                                    ),
-                                ),
-                                DocumentLabelRelationship(
-                                    type="activity_status",
-                                    timestamp=datetime.datetime(2020, 1, 1),
-                                    label=Label(
-                                        type="activity_status",
-                                        id="Implementation details",
-                                        title="Implementation details",
-                                    ),
-                                ),
-                                DocumentLabelRelationship(
-                                    type="activity_status",
-                                    timestamp=datetime.datetime(2020, 1, 1),
-                                    label=Label(
-                                        type="activity_status",
-                                        id="International agreement",
-                                        title="International agreement",
-                                    ),
-                                ),
-                                DocumentLabelRelationship(
-                                    type="activity_status",
-                                    timestamp=datetime.datetime(2020, 1, 1),
-                                    label=Label(
-                                        type="activity_status",
-                                        id="Net zero pledge",
-                                        title="Net zero pledge",
-                                    ),
-                                ),
-                                DocumentLabelRelationship(
-                                    type="activity_status",
-                                    timestamp=datetime.datetime(2020, 1, 1),
-                                    label=Label(
-                                        type="activity_status",
-                                        id="Other",
-                                        title="Other",
-                                    ),
-                                ),
-                                DocumentLabelRelationship(
-                                    type="activity_status",
-                                    timestamp=datetime.datetime(2020, 1, 1),
-                                    label=Label(
-                                        type="activity_status",
-                                        id="Passed/Approved",
-                                        title="Passed/Approved",
-                                    ),
-                                ),
-                                DocumentLabelRelationship(
-                                    type="activity_status",
-                                    timestamp=datetime.datetime(2020, 1, 1),
-                                    label=Label(
-                                        type="activity_status",
-                                        id="Repealed/Replaced",
-                                        title="Repealed/Replaced",
-                                    ),
-                                ),
-                                DocumentLabelRelationship(
-                                    type="activity_status",
-                                    timestamp=datetime.datetime(2020, 1, 1),
-                                    label=Label(
-                                        type="activity_status", id="Set", title="Set"
-                                    ),
-                                ),
-                                DocumentLabelRelationship(
-                                    type="activity_status",
-                                    timestamp=datetime.datetime(2020, 1, 1),
-                                    label=Label(
-                                        type="activity_status",
-                                        id="Settled",
-                                        title="Settled",
-                                    ),
-                                ),
-                                DocumentLabelRelationship(
-                                    type="activity_status",
-                                    timestamp=datetime.datetime(2020, 1, 1),
-                                    label=Label(
-                                        type="activity_status",
-                                        id="Updated",
-                                        title="Updated",
-                                    ),
-                                ),
-                                DocumentLabelRelationship(
-                                    type="provider",
-                                    label=Label(
-                                        type="agent",
-                                        id="Grantham Research Institute",
-                                        title="Grantham Research Institute",
-                                    ),
-                                ),
-                            ],
+                            **expected_document_from_family.model_dump()
                         ),
                     ),
                 ],
@@ -861,169 +541,7 @@ def test_transform_navigator_family_with_single_matching_document(
                     DocumentDocumentRelationship(
                         type="has_member",
                         document=DocumentWithoutRelationships(
-                            id="family",
-                            title="Matching title on family and document and collection",
-                            labels=[
-                                DocumentLabelRelationship(
-                                    type="activity_status",
-                                    timestamp=datetime.datetime(2020, 1, 1),
-                                    label=Label(
-                                        type="activity_status",
-                                        id="Amended",
-                                        title="Amended",
-                                    ),
-                                ),
-                                DocumentLabelRelationship(
-                                    type="activity_status",
-                                    timestamp=datetime.datetime(2020, 1, 1),
-                                    label=Label(
-                                        type="activity_status",
-                                        id="Appealed",
-                                        title="Appealed",
-                                    ),
-                                ),
-                                DocumentLabelRelationship(
-                                    type="activity_status",
-                                    timestamp=datetime.datetime(2020, 1, 1),
-                                    label=Label(
-                                        type="activity_status",
-                                        id="Closed",
-                                        title="Closed",
-                                    ),
-                                ),
-                                DocumentLabelRelationship(
-                                    type="activity_status",
-                                    timestamp=datetime.datetime(2020, 1, 1),
-                                    label=Label(
-                                        type="activity_status",
-                                        id="Declaration of climate emergency",
-                                        title="Declaration of climate emergency",
-                                    ),
-                                ),
-                                DocumentLabelRelationship(
-                                    type="activity_status",
-                                    timestamp=datetime.datetime(2020, 1, 1),
-                                    label=Label(
-                                        type="activity_status",
-                                        id="Dismissed",
-                                        title="Dismissed",
-                                    ),
-                                ),
-                                DocumentLabelRelationship(
-                                    type="activity_status",
-                                    timestamp=datetime.datetime(2020, 1, 1),
-                                    label=Label(
-                                        type="activity_status",
-                                        id="Entered into force",
-                                        title="Entered into force",
-                                    ),
-                                ),
-                                DocumentLabelRelationship(
-                                    type="activity_status",
-                                    timestamp=datetime.datetime(2020, 1, 1),
-                                    label=Label(
-                                        type="activity_status",
-                                        id="Filing",
-                                        title="Filing",
-                                    ),
-                                ),
-                                DocumentLabelRelationship(
-                                    type="activity_status",
-                                    timestamp=datetime.datetime(2020, 1, 1),
-                                    label=Label(
-                                        type="activity_status",
-                                        id="Granted",
-                                        title="Granted",
-                                    ),
-                                ),
-                                DocumentLabelRelationship(
-                                    type="activity_status",
-                                    timestamp=datetime.datetime(2020, 1, 1),
-                                    label=Label(
-                                        type="activity_status",
-                                        id="Implementation details",
-                                        title="Implementation details",
-                                    ),
-                                ),
-                                DocumentLabelRelationship(
-                                    type="activity_status",
-                                    timestamp=datetime.datetime(2020, 1, 1),
-                                    label=Label(
-                                        type="activity_status",
-                                        id="International agreement",
-                                        title="International agreement",
-                                    ),
-                                ),
-                                DocumentLabelRelationship(
-                                    type="activity_status",
-                                    timestamp=datetime.datetime(2020, 1, 1),
-                                    label=Label(
-                                        type="activity_status",
-                                        id="Net zero pledge",
-                                        title="Net zero pledge",
-                                    ),
-                                ),
-                                DocumentLabelRelationship(
-                                    type="activity_status",
-                                    timestamp=datetime.datetime(2020, 1, 1),
-                                    label=Label(
-                                        type="activity_status",
-                                        id="Other",
-                                        title="Other",
-                                    ),
-                                ),
-                                DocumentLabelRelationship(
-                                    type="activity_status",
-                                    timestamp=datetime.datetime(2020, 1, 1),
-                                    label=Label(
-                                        type="activity_status",
-                                        id="Passed/Approved",
-                                        title="Passed/Approved",
-                                    ),
-                                ),
-                                DocumentLabelRelationship(
-                                    type="activity_status",
-                                    timestamp=datetime.datetime(2020, 1, 1),
-                                    label=Label(
-                                        type="activity_status",
-                                        id="Repealed/Replaced",
-                                        title="Repealed/Replaced",
-                                    ),
-                                ),
-                                DocumentLabelRelationship(
-                                    type="activity_status",
-                                    timestamp=datetime.datetime(2020, 1, 1),
-                                    label=Label(
-                                        type="activity_status", id="Set", title="Set"
-                                    ),
-                                ),
-                                DocumentLabelRelationship(
-                                    type="activity_status",
-                                    timestamp=datetime.datetime(2020, 1, 1),
-                                    label=Label(
-                                        type="activity_status",
-                                        id="Settled",
-                                        title="Settled",
-                                    ),
-                                ),
-                                DocumentLabelRelationship(
-                                    type="activity_status",
-                                    timestamp=datetime.datetime(2020, 1, 1),
-                                    label=Label(
-                                        type="activity_status",
-                                        id="Updated",
-                                        title="Updated",
-                                    ),
-                                ),
-                                DocumentLabelRelationship(
-                                    type="provider",
-                                    label=Label(
-                                        type="agent",
-                                        id="Grantham Research Institute",
-                                        title="Grantham Research Institute",
-                                    ),
-                                ),
-                            ],
+                            **expected_document_from_family.model_dump()
                         ),
                     ),
                 ],
@@ -1036,82 +554,92 @@ def test_transform_navigator_family_with_litigation_corpus_type(
     navigator_family_with_litigation_corpus_type: Identified[NavigatorFamily],
 ):
     result = transform_navigator_family(navigator_family_with_litigation_corpus_type)
+    expected_document_from_family = Document(
+        id="family",
+        title="Litigation family",
+        description="Family summary",
+        labels=[
+            DocumentLabelRelationship(
+                type="status",
+                label=Label(
+                    type="status",
+                    id="Canonical",
+                    title="Canonical",
+                ),
+            ),
+            DocumentLabelRelationship(
+                type="entity_type",
+                label=Label(
+                    id="Legal case",
+                    title="Legal case",
+                    type="entity_type",
+                ),
+            ),
+            DocumentLabelRelationship(
+                type="provider",
+                label=Label(
+                    type="agent",
+                    id="Grantham Research Institute",
+                    title="Grantham Research Institute",
+                ),
+            ),
+        ],
+        relationships=[
+            DocumentDocumentRelationship(
+                type="has_member",
+                document=DocumentWithoutRelationships(
+                    id="document",
+                    title="Litigation family document",
+                    labels=[
+                        DocumentLabelRelationship(
+                            type="entity_type",
+                            label=Label(
+                                id="Decision",
+                                title="Decision",
+                                type="entity_type",
+                            ),
+                        ),
+                        DocumentLabelRelationship(
+                            type="provider",
+                            label=Label(
+                                type="agent",
+                                id="Grantham Research Institute",
+                                title="Grantham Research Institute",
+                            ),
+                        ),
+                    ],
+                ),
+            ),
+            DocumentDocumentRelationship(
+                type="has_member",
+                document=DocumentWithoutRelationships(
+                    id="1.2.3.placeholder",
+                    title="Placeholder litigation family document",
+                    labels=[
+                        DocumentLabelRelationship(
+                            type="status",
+                            label=Label(
+                                id="Obsolete",
+                                title="Obsolete",
+                                type="status",
+                            ),
+                        ),
+                        DocumentLabelRelationship(
+                            type="provider",
+                            label=Label(
+                                type="agent",
+                                id="Grantham Research Institute",
+                                title="Grantham Research Institute",
+                            ),
+                        ),
+                    ],
+                ),
+            ),
+        ],
+    )
     assert result == Success(
         [
-            Document(
-                id="family",
-                title="Litigation family",
-                labels=[
-                    DocumentLabelRelationship(
-                        type="entity_type",
-                        label=Label(
-                            id="Legal case",
-                            title="Legal case",
-                            type="entity_type",
-                        ),
-                    ),
-                    DocumentLabelRelationship(
-                        type="provider",
-                        label=Label(
-                            type="agent",
-                            id="Grantham Research Institute",
-                            title="Grantham Research Institute",
-                        ),
-                    ),
-                ],
-                relationships=[
-                    DocumentDocumentRelationship(
-                        type="has_member",
-                        document=DocumentWithoutRelationships(
-                            id="document",
-                            title="Litigation family document",
-                            labels=[
-                                DocumentLabelRelationship(
-                                    type="entity_type",
-                                    label=Label(
-                                        id="Decision",
-                                        title="Decision",
-                                        type="entity_type",
-                                    ),
-                                ),
-                                DocumentLabelRelationship(
-                                    type="provider",
-                                    label=Label(
-                                        type="agent",
-                                        id="Grantham Research Institute",
-                                        title="Grantham Research Institute",
-                                    ),
-                                ),
-                            ],
-                        ),
-                    ),
-                    DocumentDocumentRelationship(
-                        type="has_member",
-                        document=DocumentWithoutRelationships(
-                            id="1.2.3.placeholder",
-                            title="Placeholder litigation family document",
-                            labels=[
-                                DocumentLabelRelationship(
-                                    type="status",
-                                    label=Label(
-                                        id="Obsolete",
-                                        title="Obsolete",
-                                        type="status",
-                                    ),
-                                ),
-                                DocumentLabelRelationship(
-                                    type="provider",
-                                    label=Label(
-                                        type="agent",
-                                        id="Grantham Research Institute",
-                                        title="Grantham Research Institute",
-                                    ),
-                                ),
-                            ],
-                        ),
-                    ),
-                ],
-            ),
+            expected_document_from_family,
             Document(
                 id="document",
                 title="Litigation family document",
@@ -1137,28 +665,9 @@ def test_transform_navigator_family_with_litigation_corpus_type(
                     DocumentDocumentRelationship(
                         type="member_of",
                         document=DocumentWithoutRelationships(
-                            id="family",
-                            title="Litigation family",
-                            labels=[
-                                DocumentLabelRelationship(
-                                    type="entity_type",
-                                    label=Label(
-                                        id="Legal case",
-                                        title="Legal case",
-                                        type="entity_type",
-                                    ),
-                                ),
-                                DocumentLabelRelationship(
-                                    type="provider",
-                                    label=Label(
-                                        type="agent",
-                                        id="Grantham Research Institute",
-                                        title="Grantham Research Institute",
-                                    ),
-                                ),
-                            ],
+                            **expected_document_from_family.model_dump()
                         ),
-                    )
+                    ),
                 ],
             ),
             Document(
@@ -1186,26 +695,7 @@ def test_transform_navigator_family_with_litigation_corpus_type(
                     DocumentDocumentRelationship(
                         type="member_of",
                         document=DocumentWithoutRelationships(
-                            id="family",
-                            title="Litigation family",
-                            labels=[
-                                DocumentLabelRelationship(
-                                    type="entity_type",
-                                    label=Label(
-                                        id="Legal case",
-                                        title="Legal case",
-                                        type="entity_type",
-                                    ),
-                                ),
-                                DocumentLabelRelationship(
-                                    type="provider",
-                                    label=Label(
-                                        type="agent",
-                                        id="Grantham Research Institute",
-                                        title="Grantham Research Institute",
-                                    ),
-                                ),
-                            ],
+                            **expected_document_from_family.model_dump()
                         ),
                     )
                 ],
@@ -1220,111 +710,121 @@ def test_transform_navigator_family_with_multilateral_climate_fund_project(
     result = transform_navigator_family(
         navigator_family_multilateral_climate_fund_project
     )
+    expected_document_from_family = Document(
+        id="family",
+        title="Multilateral climate fund project",
+        description="Family summary",
+        labels=[
+            DocumentLabelRelationship(
+                type="status",
+                label=Label(
+                    type="status",
+                    id="Canonical",
+                    title="Canonical",
+                ),
+            ),
+            DocumentLabelRelationship(
+                type="entity_type",
+                label=Label(
+                    id="Multilateral climate fund project",
+                    title="Multilateral climate fund project",
+                    type="entity_type",
+                ),
+            ),
+            DocumentLabelRelationship(
+                type="activity_status",
+                label=Label(
+                    id="Concept approved",
+                    title="Concept approved",
+                    type="activity_status",
+                ),
+                timestamp=datetime.datetime(2020, 1, 1),
+            ),
+            DocumentLabelRelationship(
+                type="activity_status",
+                label=Label(
+                    id="Approved",
+                    title="Approved",
+                    type="activity_status",
+                ),
+                timestamp=datetime.datetime(2020, 1, 1),
+            ),
+            DocumentLabelRelationship(
+                type="activity_status",
+                label=Label(
+                    id="Under implementation",
+                    title="Under implementation",
+                    type="activity_status",
+                ),
+                timestamp=datetime.datetime(2020, 1, 1),
+            ),
+            DocumentLabelRelationship(
+                type="activity_status",
+                label=Label(
+                    id="Completed",
+                    title="Completed",
+                    type="activity_status",
+                ),
+                timestamp=datetime.datetime(2020, 1, 1),
+            ),
+            DocumentLabelRelationship(
+                type="activity_status",
+                label=Label(
+                    id="Cancelled",
+                    title="Cancelled",
+                    type="activity_status",
+                ),
+                timestamp=datetime.datetime(2020, 1, 1),
+            ),
+            DocumentLabelRelationship(
+                type="provider",
+                label=Label(
+                    type="agent",
+                    id="Grantham Research Institute",
+                    title="Grantham Research Institute",
+                ),
+            ),
+        ],
+        relationships=[
+            DocumentDocumentRelationship(
+                type="has_member",
+                document=DocumentWithoutRelationships(
+                    id="document_1",
+                    title="Multilateral climate fund project document",
+                    labels=[
+                        DocumentLabelRelationship(
+                            type="provider",
+                            label=Label(
+                                type="agent",
+                                id="Grantham Research Institute",
+                                title="Grantham Research Institute",
+                            ),
+                        ),
+                    ],
+                ),
+            ),
+            DocumentDocumentRelationship(
+                type="has_version",
+                document=DocumentWithoutRelationships(
+                    id="document_2",
+                    title="Project document",
+                    labels=[
+                        DocumentLabelRelationship(
+                            type="provider",
+                            label=Label(
+                                type="agent",
+                                id="Grantham Research Institute",
+                                title="Grantham Research Institute",
+                            ),
+                        ),
+                    ],
+                ),
+            ),
+        ],
+    )
     assert result == Success(
         [
-            Document(
-                id="family",
-                title="Multilateral climate fund project",
-                labels=[
-                    DocumentLabelRelationship(
-                        type="entity_type",
-                        label=Label(
-                            id="Multilateral climate fund project",
-                            title="Multilateral climate fund project",
-                            type="entity_type",
-                        ),
-                    ),
-                    DocumentLabelRelationship(
-                        type="activity_status",
-                        label=Label(
-                            id="Concept approved",
-                            title="Concept approved",
-                            type="activity_status",
-                        ),
-                        timestamp=datetime.datetime(2020, 1, 1),
-                    ),
-                    DocumentLabelRelationship(
-                        type="activity_status",
-                        label=Label(
-                            id="Approved",
-                            title="Approved",
-                            type="activity_status",
-                        ),
-                        timestamp=datetime.datetime(2020, 1, 1),
-                    ),
-                    DocumentLabelRelationship(
-                        type="activity_status",
-                        label=Label(
-                            id="Under implementation",
-                            title="Under implementation",
-                            type="activity_status",
-                        ),
-                        timestamp=datetime.datetime(2020, 1, 1),
-                    ),
-                    DocumentLabelRelationship(
-                        type="activity_status",
-                        label=Label(
-                            id="Completed",
-                            title="Completed",
-                            type="activity_status",
-                        ),
-                        timestamp=datetime.datetime(2020, 1, 1),
-                    ),
-                    DocumentLabelRelationship(
-                        type="activity_status",
-                        label=Label(
-                            id="Cancelled",
-                            title="Cancelled",
-                            type="activity_status",
-                        ),
-                        timestamp=datetime.datetime(2020, 1, 1),
-                    ),
-                    DocumentLabelRelationship(
-                        type="provider",
-                        label=Label(
-                            type="agent",
-                            id="Grantham Research Institute",
-                            title="Grantham Research Institute",
-                        ),
-                    ),
-                ],
-                relationships=[
-                    DocumentDocumentRelationship(
-                        type="has_member",
-                        document=DocumentWithoutRelationships(
-                            id="document_1",
-                            title="Multilateral climate fund project document",
-                            labels=[
-                                DocumentLabelRelationship(
-                                    type="provider",
-                                    label=Label(
-                                        type="agent",
-                                        id="Grantham Research Institute",
-                                        title="Grantham Research Institute",
-                                    ),
-                                ),
-                            ],
-                        ),
-                    ),
-                    DocumentDocumentRelationship(
-                        type="has_version",
-                        document=DocumentWithoutRelationships(
-                            id="document_2",
-                            title="Project document",
-                            labels=[
-                                DocumentLabelRelationship(
-                                    type="provider",
-                                    label=Label(
-                                        type="agent",
-                                        id="Grantham Research Institute",
-                                        title="Grantham Research Institute",
-                                    ),
-                                ),
-                            ],
-                        ),
-                    ),
-                ],
-            ),
+            expected_document_from_family,
             Document(
                 id="document_1",
                 title="Multilateral climate fund project document",
@@ -1342,71 +842,7 @@ def test_transform_navigator_family_with_multilateral_climate_fund_project(
                     DocumentDocumentRelationship(
                         type="member_of",
                         document=DocumentWithoutRelationships(
-                            id="family",
-                            title="Multilateral climate fund project",
-                            labels=[
-                                DocumentLabelRelationship(
-                                    type="entity_type",
-                                    label=Label(
-                                        id="Multilateral climate fund project",
-                                        title="Multilateral climate fund project",
-                                        type="entity_type",
-                                    ),
-                                ),
-                                DocumentLabelRelationship(
-                                    type="activity_status",
-                                    label=Label(
-                                        id="Concept approved",
-                                        title="Concept approved",
-                                        type="activity_status",
-                                    ),
-                                    timestamp=datetime.datetime(2020, 1, 1),
-                                ),
-                                DocumentLabelRelationship(
-                                    type="activity_status",
-                                    label=Label(
-                                        id="Approved",
-                                        title="Approved",
-                                        type="activity_status",
-                                    ),
-                                    timestamp=datetime.datetime(2020, 1, 1),
-                                ),
-                                DocumentLabelRelationship(
-                                    type="activity_status",
-                                    label=Label(
-                                        id="Under implementation",
-                                        title="Under implementation",
-                                        type="activity_status",
-                                    ),
-                                    timestamp=datetime.datetime(2020, 1, 1),
-                                ),
-                                DocumentLabelRelationship(
-                                    type="activity_status",
-                                    label=Label(
-                                        id="Completed",
-                                        title="Completed",
-                                        type="activity_status",
-                                    ),
-                                    timestamp=datetime.datetime(2020, 1, 1),
-                                ),
-                                DocumentLabelRelationship(
-                                    type="activity_status",
-                                    label=Label(
-                                        id="Cancelled",
-                                        title="Cancelled",
-                                        type="activity_status",
-                                    ),
-                                    timestamp=datetime.datetime(2020, 1, 1),
-                                ),
-                                DocumentLabelRelationship(
-                                    type="provider",
-                                    label=Label(
-                                        type="agent",
-                                        id="Grantham Research Institute",
-                                        title="Grantham Research Institute",
-                                    ),
-                                ),
-                            ],
+                            **expected_document_from_family.model_dump()
                         ),
                     )
                 ],
@@ -1428,71 +864,7 @@ def test_transform_navigator_family_with_multilateral_climate_fund_project(
                     DocumentDocumentRelationship(
                         type="is_version_of",
                         document=DocumentWithoutRelationships(
-                            id="family",
-                            title="Multilateral climate fund project",
-                            labels=[
-                                DocumentLabelRelationship(
-                                    type="entity_type",
-                                    label=Label(
-                                        id="Multilateral climate fund project",
-                                        title="Multilateral climate fund project",
-                                        type="entity_type",
-                                    ),
-                                ),
-                                DocumentLabelRelationship(
-                                    type="activity_status",
-                                    label=Label(
-                                        id="Concept approved",
-                                        title="Concept approved",
-                                        type="activity_status",
-                                    ),
-                                    timestamp=datetime.datetime(2020, 1, 1),
-                                ),
-                                DocumentLabelRelationship(
-                                    type="activity_status",
-                                    label=Label(
-                                        id="Approved",
-                                        title="Approved",
-                                        type="activity_status",
-                                    ),
-                                    timestamp=datetime.datetime(2020, 1, 1),
-                                ),
-                                DocumentLabelRelationship(
-                                    type="activity_status",
-                                    label=Label(
-                                        id="Under implementation",
-                                        title="Under implementation",
-                                        type="activity_status",
-                                    ),
-                                    timestamp=datetime.datetime(2020, 1, 1),
-                                ),
-                                DocumentLabelRelationship(
-                                    type="activity_status",
-                                    label=Label(
-                                        id="Completed",
-                                        title="Completed",
-                                        type="activity_status",
-                                    ),
-                                    timestamp=datetime.datetime(2020, 1, 1),
-                                ),
-                                DocumentLabelRelationship(
-                                    type="activity_status",
-                                    label=Label(
-                                        id="Cancelled",
-                                        title="Cancelled",
-                                        type="activity_status",
-                                    ),
-                                    timestamp=datetime.datetime(2020, 1, 1),
-                                ),
-                                DocumentLabelRelationship(
-                                    type="provider",
-                                    label=Label(
-                                        type="agent",
-                                        id="Grantham Research Institute",
-                                        title="Grantham Research Institute",
-                                    ),
-                                ),
-                            ],
+                            **expected_document_from_family.model_dump()
                         ),
                     )
                 ],

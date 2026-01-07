@@ -148,6 +148,8 @@ actions:
   disabled:
     - trunk-check-pre-push
   enabled:
+    - uv-sync
+    - uv-lock
     - trunk-check-pre-commit
     - trunk-announce
     - trunk-fmt-pre-commit

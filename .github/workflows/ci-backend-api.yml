@@ -1,10 +1,20 @@
-name: CI/CD
+name: CI for backend-api
 
 on:
   push:
     tags: [v*]
     branches:
       - main
+    paths:
+      - backend-api/**
+      - "**"
+      - "!api/**"
+      - "!data-in-pipeline/**"
+      - "!data-in-pipeline-load-api/**"
+      - "!families-api/**"
+      - "!geographies-api/**"
+      - "!concepts-api/**"
+
   pull_request:
     # By default, a workflow only runs when a pull_request event's activity type is opened,
     # synchronize, or reopened.
@@ -46,6 +56,8 @@ jobs:
         working-directory: geographies-api
       - run: uv sync --frozen --dev
         working-directory: data-in-pipeline
+      - run: uv sync --frozen --dev
+        working-directory: data-in-pipeline-load-api
       # @related BACKEND_API_PYRIGHT_HACK
       # This is a little hack to make sure we have pyright available by the pyright-backend-api trunk definition
       - run: pip install pyright==1.1.361
