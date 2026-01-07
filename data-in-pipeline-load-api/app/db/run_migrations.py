@@ -20,7 +20,7 @@ def run_migrations(engine: Engine) -> None:
     alembic_cfg = Config(alembic_ini_path)
 
     # Set the script location
-    alembic_cfg.set_main_option("script_location", f"{script_directory}/migrations")
+    alembic_cfg.set_main_option("script_location", f"{script_directory}/alembic")
 
     # Run the migration
     with engine.begin() as connection:
