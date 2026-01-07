@@ -5,7 +5,7 @@ from http import HTTPStatus
 from typing import Any
 
 import boto3
-from mangum import Mangum
+import psycopg2
 from psycopg2 import sql
 
 _LOGGER = logging.getLogger(__name__)
@@ -69,7 +69,7 @@ def handler(event, context):
     _LOGGER.info(
         f"Connecting to Aurora cluster at {host} with database {db} and user {master_creds['username']}"
     )
-    conn = psycopg.connect(
+    conn = psycopg2.connect(
         host=host,
         port=port,
         dbname=db,
@@ -92,7 +92,3 @@ def handler(event, context):
             conn.close()
 
     return {"statusCode": HTTPStatus.OK, "body": json.dumps({"status": "ok"})}
-
-
-# AWS Lambda entrypoint
-handler = Mangum(handler)
