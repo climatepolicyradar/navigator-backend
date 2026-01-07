@@ -113,13 +113,14 @@ def test_db_connection():
 
     cluster_endpoint = get_ssm_parameter("/data-in-pipeline-load-api/load-database-url")
 
+    _LOGGER.error("Getting auth token")
     token = client.generate_db_auth_token(
         DBHostname=cluster_endpoint,
         Port=DB_PORT,
         DBUsername=DB_USERNAME,
         Region="eu-west-1",
     )
-
+    _LOGGER.error("Got token, trying to connect")
     try:
         conn = psycopg2.connect(
             host=cluster_endpoint,
@@ -127,7 +128,7 @@ def test_db_connection():
             database=DB_NAME,
             user=DB_USERNAME,
             password=token,
-            sslrootcert="SSLCERTIFICATE",
+            sslmode="require",
         )
         cur = conn.cursor()
         cur.execute("""SELECT now()""")
