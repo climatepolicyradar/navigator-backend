@@ -1,4 +1,4 @@
-from datetime import datetime, timezone
+from datetime import datetime, UTC
 from http import HTTPStatus
 from unittest.mock import MagicMock, patch
 
@@ -94,7 +94,7 @@ def test_process_family_updates_flow_multiple_families(
         raw_payload=page_1_data,
         content_type="application/json",
         connector_version="1.0.0",
-        extracted_at=datetime.now(timezone.utc),
+        extracted_at=datetime.now(UTC),
         task_run_id="task-001",
         flow_run_id="flow-001",
         metadata=ExtractedMetadata(
@@ -111,7 +111,7 @@ def test_process_family_updates_flow_multiple_families(
         raw_payload=page_2_data,
         content_type="application/json",
         connector_version="1.0.0",
-        extracted_at=datetime.now(timezone.utc),
+        extracted_at=datetime.now(UTC),
         task_run_id="task-001",
         flow_run_id="flow-001",
         metadata=ExtractedMetadata(
