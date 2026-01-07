@@ -513,9 +513,34 @@ lambda_role = aws.iam.Role(
 )
 
 aws.iam.RolePolicyAttachment(
-    "lambdaBasicExecution",
+    "aurora-user-creation-lambda-basic-execution",
     role=lambda_role.name,
     policy_arn="arn:aws:iam::aws:policy/service-role/AWSLambdaBasicExecutionRole",
+)
+
+aws.iam.RolePolicy(
+    "aurora-user-creation-lambda-ssm-read-policy",
+    role=lambda_role.id,
+    policy=pulumi.Output.all(
+        data_in_pipeline_load_api_cluster_password_secret_arn=data_in_pipeline_load_api_cluster_password_secret.secret_arn,
+    ).apply(
+        lambda args: json.dumps(
+            {
+                "Version": "2012-10-17",
+                "Statement": [
+                    {
+                        "Effect": "Allow",
+                        "Action": ["ssm:GetParameter", "ssm:GetParameters"],
+                        "Resource": [
+                            args[
+                                "data_in_pipeline_load_api_cluster_password_secret_arn"
+                            ],
+                        ],
+                    }
+                ],
+            }
+        )
+    ),
 )
 
 lambda_fn = aws.lambda_.Function(
