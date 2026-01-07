@@ -1,0 +1,2 @@
+build: 
+    docker build -f Dockerfile -t data-in-pipeline-load-api --platform linux/amd64 ..

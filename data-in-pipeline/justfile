@@ -1,8 +1,6 @@
-dev:
-    uv run python -m app.dev
+dev: uv run python -m app.dev
 
-test:
-    uv run pytest -vv
+test: uv run pytest -vv
 
 test-ci:
     #!/usr/bin/env bash
@@ -31,16 +29,13 @@ deploy-override service environment tag:
     # https://linear.app/climate-policy-radar/issue/APP-1549/create-data-in-pipeline-deployments-for-production-and-staging
     just deploy-to-prefect
 
-deploy-to-prefect:
-    uv run python -m app.deploy
+deploy-to-prefect: uv run python -m app.deploy
 
 # DuckDB to serve transformation results
 # This is currently a spike to be able to better analyse, validate and share with others how the transformations are working
-duckdb-build:
-    uv run python -m app.scripts.build_duckdb
+duckdb-build: uv run python -m app.scripts.build_duckdb
 
-duckdb-dev:
-    uv run fastapi dev ./app/scripts/serve_duckdb.py
+duckdb-dev: uv run fastapi dev ./app/scripts/serve_duckdb.py
 
 # Commands for our IAM user lambda function
 build-lambda-code: clean-lambda-build-folder
@@ -54,12 +49,8 @@ build-lambda-code: clean-lambda-build-folder
     docker rm iam-user-lambda-extract
     echo "✅ Lambda package built at .lambda_build/"
 
-clean-lambda-build-folder:
-    echo "🧹 Cleaning build directory..."
+clean-lambda-build-folder: echo "🧹 Cleaning build directory..."
     rm -rf .lambda_build
 
 deploy-lambda-code: build-lambda-code
     pulumi up -ry
-
-build-load-api: 
-    docker build -f infra/Dockerfile.load_api -t data-in-pipeline-load-api --platform linux/amd64 ..

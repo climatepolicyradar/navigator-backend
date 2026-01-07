@@ -6,9 +6,12 @@ sessions. Use get_db_context() for all database operations.
 """
 
 import logging
+import os
 from collections.abc import Generator
 from contextlib import contextmanager
 
+import psycopg2
+from aws import get_aws_session, get_ssm_parameter
 from settings import settings
 from sqlalchemy import create_engine
 from sqlalchemy.engine import Engine
@@ -97,3 +100,40 @@ def get_engine() -> Engine:
     :rtype: Engine
     """
     return _engine
+
+
+def test_db_connection():
+    """Test database connection using IAM authentication token."""
+    session = get_aws_session()
+    client = session.client("rds")
+
+    DB_USERNAME = os.getenv("DB_MASTER_USERNAME")
+    DB_PORT = os.getenv("DB_PORT")
+    DB_NAME = os.getenv("DB_NAME")
+
+    cluster_endpoint = get_ssm_parameter("/data-in-pipeline-load-api/load-database-url")
+
+    token = client.generate_db_auth_token(
+        DBHostname=cluster_endpoint,
+        Port=DB_PORT,
+        DBUsername=DB_USERNAME,
+        Region="eu-west-1",
+    )
+
+    try:
+        conn = psycopg2.connect(
+            host=cluster_endpoint,
+            port=DB_PORT,
+            database=DB_NAME,
+            user=DB_USERNAME,
+            password=token,
+            sslrootcert="SSLCERTIFICATE",
+        )
+        cur = conn.cursor()
+        cur.execute("""SELECT now()""")
+        query_results = cur.fetchall()
+        _LOGGER.info("Database connection successful.Current time: %s", query_results)
+        print(query_results)
+    except Exception as e:
+        _LOGGER.error("Database connection failed due to %s", e)
+        print(f"Database connection failed due to {e}")
