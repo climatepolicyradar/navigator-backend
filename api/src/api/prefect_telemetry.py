@@ -24,7 +24,7 @@ from opentelemetry import trace
 from opentelemetry._logs import get_logger_provider
 from opentelemetry.context.context import Context
 from opentelemetry.exporter.otlp.proto.http._log_exporter import OTLPLogExporter
-from opentelemetry.sdk._logs._internal import LogData
+from opentelemetry.sdk._logs._internal import ReadWriteLogRecord
 from opentelemetry.sdk._logs.export import BatchLogRecordProcessor
 from opentelemetry.sdk.trace import ReadableSpan, Span, SpanProcessor
 from pydantic import BaseModel
@@ -179,9 +179,9 @@ class PrefectLogContextProcessor(BatchLogRecordProcessor):
       - task_name
     """
 
-    def on_emit(self, log_data: LogData) -> None:
+    def on_emit(self, log_record: ReadWriteLogRecord) -> None:
         try:
-            record = log_data.log_record
+            record = log_record.log_record
 
             flow_context = get_flow_context()
             flow_name = flow_context.flow_name
@@ -210,7 +210,7 @@ class PrefectLogContextProcessor(BatchLogRecordProcessor):
             # Avoid breaking logging on enrichment failure
             _LOGGER.debug("Failed to enrich log record with Prefect context: %s", exc)
         finally:
-            super().on_emit(log_data)
+            super().on_emit(log_record)
 
 
 class PrefectSpanContextProcessor(SpanProcessor):

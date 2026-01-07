@@ -1,3 +1,4 @@
+import components.aws as components_aws
 import pulumi
 import pulumi_aws as aws
 
@@ -8,25 +9,21 @@ name = pulumi.get_project()
 #######################################################################
 # Create the ECR repository for the Data In Pipeline.
 #######################################################################
-
-data_in_pipeline_ecr_repository = aws.ecr.Repository(
-    "data-in-pipeline-ecr-repository",
-    encryption_configurations=[
-        aws.ecr.RepositoryEncryptionConfigurationArgs(
-            encryption_type="AES256",
-        )
-    ],
-    image_scanning_configuration=aws.ecr.RepositoryImageScanningConfigurationArgs(
-        scan_on_push=False,
+data_in_pipeline_aws_ecr_repository = components_aws.ecr.Repository(
+    name="data-in-pipeline-ecr-repository",
+    aws_ecr_repository_args=aws.ecr.RepositoryArgs(
+        encryption_configurations=[
+            aws.ecr.RepositoryEncryptionConfigurationArgs(
+                encryption_type="AES256",
+            )
+        ],
+        image_scanning_configuration=aws.ecr.RepositoryImageScanningConfigurationArgs(
+            scan_on_push=False,
+        ),
+        image_tag_mutability="MUTABLE",
+        name="data-in-pipeline",
     ),
-    image_tag_mutability="MUTABLE",
-    name="data-in-pipeline",
-    opts=pulumi.ResourceOptions(protect=True),
 )
-
-
-# Export the name of the bucket
-pulumi.export("ecr_repository_url", data_in_pipeline_ecr_repository.repository_url)
 
 
 #######################################################################
@@ -138,12 +135,12 @@ aurora_cluster = aws.rds.Cluster(
     engine_version="17.6",
     database_name=db_name,
     manage_master_user_password=True,
-    master_username=config.get("aurora_master_username"),
+    master_username=config.require("aurora_master_username"),
     db_subnet_group_name=aurora_subnet_group.name,
     vpc_security_group_ids=[aurora_security_group.id],
     backup_retention_period=retention_period_days,  # Retention is included in Aurora pricing for up to 7 days. Longer retention would add charges.
     preferred_backup_window="02:00-03:00",
-    iam_database_authentication_enabled=True,
+    iam_database_authentication_enabled=False,  # TODO: Reenable later
     preferred_maintenance_window="sun:04:00-sun:05:00",
     deletion_protection=True,
     serverlessv2_scaling_configuration=aws.rds.ClusterServerlessv2ScalingConfigurationArgs(
@@ -182,6 +179,14 @@ pulumi.export(
 pulumi.export(f"{name}-{environment}-aurora-endpoint", aurora_cluster.endpoint)
 pulumi.export(
     f"{name}-{environment}-aurora-reader-endpoint", aurora_cluster.reader_endpoint
+)
+
+# Get the ARN of the secret holding the master password
+# When manage_master_user_password=True, master_user_secrets contains exactly one secret
+data_in_pipeline_load_api_cluster_password_secret = (
+    aurora_cluster.master_user_secrets.apply(
+        lambda secrets: (secrets[0] if secrets and len(secrets) == 1 else None)
+    )
 )
 
 #######################################################################
@@ -322,23 +327,6 @@ data_in_pipeline_load_api_instance_role = aws.iam.Role(
     ).json,
 )
 
-# Allow access to specific SSM Parameter Store secrets
-data_in_pipeline_load_api_ssm_policy = aws.iam.RolePolicy(
-    "data-in-pipeline-load-api-instance-role-ssm-policy",
-    role=data_in_pipeline_load_api_instance_role.id,
-    policy=aws.iam.get_policy_document(
-        statements=[
-            aws.iam.GetPolicyDocumentStatementArgs(
-                effect="Allow",
-                actions=["ssm:GetParameters"],
-                resources=[
-                    f"arn:aws:ssm:eu-west-1:{account_id}:parameter/data-in-pipeline-load-api/*"
-                ],
-            )
-        ]
-    ).json,
-)
-
 data_in_pipeline_load_api_load_database_url = aws.ssm.Parameter(
     "data-in-pipeline-load-api-load-database-url",
     name="/data-in-pipeline-load-api/load-database-url",
@@ -359,6 +347,43 @@ data_in_pipeline_load_api_cdn_url = aws.ssm.Parameter(
     type=aws.ssm.ParameterType.STRING,
     value=config.require("cdn-url"),
 )
+
+# Allow access to SSM Parameter Store and Secrets Manager
+data_in_pipeline_load_api_instance_role_policy = aws.iam.RolePolicy(
+    "data-in-pipeline-load-api-instance-role-policy",
+    role=data_in_pipeline_load_api_instance_role.id,
+    policy=pulumi.Output.all(
+        data_in_pipeline_load_api_load_database_url.arn,
+        data_in_pipeline_load_api_cdn_url.arn,
+        data_in_pipeline_load_api_cluster_password_secret.secret_arn,
+    ).apply(
+        lambda args: aws.iam.get_policy_document(
+            statements=[
+                aws.iam.GetPolicyDocumentStatementArgs(
+                    effect="Allow",
+                    actions=[
+                        "ssm:GetParameter",
+                        "ssm:GetParameters",
+                        "ssm:DescribeParameters",
+                    ],
+                    resources=[
+                        f"arn:aws:ssm:eu-west-1:{account_id}:parameter/data-in-pipeline-load-api/*",
+                        f"arn:aws:ssm:eu-west-1:{account_id}:parameter/data_in_pipeline/*",
+                    ],
+                ),
+                aws.iam.GetPolicyDocumentStatementArgs(
+                    effect="Allow",
+                    actions=[
+                        "secretsmanager:GetSecretValue",
+                        "secretsmanager:DescribeSecret",
+                    ],
+                    resources=args,
+                ),
+            ]
+        ).json
+    ),
+)
+
 
 data_in_pipeline_load_api_ecr_repository = aws.ecr.Repository(
     "data-in-pipeline-load-api-ecr-repository",
@@ -409,7 +434,8 @@ data_in_pipeline_load_api_apprunner_service = aws.apprunner.Service(
     auto_scaling_configuration_arn=config.require("auto_scaling_configuration_arn"),
     health_check_configuration=aws.apprunner.ServiceHealthCheckConfigurationArgs(
         interval=10,
-        protocol="TCP",
+        protocol="HTTP",
+        path="/load/health",
         timeout=5,
     ),
     instance_configuration=aws.apprunner.ServiceInstanceConfigurationArgs(
@@ -421,7 +447,7 @@ data_in_pipeline_load_api_apprunner_service = aws.apprunner.Service(
             vpc_connector_arn=vpc_connector.arn,
         ),
         ingress_configuration=aws.apprunner.ServiceNetworkConfigurationIngressConfigurationArgs(
-            is_publicly_accessible=False,  # enforces IAM auth
+            is_publicly_accessible=True,  # set to False to enforce IAM auth
         ),
         ip_address_type="IPV4",
     ),
@@ -438,6 +464,13 @@ data_in_pipeline_load_api_apprunner_service = aws.apprunner.Service(
                 runtime_environment_secrets={
                     "LOAD_DATABASE_URL": data_in_pipeline_load_api_load_database_url.arn,
                     "CDN_URL": data_in_pipeline_load_api_cdn_url.arn,
+                    "MANAGED_DB_PASSWORD": data_in_pipeline_load_api_cluster_password_secret.secret_arn,
+                },
+                runtime_environment_variables={
+                    "DB_MASTER_USERNAME": config.require("aurora_master_username"),
+                    "DB_PORT": "5432",
+                    "DB_NAME": config.require("db_name"),
+                    "AWS_REGION": "eu-west-1",
                 },
             ),
             image_identifier=f"{account_id}.dkr.ecr.eu-west-1.amazonaws.com/data-in-pipeline-load-api:latest",

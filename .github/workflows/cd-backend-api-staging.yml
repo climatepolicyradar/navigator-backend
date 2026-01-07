@@ -23,6 +23,7 @@ jobs:
       name: staging
     steps:
       - uses: actions/checkout@v6
+      - run: make build
 
       - name: Configure AWS credentials (staging)
         uses: aws-actions/configure-aws-credentials@v5

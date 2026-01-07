@@ -9,6 +9,10 @@ test-ci:
     docker build -t data-in-pipeline:test -f Dockerfile ..
     docker run --rm data-in-pipeline:test uv run pytest -vv
 
+test-override:
+    # this is run from the root justfile in CI
+    just test-ci
+
 deploy-to-prefect-from-local:
     #!/usr/bin/env bash
     # we use a bash script here to have inline env variables
@@ -19,7 +23,14 @@ deploy-to-prefect-from-local:
     uv run prefect cloud login
     DOCKER_REGISTRY=${DOCKER_REGISTRY} just deploy-to-prefect
 
-deploy-to-prefect: uv run python -m app.deploy
+deploy-override service environment tag:
+    # this is run from the root justfile in CI
+    # TODO: deploy to staging and production
+    # https://linear.app/climate-policy-radar/issue/APP-1549/create-data-in-pipeline-deployments-for-production-and-staging
+    just deploy-to-prefect
+
+deploy-to-prefect:
+    uv run python -m app.deploy
 
 # DuckDB to serve transformation results
 # This is currently a spike to be able to better analyse, validate and share with others how the transformations are working
@@ -44,5 +55,3 @@ clean-lambda-build-folder: echo "🧹 Cleaning build directory..."
 
 deploy-lambda-code: build-lambda-code
     pulumi up -ry
-
-build-load-api: docker build -f infra/Dockerfile.load_api -t load-api --platform linux/amd64 ..

@@ -1,5 +1,6 @@
-name: Deploy microservices to staging and production
+name: Merge to main
 on:
+  workflow_dispatch: {}
   push:
     branches:
       - main
@@ -11,78 +12,71 @@ permissions:
   id-token: write
   contents: read
 jobs:
-  determine-changed-services:
+  changes:
     runs-on: ubuntu-latest
     outputs:
-      services: ${{ steps.services.outputs.services }}
-      data-in-pipeline: ${{ steps.services.outputs.data-in-pipeline }}
+      services: ${{ steps.filter.outputs.changes }}
+
     steps:
       - uses: actions/checkout@v6
       - uses: dorny/paths-filter@v3
-        id: changes
+        id: filter
         with:
           filters: |
             families-api:
               - 'families-api/**'
               - 'api/**'
+              - 'uv.lock'
+              - pyproject.toml
 
             geographies-api:
               - 'geographies-api/**'
               - 'api/**'
+              - 'uv.lock'
+              - pyproject.toml
 
             concepts-api:
               - 'concepts-api/**'
               - 'api/**'
+              - 'uv.lock'
+              - pyproject.toml
 
             data-in-pipeline:
               - 'data-in-pipeline/**'
               - 'api/**'
+              - 'uv.lock'
+              - pyproject.toml
 
-      - id: services
-        run: |
-          SERVICES=()
-          DATA_IN_PIPELINE=false
-          if [ "${{ steps.changes.outputs.families-api }}" == "true" ]; then
-            SERVICES+=("families-api")
-          fi
-          if [ "${{ steps.changes.outputs.geographies-api }}" == "true" ]; then
-            SERVICES+=("geographies-api")
-          fi
-          if [ "${{ steps.changes.outputs.concepts-api }}" == "true" ]; then
-            SERVICES+=("concepts-api")
-          fi
-          if [ "${{ steps.changes.outputs.data-in-pipeline }}" == "true" ]; then
-            SERVICES+=("data-in-pipeline")
-            DATA_IN_PIPELINE=true
-          fi
+            data-in-pipeline-load-api:
+              - 'data-in-pipeline-load-api/**'
+              - 'api/**'
+              - 'uv.lock'
+              - pyproject.toml
 
-          # If no services detected but workflow was triggered (changes outside backend-api),
-          # assume root-level changes and trigger all services as a safety measure
-          if [ ${#SERVICES[@]} -eq 0 ] && [ "$DATA_IN_PIPELINE" == "false" ]; then
-            SERVICES+=("families-api" "geographies-api" "concepts-api" "data-in-pipeline")
-            DATA_IN_PIPELINE=true
-            echo "No specific services changes detected, but workflow was triggered - assuming root-level changes, triggering all services"
-          fi
-
-          echo "services=$(jq -c -n '$ARGS.positional' --args "${SERVICES[@]}")" >> $GITHUB_OUTPUT
-          echo "data-in-pipeline=$DATA_IN_PIPELINE" >> $GITHUB_OUTPUT
-          echo "Changed services: ${SERVICES[@]}"
-
-  deploy-microservices:
-    needs: determine-changed-services
-    if: needs.determine-changed-services.outputs.services != '[]'
+  test:
+    needs: changes
     runs-on: ubuntu-latest
     strategy:
       matrix:
-        environment: [staging, production]
-        service: ${{ fromJSON(needs.determine-changed-services.outputs.services) }}
+        service: ${{ fromJSON(needs.changes.outputs.services) }}
+      fail-fast: false
+    steps:
+      - uses: actions/checkout@v6
+      - uses: extractions/setup-just@v3
+      - run: just test ${{ matrix.service }}
+
+  deploy:
+    needs: [changes, test]
+    runs-on: ubuntu-latest
+    strategy:
+      matrix:
+        environment: [production]
+        service: ${{ fromJSON(needs.changes.outputs.services) }}
       fail-fast: false
     environment: ${{ matrix.environment }}
 
     steps:
       - uses: actions/checkout@v6
-      - uses: extractions/setup-just@v3
-
       - uses: aws-actions/configure-aws-credentials@v5
         with:
           role-to-assume: arn:aws:iam::${{ secrets.AWS_ACCOUNT_ID }}:role/navigator-backend-github-actions-deploy
@@ -97,7 +91,6 @@ jobs:
           python-version: "3.12"
 
       - uses: astral-sh/setup-uv@v7
-
       - run: uv sync --all-packages
 
       - id: pr_data
@@ -114,55 +107,31 @@ jobs:
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
 
-      - id: slack_message
-        working-directory: ${{ github.workspace }}
-        run: |
+      - run: |
           COMMIT_URL="https://github.com/${{ github.repository }}/commit/${{ github.sha }}"
           COMMIT_SHORT=$(echo "${{ github.sha }}" | cut -c1-7)
           if [ -n "${{ steps.pr_data.outputs.pr_link }}" ]; then
             PR_URL="https://github.com/${{ github.repository }}/pull/${{ steps.pr_data.outputs.pr_number }}"
             PR_NUM="${{ steps.pr_data.outputs.pr_number }}"
-            MESSAGE="🚀 Deploying <$PR_URL|PR #$PR_NUM> (<$COMMIT_URL|$COMMIT_SHORT>) to the ${{ matrix.environment }} *${{ matrix.service }}*"
+            MESSAGE="🚀 Deploying <$PR_URL|PR #$PR_NUM> (<$COMMIT_URL|$COMMIT_SHORT>) *${{ matrix.service }}* to ${{ matrix.environment }}"
           else
-            MESSAGE="🚀 Deploying <$COMMIT_URL|$COMMIT_SHORT> to the ${{ matrix.environment }} *${{ matrix.service }}*"
+            MESSAGE="🚀 Deploying <$COMMIT_URL|$COMMIT_SHORT> *${{ matrix.service }}* to ${{ matrix.environment }}"
           fi
           jq -n --arg msg "$MESSAGE" '{text: $msg, mrkdwn: true}' > slack-payload.json
 
-      - id: webhook_url
-        run: |
-          if [ "${{ matrix.environment }}" = "staging" ]; then
-            echo "webhook_url=${{ secrets.SLACK_WEBHOOK_URL_STAGING_UPDATES_CHANNEL }}" >> $GITHUB_OUTPUT
-          elif [ "${{ matrix.environment }}" = "production" ]; then
-            echo "webhook_url=${{ secrets.SLACK_WEBHOOK_URL_PRODUCTION_UPDATES_CHANNEL }}" >> $GITHUB_OUTPUT
-          fi
-
       - uses: slackapi/slack-github-action@v2.1.1
         with:
-          webhook: ${{ steps.webhook_url.outputs.webhook_url }}
+          webhook: ${{ secrets.ENV_UPDATES_CHANNEL_SLACK_WEBHOOK_URL }}
           webhook-type: incoming-webhook
           payload-file-path: slack-payload.json
 
+      - uses: extractions/setup-just@v3
       - run: |
           just deploy ${{ matrix.service }} ${{ matrix.environment }} latest
           just deploy ${{ matrix.service }} ${{ matrix.environment }} ${{ github.sha }}
-
-  deploy-prefect:
-    needs: [deploy-microservices, determine-changed-services]
-    if: needs.determine-changed-services.outputs.data-in-pipeline == 'true'
-    runs-on: ubuntu-latest
-    steps:
-      - uses: actions/checkout@v6
-      - uses: extractions/setup-just@v3
-      - uses: astral-sh/setup-uv@v7
-      - name: Sync dependencies
-        working-directory: data-in-pipeline
-        run: uv sync
-      - name: Deploy the updated data in pipeline to Prefect
-        working-directory: data-in-pipeline
         env:
           AWS_ENV: prod
           AWS_REGION: eu-west-1
           DOCKER_REGISTRY: ${{ secrets.DOCKER_REGISTRY_PRODUCTION }}
           PREFECT_API_KEY: ${{ secrets.PREFECT_API_KEY }}
           PREFECT_API_URL: ${{ secrets.PREFECT_API_URL }}
-        run: just deploy-to-prefect
