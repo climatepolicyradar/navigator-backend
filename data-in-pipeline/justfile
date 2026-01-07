@@ -54,7 +54,8 @@ build-lambda-code: clean-lambda-build-folder
     docker rm iam-user-lambda-extract
     echo "✅ Lambda package built at .lambda_build/"
 
-clean-lambda-build-folder: echo "🧹 Cleaning build directory..."
+clean-lambda-build-folder: 
+    echo "🧹 Cleaning build directory..."
     rm -rf .lambda_build
 
 deploy-lambda-code: build-lambda-code
