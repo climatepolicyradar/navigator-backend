@@ -200,3 +200,6 @@ requirements.txt
 secrets/*
 
 scripts/*.json
+
+# Ignore lambda build directories
+**/.lambda_build/
