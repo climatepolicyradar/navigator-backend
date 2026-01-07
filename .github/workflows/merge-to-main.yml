@@ -55,6 +55,7 @@ jobs:
 
   test:
     needs: changes
+    if: needs.changes.outputs.services != '[]'
     runs-on: ubuntu-latest
     strategy:
       matrix:
@@ -70,7 +71,7 @@ jobs:
     runs-on: ubuntu-latest
     strategy:
       matrix:
-        environment: [production]
+        environment: [staging, production]
         service: ${{ fromJSON(needs.changes.outputs.services) }}
       fail-fast: false
     environment: ${{ matrix.environment }}
