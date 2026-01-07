@@ -1,0 +1,106 @@
+services:
+  db:
+    profiles: [dev]
+    image: postgres:17
+    container_name: data-in-pipeline-load-api-db
+    environment:
+      POSTGRES_USER: data-in-pipeline-load-api
+      POSTGRES_PASSWORD: data-in-pipeline-load-api
+      POSTGRES_DB: data-in-pipeline-load-api
+    ports:
+      - 5432:5432
+    volumes:
+      - data-in-pipeline-load-api-postgres-data:/var/lib/postgresql/data
+    healthcheck:
+      test:
+        [
+          CMD-SHELL,
+          pg_isready -U data-in-pipeline-load-api -d data-in-pipeline-load-api,
+        ]
+      interval: 5s
+      timeout: 5s
+      retries: 10
+  app:
+    profiles: [dev]
+    container_name: data-in-pipeline-load-api-app
+    build:
+      context: ..
+      dockerfile: data-in-pipeline-load-api/Dockerfile
+    ports:
+      - 8080:8080
+    volumes:
+      - ..:/app
+    working_dir: /app
+    environment:
+      db_master_username: data-in-pipeline-load-api
+      managed_db_password: data-in-pipeline-load-api
+      load_database_url: db
+      db_port: 5432
+      db_name: data-in-pipeline-load-api
+    command:
+      [
+        uv,
+        run,
+        --project,
+        data-in-pipeline-load-api,
+        fastapi,
+        dev,
+        data-in-pipeline-load-api/app/main.py,
+        --port,
+        "8080",
+        --host,
+        0.0.0.0,
+      ]
+    depends_on:
+      - db
+  test-db:
+    profiles: [test]
+    image: postgres:17
+    container_name: data-in-pipeline-load-api-test-db
+    environment:
+      POSTGRES_USER: data-in-pipeline-load-api
+      POSTGRES_PASSWORD: data-in-pipeline-load-api
+      POSTGRES_DB: data-in-pipeline-load-api
+    ports:
+      - 5432:5432
+    healthcheck:
+      test:
+        [
+          CMD-SHELL,
+          pg_isready -U data-in-pipeline-load-api -d data-in-pipeline-load-api,
+        ]
+      interval: 5s
+      timeout: 5s
+      retries: 10
+  test:
+    profiles: [test]
+    container_name: data-in-pipeline-load-api-test
+    build:
+      context: ..
+      dockerfile: data-in-pipeline-load-api/Dockerfile
+    ports:
+      - 8080:8080
+    volumes:
+      - ..:/app
+    working_dir: /app
+    environment:
+      db_master_username: data-in-pipeline-load-api
+      managed_db_password: data-in-pipeline-load-api
+      load_database_url: test-db
+      db_port: 5432
+      db_name: data-in-pipeline-load-api
+    command:
+      [
+        uv,
+        run,
+        --project,
+        data-in-pipeline-load-api,
+        pytest,
+        data-in-pipeline-load-api,
+        --color=yes,
+        -v,
+      ]
+    depends_on:
+      - test-db
+volumes:
+  data-in-pipeline-load-api-postgres-data: {}
