@@ -1,5 +1,5 @@
 import uuid
-from datetime import datetime, timezone
+from datetime import UTC, datetime
 from http import HTTPStatus
 from typing import TypeVar
 
@@ -23,7 +23,7 @@ class ExtractedEnvelope[ExtractedData](BaseModel):
     raw_payload: ExtractedData
     content_type: str = "application/json"
     connector_version: str
-    extracted_at: datetime = Field(default_factory=lambda: datetime.now(timezone.utc))
+    extracted_at: datetime = Field(default_factory=lambda: datetime.now(UTC))
     metadata: ExtractedMetadata
     task_run_id: str
     flow_run_id: str
