@@ -530,7 +530,11 @@ aws.iam.RolePolicy(
                 "Statement": [
                     {
                         "Effect": "Allow",
-                        "Action": ["ssm:GetParameter", "ssm:GetParameters"],
+                        "Action": [
+                            "ssm:GetParameter",
+                            "ssm:GetParameters",
+                            "secretsmanager:GetSecretValue",
+                        ],
                         "Resource": [
                             args[
                                 "data_in_pipeline_load_api_cluster_password_secret_arn"
