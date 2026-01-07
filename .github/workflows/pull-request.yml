@@ -74,6 +74,7 @@ jobs:
 
   test:
     needs: changes
+    if: needs.changes.outputs.services != '[]'
     runs-on: ubuntu-latest
     strategy:
       matrix:
