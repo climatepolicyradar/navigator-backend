@@ -1,0 +1,16 @@
+config:
+  aws:region: eu-west-1
+  data-in-pipeline:aurora_min_instances: "0"
+  data-in-pipeline:aurora_max_instances: "2"
+  # Retention is included in Aurora pricing for up to 7 days. Longer retention would add charges.
+  data-in-pipeline:aurora_retention_period_days: "7"
+  data-in-pipeline-load-api:aurora_master_username:
+    secure: AAABAF1zTD/3nND53/cC6fEmDmKv2UgaIffPrgpx6nt5vLUvafRwPNDJQAw1r1ga
+  data-in-pipeline-load-api:auto_scaling_configuration_arn:
+    secure: AAABAFs/FyzqIXUJyGJPtH1k9BmveKCND+roylqsEbn1DCK2Jaq9KjWnLcNXx+UcSn15NSVie+tIrVKSzFd+ZJaxq3wS8UAnbd5lIiTqikghn9YvV0n1aVb8y42mL3YrxNAlWgpPy7sL3iEpFudlPHBHmmy5hKO7uIYhMOMJw2w/QjH2FBqERQV9VDREJrKc6AFr8pb9LBKE
+  data-in-pipeline-load-api:db_name:
+    secure: AAABAF1iroQMQDO22c9j+burg1KUvyI2WXFDrF8tpM1Morzrakn/qpm2IVs64u9aDPuWttk=
+  data-in-pipeline-load-api:load_db_user:
+    secure: AAABAE4FEKIUDFMGqtN6c9qYNV++54qfbsOvN5Zv8OJjL9uIbTaYejXZHXuD1Tl6Xet3h1I=
+  data-in-pipeline-load-api:validation_account_id:
+    secure: AAABADWdU2kfQw2roOlFnyihxLsSyNpLcts+lTHGpllZYIUMu/nRz+laZKg=
