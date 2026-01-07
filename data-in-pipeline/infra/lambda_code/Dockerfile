@@ -17,12 +17,6 @@ RUN pip install -r requirements.txt -t . --quiet
 # Copy application code
 COPY . .
 
-# (Optional) sanity check - this should work without any system dependencies
-RUN python - <<'EOF'
-import psycopg2
-print("psycopg2-binary OK:", psycopg2.__version__)
-EOF
-
 # Lambda entrypoint is provided by base image
 
 HEALTHCHECK NONE
