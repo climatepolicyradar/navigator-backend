@@ -25,7 +25,7 @@ jobs:
     steps:
       - uses: actions/checkout@v6
       - run: uv sync --all-packages
-      
+
       - name: Trunk Check
         uses: trunk-io/trunk-action@v1
         with:
@@ -62,6 +62,12 @@ jobs:
 
             data-in-pipeline:
               - 'data-in-pipeline/**'
+              - 'api/**'
+              - 'uv.lock'
+              - pyproject.toml
+
+            data-in-pipeline-load-api:
+              - 'data-in-pipeline-load-api/**'
               - 'api/**'
               - 'uv.lock'
               - pyproject.toml
