@@ -31,7 +31,7 @@ class Settings(BaseSettings):
     db_name: str
 
     # IAM authentication (if True, uses IAM tokens instead of password)
-    db_use_iam_auth: bool = True
+    db_use_iam_auth: bool = False
 
     # Connection pool parameters
     statement_timeout: str = "10000"
@@ -43,7 +43,7 @@ class Settings(BaseSettings):
     # set db_sslmode=require via environment variable.
     db_sslmode: str = "require"
 
-    @model_validator(mode="after")
+    @model_validator(mode="after")  # pyright: ignore
     def validate_auth_method(self) -> "Settings":
         """Validate that authentication credentials are provided.
 
@@ -65,4 +65,6 @@ class Settings(BaseSettings):
 # pyright: reportCallIssue=false
 # Pyright doesn't recognize that BaseSettings loads from environment variables, so it
 # flags required fields as missing constructor arguments. This is a false positive.
+# pyright also has issues with model_validator type checking - the validator works
+# correctly at runtime despite the type error.
 settings = Settings()
