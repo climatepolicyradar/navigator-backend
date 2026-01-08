@@ -9,6 +9,7 @@ import logging
 from collections.abc import Generator
 from contextlib import contextmanager
 
+from pydantic import BaseModel
 from settings import settings
 from sqlalchemy import create_engine
 from sqlalchemy.engine import Engine
@@ -16,10 +17,20 @@ from sqlalchemy.orm import Session, sessionmaker
 
 _LOGGER = logging.getLogger(__name__)
 
+
 # Connection parameters from pydantic settings (validated on import)
+class ManagedDBPassword(BaseModel):
+    username: str
+    password: str
+
+
+username_password = ManagedDBPassword.model_validate_json(
+    settings.managed_db_password.get_secret_value()
+)
+
 SQLALCHEMY_DATABASE_URI = (
     f"postgresql://{settings.db_master_username}:"
-    f"{settings.managed_db_password.get_secret_value()}@"
+    f"{username_password.password}@"
     f"{settings.load_database_url.get_secret_value()}:"
     f"{settings.db_port}/{settings.db_name}?sslmode={settings.db_sslmode}"
 )
