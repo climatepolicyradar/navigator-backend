@@ -434,7 +434,7 @@ aws.ec2.SecurityGroupRule(
     to_port=5432,
 )
 
-
+enable_iam_auth = config.require("enable_iam_auth").lower() == "true"
 data_in_pipeline_load_api_apprunner_service = aws.apprunner.Service(
     "data-in-pipeline-load-api-apprunner-service",
     auto_scaling_configuration_arn=config.require("auto_scaling_configuration_arn"),
@@ -453,7 +453,9 @@ data_in_pipeline_load_api_apprunner_service = aws.apprunner.Service(
             vpc_connector_arn=vpc_connector.arn,
         ),
         ingress_configuration=aws.apprunner.ServiceNetworkConfigurationIngressConfigurationArgs(
-            is_publicly_accessible=True,  # set to False to enforce IAM auth
+            is_publicly_accessible=(
+                False if enable_iam_auth else True
+            ),  # must be False to enforce IAM auth
         ),
         ip_address_type="IPV4",
     ),
@@ -477,6 +479,7 @@ data_in_pipeline_load_api_apprunner_service = aws.apprunner.Service(
                     "DB_PORT": "5432",
                     "DB_NAME": config.require("db_name"),
                     "AWS_REGION": "eu-west-1",
+                    "DB_USE_IAM_AUTH": str(enable_iam_auth).lower(),
                 },
             ),
             image_identifier=f"{account_id}.dkr.ecr.eu-west-1.amazonaws.com/data-in-pipeline-load-api:latest",
