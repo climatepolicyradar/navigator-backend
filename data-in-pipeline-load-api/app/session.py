@@ -8,7 +8,6 @@ sessions. Use get_db_context() for all database operations.
 import logging
 from collections.abc import Generator
 from contextlib import contextmanager
-from typing import Any
 
 from settings import settings
 from sqlalchemy import create_engine
@@ -58,16 +57,13 @@ _LOGGER.info(
     f"{settings.db_port}/{settings.db_name} (auth: {auth_method})"
 )
 
-# Configure connection creator for IAM auth
-connect_args: dict[str, Any] = {
-    "options": f"-c statement_timeout={settings.statement_timeout}"
-}
 
 if settings.db_use_iam_auth:
     _LOGGER.info("Attempting to connect to database using IAM authentication")
 
 # Engine with connection pooling to prevent connection leaks
 # Lazy initialisation - created once per worker
+connect_args = {"options": f"-c statement_timeout={settings.statement_timeout}"}
 _engine = create_engine(
     SQLALCHEMY_DATABASE_URI,
     pool_pre_ping=True,  # Verify connections before use
