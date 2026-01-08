@@ -143,9 +143,7 @@ def generate_rds_iam_token(
 
         rds_client = get_rds_client()
         _LOGGER.debug(f"🔐 Generating IAM auth token for {username}@{hostname}:{port}")
-        token = rds_client.generate_db_auth_token(
-            DBHostname=hostname, DBPort=port, DBUsername=username, Region=region
-        )
+        token = rds_client.generate_db_auth_token(hostname, port, username, region)
         _LOGGER.debug("✅ IAM auth token generated successfully")
         return token
     except ClientError as e:
