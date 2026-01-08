@@ -32,4 +32,4 @@ RUN uv sync --project $SERVICE
 EXPOSE 8080
 
 # Run the FastAPI application
-CMD ["sh", "-c", "uv run fastapi run ./$SERVICE/main.py --port 8080 --host 0.0.0.0"]
+CMD ["sh", "-c", "uv run fastapi run ./$SERVICE/app/main.py --port 8080 --host 0.0.0.0"]
