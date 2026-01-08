@@ -5,15 +5,6 @@ on:
     tags: [v*]
     branches:
       - main
-    paths:
-      - backend-api/**
-      - "**"
-      - "!api/**"
-      - "!data-in-pipeline/**"
-      - "!data-in-pipeline-load-api/**"
-      - "!families-api/**"
-      - "!geographies-api/**"
-      - "!concepts-api/**"
 
   pull_request:
     # By default, a workflow only runs when a pull_request event's activity type is opened,
@@ -50,13 +41,27 @@ jobs:
         uses: trunk-io/trunk-action@v1
         with:
           arguments: --ci
+  changes:
+    runs-on: ubuntu-latest
+    outputs:
+      backend-api: ${{ steps.filter.outputs.backend-api }}
+    steps:
+      - uses: actions/checkout@v6
+      - uses: dorny/paths-filter@v3
+        id: filter
+        with:
+          filters: |
+            backend-api:
+              - 'backend-api/**'
   non-search-tests:
+    needs: changes
     defaults:
       run:
         working-directory: backend-api
     if: |
       ! cancelled() && always() &&
-      ! startsWith(github.ref, 'refs/tags')
+      ! startsWith(github.ref, 'refs/tags') &&
+      needs.changes.outputs.backend-api == 'true'
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v6
@@ -93,12 +98,14 @@ jobs:
         run: docker compose logs
 
   search-tests:
+    needs: changes
     defaults:
       run:
         working-directory: backend-api
     if: |
       ! cancelled() && always() &&
-      ! startsWith(github.ref, 'refs/tags')
+      ! startsWith(github.ref, 'refs/tags') &&
+      needs.changes.outputs.backend-api == 'true'
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v6
@@ -127,12 +134,3 @@ jobs:
       - name: Log Dump
         if: always() && ! cancelled()
         run: docker compose logs
-
-  integration-tests:
-    if: |
-      ! cancelled() && always() &&
-      ! startsWith(github.ref, 'refs/tags')
-    runs-on: ubuntu-latest
-    steps:
-      - name: Run Integration Tests
-        run: echo TODO-TODO-TODO-TODO-TODO-TODO-TODO-TODO-TODO-TODO-TODO-TODO
