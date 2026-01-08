@@ -472,6 +472,7 @@ data_in_pipeline_load_api_apprunner_service = aws.apprunner.Service(
                 runtime_environment_secrets={
                     "LOAD_DATABASE_URL": data_in_pipeline_load_api_load_database_url.arn,
                     "CDN_URL": data_in_pipeline_load_api_cdn_url.arn,
+                    "MANAGED_DB_PASSWORD": data_in_pipeline_load_api_cluster_password_secret.secret_arn,
                 },
                 runtime_environment_variables={
                     "DB_MASTER_USERNAME": config.require("aurora_master_username"),
