@@ -87,6 +87,8 @@ jobs:
 
   deploy:
     needs: [changes, test]
+    # a.
+    if: contains(github.event.pull_request.labels.*.name, 'deploy:staging')
     runs-on: ubuntu-latest
     strategy:
       matrix:
