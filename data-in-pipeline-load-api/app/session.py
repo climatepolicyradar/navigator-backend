@@ -58,21 +58,22 @@ def _build_database_uri() -> str:
                 f"Secret ARN: {settings.managed_db_password_secret_arn}"
             )
 
-        elif settings.managed_db_password:
-            # Fallback for backwards compatibility (deprecated)
-            _LOGGER.warning(
-                "⚠️ Using deprecated managed_db_password env var. "
-                "Use managed_db_password_secret_arn instead."
-            )
-            password_raw = settings.managed_db_password.get_secret_value()
-            # Try to parse as JSON first, fall back to plain string
-            try:
-                password_dict = json.loads(password_raw)
-                password = password_dict.get("password", password_raw)
-                _LOGGER.debug("🔑 Extracted password from JSON secret format")
-            except (json.JSONDecodeError, TypeError, AttributeError):
-                password = password_raw
-                _LOGGER.debug("🔑 Using plain string password format")
+    elif settings.managed_db_password:
+        # Fallback for backwards compatibility (deprecated)
+        _LOGGER.warning(
+            "⚠️ Using deprecated managed_db_password env var. "
+            "Use managed_db_password_secret_arn instead."
+        )
+        password_raw = settings.managed_db_password.get_secret_value()
+        # Try to parse as JSON first, fall back to plain string
+        try:
+            password_dict = json.loads(password_raw)
+            password = password_dict.get("password", password_raw)
+            _LOGGER.debug("🔑 Extracted password from JSON secret format")
+        except (json.JSONDecodeError, TypeError, AttributeError):
+            password = password_raw
+            _LOGGER.debug("🔑 Using plain string password format")
+
         else:
             raise ValueError(
                 "🔒 managed_db_password_secret_arn is required when "
