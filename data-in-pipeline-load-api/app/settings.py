@@ -1,5 +1,4 @@
 import logging
-import os
 import sys
 
 from pydantic import SecretStr
@@ -39,9 +38,7 @@ class Settings(BaseSettings):
     # 'prefer' tries SSL but falls back to non-SSL for local dev (validates
     # certs if SSL is used). For production RDS without cert validation,
     # set db_sslmode=require via environment variable.
-    db_sslmode: str = (
-        "prefer" if os.getenv("ENV", "development") != "production" else "require"
-    )
+    db_sslmode: str = "require"
 
 
 # Pydantic settings are set from the env variables passed in via
