@@ -1,8 +1,7 @@
 import logging
-import os
 import sys
 
-from pydantic import SecretStr
+from pydantic import SecretStr, model_validator
 from pydantic_settings import BaseSettings
 
 # Configure logging before anything else - this module is imported early
@@ -26,10 +25,13 @@ class Settings(BaseSettings):
 
     # DB connection parameters
     db_master_username: str
-    managed_db_password: SecretStr
+    managed_db_password: SecretStr | None = None
     load_database_url: SecretStr
     db_port: str
     db_name: str
+
+    # IAM authentication (if True, uses IAM tokens instead of password)
+    db_use_iam_auth: bool = True
 
     # Connection pool parameters
     statement_timeout: str = "10000"
@@ -39,9 +41,22 @@ class Settings(BaseSettings):
     # 'prefer' tries SSL but falls back to non-SSL for local dev (validates
     # certs if SSL is used). For production RDS without cert validation,
     # set db_sslmode=require via environment variable.
-    db_sslmode: str = (
-        "prefer" if os.getenv("ENV", "development") != "production" else "require"
-    )
+    db_sslmode: str = "require"
+
+    @model_validator(mode="after")
+    def validate_auth_method(self) -> "Settings":
+        """Validate that authentication credentials are provided.
+
+        :raises ValueError: If password auth is selected but no password
+            is provided
+        :return: Settings instance
+        :rtype: Settings
+        """
+        if not self.db_use_iam_auth and self.managed_db_password is None:
+            raise ValueError(
+                "🔒 managed_db_password is required when " "db_use_iam_auth=False"
+            )
+        return self
 
 
 # Pydantic settings are set from the env variables passed in via

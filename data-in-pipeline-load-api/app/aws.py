@@ -103,3 +103,52 @@ def get_secret(secret_name: str, parse_json: bool = False) -> str | dict:
         raise ValueError(
             f"Failed to retrieve secret '{secret_name}': {error_code}"
         ) from e
+
+
+def get_rds_client() -> BaseClient:
+    """Get an RDS client using the configured session.
+
+    :return: RDS client instance
+    :rtype: BaseClient
+    """
+    session = get_aws_session()
+    return session.client("rds")
+
+
+def generate_rds_iam_token(
+    hostname: str, port: int, username: str, region: str | None = None
+) -> str:
+    """Generate an RDS IAM authentication token.
+
+    Tokens expire after 15 minutes. This function should be called
+    periodically to refresh the token.
+
+    :param hostname: RDS instance or cluster endpoint hostname
+    :type hostname: str
+    :param port: Database port (typically 5432 for PostgreSQL)
+    :type port: int
+    :param username: Database username for IAM authentication
+    :type username: str
+    :param region: AWS region (defaults to AWS_REGION env var)
+    :type region: str | None, optional
+    :raises ValueError: If token generation fails
+    :return: IAM authentication token to use as password
+    :rtype: str
+    """
+    try:
+        if region is None:
+            region = os.getenv("AWS_REGION")
+            if region is None:
+                raise ValueError("🔒 AWS_REGION must be set for IAM auth")
+
+        rds_client = get_rds_client()
+        _LOGGER.debug(f"🔐 Generating IAM auth token for {username}@{hostname}:{port}")
+        token = rds_client.generate_db_auth_token(
+            DBHostname=hostname, DBPort=port, DBUsername=username, Region=region
+        )
+        _LOGGER.debug("✅ IAM auth token generated successfully")
+        return token
+    except ClientError as e:
+        error_code = e.response.get("Error", {}).get("Code", "Unknown")
+        _LOGGER.exception(f"❌ Failed to generate IAM auth token: {error_code} - {e}")
+        raise ValueError(f"Failed to generate IAM auth token: {error_code}") from e
