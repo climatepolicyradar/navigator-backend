@@ -25,7 +25,10 @@ class Settings(BaseSettings):
 
     # DB connection parameters
     db_master_username: str
-    managed_db_password: SecretStr | None = None
+    managed_db_password_secret_arn: str | None = None
+    managed_db_password: SecretStr | None = (
+        None  # Deprecated: use managed_db_password_secret_arn
+    )
     load_database_url: SecretStr
     db_port: str
     db_name: str
@@ -43,18 +46,19 @@ class Settings(BaseSettings):
     # set db_sslmode=require via environment variable.
     db_sslmode: str = "require"
 
-    @model_validator(mode="after")  # pyright: ignore
-    def validate_auth_method(self) -> "Settings":
+    @model_validator(mode="after")  # pyright: ignore[reportCallIssue]
+    def validate_auth_method(self):
         """Validate that authentication credentials are provided.
 
         :raises ValueError: If password auth is selected but no password
-            is provided
+            secret ARN is provided
         :return: Settings instance
         :rtype: Settings
         """
-        if not self.db_use_iam_auth and self.managed_db_password is None:
+        if not self.db_use_iam_auth and self.managed_db_password_secret_arn is None:
             raise ValueError(
-                "🔒 managed_db_password is required when " "db_use_iam_auth=False"
+                "🔒 managed_db_password_secret_arn is required when "
+                "db_use_iam_auth=False"
             )
         return self
 
