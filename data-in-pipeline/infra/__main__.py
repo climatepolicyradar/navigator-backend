@@ -453,7 +453,7 @@ data_in_pipeline_load_api_apprunner_service = aws.apprunner.Service(
             vpc_connector_arn=vpc_connector.arn,
         ),
         ingress_configuration=aws.apprunner.ServiceNetworkConfigurationIngressConfigurationArgs(
-            is_publicly_accessible=(False),  # must be False to enforce IAM auth
+            is_publicly_accessible=False,  # must be False to enforce IAM auth
         ),
         ip_address_type="IPV4",
     ),
