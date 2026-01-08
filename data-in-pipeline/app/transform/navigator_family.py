@@ -258,15 +258,20 @@ def _transform_family_corpus_organisation(
 
 def _transform_navigator_family(navigator_family: NavigatorFamily) -> Document:
     labels: list[DocumentLabelRelationship] = []
+    """
+    All families are currently Principal.
+    Based on the FRBR taxonomy.
 
-    # All families are currently canonical
+    @see: https://en.wikipedia.org/wiki/Functional_Requirements_for_Bibliographic_Records
+    @see: https://developers.laws.africa/get-started/works-and-expressions
+    """
     labels.append(
         DocumentLabelRelationship(
             type="status",
             label=Label(
                 type="status",
-                id="Canonical",
-                title="Canonical",
+                id="Principal",
+                title="Principal",
             ),
         )
     )

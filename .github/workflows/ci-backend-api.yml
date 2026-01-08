@@ -1,10 +1,11 @@
-name: CI/CD
+name: CI for backend-api
 
 on:
   push:
     tags: [v*]
     branches:
       - main
+
   pull_request:
     # By default, a workflow only runs when a pull_request event's activity type is opened,
     # synchronize, or reopened.
@@ -32,34 +33,35 @@ jobs:
         with:
           python-version: "3.12"
       - uses: astral-sh/setup-uv@v7
-      # Install dependencies for all Python projects in the monorepo
-      # Sync workspace members (api, families-api, concepts-api, geographies-api) from root
-      - run: uv sync --frozen --no-install-project --dev
-      # Ensure all workspace members are properly installed for pyright
-      - run: uv sync --frozen --dev
-        working-directory: families-api
-      - run: uv sync --frozen --dev
-        working-directory: concepts-api
+      - run: uv sync --all-packages
       - run: uv sync --frozen --dev
         working-directory: backend-api
-      - run: uv sync --frozen --dev
-        working-directory: geographies-api
-      - run: uv sync --frozen --dev
-        working-directory: data-in-pipeline
-      # @related BACKEND_API_PYRIGHT_HACK
-      # This is a little hack to make sure we have pyright available by the pyright-backend-api trunk definition
       - run: pip install pyright==1.1.361
       - name: Trunk Check
         uses: trunk-io/trunk-action@v1
         with:
           arguments: --ci
+  changes:
+    runs-on: ubuntu-latest
+    outputs:
+      backend-api: ${{ steps.filter.outputs.backend-api }}
+    steps:
+      - uses: actions/checkout@v6
+      - uses: dorny/paths-filter@v3
+        id: filter
+        with:
+          filters: |
+            backend-api:
+              - 'backend-api/**'
   non-search-tests:
+    needs: changes
     defaults:
       run:
         working-directory: backend-api
     if: |
       ! cancelled() && always() &&
-      ! startsWith(github.ref, 'refs/tags')
+      ! startsWith(github.ref, 'refs/tags') &&
+      needs.changes.outputs.backend-api == 'true'
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v6
@@ -96,12 +98,14 @@ jobs:
         run: docker compose logs
 
   search-tests:
+    needs: changes
     defaults:
       run:
         working-directory: backend-api
     if: |
       ! cancelled() && always() &&
-      ! startsWith(github.ref, 'refs/tags')
+      ! startsWith(github.ref, 'refs/tags') &&
+      needs.changes.outputs.backend-api == 'true'
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v6
@@ -130,12 +134,3 @@ jobs:
       - name: Log Dump
         if: always() && ! cancelled()
         run: docker compose logs
-
-  integration-tests:
-    if: |
-      ! cancelled() && always() &&
-      ! startsWith(github.ref, 'refs/tags')
-    runs-on: ubuntu-latest
-    steps:
-      - name: Run Integration Tests
-        run: echo TODO-TODO-TODO-TODO-TODO-TODO-TODO-TODO-TODO-TODO-TODO-TODO

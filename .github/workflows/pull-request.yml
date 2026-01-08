@@ -1,64 +1,159 @@
 # This workflow **only** includes our microservices
 # ci-cd.yml controls the backend-api app
-name: Pull request
+name: CI for microservices
 on:
   pull_request:
     # there is a micro-optimisation here in only running test if it's a relevant label
     # but this isn't currently a performance bottleneck so we're leaving it to run on all labels to reduce complexity
     # a. deploys the service to staging if the pull request is (re)labelled with 'deploy:staging'
     types: [opened, synchronize, reopened, labeled] # This needs to be the American spelling, don't change it
+    paths:
+      - "!backend-api/**"
+      - "**"
   workflow_dispatch: {}
+
 permissions:
   id-token: write
   contents: read
+
 jobs:
+  code-quality:
+    permissions:
+      # For trunk to post annotations
+      checks: write
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v6
+      - uses: astral-sh/setup-uv@v7
+      - run: uv sync --all-packages
+      - name: Trunk Check
+        uses: trunk-io/trunk-action@v1
+        with:
+          arguments: --ci
+
+  changes:
+    runs-on: ubuntu-latest
+    outputs:
+      services: ${{ steps.filter.outputs.changes }}
+
+    steps:
+      - uses: actions/checkout@v6
+      - uses: dorny/paths-filter@v3
+        id: filter
+        with:
+          filters: |
+            families-api:
+              - 'families-api/**'
+              - 'api/**'
+              - 'uv.lock'
+              - pyproject.toml
+
+            geographies-api:
+              - 'geographies-api/**'
+              - 'api/**'
+              - 'uv.lock'
+              - pyproject.toml
+
+            concepts-api:
+              - 'concepts-api/**'
+              - 'api/**'
+              - 'uv.lock'
+              - pyproject.toml
+
+            data-in-pipeline:
+              - 'data-in-pipeline/**'
+              - 'api/**'
+              - 'uv.lock'
+              - pyproject.toml
+
+            data-in-pipeline-load-api:
+              - 'data-in-pipeline-load-api/**'
+              - 'api/**'
+              - 'uv.lock'
+              - pyproject.toml
+
   test:
+    needs: changes
+    if: needs.changes.outputs.services != '[]'
     runs-on: ubuntu-latest
     strategy:
       matrix:
-        service: [families-api, geographies-api, concepts-api]
+        service: ${{ fromJSON(needs.changes.outputs.services) }}
+      fail-fast: false
     steps:
       - uses: actions/checkout@v6
       - uses: extractions/setup-just@v3
       - run: just test ${{ matrix.service }}
 
-  test-data-in-pipeline:
-    runs-on: ubuntu-latest
-    defaults:
-      run:
-        working-directory: data-in-pipeline
-    steps:
-      - uses: actions/checkout@v6
-      - uses: extractions/setup-just@v3
-      - run: just test-ci
-
   deploy:
-    needs: test
-    # a. deploys the service to staging if the pull request is (re)labelled with 'deploy:staging'
+    needs: [changes, test]
+    # a.
     if: contains(github.event.pull_request.labels.*.name, 'deploy:staging')
     runs-on: ubuntu-latest
     strategy:
       matrix:
         environment: [staging]
+        service: ${{ fromJSON(needs.changes.outputs.services) }}
+      fail-fast: false
     environment: ${{ matrix.environment }}
-    env:
-      SERVICES: families-api geographies-api concepts-api
+
     steps:
       - uses: actions/checkout@v6
-      - uses: extractions/setup-just@v3
       - uses: aws-actions/configure-aws-credentials@v5
         with:
           role-to-assume: arn:aws:iam::${{ secrets.AWS_ACCOUNT_ID }}:role/navigator-backend-github-actions-deploy
           role-session-name: GitHub_to_AWS_via_FederatedOIDC_${{ matrix.environment }}
           aws-region: eu-west-1
+
       - uses: aws-actions/amazon-ecr-login@v2
+
       # we use python / uv in some build scripts and testing
       - uses: actions/setup-python@v6
         with:
           python-version: "3.12"
+
       - uses: astral-sh/setup-uv@v7
       - run: uv sync --all-packages
+
+      - id: pr_data
+        run: |
+          COMMIT_SHA=$(git rev-parse HEAD)
+          PR_NUMBER=$(gh api repos/${{ github.repository }}/commits/$COMMIT_SHA/pulls --jq '.[0].number' || echo "")
+          if [ -z "$PR_NUMBER" ]; then
+            echo "pr_number=" >> $GITHUB_OUTPUT
+            echo "pr_link=" >> $GITHUB_OUTPUT
+          else
+            echo "pr_number=$PR_NUMBER" >> $GITHUB_OUTPUT
+            echo "pr_link=https://github.com/${{ github.repository }}/pull/$PR_NUMBER" >> $GITHUB_OUTPUT
+          fi
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+
       - run: |
-          for service in $SERVICES; do
-            just deploy $service ${{ matrix.environment }} latest
-          done
+          COMMIT_URL="https://github.com/${{ github.repository }}/commit/${{ github.sha }}"
+          COMMIT_SHORT=$(echo "${{ github.sha }}" | cut -c1-7)
+          if [ -n "${{ steps.pr_data.outputs.pr_link }}" ]; then
+            PR_URL="https://github.com/${{ github.repository }}/pull/${{ steps.pr_data.outputs.pr_number }}"
+            PR_NUM="${{ steps.pr_data.outputs.pr_number }}"
+            MESSAGE="🚀 Deploying feature-branch <$PR_URL|PR #$PR_NUM> (<$COMMIT_URL|$COMMIT_SHORT>) *${{ matrix.service }}* to ${{ matrix.environment }}"
+          else
+            MESSAGE="🚀 Deploying feature-branch <$COMMIT_URL|$COMMIT_SHORT> *${{ matrix.service }}* to ${{ matrix.environment }}"
+          fi
+          jq -n --arg msg "$MESSAGE" '{text: $msg, mrkdwn: true}' > slack-payload.json
+
+      - uses: slackapi/slack-github-action@v2.1.1
+        with:
+          webhook: ${{ secrets.ENV_UPDATES_CHANNEL_SLACK_WEBHOOK_URL }}
+          webhook-type: incoming-webhook
+          payload-file-path: slack-payload.json
+
+      - uses: extractions/setup-just@v3
+      - run: |
+          just deploy ${{ matrix.service }} ${{ matrix.environment }} latest
+          just deploy ${{ matrix.service }} ${{ matrix.environment }} ${{ github.sha }}
+        env:
+          AWS_ENV: prod
+          AWS_REGION: eu-west-1
+          DOCKER_REGISTRY: ${{ secrets.DOCKER_REGISTRY_PRODUCTION }}
+          PREFECT_API_KEY: ${{ secrets.PREFECT_API_KEY }}
+          PREFECT_API_URL: ${{ secrets.PREFECT_API_URL }}

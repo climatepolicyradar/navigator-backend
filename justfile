@@ -9,7 +9,12 @@ dev service environment="production":
 
 # test
 test service:
-    docker compose -f {{service}}/docker-compose.yml --profile test up --abort-on-container-exit --exit-code-from test --remove-orphans
+    # search for any override steps
+    if just -f {{service}}/justfile --summary | grep -qe 'test-override'; then \
+        just -f {{service}}/justfile test-override; \
+    else \
+        docker compose -f {{service}}/docker-compose.yml --profile test up --abort-on-container-exit --exit-code-from test --remove-orphans; \
+    fi
 
 # build/deploy
 build service environment tag:
@@ -31,13 +36,16 @@ build service environment tag:
         --file {{service}}/Dockerfile .
 
 deploy service environment tag:
-    just build {{service}} {{environment}} {{tag}}
-
-    docker tag {{service}}:{{tag}} $(aws sts get-caller-identity --query 'Account' --output text).dkr.ecr.eu-west-1.amazonaws.com/{{service}}:{{tag}}
-    docker tag {{service}}:{{GITHUB_SHA}} $(aws sts get-caller-identity --query 'Account' --output text).dkr.ecr.eu-west-1.amazonaws.com/{{service}}:{{GITHUB_SHA}}
-
-    docker push $(aws sts get-caller-identity --query 'Account' --output text).dkr.ecr.eu-west-1.amazonaws.com/{{service}}:{{tag}}
-    docker push $(aws sts get-caller-identity --query 'Account' --output text).dkr.ecr.eu-west-1.amazonaws.com/{{service}}:{{GITHUB_SHA}}
+    # search for any override steps
+    if just -f {{service}}/justfile --summary | grep -qe 'deploy-override'; then \
+        just -f {{service}}/justfile deploy-override {{service}} {{environment}} {{tag}}; \
+    else \
+        just build {{service}} {{environment}} {{tag}}; \
+        docker tag {{service}}:{{tag}} $(aws sts get-caller-identity --query 'Account' --output text).dkr.ecr.eu-west-1.amazonaws.com/{{service}}:{{tag}}; \
+        docker tag {{service}}:{{GITHUB_SHA}} $(aws sts get-caller-identity --query 'Account' --output text).dkr.ecr.eu-west-1.amazonaws.com/{{service}}:{{GITHUB_SHA}}; \
+        docker push $(aws sts get-caller-identity --query 'Account' --output text).dkr.ecr.eu-west-1.amazonaws.com/{{service}}:{{tag}}; \
+        docker push $(aws sts get-caller-identity --query 'Account' --output text).dkr.ecr.eu-west-1.amazonaws.com/{{service}}:{{GITHUB_SHA}}; \
+    fi
 
 # private method for accessing the optional child recipe
 _prebuild service environment:
