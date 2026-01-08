@@ -1,8 +1,7 @@
 import logging
-import os
 import sys
 
-from pydantic import SecretStr
+from pydantic import SecretStr, model_validator
 from pydantic_settings import BaseSettings
 
 # Configure logging before anything else - this module is imported early
@@ -26,10 +25,16 @@ class Settings(BaseSettings):
 
     # DB connection parameters
     db_master_username: str
-    managed_db_password: SecretStr
+    managed_db_password_secret_arn: str | None = None
+    managed_db_password: SecretStr | None = (
+        None  # Deprecated: use managed_db_password_secret_arn
+    )
     load_database_url: SecretStr
     db_port: str
     db_name: str
+
+    # IAM authentication (if True, uses IAM tokens instead of password)
+    db_use_iam_auth: bool = False
 
     # Connection pool parameters
     statement_timeout: str = "10000"
@@ -39,9 +44,23 @@ class Settings(BaseSettings):
     # 'prefer' tries SSL but falls back to non-SSL for local dev (validates
     # certs if SSL is used). For production RDS without cert validation,
     # set db_sslmode=require via environment variable.
-    db_sslmode: str = (
-        "prefer" if os.getenv("ENV", "development") != "production" else "require"
-    )
+    db_sslmode: str = "require"
+
+    @model_validator(mode="after")  # pyright: ignore[reportCallIssue]
+    def validate_auth_method(self):
+        """Validate that authentication credentials are provided.
+
+        :raises ValueError: If password auth is selected but no password
+            secret ARN is provided
+        :return: Settings instance
+        :rtype: Settings
+        """
+        if not self.db_use_iam_auth and self.managed_db_password_secret_arn is None:
+            raise ValueError(
+                "🔒 managed_db_password_secret_arn is required when "
+                "db_use_iam_auth=False"
+            )
+        return self
 
 
 # Pydantic settings are set from the env variables passed in via
@@ -50,4 +69,6 @@ class Settings(BaseSettings):
 # pyright: reportCallIssue=false
 # Pyright doesn't recognize that BaseSettings loads from environment variables, so it
 # flags required fields as missing constructor arguments. This is a false positive.
+# pyright also has issues with model_validator type checking - the validator works
+# correctly at runtime despite the type error.
 settings = Settings()

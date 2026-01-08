@@ -134,6 +134,7 @@ load_db_user = config.require("load_db_user")
 min_instances = int(config.require("aurora_min_instances"))
 max_instances: int = int(config.require("aurora_max_instances"))
 retention_period_days = int(config.require("aurora_retention_period_days"))
+enable_iam_auth = config.require("enable_iam_auth").lower() == "true"
 aurora_cluster = aws.rds.Cluster(
     cluster_name,
     cluster_identifier=cluster_name,
@@ -146,7 +147,7 @@ aurora_cluster = aws.rds.Cluster(
     vpc_security_group_ids=[aurora_security_group.id],
     backup_retention_period=retention_period_days,  # Retention is included in Aurora pricing for up to 7 days. Longer retention would add charges.
     preferred_backup_window="02:00-03:00",
-    iam_database_authentication_enabled=False,  # TODO: Reenable later
+    iam_database_authentication_enabled=enable_iam_auth,
     preferred_maintenance_window="sun:04:00-sun:05:00",
     deletion_protection=True,
     serverlessv2_scaling_configuration=aws.rds.ClusterServerlessv2ScalingConfigurationArgs(
@@ -434,7 +435,6 @@ aws.ec2.SecurityGroupRule(
     to_port=5432,
 )
 
-
 data_in_pipeline_load_api_apprunner_service = aws.apprunner.Service(
     "data-in-pipeline-load-api-apprunner-service",
     auto_scaling_configuration_arn=config.require("auto_scaling_configuration_arn"),
@@ -453,7 +453,7 @@ data_in_pipeline_load_api_apprunner_service = aws.apprunner.Service(
             vpc_connector_arn=vpc_connector.arn,
         ),
         ingress_configuration=aws.apprunner.ServiceNetworkConfigurationIngressConfigurationArgs(
-            is_publicly_accessible=True,  # set to False to enforce IAM auth
+            is_publicly_accessible=False,  # must be False to enforce IAM auth
         ),
         ip_address_type="IPV4",
     ),
@@ -477,6 +477,8 @@ data_in_pipeline_load_api_apprunner_service = aws.apprunner.Service(
                     "DB_PORT": "5432",
                     "DB_NAME": config.require("db_name"),
                     "AWS_REGION": "eu-west-1",
+                    "DB_USE_IAM_AUTH": str(enable_iam_auth).lower(),
+                    "MANAGED_DB_PASSWORD_SECRET_ARN": data_in_pipeline_load_api_cluster_password_secret.secret_arn,
                 },
             ),
             image_identifier=f"{account_id}.dkr.ecr.eu-west-1.amazonaws.com/data-in-pipeline-load-api:latest",

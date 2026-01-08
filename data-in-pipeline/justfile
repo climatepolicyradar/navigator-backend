@@ -59,7 +59,5 @@ clean-lambda-build-folder:
     rm -rf .lambda_build
 
 deploy-lambda-code: build-lambda-code
+    cd infra
     pulumi up -ry
-
-build-load-api: 
-    docker build -f infra/Dockerfile.load_api -t load-api --platform linux/amd64 ..
