@@ -13,6 +13,7 @@ members = [
   "geographies-api",
   "data-in-pipeline-load-api",
   "data-in-pipeline",
+  "data-in-models",
 ]
 
 [tool.pyright]
@@ -30,4 +31,5 @@ root = [
   "geographies-api",
   "data-in-pipeline-load-api",
   "data-in-pipeline",
+  "data-in-models",
 ]

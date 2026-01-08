@@ -1,6 +1,7 @@
 from datetime import datetime
 from typing import Literal
 
+from data_in_models.models import Document
 from prefect import flow, task
 from prefect.runtime import flow_run, task_run
 from returns.result import Failure, Result, Success
@@ -15,7 +16,7 @@ from app.extract.connectors import (
 from app.extract.enums import CheckPointStorageType
 from app.identify.navigator_family import identify_navigator_family
 from app.load.aws_bucket import upload_to_s3
-from app.models import Document, ExtractedEnvelope, Identified
+from app.models import ExtractedEnvelope, Identified
 from app.pipeline_metrics import ErrorType, Operation, PipelineType, Status
 from app.transform.models import NoMatchingTransformations
 from app.transform.navigator_family import transform_navigator_family

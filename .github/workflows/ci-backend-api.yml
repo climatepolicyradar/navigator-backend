@@ -11,6 +11,7 @@ on:
       - "!api/**"
       - "!data-in-pipeline/**"
       - "!data-in-pipeline-load-api/**"
+      - "!data-in-models/**"
       - "!families-api/**"
       - "!geographies-api/**"
       - "!concepts-api/**"

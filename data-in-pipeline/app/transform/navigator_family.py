@@ -1,3 +1,10 @@
+from data_in_models.models import (
+    Document,
+    DocumentDocumentRelationship,
+    DocumentLabelRelationship,
+    DocumentWithoutRelationships,
+    Label,
+)
 from returns.result import Failure, Result, Success
 
 from app.bootstrap_telemetry import get_logger, log_context
@@ -6,14 +13,7 @@ from app.extract.connectors import (
     NavigatorDocument,
     NavigatorFamily,
 )
-from app.models import (
-    Document,
-    DocumentDocumentRelationship,
-    DocumentLabelRelationship,
-    DocumentWithoutRelationships,
-    Identified,
-    Label,
-)
+from app.models import Identified
 from app.transform.models import CouldNotTransform, NoMatchingTransformations
 
 mcf_projects_corpus_types = [

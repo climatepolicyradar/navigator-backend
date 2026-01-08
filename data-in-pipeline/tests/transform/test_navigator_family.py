@@ -1,6 +1,13 @@
 import datetime
 
 import pytest
+from data_in_models.models import (
+    Document,
+    DocumentDocumentRelationship,
+    DocumentLabelRelationship,
+    DocumentWithoutRelationships,
+    Label,
+)
 from returns.result import Success
 
 from app.extract.connectors import (
@@ -12,14 +19,7 @@ from app.extract.connectors import (
     NavigatorFamily,
     NavigatorOrganisation,
 )
-from app.models import (
-    Document,
-    DocumentDocumentRelationship,
-    DocumentLabelRelationship,
-    DocumentWithoutRelationships,
-    Identified,
-    Label,
-)
+from app.models import Identified
 from app.transform.navigator_family import transform_navigator_family
 
 
