@@ -15,6 +15,7 @@ ENV UV_PROJECT_ENVIRONMENT="/usr/local/"
 # Copy your source code
 COPY ./data-in-pipeline /app/data-in-pipeline/
 COPY ./api /app/api/
+COPY ./data-in-models /app/data-in-models/
 WORKDIR /app
 
 # Copy dependency files

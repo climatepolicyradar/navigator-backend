@@ -44,6 +44,7 @@ jobs:
             data-in-pipeline:
               - 'data-in-pipeline/**'
               - 'api/**'
+              - 'data-in-models/**'
               - 'uv.lock'
               - pyproject.toml
 
