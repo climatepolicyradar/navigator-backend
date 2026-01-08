@@ -44,7 +44,6 @@ jobs:
           python-version: "3.12"
       - uses: astral-sh/setup-uv@v7
       - run: uv sync --all-packages
-        working-directory: backend-api
       - run: uv sync --frozen --dev
         working-directory: backend-api
       - run: pip install pyright==1.1.361
