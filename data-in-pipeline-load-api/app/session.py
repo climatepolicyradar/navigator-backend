@@ -21,7 +21,7 @@ SQLALCHEMY_DATABASE_URI = (
     f"postgresql://{settings.db_master_username}:"
     f"{settings.managed_db_password.get_secret_value()}@"
     f"{settings.load_database_url.get_secret_value()}:"
-    f"{settings.db_port}/{settings.db_name}?sslmode=no-verify"
+    f"{settings.db_port}/{settings.db_name}?sslmode={settings.db_sslmode}"
 )
 
 _LOGGER.info(
