@@ -481,6 +481,9 @@ def test_transform_navigator_family_with_single_matching_document(
                         Item(
                             url="https://cdn.climatepolicyradar.org/path/to/file.pdf",
                         ),
+                        Item(
+                            url="https://source.climatepolicyradar.org/path/to/file.pdf",
+                        ),
                     ],
                 ),
             ),
@@ -538,6 +541,9 @@ def test_transform_navigator_family_with_single_matching_document(
                 items=[
                     Item(
                         url="https://cdn.climatepolicyradar.org/path/to/file.pdf",
+                    ),
+                    Item(
+                        url="https://source.climatepolicyradar.org/path/to/file.pdf",
                     ),
                 ],
             ),
