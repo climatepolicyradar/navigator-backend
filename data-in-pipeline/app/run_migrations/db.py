@@ -108,7 +108,8 @@ def get_db_context() -> Generator[Session, None, None]:
 
 
 def run_migrations():
-    # For now we just want to connect to the database and check that we have access.
-    with get_db_context() as db:
-        is_connected = db.execute(text("SELECT 1")) is not None
-        print(is_connected)
+    print("Inside run_migrations function")
+    # # For now we just want to connect to the database and check that we have access.
+    # with get_db_context() as db:
+    #     is_connected = db.execute(text("SELECT 1")) is not None
+    #     print(is_connected)
