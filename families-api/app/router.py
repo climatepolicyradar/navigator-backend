@@ -53,38 +53,55 @@ def read_families(
     *,
     session: Session = Depends(get_session),
     page: int = Query(1, ge=1),
-    page_size: int = Query(
-        default=10,
-        ge=1,
-        le=100,
-    ),
-    corpus_import_ids: list[str] = Query(
-        default=[],
-        alias="corpus.import_id",
-    ),
+    page_size: int = Query(default=10, ge=1, le=100),
+    corpus_import_ids: list[str] = Query(default=[], alias="corpus.import_id"),
+    import_ids: str | None = Query(default=None),
 ):
-    limit = page_size
-    offset = (page - 1) * limit
+    """Fetch families with optional filtering.
 
+    :param session: Database session.
+    :param page: Page number for pagination.
+    :param page_size: Number of items per page.
+    :param corpus_import_ids: Filter by corpus import IDs.
+    :param import_ids: Comma-separated list of family import IDs to fetch.
+        If provided, pagination is ignored.
+    :return: List of families.
+    """
     filters = []
+
+    if import_ids:
+        import_id_list = [
+            import_id.strip()
+            for import_id in import_ids.split(",")
+            if import_id.strip()
+        ]
+        if import_id_list:
+            filters.append(Family.import_id.in_(import_id_list))  # type: ignore
+
     if corpus_import_ids:
         # We're filtering `Families.corpus` to tell SQLModel to generate the right SQL for filtering.
         # Direct attribute access e.g. Corpus.import_id doesn't work because the ORM
         # doesn't auto-join related tables in filters.
         filters.append(Family.corpus.has(Corpus.import_id.in_(corpus_import_ids)))  # type: ignore
 
-    families = session.exec(
+    query = (
         Family.eager_loaded_select()
-        .order_by(desc(Family.last_modified), desc(Family.import_id))
-        .offset(offset)
-        .limit(limit)
         .where(*filters)
-    ).all()
+        .order_by(desc(Family.last_modified), desc(Family.import_id))
+    )
+
+    # Skip pagination if import_ids provided
+    if not import_ids:
+        limit = page_size
+        offset = (page - 1) * limit
+        query = query.offset(offset).limit(limit)
+
+    families = session.exec(query).all()
 
     return APIListResponse(
         data=list(families),
         total=len(families),
-        page=page,
+        page=page if not import_ids else 1,
         page_size=len(families),
     )
 
