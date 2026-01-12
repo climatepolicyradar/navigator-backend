@@ -14,7 +14,6 @@ from sqlalchemy import create_engine
 from sqlalchemy.engine import Engine
 from sqlalchemy.orm import Session, sessionmaker
 
-from app.aws import get_secret
 from app.settings import settings
 
 _LOGGER = logging.getLogger(__name__)
@@ -37,41 +36,18 @@ def _build_database_uri() -> str:
         # The actual token is generated in _create_connection_with_iam()
         # trunk-ignore(bandit/B105)
         password = "placeholder"
-    elif settings.managed_db_password_secret_arn:
-        # Retrieve password from Secrets Manager at runtime to always get
-        # the latest value, even if it rotates.
-        _LOGGER.info("🔑 Retrieving database password from Secrets Manager")
-        secret_dict = get_secret(
-            settings.managed_db_password_secret_arn, parse_json=True
-        )
-        if not isinstance(secret_dict, dict):
-            raise ValueError(
-                "🔒 Secret must be a JSON object when "
-                f"parse_json=True. Secret ARN: "
-                f"{settings.managed_db_password_secret_arn}"
-            )
-        password = secret_dict.get("password")
-        if password is None:
-            raise ValueError(
-                "🔒 Secret does not contain 'password' field. "
-                f"Secret ARN: {settings.managed_db_password_secret_arn}"
-            )
 
-        elif settings.managed_db_password:
-            # Fallback for backwards compatibility (deprecated)
-            _LOGGER.warning(
-                "⚠️ Using deprecated managed_db_password env var. "
-                "Use managed_db_password_secret_arn instead."
-            )
-            password_raw = settings.managed_db_password.get_secret_value()
-            # Try to parse as JSON first, fall back to plain string
-            try:
-                password_dict = json.loads(password_raw)
-                password = password_dict.get("password", password_raw)
-                _LOGGER.debug("🔑 Extracted password from JSON secret format")
-            except (json.JSONDecodeError, TypeError, AttributeError):
-                password = password_raw
-                _LOGGER.debug("🔑 Using plain string password format")
+    elif settings.managed_db_password:
+        # Try to parse as JSON first, fall back to plain string
+        _LOGGER.info("🔑 Retrieving database password from Secrets Manager")
+        password_raw = settings.managed_db_password.get_secret_value()
+        try:
+            password_dict = json.loads(password_raw)
+            password = password_dict.get("password", password_raw)
+            _LOGGER.debug("🔑 Extracted password from JSON secret format")
+        except (json.JSONDecodeError, TypeError, AttributeError):
+            password = password_raw
+            _LOGGER.debug("🔑 Using plain string password format")
 
     else:
         raise ValueError(
