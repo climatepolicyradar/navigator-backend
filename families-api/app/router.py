@@ -55,7 +55,7 @@ def read_families(
     page: int = Query(1, ge=1),
     page_size: int = Query(default=10, ge=1, le=100),
     corpus_import_ids: list[str] = Query(default=[], alias="corpus.import_id"),
-    import_ids: str | None = Query(default=None),
+    import_ids: list[str] | None = Query(default=None),
 ):
     """Fetch families with optional filtering.
 
@@ -63,20 +63,14 @@ def read_families(
     :param page: Page number for pagination.
     :param page_size: Number of items per page.
     :param corpus_import_ids: Filter by corpus import IDs.
-    :param import_ids: Comma-separated list of family import IDs to fetch.
+    :param import_ids: List of family import IDs to fetch.
         If provided, pagination is ignored.
     :return: List of families.
     """
     filters = []
 
     if import_ids:
-        import_id_list = [
-            import_id.strip()
-            for import_id in import_ids.split(",")
-            if import_id.strip()
-        ]
-        if import_id_list:
-            filters.append(Family.import_id.in_(import_id_list))  # type: ignore
+        filters.append(Family.import_id.in_(import_ids))  # type: ignore
 
     if corpus_import_ids:
         # We're filtering `Families.corpus` to tell SQLModel to generate the right SQL for filtering.
