@@ -356,9 +356,18 @@ def _transform_navigator_family(navigator_family: NavigatorFamily) -> Document:
             "Updated": "Updated",
         }
 
+        """
+        Values from Navigator are controlled
+        @see: https://github.com/climatepolicyradar/data-migrations/blob/main/taxonomies/Reports.json#L6
+        """
+        reports_event_type_to_activity_status_map = {
+            "Published": "Published",
+        }
+
         event_type_to_activity_status_map = (
             mcf_project_event_type_to_activity_status_map
             | laws_and_policies_event_type_to_activity_status_map
+            | reports_event_type_to_activity_status_map
         )
 
         for event in navigator_family.events:
