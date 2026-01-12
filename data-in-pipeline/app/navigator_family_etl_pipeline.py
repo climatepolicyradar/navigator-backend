@@ -32,6 +32,13 @@ def generate_s3_cache_key(step: Literal["extract", "identify", "transform"]) -> 
 
 
 @task(log_prints=True)
+def run_migrations():
+    """Run migrations against the load-api database."""
+    _LOGGER = get_logger()
+    _LOGGER.info("Running migrations against the load-api database")
+
+
+@task(log_prints=True)
 @pipeline_metrics.track(operation=Operation.EXTRACT)
 def extract() -> FamilyFetchResult:
     """Extract family data from the Navigator API.
