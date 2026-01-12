@@ -18,6 +18,7 @@ from app.models import (
     DocumentLabelRelationship,
     DocumentWithoutRelationships,
     Identified,
+    Item,
     Label,
 )
 from app.transform.navigator_family import transform_navigator_family
@@ -41,6 +42,11 @@ def navigator_family_with_single_matching_document() -> Identified[NavigatorFami
                 NavigatorDocument(
                     import_id="document",
                     title="Matching title on family and document and collection",
+                    cdn_object="https://cdn.climatepolicyradar.org/path/to/file.pdf",
+                    variant="Original language",
+                    source_url="https://source.climatepolicyradar.org/path/to/file.pdf",
+                    language="en",
+                    languages=["en"],
                     events=[],
                     valid_metadata={
                         "role": ["SUPPORTING LEGISLATION"],
@@ -166,7 +172,11 @@ def navigator_family_with_no_matching_transformations() -> Identified[NavigatorF
                 organisation=NavigatorOrganisation(id=1, name="CCLW"),
             ),
             documents=[
-                NavigatorDocument(import_id="456", title="Test document 1", events=[]),
+                NavigatorDocument(
+                    import_id="456",
+                    title="Test document 1",
+                    events=[],
+                ),
             ],
             events=[],
             collections=[],
@@ -467,6 +477,14 @@ def test_transform_navigator_family_with_single_matching_document(
                             ),
                         ),
                     ],
+                    items=[
+                        Item(
+                            url="https://cdn.climatepolicyradar.org/path/to/file.pdf",
+                        ),
+                        Item(
+                            url="https://source.climatepolicyradar.org/path/to/file.pdf",
+                        ),
+                    ],
                 ),
             ),
             DocumentDocumentRelationship(
@@ -475,6 +493,7 @@ def test_transform_navigator_family_with_single_matching_document(
                     id="collection_matching",
                     title="Matching title on family and document and collection",
                     labels=[],
+                    items=[],
                 ),
             ),
         ],
@@ -517,6 +536,14 @@ def test_transform_navigator_family_with_single_matching_document(
                         document=DocumentWithoutRelationships(
                             **expected_document_from_family.model_dump()
                         ),
+                    ),
+                ],
+                items=[
+                    Item(
+                        url="https://cdn.climatepolicyradar.org/path/to/file.pdf",
+                    ),
+                    Item(
+                        url="https://source.climatepolicyradar.org/path/to/file.pdf",
                     ),
                 ],
             ),

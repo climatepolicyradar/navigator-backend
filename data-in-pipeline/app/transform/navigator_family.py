@@ -12,6 +12,7 @@ from app.models import (
     DocumentLabelRelationship,
     DocumentWithoutRelationships,
     Identified,
+    Item,
     Label,
 )
 from app.transform.models import CouldNotTransform, NoMatchingTransformations
@@ -462,10 +463,28 @@ def _transform_navigator_document(
     """
     labels.extend(_transform_family_corpus_organisation(navigator_family))
 
+    """
+    Items
+    """
+    items: list[Item] = []
+    if navigator_document.cdn_object is not None:
+        items.append(
+            Item(
+                url=navigator_document.cdn_object,
+            )
+        )
+    if navigator_document.source_url is not None:
+        items.append(
+            Item(
+                url=navigator_document.source_url,
+            )
+        )
+
     return Document(
         id=navigator_document.import_id,
         title=navigator_document.title,
         labels=labels,
+        items=items,
     )
 
 
