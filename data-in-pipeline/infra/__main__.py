@@ -56,15 +56,7 @@ aurora_security_group = aws.ec2.SecurityGroup(
     name=f"{name}-aurora-sg",
     vpc_id=vpc_id,
     description=f"Security group for {name} Aurora DB",
-    ingress=[
-        aws.ec2.SecurityGroupIngressArgs(
-            description="Allow PostgreSQL access",
-            protocol="tcp",
-            from_port=db_port,
-            to_port=db_port,
-            security_groups=[],  # TODO
-        )
-    ],
+    # ingress rules are conrtolled via security groups below
     egress=[
         aws.ec2.SecurityGroupEgressArgs(
             from_port=0,
@@ -424,7 +416,7 @@ vpc_connector = aws.apprunner.VpcConnector(
 )
 
 # Allow load API connector to reach Aurora
-aws.ec2.SecurityGroupRule(
+allow_data_in_pipeline_load_api_to_aurora = aws.ec2.SecurityGroupRule(
     "allow-data-in-pipeline-load-api-to-aurora",
     type="ingress",
     security_group_id=aurora_security_group.id,
@@ -432,6 +424,7 @@ aws.ec2.SecurityGroupRule(
     protocol="tcp",
     from_port=5432,
     to_port=5432,
+    description="Allow Postgres from load API VPC SG",
 )
 
 
@@ -563,7 +556,7 @@ aws.iam.RolePolicy(
     ),
 )
 
-aws.ec2.SecurityGroupRule(
+aurora_allow_lambda = aws.ec2.SecurityGroupRule(
     "aurora-allow-lambda",
     type="ingress",
     security_group_id=aurora_security_group.id,
