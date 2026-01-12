@@ -51,8 +51,7 @@ def _build_database_uri() -> str:
 
     else:
         raise ValueError(
-            "🔒 managed_db_password_secret_arn is required when "
-            "db_use_iam_auth=False"
+            "🔒 managed_db_password is required when db_use_iam_auth=False"
         )
 
     return f"postgresql://{username}:{password}@" f"{hostname}:{port}/{database}"
