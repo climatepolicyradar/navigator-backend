@@ -17,6 +17,7 @@ from app.identify.navigator_family import identify_navigator_family
 from app.load.aws_bucket import upload_to_s3
 from app.models import Document, ExtractedEnvelope, Identified
 from app.pipeline_metrics import ErrorType, Operation, PipelineType, Status
+from app.run_migrations.db import run_migrations
 from app.transform.models import NoMatchingTransformations
 from app.transform.navigator_family import transform_navigator_family
 
@@ -32,10 +33,11 @@ def generate_s3_cache_key(step: Literal["extract", "identify", "transform"]) -> 
 
 
 @task(log_prints=True)
-def run_migrations():
+def run_db_migrations():
     """Run migrations against the load-api database."""
     _LOGGER = get_logger()
     _LOGGER.info("Running migrations against the load-api database")
+    run_migrations()
 
 
 @task(log_prints=True)
@@ -145,6 +147,8 @@ def etl_pipeline() -> list[Document] | Exception:
     # Set flow_run_name early so all metrics (including extract) have it
     run_id = flow_run.get_name() or "unknown"
     pipeline_metrics.set_flow_run_name(run_id)
+
+    run_db_migrations()
 
     extracted_result = extract()
     cache_extraction_result(extracted_result)
