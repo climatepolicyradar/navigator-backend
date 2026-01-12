@@ -228,28 +228,37 @@ def _transform_family_corpus_organisation(
     @see: https://schema.org/provider
     """
     labels: list[DocumentLabelRelationship] = []
-    organisation_to_agent_map = {
-        "AF": "Adapation Fund",
-        "CCLW": "Grantham Research Institute",
-        "CIF": "The Climate Investment Funds",
-        "CPR": "Policy Radar",
-        "GCF": "Green Climate Fund",
-        "GEF": "Global Environment Facility",
-        "Ocean Energy Pathways": "Ocean Energy Pathway",
-        "Sabin": "Sabin Center for Climate Change Law",
-        "UNFCCC": "UNFCCC",
+    corpus_to_provider_map = {
+        "CCLW.corpus.i00000001.n0000": "Grantham Research Institute",
+        "Academic.corpus.Litigation.n0000": "Sabin Center for Climate Change Law",
+        "CPR.corpus.Goldstandard.n0000": "Gold Standard",
+        "CPR.corpus.i00000001.n0000": "NewClimate Institute",
+        "CPR.corpus.i00000002.n0000": "Climate Policy Radar",
+        "CPR.corpus.i00000591.n0000": "Laws Africa",
+        "CPR.corpus.i00000592.n0000": "UNDRR",
+        "MCF.corpus.GEF.n0000": "Global Environment Facility",
+        "MCF.corpus.AF.n0000": "Adaptation Fund",
+        "MCF.corpus.GCF.n0000": "Green Climate Fund",
+        "MCF.corpus.CIF.n0000": "The Climate Investment Funds",
+        "MCF.corpus.GEF.Guidance": "Global Environment Facility",
+        "MCF.corpus.AF.Guidance": "Adaptation Fund",
+        "MCF.corpus.GCF.Guidance": "Green Climate Fund",
+        "OEP.corpus.i00000001.n0000": "Ocean Energy Pathways",
+        "UNFCCC.corpus.i00000001.n0000": "UNFCCC",
+        "UN.corpus.UNCCD.n0000": "UNCCD",
+        "UN.corpus.UNCBD.n0000": "UNCBD",
     }
 
-    organisation_name = organisation_to_agent_map.get(
-        navigator_family.corpus.organisation.name, "Unknown"
+    provider_name = corpus_to_provider_map.get(
+        navigator_family.corpus.import_id, "Unknown"
     )
     labels.append(
         DocumentLabelRelationship(
             type="provider",
             label=Label(
                 type="agent",
-                id=organisation_name,
-                title=organisation_name,
+                id=provider_name,
+                title=provider_name,
             ),
         )
     )
