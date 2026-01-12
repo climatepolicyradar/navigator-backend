@@ -140,6 +140,11 @@ def navigator_family_with_single_matching_document() -> Identified[NavigatorFami
                     event_type="Updated",
                     date=datetime.datetime(2020, 1, 1),
                 ),
+                NavigatorEvent(
+                    import_id="Published",
+                    event_type="Published",
+                    date=datetime.datetime(2020, 1, 1),
+                ),
             ],
             collections=[
                 NavigatorCollection(
@@ -427,6 +432,11 @@ def test_transform_navigator_family_with_single_matching_document(
                 type="activity_status",
                 timestamp=datetime.datetime(2020, 1, 1),
                 label=Label(type="activity_status", id="Updated", title="Updated"),
+            ),
+            DocumentLabelRelationship(
+                type="activity_status",
+                timestamp=datetime.datetime(2020, 1, 1),
+                label=Label(type="activity_status", id="Published", title="Published"),
             ),
             DocumentLabelRelationship(
                 type="provider",
