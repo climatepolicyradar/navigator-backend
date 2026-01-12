@@ -149,6 +149,7 @@ def etl_pipeline(ids: list[str] | None = None) -> list[Document] | Exception:
             or push them to a downstream Prefect block.
 
     :param ids: Optional list of family import_ids to process.
+        If empty, processes all families.
     :return: List of transformed documents or an exception.
     """
     _LOGGER = get_logger()
