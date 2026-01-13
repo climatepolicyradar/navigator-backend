@@ -2,13 +2,10 @@
 
 ## Architecture diagram [DRAFT]
 
-```mermaid
+![Architecture diagram](./architecture-diagram.png)
 
-flowchart LR
-    SourceSystemA -- Extracted --> IdentifierA -- Identified --> Transformer -- Document --> DocumentStore
-    SourceSystemB -- Extracted --> IdentifierB -- Identified --> Transformer
-
-```
+Source:
+[Whimsical board (🔒)](https://whimsical.com/data-in-pipeline-architecture-diagram-XRAimnimFLPHy7Ysx5ejYD)
 
 ## Notes
 

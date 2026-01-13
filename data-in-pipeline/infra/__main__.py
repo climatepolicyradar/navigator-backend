@@ -1,5 +1,3 @@
-import json
-import os
 from pathlib import Path
 
 import components.aws as components_aws
@@ -56,15 +54,7 @@ aurora_security_group = aws.ec2.SecurityGroup(
     name=f"{name}-aurora-sg",
     vpc_id=vpc_id,
     description=f"Security group for {name} Aurora DB",
-    ingress=[
-        aws.ec2.SecurityGroupIngressArgs(
-            description="Allow PostgreSQL access",
-            protocol="tcp",
-            from_port=db_port,
-            to_port=db_port,
-            security_groups=[],  # TODO
-        )
-    ],
+    # ingress rules are conrtolled via security groups below
     egress=[
         aws.ec2.SecurityGroupEgressArgs(
             from_port=0,
@@ -424,7 +414,7 @@ vpc_connector = aws.apprunner.VpcConnector(
 )
 
 # Allow load API connector to reach Aurora
-aws.ec2.SecurityGroupRule(
+allow_data_in_pipeline_load_api_to_aurora = aws.ec2.SecurityGroupRule(
     "allow-data-in-pipeline-load-api-to-aurora",
     type="ingress",
     security_group_id=aurora_security_group.id,
@@ -432,6 +422,7 @@ aws.ec2.SecurityGroupRule(
     protocol="tcp",
     from_port=5432,
     to_port=5432,
+    description="Allow Postgres from load API VPC SG",
 )
 
 
@@ -489,119 +480,4 @@ data_in_pipeline_load_api_apprunner_service = aws.apprunner.Service(
 pulumi.export(
     "data-in-pipeline-load-api-apprunner_service_url",
     data_in_pipeline_load_api_apprunner_service.service_url,
-)
-
-
-#######################################################################
-# Lambda to create aurora user.
-#######################################################################
-
-
-lambda_role = aws.iam.Role(
-    "aurora-user-creation-lambda-role",
-    assume_role_policy=json.dumps(
-        {
-            "Version": "2012-10-17",
-            "Statement": [
-                {
-                    "Action": "sts:AssumeRole",
-                    "Principal": {"Service": "lambda.amazonaws.com"},
-                    "Effect": "Allow",
-                }
-            ],
-        }
-    ),
-)
-
-aws.iam.RolePolicyAttachment(
-    "aurora-user-creation-lambda-basic-execution",
-    role=lambda_role.name,
-    policy_arn="arn:aws:iam::aws:policy/service-role/AWSLambdaBasicExecutionRole",
-)
-
-lambda_sg = aws.ec2.SecurityGroup(
-    "aurora-user-creation-lambda-sg",
-    vpc_id=vpc_id,
-    description="Lambda access to Aurora",
-    egress=[
-        {
-            "protocol": "-1",
-            "from_port": 0,
-            "to_port": 0,
-            "cidr_blocks": ["0.0.0.0/0"],
-        }
-    ],
-)
-
-
-aws.iam.RolePolicy(
-    "aurora-user-creation-lambda-ssm-read-policy",
-    role=lambda_role.id,
-    policy=pulumi.Output.all(
-        data_in_pipeline_load_api_cluster_password_secret_arn=data_in_pipeline_load_api_cluster_password_secret.secret_arn,
-    ).apply(
-        lambda args: json.dumps(
-            {
-                "Version": "2012-10-17",
-                "Statement": [
-                    {
-                        "Effect": "Allow",
-                        "Action": [
-                            "ssm:GetParameter",
-                            "ssm:GetParameters",
-                            "secretsmanager:GetSecretValue",
-                        ],
-                        "Resource": [
-                            args[
-                                "data_in_pipeline_load_api_cluster_password_secret_arn"
-                            ],
-                        ],
-                    }
-                ],
-            }
-        )
-    ),
-)
-
-aws.ec2.SecurityGroupRule(
-    "aurora-allow-lambda",
-    type="ingress",
-    security_group_id=aurora_security_group.id,
-    from_port=5432,
-    to_port=5432,
-    protocol="tcp",
-    source_security_group_id=lambda_sg.id,
-)
-
-aws.iam.RolePolicyAttachment(
-    "aurora-user-creation-lambda-vpc-access",
-    role=lambda_role.name,
-    policy_arn="arn:aws:iam::aws:policy/service-role/AWSLambdaVPCAccessExecutionRole",
-)
-
-lambda_fn = aws.lambda_.Function(
-    "data-in-pipeline-create-aurora-user-lambda",
-    role=lambda_role.arn,
-    runtime="python3.12",
-    handler="handler.handler",
-    timeout=15,
-    memory_size=256,
-    vpc_config={
-        "subnet_ids": private_subnets,
-        "security_group_ids": [lambda_sg.id],
-    },
-    code=pulumi.AssetArchive(
-        {".": pulumi.FileArchive(os.path.join(ROOT_DIR, ".lambda_build"))}
-    ),
-    environment=aws.lambda_.FunctionEnvironmentArgs(
-        variables={
-            "AURORA_WRITER_ENDPOINT": aurora_cluster.endpoint,
-            "DB_NAME": db_name,
-            "DB_PORT": str(db_port),
-            "ADMIN_SECRET_ARN": data_in_pipeline_load_api_cluster_password_secret.secret_arn,
-            "SQL_PATH": "/var/task/create_iam_user.sql",
-            "LOAD_DB_USER": load_db_user,
-            "APP_SCHEMA": "public",
-        }
-    ),
 )
