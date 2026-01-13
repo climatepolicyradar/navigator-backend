@@ -8,6 +8,8 @@ config = pulumi.Config()
 environment = pulumi.get_stack()
 name = pulumi.get_project()
 
+current_aws_account_id = aws.get_caller_identity().account_id
+
 ROOT_DIR = Path(__file__).parent.parent
 
 #######################################################################
@@ -29,6 +31,58 @@ data_in_pipeline_aws_ecr_repository = components_aws.ecr.Repository(
     ),
 )
 
+# Add cross account permissions so production Prefect account can pull the staging image
+# to create a staging deployment in the production account. We accept this security
+# tradeoff as we do not have a staging workspace in Prefect, so all deployments are
+# in the production workspace.
+if environment == "staging":
+    data_in_pipeline_repo_policy = aws.iam.get_policy_document(
+        statements=[
+            aws.iam.GetPolicyDocumentStatementArgs(
+                sid="CrossAccountPermission",
+                effect="Allow",
+                actions=[
+                    "ecr:BatchGetImage",
+                    "ecr:GetDownloadUrlForLayer",
+                ],
+                principals=[
+                    aws.iam.GetPolicyDocumentStatementPrincipalArgs(
+                        type="AWS",
+                        identifiers=[f"arn:aws:iam::{current_aws_account_id}:root"],
+                    )
+                ],
+            ),
+            aws.iam.GetPolicyDocumentStatementArgs(
+                effect="Allow",
+                actions=[
+                    "ecr:BatchGetImage",
+                    "ecr:GetDownloadUrlForLayer",
+                ],
+                principals=[
+                    aws.iam.GetPolicyDocumentStatementPrincipalArgs(
+                        type="Service",
+                        identifiers=["batch.amazonaws.com"],
+                    )
+                ],
+                conditions=[
+                    aws.iam.GetPolicyDocumentStatementConditionArgs(
+                        test="StringLike",
+                        variable="aws:sourceArn",
+                        values=[
+                            f"arn:aws:batch:eu-west-1:{current_aws_account_id}:job/*",
+                        ],
+                    )
+                ],
+            ),
+        ],
+    )
+
+    # Attach the policy to the underlying aws.ecr.Repository
+    data_in_pipeline_aws_ecr_repository_policy = aws.ecr.RepositoryPolicy(
+        "data-in-pipeline-ecr-repository-policy",
+        repository=data_in_pipeline_aws_ecr_repository.aws_ecr_repository.name,
+        policy=data_in_pipeline_repo_policy.json,
+    )
 
 #######################################################################
 # Create the Aurora service.
