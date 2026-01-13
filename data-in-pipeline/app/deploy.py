@@ -119,14 +119,14 @@ def create_deployment(flow: Flow) -> None:
     docker_registry = os.environ["DOCKER_REGISTRY"]
     runtime_environment = _ensure_environment_variables()
     logger.info(
-        "Creating deployment for flow `%s` in `%s` with docker registry `%s`.",
+        "Creating deployment for flow `%s` in Prefect's production workspace with "
+        "docker registry `%s`.",
         flow.name,
-        aws_env,
         docker_registry,
     )
 
     default_job_variables = ECSVariablesBlock.load(
-        f"ecs-default-job-variables-prefect-mvp-{aws_env}"
+        "ecs-default-job-variables-prefect-mvp-prod"
     ).model_dump(  # type: ignore
         # We have to exclude None for now as sending over values like container_name=None vs the key missing affects functionality
         exclude_none=True
@@ -139,8 +139,8 @@ def create_deployment(flow: Flow) -> None:
     logger.info("Job variables: %s", job_variables)
 
     _ = flow.deploy(
-        "data-in-pipeline-deployment",
-        work_pool_name=f"mvp-{aws_env}-ecs",
+        f"data-in-pipeline-{aws_env}",
+        work_pool_name="mvp-prod-ecs",
         image=DockerImage(
             name=f"{docker_registry}/data-in-pipeline",
             tag="latest",
