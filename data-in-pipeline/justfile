@@ -44,7 +44,7 @@ build service environment tag:
         --tag {{service}}:${GITHUB_SHA} \
         --file Dockerfile ..
 
-deploy-override service environment tag:
+deploy-override service environment tag: 
     #!/usr/bin/env bash
     # this is run from the root justfile in CI
     # TODO: deploy to staging and production
@@ -57,11 +57,8 @@ deploy-override service environment tag:
     # Build the image
     just build {{service}} {{environment}} {{tag}}
     
-    # Tag and push to ECR
     docker tag {{service}}:{{tag}} ${DOCKER_REGISTRY}/{{service}}:{{tag}}
-    docker tag {{service}}:${GITHUB_SHA} ${DOCKER_REGISTRY}/{{service}}:${GITHUB_SHA}
     docker push ${DOCKER_REGISTRY}/{{service}}:{{tag}}
-    docker push ${DOCKER_REGISTRY}/{{service}}:${GITHUB_SHA}
     
     # Deploy to Prefect
     DOCKER_REGISTRY=${DOCKER_REGISTRY} just deploy-to-prefect
