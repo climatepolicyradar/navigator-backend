@@ -44,8 +44,8 @@ def engine(postgres_container):
 
 def test_can_create_tables(engine):
     table_names = SQLModel.metadata.tables.keys()
-    assert "test_document" in table_names
-    assert "test_label" in table_names
+    assert "testdocument" in table_names
+    assert "testlabel" in table_names
 
 
 def test_can_insert_and_query(engine):
