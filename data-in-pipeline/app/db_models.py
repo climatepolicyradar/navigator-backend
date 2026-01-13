@@ -1,42 +1,39 @@
-from datetime import UTC, datetime
+from datetime import datetime
 
-from sqlalchemy import Column, DateTime, ForeignKey, Index, Integer, String, Text
-from sqlalchemy.orm import declarative_base, relationship
+from sqlalchemy import DateTime, ForeignKey, Index, String, Text, func
+from sqlalchemy.orm import DeclarativeBase, Mapped, mapped_column, relationship
 
-Base = declarative_base()
+
+class Base(DeclarativeBase):
+    pass
 
 
 class Document(Base):
     __tablename__ = "documents"
 
-    id = Column(String(255), primary_key=True)
-    title = Column(Text, nullable=False)
-    description = Column(Text, nullable=True)
-    created_at = Column(DateTime, default=datetime.now(UTC), nullable=False)
-    updated_at = Column(
-        DateTime,
-        default=datetime.now(UTC),
-        onupdate=datetime.now(UTC),
-        nullable=False,
+    id: Mapped[str] = mapped_column(String(255), primary_key=True)
+    title: Mapped[str] = mapped_column(Text)
+    description: Mapped[str | None] = mapped_column(Text)
+    created_at: Mapped[datetime] = mapped_column(DateTime, insert_default=func.now())
+    updated_at: Mapped[datetime] = mapped_column(
+        DateTime, insert_default=func.now(), onupdate=func.now()
     )
 
     # Table Relationships
-    label_relationships = relationship(
-        "DocumentLabel", back_populates="document", cascade="all, delete-orphan"
+    label_relationships: Mapped[list["DocumentLabel"]] = relationship(
+        back_populates="document", cascade="all, delete-orphan"
     )
-    source_relationships = relationship(
-        "DocumentRelationship",
+    source_relationships: Mapped[list["DocumentRelationship"]] = relationship(
         foreign_keys="DocumentRelationship.source_document_id",
         back_populates="source_document",
         cascade="all, delete-orphan",
     )
-    related_relationships = relationship(
-        "DocumentRelationship",
+    related_relationships: Mapped[list["DocumentRelationship"]] = relationship(
         foreign_keys="DocumentRelationship.related_document_id",
         back_populates="related_document",
     )
-    items = relationship(
-        "Item", back_populates="document", cascade="all, delete-orphan"
+    items: Mapped[list["Item"]] = relationship(
+        back_populates="document", cascade="all, delete-orphan"
     )
 
     __table_args__ = (Index("idx_documents_title", "title"),)
@@ -45,34 +42,34 @@ class Document(Base):
 class Label(Base):
     __tablename__ = "labels"
 
-    id = Column(String(255), primary_key=True)
-    title = Column(Text, nullable=False)
-    type = Column(String(100), nullable=False)
-    created_at = Column(DateTime, default=datetime.now(UTC), nullable=False)
+    id: Mapped[str] = mapped_column(String(255), primary_key=True)
+    title: Mapped[str] = mapped_column(Text)
+    type: Mapped[str] = mapped_column(String(100))
+    created_at: Mapped[datetime] = mapped_column(DateTime, insert_default=func.now())
 
     # Table Relationships
-    document_relationships = relationship(
-        "DocumentLabel", back_populates="label", cascade="all, delete-orphan"
+    document_relationships: Mapped[list["DocumentLabel"]] = relationship(
+        back_populates="label", cascade="all, delete-orphan"
     )
 
 
 class DocumentLabel(Base):
     __tablename__ = "document_labels"
 
-    id = Column(Integer, primary_key=True, autoincrement=True)
-    document_id = Column(
-        String(255), ForeignKey("documents.id", ondelete="CASCADE"), nullable=False
+    id: Mapped[int] = mapped_column(primary_key=True, autoincrement=True)
+    document_id: Mapped[str] = mapped_column(
+        String(255), ForeignKey("documents.id", ondelete="CASCADE")
     )
-    label_id = Column(
-        String(255), ForeignKey("labels.id", ondelete="CASCADE"), nullable=False
+    label_id: Mapped[str] = mapped_column(
+        String(255), ForeignKey("labels.id", ondelete="CASCADE")
     )
-    relationship_type = Column(String(100), nullable=False)
-    timestamp = Column(DateTime, nullable=True)
-    created_at = Column(DateTime, default=datetime.now(UTC), nullable=False)
+    relationship_type: Mapped[str] = mapped_column(String(100))
+    timestamp: Mapped[datetime | None] = mapped_column(DateTime)
+    created_at: Mapped[datetime] = mapped_column(DateTime, insert_default=func.now())
 
     # Table Relationships
-    document = relationship("Document", back_populates="label_relationships")
-    label = relationship("Label", back_populates="document_relationships")
+    document: Mapped["Document"] = relationship(back_populates="label_relationships")
+    label: Mapped["Label"] = relationship(back_populates="document_relationships")
 
     __table_args__ = (
         Index("idx_document_labels_document_id", "document_id"),
@@ -83,25 +80,23 @@ class DocumentLabel(Base):
 class DocumentRelationship(Base):
     __tablename__ = "document_relationships"
 
-    id = Column(Integer, primary_key=True, autoincrement=True)
-    source_document_id = Column(
-        String(255), ForeignKey("documents.id", ondelete="CASCADE"), nullable=False
+    id: Mapped[int] = mapped_column(primary_key=True, autoincrement=True)
+    source_document_id: Mapped[str] = mapped_column(
+        String(255), ForeignKey("documents.id", ondelete="CASCADE")
     )
-    related_document_id = Column(
-        String(255), ForeignKey("documents.id", ondelete="CASCADE"), nullable=False
+    related_document_id: Mapped[str] = mapped_column(
+        String(255), ForeignKey("documents.id", ondelete="CASCADE")
     )
-    relationship_type = Column(String(100), nullable=False)
-    timestamp = Column(DateTime, nullable=True)
-    created_at = Column(DateTime, default=datetime.now(UTC), nullable=False)
+    relationship_type: Mapped[str] = mapped_column(String(100))
+    timestamp: Mapped[datetime | None] = mapped_column(DateTime)
+    created_at: Mapped[datetime] = mapped_column(DateTime, insert_default=func.now())
 
     # Table Relationships
-    source_document = relationship(
-        "Document",
+    source_document: Mapped["Document"] = relationship(
         foreign_keys=[source_document_id],
         back_populates="source_relationships",
     )
-    related_document = relationship(
-        "Document",
+    related_document: Mapped["Document"] = relationship(
         foreign_keys=[related_document_id],
         back_populates="related_relationships",
     )
@@ -115,14 +110,14 @@ class DocumentRelationship(Base):
 class Item(Base):
     __tablename__ = "items"
 
-    id = Column(Integer, primary_key=True, autoincrement=True)
-    document_id = Column(
-        String(255), ForeignKey("documents.id", ondelete="CASCADE"), nullable=False
+    id: Mapped[int] = mapped_column(primary_key=True, autoincrement=True)
+    document_id: Mapped[str] = mapped_column(
+        String(255), ForeignKey("documents.id", ondelete="CASCADE")
     )
-    url = Column(Text, nullable=True)
-    created_at = Column(DateTime, default=datetime.now(UTC), nullable=False)
+    url: Mapped[str | None] = mapped_column(Text)
+    created_at: Mapped[datetime] = mapped_column(DateTime, insert_default=func.now())
 
     # Table Relationships
-    document = relationship("Document", back_populates="items")
+    document: Mapped["Document"] = relationship(back_populates="items")
 
     __table_args__ = (Index("idx_items_document_id", "document_id"),)
