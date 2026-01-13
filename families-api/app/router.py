@@ -88,18 +88,16 @@ def read_families(
         .order_by(desc(Family.last_modified), desc(Family.import_id))
     )
 
-    # Skip pagination if import_ids provided
-    if not import_ids:
-        limit = page_size
-        offset = (page - 1) * limit
-        query = query.offset(offset).limit(limit)
+    limit = page_size
+    offset = (page - 1) * limit
+    query = query.offset(offset).limit(limit)
 
     families = session.exec(query).all()
 
     return APIListResponse(
         data=list(families),
         total=len(families),
-        page=page if not import_ids else 1,
+        page=page,
         page_size=len(families),
     )
 
