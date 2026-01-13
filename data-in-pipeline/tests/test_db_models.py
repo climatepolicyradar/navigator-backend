@@ -1,31 +1,8 @@
 import pytest
-from sqlmodel import SQLModel, Field, Session, create_engine, Relationship
+from sqlmodel import Session, SQLModel, create_engine
 from testcontainers.postgres import PostgresContainer
 
-
-class TestDocumentTestLabelLink(SQLModel, table=True):
-    document_id: str | None = Field(
-        default=None, foreign_key="testdocument.id", primary_key=True
-    )
-    label_id: str | None = Field(
-        default=None, foreign_key="testlabel.id", primary_key=True
-    )
-
-
-class TestLabel(SQLModel, table=True):
-    id: str = Field(primary_key=True)
-    title: str
-    documents: list["TestDocument"] = Relationship(
-        back_populates="labels", link_model=TestDocumentTestLabelLink
-    )
-
-
-class TestDocument(SQLModel, table=True):
-    id: str = Field(primary_key=True)
-    title: str
-    labels: list[TestLabel] = Relationship(
-        back_populates="documents", link_model=TestDocumentTestLabelLink
-    )
+from app.db_models import Document, Label
 
 
 @pytest.fixture(scope="session")
@@ -44,21 +21,24 @@ def engine(postgres_container):
 
 def test_can_create_tables(engine):
     table_names = SQLModel.metadata.tables.keys()
-    assert "testdocument" in table_names
-    assert "testlabel" in table_names
+    assert "document" in table_names
+    assert "label" in table_names
+    assert "documentlabellink" in table_names
+    assert "documentdocumentlink" in table_names
+    assert "item" in table_names
 
 
 def test_can_insert_and_query(engine):
     with Session(engine) as session:
-        document = TestDocument(id="doc_1", title="Document 1")
+        document = Document(id="test-doc-1", title="Document 1")
         session.add(document)
         session.commit()
         session.refresh(document)
 
-        label = TestLabel(id="label_1", title="Label 1")
+        label = Label(id="label_1", title="Label 1", type="Type A")
         session.add(label)
         session.commit()
 
-        queried_user = session.get(TestDocument, document.id)
+        queried_user = session.get(Document, document.id)
         assert queried_user is not None
         assert queried_user.title == "Document 1"
