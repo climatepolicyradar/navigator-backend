@@ -1,3 +1,4 @@
+import json
 import os
 
 import requests
@@ -11,6 +12,8 @@ def load_to_db(documents: list[Document]) -> list[str]:
     :param list[Document] documents: List of document objects to be saved.
     :returns list[str]: List of ids of the saved documents.
     """
-    response = requests.post(url: os.getenv("LOAD_API_URL"), data: documents)
+    response = requests.post(
+        url=os.getenv("LOAD_API_URL", ""), data=json.dumps(documents), timeout=10
+    )
 
     return response.json()

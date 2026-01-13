@@ -14,8 +14,8 @@ from app.extract.connectors import (
 )
 from app.extract.enums import CheckPointStorageType
 from app.identify.navigator_family import identify_navigator_family
-from app.load import load_rds
 from app.load.aws_bucket import upload_to_s3
+from app.load.load import load_to_db
 from app.models import Document, ExtractedEnvelope, Identified
 from app.pipeline_metrics import ErrorType, Operation, PipelineType, Status
 from app.run_migrations.db import run_migrations
@@ -131,7 +131,7 @@ def transform(
 @pipeline_metrics.track(
     pipeline_type=PipelineType.FAMILY, scope="batch", flush_on_exit=True
 )
-def etl_pipeline(ids: list[str] | None = None) -> list[Document] | Exception:
+def etl_pipeline(ids: list[str] | None = None) -> list[str] | Exception:
     """Run the full Navigator ETL pipeline.
 
     If IDs are provided, processes only those specific families.
@@ -188,7 +188,7 @@ def etl_pipeline(ids: list[str] | None = None) -> list[Document] | Exception:
     match transformed:
         case Success(documents):
             load_to_s3.map(documents)
-            load_result = load_rds(documents)
+            load_result = load_to_db(documents)
             pipeline_metrics.record_processed(PipelineType.FAMILY, Status.SUCCESS)
             return load_result
         case Failure(error):
