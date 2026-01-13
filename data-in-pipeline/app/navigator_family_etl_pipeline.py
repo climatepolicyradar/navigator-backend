@@ -14,6 +14,7 @@ from app.extract.connectors import (
 )
 from app.extract.enums import CheckPointStorageType
 from app.identify.navigator_family import identify_navigator_family
+from app.load import load_rds
 from app.load.aws_bucket import upload_to_s3
 from app.models import Document, ExtractedEnvelope, Identified
 from app.pipeline_metrics import ErrorType, Operation, PipelineType, Status
@@ -126,7 +127,7 @@ def transform(
 @pipeline_metrics.track(
     pipeline_type=PipelineType.FAMILY, scope="batch", flush_on_exit=True
 )
-def etl_pipeline() -> list[Document] | Exception:
+def etl_pipeline() -> list[str] | Exception:
     """Run the full Navigator ETL pipeline.
 
     Steps:
@@ -134,12 +135,12 @@ def etl_pipeline() -> list[Document] | Exception:
         2. Identify their source type.
         3. Transform to target schema.
         4. Load transformed documents to S3 cache.
+        5. Save transformed documents to the load DB.
 
     Returns:
-        Result[Document, Exception] | None
-            The final transformation result for demonstration purposes.
-            In real use, you may want to return all transformed Results
-            or push them to a downstream Prefect block.
+        Result[str, Exception] | None
+            The final result of the etl pipeline. Will contain a list of ids
+            of the successfully saved documents on success
     """
     _LOGGER = get_logger()
     _LOGGER.info("ETL pipeline started")
@@ -173,8 +174,9 @@ def etl_pipeline() -> list[Document] | Exception:
     match transformed:
         case Success(documents):
             load_to_s3.map(documents)
+            load_result = load_rds(documents)
             pipeline_metrics.record_processed(PipelineType.FAMILY, Status.SUCCESS)
-            return documents
+            return load_result
         case Failure(error):
             # TODO: do not swallow errors
             _LOGGER.warning(f"Transformation failed: {error}")
