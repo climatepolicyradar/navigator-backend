@@ -219,6 +219,66 @@ class NavigatorConnector(HTTPConnector):
             pipeline_metrics.record_error(Operation.EXTRACT, ErrorType.UNKNOWN)
             return Failure(e)
 
+    def fetch_families(
+        self, import_ids: list[str], task_run_id: str, flow_run_id: str
+    ) -> FamilyFetchResult:
+        """Fetch multiple families from Navigator API by their import IDs.
+
+        :param import_ids: List of family import IDs to fetch.
+        :param task_run_id: The unique Prefect task run identifier.
+        :param flow_run_id: The unique Prefect flow run identifier.
+        :return: FamilyFetchResult containing the fetched families.
+        """
+        logger = get_logger()
+        try:
+            response_json = self.get("families/", params={"import_id": import_ids})
+            families_data = response_json.get("data", [])
+
+            if not families_data:
+                logger.info(f"No families found for import_ids: {import_ids}")
+                return FamilyFetchResult(envelopes=[])
+
+            validated_families = [
+                NavigatorFamily.model_validate(family) for family in families_data
+            ]
+
+            envelope = ExtractedEnvelope(
+                data=validated_families,
+                id=generate_envelope_uuid(),
+                source_name="navigator_family",
+                source_record_id=f"{task_run_id}-families-by-ids",
+                raw_payload=families_data,
+                content_type="application/json",
+                connector_version="1.0.0",
+                extracted_at=datetime.datetime.now(datetime.UTC),
+                task_run_id=task_run_id,
+                flow_run_id=flow_run_id,
+                metadata=ExtractedMetadata(
+                    endpoint=f"{self.config.base_url}/families/?import_id={'&import_id='.join(import_ids)}",
+                    http_status=HTTPStatus.OK,
+                ),
+            )
+
+            logger.info(
+                f"Successfully fetched {len(validated_families)} families by import_ids"
+            )
+            return FamilyFetchResult(envelopes=[envelope])
+
+        except requests.RequestException as e:
+            logger.exception(f"Request failed fetching families {import_ids}")
+            pipeline_metrics.record_error(Operation.EXTRACT, ErrorType.NETWORK)
+            return FamilyFetchResult(
+                envelopes=[],
+                failure=PageFetchFailure(page=0, error=str(e), task_run_id=task_run_id),
+            )
+        except Exception as e:
+            logger.exception(f"Unexpected error fetching families {import_ids}: {e}")
+            pipeline_metrics.record_error(Operation.EXTRACT, ErrorType.UNKNOWN)
+            return FamilyFetchResult(
+                envelopes=[],
+                failure=PageFetchFailure(page=0, error=str(e), task_run_id=task_run_id),
+            )
+
     def fetch_all_families(
         self, task_run_id: str, flow_run_id: str
     ) -> FamilyFetchResult:
