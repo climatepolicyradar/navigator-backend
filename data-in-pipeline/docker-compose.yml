@@ -7,7 +7,15 @@ services:
       dockerfile: data-in-pipeline/Dockerfile
     volumes:
       - ..:/app
-      - /var/run/docker.sock:/var/run/docker.sock
+      # testcontainer
+      # We need these lines to support running testcontainers in the container
+      # Which needs access to the host docker
+      - ${DOCKER_SOCKET_PATH:-/var/run/docker.sock}:/var/run/docker.sock
+    user: root
+    environment:
+      # We use testcontainers to test postgres so this is needed
+      - TESTCONTAINERS_HOST_OVERRIDE=host.docker.internal
+    # /testcontainers
     working_dir: /app
     command:
       [
@@ -20,12 +28,3 @@ services:
         --color=yes,
         -v,
       ]
-
-  load-api:
-    container_name: load-api
-    build:
-      context: ..
-      dockerfile: data-in-pipeline/infra/Dockerfile.load_api
-    ports:
-      - 8080:8080
-    working_dir: /app
