@@ -8,8 +8,6 @@ config = pulumi.Config()
 environment = pulumi.get_stack()
 name = pulumi.get_project()
 
-current_aws_account_id = aws.get_caller_identity().account_id
-
 ROOT_DIR = Path(__file__).parent.parent
 
 #######################################################################
@@ -36,6 +34,7 @@ data_in_pipeline_aws_ecr_repository = components_aws.ecr.Repository(
 # tradeoff as we do not have a staging workspace in Prefect, so all deployments are
 # in the production workspace.
 if environment == "staging":
+    prod_aws_account_id = config.get("prod_aws_account_id")
     data_in_pipeline_repo_policy = aws.iam.get_policy_document(
         statements=[
             aws.iam.GetPolicyDocumentStatementArgs(
@@ -48,7 +47,7 @@ if environment == "staging":
                 principals=[
                     aws.iam.GetPolicyDocumentStatementPrincipalArgs(
                         type="AWS",
-                        identifiers=[f"arn:aws:iam::{current_aws_account_id}:root"],
+                        identifiers=[f"arn:aws:iam::{prod_aws_account_id}:root"],
                     )
                 ],
             ),
@@ -69,7 +68,7 @@ if environment == "staging":
                         test="StringLike",
                         variable="aws:sourceArn",
                         values=[
-                            f"arn:aws:batch:eu-west-1:{current_aws_account_id}:job/*",
+                            f"arn:aws:batch:eu-west-1:{prod_aws_account_id}:job/*",
                         ],
                     )
                 ],
