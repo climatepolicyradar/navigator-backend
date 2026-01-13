@@ -43,7 +43,7 @@ def run_db_migrations():
 
 @task(log_prints=True)
 @pipeline_metrics.track(operation=Operation.EXTRACT)
-def extract() -> FamilyFetchResult:
+def extract(ids: list[str] | None = None) -> FamilyFetchResult:
     """Extract family data from the Navigator API.
 
     This task connects to the Navigator API and retrieves all family records
@@ -73,7 +73,11 @@ def extract() -> FamilyFetchResult:
     )
 
     connector = NavigatorConnector(connector_config)
-    result = connector.fetch_all_families(task_run_id, flow_run_id)
+
+    if ids is None:
+        result = connector.fetch_all_families(task_run_id, flow_run_id)
+    else:
+        result = connector.fetch_families(ids, task_run_id, flow_run_id)
     connector.close()
 
     return result
@@ -127,20 +131,28 @@ def transform(
 @pipeline_metrics.track(
     pipeline_type=PipelineType.FAMILY, scope="batch", flush_on_exit=True
 )
-def etl_pipeline() -> list[str] | Exception:
+def etl_pipeline(ids: list[str] | None = None) -> list[Document] | Exception:
     """Run the full Navigator ETL pipeline.
 
+    If IDs are provided, processes only those specific families.
+    If no IDs are provided, processes all families from the API.
+
     Steps:
-        1. Extract families from Navigator API.
+        1. Extract families from Navigator API (all or by ID).
         2. Identify their source type.
         3. Transform to target schema.
         4. Load transformed documents to S3 cache.
         5. Save transformed documents to the load DB.
 
     Returns:
-        Result[str, Exception] | None
-            The final result of the etl pipeline. Will contain a list of ids
-            of the successfully saved documents on success
+        Result[Document, Exception] | None
+            The final transformation result for demonstration purposes.
+            In real use, you may want to return all transformed Results
+            or push them to a downstream Prefect block.
+
+    :param ids: Optional list of family import_ids to process.
+        If empty, processes all families.
+    :return: List of transformed documents or an exception.
     """
     _LOGGER = get_logger()
     _LOGGER.info("ETL pipeline started")
@@ -151,7 +163,14 @@ def etl_pipeline() -> list[str] | Exception:
 
     run_db_migrations()
 
-    extracted_result = extract()
+    # If IDs provided, process only those families
+    if ids is not None:
+        _LOGGER.info(f"Processing {len(ids)} specific families")
+    else:
+        # Otherwise, process all families (existing batch logic)
+        _LOGGER.info("Processing all families")
+
+    extracted_result = extract(ids)
     cache_extraction_result(extracted_result)
 
     if extracted_result.failure is not None:
