@@ -231,7 +231,7 @@ class NavigatorConnector(HTTPConnector):
         """
         logger = get_logger()
         try:
-            response_json = self.get(f"families/?import_ids={','.join(import_ids)}")
+            response_json = self.get("families/", params={"import_id": import_ids})
             families_data = response_json.get("data", [])
 
             if not families_data:
@@ -254,7 +254,7 @@ class NavigatorConnector(HTTPConnector):
                 task_run_id=task_run_id,
                 flow_run_id=flow_run_id,
                 metadata=ExtractedMetadata(
-                    endpoint=f"{self.config.base_url}/families/?import_ids={','.join(import_ids)}",
+                    endpoint=f"{self.config.base_url}/families/?import_id={'&import_id='.join(import_ids)}",
                     http_status=HTTPStatus.OK,
                 ),
             )
