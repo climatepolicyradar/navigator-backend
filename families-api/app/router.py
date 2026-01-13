@@ -55,7 +55,7 @@ def read_families(
     page: int = Query(1, ge=1),
     page_size: int = Query(default=10, ge=1, le=100),
     corpus_import_ids: list[str] = Query(default=[], alias="corpus.import_id"),
-    import_ids: list[str] | None = Query(default=None),
+    import_id: list[str] | None = Query(default=None),
 ):
     """Fetch families with optional filtering.
 
@@ -63,12 +63,16 @@ def read_families(
     :param page: Page number for pagination.
     :param page_size: Number of items per page.
     :param corpus_import_ids: Filter by corpus import IDs.
-    :param import_ids: List of family import IDs to fetch.
+    :param import_id: List of family import IDs to fetch.
         If provided, pagination is ignored.
     :return: List of families.
     """
     filters = []
 
+    # We call this import_id in the function signature because then we use it in the URL
+    # like this: /families/?import_id=family_1&import_id=family_2 which makes more sense
+    # than using the plural.
+    import_ids = import_id
     if import_ids:
         filters.append(Family.import_id.in_(import_ids))  # type: ignore
 

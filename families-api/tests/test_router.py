@@ -223,7 +223,7 @@ def test_read_families_by_import_ids(client: TestClient, session: Session, make_
     session.add(family3)
     session.commit()
 
-    response = client.get("/families/?import_ids=family_1&import_ids=family_3")
+    response = client.get("/families/?import_id=family_1&import_id=family_3")
 
     assert response.status_code == HTTPStatus.OK
     result = APIListResponse[FamilyPublic].model_validate(response.json())
@@ -264,7 +264,7 @@ def test_read_families_by_import_ids_with_corpus_filter(
     # Request family_1 and family_2, but filter by corpus_1
     # Only family_1 should be returned
     response = client.get(
-        "/families/?import_ids=family_1&import_ids=family_2&corpus.import_id=corpus_1"
+        "/families/?import_id=family_1&import_id=family_2&corpus.import_id=corpus_1"
     )
 
     assert response.status_code == HTTPStatus.OK
@@ -285,9 +285,7 @@ def test_read_families_by_import_ids_empty_result(
     session.add(family1)
     session.commit()
 
-    response = client.get(
-        "/families/?import_ids=nonexistent_1&import_ids=nonexistent_2"
-    )
+    response = client.get("/families/?import_id=nonexistent_1&import_id=nonexistent_2")
 
     assert response.status_code == HTTPStatus.OK
     result = APIListResponse[FamilyPublic].model_validate(response.json())
