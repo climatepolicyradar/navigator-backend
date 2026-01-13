@@ -34,7 +34,7 @@ def navigator_family_with_single_matching_document() -> Identified[NavigatorFami
             title="Matching title on family and document and collection",
             summary="Family summary",
             corpus=NavigatorCorpus(
-                import_id="corpus",
+                import_id="CCLW.corpus.i00000001.n0000",
                 corpus_type=NavigatorCorpusType(name="corpus_type"),
                 organisation=NavigatorOrganisation(id=1, name="CCLW"),
             ),
@@ -140,6 +140,11 @@ def navigator_family_with_single_matching_document() -> Identified[NavigatorFami
                     event_type="Updated",
                     date=datetime.datetime(2020, 1, 1),
                 ),
+                NavigatorEvent(
+                    import_id="Published",
+                    event_type="Published",
+                    date=datetime.datetime(2020, 1, 1),
+                ),
             ],
             collections=[
                 NavigatorCollection(
@@ -167,7 +172,7 @@ def navigator_family_with_no_matching_transformations() -> Identified[NavigatorF
             title="No matches for this family or documents",
             summary="Family summary",
             corpus=NavigatorCorpus(
-                import_id="123",
+                import_id="CCLW.corpus.i00000001.n0000",
                 corpus_type=NavigatorCorpusType(name="corpus_type"),
                 organisation=NavigatorOrganisation(id=1, name="CCLW"),
             ),
@@ -429,6 +434,11 @@ def test_transform_navigator_family_with_single_matching_document(
                 label=Label(type="activity_status", id="Updated", title="Updated"),
             ),
             DocumentLabelRelationship(
+                type="activity_status",
+                timestamp=datetime.datetime(2020, 1, 1),
+                label=Label(type="activity_status", id="Published", title="Published"),
+            ),
+            DocumentLabelRelationship(
                 type="provider",
                 label=Label(
                     type="agent",
@@ -606,8 +616,8 @@ def test_transform_navigator_family_with_litigation_corpus_type(
                 type="provider",
                 label=Label(
                     type="agent",
-                    id="Grantham Research Institute",
-                    title="Grantham Research Institute",
+                    id="Sabin Center for Climate Change Law",
+                    title="Sabin Center for Climate Change Law",
                 ),
             ),
         ],
@@ -630,8 +640,8 @@ def test_transform_navigator_family_with_litigation_corpus_type(
                             type="provider",
                             label=Label(
                                 type="agent",
-                                id="Grantham Research Institute",
-                                title="Grantham Research Institute",
+                                id="Sabin Center for Climate Change Law",
+                                title="Sabin Center for Climate Change Law",
                             ),
                         ),
                     ],
@@ -655,8 +665,8 @@ def test_transform_navigator_family_with_litigation_corpus_type(
                             type="provider",
                             label=Label(
                                 type="agent",
-                                id="Grantham Research Institute",
-                                title="Grantham Research Institute",
+                                id="Sabin Center for Climate Change Law",
+                                title="Sabin Center for Climate Change Law",
                             ),
                         ),
                     ],
@@ -683,8 +693,8 @@ def test_transform_navigator_family_with_litigation_corpus_type(
                         type="provider",
                         label=Label(
                             type="agent",
-                            id="Grantham Research Institute",
-                            title="Grantham Research Institute",
+                            id="Sabin Center for Climate Change Law",
+                            title="Sabin Center for Climate Change Law",
                         ),
                     ),
                 ],
@@ -713,8 +723,8 @@ def test_transform_navigator_family_with_litigation_corpus_type(
                         type="provider",
                         label=Label(
                             type="agent",
-                            id="Grantham Research Institute",
-                            title="Grantham Research Institute",
+                            id="Sabin Center for Climate Change Law",
+                            title="Sabin Center for Climate Change Law",
                         ),
                     ),
                 ],
@@ -807,8 +817,8 @@ def test_transform_navigator_family_with_multilateral_climate_fund_project(
                 type="provider",
                 label=Label(
                     type="agent",
-                    id="Grantham Research Institute",
-                    title="Grantham Research Institute",
+                    id="Adaptation Fund",
+                    title="Adaptation Fund",
                 ),
             ),
         ],
@@ -823,8 +833,8 @@ def test_transform_navigator_family_with_multilateral_climate_fund_project(
                             type="provider",
                             label=Label(
                                 type="agent",
-                                id="Grantham Research Institute",
-                                title="Grantham Research Institute",
+                                id="Adaptation Fund",
+                                title="Adaptation Fund",
                             ),
                         ),
                     ],
@@ -840,8 +850,8 @@ def test_transform_navigator_family_with_multilateral_climate_fund_project(
                             type="provider",
                             label=Label(
                                 type="agent",
-                                id="Grantham Research Institute",
-                                title="Grantham Research Institute",
+                                id="Adaptation Fund",
+                                title="Adaptation Fund",
                             ),
                         ),
                     ],
@@ -860,8 +870,8 @@ def test_transform_navigator_family_with_multilateral_climate_fund_project(
                         type="provider",
                         label=Label(
                             type="agent",
-                            id="Grantham Research Institute",
-                            title="Grantham Research Institute",
+                            id="Adaptation Fund",
+                            title="Adaptation Fund",
                         ),
                     ),
                 ],
@@ -882,8 +892,8 @@ def test_transform_navigator_family_with_multilateral_climate_fund_project(
                         type="provider",
                         label=Label(
                             type="agent",
-                            id="Grantham Research Institute",
-                            title="Grantham Research Institute",
+                            id="Adaptation Fund",
+                            title="Adaptation Fund",
                         ),
                     ),
                 ],
