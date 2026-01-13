@@ -144,15 +144,10 @@ def etl_pipeline(ids: list[str] | None = None) -> list[Document] | Exception:
         4. Load transformed documents to S3 cache.
         5. Save transformed documents to the load DB.
 
-    Returns:
-        Result[Document, Exception] | None
-            The final transformation result for demonstration purposes.
-            In real use, you may want to return all transformed Results
-            or push them to a downstream Prefect block.
-
     :param ids: Optional list of family import_ids to process.
         If empty, processes all families.
-    :return: List of transformed documents or an exception.
+    :return [str, Exception] | None: The final result of the etl pipeline.
+        Will contain a list of ids of the successfully saved documents on success.
     """
     _LOGGER = get_logger()
     _LOGGER.info("ETL pipeline started")
