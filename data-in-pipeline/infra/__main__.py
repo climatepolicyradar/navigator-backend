@@ -530,6 +530,14 @@ data_in_pipeline_load_api_apprunner_service = aws.apprunner.Service(
     opts=pulumi.ResourceOptions(protect=True),
 )
 
+data_in_pipeline_load_api_url = aws.ssm.Parameter(
+    "data-in-pipeline-load-api-url",
+    name="/data-in-pipeline-load-api/url",
+    description="URL of the load API service",
+    type=aws.ssm.ParameterType.STRING,
+    value=data_in_pipeline_load_api_apprunner_service.service_url,
+)
+
 pulumi.export(
     "data-in-pipeline-load-api-apprunner_service_url",
     data_in_pipeline_load_api_apprunner_service.service_url,
