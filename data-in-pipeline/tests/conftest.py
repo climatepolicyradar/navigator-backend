@@ -6,20 +6,18 @@ from opentelemetry._logs import get_logger_provider
 from prefect.testing.utilities import prefect_test_harness
 
 # Set environment variables before any imports that might initialise telemetry
+# or settings that read from environment variables
 os.environ.setdefault("DISABLE_OTEL_LOGGING", "true")
 os.environ.setdefault("OTEL_TRACES_EXPORTER", "none")
 os.environ.setdefault("OTEL_LOGS_EXPORTER", "none")
 os.environ.setdefault("OTEL_METRICS_EXPORTER", "none")
 
-
-@pytest.fixture(autouse=True, scope="session")
-def set_environment_variables():
-    """Set environment variables for the test session."""
-    os.environ["DB_MASTER_USERNAME"] = "username"
-    os.environ["MANAGED_DB_PASSWORD"] = "password"
-    os.environ["LOAD_DATABASE_URL"] = "db_url"
-    os.environ["DB_PORT"] = "1111"
-    os.environ["DB_NAME"] = "db_name"
+# Set database environment variables before settings module is imported
+os.environ.setdefault("DB_MASTER_USERNAME", "test_username")
+os.environ.setdefault("MANAGED_DB_PASSWORD", "test_password")
+os.environ.setdefault("AURORA_WRITER_ENDPOINT", "test-db-endpoint")
+os.environ.setdefault("DB_PORT", "5432")
+os.environ.setdefault("DB_NAME", "test_db")
 
 
 @pytest.fixture(autouse=True, scope="session")
