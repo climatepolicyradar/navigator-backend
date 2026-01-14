@@ -539,42 +539,27 @@ pulumi.export(
 # Create environment variables and secrets for Prefect flows/tasks.
 #######################################################################
 
-# prefect_otel_endpoint = aws.ssm.Parameter(
-#     "data-in-pipeline-prefect-otel-endpoint",
-#     name="/data-in-pipeline/prefect/otel-endpoint",
-#     description="OpenTelemetry endpoint for Prefect flows",
-#     type=aws.ssm.ParameterType.STRING,
-#     value=config.get("prefect_otel_endpoint")
-#     or "https://otel.prod.climatepolicyradar.org",
-#     tags=tags,
-# )
-
 # Export environment variables (plain values)
 prefect_otel_endpoint = f"https://otel.{"prod" if environment == "production" else "staging"}.climatepolicyradar.org"
 pulumi.export(
     "prefect_runtime_environment_variables",
     {
-        # "API_BASE_URL": config.require("api_base_url"),
-        # "DISABLE_OTEL_LOGGING": config.require("prefect_disable_otel_logging"),
-        # "OTEL_EXPORTER_OTLP_PROTOCOL": "http/protobuf",
-        # "OTEL_EXPORTER_OTLP_ENDPOINT": prefect_otel_endpoint,
-        # "OTEL_PYTHON_LOGGER_PROVIDER": "sdk",
-        # "OTEL_PYTHON_LOG_CORRELATION": "true",
-        # "OTEL_PYTHON_LOG_LEVEL": config.require("otel_python_log_level"),
-        # "OTEL_RESOURCE_ATTRIBUTES": f"deployment.environment={environment},service.namespace=data-fetching",
-        # "OTEL_PYTHON_LOGGING_AUTO_INSTRUMENTATION_ENABLED": "true",
-        # "PREFECT_CLOUD_ENABLE_ORCHESTRATION_TELEMETRY": "true",
-        # "PREFECT_LOGGING_TO_API_ENABLED": "true",
-        # "PREFECT_LOGGING_EXTRA_LOGGERS": "app",
+        "API_BASE_URL": config.require("api_base_url"),
+        "DISABLE_OTEL_LOGGING": config.require("disable_otel_logging"),
+        "OTEL_EXPORTER_OTLP_PROTOCOL": "http/protobuf",
+        "OTEL_EXPORTER_OTLP_ENDPOINT": prefect_otel_endpoint,
+        "OTEL_PYTHON_LOGGER_PROVIDER": "sdk",
+        "OTEL_PYTHON_LOG_CORRELATION": True,
+        "OTEL_PYTHON_LOG_LEVEL": config.require("otel_python_log_level"),
+        "OTEL_RESOURCE_ATTRIBUTES": f"deployment.environment={environment},service.namespace=data-fetching",
+        "OTEL_PYTHON_LOGGING_AUTO_INSTRUMENTATION_ENABLED": True,
+        "PREFECT_CLOUD_ENABLE_ORCHESTRATION_TELEMETRY": True,
+        "PREFECT_LOGGING_TO_API_ENABLED": True,
+        "PREFECT_LOGGING_EXTRA_LOGGERS": "app",
     },
 )
 
 # Export secrets (ARNs) - these can be linked to Secrets Manager secrets
-# For now, we'll use an Output that can be extended later
-# Example:
-# prefect_secrets_arns_output = pulumi.Output.from_input({
-#     "DATABASE_PASSWORD": some_secret.secret_arn
-# })
 prefect_secrets_arns_output = pulumi.Output.from_input(
     {
         "MANAGED_DB_PASSWORD": data_in_pipeline_load_api_cluster_password_secret.secret_arn,
