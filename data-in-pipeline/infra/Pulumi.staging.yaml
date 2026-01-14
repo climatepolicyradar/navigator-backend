@@ -20,4 +20,5 @@ config:
   data-in-pipeline:prod_aws_account_id:
     secure: AAABAGyHc3QKlUfUJpT84VivfF+DT/6g6MVtUWqTGDmpHq3FsP8E7bToVhI=
   data-in-pipeline:api_base_url: https://api.staging.climatepolicyradar.org
-  data-in-pipeline:prefect_disable_otel_logging: "false"
+  data-in-pipeline:disable_otel_logging: "false"
+  data-in-pipeline:otel_python_log_level: INFO
