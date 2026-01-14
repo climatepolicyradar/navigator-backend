@@ -1,7 +1,7 @@
-import json
 import os
 
 import requests
+from pydantic import TypeAdapter
 
 from app.models import Document
 
@@ -13,7 +13,9 @@ def load_to_db(documents: list[Document]) -> list[str]:
     :returns list[str]: List of ids of the saved documents.
     """
     response = requests.post(
-        url=os.getenv("LOAD_API_URL", ""), data=json.dumps(documents), timeout=10
+        url=os.getenv("LOAD_API_URL", ""),
+        data=TypeAdapter(list[Document]).dump_json(documents),
+        timeout=10,
     )
 
     return response.json()
