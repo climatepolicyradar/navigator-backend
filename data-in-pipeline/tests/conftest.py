@@ -18,6 +18,7 @@ os.environ.setdefault("MANAGED_DB_PASSWORD", "test_password")
 os.environ.setdefault("AURORA_WRITER_ENDPOINT", "test-db-endpoint")
 os.environ.setdefault("DB_PORT", "5432")
 os.environ.setdefault("DB_NAME", "test_db")
+os.environ.setdefault("AWS_REGION", "eu-west-1")
 
 
 @pytest.fixture(autouse=True, scope="session")
