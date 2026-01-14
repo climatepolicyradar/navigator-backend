@@ -101,17 +101,19 @@ def get_db_context() -> Generator[Session, None, None]:
     :rtype: Generator[Session, None, None]
     """
     engine = connect_to_db()
-    db = create_session_factory(engine)
+    session_factory = create_session_factory(engine)
+    session = session_factory()
     try:
         _LOGGER.debug("Database session created (context manager)")
-        yield db
+        yield session
+        session.commit()
         _LOGGER.debug("Safely exiting database session (context manager)")
     except Exception:
-        db.rollback()
+        session.rollback()
         _LOGGER.exception("Database session rolled back (context manager)")
         raise
     finally:
-        db.close()
+        session.close()
         _LOGGER.debug("Database session closed (context manager)")
 
 
