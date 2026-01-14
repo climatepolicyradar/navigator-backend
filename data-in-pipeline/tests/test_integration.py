@@ -30,13 +30,17 @@ def test_process_document_updates_flow_with_invalid_id(mock_upload):
     assert process_document_updates(["CCLW.INVALID_ID"]) == []
 
 
+@patch("app.navigator_family_etl_pipeline.run_migrations")
 @patch("app.navigator_family_etl_pipeline.upload_to_s3")
 @patch("app.navigator_family_etl_pipeline.NavigatorConnector")
 def test_process_family_updates_flow_multiple_families(
-    mock_connector_class, mock_upload
+    mock_connector_class,
+    mock_upload,
+    mock_run_migrations,
 ):
     """Test ETL pipeline with multiple families across pages."""
     mock_upload.return_value = None
+    mock_run_migrations.return_value = None
 
     mock_connector_instance = MagicMock()
     mock_connector_class.return_value = mock_connector_instance
@@ -133,13 +137,17 @@ def test_process_family_updates_flow_multiple_families(
     assert result[0].id == "i00000315"
 
 
+@patch("app.navigator_family_etl_pipeline.run_migrations")
 @patch("app.navigator_family_etl_pipeline.upload_to_s3")
 @patch("app.navigator_family_etl_pipeline.NavigatorConnector")
 def test_process_family_updates_flow_extraction_failure(
-    mock_connector_class, mock_upload
+    mock_connector_class,
+    mock_upload,
+    mock_run_migrations,
 ):
     """Test ETL pipeline when extraction fails completely."""
     mock_upload.return_value = None
+    mock_run_migrations.return_value = None
 
     mock_connector_instance = MagicMock()
     mock_connector_class.return_value = mock_connector_instance

@@ -1,22 +1,6 @@
-import pytest
-from sqlmodel import Session, SQLModel, create_engine
-from testcontainers.postgres import PostgresContainer
+from sqlmodel import Session, SQLModel
 
 from app.db_models import Document, Label
-
-
-@pytest.fixture(scope="session")
-def postgres_container():
-    with PostgresContainer("postgres:17") as postgres:
-        yield postgres
-
-
-@pytest.fixture
-def engine(postgres_container):
-    engine = create_engine(postgres_container.get_connection_url())
-    SQLModel.metadata.create_all(engine)
-    yield engine
-    SQLModel.metadata.drop_all(engine)
 
 
 def test_can_create_tables(engine):

@@ -4,6 +4,8 @@ import pytest
 from opentelemetry import trace
 from opentelemetry._logs import get_logger_provider
 from prefect.testing.utilities import prefect_test_harness
+from sqlmodel import SQLModel, create_engine
+from testcontainers.postgres import PostgresContainer
 
 # Set environment variables before any imports that might initialise telemetry
 # or settings that read from environment variables
@@ -19,6 +21,20 @@ os.environ.setdefault("AURORA_WRITER_ENDPOINT", "test-db-endpoint")
 os.environ.setdefault("DB_PORT", "5432")
 os.environ.setdefault("DB_NAME", "test_db")
 os.environ.setdefault("AWS_REGION", "eu-west-1")
+
+
+@pytest.fixture(scope="session")
+def postgres_container():
+    with PostgresContainer("postgres:17") as postgres:
+        yield postgres
+
+
+@pytest.fixture
+def engine(postgres_container):
+    engine = create_engine(postgres_container.get_connection_url())
+    SQLModel.metadata.create_all(engine)
+    yield engine
+    SQLModel.metadata.drop_all(engine)
 
 
 @pytest.fixture(autouse=True, scope="session")
