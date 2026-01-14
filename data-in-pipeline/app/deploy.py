@@ -112,20 +112,8 @@ def _ensure_environment_variables(
         pulumi_env_vars = pulumi_outputs.get("env_vars", {})
 
     # Fallback values if Pulumi stack outputs are not available
-    FALLBACK_ENVIRONMENT_VARIABLES = {
-        "API_BASE_URL": f"https://api.{aws_env}.climatepolicyradar.org",
-        "DISABLE_OTEL_LOGGING": "false",
-        "OTEL_EXPORTER_OTLP_PROTOCOL": "http/protobuf",
-        "OTEL_EXPORTER_OTLP_ENDPOINT": f"https://otel.{"prod" if aws_env == "production" else aws_env}.climatepolicyradar.org",
-        "OTEL_PYTHON_LOGGER_PROVIDER": "sdk",
-        "OTEL_PYTHON_LOG_CORRELATION": True,
-        "OTEL_PYTHON_LOG_LEVEL": "INFO",
-        "OTEL_RESOURCE_ATTRIBUTES": f"deployment.environment={aws_env},service.namespace=data-fetching",
-        "OTEL_PYTHON_LOGGING_AUTO_INSTRUMENTATION_ENABLED": True,
-        "PREFECT_CLOUD_ENABLE_ORCHESTRATION_TELEMETRY": True,
-        "PREFECT_LOGGING_TO_API_ENABLED": True,
-        "PREFECT_LOGGING_EXTRA_LOGGERS": "app",
-    }
+    # NOTE: Should we define the OTEL variables here or in the Pulumi stack?
+    FALLBACK_ENVIRONMENT_VARIABLES = {}
 
     # Merge with environment variables (env vars take precedence)
     # Ensure pulumi_env_vars is a dict for unpacking
