@@ -3,7 +3,7 @@ from typing import Literal
 
 from prefect import flow, task
 from prefect.runtime import flow_run, task_run
-from returns.result import Failure, Result, Success
+from returns.result import Failure, Success
 
 from app.bootstrap_telemetry import get_logger, pipeline_metrics
 from app.extract.connector_config import NavigatorConnectorConfig
@@ -19,8 +19,9 @@ from app.load.load import load_to_db
 from app.models import Document, ExtractedEnvelope, Identified
 from app.pipeline_metrics import ErrorType, Operation, PipelineType, Status
 from app.run_migrations.db import run_migrations
-from app.transform.models import NoMatchingTransformations
-from app.transform.navigator_family import transform_navigator_family
+from app.transform.navigator_family import (
+    transform_navigator_family,
+)
 
 
 def generate_s3_cache_key(step: Literal["extract", "identify", "transform"]) -> str:
@@ -117,9 +118,33 @@ def identify(
 @pipeline_metrics.track(operation=Operation.TRANSFORM)
 def transform(
     identified: Identified[NavigatorFamily],
-) -> Result[list[Document], NoMatchingTransformations]:
+) -> list[Document] | Exception:
     """Transform document to target format."""
-    return transform_navigator_family(identified)
+    _LOGGER = get_logger()
+
+    transformed = transform_navigator_family(identified)
+
+    match transformed:
+        case Success(documents):
+            return documents
+        case Failure(error):
+            # TODO: do not swallow errors
+            _LOGGER.warning(f"Transformation failed: {error}")
+            pipeline_metrics.record_error(Operation.TRANSFORM, ErrorType.TRANSFORM)
+            pipeline_metrics.record_processed(PipelineType.FAMILY, Status.FAILURE)
+            return error
+        case _:
+            pipeline_metrics.record_processed(PipelineType.FAMILY, Status.FAILURE)
+            return Exception("Unexpected transformed result state")
+
+
+@task(log_prints=True)
+@pipeline_metrics.track(operation=Operation.LOAD)
+def load(
+    transformed: list[Document],
+) -> list[str] | Exception:
+    """Save transformed document."""
+    return load_to_db(transformed)
 
 
 # ---------------------------------------------------------------------
@@ -185,18 +210,16 @@ def etl_pipeline(ids: list[str] | None = None) -> list[str] | Exception:
     identified = identify(envelopes)
     transformed = transform(identified)
 
-    match transformed:
-        case Success(documents):
-            load_to_s3.map(documents)
-            load_result = load_to_db(documents)
-            pipeline_metrics.record_processed(PipelineType.FAMILY, Status.SUCCESS)
-            return load_result
-        case Failure(error):
-            # TODO: do not swallow errors
-            _LOGGER.warning(f"Transformation failed: {error}")
-            pipeline_metrics.record_error(Operation.TRANSFORM, ErrorType.TRANSFORM)
-            pipeline_metrics.record_processed(PipelineType.FAMILY, Status.FAILURE)
-            return error
-        case _:
-            pipeline_metrics.record_processed(PipelineType.FAMILY, Status.FAILURE)
-            return Exception("Unexpected transformed result state")
+    if isinstance(transformed, Exception):
+        return Exception(f"Transformation failed {transformed}")
+
+    load_to_s3.map(transformed)
+    loaded = load(transformed)
+    if isinstance(loaded, Exception):
+        _LOGGER.error(f"Load failed: {loaded}")
+        pipeline_metrics.record_error(Operation.LOAD, ErrorType.STORAGE)
+        pipeline_metrics.record_processed(PipelineType.FAMILY, Status.FAILURE)
+        return Exception(f"Transformation failed {loaded}")
+
+    pipeline_metrics.record_processed(PipelineType.FAMILY, Status.SUCCESS)
+    return loaded
