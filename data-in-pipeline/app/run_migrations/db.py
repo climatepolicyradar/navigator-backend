@@ -6,6 +6,7 @@ sessions. Use get_db_context() for all database operations.
 """
 
 import logging
+import os
 from collections.abc import Generator
 from contextlib import contextmanager
 
@@ -36,9 +37,13 @@ def get_load_db_credentials() -> LoadDBCredentials:
     :raises ValueError: If required credentials cannot be retrieved or
         are invalid.
     """
+    print(os.environ.get("MANAGED_DB_PASSWORD"))
+    print(os.environ.get("AURORA_WRITER_ENDPOINT"))
     load_database_url = settings.aurora_writer_endpoint
-    master_creds = settings.managed_db_password
-    password = master_creds.password
+    password = settings.managed_db_password
+    if "password" not in password:
+        raise ValueError("MANAGED_DB_PASSWORD does not contain a 'password' key")
+    password = password["password"]
 
     return LoadDBCredentials(
         username=settings.db_master_username,
