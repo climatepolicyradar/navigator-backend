@@ -18,3 +18,4 @@ config:
   data-in-pipeline:auto_scaling_configuration_arn:
     secure: AAABAPtqH86JGx6RULSUH+oNOsmDbECaTZJzk3FC1/HSrix5pfGhsow/xAoucc+zejtxon76wt4xr3oHXBlL/Av7k9WiZls60UukfCKfbMEGJuTPh0B6mh9s7vO1gIbkd9kxTqz+r2HVlFGIi6XuIUR8Xdg6/THVf6/he15Max5F1bOJ6yztOPI/yMKZpdTkJLvJdEKB/qkO
   data-in-pipeline:api_base_url: https://api.climatepolicyradar.org
+  data-in-pipeline:prefect_disable_otel_logging: "false"
