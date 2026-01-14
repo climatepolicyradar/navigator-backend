@@ -13,6 +13,16 @@ os.environ.setdefault("OTEL_METRICS_EXPORTER", "none")
 
 
 @pytest.fixture(autouse=True, scope="session")
+def set_environment_variables():
+    """Set environment variables for the test session."""
+    os.environ["DB_MASTER_USERNAME"] = "username"
+    os.environ["MANAGED_DB_PASSWORD"] = "password"
+    os.environ["LOAD_DATABASE_URL"] = "db_url"
+    os.environ["DB_PORT"] = "1111"
+    os.environ["DB_NAME"] = "db_name"
+
+
+@pytest.fixture(autouse=True, scope="session")
 def disable_telemetry():
     """Disable OpenTelemetry logging during tests to prevent export errors.
 
