@@ -1,7 +1,7 @@
 import uuid
-from datetime import datetime, timezone
+from datetime import UTC, datetime
 from http import HTTPStatus
-from typing import Generic, TypeVar
+from typing import TypeVar
 
 from pydantic import BaseModel, Field
 
@@ -13,7 +13,7 @@ class ExtractedMetadata(BaseModel):
     http_status: HTTPStatus
 
 
-class ExtractedEnvelope(BaseModel, Generic[ExtractedData]):
+class ExtractedEnvelope[ExtractedData](BaseModel):
     """Envelope for extracted data from any source document."""
 
     data: ExtractedData
@@ -23,13 +23,13 @@ class ExtractedEnvelope(BaseModel, Generic[ExtractedData]):
     raw_payload: ExtractedData
     content_type: str = "application/json"
     connector_version: str
-    extracted_at: datetime = Field(default_factory=lambda: datetime.now(timezone.utc))
+    extracted_at: datetime = Field(default_factory=lambda: datetime.now(UTC))
     metadata: ExtractedMetadata
     task_run_id: str
     flow_run_id: str
 
 
-class Identified(BaseModel, Generic[ExtractedData]):
+class Identified[ExtractedData](BaseModel):
     data: ExtractedData
     id: str
     source: str
@@ -47,25 +47,15 @@ class DocumentLabelRelationship(BaseModel):
     timestamp: datetime | None = None
 
 
-class BaseDocument(BaseModel):
-    id: str
-    title: str
-    labels: list[DocumentLabelRelationship] = []
-
-
-class DocumentDocumentRelationship(BaseModel):
-    type: str
-    document: "DocumentWithoutRelationships"
-    timestamp: datetime | None = None
-
-
 class Item(BaseModel):
     url: str | None = None
 
 
-class Document(BaseDocument):
+class BaseDocument(BaseModel):
+    id: str
+    title: str
     description: str | None = None
-    relationships: list[DocumentDocumentRelationship] = []
+    labels: list[DocumentLabelRelationship] = []
 
     """
     This needs work, but is a decent placeholder while we work through the model.
@@ -74,6 +64,16 @@ class Document(BaseDocument):
     @see: https://en.wikipedia.org/wiki/Functional_Requirements_for_Bibliographic_Records
     """
     items: list[Item] = []
+
+
+class DocumentDocumentRelationship(BaseModel):
+    type: str
+    document: "DocumentWithoutRelationships"
+    timestamp: datetime | None = None
+
+
+class Document(BaseDocument):
+    relationships: list[DocumentDocumentRelationship] = []
 
 
 class DocumentWithoutRelationships(BaseDocument):

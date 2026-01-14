@@ -191,7 +191,7 @@ def list_documents(
 
     # data
     result = con.execute(
-        f"SELECT id, title, labels, relationships FROM documents {where} ORDER BY title, id LIMIT ? OFFSET ?",  # nosec B608
+        f"SELECT id, title, labels, relationships, items FROM documents {where} ORDER BY title, id LIMIT ? OFFSET ?",  # nosec B608
         params + [limit, offset],
     )
     colnames = [c[0] for c in result.description]
@@ -291,7 +291,8 @@ def read_document(
             id,
             title,
             labels,
-            relationships
+            relationships,
+            items,
         FROM documents
         WHERE id = ?
         """,

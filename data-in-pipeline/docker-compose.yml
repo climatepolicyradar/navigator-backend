@@ -7,6 +7,22 @@ services:
       dockerfile: data-in-pipeline/Dockerfile
     volumes:
       - ..:/app
+      # <testcontainers>
+      # We need these lines to support running testcontainers in the container
+      # Which needs access to the host docker
+      - /var/run/docker.sock:/var/run/docker.sock
+    # this is needed as we use `USER prefect_user` in the Dockerfile
+    user: root
+    extra_hosts:
+      # @see: https://docs.docker.com/docker-for-mac/networking/#use-cases-and-workarounds
+      - host.docker.internal:host-gateway
+    environment:
+      # We use testcontainers to test postgres so this is needed
+      - TESTCONTAINERS_HOST_OVERRIDE=host.docker.internal
+      - OTEL_TRACES_EXPORTER=none
+      - OTEL_METRICS_EXPORTER=none
+      - OTEL_LOGS_EXPORTER=none
+    # </testcontainers>
     working_dir: /app
     command:
       [
@@ -19,12 +35,3 @@ services:
         --color=yes,
         -v,
       ]
-
-  load-api:
-    container_name: load-api
-    build:
-      context: ..
-      dockerfile: data-in-pipeline/infra/Dockerfile.load_api
-    ports:
-      - 8080:8080
-    working_dir: /app

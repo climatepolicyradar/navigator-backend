@@ -33,6 +33,13 @@ class Settings(BaseSettings):
     # Connection pool parameters
     statement_timeout: str = "10000"
 
+    # SSL mode for database connections
+    # Valid values: disable, allow, prefer, require, verify-ca, verify-full
+    # 'prefer' tries SSL but falls back to non-SSL for local dev (validates
+    # certs if SSL is used). For production RDS without cert validation,
+    # set db_sslmode=require via environment variable.
+    db_sslmode: str = "require"
+
 
 # Pydantic settings are set from the env variables passed in via
 # docker / apprunner. Missing required fields will raise a
