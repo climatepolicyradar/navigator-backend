@@ -14,6 +14,7 @@ from sqlalchemy import create_engine, text
 from sqlalchemy.engine import Engine
 from sqlalchemy.orm import Session, sessionmaker
 
+from app.run_migrations.aws import get_secret, get_ssm_parameter
 from app.run_migrations.settings import settings
 
 _LOGGER = logging.getLogger(__name__)
@@ -28,20 +29,36 @@ class LoadDBCredentials(BaseModel):
     sslmode: str
 
 
-def get_load_db_credentials():
-    """Get the load database credentials from the AWS Secrets Manager."""
-    print(settings)
-    print(settings.db_port)
-    print(settings.aurora_writer_endpoint)
-    print(settings.managed_db_password)
-    print(settings.managed_db_password.get_secret_value())
+def get_load_db_credentials() -> LoadDBCredentials:
+    """Get the load database credentials from AWS Secrets Manager and SSM.
 
-    password = settings.managed_db_password.get_secret_value()
+    :return: Database credentials for connecting to the load database.
+    :rtype: LoadDBCredentials
+    :raises ValueError: If required credentials cannot be retrieved or
+        are invalid.
+    """
+    load_database_url = get_ssm_parameter(
+        settings.aurora_writer_endpoint, with_decryption=True
+    )
+    secret_value = get_secret(settings.managed_db_password, parse_json=True)
+
+    if isinstance(secret_value, dict):
+        password = secret_value.get("password")
+        if password is None:
+            raise ValueError(
+                "🔒 Password not found in secret dict. Expected key 'password'."
+            )
+        if not isinstance(password, str):
+            raise ValueError(f"🔒 Password must be a string, got {type(password)}")
+    elif isinstance(secret_value, str):
+        password = secret_value
+    else:
+        raise ValueError(f"🔒 Unexpected secret type: {type(secret_value)}")
 
     return LoadDBCredentials(
         username=settings.db_master_username,
         password=password,
-        url=settings.aurora_writer_endpoint,
+        url=load_database_url,
         port=settings.db_port,
         db_name=settings.db_name,
         sslmode=settings.db_sslmode,
