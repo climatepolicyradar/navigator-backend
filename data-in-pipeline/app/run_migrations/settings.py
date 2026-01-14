@@ -53,7 +53,7 @@ def get_settings() -> Settings:
     :return: The settings instance.
     :rtype: Settings
     """
-    global _settings_instance
+    global _settings_instance  # noqa: PLW0603
     if _settings_instance is None:
         # Pyright doesn't recognize that BaseSettings loads from
         # environment variables, so it flags required fields as missing
