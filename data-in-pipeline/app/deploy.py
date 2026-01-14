@@ -207,7 +207,7 @@ def _merge_job_environments(
         if "task_definition_override" not in merged:
             merged["task_definition_override"] = {}
 
-        # Initialize containerDefinitions if not present
+        # Initialise containerDefinitions if not present
         if "containerDefinitions" not in merged["task_definition_override"]:
             merged["task_definition_override"]["containerDefinitions"] = [{}]
 
@@ -217,14 +217,16 @@ def _merge_job_environments(
         # Merge secrets (avoid duplicates by name)
         existing_secrets = first_container.get("secrets", [])
         existing_secret_names = {
-            s.get("name")
-            for s in existing_secrets
-            if isinstance(s, dict) and "name" in s
+            secret.get("name")
+            for secret in existing_secrets
+            if isinstance(secret, dict) and "name" in secret
         }
 
         # Add new secrets that don't already exist
         new_secrets = [
-            s for s in secrets_list if s.get("name") not in existing_secret_names
+            secret
+            for secret in secrets_list
+            if secret.get("name") not in existing_secret_names
         ]
 
         if new_secrets:
@@ -286,7 +288,8 @@ def create_deployment(flow: Flow) -> None:
     default_job_variables = ECSVariablesBlock.load(
         "ecs-default-job-variables-prefect-mvp-prod"
     ).model_dump(  # type: ignore
-        # We have to exclude None for now as sending over values like container_name=None vs the key missing affects functionality
+        # We have to exclude None for now as sending over values like
+        # container_name=None vs the key missing affects functionality
         exclude_none=True
     )
 
