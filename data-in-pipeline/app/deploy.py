@@ -25,6 +25,8 @@ def _get_pulumi_stack_outputs(aws_env: str) -> dict[str, Any]:
     :type aws_env: str
     :return: Dictionary containing 'env_vars' and 'secrets_arns' keys.
     :rtype: dict[str, Any]
+        Could be any type of value, but currently we only use strings
+        and booleans.
     """
     logger = get_logger()
     infra_dir = Path(__file__).parent.parent / "infra"
