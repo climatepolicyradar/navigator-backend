@@ -172,10 +172,13 @@ def test_process_family_updates_flow_extraction_failure(
     assert isinstance(result, Exception)
 
 
+@patch("app.navigator_family_etl_pipeline.run_migrations")
 @patch("app.navigator_family_etl_pipeline.upload_to_s3")
 @patch("app.navigator_family_etl_pipeline.NavigatorConnector")
 @patch("app.load.load.requests.post")
-def test_etl_pipeline_load_failure(mock_post, mock_connector_class, mock_upload):
+def test_etl_pipeline_load_failure(
+    mock_post, mock_connector_class, mock_upload, mock_run_migrations
+):
     mock_upload.return_value = None
 
     mock_connector_instance = MagicMock()
