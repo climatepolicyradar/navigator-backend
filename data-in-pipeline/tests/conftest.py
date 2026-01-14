@@ -16,7 +16,10 @@ os.environ.setdefault("OTEL_METRICS_EXPORTER", "none")
 
 # Set database environment variables before settings module is imported
 os.environ.setdefault("DB_MASTER_USERNAME", "test_username")
-os.environ.setdefault("MANAGED_DB_PASSWORD", "test_password")
+# MANAGED_DB_PASSWORD must be JSON matching MasterDbCredentials structure
+os.environ.setdefault(
+    "MANAGED_DB_PASSWORD", '{"username": "test_username", "password": "test_password"}'
+)
 os.environ.setdefault("AURORA_WRITER_ENDPOINT", "test-db-endpoint")
 os.environ.setdefault("DB_PORT", "5432")
 os.environ.setdefault("DB_NAME", "test_db")
