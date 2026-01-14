@@ -134,6 +134,7 @@ jobs:
           # These are used for the Prefect deployment only, where Prefect is always
           # deployed to production.
           AWS_ENV: ${{ matrix.environment }}
+          PULUMI_ACCESS_TOKEN: ${{ secrets.PULUMI_ACCESS_TOKEN }}
           AWS_REGION: eu-west-1
           DOCKER_REGISTRY: ${{ secrets.DOCKER_REGISTRY }}
           PREFECT_API_KEY: ${{ secrets.PREFECT_API_KEY }}
