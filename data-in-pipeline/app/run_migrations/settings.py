@@ -14,9 +14,11 @@ from typing import Any
 from pydantic import BaseModel
 from pydantic_settings import BaseSettings
 
+
 class MasterDbCredentials(BaseModel):
     username: str
     password: str
+
 
 class Settings(BaseSettings):
     """Application settings loaded from environment variables.
