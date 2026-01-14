@@ -37,13 +37,9 @@ def get_load_db_credentials() -> LoadDBCredentials:
     :raises ValueError: If required credentials cannot be retrieved or
         are invalid.
     """
-    load_database_url = get_ssm_parameter(
-        settings.aurora_writer_endpoint, with_decryption=True
-    )
-    password = settings.managed_db_password
-    if "password" not in password:
-        raise ValueError("No password found in 'managed_db_password'")
-    password = password["password"]
+    load_database_url = settings.aurora_writer_endpoint
+    master_creds = settings.managed_db_password
+    password = master_creds.password
 
     return LoadDBCredentials(
         username=settings.db_master_username,

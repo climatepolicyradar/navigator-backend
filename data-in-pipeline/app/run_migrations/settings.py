@@ -11,8 +11,12 @@ raise a ValidationError.
 
 from typing import Any
 
+from pydantic import BaseModel
 from pydantic_settings import BaseSettings
 
+class MasterDbCredentials(BaseModel):
+    username: str
+    password: str
 
 class Settings(BaseSettings):
     """Application settings loaded from environment variables.
@@ -23,7 +27,7 @@ class Settings(BaseSettings):
 
     # DB connection parameters
     db_master_username: str
-    managed_db_password: dict[str, str]
+    managed_db_password: MasterDbCredentials
     aurora_writer_endpoint: str
     db_port: str
     db_name: str
