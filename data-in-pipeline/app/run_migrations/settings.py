@@ -1,7 +1,6 @@
 import logging
 import sys
 
-from pydantic import SecretStr
 from pydantic_settings import BaseSettings
 
 # Configure logging before anything else - this module is imported early
@@ -23,8 +22,8 @@ class Settings(BaseSettings):
 
     # DB connection parameters
     db_master_username: str
-    managed_db_password: SecretStr
-    aurora_writer_endpoint: SecretStr
+    managed_db_password: str
+    aurora_writer_endpoint: str
     db_port: str
     db_name: str
 
@@ -40,7 +39,7 @@ class Settings(BaseSettings):
 
 
 # Pydantic settings are set from the env variables passed in via
-# docker / apprunner. Missing required fields will raise a
+# docker / ECS task definition. Missing required fields will raise a
 # ValidationError on import.
 # pyright: reportCallIssue=false
 # Pyright doesn't recognize that BaseSettings loads from environment variables, so it
