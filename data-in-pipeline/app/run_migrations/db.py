@@ -14,7 +14,7 @@ from sqlalchemy import create_engine, text
 from sqlalchemy.engine import Engine
 from sqlalchemy.orm import Session, sessionmaker
 
-from app.run_migrations.aws import get_secret, get_ssm_parameter
+from app.run_migrations.aws import get_ssm_parameter
 from app.run_migrations.settings import settings
 
 _LOGGER = logging.getLogger(__name__)
@@ -40,20 +40,10 @@ def get_load_db_credentials() -> LoadDBCredentials:
     load_database_url = get_ssm_parameter(
         settings.aurora_writer_endpoint, with_decryption=True
     )
-    secret_value = get_secret(settings.managed_db_password, parse_json=True)
-
-    if isinstance(secret_value, dict):
-        password = secret_value.get("password")
-        if password is None:
-            raise ValueError(
-                "🔒 Password not found in secret dict. Expected key 'password'."
-            )
-        if not isinstance(password, str):
-            raise ValueError(f"🔒 Password must be a string, got {type(password)}")
-    elif isinstance(secret_value, str):
-        password = secret_value
-    else:
-        raise ValueError(f"🔒 Unexpected secret type: {type(secret_value)}")
+    password = settings.managed_db_password
+    if "password" not in password:
+        raise ValueError("No password found in 'managed_db_password'")
+    password = password["password"]
 
     return LoadDBCredentials(
         username=settings.db_master_username,
