@@ -14,7 +14,7 @@ from sqlalchemy import create_engine, text
 from sqlalchemy.engine import Engine
 from sqlalchemy.orm import Session, sessionmaker
 
-from app.run_migrations.aws import get_secret
+from app.run_migrations.settings import settings
 
 _LOGGER = logging.getLogger(__name__)
 
@@ -30,13 +30,21 @@ class LoadDBCredentials(BaseModel):
 
 def get_load_db_credentials():
     """Get the load database credentials from the AWS Secrets Manager."""
+    print(settings)
+    print(settings.db_port)
+    print(settings.aurora_writer_endpoint)
+    print(settings.managed_db_password)
+    print(settings.managed_db_password.get_secret_value())
+
+    password = settings.managed_db_password.get_secret_value()
+
     return LoadDBCredentials(
-        username=get_secret("load-db-password", parse_json=True).get("username"),
-        password=get_secret("load-db-password", parse_json=True).get("password"),
-        url="cluster-write",
-        port="5432",
-        db_name="data-in-pipeline-load-api",
-        sslmode="require",
+        username=settings.db_master_username,
+        password=password,
+        url=settings.aurora_writer_endpoint,
+        port=settings.db_port,
+        db_name=settings.db_name,
+        sslmode=settings.db_sslmode,
     )
 
 
@@ -108,8 +116,7 @@ def get_db_context() -> Generator[Session, None, None]:
 
 
 def run_migrations():
-    print("Inside run_migrations function")
-    # # For now we just want to connect to the database and check that we have access.
-    # with get_db_context() as db:
-    #     is_connected = db.execute(text("SELECT 1")) is not None
-    #     print(is_connected)
+    # For now we just want to connect to the database and check that we have access.
+    with get_db_context() as db:
+        is_connected = db.execute(text("SELECT 1")) is not None
+        print(is_connected)
