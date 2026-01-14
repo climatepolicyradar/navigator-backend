@@ -85,6 +85,22 @@ jobs:
       - uses: extractions/setup-just@v3
       - run: just test ${{ matrix.service }}
 
+  # As test runs on a conditional service matrix we can not require `test ({service})`
+  # tests pass in the GitHub branch rules as they may or may not run.
+  #
+  # This acts as an accumulator of the `test` job results above.
+  tests:
+    needs: test
+    if: always()
+    runs-on: ubuntu-latest
+    steps:
+      # possible values
+      # @see: https://docs.github.com/en/actions/reference/workflows-and-actions/contexts#jobs-context
+      - run: |
+          if [[ "${{ needs.test.result }}" == "failure" || "${{ needs.test.result }}" == "cancelled" ]]; then
+            exit 1
+          fi
+
   deploy:
     needs: [changes, test]
     # a.
