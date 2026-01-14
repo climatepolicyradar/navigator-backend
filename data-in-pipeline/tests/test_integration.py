@@ -32,11 +32,12 @@ def test_process_document_updates_flow_with_invalid_id(mock_upload):
     assert process_document_updates(["CCLW.INVALID_ID"]) == []
 
 
+@patch("app.load.load.get_ssm_parameter", return_value="")
 @patch("app.navigator_family_etl_pipeline.upload_to_s3")
 @patch("app.navigator_family_etl_pipeline.NavigatorConnector")
 @patch("app.load.load.requests.post")
 def test_process_family_updates_flow_multiple_families(
-    mock_post, mock_connector_class, mock_upload
+    mock_post, mock_connector_class, mock_upload, mock_ssm
 ):
     """Test ETL pipeline with multiple families across pages."""
     mock_upload.return_value = None

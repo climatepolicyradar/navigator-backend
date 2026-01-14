@@ -1,9 +1,8 @@
-import os
-
 import requests
 from pydantic import TypeAdapter
 
 from app.models import Document
+from app.util import get_ssm_parameter
 
 
 def load_to_db(documents: list[Document]) -> list[str] | Exception:
@@ -14,8 +13,9 @@ def load_to_db(documents: list[Document]) -> list[str] | Exception:
     """
 
     try:
+        load_api_url = get_ssm_parameter("/data-in-pipeline-load-api/url")
         response = requests.post(
-            url=os.getenv("LOAD_API_URL", ""),
+            url=load_api_url,
             data=TypeAdapter(list[Document]).dump_json(documents),
             timeout=10,
         )

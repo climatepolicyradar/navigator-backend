@@ -33,7 +33,7 @@ services:
     working_dir: /app
     environment:
       db_master_username: data-in-pipeline-load-api
-      managed_db_password: data-in-pipeline-load-api
+      managed_db_password: '{"password": "data-in-pipeline-load-api", "username": "data-in-pipeline-load-api"}'
       load_database_url: db
       db_port: 5432
       db_name: data-in-pipeline-load-api
