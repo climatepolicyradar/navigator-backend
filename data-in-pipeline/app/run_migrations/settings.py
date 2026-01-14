@@ -9,8 +9,6 @@ on instantiation and if it isn't present or is the wrong type, will
 raise a ValidationError.
 """
 
-from typing import Any
-
 from pydantic_settings import BaseSettings
 
 
@@ -39,48 +37,7 @@ class Settings(BaseSettings):
     db_sslmode: str = "require"
 
 
-_settings_instance: Settings | None = None
-
-
-def get_settings() -> Settings:
-    """Get the settings instance, creating it on first access.
-
-    Lazy instantiation allows the module to be imported without
-    requiring environment variables to be set (e.g., during deployment
-    scripts). Settings are only validated when actually accessed at
-    runtime.
-
-    :return: The settings instance.
-    :rtype: Settings
-    """
-    global _settings_instance
-    if _settings_instance is None:
-        # Pyright doesn't recognize that BaseSettings loads from
-        # environment variables, so it flags required fields as missing
-        # constructor arguments. This is a false positive.
-        # @see: https://github.com/pydantic/pydantic/issues/3753
-        _settings_instance = Settings()  # pyright: ignore[reportCallIssue]
-    return _settings_instance
-
-
-class _SettingsProxy:
-    """Proxy object that lazily accesses settings.
-
-    This is used to allow the settings module to be imported without
-    requiring environment variables to be set (e.g., during deployment
-    scripts). Settings are only validated when actually accessed at
-    runtime.
-    """
-
-    def __getattr__(self, name: str) -> Any:
-        """Delegate attribute access to the settings instance.
-
-        :param name: Name of the attribute to access.
-        :type name: str
-        :return: The attribute value from the settings instance.
-        :rtype: Any
-        """
-        return getattr(get_settings(), name)
-
-
-settings = _SettingsProxy()
+# pyright: reportCallIssue=false
+# Pyright doesn't recognize that BaseSettings loads from environment variables, so it
+# flags required fields as missing constructor arguments. This is a false positive.
+settings = Settings()
