@@ -26,7 +26,7 @@ def _get_pulumi_stack_outputs(aws_env: str) -> dict[str, Any]:
     :return: Dictionary containing 'env_vars' and 'secrets_arns' keys.
     :rtype: dict[str, Any]
         Could be any type of value, but currently we only use strings
-        and booleans.
+        and booleans. All secrets are stored in Secrets Manager.
     """
     logger = get_logger()
     infra_dir = Path(__file__).parent.parent / "infra"
@@ -58,26 +58,15 @@ def _get_pulumi_stack_outputs(aws_env: str) -> dict[str, Any]:
         else:
             secrets_arns = {}
 
-        ssm_secrets_output = outputs.get("prefect_ssm_secrets")
-        if ssm_secrets_output and hasattr(ssm_secrets_output, "value"):
-            ssm_secrets = (
-                ssm_secrets_output.value
-                if isinstance(ssm_secrets_output.value, dict)
-                else {}
-            )
-        else:
-            ssm_secrets = {}
-
         logger.info(
             "Retrieved %s environment variables and %s secrets from Pulumi stack.",
             len(env_vars),
-            len(secrets_arns) + len(ssm_secrets),
+            len(secrets_arns),
         )
 
         return {
             "env_vars": env_vars,
             "secrets_arns": secrets_arns,
-            "ssm_secrets": ssm_secrets,
         }
     except Exception as e:
         logger.warning(
@@ -87,7 +76,6 @@ def _get_pulumi_stack_outputs(aws_env: str) -> dict[str, Any]:
         return {
             "env_vars": {},
             "secrets_arns": {},
-            "ssm_secrets": {},
         }
 
 
@@ -142,7 +130,6 @@ def _merge_job_environments(
     base_job_variables: dict[str, Any],
     runtime_environment: dict[str, Any],
     secrets_arns: dict[str, str],
-    ssm_secrets: dict[str, str],
 ) -> dict[str, Any]:
     """Merge runtime environment variables and secrets into job configuration.
 
@@ -159,8 +146,6 @@ def _merge_job_environments(
     :type runtime_environment: dict[str, Any]
     :param secrets_arns: Mapping of environment variable names to Secrets Manager ARNs.
     :type secrets_arns: dict[str, str]
-    :param ssm_secrets: Mapping of environment variable names to SSM Parameter ARNs.
-    :type ssm_secrets: dict[str, str]
     :return: Job variables with the ``env`` and container secrets configured.
     :rtype: dict[str, Any]
     """
@@ -179,11 +164,6 @@ def _merge_job_environments(
     for env_var_name, secret_arn in secrets_arns.items():
         secrets_list.append({"name": env_var_name, "valueFrom": secret_arn})
 
-    # SSM Parameter Store secrets (for SecureString parameters)
-    for env_var_name, ssm_arn in ssm_secrets.items():
-        # SSM ARN format: arn:aws:ssm:region:account:parameter/name
-        secrets_list.append({"name": env_var_name, "valueFrom": ssm_arn})
-
     if secrets_list:
         # Prefect's ECS worker uses task_definition_override to merge custom
         # container definitions. We need to provide the container definitions
@@ -201,7 +181,7 @@ def _merge_job_environments(
         # Prefect will merge this with its own container definition.
         #
         # At runtime, ECS will:
-        # 1. Use the task execution role to fetch secrets from Secrets Manager/SSM
+        # 1. Use the task execution role to fetch secrets from Secrets Manager
         # 2. Inject them as environment variables into the container
         # 3. Our Prefect flows/tasks can access them via os.getenv("SECRET_NAME")
         if "task_definition_override" not in merged:
@@ -276,7 +256,6 @@ def create_deployment(flow: Flow) -> None:
         aws_env, pulumi_outputs.get("env_vars")
     )
     secrets_arns = pulumi_outputs.get("secrets_arns", {})
-    ssm_secrets = pulumi_outputs.get("ssm_secrets", {})
 
     logger.info(
         "Creating deployment for flow `%s` in Prefect's production workspace with "
@@ -297,7 +276,6 @@ def create_deployment(flow: Flow) -> None:
         {**DEFAULT_FLOW_VARIABLES, **default_job_variables},
         runtime_environment,
         secrets_arns,
-        ssm_secrets,
     )
     logger.info("Job variables: %s", job_variables)
 

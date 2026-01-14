@@ -241,10 +241,10 @@ data_in_pipeline_load_api_cluster_password_secret = (
 #######################################################################
 # Create the IAM role for the Data In Pipeline.
 #######################################################################
-
+prefect_role_dip_name = "prefect-data-in-pipeline-load-aurora-role"
 data_in_pipeline_role = aws.iam.Role(
-    "prefect-data-in-pipeline-load-aurora-role",
-    name="prefect-data-in-pipeline-load-aurora-role",
+    prefect_role_dip_name,
+    name=prefect_role_dip_name,
     description="IAM role for Data In Pipeline Aurora",
     assume_role_policy=aws.iam.get_policy_document(
         statements=[
@@ -530,6 +530,14 @@ data_in_pipeline_load_api_apprunner_service = aws.apprunner.Service(
     opts=pulumi.ResourceOptions(protect=True),
 )
 
+data_in_pipeline_load_api_url = aws.ssm.Parameter(
+    "data-in-pipeline-load-api-url",
+    name="/data-in-pipeline-load-api/url",
+    description="URL of the load API service",
+    type=aws.ssm.ParameterType.STRING,
+    value=data_in_pipeline_load_api_apprunner_service.service_url,
+)
+
 pulumi.export(
     "data-in-pipeline-load-api-apprunner_service_url",
     data_in_pipeline_load_api_apprunner_service.service_url,
@@ -537,6 +545,12 @@ pulumi.export(
 
 #######################################################################
 # Create environment variables and secrets for Prefect flows/tasks.
+
+# For SSM Parameter Store: Regular parameters don't support
+# resource-based policies like Secrets Manager does.
+# You cannot have cross account permissions on SSM parameters. So if you
+# want to provision a secret ARN to Prefect, it needs to be in the
+# secrets manager, not the parameter store.
 #######################################################################
 
 # Export environment variables (plain values)
@@ -562,34 +576,94 @@ pulumi.export(
     },
 )
 
-# Export secrets (ARNs) - these can be linked to Secrets Manager secrets
-prefect_secrets_arns_output = pulumi.Output.from_input(
-    {
-        "MANAGED_DB_PASSWORD": data_in_pipeline_load_api_cluster_password_secret.secret_arn,
-    }
+# Create Secrets Manager secret for Aurora writer endpoint (for Prefect flows)
+data_in_pipeline_aurora_writer_endpoint = aws.secretsmanager.Secret(
+    "data-in-pipeline-aurora-writer-endpoint",
+    name="data-in-pipeline-aurora-writer-endpoint",
+    description="Aurora cluster writer endpoint for Prefect flows",
 )
+
+# Set the secret value
+aws.secretsmanager.SecretVersion(
+    "data-in-pipeline-aurora-writer-endpoint-version",
+    secret_id=data_in_pipeline_aurora_writer_endpoint.id,
+    secret_string=aurora_cluster.endpoint,
+)
+
+# Define secrets that need to be exported and have cross-account access
+# Add new secrets here - they'll automatically be included in the output
+# and get cross-account policies (if in staging environment)
+prefect_secrets_config = {
+    "MANAGED_DB_PASSWORD": data_in_pipeline_load_api_cluster_password_secret.secret_arn,
+    "AURORA_WRITER_ENDPOINT": data_in_pipeline_aurora_writer_endpoint.arn,
+    # Add more secrets here as needed:
+    # "ANOTHER_SECRET": another_secret_arn,
+}
+
+# Export secrets (ARNs) - these can be linked to Secrets Manager secrets
+prefect_secrets_arns_output = pulumi.Output.from_input(prefect_secrets_config)
 pulumi.export("prefect_secrets_arns", prefect_secrets_arns_output)
 
-# Create SSM parameter for Aurora writer endpoint (for Prefect flows)
-data_in_pipeline_aurora_writer_endpoint = aws.ssm.Parameter(
-    "data-in-pipeline-aurora-writer-endpoint",
-    name="/data-in-pipeline/aurora-writer-endpoint",
-    description="Aurora cluster writer endpoint for Prefect flows",
-    type=aws.ssm.ParameterType.SECURE_STRING,
-    value=aurora_cluster.endpoint,
-    tags=tags,
-)
 
-# Export SSM Parameter ARNs for secrets that should be referenced via SSM
-# These are for SSM SecureString parameters that should be used as secrets
-prefect_ssm_secrets_output = pulumi.Output.from_input(
-    {
-        "AURORA_WRITER_ENDPOINT": data_in_pipeline_aurora_writer_endpoint.arn,
-    }
-)
-pulumi.export("prefect_ssm_secrets", prefect_ssm_secrets_output)
+def cross_account_perms_for_secrets(secret_arn: str) -> str:
+    """Create IAM policy document for cross-account secret access.
 
-# Update IAM role to allow access to Prefect SSM parameters and secrets
+    Helper function to create policy document
+
+    :param secret_arn: ARN of the secret.
+    :type secret_arn: str
+    :return: JSON policy document.
+    :rtype: str
+    """
+    return aws.iam.get_policy_document(
+        statements=[
+            aws.iam.GetPolicyDocumentStatementArgs(
+                sid="AllowCrossAccountAccess",
+                effect="Allow",
+                principals=[
+                    aws.iam.GetPolicyDocumentStatementPrincipalArgs(
+                        type="AWS",
+                        identifiers=[prod_role_arn],
+                    )
+                ],
+                actions=[
+                    "secretsmanager:GetSecretValue",
+                    "secretsmanager:DescribeSecret",
+                ],
+                resources=[secret_arn],
+            )
+        ]
+    ).json
+
+
+#######################################################################
+# Add cross-account permissions for Secrets Manager and SSM Parameter Store.
+# Allow production Prefect account to access staging secrets/parameters.
+#######################################################################
+if environment == "staging":
+    prod_aws_account_id = config.get("prod_aws_account_id")
+    if prod_aws_account_id:
+        # Construct the prod account's role ARN
+        # The role name is consistent across environments
+        prod_role_arn = (
+            f"arn:aws:iam::{prod_aws_account_id}:role/{prefect_role_dip_name}"
+        )
+
+        # Create SecretPolicy for each secret in prefect_secrets_config
+        # This allows the prod account's role to access the selected staging secrets
+        # This automatically creates cross-account policies for all secrets
+        # defined in prefect_secrets_config above
+        for env_var_name, secret_arn_output in prefect_secrets_config.items():
+            aws.secretsmanager.SecretPolicy(
+                f"data-in-pipeline-secret-{env_var_name.lower().replace('_', '-')}-cross-account-policy",
+                secret_arn=secret_arn_output,
+                policy=secret_arn_output.apply(
+                    lambda arn: cross_account_perms_for_secrets(arn)
+                ),
+            )
+
+
+# Update IAM role to allow access to Prefect secrets
 # Note: ECS tasks require the task execution role (not task role) to have permissions
 # to access secrets. Prefect ECS worker may use a separate execution role.
 # This policy is attached to the task role for application-level access.
@@ -597,10 +671,8 @@ pulumi.export("prefect_ssm_secrets", prefect_ssm_secrets_output)
 prefect_secrets_access_policy = aws.iam.RolePolicy(
     "data-in-pipeline-prefect-secrets-access-policy",
     role=data_in_pipeline_role.id,
-    policy=pulumi.Output.all(
-        prefect_secrets_arns_output, prefect_ssm_secrets_output
-    ).apply(
-        lambda args: aws.iam.get_policy_document(
+    policy=prefect_secrets_arns_output.apply(
+        lambda secrets: aws.iam.get_policy_document(
             statements=[
                 aws.iam.GetPolicyDocumentStatementArgs(
                     effect="Allow",
@@ -613,21 +685,15 @@ prefect_secrets_access_policy = aws.iam.RolePolicy(
                         f"arn:aws:ssm:eu-west-1:{account_id}:parameter/data-in-pipeline*",
                     ],
                 ),
+                aws.iam.GetPolicyDocumentStatementArgs(
+                    effect="Allow",
+                    actions=[
+                        "secretsmanager:GetSecretValue",
+                        "secretsmanager:DescribeSecret",
+                    ],
+                    resources=list(secrets.values()) if secrets else [],
+                ),
             ]
-            + (
-                [
-                    aws.iam.GetPolicyDocumentStatementArgs(
-                        effect="Allow",
-                        actions=[
-                            "secretsmanager:GetSecretValue",
-                            "secretsmanager:DescribeSecret",
-                        ],
-                        resources=list(args[0].values()),
-                    )
-                ]
-                if args[0] and len(args[0]) > 0
-                else []
-            )
         ).json
     ),
 )
