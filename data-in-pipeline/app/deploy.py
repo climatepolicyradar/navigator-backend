@@ -91,7 +91,7 @@ def _get_pulumi_stack_outputs(aws_env: str) -> dict[str, Any]:
 
 def _ensure_environment_variables(
     aws_env: str, pulumi_env_vars: dict[str, Any] | None = None
-) -> dict[str, Any]:
+) -> dict[str, str]:
     """Collect environment variables required by Prefect runtimes.
 
     Reads from Pulumi stack outputs first, then falls back to environment
@@ -102,7 +102,7 @@ def _ensure_environment_variables(
     :param pulumi_env_vars: Optional pre-fetched Pulumi environment variables.
     :type pulumi_env_vars: dict[str, Any] | None
     :return: Mapping of environment variables to forward to Prefect jobs.
-    :rtype: dict[str, Any]
+    :rtype: dict[str, str]
     """
     logger = get_logger()
 
@@ -116,7 +116,6 @@ def _ensure_environment_variables(
     FALLBACK_ENVIRONMENT_VARIABLES = {}
 
     # Merge with environment variables (env vars take precedence)
-    # Ensure pulumi_env_vars is a dict for unpacking
     if not isinstance(pulumi_env_vars, dict):
         raise TypeError(f"pulumi_env_vars must be a dict, got {type(pulumi_env_vars)}")
     resolved = {**FALLBACK_ENVIRONMENT_VARIABLES, **pulumi_env_vars}
@@ -181,7 +180,6 @@ def _merge_job_environments(
     # SSM Parameter Store secrets (for SecureString parameters)
     for env_var_name, ssm_arn in ssm_secrets.items():
         # SSM ARN format: arn:aws:ssm:region:account:parameter/name
-        # ECS expects: arn:aws:ssm:region:account:parameter/name
         secrets_list.append({"name": env_var_name, "valueFrom": ssm_arn})
 
     if secrets_list:
@@ -203,7 +201,7 @@ def _merge_job_environments(
         # At runtime, ECS will:
         # 1. Use the task execution role to fetch secrets from Secrets Manager/SSM
         # 2. Inject them as environment variables into the container
-        # 3. Your Prefect flows/tasks can access them via os.getenv("SECRET_NAME")
+        # 3. Our Prefect flows/tasks can access them via os.getenv("SECRET_NAME")
         if "task_definition_override" not in merged:
             merged["task_definition_override"] = {}
 
