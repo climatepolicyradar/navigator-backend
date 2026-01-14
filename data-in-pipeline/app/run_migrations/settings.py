@@ -1,16 +1,15 @@
-import logging
-import sys
+"""Check our environment variables have the minimum required values.
+
+This module is used to check that the environment variables are present
+and have the correct types.
+
+These environment variables are set by Docker & the ECS task definition
+for Prefect tasks. Any field defined here will be validated by pydantic
+on instantiation and if it isn't present or is the wrong type, will
+raise a ValidationError.
+"""
 
 from pydantic_settings import BaseSettings
-
-# Configure logging before anything else - this module is imported early
-logging.basicConfig(
-    level=logging.INFO,
-    format="%(asctime)s [%(levelname)s] %(name)s: %(message)s",
-    stream=sys.stdout,
-    force=True,  # Override any existing configuration
-)
-_LOGGER = logging.getLogger(__name__)
 
 
 class Settings(BaseSettings):
@@ -38,9 +37,6 @@ class Settings(BaseSettings):
     db_sslmode: str = "require"
 
 
-# Pydantic settings are set from the env variables passed in via
-# docker / ECS task definition. Missing required fields will raise a
-# ValidationError on import.
 # pyright: reportCallIssue=false
 # Pyright doesn't recognize that BaseSettings loads from environment variables, so it
 # flags required fields as missing constructor arguments. This is a false positive.

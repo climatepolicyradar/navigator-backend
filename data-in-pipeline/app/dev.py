@@ -1,4 +1,4 @@
-import app.bootstrap_telemetry  # noqa: F401 - Initialize telemetry first
+import app.bootstrap_telemetry  # noqa: F401 - Initialise telemetry first
 from app.navigator_document_etl_pipeline import process_document_updates
 
 if __name__ == "__main__":

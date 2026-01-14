@@ -67,7 +67,11 @@ def get_load_db_credentials() -> LoadDBCredentials:
 
 def create_database_uri(credentials: LoadDBCredentials) -> str:
     """Create the database URI for the load database."""
-    return f"postgresql://{credentials.username}:{credentials.password}@{credentials.url}:{credentials.port}/{credentials.db_name}?sslmode={credentials.sslmode}"
+    return (
+        f"postgresql://{credentials.username}:{credentials.password}@"
+        f"{credentials.url}:{credentials.port}/{credentials.db_name}?"
+        f"sslmode={credentials.sslmode}"
+    )
 
 
 def connect_to_db():
@@ -80,7 +84,7 @@ def connect_to_db():
     SQLALCHEMY_DATABASE_URI = create_database_uri(credentials)
 
     _LOGGER.info(
-        f"🔌 Initialising database engine for "
+        f"Initialising database engine for "
         f"{credentials.url}:{credentials.port}/{credentials.db_name}"
     )
 

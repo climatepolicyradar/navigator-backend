@@ -87,7 +87,7 @@ class HTTPConnector:
         self.session = self._init_session()
 
     def _init_session(self) -> requests.Session:
-        """Initialize a requests session with retry and pooling configuration."""
+        """Initialise a requests session with retry and pooling configuration."""
         session = requests.Session()
 
         retry_strategy = Retry(

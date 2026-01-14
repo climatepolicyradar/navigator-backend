@@ -93,7 +93,7 @@ def get_secret(secret_name: str, parse_json: bool = False) -> str | dict:
                 return parsed
             except json.JSONDecodeError as e:
                 _LOGGER.exception(
-                    f"❌ Failed to parse secret '{secret_name}' as JSON: {e}"
+                    f"Failed to parse secret '{secret_name}' as JSON: {e}"
                 )
                 raise ValueError(f"Secret '{secret_name}' is not valid JSON") from e
 
@@ -101,7 +101,7 @@ def get_secret(secret_name: str, parse_json: bool = False) -> str | dict:
 
     except ClientError as e:
         error_code = e.response.get("Error", {}).get("Code", "Unknown")
-        _LOGGER.exception(f"❌ Failed to retrieve secret '{secret_name}': {error_code}")
+        _LOGGER.exception(f"Failed to retrieve secret '{secret_name}': {error_code}")
         raise ValueError(
             f"Failed to retrieve secret '{secret_name}': {error_code}"
         ) from e

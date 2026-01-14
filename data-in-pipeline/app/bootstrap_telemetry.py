@@ -52,10 +52,10 @@ _SERVICE_VERSION = os.getenv("SERVICE_VERSION", "0.0.0")
 _manifest = ServiceManifest.from_file(_SERVICE_MANIFEST_PATH)
 _config = TelemetryConfig.from_service_manifest(_manifest, _ENV, _SERVICE_VERSION)
 
-# Initialize telemetry
+# Initialise telemetry
 telemetry = PrefectTelemetry(config=_config)
 
-# Initialize metrics
+# Initialise metrics
 metrics_service = MetricsService(config=_config)
 
 pipeline_metrics = PipelineMetrics(metrics_service=metrics_service)
