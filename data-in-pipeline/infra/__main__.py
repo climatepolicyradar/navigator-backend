@@ -473,8 +473,8 @@ allow_data_in_pipeline_load_api_to_aurora = aws.ec2.SecurityGroupRule(
     security_group_id=aurora_security_group.id,
     source_security_group_id=data_in_pipeline_load_api_vpc_sg.id,
     protocol="tcp",
-    from_port=5432,
-    to_port=5432,
+    from_port=db_port,
+    to_port=db_port,
     description="Allow Postgres from load API VPC SG",
 )
 
@@ -518,7 +518,7 @@ data_in_pipeline_load_api_apprunner_service = aws.apprunner.Service(
                 },
                 runtime_environment_variables={
                     "DB_MASTER_USERNAME": config.require("aurora_master_username"),
-                    "DB_PORT": "5432",
+                    "DB_PORT": str(db_port),
                     "DB_NAME": config.require("db_name"),
                     "AWS_REGION": "eu-west-1",
                 },
@@ -545,6 +545,9 @@ pulumi.export(
     "prefect_runtime_environment_variables",
     {
         "API_BASE_URL": config.require("api_base_url"),
+        "DB_PORT": str(db_port),
+        "DB_MASTER_USERNAME": config.require("aurora_master_username"),
+        "DB_NAME": config.require("db_name"),
         "DISABLE_OTEL_LOGGING": config.require("disable_otel_logging"),
         "OTEL_EXPORTER_OTLP_PROTOCOL": "http/protobuf",
         "OTEL_EXPORTER_OTLP_ENDPOINT": prefect_otel_endpoint,
