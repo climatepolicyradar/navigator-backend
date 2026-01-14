@@ -14,7 +14,6 @@ from sqlalchemy import create_engine, text
 from sqlalchemy.engine import Engine
 from sqlalchemy.orm import Session, sessionmaker
 
-from app.run_migrations.aws import get_ssm_parameter
 from app.run_migrations.settings import settings
 
 _LOGGER = logging.getLogger(__name__)
