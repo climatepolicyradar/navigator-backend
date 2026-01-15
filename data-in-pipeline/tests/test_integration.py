@@ -70,6 +70,7 @@ def test_process_family_updates_flow_multiple_families(
             ],
             events=[],
             collections=[],
+            geographies=[],
         )
     ]
 
@@ -92,6 +93,7 @@ def test_process_family_updates_flow_multiple_families(
             ],
             events=[],
             collections=[],
+            geographies=[],
         )
     ]
 
@@ -201,6 +203,7 @@ def test_etl_pipeline_load_failure(mock_post, mock_connector_class, mock_upload)
             ],
             events=[],
             collections=[],
+            geographies=[],
         )
     ]
 
