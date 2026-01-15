@@ -10,10 +10,11 @@ from collections.abc import Generator
 from contextlib import contextmanager
 
 from pydantic import BaseModel
-from settings import settings
 from sqlalchemy import create_engine
 from sqlalchemy.engine import Engine
 from sqlalchemy.orm import Session, sessionmaker
+
+from app.settings import settings
 
 _LOGGER = logging.getLogger(__name__)
 

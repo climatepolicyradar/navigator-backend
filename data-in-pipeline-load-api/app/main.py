@@ -31,7 +31,7 @@ try:
         ServiceManifest.from_file(f"{root_dir}/service-manifest.json"), ENV, "0.1.0"
     )
 except Exception as _:
-    _LOGGER.error("Failed to load service manifest, using defaults")
+    _LOGGER.exception("Failed to load service manifest, using defaults")
     otel_config = TelemetryConfig(
         service_name="data-in-pipeline-load-api",
         namespace_name="data-fetching",
