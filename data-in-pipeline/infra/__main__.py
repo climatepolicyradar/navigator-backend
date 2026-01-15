@@ -229,6 +229,9 @@ pulumi.export(f"{name}-{environment}-aurora-endpoint", aurora_cluster.endpoint)
 pulumi.export(
     f"{name}-{environment}-aurora-reader-endpoint", aurora_cluster.reader_endpoint
 )
+pulumi.export(
+    f"{name}-{environment}-aurora-security-group-id", aurora_security_group.id
+)
 
 # Get the ARN of the secret holding the master password
 # When manage_master_user_password=True, master_user_secrets contains exactly one secret
@@ -483,6 +486,26 @@ allow_data_in_pipeline_load_api_to_aurora = aws.ec2.SecurityGroupRule(
     from_port=db_port,
     to_port=db_port,
     description="Allow Postgres from load API VPC SG",
+)
+
+# Allow Prefect ECS tasks to reach Aurora
+# Get Prefect security group ID from orchestrator repo `prefect_mvp` project
+orchestrator_stack = pulumi.StackReference(
+    f"climatepolicyradar/prefect_mvp/{environment}"
+)
+# The orchestrator should export the security group ID
+# Common export names to try (update based on actual export name)
+prefect_security_group_id = orchestrator_stack.get_output("prefect_security_group_id")
+
+allow_prefect_ecs_to_aurora = aws.ec2.SecurityGroupRule(
+    "allow-prefect-ecs-to-aurora",
+    type="ingress",
+    security_group_id=aurora_security_group.id,
+    source_security_group_id=prefect_security_group_id,
+    protocol="tcp",
+    from_port=db_port,
+    to_port=db_port,
+    description="Allow Postgres from Prefect ECS tasks",
 )
 
 
