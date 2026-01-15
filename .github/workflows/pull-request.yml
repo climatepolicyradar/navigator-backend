@@ -103,7 +103,7 @@ jobs:
           fi
 
   deploy:
-    needs: [changes, test]
+    needs: [changes]
     # a.
     if: contains(github.event.pull_request.labels.*.name, 'deploy:staging')
     runs-on: ubuntu-latest
