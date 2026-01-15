@@ -107,7 +107,7 @@ aurora_security_group = aws.ec2.SecurityGroup(
     name=f"{name}-aurora-sg",
     vpc_id=vpc_id,
     description=f"Security group for {name} Aurora DB",
-    # ingress rules are conrtolled via security groups below
+    # ingress rules are controlled via security groups below
     egress=[
         aws.ec2.SecurityGroupEgressArgs(
             from_port=0,
@@ -489,6 +489,8 @@ vpc_endpoint_sg = aws.ec2.SecurityGroup(
 )
 
 # VPC endpoint for App Runner (PrivateLink) - enables private access to App Runner service
+# Note: App Runner's VPC endpoint service does not support private DNS, so we disable it
+# The VPC Ingress Connection will still provide a domain name for accessing the service
 vpc_endpoint = aws.ec2.VpcEndpoint(
     "data-in-pipeline-load-api-vpc-endpoint",
     vpc_id=vpc_id,
@@ -496,7 +498,7 @@ vpc_endpoint = aws.ec2.VpcEndpoint(
     vpc_endpoint_type="Interface",
     subnet_ids=private_subnets,
     security_group_ids=[vpc_endpoint_sg.id],
-    private_dns_enabled=True,
+    private_dns_enabled=False,  # App Runner service doesn't support private DNS
     tags=tags,
 )
 
