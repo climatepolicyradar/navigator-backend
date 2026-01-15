@@ -24,6 +24,7 @@ dependencies = [
   "opentelemetry-api>=1.38.0",
   "testcontainers[postgres]>=4.14.0",
   "sqlmodel>=0.0.31",
+  "pycountry>=24.6.1",
 ]
 
 [tool.uv.sources]
