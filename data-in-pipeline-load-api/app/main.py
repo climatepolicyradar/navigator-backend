@@ -5,8 +5,9 @@ from pathlib import Path
 
 from api import FastAPITelemetry, ServiceManifest, SQLAlchemyTelemetry, TelemetryConfig
 from fastapi import FastAPI
-from routers import router
-from session import get_engine
+
+from app.routers import router
+from app.session import get_engine
 
 # Configure logging before anything else
 logging.basicConfig(
