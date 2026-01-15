@@ -219,7 +219,7 @@ def etl_pipeline(ids: list[str] | None = None) -> list[str] | Exception:
         _LOGGER.error(f"Load failed: {loaded}")
         pipeline_metrics.record_error(Operation.LOAD, ErrorType.STORAGE)
         pipeline_metrics.record_processed(PipelineType.FAMILY, Status.FAILURE)
-        return Exception(f"Transformation failed {loaded}")
+        return Exception(f"Load failed: {loaded}")
 
     pipeline_metrics.record_processed(PipelineType.FAMILY, Status.SUCCESS)
     return loaded
