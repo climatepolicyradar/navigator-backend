@@ -561,7 +561,7 @@ pulumi.export(
     {
         "API_BASE_URL": config.require("api_base_url"),
         "DB_PORT": str(db_port),
-        "MASTER_DB_PASSWORD": aurora_cluster.master_password,
+        "MANAGED_DB_PASSWORD": aurora_cluster.master_password,
         "AURORA_WRITER_ENDPOINT": aurora_cluster.endpoint,
         "DB_MASTER_USERNAME": config.require("aurora_master_username"),
         "DB_NAME": config.require("db_name"),
