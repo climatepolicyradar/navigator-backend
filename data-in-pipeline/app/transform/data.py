@@ -1,4 +1,4 @@
-from app.models import (
+from data_in_models.models import (
     Document,
     DocumentDocumentRelationship,
     DocumentLabelRelationship,

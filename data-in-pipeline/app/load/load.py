@@ -1,7 +1,7 @@
 import requests
+from data_in_models.models import Document
 from pydantic import TypeAdapter
 
-from app.models import Document
 from app.util import get_ssm_parameter
 
 
