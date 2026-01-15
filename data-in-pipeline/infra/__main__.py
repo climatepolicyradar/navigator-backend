@@ -107,7 +107,7 @@ aurora_security_group = aws.ec2.SecurityGroup(
     name=f"{name}-aurora-sg",
     vpc_id=vpc_id,
     description=f"Security group for {name} Aurora DB",
-    # ingress rules are conrtolled via security groups below
+    # ingress rules are controlled via security groups below
     egress=[
         aws.ec2.SecurityGroupEgressArgs(
             from_port=0,
@@ -452,6 +452,15 @@ data_in_pipeline_load_api_ecr_repository = aws.ecr.Repository(
 data_in_pipeline_load_api_vpc_sg = aws.ec2.SecurityGroup(
     "data-in-pipeline-load-api-vpc-sg",
     vpc_id=vpc_id,
+    ingress=[
+        aws.ec2.SecurityGroupIngressArgs(
+            protocol="tcp",
+            from_port=443,
+            to_port=443,
+            cidr_blocks=["10.0.0.0/16"],
+            description="Allow HTTPS from inside VPC",
+        )
+    ],
     egress=[
         aws.ec2.SecurityGroupEgressArgs(
             protocol="-1", from_port=0, to_port=0, cidr_blocks=["0.0.0.0/0"]
@@ -497,7 +506,7 @@ data_in_pipeline_load_api_apprunner_service = aws.apprunner.Service(
             vpc_connector_arn=vpc_connector.arn,
         ),
         ingress_configuration=aws.apprunner.ServiceNetworkConfigurationIngressConfigurationArgs(
-            is_publicly_accessible=True,  # set to False to enforce IAM auth
+            is_publicly_accessible=False,  # set to False to enforce IAM auth
         ),
         ip_address_type="IPV4",
     ),
@@ -529,6 +538,17 @@ data_in_pipeline_load_api_apprunner_service = aws.apprunner.Service(
     ),
     opts=pulumi.ResourceOptions(protect=True),
 )
+
+data_in_pipeline_load_api_apprunner_vpc_endpoint = aws.ec2.VpcEndpoint(
+    "data-in-pipeline-load-api-apprunner-private-endpoint",
+    vpc_id=vpc_id,
+    service_name="com.amazonaws.eu-west-1.apprunner.requests",
+    vpc_endpoint_type="Interface",
+    subnet_ids=private_subnets,
+    security_group_ids=[data_in_pipeline_load_api_vpc_sg.id],
+    private_dns_enabled=True,
+)
+
 
 data_in_pipeline_load_api_url = aws.ssm.Parameter(
     "data-in-pipeline-load-api-url",
