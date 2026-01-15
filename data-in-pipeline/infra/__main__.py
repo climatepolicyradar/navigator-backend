@@ -107,7 +107,7 @@ aurora_security_group = aws.ec2.SecurityGroup(
     name=f"{name}-aurora-sg",
     vpc_id=vpc_id,
     description=f"Security group for {name} Aurora DB",
-    # ingress rules are conrtolled via security groups below
+    # ingress rules are controlled via security groups below
     egress=[
         aws.ec2.SecurityGroupEgressArgs(
             from_port=0,
@@ -466,6 +466,42 @@ vpc_connector = aws.apprunner.VpcConnector(
     security_groups=[data_in_pipeline_load_api_vpc_sg.id],
 )
 
+# Security group for VPC endpoint (ingress) - allows traffic from Prefect ECS tasks
+vpc_endpoint_sg = aws.ec2.SecurityGroup(
+    "data-in-pipeline-load-api-vpc-endpoint-sg",
+    vpc_id=vpc_id,
+    description="Security group for App Runner VPC endpoint ingress",
+    ingress=[
+        aws.ec2.SecurityGroupIngressArgs(
+            from_port=443,
+            to_port=443,
+            protocol="tcp",
+            cidr_blocks=["10.0.0.0/8"],  # Allow from VPC CIDR - adjust if needed
+            description="Allow HTTPS from VPC",
+        )
+    ],
+    egress=[
+        aws.ec2.SecurityGroupEgressArgs(
+            protocol="-1", from_port=0, to_port=0, cidr_blocks=["0.0.0.0/0"]
+        )
+    ],
+    tags=tags,
+)
+
+# VPC endpoint for App Runner (PrivateLink) - enables private access to App Runner service
+# Note: App Runner's VPC endpoint service does not support private DNS, so we disable it
+# The VPC Ingress Connection will still provide a domain name for accessing the service
+vpc_endpoint = aws.ec2.VpcEndpoint(
+    "data-in-pipeline-load-api-vpc-endpoint",
+    vpc_id=vpc_id,
+    service_name="com.amazonaws.eu-west-1.apprunner.requests",
+    vpc_endpoint_type="Interface",
+    subnet_ids=private_subnets,
+    security_group_ids=[vpc_endpoint_sg.id],
+    private_dns_enabled=False,  # App Runner service doesn't support private DNS
+    tags=tags,
+)
+
 # Allow load API connector to reach Aurora
 allow_data_in_pipeline_load_api_to_aurora = aws.ec2.SecurityGroupRule(
     "allow-data-in-pipeline-load-api-to-aurora",
@@ -497,7 +533,10 @@ data_in_pipeline_load_api_apprunner_service = aws.apprunner.Service(
             vpc_connector_arn=vpc_connector.arn,
         ),
         ingress_configuration=aws.apprunner.ServiceNetworkConfigurationIngressConfigurationArgs(
-            is_publicly_accessible=True,  # set to False to enforce IAM auth
+            # Private endpoint - ingress only. Egress via VPC connector (above) is separate
+            # and will continue to allow Aurora connectivity via existing security group rules.
+            # If external access is needed, create a VPC Ingress Connection (PrivateLink).
+            is_publicly_accessible=False,
         ),
         ip_address_type="IPV4",
     ),
@@ -530,17 +569,32 @@ data_in_pipeline_load_api_apprunner_service = aws.apprunner.Service(
     opts=pulumi.ResourceOptions(protect=True),
 )
 
+# VPC Ingress Connection - links App Runner service to VPC endpoint for private access
+vpc_ingress_connection = aws.apprunner.VpcIngressConnection(
+    "data-in-pipeline-load-api-vpc-ingress-connection",
+    name=f"data-in-pipeline-load-api-vic-{environment}",
+    service_arn=data_in_pipeline_load_api_apprunner_service.arn,
+    ingress_vpc_configuration=aws.apprunner.VpcIngressConnectionIngressVpcConfigurationArgs(
+        vpc_id=vpc_id,
+        vpc_endpoint_id=vpc_endpoint.id,
+    ),
+    tags=tags,
+)
+
 data_in_pipeline_load_api_url = aws.ssm.Parameter(
     "data-in-pipeline-load-api-url",
     name="/data-in-pipeline-load-api/url",
-    description="URL of the load API service",
+    description="URL of the load API service (via VPC Ingress Connection)",
     type=aws.ssm.ParameterType.STRING,
-    value=data_in_pipeline_load_api_apprunner_service.service_url,
+    # Use VPC Ingress Connection domain name for private access
+    value=vpc_ingress_connection.domain_name.apply(lambda d: f"https://{d}"),
 )
 
+# Service URL is not available when is_publicly_accessible=False
+# Use VPC Ingress Connection domain instead (exported below)
 pulumi.export(
-    "data-in-pipeline-load-api-apprunner_service_url",
-    data_in_pipeline_load_api_apprunner_service.service_url,
+    "data-in-pipeline-load-api-vpc-ingress-connection-domain",
+    vpc_ingress_connection.domain_name,
 )
 
 #######################################################################
