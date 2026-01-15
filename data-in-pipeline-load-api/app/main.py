@@ -5,8 +5,9 @@ from pathlib import Path
 
 from api import FastAPITelemetry, ServiceManifest, SQLAlchemyTelemetry, TelemetryConfig
 from fastapi import FastAPI
-from routers import router
-from session import get_engine
+
+from app.routers import router
+from app.session import get_engine
 
 # Configure logging before anything else
 logging.basicConfig(
@@ -30,7 +31,7 @@ try:
         ServiceManifest.from_file(f"{root_dir}/service-manifest.json"), ENV, "0.1.0"
     )
 except Exception as _:
-    _LOGGER.error("Failed to load service manifest, using defaults")
+    _LOGGER.exception("Failed to load service manifest, using defaults")
     otel_config = TelemetryConfig(
         service_name="data-in-pipeline-load-api",
         namespace_name="data-fetching",

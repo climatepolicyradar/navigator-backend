@@ -29,6 +29,59 @@ data_in_pipeline_aws_ecr_repository = components_aws.ecr.Repository(
     ),
 )
 
+# Add cross account permissions so production Prefect account can pull the staging image
+# to create a staging deployment in the production account. We accept this security
+# tradeoff as we do not have a staging workspace in Prefect, so all deployments are
+# in the production workspace.
+if environment == "staging":
+    prod_aws_account_id = config.get("prod_aws_account_id")
+    data_in_pipeline_repo_policy = aws.iam.get_policy_document(
+        statements=[
+            aws.iam.GetPolicyDocumentStatementArgs(
+                sid="CrossAccountPermission",
+                effect="Allow",
+                actions=[
+                    "ecr:BatchGetImage",
+                    "ecr:GetDownloadUrlForLayer",
+                ],
+                principals=[
+                    aws.iam.GetPolicyDocumentStatementPrincipalArgs(
+                        type="AWS",
+                        identifiers=[f"arn:aws:iam::{prod_aws_account_id}:root"],
+                    )
+                ],
+            ),
+            aws.iam.GetPolicyDocumentStatementArgs(
+                effect="Allow",
+                actions=[
+                    "ecr:BatchGetImage",
+                    "ecr:GetDownloadUrlForLayer",
+                ],
+                principals=[
+                    aws.iam.GetPolicyDocumentStatementPrincipalArgs(
+                        type="Service",
+                        identifiers=["batch.amazonaws.com"],
+                    )
+                ],
+                conditions=[
+                    aws.iam.GetPolicyDocumentStatementConditionArgs(
+                        test="StringLike",
+                        variable="aws:sourceArn",
+                        values=[
+                            f"arn:aws:batch:eu-west-1:{prod_aws_account_id}:job/*",
+                        ],
+                    )
+                ],
+            ),
+        ],
+    )
+
+    # Attach the policy to the underlying aws.ecr.Repository
+    data_in_pipeline_aws_ecr_repository_policy = aws.ecr.RepositoryPolicy(
+        "data-in-pipeline-ecr-repository-policy",
+        repository=data_in_pipeline_aws_ecr_repository.aws_ecr_repository.name,
+        policy=data_in_pipeline_repo_policy.json,
+    )
 
 #######################################################################
 # Create the Aurora service.
@@ -477,7 +530,109 @@ data_in_pipeline_load_api_apprunner_service = aws.apprunner.Service(
     opts=pulumi.ResourceOptions(protect=True),
 )
 
+data_in_pipeline_load_api_url = aws.ssm.Parameter(
+    "data-in-pipeline-load-api-url",
+    name="/data-in-pipeline-load-api/url",
+    description="URL of the load API service",
+    type=aws.ssm.ParameterType.STRING,
+    value=data_in_pipeline_load_api_apprunner_service.service_url,
+)
+
 pulumi.export(
     "data-in-pipeline-load-api-apprunner_service_url",
     data_in_pipeline_load_api_apprunner_service.service_url,
+)
+
+#######################################################################
+# Create environment variables and secrets for Prefect flows/tasks.
+#######################################################################
+
+# Export environment variables (plain values)
+prefect_otel_endpoint = f"https://otel.{"prod" if environment == "production" else "staging"}.climatepolicyradar.org"
+pulumi.export(
+    "prefect_runtime_environment_variables",
+    {
+        "API_BASE_URL": config.require("api_base_url"),
+        "DISABLE_OTEL_LOGGING": config.require("disable_otel_logging"),
+        "OTEL_EXPORTER_OTLP_PROTOCOL": "http/protobuf",
+        "OTEL_EXPORTER_OTLP_ENDPOINT": prefect_otel_endpoint,
+        "OTEL_PYTHON_LOGGER_PROVIDER": "sdk",
+        "OTEL_PYTHON_LOG_CORRELATION": True,
+        "OTEL_PYTHON_LOG_LEVEL": config.require("otel_python_log_level"),
+        "OTEL_RESOURCE_ATTRIBUTES": f"deployment.environment={environment},service.namespace=data-fetching",
+        "OTEL_PYTHON_LOGGING_AUTO_INSTRUMENTATION_ENABLED": True,
+        "PREFECT_CLOUD_ENABLE_ORCHESTRATION_TELEMETRY": True,
+        "PREFECT_LOGGING_TO_API_ENABLED": True,
+        "PREFECT_LOGGING_EXTRA_LOGGERS": "app",
+    },
+)
+
+# Export secrets (ARNs) - these can be linked to Secrets Manager secrets
+prefect_secrets_arns_output = pulumi.Output.from_input(
+    {
+        "MANAGED_DB_PASSWORD": data_in_pipeline_load_api_cluster_password_secret.secret_arn,
+    }
+)
+pulumi.export("prefect_secrets_arns", prefect_secrets_arns_output)
+
+# Create SSM parameter for Aurora writer endpoint (for Prefect flows)
+data_in_pipeline_aurora_writer_endpoint = aws.ssm.Parameter(
+    "data-in-pipeline-aurora-writer-endpoint",
+    name="/data-in-pipeline/aurora-writer-endpoint",
+    description="Aurora cluster writer endpoint for Prefect flows",
+    type=aws.ssm.ParameterType.SECURE_STRING,
+    value=aurora_cluster.endpoint,
+    tags=tags,
+)
+
+# Export SSM Parameter ARNs for secrets that should be referenced via SSM
+# These are for SSM SecureString parameters that should be used as secrets
+prefect_ssm_secrets_output = pulumi.Output.from_input(
+    {
+        "AURORA_WRITER_ENDPOINT": data_in_pipeline_aurora_writer_endpoint.arn,
+    }
+)
+pulumi.export("prefect_ssm_secrets", prefect_ssm_secrets_output)
+
+# Update IAM role to allow access to Prefect SSM parameters and secrets
+# Note: ECS tasks require the task execution role (not task role) to have permissions
+# to access secrets. Prefect ECS worker may use a separate execution role.
+# This policy is attached to the task role for application-level access.
+# If Prefect uses a different execution role, ensure it has similar permissions.
+prefect_secrets_access_policy = aws.iam.RolePolicy(
+    "data-in-pipeline-prefect-secrets-access-policy",
+    role=data_in_pipeline_role.id,
+    policy=pulumi.Output.all(
+        prefect_secrets_arns_output, prefect_ssm_secrets_output
+    ).apply(
+        lambda args: aws.iam.get_policy_document(
+            statements=[
+                aws.iam.GetPolicyDocumentStatementArgs(
+                    effect="Allow",
+                    actions=[
+                        "ssm:GetParameter",
+                        "ssm:GetParameters",
+                        "ssm:DescribeParameters",
+                    ],
+                    resources=[
+                        f"arn:aws:ssm:eu-west-1:{account_id}:parameter/data-in-pipeline*",
+                    ],
+                ),
+            ]
+            + (
+                [
+                    aws.iam.GetPolicyDocumentStatementArgs(
+                        effect="Allow",
+                        actions=[
+                            "secretsmanager:GetSecretValue",
+                            "secretsmanager:DescribeSecret",
+                        ],
+                        resources=list(args[0].values()),
+                    )
+                ]
+                if args[0] and len(args[0]) > 0
+                else []
+            )
+        ).json
+    ),
 )
