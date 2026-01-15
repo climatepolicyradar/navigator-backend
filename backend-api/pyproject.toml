@@ -2,7 +2,7 @@
 name = "backend-api"
 version = "0.1.0"
 readme = "README.md"
-requires-python = ">=3.12,<3.13"
+requires-python = ">=3.13,<3.14"
 dependencies = [
   "Authlib>=1.6.0",
   "bcrypt>=4.3.0,<5.0.0",

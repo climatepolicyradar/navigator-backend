@@ -127,7 +127,7 @@ jobs:
       # we use python / uv in some build scripts and testing
       - uses: actions/setup-python@v6
         with:
-          python-version: "3.12"
+          python-version: "3.13"
 
       - uses: astral-sh/setup-uv@v7
       - run: uv sync --all-packages
