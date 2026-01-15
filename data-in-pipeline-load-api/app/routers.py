@@ -1,7 +1,9 @@
 from fastapi import APIRouter, Depends, HTTPException, status
-from repository import check_db_health
-from session import get_db
-from settings import settings
+
+from app.models import Document
+from app.repository import check_db_health
+from app.session import get_db
+from app.settings import settings
 
 # Create router with /load prefix
 router = APIRouter(prefix="/load")
@@ -26,6 +28,6 @@ def health_check(db=Depends(get_db)):
     return {"status": "ok", "version": settings.github_sha}
 
 
-@router.post("/")
-def create_document():
-    return "Received POST request to the /load endpoint"
+@router.post("/", response_model=list[str], status_code=status.HTTP_201_CREATED)
+def create_document(documents: list[Document]):
+    return [doc.id for doc in documents]
