@@ -2,6 +2,7 @@ from datetime import UTC, datetime
 from http import HTTPStatus
 from unittest.mock import MagicMock, patch
 
+from data_in_models.models import Document
 from requests.exceptions import HTTPError
 
 from app.extract.connectors import (
@@ -13,7 +14,7 @@ from app.extract.connectors import (
     NavigatorOrganisation,
     PageFetchFailure,
 )
-from app.models import Document, ExtractedEnvelope, ExtractedMetadata
+from app.models import ExtractedEnvelope, ExtractedMetadata
 from app.navigator_document_etl_pipeline import process_document_updates
 from app.navigator_family_etl_pipeline import etl_pipeline
 

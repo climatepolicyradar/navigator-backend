@@ -10,6 +10,7 @@ resolution-markers = [
 members = [
     "api",
     "concepts-api",
+    "data-in-models",
     "data-in-pipeline",
     "data-in-pipeline-load-api",
     "families-api",
@@ -447,6 +448,17 @@ wheels = [
 ]
 
 [[package]]
+name = "data-in-models"
+version = "0.1.0"
+source = { editable = "data-in-models" }
+dependencies = [
+    { name = "pydantic" },
+]
+
+[package.metadata]
+requires-dist = [{ name = "pydantic", specifier = ">=2.12.5" }]
+
+[[package]]
 name = "data-in-pipeline"
 version = "1.0.0"
 source = { virtual = "data-in-pipeline" }
@@ -455,6 +467,7 @@ dependencies = [
     { name = "boto3" },
     { name = "botocore" },
     { name = "components" },
+    { name = "data-in-models" },
     { name = "duckdb" },
     { name = "fastapi" },
     { name = "numpy" },
@@ -485,6 +498,7 @@ requires-dist = [
     { name = "boto3", specifier = ">=1.40.51" },
     { name = "botocore", specifier = ">=1.40.51" },
     { name = "components", git = "https://github.com/climatepolicyradar/infra?subdirectory=components&tag=v1.0.5" },
+    { name = "data-in-models", editable = "data-in-models" },
     { name = "duckdb", specifier = ">=1.4.1" },
     { name = "fastapi", specifier = ">=0.115.14" },
     { name = "numpy", specifier = ">=2.3.4" },

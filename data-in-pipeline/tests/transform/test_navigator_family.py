@@ -1,6 +1,14 @@
 import datetime
 
 import pytest
+from data_in_models.models import (
+    Document,
+    DocumentDocumentRelationship,
+    DocumentLabelRelationship,
+    DocumentWithoutRelationships,
+    Item,
+    Label,
+)
 from returns.result import Success
 
 from app.extract.connectors import (
@@ -12,15 +20,7 @@ from app.extract.connectors import (
     NavigatorFamily,
     NavigatorOrganisation,
 )
-from app.models import (
-    Document,
-    DocumentDocumentRelationship,
-    DocumentLabelRelationship,
-    DocumentWithoutRelationships,
-    Identified,
-    Item,
-    Label,
-)
+from app.models import Identified
 from app.transform.navigator_family import transform_navigator_family
 from tests.transform.assertions import assert_model_list_equality
 
