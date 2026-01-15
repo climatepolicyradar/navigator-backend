@@ -1,0 +1,12 @@
+[project]
+name = "data-in-models"
+version = "0.1.0"
+readme = "README.md"
+requires-python = ">=3.12,<3.14"
+
+dependencies = ["pydantic>=2.12.5"]
+
+# This is needed as we want to include this member as a package in another member of the workspace.
+[build-system]
+requires = ["hatchling"]
+build-backend = "hatchling.build"

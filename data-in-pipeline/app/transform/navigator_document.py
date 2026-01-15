@@ -1,7 +1,8 @@
+from data_in_models.models import Document
 from returns.result import Success
 
 from app.extract.connectors import NavigatorDocument
-from app.models import Document, Identified
+from app.models import Identified
 
 
 def transform_navigator_document(
