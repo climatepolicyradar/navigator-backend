@@ -2,14 +2,13 @@ name: CI for backend-api
 
 on:
   push:
-    tags: [v*]
     branches:
       - main
 
   pull_request:
     # By default, a workflow only runs when a pull_request event's activity type is opened,
     # synchronize, or reopened.
-    types: [opened, synchronize, reopened, edited]
+    types: [opened, synchronize, reopened]
     branches:
       - main
 
