@@ -22,6 +22,7 @@ from app.models import (
     Label,
 )
 from app.transform.navigator_family import transform_navigator_family
+from tests.transform.assertions import assert_model_list_equality
 
 
 @pytest.fixture
@@ -158,6 +159,7 @@ def navigator_family_with_single_matching_document() -> Identified[NavigatorFami
                     description="Collection description",
                 ),
             ],
+            geographies=["AU-NSW", "AUS", "XAA"],
         ),
     )
 
@@ -185,6 +187,7 @@ def navigator_family_with_no_matching_transformations() -> Identified[NavigatorF
             ],
             events=[],
             collections=[],
+            geographies=[],
         ),
     )
 
@@ -229,6 +232,7 @@ def navigator_family_with_litigation_corpus_type() -> Identified[NavigatorFamily
                 ),
             ],
             collections=[],
+            geographies=[],
         ),
     )
 
@@ -287,6 +291,7 @@ def navigator_family_multilateral_climate_fund_project() -> Identified[Navigator
                 ),
             ],
             collections=[],
+            geographies=[],
         ),
     )
 
@@ -446,6 +451,22 @@ def test_transform_navigator_family_with_single_matching_document(
                     title="Grantham Research Institute",
                 ),
             ),
+            DocumentLabelRelationship(
+                type="geography",
+                label=Label(
+                    type="agent",
+                    id="AU-NSW",
+                    title="New South Wales",
+                ),
+            ),
+            DocumentLabelRelationship(
+                type="geography",
+                label=Label(
+                    type="agent",
+                    id="AUS",
+                    title="Australia",
+                ),
+            ),
         ],
         relationships=[
             DocumentDocumentRelationship(
@@ -508,7 +529,8 @@ def test_transform_navigator_family_with_single_matching_document(
             ),
         ],
     )
-    assert result == Success(
+    assert_model_list_equality(
+        result.unwrap(),
         [
             expected_document_from_family,
             Document(
@@ -583,7 +605,7 @@ def test_transform_navigator_family_with_single_matching_document(
                     ),
                 ],
             ),
-        ]
+        ],
     )
 
 

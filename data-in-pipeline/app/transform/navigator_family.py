@@ -6,6 +6,7 @@ from app.extract.connectors import (
     NavigatorDocument,
     NavigatorFamily,
 )
+from app.geographies import geographies_lookup
 from app.models import (
     Document,
     DocumentDocumentRelationship,
@@ -35,8 +36,8 @@ mcf_reports_corpus_import_ids = [
 def transform_navigator_family(
     input: Identified[NavigatorFamily],
 ) -> Result[list[Document], NoMatchingTransformations]:
-    logger = get_logger()
 
+    logger = get_logger()
     with log_context(import_id=input.id):
         logger.info(f"Transforming family with {len(input.data.documents)} documents")
 
@@ -266,6 +267,7 @@ def _transform_family_corpus_organisation(
 
 
 def _transform_navigator_family(navigator_family: NavigatorFamily) -> Document:
+    logger = get_logger()
     labels: list[DocumentLabelRelationship] = []
     """
     All families are currently Principal.
@@ -400,6 +402,31 @@ def _transform_navigator_family(navigator_family: NavigatorFamily) -> Document:
     Provider labels
     """
     labels.extend(_transform_family_corpus_organisation(navigator_family))
+
+    """
+    Geography labels
+    """
+    if navigator_family.geographies:
+        geography_labels = []
+        for geograpy_id in navigator_family.geographies:
+            # We exclude No Geography (XAA)  as this was used as `geography` was previously required.
+            # An empty list is a clearer depiction of a document not having a geography.
+            if geograpy_id != "XAA":
+                geography = geographies_lookup.get(geograpy_id)
+                if geography:
+                    geography_labels.append(
+                        DocumentLabelRelationship(
+                            type="geography",
+                            label=Label(
+                                id=geography.id,
+                                title=geography.name,
+                                type="agent",
+                            ),
+                        )
+                    )
+            else:
+                logger.warning(f"Geography not found: {geograpy_id}")
+        labels.extend(geography_labels)
 
     return Document(
         id=navigator_family.import_id,
