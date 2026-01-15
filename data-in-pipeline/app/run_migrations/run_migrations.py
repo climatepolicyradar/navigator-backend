@@ -1,28 +1,16 @@
-from alembic import command
-from alembic.config import Config
-from sqlalchemy.engine import Engine
-
-from app.run_migrations.base import get_library_path
+from app.bootstrap_telemetry import get_logger
 
 
-def run_migrations(engine: Engine) -> None:
+def run_migrations() -> None:
     """
     Apply alembic migrations.
 
     Call through subprocess as opposed to the alembic command function as the server
     startup never completed when using the alembic solution.
+
+    TODO: https://linear.app/climate-policy-radar/issue/APP-1600/get-a-working-db-url-into-run-migrations
+    Completing this method is dependant on the above.
     """
-    # Path of the library
-    script_directory = get_library_path()
 
-    # Path to alembic.ini
-    alembic_ini_path = f"{script_directory}/alembic.ini"
-    alembic_cfg = Config(alembic_ini_path)
-
-    # Set the script location
-    alembic_cfg.set_main_option("script_location", f"{script_directory}/alembic")
-
-    # Run the migration
-    with engine.begin() as connection:
-        alembic_cfg.attributes["connection"] = connection
-        command.upgrade(alembic_cfg, "head")
+    logger = get_logger()
+    logger.info("run_migrations")

@@ -41,6 +41,22 @@ wheels = [
 ]
 
 [[package]]
+name = "alembic-utils"
+version = "0.8.8"
+source = { registry = "https://pypi.org/simple" }
+dependencies = [
+    { name = "alembic" },
+    { name = "flupy" },
+    { name = "parse" },
+    { name = "sqlalchemy" },
+    { name = "typing-extensions" },
+]
+sdist = { url = "https://files.pythonhosted.org/packages/ec/7a/eae622a97ba1721fd7e420c60060a74852b800ac1fecbaa2e67a35941d6d/alembic_utils-0.8.8.tar.gz", hash = "sha256:99de5d13194f26536bc0322f0c1660020a305015700d8447ccfc20e7d1494e5b", size = 21638 }
+wheels = [
+    { url = "https://files.pythonhosted.org/packages/dd/01/d55bd80997df2ec1ff2fd40cd3eeadec93c4b3c5492df3c6852b29f9e393/alembic_utils-0.8.8-py3-none-any.whl", hash = "sha256:2c2545dc545833c5deb63bce2c3cde01c1807bf99da5efab2497bc8d817cb86e", size = 31044 },
+]
+
+[[package]]
 name = "annotated-types"
 version = "0.7.0"
 source = { registry = "https://pypi.org/simple" }
@@ -470,12 +486,12 @@ dependencies = [
     { name = "returns" },
     { name = "sqlmodel" },
     { name = "testcontainers" },
-    { name = "uv" },
 ]
 
 [package.dev-dependencies]
 dev = [
     { name = "pytest" },
+    { name = "uv" },
 ]
 
 [package.metadata]
@@ -499,17 +515,21 @@ requires-dist = [
     { name = "returns", specifier = ">=0.26.0" },
     { name = "sqlmodel", specifier = ">=0.0.31" },
     { name = "testcontainers", extras = ["postgres"], specifier = ">=4.14.0" },
-    { name = "uv", specifier = ">=0.9.2" },
 ]
 
 [package.metadata.requires-dev]
-dev = [{ name = "pytest", specifier = ">=8.4.2" }]
+dev = [
+    { name = "pytest", specifier = ">=8.4.2" },
+    { name = "uv", specifier = ">=0.9.2" },
+]
 
 [[package]]
 name = "data-in-pipeline-load-api"
 version = "1.0.0"
 source = { virtual = "data-in-pipeline-load-api" }
 dependencies = [
+    { name = "alembic" },
+    { name = "alembic-utils" },
     { name = "api" },
     { name = "boto3" },
     { name = "botocore" },
@@ -526,12 +546,17 @@ dependencies = [
 dev = [
     { name = "moto", extra = ["s3", "ssm"] },
     { name = "pytest" },
+    { name = "pytest-alembic" },
+    { name = "pytest-mock-resources" },
+    { name = "python-on-whales" },
     { name = "types-sqlalchemy" },
     { name = "uv" },
 ]
 
 [package.metadata]
 requires-dist = [
+    { name = "alembic", specifier = ">=1.17.0" },
+    { name = "alembic-utils", specifier = ">=0.8.8" },
     { name = "api", editable = "api" },
     { name = "boto3", specifier = ">=1.40.51" },
     { name = "botocore", specifier = ">=1.40.51" },
@@ -548,6 +573,9 @@ requires-dist = [
 dev = [
     { name = "moto", extras = ["s3", "ssm", "secretsmanager"], specifier = ">=5.1.6" },
     { name = "pytest", specifier = ">=8.4.2" },
+    { name = "pytest-alembic", specifier = ">=0.12.1" },
+    { name = "pytest-mock-resources", specifier = ">=2.12.4" },
+    { name = "python-on-whales", specifier = ">=0.79.0" },
     { name = "types-sqlalchemy", specifier = ">=1.4.53.38" },
     { name = "uv", specifier = ">=0.9.2" },
 ]
@@ -817,6 +845,18 @@ wheels = [
     { url = "https://files.pythonhosted.org/packages/4b/5d/dbfe28f8cd1eb484bba0c62e5259b2cf6fea229d6ef43e05c06b5a78c034/fastar-0.8.0-cp313-cp313-win32.whl", hash = "sha256:b28753e0d18a643272597cb16d39f1053842aa43131ad3e260c03a2417d38401", size = 455990 },
     { url = "https://files.pythonhosted.org/packages/e1/01/e965740bd36e60ef4c5aa2cbe42b6c4eb1dc3551009238a97c2e5e96bd23/fastar-0.8.0-cp313-cp313-win_amd64.whl", hash = "sha256:620e5d737dce8321d49a5ebb7997f1fd0047cde3512082c27dc66d6ac8c1927a", size = 490227 },
     { url = "https://files.pythonhosted.org/packages/dd/10/c99202719b83e5249f26902ae53a05aea67d840eeb242019322f20fc171c/fastar-0.8.0-cp313-cp313-win_arm64.whl", hash = "sha256:c4c4bd08df563120cd33e854fe0a93b81579e8571b11f9b7da9e84c37da2d6b6", size = 461078 },
+]
+
+[[package]]
+name = "flupy"
+version = "1.2.3"
+source = { registry = "https://pypi.org/simple" }
+dependencies = [
+    { name = "typing-extensions" },
+]
+sdist = { url = "https://files.pythonhosted.org/packages/fd/a5/15fe839297d761e04c4578b11013ed46353e63b44b5e42b59c2078602fa1/flupy-1.2.3.tar.gz", hash = "sha256:220b6d40dea238cd2d66784c0d4d2a5483447a48acd343385768e0c740af9609", size = 12327 }
+wheels = [
+    { url = "https://files.pythonhosted.org/packages/7c/26/d4d1629f846ae2913e88f74955a3c3f41f3863e74c5fbc1cb79af9550717/flupy-1.2.3-py3-none-any.whl", hash = "sha256:be0f5a393bad2b3534697fbab17081993cd3f5817169dd3a61e8b2e0887612e6", size = 12512 },
 ]
 
 [[package]]
@@ -1693,6 +1733,15 @@ wheels = [
 ]
 
 [[package]]
+name = "parse"
+version = "1.20.2"
+source = { registry = "https://pypi.org/simple" }
+sdist = { url = "https://files.pythonhosted.org/packages/4f/78/d9b09ba24bb36ef8b83b71be547e118d46214735b6dfb39e4bfde0e9b9dd/parse-1.20.2.tar.gz", hash = "sha256:b41d604d16503c79d81af5165155c0b20f6c8d6c559efa66b4b695c3e5a0a0ce", size = 29391 }
+wheels = [
+    { url = "https://files.pythonhosted.org/packages/d0/31/ba45bf0b2aa7898d81cbbfac0e88c267befb59ad91a19e36e1bc5578ddb1/parse-1.20.2-py2.py3-none-any.whl", hash = "sha256:967095588cb802add9177d0c0b6133b5ba33b1ea9007ca800e526f42a85af558", size = 20126 },
+]
+
+[[package]]
 name = "parver"
 version = "0.5"
 source = { registry = "https://pypi.org/simple" }
@@ -2153,6 +2202,20 @@ wheels = [
 ]
 
 [[package]]
+name = "pytest-alembic"
+version = "0.12.1"
+source = { registry = "https://pypi.org/simple" }
+dependencies = [
+    { name = "alembic" },
+    { name = "pytest" },
+    { name = "sqlalchemy" },
+]
+sdist = { url = "https://files.pythonhosted.org/packages/f9/37/ad095d92242fe5c6b4b793191240375c01f6508960f31179de7f0e22cb96/pytest_alembic-0.12.1.tar.gz", hash = "sha256:4e2b477d93464d0cfe80487fdf63922bfd22f29153ca980c1bccf1dbf833cf12", size = 30635 }
+wheels = [
+    { url = "https://files.pythonhosted.org/packages/8b/f4/ded73992f972360adf84781b7e58729a3778e4358d482e1fe375c83948b4/pytest_alembic-0.12.1-py3-none-any.whl", hash = "sha256:d0d6be79f1c597278fbeda08c5558e7b8770af099521b0aa164e0df4aed945da", size = 36571 },
+]
+
+[[package]]
 name = "pytest-asyncio"
 version = "1.3.0"
 source = { registry = "https://pypi.org/simple" }
@@ -2163,6 +2226,20 @@ dependencies = [
 sdist = { url = "https://files.pythonhosted.org/packages/90/2c/8af215c0f776415f3590cac4f9086ccefd6fd463befeae41cd4d3f193e5a/pytest_asyncio-1.3.0.tar.gz", hash = "sha256:d7f52f36d231b80ee124cd216ffb19369aa168fc10095013c6b014a34d3ee9e5", size = 50087 }
 wheels = [
     { url = "https://files.pythonhosted.org/packages/e5/35/f8b19922b6a25bc0880171a2f1a003eaeb93657475193ab516fd87cac9da/pytest_asyncio-1.3.0-py3-none-any.whl", hash = "sha256:611e26147c7f77640e6d0a92a38ed17c3e9848063698d5c93d5aa7aa11cebff5", size = 15075 },
+]
+
+[[package]]
+name = "pytest-mock-resources"
+version = "2.12.4"
+source = { registry = "https://pypi.org/simple" }
+dependencies = [
+    { name = "pytest" },
+    { name = "sqlalchemy" },
+    { name = "typing-extensions" },
+]
+sdist = { url = "https://files.pythonhosted.org/packages/c5/9a/6ca1cc045dd45a2c0793b8d997e649a7e06c805a98a1d50ab1dab1aa3c4d/pytest_mock_resources-2.12.4.tar.gz", hash = "sha256:f3734b2f1eb851bc3c44375bd1fccc1571770a190ad16f1efa7655f436be2bf3", size = 41959 }
+wheels = [
+    { url = "https://files.pythonhosted.org/packages/75/ce/8ec6e58bd916f215b45ab8c1f4f99d3a2470ff7dfb63b70bc8026ce5740e/pytest_mock_resources-2.12.4-py3-none-any.whl", hash = "sha256:9e737cdf9e67b7ce1b9b1da0373b377339b65d206ef5e1237ac8591934429e7e", size = 58849 },
 ]
 
 [[package]]
@@ -2202,6 +2279,19 @@ source = { registry = "https://pypi.org/simple" }
 sdist = { url = "https://files.pythonhosted.org/packages/78/96/804520d0850c7db98e5ccb70282e29208723f0964e88ffd9d0da2f52ea09/python_multipart-0.0.21.tar.gz", hash = "sha256:7137ebd4d3bbf70ea1622998f902b97a29434a9e8dc40eb203bbcf7c2a2cba92", size = 37196 }
 wheels = [
     { url = "https://files.pythonhosted.org/packages/aa/76/03af049af4dcee5d27442f71b6924f01f3efb5d2bd34f23fcd563f2cc5f5/python_multipart-0.0.21-py3-none-any.whl", hash = "sha256:cf7a6713e01c87aa35387f4774e812c4361150938d20d232800f75ffcf266090", size = 24541 },
+]
+
+[[package]]
+name = "python-on-whales"
+version = "0.80.0"
+source = { registry = "https://pypi.org/simple" }
+dependencies = [
+    { name = "pydantic" },
+    { name = "typing-extensions" },
+]
+sdist = { url = "https://files.pythonhosted.org/packages/17/8e/0f76b8ccd44d7acaeb2ef15109b039a00cee5df9935249c1aa704e749f4a/python_on_whales-0.80.0.tar.gz", hash = "sha256:0f18dda93a621dc34c5c26d0dbdc20003dca07a02114c4ce60910c4afb12c1ac", size = 114918 }
+wheels = [
+    { url = "https://files.pythonhosted.org/packages/f2/d9/7dc70cfd792b420ccbdb249be4a43e949b5c151120b7abfdcacd93e37b2b/python_on_whales-0.80.0-py3-none-any.whl", hash = "sha256:3a7207899e5189695e54859a4c49461306c67fe8545a7eb53f884e342550c37d", size = 119194 },
 ]
 
 [[package]]
