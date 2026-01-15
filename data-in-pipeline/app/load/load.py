@@ -14,8 +14,11 @@ def load_to_db(documents: list[Document]) -> list[str] | Exception:
 
     try:
         load_api_url = get_ssm_parameter("/data-in-pipeline-load-api/url")
+        # Ensure URL has a scheme - App Runner URLs may not include it
+        if not load_api_url.startswith(("http://", "https://")):
+            load_api_url = f"https://{load_api_url}"
         response = requests.post(
-            url=f"https://{load_api_url}",
+            url=load_api_url,
             data=TypeAdapter(list[Document]).dump_json(documents),
             timeout=10,
         )
