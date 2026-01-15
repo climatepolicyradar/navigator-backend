@@ -150,8 +150,18 @@ def _merge_job_environments(
     these secrets into the container definition when creating ECS tasks.
 
     The secrets are configured in the job_variables, which Prefect uses to build
-    the ECS task definition. The ECS task execution role must have permissions
-    to access these secrets.
+    the ECS task definition.
+
+    IMPORTANT NOTES:
+    1. ECS secrets injection requires the TASK ROLE (not execution role) to have
+       permissions: secretsmanager:GetSecretValue and ssm:GetParameter on the
+       secret/parameter ARNs.
+    2. Prefect may REPLACE rather than MERGE containerDefinitions when
+       task_definition_override.containerDefinitions is provided. If secrets don't
+       appear in the container, check the actual ECS task definition in AWS console
+       to verify Prefect merged correctly rather than replacing the container def.
+    3. Secrets appear as environment variables at runtime - verify with:
+       os.environ.get("SECRET_NAME") inside the container.
 
     :param base_job_variables: Existing job configuration from Prefect blocks.
     :type base_job_variables: dict[str, Any]
@@ -186,19 +196,16 @@ def _merge_job_environments(
 
     if secrets_list:
         # Prefect's ECS worker uses task_definition_override to merge custom
-        # container definitions. We need to provide the container definitions
-        # with secrets that will be merged into Prefect's generated definition.
+        # container definitions. IMPORTANT: If containerDefinitions is provided,
+        # Prefect may REPLACE the entire array rather than merge, so we need to
+        # be careful.
         #
-        # The structure should match ECS container definition format:
-        # {
-        #   "containerDefinitions": [
-        #     {
-        #       "secrets": [{"name": "...", "valueFrom": "..."}]
-        #     }
-        #   ]
-        # }
-        #
-        # Prefect will merge this with its own container definition.
+        # Strategy:
+        # 1. If containerDefinitions already exists in the override, merge secrets
+        #    into the existing first container
+        # 2. If it doesn't exist, we'll let Prefect generate it and append our
+        #    secrets to the first container (this assumes Prefect merges rather
+        #    than replaces)
         #
         # At runtime, ECS will:
         # 1. Use the task execution role to fetch secrets from Secrets Manager/SSM
@@ -207,40 +214,87 @@ def _merge_job_environments(
         if "task_definition_override" not in merged:
             merged["task_definition_override"] = {}
 
-        # Initialise containerDefinitions if not present
-        if "containerDefinitions" not in merged["task_definition_override"]:
-            merged["task_definition_override"]["containerDefinitions"] = [{}]
+        # Check if containerDefinitions already exists (from base config)
+        container_defs = merged["task_definition_override"].get("containerDefinitions")
 
-        # Get the first container (Prefect will merge secrets into its container)
-        first_container = merged["task_definition_override"]["containerDefinitions"][0]
+        if container_defs and len(container_defs) > 0:
+            # Merge into existing container definition
+            first_container = container_defs[0]
+            if not isinstance(first_container, dict):
+                first_container = {}
+                container_defs[0] = first_container
 
-        # Merge secrets (avoid duplicates by name)
-        existing_secrets = first_container.get("secrets", [])
-        existing_secret_names = {
-            secret.get("name")
-            for secret in existing_secrets
-            if isinstance(secret, dict) and "name" in secret
-        }
+            existing_secrets = first_container.get("secrets", [])
+            existing_secret_names = {
+                secret.get("name")
+                for secret in existing_secrets
+                if isinstance(secret, dict) and "name" in secret
+            }
 
-        # Add new secrets that don't already exist
-        new_secrets = [
-            secret
-            for secret in secrets_list
-            if secret.get("name") not in existing_secret_names
-        ]
+            # Add new secrets that don't already exist
+            new_secrets = [
+                secret
+                for secret in secrets_list
+                if secret.get("name") not in existing_secret_names
+            ]
 
-        if new_secrets:
-            first_container["secrets"] = existing_secrets + new_secrets
-            logger.debug(
-                "Configured %s secrets for ECS task definition (total: %s).",
-                len(new_secrets),
-                len(existing_secrets) + len(new_secrets),
-            )
+            if new_secrets:
+                first_container["secrets"] = existing_secrets + new_secrets
+                logger.debug(
+                    "Merged %s secrets into existing container definition (total: %s).",
+                    len(new_secrets),
+                    len(existing_secrets) + len(new_secrets),
+                )
         else:
-            logger.debug(
-                "All %s secrets already configured in ECS task definition.",
-                len(secrets_list),
-            )
+            # No existing containerDefinitions found in override.
+            # Try to merge with base_job_variables first to see if it exists there
+            base_container_defs = base_job_variables.get(
+                "task_definition_override", {}
+            ).get("containerDefinitions")
+
+            if base_container_defs and len(base_container_defs) > 0:
+                # Merge into base container definition and set in override
+                first_container = base_container_defs[0].copy()
+                existing_secrets = first_container.get("secrets", [])
+                existing_secret_names = {
+                    secret.get("name")
+                    for secret in existing_secrets
+                    if isinstance(secret, dict) and "name" in secret
+                }
+
+                new_secrets = [
+                    secret
+                    for secret in secrets_list
+                    if secret.get("name") not in existing_secret_names
+                ]
+
+                if new_secrets:
+                    first_container["secrets"] = existing_secrets + new_secrets
+                    merged["task_definition_override"]["containerDefinitions"] = [
+                        first_container
+                    ]
+                    logger.debug(
+                        "Merged %s secrets into base container definition (total: %s).",
+                        len(new_secrets),
+                        len(existing_secrets) + len(new_secrets),
+                    )
+            else:
+                # No containerDefinitions anywhere - initialize with just secrets
+                # WARNING: If Prefect replaces rather than merges, this will break.
+                # The user should verify the actual ECS task definition after deployment.
+                merged["task_definition_override"]["containerDefinitions"] = [
+                    {"secrets": secrets_list}
+                ]
+                logger.warning(
+                    "⚠️ Initialized containerDefinitions with only secrets. "
+                    "This assumes Prefect merges rather than replaces. "
+                    "Verify the actual ECS task definition in AWS console includes "
+                    "Prefect's generated fields (image, command, environment, etc.)."
+                )
+                logger.debug(
+                    "Configured %s secrets in new container definition.",
+                    len(secrets_list),
+                )
 
     logger.debug(
         "Job environment now contains %s variables and %s secrets.",
