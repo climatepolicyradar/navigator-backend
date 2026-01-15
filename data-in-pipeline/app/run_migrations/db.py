@@ -6,7 +6,6 @@ sessions. Use get_db_context() for all database operations.
 """
 
 import logging
-import os
 from collections.abc import Generator
 from contextlib import contextmanager
 
@@ -15,6 +14,7 @@ from sqlalchemy import create_engine, text
 from sqlalchemy.engine import Engine
 from sqlalchemy.orm import Session, sessionmaker
 
+from app.run_migrations.aws import get_secret, get_ssm_parameter
 from app.run_migrations.settings import settings
 
 _LOGGER = logging.getLogger(__name__)
@@ -37,17 +37,17 @@ def get_load_db_credentials() -> LoadDBCredentials:
     :raises ValueError: If required credentials cannot be retrieved or
         are invalid.
     """
-    print(os.environ.get("MANAGED_DB_PASSWORD"))
-    print(os.environ.get("AURORA_WRITER_ENDPOINT"))
-    load_database_url = settings.aurora_writer_endpoint
-    password = settings.managed_db_password
-    if "password" not in password:
-        raise ValueError("MANAGED_DB_PASSWORD does not contain a 'password' key")
-    password = password["password"]
+    load_database_url = get_ssm_parameter("/data-in-pipeline/aurora-writer-endpoint")
+    secret_name = get_ssm_parameter("/data-in-pipeline/aurora-master-creds-secret-name")
+    master_creds = get_secret(secret_name, parse_json=True)
+    if not isinstance(master_creds, dict):
+        raise TypeError(f"Master DB creds is type {type(master_creds)}, expected dict")
+    if "password" not in master_creds.keys() or "username" not in master_creds.keys():
+        raise ValueError("MANAGED_DB_PASSWORD does not contain required keys")
 
     return LoadDBCredentials(
-        username=settings.db_master_username,
-        password=password,
+        username=master_creds["username"],
+        password=master_creds["password"],
         url=load_database_url,
         port=settings.db_port,
         db_name=settings.db_name,

@@ -238,6 +238,13 @@ data_in_pipeline_load_api_cluster_password_secret = (
     )
 )
 
+# Look up the secret metadata to get the secret name
+data_in_pipeline_load_api_cluster_password_secret_name = (
+    data_in_pipeline_load_api_cluster_password_secret.secret_arn.apply(
+        lambda arn: aws.secretsmanager.get_secret(arn=arn).name if arn else ""
+    )
+)
+
 #######################################################################
 # Create the IAM role for the Data In Pipeline.
 #######################################################################
@@ -570,15 +577,6 @@ pulumi.export(
     },
 )
 
-# Export secrets (ARNs) - these can be linked to Secrets Manager secrets
-prefect_secrets_arns_output = pulumi.Output.from_input(
-    {
-        "MANAGED_DB_PASSWORD": data_in_pipeline_load_api_cluster_password_secret.secret_arn,
-    }
-)
-pulumi.export("prefect_secrets_arns", prefect_secrets_arns_output)
-
-# Create SSM parameter for Aurora writer endpoint (for Prefect flows)
 data_in_pipeline_aurora_writer_endpoint = aws.ssm.Parameter(
     "data-in-pipeline-aurora-writer-endpoint",
     name="/data-in-pipeline/aurora-writer-endpoint",
@@ -587,55 +585,13 @@ data_in_pipeline_aurora_writer_endpoint = aws.ssm.Parameter(
     value=aurora_cluster.endpoint,
     tags=tags,
 )
-
-# Export SSM Parameter ARNs for secrets that should be referenced via SSM
-# These are for SSM SecureString parameters that should be used as secrets
-prefect_ssm_secrets_output = pulumi.Output.from_input(
-    {
-        "AURORA_WRITER_ENDPOINT": data_in_pipeline_aurora_writer_endpoint.arn,
-    }
-)
-pulumi.export("prefect_ssm_secrets", prefect_ssm_secrets_output)
-
-# Update IAM role to allow access to Prefect SSM parameters and secrets
-# Note: ECS tasks require the task execution role (not task role) to have permissions
-# to access secrets. Prefect ECS worker may use a separate execution role.
-# This policy is attached to the task role for application-level access.
-# If Prefect uses a different execution role, ensure it has similar permissions.
-prefect_secrets_access_policy = aws.iam.RolePolicy(
-    "data-in-pipeline-prefect-secrets-access-policy",
-    role=data_in_pipeline_role.id,
-    policy=pulumi.Output.all(
-        prefect_secrets_arns_output, prefect_ssm_secrets_output
-    ).apply(
-        lambda args: aws.iam.get_policy_document(
-            statements=[
-                aws.iam.GetPolicyDocumentStatementArgs(
-                    effect="Allow",
-                    actions=[
-                        "ssm:GetParameter",
-                        "ssm:GetParameters",
-                        "ssm:DescribeParameters",
-                    ],
-                    resources=[
-                        f"arn:aws:ssm:eu-west-1:{account_id}:parameter/data-in-pipeline*",
-                    ],
-                ),
-            ]
-            + (
-                [
-                    aws.iam.GetPolicyDocumentStatementArgs(
-                        effect="Allow",
-                        actions=[
-                            "secretsmanager:GetSecretValue",
-                            "secretsmanager:DescribeSecret",
-                        ],
-                        resources=list(args[0].values()),
-                    )
-                ]
-                if args[0] and len(args[0]) > 0
-                else []
-            )
-        ).json
+data_in_pipeline_aurora_master_creds_secret_name = aws.ssm.Parameter(
+    "data-in-pipeline-aurora-master-creds-secret-name",
+    name="/data-in-pipeline/aurora-master-creds-secret-name",
+    description="Aurora cluster master credentials secret name for Prefect flows",
+    type=aws.ssm.ParameterType.SECURE_STRING,
+    value=data_in_pipeline_load_api_cluster_password_secret_name.apply(
+        lambda secret_name: secret_name
     ),
+    tags=tags,
 )
