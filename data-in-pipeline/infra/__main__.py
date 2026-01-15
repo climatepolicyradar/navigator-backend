@@ -457,8 +457,8 @@ data_in_pipeline_load_api_vpc_sg = aws.ec2.SecurityGroup(
             protocol="tcp",
             from_port=443,
             to_port=443,
-            cidr_blocks=["10.0.0.0/16"],
-            description="Allow HTTPS from inside VPC",
+            cidr_blocks=[aws.ec2.get_vpc(vpc_id).cidr_block],
+            description="Allow HTTPS from inside prefect VPC",
         )
     ],
     egress=[
