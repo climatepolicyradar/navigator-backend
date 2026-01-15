@@ -491,7 +491,7 @@ allow_data_in_pipeline_load_api_to_aurora = aws.ec2.SecurityGroupRule(
 # Allow Prefect ECS tasks to reach Aurora
 # Get Prefect security group ID from orchestrator repo `prefect_mvp` project
 orchestrator_stack = pulumi.StackReference(
-    f"climatepolicyradar/prefect_mvp/{environment}"
+    f"climatepolicyradar/prefect_mvp/{"prod" if environment == 'production' else environment}"
 )
 # The orchestrator should export the security group ID
 # Common export names to try (update based on actual export name)
