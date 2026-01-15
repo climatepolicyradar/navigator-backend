@@ -36,6 +36,8 @@ def engine(postgres_container):
     SQLModel.metadata.create_all(engine)
     yield engine
     SQLModel.metadata.drop_all(engine)
+
+
 # Enable pytest assert rewriting for the assertions module
 pytest.register_assert_rewrite("tests.transform.assertions")
 
