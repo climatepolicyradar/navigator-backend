@@ -1,0 +1,10 @@
+name: data-in-pipeline-load-api
+description: data-in-pipeline-load-api
+runtime:
+  name: python
+  options:
+    toolchain: uv
+config:
+  pulumi:tags:
+    value:
+      pulumi:template: aws-python
