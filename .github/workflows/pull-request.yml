@@ -108,7 +108,7 @@ jobs:
     runs-on: ubuntu-latest
     strategy:
       matrix:
-        environment: [production]
+        environment: [staging]
         service: ${{ fromJSON(needs.changes.outputs.services) }}
       fail-fast: false
     environment: ${{ matrix.environment }}

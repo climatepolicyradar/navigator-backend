@@ -22,6 +22,9 @@ class Settings(BaseSettings):
     """
 
     # DB connection parameters
+    db_master_username: str
+    managed_db_password: str
+    aurora_writer_endpoint: str
     db_port: str
     db_name: str
 
