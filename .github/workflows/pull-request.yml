@@ -103,8 +103,7 @@ jobs:
           fi
 
   deploy:
-    # FIXME: This should be [changes, test] but the test job is broken
-    needs: [changes]
+    needs: [changes, test]
     # a.
     if: contains(github.event.pull_request.labels.*.name, 'deploy:staging')
     runs-on: ubuntu-latest
