@@ -19,6 +19,9 @@ os.environ.setdefault("OTEL_TRACES_EXPORTER", "none")
 os.environ.setdefault("OTEL_LOGS_EXPORTER", "none")
 os.environ.setdefault("OTEL_METRICS_EXPORTER", "none")
 
+# Enable pytest assert rewriting for the assertions module
+pytest.register_assert_rewrite("tests.transform.assertions")
+
 
 @pytest.fixture(autouse=True, scope="session")
 def disable_telemetry():

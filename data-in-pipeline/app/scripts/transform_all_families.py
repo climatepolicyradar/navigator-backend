@@ -93,6 +93,7 @@ if __name__ == "__main__":
                         )
                         for collection in family["collections"]
                     ],
+                    geographies=family["geographies"],
                 ),
                 id=family["import_id"],
                 source="navigator_family",

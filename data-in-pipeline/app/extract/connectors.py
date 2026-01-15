@@ -66,6 +66,7 @@ class NavigatorFamily(BaseModel):
     corpus: NavigatorCorpus
     events: list[NavigatorEvent]
     collections: list[NavigatorCollection]
+    geographies: list[str]
 
 
 class PageFetchFailure(BaseModel):

@@ -33,5 +33,5 @@ services:
         pytest,
         data-in-pipeline,
         --color=yes,
-        -v,
+        -vv,
       ]
