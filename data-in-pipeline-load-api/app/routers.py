@@ -1,9 +1,8 @@
 from fastapi import APIRouter, Depends, HTTPException, status
-
-from app.models import Document
-from app.repository import check_db_health
-from app.session import get_db
-from app.settings import settings
+from models import Document
+from repository import check_db_health
+from session import get_db
+from settings import settings
 
 # Create router with /load prefix
 router = APIRouter(prefix="/load")
