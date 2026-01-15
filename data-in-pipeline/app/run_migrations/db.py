@@ -14,7 +14,6 @@ from sqlalchemy import create_engine, text
 from sqlalchemy.engine import Engine
 from sqlalchemy.orm import Session, sessionmaker
 
-from app.run_migrations.aws import get_secret, get_ssm_parameter
 from app.run_migrations.settings import settings
 
 _LOGGER = logging.getLogger(__name__)
@@ -37,18 +36,10 @@ def get_load_db_credentials() -> LoadDBCredentials:
     :raises ValueError: If required credentials cannot be retrieved or
         are invalid.
     """
-    load_database_url = get_ssm_parameter("/data-in-pipeline/aurora-writer-endpoint")
-    secret_name = get_ssm_parameter("/data-in-pipeline/aurora-master-creds-secret-name")
-    master_creds = get_secret(secret_name, parse_json=True)
-    if not isinstance(master_creds, dict):
-        raise TypeError(f"Master DB creds is type {type(master_creds)}, expected dict")
-    if "password" not in master_creds.keys() or "username" not in master_creds.keys():
-        raise ValueError("MANAGED_DB_PASSWORD does not contain required keys")
-
     return LoadDBCredentials(
-        username=master_creds["username"],
-        password=master_creds["password"],
-        url=load_database_url,
+        username=settings.db_master_username,
+        password=settings.managed_db_password,
+        url=settings.aurora_writer_endpoint,
         port=settings.db_port,
         db_name=settings.db_name,
         sslmode=settings.db_sslmode,
