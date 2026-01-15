@@ -18,7 +18,7 @@ def load_to_db(documents: list[Document]) -> list[str] | Exception:
         if not load_api_base_url.startswith(("http://", "https://")):
             load_api_base_url = f"https://{load_api_base_url}"
         response = requests.post(
-            url=f"{load_api_base_url}/load",
+            url=f"{load_api_base_url}/load/",
             data=TypeAdapter(list[Document]).dump_json(documents),
             timeout=10,
         )
