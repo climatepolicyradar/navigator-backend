@@ -4,7 +4,24 @@ import pytest
 from opentelemetry import trace
 from opentelemetry._logs import get_logger_provider
 from prefect.testing.utilities import prefect_test_harness
+from sqlmodel import SQLModel, create_engine
 from testcontainers.postgres import PostgresContainer
+
+# Set environment variables before any imports that might initialise telemetry
+# or settings that read from environment variables
+os.environ.setdefault("DISABLE_OTEL_LOGGING", "true")
+os.environ.setdefault("OTEL_TRACES_EXPORTER", "none")
+os.environ.setdefault("OTEL_LOGS_EXPORTER", "none")
+os.environ.setdefault("OTEL_METRICS_EXPORTER", "none")
+
+# Set database environment variables before settings module is imported
+os.environ.setdefault("DB_MASTER_USERNAME", "test_username")
+# MANAGED_DB_PASSWORD contains just the password string (from RDS-managed secret)
+os.environ.setdefault("MANAGED_DB_PASSWORD", "test_password")
+os.environ.setdefault("AURORA_WRITER_ENDPOINT", "test-db-endpoint")
+os.environ.setdefault("DB_PORT", "5432")
+os.environ.setdefault("DB_NAME", "test_db")
+os.environ.setdefault("AWS_REGION", "eu-west-1")
 
 
 @pytest.fixture(scope="session")
@@ -13,11 +30,13 @@ def postgres_container():
         yield postgres
 
 
-# Set environment variables before any imports that might initialise telemetry
-os.environ.setdefault("DISABLE_OTEL_LOGGING", "true")
-os.environ.setdefault("OTEL_TRACES_EXPORTER", "none")
-os.environ.setdefault("OTEL_LOGS_EXPORTER", "none")
-os.environ.setdefault("OTEL_METRICS_EXPORTER", "none")
+@pytest.fixture
+def engine(postgres_container):
+    engine = create_engine(postgres_container.get_connection_url())
+    SQLModel.metadata.create_all(engine)
+    yield engine
+    SQLModel.metadata.drop_all(engine)
+
 
 # Enable pytest assert rewriting for the assertions module
 pytest.register_assert_rewrite("tests.transform.assertions")

@@ -33,22 +33,23 @@ def test_process_document_updates_flow_with_invalid_id(mock_upload):
     assert process_document_updates(["CCLW.INVALID_ID"]) == []
 
 
+@patch("app.navigator_family_etl_pipeline.run_migrations")
 @patch("app.load.load.get_ssm_parameter", return_value="")
 @patch("app.navigator_family_etl_pipeline.upload_to_s3")
 @patch("app.navigator_family_etl_pipeline.NavigatorConnector")
 @patch("app.load.load.requests.post")
 def test_process_family_updates_flow_multiple_families(
-    mock_post, mock_connector_class, mock_upload, mock_ssm
+    mock_post, mock_connector_class, mock_upload, mock_ssm, mock_run_migrations
 ):
     """Test ETL pipeline with multiple families across pages."""
-    mock_upload.return_value = None
+    mock_run_migrations.return_value = None
 
     mock_connector_instance = MagicMock()
     mock_connector_class.return_value = mock_connector_instance
     mock_connector_instance.close.return_value = None
 
     mock_post_response = MagicMock()
-    mock_post_response.status_code = 201
+    mock_post_response.status_code = HTTPStatus.CREATED
     mock_post_response.json.return_value = ["1", "2"]
     mock_post.return_value = mock_post_response
 
@@ -144,13 +145,17 @@ def test_process_family_updates_flow_multiple_families(
     assert result[0] == "1"
 
 
+@patch("app.navigator_family_etl_pipeline.run_migrations")
 @patch("app.navigator_family_etl_pipeline.upload_to_s3")
 @patch("app.navigator_family_etl_pipeline.NavigatorConnector")
 def test_process_family_updates_flow_extraction_failure(
-    mock_connector_class, mock_upload
+    mock_connector_class,
+    mock_upload,
+    mock_run_migrations,
 ):
     """Test ETL pipeline when extraction fails completely."""
     mock_upload.return_value = None
+    mock_run_migrations.return_value = None
 
     mock_connector_instance = MagicMock()
     mock_connector_class.return_value = mock_connector_instance
@@ -170,10 +175,13 @@ def test_process_family_updates_flow_extraction_failure(
     assert isinstance(result, Exception)
 
 
+@patch("app.navigator_family_etl_pipeline.run_migrations")
 @patch("app.navigator_family_etl_pipeline.upload_to_s3")
 @patch("app.navigator_family_etl_pipeline.NavigatorConnector")
 @patch("app.load.load.requests.post")
-def test_etl_pipeline_load_failure(mock_post, mock_connector_class, mock_upload):
+def test_etl_pipeline_load_failure(
+    mock_post, mock_connector_class, mock_upload, mock_run_migrations
+):
     mock_upload.return_value = None
 
     mock_connector_instance = MagicMock()
@@ -181,7 +189,7 @@ def test_etl_pipeline_load_failure(mock_post, mock_connector_class, mock_upload)
     mock_connector_instance.close.return_value = None
 
     mock_response = MagicMock()
-    mock_response.status_code = 500
+    mock_response.status_code = HTTPStatus.INTERNAL_SERVER_ERROR
     mock_response.raise_for_status.side_effect = HTTPError("Server error")
     mock_post.return_value = mock_response
 

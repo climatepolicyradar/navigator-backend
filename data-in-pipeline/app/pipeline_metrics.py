@@ -87,7 +87,7 @@ class PipelineMetrics:
     """
 
     def __init__(self, metrics_service: MetricsService):
-        """Initialize pipeline metrics.
+        """Initialise pipeline metrics.
 
         :param metrics_service: The generic metrics service to use for creating instruments.
         :type metrics_service: MetricsService
