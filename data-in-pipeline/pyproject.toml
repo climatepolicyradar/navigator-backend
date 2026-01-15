@@ -7,7 +7,6 @@ dependencies = [
   "api",
   "components>=1.0.3",
   "prefect[aws]>=3.4",
-  "uv>=0.9.2",
   "pulumi>=3.202.0",
   "pulumi-aws>=6.83.0",
   "pydantic>=2.12.1",
@@ -33,4 +32,4 @@ components = { git = "https://github.com/climatepolicyradar/infra", subdirectory
 
 
 [dependency-groups]
-dev = ["pytest>=8.4.2"]
+dev = ["pytest>=8.4.2", "uv>=0.9.2"]

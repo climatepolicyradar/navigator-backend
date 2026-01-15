@@ -471,12 +471,12 @@ dependencies = [
     { name = "returns" },
     { name = "sqlmodel" },
     { name = "testcontainers" },
-    { name = "uv" },
 ]
 
 [package.dev-dependencies]
 dev = [
     { name = "pytest" },
+    { name = "uv" },
 ]
 
 [package.metadata]
@@ -501,11 +501,13 @@ requires-dist = [
     { name = "returns", specifier = ">=0.26.0" },
     { name = "sqlmodel", specifier = ">=0.0.31" },
     { name = "testcontainers", extras = ["postgres"], specifier = ">=4.14.0" },
-    { name = "uv", specifier = ">=0.9.2" },
 ]
 
 [package.metadata.requires-dev]
-dev = [{ name = "pytest", specifier = ">=8.4.2" }]
+dev = [
+    { name = "pytest", specifier = ">=8.4.2" },
+    { name = "uv", specifier = ">=0.9.2" },
+]
 
 [[package]]
 name = "data-in-pipeline-load-api"

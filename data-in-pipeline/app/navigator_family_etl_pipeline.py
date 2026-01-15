@@ -18,7 +18,7 @@ from app.load.aws_bucket import upload_to_s3
 from app.load.load import load_to_db
 from app.models import Document, ExtractedEnvelope, Identified
 from app.pipeline_metrics import ErrorType, Operation, PipelineType, Status
-from app.run_migrations.db import run_migrations
+from app.run_migrations.run_migrations import run_migrations
 from app.transform.navigator_family import (
     transform_navigator_family,
 )
