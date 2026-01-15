@@ -1,14 +1,7 @@
 import pytest
 from sqlmodel import Session, SQLModel, create_engine
-from testcontainers.postgres import PostgresContainer
 
 from app.db_models import Document, Label
-
-
-@pytest.fixture(scope="session")
-def postgres_container():
-    with PostgresContainer("postgres:17") as postgres:
-        yield postgres
 
 
 @pytest.fixture
