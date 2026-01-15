@@ -15,7 +15,7 @@ def load_to_db(documents: list[Document]) -> list[str] | Exception:
     try:
         load_api_url = get_ssm_parameter("/data-in-pipeline-load-api/url")
         response = requests.post(
-            url=load_api_url,
+            url=f"https://{load_api_url}",
             data=TypeAdapter(list[Document]).dump_json(documents),
             timeout=10,
         )
