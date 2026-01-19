@@ -40,6 +40,83 @@ def generate_s3_cache_key(step: Literal["extract", "identify", "transform"]) -> 
 # ---------------------------------------------------------------------
 
 
+def _resolve_domain(domain: str, logger) -> str | None:
+    """Resolve domain to IP address and validate it's in VPC range."""
+    try:
+        resolved_ip = socket.gethostbyname(domain)
+        logger.info(f"DNS resolution successful: {domain} -> {resolved_ip}")
+
+        ip_obj = ipaddress.ip_address(resolved_ip)
+        is_private = ip_obj.is_private
+        is_vpc_range = resolved_ip.startswith("10.0.")
+
+        if is_private and is_vpc_range:
+            logger.info(f"Resolved IP {resolved_ip} is in private VPC range (10.0.x.x)")
+        elif is_private:
+            logger.warning(
+                f"Resolved IP {resolved_ip} is private but not in expected VPC range (10.0.x.x)"
+            )
+        else:
+            logger.error(
+                f"Resolved IP {resolved_ip} is PUBLIC, not private. "
+                "VPC Ingress Connection DNS may not be working correctly."
+            )
+
+        return resolved_ip
+    except socket.gaierror:
+        logger.exception(f"DNS resolution failed for {domain}")
+        return None
+    except Exception:
+        logger.exception("Error during DNS resolution")
+        return None
+
+
+def _test_tcp_connection(ip: str, port: int, logger) -> bool:
+    """Test TCP connection to IP:port. Returns True if successful."""
+    logger.info(f"Testing direct TCP connection to ENI IP: {ip}:{port}")
+    tcp_sock = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
+    tcp_sock.settimeout(5)
+    try:
+        tcp_result = tcp_sock.connect_ex((ip, port))
+        if tcp_result == 0:
+            logger.info(
+                "TCP connection to ENI successful - routing and security groups are working"
+            )
+            return True
+        logger.error(
+            f"TCP connection to ENI failed with error code: {tcp_result}. "
+            "This indicates a routing or security group issue."
+        )
+        return False
+    except Exception:
+        logger.exception("Error during TCP connection test")
+        return False
+    finally:
+        tcp_sock.close()
+
+
+def _test_http_connectivity(url: str, logger) -> None:
+    """Test HTTP connectivity to URL."""
+    logger.info(f"Testing HTTP connectivity to: {url}")
+    try:
+        response = requests.get(url, timeout=10, verify=True)
+        logger.info(
+            f"HTTP connectivity successful: {response.status_code} {response.reason}"
+        )
+    except requests.exceptions.Timeout:
+        logger.exception(
+            "HTTP connectivity timeout after 10 seconds. "
+            "This may indicate a routing or security group issue."
+        )
+    except requests.exceptions.ConnectionError:
+        logger.exception(
+            "HTTP connection error. "
+            "Check security groups, route tables, and VPC endpoint status."
+        )
+    except Exception:
+        logger.exception("Unexpected error during HTTP test")
+
+
 @task(log_prints=True)
 def test_load_api_connectivity() -> None:
     """Test DNS resolution and connectivity to the load API via VPC Ingress Connection.
@@ -47,62 +124,29 @@ def test_load_api_connectivity() -> None:
     This diagnostic task checks:
     1. DNS resolution of the VPC Ingress Connection domain
     2. Whether the resolved IP is private (10.0.x.x range)
-    3. HTTP connectivity to the /load/health endpoint
+    3. TCP connectivity to the ENI
+    4. HTTP connectivity to the /load/health endpoint
 
     This helps diagnose VPC endpoint and VPC Ingress Connection issues.
     """
     _LOGGER = get_logger()
     _LOGGER.info("Testing load API connectivity...")
 
-    # Get URL from environment variable (same as load_to_db uses)
     load_api_url = os.getenv("DATA_IN_PIPELINE_LOAD_API_URL", "")
     if not load_api_url:
         _LOGGER.error("DATA_IN_PIPELINE_LOAD_API_URL environment variable not set")
         return
 
-    # Ensure URL has a scheme
-    if not load_api_url.startswith(("http://", "https://")):
-        load_api_url = f"https://{load_api_url}"
-
     _LOGGER.info(f"Load API URL: {load_api_url}")
 
-    # Extract domain from URL
     parsed_url = urlparse(load_api_url)
     domain = parsed_url.netloc or parsed_url.path.split("/")[0]
     _LOGGER.info(f"Domain to resolve: {domain}")
 
-    # Test DNS resolution
-    try:
-        resolved_ip = socket.gethostbyname(domain)
-        _LOGGER.info(f"DNS resolution successful: {domain} -> {resolved_ip}")
-
-        # Check if IP is private (10.0.x.x range)
-        ip_obj = ipaddress.ip_address(resolved_ip)
-        is_private = ip_obj.is_private
-        is_vpc_range = resolved_ip.startswith("10.0.")
-
-        if is_private and is_vpc_range:
-            _LOGGER.info(
-                f"Resolved IP {resolved_ip} is in private VPC range (10.0.x.x)"
-            )
-        elif is_private:
-            _LOGGER.warning(
-                f"Resolved IP {resolved_ip} is private but not in expected VPC range (10.0.x.x)"
-            )
-        else:
-            _LOGGER.error(
-                f"Resolved IP {resolved_ip} is PUBLIC, not private. "
-                "VPC Ingress Connection DNS may not be working correctly."
-            )
-
-    except socket.gaierror:
-        _LOGGER.exception(f"DNS resolution failed for {domain}")
-        return
-    except Exception:
-        _LOGGER.exception("Error during DNS resolution")
+    resolved_ip = _resolve_domain(domain, _LOGGER)
+    if not resolved_ip:
         return
 
-    # Get all IP addresses (if multiple)
     try:
         addr_info = socket.getaddrinfo(domain, None)
         all_ips = {info[4][0] for info in addr_info}
@@ -110,27 +154,10 @@ def test_load_api_connectivity() -> None:
     except Exception:
         _LOGGER.exception("Could not get all IP addresses")
 
-    # Test HTTP connectivity
-    health_url = f"{load_api_url.rstrip('/')}/load/health"
-    _LOGGER.info(f"Testing HTTP connectivity to: {health_url}")
+    _test_tcp_connection(resolved_ip, 443, _LOGGER)
 
-    try:
-        response = requests.get(health_url, timeout=10, verify=True)
-        _LOGGER.info(
-            f"HTTP connectivity successful: {response.status_code} {response.reason}"
-        )
-    except requests.exceptions.Timeout:
-        _LOGGER.exception(
-            "HTTP connectivity timeout after 10 seconds. "
-            "This may indicate a routing or security group issue."
-        )
-    except requests.exceptions.ConnectionError:
-        _LOGGER.exception(
-            "HTTP connection error. "
-            "Check security groups, route tables, and VPC endpoint status."
-        )
-    except Exception:
-        _LOGGER.exception("Unexpected error during HTTP test")
+    health_url = f"{load_api_url.rstrip('/')}/load/health"
+    _test_http_connectivity(health_url, _LOGGER)
 
     _LOGGER.info("Connectivity test completed")
 
