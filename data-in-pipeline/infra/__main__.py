@@ -467,14 +467,15 @@ vpc_connector = aws.apprunner.VpcConnector(
 )
 
 # Security group for VPC endpoint (ingress) - allows traffic from Prefect ECS tasks
+HTTP_PORT = 443
 vpc_endpoint_sg = aws.ec2.SecurityGroup(
     "data-in-pipeline-load-api-vpc-endpoint-sg",
     vpc_id=vpc_id,
     description="Security group for App Runner VPC endpoint ingress",
     ingress=[
         aws.ec2.SecurityGroupIngressArgs(
-            from_port=443,
-            to_port=443,
+            from_port=HTTP_PORT,
+            to_port=HTTP_PORT,
             protocol="tcp",
             cidr_blocks=["10.0.0.0/8"],  # Allow from VPC CIDR - adjust if needed
             description="Allow HTTPS from VPC",
