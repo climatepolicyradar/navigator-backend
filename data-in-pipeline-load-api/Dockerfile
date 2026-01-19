@@ -18,7 +18,7 @@ RUN apt-get update && apt-get install -y \
     libpq-dev \
     && rm -rf /var/lib/apt/lists/*
 
-# Copy workspace root dependency details(required for uv workspace resolution)
+# Copy workspace root pyproject.toml (required for uv workspace resolution)
 COPY pyproject.toml uv.lock /app/
 
 # Copy application code
