@@ -594,23 +594,39 @@ vpc_ingress_connection = aws.apprunner.VpcIngressConnection(
     tags=tags,
 )
 
-# Use VPC Endpoint DNS entry domain name for private access
-load_api_base_url = vpc_endpoint.dns_entries.apply(
-    lambda dns_entries: f"https://{dns_entries[0].dns_name}"
+# Use VPC Ingress Connection domain name for private access
+# The VPC Ingress Connection provides the domain name that routes through the VPC endpoint
+# to the App Runner service - this is different from the VPC endpoint DNS itself
+load_api_base_url = vpc_ingress_connection.domain_name.apply(
+    lambda domain: f"https://{domain}"
 )
 data_in_pipeline_load_api_url = aws.ssm.Parameter(
     "data-in-pipeline-load-api-url",
     name="/data-in-pipeline-load-api/url",
     description="URL of the load API service (via VPC Ingress Connection)",
     type=aws.ssm.ParameterType.STRING,
-    value=load_api_base_url.apply(lambda url: url),
+    value=load_api_base_url,
 )
 
-# Service URL is not available when is_publicly_accessible=False
-# Use VPC Endpoint DNS entry domain name instead (exported below)
+# Export VPC Ingress Connection domain name for private access
 pulumi.export(
-    "data-in-pipeline-load-api-private-vpc-endpoint-domain",
-    vpc_endpoint.dns_entries.apply(lambda dns_entries: dns_entries[0].dns_name),
+    "data-in-pipeline-load-api-vpc-ingress-connection-domain",
+    vpc_ingress_connection.domain_name,
+)
+pulumi.export(
+    "data-in-pipeline-load-api-vpc-ingress-connection-status",
+    vpc_ingress_connection.status,
+)
+
+# Export VPC endpoint details for monitoring
+pulumi.export("data-in-pipeline-load-api-vpc-endpoint-id", vpc_endpoint.id)
+pulumi.export("data-in-pipeline-load-api-vpc-endpoint-state", vpc_endpoint.state)
+pulumi.export(
+    "data-in-pipeline-load-api-vpc-endpoint-service-name", vpc_endpoint.service_name
+)
+pulumi.export(
+    "data-in-pipeline-load-api-vpc-endpoint-network-interface-ids",
+    vpc_endpoint.network_interface_ids,
 )
 
 #######################################################################
