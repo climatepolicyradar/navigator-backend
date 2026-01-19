@@ -559,7 +559,7 @@ data_in_pipeline_load_api_apprunner_service = aws.apprunner.Service(
             # Private endpoint - ingress only. Egress via VPC connector (above) is separate
             # and will continue to allow Aurora connectivity via existing security group rules.
             # If external access is needed, create a VPC Ingress Connection (PrivateLink).
-            is_publicly_accessible=False,
+            is_publicly_accessible=True,
         ),
         ip_address_type="IPV4",
     ),
