@@ -514,16 +514,16 @@ vpc_endpoint_sg = aws.ec2.SecurityGroup(
 # 2. VPC Ingress Connection status is "AVAILABLE" (check exports)
 # 3. Prefect VPC has enable_dns_support=True and enable_dns_hostnames=True (they are)
 # 4. Security group rules allow HTTPS (443) from Prefect ECS tasks
-vpc_endpoint = aws.ec2.VpcEndpoint(
-    "data-in-pipeline-load-api-vpc-endpoint",
-    vpc_id=prefect_vpc_id,
-    service_name="com.amazonaws.eu-west-1.apprunner.requests",
-    vpc_endpoint_type="Interface",
-    subnet_ids=prefect_subnet_ids,
-    security_group_ids=[vpc_endpoint_sg.id],
-    private_dns_enabled=False,  # App Runner service doesn't support private DNS
-    tags=tags,
-)
+# vpc_endpoint = aws.ec2.VpcEndpoint(
+#     "data-in-pipeline-load-api-vpc-endpoint",
+#     vpc_id=prefect_vpc_id,
+#     service_name="com.amazonaws.eu-west-1.apprunner.requests",
+#     vpc_endpoint_type="Interface",
+#     subnet_ids=prefect_subnet_ids,
+#     security_group_ids=[vpc_endpoint_sg.id],
+#     private_dns_enabled=False,  # App Runner service doesn't support private DNS
+#     tags=tags,
+# )
 
 # Allow load API connector to reach Aurora
 allow_data_in_pipeline_load_api_to_aurora = aws.ec2.SecurityGroupRule(
@@ -600,27 +600,28 @@ data_in_pipeline_load_api_apprunner_service = aws.apprunner.Service(
 #
 # The VPC Ingress Connection must be in AVAILABLE status before it can be used.
 # Check the exported status to verify connectivity.
-vpc_ingress_connection = aws.apprunner.VpcIngressConnection(
-    "data-in-pipeline-load-api-vpc-ingress-connection",
-    name=f"data-in-pipeline-load-api-vic-{environment}",
-    service_arn=data_in_pipeline_load_api_apprunner_service.arn,
-    ingress_vpc_configuration=aws.apprunner.VpcIngressConnectionIngressVpcConfigurationArgs(
-        vpc_id=orchestrator_stack.get_output("prefect_vpc_id"),
-        vpc_endpoint_id=vpc_endpoint.id,
-    ),
-    tags=tags,
-    opts=pulumi.ResourceOptions(
-        # Ensure VPC endpoint is available before creating VPC Ingress Connection
-        depends_on=[vpc_endpoint],
-    ),
-)
+# vpc_ingress_connection = aws.apprunner.VpcIngressConnection(
+#     "data-in-pipeline-load-api-vpc-ingress-connection",
+#     name=f"data-in-pipeline-load-api-vic-{environment}",
+#     service_arn=data_in_pipeline_load_api_apprunner_service.arn,
+#     ingress_vpc_configuration=aws.apprunner.VpcIngressConnectionIngressVpcConfigurationArgs(
+#         vpc_id=orchestrator_stack.get_output("prefect_vpc_id"),
+#         vpc_endpoint_id=vpc_endpoint.id,
+#     ),
+#     tags=tags,
+#     opts=pulumi.ResourceOptions(
+#         # Ensure VPC endpoint is available before creating VPC Ingress Connection
+#         depends_on=[vpc_endpoint],
+#     ),
+# )
 
 # Use VPC Ingress Connection domain name for private access
 # The VPC Ingress Connection provides the domain name that routes through the VPC endpoint
 # to the App Runner service - this is different from the VPC endpoint DNS itself
-load_api_base_url = vpc_ingress_connection.domain_name.apply(
-    lambda domain: f"https://{domain}"
-)
+load_api_base_url = f"https://{data_in_pipeline_load_api_apprunner_service.service_url}"
+# vpc_ingress_connection.domain_name.apply(
+#     lambda domain: f"https://{domain}"
+# )
 data_in_pipeline_load_api_url = aws.ssm.Parameter(
     "data-in-pipeline-load-api-url",
     name="/data-in-pipeline-load-api/url",
@@ -644,29 +645,29 @@ data_in_pipeline_load_api_url = aws.ssm.Parameter(
 #    - The VPC Ingress Connection domain should resolve to private IPs
 # 6. Verify route tables - subnet must have route table that allows traffic to VPC endpoint
 # 7. Check VPC endpoint network interface IPs are reachable from Prefect tasks
-pulumi.export(
-    "data-in-pipeline-load-api-vpc-ingress-connection-domain",
-    vpc_ingress_connection.domain_name,
-)
-pulumi.export(
-    "data-in-pipeline-load-api-vpc-ingress-connection-status",
-    vpc_ingress_connection.status,
-)
-pulumi.export(
-    "data-in-pipeline-load-api-vpc-ingress-connection-arn",
-    vpc_ingress_connection.arn,
-)
+# pulumi.export(
+#     "data-in-pipeline-load-api-vpc-ingress-connection-domain",
+#     vpc_ingress_connection.domain_name,
+# )
+# pulumi.export(
+#     "data-in-pipeline-load-api-vpc-ingress-connection-status",
+#     vpc_ingress_connection.status,
+# )
+# pulumi.export(
+#     "data-in-pipeline-load-api-vpc-ingress-connection-arn",
+#     vpc_ingress_connection.arn,
+# )
 
 # Export VPC endpoint details for monitoring
-pulumi.export("data-in-pipeline-load-api-vpc-endpoint-id", vpc_endpoint.id)
-pulumi.export("data-in-pipeline-load-api-vpc-endpoint-state", vpc_endpoint.state)
-pulumi.export(
-    "data-in-pipeline-load-api-vpc-endpoint-service-name", vpc_endpoint.service_name
-)
-pulumi.export(
-    "data-in-pipeline-load-api-vpc-endpoint-network-interface-ids",
-    vpc_endpoint.network_interface_ids,
-)
+# pulumi.export("data-in-pipeline-load-api-vpc-endpoint-id", vpc_endpoint.id)
+# pulumi.export("data-in-pipeline-load-api-vpc-endpoint-state", vpc_endpoint.state)
+# pulumi.export(
+#     "data-in-pipeline-load-api-vpc-endpoint-service-name", vpc_endpoint.service_name
+# )
+# pulumi.export(
+#     "data-in-pipeline-load-api-vpc-endpoint-network-interface-ids",
+#     vpc_endpoint.network_interface_ids,
+# )
 
 #######################################################################
 # Create environment variables and secrets for Prefect flows/tasks.
@@ -719,46 +720,3 @@ prefect_ssm_secrets_output = pulumi.Output.from_input(
     }
 )
 pulumi.export("prefect_ssm_secrets", prefect_ssm_secrets_output)
-
-# Update IAM role to allow access to Prefect SSM parameters and secrets
-# Note: ECS tasks require the task execution role (not task role) to have permissions
-# to access secrets. Prefect ECS worker may use a separate execution role.
-# This policy is attached to the task role for application-level access.
-# If Prefect uses a different execution role, ensure it has similar permissions.
-prefect_secrets_access_policy = aws.iam.RolePolicy(
-    "data-in-pipeline-prefect-secrets-access-policy",
-    role=data_in_pipeline_role.id,
-    policy=pulumi.Output.all(
-        prefect_secrets_arns_output, prefect_ssm_secrets_output
-    ).apply(
-        lambda args: aws.iam.get_policy_document(
-            statements=[
-                aws.iam.GetPolicyDocumentStatementArgs(
-                    effect="Allow",
-                    actions=[
-                        "ssm:GetParameter",
-                        "ssm:GetParameters",
-                        "ssm:DescribeParameters",
-                    ],
-                    resources=[
-                        f"arn:aws:ssm:eu-west-1:{account_id}:parameter/data-in-pipeline*",
-                    ],
-                ),
-            ]
-            + (
-                [
-                    aws.iam.GetPolicyDocumentStatementArgs(
-                        effect="Allow",
-                        actions=[
-                            "secretsmanager:GetSecretValue",
-                            "secretsmanager:DescribeSecret",
-                        ],
-                        resources=list(args[0].values()),
-                    )
-                ]
-                if args[0] and len(args[0]) > 0
-                else []
-            )
-        ).json
-    ),
-)
