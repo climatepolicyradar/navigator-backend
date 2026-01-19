@@ -1,6 +1,11 @@
+import ipaddress
+import os
+import socket
 from datetime import datetime
 from typing import Literal
+from urllib.parse import urlparse
 
+import requests
 from data_in_models.models import Document
 from prefect import flow, task
 from prefect.runtime import flow_run, task_run
@@ -33,6 +38,101 @@ def generate_s3_cache_key(step: Literal["extract", "identify", "transform"]) -> 
 # ---------------------------------------------------------------------
 #  ETL TASKS
 # ---------------------------------------------------------------------
+
+
+@task(log_prints=True)
+def test_load_api_connectivity() -> None:
+    """Test DNS resolution and connectivity to the load API via VPC Ingress Connection.
+
+    This diagnostic task checks:
+    1. DNS resolution of the VPC Ingress Connection domain
+    2. Whether the resolved IP is private (10.0.x.x range)
+    3. HTTP connectivity to the /load/health endpoint
+
+    This helps diagnose VPC endpoint and VPC Ingress Connection issues.
+    """
+    _LOGGER = get_logger()
+    _LOGGER.info("Testing load API connectivity...")
+
+    # Get URL from environment variable (same as load_to_db uses)
+    load_api_url = os.getenv("DATA_IN_PIPELINE_LOAD_API_URL", "")
+    if not load_api_url:
+        _LOGGER.error("DATA_IN_PIPELINE_LOAD_API_URL environment variable not set")
+        return
+
+    # Ensure URL has a scheme
+    if not load_api_url.startswith(("http://", "https://")):
+        load_api_url = f"https://{load_api_url}"
+
+    _LOGGER.info(f"Load API URL: {load_api_url}")
+
+    # Extract domain from URL
+    parsed_url = urlparse(load_api_url)
+    domain = parsed_url.netloc or parsed_url.path.split("/")[0]
+    _LOGGER.info(f"Domain to resolve: {domain}")
+
+    # Test DNS resolution
+    try:
+        resolved_ip = socket.gethostbyname(domain)
+        _LOGGER.info(f"DNS resolution successful: {domain} -> {resolved_ip}")
+
+        # Check if IP is private (10.0.x.x range)
+        ip_obj = ipaddress.ip_address(resolved_ip)
+        is_private = ip_obj.is_private
+        is_vpc_range = resolved_ip.startswith("10.0.")
+
+        if is_private and is_vpc_range:
+            _LOGGER.info(
+                f"Resolved IP {resolved_ip} is in private VPC range (10.0.x.x)"
+            )
+        elif is_private:
+            _LOGGER.warning(
+                f"Resolved IP {resolved_ip} is private but not in expected VPC range (10.0.x.x)"
+            )
+        else:
+            _LOGGER.error(
+                f"Resolved IP {resolved_ip} is PUBLIC, not private. "
+                "VPC Ingress Connection DNS may not be working correctly."
+            )
+
+    except socket.gaierror:
+        _LOGGER.exception(f"DNS resolution failed for {domain}")
+        return
+    except Exception:
+        _LOGGER.exception("Error during DNS resolution")
+        return
+
+    # Get all IP addresses (if multiple)
+    try:
+        addr_info = socket.getaddrinfo(domain, None)
+        all_ips = {info[4][0] for info in addr_info}
+        _LOGGER.info(f"All resolved IPs: {all_ips}")
+    except Exception:
+        _LOGGER.exception("Could not get all IP addresses")
+
+    # Test HTTP connectivity
+    health_url = f"{load_api_url.rstrip('/')}/load/health"
+    _LOGGER.info(f"Testing HTTP connectivity to: {health_url}")
+
+    try:
+        response = requests.get(health_url, timeout=10, verify=True)
+        _LOGGER.info(
+            f"HTTP connectivity successful: {response.status_code} {response.reason}"
+        )
+    except requests.exceptions.Timeout:
+        _LOGGER.exception(
+            "HTTP connectivity timeout after 10 seconds. "
+            "This may indicate a routing or security group issue."
+        )
+    except requests.exceptions.ConnectionError:
+        _LOGGER.exception(
+            "HTTP connection error. "
+            "Check security groups, route tables, and VPC endpoint status."
+        )
+    except Exception:
+        _LOGGER.exception("Unexpected error during HTTP test")
+
+    _LOGGER.info("Connectivity test completed")
 
 
 @task(log_prints=True)
@@ -181,6 +281,9 @@ def etl_pipeline(ids: list[str] | None = None) -> list[str] | Exception:
     # Set flow_run_name early so all metrics (including extract) have it
     run_id = flow_run.get_name() or "unknown"
     pipeline_metrics.set_flow_run_name(run_id)
+
+    # Test connectivity to load API via VPC Ingress Connection
+    test_load_api_connectivity()
 
     run_db_migrations()
 
