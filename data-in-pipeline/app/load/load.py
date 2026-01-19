@@ -1,8 +1,8 @@
+import os
+
 import requests
 from data_in_models.models import Document
 from pydantic import TypeAdapter
-
-from app.util import get_ssm_parameter
 
 
 def load_to_db(documents: list[Document]) -> list[str] | Exception:
@@ -13,7 +13,7 @@ def load_to_db(documents: list[Document]) -> list[str] | Exception:
     """
 
     try:
-        load_api_base_url = get_ssm_parameter("/data-in-pipeline-load-api/url")
+        load_api_base_url = os.getenv("DATA_IN_PIPELINE_LOAD_API_URL", "")
         # Ensure URL has a scheme - App Runner URLs may not include it
         if not load_api_base_url.startswith(("http://", "https://")):
             load_api_base_url = f"https://{load_api_base_url}"

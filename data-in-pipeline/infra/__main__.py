@@ -581,13 +581,14 @@ vpc_ingress_connection = aws.apprunner.VpcIngressConnection(
     tags=tags,
 )
 
+load_api_base_url = vpc_ingress_connection.domain_name.apply(lambda d: f"https://{d}")
 data_in_pipeline_load_api_url = aws.ssm.Parameter(
     "data-in-pipeline-load-api-url",
     name="/data-in-pipeline-load-api/url",
     description="URL of the load API service (via VPC Ingress Connection)",
     type=aws.ssm.ParameterType.STRING,
     # Use VPC Ingress Connection domain name for private access
-    value=vpc_ingress_connection.domain_name.apply(lambda d: f"https://{d}"),
+    value=load_api_base_url,
 )
 
 # Service URL is not available when is_publicly_accessible=False
@@ -607,6 +608,7 @@ pulumi.export(
     "prefect_runtime_environment_variables",
     {
         "API_BASE_URL": config.require("api_base_url"),
+        "DATA_IN_PIPELINE_LOAD_API_URL": load_api_base_url,
         "DISABLE_OTEL_LOGGING": config.require("disable_otel_logging"),
         "OTEL_EXPORTER_OTLP_PROTOCOL": "http/protobuf",
         "OTEL_EXPORTER_OTLP_ENDPOINT": prefect_otel_endpoint,
