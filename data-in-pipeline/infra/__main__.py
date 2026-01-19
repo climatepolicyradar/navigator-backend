@@ -468,17 +468,28 @@ vpc_connector = aws.apprunner.VpcConnector(
 
 # Security group for VPC endpoint (ingress) - allows traffic from Prefect ECS tasks
 HTTP_PORT = 443
+orchestrator_stack = pulumi.StackReference(
+    f"climatepolicyradar/prefect_mvp/{'prod' if environment == 'production' else 'staging'}"
+)
+prefect_vpc_id = orchestrator_stack.get_output("prefect_vpc_id")
+prefect_security_group_id = orchestrator_stack.get_output("prefect_security_group_id")
+
+# Get Prefect ECS subnet - Interface endpoints work with a single subnet, though
+# multiple subnets (one per AZ) are recommended for high availability
+prefect_subnet_id = orchestrator_stack.get_output("prefect_ecs_service_subnet_id")
+prefect_subnet_ids = prefect_subnet_id.apply(lambda x: [x])
+
 vpc_endpoint_sg = aws.ec2.SecurityGroup(
     "data-in-pipeline-load-api-vpc-endpoint-sg",
-    vpc_id=vpc_id,
+    vpc_id=prefect_vpc_id,
     description="Security group for App Runner VPC endpoint ingress",
     ingress=[
         aws.ec2.SecurityGroupIngressArgs(
             from_port=HTTP_PORT,
             to_port=HTTP_PORT,
             protocol="tcp",
-            cidr_blocks=["10.0.0.0/8"],  # Allow from VPC CIDR - adjust if needed
-            description="Allow HTTPS from VPC",
+            security_groups=[prefect_security_group_id],
+            description="Allow HTTPS from Prefect ECS tasks",
         )
     ],
     egress=[
@@ -492,12 +503,13 @@ vpc_endpoint_sg = aws.ec2.SecurityGroup(
 # VPC endpoint for App Runner (PrivateLink) - enables private access to App Runner service
 # Note: App Runner's VPC endpoint service does not support private DNS, so we disable it
 # The VPC Ingress Connection will still provide a domain name for accessing the service
+# Using single subnet from Prefect stack
 vpc_endpoint = aws.ec2.VpcEndpoint(
     "data-in-pipeline-load-api-vpc-endpoint",
-    vpc_id=vpc_id,
+    vpc_id=prefect_vpc_id,
     service_name="com.amazonaws.eu-west-1.apprunner.requests",
     vpc_endpoint_type="Interface",
-    subnet_ids=private_subnets,
+    subnet_ids=prefect_subnet_ids,
     security_group_ids=[vpc_endpoint_sg.id],
     private_dns_enabled=False,  # App Runner service doesn't support private DNS
     tags=tags,
@@ -576,27 +588,29 @@ vpc_ingress_connection = aws.apprunner.VpcIngressConnection(
     name=f"data-in-pipeline-load-api-vic-{environment}",
     service_arn=data_in_pipeline_load_api_apprunner_service.arn,
     ingress_vpc_configuration=aws.apprunner.VpcIngressConnectionIngressVpcConfigurationArgs(
-        vpc_id=vpc_id,
+        vpc_id=orchestrator_stack.get_output("prefect_vpc_id"),
         vpc_endpoint_id=vpc_endpoint.id,
     ),
     tags=tags,
 )
 
-load_api_base_url = vpc_ingress_connection.domain_name.apply(lambda d: f"https://{d}")
+# Use VPC Endpoint DNS entry domain name for private access
+load_api_base_url = vpc_endpoint.dns_entries.apply(
+    lambda dns_entries: f"https://{dns_entries[0].dns_name}"
+)
 data_in_pipeline_load_api_url = aws.ssm.Parameter(
     "data-in-pipeline-load-api-url",
     name="/data-in-pipeline-load-api/url",
     description="URL of the load API service (via VPC Ingress Connection)",
     type=aws.ssm.ParameterType.STRING,
-    # Use VPC Ingress Connection domain name for private access
-    value=load_api_base_url,
+    value=load_api_base_url.apply(lambda url: url),
 )
 
 # Service URL is not available when is_publicly_accessible=False
-# Use VPC Ingress Connection domain instead (exported below)
+# Use VPC Endpoint DNS entry domain name instead (exported below)
 pulumi.export(
-    "data-in-pipeline-load-api-vpc-ingress-connection-domain",
-    vpc_ingress_connection.domain_name,
+    "data-in-pipeline-load-api-private-vpc-endpoint-domain",
+    vpc_endpoint.dns_entries.apply(lambda dns_entries: dns_entries[0].dns_name),
 )
 
 #######################################################################
