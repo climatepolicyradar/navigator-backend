@@ -1,0 +1,64 @@
+{
+  "scenarios": {
+    "basic-search-browse": {
+      "executor": "ramping-vus",
+      "startvus": 0,
+      "exec": "basic_search_browse_scenario",
+      "stages": [
+        { "duration": "30s", "target": 1 },
+        { "duration": "30s", "target": 2 },
+        { "duration": "30s", "target": 0 }
+      ]
+    },
+    "search-browse-average-load": {
+      "executor": "ramping-vus",
+      "startvus": 0,
+      "exec": "basic_search_browse_scenario",
+      "stages": [
+        { "duration": "2m", "target": 2 },
+        { "duration": "5m", "target": 4 },
+        { "duration": "2m", "target": 0 }
+      ]
+    },
+    "search-browse-ccc-load": {
+      "executor": "ramping-vus",
+      "startvus": 0,
+      "exec": "basic_search_browse_scenario",
+      "stages": [
+        { "duration": "2m", "target": 2 },
+        { "duration": "5m", "target": 8 },
+        { "duration": "2m", "target": 0 }
+      ]
+    },
+    "search-browse-low-stress-load": {
+      "executor": "ramping-vus",
+      "startvus": 0,
+      "exec": "basic_search_browse_scenario",
+      "stages": [
+        { "duration": "2m", "target": 8 },
+        { "duration": "5m", "target": 16 },
+        { "duration": "2m", "target": 0 }
+      ]
+    },
+    "search-browse-mid-stress-load": {
+      "executor": "ramping-vus",
+      "startvus": 0,
+      "exec": "basic_search_browse_scenario",
+      "stages": [
+        { "duration": "2m", "target": 16 },
+        { "duration": "5m", "target": 32 },
+        { "duration": "2m", "target": 0 }
+      ]
+    },
+    "search-browse-high-stress-load": {
+      "executor": "ramping-vus",
+      "startvus": 0,
+      "exec": "basic_search_browse_scenario",
+      "stages": [
+        { "duration": "2m", "target": 32 },
+        { "duration": "5m", "target": 64 },
+        { "duration": "2m", "target": 0 }
+      ]
+    }
+  }
+}
