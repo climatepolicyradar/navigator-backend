@@ -45,7 +45,7 @@ def get_url() -> str:
         value is None for value in [db_user, db_password, db_host, db_port, db_name]
     ):
         raise ValueError("Environment variables not set")
-    db_url = f"postgresql+psycopg://{db_user}:{db_password}@{db_host}:{db_port}/{db_name}?sslmode=require"
+    db_url = f"postgresql+psycopg2://{db_user}:{db_password}@{db_host}:{db_port}/{db_name}?sslmode=prefer"
     config.set_main_option("sqlalchemy.url", db_url)
     return db_url
 
