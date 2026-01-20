@@ -1,6 +1,24 @@
+import os
+
 import pytest
+from pytest_alembic.config import Config as PytestAlembicConfig
 from sqlmodel import SQLModel, create_engine
 from testcontainers.postgres import PostgresContainer
+
+
+@pytest.fixture
+def alembic_config():
+    """Override this fixture to configure the exact alembic context setup required."""
+    root_dir = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
+    alembic_dir = os.path.join(root_dir, "app", "alembic")
+
+    return PytestAlembicConfig(
+        config_options={
+            "file": os.path.join(alembic_dir, "alembic.ini"),
+            "script_location": os.path.join(alembic_dir, "migrations"),
+            "include_schemas": True,
+        }
+    )
 
 
 @pytest.fixture(scope="session")
