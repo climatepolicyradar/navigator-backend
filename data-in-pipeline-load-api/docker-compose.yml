@@ -96,7 +96,9 @@ services:
         --project,
         data-in-pipeline-load-api,
         pytest,
-        data-in-pipeline-load-api,
+        data-in-pipeline-load-api/tests,
+        -m,
+        not alembic,
         --color=yes,
         -v,
       ]

@@ -1,8 +1,9 @@
 from fastapi import APIRouter, Depends, HTTPException, status
 
+from app.alembic.run_migrations import run_migrations
 from app.models import Document
 from app.repository import check_db_health
-from app.session import get_db
+from app.session import get_db, get_engine
 from app.settings import settings
 
 # Create router with /load prefix
@@ -31,3 +32,8 @@ def health_check(db=Depends(get_db)):
 @router.post("/", response_model=list[str], status_code=status.HTTP_201_CREATED)
 def create_document(documents: list[Document]):
     return [doc.id for doc in documents]
+
+
+@router.post("/run-migrations")
+def run_schema_migrations(engine=Depends(get_engine)):
+    run_migrations(engine)
