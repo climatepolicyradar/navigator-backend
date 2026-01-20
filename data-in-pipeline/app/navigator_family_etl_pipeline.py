@@ -1,4 +1,5 @@
 import ipaddress
+import json
 import os
 import socket
 from datetime import datetime
@@ -350,7 +351,19 @@ def etl_pipeline(ids: list[str] | None = None) -> list[str] | Exception:
         _LOGGER.error(f"Load failed: {loaded}")
         pipeline_metrics.record_error(Operation.LOAD, ErrorType.STORAGE)
         pipeline_metrics.record_processed(PipelineType.FAMILY, Status.FAILURE)
-        return Exception(f"Transformation failed {loaded}")
+        return Exception(f"Load failed {loaded}")
 
     pipeline_metrics.record_processed(PipelineType.FAMILY, Status.SUCCESS)
+    _LOGGER.info("ETL pipeline completed successfully")
+
+    # TODO: make this number configurable in prefect
+    RESULT_LOG_LIMIT = 100
+    if len(loaded) > RESULT_LOG_LIMIT:
+        upload_to_s3(
+            json.dumps(loaded),
+            bucket="cpr-cache",
+            key=f"pipelines/data-in-pipeline/navigator_family/{run_id}-result.json",
+        )
+    else:
+        _LOGGER.info("Loaded document IDs: %s", loaded)
     return loaded
