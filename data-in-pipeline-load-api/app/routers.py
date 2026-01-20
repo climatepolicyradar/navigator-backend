@@ -29,7 +29,7 @@ def health_check(db=Depends(get_db)):
     return {"status": "ok", "version": settings.github_sha}
 
 
-@router.post("/", response_model=list[str], status_code=status.HTTP_201_CREATED)
+@router.post("", response_model=list[str], status_code=status.HTTP_201_CREATED)
 def create_document(documents: list[Document]):
     return [doc.id for doc in documents]
 
