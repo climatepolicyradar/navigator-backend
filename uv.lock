@@ -526,6 +526,7 @@ dev = [
     { name = "pytest-alembic" },
     { name = "pytest-mock-resources" },
     { name = "python-on-whales" },
+    { name = "testcontainers" },
     { name = "types-sqlalchemy" },
     { name = "uv" },
 ]
@@ -555,6 +556,7 @@ dev = [
     { name = "pytest-alembic", specifier = ">=0.12.1" },
     { name = "pytest-mock-resources", specifier = ">=2.12.4" },
     { name = "python-on-whales", specifier = ">=0.79.0" },
+    { name = "testcontainers", extras = ["postgres"], specifier = ">=4.14.0" },
     { name = "types-sqlalchemy", specifier = ">=1.4.53.38" },
     { name = "uv", specifier = ">=0.9.2" },
 ]

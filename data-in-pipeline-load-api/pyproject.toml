@@ -17,7 +17,6 @@ dependencies = [
   "alembic-utils>=0.8.8",
   "sqlmodel>=0.0.31",
   "data-in-models",
-
 ]
 
 [tool.uv.sources]
@@ -33,4 +32,5 @@ dev = [
   "pytest-alembic>=0.12.1",
   "pytest-mock-resources>=2.12.4",
   "python-on-whales>=0.79.0",
+  "testcontainers[postgres]>=4.14.0",
 ]

@@ -31,3 +31,8 @@ def health_check(db=Depends(get_db)):
 @router.post("/", response_model=list[str], status_code=status.HTTP_201_CREATED)
 def create_document(documents: list[Document]):
     return [doc.id for doc in documents]
+
+
+@router.post("/run-migrations")
+def run_migrations():
+    return {"status": "ok"}
