@@ -21,6 +21,7 @@ def load_to_db(documents: list[Document]) -> list[str] | Exception:
             url=f"{load_api_base_url}/load/",
             data=TypeAdapter(list[Document]).dump_json(documents),
             timeout=10,
+            verify=False,
         )
         response.raise_for_status()
     except Exception as e:
