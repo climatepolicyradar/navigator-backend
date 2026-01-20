@@ -4,7 +4,7 @@ import sys
 from pathlib import Path
 
 from api import FastAPITelemetry, ServiceManifest, SQLAlchemyTelemetry, TelemetryConfig
-from fastapi import FastAPI
+from fastapi import FastAPI, Request
 
 from app.routers import router
 from app.session import get_engine
@@ -52,6 +52,27 @@ app = FastAPI(
     redoc_url="/load/redoc",
     openapi_url="/load/openapi.json",
 )
+
+
+# Add debugging logs for routing
+@app.middleware("http")
+async def log_requests(request: Request, call_next):
+    try:
+        body_bytes = await request.body()
+        body_text = body_bytes.decode("utf-8") if body_bytes else "<empty>"
+    except Exception:
+        body_text = "<could not read body>"
+
+    print("=== Incoming Request ===")
+    print(f"METHOD: {request.method}")
+    print(f"PATH: {request.url.path}")
+    print(f"HOST: {request.headers.get('host')}")
+    print(f"BODY: {body_text}")
+    print("========================")
+
+    response = await call_next(request)
+    return response
+
 
 # Include router in app
 app.include_router(router)
