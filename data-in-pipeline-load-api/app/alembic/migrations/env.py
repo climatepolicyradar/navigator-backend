@@ -3,20 +3,15 @@ import os
 from logging.config import fileConfig
 
 from alembic import context
+from data_in_models.src.base import Base
 
 # These are required to be in context for SQLModel.metadata
-from data_in_models.src.data_in_models.models import Document  # noqa
-from data_in_models.src.data_in_models.models import DocumentDocumentLink  # noqa
-from data_in_models.src.data_in_models.models import DocumentLabelLink  # noqa
-from data_in_models.src.data_in_models.models import Item  # noqa
-from data_in_models.src.data_in_models.models import Label  # noqa
 from sqlalchemy import engine_from_config, pool
 from sqlmodel import SQLModel
 
-# from app.run_migrations.base import Base
-# target_metadata = Base.metadata
-
 _LOGGER = logging.getLogger(__name__)
+
+target_metadata = Base.metadata
 
 # this is the Alembic Config object, which provides
 # access to the values within the .ini file in use.

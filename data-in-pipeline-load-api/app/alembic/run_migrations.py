@@ -25,17 +25,13 @@ def run_migrations(engine: Engine) -> None:
     # Path of the library
     script_directory = get_library_path()
 
-    print(f"script_directory: {script_directory}")
-
     # Path to alembic.ini
     alembic_ini_path = f"{script_directory}/alembic.ini"
     alembic_cfg = Config(alembic_ini_path)
 
-    print(f"alembic_ini_path: {alembic_ini_path}")
-
     # Set the script location
     alembic_cfg.set_main_option("script_location", f"{script_directory}/migrations")
-    print(f"alembic_cfg: {alembic_cfg}")
+
     # Run the migration
     with engine.begin() as connection:
         alembic_cfg.attributes["connection"] = connection
