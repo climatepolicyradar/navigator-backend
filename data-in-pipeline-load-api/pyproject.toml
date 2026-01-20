@@ -15,10 +15,14 @@ dependencies = [
   "api",
   "alembic>=1.17.0",
   "alembic-utils>=0.8.8",
+  "sqlmodel>=0.0.31",
+  "data-in-models",
+
 ]
 
 [tool.uv.sources]
 api = { workspace = true }
+data-in-models = { workspace = true }
 
 [dependency-groups]
 dev = [
