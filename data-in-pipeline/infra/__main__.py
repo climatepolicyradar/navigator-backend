@@ -473,13 +473,17 @@ orchestrator_stack = pulumi.StackReference(
 )
 prefect_vpc_id = orchestrator_stack.get_output("prefect_vpc_id")
 prefect_security_group_id = orchestrator_stack.get_output("prefect_security_group_id")
-pulumi.export("prefect_security_group_id", prefect_security_group_id)
-pulumi.export("prefect_vpc_id", prefect_vpc_id)
+prefect_ecs_service_subnet_id = orchestrator_stack.get_output(
+    "prefect_ecs_service_subnet_id"
+)
 
 # Get Prefect ECS subnet - Interface endpoints work with a single subnet, though
 # multiple subnets (one per AZ) are recommended for high availability
-prefect_subnet_id = orchestrator_stack.get_output("prefect_ecs_service_subnet_id")
-prefect_subnet_ids = prefect_subnet_id.apply(lambda x: [x])
+prefect_subnet_ids = prefect_ecs_service_subnet_id.apply(lambda x: [x])
+
+pulumi.export("prefect_vpc_id", prefect_vpc_id)
+pulumi.export("prefect_security_group_id", prefect_security_group_id)
+pulumi.export("prefect_ecs_service_subnet_id", prefect_ecs_service_subnet_id)
 
 vpc_endpoint_sg = aws.ec2.SecurityGroup(
     "data-in-pipeline-load-api-vpc-endpoint-sg",
