@@ -13,6 +13,8 @@ dependencies = [
   "sqlalchemy-utils>=0.42.0",
   "psycopg2-binary>=2.9.11",
   "api",
+  "alembic>=1.17.0",
+  "alembic-utils>=0.8.8",
 ]
 
 [tool.uv.sources]
@@ -24,4 +26,7 @@ dev = [
   "types-sqlalchemy>=1.4.53.38",
   "uv>=0.9.2",
   "moto[s3,ssm,secretsmanager]>=5.1.6",
+  "pytest-alembic>=0.12.1",
+  "pytest-mock-resources>=2.12.4",
+  "python-on-whales>=0.79.0",
 ]
