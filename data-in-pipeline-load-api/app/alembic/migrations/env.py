@@ -3,15 +3,13 @@ import os
 from logging.config import fileConfig
 
 from alembic import context
-from data_in_models.src.base import Base
 
 # These are required to be in context for SQLModel.metadata
 from sqlalchemy import engine_from_config, pool
+from sqlalchemy.orm import declarative_base
 from sqlmodel import SQLModel
 
 _LOGGER = logging.getLogger(__name__)
-
-target_metadata = Base.metadata
 
 # this is the Alembic Config object, which provides
 # access to the values within the .ini file in use.
@@ -22,10 +20,9 @@ config = context.config
 if config.config_file_name is not None:
     fileConfig(config.config_file_name)
 
-# Metadata for the database models, means we can rely
-# on SQLModel's automatic table discovery and model
-# history.
-# Add SQLModel metadata to the context
+# Declarative base bound to the global SQLModel metadata. Any SQLModel or
+# SQLAlchemy ORM models that use this metadata will be visible to Alembic.
+Base = declarative_base(metadata=SQLModel.metadata)
 target_metadata = SQLModel.metadata
 
 # other values from the config, defined by the needs of env.py,
