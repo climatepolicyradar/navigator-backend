@@ -65,6 +65,8 @@ jobs:
     steps:
       - uses: actions/checkout@v6
       - uses: extractions/setup-just@v3
+      - uses: astral-sh/setup-uv@v7
+      - run: uv sync --project ${{ matrix.service }}
       - run: just test ${{ matrix.service }}
 
   deploy:
