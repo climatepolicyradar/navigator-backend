@@ -618,7 +618,9 @@ data_in_pipeline_load_api_apprunner_service = aws.apprunner.Service(
 # Use VPC Ingress Connection domain name for private access
 # The VPC Ingress Connection provides the domain name that routes through the VPC endpoint
 # to the App Runner service - this is different from the VPC endpoint DNS itself
-load_api_base_url = f"https://{data_in_pipeline_load_api_apprunner_service.service_url}"
+load_api_base_url = data_in_pipeline_load_api_apprunner_service.service_url.apply(
+    lambda url: f"https://{url}"
+)
 # vpc_ingress_connection.domain_name.apply(
 #     lambda domain: f"https://{domain}"
 # )
