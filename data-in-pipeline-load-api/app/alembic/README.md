@@ -25,7 +25,29 @@ uv run alembic -c app/alembic/alembic.ini --help
 
 ---
 
-## Environment variables
+## Environments and database targets
+
+There are **two distinct ways** Alembic talks to a database in this service:
+
+- **CLI / local operations (revision generation, manual upgrade):**  
+  Alembic creates its own engine using the URL built in `migrations/env.py` via
+  `get_url()`. This is controlled by environment variables (below).
+- **Runtime migrations (from the FastAPI endpoint):**  
+  The application constructs an engine in `app.session` from the `Settings`
+  object and passes an existing connection into Alembic via `run_migrations.py`.
+  In this case `env.py` **does not** call `get_url()`; it simply uses the
+  supplied connection.
+
+This split allows you to:
+
+- Point CLI operations at a **local Postgres** instance for safe autogeneration
+  of revisions.
+- Have the running service apply migrations to whatever database it is
+  configured to talk to (for example a dev, staging, or production cluster).
+
+---
+
+## Environment variables for CLI usage
 
 `migrations/env.py` constructs the database URL from environment variables
 rather than from `alembic.ini`. Before running any Alembic command you must
@@ -95,7 +117,8 @@ After generating a revision:
 
 ## Applying and rolling back migrations manually
 
-To upgrade the database to the latest revision:
+To upgrade a database to the latest revision **from the CLI**, using the URL
+defined by the environment variables above:
 
 ```bash
 uv run alembic \
@@ -138,6 +161,40 @@ uv run alembic \
 The application code uses `run_migrations.py` to apply migrations on start‑up by
 calling `command.upgrade(..., "head")` with the pre‑configured `alembic.ini` and
 `migrations/` location.
+
+At runtime the application does **not** rely on `get_url()` or its environment
+variables. Instead:
+
+- `app.session` builds a SQLAlchemy engine from `Settings`, using:
+  - `db_master_username`
+  - `managed_db_password`
+  - `load_database_url`
+  - `db_port`
+  - `db_name`
+  - `db_sslmode`
+- `app.routers` exposes an endpoint:
+
+  ```python
+  @router.post("/run-migrations")
+  def run_schema_migrations(engine=Depends(get_engine)):
+      run_migrations(engine)
+  ```
+
+- `run_migrations(engine)` in this Alembic package:
+  - Loads `alembic.ini` and points `script_location` at
+    `app/alembic/migrations`.
+  - Opens a transaction on the provided engine and calls
+    `command.upgrade(..., "head")`.
+  - Causes `env.py` to see an existing connection and therefore skip calling
+    `get_url()`.
+
+As a result:
+
+- **CLI commands** hit the database specified by `AURORA_WRITER_ENDPOINT` etc.
+- **The `/load/run-migrations` endpoint** hits the database configured for the
+  running service via `Settings` (for example the `db` service in
+  `docker-compose.yml`, or whatever environment variables are injected in
+  AppRunner / ECS).
 
 ---
 
