@@ -508,6 +508,7 @@ dependencies = [
     { name = "api" },
     { name = "boto3" },
     { name = "botocore" },
+    { name = "data-in-models" },
     { name = "fastapi", extra = ["standard"] },
     { name = "psycopg2-binary" },
     { name = "pydantic" },
@@ -515,6 +516,7 @@ dependencies = [
     { name = "requests" },
     { name = "sqlalchemy" },
     { name = "sqlalchemy-utils" },
+    { name = "sqlmodel" },
 ]
 
 [package.dev-dependencies]
@@ -535,6 +537,7 @@ requires-dist = [
     { name = "api", editable = "api" },
     { name = "boto3", specifier = ">=1.40.51" },
     { name = "botocore", specifier = ">=1.40.51" },
+    { name = "data-in-models", editable = "data-in-models" },
     { name = "fastapi", extras = ["standard"], specifier = ">=0.115.14" },
     { name = "psycopg2-binary", specifier = ">=2.9.11" },
     { name = "pydantic", specifier = ">=2.12.1" },
@@ -542,6 +545,7 @@ requires-dist = [
     { name = "requests", specifier = ">=2.32.5" },
     { name = "sqlalchemy", specifier = ">=2.0.44" },
     { name = "sqlalchemy-utils", specifier = ">=0.42.0" },
+    { name = "sqlmodel", specifier = ">=0.0.31" },
 ]
 
 [package.metadata.requires-dev]
