@@ -7,7 +7,8 @@ from prefect import Flow
 from prefect.blocks.core import Block
 from prefect.docker.docker_image import DockerImage
 from prefect_aws.workers.ecs_worker import ECSVariables
-from pydantic import BaseModel
+from pulumi.automation import OutputMap
+from pydantic import BaseModel, model_validator
 
 from app.bootstrap_telemetry import get_logger
 from app.navigator_family_etl_pipeline import etl_pipeline
@@ -26,6 +27,12 @@ class PulumiStackOutputs(BaseModel):
     prefect_runtime_environment_variables: dict[str, Any] = {}
     prefect_secrets_arns: dict[str, str] = {}
     prefect_ssm_secrets: dict[str, str] = {}
+
+    @model_validator(mode="before")
+    @classmethod
+    def from_pulumi_outputs(cls, output_map: OutputMap):
+        output_dict = {k: v.value for k, v in output_map.items()}
+        return output_dict
 
 
 def _get_pulumi_stack_outputs(aws_env: str) -> PulumiStackOutputs:
@@ -47,12 +54,8 @@ def _get_pulumi_stack_outputs(aws_env: str) -> PulumiStackOutputs:
             project_name="data-in-pipeline",
             work_dir=str(infra_dir),
         )
-        outputs = stack.outputs()
 
-        # Convert Pulumi OutputMap to a standard dict for Pydantic
-        outputs_dict = {k: v.value for k, v in outputs.items()}
-
-        stack_outputs = PulumiStackOutputs.model_validate(outputs_dict)
+        stack_outputs = PulumiStackOutputs.model_validate(stack.outputs())
 
         logger.info(
             "Retrieved %s environment variables and %s secrets from Pulumi stack.",
