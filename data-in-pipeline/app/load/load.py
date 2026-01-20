@@ -19,7 +19,7 @@ def load_to_db(documents: list[Document]) -> list[str] | Exception:
             load_api_base_url = f"http://{load_api_base_url}"
         response = requests.post(
             url=f"{load_api_base_url}/load/",
-            json=TypeAdapter(list[Document]).dump_json(documents),
+            json=TypeAdapter(list[Document]).dump_python(documents),
             timeout=10,
         )
         response.raise_for_status()
