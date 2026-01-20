@@ -57,12 +57,11 @@ app = FastAPI(
 # Add debugging logs for routing
 @app.middleware("http")
 async def log_requests(request: Request, call_next):
-    try:
-        body_bytes = await request.body()
-        body_text = body_bytes.decode("utf-8") if body_bytes else "<empty>"
-    except Exception:
-        body_text = "<could not read body>"
-
+    # read the body
+    body_bytes = await request.body()
+    # decode for logging
+    body_text = body_bytes.decode("utf-8") if body_bytes else "<empty>"
+    # log request details
     print("=== Incoming Request ===")
     print(f"METHOD: {request.method}")
     print(f"PATH: {request.url.path}")
@@ -70,6 +69,12 @@ async def log_requests(request: Request, call_next):
     print(f"BODY: {body_text}")
     print("========================")
 
+    # set the body back so downstream handlers can read it
+    async def receive():
+        return {"type": "http.request", "body": body_bytes}
+
+    request._receive = receive  # override the request's receive method
+    # continue processing
     response = await call_next(request)
     return response
 
