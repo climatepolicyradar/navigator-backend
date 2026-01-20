@@ -34,3 +34,8 @@ dev = [
   "python-on-whales>=0.79.0",
   "testcontainers[postgres]>=4.14.0",
 ]
+
+[tool.pytest.ini_options]
+markers = [
+  "alembic: marks tests as alembic (deselect with '-m \"not alembic\"')",
+]

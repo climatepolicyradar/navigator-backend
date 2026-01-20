@@ -1,0 +1,7 @@
+test-override: run-alembic-tests run-non-alembic-tests
+
+run-alembic-tests:
+    uv run pytest -vv tests/test_run_migrations.py -m 'alembic'
+
+run-non-alembic-tests:
+    docker compose -f ./docker-compose.yml --profile test up --abort-on-container-exit --exit-code-from test --remove-orphans;
