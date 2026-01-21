@@ -33,13 +33,16 @@ def test_process_document_updates_flow_with_invalid_id(mock_upload):
     assert process_document_updates(["CCLW.INVALID_ID"]) == []
 
 
+@patch("app.navigator_family_etl_pipeline.run_db_migrations")
 @patch("app.navigator_family_etl_pipeline.upload_to_s3")
 @patch("app.navigator_family_etl_pipeline.NavigatorConnector")
 @patch("app.load.load.requests.post")
 def test_process_family_updates_flow_multiple_families(
-    mock_post, mock_connector_class, mock_upload
+    mock_post, mock_connector_class, mock_upload, mock_run_migrations
 ):
     """Test ETL pipeline with multiple families across pages."""
+    mock_run_migrations.return_value = None
+
     mock_upload.return_value = None
 
     mock_connector_instance = MagicMock()
@@ -143,12 +146,26 @@ def test_process_family_updates_flow_multiple_families(
     assert result[0] == "1"
 
 
+@patch("app.navigator_family_etl_pipeline.run_db_migrations")
+def test_process_family_updates_migrations_failure(mock_run_migrations):
+    """Test ETL pipeline when extraction fails completely."""
+    mock_run_migrations.side_effect = Exception("500 Internal Server Error")
+
+    # Simulate migrations failure
+    result = etl_pipeline()
+
+    assert isinstance(result, Exception)
+
+
+@patch("app.navigator_family_etl_pipeline.run_db_migrations")
 @patch("app.navigator_family_etl_pipeline.upload_to_s3")
 @patch("app.navigator_family_etl_pipeline.NavigatorConnector")
 def test_process_family_updates_flow_extraction_failure(
-    mock_connector_class, mock_upload
+    mock_connector_class, mock_upload, mock_run_migrations
 ):
     """Test ETL pipeline when extraction fails completely."""
+    mock_run_migrations.return_value = None
+
     mock_upload.return_value = None
 
     mock_connector_instance = MagicMock()
@@ -169,10 +186,15 @@ def test_process_family_updates_flow_extraction_failure(
     assert isinstance(result, Exception)
 
 
+@patch("app.navigator_family_etl_pipeline.run_db_migrations")
 @patch("app.navigator_family_etl_pipeline.upload_to_s3")
 @patch("app.navigator_family_etl_pipeline.NavigatorConnector")
 @patch("app.load.load.requests.post")
-def test_etl_pipeline_load_failure(mock_post, mock_connector_class, mock_upload):
+def test_etl_pipeline_load_failure(
+    mock_post, mock_connector_class, mock_upload, mock_run_migrations
+):
+    mock_run_migrations.return_value = None
+
     mock_upload.return_value = None
 
     mock_connector_instance = MagicMock()
