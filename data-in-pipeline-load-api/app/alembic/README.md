@@ -89,9 +89,9 @@ Alembic is configured to autogenerate migrations from the global
 4. Run Alembic `revision --autogenerate`:
 
    ```bash
+   cd app/alembic \
    uv run alembic \
-     -c app/alembic/alembic.ini \
-     revision --autogenerate \
+     revision --autogenerate --rev-id 001 \
      -m "short description of the change"
    ```
 
