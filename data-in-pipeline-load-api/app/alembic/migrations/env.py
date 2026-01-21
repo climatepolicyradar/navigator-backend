@@ -2,6 +2,7 @@ import logging
 import os
 from logging.config import fileConfig
 
+import data_in_models  # noqa: F401
 from alembic import context
 
 # These are required to be in context for SQLModel.metadata
