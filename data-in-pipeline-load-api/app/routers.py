@@ -2,7 +2,7 @@ import logging
 
 from fastapi import APIRouter, Depends, HTTPException, status
 
-from app.alembic.run_migrations import create_initial_migration, run_migrations
+from app.alembic.run_migrations import run_migrations
 from app.models import Document
 from app.repository import check_db_health
 from app.session import get_db, get_engine
@@ -50,27 +50,3 @@ def run_schema_migrations(engine=Depends(get_engine)):
         )
 
     return {"status": "ok", "detail": "Migrations ran successfully"}
-
-
-@router.post(
-    "/create-initial-migration",
-    status_code=status.HTTP_201_CREATED,
-)
-def run_initial_migration(engine=Depends(get_engine)):
-    try:
-        create_initial_migration(engine)
-
-    except HTTPException:
-        raise
-
-    except Exception:
-        _LOGGER.exception("Initial migration creation failed")
-        raise HTTPException(
-            status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
-            detail="Failed to create initial migration",
-        )
-
-    return {
-        "status": "ok",
-        "detail": "Initial migration created successfully",
-    }
