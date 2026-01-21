@@ -2,7 +2,7 @@ import logging
 
 from fastapi import APIRouter, Depends, HTTPException, status
 
-from app.alembic.run_migrations import run_migrations
+from app.alembic.run_migrations import NoMigrationsToApply, run_migrations
 from app.models import Document
 from app.repository import check_db_health
 from app.session import get_db, get_engine
@@ -50,6 +50,9 @@ def schema_info():
 def run_schema_migrations(engine=Depends(get_engine)):
     try:
         run_migrations(engine)
+    except NoMigrationsToApply:
+        return {"status": "noop", "detail": "No schema changes detected"}
+
     except Exception as e:
         _LOGGER.exception(f"Migration failed to run : {e}")
         raise HTTPException(

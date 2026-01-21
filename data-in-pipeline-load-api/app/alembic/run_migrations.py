@@ -3,9 +3,17 @@ import os
 
 from alembic import command
 from alembic.config import Config
+from alembic.runtime.migration import MigrationContext
+from alembic.script import ScriptDirectory
 from sqlalchemy.engine import Engine
 
 _LOGGER = logging.getLogger(__name__)
+
+
+class NoMigrationsToApply(Exception):
+    """Schema is already up to date."""
+
+    pass
 
 
 def get_library_path() -> str:
@@ -21,6 +29,7 @@ def run_migrations(engine: Engine) -> None:
 
     Call through subprocess as opposed to the alembic command function as the server
     startup never completed when using the alembic solution.
+    Raises NoMigrationsToApply if the DB is already at head.
     """
     # Path of the library
     script_directory = get_library_path()
@@ -36,6 +45,20 @@ def run_migrations(engine: Engine) -> None:
     with engine.begin() as connection:
         _LOGGER.info("Checking for schema changes...")
         alembic_cfg.attributes["connection"] = connection
+
+        # ---- IDEMPOTENCY CHECK ----
+        migration_ctx = MigrationContext.configure(connection)
+        current_rev = migration_ctx.get_current_revision()
+
+        script = ScriptDirectory.from_config(alembic_cfg)
+        head_rev = script.get_current_head()
+
+        _LOGGER.info("Current revision=%s, Head revision=%s", current_rev, head_rev)
+
+        if current_rev == head_rev:
+            _LOGGER.info("No schema changes detected")
+            raise NoMigrationsToApply()
+
         try:
             _LOGGER.info("Applying migrations...")
             command.upgrade(alembic_cfg, "head")
