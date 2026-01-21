@@ -34,5 +34,12 @@ def run_migrations(engine: Engine) -> None:
 
     # Run the migration
     with engine.begin() as connection:
+        _LOGGER.info("Checking for schema changes...")
         alembic_cfg.attributes["connection"] = connection
-        command.upgrade(alembic_cfg, "head")
+        try:
+            _LOGGER.info("Applying migrations...")
+            command.upgrade(alembic_cfg, "head")
+            _LOGGER.info("Migrations applied successfully")
+        except Exception as e:
+            _LOGGER.exception("Error creating migration: %s", e)
+            raise e
