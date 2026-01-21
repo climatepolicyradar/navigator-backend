@@ -2,6 +2,7 @@ from datetime import UTC, datetime
 from http import HTTPStatus
 from unittest.mock import MagicMock, patch
 
+import pytest
 from data_in_models.models import Document
 from requests.exceptions import HTTPError
 
@@ -152,9 +153,8 @@ def test_process_family_updates_migrations_failure(mock_run_migrations):
     mock_run_migrations.side_effect = Exception("500 Internal Server Error")
 
     # Simulate migrations failure
-    result = etl_pipeline()
-
-    assert isinstance(result, Exception)
+    with pytest.raises(Exception, match="500 Internal Server Error"):
+        etl_pipeline()
 
 
 @patch("app.navigator_family_etl_pipeline.run_db_migrations")
