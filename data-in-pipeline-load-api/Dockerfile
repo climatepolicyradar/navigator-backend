@@ -24,6 +24,7 @@ COPY pyproject.toml uv.lock /app/
 # Copy application code
 COPY $SERVICE /app/$SERVICE/
 COPY ./api /app/api/
+COPY ./data-in-models /app/data-in-models/
 
 WORKDIR /app
 RUN uv sync --project $SERVICE

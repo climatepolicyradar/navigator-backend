@@ -1,12 +1,17 @@
+import logging
+
 from fastapi import APIRouter, Depends, HTTPException, status
 
+from app.alembic.run_migrations import run_migrations
 from app.models import Document
 from app.repository import check_db_health
-from app.session import get_db
+from app.session import get_db, get_engine
 from app.settings import settings
 
 # Create router with /load prefix
 router = APIRouter(prefix="/load")
+
+_LOGGER = logging.getLogger(__name__)
 
 
 @router.get("/health")
@@ -28,6 +33,28 @@ def health_check(db=Depends(get_db)):
     return {"status": "ok", "version": settings.github_sha}
 
 
-@router.post("/", response_model=list[str], status_code=status.HTTP_201_CREATED)
+@router.post("", response_model=list[str], status_code=status.HTTP_201_CREATED)
 def create_document(documents: list[Document]):
     return [doc.id for doc in documents]
+
+
+@router.get("/schema-info")
+def schema_info():
+    return {
+        "current_version": "1.0.0",
+        "head_version": "1.0.0",
+    }
+
+
+@router.post("/run-migrations")
+def run_schema_migrations(engine=Depends(get_engine)):
+    try:
+        run_migrations(engine)
+    except Exception as e:
+        _LOGGER.exception(f"Migration failed to run : {e}")
+        raise HTTPException(
+            status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
+            detail="Failed to run migrations",
+        )
+
+    return {"status": "ok", "detail": "Migrations ran successfully"}
