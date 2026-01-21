@@ -4,10 +4,16 @@ from logging.config import fileConfig
 
 import data_in_models  # noqa: F401
 from alembic import context
+from data_in_models.db_models import (  # noqa: F401
+    Document,
+    DocumentDocumentLink,
+    DocumentLabelLink,
+    Item,
+    Label,
+)
 
 # These are required to be in context for SQLModel.metadata
 from sqlalchemy import engine_from_config, pool
-from sqlalchemy.orm import declarative_base
 from sqlmodel import SQLModel
 
 _LOGGER = logging.getLogger(__name__)
@@ -23,7 +29,7 @@ if config.config_file_name is not None:
 
 # Declarative base bound to the global SQLModel metadata. Any SQLModel or
 # SQLAlchemy ORM models that use this metadata will be visible to Alembic.
-Base = declarative_base(metadata=SQLModel.metadata)
+
 target_metadata = SQLModel.metadata
 
 # other values from the config, defined by the needs of env.py,
@@ -94,12 +100,8 @@ def run_migrations_offline() -> None:
 
 
 def run_migrations_online() -> None:
-    """Run migrations in 'online' mode.
+    """Run migrations in 'online' mode."""
 
-    In this scenario we need to create an Engine
-    and associate a connection with the context.
-
-    """
     connectable = config.attributes.get("connection", None)
 
     if connectable is None:
@@ -113,15 +115,23 @@ def run_migrations_online() -> None:
             poolclass=pool.NullPool,
         )
 
-    with connectable.connect() as connection:
-        context.configure(
-            connection=connection,
-            target_metadata=target_metadata,
-            process_revision_directives=generate_incremental_revision_id,
-        )
+    # Use connectable directly if it's a Connection, otherwise call connect()
+    if hasattr(connectable, "connect"):
+        with connectable.connect() as connection:
+            _run_migrations(connection)
+    else:
+        _run_migrations(connectable)
 
-        with context.begin_transaction():
-            context.run_migrations()
+
+def _run_migrations(connection):
+    """Helper to run migrations on a given connection"""
+    context.configure(
+        connection=connection,
+        target_metadata=target_metadata,
+        process_revision_directives=generate_incremental_revision_id,
+    )
+    with context.begin_transaction():
+        context.run_migrations()
 
 
 if context.is_offline_mode():

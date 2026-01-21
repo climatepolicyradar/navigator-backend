@@ -1,3 +1,5 @@
+import logging
+
 from fastapi import APIRouter, Depends, HTTPException, status
 
 from app.alembic.run_migrations import run_migrations
@@ -8,6 +10,8 @@ from app.settings import settings
 
 # Create router with /load prefix
 router = APIRouter(prefix="/load")
+
+_LOGGER = logging.getLogger(__name__)
 
 
 @router.get("/health")
@@ -44,4 +48,13 @@ def schema_info():
 
 @router.post("/run-migrations")
 def run_schema_migrations(engine=Depends(get_engine)):
-    run_migrations(engine)
+    try:
+        run_migrations(engine)
+    except Exception as e:
+        _LOGGER.exception(f"Migration failed to run : {e}")
+        raise HTTPException(
+            status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
+            detail="Failed to run migrations",
+        )
+
+    return {"status": "ok", "detail": "Migrations ran successfully"}
