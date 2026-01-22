@@ -7,6 +7,7 @@ from prefect import Flow
 from prefect.blocks.core import Block
 from prefect.docker.docker_image import DockerImage
 from prefect_aws.workers.ecs_worker import ECSVariables
+from pydantic import BaseModel
 
 from app.bootstrap_telemetry import get_logger
 from app.navigator_family_etl_pipeline import etl_pipeline
@@ -18,7 +19,16 @@ DEFAULT_FLOW_VARIABLES = {
 }
 
 
-def _get_pulumi_stack_outputs(aws_env: str) -> dict[str, Any]:
+class PulumiStackOutputs(BaseModel):
+    prefect_vpc_id: str
+    prefect_security_group_id: str
+    prefect_ecs_service_subnet_id: str
+    prefect_runtime_environment_variables: dict[str, Any] = {}
+    prefect_secrets_arns: dict[str, str] = {}
+    prefect_ssm_secrets: dict[str, str] = {}
+
+
+def _get_pulumi_stack_outputs(aws_env: str) -> PulumiStackOutputs:
     """Read environment variables and secrets from Pulumi stack outputs.
 
     :param aws_env: AWS environment name (e.g., 'production', 'staging').
@@ -39,56 +49,27 @@ def _get_pulumi_stack_outputs(aws_env: str) -> dict[str, Any]:
         )
         outputs = stack.outputs()
 
-        env_vars_output = outputs.get("prefect_runtime_environment_variables")
-        if env_vars_output and hasattr(env_vars_output, "value"):
-            # The exported value is the dict itself, not nested under "value"
-            env_vars = (
-                env_vars_output.value if isinstance(env_vars_output.value, dict) else {}
-            )
-        else:
-            env_vars = {}
+        # Convert Pulumi OutputMap to a standard dict for Pydantic
+        outputs_dict = {k: v.value for k, v in outputs.items()}
 
-        secrets_arns_output = outputs.get("prefect_secrets_arns")
-        if secrets_arns_output and hasattr(secrets_arns_output, "value"):
-            secrets_arns = (
-                secrets_arns_output.value
-                if isinstance(secrets_arns_output.value, dict)
-                else {}
-            )
-        else:
-            secrets_arns = {}
-
-        ssm_secrets_output = outputs.get("prefect_ssm_secrets")
-        if ssm_secrets_output and hasattr(ssm_secrets_output, "value"):
-            ssm_secrets = (
-                ssm_secrets_output.value
-                if isinstance(ssm_secrets_output.value, dict)
-                else {}
-            )
-        else:
-            ssm_secrets = {}
+        stack_outputs = PulumiStackOutputs.model_validate(outputs_dict)
 
         logger.info(
             "Retrieved %s environment variables and %s secrets from Pulumi stack.",
-            len(env_vars),
-            len(secrets_arns) + len(ssm_secrets),
+            len(stack_outputs.prefect_runtime_environment_variables),
+            len(stack_outputs.prefect_secrets_arns)
+            + len(stack_outputs.prefect_ssm_secrets),
         )
 
-        return {
-            "env_vars": env_vars,
-            "secrets_arns": secrets_arns,
-            "ssm_secrets": ssm_secrets,
-        }
+        return stack_outputs
+
     except Exception as e:
         logger.warning(
             "Failed to read Pulumi stack outputs: %s. Falling back to defaults.",
             e,
         )
-        return {
-            "env_vars": {},
-            "secrets_arns": {},
-            "ssm_secrets": {},
-        }
+
+        raise e
 
 
 def _ensure_environment_variables(
@@ -111,7 +92,7 @@ def _ensure_environment_variables(
     # Use provided Pulumi env vars or fetch them
     if pulumi_env_vars is None:
         pulumi_outputs = _get_pulumi_stack_outputs(aws_env)
-        pulumi_env_vars = pulumi_outputs.get("env_vars", {})
+        pulumi_env_vars = pulumi_outputs.prefect_runtime_environment_variables
 
     # Fallback values if Pulumi stack outputs are not available
     # NOTE: Should we define the OTEL variables here or in the Pulumi stack?
@@ -145,14 +126,11 @@ def _merge_job_environments(
     ssm_secrets: dict[str, str],
 ) -> dict[str, Any]:
     """Merge runtime environment variables and secrets into job configuration.
-
     Configures secrets for ECS task definition. Prefect's ECS worker will inject
     these secrets into the container definition when creating ECS tasks.
-
     The secrets are configured in the job_variables, which Prefect uses to build
     the ECS task definition. The ECS task execution role must have permissions
     to access these secrets.
-
     :param base_job_variables: Existing job configuration from Prefect blocks.
     :type base_job_variables: dict[str, Any]
     :param runtime_environment: Environment variables collected from Pulumi or defaults.
@@ -273,10 +251,10 @@ def create_deployment(flow: Flow) -> None:
     # Get environment variables and secrets from Pulumi
     pulumi_outputs = _get_pulumi_stack_outputs(aws_env)
     runtime_environment = _ensure_environment_variables(
-        aws_env, pulumi_outputs.get("env_vars")
+        aws_env, pulumi_outputs.prefect_runtime_environment_variables
     )
-    secrets_arns = pulumi_outputs.get("secrets_arns", {})
-    ssm_secrets = pulumi_outputs.get("ssm_secrets", {})
+    secrets_arns = pulumi_outputs.prefect_secrets_arns
+    ssm_secrets = pulumi_outputs.prefect_ssm_secrets
 
     logger.info(
         "Creating deployment for flow `%s` in Prefect's production workspace with "
@@ -301,6 +279,15 @@ def create_deployment(flow: Flow) -> None:
     )
     logger.info("Job variables: %s", job_variables)
 
+    network = {
+        "vpc_id": pulumi_outputs.prefect_vpc_id,
+        "network_configuration": {
+            "subnets": [pulumi_outputs.prefect_ecs_service_subnet_id],
+            "securityGroups": [pulumi_outputs.prefect_security_group_id],
+            "assignPublicIp": "ENABLED",  # Required for Fargate in public subnet
+        },
+    }
+
     _ = flow.deploy(
         f"data-in-pipeline-{aws_env}",
         work_pool_name="mvp-prod-ecs",
@@ -309,7 +296,7 @@ def create_deployment(flow: Flow) -> None:
             tag="latest",
             dockerfile="Dockerfile",
         ),
-        job_variables=job_variables,
+        job_variables=job_variables | network,
         build=False,
         push=False,
     )

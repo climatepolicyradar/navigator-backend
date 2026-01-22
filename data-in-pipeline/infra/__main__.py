@@ -473,43 +473,38 @@ orchestrator_stack = pulumi.StackReference(
 )
 prefect_vpc_id = orchestrator_stack.get_output("prefect_vpc_id")
 prefect_security_group_id = orchestrator_stack.get_output("prefect_security_group_id")
-pulumi.export("prefect_security_group_id", prefect_security_group_id)
-pulumi.export("prefect_vpc_id", prefect_vpc_id)
+prefect_ecs_service_subnet_id = orchestrator_stack.get_output(
+    "prefect_ecs_service_subnet_id"
+)
 
 # Get Prefect ECS subnet - Interface endpoints work with a single subnet, though
 # multiple subnets (one per AZ) are recommended for high availability
-prefect_subnet_id = orchestrator_stack.get_output("prefect_ecs_service_subnet_id")
-prefect_subnet_ids = prefect_subnet_id.apply(lambda x: [x])
+prefect_subnet_ids = prefect_ecs_service_subnet_id.apply(lambda x: [x])
+
+pulumi.export("prefect_vpc_id", prefect_vpc_id)
+pulumi.export("prefect_security_group_id", prefect_security_group_id)
+pulumi.export("prefect_ecs_service_subnet_id", prefect_ecs_service_subnet_id)
 
 vpc_endpoint_sg = aws.ec2.SecurityGroup(
     "data-in-pipeline-load-api-vpc-endpoint-sg",
     vpc_id=prefect_vpc_id,
     description="Security group for App Runner VPC endpoint ingress",
-    # ingress=[
-    #     aws.ec2.SecurityGroupIngressArgs(
-    #         from_port=HTTP_PORT,
-    #         to_port=HTTP_PORT,
-    #         protocol="tcp",
-    #         security_groups=[prefect_security_group_id],
-    #         description="Allow HTTPS from Prefect ECS tasks",
-    #     )
-    # ],
-    # egress=[
-    #     aws.ec2.SecurityGroupEgressArgs(
-    #         protocol="-1", from_port=0, to_port=0, cidr_blocks=["0.0.0.0/0"]
-    #     )
-    # ],
-    # tags=tags,
-)
-
-aws.ec2.SecurityGroupRule(
-    "allow-prefect-to-data-in-pipeline-load-api-vpc-endpoint",
-    type="ingress",
-    protocol="tcp",
-    from_port=HTTP_PORT,
-    to_port=HTTP_PORT,
-    security_group_id=vpc_endpoint_sg.id,
-    source_security_group_id=prefect_security_group_id,
+    ingress=[
+        aws.ec2.SecurityGroupIngressArgs(
+            from_port=HTTP_PORT,
+            to_port=HTTP_PORT,
+            protocol="tcp",
+            # security_groups=[prefect_security_group_id],
+            cidr_blocks=["10.0.0.0/16"],
+            description="Allow HTTPS from Prefect ECS tasks",
+        )
+    ],
+    egress=[
+        aws.ec2.SecurityGroupEgressArgs(
+            protocol="-1", from_port=0, to_port=0, cidr_blocks=["0.0.0.0/0"]
+        )
+    ],
+    tags=tags,
 )
 
 
@@ -520,6 +515,7 @@ vpc_endpoint = aws.ec2.VpcEndpoint(
     vpc_endpoint_type="Interface",
     subnet_ids=prefect_subnet_ids,
     security_group_ids=[vpc_endpoint_sg.id],
+    private_dns_enabled=False,
     tags=tags,
 )
 
@@ -549,10 +545,10 @@ data_in_pipeline_load_api_apprunner_service = aws.apprunner.Service(
         instance_role_arn=data_in_pipeline_load_api_instance_role.arn,
     ),
     network_configuration=aws.apprunner.ServiceNetworkConfigurationArgs(
-        egress_configuration=aws.apprunner.ServiceNetworkConfigurationEgressConfigurationArgs(
-            egress_type="VPC",
-            vpc_connector_arn=vpc_connector.arn,
-        ),
+        # egress_configuration=aws.apprunner.ServiceNetworkConfigurationEgressConfigurationArgs(
+        #     egress_type="VPC",
+        #     vpc_connector_arn=vpc_connector.arn,
+        # ),
         ingress_configuration=aws.apprunner.ServiceNetworkConfigurationIngressConfigurationArgs(
             # Private endpoint - ingress only. Egress via VPC connector (above) is separate
             # and will continue to allow Aurora connectivity via existing security group rules.
@@ -590,42 +586,18 @@ data_in_pipeline_load_api_apprunner_service = aws.apprunner.Service(
     opts=pulumi.ResourceOptions(protect=True),
 )
 
-
-internal_domain = "internal.com"
-service_name = "data-in-pipeline-load-api"
-
-# ----------------------------
-# Route 53 Private Hosted Zone
-# ----------------------------
-private_zone = aws.route53.Zone(
-    "private-hosted-zone",
-    name=internal_domain,
-    vpcs=[aws.route53.ZoneVpcArgs(vpc_id=vpc_id)],
-    comment="Private hosted zone for internal App Runner access for Data In Pipeline Load API",
+data_in_load_api_vpc_ingress_connection = aws.apprunner.VpcIngressConnection(
+    "dip-load-api-vpc-ingress-connection",
+    name="dip-load-api-vpc-ingress-connection",
+    service_arn=data_in_pipeline_load_api_apprunner_service.arn,
+    ingress_vpc_configuration=aws.apprunner.VpcIngressConnectionIngressVpcConfigurationArgs(
+        vpc_id=prefect_vpc_id,
+        vpc_endpoint_id=vpc_endpoint.id,
+    ),
+    tags={**tags},
 )
 
-# ----------------------------
-# Route 53 A Record pointing to VPC Endpoint IPs
-# ----------------------------
-a_record = aws.route53.Record(
-    f"{service_name}-record",
-    name=f"{service_name}.{internal_domain}",
-    type="A",
-    zone_id=private_zone.id,
-    aliases=[
-        aws.route53.RecordAliasArgs(
-            name=vpc_endpoint.dns_entries.apply(lambda d: d[0]["dns_name"]),
-            zone_id=vpc_endpoint.dns_entries.apply(lambda d: d[0]["hosted_zone_id"]),
-            evaluate_target_health=False,
-        )
-    ],
-)
-
-
-pulumi.export("vpc_endpoint_id", vpc_endpoint.id)
-pulumi.export("private_dns_name", a_record.fqdn)
-
-load_api_base_url = a_record.fqdn.apply(lambda url: f"http://{url}")
+load_api_base_url = "https://6rkpif2fkz.eu-west-1.awsapprunner.com"
 
 data_in_pipeline_load_api_url = aws.ssm.Parameter(
     "data-in-pipeline-load-api-url",

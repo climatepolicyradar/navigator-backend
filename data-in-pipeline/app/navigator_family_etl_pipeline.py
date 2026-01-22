@@ -104,6 +104,7 @@ def _test_http_connectivity(url: str, logger) -> None:
         logger.info(
             f"HTTP connectivity successful: {response.status_code} {response.reason}"
         )
+        logger.info(f"Response content: {response.content}")
     except requests.exceptions.Timeout:
         logger.exception(
             "HTTP connectivity timeout after 10 seconds. "
@@ -285,7 +286,9 @@ def load(
 @pipeline_metrics.track(
     pipeline_type=PipelineType.FAMILY, scope="batch", flush_on_exit=True
 )
-def etl_pipeline(ids: list[str] | None = None) -> list[str] | Exception:
+def etl_pipeline(
+    ids: list[str] | None = None, url: str = None
+) -> list[str] | Exception:
     """Run the full Navigator ETL pipeline.
 
     If IDs are provided, processes only those specific families.
@@ -310,10 +313,17 @@ def etl_pipeline(ids: list[str] | None = None) -> list[str] | Exception:
     run_id = flow_run.get_name() or "unknown"
     pipeline_metrics.set_flow_run_name(run_id)
 
-    # Test connectivity to load API via VPC Ingress Connection
-    test_load_api_connectivity()
+    response = requests.get(url, timeout=10, verify=False)  # nosec
 
-    run_db_migrations()
+    _LOGGER.info(
+        "Health check response: %s, %s", response.content, response.status_code
+    )
+
+    return
+    # Test connectivity to load API via VPC Ingress Connection
+    # test_load_api_connectivity()
+
+    # run_db_migrations()
 
     # If IDs provided, process only those families
     if ids is not None:
