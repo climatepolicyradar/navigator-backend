@@ -24,16 +24,15 @@ def alembic_config():
 @pytest.fixture
 def engine():
     """Create engine using test-db service from docker-compose."""
-    db_host = os.getenv("load_database_url", "localhost")
-    db_port = os.getenv("db_port", "5432")
-    db_name = os.getenv("db_name", "data-in-pipeline-load-api")
-    db_user = os.getenv("db_master_username", "data-in-pipeline-load-api")
-    db_password = os.getenv(
-        "managed_db_password", '{"password": "data-in-pipeline-load-api"}'
-    )
+    # These are provided by the test-db service from docker-compose.
+    db_host = os.getenv("load_database_url")
+    db_port = os.getenv("db_port")
+    db_name = os.getenv("db_name")
+    db_user = os.getenv("db_master_username")
+    db_password = os.getenv("managed_db_password")
 
     # Parse password from JSON if needed
-    if db_password.startswith("{"):
+    if db_password is not None and db_password.startswith("{"):
         db_password = json.loads(db_password)["password"]
 
     db_url = (
