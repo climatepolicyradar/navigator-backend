@@ -1,9 +1,9 @@
+import json
 import os
 
 import pytest
 from pytest_alembic.config import Config as PytestAlembicConfig
 from sqlmodel import SQLModel, create_engine
-from testcontainers.postgres import PostgresContainer
 
 
 @pytest.fixture
@@ -21,23 +21,25 @@ def alembic_config():
     )
 
 
-@pytest.fixture(scope="session")
-def postgres_container():
-    with PostgresContainer("postgres:17") as postgres:
-        yield postgres
-
-
 @pytest.fixture
-def engine(postgres_container):
-    engine = create_engine(postgres_container.get_connection_url())
+def engine():
+    """Create engine using test-db service from docker-compose."""
+    db_host = os.getenv("load_database_url", "localhost")
+    db_port = os.getenv("db_port", "5432")
+    db_name = os.getenv("db_name", "data-in-pipeline-load-api")
+    db_user = os.getenv("db_master_username", "data-in-pipeline-load-api")
+    db_password = os.getenv(
+        "managed_db_password", '{"password": "data-in-pipeline-load-api"}'
+    )
+
+    # Parse password from JSON if needed
+    if db_password.startswith("{"):
+        db_password = json.loads(db_password)["password"]
+
+    db_url = (
+        f"postgresql+psycopg2://{db_user}:{db_password}@{db_host}:{db_port}/{db_name}"
+    )
+    engine = create_engine(db_url)
     SQLModel.metadata.create_all(engine)
     yield engine
     SQLModel.metadata.drop_all(engine)
-
-
-# # Declarative base object
-# Base = declarative_base()
-# SQLModel.metadata = Base.metadata
-
-
-# SQLModel.metadata.create_all(engine)
