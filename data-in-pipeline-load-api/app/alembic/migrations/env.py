@@ -19,15 +19,6 @@ from logging.config import fileConfig
 
 import data_in_models  # noqa: F401
 from alembic import context
-from data_in_models.db_models import (  # noqa: F401
-    Document,
-    DocumentDocumentLink,
-    DocumentLabelLink,
-    Item,
-    Label,
-)
-
-# These are required to be in context for SQLModel.metadata
 from sqlalchemy import engine_from_config, pool
 from sqlmodel import SQLModel
 
@@ -42,9 +33,8 @@ config = context.config
 if config.config_file_name is not None:
     fileConfig(config.config_file_name)
 
-# Declarative base bound to the global SQLModel metadata. Any SQLModel or
-# SQLAlchemy ORM models that use this metadata will be visible to Alembic.
-
+# Importing data_in_models triggers dynamic imports of all models
+# so they register on SQLModel.metadata for Alembic
 target_metadata = SQLModel.metadata
 
 # Define naming convention for SQL constraints to prevent migration errors.
@@ -62,7 +52,6 @@ target_metadata.naming_convention = NAMING_CONVENTION
 # can be acquired:
 # my_important_option = config.get_main_option("my_important_option")
 # ... etc.
-
 
 # Allow overriding URL via env vars (use writer endpoint in eu-west-1)
 db_host = os.getenv("AURORA_WRITER_ENDPOINT")
