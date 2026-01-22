@@ -17,7 +17,7 @@ from app.extract.connectors import (
 )
 from app.models import ExtractedEnvelope, ExtractedMetadata
 from app.navigator_document_etl_pipeline import process_document_updates
-from app.navigator_family_etl_pipeline import etl_pipeline
+from app.navigator_family_etl_pipeline import data_in_pipeline
 
 
 @patch("app.navigator_document_etl_pipeline.upload_to_s3")
@@ -139,7 +139,7 @@ def test_process_family_updates_flow_multiple_families(
         envelopes=[envelope_1, envelope_2], failure=None
     )
 
-    result = etl_pipeline()
+    result = data_in_pipeline()
 
     expected_number_of_results = 2
     assert isinstance(result, list)
@@ -154,7 +154,7 @@ def test_process_family_updates_migrations_failure(mock_run_migrations):
 
     # Simulate migrations failure
     with pytest.raises(Exception, match="500 Internal Server Error"):
-        etl_pipeline()
+        data_in_pipeline()
 
 
 @patch("app.navigator_family_etl_pipeline.run_db_migrations")
@@ -181,7 +181,7 @@ def test_process_family_updates_flow_extraction_failure(
         ),
     )
 
-    result = etl_pipeline()
+    result = data_in_pipeline()
 
     assert isinstance(result, Exception)
 
@@ -250,6 +250,6 @@ def test_etl_pipeline_load_failure(
         envelopes=[test_envelope], failure=None
     )
 
-    result = etl_pipeline()
+    result = data_in_pipeline()
 
     assert isinstance(result, Exception)

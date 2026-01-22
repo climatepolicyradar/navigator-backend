@@ -8,7 +8,7 @@ from alembic.config import Config
 from sqlalchemy import create_engine, inspect
 from sqlmodel import SQLModel
 
-from app.run_migrations.run_migrations import run_migrations
+from app.run_db_migrations.run_db_migrations import run_db_migrations
 
 
 def test_migrations_up_and_down(postgres_container, tmp_path):
@@ -23,13 +23,13 @@ def test_migrations_up_and_down(postgres_container, tmp_path):
     db_url = postgres_container.get_connection_url()
 
     base_dir = Path(__file__).parent.parent.parent
-    alembic_ini_path = base_dir / "app" / "run_migrations" / "alembic.ini"
+    alembic_ini_path = base_dir / "app" / "run_db_migrations" / "alembic.ini"
 
     alembic_cfg = Config(str(alembic_ini_path))
     # TODO: https://linear.app/climate-policy-radar/issue/APP-1600/get-a-working-db-url-into-run-migrations
     alembic_cfg.set_main_option("sqlalchemy.url", db_url)
 
-    migrations_location = base_dir / "app" / "run_migrations" / "migrations"
+    migrations_location = base_dir / "app" / "run_db_migrations" / "migrations"
     alembic_cfg.set_main_option("script_location", str(migrations_location))
 
     version_dir = tmp_path / "versions"
@@ -66,8 +66,8 @@ def test_migrations_up_and_down(postgres_container, tmp_path):
 @patch.dict(
     os.environ, {"DATA_IN_PIPELINE_LOAD_API_URL": "https://test-api.example.com"}
 )
-@patch("app.run_migrations.run_migrations.requests.post")
-@patch("app.run_migrations.run_migrations.requests.get")
+@patch("app.run_db_migrations.run_db_migrations.requests.post")
+@patch("app.run_db_migrations.run_db_migrations.requests.get")
 def test_run_migrations_when_versions_match(mock_get, mock_post):
     """Test run_migrations returns early when current_version equals head_version."""
 
@@ -79,7 +79,7 @@ def test_run_migrations_when_versions_match(mock_get, mock_post):
     mock_response.raise_for_status.return_value = None
     mock_get.return_value = mock_response
 
-    run_migrations()
+    run_db_migrations()
 
     mock_get.assert_called_once_with(
         url="https://test-api.example.com/load/schema-info", timeout=2
@@ -91,8 +91,8 @@ def test_run_migrations_when_versions_match(mock_get, mock_post):
 @patch.dict(
     os.environ, {"DATA_IN_PIPELINE_LOAD_API_URL": "https://test-api.example.com"}
 )
-@patch("app.run_migrations.run_migrations.requests.post")
-@patch("app.run_migrations.run_migrations.requests.get")
+@patch("app.run_db_migrations.run_db_migrations.requests.post")
+@patch("app.run_db_migrations.run_db_migrations.requests.get")
 def test_run_migrations_when_versions_differ(mock_get, mock_post):
     """Test run_migrations calls run-migrations endpoint when versions differ."""
 
@@ -108,7 +108,7 @@ def test_run_migrations_when_versions_differ(mock_get, mock_post):
     mock_post_response.raise_for_status.return_value = None
     mock_post.return_value = mock_post_response
 
-    run_migrations()
+    run_db_migrations()
 
     mock_get.assert_called_once_with(
         url="https://test-api.example.com/load/schema-info", timeout=2
@@ -119,8 +119,8 @@ def test_run_migrations_when_versions_differ(mock_get, mock_post):
 
 
 @patch.dict(os.environ, {"DATA_IN_PIPELINE_LOAD_API_URL": "test-api.example.com"})
-@patch("app.run_migrations.run_migrations.requests.post")
-@patch("app.run_migrations.run_migrations.requests.get")
+@patch("app.run_db_migrations.run_db_migrations.requests.post")
+@patch("app.run_db_migrations.run_db_migrations.requests.get")
 def test_run_migrations_adds_https_scheme_when_missing(mock_get, mock_post):
     """Test run_migrations adds https:// scheme to URL when missing."""
 
@@ -132,7 +132,7 @@ def test_run_migrations_adds_https_scheme_when_missing(mock_get, mock_post):
     mock_response.raise_for_status.return_value = None
     mock_get.return_value = mock_response
 
-    run_migrations()
+    run_db_migrations()
 
     mock_get.assert_called_once_with(
         url="https://test-api.example.com/load/schema-info", timeout=2
@@ -143,21 +143,21 @@ def test_run_migrations_adds_https_scheme_when_missing(mock_get, mock_post):
 @patch.dict(
     os.environ, {"DATA_IN_PIPELINE_LOAD_API_URL": "https://test-api.example.com"}
 )
-@patch("app.run_migrations.run_migrations.requests.get")
+@patch("app.run_db_migrations.run_db_migrations.requests.get")
 def test_run_migrations_handles_schema_info_error(mock_get):
     """Test run_migrations raises exception when schema-info request fails."""
 
     mock_get.side_effect = Exception()
 
     with pytest.raises(Exception):
-        run_migrations()
+        run_db_migrations()
 
 
 @patch.dict(
     os.environ, {"DATA_IN_PIPELINE_LOAD_API_URL": "https://test-api.example.com"}
 )
-@patch("app.run_migrations.run_migrations.requests.post")
-@patch("app.run_migrations.run_migrations.requests.get")
+@patch("app.run_db_migrations.run_db_migrations.requests.post")
+@patch("app.run_db_migrations.run_db_migrations.requests.get")
 def test_run_migrations_handles_run_migrations_error(mock_get, mock_post):
     """Test run_migrations raises exception when run-migrations request fails."""
 
@@ -172,4 +172,4 @@ def test_run_migrations_handles_run_migrations_error(mock_get, mock_post):
     mock_post.side_effect = Exception()
 
     with pytest.raises(Exception):
-        run_migrations()
+        run_db_migrations()
