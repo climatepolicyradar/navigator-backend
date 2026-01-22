@@ -1,8 +1,5 @@
 import os
 
-# Import data_in_models once at session level to ensure models are registered
-# before any tests run, preventing duplicate table registration errors
-import data_in_models  # noqa: F401
 import pytest
 from opentelemetry import trace
 from opentelemetry._logs import get_logger_provider
