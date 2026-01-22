@@ -8,9 +8,6 @@ def test_model_definitions_match_ddl(alembic_runner):
 
 
 @pytest.mark.alembic
-@pytest.mark.xfail(
-    reason="This test is failing because the first revision has not been created"
-)
 def test_single_head_revision(alembic_runner):
     test_alembic.test_single_head_revision(alembic_runner)
 
