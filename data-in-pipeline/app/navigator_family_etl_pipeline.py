@@ -1,12 +1,7 @@
-import ipaddress
 import json
-import os
-import socket
 from datetime import datetime
 from typing import Literal
-from urllib.parse import urlparse
 
-import requests
 from data_in_models.models import Document
 from prefect import flow, task
 from prefect.runtime import flow_run, task_run
@@ -25,7 +20,7 @@ from app.load.aws_bucket import upload_to_s3
 from app.load.load import load_to_db
 from app.models import ExtractedEnvelope, Identified
 from app.pipeline_metrics import ErrorType, Operation, PipelineType, Status
-from app.run_migrations.run_migrations import run_migrations
+from app.run_db_migrations.run_db_migrations import run_db_migrations
 from app.transform.navigator_family import (
     transform_navigator_family,
 )
@@ -41,135 +36,12 @@ def generate_s3_cache_key(step: Literal["extract", "identify", "transform"]) -> 
 # ---------------------------------------------------------------------
 
 
-def _resolve_domain(domain: str, logger) -> str | None:
-    """Resolve domain to IP address and validate it's in VPC range."""
-    try:
-        resolved_ip = socket.gethostbyname(domain)
-        logger.info(f"DNS resolution successful: {domain} -> {resolved_ip}")
-
-        ip_obj = ipaddress.ip_address(resolved_ip)
-        is_private = ip_obj.is_private
-        is_vpc_range = resolved_ip.startswith("10.0.")
-
-        if is_private and is_vpc_range:
-            logger.info(f"Resolved IP {resolved_ip} is in private VPC range (10.0.x.x)")
-        elif is_private:
-            logger.warning(
-                f"Resolved IP {resolved_ip} is private but not in expected VPC range (10.0.x.x)"
-            )
-        else:
-            logger.error(
-                f"Resolved IP {resolved_ip} is PUBLIC, not private. "
-                "VPC Ingress Connection DNS may not be working correctly."
-            )
-
-        return resolved_ip
-    except socket.gaierror:
-        logger.exception(f"DNS resolution failed for {domain}")
-        return None
-    except Exception:
-        logger.exception("Error during DNS resolution")
-        return None
-
-
-def _test_tcp_connection(ip: str, port: int, logger) -> bool:
-    """Test TCP connection to IP:port. Returns True if successful."""
-    logger.info(f"Testing direct TCP connection to ENI IP: {ip}:{port}")
-    tcp_sock = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
-    tcp_sock.settimeout(5)
-    try:
-        tcp_result = tcp_sock.connect_ex((ip, port))
-        if tcp_result == 0:
-            logger.info(
-                "TCP connection to ENI successful - routing and security groups are working"
-            )
-            return True
-        logger.error(
-            f"TCP connection to ENI failed with error code: {tcp_result}. "
-            "This indicates a routing or security group issue."
-        )
-        return False
-    except Exception:
-        logger.exception("Error during TCP connection test")
-        return False
-    finally:
-        tcp_sock.close()
-
-
-def _test_http_connectivity(url: str, logger) -> None:
-    """Test HTTP connectivity to URL."""
-    logger.info(f"Testing HTTP connectivity to: {url}")
-    try:
-        response = requests.get(url, timeout=10, verify=False)  # nosec
-        logger.info(
-            f"HTTP connectivity successful: {response.status_code} {response.reason}"
-        )
-        logger.info(f"Response content: {response.content}")
-    except requests.exceptions.Timeout:
-        logger.exception(
-            "HTTP connectivity timeout after 10 seconds. "
-            "This may indicate a routing or security group issue."
-        )
-    except requests.exceptions.ConnectionError:
-        logger.exception(
-            "HTTP connection error. "
-            "Check security groups, route tables, and VPC endpoint status."
-        )
-    except Exception:
-        logger.exception("Unexpected error during HTTP test")
-
-
 @task(log_prints=True)
-def test_load_api_connectivity() -> None:
-    """Test DNS resolution and connectivity to the load API via VPC Ingress Connection.
-
-    This diagnostic task checks:
-    1. DNS resolution of the VPC Ingress Connection domain
-    2. Whether the resolved IP is private (10.0.x.x range)
-    3. TCP connectivity to the ENI
-    4. HTTP connectivity to the /load/health endpoint
-
-    This helps diagnose VPC endpoint and VPC Ingress Connection issues.
-    """
-    _LOGGER = get_logger()
-    _LOGGER.info("Testing load API connectivity...")
-
-    load_api_url = os.getenv("DATA_IN_PIPELINE_LOAD_API_URL", "")
-    if not load_api_url:
-        _LOGGER.error("DATA_IN_PIPELINE_LOAD_API_URL environment variable not set")
-        return
-
-    _LOGGER.info(f"Load API URL: {load_api_url}")
-
-    parsed_url = urlparse(load_api_url)
-    domain = parsed_url.netloc or parsed_url.path.split("/")[0]
-    _LOGGER.info(f"Domain to resolve: {domain}")
-
-    resolved_ip = _resolve_domain(domain, _LOGGER)
-    if not resolved_ip:
-        return
-
-    try:
-        addr_info = socket.getaddrinfo(domain, None)
-        all_ips = {info[4][0] for info in addr_info}
-        _LOGGER.info(f"All resolved IPs: {all_ips}")
-    except Exception:
-        _LOGGER.exception("Could not get all IP addresses")
-
-    _test_tcp_connection(resolved_ip, 443, _LOGGER)
-
-    health_url = f"{load_api_url.rstrip('/')}/load/health"
-    _test_http_connectivity(health_url, _LOGGER)
-
-    _LOGGER.info("Connectivity test completed")
-
-
-@task(log_prints=True)
-def run_db_migrations():
+def run_db_migrations_task():
     """Run migrations against the load-api database."""
     _LOGGER = get_logger()
     _LOGGER.info("Running migrations against the load-api database")
-    run_migrations()
+    run_db_migrations()
 
 
 @task(log_prints=True)
@@ -286,9 +158,7 @@ def load(
 @pipeline_metrics.track(
     pipeline_type=PipelineType.FAMILY, scope="batch", flush_on_exit=True
 )
-def etl_pipeline(
-    ids: list[str] | None = None, url: str = None
-) -> list[str] | Exception:
+def data_in_pipeline(ids: list[str] | None = None) -> list[str] | Exception:
     """Run the full Navigator ETL pipeline.
 
     If IDs are provided, processes only those specific families.
@@ -300,11 +170,6 @@ def etl_pipeline(
         3. Transform to target schema.
         4. Load transformed documents to S3 cache.
         5. Save transformed documents to the load DB.
-
-    :param ids: Optional list of family import_ids to process.
-        If empty, processes all families.
-    :return [str, Exception] | None: The final result of the etl pipeline.
-        Will contain a list of ids of the successfully saved documents on success.
     """
     _LOGGER = get_logger()
     _LOGGER.info("ETL pipeline started")
@@ -313,17 +178,7 @@ def etl_pipeline(
     run_id = flow_run.get_name() or "unknown"
     pipeline_metrics.set_flow_run_name(run_id)
 
-    response = requests.get(url, timeout=10, verify=False)  # nosec
-
-    _LOGGER.info(
-        "Health check response: %s, %s", response.content, response.status_code
-    )
-
-    return
-    # Test connectivity to load API via VPC Ingress Connection
-    # test_load_api_connectivity()
-
-    # run_db_migrations()
+    run_db_migrations_task()
 
     # If IDs provided, process only those families
     if ids is not None:

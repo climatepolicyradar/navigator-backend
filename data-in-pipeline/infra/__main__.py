@@ -191,7 +191,8 @@ aurora_cluster = aws.rds.Cluster(
     preferred_backup_window="02:00-03:00",
     iam_database_authentication_enabled=False,  # TODO: Reenable later
     preferred_maintenance_window="sun:04:00-sun:05:00",
-    deletion_protection=True,
+    # FIXME: https://github.com/climatepolicyradar/navigator-backend/issues/964
+    deletion_protection=False,
     serverlessv2_scaling_configuration=aws.rds.ClusterServerlessv2ScalingConfigurationArgs(
         min_capacity=min_instances,
         max_capacity=max_instances,
@@ -473,17 +474,15 @@ orchestrator_stack = pulumi.StackReference(
 )
 prefect_vpc_id = orchestrator_stack.get_output("prefect_vpc_id")
 prefect_security_group_id = orchestrator_stack.get_output("prefect_security_group_id")
-prefect_ecs_service_subnet_id = orchestrator_stack.get_output(
-    "prefect_ecs_service_subnet_id"
-)
+prefect_subnet_id = orchestrator_stack.get_output("prefect_ecs_service_subnet_id")
 
 # Get Prefect ECS subnet - Interface endpoints work with a single subnet, though
 # multiple subnets (one per AZ) are recommended for high availability
-prefect_subnet_ids = prefect_ecs_service_subnet_id.apply(lambda x: [x])
+prefect_subnet_ids = prefect_subnet_id.apply(lambda x: [x])
 
 pulumi.export("prefect_vpc_id", prefect_vpc_id)
 pulumi.export("prefect_security_group_id", prefect_security_group_id)
-pulumi.export("prefect_ecs_service_subnet_id", prefect_ecs_service_subnet_id)
+pulumi.export("prefect_subnet_id", prefect_subnet_id)
 
 vpc_endpoint_sg = aws.ec2.SecurityGroup(
     "data-in-pipeline-load-api-vpc-endpoint-sg",
@@ -494,7 +493,6 @@ vpc_endpoint_sg = aws.ec2.SecurityGroup(
             from_port=HTTP_PORT,
             to_port=HTTP_PORT,
             protocol="tcp",
-            # security_groups=[prefect_security_group_id],
             cidr_blocks=["10.0.0.0/16"],
             description="Allow HTTPS from Prefect ECS tasks",
         )
@@ -516,7 +514,7 @@ vpc_endpoint = aws.ec2.VpcEndpoint(
     subnet_ids=prefect_subnet_ids,
     security_group_ids=[vpc_endpoint_sg.id],
     private_dns_enabled=False,
-    tags=tags,
+    tags={**tags, "Name": "data-in-pipeline-load-api-vpc-endpoint"},
 )
 
 # Allow load API connector to reach Aurora
@@ -545,10 +543,10 @@ data_in_pipeline_load_api_apprunner_service = aws.apprunner.Service(
         instance_role_arn=data_in_pipeline_load_api_instance_role.arn,
     ),
     network_configuration=aws.apprunner.ServiceNetworkConfigurationArgs(
-        # egress_configuration=aws.apprunner.ServiceNetworkConfigurationEgressConfigurationArgs(
-        #     egress_type="VPC",
-        #     vpc_connector_arn=vpc_connector.arn,
-        # ),
+        egress_configuration=aws.apprunner.ServiceNetworkConfigurationEgressConfigurationArgs(
+            egress_type="VPC",
+            vpc_connector_arn=vpc_connector.arn,
+        ),
         ingress_configuration=aws.apprunner.ServiceNetworkConfigurationIngressConfigurationArgs(
             # Private endpoint - ingress only. Egress via VPC connector (above) is separate
             # and will continue to allow Aurora connectivity via existing security group rules.
@@ -597,7 +595,7 @@ data_in_load_api_vpc_ingress_connection = aws.apprunner.VpcIngressConnection(
     tags={**tags},
 )
 
-load_api_base_url = "https://6rkpif2fkz.eu-west-1.awsapprunner.com"
+load_api_base_url = "https://mdemumdvnc.eu-west-1.awsapprunner.com"
 
 data_in_pipeline_load_api_url = aws.ssm.Parameter(
     "data-in-pipeline-load-api-url",

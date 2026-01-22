@@ -4,10 +4,6 @@ import requests
 from data_in_models.models import Document
 from pydantic import TypeAdapter
 
-from app.bootstrap_telemetry import get_logger
-
-_LOGGER = get_logger()
-
 
 def load_to_db(documents: list[Document]) -> list[str] | Exception:
     """Sends documents to the load API to be saved in the DB.
@@ -23,9 +19,6 @@ def load_to_db(documents: list[Document]) -> list[str] | Exception:
         if not load_api_base_url.startswith(("http://", "https://")):
             load_api_base_url = f"https://{load_api_base_url}"
 
-        _LOGGER.info(
-            f"Sending {len(documents)} documents to load API at {load_api_base_url}/load"
-        )
         response = requests.post(
             url=f"{load_api_base_url}/load",
             json=TypeAdapter(list[Document]).dump_python(documents),

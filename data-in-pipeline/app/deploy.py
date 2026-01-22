@@ -7,10 +7,11 @@ from prefect import Flow
 from prefect.blocks.core import Block
 from prefect.docker.docker_image import DockerImage
 from prefect_aws.workers.ecs_worker import ECSVariables
-from pydantic import BaseModel
+from pulumi.automation._output import OutputMap
+from pydantic import BaseModel, model_validator
 
 from app.bootstrap_telemetry import get_logger
-from app.navigator_family_etl_pipeline import etl_pipeline
+from app.navigator_family_etl_pipeline import data_in_pipeline
 
 MEGABYTES_PER_GIGABYTE = 1024
 DEFAULT_FLOW_VARIABLES = {
@@ -22,10 +23,16 @@ DEFAULT_FLOW_VARIABLES = {
 class PulumiStackOutputs(BaseModel):
     prefect_vpc_id: str
     prefect_security_group_id: str
-    prefect_ecs_service_subnet_id: str
+    prefect_subnet_id: str
     prefect_runtime_environment_variables: dict[str, Any] = {}
     prefect_secrets_arns: dict[str, str] = {}
     prefect_ssm_secrets: dict[str, str] = {}
+
+    @model_validator(mode="before")
+    @classmethod
+    def from_pulumi_outputs(cls, output_map: OutputMap):
+        output_dict = {k: v.value for k, v in output_map.items()}
+        return output_dict
 
 
 def _get_pulumi_stack_outputs(aws_env: str) -> PulumiStackOutputs:
@@ -39,20 +46,16 @@ def _get_pulumi_stack_outputs(aws_env: str) -> PulumiStackOutputs:
         and booleans.
     """
     logger = get_logger()
-    infra_dir = Path(__file__).parent.parent / "infra"
 
     try:
+        infra_dir = Path(__file__).parent.parent / "infra"
         stack = auto.select_stack(
             stack_name=f"climatepolicyradar/data-in-pipeline/{aws_env}",
             project_name="data-in-pipeline",
             work_dir=str(infra_dir),
         )
-        outputs = stack.outputs()
 
-        # Convert Pulumi OutputMap to a standard dict for Pydantic
-        outputs_dict = {k: v.value for k, v in outputs.items()}
-
-        stack_outputs = PulumiStackOutputs.model_validate(outputs_dict)
+        stack_outputs = PulumiStackOutputs.model_validate(stack.outputs())
 
         logger.info(
             "Retrieved %s environment variables and %s secrets from Pulumi stack.",
@@ -282,7 +285,7 @@ def create_deployment(flow: Flow) -> None:
     network = {
         "vpc_id": pulumi_outputs.prefect_vpc_id,
         "network_configuration": {
-            "subnets": [pulumi_outputs.prefect_ecs_service_subnet_id],
+            "subnets": [pulumi_outputs.prefect_subnet_id],
             "securityGroups": [pulumi_outputs.prefect_security_group_id],
             "assignPublicIp": "ENABLED",  # Required for Fargate in public subnet
         },
@@ -304,4 +307,4 @@ def create_deployment(flow: Flow) -> None:
 
 
 if __name__ == "__main__":
-    create_deployment(etl_pipeline)
+    create_deployment(data_in_pipeline)

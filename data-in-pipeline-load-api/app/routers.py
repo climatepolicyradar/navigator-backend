@@ -1,10 +1,11 @@
-from fastapi import APIRouter, Depends, status
+import logging
+
+from fastapi import APIRouter, Depends, HTTPException, status
 
 from app.alembic.run_migrations import run_migrations
 from app.models import Document
 from app.session import get_db, get_engine
 from app.settings import settings
-import logging
 
 # Create router with /load prefix
 router = APIRouter(prefix="/load")
@@ -15,6 +16,7 @@ _LOGGER = logging.getLogger(__name__)
 @router.get("/health")
 def health_check(db=Depends(get_db)):
     """Health check endpoint using session module's health check."""
+    # FIXME: https://github.com/climatepolicyradar/navigator-backend/issues/963
     # try:
     #     is_healthy = check_db_health(db)
 
