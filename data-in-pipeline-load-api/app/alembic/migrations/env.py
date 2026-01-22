@@ -1,3 +1,18 @@
+"""Alembic environment configuration for database migrations.
+
+This module is required by Alembic to configure the migration environment.
+
+Migration Modes:
+    - **Online**: Migrations run directly against the database with a
+        live connection. Used for applying migrations.
+    - **Offline**: Migrations are generated as SQL scripts without
+        requiring a database connection. Used for generating migration
+        files.
+
+This file is executed by Alembic whenever you run migration commands
+such as ``alembic revision --autogenerate`` or ``alembic upgrade head``.
+"""
+
 import logging
 import os
 from logging.config import fileConfig
@@ -30,6 +45,17 @@ if config.config_file_name is not None:
 # SQLAlchemy ORM models that use this metadata will be visible to Alembic.
 
 target_metadata = SQLModel.metadata
+
+# Define naming convention for SQL constraints to prevent migration errors.
+# @see: https://alembic.sqlalchemy.org/en/latest/naming.html
+NAMING_CONVENTION = {
+    "ix": "ix_%(column_0_label)s",
+    "uq": "uq_%(table_name)s_%(column_0_name)s",
+    "ck": "ck_%(table_name)s_%(constraint_name)s",
+    "fk": "fk_%(table_name)s_%(column_0_name)s_%(referred_table_name)s",
+    "pk": "pk_%(table_name)s",
+}
+target_metadata.naming_convention = NAMING_CONVENTION
 
 # other values from the config, defined by the needs of env.py,
 # can be acquired:
@@ -92,6 +118,7 @@ def run_migrations_offline() -> None:
         target_metadata=target_metadata,
         literal_binds=True,
         dialect_opts={"paramstyle": "named"},
+        user_module_prefix="sqlmodel.sql.sqltypes.",
     )
 
     with context.begin_transaction():
@@ -128,6 +155,8 @@ def _run_migrations(connection):
         connection=connection,
         target_metadata=target_metadata,
         process_revision_directives=generate_incremental_revision_id,
+        render_as_batch=True,
+        user_module_prefix="sqlmodel.sql.sqltypes.",
     )
     with context.begin_transaction():
         context.run_migrations()
