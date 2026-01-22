@@ -1,6 +1,30 @@
+"""Database models for the data-in-models package.
+
+This module defines SQLModel database models for documents, labels,
+items, and their relationships. These models are used for database
+schema definition and Alembic migrations.
+
+Type inference:
+    SQLModel infers nullability from type hints e.g.,:
+    - ``str`` (without ``| None``) → non-nullable by default
+    - ``str | None`` → nullable by default
+    - ``Field(nullable=False)`` is redundant for ``str`` types
+    - ``Field(nullable=True)`` is redundant for ``str | None`` types
+
+Field usage:
+    Use ``Field()`` only when you need additional parameters:
+    - ``primary_key=True``
+    - ``foreign_key="table.column"``
+    - ``index=True``
+    - ``default=...`` or ``default_factory=...``
+    - ``sa_column_kwargs={...}``
+
+    For simple fields without special constraints, the type annotation
+    with optional default value is sufficient.
+"""
+
 from datetime import UTC, datetime
 
-from sqlalchemy import Column, ForeignKey, String
 from sqlmodel import Field, Relationship, SQLModel
 
 
@@ -15,40 +39,32 @@ class WithDbDatetimeFields(SQLModel):
 
 
 class Document(WithDbDatetimeFields, table=True):
-    id: str = Field(sa_column=Column(String, primary_key=True))
-    title: str = Field(sa_column=Column(String, nullable=False))
-    description: str | None = Field(sa_column=Column(String, nullable=True))
+    id: str = Field(primary_key=True)
+    title: str
+    description: str | None = None
 
     items: list["Item"] = Relationship(back_populates="document")
     labels: list["DocumentLabelLink"] = Relationship(back_populates="document")
 
 
 class Label(WithDbDatetimeFields, table=True):
-    id: str = Field(sa_column=Column(String, primary_key=True))
-    title: str = Field(sa_column=Column(String, nullable=False))
-    type: str = Field(sa_column=Column(String, nullable=False))
+    id: str = Field(primary_key=True)
+    title: str
+    type: str
 
     documents: list["DocumentLabelLink"] = Relationship(back_populates="label")
 
 
 class DocumentLabelLink(WithDbDatetimeFields, table=True):
-    relationship_type: str = Field(sa_column=Column(String, nullable=False))
+    relationship_type: str
     timestamp: datetime | None = None
     document_id: str = Field(
-        sa_column=Column(
-            String,
-            ForeignKey("document.id"),
-            primary_key=True,
-            nullable=False,
-        )
+        foreign_key="document.id",
+        primary_key=True,
     )
     label_id: str = Field(
-        sa_column=Column(
-            String,
-            ForeignKey("label.id"),
-            primary_key=True,
-            nullable=False,
-        )
+        foreign_key="label.id",
+        primary_key=True,
     )
 
     label: Label = Relationship(back_populates="documents")
@@ -56,32 +72,22 @@ class DocumentLabelLink(WithDbDatetimeFields, table=True):
 
 
 class DocumentDocumentLink(WithDbDatetimeFields, table=True):
-    relationship_type: str = Field(sa_column=Column(String, nullable=False))
+    relationship_type: str
     timestamp: datetime | None = None
 
     source_document_id: str = Field(
-        sa_column=Column(
-            String,
-            ForeignKey("document.id"),
-            primary_key=True,
-            nullable=False,
-        )
+        foreign_key="document.id",
+        primary_key=True,
     )
     related_document_id: str = Field(
-        sa_column=Column(
-            String,
-            ForeignKey("document.id"),
-            primary_key=True,
-            nullable=False,
-        )
+        foreign_key="document.id",
+        primary_key=True,
     )
 
 
 class Item(WithDbDatetimeFields, table=True):
-    url: str | None = Field(sa_column=Column(String, nullable=True))
-    id: str = Field(sa_column=Column(String, primary_key=True))
-    document_id: str = Field(
-        sa_column=Column(String, ForeignKey("document.id"), nullable=False)
-    )
+    url: str | None = None
+    id: str = Field(primary_key=True)
+    document_id: str = Field(foreign_key="document.id")
 
     document: Document = Relationship(back_populates="items")
