@@ -5,7 +5,7 @@ GITHUB_REMOTE_URL := `git config --get remote.origin.url`
 dev service environment="production":
     uv sync --all-packages
     just _prebuild {{service}} {{environment}}
-    docker compose -f {{service}}/docker-compose.yml --profile dev up --build
+    docker compose -f {{service}}/docker-compose.yml --profile dev up --build --detach
 
 # test
 test service:
