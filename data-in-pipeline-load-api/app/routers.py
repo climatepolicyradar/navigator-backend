@@ -38,14 +38,6 @@ def create_document(documents: list[Document]):
     return [doc.id for doc in documents]
 
 
-@router.get("/schema-info")
-def schema_info():
-    return {
-        "current_version": "1.0.0",
-        "head_version": "1.0.0",
-    }
-
-
 @router.post("/run-migrations")
 def run_schema_migrations(engine=Depends(get_engine)):
     try:
