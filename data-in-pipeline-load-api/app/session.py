@@ -10,9 +10,8 @@ from collections.abc import Generator
 from contextlib import contextmanager
 
 from pydantic import BaseModel
-from sqlalchemy import create_engine
 from sqlalchemy.engine import Engine
-from sqlalchemy.orm import Session, sessionmaker
+from sqlmodel import Session, create_engine
 
 from app.settings import settings
 
@@ -56,9 +55,6 @@ _engine = create_engine(
     echo=False,  # Set to True for SQL query logging in debug
 )
 
-# Session factory, exported callable for tests
-SessionLocal = sessionmaker(autocommit=False, autoflush=False, bind=_engine)
-
 
 @contextmanager
 def get_db_context() -> Generator[Session, None, None]:
@@ -71,7 +67,7 @@ def get_db_context() -> Generator[Session, None, None]:
     :yields: Database session
     :rtype: Generator[Session, None, None]
     """
-    db = SessionLocal()
+    db = Session(_engine)
     try:
         _LOGGER.debug("Database session created (context manager)")
         yield db
@@ -105,7 +101,7 @@ def get_engine() -> Engine:
     Exposed for testing and advanced use cases. Generally prefer
     get_db_context() for normal operations.
 
-    :return: SQLAlchemy engine instance
+    :return: SQLModel engine instance
     :rtype: Engine
     """
     return _engine

@@ -3,7 +3,7 @@ import os
 
 import pytest
 from pytest_alembic.config import Config as PytestAlembicConfig
-from sqlmodel import SQLModel, create_engine
+from sqlmodel import Session, SQLModel, create_engine
 
 
 @pytest.fixture
@@ -21,9 +21,13 @@ def alembic_config():
     )
 
 
-@pytest.fixture
+@pytest.fixture(scope="function")
 def engine():
-    """Create engine using test-db service from docker-compose."""
+    """Create engine using test-db service from docker-compose.
+
+    Session-scoped fixture that creates tables once for all tests.
+    Uses transaction rollback in session fixture for test isolation.
+    """
     # These are provided by the test-db service from docker-compose.
     db_host = os.getenv("load_database_url")
     db_port = os.getenv("db_port")
@@ -42,3 +46,57 @@ def engine():
     SQLModel.metadata.create_all(engine)
     yield engine
     SQLModel.metadata.drop_all(engine)
+
+
+@pytest.fixture(scope="function")
+def blank_engine():
+    """Create engine with no tables for migration testing.
+
+    Drops all tables before yielding to ensure migrations can run
+    cleanly. Used specifically for testing migration endpoints.
+    """
+    # These are provided by the test-db service from docker-compose.
+    db_host = os.getenv("load_database_url")
+    db_port = os.getenv("db_port")
+    db_name = os.getenv("db_name")
+    db_user = os.getenv("db_master_username")
+    db_password = os.getenv("managed_db_password")
+
+    # Parse password from JSON if needed
+    if db_password is not None and db_password.startswith("{"):
+        db_password = json.loads(db_password)["password"]
+
+    db_url = (
+        f"postgresql+psycopg2://{db_user}:{db_password}@{db_host}:{db_port}/{db_name}"
+    )
+    engine = create_engine(db_url)
+
+    # Drop all tables to ensure clean state for migrations
+    SQLModel.metadata.drop_all(engine)
+
+    yield engine
+
+    # Clean up after test
+    SQLModel.metadata.drop_all(engine)
+
+
+@pytest.fixture(scope="function")
+def session(engine):
+    """Create a database session with transaction rollback.
+
+    Each test gets a fresh session. All changes are rolled back
+    after the test, providing isolation without dropping tables.
+    Faster than drop_all/create_all pattern.
+
+    :yields: Database session
+    :rtype: Generator[Session, None, None]
+    """
+    connection = engine.connect()
+    transaction = connection.begin()
+    session = Session(connection)
+
+    yield session
+
+    session.close()
+    transaction.rollback()
+    connection.close()
