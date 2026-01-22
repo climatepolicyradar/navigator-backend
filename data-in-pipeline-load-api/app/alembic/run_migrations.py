@@ -10,12 +10,6 @@ from sqlalchemy.engine import Engine
 _LOGGER = logging.getLogger(__name__)
 
 
-class NoMigrationsToApply(Exception):
-    """Schema is already up to date."""
-
-    pass
-
-
 def get_library_path() -> str:
     """Return the absolute path of the library already installed"""
     script_path = os.path.realpath(__file__)
@@ -29,7 +23,7 @@ def run_migrations(engine: Engine) -> None:
 
     Call through subprocess as opposed to the alembic command function as the server
     startup never completed when using the alembic solution.
-    Raises NoMigrationsToApply if the DB is already at head.
+
     """
     # Path of the library
     script_directory = get_library_path()
@@ -53,11 +47,11 @@ def run_migrations(engine: Engine) -> None:
         script = ScriptDirectory.from_config(alembic_cfg)
         head_rev = script.get_current_head()
 
-        _LOGGER.info("Current revision=%s, Head revision=%s", current_rev, head_rev)
+        _LOGGER.debug("Current revision=%s, Head revision=%s", current_rev, head_rev)
 
         if current_rev == head_rev:
             _LOGGER.info("No schema changes detected")
-            raise NoMigrationsToApply()
+            return
 
         try:
             _LOGGER.info("Applying migrations...")
