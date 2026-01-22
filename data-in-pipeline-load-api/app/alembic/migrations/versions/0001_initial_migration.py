@@ -2,13 +2,14 @@
 
 Revision ID: 0001
 Revises:
-Create Date: 2026-01-21 12:33:17.601725
+Create Date: 2026-01-22 14:16:37.223338
 
 """
 
 from collections.abc import Sequence
 
 import sqlalchemy as sa
+import sqlmodel.sql.sqltypes
 from alembic import op
 
 # revision identifiers, used by Alembic.
@@ -25,28 +26,34 @@ def upgrade() -> None:
         "document",
         sa.Column("created_at", sa.DateTime(), nullable=False),
         sa.Column("updated_at", sa.DateTime(), nullable=False),
-        sa.Column("id", sa.String(), nullable=False),
-        sa.Column("title", sa.String(), nullable=False),
-        sa.Column("description", sa.String(), nullable=True),
+        sa.Column("id", sqlmodel.sql.sqltypes.AutoString(), nullable=False),
+        sa.Column("title", sqlmodel.sql.sqltypes.AutoString(), nullable=False),
+        sa.Column("description", sqlmodel.sql.sqltypes.AutoString(), nullable=True),
         sa.PrimaryKeyConstraint("id"),
     )
     op.create_table(
         "label",
         sa.Column("created_at", sa.DateTime(), nullable=False),
         sa.Column("updated_at", sa.DateTime(), nullable=False),
-        sa.Column("id", sa.String(), nullable=False),
-        sa.Column("title", sa.String(), nullable=False),
-        sa.Column("type", sa.String(), nullable=False),
+        sa.Column("id", sqlmodel.sql.sqltypes.AutoString(), nullable=False),
+        sa.Column("title", sqlmodel.sql.sqltypes.AutoString(), nullable=False),
+        sa.Column("type", sqlmodel.sql.sqltypes.AutoString(), nullable=False),
         sa.PrimaryKeyConstraint("id"),
     )
     op.create_table(
         "documentdocumentlink",
         sa.Column("created_at", sa.DateTime(), nullable=False),
         sa.Column("updated_at", sa.DateTime(), nullable=False),
-        sa.Column("relationship_type", sa.String(), nullable=False),
+        sa.Column(
+            "relationship_type", sqlmodel.sql.sqltypes.AutoString(), nullable=False
+        ),
         sa.Column("timestamp", sa.DateTime(), nullable=True),
-        sa.Column("source_document_id", sa.String(), nullable=False),
-        sa.Column("related_document_id", sa.String(), nullable=False),
+        sa.Column(
+            "source_document_id", sqlmodel.sql.sqltypes.AutoString(), nullable=False
+        ),
+        sa.Column(
+            "related_document_id", sqlmodel.sql.sqltypes.AutoString(), nullable=False
+        ),
         sa.ForeignKeyConstraint(
             ["related_document_id"],
             ["document.id"],
@@ -61,10 +68,12 @@ def upgrade() -> None:
         "documentlabellink",
         sa.Column("created_at", sa.DateTime(), nullable=False),
         sa.Column("updated_at", sa.DateTime(), nullable=False),
-        sa.Column("relationship_type", sa.String(), nullable=False),
+        sa.Column(
+            "relationship_type", sqlmodel.sql.sqltypes.AutoString(), nullable=False
+        ),
         sa.Column("timestamp", sa.DateTime(), nullable=True),
-        sa.Column("document_id", sa.String(), nullable=False),
-        sa.Column("label_id", sa.String(), nullable=False),
+        sa.Column("document_id", sqlmodel.sql.sqltypes.AutoString(), nullable=False),
+        sa.Column("label_id", sqlmodel.sql.sqltypes.AutoString(), nullable=False),
         sa.ForeignKeyConstraint(
             ["document_id"],
             ["document.id"],
@@ -79,9 +88,9 @@ def upgrade() -> None:
         "item",
         sa.Column("created_at", sa.DateTime(), nullable=False),
         sa.Column("updated_at", sa.DateTime(), nullable=False),
-        sa.Column("url", sa.String(), nullable=True),
-        sa.Column("id", sa.String(), nullable=False),
-        sa.Column("document_id", sa.String(), nullable=False),
+        sa.Column("url", sqlmodel.sql.sqltypes.AutoString(), nullable=True),
+        sa.Column("id", sqlmodel.sql.sqltypes.AutoString(), nullable=False),
+        sa.Column("document_id", sqlmodel.sql.sqltypes.AutoString(), nullable=False),
         sa.ForeignKeyConstraint(
             ["document_id"],
             ["document.id"],
