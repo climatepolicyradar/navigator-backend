@@ -1,11 +1,10 @@
-import pytest
-from data_in_models.models import Document, Label
+from data_in_models.db_models import Document, Label
 from sqlmodel import Session, SQLModel
 
 
-@pytest.mark.xfail(reason="This test is failing because the tables do not exist")
 def test_can_create_tables(engine):
     table_names = SQLModel.metadata.tables.keys()
+    assert len(table_names) > 0
     assert "document" in table_names
     assert "label" in table_names
     assert "documentlabellink" in table_names
@@ -13,7 +12,6 @@ def test_can_create_tables(engine):
     assert "item" in table_names
 
 
-@pytest.mark.xfail(reason="This test is failing because the tables do not exist")
 def test_can_insert_and_query(engine):
     with Session(engine) as session:
         document = Document(id="test-doc-1", title="Document 1")

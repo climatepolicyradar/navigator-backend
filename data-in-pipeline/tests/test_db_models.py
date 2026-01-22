@@ -1,7 +1,6 @@
 import pytest
+from data_in_models.db_models import Document, Label
 from sqlmodel import Session, SQLModel, create_engine
-
-from app.db_models import Document, Label
 
 
 @pytest.fixture

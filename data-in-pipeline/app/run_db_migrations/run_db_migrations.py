@@ -5,7 +5,7 @@ import requests
 from app.bootstrap_telemetry import get_logger
 
 
-def run_migrations() -> None:
+def run_db_migrations() -> None:
     """Apply alembic migrations.
 
     Call through subprocess as opposed to the alembic command function

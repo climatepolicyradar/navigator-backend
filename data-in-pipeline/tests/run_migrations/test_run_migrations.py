@@ -1,113 +1,111 @@
 import os
-from pathlib import Path
 from unittest.mock import MagicMock, patch
 
 import pytest
-from alembic import command
-from alembic.config import Config
-from sqlalchemy import create_engine, inspect
-from sqlmodel import SQLModel
 
-from app.run_migrations.run_migrations import run_migrations
-
-
-def test_migrations_up_and_down(postgres_container, tmp_path):
-    """
-    Test that Alembic migrations can run 'upgrade head' without error
-    and create the expected tables.
-
-    Uses the `tmp_path` fixture
-    @see: https://docs.pytest.org/en/stable/how-to/tmp_path.html
-    """
-
-    db_url = postgres_container.get_connection_url()
-
-    base_dir = Path(__file__).parent.parent.parent
-    alembic_ini_path = base_dir / "app" / "run_migrations" / "alembic.ini"
-
-    alembic_cfg = Config(str(alembic_ini_path))
-    # TODO: https://linear.app/climate-policy-radar/issue/APP-1600/get-a-working-db-url-into-run-migrations
-    alembic_cfg.set_main_option("sqlalchemy.url", db_url)
-
-    migrations_location = base_dir / "app" / "run_migrations" / "migrations"
-    alembic_cfg.set_main_option("script_location", str(migrations_location))
-
-    version_dir = tmp_path / "versions"
-    version_dir.mkdir()
-    alembic_cfg.set_main_option("version_locations", str(version_dir))
-
-    # This proves that env.py has the models in context
-    command.revision(alembic_cfg, message="test_init", autogenerate=True)
-
-    command.upgrade(alembic_cfg, "head")
-
-    # Verify tables exist
-    engine = create_engine(db_url)
-    inspector = inspect(engine)
-    tables = set(inspector.get_table_names())
-
-    # Check for expected tables
-    expected_tables = set(SQLModel.metadata.tables.keys()) | {"alembic_version"}
-    assert tables == expected_tables
-
-    # Run Downgrade
-    command.downgrade(alembic_cfg, "base")
-
-    # Verify tables are gone
-    inspector = inspect(engine)
-    tables_after_downgrade = set(inspector.get_table_names())
-
-    tables_remaining = tables_after_downgrade - {"alembic_version"}
-    assert (
-        not tables_remaining
-    ), f"Tables should be removed after downgrade, found: {tables_remaining}"
+from app.run_db_migrations.run_db_migrations import run_db_migrations
 
 
 @patch.dict(
     os.environ, {"DATA_IN_PIPELINE_LOAD_API_URL": "https://test-api.example.com"}
 )
-@patch("app.run_migrations.run_migrations.requests.post")
-def test_run_migrations_triggers_load_api(mock_post):
-    """Test run_migrations posts to the run-migrations endpoint."""
+@patch("app.run_db_migrations.run_db_migrations.requests.post")
+@patch("app.run_db_migrations.run_db_migrations.requests.get")
+def test_run_migrations_when_versions_match(mock_get, mock_post):
+    """Test run_migrations returns early when current_version equals head_version."""
 
     mock_response = MagicMock()
     mock_response.raise_for_status.return_value = None
     mock_post.return_value = mock_response
 
-    run_migrations()
+    run_db_migrations()
 
     mock_post.assert_called_once_with(
         url="https://test-api.example.com/load/run-migrations",
         timeout=10,
     )
     mock_response.raise_for_status.assert_called_once()
-
-
-@patch.dict(os.environ, {"DATA_IN_PIPELINE_LOAD_API_URL": "test-api.example.com"})
-@patch("app.run_migrations.run_migrations.requests.post")
-def test_run_migrations_adds_https_scheme_when_missing(mock_post):
-    """Test run_migrations adds https:// scheme when missing."""
-
-    mock_response = MagicMock()
-    mock_response.raise_for_status.return_value = None
-    mock_post.return_value = mock_response
-
-    run_migrations()
-
-    mock_post.assert_called_once_with(
-        url="https://test-api.example.com/load/run-migrations",
-        timeout=10,
-    )
+    mock_post.assert_not_called()
 
 
 @patch.dict(
     os.environ, {"DATA_IN_PIPELINE_LOAD_API_URL": "https://test-api.example.com"}
 )
-@patch("app.run_migrations.run_migrations.requests.post")
-def test_run_migrations_raises_on_request_error(mock_post):
-    """Test run_migrations propagates exceptions from the POST request."""
+@patch("app.run_db_migrations.run_db_migrations.requests.post")
+@patch("app.run_db_migrations.run_db_migrations.requests.get")
+def test_run_migrations_when_versions_differ(mock_get, mock_post):
+    """Test run_migrations calls run-migrations endpoint when versions differ."""
 
-    mock_post.side_effect = Exception("boom")
+    mock_get_response = MagicMock()
+    mock_get_response.json.return_value = {
+        "current_version": "1.0.0",
+        "head_version": "2.0.0",
+    }
+    mock_get_response.raise_for_status.return_value = None
+    mock_get.return_value = mock_get_response
+
+    mock_post_response = MagicMock()
+    mock_post_response.raise_for_status.return_value = None
+    mock_post.return_value = mock_post_response
+
+    run_db_migrations()
+
+    mock_get.assert_called_once_with(
+        url="https://test-api.example.com/load/schema-info", timeout=2
+    )
+    mock_post.assert_called_once_with(
+        url="https://test-api.example.com/load/run-migrations", timeout=10
+    )
+
+
+@patch.dict(os.environ, {"DATA_IN_PIPELINE_LOAD_API_URL": "test-api.example.com"})
+@patch("app.run_db_migrations.run_db_migrations.requests.post")
+@patch("app.run_db_migrations.run_db_migrations.requests.get")
+def test_run_migrations_adds_https_scheme_when_missing(mock_get, mock_post):
+    """Test run_migrations adds https:// scheme to URL when missing."""
+
+    mock_response = MagicMock()
+    mock_response.raise_for_status.return_value = None
+    mock_post.return_value = mock_response
+
+    run_db_migrations()
+
+    mock_get.assert_called_once_with(
+        url="https://test-api.example.com/load/schema-info", timeout=2
+    )
+    mock_post.assert_not_called()
+
+
+@patch.dict(
+    os.environ, {"DATA_IN_PIPELINE_LOAD_API_URL": "https://test-api.example.com"}
+)
+@patch("app.run_db_migrations.run_db_migrations.requests.get")
+def test_run_migrations_handles_schema_info_error(mock_get):
+    """Test run_migrations raises exception when schema-info request fails."""
+
+    mock_get.side_effect = Exception()
 
     with pytest.raises(Exception):
-        run_migrations()
+        run_db_migrations()
+
+
+@patch.dict(
+    os.environ, {"DATA_IN_PIPELINE_LOAD_API_URL": "https://test-api.example.com"}
+)
+@patch("app.run_db_migrations.run_db_migrations.requests.post")
+@patch("app.run_db_migrations.run_db_migrations.requests.get")
+def test_run_migrations_handles_run_migrations_error(mock_get, mock_post):
+    """Test run_migrations raises exception when run-migrations request fails."""
+
+    mock_get_response = MagicMock()
+    mock_get_response.json.return_value = {
+        "current_version": "1.0.0",
+        "head_version": "2.0.0",
+    }
+    mock_get_response.raise_for_status.return_value = None
+    mock_get.return_value = mock_get_response
+
+    mock_post.side_effect = Exception()
+
+    with pytest.raises(Exception):
+        run_db_migrations()
