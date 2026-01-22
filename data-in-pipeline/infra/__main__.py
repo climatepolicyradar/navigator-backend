@@ -191,7 +191,8 @@ aurora_cluster = aws.rds.Cluster(
     preferred_backup_window="02:00-03:00",
     iam_database_authentication_enabled=False,  # TODO: Reenable later
     preferred_maintenance_window="sun:04:00-sun:05:00",
-    deletion_protection=True,
+    # FIXME: https://github.com/climatepolicyradar/navigator-backend/issues/964
+    deletion_protection=False,
     serverlessv2_scaling_configuration=aws.rds.ClusterServerlessv2ScalingConfigurationArgs(
         min_capacity=min_instances,
         max_capacity=max_instances,
@@ -473,13 +474,15 @@ orchestrator_stack = pulumi.StackReference(
 )
 prefect_vpc_id = orchestrator_stack.get_output("prefect_vpc_id")
 prefect_security_group_id = orchestrator_stack.get_output("prefect_security_group_id")
-pulumi.export("prefect_security_group_id", prefect_security_group_id)
-pulumi.export("prefect_vpc_id", prefect_vpc_id)
+prefect_subnet_id = orchestrator_stack.get_output("prefect_ecs_service_subnet_id")
 
 # Get Prefect ECS subnet - Interface endpoints work with a single subnet, though
 # multiple subnets (one per AZ) are recommended for high availability
-prefect_subnet_id = orchestrator_stack.get_output("prefect_ecs_service_subnet_id")
 prefect_subnet_ids = prefect_subnet_id.apply(lambda x: [x])
+
+pulumi.export("prefect_vpc_id", prefect_vpc_id)
+pulumi.export("prefect_security_group_id", prefect_security_group_id)
+pulumi.export("prefect_subnet_id", prefect_subnet_id)
 
 vpc_endpoint_sg = aws.ec2.SecurityGroup(
     "data-in-pipeline-load-api-vpc-endpoint-sg",
@@ -490,7 +493,7 @@ vpc_endpoint_sg = aws.ec2.SecurityGroup(
             from_port=HTTP_PORT,
             to_port=HTTP_PORT,
             protocol="tcp",
-            security_groups=[prefect_security_group_id],
+            cidr_blocks=["10.0.0.0/16"],
             description="Allow HTTPS from Prefect ECS tasks",
         )
     ],
@@ -502,28 +505,17 @@ vpc_endpoint_sg = aws.ec2.SecurityGroup(
     tags=tags,
 )
 
-# VPC endpoint for App Runner (PrivateLink) - enables private access to App Runner service
-# Reference: https://docs.aws.amazon.com/apprunner/latest/dg/network-pl.html
-# Note: App Runner's VPC endpoint service does not support private DNS (AWS limitation)
-# The VPC Ingress Connection provides its own domain name that resolves automatically
-#
-# Important: AWS recommends at least 2 subnets across different AZs for high availability.
-# Using single subnet from Prefect stack (will work but not ideal for HA).
-# Steps to troubleshoot timeout issues:
-# 1. VPC endpoint state is "available" (check exports)
-# 2. VPC Ingress Connection status is "AVAILABLE" (check exports)
-# 3. Prefect VPC has enable_dns_support=True and enable_dns_hostnames=True (they are)
-# 4. Security group rules allow HTTPS (443) from Prefect ECS tasks
-# vpc_endpoint = aws.ec2.VpcEndpoint(
-#     "data-in-pipeline-load-api-vpc-endpoint",
-#     vpc_id=prefect_vpc_id,
-#     service_name="com.amazonaws.eu-west-1.apprunner.requests",
-#     vpc_endpoint_type="Interface",
-#     subnet_ids=prefect_subnet_ids,
-#     security_group_ids=[vpc_endpoint_sg.id],
-#     private_dns_enabled=False,  # App Runner service doesn't support private DNS
-#     tags=tags,
-# )
+
+vpc_endpoint = aws.ec2.VpcEndpoint(
+    "data-in-pipeline-load-api-vpc-endpoint",
+    vpc_id=prefect_vpc_id,
+    service_name="com.amazonaws.eu-west-1.apprunner.requests",
+    vpc_endpoint_type="Interface",
+    subnet_ids=prefect_subnet_ids,
+    security_group_ids=[vpc_endpoint_sg.id],
+    private_dns_enabled=False,
+    tags={**tags, "Name": "data-in-pipeline-load-api-vpc-endpoint"},
+)
 
 # Allow load API connector to reach Aurora
 allow_data_in_pipeline_load_api_to_aurora = aws.ec2.SecurityGroupRule(
@@ -559,7 +551,7 @@ data_in_pipeline_load_api_apprunner_service = aws.apprunner.Service(
             # Private endpoint - ingress only. Egress via VPC connector (above) is separate
             # and will continue to allow Aurora connectivity via existing security group rules.
             # If external access is needed, create a VPC Ingress Connection (PrivateLink).
-            is_publicly_accessible=True,
+            is_publicly_accessible=False,
         ),
         ip_address_type="IPV4",
     ),
@@ -592,38 +584,19 @@ data_in_pipeline_load_api_apprunner_service = aws.apprunner.Service(
     opts=pulumi.ResourceOptions(protect=True),
 )
 
-# VPC Ingress Connection - links App Runner service to VPC endpoint for private access
-# Reference: https://docs.aws.amazon.com/apprunner/latest/dg/network-pl-manage.html
-# This creates a private connection that ensures only traffic from the Prefect VPC can access
-# the App Runner service. The domain name provided by this resource resolves automatically
-# from within the Prefect VPC and routes through the VPC endpoint.
-#
-# The VPC Ingress Connection must be in AVAILABLE status before it can be used.
-# Check the exported status to verify connectivity.
-# vpc_ingress_connection = aws.apprunner.VpcIngressConnection(
-#     "data-in-pipeline-load-api-vpc-ingress-connection",
-#     name=f"data-in-pipeline-load-api-vic-{environment}",
-#     service_arn=data_in_pipeline_load_api_apprunner_service.arn,
-#     ingress_vpc_configuration=aws.apprunner.VpcIngressConnectionIngressVpcConfigurationArgs(
-#         vpc_id=orchestrator_stack.get_output("prefect_vpc_id"),
-#         vpc_endpoint_id=vpc_endpoint.id,
-#     ),
-#     tags=tags,
-#     opts=pulumi.ResourceOptions(
-#         # Ensure VPC endpoint is available before creating VPC Ingress Connection
-#         depends_on=[vpc_endpoint],
-#     ),
-# )
-
-# Use VPC Ingress Connection domain name for private access
-# The VPC Ingress Connection provides the domain name that routes through the VPC endpoint
-# to the App Runner service - this is different from the VPC endpoint DNS itself
-load_api_base_url = data_in_pipeline_load_api_apprunner_service.service_url.apply(
-    lambda url: f"https://{url}"
+data_in_load_api_vpc_ingress_connection = aws.apprunner.VpcIngressConnection(
+    "dip-load-api-vpc-ingress-connection",
+    name="dip-load-api-vpc-ingress-connection",
+    service_arn=data_in_pipeline_load_api_apprunner_service.arn,
+    ingress_vpc_configuration=aws.apprunner.VpcIngressConnectionIngressVpcConfigurationArgs(
+        vpc_id=prefect_vpc_id,
+        vpc_endpoint_id=vpc_endpoint.id,
+    ),
+    tags={**tags},
 )
-# vpc_ingress_connection.domain_name.apply(
-#     lambda domain: f"https://{domain}"
-# )
+
+load_api_base_url = "https://mdemumdvnc.eu-west-1.awsapprunner.com"
+
 data_in_pipeline_load_api_url = aws.ssm.Parameter(
     "data-in-pipeline-load-api-url",
     name="/data-in-pipeline-load-api/url",
@@ -632,44 +605,6 @@ data_in_pipeline_load_api_url = aws.ssm.Parameter(
     value=load_api_base_url,
 )
 
-# Export VPC Ingress Connection details for monitoring and troubleshooting
-# Reference: https://docs.aws.amazon.com/apprunner/latest/dg/network-pl-manage.html
-#
-# Troubleshooting connectivity issues:
-# 1. Verify VPC Ingress Connection status is "AVAILABLE" (not "PENDING_CREATION" or "FAILED_*")
-#    - Check export: data-in-pipeline-load-api-vpc-ingress-connection-status
-# 2. Verify VPC endpoint state is "available" (check vpc-endpoint-state export)
-#    - Interface endpoint network interfaces should be in "available" state
-# 3. Ensure Prefect VPC has enable_dns_support=True and enable_dns_hostnames=True
-# 4. Verify security group allows HTTPS (443) from Prefect ECS security group
-#    - VPC endpoint SG must allow ingress from Prefect ECS tasks
-# 5. Test DNS resolution from Prefect task: nslookup <vpc-ingress-connection-domain>
-#    - The VPC Ingress Connection domain should resolve to private IPs
-# 6. Verify route tables - subnet must have route table that allows traffic to VPC endpoint
-# 7. Check VPC endpoint network interface IPs are reachable from Prefect tasks
-# pulumi.export(
-#     "data-in-pipeline-load-api-vpc-ingress-connection-domain",
-#     vpc_ingress_connection.domain_name,
-# )
-# pulumi.export(
-#     "data-in-pipeline-load-api-vpc-ingress-connection-status",
-#     vpc_ingress_connection.status,
-# )
-# pulumi.export(
-#     "data-in-pipeline-load-api-vpc-ingress-connection-arn",
-#     vpc_ingress_connection.arn,
-# )
-
-# Export VPC endpoint details for monitoring
-# pulumi.export("data-in-pipeline-load-api-vpc-endpoint-id", vpc_endpoint.id)
-# pulumi.export("data-in-pipeline-load-api-vpc-endpoint-state", vpc_endpoint.state)
-# pulumi.export(
-#     "data-in-pipeline-load-api-vpc-endpoint-service-name", vpc_endpoint.service_name
-# )
-# pulumi.export(
-#     "data-in-pipeline-load-api-vpc-endpoint-network-interface-ids",
-#     vpc_endpoint.network_interface_ids,
-# )
 
 #######################################################################
 # Create environment variables and secrets for Prefect flows/tasks.
