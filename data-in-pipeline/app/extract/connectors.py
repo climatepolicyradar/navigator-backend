@@ -67,6 +67,7 @@ class NavigatorFamily(BaseModel):
     events: list[NavigatorEvent]
     collections: list[NavigatorCollection]
     geographies: list[str]
+    category: str
 
 
 class PageFetchFailure(BaseModel):

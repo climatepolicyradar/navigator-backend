@@ -382,17 +382,17 @@ def _transform_navigator_family(navigator_family: NavigatorFamily) -> Document:
         )
 
         for event in navigator_family.events:
-            label_id = event_type_to_activity_status_map.get(
+            event_typelabel_id = event_type_to_activity_status_map.get(
                 event.event_type,
-                "Unknown",
+                "Unknown event_type",
             )
             labels.append(
                 DocumentLabelRelationship(
                     type="activity_status",
                     timestamp=event.date,
                     label=Label(
-                        id=label_id,
-                        title=label_id,
+                        id=event_typelabel_id,
+                        title=event_typelabel_id,
                         type="activity_status",
                     ),
                 )
@@ -427,6 +427,32 @@ def _transform_navigator_family(navigator_family: NavigatorFamily) -> Document:
             else:
                 logger.warning(f"Geography not found: {geograpy_id}")
         labels.extend(geography_labels)
+
+    """
+    family.cateogry
+    @see: https://github.com/climatepolicyradar/navigator-db-client/blob/a842d5e971894246843c1915de9179ddd991b25c/db_client/models/dfce/family.py#L67-L75
+    """
+    family_category_to_label_map = {
+        "EXECUTIVE": "Executive",
+        "LEGISLATIVE": "Legislative",
+        "UNFCCC": "UN Convention",
+        "MCF": "Multilateral climate fund project",
+        "REPORTS": "Guidance",
+        "LITIGATION": "Legal case",
+    }
+    family_category_label_id = family_category_to_label_map.get(
+        navigator_family.category, "Unknown family.category"
+    )
+    labels.append(
+        DocumentLabelRelationship(
+            type="entity_type",
+            label=Label(
+                id=family_category_label_id,
+                title=family_category_label_id,
+                type="entity_type",
+            ),
+        )
+    )
 
     return Document(
         id=navigator_family.import_id,

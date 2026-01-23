@@ -21,10 +21,7 @@ venvPath = "."
 venv = ".venv"
 pythonVersion = "3.13"
 exclude = ["backend-api/**"]
-extraPaths = ["api/src"]
-
-[tool.pyright.executionEnvironments]
-root = [
+extraPaths = [
   "api/src",
   "data-in-models",
   "concepts-api",

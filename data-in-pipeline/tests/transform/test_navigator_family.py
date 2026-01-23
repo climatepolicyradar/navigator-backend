@@ -34,6 +34,7 @@ def navigator_family_with_single_matching_document() -> Identified[NavigatorFami
             import_id="family",
             title="Matching title on family and document and collection",
             summary="Family summary",
+            category="REPORTS",
             corpus=NavigatorCorpus(
                 import_id="CCLW.corpus.i00000001.n0000",
                 corpus_type=NavigatorCorpusType(name="corpus_type"),
@@ -173,6 +174,7 @@ def navigator_family_with_no_matching_transformations() -> Identified[NavigatorF
             import_id="123",
             title="No matches for this family or documents",
             summary="Family summary",
+            category="REPORTS",
             corpus=NavigatorCorpus(
                 import_id="CCLW.corpus.i00000001.n0000",
                 corpus_type=NavigatorCorpusType(name="corpus_type"),
@@ -201,6 +203,7 @@ def navigator_family_with_litigation_corpus_type() -> Identified[NavigatorFamily
             import_id="family",
             title="Litigation family",
             summary="Family summary",
+            category="REPORTS",
             corpus=NavigatorCorpus(
                 import_id="Academic.corpus.Litigation.n0000",
                 corpus_type=NavigatorCorpusType(name="Litigation"),
@@ -246,6 +249,7 @@ def navigator_family_multilateral_climate_fund_project() -> Identified[Navigator
             import_id="family",
             title="Multilateral climate fund project",
             summary="Family summary",
+            category="REPORTS",
             corpus=NavigatorCorpus(
                 import_id="MCF.corpus.AF.n0000",
                 corpus_type=NavigatorCorpusType(name="AF"),
@@ -467,6 +471,14 @@ def test_transform_navigator_family_with_single_matching_document(
                     title="Australia",
                 ),
             ),
+            DocumentLabelRelationship(
+                type="entity_type",
+                label=Label(
+                    id="Guidance",
+                    title="Guidance",
+                    type="entity_type",
+                ),
+            ),
         ],
         relationships=[
             DocumentDocumentRelationship(
@@ -640,6 +652,14 @@ def test_transform_navigator_family_with_litigation_corpus_type(
                     type="agent",
                     id="Sabin Center for Climate Change Law",
                     title="Sabin Center for Climate Change Law",
+                ),
+            ),
+            DocumentLabelRelationship(
+                type="entity_type",
+                label=Label(
+                    id="Guidance",
+                    title="Guidance",
+                    type="entity_type",
                 ),
             ),
         ],
@@ -841,6 +861,14 @@ def test_transform_navigator_family_with_multilateral_climate_fund_project(
                     type="agent",
                     id="Adaptation Fund",
                     title="Adaptation Fund",
+                ),
+            ),
+            DocumentLabelRelationship(
+                type="entity_type",
+                label=Label(
+                    id="Guidance",
+                    title="Guidance",
+                    type="entity_type",
                 ),
             ),
         ],
