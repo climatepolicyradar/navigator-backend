@@ -2,12 +2,12 @@
 name = "data-in-pipeline"
 version = "1.0.0"
 readme = "README.md"
-requires-python = ">=3.12,<3.14"
+requires-python = ">=3.13,<3.14"
 dependencies = [
   "api",
+  "data-in-models",
   "components>=1.0.3",
   "prefect[aws]>=3.4",
-  "uv>=0.9.2",
   "pulumi>=3.202.0",
   "pulumi-aws>=6.83.0",
   "pydantic>=2.12.1",
@@ -22,12 +22,16 @@ dependencies = [
   "psycopg2-binary>=2.9.11",
   "opentelemetry-sdk>=1.38.0",
   "opentelemetry-api>=1.38.0",
+  "testcontainers[postgres]>=4.14.0",
+  "sqlmodel>=0.0.31",
+  "pycountry>=24.6.1",
 ]
 
 [tool.uv.sources]
 api = { workspace = true }
 components = { git = "https://github.com/climatepolicyradar/infra", subdirectory = "components", tag = "v1.0.5" }
+data-in-models = { workspace = true }
 
 
 [dependency-groups]
-dev = ["pytest>=8.4.2"]
+dev = ["pytest>=8.4.2", "uv>=0.9.2"]

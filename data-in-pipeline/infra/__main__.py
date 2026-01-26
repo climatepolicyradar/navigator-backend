@@ -1,5 +1,3 @@
-import json
-import os
 from pathlib import Path
 
 import components.aws as components_aws
@@ -31,6 +29,59 @@ data_in_pipeline_aws_ecr_repository = components_aws.ecr.Repository(
     ),
 )
 
+# Add cross account permissions so production Prefect account can pull the staging image
+# to create a staging deployment in the production account. We accept this security
+# tradeoff as we do not have a staging workspace in Prefect, so all deployments are
+# in the production workspace.
+if environment == "staging":
+    prod_aws_account_id = config.get("prod_aws_account_id")
+    data_in_pipeline_repo_policy = aws.iam.get_policy_document(
+        statements=[
+            aws.iam.GetPolicyDocumentStatementArgs(
+                sid="CrossAccountPermission",
+                effect="Allow",
+                actions=[
+                    "ecr:BatchGetImage",
+                    "ecr:GetDownloadUrlForLayer",
+                ],
+                principals=[
+                    aws.iam.GetPolicyDocumentStatementPrincipalArgs(
+                        type="AWS",
+                        identifiers=[f"arn:aws:iam::{prod_aws_account_id}:root"],
+                    )
+                ],
+            ),
+            aws.iam.GetPolicyDocumentStatementArgs(
+                effect="Allow",
+                actions=[
+                    "ecr:BatchGetImage",
+                    "ecr:GetDownloadUrlForLayer",
+                ],
+                principals=[
+                    aws.iam.GetPolicyDocumentStatementPrincipalArgs(
+                        type="Service",
+                        identifiers=["batch.amazonaws.com"],
+                    )
+                ],
+                conditions=[
+                    aws.iam.GetPolicyDocumentStatementConditionArgs(
+                        test="StringLike",
+                        variable="aws:sourceArn",
+                        values=[
+                            f"arn:aws:batch:eu-west-1:{prod_aws_account_id}:job/*",
+                        ],
+                    )
+                ],
+            ),
+        ],
+    )
+
+    # Attach the policy to the underlying aws.ecr.Repository
+    data_in_pipeline_aws_ecr_repository_policy = aws.ecr.RepositoryPolicy(
+        "data-in-pipeline-ecr-repository-policy",
+        repository=data_in_pipeline_aws_ecr_repository.aws_ecr_repository.name,
+        policy=data_in_pipeline_repo_policy.json,
+    )
 
 #######################################################################
 # Create the Aurora service.
@@ -56,15 +107,7 @@ aurora_security_group = aws.ec2.SecurityGroup(
     name=f"{name}-aurora-sg",
     vpc_id=vpc_id,
     description=f"Security group for {name} Aurora DB",
-    ingress=[
-        aws.ec2.SecurityGroupIngressArgs(
-            description="Allow PostgreSQL access",
-            protocol="tcp",
-            from_port=db_port,
-            to_port=db_port,
-            security_groups=[],  # TODO
-        )
-    ],
+    # ingress rules are controlled via security groups below
     egress=[
         aws.ec2.SecurityGroupEgressArgs(
             from_port=0,
@@ -148,7 +191,8 @@ aurora_cluster = aws.rds.Cluster(
     preferred_backup_window="02:00-03:00",
     iam_database_authentication_enabled=False,  # TODO: Reenable later
     preferred_maintenance_window="sun:04:00-sun:05:00",
-    deletion_protection=True,
+    # FIXME: https://github.com/climatepolicyradar/navigator-backend/issues/964
+    deletion_protection=False,
     serverlessv2_scaling_configuration=aws.rds.ClusterServerlessv2ScalingConfigurationArgs(
         min_capacity=min_instances,
         max_capacity=max_instances,
@@ -424,8 +468,58 @@ vpc_connector = aws.apprunner.VpcConnector(
     security_groups=[data_in_pipeline_load_api_vpc_sg.id],
 )
 
+# Security group for VPC endpoint (ingress) - allows traffic from Prefect ECS tasks
+HTTP_PORT = 443
+orchestrator_stack = pulumi.StackReference(
+    f"climatepolicyradar/prefect_mvp/{'prod' if environment == 'production' else 'staging'}"
+)
+prefect_vpc_id = orchestrator_stack.get_output("prefect_vpc_id")
+prefect_security_group_id = orchestrator_stack.get_output("prefect_security_group_id")
+prefect_subnet_id = orchestrator_stack.get_output("prefect_ecs_service_subnet_id")
+
+# Get Prefect ECS subnet - Interface endpoints work with a single subnet, though
+# multiple subnets (one per AZ) are recommended for high availability
+prefect_subnet_ids = prefect_subnet_id.apply(lambda x: [x])
+
+pulumi.export("prefect_vpc_id", prefect_vpc_id)
+pulumi.export("prefect_security_group_id", prefect_security_group_id)
+pulumi.export("prefect_subnet_id", prefect_subnet_id)
+
+vpc_endpoint_sg = aws.ec2.SecurityGroup(
+    "data-in-pipeline-load-api-vpc-endpoint-sg",
+    vpc_id=prefect_vpc_id,
+    description="Security group for App Runner VPC endpoint ingress",
+    ingress=[
+        aws.ec2.SecurityGroupIngressArgs(
+            from_port=HTTP_PORT,
+            to_port=HTTP_PORT,
+            protocol="tcp",
+            cidr_blocks=["10.0.0.0/16"],
+            description="Allow HTTPS from Prefect ECS tasks",
+        )
+    ],
+    egress=[
+        aws.ec2.SecurityGroupEgressArgs(
+            protocol="-1", from_port=0, to_port=0, cidr_blocks=["0.0.0.0/0"]
+        )
+    ],
+    tags=tags,
+)
+
+
+vpc_endpoint = aws.ec2.VpcEndpoint(
+    "data-in-pipeline-load-api-vpc-endpoint",
+    vpc_id=prefect_vpc_id,
+    service_name="com.amazonaws.eu-west-1.apprunner.requests",
+    vpc_endpoint_type="Interface",
+    subnet_ids=prefect_subnet_ids,
+    security_group_ids=[vpc_endpoint_sg.id],
+    private_dns_enabled=False,
+    tags={**tags, "Name": "data-in-pipeline-load-api-vpc-endpoint"},
+)
+
 # Allow load API connector to reach Aurora
-aws.ec2.SecurityGroupRule(
+allow_data_in_pipeline_load_api_to_aurora = aws.ec2.SecurityGroupRule(
     "allow-data-in-pipeline-load-api-to-aurora",
     type="ingress",
     security_group_id=aurora_security_group.id,
@@ -433,6 +527,7 @@ aws.ec2.SecurityGroupRule(
     protocol="tcp",
     from_port=5432,
     to_port=5432,
+    description="Allow Postgres from load API VPC SG",
 )
 
 
@@ -454,7 +549,10 @@ data_in_pipeline_load_api_apprunner_service = aws.apprunner.Service(
             vpc_connector_arn=vpc_connector.arn,
         ),
         ingress_configuration=aws.apprunner.ServiceNetworkConfigurationIngressConfigurationArgs(
-            is_publicly_accessible=True,  # set to False to enforce IAM auth
+            # Private endpoint - ingress only. Egress via VPC connector (above) is separate
+            # and will continue to allow Aurora connectivity via existing security group rules.
+            # If external access is needed, create a VPC Ingress Connection (PrivateLink).
+            is_publicly_accessible=False,
         ),
         ip_address_type="IPV4",
     ),
@@ -487,122 +585,76 @@ data_in_pipeline_load_api_apprunner_service = aws.apprunner.Service(
     opts=pulumi.ResourceOptions(protect=True),
 )
 
+data_in_load_api_vpc_ingress_connection = aws.apprunner.VpcIngressConnection(
+    "dip-load-api-vpc-ingress-connection",
+    name="dip-load-api-vpc-ingress-connection",
+    service_arn=data_in_pipeline_load_api_apprunner_service.arn,
+    ingress_vpc_configuration=aws.apprunner.VpcIngressConnectionIngressVpcConfigurationArgs(
+        vpc_id=prefect_vpc_id,
+        vpc_endpoint_id=vpc_endpoint.id,
+    ),
+    tags={**tags},
+)
+
+load_api_base_url = "https://mdemumdvnc.eu-west-1.awsapprunner.com"
+
+data_in_pipeline_load_api_url = aws.ssm.Parameter(
+    "data-in-pipeline-load-api-url",
+    name="/data-in-pipeline-load-api/url",
+    description="URL of the load API service (via VPC Ingress Connection)",
+    type=aws.ssm.ParameterType.STRING,
+    value=load_api_base_url,
+)
+
+
+#######################################################################
+# Create environment variables and secrets for Prefect flows/tasks.
+#######################################################################
+
+# Export environment variables (plain values)
+prefect_otel_endpoint = f"https://otel.{"prod" if environment == "production" else "staging"}.climatepolicyradar.org"
 pulumi.export(
-    "data-in-pipeline-load-api-apprunner_service_url",
-    data_in_pipeline_load_api_apprunner_service.service_url,
-)
-
-
-#######################################################################
-# Lambda to create aurora user.
-#######################################################################
-
-
-lambda_role = aws.iam.Role(
-    "aurora-user-creation-lambda-role",
-    assume_role_policy=json.dumps(
-        {
-            "Version": "2012-10-17",
-            "Statement": [
-                {
-                    "Action": "sts:AssumeRole",
-                    "Principal": {"Service": "lambda.amazonaws.com"},
-                    "Effect": "Allow",
-                }
-            ],
-        }
-    ),
-)
-
-aws.iam.RolePolicyAttachment(
-    "aurora-user-creation-lambda-basic-execution",
-    role=lambda_role.name,
-    policy_arn="arn:aws:iam::aws:policy/service-role/AWSLambdaBasicExecutionRole",
-)
-
-lambda_sg = aws.ec2.SecurityGroup(
-    "aurora-user-creation-lambda-sg",
-    vpc_id=vpc_id,
-    description="Lambda access to Aurora",
-    egress=[
-        {
-            "protocol": "-1",
-            "from_port": 0,
-            "to_port": 0,
-            "cidr_blocks": ["0.0.0.0/0"],
-        }
-    ],
-)
-
-
-aws.iam.RolePolicy(
-    "aurora-user-creation-lambda-ssm-read-policy",
-    role=lambda_role.id,
-    policy=pulumi.Output.all(
-        data_in_pipeline_load_api_cluster_password_secret_arn=data_in_pipeline_load_api_cluster_password_secret.secret_arn,
-    ).apply(
-        lambda args: json.dumps(
-            {
-                "Version": "2012-10-17",
-                "Statement": [
-                    {
-                        "Effect": "Allow",
-                        "Action": [
-                            "ssm:GetParameter",
-                            "ssm:GetParameters",
-                            "secretsmanager:GetSecretValue",
-                        ],
-                        "Resource": [
-                            args[
-                                "data_in_pipeline_load_api_cluster_password_secret_arn"
-                            ],
-                        ],
-                    }
-                ],
-            }
-        )
-    ),
-)
-
-aws.ec2.SecurityGroupRule(
-    "aurora-allow-lambda",
-    type="ingress",
-    security_group_id=aurora_security_group.id,
-    from_port=5432,
-    to_port=5432,
-    protocol="tcp",
-    source_security_group_id=lambda_sg.id,
-)
-
-aws.iam.RolePolicyAttachment(
-    "aurora-user-creation-lambda-vpc-access",
-    role=lambda_role.name,
-    policy_arn="arn:aws:iam::aws:policy/service-role/AWSLambdaVPCAccessExecutionRole",
-)
-
-lambda_fn = aws.lambda_.Function(
-    "data-in-pipeline-create-aurora-user-lambda",
-    role=lambda_role.arn,
-    runtime="python3.12",
-    handler="handler.handler",
-    timeout=15,
-    memory_size=256,
-    vpc_config={
-        "subnet_ids": private_subnets,
-        "security_group_ids": [lambda_sg.id],
+    "prefect_runtime_environment_variables",
+    {
+        "API_BASE_URL": config.require("api_base_url"),
+        "DATA_IN_PIPELINE_LOAD_API_URL": load_api_base_url,
+        "DISABLE_OTEL_LOGGING": config.require("disable_otel_logging"),
+        "OTEL_EXPORTER_OTLP_PROTOCOL": "http/protobuf",
+        "OTEL_EXPORTER_OTLP_ENDPOINT": prefect_otel_endpoint,
+        "OTEL_PYTHON_LOGGER_PROVIDER": "sdk",
+        "OTEL_PYTHON_LOG_CORRELATION": True,
+        "OTEL_PYTHON_LOG_LEVEL": config.require("otel_python_log_level"),
+        "OTEL_RESOURCE_ATTRIBUTES": f"deployment.environment={environment},service.namespace=data-fetching",
+        "OTEL_PYTHON_LOGGING_AUTO_INSTRUMENTATION_ENABLED": True,
+        "PREFECT_CLOUD_ENABLE_ORCHESTRATION_TELEMETRY": True,
+        "PREFECT_LOGGING_TO_API_ENABLED": True,
+        "PREFECT_LOGGING_EXTRA_LOGGERS": "app",
     },
-    code=pulumi.AssetArchive(
-        {".": pulumi.FileArchive(os.path.join(ROOT_DIR, ".lambda_build"))}
-    ),
-    environment=aws.lambda_.FunctionEnvironmentArgs(
-        variables={
-            "AURORA_WRITER_ENDPOINT": aurora_cluster.endpoint,
-            "DB_NAME": db_name,
-            "DB_PORT": str(db_port),
-            "ADMIN_SECRET_ARN": data_in_pipeline_load_api_cluster_password_secret.secret_arn,
-            "SQL_PATH": "/var/task/create_iam_user.sql",
-            "LOAD_DB_USER": load_db_user,
-            "APP_SCHEMA": "public",
-        }
-    ),
 )
+
+# Export secrets (ARNs) - these can be linked to Secrets Manager secrets
+prefect_secrets_arns_output = pulumi.Output.from_input(
+    {
+        "MANAGED_DB_PASSWORD": data_in_pipeline_load_api_cluster_password_secret.secret_arn,
+    }
+)
+pulumi.export("prefect_secrets_arns", prefect_secrets_arns_output)
+
+# Create SSM parameter for Aurora writer endpoint (for Prefect flows)
+data_in_pipeline_aurora_writer_endpoint = aws.ssm.Parameter(
+    "data-in-pipeline-aurora-writer-endpoint",
+    name="/data-in-pipeline/aurora-writer-endpoint",
+    description="Aurora cluster writer endpoint for Prefect flows",
+    type=aws.ssm.ParameterType.SECURE_STRING,
+    value=aurora_cluster.endpoint,
+    tags=tags,
+)
+
+# Export SSM Parameter ARNs for secrets that should be referenced via SSM
+# These are for SSM SecureString parameters that should be used as secrets
+prefect_ssm_secrets_output = pulumi.Output.from_input(
+    {
+        "AURORA_WRITER_ENDPOINT": data_in_pipeline_aurora_writer_endpoint.arn,
+    }
+)
+pulumi.export("prefect_ssm_secrets", prefect_ssm_secrets_output)

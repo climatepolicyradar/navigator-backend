@@ -2,12 +2,13 @@
 name = "navigator-backend"
 version = "0.1.0"
 readme = "README.md"
-requires-python = ">=3.12,<3.14"
+requires-python = ">=3.13,<3.14"
 dependencies = []
 
 [tool.uv.workspace]
 members = [
   "api",
+  "data-in-models",
   "concepts-api",
   "families-api",
   "geographies-api",
@@ -18,13 +19,14 @@ members = [
 [tool.pyright]
 venvPath = "."
 venv = ".venv"
-pythonVersion = "3.12"
+pythonVersion = "3.13"
 exclude = ["backend-api/**"]
 extraPaths = ["api/src"]
 
 [tool.pyright.executionEnvironments]
 root = [
   "api/src",
+  "data-in-models",
   "concepts-api",
   "families-api",
   "geographies-api",

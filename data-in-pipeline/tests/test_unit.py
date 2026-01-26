@@ -82,7 +82,9 @@ def test_fetch_document_success(base_config):
 
     mock_response = {
         "data": NavigatorDocument(
-            import_id=import_id, title="Test Document", events=[]
+            import_id=import_id,
+            title="Test Document",
+            events=[],
         ).model_dump()
     }
 
@@ -148,16 +150,22 @@ def test_fetch_family_success(base_config):
             import_id=import_id,
             title="Test Family",
             summary="Family summary",
+            category="REPORTS",
             corpus=NavigatorCorpus(
                 import_id="COR-111",
                 corpus_type=NavigatorCorpusType(name="corpus_type"),
                 organisation=NavigatorOrganisation(id=1, name="UNFCCC"),
             ),
             documents=[
-                NavigatorDocument(import_id=import_id, title="Test Document", events=[])
+                NavigatorDocument(
+                    import_id=import_id,
+                    title="Test Document",
+                    events=[],
+                )
             ],
             events=[],
             collections=[],
+            geographies=[],
         ).model_dump(),
     }
 
@@ -312,6 +320,7 @@ def test_fetch_all_families_successfully(base_config):
                 import_id="FAM-001",
                 title="Family 1",
                 summary="Family 1 summary",
+                category="REPORTS",
                 corpus=NavigatorCorpus(
                     import_id="COR-001",
                     corpus_type=NavigatorCorpusType(name="corpus_type"),
@@ -320,11 +329,13 @@ def test_fetch_all_families_successfully(base_config):
                 documents=[],
                 events=[],
                 collections=[],
+                geographies=[],
             ).model_dump(),
             NavigatorFamily(
                 import_id="FAM-002",
                 title="Family 2",
                 summary="Family summary",
+                category="REPORTS",
                 corpus=NavigatorCorpus(
                     import_id="COR-001",
                     corpus_type=NavigatorCorpusType(name="corpus_type"),
@@ -333,6 +344,7 @@ def test_fetch_all_families_successfully(base_config):
                 documents=[],
                 events=[],
                 collections=[],
+                geographies=[],
             ).model_dump(),
         ]
     }
@@ -342,6 +354,7 @@ def test_fetch_all_families_successfully(base_config):
                 import_id="FAM-003",
                 title="Family 3",
                 summary="Family 3 summary",
+                category="REPORTS",
                 corpus=NavigatorCorpus(
                     import_id="COR-002",
                     corpus_type=NavigatorCorpusType(name="corpus_type"),
@@ -350,6 +363,7 @@ def test_fetch_all_families_successfully(base_config):
                 documents=[],
                 events=[],
                 collections=[],
+                geographies=[],
             ).model_dump()
         ]
     }
@@ -406,6 +420,7 @@ def test_fetch_all_families_handles_successful_retrievals_and_errors(base_config
                 import_id="FAM-001",
                 title="Family 1",
                 summary="Family summary",
+                category="REPORTS",
                 corpus=NavigatorCorpus(
                     import_id="COR-001",
                     corpus_type=NavigatorCorpusType(name="corpus_type"),
@@ -414,6 +429,7 @@ def test_fetch_all_families_handles_successful_retrievals_and_errors(base_config
                 documents=[],
                 events=[],
                 collections=[],
+                geographies=[],
             ).model_dump()
         ]
     }

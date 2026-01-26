@@ -1,19 +1,8 @@
-dev:
+dev: 
     uv run python -m app.dev
 
-test:
+test-local: 
     uv run pytest -vv
-
-test-ci:
-    #!/usr/bin/env bash
-    # Build and test against the Docker image
-    set -euxo pipefail
-    docker build -t data-in-pipeline:test -f Dockerfile ..
-    docker run --rm data-in-pipeline:test uv run pytest -vv
-
-test-override:
-    # this is run from the root justfile in CI
-    just test-ci
 
 deploy-to-prefect-from-local:
     #!/usr/bin/env bash
@@ -25,41 +14,54 @@ deploy-to-prefect-from-local:
     uv run prefect cloud login
     DOCKER_REGISTRY=${DOCKER_REGISTRY} just deploy-to-prefect
 
-deploy-override service environment tag:
+build service environment tag:
+    #!/usr/bin/env bash
+    # Build the Docker image for data-in-pipeline
+    set -euxo pipefail
+    GITHUB_SHA=$(git rev-parse HEAD)
+    GITHUB_REMOTE_URL=$(git config --get remote.origin.url)
+    docker buildx build \
+        --platform linux/amd64 \
+        --output type=docker \
+        --build-arg SERVICE={{service}} \
+        --build-arg ENV={{environment}} \
+        --build-arg GITHUB_SHA=${GITHUB_SHA} \
+        --label org.opencontainers.image.source=${GITHUB_REMOTE_URL} \
+        --label org.opencontainers.image.revision=${GITHUB_SHA} \
+        --label org.opencontainers.image.created=$(date -u +%Y-%m-%dT%H:%M:%SZ) \
+        --tag {{service}}:{{tag}} \
+        --tag {{service}}:${GITHUB_SHA} \
+        --file Dockerfile ..
+
+deploy-override service environment tag: 
+    #!/usr/bin/env bash
     # this is run from the root justfile in CI
     # TODO: deploy to staging and production
     # https://linear.app/climate-policy-radar/issue/APP-1549/create-data-in-pipeline-deployments-for-production-and-staging
-    just deploy-to-prefect
+    set -euxo pipefail
+    GITHUB_SHA=$(git rev-parse HEAD)
+    AWS_ACCOUNT_ID=$(aws sts get-caller-identity --query 'Account' --output text)
+    DOCKER_REGISTRY="${AWS_ACCOUNT_ID}.dkr.ecr.eu-west-1.amazonaws.com"
+    
+    # Build the image
+    just build {{service}} {{environment}} {{tag}}
+    
+    docker tag {{service}}:{{tag}} ${DOCKER_REGISTRY}/{{service}}:{{tag}}
+    docker push ${DOCKER_REGISTRY}/{{service}}:{{tag}}
+    
+    # Deploy to Prefect
+    DOCKER_REGISTRY=${DOCKER_REGISTRY} just deploy-to-prefect
 
-deploy-to-prefect:
+deploy-to-prefect: 
     uv run python -m app.deploy
 
 # DuckDB to serve transformation results
 # This is currently a spike to be able to better analyse, validate and share with others how the transformations are working
-duckdb-build:
+duckdb-build: 
     uv run python -m app.scripts.build_duckdb
 
-duckdb-dev:
+duckdb-dev: 
     uv run fastapi dev ./app/scripts/serve_duckdb.py
-
-# Commands for our IAM user lambda function
-build-lambda-code: clean-lambda-build-folder
-    set -e
-    mkdir -p .lambda_build
-    echo "🐳 Building Lambda package with Docker..."
-    docker build --platform linux/amd64 -f infra/Dockerfile -t iam-user-lambda-builder .
-    echo "📦 Extracting built package..."
-    docker create --name iam-user-lambda-extract iam-user-lambda-builder
-    docker cp iam-user-lambda-extract:/build/. .lambda_build/
-    docker rm iam-user-lambda-extract
-    echo "✅ Lambda package built at .lambda_build/"
-
-clean-lambda-build-folder:
-    echo "🧹 Cleaning build directory..."
-    rm -rf .lambda_build
-
-deploy-lambda-code: build-lambda-code
-    pulumi up -ry
 
 build-load-api: 
     docker build -f infra/Dockerfile.load_api -t load-api --platform linux/amd64 ..

@@ -1,3 +1,11 @@
+from data_in_models.models import (
+    Document,
+    DocumentDocumentRelationship,
+    DocumentLabelRelationship,
+    DocumentWithoutRelationships,
+    Item,
+    Label,
+)
 from returns.result import Failure, Result, Success
 
 from app.bootstrap_telemetry import get_logger, log_context
@@ -6,14 +14,8 @@ from app.extract.connectors import (
     NavigatorDocument,
     NavigatorFamily,
 )
-from app.models import (
-    Document,
-    DocumentDocumentRelationship,
-    DocumentLabelRelationship,
-    DocumentWithoutRelationships,
-    Identified,
-    Label,
-)
+from app.geographies import geographies_lookup
+from app.models import Identified
 from app.transform.models import CouldNotTransform, NoMatchingTransformations
 
 mcf_projects_corpus_types = [
@@ -34,8 +36,8 @@ mcf_reports_corpus_import_ids = [
 def transform_navigator_family(
     input: Identified[NavigatorFamily],
 ) -> Result[list[Document], NoMatchingTransformations]:
-    logger = get_logger()
 
+    logger = get_logger()
     with log_context(import_id=input.id):
         logger.info(f"Transforming family with {len(input.data.documents)} documents")
 
@@ -227,28 +229,37 @@ def _transform_family_corpus_organisation(
     @see: https://schema.org/provider
     """
     labels: list[DocumentLabelRelationship] = []
-    organisation_to_agent_map = {
-        "AF": "Adapation Fund",
-        "CCLW": "Grantham Research Institute",
-        "CIF": "The Climate Investment Funds",
-        "CPR": "Policy Radar",
-        "GCF": "Green Climate Fund",
-        "GEF": "Global Environment Facility",
-        "Ocean Energy Pathways": "Ocean Energy Pathway",
-        "Sabin": "Sabin Center for Climate Change Law",
-        "UNFCCC": "UNFCCC",
+    corpus_to_provider_map = {
+        "CCLW.corpus.i00000001.n0000": "Grantham Research Institute",
+        "Academic.corpus.Litigation.n0000": "Sabin Center for Climate Change Law",
+        "CPR.corpus.Goldstandard.n0000": "Gold Standard",
+        "CPR.corpus.i00000001.n0000": "NewClimate Institute",
+        "CPR.corpus.i00000002.n0000": "Climate Policy Radar",
+        "CPR.corpus.i00000591.n0000": "Laws Africa",
+        "CPR.corpus.i00000592.n0000": "UNDRR",
+        "MCF.corpus.GEF.n0000": "Global Environment Facility",
+        "MCF.corpus.AF.n0000": "Adaptation Fund",
+        "MCF.corpus.GCF.n0000": "Green Climate Fund",
+        "MCF.corpus.CIF.n0000": "The Climate Investment Funds",
+        "MCF.corpus.GEF.Guidance": "Global Environment Facility",
+        "MCF.corpus.AF.Guidance": "Adaptation Fund",
+        "MCF.corpus.GCF.Guidance": "Green Climate Fund",
+        "OEP.corpus.i00000001.n0000": "Ocean Energy Pathways",
+        "UNFCCC.corpus.i00000001.n0000": "UNFCCC",
+        "UN.corpus.UNCCD.n0000": "UNCCD",
+        "UN.corpus.UNCBD.n0000": "UNCBD",
     }
 
-    organisation_name = organisation_to_agent_map.get(
-        navigator_family.corpus.organisation.name, "Unknown"
+    provider_name = corpus_to_provider_map.get(
+        navigator_family.corpus.import_id, "Unknown"
     )
     labels.append(
         DocumentLabelRelationship(
             type="provider",
             label=Label(
                 type="agent",
-                id=organisation_name,
-                title=organisation_name,
+                id=provider_name,
+                title=provider_name,
             ),
         )
     )
@@ -256,16 +267,22 @@ def _transform_family_corpus_organisation(
 
 
 def _transform_navigator_family(navigator_family: NavigatorFamily) -> Document:
+    logger = get_logger()
     labels: list[DocumentLabelRelationship] = []
+    """
+    All families are currently Principal.
+    Based on the FRBR taxonomy.
 
-    # All families are currently canonical
+    @see: https://en.wikipedia.org/wiki/Functional_Requirements_for_Bibliographic_Records
+    @see: https://developers.laws.africa/get-started/works-and-expressions
+    """
     labels.append(
         DocumentLabelRelationship(
             type="status",
             label=Label(
                 type="status",
-                id="Canonical",
-                title="Canonical",
+                id="Principal",
+                title="Principal",
             ),
         )
     )
@@ -350,23 +367,32 @@ def _transform_navigator_family(navigator_family: NavigatorFamily) -> Document:
             "Updated": "Updated",
         }
 
+        """
+        Values from Navigator are controlled
+        @see: https://github.com/climatepolicyradar/data-migrations/blob/main/taxonomies/Reports.json#L6
+        """
+        reports_event_type_to_activity_status_map = {
+            "Published": "Published",
+        }
+
         event_type_to_activity_status_map = (
             mcf_project_event_type_to_activity_status_map
             | laws_and_policies_event_type_to_activity_status_map
+            | reports_event_type_to_activity_status_map
         )
 
         for event in navigator_family.events:
-            label_id = event_type_to_activity_status_map.get(
+            event_type_label_id = event_type_to_activity_status_map.get(
                 event.event_type,
-                "Unknown",
+                "Unknown event_type",
             )
             labels.append(
                 DocumentLabelRelationship(
                     type="activity_status",
                     timestamp=event.date,
                     label=Label(
-                        id=label_id,
-                        title=label_id,
+                        id=event_type_label_id,
+                        title=event_type_label_id,
                         type="activity_status",
                     ),
                 )
@@ -376,6 +402,57 @@ def _transform_navigator_family(navigator_family: NavigatorFamily) -> Document:
     Provider labels
     """
     labels.extend(_transform_family_corpus_organisation(navigator_family))
+
+    """
+    Geography labels
+    """
+    if navigator_family.geographies:
+        geography_labels = []
+        for geograpy_id in navigator_family.geographies:
+            # We exclude No Geography (XAA)  as this was used as `geography` was previously required.
+            # An empty list is a clearer depiction of a document not having a geography.
+            if geograpy_id != "XAA":
+                geography = geographies_lookup.get(geograpy_id)
+                if geography:
+                    geography_labels.append(
+                        DocumentLabelRelationship(
+                            type="geography",
+                            label=Label(
+                                id=geography.id,
+                                title=geography.name,
+                                type="agent",
+                            ),
+                        )
+                    )
+            else:
+                logger.warning(f"Geography not found: {geograpy_id}")
+        labels.extend(geography_labels)
+
+    """
+    family.cateogry
+    @see: https://github.com/climatepolicyradar/navigator-db-client/blob/a842d5e971894246843c1915de9179ddd991b25c/db_client/models/dfce/family.py#L67-L75
+    """
+    family_category_to_label_map = {
+        "EXECUTIVE": "Executive",
+        "LEGISLATIVE": "Legislative",
+        "UNFCCC": "UN Convention",
+        "MCF": "Multilateral climate fund project",
+        "REPORTS": "Guidance",
+        "LITIGATION": "Legal case",
+    }
+    family_category_label_id = family_category_to_label_map.get(
+        navigator_family.category, "Unknown family.category"
+    )
+    labels.append(
+        DocumentLabelRelationship(
+            type="entity_type",
+            label=Label(
+                id=family_category_label_id,
+                title=family_category_label_id,
+                type="entity_type",
+            ),
+        )
+    )
 
     return Document(
         id=navigator_family.import_id,
@@ -457,10 +534,28 @@ def _transform_navigator_document(
     """
     labels.extend(_transform_family_corpus_organisation(navigator_family))
 
+    """
+    Items
+    """
+    items: list[Item] = []
+    if navigator_document.cdn_object is not None:
+        items.append(
+            Item(
+                url=navigator_document.cdn_object,
+            )
+        )
+    if navigator_document.source_url is not None:
+        items.append(
+            Item(
+                url=navigator_document.source_url,
+            )
+        )
+
     return Document(
         id=navigator_document.import_id,
         title=navigator_document.title,
         labels=labels,
+        items=items,
     )
 
 

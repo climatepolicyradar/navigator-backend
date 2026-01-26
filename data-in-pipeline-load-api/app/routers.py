@@ -1,31 +1,53 @@
+import logging
+
 from fastapi import APIRouter, Depends, HTTPException, status
-from repository import check_db_health
-from session import get_db
-from settings import settings
+
+from app.alembic.run_migrations import run_migrations
+from app.models import Document
+from app.session import get_db, get_engine
+from app.settings import settings
 
 # Create router with /load prefix
 router = APIRouter(prefix="/load")
+
+_LOGGER = logging.getLogger(__name__)
 
 
 @router.get("/health")
 def health_check(db=Depends(get_db)):
     """Health check endpoint using session module's health check."""
-    try:
-        is_healthy = check_db_health(db)
+    # FIXME: https://github.com/climatepolicyradar/navigator-backend/issues/963
+    # try:
+    #     is_healthy = check_db_health(db)
 
-    except Exception as e:
-        raise HTTPException(
-            status_code=status.HTTP_500_INTERNAL_SERVER_ERROR, detail=str(e)
-        )
+    # except Exception as e:
+    #     raise HTTPException(
+    #         status_code=status.HTTP_500_INTERNAL_SERVER_ERROR, detail=str(e)
+    #     )
 
-    if not is_healthy:
-        raise HTTPException(
-            status_code=status.HTTP_503_SERVICE_UNAVAILABLE,
-            detail="Database connection unhealthy",
-        )
+    # if not is_healthy:
+    #     raise HTTPException(
+    #         status_code=status.HTTP_503_SERVICE_UNAVAILABLE,
+    #         detail="Database connection unhealthy",
+    #     )
     return {"status": "ok", "version": settings.github_sha}
 
 
-@router.post("/")
-def create_document():
-    return "Received POST request to the /load endpoint"
+@router.post("", response_model=list[str], status_code=status.HTTP_201_CREATED)
+def create_document(documents: list[Document]):
+    return [doc.id for doc in documents]
+
+
+@router.post("/run-migrations")
+def run_schema_migrations(engine=Depends(get_engine)):
+    try:
+        run_migrations(engine)
+
+    except Exception as e:
+        _LOGGER.exception(f"Migration failed to run : {e}")
+        raise HTTPException(
+            status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
+            detail="Failed to run migrations",
+        )
+
+    return {"status": "ok", "detail": "Migrations ran successfully"}

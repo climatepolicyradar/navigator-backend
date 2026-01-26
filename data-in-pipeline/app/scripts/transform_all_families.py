@@ -68,6 +68,11 @@ if __name__ == "__main__":
                             import_id=doc["import_id"],
                             title=doc["title"],
                             valid_metadata=doc["valid_metadata"],
+                            cdn_object=doc["cdn_object"],
+                            variant=doc["variant"],
+                            source_url=doc["source_url"],
+                            language=doc["language"],
+                            languages=doc["languages"],
                             events=[],
                         )
                         for doc in family["documents"]
@@ -88,6 +93,7 @@ if __name__ == "__main__":
                         )
                         for collection in family["collections"]
                     ],
+                    geographies=family["geographies"],
                 ),
                 id=family["import_id"],
                 source="navigator_family",

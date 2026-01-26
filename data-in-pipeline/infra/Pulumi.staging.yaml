@@ -17,3 +17,8 @@ config:
   data-in-pipeline:cdn-url: https://cdn.dev.climatepolicyradar.org
   data-in-pipeline:auto_scaling_configuration_arn:
     secure: AAABALgb+OiEYPRpgqxkk2OBxC/4G+/zkA3++sZsoT/B0fwMAChXI/GYKKOXVHVACGNw27wRm4wYLVQGVryqupEU/BiL8eWwLWgOm2XuEi90CbmDh6xs5ypprLM5KzgnCGBCszOhIFbAK0QtKRJjQxGaMQekbtEMjVGkix2aqKGkHxRiZ8RmkLl1NddPS/M5e3u/pOdvSHoe
+  data-in-pipeline:prod_aws_account_id:
+    secure: AAABAGyHc3QKlUfUJpT84VivfF+DT/6g6MVtUWqTGDmpHq3FsP8E7bToVhI=
+  data-in-pipeline:api_base_url: https://api.staging.climatepolicyradar.org
+  data-in-pipeline:disable_otel_logging: "false"
+  data-in-pipeline:otel_python_log_level: INFO

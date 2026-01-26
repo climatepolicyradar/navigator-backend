@@ -4,12 +4,23 @@ import pytest
 from opentelemetry import trace
 from opentelemetry._logs import get_logger_provider
 from prefect.testing.utilities import prefect_test_harness
+from testcontainers.postgres import PostgresContainer
+
+
+@pytest.fixture(scope="session")
+def postgres_container():
+    with PostgresContainer("postgres:17") as postgres:
+        yield postgres
+
 
 # Set environment variables before any imports that might initialise telemetry
 os.environ.setdefault("DISABLE_OTEL_LOGGING", "true")
 os.environ.setdefault("OTEL_TRACES_EXPORTER", "none")
 os.environ.setdefault("OTEL_LOGS_EXPORTER", "none")
 os.environ.setdefault("OTEL_METRICS_EXPORTER", "none")
+
+# Enable pytest assert rewriting for the assertions module
+pytest.register_assert_rewrite("tests.transform.assertions")
 
 
 @pytest.fixture(autouse=True, scope="session")

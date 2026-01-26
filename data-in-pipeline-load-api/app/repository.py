@@ -1,8 +1,7 @@
 import logging
 
-from sqlalchemy import text
 from sqlalchemy.exc import DisconnectionError, OperationalError
-from sqlalchemy.orm import Session
+from sqlmodel import Session, select
 
 _LOGGER = logging.getLogger(__name__)
 
@@ -17,7 +16,8 @@ def check_db_health(db: Session) -> bool:
     :rtype: bool
     """
     try:
-        return db.execute(text("SELECT 1")) is not None
+        result = db.exec(select(1))
+        return result.first() is not None
     except (OperationalError, DisconnectionError):
         _LOGGER.exception("Database health check failed")
     except Exception:

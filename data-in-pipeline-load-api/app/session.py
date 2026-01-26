@@ -9,19 +9,30 @@ import logging
 from collections.abc import Generator
 from contextlib import contextmanager
 
-from settings import settings
-from sqlalchemy import create_engine
+from pydantic import BaseModel
 from sqlalchemy.engine import Engine
-from sqlalchemy.orm import Session, sessionmaker
+from sqlmodel import Session, create_engine
+
+from app.settings import settings
 
 _LOGGER = logging.getLogger(__name__)
 
+
 # Connection parameters from pydantic settings (validated on import)
+class ManagedDBPassword(BaseModel):
+    username: str
+    password: str
+
+
+username_password = ManagedDBPassword.model_validate_json(
+    settings.managed_db_password.get_secret_value()
+)
+
 SQLALCHEMY_DATABASE_URI = (
     f"postgresql://{settings.db_master_username}:"
-    f"{settings.managed_db_password.get_secret_value()}@"
+    f"{username_password.password}@"
     f"{settings.load_database_url.get_secret_value()}:"
-    f"{settings.db_port}/{settings.db_name}?sslmode=no-verify"
+    f"{settings.db_port}/{settings.db_name}?sslmode={settings.db_sslmode}"
 )
 
 _LOGGER.info(
@@ -44,9 +55,6 @@ _engine = create_engine(
     echo=False,  # Set to True for SQL query logging in debug
 )
 
-# Session factory, exported callable for tests
-SessionLocal = sessionmaker(autocommit=False, autoflush=False, bind=_engine)
-
 
 @contextmanager
 def get_db_context() -> Generator[Session, None, None]:
@@ -59,7 +67,7 @@ def get_db_context() -> Generator[Session, None, None]:
     :yields: Database session
     :rtype: Generator[Session, None, None]
     """
-    db = SessionLocal()
+    db = Session(_engine)
     try:
         _LOGGER.debug("Database session created (context manager)")
         yield db
@@ -93,7 +101,7 @@ def get_engine() -> Engine:
     Exposed for testing and advanced use cases. Generally prefer
     get_db_context() for normal operations.
 
-    :return: SQLAlchemy engine instance
+    :return: SQLModel engine instance
     :rtype: Engine
     """
     return _engine

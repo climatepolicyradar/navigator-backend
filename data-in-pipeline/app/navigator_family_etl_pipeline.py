@@ -1,9 +1,11 @@
+import json
 from datetime import datetime
 from typing import Literal
 
+from data_in_models.models import Document
 from prefect import flow, task
 from prefect.runtime import flow_run, task_run
-from returns.result import Failure, Result, Success
+from returns.result import Failure, Success
 
 from app.bootstrap_telemetry import get_logger, pipeline_metrics
 from app.extract.connector_config import NavigatorConnectorConfig
@@ -15,10 +17,13 @@ from app.extract.connectors import (
 from app.extract.enums import CheckPointStorageType
 from app.identify.navigator_family import identify_navigator_family
 from app.load.aws_bucket import upload_to_s3
-from app.models import Document, ExtractedEnvelope, Identified
+from app.load.load import load_to_db
+from app.models import ExtractedEnvelope, Identified
 from app.pipeline_metrics import ErrorType, Operation, PipelineType, Status
-from app.transform.models import NoMatchingTransformations
-from app.transform.navigator_family import transform_navigator_family
+from app.run_db_migrations.run_db_migrations import run_db_migrations
+from app.transform.navigator_family import (
+    transform_navigator_family,
+)
 
 
 def generate_s3_cache_key(step: Literal["extract", "identify", "transform"]) -> str:
@@ -32,8 +37,16 @@ def generate_s3_cache_key(step: Literal["extract", "identify", "transform"]) -> 
 
 
 @task(log_prints=True)
+def run_db_migrations_task():
+    """Run migrations against the load-api database."""
+    _LOGGER = get_logger()
+    _LOGGER.info("Running migrations against the load-api database")
+    run_db_migrations()
+
+
+@task(log_prints=True)
 @pipeline_metrics.track(operation=Operation.EXTRACT)
-def extract() -> FamilyFetchResult:
+def extract(ids: list[str] | None = None) -> FamilyFetchResult:
     """Extract family data from the Navigator API.
 
     This task connects to the Navigator API and retrieves all family records
@@ -63,7 +76,11 @@ def extract() -> FamilyFetchResult:
     )
 
     connector = NavigatorConnector(connector_config)
-    result = connector.fetch_all_families(task_run_id, flow_run_id)
+
+    if ids is None:
+        result = connector.fetch_all_families(task_run_id, flow_run_id)
+    else:
+        result = connector.fetch_families(ids, task_run_id, flow_run_id)
     connector.close()
 
     return result
@@ -71,12 +88,12 @@ def extract() -> FamilyFetchResult:
 
 @task(log_prints=True)
 @pipeline_metrics.track(operation=Operation.LOAD)
-def load_to_s3(document: Document):
+def load_to_s3(documents: list[Document], run_id: str | None = None):
     """Upload transformed to S3 cache."""
     upload_to_s3(
-        document.model_dump_json(),
+        json.dumps([doc.model_dump() for doc in documents]),
         bucket="cpr-cache",
-        key=f"pipelines/data-in-pipeline/navigator_family/{document.id}.json",
+        key=f"pipelines/data-in-pipeline/navigator_family/{run_id}-transformed-result.json",
     )
 
 
@@ -103,9 +120,33 @@ def identify(
 @pipeline_metrics.track(operation=Operation.TRANSFORM)
 def transform(
     identified: Identified[NavigatorFamily],
-) -> Result[list[Document], NoMatchingTransformations]:
+) -> list[Document] | Exception:
     """Transform document to target format."""
-    return transform_navigator_family(identified)
+    _LOGGER = get_logger()
+
+    transformed = transform_navigator_family(identified)
+
+    match transformed:
+        case Success(documents):
+            return documents
+        case Failure(error):
+            # TODO: do not swallow errors
+            _LOGGER.warning(f"Transformation failed: {error}")
+            pipeline_metrics.record_error(Operation.TRANSFORM, ErrorType.TRANSFORM)
+            pipeline_metrics.record_processed(PipelineType.FAMILY, Status.FAILURE)
+            return error
+        case _:
+            pipeline_metrics.record_processed(PipelineType.FAMILY, Status.FAILURE)
+            return Exception("Unexpected transformed result state")
+
+
+@task(log_prints=True)
+@pipeline_metrics.track(operation=Operation.LOAD)
+def load(
+    transformed: list[Document],
+) -> list[str] | Exception:
+    """Save transformed document."""
+    return load_to_db(transformed)
 
 
 # ---------------------------------------------------------------------
@@ -117,20 +158,18 @@ def transform(
 @pipeline_metrics.track(
     pipeline_type=PipelineType.FAMILY, scope="batch", flush_on_exit=True
 )
-def etl_pipeline() -> list[Document] | Exception:
+def data_in_pipeline(ids: list[str] | None = None) -> list[str] | Exception:
     """Run the full Navigator ETL pipeline.
 
+    If IDs are provided, processes only those specific families.
+    If no IDs are provided, processes all families from the API.
+
     Steps:
-        1. Extract families from Navigator API.
+        1. Extract families from Navigator API (all or by ID).
         2. Identify their source type.
         3. Transform to target schema.
         4. Load transformed documents to S3 cache.
-
-    Returns:
-        Result[Document, Exception] | None
-            The final transformation result for demonstration purposes.
-            In real use, you may want to return all transformed Results
-            or push them to a downstream Prefect block.
+        5. Save transformed documents to the load DB.
     """
     _LOGGER = get_logger()
     _LOGGER.info("ETL pipeline started")
@@ -139,7 +178,16 @@ def etl_pipeline() -> list[Document] | Exception:
     run_id = flow_run.get_name() or "unknown"
     pipeline_metrics.set_flow_run_name(run_id)
 
-    extracted_result = extract()
+    run_db_migrations_task()
+
+    # If IDs provided, process only those families
+    if ids is not None:
+        _LOGGER.info(f"Processing {len(ids)} specific families")
+    else:
+        # Otherwise, process all families (existing batch logic)
+        _LOGGER.info("Processing all families")
+
+    extracted_result = extract(ids)
     cache_extraction_result(extracted_result)
 
     if extracted_result.failure is not None:
@@ -159,17 +207,28 @@ def etl_pipeline() -> list[Document] | Exception:
     identified = identify(envelopes)
     transformed = transform(identified)
 
-    match transformed:
-        case Success(documents):
-            load_to_s3.map(documents)
-            pipeline_metrics.record_processed(PipelineType.FAMILY, Status.SUCCESS)
-            return documents
-        case Failure(error):
-            # TODO: do not swallow errors
-            _LOGGER.warning(f"Transformation failed: {error}")
-            pipeline_metrics.record_error(Operation.TRANSFORM, ErrorType.TRANSFORM)
-            pipeline_metrics.record_processed(PipelineType.FAMILY, Status.FAILURE)
-            return error
-        case _:
-            pipeline_metrics.record_processed(PipelineType.FAMILY, Status.FAILURE)
-            return Exception("Unexpected transformed result state")
+    if isinstance(transformed, Exception):
+        return Exception(f"Transformation failed {transformed}")
+
+    load_to_s3(transformed, run_id)
+    loaded = load(transformed)
+    if isinstance(loaded, Exception):
+        _LOGGER.error(f"Load failed: {loaded}")
+        pipeline_metrics.record_error(Operation.LOAD, ErrorType.STORAGE)
+        pipeline_metrics.record_processed(PipelineType.FAMILY, Status.FAILURE)
+        return Exception(f"Load failed {loaded}")
+
+    pipeline_metrics.record_processed(PipelineType.FAMILY, Status.SUCCESS)
+    _LOGGER.info("ETL pipeline completed successfully")
+
+    # TODO: make this number configurable in prefect
+    RESULT_LOG_LIMIT = 100
+    if len(loaded) > RESULT_LOG_LIMIT:
+        upload_to_s3(
+            json.dumps(loaded),
+            bucket="cpr-cache",
+            key=f"pipelines/data-in-pipeline/navigator_family/{run_id}-result.json",
+        )
+    else:
+        _LOGGER.info("Loaded document IDs: %s", loaded)
+    return loaded

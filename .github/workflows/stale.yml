@@ -1,0 +1,25 @@
+name: Stale
+
+on:
+  schedule:
+    # Taken from @see: https://github.com/climatepolicyradar/knowledge-graph/blob/0ba9546d253d5f304566e7866a33efb66912a437/.github/workflows/stale.yml#L4C5-L4C51
+    - cron: 12 9 * * 1 # every monday at 9:12 AM
+
+permissions:
+  pull-requests: write
+
+jobs:
+  stale:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/stale@v9
+        with:
+          repo-token: ${{ secrets.GITHUB_TOKEN }}
+          stale-pr-message: This PR is stale because it has been open 30 days with no activity. Remove stale label or comment or this will be closed in 10 days.
+          stale-pr-label: stale
+          # Taken from @see: https://github.com/climatepolicyradar/knowledge-graph/blob/0ba9546d253d5f304566e7866a33efb66912a437/.github/workflows/stale.yml#L10-L11
+          days-before-stale: 30
+          days-before-close: 10
+          # This tells stale to leave issues alone
+          days-before-issue-stale: -1
+          days-before-issue-close: -1

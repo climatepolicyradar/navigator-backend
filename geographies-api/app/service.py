@@ -1,8 +1,8 @@
 import logging
 import os
-from datetime import datetime, timezone
+from datetime import UTC, datetime
 from functools import lru_cache
-from typing import Any, Dict, cast
+from typing import Any, cast
 
 import pycountry
 import requests
@@ -126,7 +126,7 @@ class CustomCountriesError(Exception):
 
 
 @observe(name="load_cpr_custom_geographies")
-def load_cpr_custom_geographies() -> Dict[str, Any]:
+def load_cpr_custom_geographies() -> dict[str, Any]:
     """
     Load custom CPR geography extensions from static JSON file.
 
@@ -380,7 +380,7 @@ def populate_initial_countries_data():
         "regions": regions,
         "geography_statistics": geography_statistics,
         "version": "1.0",
-        "timestamp": datetime.now(timezone.utc).isoformat(),
+        "timestamp": datetime.now(UTC).isoformat(),
     }
 
     if os.environ["GEOGRAPHIES_BUCKET"] is None:
@@ -392,7 +392,7 @@ def populate_initial_countries_data():
 
 
 @observe(name="get_geographies_data")
-def get_geographies_data(url: str | None = None) -> Dict[str, Any]:
+def get_geographies_data(url: str | None = None) -> dict[str, Any]:
     """
     Retrieve all countries data from the Climate Policy Radar CDN.
 

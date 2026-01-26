@@ -44,6 +44,7 @@ jobs:
             data-in-pipeline:
               - 'data-in-pipeline/**'
               - 'api/**'
+              - 'data-in-models/**'
               - 'uv.lock'
               - pyproject.toml
 
@@ -64,6 +65,8 @@ jobs:
     steps:
       - uses: actions/checkout@v6
       - uses: extractions/setup-just@v3
+      - uses: astral-sh/setup-uv@v7
+      - run: uv sync --project ${{ matrix.service }}
       - run: just test ${{ matrix.service }}
 
   deploy:
@@ -89,7 +92,7 @@ jobs:
       # we use python / uv in some build scripts and testing
       - uses: actions/setup-python@v6
         with:
-          python-version: "3.12"
+          python-version: "3.13"
 
       - uses: astral-sh/setup-uv@v7
       - run: uv sync --all-packages
@@ -131,8 +134,11 @@ jobs:
           just deploy ${{ matrix.service }} ${{ matrix.environment }} latest
           just deploy ${{ matrix.service }} ${{ matrix.environment }} ${{ github.sha }}
         env:
-          AWS_ENV: prod
+          # These are used for the Prefect deployment only, where Prefect is always
+          # deployed to production.
+          AWS_ENV: ${{ matrix.environment }}
+          PULUMI_ACCESS_TOKEN: ${{ secrets.PULUMI_ACCESS_TOKEN }}
           AWS_REGION: eu-west-1
-          DOCKER_REGISTRY: ${{ secrets.DOCKER_REGISTRY_PRODUCTION }}
+          DOCKER_REGISTRY: ${{ secrets.DOCKER_REGISTRY }}
           PREFECT_API_KEY: ${{ secrets.PREFECT_API_KEY }}
           PREFECT_API_URL: ${{ secrets.PREFECT_API_URL }}

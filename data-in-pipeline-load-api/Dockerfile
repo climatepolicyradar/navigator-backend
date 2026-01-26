@@ -1,4 +1,4 @@
-FROM python:3.12-slim
+FROM python:3.13-slim
 
 # Copy uv from official image
 COPY --from=ghcr.io/astral-sh/uv:latest /uv /uvx /bin/
@@ -24,6 +24,7 @@ COPY pyproject.toml uv.lock /app/
 # Copy application code
 COPY $SERVICE /app/$SERVICE/
 COPY ./api /app/api/
+COPY ./data-in-models /app/data-in-models/
 
 WORKDIR /app
 RUN uv sync --project $SERVICE
@@ -32,4 +33,4 @@ RUN uv sync --project $SERVICE
 EXPOSE 8080
 
 # Run the FastAPI application
-CMD ["sh", "-c", "uv run fastapi run ./$SERVICE/main.py --port 8080 --host 0.0.0.0"]
+CMD ["sh", "-c", "uv run fastapi run ./$SERVICE/app/main.py --port 8080 --host 0.0.0.0"]
