@@ -3,7 +3,6 @@ from http import HTTPStatus
 from unittest.mock import MagicMock, patch
 
 import pytest
-from data_in_models.models import Document
 from requests.exceptions import HTTPError
 
 from app.extract.connectors import (
@@ -16,22 +15,7 @@ from app.extract.connectors import (
     PageFetchFailure,
 )
 from app.models import ExtractedEnvelope, ExtractedMetadata
-from app.navigator_document_etl_pipeline import process_document_updates
 from app.navigator_family_etl_pipeline import data_in_pipeline
-
-
-@patch("app.navigator_document_etl_pipeline.upload_to_s3")
-def test_process_document_updates_flow(mock_upload):
-    mock_upload.return_value = None
-    assert process_document_updates(["CCLW.legislative.10695.6311"]) == [
-        Document(id="CCLW.legislative.10695.6311", title="Climate Change Act 2022")
-    ]
-
-
-@patch("app.navigator_document_etl_pipeline.upload_to_s3")
-def test_process_document_updates_flow_with_invalid_id(mock_upload):
-    mock_upload.return_value = None
-    assert process_document_updates(["CCLW.INVALID_ID"]) == []
 
 
 @patch("app.navigator_family_etl_pipeline.run_db_migrations")
