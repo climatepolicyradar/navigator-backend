@@ -1,5 +1,5 @@
-name: data-in-pipeline-load-api
-description: data-in-pipeline-load-api
+name: data-in-load-api
+description: Data in load-api
 runtime:
   name: python
   options:
