@@ -152,7 +152,7 @@ jobs:
           STACK_NAME="${SERVICE_INFRA_FOLDER%/infra}"
           cd "$SERVICE_INFRA_FOLDER"
           pulumi stack select "climatepolicyradar/${STACK_NAME}/${{ matrix.environment }}"
-          pulumi preview
+          pulumi preview --suppress-outputs
         env:
           PULUMI_ACCESS_TOKEN: ${{ secrets.PULUMI_ACCESS_TOKEN }}
 
@@ -185,7 +185,7 @@ jobs:
           STACK_NAME="${SERVICE_INFRA_FOLDER%/infra}"
           cd "$SERVICE_INFRA_FOLDER"
           pulumi stack select "climatepolicyradar/${STACK_NAME}/staging"
-          pulumi up --yes
+          pulumi up --yes --skip-preview
         env:
           PULUMI_ACCESS_TOKEN: ${{ secrets.PULUMI_ACCESS_TOKEN }}
 
