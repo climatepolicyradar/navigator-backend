@@ -33,9 +33,21 @@ def health_check(db=Depends(get_db)):
     return {"status": "ok", "version": settings.github_sha}
 
 
-@router.post("", response_model=list[str], status_code=status.HTTP_201_CREATED)
-def create_document(documents: list[Document]):
-    return [doc.id for doc in documents]
+@router.post(
+    "/seed-database", response_model=list[str], status_code=status.HTTP_201_CREATED
+)
+# def create_document(documents: list[DocumentSchema], db=Depends(get_db)):
+def create_document(db=Depends(get_db)):
+    try:
+        return create_or_update_documents(db, test_documents)
+
+    except Exception as e:
+        _LOGGER.exception(f"Failed to create documents: {e}")
+        raise HTTPException(
+            status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
+            detail="Failed to create documents",
+        )
+    # return [doc.id for doc in documents]
 
 
 @router.post("/run-migrations")
