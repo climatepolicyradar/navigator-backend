@@ -25,7 +25,7 @@ def run_db_migrations() -> None:
         logger.debug("Triggering schema migrations via load API...")
         response = requests.post(
             url=f"{load_api_base_url}/load/run-migrations",
-            timeout=10,
+            timeout=10,  # seconds
         )
         response.raise_for_status()
     except Exception:
