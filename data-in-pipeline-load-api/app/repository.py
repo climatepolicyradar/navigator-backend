@@ -1,13 +1,14 @@
+import datetime
 import logging
-from typing import List
 
 from data_in_models.db_models import Document as DBDocument
 from data_in_models.db_models import DocumentLabelLink as DBDocumentLabelLink
 from data_in_models.db_models import Item as DBItem
 from data_in_models.db_models import Label as DBLabel
 from data_in_models.models import Document as DocumentInput
+from sqlalchemy import insert
 from sqlalchemy.exc import DisconnectionError, OperationalError
-from sqlmodel import Session, select
+from sqlmodel import Session, delete, select
 
 _LOGGER = logging.getLogger(__name__)
 
@@ -32,71 +33,181 @@ def check_db_health(db: Session) -> bool:
 
 
 def create_or_update_documents(
-    db: Session, documents: List[DocumentInput]
-) -> List[str]:
+    db: Session, documents: list[DocumentInput]
+) -> list[str]:
     """
     Upsert a list of documents and their related entities.
-    Returns list of document IDs processed.
+
+    This operation is idempotent - running it multiple times with the same
+    input produces the same result. All operations occur in a single transaction.
+
+    :param db: Database session
+    :param documents: List of documents to upsert
+    :return: List of document IDs successfully processed
+    :raises ValueError: If input validation fails
+    :raises Exception: If database operation fails (transaction will be rolled back)
     """
+
     processed_ids = []
 
-    for doc_in in documents:
-        existing = db.exec(select(DBDocument).where(DBDocument.id == doc_in.id)).first()
-        if existing:
-            existing.title = doc_in.title
-            existing.description = doc_in.description
-            current_doc = existing
-        else:
-            current_doc = DBDocument(
-                id=doc_in.id,
-                title=doc_in.title,
-                description=doc_in.description,
-            )
-            db.add(current_doc)
+    try:
+        processed_ids = []
 
-        _delete_items_for_document(db, doc_in.id)
-        db.flush()
-
-        for item in doc_in.items:
-
-            db.add(DBItem(document_id=doc_in.id, url=item.url, id=item.url))
-
-        _delete_label_relationships_for_document(db, doc_in.id)
-        db.flush()
-
-        for rel in doc_in.labels:
-            label = db.exec(select(DBLabel).where(DBLabel.id == rel.label.id)).first()
-            if not label:
-                label = DBLabel(
-                    id=rel.label.id, title=rel.label.title, type=rel.label.type
+        for doc_in in documents:
+            # Upsert main document using INSERT ... ON CONFLICT
+            stmt = (
+                insert(DBDocument)
+                .values(
+                    id=doc_in.id,
+                    title=doc_in.title,
+                    description=doc_in.description,
+                    created_at=datetime.now(UTC),
+                    updated_at=datetime.now(UTC),
                 )
-                db.add(label)
-            db.add(
-                DBDocumentLabelLink(
-                    document_id=doc_in.id,
-                    label_id=rel.label.id,
-                    relationship_type=rel.type,
-                    timestamp=rel.timestamp,
+                .on_conflict_do_update(
+                    index_elements=["id"],
+                    set_={
+                        "title": doc_in.title,
+                        "description": doc_in.description,
+                        "updated_at": datetime.now(UTC),
+                    },
                 )
             )
+            db.exec(stmt)
 
-        processed_ids.append(doc_in.id)
+            _upsert_items_for_document(db, doc_in.id, doc_in.items)
+            _upsert_labels_and_relationships(db, doc_in.id, doc_in.labels)
 
-    db.commit()
-    return processed_ids
+            processed_ids.append(doc_in.id)
 
+        db.commit()
+        return processed_ids
 
-def _delete_items_for_document(db: Session, document_id: str):
-    items = db.exec(select(DBItem).where(DBItem.document_id == document_id)).all()
-    for item in items:
-        db.delete(item)
-
-
-def _delete_label_relationships_for_document(db: Session, document_id: str):
-    rels = db.exec(
-        select(DBDocumentLabelLink).where(
-            DBDocumentLabelLink.document_id == document_id
+    except ValueError:
+        _LOGGER.exception("Validation failed for document upsert operation")
+        raise
+    except (OperationalError, DisconnectionError):
+        _LOGGER.exception("System error during document upsert operation")
+        raise
+    except Exception:
+        _LOGGER.exception(
+            f"Failed to upsert documents. Processed {len(processed_ids)} of {len(documents)} documents before failure."
         )
-    ).all()
-    for rel in rels:
-        db.delete(rel)
+        raise
+
+
+def _upsert_items_for_document(
+    db: Session, document_id: str, incoming_items: list
+) -> None:
+    """Upsert items using INSERT ... ON CONFLICT. No race condition.
+
+    :param db: Database session
+    :param document_id: Document ID to upsert items for
+    :param incoming_items: List of items from input
+    """
+    incoming_ids = []
+
+    # Upsert each item atomically
+    for item in incoming_items:
+        stmt = (
+            insert(DBItem)
+            .values(
+                id=item.id,
+                document_id=document_id,
+                url=item.url,
+                created_at=datetime.now(UTC),
+                updated_at=datetime.now(UTC),
+            )
+            .on_conflict_do_update(
+                index_elements=["id"],
+                set_={
+                    "url": item.url,
+                    "document_id": document_id,
+                    "updated_at": datetime.now(UTC),
+                },
+            )
+        )
+        db.exec(stmt)
+        incoming_ids.append(item.id)
+
+    # Delete orphaned items (items no longer in input)
+    if incoming_ids:
+        db.exec(
+            delete(DBItem).where(
+                DBItem.document_id == document_id, DBItem.id.not_in(incoming_ids)
+            )
+        )
+    else:
+        # No incoming items, delete all items for this document
+        db.exec(delete(DBItem).where(DBItem.document_id == document_id))
+
+
+def _upsert_labels_and_relationships(
+    db: Session, document_id: str, label_relationships: list
+) -> None:
+    """Upsert labels and their relationships using INSERT ... ON CONFLICT.
+
+    :param db: Database session
+    :param document_id: Document ID
+    :param label_relationships: List of DocumentLabelRelationship objects
+    """
+    incoming_label_ids = []
+
+    for rel in label_relationships:
+        # Upsert label atomically
+        label_stmt = (
+            insert(DBLabel)
+            .values(
+                id=rel.label.id,
+                title=rel.label.title,
+                type=rel.label.type,
+                created_at=datetime.now(UTC),
+                updated_at=datetime.now(UTC),
+            )
+            .on_conflict_do_update(
+                index_elements=["id"],
+                set_={
+                    "title": rel.label.title,
+                    "type": rel.label.type,
+                    "updated_at": datetime.now(UTC),
+                },
+            )
+        )
+        db.exec(label_stmt)
+
+        # Upsert document-label relationship atomically
+        link_stmt = (
+            insert(DBDocumentLabelLink)
+            .values(
+                document_id=document_id,
+                label_id=rel.label.id,
+                relationship_type=rel.type,
+                timestamp=rel.timestamp,
+                created_at=datetime.now(UTC),
+                updated_at=datetime.now(UTC),
+            )
+            .on_conflict_do_update(
+                index_elements=["document_id", "label_id"],
+                set_={
+                    "relationship_type": rel.type,
+                    "timestamp": rel.timestamp,
+                    "updated_at": datetime.now(UTC),
+                },
+            )
+        )
+        db.exec(link_stmt)
+        incoming_label_ids.append(rel.label.id)
+
+    if incoming_label_ids:
+        db.exec(
+            delete(DBDocumentLabelLink).where(
+                DBDocumentLabelLink.document_id == document_id,
+                DBDocumentLabelLink.label_id.not_in(incoming_label_ids),
+            )
+        )
+    else:
+        db.exec(
+            delete(DBDocumentLabelLink).where(
+                DBDocumentLabelLink.document_id == document_id
+            )
+        )
