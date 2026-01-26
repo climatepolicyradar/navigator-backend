@@ -1,12 +1,12 @@
-import datetime
 import logging
+from datetime import UTC, datetime
 
 from data_in_models.db_models import Document as DBDocument
 from data_in_models.db_models import DocumentLabelLink as DBDocumentLabelLink
 from data_in_models.db_models import Item as DBItem
 from data_in_models.db_models import Label as DBLabel
 from data_in_models.models import Document as DocumentInput
-from sqlalchemy import insert
+from sqlalchemy.dialects.postgresql import insert
 from sqlalchemy.exc import DisconnectionError, OperationalError
 from sqlmodel import Session, delete, select
 
