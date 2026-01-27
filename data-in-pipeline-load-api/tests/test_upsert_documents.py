@@ -133,7 +133,7 @@ def test_batch_document_creation(session):
     item = create_mock_item("batch-item", "https://batch.com")
     documents[1].items = [item]
 
-    result = create_or_update_documents(session, documents)
+    result = create_or_update_documents(session, documents)  # type: ignore
 
     assert result == ["batch-1", "batch-2", "batch-3"]
 
