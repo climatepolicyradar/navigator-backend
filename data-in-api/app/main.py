@@ -13,7 +13,12 @@ def root():
 
 
 @app.get("/health")
-def health(db=Depends(get_db)):
+def health():
+    return {"status": "ok"}
+
+
+@app.get("/db-health-check")
+def db_health_check(db=Depends(get_db)):
     try:
         is_healthy = check_db_health(db)
 
