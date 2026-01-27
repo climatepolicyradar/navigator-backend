@@ -6,6 +6,7 @@ requires-python = "==3.13.*"
 members = [
     "api",
     "concepts-api",
+    "data-in-api",
     "data-in-models",
     "data-in-pipeline",
     "data-in-pipeline-load-api",
@@ -421,6 +422,17 @@ wheels = [
     { url = "https://files.pythonhosted.org/packages/90/45/b0d691df20633eff80955a0fc7695ff9051ffce8b69741444bd9ed7bd0db/cryptography-46.0.3-cp38-abi3-win_amd64.whl", hash = "sha256:416260257577718c05135c55958b674000baef9a1c7d9e8f306ec60d71db850f", size = 3501720, upload-time = "2025-10-15T23:18:10.632Z" },
     { url = "https://files.pythonhosted.org/packages/e8/cb/2da4cc83f5edb9c3257d09e1e7ab7b23f049c7962cae8d842bbef0a9cec9/cryptography-46.0.3-cp38-abi3-win_arm64.whl", hash = "sha256:d89c3468de4cdc4f08a57e214384d0471911a3830fcdaf7a8cc587e42a866372", size = 2918740, upload-time = "2025-10-15T23:18:12.277Z" },
 ]
+
+[[package]]
+name = "data-in-api"
+version = "0.1.0"
+source = { virtual = "data-in-api" }
+dependencies = [
+    { name = "fastapi", extra = ["standard"] },
+]
+
+[package.metadata]
+requires-dist = [{ name = "fastapi", extras = ["standard"], specifier = ">=0.115.14" }]
 
 [[package]]
 name = "data-in-models"

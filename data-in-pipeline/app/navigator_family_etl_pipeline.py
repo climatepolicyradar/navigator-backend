@@ -149,6 +149,32 @@ def load(
     return load_to_db(transformed)
 
 
+@task(log_prints=True)
+def upload_report(
+    loaded: list[str],
+    run_id: str,
+    result_log_limit: int,
+) -> None:
+    """Upload report to S3 if result exceeds log limit, otherwise log IDs.
+
+    :param loaded: List of loaded document IDs.
+    :type loaded: list[str]
+    :param run_id: Flow run identifier.
+    :type run_id: str
+    :param result_log_limit: Maximum number of IDs to log directly.
+    :type result_log_limit: int
+    """
+    _LOGGER = get_logger()
+    if len(loaded) > result_log_limit:
+        upload_to_s3(
+            json.dumps(loaded),
+            bucket="cpr-cache",
+            key=f"pipelines/data-in-pipeline/navigator_family/{run_id}-result.json",
+        )
+    else:
+        _LOGGER.info("Loaded document IDs: %s", loaded)
+
+
 # ---------------------------------------------------------------------
 #  FLOW ORCHESTRATION
 # ---------------------------------------------------------------------
@@ -158,7 +184,9 @@ def load(
 @pipeline_metrics.track(
     pipeline_type=PipelineType.FAMILY, scope="batch", flush_on_exit=True
 )
-def data_in_pipeline(ids: list[str] | None = None) -> list[str] | Exception:
+def data_in_pipeline(
+    ids: list[str] | None = None, result_log_limit: int = 100
+) -> list[str] | Exception:
     """Run the full Navigator ETL pipeline.
 
     If IDs are provided, processes only those specific families.
@@ -221,14 +249,5 @@ def data_in_pipeline(ids: list[str] | None = None) -> list[str] | Exception:
     pipeline_metrics.record_processed(PipelineType.FAMILY, Status.SUCCESS)
     _LOGGER.info("ETL pipeline completed successfully")
 
-    # TODO: make this number configurable in prefect
-    RESULT_LOG_LIMIT = 100
-    if len(loaded) > RESULT_LOG_LIMIT:
-        upload_to_s3(
-            json.dumps(loaded),
-            bucket="cpr-cache",
-            key=f"pipelines/data-in-pipeline/navigator_family/{run_id}-result.json",
-        )
-    else:
-        _LOGGER.info("Loaded document IDs: %s", loaded)
+    upload_report(loaded, run_id, result_log_limit)
     return loaded
