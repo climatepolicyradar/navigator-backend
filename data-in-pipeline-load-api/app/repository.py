@@ -138,7 +138,8 @@ def _upsert_items_for_document(
     if incoming_ids:
         db.exec(
             delete(DBItem).where(
-                DBItem.document_id == document_id, ~DBItem.id.in_(incoming_ids)
+                DBItem.document_id == document_id,
+                DBItem.id.not_in(incoming_ids),  # type: ignore[attr-defined]
             )
         )
     else:
@@ -204,7 +205,7 @@ def _upsert_labels_and_relationships(
         db.exec(
             delete(DBDocumentLabelLink).where(
                 DBDocumentLabelLink.document_id == document_id,
-                ~DBDocumentLabelLink.label_id.in_(incoming_label_ids),
+                DBDocumentLabelLink.label_id.not_in(incoming_label_ids),  # type: ignore[attr-defined]
             )
         )
     else:
