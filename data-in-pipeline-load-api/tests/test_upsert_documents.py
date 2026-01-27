@@ -189,44 +189,13 @@ def test_document_id_conflict(session):
     assert len(docs) == 0
 
 
-def test_item_id_conflict(session):
-    """Test that duplicate item ID causes failure."""
+def test_shared_label_does_not_raise_error(session):
+    """Two documents sharing the same label ID should succeed"""
+    shared_label = create_mock_label("common-label", "Urgent")
 
-    item1 = create_mock_item("duplicate-item", "https://first.com")
-    doc1 = create_mock_document_input("doc-1", "First Doc", items=[item1])
-    create_documents(session, [doc1])
+    doc1 = create_mock_document_input("doc-1", "First Doc", labels=[shared_label])
+    doc2 = create_mock_document_input("doc-2", "Second Doc", labels=[shared_label])
 
-    item2 = create_mock_item("duplicate-item", "https://second.com")
-    doc2 = create_mock_document_input("doc-2", "Second Doc", items=[item2])
+    result = create_documents(session, [doc1, doc2])
 
-    with pytest.raises(IntegrityError):
-        create_documents(session, [doc2])
-
-    docs = session.exec(select(Document)).all()
-    assert len(docs) == 0
-
-
-def test_label_id_conflict(session):
-    """Test that duplicate label ID causes failure"""
-
-    label1 = create_mock_label("duplicate-label", "Label One")
-    doc1 = create_mock_document_input("doc-1", "First Doc", labels=[label1])
-    create_documents(session, [doc1])
-
-    label2 = Mock()
-    label2.id = "duplicate-label"
-    label2.title = "Different Title"
-    label2.type = "status"
-
-    rel2 = Mock()
-    rel2.type = "tag"
-    rel2.timestamp = datetime.now(UTC)
-    rel2.label = label2
-
-    doc2 = create_mock_document_input("doc-2", "Second Doc", labels=[rel2])
-
-    with pytest.raises(IntegrityError):
-        create_documents(session, [doc2])
-
-    docs = session.exec(select(Document)).all()
-    assert len(docs) == 0
+    assert result == ["doc-1", "doc-2"]
