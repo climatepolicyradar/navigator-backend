@@ -207,7 +207,7 @@ def test_item_id_conflict(session):
 
 
 def test_label_id_conflict(session):
-    """Test that duplicate label ID causes failure."""
+    """Test that duplicate label ID causes failure"""
 
     label1 = create_mock_label("duplicate-label", "Label One")
     doc1 = create_mock_document_input("doc-1", "First Doc", labels=[label1])
