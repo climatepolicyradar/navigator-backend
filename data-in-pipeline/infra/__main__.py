@@ -577,7 +577,9 @@ data_in_pipeline_load_api_apprunner_service = aws.apprunner.Service(
                     "AWS_REGION": "eu-west-1",
                 },
             ),
-            image_identifier=f"{account_id}.dkr.ecr.eu-west-1.amazonaws.com/data-in-pipeline-load-api:latest",
+            image_identifier=data_in_pipeline_load_api_ecr_repository.repository_url.apply(
+                lambda respository_url: f"{respository_url}:latest"
+            ),
             image_repository_type="ECR",
         ),
     ),
