@@ -687,58 +687,50 @@ data_in_api_aws_ecr_repository = components_aws.ecr.Repository(
 )
 
 
-# data_in_api_apprunner_service = aws.apprunner.Service(
-#     "data-in-api-apprunner-service",
-#     auto_scaling_configuration_arn=config.require("auto_scaling_configuration_arn"),
-#     health_check_configuration=aws.apprunner.ServiceHealthCheckConfigurationArgs(
-#         interval=10,
-#         protocol="HTTP",
-#         path="/load/health",
-#         timeout=5,
-#     ),
-#     instance_configuration=aws.apprunner.ServiceInstanceConfigurationArgs(
-#         instance_role_arn=data_in_pipeline_load_api_instance_role.arn,
-#     ),
-#     network_configuration=aws.apprunner.ServiceNetworkConfigurationArgs(
-#         egress_configuration=aws.apprunner.ServiceNetworkConfigurationEgressConfigurationArgs(
-#             egress_type="VPC",
-#             vpc_connector_arn=vpc_connector.arn,
-#         ),
-#         ingress_configuration=aws.apprunner.ServiceNetworkConfigurationIngressConfigurationArgs(
-#             # Private endpoint - ingress only. Egress via VPC connector (above) is separate
-#             # and will continue to allow Aurora connectivity via existing security group rules.
-#             # If external access is needed, create a VPC Ingress Connection (PrivateLink).
-#             is_publicly_accessible=False,
-#         ),
-#         ip_address_type="IPV4",
-#     ),
-#     observability_configuration=aws.apprunner.ServiceObservabilityConfigurationArgs(
-#         observability_enabled=False,
-#     ),
-#     service_name="data-in-api",
-#     source_configuration=aws.apprunner.ServiceSourceConfigurationArgs(
-#         authentication_configuration=aws.apprunner.ServiceSourceConfigurationAuthenticationConfigurationArgs(
-#             access_role_arn=data_in_pipeline_load_api_role.arn,
-#         ),
-#         image_repository=aws.apprunner.ServiceSourceConfigurationImageRepositoryArgs(
-#             image_configuration=aws.apprunner.ServiceSourceConfigurationImageRepositoryImageConfigurationArgs(
-#                 runtime_environment_secrets={
-#                     "LOAD_DATABASE_URL": data_in_pipeline_load_api_load_database_url.arn,
-#                     "CDN_URL": data_in_pipeline_load_api_cdn_url.arn,
-#                     "MANAGED_DB_PASSWORD": data_in_pipeline_load_api_cluster_password_secret.secret_arn,
-#                 },
-#                 runtime_environment_variables={
-#                     "DB_MASTER_USERNAME": config.require("aurora_master_username"),
-#                     "DB_PORT": "5432",
-#                     "DB_NAME": config.require("db_name"),
-#                     "AWS_REGION": "eu-west-1",
-#                 },
-#             ),
-#             image_identifier=data_in_api_aws_ecr_repository.repository_url.apply(
-#                 lambda respository_url: f"{respository_url}:latest"
-#             ),
-#             image_repository_type="ECR",
-#         ),
-#     ),
-#     opts=pulumi.ResourceOptions(protect=True),
-# )
+data_in_api_apprunner_service = aws.apprunner.Service(
+    "data-in-api-apprunner-service",
+    auto_scaling_configuration_arn=config.require("auto_scaling_configuration_arn"),
+    health_check_configuration=aws.apprunner.ServiceHealthCheckConfigurationArgs(
+        interval=2,
+        protocol="HTTP",
+        path="/health",
+        timeout=5,
+        unhealthy_threshold=2,
+    ),
+    instance_configuration=aws.apprunner.ServiceInstanceConfigurationArgs(
+        instance_role_arn=data_in_pipeline_load_api_instance_role.arn,
+    ),
+    network_configuration=aws.apprunner.ServiceNetworkConfigurationArgs(
+        ip_address_type="IPV4",
+        ingress_configuration=aws.apprunner.ServiceNetworkConfigurationIngressConfigurationArgs(
+            is_publicly_accessible=True,
+        ),
+    ),
+    observability_configuration=aws.apprunner.ServiceObservabilityConfigurationArgs(
+        observability_enabled=False,
+    ),
+    service_name="data-in-api",
+    source_configuration=aws.apprunner.ServiceSourceConfigurationArgs(
+        authentication_configuration=aws.apprunner.ServiceSourceConfigurationAuthenticationConfigurationArgs(
+            access_role_arn=data_in_pipeline_load_api_role.arn,
+        ),
+        image_repository=aws.apprunner.ServiceSourceConfigurationImageRepositoryArgs(
+            image_configuration=aws.apprunner.ServiceSourceConfigurationImageRepositoryImageConfigurationArgs(
+                runtime_environment_secrets={
+                    "LOAD_DATABASE_URL": data_in_pipeline_load_api_load_database_url.arn,
+                    "CDN_URL": data_in_pipeline_load_api_cdn_url.arn,
+                    "MANAGED_DB_PASSWORD": data_in_pipeline_load_api_cluster_password_secret.secret_arn,
+                },
+                runtime_environment_variables={
+                    "DB_MASTER_USERNAME": config.require("aurora_master_username"),
+                    "DB_PORT": "5432",
+                    "DB_NAME": config.require("db_name"),
+                    "AWS_REGION": "eu-west-1",
+                },
+            ),
+            image_identifier="532586131621.dkr.ecr.eu-west-1.amazonaws.com/data-in-api:latest",
+            image_repository_type="ECR",
+        ),
+    ),
+    opts=pulumi.ResourceOptions(protect=False),
+)
