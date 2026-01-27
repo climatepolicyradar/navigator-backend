@@ -1,50 +1,38 @@
-from unittest.mock import MagicMock, patch
+from unittest.mock import patch
 
-import pytest
+from data_in_models.models import Document
 
-from app.extract.connector_config import NavigatorConnectorConfig
-from app.extract.enums import CheckPointStorageType
 from app.navigator_family_etl_pipeline import (
     load,
 )
 
 
-@pytest.fixture
-def base_config():
-    return NavigatorConnectorConfig(
-        base_url="test-url",
-        source_id="navigator-docs",
-        checkpoint_storage=CheckPointStorageType.DATABASE,
-        checkpoint_key_prefix="navigator",
-    )
+@patch("app.navigator_family_etl_pipeline.load_to_db")
+def test_load_family_success(mock_load_to_db):
+    """Test successful family loading to database."""
+    doc_1 = Document(id="doc-1", title="Document 1")
+    doc_2 = Document(id="doc-2", title="Document 2")
+
+    documents = [doc_1, doc_2]
+    expected_ids = ["doc-1", "doc-2"]
+    mock_load_to_db.return_value = expected_ids
+
+    result = load(documents)
+
+    assert result == expected_ids
+    mock_load_to_db.assert_called_once_with(documents)
 
 
 @patch("app.navigator_family_etl_pipeline.load_to_db")
-def test_load_family_success(mock_upload):
-    """Test successful family caching."""
+def test_load_family_handles_load_failure(mock_load_to_db):
+    """Test handling of load API failure."""
+    doc = Document(id="doc-1", title="Document 1")
+    documents = [doc]
 
-    mock_navigator_doc = MagicMock()
-    mock_navigator_doc.model_dump_json.return_value = '{"id": "test-123"}'
-    mock_navigator_doc.id = "test-123"
-    mock_upload.return_value = True
+    expected_error = Exception("Load API connection failed")
+    mock_load_to_db.return_value = expected_error
 
-    load.fn(mock_navigator_doc)
+    result = load(documents)
 
-    mock_upload.assert_called_once_with(
-        '{"id": "test-123"}',
-        bucket="cpr-cache",
-        key="pipelines/data-in-pipeline/navigator_family/test-123.json",
-    )
-
-
-@patch("app.navigator_family_etl_pipeline.load_to_db")
-def test_load_family_handles_upload_failure(mock_upload):
-    """Test handling of S3 upload failure."""
-
-    mock_navigator_doc = MagicMock()
-    mock_navigator_doc.model_dump_json.return_value = '{"id": "test-123"}'
-    mock_navigator_doc.id = "test-123"
-    mock_upload.side_effect = Exception("S3 connection failed")
-
-    with pytest.raises(Exception, match="S3 connection failed"):
-        load.fn(mock_navigator_doc)
+    assert result == expected_error
+    mock_load_to_db.assert_called_once_with(documents)
