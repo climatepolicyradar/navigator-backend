@@ -7,7 +7,7 @@ from data_in_models.db_models import Item as DBItem
 from data_in_models.db_models import Label as DBLabel
 from data_in_models.models import Document as DocumentInput
 from sqlalchemy.dialects.postgresql import insert
-from sqlalchemy.exc import DisconnectionError, OperationalError
+from sqlalchemy.exc import DisconnectionError, IntegrityError, OperationalError
 from sqlmodel import Session, delete, select
 
 _LOGGER = logging.getLogger(__name__)
@@ -81,15 +81,19 @@ def create_or_update_documents(
             processed_ids.append(doc_in.id)
 
         db.commit()
+        _LOGGER.info(f"Successfully upserted {len(processed_ids)} documents")
         return processed_ids
 
     except ValueError:
+        db.rollback()
         _LOGGER.exception("Validation failed for document upsert operation")
         raise
     except (OperationalError, DisconnectionError):
+        db.rollback()
         _LOGGER.exception("System error during document upsert operation")
         raise
     except Exception:
+        db.rollback()
         _LOGGER.exception(
             f"Failed to upsert documents. Processed {len(processed_ids)} of {len(documents)} documents before failure."
         )
@@ -154,7 +158,6 @@ def _upsert_labels_and_relationships(
     incoming_label_ids = []
 
     for rel in label_relationships:
-        # Upsert label atomically
         label_stmt = (
             insert(DBLabel)
             .values(
@@ -175,7 +178,6 @@ def _upsert_labels_and_relationships(
         )
         db.exec(label_stmt)
 
-        # Upsert document-label relationship atomically
         link_stmt = (
             insert(DBDocumentLabelLink)
             .values(
@@ -211,3 +213,84 @@ def _upsert_labels_and_relationships(
                 DBDocumentLabelLink.document_id == document_id
             )
         )
+
+
+def create_documents(db: Session, documents: list[DocumentInput]) -> list[str]:
+    """
+    Create new documents and related entities.
+
+    This operation is atomic:
+    - All documents are created successfully, OR
+    - Any conflict causes the entire batch to fail and rollback
+
+    No partial writes are allowed.
+
+    :param db: Database session
+    :param documents: List of documents to create
+    :return: List of created document IDs
+    :raises ValueError: On any constraint violation (document/item/label ID conflict)
+    """
+    created_ids: list[str] = []
+
+    try:
+        for doc_in in documents:
+            doc_stmt = insert(DBDocument).values(
+                id=doc_in.id,
+                title=doc_in.title,
+                description=doc_in.description,
+                created_at=datetime.now(UTC),
+                updated_at=datetime.now(UTC),
+            )
+            db.exec(doc_stmt)
+
+            for item in doc_in.items:
+                item_stmt = insert(DBItem).values(
+                    id=item.id,
+                    document_id=doc_in.id,
+                    url=item.url,
+                    created_at=datetime.now(UTC),
+                    updated_at=datetime.now(UTC),
+                )
+                db.exec(item_stmt)
+
+            for rel in doc_in.labels:
+                label_stmt = insert(DBLabel).values(
+                    id=rel.label.id,
+                    title=rel.label.title,
+                    type=rel.label.type,
+                    created_at=datetime.now(UTC),
+                    updated_at=datetime.now(UTC),
+                )
+                db.exec(label_stmt)
+
+                link_stmt = insert(DBDocumentLabelLink).values(
+                    document_id=doc_in.id,
+                    label_id=rel.label.id,
+                    relationship_type=rel.type,
+                    timestamp=rel.timestamp,
+                    created_at=datetime.now(UTC),
+                    updated_at=datetime.now(UTC),
+                )
+                db.exec(link_stmt)
+
+            created_ids.append(doc_in.id)
+
+        db.commit()
+        _LOGGER.info(f"Successfully created {len(created_ids)} documents strictly")
+        return created_ids
+
+    except IntegrityError:
+        db.rollback()
+        _LOGGER.exception("Create failed due to integrity constraint violation")
+        raise
+    except (OperationalError, DisconnectionError):
+        db.rollback()
+        _LOGGER.exception("System error during document upsert operation")
+        raise
+    except Exception:
+        db.rollback()
+        _LOGGER.exception(
+            f"Unexpected failure during strict create. "
+            f"Attempted to create {len(documents)} documents."
+        )
+        raise
