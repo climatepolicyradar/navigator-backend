@@ -109,7 +109,7 @@ def _upsert_items_for_document(
     :param document_id: Document ID to upsert items for
     :param incoming_items: List of items from input
     """
-    incoming_ids = []
+    incoming_ids: list[str] = []
 
     # Upsert each item atomically
     for item in incoming_items:
@@ -155,7 +155,7 @@ def _upsert_labels_and_relationships(
     :param document_id: Document ID
     :param label_relationships: List of DocumentLabelRelationship objects
     """
-    incoming_label_ids = []
+    incoming_label_ids: list[str] = []
 
     for rel in label_relationships:
         label_stmt = (
