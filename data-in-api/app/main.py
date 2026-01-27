@@ -1,4 +1,8 @@
-from fastapi import FastAPI
+from fastapi import Depends, FastAPI, HTTPException, status
+
+from app.repository import check_db_health
+from app.session import get_db
+from app.settings import settings
 
 app = FastAPI(title="DATA IN API")
 
@@ -9,5 +13,18 @@ def root():
 
 
 @app.get("/health")
-def health():
-    return {"status": "ok"}
+def health(db=Depends(get_db)):
+    try:
+        is_healthy = check_db_health(db)
+
+    except Exception as e:
+        raise HTTPException(
+            status_code=status.HTTP_500_INTERNAL_SERVER_ERROR, detail=str(e)
+        )
+
+    if not is_healthy:
+        raise HTTPException(
+            status_code=status.HTTP_503_SERVICE_UNAVAILABLE,
+            detail="Database connection unhealthy",
+        )
+    return {"status": "ok", "version": settings.github_sha}
