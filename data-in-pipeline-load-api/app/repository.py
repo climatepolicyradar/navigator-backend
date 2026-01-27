@@ -244,22 +244,30 @@ def create_documents(db: Session, documents: list[DocumentInput]) -> list[str]:
             db.exec(doc_stmt)
 
             for item in doc_in.items:
-                item_stmt = insert(DBItem).values(
-                    id=item.id,
-                    document_id=doc_in.id,
-                    url=item.url,
-                    created_at=datetime.now(UTC),
-                    updated_at=datetime.now(UTC),
+                item_stmt = (
+                    insert(DBItem)
+                    .values(
+                        id=item.id,
+                        document_id=doc_in.id,
+                        url=item.url,
+                        created_at=datetime.now(UTC),
+                        updated_at=datetime.now(UTC),
+                    )
+                    .on_conflict_do_nothing(index_elements=["id"])
                 )
                 db.exec(item_stmt)
 
             for rel in doc_in.labels:
-                label_stmt = insert(DBLabel).values(
-                    id=rel.label.id,
-                    title=rel.label.title,
-                    type=rel.label.type,
-                    created_at=datetime.now(UTC),
-                    updated_at=datetime.now(UTC),
+                label_stmt = (
+                    insert(DBLabel)
+                    .values(
+                        id=rel.label.id,
+                        title=rel.label.title,
+                        type=rel.label.type,
+                        created_at=datetime.now(UTC),
+                        updated_at=datetime.now(UTC),
+                    )
+                    .on_conflict_do_nothing(index_elements=["id"])
                 )
                 db.exec(label_stmt)
 
