@@ -103,48 +103,24 @@ def create_or_update_documents(
 def _upsert_items_for_document(
     db: Session, document_id: str, incoming_items: list
 ) -> None:
-    """Upsert items using INSERT ... ON CONFLICT. No race condition.
+    """Replace all items for a document. Deletes existing items and inserts new ones.
 
     :param db: Database session
     :param document_id: Document ID to upsert items for
     :param incoming_items: List of items from input
     """
-    incoming_ids: list[str] = []
+    # Delete all existing items for this document
+    db.exec(delete(DBItem).where(DBItem.document_id == document_id))
 
-    # Upsert each item atomically
+    # Insert new items (database will auto-generate IDs)
     for item in incoming_items:
-        stmt = (
-            insert(DBItem)
-            .values(
-                id=item.id,
-                document_id=document_id,
-                url=item.url,
-                created_at=datetime.now(UTC),
-                updated_at=datetime.now(UTC),
-            )
-            .on_conflict_do_update(
-                index_elements=["id"],
-                set_={
-                    "url": item.url,
-                    "document_id": document_id,
-                    "updated_at": datetime.now(UTC),
-                },
-            )
+        stmt = insert(DBItem).values(
+            document_id=document_id,
+            url=item.url,
+            created_at=datetime.now(UTC),
+            updated_at=datetime.now(UTC),
         )
         db.exec(stmt)
-        incoming_ids.append(item.id)
-
-    # Delete orphaned items (items no longer in input)
-    if incoming_ids:
-        db.exec(
-            delete(DBItem).where(
-                DBItem.document_id == document_id,
-                DBItem.id.not_in(incoming_ids),  # type: ignore[attr-defined]
-            )
-        )
-    else:
-        # No incoming items, delete all items for this document
-        db.exec(delete(DBItem).where(DBItem.document_id == document_id))
 
 
 def _upsert_labels_and_relationships(
@@ -245,16 +221,11 @@ def create_documents(db: Session, documents: list[DocumentInput]) -> list[str]:
             db.exec(doc_stmt)
 
             for item in doc_in.items:
-                item_stmt = (
-                    insert(DBItem)
-                    .values(
-                        id=item.id,
-                        document_id=doc_in.id,
-                        url=item.url,
-                        created_at=datetime.now(UTC),
-                        updated_at=datetime.now(UTC),
-                    )
-                    .on_conflict_do_nothing(index_elements=["id"])
+                item_stmt = insert(DBItem).values(
+                    document_id=doc_in.id,
+                    url=item.url,
+                    created_at=datetime.now(UTC),
+                    updated_at=datetime.now(UTC),
                 )
                 db.exec(item_stmt)
 
