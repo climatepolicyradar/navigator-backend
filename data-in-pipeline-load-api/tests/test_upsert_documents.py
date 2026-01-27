@@ -82,8 +82,8 @@ def test_upsert_creates_document_with_labels_and_items(session):
     assert link is not None
     assert link.relationship_type == "tag"
 
-    item_entity = session.get(Item, "item_1")
-    assert item_entity is not None
+    assert len(doc.items) == 1
+    item_entity = doc.items[0]
     assert item_entity.url == "https://example.com/file.pdf"
     assert item_entity.document_id == "test-doc-2"
 
@@ -168,8 +168,8 @@ def test_create_document_success(session):
     assert link is not None
     assert link.relationship_type == "tag"
 
-    item_entity = session.get(Item, "item_1")
-    assert item_entity is not None
+    assert len(doc.items) == 1
+    item_entity = doc.items[0]
     assert item_entity.url == "https://example.com/file.pdf"
     assert item_entity.document_id == "test-doc-2"
 
