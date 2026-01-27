@@ -1,6 +1,6 @@
 from unittest.mock import patch
 
-from data_in_models.db_models import Document
+from data_in_models.models import Document
 
 from app.navigator_document_etl_pipeline import process_document_updates
 
