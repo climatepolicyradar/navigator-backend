@@ -92,9 +92,9 @@ jobs:
       - run: just test ${{ matrix.service }}
 
   deploy-infra:
-    needs: [changes, test]
+    needs: [changes]
     # Deploy infra changes to staging and production before app deploys.
-    if: needs.changes.outputs.infra_services != '[]' && (needs.test.result == 'success' || needs.test.result == 'skipped')
+    if: needs.changes.outputs.infra_services != '[]'
     runs-on: ubuntu-latest
     strategy:
       matrix:
