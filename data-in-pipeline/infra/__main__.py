@@ -188,7 +188,8 @@ aurora_cluster = aws.rds.Cluster(
     master_username=config.require("aurora_master_username"),
     db_subnet_group_name=aurora_subnet_group.name,
     vpc_security_group_ids=[aurora_security_group.id],
-    backup_retention_period=retention_period_days,  # Retention is included in Aurora pricing for up to 7 days. Longer retention would add charges.
+    # Retention is included in Aurora pricing for up to 7 days. Longer retention would add charges.
+    backup_retention_period=retention_period_days,
     preferred_backup_window="02:00-03:00",
     iam_database_authentication_enabled=False,  # TODO: Reenable later
     preferred_maintenance_window="sun:04:00-sun:05:00",
@@ -381,7 +382,7 @@ data_in_pipeline_load_api_instance_role = aws.iam.Role(
 data_in_pipeline_load_api_load_database_url = aws.ssm.Parameter(
     "data-in-pipeline-load-api-load-database-url",
     name="/data-in-pipeline-load-api/load-database-url",
-    description="The URL string to connect to the load database",
+    description="The URL string to connect to the load database write-replica",
     type=aws.ssm.ParameterType.SECURE_STRING,
     # This value is managed directly in SSM
     value=aurora_cluster.endpoint,
@@ -389,6 +390,13 @@ data_in_pipeline_load_api_load_database_url = aws.ssm.Parameter(
         # This value is managed directly in SSM
         ignore_changes=["value"],
     ),
+)
+data_in_pipeline_load_api_load_database_url_read_only = aws.ssm.Parameter(
+    "data-in-pipeline-load-api-load-database-url-read-only",
+    name="/data-in-pipeline-load-api/load-database-url-read-only",
+    description="The URL string to connect to the load database read-only replica",
+    type=aws.ssm.ParameterType.SECURE_STRING,
+    value=aurora_cluster.reader_endpoint,
 )
 
 data_in_pipeline_load_api_cdn_url = aws.ssm.Parameter(
@@ -579,7 +587,7 @@ data_in_pipeline_load_api_apprunner_service = aws.apprunner.Service(
                 },
             ),
             image_identifier=data_in_pipeline_load_api_ecr_repository.repository_url.apply(
-                lambda respository_url: f"{respository_url}:latest"
+                lambda repository_url: f"{repository_url}:latest"
             ),
             image_repository_type="ECR",
         ),
@@ -717,7 +725,7 @@ data_in_api_apprunner_service = aws.apprunner.Service(
         image_repository=aws.apprunner.ServiceSourceConfigurationImageRepositoryArgs(
             image_configuration=aws.apprunner.ServiceSourceConfigurationImageRepositoryImageConfigurationArgs(
                 runtime_environment_secrets={
-                    "LOAD_DATABASE_URL": data_in_pipeline_load_api_load_database_url.arn,
+                    "LOAD_DATABASE_URL": data_in_pipeline_load_api_load_database_url_read_only.arn,
                     "CDN_URL": data_in_pipeline_load_api_cdn_url.arn,
                     "MANAGED_DB_PASSWORD": data_in_pipeline_load_api_cluster_password_secret.secret_arn,
                 },
@@ -728,7 +736,9 @@ data_in_api_apprunner_service = aws.apprunner.Service(
                     "AWS_REGION": "eu-west-1",
                 },
             ),
-            image_identifier="532586131621.dkr.ecr.eu-west-1.amazonaws.com/data-in-api:latest",
+            image_identifier=data_in_api_aws_ecr_repository.aws_ecr_repository.repository_url.apply(
+                lambda repository_url: f"{repository_url}:latest"
+            ),
             image_repository_type="ECR",
         ),
     ),
