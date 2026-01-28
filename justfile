@@ -59,11 +59,11 @@ aws-ecr-login:
     aws ecr get-login-password --region eu-west-1 | docker login --username AWS --password-stdin $(aws sts get-caller-identity --query 'Account' --output text).dkr.ecr.eu-west-1.amazonaws.com
 
 test-infra service environment:
-    cd {{service}}/infra
-    pulumi stack select climatepolicyradar/{{service}}/{{environment}}
-    pulumi preview --suppress-outputs
+    cd {{service}}/infra && \
+        pulumi stack select climatepolicyradar/{{service}}/{{environment}} && \
+        pulumi preview --suppress-outputs
 
 deploy-infra service environment:
-    cd {{service}}/infra
-    pulumi stack select climatepolicyradar/{{service}}/{{environment}}
-    pulumi up --yes --skip-preview
+    cd {{service}}/infra && \
+        pulumi stack select climatepolicyradar/{{service}}/{{environment}} && \
+        pulumi up --yes --skip-preview
