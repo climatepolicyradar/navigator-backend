@@ -1,6 +1,7 @@
 import logging
 from typing import TypeVar
 
+from data_in_models.models import Document as DocumentOutput
 from fastapi import Depends, FastAPI, HTTPException, Query, status
 from pydantic import BaseModel
 
@@ -58,7 +59,7 @@ def db_health_check(db=Depends(get_db)):
     return {"status": "ok", "version": settings.github_sha}
 
 
-@app.get("/documents", response_model=APIListResponse[str])
+@app.get("/documents", response_model=APIListResponse[DocumentOutput])
 def list_documents(
     page: int = Query(1, ge=1),
     page_size: int = Query(default=20, ge=1, le=100),
@@ -68,7 +69,7 @@ def list_documents(
         all_documents = get_all_documents(db, page=page, page_size=page_size)
         total_documents = len(all_documents)
 
-        return APIListResponse[str](
+        return APIListResponse(
             data=all_documents, total=total_documents, page=page, page_size=page_size
         )
     except Exception as e:
@@ -78,7 +79,7 @@ def list_documents(
         )
 
 
-@app.get("/documents/{document_id}", response_model=APIItemResponse[str])
+@app.get("/documents/{document_id}", response_model=APIItemResponse[DocumentOutput])
 def get_document(document_id: str, db=Depends(get_db)):
     try:
         document = get_document_by_id(db, document_id)
@@ -89,7 +90,7 @@ def get_document(document_id: str, db=Depends(get_db)):
                 detail=f"Document with ID {document_id} not found",
             )
 
-        return APIItemResponse[str](data=document)
+        return APIItemResponse(data=document)
     except HTTPException:
         raise
     except Exception as e:
