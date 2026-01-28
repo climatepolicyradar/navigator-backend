@@ -1,0 +1,19 @@
+{
+  "action": "opened",
+  "number": 123,
+  "pull_request": {
+    "number": 123,
+    "head": {
+      "ref": "feature/test-branch",
+      "sha": "abc123"
+    },
+    "base": {
+      "ref": "main",
+      "sha": "def456"
+    },
+    "labels": []
+  },
+  "repository": {
+    "full_name": "climatepolicyradar/navigator-backend"
+  }
+}
