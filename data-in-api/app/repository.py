@@ -1,9 +1,13 @@
 import logging
 
 from data_in_models.db_models import Document as DBDocument
-from data_in_models.db_models import DocumentLabelLink as DBDocumentDocumentLink
+from data_in_models.db_models import DocumentDocumentLink as DBDocumentDocumentLink
 from data_in_models.models import Document as DocumentOutput
-from data_in_models.models import DocumentLabelRelationship
+from data_in_models.models import (
+    DocumentDocumentRelationship,
+    DocumentLabelRelationship,
+    DocumentWithoutRelationships,
+)
 from data_in_models.models import Item as ItemOutput
 from data_in_models.models import Label as LabelOutput
 from sqlalchemy.exc import DisconnectionError, OperationalError
@@ -31,17 +35,22 @@ def check_db_health(db: Session) -> bool:
     return False
 
 
-def get_all_documents(db: Session) -> list[DocumentOutput]:
+def get_all_documents(
+    db: Session, page: int = 1, page_size: int = 20
+) -> list[DocumentOutput]:
     """
-    Retrieve all documents with all relationships eagerly loaded.
+    Retrieve all documents.
 
     :param db: Database session
+    :param page: Page number for pagination
+    :param page_size: Number of items per page
     :return: List of all documents
     """
     try:
-        query = select(DBDocument)
+        offset = (page - 1) * page_size
+        query = select(DBDocument).offset(offset).limit(page_size)
         db_documents = db.exec(query).all()
-
+        _LOGGER.debug(f"Retrieved {len(db_documents)} documents from the database.")
         return [_map_db_document_to_schema(db, db_doc) for db_doc in db_documents]
 
     except Exception as e:
@@ -51,7 +60,7 @@ def get_all_documents(db: Session) -> list[DocumentOutput]:
 
 def get_document_by_id(db: Session, document_id: str) -> DocumentOutput | None:
     """
-    Retrieve a single document by ID with all relationships eagerly loaded.
+    Retrieve a single document by ID.
 
     :param db: Database session
     :param document_id: Document ID
@@ -78,10 +87,9 @@ def _map_db_document_to_schema(db: Session, db_doc: DBDocument) -> DocumentOutpu
     :param db_doc: Database document model
     :return: Pydantic document schema
     """
-    # Map items
+
     items = [ItemOutput(url=item.url) for item in db_doc.items]
 
-    # Map labels with relationships
     labels = [
         DocumentLabelRelationship(
             type=link.relationship_type,
@@ -101,20 +109,37 @@ def _map_db_document_to_schema(db: Session, db_doc: DBDocument) -> DocumentOutpu
         )
     ).all()
 
-    relationships = [
-        # DocumentDocumentRelationship(
-        #     type=link.relationship_type,
-        #     timestamp=link.timestamp,
-        #     document=DocumentWithoutRelationships(
-        #         id=link.related_document_id,
-        #         title="",  # populated later if needed
-        #         description=None,  # populated later if needed
-        #         labels=[],
-        #         items=[],
-        #     ),
-        # )
-        # for link in db_relationships
-    ]
+    relationships = []
+    for link in db_relationships:
+        related_doc = db.exec(
+            select(DBDocument).where(DBDocument.id == link.related_document_id)
+        ).first()
+
+        if related_doc:
+            relationships.append(
+                DocumentDocumentRelationship(
+                    type=link.relationship_type,
+                    timestamp=link.timestamp,
+                    document=DocumentWithoutRelationships(
+                        id=related_doc.id,
+                        title=related_doc.title,
+                        description=related_doc.description,
+                        labels=[
+                            DocumentLabelRelationship(
+                                type=lbl_link.relationship_type,
+                                label=LabelOutput(
+                                    id=lbl_link.label.id,
+                                    title=lbl_link.label.title,
+                                    type=lbl_link.label.type,
+                                ),
+                                timestamp=lbl_link.timestamp,
+                            )
+                            for lbl_link in related_doc.labels
+                        ],
+                        items=[ItemOutput(url=item.url) for item in related_doc.items],
+                    ),
+                )
+            )
 
     return DocumentOutput(
         id=db_doc.id,
