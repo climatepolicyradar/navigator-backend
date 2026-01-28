@@ -1,4 +1,5 @@
 FROM python:3.13-slim
+
 COPY --from=ghcr.io/astral-sh/uv:latest /uv /uvx /bin/
 # most of this is effectively taken from the uv docs
 # @see: https://docs.astral.sh/uv/guides/integration/docker/
@@ -20,14 +21,20 @@ ENV SERVICE=data-in-api
 RUN apt-get update && apt-get install -y \
     gcc \
     libpq-dev \
+    git \
     && rm -rf /var/lib/apt/lists/*
 
 # Install
-COPY uv.lock pyproject.toml /app/
+COPY pyproject.toml uv.lock /app/
+
+# Copy application code
 COPY ./$SERVICE /app/$SERVICE/
 COPY ./api /app/api/
+COPY ./data-in-models /app/data-in-models/
 
 WORKDIR /app
 RUN uv sync --project $SERVICE
+
+EXPOSE 8080
 
 CMD ["uv", "run", "fastapi", "run", "./$SERVICE/app/main.py", "--port", "8080", "--host", "0.0.0.0"]
