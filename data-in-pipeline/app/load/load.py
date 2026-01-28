@@ -4,6 +4,10 @@ import requests
 from data_in_models.models import Document
 from pydantic import TypeAdapter
 
+from app.bootstrap_telemetry import get_logger
+
+_LOGGER = get_logger()
+
 
 def load_to_db(documents: list[Document]) -> list[str] | Exception:
     """Sends documents to the load API to be saved in the DB.
@@ -26,6 +30,8 @@ def load_to_db(documents: list[Document]) -> list[str] | Exception:
         )
         response.raise_for_status()
     except Exception as e:
+        _LOGGER.exception("Error loading documents to DB: %s", e)
         return e
 
+    _LOGGER.info("Loaded %d documents to the load DB.", len(documents))
     return response.json()
