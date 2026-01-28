@@ -54,10 +54,6 @@ _prebuild service environment:
         just -f {{service}}/justfile prebuild {{environment}}; \
     fi
 
-# workflow tests (act: https://github.com/nektos/act)
-test-github-workflows:
-    bash tests/workflows/test-workflows.sh
-
 # util
 aws-ecr-login:
     aws ecr get-login-password --region eu-west-1 | docker login --username AWS --password-stdin $(aws sts get-caller-identity --query 'Account' --output text).dkr.ecr.eu-west-1.amazonaws.com
