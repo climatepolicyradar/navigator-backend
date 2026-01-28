@@ -587,7 +587,7 @@ data_in_pipeline_load_api_apprunner_service = aws.apprunner.Service(
                 },
             ),
             image_identifier=data_in_pipeline_load_api_ecr_repository.repository_url.apply(
-                lambda respository_url: f"{respository_url}:latest"
+                lambda repository_url: f"{repository_url}:latest"
             ),
             image_repository_type="ECR",
         ),
@@ -737,7 +737,7 @@ data_in_api_apprunner_service = aws.apprunner.Service(
                 },
             ),
             image_identifier=data_in_api_aws_ecr_repository.aws_ecr_repository.repository_url.apply(
-                lambda respository_url: f"{respository_url}:latest"
+                lambda repository_url: f"{repository_url}:latest"
             ),
             image_repository_type="ECR",
         ),
