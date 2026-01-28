@@ -3,6 +3,7 @@ from fastapi import Depends, FastAPI, HTTPException, status
 from app.repository import check_db_health
 from app.session import get_db
 from app.settings import settings
+from fastapi import FastAPI
 
 app = FastAPI(title="DATA IN API")
 
