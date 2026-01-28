@@ -17,7 +17,7 @@ def test_health_check_returns_ok_status(session: Session):
     client = TestClient(app)
 
     try:
-        response = client.get("/load/health")
+        response = client.get("/db-health-check")
         assert response.status_code == HTTPStatus.OK
         data = response.json()
         assert data["status"] == "ok"
