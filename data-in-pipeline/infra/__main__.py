@@ -29,6 +29,7 @@ data_in_pipeline_aws_ecr_repository = components_aws.ecr.Repository(
     ),
 )
 
+
 # Add cross account permissions so production Prefect account can pull the staging image
 # to create a staging deployment in the production account. We accept this security
 # tradeoff as we do not have a staging workspace in Prefect, so all deployments are
@@ -187,7 +188,8 @@ aurora_cluster = aws.rds.Cluster(
     master_username=config.require("aurora_master_username"),
     db_subnet_group_name=aurora_subnet_group.name,
     vpc_security_group_ids=[aurora_security_group.id],
-    backup_retention_period=retention_period_days,  # Retention is included in Aurora pricing for up to 7 days. Longer retention would add charges.
+    # Retention is included in Aurora pricing for up to 7 days. Longer retention would add charges.
+    backup_retention_period=retention_period_days,
     preferred_backup_window="02:00-03:00",
     iam_database_authentication_enabled=False,  # TODO: Reenable later
     preferred_maintenance_window="sun:04:00-sun:05:00",
@@ -380,7 +382,7 @@ data_in_pipeline_load_api_instance_role = aws.iam.Role(
 data_in_pipeline_load_api_load_database_url = aws.ssm.Parameter(
     "data-in-pipeline-load-api-load-database-url",
     name="/data-in-pipeline-load-api/load-database-url",
-    description="The URL string to connect to the load database",
+    description="The URL string to connect to the load database write-replica",
     type=aws.ssm.ParameterType.SECURE_STRING,
     # This value is managed directly in SSM
     value=aurora_cluster.endpoint,
@@ -388,6 +390,13 @@ data_in_pipeline_load_api_load_database_url = aws.ssm.Parameter(
         # This value is managed directly in SSM
         ignore_changes=["value"],
     ),
+)
+data_in_pipeline_load_api_load_database_url_read_only = aws.ssm.Parameter(
+    "data-in-pipeline-load-api-load-database-url-read-only",
+    name="/data-in-pipeline-load-api/load-database-url-read-only",
+    description="The URL string to connect to the load database read-only replica",
+    type=aws.ssm.ParameterType.SECURE_STRING,
+    value=aurora_cluster.reader_endpoint,
 )
 
 data_in_pipeline_load_api_cdn_url = aws.ssm.Parameter(
@@ -577,7 +586,9 @@ data_in_pipeline_load_api_apprunner_service = aws.apprunner.Service(
                     "AWS_REGION": "eu-west-1",
                 },
             ),
-            image_identifier=f"{account_id}.dkr.ecr.eu-west-1.amazonaws.com/data-in-pipeline-load-api:latest",
+            image_identifier=data_in_pipeline_load_api_ecr_repository.repository_url.apply(
+                lambda repository_url: f"{repository_url}:latest"
+            ),
             image_repository_type="ECR",
         ),
     ),
@@ -611,7 +622,7 @@ data_in_pipeline_load_api_url = aws.ssm.Parameter(
 #######################################################################
 
 # Export environment variables (plain values)
-prefect_otel_endpoint = f"https://otel.{"prod" if environment == "production" else "staging"}.climatepolicyradar.org"
+prefect_otel_endpoint = f"https://otel.{'prod' if environment == 'production' else 'staging'}.climatepolicyradar.org"
 pulumi.export(
     "prefect_runtime_environment_variables",
     {
@@ -657,3 +668,79 @@ prefect_ssm_secrets_output = pulumi.Output.from_input(
     }
 )
 pulumi.export("prefect_ssm_secrets", prefect_ssm_secrets_output)
+
+
+#######################################################################
+# DATA IN API SERVICE (TODO)
+#######################################################################
+
+
+#######################################################################
+# Create the ECR repository for the Data In API.
+#######################################################################
+data_in_api_aws_ecr_repository = components_aws.ecr.Repository(
+    name="data-in-api-ecr-repository",
+    aws_ecr_repository_args=aws.ecr.RepositoryArgs(
+        encryption_configurations=[
+            aws.ecr.RepositoryEncryptionConfigurationArgs(
+                encryption_type="AES256",
+            )
+        ],
+        image_scanning_configuration=aws.ecr.RepositoryImageScanningConfigurationArgs(
+            scan_on_push=False,
+        ),
+        image_tag_mutability="MUTABLE",
+        name="data-in-api",
+    ),
+)
+
+
+data_in_api_apprunner_service = aws.apprunner.Service(
+    "data-in-api-apprunner-service",
+    auto_scaling_configuration_arn=config.require("auto_scaling_configuration_arn"),
+    health_check_configuration=aws.apprunner.ServiceHealthCheckConfigurationArgs(
+        interval=2,  # seconds
+        protocol="HTTP",
+        path="/health",
+        timeout=5,  # seconds
+        unhealthy_threshold=2,  # seconds
+    ),
+    instance_configuration=aws.apprunner.ServiceInstanceConfigurationArgs(
+        instance_role_arn=data_in_pipeline_load_api_instance_role.arn,
+    ),
+    network_configuration=aws.apprunner.ServiceNetworkConfigurationArgs(
+        ip_address_type="IPV4",
+        ingress_configuration=aws.apprunner.ServiceNetworkConfigurationIngressConfigurationArgs(
+            is_publicly_accessible=True,
+        ),
+    ),
+    observability_configuration=aws.apprunner.ServiceObservabilityConfigurationArgs(
+        observability_enabled=False,
+    ),
+    service_name="data-in-api",
+    source_configuration=aws.apprunner.ServiceSourceConfigurationArgs(
+        authentication_configuration=aws.apprunner.ServiceSourceConfigurationAuthenticationConfigurationArgs(
+            access_role_arn=data_in_pipeline_load_api_role.arn,
+        ),
+        image_repository=aws.apprunner.ServiceSourceConfigurationImageRepositoryArgs(
+            image_configuration=aws.apprunner.ServiceSourceConfigurationImageRepositoryImageConfigurationArgs(
+                runtime_environment_secrets={
+                    "LOAD_DATABASE_URL": data_in_pipeline_load_api_load_database_url_read_only.arn,
+                    "CDN_URL": data_in_pipeline_load_api_cdn_url.arn,
+                    "MANAGED_DB_PASSWORD": data_in_pipeline_load_api_cluster_password_secret.secret_arn,
+                },
+                runtime_environment_variables={
+                    "DB_MASTER_USERNAME": config.require("aurora_master_username"),
+                    "DB_PORT": "5432",
+                    "DB_NAME": config.require("db_name"),
+                    "AWS_REGION": "eu-west-1",
+                },
+            ),
+            image_identifier=data_in_api_aws_ecr_repository.aws_ecr_repository.repository_url.apply(
+                lambda repository_url: f"{repository_url}:latest"
+            ),
+            image_repository_type="ECR",
+        ),
+    ),
+    opts=pulumi.ResourceOptions(protect=False),
+)

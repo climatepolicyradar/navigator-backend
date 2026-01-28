@@ -1,5 +1,5 @@
-name: data-in-load-api
-description: Data in load-api
+name: data-in-api
+description: Data in API
 runtime:
   name: python
   options:

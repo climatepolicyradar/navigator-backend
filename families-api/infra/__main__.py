@@ -133,10 +133,18 @@ families_api_ecr_repository = aws.ecr.Repository(
     opts=pulumi.ResourceOptions(protect=True),
 )
 
+families_api_apprunner_autoscaling_configuration = aws.apprunner.AutoScalingConfigurationVersion(
+    # len(name) < 32
+    "families-api-autoscaling-config",
+    auto_scaling_configuration_name="families-api-autoscaling-config",
+    max_concurrency=10,
+    max_size=10,
+    min_size=2 if stack == "production" else 1,
+)
 
 families_api_apprunner_service = aws.apprunner.Service(
     "families-api-apprunner-service",
-    auto_scaling_configuration_arn=f"arn:aws:apprunner:eu-west-1:{account_id}:autoscalingconfiguration/DefaultConfiguration/1/00000000000000000000000000000001",
+    auto_scaling_configuration_arn=families_api_apprunner_autoscaling_configuration.arn,
     health_check_configuration=aws.apprunner.ServiceHealthCheckConfigurationArgs(
         interval=10,
         protocol="TCP",

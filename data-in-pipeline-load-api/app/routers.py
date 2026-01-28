@@ -1,9 +1,10 @@
 import logging
 
+from data_in_models.models import Document as DocumentSchema
 from fastapi import APIRouter, Depends, HTTPException, status
 
 from app.alembic.run_migrations import run_migrations
-from app.models import Document
+from app.repository import check_db_health, create_documents
 from app.session import get_db, get_engine
 from app.settings import settings
 
@@ -16,26 +17,41 @@ _LOGGER = logging.getLogger(__name__)
 @router.get("/health")
 def health_check(db=Depends(get_db)):
     """Health check endpoint using session module's health check."""
-    # FIXME: https://github.com/climatepolicyradar/navigator-backend/issues/963
-    # try:
-    #     is_healthy = check_db_health(db)
+    try:
+        is_healthy = check_db_health(db)
 
-    # except Exception as e:
-    #     raise HTTPException(
-    #         status_code=status.HTTP_500_INTERNAL_SERVER_ERROR, detail=str(e)
-    #     )
+    except Exception as e:
+        raise HTTPException(
+            status_code=status.HTTP_500_INTERNAL_SERVER_ERROR, detail=str(e)
+        )
 
-    # if not is_healthy:
-    #     raise HTTPException(
-    #         status_code=status.HTTP_503_SERVICE_UNAVAILABLE,
-    #         detail="Database connection unhealthy",
-    #     )
+    if not is_healthy:
+        raise HTTPException(
+            status_code=status.HTTP_503_SERVICE_UNAVAILABLE,
+            detail="Database connection unhealthy",
+        )
     return {"status": "ok", "version": settings.github_sha}
 
 
-@router.post("", response_model=list[str], status_code=status.HTTP_201_CREATED)
-def create_document(documents: list[Document]):
-    return [doc.id for doc in documents]
+@router.post(
+    "/documents", response_model=list[str], status_code=status.HTTP_201_CREATED
+)
+def create_document(documents: list[DocumentSchema], db=Depends(get_db)):
+    if not documents:
+        raise HTTPException(
+            status_code=status.HTTP_400_BAD_REQUEST,
+            detail="No documents provided in request body",
+        )
+
+    try:
+        return create_documents(db, documents)
+
+    except Exception as e:
+        _LOGGER.exception(f"Failed to create documents: {e}")
+        raise HTTPException(
+            status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
+            detail="Failed to create documents",
+        )
 
 
 @router.post("/run-migrations")
