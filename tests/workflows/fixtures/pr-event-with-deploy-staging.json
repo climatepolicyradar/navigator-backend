@@ -1,0 +1,26 @@
+{
+  "action": "labeled",
+  "number": 123,
+  "pull_request": {
+    "number": 123,
+    "head": {
+      "ref": "feature/test-branch",
+      "sha": "abc123"
+    },
+    "base": {
+      "ref": "main",
+      "sha": "def456"
+    },
+    "labels": [
+      {
+        "name": "deploy:staging"
+      }
+    ]
+  },
+  "label": {
+    "name": "deploy:staging"
+  },
+  "repository": {
+    "full_name": "climatepolicyradar/navigator-backend"
+  }
+}
