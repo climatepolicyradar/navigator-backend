@@ -91,7 +91,7 @@ def extract(ids: list[str] | None = None) -> FamilyFetchResult:
 def load_to_s3(documents: list[Document], run_id: str | None = None):
     """Upload transformed to S3 cache."""
     upload_to_s3(
-        json.dumps([doc.model_dump() for doc in documents]),
+        json.dumps([doc.model_dump(mode="json") for doc in documents]),
         bucket="cpr-cache",
         key=f"pipelines/data-in-pipeline/navigator_family/{run_id}-transformed-result.json",
     )
