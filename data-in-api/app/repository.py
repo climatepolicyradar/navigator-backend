@@ -53,9 +53,13 @@ def get_all_documents(
         _LOGGER.debug(f"Retrieved {len(db_documents)} documents from the database.")
         return [_map_db_document_to_schema(db, db_doc) for db_doc in db_documents]
 
+    except (OperationalError, DisconnectionError):
+        db.rollback()
+        _LOGGER.exception("System error during document retrieval operation")
+        raise
     except Exception as e:
         _LOGGER.exception(f"Failed to retrieve all documents: {str(e)}")
-        raise
+        raise e
 
 
 def get_document_by_id(db: Session, document_id: str) -> DocumentOutput | None:
@@ -72,12 +76,17 @@ def get_document_by_id(db: Session, document_id: str) -> DocumentOutput | None:
 
         if not db_doc:
             return None
-
+        _LOGGER.debug(f"Retrieved document {document_id} from the database.")
         return _map_db_document_to_schema(db, db_doc)
 
+    except (OperationalError, DisconnectionError):
+        db.rollback()
+        _LOGGER.exception("System error during document retrieval operation")
+        raise
     except Exception as e:
         _LOGGER.exception(f"Failed to retrieve document {document_id}: {str(e)}")
-        raise
+        db.rollback()
+        raise e
 
 
 def _map_db_document_to_schema(db: Session, db_doc: DBDocument) -> DocumentOutput:
