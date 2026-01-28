@@ -695,7 +695,7 @@ data_in_api_apprunner_service = aws.apprunner.Service(
         protocol="HTTP",
         path="/health",
         timeout=5, # seconds
-        unhealthy_threshold=2,
+        unhealthy_threshold=2, # seconds
     ),
     instance_configuration=aws.apprunner.ServiceInstanceConfigurationArgs(
         instance_role_arn=data_in_pipeline_load_api_instance_role.arn,
