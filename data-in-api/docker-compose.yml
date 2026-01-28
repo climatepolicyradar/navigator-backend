@@ -1,0 +1,89 @@
+services:
+  db:
+    profiles: [dev]
+    image: postgres:17
+    container_name: data-in-api-db
+    environment:
+      POSTGRES_USER: data-in-api
+      POSTGRES_PASSWORD: data-in-api
+      POSTGRES_DB: data-in-api
+    ports:
+      - 5432:5432
+    volumes:
+      - data-in-api-postgres-data:/var/lib/postgresql/data
+    healthcheck:
+      test: [CMD-SHELL, pg_isready -U data-in-api -d data-in-api]
+      interval: 5s
+      timeout: 5s
+      retries: 10
+  app:
+    profiles: [dev]
+    container_name: data-in-api-app
+    build:
+      context: ..
+      dockerfile: data-in-api/Dockerfile
+    ports:
+      - 8080:8080
+    volumes:
+      - ..:/app
+    working_dir: /app
+    environment:
+      db_master_username: data-in-api
+      managed_db_password: '{"password": "data-in-api", "username": "data-in-api"}'
+      load_database_url: db
+      db_port: 5432
+      db_name: data-in-api
+    command:
+      [
+        uv,
+        run,
+        --project,
+        data-in-api,
+        fastapi,
+        dev,
+        data-in-api/app/main.py,
+        --port,
+        "8080",
+        --host,
+        0.0.0.0,
+      ]
+    depends_on:
+      - db
+  test-db:
+    profiles: [test]
+    image: postgres:17
+    container_name: data-in-api-test-db
+    environment:
+      POSTGRES_USER: data-in-api
+      POSTGRES_PASSWORD: data-in-api
+      POSTGRES_DB: data-in-api
+    ports:
+      - 5432:5432
+    healthcheck:
+      test: [CMD-SHELL, pg_isready -U data-in-api -d data-in-api]
+      interval: 5s
+      timeout: 5s
+      retries: 10
+  test:
+    profiles: [test]
+    container_name: data-in-api-test
+    build:
+      context: ..
+      dockerfile: data-in-api/Dockerfile
+    ports:
+      - 8080:8080
+    volumes:
+      - ..:/app
+    working_dir: /app
+    environment:
+      db_master_username: data-in-api
+      managed_db_password: '{"password": "data-in-api", "username": "data-in-api"}'
+      load_database_url: test-db
+      db_port: 5432
+      db_name: data-in-api
+    command:
+      [uv, run, --project, data-in-api, pytest, data-in-api, --color=yes, -vv]
+    depends_on:
+      - test-db
+volumes:
+  data-in-api-postgres-data: {}
