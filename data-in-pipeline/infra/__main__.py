@@ -694,7 +694,7 @@ data_in_api_apprunner_service = aws.apprunner.Service(
         interval=2,
         protocol="HTTP",
         path="/health",
-        timeout=5,
+        timeout=5, # seconds
         unhealthy_threshold=2,
     ),
     instance_configuration=aws.apprunner.ServiceInstanceConfigurationArgs(
