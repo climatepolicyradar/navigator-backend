@@ -62,6 +62,3 @@ duckdb-build:
 
 duckdb-dev: 
     uv run fastapi dev ./app/scripts/serve_duckdb.py
-
-build-load-api: 
-    docker build -f infra/Dockerfile.load_api -t load-api --platform linux/amd64 ..
