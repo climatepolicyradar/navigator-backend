@@ -382,7 +382,7 @@ data_in_pipeline_load_api_instance_role = aws.iam.Role(
 data_in_pipeline_load_api_load_database_url = aws.ssm.Parameter(
     "data-in-pipeline-load-api-load-database-url",
     name="/data-in-pipeline-load-api/load-database-url",
-    description="The URL string to connect to the load database",
+    description="The URL string to connect to the load database write-replica",
     type=aws.ssm.ParameterType.SECURE_STRING,
     # This value is managed directly in SSM
     value=aurora_cluster.endpoint,
@@ -394,7 +394,7 @@ data_in_pipeline_load_api_load_database_url = aws.ssm.Parameter(
 data_in_pipeline_load_api_load_database_url_read_only = aws.ssm.Parameter(
     "data-in-pipeline-load-api-load-database-url-read-only",
     name="/data-in-pipeline-load-api/load-database-url-read-only",
-    description="The URL string to connect to the load database in read-only mode",
+    description="The URL string to connect to the load database read-only replica",
     type=aws.ssm.ParameterType.SECURE_STRING,
     value=aurora_cluster.reader_endpoint,
 )
