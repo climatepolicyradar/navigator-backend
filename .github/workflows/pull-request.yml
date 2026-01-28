@@ -86,6 +86,12 @@ jobs:
             data-in-pipeline/infra:
               - 'data-in-pipeline/infra/**'
 
+            data-in-pipeline-load-api/infra:
+              - 'data-in-pipeline-load-api/infra/**'
+
+            data-in-api/infra:
+              - 'data-in-api/infra/**'
+
       - id: parse
         run: |
           CHANGES='${{ steps.filter.outputs.changes }}'
