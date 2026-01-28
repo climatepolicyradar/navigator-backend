@@ -11,4 +11,8 @@ dependencies = [
   "sqlalchemy>=2.0.44",
   "sqlalchemy-utils>=0.42.0",
   "sqlmodel>=0.0.31",
+  "data-in-models",
 ]
+
+[tool.uv.sources]
+data-in-models = { workspace = true }

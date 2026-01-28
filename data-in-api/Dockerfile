@@ -26,6 +26,7 @@ RUN apt-get update && apt-get install -y \
 COPY uv.lock pyproject.toml /app/
 COPY ./$SERVICE /app/$SERVICE/
 COPY ./api /app/api/
+COPY ./data-in-models /app/data-in-models/
 
 WORKDIR /app
 RUN uv sync --project $SERVICE
