@@ -10,6 +10,12 @@ name = pulumi.get_project()
 
 ROOT_DIR = Path(__file__).parent.parent
 
+
+def generate_secret_key(project: str, aws_service: str, name: str):
+    # TODO: https://linear.app/climate-policy-radar/issue/APP-584/standardise-naming-in-infra
+    return f"/{project}/{aws_service}/{name}"
+
+
 #######################################################################
 # Create the ECR repository for the Data In Pipeline.
 #######################################################################
@@ -407,6 +413,92 @@ data_in_pipeline_load_api_cdn_url = aws.ssm.Parameter(
     value=config.require("cdn-url"),
 )
 
+# Aurora access
+## Write replica
+data_in_pipeline_aurora_write_replica_db_url = aws.ssm.Parameter(
+    "data-in-pipeline-aurora-write-replica-db-url",
+    name=generate_secret_key(
+        project="data-in-pipeline",
+        aws_service="aurora",
+        name="write-replica-db-url",
+    ),
+    description="URL for the load database write-replica",
+    type=aws.ssm.ParameterType.STRING,
+    value=aurora_cluster.endpoint,
+)
+data_in_pipeline_aurora_write_replica_db_name = aws.ssm.Parameter(
+    "data-in-pipeline-aurora-write-replica-db-name",
+    name=generate_secret_key(
+        project="data-in-pipeline",
+        aws_service="aurora",
+        name="write-replica-db-name",
+    ),
+    description="Name of the load database write-replica",
+    type=aws.ssm.ParameterType.STRING,
+    value=config.require("db_name"),
+)
+data_in_pipeline_aurora_write_replica_db_username = aws.ssm.Parameter(
+    "data-in-pipeline-aurora-write-replica-db-username",
+    name=generate_secret_key(
+        project="data-in-pipeline",
+        aws_service="aurora",
+        name="write-replica-db-username",
+    ),
+    description="Username for the load database",
+    type=aws.ssm.ParameterType.STRING,
+    value=config.require("aurora_master_username"),
+)
+# Get the ARN of the secret holding the master password
+# When manage_master_user_password=True, master_user_secrets contains exactly one secret
+data_in_pipeline_aurora_write_replica_db_secrets = (
+    aurora_cluster.master_user_secrets.apply(
+        lambda secrets: (secrets[0] if secrets and len(secrets) == 1 else None)
+    )
+)
+
+## Read replica
+data_in_pipeline_aurora_read_replica_db_url = aws.ssm.Parameter(
+    "data-in-pipeline-aurora-read-replica-db-url",
+    name=generate_secret_key(
+        project="data-in-pipeline",
+        aws_service="aurora",
+        name="read-replica-db-url",
+    ),
+    description="URL for the load database read-replica",
+    type=aws.ssm.ParameterType.STRING,
+    value=aurora_cluster.reader_endpoint,
+)
+data_in_pipeline_aurora_read_replica_db_name = aws.ssm.Parameter(
+    "data-in-pipeline-aurora-read-replica-db-name",
+    name=generate_secret_key(
+        project="data-in-pipeline",
+        aws_service="aurora",
+        name="read-replica-db-name",
+    ),
+    description="Name of the load database read-replica",
+    type=aws.ssm.ParameterType.STRING,
+    value=config.require("db_name"),
+)
+data_in_pipeline_aurora_read_replica_db_username = aws.ssm.Parameter(
+    "data-in-pipeline-aurora-read-replica-db-username",
+    name=generate_secret_key(
+        project="data-in-pipeline",
+        aws_service="aurora",
+        name="read-replica-db-username",
+    ),
+    description="Username for the load database",
+    type=aws.ssm.ParameterType.STRING,
+    value=config.require("aurora_master_username"),
+)
+# Get the ARN of the secret holding the master password
+# When manage_master_user_password=True, master_user_secrets contains exactly one secret
+data_in_pipeline_aurora_read_replica_db_secrets = (
+    aurora_cluster.master_user_secrets.apply(
+        lambda secrets: (secrets[0] if secrets and len(secrets) == 1 else None)
+    )
+)
+
+
 # Allow access to SSM Parameter Store and Secrets Manager
 data_in_pipeline_load_api_instance_role_policy = aws.iam.RolePolicy(
     "data-in-pipeline-load-api-instance-role-policy",
@@ -415,6 +507,12 @@ data_in_pipeline_load_api_instance_role_policy = aws.iam.RolePolicy(
         data_in_pipeline_load_api_load_database_url.arn,
         data_in_pipeline_load_api_cdn_url.arn,
         data_in_pipeline_load_api_cluster_password_secret.secret_arn,
+        data_in_pipeline_aurora_write_replica_db_url.arn,
+        data_in_pipeline_aurora_write_replica_db_username.arn,
+        data_in_pipeline_aurora_write_replica_db_secrets.secret_arn,
+        data_in_pipeline_aurora_read_replica_db_url.arn,
+        data_in_pipeline_aurora_read_replica_db_username.arn,
+        data_in_pipeline_aurora_read_replica_db_secrets.secret_arn,
     ).apply(
         lambda args: aws.iam.get_policy_document(
             statements=[
@@ -428,6 +526,7 @@ data_in_pipeline_load_api_instance_role_policy = aws.iam.RolePolicy(
                     resources=[
                         f"arn:aws:ssm:eu-west-1:{account_id}:parameter/data-in-pipeline-load-api/*",
                         f"arn:aws:ssm:eu-west-1:{account_id}:parameter/data_in_pipeline/*",
+                        f"arn:aws:ssm:eu-west-1:{account_id}:parameter/data-in-pipeline/*",
                     ],
                 ),
                 aws.iam.GetPolicyDocumentStatementArgs(
@@ -578,11 +677,16 @@ data_in_pipeline_load_api_apprunner_service = aws.apprunner.Service(
                     "LOAD_DATABASE_URL": data_in_pipeline_load_api_load_database_url.arn,
                     "CDN_URL": data_in_pipeline_load_api_cdn_url.arn,
                     "MANAGED_DB_PASSWORD": data_in_pipeline_load_api_cluster_password_secret.secret_arn,
+                    # TODO: ^ to be removed in a later PR in favour of 👇
+                    "DB_URL": data_in_pipeline_aurora_write_replica_db_url.arn,
+                    "DB_NAME": data_in_pipeline_aurora_write_replica_db_name.arn,
+                    "DB_USERNAME": data_in_pipeline_aurora_write_replica_db_username.arn,
+                    # This is in the format `{"password": "xxx", "username": "xxx"}`
+                    "DB_SECRETS": data_in_pipeline_aurora_write_replica_db_secrets.secret_arn,
                 },
                 runtime_environment_variables={
                     "DB_MASTER_USERNAME": config.require("aurora_master_username"),
                     "DB_PORT": "5432",
-                    "DB_NAME": config.require("db_name"),
                     "AWS_REGION": "eu-west-1",
                 },
             ),
@@ -728,11 +832,16 @@ data_in_api_apprunner_service = aws.apprunner.Service(
                     "LOAD_DATABASE_URL": data_in_pipeline_load_api_load_database_url_read_only.arn,
                     "CDN_URL": data_in_pipeline_load_api_cdn_url.arn,
                     "MANAGED_DB_PASSWORD": data_in_pipeline_load_api_cluster_password_secret.secret_arn,
+                    # TODO: ^ to be removed in a later PR in favour of 👇
+                    "DB_URL": data_in_pipeline_aurora_read_replica_db_url.arn,
+                    "DB_NAME": data_in_pipeline_aurora_read_replica_db_name.arn,
+                    "DB_USERNAME": data_in_pipeline_aurora_read_replica_db_username.arn,
+                    # This is in the format `{"password": "xxx", "username": "xxx"}`
+                    "DB_SECRETS": data_in_pipeline_aurora_read_replica_db_secrets.secret_arn,
                 },
                 runtime_environment_variables={
                     "DB_MASTER_USERNAME": config.require("aurora_master_username"),
                     "DB_PORT": "5432",
-                    "DB_NAME": config.require("db_name"),
                     "AWS_REGION": "eu-west-1",
                 },
             ),
@@ -743,4 +852,19 @@ data_in_api_apprunner_service = aws.apprunner.Service(
         ),
     ),
     opts=pulumi.ResourceOptions(protect=False),
+)
+
+# These exports are the public API for this stack, and consumed by external stacks
+# Edit with caution
+pulumi.export(
+    "aurora-read-replica-db-url-parameter-name",
+    data_in_pipeline_aurora_read_replica_db_url.name,
+)
+pulumi.export(
+    "aurora-read-replica-db-username-parameter-name",
+    data_in_pipeline_aurora_read_replica_db_username.name,
+)
+pulumi.export(
+    "aurora-read-replica-db-secrets-secret-arn",
+    data_in_pipeline_aurora_read_replica_db_secrets.secret_arn,
 )
