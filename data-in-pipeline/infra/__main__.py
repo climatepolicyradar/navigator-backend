@@ -11,8 +11,8 @@ name = pulumi.get_project()
 ROOT_DIR = Path(__file__).parent.parent
 
 
-# TODO: https://linear.app/climate-policy-radar/issue/APP-584/standardise-naming-in-infra
 def generate_secret_key(project: str, aws_service: str, name: str):
+    # TODO: https://linear.app/climate-policy-radar/issue/APP-584/standardise-naming-in-infra
     return f"/{project}/{aws_service}/{name}"
 
 
@@ -677,10 +677,11 @@ data_in_pipeline_load_api_apprunner_service = aws.apprunner.Service(
                     "LOAD_DATABASE_URL": data_in_pipeline_load_api_load_database_url.arn,
                     "CDN_URL": data_in_pipeline_load_api_cdn_url.arn,
                     "MANAGED_DB_PASSWORD": data_in_pipeline_load_api_cluster_password_secret.secret_arn,
-                    # ^ to be removed in a later PR in favour of 👇
+                    # TODO: ^ to be removed in a later PR in favour of 👇
                     "DB_URL": data_in_pipeline_aurora_write_replica_db_url.arn,
                     "DB_NAME": data_in_pipeline_aurora_write_replica_db_name.arn,
                     "DB_USERNAME": data_in_pipeline_aurora_write_replica_db_username.arn,
+                    # This is in the format `{"password": "xxx", "username": "xxx"}`
                     "DB_SECRETS": data_in_pipeline_aurora_write_replica_db_secrets.secret_arn,
                 },
                 runtime_environment_variables={
@@ -831,10 +832,11 @@ data_in_api_apprunner_service = aws.apprunner.Service(
                     "LOAD_DATABASE_URL": data_in_pipeline_load_api_load_database_url_read_only.arn,
                     "CDN_URL": data_in_pipeline_load_api_cdn_url.arn,
                     "MANAGED_DB_PASSWORD": data_in_pipeline_load_api_cluster_password_secret.secret_arn,
-                    # ^ to be removed in a later PR in favour of 👇
+                    # TODO: ^ to be removed in a later PR in favour of 👇
                     "DB_URL": data_in_pipeline_aurora_read_replica_db_url.arn,
                     "DB_NAME": data_in_pipeline_aurora_read_replica_db_name.arn,
                     "DB_USERNAME": data_in_pipeline_aurora_read_replica_db_username.arn,
+                    # This is in the format `{"password": "xxx", "username": "xxx"}`
                     "DB_SECRETS": data_in_pipeline_aurora_read_replica_db_secrets.secret_arn,
                 },
                 runtime_environment_variables={

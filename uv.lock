@@ -428,8 +428,10 @@ name = "data-in-api"
 version = "0.1.0"
 source = { virtual = "data-in-api" }
 dependencies = [
+    { name = "api" },
     { name = "data-in-models" },
     { name = "fastapi", extra = ["standard"] },
+    { name = "psycopg2-binary" },
     { name = "pydantic" },
     { name = "pydantic-settings" },
     { name = "sqlalchemy" },
@@ -449,8 +451,10 @@ dev = [
 
 [package.metadata]
 requires-dist = [
+    { name = "api", editable = "api" },
     { name = "data-in-models", editable = "data-in-models" },
     { name = "fastapi", extras = ["standard"], specifier = ">=0.115.14" },
+    { name = "psycopg2-binary", specifier = ">=2.9.11" },
     { name = "pydantic", specifier = ">=2.12.1" },
     { name = "pydantic-settings", specifier = ">=2.9.1,<3.0.0" },
     { name = "sqlalchemy", specifier = ">=2.0.44" },

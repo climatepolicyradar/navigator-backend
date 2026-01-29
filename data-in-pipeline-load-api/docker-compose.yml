@@ -36,6 +36,7 @@ services:
       managed_db_password: '{"password": "data-in-pipeline-load-api", "username": "data-in-pipeline-load-api"}'
       load_database_url: db
       db_port: 5432
+      db_name: data-in-pipeline-load-api
       DB_URL: db
       DB_NAME: data-in-pipeline-load-api
       DB_USERNAME: data-in-pipeline-load-api
@@ -91,6 +92,7 @@ services:
       managed_db_password: '{"password": "data-in-pipeline-load-api", "username": "data-in-pipeline-load-api"}'
       load_database_url: test-db
       db_port: 5432
+      db_name: data-in-pipeline-load-api
       DB_URL: test-db
       DB_NAME: data-in-pipeline-load-api
       DB_USERNAME: data-in-pipeline-load-api

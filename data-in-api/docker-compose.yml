@@ -32,6 +32,7 @@ services:
       managed_db_password: '{"password": "data-in-api", "username": "data-in-api"}'
       load_database_url: db
       db_port: 5432
+      db_name: data-in-api
       DB_URL: db
       DB_NAME: data-in-api
       DB_USERNAME: data-in-api
@@ -83,6 +84,7 @@ services:
       managed_db_password: '{"password": "data-in-api", "username": "data-in-api"}'
       load_database_url: test-db
       db_port: 5432
+      db_name: data-in-api
       DB_URL: test-db
       DB_NAME: data-in-api
       DB_USERNAME: data-in-api
