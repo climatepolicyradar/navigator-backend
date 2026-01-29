@@ -36,7 +36,6 @@ mcf_reports_corpus_import_ids = [
 def transform_navigator_family(
     input: Identified[NavigatorFamily],
 ) -> Result[list[Document], NoMatchingTransformations]:
-
     logger = get_logger()
     with log_context(import_id=input.id):
         logger.info(f"Transforming family with {len(input.data.documents)} documents")
@@ -458,7 +457,7 @@ def _transform_navigator_family(navigator_family: NavigatorFamily) -> Document:
         id=navigator_family.import_id,
         title=navigator_family.title,
         description=navigator_family.summary,
-        labels=labels,
+        labels=_deduplicate_labels(labels),
     )
 
 
@@ -554,7 +553,7 @@ def _transform_navigator_document(
     return Document(
         id=navigator_document.import_id,
         title=navigator_document.title,
-        labels=labels,
+        labels=_deduplicate_labels(labels),
         items=items,
     )
 
@@ -567,3 +566,23 @@ def _transform_navigator_collection(
         title=navigator_collection.title,
         labels=[],
     )
+
+
+def _deduplicate_labels(
+    labels: list[DocumentLabelRelationship],
+) -> list[DocumentLabelRelationship]:
+    """
+    Deduplicate labels by (label.id, type) pair, keeping first occurrence.
+
+    This prevents database constraint violations on the composite primary key
+    (document_id, label_id) in the DocumentLabelLink table.
+    """
+    dedup_keys = set()
+    unique_labels = []
+    for label_rel in labels:
+        key = (label_rel.label.id, label_rel.type)
+        if key in dedup_keys:
+            continue
+        unique_labels.append(label_rel)
+        dedup_keys.add(key)
+    return unique_labels
