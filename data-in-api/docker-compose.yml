@@ -33,6 +33,10 @@ services:
       load_database_url: db
       db_port: 5432
       db_name: data-in-api
+      DB_URL: db
+      DB_NAME: data-in-api
+      DB_USERNAME: data-in-api
+      DB_SECRETS: '{"password": "data-in-api", "username": "data-in-api"}'
     command:
       [
         uv,
@@ -81,6 +85,10 @@ services:
       load_database_url: test-db
       db_port: 5432
       db_name: data-in-api
+      DB_URL: test-db
+      DB_NAME: data-in-api
+      DB_USERNAME: data-in-api
+      DB_SECRETS: '{"password": "data-in-api", "username": "data-in-api"}'
     command:
       [uv, run, --project, data-in-api, pytest, data-in-api, --color=yes, -vv]
     depends_on:

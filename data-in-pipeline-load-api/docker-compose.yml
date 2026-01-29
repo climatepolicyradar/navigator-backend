@@ -37,6 +37,10 @@ services:
       load_database_url: db
       db_port: 5432
       db_name: data-in-pipeline-load-api
+      DB_URL: db
+      DB_NAME: data-in-pipeline-load-api
+      DB_USERNAME: data-in-pipeline-load-api
+      DB_SECRETS: '{"password": "data-in-pipeline-load-api", "username": "data-in-pipeline-load-api"}'
     command:
       [
         uv,
@@ -89,6 +93,10 @@ services:
       load_database_url: test-db
       db_port: 5432
       db_name: data-in-pipeline-load-api
+      DB_URL: test-db
+      DB_NAME: data-in-pipeline-load-api
+      DB_USERNAME: data-in-pipeline-load-api
+      DB_SECRETS: '{"password": "data-in-pipeline-load-api", "username": "data-in-pipeline-load-api"}'
     command:
       [
         uv,
