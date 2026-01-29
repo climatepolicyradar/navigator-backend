@@ -11,11 +11,14 @@ dependencies = [
   "sqlalchemy>=2.0.44",
   "sqlalchemy-utils>=0.42.0",
   "sqlmodel>=0.0.31",
+  "psycopg2-binary>=2.9.11",
   "data-in-models",
+  "api",
 ]
 
 [tool.uv.sources]
 data-in-models = { workspace = true }
+api = { workspace = true }
 
 [dependency-groups]
 dev = [
