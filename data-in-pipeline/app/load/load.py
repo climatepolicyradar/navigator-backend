@@ -31,6 +31,7 @@ def load_to_db(documents: list[Document]) -> list[str] | Exception:
         response.raise_for_status()
     except Exception as e:
         _LOGGER.exception("Error loading documents to DB: %s", e)
+        _LOGGER.error("Error loading documents to DB: %s", e)
         return e
 
     _LOGGER.info("Loaded %d documents to the load DB.", len(documents))
