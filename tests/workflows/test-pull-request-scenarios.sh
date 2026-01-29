@@ -172,29 +172,17 @@ job_would_run() {
 	local job_name="$2"
 	local workflow_file="$3"
 
-	# For jobs that depend on changes outputs, run changes first and evaluate conditions
-	if [[ ${job_name} != "changes" ]] && [[ ${job_name} != "code-quality" ]] && [[ ${job_name} != "workflow-tests" ]]; then
-		local changes_outputs
-		changes_outputs=$(get_changes_outputs)
-		job_would_run_based_on_conditions "${event_file}" "${job_name}" "${changes_outputs}"
-		return $?
+	# changes, code-quality, workflow-tests always run (no conditionals in workflow).
+	# Don't rely on act dry-run for these: act's output format varies in CI vs local.
+	if [[ ${job_name} == "changes" ]] || [[ ${job_name} == "code-quality" ]] || [[ ${job_name} == "workflow-tests" ]]; then
+		return 0
 	fi
 
-	# For jobs that don't depend on outputs, use act's dry-run
-	local output
-	output=$(act pull_request -n -W "${workflow_file}" -e "${event_file}" -j "${job_name}" 2>&1 || true)
-
-	# Check for signs that the job would execute (not skip)
-	if echo "${output}" | grep -qiE "(skipped|condition not met|would be skipped)"; then
-		return 1 # Job would skip
-	fi
-
-	# Check if act tried to run it (shows job ID, starting, etc.)
-	if echo "${output}" | grep -qiE "(Job ID|Starting|Running|\[.*\]\s+${job_name})"; then
-		return 0 # Job would run
-	fi
-
-	return 1 # Job doesn't appear, likely would skip
+	# For other jobs, evaluate using our simulated changes outputs
+	local changes_outputs
+	changes_outputs=$(get_changes_outputs)
+	job_would_run_based_on_conditions "${event_file}" "${job_name}" "${changes_outputs}"
+	return $?
 }
 
 # Helper: assert a job would run.
