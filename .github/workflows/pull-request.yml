@@ -179,7 +179,7 @@ jobs:
   deploy-infra:
     needs: [changes, pulumi-preview]
     # Deploy infra to staging when PR has 'deploy:staging' and there are infra changes.
-    if: contains(github.event.pull_request.labels.*.name, 'deploy:staging') && needs.changes.outputs.infra_services != '[]' && (needs.pulumi-preview.result == 'success' || needs.pulumi-preview.result == 'skipped')
+    if: contains(github.event.pull_request.labels.*.name, 'deploy:staging') && needs.changes.outputs.infra_services != '[]' && needs.pulumi-preview.result == 'success'
     runs-on: ubuntu-latest
     strategy:
       matrix:
