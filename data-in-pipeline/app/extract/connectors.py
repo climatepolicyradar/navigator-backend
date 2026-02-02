@@ -162,7 +162,7 @@ class NavigatorConnector(HTTPConnector):
                     raw_payload=document.model_dump_json(),
                     content_type="application/json",
                     connector_version="1.0.0",
-                    extracted_at=datetime.datetime.now(datetime.timezone.utc),
+                    extracted_at=datetime.datetime.now(datetime.UTC),
                     metadata=ExtractedMetadata(
                         endpoint=f"{self.config.base_url}/families/documents/{import_id}",
                         http_status=HTTPStatus.OK,
@@ -172,11 +172,11 @@ class NavigatorConnector(HTTPConnector):
                 )
             )
         except requests.RequestException as e:
-            logger.error(f"Request failed fetching document {import_id}")
+            logger.exception(f"Request failed fetching document {import_id}")
             pipeline_metrics.record_error(Operation.EXTRACT, ErrorType.NETWORK)
             return Failure(e)
         except Exception as e:
-            logger.error(f"Unexpected error fetching document {import_id}")
+            logger.exception(f"Unexpected error fetching document {import_id}")
             pipeline_metrics.record_error(Operation.EXTRACT, ErrorType.UNKNOWN)
             return Failure(e)
 
@@ -203,7 +203,7 @@ class NavigatorConnector(HTTPConnector):
                     raw_payload=family.model_dump_json(),
                     content_type="application/json",
                     connector_version="1.0.0",
-                    extracted_at=datetime.datetime.now(datetime.timezone.utc),
+                    extracted_at=datetime.datetime.now(datetime.UTC),
                     metadata=ExtractedMetadata(
                         endpoint=f"{self.config.base_url}/families/documents/{import_id}",
                         http_status=HTTPStatus.OK,
@@ -213,11 +213,11 @@ class NavigatorConnector(HTTPConnector):
                 )
             )
         except requests.RequestException as e:
-            logger.error(f"Request failed fetching family {import_id}")
+            logger.exception(f"Request failed fetching family {import_id}")
             pipeline_metrics.record_error(Operation.EXTRACT, ErrorType.NETWORK)
             return Failure(e)
         except Exception as e:
-            logger.error(f"Unexpected error fetching family {import_id}")
+            logger.exception(f"Unexpected error fetching family {import_id}")
             pipeline_metrics.record_error(Operation.EXTRACT, ErrorType.UNKNOWN)
             return Failure(e)
 
@@ -310,7 +310,7 @@ class NavigatorConnector(HTTPConnector):
             with log_context(page_number=page):
                 try:
                     logger.info(f"Fetching families page {page}")
-                    response_json = self.get(f"families/?page={page}")
+                    response_json = self.get(f"families/?page={page}&page_size=100")
                     families_data = response_json.get("data", [])
 
                     # Break the loop if no more families are returned from the endpoint
@@ -333,7 +333,7 @@ class NavigatorConnector(HTTPConnector):
                         raw_payload=families_data,
                         content_type="application/json",
                         connector_version="1.0.0",
-                        extracted_at=datetime.datetime.now(datetime.timezone.utc),
+                        extracted_at=datetime.datetime.now(datetime.UTC),
                         task_run_id=task_run_id,
                         flow_run_id=flow_run_id,
                         metadata=ExtractedMetadata(
@@ -346,7 +346,7 @@ class NavigatorConnector(HTTPConnector):
                     page += 1
 
                 except requests.RequestException as e:
-                    logger.error(
+                    logger.exception(
                         f"Request failed while fetching all families at page {page}"
                     )
                     pipeline_metrics.record_error(
@@ -360,7 +360,7 @@ class NavigatorConnector(HTTPConnector):
                     )
 
                 except Exception as e:
-                    logger.error(
+                    logger.exception(
                         f"Unexpected error {e} while fetching page {page} of families"
                     )
                     pipeline_metrics.record_error(
