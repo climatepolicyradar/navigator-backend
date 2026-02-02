@@ -83,6 +83,7 @@ access_role_policy = aws.iam.RolePolicy(
 
 instance_role = aws.iam.Role(
     "data-in-api-instance-role",
+    name="data-in-api-instance-role",
     assume_role_policy=aws.iam.get_policy_document(
         statements=[
             aws.iam.GetPolicyDocumentStatementArgs(
@@ -121,6 +122,7 @@ aurora_read_replica_db_security_group_id = data_in_pipeline_stack.get_output(
 
 instance_role_policy = aws.iam.RolePolicy(
     "data-in-api-instance-role-policy",
+    name="data-in-api-instance-role-policy",
     role=instance_role.id,
     policy=pulumi.Output.all(
         aurora_read_replica_db_url_parameter=aurora_read_replica_db_url_parameter.arn,
@@ -168,6 +170,7 @@ private_subnets = [
 ]
 vpc_sg = aws.ec2.SecurityGroup(
     "data-in-api-vpc-sg",
+    name="data-in-api-vpc-sg",
     vpc_id=vpc_id,
     egress=[
         aws.ec2.SecurityGroupEgressArgs(
