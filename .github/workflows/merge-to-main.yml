@@ -78,7 +78,7 @@ jobs:
 
   test:
     needs: changes
-    if: needs.changes.outputs.services != '[]'
+    if: needs.changes.result == 'success' && needs.changes.outputs.services != '[]'
     runs-on: ubuntu-latest
     strategy:
       matrix:
@@ -92,9 +92,8 @@ jobs:
       - run: just test ${{ matrix.service }}
 
   deploy-infra:
-    needs: [changes]
-    # Deploy infra changes to staging and production before app deploys.
-    if: needs.changes.outputs.infra_services != '[]'
+    needs: changes
+    if: needs.changes.result == 'success' && needs.changes.outputs.infra_services != '[]'
     runs-on: ubuntu-latest
     strategy:
       matrix:
@@ -126,8 +125,8 @@ jobs:
           PULUMI_ACCESS_TOKEN: ${{ secrets.PULUMI_ACCESS_TOKEN }}
 
   deploy:
-    needs: [changes, test, deploy-infra]
-    if: (needs.test.result == 'success' || needs.test.result == 'skipped') && (needs.deploy-infra.result == 'success' || needs.deploy-infra.result == 'skipped') && needs.changes.outputs.services != '[]'
+    needs: [changes, test]
+    if: (needs.test.result == 'success' || needs.test.result == 'skipped') && needs.changes.result == 'success' && needs.changes.outputs.services != '[]'
     runs-on: ubuntu-latest
     strategy:
       matrix:
