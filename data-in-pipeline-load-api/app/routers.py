@@ -4,7 +4,7 @@ from data_in_models.models import Document as DocumentSchema
 from fastapi import APIRouter, Depends, HTTPException, status
 
 from app.alembic.run_migrations import run_migrations
-from app.repository import check_db_health, create_documents
+from app.repository import check_db_health, create_documents, create_or_update_documents
 from app.session import get_db, get_engine
 from app.settings import settings
 
@@ -51,6 +51,25 @@ def create_document(documents: list[DocumentSchema], db=Depends(get_db)):
         raise HTTPException(
             status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
             detail="Failed to create documents",
+        )
+
+
+@router.put("/documents", response_model=list[str], status_code=status.HTTP_200_OK)
+def update_documents(documents: list[DocumentSchema], db=Depends(get_db)):
+    if not documents:
+        raise HTTPException(
+            status_code=status.HTTP_400_BAD_REQUEST,
+            detail="No documents provided in request body",
+        )
+
+    try:
+        return create_or_update_documents(db, documents)
+
+    except Exception as e:
+        _LOGGER.exception(f"Failed to update documents: {e}")
+        raise HTTPException(
+            status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
+            detail="Failed to update documents",
         )
 
 
