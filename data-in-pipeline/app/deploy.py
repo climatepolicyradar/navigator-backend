@@ -13,9 +13,12 @@ from pydantic import BaseModel, model_validator
 from app.bootstrap_telemetry import get_logger
 from app.navigator_family_etl_pipeline import data_in_pipeline
 
+# Fargate requires proportional CPU/Memory ratios
+# 16384 MB (16GB) memory requires minimum 4096 CPU (4 vCPU)
+# See: https://docs.aws.amazon.com/AmazonECS/latest/developerguide/task_definition_parameters.html
 MEGABYTES_PER_GIGABYTE = 1024
 DEFAULT_FLOW_VARIABLES = {
-    "cpu": MEGABYTES_PER_GIGABYTE * 1,
+    "cpu": MEGABYTES_PER_GIGABYTE * 4,
     "memory": MEGABYTES_PER_GIGABYTE * 16,
 }
 
