@@ -73,6 +73,12 @@ jobs:
               - 'api/**'
               - 'uv.lock'
               - pyproject.toml
+              
+            data-in-api:
+              - 'data-in-api/**'
+              - 'api/**'
+              - 'uv.lock'
+              - pyproject.toml
 
             families-api/infra:
               - 'families-api/infra/**'
@@ -98,8 +104,22 @@ jobs:
           echo "services=$(echo "$CHANGES" | jq -c '[.[] | select(contains("/infra") | not)]')" >> $GITHUB_OUTPUT
           echo "infra_services=$(echo "$CHANGES" | jq -c '[.[] | select(contains("/infra"))]')" >> $GITHUB_OUTPUT
 
-  test:
+  no-mixed-infra-and-code:
     needs: changes
+    runs-on: ubuntu-latest
+    if: always() && needs.changes.result == 'success'
+    steps:
+      - name: Fail if PR touches both app code and infra
+        run: |
+          SERVICES='${{ needs.changes.outputs.services }}'
+          INFRA='${{ needs.changes.outputs.infra_services }}'
+          if [ "$SERVICES" != '[]' ] && [ "$INFRA" != '[]' ]; then
+            echo "This PR changes both application code and infrastructure. Split into separate PRs: infra changes and code changes cannot be deployed in the same merge."
+            exit 1
+          fi
+
+  test:
+    needs: [changes]
     if: needs.changes.outputs.services != '[]'
     runs-on: ubuntu-latest
     strategy:
@@ -118,8 +138,8 @@ jobs:
   #
   # This acts as an accumulator of the `test` job results above.
   tests:
-    needs: test
     if: always()
+    needs: [test]
     runs-on: ubuntu-latest
     steps:
       # possible values
@@ -130,8 +150,8 @@ jobs:
           fi
 
   pulumi-preview:
-    needs: changes
-    if: needs.changes.outputs.infra_services != '[]'
+    needs: [changes, no-mixed-infra-and-code]
+    if: needs.no-mixed-infra-and-code.result == 'success' && needs.changes.outputs.infra_services != '[]'
     runs-on: ubuntu-latest
     strategy:
       matrix:
@@ -161,7 +181,7 @@ jobs:
         env:
           PULUMI_ACCESS_TOKEN: ${{ secrets.PULUMI_ACCESS_TOKEN }}
 
-  deploy-infra:
+  pulumi-up:
     needs: [changes, pulumi-preview]
     # Deploy infra to staging when PR has 'deploy:staging' and there are infra changes.
     if: contains(github.event.pull_request.labels.*.name, 'deploy:staging') && needs.changes.outputs.infra_services != '[]' && needs.pulumi-preview.result == 'success'
@@ -195,9 +215,9 @@ jobs:
           PULUMI_ACCESS_TOKEN: ${{ secrets.PULUMI_ACCESS_TOKEN }}
 
   deploy:
-    needs: [changes, test, deploy-infra]
+    needs: [changes, test, no-mixed-infra-and-code]
     # a. Deploy app to staging when PR has 'deploy:staging' and there are app changes.
-    if: always() && contains(github.event.pull_request.labels.*.name, 'deploy:staging') && (needs.test.result == 'success' || needs.test.result == 'skipped') && (needs.deploy-infra.result == 'success' || needs.deploy-infra.result == 'skipped') && needs.changes.outputs.services != '[]'
+    if: needs.no-mixed-infra-and-code.result == 'success' && contains(github.event.pull_request.labels.*.name, 'deploy:staging') && (needs.test.result == 'success' || needs.test.result == 'skipped') && needs.changes.outputs.services != '[]'
     runs-on: ubuntu-latest
     strategy:
       matrix:
