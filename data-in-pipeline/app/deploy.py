@@ -275,7 +275,10 @@ def create_deployment(flow: Flow) -> None:
     )
 
     job_variables = _merge_job_environments(
-        {**DEFAULT_FLOW_VARIABLES, **default_job_variables},
+        {
+            **default_job_variables,
+            **DEFAULT_FLOW_VARIABLES,
+        },
         runtime_environment,
         secrets_arns,
         ssm_secrets,
