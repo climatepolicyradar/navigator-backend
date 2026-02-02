@@ -91,7 +91,7 @@ jobs:
       - run: uv sync --project ${{ matrix.service }}
       - run: just test ${{ matrix.service }}
 
-  deploy-infra:
+  pulumi-up:
     needs: changes
     if: needs.changes.result == 'success' && needs.changes.outputs.infra_services != '[]'
     runs-on: ubuntu-latest
