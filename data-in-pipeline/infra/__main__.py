@@ -773,92 +773,15 @@ prefect_ssm_secrets_output = pulumi.Output.from_input(
 )
 pulumi.export("prefect_ssm_secrets", prefect_ssm_secrets_output)
 
-
-#######################################################################
-# DATA IN API SERVICE (TODO)
-#######################################################################
-
-
-#######################################################################
-# Create the ECR repository for the Data In API.
-#######################################################################
-data_in_api_aws_ecr_repository = components_aws.ecr.Repository(
-    name="data-in-api-ecr-repository",
-    aws_ecr_repository_args=aws.ecr.RepositoryArgs(
-        encryption_configurations=[
-            aws.ecr.RepositoryEncryptionConfigurationArgs(
-                encryption_type="AES256",
-            )
-        ],
-        image_scanning_configuration=aws.ecr.RepositoryImageScanningConfigurationArgs(
-            scan_on_push=False,
-        ),
-        image_tag_mutability="MUTABLE",
-        name="data-in-api",
-    ),
-)
-
-
-data_in_api_apprunner_service = aws.apprunner.Service(
-    "data-in-api-apprunner-service",
-    auto_scaling_configuration_arn=config.require("auto_scaling_configuration_arn"),
-    health_check_configuration=aws.apprunner.ServiceHealthCheckConfigurationArgs(
-        interval=2,  # seconds
-        protocol="HTTP",
-        path="/health",
-        timeout=5,  # seconds
-        unhealthy_threshold=2,  # seconds
-    ),
-    instance_configuration=aws.apprunner.ServiceInstanceConfigurationArgs(
-        instance_role_arn=data_in_pipeline_load_api_instance_role.arn,
-    ),
-    network_configuration=aws.apprunner.ServiceNetworkConfigurationArgs(
-        ip_address_type="IPV4",
-        ingress_configuration=aws.apprunner.ServiceNetworkConfigurationIngressConfigurationArgs(
-            is_publicly_accessible=True,
-        ),
-    ),
-    observability_configuration=aws.apprunner.ServiceObservabilityConfigurationArgs(
-        observability_enabled=False,
-    ),
-    service_name="data-in-api",
-    source_configuration=aws.apprunner.ServiceSourceConfigurationArgs(
-        authentication_configuration=aws.apprunner.ServiceSourceConfigurationAuthenticationConfigurationArgs(
-            access_role_arn=data_in_pipeline_load_api_role.arn,
-        ),
-        image_repository=aws.apprunner.ServiceSourceConfigurationImageRepositoryArgs(
-            image_configuration=aws.apprunner.ServiceSourceConfigurationImageRepositoryImageConfigurationArgs(
-                runtime_environment_secrets={
-                    "LOAD_DATABASE_URL": data_in_pipeline_load_api_load_database_url_read_only.arn,
-                    "CDN_URL": data_in_pipeline_load_api_cdn_url.arn,
-                    "MANAGED_DB_PASSWORD": data_in_pipeline_load_api_cluster_password_secret.secret_arn,
-                    # TODO: ^ to be removed in a later PR in favour of 👇
-                    "DB_URL": data_in_pipeline_aurora_read_replica_db_url.arn,
-                    "DB_NAME": data_in_pipeline_aurora_read_replica_db_name.arn,
-                    "DB_USERNAME": data_in_pipeline_aurora_read_replica_db_username.arn,
-                    # This is in the format `{"password": "xxx", "username": "xxx"}`
-                    "DB_SECRETS": data_in_pipeline_aurora_read_replica_db_secrets.secret_arn,
-                },
-                runtime_environment_variables={
-                    "DB_MASTER_USERNAME": config.require("aurora_master_username"),
-                    "DB_PORT": "5432",
-                    "AWS_REGION": "eu-west-1",
-                },
-            ),
-            image_identifier=data_in_api_aws_ecr_repository.aws_ecr_repository.repository_url.apply(
-                lambda repository_url: f"{repository_url}:latest"
-            ),
-            image_repository_type="ECR",
-        ),
-    ),
-    opts=pulumi.ResourceOptions(protect=False),
-)
-
 # These exports are the public API for this stack, and consumed by external stacks
 # Edit with caution
 pulumi.export(
     "aurora-read-replica-db-url-parameter-name",
     data_in_pipeline_aurora_read_replica_db_url.name,
+)
+pulumi.export(
+    "aurora-read-replica-db-name-parameter-name",
+    data_in_pipeline_aurora_read_replica_db_name.name,
 )
 pulumi.export(
     "aurora-read-replica-db-username-parameter-name",
@@ -867,4 +790,8 @@ pulumi.export(
 pulumi.export(
     "aurora-read-replica-db-secrets-secret-arn",
     data_in_pipeline_aurora_read_replica_db_secrets.secret_arn,
+)
+pulumi.export(
+    "aurora-read-replica-security-group-id",
+    aurora_security_group.id,
 )
