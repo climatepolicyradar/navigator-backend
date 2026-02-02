@@ -19,7 +19,7 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - name: Export Workflow Trace (staging)
-        uses: corentinmusard/otel-cicd-action@v2
+        uses: corentinmusard/otel-cicd-action@v3
         with:
           otlpEndpoint: https://otel.staging.climatepolicyradar.org/v1/traces
           githubToken: ${{ secrets.GITHUB_TOKEN }}
