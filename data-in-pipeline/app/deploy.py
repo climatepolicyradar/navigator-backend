@@ -15,8 +15,8 @@ from app.navigator_family_etl_pipeline import data_in_pipeline
 
 MEGABYTES_PER_GIGABYTE = 1024
 DEFAULT_FLOW_VARIABLES = {
-    "cpu": MEGABYTES_PER_GIGABYTE * 1,
-    "memory": MEGABYTES_PER_GIGABYTE * 2,
+    "cpu": MEGABYTES_PER_GIGABYTE * 2,
+    "memory": MEGABYTES_PER_GIGABYTE * 32,
 }
 
 
