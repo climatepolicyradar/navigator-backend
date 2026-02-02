@@ -73,6 +73,12 @@ jobs:
               - 'api/**'
               - 'uv.lock'
               - pyproject.toml
+              
+            data-in-api:
+              - 'data-in-api/**'
+              - 'api/**'
+              - 'uv.lock'
+              - pyproject.toml
 
             families-api/infra:
               - 'families-api/infra/**'
