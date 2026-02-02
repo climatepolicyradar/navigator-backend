@@ -300,6 +300,33 @@ def navigator_family_multilateral_climate_fund_project() -> Identified[Navigator
     )
 
 
+@pytest.fixture
+def navigator_family_with_duplicate_legal_case() -> Identified[NavigatorFamily]:
+    return Identified(
+        id="family",
+        source="navigator_family",
+        data=NavigatorFamily(
+            import_id="family",
+            title="Litigation family",
+            category="LITIGATION",  # Maps to "Legal case"
+            summary="Family summary",
+            corpus=NavigatorCorpus(
+                import_id="Academic.corpus.Litigation.n0000",
+                corpus_type=NavigatorCorpusType(
+                    name="Litigation"
+                ),  # Also maps to "Legal case"
+                organisation=NavigatorOrganisation(
+                    id=1, name="Sabin Center for Climate Change Law"
+                ),
+            ),
+            documents=[],
+            events=[],
+            collections=[],
+            geographies=[],
+        ),
+    )
+
+
 def test_transform_navigator_family_with_single_matching_document(
     navigator_family_with_single_matching_document: Identified[NavigatorFamily],
 ):
@@ -619,6 +646,30 @@ def test_transform_navigator_family_with_single_matching_document(
             ),
         ],
     )
+
+
+def test_transform_navigator_family_with_litigation_corpus_type_handles_duplicate_label_relationships(
+    navigator_family_with_duplicate_legal_case: Identified[NavigatorFamily],
+):
+    result = transform_navigator_family(navigator_family_with_duplicate_legal_case)
+
+    documents = result.unwrap()
+    family_doc = documents[0]
+
+    legal_case_labels = [
+        label
+        for label in family_doc.labels
+        if label.label.id == "Legal case" and label.type == "entity_type"
+    ]
+
+    assert len(legal_case_labels) == 1, (
+        f"Expected exactly 1 'Legal case' entity_type label after deduplication, "
+        f"but found {len(legal_case_labels)}"
+    )
+
+    assert legal_case_labels[0].label.id == "Legal case"
+    assert legal_case_labels[0].label.title == "Legal case"
+    assert legal_case_labels[0].type == "entity_type"
 
 
 def test_transform_navigator_family_with_litigation_corpus_type(

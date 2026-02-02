@@ -29,8 +29,12 @@ def load_to_db(documents: list[Document]) -> list[str] | Exception:
             timeout=10,
         )
         response.raise_for_status()
-    except Exception as e:
-        _LOGGER.exception("Error loading documents to DB: %s", e)
+    except requests.exceptions.HTTPError as e:
+        _LOGGER.exception(
+            "Error loading documents to DB: %s. Response: %s",
+            e,
+            e.response.text if e.response else "No response available",
+        )
         return e
 
     _LOGGER.info("Loaded %d documents to the load DB.", len(documents))
