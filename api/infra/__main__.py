@@ -274,6 +274,14 @@ navigator_backend_github_actions_deploy = aws.iam.Role(
                         resources=["*"],
                     ),
                     aws.iam.GetPolicyDocumentStatementArgs(
+                        actions=["ssm:GetParameter"],
+                        effect="Allow",
+                        resources=[
+                            f"arn:aws:ssm:*:{account_id}:parameter/data-in-pipeline/*",
+                            f"arn:aws:ssm:*:{account_id}:parameter/data-in-api/*",
+                        ],
+                    ),
+                    aws.iam.GetPolicyDocumentStatementArgs(
                         actions=["s3:ListBucket"],
                         effect="Allow",
                         resources=[f"arn:aws:s3:::cpr-{stack}-document-cache"],
