@@ -21,7 +21,7 @@ from app.navigator_family_etl_pipeline import data_in_pipeline
 @patch("app.navigator_family_etl_pipeline.run_db_migrations")
 @patch("app.navigator_family_etl_pipeline.upload_to_s3")
 @patch("app.navigator_family_etl_pipeline.NavigatorConnector")
-@patch("app.load.load.requests.post")
+@patch("app.load.load.requests.put")
 def test_process_family_updates_flow_multiple_families(
     mock_post, mock_connector_class, mock_upload, mock_run_migrations
 ):
@@ -175,7 +175,7 @@ def test_process_family_updates_flow_extraction_failure(
 @patch("app.navigator_family_etl_pipeline.run_db_migrations")
 @patch("app.navigator_family_etl_pipeline.upload_to_s3")
 @patch("app.navigator_family_etl_pipeline.NavigatorConnector")
-@patch("app.load.load.requests.post")
+@patch("app.load.load.requests.put")
 def test_etl_pipeline_load_failure(
     mock_post, mock_connector_class, mock_upload, mock_run_migrations
 ):
