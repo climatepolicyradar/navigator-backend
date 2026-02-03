@@ -94,24 +94,6 @@ services:
   # ---------------------------------------------------------------------------
   # families-api (Postgres + FastAPI) — path prefix /families
   # ---------------------------------------------------------------------------
-  families-api-db:
-    image: postgres:17
-    container_name: families-api-db
-    environment:
-      POSTGRES_USER: navigator_admin
-      POSTGRES_PASSWORD: navigator_admin
-      POSTGRES_DB: navigator_admin
-    ports:
-      - "5432"
-    volumes:
-      - navigator-postgres-data:/var/lib/postgresql/data
-      - ./families-api/initial-data:/docker-entrypoint-initdb.d
-    healthcheck:
-      test: [CMD-SHELL, pg_isready -U navigator_admin -d navigator_admin]
-      interval: 5s
-      timeout: 5s
-      retries: 10
-
   families-api:
     build:
       context: .
@@ -120,10 +102,10 @@ services:
     ports:
       - "8080"
     environment:
-      NAVIGATOR_DATABASE_URL: postgresql://navigator_admin:navigator_admin@families-api-db:5432/navigator_admin
+      NAVIGATOR_DATABASE_URL: postgresql://navigator_admin:navigator_admin@backend_db:5432/navigator_admin
       CDN_URL: https://cdn.climatepolicyradar.org
     depends_on:
-      families-api-db:
+      backend_db:
         condition: service_healthy
     labels:
       shipyard.route: /families
