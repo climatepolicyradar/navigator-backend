@@ -57,10 +57,8 @@ services:
     env_file:
       - ./backend-api/.env
     depends_on:
-      backend_db:
-        condition: service_healthy
-      vespatest:
-        condition: service_healthy
+      - backend_db
+      - vespatest
     healthcheck:
       test: curl -s -f http://backend:8888/health >/dev/null || exit 1
       interval: 5s
@@ -105,8 +103,7 @@ services:
       NAVIGATOR_DATABASE_URL: postgresql://navigator_admin:navigator_admin@backend_db:5432/navigator_admin
       CDN_URL: https://cdn.climatepolicyradar.org
     depends_on:
-      backend_db:
-        condition: service_healthy
+      - backend_db
     labels:
       shipyard.route: /families
       shipyard.readiness.http.path: /families/health
@@ -147,8 +144,7 @@ services:
       GEOGRAPHIES_BUCKET: test-bucket
       CDN_URL: http://localstack:4566/test-bucket
     depends_on:
-      localstack:
-        condition: service_started
+      - localstack
     labels:
       shipyard.route: /geographies
       shipyard.readiness.http.path: /geographies/health
@@ -158,6 +154,4 @@ services:
 
 volumes:
   db-data-backend: {}
-  data-in-api-postgres-data: {}
-  data-in-pipeline-load-api-postgres-data: {}
   navigator-postgres-data: {}
