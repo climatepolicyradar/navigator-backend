@@ -4,6 +4,7 @@ from unittest.mock import MagicMock, patch
 
 import pytest
 from requests.exceptions import HTTPError
+from returns.result import Failure
 
 from app.extract.connectors import (
     FamilyFetchResult,
@@ -16,6 +17,7 @@ from app.extract.connectors import (
 )
 from app.models import ExtractedEnvelope, ExtractedMetadata
 from app.navigator_family_etl_pipeline import data_in_pipeline
+from app.transform.models import NoMatchingTransformations
 
 
 @patch("app.navigator_family_etl_pipeline.run_db_migrations")
@@ -240,3 +242,161 @@ def test_etl_pipeline_load_failure(
     result = data_in_pipeline()
 
     assert isinstance(result, Exception)
+
+
+@patch("app.navigator_family_etl_pipeline.run_db_migrations")
+@patch("app.navigator_family_etl_pipeline.upload_to_s3")
+@patch("app.navigator_family_etl_pipeline.NavigatorConnector")
+@patch("app.load.load.requests.put")
+def test_etl_pipeline_partial_transformation_failure(
+    mock_put, mock_connector_class, mock_upload, mock_run_migrations
+):
+    """Test that pipeline continues when some families fail transformation."""
+    mock_run_migrations.return_value = None
+    mock_upload.return_value = None
+
+    mock_connector_instance = MagicMock()
+    mock_connector_class.return_value = mock_connector_instance
+    mock_connector_instance.close.return_value = None
+
+    # Mock successful load for documents that do transform
+    mock_put_response = MagicMock()
+    mock_put_response.status_code = 201
+    mock_put_response.json.return_value = ["valid-family-doc"]
+    mock_put.return_value = mock_put_response
+
+    # One valid family, one family that will fail transformation (no matching transformation)
+    valid_family = NavigatorFamily(
+        import_id="valid-family",
+        title="Valid Family",
+        summary="Will transform successfully",
+        category="REPORTS",
+        corpus=NavigatorCorpus(
+            import_id="UNFCCC",
+            corpus_type=NavigatorCorpusType(name="corpus_type"),
+            organisation=NavigatorOrganisation(id=1, name="UNFCCC"),
+        ),
+        documents=[
+            NavigatorDocument(
+                import_id="valid-doc",
+                title="Valid Document",
+                events=[],
+            )
+        ],
+        events=[],
+        collections=[],
+        geographies=[],
+    )
+
+    invalid_family = NavigatorFamily(
+        import_id="invalid-family",
+        title="Invalid Family",
+        summary="",
+        category="UNKNOWN_CATEGORY",  # Will cause transformation to fail
+        corpus=NavigatorCorpus(
+            import_id="UNKNOWN.corpus.i00000001.n0000",
+            corpus_type=NavigatorCorpusType(name="Unknown"),
+            organisation=NavigatorOrganisation(id=999, name="Unknown"),
+        ),
+        documents=[],
+        events=[],
+        collections=[],
+        geographies=[],
+    )
+
+    envelope = ExtractedEnvelope(
+        data=[valid_family, invalid_family],
+        id="test-uuid",
+        source_name="navigator_family",
+        source_record_id="task-001-families-endpoint-page-1",
+        raw_payload=[valid_family, invalid_family],
+        content_type="application/json",
+        connector_version="1.0.0",
+        extracted_at=datetime.now(UTC),
+        task_run_id="task-001",
+        flow_run_id="flow-001",
+        metadata=ExtractedMetadata(
+            endpoint="https://api.example.com/families/?page=1",
+            http_status=HTTPStatus.OK,
+        ),
+    )
+
+    mock_connector_instance.fetch_all_families.return_value = FamilyFetchResult(
+        envelopes=[envelope], failure=None
+    )
+
+    result = data_in_pipeline()
+
+    assert isinstance(result, list)
+    assert len(result) == 1
+    assert result[0] == "valid-family-doc"
+
+    assert mock_put.call_count == 1
+
+
+@patch("app.navigator_family_etl_pipeline.transform_navigator_family")
+@patch("app.navigator_family_etl_pipeline.run_db_migrations")
+@patch("app.navigator_family_etl_pipeline.upload_to_s3")
+@patch("app.navigator_family_etl_pipeline.NavigatorConnector")
+def test_etl_pipeline_all_families_fail_transformation(
+    mock_connector_class, mock_upload, mock_run_migrations, mock_transform_families
+):
+    """Test that pipeline fails gracefully when all families fail transformation."""
+    mock_run_migrations.return_value = None
+    mock_upload.return_value = None
+
+    mock_connector_instance = MagicMock()
+    mock_connector_class.return_value = mock_connector_instance
+    mock_connector_instance.close.return_value = None
+
+    # Create families that will all fail transformation
+    failing_families = [
+        NavigatorFamily(
+            import_id=f"failing-family-{i}",
+            title=f"Failing Family {i}",
+            summary="",
+            category="UNKNOWN_CATEGORY",
+            corpus=NavigatorCorpus(
+                import_id="UNKNOWN.corpus.i00000001.n0000",
+                corpus_type=NavigatorCorpusType(name="Unknown"),
+                organisation=NavigatorOrganisation(id=999, name="Unknown"),
+            ),
+            documents=[],
+            events=[],
+            collections=[],
+            geographies=[],
+        )
+        for i in range(3)
+    ]
+
+    envelope = ExtractedEnvelope(
+        data=failing_families,
+        id="test-uuid",
+        source_name="navigator_family",
+        source_record_id="task-001-families-endpoint-page-1",
+        raw_payload=failing_families,
+        content_type="application/json",
+        connector_version="1.0.0",
+        extracted_at=datetime.now(UTC),
+        task_run_id="task-001",
+        flow_run_id="flow-001",
+        metadata=ExtractedMetadata(
+            endpoint="https://api.example.com/families/?page=1",
+            http_status=HTTPStatus.OK,
+        ),
+    )
+
+    mock_connector_instance.fetch_all_families.return_value = FamilyFetchResult(
+        envelopes=[envelope], failure=None
+    )
+
+    mock_transform_families.side_effect = [
+        Failure(NoMatchingTransformations()),
+        Failure(NoMatchingTransformations()),
+        Failure(NoMatchingTransformations()),
+    ]
+
+    result = data_in_pipeline()
+
+    assert isinstance(result, Exception)
+    assert "No documents transformed successfully" in str(result)

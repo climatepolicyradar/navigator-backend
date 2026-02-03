@@ -15,7 +15,7 @@ from app.extract.connectors import (
     NavigatorFamily,
 )
 from app.extract.enums import CheckPointStorageType
-from app.identify.navigator_family import identify_navigator_family
+from app.identify.navigator_family import identify_navigator_families
 from app.load.aws_bucket import upload_to_s3
 from app.load.load import load_to_db
 from app.models import ExtractedEnvelope, Identified
@@ -111,33 +111,42 @@ def cache_extraction_result(result: FamilyFetchResult):
 @pipeline_metrics.track(operation=Operation.IDENTIFY)
 def identify(
     extracted: list[ExtractedEnvelope[list[NavigatorFamily]]],
-) -> Identified[NavigatorFamily]:
+) -> list[Identified[NavigatorFamily]]:
     """Identify source document type."""
-    return identify_navigator_family(extracted)
+    return identify_navigator_families(extracted)
 
 
 @task(log_prints=True)
 @pipeline_metrics.track(operation=Operation.TRANSFORM)
 def transform(
-    identified: Identified[NavigatorFamily],
-) -> list[Document] | Exception:
-    """Transform document to target format."""
+    identified_families: list[Identified[NavigatorFamily]],
+) -> tuple[list[Document], list[Exception]]:
+    """Transform all families to target format, collecting successes and failures."""
     _LOGGER = get_logger()
 
-    transformed = transform_navigator_family(identified)
+    all_documents = []
+    errors = []
+    for family in identified_families:
+        transformed = transform_navigator_family(family)
 
-    match transformed:
-        case Success(documents):
-            return documents
-        case Failure(error):
-            # TODO: do not swallow errors
-            _LOGGER.warning(f"Transformation failed: {error}")
-            pipeline_metrics.record_error(Operation.TRANSFORM, ErrorType.TRANSFORM)
-            pipeline_metrics.record_processed(PipelineType.FAMILY, Status.FAILURE)
-            return error
-        case _:
-            pipeline_metrics.record_processed(PipelineType.FAMILY, Status.FAILURE)
-            return Exception("Unexpected transformed result state")
+        match transformed:
+            case Success(documents):
+                all_documents.extend(documents)
+            case Failure(error):
+                _LOGGER.warning(f"Transformation failed: {error}")
+                pipeline_metrics.record_error(Operation.TRANSFORM, ErrorType.TRANSFORM)
+                pipeline_metrics.record_processed(PipelineType.FAMILY, Status.FAILURE)
+                errors.append(error)
+            case _:
+                pipeline_metrics.record_processed(PipelineType.FAMILY, Status.FAILURE)
+                errors.append(Exception("Unexpected transformed result state"))
+
+    _LOGGER.info(
+        f"Transformation complete: {len(all_documents)} documents from "
+        f"{len(identified_families)} families ({len(errors)} failures)"
+    )
+
+    return all_documents, errors
 
 
 @task(log_prints=True)
@@ -232,14 +241,20 @@ def data_in_pipeline(
         _LOGGER.info("No families found to process")
         return []
 
-    identified = identify(envelopes)
-    transformed = transform(identified)
+    identified_families = identify(envelopes)
+    transformed_documents, errors = transform(identified_families)
 
-    if isinstance(transformed, Exception):
-        return Exception(f"Transformation failed {transformed}")
+    if errors:
+        # TODO : APP-1664 - Handle these partial failures more gracefully
+        _LOGGER.exception(f"Transformation errors: {len(errors)}")
 
-    load_to_s3(transformed, run_id)
-    loaded = load(transformed)
+    if len(transformed_documents) == 0:
+        _LOGGER.error("No documents were transformed successfully; aborting load")
+        pipeline_metrics.record_processed(PipelineType.FAMILY, Status.FAILURE)
+        return Exception("No documents transformed successfully")
+
+    load_to_s3(transformed_documents, run_id)
+    loaded = load(transformed_documents)
     if isinstance(loaded, Exception):
         _LOGGER.error(f"Load failed: {loaded}")
         pipeline_metrics.record_error(Operation.LOAD, ErrorType.STORAGE)
