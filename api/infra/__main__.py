@@ -15,6 +15,7 @@ geographies_api_stack = pulumi.StackReference(
 )
 families_api_stack = pulumi.StackReference(f"climatepolicyradar/families-api/{stack}")
 concepts_api_stack = pulumi.StackReference(f"climatepolicyradar/concepts-api/{stack}")
+data_in_api_stack = pulumi.StackReference(f"climatepolicyradar/data-in-api/{stack}")
 
 # URLs
 config = pulumi.Config()
@@ -131,6 +132,16 @@ api_cloudfront_distribution = aws.cloudfront.Distribution(
                 "origin_ssl_protocols": ["TLSv1.2"],
             },
         },
+        {
+            "domain_name": data_in_api_stack.get_output("apprunner_service_url"),
+            "origin_id": "data-in-api-apprunner",
+            "custom_origin_config": {
+                "http_port": 80,
+                "https_port": 443,
+                "origin_protocol_policy": "https-only",
+                "origin_ssl_protocols": ["TLSv1.2"],
+            },
+        },
     ],
     enabled=True,
     is_ipv6_enabled=True,
@@ -200,6 +211,23 @@ api_cloudfront_distribution = aws.cloudfront.Distribution(
                 "OPTIONS",
             ],
             "target_origin_id": "geographies-api-apprunner",
+            "viewer_protocol_policy": "redirect-to-https",
+            "cache_policy_id": api_cache_policy.id,
+            "origin_request_policy_id": api_cors_policy.id,
+        },
+        {
+            "path_pattern": "/data-in/*",
+            "allowed_methods": [
+                "HEAD",
+                "GET",
+                "OPTIONS",
+            ],
+            "cached_methods": [
+                "HEAD",
+                "GET",
+                "OPTIONS",
+            ],
+            "target_origin_id": "data-in-api-apprunner",
             "viewer_protocol_policy": "redirect-to-https",
             "cache_policy_id": api_cache_policy.id,
             "origin_request_policy_id": api_cors_policy.id,
