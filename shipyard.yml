@@ -150,7 +150,7 @@ services:
       AWS_DEFAULT_REGION: eu-west-1
       DEBUG: 1
     volumes:
-      - geographies-api/init-s3.sh:/etc/localstack/init/ready.d/init-s3.sh
+      - ./geographies-api/init-s3.sh:/etc/localstack/init/ready.d/init-s3.sh
     ports:
       - "4566"
 
