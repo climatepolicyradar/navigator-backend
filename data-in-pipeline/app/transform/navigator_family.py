@@ -561,10 +561,23 @@ def _transform_navigator_document(
 def _transform_navigator_collection(
     navigator_collection: NavigatorCollection, navigator_family: NavigatorFamily
 ) -> Document:
+    labels: list[DocumentLabelRelationship] = []
+
+    labels.append(
+        DocumentLabelRelationship(
+            type="entity_type",
+            label=Label(
+                id="Collection",
+                title="Collection",
+                type="entity_type",
+            ),
+        )
+    )
+
     return Document(
         id=navigator_collection.import_id,
         title=navigator_collection.title,
-        labels=[],
+        labels=labels,
     )
 
 
