@@ -14,11 +14,13 @@ dependencies = [
   "psycopg2-binary>=2.9.11",
   "data-in-models",
   "api",
+  "components>=1.0.3",
 ]
 
 [tool.uv.sources]
-data-in-models = { workspace = true }
 api = { workspace = true }
+data-in-models = { workspace = true }
+components = { git = "https://github.com/climatepolicyradar/infra", subdirectory = "components", tag = "v1.0.5" }
 
 [dependency-groups]
 dev = [
