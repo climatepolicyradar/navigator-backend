@@ -16,6 +16,7 @@ class DocumentLabelRelationship(BaseModel):
 
 
 class Item(BaseModel):
+    type: str
     url: str | None = None
 
 
