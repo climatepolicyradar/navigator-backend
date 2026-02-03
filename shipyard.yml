@@ -70,7 +70,7 @@ services:
       shipyard.liveness.initial_delay: "10"
 
   # ---------------------------------------------------------------------------
-  # concepts-api (FastAPI)
+  # concepts-api (FastAPI) — path prefix /concepts
   # ---------------------------------------------------------------------------
   concepts-api:
     build:
@@ -80,7 +80,7 @@ services:
     ports:
       - "8080"
     labels:
-      shipyard.route: /
+      shipyard.route: /concepts
       shipyard.readiness.http.path: /concepts/health
       shipyard.readiness.initial_delay: "10"
       shipyard.liveness.http.path: /concepts/health
@@ -122,14 +122,14 @@ services:
       data-in-api-db:
         condition: service_healthy
     labels:
-      shipyard.route: /
-      shipyard.readiness.http.path: /health
+      shipyard.route: /data-in
+      shipyard.readiness.http.path: /data-in/health
       shipyard.readiness.initial_delay: "10"
-      shipyard.liveness.http.path: /health
+      shipyard.liveness.http.path: /data-in/health
       shipyard.liveness.initial_delay: "10"
 
   # ---------------------------------------------------------------------------
-  # data-in-pipeline-load-api (Postgres + FastAPI)
+  # data-in-pipeline-load-api (Postgres + FastAPI) — path prefix /load
   # ---------------------------------------------------------------------------
   data-in-pipeline-load-api-db:
     image: postgres:17
@@ -173,14 +173,14 @@ services:
       data-in-pipeline-load-api-db:
         condition: service_healthy
     labels:
-      shipyard.route: /
+      shipyard.route: /load
       shipyard.readiness.http.path: /load/health
       shipyard.readiness.initial_delay: "10"
       shipyard.liveness.http.path: /load/health
       shipyard.liveness.initial_delay: "10"
 
   # ---------------------------------------------------------------------------
-  # families-api (Postgres + FastAPI)
+  # families-api (Postgres + FastAPI) — path prefix /families
   # ---------------------------------------------------------------------------
   families-api-db:
     image: postgres:17
@@ -214,14 +214,14 @@ services:
       families-api-db:
         condition: service_healthy
     labels:
-      shipyard.route: /
+      shipyard.route: /families
       shipyard.readiness.http.path: /families/health
       shipyard.readiness.initial_delay: "10"
       shipyard.liveness.http.path: /families/health
       shipyard.liveness.initial_delay: "10"
 
   # ---------------------------------------------------------------------------
-  # geographies-api (LocalStack S3 + FastAPI)
+  # geographies-api (LocalStack S3 + FastAPI) — path prefix /geographies
   # ---------------------------------------------------------------------------
   localstack:
     image: localstack/localstack:latest
@@ -256,7 +256,7 @@ services:
       localstack:
         condition: service_started
     labels:
-      shipyard.route: /
+      shipyard.route: /geographies
       shipyard.readiness.http.path: /geographies/health
       shipyard.readiness.initial_delay: "10"
       shipyard.liveness.http.path: /geographies/health
