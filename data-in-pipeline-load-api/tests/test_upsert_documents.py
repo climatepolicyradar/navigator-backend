@@ -1,5 +1,4 @@
 from datetime import UTC, datetime
-from unittest.mock import Mock
 
 import pytest
 from data_in_models.db_models import (
@@ -9,6 +8,18 @@ from data_in_models.db_models import (
     Item,
     Label,
 )
+from data_in_models.models import Document as DocumentInput
+from data_in_models.models import (
+    DocumentDocumentRelationship as DocumentDocumentRelationshipInput,
+)
+from data_in_models.models import (
+    DocumentLabelRelationship as DocumentLabelRelationshipInput,
+)
+from data_in_models.models import (
+    DocumentWithoutRelationships as DocumentWithoutRelationshipsInput,
+)
+from data_in_models.models import Item as ItemInput
+from data_in_models.models import Label as LabelInput
 from sqlalchemy.exc import IntegrityError
 from sqlmodel import select
 
@@ -19,50 +30,31 @@ def create_mock_document_input(
     doc_id, title="Test Doc", labels=None, items=None, relationships=None
 ):
     """Create a mock DocumentInput object for testing."""
-    mock_doc = Mock()
-    mock_doc.id = doc_id
-    mock_doc.title = title
-    mock_doc.description = None
-    mock_doc.labels = labels or []
-    mock_doc.items = items or []
-    mock_doc.relationships = relationships or []
-    return mock_doc
+    return DocumentInput(
+        id=doc_id,
+        title=title,
+        description=None,
+        labels=labels or [],
+        items=items or [],
+        relationships=relationships or [],
+    )
 
 
 def create_mock_label(label_id="label_1", title="Test Label"):
     """Create a mock label relationship."""
-    mock_label = Mock()
-    mock_label.id = label_id
-    mock_label.title = title
-    mock_label.type = "status"
+    label = LabelInput(id=label_id, title=title, type="status")
 
-    mock_rel = Mock()
-    mock_rel.type = "tag"
-    mock_rel.timestamp = datetime.now(UTC)
-    mock_rel.label = mock_label
-
-    return mock_rel
+    return DocumentLabelRelationshipInput(
+        type="tag", timestamp=datetime.now(UTC), label=label
+    )
 
 
 def create_mock_item(item_id="item_1", url="https://example.com"):
     """Create a mock item."""
-    mock_item = Mock()
-    mock_item.id = item_id
-    mock_item.url = url
-    return mock_item
-
-
-def create_mock_relationship(related_doc_id, rel_type="has_member", timestamp=None):
-    """Create a mock DocumentDocumentRelationshipInput object."""
-    mock_target_doc = Mock()
-    mock_target_doc.id = related_doc_id
-    mock_target_doc.title = f"Related Doc {related_doc_id}"
-    mock_target_doc.description = None
-
-    mock_rel = Mock()
-    mock_rel.type = rel_type
-    mock_rel.timestamp = timestamp
-    mock_rel.document = mock_target_doc
+    return ItemInput(
+        id=item_id,
+        url=url,
+    )
 
 
 def test_upsert_creates_new_document(session):
@@ -226,23 +218,22 @@ def test_shared_label_does_not_raise_error(session):
 def test_create_document_with_document_relationship(session):
     """Test creating a new document with a document relationship."""
 
-    mock_target_doc = Mock()
-    mock_target_doc.id = "target-doc-1"
-    mock_target_doc.title = "Target Document"
-    mock_target_doc.description = "Target description"
+    mock_target_doc = DocumentWithoutRelationshipsInput(
+        id="target-doc-1", title="Target Document", description="Target description"
+    )
 
-    mock_rel = Mock()
-    mock_rel.type = "has_member"
-    mock_rel.timestamp = datetime.now(UTC)
-    mock_rel.document = mock_target_doc
+    mock_rel = DocumentDocumentRelationshipInput(
+        type="has_member", timestamp=datetime.now(UTC), document=mock_target_doc
+    )
 
-    mock_doc = Mock()
-    mock_doc.id = "source-doc-1"
-    mock_doc.title = "Source Document"
-    mock_doc.description = "Source description"
-    mock_doc.labels = []
-    mock_doc.items = []
-    mock_doc.relationships = [mock_rel]
+    mock_doc = DocumentInput(
+        id="source-doc-1",
+        title="Source Document",
+        description="Source description",
+        labels=[],
+        items=[],
+        relationships=[mock_rel],
+    )
 
     result = create_or_update_documents(session, [mock_doc])
 
@@ -271,24 +262,22 @@ def test_create_document_with_document_relationship(session):
 def test_empty_relationship_list_clears_existing_relationships(session):
     """When relationships list is empty, existing relationships should be removed."""
 
-    mock_target = Mock()
-    mock_target.id = "simple-target"
-    mock_target.title = "Simple Target"
-    mock_target.description = None
+    mock_target_doc = DocumentWithoutRelationshipsInput(
+        id="target-doc-1", title="Target Document", description="Target description"
+    )
 
-    mock_rel = Mock()
-    mock_rel.type = "has_member"
-    mock_rel.timestamp = None
-    mock_rel.document = mock_target
+    mock_rel = DocumentDocumentRelationshipInput(
+        type="has_member", timestamp=datetime.now(UTC), document=mock_target_doc
+    )
 
-    mock_doc = Mock()
-    mock_doc.id = "simple-source"
-    mock_doc.title = "Simple Source"
-    mock_doc.description = None
-    mock_doc.labels = []
-    mock_doc.items = []
-    mock_doc.relationships = [mock_rel]
-
+    mock_doc = DocumentInput(
+        id="simple-source",
+        title="Simple Source",
+        description=None,
+        labels=[],
+        items=[],
+        relationships=[mock_rel],
+    )
     create_or_update_documents(session, [mock_doc])
 
     exists_query = select(DocumentDocumentLink).where(
@@ -309,23 +298,22 @@ def test_empty_relationship_list_clears_existing_relationships(session):
 def test_new_relationship_added_to_existing_document(session):
     """Test that a new relationship is added to an existing document's relationships."""
 
-    mock_target1 = Mock()
-    mock_target1.id = "target-doc-1"
-    mock_target1.title = "First Target"
-    mock_target1.description = None
+    mock_target1 = DocumentWithoutRelationshipsInput(
+        id="target-doc-1", title="First Target", description=None
+    )
 
-    mock_relationship1 = Mock()
-    mock_relationship1.type = "has_member"
-    mock_relationship1.timestamp = None
-    mock_relationship1.document = mock_target1
+    mock_relationship1 = DocumentDocumentRelationshipInput(
+        type="has_member", timestamp=None, document=mock_target1
+    )
 
-    mock_document = Mock()
-    mock_document.id = "source-doc-001"
-    mock_document.title = "Source Document"
-    mock_document.description = None
-    mock_document.labels = []
-    mock_document.items = []
-    mock_document.relationships = [mock_relationship1]
+    mock_document = DocumentInput(
+        id="source-doc-001",
+        title="Source Document",
+        description=None,
+        labels=[],
+        items=[],
+        relationships=[mock_relationship1],
+    )
 
     create_or_update_documents(session, [mock_document])
 
@@ -337,15 +325,13 @@ def test_new_relationship_added_to_existing_document(session):
 
     assert len(relationships_after_first) == 1
 
-    mock_target2 = Mock()
-    mock_target2.id = "target-doc-2"
-    mock_target2.title = "Second Target"
-    mock_target2.description = None
+    mock_target2 = DocumentWithoutRelationshipsInput(
+        id="target-doc-2", title="Second Target", description=None
+    )
 
-    mock_relationship2 = Mock()
-    mock_relationship2.type = "references"
-    mock_relationship2.timestamp = None
-    mock_relationship2.document = mock_target2
+    mock_relationship2 = DocumentDocumentRelationshipInput(
+        type="references", timestamp=None, document=mock_target2
+    )
 
     mock_document.relationships = [mock_relationship1, mock_relationship2]
 
