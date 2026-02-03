@@ -20,7 +20,7 @@ def test_health_check_returns_ok_status(session: Session):
     client = TestClient(app)
 
     try:
-        response = client.get("/db-health-check")
+        response = client.get("/data-in/db-health-check")
         assert response.status_code == HTTPStatus.OK
         data = response.json()
         assert data["status"] == "ok"
@@ -76,7 +76,7 @@ def test_list_documents_returns_all_documents(client, monkeypatch):
     mock_get_all = Mock(return_value=DOCUMENTS_LIST)
     monkeypatch.setattr("app.main.get_all_documents", mock_get_all)
 
-    response = client.get("/documents?page=1&page_size=20")
+    response = client.get("/data-in/documents?page=1&page_size=20")
     assert response.status_code == HTTPStatus.OK
     data = response.json()
     assert data["total"] == len(DOCUMENTS_LIST)
@@ -104,7 +104,7 @@ def test_list_documents_with_pagination(client, monkeypatch):
     page = 2
     page_size = 5
 
-    response = client.get(f"/documents?page={page}&page_size={page_size}")
+    response = client.get(f"/data-in/documents?page={page}&page_size={page_size}")
     assert response.status_code == HTTPStatus.OK
     data = response.json()
     assert data["page"] == page
@@ -116,7 +116,7 @@ def test_get_document_returns_single_document(client, monkeypatch):
     mock_get_by_id = Mock(return_value=SINGLE_DOCUMENT)
     monkeypatch.setattr("app.main.get_document_by_id", mock_get_by_id)
 
-    response = client.get("/documents/doc_123")
+    response = client.get("/data-in/documents/doc_123")
     assert response.status_code == HTTPStatus.OK
     data = response.json()
     assert data["data"]["id"] == "doc_123"
@@ -129,7 +129,7 @@ def test_get_document_returns_404_when_not_found(client, monkeypatch):
     mock_get_by_id = Mock(return_value=None)
     monkeypatch.setattr("app.main.get_document_by_id", mock_get_by_id)
 
-    response = client.get("/documents/nonexistent_id")
+    response = client.get("/data-in/documents/nonexistent_id")
     assert response.status_code == HTTPStatus.NOT_FOUND
     data = response.json()
     assert "not found" in data["detail"].lower()
@@ -140,7 +140,7 @@ def test_list_documents_returns_empty_list(client, monkeypatch):
     mock_get_all = Mock(return_value=[])
     monkeypatch.setattr("app.main.get_all_documents", mock_get_all)
 
-    response = client.get("/documents")
+    response = client.get("/data-in/documents")
     assert response.status_code == HTTPStatus.OK
     data = response.json()
     assert data["total"] == 0
