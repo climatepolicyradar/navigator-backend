@@ -3,10 +3,14 @@ from datetime import UTC, datetime
 from uuid import uuid4
 
 from data_in_models.db_models import Document as DBDocument
+from data_in_models.db_models import DocumentDocumentLink as DBDocumentRelationship
 from data_in_models.db_models import DocumentLabelLink as DBDocumentLabelLink
 from data_in_models.db_models import Item as DBItem
 from data_in_models.db_models import Label as DBLabel
 from data_in_models.models import Document as DocumentInput
+from data_in_models.models import (
+    DocumentDocumentRelationship as DocumentDocumentRelationshipInput,
+)
 from sqlalchemy.dialects.postgresql import insert
 from sqlalchemy.exc import DisconnectionError, IntegrityError, OperationalError
 from sqlmodel import Session, delete, select
@@ -78,7 +82,7 @@ def create_or_update_documents(
 
             _upsert_items_for_document(db, doc_in.id, doc_in.items)
             _upsert_labels_and_relationships(db, doc_in.id, doc_in.labels)
-
+            _upsert_document_document_relationships(db, doc_in.id, doc_in.relationships)
             processed_ids.append(doc_in.id)
 
         db.commit()
@@ -190,6 +194,71 @@ def _upsert_labels_and_relationships(
         db.exec(
             delete(DBDocumentLabelLink).where(
                 DBDocumentLabelLink.document_id == document_id
+            )
+        )
+
+
+def _upsert_document_document_relationships(
+    db: Session,
+    source_document_id: str,
+    relationships: list[DocumentDocumentRelationshipInput],
+) -> None:
+    incoming_target_ids: list[str] = []
+
+    for rel in relationships:
+        target = rel.document
+
+        stmt = (
+            insert(DBDocument)
+            .values(
+                id=target.id,
+                title=target.title,
+                description=target.description,
+                created_at=datetime.now(UTC),
+                updated_at=datetime.now(UTC),
+            )
+            .on_conflict_do_nothing()
+        )
+        db.exec(stmt)
+
+        rel_stmt = (
+            insert(DBDocumentRelationship)
+            .values(
+                source_document_id=source_document_id,
+                related_document_id=target.id,
+                relationship_type=rel.type,
+                timestamp=rel.timestamp,
+                created_at=datetime.now(UTC),
+                updated_at=datetime.now(UTC),
+            )
+            .on_conflict_do_update(
+                index_elements=[
+                    "source_document_id",
+                    "related_document_id",
+                ],
+                set_={
+                    "relationship_type": rel.type,
+                    "timestamp": rel.timestamp,
+                    "updated_at": datetime.now(UTC),
+                },
+            )
+        )
+        db.exec(rel_stmt)
+
+        incoming_target_ids.append(target.id)
+
+    # Delete removed relationships
+    if incoming_target_ids:
+        db.exec(
+            delete(DBDocumentRelationship).where(
+                DBDocumentRelationship.source_document_id == source_document_id,
+                DBDocumentRelationship.related_document_id.not_in(incoming_target_ids),
+            )
+        )
+    else:
+        db.exec(
+            delete(DBDocumentRelationship).where(
+                DBDocumentRelationship.source_document_id == source_document_id
             )
         )
 
