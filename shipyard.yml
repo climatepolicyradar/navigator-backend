@@ -1,6 +1,11 @@
 # Shipyard compose: backend services with route/readiness/liveness labels.
 # See https://docs.shipyard.build/docker-compose#supported-service-labels
 # Ensure backend-api/.env exists (e.g. copy from backend-api/.env.example) for backend + backend_db.
+#
+# Inter-service URLs: use Docker Compose service name + container port. Requests use the full path
+# (e.g. CONCEPTS_API_URL + "/concepts/..."). Set env vars per service that calls another; for the
+# public "one link" (e.g. frontend or redirects), use Shipyard secrets to inject the env URL or
+# SHIPYARD_ENVIRONMENT_URL in CI.
 
 version: "3.8"
 
@@ -49,6 +54,10 @@ services:
     environment:
       PYTHONPATH: .
       VESPA_URL: http://vespatest:8080
+      # Internal URLs for service-to-service (hostname = compose service name, port = container port)
+      CONCEPTS_API_URL: http://concepts-api:8080
+      FAMILIES_API_URL: http://families-api:8080
+      GEOGRAPHIES_API_URL: http://geographies-api:8080
     env_file:
       - backend-api/.env
     depends_on:
@@ -89,23 +98,6 @@ services:
   # ---------------------------------------------------------------------------
   # data-in-api (Postgres + FastAPI)
   # ---------------------------------------------------------------------------
-  data-in-api-db:
-    image: postgres:17
-    container_name: data-in-api-db
-    environment:
-      POSTGRES_USER: data-in-api
-      POSTGRES_PASSWORD: data-in-api
-      POSTGRES_DB: data-in-api
-    ports:
-      - "5432"
-    volumes:
-      - data-in-api-postgres-data:/var/lib/postgresql/data
-    healthcheck:
-      test: [CMD-SHELL, pg_isready -U data-in-api -d data-in-api]
-      interval: 5s
-      timeout: 5s
-      retries: 10
-
   data-in-api:
     build:
       context: .
@@ -119,7 +111,7 @@ services:
       DB_NAME: data-in-api
       DB_SECRETS: '{"password": "data-in-api", "username": "data-in-api"}'
     depends_on:
-      data-in-api-db:
+      data-in-pipeline-load-api-db:
         condition: service_healthy
     labels:
       shipyard.route: /data-in
