@@ -59,7 +59,7 @@ services:
       FAMILIES_API_URL: http://families-api:8080
       GEOGRAPHIES_API_URL: http://geographies-api:8080
     env_file:
-      - backend-api/.env
+      - ./backend-api/.env
     depends_on:
       backend_db:
         condition: service_healthy
@@ -109,7 +109,7 @@ services:
       - "5432"
     volumes:
       - navigator-postgres-data:/var/lib/postgresql/data
-      - families-api/initial-data:/docker-entrypoint-initdb.d
+      - ./families-api/initial-data:/docker-entrypoint-initdb.d
     healthcheck:
       test: [CMD-SHELL, pg_isready -U navigator_admin -d navigator_admin]
       interval: 5s
