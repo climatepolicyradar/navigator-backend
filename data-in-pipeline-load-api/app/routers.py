@@ -54,7 +54,7 @@ def create_document(documents: list[DocumentSchema], db=Depends(get_db)):
         )
 
 
-@router.put("/documents", response_model=list[str], status_code=status.HTTP_200_OK)
+@router.put("/documents", response_model=str, status_code=status.HTTP_200_OK)
 def update_documents(documents: list[DocumentSchema], db=Depends(get_db)):
     if not documents:
         raise HTTPException(
@@ -63,7 +63,8 @@ def update_documents(documents: list[DocumentSchema], db=Depends(get_db)):
         )
 
     try:
-        return create_or_update_documents(db, documents)
+        processed_documents = create_or_update_documents(db, documents)
+        return f"Received {len(documents)} documents; Updated {len(processed_documents)} documents"
 
     except Exception as e:
         _LOGGER.exception(f"Failed to update documents: {e}")
