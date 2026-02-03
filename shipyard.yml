@@ -54,10 +54,6 @@ services:
     environment:
       PYTHONPATH: .
       VESPA_URL: http://vespatest:8080
-      # Internal URLs for service-to-service (hostname = compose service name, port = container port)
-      CONCEPTS_API_URL: http://concepts-api:8080
-      FAMILIES_API_URL: http://families-api:8080
-      GEOGRAPHIES_API_URL: http://geographies-api:8080
     env_file:
       - ./backend-api/.env
     depends_on:
