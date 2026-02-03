@@ -42,6 +42,13 @@ jobs:
               - 'uv.lock'
               - pyproject.toml
 
+            data-in-api:
+              - 'data-in-api/**'
+              - 'api/**'
+              - 'data-in-models/**'
+              - 'uv.lock'
+              - pyproject.toml
+
             data-in-pipeline:
               - 'data-in-pipeline/**'
               - 'api/**'
@@ -63,6 +70,9 @@ jobs:
 
             concepts-api/infra:
               - 'concepts-api/infra/**'
+
+            data-in-api/infra:
+              - 'data-in-api/infra/**'
 
             data-in-pipeline/infra:
               - 'data-in-pipeline/infra/**'
