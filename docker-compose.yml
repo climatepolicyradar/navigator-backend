@@ -1,0 +1,235 @@
+# Root-level compose for Shipyard: all backend services, no test profiles/containers.
+# Build from repo root: docker compose build
+# Services use internal networking; expose app ports for routing.
+# Ensure backend-api/.env exists (e.g. copy from backend-api/.env.example) for backend + backend_db.
+
+services:
+  # ---------------------------------------------------------------------------
+  # backend-api (Vespa + Postgres + FastAPI)
+  # ---------------------------------------------------------------------------
+  vespatest:
+    image: vespaengine/vespa:8.396.18
+    container_name: vespatest
+    ports:
+      - "8080"
+      - "19071"
+    healthcheck:
+      test: curl -s -f http://vespatest:19071/status.html >/dev/null || exit 1
+      interval: 5s
+      timeout: 3s
+      retries: 30
+      start_period: 20s
+
+  backend_db:
+    image: postgres:14
+    restart: always
+    env_file:
+      - backend-api/.env
+    ports:
+      - "5432"
+    volumes:
+      - db-data-backend:/var/lib/postgresql/data
+    healthcheck:
+      test: [CMD-SHELL, pg_isready -U navigator_admin]
+      interval: 5s
+      timeout: 3s
+      retries: 30
+
+  backend:
+    build:
+      context: ./backend-api
+      dockerfile: Dockerfile
+    image: navigator-backend
+    container_name: backend-api
+    command: /bin/bash /app/startup.sh
+    tty: true
+    ports:
+      - "8888"
+    environment:
+      PYTHONPATH: .
+      VESPA_URL: http://vespatest:8080
+    env_file:
+      - backend-api/.env
+    depends_on:
+      backend_db:
+        condition: service_healthy
+      vespatest:
+        condition: service_healthy
+    healthcheck:
+      test: curl -s -f http://backend:8888/health >/dev/null || exit 1
+      interval: 5s
+      timeout: 3s
+      retries: 30
+
+  # ---------------------------------------------------------------------------
+  # concepts-api (FastAPI, no DB in compose)
+  # ---------------------------------------------------------------------------
+  concepts-api:
+    build:
+      context: .
+      dockerfile: concepts-api/Dockerfile
+    container_name: concepts-api
+    ports:
+      - "8080"
+
+  # ---------------------------------------------------------------------------
+  # data-in-api (Postgres + FastAPI)
+  # ---------------------------------------------------------------------------
+  data-in-api-db:
+    image: postgres:17
+    container_name: data-in-api-db
+    environment:
+      POSTGRES_USER: data-in-api
+      POSTGRES_PASSWORD: data-in-api
+      POSTGRES_DB: data-in-api
+    ports:
+      - "5432"
+    volumes:
+      - data-in-api-postgres-data:/var/lib/postgresql/data
+    healthcheck:
+      test: [CMD-SHELL, pg_isready -U data-in-api -d data-in-api]
+      interval: 5s
+      timeout: 5s
+      retries: 10
+
+  data-in-api:
+    build:
+      context: .
+      dockerfile: data-in-api/Dockerfile
+    container_name: data-in-api
+    ports:
+      - "8080"
+    environment:
+      DB_PORT: 5432
+      DB_URL: data-in-api-db
+      DB_NAME: data-in-api
+      DB_SECRETS: '{"password": "data-in-api", "username": "data-in-api"}'
+    depends_on:
+      data-in-api-db:
+        condition: service_healthy
+
+  # ---------------------------------------------------------------------------
+  # data-in-pipeline-load-api (Postgres + FastAPI)
+  # ---------------------------------------------------------------------------
+  data-in-pipeline-load-api-db:
+    image: postgres:17
+    container_name: data-in-pipeline-load-api-db
+    environment:
+      POSTGRES_USER: data-in-pipeline-load-api
+      POSTGRES_PASSWORD: data-in-pipeline-load-api
+      POSTGRES_DB: data-in-pipeline-load-api
+    ports:
+      - "5432"
+    volumes:
+      - data-in-pipeline-load-api-postgres-data:/var/lib/postgresql/data
+    healthcheck:
+      test:
+        [
+          CMD-SHELL,
+          pg_isready -U data-in-pipeline-load-api -d data-in-pipeline-load-api,
+        ]
+      interval: 5s
+      timeout: 5s
+      retries: 10
+
+  data-in-pipeline-load-api:
+    build:
+      context: .
+      dockerfile: data-in-pipeline-load-api/Dockerfile
+    container_name: data-in-pipeline-load-api
+    ports:
+      - "8080"
+    environment:
+      db_master_username: data-in-pipeline-load-api
+      managed_db_password: '{"password": "data-in-pipeline-load-api", "username": "data-in-pipeline-load-api"}'
+      load_database_url: data-in-pipeline-load-api-db
+      db_port: 5432
+      db_name: data-in-pipeline-load-api
+      DB_URL: data-in-pipeline-load-api-db
+      DB_NAME: data-in-pipeline-load-api
+      DB_USERNAME: data-in-pipeline-load-api
+      DB_SECRETS: '{"password": "data-in-pipeline-load-api", "username": "data-in-pipeline-load-api"}'
+    depends_on:
+      data-in-pipeline-load-api-db:
+        condition: service_healthy
+
+  # ---------------------------------------------------------------------------
+  # families-api (Postgres + FastAPI)
+  # ---------------------------------------------------------------------------
+  families-api-db:
+    image: postgres:17
+    container_name: families-api-db
+    environment:
+      POSTGRES_USER: navigator_admin
+      POSTGRES_PASSWORD: navigator_admin
+      POSTGRES_DB: navigator_admin
+    ports:
+      - "5432"
+    volumes:
+      - navigator-postgres-data:/var/lib/postgresql/data
+      - families-api/initial-data:/docker-entrypoint-initdb.d
+    healthcheck:
+      test: [CMD-SHELL, pg_isready -U navigator_admin -d navigator_admin]
+      interval: 5s
+      timeout: 5s
+      retries: 10
+
+  families-api:
+    build:
+      context: .
+      dockerfile: families-api/Dockerfile
+    container_name: families-api
+    ports:
+      - "8080"
+    environment:
+      NAVIGATOR_DATABASE_URL: postgresql://navigator_admin:navigator_admin@families-api-db:5432/navigator_admin
+      CDN_URL: https://cdn.climatepolicyradar.org
+    depends_on:
+      families-api-db:
+        condition: service_healthy
+
+  # ---------------------------------------------------------------------------
+  # geographies-api (LocalStack S3 + FastAPI)
+  # ---------------------------------------------------------------------------
+  localstack:
+    image: localstack/localstack:latest
+    container_name: localstack
+    environment:
+      GEOGRAPHIES_BUCKET: test-bucket
+      AWS_ACCESS_KEY_ID: test
+      AWS_SECRET_ACCESS_KEY: test
+      AWS_ENDPOINT_URL: http://localstack:4566
+      AWS_DEFAULT_REGION: eu-west-1
+      DEBUG: 1
+      DOCKER_HOST: unix:///var/run/docker.sock
+    volumes:
+      - geographies-api/init-s3.sh:/etc/localstack/init/ready.d/init-s3.sh
+      - "${LOCALSTACK_VOLUME_DIR:-./volume}:/var/lib/localstack"
+      - /var/run/docker.sock:/var/run/docker.sock
+    ports:
+      - 4566:4566 # LocalStack Gateway
+      - 4510-4559:4510-4559 # external services port range
+
+  geographies-api:
+    build:
+      context: .
+      dockerfile: geographies-api/Dockerfile
+    container_name: geographies-api
+    ports:
+      - "8080"
+    environment:
+      AWS_ACCESS_KEY_ID: test
+      AWS_SECRET_ACCESS_KEY: test
+      AWS_ENDPOINT_URL: http://localstack:4566
+      AWS_DEFAULT_REGION: eu-west-1
+      GEOGRAPHIES_BUCKET: test-bucket
+      CDN_URL: http://localstack:4566/test-bucket
+    depends_on:
+      localstack:
+        condition: service_started
+
+volumes:
+  db-data-backend: {}
+  data-in-api-postgres-data: {}
+  data-in-pipeline-load-api-postgres-data: {}
+  navigator-postgres-data: {}
