@@ -2,7 +2,7 @@ import logging
 from typing import TypeVar
 
 from data_in_models.models import Document as DocumentOutput
-from fastapi import Depends, FastAPI, HTTPException, Query, status
+from fastapi import APIRouter, Depends, FastAPI, HTTPException, Query, status
 from pydantic import BaseModel
 
 from app.repository import check_db_health, get_all_documents, get_document_by_id
@@ -10,6 +10,7 @@ from app.session import get_db
 from app.settings import settings
 
 app = FastAPI(title="DATA IN API")
+router = APIRouter(prefix="/data-in")
 
 APIDataType = TypeVar("APIDataType")
 
@@ -31,17 +32,20 @@ class APIItemResponse[APIDataType](BaseModel):
     data: APIDataType
 
 
-@app.get("/")
+@router.get("/")
 def root():
     return {"status": "ok"}
 
 
+# We use both routers to make sure we can have /data-in/health available publicly
+# and /health available to the AppRunner health check.
 @app.get("/health")
+@router.get("/health")
 def health():
     return {"status": "ok"}
 
 
-@app.get("/db-health-check")
+@router.get("/db-health-check")
 def db_health_check(db=Depends(get_db)):
     try:
         is_healthy = check_db_health(db)
@@ -59,7 +63,7 @@ def db_health_check(db=Depends(get_db)):
     return {"status": "ok", "version": settings.github_sha}
 
 
-@app.get("/documents", response_model=APIListResponse[DocumentOutput])
+@router.get("/documents", response_model=APIListResponse[DocumentOutput])
 def list_documents(
     page: int = Query(1, ge=1),
     page_size: int = Query(default=20, ge=1, le=100),
@@ -79,7 +83,7 @@ def list_documents(
         )
 
 
-@app.get("/documents/{document_id}", response_model=APIItemResponse[DocumentOutput])
+@router.get("/documents/{document_id}", response_model=APIItemResponse[DocumentOutput])
 def get_document(document_id: str, db=Depends(get_db)):
     try:
         document = get_document_by_id(db, document_id)
@@ -98,3 +102,6 @@ def get_document(document_id: str, db=Depends(get_db)):
         raise HTTPException(
             status_code=status.HTTP_500_INTERNAL_SERVER_ERROR, detail=str(e)
         )
+
+
+app.include_router(router)

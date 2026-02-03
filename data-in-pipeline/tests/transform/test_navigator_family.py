@@ -513,7 +513,16 @@ def test_transform_navigator_family_with_single_matching_document(
                 document=DocumentWithoutRelationships(
                     id="collection",
                     title="Collection title",
-                    labels=[],
+                    labels=[
+                        DocumentLabelRelationship(
+                            type="entity_type",
+                            label=Label(
+                                id="Collection",
+                                title="Collection",
+                                type="entity_type",
+                            ),
+                        )
+                    ],
                 ),
             ),
             DocumentDocumentRelationship(
@@ -562,7 +571,16 @@ def test_transform_navigator_family_with_single_matching_document(
                 document=DocumentWithoutRelationships(
                     id="collection_matching",
                     title="Matching title on family and document and collection",
-                    labels=[],
+                    labels=[
+                        DocumentLabelRelationship(
+                            type="entity_type",
+                            label=Label(
+                                id="Collection",
+                                title="Collection",
+                                type="entity_type",
+                            ),
+                        )
+                    ],
                     items=[],
                 ),
             ),
@@ -621,7 +639,16 @@ def test_transform_navigator_family_with_single_matching_document(
             Document(
                 id="collection_matching",
                 title="Matching title on family and document and collection",
-                labels=[],
+                labels=[
+                    DocumentLabelRelationship(
+                        type="entity_type",
+                        label=Label(
+                            id="Collection",
+                            title="Collection",
+                            type="entity_type",
+                        ),
+                    )
+                ],
                 relationships=[
                     DocumentDocumentRelationship(
                         type="is_version_of",
@@ -634,7 +661,16 @@ def test_transform_navigator_family_with_single_matching_document(
             Document(
                 id="collection",
                 title="Collection title",
-                labels=[],
+                labels=[
+                    DocumentLabelRelationship(
+                        type="entity_type",
+                        label=Label(
+                            id="Collection",
+                            title="Collection",
+                            type="entity_type",
+                        ),
+                    )
+                ],
                 relationships=[
                     DocumentDocumentRelationship(
                         type="has_member",
