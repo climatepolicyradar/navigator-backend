@@ -23,12 +23,13 @@ class Settings(BaseSettings):
 
     github_sha: str = "unknown"
 
+    # DB connection secrets
+    db_url: SecretStr
+    db_name: SecretStr
+    db_secrets: SecretStr
+
     # DB connection parameters
-    db_master_username: str
-    managed_db_password: SecretStr
-    load_database_url: SecretStr
     db_port: str
-    db_name: str
 
     # Connection pool parameters
     statement_timeout: str = "10000"

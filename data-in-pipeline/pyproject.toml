@@ -29,8 +29,8 @@ dependencies = [
 
 [tool.uv.sources]
 api = { workspace = true }
-components = { git = "https://github.com/climatepolicyradar/infra", subdirectory = "components", tag = "v1.0.5" }
 data-in-models = { workspace = true }
+components = { git = "https://github.com/climatepolicyradar/infra", subdirectory = "components", tag = "v1.0.5" }
 
 
 [dependency-groups]

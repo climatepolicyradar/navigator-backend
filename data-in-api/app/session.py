@@ -19,26 +19,24 @@ _LOGGER = logging.getLogger(__name__)
 
 
 # Connection parameters from pydantic settings (validated on import)
-class ManagedDBPassword(BaseModel):
+class DBSecrets(BaseModel):
     username: str
     password: str
 
 
-username_password = ManagedDBPassword.model_validate_json(
-    settings.managed_db_password.get_secret_value()
-)
+db_secrets = DBSecrets.model_validate_json(settings.db_secrets.get_secret_value())
 
 SQLALCHEMY_DATABASE_URI = (
-    f"postgresql://{settings.db_master_username}:"
-    f"{username_password.password}@"
-    f"{settings.load_database_url.get_secret_value()}:"
-    f"{settings.db_port}/{settings.db_name}?sslmode={settings.db_sslmode}"
+    f"postgresql://{db_secrets.username}:"
+    f"{db_secrets.password}@"
+    f"{settings.db_url.get_secret_value()}:"
+    f"{settings.db_port}/{settings.db_name.get_secret_value()}?sslmode={settings.db_sslmode}"
 )
 
 _LOGGER.info(
     f"🔌 Initialising database engine for "
-    f"{settings.load_database_url.get_secret_value()}:"
-    f"{settings.db_port}/{settings.db_name}"
+    f"{settings.db_url.get_secret_value()}:"
+    f"{settings.db_port}/{settings.db_name.get_secret_value()}"
 )
 
 # Engine with connection pooling to prevent connection leaks
