@@ -252,7 +252,7 @@ def _upsert_document_document_relationships(
         db.exec(
             delete(DBDocumentRelationship).where(
                 DBDocumentRelationship.source_document_id == source_document_id,
-                DBDocumentRelationship.related_document_id.not_in(incoming_target_ids),
+                DBDocumentRelationship.related_document_id.not_in(incoming_target_ids),  # type: ignore[attr-defined]
             )
         )
     else:
