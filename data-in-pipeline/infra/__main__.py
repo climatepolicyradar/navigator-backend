@@ -466,7 +466,14 @@ data_in_pipeline_aurora_read_replica_db_url = aws.ssm.Parameter(
     ),
     description="URL for the load database read-replica",
     type=aws.ssm.ParameterType.STRING,
-    value=aurora_cluster.reader_endpoint,
+    # FIXME: we use the instance endpoint directly as the `aurora_cluster.reader_endpoint` is not allowing us to auth against it.
+    # `aurora_cluster.reader_endpoint` is a load balancing endpoint for read replicas.
+    # We know that [0] is the CURRENT reader instance as we looked in the console.
+    # Potential bugs
+    # - re-provisioning this might not work as expected (it might)
+    # - when and if we scaling this will yield odd results as we are not using the load balancer
+    # @see: https://linear.app/climate-policy-radar/issue/APP-1669/use-aurora-clusterreader-endpoint
+    value=aurora_instances[0].endpoint,
 )
 data_in_pipeline_aurora_read_replica_db_name = aws.ssm.Parameter(
     "data-in-pipeline-aurora-read-replica-db-name",
