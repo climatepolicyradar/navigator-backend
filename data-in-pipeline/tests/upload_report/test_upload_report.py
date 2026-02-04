@@ -2,6 +2,9 @@ import json
 from typing import cast
 from unittest.mock import MagicMock, patch
 
+from data_in_models.models import (
+    Document,
+)
 from prefect.futures import PrefectFuture
 
 from app.navigator_family_etl_pipeline import upload_report
@@ -9,7 +12,7 @@ from app.navigator_family_etl_pipeline import upload_report
 
 def make_future(result: str | Exception) -> PrefectFuture[str | Exception]:
     future = cast(PrefectFuture[str | Exception], MagicMock())
-    future.result.return_value = result
+    future.result.return_value = result  # type: ignore[valid-type]
     return future
 
 
@@ -18,9 +21,9 @@ def make_future(result: str | Exception) -> PrefectFuture[str | Exception]:
 def test_upload_report_uploads_summary(mock_get_logger, mock_upload_to_s3):
     mock_logger = mock_get_logger.return_value
 
-    document_batches = [
-        [MagicMock(), MagicMock()],
-        [MagicMock()],
+    document_batches: list[list[Document]] = [
+        [cast(Document, MagicMock()), cast(Document, MagicMock())],
+        [cast(Document, MagicMock())],
     ]
 
     load_results = [
@@ -51,7 +54,10 @@ def test_upload_report_uploads_summary(mock_get_logger, mock_upload_to_s3):
 
 @patch("app.navigator_family_etl_pipeline.upload_to_s3")
 def test_upload_report_all_batches_success(mock_upload_to_s3):
-    document_batches = [[MagicMock()], [MagicMock()]]
+    document_batches: list[list[Document]] = [
+        [cast(Document, MagicMock())],
+        [cast(Document, MagicMock())],
+    ]
     load_results = [
         make_future("ok"),
         make_future("ok"),
