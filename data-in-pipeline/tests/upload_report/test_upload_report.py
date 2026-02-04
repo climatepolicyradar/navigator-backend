@@ -1,11 +1,14 @@
 import json
+from typing import cast
 from unittest.mock import MagicMock, patch
+
+from prefect.futures import PrefectFuture
 
 from app.navigator_family_etl_pipeline import upload_report
 
 
-def make_future(result):
-    future = MagicMock()
+def make_future(result: str | Exception) -> PrefectFuture[str | Exception]:
+    future = cast(PrefectFuture[str | Exception], MagicMock())
     future.result.return_value = result
     return future
 
