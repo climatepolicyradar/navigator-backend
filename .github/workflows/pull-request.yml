@@ -150,8 +150,8 @@ jobs:
   #
   # This acts as an accumulator of the `test` job results above.
   tests:
-    if: always()
-    needs: [test]
+    if: always() && needs.changes.outputs.services != '[]'
+    needs: [test, changes]
     runs-on: ubuntu-latest
     steps:
       # possible values
