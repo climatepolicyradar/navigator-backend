@@ -1,49 +1,65 @@
 import json
-from unittest.mock import patch
-
-import pytest
+from unittest.mock import MagicMock, patch
 
 from app.navigator_family_etl_pipeline import upload_report
 
 
-@patch("app.navigator_family_etl_pipeline.upload_to_s3")
-def test_upload_report_exceeds_limit_uploads_to_s3(mock_upload_to_s3):
-    """Test upload to S3 when result exceeds log limit."""
-    loaded_ids = [f"doc-{i}" for i in range(150)]
-    run_id = "test-run-123"
-    result_log_limit = 100
+def make_future(result):
+    future = MagicMock()
+    future.result.return_value = result
+    return future
 
-    upload_report.fn(loaded_ids, run_id, result_log_limit)
+
+@patch("app.navigator_family_etl_pipeline.upload_to_s3")
+@patch("app.navigator_family_etl_pipeline.get_logger")
+def test_upload_report_uploads_summary(mock_get_logger, mock_upload_to_s3):
+    mock_logger = mock_get_logger.return_value
+
+    document_batches = [
+        [MagicMock(), MagicMock()],
+        [MagicMock()],
+    ]
+
+    load_results = [
+        make_future("ok"),
+        make_future(Exception("db error")),
+    ]
+
+    run_id = "test-run-123"
+
+    upload_report.fn(document_batches, load_results, run_id)
+
+    expected_report = {
+        "run_id": run_id,
+        "total_batches": 2,
+        "total_documents": 3,
+        "successful_batches": 1,
+        "failed_batches": 1,
+    }
 
     mock_upload_to_s3.assert_called_once_with(
-        json.dumps(loaded_ids),
+        json.dumps(expected_report),
         bucket="cpr-cache",
-        key="pipelines/data-in-pipeline/navigator_family/test-run-123-result.json",
+        key="pipelines/data-in-pipeline/navigator_family/test-run-123-load-report.json",
     )
 
-
-@patch("app.navigator_family_etl_pipeline.get_logger")
-@patch("app.navigator_family_etl_pipeline.upload_to_s3")
-def test_upload_report_within_limit_logs_ids(mock_upload_to_s3, mock_get_logger):
-    """Test logging IDs when result is within log limit."""
-    mock_logger = mock_get_logger.return_value
-    loaded_ids = ["doc-1", "doc-2", "doc-3"]
-    run_id = "test-run-123"
-    result_log_limit = 100
-
-    upload_report.fn(loaded_ids, run_id, result_log_limit)
-
-    mock_upload_to_s3.assert_not_called()
-    mock_logger.info.assert_called_once_with("Loaded document IDs: %s", loaded_ids)
+    mock_logger.info.assert_called_once_with("Uploaded load report for 3 documents")
 
 
 @patch("app.navigator_family_etl_pipeline.upload_to_s3")
-def test_upload_report_handles_upload_failure(mock_upload_to_s3):
-    """Test handling of S3 upload failure."""
-    loaded_ids = [f"doc-{i}" for i in range(150)]
-    run_id = "test-run-123"
-    result_log_limit = 100
-    mock_upload_to_s3.side_effect = Exception("S3 connection failed")
+def test_upload_report_all_batches_success(mock_upload_to_s3):
+    document_batches = [[MagicMock()], [MagicMock()]]
+    load_results = [
+        make_future("ok"),
+        make_future("ok"),
+    ]
 
-    with pytest.raises(Exception, match="S3 connection failed"):
-        upload_report.fn(loaded_ids, run_id, result_log_limit)
+    run_id = "test-run-123"
+
+    upload_report.fn(document_batches, load_results, run_id)
+
+    uploaded_json = mock_upload_to_s3.call_args.args[0]
+    report = json.loads(uploaded_json)
+
+    assert report["run_id"] == run_id
+    assert report["total_batches"] == len(document_batches)

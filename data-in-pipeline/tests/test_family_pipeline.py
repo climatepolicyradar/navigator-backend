@@ -3,8 +3,11 @@ from http import HTTPStatus
 from unittest.mock import MagicMock, patch
 
 import pytest
+from data_in_models.models import (
+    DocumentWithoutRelationships,
+)
 from requests.exceptions import HTTPError
-from returns.result import Failure
+from returns.result import Failure, Success
 
 from app.extract.connectors import (
     FamilyFetchResult,
@@ -15,7 +18,7 @@ from app.extract.connectors import (
     NavigatorOrganisation,
     PageFetchFailure,
 )
-from app.models import ExtractedEnvelope, ExtractedMetadata
+from app.models import ExtractedEnvelope, ExtractedMetadata, PipelineResult
 from app.navigator_family_etl_pipeline import data_in_pipeline
 from app.transform.models import NoMatchingTransformations
 
@@ -129,10 +132,8 @@ def test_process_family_updates_flow_multiple_families(
 
     result = data_in_pipeline()
 
-    expected_number_of_results = 2
-    assert isinstance(result, list)
-    assert len(result) == expected_number_of_results
-    assert result[0] == "1"
+    assert isinstance(result, PipelineResult)
+    assert result.status == "success"
 
 
 @patch("app.navigator_family_etl_pipeline.run_db_migrations")
@@ -177,9 +178,12 @@ def test_process_family_updates_flow_extraction_failure(
 @patch("app.navigator_family_etl_pipeline.run_db_migrations")
 @patch("app.navigator_family_etl_pipeline.upload_to_s3")
 @patch("app.navigator_family_etl_pipeline.NavigatorConnector")
-@patch("app.load.load.requests.put")
+@patch("app.navigator_family_etl_pipeline.load_batch")
 def test_etl_pipeline_load_failure(
-    mock_post, mock_connector_class, mock_upload, mock_run_migrations
+    mock_load_batch_task,
+    mock_connector_class,
+    mock_upload,
+    mock_run_migrations,
 ):
     mock_run_migrations.return_value = None
 
@@ -188,11 +192,6 @@ def test_etl_pipeline_load_failure(
     mock_connector_instance = MagicMock()
     mock_connector_class.return_value = mock_connector_instance
     mock_connector_instance.close.return_value = None
-
-    mock_response = MagicMock()
-    mock_response.status_code = 500
-    mock_response.raise_for_status.side_effect = HTTPError("Server error")
-    mock_post.return_value = mock_response
 
     test_data = [
         NavigatorFamily(
@@ -238,18 +237,28 @@ def test_etl_pipeline_load_failure(
     mock_connector_instance.fetch_all_families.return_value = FamilyFetchResult(
         envelopes=[test_envelope], failure=None
     )
+    mock_load_batch_task.side_effect = HTTPError("Server error")
+    mock_future = MagicMock()
+    mock_future.result.return_value = HTTPError("Server error")
+    mock_load_batch_task.map.return_value = [mock_future]
 
     result = data_in_pipeline()
 
     assert isinstance(result, Exception)
+    assert "One or more batches failed to load" in str(result)
 
 
+@patch("app.navigator_family_etl_pipeline.transform_navigator_family")
 @patch("app.navigator_family_etl_pipeline.run_db_migrations")
 @patch("app.navigator_family_etl_pipeline.upload_to_s3")
 @patch("app.navigator_family_etl_pipeline.NavigatorConnector")
 @patch("app.load.load.requests.put")
 def test_etl_pipeline_partial_transformation_failure(
-    mock_put, mock_connector_class, mock_upload, mock_run_migrations
+    mock_put,
+    mock_connector_class,
+    mock_upload,
+    mock_run_migrations,
+    mock_transform_families,
 ):
     """Test that pipeline continues when some families fail transformation."""
     mock_run_migrations.return_value = None
@@ -259,13 +268,11 @@ def test_etl_pipeline_partial_transformation_failure(
     mock_connector_class.return_value = mock_connector_instance
     mock_connector_instance.close.return_value = None
 
-    # Mock successful load for documents that do transform
     mock_put_response = MagicMock()
     mock_put_response.status_code = 201
     mock_put_response.json.return_value = ["valid-family-doc"]
     mock_put.return_value = mock_put_response
 
-    # One valid family, one family that will fail transformation (no matching transformation)
     valid_family = NavigatorFamily(
         import_id="valid-family",
         title="Valid Family",
@@ -325,13 +332,26 @@ def test_etl_pipeline_partial_transformation_failure(
         envelopes=[envelope], failure=None
     )
 
+    mock_transformed_documents = [
+        DocumentWithoutRelationships(
+            id="test-doc",
+            title="This is the test doc",
+            description=None,
+            labels=[],
+            items=[],
+        )
+    ]
+
+    mock_transform_families.side_effect = [
+        Success(mock_transformed_documents),
+        Failure(NoMatchingTransformations()),
+    ]
+
     result = data_in_pipeline()
 
-    assert isinstance(result, list)
-    assert len(result) == 1
-    assert result[0] == "valid-family-doc"
-
-    assert mock_put.call_count == 1
+    assert isinstance(result, PipelineResult)
+    assert result.documents_processed == len(mock_transformed_documents)
+    assert result.status == "success"
 
 
 @patch("app.navigator_family_etl_pipeline.transform_navigator_family")
