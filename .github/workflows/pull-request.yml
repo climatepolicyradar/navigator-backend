@@ -40,29 +40,33 @@ jobs:
     steps:
       - uses: actions/checkout@v6
       - uses: dorny/paths-filter@v3
-        id: filter
+        id: filter-code-changes
         with:
           filters: |
             families-api:
               - 'families-api/**'
+              - '!families-api/infra/**'
               - 'api/**'
               - 'uv.lock'
               - pyproject.toml
 
             geographies-api:
               - 'geographies-api/**'
+              - '!geographies-api/infra/**'
               - 'api/**'
               - 'uv.lock'
               - pyproject.toml
 
             concepts-api:
               - 'concepts-api/**'
+              - '!concepts-api/infra/**'
               - 'api/**'
               - 'uv.lock'
               - pyproject.toml
 
             data-in-pipeline:
               - 'data-in-pipeline/**'
+              - '!data-in-pipeline/infra/**'
               - 'api/**'
               - 'data-in-models/**'
               - 'uv.lock'
@@ -70,39 +74,51 @@ jobs:
 
             data-in-pipeline-load-api:
               - 'data-in-pipeline-load-api/**'
+              - '!data-in-pipeline-load-api/infra/**'
               - 'api/**'
               - 'uv.lock'
               - pyproject.toml
-              
+
             data-in-api:
               - 'data-in-api/**'
+              - '!data-in-api/infra/**'
               - 'api/**'
               - 'uv.lock'
               - pyproject.toml
 
-            families-api/infra:
+          predicate-quantifier: every
+
+      - uses: dorny/paths-filter@v3
+        id: filter-infra-changes
+        with:
+          filters: |
+            families-api:
               - 'families-api/infra/**'
 
-            geographies-api/infra:
+            geographies-api:
               - 'geographies-api/infra/**'
 
-            concepts-api/infra:
+            concepts-api:
               - 'concepts-api/infra/**'
 
-            data-in-pipeline/infra:
+            data-in-pipeline:
               - 'data-in-pipeline/infra/**'
 
-            data-in-pipeline-load-api/infra:
+            data-in-pipeline-load-api:
               - 'data-in-pipeline-load-api/infra/**'
 
-            data-in-api/infra:
+            data-in-api:
               - 'data-in-api/infra/**'
+          predicate-quantifier: every
 
       - id: parse
         run: |
-          CHANGES='${{ steps.filter.outputs.changes }}'
-          echo "services=$(echo "$CHANGES" | jq -c '[.[] | select(contains("/infra") | not)]')" >> $GITHUB_OUTPUT
-          echo "infra_services=$(echo "$CHANGES" | jq -c '[.[] | select(contains("/infra"))]')" >> $GITHUB_OUTPUT
+          CHANGES='${{ steps.filter-code-changes.outputs.changes }}'
+          INFRA_CHANGES='${{ steps.filter-infra-changes.outputs.changes }}'
+          CHANGES=${CHANGES:-[]}
+          INFRA_CHANGES=${INFRA_CHANGES:-[]}
+          echo "services=$(echo "$CHANGES" | jq -c '.')" >> $GITHUB_OUTPUT
+          echo "infra_services=$(echo "$INFRA_CHANGES" | jq -c '.')" >> $GITHUB_OUTPUT
 
   no-mixed-infra-and-code:
     needs: changes
@@ -113,7 +129,8 @@ jobs:
         run: |
           SERVICES='${{ needs.changes.outputs.services }}'
           INFRA='${{ needs.changes.outputs.infra_services }}'
-          if [ "$SERVICES" != '[]' ] && [ "$INFRA" != '[]' ]; then
+          # Empty or '[]' means no changes; only fail when BOTH have actual content
+          if [ -n "$SERVICES" ] && [ "$SERVICES" != '[]' ] && [ -n "$INFRA" ] && [ "$INFRA" != '[]' ]; then
             echo "This PR changes both application code and infrastructure. Split into separate PRs: infra changes and code changes cannot be deployed in the same merge."
             exit 1
           fi
@@ -138,8 +155,8 @@ jobs:
   #
   # This acts as an accumulator of the `test` job results above.
   tests:
-    if: always()
-    needs: [test]
+    if: always() && needs.changes.outputs.services != '[]'
+    needs: [test, changes]
     runs-on: ubuntu-latest
     steps:
       # possible values
@@ -175,9 +192,7 @@ jobs:
           PULUMI_ACCESS_TOKEN: ${{ secrets.PULUMI_ACCESS_TOKEN }}
       - name: Pulumi preview
         run: |
-          SERVICE_INFRA_FOLDER="${{ matrix.service }}"
-          STACK_NAME="${SERVICE_INFRA_FOLDER%/infra}"
-          just test-infra "$STACK_NAME" "${{ matrix.environment }}"
+          just test-infra "${{ matrix.service }}" "${{ matrix.environment }}"
         env:
           PULUMI_ACCESS_TOKEN: ${{ secrets.PULUMI_ACCESS_TOKEN }}
 
@@ -208,9 +223,7 @@ jobs:
           PULUMI_ACCESS_TOKEN: ${{ secrets.PULUMI_ACCESS_TOKEN }}
       - name: Deploy infra
         run: |
-          SERVICE_INFRA_FOLDER="${{ matrix.service }}"
-          STACK_NAME="${SERVICE_INFRA_FOLDER%/infra}"
-          just deploy-infra "$STACK_NAME" "${{ matrix.environment }}"
+          just deploy-infra "${{ matrix.service }}" "${{ matrix.environment }}"
         env:
           PULUMI_ACCESS_TOKEN: ${{ secrets.PULUMI_ACCESS_TOKEN }}
 
