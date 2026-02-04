@@ -1,12 +1,12 @@
 import json
 from datetime import datetime
-from typing import Literal
+from typing import Any, Literal, cast
 
 from data_in_models.models import Document
 from prefect import flow, task
 from prefect.futures import PrefectFuture
 from prefect.runtime import flow_run, task_run
-from prefect.task_runners import ThreadPoolTaskRunner
+from prefect.task_runners import TaskRunner, ThreadPoolTaskRunner
 from returns.result import Failure, Success
 
 from app.bootstrap_telemetry import get_logger, pipeline_metrics
@@ -243,7 +243,16 @@ def check_load_results(batched_results: list[PrefectFuture[str | Exception]]) ->
 # ---------------------------------------------------------------------
 
 
-@flow(log_prints=True, task_runner=ThreadPoolTaskRunner(max_workers=5))
+# NOTE: Pyright flags ThreadPoolTaskRunner here due to invariant generic
+# mismatch in Prefect's type hints, even though it is runtime-compatible.
+# We cast explicitly to document intent and avoid a broad type ignore.
+task_runner = cast(
+    TaskRunner[PrefectFuture[Any]],
+    ThreadPoolTaskRunner(max_workers=5),
+)
+
+
+@flow(log_prints=True, task_runner=task_runner)
 @pipeline_metrics.track(
     pipeline_type=PipelineType.FAMILY, scope="batch", flush_on_exit=True
 )
