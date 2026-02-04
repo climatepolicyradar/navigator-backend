@@ -33,3 +33,15 @@ class Identified[ExtractedData](BaseModel):
     data: ExtractedData
     id: str
     source: str
+
+
+class PipelineResult(BaseModel):
+    """Result of the ETL pipeline execution."""
+
+    documents_processed: int = Field(
+        ..., description="Total number of documents successfully processed"
+    )
+    batches_loaded: int = Field(
+        ..., description="Number of batches loaded to the database"
+    )
+    status: str = Field(..., description="Pipeline execution status")
