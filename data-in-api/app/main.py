@@ -9,7 +9,12 @@ from app.repository import check_db_health, get_all_documents, get_document_by_i
 from app.session import get_db
 from app.settings import settings
 
-app = FastAPI(title="DATA IN API")
+app = FastAPI(
+    title="Data-in API",
+    docs_url="/data-in/docs",
+    redoc_url="/data-in/redoc",
+    openapi_url="/data-in/openapi.json",
+)
 router = APIRouter(prefix="/data-in")
 
 APIDataType = TypeVar("APIDataType")
