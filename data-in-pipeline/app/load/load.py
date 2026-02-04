@@ -7,7 +7,7 @@ from pydantic import TypeAdapter
 from app.bootstrap_telemetry import get_logger
 
 
-def load_to_db(documents: list[Document]) -> list[str] | Exception:
+def load_to_db(documents: list[Document]) -> str | Exception:
     """Sends documents to the load API to be saved in the DB.
 
     :param list[Document] documents: List of document objects to be saved.
@@ -26,7 +26,7 @@ def load_to_db(documents: list[Document]) -> list[str] | Exception:
         response = requests.put(
             url=f"{load_api_base_url}/load/documents",
             json=TypeAdapter(list[Document]).dump_python(documents, mode="json"),
-            timeout=180,
+            timeout=30,  # seconds - adjusted for batch processing
         )
         response.raise_for_status()
     except requests.exceptions.HTTPError as e:
@@ -37,5 +37,5 @@ def load_to_db(documents: list[Document]) -> list[str] | Exception:
         )
         return e
 
-    _LOGGER.info("Loaded %d documents to the load DB.", len(documents))
-    return response.json()
+    _LOGGER.info("Successfully loaded batch of %d documents.", len(documents))
+    return response.text
