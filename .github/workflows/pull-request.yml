@@ -115,6 +115,10 @@ jobs:
         run: |
           CHANGES='${{ steps.filter-code-changes.outputs.changes }}'
           INFRA_CHANGES='${{ steps.filter-infra-changes.outputs.changes }}'
+          CHANGES=${CHANGES:-[]}
+          INFRA_CHANGES=${INFRA_CHANGES:-[]}
+          echo "services=$(echo "$CHANGES" | jq -c '.')" >> $GITHUB_OUTPUT
+          echo "infra_services=$(echo "$INFRA_CHANGES" | jq -c '.')" >> $GITHUB_OUTPUT
 
   no-mixed-infra-and-code:
     needs: changes
@@ -125,7 +129,8 @@ jobs:
         run: |
           SERVICES='${{ needs.changes.outputs.services }}'
           INFRA='${{ needs.changes.outputs.infra_services }}'
-          if [ "$SERVICES" != '[]' ] && [ "$INFRA" != '[]' ]; then
+          # Empty or '[]' means no changes; only fail when BOTH have actual content
+          if [ -n "$SERVICES" ] && [ "$SERVICES" != '[]' ] && [ -n "$INFRA" ] && [ "$INFRA" != '[]' ]; then
             echo "This PR changes both application code and infrastructure. Split into separate PRs: infra changes and code changes cannot be deployed in the same merge."
             exit 1
           fi
