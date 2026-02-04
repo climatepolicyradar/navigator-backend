@@ -4,6 +4,7 @@ from typing import Literal
 
 from data_in_models.models import Document
 from prefect import flow, task
+from prefect.futures import PrefectFuture
 from prefect.runtime import flow_run, task_run
 from prefect.task_runners import ThreadPoolTaskRunner
 from returns.result import Failure, Success
@@ -188,20 +189,20 @@ def create_batches(
 @task(log_prints=True)
 def upload_report(
     document_batches: list[list[Document]],
-    load_results: list[list[str] | Exception],
+    load_results: list[PrefectFuture[str | Exception]],
     run_id: str,
 ) -> None:
     """Upload report of what was processed in this run."""
     _LOGGER = get_logger()
 
+    results = [future.result() for future in load_results]
+
     report = {
         "run_id": run_id,
         "total_batches": len(document_batches),
         "total_documents": sum(len(batch) for batch in document_batches),
-        "successful_batches": sum(
-            1 for r in load_results if not isinstance(r, Exception)
-        ),
-        "failed_batches": sum(1 for r in load_results if isinstance(r, Exception)),
+        "successful_batches": sum(1 for r in results if not isinstance(r, Exception)),
+        "failed_batches": sum(1 for r in results if isinstance(r, Exception)),
     }
 
     upload_to_s3(
@@ -214,7 +215,7 @@ def upload_report(
 
 
 @task(log_prints=True)
-def check_load_results(batched_results: list[str | Exception]) -> bool:
+def check_load_results(batched_results: list[PrefectFuture[str | Exception]]) -> bool:
     """Check if all batches loaded successfully.
 
     :param batched_results: Results from batch load operations
@@ -222,18 +223,18 @@ def check_load_results(batched_results: list[str | Exception]) -> bool:
     """
     _LOGGER = get_logger()
 
-    errors = [result for result in batched_results if isinstance(result, Exception)]
+    results = [future.result() for future in batched_results]
+
+    errors = [result for result in results if isinstance(result, Exception)]
 
     if errors:
-        _LOGGER.error(
-            f"Load failed for {len(errors)} out of {len(batched_results)} batches"
-        )
+        _LOGGER.error(f"Load failed for {len(errors)} out of {len(results)} batches")
         for error in errors:
             _LOGGER.error(f"Batch error: {error}")
             pipeline_metrics.record_error(Operation.LOAD, ErrorType.STORAGE)
         return False
 
-    _LOGGER.info(f"All {len(batched_results)} batches loaded successfully")
+    _LOGGER.info(f"All {len(results)} batches loaded successfully")
     return True
 
 
