@@ -26,7 +26,7 @@ def load_to_db(documents: list[Document]) -> list[str] | Exception:
         response = requests.put(
             url=f"{load_api_base_url}/load/documents",
             json=TypeAdapter(list[Document]).dump_python(documents, mode="json"),
-            timeout=180,
+            timeout=30,  # seconds
         )
         response.raise_for_status()
     except requests.exceptions.HTTPError as e:
