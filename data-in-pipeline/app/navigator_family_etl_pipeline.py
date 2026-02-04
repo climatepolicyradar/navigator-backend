@@ -5,6 +5,7 @@ from typing import Literal
 from data_in_models.models import Document
 from prefect import flow, task
 from prefect.runtime import flow_run, task_run
+from prefect.task_runners import ConcurrentTaskRunner
 from returns.result import Failure, Success
 
 from app.bootstrap_telemetry import get_logger, pipeline_metrics
@@ -18,7 +19,7 @@ from app.extract.enums import CheckPointStorageType
 from app.identify.navigator_family import identify_navigator_families
 from app.load.aws_bucket import upload_to_s3
 from app.load.load import load_to_db
-from app.models import ExtractedEnvelope, Identified
+from app.models import ExtractedEnvelope, Identified, PipelineResult
 from app.pipeline_metrics import ErrorType, Operation, PipelineType, Status
 from app.run_db_migrations.run_db_migrations import run_db_migrations
 from app.transform.navigator_family import (
@@ -149,39 +150,91 @@ def transform(
     return all_documents, errors
 
 
-@task(log_prints=True)
+@task(log_prints=True, retries=2, retry_delay_seconds=5)
 @pipeline_metrics.track(operation=Operation.LOAD)
-def load(
+def load_batch(
     transformed: list[Document],
 ) -> list[str] | Exception:
-    """Save transformed document."""
+    """Load a batch of documents to the database.
+
+    This task includes automatic retries for transient failures.
+
+    :param documents: Batch of documents to load
+    :return: List of document IDs or Exception if the batch fails
+    """
     return load_to_db(transformed)
 
 
 @task(log_prints=True)
-def upload_report(
-    loaded: list[str],
-    run_id: str,
-    result_log_limit: int,
-) -> None:
-    """Upload report to S3 if result exceeds log limit, otherwise log IDs.
+def create_batches(
+    documents: list[Document], batch_size: int = 500
+) -> list[list[Document]]:
+    """Split documents into batches for parallel loading.
 
-    :param loaded: List of loaded document IDs.
-    :type loaded: list[str]
-    :param run_id: Flow run identifier.
-    :type run_id: str
-    :param result_log_limit: Maximum number of IDs to log directly.
-    :type result_log_limit: int
+    :param documents: All documents to be batched
+    :param batch_size: Number of documents per batch
+    :return: List of document batches
     """
     _LOGGER = get_logger()
-    if len(loaded) > result_log_limit:
-        upload_to_s3(
-            json.dumps(loaded),
-            bucket="cpr-cache",
-            key=f"pipelines/data-in-pipeline/navigator_family/{run_id}-result.json",
+    batches = [
+        documents[i : i + batch_size] for i in range(0, len(documents), batch_size)
+    ]
+    _LOGGER.info(
+        f"Created {len(batches)} batches of size {batch_size} from {len(documents)} documents"
+    )
+    return batches
+
+
+@task(log_prints=True)
+def upload_report(
+    document_batches: list[list[Document]],
+    load_results: list[list[str] | Exception],
+    run_id: str,
+) -> None:
+    """Upload report of what was processed in this run."""
+    _LOGGER = get_logger()
+
+    report = {
+        "run_id": run_id,
+        "total_batches": len(document_batches),
+        "total_documents": sum(len(batch) for batch in document_batches),
+        "successful_batches": sum(
+            1 for r in load_results if not isinstance(r, Exception)
+        ),
+        "failed_batches": sum(1 for r in load_results if isinstance(r, Exception)),
+    }
+
+    upload_to_s3(
+        json.dumps(report),
+        bucket="cpr-cache",
+        key=f"pipelines/data-in-pipeline/navigator_family/{run_id}-load-report.json",
+    )
+
+    _LOGGER.info(f"Uploaded load report for {report['total_documents']} documents")
+
+
+@task(log_prints=True)
+def check_load_results(batched_results: list[str | Exception]) -> bool:
+    """Check if all batches loaded successfully.
+
+    :param batched_results: Results from batch load operations
+    :return: True if all batches succeeded, False otherwise
+    """
+    _LOGGER = get_logger()
+
+    errors = [result for result in batched_results if isinstance(result, Exception)]
+
+    if errors:
+        _LOGGER.error(
+            f"Load failed for {len(errors)} out of {len(batched_results)} batches"
         )
-    else:
-        _LOGGER.info("Loaded document IDs: %s", loaded)
+        for error in errors:
+            _LOGGER.error(f"Batch error: {error}")
+            pipeline_metrics.record_error(Operation.LOAD, ErrorType.STORAGE)
+        return False
+
+    _LOGGER.info(f"All {len(batched_results)} batches loaded successfully")
+    return True
 
 
 # ---------------------------------------------------------------------
@@ -189,13 +242,15 @@ def upload_report(
 # ---------------------------------------------------------------------
 
 
-@flow(log_prints=True)
+@flow(log_prints=True, task_runner=ConcurrentTaskRunner(max_workers=3))
 @pipeline_metrics.track(
     pipeline_type=PipelineType.FAMILY, scope="batch", flush_on_exit=True
 )
 def data_in_pipeline(
-    ids: list[str] | None = None, result_log_limit: int = 100
-) -> list[str] | Exception:
+    ids: list[str] | None = None,
+    batch_size: int = 500,
+    max_concurrent_batches: int = 3,
+) -> PipelineResult | Exception:
     """Run the full Navigator ETL pipeline.
 
     If IDs are provided, processes only those specific families.
@@ -206,7 +261,8 @@ def data_in_pipeline(
         2. Identify their source type.
         3. Transform to target schema.
         4. Load transformed documents to S3 cache.
-        5. Save transformed documents to the load DB.
+        5. Save transformed documents to the load DB in batches.
+        6. Upload report with results.
     """
     _LOGGER = get_logger()
     _LOGGER.info("ETL pipeline started")
@@ -224,6 +280,9 @@ def data_in_pipeline(
         # Otherwise, process all families (existing batch logic)
         _LOGGER.info("Processing all families")
 
+    # -------------------------
+    # EXTRACT
+    # -------------------------
     extracted_result = extract(ids)
     cache_extraction_result(extracted_result)
 
@@ -239,9 +298,17 @@ def data_in_pipeline(
 
     if not envelopes:
         _LOGGER.info("No families found to process")
-        return []
+        return Exception("No families found to process")
+
+    # -------------------------
+    # IDENTIFY
+    # -------------------------
 
     identified_families = identify(envelopes)
+
+    # -------------------------
+    # TRANSFORM
+    # -------------------------
     transformed_documents, errors = transform(identified_families)
 
     if errors:
@@ -253,16 +320,34 @@ def data_in_pipeline(
         pipeline_metrics.record_processed(PipelineType.FAMILY, Status.FAILURE)
         return Exception("No documents transformed successfully")
 
+    # -------------------------
+    # LOAD TO S3 CACHE
+    # -------------------------
     load_to_s3(transformed_documents, run_id)
-    loaded = load(transformed_documents)
-    if isinstance(loaded, Exception):
-        _LOGGER.error(f"Load failed: {loaded}")
-        pipeline_metrics.record_error(Operation.LOAD, ErrorType.STORAGE)
+
+    # -------------------------
+    # BATCH AND LOAD TO DB
+    # -------------------------
+    _LOGGER.info(
+        f"Starting batched load: {len(transformed_documents)} documents, "
+        f"batch_size={batch_size}, max_concurrent={max_concurrent_batches}"
+    )
+
+    document_batches = create_batches(transformed_documents, batch_size)
+    load_results = load_batch.map(document_batches)
+    all_succeeded = check_load_results(load_results)
+
+    if not all_succeeded:
         pipeline_metrics.record_processed(PipelineType.FAMILY, Status.FAILURE)
-        return Exception(f"Load failed {loaded}")
+        return Exception("One or more batches failed to load")
 
     pipeline_metrics.record_processed(PipelineType.FAMILY, Status.SUCCESS)
     _LOGGER.info("ETL pipeline completed successfully")
 
-    upload_report(loaded, run_id, result_log_limit)
-    return loaded
+    upload_report(document_batches, load_results, run_id)
+
+    return PipelineResult(
+        documents_processed=len(transformed_documents),
+        batches_loaded=len(document_batches),
+        status="success",
+    )
