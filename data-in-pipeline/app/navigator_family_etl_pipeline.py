@@ -5,7 +5,7 @@ from typing import Literal
 from data_in_models.models import Document
 from prefect import flow, task
 from prefect.runtime import flow_run, task_run
-from prefect.task_runners import ConcurrentTaskRunner
+from prefect.task_runners import ThreadPoolTaskRunner
 from returns.result import Failure, Success
 
 from app.bootstrap_telemetry import get_logger, pipeline_metrics
@@ -154,7 +154,7 @@ def transform(
 @pipeline_metrics.track(operation=Operation.LOAD)
 def load_batch(
     transformed: list[Document],
-) -> list[str] | Exception:
+) -> str | Exception:
     """Load a batch of documents to the database.
 
     This task includes automatic retries for transient failures.
@@ -242,7 +242,7 @@ def check_load_results(batched_results: list[str | Exception]) -> bool:
 # ---------------------------------------------------------------------
 
 
-@flow(log_prints=True, task_runner=ConcurrentTaskRunner(max_workers=3))
+@flow(log_prints=True, task_runner=ThreadPoolTaskRunner(max_workers=5))
 @pipeline_metrics.track(
     pipeline_type=PipelineType.FAMILY, scope="batch", flush_on_exit=True
 )
