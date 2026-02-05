@@ -345,7 +345,10 @@ def data_in_pipeline(
 
     document_batches = create_batches(transformed_documents, batch_size)
     load_results = load_batch.map(document_batches)
-    all_succeeded = check_load_results(load_results)
+
+    # Prefect resolves mapped task results before invoking tasks.
+    # Pyright sees PrefectFutureList here, but runtime value is list[str | Exception].
+    all_succeeded = check_load_results(load_results)  # type: ignore[reportArgumentType]
 
     if not all_succeeded:
         pipeline_metrics.record_processed(PipelineType.FAMILY, Status.FAILURE)
@@ -354,7 +357,9 @@ def data_in_pipeline(
     pipeline_metrics.record_processed(PipelineType.FAMILY, Status.SUCCESS)
     _LOGGER.info("ETL pipeline completed successfully")
 
-    upload_report(document_batches, load_results, run_id)
+    # Prefect resolves mapped task results before invoking tasks.
+    # Pyright sees PrefectFutureList here, but runtime value is list[str | Exception].
+    upload_report(document_batches, load_results, run_id)  # type: ignore[reportArgumentType]
 
     return PipelineResult(
         documents_processed=len(transformed_documents),
