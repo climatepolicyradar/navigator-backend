@@ -186,17 +186,25 @@ def test_etl_pipeline_load_failure(
     mock_run_migrations,
 ):
     mock_run_migrations.return_value = None
-
     mock_upload.return_value = None
 
     mock_connector_instance = MagicMock()
     mock_connector_class.return_value = mock_connector_instance
     mock_connector_instance.close.return_value = None
 
+    test_family_id = "i00000315"
+    test_family_title = "Belgium UNCBD National Targets"
+    test_source_name = "navigator_family"
+    test_source_record_id = "task-001-families-endpoint-page-1"
+    test_task_run_id = "task-001"
+    test_flow_run_id = "flow-001"
+    test_endpoint = "https://api.example.com/families/?page=1"
+    expected_error_message = "One or more batches failed to load"
+
     test_data = [
         NavigatorFamily(
-            import_id="i00000315",
-            title="Belgium UNCBD National Targets",
+            import_id=test_family_id,
+            title=test_family_title,
             summary="Family summary",
             category="REPORTS",
             corpus=NavigatorCorpus(
@@ -206,8 +214,8 @@ def test_etl_pipeline_load_failure(
             ),
             documents=[
                 NavigatorDocument(
-                    import_id="i00000315",
-                    title="Belgium UNCBD National Targets",
+                    import_id=test_family_id,
+                    title=test_family_title,
                     events=[],
                 )
             ],
@@ -220,32 +228,33 @@ def test_etl_pipeline_load_failure(
     test_envelope = ExtractedEnvelope(
         data=test_data,
         id="test-uuid-1",
-        source_name="navigator_family",
-        source_record_id="task-001-families-endpoint-page-1",
+        source_name=test_source_name,
+        source_record_id=test_source_record_id,
         raw_payload=test_data,
         content_type="application/json",
         connector_version="1.0.0",
         extracted_at=datetime.now(UTC),
-        task_run_id="task-001",
-        flow_run_id="flow-001",
+        task_run_id=test_task_run_id,
+        flow_run_id=test_flow_run_id,
         metadata=ExtractedMetadata(
-            endpoint="https://api.example.com/families/?page=1",
+            endpoint=test_endpoint,
             http_status=HTTPStatus.OK,
         ),
     )
 
+    # Mock connector response
     mock_connector_instance.fetch_all_families.return_value = FamilyFetchResult(
         envelopes=[test_envelope], failure=None
     )
-    mock_load_batch_task.side_effect = HTTPError("Server error")
-    mock_future = MagicMock()
-    mock_future.result.return_value = HTTPError("Server error")
-    mock_load_batch_task.map.return_value = [mock_future]
+
+    mock_load_batch_task.map.return_value = [HTTPError("Server error")]
 
     result = data_in_pipeline()
 
     assert isinstance(result, Exception)
-    assert "One or more batches failed to load" in str(result)
+    assert expected_error_message in str(result)
+
+    mock_connector_instance.close.assert_called_once()
 
 
 @patch("app.navigator_family_etl_pipeline.transform_navigator_family")
