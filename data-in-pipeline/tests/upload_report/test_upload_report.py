@@ -22,12 +22,11 @@ def test_upload_report_uploads_summary(mock_get_logger, mock_upload_to_s3):
         [cast(Document, MagicMock()) for _ in range(second_batch_size)],
     ]
 
-    # Now load_results contains actual results, not futures
     successful_batches_count = 1
     failed_batches_count = 1
     load_results = [
-        "ok",  # Success case - string result
-        Exception("db error"),  # Failure case - Exception
+        "ok",
+        Exception("db error"),
     ]
 
     run_id = "test-run-123"
@@ -64,7 +63,6 @@ def test_upload_report_all_batches_success(mock_upload_to_s3):
         [cast(Document, MagicMock()) for _ in range(batch_size)],
     ]
 
-    # All successful results - just strings
     successful_batches_count = total_batches
     failed_batches_count = 0
     load_results = ["ok"] * total_batches
