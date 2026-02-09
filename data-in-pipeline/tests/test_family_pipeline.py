@@ -1,26 +1,23 @@
-from datetime import UTC, datetime
 from http import HTTPStatus
 from unittest.mock import MagicMock, patch
 
 import pytest
-from data_in_models.models import (
-    DocumentWithoutRelationships,
-)
 from requests.exceptions import HTTPError
 from returns.result import Failure, Success
 
-from app.extract.connectors import (
-    FamilyFetchResult,
-    NavigatorCorpus,
-    NavigatorCorpusType,
-    NavigatorDocument,
-    NavigatorFamily,
-    NavigatorOrganisation,
-    PageFetchFailure,
-)
+from app.extract.connectors import FamilyFetchResult
 from app.models import ExtractedEnvelope, ExtractedMetadata, PipelineResult
 from app.navigator_family_etl_pipeline import data_in_pipeline
 from app.transform.models import NoMatchingTransformations
+from tests.factories import (
+    DocumentWithoutRelationshipsFactory,
+    NavigatorCorpusFactory,
+    NavigatorCorpusTypeFactory,
+    NavigatorDocumentFactory,
+    NavigatorFamilyFactory,
+    NavigatorOrganisationFactory,
+    PageFetchFailureFactory,
+)
 
 
 @patch("app.navigator_family_etl_pipeline.run_db_migrations")
@@ -44,19 +41,20 @@ def test_process_family_updates_flow_multiple_families(
     mock_post_response.json.return_value = ["1", "2"]
     mock_post.return_value = mock_post_response
 
+    corpus = NavigatorCorpusFactory.build(
+        import_id="UNFCCC",
+        corpus_type=NavigatorCorpusTypeFactory.build(name="corpus_type"),
+        organisation=NavigatorOrganisationFactory.build(id=1, name="UNFCCC"),
+    )
     page_1_data = [
-        NavigatorFamily(
+        NavigatorFamilyFactory.build(
             import_id="i00000315",
             title="Belgium UNCBD National Targets",
             summary="Family summary",
             category="REPORTS",
-            corpus=NavigatorCorpus(
-                import_id="UNFCCC",
-                corpus_type=NavigatorCorpusType(name="corpus_type"),
-                organisation=NavigatorOrganisation(id=1, name="UNFCCC"),
-            ),
+            corpus=corpus,
             documents=[
-                NavigatorDocument(
+                NavigatorDocumentFactory.build(
                     import_id="i00000315",
                     title="Belgium UNCBD National Targets",
                     events=[],
@@ -67,20 +65,15 @@ def test_process_family_updates_flow_multiple_families(
             geographies=[],
         )
     ]
-
     page_2_data = [
-        NavigatorFamily(
+        NavigatorFamilyFactory.build(
             import_id="i00000316",
             title="France UNCBD National Targets",
             summary="Family summary",
             category="REPORTS",
-            corpus=NavigatorCorpus(
-                import_id="UNFCCC",
-                corpus_type=NavigatorCorpusType(name="corpus_type"),
-                organisation=NavigatorOrganisation(id=1, name="UNFCCC"),
-            ),
+            corpus=corpus,
             documents=[
-                NavigatorDocument(
+                NavigatorDocumentFactory.build(
                     import_id="i00000316",
                     title="France UNCBD National Targets",
                     events=[],
@@ -94,36 +87,33 @@ def test_process_family_updates_flow_multiple_families(
 
     envelope_1 = ExtractedEnvelope(
         data=page_1_data,
+        raw_payload=page_1_data,
         id="test-uuid-1",
         source_name="navigator_family",
         source_record_id="task-001-families-endpoint-page-1",
-        raw_payload=page_1_data,
         content_type="application/json",
         connector_version="1.0.0",
-        extracted_at=datetime.now(UTC),
-        task_run_id="task-001",
-        flow_run_id="flow-001",
         metadata=ExtractedMetadata(
             endpoint="https://api.example.com/families/?page=1",
             http_status=HTTPStatus.OK,
         ),
+        task_run_id="task-001",
+        flow_run_id="flow-001",
     )
-
     envelope_2 = ExtractedEnvelope(
         data=page_2_data,
+        raw_payload=page_2_data,
         id="test-uuid-2",
         source_name="navigator_family",
         source_record_id="task-001-families-endpoint-page-2",
-        raw_payload=page_2_data,
         content_type="application/json",
         connector_version="1.0.0",
-        extracted_at=datetime.now(UTC),
-        task_run_id="task-001",
-        flow_run_id="flow-001",
         metadata=ExtractedMetadata(
             endpoint="https://api.example.com/families/?page=2",
             http_status=HTTPStatus.OK,
         ),
+        task_run_id="task-001",
+        flow_run_id="flow-001",
     )
 
     mock_connector_instance.fetch_all_families.return_value = FamilyFetchResult(
@@ -161,11 +151,10 @@ def test_process_family_updates_flow_extraction_failure(
     mock_connector_class.return_value = mock_connector_instance
     mock_connector_instance.close.return_value = None
 
-    # Simulate extraction failure
     expected_error = Exception("500 Internal Server Error")
     mock_connector_instance.fetch_all_families.return_value = FamilyFetchResult(
         envelopes=[],
-        failure=PageFetchFailure(
+        failure=PageFetchFailureFactory.build(
             page=1, error=str(expected_error), task_run_id="task-001"
         ),
     )
@@ -194,26 +183,24 @@ def test_etl_pipeline_load_failure(
 
     test_family_id = "i00000315"
     test_family_title = "Belgium UNCBD National Targets"
-    test_source_name = "navigator_family"
     test_source_record_id = "task-001-families-endpoint-page-1"
-    test_task_run_id = "task-001"
-    test_flow_run_id = "flow-001"
     test_endpoint = "https://api.example.com/families/?page=1"
     expected_error_message = "One or more batches failed to load"
 
+    corpus = NavigatorCorpusFactory.build(
+        import_id="UNFCCC",
+        corpus_type=NavigatorCorpusTypeFactory.build(name="corpus_type"),
+        organisation=NavigatorOrganisationFactory.build(id=1, name="UNFCCC"),
+    )
     test_data = [
-        NavigatorFamily(
+        NavigatorFamilyFactory.build(
             import_id=test_family_id,
             title=test_family_title,
             summary="Family summary",
             category="REPORTS",
-            corpus=NavigatorCorpus(
-                import_id="UNFCCC",
-                corpus_type=NavigatorCorpusType(name="corpus_type"),
-                organisation=NavigatorOrganisation(id=1, name="UNFCCC"),
-            ),
+            corpus=corpus,
             documents=[
-                NavigatorDocument(
+                NavigatorDocumentFactory.build(
                     import_id=test_family_id,
                     title=test_family_title,
                     events=[],
@@ -224,22 +211,20 @@ def test_etl_pipeline_load_failure(
             geographies=[],
         )
     ]
-
     test_envelope = ExtractedEnvelope(
         data=test_data,
-        id="test-uuid-1",
-        source_name=test_source_name,
-        source_record_id=test_source_record_id,
         raw_payload=test_data,
+        id="test-uuid-1",
+        source_name="navigator_family",
+        source_record_id=test_source_record_id,
         content_type="application/json",
         connector_version="1.0.0",
-        extracted_at=datetime.now(UTC),
-        task_run_id=test_task_run_id,
-        flow_run_id=test_flow_run_id,
         metadata=ExtractedMetadata(
             endpoint=test_endpoint,
             http_status=HTTPStatus.OK,
         ),
+        task_run_id="task-001",
+        flow_run_id="flow-001",
     )
 
     # Mock connector response
@@ -282,18 +267,19 @@ def test_etl_pipeline_partial_transformation_failure(
     mock_put_response.json.return_value = ["valid-family-doc"]
     mock_put.return_value = mock_put_response
 
-    valid_family = NavigatorFamily(
+    valid_corpus = NavigatorCorpusFactory.build(
+        import_id="UNFCCC",
+        corpus_type=NavigatorCorpusTypeFactory.build(name="corpus_type"),
+        organisation=NavigatorOrganisationFactory.build(id=1, name="UNFCCC"),
+    )
+    valid_family = NavigatorFamilyFactory.build(
         import_id="valid-family",
         title="Valid Family",
         summary="Will transform successfully",
         category="REPORTS",
-        corpus=NavigatorCorpus(
-            import_id="UNFCCC",
-            corpus_type=NavigatorCorpusType(name="corpus_type"),
-            organisation=NavigatorOrganisation(id=1, name="UNFCCC"),
-        ),
+        corpus=valid_corpus,
         documents=[
-            NavigatorDocument(
+            NavigatorDocumentFactory.build(
                 import_id="valid-doc",
                 title="Valid Document",
                 events=[],
@@ -303,16 +289,15 @@ def test_etl_pipeline_partial_transformation_failure(
         collections=[],
         geographies=[],
     )
-
-    invalid_family = NavigatorFamily(
+    invalid_family = NavigatorFamilyFactory.build(
         import_id="invalid-family",
         title="Invalid Family",
         summary="",
-        category="UNKNOWN_CATEGORY",  # Will cause transformation to fail
-        corpus=NavigatorCorpus(
+        category="UNKNOWN_CATEGORY",
+        corpus=NavigatorCorpusFactory.build(
             import_id="UNKNOWN.corpus.i00000001.n0000",
-            corpus_type=NavigatorCorpusType(name="Unknown"),
-            organisation=NavigatorOrganisation(id=999, name="Unknown"),
+            corpus_type=NavigatorCorpusTypeFactory.build(name="Unknown"),
+            organisation=NavigatorOrganisationFactory.build(id=999, name="Unknown"),
         ),
         documents=[],
         events=[],
@@ -322,19 +307,18 @@ def test_etl_pipeline_partial_transformation_failure(
 
     envelope = ExtractedEnvelope(
         data=[valid_family, invalid_family],
+        raw_payload=[valid_family, invalid_family],
         id="test-uuid",
         source_name="navigator_family",
         source_record_id="task-001-families-endpoint-page-1",
-        raw_payload=[valid_family, invalid_family],
         content_type="application/json",
         connector_version="1.0.0",
-        extracted_at=datetime.now(UTC),
-        task_run_id="task-001",
-        flow_run_id="flow-001",
         metadata=ExtractedMetadata(
             endpoint="https://api.example.com/families/?page=1",
             http_status=HTTPStatus.OK,
         ),
+        task_run_id="task-001",
+        flow_run_id="flow-001",
     )
 
     mock_connector_instance.fetch_all_families.return_value = FamilyFetchResult(
@@ -342,7 +326,7 @@ def test_etl_pipeline_partial_transformation_failure(
     )
 
     mock_transformed_documents = [
-        DocumentWithoutRelationships(
+        DocumentWithoutRelationshipsFactory.build(
             id="test-doc",
             title="This is the test doc",
             description=None,
@@ -378,18 +362,18 @@ def test_etl_pipeline_all_families_fail_transformation(
     mock_connector_class.return_value = mock_connector_instance
     mock_connector_instance.close.return_value = None
 
-    # Create families that will all fail transformation
+    failing_corpus = NavigatorCorpusFactory.build(
+        import_id="UNKNOWN.corpus.i00000001.n0000",
+        corpus_type=NavigatorCorpusTypeFactory.build(name="Unknown"),
+        organisation=NavigatorOrganisationFactory.build(id=999, name="Unknown"),
+    )
     failing_families = [
-        NavigatorFamily(
+        NavigatorFamilyFactory.build(
             import_id=f"failing-family-{i}",
             title=f"Failing Family {i}",
             summary="",
             category="UNKNOWN_CATEGORY",
-            corpus=NavigatorCorpus(
-                import_id="UNKNOWN.corpus.i00000001.n0000",
-                corpus_type=NavigatorCorpusType(name="Unknown"),
-                organisation=NavigatorOrganisation(id=999, name="Unknown"),
-            ),
+            corpus=failing_corpus,
             documents=[],
             events=[],
             collections=[],
@@ -397,22 +381,20 @@ def test_etl_pipeline_all_families_fail_transformation(
         )
         for i in range(3)
     ]
-
     envelope = ExtractedEnvelope(
         data=failing_families,
+        raw_payload=failing_families,
         id="test-uuid",
         source_name="navigator_family",
         source_record_id="task-001-families-endpoint-page-1",
-        raw_payload=failing_families,
         content_type="application/json",
         connector_version="1.0.0",
-        extracted_at=datetime.now(UTC),
-        task_run_id="task-001",
-        flow_run_id="flow-001",
         metadata=ExtractedMetadata(
             endpoint="https://api.example.com/families/?page=1",
             http_status=HTTPStatus.OK,
         ),
+        task_run_id="task-001",
+        flow_run_id="flow-001",
     )
 
     mock_connector_instance.fetch_all_families.return_value = FamilyFetchResult(

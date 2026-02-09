@@ -8,15 +8,17 @@ from returns.pipeline import is_successful
 from app.extract.connector_config import NavigatorConnectorConfig
 from app.extract.connectors import (
     NavigatorConnector,
-    NavigatorCorpus,
-    NavigatorCorpusType,
-    NavigatorDocument,
-    NavigatorFamily,
-    NavigatorOrganisation,
     PageFetchFailure,
 )
 from app.extract.enums import CheckPointStorageType
 from app.models import ExtractedEnvelope
+from tests.factories import (
+    NavigatorCorpusFactory,
+    NavigatorCorpusTypeFactory,
+    NavigatorDocumentFactory,
+    NavigatorFamilyFactory,
+    NavigatorOrganisationFactory,
+)
 
 
 @pytest.fixture
@@ -37,17 +39,17 @@ def test_fetch_family_success(base_config):
     flow_run_id = "flow-001"
 
     mock_response = {
-        "data": NavigatorFamily(
+        "data": NavigatorFamilyFactory.build(
             import_id=import_id,
             title="Test Family",
             summary="Family summary",
-            corpus=NavigatorCorpus(
+            corpus=NavigatorCorpusFactory.build(
                 import_id="COR-111",
-                corpus_type=NavigatorCorpusType(name="corpus_type"),
-                organisation=NavigatorOrganisation(id=1, name="UNFCCC"),
+                corpus_type=NavigatorCorpusTypeFactory.build(name="corpus_type"),
+                organisation=NavigatorOrganisationFactory.build(id=1, name="UNFCCC"),
             ),
             documents=[
-                NavigatorDocument(
+                NavigatorDocumentFactory.build(
                     import_id=import_id,
                     title="Test Document",
                     events=[],
@@ -117,32 +119,34 @@ def test_fetch_all_families_successfully(base_config):
     task_run_id = "task-001"
     flow_run_id = "flow-001"
 
+    corpus_1 = NavigatorCorpusFactory.build(
+        import_id="COR-001",
+        corpus_type=NavigatorCorpusTypeFactory.build(name="corpus_type"),
+        organisation=NavigatorOrganisationFactory.build(id=1, name="UNFCCC"),
+    )
+    corpus_2 = NavigatorCorpusFactory.build(
+        import_id="COR-002",
+        corpus_type=NavigatorCorpusTypeFactory.build(name="corpus_type"),
+        organisation=NavigatorOrganisationFactory.build(id=1, name="UNFCCC"),
+    )
     mock_page_1 = {
         "data": [
-            NavigatorFamily(
+            NavigatorFamilyFactory.build(
                 import_id="FAM-001",
                 title="Family 1",
                 summary="Family 1 summary",
-                corpus=NavigatorCorpus(
-                    import_id="COR-001",
-                    corpus_type=NavigatorCorpusType(name="corpus_type"),
-                    organisation=NavigatorOrganisation(id=1, name="UNFCCC"),
-                ),
+                corpus=corpus_1,
                 documents=[],
                 events=[],
                 collections=[],
                 geographies=[],
                 category="UNFCCC",
             ).model_dump(),
-            NavigatorFamily(
+            NavigatorFamilyFactory.build(
                 import_id="FAM-002",
                 title="Family 2",
                 summary="Family summary",
-                corpus=NavigatorCorpus(
-                    import_id="COR-001",
-                    corpus_type=NavigatorCorpusType(name="corpus_type"),
-                    organisation=NavigatorOrganisation(id=1, name="UNFCCC"),
-                ),
+                corpus=corpus_1,
                 documents=[],
                 events=[],
                 collections=[],
@@ -153,15 +157,11 @@ def test_fetch_all_families_successfully(base_config):
     }
     mock_page_2 = {
         "data": [
-            NavigatorFamily(
+            NavigatorFamilyFactory.build(
                 import_id="FAM-003",
                 title="Family 3",
                 summary="Family 3 summary",
-                corpus=NavigatorCorpus(
-                    import_id="COR-002",
-                    corpus_type=NavigatorCorpusType(name="corpus_type"),
-                    organisation=NavigatorOrganisation(id=1, name="UNFCCC"),
-                ),
+                corpus=corpus_2,
                 documents=[],
                 events=[],
                 collections=[],
@@ -220,14 +220,16 @@ def test_fetch_all_families_handles_successful_retrievals_and_errors(base_config
 
     mock_page_1 = {
         "data": [
-            NavigatorFamily(
+            NavigatorFamilyFactory.build(
                 import_id="FAM-001",
                 title="Family 1",
                 summary="Family summary",
-                corpus=NavigatorCorpus(
+                corpus=NavigatorCorpusFactory.build(
                     import_id="COR-001",
-                    corpus_type=NavigatorCorpusType(name="corpus_type"),
-                    organisation=NavigatorOrganisation(id=1, name="UNFCCC"),
+                    corpus_type=NavigatorCorpusTypeFactory.build(name="corpus_type"),
+                    organisation=NavigatorOrganisationFactory.build(
+                        id=1, name="UNFCCC"
+                    ),
                 ),
                 documents=[],
                 events=[],

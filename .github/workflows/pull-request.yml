@@ -86,7 +86,9 @@ jobs:
               - 'uv.lock'
               - pyproject.toml
 
-          predicate-quantifier: every
+          # Treat a service as \"changed\" if ANY matching files changed,
+          # even if other unrelated root-level files changed too.
+          predicate-quantifier: some
 
       - uses: dorny/paths-filter@v3
         id: filter-infra-changes

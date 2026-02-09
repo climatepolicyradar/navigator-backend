@@ -1,10 +1,13 @@
 import json
-from typing import cast
-from unittest.mock import MagicMock, patch
+from unittest.mock import patch
 
 from data_in_models.models import Document
+from polyfactory.factories.pydantic_factory import ModelFactory
 
 from app.navigator_family_etl_pipeline import upload_report
+
+
+class DocumentFactory(ModelFactory[Document]): ...
 
 
 @patch("app.navigator_family_etl_pipeline.upload_to_s3")
@@ -18,8 +21,8 @@ def test_upload_report_uploads_summary(mock_get_logger, mock_upload_to_s3):
     total_batches = 2
 
     document_batches: list[list[Document]] = [
-        [cast(Document, MagicMock()) for _ in range(first_batch_size)],
-        [cast(Document, MagicMock()) for _ in range(second_batch_size)],
+        DocumentFactory.batch(first_batch_size),
+        DocumentFactory.batch(second_batch_size),
     ]
 
     successful_batches_count = 1
@@ -59,8 +62,7 @@ def test_upload_report_all_batches_success(mock_upload_to_s3):
     total_documents = batch_size * total_batches
 
     document_batches: list[list[Document]] = [
-        [cast(Document, MagicMock()) for _ in range(batch_size)],
-        [cast(Document, MagicMock()) for _ in range(batch_size)],
+        DocumentFactory.batch(batch_size) for _ in range(total_batches)
     ]
 
     successful_batches_count = total_batches
@@ -116,7 +118,7 @@ def test_upload_report_mixed_batch_sizes(mock_get_logger, mock_upload_to_s3):
     failed_batches_count = 1
 
     document_batches: list[list[Document]] = [
-        [cast(Document, MagicMock()) for _ in range(size)] for size in batch_sizes
+        DocumentFactory.batch(size) for size in batch_sizes
     ]
 
     load_results = [
