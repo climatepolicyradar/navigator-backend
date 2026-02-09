@@ -12,17 +12,57 @@ from data_in_models.models import (
 from returns.result import Success
 
 from app.extract.connectors import (
-    NavigatorCollection,
-    NavigatorCorpus,
-    NavigatorCorpusType,
-    NavigatorDocument,
-    NavigatorEvent,
     NavigatorFamily,
-    NavigatorOrganisation,
 )
 from app.models import Identified
 from app.transform.navigator_family import transform_navigator_family
+from tests.factories import (
+    NavigatorCollectionFactory,
+    NavigatorCorpusFactory,
+    NavigatorCorpusTypeFactory,
+    NavigatorDocumentFactory,
+    NavigatorEventFactory,
+    NavigatorFamilyFactory,
+    NavigatorOrganisationFactory,
+)
 from tests.transform.assertions import assert_model_list_equality
+
+
+def _cclw_corpus():
+    return NavigatorCorpusFactory.build(
+        import_id="CCLW.corpus.i00000001.n0000",
+        corpus_type=NavigatorCorpusTypeFactory.build(name="corpus_type"),
+        organisation=NavigatorOrganisationFactory.build(id=1, name="CCLW"),
+    )
+
+
+def _standard_events():
+    """Event types used by CCLW transformation for activity status labels."""
+    base_date = datetime.datetime(2020, 1, 1)
+    event_specs = [
+        ("Amended", "Amended"),
+        ("Appealed", "Appealed"),
+        ("Closed", "Closed"),
+        ("Declaration Of Climate Emergency", "Declaration Of Climate Emergency"),
+        ("Dismissed", "Dismissed"),
+        ("Entered Into Force", "Entered Into Force"),
+        ("Filing", "Filing"),
+        ("Granted", "Granted"),
+        ("Implementation Details", "Implementation Details"),
+        ("International Agreement", "International Agreement"),
+        ("Net Zero Pledge", "Net Zero Pledge"),
+        ("Other", "Other"),
+        ("Passed/Approved", "Passed/Approved"),
+        ("Repealed/Replaced", "Repealed/Replaced"),
+        ("Set", "Set"),
+        ("Settled", "Settled"),
+        ("Updated", "Updated"),
+        ("Published", "Published"),
+    ]
+    return [
+        NavigatorEventFactory.build(import_id=iid, event_type=ety, date=base_date)
+        for iid, ety in event_specs
+    ]
 
 
 @pytest.fixture
@@ -30,18 +70,14 @@ def navigator_family_with_single_matching_document() -> Identified[NavigatorFami
     return Identified(
         id="family",
         source="navigator_family",
-        data=NavigatorFamily(
+        data=NavigatorFamilyFactory.build(
             import_id="family",
             title="Matching title on family and document and collection",
             summary="Family summary",
             category="REPORTS",
-            corpus=NavigatorCorpus(
-                import_id="CCLW.corpus.i00000001.n0000",
-                corpus_type=NavigatorCorpusType(name="corpus_type"),
-                organisation=NavigatorOrganisation(id=1, name="CCLW"),
-            ),
+            corpus=_cclw_corpus(),
             documents=[
-                NavigatorDocument(
+                NavigatorDocumentFactory.build(
                     import_id="document",
                     title="Matching title on family and document and collection",
                     cdn_object="https://cdn.climatepolicyradar.org/path/to/file.pdf",
@@ -56,105 +92,14 @@ def navigator_family_with_single_matching_document() -> Identified[NavigatorFami
                     },
                 ),
             ],
-            events=[
-                NavigatorEvent(
-                    import_id="Amended",
-                    event_type="Amended",
-                    date=datetime.datetime(2020, 1, 1),
-                ),
-                NavigatorEvent(
-                    import_id="Appealed",
-                    event_type="Appealed",
-                    date=datetime.datetime(2020, 1, 1),
-                ),
-                NavigatorEvent(
-                    import_id="Closed",
-                    event_type="Closed",
-                    date=datetime.datetime(2020, 1, 1),
-                ),
-                NavigatorEvent(
-                    import_id="Declaration Of Climate Emergency",
-                    event_type="Declaration Of Climate Emergency",
-                    date=datetime.datetime(2020, 1, 1),
-                ),
-                NavigatorEvent(
-                    import_id="Dismissed",
-                    event_type="Dismissed",
-                    date=datetime.datetime(2020, 1, 1),
-                ),
-                NavigatorEvent(
-                    import_id="Entered Into Force",
-                    event_type="Entered Into Force",
-                    date=datetime.datetime(2020, 1, 1),
-                ),
-                NavigatorEvent(
-                    import_id="Filing",
-                    event_type="Filing",
-                    date=datetime.datetime(2020, 1, 1),
-                ),
-                NavigatorEvent(
-                    import_id="Granted",
-                    event_type="Granted",
-                    date=datetime.datetime(2020, 1, 1),
-                ),
-                NavigatorEvent(
-                    import_id="Implementation Details",
-                    event_type="Implementation Details",
-                    date=datetime.datetime(2020, 1, 1),
-                ),
-                NavigatorEvent(
-                    import_id="International Agreement",
-                    event_type="International Agreement",
-                    date=datetime.datetime(2020, 1, 1),
-                ),
-                NavigatorEvent(
-                    import_id="Net Zero Pledge",
-                    event_type="Net Zero Pledge",
-                    date=datetime.datetime(2020, 1, 1),
-                ),
-                NavigatorEvent(
-                    import_id="Other",
-                    event_type="Other",
-                    date=datetime.datetime(2020, 1, 1),
-                ),
-                NavigatorEvent(
-                    import_id="Passed/Approved",
-                    event_type="Passed/Approved",
-                    date=datetime.datetime(2020, 1, 1),
-                ),
-                NavigatorEvent(
-                    import_id="Repealed/Replaced",
-                    event_type="Repealed/Replaced",
-                    date=datetime.datetime(2020, 1, 1),
-                ),
-                NavigatorEvent(
-                    import_id="Set",
-                    event_type="Set",
-                    date=datetime.datetime(2020, 1, 1),
-                ),
-                NavigatorEvent(
-                    import_id="Settled",
-                    event_type="Settled",
-                    date=datetime.datetime(2020, 1, 1),
-                ),
-                NavigatorEvent(
-                    import_id="Updated",
-                    event_type="Updated",
-                    date=datetime.datetime(2020, 1, 1),
-                ),
-                NavigatorEvent(
-                    import_id="Published",
-                    event_type="Published",
-                    date=datetime.datetime(2020, 1, 1),
-                ),
-            ],
+            events=_standard_events(),
             collections=[
-                NavigatorCollection(
+                NavigatorCollectionFactory.build(
                     import_id="collection_matching",
                     title="Matching title on family and document and collection",
                     description="Collection description",
                 ),
-                NavigatorCollection(
+                NavigatorCollectionFactory.build(
                     import_id="collection",
                     title="Collection title",
                     description="Collection description",
@@ -170,18 +115,14 @@ def navigator_family_with_no_matching_transformations() -> Identified[NavigatorF
     return Identified(
         id="123",
         source="navigator_family",
-        data=NavigatorFamily(
+        data=NavigatorFamilyFactory.build(
             import_id="123",
             title="No matches for this family or documents",
             summary="Family summary",
             category="REPORTS",
-            corpus=NavigatorCorpus(
-                import_id="CCLW.corpus.i00000001.n0000",
-                corpus_type=NavigatorCorpusType(name="corpus_type"),
-                organisation=NavigatorOrganisation(id=1, name="CCLW"),
-            ),
+            corpus=_cclw_corpus(),
             documents=[
-                NavigatorDocument(
+                NavigatorDocumentFactory.build(
                     import_id="456",
                     title="Test document 1",
                     events=[],
@@ -196,42 +137,47 @@ def navigator_family_with_no_matching_transformations() -> Identified[NavigatorF
 
 @pytest.fixture
 def navigator_family_with_litigation_corpus_type() -> Identified[NavigatorFamily]:
+    decision_date = datetime.datetime(2020, 1, 1)
     return Identified(
         id="family",
         source="navigator_family",
-        data=NavigatorFamily(
+        data=NavigatorFamilyFactory.build(
             import_id="family",
             title="Litigation family",
             summary="Family summary",
             category="REPORTS",
-            corpus=NavigatorCorpus(
+            corpus=NavigatorCorpusFactory.build(
                 import_id="Academic.corpus.Litigation.n0000",
-                corpus_type=NavigatorCorpusType(name="Litigation"),
-                organisation=NavigatorOrganisation(id=1, name="CCLW"),
+                corpus_type=NavigatorCorpusTypeFactory.build(name="Litigation"),
+                organisation=NavigatorOrganisationFactory.build(id=1, name="CCLW"),
             ),
             documents=[
-                NavigatorDocument(
+                NavigatorDocumentFactory.build(
                     import_id="document",
                     title="Litigation family document",
+                    cdn_object=None,
+                    source_url=None,
                     events=[
-                        NavigatorEvent(
+                        NavigatorEventFactory.build(
                             import_id="123",
                             event_type="Decision",
-                            date=datetime.datetime(2020, 1, 1),
+                            date=decision_date,
                         )
                     ],
                 ),
-                NavigatorDocument(
+                NavigatorDocumentFactory.build(
                     import_id="1.2.3.placeholder",
                     title="Placeholder litigation family document",
+                    cdn_object=None,
+                    source_url=None,
                     events=[],
                 ),
             ],
             events=[
-                NavigatorEvent(
+                NavigatorEventFactory.build(
                     import_id="123",
                     event_type="Decision",
-                    date=datetime.datetime(2020, 1, 1),
+                    date=decision_date,
                 ),
             ],
             collections=[],
@@ -240,60 +186,69 @@ def navigator_family_with_litigation_corpus_type() -> Identified[NavigatorFamily
     )
 
 
+def _mcf_events():
+    base_date = datetime.datetime(2020, 1, 1)
+    return [
+        NavigatorEventFactory.build(
+            import_id="concept_approved",
+            event_type="Concept Approved",
+            date=base_date,
+        ),
+        NavigatorEventFactory.build(
+            import_id="project_approved",
+            event_type="Project Approved",
+            date=base_date,
+        ),
+        NavigatorEventFactory.build(
+            import_id="under_implementation",
+            event_type="Under Implementation",
+            date=base_date,
+        ),
+        NavigatorEventFactory.build(
+            import_id="project_completed",
+            event_type="Project Completed",
+            date=base_date,
+        ),
+        NavigatorEventFactory.build(
+            import_id="cancelled",
+            event_type="Cancelled",
+            date=base_date,
+        ),
+    ]
+
+
 @pytest.fixture
 def navigator_family_multilateral_climate_fund_project() -> Identified[NavigatorFamily]:
     return Identified(
         id="family",
         source="navigator_family",
-        data=NavigatorFamily(
+        data=NavigatorFamilyFactory.build(
             import_id="family",
             title="Multilateral climate fund project",
             summary="Family summary",
             category="REPORTS",
-            corpus=NavigatorCorpus(
+            corpus=NavigatorCorpusFactory.build(
                 import_id="MCF.corpus.AF.n0000",
-                corpus_type=NavigatorCorpusType(name="AF"),
-                organisation=NavigatorOrganisation(id=1, name="CCLW"),
+                corpus_type=NavigatorCorpusTypeFactory.build(name="AF"),
+                organisation=NavigatorOrganisationFactory.build(id=1, name="CCLW"),
             ),
             documents=[
-                NavigatorDocument(
+                NavigatorDocumentFactory.build(
                     import_id="document_1",
                     title="Multilateral climate fund project document",
+                    cdn_object=None,
+                    source_url=None,
                     events=[],
                 ),
-                NavigatorDocument(
+                NavigatorDocumentFactory.build(
                     import_id="document_2",
                     title="Project document",
+                    cdn_object=None,
+                    source_url=None,
                     events=[],
                 ),
             ],
-            events=[
-                NavigatorEvent(
-                    import_id="concept_approved",
-                    event_type="Concept Approved",
-                    date=datetime.datetime(2020, 1, 1),
-                ),
-                NavigatorEvent(
-                    import_id="project_approved",
-                    event_type="Project Approved",
-                    date=datetime.datetime(2020, 1, 1),
-                ),
-                NavigatorEvent(
-                    import_id="under_implementation",
-                    event_type="Under Implementation",
-                    date=datetime.datetime(2020, 1, 1),
-                ),
-                NavigatorEvent(
-                    import_id="project_completed",
-                    event_type="Project Completed",
-                    date=datetime.datetime(2020, 1, 1),
-                ),
-                NavigatorEvent(
-                    import_id="cancelled",
-                    event_type="Cancelled",
-                    date=datetime.datetime(2020, 1, 1),
-                ),
-            ],
+            events=_mcf_events(),
             collections=[],
             geographies=[],
         ),
@@ -305,17 +260,15 @@ def navigator_family_with_duplicate_legal_case() -> Identified[NavigatorFamily]:
     return Identified(
         id="family",
         source="navigator_family",
-        data=NavigatorFamily(
+        data=NavigatorFamilyFactory.build(
             import_id="family",
             title="Litigation family",
-            category="LITIGATION",  # Maps to "Legal case"
+            category="LITIGATION",
             summary="Family summary",
-            corpus=NavigatorCorpus(
+            corpus=NavigatorCorpusFactory.build(
                 import_id="Academic.corpus.Litigation.n0000",
-                corpus_type=NavigatorCorpusType(
-                    name="Litigation"
-                ),  # Also maps to "Legal case"
-                organisation=NavigatorOrganisation(
+                corpus_type=NavigatorCorpusTypeFactory.build(name="Litigation"),
+                organisation=NavigatorOrganisationFactory.build(
                     id=1, name="Sabin Center for Climate Change Law"
                 ),
             ),
