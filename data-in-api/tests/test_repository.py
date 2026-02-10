@@ -119,3 +119,24 @@ def test_get_document_by_id_not_found(setup_documents: Session):
     session = setup_documents
     doc = get_document_by_id(session, "nonexistent")
     assert doc is None
+
+
+def test_get_all_documents_filter_by_label_existing(setup_documents: Session):
+    session = setup_documents
+
+    documents = get_all_documents(session, page=1, page_size=10, label_id="Main")
+
+    assert len(documents) == 1
+    doc = documents[0]
+    assert doc.id == "doc1"
+    assert any(lbl.label.id == "Main" for lbl in doc.labels)
+
+
+def test_get_all_documents_filter_by_label_nonexistent(setup_documents: Session):
+    session = setup_documents
+
+    documents = get_all_documents(
+        session, page=1, page_size=10, label_id="NonExistentLabel"
+    )
+
+    assert len(documents) == 0
