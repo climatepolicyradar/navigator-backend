@@ -511,9 +511,11 @@ def test_transform_navigator_family_with_single_matching_document(
                     ],
                     items=[
                         Item(
+                            type="cdn",
                             url="https://cdn.climatepolicyradar.org/path/to/file.pdf",
                         ),
                         Item(
+                            type="source",
                             url="https://source.climatepolicyradar.org/path/to/file.pdf",
                         ),
                     ],
@@ -582,9 +584,11 @@ def test_transform_navigator_family_with_single_matching_document(
                 ],
                 items=[
                     Item(
+                        type="cdn",
                         url="https://cdn.climatepolicyradar.org/path/to/file.pdf",
                     ),
                     Item(
+                        type="source",
                         url="https://source.climatepolicyradar.org/path/to/file.pdf",
                     ),
                 ],
