@@ -17,6 +17,11 @@ families_api_stack = pulumi.StackReference(f"climatepolicyradar/families-api/{st
 concepts_api_stack = pulumi.StackReference(f"climatepolicyradar/concepts-api/{stack}")
 data_in_api_stack = pulumi.StackReference(f"climatepolicyradar/data-in-api/{stack}")
 
+# search has a production stack only
+search_stack = None
+if stack == "production":
+    search_stack = pulumi.StackReference(f"climatepolicyradar/search/{stack}")
+
 # URLs
 config = pulumi.Config()
 url = config.require("url")
@@ -102,47 +107,63 @@ api_cloudfront_distribution = aws.cloudfront.Distribution(
     url,
     comment="API",
     origins=[
-        {
-            "domain_name": families_api_stack.get_output("apprunner_service_url"),
-            "origin_id": "families-api-apprunner",
-            "custom_origin_config": {
-                "http_port": 80,
-                "https_port": 443,
-                "origin_protocol_policy": "https-only",
-                "origin_ssl_protocols": ["TLSv1.2"],
-            },
-        },
-        {
-            "domain_name": geographies_api_stack.get_output("apprunner_service_url"),
-            "origin_id": "geographies-api-apprunner",
-            "custom_origin_config": {
-                "http_port": 80,
-                "https_port": 443,
-                "origin_protocol_policy": "https-only",
-                "origin_ssl_protocols": ["TLSv1.2"],
-            },
-        },
-        {
-            "domain_name": concepts_api_stack.get_output("apprunner_service_url"),
-            "origin_id": "concepts-api-apprunner",
-            "custom_origin_config": {
-                "http_port": 80,
-                "https_port": 443,
-                "origin_protocol_policy": "https-only",
-                "origin_ssl_protocols": ["TLSv1.2"],
-            },
-        },
-        {
-            "domain_name": data_in_api_stack.get_output("apprunner_service_url"),
-            "origin_id": "data-in-api-apprunner",
-            "custom_origin_config": {
-                "http_port": 80,
-                "https_port": 443,
-                "origin_protocol_policy": "https-only",
-                "origin_ssl_protocols": ["TLSv1.2"],
-            },
-        },
-    ],
+        aws.cloudfront.DistributionOriginArgs(
+            domain_name=families_api_stack.get_output("apprunner_service_url"),
+            origin_id="families-api-apprunner",
+            custom_origin_config=aws.cloudfront.DistributionOriginCustomOriginConfigArgs(
+                http_port=80,
+                https_port=443,
+                origin_protocol_policy="https-only",
+                origin_ssl_protocols=["TLSv1.2"],
+            ),
+        ),
+        aws.cloudfront.DistributionOriginArgs(
+            domain_name=geographies_api_stack.get_output("apprunner_service_url"),
+            origin_id="geographies-api-apprunner",
+            custom_origin_config=aws.cloudfront.DistributionOriginCustomOriginConfigArgs(
+                http_port=80,
+                https_port=443,
+                origin_protocol_policy="https-only",
+                origin_ssl_protocols=["TLSv1.2"],
+            ),
+        ),
+        aws.cloudfront.DistributionOriginArgs(
+            domain_name=concepts_api_stack.get_output("apprunner_service_url"),
+            origin_id="concepts-api-apprunner",
+            custom_origin_config=aws.cloudfront.DistributionOriginCustomOriginConfigArgs(
+                http_port=80,
+                https_port=443,
+                origin_protocol_policy="https-only",
+                origin_ssl_protocols=["TLSv1.2"],
+            ),
+        ),
+        aws.cloudfront.DistributionOriginArgs(
+            domain_name=data_in_api_stack.get_output("apprunner_service_url"),
+            origin_id="data-in-api-apprunner",
+            custom_origin_config=aws.cloudfront.DistributionOriginCustomOriginConfigArgs(
+                http_port=80,
+                https_port=443,
+                origin_protocol_policy="https-only",
+                origin_ssl_protocols=["TLSv1.2"],
+            ),
+        ),
+    ]
+    + (
+        [
+            aws.cloudfront.DistributionOriginArgs(
+                domain_name=search_stack.get_output("apprunner_service_url"),
+                origin_id="search-apprunner",
+                custom_origin_config=aws.cloudfront.DistributionOriginCustomOriginConfigArgs(
+                    http_port=80,
+                    https_port=443,
+                    origin_protocol_policy="https-only",
+                    origin_ssl_protocols=["TLSv1.2"],
+                ),
+            )
+        ]
+        if search_stack
+        else []
+    ),
     enabled=True,
     is_ipv6_enabled=True,
     aliases=[
@@ -163,76 +184,101 @@ api_cloudfront_distribution = aws.cloudfront.Distribution(
         "viewer_protocol_policy": "redirect-to-https",
         "cache_policy_id": api_cache_policy.id,
     },
-    ordered_cache_behaviors=[
-        {
-            "path_pattern": "/concepts/*",
-            "allowed_methods": [
-                "HEAD",
-                "GET",
-                "OPTIONS",
-            ],
-            "cached_methods": [
-                "HEAD",
-                "GET",
-                "OPTIONS",
-            ],
-            "target_origin_id": "concepts-api-apprunner",
-            "viewer_protocol_policy": "redirect-to-https",
-            "cache_policy_id": api_cache_policy.id,
-            "origin_request_policy_id": api_cors_policy.id,
-        },
-        {
-            "path_pattern": "/families/*",
-            "allowed_methods": [
-                "HEAD",
-                "GET",
-                "OPTIONS",
-            ],
-            "cached_methods": [
-                "HEAD",
-                "GET",
-                "OPTIONS",
-            ],
-            "target_origin_id": "families-api-apprunner",
-            "viewer_protocol_policy": "redirect-to-https",
-            "cache_policy_id": api_cache_policy.id,
-            "origin_request_policy_id": api_cors_policy.id,
-        },
-        {
-            "path_pattern": "/geographies/*",
-            "allowed_methods": [
-                "HEAD",
-                "GET",
-                "OPTIONS",
-            ],
-            "cached_methods": [
-                "HEAD",
-                "GET",
-                "OPTIONS",
-            ],
-            "target_origin_id": "geographies-api-apprunner",
-            "viewer_protocol_policy": "redirect-to-https",
-            "cache_policy_id": api_cache_policy.id,
-            "origin_request_policy_id": api_cors_policy.id,
-        },
-        {
-            "path_pattern": "/data-in/*",
-            "allowed_methods": [
-                "HEAD",
-                "GET",
-                "OPTIONS",
-            ],
-            "cached_methods": [
-                "HEAD",
-                "GET",
-                "OPTIONS",
-            ],
-            "target_origin_id": "data-in-api-apprunner",
-            "viewer_protocol_policy": "redirect-to-https",
-            "cache_policy_id": api_cache_policy.id,
-            "origin_request_policy_id": api_cors_policy.id,
-        },
-    ],
+    ordered_cache_behaviors=(
+        [
+            aws.cloudfront.DistributionOrderedCacheBehaviorArgs(
+                path_pattern="/concepts/*",
+                allowed_methods=[
+                    "HEAD",
+                    "GET",
+                    "OPTIONS",
+                ],
+                cached_methods=[
+                    "HEAD",
+                    "GET",
+                    "OPTIONS",
+                ],
+                target_origin_id="concepts-api-apprunner",
+                viewer_protocol_policy="redirect-to-https",
+                cache_policy_id=api_cache_policy.id,
+                origin_request_policy_id=api_cors_policy.id,
+            ),
+            aws.cloudfront.DistributionOrderedCacheBehaviorArgs(
+                path_pattern="/families/*",
+                allowed_methods=[
+                    "HEAD",
+                    "GET",
+                    "OPTIONS",
+                ],
+                cached_methods=[
+                    "HEAD",
+                    "GET",
+                    "OPTIONS",
+                ],
+                target_origin_id="families-api-apprunner",
+                viewer_protocol_policy="redirect-to-https",
+                cache_policy_id=api_cache_policy.id,
+                origin_request_policy_id=api_cors_policy.id,
+            ),
+            aws.cloudfront.DistributionOrderedCacheBehaviorArgs(
+                path_pattern="/geographies/*",
+                allowed_methods=[
+                    "HEAD",
+                    "GET",
+                    "OPTIONS",
+                ],
+                cached_methods=[
+                    "HEAD",
+                    "GET",
+                    "OPTIONS",
+                ],
+                target_origin_id="geographies-api-apprunner",
+                viewer_protocol_policy="redirect-to-https",
+                cache_policy_id=api_cache_policy.id,
+                origin_request_policy_id=api_cors_policy.id,
+            ),
+            aws.cloudfront.DistributionOrderedCacheBehaviorArgs(
+                path_pattern="/data-in/*",
+                allowed_methods=[
+                    "HEAD",
+                    "GET",
+                    "OPTIONS",
+                ],
+                cached_methods=[
+                    "HEAD",
+                    "GET",
+                    "OPTIONS",
+                ],
+                target_origin_id="data-in-api-apprunner",
+                viewer_protocol_policy="redirect-to-https",
+                cache_policy_id=api_cache_policy.id,
+                origin_request_policy_id=api_cors_policy.id,
+            ),
+        ]
+        + (
+            [
+                aws.cloudfront.DistributionOrderedCacheBehaviorArgs(
+                    path_pattern="/search/*",
+                    allowed_methods=[
+                        "HEAD",
+                        "GET",
+                        "OPTIONS",
+                    ],
+                    cached_methods=[
+                        "HEAD",
+                        "GET",
+                        "OPTIONS",
+                    ],
+                    target_origin_id="search-apprunner",
+                    viewer_protocol_policy="redirect-to-https",
+                    cache_policy_id=api_cache_policy.id,
+                    origin_request_policy_id=api_cors_policy.id,
+                ),
+            ]
+            if search_stack
+            else []
+        )
+    ),
     restrictions={
         "geo_restriction": {
             "restriction_type": "none",
