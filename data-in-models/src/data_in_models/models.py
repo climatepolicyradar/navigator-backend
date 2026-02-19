@@ -9,6 +9,11 @@ class Label(BaseModel):
     type: str
 
 
+class Identifier(BaseModel):
+    source: str
+    value: str
+
+
 class DocumentLabelRelationship(BaseModel):
     type: str
     label: Label
@@ -23,6 +28,7 @@ class BaseDocument(BaseModel):
     id: str
     title: str
     description: str | None = None
+    identifiers: list[Identifier] = []
     labels: list[DocumentLabelRelationship] = []
 
     """@see: https://en.wikipedia.org/wiki/Functional_Requirements_for_Bibliographic_Records"""
