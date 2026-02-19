@@ -70,6 +70,7 @@ def family_detail_from_vespa(  # noqa: PLR0913
     request: Request,
     app_token: Annotated[str, Header()],
     limit: int | None = None,
+    max_hits_per_family: int | None = None,
     db=Depends(get_db),
     vespa_search_adapter: VespaSearchAdapter = Depends(get_vespa_search_adapter),
 ):
@@ -107,6 +108,7 @@ def family_detail_from_vespa(  # noqa: PLR0913
             db=db,
             vespa_search_adapter=vespa_search_adapter,
             limit=limit,
+            max_hits_per_family=max_hits_per_family,
         )
         if hits.total_family_hits == 0:
             raise HTTPException(

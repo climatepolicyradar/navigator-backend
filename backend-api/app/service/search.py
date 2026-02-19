@@ -526,6 +526,7 @@ def get_family_from_vespa(
     db: Session,
     vespa_search_adapter: VespaSearchAdapter,
     limit: int | None = None,
+    max_hits_per_family: int | None = None,
 ) -> CprSdkSearchResponse:
     """Get a family from vespa.
 
@@ -535,8 +536,16 @@ def get_family_from_vespa(
     """
     if limit is None:
         limit = 100
+
+    if max_hits_per_family is None:
+        max_hits_per_family = limit
+
     search_body = SearchParameters(
-        family_ids=[family_id], documents_only=True, all_results=True, limit=limit
+        family_ids=[family_id],
+        documents_only=True,
+        all_results=True,
+        limit=limit,
+        max_hits_per_family=max_hits_per_family,
     )
 
     _LOGGER.info(
