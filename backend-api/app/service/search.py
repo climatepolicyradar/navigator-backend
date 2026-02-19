@@ -538,7 +538,7 @@ def get_family_from_vespa(
         limit = 100
 
     if max_hits_per_family is None:
-        max_hits_per_family = limit
+        max_hits_per_family = 100
 
     search_body = SearchParameters(
         family_ids=[family_id],
