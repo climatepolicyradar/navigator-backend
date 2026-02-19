@@ -525,7 +525,7 @@ def get_family_from_vespa(
     family_id: str,
     db: Session,
     vespa_search_adapter: VespaSearchAdapter,
-    limit: int = 10,
+    limit: int | None = None,
 ) -> CprSdkSearchResponse:
     """Get a family from vespa.
 
@@ -533,6 +533,8 @@ def get_family_from_vespa(
     :param Session db: Database session to query against.
     :return CprSdkSearchResponse: The family from vespa.
     """
+    if limit is None:
+        limit = 100
     search_body = SearchParameters(
         family_ids=[family_id], documents_only=True, all_results=True, limit=limit
     )
