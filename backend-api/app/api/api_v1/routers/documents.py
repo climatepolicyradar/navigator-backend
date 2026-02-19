@@ -69,7 +69,7 @@ def family_detail_from_vespa(  # noqa: PLR0913
     import_id: str,
     request: Request,
     app_token: Annotated[str, Header()],
-    limit: int | None,
+    limit: int | None = None,
     db=Depends(get_db),
     vespa_search_adapter: VespaSearchAdapter = Depends(get_vespa_search_adapter),
 ):
