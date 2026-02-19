@@ -2,6 +2,7 @@ import logging
 
 from data_in_models.db_models import Document as DBDocument
 from data_in_models.db_models import DocumentDocumentLink as DBDocumentDocumentLink
+from data_in_models.db_models import Label as DBLabel
 from data_in_models.models import Document as DocumentOutput
 from data_in_models.models import (
     DocumentDocumentRelationship,
@@ -85,6 +86,45 @@ def get_document_by_id(db: Session, document_id: str) -> DocumentOutput | None:
         raise
     except Exception as e:
         _LOGGER.exception(f"Failed to retrieve document {document_id}: {str(e)}")
+        db.rollback()
+        raise e
+
+
+def select_labels(db: Session, page: int, page_size: int) -> list[DBLabel]:
+    try:
+        offset = (page - 1) * page_size
+        query = select(DBLabel).offset(offset).limit(page_size)
+        db_labels = db.exec(query).all()
+        _LOGGER.debug(f"Retrieved {len(db_labels)} labels from the database.")
+        return db_labels
+
+    except (OperationalError, DisconnectionError):
+        db.rollback()
+        _LOGGER.exception("System error during labels retrieval operation")
+        raise
+
+    except Exception as e:
+        _LOGGER.exception(f"Failed to retrieve all labels: {str(e)}")
+        raise e
+
+
+def select_label(db: Session, label_id: str) -> DBLabel | None:
+    try:
+        query = select(DBLabel).where(DBLabel.id == label_id)
+        db_label = db.exec(query).first()
+
+        if not db_label:
+            return None
+        _LOGGER.debug(f"Retrieved label {label_id} from the database.")
+        return db_label
+
+    except (OperationalError, DisconnectionError):
+        db.rollback()
+        _LOGGER.exception("System error during label retrieval operation")
+        raise
+
+    except Exception as e:
+        _LOGGER.exception(f"Failed to retrieve label {label_id}: {str(e)}")
         db.rollback()
         raise e
 
