@@ -1,10 +1,10 @@
 from data_in_models.models import (
     Document,
-    DocumentDocumentRelationship,
-    DocumentLabelRelationship,
+    DocumentRelationship,
     DocumentWithoutRelationships,
     Item,
     Label,
+    LabelRelationship,
 )
 from returns.result import Failure, Result, Success
 
@@ -108,11 +108,11 @@ def transform(
     - document_from_document -- member_of --> document_from_family
     - document_from_family -- has_member --> document_from_document
     """
-    document_from_family.relationships.extend(
+    document_from_family.documents.extend(
         [
-            DocumentDocumentRelationship(
+            DocumentRelationship(
                 type="has_member",
-                document=DocumentWithoutRelationships(**document.model_dump()),
+                value=DocumentWithoutRelationships(**document.model_dump()),
             )
             for document in documents_from_documents
             if not _documents_match(document, document_from_family)
@@ -121,10 +121,10 @@ def transform(
 
     for document in documents_from_documents:
         if not _documents_match(document, document_from_family):
-            document.relationships = [
-                DocumentDocumentRelationship(
+            document.documents = [
+                DocumentRelationship(
                     type="member_of",
-                    document=DocumentWithoutRelationships(
+                    value=DocumentWithoutRelationships(
                         **document_from_family.model_dump()
                     ),
                 )
@@ -135,11 +135,11 @@ def transform(
     - document_from_collection -- has_member --> document_from_family
     - document_from_family -- member_of --> document_from_collection
     """
-    document_from_family.relationships.extend(
+    document_from_family.documents.extend(
         [
-            DocumentDocumentRelationship(
+            DocumentRelationship(
                 type="member_of",
-                document=DocumentWithoutRelationships(**document.model_dump()),
+                value=DocumentWithoutRelationships(**document.model_dump()),
             )
             for document in documents_from_collections
             if not _documents_match(document, document_from_family)
@@ -148,10 +148,10 @@ def transform(
 
     for document in documents_from_collections:
         if not _documents_match(document, document_from_family):
-            document.relationships = [
-                DocumentDocumentRelationship(
+            document.documents = [
+                DocumentRelationship(
                     type="has_member",
-                    document=DocumentWithoutRelationships(
+                    value=DocumentWithoutRelationships(
                         **document_from_family.model_dump()
                     ),
                 )
@@ -171,40 +171,40 @@ def transform(
     """
 
     # documents
-    document_from_family.relationships.extend(
-        DocumentDocumentRelationship(
+    document_from_family.documents.extend(
+        DocumentRelationship(
             type="has_version",
-            document=DocumentWithoutRelationships(**document.model_dump()),
+            value=DocumentWithoutRelationships(**document.model_dump()),
         )
         for document in documents_from_documents
         if _documents_match(document, document_from_family)
     )
     for document in documents_from_documents:
         if _documents_match(document, document_from_family):
-            document.relationships.append(
-                DocumentDocumentRelationship(
+            document.documents.append(
+                DocumentRelationship(
                     type="is_version_of",
-                    document=DocumentWithoutRelationships(
+                    value=DocumentWithoutRelationships(
                         **document_from_family.model_dump()
                     ),
                 )
             )
 
     # collections
-    document_from_family.relationships.extend(
-        DocumentDocumentRelationship(
+    document_from_family.documents.extend(
+        DocumentRelationship(
             type="has_version",
-            document=DocumentWithoutRelationships(**collection.model_dump()),
+            value=DocumentWithoutRelationships(**collection.model_dump()),
         )
         for collection in documents_from_collections
         if _documents_match(collection, document_from_family)
     )
     for collection in documents_from_collections:
         if _documents_match(collection, document_from_family):
-            collection.relationships.append(
-                DocumentDocumentRelationship(
+            collection.documents.append(
+                DocumentRelationship(
                     type="is_version_of",
-                    document=DocumentWithoutRelationships(
+                    value=DocumentWithoutRelationships(
                         **document_from_family.model_dump()
                     ),
                 )
@@ -222,12 +222,12 @@ def transform(
 
 def _transform_family_corpus_organisation(
     navigator_family: NavigatorFamily,
-) -> list[DocumentLabelRelationship]:
+) -> list[LabelRelationship]:
     """
     Related ontologies
     @see: https://schema.org/provider
     """
-    labels: list[DocumentLabelRelationship] = []
+    labels: list[LabelRelationship] = []
     corpus_to_provider_map = {
         "CCLW.corpus.i00000001.n0000": "Grantham Research Institute",
         "Academic.corpus.Litigation.n0000": "Sabin Center for Climate Change Law",
@@ -253,12 +253,12 @@ def _transform_family_corpus_organisation(
         navigator_family.corpus.import_id, "Unknown"
     )
     labels.append(
-        DocumentLabelRelationship(
+        LabelRelationship(
             type="provider",
-            label=Label(
+            value=Label(
                 type="agent",
                 id=provider_name,
-                title=provider_name,
+                value=provider_name,
             ),
         )
     )
@@ -267,7 +267,7 @@ def _transform_family_corpus_organisation(
 
 def _transform_navigator_family(navigator_family: NavigatorFamily) -> Document:
     logger = get_logger()
-    labels: list[DocumentLabelRelationship] = []
+    labels: list[LabelRelationship] = []
     """
     All families are currently Principal.
     Based on the FRBR taxonomy.
@@ -276,12 +276,12 @@ def _transform_navigator_family(navigator_family: NavigatorFamily) -> Document:
     @see: https://developers.laws.africa/get-started/works-and-expressions
     """
     labels.append(
-        DocumentLabelRelationship(
+        LabelRelationship(
             type="status",
-            label=Label(
+            value=Label(
                 type="status",
                 id="Principal",
-                title="Principal",
+                value="Principal",
             ),
         )
     )
@@ -301,11 +301,11 @@ def _transform_navigator_family(navigator_family: NavigatorFamily) -> Document:
     )
     if entity_type:
         labels.append(
-            DocumentLabelRelationship(
+            LabelRelationship(
                 type="entity_type",
-                label=Label(
+                value=Label(
                     id=entity_type,
-                    title=entity_type,
+                    value=entity_type,
                     type="entity_type",
                 ),
             )
@@ -386,12 +386,12 @@ def _transform_navigator_family(navigator_family: NavigatorFamily) -> Document:
                 "Unknown event_type",
             )
             labels.append(
-                DocumentLabelRelationship(
+                LabelRelationship(
                     type="activity_status",
                     timestamp=event.date,
-                    label=Label(
+                    value=Label(
                         id=event_type_label_id,
-                        title=event_type_label_id,
+                        value=event_type_label_id,
                         type="activity_status",
                     ),
                 )
@@ -414,11 +414,11 @@ def _transform_navigator_family(navigator_family: NavigatorFamily) -> Document:
                 geography = geographies_lookup.get(geograpy_id)
                 if geography:
                     geography_labels.append(
-                        DocumentLabelRelationship(
+                        LabelRelationship(
                             type="geography",
-                            label=Label(
+                            value=Label(
                                 id=geography.id,
-                                title=geography.name,
+                                value=geography.name,
                                 type="agent",
                             ),
                         )
@@ -443,11 +443,11 @@ def _transform_navigator_family(navigator_family: NavigatorFamily) -> Document:
         navigator_family.category, "Unknown family.category"
     )
     labels.append(
-        DocumentLabelRelationship(
+        LabelRelationship(
             type="entity_type",
-            label=Label(
+            value=Label(
                 id=family_category_label_id,
-                title=family_category_label_id,
+                value=family_category_label_id,
                 type="entity_type",
             ),
         )
@@ -464,17 +464,17 @@ def _transform_navigator_family(navigator_family: NavigatorFamily) -> Document:
 def _transform_navigator_document(
     navigator_document: NavigatorDocument, navigator_family: NavigatorFamily
 ) -> Document:
-    labels: list[DocumentLabelRelationship] = []
+    labels: list[LabelRelationship] = []
 
     if navigator_family.corpus.import_id == "Academic.corpus.Litigation.n0000":
         if navigator_document.events:
             event_type = navigator_document.events[0].event_type
             labels.append(
-                DocumentLabelRelationship(
+                LabelRelationship(
                     type="entity_type",
-                    label=Label(
+                    value=Label(
                         id=event_type,
-                        title=event_type,
+                        value=event_type,
                         type="entity_type",
                     ),
                 )
@@ -489,10 +489,10 @@ def _transform_navigator_document(
     if metadata_role is not None and len(metadata_role) > 0:
         normalised_role = metadata_role[0].capitalize()
         labels.append(
-            DocumentLabelRelationship(
+            LabelRelationship(
                 type="entity_type",
-                label=Label(
-                    id=normalised_role, title=normalised_role, type="entity_type"
+                value=Label(
+                    id=normalised_role, value=normalised_role, type="entity_type"
                 ),
             )
         )
@@ -507,11 +507,11 @@ def _transform_navigator_document(
     if metadata_type is not None and len(metadata_type) > 0:
         normalised_metadata_type = metadata_type[0].capitalize()
         labels.append(
-            DocumentLabelRelationship(
+            LabelRelationship(
                 type="entity_type",
-                label=Label(
+                value=Label(
                     id=normalised_metadata_type,
-                    title=normalised_metadata_type,
+                    value=normalised_metadata_type,
                     type="entity_type",
                 ),
             )
@@ -522,9 +522,9 @@ def _transform_navigator_document(
     """
     if navigator_document.import_id.endswith("placeholder"):
         labels.append(
-            DocumentLabelRelationship(
+            LabelRelationship(
                 type="status",
-                label=Label(id="Obsolete", title="Obsolete", type="status"),
+                value=Label(id="Obsolete", value="Obsolete", type="status"),
             )
         )
 
@@ -561,14 +561,14 @@ def _transform_navigator_document(
 def _transform_navigator_collection(
     navigator_collection: NavigatorCollection, navigator_family: NavigatorFamily
 ) -> Document:
-    labels: list[DocumentLabelRelationship] = []
+    labels: list[LabelRelationship] = []
 
     labels.append(
-        DocumentLabelRelationship(
+        LabelRelationship(
             type="entity_type",
-            label=Label(
+            value=Label(
                 id="Collection",
-                title="Collection",
+                value="Collection",
                 type="entity_type",
             ),
         )
@@ -582,8 +582,8 @@ def _transform_navigator_collection(
 
 
 def _deduplicate_labels(
-    labels: list[DocumentLabelRelationship],
-) -> list[DocumentLabelRelationship]:
+    labels: list[LabelRelationship],
+) -> list[LabelRelationship]:
     """
     Deduplicate labels by (label.id, type) pair, keeping first occurrence.
 
@@ -593,7 +593,7 @@ def _deduplicate_labels(
     dedup_keys = set()
     unique_labels = []
     for label_rel in labels:
-        key = (label_rel.label.id, label_rel.type)
+        key = (label_rel.value.id, label_rel.type)
         if key in dedup_keys:
             continue
         unique_labels.append(label_rel)
