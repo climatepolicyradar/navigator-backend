@@ -1,7 +1,11 @@
+import io
+import itertools
 import json
 from datetime import datetime
 from typing import Any, Literal, cast
 
+import pyarrow as pa
+import pyarrow.parquet as pq
 from data_in_models.models import Document
 from prefect import flow, task
 from prefect.futures import PrefectFuture
@@ -26,6 +30,7 @@ from app.run_db_migrations.run_db_migrations import run_db_migrations
 from app.transform.navigator_family import (
     transform_navigator_family,
 )
+from app.util import get_s3_client
 
 
 def generate_s3_cache_key(step: Literal["extract", "identify", "transform"]) -> str:
@@ -90,12 +95,48 @@ def extract(ids: list[str] | None = None) -> FamilyFetchResult:
 
 @task(log_prints=True)
 @pipeline_metrics.track(operation=Operation.LOAD)
-def load_to_s3(documents: list[Document], run_id: str | None = None):
-    """Upload transformed to S3 cache."""
-    upload_to_s3(
-        json.dumps([doc.model_dump(mode="json") for doc in documents]),
-        bucket="cpr-cache",
-        key=f"pipelines/data-in-pipeline/navigator_family/{run_id}-transformed-result.json",
+def cache_jsonl_to_s3(documents: list[Document], run_id: str | None = None):
+    """Upload documents as jsonl to S3 cache."""
+    client = get_s3_client()
+
+    buffer = io.BytesIO()
+    for chunk in itertools.batched(documents, 10_000):
+        buffer.write(
+            "\n".join(json.dumps(doc.model_dump(mode="json")) for doc in chunk).encode()
+        )
+        buffer.write(b"\n")
+
+    value = buffer.getvalue()
+    client.put_object(
+        Bucket="cpr-cache",
+        Key=f"pipelines/data-in-pipeline/navigator_family/{run_id}-transformed-result.jsonl",
+        Body=value,
+        ContentType="application/x-ndjson",
+    )
+
+
+@task(log_prints=True)
+@pipeline_metrics.track(operation=Operation.LOAD)
+def cache_parquet_to_s3(documents: list[Document], run_id: str | None = None):
+    """Upload documents as parquet to S3 cache."""
+    client = get_s3_client()
+
+    buffer = io.BytesIO()
+    writer = None
+    for chunk in itertools.batched(documents, 10_000):
+        table = pa.Table.from_pylist([doc.model_dump(mode="json") for doc in chunk])
+        if writer is None:
+            writer = pq.ParquetWriter(buffer, table.schema)
+        writer.write_table(table)
+    if writer:
+        writer.close()
+
+    value = buffer.getvalue()
+    client.put_object(
+        Bucket="cpr-cache",
+        Key=f"pipelines/data-in-pipeline/navigator_family/{run_id}-transformed-result.parquet",
+        Body=value,
+        ContentType="application/octet-stream",
     )
 
 
@@ -331,9 +372,13 @@ def data_in_pipeline(
         return Exception("No documents transformed successfully")
 
     # -------------------------
-    # LOAD TO S3 CACHE
+    # CACHE TO S3
     # -------------------------
-    load_to_s3(transformed_documents, run_id)
+    jsonl_future = cache_jsonl_to_s3.submit(transformed_documents, run_id)
+    parquet_future = cache_parquet_to_s3.submit(transformed_documents, run_id)
+
+    jsonl_future.result()
+    parquet_future.result()
 
     # -------------------------
     # BATCH AND LOAD TO DB
