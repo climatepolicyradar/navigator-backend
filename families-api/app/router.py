@@ -112,10 +112,29 @@ class ConceptPublic(BaseModel):
 
 
 @router.get("/concepts")
-def read_concepts(*, session: Session = Depends(get_session)):
+def read_concepts(
+    *,
+    session: Session = Depends(get_session),
+    exclude_deleted: bool = Query(default=False),
+):
+
+    exists_clause = (
+        """
+        AND EXISTS (
+            SELECT 1
+            FROM family_document fd
+            WHERE fd.family_import_id = family.import_id
+            AND fd.document_status != 'DELETED'
+        )
+    """
+        if exclude_deleted
+        else ""
+    )
+
     # Extract fields from the unnested JSONB objects
     stmt = text(
-        """
+        # trunk-ignore(bandit/B608)
+        f"""
       SELECT DISTINCT ON (concept->>'relation', concept->>'preferred_label', concept->>'subconcept_of_labels')
           concept->>'relation' as relation,
           concept->>'preferred_label' as preferred_label,
@@ -126,12 +145,7 @@ def read_concepts(*, session: Session = Depends(get_session)):
       FROM family, unnest(concepts) as concept
       WHERE concept->>'relation' IS NOT NULL
         AND concept->>'preferred_label' IS NOT NULL
-        AND EXISTS (
-            SELECT 1
-            FROM family_document fd
-            WHERE fd.family_import_id = family.import_id
-            AND fd.document_status != 'DELETED'
-        )
+        {exists_clause}
         ORDER BY concept->>'relation', concept->>'preferred_label'
     """
     )
