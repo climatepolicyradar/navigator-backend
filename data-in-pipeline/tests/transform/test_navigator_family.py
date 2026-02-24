@@ -3,11 +3,11 @@ import datetime
 import pytest
 from data_in_models.models import (
     Document,
-    DocumentDocumentRelationship,
-    DocumentLabelRelationship,
+    DocumentRelationship,
     DocumentWithoutRelationships,
     Item,
     Label,
+    LabelRelationship,
 )
 from returns.result import Success
 
@@ -289,223 +289,223 @@ def test_transform_navigator_family_with_single_matching_document(
         title="Matching title on family and document and collection",
         description="Family summary",
         labels=[
-            DocumentLabelRelationship(
+            LabelRelationship(
                 type="status",
-                label=Label(
+                value=Label(
                     type="status",
                     id="Principal",
-                    title="Principal",
+                    value="Principal",
                 ),
             ),
-            DocumentLabelRelationship(
+            LabelRelationship(
                 type="activity_status",
                 timestamp=datetime.datetime(2020, 1, 1),
-                label=Label(
+                value=Label(
                     type="activity_status",
                     id="Amended",
-                    title="Amended",
+                    value="Amended",
                 ),
             ),
-            DocumentLabelRelationship(
+            LabelRelationship(
                 type="activity_status",
                 timestamp=datetime.datetime(2020, 1, 1),
-                label=Label(
+                value=Label(
                     type="activity_status",
                     id="Appealed",
-                    title="Appealed",
+                    value="Appealed",
                 ),
             ),
-            DocumentLabelRelationship(
+            LabelRelationship(
                 type="activity_status",
                 timestamp=datetime.datetime(2020, 1, 1),
-                label=Label(
+                value=Label(
                     type="activity_status",
                     id="Closed",
-                    title="Closed",
+                    value="Closed",
                 ),
             ),
-            DocumentLabelRelationship(
+            LabelRelationship(
                 type="activity_status",
                 timestamp=datetime.datetime(2020, 1, 1),
-                label=Label(
+                value=Label(
                     type="activity_status",
                     id="Declaration of climate emergency",
-                    title="Declaration of climate emergency",
+                    value="Declaration of climate emergency",
                 ),
             ),
-            DocumentLabelRelationship(
+            LabelRelationship(
                 type="activity_status",
                 timestamp=datetime.datetime(2020, 1, 1),
-                label=Label(type="activity_status", id="Dismissed", title="Dismissed"),
+                value=Label(type="activity_status", id="Dismissed", value="Dismissed"),
             ),
-            DocumentLabelRelationship(
+            LabelRelationship(
                 type="activity_status",
                 timestamp=datetime.datetime(2020, 1, 1),
-                label=Label(
+                value=Label(
                     type="activity_status",
                     id="Entered into force",
-                    title="Entered into force",
+                    value="Entered into force",
                 ),
             ),
-            DocumentLabelRelationship(
+            LabelRelationship(
                 type="activity_status",
                 timestamp=datetime.datetime(2020, 1, 1),
-                label=Label(type="activity_status", id="Filing", title="Filing"),
+                value=Label(type="activity_status", id="Filing", value="Filing"),
             ),
-            DocumentLabelRelationship(
+            LabelRelationship(
                 type="activity_status",
                 timestamp=datetime.datetime(2020, 1, 1),
-                label=Label(type="activity_status", id="Granted", title="Granted"),
+                value=Label(type="activity_status", id="Granted", value="Granted"),
             ),
-            DocumentLabelRelationship(
+            LabelRelationship(
                 type="activity_status",
                 timestamp=datetime.datetime(2020, 1, 1),
-                label=Label(
+                value=Label(
                     type="activity_status",
                     id="Implementation details",
-                    title="Implementation details",
+                    value="Implementation details",
                 ),
             ),
-            DocumentLabelRelationship(
+            LabelRelationship(
                 type="activity_status",
                 timestamp=datetime.datetime(2020, 1, 1),
-                label=Label(
+                value=Label(
                     type="activity_status",
                     id="International agreement",
-                    title="International agreement",
+                    value="International agreement",
                 ),
             ),
-            DocumentLabelRelationship(
+            LabelRelationship(
                 type="activity_status",
                 timestamp=datetime.datetime(2020, 1, 1),
-                label=Label(
+                value=Label(
                     type="activity_status",
                     id="Net zero pledge",
-                    title="Net zero pledge",
+                    value="Net zero pledge",
                 ),
             ),
-            DocumentLabelRelationship(
+            LabelRelationship(
                 type="activity_status",
                 timestamp=datetime.datetime(2020, 1, 1),
-                label=Label(type="activity_status", id="Other", title="Other"),
+                value=Label(type="activity_status", id="Other", value="Other"),
             ),
-            DocumentLabelRelationship(
+            LabelRelationship(
                 type="activity_status",
                 timestamp=datetime.datetime(2020, 1, 1),
-                label=Label(
+                value=Label(
                     type="activity_status",
                     id="Passed/Approved",
-                    title="Passed/Approved",
+                    value="Passed/Approved",
                 ),
             ),
-            DocumentLabelRelationship(
+            LabelRelationship(
                 type="activity_status",
                 timestamp=datetime.datetime(2020, 1, 1),
-                label=Label(
+                value=Label(
                     type="activity_status",
                     id="Repealed/Replaced",
-                    title="Repealed/Replaced",
+                    value="Repealed/Replaced",
                 ),
             ),
-            DocumentLabelRelationship(
+            LabelRelationship(
                 type="activity_status",
                 timestamp=datetime.datetime(2020, 1, 1),
-                label=Label(type="activity_status", id="Set", title="Set"),
+                value=Label(type="activity_status", id="Set", value="Set"),
             ),
-            DocumentLabelRelationship(
+            LabelRelationship(
                 type="activity_status",
                 timestamp=datetime.datetime(2020, 1, 1),
-                label=Label(type="activity_status", id="Settled", title="Settled"),
+                value=Label(type="activity_status", id="Settled", value="Settled"),
             ),
-            DocumentLabelRelationship(
+            LabelRelationship(
                 type="activity_status",
                 timestamp=datetime.datetime(2020, 1, 1),
-                label=Label(type="activity_status", id="Updated", title="Updated"),
+                value=Label(type="activity_status", id="Updated", value="Updated"),
             ),
-            DocumentLabelRelationship(
+            LabelRelationship(
                 type="activity_status",
                 timestamp=datetime.datetime(2020, 1, 1),
-                label=Label(type="activity_status", id="Published", title="Published"),
+                value=Label(type="activity_status", id="Published", value="Published"),
             ),
-            DocumentLabelRelationship(
+            LabelRelationship(
                 type="provider",
-                label=Label(
+                value=Label(
                     type="agent",
                     id="Grantham Research Institute",
-                    title="Grantham Research Institute",
+                    value="Grantham Research Institute",
                 ),
             ),
-            DocumentLabelRelationship(
+            LabelRelationship(
                 type="geography",
-                label=Label(
+                value=Label(
                     type="agent",
                     id="AU-NSW",
-                    title="New South Wales",
+                    value="New South Wales",
                 ),
             ),
-            DocumentLabelRelationship(
+            LabelRelationship(
                 type="geography",
-                label=Label(
+                value=Label(
                     type="agent",
                     id="AUS",
-                    title="Australia",
+                    value="Australia",
                 ),
             ),
-            DocumentLabelRelationship(
+            LabelRelationship(
                 type="entity_type",
-                label=Label(
+                value=Label(
                     id="Guidance",
-                    title="Guidance",
+                    value="Guidance",
                     type="entity_type",
                 ),
             ),
         ],
-        relationships=[
-            DocumentDocumentRelationship(
+        documents=[
+            DocumentRelationship(
                 type="member_of",
-                document=DocumentWithoutRelationships(
+                value=DocumentWithoutRelationships(
                     id="collection",
                     title="Collection title",
                     labels=[
-                        DocumentLabelRelationship(
+                        LabelRelationship(
                             type="entity_type",
-                            label=Label(
+                            value=Label(
                                 id="Collection",
-                                title="Collection",
+                                value="Collection",
                                 type="entity_type",
                             ),
                         )
                     ],
                 ),
             ),
-            DocumentDocumentRelationship(
+            DocumentRelationship(
                 type="has_version",
-                document=DocumentWithoutRelationships(
+                value=DocumentWithoutRelationships(
                     id="document",
                     title="Matching title on family and document and collection",
                     labels=[
-                        DocumentLabelRelationship(
+                        LabelRelationship(
                             type="entity_type",
-                            label=Label(
+                            value=Label(
                                 type="entity_type",
                                 id="Supporting legislation",
-                                title="Supporting legislation",
+                                value="Supporting legislation",
                             ),
                         ),
-                        DocumentLabelRelationship(
+                        LabelRelationship(
                             type="entity_type",
-                            label=Label(
+                            value=Label(
                                 type="entity_type",
                                 id="National drought plan (ndp)",
-                                title="National drought plan (ndp)",
+                                value="National drought plan (ndp)",
                             ),
                         ),
-                        DocumentLabelRelationship(
+                        LabelRelationship(
                             type="provider",
-                            label=Label(
+                            value=Label(
                                 type="agent",
                                 id="Grantham Research Institute",
-                                title="Grantham Research Institute",
+                                value="Grantham Research Institute",
                             ),
                         ),
                     ],
@@ -519,17 +519,17 @@ def test_transform_navigator_family_with_single_matching_document(
                     ],
                 ),
             ),
-            DocumentDocumentRelationship(
+            DocumentRelationship(
                 type="has_version",
-                document=DocumentWithoutRelationships(
+                value=DocumentWithoutRelationships(
                     id="collection_matching",
                     title="Matching title on family and document and collection",
                     labels=[
-                        DocumentLabelRelationship(
+                        LabelRelationship(
                             type="entity_type",
-                            label=Label(
+                            value=Label(
                                 id="Collection",
-                                title="Collection",
+                                value="Collection",
                                 type="entity_type",
                             ),
                         )
@@ -547,35 +547,35 @@ def test_transform_navigator_family_with_single_matching_document(
                 id="document",
                 title="Matching title on family and document and collection",
                 labels=[
-                    DocumentLabelRelationship(
+                    LabelRelationship(
                         type="entity_type",
-                        label=Label(
+                        value=Label(
                             type="entity_type",
                             id="Supporting legislation",
-                            title="Supporting legislation",
+                            value="Supporting legislation",
                         ),
                     ),
-                    DocumentLabelRelationship(
+                    LabelRelationship(
                         type="entity_type",
-                        label=Label(
+                        value=Label(
                             type="entity_type",
                             id="National drought plan (ndp)",
-                            title="National drought plan (ndp)",
+                            value="National drought plan (ndp)",
                         ),
                     ),
-                    DocumentLabelRelationship(
+                    LabelRelationship(
                         type="provider",
-                        label=Label(
+                        value=Label(
                             type="agent",
                             id="Grantham Research Institute",
-                            title="Grantham Research Institute",
+                            value="Grantham Research Institute",
                         ),
                     ),
                 ],
-                relationships=[
-                    DocumentDocumentRelationship(
+                documents=[
+                    DocumentRelationship(
                         type="is_version_of",
-                        document=DocumentWithoutRelationships(
+                        value=DocumentWithoutRelationships(
                             **expected_document_from_family.model_dump()
                         ),
                     ),
@@ -593,19 +593,19 @@ def test_transform_navigator_family_with_single_matching_document(
                 id="collection_matching",
                 title="Matching title on family and document and collection",
                 labels=[
-                    DocumentLabelRelationship(
+                    LabelRelationship(
                         type="entity_type",
-                        label=Label(
+                        value=Label(
                             id="Collection",
-                            title="Collection",
+                            value="Collection",
                             type="entity_type",
                         ),
                     )
                 ],
-                relationships=[
-                    DocumentDocumentRelationship(
+                documents=[
+                    DocumentRelationship(
                         type="is_version_of",
-                        document=DocumentWithoutRelationships(
+                        value=DocumentWithoutRelationships(
                             **expected_document_from_family.model_dump()
                         ),
                     ),
@@ -615,19 +615,19 @@ def test_transform_navigator_family_with_single_matching_document(
                 id="collection",
                 title="Collection title",
                 labels=[
-                    DocumentLabelRelationship(
+                    LabelRelationship(
                         type="entity_type",
-                        label=Label(
+                        value=Label(
                             id="Collection",
-                            title="Collection",
+                            value="Collection",
                             type="entity_type",
                         ),
                     )
                 ],
-                relationships=[
-                    DocumentDocumentRelationship(
+                documents=[
+                    DocumentRelationship(
                         type="has_member",
-                        document=DocumentWithoutRelationships(
+                        value=DocumentWithoutRelationships(
                             **expected_document_from_family.model_dump()
                         ),
                     ),
@@ -648,7 +648,7 @@ def test_transform_navigator_family_with_litigation_corpus_type_handles_duplicat
     legal_case_labels = [
         label
         for label in family_doc.labels
-        if label.label.id == "Legal case" and label.type == "entity_type"
+        if label.value.id == "Legal case" and label.type == "entity_type"
     ]
 
     assert len(legal_case_labels) == 1, (
@@ -656,8 +656,8 @@ def test_transform_navigator_family_with_litigation_corpus_type_handles_duplicat
         f"but found {len(legal_case_labels)}"
     )
 
-    assert legal_case_labels[0].label.id == "Legal case"
-    assert legal_case_labels[0].label.title == "Legal case"
+    assert legal_case_labels[0].value.id == "Legal case"
+    assert legal_case_labels[0].value.value == "Legal case"
     assert legal_case_labels[0].type == "entity_type"
 
 
@@ -670,85 +670,85 @@ def test_transform_navigator_family_with_litigation_corpus_type(
         title="Litigation family",
         description="Family summary",
         labels=[
-            DocumentLabelRelationship(
+            LabelRelationship(
                 type="status",
-                label=Label(
+                value=Label(
                     type="status",
                     id="Principal",
-                    title="Principal",
+                    value="Principal",
                 ),
             ),
-            DocumentLabelRelationship(
+            LabelRelationship(
                 type="entity_type",
-                label=Label(
+                value=Label(
                     id="Legal case",
-                    title="Legal case",
+                    value="Legal case",
                     type="entity_type",
                 ),
             ),
-            DocumentLabelRelationship(
+            LabelRelationship(
                 type="provider",
-                label=Label(
+                value=Label(
                     type="agent",
                     id="Sabin Center for Climate Change Law",
-                    title="Sabin Center for Climate Change Law",
+                    value="Sabin Center for Climate Change Law",
                 ),
             ),
-            DocumentLabelRelationship(
+            LabelRelationship(
                 type="entity_type",
-                label=Label(
+                value=Label(
                     id="Guidance",
-                    title="Guidance",
+                    value="Guidance",
                     type="entity_type",
                 ),
             ),
         ],
-        relationships=[
-            DocumentDocumentRelationship(
+        documents=[
+            DocumentRelationship(
                 type="has_member",
-                document=DocumentWithoutRelationships(
+                value=DocumentWithoutRelationships(
                     id="document",
                     title="Litigation family document",
                     labels=[
-                        DocumentLabelRelationship(
+                        LabelRelationship(
                             type="entity_type",
-                            label=Label(
+                            value=Label(
                                 id="Decision",
-                                title="Decision",
+                                value="Decision",
                                 type="entity_type",
                             ),
                         ),
-                        DocumentLabelRelationship(
+                        LabelRelationship(
                             type="provider",
-                            label=Label(
+                            value=Label(
                                 type="agent",
                                 id="Sabin Center for Climate Change Law",
-                                title="Sabin Center for Climate Change Law",
+                                value="Sabin Center for Climate Change Law",
                             ),
                         ),
                     ],
                 ),
             ),
-            DocumentDocumentRelationship(
+            DocumentRelationship(
                 type="has_member",
-                document=DocumentWithoutRelationships(
+                value=DocumentWithoutRelationships(
                     id="1.2.3.placeholder",
                     title="Placeholder litigation family document",
                     labels=[
-                        DocumentLabelRelationship(
+                        LabelRelationship(
                             type="status",
-                            label=Label(
+                            value=Label(
                                 id="Obsolete",
-                                title="Obsolete",
+                                value="Obsolete",
                                 type="status",
                             ),
                         ),
-                        DocumentLabelRelationship(
+                        LabelRelationship(
                             type="provider",
-                            label=Label(
+                            value=Label(
                                 type="agent",
                                 id="Sabin Center for Climate Change Law",
-                                title="Sabin Center for Climate Change Law",
+                                value="Sabin Center for Climate Change Law",
                             ),
                         ),
                     ],
@@ -763,27 +763,27 @@ def test_transform_navigator_family_with_litigation_corpus_type(
                 id="document",
                 title="Litigation family document",
                 labels=[
-                    DocumentLabelRelationship(
+                    LabelRelationship(
                         type="entity_type",
-                        label=Label(
+                        value=Label(
                             id="Decision",
-                            title="Decision",
+                            value="Decision",
                             type="entity_type",
                         ),
                     ),
-                    DocumentLabelRelationship(
+                    LabelRelationship(
                         type="provider",
-                        label=Label(
+                        value=Label(
                             type="agent",
                             id="Sabin Center for Climate Change Law",
-                            title="Sabin Center for Climate Change Law",
+                            value="Sabin Center for Climate Change Law",
                         ),
                     ),
                 ],
-                relationships=[
-                    DocumentDocumentRelationship(
+                documents=[
+                    DocumentRelationship(
                         type="member_of",
-                        document=DocumentWithoutRelationships(
+                        value=DocumentWithoutRelationships(
                             **expected_document_from_family.model_dump()
                         ),
                     ),
@@ -793,27 +793,27 @@ def test_transform_navigator_family_with_litigation_corpus_type(
                 id="1.2.3.placeholder",
                 title="Placeholder litigation family document",
                 labels=[
-                    DocumentLabelRelationship(
+                    LabelRelationship(
                         type="status",
-                        label=Label(
+                        value=Label(
                             id="Obsolete",
-                            title="Obsolete",
+                            value="Obsolete",
                             type="status",
                         ),
                     ),
-                    DocumentLabelRelationship(
+                    LabelRelationship(
                         type="provider",
-                        label=Label(
+                        value=Label(
                             type="agent",
                             id="Sabin Center for Climate Change Law",
-                            title="Sabin Center for Climate Change Law",
+                            value="Sabin Center for Climate Change Law",
                         ),
                     ),
                 ],
-                relationships=[
-                    DocumentDocumentRelationship(
+                documents=[
+                    DocumentRelationship(
                         type="member_of",
-                        document=DocumentWithoutRelationships(
+                        value=DocumentWithoutRelationships(
                             **expected_document_from_family.model_dump()
                         ),
                     )
@@ -834,114 +834,114 @@ def test_transform_navigator_family_with_multilateral_climate_fund_project(
         title="Multilateral climate fund project",
         description="Family summary",
         labels=[
-            DocumentLabelRelationship(
+            LabelRelationship(
                 type="status",
-                label=Label(
+                value=Label(
                     type="status",
                     id="Principal",
-                    title="Principal",
+                    value="Principal",
                 ),
             ),
-            DocumentLabelRelationship(
+            LabelRelationship(
                 type="entity_type",
-                label=Label(
+                value=Label(
                     id="Multilateral climate fund project",
-                    title="Multilateral climate fund project",
+                    value="Multilateral climate fund project",
                     type="entity_type",
                 ),
             ),
-            DocumentLabelRelationship(
+            LabelRelationship(
                 type="activity_status",
-                label=Label(
+                value=Label(
                     id="Concept approved",
-                    title="Concept approved",
+                    value="Concept approved",
                     type="activity_status",
                 ),
                 timestamp=datetime.datetime(2020, 1, 1),
             ),
-            DocumentLabelRelationship(
+            LabelRelationship(
                 type="activity_status",
-                label=Label(
+                value=Label(
                     id="Approved",
-                    title="Approved",
+                    value="Approved",
                     type="activity_status",
                 ),
                 timestamp=datetime.datetime(2020, 1, 1),
             ),
-            DocumentLabelRelationship(
+            LabelRelationship(
                 type="activity_status",
-                label=Label(
+                value=Label(
                     id="Under implementation",
-                    title="Under implementation",
+                    value="Under implementation",
                     type="activity_status",
                 ),
                 timestamp=datetime.datetime(2020, 1, 1),
             ),
-            DocumentLabelRelationship(
+            LabelRelationship(
                 type="activity_status",
-                label=Label(
+                value=Label(
                     id="Completed",
-                    title="Completed",
+                    value="Completed",
                     type="activity_status",
                 ),
                 timestamp=datetime.datetime(2020, 1, 1),
             ),
-            DocumentLabelRelationship(
+            LabelRelationship(
                 type="activity_status",
-                label=Label(
+                value=Label(
                     id="Cancelled",
-                    title="Cancelled",
+                    value="Cancelled",
                     type="activity_status",
                 ),
                 timestamp=datetime.datetime(2020, 1, 1),
             ),
-            DocumentLabelRelationship(
+            LabelRelationship(
                 type="provider",
-                label=Label(
+                value=Label(
                     type="agent",
                     id="Adaptation Fund",
-                    title="Adaptation Fund",
+                    value="Adaptation Fund",
                 ),
             ),
-            DocumentLabelRelationship(
+            LabelRelationship(
                 type="entity_type",
-                label=Label(
+                value=Label(
                     id="Guidance",
-                    title="Guidance",
+                    value="Guidance",
                     type="entity_type",
                 ),
             ),
         ],
-        relationships=[
-            DocumentDocumentRelationship(
+        documents=[
+            DocumentRelationship(
                 type="has_member",
-                document=DocumentWithoutRelationships(
+                value=DocumentWithoutRelationships(
                     id="document_1",
                     title="Multilateral climate fund project document",
                     labels=[
-                        DocumentLabelRelationship(
+                        LabelRelationship(
                             type="provider",
-                            label=Label(
+                            value=Label(
                                 type="agent",
                                 id="Adaptation Fund",
-                                title="Adaptation Fund",
+                                value="Adaptation Fund",
                             ),
                         ),
                     ],
                 ),
             ),
-            DocumentDocumentRelationship(
+            DocumentRelationship(
                 type="has_version",
-                document=DocumentWithoutRelationships(
+                value=DocumentWithoutRelationships(
                     id="document_2",
                     title="Project document",
                     labels=[
-                        DocumentLabelRelationship(
+                        LabelRelationship(
                             type="provider",
-                            label=Label(
+                            value=Label(
                                 type="agent",
                                 id="Adaptation Fund",
-                                title="Adaptation Fund",
+                                value="Adaptation Fund",
                             ),
                         ),
                     ],
@@ -956,19 +956,19 @@ def test_transform_navigator_family_with_multilateral_climate_fund_project(
                 id="document_1",
                 title="Multilateral climate fund project document",
                 labels=[
-                    DocumentLabelRelationship(
+                    LabelRelationship(
                         type="provider",
-                        label=Label(
+                        value=Label(
                             type="agent",
                             id="Adaptation Fund",
-                            title="Adaptation Fund",
+                            value="Adaptation Fund",
                         ),
                     ),
                 ],
-                relationships=[
-                    DocumentDocumentRelationship(
+                documents=[
+                    DocumentRelationship(
                         type="member_of",
-                        document=DocumentWithoutRelationships(
+                        value=DocumentWithoutRelationships(
                             **expected_document_from_family.model_dump()
                         ),
                     )
@@ -978,19 +978,19 @@ def test_transform_navigator_family_with_multilateral_climate_fund_project(
                 id="document_2",
                 title="Project document",
                 labels=[
-                    DocumentLabelRelationship(
+                    LabelRelationship(
                         type="provider",
-                        label=Label(
+                        value=Label(
                             type="agent",
                             id="Adaptation Fund",
-                            title="Adaptation Fund",
+                            value="Adaptation Fund",
                         ),
                     ),
                 ],
-                relationships=[
-                    DocumentDocumentRelationship(
+                documents=[
+                    DocumentRelationship(
                         type="is_version_of",
-                        document=DocumentWithoutRelationships(
+                        value=DocumentWithoutRelationships(
                             **expected_document_from_family.model_dump()
                         ),
                     )

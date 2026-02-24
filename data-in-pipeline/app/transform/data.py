@@ -1,10 +1,10 @@
 from data_in_models.models import (
     Document,
-    DocumentDocumentRelationship,
-    DocumentLabelRelationship,
+    DocumentRelationship,
     DocumentWithoutRelationships,
     Item,
     Label,
+    LabelRelationship,
 )
 
 # @see: https://unfccc.int/resource/docs/convkp/conveng.pdf
@@ -12,20 +12,20 @@ unfccc_document = Document(
     id="__1",
     title="United Nations Framework Convention On Climate Change",
     labels=[
-        DocumentLabelRelationship(
+        LabelRelationship(
             type="debug",
-            label=Label(
+            value=Label(
                 type="debug",
                 id="manual_input",
-                title="manual_input",
+                value="manual_input",
             ),
         ),
-        DocumentLabelRelationship(
+        LabelRelationship(
             type="entity_type",
-            label=Label(
+            value=Label(
                 type="entity_type",
                 id="Treaty",
-                title="Treaty",
+                value="Treaty",
             ),
         ),
     ],
@@ -41,27 +41,27 @@ unfccc_kyoto_protocol_document = Document(
     id="__2",
     title="Kyoto Protocol To The United Nations Framework Convention On Climate Change",
     labels=[
-        DocumentLabelRelationship(
+        LabelRelationship(
             type="debug",
-            label=Label(
+            value=Label(
                 type="debug",
                 id="manual_input",
-                title="manual_input",
+                value="manual_input",
             ),
         ),
-        DocumentLabelRelationship(
+        LabelRelationship(
             type="entity_type",
-            label=Label(
+            value=Label(
                 type="entity_type",
                 id="Protocol",
-                title="Protocol",
+                value="Protocol",
             ),
         ),
     ],
-    relationships=[
-        DocumentDocumentRelationship(
+    documents=[
+        DocumentRelationship(
             type="member_of",
-            document=DocumentWithoutRelationships(**unfccc_document.model_dump()),
+            value=DocumentWithoutRelationships(**unfccc_document.model_dump()),
         )
     ],
     items=[
@@ -76,27 +76,27 @@ unfccc_copenhagen_accord_document = Document(
     id="__3",
     title="The Copenhagen Accord",
     labels=[
-        DocumentLabelRelationship(
+        LabelRelationship(
             type="debug",
-            label=Label(
+            value=Label(
                 type="debug",
                 id="manual_input",
-                title="manual_input",
+                value="manual_input",
             ),
         ),
-        DocumentLabelRelationship(
+        LabelRelationship(
             type="entity_type",
-            label=Label(
+            value=Label(
                 type="entity_type",
                 id="Accord",
-                title="Accord",
+                value="Accord",
             ),
         ),
     ],
-    relationships=[
-        DocumentDocumentRelationship(
+    documents=[
+        DocumentRelationship(
             type="member_of",
-            document=DocumentWithoutRelationships(**unfccc_document.model_dump()),
+            value=DocumentWithoutRelationships(**unfccc_document.model_dump()),
         )
     ],
     items=[
@@ -111,31 +111,31 @@ unfccc_kyoto_protocol_doha_amendment_document = Document(
     id="__4",
     title="Doha amendment to the Kyoto Protocol",
     labels=[
-        DocumentLabelRelationship(
+        LabelRelationship(
             type="debug",
-            label=Label(
+            value=Label(
                 type="debug",
                 id="manual_input",
-                title="manual_input",
+                value="manual_input",
             ),
         ),
-        DocumentLabelRelationship(
+        LabelRelationship(
             type="entity_type",
-            label=Label(
+            value=Label(
                 type="entity_type",
                 id="Amendment",
-                title="Amendment",
+                value="Amendment",
             ),
         ),
     ],
-    relationships=[
-        DocumentDocumentRelationship(
+    documents=[
+        DocumentRelationship(
             type="member_of",
-            document=DocumentWithoutRelationships(**unfccc_document.model_dump()),
+            value=DocumentWithoutRelationships(**unfccc_document.model_dump()),
         ),
-        DocumentDocumentRelationship(
+        DocumentRelationship(
             type="member_of",
-            document=DocumentWithoutRelationships(
+            value=DocumentWithoutRelationships(
                 **unfccc_kyoto_protocol_document.model_dump()
             ),
         ),
@@ -152,27 +152,27 @@ unfccc_paris_agreement_document = Document(
     id="__5",
     title="The Paris Agreement",
     labels=[
-        DocumentLabelRelationship(
+        LabelRelationship(
             type="debug",
-            label=Label(
+            value=Label(
                 type="debug",
                 id="manual_input",
-                title="manual_input",
+                value="manual_input",
             ),
         ),
-        DocumentLabelRelationship(
+        LabelRelationship(
             type="entity_type",
-            label=Label(
+            value=Label(
                 type="entity_type",
                 id="Agreement",
-                title="Agreement",
+                value="Agreement",
             ),
         ),
     ],
-    relationships=[
-        DocumentDocumentRelationship(
+    documents=[
+        DocumentRelationship(
             type="member_of",
-            document=DocumentWithoutRelationships(**unfccc_document.model_dump()),
+            value=DocumentWithoutRelationships(**unfccc_document.model_dump()),
         )
     ],
     items=[
@@ -182,28 +182,28 @@ unfccc_paris_agreement_document = Document(
     ],
 )
 
-unfccc_document.relationships = [
-    DocumentDocumentRelationship(
+unfccc_document.documents = [
+    DocumentRelationship(
         type="has_member",
-        document=DocumentWithoutRelationships(
+        value=DocumentWithoutRelationships(
             **unfccc_kyoto_protocol_document.model_dump()
         ),
     ),
-    DocumentDocumentRelationship(
+    DocumentRelationship(
         type="has_member",
-        document=DocumentWithoutRelationships(
+        value=DocumentWithoutRelationships(
             **unfccc_copenhagen_accord_document.model_dump()
         ),
     ),
-    DocumentDocumentRelationship(
+    DocumentRelationship(
         type="has_member",
-        document=DocumentWithoutRelationships(
+        value=DocumentWithoutRelationships(
             **unfccc_kyoto_protocol_doha_amendment_document.model_dump()
         ),
     ),
-    DocumentDocumentRelationship(
+    DocumentRelationship(
         type="has_member",
-        document=DocumentWithoutRelationships(
+        value=DocumentWithoutRelationships(
             **unfccc_paris_agreement_document.model_dump()
         ),
     ),

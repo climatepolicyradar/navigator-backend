@@ -44,19 +44,19 @@ class Document(WithDbDatetimeFields, table=True):
     description: str | None = None
 
     items: list["Item"] = Relationship(back_populates="document")
-    labels: list["DocumentLabelLink"] = Relationship(back_populates="document")
+    labels: list["DocumentLabelRelationship"] = Relationship(back_populates="document")
 
 
 class Label(WithDbDatetimeFields, table=True):
     id: str = Field(primary_key=True)
-    title: str
+    value: str
     type: str
 
-    documents: list["DocumentLabelLink"] = Relationship(back_populates="label")
+    documents: list["DocumentLabelRelationship"] = Relationship(back_populates="label")
 
 
-class DocumentLabelLink(WithDbDatetimeFields, table=True):
-    relationship_type: str
+class DocumentLabelRelationship(WithDbDatetimeFields, table=True):
+    type: str
     timestamp: datetime | None = None
     document_id: str = Field(
         foreign_key="document.id",
@@ -71,16 +71,30 @@ class DocumentLabelLink(WithDbDatetimeFields, table=True):
     document: Document = Relationship(back_populates="labels")
 
 
-class DocumentDocumentLink(WithDbDatetimeFields, table=True):
-    relationship_type: str
+class DocumentDocumentRelationship(WithDbDatetimeFields, table=True):
+    type: str
     timestamp: datetime | None = None
 
-    source_document_id: str = Field(
+    document_id: str = Field(
         foreign_key="document.id",
         primary_key=True,
     )
     related_document_id: str = Field(
         foreign_key="document.id",
+        primary_key=True,
+    )
+
+
+class LabelLabelRelationship(WithDbDatetimeFields, table=True):
+    type: str
+    timestamp: datetime | None = None
+
+    label_id: str = Field(
+        foreign_key="label.id",
+        primary_key=True,
+    )
+    related_label_id: str = Field(
+        foreign_key="label.id",
         primary_key=True,
     )
 

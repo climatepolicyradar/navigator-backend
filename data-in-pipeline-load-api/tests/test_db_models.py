@@ -7,8 +7,9 @@ def test_can_create_tables(session):
     assert len(table_names) > 0
     assert "document" in table_names
     assert "label" in table_names
-    assert "documentlabellink" in table_names
-    assert "documentdocumentlink" in table_names
+    assert "documentlabelrelationship" in table_names
+    assert "documentdocumentrelationship" in table_names
+    assert "labellabelrelationship" in table_names
     assert "item" in table_names
 
 
@@ -18,7 +19,7 @@ def test_can_insert_and_query(session):
     session.commit()
     session.refresh(document)
 
-    label = Label(id="label_1", title="Label 1", type="Type A")
+    label = Label(id="label_1", value="Label 1", type="Type A")
     session.add(label)
     session.commit()
 
