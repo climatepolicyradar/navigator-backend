@@ -20,17 +20,27 @@ from tests.factories import (
 )
 
 
+@patch("app.navigator_family_etl_pipeline.cache_jsonl_to_s3")
+@patch("app.navigator_family_etl_pipeline.cache_parquet_to_s3")
 @patch("app.navigator_family_etl_pipeline.run_db_migrations")
 @patch("app.navigator_family_etl_pipeline.upload_to_s3")
 @patch("app.navigator_family_etl_pipeline.NavigatorConnector")
 @patch("app.load.load.requests.put")
-def test_process_family_updates_flow_multiple_families(
-    mock_post, mock_connector_class, mock_upload, mock_run_migrations
+def test_process_family_updates_flow_multiple_families(  # noqa: PLR0913
+    mock_post,
+    mock_connector_class,
+    mock_upload,
+    mock_run_migrations,
+    mock_cache_parquet_to_s3,
+    mock_cache_jsonl_to_s3,
 ):
     """Test ETL pipeline with multiple families across pages."""
     mock_run_migrations.return_value = None
 
     mock_upload.return_value = None
+
+    mock_cache_jsonl_to_s3.return_value = None
+    mock_cache_parquet_to_s3.return_value = None
 
     mock_connector_instance = MagicMock()
     mock_connector_class.return_value = mock_connector_instance
@@ -164,18 +174,25 @@ def test_process_family_updates_flow_extraction_failure(
     assert isinstance(result, Exception)
 
 
+@patch("app.navigator_family_etl_pipeline.cache_jsonl_to_s3")
+@patch("app.navigator_family_etl_pipeline.cache_parquet_to_s3")
 @patch("app.navigator_family_etl_pipeline.run_db_migrations")
 @patch("app.navigator_family_etl_pipeline.upload_to_s3")
 @patch("app.navigator_family_etl_pipeline.NavigatorConnector")
 @patch("app.navigator_family_etl_pipeline.load_batch")
-def test_etl_pipeline_load_failure(
+def test_etl_pipeline_load_failure(  # noqa: PLR0913
     mock_load_batch_task,
     mock_connector_class,
     mock_upload,
     mock_run_migrations,
+    mock_cache_jsonl_to_s3,
+    mock_cache_parquet_to_s3,
 ):
     mock_run_migrations.return_value = None
     mock_upload.return_value = None
+
+    mock_cache_jsonl_to_s3.return_value = None
+    mock_cache_parquet_to_s3.return_value = None
 
     mock_connector_instance = MagicMock()
     mock_connector_class.return_value = mock_connector_instance
@@ -242,21 +259,28 @@ def test_etl_pipeline_load_failure(
     mock_connector_instance.close.assert_called_once()
 
 
+@patch("app.navigator_family_etl_pipeline.cache_jsonl_to_s3")
+@patch("app.navigator_family_etl_pipeline.cache_parquet_to_s3")
 @patch("app.navigator_family_etl_pipeline.transform_navigator_family")
 @patch("app.navigator_family_etl_pipeline.run_db_migrations")
 @patch("app.navigator_family_etl_pipeline.upload_to_s3")
 @patch("app.navigator_family_etl_pipeline.NavigatorConnector")
 @patch("app.load.load.requests.put")
-def test_etl_pipeline_partial_transformation_failure(
+def test_etl_pipeline_partial_transformation_failure(  # noqa: PLR0913
     mock_put,
     mock_connector_class,
     mock_upload,
     mock_run_migrations,
     mock_transform_families,
+    mock_cache_jsonl_to_s3,
+    mock_cache_parquet_to_s3,
 ):
     """Test that pipeline continues when some families fail transformation."""
     mock_run_migrations.return_value = None
     mock_upload.return_value = None
+
+    mock_cache_jsonl_to_s3.return_value = None
+    mock_cache_parquet_to_s3.return_value = None
 
     mock_connector_instance = MagicMock()
     mock_connector_class.return_value = mock_connector_instance
