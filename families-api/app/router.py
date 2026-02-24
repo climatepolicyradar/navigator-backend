@@ -1,7 +1,7 @@
 import json
 import logging
 from pathlib import Path
-from typing import Generic, TypeVar
+from typing import TypeVar
 
 from fastapi import APIRouter, Depends, HTTPException, Query
 from pydantic import BaseModel
@@ -37,14 +37,14 @@ router = APIRouter(prefix="/families")
 APIDataType = TypeVar("APIDataType")
 
 
-class APIListResponse(BaseModel, Generic[APIDataType]):
+class APIListResponse[APIDataType](BaseModel):
     data: list[APIDataType]
     total: int
     page: int
     page_size: int
 
 
-class APIItemResponse(BaseModel, Generic[APIDataType]):
+class APIItemResponse[APIDataType](BaseModel):
     data: APIDataType
 
 
@@ -124,9 +124,15 @@ def read_concepts(*, session: Session = Depends(get_session)):
           concept->>'type' as type,
           concept->>'subconcept_of_labels' as subconcept_of_labels
       FROM family, unnest(concepts) as concept
-      WHERE concept->>'relation' IS NOT NULL 
-      AND concept->>'preferred_label' IS NOT NULL
-      ORDER BY concept->>'relation', concept->>'preferred_label'
+      WHERE concept->>'relation' IS NOT NULL
+        AND concept->>'preferred_label' IS NOT NULL
+        AND EXISTS (
+            SELECT 1
+            FROM family_document fd
+            WHERE fd.family_import_id = family.import_id
+            AND fd.document_status != 'DELETED'
+        )
+        ORDER BY concept->>'relation', concept->>'preferred_label'
     """
     )
 
