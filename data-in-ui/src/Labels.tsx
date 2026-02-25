@@ -53,7 +53,7 @@ export default function Labels() {
     refineCoreProps: {
       resource: "labels",
       pagination: {
-        pageSize: 100,
+        pageSize: 1000,
       },
     },
   });

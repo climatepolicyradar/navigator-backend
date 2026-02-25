@@ -2,10 +2,18 @@ import logging
 from typing import TypeVar
 
 from data_in_models.models import Document as DocumentOutput
+from data_in_models.models import Label
 from fastapi import APIRouter, Depends, FastAPI, HTTPException, Query, status
+from fastapi.middleware.cors import CORSMiddleware
 from pydantic import BaseModel
 
-from app.repository import check_db_health, get_all_documents, get_document_by_id
+from app.repository import (
+    check_db_health,
+    get_all_documents,
+    get_document_by_id,
+    select_label,
+    select_labels,
+)
 from app.session import get_db
 from app.settings import settings
 
@@ -16,6 +24,14 @@ app = FastAPI(
     openapi_url="/data-in/openapi.json",
 )
 router = APIRouter(prefix="/data-in")
+
+app.add_middleware(
+    CORSMiddleware,
+    allow_origins=["*"],
+    allow_credentials=True,
+    allow_methods=["*"],
+    allow_headers=["*"],
+)
 
 APIDataType = TypeVar("APIDataType")
 
@@ -112,6 +128,47 @@ def get_document(document_id: str, db=Depends(get_db)):
         raise
     except Exception as e:
         _LOGGER.exception(f"Failed to fetch document {document_id}: {e}")
+        raise HTTPException(
+            status_code=status.HTTP_500_INTERNAL_SERVER_ERROR, detail=str(e)
+        )
+
+
+@router.get("/labels", response_model=APIListResponse[Label])
+def read_labels(
+    page: int = Query(1, ge=1),
+    page_size: int = Query(default=1000, ge=1, le=1000),
+    db=Depends(get_db),
+):
+    try:
+        all_labels = select_labels(db, page=page, page_size=page_size)
+        total_labels = len(all_labels)
+
+        return APIListResponse(
+            data=all_labels, total=total_labels, page=page, page_size=page_size
+        )
+    except Exception as e:
+        _LOGGER.exception(f"Failed to fetch labels: {e}")
+        raise HTTPException(
+            status_code=status.HTTP_500_INTERNAL_SERVER_ERROR, detail=str(e)
+        )
+
+
+@router.get("/labels/{label_id}", response_model=APIItemResponse[Label])
+def read_label(label_id: str, db=Depends(get_db)):
+    try:
+        label = select_label(db, label_id)
+
+        if not label:
+            raise HTTPException(
+                status_code=status.HTTP_404_NOT_FOUND,
+                detail=f"Label with ID {label_id} not found",
+            )
+
+        return APIItemResponse(data=label)
+    except HTTPException:
+        raise
+    except Exception as e:
+        _LOGGER.exception(f"Failed to fetch label {label_id}: {e}")
         raise HTTPException(
             status_code=status.HTTP_500_INTERNAL_SERVER_ERROR, detail=str(e)
         )

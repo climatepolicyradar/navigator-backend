@@ -1,7 +1,7 @@
 import json
 import logging
 from pathlib import Path
-from typing import Generic, TypeVar
+from typing import TypeVar
 
 from fastapi import APIRouter, Depends, HTTPException, Query
 from pydantic import BaseModel
@@ -37,14 +37,14 @@ router = APIRouter(prefix="/families")
 APIDataType = TypeVar("APIDataType")
 
 
-class APIListResponse(BaseModel, Generic[APIDataType]):
+class APIListResponse[APIDataType](BaseModel):
     data: list[APIDataType]
     total: int
     page: int
     page_size: int
 
 
-class APIItemResponse(BaseModel, Generic[APIDataType]):
+class APIItemResponse[APIDataType](BaseModel):
     data: APIDataType
 
 
@@ -112,10 +112,29 @@ class ConceptPublic(BaseModel):
 
 
 @router.get("/concepts")
-def read_concepts(*, session: Session = Depends(get_session)):
+def read_concepts(
+    *,
+    session: Session = Depends(get_session),
+    exclude_deleted: bool = Query(default=False),
+):
+
+    exists_clause = (
+        """
+        AND EXISTS (
+            SELECT 1
+            FROM family_document fd
+            WHERE fd.family_import_id = family.import_id
+            AND fd.document_status != 'DELETED'
+        )
+    """
+        if exclude_deleted
+        else ""
+    )
+
     # Extract fields from the unnested JSONB objects
     stmt = text(
-        """
+        # trunk-ignore(bandit/B608)
+        f"""
       SELECT DISTINCT ON (concept->>'relation', concept->>'preferred_label', concept->>'subconcept_of_labels')
           concept->>'relation' as relation,
           concept->>'preferred_label' as preferred_label,
@@ -124,9 +143,10 @@ def read_concepts(*, session: Session = Depends(get_session)):
           concept->>'type' as type,
           concept->>'subconcept_of_labels' as subconcept_of_labels
       FROM family, unnest(concepts) as concept
-      WHERE concept->>'relation' IS NOT NULL 
-      AND concept->>'preferred_label' IS NOT NULL
-      ORDER BY concept->>'relation', concept->>'preferred_label'
+      WHERE concept->>'relation' IS NOT NULL
+        AND concept->>'preferred_label' IS NOT NULL
+        {exists_clause}
+        ORDER BY concept->>'relation', concept->>'preferred_label'
     """
     )
 

@@ -1,16 +1,20 @@
 import logging
 
 from data_in_models.db_models import Document as DBDocument
-from data_in_models.db_models import DocumentDocumentLink as DBDocumentDocumentLink
-from data_in_models.db_models import DocumentLabelLink as DBDocumentLabelLink
+from data_in_models.db_models import (
+    DocumentDocumentRelationship as DBDocumentDocumentLink,
+)
+from data_in_models.db_models import Label as DBLabel
 from data_in_models.models import Document as DocumentOutput
 from data_in_models.models import (
-    DocumentDocumentRelationship,
-    DocumentLabelRelationship,
+    DocumentRelationship,
     DocumentWithoutRelationships,
 )
 from data_in_models.models import Item as ItemOutput
 from data_in_models.models import Label as LabelOutput
+from data_in_models.models import (
+    LabelRelationship,
+)
 from sqlalchemy.exc import DisconnectionError, OperationalError
 from sqlmodel import Session, select
 
@@ -102,6 +106,45 @@ def get_document_by_id(db: Session, document_id: str) -> DocumentOutput | None:
         raise e
 
 
+def select_labels(db: Session, page: int, page_size: int) -> list[DBLabel]:
+    try:
+        offset = (page - 1) * page_size
+        query = select(DBLabel).offset(offset).limit(page_size)
+        db_labels = db.exec(query).all()
+        _LOGGER.debug(f"Retrieved {len(db_labels)} labels from the database.")
+        return db_labels
+
+    except (OperationalError, DisconnectionError):
+        db.rollback()
+        _LOGGER.exception("System error during labels retrieval operation")
+        raise
+
+    except Exception as e:
+        _LOGGER.exception(f"Failed to retrieve all labels: {str(e)}")
+        raise e
+
+
+def select_label(db: Session, label_id: str) -> DBLabel | None:
+    try:
+        query = select(DBLabel).where(DBLabel.id == label_id)
+        db_label = db.exec(query).first()
+
+        if not db_label:
+            return None
+        _LOGGER.debug(f"Retrieved label {label_id} from the database.")
+        return db_label
+
+    except (OperationalError, DisconnectionError):
+        db.rollback()
+        _LOGGER.exception("System error during label retrieval operation")
+        raise
+
+    except Exception as e:
+        _LOGGER.exception(f"Failed to retrieve label {label_id}: {str(e)}")
+        db.rollback()
+        raise e
+
+
 def _map_db_document_to_schema(db: Session, db_doc: DBDocument) -> DocumentOutput:
     """
     Map database document to Pydantic schema with all relationships.
@@ -113,11 +156,11 @@ def _map_db_document_to_schema(db: Session, db_doc: DBDocument) -> DocumentOutpu
     items = [ItemOutput(url=item.url) for item in db_doc.items]
 
     labels = [
-        DocumentLabelRelationship(
-            type=link.relationship_type,
-            label=LabelOutput(
+        LabelRelationship(
+            type=link.type,
+            value=LabelOutput(
                 id=link.label.id,
-                title=link.label.title,
+                value=link.label.value,
                 type=link.label.type,
             ),
             timestamp=link.timestamp,
@@ -127,7 +170,7 @@ def _map_db_document_to_schema(db: Session, db_doc: DBDocument) -> DocumentOutpu
 
     db_relationships = db.exec(
         select(DBDocumentDocumentLink).where(
-            DBDocumentDocumentLink.source_document_id == db_doc.id
+            DBDocumentDocumentLink.document_id == db_doc.id
         )
     ).all()
 
@@ -139,19 +182,19 @@ def _map_db_document_to_schema(db: Session, db_doc: DBDocument) -> DocumentOutpu
 
         if related_doc:
             relationships.append(
-                DocumentDocumentRelationship(
-                    type=link.relationship_type,
+                DocumentRelationship(
+                    type=link.type,
                     timestamp=link.timestamp,
-                    document=DocumentWithoutRelationships(
+                    value=DocumentWithoutRelationships(
                         id=related_doc.id,
                         title=related_doc.title,
                         description=related_doc.description,
                         labels=[
-                            DocumentLabelRelationship(
-                                type=lbl_link.relationship_type,
-                                label=LabelOutput(
+                            LabelRelationship(
+                                type=lbl_link.type,
+                                value=LabelOutput(
                                     id=lbl_link.label.id,
-                                    title=lbl_link.label.title,
+                                    value=lbl_link.label.value,
                                     type=lbl_link.label.type,
                                 ),
                                 timestamp=lbl_link.timestamp,
@@ -169,5 +212,5 @@ def _map_db_document_to_schema(db: Session, db_doc: DBDocument) -> DocumentOutpu
         description=db_doc.description,
         labels=labels,
         items=items,
-        relationships=relationships,
+        documents=relationships,
     )

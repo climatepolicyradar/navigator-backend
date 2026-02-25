@@ -3,15 +3,20 @@ from datetime import datetime
 from pydantic import BaseModel
 
 
-class Label(BaseModel):
+class WithRelationships(BaseModel):
+    labels: list["LabelRelationship"] = []
+    documents: list["DocumentRelationship"] = []
+
+
+class Label(WithRelationships):
     id: str
-    title: str
     type: str
+    value: str
 
 
-class DocumentLabelRelationship(BaseModel):
+class LabelRelationship(BaseModel):
     type: str
-    label: Label
+    value: Label
     timestamp: datetime | None = None
 
 
@@ -23,21 +28,20 @@ class BaseDocument(BaseModel):
     id: str
     title: str
     description: str | None = None
-    labels: list[DocumentLabelRelationship] = []
 
     """@see: https://en.wikipedia.org/wiki/Functional_Requirements_for_Bibliographic_Records"""
     items: list[Item] = []
 
 
-class DocumentDocumentRelationship(BaseModel):
+class DocumentRelationship(BaseModel):
     type: str
-    document: "DocumentWithoutRelationships"
+    value: "DocumentWithoutRelationships"
     timestamp: datetime | None = None
 
 
-class Document(BaseDocument):
-    relationships: list[DocumentDocumentRelationship] = []
+class Document(BaseDocument, WithRelationships):
+    pass
 
 
 class DocumentWithoutRelationships(BaseDocument):
-    pass
+    labels: list["LabelRelationship"] = []

@@ -36,7 +36,9 @@ from app.repository.lookups import (
 from app.repository.lookups import (
     validate_subdivision_iso_codes,  # TODO: update this to use geographies api endpoint when refactoring geographies to use iso codes
 )
-from app.repository.lookups import get_countries_for_region
+from app.repository.lookups import (
+    get_countries_for_region,
+)
 from app.service.util import to_cdn_url
 from app.telemetry import observe
 
@@ -262,7 +264,7 @@ def _hit_is_missing_required_fields(hit: CprSdkResponseHit) -> bool:
 
 
 def _family_is_not_found_or_not_published(
-    fam_tuple: Optional[tuple[Family, FamilyMetadata]]
+    fam_tuple: Optional[tuple[Family, FamilyMetadata]],
 ) -> bool:
     return fam_tuple is None or fam_tuple[0].family_status != FamilyStatus.PUBLISHED
 
@@ -523,6 +525,8 @@ def get_family_from_vespa(
     family_id: str,
     db: Session,
     vespa_search_adapter: VespaSearchAdapter,
+    limit: int | None = None,
+    max_hits_per_family: int | None = None,
 ) -> CprSdkSearchResponse:
     """Get a family from vespa.
 
@@ -530,8 +534,18 @@ def get_family_from_vespa(
     :param Session db: Database session to query against.
     :return CprSdkSearchResponse: The family from vespa.
     """
+    if limit is None:
+        limit = 100
+
+    if max_hits_per_family is None:
+        max_hits_per_family = 100
+
     search_body = SearchParameters(
-        family_ids=[family_id], documents_only=True, all_results=True
+        family_ids=[family_id],
+        documents_only=True,
+        all_results=True,
+        limit=limit,
+        max_hits_per_family=max_hits_per_family,
     )
 
     _LOGGER.info(

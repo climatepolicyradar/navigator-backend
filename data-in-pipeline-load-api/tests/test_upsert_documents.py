@@ -3,23 +3,21 @@ from datetime import UTC, datetime
 import pytest
 from data_in_models.db_models import (
     Document,
-    DocumentDocumentLink,
-    DocumentLabelLink,
+    DocumentDocumentRelationship,
+    DocumentLabelRelationship,
     Item,
     Label,
 )
 from data_in_models.models import Document as DocumentInput
 from data_in_models.models import (
-    DocumentDocumentRelationship as DocumentDocumentRelationshipInput,
-)
-from data_in_models.models import (
-    DocumentLabelRelationship as DocumentLabelRelationshipInput,
+    DocumentRelationship as DocumentDocumentRelationshipInput,
 )
 from data_in_models.models import (
     DocumentWithoutRelationships as DocumentWithoutRelationshipsInput,
 )
 from data_in_models.models import Item as ItemInput
 from data_in_models.models import Label as LabelInput
+from data_in_models.models import LabelRelationship as DocumentLabelRelationshipInput
 from sqlalchemy.exc import IntegrityError
 from sqlmodel import select
 
@@ -36,16 +34,16 @@ def create_mock_document_input(
         description=None,
         labels=labels or [],
         items=items or [],
-        relationships=relationships or [],
+        documents=relationships or [],
     )
 
 
-def create_mock_label(label_id="label_1", title="Test Label"):
+def create_mock_label(label_id="label_1", value="Test Label"):
     """Create a mock label relationship."""
-    label = LabelInput(id=label_id, title=title, type="status")
+    label = LabelInput(id=label_id, value=value, type="status")
 
     return DocumentLabelRelationshipInput(
-        type="tag", timestamp=datetime.now(UTC), label=label
+        type="tag", timestamp=datetime.now(UTC), value=label
     )
 
 
@@ -89,11 +87,11 @@ def test_upsert_creates_document_with_labels_and_items(session):
 
     label_entity = session.get(Label, "label_1")
     assert label_entity is not None
-    assert label_entity.title == "Important"
+    assert label_entity.value == "Important"
 
-    link = session.get(DocumentLabelLink, ("test-doc-2", "label_1"))
+    link = session.get(DocumentLabelRelationship, ("test-doc-2", "label_1"))
     assert link is not None
-    assert link.relationship_type == "tag"
+    assert link.type == "tag"
 
     assert len(doc.items) == 1
     item_entity = doc.items[0]
@@ -175,11 +173,11 @@ def test_create_document_success(session):
 
     label_entity = session.get(Label, "label_1")
     assert label_entity is not None
-    assert label_entity.title == "Important"
+    assert label_entity.value == "Important"
 
-    link = session.get(DocumentLabelLink, ("test-doc-2", "label_1"))
+    link = session.get(DocumentLabelRelationship, ("test-doc-2", "label_1"))
     assert link is not None
-    assert link.relationship_type == "tag"
+    assert link.type == "tag"
 
     assert len(doc.items) == 1
     item_entity = doc.items[0]
@@ -222,7 +220,7 @@ def test_create_document_with_document_relationship(session):
     )
 
     mock_rel = DocumentDocumentRelationshipInput(
-        type="has_member", timestamp=datetime.now(UTC), document=mock_target_doc
+        type="has_member", timestamp=datetime.now(UTC), value=mock_target_doc
     )
 
     mock_doc = DocumentInput(
@@ -231,7 +229,7 @@ def test_create_document_with_document_relationship(session):
         description="Source description",
         labels=[],
         items=[],
-        relationships=[mock_rel],
+        documents=[mock_rel],
     )
 
     result = create_or_update_documents(session, [mock_doc])
@@ -246,16 +244,16 @@ def test_create_document_with_document_relationship(session):
     assert target.title == "Target Document"
 
     relationships = session.exec(
-        select(DocumentDocumentLink).where(
-            DocumentDocumentLink.source_document_id == "source-doc-1"
+        select(DocumentDocumentRelationship).where(
+            DocumentDocumentRelationship.document_id == "source-doc-1"
         )
     ).all()
 
     assert len(relationships) == 1
     rel = relationships[0]
     assert rel.related_document_id == "target-doc-1"
-    assert rel.relationship_type == "has_member"
-    assert rel.source_document_id == "source-doc-1"
+    assert rel.type == "has_member"
+    assert rel.document_id == "source-doc-1"
 
 
 def test_empty_relationship_list_clears_existing_relationships(session):
@@ -266,7 +264,7 @@ def test_empty_relationship_list_clears_existing_relationships(session):
     )
 
     mock_rel = DocumentDocumentRelationshipInput(
-        type="has_member", timestamp=datetime.now(UTC), document=mock_target_doc
+        type="has_member", timestamp=datetime.now(UTC), value=mock_target_doc
     )
 
     mock_doc = DocumentInput(
@@ -275,17 +273,17 @@ def test_empty_relationship_list_clears_existing_relationships(session):
         description=None,
         labels=[],
         items=[],
-        relationships=[mock_rel],
+        documents=[mock_rel],
     )
     create_or_update_documents(session, [mock_doc])
 
-    exists_query = select(DocumentDocumentLink).where(
-        DocumentDocumentLink.source_document_id == "simple-source"
+    exists_query = select(DocumentDocumentRelationship).where(
+        DocumentDocumentRelationship.document_id == "simple-source"
     )
     existing_rel = session.exec(exists_query).first()
     assert existing_rel is not None, "Relationship should exist after creation"
 
-    mock_doc.relationships = []
+    mock_doc.documents = []
     create_or_update_documents(session, [mock_doc])
 
     cleared_rel = session.exec(exists_query).first()
@@ -302,7 +300,7 @@ def test_new_relationship_added_to_existing_document(session):
     )
 
     mock_relationship1 = DocumentDocumentRelationshipInput(
-        type="has_member", timestamp=None, document=mock_target1
+        type="has_member", timestamp=None, value=mock_target1
     )
 
     mock_document = DocumentInput(
@@ -311,14 +309,14 @@ def test_new_relationship_added_to_existing_document(session):
         description=None,
         labels=[],
         items=[],
-        relationships=[mock_relationship1],
+        documents=[mock_relationship1],
     )
 
     create_or_update_documents(session, [mock_document])
 
     relationships_after_first = session.exec(
-        select(DocumentDocumentLink).where(
-            DocumentDocumentLink.source_document_id == "source-doc-001"
+        select(DocumentDocumentRelationship).where(
+            DocumentDocumentRelationship.document_id == "source-doc-001"
         )
     ).all()
 
@@ -329,28 +327,28 @@ def test_new_relationship_added_to_existing_document(session):
     )
 
     mock_relationship2 = DocumentDocumentRelationshipInput(
-        type="references", timestamp=None, document=mock_target2
+        type="references", timestamp=None, value=mock_target2
     )
 
-    mock_document.relationships = [mock_relationship1, mock_relationship2]
+    mock_document.documents = [mock_relationship1, mock_relationship2]
 
     create_or_update_documents(session, [mock_document])
 
     relationships_after_second = session.exec(
-        select(DocumentDocumentLink).where(
-            DocumentDocumentLink.source_document_id == "source-doc-001"
+        select(DocumentDocumentRelationship).where(
+            DocumentDocumentRelationship.document_id == "source-doc-001"
         )
     ).all()
 
     assert len(relationships_after_second) == len(
-        mock_document.relationships
-    ), f"Expected {len(mock_document.relationships)} relationships, got {len(relationships_after_second)}"
+        mock_document.documents
+    ), f"Expected {len(mock_document.documents)} relationships, got {len(relationships_after_second)}"
 
     rel_doc_ids = {r.related_document_id for r in relationships_after_second}
     assert rel_doc_ids == {"target-doc-1", "target-doc-2"}
 
     for rel in relationships_after_second:
         if rel.related_document_id == "target-doc-1":
-            assert rel.relationship_type == "has_member"
+            assert rel.type == "has_member"
         elif rel.related_document_id == "target-doc-2":
-            assert rel.relationship_type == "references"
+            assert rel.type == "references"

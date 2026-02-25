@@ -1,10 +1,16 @@
+from datetime import UTC, datetime
 from http import HTTPStatus
 
 import pytest
 from fastapi.testclient import TestClient
 from sqlmodel import Session
 
-from app.models import FamilyPublic
+from app.models import (
+    FamilyDocument,
+    FamilyDocumentStatus,
+    FamilyPublic,
+    PhysicalDocument,
+)
 from app.router import APIListResponse, ConceptPublic
 
 
@@ -200,6 +206,68 @@ def test_concepts_with_the_same_relation_and_preferred_label_are_included_in_the
     assert response.data[1].id == concept_base["id"]
     assert response.data[1].relation == concept_base["relation"]
     assert response.data[1].subconcept_of_labels == ["parent concept 2"]
+
+
+def test_concepts_excludes_families_with_only_deleted_documents_when_exclude_deleted_is_true(
+    client: TestClient, session: Session, make_family
+):
+    id = 1
+    (corpus_type, corpus, family, family_document, physical_document) = make_family(id)
+    family_document.document_status = FamilyDocumentStatus.DELETED
+    session.add(corpus_type)
+    session.add(corpus)
+    session.add(family)
+    session.add(family_document)
+    session.add(physical_document)
+    session.commit()
+
+    response = client.get("/families/concepts?exclude_deleted=true")
+    assert response.status_code == HTTPStatus.OK
+    response = APIListResponse[ConceptPublic].model_validate(response.json())
+    assert not response.data
+
+
+def test_concepts_includes_family_when_at_least_one_document_is_not_deleted(
+    client: TestClient, session: Session, make_family
+):
+    id = 1
+    (corpus_type, corpus, family, family_document, physical_document) = make_family(id)
+    family_document.document_status = FamilyDocumentStatus.DELETED
+
+    # Add a second non-deleted document to the same family
+    physical_document_2 = PhysicalDocument(
+        id=2,
+        title="Test Physical Document 2",
+        source_url="https://example.com/test-physical-document-2",
+        md5_sum="test_md5_sum_2",
+        cdn_object="https://cdn.example.com/test-physical-document-2",
+        content_type="application/pdf",
+    )
+    family_document_2 = FamilyDocument(
+        import_id="family_document_2",
+        variant_name="MAIN",
+        document_status=FamilyDocumentStatus.CREATED,
+        family_import_id=f"family_{id}",
+        physical_document_id=2,
+        valid_metadata={},
+        last_modified=datetime.now(UTC),
+    )
+
+    session.add(corpus_type)
+    session.add(corpus)
+    session.add(family)
+    session.add(family_document)
+    session.add(physical_document)
+    session.add(physical_document_2)
+    session.add(family_document_2)
+    session.commit()
+
+    expected_number_of_concepts = 2
+
+    response = client.get("/families/concepts?exclude_deleted=true")
+    assert response.status_code == HTTPStatus.OK
+    response = APIListResponse[ConceptPublic].model_validate(response.json())
+    assert len(response.data) == expected_number_of_concepts
 
 
 def test_read_families_by_import_ids(client: TestClient, session: Session, make_family):

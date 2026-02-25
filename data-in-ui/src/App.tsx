@@ -19,7 +19,7 @@ import Labels from "./Labels";
 import Relationships from "./Relationships";
 
 const baseProvider = dataProvider(
-  "https://skillful-analysis-production.up.railway.app",
+  "https://api.climatepolicyradar.org/data-in/documents",
 );
 
 const documentsDataProvider: DataProvider = {
@@ -32,7 +32,7 @@ const documentsDataProvider: DataProvider = {
     const limit = pageSize;
 
     const url = new URL(
-      `https://skillful-analysis-production.up.railway.app/${resource}`,
+      `https://api.climatepolicyradar.org/data-in/${resource}`,
     );
     url.searchParams.set("offset", offset.toString());
     url.searchParams.set("limit", limit.toString());
@@ -62,7 +62,7 @@ const documentsDataProvider: DataProvider = {
   },
   getOne: async ({ resource, id }) => {
     const url = new URL(
-      `https://skillful-analysis-production.up.railway.app/${resource}/${id}`,
+      `https://api.climatepolicyradar.org/data-in/${resource}/${id}`,
     );
     const response = await fetch(url.toString());
     const responseJson = await response.json();
