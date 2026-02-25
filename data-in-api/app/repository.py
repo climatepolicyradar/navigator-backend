@@ -7,6 +7,9 @@ from data_in_models.db_models import (
 from data_in_models.db_models import Label as DBLabel
 from data_in_models.models import Document as DocumentOutput
 from data_in_models.models import (
+    DocumentLabelRelationship as DBDocumentLabelRelationship,
+)
+from data_in_models.models import (
     DocumentRelationship,
     DocumentWithoutRelationships,
 )
@@ -60,8 +63,8 @@ def get_all_documents(
 
         if label_id:
             query = (
-                query.join(DBDocumentLabelLink)
-                .where(DBDocumentLabelLink.label_id == label_id)
+                query.join(DBDocumentLabelRelationship)
+                .where(DBDocumentLabelRelationship.label_id == label_id)
                 .distinct()
             )
 
