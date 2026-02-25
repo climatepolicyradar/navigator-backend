@@ -138,6 +138,12 @@ def cache_parquet_to_s3(documents: list[Document], run_id: str | None = None):
         Body=value,
         ContentType="application/octet-stream",
     )
+    client.put_object(
+        Bucket="cpr-cache",
+        Key="pipelines/data-in-pipeline/navigator_family/documents-latest.parquet",
+        Body=value,
+        ContentType="application/octet-stream",
+    )
 
 
 @task(log_prints=True)
