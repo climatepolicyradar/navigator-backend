@@ -72,7 +72,9 @@ def db_health_check(db=Depends(get_db)):
 def list_documents(
     page: int = Query(1, ge=1),
     page_size: int = Query(default=20, ge=1, le=100),
-    label_id: str | None = Query(default=None),
+    label_id: str | None = Query(
+        default=None, description="Filter by labels.label.id", alias="labels.label.id"
+    ),
     db=Depends(get_db),
 ):
     try:
