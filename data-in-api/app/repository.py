@@ -4,6 +4,9 @@ from data_in_models.db_models import Document as DBDocument
 from data_in_models.db_models import (
     DocumentDocumentRelationship as DBDocumentDocumentLink,
 )
+from data_in_models.db_models import (
+    DocumentLabelRelationship as DBDocumentLabelRelationship,
+)
 from data_in_models.db_models import Label as DBLabel
 from data_in_models.models import Document as DocumentOutput
 from data_in_models.models import (
@@ -41,7 +44,10 @@ def check_db_health(db: Session) -> bool:
 
 
 def get_all_documents(
-    db: Session, page: int = 1, page_size: int = 20
+    db: Session,
+    page: int = 1,
+    page_size: int = 20,
+    label_id: str | None = None,
 ) -> list[DocumentOutput]:
     """
     Retrieve all documents.
@@ -53,7 +59,16 @@ def get_all_documents(
     """
     try:
         offset = (page - 1) * page_size
-        query = select(DBDocument).offset(offset).limit(page_size)
+        query = select(DBDocument)
+
+        if label_id:
+            query = (
+                query.join(DBDocumentLabelRelationship)
+                .where(DBDocumentLabelRelationship.label_id == label_id)
+                .distinct()
+            )
+
+        query = query.offset(offset).limit(page_size)
         db_documents = db.exec(query).all()
         _LOGGER.debug(f"Retrieved {len(db_documents)} documents from the database.")
         return [_map_db_document_to_schema(db, db_doc) for db_doc in db_documents]

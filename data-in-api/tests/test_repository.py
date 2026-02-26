@@ -89,8 +89,7 @@ def setup_documents(session: Session):
 
 
 def test_get_all_documents_with_relationships(setup_documents: Session):
-    session = setup_documents
-    documents = get_all_documents(session, page=1, page_size=10)
+    documents = get_all_documents(setup_documents, page=1, page_size=10)
     total_mocked_documents = 2
 
     assert len(documents) == total_mocked_documents
@@ -104,8 +103,7 @@ def test_get_all_documents_with_relationships(setup_documents: Session):
 
 
 def test_get_document_by_id_with_relationships(setup_documents: Session):
-    session = setup_documents
-    doc1 = get_document_by_id(session, "doc1")
+    doc1 = get_document_by_id(setup_documents, "doc1")
 
     assert doc1 is not None
     assert doc1.id == "doc1"
@@ -116,6 +114,26 @@ def test_get_document_by_id_with_relationships(setup_documents: Session):
 
 
 def test_get_document_by_id_not_found(setup_documents: Session):
-    session = setup_documents
-    doc = get_document_by_id(session, "nonexistent")
+    doc = get_document_by_id(setup_documents, "nonexistent")
     assert doc is None
+
+
+def test_get_all_documents_filter_by_label_existing(setup_documents: Session):
+
+    documents = get_all_documents(
+        setup_documents, page=1, page_size=10, label_id="Main"
+    )
+
+    assert len(documents) == 1
+    doc = documents[0]
+    assert doc.id == "doc1"
+    assert any(lbl.value.id == "Main" for lbl in doc.labels)
+
+
+def test_get_all_documents_filter_by_label_nonexistent(setup_documents: Session):
+
+    documents = get_all_documents(
+        setup_documents, page=1, page_size=10, label_id="NonExistentLabel"
+    )
+
+    assert len(documents) == 0
