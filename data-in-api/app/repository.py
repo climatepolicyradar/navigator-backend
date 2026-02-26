@@ -6,7 +6,7 @@ from data_in_models.db_models import (
 )
 from data_in_models.db_models import Label as DBLabel
 from data_in_models.models import Document as DocumentOutput
-from data_in_models.models import (
+from data_in_models.db_models import (
     DocumentLabelRelationship as DBDocumentLabelRelationship,
 )
 from data_in_models.models import (

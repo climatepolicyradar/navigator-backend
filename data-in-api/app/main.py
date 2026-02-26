@@ -89,7 +89,7 @@ def list_documents(
     page: int = Query(1, ge=1),
     page_size: int = Query(default=20, ge=1, le=100),
     label_id: str | None = Query(
-        default=None, description="Filter by labels.label.id", alias="labels.label.id"
+        default=None, description="Filter by labels.value.id", alias="labels.value.id"
     ),
     db=Depends(get_db),
 ):
