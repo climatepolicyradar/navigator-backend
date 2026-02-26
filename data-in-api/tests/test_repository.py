@@ -127,7 +127,7 @@ def test_get_all_documents_filter_by_label_existing(setup_documents: Session):
     assert len(documents) == 1
     doc = documents[0]
     assert doc.id == "doc1"
-    assert any(lbl.label.id == "Main" for lbl in doc.labels)
+    assert any(lbl.value.id == "Main" for lbl in doc.labels)
 
 
 def test_get_all_documents_filter_by_label_nonexistent(setup_documents: Session):
