@@ -22,16 +22,16 @@ import {
 
 type Label = {
   type: string;
-  label: {
+  value: {
     id: string;
-    title: string;
+    value: string;
     type: string;
   };
 };
 
 type Relationship = {
   type: string;
-  document: {
+  value: {
     id: string;
     title: string;
     labels: Label[];
@@ -42,7 +42,7 @@ export type Document = {
   id: string;
   title: string;
   labels: Label[];
-  relationships: Relationship[];
+  documents: Relationship[];
 };
 
 export default function Documents() {
@@ -107,7 +107,7 @@ export default function Documents() {
             <div className="flex flex-wrap gap-1">
               {labels.map((label, index) => (
                 <Badge key={index} variant="secondary">
-                  {label.type}: {label.label.title}
+                  {label.type}: {label.value.value}
                 </Badge>
               ))}
             </div>
@@ -119,12 +119,12 @@ export default function Documents() {
         accessorKey: "relationships",
         header: "Relationships",
         cell: ({ row }) => {
-          const relationships = row.original.relationships || [];
+          const relationships = row.original.documents || [];
           return (
             <div className="flex flex-wrap gap-1">
               {relationships.map((rel, index) => (
                 <Badge key={index} variant="outline">
-                  {rel.type}: {rel.document.title}
+                  {rel.type}: {rel.value.title}
                 </Badge>
               ))}
             </div>

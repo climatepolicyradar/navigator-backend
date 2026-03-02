@@ -48,7 +48,7 @@ export default function Document() {
                         variant="secondary"
                         className="px-3 py-1 text-sm"
                       >
-                        {label.type}: {label.label.title}
+                        {label.type}: {label.value.value}
                       </Badge>
                     ))}
                   </div>
@@ -63,22 +63,22 @@ export default function Document() {
                 <h3 className="text-sm font-medium leading-none mb-3">
                   Relationships
                 </h3>
-                {document?.relationships?.length ? (
+                {document?.documents?.length ? (
                   <div className="flex flex-wrap gap-2">
-                    {document.relationships.map((relationship, index) => (
+                    {document.documents.map((document, index) => (
                       <Badge
                         key={index}
                         variant="secondary"
                         className="hover:bg-accent px-3 py-1 text-sm h-auto"
                       >
                         <Link
-                          to={`/documents/${relationship.document.id}`}
+                          to={`/documents/${document.value.id}`}
                           className="flex items-center gap-1"
                         >
                           <span className="font-semibold">
-                            {relationship.type}:
+                            {document.type}:
                           </span>
-                          <span>{relationship.document.title}</span>
+                          <span>{document.value.title}</span>
                         </Link>
                       </Badge>
                     ))}
