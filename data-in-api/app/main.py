@@ -134,9 +134,10 @@ def read_labels(
     try:
         all_labels = select_labels(db, page=page, page_size=page_size)
         total_labels = len(all_labels)
+        data = [label for label in all_labels]
 
         return APIListResponse(
-            data=all_labels, total=total_labels, page=page, page_size=page_size
+            data=data, total=total_labels, page=page, page_size=page_size
         )
     except Exception as e:
         _LOGGER.exception(f"Failed to fetch labels: {e}")

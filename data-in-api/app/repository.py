@@ -94,13 +94,13 @@ def get_document_by_id(db: Session, document_id: str) -> DocumentOutput | None:
         raise e
 
 
-def select_labels(db: Session, page: int, page_size: int) -> list[DBLabel]:
+def select_labels(db: Session, page: int, page_size: int) -> list[LabelOutput]:
     try:
         offset = (page - 1) * page_size
         query = select(DBLabel).offset(offset).limit(page_size)
         db_labels = db.exec(query).all()
         _LOGGER.debug(f"Retrieved {len(db_labels)} labels from the database.")
-        return db_labels
+        return [_map_db_label_to_schema(db_label) for db_label in db_labels]
 
     except (OperationalError, DisconnectionError):
         db.rollback()
@@ -112,7 +112,7 @@ def select_labels(db: Session, page: int, page_size: int) -> list[DBLabel]:
         raise e
 
 
-def select_label(db: Session, label_id: str) -> DBLabel | None:
+def select_label(db: Session, label_id: str) -> LabelOutput | None:
     try:
         query = select(DBLabel).where(DBLabel.id == label_id)
         db_label = db.exec(query).first()
@@ -120,7 +120,7 @@ def select_label(db: Session, label_id: str) -> DBLabel | None:
         if not db_label:
             return None
         _LOGGER.debug(f"Retrieved label {label_id} from the database.")
-        return db_label
+        return _map_db_label_to_schema(db_label)
 
     except (OperationalError, DisconnectionError):
         db.rollback()
@@ -201,4 +201,14 @@ def _map_db_document_to_schema(db: Session, db_doc: DBDocument) -> DocumentOutpu
         labels=labels,
         items=items,
         documents=relationships,
+    )
+
+
+def _map_db_label_to_schema(db_label: DBLabel) -> LabelOutput:
+    """Map database label to model."""
+    return LabelOutput(
+        id=db_label.id,
+        value=db_label.value,
+        type=db_label.type,
+        # We purposefully do not map relation ships as they are not useful in the response
     )

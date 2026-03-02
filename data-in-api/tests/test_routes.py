@@ -49,7 +49,7 @@ DOCUMENTS_LIST = [
         description="Description 1",
         labels=[],
         items=[],
-        relationships=[],
+        documents=[],
     ),
     DocumentOutput(
         id="doc_2",
@@ -57,7 +57,7 @@ DOCUMENTS_LIST = [
         description=None,
         labels=[],
         items=[],
-        relationships=[],
+        documents=[],
     ),
 ]
 
@@ -67,7 +67,7 @@ SINGLE_DOCUMENT = DocumentOutput(
     description="Test description",
     labels=[],
     items=[],
-    relationships=[],
+    documents=[],
 )
 
 
@@ -94,7 +94,7 @@ def test_list_documents_with_pagination(client, monkeypatch):
             description=None,
             labels=[],
             items=[],
-            relationships=[],
+            documents=[],
         )
         for i in range(10)
     ]
