@@ -112,7 +112,13 @@ def get_document_by_id(db: Session, document_id: str) -> DocumentOutput | None:
 def select_labels(db: Session, page: int, page_size: int) -> list[LabelOutput]:
     try:
         offset = (page - 1) * page_size
-        query = select(DBLabel).offset(offset).limit(page_size)
+        query = (
+            select(DBLabel)
+            .offset(offset)
+            .limit(page_size)
+            .order_by(DBLabel.type)
+            .order_by(DBLabel.value)
+        )
         db_labels = db.exec(query).all()
         _LOGGER.debug(f"Retrieved {len(db_labels)} labels from the database.")
         return [_map_db_label_to_schema(db_label) for db_label in db_labels]
