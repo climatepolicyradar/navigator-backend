@@ -88,10 +88,18 @@ def db_health_check(db=Depends(get_db)):
 def list_documents(
     page: int = Query(1, ge=1),
     page_size: int = Query(default=20, ge=1, le=100),
+    label_id: str | None = Query(
+        default=None, description="Filter by labels.value.id", alias="labels.value.id"
+    ),
     db=Depends(get_db),
 ):
     try:
-        all_documents = get_all_documents(db, page=page, page_size=page_size)
+        all_documents = get_all_documents(
+            db,
+            page=page,
+            page_size=page_size,
+            label_id=label_id,
+        )
         total_documents = len(all_documents)
 
         return APIListResponse(
