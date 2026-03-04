@@ -30,7 +30,7 @@ from app.run_db_migrations.run_db_migrations import run_db_migrations
 from app.transform.navigator_family import (
     transform_navigator_family,
 )
-from app.util import get_s3_client
+from app.util import SlackNotify, get_s3_client
 
 
 def generate_s3_cache_key(step: Literal["extract", "identify", "transform"]) -> str:
@@ -299,7 +299,7 @@ task_runner = cast(
 )
 
 
-@flow(log_prints=True, task_runner=task_runner)
+@flow(log_prints=True, task_runner=task_runner, on_failure=[SlackNotify.message])
 @pipeline_metrics.track(
     pipeline_type=PipelineType.FAMILY, scope="batch", flush_on_exit=True
 )
