@@ -124,7 +124,10 @@ def cache_parquet_to_s3(documents: list[Document], run_id: str | None = None):
     buffer = io.BytesIO()
     writer = None
     for chunk in itertools.batched(documents, 10_000):
-        table = pa.Table.from_pylist([doc.model_dump(mode="json") for doc in chunk])
+        rows = [doc.model_dump(mode="json") for doc in chunk]
+        for row in rows:
+            row["attributes"] = json.dumps(row.get("attributes", {}))
+        table = pa.Table.from_pylist(rows)
         if writer is None:
             writer = pq.ParquetWriter(buffer, table.schema)
         writer.write_table(table)
