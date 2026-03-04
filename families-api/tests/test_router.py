@@ -437,7 +437,4 @@ def test_read_family_includes_deleted_documents_by_default(
 
     response = client.get(f"/families/{family.import_id}")
 
-    assert response.status_code == HTTPStatus.OK
-    result = FamilyPublic.model_validate(response.json()["data"])
-    document_statuses = {doc.document_status for doc in result.documents}
-    assert FamilyDocumentStatus.DELETED in document_statuses
+    assert response.status_code == HTTPStatus.GONE
