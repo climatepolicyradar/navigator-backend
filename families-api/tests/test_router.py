@@ -359,3 +359,85 @@ def test_read_families_by_import_ids_empty_result(
     result = APIListResponse[FamilyPublic].model_validate(response.json())
     assert len(result.data) == 0
     assert result.total == 0
+
+
+def test_read_family_excludes_deleted_documents(
+    client: TestClient, session: Session, make_family
+):
+    """Families endpoint should not return deleted documents."""
+    id = 1
+    (corpus_type, corpus, family, family_document, physical_document) = make_family(id)
+
+    # Mark the existing document as deleted and add a new non-deleted one
+    family_document.document_status = FamilyDocumentStatus.DELETED
+
+    family_document_2 = FamilyDocument(
+        import_id="family_document_2",
+        variant_name="MAIN",
+        document_status=FamilyDocumentStatus.CREATED,
+        family_import_id=family.import_id,
+        physical_document_id=physical_document.id,
+        valid_metadata=family_document.valid_metadata,
+        last_modified=family_document.last_modified,
+    )
+
+    session.add(corpus_type)
+    session.add(corpus)
+    session.add(family)
+    session.add(family_document)
+    session.add(family_document_2)
+    session.add(physical_document)
+    session.commit()
+
+    response = client.get(f"/families/{family.import_id}?exclude_deleted=true")
+
+    assert response.status_code == HTTPStatus.OK
+    result = FamilyPublic.model_validate(response.json()["data"])
+    document_statuses = {doc.document_status for doc in result.documents}
+    assert FamilyDocumentStatus.DELETED not in document_statuses
+    assert FamilyDocumentStatus.CREATED in document_statuses
+
+
+def test_read_family_returns_410_when_all_documents_are_deleted(
+    client: TestClient, session: Session, make_family
+):
+    """Families endpoint should return 410 when all documents are deleted."""
+    id = 1
+    (corpus_type, corpus, family, family_document, physical_document) = make_family(id)
+
+    family_document.document_status = FamilyDocumentStatus.DELETED
+
+    session.add(corpus_type)
+    session.add(corpus)
+    session.add(family)
+    session.add(family_document)
+    session.add(physical_document)
+    session.commit()
+
+    response = client.get(f"/families/{family.import_id}?exclude_deleted=true")
+
+    assert response.status_code == HTTPStatus.GONE
+
+
+def test_read_family_includes_deleted_documents_by_default(
+    client: TestClient, session: Session, make_family
+):
+    """Families endpoint includes deleted documents when not excluded."""
+    id = 1
+    (corpus_type, corpus, family, family_document, physical_document) = make_family(id)
+
+    family_document.document_status = FamilyDocumentStatus.DELETED
+
+    session.add(corpus_type)
+    session.add(corpus)
+    session.add(family)
+    session.add(family_document)
+    session.add(physical_document)
+    session.commit()
+
+    response = client.get(f"/families/{family.import_id}")
+
+    assert response.status_code == HTTPStatus.OK
+    result = FamilyPublic.model_validate(response.json()["data"])
+    document_statuses = {doc.document_status for doc in result.documents}
+    assert FamilyDocumentStatus.DELETED in document_statuses
