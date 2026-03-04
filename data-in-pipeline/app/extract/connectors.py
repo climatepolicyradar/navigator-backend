@@ -68,6 +68,7 @@ class NavigatorFamily(BaseModel):
     collections: list[NavigatorCollection]
     geographies: list[str]
     category: str
+    metadata: dict[str, list[str]] = {}
 
 
 class PageFetchFailure(BaseModel):
