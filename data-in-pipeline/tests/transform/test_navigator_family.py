@@ -111,6 +111,8 @@ def navigator_family_with_single_matching_document() -> Identified[NavigatorFami
                 "core_object": ["Core Object 123"],
                 "project_value_fund_spend": ["123456789"],
                 "project_value_co_financing": ["123456789"],
+                "author": ["Test Author"],
+                "author_type": ["Person"],
             },
         ),
     )
@@ -455,6 +457,14 @@ def test_transform_navigator_family_with_single_matching_document(
                     type="agent",
                     id="AUS",
                     value="Australia",
+                ),
+            ),
+            LabelRelationship(
+                type="author",
+                value=Label(
+                    id="Test Author",
+                    value="Test Author",
+                    type="person",
                 ),
             ),
             LabelRelationship(
