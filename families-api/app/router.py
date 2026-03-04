@@ -280,15 +280,51 @@ def read_slug(*, session: Session = Depends(get_session), slug_name: str):
 
 
 @router.get("/{family_id}", response_model=APIItemResponse[FamilyPublic])
-def read_family(*, session: Session = Depends(get_session), family_id: str):
+def read_family(
+    *,
+    session: Session = Depends(get_session),
+    family_id: str,
+    exclude_deleted: bool = Query(default=True),
+):
+    """
+    Retrieve a single family by import ID.
+
     # When should this break?
     # https://sqlmodel.tiangolo.com/tutorial/fastapi/read-one/#path-operation-for-one-hero
+
+    :param session: Database session used for the query.
+    :type session: Session
+    :param family_id: Import ID of the requested family.
+    :type family_id: str
+    :param exclude_deleted: When True, exclude deleted documents and
+        return 410 if all documents are deleted.
+    :type exclude_deleted: bool
+    :raises HTTPException: Raised with 404 when the family is not
+        found or when all related documents are deleted.
+    :return: The requested family wrapped in an APIItemResponse.
+    :rtype: APIItemResponse[FamilyPublic]
+    """
     family = session.exec(
         Family.eager_loaded_select().where(Family.import_id == family_id)
     ).one_or_none()
 
     if family is None:
         raise HTTPException(status_code=404, detail="Not found")
+
+    if exclude_deleted:
+        active_family_documents = [
+            document
+            for document in family.family_documents
+            if document.document_status != FamilyDocumentStatus.DELETED
+        ]
+
+        if not active_family_documents:
+            _LOGGER.info(
+                "🧹 Excluding family %s because all documents are deleted", family_id
+            )
+            raise HTTPException(status_code=410, detail="Gone")
+
+        family.family_documents = active_family_documents
 
     return APIItemResponse(
         data=family,

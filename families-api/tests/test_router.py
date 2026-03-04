@@ -17,8 +17,10 @@ from app.router import APIListResponse, ConceptPublic
 def test_returns_a_list_of_concepts_we_have_data_for(
     client: TestClient, session: Session, make_family
 ):
-    id = 1
-    (corpus_type, corpus, family, family_document, physical_document) = make_family(id)
+    import_id = 1
+    (corpus_type, corpus, family, family_document, physical_document) = make_family(
+        import_id
+    )
 
     session.add(corpus_type)
     session.add(corpus)
@@ -39,11 +41,11 @@ def test_returns_a_list_of_concepts_we_have_data_for(
 def test_does_not_include_duplicate_concepts_in_the_response(
     client: TestClient, session: Session, make_family
 ):
-    id1 = 1
-    (corpus_type1, corpus1, family1, _, _) = make_family(id1)
+    import_id1 = 1
+    (corpus_type1, corpus1, family1, _, _) = make_family(import_id1)
     # add another family with the same concepts
-    id2 = 2
-    (corpus_type2, corpus2, family2, _, _) = make_family(id2)
+    import_id2 = 2
+    (corpus_type2, corpus2, family2, _, _) = make_family(import_id2)
 
     session.add(corpus_type1)
     session.add(corpus_type2)
@@ -68,8 +70,8 @@ def test_does_not_include_duplicate_concepts_in_the_response(
 def test_does_not_include_concepts_with_no_relation(
     client: TestClient, session: Session, make_family, relation
 ):
-    id = 1
-    (corpus_type, corpus, family, _, _) = make_family(id)
+    import_id = 1
+    (corpus_type, corpus, family, _, _) = make_family(import_id)
     family.concepts = {
         "id": "test concepts 1",
         "ids": [],
@@ -95,8 +97,8 @@ def test_does_not_include_concepts_with_no_relation(
 def test_does_not_include_concepts_with_no_concept_preferred_label(
     client: TestClient, session: Session, make_family, preferred_label
 ):
-    id = 1
-    (corpus_type, corpus, family, _, _) = make_family(id)
+    import_id = 1
+    (corpus_type, corpus, family, _, _) = make_family(import_id)
     family.concepts = {
         "id": "test concepts 1",
         "ids": [],
@@ -121,8 +123,10 @@ def test_does_not_include_concepts_with_no_concept_preferred_label(
 def test_returns_a_list_of_concepts_ordered_by_relation_and_then_preferred_label(
     client: TestClient, session: Session, make_family
 ):
-    id = 1
-    (corpus_type, corpus, family, family_document, physical_document) = make_family(id)
+    import_id = 1
+    (corpus_type, corpus, family, family_document, physical_document) = make_family(
+        import_id
+    )
     family.concepts = (
         {
             "id": "test concepts 3",
@@ -172,8 +176,8 @@ def test_returns_a_list_of_concepts_ordered_by_relation_and_then_preferred_label
 def test_concepts_with_the_same_relation_and_preferred_label_are_included_in_the_response_if_subconcept_of_labels_is_different(
     client: TestClient, session: Session, make_family
 ):
-    id = 1
-    (corpus_type, corpus, family, _, _) = make_family(id)
+    import_id = 1
+    (corpus_type, corpus, family, _, _) = make_family(import_id)
     concept_base = {
         "id": "test concepts 1",
         "ids": [],
@@ -211,8 +215,10 @@ def test_concepts_with_the_same_relation_and_preferred_label_are_included_in_the
 def test_concepts_excludes_families_with_only_deleted_documents_when_exclude_deleted_is_true(
     client: TestClient, session: Session, make_family
 ):
-    id = 1
-    (corpus_type, corpus, family, family_document, physical_document) = make_family(id)
+    import_id = 1
+    (corpus_type, corpus, family, family_document, physical_document) = make_family(
+        import_id
+    )
     family_document.document_status = FamilyDocumentStatus.DELETED
     session.add(corpus_type)
     session.add(corpus)
@@ -230,8 +236,10 @@ def test_concepts_excludes_families_with_only_deleted_documents_when_exclude_del
 def test_concepts_includes_family_when_at_least_one_document_is_not_deleted(
     client: TestClient, session: Session, make_family
 ):
-    id = 1
-    (corpus_type, corpus, family, family_document, physical_document) = make_family(id)
+    import_id = 1
+    (corpus_type, corpus, family, family_document, physical_document) = make_family(
+        import_id
+    )
     family_document.document_status = FamilyDocumentStatus.DELETED
 
     # Add a second non-deleted document to the same family
@@ -247,7 +255,7 @@ def test_concepts_includes_family_when_at_least_one_document_is_not_deleted(
         import_id="family_document_2",
         variant_name="MAIN",
         document_status=FamilyDocumentStatus.CREATED,
-        family_import_id=f"family_{id}",
+        family_import_id=f"family_{import_id}",
         physical_document_id=2,
         valid_metadata={},
         last_modified=datetime.now(UTC),
@@ -272,13 +280,13 @@ def test_concepts_includes_family_when_at_least_one_document_is_not_deleted(
 
 def test_read_families_by_import_ids(client: TestClient, session: Session, make_family):
     """Test fetching families by import IDs list."""
-    id1 = 1
-    id2 = 2
-    id3 = 3
+    import_id1 = 1
+    import_id2 = 2
+    import_id3 = 3
 
-    (corpus_type1, corpus1, family1, _, _) = make_family(id1)
-    (corpus_type2, corpus2, family2, _, _) = make_family(id2)
-    (corpus_type3, corpus3, family3, _, _) = make_family(id3)
+    (corpus_type1, corpus1, family1, _, _) = make_family(import_id1)
+    (corpus_type2, corpus2, family2, _, _) = make_family(import_id2)
+    (corpus_type3, corpus3, family3, _, _) = make_family(import_id3)
 
     session.add(corpus_type1)
     session.add(corpus_type2)
@@ -310,13 +318,13 @@ def test_read_families_by_import_ids_with_corpus_filter(
     client: TestClient, session: Session, make_family
 ):
     """Test fetching families by import IDs combined with corpus filter."""
-    id1 = 1
-    id2 = 2
-    id3 = 3
+    import_id1 = 1
+    import_id2 = 2
+    import_id3 = 3
 
-    (corpus_type1, corpus1, family1, _, _) = make_family(id1)
-    (corpus_type2, corpus2, family2, _, _) = make_family(id2)
-    (corpus_type3, corpus3, family3, _, _) = make_family(id3)
+    (corpus_type1, corpus1, family1, _, _) = make_family(import_id1)
+    (corpus_type2, corpus2, family2, _, _) = make_family(import_id2)
+    (corpus_type3, corpus3, family3, _, _) = make_family(import_id3)
 
     session.add(corpus_type1)
     session.add(corpus_type2)
@@ -345,8 +353,8 @@ def test_read_families_by_import_ids_empty_result(
     client: TestClient, session: Session, make_family
 ):
     """Test fetching families with non-existent import IDs."""
-    id1 = 1
-    (corpus_type1, corpus1, family1, _, _) = make_family(id1)
+    import_id1 = 1
+    (corpus_type1, corpus1, family1, _, _) = make_family(import_id1)
 
     session.add(corpus_type1)
     session.add(corpus1)
@@ -359,3 +367,50 @@ def test_read_families_by_import_ids_empty_result(
     result = APIListResponse[FamilyPublic].model_validate(response.json())
     assert len(result.data) == 0
     assert result.total == 0
+
+
+def test_read_family_excludes_deleted_documents(
+    client: TestClient, session: Session, make_family
+):
+    """Families endpoint should not return deleted documents."""
+    import_id = 1
+    (corpus_type, corpus, family, family_document, physical_document) = make_family(
+        import_id
+    )
+
+    # Mark the existing document as deleted and add a new non-deleted one
+    family_document.document_status = FamilyDocumentStatus.DELETED
+
+    session.add(corpus_type)
+    session.add(corpus)
+    session.add(family)
+    session.add(family_document)
+    session.add(physical_document)
+    session.commit()
+
+    response = client.get(f"/families/{family.import_id}")
+
+    assert response.status_code == HTTPStatus.GONE
+
+
+def test_read_family_returns_410_when_all_documents_are_deleted(
+    client: TestClient, session: Session, make_family
+):
+    """Families endpoint should return 410 when all documents are deleted."""
+    import_id = 1
+    (corpus_type, corpus, family, family_document, physical_document) = make_family(
+        import_id
+    )
+
+    family_document.document_status = FamilyDocumentStatus.DELETED
+
+    session.add(corpus_type)
+    session.add(corpus)
+    session.add(family)
+    session.add(family_document)
+    session.add(physical_document)
+    session.commit()
+
+    response = client.get(f"/families/{family.import_id}")
+
+    assert response.status_code == HTTPStatus.GONE
