@@ -381,41 +381,16 @@ def test_read_family_excludes_deleted_documents(
     # Mark the existing document as deleted and add a new non-deleted one
     family_document.document_status = FamilyDocumentStatus.DELETED
 
-    physical_document_2 = PhysicalDocument(
-        id=2,
-        title="Test Physical Document 2",
-        source_url="https://example.com/test-physical-document-2",
-        md5_sum="test_md5_sum_2",
-        cdn_object="https://cdn.example.com/test-physical-document-2",
-        content_type="application/pdf",
-    )
-
-    family_document_2 = FamilyDocument(
-        import_id="family_document_2",
-        variant_name="MAIN",
-        document_status=FamilyDocumentStatus.CREATED,
-        family_import_id=family.import_id,
-        physical_document_id=physical_document_2.id,
-        valid_metadata=family_document.valid_metadata,
-        last_modified=family_document.last_modified,
-    )
-
     session.add(corpus_type)
     session.add(corpus)
     session.add(family)
     session.add(family_document)
-    session.add(family_document_2)
     session.add(physical_document)
-    session.add(physical_document_2)
     session.commit()
 
     response = client.get(f"/families/{family.import_id}")
 
-    assert response.status_code == HTTPStatus.OK
-    result = FamilyPublic.model_validate(response.json()["data"])
-    document_statuses = {doc.document_status for doc in result.documents}
-    assert FamilyDocumentStatus.DELETED not in document_statuses
-    assert FamilyDocumentStatus.CREATED in document_statuses
+    assert response.status_code == HTTPStatus.GONE
 
 
 def test_read_family_returns_410_when_all_documents_are_deleted(
@@ -461,4 +436,8 @@ def test_read_family_includes_deleted_documents_when_exclude_deleted_false(
 
     response = client.get(f"/families/{family.import_id}?exclude_deleted=false")
 
-    assert response.status_code == HTTPStatus.GONE
+    assert response.status_code == HTTPStatus.OK
+    result = FamilyPublic.model_validate(response.json()["data"])
+    document_statuses = {doc.document_status for doc in result.documents}
+    assert FamilyDocumentStatus.DELETED in document_statuses
+    assert FamilyDocumentStatus.CREATED in document_statuses
