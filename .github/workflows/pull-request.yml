@@ -198,6 +198,14 @@ jobs:
         env:
           PULUMI_ACCESS_TOKEN: ${{ secrets.PULUMI_ACCESS_TOKEN }}
 
+  dependabot:
+    name: Dependabot Auto-pilot
+    needs: [code-quality, test, tests, no-mixed-infra-and-code]
+    permissions:
+      pull-requests: write
+      contents: write
+    uses: climatepolicyradar/reusable-workflows/.github/workflows/dependabot-autopilot.yml@v22
+
   pulumi-up:
     needs: [changes, pulumi-preview]
     # Deploy infra to staging when PR has 'deploy:staging' and there are infra changes.
