@@ -1,4 +1,3 @@
-import inspect
 import logging
 import os
 import uuid
@@ -7,7 +6,7 @@ import boto3
 from botocore.client import BaseClient
 from botocore.config import Config
 from prefect.settings import PREFECT_UI_URL
-from prefect_slack.credentials import SlackWebhook
+from prefect_slack import SlackCredentials
 
 from app.bootstrap_telemetry import pipeline_metrics
 from app.pipeline_metrics import ErrorType, Operation
@@ -107,6 +106,7 @@ class SlackNotify:
 
     # Message templates
     FLOW_RUN_URL = "{prefect_base_url}/flow-runs/flow-run/{flow_run.id}"
+    SLACK_NAVIGATOR_NOTIFIER_BOT_BLOCK = "slack-navigator-notifier-bot"
     BASE_MESSAGE = (
         "💥 Flow run <{ui_url}|{flow.name}/{flow_run.name}> "
         "state `{flow_run.state.name}` at {flow_run.state.timestamp}.\n"
@@ -145,6 +145,14 @@ class SlackNotify:
         ui_url = cls.FLOW_RUN_URL.format(
             prefect_base_url=PREFECT_UI_URL.value(), flow_run=flow_run
         )
+
+        # Ignoring as pyright incorrectly infers type here - this is due to us upgrading to
+        # python 3.13
+        slack_credentials_block = await SlackCredentials.load(
+            cls.SLACK_NAVIGATOR_NOTIFIER_BOT_BLOCK
+        )  # type: ignore[reportGeneralTypeIssues]
+        client = slack_credentials_block.get_client()
+
         msg = cls.BASE_MESSAGE.format(
             flow=flow,
             flow_run=flow_run,
@@ -153,12 +161,8 @@ class SlackNotify:
             environment=cls.get_environment(),
         )
 
-        slack = SlackWebhook.load(cls.get_slack_block_name())
-        if inspect.isawaitable(slack):
-            slack = await slack
-
-        result = slack.notify(body=msg)
-        if inspect.isawaitable(result):
-            _ = await result
-
-        return None
+        await client.chat_postMessage(
+            channel=str(cls.slack_channel_name),
+            text=msg,
+            blocks=cls.SLACK_NAVIGATOR_NOTIFIER_BOT_BLOCK,
+        )
