@@ -146,9 +146,11 @@ class SlackNotify:
             prefect_base_url=PREFECT_UI_URL.value(), flow_run=flow_run
         )
 
-        slack_credentials_block = SlackCredentials.load(
+        # Ignoring as pyright incorrectly infers type here - this is due to us upgrading to
+        # python 3.13
+        slack_credentials_block = await SlackCredentials.load(
             cls.SLACK_NAVIGATOR_NOTIFIER_BOT_BLOCK
-        )
+        )  # type: ignore[reportGeneralTypeIssues]
         client = slack_credentials_block.get_client()
 
         msg = cls.BASE_MESSAGE.format(

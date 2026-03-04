@@ -590,7 +590,7 @@ requires-dist = [
     { name = "opentelemetry-sdk", specifier = ">=1.38.0" },
     { name = "pandas", specifier = ">=2.3.3" },
     { name = "prefect", extras = ["aws"], specifier = ">=3.4" },
-    { name = "prefect", extras = ["slack"], specifier = ">=3.3.1,<4.0.0" },
+    { name = "prefect", extras = ["slack"], specifier = ">=3.4,<4.0.0" },
     { name = "psycopg2-binary", specifier = ">=2.9.11" },
     { name = "pulumi", specifier = ">=3.202.0" },
     { name = "pulumi-aws", specifier = ">=6.83.0" },
