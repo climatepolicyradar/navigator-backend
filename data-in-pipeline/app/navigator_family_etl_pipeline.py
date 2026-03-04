@@ -113,6 +113,12 @@ def cache_jsonl_to_s3(documents: list[Document], run_id: str | None = None):
         Body=value,
         ContentType="application/x-ndjson",
     )
+    client.put_object(
+        Bucket="cpr-cache",
+        Key="pipelines/data-in-pipeline/navigator_family/documents-latest.jsonl",
+        Body=value,
+        ContentType="application/x-ndjson",
+    )
 
 
 @task(log_prints=True)
