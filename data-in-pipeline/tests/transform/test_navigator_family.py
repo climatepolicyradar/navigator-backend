@@ -106,12 +106,6 @@ def navigator_family_with_single_matching_document() -> Identified[NavigatorFami
                 ),
             ],
             geographies=["AU-NSW", "AUS", "XAA"],
-            metadata={
-                "case_number": ["CASE-NUMBER 123"],
-                "core_object": ["Core Object 123"],
-                "project_value_fund_spend": ["123456789"],
-                "project_value_co_financing": ["123456789"],
-            },
         ),
     )
 
@@ -544,12 +538,6 @@ def test_transform_navigator_family_with_single_matching_document(
                 ),
             ),
         ],
-        attributes={
-            "case_number": "CASE-NUMBER 123",
-            "core_object": "Core Object 123",
-            "project_value_fund_spend": 123456789,
-            "project_value_co_financing": 123456789,
-        },
     )
     assert_model_list_equality(
         result.unwrap(),
