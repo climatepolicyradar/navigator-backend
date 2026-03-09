@@ -34,6 +34,7 @@ class NavigatorDocument(BaseModel):
     cdn_object: str | None = None
     source_url: str | None = None
     variant: str | None = None
+    content_type: str | None = None
 
 
 class NavigatorCorpusType(BaseModel):

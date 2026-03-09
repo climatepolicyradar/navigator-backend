@@ -27,9 +27,7 @@ def upgrade() -> None:
             sa.Column("type", sqlmodel.sql.sqltypes.AutoString(), nullable=False)
         )
         batch_op.add_column(
-            sa.Column(
-                "content_type", sqlmodel.sql.sqltypes.AutoString(), nullable=False
-            )
+            sa.Column("content_type", sqlmodel.sql.sqltypes.AutoString(), nullable=True)
         )
 
     # ### end Alembic commands ###

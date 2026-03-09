@@ -82,6 +82,7 @@ def navigator_family_with_single_matching_document() -> Identified[NavigatorFami
                     title="Matching title on family and document and collection",
                     cdn_object="https://cdn.climatepolicyradar.org/path/to/file.pdf",
                     variant="Original language",
+                    content_type="application/pdf",
                     source_url="https://source.climatepolicyradar.org/path/to/file.pdf",
                     language="en",
                     languages=["en"],
@@ -512,9 +513,13 @@ def test_transform_navigator_family_with_single_matching_document(
                     items=[
                         Item(
                             url="https://cdn.climatepolicyradar.org/path/to/file.pdf",
+                            type="cdn",
+                            content_type="application/pdf",
                         ),
                         Item(
                             url="https://source.climatepolicyradar.org/path/to/file.pdf",
+                            type="source",
+                            content_type="application/pdf",
                         ),
                     ],
                 ),
@@ -583,9 +588,13 @@ def test_transform_navigator_family_with_single_matching_document(
                 items=[
                     Item(
                         url="https://cdn.climatepolicyradar.org/path/to/file.pdf",
+                        type="cdn",
+                        content_type="application/pdf",
                     ),
                     Item(
                         url="https://source.climatepolicyradar.org/path/to/file.pdf",
+                        type="source",
+                        content_type="application/pdf",
                     ),
                 ],
             ),

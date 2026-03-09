@@ -541,12 +541,16 @@ def _transform_navigator_document(
         items.append(
             Item(
                 url=navigator_document.cdn_object,
+                type="cdn",
+                content_type=navigator_document.content_type,
             )
         )
     if navigator_document.source_url is not None:
         items.append(
             Item(
                 url=navigator_document.source_url,
+                type="source",
+                content_type=navigator_document.content_type,
             )
         )
 
