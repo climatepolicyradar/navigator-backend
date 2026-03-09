@@ -162,7 +162,10 @@ def _map_db_document_to_schema(db: Session, db_doc: DBDocument) -> DocumentOutpu
     :return: Pydantic document schema
     """
 
-    items = [ItemOutput(url=item.url) for item in db_doc.items]
+    items = [
+        ItemOutput(url=item.url, type=item.type, content_type=item.content_type)
+        for item in db_doc.items
+    ]
 
     labels = [
         LabelRelationship(
@@ -210,7 +213,14 @@ def _map_db_document_to_schema(db: Session, db_doc: DBDocument) -> DocumentOutpu
                             )
                             for lbl_link in related_doc.labels
                         ],
-                        items=[ItemOutput(url=item.url) for item in related_doc.items],
+                        items=[
+                            ItemOutput(
+                                url=item.url,
+                                type=item.type,
+                                content_type=item.content_type,
+                            )
+                            for item in related_doc.items
+                        ],
                     ),
                 )
             )

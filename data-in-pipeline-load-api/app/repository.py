@@ -125,6 +125,8 @@ def _upsert_items_for_document(
             id=str(uuid4()),
             document_id=document_id,
             url=item.url,
+            type=item.type,
+            content_type=item.content_type,
             created_at=datetime.now(UTC),
             updated_at=datetime.now(UTC),
         )
@@ -300,6 +302,8 @@ def create_documents(db: Session, documents: list[DocumentInput]) -> list[str]:
                         id=str(uuid4()),
                         document_id=doc_in.id,
                         url=item.url,
+                        type=item.type,
+                        content_type=item.content_type,
                         created_at=datetime.now(UTC),
                         updated_at=datetime.now(UTC),
                     )
