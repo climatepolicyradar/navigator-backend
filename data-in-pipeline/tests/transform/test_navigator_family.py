@@ -485,7 +485,7 @@ def test_transform_navigator_family_with_single_matching_document(
                     title="Matching title on family and document and collection",
                     labels=[
                         LabelRelationship(
-                            type="entity_type",
+                            type="role",
                             value=Label(
                                 type="entity_type",
                                 id="Supporting legislation",
@@ -548,7 +548,7 @@ def test_transform_navigator_family_with_single_matching_document(
                 title="Matching title on family and document and collection",
                 labels=[
                     LabelRelationship(
-                        type="entity_type",
+                        type="role",
                         value=Label(
                             type="entity_type",
                             id="Supporting legislation",
