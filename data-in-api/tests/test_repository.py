@@ -34,10 +34,13 @@ def create_document(
     return doc
 
 
+# trunk-ignore(ruff/PLR0913)
 def add_item_to_document(
-    session: Session, doc_id: str, item_id: str, url: str
+    session: Session, doc_id: str, item_id: str, url: str, type: str, content_type: str
 ) -> DBItem:
-    item = DBItem(id=item_id, document_id=doc_id, url=url)
+    item = DBItem(
+        id=item_id, document_id=doc_id, url=url, type=type, content_type=content_type
+    )
     session.add(item)
     session.commit()
     return item
@@ -77,8 +80,22 @@ def setup_documents(session: Session):
     create_document(session, "doc1", "Document 1", "First doc")
     create_document(session, "doc2", "Document 2", "Second doc")
 
-    add_item_to_document(session, "doc1", "item1", "https://example.com/1")
-    add_item_to_document(session, "doc2", "item2", "https://example.com/2")
+    add_item_to_document(
+        session,
+        "doc1",
+        "item1",
+        "https://example.com/1",
+        type="cdn",
+        content_type="html",
+    )
+    add_item_to_document(
+        session,
+        "doc2",
+        "item2",
+        "https://example.com/2",
+        type="source",
+        content_type="html",
+    )
 
     link_document_label(session, "doc1", "Main")
     link_document_label(session, "doc2", "Law")
@@ -97,6 +114,8 @@ def test_get_all_documents_with_relationships(setup_documents: Session):
     doc1: DocumentOutput = next(d for d in documents if d.id == "doc1")
     assert doc1.title == "Document 1"
     assert doc1.items[0].url == "https://example.com/1"
+    assert doc1.items[0].type == "cdn"
+    assert doc1.items[0].content_type == "html"
     assert doc1.labels[0].value.value == "Main"
     assert doc1.documents[0].value.id == "doc2"
     assert doc1.documents[0].value.items[0].url == "https://example.com/2"
@@ -109,6 +128,8 @@ def test_get_document_by_id_with_relationships(setup_documents: Session):
     assert doc1.id == "doc1"
     assert doc1.labels[0].value.id == "Main"
     assert doc1.items[0].url == "https://example.com/1"
+    assert doc1.items[0].type == "cdn"
+    assert doc1.items[0].content_type == "html"
     assert doc1.documents[0].type == "member_of"
     assert doc1.documents[0].value.id == "doc2"
 
