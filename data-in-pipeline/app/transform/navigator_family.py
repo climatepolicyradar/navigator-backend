@@ -444,7 +444,7 @@ def _transform_navigator_family(navigator_family: NavigatorFamily) -> Document:
     )
     labels.append(
         LabelRelationship(
-            type="entity_type",
+            type="category",
             value=Label(
                 id=family_category_label_id,
                 value=family_category_label_id,
