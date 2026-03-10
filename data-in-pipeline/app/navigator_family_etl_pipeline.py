@@ -130,7 +130,16 @@ def cache_parquet_to_s3(documents: list[Document], run_id: str | None = None):
     buffer = io.BytesIO()
     writer = None
     for chunk in itertools.batched(documents, 10_000):
-        rows = [doc.model_dump(mode="json", exclude={"attributes"}) for doc in chunk]
+        rows = []
+        for doc in chunk:
+            # we serialise the attributes to a json string and transform an empty dict => None
+            # as parquet breaks when auto-deriving a field with `{}` as its value.
+            doc_data = doc.model_dump(mode="json")
+            if "attributes" in doc_data and doc_data["attributes"]:
+                doc_data["attributes"] = json.dumps(doc_data["attributes"])
+            else:
+                doc_data["attributes"] = None
+            rows.append(doc_data)
         table = pa.Table.from_pylist(rows)
         if writer is None:
             writer = pq.ParquetWriter(buffer, table.schema)
