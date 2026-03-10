@@ -490,7 +490,7 @@ def _transform_navigator_document(
         normalised_role = metadata_role[0].capitalize()
         labels.append(
             LabelRelationship(
-                type="entity_type",
+                type="role",
                 value=Label(
                     id=normalised_role, value=normalised_role, type="entity_type"
                 ),
