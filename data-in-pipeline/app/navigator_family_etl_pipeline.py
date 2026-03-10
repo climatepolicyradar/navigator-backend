@@ -113,6 +113,12 @@ def cache_jsonl_to_s3(documents: list[Document], run_id: str | None = None):
         Body=value,
         ContentType="application/x-ndjson",
     )
+    client.put_object(
+        Bucket="cpr-cache",
+        Key="pipelines/data-in-pipeline/navigator_family/documents-latest.jsonl",
+        Body=value,
+        ContentType="application/x-ndjson",
+    )
 
 
 @task(log_prints=True)
@@ -124,7 +130,17 @@ def cache_parquet_to_s3(documents: list[Document], run_id: str | None = None):
     buffer = io.BytesIO()
     writer = None
     for chunk in itertools.batched(documents, 10_000):
-        table = pa.Table.from_pylist([doc.model_dump(mode="json") for doc in chunk])
+        rows = []
+        for doc in chunk:
+            # we serialise the attributes to a json string and transform an empty dict => None
+            # as parquet breaks when auto-deriving a field with `{}` as its value.
+            doc_data = doc.model_dump(mode="json")
+            if "attributes" in doc_data and doc_data["attributes"]:
+                doc_data["attributes"] = json.dumps(doc_data["attributes"])
+            else:
+                doc_data["attributes"] = None
+            rows.append(doc_data)
+        table = pa.Table.from_pylist(rows)
         if writer is None:
             writer = pq.ParquetWriter(buffer, table.schema)
         writer.write_table(table)

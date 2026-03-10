@@ -466,7 +466,7 @@ def _transform_navigator_family(navigator_family: NavigatorFamily) -> Document:
     )
     labels.append(
         LabelRelationship(
-            type="entity_type",
+            type="category",
             value=Label(
                 id=family_category_label_id,
                 value=family_category_label_id,
@@ -475,42 +475,11 @@ def _transform_navigator_family(navigator_family: NavigatorFamily) -> Document:
         )
     )
 
-    """
-    Attributes
-    @see: https://github.com/climatepolicyradar/search/pull/131
-    """
-    attributes: dict[str, str | float | bool] = {}
-
-    # string attributes
-    metadata_key_to_attribute_string_map = {
-        "case_number": "case_number",
-        "core_object": "core_object",
-        "project_url": "project_url",
-        # These are being ignored for now while we discuss how to handle external IDs in general
-        # "external_id": "external_id",
-        # "project_id": "project_id",
-    }
-    for metadata_key, attribute_name in metadata_key_to_attribute_string_map.items():
-        metadata_value = navigator_family.metadata.get(metadata_key)
-        if metadata_value is not None:
-            attributes[attribute_name] = metadata_value[0]
-
-    # float attributes
-    metadata_key_to_attribute_float_map = {
-        "project_value_fund_spend": "project_value_fund_spend",
-        "project_value_co_financing": "project_value_co_financing",
-    }
-    for metadata_key, attribute_name in metadata_key_to_attribute_float_map.items():
-        metadata_value = navigator_family.metadata.get(metadata_key)
-        if metadata_value is not None and metadata_value[0].isnumeric():
-            attributes[attribute_name] = float(metadata_value[0])
-
     return Document(
         id=navigator_family.import_id,
         title=navigator_family.title,
         description=navigator_family.summary,
         labels=_deduplicate_labels(labels),
-        attributes=attributes,
     )
 
 
@@ -543,7 +512,7 @@ def _transform_navigator_document(
         normalised_role = metadata_role[0].capitalize()
         labels.append(
             LabelRelationship(
-                type="entity_type",
+                type="role",
                 value=Label(
                     id=normalised_role, value=normalised_role, type="entity_type"
                 ),
@@ -594,12 +563,16 @@ def _transform_navigator_document(
         items.append(
             Item(
                 url=navigator_document.cdn_object,
+                type="cdn",
+                content_type=navigator_document.content_type,
             )
         )
     if navigator_document.source_url is not None:
         items.append(
             Item(
                 url=navigator_document.source_url,
+                type="source",
+                content_type=navigator_document.content_type,
             )
         )
 

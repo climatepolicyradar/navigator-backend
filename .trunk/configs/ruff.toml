@@ -11,7 +11,7 @@ target-version = "py312"
 select = ["D3", "E", "F", "TID252", "UP", "PL", "TRY400"]
 
 # Never enforce `E501` (line length violations). This should be handled by formatters.
-ignore = ["E501", "TRY003", "D213", "D415"]
+ignore = ["E501", "TRY003", "D213", "D415", "PLR0915"]
 
 [lint]
 ignore-init-module-imports = true

@@ -47,11 +47,11 @@ def create_mock_label(label_id="label_1", value="Test Label"):
     )
 
 
-def create_mock_item(url="https://example.com"):
+def create_mock_item(
+    url="https://example.com", type="source", content_type="application/pdf"
+):
     """Create a mock item."""
-    return ItemInput(
-        url=url,
-    )
+    return ItemInput(url=url, type=type, content_type=content_type)
 
 
 def test_upsert_creates_new_document(session):
@@ -73,7 +73,7 @@ def test_upsert_creates_document_with_labels_and_items(session):
     """Test creating a document with associated labels and items."""
 
     label = create_mock_label("label_1", "Important")
-    item = create_mock_item("https://example.com/file.pdf")
+    item = create_mock_item("https://example.com/file.pdf", "source", "html")
     doc_input = create_mock_document_input(
         "test-doc-2", "Document with Labels", labels=[label], items=[item]
     )
@@ -141,7 +141,7 @@ def test_batch_document_creation(session):
         create_mock_document_input("batch-3", "Third Batch Doc"),
     ]
 
-    item = create_mock_item("https://batch.com")
+    item = create_mock_item("https://batch.com", "source", "html")
     documents[1].items = [item]
 
     result = create_or_update_documents(session, documents)  # type: ignore[reportAttributeAccessIssue]
@@ -159,7 +159,7 @@ def test_batch_document_creation(session):
 def test_create_document_success(session):
     """Test successfully creating a new document with labels and items."""
     label = create_mock_label("label_1", "Important")
-    item = create_mock_item("https://example.com/file.pdf")
+    item = create_mock_item("https://example.com/file.pdf", "source", "html")
     doc_input = create_mock_document_input(
         "test-doc-2", "Document with Labels", labels=[label], items=[item]
     )

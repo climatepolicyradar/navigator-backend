@@ -324,7 +324,7 @@ def read_family(
             )
             raise HTTPException(status_code=410, detail="Gone")
 
-        family.family_documents = active_family_documents
+        family = family.model_copy(update={"family_documents": active_family_documents})
 
     return APIItemResponse(
         data=family,

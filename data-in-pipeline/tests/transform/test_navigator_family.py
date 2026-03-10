@@ -82,6 +82,7 @@ def navigator_family_with_single_matching_document() -> Identified[NavigatorFami
                     title="Matching title on family and document and collection",
                     cdn_object="https://cdn.climatepolicyradar.org/path/to/file.pdf",
                     variant="Original language",
+                    content_type="application/pdf",
                     source_url="https://source.climatepolicyradar.org/path/to/file.pdf",
                     language="en",
                     languages=["en"],
@@ -501,7 +502,7 @@ def test_transform_navigator_family_with_single_matching_document(
                     title="Matching title on family and document and collection",
                     labels=[
                         LabelRelationship(
-                            type="entity_type",
+                            type="role",
                             value=Label(
                                 type="entity_type",
                                 id="Supporting legislation",
@@ -528,9 +529,13 @@ def test_transform_navigator_family_with_single_matching_document(
                     items=[
                         Item(
                             url="https://cdn.climatepolicyradar.org/path/to/file.pdf",
+                            type="cdn",
+                            content_type="application/pdf",
                         ),
                         Item(
                             url="https://source.climatepolicyradar.org/path/to/file.pdf",
+                            type="source",
+                            content_type="application/pdf",
                         ),
                     ],
                 ),
@@ -554,12 +559,6 @@ def test_transform_navigator_family_with_single_matching_document(
                 ),
             ),
         ],
-        attributes={
-            "case_number": "CASE-NUMBER 123",
-            "core_object": "Core Object 123",
-            "project_value_fund_spend": 123456789,
-            "project_value_co_financing": 123456789,
-        },
     )
     assert_model_list_equality(
         result.unwrap(),
@@ -570,7 +569,7 @@ def test_transform_navigator_family_with_single_matching_document(
                 title="Matching title on family and document and collection",
                 labels=[
                     LabelRelationship(
-                        type="entity_type",
+                        type="role",
                         value=Label(
                             type="entity_type",
                             id="Supporting legislation",
@@ -605,9 +604,13 @@ def test_transform_navigator_family_with_single_matching_document(
                 items=[
                     Item(
                         url="https://cdn.climatepolicyradar.org/path/to/file.pdf",
+                        type="cdn",
+                        content_type="application/pdf",
                     ),
                     Item(
                         url="https://source.climatepolicyradar.org/path/to/file.pdf",
+                        type="source",
+                        content_type="application/pdf",
                     ),
                 ],
             ),
@@ -717,7 +720,7 @@ def test_transform_navigator_family_with_litigation_corpus_type(
                 ),
             ),
             LabelRelationship(
-                type="entity_type",
+                type="category",
                 value=Label(
                     id="Guidance",
                     value="Guidance",
@@ -926,7 +929,7 @@ def test_transform_navigator_family_with_multilateral_climate_fund_project(
                 ),
             ),
             LabelRelationship(
-                type="entity_type",
+                type="category",
                 value=Label(
                     id="Guidance",
                     value="Guidance",
