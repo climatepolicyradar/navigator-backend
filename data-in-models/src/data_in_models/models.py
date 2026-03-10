@@ -22,7 +22,7 @@ class LabelRelationship(BaseModel):
 
 class Item(BaseModel):
     url: str | None = None
-    type: str
+    type: str | None = None
     content_type: str | None = None
 
 
