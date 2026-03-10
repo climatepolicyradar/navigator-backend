@@ -205,7 +205,12 @@ def transform(
     return all_documents, errors
 
 
-@task(log_prints=True, retries=2, retry_delay_seconds=[5, 10, 20, 40])
+@task(
+    log_prints=True,
+    retries=2,
+    retry_delay_seconds=[5, 10],
+    tags=["load-api-write-concurrency-limit"],
+)
 @pipeline_metrics.track(operation=Operation.LOAD)
 def load_batch(
     transformed: list[Document],
