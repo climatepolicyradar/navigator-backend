@@ -58,6 +58,7 @@ def test_upsert_creates_new_document(session):
     """Test creating a new document with no labels or items."""
 
     doc_input = create_mock_document_input("test-doc-1", "Test Document")
+    doc_input.attributes = {"priority": 1.0, "active": True}
     result = create_or_update_documents(session, [doc_input])
 
     assert result == ["test-doc-1"]
@@ -65,6 +66,7 @@ def test_upsert_creates_new_document(session):
     saved_doc = session.get(Document, "test-doc-1")
     assert saved_doc is not None
     assert saved_doc.title == "Test Document"
+    assert saved_doc.attributes == {"priority": 1.0, "active": True}
     assert saved_doc.created_at is not None
     assert saved_doc.updated_at is not None
 

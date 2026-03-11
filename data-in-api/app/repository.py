@@ -62,10 +62,8 @@ def get_all_documents(
         query = select(DBDocument)
 
         if label_id:
-            query = (
-                query.join(DBDocumentLabelRelationship)
-                .where(DBDocumentLabelRelationship.label_id == label_id)
-                .distinct()
+            query = query.join(DBDocumentLabelRelationship).where(
+                DBDocumentLabelRelationship.label_id == label_id
             )
 
         query = query.offset(offset).limit(page_size)
