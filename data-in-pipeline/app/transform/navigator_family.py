@@ -268,6 +268,8 @@ def _transform_family_corpus_organisation(
 def _transform_navigator_family(navigator_family: NavigatorFamily) -> Document:
     logger = get_logger()
     labels: list[LabelRelationship] = []
+    attributes: dict[str, str | float | bool] = {}
+
     """
     All families are currently Principal.
     Based on the FRBR taxonomy.
@@ -453,11 +455,19 @@ def _transform_navigator_family(navigator_family: NavigatorFamily) -> Document:
         )
     )
 
+    """
+    Slug
+    We should not couple to this implementation as it is an incoplete ID service which is unmaintained.
+    But we need it for migration purposes.
+    """
+    attributes["deprecated_slug"] = navigator_family.slug
+
     return Document(
         id=navigator_family.import_id,
         title=navigator_family.title,
         description=navigator_family.summary,
         labels=_deduplicate_labels(labels),
+        attributes=attributes,
     )
 
 
@@ -465,6 +475,7 @@ def _transform_navigator_document(
     navigator_document: NavigatorDocument, navigator_family: NavigatorFamily
 ) -> Document:
     labels: list[LabelRelationship] = []
+    attributes: dict[str, str | float | bool] = {}
 
     if navigator_family.corpus.import_id == "Academic.corpus.Litigation.n0000":
         if navigator_document.events:
@@ -554,11 +565,19 @@ def _transform_navigator_document(
             )
         )
 
+    """
+    Slug
+    We should not couple to this implementation as it is an incoplete ID service which is unmaintained.
+    But we need it for migration purposes.
+    """
+    attributes["deprecated_slug"] = navigator_document.slug
+
     return Document(
         id=navigator_document.import_id,
         title=navigator_document.title,
         labels=_deduplicate_labels(labels),
         items=items,
+        attributes=attributes,
     )
 
 

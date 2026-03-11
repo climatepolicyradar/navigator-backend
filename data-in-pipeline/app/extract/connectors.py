@@ -35,6 +35,7 @@ class NavigatorDocument(BaseModel):
     source_url: str | None = None
     variant: str | None = None
     content_type: str | None = None
+    slug: str
 
 
 class NavigatorCorpusType(BaseModel):
@@ -69,6 +70,7 @@ class NavigatorFamily(BaseModel):
     collections: list[NavigatorCollection]
     geographies: list[str]
     category: str
+    slug: str
 
 
 class PageFetchFailure(BaseModel):
