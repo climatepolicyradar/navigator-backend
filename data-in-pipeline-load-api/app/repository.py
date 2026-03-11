@@ -68,6 +68,7 @@ def create_or_update_documents(
                     id=doc_in.id,
                     title=doc_in.title,
                     description=doc_in.description,
+                    attributes=doc_in.attributes,
                     created_at=datetime.now(UTC),
                     updated_at=datetime.now(UTC),
                 )
@@ -76,6 +77,7 @@ def create_or_update_documents(
                     set_={
                         "title": doc_in.title,
                         "description": doc_in.description,
+                        "attributes": doc_in.attributes,
                         "updated_at": datetime.now(UTC),
                     },
                 )
@@ -218,6 +220,7 @@ def _upsert_document_document_relationships(
                 id=target.id,
                 title=target.title,
                 description=target.description,
+                attributes=target.attributes,
                 created_at=datetime.now(UTC),
                 updated_at=datetime.now(UTC),
             )
@@ -290,6 +293,7 @@ def create_documents(db: Session, documents: list[DocumentInput]) -> list[str]:
                 id=doc_in.id,
                 title=doc_in.title,
                 description=doc_in.description,
+                attributes=doc_in.attributes,
                 created_at=datetime.now(UTC),
                 updated_at=datetime.now(UTC),
             )
