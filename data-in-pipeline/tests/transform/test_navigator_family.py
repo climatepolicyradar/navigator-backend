@@ -91,6 +91,7 @@ def navigator_family_with_single_matching_document() -> Identified[NavigatorFami
                         "role": ["SUPPORTING LEGISLATION"],
                         "type": ["National Drought Plan (NDP)"],
                     },
+                    slug="document-slug",
                 ),
             ],
             events=_standard_events(),
@@ -107,6 +108,7 @@ def navigator_family_with_single_matching_document() -> Identified[NavigatorFami
                 ),
             ],
             geographies=["AU-NSW", "AUS", "XAA"],
+            slug="family-slug",
         ),
     )
 
@@ -158,6 +160,7 @@ def navigator_family_with_litigation_corpus_type() -> Identified[NavigatorFamily
                     title="Litigation family document",
                     cdn_object=None,
                     source_url=None,
+                    slug="litigation-document-slug",
                     events=[
                         NavigatorEventFactory.build(
                             import_id="123",
@@ -171,6 +174,7 @@ def navigator_family_with_litigation_corpus_type() -> Identified[NavigatorFamily
                     title="Placeholder litigation family document",
                     cdn_object=None,
                     source_url=None,
+                    slug="placeholder-document-slug",
                     events=[],
                 ),
             ],
@@ -183,6 +187,7 @@ def navigator_family_with_litigation_corpus_type() -> Identified[NavigatorFamily
             ],
             collections=[],
             geographies=[],
+            slug="litigation-family-slug",
         ),
     )
 
@@ -239,6 +244,7 @@ def navigator_family_multilateral_climate_fund_project() -> Identified[Navigator
                     title="Multilateral climate fund project document",
                     cdn_object=None,
                     source_url=None,
+                    slug="document-1-slug",
                     events=[],
                 ),
                 NavigatorDocumentFactory.build(
@@ -246,12 +252,14 @@ def navigator_family_multilateral_climate_fund_project() -> Identified[Navigator
                     title="Project document",
                     cdn_object=None,
                     source_url=None,
+                    slug="document-2-slug",
                     events=[],
                 ),
             ],
             events=_mcf_events(),
             collections=[],
             geographies=[],
+            slug="mcf-family-slug",
         ),
     )
 
@@ -538,6 +546,7 @@ def test_transform_navigator_family_with_single_matching_document(
                             content_type="application/pdf",
                         ),
                     ],
+                    attributes={"deprecated_slug": "document-slug"},
                 ),
             ),
             DocumentRelationship(
@@ -559,6 +568,7 @@ def test_transform_navigator_family_with_single_matching_document(
                 ),
             ),
         ],
+        attributes={"deprecated_slug": "family-slug"},
     )
     assert_model_list_equality(
         result.unwrap(),
@@ -629,6 +639,7 @@ def test_transform_navigator_family_with_single_matching_document(
                         content_type="application/pdf",
                     ),
                 ],
+                attributes={"deprecated_slug": "document-slug"},
             ),
             Document(
                 id="collection_matching",
@@ -768,6 +779,7 @@ def test_transform_navigator_family_with_litigation_corpus_type(
                             ),
                         ),
                     ],
+                    attributes={"deprecated_slug": "litigation-document-slug"},
                 ),
             ),
             DocumentRelationship(
@@ -793,9 +805,11 @@ def test_transform_navigator_family_with_litigation_corpus_type(
                             ),
                         ),
                     ],
+                    attributes={"deprecated_slug": "placeholder-document-slug"},
                 ),
             ),
         ],
+        attributes={"deprecated_slug": "litigation-family-slug"},
     )
     assert result == Success(
         [
@@ -829,6 +843,7 @@ def test_transform_navigator_family_with_litigation_corpus_type(
                         ),
                     ),
                 ],
+                attributes={"deprecated_slug": "litigation-document-slug"},
             ),
             Document(
                 id="1.2.3.placeholder",
@@ -859,6 +874,7 @@ def test_transform_navigator_family_with_litigation_corpus_type(
                         ),
                     )
                 ],
+                attributes={"deprecated_slug": "placeholder-document-slug"},
             ),
         ],
     )
@@ -969,6 +985,7 @@ def test_transform_navigator_family_with_multilateral_climate_fund_project(
                             ),
                         ),
                     ],
+                    attributes={"deprecated_slug": "document-1-slug"},
                 ),
             ),
             DocumentRelationship(
@@ -986,9 +1003,11 @@ def test_transform_navigator_family_with_multilateral_climate_fund_project(
                             ),
                         ),
                     ],
+                    attributes={"deprecated_slug": "document-2-slug"},
                 ),
             ),
         ],
+        attributes={"deprecated_slug": "mcf-family-slug"},
     )
     assert result == Success(
         [
@@ -1014,6 +1033,7 @@ def test_transform_navigator_family_with_multilateral_climate_fund_project(
                         ),
                     )
                 ],
+                attributes={"deprecated_slug": "document-1-slug"},
             ),
             Document(
                 id="document_2",
@@ -1036,6 +1056,7 @@ def test_transform_navigator_family_with_multilateral_climate_fund_project(
                         ),
                     )
                 ],
+                attributes={"deprecated_slug": "document-2-slug"},
             ),
         ]
     )
