@@ -459,7 +459,7 @@ def _transform_navigator_family(navigator_family: NavigatorFamily) -> Document:
             value=Label(
                 id=family_category_label_id,
                 value=family_category_label_id,
-                type="entity_type",
+                type="category",
             ),
         )
     )
