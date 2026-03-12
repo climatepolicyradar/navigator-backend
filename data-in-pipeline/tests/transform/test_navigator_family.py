@@ -447,7 +447,7 @@ def test_transform_navigator_family_with_single_matching_document(
             LabelRelationship(
                 type="geography",
                 value=Label(
-                    type="agent",
+                    type="geography",
                     id="AU-NSW",
                     value="New South Wales",
                 ),
@@ -455,7 +455,7 @@ def test_transform_navigator_family_with_single_matching_document(
             LabelRelationship(
                 type="geography",
                 value=Label(
-                    type="agent",
+                    type="geography",
                     id="AUS",
                     value="Australia",
                 ),
@@ -515,6 +515,22 @@ def test_transform_navigator_family_with_single_matching_document(
                                 type="agent",
                                 id="Grantham Research Institute",
                                 value="Grantham Research Institute",
+                            ),
+                        ),
+                        LabelRelationship(
+                            type="geography",
+                            value=Label(
+                                type="geography",
+                                id="AU-NSW",
+                                value="New South Wales",
+                            ),
+                        ),
+                        LabelRelationship(
+                            type="geography",
+                            value=Label(
+                                type="geography",
+                                id="AUS",
+                                value="Australia",
                             ),
                         ),
                     ],
@@ -584,6 +600,22 @@ def test_transform_navigator_family_with_single_matching_document(
                             type="agent",
                             id="Grantham Research Institute",
                             value="Grantham Research Institute",
+                        ),
+                    ),
+                    LabelRelationship(
+                        type="geography",
+                        value=Label(
+                            type="geography",
+                            id="AU-NSW",
+                            value="New South Wales",
+                        ),
+                    ),
+                    LabelRelationship(
+                        type="geography",
+                        value=Label(
+                            type="geography",
+                            id="AUS",
+                            value="Australia",
                         ),
                     ),
                 ],

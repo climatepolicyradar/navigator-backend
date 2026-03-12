@@ -199,6 +199,7 @@ def _map_db_document_to_schema(db: Session, db_doc: DBDocument) -> DocumentOutpu
                         id=related_doc.id,
                         title=related_doc.title,
                         description=related_doc.description,
+                        attributes=related_doc.attributes,
                         labels=[
                             LabelRelationship(
                                 type=lbl_link.type,
@@ -230,6 +231,7 @@ def _map_db_document_to_schema(db: Session, db_doc: DBDocument) -> DocumentOutpu
         labels=labels,
         items=items,
         documents=relationships,
+        attributes=db_doc.attributes,
     )
 
 

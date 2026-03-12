@@ -265,8 +265,37 @@ def _transform_family_corpus_organisation(
     return labels
 
 
-def _transform_navigator_family(navigator_family: NavigatorFamily) -> Document:
+def _transform_geographies(
+    navigator_family: NavigatorFamily,
+) -> list[LabelRelationship]:
     logger = get_logger()
+    labels = []
+    if navigator_family.geographies:
+        geography_labels = []
+        for geograpy_id in navigator_family.geographies:
+            # We exclude No Geography (XAA) as this was used as `geography` was previously required.
+            # An empty list is a clearer depiction of a document not having a geography.
+            if geograpy_id != "XAA":
+                geography = geographies_lookup.get(geograpy_id)
+                if geography:
+                    geography_labels.append(
+                        LabelRelationship(
+                            type="geography",
+                            value=Label(
+                                id=geography.id,
+                                value=geography.name,
+                                type="geography",
+                            ),
+                        )
+                    )
+            else:
+                logger.warning(f"Geography not found: {geograpy_id}")
+        labels.extend(geography_labels)
+
+    return labels
+
+
+def _transform_navigator_family(navigator_family: NavigatorFamily) -> Document:
     labels: list[LabelRelationship] = []
     attributes: dict[str, str | float | bool] = {}
 
@@ -407,27 +436,7 @@ def _transform_navigator_family(navigator_family: NavigatorFamily) -> Document:
     """
     Geography labels
     """
-    if navigator_family.geographies:
-        geography_labels = []
-        for geograpy_id in navigator_family.geographies:
-            # We exclude No Geography (XAA)  as this was used as `geography` was previously required.
-            # An empty list is a clearer depiction of a document not having a geography.
-            if geograpy_id != "XAA":
-                geography = geographies_lookup.get(geograpy_id)
-                if geography:
-                    geography_labels.append(
-                        LabelRelationship(
-                            type="geography",
-                            value=Label(
-                                id=geography.id,
-                                value=geography.name,
-                                type="agent",
-                            ),
-                        )
-                    )
-            else:
-                logger.warning(f"Geography not found: {geograpy_id}")
-        labels.extend(geography_labels)
+    labels.extend(_transform_geographies(navigator_family))
 
     """
     family.cateogry
@@ -571,6 +580,11 @@ def _transform_navigator_document(
     But we need it for migration purposes.
     """
     attributes["deprecated_slug"] = navigator_document.slug
+
+    """
+    Geography labels
+    """
+    labels.extend(_transform_geographies(navigator_family))
 
     return Document(
         id=navigator_document.import_id,
