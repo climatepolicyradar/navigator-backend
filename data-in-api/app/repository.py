@@ -230,6 +230,7 @@ def _map_db_document_to_schema(db: Session, db_doc: DBDocument) -> DocumentOutpu
         labels=labels,
         items=items,
         documents=relationships,
+        attributes=db_doc.attributes,
     )
 
 
