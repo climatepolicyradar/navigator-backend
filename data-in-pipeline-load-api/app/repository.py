@@ -60,6 +60,33 @@ def create_or_update_documents(
     try:
         processed_ids = []
 
+        unique_labels = {
+            rel.value.id: rel.value for doc_in in documents for rel in doc_in.labels
+        }
+        if unique_labels:
+            now = datetime.now(UTC)
+            label_stmt = insert(DBLabel).values(
+                [
+                    {
+                        "id": label.id,
+                        "value": label.value,
+                        "type": label.type,
+                        "created_at": now,
+                        "updated_at": now,
+                    }
+                    for label in unique_labels.values()
+                ]
+            )
+            label_stmt = label_stmt.on_conflict_do_update(
+                index_elements=["id"],
+                set_={
+                    "value": label_stmt.excluded.value,
+                    "type": label_stmt.excluded.type,
+                    "updated_at": now,
+                },
+            )
+            db.exec(label_stmt)
+
         for doc_in in documents:
             # Upsert main document using INSERT ... ON CONFLICT
             stmt = (
@@ -138,7 +165,9 @@ def _upsert_items_for_document(
 def _upsert_labels_and_relationships(
     db: Session, document_id: str, label_relationships: list
 ) -> None:
-    """Upsert labels and their relationships using INSERT ... ON CONFLICT.
+    """Upsert document-label relationships using INSERT ... ON CONFLICT.
+
+    Labels themselves are bulk-upserted before this is called.
 
     :param db: Database session
     :param document_id: Document ID
@@ -147,26 +176,6 @@ def _upsert_labels_and_relationships(
     incoming_label_ids: list[str] = []
 
     for rel in label_relationships:
-        label_stmt = (
-            insert(DBLabel)
-            .values(
-                id=rel.value.id,
-                value=rel.value.value,
-                type=rel.value.type,
-                created_at=datetime.now(UTC),
-                updated_at=datetime.now(UTC),
-            )
-            .on_conflict_do_update(
-                index_elements=["id"],
-                set_={
-                    "value": rel.value.value,
-                    "type": rel.value.type,
-                    "updated_at": datetime.now(UTC),
-                },
-            )
-        )
-        db.exec(label_stmt)
-
         link_stmt = (
             insert(DBDocumentLabelLink)
             .values(
