@@ -290,39 +290,6 @@ def navigator_family_with_duplicate_legal_case() -> Identified[NavigatorFamily]:
     )
 
 
-@pytest.fixture
-def navigator_family_with_laws_and_policies_corpus_type() -> (
-    Identified[NavigatorFamily]
-):
-    return Identified(
-        id="family",
-        source="navigator_family",
-        data=NavigatorFamilyFactory.build(
-            import_id="family",
-            title="Laws and policies family",
-            summary="Family summary",
-            category="LEGISLATIVE",
-            corpus=_cclw_corpus(),
-            documents=[],
-            events=[],
-            collections=[],
-            geographies=["AUS"],
-            slug="laws-and-policies-family-slug",
-            metadata={
-                "topic": ["Mitigation"],
-                "sector": ["Economy-wide"],
-                "keyword": ["Transport"],
-                "framework": ["Mitigation"],
-                "hazard": [],
-                "instrument": [
-                    "Processes, plans and strategies|Governance",
-                    "Planning|Governance",
-                ],
-            },
-        ),
-    )
-
-
 def test_transform_navigator_family_with_single_matching_document(
     navigator_family_with_single_matching_document: Identified[NavigatorFamily],
 ):
@@ -747,9 +714,51 @@ def test_transform_navigator_family_with_litigation_corpus_type_handles_duplicat
     assert legal_case_labels[0].type == "entity_type"
 
 
+@pytest.mark.parametrize(
+    "corpus_id, org, provider",
+    [
+        ("CCLW.corpus.i00000001.n0000", "CCLW", "Grantham Research Institute"),
+        ("CPR.corpus.i00000001.n0000", "CPR", "NewClimate Institute"),
+        ("CPR.corpus.Goldstandard.n0000", "CPR", "Gold Standard"),
+        ("CPR.corpus.i00000589.n0000", "CPR", "Naturebase"),
+        ("CPR.corpus.i00000591.n0000", "CPR", "Laws Africa"),
+        ("CPR.corpus.i00000592.n0000", "CPR", "UNDRR"),
+    ],
+)
 def test_transform_navigator_family_with_laws_and_policies_corpus_type(
-    navigator_family_with_laws_and_policies_corpus_type: Identified[NavigatorFamily],
+    corpus_id: str, org: str, provider: str
 ):
+    navigator_family_with_laws_and_policies_corpus_type = Identified(
+        id="family",
+        source="navigator_family",
+        data=NavigatorFamilyFactory.build(
+            import_id="family",
+            title="Laws and policies family",
+            summary="Family summary",
+            category="LEGISLATIVE",
+            corpus=NavigatorCorpusFactory.build(
+                import_id=corpus_id,
+                corpus_type=NavigatorCorpusTypeFactory.build(name="corpus_type"),
+                organisation=NavigatorOrganisationFactory.build(id=1, name=org),
+            ),
+            documents=[],
+            events=[],
+            collections=[],
+            geographies=["AUS"],
+            slug="laws-and-policies-family-slug",
+            metadata={
+                "topic": ["Mitigation"],
+                "sector": ["Economy-wide"],
+                "keyword": ["Transport"],
+                "framework": ["Mitigation"],
+                "hazard": [],
+                "instrument": [
+                    "Processes, plans and strategies|Governance",
+                    "Planning|Governance",
+                ],
+            },
+        ),
+    )
     result = transform_navigator_family(
         navigator_family_with_laws_and_policies_corpus_type
     )
@@ -770,8 +779,8 @@ def test_transform_navigator_family_with_laws_and_policies_corpus_type(
                 type="provider",
                 value=Label(
                     type="agent",
-                    id="Grantham Research Institute",
-                    value="Grantham Research Institute",
+                    id=provider,
+                    value=provider,
                 ),
             ),
             LabelRelationship(
