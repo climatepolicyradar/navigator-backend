@@ -465,7 +465,7 @@ def test_transform_navigator_family_with_single_matching_document(
                 value=Label(
                     id="Guidance",
                     value="Guidance",
-                    type="entity_type",
+                    type="category",
                 ),
             ),
         ],
@@ -751,7 +751,7 @@ def test_transform_navigator_family_with_litigation_corpus_type(
                 value=Label(
                     id="Guidance",
                     value="Guidance",
-                    type="entity_type",
+                    type="category",
                 ),
             ),
         ],
@@ -965,7 +965,7 @@ def test_transform_navigator_family_with_multilateral_climate_fund_project(
                 value=Label(
                     id="Guidance",
                     value="Guidance",
-                    type="entity_type",
+                    type="category",
                 ),
             ),
         ],
