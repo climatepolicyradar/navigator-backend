@@ -310,14 +310,14 @@ def navigator_family_with_laws_and_policies_corpus_type() -> (
             slug="laws-and-policies-family-slug",
             metadata={
                 "topic": ["Mitigation"],
-                # "sector": ["Economy-wide"],
-                # "keyword": ["Transport"],
-                # "framework": ["Mitigation"],
-                # "hazard": [],
-                # "instrument": [
-                #     "Processes, plans and strategies|Governance",
-                #     "Planning|Governance",
-                # ],
+                "sector": ["Economy-wide"],
+                "keyword": ["Transport"],
+                "framework": ["Mitigation"],
+                "hazard": [],
+                "instrument": [
+                    "Processes, plans and strategies|Governance",
+                    "Planning|Governance",
+                ],
             },
         ),
     )
@@ -796,6 +796,46 @@ def test_transform_navigator_family_with_laws_and_policies_corpus_type(
                     id="Mitigation",
                     value="Mitigation",
                     type="topic",
+                ),
+            ),
+            LabelRelationship(
+                type="sector",
+                value=Label(
+                    id="Economy-wide",
+                    value="Economy-wide",
+                    type="sector",
+                ),
+            ),
+            LabelRelationship(
+                type="keyword",
+                value=Label(
+                    id="Transport",
+                    value="Transport",
+                    type="keyword",
+                ),
+            ),
+            LabelRelationship(
+                type="framework",
+                value=Label(
+                    id="Mitigation",
+                    value="Mitigation",
+                    type="framework",
+                ),
+            ),
+            LabelRelationship(
+                type="instrument",
+                value=Label(
+                    id="Processes, plans and strategies|Governance",
+                    value="Processes, plans and strategies|Governance",
+                    type="instrument",
+                ),
+            ),
+            LabelRelationship(
+                type="instrument",
+                value=Label(
+                    id="Planning|Governance",
+                    value="Planning|Governance",
+                    type="instrument",
                 ),
             ),
         ],
