@@ -109,6 +109,7 @@ def navigator_family_with_single_matching_document() -> Identified[NavigatorFami
             ],
             geographies=["AU-NSW", "AUS", "XAA"],
             slug="family-slug",
+            metadata={},
         ),
     )
 
@@ -285,6 +286,39 @@ def navigator_family_with_duplicate_legal_case() -> Identified[NavigatorFamily]:
             events=[],
             collections=[],
             geographies=[],
+        ),
+    )
+
+
+@pytest.fixture
+def navigator_family_with_laws_and_policies_corpus_type() -> (
+    Identified[NavigatorFamily]
+):
+    return Identified(
+        id="family",
+        source="navigator_family",
+        data=NavigatorFamilyFactory.build(
+            import_id="family",
+            title="Laws and policies family",
+            summary="Family summary",
+            category="LEGISLATIVE",
+            corpus=_cclw_corpus(),
+            documents=[],
+            events=[],
+            collections=[],
+            geographies=["AUS"],
+            slug="laws-and-policies-family-slug",
+            metadata={
+                "topic": ["Mitigation"],
+                # "sector": ["Economy-wide"],
+                # "keyword": ["Transport"],
+                # "framework": ["Mitigation"],
+                # "hazard": [],
+                # "instrument": [
+                #     "Processes, plans and strategies|Governance",
+                #     "Planning|Governance",
+                # ],
+            },
         ),
     )
 
@@ -711,6 +745,67 @@ def test_transform_navigator_family_with_litigation_corpus_type_handles_duplicat
     assert legal_case_labels[0].value.id == "Legal case"
     assert legal_case_labels[0].value.value == "Legal case"
     assert legal_case_labels[0].type == "entity_type"
+
+
+def test_transform_navigator_family_with_laws_and_policies_corpus_type(
+    navigator_family_with_laws_and_policies_corpus_type: Identified[NavigatorFamily],
+):
+    result = transform_navigator_family(
+        navigator_family_with_laws_and_policies_corpus_type
+    )
+    expected_document_from_family = Document(
+        id="family",
+        title="Laws and policies family",
+        description="Family summary",
+        labels=[
+            LabelRelationship(
+                type="status",
+                value=Label(
+                    type="status",
+                    id="Principal",
+                    value="Principal",
+                ),
+            ),
+            LabelRelationship(
+                type="provider",
+                value=Label(
+                    type="agent",
+                    id="Grantham Research Institute",
+                    value="Grantham Research Institute",
+                ),
+            ),
+            LabelRelationship(
+                type="geography",
+                value=Label(
+                    id="AUS",
+                    value="Australia",
+                    type="geography",
+                ),
+            ),
+            LabelRelationship(
+                type="category",
+                value=Label(
+                    id="Legislative",
+                    value="Legislative",
+                    type="category",
+                ),
+            ),
+            LabelRelationship(
+                type="topic",
+                value=Label(
+                    id="Mitigation",
+                    value="Mitigation",
+                    type="topic",
+                ),
+            ),
+        ],
+        documents=[],
+        attributes={"deprecated_slug": "laws-and-policies-family-slug"},
+    )
+    assert_model_list_equality(
+        result.unwrap(),
+        [expected_document_from_family],
+    )
 
 
 def test_transform_navigator_family_with_litigation_corpus_type(

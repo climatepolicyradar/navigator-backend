@@ -466,10 +466,28 @@ def _transform_navigator_family(navigator_family: NavigatorFamily) -> Document:
 
     """
     Slug
-    We should not couple to this implementation as it is an incoplete ID service which is unmaintained.
+    We should not couple to this implementation as it is an incomplete ID service which is unmaintained.
     But we need it for migration purposes.
     """
     attributes["deprecated_slug"] = navigator_family.slug
+
+    """
+    Metadata
+    """
+    if navigator_family.metadata and navigator_family.corpus.import_id in [
+        "CCLW.corpus.i00000001.n0000"
+    ]:
+        for k, v in navigator_family.metadata.items():
+            labels.append(
+                LabelRelationship(
+                    type=k,
+                    value=Label(
+                        id=v[0],
+                        value=v[0],
+                        type=k,
+                    ),
+                )
+            )
 
     return Document(
         id=navigator_family.import_id,
