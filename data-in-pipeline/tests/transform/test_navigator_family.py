@@ -747,11 +747,14 @@ def test_transform_navigator_family_with_laws_and_policies_corpus_type(
             geographies=["AUS"],
             slug="laws-and-policies-family-slug",
             metadata={
+                # testing single value
                 "topic": ["Mitigation"],
                 "sector": ["Economy-wide"],
                 "keyword": ["Transport"],
                 "framework": ["Mitigation"],
+                # testing no value
                 "hazard": [],
+                # testing multiple values
                 "instrument": [
                     "Processes, plans and strategies|Governance",
                     "Planning|Governance",
