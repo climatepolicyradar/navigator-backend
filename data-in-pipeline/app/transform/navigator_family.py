@@ -232,6 +232,7 @@ def _transform_family_corpus_organisation(
         "CCLW.corpus.i00000001.n0000": "Grantham Research Institute",
         "Academic.corpus.Litigation.n0000": "Sabin Center for Climate Change Law",
         "CPR.corpus.Goldstandard.n0000": "Gold Standard",
+        "CPR.corpus.i00000589.n0000": "Naturebase",
         "CPR.corpus.i00000001.n0000": "NewClimate Institute",
         "CPR.corpus.i00000002.n0000": "Climate Policy Radar",
         "CPR.corpus.i00000591.n0000": "Laws Africa",
@@ -466,10 +467,39 @@ def _transform_navigator_family(navigator_family: NavigatorFamily) -> Document:
 
     """
     Slug
-    We should not couple to this implementation as it is an incoplete ID service which is unmaintained.
+    We should not couple to this implementation as it is an incomplete ID service which is unmaintained.
     But we need it for migration purposes.
     """
     attributes["deprecated_slug"] = navigator_family.slug
+
+    """
+    Metadata
+    """
+    laws_and_policies_corpora = [
+        "CCLW.corpus.i00000001.n0000",
+        "CPR.corpus.i00000001.n0000",
+        "CPR.corpus.Goldstandard.n0000",
+        "CPR.corpus.i00000589.n0000",
+        "CPR.corpus.i00000591.n0000",
+        "CPR.corpus.i00000592.n0000",
+    ]
+    if (
+        navigator_family.metadata
+        and navigator_family.corpus.import_id in laws_and_policies_corpora
+    ):
+        for key, values in navigator_family.metadata.items():
+            if values:
+                for value in values:
+                    labels.append(
+                        LabelRelationship(
+                            type=key,
+                            value=Label(
+                                id=value,
+                                value=value,
+                                type=key,
+                            ),
+                        )
+                    )
 
     return Document(
         id=navigator_family.import_id,

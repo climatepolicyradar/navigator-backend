@@ -109,6 +109,7 @@ def navigator_family_with_single_matching_document() -> Identified[NavigatorFami
             ],
             geographies=["AU-NSW", "AUS", "XAA"],
             slug="family-slug",
+            metadata={},
         ),
     )
 
@@ -711,6 +712,152 @@ def test_transform_navigator_family_with_litigation_corpus_type_handles_duplicat
     assert legal_case_labels[0].value.id == "Legal case"
     assert legal_case_labels[0].value.value == "Legal case"
     assert legal_case_labels[0].type == "entity_type"
+
+
+@pytest.mark.parametrize(
+    "corpus_id, org, provider",
+    [
+        ("CCLW.corpus.i00000001.n0000", "CCLW", "Grantham Research Institute"),
+        ("CPR.corpus.i00000001.n0000", "CPR", "NewClimate Institute"),
+        ("CPR.corpus.Goldstandard.n0000", "CPR", "Gold Standard"),
+        ("CPR.corpus.i00000589.n0000", "CPR", "Naturebase"),
+        ("CPR.corpus.i00000591.n0000", "CPR", "Laws Africa"),
+        ("CPR.corpus.i00000592.n0000", "CPR", "UNDRR"),
+    ],
+)
+def test_transform_navigator_family_with_laws_and_policies_corpus_type(
+    corpus_id: str, org: str, provider: str
+):
+    navigator_family_with_laws_and_policies_corpus_type = Identified(
+        id="family",
+        source="navigator_family",
+        data=NavigatorFamilyFactory.build(
+            import_id="family",
+            title="Laws and policies family",
+            summary="Family summary",
+            category="LEGISLATIVE",
+            corpus=NavigatorCorpusFactory.build(
+                import_id=corpus_id,
+                corpus_type=NavigatorCorpusTypeFactory.build(name="corpus_type"),
+                organisation=NavigatorOrganisationFactory.build(id=1, name=org),
+            ),
+            documents=[],
+            events=[],
+            collections=[],
+            geographies=["AUS"],
+            slug="laws-and-policies-family-slug",
+            metadata={
+                # testing single value
+                "topic": ["Mitigation"],
+                "sector": ["Economy-wide"],
+                "keyword": ["Transport"],
+                "framework": ["Mitigation"],
+                # testing no value
+                "hazard": [],
+                # testing multiple values
+                "instrument": [
+                    "Processes, plans and strategies|Governance",
+                    "Planning|Governance",
+                ],
+            },
+        ),
+    )
+    result = transform_navigator_family(
+        navigator_family_with_laws_and_policies_corpus_type
+    )
+    expected_document_from_family = Document(
+        id="family",
+        title="Laws and policies family",
+        description="Family summary",
+        labels=[
+            LabelRelationship(
+                type="status",
+                value=Label(
+                    type="status",
+                    id="Principal",
+                    value="Principal",
+                ),
+            ),
+            LabelRelationship(
+                type="provider",
+                value=Label(
+                    type="agent",
+                    id=provider,
+                    value=provider,
+                ),
+            ),
+            LabelRelationship(
+                type="geography",
+                value=Label(
+                    id="AUS",
+                    value="Australia",
+                    type="geography",
+                ),
+            ),
+            LabelRelationship(
+                type="category",
+                value=Label(
+                    id="Legislative",
+                    value="Legislative",
+                    type="category",
+                ),
+            ),
+            LabelRelationship(
+                type="topic",
+                value=Label(
+                    id="Mitigation",
+                    value="Mitigation",
+                    type="topic",
+                ),
+            ),
+            LabelRelationship(
+                type="sector",
+                value=Label(
+                    id="Economy-wide",
+                    value="Economy-wide",
+                    type="sector",
+                ),
+            ),
+            LabelRelationship(
+                type="keyword",
+                value=Label(
+                    id="Transport",
+                    value="Transport",
+                    type="keyword",
+                ),
+            ),
+            LabelRelationship(
+                type="framework",
+                value=Label(
+                    id="Mitigation",
+                    value="Mitigation",
+                    type="framework",
+                ),
+            ),
+            LabelRelationship(
+                type="instrument",
+                value=Label(
+                    id="Processes, plans and strategies|Governance",
+                    value="Processes, plans and strategies|Governance",
+                    type="instrument",
+                ),
+            ),
+            LabelRelationship(
+                type="instrument",
+                value=Label(
+                    id="Planning|Governance",
+                    value="Planning|Governance",
+                    type="instrument",
+                ),
+            ),
+        ],
+        documents=[],
+        attributes={"deprecated_slug": "laws-and-policies-family-slug"},
+    )
+    assert_model_list_equality(
+        result.unwrap(),
+        [expected_document_from_family],
+    )
 
 
 def test_transform_navigator_family_with_litigation_corpus_type(

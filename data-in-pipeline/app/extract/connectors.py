@@ -71,6 +71,7 @@ class NavigatorFamily(BaseModel):
     geographies: list[str]
     category: str
     slug: str
+    metadata: dict[str, list[str]] = {}
 
 
 class PageFetchFailure(BaseModel):
