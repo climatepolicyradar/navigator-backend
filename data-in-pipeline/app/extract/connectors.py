@@ -2,7 +2,7 @@ import datetime
 from http import HTTPStatus
 
 import requests
-from pydantic import BaseModel
+from pydantic import BaseModel, computed_field
 from requests.adapters import HTTPAdapter, Retry
 from returns.result import Failure, Result, Success
 
@@ -17,6 +17,7 @@ class NavigatorEvent(BaseModel):
     import_id: str
     event_type: str
     date: datetime.datetime
+    valid_metadata: dict[str, list[str]] = {}
 
 
 class NavigatorDocument(BaseModel):
@@ -73,6 +74,36 @@ class NavigatorFamily(BaseModel):
     category: str
     slug: str
     metadata: dict[str, list[str]] = {}
+
+    @computed_field
+    @property
+    def published_date(self) -> datetime.datetime | None:
+        # datetime_event_name stores the value of the event.event_type that should be used for published_date
+        # otherwise we use the earliest date
+        published_event_date = next(
+            (
+                event.date
+                for event in self.events
+                if event.valid_metadata is not None
+                and event.event_type == event.valid_metadata["datetime_event_name"]
+            ),
+            None,
+        )
+        earliest_event_date = min(
+            (event.date for event in self.events if event.date), default=None
+        )
+        return published_event_date or earliest_event_date
+
+    @computed_field
+    @property
+    def last_updated_date(self) -> datetime.datetime | None:
+        # get the most recent date that is not in the future
+        now = datetime.datetime.now()
+        latest_event_date = max(
+            (event.date for event in self.events if event.date and event.date <= now),
+            default=None,
+        )
+        return latest_event_date
 
 
 class PageFetchFailure(BaseModel):
