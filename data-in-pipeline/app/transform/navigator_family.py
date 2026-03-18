@@ -606,7 +606,7 @@ def _transform_navigator_document(
 
     """
     Slug
-    We should not couple to this implementation as it is an incoplete ID service which is unmaintained.
+    We should not couple to this implementation as it is an incomplete ID service which is unmaintained.
     But we need it for migration purposes.
     """
     attributes["deprecated_slug"] = navigator_document.slug
@@ -615,6 +615,11 @@ def _transform_navigator_document(
     Geography labels
     """
     labels.extend(_transform_geographies(navigator_family))
+
+    if navigator_document.variant:
+        attributes["variant"] = navigator_document.variant
+    if navigator_document.md5_sum:
+        attributes["md5_sum"] = navigator_document.md5_sum
 
     return Document(
         id=navigator_document.import_id,

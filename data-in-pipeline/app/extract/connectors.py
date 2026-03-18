@@ -36,6 +36,7 @@ class NavigatorDocument(BaseModel):
     variant: str | None = None
     content_type: str | None = None
     slug: str
+    md5_sum: str | None = None
 
 
 class NavigatorCorpusType(BaseModel):
