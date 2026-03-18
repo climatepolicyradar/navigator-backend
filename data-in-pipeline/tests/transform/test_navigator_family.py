@@ -9,7 +9,6 @@ from data_in_models.models import (
     Label,
     LabelRelationship,
 )
-from returns.result import Success
 
 from app.extract.connectors import (
     NavigatorFamily,
@@ -84,8 +83,9 @@ def navigator_family_with_single_matching_document() -> Identified[NavigatorFami
                     variant="Original language",
                     content_type="application/pdf",
                     source_url="https://source.climatepolicyradar.org/path/to/file.pdf",
-                    language="en",
-                    languages=["en"],
+                    language="eng",
+                    languages=["eng", "fra"],
+                    md5_sum="aaaaa11111bbbbb",
                     events=[],
                     valid_metadata={
                         "role": ["SUPPORTING LEGISLATION"],
@@ -169,6 +169,9 @@ def navigator_family_with_litigation_corpus_type() -> Identified[NavigatorFamily
                             date=decision_date,
                         )
                     ],
+                    variant="Original language",
+                    md5_sum="aaaaa11111bbbbb",
+                    languages=[],
                 ),
                 NavigatorDocumentFactory.build(
                     import_id="1.2.3.placeholder",
@@ -177,6 +180,9 @@ def navigator_family_with_litigation_corpus_type() -> Identified[NavigatorFamily
                     source_url=None,
                     slug="placeholder-document-slug",
                     events=[],
+                    variant=None,
+                    md5_sum="aaaaa11111bbbbb",
+                    languages=[],
                 ),
             ],
             events=[
@@ -247,6 +253,10 @@ def navigator_family_multilateral_climate_fund_project() -> Identified[Navigator
                     source_url=None,
                     slug="document-1-slug",
                     events=[],
+                    variant="Original language",
+                    md5_sum="aaaaa11111bbbbb",
+                    language="eng",
+                    languages=["eng"],
                 ),
                 NavigatorDocumentFactory.build(
                     import_id="document_2",
@@ -255,6 +265,10 @@ def navigator_family_multilateral_climate_fund_project() -> Identified[Navigator
                     source_url=None,
                     slug="document-2-slug",
                     events=[],
+                    variant="Original language",
+                    md5_sum="aaaaa11111bbbbb",
+                    language="eng",
+                    languages=["eng"],
                 ),
             ],
             events=_mcf_events(),
@@ -534,6 +548,22 @@ def test_transform_navigator_family_with_single_matching_document(
                                 value="Australia",
                             ),
                         ),
+                        LabelRelationship(
+                            type="language",
+                            value=Label(
+                                id="eng",
+                                value="eng",
+                                type="language",
+                            ),
+                        ),
+                        LabelRelationship(
+                            type="language",
+                            value=Label(
+                                id="fra",
+                                value="fra",
+                                type="language",
+                            ),
+                        ),
                     ],
                     items=[
                         Item(
@@ -547,7 +577,11 @@ def test_transform_navigator_family_with_single_matching_document(
                             content_type="application/pdf",
                         ),
                     ],
-                    attributes={"deprecated_slug": "document-slug"},
+                    attributes={
+                        "deprecated_slug": "document-slug",
+                        "variant": "Original language",
+                        "md5_sum": "aaaaa11111bbbbb",
+                    },
                 ),
             ),
             DocumentRelationship(
@@ -619,6 +653,22 @@ def test_transform_navigator_family_with_single_matching_document(
                             value="Australia",
                         ),
                     ),
+                    LabelRelationship(
+                        type="language",
+                        value=Label(
+                            id="eng",
+                            value="eng",
+                            type="language",
+                        ),
+                    ),
+                    LabelRelationship(
+                        type="language",
+                        value=Label(
+                            id="fra",
+                            value="fra",
+                            type="language",
+                        ),
+                    ),
                 ],
                 documents=[
                     DocumentRelationship(
@@ -640,7 +690,11 @@ def test_transform_navigator_family_with_single_matching_document(
                         content_type="application/pdf",
                     ),
                 ],
-                attributes={"deprecated_slug": "document-slug"},
+                attributes={
+                    "deprecated_slug": "document-slug",
+                    "variant": "Original language",
+                    "md5_sum": "aaaaa11111bbbbb",
+                },
             ),
             Document(
                 id="collection_matching",
@@ -926,7 +980,11 @@ def test_transform_navigator_family_with_litigation_corpus_type(
                             ),
                         ),
                     ],
-                    attributes={"deprecated_slug": "litigation-document-slug"},
+                    attributes={
+                        "deprecated_slug": "litigation-document-slug",
+                        "md5_sum": "aaaaa11111bbbbb",
+                        "variant": "Original language",
+                    },
                 ),
             ),
             DocumentRelationship(
@@ -952,13 +1010,17 @@ def test_transform_navigator_family_with_litigation_corpus_type(
                             ),
                         ),
                     ],
-                    attributes={"deprecated_slug": "placeholder-document-slug"},
+                    attributes={
+                        "deprecated_slug": "placeholder-document-slug",
+                        "md5_sum": "aaaaa11111bbbbb",
+                    },
                 ),
             ),
         ],
         attributes={"deprecated_slug": "litigation-family-slug"},
     )
-    assert result == Success(
+    assert_model_list_equality(
+        result.unwrap(),
         [
             expected_document_from_family,
             Document(
@@ -990,7 +1052,11 @@ def test_transform_navigator_family_with_litigation_corpus_type(
                         ),
                     ),
                 ],
-                attributes={"deprecated_slug": "litigation-document-slug"},
+                attributes={
+                    "deprecated_slug": "litigation-document-slug",
+                    "md5_sum": "aaaaa11111bbbbb",
+                    "variant": "Original language",
+                },
             ),
             Document(
                 id="1.2.3.placeholder",
@@ -1021,7 +1087,10 @@ def test_transform_navigator_family_with_litigation_corpus_type(
                         ),
                     )
                 ],
-                attributes={"deprecated_slug": "placeholder-document-slug"},
+                attributes={
+                    "deprecated_slug": "placeholder-document-slug",
+                    "md5_sum": "aaaaa11111bbbbb",
+                },
             ),
         ],
     )
@@ -1131,8 +1200,20 @@ def test_transform_navigator_family_with_multilateral_climate_fund_project(
                                 value="Adaptation Fund",
                             ),
                         ),
+                        LabelRelationship(
+                            type="language",
+                            value=Label(
+                                id="eng",
+                                value="eng",
+                                type="language",
+                            ),
+                        ),
                     ],
-                    attributes={"deprecated_slug": "document-1-slug"},
+                    attributes={
+                        "deprecated_slug": "document-1-slug",
+                        "variant": "Original language",
+                        "md5_sum": "aaaaa11111bbbbb",
+                    },
                 ),
             ),
             DocumentRelationship(
@@ -1149,14 +1230,27 @@ def test_transform_navigator_family_with_multilateral_climate_fund_project(
                                 value="Adaptation Fund",
                             ),
                         ),
+                        LabelRelationship(
+                            type="language",
+                            value=Label(
+                                id="eng",
+                                value="eng",
+                                type="language",
+                            ),
+                        ),
                     ],
-                    attributes={"deprecated_slug": "document-2-slug"},
+                    attributes={
+                        "deprecated_slug": "document-2-slug",
+                        "variant": "Original language",
+                        "md5_sum": "aaaaa11111bbbbb",
+                    },
                 ),
             ),
         ],
         attributes={"deprecated_slug": "mcf-family-slug"},
     )
-    assert result == Success(
+    assert_model_list_equality(
+        result.unwrap(),
         [
             expected_document_from_family,
             Document(
@@ -1171,6 +1265,14 @@ def test_transform_navigator_family_with_multilateral_climate_fund_project(
                             value="Adaptation Fund",
                         ),
                     ),
+                    LabelRelationship(
+                        type="language",
+                        value=Label(
+                            id="eng",
+                            value="eng",
+                            type="language",
+                        ),
+                    ),
                 ],
                 documents=[
                     DocumentRelationship(
@@ -1180,7 +1282,11 @@ def test_transform_navigator_family_with_multilateral_climate_fund_project(
                         ),
                     )
                 ],
-                attributes={"deprecated_slug": "document-1-slug"},
+                attributes={
+                    "deprecated_slug": "document-1-slug",
+                    "variant": "Original language",
+                    "md5_sum": "aaaaa11111bbbbb",
+                },
             ),
             Document(
                 id="document_2",
@@ -1194,6 +1300,14 @@ def test_transform_navigator_family_with_multilateral_climate_fund_project(
                             value="Adaptation Fund",
                         ),
                     ),
+                    LabelRelationship(
+                        type="language",
+                        value=Label(
+                            id="eng",
+                            value="eng",
+                            type="language",
+                        ),
+                    ),
                 ],
                 documents=[
                     DocumentRelationship(
@@ -1203,7 +1317,11 @@ def test_transform_navigator_family_with_multilateral_climate_fund_project(
                         ),
                     )
                 ],
-                attributes={"deprecated_slug": "document-2-slug"},
+                attributes={
+                    "deprecated_slug": "document-2-slug",
+                    "variant": "Original language",
+                    "md5_sum": "aaaaa11111bbbbb",
+                },
             ),
-        ]
+        ],
     )
