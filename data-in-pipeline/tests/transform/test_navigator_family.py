@@ -171,6 +171,7 @@ def navigator_family_with_litigation_corpus_type() -> Identified[NavigatorFamily
                     ],
                     variant="Original language",
                     md5_sum="aaaaa11111bbbbb",
+                    languages=[],
                 ),
                 NavigatorDocumentFactory.build(
                     import_id="1.2.3.placeholder",
@@ -181,6 +182,7 @@ def navigator_family_with_litigation_corpus_type() -> Identified[NavigatorFamily
                     events=[],
                     variant=None,
                     md5_sum="aaaaa11111bbbbb",
+                    languages=[],
                 ),
             ],
             events=[
@@ -253,6 +255,8 @@ def navigator_family_multilateral_climate_fund_project() -> Identified[Navigator
                     events=[],
                     variant="Original language",
                     md5_sum="aaaaa11111bbbbb",
+                    language="eng",
+                    languages=["eng"],
                 ),
                 NavigatorDocumentFactory.build(
                     import_id="document_2",
@@ -263,6 +267,8 @@ def navigator_family_multilateral_climate_fund_project() -> Identified[Navigator
                     events=[],
                     variant="Original language",
                     md5_sum="aaaaa11111bbbbb",
+                    language="eng",
+                    languages=["eng"],
                 ),
             ],
             events=_mcf_events(),
@@ -542,6 +548,22 @@ def test_transform_navigator_family_with_single_matching_document(
                                 value="Australia",
                             ),
                         ),
+                        LabelRelationship(
+                            type="language",
+                            value=Label(
+                                id="eng",
+                                value="eng",
+                                type="language",
+                            ),
+                        ),
+                        LabelRelationship(
+                            type="language",
+                            value=Label(
+                                id="fra",
+                                value="fra",
+                                type="language",
+                            ),
+                        ),
                     ],
                     items=[
                         Item(
@@ -629,6 +651,22 @@ def test_transform_navigator_family_with_single_matching_document(
                             type="geography",
                             id="AUS",
                             value="Australia",
+                        ),
+                    ),
+                    LabelRelationship(
+                        type="language",
+                        value=Label(
+                            id="eng",
+                            value="eng",
+                            type="language",
+                        ),
+                    ),
+                    LabelRelationship(
+                        type="language",
+                        value=Label(
+                            id="fra",
+                            value="fra",
+                            type="language",
                         ),
                     ),
                 ],
@@ -1162,6 +1200,14 @@ def test_transform_navigator_family_with_multilateral_climate_fund_project(
                                 value="Adaptation Fund",
                             ),
                         ),
+                        LabelRelationship(
+                            type="language",
+                            value=Label(
+                                id="eng",
+                                value="eng",
+                                type="language",
+                            ),
+                        ),
                     ],
                     attributes={
                         "deprecated_slug": "document-1-slug",
@@ -1182,6 +1228,14 @@ def test_transform_navigator_family_with_multilateral_climate_fund_project(
                                 type="agent",
                                 id="Adaptation Fund",
                                 value="Adaptation Fund",
+                            ),
+                        ),
+                        LabelRelationship(
+                            type="language",
+                            value=Label(
+                                id="eng",
+                                value="eng",
+                                type="language",
                             ),
                         ),
                     ],
@@ -1211,6 +1265,14 @@ def test_transform_navigator_family_with_multilateral_climate_fund_project(
                             value="Adaptation Fund",
                         ),
                     ),
+                    LabelRelationship(
+                        type="language",
+                        value=Label(
+                            id="eng",
+                            value="eng",
+                            type="language",
+                        ),
+                    ),
                 ],
                 documents=[
                     DocumentRelationship(
@@ -1236,6 +1298,14 @@ def test_transform_navigator_family_with_multilateral_climate_fund_project(
                             type="agent",
                             id="Adaptation Fund",
                             value="Adaptation Fund",
+                        ),
+                    ),
+                    LabelRelationship(
+                        type="language",
+                        value=Label(
+                            id="eng",
+                            value="eng",
+                            type="language",
                         ),
                     ),
                 ],

@@ -616,6 +616,21 @@ def _transform_navigator_document(
     """
     labels.extend(_transform_geographies(navigator_family))
 
+    """
+    Language labels
+    """
+    for lang in navigator_document.languages:
+        labels.append(
+            LabelRelationship(
+                type="language",
+                value=Label(id=lang, value=lang, type="language"),
+            )
+        )
+
+    """
+    Internal attributes
+    """
+
     if navigator_document.variant:
         attributes["variant"] = navigator_document.variant
     if navigator_document.md5_sum:
