@@ -230,65 +230,67 @@ def _upsert_document_document_relationships(
     document_id: str,
     relationships: list[DocumentDocumentRelationshipInput],
 ) -> None:
-    incoming_target_ids: list[str] = []
+    now = datetime.now(UTC)
 
-    for rel in relationships:
-        target = rel.value
-
-        stmt = (
-            insert(DBDocument)
-            .values(
-                id=target.id,
-                title=target.title,
-                description=target.description,
-                attributes=target.attributes,
-                created_at=datetime.now(UTC),
-                updated_at=datetime.now(UTC),
-            )
-            .on_conflict_do_nothing()
-        )
-        db.exec(stmt)
-
-        rel_stmt = (
-            insert(DBDocumentRelationship)
-            .values(
-                document_id=document_id,
-                related_document_id=target.id,
-                type=rel.type,
-                timestamp=rel.timestamp,
-                created_at=datetime.now(UTC),
-                updated_at=datetime.now(UTC),
-            )
-            .on_conflict_do_update(
-                index_elements=[
-                    "document_id",
-                    "related_document_id",
-                ],
-                set_={
-                    "type": rel.type,
-                    "timestamp": rel.timestamp,
-                    "updated_at": datetime.now(UTC),
-                },
-            )
-        )
-        db.exec(rel_stmt)
-
-        incoming_target_ids.append(target.id)
-
-    # Delete removed relationships
-    if incoming_target_ids:
-        db.exec(
-            delete(DBDocumentRelationship).where(
-                DBDocumentRelationship.document_id == document_id,
-                DBDocumentRelationship.related_document_id.not_in(incoming_target_ids),  # type: ignore[attr-defined]
-            )
-        )
-    else:
+    if not relationships:
         db.exec(
             delete(DBDocumentRelationship).where(
                 DBDocumentRelationship.document_id == document_id
             )
         )
+        return
+
+    unique_targets = {rel.value.id: rel.value for rel in relationships}
+
+    target_rows = [
+        {
+            "id": target.id,
+            "title": target.title,
+            "description": target.description,
+            "attributes": target.attributes,
+            "created_at": now,
+            "updated_at": now,
+        }
+        for target in unique_targets.values()
+    ]
+
+    # Bulk insert targets (do nothing if they already exist)
+    db.exec(insert(DBDocument).values(target_rows).on_conflict_do_nothing())
+
+    rel_rows = [
+        {
+            "document_id": document_id,
+            "related_document_id": rel.value.id,
+            "type": rel.type,
+            "timestamp": rel.timestamp,
+            "created_at": now,
+            "updated_at": now,
+        }
+        for rel in relationships
+    ]
+
+    rel_stmt = insert(DBDocumentRelationship).values(rel_rows)
+
+    rel_stmt = rel_stmt.on_conflict_do_update(
+        index_elements=["document_id", "related_document_id"],
+        set_={
+            "type": rel_stmt.excluded.type,
+            "timestamp": rel_stmt.excluded.timestamp,
+            "updated_at": now,
+        },
+    )
+
+    db.exec(rel_stmt)
+
+    # --- 3. Delete removed relationships ---
+    incoming_target_ids = [rel.value.id for rel in relationships]
+
+    db.exec(
+        delete(DBDocumentRelationship).where(
+            DBDocumentRelationship.document_id == document_id,
+            ~DBDocumentRelationship.related_document_id.in_(incoming_target_ids),
+        )
+    )
 
 
 def create_documents(db: Session, documents: list[DocumentInput]) -> list[str]:
