@@ -57,6 +57,8 @@ def create_or_update_documents(
 
     processed_ids = []
 
+    now = datetime.now(UTC)
+
     try:
         processed_ids = []
 
@@ -64,7 +66,6 @@ def create_or_update_documents(
             rel.value.id: rel.value for doc_in in documents for rel in doc_in.labels
         }
         if unique_labels:
-            now = datetime.now(UTC)
             label_stmt = insert(DBLabel).values(
                 [
                     {
@@ -96,8 +97,8 @@ def create_or_update_documents(
                     title=doc_in.title,
                     description=doc_in.description,
                     attributes=doc_in.attributes,
-                    created_at=datetime.now(UTC),
-                    updated_at=datetime.now(UTC),
+                    created_at=now,
+                    updated_at=now,
                 )
                 .on_conflict_do_update(
                     index_elements=["id"],
@@ -105,7 +106,7 @@ def create_or_update_documents(
                         "title": doc_in.title,
                         "description": doc_in.description,
                         "attributes": doc_in.attributes,
-                        "updated_at": datetime.now(UTC),
+                        "updated_at": now,
                     },
                 )
             )
@@ -145,21 +146,27 @@ def _upsert_items_for_document(
     :param document_id: Document ID to upsert items for
     :param incoming_items: List of items from input
     """
-    # Delete all existing items for this document
-    db.exec(delete(DBItem).where(DBItem.document_id == document_id))
 
-    # Insert new items (database will auto-generate IDs)
-    for item in incoming_items:
-        stmt = insert(DBItem).values(
-            id=str(uuid4()),
-            document_id=document_id,
-            url=item.url,
-            type=item.type,
-            content_type=item.content_type,
-            created_at=datetime.now(UTC),
-            updated_at=datetime.now(UTC),
+    if incoming_items:
+        # Delete all existing items for this document
+        db.exec(delete(DBItem).where(DBItem.document_id == document_id))
+
+        item_stmt = insert(DBItem).values(
+            [
+                {
+                    "id": str(uuid4()),
+                    "document_id": document_id,
+                    "url": item.url,
+                    "type": item.type,
+                    "content_type": item.content_type,
+                    "created_at": datetime.now(UTC),
+                    "updated_at": datetime.now(UTC),
+                }
+                for item in incoming_items
+            ]
         )
-        db.exec(stmt)
+
+        db.exec(item_stmt)
 
 
 def _upsert_labels_and_relationships(
@@ -173,36 +180,42 @@ def _upsert_labels_and_relationships(
     :param document_id: Document ID
     :param label_relationships: List of DocumentLabelRelationship objects
     """
-    incoming_label_ids: list[str] = []
 
-    for rel in label_relationships:
-        link_stmt = (
-            insert(DBDocumentLabelLink)
-            .values(
-                document_id=document_id,
-                label_id=rel.value.id,
-                type=rel.type,
-                timestamp=rel.timestamp,
-                created_at=datetime.now(UTC),
-                updated_at=datetime.now(UTC),
-            )
-            .on_conflict_do_update(
-                index_elements=["document_id", "label_id"],
-                set_={
-                    "type": rel.type,
-                    "timestamp": rel.timestamp,
-                    "updated_at": datetime.now(UTC),
-                },
-            )
+    now = datetime.now(UTC)
+
+    if label_relationships:
+        rows = [
+            {
+                "document_id": document_id,
+                "label_id": rel.value.id,
+                "type": rel.type,
+                "timestamp": rel.timestamp,
+                "created_at": now,
+                "updated_at": now,
+            }
+            for rel in label_relationships
+        ]
+
+        stmt = insert(DBDocumentLabelLink).values(rows)
+
+        stmt = stmt.on_conflict_do_update(
+            index_elements=["document_id", "label_id"],
+            set_={
+                "type": stmt.excluded.type,
+                "timestamp": stmt.excluded.timestamp,
+                "updated_at": now,
+            },
         )
-        db.exec(link_stmt)
-        incoming_label_ids.append(rel.value.id)
+
+        db.exec(stmt)
+
+    incoming_label_ids = [rel.value.id for rel in label_relationships]
 
     if incoming_label_ids:
         db.exec(
             delete(DBDocumentLabelLink).where(
                 DBDocumentLabelLink.document_id == document_id,
-                DBDocumentLabelLink.label_id.not_in(incoming_label_ids),  # type: ignore[attr-defined]
+                ~DBDocumentLabelLink.label_id.in_(incoming_label_ids),  # type: ignore[attr-defined]
             )
         )
     else:
@@ -218,65 +231,67 @@ def _upsert_document_document_relationships(
     document_id: str,
     relationships: list[DocumentDocumentRelationshipInput],
 ) -> None:
-    incoming_target_ids: list[str] = []
+    now = datetime.now(UTC)
 
-    for rel in relationships:
-        target = rel.value
-
-        stmt = (
-            insert(DBDocument)
-            .values(
-                id=target.id,
-                title=target.title,
-                description=target.description,
-                attributes=target.attributes,
-                created_at=datetime.now(UTC),
-                updated_at=datetime.now(UTC),
-            )
-            .on_conflict_do_nothing()
-        )
-        db.exec(stmt)
-
-        rel_stmt = (
-            insert(DBDocumentRelationship)
-            .values(
-                document_id=document_id,
-                related_document_id=target.id,
-                type=rel.type,
-                timestamp=rel.timestamp,
-                created_at=datetime.now(UTC),
-                updated_at=datetime.now(UTC),
-            )
-            .on_conflict_do_update(
-                index_elements=[
-                    "document_id",
-                    "related_document_id",
-                ],
-                set_={
-                    "type": rel.type,
-                    "timestamp": rel.timestamp,
-                    "updated_at": datetime.now(UTC),
-                },
-            )
-        )
-        db.exec(rel_stmt)
-
-        incoming_target_ids.append(target.id)
-
-    # Delete removed relationships
-    if incoming_target_ids:
-        db.exec(
-            delete(DBDocumentRelationship).where(
-                DBDocumentRelationship.document_id == document_id,
-                DBDocumentRelationship.related_document_id.not_in(incoming_target_ids),  # type: ignore[attr-defined]
-            )
-        )
-    else:
+    if not relationships:
         db.exec(
             delete(DBDocumentRelationship).where(
                 DBDocumentRelationship.document_id == document_id
             )
         )
+        return
+
+    unique_targets = {rel.value.id: rel.value for rel in relationships}
+
+    target_rows = [
+        {
+            "id": target.id,
+            "title": target.title,
+            "description": target.description,
+            "attributes": target.attributes,
+            "created_at": now,
+            "updated_at": now,
+        }
+        for target in unique_targets.values()
+    ]
+
+    # Bulk insert targets (do nothing if they already exist)
+    db.exec(insert(DBDocument).values(target_rows).on_conflict_do_nothing())
+
+    rel_rows = [
+        {
+            "document_id": document_id,
+            "related_document_id": rel.value.id,
+            "type": rel.type,
+            "timestamp": rel.timestamp,
+            "created_at": now,
+            "updated_at": now,
+        }
+        for rel in relationships
+    ]
+
+    rel_stmt = insert(DBDocumentRelationship).values(rel_rows)
+
+    rel_stmt = rel_stmt.on_conflict_do_update(
+        index_elements=["document_id", "related_document_id"],
+        set_={
+            "type": rel_stmt.excluded.type,
+            "timestamp": rel_stmt.excluded.timestamp,
+            "updated_at": now,
+        },
+    )
+
+    db.exec(rel_stmt)
+
+    # --- 3. Delete removed relationships ---
+    incoming_target_ids = [rel.value.id for rel in relationships]
+
+    db.exec(
+        delete(DBDocumentRelationship).where(
+            DBDocumentRelationship.document_id == document_id,
+            ~DBDocumentRelationship.related_document_id.in_(incoming_target_ids),  # type: ignore[attr-defined]
+        )
+    )
 
 
 def create_documents(db: Session, documents: list[DocumentInput]) -> list[str]:
