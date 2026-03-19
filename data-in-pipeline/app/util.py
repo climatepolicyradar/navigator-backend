@@ -1,10 +1,13 @@
 import logging
 import os
+import textwrap
 import uuid
 
 import boto3
 from botocore.client import BaseClient
 from botocore.config import Config
+from prefect.client.schemas.objects import FlowRun, State
+from prefect.flows import Flow
 from prefect.settings import PREFECT_UI_URL
 from prefect_slack import SlackCredentials
 
@@ -101,6 +104,77 @@ def get_ssm_parameter(name: str, with_decryption: bool = True) -> str:
     return response["Parameter"]["Value"]
 
 
+def state_report_slack_blocks(
+    self,
+    flow: Flow,
+    flow_run: FlowRun,
+    state: State,
+    ui_url: str,
+):
+    """Create all Slack Blocks for a state update."""
+    header = (
+        f"❌ Flow run *{flow.name}/" f"{flow_run.name}* observed state `{state.name}`."
+    )
+    state_message = textwrap.shorten(
+        state.message or "No message",
+        width=self.MAX_SLACK_TEXT_LENGTH,
+        placeholder="...",
+    )
+
+    return [
+        {
+            "type": "section",
+            "text": {
+                "type": "mrkdwn",
+                "text": header,
+            },
+            "accessory": {
+                "type": "button",
+                "text": {
+                    "type": "plain_text",
+                    "text": "View in Prefect",
+                    "emoji": True,
+                },
+                "value": "view_in_prefect",
+                "url": ui_url,
+                "action_id": "button-action",
+            },
+        },
+        {"type": "divider"},
+        {
+            "type": "section",
+            "fields": [
+                {
+                    "type": "mrkdwn",
+                    "text": f"*Environment*\n`{self.get_environment()}`",
+                },
+                {
+                    "type": "mrkdwn",
+                    "text": f"*Version*\n`{flow_run.deployment_version}`",
+                },
+                {
+                    "type": "mrkdwn",
+                    "text": f"*Work Pool*\n`{flow_run.work_pool_name}`",
+                },
+                {
+                    "type": "mrkdwn",
+                    "text": f"*Timestamp*\n`{state.timestamp}`",
+                },
+                self.slack_runtime_block(flow_run),
+            ],
+        },
+        {"type": "divider"},
+        {
+            "type": "section",
+            "expand": False,
+            "text": {
+                "type": "mrkdwn",
+                "text": f"*State message:*\n\n>{state_message}",
+            },
+        },
+    ]
+
+
 class SlackNotify:
     """Notify a Slack channel through a Prefect Slack webhook."""
 
@@ -164,5 +238,5 @@ class SlackNotify:
         await client.chat_postMessage(
             channel=str(cls.slack_channel_name),
             text=msg,
-            blocks=cls.SLACK_NAVIGATOR_NOTIFIER_BOT_BLOCK,
+            blocks=state_report_slack_blocks(cls, flow, flow_run, state, ui_url),
         )
