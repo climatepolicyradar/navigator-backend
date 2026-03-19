@@ -117,7 +117,7 @@ def state_report_slack_blocks(
     )
     state_message = textwrap.shorten(
         state.message or "No message",
-        width=self.MAX_SLACK_TEXT_LENGTH,
+        width=3000,
         placeholder="...",
     )
 
