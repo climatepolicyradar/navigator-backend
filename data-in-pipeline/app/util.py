@@ -148,10 +148,10 @@ class SlackNotify:
 
         # Ignoring as pyright incorrectly infers type here - this is due to us upgrading to
         # python 3.13
-        slack_credentials_block = await SlackCredentials.load(
+        slack_credentials_block = SlackCredentials.load(
             cls.SLACK_NAVIGATOR_NOTIFIER_BOT_BLOCK
-        )  # type: ignore[reportGeneralTypeIssues]
-        client = slack_credentials_block.get_client()
+        )
+        client = slack_credentials_block.get_client()  # type: ignore
 
         msg = cls.BASE_MESSAGE.format(
             flow=flow,
