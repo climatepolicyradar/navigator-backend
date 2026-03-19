@@ -177,36 +177,42 @@ def _upsert_labels_and_relationships(
     :param document_id: Document ID
     :param label_relationships: List of DocumentLabelRelationship objects
     """
-    incoming_label_ids: list[str] = []
 
-    for rel in label_relationships:
-        link_stmt = (
-            insert(DBDocumentLabelLink)
-            .values(
-                document_id=document_id,
-                label_id=rel.value.id,
-                type=rel.type,
-                timestamp=rel.timestamp,
-                created_at=datetime.now(UTC),
-                updated_at=datetime.now(UTC),
-            )
-            .on_conflict_do_update(
-                index_elements=["document_id", "label_id"],
-                set_={
-                    "type": rel.type,
-                    "timestamp": rel.timestamp,
-                    "updated_at": datetime.now(UTC),
-                },
-            )
+    now = datetime.now(UTC)
+
+    if label_relationships:
+        rows = [
+            {
+                "document_id": document_id,
+                "label_id": rel.value.id,
+                "type": rel.type,
+                "timestamp": rel.timestamp,
+                "created_at": now,
+                "updated_at": now,
+            }
+            for rel in label_relationships
+        ]
+
+        stmt = insert(DBDocumentLabelLink).values(rows)
+
+        stmt = stmt.on_conflict_do_update(
+            index_elements=["document_id", "label_id"],
+            set_={
+                "type": stmt.excluded.type,
+                "timestamp": stmt.excluded.timestamp,
+                "updated_at": now,
+            },
         )
-        db.exec(link_stmt)
-        incoming_label_ids.append(rel.value.id)
+
+        db.exec(stmt)
+
+    incoming_label_ids = [rel.value.id for rel in label_relationships]
 
     if incoming_label_ids:
         db.exec(
             delete(DBDocumentLabelLink).where(
                 DBDocumentLabelLink.document_id == document_id,
-                DBDocumentLabelLink.label_id.not_in(incoming_label_ids),  # type: ignore[attr-defined]
+                ~DBDocumentLabelLink.label_id.in_(incoming_label_ids),
             )
         )
     else:
