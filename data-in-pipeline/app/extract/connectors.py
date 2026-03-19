@@ -74,8 +74,8 @@ class NavigatorFamily(BaseModel):
     category: str
     slug: str
     metadata: dict[str, list[str]] = {}
-    published_date: datetime.datetime | None
-    last_updated_date: datetime.datetime | None
+    published_date: str | None
+    last_updated_date: str | None
 
 
 class PageFetchFailure(BaseModel):
