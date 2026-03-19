@@ -57,6 +57,8 @@ def create_or_update_documents(
 
     processed_ids = []
 
+    now = datetime.now(UTC)
+
     try:
         processed_ids = []
 
@@ -64,7 +66,6 @@ def create_or_update_documents(
             rel.value.id: rel.value for doc_in in documents for rel in doc_in.labels
         }
         if unique_labels:
-            now = datetime.now(UTC)
             label_stmt = insert(DBLabel).values(
                 [
                     {
@@ -96,8 +97,8 @@ def create_or_update_documents(
                     title=doc_in.title,
                     description=doc_in.description,
                     attributes=doc_in.attributes,
-                    created_at=datetime.now(UTC),
-                    updated_at=datetime.now(UTC),
+                    created_at=now,
+                    updated_at=now,
                 )
                 .on_conflict_do_update(
                     index_elements=["id"],
@@ -105,7 +106,7 @@ def create_or_update_documents(
                         "title": doc_in.title,
                         "description": doc_in.description,
                         "attributes": doc_in.attributes,
-                        "updated_at": datetime.now(UTC),
+                        "updated_at": now,
                     },
                 )
             )
@@ -214,7 +215,7 @@ def _upsert_labels_and_relationships(
         db.exec(
             delete(DBDocumentLabelLink).where(
                 DBDocumentLabelLink.document_id == document_id,
-                ~DBDocumentLabelLink.label_id.in_(incoming_label_ids),
+                ~DBDocumentLabelLink.label_id.in_(incoming_label_ids),  # type: ignore[attr-defined]
             )
         )
     else:
@@ -288,7 +289,7 @@ def _upsert_document_document_relationships(
     db.exec(
         delete(DBDocumentRelationship).where(
             DBDocumentRelationship.document_id == document_id,
-            ~DBDocumentRelationship.related_document_id.in_(incoming_target_ids),
+            ~DBDocumentRelationship.related_document_id.in_(incoming_target_ids),  # type: ignore[attr-defined]
         )
     )
 
