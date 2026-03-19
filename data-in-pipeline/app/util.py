@@ -160,7 +160,6 @@ def state_report_slack_blocks(
                     "type": "mrkdwn",
                     "text": f"*Timestamp*\n`{state.timestamp}`",
                 },
-                self.slack_runtime_block(flow_run),
             ],
         },
         {"type": "divider"},
