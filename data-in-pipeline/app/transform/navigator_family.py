@@ -501,6 +501,20 @@ def _transform_navigator_family(navigator_family: NavigatorFamily) -> Document:
                         )
                     )
 
+    """
+    Dates
+
+    These are values calculated from events.
+    """
+    if navigator_family.published_date:
+        attributes["published_date"] = navigator_family.published_date.strftime(
+            "%Y-%m-%d%H:%M:%SZ"
+        )
+    if navigator_family.last_updated_date:
+        attributes["last_updated_date"] = navigator_family.last_updated_date.strftime(
+            "%Y-%m-%d%H:%M:%SZ"
+        )
+
     return Document(
         id=navigator_family.import_id,
         title=navigator_family.title,

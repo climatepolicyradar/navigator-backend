@@ -59,7 +59,15 @@ def _standard_events():
         ("Published", "Published"),
     ]
     return [
-        NavigatorEventFactory.build(import_id=iid, event_type=ety, date=base_date)
+        NavigatorEventFactory.build(
+            import_id=iid,
+            event_type=ety,
+            date=base_date,
+            valid_metadata={
+                "event_type": [ety],
+                "datetime_event_name": ["Passed/Approved"],
+            },
+        )
         for iid, ety in event_specs
     ]
 
@@ -167,6 +175,10 @@ def navigator_family_with_litigation_corpus_type() -> Identified[NavigatorFamily
                             import_id="123",
                             event_type="Decision",
                             date=decision_date,
+                            valid_metadata={
+                                "event_type": ["Decision"],
+                                "datetime_event_name": ["Decision"],
+                            },
                         )
                     ],
                     variant="Original language",
@@ -190,6 +202,10 @@ def navigator_family_with_litigation_corpus_type() -> Identified[NavigatorFamily
                     import_id="123",
                     event_type="Decision",
                     date=decision_date,
+                    valid_metadata={
+                        "event_type": ["Decision"],
+                        "datetime_event_name": ["Decision"],
+                    },
                 ),
             ],
             collections=[],
@@ -206,26 +222,46 @@ def _mcf_events():
             import_id="concept_approved",
             event_type="Concept Approved",
             date=base_date,
+            valid_metadata={
+                "event_type": ["Concept Approved"],
+                "datetime_event_name": ["Project Approved"],
+            },
         ),
         NavigatorEventFactory.build(
             import_id="project_approved",
             event_type="Project Approved",
             date=base_date,
+            valid_metadata={
+                "event_type": ["Project Approved"],
+                "datetime_event_name": ["Project Approved"],
+            },
         ),
         NavigatorEventFactory.build(
             import_id="under_implementation",
             event_type="Under Implementation",
             date=base_date,
+            valid_metadata={
+                "event_type": ["Under Implementation"],
+                "datetime_event_name": ["Project Approved"],
+            },
         ),
         NavigatorEventFactory.build(
             import_id="project_completed",
             event_type="Project Completed",
             date=base_date,
+            valid_metadata={
+                "event_type": ["Project Completed"],
+                "datetime_event_name": ["Project Approved"],
+            },
         ),
         NavigatorEventFactory.build(
             import_id="cancelled",
             event_type="Cancelled",
             date=base_date,
+            valid_metadata={
+                "event_type": ["Cancelled"],
+                "datetime_event_name": ["Project Approved"],
+            },
         ),
     ]
 
@@ -603,7 +639,11 @@ def test_transform_navigator_family_with_single_matching_document(
                 ),
             ),
         ],
-        attributes={"deprecated_slug": "family-slug"},
+        attributes={
+            "deprecated_slug": "family-slug",
+            "published_date": "2020-01-0100:00:00Z",
+            "last_updated_date": "2020-01-0100:00:00Z",
+        },
     )
     assert_model_list_equality(
         result.unwrap(),
@@ -1017,7 +1057,11 @@ def test_transform_navigator_family_with_litigation_corpus_type(
                 ),
             ),
         ],
-        attributes={"deprecated_slug": "litigation-family-slug"},
+        attributes={
+            "deprecated_slug": "litigation-family-slug",
+            "published_date": "2020-01-0100:00:00Z",
+            "last_updated_date": "2020-01-0100:00:00Z",
+        },
     )
     assert_model_list_equality(
         result.unwrap(),
@@ -1247,7 +1291,11 @@ def test_transform_navigator_family_with_multilateral_climate_fund_project(
                 ),
             ),
         ],
-        attributes={"deprecated_slug": "mcf-family-slug"},
+        attributes={
+            "deprecated_slug": "mcf-family-slug",
+            "published_date": "2020-01-0100:00:00Z",
+            "last_updated_date": "2020-01-0100:00:00Z",
+        },
     )
     assert_model_list_equality(
         result.unwrap(),
