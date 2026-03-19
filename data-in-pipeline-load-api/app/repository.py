@@ -148,18 +148,22 @@ def _upsert_items_for_document(
     # Delete all existing items for this document
     db.exec(delete(DBItem).where(DBItem.document_id == document_id))
 
-    # Insert new items (database will auto-generate IDs)
-    for item in incoming_items:
-        stmt = insert(DBItem).values(
-            id=str(uuid4()),
-            document_id=document_id,
-            url=item.url,
-            type=item.type,
-            content_type=item.content_type,
-            created_at=datetime.now(UTC),
-            updated_at=datetime.now(UTC),
-        )
-        db.exec(stmt)
+    item_stmt = insert(DBItem).values(
+        [
+            {
+                "id": str(uuid4()),
+                "document_id": document_id,
+                "url": item.url,
+                "type": item.type,
+                "content_type": item.content_type,
+                "created_at": datetime.now(UTC),
+                "updated_at": datetime.now(UTC),
+            }
+            for item in incoming_items
+        ]
+    )
+
+    db.exec(item_stmt)
 
 
 def _upsert_labels_and_relationships(
