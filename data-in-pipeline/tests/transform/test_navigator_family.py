@@ -83,6 +83,8 @@ def navigator_family_with_single_matching_document() -> Identified[NavigatorFami
             summary="Family summary",
             category="REPORTS",
             corpus=_cclw_corpus(),
+            last_updated_date="2020-01-0100:00:00Z",
+            published_date="2020-01-0100:00:00Z",
             documents=[
                 NavigatorDocumentFactory.build(
                     import_id="document",
@@ -132,6 +134,8 @@ def navigator_family_with_no_matching_transformations() -> Identified[NavigatorF
             title="No matches for this family or documents",
             summary="Family summary",
             category="REPORTS",
+            last_updated_date="2020-01-0100:00:00Z",
+            published_date="2020-01-0100:00:00Z",
             corpus=_cclw_corpus(),
             documents=[
                 NavigatorDocumentFactory.build(
@@ -158,6 +162,8 @@ def navigator_family_with_litigation_corpus_type() -> Identified[NavigatorFamily
             title="Litigation family",
             summary="Family summary",
             category="REPORTS",
+            last_updated_date="2020-01-0100:00:00Z",
+            published_date="2020-01-0100:00:00Z",
             corpus=NavigatorCorpusFactory.build(
                 import_id="Academic.corpus.Litigation.n0000",
                 corpus_type=NavigatorCorpusTypeFactory.build(name="Litigation"),
@@ -276,6 +282,8 @@ def navigator_family_multilateral_climate_fund_project() -> Identified[Navigator
             title="Multilateral climate fund project",
             summary="Family summary",
             category="REPORTS",
+            last_updated_date=None,
+            published_date=None,
             corpus=NavigatorCorpusFactory.build(
                 import_id="MCF.corpus.AF.n0000",
                 corpus_type=NavigatorCorpusTypeFactory.build(name="AF"),
@@ -324,6 +332,8 @@ def navigator_family_with_duplicate_legal_case() -> Identified[NavigatorFamily]:
             import_id="family",
             title="Litigation family",
             category="LITIGATION",
+            last_updated_date=None,
+            published_date=None,
             summary="Family summary",
             corpus=NavigatorCorpusFactory.build(
                 import_id="Academic.corpus.Litigation.n0000",
@@ -830,6 +840,8 @@ def test_transform_navigator_family_with_laws_and_policies_corpus_type(
             title="Laws and policies family",
             summary="Family summary",
             category="LEGISLATIVE",
+            published_date=None,
+            last_updated_date=None,
             corpus=NavigatorCorpusFactory.build(
                 import_id=corpus_id,
                 corpus_type=NavigatorCorpusTypeFactory.build(name="corpus_type"),
@@ -1293,8 +1305,6 @@ def test_transform_navigator_family_with_multilateral_climate_fund_project(
         ],
         attributes={
             "deprecated_slug": "mcf-family-slug",
-            "published_date": "2020-01-0100:00:00Z",
-            "last_updated_date": "2020-01-0100:00:00Z",
         },
     )
     assert_model_list_equality(
