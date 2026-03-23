@@ -646,6 +646,10 @@ def _transform_navigator_document(
     if navigator_document.md5_sum:
         attributes["md5_sum"] = navigator_document.md5_sum
 
+    """This field defines whether a document is available to be searched in Vespa.
+    It is still used to filter out un-published or deleted documents in the frontend."""
+    attributes["status"] = navigator_document.document_status
+
     return Document(
         id=navigator_document.import_id,
         title=navigator_document.title,
