@@ -218,7 +218,7 @@ def _upsert_labels_and_relationships(
     db.exec(
         delete(DBDocumentLabelLink).where(
             DBDocumentLabelLink.document_id == document_id,
-            ~DBDocumentLabelLink.label_id.in_(unique_rels.keys()),
+            ~DBDocumentLabelLink.label_id.in_(unique_rels.keys()),  # type: ignore[attr-defined]
         )
     )
 
