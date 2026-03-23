@@ -316,7 +316,7 @@ def check_load_results(batched_results: list[str | Exception]) -> bool:
 # We cast explicitly to document intent and avoid a broad type ignore.
 task_runner = cast(
     TaskRunner[PrefectFuture[Any]],
-    ThreadPoolTaskRunner(max_workers=2),
+    ThreadPoolTaskRunner(max_workers=1),
 )
 
 
