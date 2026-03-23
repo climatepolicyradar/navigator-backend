@@ -85,6 +85,10 @@ def create_or_update_documents(
                     "type": label_stmt.excluded.type,
                     "updated_at": now,
                 },
+                where=(
+                    (DBLabel.value != label_stmt.excluded.value)
+                    | (DBLabel.type != label_stmt.excluded.type)
+                ),
             )
             db.exec(label_stmt)
 
@@ -212,6 +216,7 @@ def _upsert_labels_and_relationships(
             "timestamp": stmt.excluded.timestamp,
             "updated_at": now,
         },
+        where=(DBDocumentLabelLink.type != stmt.excluded.type),
     )
     db.exec(stmt)
 
@@ -276,6 +281,7 @@ def _upsert_document_document_relationships(
             "timestamp": rel_stmt.excluded.timestamp,
             "updated_at": now,
         },
+        where=(DBDocumentRelationship.type != rel_stmt.excluded.type),
     )
 
     db.exec(rel_stmt)
