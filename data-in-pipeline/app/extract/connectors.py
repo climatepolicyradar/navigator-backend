@@ -25,6 +25,7 @@ class NavigatorDocument(BaseModel):
     title: str
     events: list[NavigatorEvent]
     valid_metadata: dict[str, list[str]] = {}
+    document_status: str
 
     """
     These values come from the `physical_document` table, but are flattened into the document via the families-api.
