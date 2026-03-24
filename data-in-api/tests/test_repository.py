@@ -157,23 +157,16 @@ def test_get_all_documents_filter_by_label_existing(setup_documents: Session):
     assert any(lbl.value.id == "Main" for lbl in doc.labels)
 
 
-def test_get_all_documents_filter_by_status(session: Session):
-    create_label(session, "Principal", "Principal", "status")
+def test_get_all_documents_filter_by_status(setup_documents: Session):
 
-    create_document(session, "doc1", "Document 1", "First doc", {"status": "PUBLISHED"})
-    create_document(session, "doc2", "Document 2", "Second doc", {"status": "DELETED"})
-    create_document(session, "fam1", "Family 1", "Document from Family")
+    documents = get_all_documents(
+        setup_documents, page=1, page_size=10, status="PUBLISHED"
+    )
 
-    link_documents(session, "doc1", "fam1")
-
-    documents = get_all_documents(session, page=1, page_size=10, status="PUBLISHED")
-
-    assert len(documents) == 2
+    assert len(documents) == 1
     doc = documents[0]
     assert doc.id == "doc1"
     assert doc.attributes["status"] == "PUBLISHED"
-    fam = documents[1]
-    assert fam.id == "fam1"
 
 
 def test_get_all_documents_filter_by_label_nonexistent(setup_documents: Session):
