@@ -26,9 +26,15 @@ def create_label(
 
 
 def create_document(
-    session: Session, doc_id: str, title: str, description: str = ""
+    session: Session,
+    doc_id: str,
+    title: str,
+    description: str = "",
+    attributes: dict[str, str | float | bool] = {},
 ) -> DBDocument:
-    doc = DBDocument(id=doc_id, title=title, description=description)
+    doc = DBDocument(
+        id=doc_id, title=title, description=description, attributes=attributes
+    )
     session.add(doc)
     session.commit()
     return doc
@@ -77,8 +83,8 @@ def setup_documents(session: Session):
     create_label(session, "Main", "Main")
     create_label(session, "Law", "Law")
 
-    create_document(session, "doc1", "Document 1", "First doc")
-    create_document(session, "doc2", "Document 2", "Second doc")
+    create_document(session, "doc1", "Document 1", "First doc", {"status": "PUBLISHED"})
+    create_document(session, "doc2", "Document 2", "Second doc", {"status": "DELETED"})
 
     add_item_to_document(
         session,
@@ -149,6 +155,18 @@ def test_get_all_documents_filter_by_label_existing(setup_documents: Session):
     doc = documents[0]
     assert doc.id == "doc1"
     assert any(lbl.value.id == "Main" for lbl in doc.labels)
+
+
+def test_get_all_documents_filter_by_status(setup_documents: Session):
+
+    documents = get_all_documents(
+        setup_documents, page=1, page_size=10, status="PUBLISHED"
+    )
+
+    assert len(documents) == 1
+    doc = documents[0]
+    assert doc.id == "doc1"
+    assert doc.attributes["status"] == "PUBLISHED"
 
 
 def test_get_all_documents_filter_by_label_nonexistent(setup_documents: Session):

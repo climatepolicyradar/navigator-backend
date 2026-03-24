@@ -48,6 +48,7 @@ def get_all_documents(
     page: int = 1,
     page_size: int = 20,
     label_id: str | None = None,
+    status: str | None = None,
 ) -> list[DocumentOutput]:
     """
     Retrieve all documents.
@@ -60,6 +61,9 @@ def get_all_documents(
     try:
         offset = (page - 1) * page_size
         query = select(DBDocument)
+
+        if status:
+            query = query.where(DBDocument.attributes["status"].as_string() == status)
 
         if label_id:
             query = query.join(DBDocumentLabelRelationship).where(
