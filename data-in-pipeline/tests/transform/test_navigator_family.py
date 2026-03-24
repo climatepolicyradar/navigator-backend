@@ -660,6 +660,7 @@ def test_transform_navigator_family_with_single_matching_document(
             "deprecated_slug": "family-slug",
             "published_date": "2020-01-0100:00:00Z",
             "last_updated_date": "2020-01-0100:00:00Z",
+            "status": "PUBLISHED",
         },
     )
     assert_model_list_equality(
@@ -966,7 +967,9 @@ def test_transform_navigator_family_with_laws_and_policies_corpus_type(
             ),
         ],
         documents=[],
-        attributes={"deprecated_slug": "laws-and-policies-family-slug"},
+        attributes={
+            "deprecated_slug": "laws-and-policies-family-slug",
+        },
     )
     assert_model_list_equality(
         result.unwrap(),
@@ -1083,6 +1086,7 @@ def test_transform_navigator_family_with_litigation_corpus_type(
             "deprecated_slug": "litigation-family-slug",
             "published_date": "2020-01-0100:00:00Z",
             "last_updated_date": "2020-01-0100:00:00Z",
+            "status": "PUBLISHED",
         },
     )
     assert_model_list_equality(
@@ -1319,6 +1323,7 @@ def test_transform_navigator_family_with_multilateral_climate_fund_project(
         ],
         attributes={
             "deprecated_slug": "mcf-family-slug",
+            "status": "PUBLISHED",
         },
     )
     assert_model_list_equality(

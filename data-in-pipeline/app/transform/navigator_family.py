@@ -511,6 +511,13 @@ def _transform_navigator_family(navigator_family: NavigatorFamily) -> Document:
     if navigator_family.last_updated_date:
         attributes["last_updated_date"] = navigator_family.last_updated_date
 
+    """This field defines whether a document is available to be searched in Vespa.
+    It is still used to filter out un-published or deleted documents in the frontend.
+    We are mapping it onto principal documents to keep the data-in-api clean.
+    """
+    if navigator_family.documents:
+        attributes["status"] = navigator_family.documents[0].document_status
+
     return Document(
         id=navigator_family.import_id,
         title=navigator_family.title,
