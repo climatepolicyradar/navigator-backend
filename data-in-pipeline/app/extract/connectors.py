@@ -17,6 +17,7 @@ class NavigatorEvent(BaseModel):
     import_id: str
     event_type: str
     date: datetime.datetime
+    valid_metadata: dict[str, list[str]] = {}
 
 
 class NavigatorDocument(BaseModel):
@@ -24,6 +25,7 @@ class NavigatorDocument(BaseModel):
     title: str
     events: list[NavigatorEvent]
     valid_metadata: dict[str, list[str]] = {}
+    document_status: str
 
     """
     These values come from the `physical_document` table, but are flattened into the document via the families-api.
@@ -35,6 +37,8 @@ class NavigatorDocument(BaseModel):
     source_url: str | None = None
     variant: str | None = None
     content_type: str | None = None
+    slug: str
+    md5_sum: str | None = None
 
 
 class NavigatorCorpusType(BaseModel):
@@ -69,6 +73,10 @@ class NavigatorFamily(BaseModel):
     collections: list[NavigatorCollection]
     geographies: list[str]
     category: str
+    slug: str
+    metadata: dict[str, list[str]] = {}
+    published_date: str | None
+    last_updated_date: str | None
 
 
 class PageFetchFailure(BaseModel):

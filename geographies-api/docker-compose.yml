@@ -44,6 +44,7 @@ services:
       AWS_ENDPOINT_URL: http://localstack:4566
       AWS_DEFAULT_REGION: eu-west-1
       DEBUG: 1
+      LOCALSTACK_ACKNOWLEDGE_ACCOUNT_REQUIREMENT: 1
     volumes:
       - ./init-s3.sh:/etc/localstack/init/ready.d/init-s3.sh
 

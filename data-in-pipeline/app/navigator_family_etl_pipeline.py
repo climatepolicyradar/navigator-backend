@@ -130,7 +130,16 @@ def cache_parquet_to_s3(documents: list[Document], run_id: str | None = None):
     buffer = io.BytesIO()
     writer = None
     for chunk in itertools.batched(documents, 10_000):
-        rows = [doc.model_dump(mode="json", exclude={"attributes"}) for doc in chunk]
+        rows = []
+        for doc in chunk:
+            # we serialise the attributes to a json string and transform an empty dict => None
+            # as parquet breaks when auto-deriving a field with `{}` as its value.
+            doc_data = doc.model_dump(mode="json")
+            if "attributes" in doc_data and doc_data["attributes"]:
+                doc_data["attributes"] = json.dumps(doc_data["attributes"])
+            else:
+                doc_data["attributes"] = None
+            rows.append(doc_data)
         table = pa.Table.from_pylist(rows)
         if writer is None:
             writer = pq.ParquetWriter(buffer, table.schema)
@@ -205,7 +214,12 @@ def transform(
     return all_documents, errors
 
 
-@task(log_prints=True, retries=2, retry_delay_seconds=5)
+@task(
+    log_prints=True,
+    retries=2,
+    retry_delay_seconds=[5, 10],
+    tags=["load-api-write-concurrency-limit"],
+)
 @pipeline_metrics.track(operation=Operation.LOAD)
 def load_batch(
     transformed: list[Document],
@@ -302,7 +316,7 @@ def check_load_results(batched_results: list[str | Exception]) -> bool:
 # We cast explicitly to document intent and avoid a broad type ignore.
 task_runner = cast(
     TaskRunner[PrefectFuture[Any]],
-    ThreadPoolTaskRunner(max_workers=2),
+    ThreadPoolTaskRunner(max_workers=1),
 )
 
 
@@ -388,10 +402,10 @@ def data_in_pipeline(
     # CACHE TO S3
     # -------------------------
     jsonl_future = cache_jsonl_to_s3.submit(transformed_documents, run_id)
-    parquet_future = cache_parquet_to_s3.submit(transformed_documents, run_id)
+    # parquet_future = cache_parquet_to_s3.submit(transformed_documents, run_id)
 
     jsonl_future.result()
-    parquet_future.result()
+    # parquet_future.result()
 
     # -------------------------
     # BATCH AND LOAD TO DB
