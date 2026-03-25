@@ -1723,3 +1723,200 @@ def test_transform_navigator_family_with_published_and_unpublished_documents():
             ),
         ],
     )
+
+
+def test_transform_navigator_family_with_no_published_documents():
+    navigator_family_with_different_document_statuses = Identified(
+        id="family",
+        source="navigator_family",
+        data=NavigatorFamilyFactory.build(
+            import_id="family",
+            title="Family with no published documents",
+            summary="Family summary",
+            category="LEGISLATIVE",
+            published_date=None,
+            last_updated_date=None,
+            corpus=_cclw_corpus(),
+            documents=[
+                NavigatorDocumentFactory.build(
+                    import_id="document1",
+                    title="Matching title on family and document",
+                    cdn_object="https://cdn.climatepolicyradar.org/path/to/file.pdf",
+                    variant="Original language",
+                    content_type="application/pdf",
+                    source_url="https://source.climatepolicyradar.org/path/to/file.pdf",
+                    languages=["eng"],
+                    md5_sum="aaaaa11111bbbbb",
+                    events=[],
+                    valid_metadata={},
+                    slug="document1-slug",
+                    document_status="DELETED",
+                ),
+            ],
+            events=[],
+            collections=[],
+            geographies=["AUS"],
+            slug="family-with-no-published-documents-slug",
+            metadata={},
+        ),
+    )
+    result = transform_navigator_family(
+        navigator_family_with_different_document_statuses
+    )
+    expected_document_from_family = Document(
+        id="family",
+        title="Family with no published documents",
+        description="Family summary",
+        labels=[
+            LabelRelationship(
+                type="status",
+                value=Label(
+                    type="status",
+                    id="Principal",
+                    value="Principal",
+                ),
+            ),
+            LabelRelationship(
+                type="provider",
+                value=Label(
+                    type="agent",
+                    id="Grantham Research Institute",
+                    value="Grantham Research Institute",
+                ),
+            ),
+            LabelRelationship(
+                type="geography",
+                value=Label(
+                    id="AUS",
+                    value="Australia",
+                    type="geography",
+                ),
+            ),
+            LabelRelationship(
+                type="category",
+                value=Label(
+                    id="Legislative",
+                    value="Legislative",
+                    type="category",
+                ),
+            ),
+        ],
+        documents=[
+            DocumentRelationship(
+                type="has_member",
+                value=DocumentWithoutRelationships(
+                    id="document1",
+                    title="Matching title on family and document",
+                    labels=[
+                        LabelRelationship(
+                            type="provider",
+                            value=Label(
+                                type="agent",
+                                id="Grantham Research Institute",
+                                value="Grantham Research Institute",
+                            ),
+                        ),
+                        LabelRelationship(
+                            type="geography",
+                            value=Label(
+                                type="geography",
+                                id="AUS",
+                                value="Australia",
+                            ),
+                        ),
+                        LabelRelationship(
+                            type="language",
+                            value=Label(
+                                id="eng",
+                                value="eng",
+                                type="language",
+                            ),
+                        ),
+                    ],
+                    items=[
+                        Item(
+                            url="https://cdn.climatepolicyradar.org/path/to/file.pdf",
+                            type="cdn",
+                            content_type="application/pdf",
+                        ),
+                        Item(
+                            url="https://source.climatepolicyradar.org/path/to/file.pdf",
+                            type="source",
+                            content_type="application/pdf",
+                        ),
+                    ],
+                    attributes={
+                        "deprecated_slug": "document1-slug",
+                        "variant": "Original language",
+                        "md5_sum": "aaaaa11111bbbbb",
+                        "status": "DELETED",
+                    },
+                ),
+            ),
+        ],
+        attributes={
+            "deprecated_slug": "family-with-no-published-documents-slug",
+        },
+    )
+    assert_model_list_equality(
+        result.unwrap(),
+        [
+            expected_document_from_family,
+            Document(
+                id="document1",
+                title="Matching title on family and document",
+                labels=[
+                    LabelRelationship(
+                        type="provider",
+                        value=Label(
+                            type="agent",
+                            id="Grantham Research Institute",
+                            value="Grantham Research Institute",
+                        ),
+                    ),
+                    LabelRelationship(
+                        type="geography",
+                        value=Label(
+                            type="geography",
+                            id="AUS",
+                            value="Australia",
+                        ),
+                    ),
+                    LabelRelationship(
+                        type="language",
+                        value=Label(
+                            id="eng",
+                            value="eng",
+                            type="language",
+                        ),
+                    ),
+                ],
+                documents=[
+                    DocumentRelationship(
+                        type="member_of",
+                        value=DocumentWithoutRelationships(
+                            **expected_document_from_family.model_dump()
+                        ),
+                    ),
+                ],
+                items=[
+                    Item(
+                        url="https://cdn.climatepolicyradar.org/path/to/file.pdf",
+                        type="cdn",
+                        content_type="application/pdf",
+                    ),
+                    Item(
+                        url="https://source.climatepolicyradar.org/path/to/file.pdf",
+                        type="source",
+                        content_type="application/pdf",
+                    ),
+                ],
+                attributes={
+                    "deprecated_slug": "document1-slug",
+                    "variant": "Original language",
+                    "md5_sum": "aaaaa11111bbbbb",
+                    "status": "DELETED",
+                },
+            ),
+        ],
+    )
