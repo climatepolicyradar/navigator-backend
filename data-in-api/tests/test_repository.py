@@ -169,6 +169,19 @@ def test_get_all_documents_filter_by_status(setup_documents: Session):
     assert doc.attributes["status"] == "PUBLISHED"
 
 
+def test_get_all_documents_filter_when_no_status(session: Session):
+    create_document(
+        session,
+        "fam_doc",
+        "Document from family",
+        "Document from family description",
+    )
+
+    documents = get_all_documents(session, page=1, page_size=10, status="PUBLISHED")
+
+    assert len(documents) == 0
+
+
 def test_get_all_documents_filter_by_label_nonexistent(setup_documents: Session):
 
     documents = get_all_documents(
