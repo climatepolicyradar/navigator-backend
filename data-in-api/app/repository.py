@@ -18,6 +18,7 @@ from data_in_models.models import Label as LabelOutput
 from data_in_models.models import (
     LabelRelationship,
 )
+from sqlalchemy import func
 from sqlalchemy.exc import DisconnectionError, OperationalError
 from sqlmodel import Session, select
 
@@ -63,7 +64,10 @@ def get_all_documents(
         query = select(DBDocument)
 
         if status:
-            query = query.where(DBDocument.attributes["status"].as_string() == status)
+            query = query.where(
+                func.lower(DBDocument.attributes["status"].as_string())
+                == status.lower()
+            )
 
         if label_id:
             query = query.join(DBDocumentLabelRelationship).where(

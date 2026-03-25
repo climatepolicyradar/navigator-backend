@@ -91,14 +91,16 @@ def list_documents(
     label_id: str | None = Query(
         default=None, description="Filter by labels.value.id", alias="labels.value.id"
     ),
+    status: str | None = Query(
+        default=None,
+        description="Filter by attributes.status",
+        alias="attributes.status",
+    ),
     db=Depends(get_db),
 ):
     try:
         all_documents = get_all_documents(
-            db,
-            page=page,
-            page_size=page_size,
-            label_id=label_id,
+            db, page=page, page_size=page_size, label_id=label_id, status=status
         )
         total_documents = len(all_documents)
 
