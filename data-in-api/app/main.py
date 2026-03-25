@@ -95,6 +95,7 @@ def list_documents(
         default=None,
         description="Filter by attributes.status",
         alias="attributes.status",
+        examples=["published", "deleted", "created"],
     ),
     db=Depends(get_db),
 ):
