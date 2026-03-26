@@ -379,7 +379,7 @@ def _transform_navigator_family(navigator_family: NavigatorFamily) -> Document:
         @see: https://github.com/climatepolicyradar/data-migrations/blob/main/taxonomies/Intl.%20agreements.json#L7-L24
         """
         laws_and_policies_event_type_to_activity_status_map = {
-            "Amended": "Amended",
+            "Amended": "Amended/Updated",
             "Appealed": "Appealed",
             "Closed": "Closed",
             "Declaration Of Climate Emergency": "Declaration of climate emergency",
@@ -395,7 +395,7 @@ def _transform_navigator_family(navigator_family: NavigatorFamily) -> Document:
             "Repealed/Replaced": "Repealed/Replaced",
             "Set": "Set",
             "Settled": "Settled",
-            "Updated": "Updated",
+            "Updated": "Amended/Updated",
         }
 
         """
