@@ -378,8 +378,8 @@ def test_transform_navigator_family_with_single_matching_document(
                 timestamp=datetime.datetime(2020, 1, 1),
                 value=Label(
                     type="activity_status",
-                    id="Amended",
-                    value="Amended",
+                    id="Amended/Updated",
+                    value="Amended/Updated",
                 ),
             ),
             LabelRelationship(
@@ -492,11 +492,6 @@ def test_transform_navigator_family_with_single_matching_document(
                 type="activity_status",
                 timestamp=datetime.datetime(2020, 1, 1),
                 value=Label(type="activity_status", id="Settled", value="Settled"),
-            ),
-            LabelRelationship(
-                type="activity_status",
-                timestamp=datetime.datetime(2020, 1, 1),
-                value=Label(type="activity_status", id="Updated", value="Updated"),
             ),
             LabelRelationship(
                 type="activity_status",
