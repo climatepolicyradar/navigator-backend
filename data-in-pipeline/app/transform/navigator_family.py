@@ -483,6 +483,17 @@ def _transform_navigator_family(navigator_family: NavigatorFamily) -> Document:
         "CPR.corpus.i00000591.n0000",
         "CPR.corpus.i00000592.n0000",
     ]
+
+    mcf_corpora = mcf_reports_corpus_import_ids + [
+        "MCF.corpus.AF.n0000",
+        "MCF.corpus.GEF.n0000",
+        "MCF.corpus.CIF.n0000",
+        "MCF.corpus.GCF.n0000",
+    ]
+
+    mcf_excluded_keys = {"region", "external_id"}
+    mcf_key_mapping = {"status": "project_status"}
+
     if (
         navigator_family.metadata
         and navigator_family.corpus.import_id in laws_and_policies_corpora
@@ -500,6 +511,25 @@ def _transform_navigator_family(navigator_family: NavigatorFamily) -> Document:
                             ),
                         )
                     )
+
+    elif navigator_family.metadata and navigator_family.corpus.import_id in mcf_corpora:
+        for key, values in navigator_family.metadata.items():
+            if key in mcf_excluded_keys or not values:
+                continue
+
+            mapped_key = mcf_key_mapping.get(key, key)
+
+            for value in values:
+                labels.append(
+                    LabelRelationship(
+                        type=mapped_key,
+                        value=Label(
+                            id=value,
+                            value=value,
+                            type=mapped_key,
+                        ),
+                    )
+                )
 
     """
     Dates
