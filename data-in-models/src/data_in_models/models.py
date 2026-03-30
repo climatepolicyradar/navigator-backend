@@ -30,7 +30,7 @@ class LabelRelationship(BaseModel):
 
 class Item(BaseModel):
     url: str | None = None
-    type: str | None = None
+    type: str
     content_type: str | None = None
 
 

@@ -379,7 +379,7 @@ def _transform_navigator_family(navigator_family: NavigatorFamily) -> Document:
         @see: https://github.com/climatepolicyradar/data-migrations/blob/main/taxonomies/Intl.%20agreements.json#L7-L24
         """
         laws_and_policies_event_type_to_activity_status_map = {
-            "Amended": "Amended",
+            "Amended": "Amended/Updated",
             "Appealed": "Appealed",
             "Closed": "Closed",
             "Declaration Of Climate Emergency": "Declaration of climate emergency",
@@ -395,7 +395,7 @@ def _transform_navigator_family(navigator_family: NavigatorFamily) -> Document:
             "Repealed/Replaced": "Repealed/Replaced",
             "Set": "Set",
             "Settled": "Settled",
-            "Updated": "Updated",
+            "Updated": "Amended/Updated",
         }
 
         """
@@ -510,6 +510,19 @@ def _transform_navigator_family(navigator_family: NavigatorFamily) -> Document:
         attributes["published_date"] = navigator_family.published_date
     if navigator_family.last_updated_date:
         attributes["last_updated_date"] = navigator_family.last_updated_date
+
+    """This field defines whether a document is available to be searched in Vespa.
+    It is still used to filter out un-published or deleted documents in the frontend.
+    We are mapping it onto principal documents that have at least one related document
+    that has a 'PUBLISHED' status to keep the data-in-api clean. For simplicity, we do not
+    add a status if the family cannot be considered published.
+    """
+
+    contains_published_document = [
+        doc for doc in navigator_family.documents if doc.document_status == "PUBLISHED"
+    ]
+    if navigator_family.documents and contains_published_document:
+        attributes["status"] = "PUBLISHED"
 
     return Document(
         id=navigator_family.import_id,
