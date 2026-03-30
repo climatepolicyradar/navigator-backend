@@ -8,12 +8,12 @@
 
 # These owners will be the default owners for everything in
 # the repo. Unless a later match takes precedence, members
-# of @climatepolicyradar/software will be requested for
+# of @climatepolicyradar/application_engineers will be requested for
 # review when someone opens a pull request. Teams should
 # be identified in the format @org/team-name. Teams must have
 # explicit write access to the repository.
 
-*                                                               @climatepolicyradar/software
+*                                                               @climatepolicyradar/application_engineers
 backend-api/app/api/api_v1/routers/pipeline_trigger.py          @climatepolicyradar/deng
 backend-api/tests/unit/app/core/test_pipeline.py                @climatepolicyradar/deng
 backend-api/tests/non_search/app/test_pipeline_trigger.py       @climatepolicyradar/deng

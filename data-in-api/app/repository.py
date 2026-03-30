@@ -18,6 +18,7 @@ from data_in_models.models import Label as LabelOutput
 from data_in_models.models import (
     LabelRelationship,
 )
+from sqlalchemy import func
 from sqlalchemy.exc import DisconnectionError, OperationalError
 from sqlmodel import Session, select
 
@@ -48,6 +49,7 @@ def get_all_documents(
     page: int = 1,
     page_size: int = 20,
     label_id: str | None = None,
+    status: str | None = None,
 ) -> list[DocumentOutput]:
     """
     Retrieve all documents.
@@ -61,11 +63,15 @@ def get_all_documents(
         offset = (page - 1) * page_size
         query = select(DBDocument)
 
+        if status:
+            query = query.where(
+                func.lower(DBDocument.attributes["status"].as_string())
+                == status.lower()
+            )
+
         if label_id:
-            query = (
-                query.join(DBDocumentLabelRelationship)
-                .where(DBDocumentLabelRelationship.label_id == label_id)
-                .distinct()
+            query = query.join(DBDocumentLabelRelationship).where(
+                DBDocumentLabelRelationship.label_id == label_id
             )
 
         query = query.offset(offset).limit(page_size)
@@ -201,6 +207,7 @@ def _map_db_document_to_schema(db: Session, db_doc: DBDocument) -> DocumentOutpu
                         id=related_doc.id,
                         title=related_doc.title,
                         description=related_doc.description,
+                        attributes=related_doc.attributes,
                         labels=[
                             LabelRelationship(
                                 type=lbl_link.type,
@@ -232,6 +239,7 @@ def _map_db_document_to_schema(db: Session, db_doc: DBDocument) -> DocumentOutpu
         labels=labels,
         items=items,
         documents=relationships,
+        attributes=db_doc.attributes,
     )
 
 

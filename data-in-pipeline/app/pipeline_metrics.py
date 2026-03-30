@@ -33,6 +33,7 @@ class Status(StrEnum):
 
     SUCCESS = "success"
     FAILURE = "failure"
+    PARTIAL = "partial"
 
 
 class Operation(StrEnum):

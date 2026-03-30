@@ -9,7 +9,6 @@ from data_in_models.models import (
     Label,
     LabelRelationship,
 )
-from returns.result import Success
 
 from app.extract.connectors import (
     NavigatorFamily,
@@ -60,7 +59,15 @@ def _standard_events():
         ("Published", "Published"),
     ]
     return [
-        NavigatorEventFactory.build(import_id=iid, event_type=ety, date=base_date)
+        NavigatorEventFactory.build(
+            import_id=iid,
+            event_type=ety,
+            date=base_date,
+            valid_metadata={
+                "event_type": [ety],
+                "datetime_event_name": ["Passed/Approved"],
+            },
+        )
         for iid, ety in event_specs
     ]
 
@@ -76,6 +83,8 @@ def navigator_family_with_single_matching_document() -> Identified[NavigatorFami
             summary="Family summary",
             category="REPORTS",
             corpus=_cclw_corpus(),
+            last_updated_date="2020-01-0100:00:00Z",
+            published_date="2020-01-0100:00:00Z",
             documents=[
                 NavigatorDocumentFactory.build(
                     import_id="document",
@@ -84,13 +93,16 @@ def navigator_family_with_single_matching_document() -> Identified[NavigatorFami
                     variant="Original language",
                     content_type="application/pdf",
                     source_url="https://source.climatepolicyradar.org/path/to/file.pdf",
-                    language="en",
-                    languages=["en"],
+                    language="eng",
+                    languages=["eng", "fra"],
+                    md5_sum="aaaaa11111bbbbb",
                     events=[],
                     valid_metadata={
                         "role": ["SUPPORTING LEGISLATION"],
                         "type": ["National Drought Plan (NDP)"],
                     },
+                    slug="document-slug",
+                    document_status="PUBLISHED",
                 ),
             ],
             events=_standard_events(),
@@ -115,6 +127,7 @@ def navigator_family_with_single_matching_document() -> Identified[NavigatorFami
                 "author": ["Test Author"],
                 "author_type": ["Person"],
             },
+            slug="family-slug",
         ),
     )
 
@@ -129,12 +142,15 @@ def navigator_family_with_no_matching_transformations() -> Identified[NavigatorF
             title="No matches for this family or documents",
             summary="Family summary",
             category="REPORTS",
+            last_updated_date="2020-01-0100:00:00Z",
+            published_date="2020-01-0100:00:00Z",
             corpus=_cclw_corpus(),
             documents=[
                 NavigatorDocumentFactory.build(
                     import_id="456",
                     title="Test document 1",
                     events=[],
+                    document_status="PUBLISHED",
                 ),
             ],
             events=[],
@@ -155,6 +171,8 @@ def navigator_family_with_litigation_corpus_type() -> Identified[NavigatorFamily
             title="Litigation family",
             summary="Family summary",
             category="REPORTS",
+            last_updated_date="2020-01-0100:00:00Z",
+            published_date="2020-01-0100:00:00Z",
             corpus=NavigatorCorpusFactory.build(
                 import_id="Academic.corpus.Litigation.n0000",
                 corpus_type=NavigatorCorpusTypeFactory.build(name="Litigation"),
@@ -166,20 +184,34 @@ def navigator_family_with_litigation_corpus_type() -> Identified[NavigatorFamily
                     title="Litigation family document",
                     cdn_object=None,
                     source_url=None,
+                    slug="litigation-document-slug",
                     events=[
                         NavigatorEventFactory.build(
                             import_id="123",
                             event_type="Decision",
                             date=decision_date,
+                            valid_metadata={
+                                "event_type": ["Decision"],
+                                "datetime_event_name": ["Decision"],
+                            },
                         )
                     ],
+                    variant="Original language",
+                    md5_sum="aaaaa11111bbbbb",
+                    languages=[],
+                    document_status="PUBLISHED",
                 ),
                 NavigatorDocumentFactory.build(
                     import_id="1.2.3.placeholder",
                     title="Placeholder litigation family document",
                     cdn_object=None,
                     source_url=None,
+                    slug="placeholder-document-slug",
                     events=[],
+                    variant=None,
+                    md5_sum="aaaaa11111bbbbb",
+                    languages=[],
+                    document_status="PUBLISHED",
                 ),
             ],
             events=[
@@ -187,10 +219,15 @@ def navigator_family_with_litigation_corpus_type() -> Identified[NavigatorFamily
                     import_id="123",
                     event_type="Decision",
                     date=decision_date,
+                    valid_metadata={
+                        "event_type": ["Decision"],
+                        "datetime_event_name": ["Decision"],
+                    },
                 ),
             ],
             collections=[],
             geographies=[],
+            slug="litigation-family-slug",
         ),
     )
 
@@ -202,26 +239,46 @@ def _mcf_events():
             import_id="concept_approved",
             event_type="Concept Approved",
             date=base_date,
+            valid_metadata={
+                "event_type": ["Concept Approved"],
+                "datetime_event_name": ["Project Approved"],
+            },
         ),
         NavigatorEventFactory.build(
             import_id="project_approved",
             event_type="Project Approved",
             date=base_date,
+            valid_metadata={
+                "event_type": ["Project Approved"],
+                "datetime_event_name": ["Project Approved"],
+            },
         ),
         NavigatorEventFactory.build(
             import_id="under_implementation",
             event_type="Under Implementation",
             date=base_date,
+            valid_metadata={
+                "event_type": ["Under Implementation"],
+                "datetime_event_name": ["Project Approved"],
+            },
         ),
         NavigatorEventFactory.build(
             import_id="project_completed",
             event_type="Project Completed",
             date=base_date,
+            valid_metadata={
+                "event_type": ["Project Completed"],
+                "datetime_event_name": ["Project Approved"],
+            },
         ),
         NavigatorEventFactory.build(
             import_id="cancelled",
             event_type="Cancelled",
             date=base_date,
+            valid_metadata={
+                "event_type": ["Cancelled"],
+                "datetime_event_name": ["Project Approved"],
+            },
         ),
     ]
 
@@ -236,6 +293,8 @@ def navigator_family_multilateral_climate_fund_project() -> Identified[Navigator
             title="Multilateral climate fund project",
             summary="Family summary",
             category="REPORTS",
+            last_updated_date=None,
+            published_date=None,
             corpus=NavigatorCorpusFactory.build(
                 import_id="MCF.corpus.AF.n0000",
                 corpus_type=NavigatorCorpusTypeFactory.build(name="AF"),
@@ -247,19 +306,32 @@ def navigator_family_multilateral_climate_fund_project() -> Identified[Navigator
                     title="Multilateral climate fund project document",
                     cdn_object=None,
                     source_url=None,
+                    slug="document-1-slug",
                     events=[],
+                    variant="Original language",
+                    md5_sum="aaaaa11111bbbbb",
+                    language="eng",
+                    languages=["eng"],
+                    document_status="PUBLISHED",
                 ),
                 NavigatorDocumentFactory.build(
                     import_id="document_2",
                     title="Project document",
                     cdn_object=None,
                     source_url=None,
+                    slug="document-2-slug",
                     events=[],
+                    variant="Original language",
+                    md5_sum="aaaaa11111bbbbb",
+                    language="eng",
+                    languages=["eng"],
+                    document_status="PUBLISHED",
                 ),
             ],
             events=_mcf_events(),
             collections=[],
             geographies=[],
+            slug="mcf-family-slug",
         ),
     )
 
@@ -273,6 +345,8 @@ def navigator_family_with_duplicate_legal_case() -> Identified[NavigatorFamily]:
             import_id="family",
             title="Litigation family",
             category="LITIGATION",
+            last_updated_date=None,
+            published_date=None,
             summary="Family summary",
             corpus=NavigatorCorpusFactory.build(
                 import_id="Academic.corpus.Litigation.n0000",
@@ -311,8 +385,8 @@ def test_transform_navigator_family_with_single_matching_document(
                 timestamp=datetime.datetime(2020, 1, 1),
                 value=Label(
                     type="activity_status",
-                    id="Amended",
-                    value="Amended",
+                    id="Amended/Updated",
+                    value="Amended/Updated",
                 ),
             ),
             LabelRelationship(
@@ -429,11 +503,6 @@ def test_transform_navigator_family_with_single_matching_document(
             LabelRelationship(
                 type="activity_status",
                 timestamp=datetime.datetime(2020, 1, 1),
-                value=Label(type="activity_status", id="Updated", value="Updated"),
-            ),
-            LabelRelationship(
-                type="activity_status",
-                timestamp=datetime.datetime(2020, 1, 1),
                 value=Label(type="activity_status", id="Published", value="Published"),
             ),
             LabelRelationship(
@@ -447,7 +516,7 @@ def test_transform_navigator_family_with_single_matching_document(
             LabelRelationship(
                 type="geography",
                 value=Label(
-                    type="agent",
+                    type="geography",
                     id="AU-NSW",
                     value="New South Wales",
                 ),
@@ -455,7 +524,7 @@ def test_transform_navigator_family_with_single_matching_document(
             LabelRelationship(
                 type="geography",
                 value=Label(
-                    type="agent",
+                    type="geography",
                     id="AUS",
                     value="Australia",
                 ),
@@ -473,7 +542,7 @@ def test_transform_navigator_family_with_single_matching_document(
                 value=Label(
                     id="Guidance",
                     value="Guidance",
-                    type="entity_type",
+                    type="category",
                 ),
             ),
         ],
@@ -525,6 +594,38 @@ def test_transform_navigator_family_with_single_matching_document(
                                 value="Grantham Research Institute",
                             ),
                         ),
+                        LabelRelationship(
+                            type="geography",
+                            value=Label(
+                                type="geography",
+                                id="AU-NSW",
+                                value="New South Wales",
+                            ),
+                        ),
+                        LabelRelationship(
+                            type="geography",
+                            value=Label(
+                                type="geography",
+                                id="AUS",
+                                value="Australia",
+                            ),
+                        ),
+                        LabelRelationship(
+                            type="language",
+                            value=Label(
+                                id="eng",
+                                value="eng",
+                                type="language",
+                            ),
+                        ),
+                        LabelRelationship(
+                            type="language",
+                            value=Label(
+                                id="fra",
+                                value="fra",
+                                type="language",
+                            ),
+                        ),
                     ],
                     items=[
                         Item(
@@ -538,6 +639,12 @@ def test_transform_navigator_family_with_single_matching_document(
                             content_type="application/pdf",
                         ),
                     ],
+                    attributes={
+                        "deprecated_slug": "document-slug",
+                        "variant": "Original language",
+                        "md5_sum": "aaaaa11111bbbbb",
+                        "status": "PUBLISHED",
+                    },
                 ),
             ),
             DocumentRelationship(
@@ -559,6 +666,12 @@ def test_transform_navigator_family_with_single_matching_document(
                 ),
             ),
         ],
+        attributes={
+            "deprecated_slug": "family-slug",
+            "published_date": "2020-01-0100:00:00Z",
+            "last_updated_date": "2020-01-0100:00:00Z",
+            "status": "PUBLISHED",
+        },
     )
     assert_model_list_equality(
         result.unwrap(),
@@ -592,6 +705,38 @@ def test_transform_navigator_family_with_single_matching_document(
                             value="Grantham Research Institute",
                         ),
                     ),
+                    LabelRelationship(
+                        type="geography",
+                        value=Label(
+                            type="geography",
+                            id="AU-NSW",
+                            value="New South Wales",
+                        ),
+                    ),
+                    LabelRelationship(
+                        type="geography",
+                        value=Label(
+                            type="geography",
+                            id="AUS",
+                            value="Australia",
+                        ),
+                    ),
+                    LabelRelationship(
+                        type="language",
+                        value=Label(
+                            id="eng",
+                            value="eng",
+                            type="language",
+                        ),
+                    ),
+                    LabelRelationship(
+                        type="language",
+                        value=Label(
+                            id="fra",
+                            value="fra",
+                            type="language",
+                        ),
+                    ),
                 ],
                 documents=[
                     DocumentRelationship(
@@ -613,6 +758,12 @@ def test_transform_navigator_family_with_single_matching_document(
                         content_type="application/pdf",
                     ),
                 ],
+                attributes={
+                    "deprecated_slug": "document-slug",
+                    "variant": "Original language",
+                    "md5_sum": "aaaaa11111bbbbb",
+                    "status": "PUBLISHED",
+                },
             ),
             Document(
                 id="collection_matching",
@@ -686,6 +837,156 @@ def test_transform_navigator_family_with_litigation_corpus_type_handles_duplicat
     assert legal_case_labels[0].type == "entity_type"
 
 
+@pytest.mark.parametrize(
+    "corpus_id, org, provider",
+    [
+        ("CCLW.corpus.i00000001.n0000", "CCLW", "Grantham Research Institute"),
+        ("CPR.corpus.i00000001.n0000", "CPR", "NewClimate Institute"),
+        ("CPR.corpus.Goldstandard.n0000", "CPR", "Gold Standard"),
+        ("CPR.corpus.i00000589.n0000", "CPR", "Naturebase"),
+        ("CPR.corpus.i00000591.n0000", "CPR", "Laws Africa"),
+        ("CPR.corpus.i00000592.n0000", "CPR", "UNDRR"),
+    ],
+)
+def test_transform_navigator_family_with_laws_and_policies_corpus_type(
+    corpus_id: str, org: str, provider: str
+):
+    navigator_family_with_laws_and_policies_corpus_type = Identified(
+        id="family",
+        source="navigator_family",
+        data=NavigatorFamilyFactory.build(
+            import_id="family",
+            title="Laws and policies family",
+            summary="Family summary",
+            category="LEGISLATIVE",
+            published_date=None,
+            last_updated_date=None,
+            corpus=NavigatorCorpusFactory.build(
+                import_id=corpus_id,
+                corpus_type=NavigatorCorpusTypeFactory.build(name="corpus_type"),
+                organisation=NavigatorOrganisationFactory.build(id=1, name=org),
+            ),
+            documents=[],
+            events=[],
+            collections=[],
+            geographies=["AUS"],
+            slug="laws-and-policies-family-slug",
+            metadata={
+                # testing single value
+                "topic": ["Mitigation"],
+                "sector": ["Economy-wide"],
+                "keyword": ["Transport"],
+                "framework": ["Mitigation"],
+                # testing no value
+                "hazard": [],
+                # testing multiple values
+                "instrument": [
+                    "Processes, plans and strategies|Governance",
+                    "Planning|Governance",
+                ],
+            },
+        ),
+    )
+    result = transform_navigator_family(
+        navigator_family_with_laws_and_policies_corpus_type
+    )
+    expected_document_from_family = Document(
+        id="family",
+        title="Laws and policies family",
+        description="Family summary",
+        labels=[
+            LabelRelationship(
+                type="status",
+                value=Label(
+                    type="status",
+                    id="Principal",
+                    value="Principal",
+                ),
+            ),
+            LabelRelationship(
+                type="provider",
+                value=Label(
+                    type="agent",
+                    id=provider,
+                    value=provider,
+                ),
+            ),
+            LabelRelationship(
+                type="geography",
+                value=Label(
+                    id="AUS",
+                    value="Australia",
+                    type="geography",
+                ),
+            ),
+            LabelRelationship(
+                type="category",
+                value=Label(
+                    id="Legislative",
+                    value="Legislative",
+                    type="category",
+                ),
+            ),
+            LabelRelationship(
+                type="topic",
+                value=Label(
+                    id="Mitigation",
+                    value="Mitigation",
+                    type="topic",
+                ),
+            ),
+            LabelRelationship(
+                type="sector",
+                value=Label(
+                    id="Economy-wide",
+                    value="Economy-wide",
+                    type="sector",
+                ),
+            ),
+            LabelRelationship(
+                type="keyword",
+                value=Label(
+                    id="Transport",
+                    value="Transport",
+                    type="keyword",
+                ),
+            ),
+            LabelRelationship(
+                type="framework",
+                value=Label(
+                    id="Mitigation",
+                    value="Mitigation",
+                    type="framework",
+                ),
+            ),
+            LabelRelationship(
+                type="instrument",
+                value=Label(
+                    id="Processes, plans and strategies|Governance",
+                    value="Processes, plans and strategies|Governance",
+                    type="instrument",
+                ),
+            ),
+            LabelRelationship(
+                type="instrument",
+                value=Label(
+                    id="Planning|Governance",
+                    value="Planning|Governance",
+                    type="instrument",
+                ),
+            ),
+        ],
+        documents=[],
+        attributes={
+            "deprecated_slug": "laws-and-policies-family-slug",
+        },
+    )
+    assert_model_list_equality(
+        result.unwrap(),
+        [expected_document_from_family],
+    )
+
+
 def test_transform_navigator_family_with_litigation_corpus_type(
     navigator_family_with_litigation_corpus_type: Identified[NavigatorFamily],
 ):
@@ -724,7 +1025,7 @@ def test_transform_navigator_family_with_litigation_corpus_type(
                 value=Label(
                     id="Guidance",
                     value="Guidance",
-                    type="entity_type",
+                    type="category",
                 ),
             ),
         ],
@@ -752,6 +1053,12 @@ def test_transform_navigator_family_with_litigation_corpus_type(
                             ),
                         ),
                     ],
+                    attributes={
+                        "deprecated_slug": "litigation-document-slug",
+                        "md5_sum": "aaaaa11111bbbbb",
+                        "variant": "Original language",
+                        "status": "PUBLISHED",
+                    },
                 ),
             ),
             DocumentRelationship(
@@ -777,11 +1084,23 @@ def test_transform_navigator_family_with_litigation_corpus_type(
                             ),
                         ),
                     ],
+                    attributes={
+                        "deprecated_slug": "placeholder-document-slug",
+                        "md5_sum": "aaaaa11111bbbbb",
+                        "status": "PUBLISHED",
+                    },
                 ),
             ),
         ],
+        attributes={
+            "deprecated_slug": "litigation-family-slug",
+            "published_date": "2020-01-0100:00:00Z",
+            "last_updated_date": "2020-01-0100:00:00Z",
+            "status": "PUBLISHED",
+        },
     )
-    assert result == Success(
+    assert_model_list_equality(
+        result.unwrap(),
         [
             expected_document_from_family,
             Document(
@@ -813,6 +1132,12 @@ def test_transform_navigator_family_with_litigation_corpus_type(
                         ),
                     ),
                 ],
+                attributes={
+                    "deprecated_slug": "litigation-document-slug",
+                    "md5_sum": "aaaaa11111bbbbb",
+                    "variant": "Original language",
+                    "status": "PUBLISHED",
+                },
             ),
             Document(
                 id="1.2.3.placeholder",
@@ -843,6 +1168,11 @@ def test_transform_navigator_family_with_litigation_corpus_type(
                         ),
                     )
                 ],
+                attributes={
+                    "deprecated_slug": "placeholder-document-slug",
+                    "md5_sum": "aaaaa11111bbbbb",
+                    "status": "PUBLISHED",
+                },
             ),
         ],
     )
@@ -933,7 +1263,7 @@ def test_transform_navigator_family_with_multilateral_climate_fund_project(
                 value=Label(
                     id="Guidance",
                     value="Guidance",
-                    type="entity_type",
+                    type="category",
                 ),
             ),
         ],
@@ -952,7 +1282,21 @@ def test_transform_navigator_family_with_multilateral_climate_fund_project(
                                 value="Adaptation Fund",
                             ),
                         ),
+                        LabelRelationship(
+                            type="language",
+                            value=Label(
+                                id="eng",
+                                value="eng",
+                                type="language",
+                            ),
+                        ),
                     ],
+                    attributes={
+                        "deprecated_slug": "document-1-slug",
+                        "variant": "Original language",
+                        "md5_sum": "aaaaa11111bbbbb",
+                        "status": "PUBLISHED",
+                    },
                 ),
             ),
             DocumentRelationship(
@@ -969,12 +1313,31 @@ def test_transform_navigator_family_with_multilateral_climate_fund_project(
                                 value="Adaptation Fund",
                             ),
                         ),
+                        LabelRelationship(
+                            type="language",
+                            value=Label(
+                                id="eng",
+                                value="eng",
+                                type="language",
+                            ),
+                        ),
                     ],
+                    attributes={
+                        "deprecated_slug": "document-2-slug",
+                        "variant": "Original language",
+                        "md5_sum": "aaaaa11111bbbbb",
+                        "status": "PUBLISHED",
+                    },
                 ),
             ),
         ],
+        attributes={
+            "deprecated_slug": "mcf-family-slug",
+            "status": "PUBLISHED",
+        },
     )
-    assert result == Success(
+    assert_model_list_equality(
+        result.unwrap(),
         [
             expected_document_from_family,
             Document(
@@ -989,6 +1352,14 @@ def test_transform_navigator_family_with_multilateral_climate_fund_project(
                             value="Adaptation Fund",
                         ),
                     ),
+                    LabelRelationship(
+                        type="language",
+                        value=Label(
+                            id="eng",
+                            value="eng",
+                            type="language",
+                        ),
+                    ),
                 ],
                 documents=[
                     DocumentRelationship(
@@ -998,6 +1369,12 @@ def test_transform_navigator_family_with_multilateral_climate_fund_project(
                         ),
                     )
                 ],
+                attributes={
+                    "deprecated_slug": "document-1-slug",
+                    "variant": "Original language",
+                    "md5_sum": "aaaaa11111bbbbb",
+                    "status": "PUBLISHED",
+                },
             ),
             Document(
                 id="document_2",
@@ -1011,6 +1388,14 @@ def test_transform_navigator_family_with_multilateral_climate_fund_project(
                             value="Adaptation Fund",
                         ),
                     ),
+                    LabelRelationship(
+                        type="language",
+                        value=Label(
+                            id="eng",
+                            value="eng",
+                            type="language",
+                        ),
+                    ),
                 ],
                 documents=[
                     DocumentRelationship(
@@ -1020,6 +1405,528 @@ def test_transform_navigator_family_with_multilateral_climate_fund_project(
                         ),
                     )
                 ],
+                attributes={
+                    "deprecated_slug": "document-2-slug",
+                    "variant": "Original language",
+                    "md5_sum": "aaaaa11111bbbbb",
+                    "status": "PUBLISHED",
+                },
             ),
-        ]
+        ],
+    )
+
+
+def test_transform_navigator_family_with_published_and_unpublished_documents():
+    navigator_family_with_different_document_statuses = Identified(
+        id="family",
+        source="navigator_family",
+        data=NavigatorFamilyFactory.build(
+            import_id="family",
+            title="Family with different document statuses",
+            summary="Family summary",
+            category="LEGISLATIVE",
+            published_date=None,
+            last_updated_date=None,
+            corpus=_cclw_corpus(),
+            documents=[
+                NavigatorDocumentFactory.build(
+                    import_id="document1",
+                    title="Matching title on family and document",
+                    cdn_object="https://cdn.climatepolicyradar.org/path/to/file.pdf",
+                    variant="Original language",
+                    content_type="application/pdf",
+                    source_url="https://source.climatepolicyradar.org/path/to/file.pdf",
+                    languages=["eng"],
+                    md5_sum="aaaaa11111bbbbb",
+                    events=[],
+                    valid_metadata={},
+                    slug="document1-slug",
+                    document_status="CREATED",
+                ),
+                NavigatorDocumentFactory.build(
+                    import_id="document2",
+                    title="Matching title on family and document",
+                    cdn_object="https://cdn.climatepolicyradar.org/path/to/file.pdf",
+                    variant="Original language",
+                    content_type="application/pdf",
+                    source_url="https://source.climatepolicyradar.org/path/to/file.pdf",
+                    languages=["eng"],
+                    md5_sum="aaaaa11111cccc",
+                    events=[],
+                    valid_metadata={},
+                    slug="document2-slug",
+                    document_status="PUBLISHED",
+                ),
+            ],
+            events=[],
+            collections=[],
+            geographies=["AUS"],
+            slug="family-with-different-document-statuses-slug",
+            metadata={},
+        ),
+    )
+    result = transform_navigator_family(
+        navigator_family_with_different_document_statuses
+    )
+    expected_document_from_family = Document(
+        id="family",
+        title="Family with different document statuses",
+        description="Family summary",
+        labels=[
+            LabelRelationship(
+                type="status",
+                value=Label(
+                    type="status",
+                    id="Principal",
+                    value="Principal",
+                ),
+            ),
+            LabelRelationship(
+                type="provider",
+                value=Label(
+                    type="agent",
+                    id="Grantham Research Institute",
+                    value="Grantham Research Institute",
+                ),
+            ),
+            LabelRelationship(
+                type="geography",
+                value=Label(
+                    id="AUS",
+                    value="Australia",
+                    type="geography",
+                ),
+            ),
+            LabelRelationship(
+                type="category",
+                value=Label(
+                    id="Legislative",
+                    value="Legislative",
+                    type="category",
+                ),
+            ),
+        ],
+        documents=[
+            DocumentRelationship(
+                type="has_member",
+                value=DocumentWithoutRelationships(
+                    id="document1",
+                    title="Matching title on family and document",
+                    labels=[
+                        LabelRelationship(
+                            type="provider",
+                            value=Label(
+                                type="agent",
+                                id="Grantham Research Institute",
+                                value="Grantham Research Institute",
+                            ),
+                        ),
+                        LabelRelationship(
+                            type="geography",
+                            value=Label(
+                                type="geography",
+                                id="AUS",
+                                value="Australia",
+                            ),
+                        ),
+                        LabelRelationship(
+                            type="language",
+                            value=Label(
+                                id="eng",
+                                value="eng",
+                                type="language",
+                            ),
+                        ),
+                    ],
+                    items=[
+                        Item(
+                            url="https://cdn.climatepolicyradar.org/path/to/file.pdf",
+                            type="cdn",
+                            content_type="application/pdf",
+                        ),
+                        Item(
+                            url="https://source.climatepolicyradar.org/path/to/file.pdf",
+                            type="source",
+                            content_type="application/pdf",
+                        ),
+                    ],
+                    attributes={
+                        "deprecated_slug": "document1-slug",
+                        "variant": "Original language",
+                        "md5_sum": "aaaaa11111bbbbb",
+                        "status": "CREATED",
+                    },
+                ),
+            ),
+            DocumentRelationship(
+                type="has_member",
+                value=DocumentWithoutRelationships(
+                    id="document2",
+                    title="Matching title on family and document",
+                    labels=[
+                        LabelRelationship(
+                            type="provider",
+                            value=Label(
+                                type="agent",
+                                id="Grantham Research Institute",
+                                value="Grantham Research Institute",
+                            ),
+                        ),
+                        LabelRelationship(
+                            type="geography",
+                            value=Label(
+                                type="geography",
+                                id="AUS",
+                                value="Australia",
+                            ),
+                        ),
+                        LabelRelationship(
+                            type="language",
+                            value=Label(
+                                id="eng",
+                                value="eng",
+                                type="language",
+                            ),
+                        ),
+                    ],
+                    items=[
+                        Item(
+                            url="https://cdn.climatepolicyradar.org/path/to/file.pdf",
+                            type="cdn",
+                            content_type="application/pdf",
+                        ),
+                        Item(
+                            url="https://source.climatepolicyradar.org/path/to/file.pdf",
+                            type="source",
+                            content_type="application/pdf",
+                        ),
+                    ],
+                    attributes={
+                        "deprecated_slug": "document2-slug",
+                        "variant": "Original language",
+                        "md5_sum": "aaaaa11111cccc",
+                        "status": "PUBLISHED",
+                    },
+                ),
+            ),
+        ],
+        attributes={
+            "deprecated_slug": "family-with-different-document-statuses-slug",
+            "status": "PUBLISHED",
+        },
+    )
+    assert_model_list_equality(
+        result.unwrap(),
+        [
+            expected_document_from_family,
+            Document(
+                id="document1",
+                title="Matching title on family and document",
+                labels=[
+                    LabelRelationship(
+                        type="provider",
+                        value=Label(
+                            type="agent",
+                            id="Grantham Research Institute",
+                            value="Grantham Research Institute",
+                        ),
+                    ),
+                    LabelRelationship(
+                        type="geography",
+                        value=Label(
+                            type="geography",
+                            id="AUS",
+                            value="Australia",
+                        ),
+                    ),
+                    LabelRelationship(
+                        type="language",
+                        value=Label(
+                            id="eng",
+                            value="eng",
+                            type="language",
+                        ),
+                    ),
+                ],
+                documents=[
+                    DocumentRelationship(
+                        type="member_of",
+                        value=DocumentWithoutRelationships(
+                            **expected_document_from_family.model_dump()
+                        ),
+                    ),
+                ],
+                items=[
+                    Item(
+                        url="https://cdn.climatepolicyradar.org/path/to/file.pdf",
+                        type="cdn",
+                        content_type="application/pdf",
+                    ),
+                    Item(
+                        url="https://source.climatepolicyradar.org/path/to/file.pdf",
+                        type="source",
+                        content_type="application/pdf",
+                    ),
+                ],
+                attributes={
+                    "deprecated_slug": "document1-slug",
+                    "variant": "Original language",
+                    "md5_sum": "aaaaa11111bbbbb",
+                    "status": "CREATED",
+                },
+            ),
+            Document(
+                id="document2",
+                title="Matching title on family and document",
+                labels=[
+                    LabelRelationship(
+                        type="provider",
+                        value=Label(
+                            type="agent",
+                            id="Grantham Research Institute",
+                            value="Grantham Research Institute",
+                        ),
+                    ),
+                    LabelRelationship(
+                        type="geography",
+                        value=Label(
+                            type="geography",
+                            id="AUS",
+                            value="Australia",
+                        ),
+                    ),
+                    LabelRelationship(
+                        type="language",
+                        value=Label(
+                            id="eng",
+                            value="eng",
+                            type="language",
+                        ),
+                    ),
+                ],
+                documents=[
+                    DocumentRelationship(
+                        type="member_of",
+                        value=DocumentWithoutRelationships(
+                            **expected_document_from_family.model_dump()
+                        ),
+                    ),
+                ],
+                items=[
+                    Item(
+                        url="https://cdn.climatepolicyradar.org/path/to/file.pdf",
+                        type="cdn",
+                        content_type="application/pdf",
+                    ),
+                    Item(
+                        url="https://source.climatepolicyradar.org/path/to/file.pdf",
+                        type="source",
+                        content_type="application/pdf",
+                    ),
+                ],
+                attributes={
+                    "deprecated_slug": "document2-slug",
+                    "variant": "Original language",
+                    "md5_sum": "aaaaa11111cccc",
+                    "status": "PUBLISHED",
+                },
+            ),
+        ],
+    )
+
+
+def test_transform_navigator_family_with_no_published_documents():
+    navigator_family_with_different_document_statuses = Identified(
+        id="family",
+        source="navigator_family",
+        data=NavigatorFamilyFactory.build(
+            import_id="family",
+            title="Family with no published documents",
+            summary="Family summary",
+            category="LEGISLATIVE",
+            published_date=None,
+            last_updated_date=None,
+            corpus=_cclw_corpus(),
+            documents=[
+                NavigatorDocumentFactory.build(
+                    import_id="document1",
+                    title="Matching title on family and document",
+                    cdn_object="https://cdn.climatepolicyradar.org/path/to/file.pdf",
+                    variant="Original language",
+                    content_type="application/pdf",
+                    source_url="https://source.climatepolicyradar.org/path/to/file.pdf",
+                    languages=["eng"],
+                    md5_sum="aaaaa11111bbbbb",
+                    events=[],
+                    valid_metadata={},
+                    slug="document1-slug",
+                    document_status="DELETED",
+                ),
+            ],
+            events=[],
+            collections=[],
+            geographies=["AUS"],
+            slug="family-with-no-published-documents-slug",
+            metadata={},
+        ),
+    )
+    result = transform_navigator_family(
+        navigator_family_with_different_document_statuses
+    )
+    expected_document_from_family = Document(
+        id="family",
+        title="Family with no published documents",
+        description="Family summary",
+        labels=[
+            LabelRelationship(
+                type="status",
+                value=Label(
+                    type="status",
+                    id="Principal",
+                    value="Principal",
+                ),
+            ),
+            LabelRelationship(
+                type="provider",
+                value=Label(
+                    type="agent",
+                    id="Grantham Research Institute",
+                    value="Grantham Research Institute",
+                ),
+            ),
+            LabelRelationship(
+                type="geography",
+                value=Label(
+                    id="AUS",
+                    value="Australia",
+                    type="geography",
+                ),
+            ),
+            LabelRelationship(
+                type="category",
+                value=Label(
+                    id="Legislative",
+                    value="Legislative",
+                    type="category",
+                ),
+            ),
+        ],
+        documents=[
+            DocumentRelationship(
+                type="has_member",
+                value=DocumentWithoutRelationships(
+                    id="document1",
+                    title="Matching title on family and document",
+                    labels=[
+                        LabelRelationship(
+                            type="provider",
+                            value=Label(
+                                type="agent",
+                                id="Grantham Research Institute",
+                                value="Grantham Research Institute",
+                            ),
+                        ),
+                        LabelRelationship(
+                            type="geography",
+                            value=Label(
+                                type="geography",
+                                id="AUS",
+                                value="Australia",
+                            ),
+                        ),
+                        LabelRelationship(
+                            type="language",
+                            value=Label(
+                                id="eng",
+                                value="eng",
+                                type="language",
+                            ),
+                        ),
+                    ],
+                    items=[
+                        Item(
+                            url="https://cdn.climatepolicyradar.org/path/to/file.pdf",
+                            type="cdn",
+                            content_type="application/pdf",
+                        ),
+                        Item(
+                            url="https://source.climatepolicyradar.org/path/to/file.pdf",
+                            type="source",
+                            content_type="application/pdf",
+                        ),
+                    ],
+                    attributes={
+                        "deprecated_slug": "document1-slug",
+                        "variant": "Original language",
+                        "md5_sum": "aaaaa11111bbbbb",
+                        "status": "DELETED",
+                    },
+                ),
+            ),
+        ],
+        attributes={
+            "deprecated_slug": "family-with-no-published-documents-slug",
+        },
+    )
+    assert_model_list_equality(
+        result.unwrap(),
+        [
+            expected_document_from_family,
+            Document(
+                id="document1",
+                title="Matching title on family and document",
+                labels=[
+                    LabelRelationship(
+                        type="provider",
+                        value=Label(
+                            type="agent",
+                            id="Grantham Research Institute",
+                            value="Grantham Research Institute",
+                        ),
+                    ),
+                    LabelRelationship(
+                        type="geography",
+                        value=Label(
+                            type="geography",
+                            id="AUS",
+                            value="Australia",
+                        ),
+                    ),
+                    LabelRelationship(
+                        type="language",
+                        value=Label(
+                            id="eng",
+                            value="eng",
+                            type="language",
+                        ),
+                    ),
+                ],
+                documents=[
+                    DocumentRelationship(
+                        type="member_of",
+                        value=DocumentWithoutRelationships(
+                            **expected_document_from_family.model_dump()
+                        ),
+                    ),
+                ],
+                items=[
+                    Item(
+                        url="https://cdn.climatepolicyradar.org/path/to/file.pdf",
+                        type="cdn",
+                        content_type="application/pdf",
+                    ),
+                    Item(
+                        url="https://source.climatepolicyradar.org/path/to/file.pdf",
+                        type="source",
+                        content_type="application/pdf",
+                    ),
+                ],
+                attributes={
+                    "deprecated_slug": "document1-slug",
+                    "variant": "Original language",
+                    "md5_sum": "aaaaa11111bbbbb",
+                    "status": "DELETED",
+                },
+            ),
+        ],
     )

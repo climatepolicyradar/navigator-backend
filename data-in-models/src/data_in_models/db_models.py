@@ -25,6 +25,7 @@ Field usage:
 
 from datetime import UTC, datetime
 
+from sqlalchemy import JSON, Column
 from sqlmodel import Field, Relationship, SQLModel
 
 
@@ -42,6 +43,10 @@ class Document(WithDbDatetimeFields, table=True):
     id: str = Field(primary_key=True)
     title: str
     description: str | None = None
+    attributes: dict = Field(
+        default_factory=dict,
+        sa_column=Column(JSON, nullable=False),
+    )
 
     items: list["Item"] = Relationship(back_populates="document")
     labels: list["DocumentLabelRelationship"] = Relationship(back_populates="document")
@@ -101,7 +106,7 @@ class LabelLabelRelationship(WithDbDatetimeFields, table=True):
 
 class Item(WithDbDatetimeFields, table=True):
     url: str | None = None
-    type: str | None = None
+    type: str
     content_type: str | None = None
     id: str = Field(primary_key=True)
     document_id: str = Field(foreign_key="document.id")

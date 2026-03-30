@@ -1,3 +1,4 @@
+import asyncio
 import io
 import itertools
 import json
@@ -173,6 +174,17 @@ def cache_extraction_result(result: FamilyFetchResult):
 
 
 @task(log_prints=True)
+def cache_transform_errors(errors: list[Exception], run_id: str):
+    """Cache transformation errors to S3."""
+    error_data = [str(e) for e in errors]
+    upload_to_s3(
+        json.dumps(error_data),
+        bucket="cpr-cache",
+        key=f"pipelines/data-in-pipeline/transformation_errors/{run_id}-transform-errors.json",
+    )
+
+
+@task(log_prints=True)
 @pipeline_metrics.track(operation=Operation.IDENTIFY)
 def identify(
     extracted: list[ExtractedEnvelope[list[NavigatorFamily]]],
@@ -214,7 +226,12 @@ def transform(
     return all_documents, errors
 
 
-@task(log_prints=True, retries=2, retry_delay_seconds=5)
+@task(
+    log_prints=True,
+    retries=2,
+    retry_delay_seconds=[5, 10],
+    tags=["load-api-write-concurrency-limit"],
+)
 @pipeline_metrics.track(operation=Operation.LOAD)
 def load_batch(
     transformed: list[Document],
@@ -311,7 +328,7 @@ def check_load_results(batched_results: list[str | Exception]) -> bool:
 # We cast explicitly to document intent and avoid a broad type ignore.
 task_runner = cast(
     TaskRunner[PrefectFuture[Any]],
-    ThreadPoolTaskRunner(max_workers=2),
+    ThreadPoolTaskRunner(max_workers=1),
 )
 
 
@@ -385,7 +402,18 @@ def data_in_pipeline(
     transformed_documents, errors = transform(identified_families)
 
     if errors:
-        # TODO : APP-1664 - Handle these partial failures more gracefully
+        cache_transform_errors(errors, run_id)
+        asyncio.run(
+            SlackNotify.send_custom_message(
+                message=(
+                    f"⚠️ *Partial transform failure* in `{run_id}`\n"
+                    f"*Failed:* {len(errors)} / {family_count} families\n"
+                    f"*Succeeded:* {len(transformed_documents)}\n"
+                    f"Failed IDs cached to S3 → `s3://cpr-cache/pipelines/data-in-pipeline/transformation_errors/{run_id}-transform-errors.json`"
+                )
+            )
+        )
+        pipeline_metrics.record_processed(PipelineType.FAMILY, Status.PARTIAL)
         _LOGGER.exception(f"Transformation errors: {len(errors)}")
 
     if len(transformed_documents) == 0:
@@ -397,10 +425,10 @@ def data_in_pipeline(
     # CACHE TO S3
     # -------------------------
     jsonl_future = cache_jsonl_to_s3.submit(transformed_documents, run_id)
-    parquet_future = cache_parquet_to_s3.submit(transformed_documents, run_id)
+    # parquet_future = cache_parquet_to_s3.submit(transformed_documents, run_id)
 
     jsonl_future.result()
-    parquet_future.result()
+    # parquet_future.result()
 
     # -------------------------
     # BATCH AND LOAD TO DB

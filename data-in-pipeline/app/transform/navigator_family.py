@@ -232,6 +232,7 @@ def _transform_family_corpus_organisation(
         "CCLW.corpus.i00000001.n0000": "Grantham Research Institute",
         "Academic.corpus.Litigation.n0000": "Sabin Center for Climate Change Law",
         "CPR.corpus.Goldstandard.n0000": "Gold Standard",
+        "CPR.corpus.i00000589.n0000": "Naturebase",
         "CPR.corpus.i00000001.n0000": "NewClimate Institute",
         "CPR.corpus.i00000002.n0000": "Climate Policy Radar",
         "CPR.corpus.i00000591.n0000": "Laws Africa",
@@ -265,9 +266,40 @@ def _transform_family_corpus_organisation(
     return labels
 
 
-def _transform_navigator_family(navigator_family: NavigatorFamily) -> Document:
+def _transform_geographies(
+    navigator_family: NavigatorFamily,
+) -> list[LabelRelationship]:
     logger = get_logger()
+    labels = []
+    if navigator_family.geographies:
+        geography_labels = []
+        for geograpy_id in navigator_family.geographies:
+            # We exclude No Geography (XAA) as this was used as `geography` was previously required.
+            # An empty list is a clearer depiction of a document not having a geography.
+            if geograpy_id != "XAA":
+                geography = geographies_lookup.get(geograpy_id)
+                if geography:
+                    geography_labels.append(
+                        LabelRelationship(
+                            type="geography",
+                            value=Label(
+                                id=geography.id,
+                                value=geography.name,
+                                type="geography",
+                            ),
+                        )
+                    )
+            else:
+                logger.warning(f"Geography not found: {geograpy_id}")
+        labels.extend(geography_labels)
+
+    return labels
+
+
+def _transform_navigator_family(navigator_family: NavigatorFamily) -> Document:
     labels: list[LabelRelationship] = []
+    attributes: dict[str, str | float | bool] = {}
+
     """
     All families are currently Principal.
     Based on the FRBR taxonomy.
@@ -347,7 +379,7 @@ def _transform_navigator_family(navigator_family: NavigatorFamily) -> Document:
         @see: https://github.com/climatepolicyradar/data-migrations/blob/main/taxonomies/Intl.%20agreements.json#L7-L24
         """
         laws_and_policies_event_type_to_activity_status_map = {
-            "Amended": "Amended",
+            "Amended": "Amended/Updated",
             "Appealed": "Appealed",
             "Closed": "Closed",
             "Declaration Of Climate Emergency": "Declaration of climate emergency",
@@ -363,7 +395,7 @@ def _transform_navigator_family(navigator_family: NavigatorFamily) -> Document:
             "Repealed/Replaced": "Repealed/Replaced",
             "Set": "Set",
             "Settled": "Settled",
-            "Updated": "Updated",
+            "Updated": "Amended/Updated",
         }
 
         """
@@ -405,27 +437,7 @@ def _transform_navigator_family(navigator_family: NavigatorFamily) -> Document:
     """
     Geography labels
     """
-    if navigator_family.geographies:
-        geography_labels = []
-        for geograpy_id in navigator_family.geographies:
-            # We exclude No Geography (XAA)  as this was used as `geography` was previously required.
-            # An empty list is a clearer depiction of a document not having a geography.
-            if geograpy_id != "XAA":
-                geography = geographies_lookup.get(geograpy_id)
-                if geography:
-                    geography_labels.append(
-                        LabelRelationship(
-                            type="geography",
-                            value=Label(
-                                id=geography.id,
-                                value=geography.name,
-                                type="agent",
-                            ),
-                        )
-                    )
-            else:
-                logger.warning(f"Geography not found: {geograpy_id}")
-        labels.extend(geography_labels)
+    labels.extend(_transform_geographies(navigator_family))
 
     """
     metadata.author and metadata.author_type
@@ -470,16 +482,76 @@ def _transform_navigator_family(navigator_family: NavigatorFamily) -> Document:
             value=Label(
                 id=family_category_label_id,
                 value=family_category_label_id,
-                type="entity_type",
+                type="category",
             ),
         )
     )
+
+    """
+    Slug
+    We should not couple to this implementation as it is an incomplete ID service which is unmaintained.
+    But we need it for migration purposes.
+    """
+    attributes["deprecated_slug"] = navigator_family.slug
+
+    """
+    Metadata
+    """
+    laws_and_policies_corpora = [
+        "CCLW.corpus.i00000001.n0000",
+        "CPR.corpus.i00000001.n0000",
+        "CPR.corpus.Goldstandard.n0000",
+        "CPR.corpus.i00000589.n0000",
+        "CPR.corpus.i00000591.n0000",
+        "CPR.corpus.i00000592.n0000",
+    ]
+    if (
+        navigator_family.metadata
+        and navigator_family.corpus.import_id in laws_and_policies_corpora
+    ):
+        for key, values in navigator_family.metadata.items():
+            if values:
+                for value in values:
+                    labels.append(
+                        LabelRelationship(
+                            type=key,
+                            value=Label(
+                                id=value,
+                                value=value,
+                                type=key,
+                            ),
+                        )
+                    )
+
+    """
+    Dates
+
+    These are values calculated from events.
+    """
+    if navigator_family.published_date:
+        attributes["published_date"] = navigator_family.published_date
+    if navigator_family.last_updated_date:
+        attributes["last_updated_date"] = navigator_family.last_updated_date
+
+    """This field defines whether a document is available to be searched in Vespa.
+    It is still used to filter out un-published or deleted documents in the frontend.
+    We are mapping it onto principal documents that have at least one related document
+    that has a 'PUBLISHED' status to keep the data-in-api clean. For simplicity, we do not
+    add a status if the family cannot be considered published.
+    """
+
+    contains_published_document = [
+        doc for doc in navigator_family.documents if doc.document_status == "PUBLISHED"
+    ]
+    if navigator_family.documents and contains_published_document:
+        attributes["status"] = "PUBLISHED"
 
     return Document(
         id=navigator_family.import_id,
         title=navigator_family.title,
         description=navigator_family.summary,
         labels=_deduplicate_labels(labels),
+        attributes=attributes,
     )
 
 
@@ -487,6 +559,7 @@ def _transform_navigator_document(
     navigator_document: NavigatorDocument, navigator_family: NavigatorFamily
 ) -> Document:
     labels: list[LabelRelationship] = []
+    attributes: dict[str, str | float | bool] = {}
 
     if navigator_family.corpus.import_id == "Academic.corpus.Litigation.n0000":
         if navigator_document.events:
@@ -576,11 +649,48 @@ def _transform_navigator_document(
             )
         )
 
+    """
+    Slug
+    We should not couple to this implementation as it is an incomplete ID service which is unmaintained.
+    But we need it for migration purposes.
+    """
+    attributes["deprecated_slug"] = navigator_document.slug
+
+    """
+    Geography labels
+    """
+    labels.extend(_transform_geographies(navigator_family))
+
+    """
+    Language labels
+    """
+    for lang in navigator_document.languages:
+        labels.append(
+            LabelRelationship(
+                type="language",
+                value=Label(id=lang, value=lang, type="language"),
+            )
+        )
+
+    """
+    Internal attributes
+    """
+
+    if navigator_document.variant:
+        attributes["variant"] = navigator_document.variant
+    if navigator_document.md5_sum:
+        attributes["md5_sum"] = navigator_document.md5_sum
+
+    """This field defines whether a document is available to be searched in Vespa.
+    It is still used to filter out un-published or deleted documents in the frontend."""
+    attributes["status"] = navigator_document.document_status
+
     return Document(
         id=navigator_document.import_id,
         title=navigator_document.title,
         labels=_deduplicate_labels(labels),
         items=items,
+        attributes=attributes,
     )
 
 
