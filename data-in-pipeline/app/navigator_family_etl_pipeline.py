@@ -1,3 +1,4 @@
+import asyncio
 import io
 import itertools
 import json
@@ -169,6 +170,17 @@ def cache_extraction_result(result: FamilyFetchResult):
         result.model_dump_json(),
         bucket="cpr-cache",
         key=generate_s3_cache_key("extract"),
+    )
+
+
+@task(log_prints=True)
+def cache_transform_errors(errors: list[Exception], run_id: str):
+    """Cache transformation errors to S3."""
+    error_data = [str(e) for e in errors]
+    upload_to_s3(
+        json.dumps(error_data),
+        bucket="cpr-cache",
+        key=f"pipelines/data-in-pipeline/transformation_errors/{run_id}-transform-errors.json",
     )
 
 
@@ -390,7 +402,18 @@ def data_in_pipeline(
     transformed_documents, errors = transform(identified_families)
 
     if errors:
-        # TODO : APP-1664 - Handle these partial failures more gracefully
+        cache_transform_errors(errors, run_id)
+        asyncio.run(
+            SlackNotify.send_custom_message(
+                message=(
+                    f"⚠️ *Partial transform failure* in `{run_id}`\n"
+                    f"*Failed:* {len(errors)} / {family_count} families\n"
+                    f"*Succeeded:* {len(transformed_documents)}\n"
+                    f"Failed IDs cached to S3 → `s3://cpr-cache/pipelines/data-in-pipeline/transformation_errors/{run_id}-transform-errors.json`"
+                )
+            )
+        )
+        pipeline_metrics.record_processed(PipelineType.FAMILY, Status.PARTIAL)
         _LOGGER.exception(f"Transformation errors: {len(errors)}")
 
     if len(transformed_documents) == 0:
