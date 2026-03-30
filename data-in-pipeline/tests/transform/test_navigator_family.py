@@ -538,11 +538,61 @@ def test_transform_navigator_family_with_single_matching_document(
                 ),
             ),
             LabelRelationship(
-                type="entity_type",
+                type="category",
                 value=Label(
                     id="Guidance",
                     value="Guidance",
                     type="category",
+                ),
+            ),
+            LabelRelationship(
+                type="case_number",
+                value=Label(
+                    documents=[],
+                    id="CASE-NUMBER 123",
+                    labels=[],
+                    type="case_number",
+                    value="CASE-NUMBER 123",
+                ),
+            ),
+            LabelRelationship(
+                type="core_object",
+                value=Label(
+                    documents=[],
+                    id="Core Object 123",
+                    labels=[],
+                    type="core_object",
+                    value="Core Object 123",
+                ),
+            ),
+            LabelRelationship(
+                type="project_value_fund_spend",
+                value=Label(
+                    documents=[],
+                    id="123456789",
+                    labels=[],
+                    type="project_value_fund_spend",
+                    value="123456789",
+                ),
+            ),
+            LabelRelationship(
+                type="project_value_co_financing",
+                value=Label(
+                    documents=[],
+                    id="123456789",
+                    labels=[],
+                    type="project_value_co_financing",
+                    value="123456789",
+                ),
+            ),
+            LabelRelationship(
+                type="author_type",
+                value=Label(
+                    documents=[],
+                    id="Person",
+                    labels=[],
+                    type="author_type",
+                    value="Person",
                 ),
             ),
         ],
