@@ -324,6 +324,17 @@ def navigator_family_multilateral_climate_fund_project() -> Identified[Navigator
             events=_mcf_events(),
             collections=[],
             geographies=[],
+            metadata={
+                "region": ["Europe & Central Asia"],
+                "sector": ["Public Sector"],
+                "status": ["Under Implementation"],
+                "project_id": ["XACTMK002A"],
+                "external_id": [],
+                "project_url": ["https://www.cif.org/projects"],
+                "implementing_agency": ["International Bank for Reconstruction"],
+                "project_value_fund_spend": ["250000"],
+                "project_value_co_financing": ["100000"],
+            },
             slug="mcf-family-slug",
         ),
     )
@@ -1249,6 +1260,62 @@ def test_transform_navigator_family_with_multilateral_climate_fund_project(
                     id="Guidance",
                     value="Guidance",
                     type="category",
+                ),
+            ),
+            LabelRelationship(
+                type="sector",
+                value=Label(
+                    id="Public Sector",
+                    type="sector",
+                    value="Public Sector",
+                ),
+            ),
+            LabelRelationship(
+                type="project_status",
+                value=Label(
+                    id="Under Implementation",
+                    type="project_status",
+                    value="Under Implementation",
+                ),
+            ),
+            LabelRelationship(
+                type="project_id",
+                value=Label(
+                    id="XACTMK002A",
+                    type="project_id",
+                    value="XACTMK002A",
+                ),
+            ),
+            LabelRelationship(
+                type="project_url",
+                value=Label(
+                    id="https://www.cif.org/projects",
+                    type="project_url",
+                    value="https://www.cif.org/projects",
+                ),
+            ),
+            LabelRelationship(
+                type="implementing_agency",
+                value=Label(
+                    id="International Bank for Reconstruction",
+                    type="implementing_agency",
+                    value="International Bank for Reconstruction",
+                ),
+            ),
+            LabelRelationship(
+                type="project_value_fund_spend",
+                value=Label(
+                    id="250000",
+                    type="project_value_fund_spend",
+                    value="250000",
+                ),
+            ),
+            LabelRelationship(
+                type="project_value_co_financing",
+                value=Label(
+                    id="100000",
+                    type="project_value_co_financing",
+                    value="100000",
                 ),
             ),
         ],
