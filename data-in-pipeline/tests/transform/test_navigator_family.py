@@ -1279,43 +1279,11 @@ def test_transform_navigator_family_with_multilateral_climate_fund_project(
                 ),
             ),
             LabelRelationship(
-                type="project_id",
-                value=Label(
-                    id="XACTMK002A",
-                    type="project_id",
-                    value="XACTMK002A",
-                ),
-            ),
-            LabelRelationship(
-                type="project_url",
-                value=Label(
-                    id="https://www.cif.org/projects",
-                    type="project_url",
-                    value="https://www.cif.org/projects",
-                ),
-            ),
-            LabelRelationship(
                 type="implementing_agency",
                 value=Label(
                     id="International Bank for Reconstruction",
                     type="implementing_agency",
                     value="International Bank for Reconstruction",
-                ),
-            ),
-            LabelRelationship(
-                type="project_value_fund_spend",
-                value=Label(
-                    id="250000",
-                    type="project_value_fund_spend",
-                    value="250000",
-                ),
-            ),
-            LabelRelationship(
-                type="project_value_co_financing",
-                value=Label(
-                    id="100000",
-                    type="project_value_co_financing",
-                    value="100000",
                 ),
             ),
         ],
@@ -1385,6 +1353,10 @@ def test_transform_navigator_family_with_multilateral_climate_fund_project(
         ],
         attributes={
             "deprecated_slug": "mcf-family-slug",
+            "project_id": "XACTMK002A",
+            "project_url": "https://www.cif.org/projects",
+            "project_value_co_financing": "100000",
+            "project_value_fund_spend": "250000",
             "status": "PUBLISHED",
         },
     )

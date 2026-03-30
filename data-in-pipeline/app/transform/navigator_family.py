@@ -52,6 +52,12 @@ LAWS_AND_POLICIES_CORPORA = {
 
 MCF_EXCLUDED_KEYS = {"region", "external_id"}
 MCF_KEY_MAPPING = {"status": "project_status"}
+MCF_ATTRIBUTE_KEYS = {
+    "project_id",
+    "project_url",
+    "project_value_fund_spend",
+    "project_value_co_financing",
+}
 
 
 def transform_navigator_family(
@@ -287,22 +293,30 @@ def _transform_family_corpus_organisation(
     return labels
 
 
-def _transform_mcf_metadata(metadata: dict) -> list[LabelRelationship]:
-    labels = []
+def _transform_mcf_metadata(
+    metadata: dict,
+    attributes: dict[str, str | float | bool],
+) -> list[LabelRelationship]:
+    labels: list[LabelRelationship] = []
 
     for key, values in metadata.items():
-        if key in MCF_EXCLUDED_KEYS or not values:
+        if not values or key in MCF_EXCLUDED_KEYS:
+            continue
+
+        # We know that the value of the metadata is always list[str] with one element
+        if key in MCF_ATTRIBUTE_KEYS:
+            attributes[key] = values[0]
             continue
 
         mapped_key = MCF_KEY_MAPPING.get(key, key)
 
-        for value in values:
-            labels.append(
-                LabelRelationship(
-                    type=mapped_key,
-                    value=Label(id=value, value=value, type=mapped_key),
-                )
+        labels.extend(
+            LabelRelationship(
+                type=mapped_key,
+                value=Label(id=value, value=value, type=mapped_key),
             )
+            for value in values
+        )
 
     return labels
 
@@ -325,7 +339,7 @@ def _transform_laws_policies_metadata(metadata: dict) -> list[LabelRelationship]
     return labels
 
 
-def _transform_metadata(navigator_family) -> list[LabelRelationship]:
+def _transform_metadata(navigator_family, attributes) -> list[LabelRelationship]:
     if not navigator_family.metadata:
         return []
 
@@ -335,7 +349,7 @@ def _transform_metadata(navigator_family) -> list[LabelRelationship]:
         return _transform_laws_policies_metadata(navigator_family.metadata)
 
     if import_id in MCF_CORPORA:
-        return _transform_mcf_metadata(navigator_family.metadata)
+        return _transform_mcf_metadata(navigator_family.metadata, attributes)
 
     return []
 
@@ -550,7 +564,7 @@ def _transform_navigator_family(navigator_family: NavigatorFamily) -> Document:
     Metadata
     """
 
-    labels.extend(_transform_metadata(navigator_family))
+    labels.extend(_transform_metadata(navigator_family, attributes))
 
     """
     Dates
