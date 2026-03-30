@@ -294,13 +294,16 @@ def _transform_family_corpus_organisation(
 
 
 def _transform_mcf_metadata(
-    metadata: dict,
+    metadata: dict[str, list[str]],
     attributes: dict[str, str | float | bool],
 ) -> list[LabelRelationship]:
     labels: list[LabelRelationship] = []
 
     for key, values in metadata.items():
         if not values or key in MCF_EXCLUDED_KEYS:
+            continue
+
+        if not values or not key:
             continue
 
         # We know that the value of the metadata is always list[str] with one element
