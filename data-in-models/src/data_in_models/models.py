@@ -16,6 +16,12 @@ class WithAttributes(BaseModel):
     attributes: dict[str, str | float | bool] = {}
 
 
+class LabelWithoutRelationships(BaseModel):
+    id: str
+    type: str
+    value: str
+
+
 class Label(WithRelationships):
     id: str
     type: str
@@ -24,7 +30,7 @@ class Label(WithRelationships):
 
 class LabelRelationship(BaseModel):
     type: str
-    value: Label
+    value: LabelWithoutRelationships
     timestamp: datetime | None = None
 
 
