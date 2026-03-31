@@ -334,6 +334,7 @@ def navigator_family_multilateral_climate_fund_project() -> Identified[Navigator
                 "implementing_agency": ["International Bank for Reconstruction"],
                 "project_value_fund_spend": ["250000"],
                 "project_value_co_financing": ["100000"],
+                "approved_ref": ["XACTMK002A"],
             },
             slug="mcf-family-slug",
         ),
