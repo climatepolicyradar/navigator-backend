@@ -112,9 +112,7 @@ def state_report_slack_blocks(
     ui_url: str,
 ):
     """Create all Slack Blocks for a state update."""
-    header = (
-        f"❌ Flow run *{flow.name}/" f"{flow_run.name}* observed state `{state.name}`."
-    )
+    header = f"❌ Flow run *{flow.name}/{flow_run.name}* observed state `{state.name}`."
     state_message = textwrap.shorten(
         state.message or "No message",
         width=3000,
@@ -239,3 +237,16 @@ class SlackNotify:
             text=msg,
             blocks=state_report_slack_blocks(cls, flow, flow_run, state, ui_url),
         )
+
+    @classmethod
+    async def send_custom_message(cls, message: str):
+        """Send a custom Slack message."""
+        if cls.get_environment() != "prod":
+            return None
+
+        slack_credentials_block = SlackCredentials.load(
+            cls.SLACK_NAVIGATOR_NOTIFIER_BOT_BLOCK
+        )
+        client = slack_credentials_block.get_client()  # type: ignore
+
+        await client.chat_postMessage(channel=str(cls.slack_channel_name), text=message)

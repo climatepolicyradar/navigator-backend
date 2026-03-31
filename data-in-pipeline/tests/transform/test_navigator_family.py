@@ -119,8 +119,15 @@ def navigator_family_with_single_matching_document() -> Identified[NavigatorFami
                 ),
             ],
             geographies=["AU-NSW", "AUS", "XAA"],
+            metadata={
+                "case_number": ["CASE-NUMBER 123"],
+                "core_object": ["Core Object 123"],
+                "project_value_fund_spend": ["123456789"],
+                "project_value_co_financing": ["123456789"],
+                "author": ["Test Author"],
+                "author_type": ["Person"],
+            },
             slug="family-slug",
-            metadata={},
         ),
     )
 
@@ -535,11 +542,69 @@ def test_transform_navigator_family_with_single_matching_document(
                 ),
             ),
             LabelRelationship(
+                type="author",
+                value=Label(
+                    id="Test Author",
+                    value="Test Author",
+                    type="person",
+                ),
+            ),
+            LabelRelationship(
                 type="category",
                 value=Label(
                     id="Guidance",
                     value="Guidance",
                     type="category",
+                ),
+            ),
+            LabelRelationship(
+                type="case_number",
+                value=Label(
+                    documents=[],
+                    id="CASE-NUMBER 123",
+                    labels=[],
+                    type="case_number",
+                    value="CASE-NUMBER 123",
+                ),
+            ),
+            LabelRelationship(
+                type="core_object",
+                value=Label(
+                    documents=[],
+                    id="Core Object 123",
+                    labels=[],
+                    type="core_object",
+                    value="Core Object 123",
+                ),
+            ),
+            LabelRelationship(
+                type="project_value_fund_spend",
+                value=Label(
+                    documents=[],
+                    id="123456789",
+                    labels=[],
+                    type="project_value_fund_spend",
+                    value="123456789",
+                ),
+            ),
+            LabelRelationship(
+                type="project_value_co_financing",
+                value=Label(
+                    documents=[],
+                    id="123456789",
+                    labels=[],
+                    type="project_value_co_financing",
+                    value="123456789",
+                ),
+            ),
+            LabelRelationship(
+                type="author_type",
+                value=Label(
+                    documents=[],
+                    id="Person",
+                    labels=[],
+                    type="author_type",
+                    value="Person",
                 ),
             ),
         ],

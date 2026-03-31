@@ -532,6 +532,28 @@ def _transform_navigator_family(navigator_family: NavigatorFamily) -> Document:
     labels.extend(_transform_geographies(navigator_family))
 
     """
+    metadata.author and metadata.author_type
+    """
+    author_metadata = navigator_family.metadata.get("author")
+    if author_metadata and author_metadata[0]:
+        author = author_metadata[0]
+        author_type = "agent"
+        author_type_metadata = navigator_family.metadata.get("author_type")
+        if author_type_metadata and author_type_metadata[0]:
+            author_type = author_type_metadata[0].lower()
+
+        labels.append(
+            LabelRelationship(
+                type="author",
+                value=Label(
+                    id=author,
+                    value=author,
+                    type=author_type,
+                ),
+            )
+        )
+
+    """
     family.cateogry
     @see: https://github.com/climatepolicyradar/navigator-db-client/blob/a842d5e971894246843c1915de9179ddd991b25c/db_client/models/dfce/family.py#L67-L75
     """
