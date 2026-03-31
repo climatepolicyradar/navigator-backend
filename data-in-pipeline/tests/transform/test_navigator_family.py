@@ -228,6 +228,7 @@ def navigator_family_with_litigation_corpus_type() -> Identified[NavigatorFamily
             collections=[],
             geographies=[],
             slug="litigation-family-slug",
+            metadata={"case_number": ["CASE-NUMBER 123"]},
         ),
     )
 
@@ -759,6 +760,9 @@ def test_transform_navigator_family_with_single_matching_document(
         ],
         attributes={
             "deprecated_slug": "family-slug",
+            "identifier::case_number": "CASE-NUMBER 123",
+            "project_fund_spend_usd": 123456789,
+            "project_co_financing_usd": 123456789,
             "published_date": "2020-01-0100:00:00Z",
             "last_updated_date": "2020-01-0100:00:00Z",
             "status": "PUBLISHED",
@@ -1185,6 +1189,7 @@ def test_transform_navigator_family_with_litigation_corpus_type(
         ],
         attributes={
             "deprecated_slug": "litigation-family-slug",
+            "identifier::case_number": "CASE-NUMBER 123",
             "published_date": "2020-01-0100:00:00Z",
             "last_updated_date": "2020-01-0100:00:00Z",
             "status": "PUBLISHED",
@@ -1455,12 +1460,12 @@ def test_transform_navigator_family_with_multilateral_climate_fund_project(
             ),
         ],
         attributes={
-            "approved_ref": "XACTMK002A",
             "deprecated_slug": "mcf-family-slug",
-            "project_id": "XACTMK002A",
+            "identifier::project_id": "XACTMK002A",
+            "identifier::project_approved_ref": "XACTMK002A",
+            "project_co_financing_usd": 100000,
+            "project_fund_spend_usd": 250000,
             "project_url": "https://www.cif.org/projects",
-            "project_value_co_financing": "100000",
-            "project_value_fund_spend": "250000",
             "status": "PUBLISHED",
         },
     )
