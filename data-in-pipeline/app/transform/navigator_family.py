@@ -57,6 +57,7 @@ MCF_ATTRIBUTE_KEYS = {
     "project_url",
     "project_value_fund_spend",
     "project_value_co_financing",
+    "approved_ref",
 }
 
 
