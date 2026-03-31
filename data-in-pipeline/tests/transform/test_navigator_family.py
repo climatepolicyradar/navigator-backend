@@ -122,8 +122,6 @@ def navigator_family_with_single_matching_document() -> Identified[NavigatorFami
             metadata={
                 "case_number": ["CASE-NUMBER 123"],
                 "core_object": ["Core Object 123"],
-                "project_value_fund_spend": ["123456789"],
-                "project_value_co_financing": ["123456789"],
                 "author": ["Test Author"],
                 "author_type": ["Person"],
             },
