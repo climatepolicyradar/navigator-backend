@@ -616,22 +616,6 @@ def test_transform_navigator_family_with_single_matching_document(
                     value="Core Object 123",
                 ),
             ),
-            LabelRelationship(  # these are attributes right ??
-                type="project_value_fund_spend",
-                value=LabelWithoutRelationships(
-                    id="123456789",
-                    type="project_value_fund_spend",
-                    value="123456789",
-                ),
-            ),
-            LabelRelationship(
-                type="project_value_co_financing",
-                value=LabelWithoutRelationships(
-                    id="123456789",
-                    type="project_value_co_financing",
-                    value="123456789",
-                ),
-            ),
             LabelRelationship(
                 type="author_type",
                 value=LabelWithoutRelationships(
