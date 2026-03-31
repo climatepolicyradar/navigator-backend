@@ -406,7 +406,7 @@ def _transform_litigation_concepts_to_label_relationships(
         List[LabelRelationship] where each:
         - type="concept"
         - value=LabelWithoutRelationships (with nested .labels for hierarchies)
-        - Parent references are SHALLOW (labels=[] to prevent deep nesting)
+        - Parent references are SHALLOW (labels=[] to prevent deep nesting).
     """
     # Build core labels indexed by (relation, id)
     label_map: dict[tuple[str, str], LabelWithoutRelationships] = {
