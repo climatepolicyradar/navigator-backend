@@ -1418,6 +1418,7 @@ def test_transform_navigator_family_with_multilateral_climate_fund_project(
             ),
         ],
         attributes={
+            "approved_ref": "XACTMK002A",
             "deprecated_slug": "mcf-family-slug",
             "project_id": "XACTMK002A",
             "project_url": "https://www.cif.org/projects",
