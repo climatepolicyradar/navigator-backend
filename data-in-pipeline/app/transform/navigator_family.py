@@ -18,26 +18,21 @@ from app.geographies import geographies_lookup
 from app.models import Identified
 from app.transform.models import CouldNotTransform, NoMatchingTransformations
 
-mcf_projects_corpus_types = [
-    "AF",
-    "CIF",
-    "GEF",
-    "GCF",
-]
-
-mcf_reports_corpus_import_ids = [
-    "MCF.corpus.AF.Guidance",
-    "MCF.corpus.CIF.Guidance",
-    "MCF.corpus.GEF.Guidance",
-    "MCF.corpus.GCF.Guidance",
-]
-
-MCF_CORPORA = set(mcf_reports_corpus_import_ids) | {
+mcf_projects_corpus_import_ids = [
     "MCF.corpus.AF.n0000",
-    "MCF.corpus.GEF.n0000",
     "MCF.corpus.CIF.n0000",
     "MCF.corpus.GCF.n0000",
-}
+    "MCF.corpus.GEF.n0000",
+]
+
+mcf_guidance_corpus_import_ids = [
+    "MCF.corpus.AF.Guidance",
+    "MCF.corpus.CIF.Guidance",
+    "MCF.corpus.GCF.Guidance",
+    "MCF.corpus.GEF.Guidance",
+]
+
+MCF_CORPORA = set(mcf_guidance_corpus_import_ids) | set(mcf_projects_corpus_import_ids)
 
 
 LAWS_AND_POLICIES_CORPORA = {
@@ -265,13 +260,14 @@ def _transform_family_corpus_organisation(
         "CPR.corpus.i00000002.n0000": "Climate Policy Radar",
         "CPR.corpus.i00000591.n0000": "Laws Africa",
         "CPR.corpus.i00000592.n0000": "UNDRR",
-        "MCF.corpus.GEF.n0000": "Global Environment Facility",
         "MCF.corpus.AF.n0000": "Adaptation Fund",
-        "MCF.corpus.GCF.n0000": "Green Climate Fund",
-        "MCF.corpus.CIF.n0000": "The Climate Investment Funds",
-        "MCF.corpus.GEF.Guidance": "Global Environment Facility",
         "MCF.corpus.AF.Guidance": "Adaptation Fund",
+        "MCF.corpus.CIF.n0000": "The Climate Investment Funds",
+        "MCF.corpus.CIF.Guidance": "The Climate Investment Funds",
+        "MCF.corpus.GCF.n0000": "Green Climate Fund",
         "MCF.corpus.GCF.Guidance": "Green Climate Fund",
+        "MCF.corpus.GEF.n0000": "Global Environment Facility",
+        "MCF.corpus.GEF.Guidance": "Global Environment Facility",
         "OEP.corpus.i00000001.n0000": "Ocean Energy Pathways",
         "UNFCCC.corpus.i00000001.n0000": "UNFCCC",
         "UN.corpus.UNCCD.n0000": "UNCCD",
@@ -430,6 +426,31 @@ def _transform_navigator_family(navigator_family: NavigatorFamily) -> Document:
                 value=Label(
                     id=entity_type,
                     value=entity_type,
+                    type="entity_type",
+                ),
+            )
+        )
+
+    # MCF reports and guidance labels
+    if navigator_family.corpus.import_id in mcf_projects_corpus_import_ids:
+        labels.append(
+            LabelRelationship(
+                type="entity_type",
+                value=Label(
+                    id="Project",
+                    value="Project",
+                    type="entity_type",
+                ),
+            )
+        )
+
+    if navigator_family.corpus.import_id in mcf_guidance_corpus_import_ids:
+        labels.append(
+            LabelRelationship(
+                type="entity_type",
+                value=Label(
+                    id="Guidance",
+                    value="Guidance",
                     type="entity_type",
                 ),
             )
