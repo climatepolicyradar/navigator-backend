@@ -13,7 +13,7 @@ from data_in_models.models import (
 from app.extract.connectors import (
     NavigatorFamily,
 )
-from app.models import Identified
+from app.models import Identified, IncomingConcept
 from app.transform.navigator_family import transform_navigator_family
 from tests.factories import (
     NavigatorCollectionFactory,
@@ -226,6 +226,104 @@ def navigator_family_with_litigation_corpus_type() -> Identified[NavigatorFamily
             collections=[],
             geographies=[],
             slug="litigation-family-slug",
+        ),
+    )
+
+
+@pytest.fixture
+def navigator_family_with_litigation_concepts() -> Identified[NavigatorFamily]:
+    decision_date = datetime.datetime(2020, 1, 1)
+    return Identified(
+        id="family",
+        source="navigator_family",
+        data=NavigatorFamilyFactory.build(
+            import_id="family",
+            title="Litigation family",
+            summary="Family summary",
+            category="REPORTS",
+            last_updated_date="2020-01-0100:00:00Z",
+            published_date="2020-01-0100:00:00Z",
+            corpus=NavigatorCorpusFactory.build(
+                import_id="Academic.corpus.Litigation.n0000",
+                corpus_type=NavigatorCorpusTypeFactory.build(name="Litigation"),
+                organisation=NavigatorOrganisationFactory.build(id=1, name="Sabin"),
+            ),
+            documents=[
+                NavigatorDocumentFactory.build(
+                    import_id="document",
+                    title="Litigation family document",
+                    cdn_object=None,
+                    source_url=None,
+                    slug="litigation-document-slug",
+                    events=[
+                        NavigatorEventFactory.build(
+                            import_id="123",
+                            event_type="Decision",
+                            date=decision_date,
+                            valid_metadata={
+                                "event_type": ["Decision"],
+                                "datetime_event_name": ["Decision"],
+                            },
+                        )
+                    ],
+                    variant="Original language",
+                    md5_sum="aaaaa11111bbbbb",
+                    languages=[],
+                    document_status="PUBLISHED",
+                ),
+                NavigatorDocumentFactory.build(
+                    import_id="1.2.3.placeholder",
+                    title="Placeholder litigation family document",
+                    cdn_object=None,
+                    source_url=None,
+                    slug="placeholder-document-slug",
+                    events=[],
+                    variant=None,
+                    md5_sum="aaaaa11111bbbbb",
+                    languages=[],
+                    document_status="PUBLISHED",
+                ),
+            ],
+            events=[
+                NavigatorEventFactory.build(
+                    import_id="123",
+                    event_type="Decision",
+                    date=decision_date,
+                    valid_metadata={
+                        "event_type": ["Decision"],
+                        "datetime_event_name": ["Decision"],
+                    },
+                ),
+            ],
+            collections=[],
+            geographies=[],
+            slug="litigation-family-slug",
+            concepts=[
+                IncomingConcept(
+                    id="High Court of Justice",
+                    ids=[],
+                    type="legal_entity",
+                    relation="jurisdiction",
+                    preferred_label="High Court of Justice",
+                    subconcept_of_labels=["England and Wales"],
+                ),
+                IncomingConcept(
+                    id="High Court of Justice (Administrative Court)",
+                    ids=[],
+                    type="legal_entity",
+                    relation="jurisdiction",
+                    preferred_label="High Court of Justice (Administrative Court)",
+                    subconcept_of_labels=["High Court of Justice"],
+                ),
+                IncomingConcept(
+                    id="England And Wales",
+                    ids=[],
+                    type="legal_entity",
+                    relation="jurisdiction",
+                    preferred_label="England and Wales",
+                    subconcept_of_labels=[],
+                ),
+            ],
         ),
     )
 
