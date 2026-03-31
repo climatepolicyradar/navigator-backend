@@ -32,6 +32,34 @@ mcf_reports_corpus_import_ids = [
     "MCF.corpus.GCF.Guidance",
 ]
 
+MCF_CORPORA = set(mcf_reports_corpus_import_ids) | {
+    "MCF.corpus.AF.n0000",
+    "MCF.corpus.GEF.n0000",
+    "MCF.corpus.CIF.n0000",
+    "MCF.corpus.GCF.n0000",
+}
+
+
+LAWS_AND_POLICIES_CORPORA = {
+    "CCLW.corpus.i00000001.n0000",
+    "CPR.corpus.i00000001.n0000",
+    "CPR.corpus.Goldstandard.n0000",
+    "CPR.corpus.i00000589.n0000",
+    "CPR.corpus.i00000591.n0000",
+    "CPR.corpus.i00000592.n0000",
+}
+
+
+MCF_EXCLUDED_KEYS = {"region", "external_id"}
+MCF_KEY_MAPPING = {"status": "project_status"}
+MCF_ATTRIBUTE_KEYS = {
+    "project_id",
+    "project_url",
+    "project_value_fund_spend",
+    "project_value_co_financing",
+    "approved_ref",
+}
+
 
 def transform_navigator_family(
     input: Identified[NavigatorFamily],
@@ -266,6 +294,70 @@ def _transform_family_corpus_organisation(
     return labels
 
 
+def _transform_mcf_metadata(
+    metadata: dict[str, list[str]],
+    attributes: dict[str, str | float | bool],
+) -> list[LabelRelationship]:
+    labels: list[LabelRelationship] = []
+
+    for key, values in metadata.items():
+        if not values or key in MCF_EXCLUDED_KEYS:
+            continue
+
+        if not values or not key:
+            continue
+
+        # We know that the value of the metadata is always list[str] with one element
+        if key in MCF_ATTRIBUTE_KEYS:
+            attributes[key] = values[0]
+            continue
+
+        mapped_key = MCF_KEY_MAPPING.get(key, key)
+
+        labels.extend(
+            LabelRelationship(
+                type=mapped_key,
+                value=Label(id=value, value=value, type=mapped_key),
+            )
+            for value in values
+        )
+
+    return labels
+
+
+def _transform_laws_policies_metadata(metadata: dict) -> list[LabelRelationship]:
+    labels = []
+
+    for key, values in metadata.items():
+        if not values:
+            continue
+
+        for value in values:
+            labels.append(
+                LabelRelationship(
+                    type=key,
+                    value=Label(id=value, value=value, type=key),
+                )
+            )
+
+    return labels
+
+
+def _transform_metadata(navigator_family, attributes) -> list[LabelRelationship]:
+    if not navigator_family.metadata:
+        return []
+
+    import_id = navigator_family.corpus.import_id
+
+    if import_id in LAWS_AND_POLICIES_CORPORA:
+        return _transform_laws_policies_metadata(navigator_family.metadata)
+
+    if import_id in MCF_CORPORA:
+        return _transform_mcf_metadata(navigator_family.metadata, attributes)
+
+    return []
+
+
 def _transform_geographies(
     navigator_family: NavigatorFamily,
 ) -> list[LabelRelationship]:
@@ -497,31 +589,8 @@ def _transform_navigator_family(navigator_family: NavigatorFamily) -> Document:
     """
     Metadata
     """
-    laws_and_policies_corpora = [
-        "CCLW.corpus.i00000001.n0000",
-        "CPR.corpus.i00000001.n0000",
-        "CPR.corpus.Goldstandard.n0000",
-        "CPR.corpus.i00000589.n0000",
-        "CPR.corpus.i00000591.n0000",
-        "CPR.corpus.i00000592.n0000",
-    ]
-    if (
-        navigator_family.metadata
-        and navigator_family.corpus.import_id in laws_and_policies_corpora
-    ):
-        for key, values in navigator_family.metadata.items():
-            if values:
-                for value in values:
-                    labels.append(
-                        LabelRelationship(
-                            type=key,
-                            value=Label(
-                                id=value,
-                                value=value,
-                                type=key,
-                            ),
-                        )
-                    )
+
+    labels.extend(_transform_metadata(navigator_family, attributes))
 
     """
     Dates
