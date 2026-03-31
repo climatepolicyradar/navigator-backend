@@ -667,7 +667,7 @@ def test_transform_navigator_family_with_single_matching_document(
                 value=DocumentWithoutRelationships(
                     id="document",
                     title="Matching title on family and document and collection",
-                    # attribution_url="testurl.org",
+                    attribution_url="testurl.org",
                     labels=[
                         LabelRelationship(
                             type="role",
@@ -780,7 +780,7 @@ def test_transform_navigator_family_with_single_matching_document(
             Document(
                 id="document",
                 title="Matching title on family and document and collection",
-                # attribution_url="testurl.org",
+                attribution_url="testurl.org",
                 labels=[
                     LabelRelationship(
                         type="role",
@@ -1141,6 +1141,7 @@ def test_transform_navigator_family_with_litigation_corpus_type(
                 value=DocumentWithoutRelationships(
                     id="document",
                     title="Litigation family document",
+                    attribution_url="testurl.org",
                     labels=[
                         LabelRelationship(
                             type="entity_type",
@@ -1172,6 +1173,7 @@ def test_transform_navigator_family_with_litigation_corpus_type(
                 value=DocumentWithoutRelationships(
                     id="1.2.3.placeholder",
                     title="Placeholder litigation family document",
+                    attribution_url="testurl.org",
                     labels=[
                         LabelRelationship(
                             type="status",
@@ -1212,6 +1214,7 @@ def test_transform_navigator_family_with_litigation_corpus_type(
             Document(
                 id="document",
                 title="Litigation family document",
+                attribution_url="testurl.org",
                 labels=[
                     LabelRelationship(
                         type="entity_type",
@@ -1248,6 +1251,7 @@ def test_transform_navigator_family_with_litigation_corpus_type(
             Document(
                 id="1.2.3.placeholder",
                 title="Placeholder litigation family document",
+                attribution_url="testurl.org",
                 labels=[
                     LabelRelationship(
                         type="status",
@@ -1412,6 +1416,7 @@ def test_transform_navigator_family_with_multilateral_climate_fund_project(
                 value=DocumentWithoutRelationships(
                     id="document_1",
                     title="Multilateral climate fund project document",
+                    attribution_url="testurl.org",
                     labels=[
                         LabelRelationship(
                             type="provider",
@@ -1443,6 +1448,7 @@ def test_transform_navigator_family_with_multilateral_climate_fund_project(
                 value=DocumentWithoutRelationships(
                     id="document_2",
                     title="Project document",
+                    attribution_url="testurl.org",
                     labels=[
                         LabelRelationship(
                             type="provider",
@@ -1487,6 +1493,7 @@ def test_transform_navigator_family_with_multilateral_climate_fund_project(
             Document(
                 id="document_1",
                 title="Multilateral climate fund project document",
+                attribution_url="testurl.org",
                 labels=[
                     LabelRelationship(
                         type="provider",
@@ -1523,6 +1530,7 @@ def test_transform_navigator_family_with_multilateral_climate_fund_project(
             Document(
                 id="document_2",
                 title="Project document",
+                attribution_url="testurl.org",
                 labels=[
                     LabelRelationship(
                         type="provider",
@@ -1657,6 +1665,7 @@ def test_transform_navigator_family_with_published_and_unpublished_documents():
                 value=DocumentWithoutRelationships(
                     id="document1",
                     title="Matching title on family and document",
+                    attribution_url="testurl.org",
                     labels=[
                         LabelRelationship(
                             type="provider",
@@ -1708,6 +1717,7 @@ def test_transform_navigator_family_with_published_and_unpublished_documents():
                 value=DocumentWithoutRelationships(
                     id="document2",
                     title="Matching title on family and document",
+                    attribution_url="testurl.org",
                     labels=[
                         LabelRelationship(
                             type="provider",
@@ -1767,6 +1777,7 @@ def test_transform_navigator_family_with_published_and_unpublished_documents():
             Document(
                 id="document1",
                 title="Matching title on family and document",
+                attribution_url="testurl.org",
                 labels=[
                     LabelRelationship(
                         type="provider",
@@ -1823,6 +1834,7 @@ def test_transform_navigator_family_with_published_and_unpublished_documents():
             Document(
                 id="document2",
                 title="Matching title on family and document",
+                attribution_url="testurl.org",
                 labels=[
                     LabelRelationship(
                         type="provider",
@@ -1961,6 +1973,7 @@ def test_transform_navigator_family_with_no_published_documents():
                 value=DocumentWithoutRelationships(
                     id="document1",
                     title="Matching title on family and document",
+                    attribution_url="testurl.org",
                     labels=[
                         LabelRelationship(
                             type="provider",
@@ -2019,6 +2032,7 @@ def test_transform_navigator_family_with_no_published_documents():
             Document(
                 id="document1",
                 title="Matching title on family and document",
+                attribution_url="testurl.org",
                 labels=[
                     LabelRelationship(
                         type="provider",

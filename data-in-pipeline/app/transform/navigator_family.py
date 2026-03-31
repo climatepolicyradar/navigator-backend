@@ -779,6 +779,7 @@ def _transform_navigator_document(
     return Document(
         id=navigator_document.import_id,
         title=navigator_document.title,
+        attribution_url=navigator_family.corpus.attribution_url,
         labels=_deduplicate_labels(labels),
         items=items,
         attributes=attributes,
