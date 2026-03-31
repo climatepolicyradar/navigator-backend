@@ -649,7 +649,7 @@ def test_transform_navigator_family_with_single_matching_document(
                 value=DocumentWithoutRelationships(
                     id="collection",
                     title="Collection title",
-                    # attribution_url="testurl.org",
+                    attribution_url="testurl.org",
                     labels=[
                         LabelRelationship(
                             type="entity_type",
@@ -751,7 +751,7 @@ def test_transform_navigator_family_with_single_matching_document(
                 value=DocumentWithoutRelationships(
                     id="collection_matching",
                     title="Matching title on family and document and collection",
-                    # attribution_url="testurl.org",
+                    attribution_url="testurl.org",
                     labels=[
                         LabelRelationship(
                             type="entity_type",
@@ -869,7 +869,7 @@ def test_transform_navigator_family_with_single_matching_document(
             Document(
                 id="collection_matching",
                 title="Matching title on family and document and collection",
-                # attribution_url="testurl.org",
+                attribution_url="testurl.org",
                 labels=[
                     LabelRelationship(
                         type="entity_type",
@@ -892,7 +892,7 @@ def test_transform_navigator_family_with_single_matching_document(
             Document(
                 id="collection",
                 title="Collection title",
-                # attribution_url="testurl.org",
+                attribution_url="testurl.org",
                 labels=[
                     LabelRelationship(
                         type="entity_type",

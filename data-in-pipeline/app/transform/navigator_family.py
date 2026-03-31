@@ -805,6 +805,7 @@ def _transform_navigator_collection(
     return Document(
         id=navigator_collection.import_id,
         title=navigator_collection.title,
+        attribution_url=navigator_family.corpus.attribution_url,
         labels=labels,
     )
 
