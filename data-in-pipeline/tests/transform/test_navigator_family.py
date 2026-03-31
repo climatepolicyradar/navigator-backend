@@ -349,6 +349,35 @@ def navigator_family_multilateral_climate_fund_project() -> Identified[Navigator
 
 
 @pytest.fixture
+def navigator_family_multilateral_climate_fund_guidance() -> (
+    Identified[NavigatorFamily]
+):
+    return Identified(
+        id="family",
+        source="navigator_family",
+        data=NavigatorFamilyFactory.build(
+            import_id="family",
+            title="Multilateral climate fund guidance",
+            summary="Family summary",
+            category="REPORTS",
+            last_updated_date=None,
+            published_date=None,
+            corpus=NavigatorCorpusFactory.build(
+                import_id="MCF.corpus.AF.Guidance",
+                corpus_type=NavigatorCorpusTypeFactory.build(name="AF"),
+                organisation=NavigatorOrganisationFactory.build(id=1, name="CCLW"),
+            ),
+            documents=[],
+            events=[],
+            collections=[],
+            geographies=[],
+            metadata={},
+            slug="mcf-guidance-family-slug",
+        ),
+    )
+
+
+@pytest.fixture
 def navigator_family_with_duplicate_legal_case() -> Identified[NavigatorFamily]:
     return Identified(
         id="family",
@@ -1268,6 +1297,14 @@ def test_transform_navigator_family_with_multilateral_climate_fund_project(
                 ),
             ),
             LabelRelationship(
+                type="entity_type",
+                value=Label(
+                    id="Project",
+                    value="Project",
+                    type="entity_type",
+                ),
+            ),
+            LabelRelationship(
                 type="activity_status",
                 value=Label(
                     id="Concept approved",
@@ -2019,5 +2056,69 @@ def test_transform_navigator_family_with_no_published_documents():
                     "status": "DELETED",
                 },
             ),
+        ],
+    )
+
+
+def test_transform_navigator_family_with_multilateral_climate_fund_guidance(
+    navigator_family_multilateral_climate_fund_guidance: Identified[NavigatorFamily],
+):
+    result = transform_navigator_family(
+        navigator_family_multilateral_climate_fund_guidance
+    )
+    assert_model_list_equality(
+        result.unwrap(),
+        [
+            Document(
+                id="family",
+                title="Multilateral climate fund guidance",
+                description="Family summary",
+                labels=[
+                    LabelRelationship(
+                        type="status",
+                        value=Label(
+                            type="status",
+                            id="Principal",
+                            value="Principal",
+                        ),
+                    ),
+                    LabelRelationship(
+                        type="entity_type",
+                        value=Label(
+                            id="Multilateral climate fund project",
+                            value="Multilateral climate fund project",
+                            type="entity_type",
+                        ),
+                    ),
+                    LabelRelationship(
+                        type="entity_type",
+                        value=Label(
+                            id="Guidance",
+                            value="Guidance",
+                            type="entity_type",
+                        ),
+                    ),
+                    LabelRelationship(
+                        type="provider",
+                        value=Label(
+                            type="agent",
+                            id="Adaptation Fund",
+                            value="Adaptation Fund",
+                        ),
+                    ),
+                    LabelRelationship(
+                        type="category",
+                        value=Label(
+                            id="Guidance",
+                            value="Guidance",
+                            type="category",
+                        ),
+                    ),
+                ],
+                documents=[],
+                attributes={
+                    "deprecated_slug": "mcf-guidance-family-slug",
+                },
+            )
         ],
     )
