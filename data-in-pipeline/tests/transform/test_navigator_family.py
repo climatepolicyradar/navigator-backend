@@ -226,6 +226,7 @@ def navigator_family_with_litigation_corpus_type() -> Identified[NavigatorFamily
             collections=[],
             geographies=[],
             slug="litigation-family-slug",
+            concepts=[],
         ),
     )
 
@@ -316,7 +317,7 @@ def navigator_family_with_litigation_concepts() -> Identified[NavigatorFamily]:
                     subconcept_of_labels=["High Court of Justice"],
                 ),
                 IncomingConcept(
-                    id="England And Wales",
+                    id="England and Wales",
                     ids=[],
                     type="legal_entity",
                     relation="jurisdiction",
@@ -496,6 +497,7 @@ def navigator_family_with_duplicate_legal_case() -> Identified[NavigatorFamily]:
             events=[],
             collections=[],
             geographies=[],
+            concepts=[],
         ),
     )
 
@@ -1394,6 +1396,53 @@ def test_transform_navigator_family_with_litigation_corpus_type_and_litigation_c
                     type="category",
                 ),
             ),
+            LabelRelationship(
+                type="concept",
+                value=LabelWithoutRelationships(
+                    id="High Court of Justice",
+                    labels=[
+                        LabelRelationship(
+                            type="subconcept_of",
+                            value=LabelWithoutRelationships(
+                                id="England and Wales",
+                                labels=[],
+                                type="jurisdiction",
+                                value="England and Wales",
+                            ),
+                        )
+                    ],
+                    type="jurisdiction",
+                    value="High Court of Justice",
+                ),
+            ),
+            LabelRelationship(
+                type="concept",
+                value=LabelWithoutRelationships(
+                    id="High Court of Justice (Administrative Court)",
+                    labels=[
+                        LabelRelationship(
+                            type="subconcept_of",
+                            value=LabelWithoutRelationships(
+                                id="High Court of Justice",
+                                labels=[],
+                                type="jurisdiction",
+                                value="High Court of Justice",
+                            ),
+                        )
+                    ],
+                    type="jurisdiction",
+                    value="High Court of Justice (Administrative Court)",
+                ),
+            ),
+            LabelRelationship(
+                type="concept",
+                value=LabelWithoutRelationships(
+                    id="England and Wales",
+                    labels=[],
+                    type="jurisdiction",
+                    value="England and Wales",
+                ),
+            ),
         ],
         documents=[
             DocumentRelationship(
@@ -1462,7 +1511,7 @@ def test_transform_navigator_family_with_litigation_corpus_type_and_litigation_c
             "deprecated_slug": "litigation-family-slug",
             "published_date": "2020-01-0100:00:00Z",
             "last_updated_date": "2020-01-0100:00:00Z",
-            "status": "PUBLISHEDssss",
+            "status": "PUBLISHED",
         },
     )
     assert_model_list_equality(

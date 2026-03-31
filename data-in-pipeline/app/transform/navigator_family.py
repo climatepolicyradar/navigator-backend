@@ -384,6 +384,18 @@ def _transform_geographies(
     return labels
 
 
+def _shallow_label(label: LabelWithoutRelationships) -> LabelWithoutRelationships:
+    """
+    We want to avoid deep nesting of labels and recursive references.
+    """
+    return LabelWithoutRelationships(
+        id=label.id,
+        type=label.type,
+        value=label.value,
+        labels=[],
+    )
+
+
 def _transform_litigation_concepts_to_label_relationships(
     concepts: list[IncomingConcept],
 ) -> list[LabelRelationship]:
@@ -394,6 +406,7 @@ def _transform_litigation_concepts_to_label_relationships(
         List[LabelRelationship] where each:
         - type="concept"
         - value=LabelWithoutRelationships (with nested .labels for hierarchies)
+        - Parent references are SHALLOW (labels=[] to prevent deep nesting)
     """
     # Build core labels indexed by (relation, id)
     label_map: dict[tuple[str, str], LabelWithoutRelationships] = {
@@ -401,13 +414,12 @@ def _transform_litigation_concepts_to_label_relationships(
             id=c.id,
             type=c.relation,
             value=c.preferred_label,
-            # labels field auto-initialized to []
         )
         for c in concepts
     }
 
     # Secondary index for parent lookups by preferred_label
-    by_name: dict[tuple[str, str], LabelWithoutRelationships] = {
+    label_by_name: dict[tuple[str, str], LabelWithoutRelationships] = {
         (c.relation, c.preferred_label): label_map[(c.relation, c.id)] for c in concepts
     }
 
@@ -415,19 +427,18 @@ def _transform_litigation_concepts_to_label_relationships(
     for concept in concepts:
         child = label_map[(concept.relation, concept.id)]
         for parent_name in concept.subconcept_of_labels:
-            parent = by_name.get((concept.relation, parent_name))
+            parent = label_by_name.get((concept.relation, parent_name))
             if parent is None:
                 raise ValueError(
                     f"Unknown parent label {parent_name!r} in relation {concept.relation!r}"
                 )
-            # ✅ Now works: LabelWithoutRelationships has .labels field
-            child.labels.append(LabelRelationship(type="subconcept_of", value=parent))
 
-    print(
-        f"Constructed label map with {len(label_map)} concepts and {sum(len(c.labels) for c in label_map.values())} subconcept relationships"
-    )
+            parent_ref = _shallow_label(parent)
 
-    # Wrap as relationships for consistency with your labels list
+            child.labels.append(
+                LabelRelationship(type="subconcept_of", value=parent_ref)
+            )
+
     return [
         LabelRelationship(type="concept", value=label) for label in label_map.values()
     ]
@@ -667,7 +678,10 @@ def _transform_navigator_family(navigator_family: NavigatorFamily) -> Document:
     Sabin Center for Climate Change Law and only apply to the Academic.corpus.Litigation.n0000 corpus.
     """
 
-    if navigator_family.corpus.import_id == "Academic.corpus.Litigation.n0000":
+    if (
+        navigator_family.corpus.import_id == "Academic.corpus.Litigation.n0000"
+        and navigator_family.concepts
+    ):
         labels.extend(
             _transform_litigation_concepts_to_label_relationships(
                 navigator_family.concepts
