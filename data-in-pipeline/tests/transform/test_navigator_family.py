@@ -1353,6 +1353,197 @@ def test_transform_navigator_family_with_litigation_corpus_type(
     )
 
 
+def test_transform_navigator_family_with_litigation_corpus_type_and_litigation_concepts(
+    navigator_family_with_litigation_concepts: Identified[NavigatorFamily],
+):
+    result = transform_navigator_family(navigator_family_with_litigation_concepts)
+    expected_document_from_family = Document(
+        id="family",
+        title="Litigation family",
+        description="Family summary",
+        labels=[
+            LabelRelationship(
+                type="status",
+                value=LabelWithoutRelationships(
+                    type="status",
+                    id="Principal",
+                    value="Principal",
+                ),
+            ),
+            LabelRelationship(
+                type="entity_type",
+                value=LabelWithoutRelationships(
+                    id="Legal case",
+                    value="Legal case",
+                    type="entity_type",
+                ),
+            ),
+            LabelRelationship(
+                type="provider",
+                value=LabelWithoutRelationships(
+                    type="agent",
+                    id="Sabin Center for Climate Change Law",
+                    value="Sabin Center for Climate Change Law",
+                ),
+            ),
+            LabelRelationship(
+                type="category",
+                value=LabelWithoutRelationships(
+                    id="Guidance",
+                    value="Guidance",
+                    type="category",
+                ),
+            ),
+        ],
+        documents=[
+            DocumentRelationship(
+                type="has_member",
+                value=DocumentWithoutRelationships(
+                    id="document",
+                    title="Litigation family document",
+                    labels=[
+                        LabelRelationship(
+                            type="entity_type",
+                            value=LabelWithoutRelationships(
+                                id="Decision",
+                                value="Decision",
+                                type="entity_type",
+                            ),
+                        ),
+                        LabelRelationship(
+                            type="provider",
+                            value=LabelWithoutRelationships(
+                                type="agent",
+                                id="Sabin Center for Climate Change Law",
+                                value="Sabin Center for Climate Change Law",
+                            ),
+                        ),
+                    ],
+                    attributes={
+                        "deprecated_slug": "litigation-document-slug",
+                        "md5_sum": "aaaaa11111bbbbb",
+                        "variant": "Original language",
+                        "status": "PUBLISHED",
+                    },
+                ),
+            ),
+            DocumentRelationship(
+                type="has_member",
+                value=DocumentWithoutRelationships(
+                    id="1.2.3.placeholder",
+                    title="Placeholder litigation family document",
+                    labels=[
+                        LabelRelationship(
+                            type="status",
+                            value=LabelWithoutRelationships(
+                                id="Obsolete",
+                                value="Obsolete",
+                                type="status",
+                            ),
+                        ),
+                        LabelRelationship(
+                            type="provider",
+                            value=LabelWithoutRelationships(
+                                type="agent",
+                                id="Sabin Center for Climate Change Law",
+                                value="Sabin Center for Climate Change Law",
+                            ),
+                        ),
+                    ],
+                    attributes={
+                        "deprecated_slug": "placeholder-document-slug",
+                        "md5_sum": "aaaaa11111bbbbb",
+                        "status": "PUBLISHED",
+                    },
+                ),
+            ),
+        ],
+        attributes={
+            "deprecated_slug": "litigation-family-slug",
+            "published_date": "2020-01-0100:00:00Z",
+            "last_updated_date": "2020-01-0100:00:00Z",
+            "status": "PUBLISHEDssss",
+        },
+    )
+    assert_model_list_equality(
+        result.unwrap(),
+        [
+            expected_document_from_family,
+            Document(
+                id="document",
+                title="Litigation family document",
+                labels=[
+                    LabelRelationship(
+                        type="entity_type",
+                        value=LabelWithoutRelationships(
+                            id="Decision",
+                            value="Decision",
+                            type="entity_type",
+                        ),
+                    ),
+                    LabelRelationship(
+                        type="provider",
+                        value=LabelWithoutRelationships(
+                            type="agent",
+                            id="Sabin Center for Climate Change Law",
+                            value="Sabin Center for Climate Change Law",
+                        ),
+                    ),
+                ],
+                documents=[
+                    DocumentRelationship(
+                        type="member_of",
+                        value=DocumentWithoutRelationships(
+                            **expected_document_from_family.model_dump()
+                        ),
+                    ),
+                ],
+                attributes={
+                    "deprecated_slug": "litigation-document-slug",
+                    "md5_sum": "aaaaa11111bbbbb",
+                    "variant": "Original language",
+                    "status": "PUBLISHED",
+                },
+            ),
+            Document(
+                id="1.2.3.placeholder",
+                title="Placeholder litigation family document",
+                labels=[
+                    LabelRelationship(
+                        type="status",
+                        value=LabelWithoutRelationships(
+                            id="Obsolete",
+                            value="Obsolete",
+                            type="status",
+                        ),
+                    ),
+                    LabelRelationship(
+                        type="provider",
+                        value=LabelWithoutRelationships(
+                            type="agent",
+                            id="Sabin Center for Climate Change Law",
+                            value="Sabin Center for Climate Change Law",
+                        ),
+                    ),
+                ],
+                documents=[
+                    DocumentRelationship(
+                        type="member_of",
+                        value=DocumentWithoutRelationships(
+                            **expected_document_from_family.model_dump()
+                        ),
+                    )
+                ],
+                attributes={
+                    "deprecated_slug": "placeholder-document-slug",
+                    "md5_sum": "aaaaa11111bbbbb",
+                    "status": "PUBLISHED",
+                },
+            ),
+        ],
+    )
+
+
 def test_transform_navigator_family_with_multilateral_climate_fund_project(
     navigator_family_multilateral_climate_fund_project: Identified[NavigatorFamily],
 ):

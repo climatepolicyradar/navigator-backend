@@ -384,6 +384,55 @@ def _transform_geographies(
     return labels
 
 
+def _transform_litigation_concepts_to_label_relationships(
+    concepts: list[IncomingConcept],
+) -> list[LabelRelationship]:
+    """
+    Convert litigation concepts into label relationships with subconcept hierarchies.
+
+    Returns:
+        List[LabelRelationship] where each:
+        - type="concept"
+        - value=LabelWithoutRelationships (with nested .labels for hierarchies)
+    """
+    # Build core labels indexed by (relation, id)
+    label_map: dict[tuple[str, str], LabelWithoutRelationships] = {
+        (c.relation, c.id): LabelWithoutRelationships(
+            id=c.id,
+            type=c.relation,
+            value=c.preferred_label,
+            # labels field auto-initialized to []
+        )
+        for c in concepts
+    }
+
+    # Secondary index for parent lookups by preferred_label
+    by_name: dict[tuple[str, str], LabelWithoutRelationships] = {
+        (c.relation, c.preferred_label): label_map[(c.relation, c.id)] for c in concepts
+    }
+
+    # Wire up parent-child relationships
+    for concept in concepts:
+        child = label_map[(concept.relation, concept.id)]
+        for parent_name in concept.subconcept_of_labels:
+            parent = by_name.get((concept.relation, parent_name))
+            if parent is None:
+                raise ValueError(
+                    f"Unknown parent label {parent_name!r} in relation {concept.relation!r}"
+                )
+            # ✅ Now works: LabelWithoutRelationships has .labels field
+            child.labels.append(LabelRelationship(type="subconcept_of", value=parent))
+
+    print(
+        f"Constructed label map with {len(label_map)} concepts and {sum(len(c.labels) for c in label_map.values())} subconcept relationships"
+    )
+
+    # Wrap as relationships for consistency with your labels list
+    return [
+        LabelRelationship(type="concept", value=label) for label in label_map.values()
+    ]
+
+
 def _transform_navigator_family(navigator_family: NavigatorFamily) -> Document:
     labels: list[LabelRelationship] = []
     attributes: dict[str, str | float | bool] = {}
@@ -612,6 +661,18 @@ def _transform_navigator_family(navigator_family: NavigatorFamily) -> Document:
     """
 
     labels.extend(_transform_metadata(navigator_family, attributes))
+
+    """
+    Litigation concepts, not to be confused with other concepts these are defined by the
+    Sabin Center for Climate Change Law and only apply to the Academic.corpus.Litigation.n0000 corpus.
+    """
+
+    if navigator_family.corpus.import_id == "Academic.corpus.Litigation.n0000":
+        labels.extend(
+            _transform_litigation_concepts_to_label_relationships(
+                navigator_family.concepts
+            )
+        )
 
     """
     Dates
