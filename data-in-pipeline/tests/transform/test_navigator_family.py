@@ -32,6 +32,7 @@ def _cclw_corpus():
         import_id="CCLW.corpus.i00000001.n0000",
         corpus_type=NavigatorCorpusTypeFactory.build(name="corpus_type"),
         organisation=NavigatorOrganisationFactory.build(id=1, name="CCLW"),
+        attribution_url="testurl.org",
     )
 
 
@@ -177,6 +178,7 @@ def navigator_family_with_litigation_corpus_type() -> Identified[NavigatorFamily
                 import_id="Academic.corpus.Litigation.n0000",
                 corpus_type=NavigatorCorpusTypeFactory.build(name="Litigation"),
                 organisation=NavigatorOrganisationFactory.build(id=1, name="CCLW"),
+                attribution_url="testurl.org",
             ),
             documents=[
                 NavigatorDocumentFactory.build(
@@ -299,6 +301,7 @@ def navigator_family_multilateral_climate_fund_project() -> Identified[Navigator
                 import_id="MCF.corpus.AF.n0000",
                 corpus_type=NavigatorCorpusTypeFactory.build(name="AF"),
                 organisation=NavigatorOrganisationFactory.build(id=1, name="CCLW"),
+                attribution_url="testurl.org",
             ),
             documents=[
                 NavigatorDocumentFactory.build(
@@ -366,6 +369,7 @@ def navigator_family_multilateral_climate_fund_guidance() -> (
                 import_id="MCF.corpus.AF.Guidance",
                 corpus_type=NavigatorCorpusTypeFactory.build(name="AF"),
                 organisation=NavigatorOrganisationFactory.build(id=1, name="CCLW"),
+                attribution_url="testurl.org",
             ),
             documents=[],
             events=[],
@@ -395,6 +399,7 @@ def navigator_family_with_duplicate_legal_case() -> Identified[NavigatorFamily]:
                 organisation=NavigatorOrganisationFactory.build(
                     id=1, name="Sabin Center for Climate Change Law"
                 ),
+                attribution_url="testurl.org",
             ),
             documents=[],
             events=[],
@@ -412,6 +417,7 @@ def test_transform_navigator_family_with_single_matching_document(
         id="family",
         title="Matching title on family and document and collection",
         description="Family summary",
+        attribution_url="testurl.org",
         labels=[
             LabelRelationship(
                 type="status",
@@ -643,6 +649,7 @@ def test_transform_navigator_family_with_single_matching_document(
                 value=DocumentWithoutRelationships(
                     id="collection",
                     title="Collection title",
+                    # attribution_url="testurl.org",
                     labels=[
                         LabelRelationship(
                             type="entity_type",
@@ -660,6 +667,7 @@ def test_transform_navigator_family_with_single_matching_document(
                 value=DocumentWithoutRelationships(
                     id="document",
                     title="Matching title on family and document and collection",
+                    # attribution_url="testurl.org",
                     labels=[
                         LabelRelationship(
                             type="role",
@@ -743,6 +751,7 @@ def test_transform_navigator_family_with_single_matching_document(
                 value=DocumentWithoutRelationships(
                     id="collection_matching",
                     title="Matching title on family and document and collection",
+                    # attribution_url="testurl.org",
                     labels=[
                         LabelRelationship(
                             type="entity_type",
@@ -771,6 +780,7 @@ def test_transform_navigator_family_with_single_matching_document(
             Document(
                 id="document",
                 title="Matching title on family and document and collection",
+                # attribution_url="testurl.org",
                 labels=[
                     LabelRelationship(
                         type="role",
@@ -859,6 +869,7 @@ def test_transform_navigator_family_with_single_matching_document(
             Document(
                 id="collection_matching",
                 title="Matching title on family and document and collection",
+                # attribution_url="testurl.org",
                 labels=[
                     LabelRelationship(
                         type="entity_type",
@@ -881,6 +892,7 @@ def test_transform_navigator_family_with_single_matching_document(
             Document(
                 id="collection",
                 title="Collection title",
+                # attribution_url="testurl.org",
                 labels=[
                     LabelRelationship(
                         type="entity_type",
@@ -956,6 +968,7 @@ def test_transform_navigator_family_with_laws_and_policies_corpus_type(
                 import_id=corpus_id,
                 corpus_type=NavigatorCorpusTypeFactory.build(name="corpus_type"),
                 organisation=NavigatorOrganisationFactory.build(id=1, name=org),
+                attribution_url="testurl.org",
             ),
             documents=[],
             events=[],
@@ -985,6 +998,7 @@ def test_transform_navigator_family_with_laws_and_policies_corpus_type(
         id="family",
         title="Laws and policies family",
         description="Family summary",
+        attribution_url="testurl.org",
         labels=[
             LabelRelationship(
                 type="status",
@@ -1086,6 +1100,7 @@ def test_transform_navigator_family_with_litigation_corpus_type(
         id="family",
         title="Litigation family",
         description="Family summary",
+        attribution_url="testurl.org",
         labels=[
             LabelRelationship(
                 type="status",
@@ -1279,6 +1294,7 @@ def test_transform_navigator_family_with_multilateral_climate_fund_project(
         id="family",
         title="Multilateral climate fund project",
         description="Family summary",
+        attribution_url="testurl.org",
         labels=[
             LabelRelationship(
                 type="status",
@@ -1600,6 +1616,7 @@ def test_transform_navigator_family_with_published_and_unpublished_documents():
         id="family",
         title="Family with different document statuses",
         description="Family summary",
+        attribution_url="testurl.org",
         labels=[
             LabelRelationship(
                 type="status",
@@ -1864,7 +1881,7 @@ def test_transform_navigator_family_with_published_and_unpublished_documents():
 
 
 def test_transform_navigator_family_with_no_published_documents():
-    navigator_family_with_different_document_statuses = Identified(
+    navigator_family_with_no_published_documents = Identified(
         id="family",
         source="navigator_family",
         data=NavigatorFamilyFactory.build(
@@ -1898,13 +1915,12 @@ def test_transform_navigator_family_with_no_published_documents():
             metadata={},
         ),
     )
-    result = transform_navigator_family(
-        navigator_family_with_different_document_statuses
-    )
+    result = transform_navigator_family(navigator_family_with_no_published_documents)
     expected_document_from_family = Document(
         id="family",
         title="Family with no published documents",
         description="Family summary",
+        attribution_url="testurl.org",
         labels=[
             LabelRelationship(
                 type="status",
@@ -2073,6 +2089,7 @@ def test_transform_navigator_family_with_multilateral_climate_fund_guidance(
                 id="family",
                 title="Multilateral climate fund guidance",
                 description="Family summary",
+                attribution_url="testurl.org",
                 labels=[
                     LabelRelationship(
                         type="status",
