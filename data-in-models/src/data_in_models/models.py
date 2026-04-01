@@ -2,7 +2,7 @@ from __future__ import annotations
 
 from datetime import datetime
 
-from pydantic import BaseModel, Field
+from pydantic import BaseModel
 
 
 class WithRelationships(BaseModel):
@@ -20,7 +20,7 @@ class LabelWithoutDocumentRelationships(BaseModel):
     id: str
     type: str
     value: str
-    labels: list[LabelRelationship] = Field(default_factory=list)
+    labels: list[LabelRelationship] = []
 
 
 class Label(WithRelationships):
