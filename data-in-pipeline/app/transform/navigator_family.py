@@ -15,7 +15,7 @@ from app.extract.connectors import (
     NavigatorFamily,
 )
 from app.geographies import geographies_lookup
-from app.models import Identified, IncomingConcept
+from app.models import Identified, NavigatorConcept
 from app.transform.models import CouldNotTransform, NoMatchingTransformations
 
 mcf_projects_corpus_import_ids = [
@@ -397,7 +397,7 @@ def _shallow_label(label: LabelWithoutRelationships) -> LabelWithoutRelationship
 
 
 def _transform_litigation_concepts_to_label_relationships(
-    concepts: list[IncomingConcept],
+    concepts: list[NavigatorConcept],
 ) -> list[LabelRelationship]:
     """
     Convert litigation concepts into label relationships with subconcept hierarchies.

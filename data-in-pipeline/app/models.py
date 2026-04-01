@@ -47,7 +47,7 @@ class PipelineResult(BaseModel):
     status: str = Field(..., description="Pipeline execution status")
 
 
-class IncomingConcept(BaseModel):
+class NavigatorConcept(BaseModel):
     id: str
     ids: list[str] = []
     type: str

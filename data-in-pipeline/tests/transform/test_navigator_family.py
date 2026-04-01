@@ -13,7 +13,7 @@ from data_in_models.models import (
 from app.extract.connectors import (
     NavigatorFamily,
 )
-from app.models import Identified, IncomingConcept
+from app.models import Identified, NavigatorConcept
 from app.transform.navigator_family import transform_navigator_family
 from tests.factories import (
     NavigatorCollectionFactory,
@@ -300,7 +300,7 @@ def navigator_family_with_litigation_concepts() -> Identified[NavigatorFamily]:
             geographies=[],
             slug="litigation-family-slug",
             concepts=[
-                IncomingConcept(
+                NavigatorConcept(
                     id="High Court of Justice",
                     ids=[],
                     type="legal_entity",
@@ -308,7 +308,7 @@ def navigator_family_with_litigation_concepts() -> Identified[NavigatorFamily]:
                     preferred_label="High Court of Justice",
                     subconcept_of_labels=["England and Wales"],
                 ),
-                IncomingConcept(
+                NavigatorConcept(
                     id="High Court of Justice (Administrative Court)",
                     ids=[],
                     type="legal_entity",
@@ -316,7 +316,7 @@ def navigator_family_with_litigation_concepts() -> Identified[NavigatorFamily]:
                     preferred_label="High Court of Justice (Administrative Court)",
                     subconcept_of_labels=["High Court of Justice"],
                 ),
-                IncomingConcept(
+                NavigatorConcept(
                     id="England and Wales",
                     ids=[],
                     type="legal_entity",
