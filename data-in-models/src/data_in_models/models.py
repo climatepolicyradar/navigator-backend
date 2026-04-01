@@ -16,7 +16,7 @@ class WithAttributes(BaseModel):
     attributes: dict[str, str | float | bool] = {}
 
 
-class Label(WithRelationships):
+class Label(WithAttributes, WithRelationships):
     id: str
     type: str
     value: str
@@ -38,7 +38,6 @@ class BaseDocument(WithAttributes):
     id: str
     title: str
     description: str | None = None
-    attribution_url: str | None = None
 
     """@see: https://en.wikipedia.org/wiki/Functional_Requirements_for_Bibliographic_Records"""
     items: list[Item] = []
