@@ -64,6 +64,8 @@ class CorpusBase(SQLModel):
     title: str
     corpus_type_name: str
     attribution_url: str | None
+    corpus_text: str
+    corpus_image_url: str | None
 
 
 class Corpus(CorpusBase, table=True):
