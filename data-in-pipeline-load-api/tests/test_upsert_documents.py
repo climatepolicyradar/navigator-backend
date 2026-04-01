@@ -40,7 +40,7 @@ def create_mock_document_input(
 
 def create_mock_label(label_id="label_1", value="Test Label"):
     """Create a mock label relationship."""
-    label = LabelInput(id=label_id, value=value, type="status")
+    label = LabelInput(id=label_id, value=value, type="status", attributes={})
 
     return DocumentLabelRelationshipInput(
         type="tag", timestamp=datetime.now(UTC), value=label
