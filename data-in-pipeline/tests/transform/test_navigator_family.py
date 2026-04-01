@@ -586,11 +586,11 @@ def test_transform_navigator_family_with_single_matching_document(
                 ),
             ),
             LabelRelationship(
-                type="category",
+                type="deprecated_category",
                 value=Label(
-                    id="Guidance",
-                    value="Guidance",
-                    type="category",
+                    id="REPORTS",
+                    value="REPORTS",
+                    type="deprecated_category",
                 ),
             ),
             LabelRelationship(
@@ -1029,10 +1029,18 @@ def test_transform_navigator_family_with_laws_and_policies_corpus_type(
                 ),
             ),
             LabelRelationship(
+                type="deprecated_category",
+                value=Label(
+                    id="LEGISLATIVE",
+                    value="LEGISLATIVE",
+                    type="deprecated_category",
+                ),
+            ),
+            LabelRelationship(
                 type="category",
                 value=Label(
-                    id="Legislative",
-                    value="Legislative",
+                    id="Law",
+                    value="Law",
                     type="category",
                 ),
             ),
@@ -1131,11 +1139,11 @@ def test_transform_navigator_family_with_litigation_corpus_type(
                 ),
             ),
             LabelRelationship(
-                type="category",
+                type="deprecated_category",
                 value=Label(
-                    id="Guidance",
-                    value="Guidance",
-                    type="category",
+                    id="REPORTS",
+                    value="REPORTS",
+                    type="deprecated_category",
                 ),
             ),
         ],
@@ -1383,11 +1391,11 @@ def test_transform_navigator_family_with_multilateral_climate_fund_project(
                 ),
             ),
             LabelRelationship(
-                type="category",
+                type="deprecated_category",
                 value=Label(
-                    id="Guidance",
-                    value="Guidance",
-                    type="category",
+                    id="REPORTS",
+                    value="REPORTS",
+                    type="deprecated_category",
                 ),
             ),
             LabelRelationship(
@@ -1656,10 +1664,18 @@ def test_transform_navigator_family_with_published_and_unpublished_documents():
                 ),
             ),
             LabelRelationship(
+                type="deprecated_category",
+                value=Label(
+                    id="LEGISLATIVE",
+                    value="LEGISLATIVE",
+                    type="deprecated_category",
+                ),
+            ),
+            LabelRelationship(
                 type="category",
                 value=Label(
-                    id="Legislative",
-                    value="Legislative",
+                    id="Law",
+                    value="Law",
                     type="category",
                 ),
             ),
@@ -1686,6 +1702,14 @@ def test_transform_navigator_family_with_published_and_unpublished_documents():
                                 type="geography",
                                 id="AUS",
                                 value="Australia",
+                            ),
+                        ),
+                        LabelRelationship(
+                            type="category",
+                            value=Label(
+                                id="Law",
+                                value="Law",
+                                type="category",
                             ),
                         ),
                         LabelRelationship(
@@ -1738,6 +1762,14 @@ def test_transform_navigator_family_with_published_and_unpublished_documents():
                                 type="geography",
                                 id="AUS",
                                 value="Australia",
+                            ),
+                        ),
+                        LabelRelationship(
+                            type="category",
+                            value=Label(
+                                id="Law",
+                                value="Law",
+                                type="category",
                             ),
                         ),
                         LabelRelationship(
@@ -1801,6 +1833,14 @@ def test_transform_navigator_family_with_published_and_unpublished_documents():
                         ),
                     ),
                     LabelRelationship(
+                        type="category",
+                        value=Label(
+                            id="Law",
+                            value="Law",
+                            type="category",
+                        ),
+                    ),
+                    LabelRelationship(
                         type="language",
                         value=Label(
                             id="eng",
@@ -1855,6 +1895,14 @@ def test_transform_navigator_family_with_published_and_unpublished_documents():
                             type="geography",
                             id="AUS",
                             value="Australia",
+                        ),
+                    ),
+                    LabelRelationship(
+                        type="category",
+                        value=Label(
+                            id="Law",
+                            value="Law",
+                            type="category",
                         ),
                     ),
                     LabelRelationship(
@@ -1964,10 +2012,18 @@ def test_transform_navigator_family_with_no_published_documents():
                 ),
             ),
             LabelRelationship(
+                type="deprecated_category",
+                value=Label(
+                    id="LEGISLATIVE",
+                    value="LEGISLATIVE",
+                    type="deprecated_category",
+                ),
+            ),
+            LabelRelationship(
                 type="category",
                 value=Label(
-                    id="Legislative",
-                    value="Legislative",
+                    id="Law",
+                    value="Law",
                     type="category",
                 ),
             ),
@@ -1994,6 +2050,14 @@ def test_transform_navigator_family_with_no_published_documents():
                                 type="geography",
                                 id="AUS",
                                 value="Australia",
+                            ),
+                        ),
+                        LabelRelationship(
+                            type="category",
+                            value=Label(
+                                id="Law",
+                                value="Law",
+                                type="category",
                             ),
                         ),
                         LabelRelationship(
@@ -2053,6 +2117,14 @@ def test_transform_navigator_family_with_no_published_documents():
                             type="geography",
                             id="AUS",
                             value="Australia",
+                        ),
+                    ),
+                    LabelRelationship(
+                        type="category",
+                        value=Label(
+                            id="Law",
+                            value="Law",
+                            type="category",
                         ),
                     ),
                     LabelRelationship(
@@ -2143,11 +2215,11 @@ def test_transform_navigator_family_with_multilateral_climate_fund_guidance(
                         ),
                     ),
                     LabelRelationship(
-                        type="category",
+                        type="deprecated_category",
                         value=Label(
-                            id="Guidance",
-                            value="Guidance",
-                            type="category",
+                            id="REPORTS",
+                            value="REPORTS",
+                            type="deprecated_category",
                         ),
                     ),
                 ],
