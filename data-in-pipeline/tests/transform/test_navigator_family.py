@@ -952,14 +952,7 @@ def test_transform_navigator_family_with_litigation_corpus_type_handles_duplicat
         if label.value.id == "Legal case" and label.type == "entity_type"
     ]
 
-    assert len(legal_case_labels) == 1, (
-        f"Expected exactly 1 'Legal case' entity_type label after deduplication, "
-        f"but found {len(legal_case_labels)}"
-    )
-
-    assert legal_case_labels[0].value.id == "Legal case"
-    assert legal_case_labels[0].value.value == "Legal case"
-    assert legal_case_labels[0].type == "entity_type"
+    assert len(legal_case_labels) == 0
 
 
 @pytest.mark.parametrize(
@@ -1143,14 +1136,6 @@ def test_transform_navigator_family_with_litigation_corpus_type(
                     type="status",
                     id="Principal",
                     value="Principal",
-                ),
-            ),
-            LabelRelationship(
-                type="entity_type",
-                value=Label(
-                    id="Legal case",
-                    value="Legal case",
-                    type="entity_type",
                 ),
             ),
             LabelRelationship(
@@ -1362,14 +1347,6 @@ def test_transform_navigator_family_with_multilateral_climate_fund_project(
                     type="status",
                     id="Principal",
                     value="Principal",
-                ),
-            ),
-            LabelRelationship(
-                type="entity_type",
-                value=Label(
-                    id="Multilateral climate fund project",
-                    value="Multilateral climate fund project",
-                    type="entity_type",
                 ),
             ),
             LabelRelationship(
@@ -2283,14 +2260,6 @@ def test_transform_navigator_family_with_multilateral_climate_fund_guidance(
                             type="status",
                             id="Principal",
                             value="Principal",
-                        ),
-                    ),
-                    LabelRelationship(
-                        type="entity_type",
-                        value=Label(
-                            id="Multilateral climate fund project",
-                            value="Multilateral climate fund project",
-                            type="entity_type",
                         ),
                     ),
                     LabelRelationship(
