@@ -284,6 +284,15 @@ def _transform_family_corpus_organisation(
                 type="agent",
                 id=provider_name,
                 value=provider_name,
+                attributes={
+                    "attribution_url": navigator_family.corpus.attribution_url,
+                    "corpus_text": navigator_family.corpus.corpus_text,
+                    "corpus_image_url": (
+                        f"https://cdn.climatepolicyradar.org/{navigator_family.corpus.corpus_image_url}"
+                        if navigator_family.corpus.corpus_image_url
+                        else ""
+                    ),
+                },
             ),
         )
     )
@@ -686,7 +695,6 @@ def _transform_navigator_family(navigator_family: NavigatorFamily) -> Document:
         id=navigator_family.import_id,
         title=navigator_family.title,
         description=navigator_family.summary,
-        attribution_url=navigator_family.corpus.attribution_url,
         labels=_deduplicate_labels(labels),
         attributes=attributes,
     )
@@ -825,7 +833,6 @@ def _transform_navigator_document(
     return Document(
         id=navigator_document.import_id,
         title=navigator_document.title,
-        attribution_url=navigator_family.corpus.attribution_url,
         labels=_deduplicate_labels(labels),
         items=items,
         attributes=attributes,
@@ -851,7 +858,6 @@ def _transform_navigator_collection(
     return Document(
         id=navigator_collection.import_id,
         title=navigator_collection.title,
-        attribution_url=navigator_family.corpus.attribution_url,
         labels=labels,
     )
 

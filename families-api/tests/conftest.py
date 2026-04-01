@@ -39,6 +39,8 @@ def make_family():
             organisation_id=organisation.id,
             corpus_type_name=corpus_type.name,
             attribution_url="https://policyradar.org",
+            corpus_text="Corpus description",
+            corpus_image_url=None,
         )
         physical_document = PhysicalDocument(
             id=id,
