@@ -453,7 +453,7 @@ def _transform_to_category(
                 value=Label(
                     id="Laws and Policies",
                     value="Laws and Policies",
-                    type="category",
+                    type="deprecated_category",
                 ),
             )
         )
