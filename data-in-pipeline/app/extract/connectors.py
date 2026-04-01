@@ -2,7 +2,7 @@ import datetime
 from http import HTTPStatus
 
 import requests
-from pydantic import BaseModel, Field
+from pydantic import BaseModel
 from requests.adapters import HTTPAdapter, Retry
 from returns.result import Failure, Result, Success
 
@@ -74,7 +74,7 @@ class NavigatorFamily(BaseModel):
     geographies: list[str]
     category: str
     slug: str
-    concepts: list[NavigatorConcept] = Field(default_factory=list)
+    concepts: list[NavigatorConcept] = []
     metadata: dict[str, list[str]] = {}
     published_date: str | None
     last_updated_date: str | None
