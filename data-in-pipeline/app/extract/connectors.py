@@ -56,7 +56,7 @@ class NavigatorCorpus(BaseModel):
     organisation: NavigatorOrganisation
     attribution_url: str = ""
     corpus_text: str
-    corpus_image_url: str = ""
+    corpus_image_url: str | None = None
 
 
 class NavigatorCollection(BaseModel):

@@ -182,7 +182,7 @@ def navigator_family_with_litigation_corpus_type() -> Identified[NavigatorFamily
                 organisation=NavigatorOrganisationFactory.build(id=1, name="CCLW"),
                 attribution_url="testurl.org",
                 corpus_text="Test corpus",
-                corpus_image_url="corpus_image.png",
+                corpus_image_url=None,
             ),
             documents=[
                 NavigatorDocumentFactory.build(
@@ -308,7 +308,7 @@ def navigator_family_multilateral_climate_fund_project() -> Identified[Navigator
                 organisation=NavigatorOrganisationFactory.build(id=1, name="CCLW"),
                 attribution_url="testurl.org",
                 corpus_text="Test corpus",
-                corpus_image_url="corpus_image.png",
+                corpus_image_url=None,
             ),
             documents=[
                 NavigatorDocumentFactory.build(
@@ -378,7 +378,7 @@ def navigator_family_multilateral_climate_fund_guidance() -> (
                 organisation=NavigatorOrganisationFactory.build(id=1, name="CCLW"),
                 attribution_url="testurl.org",
                 corpus_text="Test corpus",
-                corpus_image_url="corpus_image.png",
+                corpus_image_url=None,
             ),
             documents=[],
             events=[],
@@ -410,7 +410,7 @@ def navigator_family_with_duplicate_legal_case() -> Identified[NavigatorFamily]:
                 ),
                 attribution_url="testurl.org",
                 corpus_text="Test corpus",
-                corpus_image_url="corpus_image.png",
+                corpus_image_url=None,
             ),
             documents=[],
             events=[],
@@ -571,7 +571,7 @@ def test_transform_navigator_family_with_single_matching_document(
                     attributes={
                         "attribution_url": "testurl.org",
                         "corpus_text": "Test corpus",
-                        "corpus_image_url": "corpus_image.png",
+                        "corpus_image_url": "https://cdn.climatepolicyradar.org/corpus_image.png",
                     },
                 ),
             ),
@@ -707,7 +707,7 @@ def test_transform_navigator_family_with_single_matching_document(
                                 attributes={
                                     "attribution_url": "testurl.org",
                                     "corpus_text": "Test corpus",
-                                    "corpus_image_url": "corpus_image.png",
+                                    "corpus_image_url": "https://cdn.climatepolicyradar.org/corpus_image.png",
                                 },
                             ),
                         ),
@@ -826,7 +826,7 @@ def test_transform_navigator_family_with_single_matching_document(
                             attributes={
                                 "attribution_url": "testurl.org",
                                 "corpus_text": "Test corpus",
-                                "corpus_image_url": "corpus_image.png",
+                                "corpus_image_url": "https://cdn.climatepolicyradar.org/corpus_image.png",
                             },
                         ),
                     ),
@@ -992,7 +992,7 @@ def test_transform_navigator_family_with_laws_and_policies_corpus_type(
                 organisation=NavigatorOrganisationFactory.build(id=1, name=org),
                 attribution_url="testurl.org",
                 corpus_text="Test corpus",
-                corpus_image_url="corpus_image.png",
+                corpus_image_url=None,
             ),
             documents=[],
             events=[],
@@ -1040,7 +1040,7 @@ def test_transform_navigator_family_with_laws_and_policies_corpus_type(
                     attributes={
                         "attribution_url": "testurl.org",
                         "corpus_text": "Test corpus",
-                        "corpus_image_url": "corpus_image.png",
+                        "corpus_image_url": "",
                     },
                 ),
             ),
@@ -1154,7 +1154,7 @@ def test_transform_navigator_family_with_litigation_corpus_type(
                     attributes={
                         "attribution_url": "testurl.org",
                         "corpus_text": "Test corpus",
-                        "corpus_image_url": "corpus_image.png",
+                        "corpus_image_url": "",
                     },
                 ),
             ),
@@ -1191,7 +1191,7 @@ def test_transform_navigator_family_with_litigation_corpus_type(
                                 attributes={
                                     "attribution_url": "testurl.org",
                                     "corpus_text": "Test corpus",
-                                    "corpus_image_url": "corpus_image.png",
+                                    "corpus_image_url": "",
                                 },
                             ),
                         ),
@@ -1227,7 +1227,7 @@ def test_transform_navigator_family_with_litigation_corpus_type(
                                 attributes={
                                     "attribution_url": "testurl.org",
                                     "corpus_text": "Test corpus",
-                                    "corpus_image_url": "corpus_image.png",
+                                    "corpus_image_url": "",
                                 },
                             ),
                         ),
@@ -1273,7 +1273,7 @@ def test_transform_navigator_family_with_litigation_corpus_type(
                             attributes={
                                 "attribution_url": "testurl.org",
                                 "corpus_text": "Test corpus",
-                                "corpus_image_url": "corpus_image.png",
+                                "corpus_image_url": "",
                             },
                         ),
                     ),
@@ -1314,7 +1314,7 @@ def test_transform_navigator_family_with_litigation_corpus_type(
                             attributes={
                                 "attribution_url": "testurl.org",
                                 "corpus_text": "Test corpus",
-                                "corpus_image_url": "corpus_image.png",
+                                "corpus_image_url": "",
                             },
                         ),
                     ),
@@ -1426,7 +1426,7 @@ def test_transform_navigator_family_with_multilateral_climate_fund_project(
                     attributes={
                         "attribution_url": "testurl.org",
                         "corpus_text": "Test corpus",
-                        "corpus_image_url": "corpus_image.png",
+                        "corpus_image_url": "",
                     },
                 ),
             ),
@@ -1479,7 +1479,7 @@ def test_transform_navigator_family_with_multilateral_climate_fund_project(
                                 attributes={
                                     "attribution_url": "testurl.org",
                                     "corpus_text": "Test corpus",
-                                    "corpus_image_url": "corpus_image.png",
+                                    "corpus_image_url": "",
                                 },
                             ),
                         ),
@@ -1515,7 +1515,7 @@ def test_transform_navigator_family_with_multilateral_climate_fund_project(
                                 attributes={
                                     "attribution_url": "testurl.org",
                                     "corpus_text": "Test corpus",
-                                    "corpus_image_url": "corpus_image.png",
+                                    "corpus_image_url": "",
                                 },
                             ),
                         ),
@@ -1564,7 +1564,7 @@ def test_transform_navigator_family_with_multilateral_climate_fund_project(
                             attributes={
                                 "attribution_url": "testurl.org",
                                 "corpus_text": "Test corpus",
-                                "corpus_image_url": "corpus_image.png",
+                                "corpus_image_url": "",
                             },
                         ),
                     ),
@@ -1605,7 +1605,7 @@ def test_transform_navigator_family_with_multilateral_climate_fund_project(
                             attributes={
                                 "attribution_url": "testurl.org",
                                 "corpus_text": "Test corpus",
-                                "corpus_image_url": "corpus_image.png",
+                                "corpus_image_url": "",
                             },
                         ),
                     ),
@@ -1711,7 +1711,7 @@ def test_transform_navigator_family_with_published_and_unpublished_documents():
                     attributes={
                         "attribution_url": "testurl.org",
                         "corpus_text": "Test corpus",
-                        "corpus_image_url": "corpus_image.png",
+                        "corpus_image_url": "https://cdn.climatepolicyradar.org/corpus_image.png",
                     },
                 ),
             ),
@@ -1748,7 +1748,7 @@ def test_transform_navigator_family_with_published_and_unpublished_documents():
                                 attributes={
                                     "attribution_url": "testurl.org",
                                     "corpus_text": "Test corpus",
-                                    "corpus_image_url": "corpus_image.png",
+                                    "corpus_image_url": "https://cdn.climatepolicyradar.org/corpus_image.png",
                                 },
                             ),
                         ),
@@ -1804,7 +1804,7 @@ def test_transform_navigator_family_with_published_and_unpublished_documents():
                                 attributes={
                                     "attribution_url": "testurl.org",
                                     "corpus_text": "Test corpus",
-                                    "corpus_image_url": "corpus_image.png",
+                                    "corpus_image_url": "https://cdn.climatepolicyradar.org/corpus_image.png",
                                 },
                             ),
                         ),
@@ -1868,7 +1868,7 @@ def test_transform_navigator_family_with_published_and_unpublished_documents():
                             attributes={
                                 "attribution_url": "testurl.org",
                                 "corpus_text": "Test corpus",
-                                "corpus_image_url": "corpus_image.png",
+                                "corpus_image_url": "https://cdn.climatepolicyradar.org/corpus_image.png",
                             },
                         ),
                     ),
@@ -1929,7 +1929,7 @@ def test_transform_navigator_family_with_published_and_unpublished_documents():
                             attributes={
                                 "attribution_url": "testurl.org",
                                 "corpus_text": "Test corpus",
-                                "corpus_image_url": "corpus_image.png",
+                                "corpus_image_url": "https://cdn.climatepolicyradar.org/corpus_image.png",
                             },
                         ),
                     ),
@@ -2039,7 +2039,7 @@ def test_transform_navigator_family_with_no_published_documents():
                     attributes={
                         "attribution_url": "testurl.org",
                         "corpus_text": "Test corpus",
-                        "corpus_image_url": "corpus_image.png",
+                        "corpus_image_url": "https://cdn.climatepolicyradar.org/corpus_image.png",
                     },
                 ),
             ),
@@ -2076,7 +2076,7 @@ def test_transform_navigator_family_with_no_published_documents():
                                 attributes={
                                     "attribution_url": "testurl.org",
                                     "corpus_text": "Test corpus",
-                                    "corpus_image_url": "corpus_image.png",
+                                    "corpus_image_url": "https://cdn.climatepolicyradar.org/corpus_image.png",
                                 },
                             ),
                         ),
@@ -2139,7 +2139,7 @@ def test_transform_navigator_family_with_no_published_documents():
                             attributes={
                                 "attribution_url": "testurl.org",
                                 "corpus_text": "Test corpus",
-                                "corpus_image_url": "corpus_image.png",
+                                "corpus_image_url": "https://cdn.climatepolicyradar.org/corpus_image.png",
                             },
                         ),
                     ),
@@ -2238,7 +2238,7 @@ def test_transform_navigator_family_with_multilateral_climate_fund_guidance(
                             attributes={
                                 "attribution_url": "testurl.org",
                                 "corpus_text": "Test corpus",
-                                "corpus_image_url": "corpus_image.png",
+                                "corpus_image_url": "",
                             },
                         ),
                     ),

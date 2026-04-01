@@ -287,7 +287,11 @@ def _transform_family_corpus_organisation(
                 attributes={
                     "attribution_url": navigator_family.corpus.attribution_url,
                     "corpus_text": navigator_family.corpus.corpus_text,
-                    "corpus_image_url": navigator_family.corpus.corpus_image_url,
+                    "corpus_image_url": (
+                        f"https://cdn.climatepolicyradar.org/{navigator_family.corpus.corpus_image_url}"
+                        if navigator_family.corpus.corpus_image_url
+                        else ""
+                    ),
                 },
             ),
         )
