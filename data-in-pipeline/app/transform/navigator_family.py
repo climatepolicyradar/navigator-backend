@@ -4,7 +4,7 @@ from data_in_models.models import (
     DocumentWithoutRelationships,
     Item,
     LabelRelationship,
-    LabelWithoutRelationships,
+    LabelWithoutDocumentRelationships,
 )
 from returns.result import Failure, Result, Success
 
@@ -280,7 +280,7 @@ def _transform_family_corpus_organisation(
     labels.append(
         LabelRelationship(
             type="provider",
-            value=LabelWithoutRelationships(
+            value=LabelWithoutDocumentRelationships(
                 type="agent",
                 id=provider_name,
                 value=provider_name,
@@ -313,7 +313,9 @@ def _transform_mcf_metadata(
         labels.extend(
             LabelRelationship(
                 type=mapped_key,
-                value=LabelWithoutRelationships(id=value, value=value, type=mapped_key),
+                value=LabelWithoutDocumentRelationships(
+                    id=value, value=value, type=mapped_key
+                ),
             )
             for value in values
         )
@@ -332,7 +334,9 @@ def _transform_laws_policies_metadata(metadata: dict) -> list[LabelRelationship]
             labels.append(
                 LabelRelationship(
                     type=key,
-                    value=LabelWithoutRelationships(id=value, value=value, type=key),
+                    value=LabelWithoutDocumentRelationships(
+                        id=value, value=value, type=key
+                    ),
                 )
             )
 
@@ -370,7 +374,7 @@ def _transform_geographies(
                     geography_labels.append(
                         LabelRelationship(
                             type="geography",
-                            value=LabelWithoutRelationships(
+                            value=LabelWithoutDocumentRelationships(
                                 id=geography.id,
                                 value=geography.name,
                                 type="geography",
@@ -384,11 +388,13 @@ def _transform_geographies(
     return labels
 
 
-def _shallow_label(label: LabelWithoutRelationships) -> LabelWithoutRelationships:
+def _shallow_label(
+    label: LabelWithoutDocumentRelationships,
+) -> LabelWithoutDocumentRelationships:
     """
     We want to avoid deep nesting of labels and recursive references.
     """
-    return LabelWithoutRelationships(
+    return LabelWithoutDocumentRelationships(
         id=label.id,
         type=label.type,
         value=label.value,
@@ -409,8 +415,8 @@ def _transform_litigation_concepts_to_label_relationships(
         - Parent references are SHALLOW (labels=[] to prevent deep nesting).
     """
     # Build core labels indexed by (relation, id)
-    label_map: dict[tuple[str, str], LabelWithoutRelationships] = {
-        (c.relation, c.id): LabelWithoutRelationships(
+    label_map: dict[tuple[str, str], LabelWithoutDocumentRelationships] = {
+        (c.relation, c.id): LabelWithoutDocumentRelationships(
             id=c.id,
             type=c.relation,
             value=c.preferred_label,
@@ -419,7 +425,7 @@ def _transform_litigation_concepts_to_label_relationships(
     }
 
     # Secondary index for parent lookups by preferred_label
-    label_by_name: dict[tuple[str, str], LabelWithoutRelationships] = {
+    label_by_name: dict[tuple[str, str], LabelWithoutDocumentRelationships] = {
         (c.relation, c.preferred_label): label_map[(c.relation, c.id)] for c in concepts
     }
 
@@ -458,7 +464,7 @@ def _transform_navigator_family(navigator_family: NavigatorFamily) -> Document:
     labels.append(
         LabelRelationship(
             type="status",
-            value=LabelWithoutRelationships(
+            value=LabelWithoutDocumentRelationships(
                 type="status",
                 id="Principal",
                 value="Principal",
@@ -483,7 +489,7 @@ def _transform_navigator_family(navigator_family: NavigatorFamily) -> Document:
         labels.append(
             LabelRelationship(
                 type="entity_type",
-                value=LabelWithoutRelationships(
+                value=LabelWithoutDocumentRelationships(
                     id=entity_type,
                     value=entity_type,
                     type="entity_type",
@@ -496,7 +502,7 @@ def _transform_navigator_family(navigator_family: NavigatorFamily) -> Document:
         labels.append(
             LabelRelationship(
                 type="entity_type",
-                value=LabelWithoutRelationships(
+                value=LabelWithoutDocumentRelationships(
                     id="Project",
                     value="Project",
                     type="entity_type",
@@ -508,7 +514,7 @@ def _transform_navigator_family(navigator_family: NavigatorFamily) -> Document:
         labels.append(
             LabelRelationship(
                 type="entity_type",
-                value=LabelWithoutRelationships(
+                value=LabelWithoutDocumentRelationships(
                     id="Guidance",
                     value="Guidance",
                     type="entity_type",
@@ -594,7 +600,7 @@ def _transform_navigator_family(navigator_family: NavigatorFamily) -> Document:
                 LabelRelationship(
                     type="activity_status",
                     timestamp=event.date,
-                    value=LabelWithoutRelationships(
+                    value=LabelWithoutDocumentRelationships(
                         id=event_type_label_id,
                         value=event_type_label_id,
                         type="activity_status",
@@ -626,7 +632,7 @@ def _transform_navigator_family(navigator_family: NavigatorFamily) -> Document:
         labels.append(
             LabelRelationship(
                 type="author",
-                value=LabelWithoutRelationships(
+                value=LabelWithoutDocumentRelationships(
                     id=author,
                     value=author,
                     type=author_type,
@@ -652,7 +658,7 @@ def _transform_navigator_family(navigator_family: NavigatorFamily) -> Document:
     labels.append(
         LabelRelationship(
             type="category",
-            value=LabelWithoutRelationships(
+            value=LabelWithoutDocumentRelationships(
                 id=family_category_label_id,
                 value=family_category_label_id,
                 type="category",
@@ -732,7 +738,7 @@ def _transform_navigator_document(
             labels.append(
                 LabelRelationship(
                     type="entity_type",
-                    value=LabelWithoutRelationships(
+                    value=LabelWithoutDocumentRelationships(
                         id=event_type,
                         value=event_type,
                         type="entity_type",
@@ -751,7 +757,7 @@ def _transform_navigator_document(
         labels.append(
             LabelRelationship(
                 type="role",
-                value=LabelWithoutRelationships(
+                value=LabelWithoutDocumentRelationships(
                     id=normalised_role, value=normalised_role, type="entity_type"
                 ),
             )
@@ -769,7 +775,7 @@ def _transform_navigator_document(
         labels.append(
             LabelRelationship(
                 type="entity_type",
-                value=LabelWithoutRelationships(
+                value=LabelWithoutDocumentRelationships(
                     id=normalised_metadata_type,
                     value=normalised_metadata_type,
                     type="entity_type",
@@ -784,7 +790,7 @@ def _transform_navigator_document(
         labels.append(
             LabelRelationship(
                 type="status",
-                value=LabelWithoutRelationships(
+                value=LabelWithoutDocumentRelationships(
                     id="Obsolete", value="Obsolete", type="status"
                 ),
             )
@@ -835,7 +841,9 @@ def _transform_navigator_document(
         labels.append(
             LabelRelationship(
                 type="language",
-                value=LabelWithoutRelationships(id=lang, value=lang, type="language"),
+                value=LabelWithoutDocumentRelationships(
+                    id=lang, value=lang, type="language"
+                ),
             )
         )
 
@@ -869,7 +877,7 @@ def _transform_navigator_collection(
     labels.append(
         LabelRelationship(
             type="entity_type",
-            value=LabelWithoutRelationships(
+            value=LabelWithoutDocumentRelationships(
                 id="Collection",
                 value="Collection",
                 type="entity_type",
