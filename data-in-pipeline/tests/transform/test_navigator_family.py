@@ -1192,14 +1192,6 @@ def test_transform_navigator_family_with_litigation_corpus_type(
                 ),
             ),
             LabelRelationship(
-                type="entity_type",
-                value=Label(
-                    id="Legal case",
-                    value="Legal case",
-                    type="entity_type",
-                ),
-            ),
-            LabelRelationship(
                 type="provider",
                 value=Label(
                     type="agent",
@@ -1409,14 +1401,6 @@ def test_transform_navigator_family_with_litigation_corpus_type_and_litigation_c
                 ),
             ),
             LabelRelationship(
-                type="entity_type",
-                value=Label(
-                    id="Legal case",
-                    value="Legal case",
-                    type="entity_type",
-                ),
-            ),
-            LabelRelationship(
                 type="provider",
                 value=Label(
                     type="agent",
@@ -1596,14 +1580,6 @@ def test_transform_navigator_family_with_multilateral_climate_fund_project(
                     type="status",
                     id="Principal",
                     value="Principal",
-                ),
-            ),
-            LabelRelationship(
-                type="entity_type",
-                value=Label(
-                    id="Multilateral climate fund project",
-                    value="Multilateral climate fund project",
-                    type="entity_type",
                 ),
             ),
             LabelRelationship(
@@ -2517,14 +2493,6 @@ def test_transform_navigator_family_with_multilateral_climate_fund_guidance(
                             type="status",
                             id="Principal",
                             value="Principal",
-                        ),
-                    ),
-                    LabelRelationship(
-                        type="entity_type",
-                        value=Label(
-                            id="Multilateral climate fund project",
-                            value="Multilateral climate fund project",
-                            type="entity_type",
                         ),
                     ),
                     LabelRelationship(
