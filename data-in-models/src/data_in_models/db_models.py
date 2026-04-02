@@ -58,7 +58,7 @@ class Label(WithDbDatetimeFields, table=True):
     type: str
     attributes: dict = Field(
         default_factory=dict,
-        sa_column=Column(JSON, nullable=False),
+        sa_column=Column(JSON, nullable=True),
     )
 
     documents: list["DocumentLabelRelationship"] = Relationship(back_populates="label")
