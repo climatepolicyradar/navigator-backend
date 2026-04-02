@@ -45,8 +45,8 @@ LAWS_AND_POLICIES_CORPORA = {
 }
 
 
-MCF_EXCLUDED_KEYS = {"region", "external_id"}
 MCF_KEY_MAPPING = {"status": "project_status"}
+MCF_EXCLUDED_KEYS = {"region", "external_id"}
 MCF_ATTRIBUTE_KEYS = {
     "project_id",
     "project_url",
@@ -284,6 +284,15 @@ def _transform_family_corpus_organisation(
                 type="agent",
                 id=provider_name,
                 value=provider_name,
+                attributes={
+                    "attribution_url": navigator_family.corpus.attribution_url,
+                    "corpus_text": navigator_family.corpus.corpus_text,
+                    "corpus_image_url": (
+                        f"https://cdn.climatepolicyradar.org/{navigator_family.corpus.corpus_image_url}"
+                        if navigator_family.corpus.corpus_image_url
+                        else ""
+                    ),
+                },
             ),
         )
     )
@@ -292,33 +301,24 @@ def _transform_family_corpus_organisation(
 
 def _transform_mcf_metadata(
     metadata: dict[str, list[str]],
-    attributes: dict[str, str | float | bool],
 ) -> list[LabelRelationship]:
     labels: list[LabelRelationship] = []
 
     for key, values in metadata.items():
-        if not values or key in MCF_EXCLUDED_KEYS:
-            continue
-
-        if not values or not key:
-            continue
-
-        # We know that the value of the metadata is always list[str] with one element
-        if key in MCF_ATTRIBUTE_KEYS:
-            attributes[key] = values[0]
+        if key in MCF_EXCLUDED_KEYS or key in MCF_ATTRIBUTE_KEYS:
             continue
 
         mapped_key = MCF_KEY_MAPPING.get(key, key)
-
-        labels.extend(
-            LabelRelationship(
-                type=mapped_key,
-                value=LabelWithoutDocumentRelationships(
-                    id=value, value=value, type=mapped_key
-                ),
+        if mapped_key:
+            labels.extend(
+                LabelRelationship(
+                    type=mapped_key,
+                    value=LabelWithoutDocumentRelationships(
+                        id=value, value=value, type=mapped_key
+                    ),
+                )
+                for value in values
             )
-            for value in values
-        )
 
     return labels
 
@@ -343,7 +343,7 @@ def _transform_laws_policies_metadata(metadata: dict) -> list[LabelRelationship]
     return labels
 
 
-def _transform_metadata(navigator_family, attributes) -> list[LabelRelationship]:
+def _transform_metadata(navigator_family) -> list[LabelRelationship]:
     if not navigator_family.metadata:
         return []
 
@@ -353,9 +353,62 @@ def _transform_metadata(navigator_family, attributes) -> list[LabelRelationship]
         return _transform_laws_policies_metadata(navigator_family.metadata)
 
     if import_id in MCF_CORPORA:
-        return _transform_mcf_metadata(navigator_family.metadata, attributes)
+        return _transform_mcf_metadata(navigator_family.metadata)
 
     return []
+
+
+def _to_float(value: str) -> float:
+    try:
+        return float(value)
+    except (ValueError, TypeError):
+        return 0
+
+
+def _identifier_attribute(key: str) -> str:
+    return f"identifier::{key}"
+
+
+def _float_attribute(key: str, unit: str) -> str:
+    return f"{key}_{unit}"
+
+
+def _transform_metadata_to_attributes(
+    metadata: dict[str, list[str]],
+) -> dict[str, str | float | bool]:
+    attributes = {}
+
+    # litigation
+    case_number = metadata.get("case_number")
+    if case_number and case_number[0]:
+        attributes[_identifier_attribute("case_number")] = case_number[0]
+
+    # mcf
+    project_id = metadata.get("project_id")
+    if project_id and project_id[0]:
+        attributes[_identifier_attribute("project_id")] = project_id[0]
+
+    approved_ref = metadata.get("approved_ref")
+    if approved_ref and approved_ref[0]:
+        attributes[_identifier_attribute("project_approved_ref")] = approved_ref[0]
+
+    project_value_fund_spend = metadata.get("project_value_fund_spend")
+    if project_value_fund_spend and project_value_fund_spend[0]:
+        attributes[_float_attribute("project_fund_spend", "usd")] = _to_float(
+            project_value_fund_spend[0]
+        )
+
+    project_value_co_financing = metadata.get("project_value_co_financing")
+    if project_value_co_financing and project_value_co_financing[0]:
+        attributes[_float_attribute("project_co_financing", "usd")] = _to_float(
+            project_value_co_financing[0]
+        )
+
+    project_url = metadata.get("project_url")
+    if project_url and project_url[0]:
+        attributes["project_url"] = project_url[0]
+
+    return attributes
 
 
 def _transform_geographies(
@@ -448,6 +501,51 @@ def _transform_litigation_concepts_to_label_relationships(
     return [
         LabelRelationship(type="concept", value=label) for label in label_map.values()
     ]
+
+
+def _transform_to_category(
+    navigator_family: NavigatorFamily,
+) -> list[LabelRelationship]:
+    labels = []
+
+    if navigator_family.corpus.corpus_type == "Laws and Policies":
+        # We are maintaing this as the assumption is all Laws and policies
+        # have been tagged as "LEGISLATIVE" OR "EXECUTIVE", but there is a possiblity
+        # that they have not as the system allows it. This should allow us
+        # to assess that data.
+        labels.append(
+            LabelRelationship(
+                type="deprecated_category",
+                value=LabelWithoutDocumentRelationships(
+                    id="Laws and Policies",
+                    value="Laws and Policies",
+                    type="category",
+                ),
+            )
+        )
+    if navigator_family.category == "LEGISLATIVE":
+        labels.append(
+            LabelRelationship(
+                type="category",
+                value=LabelWithoutDocumentRelationships(
+                    id="Law",
+                    value="Law",
+                    type="category",
+                ),
+            )
+        )
+    if navigator_family.category == "EXECUTIVE":
+        labels.append(
+            LabelRelationship(
+                type="category",
+                value=LabelWithoutDocumentRelationships(
+                    id="Policy",
+                    value="Policy",
+                    type="category",
+                ),
+            )
+        )
+    return labels
 
 
 def _transform_navigator_family(navigator_family: NavigatorFamily) -> Document:
@@ -641,30 +739,26 @@ def _transform_navigator_family(navigator_family: NavigatorFamily) -> Document:
         )
 
     """
-    family.cateogry
+    family.category
     @see: https://github.com/climatepolicyradar/navigator-db-client/blob/a842d5e971894246843c1915de9179ddd991b25c/db_client/models/dfce/family.py#L67-L75
+
+    This is used on the frontend for now, but we will be removing it for the newly implemented canonical category below.
     """
-    family_category_to_label_map = {
-        "EXECUTIVE": "Executive",
-        "LEGISLATIVE": "Legislative",
-        "UNFCCC": "UN Convention",
-        "MCF": "Multilateral climate fund project",
-        "REPORTS": "Guidance",
-        "LITIGATION": "Legal case",
-    }
-    family_category_label_id = family_category_to_label_map.get(
-        navigator_family.category, "Unknown family.category"
-    )
     labels.append(
         LabelRelationship(
-            type="category",
+            type="deprecated_category",
             value=LabelWithoutDocumentRelationships(
-                id=family_category_label_id,
-                value=family_category_label_id,
-                type="category",
+                id=navigator_family.category,
+                value=navigator_family.category,
+                type="deprecated_category",
             ),
         )
     )
+
+    """
+    Canonical category
+    """
+    labels.extend(_transform_to_category(navigator_family))
 
     """
     Slug
@@ -677,7 +771,24 @@ def _transform_navigator_family(navigator_family: NavigatorFamily) -> Document:
     Metadata
     """
 
-    labels.extend(_transform_metadata(navigator_family, attributes))
+    labels.extend(_transform_metadata(navigator_family))
+
+    attributes.update(_transform_metadata_to_attributes(navigator_family.metadata))
+
+    """
+    Litigation concepts, not to be confused with other concepts these are defined by the
+    Sabin Center for Climate Change Law and only apply to the Academic.corpus.Litigation.n0000 corpus.
+    """
+
+    if (
+        navigator_family.corpus.import_id == "Academic.corpus.Litigation.n0000"
+        and navigator_family.concepts
+    ):
+        labels.extend(
+            _transform_litigation_concepts_to_label_relationships(
+                navigator_family.concepts
+            )
+        )
 
     """
     Litigation concepts, not to be confused with other concepts these are defined by the
@@ -833,6 +944,11 @@ def _transform_navigator_document(
     Geography labels
     """
     labels.extend(_transform_geographies(navigator_family))
+
+    """
+    Canonical category
+    """
+    labels.extend(_transform_to_category(navigator_family))
 
     """
     Language labels

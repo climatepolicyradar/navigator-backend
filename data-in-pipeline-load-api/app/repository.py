@@ -72,6 +72,7 @@ def create_or_update_documents(
                         "id": label.id,
                         "value": label.value,
                         "type": label.type,
+                        "attributes": label.attributes,
                         "created_at": now,
                         "updated_at": now,
                     }
@@ -83,6 +84,7 @@ def create_or_update_documents(
                 set_={
                     "value": label_stmt.excluded.value,
                     "type": label_stmt.excluded.type,
+                    "attributes": label_stmt.excluded.attributes,
                     "updated_at": now,
                 },
                 where=(
@@ -349,6 +351,7 @@ def create_documents(db: Session, documents: list[DocumentInput]) -> list[str]:
                         id=rel.value.id,
                         value=rel.value.value,
                         type=rel.value.type,
+                        attributes=rel.value.attributes,
                         created_at=datetime.now(UTC),
                         updated_at=datetime.now(UTC),
                     )

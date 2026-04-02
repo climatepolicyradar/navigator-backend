@@ -23,7 +23,7 @@ class LabelWithoutDocumentRelationships(BaseModel):
     labels: list[LabelRelationship] = []
 
 
-class Label(WithRelationships):
+class Label(WithAttributes, WithRelationships):
     id: str
     type: str
     value: str
