@@ -38,6 +38,17 @@ def _cclw_corpus():
     )
 
 
+def _cclw_laws_and_policies_corpus():
+    return NavigatorCorpusFactory.build(
+        import_id="CCLW.corpus.i00000001.n0000",
+        corpus_type=NavigatorCorpusTypeFactory.build(name="Laws and Policies"),
+        organisation=NavigatorOrganisationFactory.build(id=1, name="CCLW"),
+        attribution_url="testurl.org",
+        corpus_text="Test corpus",
+        corpus_image_url="corpus_image.png",
+    )
+
+
 def _standard_events():
     """Event types used by CCLW transformation for activity status labels."""
     base_date = datetime.datetime(2020, 1, 1)
@@ -981,7 +992,7 @@ def test_transform_navigator_family_with_laws_and_policies_corpus_type(
             last_updated_date=None,
             corpus=NavigatorCorpusFactory.build(
                 import_id=corpus_id,
-                corpus_type=NavigatorCorpusTypeFactory.build(name="corpus_type"),
+                corpus_type=NavigatorCorpusTypeFactory.build(name="Laws and Policies"),
                 organisation=NavigatorOrganisationFactory.build(id=1, name=org),
                 attribution_url="testurl.org",
                 corpus_text="Test corpus",
@@ -1050,6 +1061,14 @@ def test_transform_navigator_family_with_laws_and_policies_corpus_type(
                 value=Label(
                     id="LEGISLATIVE",
                     value="LEGISLATIVE",
+                    type="deprecated_category",
+                ),
+            ),
+            LabelRelationship(
+                type="deprecated_category",
+                value=Label(
+                    id="Laws and Policies",
+                    value="Laws and Policies",
                     type="deprecated_category",
                 ),
             ),
@@ -1424,6 +1443,14 @@ def test_transform_navigator_family_with_multilateral_climate_fund_project(
                 ),
             ),
             LabelRelationship(
+                type="category",
+                value=Label(
+                    id="Multilateral Climate Fund project",
+                    value="Multilateral Climate Fund project",
+                    type="category",
+                ),
+            ),
+            LabelRelationship(
                 type="sector",
                 value=Label(
                     id="Public Sector",
@@ -1469,6 +1496,22 @@ def test_transform_navigator_family_with_multilateral_climate_fund_project(
                             ),
                         ),
                         LabelRelationship(
+                            type="category",
+                            value=Label(
+                                id="Multilateral Climate Fund project",
+                                value="Multilateral Climate Fund project",
+                                type="category",
+                            ),
+                        ),
+                        LabelRelationship(
+                            type="entity_type",
+                            value=Label(
+                                id="Project",
+                                value="Project",
+                                type="entity_type",
+                            ),
+                        ),
+                        LabelRelationship(
                             type="language",
                             value=Label(
                                 id="eng",
@@ -1502,6 +1545,22 @@ def test_transform_navigator_family_with_multilateral_climate_fund_project(
                                     "corpus_text": "Test corpus",
                                     "corpus_image_url": "",
                                 },
+                            ),
+                        ),
+                        LabelRelationship(
+                            type="category",
+                            value=Label(
+                                id="Multilateral Climate Fund project",
+                                value="Multilateral Climate Fund project",
+                                type="category",
+                            ),
+                        ),
+                        LabelRelationship(
+                            type="entity_type",
+                            value=Label(
+                                id="Project",
+                                value="Project",
+                                type="entity_type",
                             ),
                         ),
                         LabelRelationship(
@@ -1554,6 +1613,22 @@ def test_transform_navigator_family_with_multilateral_climate_fund_project(
                         ),
                     ),
                     LabelRelationship(
+                        type="category",
+                        value=Label(
+                            id="Multilateral Climate Fund project",
+                            value="Multilateral Climate Fund project",
+                            type="category",
+                        ),
+                    ),
+                    LabelRelationship(
+                        type="entity_type",
+                        value=Label(
+                            id="Project",
+                            value="Project",
+                            type="entity_type",
+                        ),
+                    ),
+                    LabelRelationship(
                         type="language",
                         value=Label(
                             id="eng",
@@ -1595,6 +1670,22 @@ def test_transform_navigator_family_with_multilateral_climate_fund_project(
                         ),
                     ),
                     LabelRelationship(
+                        type="category",
+                        value=Label(
+                            id="Multilateral Climate Fund project",
+                            value="Multilateral Climate Fund project",
+                            type="category",
+                        ),
+                    ),
+                    LabelRelationship(
+                        type="entity_type",
+                        value=Label(
+                            id="Project",
+                            value="Project",
+                            type="entity_type",
+                        ),
+                    ),
+                    LabelRelationship(
                         type="language",
                         value=Label(
                             id="eng",
@@ -1633,7 +1724,7 @@ def test_transform_navigator_family_with_published_and_unpublished_documents():
             category="LEGISLATIVE",
             published_date=None,
             last_updated_date=None,
-            corpus=_cclw_corpus(),
+            corpus=_cclw_laws_and_policies_corpus(),
             documents=[
                 NavigatorDocumentFactory.build(
                     import_id="document1",
@@ -1717,6 +1808,14 @@ def test_transform_navigator_family_with_published_and_unpublished_documents():
                 ),
             ),
             LabelRelationship(
+                type="deprecated_category",
+                value=Label(
+                    id="Laws and Policies",
+                    value="Laws and Policies",
+                    type="deprecated_category",
+                ),
+            ),
+            LabelRelationship(
                 type="category",
                 value=Label(
                     id="Law",
@@ -1751,6 +1850,14 @@ def test_transform_navigator_family_with_published_and_unpublished_documents():
                                 type="geography",
                                 id="AUS",
                                 value="Australia",
+                            ),
+                        ),
+                        LabelRelationship(
+                            type="deprecated_category",
+                            value=Label(
+                                id="Laws and Policies",
+                                value="Laws and Policies",
+                                type="deprecated_category",
                             ),
                         ),
                         LabelRelationship(
@@ -1815,6 +1922,14 @@ def test_transform_navigator_family_with_published_and_unpublished_documents():
                                 type="geography",
                                 id="AUS",
                                 value="Australia",
+                            ),
+                        ),
+                        LabelRelationship(
+                            type="deprecated_category",
+                            value=Label(
+                                id="Laws and Policies",
+                                value="Laws and Policies",
+                                type="deprecated_category",
                             ),
                         ),
                         LabelRelationship(
@@ -1890,6 +2005,14 @@ def test_transform_navigator_family_with_published_and_unpublished_documents():
                         ),
                     ),
                     LabelRelationship(
+                        type="deprecated_category",
+                        value=Label(
+                            id="Laws and Policies",
+                            value="Laws and Policies",
+                            type="deprecated_category",
+                        ),
+                    ),
+                    LabelRelationship(
                         type="category",
                         value=Label(
                             id="Law",
@@ -1959,6 +2082,14 @@ def test_transform_navigator_family_with_published_and_unpublished_documents():
                         ),
                     ),
                     LabelRelationship(
+                        type="deprecated_category",
+                        value=Label(
+                            id="Laws and Policies",
+                            value="Laws and Policies",
+                            type="deprecated_category",
+                        ),
+                    ),
+                    LabelRelationship(
                         type="category",
                         value=Label(
                             id="Law",
@@ -2017,7 +2148,7 @@ def test_transform_navigator_family_with_no_published_documents():
             category="LEGISLATIVE",
             published_date=None,
             last_updated_date=None,
-            corpus=_cclw_corpus(),
+            corpus=_cclw_laws_and_policies_corpus(),
             documents=[
                 NavigatorDocumentFactory.build(
                     import_id="document1",
@@ -2085,6 +2216,14 @@ def test_transform_navigator_family_with_no_published_documents():
                 ),
             ),
             LabelRelationship(
+                type="deprecated_category",
+                value=Label(
+                    id="Laws and Policies",
+                    value="Laws and Policies",
+                    type="deprecated_category",
+                ),
+            ),
+            LabelRelationship(
                 type="category",
                 value=Label(
                     id="Law",
@@ -2119,6 +2258,14 @@ def test_transform_navigator_family_with_no_published_documents():
                                 type="geography",
                                 id="AUS",
                                 value="Australia",
+                            ),
+                        ),
+                        LabelRelationship(
+                            type="deprecated_category",
+                            value=Label(
+                                id="Laws and Policies",
+                                value="Laws and Policies",
+                                type="deprecated_category",
                             ),
                         ),
                         LabelRelationship(
@@ -2190,6 +2337,14 @@ def test_transform_navigator_family_with_no_published_documents():
                             type="geography",
                             id="AUS",
                             value="Australia",
+                        ),
+                    ),
+                    LabelRelationship(
+                        type="deprecated_category",
+                        value=Label(
+                            id="Laws and Policies",
+                            value="Laws and Policies",
+                            type="deprecated_category",
                         ),
                     ),
                     LabelRelationship(
@@ -2291,6 +2446,14 @@ def test_transform_navigator_family_with_multilateral_climate_fund_guidance(
                             type="deprecated_category",
                         ),
                     ),
+                    LabelRelationship(
+                        type="category",
+                        value=Label(
+                            id="Multilateral Climate Fund project",
+                            value="Multilateral Climate Fund project",
+                            type="category",
+                        ),
+                    ),
                 ],
                 documents=[],
                 attributes={
@@ -2299,3 +2462,59 @@ def test_transform_navigator_family_with_multilateral_climate_fund_guidance(
             )
         ],
     )
+
+
+@pytest.mark.parametrize(
+    "corpus_id, expected_category",
+    [
+        ("UNFCCC.corpus.i00000001.n0000", "UN submission"),
+        ("UN.corpus.UNCCD.n0000", "UN submission"),
+        ("UN.corpus.UNCBD.n0000", "UN submission"),
+        ("OEP.corpus.i00000001.n0000", "Report"),
+        ("CPR.corpus.i00000002.n0000", "Litigation"),
+        ("MCF.corpus.AF.n0000", "Multilateral Climate Fund project"),
+        ("MCF.corpus.CIF.n0000", "Multilateral Climate Fund project"),
+        ("MCF.corpus.GCF.n0000", "Multilateral Climate Fund project"),
+        ("MCF.corpus.GEF.n0000", "Multilateral Climate Fund project"),
+        ("MCF.corpus.AF.Guidance", "Multilateral Climate Fund project"),
+        ("MCF.corpus.CIF.Guidance", "Multilateral Climate Fund project"),
+        ("MCF.corpus.GCF.Guidance", "Multilateral Climate Fund project"),
+        ("MCF.corpus.GEF.Guidance", "Multilateral Climate Fund project"),
+    ],
+)
+def test_transform_to_category_corpus_ids(corpus_id: str, expected_category: str):
+    navigator_family = Identified(
+        id="family",
+        source="navigator_family",
+        data=NavigatorFamilyFactory.build(
+            import_id="family",
+            title="Family",
+            summary="Family summary",
+            category="REPORTS",
+            published_date=None,
+            last_updated_date=None,
+            corpus=NavigatorCorpusFactory.build(
+                import_id=corpus_id,
+                corpus_type=NavigatorCorpusTypeFactory.build(name="corpus_type"),
+                organisation=NavigatorOrganisationFactory.build(id=1, name="org"),
+                attribution_url="testurl.org",
+                corpus_text="Test corpus",
+                corpus_image_url=None,
+            ),
+            documents=[],
+            events=[],
+            collections=[],
+            geographies=[],
+            slug="family-slug",
+            metadata={},
+        ),
+    )
+
+    result = transform_navigator_family(navigator_family)
+    documents = result.unwrap()
+    family_doc = documents[0]
+
+    category_labels = [label for label in family_doc.labels if label.type == "category"]
+    assert any(
+        label.value.id == expected_category for label in category_labels
+    ), f"Expected category '{expected_category}' not found in labels for corpus '{corpus_id}'"

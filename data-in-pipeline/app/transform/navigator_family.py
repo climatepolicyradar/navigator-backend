@@ -442,7 +442,89 @@ def _transform_to_category(
 ) -> list[LabelRelationship]:
     labels = []
 
-    if navigator_family.corpus.corpus_type == "Laws and Policies":
+    un_submission_corpora = [
+        "UNFCCC.corpus.i00000001.n0000",
+        "UN.corpus.UNCCD.n0000",
+        "UN.corpus.UNCBD.n0000",
+    ]
+    if navigator_family.corpus.import_id in un_submission_corpora:
+        labels.append(
+            LabelRelationship(
+                type="category",
+                value=Label(
+                    id="UN submission",
+                    value="UN submission",
+                    type="category",
+                ),
+            )
+        )
+
+    oep_corpora = [
+        "OEP.corpus.i00000001.n0000",
+    ]
+    if navigator_family.corpus.import_id in oep_corpora:
+        labels.append(
+            LabelRelationship(
+                type="category",
+                value=Label(
+                    id="Report",
+                    value="Report",
+                    type="category",
+                ),
+            )
+        )
+
+    litigation_corpora = [
+        "CPR.corpus.i00000002.n0000",
+    ]
+    if navigator_family.corpus.import_id in litigation_corpora:
+        labels.append(
+            LabelRelationship(
+                type="category",
+                value=Label(
+                    id="Litigation",
+                    value="Litigation",
+                    type="category",
+                ),
+            )
+        )
+
+    if navigator_family.corpus.import_id in MCF_CORPORA:
+        labels.append(
+            LabelRelationship(
+                type="category",
+                value=Label(
+                    id="Multilateral Climate Fund project",
+                    value="Multilateral Climate Fund project",
+                    type="category",
+                ),
+            )
+        )
+
+        if navigator_family.corpus.import_id in mcf_guidance_corpus_import_ids:
+            labels.append(
+                LabelRelationship(
+                    type="entity_type",
+                    value=Label(
+                        id="Guidance",
+                        value="Guidance",
+                        type="entity_type",
+                    ),
+                )
+            )
+        if navigator_family.corpus.import_id in mcf_projects_corpus_import_ids:
+            labels.append(
+                LabelRelationship(
+                    type="entity_type",
+                    value=Label(
+                        id="Project",
+                        value="Project",
+                        type="entity_type",
+                    ),
+                )
+            )
+
+    if navigator_family.corpus.corpus_type.name == "Laws and Policies":
         # We are maintaing this as the assumption is all Laws and policies
         # have been tagged as "LEGISLATIVE" OR "EXECUTIVE", but there is a possiblity
         # that they have not as the system allows it. This should allow us
@@ -457,28 +539,29 @@ def _transform_to_category(
                 ),
             )
         )
-    if navigator_family.category == "LEGISLATIVE":
-        labels.append(
-            LabelRelationship(
-                type="category",
-                value=Label(
-                    id="Law",
-                    value="Law",
+        if navigator_family.category == "LEGISLATIVE":
+            labels.append(
+                LabelRelationship(
                     type="category",
-                ),
+                    value=Label(
+                        id="Law",
+                        value="Law",
+                        type="category",
+                    ),
+                )
             )
-        )
-    if navigator_family.category == "EXECUTIVE":
-        labels.append(
-            LabelRelationship(
-                type="category",
-                value=Label(
-                    id="Policy",
-                    value="Policy",
+        if navigator_family.category == "EXECUTIVE":
+            labels.append(
+                LabelRelationship(
                     type="category",
-                ),
+                    value=Label(
+                        id="Policy",
+                        value="Policy",
+                        type="category",
+                    ),
+                )
             )
-        )
+
     return labels
 
 
