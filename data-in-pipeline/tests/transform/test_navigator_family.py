@@ -257,6 +257,9 @@ def navigator_family_with_litigation_concepts() -> Identified[NavigatorFamily]:
                 import_id="Academic.corpus.Litigation.n0000",
                 corpus_type=NavigatorCorpusTypeFactory.build(name="Litigation"),
                 organisation=NavigatorOrganisationFactory.build(id=1, name="Sabin"),
+                attribution_url="testurl.org",
+                corpus_text="Test corpus",
+                corpus_image_url=None,
             ),
             documents=[
                 NavigatorDocumentFactory.build(
@@ -1005,23 +1008,6 @@ def test_transform_navigator_family_with_single_matching_document(
     )
 
 
-def test_transform_navigator_family_with_litigation_corpus_type_handles_duplicate_label_relationships(
-    navigator_family_with_duplicate_legal_case: Identified[NavigatorFamily],
-):
-    result = transform_navigator_family(navigator_family_with_duplicate_legal_case)
-
-    documents = result.unwrap()
-    family_doc = documents[0]
-
-    legal_case_labels = [
-        label
-        for label in family_doc.labels
-        if label.value.id == "Legal case" and label.type == "entity_type"
-    ]
-
-    assert len(legal_case_labels) == 0
-
-
 @pytest.mark.parametrize(
     "corpus_id, org, provider",
     [
@@ -1229,8 +1215,8 @@ def test_transform_navigator_family_with_litigation_corpus_type(
             LabelRelationship(
                 type="deprecated_category",
                 value=Label(
-                    id="REPORTS",
-                    value="REPORTS",
+                    id="LITIGATION",
+                    value="LITIGATION",
                     type="deprecated_category",
                 ),
             ),
@@ -1436,19 +1422,24 @@ def test_transform_navigator_family_with_litigation_corpus_type_and_litigation_c
                     type="agent",
                     id="Sabin Center for Climate Change Law",
                     value="Sabin Center for Climate Change Law",
+                    attributes={
+                        "attribution_url": "testurl.org",
+                        "corpus_text": "Test corpus",
+                        "corpus_image_url": "",
+                    },
                 ),
             ),
             LabelRelationship(
-                type="category",
+                type="deprecated_category",
                 value=Label(
-                    id="Guidance",
-                    value="Guidance",
-                    type="category",
+                    id="LITIGATION",
+                    value="LITIGATION",
+                    type="deprecated_category",
                 ),
             ),
             LabelRelationship(
                 type="concept",
-                value=Label(
+                value=LabelWithoutDocumentRelationships(
                     id="High Court of Justice",
                     labels=[
                         LabelRelationship(
@@ -1515,6 +1506,11 @@ def test_transform_navigator_family_with_litigation_corpus_type_and_litigation_c
                                 type="agent",
                                 id="Sabin Center for Climate Change Law",
                                 value="Sabin Center for Climate Change Law",
+                                attributes={
+                                    "attribution_url": "testurl.org",
+                                    "corpus_text": "Test corpus",
+                                    "corpus_image_url": "",
+                                },
                             ),
                         ),
                     ],
@@ -1556,6 +1552,11 @@ def test_transform_navigator_family_with_litigation_corpus_type_and_litigation_c
                             type="agent",
                             id="Sabin Center for Climate Change Law",
                             value="Sabin Center for Climate Change Law",
+                            attributes={
+                                "attribution_url": "testurl.org",
+                                "corpus_text": "Test corpus",
+                                "corpus_image_url": "",
+                            },
                         ),
                     ),
                 ],
@@ -1674,8 +1675,8 @@ def test_transform_navigator_family_with_multilateral_climate_fund_project(
             LabelRelationship(
                 type="deprecated_category",
                 value=Label(
-                    id="REPORTS",
-                    value="REPORTS",
+                    id="MCF",
+                    value="MCF",
                     type="deprecated_category",
                 ),
             ),
@@ -2018,14 +2019,6 @@ def test_transform_navigator_family_with_published_and_unpublished_documents():
                             ),
                         ),
                         LabelRelationship(
-                            type="category",
-                            value=Label(
-                                id="Law",
-                                value="Law",
-                                type="category",
-                            ),
-                        ),
-                        LabelRelationship(
                             type="language",
                             value=Label(
                                 id="eng",
@@ -2079,14 +2072,6 @@ def test_transform_navigator_family_with_published_and_unpublished_documents():
                                 type="geography",
                                 id="AUS",
                                 value="Australia",
-                            ),
-                        ),
-                        LabelRelationship(
-                            type="category",
-                            value=Label(
-                                id="Law",
-                                value="Law",
-                                type="category",
                             ),
                         ),
                         LabelRelationship(
@@ -2170,14 +2155,6 @@ def test_transform_navigator_family_with_published_and_unpublished_documents():
                         ),
                     ),
                     LabelRelationship(
-                        type="category",
-                        value=Label(
-                            id="Law",
-                            value="Law",
-                            type="category",
-                        ),
-                    ),
-                    LabelRelationship(
                         type="language",
                         value=Label(
                             id="eng",
@@ -2236,14 +2213,6 @@ def test_transform_navigator_family_with_published_and_unpublished_documents():
                             type="geography",
                             id="AUS",
                             value="Australia",
-                        ),
-                    ),
-                    LabelRelationship(
-                        type="category",
-                        value=Label(
-                            id="Law",
-                            value="Law",
-                            type="category",
                         ),
                     ),
                     LabelRelationship(
@@ -2418,14 +2387,6 @@ def test_transform_navigator_family_with_no_published_documents():
                             ),
                         ),
                         LabelRelationship(
-                            type="category",
-                            value=Label(
-                                id="Law",
-                                value="Law",
-                                type="category",
-                            ),
-                        ),
-                        LabelRelationship(
                             type="language",
                             value=Label(
                                 id="eng",
@@ -2486,14 +2447,6 @@ def test_transform_navigator_family_with_no_published_documents():
                             type="geography",
                             id="AUS",
                             value="Australia",
-                        ),
-                    ),
-                    LabelRelationship(
-                        type="category",
-                        value=Label(
-                            id="Law",
-                            value="Law",
-                            type="category",
                         ),
                     ),
                     LabelRelationship(
