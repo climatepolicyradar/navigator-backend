@@ -45,3 +45,12 @@ class PipelineResult(BaseModel):
         ..., description="Number of batches loaded to the database"
     )
     status: str = Field(..., description="Pipeline execution status")
+
+
+class NavigatorConcept(BaseModel):
+    id: str
+    ids: list[str] = []
+    type: str
+    relation: str
+    preferred_label: str
+    subconcept_of_labels: list[str] = []

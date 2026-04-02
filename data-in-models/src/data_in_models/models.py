@@ -16,15 +16,28 @@ class WithAttributes(BaseModel):
     attributes: dict[str, str | float | bool] = {}
 
 
-class Label(WithAttributes, WithRelationships):
+class LabelBase(WithAttributes):
     id: str
     type: str
     value: str
 
 
+class LabelWithoutDocumentRelationships(LabelBase):
+    """A Label that can carry nested label relationships, but no document relationships.
+    Used as the value type in LabelRelationship to prevent circular document nesting."""
+
+    labels: list[LabelRelationship] = []
+
+
+class Label(LabelWithoutDocumentRelationships):
+    """Full Label — includes both label and document relationships."""
+
+    documents: list[DocumentRelationship] = []
+
+
 class LabelRelationship(BaseModel):
     type: str
-    value: Label
+    value: LabelWithoutDocumentRelationships | Label
     timestamp: datetime | None = None
 
 
