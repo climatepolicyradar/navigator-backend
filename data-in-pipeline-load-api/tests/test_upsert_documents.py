@@ -38,9 +38,9 @@ def create_mock_document_input(
     )
 
 
-def create_mock_label(label_id="label_1", value="Test Label"):
+def create_mock_label(label_id="label_1", value="Test Label", attributes={}):
     """Create a mock label relationship."""
-    label = LabelInput(id=label_id, value=value, type="status", attributes={})
+    label = LabelInput(id=label_id, value=value, type="status", attributes=attributes)
 
     return DocumentLabelRelationshipInput(
         type="tag", timestamp=datetime.now(UTC), value=label
@@ -103,16 +103,23 @@ def test_upsert_creates_document_with_labels_and_items(session):
 
 def test_update_existing_document(session):
     """Test updating an existing document with new data."""
-    initial_doc = create_mock_document_input("update-doc", "Old Title")
+    initial_label = create_mock_label("update-label", "Label title", {})
+    initial_doc = create_mock_document_input("update-doc", "Old Title", [initial_label])
     create_or_update_documents(session, [initial_doc])
 
-    updated_doc = create_mock_document_input("update-doc", "New Title")
+    updated_label = create_mock_label(
+        "update-label", "Label title", {"test-attribute": "updated-test-value"}
+    )
+    updated_doc = create_mock_document_input("update-doc", "New Title", [updated_label])
     result = create_or_update_documents(session, [updated_doc])
 
     assert result == ["update-doc"]
 
     doc = session.get(Document, "update-doc")
     assert doc.title == "New Title"
+
+    label = session.get(Label, "update-label")
+    assert label.attributes == {"test-attribute": "updated-test-value"}
 
 
 def test_idempotent_operation(session):
