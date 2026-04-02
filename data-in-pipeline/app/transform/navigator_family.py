@@ -3,6 +3,7 @@ from data_in_models.models import (
     DocumentRelationship,
     DocumentWithoutRelationships,
     Item,
+    Label,
     LabelRelationship,
     LabelWithoutDocumentRelationships,
 )
@@ -280,7 +281,7 @@ def _transform_family_corpus_organisation(
     labels.append(
         LabelRelationship(
             type="provider",
-            value=LabelWithoutDocumentRelationships(
+            value=Label(
                 type="agent",
                 id=provider_name,
                 value=provider_name,
@@ -313,9 +314,7 @@ def _transform_mcf_metadata(
             labels.extend(
                 LabelRelationship(
                     type=mapped_key,
-                    value=LabelWithoutDocumentRelationships(
-                        id=value, value=value, type=mapped_key
-                    ),
+                    value=Label(id=value, value=value, type=mapped_key),
                 )
                 for value in values
             )
@@ -334,9 +333,7 @@ def _transform_laws_policies_metadata(metadata: dict) -> list[LabelRelationship]
             labels.append(
                 LabelRelationship(
                     type=key,
-                    value=LabelWithoutDocumentRelationships(
-                        id=value, value=value, type=key
-                    ),
+                    value=Label(id=value, value=value, type=key),
                 )
             )
 
@@ -427,7 +424,7 @@ def _transform_geographies(
                     geography_labels.append(
                         LabelRelationship(
                             type="geography",
-                            value=LabelWithoutDocumentRelationships(
+                            value=Label(
                                 id=geography.id,
                                 value=geography.name,
                                 type="geography",
@@ -516,7 +513,7 @@ def _transform_to_category(
         labels.append(
             LabelRelationship(
                 type="deprecated_category",
-                value=LabelWithoutDocumentRelationships(
+                value=Label(
                     id="Laws and Policies",
                     value="Laws and Policies",
                     type="category",
@@ -527,7 +524,7 @@ def _transform_to_category(
         labels.append(
             LabelRelationship(
                 type="category",
-                value=LabelWithoutDocumentRelationships(
+                value=Label(
                     id="Law",
                     value="Law",
                     type="category",
@@ -538,7 +535,7 @@ def _transform_to_category(
         labels.append(
             LabelRelationship(
                 type="category",
-                value=LabelWithoutDocumentRelationships(
+                value=Label(
                     id="Policy",
                     value="Policy",
                     type="category",
@@ -562,7 +559,7 @@ def _transform_navigator_family(navigator_family: NavigatorFamily) -> Document:
     labels.append(
         LabelRelationship(
             type="status",
-            value=LabelWithoutDocumentRelationships(
+            value=Label(
                 type="status",
                 id="Principal",
                 value="Principal",
@@ -587,7 +584,7 @@ def _transform_navigator_family(navigator_family: NavigatorFamily) -> Document:
         labels.append(
             LabelRelationship(
                 type="entity_type",
-                value=LabelWithoutDocumentRelationships(
+                value=Label(
                     id=entity_type,
                     value=entity_type,
                     type="entity_type",
@@ -600,7 +597,7 @@ def _transform_navigator_family(navigator_family: NavigatorFamily) -> Document:
         labels.append(
             LabelRelationship(
                 type="entity_type",
-                value=LabelWithoutDocumentRelationships(
+                value=Label(
                     id="Project",
                     value="Project",
                     type="entity_type",
@@ -612,7 +609,7 @@ def _transform_navigator_family(navigator_family: NavigatorFamily) -> Document:
         labels.append(
             LabelRelationship(
                 type="entity_type",
-                value=LabelWithoutDocumentRelationships(
+                value=Label(
                     id="Guidance",
                     value="Guidance",
                     type="entity_type",
@@ -698,7 +695,7 @@ def _transform_navigator_family(navigator_family: NavigatorFamily) -> Document:
                 LabelRelationship(
                     type="activity_status",
                     timestamp=event.date,
-                    value=LabelWithoutDocumentRelationships(
+                    value=Label(
                         id=event_type_label_id,
                         value=event_type_label_id,
                         type="activity_status",
@@ -730,7 +727,7 @@ def _transform_navigator_family(navigator_family: NavigatorFamily) -> Document:
         labels.append(
             LabelRelationship(
                 type="author",
-                value=LabelWithoutDocumentRelationships(
+                value=Label(
                     id=author,
                     value=author,
                     type=author_type,
@@ -747,7 +744,7 @@ def _transform_navigator_family(navigator_family: NavigatorFamily) -> Document:
     labels.append(
         LabelRelationship(
             type="deprecated_category",
-            value=LabelWithoutDocumentRelationships(
+            value=Label(
                 id=navigator_family.category,
                 value=navigator_family.category,
                 type="deprecated_category",
@@ -849,7 +846,7 @@ def _transform_navigator_document(
             labels.append(
                 LabelRelationship(
                     type="entity_type",
-                    value=LabelWithoutDocumentRelationships(
+                    value=Label(
                         id=event_type,
                         value=event_type,
                         type="entity_type",
@@ -868,7 +865,7 @@ def _transform_navigator_document(
         labels.append(
             LabelRelationship(
                 type="role",
-                value=LabelWithoutDocumentRelationships(
+                value=Label(
                     id=normalised_role, value=normalised_role, type="entity_type"
                 ),
             )
@@ -886,7 +883,7 @@ def _transform_navigator_document(
         labels.append(
             LabelRelationship(
                 type="entity_type",
-                value=LabelWithoutDocumentRelationships(
+                value=Label(
                     id=normalised_metadata_type,
                     value=normalised_metadata_type,
                     type="entity_type",
@@ -901,9 +898,7 @@ def _transform_navigator_document(
         labels.append(
             LabelRelationship(
                 type="status",
-                value=LabelWithoutDocumentRelationships(
-                    id="Obsolete", value="Obsolete", type="status"
-                ),
+                value=Label(id="Obsolete", value="Obsolete", type="status"),
             )
         )
 
@@ -957,9 +952,7 @@ def _transform_navigator_document(
         labels.append(
             LabelRelationship(
                 type="language",
-                value=LabelWithoutDocumentRelationships(
-                    id=lang, value=lang, type="language"
-                ),
+                value=Label(id=lang, value=lang, type="language"),
             )
         )
 
@@ -993,7 +986,7 @@ def _transform_navigator_collection(
     labels.append(
         LabelRelationship(
             type="entity_type",
-            value=LabelWithoutDocumentRelationships(
+            value=Label(
                 id="Collection",
                 value="Collection",
                 type="entity_type",

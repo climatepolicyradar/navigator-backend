@@ -1,19 +1,21 @@
 import datetime
 
 import pytest
-from app.extract.connectors import (
-    NavigatorFamily,
-)
-from app.models import Identified, NavigatorConcept
-from app.transform.navigator_family import transform_navigator_family
 from data_in_models.models import (
     Document,
     DocumentRelationship,
     DocumentWithoutRelationships,
     Item,
+    Label,
     LabelRelationship,
     LabelWithoutDocumentRelationships,
 )
+
+from app.extract.connectors import (
+    NavigatorFamily,
+)
+from app.models import Identified, NavigatorConcept
+from app.transform.navigator_family import transform_navigator_family
 from tests.factories import (
     NavigatorCollectionFactory,
     NavigatorCorpusFactory,
@@ -443,9 +445,9 @@ def navigator_family_multilateral_climate_fund_project() -> Identified[Navigator
 
 
 @pytest.fixture
-def navigator_family_multilateral_climate_fund_guidance() -> Identified[
-    NavigatorFamily
-]:
+def navigator_family_multilateral_climate_fund_guidance() -> (
+    Identified[NavigatorFamily]
+):
     return Identified(
         id="family",
         source="navigator_family",
@@ -516,7 +518,7 @@ def test_transform_navigator_family_with_single_matching_document(
         labels=[
             LabelRelationship(
                 type="status",
-                value=LabelWithoutDocumentRelationships(
+                value=Label(
                     type="status",
                     id="Principal",
                     value="Principal",
@@ -525,7 +527,7 @@ def test_transform_navigator_family_with_single_matching_document(
             LabelRelationship(
                 type="activity_status",
                 timestamp=datetime.datetime(2020, 1, 1),
-                value=LabelWithoutDocumentRelationships(
+                value=Label(
                     type="activity_status",
                     id="Amended/Updated",
                     value="Amended/Updated",
@@ -534,7 +536,7 @@ def test_transform_navigator_family_with_single_matching_document(
             LabelRelationship(
                 type="activity_status",
                 timestamp=datetime.datetime(2020, 1, 1),
-                value=LabelWithoutDocumentRelationships(
+                value=Label(
                     type="activity_status",
                     id="Appealed",
                     value="Appealed",
@@ -543,7 +545,7 @@ def test_transform_navigator_family_with_single_matching_document(
             LabelRelationship(
                 type="activity_status",
                 timestamp=datetime.datetime(2020, 1, 1),
-                value=LabelWithoutDocumentRelationships(
+                value=Label(
                     type="activity_status",
                     id="Closed",
                     value="Closed",
@@ -552,7 +554,7 @@ def test_transform_navigator_family_with_single_matching_document(
             LabelRelationship(
                 type="activity_status",
                 timestamp=datetime.datetime(2020, 1, 1),
-                value=LabelWithoutDocumentRelationships(
+                value=Label(
                     type="activity_status",
                     id="Declaration of climate emergency",
                     value="Declaration of climate emergency",
@@ -561,14 +563,12 @@ def test_transform_navigator_family_with_single_matching_document(
             LabelRelationship(
                 type="activity_status",
                 timestamp=datetime.datetime(2020, 1, 1),
-                value=LabelWithoutDocumentRelationships(
-                    type="activity_status", id="Dismissed", value="Dismissed"
-                ),
+                value=Label(type="activity_status", id="Dismissed", value="Dismissed"),
             ),
             LabelRelationship(
                 type="activity_status",
                 timestamp=datetime.datetime(2020, 1, 1),
-                value=LabelWithoutDocumentRelationships(
+                value=Label(
                     type="activity_status",
                     id="Entered into force",
                     value="Entered into force",
@@ -577,21 +577,17 @@ def test_transform_navigator_family_with_single_matching_document(
             LabelRelationship(
                 type="activity_status",
                 timestamp=datetime.datetime(2020, 1, 1),
-                value=LabelWithoutDocumentRelationships(
-                    type="activity_status", id="Filing", value="Filing"
-                ),
+                value=Label(type="activity_status", id="Filing", value="Filing"),
             ),
             LabelRelationship(
                 type="activity_status",
                 timestamp=datetime.datetime(2020, 1, 1),
-                value=LabelWithoutDocumentRelationships(
-                    type="activity_status", id="Granted", value="Granted"
-                ),
+                value=Label(type="activity_status", id="Granted", value="Granted"),
             ),
             LabelRelationship(
                 type="activity_status",
                 timestamp=datetime.datetime(2020, 1, 1),
-                value=LabelWithoutDocumentRelationships(
+                value=Label(
                     type="activity_status",
                     id="Implementation details",
                     value="Implementation details",
@@ -600,7 +596,7 @@ def test_transform_navigator_family_with_single_matching_document(
             LabelRelationship(
                 type="activity_status",
                 timestamp=datetime.datetime(2020, 1, 1),
-                value=LabelWithoutDocumentRelationships(
+                value=Label(
                     type="activity_status",
                     id="International agreement",
                     value="International agreement",
@@ -609,7 +605,7 @@ def test_transform_navigator_family_with_single_matching_document(
             LabelRelationship(
                 type="activity_status",
                 timestamp=datetime.datetime(2020, 1, 1),
-                value=LabelWithoutDocumentRelationships(
+                value=Label(
                     type="activity_status",
                     id="Net zero pledge",
                     value="Net zero pledge",
@@ -618,14 +614,12 @@ def test_transform_navigator_family_with_single_matching_document(
             LabelRelationship(
                 type="activity_status",
                 timestamp=datetime.datetime(2020, 1, 1),
-                value=LabelWithoutDocumentRelationships(
-                    type="activity_status", id="Other", value="Other"
-                ),
+                value=Label(type="activity_status", id="Other", value="Other"),
             ),
             LabelRelationship(
                 type="activity_status",
                 timestamp=datetime.datetime(2020, 1, 1),
-                value=LabelWithoutDocumentRelationships(
+                value=Label(
                     type="activity_status",
                     id="Passed/Approved",
                     value="Passed/Approved",
@@ -634,7 +628,7 @@ def test_transform_navigator_family_with_single_matching_document(
             LabelRelationship(
                 type="activity_status",
                 timestamp=datetime.datetime(2020, 1, 1),
-                value=LabelWithoutDocumentRelationships(
+                value=Label(
                     type="activity_status",
                     id="Repealed/Replaced",
                     value="Repealed/Replaced",
@@ -643,27 +637,21 @@ def test_transform_navigator_family_with_single_matching_document(
             LabelRelationship(
                 type="activity_status",
                 timestamp=datetime.datetime(2020, 1, 1),
-                value=LabelWithoutDocumentRelationships(
-                    type="activity_status", id="Set", value="Set"
-                ),
+                value=Label(type="activity_status", id="Set", value="Set"),
             ),
             LabelRelationship(
                 type="activity_status",
                 timestamp=datetime.datetime(2020, 1, 1),
-                value=LabelWithoutDocumentRelationships(
-                    type="activity_status", id="Settled", value="Settled"
-                ),
+                value=Label(type="activity_status", id="Settled", value="Settled"),
             ),
             LabelRelationship(
                 type="activity_status",
                 timestamp=datetime.datetime(2020, 1, 1),
-                value=LabelWithoutDocumentRelationships(
-                    type="activity_status", id="Published", value="Published"
-                ),
+                value=Label(type="activity_status", id="Published", value="Published"),
             ),
             LabelRelationship(
                 type="provider",
-                value=LabelWithoutDocumentRelationships(
+                value=Label(
                     type="agent",
                     id="Grantham Research Institute",
                     value="Grantham Research Institute",
@@ -676,7 +664,7 @@ def test_transform_navigator_family_with_single_matching_document(
             ),
             LabelRelationship(
                 type="geography",
-                value=LabelWithoutDocumentRelationships(
+                value=Label(
                     type="geography",
                     id="AU-NSW",
                     value="New South Wales",
@@ -684,7 +672,7 @@ def test_transform_navigator_family_with_single_matching_document(
             ),
             LabelRelationship(
                 type="geography",
-                value=LabelWithoutDocumentRelationships(
+                value=Label(
                     type="geography",
                     id="AUS",
                     value="Australia",
@@ -692,7 +680,7 @@ def test_transform_navigator_family_with_single_matching_document(
             ),
             LabelRelationship(
                 type="author",
-                value=LabelWithoutDocumentRelationships(
+                value=Label(
                     id="Test Author",
                     value="Test Author",
                     type="person",
@@ -700,7 +688,7 @@ def test_transform_navigator_family_with_single_matching_document(
             ),
             LabelRelationship(
                 type="deprecated_category",
-                value=LabelWithoutDocumentRelationships(
+                value=Label(
                     id="REPORTS",
                     value="REPORTS",
                     type="deprecated_category",
@@ -708,7 +696,7 @@ def test_transform_navigator_family_with_single_matching_document(
             ),
             LabelRelationship(
                 type="case_number",
-                value=LabelWithoutDocumentRelationships(
+                value=Label(
                     id="CASE-NUMBER 123",
                     type="case_number",
                     value="CASE-NUMBER 123",
@@ -716,7 +704,7 @@ def test_transform_navigator_family_with_single_matching_document(
             ),
             LabelRelationship(
                 type="core_object",
-                value=LabelWithoutDocumentRelationships(
+                value=Label(
                     id="Core Object 123",
                     type="core_object",
                     value="Core Object 123",
@@ -724,7 +712,7 @@ def test_transform_navigator_family_with_single_matching_document(
             ),
             LabelRelationship(
                 type="author_type",
-                value=LabelWithoutDocumentRelationships(
+                value=Label(
                     id="Person",
                     type="author_type",
                     value="Person",
@@ -740,7 +728,7 @@ def test_transform_navigator_family_with_single_matching_document(
                     labels=[
                         LabelRelationship(
                             type="entity_type",
-                            value=LabelWithoutDocumentRelationships(
+                            value=Label(
                                 id="Collection",
                                 value="Collection",
                                 type="entity_type",
@@ -757,7 +745,7 @@ def test_transform_navigator_family_with_single_matching_document(
                     labels=[
                         LabelRelationship(
                             type="role",
-                            value=LabelWithoutDocumentRelationships(
+                            value=Label(
                                 type="entity_type",
                                 id="Supporting legislation",
                                 value="Supporting legislation",
@@ -765,7 +753,7 @@ def test_transform_navigator_family_with_single_matching_document(
                         ),
                         LabelRelationship(
                             type="entity_type",
-                            value=LabelWithoutDocumentRelationships(
+                            value=Label(
                                 type="entity_type",
                                 id="National drought plan (ndp)",
                                 value="National drought plan (ndp)",
@@ -773,7 +761,7 @@ def test_transform_navigator_family_with_single_matching_document(
                         ),
                         LabelRelationship(
                             type="provider",
-                            value=LabelWithoutDocumentRelationships(
+                            value=Label(
                                 type="agent",
                                 id="Grantham Research Institute",
                                 value="Grantham Research Institute",
@@ -786,7 +774,7 @@ def test_transform_navigator_family_with_single_matching_document(
                         ),
                         LabelRelationship(
                             type="geography",
-                            value=LabelWithoutDocumentRelationships(
+                            value=Label(
                                 type="geography",
                                 id="AU-NSW",
                                 value="New South Wales",
@@ -794,7 +782,7 @@ def test_transform_navigator_family_with_single_matching_document(
                         ),
                         LabelRelationship(
                             type="geography",
-                            value=LabelWithoutDocumentRelationships(
+                            value=Label(
                                 type="geography",
                                 id="AUS",
                                 value="Australia",
@@ -802,7 +790,7 @@ def test_transform_navigator_family_with_single_matching_document(
                         ),
                         LabelRelationship(
                             type="language",
-                            value=LabelWithoutDocumentRelationships(
+                            value=Label(
                                 id="eng",
                                 value="eng",
                                 type="language",
@@ -810,7 +798,7 @@ def test_transform_navigator_family_with_single_matching_document(
                         ),
                         LabelRelationship(
                             type="language",
-                            value=LabelWithoutDocumentRelationships(
+                            value=Label(
                                 id="fra",
                                 value="fra",
                                 type="language",
@@ -845,7 +833,7 @@ def test_transform_navigator_family_with_single_matching_document(
                     labels=[
                         LabelRelationship(
                             type="entity_type",
-                            value=LabelWithoutDocumentRelationships(
+                            value=Label(
                                 id="Collection",
                                 value="Collection",
                                 type="entity_type",
@@ -876,7 +864,7 @@ def test_transform_navigator_family_with_single_matching_document(
                 labels=[
                     LabelRelationship(
                         type="role",
-                        value=LabelWithoutDocumentRelationships(
+                        value=Label(
                             type="entity_type",
                             id="Supporting legislation",
                             value="Supporting legislation",
@@ -884,7 +872,7 @@ def test_transform_navigator_family_with_single_matching_document(
                     ),
                     LabelRelationship(
                         type="entity_type",
-                        value=LabelWithoutDocumentRelationships(
+                        value=Label(
                             type="entity_type",
                             id="National drought plan (ndp)",
                             value="National drought plan (ndp)",
@@ -892,7 +880,7 @@ def test_transform_navigator_family_with_single_matching_document(
                     ),
                     LabelRelationship(
                         type="provider",
-                        value=LabelWithoutDocumentRelationships(
+                        value=Label(
                             type="agent",
                             id="Grantham Research Institute",
                             value="Grantham Research Institute",
@@ -905,7 +893,7 @@ def test_transform_navigator_family_with_single_matching_document(
                     ),
                     LabelRelationship(
                         type="geography",
-                        value=LabelWithoutDocumentRelationships(
+                        value=Label(
                             type="geography",
                             id="AU-NSW",
                             value="New South Wales",
@@ -913,7 +901,7 @@ def test_transform_navigator_family_with_single_matching_document(
                     ),
                     LabelRelationship(
                         type="geography",
-                        value=LabelWithoutDocumentRelationships(
+                        value=Label(
                             type="geography",
                             id="AUS",
                             value="Australia",
@@ -921,7 +909,7 @@ def test_transform_navigator_family_with_single_matching_document(
                     ),
                     LabelRelationship(
                         type="language",
-                        value=LabelWithoutDocumentRelationships(
+                        value=Label(
                             id="eng",
                             value="eng",
                             type="language",
@@ -929,7 +917,7 @@ def test_transform_navigator_family_with_single_matching_document(
                     ),
                     LabelRelationship(
                         type="language",
-                        value=LabelWithoutDocumentRelationships(
+                        value=Label(
                             id="fra",
                             value="fra",
                             type="language",
@@ -969,7 +957,7 @@ def test_transform_navigator_family_with_single_matching_document(
                 labels=[
                     LabelRelationship(
                         type="entity_type",
-                        value=LabelWithoutDocumentRelationships(
+                        value=Label(
                             id="Collection",
                             value="Collection",
                             type="entity_type",
@@ -991,7 +979,7 @@ def test_transform_navigator_family_with_single_matching_document(
                 labels=[
                     LabelRelationship(
                         type="entity_type",
-                        value=LabelWithoutDocumentRelationships(
+                        value=Label(
                             id="Collection",
                             value="Collection",
                             type="entity_type",
@@ -1091,7 +1079,7 @@ def test_transform_navigator_family_with_laws_and_policies_corpus_type(
         labels=[
             LabelRelationship(
                 type="status",
-                value=LabelWithoutDocumentRelationships(
+                value=Label(
                     type="status",
                     id="Principal",
                     value="Principal",
@@ -1099,7 +1087,7 @@ def test_transform_navigator_family_with_laws_and_policies_corpus_type(
             ),
             LabelRelationship(
                 type="provider",
-                value=LabelWithoutDocumentRelationships(
+                value=Label(
                     type="agent",
                     id=provider,
                     value=provider,
@@ -1112,7 +1100,7 @@ def test_transform_navigator_family_with_laws_and_policies_corpus_type(
             ),
             LabelRelationship(
                 type="geography",
-                value=LabelWithoutDocumentRelationships(
+                value=Label(
                     id="AUS",
                     value="Australia",
                     type="geography",
@@ -1120,7 +1108,7 @@ def test_transform_navigator_family_with_laws_and_policies_corpus_type(
             ),
             LabelRelationship(
                 type="deprecated_category",
-                value=LabelWithoutDocumentRelationships(
+                value=Label(
                     id="LEGISLATIVE",
                     value="LEGISLATIVE",
                     type="deprecated_category",
@@ -1128,7 +1116,7 @@ def test_transform_navigator_family_with_laws_and_policies_corpus_type(
             ),
             LabelRelationship(
                 type="category",
-                value=LabelWithoutDocumentRelationships(
+                value=Label(
                     id="Law",
                     value="Law",
                     type="category",
@@ -1136,7 +1124,7 @@ def test_transform_navigator_family_with_laws_and_policies_corpus_type(
             ),
             LabelRelationship(
                 type="topic",
-                value=LabelWithoutDocumentRelationships(
+                value=Label(
                     id="Mitigation",
                     value="Mitigation",
                     type="topic",
@@ -1144,7 +1132,7 @@ def test_transform_navigator_family_with_laws_and_policies_corpus_type(
             ),
             LabelRelationship(
                 type="sector",
-                value=LabelWithoutDocumentRelationships(
+                value=Label(
                     id="Economy-wide",
                     value="Economy-wide",
                     type="sector",
@@ -1152,7 +1140,7 @@ def test_transform_navigator_family_with_laws_and_policies_corpus_type(
             ),
             LabelRelationship(
                 type="keyword",
-                value=LabelWithoutDocumentRelationships(
+                value=Label(
                     id="Transport",
                     value="Transport",
                     type="keyword",
@@ -1160,7 +1148,7 @@ def test_transform_navigator_family_with_laws_and_policies_corpus_type(
             ),
             LabelRelationship(
                 type="framework",
-                value=LabelWithoutDocumentRelationships(
+                value=Label(
                     id="Mitigation",
                     value="Mitigation",
                     type="framework",
@@ -1168,7 +1156,7 @@ def test_transform_navigator_family_with_laws_and_policies_corpus_type(
             ),
             LabelRelationship(
                 type="instrument",
-                value=LabelWithoutDocumentRelationships(
+                value=Label(
                     id="Processes, plans and strategies|Governance",
                     value="Processes, plans and strategies|Governance",
                     type="instrument",
@@ -1176,7 +1164,7 @@ def test_transform_navigator_family_with_laws_and_policies_corpus_type(
             ),
             LabelRelationship(
                 type="instrument",
-                value=LabelWithoutDocumentRelationships(
+                value=Label(
                     id="Planning|Governance",
                     value="Planning|Governance",
                     type="instrument",
@@ -1205,7 +1193,7 @@ def test_transform_navigator_family_with_litigation_corpus_type(
         labels=[
             LabelRelationship(
                 type="status",
-                value=LabelWithoutDocumentRelationships(
+                value=Label(
                     type="status",
                     id="Principal",
                     value="Principal",
@@ -1213,7 +1201,7 @@ def test_transform_navigator_family_with_litigation_corpus_type(
             ),
             LabelRelationship(
                 type="entity_type",
-                value=LabelWithoutDocumentRelationships(
+                value=Label(
                     id="Legal case",
                     value="Legal case",
                     type="entity_type",
@@ -1221,7 +1209,7 @@ def test_transform_navigator_family_with_litigation_corpus_type(
             ),
             LabelRelationship(
                 type="provider",
-                value=LabelWithoutDocumentRelationships(
+                value=Label(
                     type="agent",
                     id="Sabin Center for Climate Change Law",
                     value="Sabin Center for Climate Change Law",
@@ -1234,7 +1222,7 @@ def test_transform_navigator_family_with_litigation_corpus_type(
             ),
             LabelRelationship(
                 type="deprecated_category",
-                value=LabelWithoutDocumentRelationships(
+                value=Label(
                     id="REPORTS",
                     value="REPORTS",
                     type="deprecated_category",
@@ -1250,7 +1238,7 @@ def test_transform_navigator_family_with_litigation_corpus_type(
                     labels=[
                         LabelRelationship(
                             type="entity_type",
-                            value=LabelWithoutDocumentRelationships(
+                            value=Label(
                                 id="Decision",
                                 value="Decision",
                                 type="entity_type",
@@ -1258,7 +1246,7 @@ def test_transform_navigator_family_with_litigation_corpus_type(
                         ),
                         LabelRelationship(
                             type="provider",
-                            value=LabelWithoutDocumentRelationships(
+                            value=Label(
                                 type="agent",
                                 id="Sabin Center for Climate Change Law",
                                 value="Sabin Center for Climate Change Law",
@@ -1286,7 +1274,7 @@ def test_transform_navigator_family_with_litigation_corpus_type(
                     labels=[
                         LabelRelationship(
                             type="status",
-                            value=LabelWithoutDocumentRelationships(
+                            value=Label(
                                 id="Obsolete",
                                 value="Obsolete",
                                 type="status",
@@ -1294,7 +1282,7 @@ def test_transform_navigator_family_with_litigation_corpus_type(
                         ),
                         LabelRelationship(
                             type="provider",
-                            value=LabelWithoutDocumentRelationships(
+                            value=Label(
                                 type="agent",
                                 id="Sabin Center for Climate Change Law",
                                 value="Sabin Center for Climate Change Law",
@@ -1332,7 +1320,7 @@ def test_transform_navigator_family_with_litigation_corpus_type(
                 labels=[
                     LabelRelationship(
                         type="entity_type",
-                        value=LabelWithoutDocumentRelationships(
+                        value=Label(
                             id="Decision",
                             value="Decision",
                             type="entity_type",
@@ -1340,7 +1328,7 @@ def test_transform_navigator_family_with_litigation_corpus_type(
                     ),
                     LabelRelationship(
                         type="provider",
-                        value=LabelWithoutDocumentRelationships(
+                        value=Label(
                             type="agent",
                             id="Sabin Center for Climate Change Law",
                             value="Sabin Center for Climate Change Law",
@@ -1373,7 +1361,7 @@ def test_transform_navigator_family_with_litigation_corpus_type(
                 labels=[
                     LabelRelationship(
                         type="status",
-                        value=LabelWithoutDocumentRelationships(
+                        value=Label(
                             id="Obsolete",
                             value="Obsolete",
                             type="status",
@@ -1381,7 +1369,7 @@ def test_transform_navigator_family_with_litigation_corpus_type(
                     ),
                     LabelRelationship(
                         type="provider",
-                        value=LabelWithoutDocumentRelationships(
+                        value=Label(
                             type="agent",
                             id="Sabin Center for Climate Change Law",
                             value="Sabin Center for Climate Change Law",
@@ -1422,7 +1410,7 @@ def test_transform_navigator_family_with_litigation_corpus_type_and_litigation_c
         labels=[
             LabelRelationship(
                 type="status",
-                value=LabelWithoutDocumentRelationships(
+                value=Label(
                     type="status",
                     id="Principal",
                     value="Principal",
@@ -1430,7 +1418,7 @@ def test_transform_navigator_family_with_litigation_corpus_type_and_litigation_c
             ),
             LabelRelationship(
                 type="entity_type",
-                value=LabelWithoutDocumentRelationships(
+                value=Label(
                     id="Legal case",
                     value="Legal case",
                     type="entity_type",
@@ -1438,7 +1426,7 @@ def test_transform_navigator_family_with_litigation_corpus_type_and_litigation_c
             ),
             LabelRelationship(
                 type="provider",
-                value=LabelWithoutDocumentRelationships(
+                value=Label(
                     type="agent",
                     id="Sabin Center for Climate Change Law",
                     value="Sabin Center for Climate Change Law",
@@ -1446,7 +1434,7 @@ def test_transform_navigator_family_with_litigation_corpus_type_and_litigation_c
             ),
             LabelRelationship(
                 type="category",
-                value=LabelWithoutDocumentRelationships(
+                value=Label(
                     id="Guidance",
                     value="Guidance",
                     type="category",
@@ -1454,7 +1442,7 @@ def test_transform_navigator_family_with_litigation_corpus_type_and_litigation_c
             ),
             LabelRelationship(
                 type="concept",
-                value=LabelWithoutDocumentRelationships(
+                value=Label(
                     id="High Court of Justice",
                     labels=[
                         LabelRelationship(
@@ -1509,7 +1497,7 @@ def test_transform_navigator_family_with_litigation_corpus_type_and_litigation_c
                     labels=[
                         LabelRelationship(
                             type="entity_type",
-                            value=LabelWithoutDocumentRelationships(
+                            value=Label(
                                 id="Decision",
                                 value="Decision",
                                 type="entity_type",
@@ -1517,7 +1505,7 @@ def test_transform_navigator_family_with_litigation_corpus_type_and_litigation_c
                         ),
                         LabelRelationship(
                             type="provider",
-                            value=LabelWithoutDocumentRelationships(
+                            value=Label(
                                 type="agent",
                                 id="Sabin Center for Climate Change Law",
                                 value="Sabin Center for Climate Change Law",
@@ -1550,7 +1538,7 @@ def test_transform_navigator_family_with_litigation_corpus_type_and_litigation_c
                 labels=[
                     LabelRelationship(
                         type="entity_type",
-                        value=LabelWithoutDocumentRelationships(
+                        value=Label(
                             id="Decision",
                             value="Decision",
                             type="entity_type",
@@ -1558,7 +1546,7 @@ def test_transform_navigator_family_with_litigation_corpus_type_and_litigation_c
                     ),
                     LabelRelationship(
                         type="provider",
-                        value=LabelWithoutDocumentRelationships(
+                        value=Label(
                             type="agent",
                             id="Sabin Center for Climate Change Law",
                             value="Sabin Center for Climate Change Law",
@@ -1597,7 +1585,7 @@ def test_transform_navigator_family_with_multilateral_climate_fund_project(
         labels=[
             LabelRelationship(
                 type="status",
-                value=LabelWithoutDocumentRelationships(
+                value=Label(
                     type="status",
                     id="Principal",
                     value="Principal",
@@ -1605,7 +1593,7 @@ def test_transform_navigator_family_with_multilateral_climate_fund_project(
             ),
             LabelRelationship(
                 type="entity_type",
-                value=LabelWithoutDocumentRelationships(
+                value=Label(
                     id="Multilateral climate fund project",
                     value="Multilateral climate fund project",
                     type="entity_type",
@@ -1613,7 +1601,7 @@ def test_transform_navigator_family_with_multilateral_climate_fund_project(
             ),
             LabelRelationship(
                 type="entity_type",
-                value=LabelWithoutDocumentRelationships(
+                value=Label(
                     id="Project",
                     value="Project",
                     type="entity_type",
@@ -1621,7 +1609,7 @@ def test_transform_navigator_family_with_multilateral_climate_fund_project(
             ),
             LabelRelationship(
                 type="activity_status",
-                value=LabelWithoutDocumentRelationships(
+                value=Label(
                     id="Concept approved",
                     value="Concept approved",
                     type="activity_status",
@@ -1630,7 +1618,7 @@ def test_transform_navigator_family_with_multilateral_climate_fund_project(
             ),
             LabelRelationship(
                 type="activity_status",
-                value=LabelWithoutDocumentRelationships(
+                value=Label(
                     id="Approved",
                     value="Approved",
                     type="activity_status",
@@ -1639,7 +1627,7 @@ def test_transform_navigator_family_with_multilateral_climate_fund_project(
             ),
             LabelRelationship(
                 type="activity_status",
-                value=LabelWithoutDocumentRelationships(
+                value=Label(
                     id="Under implementation",
                     value="Under implementation",
                     type="activity_status",
@@ -1648,7 +1636,7 @@ def test_transform_navigator_family_with_multilateral_climate_fund_project(
             ),
             LabelRelationship(
                 type="activity_status",
-                value=LabelWithoutDocumentRelationships(
+                value=Label(
                     id="Completed",
                     value="Completed",
                     type="activity_status",
@@ -1657,7 +1645,7 @@ def test_transform_navigator_family_with_multilateral_climate_fund_project(
             ),
             LabelRelationship(
                 type="activity_status",
-                value=LabelWithoutDocumentRelationships(
+                value=Label(
                     id="Cancelled",
                     value="Cancelled",
                     type="activity_status",
@@ -1666,7 +1654,7 @@ def test_transform_navigator_family_with_multilateral_climate_fund_project(
             ),
             LabelRelationship(
                 type="provider",
-                value=LabelWithoutDocumentRelationships(
+                value=Label(
                     type="agent",
                     id="Adaptation Fund",
                     value="Adaptation Fund",
@@ -1679,7 +1667,7 @@ def test_transform_navigator_family_with_multilateral_climate_fund_project(
             ),
             LabelRelationship(
                 type="deprecated_category",
-                value=LabelWithoutDocumentRelationships(
+                value=Label(
                     id="REPORTS",
                     value="REPORTS",
                     type="deprecated_category",
@@ -1687,7 +1675,7 @@ def test_transform_navigator_family_with_multilateral_climate_fund_project(
             ),
             LabelRelationship(
                 type="sector",
-                value=LabelWithoutDocumentRelationships(
+                value=Label(
                     id="Public Sector",
                     type="sector",
                     value="Public Sector",
@@ -1695,7 +1683,7 @@ def test_transform_navigator_family_with_multilateral_climate_fund_project(
             ),
             LabelRelationship(
                 type="project_status",
-                value=LabelWithoutDocumentRelationships(
+                value=Label(
                     id="Under Implementation",
                     type="project_status",
                     value="Under Implementation",
@@ -1703,7 +1691,7 @@ def test_transform_navigator_family_with_multilateral_climate_fund_project(
             ),
             LabelRelationship(
                 type="implementing_agency",
-                value=LabelWithoutDocumentRelationships(
+                value=Label(
                     id="International Bank for Reconstruction",
                     type="implementing_agency",
                     value="International Bank for Reconstruction",
@@ -1719,7 +1707,7 @@ def test_transform_navigator_family_with_multilateral_climate_fund_project(
                     labels=[
                         LabelRelationship(
                             type="provider",
-                            value=LabelWithoutDocumentRelationships(
+                            value=Label(
                                 type="agent",
                                 id="Adaptation Fund",
                                 value="Adaptation Fund",
@@ -1732,7 +1720,7 @@ def test_transform_navigator_family_with_multilateral_climate_fund_project(
                         ),
                         LabelRelationship(
                             type="language",
-                            value=LabelWithoutDocumentRelationships(
+                            value=Label(
                                 id="eng",
                                 value="eng",
                                 type="language",
@@ -1755,7 +1743,7 @@ def test_transform_navigator_family_with_multilateral_climate_fund_project(
                     labels=[
                         LabelRelationship(
                             type="provider",
-                            value=LabelWithoutDocumentRelationships(
+                            value=Label(
                                 type="agent",
                                 id="Adaptation Fund",
                                 value="Adaptation Fund",
@@ -1768,7 +1756,7 @@ def test_transform_navigator_family_with_multilateral_climate_fund_project(
                         ),
                         LabelRelationship(
                             type="language",
-                            value=LabelWithoutDocumentRelationships(
+                            value=Label(
                                 id="eng",
                                 value="eng",
                                 type="language",
@@ -1804,7 +1792,7 @@ def test_transform_navigator_family_with_multilateral_climate_fund_project(
                 labels=[
                     LabelRelationship(
                         type="provider",
-                        value=LabelWithoutDocumentRelationships(
+                        value=Label(
                             type="agent",
                             id="Adaptation Fund",
                             value="Adaptation Fund",
@@ -1817,7 +1805,7 @@ def test_transform_navigator_family_with_multilateral_climate_fund_project(
                     ),
                     LabelRelationship(
                         type="language",
-                        value=LabelWithoutDocumentRelationships(
+                        value=Label(
                             id="eng",
                             value="eng",
                             type="language",
@@ -1845,7 +1833,7 @@ def test_transform_navigator_family_with_multilateral_climate_fund_project(
                 labels=[
                     LabelRelationship(
                         type="provider",
-                        value=LabelWithoutDocumentRelationships(
+                        value=Label(
                             type="agent",
                             id="Adaptation Fund",
                             value="Adaptation Fund",
@@ -1858,7 +1846,7 @@ def test_transform_navigator_family_with_multilateral_climate_fund_project(
                     ),
                     LabelRelationship(
                         type="language",
-                        value=LabelWithoutDocumentRelationships(
+                        value=Label(
                             id="eng",
                             value="eng",
                             type="language",
@@ -1943,7 +1931,7 @@ def test_transform_navigator_family_with_published_and_unpublished_documents():
         labels=[
             LabelRelationship(
                 type="status",
-                value=LabelWithoutDocumentRelationships(
+                value=Label(
                     type="status",
                     id="Principal",
                     value="Principal",
@@ -1951,7 +1939,7 @@ def test_transform_navigator_family_with_published_and_unpublished_documents():
             ),
             LabelRelationship(
                 type="provider",
-                value=LabelWithoutDocumentRelationships(
+                value=Label(
                     type="agent",
                     id="Grantham Research Institute",
                     value="Grantham Research Institute",
@@ -1964,7 +1952,7 @@ def test_transform_navigator_family_with_published_and_unpublished_documents():
             ),
             LabelRelationship(
                 type="geography",
-                value=LabelWithoutDocumentRelationships(
+                value=Label(
                     id="AUS",
                     value="Australia",
                     type="geography",
@@ -1972,7 +1960,7 @@ def test_transform_navigator_family_with_published_and_unpublished_documents():
             ),
             LabelRelationship(
                 type="deprecated_category",
-                value=LabelWithoutDocumentRelationships(
+                value=Label(
                     id="LEGISLATIVE",
                     value="LEGISLATIVE",
                     type="deprecated_category",
@@ -1980,7 +1968,7 @@ def test_transform_navigator_family_with_published_and_unpublished_documents():
             ),
             LabelRelationship(
                 type="category",
-                value=LabelWithoutDocumentRelationships(
+                value=Label(
                     id="Law",
                     value="Law",
                     type="category",
@@ -1996,7 +1984,7 @@ def test_transform_navigator_family_with_published_and_unpublished_documents():
                     labels=[
                         LabelRelationship(
                             type="provider",
-                            value=LabelWithoutDocumentRelationships(
+                            value=Label(
                                 type="agent",
                                 id="Grantham Research Institute",
                                 value="Grantham Research Institute",
@@ -2009,7 +1997,7 @@ def test_transform_navigator_family_with_published_and_unpublished_documents():
                         ),
                         LabelRelationship(
                             type="geography",
-                            value=LabelWithoutDocumentRelationships(
+                            value=Label(
                                 type="geography",
                                 id="AUS",
                                 value="Australia",
@@ -2025,7 +2013,7 @@ def test_transform_navigator_family_with_published_and_unpublished_documents():
                         ),
                         LabelRelationship(
                             type="category",
-                            value=LabelWithoutDocumentRelationships(
+                            value=Label(
                                 id="Law",
                                 value="Law",
                                 type="category",
@@ -2033,7 +2021,7 @@ def test_transform_navigator_family_with_published_and_unpublished_documents():
                         ),
                         LabelRelationship(
                             type="language",
-                            value=LabelWithoutDocumentRelationships(
+                            value=Label(
                                 id="eng",
                                 value="eng",
                                 type="language",
@@ -2068,7 +2056,7 @@ def test_transform_navigator_family_with_published_and_unpublished_documents():
                     labels=[
                         LabelRelationship(
                             type="provider",
-                            value=LabelWithoutDocumentRelationships(
+                            value=Label(
                                 type="agent",
                                 id="Grantham Research Institute",
                                 value="Grantham Research Institute",
@@ -2081,7 +2069,7 @@ def test_transform_navigator_family_with_published_and_unpublished_documents():
                         ),
                         LabelRelationship(
                             type="geography",
-                            value=LabelWithoutDocumentRelationships(
+                            value=Label(
                                 type="geography",
                                 id="AUS",
                                 value="Australia",
@@ -2089,7 +2077,7 @@ def test_transform_navigator_family_with_published_and_unpublished_documents():
                         ),
                         LabelRelationship(
                             type="category",
-                            value=LabelWithoutDocumentRelationships(
+                            value=Label(
                                 id="Law",
                                 value="Law",
                                 type="category",
@@ -2097,7 +2085,7 @@ def test_transform_navigator_family_with_published_and_unpublished_documents():
                         ),
                         LabelRelationship(
                             type="category",
-                            value=LabelWithoutDocumentRelationships(
+                            value=Label(
                                 id="Law",
                                 value="Law",
                                 type="category",
@@ -2105,7 +2093,7 @@ def test_transform_navigator_family_with_published_and_unpublished_documents():
                         ),
                         LabelRelationship(
                             type="language",
-                            value=LabelWithoutDocumentRelationships(
+                            value=Label(
                                 id="eng",
                                 value="eng",
                                 type="language",
@@ -2148,7 +2136,7 @@ def test_transform_navigator_family_with_published_and_unpublished_documents():
                 labels=[
                     LabelRelationship(
                         type="provider",
-                        value=LabelWithoutDocumentRelationships(
+                        value=Label(
                             type="agent",
                             id="Grantham Research Institute",
                             value="Grantham Research Institute",
@@ -2161,7 +2149,7 @@ def test_transform_navigator_family_with_published_and_unpublished_documents():
                     ),
                     LabelRelationship(
                         type="geography",
-                        value=LabelWithoutDocumentRelationships(
+                        value=Label(
                             type="geography",
                             id="AUS",
                             value="Australia",
@@ -2177,7 +2165,7 @@ def test_transform_navigator_family_with_published_and_unpublished_documents():
                     ),
                     LabelRelationship(
                         type="category",
-                        value=LabelWithoutDocumentRelationships(
+                        value=Label(
                             id="Law",
                             value="Law",
                             type="category",
@@ -2185,7 +2173,7 @@ def test_transform_navigator_family_with_published_and_unpublished_documents():
                     ),
                     LabelRelationship(
                         type="language",
-                        value=LabelWithoutDocumentRelationships(
+                        value=Label(
                             id="eng",
                             value="eng",
                             type="language",
@@ -2225,7 +2213,7 @@ def test_transform_navigator_family_with_published_and_unpublished_documents():
                 labels=[
                     LabelRelationship(
                         type="provider",
-                        value=LabelWithoutDocumentRelationships(
+                        value=Label(
                             type="agent",
                             id="Grantham Research Institute",
                             value="Grantham Research Institute",
@@ -2238,7 +2226,7 @@ def test_transform_navigator_family_with_published_and_unpublished_documents():
                     ),
                     LabelRelationship(
                         type="geography",
-                        value=LabelWithoutDocumentRelationships(
+                        value=Label(
                             type="geography",
                             id="AUS",
                             value="Australia",
@@ -2246,7 +2234,7 @@ def test_transform_navigator_family_with_published_and_unpublished_documents():
                     ),
                     LabelRelationship(
                         type="category",
-                        value=LabelWithoutDocumentRelationships(
+                        value=Label(
                             id="Law",
                             value="Law",
                             type="category",
@@ -2254,7 +2242,7 @@ def test_transform_navigator_family_with_published_and_unpublished_documents():
                     ),
                     LabelRelationship(
                         type="category",
-                        value=LabelWithoutDocumentRelationships(
+                        value=Label(
                             id="Law",
                             value="Law",
                             type="category",
@@ -2262,7 +2250,7 @@ def test_transform_navigator_family_with_published_and_unpublished_documents():
                     ),
                     LabelRelationship(
                         type="language",
-                        value=LabelWithoutDocumentRelationships(
+                        value=Label(
                             id="eng",
                             value="eng",
                             type="language",
@@ -2343,7 +2331,7 @@ def test_transform_navigator_family_with_no_published_documents():
         labels=[
             LabelRelationship(
                 type="status",
-                value=LabelWithoutDocumentRelationships(
+                value=Label(
                     type="status",
                     id="Principal",
                     value="Principal",
@@ -2351,7 +2339,7 @@ def test_transform_navigator_family_with_no_published_documents():
             ),
             LabelRelationship(
                 type="provider",
-                value=LabelWithoutDocumentRelationships(
+                value=Label(
                     type="agent",
                     id="Grantham Research Institute",
                     value="Grantham Research Institute",
@@ -2364,7 +2352,7 @@ def test_transform_navigator_family_with_no_published_documents():
             ),
             LabelRelationship(
                 type="geography",
-                value=LabelWithoutDocumentRelationships(
+                value=Label(
                     id="AUS",
                     value="Australia",
                     type="geography",
@@ -2372,7 +2360,7 @@ def test_transform_navigator_family_with_no_published_documents():
             ),
             LabelRelationship(
                 type="deprecated_category",
-                value=LabelWithoutDocumentRelationships(
+                value=Label(
                     id="LEGISLATIVE",
                     value="LEGISLATIVE",
                     type="deprecated_category",
@@ -2380,7 +2368,7 @@ def test_transform_navigator_family_with_no_published_documents():
             ),
             LabelRelationship(
                 type="category",
-                value=LabelWithoutDocumentRelationships(
+                value=Label(
                     id="Law",
                     value="Law",
                     type="category",
@@ -2396,7 +2384,7 @@ def test_transform_navigator_family_with_no_published_documents():
                     labels=[
                         LabelRelationship(
                             type="provider",
-                            value=LabelWithoutDocumentRelationships(
+                            value=Label(
                                 type="agent",
                                 id="Grantham Research Institute",
                                 value="Grantham Research Institute",
@@ -2409,7 +2397,7 @@ def test_transform_navigator_family_with_no_published_documents():
                         ),
                         LabelRelationship(
                             type="geography",
-                            value=LabelWithoutDocumentRelationships(
+                            value=Label(
                                 type="geography",
                                 id="AUS",
                                 value="Australia",
@@ -2417,7 +2405,7 @@ def test_transform_navigator_family_with_no_published_documents():
                         ),
                         LabelRelationship(
                             type="category",
-                            value=LabelWithoutDocumentRelationships(
+                            value=Label(
                                 id="Law",
                                 value="Law",
                                 type="category",
@@ -2425,7 +2413,7 @@ def test_transform_navigator_family_with_no_published_documents():
                         ),
                         LabelRelationship(
                             type="category",
-                            value=LabelWithoutDocumentRelationships(
+                            value=Label(
                                 id="Law",
                                 value="Law",
                                 type="category",
@@ -2433,7 +2421,7 @@ def test_transform_navigator_family_with_no_published_documents():
                         ),
                         LabelRelationship(
                             type="language",
-                            value=LabelWithoutDocumentRelationships(
+                            value=Label(
                                 id="eng",
                                 value="eng",
                                 type="language",
@@ -2475,7 +2463,7 @@ def test_transform_navigator_family_with_no_published_documents():
                 labels=[
                     LabelRelationship(
                         type="provider",
-                        value=LabelWithoutDocumentRelationships(
+                        value=Label(
                             type="agent",
                             id="Grantham Research Institute",
                             value="Grantham Research Institute",
@@ -2488,7 +2476,7 @@ def test_transform_navigator_family_with_no_published_documents():
                     ),
                     LabelRelationship(
                         type="geography",
-                        value=LabelWithoutDocumentRelationships(
+                        value=Label(
                             type="geography",
                             id="AUS",
                             value="Australia",
@@ -2496,7 +2484,7 @@ def test_transform_navigator_family_with_no_published_documents():
                     ),
                     LabelRelationship(
                         type="category",
-                        value=LabelWithoutDocumentRelationships(
+                        value=Label(
                             id="Law",
                             value="Law",
                             type="category",
@@ -2504,7 +2492,7 @@ def test_transform_navigator_family_with_no_published_documents():
                     ),
                     LabelRelationship(
                         type="category",
-                        value=LabelWithoutDocumentRelationships(
+                        value=Label(
                             id="Law",
                             value="Law",
                             type="category",
@@ -2512,7 +2500,7 @@ def test_transform_navigator_family_with_no_published_documents():
                     ),
                     LabelRelationship(
                         type="language",
-                        value=LabelWithoutDocumentRelationships(
+                        value=Label(
                             id="eng",
                             value="eng",
                             type="language",
@@ -2566,7 +2554,7 @@ def test_transform_navigator_family_with_multilateral_climate_fund_guidance(
                 labels=[
                     LabelRelationship(
                         type="status",
-                        value=LabelWithoutDocumentRelationships(
+                        value=Label(
                             type="status",
                             id="Principal",
                             value="Principal",
@@ -2574,7 +2562,7 @@ def test_transform_navigator_family_with_multilateral_climate_fund_guidance(
                     ),
                     LabelRelationship(
                         type="entity_type",
-                        value=LabelWithoutDocumentRelationships(
+                        value=Label(
                             id="Multilateral climate fund project",
                             value="Multilateral climate fund project",
                             type="entity_type",
@@ -2582,7 +2570,7 @@ def test_transform_navigator_family_with_multilateral_climate_fund_guidance(
                     ),
                     LabelRelationship(
                         type="entity_type",
-                        value=LabelWithoutDocumentRelationships(
+                        value=Label(
                             id="Guidance",
                             value="Guidance",
                             type="entity_type",
@@ -2590,7 +2578,7 @@ def test_transform_navigator_family_with_multilateral_climate_fund_guidance(
                     ),
                     LabelRelationship(
                         type="provider",
-                        value=LabelWithoutDocumentRelationships(
+                        value=Label(
                             type="agent",
                             id="Adaptation Fund",
                             value="Adaptation Fund",
@@ -2603,7 +2591,7 @@ def test_transform_navigator_family_with_multilateral_climate_fund_guidance(
                     ),
                     LabelRelationship(
                         type="deprecated_category",
-                        value=LabelWithoutDocumentRelationships(
+                        value=Label(
                             id="REPORTS",
                             value="REPORTS",
                             type="deprecated_category",
