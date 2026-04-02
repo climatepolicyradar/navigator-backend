@@ -437,6 +437,51 @@ def _transform_geographies(
     return labels
 
 
+def _transform_to_category(
+    navigator_family: NavigatorFamily,
+) -> list[LabelRelationship]:
+    labels = []
+
+    if navigator_family.corpus.corpus_type == "Laws and Policies":
+        # We are maintaing this as the assumption is all Laws and policies
+        # have been tagged as "LEGISLATIVE" OR "EXECUTIVE", but there is a possiblity
+        # that they have not as the system allows it. This should allow us
+        # to assess that data.
+        labels.append(
+            LabelRelationship(
+                type="deprecated_category",
+                value=Label(
+                    id="Laws and Policies",
+                    value="Laws and Policies",
+                    type="category",
+                ),
+            )
+        )
+    if navigator_family.category == "LEGISLATIVE":
+        labels.append(
+            LabelRelationship(
+                type="category",
+                value=Label(
+                    id="Law",
+                    value="Law",
+                    type="category",
+                ),
+            )
+        )
+    if navigator_family.category == "EXECUTIVE":
+        labels.append(
+            LabelRelationship(
+                type="category",
+                value=Label(
+                    id="Policy",
+                    value="Policy",
+                    type="category",
+                ),
+            )
+        )
+    return labels
+
+
 def _transform_navigator_family(navigator_family: NavigatorFamily) -> Document:
     labels: list[LabelRelationship] = []
     attributes: dict[str, str | float | bool] = {}
@@ -458,31 +503,6 @@ def _transform_navigator_family(navigator_family: NavigatorFamily) -> Document:
             ),
         )
     )
-
-    corpus_type_to_entity_type_map = {
-        "Laws and Policies": "Laws and policies",
-        "Litigation": "Legal case",
-        "Reports": "Report",
-        "Intl. agreements": "International agreement",
-        "AF": "Multilateral climate fund project",
-        "CIF": "Multilateral climate fund project",
-        "GEF": "Multilateral climate fund project",
-        "GCF": "Multilateral climate fund project",
-    }
-    entity_type = corpus_type_to_entity_type_map.get(
-        navigator_family.corpus.corpus_type.name
-    )
-    if entity_type:
-        labels.append(
-            LabelRelationship(
-                type="entity_type",
-                value=Label(
-                    id=entity_type,
-                    value=entity_type,
-                    type="entity_type",
-                ),
-            )
-        )
 
     # MCF reports and guidance labels
     if navigator_family.corpus.import_id in mcf_projects_corpus_import_ids:
@@ -628,30 +648,26 @@ def _transform_navigator_family(navigator_family: NavigatorFamily) -> Document:
         )
 
     """
-    family.cateogry
+    family.category
     @see: https://github.com/climatepolicyradar/navigator-db-client/blob/a842d5e971894246843c1915de9179ddd991b25c/db_client/models/dfce/family.py#L67-L75
+
+    This is used on the frontend for now, but we will be removing it for the newly implemented canonical category below.
     """
-    family_category_to_label_map = {
-        "EXECUTIVE": "Executive",
-        "LEGISLATIVE": "Legislative",
-        "UNFCCC": "UN Convention",
-        "MCF": "Multilateral climate fund project",
-        "REPORTS": "Guidance",
-        "LITIGATION": "Legal case",
-    }
-    family_category_label_id = family_category_to_label_map.get(
-        navigator_family.category, "Unknown family.category"
-    )
     labels.append(
         LabelRelationship(
-            type="category",
+            type="deprecated_category",
             value=Label(
-                id=family_category_label_id,
-                value=family_category_label_id,
-                type="category",
+                id=navigator_family.category,
+                value=navigator_family.category,
+                type="deprecated_category",
             ),
         )
     )
+
+    """
+    Canonical category
+    """
+    labels.extend(_transform_to_category(navigator_family))
 
     """
     Slug
@@ -805,6 +821,11 @@ def _transform_navigator_document(
     Geography labels
     """
     labels.extend(_transform_geographies(navigator_family))
+
+    """
+    Canonical category
+    """
+    labels.extend(_transform_to_category(navigator_family))
 
     """
     Language labels
