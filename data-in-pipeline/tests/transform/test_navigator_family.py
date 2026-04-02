@@ -272,18 +272,6 @@ def navigator_family_with_litigation_concepts() -> Identified[NavigatorFamily]:
                     languages=[],
                     document_status="PUBLISHED",
                 ),
-                NavigatorDocumentFactory.build(
-                    import_id="1.2.3.placeholder",
-                    title="Placeholder litigation family document",
-                    cdn_object=None,
-                    source_url=None,
-                    slug="placeholder-document-slug",
-                    events=[],
-                    variant=None,
-                    md5_sum="aaaaa11111bbbbb",
-                    languages=[],
-                    document_status="PUBLISHED",
-                ),
             ],
             events=[
                 NavigatorEventFactory.build(
@@ -1476,36 +1464,6 @@ def test_transform_navigator_family_with_litigation_corpus_type_and_litigation_c
                     },
                 ),
             ),
-            DocumentRelationship(
-                type="has_member",
-                value=DocumentWithoutRelationships(
-                    id="1.2.3.placeholder",
-                    title="Placeholder litigation family document",
-                    labels=[
-                        LabelRelationship(
-                            type="status",
-                            value=LabelWithoutDocumentRelationships(
-                                id="Obsolete",
-                                value="Obsolete",
-                                type="status",
-                            ),
-                        ),
-                        LabelRelationship(
-                            type="provider",
-                            value=LabelWithoutDocumentRelationships(
-                                type="agent",
-                                id="Sabin Center for Climate Change Law",
-                                value="Sabin Center for Climate Change Law",
-                            ),
-                        ),
-                    ],
-                    attributes={
-                        "deprecated_slug": "placeholder-document-slug",
-                        "md5_sum": "aaaaa11111bbbbb",
-                        "status": "PUBLISHED",
-                    },
-                ),
-            ),
         ],
         attributes={
             "deprecated_slug": "litigation-family-slug",
@@ -1551,41 +1509,6 @@ def test_transform_navigator_family_with_litigation_corpus_type_and_litigation_c
                     "deprecated_slug": "litigation-document-slug",
                     "md5_sum": "aaaaa11111bbbbb",
                     "variant": "Original language",
-                    "status": "PUBLISHED",
-                },
-            ),
-            Document(
-                id="1.2.3.placeholder",
-                title="Placeholder litigation family document",
-                labels=[
-                    LabelRelationship(
-                        type="status",
-                        value=LabelWithoutDocumentRelationships(
-                            id="Obsolete",
-                            value="Obsolete",
-                            type="status",
-                        ),
-                    ),
-                    LabelRelationship(
-                        type="provider",
-                        value=LabelWithoutDocumentRelationships(
-                            type="agent",
-                            id="Sabin Center for Climate Change Law",
-                            value="Sabin Center for Climate Change Law",
-                        ),
-                    ),
-                ],
-                documents=[
-                    DocumentRelationship(
-                        type="member_of",
-                        value=DocumentWithoutRelationships(
-                            **expected_document_from_family.model_dump()
-                        ),
-                    )
-                ],
-                attributes={
-                    "deprecated_slug": "placeholder-document-slug",
-                    "md5_sum": "aaaaa11111bbbbb",
                     "status": "PUBLISHED",
                 },
             ),
