@@ -85,7 +85,7 @@ def navigator_family_with_single_matching_document() -> Identified[NavigatorFami
             import_id="family",
             title="Matching title on family and document and collection",
             summary="Family summary",
-            category="REPORTS",
+            category="EXECUTIVE",
             corpus=_cclw_corpus(),
             last_updated_date="2020-01-0100:00:00Z",
             published_date="2020-01-0100:00:00Z",
@@ -124,8 +124,6 @@ def navigator_family_with_single_matching_document() -> Identified[NavigatorFami
             ],
             geographies=["AU-NSW", "AUS", "XAA"],
             metadata={
-                "case_number": ["CASE-NUMBER 123"],
-                "core_object": ["Core Object 123"],
                 "author": ["Test Author"],
                 "author_type": ["Person"],
             },
@@ -143,7 +141,7 @@ def navigator_family_with_no_matching_transformations() -> Identified[NavigatorF
             import_id="123",
             title="No matches for this family or documents",
             summary="Family summary",
-            category="REPORTS",
+            category="UNFCCC",
             last_updated_date="2020-01-0100:00:00Z",
             published_date="2020-01-0100:00:00Z",
             corpus=_cclw_corpus(),
@@ -172,7 +170,7 @@ def navigator_family_with_litigation_corpus_type() -> Identified[NavigatorFamily
             import_id="family",
             title="Litigation family",
             summary="Family summary",
-            category="REPORTS",
+            category="LITIGATION",
             last_updated_date="2020-01-0100:00:00Z",
             published_date="2020-01-0100:00:00Z",
             corpus=NavigatorCorpusFactory.build(
@@ -233,7 +231,10 @@ def navigator_family_with_litigation_corpus_type() -> Identified[NavigatorFamily
             collections=[],
             geographies=[],
             slug="litigation-family-slug",
-            metadata={"case_number": ["CASE-NUMBER 123"]},
+            metadata={
+                "case_number": ["CASE-NUMBER 123"],
+                "core_object": ["Core Object 123"],
+            },
             concepts=[],
         ),
     )
@@ -249,7 +250,7 @@ def navigator_family_with_litigation_concepts() -> Identified[NavigatorFamily]:
             import_id="family",
             title="Litigation family",
             summary="Family summary",
-            category="REPORTS",
+            category="LITIGATION",
             last_updated_date="2020-01-0100:00:00Z",
             published_date="2020-01-0100:00:00Z",
             corpus=NavigatorCorpusFactory.build(
@@ -385,7 +386,7 @@ def navigator_family_multilateral_climate_fund_project() -> Identified[Navigator
             import_id="family",
             title="Multilateral climate fund project",
             summary="Family summary",
-            category="REPORTS",
+            category="MCF",
             last_updated_date=None,
             published_date=None,
             corpus=NavigatorCorpusFactory.build(
@@ -689,25 +690,17 @@ def test_transform_navigator_family_with_single_matching_document(
             LabelRelationship(
                 type="deprecated_category",
                 value=Label(
-                    id="REPORTS",
-                    value="REPORTS",
+                    id="EXECUTIVE",
+                    value="EXECUTIVE",
                     type="deprecated_category",
                 ),
             ),
             LabelRelationship(
-                type="case_number",
+                type="category",
                 value=Label(
-                    id="CASE-NUMBER 123",
-                    type="case_number",
-                    value="CASE-NUMBER 123",
-                ),
-            ),
-            LabelRelationship(
-                type="core_object",
-                value=Label(
-                    id="Core Object 123",
-                    type="core_object",
-                    value="Core Object 123",
+                    id="Policy",
+                    value="Policy",
+                    type="category",
                 ),
             ),
             LabelRelationship(
@@ -789,6 +782,14 @@ def test_transform_navigator_family_with_single_matching_document(
                             ),
                         ),
                         LabelRelationship(
+                            type="category",
+                            value=Label(
+                                id="Policy",
+                                value="Policy",
+                                type="category",
+                            ),
+                        ),
+                        LabelRelationship(
                             type="language",
                             value=Label(
                                 id="eng",
@@ -846,9 +847,6 @@ def test_transform_navigator_family_with_single_matching_document(
         ],
         attributes={
             "deprecated_slug": "family-slug",
-            "identifier::case_number": "CASE-NUMBER 123",
-            "project_fund_spend_usd": 123456789,
-            "project_co_financing_usd": 123456789,
             "published_date": "2020-01-0100:00:00Z",
             "last_updated_date": "2020-01-0100:00:00Z",
             "status": "PUBLISHED",
@@ -905,6 +903,14 @@ def test_transform_navigator_family_with_single_matching_document(
                             type="geography",
                             id="AUS",
                             value="Australia",
+                        ),
+                    ),
+                    LabelRelationship(
+                        type="category",
+                        value=Label(
+                            id="Policy",
+                            value="Policy",
+                            type="category",
                         ),
                     ),
                     LabelRelationship(
