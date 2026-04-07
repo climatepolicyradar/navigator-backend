@@ -9,6 +9,7 @@ from data_in_models.db_models import (
 from data_in_models.db_models import DocumentLabelRelationship as DBDocumentLabelLink
 from data_in_models.db_models import Item as DBItem
 from data_in_models.db_models import Label as DBLabel
+from data_in_models.db_models import LabelLabelRelationship as DBLabelLabelLink
 from data_in_models.models import Document as DocumentInput
 from data_in_models.models import (
     DocumentRelationship as DocumentDocumentRelationshipInput,
@@ -93,6 +94,46 @@ def create_or_update_documents(
                 ),
             )
             db.exec(label_stmt)
+
+            labels_with_label_relationship = [
+                {
+                    "label_id": label.id,
+                    "related_label_id": label.labels[0].value.id,
+                    "type": label.labels[0].type,
+                    "timestamp": label.labels[0].timestamp,
+                    "created_at": now,
+                    "updated_at": now,
+                }
+                for label in unique_labels.values()
+                if label.labels
+            ]
+
+            if labels_with_label_relationship:
+                stmt = insert(DBLabelLabelLink).values(labels_with_label_relationship)
+                stmt = stmt.on_conflict_do_update(
+                    index_elements=["label_id", "related_label_id"],
+                    set_={
+                        "type": stmt.excluded.type,
+                        "timestamp": stmt.excluded.timestamp,
+                        "updated_at": now,
+                    },
+                    where=(DBLabelLabelLink.type != stmt.excluded.type),
+                )
+                db.exec(stmt)
+
+                # Delete removed label-label relationships
+                db.exec(
+                    delete(DBLabelLabelLink).where(
+                        DBLabelLabelLink.label_id.in_(  # type: ignore[attr-defined]
+                            label.id for label in unique_labels.values() if label.labels
+                        ),
+                        ~DBLabelLabelLink.related_label_id.in_(  # type: ignore[attr-defined]
+                            label.labels[0].value.id
+                            for label in unique_labels.values()
+                            if label.labels
+                        ),
+                    )
+                )
 
         for doc_in in documents:
             # Upsert main document using INSERT ... ON CONFLICT
