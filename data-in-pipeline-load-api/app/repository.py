@@ -340,7 +340,7 @@ def sync_label_relationships(
     # Delete old relationships
     delete_stmt = delete(DBLabelLabelLink).where(
         DBLabelLabelLink.label_id.in_(sub_concept_ids),
-        ~tuple_(DBLabelLabelLink.label_id, DBLabelLabelLink.related_label_id).in_(
+        ~tuple_(DBLabelLabelLink.label_id, DBLabelLabelLink.related_label_id).in_(  # type: ignore[attr-defined]
             label_relationship_ids
         ),
     )
