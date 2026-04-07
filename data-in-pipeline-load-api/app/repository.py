@@ -14,6 +14,7 @@ from data_in_models.models import Document as DocumentInput
 from data_in_models.models import (
     DocumentRelationship as DocumentDocumentRelationshipInput,
 )
+from sqlalchemy import tuple_
 from sqlalchemy.dialects.postgresql import insert
 from sqlalchemy.exc import DisconnectionError, IntegrityError, OperationalError
 from sqlmodel import Session, delete, select
@@ -98,42 +99,18 @@ def create_or_update_documents(
             labels_with_label_relationship = [
                 {
                     "label_id": label.id,
-                    "related_label_id": label.labels[0].value.id,
-                    "type": label.labels[0].type,
-                    "timestamp": label.labels[0].timestamp,
+                    "related_label_id": rel.value.id,
+                    "type": rel.type,
+                    "timestamp": rel.timestamp,
                     "created_at": now,
                     "updated_at": now,
                 }
                 for label in unique_labels.values()
-                if label.labels
+                for rel in (label.labels or [])
             ]
 
             if labels_with_label_relationship:
-                stmt = insert(DBLabelLabelLink).values(labels_with_label_relationship)
-                stmt = stmt.on_conflict_do_update(
-                    index_elements=["label_id", "related_label_id"],
-                    set_={
-                        "type": stmt.excluded.type,
-                        "timestamp": stmt.excluded.timestamp,
-                        "updated_at": now,
-                    },
-                    where=(DBLabelLabelLink.type != stmt.excluded.type),
-                )
-                db.exec(stmt)
-
-                # Delete removed label-label relationships
-                db.exec(
-                    delete(DBLabelLabelLink).where(
-                        DBLabelLabelLink.label_id.in_(  # type: ignore[attr-defined]
-                            label.id for label in unique_labels.values() if label.labels
-                        ),
-                        ~DBLabelLabelLink.related_label_id.in_(  # type: ignore[attr-defined]
-                            label.labels[0].value.id
-                            for label in unique_labels.values()
-                            if label.labels
-                        ),
-                    )
-                )
+                sync_label_relationships(db, labels_with_label_relationship, now)
 
         for doc_in in documents:
             # Upsert main document using INSERT ... ON CONFLICT
@@ -338,6 +315,49 @@ def _upsert_document_document_relationships(
             ~DBDocumentRelationship.related_document_id.in_(incoming_target_ids),  # type: ignore[attr-defined]
         )
     )
+
+
+def sync_label_relationships(
+    db: Session, labels_with_label_relationship: list[dict], now
+):
+    """
+    Upsert concept-subconcept label relationships and remove old relationships
+    for sub concepts where parent concepts have changed.
+
+    :param db: Database session
+    :param labels_with_label_relationship: List of dicts with keys: label_id, related
+    _label_id, type, timestamp
+    :param now: Current timestamp for created_at/updated_at fields
+    """
+
+    sub_concept_ids = set()
+    label_relationship_ids = set()
+
+    for rel in labels_with_label_relationship:
+        sub_concept_ids.add(rel["label_id"])
+        label_relationship_ids.add((rel["label_id"], rel["related_label_id"]))
+
+    # Delete old relationships
+    delete_stmt = delete(DBLabelLabelLink).where(
+        DBLabelLabelLink.label_id.in_(sub_concept_ids),
+        ~tuple_(DBLabelLabelLink.label_id, DBLabelLabelLink.related_label_id).in_(
+            label_relationship_ids
+        ),
+    )
+    db.exec(delete_stmt)
+
+    # Upsert current relationships
+    stmt = insert(DBLabelLabelLink).values(labels_with_label_relationship)
+    stmt = stmt.on_conflict_do_update(
+        index_elements=["label_id", "related_label_id"],
+        set_={
+            "type": stmt.excluded.type,
+            "timestamp": stmt.excluded.timestamp,
+            "updated_at": now,
+        },
+        where=(DBLabelLabelLink.type != stmt.excluded.type),
+    )
+    db.exec(stmt)
 
 
 def create_documents(db: Session, documents: list[DocumentInput]) -> list[str]:
