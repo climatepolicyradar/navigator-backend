@@ -454,6 +454,7 @@ def _shallow_label(
 
 def _transform_litigation_concepts_to_label_relationships(
     concepts: list[NavigatorConcept],
+    family_import_id: str,
 ) -> list[LabelRelationship]:
     """
     Convert litigation concepts into label relationships with subconcept hierarchies.
@@ -462,6 +463,7 @@ def _transform_litigation_concepts_to_label_relationships(
         List[LabelRelationship] where each:
         - type="concept"
         - value=LabelWithoutRelationships (with nested .labels for hierarchies)
+        - family_import_id= the import_id of the family these concepts belong to, to debug if needed.
         - Parent references are SHALLOW (labels=[] to prevent deep nesting).
     """
     # Build core labels indexed by (relation, id) - using a tuple here as the ids may not be unique across different concept types (relations)
@@ -486,7 +488,7 @@ def _transform_litigation_concepts_to_label_relationships(
             parent = label_by_name.get((concept.relation, parent_name))
             if parent is None:
                 raise ValueError(
-                    f"Unknown parent label {parent_name!r} in relation {concept.relation!r}"
+                    f"Unknown parent label {parent_name!r} in relation {concept.relation!r}. See family {family_import_id!r} for details."
                 )
 
             parent_ref = _shallow_label(parent)
@@ -841,7 +843,7 @@ def _transform_navigator_family(navigator_family: NavigatorFamily) -> Document:
     ):
         labels.extend(
             _transform_litigation_concepts_to_label_relationships(
-                navigator_family.concepts
+                navigator_family.concepts, navigator_family.import_id
             )
         )
 
