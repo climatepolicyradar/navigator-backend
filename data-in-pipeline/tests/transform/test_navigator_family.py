@@ -8,12 +8,13 @@ from data_in_models.models import (
     Item,
     Label,
     LabelRelationship,
+    LabelWithoutDocumentRelationships,
 )
 
 from app.extract.connectors import (
     NavigatorFamily,
 )
-from app.models import Identified
+from app.models import Identified, NavigatorConcept
 from app.transform.navigator_family import transform_navigator_family
 from tests.factories import (
     NavigatorCollectionFactory,
@@ -95,8 +96,8 @@ def navigator_family_with_single_matching_document() -> Identified[NavigatorFami
             import_id="family",
             title="Matching title on family and document and collection",
             summary="Family summary",
-            category="REPORTS",
-            corpus=_cclw_corpus(),
+            category="EXECUTIVE",
+            corpus=_cclw_laws_and_policies_corpus(),
             last_updated_date="2020-01-0100:00:00Z",
             published_date="2020-01-0100:00:00Z",
             documents=[
@@ -134,10 +135,6 @@ def navigator_family_with_single_matching_document() -> Identified[NavigatorFami
             ],
             geographies=["AU-NSW", "AUS", "XAA"],
             metadata={
-                "case_number": ["CASE-NUMBER 123"],
-                "core_object": ["Core Object 123"],
-                "project_value_fund_spend": ["123456789"],
-                "project_value_co_financing": ["123456789"],
                 "author": ["Test Author"],
                 "author_type": ["Person"],
             },
@@ -155,7 +152,7 @@ def navigator_family_with_no_matching_transformations() -> Identified[NavigatorF
             import_id="123",
             title="No matches for this family or documents",
             summary="Family summary",
-            category="REPORTS",
+            category="UNFCCC",
             last_updated_date="2020-01-0100:00:00Z",
             published_date="2020-01-0100:00:00Z",
             corpus=_cclw_corpus(),
@@ -184,7 +181,7 @@ def navigator_family_with_litigation_corpus_type() -> Identified[NavigatorFamily
             import_id="family",
             title="Litigation family",
             summary="Family summary",
-            category="REPORTS",
+            category="LITIGATION",
             last_updated_date="2020-01-0100:00:00Z",
             published_date="2020-01-0100:00:00Z",
             corpus=NavigatorCorpusFactory.build(
@@ -245,7 +242,100 @@ def navigator_family_with_litigation_corpus_type() -> Identified[NavigatorFamily
             collections=[],
             geographies=[],
             slug="litigation-family-slug",
-            metadata={"case_number": ["CASE-NUMBER 123"]},
+            metadata={
+                "case_number": ["CASE-NUMBER 123"],
+                "core_object": ["Core Object 123"],
+            },
+            concepts=[],
+        ),
+    )
+
+
+@pytest.fixture
+def navigator_family_with_litigation_concepts() -> Identified[NavigatorFamily]:
+    decision_date = datetime.datetime(2020, 1, 1)
+    return Identified(
+        id="family",
+        source="navigator_family",
+        data=NavigatorFamilyFactory.build(
+            import_id="family",
+            title="Litigation family",
+            summary="Family summary",
+            category="LITIGATION",
+            last_updated_date="2020-01-0100:00:00Z",
+            published_date="2020-01-0100:00:00Z",
+            corpus=NavigatorCorpusFactory.build(
+                import_id="Academic.corpus.Litigation.n0000",
+                corpus_type=NavigatorCorpusTypeFactory.build(name="Litigation"),
+                organisation=NavigatorOrganisationFactory.build(id=1, name="Sabin"),
+                attribution_url="testurl.org",
+                corpus_text="Test corpus",
+                corpus_image_url=None,
+            ),
+            documents=[
+                NavigatorDocumentFactory.build(
+                    import_id="document",
+                    title="Litigation family document",
+                    cdn_object=None,
+                    source_url=None,
+                    slug="litigation-document-slug",
+                    events=[
+                        NavigatorEventFactory.build(
+                            import_id="123",
+                            event_type="Decision",
+                            date=decision_date,
+                            valid_metadata={
+                                "event_type": ["Decision"],
+                                "datetime_event_name": ["Decision"],
+                            },
+                        )
+                    ],
+                    variant="Original language",
+                    md5_sum="aaaaa11111bbbbb",
+                    languages=[],
+                    document_status="PUBLISHED",
+                ),
+            ],
+            events=[
+                NavigatorEventFactory.build(
+                    import_id="123",
+                    event_type="Decision",
+                    date=decision_date,
+                    valid_metadata={
+                        "event_type": ["Decision"],
+                        "datetime_event_name": ["Decision"],
+                    },
+                ),
+            ],
+            collections=[],
+            geographies=[],
+            slug="litigation-family-slug",
+            concepts=[
+                NavigatorConcept(
+                    id="High Court of Justice",
+                    ids=[],
+                    type="legal_entity",
+                    relation="jurisdiction",
+                    preferred_label="High Court of Justice",
+                    subconcept_of_labels=["England and Wales"],
+                ),
+                NavigatorConcept(
+                    id="High Court of Justice (Administrative Court)",
+                    ids=[],
+                    type="legal_entity",
+                    relation="jurisdiction",
+                    preferred_label="High Court of Justice (Administrative Court)",
+                    subconcept_of_labels=["High Court of Justice"],
+                ),
+                NavigatorConcept(
+                    id="England and Wales",
+                    ids=[],
+                    type="legal_entity",
+                    relation="jurisdiction",
+                    preferred_label="England and Wales",
+                    subconcept_of_labels=[],
+                ),
+            ],
         ),
     )
 
@@ -310,7 +400,7 @@ def navigator_family_multilateral_climate_fund_project() -> Identified[Navigator
             import_id="family",
             title="Multilateral climate fund project",
             summary="Family summary",
-            category="REPORTS",
+            category="MCF",
             last_updated_date=None,
             published_date=None,
             corpus=NavigatorCorpusFactory.build(
@@ -427,6 +517,7 @@ def navigator_family_with_duplicate_legal_case() -> Identified[NavigatorFamily]:
             events=[],
             collections=[],
             geographies=[],
+            concepts=[],
         ),
     )
 
@@ -613,57 +704,31 @@ def test_transform_navigator_family_with_single_matching_document(
             LabelRelationship(
                 type="deprecated_category",
                 value=Label(
-                    id="REPORTS",
-                    value="REPORTS",
+                    id="EXECUTIVE",
+                    value="EXECUTIVE",
                     type="deprecated_category",
                 ),
             ),
             LabelRelationship(
-                type="case_number",
+                type="deprecated_category",
                 value=Label(
-                    documents=[],
-                    id="CASE-NUMBER 123",
-                    labels=[],
-                    type="case_number",
-                    value="CASE-NUMBER 123",
+                    id="Laws and Policies",
+                    value="Laws and Policies",
+                    type="deprecated_category",
                 ),
             ),
             LabelRelationship(
-                type="core_object",
+                type="category",
                 value=Label(
-                    documents=[],
-                    id="Core Object 123",
-                    labels=[],
-                    type="core_object",
-                    value="Core Object 123",
-                ),
-            ),
-            LabelRelationship(
-                type="project_value_fund_spend",
-                value=Label(
-                    documents=[],
-                    id="123456789",
-                    labels=[],
-                    type="project_value_fund_spend",
-                    value="123456789",
-                ),
-            ),
-            LabelRelationship(
-                type="project_value_co_financing",
-                value=Label(
-                    documents=[],
-                    id="123456789",
-                    labels=[],
-                    type="project_value_co_financing",
-                    value="123456789",
+                    id="Policy",
+                    value="Policy",
+                    type="category",
                 ),
             ),
             LabelRelationship(
                 type="author_type",
                 value=Label(
-                    documents=[],
                     id="Person",
-                    labels=[],
                     type="author_type",
                     value="Person",
                 ),
@@ -739,6 +804,22 @@ def test_transform_navigator_family_with_single_matching_document(
                             ),
                         ),
                         LabelRelationship(
+                            type="deprecated_category",
+                            value=Label(
+                                id="Laws and Policies",
+                                value="Laws and Policies",
+                                type="deprecated_category",
+                            ),
+                        ),
+                        LabelRelationship(
+                            type="category",
+                            value=Label(
+                                id="Policy",
+                                value="Policy",
+                                type="category",
+                            ),
+                        ),
+                        LabelRelationship(
                             type="language",
                             value=Label(
                                 id="eng",
@@ -796,9 +877,6 @@ def test_transform_navigator_family_with_single_matching_document(
         ],
         attributes={
             "deprecated_slug": "family-slug",
-            "identifier::case_number": "CASE-NUMBER 123",
-            "project_fund_spend_usd": 123456789,
-            "project_co_financing_usd": 123456789,
             "published_date": "2020-01-0100:00:00Z",
             "last_updated_date": "2020-01-0100:00:00Z",
             "status": "PUBLISHED",
@@ -855,6 +933,22 @@ def test_transform_navigator_family_with_single_matching_document(
                             type="geography",
                             id="AUS",
                             value="Australia",
+                        ),
+                    ),
+                    LabelRelationship(
+                        type="deprecated_category",
+                        value=Label(
+                            id="Laws and Policies",
+                            value="Laws and Policies",
+                            type="deprecated_category",
+                        ),
+                    ),
+                    LabelRelationship(
+                        type="category",
+                        value=Label(
+                            id="Policy",
+                            value="Policy",
+                            type="category",
                         ),
                     ),
                     LabelRelationship(
@@ -947,23 +1041,6 @@ def test_transform_navigator_family_with_single_matching_document(
             ),
         ],
     )
-
-
-def test_transform_navigator_family_with_litigation_corpus_type_handles_duplicate_label_relationships(
-    navigator_family_with_duplicate_legal_case: Identified[NavigatorFamily],
-):
-    result = transform_navigator_family(navigator_family_with_duplicate_legal_case)
-
-    documents = result.unwrap()
-    family_doc = documents[0]
-
-    legal_case_labels = [
-        label
-        for label in family_doc.labels
-        if label.value.id == "Legal case" and label.type == "entity_type"
-    ]
-
-    assert len(legal_case_labels) == 0
 
 
 @pytest.mark.parametrize(
@@ -1173,8 +1250,8 @@ def test_transform_navigator_family_with_litigation_corpus_type(
             LabelRelationship(
                 type="deprecated_category",
                 value=Label(
-                    id="REPORTS",
-                    value="REPORTS",
+                    id="LITIGATION",
+                    value="LITIGATION",
                     type="deprecated_category",
                 ),
             ),
@@ -1349,6 +1426,186 @@ def test_transform_navigator_family_with_litigation_corpus_type(
     )
 
 
+def test_transform_navigator_family_with_litigation_corpus_type_and_litigation_concepts(
+    navigator_family_with_litigation_concepts: Identified[NavigatorFamily],
+):
+    result = transform_navigator_family(navigator_family_with_litigation_concepts)
+    expected_document_from_family = Document(
+        id="family",
+        title="Litigation family",
+        description="Family summary",
+        labels=[
+            LabelRelationship(
+                type="status",
+                value=Label(
+                    type="status",
+                    id="Principal",
+                    value="Principal",
+                ),
+            ),
+            LabelRelationship(
+                type="provider",
+                value=Label(
+                    type="agent",
+                    id="Sabin Center for Climate Change Law",
+                    value="Sabin Center for Climate Change Law",
+                    attributes={
+                        "attribution_url": "testurl.org",
+                        "corpus_text": "Test corpus",
+                        "corpus_image_url": "",
+                    },
+                ),
+            ),
+            LabelRelationship(
+                type="deprecated_category",
+                value=Label(
+                    id="LITIGATION",
+                    value="LITIGATION",
+                    type="deprecated_category",
+                ),
+            ),
+            LabelRelationship(
+                type="concept",
+                value=LabelWithoutDocumentRelationships(
+                    id="High Court of Justice",
+                    labels=[
+                        LabelRelationship(
+                            type="subconcept_of",
+                            value=LabelWithoutDocumentRelationships(
+                                id="England and Wales",
+                                labels=[],
+                                type="jurisdiction",
+                                value="England and Wales",
+                            ),
+                        )
+                    ],
+                    type="jurisdiction",
+                    value="High Court of Justice",
+                ),
+            ),
+            LabelRelationship(
+                type="concept",
+                value=LabelWithoutDocumentRelationships(
+                    id="High Court of Justice (Administrative Court)",
+                    labels=[
+                        LabelRelationship(
+                            type="subconcept_of",
+                            value=LabelWithoutDocumentRelationships(
+                                id="High Court of Justice",
+                                labels=[],
+                                type="jurisdiction",
+                                value="High Court of Justice",
+                            ),
+                        )
+                    ],
+                    type="jurisdiction",
+                    value="High Court of Justice (Administrative Court)",
+                ),
+            ),
+            LabelRelationship(
+                type="concept",
+                value=LabelWithoutDocumentRelationships(
+                    id="England and Wales",
+                    labels=[],
+                    type="jurisdiction",
+                    value="England and Wales",
+                ),
+            ),
+        ],
+        documents=[
+            DocumentRelationship(
+                type="has_member",
+                value=DocumentWithoutRelationships(
+                    id="document",
+                    title="Litigation family document",
+                    labels=[
+                        LabelRelationship(
+                            type="entity_type",
+                            value=Label(
+                                id="Decision",
+                                value="Decision",
+                                type="entity_type",
+                            ),
+                        ),
+                        LabelRelationship(
+                            type="provider",
+                            value=Label(
+                                type="agent",
+                                id="Sabin Center for Climate Change Law",
+                                value="Sabin Center for Climate Change Law",
+                                attributes={
+                                    "attribution_url": "testurl.org",
+                                    "corpus_text": "Test corpus",
+                                    "corpus_image_url": "",
+                                },
+                            ),
+                        ),
+                    ],
+                    attributes={
+                        "deprecated_slug": "litigation-document-slug",
+                        "md5_sum": "aaaaa11111bbbbb",
+                        "variant": "Original language",
+                        "status": "PUBLISHED",
+                    },
+                ),
+            ),
+        ],
+        attributes={
+            "deprecated_slug": "litigation-family-slug",
+            "published_date": "2020-01-0100:00:00Z",
+            "last_updated_date": "2020-01-0100:00:00Z",
+            "status": "PUBLISHED",
+        },
+    )
+    assert_model_list_equality(
+        result.unwrap(),
+        [
+            expected_document_from_family,
+            Document(
+                id="document",
+                title="Litigation family document",
+                labels=[
+                    LabelRelationship(
+                        type="entity_type",
+                        value=Label(
+                            id="Decision",
+                            value="Decision",
+                            type="entity_type",
+                        ),
+                    ),
+                    LabelRelationship(
+                        type="provider",
+                        value=Label(
+                            type="agent",
+                            id="Sabin Center for Climate Change Law",
+                            value="Sabin Center for Climate Change Law",
+                            attributes={
+                                "attribution_url": "testurl.org",
+                                "corpus_text": "Test corpus",
+                                "corpus_image_url": "",
+                            },
+                        ),
+                    ),
+                ],
+                documents=[
+                    DocumentRelationship(
+                        type="member_of",
+                        value=DocumentWithoutRelationships(
+                            **expected_document_from_family.model_dump()
+                        ),
+                    ),
+                ],
+                attributes={
+                    "deprecated_slug": "litigation-document-slug",
+                    "md5_sum": "aaaaa11111bbbbb",
+                    "variant": "Original language",
+                    "status": "PUBLISHED",
+                },
+            ),
+        ],
+    )
+
+
 def test_transform_navigator_family_with_multilateral_climate_fund_project(
     navigator_family_multilateral_climate_fund_project: Identified[NavigatorFamily],
 ):
@@ -1437,8 +1694,8 @@ def test_transform_navigator_family_with_multilateral_climate_fund_project(
             LabelRelationship(
                 type="deprecated_category",
                 value=Label(
-                    id="REPORTS",
-                    value="REPORTS",
+                    id="MCF",
+                    value="MCF",
                     type="deprecated_category",
                 ),
             ),

@@ -8,7 +8,7 @@ from returns.result import Failure, Result, Success
 
 from app.bootstrap_telemetry import get_logger, log_context, pipeline_metrics
 from app.extract.connector_config import NavigatorConnectorConfig
-from app.models import ExtractedEnvelope, ExtractedMetadata
+from app.models import ExtractedEnvelope, ExtractedMetadata, NavigatorConcept
 from app.pipeline_metrics import ErrorType, Operation
 from app.util import generate_envelope_uuid
 
@@ -76,6 +76,7 @@ class NavigatorFamily(BaseModel):
     geographies: list[str]
     category: str
     slug: str
+    concepts: list[NavigatorConcept] = []
     metadata: dict[str, list[str]] = {}
     published_date: str | None
     last_updated_date: str | None

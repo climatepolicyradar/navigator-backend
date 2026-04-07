@@ -5,6 +5,7 @@ from data_in_models.models import (
     Item,
     Label,
     LabelRelationship,
+    LabelWithoutDocumentRelationships,
 )
 from returns.result import Failure, Result, Success
 
@@ -15,7 +16,7 @@ from app.extract.connectors import (
     NavigatorFamily,
 )
 from app.geographies import geographies_lookup
-from app.models import Identified
+from app.models import Identified, NavigatorConcept
 from app.transform.models import CouldNotTransform, NoMatchingTransformations
 
 mcf_projects_corpus_import_ids = [
@@ -437,6 +438,68 @@ def _transform_geographies(
     return labels
 
 
+def _shallow_label(
+    label: LabelWithoutDocumentRelationships,
+) -> LabelWithoutDocumentRelationships:
+    """
+    We want to avoid deep nesting of labels and recursive references.
+    """
+    return LabelWithoutDocumentRelationships(
+        id=label.id,
+        type=label.type,
+        value=label.value,
+        labels=[],
+    )
+
+
+def _transform_litigation_concepts_to_label_relationships(
+    concepts: list[NavigatorConcept],
+) -> list[LabelRelationship]:
+    """
+    Convert litigation concepts into label relationships with subconcept hierarchies.
+
+    Returns:
+        List[LabelRelationship] where each:
+        - type="concept"
+        - value=LabelWithoutRelationships (with nested .labels for hierarchies)
+        - Parent references are SHALLOW (labels=[] to prevent deep nesting).
+    """
+    # Build core labels indexed by (relation, id) - using a tuple here as the ids may not be unique across different concept types (relations)
+    label_map: dict[tuple[str, str], LabelWithoutDocumentRelationships] = {
+        (c.relation, c.id): LabelWithoutDocumentRelationships(
+            id=c.id,
+            type=c.relation,
+            value=c.preferred_label,
+        )
+        for c in concepts
+    }
+
+    # Secondary index for parent lookups by preferred_label
+    label_by_name: dict[tuple[str, str], LabelWithoutDocumentRelationships] = {
+        (c.relation, c.preferred_label): label_map[(c.relation, c.id)] for c in concepts
+    }
+
+    # Wire up parent-child relationships
+    for concept in concepts:
+        child = label_map[(concept.relation, concept.id)]
+        for parent_name in concept.subconcept_of_labels:
+            parent = label_by_name.get((concept.relation, parent_name))
+            if parent is None:
+                raise ValueError(
+                    f"Unknown parent label {parent_name!r} in relation {concept.relation!r}"
+                )
+
+            parent_ref = _shallow_label(parent)
+
+            child.labels.append(
+                LabelRelationship(type="subconcept_of", value=parent_ref)
+            )
+
+    return [
+        LabelRelationship(type="concept", value=label) for label in label_map.values()
+    ]
+
+
 def _transform_to_category(
     navigator_family: NavigatorFamily,
 ) -> list[LabelRelationship]:
@@ -766,6 +829,36 @@ def _transform_navigator_family(navigator_family: NavigatorFamily) -> Document:
     labels.extend(_transform_metadata(navigator_family))
 
     attributes.update(_transform_metadata_to_attributes(navigator_family.metadata))
+
+    """
+    Litigation concepts, not to be confused with other concepts these are defined by the
+    Sabin Center for Climate Change Law and only apply to the Academic.corpus.Litigation.n0000 corpus.
+    """
+
+    if (
+        navigator_family.corpus.import_id == "Academic.corpus.Litigation.n0000"
+        and navigator_family.concepts
+    ):
+        labels.extend(
+            _transform_litigation_concepts_to_label_relationships(
+                navigator_family.concepts
+            )
+        )
+
+    """
+    Litigation concepts, not to be confused with other concepts these are defined by the
+    Sabin Center for Climate Change Law and only apply to the Academic.corpus.Litigation.n0000 corpus.
+    """
+
+    if (
+        navigator_family.corpus.import_id == "Academic.corpus.Litigation.n0000"
+        and navigator_family.concepts
+    ):
+        labels.extend(
+            _transform_litigation_concepts_to_label_relationships(
+                navigator_family.concepts
+            )
+        )
 
     """
     Dates
