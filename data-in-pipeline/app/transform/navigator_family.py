@@ -848,21 +848,6 @@ def _transform_navigator_family(navigator_family: NavigatorFamily) -> Document:
         )
 
     """
-    Litigation concepts, not to be confused with other concepts these are defined by the
-    Sabin Center for Climate Change Law and only apply to the Academic.corpus.Litigation.n0000 corpus.
-    """
-
-    if (
-        navigator_family.corpus.import_id == "Academic.corpus.Litigation.n0000"
-        and navigator_family.concepts
-    ):
-        labels.extend(
-            _transform_litigation_concepts_to_label_relationships(
-                navigator_family.concepts
-            )
-        )
-
-    """
     Dates
 
     These are values calculated from events.
