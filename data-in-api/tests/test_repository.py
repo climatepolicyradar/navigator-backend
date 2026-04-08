@@ -8,6 +8,7 @@ from data_in_models.db_models import (
 from data_in_models.db_models import DocumentLabelRelationship as DBDocumentLabelLink
 from data_in_models.db_models import Item as DBItem
 from data_in_models.db_models import Label as DBLabel
+from data_in_models.db_models import LabelLabelRelationship as DBLabelLabelRelationship
 from data_in_models.models import Document as DocumentOutput
 from sqlmodel import Session
 
@@ -23,6 +24,22 @@ def create_label(
     session.add(label)
     session.commit()
     return label
+
+
+def link_label_to_parent(
+    session: Session,
+    label_id: str,
+    parent_id: str,
+    type: str = "subconcept_of",
+) -> DBLabelLabelRelationship:
+    link = DBLabelLabelRelationship(
+        label_id=label_id,
+        related_label_id=parent_id,
+        type=type,
+    )
+    session.add(link)
+    session.commit()
+    return link
 
 
 def create_document(
@@ -189,3 +206,140 @@ def test_get_all_documents_filter_by_label_nonexistent(setup_documents: Session)
     )
 
     assert len(documents) == 0
+
+
+def test_label_with_parent_returns_nested_label(session: Session):
+    """A label with a parent should return the parent nested in labels."""
+    create_label(
+        session,
+        "Federal Statutory Claims (US)",
+        "Federal Statutory Claims (US)",
+        type_="category",
+    )
+    create_label(
+        session,
+        "Endangered Species Act (US)",
+        "Endangered Species Act (US)",
+        type_="category",
+    )
+    link_label_to_parent(
+        session, "Endangered Species Act (US)", "Federal Statutory Claims (US)"
+    )
+
+    create_document(session, "doc1", "Document 1")
+    link_document_label(session, "doc1", "Endangered Species Act (US)", type="concept")
+
+    doc = get_document_by_id(session, "doc1")
+
+    assert doc is not None
+    assert len(doc.labels) == 1
+
+    label_rel = doc.labels[0]
+    assert label_rel.value.id == "Endangered Species Act (US)"
+    assert label_rel.value.type == "category"
+    assert len(label_rel.value.labels) == 1
+
+    parent = label_rel.value.labels[0]
+    assert parent.type == "subconcept_of"
+    assert parent.value.id == "Federal Statutory Claims (US)"
+    assert parent.value.value == "Federal Statutory Claims (US)"
+    assert parent.value.type == "category"
+    assert parent.value.labels == []
+
+
+def test_label_without_parent_has_empty_nested_labels(session: Session):
+    """A label with no parent should return with an empty labels list."""
+    create_label(session, "Principal", "Principal", type_="status")
+    create_document(session, "doc1", "Document 1")
+    link_document_label(session, "doc1", "Principal", type="status")
+
+    doc = get_document_by_id(session, "doc1")
+
+    assert doc is not None
+    label_rel = doc.labels[0]
+    assert label_rel.value.id == "Principal"
+    assert label_rel.value.labels == []
+
+
+def test_mixed_labels_with_and_without_parents(session: Session):
+    """A document with some labels that have parents and some that don't."""
+    create_label(
+        session,
+        "Federal Statutory Claims (US)",
+        "Federal Statutory Claims (US)",
+        type_="category",
+    )
+    create_label(
+        session,
+        "Endangered Species Act (US)",
+        "Endangered Species Act (US)",
+        type_="category",
+    )
+    create_label(session, "Principal", "Principal", type_="status")
+    link_label_to_parent(
+        session, "Endangered Species Act (US)", "Federal Statutory Claims (US)"
+    )
+
+    create_document(session, "doc1", "Document 1")
+    link_document_label(session, "doc1", "Endangered Species Act (US)", type="concept")
+    link_document_label(session, "doc1", "Principal", type="status")
+
+    expected_total_document_labels = 2
+
+    doc = get_document_by_id(session, "doc1")
+
+    assert doc is not None
+    assert len(doc.labels) == expected_total_document_labels
+
+    by_id = {rel.value.id: rel for rel in doc.labels}
+
+    assert len(by_id["Endangered Species Act (US)"].value.labels) == 1
+    assert (
+        by_id["Endangered Species Act (US)"].value.labels[0].value.id
+        == "Federal Statutory Claims (US)"
+    )
+    assert len(by_id["Principal"].value.labels) == 0
+
+
+def test_document_with_no_labels_returns_empty_labels(session: Session):
+    """A document with no labels should return an empty labels list."""
+    create_document(session, "doc1", "Document 1")
+
+    doc = get_document_by_id(session, "doc1")
+
+    assert doc is not None
+    assert doc.labels == []
+
+
+def test_related_document_labels_do_not_include_parents(session: Session):
+    """Labels on a related document embedded in DocumentRelationship should also carry parent info."""
+    create_label(
+        session,
+        "Federal Statutory Claims (US)",
+        "Federal Statutory Claims (US)",
+        type_="category",
+    )
+    create_label(
+        session,
+        "Endangered Species Act (US)",
+        "Endangered Species Act (US)",
+        type_="category",
+    )
+    link_label_to_parent(
+        session, "Endangered Species Act (US)", "Federal Statutory Claims (US)"
+    )
+
+    create_document(session, "doc1", "Document 1")
+    create_document(session, "doc2", "Document 2")
+    link_documents(session, "doc1", "doc2")
+    link_document_label(session, "doc2", "Endangered Species Act (US)", type="concept")
+
+    doc = get_document_by_id(session, "doc1")
+
+    assert doc is not None
+    assert len(doc.documents) == 1
+
+    related = doc.documents[0].value
+    assert related.id == "doc2"
+    assert len(related.labels) == 1
+    assert related.labels[0].value.id == "Endangered Species Act (US)"
