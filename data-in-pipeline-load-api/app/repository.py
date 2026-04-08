@@ -1,5 +1,6 @@
 import logging
 from datetime import UTC, datetime
+from typing import TypedDict
 from uuid import uuid4
 
 from data_in_models.db_models import Document as DBDocument
@@ -9,15 +10,26 @@ from data_in_models.db_models import (
 from data_in_models.db_models import DocumentLabelRelationship as DBDocumentLabelLink
 from data_in_models.db_models import Item as DBItem
 from data_in_models.db_models import Label as DBLabel
+from data_in_models.db_models import LabelLabelRelationship as DBLabelLabelLink
 from data_in_models.models import Document as DocumentInput
 from data_in_models.models import (
     DocumentRelationship as DocumentDocumentRelationshipInput,
 )
+from sqlalchemy import tuple_
 from sqlalchemy.dialects.postgresql import insert
 from sqlalchemy.exc import DisconnectionError, IntegrityError, OperationalError
 from sqlmodel import Session, delete, select
 
 _LOGGER = logging.getLogger(__name__)
+
+
+class LabelRelationshipRow(TypedDict):
+    label_id: str
+    related_label_id: str
+    type: str
+    timestamp: datetime | None
+    created_at: datetime
+    updated_at: datetime
 
 
 def check_db_health(db: Session) -> bool:
@@ -93,6 +105,22 @@ def create_or_update_documents(
                 ),
             )
             db.exec(label_stmt)
+
+            labels_with_label_relationship: list[LabelRelationshipRow] = [
+                {
+                    "label_id": label.id,
+                    "related_label_id": rel.value.id,
+                    "type": rel.type,
+                    "timestamp": rel.timestamp,
+                    "created_at": now,
+                    "updated_at": now,
+                }
+                for label in unique_labels.values()
+                for rel in (label.labels or [])
+            ]
+
+            if labels_with_label_relationship:
+                sync_label_relationships(db, labels_with_label_relationship, now)
 
         for doc_in in documents:
             # Upsert main document using INSERT ... ON CONFLICT
@@ -297,6 +325,51 @@ def _upsert_document_document_relationships(
             ~DBDocumentRelationship.related_document_id.in_(incoming_target_ids),  # type: ignore[attr-defined]
         )
     )
+
+
+def sync_label_relationships(
+    db: Session,
+    labels_with_label_relationship: list[LabelRelationshipRow],
+    now: datetime,
+):
+    """
+    Upsert concept-subconcept label relationships and remove old relationships
+    for sub concepts where parent concepts have changed.
+
+    :param db: Database session
+    :param labels_with_label_relationship: List of dicts with keys: label_id, related
+    _label_id, type, timestamp
+    :param now: Current timestamp for created_at/updated_at fields
+    """
+
+    label_relationship_ids: set[tuple[str, str]] = set()
+    sub_concept_ids: set[str] = set()
+
+    for rel in labels_with_label_relationship:
+        sub_concept_ids.add(rel["label_id"])
+        label_relationship_ids.add((rel["label_id"], rel["related_label_id"]))
+
+    # Delete old relationships
+    delete_stmt = delete(DBLabelLabelLink).where(
+        DBLabelLabelLink.label_id.in_(sub_concept_ids),  # type: ignore[attr-defined]
+        ~tuple_(DBLabelLabelLink.label_id, DBLabelLabelLink.related_label_id).in_(  # type: ignore[attr-defined]
+            label_relationship_ids
+        ),
+    )
+    db.exec(delete_stmt)
+
+    # Upsert current relationships
+    stmt = insert(DBLabelLabelLink).values(labels_with_label_relationship)
+    stmt = stmt.on_conflict_do_update(
+        index_elements=["label_id", "related_label_id"],
+        set_={
+            "type": stmt.excluded.type,
+            "timestamp": stmt.excluded.timestamp,
+            "updated_at": now,
+        },
+        where=(DBLabelLabelLink.type != stmt.excluded.type),
+    )
+    db.exec(stmt)
 
 
 def create_documents(db: Session, documents: list[DocumentInput]) -> list[str]:
