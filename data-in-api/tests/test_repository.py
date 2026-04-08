@@ -237,6 +237,25 @@ def test_select_label_with_empty_attributes(session: Session):
     assert result.attributes == {}
 
 
+def test_select_label_with_null_attributes(session: Session):
+    """Test handling of legacy NULL attributes in DB."""
+
+    # Insert bad legacy data directly
+    label = DBLabel(
+        id="null_attr_label",
+        value="NullAttr",
+        type="entity_type",
+        attributes=None,  # type: ignore
+    )  # simulate legacy data with NULL attributes
+    session.add(label)
+    session.commit()
+
+    result = select_label(session, "null_attr_label")
+
+    assert result is not None
+    assert result.attributes == {}
+
+
 def test_document_labels_include_attributes(session_with_documents: Session):
     """Test that label attributes appear in top-level document labels."""
     # Create a label with attributes and link to doc1
