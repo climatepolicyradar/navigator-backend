@@ -21,7 +21,7 @@ def create_label(
     label_id: str,
     value: str,
     type_: str = "entity_type",
-    attributes: dict[str, str | float | bool] | None = None,
+    attributes: dict[str, str | float | bool] = {},
 ) -> DBLabel:
     label = DBLabel(id=label_id, value=value, type=type_, attributes=attributes)
     session.add(label)
@@ -238,8 +238,17 @@ def test_select_label_with_empty_attributes(session: Session):
 
 
 def test_select_label_with_null_attributes(session: Session):
-    """Test label with empty attributes dict."""
-    create_label(session, label_id="null_attr_label", value="NullAttr", attributes=None)
+    """Test handling of legacy NULL attributes in DB."""
+
+    # Insert bad legacy data directly
+    label = DBLabel(
+        id="null_attr_label",
+        value="NullAttr",
+        type="entity_type",
+        attributes=None,  # simulate corrupted/legacy DB state
+    )
+    session.add(label)
+    session.commit()
 
     result = select_label(session, "null_attr_label")
 
