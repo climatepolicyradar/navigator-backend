@@ -21,7 +21,7 @@ def create_label(
     label_id: str,
     value: str,
     type_: str = "entity_type",
-    attributes: dict[str, str | float | bool] = {},
+    attributes: dict[str, str | float | bool] | None = None,
 ) -> DBLabel:
     label = DBLabel(id=label_id, value=value, type=type_, attributes=attributes)
     session.add(label)
@@ -232,6 +232,16 @@ def test_select_label_with_empty_attributes(session: Session):
     create_label(session, label_id="empty_attr_label", value="EmptyAttr", attributes={})
 
     result = select_label(session, "empty_attr_label")
+
+    assert result is not None
+    assert result.attributes == {}
+
+
+def test_select_label_with_null_attributes(session: Session):
+    """Test label with empty attributes dict."""
+    create_label(session, label_id="null_attr_label", value="NullAttr", attributes=None)
+
+    result = select_label(session, "null_attr_label")
 
     assert result is not None
     assert result.attributes == {}

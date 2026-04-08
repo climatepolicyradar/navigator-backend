@@ -180,7 +180,7 @@ def _map_db_document_to_schema(db: Session, db_doc: DBDocument) -> DocumentOutpu
                 id=link.label.id,
                 value=link.label.value,
                 type=link.label.type,
-                attributes=link.label.attributes,
+                attributes=link.label.attributes or {},
             ),
             timestamp=link.timestamp,
         )
@@ -250,6 +250,6 @@ def _map_db_label_to_schema(db_label: DBLabel) -> LabelOutput:
         id=db_label.id,
         value=db_label.value,
         type=db_label.type,
-        attributes=db_label.attributes,
+        attributes=db_label.attributes or {},
         # We purposefully do not map relation ships as they are not useful in the response
     )
