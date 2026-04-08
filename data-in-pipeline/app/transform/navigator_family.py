@@ -513,7 +513,9 @@ def _transform_litigation_concepts_to_label_relationships(
                 )
 
     return [
-        LabelRelationship(type="concept", value=label) for label in label_map.values()
+        # we use legal_concept over concept as `concept` is reserved for our knowledge graph labels
+        LabelRelationship(type="legal_concept", value=label)
+        for label in label_map.values()
     ]
 
 
