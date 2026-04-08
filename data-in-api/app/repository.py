@@ -8,6 +8,7 @@ from data_in_models.db_models import (
     DocumentLabelRelationship as DBDocumentLabelRelationship,
 )
 from data_in_models.db_models import Label as DBLabel
+from data_in_models.db_models import LabelLabelRelationship as DBLabelLabelRelationship
 from data_in_models.models import Document as DocumentOutput
 from data_in_models.models import (
     DocumentRelationship,
@@ -17,6 +18,9 @@ from data_in_models.models import Item as ItemOutput
 from data_in_models.models import Label as LabelOutput
 from data_in_models.models import (
     LabelRelationship,
+)
+from data_in_models.models import (
+    LabelWithoutDocumentRelationships as LabelLabelRelationshipOutput,
 )
 from sqlalchemy import func
 from sqlalchemy.exc import DisconnectionError, OperationalError
@@ -173,17 +177,21 @@ def _map_db_document_to_schema(db: Session, db_doc: DBDocument) -> DocumentOutpu
         for item in db_doc.items
     ]
 
-    labels = [
-        LabelRelationship(
-            type=link.type,
-            value=LabelOutput(
-                id=link.label.id,
-                value=link.label.value,
-                type=link.label.type,
-            ),
-            timestamp=link.timestamp,
+    label_ids: list[str] = [relationship.label_id for relationship in db_doc.labels]
+
+    label_label_links: list[DBLabelLabelRelationship] = db.exec(
+        select(DBLabelLabelRelationship).where(
+            DBLabelLabelRelationship.label_id.in_(label_ids)  # type: ignore[attr-defined]
         )
-        for link in db_doc.labels
+    ).all()
+
+    label_parent_lookup: dict[str, DBLabelLabelRelationship] = {
+        link.label_id: link for link in label_label_links
+    }
+
+    labels = [
+        _build_label_relationship_output(doc_label, label_parent_lookup)
+        for doc_label in db_doc.labels
     ]
 
     db_relationships = db.exec(
@@ -250,4 +258,49 @@ def _map_db_label_to_schema(db_label: DBLabel) -> LabelOutput:
         value=db_label.value,
         type=db_label.type,
         # We purposefully do not map relation ships as they are not useful in the response
+    )
+
+
+def _build_label_relationship_output(
+    doc_label: DBDocumentLabelRelationship,
+    label_parent_lookup: dict[str, DBLabelLabelRelationship],
+) -> LabelRelationship:
+    """
+    Build a LabelRelationship output object for a document label.
+
+    Maps a document-label relationship to its output schema and attaches
+    a single-level parent label relationship if one exists.
+
+    :param doc_label: The document-label relationship from the database
+    :param label_parent_lookup: Mapping of label_id to its parent label relationship
+    :return: LabelRelationship with optional nested parent label
+    """
+
+    parent_link = label_parent_lookup.get(doc_label.label.id)
+
+    nested_labels = (
+        [
+            LabelRelationship(
+                type=parent_link.type,
+                value=LabelLabelRelationshipOutput(
+                    id=parent_link.related_label_id,
+                    value=parent_link.related_label_id,
+                    type=doc_label.label.type,  # same type as child
+                    labels=[],  # we only support one level of nesting
+                ),
+                timestamp=parent_link.timestamp,
+            )
+        ]
+        if parent_link
+        else []
+    )
+    return LabelRelationship(
+        type=doc_label.type,
+        value=LabelLabelRelationshipOutput(
+            id=doc_label.label.id,
+            value=doc_label.label.value,
+            type=doc_label.label.type,
+            labels=nested_labels,
+        ),
+        timestamp=doc_label.timestamp,
     )
