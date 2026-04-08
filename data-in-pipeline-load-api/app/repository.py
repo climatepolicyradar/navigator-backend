@@ -1,5 +1,6 @@
 import logging
 from datetime import UTC, datetime
+from typing import TypedDict
 from uuid import uuid4
 
 from data_in_models.db_models import Document as DBDocument
@@ -20,6 +21,15 @@ from sqlalchemy.exc import DisconnectionError, IntegrityError, OperationalError
 from sqlmodel import Session, delete, select
 
 _LOGGER = logging.getLogger(__name__)
+
+
+class LabelRelationshipRow(TypedDict):
+    label_id: str
+    related_label_id: str
+    type: str
+    timestamp: datetime | None
+    created_at: datetime
+    updated_at: datetime
 
 
 def check_db_health(db: Session) -> bool:
@@ -96,7 +106,7 @@ def create_or_update_documents(
             )
             db.exec(label_stmt)
 
-            labels_with_label_relationship = [
+            labels_with_label_relationship: list[LabelRelationshipRow] = [
                 {
                     "label_id": label.id,
                     "related_label_id": rel.value.id,
@@ -318,7 +328,9 @@ def _upsert_document_document_relationships(
 
 
 def sync_label_relationships(
-    db: Session, labels_with_label_relationship: list[dict], now
+    db: Session,
+    labels_with_label_relationship: list[LabelRelationshipRow],
+    now: datetime,
 ):
     """
     Upsert concept-subconcept label relationships and remove old relationships
@@ -330,8 +342,8 @@ def sync_label_relationships(
     :param now: Current timestamp for created_at/updated_at fields
     """
 
-    sub_concept_ids = set()
-    label_relationship_ids = set()
+    label_relationship_ids: set[tuple[str, str]] = set()
+    sub_concept_ids: set[str] = set()
 
     for rel in labels_with_label_relationship:
         sub_concept_ids.add(rel["label_id"])
