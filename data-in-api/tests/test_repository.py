@@ -245,8 +245,8 @@ def test_select_label_with_null_attributes(session: Session):
         id="null_attr_label",
         value="NullAttr",
         type="entity_type",
-        attributes=None,  # simulate corrupted/legacy DB state
-    )
+        attributes=None,  # type: ignore
+    )  # simulate legacy data with NULL attributes
     session.add(label)
     session.commit()
 
