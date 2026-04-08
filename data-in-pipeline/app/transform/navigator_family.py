@@ -467,11 +467,21 @@ def _transform_litigation_concepts_to_label_relationships(
         - family_import_id= the import_id of the family these concepts belong to, to debug if needed.
         - Parent references are SHALLOW (labels=[] to prevent deep nesting).
     """
+
+    # The relation values unfortunately conflict with other values in the taxonomy, so we have to map them as `legal`
+    # @see: https://github.com/climatepolicyradar/litigation-data-mapper/blob/49e8da8f4449dc8e3fec5a126b9973df4efb4d26/litigation_data_mapper/extract_concepts.py#L45
+    relation_to_type_map = {
+        "author": "legal",
+        "jurisdiction": "jurisdiction",
+        "category": "case_category",  # This is the main conflict - category is reserved for higher level types like "Law", "Policy", etc.
+        "principal_law": "principal_law",
+    }
+
     # Build core labels indexed by (relation, id) - using a tuple here as the ids may not be unique across different concept types (relations)
     label_map: dict[tuple[str, str], LabelWithoutDocumentRelationships] = {
         (c.relation, c.id): LabelWithoutDocumentRelationships(
             id=c.id,
-            type=c.relation,
+            type=relation_to_type_map.get(c.relation, "litigation_concept"),
             value=c.preferred_label,
         )
         for c in concepts
