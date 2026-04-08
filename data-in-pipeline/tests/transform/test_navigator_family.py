@@ -1,6 +1,11 @@
 import datetime
 
 import pytest
+from app.extract.connectors import (
+    NavigatorFamily,
+)
+from app.models import Identified, NavigatorConcept
+from app.transform.navigator_family import transform_navigator_family
 from data_in_models.models import (
     Document,
     DocumentRelationship,
@@ -10,12 +15,6 @@ from data_in_models.models import (
     LabelRelationship,
     LabelWithoutDocumentRelationships,
 )
-
-from app.extract.connectors import (
-    NavigatorFamily,
-)
-from app.models import Identified, NavigatorConcept
-from app.transform.navigator_family import transform_navigator_family
 from tests.factories import (
     NavigatorCollectionFactory,
     NavigatorCorpusFactory,
@@ -460,9 +459,9 @@ def navigator_family_multilateral_climate_fund_project() -> Identified[Navigator
 
 
 @pytest.fixture
-def navigator_family_multilateral_climate_fund_guidance() -> (
-    Identified[NavigatorFamily]
-):
+def navigator_family_multilateral_climate_fund_guidance() -> Identified[
+    NavigatorFamily
+]:
     return Identified(
         id="family",
         source="navigator_family",
@@ -1465,7 +1464,7 @@ def test_transform_navigator_family_with_litigation_corpus_type_and_litigation_c
                 ),
             ),
             LabelRelationship(
-                type="concept",
+                type="legal_concept",
                 value=LabelWithoutDocumentRelationships(
                     id="High Court of Justice",
                     labels=[
@@ -1484,7 +1483,7 @@ def test_transform_navigator_family_with_litigation_corpus_type_and_litigation_c
                 ),
             ),
             LabelRelationship(
-                type="concept",
+                type="legal_concept",
                 value=LabelWithoutDocumentRelationships(
                     id="High Court of Justice (Administrative Court)",
                     labels=[
@@ -1503,7 +1502,7 @@ def test_transform_navigator_family_with_litigation_corpus_type_and_litigation_c
                 ),
             ),
             LabelRelationship(
-                type="concept",
+                type="legal_concept",
                 value=LabelWithoutDocumentRelationships(
                     id="England and Wales",
                     labels=[],
@@ -2772,6 +2771,6 @@ def test_transform_to_category_corpus_ids(corpus_id: str, expected_category: str
     family_doc = documents[0]
 
     category_labels = [label for label in family_doc.labels if label.type == "category"]
-    assert any(
-        label.value.id == expected_category for label in category_labels
-    ), f"Expected category '{expected_category}' not found in labels for corpus '{corpus_id}'"
+    assert any(label.value.id == expected_category for label in category_labels), (
+        f"Expected category '{expected_category}' not found in labels for corpus '{corpus_id}'"
+    )
