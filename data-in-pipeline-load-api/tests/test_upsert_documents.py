@@ -7,6 +7,7 @@ from data_in_models.db_models import (
     DocumentLabelRelationship,
     Item,
     Label,
+    LabelLabelRelationship,
 )
 from data_in_models.models import Document as DocumentInput
 from data_in_models.models import (
@@ -18,6 +19,9 @@ from data_in_models.models import (
 from data_in_models.models import Item as ItemInput
 from data_in_models.models import Label as LabelInput
 from data_in_models.models import LabelRelationship as DocumentLabelRelationshipInput
+from data_in_models.models import (
+    LabelWithoutDocumentRelationships as LabelWithoutDocumentRelationshipsInput,
+)
 from sqlalchemy.exc import IntegrityError
 from sqlmodel import select
 
@@ -52,6 +56,37 @@ def create_mock_item(
 ):
     """Create a mock item."""
     return ItemInput(url=url, type=type, content_type=content_type)
+
+
+def create_mock_label_with_parent(
+    label_id: str,
+    label_value: str,
+    parent_id: str,
+    parent_value: str,
+    rel_type: str = "subconcept_of",
+) -> list[DocumentLabelRelationshipInput]:
+    """Create a child label with a parent, plus the parent as a standalone label.
+    Returns both so the parent is written to the label table before the link row."""
+    parent = LabelWithoutDocumentRelationshipsInput(
+        id=parent_id,
+        value=parent_value,
+        type="category",
+        attributes={},
+        labels=[],
+    )
+    child = LabelWithoutDocumentRelationshipsInput(
+        id=label_id,
+        value=label_value,
+        type="category",
+        attributes={},
+        labels=[
+            DocumentLabelRelationshipInput(type=rel_type, value=parent, timestamp=None)
+        ],
+    )
+    return [
+        DocumentLabelRelationshipInput(type="concept", value=child, timestamp=None),
+        DocumentLabelRelationshipInput(type="concept", value=parent, timestamp=None),
+    ]
 
 
 def test_upsert_creates_new_document(session):
@@ -361,3 +396,97 @@ def test_new_relationship_added_to_existing_document(session):
             assert rel.type == "has_member"
         elif rel.related_document_id == "target-doc-2":
             assert rel.type == "references"
+
+
+def test_label_with_parent_creates_link_row(session):
+    """A label with a parent should write a row to LabelLabelRelationship."""
+    label_rel = create_mock_label_with_parent(
+        label_id="Endangered Species Act (US)",
+        label_value="Endangered Species Act (US)",
+        parent_id="Federal Statutory Claims (US)",
+        parent_value="Federal Statutory Claims (US)",
+    )
+    doc = create_mock_document_input("doc-1", labels=label_rel)
+
+    create_or_update_documents(session, [doc])
+
+    link = session.get(
+        LabelLabelRelationship,
+        ("Endangered Species Act (US)", "Federal Statutory Claims (US)"),
+    )
+    assert link is not None
+    assert link.type == "subconcept_of"
+
+
+def test_label_without_parent_creates_no_link_row(session):
+    """A label with an empty labels list should not write to LabelLabelRelationship."""
+    label_rel = create_mock_label("orphan-label", "Orphan")
+    doc = create_mock_document_input("doc-1", labels=[label_rel])
+
+    create_or_update_documents(session, [doc])
+
+    links = session.exec(select(LabelLabelRelationship)).all()
+    assert len(links) == 0
+
+
+def test_label_link_is_idempotent(session):
+    """Upserting the same label-label relationship twice should produce one row."""
+    label_rel = create_mock_label_with_parent(
+        label_id="child", label_value="Child", parent_id="parent", parent_value="Parent"
+    )
+    doc = create_mock_document_input("doc-1", labels=label_rel)
+
+    create_or_update_documents(session, [doc])
+    create_or_update_documents(session, [doc])
+
+    links = session.exec(select(LabelLabelRelationship)).all()
+    assert len(links) == 1
+
+
+def test_label_link_updated_when_parent_changes(session):
+    """When a label's parent changes, the old link row should be removed and a new one written."""
+    label_rel = create_mock_label_with_parent(
+        label_id="child",
+        label_value="Child",
+        parent_id="parent-a",
+        parent_value="Parent A",
+    )
+    doc = create_mock_document_input("doc-1", labels=label_rel)
+    create_or_update_documents(session, [doc])
+
+    assert session.get(LabelLabelRelationship, ("child", "parent-a")) is not None
+
+    label_rel_new_parent = create_mock_label_with_parent(
+        label_id="child",
+        label_value="Child",
+        parent_id="parent-b",
+        parent_value="Parent B",
+    )
+    doc.labels = label_rel_new_parent
+    create_or_update_documents(session, [doc])
+
+    assert session.get(LabelLabelRelationship, ("child", "parent-a")) is None
+    assert session.get(LabelLabelRelationship, ("child", "parent-b")) is not None
+
+
+def test_multiple_labels_some_with_parents(session):
+    """A mix of labels with and without parents should only write link rows for those with parents."""
+    child_rel = create_mock_label_with_parent(
+        label_id="child",
+        label_value="Child",
+        parent_id="parent",
+        parent_value="Parent",
+    )
+    orphan_rel = create_mock_label("orphan", "Orphan")
+    total_labels = child_rel + [orphan_rel]
+    doc = create_mock_document_input("doc-1", labels=child_rel + [orphan_rel])
+
+    create_or_update_documents(session, [doc])
+
+    labels = session.exec(select(Label)).all()
+    assert len(labels) == len(total_labels)  # child, parent, orphan
+
+    links = session.exec(select(LabelLabelRelationship)).all()
+    assert len(links) == 1
+    assert links[0].label_id == "child"
+    assert links[0].related_label_id == "parent"
