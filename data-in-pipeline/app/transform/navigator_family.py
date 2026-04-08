@@ -456,6 +456,7 @@ def _transform_litigation_concepts_to_label_relationships(
     concepts: list[NavigatorConcept],
     family_import_id: str,
 ) -> list[LabelRelationship]:
+    logger = get_logger()
     """
     Convert litigation concepts into label relationships with subconcept hierarchies.
 
@@ -487,15 +488,19 @@ def _transform_litigation_concepts_to_label_relationships(
         for parent_name in concept.subconcept_of_labels:
             parent = label_by_name.get((concept.relation, parent_name))
             if parent is None:
-                raise ValueError(
+                # TODO: we should accumulate these errors and report them somewhere.
+                # raise ValueError(
+                #     f"Unknown parent label {parent_name!r} in relation {concept.relation!r}. See family {family_import_id!r} for details."
+                # )
+                logger.error(
                     f"Unknown parent label {parent_name!r} in relation {concept.relation!r}. See family {family_import_id!r} for details."
                 )
+            else:
+                parent_ref = _shallow_label(parent)
 
-            parent_ref = _shallow_label(parent)
-
-            child.labels.append(
-                LabelRelationship(type="subconcept_of", value=parent_ref)
-            )
+                child.labels.append(
+                    LabelRelationship(type="subconcept_of", value=parent_ref)
+                )
 
     return [
         LabelRelationship(type="concept", value=label) for label in label_map.values()
