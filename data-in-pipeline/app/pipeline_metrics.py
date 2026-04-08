@@ -329,22 +329,33 @@ class PipelineMetrics:
 
         return (cpu, memory)
 
-    def record_processed(self, pipeline_type: PipelineType, status: Status) -> None:
+    def record_processed(
+        self,
+        pipeline_type: PipelineType,
+        operation: Operation,
+        status: Status,
+        num_items: int,
+    ) -> None:
         """Record a document processing event.
 
         :param pipeline_type: The type of pipeline (document or family).
         :type pipeline_type: PipelineType
+        :param operation: The pipeline operation where the processing occurred.
+        :type operation: Operation
         :param status: The processing status (success or failure).
         :type status: Status
+        :param num_items: The number of items processed.
+        :type num_items: int
         """
         if self._disabled or self._documents_processed is None:
             return
 
         self._documents_processed.add(
-            1,
+            num_items,
             attributes={
                 **self._base_attributes,
                 "pipeline_type": pipeline_type.value,
+                "operation": operation.value,
                 "status": status.value,
             },
         )

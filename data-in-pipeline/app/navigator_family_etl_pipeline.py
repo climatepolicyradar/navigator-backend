@@ -26,7 +26,7 @@ from app.identify.navigator_family import identify_navigator_families
 from app.load.aws_bucket import upload_to_s3
 from app.load.load import load_to_db
 from app.models import ExtractedEnvelope, Identified, PipelineResult
-from app.pipeline_metrics import ErrorType, Operation, PipelineType, Status
+from app.pipeline_metrics import Operation, PipelineType, Status
 from app.run_db_migrations.run_db_migrations import run_db_migrations
 from app.transform.navigator_family import (
     transform_navigator_family,
@@ -211,11 +211,8 @@ def transform(
                 all_documents.extend(documents)
             case Failure(error):
                 _LOGGER.warning(f"Transformation failed: {error}")
-                pipeline_metrics.record_error(Operation.TRANSFORM, ErrorType.TRANSFORM)
-                pipeline_metrics.record_processed(PipelineType.FAMILY, Status.FAILURE)
                 errors.append(error)
             case _:
-                pipeline_metrics.record_processed(PipelineType.FAMILY, Status.FAILURE)
                 errors.append(Exception("Unexpected transformed result state"))
 
     _LOGGER.info(
@@ -295,15 +292,18 @@ def upload_report(
 
 
 @task(log_prints=True)
-def check_load_results(batched_results: list[str | Exception]) -> bool:
-    """Check if all batches loaded successfully.
+def count_batch_successes_and_failures(
+    batched_results: list[str | Exception],
+) -> tuple[int, int]:
+    """Count the number of successful and failed batches.
 
     :param batched_results: Results from batch load operations
-    :return: True if all batches succeeded, False otherwise
+    :return: Tuple of (number of batches that succeeded, number of
+        batches that had failures)
     """
     _LOGGER = get_logger()
 
-    errors = [r for r in batched_results if isinstance(r, Exception)]
+    errors = [result for result in batched_results if isinstance(result, Exception)]
 
     if errors:
         _LOGGER.error(
@@ -311,11 +311,9 @@ def check_load_results(batched_results: list[str | Exception]) -> bool:
         )
         for error in errors:
             _LOGGER.error(f"Batch error: {error}")
-            pipeline_metrics.record_error(Operation.LOAD, ErrorType.STORAGE)
-        return False
 
-    _LOGGER.info(f"All {len(batched_results)} batches loaded successfully")
-    return True
+    _LOGGER.info(f"{len(batched_results) - len(errors)} batches loaded successfully")
+    return len(batched_results) - len(errors), len(errors)
 
 
 # ---------------------------------------------------------------------
@@ -347,12 +345,12 @@ def data_in_pipeline(
     If no IDs are provided, processes all families from the API.
 
     Steps:
-        1. Extract families from Navigator API (all or by ID).
-        2. Identify their source type.
-        3. Transform to target schema.
-        4. Load transformed documents to S3 cache.
-        5. Save transformed documents to the load DB in batches.
-        6. Upload report with results.
+        - Extract families from Navigator API (all or by ID).
+        - Identify their source type.
+        - Transform to target schema.
+        - Load transformed documents to S3 cache.
+        - Save transformed documents to the load DB in batches.
+        - Upload report with results.
     """
     _LOGGER = get_logger()
     _LOGGER.info("ETL pipeline started")
@@ -374,21 +372,34 @@ def data_in_pipeline(
     # EXTRACT
     # -------------------------
     extracted_result = extract(ids)
+    envelopes = extracted_result.envelopes
     cache_extraction_result(extracted_result)
 
-    if extracted_result.failure is not None:
-        _LOGGER.error(f"Extraction failed: {extracted_result.failure}")
-        pipeline_metrics.record_processed(PipelineType.FAMILY, Status.FAILURE)
-        return Exception(f"Extraction failed at page {extracted_result.failure.page}")
-
-    envelopes = extracted_result.envelopes
-
     family_count = sum(len(env.data) for env in envelopes)
+
+    # This provides a searchable log string and key data, it should be before any return statements
     pipeline_metrics.log_run_info(PipelineType.FAMILY, family_count, run_id)
 
     if not envelopes:
         _LOGGER.info("No families found to process")
         return Exception("No families found to process")
+
+    if extracted_result.failure:
+        _LOGGER.error(f"Extraction failed: {extracted_result.failure}")
+        pipeline_metrics.record_processed(
+            PipelineType.FAMILY,
+            Operation.EXTRACT,
+            Status.FAILURE,
+            len(envelopes),
+        )
+        return Exception(f"Extraction failed at page {extracted_result.failure.page}")
+
+    pipeline_metrics.record_processed(
+        PipelineType.FAMILY,
+        Operation.EXTRACT,
+        Status.SUCCESS,
+        len(envelopes),
+    )
 
     # -------------------------
     # IDENTIFY
@@ -413,13 +424,25 @@ def data_in_pipeline(
                 )
             )
         )
-        pipeline_metrics.record_processed(PipelineType.FAMILY, Status.PARTIAL)
+        pipeline_metrics.record_processed(
+            PipelineType.FAMILY,
+            Operation.TRANSFORM,
+            Status.FAILURE,
+            len(errors),
+        )
         _LOGGER.exception(f"Transformation errors: {len(errors)}")
 
     if len(transformed_documents) == 0:
         _LOGGER.error("No documents were transformed successfully; aborting load")
-        pipeline_metrics.record_processed(PipelineType.FAMILY, Status.FAILURE)
         return Exception("No documents transformed successfully")
+
+    pipeline_metrics.record_processed(
+        PipelineType.FAMILY,  # refactoring: this part of the abstraction is wrong, and we will remove so metrics always count documents only
+        Operation.TRANSFORM,  # We will move this to structured logging for stage-by-stage observability, and count document
+        Status.SUCCESS,
+        # FIXME
+        len(transformed_families) - len(errors),
+    )
 
     # -------------------------
     # CACHE TO S3
@@ -443,13 +466,27 @@ def data_in_pipeline(
 
     # Prefect resolves mapped task results before invoking tasks.
     # Pyright sees PrefectFutureList here, but runtime value is list[str | Exception].
-    all_succeeded = check_load_results(load_results)  # type: ignore[reportArgumentType]
+    successful_batches, failed_batches = count_batch_successes_and_failures(load_results)  # type: ignore[reportArgumentType]
 
-    if not all_succeeded:
-        pipeline_metrics.record_processed(PipelineType.FAMILY, Status.FAILURE)
-        return Exception("One or more batches failed to load")
+    pipeline_metrics.record_processed(
+        PipelineType.FAMILY,
+        Operation.LOAD,
+        Status.SUCCESS,
+        successful_batches * batch_size,
+    )
 
-    pipeline_metrics.record_processed(PipelineType.FAMILY, Status.SUCCESS)
+    if failed_batches > 0:
+        pipeline_metrics.record_processed(
+            PipelineType.FAMILY,
+            Operation.LOAD,
+            Status.FAILURE,
+            failed_batches * batch_size,
+        )
+        return Exception(f"{failed_batches} batches failed to load")
+
+    if successful_batches == len(transformed_documents) / batch_size:
+        _LOGGER.info("All batches loaded successfully")
+
     _LOGGER.info("ETL pipeline completed successfully")
 
     # Prefect resolves mapped task results before invoking tasks.
