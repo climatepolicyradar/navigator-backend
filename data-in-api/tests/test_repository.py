@@ -12,15 +12,19 @@ from data_in_models.db_models import LabelLabelRelationship as DBLabelLabelRelat
 from data_in_models.models import Document as DocumentOutput
 from sqlmodel import Session
 
-from app.repository import get_all_documents, get_document_by_id
+from app.repository import get_all_documents, get_document_by_id, select_label
 
 _LOGGER = logging.getLogger(__name__)
 
 
 def create_label(
-    session: Session, label_id: str, value: str, type_: str = "entity_type"
+    session: Session,
+    label_id: str,
+    value: str,
+    type_: str = "entity_type",
+    attributes: dict[str, str | float | bool] = {},
 ) -> DBLabel:
-    label = DBLabel(id=label_id, value=value, type=type_)
+    label = DBLabel(id=label_id, value=value, type=type_, attributes=attributes)
     session.add(label)
     session.commit()
     return label
@@ -95,7 +99,7 @@ def link_documents(
 
 
 @pytest.fixture
-def setup_documents(session: Session):
+def session_with_documents(session: Session):
     """Set up two documents with labels, items, and a relationship."""
     create_label(session, "Main", "Main")
     create_label(session, "Law", "Law")
@@ -128,8 +132,8 @@ def setup_documents(session: Session):
     return session
 
 
-def test_get_all_documents_with_relationships(setup_documents: Session):
-    documents = get_all_documents(setup_documents, page=1, page_size=10)
+def test_get_all_documents_with_relationships(session_with_documents: Session):
+    documents = get_all_documents(session_with_documents, page=1, page_size=10)
     total_mocked_documents = 2
 
     assert len(documents) == total_mocked_documents
@@ -144,8 +148,8 @@ def test_get_all_documents_with_relationships(setup_documents: Session):
     assert doc1.documents[0].value.items[0].url == "https://example.com/2"
 
 
-def test_get_document_by_id_with_relationships(setup_documents: Session):
-    doc1 = get_document_by_id(setup_documents, "doc1")
+def test_get_document_by_id_with_relationships(session_with_documents: Session):
+    doc1 = get_document_by_id(session_with_documents, "doc1")
 
     assert doc1 is not None
     assert doc1.id == "doc1"
@@ -157,15 +161,15 @@ def test_get_document_by_id_with_relationships(setup_documents: Session):
     assert doc1.documents[0].value.id == "doc2"
 
 
-def test_get_document_by_id_not_found(setup_documents: Session):
-    doc = get_document_by_id(setup_documents, "nonexistent")
+def test_get_document_by_id_not_found(session_with_documents: Session):
+    doc = get_document_by_id(session_with_documents, "nonexistent")
     assert doc is None
 
 
-def test_get_all_documents_filter_by_label_existing(setup_documents: Session):
+def test_get_all_documents_filter_by_label_existing(session_with_documents: Session):
 
     documents = get_all_documents(
-        setup_documents, page=1, page_size=10, label_id="Main"
+        session_with_documents, page=1, page_size=10, label_id="Main"
     )
 
     assert len(documents) == 1
@@ -174,10 +178,10 @@ def test_get_all_documents_filter_by_label_existing(setup_documents: Session):
     assert any(lbl.value.id == "Main" for lbl in doc.labels)
 
 
-def test_get_all_documents_filter_by_status(setup_documents: Session):
+def test_get_all_documents_filter_by_status(session_with_documents: Session):
 
     documents = get_all_documents(
-        setup_documents, page=1, page_size=10, status="PUBLISHED"
+        session_with_documents, page=1, page_size=10, status="PUBLISHED"
     )
 
     assert len(documents) == 1
@@ -199,10 +203,10 @@ def test_get_all_documents_filter_when_no_status(session: Session):
     assert len(documents) == 0
 
 
-def test_get_all_documents_filter_by_label_nonexistent(setup_documents: Session):
+def test_get_all_documents_filter_by_label_nonexistent(session_with_documents: Session):
 
     documents = get_all_documents(
-        setup_documents, page=1, page_size=10, label_id="NonExistentLabel"
+        session_with_documents, page=1, page_size=10, label_id="NonExistentLabel"
     )
 
     assert len(documents) == 0
@@ -343,3 +347,93 @@ def test_related_document_labels_do_not_include_parents(session: Session):
     assert related.id == "doc2"
     assert len(related.labels) == 1
     assert related.labels[0].value.id == "Endangered Species Act (US)"
+
+
+def test_select_label_with_attributes(session: Session):
+    """Test that attributes are properly mapped from DBLabel to LabelOutput."""
+    test_attributes = {
+        "confidence": 0.95,
+        "source": "manual",
+        "verified": True,
+        "count": 42,
+    }
+
+    create_label(
+        session,
+        label_id="test_label",
+        value="TestLabel",
+        type_="entity_type",
+        attributes=test_attributes,
+    )
+
+    result = select_label(session, "test_label")
+
+    assert result is not None
+    assert result.id == "test_label"
+    assert result.value == "TestLabel"
+    assert result.type == "entity_type"
+    assert result.attributes == test_attributes
+
+
+def test_select_label_not_found(session: Session):
+    """Test that select_label returns None for non-existent label."""
+    result = select_label(session, "nonexistent_label")
+    assert result is None
+
+
+def test_select_label_with_empty_attributes(session: Session):
+    """Test label with empty attributes dict."""
+    create_label(session, label_id="empty_attr_label", value="EmptyAttr", attributes={})
+
+    result = select_label(session, "empty_attr_label")
+
+    assert result is not None
+    assert result.attributes == {}
+
+
+def test_select_label_with_null_attributes(session: Session):
+    """Test handling of legacy NULL attributes in DB."""
+
+    # Insert bad legacy data directly
+    label = DBLabel(
+        id="null_attr_label",
+        value="NullAttr",
+        type="entity_type",
+        attributes=None,  # type: ignore
+    )  # simulate legacy data with NULL attributes
+    session.add(label)
+    session.commit()
+
+    result = select_label(session, "null_attr_label")
+
+    assert result is not None
+    assert result.attributes == {}
+
+
+def test_document_labels_include_attributes(session_with_documents: Session):
+    """Test that label attributes appear in top-level document labels."""
+    # Create a label with attributes and link to doc1
+    create_label(
+        session_with_documents,
+        "labeled_attr",
+        "LabeledAttr",
+        type_="category",
+        attributes={"confidence": 0.98, "source": "ml_model", "priority": 1},
+    )
+    link_document_label(session_with_documents, "doc1", "labeled_attr", type="category")
+
+    result = get_document_by_id(session_with_documents, "doc1")
+    assert result is not None
+
+    # Find our specific label in the response
+    target_label = next(
+        (lbl for lbl in result.labels if lbl.value.id == "labeled_attr"), None
+    )
+
+    assert target_label is not None
+    assert target_label.value.attributes == {
+        "confidence": 0.98,
+        "source": "ml_model",
+        "priority": 1,
+    }
+    assert target_label.type == "category"
