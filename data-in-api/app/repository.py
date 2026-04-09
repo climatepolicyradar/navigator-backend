@@ -301,6 +301,7 @@ def _build_label_relationship_output(
             value=doc_label.label.value,
             type=doc_label.label.type,
             labels=nested_labels,
+            attributes=doc_label.label.attributes or {},
         ),
         timestamp=doc_label.timestamp,
     )
