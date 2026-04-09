@@ -59,7 +59,7 @@ MCF_ATTRIBUTE_KEYS = {
 
 def transform_navigator_family(
     input: Identified[NavigatorFamily],
-) -> Result[list[Document], NoMatchingTransformations]:
+) -> Result[list[Document], CouldNotTransform | NoMatchingTransformations]:
     logger = get_logger()
     with log_context(import_id=input.id):
         logger.info(f"Transforming family with {len(input.data.documents)} documents")
@@ -68,6 +68,9 @@ def transform_navigator_family(
             case Success(d):
                 logger.info(f"Transform completed, produced {len(d)} documents")
                 return Success(d)
+            case Failure(error):
+                logger.warning(f"Transformation failed: {error}")
+                return Failure(error)
 
         logger.warning("No matching transformation found")
         return Failure(NoMatchingTransformations())
@@ -456,7 +459,6 @@ def _transform_litigation_concepts_to_label_relationships(
     concepts: list[NavigatorConcept],
     family_import_id: str,
 ) -> list[LabelRelationship]:
-    logger = get_logger()
     """
     Convert litigation concepts into label relationships with subconcept hierarchies.
 
@@ -498,11 +500,7 @@ def _transform_litigation_concepts_to_label_relationships(
         for parent_name in concept.subconcept_of_labels:
             parent = label_by_name.get((concept.relation, parent_name))
             if parent is None:
-                # TODO: we should accumulate these errors and report them somewhere.
-                # raise ValueError(
-                #     f"Unknown parent label {parent_name!r} in relation {concept.relation!r}. See family {family_import_id!r} for details."
-                # )
-                logger.error(
+                raise CouldNotTransform(
                     f"Unknown parent label {parent_name!r} in relation {concept.relation!r}. See family {family_import_id!r} for details."
                 )
             else:
