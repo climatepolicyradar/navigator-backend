@@ -106,7 +106,8 @@ def transform(
     result = _transform_navigator_family(input.data)
     if isinstance(result, Failure):
         return result
-    document_from_family = result
+    else:
+        document_from_family = result.unwrap()
 
     documents_from_documents = [
         _transform_navigator_document(
@@ -897,12 +898,14 @@ def _transform_navigator_family(
     if navigator_family.documents and contains_published_document:
         attributes["status"] = "PUBLISHED"
 
-    return Document(
-        id=navigator_family.import_id,
-        title=navigator_family.title,
-        description=navigator_family.summary,
-        labels=_deduplicate_labels(labels),
-        attributes=attributes,
+    return Success(
+        Document(
+            id=navigator_family.import_id,
+            title=navigator_family.title,
+            description=navigator_family.summary,
+            labels=_deduplicate_labels(labels),
+            attributes=attributes,
+        )
     )
 
 
