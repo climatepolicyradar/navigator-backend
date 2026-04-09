@@ -185,12 +185,12 @@ def _map_db_document_to_schema(db: Session, db_doc: DBDocument) -> DocumentOutpu
         )
     ).all()
 
-    label_parent_lookup: dict[str, DBLabelLabelRelationship] = {
+    label_relationship_lookup: dict[str, DBLabelLabelRelationship] = {
         link.label_id: link for link in label_label_links
     }
 
     labels = [
-        _build_label_relationship_output(doc_label, label_parent_lookup)
+        _build_label_relationship_output(doc_label, label_relationship_lookup)
         for doc_label in db_doc.labels
     ]
 
@@ -263,7 +263,7 @@ def _map_db_label_to_schema(db_label: DBLabel) -> LabelOutput:
 
 def _build_label_relationship_output(
     doc_label: DBDocumentLabelRelationship,
-    label_parent_lookup: dict[str, DBLabelLabelRelationship],
+    label_relationship_lookup: dict[str, DBLabelLabelRelationship],
 ) -> LabelRelationship:
     """
     Build a LabelRelationship output object for a document label.
@@ -276,22 +276,22 @@ def _build_label_relationship_output(
     :return: LabelRelationship with optional nested parent label
     """
 
-    parent_link = label_parent_lookup.get(doc_label.label.id)
+    link = label_relationship_lookup.get(doc_label.label.id)
 
     nested_labels = (
         [
             LabelRelationship(
-                type=parent_link.type,
+                type=link.type,
                 value=LabelLabelRelationshipOutput(
-                    id=parent_link.related_label_id,
-                    value=parent_link.related_label_id,
-                    type=doc_label.label.type,  # same type as child
+                    id=link.related_label_id,
+                    value=link.related_label_id,
+                    type=doc_label.label.type,  # label and related label which are currently legal concepts has the same type
                     labels=[],  # we only support one level of nesting
                 ),
-                timestamp=parent_link.timestamp,
+                timestamp=link.timestamp,
             )
         ]
-        if parent_link
+        if link
         else []
     )
     return LabelRelationship(
