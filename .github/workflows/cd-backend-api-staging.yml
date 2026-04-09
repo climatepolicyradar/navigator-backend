@@ -64,7 +64,7 @@ jobs:
           fi
           jq -n --arg msg "$MESSAGE" '{text: $msg, mrkdwn: true}' > slack-payload.json
 
-      - uses: slackapi/slack-github-action@v2.1.1
+      - uses: slackapi/slack-github-action@v3.0.1
         with:
           webhook: ${{ secrets.SLACK_WEBHOOK_URL_STAGING_UPDATES_CHANNEL }}
           webhook-type: incoming-webhook
