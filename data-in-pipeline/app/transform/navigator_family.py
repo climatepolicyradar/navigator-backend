@@ -103,7 +103,11 @@ def transform(
     """
     Transform
     """
-    document_from_family = _transform_navigator_family(input.data)
+    result = _transform_navigator_family(input.data)
+    if isinstance(result, Failure):
+        return result
+    document_from_family = result
+
     documents_from_documents = [
         _transform_navigator_document(
             document,
@@ -458,7 +462,7 @@ def _shallow_label(
 def _transform_litigation_concepts_to_label_relationships(
     concepts: list[NavigatorConcept],
     family_import_id: str,
-) -> list[LabelRelationship]:
+) -> Result[list[LabelRelationship], CouldNotTransform]:
     """
     Convert litigation concepts into label relationships with subconcept hierarchies.
 
@@ -500,8 +504,10 @@ def _transform_litigation_concepts_to_label_relationships(
         for parent_name in concept.subconcept_of_labels:
             parent = label_by_name.get((concept.relation, parent_name))
             if parent is None:
-                raise CouldNotTransform(
-                    f"Unknown parent label {parent_name!r} in relation {concept.relation!r}. See family {family_import_id!r} for details."
+                return Failure(
+                    CouldNotTransform(
+                        f"Unknown parent label {parent_name!r} in relation {concept.relation!r}. See family {family_import_id!r} for details."
+                    )
                 )
             else:
                 parent_ref = _shallow_label(parent)
@@ -510,11 +516,13 @@ def _transform_litigation_concepts_to_label_relationships(
                     LabelRelationship(type="subconcept_of", value=parent_ref)
                 )
 
-    return [
-        # we use legal_concept over concept as `concept` is reserved for our knowledge graph labels
-        LabelRelationship(type="legal_concept", value=label)
-        for label in label_map.values()
-    ]
+    return Success(
+        [
+            # we use legal_concept over concept as `concept` is reserved for our knowledge graph labels
+            LabelRelationship(type="legal_concept", value=label)
+            for label in label_map.values()
+        ]
+    )
 
 
 def _transform_to_category(
@@ -645,7 +653,9 @@ def _transform_to_category(
     return labels
 
 
-def _transform_navigator_family(navigator_family: NavigatorFamily) -> Document:
+def _transform_navigator_family(
+    navigator_family: NavigatorFamily,
+) -> Result[Document, CouldNotTransform]:
     labels: list[LabelRelationship] = []
     attributes: dict[str, str | float | bool] = {}
 
@@ -856,11 +866,13 @@ def _transform_navigator_family(navigator_family: NavigatorFamily) -> Document:
         navigator_family.corpus.import_id == "Academic.corpus.Litigation.n0000"
         and navigator_family.concepts
     ):
-        labels.extend(
-            _transform_litigation_concepts_to_label_relationships(
-                navigator_family.concepts, navigator_family.import_id
-            )
-        )
+        match _transform_litigation_concepts_to_label_relationships(
+            navigator_family.concepts, navigator_family.import_id
+        ):
+            case Success(litigation_labels):
+                labels.extend(litigation_labels)
+            case Failure(e):
+                return Failure(e)
 
     """
     Dates
