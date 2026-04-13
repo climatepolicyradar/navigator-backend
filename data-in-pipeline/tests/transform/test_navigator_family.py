@@ -1,11 +1,6 @@
 import datetime
 
 import pytest
-from app.extract.connectors import (
-    NavigatorFamily,
-)
-from app.models import Identified, NavigatorConcept
-from app.transform.navigator_family import transform_navigator_family
 from data_in_models.models import (
     Document,
     DocumentRelationship,
@@ -15,6 +10,12 @@ from data_in_models.models import (
     LabelRelationship,
     LabelWithoutDocumentRelationships,
 )
+
+from app.extract.connectors import (
+    NavigatorFamily,
+)
+from app.models import Identified, NavigatorConcept
+from app.transform.navigator_family import transform_navigator_family
 from tests.factories import (
     NavigatorCollectionFactory,
     NavigatorCorpusFactory,
@@ -125,11 +126,13 @@ def navigator_family_with_single_matching_document() -> Identified[NavigatorFami
                     import_id="collection_matching",
                     title="Matching title on family and document and collection",
                     description="Collection description",
+                    slug="collection-matching-slug",
                 ),
                 NavigatorCollectionFactory.build(
                     import_id="collection",
                     title="Collection title",
                     description="Collection description",
+                    slug="collection-slug",
                 ),
             ],
             geographies=["AU-NSW", "AUS", "XAA"],
@@ -459,9 +462,9 @@ def navigator_family_multilateral_climate_fund_project() -> Identified[Navigator
 
 
 @pytest.fixture
-def navigator_family_multilateral_climate_fund_guidance() -> Identified[
-    NavigatorFamily
-]:
+def navigator_family_multilateral_climate_fund_guidance() -> (
+    Identified[NavigatorFamily]
+):
     return Identified(
         id="family",
         source="navigator_family",
@@ -519,6 +522,317 @@ def navigator_family_with_duplicate_legal_case() -> Identified[NavigatorFamily]:
             concepts=[],
         ),
     )
+
+
+# @pytest.fixture
+# def navigator_family_with_collections() -> Identified[NavigatorFamily]:
+#     return Identified(
+#         id="family",
+#         source="navigator_family",
+#         data=NavigatorFamilyFactory.build(
+#             import_id="family",
+#             title="Family with collections",
+#             summary="Family summary",
+#             category="EXECUTIVE",
+#             last_updated_date=None,
+#             published_date=None,
+#             corpus=_cclw_corpus(),
+#             documents=[],
+#             events=[],
+#             collections=[
+#                 NavigatorCollectionFactory.build(
+#                     import_id="collection_1",
+#                     title="Collection 1",
+#                     description="Collection 1 description",
+#                     slug="collection-1-slug",
+#                 ),
+#                 NavigatorCollectionFactory.build(
+#                     import_id="collection_2",
+#                     title="Collection 2",
+#                     description="Collection 2 description",
+#                     slug="collection-2-slug",
+#                 ),
+#             ],
+#             geographies=[],
+#         ),
+#     )
+
+
+# def test_transform_navigator_family_with_collection(
+#     navigator_family_with_collections: Identified[NavigatorFamily],
+# ):
+#     result = transform_navigator_family(navigator_family_with_collections)
+
+#     actual = result.unwrap()
+
+#     actual_sorted = sorted(actual, key=lambda x: x.id)
+
+#     expected = [
+#         Document(
+#             id="collection_1",
+#             title="Collection 1",
+#             description=None,
+#             labels=[
+#                 LabelRelationship(
+#                     type="entity_type",
+#                     value=Label(
+#                         type="entity_type",
+#                         id="Collection",
+#                         value="Collection",
+#                         attributes={},
+#                         documents=[],
+#                         labels=[],
+#                     ),
+#                     timestamp=None,
+#                 ),
+#             ],
+#             documents=[
+#                 LabelRelationship(
+#                     type="has_member",
+#                     value=Document(
+#                         id="family",
+#                         title="Family with collections",
+#                         description="Family summary",
+#                         labels=[
+#                             LabelRelationship(
+#                                 type="status",
+#                                 value=Label(
+#                                     type="status",
+#                                     id="Principal",
+#                                     value="Principal",
+#                                     attributes={},
+#                                     documents=[],
+#                                     labels=[],
+#                                 ),
+#                                 timestamp=None,
+#                             ),
+#                             LabelRelationship(
+#                                 type="provider",
+#                                 value=Label(
+#                                     type="agent",
+#                                     id="Grantham Research Institute",
+#                                     value="Grantham Research Institute",
+#                                     attributes={
+#                                         "attribution_url": "testurl.org",
+#                                         "corpus_image_url": "https://cdn.climatepolicyradar.org/corpus_image.png",
+#                                         "corpus_text": "Test corpus",
+#                                     },
+#                                     documents=[],
+#                                     labels=[],
+#                                 ),
+#                                 timestamp=None,
+#                             ),
+#                             LabelRelationship(
+#                                 type="deprecated_category",
+#                                 value=Label(
+#                                     type="deprecated_category",
+#                                     id="EXECUTIVE",
+#                                     value="EXECUTIVE",
+#                                     attributes={},
+#                                     documents=[],
+#                                     labels=[],
+#                                 ),
+#                                 timestamp=None,
+#                             ),
+#                         ],
+#                         attributes={"deprecated_slug": "qrzlWpwUQZhDpCAguNtf"},
+#                         documents=[],
+#                         items=[],
+#                     ),
+#                     timestamp=None,
+#                 ),
+#             ],
+#             attributes={"deprecated_slug": "collection-1-slug"},
+#             items=[],
+#         ),
+#         Document(
+#             id="collection_2",
+#             title="Collection 2",
+#             description=None,
+#             labels=[
+#                 LabelRelationship(
+#                     type="entity_type",
+#                     value=Label(
+#                         type="entity_type",
+#                         id="Collection",
+#                         value="Collection",
+#                         attributes={},
+#                         documents=[],
+#                         labels=[],
+#                     ),
+#                     timestamp=None,
+#                 ),
+#             ],
+#             documents=[
+#                 LabelRelationship(
+#                     type="has_member",
+#                     value=Document(
+#                         id="family",
+#                         title="Family with collections",
+#                         description="Family summary",
+#                         labels=[
+#                             LabelRelationship(
+#                                 type="status",
+#                                 value=Label(
+#                                     type="status",
+#                                     id="Principal",
+#                                     value="Principal",
+#                                     attributes={},
+#                                     documents=[],
+#                                     labels=[],
+#                                 ),
+#                                 timestamp=None,
+#                             ),
+#                             LabelRelationship(
+#                                 type="provider",
+#                                 value=Label(
+#                                     type="agent",
+#                                     id="Grantham Research Institute",
+#                                     value="Grantham Research Institute",
+#                                     attributes={
+#                                         "attribution_url": "testurl.org",
+#                                         "corpus_image_url": "https://cdn.climatepolicyradar.org/corpus_image.png",
+#                                         "corpus_text": "Test corpus",
+#                                     },
+#                                     documents=[],
+#                                     labels=[],
+#                                 ),
+#                                 timestamp=None,
+#                             ),
+#                             LabelRelationship(
+#                                 type="deprecated_category",
+#                                 value=Label(
+#                                     type="deprecated_category",
+#                                     id="EXECUTIVE",
+#                                     value="EXECUTIVE",
+#                                     attributes={},
+#                                     documents=[],
+#                                     labels=[],
+#                                 ),
+#                                 timestamp=None,
+#                             ),
+#                         ],
+#                         attributes={"deprecated_slug": "qrzlWpwUQZhDpCAguNtf"},
+#                         documents=[],
+#                         items=[],
+#                     ),
+#                     timestamp=None,
+#                 ),
+#             ],
+#             attributes={"deprecated_slug": "collection-2-slug"},
+#             items=[],
+#         ),
+#         Document(
+#             id="family",
+#             title="Family with collections",
+#             description="Family summary",
+#             labels=[
+#                 LabelRelationship(
+#                     type="status",
+#                     value=Label(
+#                         type="status",
+#                         id="Principal",
+#                         value="Principal",
+#                         attributes={},
+#                         documents=[],
+#                         labels=[],
+#                     ),
+#                     timestamp=None,
+#                 ),
+#                 LabelRelationship(
+#                     type="provider",
+#                     value=Label(
+#                         type="agent",
+#                         id="Grantham Research Institute",
+#                         value="Grantham Research Institute",
+#                         attributes={
+#                             "attribution_url": "testurl.org",
+#                             "corpus_image_url": "https://cdn.climatepolicyradar.org/corpus_image.png",
+#                             "corpus_text": "Test corpus",
+#                         },
+#                         documents=[],
+#                         labels=[],
+#                     ),
+#                     timestamp=None,
+#                 ),
+#                 LabelRelationship(
+#                     type="deprecated_category",
+#                     value=Label(
+#                         type="deprecated_category",
+#                         id="EXECUTIVE",
+#                         value="EXECUTIVE",
+#                         attributes={},
+#                         documents=[],
+#                         labels=[],
+#                     ),
+#                     timestamp=None,
+#                 ),
+#                 # This random-looking label appears to come from your test data
+#                 # You should clean up your test fixture to remove unexpected labels
+#             ],
+#             documents=[
+#                 LabelRelationship(
+#                     type="member_of",
+#                     value=Document(
+#                         id="collection_1",
+#                         title="Collection 1",
+#                         description=None,
+#                         labels=[
+#                             LabelRelationship(
+#                                 type="entity_type",
+#                                 value=Label(
+#                                     type="entity_type",
+#                                     id="Collection",
+#                                     value="Collection",
+#                                     attributes={},
+#                                     documents=[],
+#                                     labels=[],
+#                                 ),
+#                                 timestamp=None,
+#                             ),
+#                         ],
+#                         attributes={"deprecated_slug": "collection-1-slug"},
+#                         documents=[],
+#                         items=[],
+#                     ),
+#                     timestamp=None,
+#                 ),
+#                 LabelRelationship(
+#                     type="member_of",
+#                     value=Document(
+#                         id="collection_2",
+#                         title="Collection 2",
+#                         description=None,
+#                         labels=[
+#                             LabelRelationship(
+#                                 type="entity_type",
+#                                 value=Label(
+#                                     type="entity_type",
+#                                     id="Collection",
+#                                     value="Collection",
+#                                     attributes={},
+#                                     documents=[],
+#                                     labels=[],
+#                                 ),
+#                                 timestamp=None,
+#                             ),
+#                         ],
+#                         attributes={"deprecated_slug": "collection-2-slug"},
+#                         documents=[],
+#                         items=[],
+#                     ),
+#                     timestamp=None,
+#                 ),
+#             ],
+#             attributes={"deprecated_slug": "qrzlWpwUQZhDpCAguNtf"},
+#             items=[],
+#         ),
+#     ]
+
+#     # Sort expected as well
+#     expected_sorted = sorted(expected, key=lambda x: x.id)
+
+#     assert_model_list_equality(actual_sorted, expected_sorted)
 
 
 def test_transform_navigator_family_with_single_matching_document(
@@ -749,6 +1063,7 @@ def test_transform_navigator_family_with_single_matching_document(
                             ),
                         )
                     ],
+                    attributes={"deprecated_slug": "collection-slug"},
                 ),
             ),
             DocumentRelationship(
@@ -871,6 +1186,7 @@ def test_transform_navigator_family_with_single_matching_document(
                         )
                     ],
                     items=[],
+                    attributes={"deprecated_slug": "collection-matching-slug"},
                 ),
             ),
         ],
@@ -997,6 +1313,9 @@ def test_transform_navigator_family_with_single_matching_document(
             Document(
                 id="collection_matching",
                 title="Matching title on family and document and collection",
+                attributes={
+                    "deprecated_slug": "collection-matching-slug",
+                },
                 labels=[
                     LabelRelationship(
                         type="entity_type",
@@ -1017,6 +1336,9 @@ def test_transform_navigator_family_with_single_matching_document(
                 ],
             ),
             Document(
+                attributes={
+                    "deprecated_slug": "collection-slug",
+                },
                 id="collection",
                 title="Collection title",
                 labels=[
@@ -2771,6 +3093,6 @@ def test_transform_to_category_corpus_ids(corpus_id: str, expected_category: str
     family_doc = documents[0]
 
     category_labels = [label for label in family_doc.labels if label.type == "category"]
-    assert any(label.value.id == expected_category for label in category_labels), (
-        f"Expected category '{expected_category}' not found in labels for corpus '{corpus_id}'"
-    )
+    assert any(
+        label.value.id == expected_category for label in category_labels
+    ), f"Expected category '{expected_category}' not found in labels for corpus '{corpus_id}'"
