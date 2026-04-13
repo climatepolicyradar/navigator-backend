@@ -104,11 +104,9 @@ services:
         --project,
         data-in-pipeline-load-api,
         pytest,
-        data-in-pipeline-load-api/tests,
-        -m,
-        not alembic,
+        data-in-pipeline-load-api,
         --color=yes,
-        -v,
+        -vvv,
       ]
     depends_on:
       - test-db

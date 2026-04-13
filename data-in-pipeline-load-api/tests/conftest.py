@@ -12,11 +12,26 @@ def alembic_config():
     root_dir = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
     alembic_dir = os.path.join(root_dir, "app", "alembic")
 
+    db_host = os.getenv("load_database_url")
+    db_port = os.getenv("db_port")
+    db_name = os.getenv("db_name")
+    db_user = os.getenv("db_master_username")
+    db_password = os.getenv("managed_db_password")
+
+    if db_password and db_password.startswith("{"):
+        db_password = json.loads(db_password)["password"]
+
+    db_url = (
+        f"postgresql+psycopg2://{db_user}:{db_password}"
+        f"@{db_host}:{db_port}/{db_name}"
+    )
+
     return PytestAlembicConfig(
         config_options={
             "file": os.path.join(alembic_dir, "alembic.ini"),
             "script_location": os.path.join(alembic_dir, "migrations"),
             "include_schemas": True,
+            "sqlalchemy.url": db_url,
         }
     )
 
@@ -46,6 +61,17 @@ def engine():
     SQLModel.metadata.create_all(engine)
     yield engine
     SQLModel.metadata.drop_all(engine)
+
+
+@pytest.fixture
+def alembic_engine(engine):
+    """Create an engine specifically for alembic testing.
+    Resets the whole schema so that the alembic revision state is clean for each test.
+    """
+    with engine.begin() as conn:
+        conn.exec_driver_sql("DROP SCHEMA public CASCADE")
+        conn.exec_driver_sql("CREATE SCHEMA public")
+    return engine
 
 
 @pytest.fixture(scope="function")
