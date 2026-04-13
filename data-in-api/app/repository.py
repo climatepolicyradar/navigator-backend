@@ -28,6 +28,12 @@ from sqlmodel import Session, select
 
 _LOGGER = logging.getLogger(__name__)
 
+LABEL_TYPES_WITH_RELATIONSHIPS = {
+    "case_category",
+    "principal_law",
+    "jurisdiction",
+}  # For now this is a hardcoded set of label types that we known have relationships, i.e Sabin types. Should this list be updated please be aware that different corpora may have the same labels.
+
 
 def check_db_health(db: Session) -> bool:
     """Check database connection health.
@@ -177,7 +183,11 @@ def _map_db_document_to_schema(db: Session, db_doc: DBDocument) -> DocumentOutpu
         for item in db_doc.items
     ]
 
-    label_ids: list[str] = [relationship.label_id for relationship in db_doc.labels]
+    label_ids: list[str] = [
+        relationship.label_id
+        for relationship in db_doc.labels
+        if relationship.label.type in LABEL_TYPES_WITH_RELATIONSHIPS
+    ]
 
     label_label_links: list[DBLabelLabelRelationship] = db.exec(
         select(DBLabelLabelRelationship).where(

@@ -218,13 +218,13 @@ def test_label_with_parent_returns_nested_label(session: Session):
         session,
         "Federal Statutory Claims (US)",
         "Federal Statutory Claims (US)",
-        type_="category",
+        type_="principal_law",
     )
     create_label(
         session,
         "Endangered Species Act (US)",
         "Endangered Species Act (US)",
-        type_="category",
+        type_="principal_law",
     )
     link_label_to_parent(
         session, "Endangered Species Act (US)", "Federal Statutory Claims (US)"
@@ -240,15 +240,48 @@ def test_label_with_parent_returns_nested_label(session: Session):
 
     label_rel = doc.labels[0]
     assert label_rel.value.id == "Endangered Species Act (US)"
-    assert label_rel.value.type == "category"
+    assert label_rel.value.type == "principal_law"
     assert len(label_rel.value.labels) == 1
 
     parent = label_rel.value.labels[0]
     assert parent.type == "subconcept_of"
     assert parent.value.id == "Federal Statutory Claims (US)"
     assert parent.value.value == "Federal Statutory Claims (US)"
-    assert parent.value.type == "category"
+    assert parent.value.type == "principal_law"
     assert parent.value.labels == []
+
+
+def test_label_of_invalid_type_does_not_return_nested_labels(session: Session):
+    create_label(
+        session,
+        "Federal Statutory Claims (US)",
+        "Federal Statutory Claims (US)",
+        type_="random_type",
+    )
+    create_label(
+        session,
+        "Endangered Species Act (US)",
+        "Endangered Species Act (US)",
+        type_="random_type",
+    )
+    link_label_to_parent(
+        session, "Endangered Species Act (US)", "Federal Statutory Claims (US)"
+    )
+
+    create_document(session, "doc1", "Document 1")
+    link_document_label(session, "doc1", "Endangered Species Act (US)", type="concept")
+
+    doc = get_document_by_id(session, "doc1")
+
+    assert doc is not None
+    assert len(doc.labels) == 1
+
+    label_rel = doc.labels[0]
+    assert label_rel.value.id == "Endangered Species Act (US)"
+    assert label_rel.value.type == "random_type"
+    assert (
+        len(label_rel.value.labels) == 0
+    )  # No nested labels should be returned for invalid type
 
 
 def test_label_without_parent_has_empty_nested_labels(session: Session):
@@ -271,13 +304,13 @@ def test_mixed_labels_with_and_without_parents(session: Session):
         session,
         "Federal Statutory Claims (US)",
         "Federal Statutory Claims (US)",
-        type_="category",
+        type_="case_category",
     )
     create_label(
         session,
         "Endangered Species Act (US)",
         "Endangered Species Act (US)",
-        type_="category",
+        type_="case_category",
     )
     create_label(session, "Principal", "Principal", type_="status")
     link_label_to_parent(
