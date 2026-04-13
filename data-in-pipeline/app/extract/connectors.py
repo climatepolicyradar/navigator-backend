@@ -63,6 +63,8 @@ class NavigatorCollection(BaseModel):
     import_id: str
     title: str
     description: str
+    slug: str
+    metadata: dict[str, list[str]] = {}
 
 
 class NavigatorFamily(BaseModel):
