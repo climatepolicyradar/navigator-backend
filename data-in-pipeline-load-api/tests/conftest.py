@@ -48,6 +48,17 @@ def engine():
     SQLModel.metadata.drop_all(engine)
 
 
+@pytest.fixture
+def alembic_engine(engine):
+    """Create an engine specifically for alembic testing.
+    Resets the whole schema so that the alembic revision state is clean for each test.
+    """
+    with engine.begin() as conn:
+        conn.exec_driver_sql("DROP SCHEMA public CASCADE")
+        conn.exec_driver_sql("CREATE SCHEMA public")
+    return engine
+
+
 @pytest.fixture(scope="function")
 def blank_engine():
     """Create engine with no tables for migration testing.
