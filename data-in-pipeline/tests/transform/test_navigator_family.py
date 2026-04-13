@@ -1,6 +1,12 @@
 import datetime
 
 import pytest
+from app.extract.connectors import (
+    NavigatorFamily,
+)
+from app.models import Identified, NavigatorConcept
+from app.transform.models import CouldNotTransform
+from app.transform.navigator_family import transform_navigator_family
 from data_in_models.models import (
     Document,
     DocumentRelationship,
@@ -10,12 +16,6 @@ from data_in_models.models import (
     LabelRelationship,
     LabelWithoutDocumentRelationships,
 )
-
-from app.extract.connectors import (
-    NavigatorFamily,
-)
-from app.models import Identified, NavigatorConcept
-from app.transform.navigator_family import transform_navigator_family
 from tests.factories import (
     NavigatorCollectionFactory,
     NavigatorCorpusFactory,
@@ -342,6 +342,69 @@ def navigator_family_with_litigation_concepts() -> Identified[NavigatorFamily]:
     )
 
 
+@pytest.fixture
+def navigator_family_with_litigation_concept_missing_parent() -> Identified[
+    NavigatorFamily
+]:
+    decision_date = datetime.datetime(2020, 1, 1)
+    return Identified(
+        id="family",
+        source="navigator_family",
+        data=NavigatorFamilyFactory.build(
+            import_id="family",
+            title="Litigation family",
+            summary="Family summary",
+            category="LITIGATION",
+            last_updated_date="2020-01-0100:00:00Z",
+            published_date="2020-01-0100:00:00Z",
+            corpus=NavigatorCorpusFactory.build(
+                import_id="Academic.corpus.Litigation.n0000",
+                corpus_type=NavigatorCorpusTypeFactory.build(name="Litigation"),
+                organisation=NavigatorOrganisationFactory.build(id=1, name="Sabin"),
+                attribution_url="testurl.org",
+                corpus_text="Test corpus",
+                corpus_image_url=None,
+            ),
+            documents=[
+                NavigatorDocumentFactory.build(
+                    import_id="document",
+                    title="Litigation family document",
+                    slug="litigation-document-slug",
+                    events=[
+                        NavigatorEventFactory.build(
+                            import_id="123",
+                            event_type="Decision",
+                            date=decision_date,
+                            valid_metadata={
+                                "event_type": ["Decision"],
+                                "datetime_event_name": ["Decision"],
+                            },
+                        )
+                    ],
+                    variant="Original language",
+                    md5_sum="aaaaa11111bbbbb",
+                    languages=[],
+                    document_status="PUBLISHED",
+                ),
+            ],
+            events=[],
+            collections=[],
+            geographies=[],
+            slug="litigation-family-slug",
+            concepts=[
+                NavigatorConcept(
+                    id="High Court of Justice",
+                    ids=[],
+                    type="legal_entity",
+                    relation="jurisdiction",
+                    preferred_label="High Court of Justice",
+                    subconcept_of_labels=["Missing Parent Label"],
+                ),
+            ],
+        ),
+    )
+
+
 def _mcf_events():
     base_date = datetime.datetime(2020, 1, 1)
     return [
@@ -462,9 +525,9 @@ def navigator_family_multilateral_climate_fund_project() -> Identified[Navigator
 
 
 @pytest.fixture
-def navigator_family_multilateral_climate_fund_guidance() -> (
-    Identified[NavigatorFamily]
-):
+def navigator_family_multilateral_climate_fund_guidance() -> Identified[
+    NavigatorFamily
+]:
     return Identified(
         id="family",
         source="navigator_family",
@@ -1927,6 +1990,23 @@ def test_transform_navigator_family_with_litigation_corpus_type_and_litigation_c
     )
 
 
+def test_transform_navigator_family_with_litigation_concepts_missing_parent_label_returns_failure(
+    navigator_family_with_litigation_concept_missing_parent: Identified[
+        NavigatorFamily
+    ],
+):
+    result = transform_navigator_family(
+        navigator_family_with_litigation_concept_missing_parent
+    )
+
+    failure_exception = result.swap().unwrap()
+    assert isinstance(failure_exception, CouldNotTransform)
+    assert (
+        "Unknown parent label 'Missing Parent Label' in relation 'jurisdiction'. "
+        "See family 'family' for details."
+    ) in str(failure_exception)
+
+
 def test_transform_navigator_family_with_multilateral_climate_fund_project(
     navigator_family_multilateral_climate_fund_project: Identified[NavigatorFamily],
 ):
@@ -3093,6 +3173,6 @@ def test_transform_to_category_corpus_ids(corpus_id: str, expected_category: str
     family_doc = documents[0]
 
     category_labels = [label for label in family_doc.labels if label.type == "category"]
-    assert any(
-        label.value.id == expected_category for label in category_labels
-    ), f"Expected category '{expected_category}' not found in labels for corpus '{corpus_id}'"
+    assert any(label.value.id == expected_category for label in category_labels), (
+        f"Expected category '{expected_category}' not found in labels for corpus '{corpus_id}'"
+    )
