@@ -127,11 +127,13 @@ def navigator_family_with_single_matching_document() -> Identified[NavigatorFami
                     import_id="collection_matching",
                     title="Matching title on family and document and collection",
                     description="Collection description",
+                    slug="collection-matching-slug",
                 ),
                 NavigatorCollectionFactory.build(
                     import_id="collection",
                     title="Collection title",
                     description="Collection description",
+                    slug="collection-slug",
                 ),
             ],
             geographies=["AU-NSW", "AUS", "XAA"],
@@ -814,6 +816,7 @@ def test_transform_navigator_family_with_single_matching_document(
                             ),
                         )
                     ],
+                    attributes={"deprecated_slug": "collection-slug"},
                 ),
             ),
             DocumentRelationship(
@@ -936,6 +939,7 @@ def test_transform_navigator_family_with_single_matching_document(
                         )
                     ],
                     items=[],
+                    attributes={"deprecated_slug": "collection-matching-slug"},
                 ),
             ),
         ],
@@ -1062,6 +1066,9 @@ def test_transform_navigator_family_with_single_matching_document(
             Document(
                 id="collection_matching",
                 title="Matching title on family and document and collection",
+                attributes={
+                    "deprecated_slug": "collection-matching-slug",
+                },
                 labels=[
                     LabelRelationship(
                         type="entity_type",
@@ -1082,6 +1089,9 @@ def test_transform_navigator_family_with_single_matching_document(
                 ],
             ),
             Document(
+                attributes={
+                    "deprecated_slug": "collection-slug",
+                },
                 id="collection",
                 title="Collection title",
                 labels=[

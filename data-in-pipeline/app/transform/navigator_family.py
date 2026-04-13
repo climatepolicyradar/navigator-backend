@@ -1069,10 +1069,16 @@ def _transform_navigator_collection(
         )
     )
 
+    attributes = {}
+
+    if navigator_collection.slug:
+        attributes["deprecated_slug"] = navigator_collection.slug
+
     return Document(
         id=navigator_collection.import_id,
         title=navigator_collection.title,
         labels=labels,
+        attributes=attributes,
     )
 
 
