@@ -689,7 +689,7 @@ def _transform_litigation_data(
                     type="activity_status",
                     timestamp=filing_event.date,
                     value=Label(
-                        id="Filed",
+                        id="activity_status::Filed",
                         value="Filed",
                         type="activity_status",
                     ),
