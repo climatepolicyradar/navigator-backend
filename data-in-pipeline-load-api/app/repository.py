@@ -103,10 +103,11 @@ def create_or_update_documents(
                     (DBLabel.value != label_stmt.excluded.value)
                     | (DBLabel.type != label_stmt.excluded.type)
                     | (
-                        DBLabel.attributes.is_distinct_from(
+                        DBLabel.attributes.is_distinct_from(  # type: ignore
                             label_stmt.excluded.attributes
                         )
                     )
+                    # pyright treats DBLabel as a dict and does not recognise that it is also a SQLAlchemy Column
                 ),
             )
             db.exec(label_stmt)
