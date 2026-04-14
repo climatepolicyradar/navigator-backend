@@ -1343,7 +1343,7 @@ def test_transform_navigator_family_with_litigation_corpus_type(
                 timestamp=datetime.datetime(2020, 1, 1),
                 value=Label(
                     type="activity_status",
-                    id="Filed",
+                    id="activity_status::Filed",
                     value="Filed",
                 ),
             ),
