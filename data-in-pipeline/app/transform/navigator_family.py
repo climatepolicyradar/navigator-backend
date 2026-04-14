@@ -876,6 +876,36 @@ def _transform_navigator_family(
                 return Failure(e)
 
     """
+    Litigation filing date
+    We are adding this as an attribute on the family as it is a key date for litigation documents.
+    """
+
+    if (
+        navigator_family.corpus.import_id == "Academic.corpus.Litigation.n0000"
+        and navigator_family.events
+    ):
+        filing_event = next(
+            (
+                e
+                for e in navigator_family.events
+                if e.event_type == "Filing Year For Action"
+            ),
+            None,
+        )
+
+        if filing_event:
+            labels.append(
+                LabelRelationship(
+                    type="activity_status",
+                    timestamp=filing_event.date,
+                    value=Label(
+                        id="Filed",
+                        value="Filed",
+                        type="activity_status",
+                    ),
+                )
+            )
+    """
     Dates
 
     These are values calculated from events.
