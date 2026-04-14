@@ -601,7 +601,7 @@ def test_transform_navigator_family_with_single_matching_document(
                 type="status",
                 value=Label(
                     type="status",
-                    id="Principal",
+                    id="status::Principal",
                     value="Principal",
                 ),
             ),
@@ -610,7 +610,7 @@ def test_transform_navigator_family_with_single_matching_document(
                 timestamp=datetime.datetime(2020, 1, 1),
                 value=Label(
                     type="activity_status",
-                    id="Amended/Updated",
+                    id="activity_status::Amended/Updated",
                     value="Amended/Updated",
                 ),
             ),
@@ -619,7 +619,7 @@ def test_transform_navigator_family_with_single_matching_document(
                 timestamp=datetime.datetime(2020, 1, 1),
                 value=Label(
                     type="activity_status",
-                    id="Appealed",
+                    id="activity_status::Appealed",
                     value="Appealed",
                 ),
             ),
@@ -628,7 +628,7 @@ def test_transform_navigator_family_with_single_matching_document(
                 timestamp=datetime.datetime(2020, 1, 1),
                 value=Label(
                     type="activity_status",
-                    id="Closed",
+                    id="activity_status::Closed",
                     value="Closed",
                 ),
             ),
@@ -637,40 +637,50 @@ def test_transform_navigator_family_with_single_matching_document(
                 timestamp=datetime.datetime(2020, 1, 1),
                 value=Label(
                     type="activity_status",
-                    id="Declaration of climate emergency",
+                    id="activity_status::Declaration of climate emergency",
                     value="Declaration of climate emergency",
                 ),
             ),
             LabelRelationship(
                 type="activity_status",
                 timestamp=datetime.datetime(2020, 1, 1),
-                value=Label(type="activity_status", id="Dismissed", value="Dismissed"),
+                value=Label(
+                    type="activity_status",
+                    id="activity_status::Dismissed",
+                    value="Dismissed",
+                ),
             ),
             LabelRelationship(
                 type="activity_status",
                 timestamp=datetime.datetime(2020, 1, 1),
                 value=Label(
                     type="activity_status",
-                    id="Entered into force",
+                    id="activity_status::Entered into force",
                     value="Entered into force",
                 ),
             ),
             LabelRelationship(
                 type="activity_status",
                 timestamp=datetime.datetime(2020, 1, 1),
-                value=Label(type="activity_status", id="Filing", value="Filing"),
-            ),
-            LabelRelationship(
-                type="activity_status",
-                timestamp=datetime.datetime(2020, 1, 1),
-                value=Label(type="activity_status", id="Granted", value="Granted"),
+                value=Label(
+                    type="activity_status", id="activity_status::Filing", value="Filing"
+                ),
             ),
             LabelRelationship(
                 type="activity_status",
                 timestamp=datetime.datetime(2020, 1, 1),
                 value=Label(
                     type="activity_status",
-                    id="Implementation details",
+                    id="activity_status::Granted",
+                    value="Granted",
+                ),
+            ),
+            LabelRelationship(
+                type="activity_status",
+                timestamp=datetime.datetime(2020, 1, 1),
+                value=Label(
+                    type="activity_status",
+                    id="activity_status::Implementation details",
                     value="Implementation details",
                 ),
             ),
@@ -679,7 +689,7 @@ def test_transform_navigator_family_with_single_matching_document(
                 timestamp=datetime.datetime(2020, 1, 1),
                 value=Label(
                     type="activity_status",
-                    id="International agreement",
+                    id="activity_status::International agreement",
                     value="International agreement",
                 ),
             ),
@@ -688,21 +698,23 @@ def test_transform_navigator_family_with_single_matching_document(
                 timestamp=datetime.datetime(2020, 1, 1),
                 value=Label(
                     type="activity_status",
-                    id="Net zero pledge",
+                    id="activity_status::Net zero pledge",
                     value="Net zero pledge",
                 ),
             ),
             LabelRelationship(
                 type="activity_status",
                 timestamp=datetime.datetime(2020, 1, 1),
-                value=Label(type="activity_status", id="Other", value="Other"),
+                value=Label(
+                    type="activity_status", id="activity_status::Other", value="Other"
+                ),
             ),
             LabelRelationship(
                 type="activity_status",
                 timestamp=datetime.datetime(2020, 1, 1),
                 value=Label(
                     type="activity_status",
-                    id="Passed/Approved",
+                    id="activity_status::Passed/Approved",
                     value="Passed/Approved",
                 ),
             ),
@@ -711,30 +723,40 @@ def test_transform_navigator_family_with_single_matching_document(
                 timestamp=datetime.datetime(2020, 1, 1),
                 value=Label(
                     type="activity_status",
-                    id="Repealed/Replaced",
+                    id="activity_status::Repealed/Replaced",
                     value="Repealed/Replaced",
                 ),
             ),
             LabelRelationship(
                 type="activity_status",
                 timestamp=datetime.datetime(2020, 1, 1),
-                value=Label(type="activity_status", id="Set", value="Set"),
+                value=Label(
+                    type="activity_status", id="activity_status::Set", value="Set"
+                ),
             ),
             LabelRelationship(
                 type="activity_status",
                 timestamp=datetime.datetime(2020, 1, 1),
-                value=Label(type="activity_status", id="Settled", value="Settled"),
+                value=Label(
+                    type="activity_status",
+                    id="activity_status::Settled",
+                    value="Settled",
+                ),
             ),
             LabelRelationship(
                 type="activity_status",
                 timestamp=datetime.datetime(2020, 1, 1),
-                value=Label(type="activity_status", id="Published", value="Published"),
+                value=Label(
+                    type="activity_status",
+                    id="activity_status::Published",
+                    value="Published",
+                ),
             ),
             LabelRelationship(
                 type="provider",
                 value=Label(
                     type="agent",
-                    id="Grantham Research Institute",
+                    id="agent::Grantham Research Institute",
                     value="Grantham Research Institute",
                     attributes={
                         "attribution_url": "testurl.org",
@@ -747,7 +769,7 @@ def test_transform_navigator_family_with_single_matching_document(
                 type="geography",
                 value=Label(
                     type="geography",
-                    id="AU-NSW",
+                    id="geography::AU-NSW",
                     value="New South Wales",
                 ),
             ),
@@ -755,14 +777,14 @@ def test_transform_navigator_family_with_single_matching_document(
                 type="geography",
                 value=Label(
                     type="geography",
-                    id="AUS",
+                    id="geography::AUS",
                     value="Australia",
                 ),
             ),
             LabelRelationship(
                 type="author",
                 value=Label(
-                    id="Test Author",
+                    id="person::Test Author",
                     value="Test Author",
                     type="person",
                 ),
@@ -770,7 +792,7 @@ def test_transform_navigator_family_with_single_matching_document(
             LabelRelationship(
                 type="deprecated_category",
                 value=Label(
-                    id="EXECUTIVE",
+                    id="deprecated_category::EXECUTIVE",
                     value="EXECUTIVE",
                     type="deprecated_category",
                 ),
@@ -778,7 +800,7 @@ def test_transform_navigator_family_with_single_matching_document(
             LabelRelationship(
                 type="deprecated_category",
                 value=Label(
-                    id="Laws and Policies",
+                    id="deprecated_category::Laws and Policies",
                     value="Laws and Policies",
                     type="deprecated_category",
                 ),
@@ -786,15 +808,23 @@ def test_transform_navigator_family_with_single_matching_document(
             LabelRelationship(
                 type="category",
                 value=Label(
-                    id="Policy",
+                    id="category::Policy",
                     value="Policy",
                     type="category",
                 ),
             ),
             LabelRelationship(
+                type="author",
+                value=Label(
+                    id="author::Test Author",
+                    type="author",
+                    value="Test Author",
+                ),
+            ),
+            LabelRelationship(
                 type="author_type",
                 value=Label(
-                    id="Person",
+                    id="author_type::Person",
                     type="author_type",
                     value="Person",
                 ),
@@ -810,7 +840,7 @@ def test_transform_navigator_family_with_single_matching_document(
                         LabelRelationship(
                             type="entity_type",
                             value=Label(
-                                id="Collection",
+                                id="entity_type::Collection",
                                 value="Collection",
                                 type="entity_type",
                             ),
@@ -829,7 +859,7 @@ def test_transform_navigator_family_with_single_matching_document(
                             type="role",
                             value=Label(
                                 type="entity_type",
-                                id="Supporting legislation",
+                                id="entity_type::Supporting legislation",
                                 value="Supporting legislation",
                             ),
                         ),
@@ -837,7 +867,7 @@ def test_transform_navigator_family_with_single_matching_document(
                             type="entity_type",
                             value=Label(
                                 type="entity_type",
-                                id="National drought plan (ndp)",
+                                id="entity_type::National drought plan (ndp)",
                                 value="National drought plan (ndp)",
                             ),
                         ),
@@ -845,7 +875,7 @@ def test_transform_navigator_family_with_single_matching_document(
                             type="provider",
                             value=Label(
                                 type="agent",
-                                id="Grantham Research Institute",
+                                id="agent::Grantham Research Institute",
                                 value="Grantham Research Institute",
                                 attributes={
                                     "attribution_url": "testurl.org",
@@ -858,7 +888,7 @@ def test_transform_navigator_family_with_single_matching_document(
                             type="geography",
                             value=Label(
                                 type="geography",
-                                id="AU-NSW",
+                                id="geography::AU-NSW",
                                 value="New South Wales",
                             ),
                         ),
@@ -866,14 +896,14 @@ def test_transform_navigator_family_with_single_matching_document(
                             type="geography",
                             value=Label(
                                 type="geography",
-                                id="AUS",
+                                id="geography::AUS",
                                 value="Australia",
                             ),
                         ),
                         LabelRelationship(
                             type="deprecated_category",
                             value=Label(
-                                id="Laws and Policies",
+                                id="deprecated_category::Laws and Policies",
                                 value="Laws and Policies",
                                 type="deprecated_category",
                             ),
@@ -881,7 +911,7 @@ def test_transform_navigator_family_with_single_matching_document(
                         LabelRelationship(
                             type="category",
                             value=Label(
-                                id="Policy",
+                                id="category::Policy",
                                 value="Policy",
                                 type="category",
                             ),
@@ -889,7 +919,7 @@ def test_transform_navigator_family_with_single_matching_document(
                         LabelRelationship(
                             type="language",
                             value=Label(
-                                id="eng",
+                                id="language::eng",
                                 value="eng",
                                 type="language",
                             ),
@@ -897,7 +927,7 @@ def test_transform_navigator_family_with_single_matching_document(
                         LabelRelationship(
                             type="language",
                             value=Label(
-                                id="fra",
+                                id="language::fra",
                                 value="fra",
                                 type="language",
                             ),
@@ -932,7 +962,7 @@ def test_transform_navigator_family_with_single_matching_document(
                         LabelRelationship(
                             type="entity_type",
                             value=Label(
-                                id="Collection",
+                                id="entity_type::Collection",
                                 value="Collection",
                                 type="entity_type",
                             ),
@@ -962,7 +992,7 @@ def test_transform_navigator_family_with_single_matching_document(
                         type="role",
                         value=Label(
                             type="entity_type",
-                            id="Supporting legislation",
+                            id="entity_type::Supporting legislation",
                             value="Supporting legislation",
                         ),
                     ),
@@ -970,7 +1000,7 @@ def test_transform_navigator_family_with_single_matching_document(
                         type="entity_type",
                         value=Label(
                             type="entity_type",
-                            id="National drought plan (ndp)",
+                            id="entity_type::National drought plan (ndp)",
                             value="National drought plan (ndp)",
                         ),
                     ),
@@ -978,7 +1008,7 @@ def test_transform_navigator_family_with_single_matching_document(
                         type="provider",
                         value=Label(
                             type="agent",
-                            id="Grantham Research Institute",
+                            id="agent::Grantham Research Institute",
                             value="Grantham Research Institute",
                             attributes={
                                 "attribution_url": "testurl.org",
@@ -991,7 +1021,7 @@ def test_transform_navigator_family_with_single_matching_document(
                         type="geography",
                         value=Label(
                             type="geography",
-                            id="AU-NSW",
+                            id="geography::AU-NSW",
                             value="New South Wales",
                         ),
                     ),
@@ -999,14 +1029,14 @@ def test_transform_navigator_family_with_single_matching_document(
                         type="geography",
                         value=Label(
                             type="geography",
-                            id="AUS",
+                            id="geography::AUS",
                             value="Australia",
                         ),
                     ),
                     LabelRelationship(
                         type="deprecated_category",
                         value=Label(
-                            id="Laws and Policies",
+                            id="deprecated_category::Laws and Policies",
                             value="Laws and Policies",
                             type="deprecated_category",
                         ),
@@ -1014,7 +1044,7 @@ def test_transform_navigator_family_with_single_matching_document(
                     LabelRelationship(
                         type="category",
                         value=Label(
-                            id="Policy",
+                            id="category::Policy",
                             value="Policy",
                             type="category",
                         ),
@@ -1022,7 +1052,7 @@ def test_transform_navigator_family_with_single_matching_document(
                     LabelRelationship(
                         type="language",
                         value=Label(
-                            id="eng",
+                            id="language::eng",
                             value="eng",
                             type="language",
                         ),
@@ -1030,7 +1060,7 @@ def test_transform_navigator_family_with_single_matching_document(
                     LabelRelationship(
                         type="language",
                         value=Label(
-                            id="fra",
+                            id="language::fra",
                             value="fra",
                             type="language",
                         ),
@@ -1073,7 +1103,7 @@ def test_transform_navigator_family_with_single_matching_document(
                     LabelRelationship(
                         type="entity_type",
                         value=Label(
-                            id="Collection",
+                            id="entity_type::Collection",
                             value="Collection",
                             type="entity_type",
                         ),
@@ -1098,7 +1128,7 @@ def test_transform_navigator_family_with_single_matching_document(
                     LabelRelationship(
                         type="entity_type",
                         value=Label(
-                            id="Collection",
+                            id="entity_type::Collection",
                             value="Collection",
                             type="entity_type",
                         ),
@@ -1182,7 +1212,7 @@ def test_transform_navigator_family_with_laws_and_policies_corpus_type(
                 type="status",
                 value=Label(
                     type="status",
-                    id="Principal",
+                    id="status::Principal",
                     value="Principal",
                 ),
             ),
@@ -1190,7 +1220,7 @@ def test_transform_navigator_family_with_laws_and_policies_corpus_type(
                 type="provider",
                 value=Label(
                     type="agent",
-                    id=provider,
+                    id=f"agent::{provider}",
                     value=provider,
                     attributes={
                         "attribution_url": "testurl.org",
@@ -1202,7 +1232,7 @@ def test_transform_navigator_family_with_laws_and_policies_corpus_type(
             LabelRelationship(
                 type="geography",
                 value=Label(
-                    id="AUS",
+                    id="geography::AUS",
                     value="Australia",
                     type="geography",
                 ),
@@ -1210,7 +1240,7 @@ def test_transform_navigator_family_with_laws_and_policies_corpus_type(
             LabelRelationship(
                 type="deprecated_category",
                 value=Label(
-                    id="LEGISLATIVE",
+                    id="deprecated_category::LEGISLATIVE",
                     value="LEGISLATIVE",
                     type="deprecated_category",
                 ),
@@ -1218,7 +1248,7 @@ def test_transform_navigator_family_with_laws_and_policies_corpus_type(
             LabelRelationship(
                 type="deprecated_category",
                 value=Label(
-                    id="Laws and Policies",
+                    id="deprecated_category::Laws and Policies",
                     value="Laws and Policies",
                     type="deprecated_category",
                 ),
@@ -1226,7 +1256,7 @@ def test_transform_navigator_family_with_laws_and_policies_corpus_type(
             LabelRelationship(
                 type="category",
                 value=Label(
-                    id="Law",
+                    id="category::Law",
                     value="Law",
                     type="category",
                 ),
@@ -1234,7 +1264,7 @@ def test_transform_navigator_family_with_laws_and_policies_corpus_type(
             LabelRelationship(
                 type="topic",
                 value=Label(
-                    id="Mitigation",
+                    id="topic::Mitigation",
                     value="Mitigation",
                     type="topic",
                 ),
@@ -1242,7 +1272,7 @@ def test_transform_navigator_family_with_laws_and_policies_corpus_type(
             LabelRelationship(
                 type="sector",
                 value=Label(
-                    id="Economy-wide",
+                    id="sector::Economy-wide",
                     value="Economy-wide",
                     type="sector",
                 ),
@@ -1250,7 +1280,7 @@ def test_transform_navigator_family_with_laws_and_policies_corpus_type(
             LabelRelationship(
                 type="keyword",
                 value=Label(
-                    id="Transport",
+                    id="keyword::Transport",
                     value="Transport",
                     type="keyword",
                 ),
@@ -1258,7 +1288,7 @@ def test_transform_navigator_family_with_laws_and_policies_corpus_type(
             LabelRelationship(
                 type="framework",
                 value=Label(
-                    id="Mitigation",
+                    id="framework::Mitigation",
                     value="Mitigation",
                     type="framework",
                 ),
@@ -1266,7 +1296,7 @@ def test_transform_navigator_family_with_laws_and_policies_corpus_type(
             LabelRelationship(
                 type="instrument",
                 value=Label(
-                    id="Processes, plans and strategies|Governance",
+                    id="instrument::Processes, plans and strategies|Governance",
                     value="Processes, plans and strategies|Governance",
                     type="instrument",
                 ),
@@ -1274,7 +1304,7 @@ def test_transform_navigator_family_with_laws_and_policies_corpus_type(
             LabelRelationship(
                 type="instrument",
                 value=Label(
-                    id="Planning|Governance",
+                    id="instrument::Planning|Governance",
                     value="Planning|Governance",
                     type="instrument",
                 ),
@@ -1304,7 +1334,7 @@ def test_transform_navigator_family_with_litigation_corpus_type(
                 type="status",
                 value=Label(
                     type="status",
-                    id="Principal",
+                    id="status::Principal",
                     value="Principal",
                 ),
             ),
@@ -1312,7 +1342,7 @@ def test_transform_navigator_family_with_litigation_corpus_type(
                 type="provider",
                 value=Label(
                     type="agent",
-                    id="Sabin Center for Climate Change Law",
+                    id="agent::Sabin Center for Climate Change Law",
                     value="Sabin Center for Climate Change Law",
                     attributes={
                         "attribution_url": "testurl.org",
@@ -1324,7 +1354,7 @@ def test_transform_navigator_family_with_litigation_corpus_type(
             LabelRelationship(
                 type="deprecated_category",
                 value=Label(
-                    id="LITIGATION",
+                    id="deprecated_category::LITIGATION",
                     value="LITIGATION",
                     type="deprecated_category",
                 ),
@@ -1340,7 +1370,7 @@ def test_transform_navigator_family_with_litigation_corpus_type(
                         LabelRelationship(
                             type="entity_type",
                             value=Label(
-                                id="Decision",
+                                id="entity_type::Decision",
                                 value="Decision",
                                 type="entity_type",
                             ),
@@ -1349,7 +1379,7 @@ def test_transform_navigator_family_with_litigation_corpus_type(
                             type="provider",
                             value=Label(
                                 type="agent",
-                                id="Sabin Center for Climate Change Law",
+                                id="agent::Sabin Center for Climate Change Law",
                                 value="Sabin Center for Climate Change Law",
                                 attributes={
                                     "attribution_url": "testurl.org",
@@ -1376,7 +1406,7 @@ def test_transform_navigator_family_with_litigation_corpus_type(
                         LabelRelationship(
                             type="status",
                             value=Label(
-                                id="Obsolete",
+                                id="status::Obsolete",
                                 value="Obsolete",
                                 type="status",
                             ),
@@ -1385,7 +1415,7 @@ def test_transform_navigator_family_with_litigation_corpus_type(
                             type="provider",
                             value=Label(
                                 type="agent",
-                                id="Sabin Center for Climate Change Law",
+                                id="agent::Sabin Center for Climate Change Law",
                                 value="Sabin Center for Climate Change Law",
                                 attributes={
                                     "attribution_url": "testurl.org",
@@ -1422,7 +1452,7 @@ def test_transform_navigator_family_with_litigation_corpus_type(
                     LabelRelationship(
                         type="entity_type",
                         value=Label(
-                            id="Decision",
+                            id="entity_type::Decision",
                             value="Decision",
                             type="entity_type",
                         ),
@@ -1431,7 +1461,7 @@ def test_transform_navigator_family_with_litigation_corpus_type(
                         type="provider",
                         value=Label(
                             type="agent",
-                            id="Sabin Center for Climate Change Law",
+                            id="agent::Sabin Center for Climate Change Law",
                             value="Sabin Center for Climate Change Law",
                             attributes={
                                 "attribution_url": "testurl.org",
@@ -1463,7 +1493,7 @@ def test_transform_navigator_family_with_litigation_corpus_type(
                     LabelRelationship(
                         type="status",
                         value=Label(
-                            id="Obsolete",
+                            id="status::Obsolete",
                             value="Obsolete",
                             type="status",
                         ),
@@ -1472,7 +1502,7 @@ def test_transform_navigator_family_with_litigation_corpus_type(
                         type="provider",
                         value=Label(
                             type="agent",
-                            id="Sabin Center for Climate Change Law",
+                            id="agent::Sabin Center for Climate Change Law",
                             value="Sabin Center for Climate Change Law",
                             attributes={
                                 "attribution_url": "testurl.org",
@@ -1513,7 +1543,7 @@ def test_transform_navigator_family_with_litigation_corpus_type_and_litigation_c
                 type="status",
                 value=Label(
                     type="status",
-                    id="Principal",
+                    id="status::Principal",
                     value="Principal",
                 ),
             ),
@@ -1521,7 +1551,7 @@ def test_transform_navigator_family_with_litigation_corpus_type_and_litigation_c
                 type="provider",
                 value=Label(
                     type="agent",
-                    id="Sabin Center for Climate Change Law",
+                    id="agent::Sabin Center for Climate Change Law",
                     value="Sabin Center for Climate Change Law",
                     attributes={
                         "attribution_url": "testurl.org",
@@ -1533,7 +1563,7 @@ def test_transform_navigator_family_with_litigation_corpus_type_and_litigation_c
             LabelRelationship(
                 type="deprecated_category",
                 value=Label(
-                    id="LITIGATION",
+                    id="deprecated_category::LITIGATION",
                     value="LITIGATION",
                     type="deprecated_category",
                 ),
@@ -1541,12 +1571,12 @@ def test_transform_navigator_family_with_litigation_corpus_type_and_litigation_c
             LabelRelationship(
                 type="legal_concept",
                 value=LabelWithoutDocumentRelationships(
-                    id="High Court of Justice",
+                    id="jurisdiction::High Court of Justice",
                     labels=[
                         LabelRelationship(
                             type="subconcept_of",
                             value=LabelWithoutDocumentRelationships(
-                                id="England and Wales",
+                                id="jurisdiction::England and Wales",
                                 labels=[],
                                 type="jurisdiction",
                                 value="England and Wales",
@@ -1560,12 +1590,12 @@ def test_transform_navigator_family_with_litigation_corpus_type_and_litigation_c
             LabelRelationship(
                 type="legal_concept",
                 value=LabelWithoutDocumentRelationships(
-                    id="High Court of Justice (Administrative Court)",
+                    id="jurisdiction::High Court of Justice (Administrative Court)",
                     labels=[
                         LabelRelationship(
                             type="subconcept_of",
                             value=LabelWithoutDocumentRelationships(
-                                id="High Court of Justice",
+                                id="jurisdiction::High Court of Justice",
                                 labels=[],
                                 type="jurisdiction",
                                 value="High Court of Justice",
@@ -1579,7 +1609,7 @@ def test_transform_navigator_family_with_litigation_corpus_type_and_litigation_c
             LabelRelationship(
                 type="legal_concept",
                 value=LabelWithoutDocumentRelationships(
-                    id="England and Wales",
+                    id="jurisdiction::England and Wales",
                     labels=[],
                     type="jurisdiction",
                     value="England and Wales",
@@ -1596,7 +1626,7 @@ def test_transform_navigator_family_with_litigation_corpus_type_and_litigation_c
                         LabelRelationship(
                             type="entity_type",
                             value=Label(
-                                id="Decision",
+                                id="entity_type::Decision",
                                 value="Decision",
                                 type="entity_type",
                             ),
@@ -1605,7 +1635,7 @@ def test_transform_navigator_family_with_litigation_corpus_type_and_litigation_c
                             type="provider",
                             value=Label(
                                 type="agent",
-                                id="Sabin Center for Climate Change Law",
+                                id="agent::Sabin Center for Climate Change Law",
                                 value="Sabin Center for Climate Change Law",
                                 attributes={
                                     "attribution_url": "testurl.org",
@@ -1642,7 +1672,7 @@ def test_transform_navigator_family_with_litigation_corpus_type_and_litigation_c
                     LabelRelationship(
                         type="entity_type",
                         value=Label(
-                            id="Decision",
+                            id="entity_type::Decision",
                             value="Decision",
                             type="entity_type",
                         ),
@@ -1651,7 +1681,7 @@ def test_transform_navigator_family_with_litigation_corpus_type_and_litigation_c
                         type="provider",
                         value=Label(
                             type="agent",
-                            id="Sabin Center for Climate Change Law",
+                            id="agent::Sabin Center for Climate Change Law",
                             value="Sabin Center for Climate Change Law",
                             attributes={
                                 "attribution_url": "testurl.org",
@@ -1712,14 +1742,14 @@ def test_transform_navigator_family_with_multilateral_climate_fund_project(
                 type="status",
                 value=Label(
                     type="status",
-                    id="Principal",
+                    id="status::Principal",
                     value="Principal",
                 ),
             ),
             LabelRelationship(
                 type="entity_type",
                 value=Label(
-                    id="Project",
+                    id="entity_type::Project",
                     value="Project",
                     type="entity_type",
                 ),
@@ -1727,7 +1757,7 @@ def test_transform_navigator_family_with_multilateral_climate_fund_project(
             LabelRelationship(
                 type="activity_status",
                 value=Label(
-                    id="Concept approved",
+                    id="activity_status::Concept approved",
                     value="Concept approved",
                     type="activity_status",
                 ),
@@ -1736,7 +1766,7 @@ def test_transform_navigator_family_with_multilateral_climate_fund_project(
             LabelRelationship(
                 type="activity_status",
                 value=Label(
-                    id="Approved",
+                    id="activity_status::Approved",
                     value="Approved",
                     type="activity_status",
                 ),
@@ -1745,7 +1775,7 @@ def test_transform_navigator_family_with_multilateral_climate_fund_project(
             LabelRelationship(
                 type="activity_status",
                 value=Label(
-                    id="Under implementation",
+                    id="activity_status::Under implementation",
                     value="Under implementation",
                     type="activity_status",
                 ),
@@ -1754,7 +1784,7 @@ def test_transform_navigator_family_with_multilateral_climate_fund_project(
             LabelRelationship(
                 type="activity_status",
                 value=Label(
-                    id="Completed",
+                    id="activity_status::Completed",
                     value="Completed",
                     type="activity_status",
                 ),
@@ -1763,7 +1793,7 @@ def test_transform_navigator_family_with_multilateral_climate_fund_project(
             LabelRelationship(
                 type="activity_status",
                 value=Label(
-                    id="Cancelled",
+                    id="activity_status::Cancelled",
                     value="Cancelled",
                     type="activity_status",
                 ),
@@ -1773,7 +1803,7 @@ def test_transform_navigator_family_with_multilateral_climate_fund_project(
                 type="provider",
                 value=Label(
                     type="agent",
-                    id="Adaptation Fund",
+                    id="agent::Adaptation Fund",
                     value="Adaptation Fund",
                     attributes={
                         "attribution_url": "testurl.org",
@@ -1785,7 +1815,7 @@ def test_transform_navigator_family_with_multilateral_climate_fund_project(
             LabelRelationship(
                 type="deprecated_category",
                 value=Label(
-                    id="MCF",
+                    id="deprecated_category::MCF",
                     value="MCF",
                     type="deprecated_category",
                 ),
@@ -1793,7 +1823,7 @@ def test_transform_navigator_family_with_multilateral_climate_fund_project(
             LabelRelationship(
                 type="category",
                 value=Label(
-                    id="Multilateral Climate Fund project",
+                    id="category::Multilateral Climate Fund project",
                     value="Multilateral Climate Fund project",
                     type="category",
                 ),
@@ -1801,7 +1831,7 @@ def test_transform_navigator_family_with_multilateral_climate_fund_project(
             LabelRelationship(
                 type="sector",
                 value=Label(
-                    id="Public Sector",
+                    id="sector::Public Sector",
                     type="sector",
                     value="Public Sector",
                 ),
@@ -1809,7 +1839,7 @@ def test_transform_navigator_family_with_multilateral_climate_fund_project(
             LabelRelationship(
                 type="project_status",
                 value=Label(
-                    id="Under Implementation",
+                    id="project_status::Under Implementation",
                     type="project_status",
                     value="Under Implementation",
                 ),
@@ -1817,7 +1847,7 @@ def test_transform_navigator_family_with_multilateral_climate_fund_project(
             LabelRelationship(
                 type="implementing_agency",
                 value=Label(
-                    id="International Bank for Reconstruction",
+                    id="implementing_agency::International Bank for Reconstruction",
                     type="implementing_agency",
                     value="International Bank for Reconstruction",
                 ),
@@ -1834,7 +1864,7 @@ def test_transform_navigator_family_with_multilateral_climate_fund_project(
                             type="provider",
                             value=Label(
                                 type="agent",
-                                id="Adaptation Fund",
+                                id="agent::Adaptation Fund",
                                 value="Adaptation Fund",
                                 attributes={
                                     "attribution_url": "testurl.org",
@@ -1846,7 +1876,7 @@ def test_transform_navigator_family_with_multilateral_climate_fund_project(
                         LabelRelationship(
                             type="category",
                             value=Label(
-                                id="Multilateral Climate Fund project",
+                                id="category::Multilateral Climate Fund project",
                                 value="Multilateral Climate Fund project",
                                 type="category",
                             ),
@@ -1854,7 +1884,7 @@ def test_transform_navigator_family_with_multilateral_climate_fund_project(
                         LabelRelationship(
                             type="entity_type",
                             value=Label(
-                                id="Project",
+                                id="entity_type::Project",
                                 value="Project",
                                 type="entity_type",
                             ),
@@ -1862,7 +1892,7 @@ def test_transform_navigator_family_with_multilateral_climate_fund_project(
                         LabelRelationship(
                             type="language",
                             value=Label(
-                                id="eng",
+                                id="language::eng",
                                 value="eng",
                                 type="language",
                             ),
@@ -1886,7 +1916,7 @@ def test_transform_navigator_family_with_multilateral_climate_fund_project(
                             type="provider",
                             value=Label(
                                 type="agent",
-                                id="Adaptation Fund",
+                                id="agent::Adaptation Fund",
                                 value="Adaptation Fund",
                                 attributes={
                                     "attribution_url": "testurl.org",
@@ -1898,7 +1928,7 @@ def test_transform_navigator_family_with_multilateral_climate_fund_project(
                         LabelRelationship(
                             type="category",
                             value=Label(
-                                id="Multilateral Climate Fund project",
+                                id="category::Multilateral Climate Fund project",
                                 value="Multilateral Climate Fund project",
                                 type="category",
                             ),
@@ -1906,7 +1936,7 @@ def test_transform_navigator_family_with_multilateral_climate_fund_project(
                         LabelRelationship(
                             type="entity_type",
                             value=Label(
-                                id="Project",
+                                id="entity_type::Project",
                                 value="Project",
                                 type="entity_type",
                             ),
@@ -1914,7 +1944,7 @@ def test_transform_navigator_family_with_multilateral_climate_fund_project(
                         LabelRelationship(
                             type="language",
                             value=Label(
-                                id="eng",
+                                id="language::eng",
                                 value="eng",
                                 type="language",
                             ),
@@ -1951,7 +1981,7 @@ def test_transform_navigator_family_with_multilateral_climate_fund_project(
                         type="provider",
                         value=Label(
                             type="agent",
-                            id="Adaptation Fund",
+                            id="agent::Adaptation Fund",
                             value="Adaptation Fund",
                             attributes={
                                 "attribution_url": "testurl.org",
@@ -1963,7 +1993,7 @@ def test_transform_navigator_family_with_multilateral_climate_fund_project(
                     LabelRelationship(
                         type="category",
                         value=Label(
-                            id="Multilateral Climate Fund project",
+                            id="category::Multilateral Climate Fund project",
                             value="Multilateral Climate Fund project",
                             type="category",
                         ),
@@ -1971,7 +2001,7 @@ def test_transform_navigator_family_with_multilateral_climate_fund_project(
                     LabelRelationship(
                         type="entity_type",
                         value=Label(
-                            id="Project",
+                            id="entity_type::Project",
                             value="Project",
                             type="entity_type",
                         ),
@@ -1979,7 +2009,7 @@ def test_transform_navigator_family_with_multilateral_climate_fund_project(
                     LabelRelationship(
                         type="language",
                         value=Label(
-                            id="eng",
+                            id="language::eng",
                             value="eng",
                             type="language",
                         ),
@@ -2008,7 +2038,7 @@ def test_transform_navigator_family_with_multilateral_climate_fund_project(
                         type="provider",
                         value=Label(
                             type="agent",
-                            id="Adaptation Fund",
+                            id="agent::Adaptation Fund",
                             value="Adaptation Fund",
                             attributes={
                                 "attribution_url": "testurl.org",
@@ -2020,7 +2050,7 @@ def test_transform_navigator_family_with_multilateral_climate_fund_project(
                     LabelRelationship(
                         type="category",
                         value=Label(
-                            id="Multilateral Climate Fund project",
+                            id="category::Multilateral Climate Fund project",
                             value="Multilateral Climate Fund project",
                             type="category",
                         ),
@@ -2028,7 +2058,7 @@ def test_transform_navigator_family_with_multilateral_climate_fund_project(
                     LabelRelationship(
                         type="entity_type",
                         value=Label(
-                            id="Project",
+                            id="entity_type::Project",
                             value="Project",
                             type="entity_type",
                         ),
@@ -2036,7 +2066,7 @@ def test_transform_navigator_family_with_multilateral_climate_fund_project(
                     LabelRelationship(
                         type="language",
                         value=Label(
-                            id="eng",
+                            id="language::eng",
                             value="eng",
                             type="language",
                         ),
@@ -2122,7 +2152,7 @@ def test_transform_navigator_family_with_published_and_unpublished_documents():
                 type="status",
                 value=Label(
                     type="status",
-                    id="Principal",
+                    id="status::Principal",
                     value="Principal",
                 ),
             ),
@@ -2130,7 +2160,7 @@ def test_transform_navigator_family_with_published_and_unpublished_documents():
                 type="provider",
                 value=Label(
                     type="agent",
-                    id="Grantham Research Institute",
+                    id="agent::Grantham Research Institute",
                     value="Grantham Research Institute",
                     attributes={
                         "attribution_url": "testurl.org",
@@ -2142,7 +2172,7 @@ def test_transform_navigator_family_with_published_and_unpublished_documents():
             LabelRelationship(
                 type="geography",
                 value=Label(
-                    id="AUS",
+                    id="geography::AUS",
                     value="Australia",
                     type="geography",
                 ),
@@ -2150,7 +2180,7 @@ def test_transform_navigator_family_with_published_and_unpublished_documents():
             LabelRelationship(
                 type="deprecated_category",
                 value=Label(
-                    id="LEGISLATIVE",
+                    id="deprecated_category::LEGISLATIVE",
                     value="LEGISLATIVE",
                     type="deprecated_category",
                 ),
@@ -2158,7 +2188,7 @@ def test_transform_navigator_family_with_published_and_unpublished_documents():
             LabelRelationship(
                 type="deprecated_category",
                 value=Label(
-                    id="Laws and Policies",
+                    id="deprecated_category::Laws and Policies",
                     value="Laws and Policies",
                     type="deprecated_category",
                 ),
@@ -2166,7 +2196,7 @@ def test_transform_navigator_family_with_published_and_unpublished_documents():
             LabelRelationship(
                 type="category",
                 value=Label(
-                    id="Law",
+                    id="category::Law",
                     value="Law",
                     type="category",
                 ),
@@ -2183,7 +2213,7 @@ def test_transform_navigator_family_with_published_and_unpublished_documents():
                             type="provider",
                             value=Label(
                                 type="agent",
-                                id="Grantham Research Institute",
+                                id="agent::Grantham Research Institute",
                                 value="Grantham Research Institute",
                                 attributes={
                                     "attribution_url": "testurl.org",
@@ -2196,14 +2226,14 @@ def test_transform_navigator_family_with_published_and_unpublished_documents():
                             type="geography",
                             value=Label(
                                 type="geography",
-                                id="AUS",
+                                id="geography::AUS",
                                 value="Australia",
                             ),
                         ),
                         LabelRelationship(
                             type="deprecated_category",
                             value=Label(
-                                id="Laws and Policies",
+                                id="deprecated_category::Laws and Policies",
                                 value="Laws and Policies",
                                 type="deprecated_category",
                             ),
@@ -2211,7 +2241,7 @@ def test_transform_navigator_family_with_published_and_unpublished_documents():
                         LabelRelationship(
                             type="category",
                             value=Label(
-                                id="Law",
+                                id="category::Law",
                                 value="Law",
                                 type="category",
                             ),
@@ -2219,7 +2249,7 @@ def test_transform_navigator_family_with_published_and_unpublished_documents():
                         LabelRelationship(
                             type="language",
                             value=Label(
-                                id="eng",
+                                id="language::eng",
                                 value="eng",
                                 type="language",
                             ),
@@ -2255,7 +2285,7 @@ def test_transform_navigator_family_with_published_and_unpublished_documents():
                             type="provider",
                             value=Label(
                                 type="agent",
-                                id="Grantham Research Institute",
+                                id="agent::Grantham Research Institute",
                                 value="Grantham Research Institute",
                                 attributes={
                                     "attribution_url": "testurl.org",
@@ -2268,14 +2298,14 @@ def test_transform_navigator_family_with_published_and_unpublished_documents():
                             type="geography",
                             value=Label(
                                 type="geography",
-                                id="AUS",
+                                id="geography::AUS",
                                 value="Australia",
                             ),
                         ),
                         LabelRelationship(
                             type="deprecated_category",
                             value=Label(
-                                id="Laws and Policies",
+                                id="deprecated_category::Laws and Policies",
                                 value="Laws and Policies",
                                 type="deprecated_category",
                             ),
@@ -2283,7 +2313,7 @@ def test_transform_navigator_family_with_published_and_unpublished_documents():
                         LabelRelationship(
                             type="category",
                             value=Label(
-                                id="Law",
+                                id="category::Law",
                                 value="Law",
                                 type="category",
                             ),
@@ -2291,7 +2321,7 @@ def test_transform_navigator_family_with_published_and_unpublished_documents():
                         LabelRelationship(
                             type="language",
                             value=Label(
-                                id="eng",
+                                id="language::eng",
                                 value="eng",
                                 type="language",
                             ),
@@ -2335,7 +2365,7 @@ def test_transform_navigator_family_with_published_and_unpublished_documents():
                         type="provider",
                         value=Label(
                             type="agent",
-                            id="Grantham Research Institute",
+                            id="agent::Grantham Research Institute",
                             value="Grantham Research Institute",
                             attributes={
                                 "attribution_url": "testurl.org",
@@ -2348,14 +2378,14 @@ def test_transform_navigator_family_with_published_and_unpublished_documents():
                         type="geography",
                         value=Label(
                             type="geography",
-                            id="AUS",
+                            id="geography::AUS",
                             value="Australia",
                         ),
                     ),
                     LabelRelationship(
                         type="deprecated_category",
                         value=Label(
-                            id="Laws and Policies",
+                            id="deprecated_category::Laws and Policies",
                             value="Laws and Policies",
                             type="deprecated_category",
                         ),
@@ -2363,7 +2393,7 @@ def test_transform_navigator_family_with_published_and_unpublished_documents():
                     LabelRelationship(
                         type="category",
                         value=Label(
-                            id="Law",
+                            id="category::Law",
                             value="Law",
                             type="category",
                         ),
@@ -2371,7 +2401,7 @@ def test_transform_navigator_family_with_published_and_unpublished_documents():
                     LabelRelationship(
                         type="language",
                         value=Label(
-                            id="eng",
+                            id="language::eng",
                             value="eng",
                             type="language",
                         ),
@@ -2412,7 +2442,7 @@ def test_transform_navigator_family_with_published_and_unpublished_documents():
                         type="provider",
                         value=Label(
                             type="agent",
-                            id="Grantham Research Institute",
+                            id="agent::Grantham Research Institute",
                             value="Grantham Research Institute",
                             attributes={
                                 "attribution_url": "testurl.org",
@@ -2425,14 +2455,14 @@ def test_transform_navigator_family_with_published_and_unpublished_documents():
                         type="geography",
                         value=Label(
                             type="geography",
-                            id="AUS",
+                            id="geography::AUS",
                             value="Australia",
                         ),
                     ),
                     LabelRelationship(
                         type="deprecated_category",
                         value=Label(
-                            id="Laws and Policies",
+                            id="deprecated_category::Laws and Policies",
                             value="Laws and Policies",
                             type="deprecated_category",
                         ),
@@ -2440,7 +2470,7 @@ def test_transform_navigator_family_with_published_and_unpublished_documents():
                     LabelRelationship(
                         type="category",
                         value=Label(
-                            id="Law",
+                            id="category::Law",
                             value="Law",
                             type="category",
                         ),
@@ -2448,7 +2478,7 @@ def test_transform_navigator_family_with_published_and_unpublished_documents():
                     LabelRelationship(
                         type="language",
                         value=Label(
-                            id="eng",
+                            id="language::eng",
                             value="eng",
                             type="language",
                         ),
@@ -2530,7 +2560,7 @@ def test_transform_navigator_family_with_no_published_documents():
                 type="status",
                 value=Label(
                     type="status",
-                    id="Principal",
+                    id="status::Principal",
                     value="Principal",
                 ),
             ),
@@ -2538,7 +2568,7 @@ def test_transform_navigator_family_with_no_published_documents():
                 type="provider",
                 value=Label(
                     type="agent",
-                    id="Grantham Research Institute",
+                    id="agent::Grantham Research Institute",
                     value="Grantham Research Institute",
                     attributes={
                         "attribution_url": "testurl.org",
@@ -2550,7 +2580,7 @@ def test_transform_navigator_family_with_no_published_documents():
             LabelRelationship(
                 type="geography",
                 value=Label(
-                    id="AUS",
+                    id="geography::AUS",
                     value="Australia",
                     type="geography",
                 ),
@@ -2558,7 +2588,7 @@ def test_transform_navigator_family_with_no_published_documents():
             LabelRelationship(
                 type="deprecated_category",
                 value=Label(
-                    id="LEGISLATIVE",
+                    id="deprecated_category::LEGISLATIVE",
                     value="LEGISLATIVE",
                     type="deprecated_category",
                 ),
@@ -2566,7 +2596,7 @@ def test_transform_navigator_family_with_no_published_documents():
             LabelRelationship(
                 type="deprecated_category",
                 value=Label(
-                    id="Laws and Policies",
+                    id="deprecated_category::Laws and Policies",
                     value="Laws and Policies",
                     type="deprecated_category",
                 ),
@@ -2574,7 +2604,7 @@ def test_transform_navigator_family_with_no_published_documents():
             LabelRelationship(
                 type="category",
                 value=Label(
-                    id="Law",
+                    id="category::Law",
                     value="Law",
                     type="category",
                 ),
@@ -2591,7 +2621,7 @@ def test_transform_navigator_family_with_no_published_documents():
                             type="provider",
                             value=Label(
                                 type="agent",
-                                id="Grantham Research Institute",
+                                id="agent::Grantham Research Institute",
                                 value="Grantham Research Institute",
                                 attributes={
                                     "attribution_url": "testurl.org",
@@ -2604,14 +2634,14 @@ def test_transform_navigator_family_with_no_published_documents():
                             type="geography",
                             value=Label(
                                 type="geography",
-                                id="AUS",
+                                id="geography::AUS",
                                 value="Australia",
                             ),
                         ),
                         LabelRelationship(
                             type="deprecated_category",
                             value=Label(
-                                id="Laws and Policies",
+                                id="deprecated_category::Laws and Policies",
                                 value="Laws and Policies",
                                 type="deprecated_category",
                             ),
@@ -2619,7 +2649,7 @@ def test_transform_navigator_family_with_no_published_documents():
                         LabelRelationship(
                             type="category",
                             value=Label(
-                                id="Law",
+                                id="category::Law",
                                 value="Law",
                                 type="category",
                             ),
@@ -2627,7 +2657,7 @@ def test_transform_navigator_family_with_no_published_documents():
                         LabelRelationship(
                             type="language",
                             value=Label(
-                                id="eng",
+                                id="language::eng",
                                 value="eng",
                                 type="language",
                             ),
@@ -2670,7 +2700,7 @@ def test_transform_navigator_family_with_no_published_documents():
                         type="provider",
                         value=Label(
                             type="agent",
-                            id="Grantham Research Institute",
+                            id="agent::Grantham Research Institute",
                             value="Grantham Research Institute",
                             attributes={
                                 "attribution_url": "testurl.org",
@@ -2683,14 +2713,14 @@ def test_transform_navigator_family_with_no_published_documents():
                         type="geography",
                         value=Label(
                             type="geography",
-                            id="AUS",
+                            id="geography::AUS",
                             value="Australia",
                         ),
                     ),
                     LabelRelationship(
                         type="deprecated_category",
                         value=Label(
-                            id="Laws and Policies",
+                            id="deprecated_category::Laws and Policies",
                             value="Laws and Policies",
                             type="deprecated_category",
                         ),
@@ -2698,7 +2728,7 @@ def test_transform_navigator_family_with_no_published_documents():
                     LabelRelationship(
                         type="category",
                         value=Label(
-                            id="Law",
+                            id="category::Law",
                             value="Law",
                             type="category",
                         ),
@@ -2706,7 +2736,7 @@ def test_transform_navigator_family_with_no_published_documents():
                     LabelRelationship(
                         type="language",
                         value=Label(
-                            id="eng",
+                            id="language::eng",
                             value="eng",
                             type="language",
                         ),
@@ -2761,14 +2791,14 @@ def test_transform_navigator_family_with_multilateral_climate_fund_guidance(
                         type="status",
                         value=Label(
                             type="status",
-                            id="Principal",
+                            id="status::Principal",
                             value="Principal",
                         ),
                     ),
                     LabelRelationship(
                         type="entity_type",
                         value=Label(
-                            id="Guidance",
+                            id="entity_type::Guidance",
                             value="Guidance",
                             type="entity_type",
                         ),
@@ -2777,7 +2807,7 @@ def test_transform_navigator_family_with_multilateral_climate_fund_guidance(
                         type="provider",
                         value=Label(
                             type="agent",
-                            id="Adaptation Fund",
+                            id="agent::Adaptation Fund",
                             value="Adaptation Fund",
                             attributes={
                                 "attribution_url": "testurl.org",
@@ -2789,7 +2819,7 @@ def test_transform_navigator_family_with_multilateral_climate_fund_guidance(
                     LabelRelationship(
                         type="deprecated_category",
                         value=Label(
-                            id="REPORTS",
+                            id="deprecated_category::REPORTS",
                             value="REPORTS",
                             type="deprecated_category",
                         ),
@@ -2797,7 +2827,7 @@ def test_transform_navigator_family_with_multilateral_climate_fund_guidance(
                     LabelRelationship(
                         type="category",
                         value=Label(
-                            id="Multilateral Climate Fund project",
+                            id="category::Multilateral Climate Fund project",
                             value="Multilateral Climate Fund project",
                             type="category",
                         ),
@@ -2815,19 +2845,19 @@ def test_transform_navigator_family_with_multilateral_climate_fund_guidance(
 @pytest.mark.parametrize(
     "corpus_id, expected_category",
     [
-        ("UNFCCC.corpus.i00000001.n0000", "UN submission"),
-        ("UN.corpus.UNCCD.n0000", "UN submission"),
-        ("UN.corpus.UNCBD.n0000", "UN submission"),
-        ("OEP.corpus.i00000001.n0000", "Report"),
-        ("CPR.corpus.i00000002.n0000", "Litigation"),
-        ("MCF.corpus.AF.n0000", "Multilateral Climate Fund project"),
-        ("MCF.corpus.CIF.n0000", "Multilateral Climate Fund project"),
-        ("MCF.corpus.GCF.n0000", "Multilateral Climate Fund project"),
-        ("MCF.corpus.GEF.n0000", "Multilateral Climate Fund project"),
-        ("MCF.corpus.AF.Guidance", "Multilateral Climate Fund project"),
-        ("MCF.corpus.CIF.Guidance", "Multilateral Climate Fund project"),
-        ("MCF.corpus.GCF.Guidance", "Multilateral Climate Fund project"),
-        ("MCF.corpus.GEF.Guidance", "Multilateral Climate Fund project"),
+        ("UNFCCC.corpus.i00000001.n0000", "category::UN submission"),
+        ("UN.corpus.UNCCD.n0000", "category::UN submission"),
+        ("UN.corpus.UNCBD.n0000", "category::UN submission"),
+        ("OEP.corpus.i00000001.n0000", "category::Report"),
+        ("CPR.corpus.i00000002.n0000", "category::Litigation"),
+        ("MCF.corpus.AF.n0000", "category::Multilateral Climate Fund project"),
+        ("MCF.corpus.CIF.n0000", "category::Multilateral Climate Fund project"),
+        ("MCF.corpus.GCF.n0000", "category::Multilateral Climate Fund project"),
+        ("MCF.corpus.GEF.n0000", "category::Multilateral Climate Fund project"),
+        ("MCF.corpus.AF.Guidance", "category::Multilateral Climate Fund project"),
+        ("MCF.corpus.CIF.Guidance", "category::Multilateral Climate Fund project"),
+        ("MCF.corpus.GCF.Guidance", "category::Multilateral Climate Fund project"),
+        ("MCF.corpus.GEF.Guidance", "category::Multilateral Climate Fund project"),
     ],
 )
 def test_transform_to_category_corpus_ids(corpus_id: str, expected_category: str):
