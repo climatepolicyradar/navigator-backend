@@ -241,6 +241,15 @@ def navigator_family_with_litigation_corpus_type() -> Identified[NavigatorFamily
                         "datetime_event_name": ["Decision"],
                     },
                 ),
+                NavigatorEventFactory.build(
+                    import_id="456",
+                    event_type="Filing Year For Action",
+                    date=decision_date,
+                    valid_metadata={
+                        "event_type": ["Filing Year For Action"],
+                        "datetime_event_name": ["Filing Year For Action"],
+                    },
+                ),
             ],
             collections=[],
             geographies=[],
@@ -1357,6 +1366,15 @@ def test_transform_navigator_family_with_litigation_corpus_type(
                     id="deprecated_category::LITIGATION",
                     value="LITIGATION",
                     type="deprecated_category",
+                ),
+            ),
+            LabelRelationship(
+                type="activity_status",
+                timestamp=datetime.datetime(2020, 1, 1),
+                value=Label(
+                    type="activity_status",
+                    id="activity_status::Filed",
+                    value="Filed",
                 ),
             ),
         ],

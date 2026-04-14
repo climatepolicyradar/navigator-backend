@@ -656,6 +656,49 @@ def _transform_to_category(
     return labels
 
 
+def _transform_litigation_data(
+    navigator_family: NavigatorFamily,
+) -> Result[list[LabelRelationship], CouldNotTransform]:
+    """
+    Transform litigation-specific concepts and filing date into label relationships.
+    Only applies to the Litigation corpus.
+    """
+    labels: list[LabelRelationship] = []
+
+    if navigator_family.concepts:
+        match _transform_litigation_concepts_to_label_relationships(
+            navigator_family.concepts, navigator_family.import_id
+        ):
+            case Success(litigation_labels):
+                labels.extend(litigation_labels)
+            case Failure(e):
+                return Failure(e)
+
+    if navigator_family.events:
+        filing_event = next(
+            (
+                e
+                for e in navigator_family.events
+                if e.event_type == "Filing Year For Action"
+            ),
+            None,
+        )
+        if filing_event:
+            labels.append(
+                LabelRelationship(
+                    type="activity_status",
+                    timestamp=filing_event.date,
+                    value=Label(
+                        id="activity_status::Filed",
+                        value="Filed",
+                        type="activity_status",
+                    ),
+                )
+            )
+
+    return Success(labels)
+
+
 def _transform_navigator_family(
     navigator_family: NavigatorFamily,
 ) -> Result[Document, CouldNotTransform]:
@@ -863,15 +906,12 @@ def _transform_navigator_family(
     """
     Litigation concepts, not to be confused with other concepts these are defined by the
     Sabin Center for Climate Change Law and only apply to the Academic.corpus.Litigation.n0000 corpus.
+    We are adding also adding Litigation filing date as an attribute on the family as it is a key date
+    for litigation documents.
     """
 
-    if (
-        navigator_family.corpus.import_id == "Academic.corpus.Litigation.n0000"
-        and navigator_family.concepts
-    ):
-        match _transform_litigation_concepts_to_label_relationships(
-            navigator_family.concepts, navigator_family.import_id
-        ):
+    if navigator_family.corpus.import_id == "Academic.corpus.Litigation.n0000":
+        match _transform_litigation_data(navigator_family):
             case Success(litigation_labels):
                 labels.extend(litigation_labels)
             case Failure(e):
