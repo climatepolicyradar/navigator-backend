@@ -102,7 +102,11 @@ def create_or_update_documents(
                 where=(
                     (DBLabel.value != label_stmt.excluded.value)
                     | (DBLabel.type != label_stmt.excluded.type)
-                    | (DBLabel.attributes != label_stmt.excluded.attributes)
+                    | (
+                        DBLabel.attributes.is_distinct_from(
+                            label_stmt.excluded.attributes
+                        )
+                    )
                 ),
             )
             db.exec(label_stmt)
