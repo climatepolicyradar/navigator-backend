@@ -22,7 +22,7 @@ def upgrade() -> None:
     """Upgrade schema."""
 
     with op.batch_alter_table("label", schema=None) as batch_op:
-        batch_op.add_column(sa.Column("attributes", sa.JSON(), nullable=True))
+        batch_op.add_column(sa.Column("attributes", sa.JSON(), nullable=False))
 
     # ### end Alembic commands ###
 
