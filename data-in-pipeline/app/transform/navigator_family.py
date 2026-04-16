@@ -436,7 +436,7 @@ def _transform_geographies(
                         LabelRelationship(
                             type="geography",
                             value=Label(
-                                id=f"geography::{geography.id}",
+                                id=f"geography::{geography.name}",
                                 value=geography.name,
                                 type="geography",
                             ),
