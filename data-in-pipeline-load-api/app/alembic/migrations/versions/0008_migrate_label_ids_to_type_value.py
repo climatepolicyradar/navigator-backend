@@ -9,6 +9,7 @@ Create Date: 2026-04-14
 from collections.abc import Sequence
 
 from alembic import op
+from sqlalchemy import text
 
 # revision identifiers, used by Alembic.
 revision: str = "0008"
@@ -24,6 +25,10 @@ LABELLABELRELATIONSHIP_RELATED_LABEL_FK = (
 
 
 def upgrade() -> None:
+    # This migration does bulk UPDATE across ~1M rows in documentlabelrelationship.
+    # Disable the application-level statement_timeout for this connection only.
+    op.get_bind().execute(text("SET LOCAL statement_timeout = 0"))
+
     # Step 1: Drop FK constraints so we can freely update label.id
     op.drop_constraint(
         DOCUMENTLABELRELATIONSHIP_LABEL_FK,
