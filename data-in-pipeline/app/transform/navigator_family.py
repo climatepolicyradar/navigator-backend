@@ -281,6 +281,7 @@ def _transform_family_corpus_organisation(
         "UNFCCC.corpus.i00000001.n0000": "UNFCCC",
         "UN.corpus.UNCCD.n0000": "UNCCD",
         "UN.corpus.UNCBD.n0000": "UNCBD",
+        "ICCN.corpus.i00000001.n0000": "International Climate Councils Network",
     }
 
     provider_name = corpus_to_provider_map.get(
