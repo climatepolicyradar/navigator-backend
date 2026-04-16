@@ -960,7 +960,8 @@ def _transform_navigator_document(
 
     if navigator_family.corpus.import_id == "Academic.corpus.Litigation.n0000":
         if navigator_document.events:
-            event_type = navigator_document.events[0].event_type
+            document_event = navigator_document.events[0]
+            event_type = document_event.event_type
             labels.append(
                 LabelRelationship(
                     type="entity_type",
@@ -968,6 +969,17 @@ def _transform_navigator_document(
                         id=f"entity_type::{event_type}",
                         value=event_type,
                         type="entity_type",
+                    ),
+                )
+            )
+            labels.append(
+                LabelRelationship(
+                    type="activity_status",
+                    timestamp=document_event.date,
+                    value=Label(
+                        id="activity_status::Filed",
+                        value="Filed",
+                        type="activity_status",
                     ),
                 )
             )

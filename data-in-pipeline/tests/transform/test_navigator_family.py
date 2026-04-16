@@ -1394,6 +1394,18 @@ def test_transform_navigator_family_with_litigation_corpus_type(
                             ),
                         ),
                         LabelRelationship(
+                            timestamp=datetime.datetime(2020, 1, 1, 0, 0),
+                            type="activity_status",
+                            value=Label(
+                                attributes={},
+                                documents=[],
+                                id="activity_status::Filed",
+                                labels=[],
+                                type="activity_status",
+                                value="Filed",
+                            ),
+                        ),
+                        LabelRelationship(
                             type="provider",
                             value=Label(
                                 type="agent",
@@ -1473,6 +1485,18 @@ def test_transform_navigator_family_with_litigation_corpus_type(
                             id="entity_type::Decision",
                             value="Decision",
                             type="entity_type",
+                        ),
+                    ),
+                    LabelRelationship(
+                        timestamp=datetime.datetime(2020, 1, 1, 0, 0),
+                        type="activity_status",
+                        value=Label(
+                            attributes={},
+                            documents=[],
+                            id="activity_status::Filed",
+                            labels=[],
+                            type="activity_status",
+                            value="Filed",
                         ),
                     ),
                     LabelRelationship(
@@ -1650,6 +1674,18 @@ def test_transform_navigator_family_with_litigation_corpus_type_and_litigation_c
                             ),
                         ),
                         LabelRelationship(
+                            timestamp=datetime.datetime(2020, 1, 1, 0, 0),
+                            type="activity_status",
+                            value=Label(
+                                attributes={},
+                                documents=[],
+                                id="activity_status::Filed",
+                                labels=[],
+                                type="activity_status",
+                                value="Filed",
+                            ),
+                        ),
+                        LabelRelationship(
                             type="provider",
                             value=Label(
                                 type="agent",
@@ -1693,6 +1729,18 @@ def test_transform_navigator_family_with_litigation_corpus_type_and_litigation_c
                             id="entity_type::Decision",
                             value="Decision",
                             type="entity_type",
+                        ),
+                    ),
+                    LabelRelationship(
+                        timestamp=datetime.datetime(2020, 1, 1, 0, 0),
+                        type="activity_status",
+                        value=Label(
+                            attributes={},
+                            documents=[],
+                            id="activity_status::Filed",
+                            labels=[],
+                            type="activity_status",
+                            value="Filed",
                         ),
                     ),
                     LabelRelationship(
