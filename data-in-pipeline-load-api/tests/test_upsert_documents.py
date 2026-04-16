@@ -157,6 +157,53 @@ def test_update_existing_document(session):
     assert label.attributes == {"test-attribute": "updated-test-value"}
 
 
+@pytest.mark.parametrize(
+    "old_attributes,new_attributes",
+    [
+        ({}, {"test-attribute": "updated-test-value"}),
+        ({"test-attribute": "updated-test-value"}, {}),
+        ({"test-attribute": "old-value"}, {"test-attribute": "updated-value"}),
+        (
+            {"test-attribute": "old-value"},
+            {"test-attribute": "old-value", "test-attribute-2": "new-value"},
+        ),
+        (
+            {"test-attribute": "old-value", "test-attribute-2": "new-value"},
+            {"test-attribute": "old-value"},
+        ),
+        (
+            {"test-attribute": "old-value"},
+            {"test-attribute-2": "new-value"},
+        ),
+    ],
+)
+def test_update_existing_document_new_label_attributes(
+    session, old_attributes, new_attributes
+):
+    """Test updating an existing document with new data."""
+    initial_label = create_mock_label("update-label", "Label title", old_attributes)
+    initial_doc = create_mock_document_input("test-doc", "Doc Title", [initial_label])
+    create_or_update_documents(session, [initial_doc])
+
+    updated_label = create_mock_label(
+        initial_label.value.id,
+        initial_label.value.value,
+        new_attributes,
+    )
+    updated_doc = create_mock_document_input(
+        initial_doc.id, initial_doc.title, [updated_label]
+    )
+    result = create_or_update_documents(session, [updated_doc])
+
+    assert result == ["test-doc"]
+
+    doc = session.get(Document, "test-doc")
+    assert doc.title == "Doc Title"
+
+    label = session.get(Label, "update-label")
+    assert label.attributes == new_attributes
+
+
 def test_idempotent_operation(session):
     """Test that calling the function twice with same data has same result."""
     doc_input = create_mock_document_input("idempotent-doc", "Same Document")

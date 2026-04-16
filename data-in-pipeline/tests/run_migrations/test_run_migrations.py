@@ -21,7 +21,7 @@ def test_run_db_migrations_triggers_load_api(mock_post):
 
     mock_post.assert_called_once_with(
         url="https://test-api.example.com/load/run-migrations",
-        timeout=10,
+        timeout=120,
     )
     mock_response.raise_for_status.assert_called_once()
 
@@ -39,7 +39,7 @@ def test_run_db_migrations_adds_https_scheme_when_missing(mock_post):
 
     mock_post.assert_called_once_with(
         url="https://test-api.example.com/load/run-migrations",
-        timeout=10,
+        timeout=120,
     )
 
 

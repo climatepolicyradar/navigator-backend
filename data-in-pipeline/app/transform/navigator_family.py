@@ -291,7 +291,7 @@ def _transform_family_corpus_organisation(
             type="provider",
             value=Label(
                 type="agent",
-                id=provider_name,
+                id=f"agent::{provider_name}",
                 value=provider_name,
                 attributes={
                     "attribution_url": navigator_family.corpus.attribution_url,
@@ -322,7 +322,9 @@ def _transform_mcf_metadata(
             labels.extend(
                 LabelRelationship(
                     type=mapped_key,
-                    value=Label(id=value, value=value, type=mapped_key),
+                    value=Label(
+                        id=f"{mapped_key}::{value}", value=value, type=mapped_key
+                    ),
                 )
                 for value in values
             )
@@ -341,7 +343,7 @@ def _transform_laws_policies_metadata(metadata: dict) -> list[LabelRelationship]
             labels.append(
                 LabelRelationship(
                     type=key,
-                    value=Label(id=value, value=value, type=key),
+                    value=Label(id=f"{key}::{value}", value=value, type=key),
                 )
             )
 
@@ -433,7 +435,7 @@ def _transform_geographies(
                         LabelRelationship(
                             type="geography",
                             value=Label(
-                                id=geography.id,
+                                id=f"geography::{geography.id}",
                                 value=geography.name,
                                 type="geography",
                             ),
@@ -487,7 +489,7 @@ def _transform_litigation_concepts_to_label_relationships(
     # Build core labels indexed by (relation, id) - using a tuple here as the ids may not be unique across different concept types (relations)
     label_map: dict[tuple[str, str], LabelWithoutDocumentRelationships] = {
         (c.relation, c.id): LabelWithoutDocumentRelationships(
-            id=c.id,
+            id=f"{relation_to_type_map.get(c.relation, 'litigation_concept')}::{c.id}",
             type=relation_to_type_map.get(c.relation, "litigation_concept"),
             value=c.preferred_label,
         )
@@ -541,7 +543,7 @@ def _transform_to_category(
             LabelRelationship(
                 type="category",
                 value=Label(
-                    id="UN submission",
+                    id="category::UN submission",
                     value="UN submission",
                     type="category",
                 ),
@@ -556,7 +558,7 @@ def _transform_to_category(
             LabelRelationship(
                 type="category",
                 value=Label(
-                    id="Report",
+                    id="category::Report",
                     value="Report",
                     type="category",
                 ),
@@ -571,7 +573,7 @@ def _transform_to_category(
             LabelRelationship(
                 type="category",
                 value=Label(
-                    id="Litigation",
+                    id="category::Litigation",
                     value="Litigation",
                     type="category",
                 ),
@@ -583,7 +585,7 @@ def _transform_to_category(
             LabelRelationship(
                 type="category",
                 value=Label(
-                    id="Multilateral Climate Fund project",
+                    id="category::Multilateral Climate Fund project",
                     value="Multilateral Climate Fund project",
                     type="category",
                 ),
@@ -595,7 +597,7 @@ def _transform_to_category(
                 LabelRelationship(
                     type="entity_type",
                     value=Label(
-                        id="Guidance",
+                        id="entity_type::Guidance",
                         value="Guidance",
                         type="entity_type",
                     ),
@@ -606,7 +608,7 @@ def _transform_to_category(
                 LabelRelationship(
                     type="entity_type",
                     value=Label(
-                        id="Project",
+                        id="entity_type::Project",
                         value="Project",
                         type="entity_type",
                     ),
@@ -622,7 +624,7 @@ def _transform_to_category(
             LabelRelationship(
                 type="deprecated_category",
                 value=Label(
-                    id="Laws and Policies",
+                    id="deprecated_category::Laws and Policies",
                     value="Laws and Policies",
                     type="deprecated_category",
                 ),
@@ -633,7 +635,7 @@ def _transform_to_category(
                 LabelRelationship(
                     type="category",
                     value=Label(
-                        id="Law",
+                        id="category::Law",
                         value="Law",
                         type="category",
                     ),
@@ -644,7 +646,7 @@ def _transform_to_category(
                 LabelRelationship(
                     type="category",
                     value=Label(
-                        id="Policy",
+                        id="category::Policy",
                         value="Policy",
                         type="category",
                     ),
@@ -652,6 +654,49 @@ def _transform_to_category(
             )
 
     return labels
+
+
+def _transform_litigation_data(
+    navigator_family: NavigatorFamily,
+) -> Result[list[LabelRelationship], CouldNotTransform]:
+    """
+    Transform litigation-specific concepts and filing date into label relationships.
+    Only applies to the Litigation corpus.
+    """
+    labels: list[LabelRelationship] = []
+
+    if navigator_family.concepts:
+        match _transform_litigation_concepts_to_label_relationships(
+            navigator_family.concepts, navigator_family.import_id
+        ):
+            case Success(litigation_labels):
+                labels.extend(litigation_labels)
+            case Failure(e):
+                return Failure(e)
+
+    if navigator_family.events:
+        filing_event = next(
+            (
+                e
+                for e in navigator_family.events
+                if e.event_type == "Filing Year For Action"
+            ),
+            None,
+        )
+        if filing_event:
+            labels.append(
+                LabelRelationship(
+                    type="activity_status",
+                    timestamp=filing_event.date,
+                    value=Label(
+                        id="activity_status::Filed",
+                        value="Filed",
+                        type="activity_status",
+                    ),
+                )
+            )
+
+    return Success(labels)
 
 
 def _transform_navigator_family(
@@ -672,7 +717,7 @@ def _transform_navigator_family(
             type="status",
             value=Label(
                 type="status",
-                id="Principal",
+                id="status::Principal",
                 value="Principal",
             ),
         )
@@ -684,7 +729,7 @@ def _transform_navigator_family(
             LabelRelationship(
                 type="entity_type",
                 value=Label(
-                    id="Project",
+                    id="entity_type::Project",
                     value="Project",
                     type="entity_type",
                 ),
@@ -696,7 +741,7 @@ def _transform_navigator_family(
             LabelRelationship(
                 type="entity_type",
                 value=Label(
-                    id="Guidance",
+                    id="entity_type::Guidance",
                     value="Guidance",
                     type="entity_type",
                 ),
@@ -782,7 +827,7 @@ def _transform_navigator_family(
                     type="activity_status",
                     timestamp=event.date,
                     value=Label(
-                        id=event_type_label_id,
+                        id=f"activity_status::{event_type_label_id}",
                         value=event_type_label_id,
                         type="activity_status",
                     ),
@@ -814,7 +859,7 @@ def _transform_navigator_family(
             LabelRelationship(
                 type="author",
                 value=Label(
-                    id=author,
+                    id=f"{author_type}::{author}",
                     value=author,
                     type=author_type,
                 ),
@@ -831,7 +876,7 @@ def _transform_navigator_family(
         LabelRelationship(
             type="deprecated_category",
             value=Label(
-                id=navigator_family.category,
+                id=f"deprecated_category::{navigator_family.category}",
                 value=navigator_family.category,
                 type="deprecated_category",
             ),
@@ -861,15 +906,12 @@ def _transform_navigator_family(
     """
     Litigation concepts, not to be confused with other concepts these are defined by the
     Sabin Center for Climate Change Law and only apply to the Academic.corpus.Litigation.n0000 corpus.
+    We are adding also adding Litigation filing date as an attribute on the family as it is a key date
+    for litigation documents.
     """
 
-    if (
-        navigator_family.corpus.import_id == "Academic.corpus.Litigation.n0000"
-        and navigator_family.concepts
-    ):
-        match _transform_litigation_concepts_to_label_relationships(
-            navigator_family.concepts, navigator_family.import_id
-        ):
+    if navigator_family.corpus.import_id == "Academic.corpus.Litigation.n0000":
+        match _transform_litigation_data(navigator_family):
             case Success(litigation_labels):
                 labels.extend(litigation_labels)
             case Failure(e):
@@ -952,7 +994,7 @@ def _transform_navigator_document(
                 LabelRelationship(
                     type="entity_type",
                     value=Label(
-                        id=event_type,
+                        id=f"entity_type::{event_type}",
                         value=event_type,
                         type="entity_type",
                     ),
@@ -971,7 +1013,9 @@ def _transform_navigator_document(
             LabelRelationship(
                 type="role",
                 value=Label(
-                    id=normalised_role, value=normalised_role, type="entity_type"
+                    id=f"entity_type::{normalised_role}",
+                    value=normalised_role,
+                    type="entity_type",
                 ),
             )
         )
@@ -989,7 +1033,7 @@ def _transform_navigator_document(
             LabelRelationship(
                 type="entity_type",
                 value=Label(
-                    id=normalised_metadata_type,
+                    id=f"entity_type::{normalised_metadata_type}",
                     value=normalised_metadata_type,
                     type="entity_type",
                 ),
@@ -1003,7 +1047,7 @@ def _transform_navigator_document(
         labels.append(
             LabelRelationship(
                 type="status",
-                value=Label(id="Obsolete", value="Obsolete", type="status"),
+                value=Label(id="status::Obsolete", value="Obsolete", type="status"),
             )
         )
 
@@ -1057,7 +1101,7 @@ def _transform_navigator_document(
         labels.append(
             LabelRelationship(
                 type="language",
-                value=Label(id=lang, value=lang, type="language"),
+                value=Label(id=f"language::{lang}", value=lang, type="language"),
             )
         )
 
@@ -1092,7 +1136,7 @@ def _transform_navigator_collection(
         LabelRelationship(
             type="entity_type",
             value=Label(
-                id="Collection",
+                id="entity_type::Collection",
                 value="Collection",
                 type="entity_type",
             ),
