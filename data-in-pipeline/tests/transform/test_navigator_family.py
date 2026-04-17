@@ -778,7 +778,7 @@ def test_transform_navigator_family_with_single_matching_document(
                 type="geography",
                 value=Label(
                     type="geography",
-                    id="geography::New South Wales",
+                    id="geography::AU-NSW",
                     value="New South Wales",
                 ),
             ),
@@ -786,7 +786,7 @@ def test_transform_navigator_family_with_single_matching_document(
                 type="geography",
                 value=Label(
                     type="geography",
-                    id="geography::Australia",
+                    id="geography::AUS",
                     value="Australia",
                 ),
             ),
@@ -897,7 +897,7 @@ def test_transform_navigator_family_with_single_matching_document(
                             type="geography",
                             value=Label(
                                 type="geography",
-                                id="geography::New South Wales",
+                                id="geography::AU-NSW",
                                 value="New South Wales",
                             ),
                         ),
@@ -905,7 +905,7 @@ def test_transform_navigator_family_with_single_matching_document(
                             type="geography",
                             value=Label(
                                 type="geography",
-                                id="geography::Australia",
+                                id="geography::AUS",
                                 value="Australia",
                             ),
                         ),
@@ -1030,7 +1030,7 @@ def test_transform_navigator_family_with_single_matching_document(
                         type="geography",
                         value=Label(
                             type="geography",
-                            id="geography::New South Wales",
+                            id="geography::AU-NSW",
                             value="New South Wales",
                         ),
                     ),
@@ -1038,7 +1038,7 @@ def test_transform_navigator_family_with_single_matching_document(
                         type="geography",
                         value=Label(
                             type="geography",
-                            id="geography::Australia",
+                            id="geography::AUS",
                             value="Australia",
                         ),
                     ),
@@ -1241,7 +1241,7 @@ def test_transform_navigator_family_with_laws_and_policies_corpus_type(
             LabelRelationship(
                 type="geography",
                 value=Label(
-                    id="geography::Australia",
+                    id="geography::AUS",
                     value="Australia",
                     type="geography",
                 ),
@@ -2190,7 +2190,7 @@ def test_transform_navigator_family_with_published_and_unpublished_documents():
             LabelRelationship(
                 type="geography",
                 value=Label(
-                    id="geography::Australia",
+                    id="geography::AUS",
                     value="Australia",
                     type="geography",
                 ),
@@ -2244,7 +2244,7 @@ def test_transform_navigator_family_with_published_and_unpublished_documents():
                             type="geography",
                             value=Label(
                                 type="geography",
-                                id="geography::Australia",
+                                id="geography::AUS",
                                 value="Australia",
                             ),
                         ),
@@ -2316,7 +2316,7 @@ def test_transform_navigator_family_with_published_and_unpublished_documents():
                             type="geography",
                             value=Label(
                                 type="geography",
-                                id="geography::Australia",
+                                id="geography::AUS",
                                 value="Australia",
                             ),
                         ),
@@ -2396,7 +2396,7 @@ def test_transform_navigator_family_with_published_and_unpublished_documents():
                         type="geography",
                         value=Label(
                             type="geography",
-                            id="geography::Australia",
+                            id="geography::AUS",
                             value="Australia",
                         ),
                     ),
@@ -2473,7 +2473,7 @@ def test_transform_navigator_family_with_published_and_unpublished_documents():
                         type="geography",
                         value=Label(
                             type="geography",
-                            id="geography::Australia",
+                            id="geography::AUS",
                             value="Australia",
                         ),
                     ),
@@ -2598,7 +2598,7 @@ def test_transform_navigator_family_with_no_published_documents():
             LabelRelationship(
                 type="geography",
                 value=Label(
-                    id="geography::Australia",
+                    id="geography::AUS",
                     value="Australia",
                     type="geography",
                 ),
@@ -2652,7 +2652,7 @@ def test_transform_navigator_family_with_no_published_documents():
                             type="geography",
                             value=Label(
                                 type="geography",
-                                id="geography::Australia",
+                                id="geography::AUS",
                                 value="Australia",
                             ),
                         ),
@@ -2731,7 +2731,7 @@ def test_transform_navigator_family_with_no_published_documents():
                         type="geography",
                         value=Label(
                             type="geography",
-                            id="geography::Australia",
+                            id="geography::AUS",
                             value="Australia",
                         ),
                     ),
