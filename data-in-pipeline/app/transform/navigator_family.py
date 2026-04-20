@@ -581,6 +581,21 @@ def _transform_to_category(
             )
         )
 
+    corporate_disclosures_corpora = [
+        "CPR.corpus.i00000002.n0000",
+    ]
+    if navigator_family.corpus.import_id in corporate_disclosures_corpora:
+        labels.append(
+            LabelRelationship(
+                type="category",
+                value=Label(
+                    id="category::Corporate Disclosure",
+                    value="Corporate Disclosure",
+                    type="category",
+                ),
+            )
+        )
+
     if navigator_family.corpus.import_id in MCF_CORPORA:
         labels.append(
             LabelRelationship(

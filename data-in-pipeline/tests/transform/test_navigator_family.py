@@ -1369,6 +1369,14 @@ def test_transform_navigator_family_with_litigation_corpus_type(
                 ),
             ),
             LabelRelationship(
+                type="category",
+                value=Label(
+                    id="category::Litigation",
+                    value="Litigation",
+                    type="category",
+                ),
+            ),
+            LabelRelationship(
                 type="activity_status",
                 timestamp=datetime.datetime(2020, 1, 1),
                 value=Label(
@@ -1418,6 +1426,14 @@ def test_transform_navigator_family_with_litigation_corpus_type(
                                 },
                             ),
                         ),
+                        LabelRelationship(
+                            type="category",
+                            value=Label(
+                                id="category::Litigation",
+                                value="Litigation",
+                                type="category",
+                            ),
+                        ),
                     ],
                     attributes={
                         "deprecated_slug": "litigation-document-slug",
@@ -1452,6 +1468,14 @@ def test_transform_navigator_family_with_litigation_corpus_type(
                                     "corpus_text": "Test corpus",
                                     "corpus_image_url": "",
                                 },
+                            ),
+                        ),
+                        LabelRelationship(
+                            type="category",
+                            value=Label(
+                                id="category::Litigation",
+                                value="Litigation",
+                                type="category",
                             ),
                         ),
                     ],
@@ -1512,6 +1536,14 @@ def test_transform_navigator_family_with_litigation_corpus_type(
                             },
                         ),
                     ),
+                    LabelRelationship(
+                        type="category",
+                        value=Label(
+                            id="category::Litigation",
+                            value="Litigation",
+                            type="category",
+                        ),
+                    ),
                 ],
                 documents=[
                     DocumentRelationship(
@@ -1551,6 +1583,14 @@ def test_transform_navigator_family_with_litigation_corpus_type(
                                 "corpus_text": "Test corpus",
                                 "corpus_image_url": "",
                             },
+                        ),
+                    ),
+                    LabelRelationship(
+                        type="category",
+                        value=Label(
+                            id="category::Litigation",
+                            value="Litigation",
+                            type="category",
                         ),
                     ),
                 ],
@@ -1608,6 +1648,14 @@ def test_transform_navigator_family_with_litigation_corpus_type_and_litigation_c
                     id="deprecated_category::LITIGATION",
                     value="LITIGATION",
                     type="deprecated_category",
+                ),
+            ),
+            LabelRelationship(
+                type="category",
+                value=Label(
+                    id="category::Litigation",
+                    value="Litigation",
+                    type="category",
                 ),
             ),
             LabelRelationship(
@@ -1698,6 +1746,14 @@ def test_transform_navigator_family_with_litigation_corpus_type_and_litigation_c
                                 },
                             ),
                         ),
+                        LabelRelationship(
+                            type="category",
+                            value=Label(
+                                id="category::Litigation",
+                                value="Litigation",
+                                type="category",
+                            ),
+                        ),
                     ],
                     attributes={
                         "deprecated_slug": "litigation-document-slug",
@@ -1754,6 +1810,14 @@ def test_transform_navigator_family_with_litigation_corpus_type_and_litigation_c
                                 "corpus_text": "Test corpus",
                                 "corpus_image_url": "",
                             },
+                        ),
+                    ),
+                    LabelRelationship(
+                        type="category",
+                        value=Label(
+                            id="category::Litigation",
+                            value="Litigation",
+                            type="category",
                         ),
                     ),
                 ],
@@ -2915,7 +2979,8 @@ def test_transform_navigator_family_with_multilateral_climate_fund_guidance(
         ("UN.corpus.UNCCD.n0000", "category::UN submission"),
         ("UN.corpus.UNCBD.n0000", "category::UN submission"),
         ("OEP.corpus.i00000001.n0000", "category::Report"),
-        ("CPR.corpus.i00000002.n0000", "category::Litigation"),
+        ("CPR.corpus.i00000002.n0000", "category::Corporate Disclosure"),
+        ("Academic.corpus.Litigation.n0000", "category::Litigation"),
         ("MCF.corpus.AF.n0000", "category::Multilateral Climate Fund project"),
         ("MCF.corpus.CIF.n0000", "category::Multilateral Climate Fund project"),
         ("MCF.corpus.GCF.n0000", "category::Multilateral Climate Fund project"),
@@ -2951,6 +3016,7 @@ def test_transform_to_category_corpus_ids(corpus_id: str, expected_category: str
             geographies=[],
             slug="family-slug",
             metadata={},
+            concepts=[],
         ),
     )
 
