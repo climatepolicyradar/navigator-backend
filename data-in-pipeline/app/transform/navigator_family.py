@@ -567,7 +567,7 @@ def _transform_to_category(
         )
 
     litigation_corpora = [
-        "CPR.corpus.i00000002.n0000",
+        "Academic.corpus.Litigation.n0000",
     ]
     if navigator_family.corpus.import_id in litigation_corpora:
         labels.append(
