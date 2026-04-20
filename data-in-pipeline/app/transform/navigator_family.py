@@ -567,7 +567,7 @@ def _transform_to_category(
         )
 
     litigation_corpora = [
-        "CPR.corpus.i00000002.n0000",
+        "Academic.corpus.Litigation.n0000",
     ]
     if navigator_family.corpus.import_id in litigation_corpora:
         labels.append(
@@ -576,6 +576,21 @@ def _transform_to_category(
                 value=Label(
                     id="category::Litigation",
                     value="Litigation",
+                    type="category",
+                ),
+            )
+        )
+
+    corporate_disclosures_corpora = [
+        "CPR.corpus.i00000002.n0000",
+    ]
+    if navigator_family.corpus.import_id in corporate_disclosures_corpora:
+        labels.append(
+            LabelRelationship(
+                type="category",
+                value=Label(
+                    id="category::Corporate Disclosure",
+                    value="Corporate Disclosure",
                     type="category",
                 ),
             )
