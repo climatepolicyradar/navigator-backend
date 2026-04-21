@@ -338,7 +338,7 @@ data_in_pipeline_role_policy = aws.iam.RolePolicy(
 
 # Read-only RDS metadata for Prefect flows. NOT required for IAM DB auth
 # (that's `rds-db:connect` above) — kept as a precaution pending audit.
-# TODO: grep flow repos / check CloudTrail; remove if unused
+# TODO: grep flow repos / check CloudTrail; remove if unused.
 
 prefect_rds_describe_policy = aws.iam.RolePolicy(
     f"{name}-{environment}-prefect-rds-describe-policy",
