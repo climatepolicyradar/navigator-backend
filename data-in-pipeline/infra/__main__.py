@@ -1,3 +1,4 @@
+import json
 from pathlib import Path
 
 import components.aws as components_aws
@@ -179,7 +180,7 @@ bastion_egress_to_rds = aws.ec2.SecurityGroupRule(
 #######################################################################
 
 cluster_name = f"{name}-{environment}-aurora-cluster"
-load_db_user = config.require("load_db_user")
+api_load_writer_db_user = config.require("api_load_writer_db_user")
 
 min_instances = int(config.require("aurora_min_instances"))
 max_instances: int = int(config.require("aurora_max_instances"))
@@ -197,7 +198,7 @@ aurora_cluster = aws.rds.Cluster(
     # Retention is included in Aurora pricing for up to 7 days. Longer retention would add charges.
     backup_retention_period=retention_period_days,
     preferred_backup_window="02:00-03:00",
-    iam_database_authentication_enabled=False,  # TODO: Reenable later
+    iam_database_authentication_enabled=True,
     preferred_maintenance_window="sun:04:00-sun:05:00",
     # FIXME: https://github.com/climatepolicyradar/navigator-backend/issues/964
     deletion_protection=False,
@@ -243,8 +244,48 @@ pulumi.export(
 # When manage_master_user_password=True, master_user_secrets contains exactly one secret
 data_in_pipeline_load_api_cluster_password_secret = (
     aurora_cluster.master_user_secrets.apply(
-        lambda secrets: (secrets[0] if secrets and len(secrets) == 1 else None)
+        lambda secrets: secrets[0] if secrets and len(secrets) == 1 else None
     )
+)
+
+# Build the rds-db ARN for the load user.
+# Format: arn:aws:rds-db:REGION:ACCOUNT:dbuser:CLUSTER_RESOURCE_ID/DB_USER
+# See: https://docs.aws.amazon.com/AmazonRDS/latest/AuroraUserGuide/UsingWithRDS.IAMDBAuth.IAMPolicy.html
+current_region = aws.get_region().name
+
+api_load_writer_db_user_arn = aurora_cluster.cluster_resource_id.apply(
+    lambda resource_id: (
+        f"arn:aws:rds-db:{current_region}:{account_id}:"
+        f"dbuser:{resource_id}/{api_load_writer_db_user}"
+    )
+)
+
+api_load_writer_db_user_iam_policy = aws.iam.Policy(
+    f"{name}-{environment}-rds-iam-connect-policy",
+    name=f"{name}-{environment}-rds-iam-connect-policy",
+    description=(
+        f"Allow rds-db:connect as {api_load_writer_db_user} on {cluster_name}"
+    ),
+    policy=api_load_writer_db_user_arn.apply(
+        lambda arn: json.dumps(
+            {
+                "Version": "2012-10-17",
+                "Statement": [
+                    {
+                        "Effect": "Allow",
+                        "Action": ["rds-db:connect"],
+                        "Resource": [arn],
+                    }
+                ],
+            }
+        )
+    ),
+    tags=tags,
+)
+
+pulumi.export(
+    f"{name}-{environment}-rds-iam-connect-policy-arn",
+    api_load_writer_db_user_iam_policy.arn,
 )
 
 #######################################################################
@@ -295,32 +336,25 @@ data_in_pipeline_role_policy = aws.iam.RolePolicy(
     ).json,
 )
 
-# Construct IAM policy with cluster resource ID using apply to handle Output
-app_runner_connect_role_policy = aws.iam.RolePolicy(
-    f"{name}-aurora-iam-connect-policy",
-    name="data-in-pipeline-aurora-iam-connect-policy",
+# Read-only RDS metadata for Prefect flows. NOT required for IAM DB auth
+# (that's `rds-db:connect` above) — kept as a precaution pending audit.
+# TODO: grep flow repos / check CloudTrail; remove if unused.
+
+prefect_rds_describe_policy = aws.iam.RolePolicy(
+    f"{name}-{environment}-prefect-rds-describe-policy",
+    name=f"{name}-{environment}-prefect-rds-describe-policy",
     role=data_in_pipeline_role.id,
-    policy=aurora_cluster.cluster_resource_id.apply(
-        lambda resource_id: aws.iam.get_policy_document(
-            statements=[
-                aws.iam.GetPolicyDocumentStatementArgs(
-                    effect="Allow",
-                    actions=["rds-db:connect"],
-                    resources=[
-                        f"arn:aws:rds-db:eu-west-1:{account_id}:dbuser:{resource_id}/{load_db_user}"
-                    ],
-                ),
-                # Optional: discovery permissions
-                aws.iam.GetPolicyDocumentStatementArgs(
-                    effect="Allow",
-                    actions=[
-                        "rds:DescribeDBClusters",
-                        "rds:DescribeDBInstances",
-                    ],
-                    resources=["*"],
-                ),
-            ]
-        ).json
+    policy=json.dumps(
+        {
+            "Version": "2012-10-17",
+            "Statement": [
+                {
+                    "Effect": "Allow",
+                    "Action": ["rds:DescribeDBClusters", "rds:DescribeDBInstances"],
+                    "Resource": ["*"],
+                }
+            ],
+        }
     ),
 )
 
@@ -384,6 +418,21 @@ data_in_pipeline_load_api_instance_role = aws.iam.Role(
         ]
     ).json,
 )
+
+# Prefect ECS task role — connects to Aurora as api_load_writer via IAM auth
+prefect_rds_iam_connect_attachment = aws.iam.RolePolicyAttachment(
+    f"{name}-{environment}-prefect-rds-iam-connect-attach",
+    role=data_in_pipeline_role.name,
+    policy_arn=api_load_writer_db_user_iam_policy.arn,
+)
+
+# App Runner Load API instance role — connects to Aurora as api_load_writer via IAM auth
+load_api_rds_iam_connect_attachment = aws.iam.RolePolicyAttachment(
+    f"{name}-{environment}-load-api-rds-iam-connect-attach",
+    role=data_in_pipeline_load_api_instance_role.name,
+    policy_arn=api_load_writer_db_user_iam_policy.arn,
+)
+
 
 data_in_pipeline_load_api_load_database_url = aws.ssm.Parameter(
     "data-in-pipeline-load-api-load-database-url",
@@ -452,7 +501,7 @@ data_in_pipeline_aurora_write_replica_db_username = aws.ssm.Parameter(
 # When manage_master_user_password=True, master_user_secrets contains exactly one secret
 data_in_pipeline_aurora_write_replica_db_secrets = (
     aurora_cluster.master_user_secrets.apply(
-        lambda secrets: (secrets[0] if secrets and len(secrets) == 1 else None)
+        lambda secrets: secrets[0] if secrets and len(secrets) == 1 else None
     )
 )
 
@@ -501,7 +550,7 @@ data_in_pipeline_aurora_read_replica_db_username = aws.ssm.Parameter(
 # When manage_master_user_password=True, master_user_secrets contains exactly one secret
 data_in_pipeline_aurora_read_replica_db_secrets = (
     aurora_cluster.master_user_secrets.apply(
-        lambda secrets: (secrets[0] if secrets and len(secrets) == 1 else None)
+        lambda secrets: secrets[0] if secrets and len(secrets) == 1 else None
     )
 )
 
@@ -521,31 +570,33 @@ data_in_pipeline_load_api_instance_role_policy = aws.iam.RolePolicy(
         data_in_pipeline_aurora_read_replica_db_username.arn,
         data_in_pipeline_aurora_read_replica_db_secrets.secret_arn,
     ).apply(
-        lambda args: aws.iam.get_policy_document(
-            statements=[
-                aws.iam.GetPolicyDocumentStatementArgs(
-                    effect="Allow",
-                    actions=[
-                        "ssm:GetParameter",
-                        "ssm:GetParameters",
-                        "ssm:DescribeParameters",
-                    ],
-                    resources=[
-                        f"arn:aws:ssm:eu-west-1:{account_id}:parameter/data-in-pipeline-load-api/*",
-                        f"arn:aws:ssm:eu-west-1:{account_id}:parameter/data_in_pipeline/*",
-                        f"arn:aws:ssm:eu-west-1:{account_id}:parameter/data-in-pipeline/*",
-                    ],
-                ),
-                aws.iam.GetPolicyDocumentStatementArgs(
-                    effect="Allow",
-                    actions=[
-                        "secretsmanager:GetSecretValue",
-                        "secretsmanager:DescribeSecret",
-                    ],
-                    resources=args,
-                ),
-            ]
-        ).json
+        lambda args: (
+            aws.iam.get_policy_document(
+                statements=[
+                    aws.iam.GetPolicyDocumentStatementArgs(
+                        effect="Allow",
+                        actions=[
+                            "ssm:GetParameter",
+                            "ssm:GetParameters",
+                            "ssm:DescribeParameters",
+                        ],
+                        resources=[
+                            f"arn:aws:ssm:eu-west-1:{account_id}:parameter/data-in-pipeline-load-api/*",
+                            f"arn:aws:ssm:eu-west-1:{account_id}:parameter/data_in_pipeline/*",
+                            f"arn:aws:ssm:eu-west-1:{account_id}:parameter/data-in-pipeline/*",
+                        ],
+                    ),
+                    aws.iam.GetPolicyDocumentStatementArgs(
+                        effect="Allow",
+                        actions=[
+                            "secretsmanager:GetSecretValue",
+                            "secretsmanager:DescribeSecret",
+                        ],
+                        resources=args,
+                    ),
+                ]
+            ).json
+        )
     ),
 )
 
