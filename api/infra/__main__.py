@@ -393,7 +393,6 @@ navigator_backend_github_actions_deploy = aws.iam.Role(
                             "iam:GetRolePolicy",
                             "iam:GetRole",
                             "iam:ListRolePolicies",
-                            "iam:ListRoles",
                         ],
                         effect="Allow",
                         resources=[
