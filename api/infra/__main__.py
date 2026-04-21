@@ -382,10 +382,18 @@ navigator_backend_github_actions_deploy = aws.iam.Role(
                         ],
                     ),
                     aws.iam.GetPolicyDocumentStatementArgs(
+                        actions=["rds:DescribeDBClusters"],
+                        effect="Allow",
+                        resources=["*"],
+                    ),
+                    aws.iam.GetPolicyDocumentStatementArgs(
                         actions=[
                             "iam:PutRolePolicy",
                             "iam:DeleteRolePolicy",
                             "iam:GetRolePolicy",
+                            "iam:GetRole",
+                            "iam:ListRolePolicies",
+                            "iam:ListRoles",
                         ],
                         effect="Allow",
                         resources=[
