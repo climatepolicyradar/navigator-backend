@@ -1153,16 +1153,6 @@ def _transform_navigator_document(
     if navigator_document.md5_sum:
         attributes["md5_sum"] = navigator_document.md5_sum
 
-    """
-    Dates
-
-    These are values calculated from events.
-    """
-    if navigator_document.published_date:
-        attributes["published_date"] = navigator_document.published_date
-    if navigator_document.last_updated_date:
-        attributes["last_updated_date"] = navigator_document.last_updated_date
-
     """This field defines whether a document is available to be searched in Vespa.
     It is still used to filter out un-published or deleted documents in the frontend."""
     attributes["status"] = navigator_document.document_status
