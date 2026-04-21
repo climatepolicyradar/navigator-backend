@@ -111,6 +111,7 @@ def navigator_family_with_litigation_corpus_type() -> Identified[NavigatorFamily
                 "case_number": ["CASE-NUMBER 123"],
                 "core_object": ["Core Object 123"],
                 "status": ["Decided"],
+                "id": ["123456"],
             },
             concepts=[],
         ),
@@ -468,9 +469,11 @@ def test_transform_navigator_family_with_litigation_corpus_type(
         attributes={
             "deprecated_slug": "litigation-family-slug",
             "identifier::case_number": "CASE-NUMBER 123",
+            "identifier::provider_id": "123456",
             "published_date": "2020-01-0100:00:00Z",
             "last_updated_date": "2020-01-0100:00:00Z",
             "status": "PUBLISHED",
+            "core_object": "Core Object 123",
         },
     )
     assert_model_list_equality(

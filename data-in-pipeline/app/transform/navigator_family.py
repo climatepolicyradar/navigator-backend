@@ -414,6 +414,14 @@ def _transform_metadata_to_attributes(
     if case_number and case_number[0]:
         attributes[_identifier_attribute("case_number")] = case_number[0]
 
+    provider_id = metadata.get("id")
+    if provider_id and provider_id[0]:
+        attributes[_identifier_attribute("provider_id")] = provider_id[0]
+
+    core_object = metadata.get("core_object")
+    if core_object and core_object[0]:
+        attributes["core_object"] = core_object[0]
+
     # mcf
     project_id = metadata.get("project_id")
     if project_id and project_id[0]:
