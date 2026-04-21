@@ -45,6 +45,7 @@ LAWS_AND_POLICIES_CORPORA = {
     "CPR.corpus.i00000592.n0000",
 }
 
+LITIGATION_CORPORA = {"Academic.corpus.Litigation.n0000"}
 
 MCF_KEY_MAPPING = {"status": "project_status"}
 MCF_EXCLUDED_KEYS = {"region", "external_id"}
@@ -351,6 +352,26 @@ def _transform_laws_policies_metadata(metadata: dict) -> list[LabelRelationship]
     return labels
 
 
+def _transform_litigation_metadata(metadata: dict) -> list[LabelRelationship]:
+    labels = []
+
+    case_status = metadata.get("status")
+
+    if case_status and case_status[0]:
+        labels.append(
+            LabelRelationship(
+                type="activity_status",
+                value=Label(
+                    type="activity_status",
+                    id=f"activity_status::{case_status[0]}",
+                    value=case_status[0],
+                ),
+            )
+        )
+
+    return labels
+
+
 def _transform_metadata(navigator_family) -> list[LabelRelationship]:
     if not navigator_family.metadata:
         return []
@@ -363,6 +384,8 @@ def _transform_metadata(navigator_family) -> list[LabelRelationship]:
     if import_id in MCF_CORPORA:
         return _transform_mcf_metadata(navigator_family.metadata)
 
+    if import_id in LITIGATION_CORPORA:
+        return _transform_litigation_metadata(navigator_family.metadata)
     return []
 
 

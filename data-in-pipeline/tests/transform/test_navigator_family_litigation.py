@@ -110,6 +110,7 @@ def navigator_family_with_litigation_corpus_type() -> Identified[NavigatorFamily
             metadata={
                 "case_number": ["CASE-NUMBER 123"],
                 "core_object": ["Core Object 123"],
+                "status": ["Decided"],
             },
             concepts=[],
         ),
@@ -343,6 +344,14 @@ def test_transform_navigator_family_with_litigation_corpus_type(
                     id="category::Litigation",
                     value="Litigation",
                     type="category",
+                ),
+            ),
+            LabelRelationship(
+                type="activity_status",
+                value=Label(
+                    type="activity_status",
+                    id="activity_status::Decided",
+                    value="Decided",
                 ),
             ),
             LabelRelationship(
