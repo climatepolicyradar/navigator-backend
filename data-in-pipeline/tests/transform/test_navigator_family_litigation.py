@@ -350,14 +350,6 @@ def test_transform_navigator_family_with_litigation_corpus_type(
             ),
             LabelRelationship(
                 type="activity_status",
-                value=Label(
-                    type="activity_status",
-                    id="activity_status::Decided",
-                    value="Decided",
-                ),
-            ),
-            LabelRelationship(
-                type="activity_status",
                 timestamp=datetime.datetime(2020, 1, 1),
                 value=Label(
                     type="activity_status",
@@ -476,6 +468,7 @@ def test_transform_navigator_family_with_litigation_corpus_type(
             "status": "PUBLISHED",
             "core_object": "Core Object 123",
             "original_case_name": "Original case name",
+            "case_status": "Decided",
         },
     )
     assert_model_list_equality(

@@ -352,26 +352,6 @@ def _transform_laws_policies_metadata(metadata: dict) -> list[LabelRelationship]
     return labels
 
 
-def _transform_litigation_metadata(metadata: dict) -> list[LabelRelationship]:
-    labels = []
-
-    case_status = metadata.get("status")
-
-    if case_status and case_status[0]:
-        labels.append(
-            LabelRelationship(
-                type="activity_status",
-                value=Label(
-                    type="activity_status",
-                    id=f"activity_status::{case_status[0]}",
-                    value=case_status[0],
-                ),
-            )
-        )
-
-    return labels
-
-
 def _transform_metadata(navigator_family) -> list[LabelRelationship]:
     if not navigator_family.metadata:
         return []
@@ -384,8 +364,6 @@ def _transform_metadata(navigator_family) -> list[LabelRelationship]:
     if import_id in MCF_CORPORA:
         return _transform_mcf_metadata(navigator_family.metadata)
 
-    if import_id in LITIGATION_CORPORA:
-        return _transform_litigation_metadata(navigator_family.metadata)
     return []
 
 
@@ -425,6 +403,10 @@ def _transform_metadata_to_attributes(
     original_case_name = metadata.get("original_case_name")
     if original_case_name and original_case_name[0]:
         attributes["original_case_name"] = original_case_name[0]
+
+    case_status = metadata.get("status")
+    if case_status and case_status[0]:
+        attributes["case_status"] = case_status[0]
 
     # mcf
     project_id = metadata.get("project_id")
