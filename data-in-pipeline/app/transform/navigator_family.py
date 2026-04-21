@@ -45,6 +45,8 @@ LAWS_AND_POLICIES_CORPORA = {
     "CPR.corpus.i00000592.n0000",
 }
 
+LITIGATION_CORPORA = {"Academic.corpus.Litigation.n0000"}
+
 
 MCF_KEY_MAPPING = {"status": "project_status"}
 MCF_EXCLUDED_KEYS = {"region", "external_id"}
@@ -366,6 +368,23 @@ def _transform_metadata(navigator_family) -> list[LabelRelationship]:
     return []
 
 
+def _transform_metadata_to_attributes(
+    navigator_family: NavigatorFamily,
+) -> dict[str, str | float | bool]:
+    if not navigator_family.metadata:
+        return {}
+
+    import_id = navigator_family.corpus.import_id
+
+    if import_id in LITIGATION_CORPORA:
+        return _transform_litigation_metadata_to_attributes(navigator_family.metadata)
+
+    if import_id in MCF_CORPORA:
+        return _transform_mcf_metadata_to_attributes(navigator_family.metadata)
+
+    return {}
+
+
 def _to_float(value: str) -> float:
     try:
         return float(value)
@@ -381,17 +400,11 @@ def _float_attribute(key: str, unit: str) -> str:
     return f"{key}_{unit}"
 
 
-def _transform_metadata_to_attributes(
+def _transform_mcf_metadata_to_attributes(
     metadata: dict[str, list[str]],
 ) -> dict[str, str | float | bool]:
     attributes = {}
 
-    # litigation
-    case_number = metadata.get("case_number")
-    if case_number and case_number[0]:
-        attributes[_identifier_attribute("case_number")] = case_number[0]
-
-    # mcf
     project_id = metadata.get("project_id")
     if project_id and project_id[0]:
         attributes[_identifier_attribute("project_id")] = project_id[0]
@@ -415,6 +428,34 @@ def _transform_metadata_to_attributes(
     project_url = metadata.get("project_url")
     if project_url and project_url[0]:
         attributes["project_url"] = project_url[0]
+
+    return attributes
+
+
+def _transform_litigation_metadata_to_attributes(
+    metadata: dict[str, list[str]],
+) -> dict[str, str | float | bool]:
+    attributes = {}
+
+    case_status = metadata.get("status")
+    if case_status and case_status[0]:
+        attributes["case_status"] = case_status[0]
+
+    case_number = metadata.get("case_number")
+    if case_number and case_number[0]:
+        attributes[_identifier_attribute("case_number")] = case_number[0]
+
+    provider_id = metadata.get("id")
+    if provider_id and provider_id[0]:
+        attributes[_identifier_attribute("provider_id")] = provider_id[0]
+
+    core_object = metadata.get("core_object")
+    if core_object and core_object[0]:
+        attributes["core_object"] = core_object[0]
+
+    original_case_name = metadata.get("original_case_name")
+    if original_case_name and original_case_name[0]:
+        attributes["original_case_name"] = original_case_name[0]
 
     return attributes
 
@@ -917,7 +958,7 @@ def _transform_navigator_family(
 
     labels.extend(_transform_metadata(navigator_family))
 
-    attributes.update(_transform_metadata_to_attributes(navigator_family.metadata))
+    attributes.update(_transform_metadata_to_attributes(navigator_family))
 
     """
     Litigation concepts, not to be confused with other concepts these are defined by the
