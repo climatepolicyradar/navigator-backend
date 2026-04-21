@@ -397,7 +397,7 @@ navigator_backend_github_actions_deploy = aws.iam.Role(
                         ],
                         effect="Allow",
                         resources=[
-                            f"arn:aws:iam::{account_id}:role/prefect-data-in-pipeline-*",
+                            f"arn:aws:iam::{account_id}:role/prefect-data-in-pipeline-load-aurora-role",
                         ],
                     ),
                 ]
