@@ -112,6 +112,7 @@ def navigator_family_with_litigation_corpus_type() -> Identified[NavigatorFamily
                 "core_object": ["Core Object 123"],
                 "status": ["Decided"],
                 "id": ["123456"],
+                "original_case_name": ["Original case name"],
             },
             concepts=[],
         ),
@@ -474,6 +475,7 @@ def test_transform_navigator_family_with_litigation_corpus_type(
             "last_updated_date": "2020-01-0100:00:00Z",
             "status": "PUBLISHED",
             "core_object": "Core Object 123",
+            "original_case_name": "Original case name",
         },
     )
     assert_model_list_equality(
