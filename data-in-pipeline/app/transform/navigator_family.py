@@ -45,8 +45,6 @@ LAWS_AND_POLICIES_CORPORA = {
     "CPR.corpus.i00000592.n0000",
 }
 
-LITIGATION_CORPORA = {"Academic.corpus.Litigation.n0000"}
-
 MCF_KEY_MAPPING = {"status": "project_status"}
 MCF_EXCLUDED_KEYS = {"region", "external_id"}
 MCF_ATTRIBUTE_KEYS = {
