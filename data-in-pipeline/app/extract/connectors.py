@@ -65,6 +65,8 @@ class NavigatorCollection(BaseModel):
     description: str
     slug: str
     metadata: dict[str, list[str]] = {}
+    created: str | None = None
+    last_modified: str | None = None
 
 
 class NavigatorFamily(BaseModel):
