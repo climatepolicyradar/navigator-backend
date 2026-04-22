@@ -130,31 +130,33 @@ instance_role_policy = aws.iam.RolePolicy(
         aurora_read_replica_db_username_parameter=aurora_read_replica_db_username_parameter.arn,
         aurora_read_replica_db_secret_arn=aurora_read_replica_db_secret_arn,
     ).apply(
-        lambda args: aws.iam.get_policy_document(
-            statements=[
-                aws.iam.GetPolicyDocumentStatementArgs(
-                    effect="Allow",
-                    actions=[
-                        "ssm:GetParameter",
-                        "ssm:GetParameters",
-                        "ssm:DescribeParameters",
-                    ],
-                    resources=[
-                        args["aurora_read_replica_db_url_parameter"],
-                        args["aurora_read_replica_db_name_parameter"],
-                        args["aurora_read_replica_db_username_parameter"],
-                    ],
-                ),
-                aws.iam.GetPolicyDocumentStatementArgs(
-                    effect="Allow",
-                    actions=[
-                        "secretsmanager:GetSecretValue",
-                        "secretsmanager:DescribeSecret",
-                    ],
-                    resources=[args["aurora_read_replica_db_secret_arn"]],
-                ),
-            ]
-        ).json
+        lambda args: (
+            aws.iam.get_policy_document(
+                statements=[
+                    aws.iam.GetPolicyDocumentStatementArgs(
+                        effect="Allow",
+                        actions=[
+                            "ssm:GetParameter",
+                            "ssm:GetParameters",
+                            "ssm:DescribeParameters",
+                        ],
+                        resources=[
+                            args["aurora_read_replica_db_url_parameter"],
+                            args["aurora_read_replica_db_name_parameter"],
+                            args["aurora_read_replica_db_username_parameter"],
+                        ],
+                    ),
+                    aws.iam.GetPolicyDocumentStatementArgs(
+                        effect="Allow",
+                        actions=[
+                            "secretsmanager:GetSecretValue",
+                            "secretsmanager:DescribeSecret",
+                        ],
+                        resources=[args["aurora_read_replica_db_secret_arn"]],
+                    ),
+                ]
+            ).json
+        )
     ),
 )
 
@@ -231,13 +233,8 @@ apprunner_service = aws.apprunner.Service(
             image_configuration=aws.apprunner.ServiceSourceConfigurationImageRepositoryImageConfigurationArgs(
                 runtime_environment_secrets={
                     "LOAD_DATABASE_URL": aurora_read_replica_db_url_parameter.arn,
-                    "MANAGED_DB_PASSWORD": aurora_read_replica_db_secret_arn,
-                    "DB_MASTER_USERNAME": aurora_read_replica_db_username_parameter.arn,
-                    # TODO: ^ to be removed in a later PR in favour of 👇
                     "DB_URL": aurora_read_replica_db_url_parameter.arn,
                     "DB_NAME": aurora_read_replica_db_name_parameter.arn,
-                    "DB_USERNAME": aurora_read_replica_db_username_parameter.arn,
-                    # This is in the format `{"password": "xxx", "username": "xxx"}`
                     "DB_SECRETS": aurora_read_replica_db_secret_arn,
                 },
                 runtime_environment_variables={
