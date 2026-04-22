@@ -374,31 +374,6 @@ navigator_backend_github_actions_deploy = aws.iam.Role(
                             f"arn:aws:s3:::cpr-{stack}-document-cache/concepts/*"
                         ],
                     ),
-                    aws.iam.GetPolicyDocumentStatementArgs(
-                        actions=["rds:ModifyDBCluster"],
-                        effect="Allow",
-                        resources=[
-                            f"arn:aws:rds:*:{account_id}:cluster:data-in-pipeline-*",
-                        ],
-                    ),
-                    aws.iam.GetPolicyDocumentStatementArgs(
-                        actions=["rds:DescribeDBClusters"],
-                        effect="Allow",
-                        resources=["*"],
-                    ),
-                    aws.iam.GetPolicyDocumentStatementArgs(
-                        actions=[
-                            "iam:PutRolePolicy",
-                            "iam:DeleteRolePolicy",
-                            "iam:GetRolePolicy",
-                            "iam:GetRole",
-                            "iam:ListRolePolicies",
-                        ],
-                        effect="Allow",
-                        resources=[
-                            f"arn:aws:iam::{account_id}:role/prefect-data-in-pipeline-load-aurora-role",
-                        ],
-                    ),
                 ]
             ).json,
         )
