@@ -24,11 +24,10 @@ class Settings(BaseSettings):
     github_sha: str = "unknown"
 
     # DB connection parameters
-    db_master_username: str
-    managed_db_password: SecretStr
     load_database_url: SecretStr
     db_port: str
     db_name: str
+    aws_region: str
 
     # Connection pool parameters
     statement_timeout: str = "10000"
