@@ -33,14 +33,17 @@ services:
     working_dir: /app
     environment:
       db_master_username: data-in-pipeline-load-api
-      managed_db_password: '{"password": "data-in-pipeline-load-api", "username": "data-in-pipeline-load-api"}'
+      managed_db_password: '{"password": "data-in-pipeline-load-api",
+        "username": "data-in-pipeline-load-api"}'
       load_database_url: db
       db_port: 5432
       db_name: data-in-pipeline-load-api
       DB_URL: db
       DB_NAME: data-in-pipeline-load-api
       DB_USERNAME: data-in-pipeline-load-api
-      DB_SECRETS: '{"password": "data-in-pipeline-load-api", "username": "data-in-pipeline-load-api"}'
+      DB_SECRETS: '{"password": "data-in-pipeline-load-api", "username":
+        "data-in-pipeline-load-api"}'
+      AWS_REGION: eu-west-1
     command:
       [
         uv,
@@ -65,6 +68,7 @@ services:
       POSTGRES_USER: data-in-pipeline-load-api
       POSTGRES_PASSWORD: data-in-pipeline-load-api
       POSTGRES_DB: data-in-pipeline-load-api
+      AWS_REGION: eu-west-1
     ports:
       - 5432:5432
     healthcheck:
@@ -89,14 +93,17 @@ services:
     working_dir: /app
     environment:
       db_master_username: data-in-pipeline-load-api
-      managed_db_password: '{"password": "data-in-pipeline-load-api", "username": "data-in-pipeline-load-api"}'
+      managed_db_password: '{"password": "data-in-pipeline-load-api",
+        "username": "data-in-pipeline-load-api"}'
       load_database_url: test-db
       db_port: 5432
       db_name: data-in-pipeline-load-api
       DB_URL: test-db
       DB_NAME: data-in-pipeline-load-api
       DB_USERNAME: data-in-pipeline-load-api
-      DB_SECRETS: '{"password": "data-in-pipeline-load-api", "username": "data-in-pipeline-load-api"}'
+      DB_SECRETS: '{"password": "data-in-pipeline-load-api", "username":
+        "data-in-pipeline-load-api"}'
+      AWS_REGION: eu-west-1
     command:
       [
         uv,

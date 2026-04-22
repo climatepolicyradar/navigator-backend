@@ -495,7 +495,7 @@ data_in_pipeline_aurora_write_replica_db_username = aws.ssm.Parameter(
     ),
     description="Username for the load database",
     type=aws.ssm.ParameterType.STRING,
-    value=config.require("aurora_master_username"),
+    value=config.require("api_load_writer_db_user"),
 )
 # Get the ARN of the secret holding the master password
 # When manage_master_user_password=True, master_user_secrets contains exactly one secret
@@ -734,16 +734,12 @@ data_in_pipeline_load_api_apprunner_service = aws.apprunner.Service(
                 runtime_environment_secrets={
                     "LOAD_DATABASE_URL": data_in_pipeline_load_api_load_database_url.arn,
                     "CDN_URL": data_in_pipeline_load_api_cdn_url.arn,
-                    "MANAGED_DB_PASSWORD": data_in_pipeline_load_api_cluster_password_secret.secret_arn,
-                    # TODO: ^ to be removed in a later PR in favour of 👇
                     "DB_URL": data_in_pipeline_aurora_write_replica_db_url.arn,
                     "DB_NAME": data_in_pipeline_aurora_write_replica_db_name.arn,
-                    "DB_USERNAME": data_in_pipeline_aurora_write_replica_db_username.arn,
                     # This is in the format `{"password": "xxx", "username": "xxx"}`
                     "DB_SECRETS": data_in_pipeline_aurora_write_replica_db_secrets.secret_arn,
                 },
                 runtime_environment_variables={
-                    "DB_MASTER_USERNAME": config.require("aurora_master_username"),
                     "DB_PORT": "5432",
                     "AWS_REGION": "eu-west-1",
                 },
