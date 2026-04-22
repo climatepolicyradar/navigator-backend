@@ -97,6 +97,18 @@ def _documents_match(
     return documentA.title.lower() == documentB.title.lower()
 
 
+def _family_document_merged(
+    navigator_family: NavigatorFamily, navigator_document: NavigatorDocument
+) -> bool:
+    if navigator_document.title.lower() == "project document":
+        return True
+
+    if navigator_family.title.lower() == navigator_document.title.lower():
+        return True
+
+    return False
+
+
 def transform(
     input: Identified[NavigatorFamily],
 ) -> Result[list[Document], CouldNotTransform]:
@@ -1170,6 +1182,15 @@ def _transform_navigator_document(
         attributes["published_date"] = navigator_family.published_date
     if navigator_family.last_updated_date:
         attributes["last_updated_date"] = navigator_family.last_updated_date
+
+    # Merged - experimental and should not be relied upon
+    if _family_document_merged(navigator_family, navigator_document):
+        labels.append(
+            LabelRelationship(
+                type="status",
+                value=Label(id="status::Merged", value="Merged", type="status"),
+            )
+        )
 
     return Document(
         id=navigator_document.import_id,

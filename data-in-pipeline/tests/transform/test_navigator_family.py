@@ -513,6 +513,14 @@ def test_transform_navigator_family_with_single_matching_document(
                                 type="language",
                             ),
                         ),
+                        LabelRelationship(
+                            type="status",
+                            value=Label(
+                                id="status::Merged",
+                                value="Merged",
+                                type="status",
+                            ),
+                        ),
                     ],
                     items=[
                         Item(
@@ -650,6 +658,14 @@ def test_transform_navigator_family_with_single_matching_document(
                             id="language::fra",
                             value="fra",
                             type="language",
+                        ),
+                    ),
+                    LabelRelationship(
+                        type="status",
+                        value=Label(
+                            id="status::Merged",
+                            value="Merged",
+                            type="status",
                         ),
                     ),
                 ],
