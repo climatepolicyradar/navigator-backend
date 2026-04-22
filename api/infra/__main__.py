@@ -348,7 +348,11 @@ navigator_backend_github_actions_deploy = aws.iam.Role(
                         resources=["*"],
                     ),
                     aws.iam.GetPolicyDocumentStatementArgs(
-                        actions=["ssm:GetParameter"],
+                        actions=[
+                            "ssm:GetParameter",
+                            "ssm:GetParameters",
+                            "ssm:PutParameter",
+                        ],
                         effect="Allow",
                         resources=[
                             f"arn:aws:ssm:*:{account_id}:parameter/data-in-pipeline/*",
@@ -375,11 +379,9 @@ navigator_backend_github_actions_deploy = aws.iam.Role(
                         ],
                     ),
                     aws.iam.GetPolicyDocumentStatementArgs(
-                        actions=["ssm:PutParameter"],
+                        actions=["ssm:DescribeParameters"],
                         effect="Allow",
-                        resources=[
-                            f"arn:aws:ssm:*:{account_id}:parameter/data-in-pipeline/*",
-                        ],
+                        resources=["*"],
                     ),
                     aws.iam.GetPolicyDocumentStatementArgs(
                         actions=[
@@ -394,6 +396,16 @@ navigator_backend_github_actions_deploy = aws.iam.Role(
                         effect="Allow",
                         resources=[
                             f"arn:aws:iam::{account_id}:role/data-in-pipeline-*"
+                            f"arn:aws:iam::{account_id}:role/data-in-api-*"
+                        ],
+                    ),
+                    aws.iam.GetPolicyDocumentStatementArgs(
+                        actions=[
+                            "ssm:ListTagsForResource",
+                        ],
+                        effect="Allow",
+                        resources=[
+                            f"arn:aws:ssm:*:{account_id}:parameter/data-in-pipeline/*",
                         ],
                     ),
                 ]
