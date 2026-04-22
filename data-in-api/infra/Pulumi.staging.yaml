@@ -1,3 +1,5 @@
 config:
   aws:region: eu-west-1
   data-in-api:cdn-url: https://cdn.dev.climatepolicyradar.org
+  data-in-api:api_reader_db_user:
+    secure: AAABAJYNJE48HLvrBtyZ0fZhV/99sDn3HkYg7l5xrxWS0RpR3KeWKLlh
