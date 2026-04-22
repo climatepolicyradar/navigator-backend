@@ -130,33 +130,94 @@ instance_role_policy = aws.iam.RolePolicy(
         aurora_read_replica_db_username_parameter=aurora_read_replica_db_username_parameter.arn,
         aurora_read_replica_db_secret_arn=aurora_read_replica_db_secret_arn,
     ).apply(
-        lambda args: aws.iam.get_policy_document(
-            statements=[
-                aws.iam.GetPolicyDocumentStatementArgs(
-                    effect="Allow",
-                    actions=[
-                        "ssm:GetParameter",
-                        "ssm:GetParameters",
-                        "ssm:DescribeParameters",
-                    ],
-                    resources=[
-                        args["aurora_read_replica_db_url_parameter"],
-                        args["aurora_read_replica_db_name_parameter"],
-                        args["aurora_read_replica_db_username_parameter"],
-                    ],
-                ),
-                aws.iam.GetPolicyDocumentStatementArgs(
-                    effect="Allow",
-                    actions=[
-                        "secretsmanager:GetSecretValue",
-                        "secretsmanager:DescribeSecret",
-                    ],
-                    resources=[args["aurora_read_replica_db_secret_arn"]],
-                ),
-            ]
-        ).json
+        lambda args: (
+            aws.iam.get_policy_document(
+                statements=[
+                    aws.iam.GetPolicyDocumentStatementArgs(
+                        effect="Allow",
+                        actions=[
+                            "ssm:GetParameter",
+                            "ssm:GetParameters",
+                            "ssm:DescribeParameters",
+                        ],
+                        resources=[
+                            args["aurora_read_replica_db_url_parameter"],
+                            args["aurora_read_replica_db_name_parameter"],
+                            args["aurora_read_replica_db_username_parameter"],
+                        ],
+                    ),
+                    aws.iam.GetPolicyDocumentStatementArgs(
+                        effect="Allow",
+                        actions=[
+                            "secretsmanager:GetSecretValue",
+                            "secretsmanager:DescribeSecret",
+                        ],
+                        resources=[args["aurora_read_replica_db_secret_arn"]],
+                    ),
+                ]
+            ).json
+        )
     ),
 )
+
+
+# -----------------------------------------------------------------------------
+# IAM database authentication for the data-in-api read-only user.
+# See data-in-pipeline/infra for how the cluster-side flag is enabled and the
+# `api_load_writer` equivalent is set up. This stack reuses that cluster and
+# adds its own policy for the `api_data_reader_db_user` Postgres role.
+# -----------------------------------------------------------------------------
+api_data_reader_db_user = config.require("api_data_reader_db_user")
+
+aurora_cluster_resource_id = data_in_pipeline_stack.get_output(
+    f"data-in-pipeline-{environment}-aurora-cluster-resource-id"
+)
+
+current_region = aws.get_region().name
+
+api_data_reader_db_user_arn = aurora_cluster_resource_id.apply(
+    lambda resource_id: (
+        f"arn:aws:rds-db:{current_region}:{account_id}:"
+        f"dbuser:{resource_id}/{api_data_reader_db_user}"
+    )
+)
+
+api_data_reader_db_user_iam_policy = aws.iam.Policy(
+    f"{name}-{environment}-rds-iam-connect-policy",
+    name=f"{name}-{environment}-rds-iam-connect-policy",
+    description=(
+        f"Allow rds-db:connect as {api_data_reader_db_user} on the data-in-pipeline "
+        f"Aurora cluster ({environment})"
+    ),
+    policy=api_data_reader_db_user_arn.apply(
+        lambda arn: json.dumps(
+            {
+                "Version": "2012-10-17",
+                "Statement": [
+                    {
+                        "Effect": "Allow",
+                        "Action": ["rds-db:connect"],
+                        "Resource": [arn],
+                    }
+                ],
+            }
+        )
+    ),
+    tags=tags,
+)
+
+# App Runner instance role connects to Aurora as api_reader_db_user via IAM auth
+api_reader_rds_iam_connect_attachment = aws.iam.RolePolicyAttachment(
+    f"{name}-{environment}-api-data-reader-rds-iam-connect-attach",
+    role=instance_role.name,
+    policy_arn=api_data_reader_db_user_iam_policy.arn,
+)
+
+pulumi.export(
+    f"{name}-{environment}-rds-iam-connect-policy-arn",
+    api_data_reader_db_user_iam_policy.arn,
+)
+
 
 aws_env_stack = pulumi.StackReference(f"climatepolicyradar/aws_env/{environment}")
 vpc_id = aws_env_stack.get_output("vpc_id")
