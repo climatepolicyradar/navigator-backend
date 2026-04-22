@@ -736,7 +736,6 @@ data_in_pipeline_load_api_apprunner_service = aws.apprunner.Service(
                     "CDN_URL": data_in_pipeline_load_api_cdn_url.arn,
                     "DB_URL": data_in_pipeline_aurora_write_replica_db_url.arn,
                     "DB_NAME": data_in_pipeline_aurora_write_replica_db_name.arn,
-                    "DB_USERNAME": data_in_pipeline_aurora_write_replica_db_username.arn,
                     # This is in the format `{"password": "xxx", "username": "xxx"}`
                     "DB_SECRETS": data_in_pipeline_aurora_write_replica_db_secrets.secret_arn,
                 },
