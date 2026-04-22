@@ -374,6 +374,28 @@ navigator_backend_github_actions_deploy = aws.iam.Role(
                             f"arn:aws:s3:::cpr-{stack}-document-cache/concepts/*"
                         ],
                     ),
+                    aws.iam.GetPolicyDocumentStatementArgs(
+                        actions=["ssm:PutParameter"],
+                        effect="Allow",
+                        resources=[
+                            f"arn:aws:ssm:*:{account_id}:parameter/data-in-pipeline/*",
+                        ],
+                    ),
+                    aws.iam.GetPolicyDocumentStatementArgs(
+                        actions=[
+                            "rds:ModifyDBCluster",
+                            "rds:Describe*",
+                        ],
+                        effect="Allow",
+                        resources=["*"],
+                    ),
+                    aws.iam.GetPolicyDocumentStatementArgs(
+                        actions=["iam:PassRole"],
+                        effect="Allow",
+                        resources=[
+                            f"arn:aws:iam::{account_id}:role/data-in-pipeline-*"
+                        ],
+                    ),
                 ]
             ).json,
         )
