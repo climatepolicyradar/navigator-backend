@@ -374,6 +374,20 @@ navigator_backend_github_actions_deploy = aws.iam.Role(
                             f"arn:aws:s3:::cpr-{stack}-document-cache/concepts/*"
                         ],
                     ),
+                    aws.iam.GetPolicyDocumentStatementArgs(
+                        actions=["ssm:PutParameter"],
+                        effect="Allow",
+                        resources=[
+                            f"arn:aws:ssm:*:{account_id}:parameter/data-in-pipeline/*",
+                        ],
+                    ),
+                    aws.iam.GetPolicyDocumentStatementArgs(
+                        actions=["rds:ModifyDBCluster"],
+                        effect="Allow",
+                        resources=[
+                            f"arn:aws:rds:eu-west-1:{account_id}:cluster:data-in-pipeline-{stack}-aurora-cluster"
+                        ],
+                    ),
                 ]
             ).json,
         )
