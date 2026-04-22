@@ -26,6 +26,7 @@ class Settings(BaseSettings):
     # DB connection secrets
     db_url: SecretStr
     db_name: SecretStr
+    db_secrets: SecretStr
 
     # DB connection parameters
     db_port: str
