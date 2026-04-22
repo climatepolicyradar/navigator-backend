@@ -115,12 +115,16 @@ def navigator_family_with_single_matching_document() -> Identified[NavigatorFami
                     title="Matching title on family and document and collection",
                     description="Collection description",
                     slug="collection-matching-slug",
+                    created="2020-01-0100:00:00Z",
+                    last_modified="2020-01-0100:00:00Z",
                 ),
                 NavigatorCollectionFactory.build(
                     import_id="collection",
                     title="Collection title",
                     description="Collection description",
                     slug="collection-slug",
+                    created="2020-01-0100:00:00Z",
+                    last_modified="2020-01-0100:00:00Z",
                 ),
             ],
             geographies=["AU-NSW", "AUS", "XAA"],
@@ -419,7 +423,11 @@ def test_transform_navigator_family_with_single_matching_document(
                             ),
                         )
                     ],
-                    attributes={"deprecated_slug": "collection-slug"},
+                    attributes={
+                        "deprecated_slug": "collection-slug",
+                        "published_date": "2020-01-0100:00:00Z",
+                        "last_updated_date": "2020-01-0100:00:00Z",
+                    },
                 ),
             ),
             DocumentRelationship(
@@ -523,6 +531,8 @@ def test_transform_navigator_family_with_single_matching_document(
                         "variant": "Original language",
                         "md5_sum": "aaaaa11111bbbbb",
                         "status": "PUBLISHED",
+                        "published_date": "2020-01-0100:00:00Z",
+                        "last_updated_date": "2020-01-0100:00:00Z",
                     },
                 ),
             ),
@@ -542,7 +552,11 @@ def test_transform_navigator_family_with_single_matching_document(
                         )
                     ],
                     items=[],
-                    attributes={"deprecated_slug": "collection-matching-slug"},
+                    attributes={
+                        "deprecated_slug": "collection-matching-slug",
+                        "published_date": "2020-01-0100:00:00Z",
+                        "last_updated_date": "2020-01-0100:00:00Z",
+                    },
                 ),
             ),
         ],
@@ -664,6 +678,8 @@ def test_transform_navigator_family_with_single_matching_document(
                     "variant": "Original language",
                     "md5_sum": "aaaaa11111bbbbb",
                     "status": "PUBLISHED",
+                    "published_date": "2020-01-0100:00:00Z",
+                    "last_updated_date": "2020-01-0100:00:00Z",
                 },
             ),
             Document(
@@ -671,6 +687,8 @@ def test_transform_navigator_family_with_single_matching_document(
                 title="Matching title on family and document and collection",
                 attributes={
                     "deprecated_slug": "collection-matching-slug",
+                    "published_date": "2020-01-0100:00:00Z",
+                    "last_updated_date": "2020-01-0100:00:00Z",
                 },
                 labels=[
                     LabelRelationship(
@@ -694,6 +712,8 @@ def test_transform_navigator_family_with_single_matching_document(
             Document(
                 attributes={
                     "deprecated_slug": "collection-slug",
+                    "published_date": "2020-01-0100:00:00Z",
+                    "last_updated_date": "2020-01-0100:00:00Z",
                 },
                 id="collection",
                 title="Collection title",

@@ -1,5 +1,5 @@
 import logging
-from datetime import datetime, timezone
+from datetime import UTC, datetime
 from enum import Enum
 from pathlib import Path
 from typing import Any, Optional
@@ -163,14 +163,14 @@ class CollectionBase(SQLModel):
     title: str
     description: str
     valid_metadata: dict[str, Any]
+    created: datetime = Field(default_factory=datetime.now)
+    last_modified: datetime = Field(default_factory=datetime.now)
 
 
 class Collection(CollectionBase, table=True):
     __tablename__ = "collection"  # type: ignore[assignment]
     import_id: str = Field(primary_key=True)
 
-    created: datetime = Field(default_factory=datetime.now)
-    last_modified: datetime = Field(default_factory=datetime.now)
     valid_metadata: dict[str, Any] = Field(
         default_factory=dict, sa_column=Column(JSONB)
     )
@@ -287,7 +287,7 @@ class Family(FamilyBase, table=True):
     unparsed_slug: list[Slug] = Relationship(
         sa_relationship_kwargs={"order_by": lambda: Slug.created.desc()}  # type: ignore
     )
-    unparsed_metadata: Optional[FamilyMetadata] = Relationship()
+    unparsed_metadata: FamilyMetadata | None = Relationship()
     unparsed_events: list[FamilyEvent] = Relationship(back_populates="family")
     unparsed_collections: list[Collection] = Relationship(
         back_populates="families", link_model=CollectionFamilyLink
@@ -314,7 +314,7 @@ class FamilyPublic(FamilyBase):
     corpus: CorpusPublic = Field()
     unparsed_geographies: list[Geography] = Field(default_factory=list, exclude=True)
     unparsed_slug: list[Slug] = Field(exclude=True, default=list())
-    unparsed_metadata: Optional[FamilyMetadata] = Field(exclude=True, default=None)
+    unparsed_metadata: FamilyMetadata | None = Field(exclude=True, default=None)
     unparsed_events: list[FamilyEvent] = Field(exclude=True, default=list())
     unparsed_collections: list[Collection] = Field(exclude=True, default=list())
     family_category: str = Field(exclude=True, default="")
@@ -369,7 +369,7 @@ class FamilyPublic(FamilyBase):
     @property
     def last_updated_date(self) -> datetime | None:
         # get the most recent date that is not in the future
-        now = datetime.now(tz=timezone.utc)
+        now = datetime.now(tz=UTC)
         latest_event_date = max(
             (
                 event.date
