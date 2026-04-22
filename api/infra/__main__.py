@@ -382,10 +382,18 @@ navigator_backend_github_actions_deploy = aws.iam.Role(
                         ],
                     ),
                     aws.iam.GetPolicyDocumentStatementArgs(
-                        actions=["rds:ModifyDBCluster"],
+                        actions=[
+                            "rds:ModifyDBCluster",
+                            "rds:Describe*",
+                        ],
+                        effect="Allow",
+                        resources=["*"],
+                    ),
+                    aws.iam.GetPolicyDocumentStatementArgs(
+                        actions=["iam:PassRole"],
                         effect="Allow",
                         resources=[
-                            f"arn:aws:rds:eu-west-1:{account_id}:cluster:data-in-pipeline-{stack}-aurora-cluster"
+                            f"arn:aws:iam::{account_id}:role/data-in-pipeline-*"
                         ],
                     ),
                 ]
