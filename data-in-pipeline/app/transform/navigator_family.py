@@ -974,11 +974,7 @@ def _transform_navigator_family(
             case Failure(e):
                 return Failure(e)
 
-    """
-    Dates
-
-    These are values calculated from events.
-    """
+    """Dates"""
     if navigator_family.published_date:
         attributes["published_date"] = navigator_family.published_date
     if navigator_family.last_updated_date:
@@ -1157,6 +1153,12 @@ def _transform_navigator_document(
     It is still used to filter out un-published or deleted documents in the frontend."""
     attributes["status"] = navigator_document.document_status
 
+    """Dates"""
+    if navigator_family.published_date:
+        attributes["published_date"] = navigator_family.published_date
+    if navigator_family.last_updated_date:
+        attributes["last_updated_date"] = navigator_family.last_updated_date
+
     return Document(
         id=navigator_document.import_id,
         title=navigator_document.title,
@@ -1186,6 +1188,12 @@ def _transform_navigator_collection(
 
     if navigator_collection.slug:
         attributes["deprecated_slug"] = navigator_collection.slug
+
+    """Dates"""
+    if navigator_collection.created:
+        attributes["published_date"] = navigator_collection.created
+    if navigator_collection.last_modified:
+        attributes["last_updated_date"] = navigator_collection.last_modified
 
     return Document(
         id=navigator_collection.import_id,
