@@ -63,6 +63,8 @@ def navigator_family_with_litigation_corpus_type() -> Identified[NavigatorFamily
                             valid_metadata={
                                 "event_type": ["Decision"],
                                 "datetime_event_name": ["Decision"],
+                                "action_taken": ["Answer filed by federal defendants"],
+                                "description": ["Summary of the filed document"],
                             },
                         )
                     ],
@@ -364,6 +366,7 @@ def test_transform_navigator_family_with_litigation_corpus_type(
                 value=DocumentWithoutRelationships(
                     id="document",
                     title="Litigation family document",
+                    description="Summary of the filed document",
                     labels=[
                         LabelRelationship(
                             type="entity_type",
@@ -412,6 +415,7 @@ def test_transform_navigator_family_with_litigation_corpus_type(
                         "md5_sum": "aaaaa11111bbbbb",
                         "variant": "Original language",
                         "status": "PUBLISHED",
+                        "action_taken": "Answer filed by federal defendants",
                     },
                 ),
             ),
@@ -478,6 +482,7 @@ def test_transform_navigator_family_with_litigation_corpus_type(
             Document(
                 id="document",
                 title="Litigation family document",
+                description="Summary of the filed document",
                 labels=[
                     LabelRelationship(
                         type="entity_type",
@@ -534,6 +539,7 @@ def test_transform_navigator_family_with_litigation_corpus_type(
                     "md5_sum": "aaaaa11111bbbbb",
                     "variant": "Original language",
                     "status": "PUBLISHED",
+                    "action_taken": "Answer filed by federal defendants",
                 },
             ),
             Document(
@@ -688,6 +694,7 @@ def test_transform_navigator_family_with_litigation_corpus_type_and_litigation_c
                 value=DocumentWithoutRelationships(
                     id="document",
                     title="Litigation family document",
+                    description=None,
                     labels=[
                         LabelRelationship(
                             type="entity_type",
@@ -754,6 +761,7 @@ def test_transform_navigator_family_with_litigation_corpus_type_and_litigation_c
             Document(
                 id="document",
                 title="Litigation family document",
+                description=None,
                 labels=[
                     LabelRelationship(
                         type="entity_type",
