@@ -77,7 +77,7 @@ def _build_database_uri() -> str:
 
     return (
         f"postgresql://{username}:{token}@"
-        f"{endpoint}:{port}/{settings.db_name}"
+        f"{endpoint}:{port}/{settings.db_name.get_secret_value()}"
         f"?sslmode={settings.db_sslmode}"
     )
 
