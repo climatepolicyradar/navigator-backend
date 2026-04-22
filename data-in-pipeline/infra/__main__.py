@@ -495,7 +495,7 @@ data_in_pipeline_aurora_write_replica_db_username = aws.ssm.Parameter(
     ),
     description="Username for the load database",
     type=aws.ssm.ParameterType.STRING,
-    value=config.require("aurora_master_username"),
+    value=config.require("api_load_writer_db_user"),
 )
 # Get the ARN of the secret holding the master password
 # When manage_master_user_password=True, master_user_secrets contains exactly one secret
