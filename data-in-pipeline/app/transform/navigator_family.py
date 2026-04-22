@@ -1004,15 +1004,38 @@ def _transform_navigator_family(
     )
 
 
+def _transform_document_urls(navigator_document):
+    items = []
+    if navigator_document.cdn_object is not None:
+        items.append(
+            Item(
+                url=navigator_document.cdn_object,
+                type="cdn",
+                content_type=navigator_document.content_type,
+            )
+        )
+    if navigator_document.source_url is not None:
+        items.append(
+            Item(
+                url=navigator_document.source_url,
+                type="source",
+                content_type=navigator_document.content_type,
+            )
+        )
+    return items
+
+
 def _transform_navigator_document(
     navigator_document: NavigatorDocument, navigator_family: NavigatorFamily
 ) -> Document:
     labels: list[LabelRelationship] = []
     attributes: dict[str, str | float | bool] = {}
+    description = None
 
     if navigator_family.corpus.import_id == "Academic.corpus.Litigation.n0000":
         if navigator_document.events:
             document_event = navigator_document.events[0]
+            description = document_event.valid_metadata.get("description")
             event_type = document_event.event_type
             labels.append(
                 LabelRelationship(
@@ -1035,6 +1058,9 @@ def _transform_navigator_document(
                     ),
                 )
             )
+            action_taken = document_event.valid_metadata.get("action_taken")
+            if action_taken:
+                attributes["action_taken"] = action_taken[0]
 
     """
     These values are controlled
@@ -1095,22 +1121,8 @@ def _transform_navigator_document(
     Items
     """
     items: list[Item] = []
-    if navigator_document.cdn_object is not None:
-        items.append(
-            Item(
-                url=navigator_document.cdn_object,
-                type="cdn",
-                content_type=navigator_document.content_type,
-            )
-        )
-    if navigator_document.source_url is not None:
-        items.append(
-            Item(
-                url=navigator_document.source_url,
-                type="source",
-                content_type=navigator_document.content_type,
-            )
-        )
+
+    items.extend(_transform_document_urls(navigator_document))
 
     """
     Slug
@@ -1162,6 +1174,7 @@ def _transform_navigator_document(
     return Document(
         id=navigator_document.import_id,
         title=navigator_document.title,
+        description=description[0] if description else None,
         labels=_deduplicate_labels(labels),
         items=items,
         attributes=attributes,
