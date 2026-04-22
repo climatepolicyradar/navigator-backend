@@ -1009,10 +1009,12 @@ def _transform_navigator_document(
 ) -> Document:
     labels: list[LabelRelationship] = []
     attributes: dict[str, str | float | bool] = {}
+    description = None
 
     if navigator_family.corpus.import_id == "Academic.corpus.Litigation.n0000":
         if navigator_document.events:
             document_event = navigator_document.events[0]
+            description = document_event.valid_metadata.get("description")
             event_type = document_event.event_type
             labels.append(
                 LabelRelationship(
@@ -1035,6 +1037,9 @@ def _transform_navigator_document(
                     ),
                 )
             )
+            action_taken = document_event.valid_metadata.get("action_taken")
+            if action_taken:
+                attributes["action_taken"] = action_taken[0]
 
     """
     These values are controlled
@@ -1162,6 +1167,7 @@ def _transform_navigator_document(
     return Document(
         id=navigator_document.import_id,
         title=navigator_document.title,
+        description=description[0] if description else None,
         labels=_deduplicate_labels(labels),
         items=items,
         attributes=attributes,
