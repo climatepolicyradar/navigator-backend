@@ -68,6 +68,8 @@ def _build_database_uri() -> str:
     port = settings.db_port
     region = settings.aws_region
 
+    _LOGGER.info("Generating IAM auth token")
+
     token = rds_client.generate_db_auth_token(
         DBHostname=endpoint, Port=port, DBUsername=username, Region=region
     )

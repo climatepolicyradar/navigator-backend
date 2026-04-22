@@ -32,6 +32,7 @@ services:
       DB_URL: db
       DB_NAME: data-in-api
       DB_SECRETS: '{"password": "data-in-api", "username": "data-in-api"}'
+      AWS_REGION: eu-west-1
     command:
       [
         uv,
@@ -80,6 +81,7 @@ services:
       DB_NAME: data-in-api
       DB_USERNAME: data-in-api
       DB_SECRETS: '{"password": "data-in-api", "username": "data-in-api"}'
+      AWS_REGION: eu-west-1
     command:
       [uv, run, --project, data-in-api, pytest, data-in-api, --color=yes, -vv]
     depends_on:
