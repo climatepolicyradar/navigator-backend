@@ -24,3 +24,5 @@ config:
   data-in-pipeline:otel_python_log_level: INFO
   data-in-pipeline:api_load_writer_db_user:
     secure: AAABAOcP/EtN52XZzaZdoiyyKA0XHimxka5qAf/RRe4gefwn8w0qOxv75FCPEqo=
+  data-in-pipeline:api_data_reader_db_user:
+    secure: AAABAEi5zKN+P8hNAmURtf3hnucOp10QnzZ7Xz343BAIpkCHKD43w2kaYrqIojw=
