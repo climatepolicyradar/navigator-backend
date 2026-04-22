@@ -1004,6 +1004,27 @@ def _transform_navigator_family(
     )
 
 
+def _transform_document_urls(navigator_document):
+    items = []
+    if navigator_document.cdn_object is not None:
+        items.append(
+            Item(
+                url=navigator_document.cdn_object,
+                type="cdn",
+                content_type=navigator_document.content_type,
+            )
+        )
+    if navigator_document.source_url is not None:
+        items.append(
+            Item(
+                url=navigator_document.source_url,
+                type="source",
+                content_type=navigator_document.content_type,
+            )
+        )
+    return items
+
+
 def _transform_navigator_document(
     navigator_document: NavigatorDocument, navigator_family: NavigatorFamily
 ) -> Document:
@@ -1100,22 +1121,8 @@ def _transform_navigator_document(
     Items
     """
     items: list[Item] = []
-    if navigator_document.cdn_object is not None:
-        items.append(
-            Item(
-                url=navigator_document.cdn_object,
-                type="cdn",
-                content_type=navigator_document.content_type,
-            )
-        )
-    if navigator_document.source_url is not None:
-        items.append(
-            Item(
-                url=navigator_document.source_url,
-                type="source",
-                content_type=navigator_document.content_type,
-            )
-        )
+
+    items.extend(_transform_document_urls(navigator_document))
 
     """
     Slug
