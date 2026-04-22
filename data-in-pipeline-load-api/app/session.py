@@ -18,48 +18,6 @@ from app.settings import settings
 _LOGGER = logging.getLogger(__name__)
 
 
-username = get_ssm_parameter("data-in-pipeline-aurora-write-replica-db-username")
-
-session = get_aws_session()
-client = session.client("rds")
-
-ENDPOINT = settings.load_database_url.get_secret_value()
-PORT = settings.db_port
-REGION = settings.aws_region
-
-token = client.generate_db_auth_token(
-    DBHostname=ENDPOINT, Port=PORT, DBUsername=username, Region=REGION
-)
-
-
-SQLALCHEMY_DATABASE_URI = (
-    f"postgresql://{username}:"
-    f"{token}@"
-    f"{ENDPOINT}:"
-    f"{PORT}/{settings.db_name}?sslmode={settings.db_sslmode}"
-)
-
-_LOGGER.info(
-    f"🔌 Initialising database engine for "
-    f"{settings.load_database_url.get_secret_value()}:"
-    f"{settings.db_port}/{settings.db_name}"
-)
-
-# Engine with connection pooling to prevent connection leaks
-# Lazy initialisation - created once per worker
-_engine = create_engine(
-    SQLALCHEMY_DATABASE_URI,
-    pool_pre_ping=True,  # Verify connections before use
-    pool_size=10,  # Base connection pool size
-    max_overflow=100,  # Additional connections when pool exhausted
-    pool_recycle=840,  # Recycle every 14 min to avoid expired IAM auth tokens (15 min lifetime). https://docs.aws.amazon.com/AmazonRDS/latest/AuroraUserGuide/UsingWithRDS.IAMDBAuth.html
-    pool_timeout=30,  # Wait up to 30s for a connection before error
-    isolation_level="READ COMMITTED",  # PostgreSQL default, explicit
-    connect_args={"options": f"-c statement_timeout={settings.statement_timeout}"},
-    echo=False,  # Set to True for SQL query logging in debug
-)
-
-
 @contextmanager
 def get_db_context() -> Generator[Session, None, None]:
     """Context manager for database session lifecycle.
@@ -71,7 +29,7 @@ def get_db_context() -> Generator[Session, None, None]:
     :yields: Database session
     :rtype: Generator[Session, None, None]
     """
-    db = Session(_engine)
+    db = Session(get_engine())
     try:
         _LOGGER.debug("Database session created (context manager)")
         yield db
@@ -99,6 +57,28 @@ def get_db() -> Generator[Session, None, None]:
         yield db
 
 
+def _build_database_uri() -> str:
+    """Fetch the IAM auth token and build the SQLAlchemy URI."""
+    username = get_ssm_parameter("data-in-pipeline-aurora-write-replica-db-username")
+
+    aws_session = get_aws_session()
+    rds_client = aws_session.client("rds")
+
+    endpoint = settings.load_database_url.get_secret_value()
+    port = settings.db_port
+    region = settings.aws_region
+
+    token = rds_client.generate_db_auth_token(
+        DBHostname=endpoint, Port=port, DBUsername=username, Region=region
+    )
+
+    return (
+        f"postgresql://{username}:{token}@"
+        f"{endpoint}:{port}/{settings.db_name}"
+        f"?sslmode={settings.db_sslmode}"
+    )
+
+
 def get_engine() -> Engine:
     """Get the database engine instance.
 
@@ -108,4 +88,25 @@ def get_engine() -> Engine:
     :return: SQLModel engine instance
     :rtype: Engine
     """
+
+    _LOGGER.info(
+        f"🔌 Initialising database engine for "
+        f"{settings.load_database_url.get_secret_value()}:"
+        f"{settings.db_port}/{settings.db_name}"
+    )
+
+    # Engine with connection pooling to prevent connection leaks
+    # Lazy initialisation - created once per worker
+    _engine = create_engine(
+        _build_database_uri(),
+        pool_pre_ping=True,  # Verify connections before use
+        pool_size=10,  # Base connection pool size
+        max_overflow=100,  # Additional connections when pool exhausted
+        pool_recycle=840,  # Recycle every 14 min to avoid expired IAM auth tokens (15 min lifetime). https://docs.aws.amazon.com/AmazonRDS/latest/AuroraUserGuide/UsingWithRDS.IAMDBAuth.html
+        pool_timeout=30,  # Wait up to 30s for a connection before error
+        isolation_level="READ COMMITTED",  # PostgreSQL default, explicit
+        connect_args={"options": f"-c statement_timeout={settings.statement_timeout}"},
+        echo=False,  # Set to True for SQL query logging in debug
+    )
+
     return _engine
