@@ -9,30 +9,34 @@ import logging
 from collections.abc import Generator
 from contextlib import contextmanager
 
-from pydantic import BaseModel
 from sqlalchemy.engine import Engine
 from sqlmodel import Session, create_engine
 
+from app.aws import get_aws_session, get_ssm_parameter
 from app.settings import settings
 
 _LOGGER = logging.getLogger(__name__)
 
 
-# Connection parameters from pydantic settings (validated on import)
-class ManagedDBPassword(BaseModel):
-    username: str
-    password: str
+username = get_ssm_parameter("data-in-pipeline-aurora-write-replica-db-username")
 
+session = get_aws_session()
+client = session.client("rds")
 
-username_password = ManagedDBPassword.model_validate_json(
-    settings.managed_db_password.get_secret_value()
+ENDPOINT = settings.load_database_url.get_secret_value()
+PORT = settings.db_port
+REGION = settings.aws_region
+
+token = client.generate_db_auth_token(
+    DBHostname=ENDPOINT, Port=PORT, DBUsername=username, Region=REGION
 )
 
+
 SQLALCHEMY_DATABASE_URI = (
-    f"postgresql://{settings.db_master_username}:"
-    f"{username_password.password}@"
-    f"{settings.load_database_url.get_secret_value()}:"
-    f"{settings.db_port}/{settings.db_name}?sslmode={settings.db_sslmode}"
+    f"postgresql://{username}:"
+    f"{token}@"
+    f"{ENDPOINT}:"
+    f"{PORT}/{settings.db_name}?sslmode={settings.db_sslmode}"
 )
 
 _LOGGER.info(
@@ -48,7 +52,7 @@ _engine = create_engine(
     pool_pre_ping=True,  # Verify connections before use
     pool_size=10,  # Base connection pool size
     max_overflow=100,  # Additional connections when pool exhausted
-    pool_recycle=1800,  # Recycle connections after 30 minutes
+    pool_recycle=840,  # Recycle every 14 min to avoid expired IAM auth tokens (15 min lifetime). https://docs.aws.amazon.com/AmazonRDS/latest/AuroraUserGuide/UsingWithRDS.IAMDBAuth.html
     pool_timeout=30,  # Wait up to 30s for a connection before error
     isolation_level="READ COMMITTED",  # PostgreSQL default, explicit
     connect_args={"options": f"-c statement_timeout={settings.statement_timeout}"},
