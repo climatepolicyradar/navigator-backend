@@ -1,0 +1,4 @@
+GRANT USAGE ON SCHEMA public TO api_data_reader;
+GRANT SELECT ON ALL TABLES IN SCHEMA public TO api_data_reader;
+ALTER DEFAULT PRIVILEGES IN SCHEMA public
+  GRANT SELECT ON TABLES TO api_data_reader;

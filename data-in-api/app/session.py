@@ -8,6 +8,7 @@ sessions. Use get_db_context() for all database operations.
 import logging
 from collections.abc import Generator
 from contextlib import contextmanager
+from urllib.parse import quote_plus
 
 from sqlalchemy.engine import Engine
 from sqlmodel import Session, create_engine
@@ -60,7 +61,7 @@ def get_db() -> Generator[Session, None, None]:
 def _build_database_uri() -> str:
     """Fetch the IAM auth token and build the SQLAlchemy URI."""
 
-    username = get_ssm_parameter("data-in-pipeline-aurora-read-replica-db-username")
+    username = get_ssm_parameter("/data-in-pipeline/aurora/read-replica-db-username")
 
     aws_session = get_aws_session()
     rds_client = aws_session.client("rds")
@@ -76,7 +77,7 @@ def _build_database_uri() -> str:
     )
 
     return (
-        f"postgresql://{username}:{token}@"
+        f"postgresql://{username}:{quote_plus(token)}@"
         f"{endpoint}:{port}/{settings.db_name.get_secret_value()}"
         f"?sslmode={settings.db_sslmode}"
     )

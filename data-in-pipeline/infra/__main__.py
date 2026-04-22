@@ -199,6 +199,7 @@ aurora_cluster = aws.rds.Cluster(
     backup_retention_period=retention_period_days,
     preferred_backup_window="02:00-03:00",
     iam_database_authentication_enabled=True,
+    enable_http_endpoint=False,
     preferred_maintenance_window="sun:04:00-sun:05:00",
     # FIXME: https://github.com/climatepolicyradar/navigator-backend/issues/964
     deletion_protection=False,
@@ -738,8 +739,11 @@ data_in_pipeline_load_api_apprunner_service = aws.apprunner.Service(
                     "DB_NAME": data_in_pipeline_aurora_write_replica_db_name.arn,
                     # This is in the format `{"password": "xxx", "username": "xxx"}`
                     "DB_SECRETS": data_in_pipeline_aurora_write_replica_db_secrets.secret_arn,
+                    "DB_USERNAME": data_in_pipeline_aurora_write_replica_db_username.arn,
+                    "MANAGED_DB_PASSWORD": data_in_pipeline_load_api_cluster_password_secret.secret_arn,
                 },
                 runtime_environment_variables={
+                    "DB_MASTER_USERNAME": config.require("aurora_master_username"),
                     "DB_PORT": "5432",
                     "AWS_REGION": "eu-west-1",
                 },
@@ -848,4 +852,8 @@ pulumi.export(
 pulumi.export(
     "aurora-read-replica-security-group-id",
     aurora_security_group.id,
+)
+pulumi.export(
+    "aurora-cluster-resource-id",
+    aurora_cluster.cluster_resource_id,
 )
