@@ -60,7 +60,7 @@ def get_db() -> Generator[Session, None, None]:
 def _build_database_uri() -> str:
     """Fetch the IAM auth token and build the SQLAlchemy URI."""
 
-    username = get_ssm_parameter("data-in-pipeline-aurora-write-replica-db-username")
+    username = get_ssm_parameter("data-in-pipeline-aurora-read-replica-db-username")
 
     aws_session = get_aws_session()
     rds_client = aws_session.client("rds")
