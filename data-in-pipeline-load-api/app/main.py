@@ -1,7 +1,6 @@
 import logging
 import os
 import sys
-from contextlib import asynccontextmanager
 from pathlib import Path
 
 from api import FastAPITelemetry, ServiceManifest, SQLAlchemyTelemetry, TelemetryConfig
@@ -44,14 +43,7 @@ except Exception as _:
 telemetry = FastAPITelemetry(otel_config)
 tracer = telemetry.get_tracer()
 sqlalchemy_telemetry = SQLAlchemyTelemetry(tracer)
-
-
-@asynccontextmanager
-async def lifespan(app: FastAPI):
-    # Runs once when the server starts — not at import time
-    _LOGGER.info("⚙️ Instrumenting SQLAlchemy telemetry")
-    sqlalchemy_telemetry.instrument(get_engine())
-    yield
+sqlalchemy_telemetry.instrument(get_engine())
 
 
 # Create the FastAPI app
@@ -59,7 +51,6 @@ app = FastAPI(
     docs_url="/load/docs",
     redoc_url="/load/redoc",
     openapi_url="/load/openapi.json",
-    lifespan=lifespan,
 )
 
 # Include router in app
