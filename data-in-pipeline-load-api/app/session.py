@@ -9,7 +9,8 @@ import logging
 from collections.abc import Generator
 from contextlib import contextmanager
 
-from sqlalchemy import Engine, event
+from sqlalchemy import event
+from sqlalchemy.engine import Engine
 from sqlmodel import Session, create_engine
 
 from app.aws import get_aws_session
