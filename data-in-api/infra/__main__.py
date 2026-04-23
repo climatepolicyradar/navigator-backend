@@ -120,6 +120,10 @@ aurora_read_replica_db_security_group_id = data_in_pipeline_stack.get_output(
     "aurora-read-replica-security-group-id"
 )
 
+aurora_cluster_resource_id = data_in_pipeline_stack.require_output(
+    "aurora-cluster-resource-id"
+)
+
 instance_role_policy = aws.iam.RolePolicy(
     "data-in-api-instance-role-policy",
     name="data-in-api-instance-role-policy",
@@ -129,6 +133,8 @@ instance_role_policy = aws.iam.RolePolicy(
         aurora_read_replica_db_name_parameter=aurora_read_replica_db_name_parameter.arn,
         aurora_read_replica_db_username_parameter=aurora_read_replica_db_username_parameter.arn,
         aurora_read_replica_db_secret_arn=aurora_read_replica_db_secret_arn,
+        aurora_cluster_resource_id=aurora_cluster_resource_id,
+        db_username=aurora_read_replica_db_username_parameter.value,
     ).apply(
         lambda args: (
             aws.iam.get_policy_document(
@@ -153,6 +159,13 @@ instance_role_policy = aws.iam.RolePolicy(
                             "secretsmanager:DescribeSecret",
                         ],
                         resources=[args["aurora_read_replica_db_secret_arn"]],
+                    ),
+                    aws.iam.GetPolicyDocumentStatementArgs(
+                        effect="Allow",
+                        actions=["rds-db:connect"],
+                        resources=[
+                            f"arn:aws:rds-db:eu-west-1:{account_id}:dbuser:{args['aurora_cluster_resource_id']}/{args['db_username']}"
+                        ],
                     ),
                 ]
             ).json
@@ -249,7 +262,9 @@ apprunner_service = aws.apprunner.Service(
             image_repository_type="ECR",
         ),
     ),
-    opts=pulumi.ResourceOptions(protect=False),
+    opts=pulumi.ResourceOptions(
+        protect=False,
+    ),
 )
 
 

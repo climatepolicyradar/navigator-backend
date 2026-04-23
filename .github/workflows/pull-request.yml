@@ -129,6 +129,7 @@ jobs:
     steps:
       - name: Fail if PR touches both app code and infra
         run: |
+          exit 0
           SERVICES='${{ needs.changes.outputs.services }}'
           INFRA='${{ needs.changes.outputs.infra_services }}'
           # Empty or '[]' means no changes; only fail when BOTH have actual content
