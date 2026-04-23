@@ -392,11 +392,19 @@ navigator_backend_github_actions_deploy = aws.iam.Role(
                         resources=["*"],
                     ),
                     aws.iam.GetPolicyDocumentStatementArgs(
-                        actions=["iam:PassRole"],
+                        actions=[
+                            "iam:PassRole",
+                            "iam:DeleteRolePolicy",
+                            "iam:GetRole",
+                            "iam:ListRolePolicies",
+                            "iam:GetRolePolicy",
+                            "iam:PutRolePolicy",
+                            "iam:ListAttachedRolePolicies",
+                        ],
                         effect="Allow",
                         resources=[
-                            f"arn:aws:iam::{account_id}:role/data-in-pipeline-*"
-                            f"arn:aws:iam::{account_id}:role/data-in-api-*"
+                            f"arn:aws:iam::{account_id}:role/data-in-pipeline-*",
+                            f"arn:aws:iam::{account_id}:role/data-in-api-*",
                         ],
                     ),
                     aws.iam.GetPolicyDocumentStatementArgs(
