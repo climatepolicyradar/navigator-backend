@@ -398,6 +398,14 @@ def test_transform_navigator_family_with_multilateral_climate_fund_project(
                                 type="language",
                             ),
                         ),
+                        LabelRelationship(
+                            type="status",
+                            value=Label(
+                                id="status::Merged",
+                                value="Merged",
+                                type="status",
+                            ),
+                        ),
                     ],
                     attributes={
                         "deprecated_slug": "document-2-slug",
@@ -518,6 +526,14 @@ def test_transform_navigator_family_with_multilateral_climate_fund_project(
                             id="language::eng",
                             value="eng",
                             type="language",
+                        ),
+                    ),
+                    LabelRelationship(
+                        type="status",
+                        value=Label(
+                            id="status::Merged",
+                            value="Merged",
+                            type="status",
                         ),
                     ),
                 ],
