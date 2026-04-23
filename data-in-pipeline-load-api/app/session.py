@@ -8,7 +8,6 @@ sessions. Use get_db_context() for all database operations.
 import logging
 from collections.abc import Generator
 from contextlib import contextmanager
-from urllib.parse import quote_plus
 
 from sqlalchemy import Engine, event
 from sqlmodel import Session, create_engine
@@ -102,7 +101,7 @@ def _generate_token() -> str:
 @event.listens_for(_engine, "do_connect")
 def provide_token(dialect, conn_rec, cargs, cparams):
     _LOGGER.info("Generating fresh IAM auth token for new connection")
-    cparams["password"] = quote_plus(_generate_token())
+    cparams["password"] = _generate_token()
 
 
 def get_engine() -> Engine:
