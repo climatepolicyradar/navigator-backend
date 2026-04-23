@@ -8,6 +8,7 @@ sessions. Use get_db_context() for all database operations.
 import logging
 from collections.abc import Generator
 from contextlib import contextmanager
+from urllib.parse import quote_plus
 
 from sqlalchemy.engine import Engine
 from sqlmodel import Session, create_engine
@@ -75,7 +76,7 @@ def _build_database_uri() -> str:
     )
 
     return (
-        f"postgresql://{username}:{token}@"
+        f"postgresql://{username}:{quote_plus(token)}@"
         f"{endpoint}:{port}/{settings.db_name}"
         f"?sslmode={settings.db_sslmode}"
     )
