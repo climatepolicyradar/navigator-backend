@@ -304,6 +304,7 @@ data_in_pipeline_load_api_github_actions_role = aws.iam.Role(
                                 "iam:GetPolicy",
                                 "iam:GetRole",
                                 "acm:DescribeCertificate",
+                                "iam:PutRolePolicy",
                             ],
                             "Effect": "Allow",
                             "Resource": "*",
