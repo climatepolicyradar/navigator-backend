@@ -9,34 +9,29 @@ import logging
 from collections.abc import Generator
 from contextlib import contextmanager
 
-from pydantic import BaseModel
+from sqlalchemy import event
 from sqlalchemy.engine import Engine
 from sqlmodel import Session, create_engine
 
+from app.aws import get_aws_session
 from app.settings import settings
 
 _LOGGER = logging.getLogger(__name__)
 
-
-# Connection parameters from pydantic settings (validated on import)
-class DBSecrets(BaseModel):
-    username: str
-    password: str
-
-
-db_secrets = DBSecrets.model_validate_json(settings.db_secrets.get_secret_value())
+endpoint = settings.db_url.get_secret_value()
+port = settings.db_port
+region = settings.aws_region
+username = settings.db_username.get_secret_value()
 
 SQLALCHEMY_DATABASE_URI = (
-    f"postgresql://{db_secrets.username}:"
-    f"{db_secrets.password}@"
-    f"{settings.db_url.get_secret_value()}:"
-    f"{settings.db_port}/{settings.db_name.get_secret_value()}?sslmode={settings.db_sslmode}"
+    f"postgresql://{username}@{endpoint}:{port}/{settings.db_name}"
+    f"?sslmode={settings.db_sslmode}"
 )
 
 _LOGGER.info(
     f"🔌 Initialising database engine for "
     f"{settings.db_url.get_secret_value()}:"
-    f"{settings.db_port}/{settings.db_name.get_secret_value()}"
+    f"{settings.db_port}/{settings.db_name}"
 )
 
 # Engine with connection pooling to prevent connection leaks
@@ -46,7 +41,7 @@ _engine = create_engine(
     pool_pre_ping=True,  # Verify connections before use
     pool_size=10,  # Base connection pool size
     max_overflow=100,  # Additional connections when pool exhausted
-    pool_recycle=1800,  # Recycle connections after 30 minutes
+    pool_recycle=840,  # Recycle every 14 min to avoid expired IAM auth tokens (15 min lifetime). https://docs.aws.amazon.com/AmazonRDS/latest/AuroraUserGuide/UsingWithRDS.IAMDBAuth.html
     pool_timeout=30,  # Wait up to 30s for a connection before error
     isolation_level="READ COMMITTED",  # PostgreSQL default, explicit
     connect_args={"options": f"-c statement_timeout={settings.statement_timeout}"},
@@ -93,12 +88,25 @@ def get_db() -> Generator[Session, None, None]:
         yield db
 
 
+def _generate_token() -> str:
+    aws_session = get_aws_session()
+    rds_client = aws_session.client("rds")
+    return rds_client.generate_db_auth_token(
+        DBHostname=endpoint,
+        Port=port,
+        DBUsername=username,
+        Region=region,
+    )
+
+
+@event.listens_for(_engine, "do_connect")
+def provide_token(dialect, conn_rec, cargs, cparams):
+    _LOGGER.info("Generating fresh IAM auth token for new connection")
+    cparams["password"] = _generate_token()
+
+
 def get_engine() -> Engine:
     """Get the database engine instance.
-
-    Exposed for testing and advanced use cases. Generally prefer
-    get_db_context() for normal operations.
-
     :return: SQLModel engine instance
     :rtype: Engine
     """
