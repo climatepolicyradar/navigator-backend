@@ -18,13 +18,13 @@ from app.settings import settings
 
 _LOGGER = logging.getLogger(__name__)
 
-endpoint = settings.load_database_url.get_secret_value()
-port = settings.db_port
-region = settings.aws_region
-username = settings.db_username.get_secret_value()
+load_database_url = settings.load_database_url.get_secret_value()
+db_port = settings.db_port
+aws_region = settings.aws_region
+db_username = settings.db_username.get_secret_value()
 
 SQLALCHEMY_DATABASE_URI = (
-    f"postgresql://{username}@{endpoint}:{port}/{settings.db_name}"
+    f"postgresql://{db_username}@{load_database_url}:{db_port}/{settings.db_name}"
     f"?sslmode={settings.db_sslmode}"
 )
 
@@ -92,10 +92,10 @@ def _generate_token() -> str:
     aws_session = get_aws_session()
     rds_client = aws_session.client("rds")
     return rds_client.generate_db_auth_token(
-        DBHostname=endpoint,
-        Port=port,
-        DBUsername=username,
-        Region=region,
+        DBHostname=load_database_url,
+        Port=db_port,
+        DBUsername=db_username,
+        Region=aws_region,
     )
 
 
