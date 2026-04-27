@@ -35,11 +35,11 @@ def engine():
     """
 
     # These are provided by the test-db service from docker-compose.
-    db_host = os.getenv("db_url")
-    db_port = os.getenv("db_port")
-    db_name = os.getenv("db_name")
-    db_username = os.getenv("db_username")
-    db_password = os.getenv("db_master_password")
+    db_host = os.getenv("DB_URL")
+    db_port = os.getenv("DB_PORT")
+    db_name = os.getenv("DB_NAME")
+    db_username = os.getenv("DB_USERNAME")
+    db_password = os.getenv("DB_MASTER_PASSWORD")
 
     db_url = f"postgresql+psycopg2://{db_username}:{db_password}@{db_host}:{db_port}/{db_name}"
     engine = create_engine(db_url)
