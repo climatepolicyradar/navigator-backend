@@ -11,6 +11,9 @@ ARG ENV
 ENV ENV=${ENV}
 
 ENV SERVICE=data-in-pipeline-load-api
+# This ensures that the dependencies are installed at system python level
+# without having to activate a venv
+ENV UV_PROJECT_ENVIRONMENT="/usr/local/"
 
 # Install system dependencies required for psycopg2
 RUN apt-get update && apt-get install -y \
