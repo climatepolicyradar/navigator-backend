@@ -57,38 +57,6 @@ def engine():
 
 
 @pytest.fixture(scope="function")
-def blank_engine():
-    """Create engine with no tables for migration testing.
-
-    Drops all tables before yielding to ensure migrations can run
-    cleanly. Used specifically for testing migration endpoints.
-    """
-    # These are provided by the test-db service from docker-compose.
-    db_host = os.getenv("load_database_url")
-    db_port = os.getenv("db_port")
-    db_name = os.getenv("db_name")
-    db_user = os.getenv("db_master_username")
-    db_password = os.getenv("managed_db_password")
-
-    # Parse password from JSON if needed
-    if db_password is not None and db_password.startswith("{"):
-        db_password = json.loads(db_password)["password"]
-
-    db_url = (
-        f"postgresql+psycopg2://{db_user}:{db_password}@{db_host}:{db_port}/{db_name}"
-    )
-    engine = create_engine(db_url)
-
-    # Drop all tables to ensure clean state for migrations
-    SQLModel.metadata.drop_all(engine)
-
-    yield engine
-
-    # Clean up after test
-    SQLModel.metadata.drop_all(engine)
-
-
-@pytest.fixture(scope="function")
 def session(engine):
     """Create a database session with transaction rollback.
 
