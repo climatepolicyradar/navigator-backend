@@ -41,7 +41,7 @@ _engine = create_engine(
     pool_pre_ping=True,  # Verify connections before use
     pool_size=10,  # Base connection pool size
     max_overflow=100,  # Additional connections when pool exhausted
-    pool_recycle=840,  # Recycle every 14 min to avoid expired IAM auth tokens (15 min lifetime). https://docs.aws.amazon.com/AmazonRDS/latest/AuroraUserGuide/UsingWithRDS.IAMDBAuth.html
+    pool_recycle=600,  # Recycle every 10 min to avoid expired IAM auth tokens (15 min lifetime). https://docs.aws.amazon.com/AmazonRDS/latest/AuroraUserGuide/UsingWithRDS.IAMDBAuth.html
     pool_timeout=30,  # Wait up to 30s for a connection before error
     isolation_level="READ COMMITTED",  # PostgreSQL default, explicit
     connect_args={"options": f"-c statement_timeout={settings.statement_timeout}"},
