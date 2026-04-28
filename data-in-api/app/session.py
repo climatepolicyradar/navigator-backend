@@ -113,7 +113,6 @@ def _generate_token() -> str:
     )
 
 
-# @see:  https://docs.sqlalchemy.org/en/20/core/engines.html#generating-dynamic-authentication-tokens
 @event.listens_for(_engine, "do_connect")
 def provide_token(
     dialect: Dialect,
