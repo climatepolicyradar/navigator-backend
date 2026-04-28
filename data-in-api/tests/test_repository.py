@@ -104,8 +104,8 @@ def session_with_documents(session: Session):
     create_label(session, "Main", "Main")
     create_label(session, "Law", "Law")
 
-    create_document(session, "doc1", "Document 1", "First doc", {"status": "PUBLISHED"})
-    create_document(session, "doc2", "Document 2", "Second doc", {"status": "DELETED"})
+    create_document(session, "doc1", "Document 1", "First doc", {"status": "published"})
+    create_document(session, "doc2", "Document 2", "Second doc", {"status": "deleted"})
 
     add_item_to_document(
         session,
