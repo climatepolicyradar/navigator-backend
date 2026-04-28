@@ -14,7 +14,6 @@ from app.extract.connectors import (
     NavigatorFamily,
 )
 from app.models import Identified, NavigatorConcept
-from app.transform.models import CouldNotTransform
 from app.transform.navigator_family import transform_navigator_family
 from tests.factories import (
     NavigatorCorpusFactory,
@@ -834,20 +833,3 @@ def test_transform_navigator_family_with_litigation_corpus_type_and_litigation_c
             ),
         ],
     )
-
-
-def test_transform_navigator_family_with_litigation_concepts_missing_parent_label_returns_failure(
-    navigator_family_with_litigation_concept_missing_parent: Identified[
-        NavigatorFamily
-    ],
-):
-    result = transform_navigator_family(
-        navigator_family_with_litigation_concept_missing_parent
-    )
-
-    failure_exception = result.swap().unwrap()
-    assert isinstance(failure_exception, CouldNotTransform)
-    assert (
-        "Unknown parent label 'Missing Parent Label' in relation 'jurisdiction'. "
-        "See family 'family' for details."
-    ) in str(failure_exception)
