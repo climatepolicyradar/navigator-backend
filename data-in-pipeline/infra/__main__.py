@@ -746,6 +746,7 @@ data_in_pipeline_load_api_apprunner_service = aws.apprunner.Service(
                     "DB_MASTER_USERNAME": config.require("aurora_master_username"),
                     "DB_PORT": "5432",
                     "AWS_REGION": "eu-west-1",
+                    "DB_SSLMODE": "require",
                 },
             ),
             image_identifier=data_in_pipeline_load_api_ecr_repository.repository_url.apply(

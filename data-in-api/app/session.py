@@ -33,7 +33,7 @@ SQLALCHEMY_DATABASE_URI = (
 _LOGGER.info(
     f"🔌 Initialising database engine for "
     f"{settings.db_url.get_secret_value()}:"
-    f"{settings.db_port}/{settings.db_name}"
+    f"{settings.db_port}/{settings.db_name.get_secret_value()}"
 )
 
 # Engine with connection pooling to prevent connection leaks
