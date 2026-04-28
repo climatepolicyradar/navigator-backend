@@ -259,6 +259,7 @@ apprunner_service = aws.apprunner.Service(
                     "DB_PORT": "5432",
                     "AWS_REGION": "eu-west-1",
                     "CDN_URL": config.require("cdn-url"),
+                    "DB_SSLMODE": "require",
                 },
             ),
             image_identifier=ecr_repository.aws_ecr_repository.repository_url.apply(
