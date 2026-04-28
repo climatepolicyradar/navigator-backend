@@ -1,12 +1,9 @@
-import json
 import os
 
 import pytest
 from pydantic import BaseModel
 from pytest_alembic.config import Config as PytestAlembicConfig
 from sqlmodel import Session, SQLModel, create_engine
-
-from app.settings import settings
 
 
 @pytest.fixture
@@ -37,54 +34,17 @@ def engine():
     Uses transaction rollback in session fixture for test isolation.
     """
 
-    db_secrets = DBSecrets.model_validate_json(settings.db_secrets.get_secret_value())
     # These are provided by the test-db service from docker-compose.
-    db_host = settings.db_url.get_secret_value()
-    db_port = settings.db_port
-    db_name = settings.db_name.get_secret_value()
-    db_username = db_secrets.username
-    db_password = db_secrets.password
+    db_url = os.getenv("DB_URL")
+    db_port = os.getenv("DB_PORT")
+    db_name = os.getenv("DB_NAME")
+    db_username = os.getenv("DB_USERNAME")
+    db_password = os.getenv("DB_MASTER_PASSWORD")
 
-    # Parse password from JSON if needed
-    if db_password is not None and db_password.startswith("{"):
-        db_password = json.loads(db_password)["password"]
-
-    db_url = f"postgresql+psycopg2://{db_username}:{db_password}@{db_host}:{db_port}/{db_name}"
+    db_url = f"postgresql+psycopg2://{db_username}:{db_password}@{db_url}:{db_port}/{db_name}"
     engine = create_engine(db_url)
     SQLModel.metadata.create_all(engine)
     yield engine
-    SQLModel.metadata.drop_all(engine)
-
-
-@pytest.fixture(scope="function")
-def blank_engine():
-    """Create engine with no tables for migration testing.
-
-    Drops all tables before yielding to ensure migrations can run
-    cleanly. Used specifically for testing migration endpoints.
-    """
-    # These are provided by the test-db service from docker-compose.
-    db_host = os.getenv("load_database_url")
-    db_port = os.getenv("db_port")
-    db_name = os.getenv("db_name")
-    db_user = os.getenv("db_master_username")
-    db_password = os.getenv("managed_db_password")
-
-    # Parse password from JSON if needed
-    if db_password is not None and db_password.startswith("{"):
-        db_password = json.loads(db_password)["password"]
-
-    db_url = (
-        f"postgresql+psycopg2://{db_user}:{db_password}@{db_host}:{db_port}/{db_name}"
-    )
-    engine = create_engine(db_url)
-
-    # Drop all tables to ensure clean state for migrations
-    SQLModel.metadata.drop_all(engine)
-
-    yield engine
-
-    # Clean up after test
     SQLModel.metadata.drop_all(engine)
 
 

@@ -1,7 +1,6 @@
 import logging
 
 import pytest
-from app.repository import get_all_documents, get_document_by_id, select_label
 from data_in_models.db_models import Document as DBDocument
 from data_in_models.db_models import (
     DocumentDocumentRelationship as DBDocumentDocumentLink,
@@ -12,6 +11,8 @@ from data_in_models.db_models import Label as DBLabel
 from data_in_models.db_models import LabelLabelRelationship as DBLabelLabelRelationship
 from data_in_models.models import Document as DocumentOutput
 from sqlmodel import Session
+
+from app.repository import get_all_documents, get_document_by_id, select_label
 
 _LOGGER = logging.getLogger(__name__)
 

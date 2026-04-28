@@ -145,9 +145,9 @@ def navigator_family_multilateral_climate_fund_project() -> Identified[Navigator
 
 
 @pytest.fixture
-def navigator_family_multilateral_climate_fund_guidance() -> Identified[
-    NavigatorFamily
-]:
+def navigator_family_multilateral_climate_fund_guidance() -> (
+    Identified[NavigatorFamily]
+):
     return Identified(
         id="family",
         source="navigator_family",

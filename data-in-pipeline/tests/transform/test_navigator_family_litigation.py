@@ -211,9 +211,9 @@ def navigator_family_with_litigation_concepts() -> Identified[NavigatorFamily]:
 
 
 @pytest.fixture
-def navigator_family_with_litigation_concept_missing_parent() -> Identified[
-    NavigatorFamily
-]:
+def navigator_family_with_litigation_concept_missing_parent() -> (
+    Identified[NavigatorFamily]
+):
     decision_date = datetime.datetime(2020, 1, 1)
     return Identified(
         id="family",

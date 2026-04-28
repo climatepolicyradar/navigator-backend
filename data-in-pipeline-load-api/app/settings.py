@@ -27,6 +27,7 @@ class Settings(BaseSettings):
     load_database_url: SecretStr
     db_port: str
     db_name: str
+    db_username: SecretStr
     aws_region: str
 
     # Connection pool parameters

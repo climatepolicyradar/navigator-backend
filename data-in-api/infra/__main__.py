@@ -246,14 +246,20 @@ apprunner_service = aws.apprunner.Service(
             image_configuration=aws.apprunner.ServiceSourceConfigurationImageRepositoryImageConfigurationArgs(
                 runtime_environment_secrets={
                     "LOAD_DATABASE_URL": aurora_read_replica_db_url_parameter.arn,
+                    "MANAGED_DB_PASSWORD": aurora_read_replica_db_secret_arn,
+                    "DB_MASTER_USERNAME": aurora_read_replica_db_username_parameter.arn,
+                    # TODO: ^ to be removed in a later PR in favour of 👇
                     "DB_URL": aurora_read_replica_db_url_parameter.arn,
                     "DB_NAME": aurora_read_replica_db_name_parameter.arn,
+                    "DB_USERNAME": aurora_read_replica_db_username_parameter.arn,
+                    # This is in the format `{"password": "xxx", "username": "xxx"}`
                     "DB_SECRETS": aurora_read_replica_db_secret_arn,
                 },
                 runtime_environment_variables={
                     "DB_PORT": "5432",
                     "AWS_REGION": "eu-west-1",
                     "CDN_URL": config.require("cdn-url"),
+                    "DB_SSLMODE": "require",
                 },
             ),
             image_identifier=ecr_repository.aws_ecr_repository.repository_url.apply(
@@ -319,6 +325,8 @@ data_in_pipeline_load_api_github_actions_role = aws.iam.Role(
                                 "iam:GetPolicy",
                                 "iam:GetRole",
                                 "acm:DescribeCertificate",
+                                "iam:PutRolePolicy",
+                                "iam:DeleteRolePolicy",
                             ],
                             "Effect": "Allow",
                             "Resource": "*",

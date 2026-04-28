@@ -305,6 +305,8 @@ def create_deployment(flow: Flow) -> None:
             tag="latest",
             dockerfile="Dockerfile",
         ),
+        # this is scheduled to run daily at 5am
+        cron="0 5 * * *",
         job_variables=job_variables | network,
         build=False,
         push=False,
