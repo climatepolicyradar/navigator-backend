@@ -80,7 +80,7 @@ services:
       DB_URL: test-db
       DB_NAME: data-in-api
       DB_USERNAME: data-in-api
-      DB_SECRETS: '{"password": "data-in-api", "username": "data-in-api"}'
+      DB_MASTER_PASSWORD: data-in-api
       AWS_REGION: eu-west-1
     command:
       [uv, run, --project, data-in-api, pytest, data-in-api, --color=yes, -vv]
