@@ -561,11 +561,7 @@ def _transform_litigation_concepts_to_label_relationships(
         for parent_name in concept.subconcept_of_labels:
             parent = label_by_name.get((concept.relation, parent_name))
             if parent is None:
-                return Failure(
-                    CouldNotTransform(
-                        f"Unknown parent label {parent_name!r} in relation {concept.relation!r}. See family {family_import_id!r} for details."
-                    )
-                )
+                continue
             else:
                 parent_ref = _shallow_label(parent)
 
