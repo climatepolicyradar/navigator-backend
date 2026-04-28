@@ -26,7 +26,7 @@ aws_region = settings.aws_region
 db_username = settings.db_username.get_secret_value()
 
 SQLALCHEMY_DATABASE_URI = (
-    f"postgresql://{db_username}@{db_url}:{db_port}/{settings.db_name}"
+    f"postgresql://{db_username}@{db_url}:{db_port}/{settings.db_name.get_secret_value()}"
     f"?sslmode={settings.db_sslmode}"
 )
 
