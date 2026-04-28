@@ -1,6 +1,7 @@
 import logging
 
 import pytest
+from app.repository import get_all_documents, get_document_by_id, select_label
 from data_in_models.db_models import Document as DBDocument
 from data_in_models.db_models import (
     DocumentDocumentRelationship as DBDocumentDocumentLink,
@@ -11,8 +12,6 @@ from data_in_models.db_models import Label as DBLabel
 from data_in_models.db_models import LabelLabelRelationship as DBLabelLabelRelationship
 from data_in_models.models import Document as DocumentOutput
 from sqlmodel import Session
-
-from app.repository import get_all_documents, get_document_by_id, select_label
 
 _LOGGER = logging.getLogger(__name__)
 
@@ -167,7 +166,6 @@ def test_get_document_by_id_not_found(session_with_documents: Session):
 
 
 def test_get_all_documents_filter_by_label_existing(session_with_documents: Session):
-
     documents = get_all_documents(
         session_with_documents, page=1, page_size=10, label_id="Main"
     )
@@ -179,15 +177,14 @@ def test_get_all_documents_filter_by_label_existing(session_with_documents: Sess
 
 
 def test_get_all_documents_filter_by_status(session_with_documents: Session):
-
     documents = get_all_documents(
-        session_with_documents, page=1, page_size=10, status="PUBLISHED"
+        session_with_documents, page=1, page_size=10, status="published"
     )
 
     assert len(documents) == 1
     doc = documents[0]
     assert doc.id == "doc1"
-    assert doc.attributes["status"] == "PUBLISHED"
+    assert doc.attributes["status"] == "published"
 
 
 def test_get_all_documents_filter_when_no_status(session: Session):
@@ -198,13 +195,12 @@ def test_get_all_documents_filter_when_no_status(session: Session):
         "Document from family description",
     )
 
-    documents = get_all_documents(session, page=1, page_size=10, status="PUBLISHED")
+    documents = get_all_documents(session, page=1, page_size=10, status="published")
 
     assert len(documents) == 0
 
 
 def test_get_all_documents_filter_by_label_nonexistent(session_with_documents: Session):
-
     documents = get_all_documents(
         session_with_documents, page=1, page_size=10, label_id="NonExistentLabel"
     )

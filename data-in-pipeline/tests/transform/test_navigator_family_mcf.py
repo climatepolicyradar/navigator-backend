@@ -108,7 +108,7 @@ def navigator_family_multilateral_climate_fund_project() -> Identified[Navigator
                     md5_sum="aaaaa11111bbbbb",
                     language="eng",
                     languages=["eng"],
-                    document_status="PUBLISHED",
+                    document_status="published",
                 ),
                 NavigatorDocumentFactory.build(
                     import_id="document_2",
@@ -121,7 +121,7 @@ def navigator_family_multilateral_climate_fund_project() -> Identified[Navigator
                     md5_sum="aaaaa11111bbbbb",
                     language="eng",
                     languages=["eng"],
-                    document_status="PUBLISHED",
+                    document_status="published",
                 ),
             ],
             events=_mcf_events(),
@@ -145,9 +145,9 @@ def navigator_family_multilateral_climate_fund_project() -> Identified[Navigator
 
 
 @pytest.fixture
-def navigator_family_multilateral_climate_fund_guidance() -> (
-    Identified[NavigatorFamily]
-):
+def navigator_family_multilateral_climate_fund_guidance() -> Identified[
+    NavigatorFamily
+]:
     return Identified(
         id="family",
         source="navigator_family",
@@ -351,7 +351,7 @@ def test_transform_navigator_family_with_multilateral_climate_fund_project(
                         "deprecated_slug": "document-1-slug",
                         "variant": "Original language",
                         "md5_sum": "aaaaa11111bbbbb",
-                        "status": "PUBLISHED",
+                        "status": "published",
                     },
                 ),
             ),
@@ -411,7 +411,7 @@ def test_transform_navigator_family_with_multilateral_climate_fund_project(
                         "deprecated_slug": "document-2-slug",
                         "variant": "Original language",
                         "md5_sum": "aaaaa11111bbbbb",
-                        "status": "PUBLISHED",
+                        "status": "published",
                     },
                 ),
             ),
@@ -423,7 +423,7 @@ def test_transform_navigator_family_with_multilateral_climate_fund_project(
             "project_co_financing_usd": 100000,
             "project_fund_spend_usd": 250000,
             "project_url": "https://www.cif.org/projects",
-            "status": "PUBLISHED",
+            "status": "published",
         },
     )
     assert_model_list_equality(
@@ -484,7 +484,7 @@ def test_transform_navigator_family_with_multilateral_climate_fund_project(
                     "deprecated_slug": "document-1-slug",
                     "variant": "Original language",
                     "md5_sum": "aaaaa11111bbbbb",
-                    "status": "PUBLISHED",
+                    "status": "published",
                 },
             ),
             Document(
@@ -549,7 +549,7 @@ def test_transform_navigator_family_with_multilateral_climate_fund_project(
                     "deprecated_slug": "document-2-slug",
                     "variant": "Original language",
                     "md5_sum": "aaaaa11111bbbbb",
-                    "status": "PUBLISHED",
+                    "status": "published",
                 },
             ),
         ],

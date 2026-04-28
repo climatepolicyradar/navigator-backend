@@ -1000,10 +1000,10 @@ def _transform_navigator_family(
     """
 
     contains_published_document = [
-        doc for doc in navigator_family.documents if doc.document_status == "PUBLISHED"
+        doc for doc in navigator_family.documents if doc.document_status == "published"
     ]
     if navigator_family.documents and contains_published_document:
-        attributes["status"] = "PUBLISHED"
+        attributes["status"] = "published"
 
     return Success(
         Document(

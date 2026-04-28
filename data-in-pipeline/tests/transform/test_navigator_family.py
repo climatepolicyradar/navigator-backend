@@ -1,6 +1,11 @@
 import datetime
 
 import pytest
+from app.extract.connectors import (
+    NavigatorFamily,
+)
+from app.models import Identified
+from app.transform.navigator_family import transform_navigator_family
 from data_in_models.models import (
     Document,
     DocumentRelationship,
@@ -9,12 +14,6 @@ from data_in_models.models import (
     Label,
     LabelRelationship,
 )
-
-from app.extract.connectors import (
-    NavigatorFamily,
-)
-from app.models import Identified
-from app.transform.navigator_family import transform_navigator_family
 from tests.factories import (
     NavigatorCollectionFactory,
     NavigatorCorpusFactory,
@@ -105,7 +104,7 @@ def navigator_family_with_single_matching_document() -> Identified[NavigatorFami
                         "type": ["National Drought Plan (NDP)"],
                     },
                     slug="document-slug",
-                    document_status="PUBLISHED",
+                    document_status="published",
                 ),
             ],
             events=_standard_events(),
@@ -155,7 +154,7 @@ def navigator_family_with_no_matching_transformations() -> Identified[NavigatorF
                     import_id="456",
                     title="Test document 1",
                     events=[],
-                    document_status="PUBLISHED",
+                    document_status="published",
                 ),
             ],
             events=[],
@@ -538,7 +537,7 @@ def test_transform_navigator_family_with_single_matching_document(
                         "deprecated_slug": "document-slug",
                         "variant": "Original language",
                         "md5_sum": "aaaaa11111bbbbb",
-                        "status": "PUBLISHED",
+                        "status": "published",
                         "published_date": "2020-01-0100:00:00Z",
                         "last_updated_date": "2020-01-0100:00:00Z",
                     },
@@ -572,7 +571,7 @@ def test_transform_navigator_family_with_single_matching_document(
             "deprecated_slug": "family-slug",
             "published_date": "2020-01-0100:00:00Z",
             "last_updated_date": "2020-01-0100:00:00Z",
-            "status": "PUBLISHED",
+            "status": "published",
         },
     )
     assert_model_list_equality(
@@ -693,7 +692,7 @@ def test_transform_navigator_family_with_single_matching_document(
                     "deprecated_slug": "document-slug",
                     "variant": "Original language",
                     "md5_sum": "aaaaa11111bbbbb",
-                    "status": "PUBLISHED",
+                    "status": "published",
                     "published_date": "2020-01-0100:00:00Z",
                     "last_updated_date": "2020-01-0100:00:00Z",
                 },
@@ -969,7 +968,7 @@ def test_transform_navigator_family_with_published_and_unpublished_documents():
                     events=[],
                     valid_metadata={},
                     slug="document2-slug",
-                    document_status="PUBLISHED",
+                    document_status="published",
                 ),
             ],
             events=[],
@@ -1182,14 +1181,14 @@ def test_transform_navigator_family_with_published_and_unpublished_documents():
                         "deprecated_slug": "document2-slug",
                         "variant": "Original language",
                         "md5_sum": "aaaaa11111cccc",
-                        "status": "PUBLISHED",
+                        "status": "published",
                     },
                 ),
             ),
         ],
         attributes={
             "deprecated_slug": "family-with-different-document-statuses-slug",
-            "status": "PUBLISHED",
+            "status": "published",
         },
     )
     assert_model_list_equality(
@@ -1347,7 +1346,7 @@ def test_transform_navigator_family_with_published_and_unpublished_documents():
                     "deprecated_slug": "document2-slug",
                     "variant": "Original language",
                     "md5_sum": "aaaaa11111cccc",
-                    "status": "PUBLISHED",
+                    "status": "published",
                 },
             ),
         ],
@@ -1665,6 +1664,6 @@ def test_transform_to_category_corpus_ids(corpus_id: str, expected_category: str
     family_doc = documents[0]
 
     category_labels = [label for label in family_doc.labels if label.type == "category"]
-    assert any(
-        label.value.id == expected_category for label in category_labels
-    ), f"Expected category '{expected_category}' not found in labels for corpus '{corpus_id}'"
+    assert any(label.value.id == expected_category for label in category_labels), (
+        f"Expected category '{expected_category}' not found in labels for corpus '{corpus_id}'"
+    )
