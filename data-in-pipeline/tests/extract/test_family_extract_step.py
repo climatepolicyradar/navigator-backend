@@ -125,9 +125,11 @@ def test_extract_families_propagates_connector_failure():
         expected_error = "Failed to fetch families: API timeout"
         mock_connector_instance.fetch_families.return_value = FamilyFetchResult(
             envelopes=[],
-            failures=PageFetchFailureFactory.build(
-                page=0, error=expected_error, task_run_id="task-001"
-            ),
+            failures=[
+                PageFetchFailureFactory.build(
+                    page=0, error=expected_error, task_run_id="task-001"
+                )
+            ],
         )
 
         result = extract(invalid_ids)
@@ -153,9 +155,11 @@ def test_extract_families_handles_http_error():
         expected_error = "404 Client Error: Not Found"
         mock_connector_instance.fetch_families.return_value = FamilyFetchResult(
             envelopes=[],
-            failures=PageFetchFailureFactory.build(
-                page=0, error=expected_error, task_run_id="task-001"
-            ),
+            failures=[
+                PageFetchFailureFactory.build(
+                    page=0, error=expected_error, task_run_id="task-001"
+                )
+            ],
         )
 
         result = extract(invalid_ids)

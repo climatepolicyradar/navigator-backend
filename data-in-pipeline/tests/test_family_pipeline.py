@@ -169,9 +169,11 @@ def test_process_family_updates_flow_extraction_failure(
     expected_error = Exception("500 Internal Server Error")
     mock_connector_instance.fetch_all_families.return_value = FamilyFetchResult(
         envelopes=[],
-        failures=PageFetchFailureFactory.build(
-            page=1, error=str(expected_error), task_run_id="task-001"
-        ),
+        failures=[
+            PageFetchFailureFactory.build(
+                page=1, error=str(expected_error), task_run_id="task-001"
+            )
+        ],
     )
 
     result = data_in_pipeline()
