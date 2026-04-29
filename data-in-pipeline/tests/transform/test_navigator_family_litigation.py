@@ -59,7 +59,7 @@ def navigator_family_with_litigation_corpus_type() -> Identified[NavigatorFamily
                             import_id="123",
                             event_type="Decision",
                             date=decision_date,
-                            valid_metadata={
+                            metadata={
                                 "event_type": ["Decision"],
                                 "datetime_event_name": ["Decision"],
                                 "action_taken": ["Answer filed by federal defendants"],
@@ -90,7 +90,7 @@ def navigator_family_with_litigation_corpus_type() -> Identified[NavigatorFamily
                     import_id="123",
                     event_type="Decision",
                     date=decision_date,
-                    valid_metadata={
+                    metadata={
                         "event_type": ["Decision"],
                         "datetime_event_name": ["Decision"],
                     },
@@ -99,7 +99,7 @@ def navigator_family_with_litigation_corpus_type() -> Identified[NavigatorFamily
                     import_id="456",
                     event_type="Filing Year For Action",
                     date=decision_date,
-                    valid_metadata={
+                    metadata={
                         "event_type": ["Filing Year For Action"],
                         "datetime_event_name": ["Filing Year For Action"],
                     },
@@ -153,7 +153,7 @@ def navigator_family_with_litigation_concepts() -> Identified[NavigatorFamily]:
                             import_id="123",
                             event_type="Decision",
                             date=decision_date,
-                            valid_metadata={
+                            metadata={
                                 "event_type": ["Decision"],
                                 "datetime_event_name": ["Decision"],
                             },
@@ -170,7 +170,7 @@ def navigator_family_with_litigation_concepts() -> Identified[NavigatorFamily]:
                     import_id="123",
                     event_type="Decision",
                     date=decision_date,
-                    valid_metadata={
+                    metadata={
                         "event_type": ["Decision"],
                         "datetime_event_name": ["Decision"],
                     },
