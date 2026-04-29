@@ -112,10 +112,6 @@ aurora_read_replica_db_username_parameter = data_in_pipeline_stack.get_output(
     "aurora-read-replica-db-username-parameter-name"
 ).apply(lambda name: aws.ssm.get_parameter(name=name))
 
-aurora_read_replica_db_secret_arn = data_in_pipeline_stack.get_output(
-    "aurora-read-replica-db-secrets-secret-arn"
-)
-
 aurora_read_replica_db_security_group_id = data_in_pipeline_stack.get_output(
     "aurora-read-replica-security-group-id"
 )
@@ -132,7 +128,6 @@ instance_role_policy = aws.iam.RolePolicy(
         aurora_read_replica_db_url_parameter=aurora_read_replica_db_url_parameter.arn,
         aurora_read_replica_db_name_parameter=aurora_read_replica_db_name_parameter.arn,
         aurora_read_replica_db_username_parameter=aurora_read_replica_db_username_parameter.arn,
-        aurora_read_replica_db_secret_arn=aurora_read_replica_db_secret_arn,
         aurora_cluster_resource_id=aurora_cluster_resource_id,
         db_username=aurora_read_replica_db_username_parameter.value,
     ).apply(
@@ -151,14 +146,6 @@ instance_role_policy = aws.iam.RolePolicy(
                             args["aurora_read_replica_db_name_parameter"],
                             args["aurora_read_replica_db_username_parameter"],
                         ],
-                    ),
-                    aws.iam.GetPolicyDocumentStatementArgs(
-                        effect="Allow",
-                        actions=[
-                            "secretsmanager:GetSecretValue",
-                            "secretsmanager:DescribeSecret",
-                        ],
-                        resources=[args["aurora_read_replica_db_secret_arn"]],
                     ),
                     aws.iam.GetPolicyDocumentStatementArgs(
                         effect="Allow",
@@ -245,15 +232,9 @@ apprunner_service = aws.apprunner.Service(
         image_repository=aws.apprunner.ServiceSourceConfigurationImageRepositoryArgs(
             image_configuration=aws.apprunner.ServiceSourceConfigurationImageRepositoryImageConfigurationArgs(
                 runtime_environment_secrets={
-                    "LOAD_DATABASE_URL": aurora_read_replica_db_url_parameter.arn,
-                    "MANAGED_DB_PASSWORD": aurora_read_replica_db_secret_arn,
-                    "DB_MASTER_USERNAME": aurora_read_replica_db_username_parameter.arn,
-                    # TODO: ^ to be removed in a later PR in favour of 👇
                     "DB_URL": aurora_read_replica_db_url_parameter.arn,
                     "DB_NAME": aurora_read_replica_db_name_parameter.arn,
                     "DB_USERNAME": aurora_read_replica_db_username_parameter.arn,
-                    # This is in the format `{"password": "xxx", "username": "xxx"}`
-                    "DB_SECRETS": aurora_read_replica_db_secret_arn,
                 },
                 runtime_environment_variables={
                     "DB_PORT": "5432",
