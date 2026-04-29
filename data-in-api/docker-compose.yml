@@ -11,6 +11,7 @@ services:
       - 5432:5432
     volumes:
       - data-in-api-postgres-data:/var/lib/postgresql/data
+      - ./db/init:/docker-entrypoint-initdb.d:ro
     healthcheck:
       test: [CMD-SHELL, pg_isready -U data-in-api -d data-in-api]
       interval: 5s
