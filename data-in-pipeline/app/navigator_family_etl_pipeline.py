@@ -20,6 +20,7 @@ from app.extract.connectors import (
     FamilyFetchResult,
     NavigatorConnector,
     NavigatorFamily,
+    RecordValidationFailure,
 )
 from app.extract.enums import CheckPointStorageType
 from app.identify.navigator_family import identify_navigator_families
@@ -181,6 +182,18 @@ def cache_transform_errors(errors: list[Exception], run_id: str):
         json.dumps(error_data),
         bucket="cpr-cache",
         key=f"pipelines/data-in-pipeline/transformation_errors/{run_id}-transform-errors.json",
+    )
+
+
+@task(log_prints=True)
+def cache_extract_errors(errors: list[RecordValidationFailure], run_id: str):
+    """Cache extract errors to S3."""
+
+    error_data = [f"{e.import_ids}: {e.error}" for e in errors]
+    upload_to_s3(
+        json.dumps(error_data),
+        bucket="cpr-cache",
+        key=f"pipelines/data-in-pipeline/extract_errors/{run_id}-extract-errors.json",
     )
 
 
@@ -374,12 +387,24 @@ def data_in_pipeline(
     # EXTRACT
     # -------------------------
     extracted_result = extract(ids)
+    extract_failures = extracted_result.failures
     cache_extraction_result(extracted_result)
 
-    if extracted_result.failure is not None:
-        _LOGGER.error(f"Extraction failed: {extracted_result.failure}")
-        pipeline_metrics.record_processed(PipelineType.FAMILY, Status.FAILURE)
-        return Exception(f"Extraction failed at page {extracted_result.failure.page}")
+    if extract_failures and isinstance(extract_failures[0], RecordValidationFailure):
+        _LOGGER.error(f"Extraction failed for some families: {extract_failures}")
+        pipeline_metrics.record_processed(PipelineType.FAMILY, Status.PARTIAL)
+        cache_extract_errors(extract_failures, run_id)  # type: ignore
+        asyncio.run(
+            SlackNotify.send_custom_message(
+                message=(
+                    f"⚠️ *Partial extract failure* in `{run_id}`\n"
+                    f"*Failed:* {len(extract_failures)} families\n"
+                    f"*Succeeded:* {len(extracted_result.envelopes)}\n"
+                    f"Failed IDs cached to S3 → `s3://cpr-cache/pipelines/data-in-pipeline/extract_errors/{run_id}-extract-errors.json`"
+                )
+            )
+        )
+        pipeline_metrics.record_processed(PipelineType.FAMILY, Status.PARTIAL)
 
     envelopes = extracted_result.envelopes
 
