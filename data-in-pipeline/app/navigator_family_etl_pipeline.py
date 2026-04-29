@@ -376,10 +376,10 @@ def data_in_pipeline(
     extracted_result = extract(ids)
     cache_extraction_result(extracted_result)
 
-    if extracted_result.failure is not None:
-        _LOGGER.error(f"Extraction failed: {extracted_result.failure}")
+    if extracted_result.failures is not None:
+        _LOGGER.error(f"Extraction failed: {extracted_result.failures}")
         pipeline_metrics.record_processed(PipelineType.FAMILY, Status.FAILURE)
-        return Exception(f"Extraction failed at page {extracted_result.failure.page}")
+        return Exception(f"Extraction failed at page {extracted_result.failures.page}")
 
     envelopes = extracted_result.envelopes
 

@@ -182,7 +182,7 @@ def test_fetch_all_families_successfully(base_config):
     ):
         result = connector.fetch_all_families(task_run_id, flow_run_id)
 
-    assert result.failure is None
+    assert result.failures is None
     expected_num_families = 2
     assert len(result.envelopes) == expected_num_families
     assert (
@@ -207,7 +207,7 @@ def test_fetch_all_families_no_data_returned_from_endpoint(base_config):
     with patch.object(connector, "get", return_value=mock_empty_page):
         result = connector.fetch_all_families(task_run_id, flow_run_id)
 
-    assert result.failure is None
+    assert result.failures is None
     assert len(result.envelopes) == 0
     connector.close()
 
@@ -247,11 +247,11 @@ def test_fetch_all_families_handles_successful_retrievals_and_errors(base_config
     ):
         result = connector.fetch_all_families(task_run_id, flow_run_id)
 
-    assert result.failure is not None
-    assert isinstance(result.failure, PageFetchFailure)
+    assert result.failures is not None
+    assert isinstance(result.failures, PageFetchFailure)
     expected_page_num_to_fail = 2
-    assert result.failure.page == expected_page_num_to_fail
-    assert "500 Internal Server Error" in result.failure.error
+    assert result.failures.page == expected_page_num_to_fail
+    assert "500 Internal Server Error" in result.failures.error
     assert len(result.envelopes) == 1
     assert (
         result.envelopes[0].source_record_id
@@ -271,9 +271,9 @@ def test_fetch_all_families_handles_errors(base_config):
     with patch.object(connector, "get", side_effect=unexpected_error):
         result = connector.fetch_all_families(task_run_id, flow_run_id)
 
-    assert result.failure is not None
-    assert isinstance(result.failure, PageFetchFailure)
-    assert result.failure.page == 1
-    assert "Unexpected parsing error" in result.failure.error
+    assert result.failures is not None
+    assert isinstance(result.failures, PageFetchFailure)
+    assert result.failures.page == 1
+    assert "Unexpected parsing error" in result.failures.error
     assert len(result.envelopes) == 0
     connector.close()

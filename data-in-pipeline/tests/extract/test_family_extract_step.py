@@ -96,12 +96,12 @@ def test_extract_families_handles_valid_ids_success():
         )
 
         mock_connector_instance.fetch_families.return_value = FamilyFetchResult(
-            envelopes=[mock_envelope], failure=None
+            envelopes=[mock_envelope], failures=None
         )
 
         result = extract(valid_ids)
 
-    assert result.failure is None
+    assert result.failures is None
     assert len(result.envelopes) == 1
     assert result.envelopes[0].source_name == "navigator_family"
     expected_family_count = 2
@@ -125,16 +125,16 @@ def test_extract_families_propagates_connector_failure():
         expected_error = "Failed to fetch families: API timeout"
         mock_connector_instance.fetch_families.return_value = FamilyFetchResult(
             envelopes=[],
-            failure=PageFetchFailureFactory.build(
+            failures=PageFetchFailureFactory.build(
                 page=0, error=expected_error, task_run_id="task-001"
             ),
         )
 
         result = extract(invalid_ids)
 
-    assert result.failure is not None
-    assert isinstance(result.failure, PageFetchFailure)
-    assert "API timeout" in result.failure.error
+    assert result.failures is not None
+    assert isinstance(result.failures, PageFetchFailure)
+    assert "API timeout" in result.failures.error
     assert len(result.envelopes) == 0
     mock_connector_instance.fetch_families.assert_called_once()
 
@@ -153,14 +153,14 @@ def test_extract_families_handles_http_error():
         expected_error = "404 Client Error: Not Found"
         mock_connector_instance.fetch_families.return_value = FamilyFetchResult(
             envelopes=[],
-            failure=PageFetchFailureFactory.build(
+            failures=PageFetchFailureFactory.build(
                 page=0, error=expected_error, task_run_id="task-001"
             ),
         )
 
         result = extract(invalid_ids)
 
-    assert result.failure is not None
-    assert isinstance(result.failure, PageFetchFailure)
-    assert "404" in result.failure.error
+    assert result.failures is not None
+    assert isinstance(result.failures, PageFetchFailure)
+    assert "404" in result.failures.error
     assert len(result.envelopes) == 0
