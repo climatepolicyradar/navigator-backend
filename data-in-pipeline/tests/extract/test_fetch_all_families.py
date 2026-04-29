@@ -72,7 +72,7 @@ def test_fetch_all_families_collects_validation_failures_and_continues():
 
     failure = result.failures[0]
     assert isinstance(failure, RecordValidationFailure)
-    assert failure.import_ids == "Invalid.family.0.0"
+    assert failure.import_ids[0] == "Invalid.family.0.0"
     assert failure.page == 1
     assert (
         failure.error
