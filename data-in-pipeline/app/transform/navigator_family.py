@@ -1043,7 +1043,7 @@ def _transform_navigator_document(
     if navigator_family.corpus.import_id == "Academic.corpus.Litigation.n0000":
         if navigator_document.events:
             document_event = navigator_document.events[0]
-            description = document_event.valid_metadata.get("description")
+            description = document_event.metadata.get("description")
             event_type = document_event.event_type
             labels.append(
                 LabelRelationship(
@@ -1066,7 +1066,7 @@ def _transform_navigator_document(
                     ),
                 )
             )
-            action_taken = document_event.valid_metadata.get("action_taken")
+            action_taken = document_event.metadata.get("action_taken")
             if action_taken:
                 attributes["action_taken"] = action_taken[0]
 

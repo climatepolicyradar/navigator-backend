@@ -17,7 +17,7 @@ class NavigatorEvent(BaseModel):
     import_id: str
     event_type: str
     date: datetime.datetime
-    valid_metadata: dict[str, list[str]] = {}
+    metadata: dict[str, list[str]] = {}
 
 
 class NavigatorDocument(BaseModel):
