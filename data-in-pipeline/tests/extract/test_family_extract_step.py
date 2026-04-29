@@ -96,7 +96,7 @@ def test_extract_families_handles_valid_ids_success():
         )
 
         mock_connector_instance.fetch_families.return_value = FamilyFetchResult(
-            envelopes=[mock_envelope], failures=None
+            envelopes=[mock_envelope], failures=[]
         )
 
         result = extract(valid_ids)

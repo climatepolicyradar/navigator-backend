@@ -100,7 +100,7 @@ class RecordValidationFailure(BaseModel):
 
 class FamilyFetchResult(BaseModel):
     envelopes: list[ExtractedEnvelope]
-    failures: list[PageFetchFailure] | list[RecordValidationFailure] | None = None
+    failures: list[PageFetchFailure] | list[RecordValidationFailure]
 
 
 class HTTPConnector:

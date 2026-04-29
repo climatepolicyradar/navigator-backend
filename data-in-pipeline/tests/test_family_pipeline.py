@@ -132,7 +132,7 @@ def test_process_family_updates_flow_multiple_families(  # noqa: PLR0913
     )
 
     mock_connector_instance.fetch_all_families.return_value = FamilyFetchResult(
-        envelopes=[envelope_1, envelope_2], failures=None
+        envelopes=[envelope_1, envelope_2], failures=[]
     )
 
     result = data_in_pipeline()
@@ -253,7 +253,7 @@ def test_etl_pipeline_load_failure(  # noqa: PLR0913
 
     # Mock connector response
     mock_connector_instance.fetch_all_families.return_value = FamilyFetchResult(
-        envelopes=[test_envelope], failures=None
+        envelopes=[test_envelope], failures=[]
     )
 
     mock_load_batch_task.map.return_value = [HTTPError("Server error")]
@@ -353,7 +353,7 @@ def test_etl_pipeline_partial_transformation_failure(  # noqa: PLR0913
     )
 
     mock_connector_instance.fetch_all_families.return_value = FamilyFetchResult(
-        envelopes=[envelope], failures=None
+        envelopes=[envelope], failures=[]
     )
 
     mock_transformed_documents = [
@@ -429,7 +429,7 @@ def test_etl_pipeline_all_families_fail_transformation(
     )
 
     mock_connector_instance.fetch_all_families.return_value = FamilyFetchResult(
-        envelopes=[envelope], failures=None
+        envelopes=[envelope], failures=[]
     )
 
     mock_transform_families.side_effect = [

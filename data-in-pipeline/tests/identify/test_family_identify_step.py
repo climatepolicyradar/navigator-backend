@@ -207,7 +207,7 @@ def test_fetch_all_families_no_data_returned_from_endpoint(base_config):
     with patch.object(connector, "get", return_value=mock_empty_page):
         result = connector.fetch_all_families(task_run_id, flow_run_id)
 
-    assert result.failures is None
+    assert not result.failures
     assert len(result.envelopes) == 0
     connector.close()
 
