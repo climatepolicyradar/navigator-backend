@@ -100,7 +100,7 @@ class RecordValidationFailure(BaseModel):
 
 class FamilyFetchResult(BaseModel):
     envelopes: list[ExtractedEnvelope]
-    failures: PageFetchFailure | list[RecordValidationFailure] | None = None
+    failures: list[PageFetchFailure] | list[RecordValidationFailure] | None = None
 
 
 class HTTPConnector:
@@ -302,18 +302,18 @@ class NavigatorConnector(HTTPConnector):
             pipeline_metrics.record_error(Operation.EXTRACT, ErrorType.NETWORK)
             return FamilyFetchResult(
                 envelopes=[],
-                failures=PageFetchFailure(
-                    page=0, error=str(e), task_run_id=task_run_id
-                ),
+                failures=[
+                    PageFetchFailure(page=0, error=str(e), task_run_id=task_run_id),
+                ],
             )
         except Exception as e:
             logger.exception(f"Unexpected error fetching families {import_ids}: {e}")
             pipeline_metrics.record_error(Operation.EXTRACT, ErrorType.UNKNOWN)
             return FamilyFetchResult(
                 envelopes=[],
-                failures=PageFetchFailure(
-                    page=0, error=str(e), task_run_id=task_run_id
-                ),
+                failures=[
+                    PageFetchFailure(page=0, error=str(e), task_run_id=task_run_id)
+                ],
             )
 
     def fetch_all_families(
@@ -401,9 +401,11 @@ class NavigatorConnector(HTTPConnector):
                     )
                     return FamilyFetchResult(
                         envelopes=successful_envelopes,
-                        failures=PageFetchFailure(
-                            page=page, error=str(e), task_run_id=task_run_id
-                        ),
+                        failures=[
+                            PageFetchFailure(
+                                page=page, error=str(e), task_run_id=task_run_id
+                            ),
+                        ],
                     )
 
                 except Exception as e:
@@ -415,9 +417,11 @@ class NavigatorConnector(HTTPConnector):
                     )
                     return FamilyFetchResult(
                         envelopes=successful_envelopes,
-                        failures=PageFetchFailure(
-                            page=page, error=str(e), task_run_id=task_run_id
-                        ),
+                        failures=[
+                            PageFetchFailure(
+                                page=page, error=str(e), task_run_id=task_run_id
+                            ),
+                        ],
                     )
 
         logger.info(
