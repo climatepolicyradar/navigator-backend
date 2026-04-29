@@ -101,7 +101,7 @@ def test_extract_families_handles_valid_ids_success():
 
         result = extract(valid_ids)
 
-    assert result.failures is None
+    assert not result.failures
     assert len(result.envelopes) == 1
     assert result.envelopes[0].source_name == "navigator_family"
     expected_family_count = 2
@@ -134,9 +134,10 @@ def test_extract_families_propagates_connector_failure():
 
         result = extract(invalid_ids)
 
-    assert result.failures is not None
-    assert isinstance(result.failures, PageFetchFailure)
-    assert "API timeout" in result.failures.error
+    assert result.failures
+    failure = result.failures[0]
+    assert isinstance(failure, PageFetchFailure)
+    assert "API timeout" in failure.error
     assert len(result.envelopes) == 0
     mock_connector_instance.fetch_families.assert_called_once()
 
@@ -164,7 +165,8 @@ def test_extract_families_handles_http_error():
 
         result = extract(invalid_ids)
 
-    assert result.failures is not None
-    assert isinstance(result.failures, PageFetchFailure)
-    assert "404" in result.failures.error
+    assert result.failures
+    failure = result.failures[0]
+    assert isinstance(failure, PageFetchFailure)
+    assert "404" in failure.error
     assert len(result.envelopes) == 0
