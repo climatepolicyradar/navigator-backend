@@ -181,7 +181,7 @@ class NavigatorConnector(HTTPConnector):
                     id=generate_envelope_uuid(),
                     source_name="navigator_document",
                     source_record_id=import_id,
-                    raw_payload=document.model_dump_json(),
+                    raw_payload=document_data,
                     content_type="application/json",
                     connector_version="1.0.0",
                     extracted_at=datetime.datetime.now(datetime.UTC),
@@ -222,7 +222,7 @@ class NavigatorConnector(HTTPConnector):
                     id=generate_envelope_uuid(),
                     source_name="navigator_family",
                     source_record_id=import_id,
-                    raw_payload=family.model_dump_json(),
+                    raw_payload=family_data,
                     content_type="application/json",
                     connector_version="1.0.0",
                     extracted_at=datetime.datetime.now(datetime.UTC),
@@ -342,7 +342,6 @@ class NavigatorConnector(HTTPConnector):
         page = 1
         successful_envelopes: list[ExtractedEnvelope] = []
         failures: list[RecordValidationFailure] = []
-        validated_families: list[NavigatorFamily] = []
 
         while True:
             with log_context(page_number=page):
@@ -358,12 +357,17 @@ class NavigatorConnector(HTTPConnector):
                         )
                         break
 
+                    validated_families: list[NavigatorFamily] = []
+
                     for family in families_data:
                         try:
                             validated_families.append(
                                 NavigatorFamily.model_validate(family)
                             )
                         except ValidationError as e:
+                            logger.info(
+                                f"Error validating family {family["import_id"]}: {e.json()}"
+                            )
                             failures.append(
                                 RecordValidationFailure(
                                     import_ids=[family["import_id"]],
@@ -427,4 +431,5 @@ class NavigatorConnector(HTTPConnector):
         logger.info(
             f"Fetch families completed: {len(successful_envelopes)} pages succeeded"
         )
+        logger.info(f"{len(failures)} families failed validation")
         return FamilyFetchResult(envelopes=successful_envelopes, failures=failures)

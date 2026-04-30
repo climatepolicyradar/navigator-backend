@@ -81,7 +81,7 @@ def test_extract_families_handles_valid_ids_success():
         ]
         mock_envelope = ExtractedEnvelope(
             data=families,
-            raw_payload=families,
+            raw_payload=[family.model_dump() for family in families],
             id="test-uuid",
             source_name="navigator_family",
             source_record_id="task-001-families-by-ids",

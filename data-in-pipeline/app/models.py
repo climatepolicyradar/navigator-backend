@@ -1,7 +1,7 @@
 import uuid
 from datetime import UTC, datetime
 from http import HTTPStatus
-from typing import TypeVar
+from typing import Any, TypeVar
 
 from pydantic import BaseModel, Field
 
@@ -20,7 +20,7 @@ class ExtractedEnvelope[ExtractedData](BaseModel):
     id: str = Field(default_factory=lambda: str(uuid.uuid4()))
     source_name: str
     source_record_id: str
-    raw_payload: ExtractedData
+    raw_payload: list[dict[str, Any]] | dict[str, Any]
     content_type: str = "application/json"
     connector_version: str
     extracted_at: datetime = Field(default_factory=lambda: datetime.now(UTC))
