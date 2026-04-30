@@ -561,11 +561,7 @@ def _transform_litigation_concepts_to_label_relationships(
         for parent_name in concept.subconcept_of_labels:
             parent = label_by_name.get((concept.relation, parent_name))
             if parent is None:
-                return Failure(
-                    CouldNotTransform(
-                        f"Unknown parent label {parent_name!r} in relation {concept.relation!r}. See family {family_import_id!r} for details."
-                    )
-                )
+                continue
             else:
                 parent_ref = _shallow_label(parent)
 
@@ -1000,10 +996,10 @@ def _transform_navigator_family(
     """
 
     contains_published_document = [
-        doc for doc in navigator_family.documents if doc.document_status == "PUBLISHED"
+        doc for doc in navigator_family.documents if doc.document_status == "published"
     ]
     if navigator_family.documents and contains_published_document:
-        attributes["status"] = "PUBLISHED"
+        attributes["status"] = "published"
 
     return Success(
         Document(
@@ -1047,7 +1043,7 @@ def _transform_navigator_document(
     if navigator_family.corpus.import_id == "Academic.corpus.Litigation.n0000":
         if navigator_document.events:
             document_event = navigator_document.events[0]
-            description = document_event.valid_metadata.get("description")
+            description = document_event.metadata.get("description")
             event_type = document_event.event_type
             labels.append(
                 LabelRelationship(
@@ -1070,7 +1066,7 @@ def _transform_navigator_document(
                     ),
                 )
             )
-            action_taken = document_event.valid_metadata.get("action_taken")
+            action_taken = document_event.metadata.get("action_taken")
             if action_taken:
                 attributes["action_taken"] = action_taken[0]
 

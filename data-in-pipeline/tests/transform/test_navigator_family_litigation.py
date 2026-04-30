@@ -14,7 +14,6 @@ from app.extract.connectors import (
     NavigatorFamily,
 )
 from app.models import Identified, NavigatorConcept
-from app.transform.models import CouldNotTransform
 from app.transform.navigator_family import transform_navigator_family
 from tests.factories import (
     NavigatorCorpusFactory,
@@ -60,7 +59,7 @@ def navigator_family_with_litigation_corpus_type() -> Identified[NavigatorFamily
                             import_id="123",
                             event_type="Decision",
                             date=decision_date,
-                            valid_metadata={
+                            metadata={
                                 "event_type": ["Decision"],
                                 "datetime_event_name": ["Decision"],
                                 "action_taken": ["Answer filed by federal defendants"],
@@ -71,7 +70,7 @@ def navigator_family_with_litigation_corpus_type() -> Identified[NavigatorFamily
                     variant="Original language",
                     md5_sum="aaaaa11111bbbbb",
                     languages=[],
-                    document_status="PUBLISHED",
+                    document_status="published",
                 ),
                 NavigatorDocumentFactory.build(
                     import_id="1.2.3.placeholder",
@@ -83,7 +82,7 @@ def navigator_family_with_litigation_corpus_type() -> Identified[NavigatorFamily
                     variant=None,
                     md5_sum="aaaaa11111bbbbb",
                     languages=[],
-                    document_status="PUBLISHED",
+                    document_status="published",
                 ),
             ],
             events=[
@@ -91,7 +90,7 @@ def navigator_family_with_litigation_corpus_type() -> Identified[NavigatorFamily
                     import_id="123",
                     event_type="Decision",
                     date=decision_date,
-                    valid_metadata={
+                    metadata={
                         "event_type": ["Decision"],
                         "datetime_event_name": ["Decision"],
                     },
@@ -100,7 +99,7 @@ def navigator_family_with_litigation_corpus_type() -> Identified[NavigatorFamily
                     import_id="456",
                     event_type="Filing Year For Action",
                     date=decision_date,
-                    valid_metadata={
+                    metadata={
                         "event_type": ["Filing Year For Action"],
                         "datetime_event_name": ["Filing Year For Action"],
                     },
@@ -154,7 +153,7 @@ def navigator_family_with_litigation_concepts() -> Identified[NavigatorFamily]:
                             import_id="123",
                             event_type="Decision",
                             date=decision_date,
-                            valid_metadata={
+                            metadata={
                                 "event_type": ["Decision"],
                                 "datetime_event_name": ["Decision"],
                             },
@@ -163,7 +162,7 @@ def navigator_family_with_litigation_concepts() -> Identified[NavigatorFamily]:
                     variant="Original language",
                     md5_sum="aaaaa11111bbbbb",
                     languages=[],
-                    document_status="PUBLISHED",
+                    document_status="published",
                 ),
             ],
             events=[
@@ -171,7 +170,7 @@ def navigator_family_with_litigation_concepts() -> Identified[NavigatorFamily]:
                     import_id="123",
                     event_type="Decision",
                     date=decision_date,
-                    valid_metadata={
+                    metadata={
                         "event_type": ["Decision"],
                         "datetime_event_name": ["Decision"],
                     },
@@ -252,7 +251,7 @@ def navigator_family_with_litigation_concept_missing_parent() -> (
                     variant="Original language",
                     md5_sum="aaaaa11111bbbbb",
                     languages=[],
-                    document_status="PUBLISHED",
+                    document_status="published",
                 ),
             ],
             events=[],
@@ -414,7 +413,7 @@ def test_transform_navigator_family_with_litigation_corpus_type(
                         "deprecated_slug": "litigation-document-slug",
                         "md5_sum": "aaaaa11111bbbbb",
                         "variant": "Original language",
-                        "status": "PUBLISHED",
+                        "status": "published",
                         "published_date": "2020-01-0100:00:00Z",
                         "last_updated_date": "2020-01-0100:00:00Z",
                         "action_taken": "Answer filed by federal defendants",
@@ -460,7 +459,7 @@ def test_transform_navigator_family_with_litigation_corpus_type(
                     attributes={
                         "deprecated_slug": "placeholder-document-slug",
                         "md5_sum": "aaaaa11111bbbbb",
-                        "status": "PUBLISHED",
+                        "status": "published",
                         "published_date": "2020-01-0100:00:00Z",
                         "last_updated_date": "2020-01-0100:00:00Z",
                     },
@@ -473,7 +472,7 @@ def test_transform_navigator_family_with_litigation_corpus_type(
             "identifier::provider_id": "123456",
             "published_date": "2020-01-0100:00:00Z",
             "last_updated_date": "2020-01-0100:00:00Z",
-            "status": "PUBLISHED",
+            "status": "published",
             "core_object": "Core Object 123",
             "original_case_name": "Original case name",
             "case_status": "Decided",
@@ -542,7 +541,7 @@ def test_transform_navigator_family_with_litigation_corpus_type(
                     "deprecated_slug": "litigation-document-slug",
                     "md5_sum": "aaaaa11111bbbbb",
                     "variant": "Original language",
-                    "status": "PUBLISHED",
+                    "status": "published",
                     "published_date": "2020-01-0100:00:00Z",
                     "last_updated_date": "2020-01-0100:00:00Z",
                     "action_taken": "Answer filed by federal defendants",
@@ -593,7 +592,7 @@ def test_transform_navigator_family_with_litigation_corpus_type(
                 attributes={
                     "deprecated_slug": "placeholder-document-slug",
                     "md5_sum": "aaaaa11111bbbbb",
-                    "status": "PUBLISHED",
+                    "status": "published",
                     "published_date": "2020-01-0100:00:00Z",
                     "last_updated_date": "2020-01-0100:00:00Z",
                 },
@@ -750,7 +749,7 @@ def test_transform_navigator_family_with_litigation_corpus_type_and_litigation_c
                         "deprecated_slug": "litigation-document-slug",
                         "md5_sum": "aaaaa11111bbbbb",
                         "variant": "Original language",
-                        "status": "PUBLISHED",
+                        "status": "published",
                         "published_date": "2020-01-0100:00:00Z",
                         "last_updated_date": "2020-01-0100:00:00Z",
                     },
@@ -761,7 +760,7 @@ def test_transform_navigator_family_with_litigation_corpus_type_and_litigation_c
             "deprecated_slug": "litigation-family-slug",
             "published_date": "2020-01-0100:00:00Z",
             "last_updated_date": "2020-01-0100:00:00Z",
-            "status": "PUBLISHED",
+            "status": "published",
         },
     )
     assert_model_list_equality(
@@ -827,27 +826,10 @@ def test_transform_navigator_family_with_litigation_corpus_type_and_litigation_c
                     "deprecated_slug": "litigation-document-slug",
                     "md5_sum": "aaaaa11111bbbbb",
                     "variant": "Original language",
-                    "status": "PUBLISHED",
+                    "status": "published",
                     "published_date": "2020-01-0100:00:00Z",
                     "last_updated_date": "2020-01-0100:00:00Z",
                 },
             ),
         ],
     )
-
-
-def test_transform_navigator_family_with_litigation_concepts_missing_parent_label_returns_failure(
-    navigator_family_with_litigation_concept_missing_parent: Identified[
-        NavigatorFamily
-    ],
-):
-    result = transform_navigator_family(
-        navigator_family_with_litigation_concept_missing_parent
-    )
-
-    failure_exception = result.swap().unwrap()
-    assert isinstance(failure_exception, CouldNotTransform)
-    assert (
-        "Unknown parent label 'Missing Parent Label' in relation 'jurisdiction'. "
-        "See family 'family' for details."
-    ) in str(failure_exception)

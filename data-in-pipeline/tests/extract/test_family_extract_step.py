@@ -81,7 +81,7 @@ def test_extract_families_handles_valid_ids_success():
         ]
         mock_envelope = ExtractedEnvelope(
             data=families,
-            raw_payload=families,
+            raw_payload=[family.model_dump() for family in families],
             id="test-uuid",
             source_name="navigator_family",
             source_record_id="task-001-families-by-ids",
@@ -96,12 +96,12 @@ def test_extract_families_handles_valid_ids_success():
         )
 
         mock_connector_instance.fetch_families.return_value = FamilyFetchResult(
-            envelopes=[mock_envelope], failure=None
+            envelopes=[mock_envelope], failures=[]
         )
 
         result = extract(valid_ids)
 
-    assert result.failure is None
+    assert not result.failures
     assert len(result.envelopes) == 1
     assert result.envelopes[0].source_name == "navigator_family"
     expected_family_count = 2
@@ -125,16 +125,19 @@ def test_extract_families_propagates_connector_failure():
         expected_error = "Failed to fetch families: API timeout"
         mock_connector_instance.fetch_families.return_value = FamilyFetchResult(
             envelopes=[],
-            failure=PageFetchFailureFactory.build(
-                page=0, error=expected_error, task_run_id="task-001"
-            ),
+            failures=[
+                PageFetchFailureFactory.build(
+                    page=0, error=expected_error, task_run_id="task-001"
+                )
+            ],
         )
 
         result = extract(invalid_ids)
 
-    assert result.failure is not None
-    assert isinstance(result.failure, PageFetchFailure)
-    assert "API timeout" in result.failure.error
+    assert result.failures
+    failure = result.failures[0]
+    assert isinstance(failure, PageFetchFailure)
+    assert "API timeout" in failure.error
     assert len(result.envelopes) == 0
     mock_connector_instance.fetch_families.assert_called_once()
 
@@ -153,14 +156,17 @@ def test_extract_families_handles_http_error():
         expected_error = "404 Client Error: Not Found"
         mock_connector_instance.fetch_families.return_value = FamilyFetchResult(
             envelopes=[],
-            failure=PageFetchFailureFactory.build(
-                page=0, error=expected_error, task_run_id="task-001"
-            ),
+            failures=[
+                PageFetchFailureFactory.build(
+                    page=0, error=expected_error, task_run_id="task-001"
+                )
+            ],
         )
 
         result = extract(invalid_ids)
 
-    assert result.failure is not None
-    assert isinstance(result.failure, PageFetchFailure)
-    assert "404" in result.failure.error
+    assert result.failures
+    failure = result.failures[0]
+    assert isinstance(failure, PageFetchFailure)
+    assert "404" in failure.error
     assert len(result.envelopes) == 0

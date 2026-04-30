@@ -241,13 +241,6 @@ pulumi.export(
     f"{name}-{environment}-aurora-reader-endpoint", aurora_cluster.reader_endpoint
 )
 
-# Get the ARN of the secret holding the master password
-# When manage_master_user_password=True, master_user_secrets contains exactly one secret
-data_in_pipeline_load_api_cluster_password_secret = (
-    aurora_cluster.master_user_secrets.apply(
-        lambda secrets: secrets[0] if secrets and len(secrets) == 1 else None
-    )
-)
 
 # Build the rds-db ARN for the load user
 # Format: arn:aws:rds-db:REGION:ACCOUNT:dbuser:CLUSTER_RESOURCE_ID/DB_USER
@@ -464,18 +457,6 @@ data_in_pipeline_load_api_cdn_url = aws.ssm.Parameter(
 )
 
 # Aurora access
-## Write replica
-data_in_pipeline_aurora_write_replica_db_url = aws.ssm.Parameter(
-    "data-in-pipeline-aurora-write-replica-db-url",
-    name=generate_secret_key(
-        project="data-in-pipeline",
-        aws_service="aurora",
-        name="write-replica-db-url",
-    ),
-    description="URL for the load database write-replica",
-    type=aws.ssm.ParameterType.STRING,
-    value=aurora_cluster.endpoint,
-)
 data_in_pipeline_aurora_write_replica_db_name = aws.ssm.Parameter(
     "data-in-pipeline-aurora-write-replica-db-name",
     name=generate_secret_key(
@@ -497,13 +478,6 @@ data_in_pipeline_aurora_write_replica_db_username = aws.ssm.Parameter(
     description="Username for the load database",
     type=aws.ssm.ParameterType.STRING,
     value=config.require("api_load_writer_db_user"),
-)
-# Get the ARN of the secret holding the master password
-# When manage_master_user_password=True, master_user_secrets contains exactly one secret
-data_in_pipeline_aurora_write_replica_db_secrets = (
-    aurora_cluster.master_user_secrets.apply(
-        lambda secrets: secrets[0] if secrets and len(secrets) == 1 else None
-    )
 )
 
 ## Read replica
@@ -563,10 +537,7 @@ data_in_pipeline_load_api_instance_role_policy = aws.iam.RolePolicy(
     policy=pulumi.Output.all(
         data_in_pipeline_load_api_load_database_url.arn,
         data_in_pipeline_load_api_cdn_url.arn,
-        data_in_pipeline_load_api_cluster_password_secret.secret_arn,
-        data_in_pipeline_aurora_write_replica_db_url.arn,
         data_in_pipeline_aurora_write_replica_db_username.arn,
-        data_in_pipeline_aurora_write_replica_db_secrets.secret_arn,
         data_in_pipeline_aurora_read_replica_db_url.arn,
         data_in_pipeline_aurora_read_replica_db_username.arn,
         data_in_pipeline_aurora_read_replica_db_secrets.secret_arn,
@@ -735,15 +706,10 @@ data_in_pipeline_load_api_apprunner_service = aws.apprunner.Service(
                 runtime_environment_secrets={
                     "LOAD_DATABASE_URL": data_in_pipeline_load_api_load_database_url.arn,
                     "CDN_URL": data_in_pipeline_load_api_cdn_url.arn,
-                    "DB_URL": data_in_pipeline_aurora_write_replica_db_url.arn,
                     "DB_NAME": data_in_pipeline_aurora_write_replica_db_name.arn,
-                    # This is in the format `{"password": "xxx", "username": "xxx"}`
-                    "DB_SECRETS": data_in_pipeline_aurora_write_replica_db_secrets.secret_arn,
                     "DB_USERNAME": data_in_pipeline_aurora_write_replica_db_username.arn,
-                    "MANAGED_DB_PASSWORD": data_in_pipeline_load_api_cluster_password_secret.secret_arn,
                 },
                 runtime_environment_variables={
-                    "DB_MASTER_USERNAME": config.require("aurora_master_username"),
                     "DB_PORT": "5432",
                     "AWS_REGION": "eu-west-1",
                     "DB_SSLMODE": "require",
@@ -804,14 +770,6 @@ pulumi.export(
         "PREFECT_LOGGING_EXTRA_LOGGERS": "app",
     },
 )
-
-# Export secrets (ARNs) - these can be linked to Secrets Manager secrets
-prefect_secrets_arns_output = pulumi.Output.from_input(
-    {
-        "MANAGED_DB_PASSWORD": data_in_pipeline_load_api_cluster_password_secret.secret_arn,
-    }
-)
-pulumi.export("prefect_secrets_arns", prefect_secrets_arns_output)
 
 # Create SSM parameter for Aurora writer endpoint (for Prefect flows)
 data_in_pipeline_aurora_writer_endpoint = aws.ssm.Parameter(

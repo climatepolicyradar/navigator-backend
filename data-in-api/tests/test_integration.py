@@ -30,7 +30,7 @@ def test_list_documents_allows_filtering_by_status(
             id="doc1",
             title="Document 1",
             description="First doc",
-            attributes={"status": "PUBLISHED"},
+            attributes={"status": "published"},
         )
     )
     session.add(
@@ -38,13 +38,13 @@ def test_list_documents_allows_filtering_by_status(
             id="doc2",
             title="Document 2",
             description="Second doc",
-            attributes={"status": "DELETED"},
+            attributes={"status": "deleted"},
         )
     )
     session.commit()
 
     response = client.get(
-        "/data-in/documents?page=1&page_size=20&attributes.status=PUBLISHED"
+        "/data-in/documents?page=1&page_size=20&attributes.status=published"
     )
 
     assert response.status_code == HTTPStatus.OK
@@ -56,6 +56,6 @@ def test_list_documents_allows_filtering_by_status(
             "labels": [],
             "documents": [],
             "items": [],
-            "attributes": {"status": "PUBLISHED"},
+            "attributes": {"status": "published"},
         }
     ]

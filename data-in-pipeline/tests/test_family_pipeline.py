@@ -102,7 +102,7 @@ def test_process_family_updates_flow_multiple_families(  # noqa: PLR0913
 
     envelope_1 = ExtractedEnvelope(
         data=page_1_data,
-        raw_payload=page_1_data,
+        raw_payload=[family.model_dump() for family in page_1_data],
         id="test-uuid-1",
         source_name="navigator_family",
         source_record_id="task-001-families-endpoint-page-1",
@@ -117,7 +117,7 @@ def test_process_family_updates_flow_multiple_families(  # noqa: PLR0913
     )
     envelope_2 = ExtractedEnvelope(
         data=page_2_data,
-        raw_payload=page_2_data,
+        raw_payload=[family.model_dump() for family in page_2_data],
         id="test-uuid-2",
         source_name="navigator_family",
         source_record_id="task-001-families-endpoint-page-2",
@@ -132,7 +132,7 @@ def test_process_family_updates_flow_multiple_families(  # noqa: PLR0913
     )
 
     mock_connector_instance.fetch_all_families.return_value = FamilyFetchResult(
-        envelopes=[envelope_1, envelope_2], failure=None
+        envelopes=[envelope_1, envelope_2], failures=[]
     )
 
     result = data_in_pipeline()
@@ -169,9 +169,11 @@ def test_process_family_updates_flow_extraction_failure(
     expected_error = Exception("500 Internal Server Error")
     mock_connector_instance.fetch_all_families.return_value = FamilyFetchResult(
         envelopes=[],
-        failure=PageFetchFailureFactory.build(
-            page=1, error=str(expected_error), task_run_id="task-001"
-        ),
+        failures=[
+            PageFetchFailureFactory.build(
+                page=1, error=str(expected_error), task_run_id="task-001"
+            )
+        ],
     )
 
     result = data_in_pipeline()
@@ -235,7 +237,7 @@ def test_etl_pipeline_load_failure(  # noqa: PLR0913
     ]
     test_envelope = ExtractedEnvelope(
         data=test_data,
-        raw_payload=test_data,
+        raw_payload=[family.model_dump() for family in test_data],
         id="test-uuid-1",
         source_name="navigator_family",
         source_record_id=test_source_record_id,
@@ -251,7 +253,7 @@ def test_etl_pipeline_load_failure(  # noqa: PLR0913
 
     # Mock connector response
     mock_connector_instance.fetch_all_families.return_value = FamilyFetchResult(
-        envelopes=[test_envelope], failure=None
+        envelopes=[test_envelope], failures=[]
     )
 
     mock_load_batch_task.map.return_value = [HTTPError("Server error")]
@@ -336,7 +338,7 @@ def test_etl_pipeline_partial_transformation_failure(  # noqa: PLR0913
 
     envelope = ExtractedEnvelope(
         data=[valid_family, invalid_family],
-        raw_payload=[valid_family, invalid_family],
+        raw_payload=[family.model_dump() for family in [valid_family, invalid_family]],
         id="test-uuid",
         source_name="navigator_family",
         source_record_id="task-001-families-endpoint-page-1",
@@ -351,7 +353,7 @@ def test_etl_pipeline_partial_transformation_failure(  # noqa: PLR0913
     )
 
     mock_connector_instance.fetch_all_families.return_value = FamilyFetchResult(
-        envelopes=[envelope], failure=None
+        envelopes=[envelope], failures=[]
     )
 
     mock_transformed_documents = [
@@ -412,7 +414,7 @@ def test_etl_pipeline_all_families_fail_transformation(
     ]
     envelope = ExtractedEnvelope(
         data=failing_families,
-        raw_payload=failing_families,
+        raw_payload=[family.model_dump() for family in failing_families],
         id="test-uuid",
         source_name="navigator_family",
         source_record_id="task-001-families-endpoint-page-1",
@@ -427,7 +429,7 @@ def test_etl_pipeline_all_families_fail_transformation(
     )
 
     mock_connector_instance.fetch_all_families.return_value = FamilyFetchResult(
-        envelopes=[envelope], failure=None
+        envelopes=[envelope], failures=[]
     )
 
     mock_transform_families.side_effect = [
