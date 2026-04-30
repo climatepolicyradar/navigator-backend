@@ -102,7 +102,7 @@ def test_process_family_updates_flow_multiple_families(  # noqa: PLR0913
 
     envelope_1 = ExtractedEnvelope(
         data=page_1_data,
-        raw_payload=page_1_data,
+        raw_payload=[family.model_dump() for family in page_1_data],
         id="test-uuid-1",
         source_name="navigator_family",
         source_record_id="task-001-families-endpoint-page-1",
@@ -117,7 +117,7 @@ def test_process_family_updates_flow_multiple_families(  # noqa: PLR0913
     )
     envelope_2 = ExtractedEnvelope(
         data=page_2_data,
-        raw_payload=page_2_data,
+        raw_payload=[family.model_dump() for family in page_2_data],
         id="test-uuid-2",
         source_name="navigator_family",
         source_record_id="task-001-families-endpoint-page-2",
@@ -237,7 +237,7 @@ def test_etl_pipeline_load_failure(  # noqa: PLR0913
     ]
     test_envelope = ExtractedEnvelope(
         data=test_data,
-        raw_payload=test_data,
+        raw_payload=[family.model_dump() for family in test_data],
         id="test-uuid-1",
         source_name="navigator_family",
         source_record_id=test_source_record_id,
@@ -338,7 +338,7 @@ def test_etl_pipeline_partial_transformation_failure(  # noqa: PLR0913
 
     envelope = ExtractedEnvelope(
         data=[valid_family, invalid_family],
-        raw_payload=[valid_family, invalid_family],
+        raw_payload=[family.model_dump() for family in [valid_family, invalid_family]],
         id="test-uuid",
         source_name="navigator_family",
         source_record_id="task-001-families-endpoint-page-1",
@@ -414,7 +414,7 @@ def test_etl_pipeline_all_families_fail_transformation(
     ]
     envelope = ExtractedEnvelope(
         data=failing_families,
-        raw_payload=failing_families,
+        raw_payload=[family.model_dump() for family in failing_families],
         id="test-uuid",
         source_name="navigator_family",
         source_record_id="task-001-families-endpoint-page-1",
