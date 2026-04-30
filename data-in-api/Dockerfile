@@ -1,4 +1,4 @@
-FROM python:3.13-slim AS base
+FROM python:3.13-slim
 
 COPY --from=ghcr.io/astral-sh/uv:latest /uv /uvx /bin/
 # most of this is effectively taken from the uv docs
@@ -40,11 +40,4 @@ RUN uv sync --project $SERVICE
 
 EXPOSE 8080
 
-# For more on multi-stage builds see:
-# https://docs.docker.com/build/building/multi-stage/#use-an-external-image-as-a-stage
-
-FROM base AS dev
-CMD ["sh", "-c", "uv run --project $SERVICE python $SERVICE/scripts/dev_entrypoint.py"]
-
-FROM base AS prod
 CMD ["sh", "-c", "uv run fastapi run ./$SERVICE/app/main.py --port 8080 --host 0.0.0.0"]

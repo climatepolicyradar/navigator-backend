@@ -22,7 +22,6 @@ services:
     container_name: data-in-api-app
     build:
       context: ..
-      target: dev
       dockerfile: data-in-api/Dockerfile
     ports:
       - 8080:8080
@@ -70,7 +69,6 @@ services:
     container_name: data-in-api-test
     build:
       context: ..
-      target: dev
       dockerfile: data-in-api/Dockerfile
     ports:
       - 8080:8080
