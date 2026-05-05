@@ -84,10 +84,6 @@ def transform_navigator_family(
             f"Transform completed: produced {len(result.documents)} documents, "
             f"{len(result.errors)} errors"
         )
-        if result.errors:
-            logger.warning(
-                f"Transformation produced {len(result.errors)} non-fatal errors"
-            )
         return result
 
 
