@@ -235,7 +235,6 @@ def process_result_into_csv(
         ]
         if family_documents:
             for document in family_documents:
-                _LOGGER.info(f"Document: {document}")
                 physical_document = document.physical_document
 
                 if physical_document is None:
