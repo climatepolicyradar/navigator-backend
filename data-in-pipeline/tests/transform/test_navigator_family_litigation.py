@@ -479,7 +479,7 @@ def test_transform_navigator_family_with_litigation_corpus_type(
         },
     )
     assert_model_list_equality(
-        result.unwrap(),
+        result.documents,
         [
             expected_document_from_family,
             Document(
@@ -764,7 +764,7 @@ def test_transform_navigator_family_with_litigation_corpus_type_and_litigation_c
         },
     )
     assert_model_list_equality(
-        result.unwrap(),
+        result.documents,
         [
             expected_document_from_family,
             Document(

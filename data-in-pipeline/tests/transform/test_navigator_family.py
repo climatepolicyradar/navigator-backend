@@ -576,7 +576,7 @@ def test_transform_navigator_family_with_single_matching_document(
         },
     )
     assert_model_list_equality(
-        result.unwrap(),
+        result.documents,
         [
             expected_document_from_family,
             Document(
@@ -925,7 +925,7 @@ def test_transform_navigator_family_with_laws_and_policies_corpus_type(
         },
     )
     assert_model_list_equality(
-        result.unwrap(),
+        result.documents,
         [expected_document_from_family],
     )
 
@@ -1193,7 +1193,7 @@ def test_transform_navigator_family_with_published_and_unpublished_documents():
         },
     )
     assert_model_list_equality(
-        result.unwrap(),
+        result.documents,
         [
             expected_document_from_family,
             Document(
@@ -1528,7 +1528,7 @@ def test_transform_navigator_family_with_no_published_documents():
         },
     )
     assert_model_list_equality(
-        result.unwrap(),
+        result.documents,
         [
             expected_document_from_family,
             Document(
@@ -1661,7 +1661,7 @@ def test_transform_to_category_corpus_ids(corpus_id: str, expected_category: str
     )
 
     result = transform_navigator_family(navigator_family)
-    documents = result.unwrap()
+    documents = result.documents
     family_doc = documents[0]
 
     category_labels = [label for label in family_doc.labels if label.type == "category"]
