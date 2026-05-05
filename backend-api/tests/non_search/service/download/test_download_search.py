@@ -26,6 +26,7 @@ def test_process_result_into_csv_returns_correct_data_for_CPR_search_in_csv_form
     mock_family_slug = "cpr-test-family"
 
     mock_document_slug = "cpr-test-document"
+    mock_document_import_id = "Test.CPR.document.0"
     mock_document_source_url = "www.cpr-test-document.pdf"
     mock_document_title = "CPR Test Document"
     mock_document_content_type = "application/pdf"
@@ -36,6 +37,7 @@ def test_process_result_into_csv_returns_correct_data_for_CPR_search_in_csv_form
         "documents": {
             mock_family_slug: [
                 FamilyDocument(
+                    import_id=mock_document_import_id,
                     slugs=[Slug(name=mock_document_slug)],
                     physical_document=PhysicalDocument(
                         source_url=mock_document_source_url,
@@ -391,6 +393,7 @@ def test_stream_result_into_csv_returns_same_data_as_string_version(
 ):
     mock_family_slug = "cpr-test-family"
     mock_document_slug = "cpr-test-document"
+    mock_document_import_id = "Test.CPR.document.0"
     mock_document_source_url = "www.cpr-test-document.pdf"
     mock_document_title = "CPR Test Document"
 
@@ -400,6 +403,7 @@ def test_stream_result_into_csv_returns_same_data_as_string_version(
         "documents": {
             mock_family_slug: [
                 FamilyDocument(
+                    import_id=mock_document_import_id,
                     slugs=[Slug(name=mock_document_slug)],
                     physical_document=PhysicalDocument(
                         source_url=mock_document_source_url,
