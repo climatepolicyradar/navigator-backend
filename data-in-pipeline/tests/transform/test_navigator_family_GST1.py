@@ -9,7 +9,10 @@ from data_in_models.models import (
 )
 
 from app.models import Identified
-from app.transform.navigator_family import _part_of_gst1, transform_navigator_family
+from app.transform.navigator_family import (
+    _part_of_global_stock_take_1,
+    transform_navigator_family,
+)
 from tests.factories import (
     NavigatorCorpusFactory,
     NavigatorCorpusTypeFactory,
@@ -97,7 +100,7 @@ def test_part_of_gst1_correctly_assesses_if_family_is_part_of_global_stocktake(
         },
     )
 
-    assert _part_of_gst1(test_family) == expected_result
+    assert _part_of_global_stock_take_1(test_family) == expected_result
 
 
 def test_transform_navigator_family_UNFCCC_party_submission_to_GST1_label():

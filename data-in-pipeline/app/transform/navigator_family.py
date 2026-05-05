@@ -766,9 +766,9 @@ def _transform_litigation_data(
     return Success(labels)
 
 
-def _part_of_gst1(navigator_family: NavigatorFamily) -> bool:
+def _part_of_global_stock_take_1(navigator_family: NavigatorFamily) -> bool:
     """
-    Checks if a family was fart of the first Global Stocktake.
+    Checks if a family was fart of the first Global Stocktake (GST1).
     """
     gst1_party_submission_date = "2023-11-30"
 
@@ -853,7 +853,7 @@ def _transform_navigator_family(
         )
 
     # GST1 labels
-    if _part_of_gst1(navigator_family):
+    if _part_of_global_stock_take_1(navigator_family):
         labels.append(
             LabelRelationship(
                 type="entity_type",
@@ -1179,7 +1179,7 @@ def _transform_navigator_document(
     labels.extend(_transform_family_corpus_organisation(navigator_family))
 
     # GST1 labels
-    if _part_of_gst1(navigator_family):
+    if _part_of_global_stock_take_1(navigator_family):
         labels.append(
             LabelRelationship(
                 type="entity_type",
