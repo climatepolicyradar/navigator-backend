@@ -268,7 +268,7 @@ class FamilyBase(SQLModel):
     description: str
     concepts: list[dict[str, Any]]
     last_modified: datetime = Field(default_factory=datetime.now, exclude=True)
-    created: datetime = Field(default_factory=datetime.now, exclude=True)
+    created: datetime = Field(default_factory=datetime.now)
     family_category: str
 
 
@@ -449,6 +449,7 @@ class FamilyDocumentBase(SQLModel):
     variant_name: str | None
     document_status: FamilyDocumentStatus
     last_modified: datetime
+    created: datetime = Field(default_factory=datetime.now)
 
 
 class FamilyDocument(FamilyDocumentBase, table=True):

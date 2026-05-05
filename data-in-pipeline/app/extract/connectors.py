@@ -89,6 +89,7 @@ class NavigatorFamily(BaseModel):
     metadata: dict[str, list[str]] = {}
     published_date: str | None = None
     last_updated_date: str | None = None
+    created: str
 
 
 class PageFetchFailure(BaseModel):
