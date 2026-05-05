@@ -1,3 +1,5 @@
+from datetime import datetime
+
 from data_in_models.models import (
     Document,
     DocumentRelationship,
@@ -764,6 +766,41 @@ def _transform_litigation_data(
     return Success(labels)
 
 
+def _part_of_gst1(navigator_family: NavigatorFamily) -> bool:
+    """
+    Checks if a family was fart of the first Global Stocktake.
+    """
+    gst1_party_submission_date = "2023-11-30"
+
+    family_created_date_without_time = str(
+        datetime.fromisoformat(navigator_family.created.replace("Z", "+00:00")).date()
+    )
+
+    gst1_party_submission = (
+        navigator_family.corpus.import_id == "UNFCCC.corpus.i00000001.n0000"
+        and navigator_family.metadata["author_type"][0] == "Party"
+        and family_created_date_without_time == gst1_party_submission_date
+    )
+
+    gst1_non_party_report_dates = [
+        "2023-11-30",
+        "2024-10-15",
+        "2024-10-17",
+        "2024-11-06",
+        "2024-11-15",
+        "2024-11-18",
+    ]
+
+    gst1_non_party_report = (
+        navigator_family.corpus.import_id == "UNFCCC.corpus.i00000001.n0000"
+        and navigator_family.metadata["author_type"][0] == "Non-Party"
+        and family_created_date_without_time in gst1_non_party_report_dates
+    )
+
+    return gst1_party_submission or gst1_non_party_report
+
+
+# trunk-ignore(ruff/PLR0912)
 def _transform_navigator_family(
     navigator_family: NavigatorFamily,
 ) -> Result[Document, CouldNotTransform]:
@@ -809,6 +846,19 @@ def _transform_navigator_family(
                     id="entity_type::Guidance",
                     value="Guidance",
                     type="entity_type",
+                ),
+            )
+        )
+
+    # GST1 labels
+    if _part_of_gst1(navigator_family):
+        labels.append(
+            LabelRelationship(
+                type="?",
+                value=Label(
+                    id="?::GST1",
+                    value="GST1",
+                    type="?",
                 ),
             )
         )
