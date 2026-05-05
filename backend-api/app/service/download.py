@@ -155,7 +155,15 @@ def _get_matching_document_import_ids(
     search_response_families: Sequence[SearchResponseFamily],
     documents_by_family_slug: Mapping[str, Sequence[FamilyDocument]],
 ) -> set[str]:
-    """Return document import IDs that match search passage hits."""
+    """Return document import IDs that match search passage hits.
+
+    :param Sequence[SearchResponseFamily] search_response_families:
+        Families returned by search, including matched document slugs.
+    :param Mapping[str, Sequence[FamilyDocument]] documents_by_family_slug:
+        Mapping of family slug to persisted family documents.
+    :return: Set of matching document import IDs represented as strings.
+    :rtype: set[str]
+    """
     all_matching_document_slugs = {
         d.document_slug
         for f in search_response_families
@@ -219,8 +227,7 @@ def stream_result_into_csv(  # noqa: PLR0913
     theme: Optional[str] = None,
     chunk_size: int = 128,
 ) -> Iterator[bytes]:
-    """
-    Process a search/browse result into a CSV file for download.
+    """Process a search/browse result into a CSV file for download.
 
     :param Session db: database session for supplementary queries
     :param Sequence[SearchResponseFamily] search_response_families: the families search result to process
@@ -391,7 +398,21 @@ def process_result_into_csv(
     is_browse: bool,
     theme: str | None = None,
 ) -> str:
-    """Process a search/browse result into a CSV string."""
+    """
+    Process search or browse results into a CSV string.
+
+    :param Session db: Database session for supplementary CSV enrichment.
+    :param Sequence[SearchResponseFamily] search_response_families:
+        Families from the search or browse response.
+    :param str | None base_url:
+        Public application base URL used to construct links.
+    :param bool is_browse:
+        Whether the result source is browse mode instead of search mode.
+    :param str | None theme:
+        Optional theme controlling CSV schema, defaults to None.
+    :return: UTF-8 decoded CSV content.
+    :rtype: str
+    """
     return b"".join(
         stream_result_into_csv(
             db=db,
