@@ -1083,6 +1083,7 @@ def _transform_document_urls(navigator_document):
     return items
 
 
+# trunk-ignore(ruff/PLR0912)
 def _transform_navigator_document(
     navigator_document: NavigatorDocument, navigator_family: NavigatorFamily
 ) -> Document:
@@ -1174,6 +1175,19 @@ def _transform_navigator_document(
     Provider labels
     """
     labels.extend(_transform_family_corpus_organisation(navigator_family))
+
+    # GST1 labels
+    if _part_of_gst1(navigator_family):
+        labels.append(
+            LabelRelationship(
+                type="entity_type",
+                value=Label(
+                    id="entity_type::GST1",
+                    value="GST1 Submission",
+                    type="entity_type",
+                ),
+            ),
+        )
 
     """
     Items

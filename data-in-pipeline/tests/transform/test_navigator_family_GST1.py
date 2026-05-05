@@ -1,6 +1,9 @@
 import pytest
 from data_in_models.models import (
     Document,
+    DocumentRelationship,
+    DocumentWithoutRelationships,
+    Item,
     Label,
     LabelRelationship,
 )
@@ -10,6 +13,7 @@ from app.transform.navigator_family import _part_of_gst1, transform_navigator_fa
 from tests.factories import (
     NavigatorCorpusFactory,
     NavigatorCorpusTypeFactory,
+    NavigatorDocumentFactory,
     NavigatorFamilyFactory,
     NavigatorOrganisationFactory,
 )
@@ -116,7 +120,23 @@ def test_transform_navigator_family_UNFCCC_party_submission_to_GST1_label():
                 corpus_text="Test corpus",
                 corpus_image_url="corpus_image.png",
             ),
-            documents=[],
+            documents=[
+                NavigatorDocumentFactory.build(
+                    import_id="document",
+                    title="GST1 party document",
+                    cdn_object="https://cdn.climatepolicyradar.org/path/to/file.pdf",
+                    variant="Original language",
+                    content_type="application/pdf",
+                    source_url="https://source.climatepolicyradar.org/path/to/file.pdf",
+                    language="eng",
+                    languages=["eng"],
+                    md5_sum="aaaaa11111bbbbb",
+                    events=[],
+                    valid_metadata={},
+                    slug="document-slug",
+                    document_status="published",
+                ),
+            ],
             events=[],
             collections=[],
             geographies=["AUS"],
@@ -195,14 +215,167 @@ def test_transform_navigator_family_UNFCCC_party_submission_to_GST1_label():
                 ),
             ),
         ],
-        documents=[],
+        documents=[
+            DocumentRelationship(
+                type="has_member",
+                value=DocumentWithoutRelationships(
+                    id="document",
+                    title="GST1 party document",
+                    labels=[
+                        LabelRelationship(
+                            type="provider",
+                            value=Label(
+                                type="agent",
+                                id="agent::UNFCCC",
+                                value="UNFCCC",
+                                attributes={
+                                    "attribution_url": "testurl.org",
+                                    "corpus_text": "Test corpus",
+                                    "corpus_image_url": "https://cdn.climatepolicyradar.org/corpus_image.png",
+                                },
+                            ),
+                        ),
+                        LabelRelationship(
+                            type="entity_type",
+                            value=Label(
+                                id="entity_type::GST1",
+                                value="GST1 Submission",
+                                type="entity_type",
+                            ),
+                        ),
+                        LabelRelationship(
+                            type="geography",
+                            value=Label(
+                                type="geography",
+                                id="geography::AUS",
+                                value="Australia",
+                            ),
+                        ),
+                        LabelRelationship(
+                            type="category",
+                            value=Label(
+                                id="category::UN submission",
+                                value="UN submission",
+                                type="category",
+                            ),
+                        ),
+                        LabelRelationship(
+                            type="language",
+                            value=Label(
+                                id="language::eng",
+                                value="eng",
+                                type="language",
+                            ),
+                        ),
+                    ],
+                    items=[
+                        Item(
+                            url="https://cdn.climatepolicyradar.org/path/to/file.pdf",
+                            type="cdn",
+                            content_type="application/pdf",
+                        ),
+                        Item(
+                            url="https://source.climatepolicyradar.org/path/to/file.pdf",
+                            type="source",
+                            content_type="application/pdf",
+                        ),
+                    ],
+                    attributes={
+                        "deprecated_slug": "document-slug",
+                        "variant": "Original language",
+                        "md5_sum": "aaaaa11111bbbbb",
+                        "status": "published",
+                    },
+                ),
+            ),
+        ],
         attributes={
             "deprecated_slug": "family-with-different-document-statuses-slug",
+            "status": "published",
         },
     )
     assert_model_list_equality(
         result.unwrap(),
-        [expected_document_from_family],
+        [
+            expected_document_from_family,
+            Document(
+                id="document",
+                title="GST1 party document",
+                labels=[
+                    LabelRelationship(
+                        type="provider",
+                        value=Label(
+                            type="agent",
+                            id="agent::UNFCCC",
+                            value="UNFCCC",
+                            attributes={
+                                "attribution_url": "testurl.org",
+                                "corpus_text": "Test corpus",
+                                "corpus_image_url": "https://cdn.climatepolicyradar.org/corpus_image.png",
+                            },
+                        ),
+                    ),
+                    LabelRelationship(
+                        type="entity_type",
+                        value=Label(
+                            id="entity_type::GST1",
+                            value="GST1 Submission",
+                            type="entity_type",
+                        ),
+                    ),
+                    LabelRelationship(
+                        type="geography",
+                        value=Label(
+                            type="geography",
+                            id="geography::AUS",
+                            value="Australia",
+                        ),
+                    ),
+                    LabelRelationship(
+                        type="category",
+                        value=Label(
+                            id="category::UN submission",
+                            value="UN submission",
+                            type="category",
+                        ),
+                    ),
+                    LabelRelationship(
+                        type="language",
+                        value=Label(
+                            id="language::eng",
+                            value="eng",
+                            type="language",
+                        ),
+                    ),
+                ],
+                documents=[
+                    DocumentRelationship(
+                        type="member_of",
+                        value=DocumentWithoutRelationships(
+                            **expected_document_from_family.model_dump()
+                        ),
+                    ),
+                ],
+                items=[
+                    Item(
+                        url="https://cdn.climatepolicyradar.org/path/to/file.pdf",
+                        type="cdn",
+                        content_type="application/pdf",
+                    ),
+                    Item(
+                        url="https://source.climatepolicyradar.org/path/to/file.pdf",
+                        type="source",
+                        content_type="application/pdf",
+                    ),
+                ],
+                attributes={
+                    "deprecated_slug": "document-slug",
+                    "variant": "Original language",
+                    "md5_sum": "aaaaa11111bbbbb",
+                    "status": "published",
+                },
+            ),
+        ],
     )
 
 
@@ -226,7 +399,23 @@ def test_transform_navigator_family_UNFCCC_non_party_submission_to_GST1_label():
                 corpus_text="Test corpus",
                 corpus_image_url="corpus_image.png",
             ),
-            documents=[],
+            documents=[
+                NavigatorDocumentFactory.build(
+                    import_id="document",
+                    title="GST1 party document",
+                    cdn_object="https://cdn.climatepolicyradar.org/path/to/file.pdf",
+                    variant="Original language",
+                    content_type="application/pdf",
+                    source_url="https://source.climatepolicyradar.org/path/to/file.pdf",
+                    language="eng",
+                    languages=["eng"],
+                    md5_sum="aaaaa11111bbbbb",
+                    events=[],
+                    valid_metadata={},
+                    slug="document-slug",
+                    document_status="published",
+                ),
+            ],
             events=[],
             collections=[],
             geographies=["AUS"],
@@ -305,12 +494,165 @@ def test_transform_navigator_family_UNFCCC_non_party_submission_to_GST1_label():
                 ),
             ),
         ],
-        documents=[],
+        documents=[
+            DocumentRelationship(
+                type="has_member",
+                value=DocumentWithoutRelationships(
+                    id="document",
+                    title="GST1 party document",
+                    labels=[
+                        LabelRelationship(
+                            type="provider",
+                            value=Label(
+                                type="agent",
+                                id="agent::UNFCCC",
+                                value="UNFCCC",
+                                attributes={
+                                    "attribution_url": "testurl.org",
+                                    "corpus_text": "Test corpus",
+                                    "corpus_image_url": "https://cdn.climatepolicyradar.org/corpus_image.png",
+                                },
+                            ),
+                        ),
+                        LabelRelationship(
+                            type="entity_type",
+                            value=Label(
+                                id="entity_type::GST1",
+                                value="GST1 Submission",
+                                type="entity_type",
+                            ),
+                        ),
+                        LabelRelationship(
+                            type="geography",
+                            value=Label(
+                                type="geography",
+                                id="geography::AUS",
+                                value="Australia",
+                            ),
+                        ),
+                        LabelRelationship(
+                            type="category",
+                            value=Label(
+                                id="category::UN submission",
+                                value="UN submission",
+                                type="category",
+                            ),
+                        ),
+                        LabelRelationship(
+                            type="language",
+                            value=Label(
+                                id="language::eng",
+                                value="eng",
+                                type="language",
+                            ),
+                        ),
+                    ],
+                    items=[
+                        Item(
+                            url="https://cdn.climatepolicyradar.org/path/to/file.pdf",
+                            type="cdn",
+                            content_type="application/pdf",
+                        ),
+                        Item(
+                            url="https://source.climatepolicyradar.org/path/to/file.pdf",
+                            type="source",
+                            content_type="application/pdf",
+                        ),
+                    ],
+                    attributes={
+                        "deprecated_slug": "document-slug",
+                        "variant": "Original language",
+                        "md5_sum": "aaaaa11111bbbbb",
+                        "status": "published",
+                    },
+                ),
+            ),
+        ],
         attributes={
             "deprecated_slug": "family-with-different-document-statuses-slug",
+            "status": "published",
         },
     )
     assert_model_list_equality(
         result.unwrap(),
-        [expected_document_from_family],
+        [
+            expected_document_from_family,
+            Document(
+                id="document",
+                title="GST1 party document",
+                labels=[
+                    LabelRelationship(
+                        type="provider",
+                        value=Label(
+                            type="agent",
+                            id="agent::UNFCCC",
+                            value="UNFCCC",
+                            attributes={
+                                "attribution_url": "testurl.org",
+                                "corpus_text": "Test corpus",
+                                "corpus_image_url": "https://cdn.climatepolicyradar.org/corpus_image.png",
+                            },
+                        ),
+                    ),
+                    LabelRelationship(
+                        type="entity_type",
+                        value=Label(
+                            id="entity_type::GST1",
+                            value="GST1 Submission",
+                            type="entity_type",
+                        ),
+                    ),
+                    LabelRelationship(
+                        type="geography",
+                        value=Label(
+                            type="geography",
+                            id="geography::AUS",
+                            value="Australia",
+                        ),
+                    ),
+                    LabelRelationship(
+                        type="category",
+                        value=Label(
+                            id="category::UN submission",
+                            value="UN submission",
+                            type="category",
+                        ),
+                    ),
+                    LabelRelationship(
+                        type="language",
+                        value=Label(
+                            id="language::eng",
+                            value="eng",
+                            type="language",
+                        ),
+                    ),
+                ],
+                documents=[
+                    DocumentRelationship(
+                        type="member_of",
+                        value=DocumentWithoutRelationships(
+                            **expected_document_from_family.model_dump()
+                        ),
+                    ),
+                ],
+                items=[
+                    Item(
+                        url="https://cdn.climatepolicyradar.org/path/to/file.pdf",
+                        type="cdn",
+                        content_type="application/pdf",
+                    ),
+                    Item(
+                        url="https://source.climatepolicyradar.org/path/to/file.pdf",
+                        type="source",
+                        content_type="application/pdf",
+                    ),
+                ],
+                attributes={
+                    "deprecated_slug": "document-slug",
+                    "variant": "Original language",
+                    "md5_sum": "aaaaa11111bbbbb",
+                    "status": "published",
+                },
+            ),
+        ],
     )
