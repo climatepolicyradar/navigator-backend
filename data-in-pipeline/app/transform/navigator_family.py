@@ -7,7 +7,7 @@ from data_in_models.models import (
     LabelRelationship,
     LabelWithoutDocumentRelationships,
 )
-from returns.result import Failure, Result, Success
+from pydantic import BaseModel, ConfigDict
 
 from app.bootstrap_telemetry import get_logger, log_context
 from app.extract.connectors import (
@@ -17,7 +17,7 @@ from app.extract.connectors import (
 )
 from app.geographies import geographies_lookup
 from app.models import Identified, NavigatorConcept
-from app.transform.models import CouldNotTransform, NoMatchingTransformations
+from app.transform.models import CouldNotTransform
 
 mcf_projects_corpus_import_ids = [
     "MCF.corpus.AF.n0000",
@@ -59,23 +59,32 @@ MCF_ATTRIBUTE_KEYS = {
 }
 
 
+class TransformResult(BaseModel):
+    model_config = ConfigDict(
+        arbitrary_types_allowed=True
+    )  # allowing non-Pydantic types in this model
+    documents: list[Document]
+    errors: list[CouldNotTransform]
+
+
+class LitigationConceptLabelTransformResult(BaseModel):
+    model_config = ConfigDict(arbitrary_types_allowed=True)
+    labels: list[LabelRelationship]
+    errors: list[CouldNotTransform]
+
+
 def transform_navigator_family(
     input: Identified[NavigatorFamily],
-) -> Result[list[Document], CouldNotTransform | NoMatchingTransformations]:
+) -> TransformResult:
     logger = get_logger()
     with log_context(import_id=input.id):
         logger.info(f"Transforming family with {len(input.data.documents)} documents")
-
-        match transform(input):
-            case Success(d):
-                logger.info(f"Transform completed, produced {len(d)} documents")
-                return Success(d)
-            case Failure(error):
-                logger.warning(f"Transformation failed: {error}")
-                return Failure(error)
-
-        logger.warning("No matching transformation found")
-        return Failure(NoMatchingTransformations())
+        result = transform(input)
+        logger.info(
+            f"Transform completed: produced {len(result.documents)} documents, "
+            f"{len(result.errors)} errors"
+        )
+        return result
 
 
 def _documents_match(
@@ -111,17 +120,15 @@ def _family_document_merged(
 
 def transform(
     input: Identified[NavigatorFamily],
-) -> Result[list[Document], CouldNotTransform]:
+) -> TransformResult:
     documents: list[Document] = []
+    transformation_errors: list[CouldNotTransform] = []
 
     """
     Transform
     """
-    result = _transform_navigator_family(input.data)
-    if isinstance(result, Failure):
-        return result
-    else:
-        document_from_family = result.unwrap()
+    document_from_family, errors = _transform_navigator_family(input.data)
+    transformation_errors.extend(errors)
 
     documents_from_documents = [
         _transform_navigator_document(
@@ -263,7 +270,7 @@ def transform(
     documents.extend(documents_from_documents)
     documents.extend(documents_from_collections)
 
-    return Success(documents)
+    return TransformResult(documents=documents, errors=transformation_errors)
 
 
 def _transform_family_corpus_organisation(
@@ -519,7 +526,7 @@ def _shallow_label(
 def _transform_litigation_concepts_to_label_relationships(
     concepts: list[NavigatorConcept],
     family_import_id: str,
-) -> Result[list[LabelRelationship], CouldNotTransform]:
+) -> LitigationConceptLabelTransformResult:
     """
     Convert litigation concepts into label relationships with subconcept hierarchies.
 
@@ -530,6 +537,8 @@ def _transform_litigation_concepts_to_label_relationships(
         - family_import_id= the import_id of the family these concepts belong to, to debug if needed.
         - Parent references are SHALLOW (labels=[] to prevent deep nesting).
     """
+
+    errors: list[CouldNotTransform] = []
 
     # The relation values unfortunately conflict with other values in the taxonomy, so we have to map them as `legal`
     # @see: https://github.com/climatepolicyradar/litigation-data-mapper/blob/49e8da8f4449dc8e3fec5a126b9973df4efb4d26/litigation_data_mapper/extract_concepts.py#L45
@@ -561,7 +570,11 @@ def _transform_litigation_concepts_to_label_relationships(
         for parent_name in concept.subconcept_of_labels:
             parent = label_by_name.get((concept.relation, parent_name))
             if parent is None:
-                continue
+                errors.append(
+                    CouldNotTransform(
+                        f"Unknown parent label {parent_name!r} in relation {concept.relation!r}. See family {family_import_id!r} for details."
+                    )
+                )
             else:
                 parent_ref = _shallow_label(parent)
 
@@ -569,12 +582,13 @@ def _transform_litigation_concepts_to_label_relationships(
                     LabelRelationship(type="subconcept_of", value=parent_ref)
                 )
 
-    return Success(
-        [
-            # we use legal_concept over concept as `concept` is reserved for our knowledge graph labels
+    return LitigationConceptLabelTransformResult(
+        labels=[
+            # `legal_concept` rather than `concept` — `concept` is reserved for knowledge graph labels.
             LabelRelationship(type="legal_concept", value=label)
             for label in label_map.values()
-        ]
+        ],
+        errors=errors,
     )
 
 
@@ -723,21 +737,20 @@ def _transform_to_category(
 
 def _transform_litigation_data(
     navigator_family: NavigatorFamily,
-) -> Result[list[LabelRelationship], CouldNotTransform]:
+) -> tuple[list[LabelRelationship], list[CouldNotTransform]]:
     """
     Transform litigation-specific concepts and filing date into label relationships.
     Only applies to the Litigation corpus.
     """
     labels: list[LabelRelationship] = []
+    errors: list[CouldNotTransform] = []
 
     if navigator_family.concepts:
-        match _transform_litigation_concepts_to_label_relationships(
+        concept_labels = _transform_litigation_concepts_to_label_relationships(
             navigator_family.concepts, navigator_family.import_id
-        ):
-            case Success(litigation_labels):
-                labels.extend(litigation_labels)
-            case Failure(e):
-                return Failure(e)
+        )
+        labels.extend(concept_labels.labels)
+        errors.extend(concept_labels.errors)
 
     if navigator_family.events:
         filing_event = next(
@@ -761,14 +774,15 @@ def _transform_litigation_data(
                 )
             )
 
-    return Success(labels)
+    return labels, errors
 
 
 def _transform_navigator_family(
     navigator_family: NavigatorFamily,
-) -> Result[Document, CouldNotTransform]:
+) -> tuple[Document, list[CouldNotTransform]]:
     labels: list[LabelRelationship] = []
     attributes: dict[str, str | float | bool] = {}
+    transformation_errors: list[CouldNotTransform] = []
 
     """
     All families are currently Principal.
@@ -976,11 +990,11 @@ def _transform_navigator_family(
     """
 
     if navigator_family.corpus.import_id == "Academic.corpus.Litigation.n0000":
-        match _transform_litigation_data(navigator_family):
-            case Success(litigation_labels):
-                labels.extend(litigation_labels)
-            case Failure(e):
-                return Failure(e)
+        litigation_labels, litigation_errors = _transform_litigation_data(
+            navigator_family
+        )
+        labels.extend(litigation_labels)
+        transformation_errors.extend(litigation_errors)
 
     """Dates"""
     if navigator_family.published_date:
@@ -1001,15 +1015,15 @@ def _transform_navigator_family(
     if navigator_family.documents and contains_published_document:
         attributes["status"] = "published"
 
-    return Success(
-        Document(
-            id=navigator_family.import_id,
-            title=navigator_family.title,
-            description=navigator_family.summary,
-            labels=_deduplicate_labels(labels),
-            attributes=attributes,
-        )
+    document = Document(
+        id=navigator_family.import_id,
+        title=navigator_family.title,
+        description=navigator_family.summary,
+        labels=_deduplicate_labels(labels),
+        attributes=attributes,
     )
+
+    return document, transformation_errors
 
 
 def _transform_document_urls(navigator_document):

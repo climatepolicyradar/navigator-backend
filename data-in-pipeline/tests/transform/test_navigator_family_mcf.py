@@ -427,7 +427,7 @@ def test_transform_navigator_family_with_multilateral_climate_fund_project(
         },
     )
     assert_model_list_equality(
-        result.unwrap(),
+        result.documents,
         [
             expected_document_from_family,
             Document(
@@ -563,7 +563,7 @@ def test_transform_navigator_family_with_multilateral_climate_fund_guidance(
         navigator_family_multilateral_climate_fund_guidance
     )
     assert_model_list_equality(
-        result.unwrap(),
+        result.documents,
         [
             Document(
                 id="family",

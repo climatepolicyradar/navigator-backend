@@ -12,7 +12,6 @@ from prefect import flow, task
 from prefect.futures import PrefectFuture
 from prefect.runtime import flow_run, task_run
 from prefect.task_runners import TaskRunner, ThreadPoolTaskRunner
-from returns.result import Failure, Success
 
 from app.bootstrap_telemetry import get_logger, pipeline_metrics
 from app.extract.connector_config import NavigatorConnectorConfig
@@ -29,9 +28,7 @@ from app.load.load import load_to_db
 from app.models import ExtractedEnvelope, Identified, PipelineResult
 from app.pipeline_metrics import ErrorType, Operation, PipelineType, Status
 from app.run_db_migrations.run_db_migrations import run_db_migrations
-from app.transform.navigator_family import (
-    transform_navigator_family,
-)
+from app.transform.navigator_family import transform_navigator_family
 from app.util import SlackNotify, get_s3_client
 
 
@@ -217,23 +214,19 @@ def transform(
     all_documents = []
     errors = []
     for family in identified_families:
-        transformed = transform_navigator_family(family)
+        transformed_result = transform_navigator_family(family)
+        all_documents.extend(transformed_result.documents)
 
-        match transformed:
-            case Success(documents):
-                all_documents.extend(documents)
-            case Failure(error):
-                _LOGGER.warning(f"Transformation failed: {error}")
+        if transformed_result.errors:
+            for error in transformed_result.errors:
+                _LOGGER.warning(f"Partial Transformation: Non Fatal Error: {error}")
                 pipeline_metrics.record_error(Operation.TRANSFORM, ErrorType.TRANSFORM)
                 pipeline_metrics.record_processed(PipelineType.FAMILY, Status.FAILURE)
                 errors.append(error)
-            case _:
-                pipeline_metrics.record_processed(PipelineType.FAMILY, Status.FAILURE)
-                errors.append(Exception("Unexpected transformed result state"))
 
     _LOGGER.info(
         f"Transformation complete: {len(all_documents)} documents from "
-        f"{len(identified_families)} families ({len(errors)} failures)"
+        f"{len(identified_families)} families ({len(errors)} non fatal errors)"
     )
 
     return all_documents, errors
