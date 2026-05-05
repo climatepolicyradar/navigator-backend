@@ -142,11 +142,11 @@ def test_transform_navigator_family_UNFCCC_party_submission_to_GST1_label():
                 ),
             ),
             LabelRelationship(
-                type="?",
+                type="entity_type",
                 value=Label(
-                    id="?::GST1",
-                    value="GST1",
-                    type="?",
+                    id="entity_type::GST1",
+                    value="GST1 Submission",
+                    type="entity_type",
                 ),
             ),
             LabelRelationship(
@@ -252,11 +252,11 @@ def test_transform_navigator_family_UNFCCC_non_party_submission_to_GST1_label():
                 ),
             ),
             LabelRelationship(
-                type="?",
+                type="entity_type",
                 value=Label(
-                    id="?::GST1",
-                    value="GST1",
-                    type="?",
+                    id="entity_type::GST1",
+                    value="GST1 Submission",
+                    type="entity_type",
                 ),
             ),
             LabelRelationship(

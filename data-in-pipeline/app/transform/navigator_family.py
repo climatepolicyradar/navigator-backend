@@ -854,13 +854,13 @@ def _transform_navigator_family(
     if _part_of_gst1(navigator_family):
         labels.append(
             LabelRelationship(
-                type="?",
+                type="entity_type",
                 value=Label(
-                    id="?::GST1",
-                    value="GST1",
-                    type="?",
+                    id="entity_type::GST1",
+                    value="GST1 Submission",
+                    type="entity_type",
                 ),
-            )
+            ),
         )
 
     # We skip litigation as we hijacked the event_type for document type
