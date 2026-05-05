@@ -778,6 +778,7 @@ def _part_of_gst1(navigator_family: NavigatorFamily) -> bool:
 
     gst1_party_submission = (
         navigator_family.corpus.import_id == "UNFCCC.corpus.i00000001.n0000"
+        and navigator_family.metadata.get("author_type") is not None
         and navigator_family.metadata["author_type"][0] == "Party"
         and family_created_date_without_time == gst1_party_submission_date
     )
@@ -793,6 +794,7 @@ def _part_of_gst1(navigator_family: NavigatorFamily) -> bool:
 
     gst1_non_party_report = (
         navigator_family.corpus.import_id == "UNFCCC.corpus.i00000001.n0000"
+        and navigator_family.metadata.get("author_type") is not None
         and navigator_family.metadata["author_type"][0] == "Non-Party"
         and family_created_date_without_time in gst1_non_party_report_dates
     )

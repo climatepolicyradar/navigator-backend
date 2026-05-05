@@ -67,6 +67,7 @@ def test_process_family_updates_flow_multiple_families(  # noqa: PLR0913
             title="Belgium UNCBD National Targets",
             summary="Family summary",
             category="REPORTS",
+            created="2020-01-01T00:00:00Z",
             corpus=corpus,
             documents=[
                 NavigatorDocumentFactory.build(
@@ -86,6 +87,7 @@ def test_process_family_updates_flow_multiple_families(  # noqa: PLR0913
             title="France UNCBD National Targets",
             summary="Family summary",
             category="REPORTS",
+            created="2020-01-01T00:00:00Z",
             corpus=corpus,
             documents=[
                 NavigatorDocumentFactory.build(
@@ -222,6 +224,7 @@ def test_etl_pipeline_load_failure(  # noqa: PLR0913
             title=test_family_title,
             summary="Family summary",
             category="REPORTS",
+            created="2020-01-01T00:00:00Z",
             corpus=corpus,
             documents=[
                 NavigatorDocumentFactory.build(
