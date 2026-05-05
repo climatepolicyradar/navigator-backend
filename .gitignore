@@ -1,5 +1,6 @@
 # Database dump
 backend_db_dump.dump
+*/db/init/*
 
 # Benchmarks
 benchmark*

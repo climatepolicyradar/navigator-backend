@@ -5,12 +5,13 @@ services:
     container_name: data-in-api-db
     environment:
       POSTGRES_USER: data-in-api
-      POSTGRES_PASSWORD: data-in-api
+      POSTGRES_PASSWORD: db:5432/?Action=connect&DBUser=data-in-api&X-Amz-Algorithm=AWS4-HMAC-SHA256&X-Amz-Credential=AKIAIOSFODNN7EXAMPLE%2F20260101%2Feu-west-1%2Frds-db%2Faws4_request&X-Amz-Date=20260101T000000Z&X-Amz-Expires=900&X-Amz-SignedHeaders=host&X-Amz-Security-Token=FAKE_SESSION_TOKEN_FOR_LOCAL_DEV&X-Amz-Signature=db678633f21e22d0dc69ca4ceb8c15108eb1e0f100822e61cc587f5a9afbe051
       POSTGRES_DB: data-in-api
     ports:
       - 5432:5432
     volumes:
       - data-in-api-postgres-data:/var/lib/postgresql/data
+      - ./db/init:/docker-entrypoint-initdb.d:ro
     healthcheck:
       test: [CMD-SHELL, pg_isready -U data-in-api -d data-in-api]
       interval: 5s
@@ -28,24 +29,23 @@ services:
       - ..:/app
     working_dir: /app
     environment:
-      DB_PORT: 5432
       DB_URL: db
       DB_NAME: data-in-api
-      DB_SECRETS: '{"password": "data-in-api", "username": "data-in-api"}'
+      DB_USERNAME: data-in-api
       AWS_REGION: eu-west-1
+      DB_PORT: 5432
+      #  required for IAM token generation:
+      AWS_ACCESS_KEY_ID: AKIAIOSFODNN7EXAMPLE
+      AWS_SECRET_ACCESS_KEY: wJalrXUtnFEMI/K7MDENG/bPxRfiCYEXAMPLEKEY
+      AWS_SESSION_TOKEN: FAKE_SESSION_TOKEN_FOR_LOCAL_DEV
     command:
       [
         uv,
         run,
         --project,
         data-in-api,
-        fastapi,
-        dev,
-        data-in-api/app/main.py,
-        --port,
-        "8080",
-        --host,
-        0.0.0.0,
+        python,
+        data-in-api/scripts/dev_entrypoint.py,
       ]
     depends_on:
       - db
@@ -55,7 +55,7 @@ services:
     container_name: data-in-api-test-db
     environment:
       POSTGRES_USER: data-in-api
-      POSTGRES_PASSWORD: data-in-api
+      POSTGRES_PASSWORD: test-db:5432/?Action=connect&DBUser=data-in-api&X-Amz-Algorithm=AWS4-HMAC-SHA256&X-Amz-Credential=AKIAIOSFODNN7EXAMPLE%2F20260101%2Feu-west-1%2Frds-db%2Faws4_request&X-Amz-Date=20260101T000000Z&X-Amz-Expires=900&X-Amz-SignedHeaders=host&X-Amz-Security-Token=FAKE_SESSION_TOKEN_FOR_LOCAL_DEV&X-Amz-Signature=f3544635f326b40e521530aa4af54448f0131be982b753c4acb7bff0803e3d56
       POSTGRES_DB: data-in-api
     ports:
       - 5432:5432
@@ -76,12 +76,15 @@ services:
       - ..:/app
     working_dir: /app
     environment:
-      DB_PORT: 5432
       DB_URL: test-db
       DB_NAME: data-in-api
       DB_USERNAME: data-in-api
-      DB_MASTER_PASSWORD: data-in-api
       AWS_REGION: eu-west-1
+      DB_PORT: 5432
+      #  required for IAM token generation:
+      AWS_ACCESS_KEY_ID: AKIAIOSFODNN7EXAMPLE
+      AWS_SECRET_ACCESS_KEY: wJalrXUtnFEMI/K7MDENG/bPxRfiCYEXAMPLEKEY
+      AWS_SESSION_TOKEN: FAKE_SESSION_TOKEN_FOR_LOCAL_DEV
     command:
       [uv, run, --project, data-in-api, pytest, data-in-api, --color=yes, -vv]
     depends_on:
