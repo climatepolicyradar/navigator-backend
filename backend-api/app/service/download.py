@@ -151,6 +151,32 @@ def parse_concept_labels(concept_labels: Sequence[str], prefix: str) -> str:
     )
 
 
+def _get_matching_document_import_ids(
+    search_response_families: Sequence[SearchResponseFamily],
+    documents_by_family_slug: Mapping[str, Sequence[FamilyDocument]],
+) -> set[str]:
+    """Return document import IDs that match search passage hits."""
+    all_matching_document_slugs = {
+        d.document_slug
+        for f in search_response_families
+        for d in f.family_documents
+        if d.document_passage_matches
+    }
+    if not all_matching_document_slugs:
+        return set()
+
+    matching_document_import_ids: set[str] = set()
+    for family in search_response_families:
+        family_documents = documents_by_family_slug.get(family.family_slug, [])
+        for document in family_documents:
+            if not document.import_id:
+                continue
+            if any(slug.name in all_matching_document_slugs for slug in document.slugs):
+                matching_document_import_ids.add(str(document.import_id))
+
+    return matching_document_import_ids
+
+
 def _get_document_events(
     db: Session, document_import_ids: Sequence[str]
 ) -> Mapping[str, list[FamilyEvent]]:
@@ -207,17 +233,14 @@ def stream_result_into_csv(  # noqa: PLR0913
     is_ccc_theme = theme and theme.upper() == "CCC"
 
     extra_required_info = _get_extra_csv_info(db, search_response_families)
-    all_matching_document_slugs = {
-        d.document_slug
-        for f in search_response_families
-        for d in f.family_documents
-        if d.document_passage_matches
-    }
-
     if base_url is None:
         raise ValidationError("Error creating CSV")
     if chunk_size < 1:
         raise ValidationError("CSV chunk size must be at least 1")
+    matching_document_import_ids = _get_matching_document_import_ids(
+        search_response_families,
+        extra_required_info["documents"],
+    )
 
     scheme = "http" if "localhost" in base_url else "https"
     url_base = f"{scheme}://{base_url}"
@@ -237,7 +260,6 @@ def stream_result_into_csv(  # noqa: PLR0913
     rows_in_chunk = 0
 
     for family in search_response_families:
-        _LOGGER.debug(f"Family: {family}")
         family_metadata = extra_required_info["metadata"].get(family.family_slug, {})
         if not family_metadata:
             _LOGGER.error(f"Failed to find metadata for '{family.family_slug}'")
@@ -273,20 +295,17 @@ def stream_result_into_csv(  # noqa: PLR0913
                     else:
                         document_match = (
                             "Yes"
-                            if bool(
-                                {slug.name for slug in document.slugs}
-                                & all_matching_document_slugs
-                            )
+                            if str(document.import_id) in matching_document_import_ids
                             else "No"
                         )
 
-                document_languages = ";".join(
-                    [
+                document_languages = (
+                    ";".join(
                         cast(str, language.name)
                         for language in physical_document.languages
-                    ]
+                    )
                     if physical_document is not None
-                    else []
+                    else ""
                 )
 
                 if is_ccc_theme:

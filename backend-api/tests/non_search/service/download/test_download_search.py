@@ -10,7 +10,11 @@ from app.models.search import (
     SearchResponseFamily,
     SearchResponseFamilyDocument,
 )
-from app.service.download import process_result_into_csv, stream_result_into_csv
+from app.service.download import (
+    _get_matching_document_import_ids,
+    process_result_into_csv,
+    stream_result_into_csv,
+)
 
 
 @patch("app.service.download._get_extra_csv_info")
@@ -463,3 +467,72 @@ def test_stream_result_into_csv_returns_same_data_as_string_version(
     ).decode("utf-8")
 
     assert streamed_csv == expected_csv
+
+
+def test_get_matching_document_import_ids_matches_any_document_slug():
+    matching_slug = "matching-slug"
+    family_slug = "family-1"
+    matching_doc_import_id = "doc-1"
+
+    search_response_families = [
+        SearchResponseFamily(
+            family_slug=family_slug,
+            family_name="Test Family",
+            family_description="Test Family Description",
+            family_category="Legislative",
+            family_date="2025-01-01",
+            family_source="CPR",
+            corpus_import_id="Test.CPR.corpus.0",
+            corpus_type_name="Laws and Policies",
+            family_geographies=["BRA"],
+            family_metadata={},
+            family_title_match=True,
+            family_description_match=False,
+            total_passage_hits=1,
+            family_documents=[
+                SearchResponseFamilyDocument(
+                    document_title="doc",
+                    document_slug=matching_slug,
+                    document_type="Test",
+                    document_source_url="https://example.com/doc.pdf",
+                    document_url=f"https://example.com/documents/{matching_slug}",
+                    document_content_type="application/pdf",
+                    document_passage_matches=[
+                        SearchResponseDocumentPassage(text="match", text_block_id="0")
+                    ],
+                )
+            ],
+            continuation_token=None,
+            prev_continuation_token=None,
+            metadata=None,
+        )
+    ]
+
+    documents_by_family_slug = {
+        family_slug: [
+            FamilyDocument(
+                import_id=matching_doc_import_id,
+                slugs=[Slug(name="non-matching"), Slug(name=matching_slug)],
+                physical_document=PhysicalDocument(
+                    source_url="https://example.com/doc.pdf",
+                    title="Test Document",
+                ),
+                valid_metadata={},
+            ),
+            FamilyDocument(
+                import_id=None,
+                slugs=[Slug(name=matching_slug)],
+                physical_document=PhysicalDocument(
+                    source_url="https://example.com/doc2.pdf",
+                    title="Test Document 2",
+                ),
+                valid_metadata={},
+            ),
+        ]
+    }
+
+    matching_document_import_ids = _get_matching_document_import_ids(
+        search_response_families, documents_by_family_slug
+    )
+
+    assert matching_document_import_ids == {matching_doc_import_id}
