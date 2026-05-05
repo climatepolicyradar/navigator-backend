@@ -88,6 +88,7 @@ def navigator_family_with_single_matching_document() -> Identified[NavigatorFami
             corpus=_cclw_corpus(),
             last_updated_date="2020-01-0100:00:00Z",
             published_date="2020-01-0100:00:00Z",
+            created="2020-01-01T00:00:00Z",
             documents=[
                 NavigatorDocumentFactory.build(
                     import_id="document",
@@ -115,7 +116,7 @@ def navigator_family_with_single_matching_document() -> Identified[NavigatorFami
                     title="Matching title on family and document and collection",
                     description="Collection description",
                     slug="collection-matching-slug",
-                    created="2020-01-0100:00:00Z",
+                    created="2020-01-01T00:00:00Z",
                     last_modified="2020-01-0100:00:00Z",
                 ),
                 NavigatorCollectionFactory.build(
@@ -123,7 +124,7 @@ def navigator_family_with_single_matching_document() -> Identified[NavigatorFami
                     title="Collection title",
                     description="Collection description",
                     slug="collection-slug",
-                    created="2020-01-0100:00:00Z",
+                    created="2020-01-01T00:00:00Z",
                     last_modified="2020-01-0100:00:00Z",
                 ),
             ],
@@ -149,6 +150,7 @@ def navigator_family_with_no_matching_transformations() -> Identified[NavigatorF
             category="UNFCCC",
             last_updated_date="2020-01-0100:00:00Z",
             published_date="2020-01-0100:00:00Z",
+            created="2020-01-01T00:00:00Z",
             corpus=_cclw_corpus(),
             documents=[
                 NavigatorDocumentFactory.build(
@@ -780,6 +782,7 @@ def test_transform_navigator_family_with_laws_and_policies_corpus_type(
             category="LEGISLATIVE",
             published_date=None,
             last_updated_date=None,
+            created="2020-01-01T00:00:00Z",
             corpus=NavigatorCorpusFactory.build(
                 import_id=corpus_id,
                 corpus_type=NavigatorCorpusTypeFactory.build(name="Laws and Policies"),
@@ -941,6 +944,7 @@ def test_transform_navigator_family_with_published_and_unpublished_documents():
             category="LEGISLATIVE",
             published_date=None,
             last_updated_date=None,
+            created="2020-01-01T00:00:00Z",
             corpus=_cclw_corpus(),
             documents=[
                 NavigatorDocumentFactory.build(
@@ -1365,6 +1369,7 @@ def test_transform_navigator_family_with_no_published_documents():
             category="LEGISLATIVE",
             published_date=None,
             last_updated_date=None,
+            created="2020-01-01T00:00:00Z",
             corpus=_cclw_corpus(),
             documents=[
                 NavigatorDocumentFactory.build(
@@ -1642,6 +1647,7 @@ def test_transform_to_category_corpus_ids(corpus_id: str, expected_category: str
             category="REPORTS",
             published_date=None,
             last_updated_date=None,
+            created="2020-01-01T00:00:00Z",
             corpus=NavigatorCorpusFactory.build(
                 import_id=corpus_id,
                 corpus_type=NavigatorCorpusTypeFactory.build(name="corpus_type"),
@@ -1655,7 +1661,7 @@ def test_transform_to_category_corpus_ids(corpus_id: str, expected_category: str
             collections=[],
             geographies=[],
             slug="family-slug",
-            metadata={},
+            metadata={"author_type": ["Party"]},
             concepts=[],
         ),
     )

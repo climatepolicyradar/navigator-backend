@@ -88,6 +88,7 @@ def navigator_family_multilateral_climate_fund_project() -> Identified[Navigator
             category="MCF",
             last_updated_date=None,
             published_date=None,
+            created="2020-01-01T00:00:00Z",
             corpus=NavigatorCorpusFactory.build(
                 import_id="MCF.corpus.AF.n0000",
                 corpus_type=NavigatorCorpusTypeFactory.build(name="AF"),
@@ -158,6 +159,7 @@ def navigator_family_multilateral_climate_fund_guidance() -> (
             category="REPORTS",
             last_updated_date=None,
             published_date=None,
+            created="2020-01-01T00:00:00Z",
             corpus=NavigatorCorpusFactory.build(
                 import_id="MCF.corpus.AF.Guidance",
                 corpus_type=NavigatorCorpusTypeFactory.build(name="AF"),

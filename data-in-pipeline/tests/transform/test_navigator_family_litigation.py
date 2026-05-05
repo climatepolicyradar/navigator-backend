@@ -39,6 +39,7 @@ def navigator_family_with_litigation_corpus_type() -> Identified[NavigatorFamily
             category="LITIGATION",
             last_updated_date="2020-01-0100:00:00Z",
             published_date="2020-01-0100:00:00Z",
+            created="2020-01-01T00:00:00Z",
             corpus=NavigatorCorpusFactory.build(
                 import_id="Academic.corpus.Litigation.n0000",
                 corpus_type=NavigatorCorpusTypeFactory.build(name="Litigation"),
@@ -133,6 +134,7 @@ def navigator_family_with_litigation_concepts() -> Identified[NavigatorFamily]:
             category="LITIGATION",
             last_updated_date="2020-01-0100:00:00Z",
             published_date="2020-01-0100:00:00Z",
+            created="2020-01-01T00:00:00Z",
             corpus=NavigatorCorpusFactory.build(
                 import_id="Academic.corpus.Litigation.n0000",
                 corpus_type=NavigatorCorpusTypeFactory.build(name="Litigation"),
@@ -224,6 +226,7 @@ def navigator_family_with_litigation_concept_missing_parent() -> (
             category="LITIGATION",
             last_updated_date="2020-01-0100:00:00Z",
             published_date="2020-01-0100:00:00Z",
+            created="2020-01-01T00:00:00Z",
             corpus=NavigatorCorpusFactory.build(
                 import_id="Academic.corpus.Litigation.n0000",
                 corpus_type=NavigatorCorpusTypeFactory.build(name="Litigation"),
@@ -283,6 +286,7 @@ def navigator_family_with_duplicate_legal_case() -> Identified[NavigatorFamily]:
             category="LITIGATION",
             last_updated_date=None,
             published_date=None,
+            created="2020-01-01T00:00:00Z",
             summary="Family summary",
             corpus=NavigatorCorpusFactory.build(
                 import_id="Academic.corpus.Litigation.n0000",
