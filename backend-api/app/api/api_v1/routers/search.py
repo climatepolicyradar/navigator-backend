@@ -21,7 +21,6 @@ https://fastapi.tiangolo.com/async/
 """
 
 import logging
-from io import BytesIO
 from typing import Annotated, Sequence, cast
 
 from cpr_sdk.search_adaptors import VespaSearchAdapter
@@ -44,7 +43,7 @@ from app.models.search import SearchRequestBody, SearchResponse
 from app.service.custom_app import AppTokenFactory
 from app.service.download import (
     create_data_download_zip_archive,
-    process_result_into_csv,
+    stream_result_into_csv,
 )
 from app.service.search import get_s3_doc_url_from_cdn, make_search_request
 from app.service.vespa import get_vespa_search_adapter
@@ -224,13 +223,11 @@ def download_search_documents(
             detail=f"Invalid Query: {' '.join(e.args)}",
         )
 
-    content_str = process_result_into_csv(
+    content_stream = stream_result_into_csv(
         db, search_response.families, token.aud, is_browse=is_browse, theme=token.sub
     )
-
-    _LOGGER.debug(f"Downloading search results as CSV: {content_str}")
     return StreamingResponse(
-        content=BytesIO(content_str.encode("utf-8")),
+        content=content_stream,
         headers={
             "Content-Type": "text/csv",
             "Content-Disposition": "attachment; filename=results.csv",

@@ -10,7 +10,7 @@ from app.models.search import (
     SearchResponseFamily,
     SearchResponseFamilyDocument,
 )
-from app.service.download import process_result_into_csv
+from app.service.download import process_result_into_csv, stream_result_into_csv
 
 
 @patch("app.service.download._get_extra_csv_info")
@@ -379,3 +379,87 @@ def test_process_result_into_csv_returns_correct_data_for_CCC_search_in_csv_form
         )
         == expected_search_csv
     )
+
+
+@patch("app.service.download._get_extra_csv_info")
+def test_stream_result_into_csv_returns_same_data_as_string_version(
+    mock_get_extra_csv_info,
+):
+    mock_family_slug = "cpr-test-family"
+    mock_document_slug = "cpr-test-document"
+    mock_document_source_url = "www.cpr-test-document.pdf"
+    mock_document_title = "CPR Test Document"
+
+    mock_get_extra_csv_info.return_value = {
+        "metadata": {mock_family_slug: {}},
+        "source": {mock_family_slug: "CPR"},
+        "documents": {
+            mock_family_slug: [
+                FamilyDocument(
+                    slugs=[Slug(name=mock_document_slug)],
+                    physical_document=PhysicalDocument(
+                        source_url=mock_document_source_url,
+                        title=mock_document_title,
+                    ),
+                    valid_metadata={},
+                )
+            ]
+        },
+        "collection": {mock_family_slug: {}},
+        "document_events": {},
+    }
+
+    families = [
+        SearchResponseFamily(
+            family_slug=mock_family_slug,
+            family_name="CPR Test Family",
+            family_description="CPR Test Family Description",
+            family_category="Legislative",
+            family_date="2025-01-01",
+            family_source="CPR",
+            corpus_import_id="Test.CPR.corpus.0",
+            corpus_type_name="Laws and Policies",
+            family_geographies=["BRA"],
+            family_metadata={},
+            family_title_match=True,
+            family_description_match=False,
+            total_passage_hits=1,
+            family_documents=[
+                SearchResponseFamilyDocument(
+                    document_title=mock_document_title,
+                    document_slug=mock_document_slug,
+                    document_type="Test",
+                    document_source_url=mock_document_source_url,
+                    document_url=f"https://test.com/documents/{mock_document_slug}",
+                    document_content_type="application/pdf",
+                    document_passage_matches=[
+                        SearchResponseDocumentPassage(text="test", text_block_id="0")
+                    ],
+                )
+            ],
+            continuation_token=None,
+            prev_continuation_token=None,
+            metadata=None,
+        )
+    ]
+
+    expected_csv = process_result_into_csv(
+        db=None,  # type: ignore
+        search_response_families=families,
+        base_url="test.com",
+        is_browse=False,
+        theme="CPR",
+    )
+
+    streamed_csv = b"".join(
+        stream_result_into_csv(
+            db=None,  # type: ignore
+            search_response_families=families,
+            base_url="test.com",
+            is_browse=False,
+            theme="CPR",
+            chunk_size=1,
+        )
+    ).decode("utf-8")
+
+    assert streamed_csv == expected_csv

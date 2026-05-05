@@ -5,7 +5,7 @@ import zipfile
 from collections import defaultdict
 from io import BytesIO, StringIO
 from logging import getLogger
-from typing import Any, Mapping, Optional, Sequence, cast
+from typing import Any, Iterator, Mapping, Optional, Sequence, cast
 
 import pandas as pd
 from db_client.models.dfce import (
@@ -185,13 +185,14 @@ def _get_document_events(
 
 
 @observe("process_result_into_csv")
-def process_result_into_csv(
+def stream_result_into_csv(  # noqa: PLR0913
     db: Session,
     search_response_families: Sequence[SearchResponseFamily],
     base_url: Optional[str],
     is_browse: bool,
     theme: Optional[str] = None,
-) -> str:
+    chunk_size: int = 128,
+) -> Iterator[bytes]:
     """
     Process a search/browse result into a CSV file for download.
 
@@ -199,7 +200,8 @@ def process_result_into_csv(
     :param Sequence[SearchResponseFamily] search_response_families: the families search result to process
     :param bool is_browse: a flag indicating whether this is a search/browse result
     :param Optional[str] theme: the theme to determine CSV column format
-    :return str: the search result represented as CSV
+    :param int chunk_size: number of rows per yielded CSV chunk
+    :return Iterator[bytes]: UTF-8 encoded CSV chunks
     """
     # Check if theme is CCC (case insensitive)
     is_ccc_theme = theme and theme.upper() == "CCC"
@@ -214,10 +216,25 @@ def process_result_into_csv(
 
     if base_url is None:
         raise ValidationError("Error creating CSV")
+    if chunk_size < 1:
+        raise ValidationError("CSV chunk size must be at least 1")
 
     scheme = "http" if "localhost" in base_url else "https"
     url_base = f"{scheme}://{base_url}"
-    rows = []
+    csv_buffer = StringIO("")
+    csv_fieldnames = (
+        _CCC_CSV_SEARCH_RESPONSE_COLUMNS
+        if is_ccc_theme
+        else _CSV_SEARCH_RESPONSE_COLUMNS
+    )
+    writer = csv.DictWriter(
+        csv_buffer, fieldnames=csv_fieldnames, extrasaction="ignore"
+    )
+    writer.writeheader()
+    yield csv_buffer.getvalue().encode("utf-8")
+    csv_buffer.seek(0)
+    csv_buffer.truncate(0)
+    rows_in_chunk = 0
 
     for family in search_response_families:
         _LOGGER.debug(f"Family: {family}")
@@ -299,7 +316,13 @@ def process_result_into_csv(
                         document_languages,
                     )
 
-                rows.append(row)
+                writer.writerow(row)
+                rows_in_chunk += 1
+                if rows_in_chunk >= chunk_size:
+                    yield csv_buffer.getvalue().encode("utf-8")
+                    csv_buffer.seek(0)
+                    csv_buffer.truncate(0)
+                    rows_in_chunk = 0
         else:
             # Always write a row, even if the Family contains no documents
             if is_ccc_theme:
@@ -329,24 +352,36 @@ def process_result_into_csv(
                     "",  # Document languages
                 )
 
-            rows.append(row)
+            writer.writerow(row)
+            rows_in_chunk += 1
+            if rows_in_chunk >= chunk_size:
+                yield csv_buffer.getvalue().encode("utf-8")
+                csv_buffer.seek(0)
+                csv_buffer.truncate(0)
+                rows_in_chunk = 0
 
-    csv_result_io = StringIO("")
+    if rows_in_chunk > 0:
+        yield csv_buffer.getvalue().encode("utf-8")
 
-    if is_ccc_theme:
-        csv_fieldnames = _CCC_CSV_SEARCH_RESPONSE_COLUMNS
-    else:
-        csv_fieldnames = _CSV_SEARCH_RESPONSE_COLUMNS
 
-    writer = csv.DictWriter(
-        csv_result_io, fieldnames=csv_fieldnames, extrasaction="ignore"
-    )
-    writer.writeheader()
-    for row in rows:
-        writer.writerow(row)
-
-    csv_result_io.seek(0)
-    return csv_result_io.read()
+@observe("process_result_into_csv")
+def process_result_into_csv(
+    db: Session,
+    search_response_families: Sequence[SearchResponseFamily],
+    base_url: str | None,
+    is_browse: bool,
+    theme: str | None = None,
+) -> str:
+    """Process a search/browse result into a CSV string."""
+    return b"".join(
+        stream_result_into_csv(
+            db=db,
+            search_response_families=search_response_families,
+            base_url=base_url,
+            is_browse=is_browse,
+            theme=theme,
+        )
+    ).decode("utf-8")
 
 
 def _create_ccc_csv_row(
