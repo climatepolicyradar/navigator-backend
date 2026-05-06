@@ -206,6 +206,20 @@ def identify(
     return identify_navigator_families(extracted)
 
 
+def transform_duplicate_collections(
+    collections: dict[str, Document], documents: list[Document]
+):
+    """
+    Combines duplicate collection documents with a single link to a different related family document
+    into one collection document with links to all related family documents
+    """
+    for doc in documents:
+        if doc.id not in collections:
+            collections[doc.id] = doc
+        else:
+            collections[doc.id].documents.extend(doc.documents)
+
+
 @task(log_prints=True)
 @pipeline_metrics.track(operation=Operation.TRANSFORM)
 def transform(
@@ -215,13 +229,15 @@ def transform(
     _LOGGER = get_logger()
 
     all_documents = []
+    all_collections = {}
     errors = []
     for family in identified_families:
-        transformed = transform_navigator_family(family)
+        result = transform_navigator_family(family)
 
-        match transformed:
-            case Success(documents):
+        match result:
+            case Success((documents, collection_documents)):
                 all_documents.extend(documents)
+                transform_duplicate_collections(all_collections, collection_documents)
             case Failure(error):
                 _LOGGER.warning(f"Transformation failed: {error}")
                 pipeline_metrics.record_error(Operation.TRANSFORM, ErrorType.TRANSFORM)
@@ -236,7 +252,8 @@ def transform(
         f"{len(identified_families)} families ({len(errors)} failures)"
     )
 
-    return all_documents, errors
+    all_transformed = all_documents + list(all_collections.values())
+    return all_transformed, errors
 
 
 @task(

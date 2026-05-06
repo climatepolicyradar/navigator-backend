@@ -150,7 +150,9 @@ def test_transform_navigator_family_UNFCCC_party_submission_to_GST1_label():
             },
         ),
     )
-    result = transform_navigator_family(navigator_family_with_GST1_documents)
+    result, _ = transform_navigator_family(
+        navigator_family_with_GST1_documents
+    ).unwrap()
     expected_document_from_family = Document(
         id="family",
         title="GST1 party family",
@@ -298,7 +300,7 @@ def test_transform_navigator_family_UNFCCC_party_submission_to_GST1_label():
         },
     )
     assert_model_list_equality(
-        result.unwrap(),
+        result,
         [
             expected_document_from_family,
             Document(
@@ -429,7 +431,9 @@ def test_transform_navigator_family_UNFCCC_non_party_submission_to_GST1_label():
             },
         ),
     )
-    result = transform_navigator_family(navigator_family_with_GST1_documents)
+    result, _ = transform_navigator_family(
+        navigator_family_with_GST1_documents
+    ).unwrap()
     expected_document_from_family = Document(
         id="family",
         title="GST1 party family",
@@ -577,7 +581,7 @@ def test_transform_navigator_family_UNFCCC_non_party_submission_to_GST1_label():
         },
     )
     assert_model_list_equality(
-        result.unwrap(),
+        result,
         [
             expected_document_from_family,
             Document(
