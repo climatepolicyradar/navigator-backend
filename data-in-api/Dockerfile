@@ -46,8 +46,9 @@ EXPOSE 8080
 FROM base AS dev
 
 RUN apt-get update && apt-get install -y --no-install-recommends faketime \
-    && rm -rf /var/lib/apt/lists/*
-ENV LD_PRELOAD=/usr/lib/x86_64-linux-gnu/faketime/libfaketime.so.1
+    && rm -rf /var/lib/apt/lists/* \
+    && ln -s "$(find /usr/lib -name 'libfaketime.so.1' | head -1)" /usr/local/lib/libfaketime.so.1
+ENV LD_PRELOAD=/usr/local/lib/libfaketime.so.1
 CMD ["sh", "-c", "uv run fastapi dev ./$SERVICE/app/main.py --port 8080 --host 0.0.0.0"]
 
 FROM base AS prod

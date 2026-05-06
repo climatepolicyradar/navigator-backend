@@ -135,6 +135,7 @@ def provide_token(
         uses the updated params to open the connection.
     """
     _LOGGER.info("Generating fresh IAM auth token for new connection")
+    _LOGGER.info(f">>>>>>>> { _generate_token()}")
     cparams["password"] = _generate_token()
 
 
