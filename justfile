@@ -25,6 +25,7 @@ build service environment tag:
     docker buildx build \
         --platform linux/amd64 \
         --output type=docker \
+        --target prod \
         --build-arg SERVICE={{service}} \
         --build-arg ENV={{environment}} \
         --build-arg GITHUB_SHA={{GITHUB_SHA}} \
