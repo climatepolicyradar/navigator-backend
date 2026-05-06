@@ -856,11 +856,11 @@ def _transform_navigator_family(
     if _part_of_global_stock_take_1(navigator_family):
         labels.append(
             LabelRelationship(
-                type="entity_type",
+                type="process",
                 value=Label(
-                    id="entity_type::GST1",
+                    id="process::GST1",
                     value="GST1 Submission",
-                    type="entity_type",
+                    type="process",
                 ),
             ),
         )
@@ -1182,11 +1182,11 @@ def _transform_navigator_document(
     if _part_of_global_stock_take_1(navigator_family):
         labels.append(
             LabelRelationship(
-                type="entity_type",
+                type="process",
                 value=Label(
-                    id="entity_type::GST1",
+                    id="process::GST1",
                     value="GST1 Submission",
-                    type="entity_type",
+                    type="process",
                 ),
             ),
         )

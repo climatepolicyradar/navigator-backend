@@ -165,11 +165,11 @@ def test_transform_navigator_family_UNFCCC_party_submission_to_GST1_label():
                 ),
             ),
             LabelRelationship(
-                type="entity_type",
+                type="process",
                 value=Label(
-                    id="entity_type::GST1",
+                    id="process::GST1",
                     value="GST1 Submission",
-                    type="entity_type",
+                    type="process",
                 ),
             ),
             LabelRelationship(
@@ -239,11 +239,11 @@ def test_transform_navigator_family_UNFCCC_party_submission_to_GST1_label():
                             ),
                         ),
                         LabelRelationship(
-                            type="entity_type",
+                            type="process",
                             value=Label(
-                                id="entity_type::GST1",
+                                id="process::GST1",
                                 value="GST1 Submission",
-                                type="entity_type",
+                                type="process",
                             ),
                         ),
                         LabelRelationship(
@@ -319,11 +319,11 @@ def test_transform_navigator_family_UNFCCC_party_submission_to_GST1_label():
                         ),
                     ),
                     LabelRelationship(
-                        type="entity_type",
+                        type="process",
                         value=Label(
-                            id="entity_type::GST1",
+                            id="process::GST1",
                             value="GST1 Submission",
-                            type="entity_type",
+                            type="process",
                         ),
                     ),
                     LabelRelationship(
@@ -444,11 +444,11 @@ def test_transform_navigator_family_UNFCCC_non_party_submission_to_GST1_label():
                 ),
             ),
             LabelRelationship(
-                type="entity_type",
+                type="process",
                 value=Label(
-                    id="entity_type::GST1",
+                    id="process::GST1",
                     value="GST1 Submission",
-                    type="entity_type",
+                    type="process",
                 ),
             ),
             LabelRelationship(
@@ -518,11 +518,11 @@ def test_transform_navigator_family_UNFCCC_non_party_submission_to_GST1_label():
                             ),
                         ),
                         LabelRelationship(
-                            type="entity_type",
+                            type="process",
                             value=Label(
-                                id="entity_type::GST1",
+                                id="process::GST1",
                                 value="GST1 Submission",
-                                type="entity_type",
+                                type="process",
                             ),
                         ),
                         LabelRelationship(
@@ -598,11 +598,11 @@ def test_transform_navigator_family_UNFCCC_non_party_submission_to_GST1_label():
                         ),
                     ),
                     LabelRelationship(
-                        type="entity_type",
+                        type="process",
                         value=Label(
-                            id="entity_type::GST1",
+                            id="process::GST1",
                             value="GST1 Submission",
-                            type="entity_type",
+                            type="process",
                         ),
                     ),
                     LabelRelationship(
