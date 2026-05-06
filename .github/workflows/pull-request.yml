@@ -39,7 +39,7 @@ jobs:
 
     steps:
       - uses: actions/checkout@v6
-      - uses: dorny/paths-filter@v3
+      - uses: dorny/paths-filter@v4
         id: filter-code-changes
         with:
           filters: |
@@ -90,7 +90,7 @@ jobs:
           # even if other unrelated root-level files changed too.
           predicate-quantifier: some
 
-      - uses: dorny/paths-filter@v3
+      - uses: dorny/paths-filter@v4
         id: filter-infra-changes
         with:
           filters: |
@@ -147,7 +147,7 @@ jobs:
       fail-fast: false
     steps:
       - uses: actions/checkout@v6
-      - uses: extractions/setup-just@v3
+      - uses: extractions/setup-just@v4
       - uses: astral-sh/setup-uv@v7
       - run: uv sync --project ${{ matrix.service }}
       - run: just test ${{ matrix.service }}
@@ -187,7 +187,7 @@ jobs:
           aws-region: eu-west-1
       - uses: astral-sh/setup-uv@v7
       - run: uv sync --all-packages
-      - uses: extractions/setup-just@v3
+      - uses: extractions/setup-just@v4
       - name: Install Pulumi
         uses: pulumi/actions@v6
         env:
@@ -228,7 +228,7 @@ jobs:
           aws-region: eu-west-1
       - uses: astral-sh/setup-uv@v7
       - run: uv sync --all-packages
-      - uses: extractions/setup-just@v3
+      - uses: extractions/setup-just@v4
       - name: Install Pulumi
         uses: pulumi/actions@v6
         env:
@@ -295,13 +295,13 @@ jobs:
           fi
           jq -n --arg msg "$MESSAGE" '{text: $msg, mrkdwn: true}' > slack-payload.json
 
-      - uses: slackapi/slack-github-action@v2.1.1
+      - uses: slackapi/slack-github-action@v3.0.2
         with:
           webhook: ${{ secrets.ENV_UPDATES_CHANNEL_SLACK_WEBHOOK_URL }}
           webhook-type: incoming-webhook
           payload-file-path: slack-payload.json
 
-      - uses: extractions/setup-just@v3
+      - uses: extractions/setup-just@v4
       - run: |
           just deploy ${{ matrix.service }} ${{ matrix.environment }} latest
           just deploy ${{ matrix.service }} ${{ matrix.environment }} ${{ github.sha }}

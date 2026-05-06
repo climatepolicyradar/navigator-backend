@@ -46,7 +46,7 @@ jobs:
       backend-api: ${{ steps.filter.outputs.backend-api }}
     steps:
       - uses: actions/checkout@v6
-      - uses: dorny/paths-filter@v3
+      - uses: dorny/paths-filter@v4
         id: filter
         with:
           filters: |

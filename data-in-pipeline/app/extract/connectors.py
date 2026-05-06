@@ -17,7 +17,12 @@ class NavigatorEvent(BaseModel):
     import_id: str
     event_type: str
     date: datetime.datetime
-    metadata: dict[str, list[str]] = {}
+    # We have quite a few families that fail model validation due to
+    # event.metadata.even_type being a string rather than a list.
+    # We don't use the value of event.metadata.even_type as it is a duplicate
+    # of event.event_type so we are allowing str values here so that the
+    # affected families can still be transformed.
+    metadata: dict[str, list[str] | str] = {}
 
 
 class NavigatorDocument(BaseModel):
