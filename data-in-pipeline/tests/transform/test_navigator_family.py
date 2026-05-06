@@ -170,7 +170,9 @@ def navigator_family_with_no_matching_transformations() -> Identified[NavigatorF
 def test_transform_navigator_family_with_single_matching_document(
     navigator_family_with_single_matching_document: Identified[NavigatorFamily],
 ):
-    result = transform_navigator_family(navigator_family_with_single_matching_document)
+    family_result, collection_result = transform_navigator_family(
+        navigator_family_with_single_matching_document
+    ).unwrap()
     expected_document_from_family = Document(
         id="family",
         title="Matching title on family and document and collection",
@@ -578,7 +580,7 @@ def test_transform_navigator_family_with_single_matching_document(
         },
     )
     assert_model_list_equality(
-        result.unwrap(),
+        family_result + collection_result,
         [
             expected_document_from_family,
             Document(
@@ -812,9 +814,9 @@ def test_transform_navigator_family_with_laws_and_policies_corpus_type(
             },
         ),
     )
-    result = transform_navigator_family(
+    family_result, _ = transform_navigator_family(
         navigator_family_with_laws_and_policies_corpus_type
-    )
+    ).unwrap()
     expected_document_from_family = Document(
         id="family",
         title="Laws and policies family",
@@ -928,7 +930,7 @@ def test_transform_navigator_family_with_laws_and_policies_corpus_type(
         },
     )
     assert_model_list_equality(
-        result.unwrap(),
+        family_result,
         [expected_document_from_family],
     )
 
@@ -983,9 +985,9 @@ def test_transform_navigator_family_with_published_and_unpublished_documents():
             metadata={},
         ),
     )
-    result = transform_navigator_family(
+    result, _ = transform_navigator_family(
         navigator_family_with_different_document_statuses
-    )
+    ).unwrap()
     expected_document_from_family = Document(
         id="family",
         title="Family with different document statuses",
@@ -1197,7 +1199,7 @@ def test_transform_navigator_family_with_published_and_unpublished_documents():
         },
     )
     assert_model_list_equality(
-        result.unwrap(),
+        result,
         [
             expected_document_from_family,
             Document(
@@ -1394,7 +1396,9 @@ def test_transform_navigator_family_with_no_published_documents():
             metadata={},
         ),
     )
-    result = transform_navigator_family(navigator_family_with_no_published_documents)
+    result, _ = transform_navigator_family(
+        navigator_family_with_no_published_documents
+    ).unwrap()
     expected_document_from_family = Document(
         id="family",
         title="Family with no published documents",
@@ -1533,7 +1537,7 @@ def test_transform_navigator_family_with_no_published_documents():
         },
     )
     assert_model_list_equality(
-        result.unwrap(),
+        result,
         [
             expected_document_from_family,
             Document(
@@ -1666,8 +1670,8 @@ def test_transform_to_category_corpus_ids(corpus_id: str, expected_category: str
         ),
     )
 
-    result = transform_navigator_family(navigator_family)
-    documents = result.unwrap()
+    result, _ = transform_navigator_family(navigator_family).unwrap()
+    documents = result
     family_doc = documents[0]
 
     category_labels = [label for label in family_doc.labels if label.type == "category"]

@@ -63,15 +63,17 @@ MCF_ATTRIBUTE_KEYS = {
 
 def transform_navigator_family(
     input: Identified[NavigatorFamily],
-) -> Result[list[Document], CouldNotTransform | NoMatchingTransformations]:
+) -> Result[
+    tuple[list[Document], list[Document]], CouldNotTransform | NoMatchingTransformations
+]:
     logger = get_logger()
     with log_context(import_id=input.id):
         logger.info(f"Transforming family with {len(input.data.documents)} documents")
 
         match transform(input):
-            case Success(d):
+            case Success((d, c)):
                 logger.info(f"Transform completed, produced {len(d)} documents")
-                return Success(d)
+                return Success((d, c))
             case Failure(error):
                 logger.warning(f"Transformation failed: {error}")
                 return Failure(error)
@@ -113,7 +115,7 @@ def _family_document_merged(
 
 def transform(
     input: Identified[NavigatorFamily],
-) -> Result[list[Document], CouldNotTransform]:
+) -> Result[tuple[list[Document], list[Document]], CouldNotTransform]:
     documents: list[Document] = []
 
     """
@@ -263,9 +265,8 @@ def transform(
     """
     documents.append(document_from_family)
     documents.extend(documents_from_documents)
-    documents.extend(documents_from_collections)
 
-    return Success(documents)
+    return Success((documents, documents_from_collections))
 
 
 def _transform_family_corpus_organisation(

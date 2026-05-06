@@ -310,7 +310,9 @@ def navigator_family_with_duplicate_legal_case() -> Identified[NavigatorFamily]:
 def test_transform_navigator_family_with_litigation_corpus_type(
     navigator_family_with_litigation_corpus_type: Identified[NavigatorFamily],
 ):
-    result = transform_navigator_family(navigator_family_with_litigation_corpus_type)
+    result, _ = transform_navigator_family(
+        navigator_family_with_litigation_corpus_type
+    ).unwrap()
     expected_document_from_family = Document(
         id="family",
         title="Litigation family",
@@ -483,7 +485,7 @@ def test_transform_navigator_family_with_litigation_corpus_type(
         },
     )
     assert_model_list_equality(
-        result.unwrap(),
+        result,
         [
             expected_document_from_family,
             Document(
@@ -608,7 +610,9 @@ def test_transform_navigator_family_with_litigation_corpus_type(
 def test_transform_navigator_family_with_litigation_corpus_type_and_litigation_concepts(
     navigator_family_with_litigation_concepts: Identified[NavigatorFamily],
 ):
-    result = transform_navigator_family(navigator_family_with_litigation_concepts)
+    result, _ = transform_navigator_family(
+        navigator_family_with_litigation_concepts
+    ).unwrap()
     expected_document_from_family = Document(
         id="family",
         title="Litigation family",
@@ -768,7 +772,7 @@ def test_transform_navigator_family_with_litigation_corpus_type_and_litigation_c
         },
     )
     assert_model_list_equality(
-        result.unwrap(),
+        result,
         [
             expected_document_from_family,
             Document(
