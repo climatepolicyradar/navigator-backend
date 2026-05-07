@@ -1,4 +1,4 @@
-FROM python:3.13-slim
+FROM python:3.13-slim AS base
 
 COPY --from=ghcr.io/astral-sh/uv:latest /uv /uvx /bin/
 # most of this is effectively taken from the uv docs
@@ -39,5 +39,18 @@ WORKDIR /app
 RUN uv sync --project $SERVICE
 
 EXPOSE 8080
+
+# For more on multi-stage builds see:
+# https://docs.docker.com/build/building/multi-stage/#use-an-external-image-as-a-stage
+
+FROM base AS dev
+
+RUN apt-get update && apt-get install -y --no-install-recommends faketime \
+    && rm -rf /var/lib/apt/lists/* \
+    && ln -s "$(find /usr/lib -name 'libfaketime.so.1' | head -1)" /usr/local/lib/libfaketime.so.1
+ENV LD_PRELOAD=/usr/local/lib/libfaketime.so.1
+CMD ["sh", "-c", "uv run fastapi dev ./$SERVICE/app/main.py --port 8080 --host 0.0.0.0"]
+
+FROM base AS prod
 
 CMD ["sh", "-c", "uv run fastapi run ./$SERVICE/app/main.py --port 8080 --host 0.0.0.0"]
