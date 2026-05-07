@@ -1128,6 +1128,9 @@ def _transform_navigator_document(
     These values are controlled
     @see: https://github.com/climatepolicyradar/data-migrations/blob/main/taxonomies/Intl.%20agreements.json#L42-L51
     @see: https://github.com/climatepolicyradar/data-migrations/blob/main/taxonomies/Laws%20and%20Policies.json#L381-L396
+
+    Based on 
+    @see: https://schema.org/Role
     """
     metadata_role = navigator_document.valid_metadata.get("role")
     if metadata_role is not None and len(metadata_role) > 0:
@@ -1136,9 +1139,9 @@ def _transform_navigator_document(
             LabelRelationship(
                 type="role",
                 value=Label(
-                    id=f"entity_type::{normalised_role}",
+                    id=f"role::{normalised_role}",
                     value=normalised_role,
-                    type="entity_type",
+                    type="role",
                 ),
             )
         )
