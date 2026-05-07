@@ -174,7 +174,7 @@ def cache_extraction_result(result: FamilyFetchResult):
 
 
 @task(log_prints=True)
-def cache_transform_errors(errors: list[Exception], run_id: str):
+def cache_transform_errors(errors: list[Exception | TransformWarning], run_id: str):
     """Cache transformation errors to S3."""
     error_data = [str(e) for e in errors]
     upload_to_s3(
