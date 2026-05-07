@@ -181,9 +181,12 @@ def navigator_family_multilateral_climate_fund_guidance() -> (
 def test_transform_navigator_family_with_multilateral_climate_fund_project(
     navigator_family_multilateral_climate_fund_project: Identified[NavigatorFamily],
 ):
-    result, _ = transform_navigator_family(
+    output = transform_navigator_family(
         navigator_family_multilateral_climate_fund_project
     ).unwrap()
+
+    assert output.warnings == []
+    assert output.collection_documents == []
     expected_document_from_family = Document(
         id="family",
         title="Multilateral climate fund project",
@@ -429,7 +432,7 @@ def test_transform_navigator_family_with_multilateral_climate_fund_project(
         },
     )
     assert_model_list_equality(
-        result,
+        output.documents,
         [
             expected_document_from_family,
             Document(
@@ -561,11 +564,14 @@ def test_transform_navigator_family_with_multilateral_climate_fund_project(
 def test_transform_navigator_family_with_multilateral_climate_fund_guidance(
     navigator_family_multilateral_climate_fund_guidance: Identified[NavigatorFamily],
 ):
-    result, _ = transform_navigator_family(
+    output = transform_navigator_family(
         navigator_family_multilateral_climate_fund_guidance
     ).unwrap()
+
+    assert output.warnings == []
+    assert output.collection_documents == []
     assert_model_list_equality(
-        result,
+        output.documents,
         [
             Document(
                 id="family",
