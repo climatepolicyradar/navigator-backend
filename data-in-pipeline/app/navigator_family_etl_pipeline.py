@@ -12,6 +12,7 @@ from prefect import flow, task
 from prefect.futures import PrefectFuture
 from prefect.runtime import flow_run, task_run
 from prefect.task_runners import TaskRunner, ThreadPoolTaskRunner
+from returns.result import Failure, Success
 
 from app.bootstrap_telemetry import get_logger, pipeline_metrics
 from app.extract.connector_config import NavigatorConnectorConfig
@@ -203,6 +204,20 @@ def identify(
     return identify_navigator_families(extracted)
 
 
+def transform_duplicate_collections(
+    collections: dict[str, Document], documents: list[Document]
+):
+    """
+    Combines duplicate collection documents with a single link to a different related family document
+    into one collection document with links to all related family documents
+    """
+    for doc in documents:
+        if doc.id not in collections:
+            collections[doc.id] = doc
+        else:
+            collections[doc.id].documents.extend(doc.documents)
+
+
 @task(log_prints=True)
 @pipeline_metrics.track(operation=Operation.TRANSFORM)
 def transform(
@@ -212,24 +227,31 @@ def transform(
     _LOGGER = get_logger()
 
     all_documents = []
+    all_collections = {}
     errors = []
     for family in identified_families:
-        transformed_result = transform_navigator_family(family)
-        all_documents.extend(transformed_result.documents)
+        result = transform_navigator_family(family)
 
-        if transformed_result.errors:
-            for error in transformed_result.errors:
-                _LOGGER.warning(f"Partial Transformation: Non Fatal Error: {error}")
+        match result:
+            case Success((documents, collection_documents)):
+                all_documents.extend(documents)
+                transform_duplicate_collections(all_collections, collection_documents)
+            case Failure(error):
+                _LOGGER.warning(f"Transformation failed: {error}")
                 pipeline_metrics.record_error(Operation.TRANSFORM, ErrorType.TRANSFORM)
                 pipeline_metrics.record_processed(PipelineType.FAMILY, Status.FAILURE)
                 errors.append(error)
+            case _:
+                pipeline_metrics.record_processed(PipelineType.FAMILY, Status.FAILURE)
+                errors.append(Exception("Unexpected transformed result state"))
 
     _LOGGER.info(
         f"Transformation complete: {len(all_documents)} documents from "
-        f"{len(identified_families)} families ({len(errors)} non fatal errors)"
+        f"{len(identified_families)} families ({len(errors)} failures)"
     )
 
-    return all_documents, errors
+    all_transformed = all_documents + list(all_collections.values())
+    return all_transformed, errors
 
 
 @task(
