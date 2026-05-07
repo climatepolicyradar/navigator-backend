@@ -1,3 +1,5 @@
+from datetime import datetime
+
 from data_in_models.models import (
     Document,
     DocumentRelationship,
@@ -61,15 +63,17 @@ MCF_ATTRIBUTE_KEYS = {
 
 def transform_navigator_family(
     input: Identified[NavigatorFamily],
-) -> Result[list[Document], CouldNotTransform | NoMatchingTransformations]:
+) -> Result[
+    tuple[list[Document], list[Document]], CouldNotTransform | NoMatchingTransformations
+]:
     logger = get_logger()
     with log_context(import_id=input.id):
         logger.info(f"Transforming family with {len(input.data.documents)} documents")
 
         match transform(input):
-            case Success(d):
+            case Success((d, c)):
                 logger.info(f"Transform completed, produced {len(d)} documents")
-                return Success(d)
+                return Success((d, c))
             case Failure(error):
                 logger.warning(f"Transformation failed: {error}")
                 return Failure(error)
@@ -111,7 +115,7 @@ def _family_document_merged(
 
 def transform(
     input: Identified[NavigatorFamily],
-) -> Result[list[Document], CouldNotTransform]:
+) -> Result[tuple[list[Document], list[Document]], CouldNotTransform]:
     documents: list[Document] = []
 
     """
@@ -261,9 +265,8 @@ def transform(
     """
     documents.append(document_from_family)
     documents.extend(documents_from_documents)
-    documents.extend(documents_from_collections)
 
-    return Success(documents)
+    return Success((documents, documents_from_collections))
 
 
 def _transform_family_corpus_organisation(
@@ -764,6 +767,43 @@ def _transform_litigation_data(
     return Success(labels)
 
 
+def _part_of_gst1(navigator_family: NavigatorFamily) -> bool:
+    """
+    Checks if a family was fart of the first Global Stocktake (GST1).
+    """
+    gst1_party_submission_date = "2023-11-30"
+
+    family_created_date_without_time = str(
+        datetime.fromisoformat(navigator_family.created.replace("Z", "+00:00")).date()
+    )
+
+    gst1_party_submission = (
+        navigator_family.corpus.import_id == "UNFCCC.corpus.i00000001.n0000"
+        and navigator_family.metadata.get("author_type") is not None
+        and navigator_family.metadata["author_type"][0] == "Party"
+        and family_created_date_without_time == gst1_party_submission_date
+    )
+
+    gst1_non_party_report_dates = [
+        "2023-11-30",
+        "2024-10-15",
+        "2024-10-17",
+        "2024-11-06",
+        "2024-11-15",
+        "2024-11-18",
+    ]
+
+    gst1_non_party_report = (
+        navigator_family.corpus.import_id == "UNFCCC.corpus.i00000001.n0000"
+        and navigator_family.metadata.get("author_type") is not None
+        and navigator_family.metadata["author_type"][0] == "Non-Party"
+        and family_created_date_without_time in gst1_non_party_report_dates
+    )
+
+    return gst1_party_submission or gst1_non_party_report
+
+
+# trunk-ignore(ruff/PLR0912)
 def _transform_navigator_family(
     navigator_family: NavigatorFamily,
 ) -> Result[Document, CouldNotTransform]:
@@ -811,6 +851,19 @@ def _transform_navigator_family(
                     type="entity_type",
                 ),
             )
+        )
+
+    # GST1 labels
+    if _part_of_gst1(navigator_family):
+        labels.append(
+            LabelRelationship(
+                type="process",
+                value=Label(
+                    id="process::GST1",
+                    value="GST1 Submission",
+                    type="process",
+                ),
+            ),
         )
 
     # We skip litigation as we hijacked the event_type for document type
@@ -1033,6 +1086,7 @@ def _transform_document_urls(navigator_document):
     return items
 
 
+# trunk-ignore(ruff/PLR0912)
 def _transform_navigator_document(
     navigator_document: NavigatorDocument, navigator_family: NavigatorFamily
 ) -> Document:
@@ -1074,6 +1128,9 @@ def _transform_navigator_document(
     These values are controlled
     @see: https://github.com/climatepolicyradar/data-migrations/blob/main/taxonomies/Intl.%20agreements.json#L42-L51
     @see: https://github.com/climatepolicyradar/data-migrations/blob/main/taxonomies/Laws%20and%20Policies.json#L381-L396
+
+    Based on 
+    @see: https://schema.org/Role
     """
     metadata_role = navigator_document.valid_metadata.get("role")
     if metadata_role is not None and len(metadata_role) > 0:
@@ -1082,9 +1139,9 @@ def _transform_navigator_document(
             LabelRelationship(
                 type="role",
                 value=Label(
-                    id=f"entity_type::{normalised_role}",
+                    id=f"role::{normalised_role}",
                     value=normalised_role,
-                    type="entity_type",
+                    type="role",
                 ),
             )
         )
@@ -1124,6 +1181,19 @@ def _transform_navigator_document(
     Provider labels
     """
     labels.extend(_transform_family_corpus_organisation(navigator_family))
+
+    # GST1 labels
+    if _part_of_gst1(navigator_family):
+        labels.append(
+            LabelRelationship(
+                type="process",
+                value=Label(
+                    id="process::GST1",
+                    value="GST1 Submission",
+                    type="process",
+                ),
+            ),
+        )
 
     """
     Items
