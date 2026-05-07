@@ -4,7 +4,7 @@ Use ModelFactory.build(...) with overrides for specific test data; factories
 fill the rest with sensible defaults.
 """
 
-from data_in_models.models import DocumentWithoutRelationships
+from data_in_models.models import Document, DocumentWithoutRelationships
 from polyfactory.factories.pydantic_factory import ModelFactory
 
 from app.extract.connectors import (
@@ -58,3 +58,7 @@ class ExtractedMetadataFactory(ModelFactory[ExtractedMetadata]):
 
 class DocumentWithoutRelationshipsFactory(ModelFactory[DocumentWithoutRelationships]):
     """Factory for DocumentWithoutRelationships. Override id, title, labels, items."""
+
+
+class DocumentFactory(ModelFactory[Document]):
+    """Factory for Document. Override id, title, labels, items."""
