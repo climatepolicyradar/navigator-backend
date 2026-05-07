@@ -1,3 +1,6 @@
+from datetime import datetime
+from typing import Annotated, Literal
+
 from data_in_models.models import (
     Document,
     DocumentRelationship,
@@ -7,7 +10,8 @@ from data_in_models.models import (
     LabelRelationship,
     LabelWithoutDocumentRelationships,
 )
-from pydantic import BaseModel, ConfigDict
+from pydantic import BaseModel, ConfigDict, Field
+from returns.result import Failure, Result, Success
 
 from app.bootstrap_telemetry import get_logger, log_context
 from app.extract.connectors import (
@@ -18,6 +22,10 @@ from app.extract.connectors import (
 from app.geographies import geographies_lookup
 from app.models import Identified, NavigatorConcept
 from app.transform.models import CouldNotTransform
+
+# ---------------------------------------------------------------------------
+# Constants
+# ---------------------------------------------------------------------------
 
 mcf_projects_corpus_import_ids = [
     "MCF.corpus.AF.n0000",
@@ -59,89 +67,121 @@ MCF_ATTRIBUTE_KEYS = {
 }
 
 
-class TransformResult(BaseModel):
-    model_config = ConfigDict(
-        arbitrary_types_allowed=True
-    )  # allowing non-Pydantic types in this model
-    documents: list[Document]
-    errors: list[CouldNotTransform]
+# ---------------------------------------------------------------------------
+# Warnings (non-fatal)
+# ---------------------------------------------------------------------------
+# A warning means "I produced a Document, but here's something I had to skip
+# or couldn't resolve." The transform still completes; warnings are an audit
+# log so callers can observe and report what happened. Compare with
+# `CouldNotTransform`, which is used at the boundary for genuinely fatal
+# failures where no Document can be produced at all.
 
 
-class LitigationConceptLabelTransformResult(BaseModel):
+class UnknownParentLabel(BaseModel):
+    """A litigation concept referenced a parent label that wasn't in the input.
+
+    The child label is still emitted; only the unresolved `subconcept_of`
+    link is dropped.
+    """
+
+    kind: Literal["unknown_parent_label"] = "unknown_parent_label"
+    family_import_id: str
+    relation: str
+    parent_name: str
+
+
+class UnknownGeography(BaseModel):
+    """A geography ID was supplied that isn't in the geographies lookup table.
+
+    The geography is silently skipped; this warning surfaces it for inspection.
+    Note: the sentinel `XAA` ("No Geography") is intentionally excluded and
+    does NOT produce a warning.
+    """
+
+    kind: Literal["unknown_geography"] = "unknown_geography"
+    family_import_id: str
+    geography_id: str
+
+
+# Discriminated union — `kind` is the discriminator field.
+# @see: https://docs.pydantic.dev/latest/concepts/unions/#discriminated-unions
+TransformWarning = Annotated[
+    UnknownParentLabel | UnknownGeography,
+    Field(discriminator="kind"),
+]
+
+
+# ---------------------------------------------------------------------------
+# Output
+# ---------------------------------------------------------------------------
+
+
+class TransformOutput(BaseModel):
+    """Successful result of transforming a NavigatorFamily.
+
+    `documents` are principal documents (the family + its NavigatorDocuments).
+    `collection_documents` are emitted separately because callers persist them
+    differently. `warnings` is the audit log of non-fatal issues — the
+    documents are still complete and usable when warnings is non-empty.
+    """
+
     model_config = ConfigDict(arbitrary_types_allowed=True)
-    labels: list[LabelRelationship]
-    errors: list[CouldNotTransform]
+
+    documents: list[Document]
+    collection_documents: list[Document]
+    warnings: list[TransformWarning]
+
+
+# ---------------------------------------------------------------------------
+# Public entry points
+# ---------------------------------------------------------------------------
 
 
 def transform_navigator_family(
     input: Identified[NavigatorFamily],
-) -> TransformResult:
+) -> Result[TransformOutput, CouldNotTransform]:
     logger = get_logger()
     with log_context(import_id=input.id):
         logger.info(f"Transforming family with {len(input.data.documents)} documents")
         result = transform(input)
-        logger.info(
-            f"Transform completed: produced {len(result.documents)} documents, "
-            f"{len(result.errors)} errors"
-        )
+        match result:
+            case Success(output):
+                logger.info(
+                    f"Transform completed: produced {len(output.documents)} documents "
+                    f"and {len(output.collection_documents)} collection documents "
+                    f"with {len(output.warnings)} warnings"
+                )
+            case Failure(error):
+                logger.warning(f"Transformation failed: {error}")
         return result
-
-
-def _documents_match(
-    documentA: Document,
-    documentB: Document,
-) -> bool:
-    """
-    In the world of MCFs - we often have a "project document" that is a 1-1 mapping of the family.
-    """
-    if documentA.title.lower() == "project document":
-        return True
-
-    """
-    We have some document <=> family relationships that are essentially just a
-    repeat of each other.
-
-    We can use this 1-1 mapping and put the data from the family and store on the document.
-    """
-    return documentA.title.lower() == documentB.title.lower()
-
-
-def _family_document_merged(
-    navigator_family: NavigatorFamily, navigator_document: NavigatorDocument
-) -> bool:
-    if navigator_document.title.lower() == "project document":
-        return True
-
-    if navigator_family.title.lower() == navigator_document.title.lower():
-        return True
-
-    return False
 
 
 def transform(
     input: Identified[NavigatorFamily],
-) -> TransformResult:
-    documents: list[Document] = []
-    transformation_errors: list[CouldNotTransform] = []
+) -> Result[TransformOutput, CouldNotTransform]:
+    """Transform a NavigatorFamily into principal + collection documents.
+
+    Note: this currently has no fatal failure paths — every error case is
+    non-fatal and surfaces as a warning. The `Result` wrapping is kept so
+    callers have a stable return shape and so future fatal cases can be
+    added without changing every call site.
+    """
+    warnings: list[TransformWarning] = []
 
     """
     Transform
     """
-    document_from_family, errors = _transform_navigator_family(input.data)
-    transformation_errors.extend(errors)
+    document_from_family, family_warnings = _transform_navigator_family(input.data)
+    warnings.extend(family_warnings)
 
-    documents_from_documents = [
-        _transform_navigator_document(
-            document,
-            input.data,
-        )
-        for document in input.data.documents
-    ]
-    documents_from_collections = [
-        _transform_navigator_collection(
-            collection,
-            input.data,
-        )
+    documents_from_documents: list[Document] = []
+    for nav_doc in input.data.documents:
+        doc, doc_warnings = _transform_navigator_document(nav_doc, input.data)
+        documents_from_documents.append(doc)
+        warnings.extend(doc_warnings)
+
+    documents_from_collections: list[Document] = [
+        _transform_navigator_collection(collection, input.data)
         for collection in input.data.collections
     ]
 
@@ -263,14 +303,54 @@ def transform(
                 )
             )
 
-    """
-    Return the documents
-    """
-    documents.append(document_from_family)
-    documents.extend(documents_from_documents)
-    documents.extend(documents_from_collections)
+    return Success(
+        TransformOutput(
+            documents=[document_from_family, *documents_from_documents],
+            collection_documents=documents_from_collections,
+            warnings=warnings,
+        )
+    )
 
-    return TransformResult(documents=documents, errors=transformation_errors)
+
+# ---------------------------------------------------------------------------
+# Matching helpers
+# ---------------------------------------------------------------------------
+
+
+def _documents_match(
+    documentA: Document,
+    documentB: Document,
+) -> bool:
+    """
+    In the world of MCFs - we often have a "project document" that is a 1-1 mapping of the family.
+    """
+    if documentA.title.lower() == "project document":
+        return True
+
+    """
+    We have some document <=> family relationships that are essentially just a
+    repeat of each other.
+
+    We can use this 1-1 mapping and put the data from the family and store on the document.
+    """
+    return documentA.title.lower() == documentB.title.lower()
+
+
+def _family_document_merged(
+    navigator_family: NavigatorFamily, navigator_document: NavigatorDocument
+) -> bool:
+    if navigator_document.title.lower() == "project document":
+        return True
+
+    if navigator_family.title.lower() == navigator_document.title.lower():
+        return True
+
+    return False
+
+
+# ---------------------------------------------------------------------------
+# Label / attribute helpers
+# ---------------------------------------------------------------------------
 
 
 def _transform_family_corpus_organisation(
@@ -481,32 +561,43 @@ def _transform_litigation_metadata_to_attributes(
 
 def _transform_geographies(
     navigator_family: NavigatorFamily,
-) -> list[LabelRelationship]:
-    logger = get_logger()
-    labels = []
-    if navigator_family.geographies:
-        geography_labels = []
-        for geograpy_id in navigator_family.geographies:
-            # We exclude No Geography (XAA) as this was used as `geography` was previously required.
-            # An empty list is a clearer depiction of a document not having a geography.
-            if geograpy_id != "XAA":
-                geography = geographies_lookup.get(geograpy_id)
-                if geography:
-                    geography_labels.append(
-                        LabelRelationship(
-                            type="geography",
-                            value=Label(
-                                id=f"geography::{geography.id}",
-                                value=geography.name,
-                                type="geography",
-                            ),
-                        )
-                    )
-            else:
-                logger.warning(f"Geography not found: {geograpy_id}")
-        labels.extend(geography_labels)
+) -> tuple[list[LabelRelationship], list[TransformWarning]]:
+    """Convert family.geographies into geography labels.
 
-    return labels
+    XAA ("No Geography") is silently skipped — it's a sentinel from when
+    `geography` was previously a required field. Genuine unknown IDs become
+    `UnknownGeography` warnings.
+    """
+    labels: list[LabelRelationship] = []
+    warnings: list[TransformWarning] = []
+
+    if not navigator_family.geographies:
+        return labels, warnings
+
+    for geography_id in navigator_family.geographies:
+        if geography_id == "XAA":
+            continue
+        geography = geographies_lookup.get(geography_id)
+        if geography is None:
+            warnings.append(
+                UnknownGeography(
+                    family_import_id=navigator_family.import_id,
+                    geography_id=geography_id,
+                )
+            )
+            continue
+        labels.append(
+            LabelRelationship(
+                type="geography",
+                value=Label(
+                    id=f"geography::{geography.id}",
+                    value=geography.name,
+                    type="geography",
+                ),
+            )
+        )
+
+    return labels, warnings
 
 
 def _shallow_label(
@@ -526,19 +617,20 @@ def _shallow_label(
 def _transform_litigation_concepts_to_label_relationships(
     concepts: list[NavigatorConcept],
     family_import_id: str,
-) -> LitigationConceptLabelTransformResult:
+) -> tuple[list[LabelRelationship], list[TransformWarning]]:
     """
     Convert litigation concepts into label relationships with subconcept hierarchies.
 
     Returns:
-        List[LabelRelationship] where each:
-        - type="concept"
-        - value=LabelWithoutRelationships (with nested .labels for hierarchies)
-        - family_import_id= the import_id of the family these concepts belong to, to debug if needed.
-        - Parent references are SHALLOW (labels=[] to prevent deep nesting).
-    """
+        - labels: one `legal_concept` LabelRelationship per concept; nested
+          `subconcept_of` links wired up where the parent label resolves.
+        - warnings: `UnknownParentLabel` for any `subconcept_of_labels` entry
+          that doesn't resolve to a known concept. The child label is still
+          emitted; only the dangling link is dropped.
 
-    errors: list[CouldNotTransform] = []
+    Parent references are SHALLOW (labels=[] to prevent deep nesting).
+    """
+    warnings: list[TransformWarning] = []
 
     # The relation values unfortunately conflict with other values in the taxonomy, so we have to map them as `legal`
     # @see: https://github.com/climatepolicyradar/litigation-data-mapper/blob/49e8da8f4449dc8e3fec5a126b9973df4efb4d26/litigation_data_mapper/extract_concepts.py#L45
@@ -570,26 +662,25 @@ def _transform_litigation_concepts_to_label_relationships(
         for parent_name in concept.subconcept_of_labels:
             parent = label_by_name.get((concept.relation, parent_name))
             if parent is None:
-                errors.append(
-                    CouldNotTransform(
-                        f"Unknown parent label {parent_name!r} in relation {concept.relation!r}. See family {family_import_id!r} for details."
+                warnings.append(
+                    UnknownParentLabel(
+                        family_import_id=family_import_id,
+                        relation=concept.relation,
+                        parent_name=parent_name,
                     )
                 )
-            else:
-                parent_ref = _shallow_label(parent)
+                continue
+            parent_ref = _shallow_label(parent)
+            child.labels.append(
+                LabelRelationship(type="subconcept_of", value=parent_ref)
+            )
 
-                child.labels.append(
-                    LabelRelationship(type="subconcept_of", value=parent_ref)
-                )
-
-    return LitigationConceptLabelTransformResult(
-        labels=[
-            # `legal_concept` rather than `concept` — `concept` is reserved for knowledge graph labels.
-            LabelRelationship(type="legal_concept", value=label)
-            for label in label_map.values()
-        ],
-        errors=errors,
-    )
+    labels = [
+        # we use legal_concept over concept as `concept` is reserved for our knowledge graph labels
+        LabelRelationship(type="legal_concept", value=label)
+        for label in label_map.values()
+    ]
+    return labels, warnings
 
 
 def _transform_to_category(
@@ -737,20 +828,22 @@ def _transform_to_category(
 
 def _transform_litigation_data(
     navigator_family: NavigatorFamily,
-) -> tuple[list[LabelRelationship], list[CouldNotTransform]]:
+) -> tuple[list[LabelRelationship], list[TransformWarning]]:
     """
     Transform litigation-specific concepts and filing date into label relationships.
     Only applies to the Litigation corpus.
     """
     labels: list[LabelRelationship] = []
-    errors: list[CouldNotTransform] = []
+    warnings: list[TransformWarning] = []
 
     if navigator_family.concepts:
-        concept_labels = _transform_litigation_concepts_to_label_relationships(
-            navigator_family.concepts, navigator_family.import_id
+        concept_labels, concept_warnings = (
+            _transform_litigation_concepts_to_label_relationships(
+                navigator_family.concepts, navigator_family.import_id
+            )
         )
-        labels.extend(concept_labels.labels)
-        errors.extend(concept_labels.errors)
+        labels.extend(concept_labels)
+        warnings.extend(concept_warnings)
 
     if navigator_family.events:
         filing_event = next(
@@ -774,15 +867,57 @@ def _transform_litigation_data(
                 )
             )
 
-    return labels, errors
+    return labels, warnings
 
 
+def _part_of_gst1(navigator_family: NavigatorFamily) -> bool:
+    """
+    Checks if a family was fart of the first Global Stocktake (GST1).
+    """
+    gst1_party_submission_date = "2023-11-30"
+
+    family_created_date_without_time = str(
+        datetime.fromisoformat(navigator_family.created.replace("Z", "+00:00")).date()
+    )
+
+    gst1_party_submission = (
+        navigator_family.corpus.import_id == "UNFCCC.corpus.i00000001.n0000"
+        and navigator_family.metadata.get("author_type") is not None
+        and navigator_family.metadata["author_type"][0] == "Party"
+        and family_created_date_without_time == gst1_party_submission_date
+    )
+
+    gst1_non_party_report_dates = [
+        "2023-11-30",
+        "2024-10-15",
+        "2024-10-17",
+        "2024-11-06",
+        "2024-11-15",
+        "2024-11-18",
+    ]
+
+    gst1_non_party_report = (
+        navigator_family.corpus.import_id == "UNFCCC.corpus.i00000001.n0000"
+        and navigator_family.metadata.get("author_type") is not None
+        and navigator_family.metadata["author_type"][0] == "Non-Party"
+        and family_created_date_without_time in gst1_non_party_report_dates
+    )
+
+    return gst1_party_submission or gst1_non_party_report
+
+
+# ---------------------------------------------------------------------------
+# Per-entity transforms
+# ---------------------------------------------------------------------------
+
+
+# trunk-ignore(ruff/PLR0912)
 def _transform_navigator_family(
     navigator_family: NavigatorFamily,
-) -> tuple[Document, list[CouldNotTransform]]:
+) -> tuple[Document, list[TransformWarning]]:
     labels: list[LabelRelationship] = []
     attributes: dict[str, str | float | bool] = {}
-    transformation_errors: list[CouldNotTransform] = []
+    warnings: list[TransformWarning] = []
 
     """
     All families are currently Principal.
@@ -825,6 +960,19 @@ def _transform_navigator_family(
                     type="entity_type",
                 ),
             )
+        )
+
+    # GST1 labels
+    if _part_of_gst1(navigator_family):
+        labels.append(
+            LabelRelationship(
+                type="process",
+                value=Label(
+                    id="process::GST1",
+                    value="GST1 Submission",
+                    type="process",
+                ),
+            ),
         )
 
     # We skip litigation as we hijacked the event_type for document type
@@ -921,7 +1069,9 @@ def _transform_navigator_family(
     """
     Geography labels
     """
-    labels.extend(_transform_geographies(navigator_family))
+    geography_labels, geography_warnings = _transform_geographies(navigator_family)
+    labels.extend(geography_labels)
+    warnings.extend(geography_warnings)
 
     """
     metadata.author and metadata.author_type
@@ -977,9 +1127,7 @@ def _transform_navigator_family(
     """
     Metadata
     """
-
     labels.extend(_transform_metadata(navigator_family))
-
     attributes.update(_transform_metadata_to_attributes(navigator_family))
 
     """
@@ -988,13 +1136,12 @@ def _transform_navigator_family(
     We are adding also adding Litigation filing date as an attribute on the family as it is a key date
     for litigation documents.
     """
-
     if navigator_family.corpus.import_id == "Academic.corpus.Litigation.n0000":
-        litigation_labels, litigation_errors = _transform_litigation_data(
+        litigation_labels, litigation_warnings = _transform_litigation_data(
             navigator_family
         )
         labels.extend(litigation_labels)
-        transformation_errors.extend(litigation_errors)
+        warnings.extend(litigation_warnings)
 
     """Dates"""
     if navigator_family.published_date:
@@ -1008,7 +1155,6 @@ def _transform_navigator_family(
     that has a 'PUBLISHED' status to keep the data-in-api clean. For simplicity, we do not
     add a status if the family cannot be considered published.
     """
-
     contains_published_document = [
         doc for doc in navigator_family.documents if doc.document_status == "published"
     ]
@@ -1022,8 +1168,7 @@ def _transform_navigator_family(
         labels=_deduplicate_labels(labels),
         attributes=attributes,
     )
-
-    return document, transformation_errors
+    return document, warnings
 
 
 def _transform_document_urls(navigator_document):
@@ -1047,11 +1192,13 @@ def _transform_document_urls(navigator_document):
     return items
 
 
+# trunk-ignore(ruff/PLR0912)
 def _transform_navigator_document(
     navigator_document: NavigatorDocument, navigator_family: NavigatorFamily
-) -> Document:
+) -> tuple[Document, list[TransformWarning]]:
     labels: list[LabelRelationship] = []
     attributes: dict[str, str | float | bool] = {}
+    warnings: list[TransformWarning] = []
     description = None
 
     if navigator_family.corpus.import_id == "Academic.corpus.Litigation.n0000":
@@ -1088,6 +1235,9 @@ def _transform_navigator_document(
     These values are controlled
     @see: https://github.com/climatepolicyradar/data-migrations/blob/main/taxonomies/Intl.%20agreements.json#L42-L51
     @see: https://github.com/climatepolicyradar/data-migrations/blob/main/taxonomies/Laws%20and%20Policies.json#L381-L396
+
+    Based on
+    @see: https://schema.org/Role
     """
     metadata_role = navigator_document.valid_metadata.get("role")
     if metadata_role is not None and len(metadata_role) > 0:
@@ -1096,9 +1246,9 @@ def _transform_navigator_document(
             LabelRelationship(
                 type="role",
                 value=Label(
-                    id=f"entity_type::{normalised_role}",
+                    id=f"role::{normalised_role}",
                     value=normalised_role,
-                    type="entity_type",
+                    type="role",
                 ),
             )
         )
@@ -1139,11 +1289,23 @@ def _transform_navigator_document(
     """
     labels.extend(_transform_family_corpus_organisation(navigator_family))
 
+    # GST1 labels
+    if _part_of_gst1(navigator_family):
+        labels.append(
+            LabelRelationship(
+                type="process",
+                value=Label(
+                    id="process::GST1",
+                    value="GST1 Submission",
+                    type="process",
+                ),
+            ),
+        )
+
     """
     Items
     """
     items: list[Item] = []
-
     items.extend(_transform_document_urls(navigator_document))
 
     """
@@ -1156,7 +1318,9 @@ def _transform_navigator_document(
     """
     Geography labels
     """
-    labels.extend(_transform_geographies(navigator_family))
+    geography_labels, geography_warnings = _transform_geographies(navigator_family)
+    labels.extend(geography_labels)
+    warnings.extend(geography_warnings)
 
     """
     Canonical category
@@ -1177,7 +1341,6 @@ def _transform_navigator_document(
     """
     Internal attributes
     """
-
     if navigator_document.variant:
         attributes["variant"] = navigator_document.variant
     if navigator_document.md5_sum:
@@ -1202,7 +1365,7 @@ def _transform_navigator_document(
             )
         )
 
-    return Document(
+    document = Document(
         id=navigator_document.import_id,
         title=navigator_document.title,
         description=description[0] if description else None,
@@ -1210,6 +1373,7 @@ def _transform_navigator_document(
         items=items,
         attributes=attributes,
     )
+    return document, warnings
 
 
 def _transform_navigator_collection(
