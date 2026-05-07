@@ -6,16 +6,27 @@ from unittest.mock import MagicMock, patch
 import pyarrow as pa
 import pyarrow.parquet as pq
 import pytest
-from data_in_models.models import Document
+from data_in_models.models import (
+    Document,
+    DocumentRelationship,
+    DocumentWithoutRelationships,
+    Label,
+    LabelRelationship,
+)
 from requests.exceptions import HTTPError
 from returns.result import Failure, Success
 
 from app.extract.connectors import FamilyFetchResult
-from app.models import ExtractedEnvelope, ExtractedMetadata, PipelineResult
-from app.navigator_family_etl_pipeline import cache_parquet_to_s3, data_in_pipeline
+from app.models import ExtractedEnvelope, ExtractedMetadata, Identified, PipelineResult
+from app.navigator_family_etl_pipeline import (
+    cache_parquet_to_s3,
+    data_in_pipeline,
+    transform,
+)
 from app.transform.models import NoMatchingTransformations
 from tests.factories import (
     DocumentWithoutRelationshipsFactory,
+    NavigatorCollectionFactory,
     NavigatorCorpusFactory,
     NavigatorCorpusTypeFactory,
     NavigatorDocumentFactory,
@@ -23,6 +34,7 @@ from tests.factories import (
     NavigatorOrganisationFactory,
     PageFetchFailureFactory,
 )
+from tests.transform.assertions import assert_model_list_equality
 
 
 @patch("app.navigator_family_etl_pipeline.cache_jsonl_to_s3")
@@ -67,6 +79,7 @@ def test_process_family_updates_flow_multiple_families(  # noqa: PLR0913
             title="Belgium UNCBD National Targets",
             summary="Family summary",
             category="REPORTS",
+            created="2020-01-01T00:00:00Z",
             corpus=corpus,
             documents=[
                 NavigatorDocumentFactory.build(
@@ -86,6 +99,7 @@ def test_process_family_updates_flow_multiple_families(  # noqa: PLR0913
             title="France UNCBD National Targets",
             summary="Family summary",
             category="REPORTS",
+            created="2020-01-01T00:00:00Z",
             corpus=corpus,
             documents=[
                 NavigatorDocumentFactory.build(
@@ -222,6 +236,7 @@ def test_etl_pipeline_load_failure(  # noqa: PLR0913
             title=test_family_title,
             summary="Family summary",
             category="REPORTS",
+            created="2020-01-01T00:00:00Z",
             corpus=corpus,
             documents=[
                 NavigatorDocumentFactory.build(
@@ -367,7 +382,7 @@ def test_etl_pipeline_partial_transformation_failure(  # noqa: PLR0913
     ]
 
     mock_transform_families.side_effect = [
-        Success(mock_transformed_documents),
+        Success((mock_transformed_documents, [])),
         Failure(NoMatchingTransformations()),
     ]
 
@@ -518,3 +533,273 @@ def test_cache_parquet_to_s3_includes_attributes_as_json_string(mock_get_s3_clie
     assert parsed_attr_2 == {"other_key": "other_value"}
 
     assert rows[2]["attributes"] is None
+
+
+def test_transform_correctly_transforms_collections_with_multiple_families():
+    test_corpus = NavigatorCorpusFactory.build(
+        import_id="CCLW.corpus.i00000001.n0000",
+        corpus_type=NavigatorCorpusTypeFactory.build(name="Laws and Policies"),
+        organisation=NavigatorOrganisationFactory.build(id=1, name="CCLW"),
+        attribution_url="testurl.org",
+        corpus_text="Test corpus",
+        corpus_image_url="corpus_image.png",
+    )
+
+    test_collection = NavigatorCollectionFactory.build(
+        import_id="collection",
+        title="Collection title",
+        description="Collection description",
+        slug="collection-slug",
+        created="2020-01-01T00:00:00Z",
+        last_modified="2020-01-01T00:00:00Z",
+    )
+
+    test_families = [
+        Identified(
+            id="family1",
+            source="navigator_family",
+            data=NavigatorFamilyFactory.build(
+                import_id="family1",
+                title="Family 1 title",
+                summary="Family summary",
+                category="LEGISLATIVE",
+                corpus=test_corpus,
+                last_updated_date="2020-01-01T00:00:00Z",
+                published_date="2020-01-01T00:00:00Z",
+                created="2020-01-01T00:00:00Z",
+                documents=[],
+                events=[],
+                collections=[test_collection],
+                geographies=[],
+                metadata={},
+                slug="family1-slug",
+            ),
+        ),
+        Identified(
+            id="family2",
+            source="navigator_family",
+            data=NavigatorFamilyFactory.build(
+                import_id="family2",
+                title="Family 2 title",
+                summary="Family summary",
+                category="LEGISLATIVE",
+                corpus=test_corpus,
+                last_updated_date="2020-01-01T00:00:00Z",
+                published_date="2020-01-01T00:00:00Z",
+                created="2020-01-01T00:00:00Z",
+                documents=[],
+                events=[],
+                collections=[test_collection],
+                geographies=[],
+                metadata={},
+                slug="family2-slug",
+            ),
+        ),
+    ]
+
+    expected_family1_transform_result = Document(
+        id="family1",
+        title="Family 1 title",
+        description="Family summary",
+        labels=[
+            LabelRelationship(
+                type="status",
+                value=Label(
+                    type="status",
+                    id="status::Principal",
+                    value="Principal",
+                ),
+            ),
+            LabelRelationship(
+                type="provider",
+                value=Label(
+                    type="agent",
+                    id="agent::Grantham Research Institute",
+                    value="Grantham Research Institute",
+                    attributes={
+                        "attribution_url": "testurl.org",
+                        "corpus_text": "Test corpus",
+                        "corpus_image_url": "https://cdn.climatepolicyradar.org/corpus_image.png",
+                    },
+                ),
+            ),
+            LabelRelationship(
+                type="deprecated_category",
+                value=Label(
+                    id="deprecated_category::LEGISLATIVE",
+                    value="LEGISLATIVE",
+                    type="deprecated_category",
+                ),
+            ),
+            LabelRelationship(
+                type="deprecated_category",
+                value=Label(
+                    id="deprecated_category::Laws and Policies",
+                    value="Laws and Policies",
+                    type="deprecated_category",
+                ),
+            ),
+            LabelRelationship(
+                type="category",
+                value=Label(
+                    id="category::Law",
+                    value="Law",
+                    type="category",
+                ),
+            ),
+        ],
+        documents=[
+            DocumentRelationship(
+                type="member_of",
+                value=DocumentWithoutRelationships(
+                    id="collection",
+                    title="Collection title",
+                    labels=[
+                        LabelRelationship(
+                            type="entity_type",
+                            value=Label(
+                                id="entity_type::Collection",
+                                value="Collection",
+                                type="entity_type",
+                            ),
+                        )
+                    ],
+                    attributes={
+                        "deprecated_slug": "collection-slug",
+                        "published_date": "2020-01-01T00:00:00Z",
+                        "last_updated_date": "2020-01-01T00:00:00Z",
+                    },
+                ),
+            ),
+        ],
+        attributes={
+            "deprecated_slug": "family1-slug",
+            "published_date": "2020-01-01T00:00:00Z",
+            "last_updated_date": "2020-01-01T00:00:00Z",
+        },
+    )
+    expected_family2_transform_result = Document(
+        id="family2",
+        title="Family 2 title",
+        description="Family summary",
+        labels=[
+            LabelRelationship(
+                type="status",
+                value=Label(
+                    type="status",
+                    id="status::Principal",
+                    value="Principal",
+                ),
+            ),
+            LabelRelationship(
+                type="provider",
+                value=Label(
+                    type="agent",
+                    id="agent::Grantham Research Institute",
+                    value="Grantham Research Institute",
+                    attributes={
+                        "attribution_url": "testurl.org",
+                        "corpus_text": "Test corpus",
+                        "corpus_image_url": "https://cdn.climatepolicyradar.org/corpus_image.png",
+                    },
+                ),
+            ),
+            LabelRelationship(
+                type="deprecated_category",
+                value=Label(
+                    id="deprecated_category::LEGISLATIVE",
+                    value="LEGISLATIVE",
+                    type="deprecated_category",
+                ),
+            ),
+            LabelRelationship(
+                type="deprecated_category",
+                value=Label(
+                    id="deprecated_category::Laws and Policies",
+                    value="Laws and Policies",
+                    type="deprecated_category",
+                ),
+            ),
+            LabelRelationship(
+                type="category",
+                value=Label(
+                    id="category::Law",
+                    value="Law",
+                    type="category",
+                ),
+            ),
+        ],
+        documents=[
+            DocumentRelationship(
+                type="member_of",
+                value=DocumentWithoutRelationships(
+                    id="collection",
+                    title="Collection title",
+                    labels=[
+                        LabelRelationship(
+                            type="entity_type",
+                            value=Label(
+                                id="entity_type::Collection",
+                                value="Collection",
+                                type="entity_type",
+                            ),
+                        )
+                    ],
+                    attributes={
+                        "deprecated_slug": "collection-slug",
+                        "published_date": "2020-01-01T00:00:00Z",
+                        "last_updated_date": "2020-01-01T00:00:00Z",
+                    },
+                ),
+            ),
+        ],
+        attributes={
+            "deprecated_slug": "family2-slug",
+            "published_date": "2020-01-01T00:00:00Z",
+            "last_updated_date": "2020-01-01T00:00:00Z",
+        },
+    )
+    expected_collection_transform_result = Document(
+        attributes={
+            "deprecated_slug": "collection-slug",
+            "published_date": "2020-01-01T00:00:00Z",
+            "last_updated_date": "2020-01-01T00:00:00Z",
+        },
+        id="collection",
+        title="Collection title",
+        labels=[
+            LabelRelationship(
+                type="entity_type",
+                value=Label(
+                    id="entity_type::Collection",
+                    value="Collection",
+                    type="entity_type",
+                ),
+            )
+        ],
+        documents=[
+            DocumentRelationship(
+                type="has_member",
+                value=DocumentWithoutRelationships(
+                    **expected_family1_transform_result.model_dump()
+                ),
+            ),
+            DocumentRelationship(
+                type="has_member",
+                value=DocumentWithoutRelationships(
+                    **expected_family2_transform_result.model_dump()
+                ),
+            ),
+        ],
+    )
+
+    expected_family_transform_result = [
+        expected_family1_transform_result,
+        expected_family2_transform_result,
+        expected_collection_transform_result,
+    ]
+
+    (transform_result, errors) = transform(test_families)
+
+    assert not errors
+    assert_model_list_equality(transform_result, expected_family_transform_result)

@@ -241,6 +241,7 @@ def transform(
 
     for family in identified_families:
         result = transform_navigator_family(family)
+        result = transform_navigator_family(family)
 
         match result:
             case Success(output):

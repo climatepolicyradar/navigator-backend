@@ -88,6 +88,7 @@ def navigator_family_multilateral_climate_fund_project() -> Identified[Navigator
             category="MCF",
             last_updated_date=None,
             published_date=None,
+            created="2020-01-01T00:00:00Z",
             corpus=NavigatorCorpusFactory.build(
                 import_id="MCF.corpus.AF.n0000",
                 corpus_type=NavigatorCorpusTypeFactory.build(name="AF"),
@@ -158,6 +159,7 @@ def navigator_family_multilateral_climate_fund_guidance() -> (
             category="REPORTS",
             last_updated_date=None,
             published_date=None,
+            created="2020-01-01T00:00:00Z",
             corpus=NavigatorCorpusFactory.build(
                 import_id="MCF.corpus.AF.Guidance",
                 corpus_type=NavigatorCorpusTypeFactory.build(name="AF"),
@@ -179,9 +181,9 @@ def navigator_family_multilateral_climate_fund_guidance() -> (
 def test_transform_navigator_family_with_multilateral_climate_fund_project(
     navigator_family_multilateral_climate_fund_project: Identified[NavigatorFamily],
 ):
-    result = transform_navigator_family(
+    result, _ = transform_navigator_family(
         navigator_family_multilateral_climate_fund_project
-    )
+    ).unwrap()
     expected_document_from_family = Document(
         id="family",
         title="Multilateral climate fund project",
@@ -427,7 +429,7 @@ def test_transform_navigator_family_with_multilateral_climate_fund_project(
         },
     )
     assert_model_list_equality(
-        result.documents,
+        result,
         [
             expected_document_from_family,
             Document(
@@ -559,11 +561,11 @@ def test_transform_navigator_family_with_multilateral_climate_fund_project(
 def test_transform_navigator_family_with_multilateral_climate_fund_guidance(
     navigator_family_multilateral_climate_fund_guidance: Identified[NavigatorFamily],
 ):
-    result = transform_navigator_family(
+    result, _ = transform_navigator_family(
         navigator_family_multilateral_climate_fund_guidance
-    )
+    ).unwrap()
     assert_model_list_equality(
-        result.documents,
+        result,
         [
             Document(
                 id="family",

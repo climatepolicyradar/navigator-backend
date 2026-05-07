@@ -86,8 +86,9 @@ def navigator_family_with_single_matching_document() -> Identified[NavigatorFami
             summary="Family summary",
             category="EXECUTIVE",
             corpus=_cclw_corpus(),
-            last_updated_date="2020-01-0100:00:00Z",
-            published_date="2020-01-0100:00:00Z",
+            last_updated_date="2020-01-01T00:00:00Z",
+            published_date="2020-01-01T00:00:00Z",
+            created="2020-01-01T00:00:00Z",
             documents=[
                 NavigatorDocumentFactory.build(
                     import_id="document",
@@ -115,16 +116,16 @@ def navigator_family_with_single_matching_document() -> Identified[NavigatorFami
                     title="Matching title on family and document and collection",
                     description="Collection description",
                     slug="collection-matching-slug",
-                    created="2020-01-0100:00:00Z",
-                    last_modified="2020-01-0100:00:00Z",
+                    created="2020-01-01T00:00:00Z",
+                    last_modified="2020-01-01T00:00:00Z",
                 ),
                 NavigatorCollectionFactory.build(
                     import_id="collection",
                     title="Collection title",
                     description="Collection description",
                     slug="collection-slug",
-                    created="2020-01-0100:00:00Z",
-                    last_modified="2020-01-0100:00:00Z",
+                    created="2020-01-01T00:00:00Z",
+                    last_modified="2020-01-01T00:00:00Z",
                 ),
             ],
             geographies=["AU-NSW", "AUS", "XAA"],
@@ -147,8 +148,9 @@ def navigator_family_with_no_matching_transformations() -> Identified[NavigatorF
             title="No matches for this family or documents",
             summary="Family summary",
             category="UNFCCC",
-            last_updated_date="2020-01-0100:00:00Z",
-            published_date="2020-01-0100:00:00Z",
+            last_updated_date="2020-01-01T00:00:00Z",
+            published_date="2020-01-01T00:00:00Z",
+            created="2020-01-01T00:00:00Z",
             corpus=_cclw_corpus(),
             documents=[
                 NavigatorDocumentFactory.build(
@@ -168,7 +170,9 @@ def navigator_family_with_no_matching_transformations() -> Identified[NavigatorF
 def test_transform_navigator_family_with_single_matching_document(
     navigator_family_with_single_matching_document: Identified[NavigatorFamily],
 ):
-    result = transform_navigator_family(navigator_family_with_single_matching_document)
+    family_result, collection_result = transform_navigator_family(
+        navigator_family_with_single_matching_document
+    ).unwrap()
     expected_document_from_family = Document(
         id="family",
         title="Matching title on family and document and collection",
@@ -425,8 +429,8 @@ def test_transform_navigator_family_with_single_matching_document(
                     ],
                     attributes={
                         "deprecated_slug": "collection-slug",
-                        "published_date": "2020-01-0100:00:00Z",
-                        "last_updated_date": "2020-01-0100:00:00Z",
+                        "published_date": "2020-01-01T00:00:00Z",
+                        "last_updated_date": "2020-01-01T00:00:00Z",
                     },
                 ),
             ),
@@ -439,8 +443,8 @@ def test_transform_navigator_family_with_single_matching_document(
                         LabelRelationship(
                             type="role",
                             value=Label(
-                                type="entity_type",
-                                id="entity_type::Supporting legislation",
+                                type="role",
+                                id="role::Supporting legislation",
                                 value="Supporting legislation",
                             ),
                         ),
@@ -539,8 +543,8 @@ def test_transform_navigator_family_with_single_matching_document(
                         "variant": "Original language",
                         "md5_sum": "aaaaa11111bbbbb",
                         "status": "published",
-                        "published_date": "2020-01-0100:00:00Z",
-                        "last_updated_date": "2020-01-0100:00:00Z",
+                        "published_date": "2020-01-01T00:00:00Z",
+                        "last_updated_date": "2020-01-01T00:00:00Z",
                     },
                 ),
             ),
@@ -562,21 +566,21 @@ def test_transform_navigator_family_with_single_matching_document(
                     items=[],
                     attributes={
                         "deprecated_slug": "collection-matching-slug",
-                        "published_date": "2020-01-0100:00:00Z",
-                        "last_updated_date": "2020-01-0100:00:00Z",
+                        "published_date": "2020-01-01T00:00:00Z",
+                        "last_updated_date": "2020-01-01T00:00:00Z",
                     },
                 ),
             ),
         ],
         attributes={
             "deprecated_slug": "family-slug",
-            "published_date": "2020-01-0100:00:00Z",
-            "last_updated_date": "2020-01-0100:00:00Z",
+            "published_date": "2020-01-01T00:00:00Z",
+            "last_updated_date": "2020-01-01T00:00:00Z",
             "status": "published",
         },
     )
     assert_model_list_equality(
-        result.documents,
+        family_result + collection_result,
         [
             expected_document_from_family,
             Document(
@@ -586,8 +590,8 @@ def test_transform_navigator_family_with_single_matching_document(
                     LabelRelationship(
                         type="role",
                         value=Label(
-                            type="entity_type",
-                            id="entity_type::Supporting legislation",
+                            type="role",
+                            id="role::Supporting legislation",
                             value="Supporting legislation",
                         ),
                     ),
@@ -694,8 +698,8 @@ def test_transform_navigator_family_with_single_matching_document(
                     "variant": "Original language",
                     "md5_sum": "aaaaa11111bbbbb",
                     "status": "published",
-                    "published_date": "2020-01-0100:00:00Z",
-                    "last_updated_date": "2020-01-0100:00:00Z",
+                    "published_date": "2020-01-01T00:00:00Z",
+                    "last_updated_date": "2020-01-01T00:00:00Z",
                 },
             ),
             Document(
@@ -703,8 +707,8 @@ def test_transform_navigator_family_with_single_matching_document(
                 title="Matching title on family and document and collection",
                 attributes={
                     "deprecated_slug": "collection-matching-slug",
-                    "published_date": "2020-01-0100:00:00Z",
-                    "last_updated_date": "2020-01-0100:00:00Z",
+                    "published_date": "2020-01-01T00:00:00Z",
+                    "last_updated_date": "2020-01-01T00:00:00Z",
                 },
                 labels=[
                     LabelRelationship(
@@ -728,8 +732,8 @@ def test_transform_navigator_family_with_single_matching_document(
             Document(
                 attributes={
                     "deprecated_slug": "collection-slug",
-                    "published_date": "2020-01-0100:00:00Z",
-                    "last_updated_date": "2020-01-0100:00:00Z",
+                    "published_date": "2020-01-01T00:00:00Z",
+                    "last_updated_date": "2020-01-01T00:00:00Z",
                 },
                 id="collection",
                 title="Collection title",
@@ -780,6 +784,7 @@ def test_transform_navigator_family_with_laws_and_policies_corpus_type(
             category="LEGISLATIVE",
             published_date=None,
             last_updated_date=None,
+            created="2020-01-01T00:00:00Z",
             corpus=NavigatorCorpusFactory.build(
                 import_id=corpus_id,
                 corpus_type=NavigatorCorpusTypeFactory.build(name="Laws and Policies"),
@@ -809,9 +814,9 @@ def test_transform_navigator_family_with_laws_and_policies_corpus_type(
             },
         ),
     )
-    result = transform_navigator_family(
+    family_result, _ = transform_navigator_family(
         navigator_family_with_laws_and_policies_corpus_type
-    )
+    ).unwrap()
     expected_document_from_family = Document(
         id="family",
         title="Laws and policies family",
@@ -925,7 +930,7 @@ def test_transform_navigator_family_with_laws_and_policies_corpus_type(
         },
     )
     assert_model_list_equality(
-        result.documents,
+        family_result,
         [expected_document_from_family],
     )
 
@@ -941,6 +946,7 @@ def test_transform_navigator_family_with_published_and_unpublished_documents():
             category="LEGISLATIVE",
             published_date=None,
             last_updated_date=None,
+            created="2020-01-01T00:00:00Z",
             corpus=_cclw_corpus(),
             documents=[
                 NavigatorDocumentFactory.build(
@@ -979,9 +985,9 @@ def test_transform_navigator_family_with_published_and_unpublished_documents():
             metadata={},
         ),
     )
-    result = transform_navigator_family(
+    result, _ = transform_navigator_family(
         navigator_family_with_different_document_statuses
-    )
+    ).unwrap()
     expected_document_from_family = Document(
         id="family",
         title="Family with different document statuses",
@@ -1193,7 +1199,7 @@ def test_transform_navigator_family_with_published_and_unpublished_documents():
         },
     )
     assert_model_list_equality(
-        result.documents,
+        result,
         [
             expected_document_from_family,
             Document(
@@ -1365,6 +1371,7 @@ def test_transform_navigator_family_with_no_published_documents():
             category="LEGISLATIVE",
             published_date=None,
             last_updated_date=None,
+            created="2020-01-01T00:00:00Z",
             corpus=_cclw_corpus(),
             documents=[
                 NavigatorDocumentFactory.build(
@@ -1389,7 +1396,9 @@ def test_transform_navigator_family_with_no_published_documents():
             metadata={},
         ),
     )
-    result = transform_navigator_family(navigator_family_with_no_published_documents)
+    result, _ = transform_navigator_family(
+        navigator_family_with_no_published_documents
+    ).unwrap()
     expected_document_from_family = Document(
         id="family",
         title="Family with no published documents",
@@ -1528,7 +1537,7 @@ def test_transform_navigator_family_with_no_published_documents():
         },
     )
     assert_model_list_equality(
-        result.documents,
+        result,
         [
             expected_document_from_family,
             Document(
@@ -1642,6 +1651,7 @@ def test_transform_to_category_corpus_ids(corpus_id: str, expected_category: str
             category="REPORTS",
             published_date=None,
             last_updated_date=None,
+            created="2020-01-01T00:00:00Z",
             corpus=NavigatorCorpusFactory.build(
                 import_id=corpus_id,
                 corpus_type=NavigatorCorpusTypeFactory.build(name="corpus_type"),
@@ -1660,8 +1670,8 @@ def test_transform_to_category_corpus_ids(corpus_id: str, expected_category: str
         ),
     )
 
-    result = transform_navigator_family(navigator_family)
-    documents = result.documents
+    result, _ = transform_navigator_family(navigator_family).unwrap()
+    documents = result
     family_doc = documents[0]
 
     category_labels = [label for label in family_doc.labels if label.type == "category"]

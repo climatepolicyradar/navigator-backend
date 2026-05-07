@@ -1,9 +1,10 @@
 import os
 
 import pytest
-from pydantic import BaseModel
 from pytest_alembic.config import Config as PytestAlembicConfig
-from sqlmodel import Session, SQLModel, create_engine
+from sqlmodel import Session, SQLModel
+
+from app.session import get_engine
 
 
 @pytest.fixture
@@ -21,28 +22,10 @@ def alembic_config():
     )
 
 
-class DBSecrets(BaseModel):
-    username: str
-    password: str
-
-
-@pytest.fixture(scope="function")
+@pytest.fixture(scope="session")
 def engine():
-    """Create engine using test-db service from docker-compose.
-
-    Session-scoped fixture that creates tables once for all tests.
-    Uses transaction rollback in session fixture for test isolation.
-    """
-
-    # These are provided by the test-db service from docker-compose.
-    db_url = os.getenv("DB_URL")
-    db_port = os.getenv("DB_PORT")
-    db_name = os.getenv("DB_NAME")
-    db_username = os.getenv("DB_USERNAME")
-    db_password = os.getenv("DB_MASTER_PASSWORD")
-
-    db_url = f"postgresql+psycopg2://{db_username}:{db_password}@{db_url}:{db_port}/{db_name}"
-    engine = create_engine(db_url)
+    """Reuse the production engine, but manage schema lifecycle for tests."""
+    engine = get_engine()
     SQLModel.metadata.create_all(engine)
     yield engine
     SQLModel.metadata.drop_all(engine)
