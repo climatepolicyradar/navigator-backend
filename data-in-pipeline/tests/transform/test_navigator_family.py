@@ -443,8 +443,8 @@ def test_transform_navigator_family_with_single_matching_document(
                         LabelRelationship(
                             type="role",
                             value=Label(
-                                type="entity_type",
-                                id="entity_type::Supporting legislation",
+                                type="role",
+                                id="role::Supporting legislation",
                                 value="Supporting legislation",
                             ),
                         ),
@@ -590,8 +590,8 @@ def test_transform_navigator_family_with_single_matching_document(
                     LabelRelationship(
                         type="role",
                         value=Label(
-                            type="entity_type",
-                            id="entity_type::Supporting legislation",
+                            type="role",
+                            id="role::Supporting legislation",
                             value="Supporting legislation",
                         ),
                     ),
