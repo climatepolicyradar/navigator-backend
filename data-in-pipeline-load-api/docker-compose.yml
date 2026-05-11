@@ -5,12 +5,13 @@ services:
     container_name: data-in-pipeline-load-api-db
     environment:
       POSTGRES_USER: data-in-pipeline-load-api
-      POSTGRES_PASSWORD: data-in-pipeline-load-api
+      POSTGRES_PASSWORD: db:5432/?Action=connect&DBUser=data-in-pipeline-load-api&X-Amz-Algorithm=AWS4-HMAC-SHA256&X-Amz-Credential=FAKE_ACCESS_KEY_ID%2F20260101%2Feu-west-1%2Frds-db%2Faws4_request&X-Amz-Date=20260101T000000Z&X-Amz-Expires=900&X-Amz-SignedHeaders=host&X-Amz-Security-Token=FAKE_SESSION_TOKEN_FOR_LOCAL_DEV&X-Amz-Signature=bbb6ba536011db090977ff508696d79d4e8b05156d0caa757f8beeca186a1ea4
       POSTGRES_DB: data-in-pipeline-load-api
     ports:
       - 5432:5432
     volumes:
       - data-in-pipeline-load-api-postgres-data:/var/lib/postgresql/data
+      - .data_cache:/docker-entrypoint-initdb.d:ro
     healthcheck:
       test:
         [
@@ -25,6 +26,7 @@ services:
     container_name: data-in-pipeline-load-api-app
     build:
       context: ..
+      target: dev
       dockerfile: data-in-pipeline-load-api/Dockerfile
     ports:
       - 8080:8080
@@ -32,18 +34,18 @@ services:
       - ..:/app
     working_dir: /app
     environment:
-      db_master_username: data-in-pipeline-load-api
-      managed_db_password: '{"password": "data-in-pipeline-load-api",
-        "username": "data-in-pipeline-load-api"}'
-      load_database_url: db
-      db_port: 5432
-      db_name: data-in-pipeline-load-api
-      DB_URL: db
+      LOAD_DATABASE_URL: db
       DB_NAME: data-in-pipeline-load-api
       DB_USERNAME: data-in-pipeline-load-api
-      DB_SECRETS: '{"password": "data-in-pipeline-load-api", "username":
-        "data-in-pipeline-load-api"}'
+      DB_PORT: 5432
       AWS_REGION: eu-west-1
+      #  required for IAM token generation:
+      AWS_ACCESS_KEY_ID: FAKE_ACCESS_KEY_ID
+      AWS_SECRET_ACCESS_KEY: FAKE_SECRET_ACCESS_KEY
+      AWS_SESSION_TOKEN: FAKE_SESSION_TOKEN_FOR_LOCAL_DEV
+      # Frozen time
+      FAKETIME: "2026-01-01 00:00:00"
+      FAKETIME_NO_CACHE: "1"
     command:
       [
         uv,
@@ -66,7 +68,7 @@ services:
     container_name: data-in-pipeline-load-api-test-db
     environment:
       POSTGRES_USER: data-in-pipeline-load-api
-      POSTGRES_PASSWORD: data-in-pipeline-load-api
+      POSTGRES_PASSWORD: test-db:5432/?Action=connect&DBUser=data-in-pipeline-load-api&X-Amz-Algorithm=AWS4-HMAC-SHA256&X-Amz-Credential=FAKE_ACCESS_KEY_ID%2F20260101%2Feu-west-1%2Frds-db%2Faws4_request&X-Amz-Date=20260101T000000Z&X-Amz-Expires=900&X-Amz-SignedHeaders=host&X-Amz-Security-Token=FAKE_SESSION_TOKEN_FOR_LOCAL_DEV&X-Amz-Signature=a76955bc0419fcdd2ffbdedbddb28324cb0545a684de9f2aab25762bb65861e2
       POSTGRES_DB: data-in-pipeline-load-api
       AWS_REGION: eu-west-1
     ports:
@@ -85,6 +87,7 @@ services:
     container_name: data-in-pipeline-load-api-test
     build:
       context: ..
+      target: dev
       dockerfile: data-in-pipeline-load-api/Dockerfile
     ports:
       - 8080:8080
@@ -92,18 +95,18 @@ services:
       - ..:/app
     working_dir: /app
     environment:
-      db_master_username: data-in-pipeline-load-api
-      managed_db_password: '{"password": "data-in-pipeline-load-api",
-        "username": "data-in-pipeline-load-api"}'
-      load_database_url: test-db
-      db_port: 5432
-      db_name: data-in-pipeline-load-api
-      DB_URL: test-db
+      LOAD_DATABASE_URL: test-db
       DB_NAME: data-in-pipeline-load-api
       DB_USERNAME: data-in-pipeline-load-api
-      DB_SECRETS: '{"password": "data-in-pipeline-load-api", "username":
-        "data-in-pipeline-load-api"}'
       AWS_REGION: eu-west-1
+      DB_PORT: 5432
+      #  required for IAM token generation:
+      AWS_ACCESS_KEY_ID: FAKE_ACCESS_KEY_ID
+      AWS_SECRET_ACCESS_KEY: FAKE_SECRET_ACCESS_KEY
+      AWS_SESSION_TOKEN: FAKE_SESSION_TOKEN_FOR_LOCAL_DEV
+      # Frozen time
+      FAKETIME: "2026-01-01 00:00:00"
+      FAKETIME_NO_CACHE: "1"
     command:
       [
         uv,
