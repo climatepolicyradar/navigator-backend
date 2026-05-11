@@ -1,9 +1,10 @@
-import json
 import os
 
 import pytest
 from pytest_alembic.config import Config as PytestAlembicConfig
-from sqlmodel import Session, SQLModel, create_engine
+from sqlmodel import Session, SQLModel
+
+from app.session import get_engine
 
 
 @pytest.fixture
@@ -21,28 +22,10 @@ def alembic_config():
     )
 
 
-@pytest.fixture(scope="function")
+@pytest.fixture(scope="session")
 def engine():
-    """Create engine using test-db service from docker-compose.
-
-    Session-scoped fixture that creates tables once for all tests.
-    Uses transaction rollback in session fixture for test isolation.
-    """
-    # These are provided by the test-db service from docker-compose.
-    db_host = os.getenv("load_database_url")
-    db_port = os.getenv("db_port")
-    db_name = os.getenv("db_name")
-    db_user = os.getenv("db_master_username")
-    db_password = os.getenv("managed_db_password")
-
-    # Parse password from JSON if needed
-    if db_password is not None and db_password.startswith("{"):
-        db_password = json.loads(db_password)["password"]
-
-    db_url = (
-        f"postgresql+psycopg2://{db_user}:{db_password}@{db_host}:{db_port}/{db_name}"
-    )
-    engine = create_engine(db_url)
+    """Reuse the production engine, but manage schema lifecycle for tests."""
+    engine = get_engine()
     SQLModel.metadata.create_all(engine)
     yield engine
     SQLModel.metadata.drop_all(engine)
@@ -66,21 +49,7 @@ def blank_engine():
     Drops all tables before yielding to ensure migrations can run
     cleanly. Used specifically for testing migration endpoints.
     """
-    # These are provided by the test-db service from docker-compose.
-    db_host = os.getenv("load_database_url")
-    db_port = os.getenv("db_port")
-    db_name = os.getenv("db_name")
-    db_user = os.getenv("db_master_username")
-    db_password = os.getenv("managed_db_password")
-
-    # Parse password from JSON if needed
-    if db_password is not None and db_password.startswith("{"):
-        db_password = json.loads(db_password)["password"]
-
-    db_url = (
-        f"postgresql+psycopg2://{db_user}:{db_password}@{db_host}:{db_port}/{db_name}"
-    )
-    engine = create_engine(db_url)
+    engine = get_engine()
 
     # Drop all tables to ensure clean state for migrations
     SQLModel.metadata.drop_all(engine)

@@ -29,9 +29,8 @@ from app.load.load import load_to_db
 from app.models import ExtractedEnvelope, Identified, PipelineResult
 from app.pipeline_metrics import ErrorType, Operation, PipelineType, Status
 from app.run_db_migrations.run_db_migrations import run_db_migrations
-from app.transform.navigator_family import (
-    transform_navigator_family,
-)
+from app.transform.models import TransformWarning
+from app.transform.navigator_family import transform_navigator_family
 from app.util import SlackNotify, get_s3_client
 
 
@@ -175,7 +174,7 @@ def cache_extraction_result(result: FamilyFetchResult):
 
 
 @task(log_prints=True)
-def cache_transform_errors(errors: list[Exception], run_id: str):
+def cache_transform_errors(errors: list[Exception | TransformWarning], run_id: str):
     """Cache transformation errors to S3."""
     error_data = [str(e) for e in errors]
     upload_to_s3(
@@ -222,22 +221,41 @@ def transform_duplicate_collections(
 
 @task(log_prints=True)
 @pipeline_metrics.track(operation=Operation.TRANSFORM)
+@task(log_prints=True)
+@pipeline_metrics.track(operation=Operation.TRANSFORM)
 def transform(
     identified_families: list[Identified[NavigatorFamily]],
-) -> tuple[list[Document], list[Exception]]:
-    """Transform all families to target format, collecting successes and failures."""
+) -> tuple[list[Document], list[Exception | TransformWarning]]:
+    """Transform all families to target format, collecting successes and failures.
+
+    The errors list mixes fatal `Exception`s (transformation failed entirely, no
+    document produced) with non-fatal `TransformWarning`s (transformation
+    succeeded, but a sub-step had to skip something — the document IS in the
+    returned list). Callers that need to distinguish can match on the type.
+    """
     _LOGGER = get_logger()
 
-    all_documents = []
-    all_collections = {}
-    errors = []
+    all_documents: list[Document] = []
+    all_collections: dict = {}
+    errors: list[Exception | TransformWarning] = []
+
     for family in identified_families:
         result = transform_navigator_family(family)
-
         match result:
-            case Success((documents, collection_documents)):
-                all_documents.extend(documents)
-                transform_duplicate_collections(all_collections, collection_documents)
+            case Success(output):
+                all_documents.extend(output.documents)
+                transform_duplicate_collections(
+                    all_collections, output.collection_documents
+                )
+                for warning in output.warnings:
+                    _LOGGER.warning(
+                        "transform warning",
+                        extra={
+                            "family_id": family.id,
+                            "warning": warning.model_dump(),
+                        },
+                    )
+                errors.extend(output.warnings)
             case Failure(error):
                 _LOGGER.warning(f"Transformation failed: {error}")
                 pipeline_metrics.record_error(Operation.TRANSFORM, ErrorType.TRANSFORM)
@@ -249,7 +267,7 @@ def transform(
 
     _LOGGER.info(
         f"Transformation complete: {len(all_documents)} documents from "
-        f"{len(identified_families)} families ({len(errors)} failures)"
+        f"{len(identified_families)} families ({len(errors)} issues)"
     )
 
     all_transformed = all_documents + list(all_collections.values())

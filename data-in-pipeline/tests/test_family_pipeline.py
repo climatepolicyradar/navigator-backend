@@ -24,8 +24,8 @@ from app.navigator_family_etl_pipeline import (
     transform,
 )
 from app.transform.models import NoMatchingTransformations
+from app.transform.navigator_family import TransformOutput
 from tests.factories import (
-    DocumentWithoutRelationshipsFactory,
     NavigatorCollectionFactory,
     NavigatorCorpusFactory,
     NavigatorCorpusTypeFactory,
@@ -371,25 +371,33 @@ def test_etl_pipeline_partial_transformation_failure(  # noqa: PLR0913
         envelopes=[envelope], failures=[]
     )
 
-    mock_transformed_documents = [
-        DocumentWithoutRelationshipsFactory.build(
-            id="test-doc",
-            title="This is the test doc",
-            description=None,
-            labels=[],
-            items=[],
-        )
-    ]
+    mock_transformed_documents = TransformOutput(
+        documents=[
+            Document(
+                id="valid-family",
+                title="Valid Family",
+                description="Will transform successfully",
+                labels=[],
+                items=[],
+                documents=[],
+            )
+        ],
+        warnings=[],
+        collection_documents=[],
+    )
 
     mock_transform_families.side_effect = [
-        Success((mock_transformed_documents, [])),
+        Success(mock_transformed_documents),
         Failure(NoMatchingTransformations()),
     ]
 
     result = data_in_pipeline()
 
     assert isinstance(result, PipelineResult)
-    assert result.documents_processed == len(mock_transformed_documents)
+    assert result.documents_processed == len(
+        mock_transformed_documents.documents
+        + mock_transformed_documents.collection_documents
+    )
     assert result.status == "success"
 
 

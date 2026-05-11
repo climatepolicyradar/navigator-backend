@@ -170,9 +170,15 @@ def navigator_family_with_no_matching_transformations() -> Identified[NavigatorF
 def test_transform_navigator_family_with_single_matching_document(
     navigator_family_with_single_matching_document: Identified[NavigatorFamily],
 ):
-    family_result, collection_result = transform_navigator_family(
+    output = transform_navigator_family(
         navigator_family_with_single_matching_document
     ).unwrap()
+
+    assert output.warnings == []
+
+    family_result = output.documents
+    collection_result = output.collection_documents
+
     expected_document_from_family = Document(
         id="family",
         title="Matching title on family and document and collection",
@@ -814,9 +820,15 @@ def test_transform_navigator_family_with_laws_and_policies_corpus_type(
             },
         ),
     )
-    family_result, _ = transform_navigator_family(
+    output = transform_navigator_family(
         navigator_family_with_laws_and_policies_corpus_type
     ).unwrap()
+
+    assert output.warnings == []
+    assert output.collection_documents == []
+
+    family_result = output.documents
+
     expected_document_from_family = Document(
         id="family",
         title="Laws and policies family",
@@ -985,9 +997,15 @@ def test_transform_navigator_family_with_published_and_unpublished_documents():
             metadata={},
         ),
     )
-    result, _ = transform_navigator_family(
+    output = transform_navigator_family(
         navigator_family_with_different_document_statuses
     ).unwrap()
+
+    assert output.warnings == []
+    assert output.collection_documents == []
+
+    result = output.documents
+
     expected_document_from_family = Document(
         id="family",
         title="Family with different document statuses",
@@ -1396,9 +1414,16 @@ def test_transform_navigator_family_with_no_published_documents():
             metadata={},
         ),
     )
-    result, _ = transform_navigator_family(
+
+    output = transform_navigator_family(
         navigator_family_with_no_published_documents
     ).unwrap()
+
+    assert output.warnings == []
+    assert output.collection_documents == []
+
+    result = output.documents
+
     expected_document_from_family = Document(
         id="family",
         title="Family with no published documents",
@@ -1670,9 +1695,13 @@ def test_transform_to_category_corpus_ids(corpus_id: str, expected_category: str
         ),
     )
 
-    result, _ = transform_navigator_family(navigator_family).unwrap()
-    documents = result
-    family_doc = documents[0]
+    output = transform_navigator_family(navigator_family).unwrap()
+
+    assert output.warnings == []
+    assert output.collection_documents == []
+
+    result = output.documents
+    family_doc = result[0]
 
     category_labels = [label for label in family_doc.labels if label.type == "category"]
     assert any(
