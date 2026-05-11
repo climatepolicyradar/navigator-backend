@@ -116,6 +116,18 @@ def transform_navigator_family(
         return result
 
 
+def _transform_navigator_documents(
+    data: NavigatorFamily,
+) -> tuple[list[Document], list[TransformWarning]]:
+    transformed_documents = []
+    warnings = []
+    for nav_doc in data.documents:
+        doc, doc_warnings = _transform_navigator_document(nav_doc, data)
+        transformed_documents.append(doc)
+        warnings.extend(doc_warnings)
+    return transformed_documents, warnings
+
+
 def transform(
     input: Identified[NavigatorFamily],
 ) -> Result[TransformOutput, CouldNotTransform]:
@@ -134,11 +146,7 @@ def transform(
     document_from_family, family_warnings = _transform_navigator_family(input.data)
     warnings.extend(family_warnings)
 
-    documents_from_documents: list[Document] = []
-    for nav_doc in input.data.documents:
-        doc, doc_warnings = _transform_navigator_document(nav_doc, input.data)
-        documents_from_documents.append(doc)
-        warnings.extend(doc_warnings)
+    documents_from_documents, warnings = _transform_navigator_documents(input.data)
 
     documents_from_collections: list[Document] = [
         _transform_navigator_collection(collection, input.data)
