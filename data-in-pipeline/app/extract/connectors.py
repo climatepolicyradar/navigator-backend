@@ -16,6 +16,7 @@ from app.util import generate_envelope_uuid
 class NavigatorEvent(BaseModel):
     import_id: str
     event_type: str
+    title: str
     date: datetime.datetime
     # We have quite a few families that fail model validation due to
     # event.metadata.even_type being a string rather than a list.

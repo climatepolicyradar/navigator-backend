@@ -116,6 +116,82 @@ def transform_navigator_family(
         return result
 
 
+def _transform_litigation_events(data: NavigatorFamily) -> list[Document]:
+    documents = []
+    labels = []
+    attributes = {}
+    navigator_family_events = data.events
+    navigator_document_event_ids = {
+        doc.events[0].import_id for doc in data.documents if doc.events
+    }
+
+    # Remove events with links to documents as they will have already been transformed
+    # and remove Filing Year For Action events as they are only used to store the filing date
+    # for a case
+    deduplicated_events = [
+        event
+        for event in navigator_family_events
+        if event.import_id not in navigator_document_event_ids
+        and event.event_type != "Filing Year For Action"
+    ]
+
+    for event in deduplicated_events:
+        labels.extend(
+            [
+                LabelRelationship(
+                    type="entity_type",
+                    value=Label(
+                        id=f"entity_type::{event.event_type}",
+                        value=event.event_type,
+                        type="entity_type",
+                    ),
+                ),
+                LabelRelationship(
+                    type="activity_status",
+                    timestamp=event.date,
+                    value=Label(
+                        id="activity_status::Filed",
+                        value="Filed",
+                        type="activity_status",
+                    ),
+                ),
+                _transform_family_corpus_organisation(data)[0],
+            ]
+        )
+
+        labels.extend(_transform_to_category(data))
+        geo_labels, _ = _transform_geographies(data)
+        labels.extend(geo_labels)
+        if event.metadata["action_taken"]:
+            attributes["action_taken"] = event.metadata["action_taken"][0]
+
+        documents.append(
+            Document(
+                id=event.import_id,
+                title=event.title,
+                description=event.metadata["description"][0],
+                labels=labels,
+                items=[],
+                attributes=attributes,
+            )
+        )
+    return documents
+
+
+def _transform_navigator_documents(
+    data: NavigatorFamily,
+) -> tuple[list[Document], list[TransformWarning]]:
+    transformed_documents = []
+    warnings = []
+    for nav_doc in data.documents:
+        doc, doc_warnings = _transform_navigator_document(nav_doc, data)
+        transformed_documents.append(doc)
+        warnings.extend(doc_warnings)
+    if data.corpus.import_id == "Academic.corpus.Litigation.n0000":
+        transformed_documents.extend(_transform_litigation_events(data))
+    return transformed_documents, warnings
+
+
 def transform(
     input: Identified[NavigatorFamily],
 ) -> Result[TransformOutput, CouldNotTransform]:
@@ -134,11 +210,7 @@ def transform(
     document_from_family, family_warnings = _transform_navigator_family(input.data)
     warnings.extend(family_warnings)
 
-    documents_from_documents: list[Document] = []
-    for nav_doc in input.data.documents:
-        doc, doc_warnings = _transform_navigator_document(nav_doc, input.data)
-        documents_from_documents.append(doc)
-        warnings.extend(doc_warnings)
+    documents_from_documents, warnings = _transform_navigator_documents(input.data)
 
     documents_from_collections: list[Document] = [
         _transform_navigator_collection(collection, input.data)
@@ -847,7 +919,6 @@ def _part_of_gst1(navigator_family: NavigatorFamily) -> bool:
 # ---------------------------------------------------------------------------
 
 
-# trunk-ignore(ruff/PLR0912)
 def _transform_navigator_family(
     navigator_family: NavigatorFamily,
 ) -> tuple[Document, list[TransformWarning]]:
