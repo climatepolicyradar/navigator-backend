@@ -1,6 +1,5 @@
-from collections.abc import Mapping, Sequence
 from enum import Enum
-from typing import Annotated, Literal, Optional
+from typing import List, Literal, Mapping, Optional, Sequence
 
 from cpr_sdk.models.search import Passage
 from cpr_sdk.models.search import SearchParameters as CprSdkSearchParameters
@@ -15,6 +14,7 @@ from pydantic import (
 )
 from pydantic.json_schema import JsonSchemaValue
 from pydantic_core.core_schema import CoreSchema
+from typing_extensions import Annotated
 
 from app.models import CLIMATE_LAWS_MATCH
 
@@ -148,10 +148,10 @@ class SearchResponseDocumentPassage(BaseModel):
 
     text: str
     text_block_id: str
-    text_block_page: int | None = None
-    text_block_coords: Sequence[Coord] | None = None
-    concepts: Sequence[Passage.Concept] | None = None
-    block_id_sort_key: int | None = None
+    text_block_page: Optional[int] = None
+    text_block_coords: Optional[Sequence[Coord]] = None
+    concepts: Optional[Sequence[Passage.Concept]] = None
+    block_id_sort_key: Optional[int] = None
 
 
 class SearchResponseFamilyDocument(BaseModel):
@@ -172,22 +172,22 @@ class SearchResponseFamilyDocument(BaseModel):
     https://app.climatepolicyradar.org/documents/national-climate-change-adaptation-strategy_06f8
     """
 
-    document_type: str | None = None
+    document_type: Optional[str] = None
     """
     The type of document, for example: “Strategy”
     """
 
-    document_source_url: str | None = None
+    document_source_url: Optional[str] = None
     """
     The source url of the external site that was used to ingest into the system.
     """
 
-    document_url: str | None = None
+    document_url: Optional[str] = None
     """
     The CDN url of where the document can be found within our system.
     """
 
-    document_content_type: str | None = None
+    document_content_type: Optional[str] = None
     """
     The content_type of the document found at the `document_url`. For example:
     “application/pdf” or “text/html”.
@@ -259,7 +259,7 @@ class SearchResponseFamily(BaseModel):
     The name given to the type of corpus the family belongs to. E.G. 'Laws and Policies'
     """
 
-    family_geographies: list[str]
+    family_geographies: List[str]
     """
     The geographical locations of the family in ISO 3166-1 alpha-3
     """
@@ -286,20 +286,20 @@ class SearchResponseFamily(BaseModel):
 
     family_documents: list[SearchResponseFamilyDocument]
 
-    continuation_token: str | None = None
+    continuation_token: Optional[str] = None
     """
     Passage level continuation token. Can be used in conjunction with the family level
     `this continuation_token` to get the next page of passages for this specific family
     """
 
-    prev_continuation_token: str | None = None
+    prev_continuation_token: Optional[str] = None
     """
     Passage level continuation token. Can be used in conjunction with the family level
     `this continuation_token` to get the previous page of passages for this specific
     family
     """
 
-    metadata: Sequence[dict[str, str]] | None = None
+    metadata: Optional[Sequence[dict[str, str]]] = None
     """
     This is the metadata is from Vespa which is a mixture of document and family metadata.
     """
@@ -322,16 +322,16 @@ class SearchResponse(BaseModel):
     total_time_ms: int
     """query_time + extra processing"""
 
-    continuation_token: str | None = None
+    continuation_token: Optional[str] = None
     """
     A token that can be sent in a followup request to the search endpoint in order to
     get the next page from the search database for this specific query.
     """
 
-    this_continuation_token: str | None = None
+    this_continuation_token: Optional[str] = None
     """Relevant when using passage level continuations on a search page"""
 
-    prev_continuation_token: str | None = None
+    prev_continuation_token: Optional[str] = None
     """
     A token that can be sent in a followup request to the search endpoint in order to
     get the previous page from the search database for this specific query.
@@ -361,7 +361,7 @@ class SearchResponse(BaseModel):
         return self
 
 
-Top5FamilyList = Annotated[list[SearchResponseFamily], Field(max_length=5)]
+Top5FamilyList = Annotated[List[SearchResponseFamily], Field(max_length=5)]
 # Alias required for type hinting
 _T5FamL = Top5FamilyList
 
@@ -392,11 +392,11 @@ class LatestFamilyResponse(BaseModel):
 class BrowseArgs(BaseModel):
     """Arguments for the browse_rds function"""
 
-    geography_slugs: Sequence[str] | None = None
-    country_codes: Sequence[str] | None = None
-    corpora_ids: Sequence[str] | None = None
-    categories: Sequence[str] | None = None
+    geography_slugs: Optional[Sequence[str]] = None
+    country_codes: Optional[Sequence[str]] = None
+    corpora_ids: Optional[Sequence[str]] = None
+    categories: Optional[Sequence[str]] = None
     sort_field: SortField = SortField.DATE
     sort_order: SortOrder = SortOrder.DESCENDING
-    offset: int | None = 0
-    limit: int | None = 10
+    offset: Optional[int] = 0
+    limit: Optional[int] = 10
