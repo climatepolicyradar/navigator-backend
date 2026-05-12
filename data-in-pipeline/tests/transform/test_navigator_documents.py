@@ -246,6 +246,50 @@ def test_transform_navigator_documents_litigation_events_without_documents():
     )
 
 
+def test_transform_navigator_documents_litigation_filing_year_for_action_events_are_skipped():
+    litigation_family = NavigatorFamilyFactory.build(
+        import_id="family",
+        title="Litigation family",
+        category="LITIGATION",
+        last_updated_date=None,
+        published_date=None,
+        created="2020-01-01T00:00:00Z",
+        summary="Family summary",
+        corpus=NavigatorCorpusFactory.build(
+            import_id="Academic.corpus.Litigation.n0000",
+            corpus_type=NavigatorCorpusTypeFactory.build(name="Litigation"),
+            organisation=NavigatorOrganisationFactory.build(
+                id=1, name="Sabin Center for Climate Change Law"
+            ),
+            attribution_url="testurl.org",
+            corpus_text="Test corpus",
+            corpus_image_url=None,
+        ),
+        documents=[],
+        events=[
+            NavigatorEventFactory.build(
+                import_id="123",
+                event_type="Filing Year For Action",
+                title="Filing Year For Action",
+                date=datetime(2020, 1, 1),
+                metadata={
+                    "event_type": ["Filing Year For Action"],
+                    "datetime_event_name": ["Filing Year For Action"],
+                    "action_taken": [],
+                    "description": ["Filing Year For Action"],
+                },
+            )
+        ],
+        collections=[],
+        geographies=[],
+        concepts=[],
+    )
+
+    result, warnings = _transform_navigator_documents(litigation_family)
+
+    assert not warnings
+    assert not result
+
+
 # Test cases:
-# - filing year for action does not get transformed to a document
 # - placeholder docs still get transformed with an obsolete label

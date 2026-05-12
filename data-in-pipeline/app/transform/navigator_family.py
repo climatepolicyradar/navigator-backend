@@ -118,41 +118,50 @@ def transform_navigator_family(
 
 def _transform_litigation_events(data: NavigatorFamily) -> list[Document]:
     documents = []
+    labels = []
+    attributes = {}
     navigator_family_events = data.events
     navigator_document_event_ids = {doc.events[0].import_id for doc in data.documents}
 
     # Remove events with links to documents as they will have already been transformed
+    # and remove Filing Year For Action events as they are only used to store the filing date
+    # for a case
     deduplicated_events = [
         event
         for event in navigator_family_events
         if event.import_id not in navigator_document_event_ids
+        and event.event_type != "Filing Year For Action"
     ]
 
     for event in deduplicated_events:
-        labels = [
-            LabelRelationship(
-                type="entity_type",
-                value=Label(
-                    id=f"entity_type::{event.event_type}",
-                    value=event.event_type,
+        labels.extend(
+            [
+                LabelRelationship(
                     type="entity_type",
+                    value=Label(
+                        id=f"entity_type::{event.event_type}",
+                        value=event.event_type,
+                        type="entity_type",
+                    ),
                 ),
-            ),
-            LabelRelationship(
-                type="activity_status",
-                timestamp=event.date,
-                value=Label(
-                    id="activity_status::Filed",
-                    value="Filed",
+                LabelRelationship(
                     type="activity_status",
+                    timestamp=event.date,
+                    value=Label(
+                        id="activity_status::Filed",
+                        value="Filed",
+                        type="activity_status",
+                    ),
                 ),
-            ),
-            _transform_family_corpus_organisation(data)[0],
-        ]
+                _transform_family_corpus_organisation(data)[0],
+            ]
+        )
 
         labels.extend(_transform_to_category(data))
         geo_labels, _ = _transform_geographies(data)
         labels.extend(geo_labels)
+        if event.metadata["action_taken"]:
+            attributes["action_taken"] = event.metadata["action_taken"][0]
 
         documents.append(
             Document(
@@ -161,7 +170,7 @@ def _transform_litigation_events(data: NavigatorFamily) -> list[Document]:
                 description=event.metadata["description"][0],
                 labels=labels,
                 items=[],
-                attributes={"action_taken": event.metadata["action_taken"][0]},
+                attributes=attributes,
             )
         )
     return documents
