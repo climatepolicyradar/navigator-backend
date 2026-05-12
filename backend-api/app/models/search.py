@@ -60,6 +60,8 @@ class SearchRequestBody(CprSdkSearchParameters):
         populate_by_name=True,
     )
 
+    exact_match: bool = True
+
     # Query string should be required in backend (its not in dal)
     query_string: str  # type: ignore
     """
