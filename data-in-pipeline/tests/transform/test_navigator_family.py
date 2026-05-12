@@ -421,6 +421,29 @@ def test_transform_navigator_family_with_single_matching_document(
             DocumentRelationship(
                 type="member_of",
                 value=DocumentWithoutRelationships(
+                    id="collection_matching",
+                    title="Matching title on family and document and collection",
+                    labels=[
+                        LabelRelationship(
+                            type="entity_type",
+                            value=Label(
+                                id="entity_type::Collection",
+                                value="Collection",
+                                type="entity_type",
+                            ),
+                        )
+                    ],
+                    items=[],
+                    attributes={
+                        "deprecated_slug": "collection-matching-slug",
+                        "published_date": "2020-01-01T00:00:00Z",
+                        "last_updated_date": "2020-01-01T00:00:00Z",
+                    },
+                ),
+            ),
+            DocumentRelationship(
+                type="member_of",
+                value=DocumentWithoutRelationships(
                     id="collection",
                     title="Collection title",
                     labels=[
@@ -549,29 +572,6 @@ def test_transform_navigator_family_with_single_matching_document(
                         "variant": "Original language",
                         "md5_sum": "aaaaa11111bbbbb",
                         "status": "published",
-                        "published_date": "2020-01-01T00:00:00Z",
-                        "last_updated_date": "2020-01-01T00:00:00Z",
-                    },
-                ),
-            ),
-            DocumentRelationship(
-                type="has_version",
-                value=DocumentWithoutRelationships(
-                    id="collection_matching",
-                    title="Matching title on family and document and collection",
-                    labels=[
-                        LabelRelationship(
-                            type="entity_type",
-                            value=Label(
-                                id="entity_type::Collection",
-                                value="Collection",
-                                type="entity_type",
-                            ),
-                        )
-                    ],
-                    items=[],
-                    attributes={
-                        "deprecated_slug": "collection-matching-slug",
                         "published_date": "2020-01-01T00:00:00Z",
                         "last_updated_date": "2020-01-01T00:00:00Z",
                     },
@@ -728,7 +728,7 @@ def test_transform_navigator_family_with_single_matching_document(
                 ],
                 documents=[
                     DocumentRelationship(
-                        type="is_version_of",
+                        type="has_member",
                         value=DocumentWithoutRelationships(
                             **expected_document_from_family.model_dump()
                         ),

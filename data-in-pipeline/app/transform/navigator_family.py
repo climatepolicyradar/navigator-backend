@@ -267,20 +267,16 @@ def transform(
                 value=DocumentWithoutRelationships(**document.model_dump()),
             )
             for document in documents_from_collections
-            if not _documents_match(document, document_from_family)
         ]
     )
 
     for document in documents_from_collections:
-        if not _documents_match(document, document_from_family):
-            document.documents = [
-                DocumentRelationship(
-                    type="has_member",
-                    value=DocumentWithoutRelationships(
-                        **document_from_family.model_dump()
-                    ),
-                )
-            ]
+        document.documents = [
+            DocumentRelationship(
+                type="has_member",
+                value=DocumentWithoutRelationships(**document_from_family.model_dump()),
+            )
+        ]
 
     """
     Versions
@@ -307,26 +303,6 @@ def transform(
     for document in documents_from_documents:
         if _documents_match(document, document_from_family):
             document.documents.append(
-                DocumentRelationship(
-                    type="is_version_of",
-                    value=DocumentWithoutRelationships(
-                        **document_from_family.model_dump()
-                    ),
-                )
-            )
-
-    # collections
-    document_from_family.documents.extend(
-        DocumentRelationship(
-            type="has_version",
-            value=DocumentWithoutRelationships(**collection.model_dump()),
-        )
-        for collection in documents_from_collections
-        if _documents_match(collection, document_from_family)
-    )
-    for collection in documents_from_collections:
-        if _documents_match(collection, document_from_family):
-            collection.documents.append(
                 DocumentRelationship(
                     type="is_version_of",
                     value=DocumentWithoutRelationships(
