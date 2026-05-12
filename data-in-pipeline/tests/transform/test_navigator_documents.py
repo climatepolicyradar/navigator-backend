@@ -289,7 +289,3 @@ def test_transform_navigator_documents_litigation_filing_year_for_action_events_
 
     assert not warnings
     assert not result
-
-
-# Test cases:
-# - placeholder docs still get transformed with an obsolete label

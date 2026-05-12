@@ -121,7 +121,9 @@ def _transform_litigation_events(data: NavigatorFamily) -> list[Document]:
     labels = []
     attributes = {}
     navigator_family_events = data.events
-    navigator_document_event_ids = {doc.events[0].import_id for doc in data.documents}
+    navigator_document_event_ids = {
+        doc.events[0].import_id for doc in data.documents if doc.events
+    }
 
     # Remove events with links to documents as they will have already been transformed
     # and remove Filing Year For Action events as they are only used to store the filing date
