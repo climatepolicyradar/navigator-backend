@@ -14,8 +14,10 @@ from returns.result import Failure, Result, Success
 
 from app.bootstrap_telemetry import get_logger, log_context
 from app.extract.connectors import (
+    LitigationDocumentStatus,
     NavigatorCollection,
     NavigatorDocument,
+    NavigatorDocumentStatus,
     NavigatorFamily,
 )
 from app.geographies import geographies_lookup
@@ -188,6 +190,8 @@ def _transform_litigation_events(data: NavigatorFamily) -> list[Document]:
         labels.extend(geo_labels)
         if event.metadata["action_taken"]:
             attributes["action_taken"] = event.metadata["action_taken"][0]
+
+        attributes["status"] = LitigationDocumentStatus.PENDING_DOCUMENT_FILE.value
 
         documents.append(
             Document(
@@ -1164,10 +1168,12 @@ def _transform_navigator_family(
     add a status if the family cannot be considered published.
     """
     contains_published_document = [
-        doc for doc in navigator_family.documents if doc.document_status == "published"
+        doc
+        for doc in navigator_family.documents
+        if doc.document_status == NavigatorDocumentStatus.PUBLISHED
     ]
     if navigator_family.documents and contains_published_document:
-        attributes["status"] = "published"
+        attributes["status"] = NavigatorDocumentStatus.PUBLISHED.value
 
     labels = (
         labels
@@ -1365,7 +1371,7 @@ def _transform_navigator_document(
 
     """This field defines whether a document is available to be searched in Vespa.
     It is still used to filter out un-published or deleted documents in the frontend."""
-    attributes["status"] = navigator_document.document_status
+    attributes["status"] = navigator_document.document_status.value
 
     """Dates"""
     if navigator_family.published_date:

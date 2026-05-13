@@ -1,4 +1,5 @@
 import datetime
+from enum import Enum
 from http import HTTPStatus
 
 import requests
@@ -26,12 +27,25 @@ class NavigatorEvent(BaseModel):
     metadata: dict[str, list[str] | str] = {}
 
 
+class NavigatorDocumentStatus(Enum):
+    PUBLISHED = "published"
+    DELETED = "deleted"
+    CREATED = "created"
+
+
+# This is a new status we are introducing to allow documents transformed
+# from litigation events (when there is no file available) to be distinguished
+# from regular published documents.
+class LitigationDocumentStatus(Enum):
+    PENDING_DOCUMENT_FILE = "pending_document_file"
+
+
 class NavigatorDocument(BaseModel):
     import_id: str
     title: str
     events: list[NavigatorEvent]
     valid_metadata: dict[str, list[str]] = {}
-    document_status: str
+    document_status: NavigatorDocumentStatus | LitigationDocumentStatus
 
     """
     These values come from the `physical_document` table, but are flattened into the document via the families-api.
