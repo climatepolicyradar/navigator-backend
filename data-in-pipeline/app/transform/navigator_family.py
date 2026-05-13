@@ -31,6 +31,30 @@ from app.transform.models import (
 # Constants
 # ---------------------------------------------------------------------------
 
+_corpus_to_provider_map = {
+    "CCLW.corpus.i00000001.n0000": "Grantham Research Institute",
+    "Academic.corpus.Litigation.n0000": "Sabin Center for Climate Change Law",
+    "CPR.corpus.Goldstandard.n0000": "Gold Standard",
+    "CPR.corpus.i00000589.n0000": "Naturebase",
+    "CPR.corpus.i00000001.n0000": "NewClimate Institute",
+    "CPR.corpus.i00000002.n0000": "Climate Policy Radar",
+    "CPR.corpus.i00000591.n0000": "Laws Africa",
+    "CPR.corpus.i00000592.n0000": "UNDRR",
+    "MCF.corpus.AF.n0000": "Adaptation Fund",
+    "MCF.corpus.AF.Guidance": "Adaptation Fund",
+    "MCF.corpus.CIF.n0000": "The Climate Investment Funds",
+    "MCF.corpus.CIF.Guidance": "The Climate Investment Funds",
+    "MCF.corpus.GCF.n0000": "Green Climate Fund",
+    "MCF.corpus.GCF.Guidance": "Green Climate Fund",
+    "MCF.corpus.GEF.n0000": "Global Environment Facility",
+    "MCF.corpus.GEF.Guidance": "Global Environment Facility",
+    "OEP.corpus.i00000001.n0000": "Ocean Energy Pathways",
+    "UNFCCC.corpus.i00000001.n0000": "UNFCCC",
+    "UN.corpus.UNCCD.n0000": "UNCCD",
+    "UN.corpus.UNCBD.n0000": "UNCBD",
+    "ICCN.corpus.i00000001.n0000": "International Climate Councils Network",
+}
+
 mcf_projects_corpus_import_ids = [
     "MCF.corpus.AF.n0000",
     "MCF.corpus.CIF.n0000",
@@ -369,31 +393,8 @@ def _transform_family_corpus_organisation(
     @see: https://schema.org/provider
     """
     labels: list[LabelRelationship] = []
-    corpus_to_provider_map = {
-        "CCLW.corpus.i00000001.n0000": "Grantham Research Institute",
-        "Academic.corpus.Litigation.n0000": "Sabin Center for Climate Change Law",
-        "CPR.corpus.Goldstandard.n0000": "Gold Standard",
-        "CPR.corpus.i00000589.n0000": "Naturebase",
-        "CPR.corpus.i00000001.n0000": "NewClimate Institute",
-        "CPR.corpus.i00000002.n0000": "Climate Policy Radar",
-        "CPR.corpus.i00000591.n0000": "Laws Africa",
-        "CPR.corpus.i00000592.n0000": "UNDRR",
-        "MCF.corpus.AF.n0000": "Adaptation Fund",
-        "MCF.corpus.AF.Guidance": "Adaptation Fund",
-        "MCF.corpus.CIF.n0000": "The Climate Investment Funds",
-        "MCF.corpus.CIF.Guidance": "The Climate Investment Funds",
-        "MCF.corpus.GCF.n0000": "Green Climate Fund",
-        "MCF.corpus.GCF.Guidance": "Green Climate Fund",
-        "MCF.corpus.GEF.n0000": "Global Environment Facility",
-        "MCF.corpus.GEF.Guidance": "Global Environment Facility",
-        "OEP.corpus.i00000001.n0000": "Ocean Energy Pathways",
-        "UNFCCC.corpus.i00000001.n0000": "UNFCCC",
-        "UN.corpus.UNCCD.n0000": "UNCCD",
-        "UN.corpus.UNCBD.n0000": "UNCBD",
-        "ICCN.corpus.i00000001.n0000": "International Climate Councils Network",
-    }
 
-    provider_name = corpus_to_provider_map.get(
+    provider_name = _corpus_to_provider_map.get(
         navigator_family.corpus.import_id, "Unknown"
     )
     labels.append(
@@ -1168,6 +1169,15 @@ def _transform_navigator_family(
     if navigator_family.documents and contains_published_document:
         attributes["status"] = "published"
 
+    labels = (
+        labels
+        + _author_label(navigator_family)
+        + _author_type_label(navigator_family)
+        + _stakeholder_type_label(navigator_family)
+        + _un_convention_label(navigator_family)
+        + _multilateral_climate_fund_label(navigator_family)
+    )
+
     document = Document(
         id=navigator_family.import_id,
         title=navigator_family.title,
@@ -1436,3 +1446,138 @@ def _deduplicate_labels(
         unique_labels.append(label_rel)
         dedup_keys.add(key)
     return unique_labels
+
+
+# Anything below this point is quite loosey goosey
+# on the label types taxonomy but we need this data
+# for to support faceted search that looks
+# similar to our legacy search.
+
+
+# region author label
+def _author_label(
+    navigator_family: NavigatorFamily,
+) -> list[LabelRelationship]:
+    labels: list[LabelRelationship] = []
+    author_values = navigator_family.metadata.get("author")
+    if author_values and author_values[0] not in _stakeholder_types:
+        author = author_values[0]
+        labels.append(
+            LabelRelationship(
+                type="author",
+                value=Label(
+                    id=f"author::{author}",
+                    value=author,
+                    type="author",
+                ),
+            )
+        )
+    return labels
+
+
+# region author_type label
+_stakeholder_types = ["Party", "Non-Party"]
+
+
+def _author_type_label(
+    navigator_family: NavigatorFamily,
+) -> list[LabelRelationship]:
+    labels: list[LabelRelationship] = []
+    author_type_values = navigator_family.metadata.get("author_type")
+    if author_type_values and author_type_values[0] not in _stakeholder_types:
+        author_type = author_type_values[0]
+        labels.append(
+            LabelRelationship(
+                type="author_type",
+                value=Label(
+                    id=f"author_type::{author_type}",
+                    value=author_type,
+                    type="author_type",
+                ),
+            )
+        )
+    return labels
+
+
+# region stakeholder_type label
+def _stakeholder_type_label(
+    navigator_family: NavigatorFamily,
+) -> list[LabelRelationship]:
+    labels: list[LabelRelationship] = []
+    author_type_values = navigator_family.metadata.get("author_type")
+    if author_type_values and author_type_values[0] in _stakeholder_types:
+        author_type = author_type_values[0]
+        labels.append(
+            LabelRelationship(
+                type="stakeholder_type",
+                value=Label(
+                    id=f"stakeholder_type::{author_type}",
+                    value=author_type,
+                    type="stakeholder_type",
+                ),
+            )
+        )
+
+    return labels
+
+
+# region un_convention label
+_corpus_import_id_to_un_convention = {
+    "UNFCCC.corpus.i00000001.n0000": "UNFCCC",
+    "UN.corpus.UNCCD.n0000": "UNCCD",
+    "UN.corpus.UNCBD.n0000": "UNCBD",
+}
+
+
+def _un_convention_label(
+    navigator_family: NavigatorFamily,
+) -> list[LabelRelationship]:
+    labels: list[LabelRelationship] = []
+    if navigator_family.corpus.import_id in _corpus_import_id_to_un_convention:
+        un_convention = _corpus_import_id_to_un_convention[
+            navigator_family.corpus.import_id
+        ]
+        labels.append(
+            LabelRelationship(
+                type="un_convention",
+                value=Label(
+                    id=f"un_convention::{un_convention}",
+                    value=un_convention,
+                    type="un_convention",
+                ),
+            )
+        )
+
+    return labels
+
+
+# region multilateral_climate_fund label
+_corpus_import_id_to_multilateral_climate_fund = {
+    "MCF.corpus.AF.n0000": "Adaptation Fund",
+    "MCF.corpus.CIF.n0000": "Climate Investment Funds",
+    "MCF.corpus.GCF.n0000": "Global Environment Facility",
+    "MCF.corpus.GEF.n0000": "Green Climate Fund",
+}
+
+
+def _multilateral_climate_fund_label(
+    navigator_family: NavigatorFamily,
+) -> list[LabelRelationship]:
+    labels: list[LabelRelationship] = []
+    if navigator_family.corpus.import_id in MCF_CORPORA:
+        multilateral_climate_fund = _corpus_import_id_to_multilateral_climate_fund.get(
+            navigator_family.corpus.import_id
+        )
+        if multilateral_climate_fund:
+            labels.append(
+                LabelRelationship(
+                    type="multilateral_climate_fund",
+                    value=Label(
+                        id=f"multilateral_climate_fund::{multilateral_climate_fund}",
+                        value=multilateral_climate_fund,
+                        type="multilateral_climate_fund",
+                    ),
+                )
+            )
+
+    return labels
