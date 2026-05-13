@@ -240,6 +240,7 @@ def test_transform_navigator_documents_litigation_events_without_documents():
                 documents=[],
                 attributes={
                     "action_taken": "Action taken on decision",
+                    "status": "awaiting_source_file",
                 },
             ),
         ],
