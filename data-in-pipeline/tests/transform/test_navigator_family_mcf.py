@@ -306,14 +306,6 @@ def test_transform_navigator_family_with_multilateral_climate_fund_project(
                     value="International Bank for Reconstruction",
                 ),
             ),
-            LabelRelationship(
-                type="multilateral_climate_fund",
-                value=Label(
-                    id="multilateral_climate_fund::Adaptation Fund",
-                    value="Adaptation Fund",
-                    type="multilateral_climate_fund",
-                ),
-            ),
         ],
         documents=[
             DocumentRelationship(

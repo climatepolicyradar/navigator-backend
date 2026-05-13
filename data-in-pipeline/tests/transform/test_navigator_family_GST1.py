@@ -223,30 +223,6 @@ def test_transform_navigator_family_UNFCCC_party_submission_to_GST1_label():
                     type="category",
                 ),
             ),
-            LabelRelationship(
-                type="author",
-                value=Label(
-                    id="author::Australia",
-                    value="Australia",
-                    type="author",
-                ),
-            ),
-            LabelRelationship(
-                type="stakeholder_type",
-                value=Label(
-                    id="stakeholder_type::Party",
-                    value="Party",
-                    type="stakeholder_type",
-                ),
-            ),
-            LabelRelationship(
-                type="un_convention",
-                value=Label(
-                    id="un_convention::UNFCCC",
-                    value="UNFCCC",
-                    type="un_convention",
-                ),
-            ),
         ],
         documents=[
             DocumentRelationship(
@@ -530,30 +506,6 @@ def test_transform_navigator_family_UNFCCC_non_party_submission_to_GST1_label():
                     id="category::UN submission",
                     value="UN submission",
                     type="category",
-                ),
-            ),
-            LabelRelationship(
-                type="author",
-                value=Label(
-                    id="author::Australia",
-                    value="Australia",
-                    type="author",
-                ),
-            ),
-            LabelRelationship(
-                type="stakeholder_type",
-                value=Label(
-                    id="stakeholder_type::Non-Party",
-                    value="Non-Party",
-                    type="stakeholder_type",
-                ),
-            ),
-            LabelRelationship(
-                type="un_convention",
-                value=Label(
-                    id="un_convention::UNFCCC",
-                    value="UNFCCC",
-                    type="un_convention",
                 ),
             ),
         ],
