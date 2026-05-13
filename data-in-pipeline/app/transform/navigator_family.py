@@ -191,7 +191,7 @@ def _transform_litigation_events(data: NavigatorFamily) -> list[Document]:
         if event.metadata["action_taken"]:
             attributes["action_taken"] = event.metadata["action_taken"][0]
 
-        attributes["status"] = LitigationDocumentStatus.PENDING_DOCUMENT_FILE.value
+        attributes["status"] = LitigationDocumentStatus.AWAITING_SOURCE_FILE.value
 
         documents.append(
             Document(

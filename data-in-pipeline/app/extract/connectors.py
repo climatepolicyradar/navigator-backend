@@ -37,7 +37,7 @@ class NavigatorDocumentStatus(Enum):
 # from litigation events (when there is no file available) to be distinguished
 # from regular published documents.
 class LitigationDocumentStatus(Enum):
-    PENDING_DOCUMENT_FILE = "pending_document_file"
+    AWAITING_SOURCE_FILE = "awaiting_source_file"
 
 
 class NavigatorDocument(BaseModel):
