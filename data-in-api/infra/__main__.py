@@ -37,10 +37,10 @@ if is_review_stack:
     import pulumi_docker_build as docker_build
 
     # Shared resources for review stacks (from backend-platform).
-    platform_stack = pulumi.StackReference("climatepolicyradar/backend-platform/staging")
-    shared_ecr_url = platform_stack.get_output(
-        "data-in-api_review_ecr_repository_url"
+    platform_stack = pulumi.StackReference(
+        "climatepolicyradar/backend-platform/staging"
     )
+    shared_ecr_url = platform_stack.get_output("data-in-api_review_ecr_repository_url")
     shared_access_role_arn = platform_stack.get_output("apprunner_ecr_access_role_arn")
     shared_instance_role_arn = platform_stack.get_output("apprunner_instance_role_arn")
 
@@ -287,9 +287,7 @@ else:
         ),
     )
 
-    aws_env_stack = pulumi.StackReference(
-        f"climatepolicyradar/aws_env/{environment}"
-    )
+    aws_env_stack = pulumi.StackReference(f"climatepolicyradar/aws_env/{environment}")
     vpc_id = aws_env_stack.get_output("vpc_id")
     eu_west_1a_private_subnet_id = aws_env_stack.get_output(
         "eu_west_1a_private_subnet_id"

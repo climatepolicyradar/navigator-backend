@@ -34,7 +34,9 @@ if is_review_stack:
     import pulumi_docker_build as docker_build
 
     # Shared resources for review stacks (from backend-platform).
-    platform_stack = pulumi.StackReference("climatepolicyradar/backend-platform/staging")
+    platform_stack = pulumi.StackReference(
+        "climatepolicyradar/backend-platform/staging"
+    )
     shared_ecr_url = platform_stack.get_output(
         "geographies-api_review_ecr_repository_url"
     )
@@ -227,9 +229,7 @@ else:
                 aws.iam.GetPolicyDocumentStatementArgs(
                     effect="Allow",
                     actions=["s3:ListBucket"],
-                    resources=[
-                        f"arn:aws:s3:::{config.require('geographies_bucket')}"
-                    ],
+                    resources=[f"arn:aws:s3:::{config.require('geographies_bucket')}"],
                 ),
             ]
         ).json,
@@ -275,9 +275,7 @@ else:
                 image_configuration=aws.apprunner.ServiceSourceConfigurationImageRepositoryImageConfigurationArgs(
                     port="8080",  # @related: PORT_NUMBER
                     runtime_environment_variables={
-                        "GEOGRAPHIES_BUCKET": config.require(
-                            "geographies_bucket"
-                        ),
+                        "GEOGRAPHIES_BUCKET": config.require("geographies_bucket"),
                         "CDN_URL": config.require("cdn_url"),
                     },
                 ),

@@ -34,7 +34,9 @@ if is_review_stack:
     import pulumi_docker_build as docker_build
 
     # Shared resources for review stacks (from backend-platform).
-    platform_stack = pulumi.StackReference("climatepolicyradar/backend-platform/staging")
+    platform_stack = pulumi.StackReference(
+        "climatepolicyradar/backend-platform/staging"
+    )
     shared_ecr_url = platform_stack.get_output("families-api_review_ecr_repository_url")
     shared_access_role_arn = platform_stack.get_output("apprunner_ecr_access_role_arn")
     shared_instance_role_arn = platform_stack.get_output("apprunner_instance_role_arn")
@@ -202,9 +204,7 @@ else:
 
     families_api_apprunner_navigator_database_url = aws.ssm.Parameter(
         "families-api-apprunner-navigator-database-url",
-        name=generate_secret_key(
-            "families-api", "apprunner", "NAVIGATOR_DATABASE_URL"
-        ),
+        name=generate_secret_key("families-api", "apprunner", "NAVIGATOR_DATABASE_URL"),
         description="The URL string to connect to the navigator database",
         type=aws.ssm.ParameterType.SECURE_STRING,
         # This value is managed directly in SSM
@@ -245,15 +245,13 @@ else:
         opts=pulumi.ResourceOptions(protect=True),
     )
 
-    families_api_apprunner_autoscaling_configuration = (
-        aws.apprunner.AutoScalingConfigurationVersion(
-            # len(name) < 32
-            "families-api-autoscaling-config",
-            auto_scaling_configuration_name="families-api-autoscaling-config",
-            max_concurrency=10,
-            max_size=10,
-            min_size=2 if stack == "production" else 1,
-        )
+    families_api_apprunner_autoscaling_configuration = aws.apprunner.AutoScalingConfigurationVersion(
+        # len(name) < 32
+        "families-api-autoscaling-config",
+        auto_scaling_configuration_name="families-api-autoscaling-config",
+        max_concurrency=10,
+        max_size=10,
+        min_size=2 if stack == "production" else 1,
     )
 
     families_api_apprunner_service = aws.apprunner.Service(

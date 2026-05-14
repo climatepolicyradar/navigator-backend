@@ -33,10 +33,10 @@ if is_review_stack:
     import pulumi_docker_build as docker_build
 
     # Shared resources for review stacks (from backend-platform).
-    platform_stack = pulumi.StackReference("climatepolicyradar/backend-platform/staging")
-    shared_ecr_url = platform_stack.get_output(
-        "concepts-api_review_ecr_repository_url"
+    platform_stack = pulumi.StackReference(
+        "climatepolicyradar/backend-platform/staging"
     )
+    shared_ecr_url = platform_stack.get_output("concepts-api_review_ecr_repository_url")
     shared_access_role_arn = platform_stack.get_output("apprunner_ecr_access_role_arn")
     shared_instance_role_arn = platform_stack.get_output("apprunner_instance_role_arn")
 
@@ -235,9 +235,7 @@ else:
             image_repository=aws.apprunner.ServiceSourceConfigurationImageRepositoryArgs(
                 image_configuration=aws.apprunner.ServiceSourceConfigurationImageRepositoryImageConfigurationArgs(
                     port="8080",
-                    runtime_environment_variables={
-                        "Environment": pulumi.get_stack()
-                    },
+                    runtime_environment_variables={"Environment": pulumi.get_stack()},
                 ),
                 image_identifier=f"{account_id}.dkr.ecr.eu-west-1.amazonaws.com/concepts-api:latest",
                 image_repository_type="ECR",
