@@ -64,6 +64,7 @@ if is_review_stack:
 
     concepts_api_apprunner_service = aws.apprunner.Service(
         "concepts-api-apprunner-service",
+        service_name=stack,
         auto_scaling_configuration_arn=(
             f"arn:aws:apprunner:eu-west-1:{account_id}:autoscalingconfiguration"
             "/DefaultConfiguration/1/00000000000000000000000000000001"

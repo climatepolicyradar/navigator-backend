@@ -88,6 +88,7 @@ if is_review_stack:
     # needed -- uses staging SSM params which contain the connection details).
     apprunner_service = aws.apprunner.Service(
         "data-in-api-apprunner-service",
+        service_name=pulumi.get_stack(),
         auto_scaling_configuration_arn=(
             f"arn:aws:apprunner:eu-west-1:{account_id}:autoscalingconfiguration"
             "/DefaultConfiguration/1/00000000000000000000000000000001"
