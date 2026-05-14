@@ -11,6 +11,7 @@ dependencies = [
   "psycopg2>=2.9.10,<3.0.0",
   "pulumi>=3.166.0,<4.0.0",
   "pulumi-aws>=6.78.0,<7.0.0",
+  "pulumi-docker-build>=0.0.15,<1.0.0",
   "api",
   "pycountry>=24.6.1",
   "python-slugify>=8.0.4",
