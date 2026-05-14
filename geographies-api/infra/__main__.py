@@ -27,17 +27,14 @@ else:
     pr_number = None
 
 # ---------------------------------------------------------------------------
-# Shared resources for review stacks (from backend-platform)
-# ---------------------------------------------------------------------------
-platform_stack = pulumi.StackReference("climatepolicyradar/backend-platform/staging")
-
-# ---------------------------------------------------------------------------
 # Docker image build for review stacks
 # ---------------------------------------------------------------------------
 review_image = None
 if is_review_stack:
     import pulumi_docker_build as docker_build
 
+    # Shared resources for review stacks (from backend-platform).
+    platform_stack = pulumi.StackReference("climatepolicyradar/backend-platform/staging")
     shared_ecr_url = platform_stack.get_output(
         "geographies-api_review_ecr_repository_url"
     )
