@@ -1,7 +1,0 @@
-name: backend-platform
-description: Shared resources for backend review stacks (ECR repos, IAM roles, ESC environments, deployment settings)
-runtime:
-  name: python
-  options:
-    toolchain: pip
-    virtualenv: venv
