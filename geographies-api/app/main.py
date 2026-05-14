@@ -24,7 +24,7 @@ try:
         ServiceManifest.from_file(f"{root_dir}/service-manifest.json"), ENV, "0.1.0"
     )
 except Exception as _:
-    _LOGGER.error("Failed to load service manifest, using defaults")
+    _LOGGER.exception("Failed to load service manifest, using defaults")
     otel_config = TelemetryConfig(
         service_name="navigator-backend",
         namespace_name="navigator",
@@ -54,7 +54,7 @@ app.include_router(
 _ALLOW_ORIGIN_REGEX = (
     r"http://localhost:3000|"
     r"http://bs-local.com:3000|"
-    r"https://.+\.climatepolicyradar\.shipyard\.host|"
+    r"https://.+\.awsapprunner\.com|"
     r"https://.+\.climatepolicyradar\.org|"
     r"https://.+\.staging.climatepolicyradar\.org|"
     r"https://.+\.production.climatepolicyradar\.org|"
