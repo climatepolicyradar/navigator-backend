@@ -15,7 +15,6 @@ from typing import cast
 
 import pulumi
 import pulumi_aws as aws
-import pulumi_command as command
 import pulumi_pulumiservice as pulumiservice
 
 # ---------------------------------------------------------------------------
@@ -349,13 +348,8 @@ for service in REVIEW_SERVICES:
 # per PR, runs `pulumi up` on updates, and destroys on PR close.
 # The `pull_request_template` flag enables this, and `review_stack_labels`
 # gates creation to PRs carrying the "deploy:dev" label.
-#
-# NOTE: `review_stack_labels` is not yet in the Python SDK, so we use the
-# `github` property (which maps to the REST API's `gitHub` field) and set
-# `pull_request_template` there. The label gating is applied via a
-# post-deploy REST API patch below.
 for service in REVIEW_SERVICES:
-    ds = pulumiservice.DeploymentSettings(
+    pulumiservice.DeploymentSettings(
         f"{service}-review-deployment-settings",
         organization=org_name,
         project=service,
@@ -377,23 +371,6 @@ for service in REVIEW_SERVICES:
                 skip_intermediate_deployments=True,
             ),
         ),
-    )
-
-    # Patch reviewStackLabels via the REST API since the Python SDK does not
-    # yet expose this field.  The PATCH endpoint merges into the existing
-    # settings so only the gitHub.reviewStackLabels key is touched.
-    command.local.Command(
-        f"{service}-review-stack-labels",
-        create=pulumi.Output.format(
-            "curl -fsSL -X POST "
-            '-H "Authorization: token $PULUMI_ACCESS_TOKEN" '
-            '-H "Content-Type: application/json" '
-            '"https://api.pulumi.com/api/stacks/{0}/{1}/review/deployments/settings" '
-            '-d \'{{"gitHub": {{"reviewStackLabels": ["deploy:dev"]}}}}\'',
-            org_name,
-            service,
-        ),
-        opts=pulumi.ResourceOptions(depends_on=[ds]),
     )
 
 # ---------------------------------------------------------------------------
