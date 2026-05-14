@@ -75,8 +75,8 @@ deployment_role = aws.iam.Role(
                                     for svc in REVIEW_SERVICES
                                 ]
                                 + [
-                                    f"pulumi:deploy:org:{org_name}:project:backend-platform:*",
-                                    f"pulumi:environments:org:{org_name}:env:backend-platform/*",
+                                    f"pulumi:deploy:org:{org_name}:project:backend-review-stack-shared-resources:*",
+                                    f"pulumi:environments:org:{org_name}:env:backend-review-stack-shared-resources/*",
                                 ],
                             },
                         },
@@ -307,11 +307,11 @@ aws_creds_env_yaml = deployment_role.arn.apply(
     )
 )
 
-# Create a shared AWS creds environment under the backend-platform project.
+# Create a shared AWS creds environment under the backend-review-stack-shared-resources project.
 aws_creds_env = pulumiservice.Environment(
     "aws-creds-staging",
     organization=org_name,
-    project="backend-platform",
+    project="backend-review-stack-shared-resources",
     name="aws-creds-staging",
     yaml=aws_creds_env_yaml.apply(lambda y: pulumi.StringAsset(y)),
 )
@@ -322,7 +322,7 @@ for service in REVIEW_SERVICES:
     review_env_yaml = apprunner_ecr_access_role.arn.apply(
         lambda role_arn, svc=service: (
             "imports:\n"
-            "  - backend-platform/aws-creds-staging\n"
+            "  - backend-review-stack-shared-resources/aws-creds-staging\n"
             "\n"
             "values:\n"
             "  environmentVariables:\n"
