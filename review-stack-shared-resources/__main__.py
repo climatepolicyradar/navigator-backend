@@ -359,8 +359,10 @@ for service in REVIEW_SERVICES:
                 repo_dir=f"{service}/infra",
             ),
         ),
-        github=pulumiservice.DeploymentSettingsGithubArgs(
+        vcs=pulumiservice.DeploymentSettingsVcsArgs(
+            provider="github",
             repository="climatepolicyradar/navigator-backend",
+            pull_request_template=False,
             deploy_commits=False,
             preview_pull_requests=False,
         ),
