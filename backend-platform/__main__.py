@@ -15,6 +15,7 @@ from typing import cast
 
 import pulumi
 import pulumi_aws as aws
+import pulumi_command as command
 import pulumi_pulumiservice as pulumiservice
 
 # ---------------------------------------------------------------------------
@@ -336,9 +337,17 @@ for service in REVIEW_SERVICES:
 # Deployment Settings for Review Template Stacks
 # ---------------------------------------------------------------------------
 # Each microservice gets a "review" template stack with deployment settings.
-# PR stacks inherit settings from these templates.
+# Pulumi Cloud natively manages review stack lifecycle: it creates a stack
+# per PR, runs `pulumi up` on updates, and destroys on PR close.
+# The `pull_request_template` flag enables this, and `review_stack_labels`
+# gates creation to PRs carrying the "deploy:dev" label.
+#
+# NOTE: `review_stack_labels` is not yet in the Python SDK, so we use the
+# `github` property (which maps to the REST API's `gitHub` field) and set
+# `pull_request_template` there. The label gating is applied via a
+# post-deploy REST API patch below.
 for service in REVIEW_SERVICES:
-    pulumiservice.DeploymentSettings(
+    ds = pulumiservice.DeploymentSettings(
         f"{service}-review-deployment-settings",
         organization=org_name,
         project=service,
@@ -349,10 +358,9 @@ for service in REVIEW_SERVICES:
                 repo_dir=f"{service}/infra",
             ),
         ),
-        vcs=pulumiservice.DeploymentSettingsVcsArgs(
-            provider="github",
+        github=pulumiservice.DeploymentSettingsGithubArgs(
             repository="climatepolicyradar/navigator-backend",
-            pull_request_template=False,
+            pull_request_template=True,
             deploy_commits=False,
             preview_pull_requests=False,
         ),
@@ -361,6 +369,23 @@ for service in REVIEW_SERVICES:
                 skip_intermediate_deployments=True,
             ),
         ),
+    )
+
+    # Patch reviewStackLabels via the REST API since the Python SDK does not
+    # yet expose this field.  The PATCH endpoint merges into the existing
+    # settings so only the gitHub.reviewStackLabels key is touched.
+    command.local.Command(
+        f"{service}-review-stack-labels",
+        create=pulumi.Output.format(
+            'curl -fsSL -X POST '
+            '-H "Authorization: token $PULUMI_ACCESS_TOKEN" '
+            '-H "Content-Type: application/json" '
+            '"https://api.pulumi.com/api/stacks/{0}/{1}/review/deployments/settings" '
+            '-d \'{{"gitHub": {{"reviewStackLabels": ["deploy:dev"]}}}}\'',
+            org_name,
+            service,
+        ),
+        opts=pulumi.ResourceOptions(depends_on=[ds]),
     )
 
 # ---------------------------------------------------------------------------
