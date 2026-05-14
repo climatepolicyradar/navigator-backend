@@ -344,10 +344,9 @@ for service in REVIEW_SERVICES:
 # Deployment Settings for Review Template Stacks
 # ---------------------------------------------------------------------------
 # Each microservice gets a "review" template stack with deployment settings.
-# Pulumi Cloud natively manages review stack lifecycle: it creates a stack
-# per PR, runs `pulumi up` on updates, and destroys on PR close.
-# The `pull_request_template` flag enables this, and `review_stack_labels`
-# gates creation to PRs carrying the "deploy:dev" label.
+# The GitHub Actions workflow (deploy-review-stack.yml) manages the review
+# stack lifecycle: creating stacks, configuring settings, triggering
+# deployments, and destroying on PR close -- gated by the "deploy:dev" label.
 for service in REVIEW_SERVICES:
     pulumiservice.DeploymentSettings(
         f"{service}-review-deployment-settings",
@@ -362,7 +361,6 @@ for service in REVIEW_SERVICES:
         ),
         github=pulumiservice.DeploymentSettingsGithubArgs(
             repository="climatepolicyradar/navigator-backend",
-            pull_request_template=True,
             deploy_commits=False,
             preview_pull_requests=False,
         ),
