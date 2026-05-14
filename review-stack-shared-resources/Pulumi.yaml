@@ -1,0 +1,11 @@
+name: backend-review-stack-shared-resources
+description: Shared resources for review stacks in the backend
+runtime:
+  name: python
+  options:
+    toolchain: uv
+    virtualenv: .venv
+config:
+  pulumi:tags:
+    value:
+      pulumi:template: aws-python

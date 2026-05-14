@@ -1,0 +1,14 @@
+[project]
+name = "backend-review-stack-shared-resources"
+version = "0.0.0"
+description = "Shared Pulumi resources for backend microservice review stacks"
+requires-python = ">=3.11"
+dependencies = [
+  "pulumi>=3.0.0,<4.0.0",
+  "pulumi-aws>=7.0.0,<8.0.0",
+  "pulumi-command>=1.0.0,<2.0.0",
+  "pulumi-pulumiservice>=0.30.0,<1.0.0",
+]
+
+[tool.uv]
+package = false
