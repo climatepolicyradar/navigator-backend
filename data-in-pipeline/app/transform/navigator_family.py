@@ -1056,6 +1056,23 @@ def _transform_navigator_family(
         )
 
     """
+    metadata.domain
+    """
+    domain_metadata = navigator_family.metadata.get("domain", [])
+    for domain in domain_metadata:
+        if domain:
+            labels.append(
+                LabelRelationship(
+                    type="domain",
+                    value=Label(
+                        id=f"domain::{domain.capitalize()}",
+                        value=domain.capitalize(),
+                        type="domain",
+                    ),
+                )
+            )
+
+    """
     family.category
     @see: https://github.com/climatepolicyradar/navigator-db-client/blob/a842d5e971894246843c1915de9179ddd991b25c/db_client/models/dfce/family.py#L67-L75
 
@@ -1232,6 +1249,19 @@ def _transform_navigator_document(
                 ),
             )
         )
+
+    for domain in navigator_family.metadata.get("domain", []):
+        if domain:
+            labels.append(
+                LabelRelationship(
+                    type="domain",
+                    value=Label(
+                        id=f"domain::{domain.capitalize()}",
+                        value=domain.capitalize(),
+                        type="domain",
+                    ),
+                )
+            )
 
     """
     These were added to allow families to be parsed if they did not have any documents.
