@@ -919,6 +919,26 @@ def _part_of_gst1(navigator_family: NavigatorFamily) -> bool:
     return gst1_party_submission or gst1_non_party_report
 
 
+def _build_domain_labels(domains: list[str]) -> list[LabelRelationship]:
+    """Build domain label relationships from a sequence of domain names.
+
+    Empty/falsy entries are skipped. Domain names are capitalised in both
+    the label id and its display value.
+    """
+    return [
+        LabelRelationship(
+            type="domain",
+            value=Label(
+                id=f"domain::{domain.capitalize()}",
+                value=domain.capitalize(),
+                type="domain",
+            ),
+        )
+        for domain in domains
+        if domain
+    ]
+
+
 # ---------------------------------------------------------------------------
 # Per-entity transforms
 # ---------------------------------------------------------------------------
@@ -1111,18 +1131,7 @@ def _transform_navigator_family(
     metadata.domain
     """
     domain_metadata = navigator_family.metadata.get("domain", [])
-    for domain in domain_metadata:
-        if domain:
-            labels.append(
-                LabelRelationship(
-                    type="domain",
-                    value=Label(
-                        id=f"domain::{domain.capitalize()}",
-                        value=domain.capitalize(),
-                        type="domain",
-                    ),
-                )
-            )
+    labels.extend(_build_domain_labels(domain_metadata))
 
     """
     family.category
@@ -1313,18 +1322,8 @@ def _transform_navigator_document(
             )
         )
 
-    for domain in navigator_family.metadata.get("domain", []):
-        if domain:
-            labels.append(
-                LabelRelationship(
-                    type="domain",
-                    value=Label(
-                        id=f"domain::{domain.capitalize()}",
-                        value=domain.capitalize(),
-                        type="domain",
-                    ),
-                )
-            )
+    domain_metadata = navigator_family.metadata.get("domain", [])
+    labels.extend(_build_domain_labels(domain_metadata))
 
     """
     These were added to allow families to be parsed if they did not have any documents.
