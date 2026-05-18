@@ -189,7 +189,7 @@ jobs:
       - run: uv sync --all-packages
       - uses: extractions/setup-just@v4
       - name: Install Pulumi
-        uses: pulumi/actions@v6
+        uses: pulumi/actions@v7
         env:
           PULUMI_ACCESS_TOKEN: ${{ secrets.PULUMI_ACCESS_TOKEN }}
       - name: Pulumi preview
@@ -230,7 +230,7 @@ jobs:
       - run: uv sync --all-packages
       - uses: extractions/setup-just@v4
       - name: Install Pulumi
-        uses: pulumi/actions@v6
+        uses: pulumi/actions@v7
         env:
           PULUMI_ACCESS_TOKEN: ${{ secrets.PULUMI_ACCESS_TOKEN }}
       - name: Deploy infra
@@ -295,7 +295,7 @@ jobs:
           fi
           jq -n --arg msg "$MESSAGE" '{text: $msg, mrkdwn: true}' > slack-payload.json
 
-      - uses: slackapi/slack-github-action@v3.0.2
+      - uses: slackapi/slack-github-action@v3.0.3
         with:
           webhook: ${{ secrets.ENV_UPDATES_CHANNEL_SLACK_WEBHOOK_URL }}
           webhook-type: incoming-webhook

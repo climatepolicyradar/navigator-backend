@@ -14,7 +14,14 @@ from app.extract.connectors import (
     NavigatorFamily,
 )
 from app.models import Identified
-from app.transform.navigator_family import transform_navigator_family
+from app.transform.navigator_family import (
+    _author_label,
+    _author_type_label,
+    _multilateral_climate_fund_label,
+    _stakeholder_type_label,
+    _un_convention_label,
+    transform_navigator_family,
+)
 from tests.factories import (
     NavigatorCollectionFactory,
     NavigatorCorpusFactory,
@@ -421,6 +428,29 @@ def test_transform_navigator_family_with_single_matching_document(
             DocumentRelationship(
                 type="member_of",
                 value=DocumentWithoutRelationships(
+                    id="collection_matching",
+                    title="Matching title on family and document and collection",
+                    labels=[
+                        LabelRelationship(
+                            type="entity_type",
+                            value=Label(
+                                id="entity_type::Collection",
+                                value="Collection",
+                                type="entity_type",
+                            ),
+                        )
+                    ],
+                    items=[],
+                    attributes={
+                        "deprecated_slug": "collection-matching-slug",
+                        "published_date": "2020-01-01T00:00:00Z",
+                        "last_updated_date": "2020-01-01T00:00:00Z",
+                    },
+                ),
+            ),
+            DocumentRelationship(
+                type="member_of",
+                value=DocumentWithoutRelationships(
                     id="collection",
                     title="Collection title",
                     labels=[
@@ -549,29 +579,6 @@ def test_transform_navigator_family_with_single_matching_document(
                         "variant": "Original language",
                         "md5_sum": "aaaaa11111bbbbb",
                         "status": "published",
-                        "published_date": "2020-01-01T00:00:00Z",
-                        "last_updated_date": "2020-01-01T00:00:00Z",
-                    },
-                ),
-            ),
-            DocumentRelationship(
-                type="has_version",
-                value=DocumentWithoutRelationships(
-                    id="collection_matching",
-                    title="Matching title on family and document and collection",
-                    labels=[
-                        LabelRelationship(
-                            type="entity_type",
-                            value=Label(
-                                id="entity_type::Collection",
-                                value="Collection",
-                                type="entity_type",
-                            ),
-                        )
-                    ],
-                    items=[],
-                    attributes={
-                        "deprecated_slug": "collection-matching-slug",
                         "published_date": "2020-01-01T00:00:00Z",
                         "last_updated_date": "2020-01-01T00:00:00Z",
                     },
@@ -728,7 +735,7 @@ def test_transform_navigator_family_with_single_matching_document(
                 ],
                 documents=[
                     DocumentRelationship(
-                        type="is_version_of",
+                        type="has_member",
                         value=DocumentWithoutRelationships(
                             **expected_document_from_family.model_dump()
                         ),
@@ -973,7 +980,7 @@ def test_transform_navigator_family_with_published_and_unpublished_documents():
                     events=[],
                     valid_metadata={},
                     slug="document1-slug",
-                    document_status="CREATED",
+                    document_status="created",
                 ),
                 NavigatorDocumentFactory.build(
                     import_id="document2",
@@ -1134,7 +1141,7 @@ def test_transform_navigator_family_with_published_and_unpublished_documents():
                         "deprecated_slug": "document1-slug",
                         "variant": "Original language",
                         "md5_sum": "aaaaa11111bbbbb",
-                        "status": "CREATED",
+                        "status": "created",
                     },
                 ),
             ),
@@ -1294,7 +1301,7 @@ def test_transform_navigator_family_with_published_and_unpublished_documents():
                     "deprecated_slug": "document1-slug",
                     "variant": "Original language",
                     "md5_sum": "aaaaa11111bbbbb",
-                    "status": "CREATED",
+                    "status": "created",
                 },
             ),
             Document(
@@ -1404,7 +1411,7 @@ def test_transform_navigator_family_with_no_published_documents():
                     events=[],
                     valid_metadata={},
                     slug="document1-slug",
-                    document_status="DELETED",
+                    document_status="deleted",
                 ),
             ],
             events=[],
@@ -1552,7 +1559,7 @@ def test_transform_navigator_family_with_no_published_documents():
                         "deprecated_slug": "document1-slug",
                         "variant": "Original language",
                         "md5_sum": "aaaaa11111bbbbb",
-                        "status": "DELETED",
+                        "status": "deleted",
                     },
                 ),
             ),
@@ -1639,7 +1646,7 @@ def test_transform_navigator_family_with_no_published_documents():
                     "deprecated_slug": "document1-slug",
                     "variant": "Original language",
                     "md5_sum": "aaaaa11111bbbbb",
-                    "status": "DELETED",
+                    "status": "deleted",
                 },
             ),
         ],
@@ -1707,3 +1714,134 @@ def test_transform_to_category_corpus_ids(corpus_id: str, expected_category: str
     assert any(
         label.value.id == expected_category for label in category_labels
     ), f"Expected category '{expected_category}' not found in labels for corpus '{corpus_id}'"
+
+
+# region labels
+@pytest.mark.parametrize("author_type", ["Party", "Non-Party"])
+def test_author_type_label_returns_empty_for_stakeholder_types(author_type):
+    family = NavigatorFamilyFactory.build(
+        corpus=NavigatorCorpusFactory.build(import_id="UNFCCC.corpus.i00000001.n0000"),
+        metadata={"author_type": [author_type]},
+    )
+    assert _author_type_label(family) == []
+
+
+def test_author_type_label_returns_label_for_non_stakeholder():
+    family = NavigatorFamilyFactory.build(
+        corpus=NavigatorCorpusFactory.build(import_id="UNFCCC.corpus.i00000001.n0000"),
+        metadata={"author_type": ["Government"]},
+    )
+    labels = _author_type_label(family)
+    assert len(labels) == 1
+    assert labels[0].type == "author_type"
+    assert labels[0].value.id == "author_type::Government"
+
+
+def test_author_type_label_returns_empty_when_no_metadata():
+    family = NavigatorFamilyFactory.build(
+        corpus=NavigatorCorpusFactory.build(import_id="UNFCCC.corpus.i00000001.n0000"),
+        metadata={},
+    )
+    assert _author_type_label(family) == []
+
+
+@pytest.mark.parametrize("author_type", ["Party", "Non-Party"])
+def test_stakeholder_type_label_returns_label(author_type):
+    family = NavigatorFamilyFactory.build(
+        corpus=NavigatorCorpusFactory.build(import_id="UNFCCC.corpus.i00000001.n0000"),
+        metadata={"author_type": [author_type]},
+    )
+    labels = _stakeholder_type_label(family)
+    assert len(labels) == 1
+    assert labels[0].type == "stakeholder_type"
+    assert labels[0].value.id == f"stakeholder_type::{author_type}"
+
+
+def test_stakeholder_type_label_returns_empty_for_non_stakeholder():
+    family = NavigatorFamilyFactory.build(
+        corpus=NavigatorCorpusFactory.build(import_id="UNFCCC.corpus.i00000001.n0000"),
+        metadata={"author_type": ["Government"]},
+    )
+    assert _stakeholder_type_label(family) == []
+
+
+def test_stakeholder_type_label_returns_empty_when_no_metadata():
+    family = NavigatorFamilyFactory.build(
+        corpus=NavigatorCorpusFactory.build(import_id="UNFCCC.corpus.i00000001.n0000"),
+        metadata={},
+    )
+    assert _stakeholder_type_label(family) == []
+
+
+@pytest.mark.parametrize(
+    "corpus_import_id, expected_convention",
+    [
+        ("UNFCCC.corpus.i00000001.n0000", "UNFCCC"),
+        ("UN.corpus.UNCCD.n0000", "UNCCD"),
+        ("UN.corpus.UNCBD.n0000", "UNCBD"),
+    ],
+)
+def test_un_convention_label_returns_label(corpus_import_id, expected_convention):
+    family = NavigatorFamilyFactory.build(
+        corpus=NavigatorCorpusFactory.build(import_id=corpus_import_id),
+        metadata={},
+    )
+    labels = _un_convention_label(family)
+    assert len(labels) == 1
+    assert labels[0].type == "un_convention"
+    assert labels[0].value.id == f"un_convention::{expected_convention}"
+
+
+def test_un_convention_label_returns_empty_for_non_un_corpus():
+    family = NavigatorFamilyFactory.build(
+        corpus=NavigatorCorpusFactory.build(import_id="CCLW.corpus.i00000001.n0000"),
+        metadata={},
+    )
+    assert _un_convention_label(family) == []
+
+
+@pytest.mark.parametrize(
+    "corpus_import_id, expected_fund",
+    [
+        ("MCF.corpus.AF.n0000", "Adaptation Fund"),
+        ("MCF.corpus.CIF.n0000", "Climate Investment Funds"),
+        ("MCF.corpus.GCF.n0000", "Global Environment Facility"),
+        ("MCF.corpus.GEF.n0000", "Green Climate Fund"),
+    ],
+)
+def test_multilateral_climate_fund_label_returns_label(corpus_import_id, expected_fund):
+    family = NavigatorFamilyFactory.build(
+        corpus=NavigatorCorpusFactory.build(import_id=corpus_import_id),
+        metadata={},
+    )
+    labels = _multilateral_climate_fund_label(family)
+    assert len(labels) == 1
+    assert labels[0].type == "multilateral_climate_fund"
+    assert labels[0].value.id == f"multilateral_climate_fund::{expected_fund}"
+
+
+def test_multilateral_climate_fund_label_returns_empty_for_non_mcf_corpus():
+    family = NavigatorFamilyFactory.build(
+        corpus=NavigatorCorpusFactory.build(import_id="CCLW.corpus.i00000001.n0000"),
+        metadata={},
+    )
+    assert _multilateral_climate_fund_label(family) == []
+
+
+def test_author_label_returns_label():
+    family = NavigatorFamilyFactory.build(
+        corpus=NavigatorCorpusFactory.build(import_id="UNFCCC.corpus.i00000001.n0000"),
+        metadata={"author": ["Greenpeace"]},
+    )
+    labels = _author_label(family)
+    assert len(labels) == 1
+    assert labels[0].type == "author"
+    assert labels[0].value.id == "author::Greenpeace"
+
+
+def test_author_label_returns_empty_when_no_metadata():
+    family = NavigatorFamilyFactory.build(
+        corpus=NavigatorCorpusFactory.build(import_id="UNFCCC.corpus.i00000001.n0000"),
+        metadata={},
+    )
+    assert _author_label(family) == []
