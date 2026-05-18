@@ -659,16 +659,35 @@ def generate_data_dump_as_file(
 
 
 def generate_data_dump_readme(ingest_cycle_start: str, theme: Optional[str] = None):
+    if theme and theme.upper() == "CCC":
+        file_buffer = StringIO(
+            "Thank you for downloading this data file from the Sabin Center's "
+            "The Climate Litigation Database, powered by Climate Policy Radar! "
+            "This CSV file contains data for the whole database. Each row in the "
+            "file represents an individual document in the database."
+            "\n\n"
+            "For more information about using this file, including a data "
+            "dictionary that explains the file's content, visit "
+            "https://climatepolicyradar.notion.site/"
+            "Readme-for-Climate-Case-Chart-document-data-download-"
+            "35f9109609a48003affdf86d97eb2ccd."
+            "\n\n"
+            "View our terms of use at "
+            "https://www.climatecasechart.com/terms-of-use"
+            "\n\n"
+            f"Date data last updated: {ingest_cycle_start}"
+        )
+        file_buffer.seek(0)
+        return file_buffer
+
     partner_name = ""
-    match theme:
+    match (theme or "").lower():
         case "cclw":
             partner_name = " and Climate Change Laws of the World"
         case "mcf":
             partner_name = (
                 " and the Multilateral Climate Funds' Climate Project Explorer"
             )
-        case "ccc":
-            partner_name = " and the Sabin Center's Climate Litigation Database"
         case _:
             partner_name = ""
 

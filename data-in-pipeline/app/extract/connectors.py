@@ -1,4 +1,5 @@
 import datetime
+from enum import Enum
 from http import HTTPStatus
 
 import requests
@@ -16,6 +17,7 @@ from app.util import generate_envelope_uuid
 class NavigatorEvent(BaseModel):
     import_id: str
     event_type: str
+    title: str
     date: datetime.datetime
     # We have quite a few families that fail model validation due to
     # event.metadata.even_type being a string rather than a list.
@@ -25,12 +27,25 @@ class NavigatorEvent(BaseModel):
     metadata: dict[str, list[str] | str] = {}
 
 
+class NavigatorDocumentStatus(Enum):
+    PUBLISHED = "published"
+    DELETED = "deleted"
+    CREATED = "created"
+
+
+# This is a new status we are introducing to allow documents transformed
+# from litigation events (when there is no file available) to be distinguished
+# from regular published documents.
+class LitigationDocumentStatus(Enum):
+    AWAITING_SOURCE_FILE = "awaiting_source_file"
+
+
 class NavigatorDocument(BaseModel):
     import_id: str
     title: str
     events: list[NavigatorEvent]
     valid_metadata: dict[str, list[str]] = {}
-    document_status: str
+    document_status: NavigatorDocumentStatus | LitigationDocumentStatus
 
     """
     These values come from the `physical_document` table, but are flattened into the document via the families-api.
