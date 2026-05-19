@@ -194,9 +194,9 @@ def test_transform_navigator_family_UNFCCC_party_submission_to_GST1_label():
             LabelRelationship(
                 type="geography",
                 value=Label(
-                    id="geography::AUS",
+                    id="country::AUS",
                     value="Australia",
-                    type="geography",
+                    type="country",
                 ),
             ),
             LabelRelationship(
@@ -279,8 +279,8 @@ def test_transform_navigator_family_UNFCCC_party_submission_to_GST1_label():
                         LabelRelationship(
                             type="geography",
                             value=Label(
-                                type="geography",
-                                id="geography::AUS",
+                                type="country",
+                                id="country::AUS",
                                 value="Australia",
                             ),
                         ),
@@ -359,8 +359,8 @@ def test_transform_navigator_family_UNFCCC_party_submission_to_GST1_label():
                     LabelRelationship(
                         type="geography",
                         value=Label(
-                            type="geography",
-                            id="geography::AUS",
+                            type="country",
+                            id="country::AUS",
                             value="Australia",
                         ),
                     ),
@@ -503,9 +503,9 @@ def test_transform_navigator_family_UNFCCC_non_party_submission_to_GST1_label():
             LabelRelationship(
                 type="geography",
                 value=Label(
-                    id="geography::AUS",
+                    id="country::AUS",
                     value="Australia",
-                    type="geography",
+                    type="country",
                 ),
             ),
             LabelRelationship(
@@ -588,8 +588,8 @@ def test_transform_navigator_family_UNFCCC_non_party_submission_to_GST1_label():
                         LabelRelationship(
                             type="geography",
                             value=Label(
-                                type="geography",
-                                id="geography::AUS",
+                                type="country",
+                                id="country::AUS",
                                 value="Australia",
                             ),
                         ),
@@ -668,8 +668,8 @@ def test_transform_navigator_family_UNFCCC_non_party_submission_to_GST1_label():
                     LabelRelationship(
                         type="geography",
                         value=Label(
-                            type="geography",
-                            id="geography::AUS",
+                            type="country",
+                            id="country::AUS",
                             value="Australia",
                         ),
                     ),
