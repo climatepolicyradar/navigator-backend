@@ -31,7 +31,7 @@ from tests.factories import (
     NavigatorFamilyFactory,
     NavigatorOrganisationFactory,
 )
-from tests.transform.assertions import assert_model_list_equality
+from tests.transform.assertions import assert_documents_equal
 
 
 def _cclw_corpus():
@@ -592,7 +592,7 @@ def test_transform_navigator_family_with_single_matching_document(
             "status": "published",
         },
     )
-    assert_model_list_equality(
+    assert_documents_equal(
         family_result + collection_result,
         [
             expected_document_from_family,
@@ -948,7 +948,7 @@ def test_transform_navigator_family_with_laws_and_policies_corpus_type(
             "deprecated_slug": "laws-and-policies-family-slug",
         },
     )
-    assert_model_list_equality(
+    assert_documents_equal(
         family_result,
         [expected_document_from_family],
     )
@@ -1223,7 +1223,7 @@ def test_transform_navigator_family_with_published_and_unpublished_documents():
             "status": "published",
         },
     )
-    assert_model_list_equality(
+    assert_documents_equal(
         result,
         [
             expected_document_from_family,
@@ -1568,7 +1568,7 @@ def test_transform_navigator_family_with_no_published_documents():
             "deprecated_slug": "family-with-no-published-documents-slug",
         },
     )
-    assert_model_list_equality(
+    assert_documents_equal(
         result,
         [
             expected_document_from_family,

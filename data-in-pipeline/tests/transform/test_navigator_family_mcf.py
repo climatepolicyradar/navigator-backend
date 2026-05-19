@@ -22,7 +22,7 @@ from tests.factories import (
     NavigatorFamilyFactory,
     NavigatorOrganisationFactory,
 )
-from tests.transform.assertions import assert_model_list_equality
+from tests.transform.assertions import assert_documents_equal
 
 
 def _mcf_events():
@@ -439,7 +439,7 @@ def test_transform_navigator_family_with_multilateral_climate_fund_project(
             "status": "published",
         },
     )
-    assert_model_list_equality(
+    assert_documents_equal(
         output.documents,
         [
             expected_document_from_family,
@@ -578,7 +578,7 @@ def test_transform_navigator_family_with_multilateral_climate_fund_guidance(
 
     assert output.warnings == []
     assert output.collection_documents == []
-    assert_model_list_equality(
+    assert_documents_equal(
         output.documents,
         [
             Document(

@@ -15,7 +15,7 @@ from tests.factories import (
     NavigatorFamilyFactory,
     NavigatorOrganisationFactory,
 )
-from tests.transform.assertions import assert_model_list_equality
+from tests.transform.assertions import assert_documents_equal
 
 
 def test_transform_navigator_documents_litigation_events_with_documents():
@@ -73,7 +73,7 @@ def test_transform_navigator_documents_litigation_events_with_documents():
 
     assert not warnings
 
-    assert_model_list_equality(
+    assert_documents_equal(
         result,
         [
             Document(
@@ -179,7 +179,7 @@ def test_transform_navigator_documents_litigation_events_without_documents():
 
     assert not warnings
 
-    assert_model_list_equality(
+    assert_documents_equal(
         result,
         [
             Document(

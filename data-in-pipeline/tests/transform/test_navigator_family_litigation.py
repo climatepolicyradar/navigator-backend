@@ -23,7 +23,7 @@ from tests.factories import (
     NavigatorFamilyFactory,
     NavigatorOrganisationFactory,
 )
-from tests.transform.assertions import assert_model_list_equality
+from tests.transform.assertions import assert_documents_equal
 
 
 @pytest.fixture
@@ -490,7 +490,7 @@ def test_transform_navigator_family_with_litigation_corpus_type(
             "case_status": "Decided",
         },
     )
-    assert_model_list_equality(
+    assert_documents_equal(
         result,
         [
             expected_document_from_family,
@@ -783,7 +783,7 @@ def test_transform_navigator_family_with_litigation_corpus_type_and_litigation_c
             "status": "published",
         },
     )
-    assert_model_list_equality(
+    assert_documents_equal(
         result,
         [
             expected_document_from_family,
