@@ -402,16 +402,16 @@ def test_transform_navigator_family_with_single_matching_document(
             LabelRelationship(
                 type="geography",
                 value=Label(
-                    type="geography",
-                    id="geography::AU-NSW",
+                    type="subdivision",
+                    id="subdivision::AU-NSW",
                     value="New South Wales",
                 ),
             ),
             LabelRelationship(
                 type="geography",
                 value=Label(
-                    type="geography",
-                    id="geography::AUS",
+                    type="country",
+                    id="country::AUS",
                     value="Australia",
                 ),
             ),
@@ -548,16 +548,16 @@ def test_transform_navigator_family_with_single_matching_document(
                         LabelRelationship(
                             type="geography",
                             value=Label(
-                                type="geography",
-                                id="geography::AU-NSW",
+                                type="subdivision",
+                                id="subdivision::AU-NSW",
                                 value="New South Wales",
                             ),
                         ),
                         LabelRelationship(
                             type="geography",
                             value=Label(
-                                type="geography",
-                                id="geography::AUS",
+                                type="country",
+                                id="country::AUS",
                                 value="Australia",
                             ),
                         ),
@@ -672,16 +672,16 @@ def test_transform_navigator_family_with_single_matching_document(
                     LabelRelationship(
                         type="geography",
                         value=Label(
-                            type="geography",
-                            id="geography::AU-NSW",
+                            type="subdivision",
+                            id="subdivision::AU-NSW",
                             value="New South Wales",
                         ),
                     ),
                     LabelRelationship(
                         type="geography",
                         value=Label(
-                            type="geography",
-                            id="geography::AUS",
+                            type="country",
+                            id="country::AUS",
                             value="Australia",
                         ),
                     ),
@@ -905,9 +905,9 @@ def test_transform_navigator_family_with_laws_and_policies_corpus_type(
             LabelRelationship(
                 type="geography",
                 value=Label(
-                    id="geography::AUS",
+                    id="country::AUS",
                     value="Australia",
-                    type="geography",
+                    type="country",
                 ),
             ),
             LabelRelationship(
@@ -1082,9 +1082,9 @@ def test_transform_navigator_family_with_published_and_unpublished_documents():
             LabelRelationship(
                 type="geography",
                 value=Label(
-                    id="geography::AUS",
+                    id="country::AUS",
                     value="Australia",
-                    type="geography",
+                    type="country",
                 ),
             ),
             LabelRelationship(
@@ -1135,8 +1135,8 @@ def test_transform_navigator_family_with_published_and_unpublished_documents():
                         LabelRelationship(
                             type="geography",
                             value=Label(
-                                type="geography",
-                                id="geography::AUS",
+                                type="country",
+                                id="country::AUS",
                                 value="Australia",
                             ),
                         ),
@@ -1207,8 +1207,8 @@ def test_transform_navigator_family_with_published_and_unpublished_documents():
                         LabelRelationship(
                             type="geography",
                             value=Label(
-                                type="geography",
-                                id="geography::AUS",
+                                type="country",
+                                id="country::AUS",
                                 value="Australia",
                             ),
                         ),
@@ -1287,8 +1287,8 @@ def test_transform_navigator_family_with_published_and_unpublished_documents():
                     LabelRelationship(
                         type="geography",
                         value=Label(
-                            type="geography",
-                            id="geography::AUS",
+                            type="country",
+                            id="country::AUS",
                             value="Australia",
                         ),
                     ),
@@ -1364,8 +1364,8 @@ def test_transform_navigator_family_with_published_and_unpublished_documents():
                     LabelRelationship(
                         type="geography",
                         value=Label(
-                            type="geography",
-                            id="geography::AUS",
+                            type="country",
+                            id="country::AUS",
                             value="Australia",
                         ),
                     ),
@@ -1500,9 +1500,9 @@ def test_transform_navigator_family_with_no_published_documents():
             LabelRelationship(
                 type="geography",
                 value=Label(
-                    id="geography::AUS",
+                    id="country::AUS",
                     value="Australia",
-                    type="geography",
+                    type="country",
                 ),
             ),
             LabelRelationship(
@@ -1553,8 +1553,8 @@ def test_transform_navigator_family_with_no_published_documents():
                         LabelRelationship(
                             type="geography",
                             value=Label(
-                                type="geography",
-                                id="geography::AUS",
+                                type="country",
+                                id="country::AUS",
                                 value="Australia",
                             ),
                         ),
@@ -1632,8 +1632,8 @@ def test_transform_navigator_family_with_no_published_documents():
                     LabelRelationship(
                         type="geography",
                         value=Label(
-                            type="geography",
-                            id="geography::AUS",
+                            type="country",
+                            id="country::AUS",
                             value="Australia",
                         ),
                     ),
