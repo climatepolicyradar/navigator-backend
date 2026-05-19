@@ -35,12 +35,19 @@ class Subdivision(GeographyBase):
     country_code: str
 
 
-Geography = Country | Subdivision
+class Region(GeographyBase):
+    type: Literal["region"] = "region"
+    level: Literal["region", "sub-region", "intermediate-region"]
+    parent_code: str | None = None
+
+
+Geography = Country | Subdivision | Region
 
 
 class Geographies(BaseModel):
     countries: list[Country]
     subdivisions: list[Subdivision]
+    regions: list[Region]
 
 
 custom_countries = [
@@ -86,10 +93,63 @@ def _load_countries_from_raw_data() -> list[Country]:
     return countries
 
 
+def _load_regions_from_raw_data() -> list[Region]:
+    """Build UN M49 region records from the curated ISO raw-data CSV.
+
+    Deduplicates macroregions, sub-regions, and intermediate regions by
+    their M49 numeric codes while iterating country rows.
+
+    :return: All distinct regions present in ``raw-data.csv``.
+    :rtype: list[Region]
+    """
+    regions_by_code: dict[str, Region] = {}
+
+    def _maybe_add(
+        code: str,
+        name: str,
+        level: Literal["region", "sub-region", "intermediate-region"],
+        parent_code: str | None,
+    ) -> None:
+        if not code or not name or code in regions_by_code:
+            return
+        regions_by_code[code] = Region(
+            id=code,
+            name=name,
+            level=level,
+            parent_code=parent_code,
+        )
+
+    with _RAW_DATA_CSV.open(encoding="utf-8", newline="") as csv_file:
+        for row in csv.DictReader(csv_file):
+            region_code = row["region-code"].strip()
+            sub_region_code = row["sub-region-code"].strip()
+            _maybe_add(
+                region_code,
+                row["region"].strip(),
+                "region",
+                None,
+            )
+            _maybe_add(
+                sub_region_code,
+                row["sub-region"].strip(),
+                "sub-region",
+                region_code or None,
+            )
+            _maybe_add(
+                row["intermediate-region-code"].strip(),
+                row["intermediate-region"].strip(),
+                "intermediate-region",
+                sub_region_code or None,
+            )
+
+    return list(regions_by_code.values())
+
+
 subdivisions = cast(list[PyCountrySubdivision], pycountry.subdivisions)
 
 geographies = Geographies(
     countries=_load_countries_from_raw_data() + custom_countries,
+    regions=_load_regions_from_raw_data(),
     subdivisions=[
         Subdivision(
             id=subdivision.code,
@@ -101,6 +161,8 @@ geographies = Geographies(
 )
 
 # cached for convenience
-geographies_lookup = {country.id: country for country in geographies.countries} | {
-    subdivision.id: subdivision for subdivision in geographies.subdivisions
-}
+geographies_lookup = (
+    {country.id: country for country in geographies.countries}
+    | {subdivision.id: subdivision for subdivision in geographies.subdivisions}
+    | {region.id: region for region in geographies.regions}
+)
