@@ -8,6 +8,7 @@ which we will sunset soon.
 """
 
 import csv
+import json
 from pathlib import Path
 from typing import Literal, cast
 
@@ -21,6 +22,10 @@ _RAW_DATA_CSV = Path(__file__).parent / "geographies" / "raw-data.csv"
 class GeographyBase(BaseModel):
     id: str
     name: str
+
+
+class Region(GeographyBase):
+    type: Literal["region"] = "region"
 
 
 class Country(GeographyBase):
@@ -86,6 +91,33 @@ def _load_countries_from_raw_data() -> list[Country]:
     return countries
 
 
+def _load_countries_from_worldbank_api():
+    """Taken from https://api.worldbank.org/v2/country?format=json&per_page=300"""
+    _lookup_path = (
+        Path(__file__).parent / "geographies" / "world-bank-api-countries.json"
+    )
+    _lookup_data = json.loads(_lookup_path.read_text())
+    return _lookup_data[1]
+
+
+# IDs are taoken from
+# @see: https://api.worldbank.org/v2/region?format=json
+regions = [
+    Region(id="SAS", name="South Asia"),
+    Region(id="ECS", name="Europe & Central Asia"),
+    Region(id="MEA", name="Middle East & North Africa"),
+    Region(id="SSF", name="Sub-Saharan Africa"),
+    Region(id="LCN", name="Latin America & Caribbean"),
+    Region(id="EAS", name="East Asia & Pacific"),
+    Region(id="NAC", name="North America"),
+]
+_regions_by_id = {r.id: r for r in regions}
+regions_lookup: dict[str, Region] = {
+    c["id"]: _regions_by_id[c["region"]["id"]]
+    for c in _load_countries_from_worldbank_api()
+    if c["region"]["id"] in _regions_by_id
+}
+
 subdivisions = cast(list[PyCountrySubdivision], pycountry.subdivisions)
 
 geographies = Geographies(
@@ -105,4 +137,4 @@ geographies_lookup = {country.id: country for country in geographies.countries} 
     subdivision.id: subdivision for subdivision in geographies.subdivisions
 }
 
-geographies_by_alpha_2 = {country.alpha_2: country for country in geographies.countries}
+countries_by_alpha_2 = {country.alpha_2: country for country in geographies.countries}

@@ -23,8 +23,9 @@ from app.extract.connectors import (
 from app.geographies import (
     Country,
     Subdivision,
-    geographies_by_alpha_2,
+    countries_by_alpha_2,
     geographies_lookup,
+    regions_lookup,
 )
 from app.models import Identified, NavigatorConcept
 from app.transform.models import (
@@ -607,18 +608,39 @@ def _transform_geographies(
 
         geography_type = "geography"
         associated_labels: list[LabelRelationship] = []
+        region_label: Label | None = None
         if isinstance(geography, Country):
             geography_type = "country"
+            region = regions_lookup.get(geography.id)
+            if region is not None:
+                region_label = Label(
+                    id=f"region::{region.id}",
+                    value=region.name,
+                    type="region",
+                )
+                associated_labels.append(
+                    LabelRelationship(
+                        type="subconcept_of",
+                        value=region_label,
+                    )
+                )
+            else:
+                warnings.append(
+                    UnknownGeography(
+                        family_import_id=navigator_family.import_id,
+                        geography_id=geography.id,
+                    )
+                )
 
         if isinstance(geography, Subdivision):
             geography_type = "subdivision"
-            country = geographies_by_alpha_2.get(geography.country_code)
+            country = countries_by_alpha_2.get(geography.country_code)
             if country is not None:
                 associated_labels.append(
                     LabelRelationship(
                         type="subconcept_of",
                         value=Label(
-                            id=f"country::{country.alpha_3}",
+                            id=f"country::{country.id}",
                             value=country.name,
                             type="country",
                         ),
@@ -628,9 +650,17 @@ def _transform_geographies(
                 warnings.append(
                     UnknownGeography(
                         family_import_id=navigator_family.import_id,
-                        geography_id=geography.country_code,
+                        geography_id=geography.id,
                     )
                 )
+
+        if region_label is not None:
+            labels.append(
+                LabelRelationship(
+                    type="geography",
+                    value=region_label,
+                )
+            )
 
         labels.append(
             LabelRelationship(
