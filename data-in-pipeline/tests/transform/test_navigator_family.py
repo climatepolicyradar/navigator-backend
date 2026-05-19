@@ -405,6 +405,16 @@ def test_transform_navigator_family_with_single_matching_document(
                     type="subdivision",
                     id="subdivision::AU-NSW",
                     value="New South Wales",
+                    labels=[
+                        LabelRelationship(
+                            type="subconcept_of",
+                            value=Label(
+                                type="country",
+                                id="country::AUS",
+                                value="Australia",
+                            ),
+                        ),
+                    ],
                 ),
             ),
             LabelRelationship(
@@ -551,6 +561,16 @@ def test_transform_navigator_family_with_single_matching_document(
                                 type="subdivision",
                                 id="subdivision::AU-NSW",
                                 value="New South Wales",
+                                labels=[
+                                    LabelRelationship(
+                                        type="subconcept_of",
+                                        value=Label(
+                                            type="country",
+                                            id="country::AUS",
+                                            value="Australia",
+                                        ),
+                                    ),
+                                ],
                             ),
                         ),
                         LabelRelationship(
@@ -675,6 +695,16 @@ def test_transform_navigator_family_with_single_matching_document(
                             type="subdivision",
                             id="subdivision::AU-NSW",
                             value="New South Wales",
+                            labels=[
+                                LabelRelationship(
+                                    type="subconcept_of",
+                                    value=Label(
+                                        type="country",
+                                        id="country::AUS",
+                                        value="Australia",
+                                    ),
+                                ),
+                            ],
                         ),
                     ),
                     LabelRelationship(

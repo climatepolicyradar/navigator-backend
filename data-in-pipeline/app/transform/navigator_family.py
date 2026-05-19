@@ -20,7 +20,12 @@ from app.extract.connectors import (
     NavigatorDocumentStatus,
     NavigatorFamily,
 )
-from app.geographies import Country, Subdivision, geographies_lookup
+from app.geographies import (
+    Country,
+    Subdivision,
+    geographies_by_alpha_2,
+    geographies_lookup,
+)
 from app.models import Identified, NavigatorConcept
 from app.transform.models import (
     CouldNotTransform,
@@ -601,16 +606,37 @@ def _transform_geographies(
             continue
 
         geography_type = "geography"
+        associated_labels: list[LabelRelationship] = []
         if isinstance(geography, Country):
             geography_type = "country"
 
         if isinstance(geography, Subdivision):
             geography_type = "subdivision"
+            country = geographies_by_alpha_2.get(geography.country_code)
+            if country is not None:
+                associated_labels.append(
+                    LabelRelationship(
+                        type="subconcept_of",
+                        value=Label(
+                            id=f"country::{country.alpha_3}",
+                            value=country.name,
+                            type="country",
+                        ),
+                    )
+                )
+            else:
+                warnings.append(
+                    UnknownGeography(
+                        family_import_id=navigator_family.import_id,
+                        geography_id=geography.country_code,
+                    )
+                )
 
         labels.append(
             LabelRelationship(
                 type="geography",
                 value=Label(
+                    labels=associated_labels,
                     id=f"{geography_type}::{geography.id}",
                     value=geography.name,
                     type=geography_type,

@@ -104,3 +104,5 @@ geographies = Geographies(
 geographies_lookup = {country.id: country for country in geographies.countries} | {
     subdivision.id: subdivision for subdivision in geographies.subdivisions
 }
+
+geographies_by_alpha_2 = {country.alpha_2: country for country in geographies.countries}
