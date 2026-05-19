@@ -20,7 +20,7 @@ from app.extract.connectors import (
     NavigatorDocumentStatus,
     NavigatorFamily,
 )
-from app.geographies import geographies_lookup
+from app.geographies import Country, Subdivision, geographies_lookup
 from app.models import Identified, NavigatorConcept
 from app.transform.models import (
     CouldNotTransform,
@@ -599,13 +599,21 @@ def _transform_geographies(
                 )
             )
             continue
+
+        geography_type = "geography"
+        if isinstance(geography, Country):
+            geography_type = "country"
+
+        if isinstance(geography, Subdivision):
+            geography_type = "subdivision"
+
         labels.append(
             LabelRelationship(
                 type="geography",
                 value=Label(
-                    id=f"geography::{geography.id}",
+                    id=f"{geography_type}::{geography.id}",
                     value=geography.name,
-                    type="geography",
+                    type=geography_type,
                 ),
             )
         )
