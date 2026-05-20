@@ -174,6 +174,46 @@ def navigator_family_with_no_matching_transformations() -> Identified[NavigatorF
     )
 
 
+@pytest.fixture
+def navigator_family_with_domain_metadata() -> Identified[NavigatorFamily]:
+    return Identified(
+        id="123",
+        source="navigator_family",
+        data=NavigatorFamilyFactory.build(
+            import_id="123",
+            title="Capsule Corp family with domain metadata",
+            summary="Family summary",
+            category="UNFCCC",
+            last_updated_date="2020-01-01T00:00:00Z",
+            published_date="2020-01-01T00:00:00Z",
+            created="2020-01-01T00:00:00Z",
+            corpus=_cclw_corpus(),
+            documents=[
+                NavigatorDocumentFactory.build(
+                    import_id="documentCapsuleCorp1",
+                    title="Test document 1 of Climate Domain",
+                    events=[],
+                    document_status="published",
+                    slug="document-slug",
+                    languages=["eng"],
+                    cdn_object="https://cdn.climatepolicyradar.org/path/to/file.pdf",
+                    variant="Original language",
+                    content_type="application/pdf",
+                    source_url="https://source.climatepolicyradar.org/path/to/file.pdf",
+                    md5_sum="TrunksIsTheBest",
+                ),
+            ],
+            events=[],
+            collections=[],
+            geographies=[],
+            metadata={
+                "domain": ["Climate", "Nature"],
+            },
+            slug="family-slug",
+        ),
+    )
+
+
 def test_transform_navigator_family_with_single_matching_document(
     navigator_family_with_single_matching_document: Identified[NavigatorFamily],
 ):
@@ -362,17 +402,45 @@ def test_transform_navigator_family_with_single_matching_document(
             LabelRelationship(
                 type="geography",
                 value=Label(
-                    type="geography",
-                    id="geography::AU-NSW",
+                    type="subdivision",
+                    id="subdivision::AU-NSW",
                     value="New South Wales",
+                    labels=[
+                        LabelRelationship(
+                            type="subconcept_of",
+                            value=Label(
+                                type="country",
+                                id="country::AUS",
+                                value="Australia",
+                            ),
+                        ),
+                    ],
                 ),
             ),
             LabelRelationship(
                 type="geography",
                 value=Label(
-                    type="geography",
-                    id="geography::AUS",
+                    type="region",
+                    id="region::EAS",
+                    value="East Asia & Pacific",
+                ),
+            ),
+            LabelRelationship(
+                type="geography",
+                value=Label(
+                    type="country",
+                    id="country::AUS",
                     value="Australia",
+                    labels=[
+                        LabelRelationship(
+                            type="subconcept_of",
+                            value=Label(
+                                type="region",
+                                id="region::EAS",
+                                value="East Asia & Pacific",
+                            ),
+                        ),
+                    ],
                 ),
             ),
             LabelRelationship(
@@ -508,17 +576,45 @@ def test_transform_navigator_family_with_single_matching_document(
                         LabelRelationship(
                             type="geography",
                             value=Label(
-                                type="geography",
-                                id="geography::AU-NSW",
+                                type="subdivision",
+                                id="subdivision::AU-NSW",
                                 value="New South Wales",
+                                labels=[
+                                    LabelRelationship(
+                                        type="subconcept_of",
+                                        value=Label(
+                                            type="country",
+                                            id="country::AUS",
+                                            value="Australia",
+                                        ),
+                                    ),
+                                ],
                             ),
                         ),
                         LabelRelationship(
                             type="geography",
                             value=Label(
-                                type="geography",
-                                id="geography::AUS",
+                                type="region",
+                                id="region::EAS",
+                                value="East Asia & Pacific",
+                            ),
+                        ),
+                        LabelRelationship(
+                            type="geography",
+                            value=Label(
+                                type="country",
+                                id="country::AUS",
                                 value="Australia",
+                                labels=[
+                                    LabelRelationship(
+                                        type="subconcept_of",
+                                        value=Label(
+                                            type="region",
+                                            id="region::EAS",
+                                            value="East Asia & Pacific",
+                                        ),
+                                    ),
+                                ],
                             ),
                         ),
                         LabelRelationship(
@@ -632,17 +728,45 @@ def test_transform_navigator_family_with_single_matching_document(
                     LabelRelationship(
                         type="geography",
                         value=Label(
-                            type="geography",
-                            id="geography::AU-NSW",
+                            type="subdivision",
+                            id="subdivision::AU-NSW",
                             value="New South Wales",
+                            labels=[
+                                LabelRelationship(
+                                    type="subconcept_of",
+                                    value=Label(
+                                        type="country",
+                                        id="country::AUS",
+                                        value="Australia",
+                                    ),
+                                ),
+                            ],
                         ),
                     ),
                     LabelRelationship(
                         type="geography",
                         value=Label(
-                            type="geography",
-                            id="geography::AUS",
+                            type="region",
+                            id="region::EAS",
+                            value="East Asia & Pacific",
+                        ),
+                    ),
+                    LabelRelationship(
+                        type="geography",
+                        value=Label(
+                            type="country",
+                            id="country::AUS",
                             value="Australia",
+                            labels=[
+                                LabelRelationship(
+                                    type="subconcept_of",
+                                    value=Label(
+                                        type="region",
+                                        id="region::EAS",
+                                        value="East Asia & Pacific",
+                                    ),
+                                ),
+                            ],
                         ),
                     ),
                     LabelRelationship(
@@ -865,9 +989,27 @@ def test_transform_navigator_family_with_laws_and_policies_corpus_type(
             LabelRelationship(
                 type="geography",
                 value=Label(
-                    id="geography::AUS",
+                    type="region",
+                    id="region::EAS",
+                    value="East Asia & Pacific",
+                ),
+            ),
+            LabelRelationship(
+                type="geography",
+                value=Label(
+                    id="country::AUS",
                     value="Australia",
-                    type="geography",
+                    type="country",
+                    labels=[
+                        LabelRelationship(
+                            type="subconcept_of",
+                            value=Label(
+                                type="region",
+                                id="region::EAS",
+                                value="East Asia & Pacific",
+                            ),
+                        ),
+                    ],
                 ),
             ),
             LabelRelationship(
@@ -1042,9 +1184,27 @@ def test_transform_navigator_family_with_published_and_unpublished_documents():
             LabelRelationship(
                 type="geography",
                 value=Label(
-                    id="geography::AUS",
+                    type="region",
+                    id="region::EAS",
+                    value="East Asia & Pacific",
+                ),
+            ),
+            LabelRelationship(
+                type="geography",
+                value=Label(
+                    id="country::AUS",
                     value="Australia",
-                    type="geography",
+                    type="country",
+                    labels=[
+                        LabelRelationship(
+                            type="subconcept_of",
+                            value=Label(
+                                type="region",
+                                id="region::EAS",
+                                value="East Asia & Pacific",
+                            ),
+                        ),
+                    ],
                 ),
             ),
             LabelRelationship(
@@ -1095,9 +1255,27 @@ def test_transform_navigator_family_with_published_and_unpublished_documents():
                         LabelRelationship(
                             type="geography",
                             value=Label(
-                                type="geography",
-                                id="geography::AUS",
+                                type="region",
+                                id="region::EAS",
+                                value="East Asia & Pacific",
+                            ),
+                        ),
+                        LabelRelationship(
+                            type="geography",
+                            value=Label(
+                                type="country",
+                                id="country::AUS",
                                 value="Australia",
+                                labels=[
+                                    LabelRelationship(
+                                        type="subconcept_of",
+                                        value=Label(
+                                            type="region",
+                                            id="region::EAS",
+                                            value="East Asia & Pacific",
+                                        ),
+                                    ),
+                                ],
                             ),
                         ),
                         LabelRelationship(
@@ -1167,9 +1345,27 @@ def test_transform_navigator_family_with_published_and_unpublished_documents():
                         LabelRelationship(
                             type="geography",
                             value=Label(
-                                type="geography",
-                                id="geography::AUS",
+                                type="region",
+                                id="region::EAS",
+                                value="East Asia & Pacific",
+                            ),
+                        ),
+                        LabelRelationship(
+                            type="geography",
+                            value=Label(
+                                type="country",
+                                id="country::AUS",
                                 value="Australia",
+                                labels=[
+                                    LabelRelationship(
+                                        type="subconcept_of",
+                                        value=Label(
+                                            type="region",
+                                            id="region::EAS",
+                                            value="East Asia & Pacific",
+                                        ),
+                                    ),
+                                ],
                             ),
                         ),
                         LabelRelationship(
@@ -1247,9 +1443,27 @@ def test_transform_navigator_family_with_published_and_unpublished_documents():
                     LabelRelationship(
                         type="geography",
                         value=Label(
-                            type="geography",
-                            id="geography::AUS",
+                            type="region",
+                            id="region::EAS",
+                            value="East Asia & Pacific",
+                        ),
+                    ),
+                    LabelRelationship(
+                        type="geography",
+                        value=Label(
+                            type="country",
+                            id="country::AUS",
                             value="Australia",
+                            labels=[
+                                LabelRelationship(
+                                    type="subconcept_of",
+                                    value=Label(
+                                        type="region",
+                                        id="region::EAS",
+                                        value="East Asia & Pacific",
+                                    ),
+                                ),
+                            ],
                         ),
                     ),
                     LabelRelationship(
@@ -1324,9 +1538,27 @@ def test_transform_navigator_family_with_published_and_unpublished_documents():
                     LabelRelationship(
                         type="geography",
                         value=Label(
-                            type="geography",
-                            id="geography::AUS",
+                            type="region",
+                            id="region::EAS",
+                            value="East Asia & Pacific",
+                        ),
+                    ),
+                    LabelRelationship(
+                        type="geography",
+                        value=Label(
+                            type="country",
+                            id="country::AUS",
                             value="Australia",
+                            labels=[
+                                LabelRelationship(
+                                    type="subconcept_of",
+                                    value=Label(
+                                        type="region",
+                                        id="region::EAS",
+                                        value="East Asia & Pacific",
+                                    ),
+                                ),
+                            ],
                         ),
                     ),
                     LabelRelationship(
@@ -1460,9 +1692,27 @@ def test_transform_navigator_family_with_no_published_documents():
             LabelRelationship(
                 type="geography",
                 value=Label(
-                    id="geography::AUS",
+                    type="region",
+                    id="region::EAS",
+                    value="East Asia & Pacific",
+                ),
+            ),
+            LabelRelationship(
+                type="geography",
+                value=Label(
+                    id="country::AUS",
                     value="Australia",
-                    type="geography",
+                    type="country",
+                    labels=[
+                        LabelRelationship(
+                            type="subconcept_of",
+                            value=Label(
+                                type="region",
+                                id="region::EAS",
+                                value="East Asia & Pacific",
+                            ),
+                        ),
+                    ],
                 ),
             ),
             LabelRelationship(
@@ -1513,9 +1763,27 @@ def test_transform_navigator_family_with_no_published_documents():
                         LabelRelationship(
                             type="geography",
                             value=Label(
-                                type="geography",
-                                id="geography::AUS",
+                                type="region",
+                                id="region::EAS",
+                                value="East Asia & Pacific",
+                            ),
+                        ),
+                        LabelRelationship(
+                            type="geography",
+                            value=Label(
+                                type="country",
+                                id="country::AUS",
                                 value="Australia",
+                                labels=[
+                                    LabelRelationship(
+                                        type="subconcept_of",
+                                        value=Label(
+                                            type="region",
+                                            id="region::EAS",
+                                            value="East Asia & Pacific",
+                                        ),
+                                    ),
+                                ],
                             ),
                         ),
                         LabelRelationship(
@@ -1592,9 +1860,27 @@ def test_transform_navigator_family_with_no_published_documents():
                     LabelRelationship(
                         type="geography",
                         value=Label(
-                            type="geography",
-                            id="geography::AUS",
+                            type="region",
+                            id="region::EAS",
+                            value="East Asia & Pacific",
+                        ),
+                    ),
+                    LabelRelationship(
+                        type="geography",
+                        value=Label(
+                            type="country",
+                            id="country::AUS",
                             value="Australia",
+                            labels=[
+                                LabelRelationship(
+                                    type="subconcept_of",
+                                    value=Label(
+                                        type="region",
+                                        id="region::EAS",
+                                        value="East Asia & Pacific",
+                                    ),
+                                ),
+                            ],
                         ),
                     ),
                     LabelRelationship(
@@ -1714,6 +2000,218 @@ def test_transform_to_category_corpus_ids(corpus_id: str, expected_category: str
     assert any(
         label.value.id == expected_category for label in category_labels
     ), f"Expected category '{expected_category}' not found in labels for corpus '{corpus_id}'"
+
+
+def test_transform_navigator_family_and_document_with_domain_metadata(
+    navigator_family_with_domain_metadata: Identified[NavigatorFamily],
+):
+    output = transform_navigator_family(navigator_family_with_domain_metadata).unwrap()
+
+    assert output.warnings == []
+    assert output.collection_documents == []
+
+    domain_labels = [
+        LabelRelationship(
+            type="domain",
+            value=Label(
+                id="domain::Climate",
+                type="domain",
+                value="Climate",
+            ),
+        ),
+        LabelRelationship(
+            type="domain",
+            value=Label(
+                id="domain::Nature",
+                type="domain",
+                value="Nature",
+            ),
+        ),
+    ]
+
+    expected_document_from_family = Document(
+        id="123",
+        title="Capsule Corp family with domain metadata",
+        description="Family summary",
+        attributes={
+            "deprecated_slug": "family-slug",
+            "published_date": "2020-01-01T00:00:00Z",
+            "last_updated_date": "2020-01-01T00:00:00Z",
+            "status": "published",
+        },
+        documents=[
+            DocumentRelationship(
+                type="has_member",
+                value=DocumentWithoutRelationships(
+                    id="documentCapsuleCorp1",
+                    title="Test document 1 of Climate Domain",
+                    labels=[
+                        *domain_labels,
+                        LabelRelationship(
+                            type="provider",
+                            value=Label(
+                                type="agent",
+                                id="agent::Grantham Research Institute",
+                                value="Grantham Research Institute",
+                                attributes={
+                                    "attribution_url": "testurl.org",
+                                    "corpus_text": "Test corpus",
+                                    "corpus_image_url": "https://cdn.climatepolicyradar.org/corpus_image.png",
+                                },
+                            ),
+                        ),
+                        LabelRelationship(
+                            type="deprecated_category",
+                            value=Label(
+                                id="deprecated_category::Laws and Policies",
+                                value="Laws and Policies",
+                                type="deprecated_category",
+                            ),
+                        ),
+                        LabelRelationship(
+                            type="language",
+                            value=Label(
+                                id="language::eng",
+                                value="eng",
+                                type="language",
+                            ),
+                        ),
+                    ],
+                    items=[
+                        Item(
+                            url="https://cdn.climatepolicyradar.org/path/to/file.pdf",
+                            type="cdn",
+                            content_type="application/pdf",
+                        ),
+                        Item(
+                            url="https://source.climatepolicyradar.org/path/to/file.pdf",
+                            type="source",
+                            content_type="application/pdf",
+                        ),
+                    ],
+                    attributes={
+                        "deprecated_slug": "document-slug",
+                        "last_updated_date": "2020-01-01T00:00:00Z",
+                        "published_date": "2020-01-01T00:00:00Z",
+                        "status": "published",
+                        "variant": "Original language",
+                        "md5_sum": "TrunksIsTheBest",
+                    },
+                ),
+            ),
+        ],
+        labels=[
+            LabelRelationship(
+                type="status",
+                value=Label(
+                    type="status",
+                    id="status::Principal",
+                    value="Principal",
+                ),
+            ),
+            LabelRelationship(
+                type="provider",
+                value=Label(
+                    type="agent",
+                    id="agent::Grantham Research Institute",
+                    value="Grantham Research Institute",
+                    attributes={
+                        "attribution_url": "testurl.org",
+                        "corpus_text": "Test corpus",
+                        "corpus_image_url": "https://cdn.climatepolicyradar.org/corpus_image.png",
+                    },
+                ),
+            ),
+            *domain_labels,
+            LabelRelationship(
+                type="deprecated_category",
+                value=Label(
+                    id="deprecated_category::UNFCCC",
+                    value="UNFCCC",
+                    type="deprecated_category",
+                ),
+            ),
+            LabelRelationship(
+                type="deprecated_category",
+                value=Label(
+                    id="deprecated_category::Laws and Policies",
+                    value="Laws and Policies",
+                    type="deprecated_category",
+                ),
+            ),
+        ],
+    )
+
+    assert_model_list_equality(
+        output.documents,
+        [
+            expected_document_from_family,
+            Document(
+                id="documentCapsuleCorp1",
+                title="Test document 1 of Climate Domain",
+                labels=[
+                    *domain_labels,
+                    LabelRelationship(
+                        type="provider",
+                        value=Label(
+                            type="agent",
+                            id="agent::Grantham Research Institute",
+                            value="Grantham Research Institute",
+                            attributes={
+                                "attribution_url": "testurl.org",
+                                "corpus_text": "Test corpus",
+                                "corpus_image_url": "https://cdn.climatepolicyradar.org/corpus_image.png",
+                            },
+                        ),
+                    ),
+                    LabelRelationship(
+                        type="deprecated_category",
+                        value=Label(
+                            id="deprecated_category::Laws and Policies",
+                            value="Laws and Policies",
+                            type="deprecated_category",
+                        ),
+                    ),
+                    LabelRelationship(
+                        type="language",
+                        value=Label(
+                            id="language::eng",
+                            value="eng",
+                            type="language",
+                        ),
+                    ),
+                ],
+                documents=[
+                    DocumentRelationship(
+                        type="member_of",
+                        value=DocumentWithoutRelationships(
+                            **expected_document_from_family.model_dump()
+                        ),
+                    ),
+                ],
+                items=[
+                    Item(
+                        url="https://cdn.climatepolicyradar.org/path/to/file.pdf",
+                        type="cdn",
+                        content_type="application/pdf",
+                    ),
+                    Item(
+                        url="https://source.climatepolicyradar.org/path/to/file.pdf",
+                        type="source",
+                        content_type="application/pdf",
+                    ),
+                ],
+                attributes={
+                    "deprecated_slug": "document-slug",
+                    "status": "published",
+                    "published_date": "2020-01-01T00:00:00Z",
+                    "last_updated_date": "2020-01-01T00:00:00Z",
+                    "variant": "Original language",
+                    "md5_sum": "TrunksIsTheBest",
+                },
+            ),
+        ],
+    )
 
 
 # region labels

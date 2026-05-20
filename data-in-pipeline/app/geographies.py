@@ -7,17 +7,25 @@ of tech debt from having to support some legacy requirements from the frontend
 which we will sunset soon.
 """
 
+import csv
+import json
+from pathlib import Path
 from typing import Literal, cast
 
 import pycountry
-from pycountry.db import Country as PyCountryCountry
 from pycountry.db import Subdivision as PyCountrySubdivision
 from pydantic import BaseModel
+
+_RAW_DATA_CSV = Path(__file__).parent / "geographies" / "raw-data.csv"
 
 
 class GeographyBase(BaseModel):
     id: str
     name: str
+
+
+class Region(GeographyBase):
+    type: Literal["region"] = "region"
 
 
 class Country(GeographyBase):
@@ -57,21 +65,63 @@ custom_countries = [
     ),
 ]
 
-countries = cast(list[PyCountryCountry], pycountry.countries)
+
+def _load_countries_from_raw_data() -> list[Country]:
+    """Build country records from the curated ISO raw-data CSV.
+
+    :return: One :class:`Country` per row in ``raw-data.csv``.
+    :rtype: list[Country]
+    """
+    countries: list[Country] = []
+    with _RAW_DATA_CSV.open(encoding="utf-8", newline="") as csv_file:
+        for row in csv.DictReader(csv_file):
+            alpha_2 = row["alpha-2"].strip()
+            alpha_3 = row["alpha-3"].strip()
+            numeric_raw = row["country-code"].strip()
+            numeric = numeric_raw.zfill(3) if numeric_raw else ""
+            countries.append(
+                Country(
+                    id=alpha_3,
+                    name=row["ISO short name"].strip(),
+                    alpha_2=alpha_2,
+                    alpha_3=alpha_3,
+                    numeric=numeric,
+                )
+            )
+    return countries
+
+
+def _load_countries_from_worldbank_api():
+    """Taken from https://api.worldbank.org/v2/country?format=json&per_page=300"""
+    _lookup_path = (
+        Path(__file__).parent / "geographies" / "world-bank-api-countries.json"
+    )
+    _lookup_data = json.loads(_lookup_path.read_text())
+    return _lookup_data[1]
+
+
+# IDs are taken from
+# @see: https://api.worldbank.org/v2/region?format=json
+regions = [
+    Region(id="SAS", name="South Asia"),
+    Region(id="ECS", name="Europe & Central Asia"),
+    Region(id="MEA", name="Middle East & North Africa"),
+    Region(id="SSF", name="Sub-Saharan Africa"),
+    Region(id="LCN", name="Latin America & Caribbean"),
+    Region(id="EAS", name="East Asia & Pacific"),
+    Region(id="NAC", name="North America"),
+]
+_regions_by_id = {r.id: r for r in regions}
+regions_lookup: dict[str, Region] = {
+    c["id"]: _regions_by_id[c["region"]["id"]]
+    for c in _load_countries_from_worldbank_api()
+    if c["region"]["id"] in _regions_by_id
+}
+
 subdivisions = cast(list[PyCountrySubdivision], pycountry.subdivisions)
 
 geographies = Geographies(
-    countries=[
-        Country(
-            id=country.alpha_3,
-            name=country.name,
-            alpha_2=country.alpha_2,
-            alpha_3=country.alpha_3,
-            numeric=country.numeric,
-        )
-        for country in countries
-    ]
-    + custom_countries,
+    countries=_load_countries_from_raw_data() + custom_countries,
     subdivisions=[
         Subdivision(
             id=subdivision.code,
@@ -86,3 +136,5 @@ geographies = Geographies(
 geographies_lookup = {country.id: country for country in geographies.countries} | {
     subdivision.id: subdivision for subdivision in geographies.subdivisions
 }
+
+countries_by_alpha_2 = {country.alpha_2: country for country in geographies.countries}

@@ -194,9 +194,27 @@ def test_transform_navigator_family_UNFCCC_party_submission_to_GST1_label():
             LabelRelationship(
                 type="geography",
                 value=Label(
-                    id="geography::AUS",
+                    type="region",
+                    id="region::EAS",
+                    value="East Asia & Pacific",
+                ),
+            ),
+            LabelRelationship(
+                type="geography",
+                value=Label(
+                    id="country::AUS",
                     value="Australia",
-                    type="geography",
+                    type="country",
+                    labels=[
+                        LabelRelationship(
+                            type="subconcept_of",
+                            value=Label(
+                                type="region",
+                                id="region::EAS",
+                                value="East Asia & Pacific",
+                            ),
+                        ),
+                    ],
                 ),
             ),
             LabelRelationship(
@@ -279,9 +297,27 @@ def test_transform_navigator_family_UNFCCC_party_submission_to_GST1_label():
                         LabelRelationship(
                             type="geography",
                             value=Label(
-                                type="geography",
-                                id="geography::AUS",
+                                type="region",
+                                id="region::EAS",
+                                value="East Asia & Pacific",
+                            ),
+                        ),
+                        LabelRelationship(
+                            type="geography",
+                            value=Label(
+                                type="country",
+                                id="country::AUS",
                                 value="Australia",
+                                labels=[
+                                    LabelRelationship(
+                                        type="subconcept_of",
+                                        value=Label(
+                                            type="region",
+                                            id="region::EAS",
+                                            value="East Asia & Pacific",
+                                        ),
+                                    ),
+                                ],
                             ),
                         ),
                         LabelRelationship(
@@ -359,9 +395,27 @@ def test_transform_navigator_family_UNFCCC_party_submission_to_GST1_label():
                     LabelRelationship(
                         type="geography",
                         value=Label(
-                            type="geography",
-                            id="geography::AUS",
+                            type="region",
+                            id="region::EAS",
+                            value="East Asia & Pacific",
+                        ),
+                    ),
+                    LabelRelationship(
+                        type="geography",
+                        value=Label(
+                            type="country",
+                            id="country::AUS",
                             value="Australia",
+                            labels=[
+                                LabelRelationship(
+                                    type="subconcept_of",
+                                    value=Label(
+                                        type="region",
+                                        id="region::EAS",
+                                        value="East Asia & Pacific",
+                                    ),
+                                ),
+                            ],
                         ),
                     ),
                     LabelRelationship(
@@ -503,9 +557,27 @@ def test_transform_navigator_family_UNFCCC_non_party_submission_to_GST1_label():
             LabelRelationship(
                 type="geography",
                 value=Label(
-                    id="geography::AUS",
+                    type="region",
+                    id="region::EAS",
+                    value="East Asia & Pacific",
+                ),
+            ),
+            LabelRelationship(
+                type="geography",
+                value=Label(
+                    id="country::AUS",
                     value="Australia",
-                    type="geography",
+                    type="country",
+                    labels=[
+                        LabelRelationship(
+                            type="subconcept_of",
+                            value=Label(
+                                type="region",
+                                id="region::EAS",
+                                value="East Asia & Pacific",
+                            ),
+                        ),
+                    ],
                 ),
             ),
             LabelRelationship(
@@ -588,9 +660,27 @@ def test_transform_navigator_family_UNFCCC_non_party_submission_to_GST1_label():
                         LabelRelationship(
                             type="geography",
                             value=Label(
-                                type="geography",
-                                id="geography::AUS",
+                                type="region",
+                                id="region::EAS",
+                                value="East Asia & Pacific",
+                            ),
+                        ),
+                        LabelRelationship(
+                            type="geography",
+                            value=Label(
+                                type="country",
+                                id="country::AUS",
                                 value="Australia",
+                                labels=[
+                                    LabelRelationship(
+                                        type="subconcept_of",
+                                        value=Label(
+                                            type="region",
+                                            id="region::EAS",
+                                            value="East Asia & Pacific",
+                                        ),
+                                    ),
+                                ],
                             ),
                         ),
                         LabelRelationship(
@@ -668,9 +758,27 @@ def test_transform_navigator_family_UNFCCC_non_party_submission_to_GST1_label():
                     LabelRelationship(
                         type="geography",
                         value=Label(
-                            type="geography",
-                            id="geography::AUS",
+                            type="region",
+                            id="region::EAS",
+                            value="East Asia & Pacific",
+                        ),
+                    ),
+                    LabelRelationship(
+                        type="geography",
+                        value=Label(
+                            type="country",
+                            id="country::AUS",
                             value="Australia",
+                            labels=[
+                                LabelRelationship(
+                                    type="subconcept_of",
+                                    value=Label(
+                                        type="region",
+                                        id="region::EAS",
+                                        value="East Asia & Pacific",
+                                    ),
+                                ),
+                            ],
                         ),
                     ),
                     LabelRelationship(

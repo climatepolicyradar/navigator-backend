@@ -231,9 +231,27 @@ def test_transform_navigator_documents_litigation_events_without_documents():
                     LabelRelationship(
                         type="geography",
                         value=Label(
-                            type="geography",
-                            id="geography::AUS",
+                            type="region",
+                            id="region::EAS",
+                            value="East Asia & Pacific",
+                        ),
+                    ),
+                    LabelRelationship(
+                        type="geography",
+                        value=Label(
+                            type="country",
+                            id="country::AUS",
                             value="Australia",
+                            labels=[
+                                LabelRelationship(
+                                    type="subconcept_of",
+                                    value=Label(
+                                        type="region",
+                                        id="region::EAS",
+                                        value="East Asia & Pacific",
+                                    ),
+                                ),
+                            ],
                         ),
                     ),
                 ],

@@ -20,7 +20,13 @@ from app.extract.connectors import (
     NavigatorDocumentStatus,
     NavigatorFamily,
 )
-from app.geographies import geographies_lookup
+from app.geographies import (
+    Country,
+    Subdivision,
+    countries_by_alpha_2,
+    geographies_lookup,
+    regions_lookup,
+)
 from app.models import Identified, NavigatorConcept
 from app.transform.models import (
     CouldNotTransform,
@@ -599,13 +605,71 @@ def _transform_geographies(
                 )
             )
             continue
+
+        geography_type = "geography"
+        associated_labels: list[LabelRelationship] = []
+        region_label: Label | None = None
+        if isinstance(geography, Country):
+            geography_type = "country"
+            region = regions_lookup.get(geography.id)
+            if region is not None:
+                region_label = Label(
+                    id=f"region::{region.id}",
+                    value=region.name,
+                    type="region",
+                )
+                associated_labels.append(
+                    LabelRelationship(
+                        type="subconcept_of",
+                        value=region_label,
+                    )
+                )
+            else:
+                warnings.append(
+                    UnknownGeography(
+                        family_import_id=navigator_family.import_id,
+                        geography_id=geography.id,
+                    )
+                )
+
+        if isinstance(geography, Subdivision):
+            geography_type = "subdivision"
+            country = countries_by_alpha_2.get(geography.country_code)
+            if country is not None:
+                associated_labels.append(
+                    LabelRelationship(
+                        type="subconcept_of",
+                        value=Label(
+                            id=f"country::{country.id}",
+                            value=country.name,
+                            type="country",
+                        ),
+                    )
+                )
+            else:
+                warnings.append(
+                    UnknownGeography(
+                        family_import_id=navigator_family.import_id,
+                        geography_id=geography.id,
+                    )
+                )
+
+        if region_label is not None:
+            labels.append(
+                LabelRelationship(
+                    type="geography",
+                    value=region_label,
+                )
+            )
+
         labels.append(
             LabelRelationship(
                 type="geography",
                 value=Label(
-                    id=f"geography::{geography.id}",
+                    labels=associated_labels,
+                    id=f"{geography_type}::{geography.id}",
                     value=geography.name,
-                    type="geography",
+                    type=geography_type,
                 ),
             )
         )
@@ -919,6 +983,26 @@ def _part_of_gst1(navigator_family: NavigatorFamily) -> bool:
     return gst1_party_submission or gst1_non_party_report
 
 
+def _build_domain_labels(domains: list[str]) -> list[LabelRelationship]:
+    """Build domain label relationships from a sequence of domain names.
+
+    Empty/falsy entries are skipped. Domain names are capitalised in both
+    the label id and its display value.
+    """
+    return [
+        LabelRelationship(
+            type="domain",
+            value=Label(
+                id=f"domain::{domain.capitalize()}",
+                value=domain.capitalize(),
+                type="domain",
+            ),
+        )
+        for domain in domains
+        if domain
+    ]
+
+
 # ---------------------------------------------------------------------------
 # Per-entity transforms
 # ---------------------------------------------------------------------------
@@ -1108,6 +1192,12 @@ def _transform_navigator_family(
         )
 
     """
+    metadata.domain
+    """
+    domain_metadata = navigator_family.metadata.get("domain", [])
+    labels.extend(_build_domain_labels(domain_metadata))
+
+    """
     family.category
     @see: https://github.com/climatepolicyradar/navigator-db-client/blob/a842d5e971894246843c1915de9179ddd991b25c/db_client/models/dfce/family.py#L67-L75
 
@@ -1295,6 +1385,9 @@ def _transform_navigator_document(
                 ),
             )
         )
+
+    domain_metadata = navigator_family.metadata.get("domain", [])
+    labels.extend(_build_domain_labels(domain_metadata))
 
     """
     These were added to allow families to be parsed if they did not have any documents.
