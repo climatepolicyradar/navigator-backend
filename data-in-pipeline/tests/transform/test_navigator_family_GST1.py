@@ -37,7 +37,7 @@ from tests.transform.assertions import assert_model_list_equality
         #
         # invalid cases - Party
         (
-            "Invalid.corpus.i00000001.n0000",
+            "CCLW.corpus.i00000001.n0000",
             "Party",
             "2023-11-30T00:00:00Z",
             False,
@@ -57,7 +57,7 @@ from tests.transform.assertions import assert_model_list_equality
         #
         # invalid cases - Non-Party
         (
-            "Invalid.corpus.i00000001.n0000",
+            "CCLW.corpus.i00000001.n0000",
             "Non-Party",
             "2023-11-30T00:00:00Z",
             False,
@@ -313,19 +313,19 @@ def test_transform_navigator_family_UNFCCC_party_submission_to_GST1_label():
                             ),
                         ),
                         LabelRelationship(
-                            type="category",
-                            value=Label(
-                                id="category::UN submission",
-                                value="UN submission",
-                                type="category",
-                            ),
-                        ),
-                        LabelRelationship(
                             type="language",
                             value=Label(
                                 id="language::eng",
                                 value="eng",
                                 type="language",
+                            ),
+                        ),
+                        LabelRelationship(
+                            type="category",
+                            value=Label(
+                                id="category::UN submission",
+                                value="UN submission",
+                                type="category",
                             ),
                         ),
                     ],
@@ -411,19 +411,19 @@ def test_transform_navigator_family_UNFCCC_party_submission_to_GST1_label():
                         ),
                     ),
                     LabelRelationship(
-                        type="category",
-                        value=Label(
-                            id="category::UN submission",
-                            value="UN submission",
-                            type="category",
-                        ),
-                    ),
-                    LabelRelationship(
                         type="language",
                         value=Label(
                             id="language::eng",
                             value="eng",
                             type="language",
+                        ),
+                    ),
+                    LabelRelationship(
+                        type="category",
+                        value=Label(
+                            id="category::UN submission",
+                            value="UN submission",
+                            type="category",
                         ),
                     ),
                 ],
@@ -668,19 +668,19 @@ def test_transform_navigator_family_UNFCCC_non_party_submission_to_GST1_label():
                             ),
                         ),
                         LabelRelationship(
-                            type="category",
-                            value=Label(
-                                id="category::UN submission",
-                                value="UN submission",
-                                type="category",
-                            ),
-                        ),
-                        LabelRelationship(
                             type="language",
                             value=Label(
                                 id="language::eng",
                                 value="eng",
                                 type="language",
+                            ),
+                        ),
+                        LabelRelationship(
+                            type="category",
+                            value=Label(
+                                id="category::UN submission",
+                                value="UN submission",
+                                type="category",
                             ),
                         ),
                     ],
@@ -766,19 +766,19 @@ def test_transform_navigator_family_UNFCCC_non_party_submission_to_GST1_label():
                         ),
                     ),
                     LabelRelationship(
-                        type="category",
-                        value=Label(
-                            id="category::UN submission",
-                            value="UN submission",
-                            type="category",
-                        ),
-                    ),
-                    LabelRelationship(
                         type="language",
                         value=Label(
                             id="language::eng",
                             value="eng",
                             type="language",
+                        ),
+                    ),
+                    LabelRelationship(
+                        type="category",
+                        value=Label(
+                            id="category::UN submission",
+                            value="UN submission",
+                            type="category",
                         ),
                     ),
                 ],
