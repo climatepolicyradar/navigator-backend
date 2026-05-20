@@ -1539,7 +1539,7 @@ def _author_label(
 ) -> list[LabelRelationship]:
     labels: list[LabelRelationship] = []
     author_values = navigator_family.metadata.get("author")
-    if author_values and author_values[0] not in ["Party", "Non-Party"]:
+    if author_values and author_values[0]:
         author = author_values[0]
         labels.append(
             LabelRelationship(
