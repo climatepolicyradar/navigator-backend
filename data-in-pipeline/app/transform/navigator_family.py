@@ -1173,28 +1173,6 @@ def _transform_navigator_family(
     warnings.extend(geography_warnings)
 
     """
-    metadata.author and metadata.author_type
-    """
-    author_metadata = navigator_family.metadata.get("author")
-    if author_metadata and author_metadata[0]:
-        author = author_metadata[0]
-        author_type = "agent"
-        author_type_metadata = navigator_family.metadata.get("author_type")
-        if author_type_metadata and author_type_metadata[0]:
-            author_type = author_type_metadata[0].lower()
-
-        labels.append(
-            LabelRelationship(
-                type="author",
-                value=Label(
-                    id=f"{author_type}::{author}",
-                    value=author,
-                    type=author_type,
-                ),
-            )
-        )
-
-    """
     metadata.domain
     """
     domain_metadata = navigator_family.metadata.get("domain", [])
@@ -1272,7 +1250,6 @@ def _transform_navigator_family(
         labels
         + _author_label(navigator_family)
         + _author_type_label(navigator_family)
-        + _stakeholder_type_label(navigator_family)
         + _un_convention_label(navigator_family)
         + _multilateral_climate_fund_label(navigator_family)
     )
@@ -1562,7 +1539,7 @@ def _author_label(
 ) -> list[LabelRelationship]:
     labels: list[LabelRelationship] = []
     author_values = navigator_family.metadata.get("author")
-    if author_values and author_values[0] not in _stakeholder_types:
+    if author_values and author_values[0] not in ["Party", "Non-Party"]:
         author = author_values[0]
         labels.append(
             LabelRelationship(
@@ -1578,7 +1555,24 @@ def _author_label(
 
 
 # region author_type label
-_stakeholder_types = ["Party", "Non-Party"]
+
+# These are controlled vocabularies
+_author_types = [
+    # Intl. Agreements
+    # @see: https://github.com/climatepolicyradar/data-migrations/blob/main/taxonomies/Intl.%20agreements.json#L145-L149
+    "Party",
+    "Non-Party",
+    # Reports
+    # https://github.com/climatepolicyradar/data-migrations/blob/main/taxonomies/Reports.json#L32-L41
+    "Individual",
+    "Academic/Research",
+    "National Body",
+    "Intergovernmental Organization",
+    "Corporate",
+    "Industry Body",
+    "NGO/Civil Society",
+    "Other",
+]
 
 
 def _author_type_label(
@@ -1586,7 +1580,7 @@ def _author_type_label(
 ) -> list[LabelRelationship]:
     labels: list[LabelRelationship] = []
     author_type_values = navigator_family.metadata.get("author_type")
-    if author_type_values and author_type_values[0] not in _stakeholder_types:
+    if author_type_values and author_type_values[0] in _author_types:
         author_type = author_type_values[0]
         labels.append(
             LabelRelationship(
@@ -1598,28 +1592,6 @@ def _author_type_label(
                 ),
             )
         )
-    return labels
-
-
-# region stakeholder_type label
-def _stakeholder_type_label(
-    navigator_family: NavigatorFamily,
-) -> list[LabelRelationship]:
-    labels: list[LabelRelationship] = []
-    author_type_values = navigator_family.metadata.get("author_type")
-    if author_type_values and author_type_values[0] in _stakeholder_types:
-        author_type = author_type_values[0]
-        labels.append(
-            LabelRelationship(
-                type="stakeholder_type",
-                value=Label(
-                    id=f"stakeholder_type::{author_type}",
-                    value=author_type,
-                    type="stakeholder_type",
-                ),
-            )
-        )
-
     return labels
 
 
