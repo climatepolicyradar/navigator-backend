@@ -18,7 +18,6 @@ from app.transform.navigator_family import (
     _author_label,
     _author_type_label,
     _multilateral_climate_fund_label,
-    _stakeholder_type_label,
     _un_convention_label,
     transform_navigator_family,
 )
@@ -441,14 +440,6 @@ def test_transform_navigator_family_with_single_matching_document(
                             ),
                         ),
                     ],
-                ),
-            ),
-            LabelRelationship(
-                type="author",
-                value=Label(
-                    id="person::Test Author",
-                    value="Test Author",
-                    type="person",
                 ),
             ),
             LabelRelationship(
@@ -2215,24 +2206,15 @@ def test_transform_navigator_family_and_document_with_domain_metadata(
 
 
 # region labels
-@pytest.mark.parametrize("author_type", ["Party", "Non-Party"])
-def test_author_type_label_returns_empty_for_stakeholder_types(author_type):
-    family = NavigatorFamilyFactory.build(
-        corpus=NavigatorCorpusFactory.build(import_id="UNFCCC.corpus.i00000001.n0000"),
-        metadata={"author_type": [author_type]},
-    )
-    assert _author_type_label(family) == []
-
-
 def test_author_type_label_returns_label_for_non_stakeholder():
     family = NavigatorFamilyFactory.build(
         corpus=NavigatorCorpusFactory.build(import_id="UNFCCC.corpus.i00000001.n0000"),
-        metadata={"author_type": ["Government"]},
+        metadata={"author_type": ["Intergovernmental Organization"]},
     )
     labels = _author_type_label(family)
     assert len(labels) == 1
     assert labels[0].type == "author_type"
-    assert labels[0].value.id == "author_type::Government"
+    assert labels[0].value.id == "author_type::Intergovernmental Organization"
 
 
 def test_author_type_label_returns_empty_when_no_metadata():
@@ -2241,34 +2223,6 @@ def test_author_type_label_returns_empty_when_no_metadata():
         metadata={},
     )
     assert _author_type_label(family) == []
-
-
-@pytest.mark.parametrize("author_type", ["Party", "Non-Party"])
-def test_stakeholder_type_label_returns_label(author_type):
-    family = NavigatorFamilyFactory.build(
-        corpus=NavigatorCorpusFactory.build(import_id="UNFCCC.corpus.i00000001.n0000"),
-        metadata={"author_type": [author_type]},
-    )
-    labels = _stakeholder_type_label(family)
-    assert len(labels) == 1
-    assert labels[0].type == "stakeholder_type"
-    assert labels[0].value.id == f"stakeholder_type::{author_type}"
-
-
-def test_stakeholder_type_label_returns_empty_for_non_stakeholder():
-    family = NavigatorFamilyFactory.build(
-        corpus=NavigatorCorpusFactory.build(import_id="UNFCCC.corpus.i00000001.n0000"),
-        metadata={"author_type": ["Government"]},
-    )
-    assert _stakeholder_type_label(family) == []
-
-
-def test_stakeholder_type_label_returns_empty_when_no_metadata():
-    family = NavigatorFamilyFactory.build(
-        corpus=NavigatorCorpusFactory.build(import_id="UNFCCC.corpus.i00000001.n0000"),
-        metadata={},
-    )
-    assert _stakeholder_type_label(family) == []
 
 
 @pytest.mark.parametrize(

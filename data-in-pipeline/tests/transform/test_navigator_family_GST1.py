@@ -218,14 +218,6 @@ def test_transform_navigator_family_UNFCCC_party_submission_to_GST1_label():
                 ),
             ),
             LabelRelationship(
-                type="author",
-                value=Label(
-                    id="party::Australia",
-                    value="Australia",
-                    type="party",
-                ),
-            ),
-            LabelRelationship(
                 type="deprecated_category",
                 value=Label(
                     id="deprecated_category::EXECUTIVE",
@@ -250,11 +242,11 @@ def test_transform_navigator_family_UNFCCC_party_submission_to_GST1_label():
                 ),
             ),
             LabelRelationship(
-                type="stakeholder_type",
+                type="author_type",
                 value=Label(
-                    id="stakeholder_type::Party",
+                    id="author_type::Party",
                     value="Party",
-                    type="stakeholder_type",
+                    type="author_type",
                 ),
             ),
             LabelRelationship(
@@ -581,14 +573,6 @@ def test_transform_navigator_family_UNFCCC_non_party_submission_to_GST1_label():
                 ),
             ),
             LabelRelationship(
-                type="author",
-                value=Label(
-                    id="non-party::Australia",
-                    value="Australia",
-                    type="non-party",
-                ),
-            ),
-            LabelRelationship(
                 type="deprecated_category",
                 value=Label(
                     id="deprecated_category::EXECUTIVE",
@@ -613,11 +597,11 @@ def test_transform_navigator_family_UNFCCC_non_party_submission_to_GST1_label():
                 ),
             ),
             LabelRelationship(
-                type="stakeholder_type",
+                type="author_type",
                 value=Label(
-                    id="stakeholder_type::Non-Party",
+                    id="author_type::Non-Party",
                     value="Non-Party",
-                    type="stakeholder_type",
+                    type="author_type",
                 ),
             ),
             LabelRelationship(
