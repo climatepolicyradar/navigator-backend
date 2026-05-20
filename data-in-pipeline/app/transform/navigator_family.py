@@ -24,6 +24,7 @@ from app.geographies import (
     Country,
     Subdivision,
     countries_by_alpha_2,
+    custom_countries,
     geographies_lookup,
     regions_lookup,
 )
@@ -38,6 +39,8 @@ from app.transform.models import (
 # ---------------------------------------------------------------------------
 # Constants
 # ---------------------------------------------------------------------------
+
+_custom_countries_by_id = {c.id: c for c in custom_countries}
 
 _corpus_to_provider_map = {
     "CCLW.corpus.i00000001.n0000": "Grantham Research Institute",
@@ -624,7 +627,7 @@ def _transform_geographies(
                         value=region_label,
                     )
                 )
-            else:
+            elif geography.id not in _custom_countries_by_id:
                 warnings.append(
                     UnknownGeography(
                         family_import_id=navigator_family.import_id,
