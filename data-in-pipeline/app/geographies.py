@@ -100,7 +100,7 @@ def _load_countries_from_worldbank_api():
     return _lookup_data[1]
 
 
-# IDs are taoken from
+# IDs are taken from
 # @see: https://api.worldbank.org/v2/region?format=json
 regions = [
     Region(id="SAS", name="South Asia"),
