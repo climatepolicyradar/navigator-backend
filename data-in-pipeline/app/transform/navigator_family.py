@@ -40,7 +40,7 @@ from app.transform.models import (
 # Constants
 # ---------------------------------------------------------------------------
 
-_custom_countries_by_id = {c.id: c for c in custom_countries}
+_eu_and_international_region_ids = {c.id: c for c in custom_countries}
 
 _corpus_to_provider_map = {
     "CCLW.corpus.i00000001.n0000": "Grantham Research Institute",
@@ -627,7 +627,7 @@ def _transform_geographies(
                         value=region_label,
                     )
                 )
-            elif geography.id not in _custom_countries_by_id:
+            elif geography.id not in _eu_and_international_region_ids:
                 warnings.append(
                     UnknownGeography(
                         family_import_id=navigator_family.import_id,
