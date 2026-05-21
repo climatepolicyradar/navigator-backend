@@ -17,6 +17,9 @@ from app.models import Identified
 from app.transform.navigator_family import (
     _author_label,
     _author_type_label,
+    _category_label,
+    _deprecated_category_label,
+    _entity_type_label,
     _multilateral_climate_fund_label,
     _un_convention_label,
     transform_navigator_family,
@@ -451,22 +454,6 @@ def test_transform_navigator_family_with_single_matching_document(
                 ),
             ),
             LabelRelationship(
-                type="deprecated_category",
-                value=Label(
-                    id="deprecated_category::Laws and Policies",
-                    value="Laws and Policies",
-                    type="deprecated_category",
-                ),
-            ),
-            LabelRelationship(
-                type="category",
-                value=Label(
-                    id="category::Policy",
-                    value="Policy",
-                    type="category",
-                ),
-            ),
-            LabelRelationship(
                 type="author",
                 value=Label(
                     id="author::Test Author",
@@ -480,6 +467,22 @@ def test_transform_navigator_family_with_single_matching_document(
                     id="author_type::Person",
                     type="author_type",
                     value="Person",
+                ),
+            ),
+            LabelRelationship(
+                type="category",
+                value=Label(
+                    id="category::Policy",
+                    value="Policy",
+                    type="category",
+                ),
+            ),
+            LabelRelationship(
+                type="deprecated_category",
+                value=Label(
+                    id="deprecated_category::Laws and Policies",
+                    value="Laws and Policies",
+                    type="deprecated_category",
                 ),
             ),
         ],
@@ -609,22 +612,6 @@ def test_transform_navigator_family_with_single_matching_document(
                             ),
                         ),
                         LabelRelationship(
-                            type="deprecated_category",
-                            value=Label(
-                                id="deprecated_category::Laws and Policies",
-                                value="Laws and Policies",
-                                type="deprecated_category",
-                            ),
-                        ),
-                        LabelRelationship(
-                            type="category",
-                            value=Label(
-                                id="category::Policy",
-                                value="Policy",
-                                type="category",
-                            ),
-                        ),
-                        LabelRelationship(
                             type="language",
                             value=Label(
                                 id="language::eng",
@@ -646,6 +633,22 @@ def test_transform_navigator_family_with_single_matching_document(
                                 id="status::Merged",
                                 value="Merged",
                                 type="status",
+                            ),
+                        ),
+                        LabelRelationship(
+                            type="category",
+                            value=Label(
+                                id="category::Policy",
+                                value="Policy",
+                                type="category",
+                            ),
+                        ),
+                        LabelRelationship(
+                            type="deprecated_category",
+                            value=Label(
+                                id="deprecated_category::Laws and Policies",
+                                value="Laws and Policies",
+                                type="deprecated_category",
                             ),
                         ),
                     ],
@@ -761,22 +764,6 @@ def test_transform_navigator_family_with_single_matching_document(
                         ),
                     ),
                     LabelRelationship(
-                        type="deprecated_category",
-                        value=Label(
-                            id="deprecated_category::Laws and Policies",
-                            value="Laws and Policies",
-                            type="deprecated_category",
-                        ),
-                    ),
-                    LabelRelationship(
-                        type="category",
-                        value=Label(
-                            id="category::Policy",
-                            value="Policy",
-                            type="category",
-                        ),
-                    ),
-                    LabelRelationship(
                         type="language",
                         value=Label(
                             id="language::eng",
@@ -798,6 +785,22 @@ def test_transform_navigator_family_with_single_matching_document(
                             id="status::Merged",
                             value="Merged",
                             type="status",
+                        ),
+                    ),
+                    LabelRelationship(
+                        type="category",
+                        value=Label(
+                            id="category::Policy",
+                            value="Policy",
+                            type="category",
+                        ),
+                    ),
+                    LabelRelationship(
+                        type="deprecated_category",
+                        value=Label(
+                            id="deprecated_category::Laws and Policies",
+                            value="Laws and Policies",
+                            type="deprecated_category",
                         ),
                     ),
                 ],
@@ -1012,22 +1015,6 @@ def test_transform_navigator_family_with_laws_and_policies_corpus_type(
                 ),
             ),
             LabelRelationship(
-                type="deprecated_category",
-                value=Label(
-                    id="deprecated_category::Laws and Policies",
-                    value="Laws and Policies",
-                    type="deprecated_category",
-                ),
-            ),
-            LabelRelationship(
-                type="category",
-                value=Label(
-                    id="category::Law",
-                    value="Law",
-                    type="category",
-                ),
-            ),
-            LabelRelationship(
                 type="topic",
                 value=Label(
                     id="topic::Mitigation",
@@ -1073,6 +1060,22 @@ def test_transform_navigator_family_with_laws_and_policies_corpus_type(
                     id="instrument::Planning|Governance",
                     value="Planning|Governance",
                     type="instrument",
+                ),
+            ),
+            LabelRelationship(
+                type="category",
+                value=Label(
+                    id="category::Law",
+                    value="Law",
+                    type="category",
+                ),
+            ),
+            LabelRelationship(
+                type="deprecated_category",
+                value=Label(
+                    id="deprecated_category::Laws and Policies",
+                    value="Laws and Policies",
+                    type="deprecated_category",
                 ),
             ),
         ],
@@ -1207,19 +1210,19 @@ def test_transform_navigator_family_with_published_and_unpublished_documents():
                 ),
             ),
             LabelRelationship(
-                type="deprecated_category",
-                value=Label(
-                    id="deprecated_category::Laws and Policies",
-                    value="Laws and Policies",
-                    type="deprecated_category",
-                ),
-            ),
-            LabelRelationship(
                 type="category",
                 value=Label(
                     id="category::Law",
                     value="Law",
                     type="category",
+                ),
+            ),
+            LabelRelationship(
+                type="deprecated_category",
+                value=Label(
+                    id="deprecated_category::Laws and Policies",
+                    value="Laws and Policies",
+                    type="deprecated_category",
                 ),
             ),
         ],
@@ -1270,11 +1273,11 @@ def test_transform_navigator_family_with_published_and_unpublished_documents():
                             ),
                         ),
                         LabelRelationship(
-                            type="deprecated_category",
+                            type="language",
                             value=Label(
-                                id="deprecated_category::Laws and Policies",
-                                value="Laws and Policies",
-                                type="deprecated_category",
+                                id="language::eng",
+                                value="eng",
+                                type="language",
                             ),
                         ),
                         LabelRelationship(
@@ -1286,11 +1289,11 @@ def test_transform_navigator_family_with_published_and_unpublished_documents():
                             ),
                         ),
                         LabelRelationship(
-                            type="language",
+                            type="deprecated_category",
                             value=Label(
-                                id="language::eng",
-                                value="eng",
-                                type="language",
+                                id="deprecated_category::Laws and Policies",
+                                value="Laws and Policies",
+                                type="deprecated_category",
                             ),
                         ),
                     ],
@@ -1360,11 +1363,11 @@ def test_transform_navigator_family_with_published_and_unpublished_documents():
                             ),
                         ),
                         LabelRelationship(
-                            type="deprecated_category",
+                            type="language",
                             value=Label(
-                                id="deprecated_category::Laws and Policies",
-                                value="Laws and Policies",
-                                type="deprecated_category",
+                                id="language::eng",
+                                value="eng",
+                                type="language",
                             ),
                         ),
                         LabelRelationship(
@@ -1376,11 +1379,11 @@ def test_transform_navigator_family_with_published_and_unpublished_documents():
                             ),
                         ),
                         LabelRelationship(
-                            type="language",
+                            type="deprecated_category",
                             value=Label(
-                                id="language::eng",
-                                value="eng",
-                                type="language",
+                                id="deprecated_category::Laws and Policies",
+                                value="Laws and Policies",
+                                type="deprecated_category",
                             ),
                         ),
                     ],
@@ -1458,11 +1461,11 @@ def test_transform_navigator_family_with_published_and_unpublished_documents():
                         ),
                     ),
                     LabelRelationship(
-                        type="deprecated_category",
+                        type="language",
                         value=Label(
-                            id="deprecated_category::Laws and Policies",
-                            value="Laws and Policies",
-                            type="deprecated_category",
+                            id="language::eng",
+                            value="eng",
+                            type="language",
                         ),
                     ),
                     LabelRelationship(
@@ -1474,11 +1477,11 @@ def test_transform_navigator_family_with_published_and_unpublished_documents():
                         ),
                     ),
                     LabelRelationship(
-                        type="language",
+                        type="deprecated_category",
                         value=Label(
-                            id="language::eng",
-                            value="eng",
-                            type="language",
+                            id="deprecated_category::Laws and Policies",
+                            value="Laws and Policies",
+                            type="deprecated_category",
                         ),
                     ),
                 ],
@@ -1553,11 +1556,11 @@ def test_transform_navigator_family_with_published_and_unpublished_documents():
                         ),
                     ),
                     LabelRelationship(
-                        type="deprecated_category",
+                        type="language",
                         value=Label(
-                            id="deprecated_category::Laws and Policies",
-                            value="Laws and Policies",
-                            type="deprecated_category",
+                            id="language::eng",
+                            value="eng",
+                            type="language",
                         ),
                     ),
                     LabelRelationship(
@@ -1569,11 +1572,11 @@ def test_transform_navigator_family_with_published_and_unpublished_documents():
                         ),
                     ),
                     LabelRelationship(
-                        type="language",
+                        type="deprecated_category",
                         value=Label(
-                            id="language::eng",
-                            value="eng",
-                            type="language",
+                            id="deprecated_category::Laws and Policies",
+                            value="Laws and Policies",
+                            type="deprecated_category",
                         ),
                     ),
                 ],
@@ -1715,19 +1718,19 @@ def test_transform_navigator_family_with_no_published_documents():
                 ),
             ),
             LabelRelationship(
-                type="deprecated_category",
-                value=Label(
-                    id="deprecated_category::Laws and Policies",
-                    value="Laws and Policies",
-                    type="deprecated_category",
-                ),
-            ),
-            LabelRelationship(
                 type="category",
                 value=Label(
                     id="category::Law",
                     value="Law",
                     type="category",
+                ),
+            ),
+            LabelRelationship(
+                type="deprecated_category",
+                value=Label(
+                    id="deprecated_category::Laws and Policies",
+                    value="Laws and Policies",
+                    type="deprecated_category",
                 ),
             ),
         ],
@@ -1778,11 +1781,11 @@ def test_transform_navigator_family_with_no_published_documents():
                             ),
                         ),
                         LabelRelationship(
-                            type="deprecated_category",
+                            type="language",
                             value=Label(
-                                id="deprecated_category::Laws and Policies",
-                                value="Laws and Policies",
-                                type="deprecated_category",
+                                id="language::eng",
+                                value="eng",
+                                type="language",
                             ),
                         ),
                         LabelRelationship(
@@ -1794,11 +1797,11 @@ def test_transform_navigator_family_with_no_published_documents():
                             ),
                         ),
                         LabelRelationship(
-                            type="language",
+                            type="deprecated_category",
                             value=Label(
-                                id="language::eng",
-                                value="eng",
-                                type="language",
+                                id="deprecated_category::Laws and Policies",
+                                value="Laws and Policies",
+                                type="deprecated_category",
                             ),
                         ),
                     ],
@@ -1875,11 +1878,11 @@ def test_transform_navigator_family_with_no_published_documents():
                         ),
                     ),
                     LabelRelationship(
-                        type="deprecated_category",
+                        type="language",
                         value=Label(
-                            id="deprecated_category::Laws and Policies",
-                            value="Laws and Policies",
-                            type="deprecated_category",
+                            id="language::eng",
+                            value="eng",
+                            type="language",
                         ),
                     ),
                     LabelRelationship(
@@ -1891,11 +1894,11 @@ def test_transform_navigator_family_with_no_published_documents():
                         ),
                     ),
                     LabelRelationship(
-                        type="language",
+                        type="deprecated_category",
                         value=Label(
-                            id="language::eng",
-                            value="eng",
-                            type="language",
+                            id="deprecated_category::Laws and Policies",
+                            value="Laws and Policies",
+                            type="deprecated_category",
                         ),
                     ),
                 ],
@@ -2052,19 +2055,19 @@ def test_transform_navigator_family_and_document_with_domain_metadata(
                             ),
                         ),
                         LabelRelationship(
-                            type="deprecated_category",
-                            value=Label(
-                                id="deprecated_category::Laws and Policies",
-                                value="Laws and Policies",
-                                type="deprecated_category",
-                            ),
-                        ),
-                        LabelRelationship(
                             type="language",
                             value=Label(
                                 id="language::eng",
                                 value="eng",
                                 type="language",
+                            ),
+                        ),
+                        LabelRelationship(
+                            type="deprecated_category",
+                            value=Label(
+                                id="deprecated_category::Laws and Policies",
+                                value="Laws and Policies",
+                                type="deprecated_category",
                             ),
                         ),
                     ],
@@ -2156,19 +2159,19 @@ def test_transform_navigator_family_and_document_with_domain_metadata(
                         ),
                     ),
                     LabelRelationship(
-                        type="deprecated_category",
-                        value=Label(
-                            id="deprecated_category::Laws and Policies",
-                            value="Laws and Policies",
-                            type="deprecated_category",
-                        ),
-                    ),
-                    LabelRelationship(
                         type="language",
                         value=Label(
                             id="language::eng",
                             value="eng",
                             type="language",
+                        ),
+                    ),
+                    LabelRelationship(
+                        type="deprecated_category",
+                        value=Label(
+                            id="deprecated_category::Laws and Policies",
+                            value="Laws and Policies",
+                            type="deprecated_category",
                         ),
                     ),
                 ],
@@ -2297,3 +2300,122 @@ def test_author_label_returns_empty_when_no_metadata():
         metadata={},
     )
     assert _author_label(family) == []
+
+
+def test_category_label_returns_law_for_legislative():
+    family = NavigatorFamilyFactory.build(
+        corpus=NavigatorCorpusFactory.build(import_id="CCLW.corpus.i00000001.n0000"),
+        category="LEGISLATIVE",
+    )
+    labels = _category_label(family)
+    assert len(labels) == 1
+    assert labels[0].type == "category"
+    assert labels[0].value.id == "category::Law"
+
+
+def test_category_label_returns_policy_for_executive():
+    family = NavigatorFamilyFactory.build(
+        corpus=NavigatorCorpusFactory.build(import_id="CCLW.corpus.i00000001.n0000"),
+        category="EXECUTIVE",
+    )
+    labels = _category_label(family)
+    assert len(labels) == 1
+    assert labels[0].type == "category"
+    assert labels[0].value.id == "category::Policy"
+
+
+def test_category_label_returns_empty_for_laws_and_policies_with_no_matching_category():
+    family = NavigatorFamilyFactory.build(
+        corpus=NavigatorCorpusFactory.build(import_id="CCLW.corpus.i00000001.n0000"),
+        category="UNFCCC",
+    )
+    assert _category_label(family) == []
+
+
+@pytest.mark.parametrize(
+    "corpus_import_id, expected_category",
+    [
+        ("UNFCCC.corpus.i00000001.n0000", "UN submission"),
+        ("OEP.corpus.i00000001.n0000", "Report"),
+        ("Academic.corpus.Litigation.n0000", "Litigation"),
+        ("CPR.corpus.i00000002.n0000", "Corporate Disclosure"),
+    ],
+)
+def test_category_label_returns_category_for_non_laws_and_policies(
+    corpus_import_id, expected_category
+):
+    family = NavigatorFamilyFactory.build(
+        corpus=NavigatorCorpusFactory.build(import_id=corpus_import_id),
+    )
+    labels = _category_label(family)
+    assert len(labels) == 1
+    assert labels[0].type == "category"
+    assert labels[0].value.id == f"category::{expected_category}"
+
+
+def test_deprecated_category_label_returns_label_for_laws_and_policies_corpus_type():
+    family = NavigatorFamilyFactory.build(
+        corpus=NavigatorCorpusFactory.build(
+            import_id="CCLW.corpus.i00000001.n0000",
+            corpus_type=NavigatorCorpusTypeFactory.build(name="Laws and Policies"),
+        ),
+    )
+    labels = _deprecated_category_label(family)
+    assert len(labels) == 1
+    assert labels[0].type == "deprecated_category"
+    assert labels[0].value.id == "deprecated_category::Laws and Policies"
+
+
+def test_deprecated_category_label_returns_empty_for_non_laws_and_policies_corpus_type():
+    family = NavigatorFamilyFactory.build(
+        corpus=NavigatorCorpusFactory.build(
+            import_id="UNFCCC.corpus.i00000001.n0000",
+            corpus_type=NavigatorCorpusTypeFactory.build(name="UNFCCC"),
+        ),
+    )
+    assert _deprecated_category_label(family) == []
+
+
+@pytest.mark.parametrize(
+    "corpus_import_id",
+    [
+        "MCF.corpus.AF.Guidance",
+        "MCF.corpus.CIF.Guidance",
+        "MCF.corpus.GCF.Guidance",
+        "MCF.corpus.GEF.Guidance",
+    ],
+)
+def test_entity_type_label_returns_guidance_for_mcf_guidance_corpus(corpus_import_id):
+    family = NavigatorFamilyFactory.build(
+        corpus=NavigatorCorpusFactory.build(import_id=corpus_import_id),
+    )
+    labels = _entity_type_label(family)
+    assert len(labels) == 1
+    assert labels[0].type == "entity_type"
+    assert labels[0].value.id == "entity_type::Guidance"
+
+
+@pytest.mark.parametrize(
+    "corpus_import_id",
+    [
+        "MCF.corpus.AF.n0000",
+        "MCF.corpus.CIF.n0000",
+        "MCF.corpus.GCF.n0000",
+        "MCF.corpus.GEF.n0000",
+    ],
+)
+def test_entity_type_label_returns_project_for_mcf_project_corpus(corpus_import_id):
+    family = NavigatorFamilyFactory.build(
+        corpus=NavigatorCorpusFactory.build(import_id=corpus_import_id),
+    )
+    labels = _entity_type_label(family)
+    assert len(labels) == 1
+    assert labels[0].type == "entity_type"
+    assert labels[0].value.id == "entity_type::Project"
+
+
+def test_entity_type_label_returns_empty_for_non_mcf_corpus():
+    family = NavigatorFamilyFactory.build(
+        corpus=NavigatorCorpusFactory.build(import_id="CCLW.corpus.i00000001.n0000"),
+    )
+    assert _entity_type_label(family) == []

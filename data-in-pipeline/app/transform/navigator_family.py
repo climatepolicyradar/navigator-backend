@@ -1,4 +1,5 @@
 from datetime import datetime
+from typing import Literal
 
 from data_in_models.models import (
     Document,
@@ -14,6 +15,7 @@ from returns.result import Failure, Result, Success
 
 from app.bootstrap_telemetry import get_logger, log_context
 from app.extract.connectors import (
+    CorpusId,
     LitigationDocumentStatus,
     NavigatorCollection,
     NavigatorDocument,
@@ -41,9 +43,37 @@ from app.transform.models import (
 # Constants
 # ---------------------------------------------------------------------------
 
+# region category label relationships
+corporate_discloser = Label(
+    type="category", id="category::Corporate Disclosures", value="Corporate Disclosures"
+)
+multilateral_climate_fund_project = Label(
+    type="category",
+    id="category::Multilateral Climate Fund project",
+    value="Multilateral Climate Fund project",
+)
+multilateral_climate_fund_project_guidance = Label(
+    id="entity_type::Guidance",
+    value="Guidance",
+    type="entity_type",
+    labels=[
+        LabelRelationship(type="subconcept_of", value=multilateral_climate_fund_project)
+    ],
+)
+multilateral_climate_fund_project_project = Label(
+    id="entity_type::Project",
+    value="Project",
+    type="entity_type",
+    labels=[
+        LabelRelationship(type="subconcept_of", value=multilateral_climate_fund_project)
+    ],
+)
+
+
 _eu_and_international_region_ids = {c.id: c for c in custom_countries}
 
-_corpus_to_provider_map = {
+
+_corpus_to_provider_map: dict[CorpusId, str] = {
     "CCLW.corpus.i00000001.n0000": "Grantham Research Institute",
     "Academic.corpus.Litigation.n0000": "Sabin Center for Climate Change Law",
     "CPR.corpus.Goldstandard.n0000": "Gold Standard",
@@ -66,6 +96,7 @@ _corpus_to_provider_map = {
     "UN.corpus.UNCBD.n0000": "UNCBD",
     "ICCN.corpus.i00000001.n0000": "International Climate Councils Network",
 }
+
 
 mcf_projects_corpus_import_ids = [
     "MCF.corpus.AF.n0000",
@@ -195,13 +226,14 @@ def _transform_litigation_events(data: NavigatorFamily) -> list[Document]:
             ]
         )
 
-        labels.extend(_transform_to_category(data))
         geo_labels, _ = _transform_geographies(data)
         labels.extend(geo_labels)
         if event.metadata["action_taken"]:
             attributes["action_taken"] = event.metadata["action_taken"][0]
 
         attributes["status"] = LitigationDocumentStatus.AWAITING_SOURCE_FILE.value
+
+        labels = labels + _category_label(data) + _deprecated_category_label(data)
 
         documents.append(
             Document(
@@ -251,7 +283,7 @@ def transform(
     documents_from_documents, warnings = _transform_navigator_documents(input.data)
 
     documents_from_collections: list[Document] = [
-        _transform_navigator_collection(collection, input.data)
+        _transform_navigator_collection(collection)
         for collection in input.data.collections
     ]
 
@@ -764,149 +796,6 @@ def _transform_litigation_concepts_to_label_relationships(
     return labels, warnings
 
 
-def _transform_to_category(
-    navigator_family: NavigatorFamily,
-) -> list[LabelRelationship]:
-    labels = []
-
-    un_submission_corpora = [
-        "UNFCCC.corpus.i00000001.n0000",
-        "UN.corpus.UNCCD.n0000",
-        "UN.corpus.UNCBD.n0000",
-    ]
-    if navigator_family.corpus.import_id in un_submission_corpora:
-        labels.append(
-            LabelRelationship(
-                type="category",
-                value=Label(
-                    id="category::UN submission",
-                    value="UN submission",
-                    type="category",
-                ),
-            )
-        )
-
-    oep_corpora = [
-        "OEP.corpus.i00000001.n0000",
-    ]
-    if navigator_family.corpus.import_id in oep_corpora:
-        labels.append(
-            LabelRelationship(
-                type="category",
-                value=Label(
-                    id="category::Report",
-                    value="Report",
-                    type="category",
-                ),
-            )
-        )
-
-    litigation_corpora = [
-        "Academic.corpus.Litigation.n0000",
-    ]
-    if navigator_family.corpus.import_id in litigation_corpora:
-        labels.append(
-            LabelRelationship(
-                type="category",
-                value=Label(
-                    id="category::Litigation",
-                    value="Litigation",
-                    type="category",
-                ),
-            )
-        )
-
-    corporate_disclosures_corpora = [
-        "CPR.corpus.i00000002.n0000",
-    ]
-    if navigator_family.corpus.import_id in corporate_disclosures_corpora:
-        labels.append(
-            LabelRelationship(
-                type="category",
-                value=Label(
-                    id="category::Corporate Disclosure",
-                    value="Corporate Disclosure",
-                    type="category",
-                ),
-            )
-        )
-
-    if navigator_family.corpus.import_id in MCF_CORPORA:
-        labels.append(
-            LabelRelationship(
-                type="category",
-                value=Label(
-                    id="category::Multilateral Climate Fund project",
-                    value="Multilateral Climate Fund project",
-                    type="category",
-                ),
-            )
-        )
-
-        if navigator_family.corpus.import_id in mcf_guidance_corpus_import_ids:
-            labels.append(
-                LabelRelationship(
-                    type="entity_type",
-                    value=Label(
-                        id="entity_type::Guidance",
-                        value="Guidance",
-                        type="entity_type",
-                    ),
-                )
-            )
-        if navigator_family.corpus.import_id in mcf_projects_corpus_import_ids:
-            labels.append(
-                LabelRelationship(
-                    type="entity_type",
-                    value=Label(
-                        id="entity_type::Project",
-                        value="Project",
-                        type="entity_type",
-                    ),
-                )
-            )
-
-    if navigator_family.corpus.corpus_type.name == "Laws and Policies":
-        # We are maintaing this as the assumption is all Laws and policies
-        # have been tagged as "LEGISLATIVE" OR "EXECUTIVE", but there is a possiblity
-        # that they have not as the system allows it. This should allow us
-        # to assess that data.
-        labels.append(
-            LabelRelationship(
-                type="deprecated_category",
-                value=Label(
-                    id="deprecated_category::Laws and Policies",
-                    value="Laws and Policies",
-                    type="deprecated_category",
-                ),
-            )
-        )
-        if navigator_family.category == "LEGISLATIVE":
-            labels.append(
-                LabelRelationship(
-                    type="category",
-                    value=Label(
-                        id="category::Law",
-                        value="Law",
-                        type="category",
-                    ),
-                )
-            )
-        if navigator_family.category == "EXECUTIVE":
-            labels.append(
-                LabelRelationship(
-                    type="category",
-                    value=Label(
-                        id="category::Policy",
-                        value="Policy",
-                        type="category",
-                    ),
-                )
-            )
-
-    return labels
-
-
 def _transform_litigation_data(
     navigator_family: NavigatorFamily,
 ) -> tuple[list[LabelRelationship], list[TransformWarning]]:
@@ -1197,11 +1086,6 @@ def _transform_navigator_family(
     )
 
     """
-    Canonical category
-    """
-    labels.extend(_transform_to_category(navigator_family))
-
-    """
     Slug
     We should not couple to this implementation as it is an incomplete ID service which is unmaintained.
     But we need it for migration purposes.
@@ -1249,6 +1133,9 @@ def _transform_navigator_family(
 
     labels = (
         labels
+        + _category_label(navigator_family)
+        + _deprecated_category_label(navigator_family)
+        + _entity_type_label(navigator_family)
         + _author_label(navigator_family)
         + _author_type_label(navigator_family)
         + _un_convention_label(navigator_family)
@@ -1420,11 +1307,6 @@ def _transform_navigator_document(
     warnings.extend(geography_warnings)
 
     """
-    Canonical category
-    """
-    labels.extend(_transform_to_category(navigator_family))
-
-    """
     Language labels
     """
     for lang in navigator_document.languages:
@@ -1462,6 +1344,12 @@ def _transform_navigator_document(
             )
         )
 
+    labels = (
+        labels
+        + _category_label(navigator_family)
+        + _deprecated_category_label(navigator_family)
+    )
+
     document = Document(
         id=navigator_document.import_id,
         title=navigator_document.title,
@@ -1474,7 +1362,7 @@ def _transform_navigator_document(
 
 
 def _transform_navigator_collection(
-    navigator_collection: NavigatorCollection, navigator_family: NavigatorFamily
+    navigator_collection: NavigatorCollection,
 ) -> Document:
     labels: list[LabelRelationship] = []
 
@@ -1534,11 +1422,174 @@ def _deduplicate_labels(
 # similar to our legacy search.
 
 
+# region category label
+type Category = Literal[
+    "Law",
+    "Policy",
+    "UN submission",
+    "Report",
+    "Litigation",
+    "Corporate Disclosure",
+    "Multilateral Climate Fund project",
+]
+type DeprecatedCategory = Literal["Laws and Policies"]
+
+_corpus_import_id_to_category_map: dict[CorpusId, Category | DeprecatedCategory] = {
+    "UNFCCC.corpus.i00000001.n0000": "UN submission",
+    "UN.corpus.UNCCD.n0000": "UN submission",
+    "UN.corpus.UNCBD.n0000": "UN submission",
+    "OEP.corpus.i00000001.n0000": "Report",
+    "ICCN.corpus.i00000001.n0000": "Report",
+    "Academic.corpus.Litigation.n0000": "Litigation",
+    "CPR.corpus.i00000002.n0000": "Corporate Disclosure",
+    "MCF.corpus.AF.n0000": "Multilateral Climate Fund project",
+    "MCF.corpus.CIF.n0000": "Multilateral Climate Fund project",
+    "MCF.corpus.GCF.n0000": "Multilateral Climate Fund project",
+    "MCF.corpus.GEF.n0000": "Multilateral Climate Fund project",
+    "MCF.corpus.AF.Guidance": "Multilateral Climate Fund project",
+    "MCF.corpus.CIF.Guidance": "Multilateral Climate Fund project",
+    "MCF.corpus.GCF.Guidance": "Multilateral Climate Fund project",
+    "MCF.corpus.GEF.Guidance": "Multilateral Climate Fund project",
+    # Laws and Policies are treated slightly different in the transformer i.e.
+    # They are split between `Law` and `Policy`
+    "CCLW.corpus.i00000001.n0000": "Laws and Policies",
+    "CPR.corpus.i00000001.n0000": "Laws and Policies",
+    "CPR.corpus.Goldstandard.n0000": "Laws and Policies",
+    "CPR.corpus.i00000591.n0000": "Laws and Policies",
+    "CPR.corpus.i00000589.n0000": "Laws and Policies",
+    "CPR.corpus.i00000592.n0000": "Laws and Policies",
+}
+
+
+def _category_import_id_to_category(
+    navigator_family: NavigatorFamily,
+) -> Category:
+    logger = get_logger()
+    category = _corpus_import_id_to_category_map[navigator_family.corpus.import_id]
+    if category == "Laws and Policies":
+        if navigator_family.category == "LEGISLATIVE":
+            return "Law"
+        if navigator_family.category == "EXECUTIVE":
+            return "Policy"
+        else:
+            # We should never reach this code path
+            logger.warning(
+                f"Navigator family {navigator_family.import_id} has category 'Laws and Policies' but unexpected family category {navigator_family.category}. Defaulting to 'Law'"
+            )
+            return "Law"
+    else:
+        return category
+
+
+def _category_label(
+    navigator_family: NavigatorFamily,
+) -> list[LabelRelationship]:
+    labels = []
+    category = _corpus_import_id_to_category_map[navigator_family.corpus.import_id]
+
+    if category == "Laws and Policies":
+        if navigator_family.category == "LEGISLATIVE":
+            labels.append(
+                LabelRelationship(
+                    type="category",
+                    value=Label(
+                        id="category::Law",
+                        value="Law",
+                        type="category",
+                    ),
+                )
+            )
+        if navigator_family.category == "EXECUTIVE":
+            labels.append(
+                LabelRelationship(
+                    type="category",
+                    value=Label(
+                        id="category::Policy",
+                        value="Policy",
+                        type="category",
+                    ),
+                )
+            )
+    else:
+        labels.append(
+            LabelRelationship(
+                type="category",
+                value=Label(
+                    id=f"category::{category}",
+                    value=category,
+                    type="category",
+                ),
+            )
+        )
+
+    return labels
+
+
+# region deprecated_category label
+
+
+def _deprecated_category_label(
+    navigator_family: NavigatorFamily,
+) -> list[LabelRelationship]:
+    labels = []
+    if navigator_family.corpus.corpus_type.name == "Laws and Policies":
+        # We are maintaing this as the assumption is all Laws and policies
+        # have been tagged as "LEGISLATIVE" OR "EXECUTIVE", but there is a possiblity
+        # that they have not as the system allows it. This should allow us
+        # to assess that data.
+        labels.append(
+            LabelRelationship(
+                type="deprecated_category",
+                value=Label(
+                    id="deprecated_category::Laws and Policies",
+                    value="Laws and Policies",
+                    type="deprecated_category",
+                ),
+            )
+        )
+
+    return labels
+
+
+#  region entity_type label
+def _entity_type_label(
+    navigator_family: NavigatorFamily,
+) -> list[LabelRelationship]:
+    labels: list[LabelRelationship] = []
+    category = _category_import_id_to_category(navigator_family)
+
+    if category == "Multilateral Climate Fund project":
+        if navigator_family.corpus.import_id in mcf_guidance_corpus_import_ids:
+            labels.append(
+                LabelRelationship(
+                    type="entity_type",
+                    value=multilateral_climate_fund_project_guidance,
+                )
+            )
+        if navigator_family.corpus.import_id in mcf_projects_corpus_import_ids:
+            labels.append(
+                LabelRelationship(
+                    type="entity_type",
+                    value=multilateral_climate_fund_project_project,
+                )
+            )
+
+    return labels
+
+
 # region author label
 def _author_label(
     navigator_family: NavigatorFamily,
 ) -> list[LabelRelationship]:
     labels: list[LabelRelationship] = []
+    category = _category_import_id_to_category(navigator_family)
+    related_labels: list[LabelRelationship] = []
+
+    if category == "Corporate Disclosure":
+        related_labels = [
+            LabelRelationship(type="subconcept_of", value=corporate_discloser)
+        ]
+
     author_values = navigator_family.metadata.get("author")
     if author_values and author_values[0]:
         author = author_values[0]
@@ -1549,6 +1600,7 @@ def _author_label(
                     id=f"author::{author}",
                     value=author,
                     type="author",
+                    labels=related_labels,
                 ),
             )
         )

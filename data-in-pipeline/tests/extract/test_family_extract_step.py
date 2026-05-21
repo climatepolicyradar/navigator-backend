@@ -50,7 +50,7 @@ def test_extract_families_handles_valid_ids_success():
                 summary="Summary 1",
                 documents=[],
                 corpus=NavigatorCorpusFactory.build(
-                    import_id="COR-001",
+                    import_id="CCLW.corpus.i00000001.n0000",
                     corpus_type=NavigatorCorpusTypeFactory.build(name="corpus_type"),
                     organisation=NavigatorOrganisationFactory.build(
                         id=1, name="UNFCCC"
@@ -67,7 +67,7 @@ def test_extract_families_handles_valid_ids_success():
                 summary="Summary 2",
                 documents=[],
                 corpus=NavigatorCorpusFactory.build(
-                    import_id="COR-002",
+                    import_id="CPR.corpus.i00000001.n0000",
                     corpus_type=NavigatorCorpusTypeFactory.build(name="corpus_type"),
                     organisation=NavigatorOrganisationFactory.build(
                         id=1, name="UNFCCC"

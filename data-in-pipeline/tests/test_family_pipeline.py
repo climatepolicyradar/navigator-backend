@@ -69,7 +69,7 @@ def test_process_family_updates_flow_multiple_families(  # noqa: PLR0913
     mock_post.return_value = mock_post_response
 
     corpus = NavigatorCorpusFactory.build(
-        import_id="UNFCCC",
+        import_id="UNFCCC.corpus.i00000001.n0000",
         corpus_type=NavigatorCorpusTypeFactory.build(name="corpus_type"),
         organisation=NavigatorOrganisationFactory.build(id=1, name="UNFCCC"),
     )
@@ -226,7 +226,7 @@ def test_etl_pipeline_load_failure(  # noqa: PLR0913
     expected_error_message = "One or more batches failed to load"
 
     corpus = NavigatorCorpusFactory.build(
-        import_id="UNFCCC",
+        import_id="UNFCCC.corpus.i00000001.n0000",
         corpus_type=NavigatorCorpusTypeFactory.build(name="corpus_type"),
         organisation=NavigatorOrganisationFactory.build(id=1, name="UNFCCC"),
     )
@@ -314,7 +314,7 @@ def test_etl_pipeline_partial_transformation_failure(  # noqa: PLR0913
     mock_put.return_value = mock_put_response
 
     valid_corpus = NavigatorCorpusFactory.build(
-        import_id="UNFCCC",
+        import_id="UNFCCC.corpus.i00000001.n0000",
         corpus_type=NavigatorCorpusTypeFactory.build(name="corpus_type"),
         organisation=NavigatorOrganisationFactory.build(id=1, name="UNFCCC"),
     )
@@ -341,7 +341,7 @@ def test_etl_pipeline_partial_transformation_failure(  # noqa: PLR0913
         summary="",
         category="UNKNOWN_CATEGORY",
         corpus=NavigatorCorpusFactory.build(
-            import_id="UNKNOWN.corpus.i00000001.n0000",
+            import_id="CCLW.corpus.i00000001.n0000",
             corpus_type=NavigatorCorpusTypeFactory.build(name="Unknown"),
             organisation=NavigatorOrganisationFactory.build(id=999, name="Unknown"),
         ),
@@ -417,7 +417,7 @@ def test_etl_pipeline_all_families_fail_transformation(
     mock_connector_instance.close.return_value = None
 
     failing_corpus = NavigatorCorpusFactory.build(
-        import_id="UNKNOWN.corpus.i00000001.n0000",
+        import_id="CCLW.corpus.i00000001.n0000",
         corpus_type=NavigatorCorpusTypeFactory.build(name="Unknown"),
         organisation=NavigatorOrganisationFactory.build(id=999, name="Unknown"),
     )
@@ -640,19 +640,19 @@ def test_transform_correctly_transforms_collections_with_multiple_families():
                 ),
             ),
             LabelRelationship(
-                type="deprecated_category",
-                value=Label(
-                    id="deprecated_category::Laws and Policies",
-                    value="Laws and Policies",
-                    type="deprecated_category",
-                ),
-            ),
-            LabelRelationship(
                 type="category",
                 value=Label(
                     id="category::Law",
                     value="Law",
                     type="category",
+                ),
+            ),
+            LabelRelationship(
+                type="deprecated_category",
+                value=Label(
+                    id="deprecated_category::Laws and Policies",
+                    value="Laws and Policies",
+                    type="deprecated_category",
                 ),
             ),
         ],
@@ -721,19 +721,19 @@ def test_transform_correctly_transforms_collections_with_multiple_families():
                 ),
             ),
             LabelRelationship(
-                type="deprecated_category",
-                value=Label(
-                    id="deprecated_category::Laws and Policies",
-                    value="Laws and Policies",
-                    type="deprecated_category",
-                ),
-            ),
-            LabelRelationship(
                 type="category",
                 value=Label(
                     id="category::Law",
                     value="Law",
                     type="category",
+                ),
+            ),
+            LabelRelationship(
+                type="deprecated_category",
+                value=Label(
+                    id="deprecated_category::Laws and Policies",
+                    value="Laws and Policies",
+                    type="deprecated_category",
                 ),
             ),
         ],

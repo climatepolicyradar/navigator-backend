@@ -354,20 +354,20 @@ def test_transform_navigator_family_with_litigation_corpus_type(
                 ),
             ),
             LabelRelationship(
-                type="category",
-                value=Label(
-                    id="category::Litigation",
-                    value="Litigation",
-                    type="category",
-                ),
-            ),
-            LabelRelationship(
                 type="activity_status",
                 timestamp=datetime.datetime(2020, 1, 1),
                 value=Label(
                     type="activity_status",
                     id="activity_status::Filed",
                     value="Filed",
+                ),
+            ),
+            LabelRelationship(
+                type="category",
+                value=Label(
+                    id="category::Litigation",
+                    value="Litigation",
+                    type="category",
                 ),
             ),
         ],
@@ -660,14 +660,6 @@ def test_transform_navigator_family_with_litigation_corpus_type_and_litigation_c
                 ),
             ),
             LabelRelationship(
-                type="category",
-                value=Label(
-                    id="category::Litigation",
-                    value="Litigation",
-                    type="category",
-                ),
-            ),
-            LabelRelationship(
                 type="legal_concept",
                 value=LabelWithoutDocumentRelationships(
                     id="jurisdiction::High Court of Justice",
@@ -712,6 +704,14 @@ def test_transform_navigator_family_with_litigation_corpus_type_and_litigation_c
                     labels=[],
                     type="jurisdiction",
                     value="England and Wales",
+                ),
+            ),
+            LabelRelationship(
+                type="category",
+                value=Label(
+                    id="category::Litigation",
+                    value="Litigation",
+                    type="category",
                 ),
             ),
         ],
