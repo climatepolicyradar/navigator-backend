@@ -33,6 +33,7 @@ from app.geographies import (
 from app.models import Identified, NavigatorConcept
 from app.transform.models import (
     CouldNotTransform,
+    MissingRegionMapping,
     TransformWarning,
     UnknownGeography,
     UnknownParentLabel,
@@ -661,7 +662,7 @@ def _transform_geographies(
                 )
             elif geography.id not in _eu_and_international_region_ids:
                 warnings.append(
-                    UnknownGeography(
+                    MissingRegionMapping(
                         family_import_id=navigator_family.import_id,
                         geography_id=geography.id,
                     )

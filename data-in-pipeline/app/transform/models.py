@@ -51,9 +51,17 @@ class UnknownGeography(BaseModel):
     geography_id: str
 
 
+class MissingRegionMapping(BaseModel):
+    """A known country could not be mapped to a region."""
+
+    kind: Literal["missing_region_mapping"] = "missing_region_mapping"
+    family_import_id: str
+    geography_id: str
+
+
 # Discriminated union — `kind` is the discriminator field.
 # @see: https://docs.pydantic.dev/latest/concepts/unions/#discriminated-unions
 type TransformWarning = Annotated[
-    UnknownParentLabel | UnknownGeography,
+    UnknownParentLabel | UnknownGeography | MissingRegionMapping,
     Field(discriminator="kind"),
 ]
