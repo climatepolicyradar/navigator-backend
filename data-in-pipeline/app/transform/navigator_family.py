@@ -72,6 +72,7 @@ multilateral_climate_fund_project_project = Label(
 
 law = Label(type="category", id="category::Law", value="Law")
 policy = Label(type="category", id="category::Policy", value="Policy")
+report = Label(type="category", id="category::Report", value="Report")
 
 
 _eu_and_international_region_ids = {c.id: c for c in custom_countries}
@@ -1148,6 +1149,7 @@ def _transform_navigator_family(
         + _implementing_agency_label(navigator_family)
         + _un_convention_label(navigator_family)
         + _multilateral_climate_fund_label(navigator_family)
+        + _report_type_label(navigator_family)
     )
 
     document = Document(
@@ -1822,6 +1824,32 @@ def _multilateral_climate_fund_label(
                     ),
                 )
             )
+
+    return labels
+
+
+# region report_type label
+def _report_type_label(
+    navigator_family: NavigatorFamily,
+) -> list[LabelRelationship]:
+    labels: list[LabelRelationship] = []
+    if navigator_family.corpus.import_id == "ICCN.corpus.i00000001.n0000":
+        labels.append(
+            LabelRelationship(
+                type="report_type",
+                value=Label(
+                    id="report_type::Climate council report",
+                    value="Climate council report",
+                    type="agent",
+                    labels=[
+                        LabelRelationship(
+                            type="subconcept_of",
+                            value=report,
+                        )
+                    ],
+                ),
+            )
+        )
 
     return labels
 
