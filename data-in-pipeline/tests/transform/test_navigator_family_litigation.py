@@ -370,6 +370,34 @@ def test_transform_navigator_family_with_litigation_corpus_type(
                     type="category",
                 ),
             ),
+            LabelRelationship(
+                type="status",
+                value=Label(
+                    id="status::Decided",
+                    value="Decided",
+                    type="status",
+                    labels=[
+                        LabelRelationship(
+                            type="subconcept_of",
+                            value=Label(
+                                id="entity_type::Project",
+                                value="Project",
+                                type="entity_type",
+                                labels=[
+                                    LabelRelationship(
+                                        type="subconcept_of",
+                                        value=Label(
+                                            id="category::Multilateral Climate Fund project",
+                                            value="Multilateral Climate Fund project",
+                                            type="category",
+                                        ),
+                                    )
+                                ],
+                            ),
+                        )
+                    ],
+                ),
+            ),
         ],
         documents=[
             DocumentRelationship(

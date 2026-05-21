@@ -47,6 +47,7 @@ from app.transform.models import (
 corporate_discloser = Label(
     type="category", id="category::Corporate Disclosures", value="Corporate Disclosures"
 )
+
 multilateral_climate_fund_project = Label(
     type="category",
     id="category::Multilateral Climate Fund project",
@@ -68,6 +69,8 @@ multilateral_climate_fund_project_project = Label(
         LabelRelationship(type="subconcept_of", value=multilateral_climate_fund_project)
     ],
 )
+
+law = Label(type="category", id="category::Law", value="Law")
 
 
 _eu_and_international_region_ids = {c.id: c for c in custom_countries}
@@ -1138,6 +1141,10 @@ def _transform_navigator_family(
         + _entity_type_label(navigator_family)
         + _author_label(navigator_family)
         + _author_type_label(navigator_family)
+        + _topic_label(navigator_family)
+        + _law_type_label(navigator_family)
+        + _status_label(navigator_family)
+        + _implementing_agency_label(navigator_family)
         + _un_convention_label(navigator_family)
         + _multilateral_climate_fund_label(navigator_family)
     )
@@ -1648,6 +1655,172 @@ def _author_type_label(
     return labels
 
 
+# region topic label
+# This is also known as "response area" in the UI
+def _topic_label(
+    navigator_family: NavigatorFamily,
+) -> list[LabelRelationship]:
+    labels: list[LabelRelationship] = []
+
+    # These are controlled vocabularies
+    # @see: https://github.com/climatepolicyradar/data-migrations/blob/main/taxonomies/Laws%20and%20Policies.json#L15-L18
+    topic_values = navigator_family.metadata.get("topic")
+    if topic_values and topic_values[0]:
+        topic = topic_values[0]
+        labels.append(
+            LabelRelationship(
+                type="topic",
+                value=Label(
+                    id=f"topic::{topic}",
+                    value=topic,
+                    type="topic",
+                    labels=[LabelRelationship(type="subconcept_of", value=law)],
+                ),
+            )
+        )
+
+    # These are controlled vocabularies
+    # @see: https://github.com/climatepolicyradar/data-migrations/blob/main/taxonomies/Laws%20and%20Policies.json#L496-L498
+    framework_values = navigator_family.metadata.get("framework")
+
+    # Only Mitigation makes this a Framework law
+    if framework_values and framework_values[0] in ["Mitigation"]:
+        topic = framework_values[0]
+        labels.append(
+            LabelRelationship(
+                type="law_type",
+                value=Label(
+                    id=f"law_type::{topic}",
+                    value="Framework law",
+                    type="law_type",
+                    labels=[LabelRelationship(type="subconcept_of", value=law)],
+                ),
+            )
+        )
+    return labels
+
+
+# region law_type label
+def _law_type_label(
+    navigator_family: NavigatorFamily,
+) -> list[LabelRelationship]:
+    labels: list[LabelRelationship] = []
+
+    # These are controlled vocabularies
+    # @see: https://github.com/climatepolicyradar/data-migrations/blob/main/taxonomies/Laws%20and%20Policies.json#L490-L494
+    framework_values = navigator_family.metadata.get("framework")
+
+    # Only Mitigation makes this a Framework law
+    if framework_values and framework_values[0] in [
+        "Adaptation",
+        "Mitigation",
+        "Drm/Drr",
+    ]:
+        topic = framework_values[0]
+        labels.append(
+            LabelRelationship(
+                type="law_type",
+                value=Label(
+                    id=f"law_type::{topic}",
+                    value="Framework law",
+                    type="law_type",
+                    labels=[LabelRelationship(type="subconcept_of", value=law)],
+                ),
+            )
+        )
+    return labels
+
+
+# region status label
+def _status_label(
+    navigator_family: NavigatorFamily,
+) -> list[LabelRelationship]:
+    labels: list[LabelRelationship] = []
+
+    # These are controlled vocabularies
+    # @see: https://github.com/climatepolicyradar/data-migrations/blob/main/taxonomies/GCF.json#L44-L48
+    status_values = navigator_family.metadata.get("status")
+    if status_values and status_values[0]:
+        status = status_values[0]
+        labels.append(
+            LabelRelationship(
+                type="status",
+                value=Label(
+                    id=f"status::{status}",
+                    value=status,
+                    type="status",
+                    labels=[
+                        LabelRelationship(
+                            type="subconcept_of",
+                            value=multilateral_climate_fund_project_project,
+                        )
+                    ],
+                ),
+            )
+        )
+    return labels
+
+
+# region implementing_agency label
+def _implementing_agency_label(
+    navigator_family: NavigatorFamily,
+) -> list[LabelRelationship]:
+    labels: list[LabelRelationship] = []
+
+    # These are controlled vocabularies
+    # @see: https://github.com/climatepolicyradar/data-migrations/blob/main/taxonomies/GCF.json#L44-L48
+    status_values = navigator_family.metadata.get("implementing_agency")
+    if status_values and status_values[0]:
+        status = status_values[0]
+        labels.append(
+            LabelRelationship(
+                type="implementing_agency",
+                value=Label(
+                    id=f"agent::{status}",
+                    value=status,
+                    type="agent",
+                    labels=[
+                        LabelRelationship(
+                            type="subconcept_of",
+                            value=multilateral_climate_fund_project_project,
+                        )
+                    ],
+                ),
+            )
+        )
+    return labels
+
+
+# region multilateral_climate_fund label
+def _multilateral_climate_fund_label(
+    navigator_family: NavigatorFamily,
+) -> list[LabelRelationship]:
+    labels: list[LabelRelationship] = []
+    if navigator_family.corpus.import_id in MCF_CORPORA:
+        multilateral_climate_fund = _corpus_import_id_to_multilateral_climate_fund.get(
+            navigator_family.corpus.import_id
+        )
+        if multilateral_climate_fund:
+            labels.append(
+                LabelRelationship(
+                    type="multilateral_climate_fund",
+                    value=Label(
+                        id=f"agent::{multilateral_climate_fund}",
+                        value=multilateral_climate_fund,
+                        type="agent",
+                        labels=[
+                            LabelRelationship(
+                                type="subconcept_of",
+                                value=multilateral_climate_fund_project,
+                            )
+                        ],
+                    ),
+                )
+            )
+
+    return labels
+
+
 # region un_convention label
 _corpus_import_id_to_un_convention = {
     "UNFCCC.corpus.i00000001.n0000": "UNFCCC",
@@ -1685,26 +1858,3 @@ _corpus_import_id_to_multilateral_climate_fund = {
     "MCF.corpus.GCF.n0000": "Global Environment Facility",
     "MCF.corpus.GEF.n0000": "Green Climate Fund",
 }
-
-
-def _multilateral_climate_fund_label(
-    navigator_family: NavigatorFamily,
-) -> list[LabelRelationship]:
-    labels: list[LabelRelationship] = []
-    if navigator_family.corpus.import_id in MCF_CORPORA:
-        multilateral_climate_fund = _corpus_import_id_to_multilateral_climate_fund.get(
-            navigator_family.corpus.import_id
-        )
-        if multilateral_climate_fund:
-            labels.append(
-                LabelRelationship(
-                    type="multilateral_climate_fund",
-                    value=Label(
-                        id=f"multilateral_climate_fund::{multilateral_climate_fund}",
-                        value=multilateral_climate_fund,
-                        type="multilateral_climate_fund",
-                    ),
-                )
-            )
-
-    return labels

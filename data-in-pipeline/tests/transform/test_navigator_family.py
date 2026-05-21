@@ -20,7 +20,11 @@ from app.transform.navigator_family import (
     _category_label,
     _deprecated_category_label,
     _entity_type_label,
+    _implementing_agency_label,
+    _law_type_label,
     _multilateral_climate_fund_label,
+    _status_label,
+    _topic_label,
     _un_convention_label,
     transform_navigator_family,
 )
@@ -1076,6 +1080,24 @@ def test_transform_navigator_family_with_laws_and_policies_corpus_type(
                     id="deprecated_category::Laws and Policies",
                     value="Laws and Policies",
                     type="deprecated_category",
+                ),
+            ),
+            LabelRelationship(
+                type="law_type",
+                value=Label(
+                    id="law_type::Mitigation",
+                    value="Framework law",
+                    type="law_type",
+                    labels=[
+                        LabelRelationship(
+                            type="subconcept_of",
+                            value=Label(
+                                id="category::Law",
+                                value="Law",
+                                type="category",
+                            ),
+                        )
+                    ],
                 ),
             ),
         ],
@@ -2272,7 +2294,7 @@ def test_multilateral_climate_fund_label_returns_label(corpus_import_id, expecte
     labels = _multilateral_climate_fund_label(family)
     assert len(labels) == 1
     assert labels[0].type == "multilateral_climate_fund"
-    assert labels[0].value.id == f"multilateral_climate_fund::{expected_fund}"
+    assert labels[0].value.id == f"agent::{expected_fund}"
 
 
 def test_multilateral_climate_fund_label_returns_empty_for_non_mcf_corpus():
@@ -2419,3 +2441,230 @@ def test_entity_type_label_returns_empty_for_non_mcf_corpus():
         corpus=NavigatorCorpusFactory.build(import_id="CCLW.corpus.i00000001.n0000"),
     )
     assert _entity_type_label(family) == []
+
+
+@pytest.mark.parametrize(
+    "topic",
+    ["Mitigation", "Adaptation", "Loss and Damage"],
+)
+def test_topic_label_returns_label_for_topic_metadata(topic):
+    family = NavigatorFamilyFactory.build(
+        corpus=NavigatorCorpusFactory.build(import_id="CCLW.corpus.i00000001.n0000"),
+        metadata={"topic": [topic]},
+    )
+    labels = _topic_label(family)
+    assert len(labels) == 1
+    assert labels[0].type == "topic"
+    assert labels[0].value.id == f"topic::{topic}"
+    assert labels[0].value.value == topic
+    assert labels[0].value.type == "topic"
+
+
+def test_topic_label_includes_subconcept_of_law():
+    family = NavigatorFamilyFactory.build(
+        corpus=NavigatorCorpusFactory.build(import_id="CCLW.corpus.i00000001.n0000"),
+        metadata={"topic": ["Mitigation"]},
+    )
+    labels = _topic_label(family)
+    assert len(labels) == 1
+    subconcept_labels = labels[0].value.labels
+    assert len(subconcept_labels) == 1
+    assert subconcept_labels[0].type == "subconcept_of"
+    assert subconcept_labels[0].value.id == "category::Law"
+    assert subconcept_labels[0].value.type == "category"
+    assert subconcept_labels[0].value.value == "Law"
+
+
+def test_topic_label_returns_empty_when_no_topic_key():
+    family = NavigatorFamilyFactory.build(
+        corpus=NavigatorCorpusFactory.build(import_id="CCLW.corpus.i00000001.n0000"),
+        metadata={},
+    )
+    assert _topic_label(family) == []
+
+
+def test_topic_label_returns_empty_when_topic_is_empty_list():
+    family = NavigatorFamilyFactory.build(
+        corpus=NavigatorCorpusFactory.build(import_id="CCLW.corpus.i00000001.n0000"),
+        metadata={"topic": []},
+    )
+    assert _topic_label(family) == []
+
+
+def test_topic_label_returns_empty_when_topic_first_value_is_empty_string():
+    family = NavigatorFamilyFactory.build(
+        corpus=NavigatorCorpusFactory.build(import_id="CCLW.corpus.i00000001.n0000"),
+        metadata={"topic": [""]},
+    )
+    assert _topic_label(family) == []
+
+
+def test_topic_label_returns_law_type_label_for_mitigation_framework():
+    family = NavigatorFamilyFactory.build(
+        corpus=NavigatorCorpusFactory.build(import_id="CCLW.corpus.i00000001.n0000"),
+        metadata={"framework": ["Mitigation"]},
+    )
+    labels = _topic_label(family)
+    assert len(labels) == 1
+    assert labels[0].type == "law_type"
+    assert labels[0].value.id == "law_type::Mitigation"
+    assert labels[0].value.value == "Framework law"
+
+
+def test_topic_label_ignores_non_mitigation_framework_metadata():
+    family = NavigatorFamilyFactory.build(
+        corpus=NavigatorCorpusFactory.build(import_id="CCLW.corpus.i00000001.n0000"),
+        metadata={"framework": ["Adaptation"]},
+    )
+    assert _topic_label(family) == []
+
+
+@pytest.mark.parametrize("framework", ["Adaptation", "Mitigation", "Drm/Drr"])
+def test_law_type_label_returns_label_for_framework_values(framework):
+    family = NavigatorFamilyFactory.build(
+        corpus=NavigatorCorpusFactory.build(import_id="CCLW.corpus.i00000001.n0000"),
+        metadata={"framework": [framework]},
+    )
+    labels = _law_type_label(family)
+    assert len(labels) == 1
+    assert labels[0].type == "law_type"
+    assert labels[0].value.id == f"law_type::{framework}"
+    assert labels[0].value.value == "Framework law"
+    assert labels[0].value.type == "law_type"
+
+
+def test_law_type_label_includes_subconcept_of_law():
+    family = NavigatorFamilyFactory.build(
+        corpus=NavigatorCorpusFactory.build(import_id="CCLW.corpus.i00000001.n0000"),
+        metadata={"framework": ["Adaptation"]},
+    )
+    labels = _law_type_label(family)
+    subconcept_labels = labels[0].value.labels
+    assert len(subconcept_labels) == 1
+    assert subconcept_labels[0].type == "subconcept_of"
+    assert subconcept_labels[0].value.id == "category::Law"
+    assert subconcept_labels[0].value.type == "category"
+
+
+def test_law_type_label_returns_empty_when_no_framework_key():
+    family = NavigatorFamilyFactory.build(
+        corpus=NavigatorCorpusFactory.build(import_id="CCLW.corpus.i00000001.n0000"),
+        metadata={},
+    )
+    assert _law_type_label(family) == []
+
+
+def test_law_type_label_returns_empty_for_non_matching_framework():
+    family = NavigatorFamilyFactory.build(
+        corpus=NavigatorCorpusFactory.build(import_id="CCLW.corpus.i00000001.n0000"),
+        metadata={"framework": ["Other"]},
+    )
+    assert _law_type_label(family) == []
+
+
+def test_law_type_label_returns_empty_when_framework_is_empty_list():
+    family = NavigatorFamilyFactory.build(
+        corpus=NavigatorCorpusFactory.build(import_id="CCLW.corpus.i00000001.n0000"),
+        metadata={"framework": []},
+    )
+    assert _law_type_label(family) == []
+
+
+def test_status_label_returns_label_for_status_metadata():
+    family = NavigatorFamilyFactory.build(
+        corpus=NavigatorCorpusFactory.build(import_id="MCF.corpus.AF.n0000"),
+        metadata={"status": ["Under Implementation"]},
+    )
+    labels = _status_label(family)
+    assert len(labels) == 1
+    assert labels[0].type == "status"
+    assert labels[0].value.id == "status::Under Implementation"
+    assert labels[0].value.value == "Under Implementation"
+    assert labels[0].value.type == "status"
+
+
+def test_status_label_includes_subconcept_of_mcf_project():
+    family = NavigatorFamilyFactory.build(
+        corpus=NavigatorCorpusFactory.build(import_id="MCF.corpus.AF.n0000"),
+        metadata={"status": ["Under Implementation"]},
+    )
+    labels = _status_label(family)
+    subconcept_labels = labels[0].value.labels
+    assert len(subconcept_labels) == 1
+    assert subconcept_labels[0].type == "subconcept_of"
+    assert subconcept_labels[0].value.id == "entity_type::Project"
+    assert subconcept_labels[0].value.type == "entity_type"
+
+
+def test_status_label_returns_empty_when_no_status_key():
+    family = NavigatorFamilyFactory.build(
+        corpus=NavigatorCorpusFactory.build(import_id="MCF.corpus.AF.n0000"),
+        metadata={},
+    )
+    assert _status_label(family) == []
+
+
+def test_status_label_returns_empty_when_status_is_empty_list():
+    family = NavigatorFamilyFactory.build(
+        corpus=NavigatorCorpusFactory.build(import_id="MCF.corpus.AF.n0000"),
+        metadata={"status": []},
+    )
+    assert _status_label(family) == []
+
+
+def test_status_label_returns_empty_when_status_first_value_is_empty_string():
+    family = NavigatorFamilyFactory.build(
+        corpus=NavigatorCorpusFactory.build(import_id="MCF.corpus.AF.n0000"),
+        metadata={"status": [""]},
+    )
+    assert _status_label(family) == []
+
+
+def test_implementing_agency_label_returns_label():
+    family = NavigatorFamilyFactory.build(
+        corpus=NavigatorCorpusFactory.build(import_id="MCF.corpus.AF.n0000"),
+        metadata={"implementing_agency": ["World Bank"]},
+    )
+    labels = _implementing_agency_label(family)
+    assert len(labels) == 1
+    assert labels[0].type == "implementing_agency"
+    assert labels[0].value.id == "agent::World Bank"
+    assert labels[0].value.value == "World Bank"
+    assert labels[0].value.type == "agent"
+
+
+def test_implementing_agency_label_includes_subconcept_of_mcf_project():
+    family = NavigatorFamilyFactory.build(
+        corpus=NavigatorCorpusFactory.build(import_id="MCF.corpus.AF.n0000"),
+        metadata={"implementing_agency": ["World Bank"]},
+    )
+    labels = _implementing_agency_label(family)
+    subconcept_labels = labels[0].value.labels
+    assert len(subconcept_labels) == 1
+    assert subconcept_labels[0].type == "subconcept_of"
+    assert subconcept_labels[0].value.id == "entity_type::Project"
+    assert subconcept_labels[0].value.type == "entity_type"
+
+
+def test_implementing_agency_label_returns_empty_when_no_metadata():
+    family = NavigatorFamilyFactory.build(
+        corpus=NavigatorCorpusFactory.build(import_id="MCF.corpus.AF.n0000"),
+        metadata={},
+    )
+    assert _implementing_agency_label(family) == []
+
+
+def test_implementing_agency_label_returns_empty_when_empty_list():
+    family = NavigatorFamilyFactory.build(
+        corpus=NavigatorCorpusFactory.build(import_id="MCF.corpus.AF.n0000"),
+        metadata={"implementing_agency": []},
+    )
+    assert _implementing_agency_label(family) == []
+
+
+def test_implementing_agency_label_returns_empty_when_empty_string():
+    family = NavigatorFamilyFactory.build(
+        corpus=NavigatorCorpusFactory.build(import_id="MCF.corpus.AF.n0000"),
+        metadata={"implementing_agency": [""]},
+    )
+    assert _implementing_agency_label(family) == []
