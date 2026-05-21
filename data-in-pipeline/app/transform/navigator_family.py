@@ -71,6 +71,7 @@ multilateral_climate_fund_project_project = Label(
 )
 
 law = Label(type="category", id="category::Law", value="Law")
+policy = Label(type="category", id="category::Policy", value="Policy")
 
 
 _eu_and_international_region_ids = {c.id: c for c in custom_countries}
@@ -1661,11 +1662,13 @@ def _topic_label(
     navigator_family: NavigatorFamily,
 ) -> list[LabelRelationship]:
     labels: list[LabelRelationship] = []
+    category = _category_import_id_to_category(navigator_family)
 
     # These are controlled vocabularies
     # @see: https://github.com/climatepolicyradar/data-migrations/blob/main/taxonomies/Laws%20and%20Policies.json#L15-L18
     topic_values = navigator_family.metadata.get("topic")
     if topic_values and topic_values[0]:
+        subconcept_of = policy if category == "Policy" else law
         topic = topic_values[0]
         labels.append(
             LabelRelationship(
@@ -1674,7 +1677,9 @@ def _topic_label(
                     id=f"topic::{topic}",
                     value=topic,
                     type="topic",
-                    labels=[LabelRelationship(type="subconcept_of", value=law)],
+                    labels=[
+                        LabelRelationship(type="subconcept_of", value=subconcept_of)
+                    ],
                 ),
             )
         )
