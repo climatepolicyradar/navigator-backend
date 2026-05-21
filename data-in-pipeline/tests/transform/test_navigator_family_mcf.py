@@ -146,9 +146,9 @@ def navigator_family_multilateral_climate_fund_project() -> Identified[Navigator
 
 
 @pytest.fixture
-def navigator_family_multilateral_climate_fund_guidance() -> (
-    Identified[NavigatorFamily]
-):
+def navigator_family_multilateral_climate_fund_guidance() -> Identified[
+    NavigatorFamily
+]:
     return Identified(
         id="family",
         source="navigator_family",
@@ -307,11 +307,77 @@ def test_transform_navigator_family_with_multilateral_climate_fund_project(
                 ),
             ),
             LabelRelationship(
+                type="status",
+                value=Label(
+                    id="status::Under Implementation",
+                    value="Under Implementation",
+                    type="status",
+                    labels=[
+                        LabelRelationship(
+                            type="subconcept_of",
+                            value=Label(
+                                id="entity_type::Project",
+                                value="Project",
+                                type="entity_type",
+                                labels=[
+                                    LabelRelationship(
+                                        type="subconcept_of",
+                                        value=Label(
+                                            id="category::Multilateral Climate Fund project",
+                                            value="Multilateral Climate Fund project",
+                                            type="category",
+                                        ),
+                                    )
+                                ],
+                            ),
+                        )
+                    ],
+                ),
+            ),
+            LabelRelationship(
+                type="implementing_agency",
+                value=Label(
+                    id="agent::International Bank for Reconstruction",
+                    value="International Bank for Reconstruction",
+                    type="agent",
+                    labels=[
+                        LabelRelationship(
+                            type="subconcept_of",
+                            value=Label(
+                                id="entity_type::Project",
+                                value="Project",
+                                type="entity_type",
+                                labels=[
+                                    LabelRelationship(
+                                        type="subconcept_of",
+                                        value=Label(
+                                            id="category::Multilateral Climate Fund project",
+                                            value="Multilateral Climate Fund project",
+                                            type="category",
+                                        ),
+                                    )
+                                ],
+                            ),
+                        )
+                    ],
+                ),
+            ),
+            LabelRelationship(
                 type="multilateral_climate_fund",
                 value=Label(
-                    id="multilateral_climate_fund::Adaptation Fund",
+                    id="agent::Adaptation Fund",
                     value="Adaptation Fund",
-                    type="multilateral_climate_fund",
+                    type="agent",
+                    labels=[
+                        LabelRelationship(
+                            type="subconcept_of",
+                            value=Label(
+                                id="category::Multilateral Climate Fund project",
+                                value="Multilateral Climate Fund project",
+                                type="category",
+                            ),
+                        )
+                    ],
                 ),
             ),
         ],
