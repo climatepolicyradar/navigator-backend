@@ -2013,9 +2013,9 @@ def test_transform_to_category_corpus_ids(corpus_id: str, expected_category: str
     family_doc = result[0]
 
     category_labels = [label for label in family_doc.labels if label.type == "category"]
-    assert any(label.value.id == expected_category for label in category_labels), (
-        f"Expected category '{expected_category}' not found in labels for corpus '{corpus_id}'"
-    )
+    assert any(
+        label.value.id == expected_category for label in category_labels
+    ), f"Expected category '{expected_category}' not found in labels for corpus '{corpus_id}'"
 
 
 def test_transform_navigator_family_and_document_with_domain_metadata(
