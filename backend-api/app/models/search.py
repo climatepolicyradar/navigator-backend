@@ -67,6 +67,18 @@ class SearchRequestBody(CprSdkSearchParameters):
     For example: 'Adaptation strategy'"
     """
 
+    exact_match: bool = Field(
+        default=True,
+        description=(
+            "Whether to only return results that exactly match the query string. "
+            "This defaults to True as semantic search is deprecated in the backend."
+        ),
+    )
+    """
+    Indicate if the `query_string` should be treated as an exact match when
+    the search is performed.
+    """
+
     # We need to add `keyword_filters` here because the items received from the frontend
     # need processing to be ready for vespa (key name change & geo slugs to geo codes)
     keyword_filters: BackendKeywordFilter = None
@@ -120,6 +132,16 @@ class SearchRequestBody(CprSdkSearchParameters):
                 f"page_size: {page_size}, limit: {limit}"
             )
         return page_size
+
+    @field_validator("exact_match", mode="before")
+    @classmethod
+    def force_exact_match(cls, v):
+        """
+        Ensure we always set exact_match to True.
+
+        This is as semantic search is deprecated in the backend.
+        """
+        return True
 
     @classmethod
     def __get_pydantic_json_schema__(

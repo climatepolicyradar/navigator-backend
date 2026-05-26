@@ -350,7 +350,8 @@ def test_create_vespa_search_params(
     assert produced_search_parameters.continuation_tokens == continuation_tokens
     assert produced_search_parameters.year_range == year_range
     assert produced_search_parameters.query_string == query_string
-    assert produced_search_parameters.exact_match == exact_match
+    # We've deprecated embeddings in the backend system, thus this should always be True
+    assert produced_search_parameters.exact_match
 
     # Test converted data
     if keyword_filters:

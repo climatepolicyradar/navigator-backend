@@ -78,6 +78,9 @@ strategy”
 Boolean value to indicate if the `query_string`should be treated as an exact
 match when the search is performed.
 
+> **Warning**: `exact_match` will be overidden to `True`. This is because
+> embeddings have been deprecated in the backend system.
+
 ##### max_passages_per_doc (optional, default is 10)
 
 The maximum number of matched passages to be returned for a single document.

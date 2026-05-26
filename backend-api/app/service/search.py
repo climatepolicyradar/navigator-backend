@@ -1,6 +1,5 @@
 import logging
 import re
-from enum import Enum
 from typing import Mapping, Optional, Sequence, Tuple
 
 from cpr_sdk.exceptions import QueryError
@@ -43,12 +42,6 @@ from app.service.util import to_cdn_url
 from app.telemetry import observe
 
 _LOGGER = logging.getLogger(__name__)
-
-
-class SearchType(str, Enum):
-    standard = "standard"
-    browse = "browse"
-    browse_with_concepts = "browse_with_concepts"
 
 
 def _parse_text_block_id(text_block_id: Optional[str]) -> Tuple[Optional[int], int]:
@@ -463,34 +456,6 @@ def create_vespa_search_params(
     return search_body
 
 
-@observe("identify_search_type")
-def identify_search_type(search_body: SearchRequestBody) -> str:
-    """Identify the search type from parameters"""
-    if not search_body.query_string and not search_body.concept_filters:
-        return SearchType.browse
-    elif not search_body.query_string and search_body.concept_filters:
-        return SearchType.browse_with_concepts
-    else:
-        return SearchType.standard
-
-
-@observe("mutate_search_body_for_search_type")
-def mutate_search_body_for_search_type(
-    search_body: SearchRequestBody,
-) -> SearchRequestBody:
-    """Mutate the search body in line with the search params"""
-    search_type = identify_search_type(search_body=search_body)
-    if search_type == SearchType.browse:
-        search_body.all_results = True
-        search_body.documents_only = True
-        search_body.exact_match = False
-    elif search_type == SearchType.browse_with_concepts:
-        search_body.all_results = True
-        search_body.documents_only = False
-        search_body.exact_match = False
-    return search_body
-
-
 @observe("make_search_request")
 def make_search_request(
     db: Session,
@@ -500,7 +465,6 @@ def make_search_request(
     """Perform a search request against the Vespa search engine"""
 
     try:
-        search_body = mutate_search_body_for_search_type(search_body=search_body)
         cpr_sdk_search_params = create_vespa_search_params(db, search_body)
         cpr_sdk_search_response = observe("vespa_search")(vespa_search_adapter.search)(
             parameters=cpr_sdk_search_params
