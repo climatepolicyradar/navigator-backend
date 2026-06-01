@@ -1,5 +1,12 @@
 import pulumi
 import pulumi_aws as aws
+from pulumi_aws.ecs.express_gateway_service import (
+    ExpressGatewayService,
+    ExpressGatewayServiceNetworkConfigurationArgs,
+    ExpressGatewayServicePrimaryContainerArgs,
+    ExpressGatewayServicePrimaryContainerEnvironmentArgs,
+    ExpressGatewayServiceScalingTargetArgs,
+)
 
 account_id = aws.get_caller_identity().account_id
 
@@ -10,6 +17,14 @@ def generate_secret_key(project: str, aws_service: str, name: str):
 
 
 config = pulumi.Config()
+stack = pulumi.get_stack()
+NAME_PREFIX = f"geographies-api-{stack}"
+
+########################################################################
+# Reference to shared API services infra
+########################################################################
+
+shared = pulumi.StackReference(f"climatepolicyradar/api-services-shared/{stack}")
 
 
 # This stuff is being encapsulated in navigator-infra and we should use that once it is ready
@@ -177,5 +192,113 @@ geographies_api_apprunner_service = aws.apprunner.Service(
     ),
     opts=pulumi.ResourceOptions(protect=True),
 )
+
+########################################################################
+# ECS Express Gateway service
+########################################################################
+
+# Task role: the IAM role the *running container* assumes.
+ecs_task_role = aws.iam.Role(
+    f"{NAME_PREFIX}-ecs-task-role",
+    name=f"{NAME_PREFIX}-ecs-task-role",
+    assume_role_policy=aws.iam.get_policy_document(
+        statements=[
+            aws.iam.GetPolicyDocumentStatementArgs(
+                effect="Allow",
+                principals=[
+                    aws.iam.GetPolicyDocumentStatementPrincipalArgs(
+                        type="Service",
+                        identifiers=["ecs-tasks.amazonaws.com"],
+                    )
+                ],
+                actions=["sts:AssumeRole"],
+            )
+        ]
+    ).json,
+)
+
+# Reuse the same S3 access policy that App Runner uses — the bucket
+# permissions are the same regardless of compute backend.
+aws.iam.RolePolicyAttachment(
+    f"{NAME_PREFIX}-ecs-task-role-s3-policy-attachment",
+    role=ecs_task_role.name,
+    policy_arn=s3_access_policy.arn,
+)
+
+# SSM access for any secrets the container reads at runtime. Mirrors
+# the App Runner SSM policy.
+aws.iam.RolePolicy(
+    f"{NAME_PREFIX}-ecs-task-role-ssm-policy",
+    role=ecs_task_role.id,
+    policy=aws.iam.get_policy_document(
+        statements=[
+            aws.iam.GetPolicyDocumentStatementArgs(
+                effect="Allow",
+                actions=["ssm:GetParameters"],
+                resources=[
+                    f"arn:aws:ssm:eu-west-1:{account_id}:parameter/geographies-api/*"
+                ],
+            )
+        ]
+    ).json,
+)
+
+
+# Container config
+primary_container = ExpressGatewayServicePrimaryContainerArgs(
+    image=geographies_api_ecr_repository.repository_url.apply(
+        lambda url: f"{url}:{config.require('docker_tag')}"
+    ),
+    container_port=8080,  # @related: PORT_NUMBER
+    environments=[
+        ExpressGatewayServicePrimaryContainerEnvironmentArgs(
+            name="GEOGRAPHIES_BUCKET",
+            value=config.require("geographies_bucket"),
+        ),
+        ExpressGatewayServicePrimaryContainerEnvironmentArgs(
+            name="CDN_URL",
+            value=config.require("cdn_url"),
+        ),
+    ],
+)
+
+
+ecs_express_service = ExpressGatewayService(
+    f"{NAME_PREFIX}-ecs-express-service",
+    service_name=NAME_PREFIX,
+    cluster=shared.get_output("cluster_arn"),
+    execution_role_arn=shared.get_output("task_execution_role_arn"),
+    infrastructure_role_arn=shared.get_output("infrastructure_role_arn"),
+    task_role_arn=ecs_task_role.arn,  # service-specific
+    primary_container=primary_container,
+    health_check_path="/health",
+    cpu="1024",
+    memory="2048",
+    scaling_targets=[
+        ExpressGatewayServiceScalingTargetArgs(
+            auto_scaling_metric="AVERAGE_CPU",
+            auto_scaling_target_value=70,
+            min_task_count=1,
+            max_task_count=4,
+        ),
+    ],
+    network_configurations=[
+        ExpressGatewayServiceNetworkConfigurationArgs(
+            security_groups=[shared.get_output("alb_security_group_id")],
+            subnets=[
+                shared.get_output("vpc_public_subnet_1_id"),
+                shared.get_output("vpc_public_subnet_2_id"),
+                shared.get_output("vpc_public_subnet_3_id"),
+            ],
+        ),
+    ],
+)
+
+# pulumi.export(
+#     "ecs_express_service_url",
+#     ecs_express_service.ingress_paths.apply(
+#         lambda paths: paths[0].endpoint if paths else None
+#     ),
+# )
 
 pulumi.export("apprunner_service_url", geographies_api_apprunner_service.service_url)
