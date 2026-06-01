@@ -265,7 +265,10 @@ async def create_deployment(flow: Flow) -> None:
         docker_registry,
     )
 
-    default_variables_name = f"ecs-default-job-variables-prefect-mvp-{aws_env}"
+    # In prefect the Variable is saved with the shortened prod suffix for the
+    # environment, so we need to adjust the suffix accordingly when loading the block.
+    aws_env_short: str = "prod" if aws_env == "production" else aws_env
+    default_variables_name = f"ecs-default-job-variables-prefect-mvp-{aws_env_short}"
     default_job_variables: Any = await Variable.aget(default_variables_name)
     if default_job_variables is None:
         raise ValueError(f"Variable '{default_variables_name}' not found in Prefect")
