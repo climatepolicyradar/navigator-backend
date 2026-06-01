@@ -275,14 +275,6 @@ def test_transform_navigator_family_with_multilateral_climate_fund_project(
                 ),
             ),
             LabelRelationship(
-                type="category",
-                value=Label(
-                    id="category::Multilateral Climate Fund project",
-                    value="Multilateral Climate Fund project",
-                    type="category",
-                ),
-            ),
-            LabelRelationship(
                 type="sector",
                 value=Label(
                     id="sector::Public Sector",
@@ -307,11 +299,85 @@ def test_transform_navigator_family_with_multilateral_climate_fund_project(
                 ),
             ),
             LabelRelationship(
+                type="category",
+                value=Label(
+                    id="category::Multilateral Climate Fund project",
+                    value="Multilateral Climate Fund project",
+                    type="category",
+                ),
+            ),
+            LabelRelationship(
+                type="status",
+                value=Label(
+                    id="status::Under Implementation",
+                    value="Under Implementation",
+                    type="status",
+                    labels=[
+                        LabelRelationship(
+                            type="subconcept_of",
+                            value=Label(
+                                id="entity_type::Project",
+                                value="Project",
+                                type="entity_type",
+                                labels=[
+                                    LabelRelationship(
+                                        type="subconcept_of",
+                                        value=Label(
+                                            id="category::Multilateral Climate Fund project",
+                                            value="Multilateral Climate Fund project",
+                                            type="category",
+                                        ),
+                                    )
+                                ],
+                            ),
+                        )
+                    ],
+                ),
+            ),
+            LabelRelationship(
+                type="implementing_agency",
+                value=Label(
+                    id="agent::International Bank for Reconstruction",
+                    value="International Bank for Reconstruction",
+                    type="agent",
+                    labels=[
+                        LabelRelationship(
+                            type="subconcept_of",
+                            value=Label(
+                                id="entity_type::Project",
+                                value="Project",
+                                type="entity_type",
+                                labels=[
+                                    LabelRelationship(
+                                        type="subconcept_of",
+                                        value=Label(
+                                            id="category::Multilateral Climate Fund project",
+                                            value="Multilateral Climate Fund project",
+                                            type="category",
+                                        ),
+                                    )
+                                ],
+                            ),
+                        )
+                    ],
+                ),
+            ),
+            LabelRelationship(
                 type="multilateral_climate_fund",
                 value=Label(
-                    id="multilateral_climate_fund::Adaptation Fund",
+                    id="agent::Adaptation Fund",
                     value="Adaptation Fund",
-                    type="multilateral_climate_fund",
+                    type="agent",
+                    labels=[
+                        LabelRelationship(
+                            type="subconcept_of",
+                            value=Label(
+                                id="category::Multilateral Climate Fund project",
+                                value="Multilateral Climate Fund project",
+                                type="category",
+                            ),
+                        )
+                    ],
                 ),
             ),
         ],
@@ -336,27 +402,19 @@ def test_transform_navigator_family_with_multilateral_climate_fund_project(
                             ),
                         ),
                         LabelRelationship(
-                            type="category",
-                            value=Label(
-                                id="category::Multilateral Climate Fund project",
-                                value="Multilateral Climate Fund project",
-                                type="category",
-                            ),
-                        ),
-                        LabelRelationship(
-                            type="entity_type",
-                            value=Label(
-                                id="entity_type::Project",
-                                value="Project",
-                                type="entity_type",
-                            ),
-                        ),
-                        LabelRelationship(
                             type="language",
                             value=Label(
                                 id="language::eng",
                                 value="eng",
                                 type="language",
+                            ),
+                        ),
+                        LabelRelationship(
+                            type="category",
+                            value=Label(
+                                id="category::Multilateral Climate Fund project",
+                                value="Multilateral Climate Fund project",
+                                type="category",
                             ),
                         ),
                     ],
@@ -388,22 +446,6 @@ def test_transform_navigator_family_with_multilateral_climate_fund_project(
                             ),
                         ),
                         LabelRelationship(
-                            type="category",
-                            value=Label(
-                                id="category::Multilateral Climate Fund project",
-                                value="Multilateral Climate Fund project",
-                                type="category",
-                            ),
-                        ),
-                        LabelRelationship(
-                            type="entity_type",
-                            value=Label(
-                                id="entity_type::Project",
-                                value="Project",
-                                type="entity_type",
-                            ),
-                        ),
-                        LabelRelationship(
                             type="language",
                             value=Label(
                                 id="language::eng",
@@ -417,6 +459,14 @@ def test_transform_navigator_family_with_multilateral_climate_fund_project(
                                 id="status::Merged",
                                 value="Merged",
                                 type="status",
+                            ),
+                        ),
+                        LabelRelationship(
+                            type="category",
+                            value=Label(
+                                id="category::Multilateral Climate Fund project",
+                                value="Multilateral Climate Fund project",
+                                type="category",
                             ),
                         ),
                     ],
@@ -461,27 +511,19 @@ def test_transform_navigator_family_with_multilateral_climate_fund_project(
                         ),
                     ),
                     LabelRelationship(
-                        type="category",
-                        value=Label(
-                            id="category::Multilateral Climate Fund project",
-                            value="Multilateral Climate Fund project",
-                            type="category",
-                        ),
-                    ),
-                    LabelRelationship(
-                        type="entity_type",
-                        value=Label(
-                            id="entity_type::Project",
-                            value="Project",
-                            type="entity_type",
-                        ),
-                    ),
-                    LabelRelationship(
                         type="language",
                         value=Label(
                             id="language::eng",
                             value="eng",
                             type="language",
+                        ),
+                    ),
+                    LabelRelationship(
+                        type="category",
+                        value=Label(
+                            id="category::Multilateral Climate Fund project",
+                            value="Multilateral Climate Fund project",
+                            type="category",
                         ),
                     ),
                 ],
@@ -518,22 +560,6 @@ def test_transform_navigator_family_with_multilateral_climate_fund_project(
                         ),
                     ),
                     LabelRelationship(
-                        type="category",
-                        value=Label(
-                            id="category::Multilateral Climate Fund project",
-                            value="Multilateral Climate Fund project",
-                            type="category",
-                        ),
-                    ),
-                    LabelRelationship(
-                        type="entity_type",
-                        value=Label(
-                            id="entity_type::Project",
-                            value="Project",
-                            type="entity_type",
-                        ),
-                    ),
-                    LabelRelationship(
                         type="language",
                         value=Label(
                             id="language::eng",
@@ -547,6 +573,14 @@ def test_transform_navigator_family_with_multilateral_climate_fund_project(
                             id="status::Merged",
                             value="Merged",
                             type="status",
+                        ),
+                    ),
+                    LabelRelationship(
+                        type="category",
+                        value=Label(
+                            id="category::Multilateral Climate Fund project",
+                            value="Multilateral Climate Fund project",
+                            type="category",
                         ),
                     ),
                 ],

@@ -44,7 +44,7 @@ def test_fetch_family_success(base_config):
             title="Test Family",
             summary="Family summary",
             corpus=NavigatorCorpusFactory.build(
-                import_id="COR-111",
+                import_id="CCLW.corpus.i00000001.n0000",
                 corpus_type=NavigatorCorpusTypeFactory.build(name="corpus_type"),
                 organisation=NavigatorOrganisationFactory.build(id=1, name="UNFCCC"),
             ),
@@ -120,12 +120,12 @@ def test_fetch_all_families_successfully(base_config):
     flow_run_id = "flow-001"
 
     corpus_1 = NavigatorCorpusFactory.build(
-        import_id="COR-001",
+        import_id="CCLW.corpus.i00000001.n0000",
         corpus_type=NavigatorCorpusTypeFactory.build(name="corpus_type"),
         organisation=NavigatorOrganisationFactory.build(id=1, name="UNFCCC"),
     )
     corpus_2 = NavigatorCorpusFactory.build(
-        import_id="COR-002",
+        import_id="CPR.corpus.i00000001.n0000",
         corpus_type=NavigatorCorpusTypeFactory.build(name="corpus_type"),
         organisation=NavigatorOrganisationFactory.build(id=1, name="UNFCCC"),
     )
@@ -225,7 +225,7 @@ def test_fetch_all_families_handles_successful_retrievals_and_errors(base_config
                 title="Family 1",
                 summary="Family summary",
                 corpus=NavigatorCorpusFactory.build(
-                    import_id="COR-001",
+                    import_id="CCLW.corpus.i00000001.n0000",
                     corpus_type=NavigatorCorpusTypeFactory.build(name="corpus_type"),
                     organisation=NavigatorOrganisationFactory.build(
                         id=1, name="UNFCCC"

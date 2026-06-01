@@ -1,6 +1,7 @@
 import datetime
 from enum import Enum
 from http import HTTPStatus
+from typing import Literal
 
 import requests
 from pydantic import BaseModel, ValidationError
@@ -70,8 +71,33 @@ class NavigatorOrganisation(BaseModel):
     name: str
 
 
+type CorpusId = Literal[
+    "CCLW.corpus.i00000001.n0000",
+    "Academic.corpus.Litigation.n0000",
+    "CPR.corpus.Goldstandard.n0000",
+    "CPR.corpus.i00000589.n0000",
+    "CPR.corpus.i00000001.n0000",
+    "CPR.corpus.i00000002.n0000",
+    "CPR.corpus.i00000591.n0000",
+    "CPR.corpus.i00000592.n0000",
+    "MCF.corpus.AF.n0000",
+    "MCF.corpus.AF.Guidance",
+    "MCF.corpus.CIF.n0000",
+    "MCF.corpus.CIF.Guidance",
+    "MCF.corpus.GCF.n0000",
+    "MCF.corpus.GCF.Guidance",
+    "MCF.corpus.GEF.n0000",
+    "MCF.corpus.GEF.Guidance",
+    "OEP.corpus.i00000001.n0000",
+    "UNFCCC.corpus.i00000001.n0000",
+    "UN.corpus.UNCCD.n0000",
+    "UN.corpus.UNCBD.n0000",
+    "ICCN.corpus.i00000001.n0000",
+]
+
+
 class NavigatorCorpus(BaseModel):
-    import_id: str
+    import_id: CorpusId
     corpus_type: NavigatorCorpusType
     organisation: NavigatorOrganisation
     attribution_url: str = ""
@@ -387,7 +413,7 @@ class NavigatorConnector(HTTPConnector):
                             )
                         except ValidationError as e:
                             logger.info(
-                                f"Error validating family {family["import_id"]}: {e.json()}"
+                                f"Error validating family {family['import_id']}: {e.json()}"
                             )
                             failures.append(
                                 RecordValidationFailure(
