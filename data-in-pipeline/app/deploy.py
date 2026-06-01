@@ -269,6 +269,9 @@ async def create_deployment(flow: Flow) -> None:
     default_job_variables: Any = await Variable.aget(default_variables_name)
     if default_job_variables is None:
         raise ValueError(f"Variable '{default_variables_name}' not found in Prefect")
+    default_job_variables = {
+        k: v for k, v in default_job_variables.items() if v is not None
+    }
 
     job_variables = _merge_job_environments(
         {
