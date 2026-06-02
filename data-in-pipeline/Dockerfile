@@ -3,7 +3,8 @@
 # and also don't have a health endpoint to ping to provide a meaningful health
 # check
 # checkov:skip=CKV_DOCKER_2
-FROM prefecthq/prefect:3.4-python3.13
+FROM prefecthq/prefect:3.7.2-python3.13
+
 
 # Create a non-root user
 RUN useradd -m -u 1000 prefect_user
