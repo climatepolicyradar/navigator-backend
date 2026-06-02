@@ -24,7 +24,7 @@ NAME_PREFIX = f"geographies-api-{stack}"
 # Reference to shared API services infra
 ########################################################################
 
-shared = pulumi.StackReference(f"climatepolicyradar/api-services-shared/{stack}")
+shared = pulumi.StackReference(f"climatepolicyradar/ecs-infra/{stack}")
 
 
 # This stuff is being encapsulated in navigator-infra and we should use that once it is ready

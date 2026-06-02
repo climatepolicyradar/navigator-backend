@@ -1,9 +1,9 @@
-name: api-services-shared
+name: ecs-infra
 description: Shared ECS infrastructure for API microservices
 runtime:
   name: python
   options:
-    virtualenv: uv
+    toolchain: uv
 config:
   pulumi:tags:
     value:
