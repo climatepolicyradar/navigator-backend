@@ -43,7 +43,7 @@ from app.transform.models import (
 # Constants
 # ---------------------------------------------------------------------------
 
-# region category label relationships
+# region Corporate disclosures
 corporate_discloser = Label(
     type="category", id="category::Corporate Disclosures", value="Corporate Disclosures"
 )
@@ -64,6 +64,7 @@ corporate_voluntary_filing = Label(
     ],
 )
 
+# region MCFs
 multilateral_climate_fund_project = Label(
     type="category",
     id="category::Multilateral Climate Fund project",
@@ -134,10 +135,13 @@ project_completion_report = Label(
     ],
 )
 
-
+# region Law
 law = Label(type="category", id="category::Law", value="Law")
+
+# region Policy
 policy = Label(type="category", id="category::Policy", value="Policy")
 
+# region Report
 report = Label(type="category", id="category::Report", value="Report")
 climate_council_report = Label(
     id="report_type::Climate council report",
@@ -232,6 +236,7 @@ other = Label(
     labels=[LabelRelationship(type="subconcept_of", value=report)],
 )
 
+# region UN submission
 un_submission = Label(
     type="category", id="category::UN submission", value="UN submission"
 )
@@ -246,6 +251,116 @@ non_party = Label(
     value="Non-Party",
     type="author_type",
     labels=[LabelRelationship(type="subconcept_of", value=un_submission)],
+)
+unfccc = Label(
+    id="un_convention::UNFCCC",
+    value="UNFCCC",
+    type="un_convention",
+    labels=[LabelRelationship(type="subconcept_of", value=un_submission)],
+)
+nationally_determined_contribution = Label(
+    id="entity_type::Nationally Determined Contribution (NDC)",
+    value="Nationally Determined Contribution (NDC)",
+    type="entity_type",
+    labels=[LabelRelationship(type="subconcept_of", value=unfccc)],
+)
+national_adaptation_plan = Label(
+    id="entity_type::National Adaptation Plan (NAP)",
+    value="National Adaptation Plan (NAP)",
+    type="entity_type",
+    labels=[LabelRelationship(type="subconcept_of", value=unfccc)],
+)
+biennial_transparency_report = Label(
+    id="entity_type::Biennial Transparency Report (BTR)",
+    value="Biennial Transparency Report (BTR)",
+    type="entity_type",
+    labels=[LabelRelationship(type="subconcept_of", value=unfccc)],
+)
+long_term_low_emission_development_strategy = Label(
+    id="entity_type::Long-term Low-emission Development Strategy (LT-LEDS)",
+    value="Long-term Low-emission Development Strategy (LT-LEDS)",
+    type="entity_type",
+    labels=[LabelRelationship(type="subconcept_of", value=unfccc)],
+)
+biennial_update_report = Label(
+    id="entity_type::Biennial Update Report (BUR)",
+    value="Biennial Update Report (BUR)",
+    type="entity_type",
+    labels=[LabelRelationship(type="subconcept_of", value=unfccc)],
+)
+biennial_report = Label(
+    id="entity_type::Biennial Report (BR)",
+    value="Biennial Report (BR)",
+    type="entity_type",
+    labels=[LabelRelationship(type="subconcept_of", value=unfccc)],
+)
+national_communication = Label(
+    id="entity_type::National Communication (NC)",
+    value="National Communication (NC)",
+    type="entity_type",
+    labels=[LabelRelationship(type="subconcept_of", value=unfccc)],
+)
+national_inventory_report = Label(
+    id="entity_type::National Inventory Report (NIR)",
+    value="National Inventory Report (NIR)",
+    type="entity_type",
+    labels=[LabelRelationship(type="subconcept_of", value=unfccc)],
+)
+adaptation_communication = Label(
+    id="entity_type::Adaptation Communication (AC)",
+    value="Adaptation Communication (AC)",
+    type="entity_type",
+    labels=[LabelRelationship(type="subconcept_of", value=unfccc)],
+)
+
+cbd = Label(
+    id="un_convention::CBD",
+    value="CBD",
+    type="un_convention",
+    labels=[LabelRelationship(type="subconcept_of", value=un_submission)],
+)
+national_biodiversity_strategy_and_action_plan = Label(
+    id="entity_type::National Biodiversity Strategy and Action Plan (NBSAP)",
+    value="National Biodiversity Strategy and Action Plan (NBSAP)",
+    type="entity_type",
+    labels=[LabelRelationship(type="subconcept_of", value=cbd)],
+)
+national_report = Label(
+    id="entity_type::National Report (NR)",
+    value="National Report (NR)",
+    type="entity_type",
+    labels=[LabelRelationship(type="subconcept_of", value=cbd)],
+)
+national_targets = Label(
+    id="entity_type::National Targets (NT)",
+    value="National Targets (NT)",
+    type="entity_type",
+    labels=[LabelRelationship(type="subconcept_of", value=cbd)],
+)
+
+unccd = Label(
+    id="un_convention::UNCCD",
+    value="UNCCD",
+    type="un_convention",
+    labels=[LabelRelationship(type="subconcept_of", value=un_submission)],
+)
+voluntary_land_degradation_neutrality_targets = Label(
+    id="document_type::Voluntary Land Degradation Neutrality Targets (LDN-T)",
+    value="Voluntary Land Degradation Neutrality Targets (LDN-T)",
+    type="document_type",
+    labels=[LabelRelationship(type="subconcept_of", value=unccd)],
+)
+country_report = Label(
+    id="document_type::Country Report (CR)",
+    value="Country Report (CR)",
+    type="document_type",
+    labels=[LabelRelationship(type="subconcept_of", value=unccd)],
+)
+national_drought_plan = Label(
+    id="document_type::National Drought Plan (NDP)",
+    value="National Drought Plan (NDP)",
+    type="document_type",
+    labels=[LabelRelationship(type="subconcept_of", value=unccd)],
 )
 
 
@@ -1740,6 +1855,27 @@ _document_type_to_entity_type_map: dict[str, list[Label]] = {
     "Gender action plan": [multilateral_climate_fund_project_gender_action_plan],
     "Gender assessment": [gender_assessment],
     "Project completion report": [project_completion_report],
+    "Nationally Determined Contribution": [nationally_determined_contribution],
+    "National Adaptation Plan": [national_adaptation_plan],
+    "Biennial Transparency Report": [biennial_transparency_report],
+    "Long-term Low-emission Development Strategy": [
+        long_term_low_emission_development_strategy
+    ],
+    "Biennial Update Report": [biennial_update_report],
+    "Biennial Report": [biennial_report],
+    "National Communication": [national_communication],
+    "National Inventory Report": [national_inventory_report],
+    "Adaptation Communication": [adaptation_communication],
+    "National Biodiversity Strategy and Action Plan (NBSAP)": [
+        national_biodiversity_strategy_and_action_plan
+    ],
+    "National Report (NR)": [national_report],
+    "National Target (NT)": [national_targets],
+    "Voluntary Land Degradation Neutrality Targets (LDN-T)": [
+        voluntary_land_degradation_neutrality_targets
+    ],
+    "Country Report (CR)": [country_report],
+    "National Drought Plan (NDP)": [national_drought_plan],
 }
 
 
@@ -1840,11 +1976,11 @@ _author_types = {
     # https://github.com/climatepolicyradar/data-migrations/blob/main/taxonomies/Reports.json#L32-L41
     "Individual": individual,
     "Academic/Research": academic_research,
-    "National Body": national_body,
-    "Intergovernmental Organization": intergovernmental_organization,
+    "National body": national_body,
+    "Intergovernmental organization": intergovernmental_organization,
     "Corporate": corporate,
-    "Industry Body": industry_body,
-    "NGO/Civil Society": ngo_civil_society,
+    "Industry body": industry_body,
+    "NGO/Civil society": ngo_civil_society,
     "Other": other,
 }
 
@@ -2065,9 +2201,9 @@ def _report_type_label(
 
 # region un_convention label
 _corpus_import_id_to_un_convention = {
-    "UNFCCC.corpus.i00000001.n0000": "UNFCCC",
-    "UN.corpus.UNCCD.n0000": "UNCCD",
-    "UN.corpus.UNCBD.n0000": "UNCBD",
+    "UNFCCC.corpus.i00000001.n0000": unfccc,
+    "UN.corpus.UNCCD.n0000": unccd,
+    "UN.corpus.UNCBD.n0000": cbd,
 }
 
 
@@ -2082,11 +2218,7 @@ def _un_convention_label(
         labels.append(
             LabelRelationship(
                 type="un_convention",
-                value=Label(
-                    id=f"un_convention::{un_convention}",
-                    value=un_convention,
-                    type="un_convention",
-                ),
+                value=un_convention,
             )
         )
 

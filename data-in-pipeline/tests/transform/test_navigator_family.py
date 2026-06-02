@@ -490,6 +490,34 @@ def test_transform_navigator_family_with_single_matching_document(
                     type="deprecated_category",
                 ),
             ),
+            LabelRelationship(
+                type="entity_type",
+                value=Label(
+                    type="document_type",
+                    id="document_type::National Drought Plan (NDP)",
+                    value="National Drought Plan (NDP)",
+                    labels=[
+                        LabelRelationship(
+                            type="subconcept_of",
+                            value=Label(
+                                type="un_convention",
+                                id="un_convention::UNCCD",
+                                value="UNCCD",
+                                labels=[
+                                    LabelRelationship(
+                                        type="subconcept_of",
+                                        value=Label(
+                                            type="category",
+                                            id="category::UN submission",
+                                            value="UN submission",
+                                        ),
+                                    )
+                                ],
+                            ),
+                        )
+                    ],
+                ),
+            ),
         ],
         documents=[
             DocumentRelationship(
@@ -2235,7 +2263,7 @@ def test_transform_navigator_family_and_document_with_domain_metadata(
 def test_author_type_label_returns_label_for_non_stakeholder():
     family = NavigatorFamilyFactory.build(
         corpus=NavigatorCorpusFactory.build(import_id="UNFCCC.corpus.i00000001.n0000"),
-        metadata={"author_type": ["Intergovernmental Organization"]},
+        metadata={"author_type": ["Intergovernmental organization"]},
     )
     labels = _author_type_label(family)
     assert len(labels) == 1
@@ -2256,7 +2284,7 @@ def test_author_type_label_returns_empty_when_no_metadata():
     [
         ("UNFCCC.corpus.i00000001.n0000", "UNFCCC"),
         ("UN.corpus.UNCCD.n0000", "UNCCD"),
-        ("UN.corpus.UNCBD.n0000", "UNCBD"),
+        ("UN.corpus.UNCBD.n0000", "CBD"),
     ],
 )
 def test_un_convention_label_returns_label(corpus_import_id, expected_convention):
