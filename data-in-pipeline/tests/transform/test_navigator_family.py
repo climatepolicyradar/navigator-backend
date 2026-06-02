@@ -23,6 +23,7 @@ from app.transform.navigator_family import (
     _implementing_agency_label,
     _law_type_label,
     _multilateral_climate_fund_label,
+    _report_type_label,
     _status_label,
     _topic_label,
     _un_convention_label,
@@ -2668,3 +2669,34 @@ def test_implementing_agency_label_returns_empty_when_empty_string():
         metadata={"implementing_agency": [""]},
     )
     assert _implementing_agency_label(family) == []
+
+
+def test_report_type_label_returns_label_for_iccn_corpus():
+    family = NavigatorFamilyFactory.build(
+        corpus=NavigatorCorpusFactory.build(import_id="ICCN.corpus.i00000001.n0000"),
+    )
+    labels = _report_type_label(family)
+    assert len(labels) == 1
+    assert labels[0].type == "report_type"
+    assert labels[0].value.id == "report_type::Climate council report"
+    assert labels[0].value.value == "Climate council report"
+    assert labels[0].value.type == "agent"
+
+
+def test_report_type_label_includes_subconcept_of_report():
+    family = NavigatorFamilyFactory.build(
+        corpus=NavigatorCorpusFactory.build(import_id="ICCN.corpus.i00000001.n0000"),
+    )
+    labels = _report_type_label(family)
+    subconcept_labels = labels[0].value.labels
+    assert len(subconcept_labels) == 1
+    assert subconcept_labels[0].type == "subconcept_of"
+    assert subconcept_labels[0].value.id == "category::Report"
+    assert subconcept_labels[0].value.type == "category"
+
+
+def test_report_type_label_returns_empty_for_non_iccn_corpus():
+    family = NavigatorFamilyFactory.build(
+        corpus=NavigatorCorpusFactory.build(import_id="CCLW.corpus.i00000001.n0000"),
+    )
+    assert _report_type_label(family) == []
