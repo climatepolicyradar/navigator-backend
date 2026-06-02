@@ -2565,7 +2565,7 @@ def test_topic_label_returns_label_for_topic_metadata(topic):
     assert labels[0].value.type == "topic"
 
 
-def test_topic_label_includes_subconcept_of_law():
+def test_topic_label_includes_subconcept_of_law_and_policy():
     family = NavigatorFamilyFactory.build(
         corpus=NavigatorCorpusFactory.build(import_id="CCLW.corpus.i00000001.n0000"),
         metadata={"topic": ["Mitigation"]},
@@ -2573,11 +2573,15 @@ def test_topic_label_includes_subconcept_of_law():
     labels = _topic_label(family)
     assert len(labels) == 1
     subconcept_labels = labels[0].value.labels
-    assert len(subconcept_labels) == 1
+    assert len(subconcept_labels) == 2  # noqa: PLR2004
     assert subconcept_labels[0].type == "subconcept_of"
     assert subconcept_labels[0].value.id == "category::Law"
     assert subconcept_labels[0].value.type == "category"
     assert subconcept_labels[0].value.value == "Law"
+    assert subconcept_labels[1].type == "subconcept_of"
+    assert subconcept_labels[1].value.id == "category::Policy"
+    assert subconcept_labels[1].value.type == "category"
+    assert subconcept_labels[1].value.value == "Policy"
 
 
 def test_topic_label_returns_empty_when_no_topic_key():

@@ -2001,13 +2001,11 @@ def _topic_label(
     navigator_family: NavigatorFamily,
 ) -> list[LabelRelationship]:
     labels: list[LabelRelationship] = []
-    category = _category_import_id_to_category(navigator_family)
 
     # These are controlled vocabularies
     # @see: https://github.com/climatepolicyradar/data-migrations/blob/main/taxonomies/Laws%20and%20Policies.json#L15-L18
     topic_values = navigator_family.metadata.get("topic")
     if topic_values and topic_values[0]:
-        subconcept_of = policy if category == "Policy" else law
         topic = topic_values[0]
         labels.append(
             LabelRelationship(
@@ -2017,7 +2015,8 @@ def _topic_label(
                     value=topic,
                     type="topic",
                     labels=[
-                        LabelRelationship(type="subconcept_of", value=subconcept_of)
+                        LabelRelationship(type="subconcept_of", value=law),
+                        LabelRelationship(type="subconcept_of", value=policy),
                     ],
                 ),
             )
