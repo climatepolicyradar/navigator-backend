@@ -87,7 +87,7 @@ multilateral_climate_fund_project_project = Label(
 )
 annual_performance_report = Label(
     id="entity_type::Annual performance report",
-    value="Annual Performance Report",
+    value="Annual performance report",
     type="entity_type",
     labels=[
         LabelRelationship(type="subconcept_of", value=multilateral_climate_fund_project)
