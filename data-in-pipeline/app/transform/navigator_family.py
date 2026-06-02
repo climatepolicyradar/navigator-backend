@@ -47,6 +47,22 @@ from app.transform.models import (
 corporate_discloser = Label(
     type="category", id="category::Corporate Disclosures", value="Corporate Disclosures"
 )
+corporate_voluntary_report = Label(
+    id="entity_type::Corporate voluntary report",
+    value="Corporate voluntary report",
+    type="entity_type",
+    labels=[
+        LabelRelationship(type="subconcept_of", value=corporate_discloser),
+    ],
+)
+corporate_voluntary_filing = Label(
+    id="entity_type::Corporate voluntary filing",
+    value="Corporate voluntary report",
+    type="entity_type",
+    labels=[
+        LabelRelationship(type="subconcept_of", value=corporate_discloser),
+    ],
+)
 
 multilateral_climate_fund_project = Label(
     type="category",
@@ -72,8 +88,33 @@ multilateral_climate_fund_project_project = Label(
 
 law = Label(type="category", id="category::Law", value="Law")
 policy = Label(type="category", id="category::Policy", value="Policy")
-report = Label(type="category", id="category::Report", value="Report")
 
+report = Label(type="category", id="category::Report", value="Report")
+climate_council_report = Label(
+    id="report_type::Climate council report",
+    value="Climate council report",
+    type="agent",
+    labels=[
+        LabelRelationship(
+            type="subconcept_of",
+            value=report,
+        )
+    ],
+)
+annual_report = Label(
+    id="entity_type::Annual report",
+    value="Annual report",
+    type="entity_type",
+    labels=[
+        LabelRelationship(type="subconcept_of", value=climate_council_report),
+    ],
+)
+assessment_report = Label(
+    id="entity_type::Assessment report",
+    value="Assessment report",
+    type="entity_type",
+    labels=[LabelRelationship(type="subconcept_of", value=climate_council_report)],
+)
 
 _eu_and_international_region_ids = {c.id: c for c in custom_countries}
 
@@ -1562,6 +1603,25 @@ def _deprecated_category_label(
 
 
 #  region entity_type label
+# The capitalisation of these keys is irregular as it is irregular in the source data
+_document_type_to_entity_type_map = {
+    "Corporate voluntary report": corporate_voluntary_report,
+    "Corporate regulatory filing": corporate_voluntary_filing,
+    "Assessment Report": assessment_report,
+    "Annual Report": annual_report,
+}
+
+
+def _has_document_of_type(
+    navigator_family: NavigatorFamily, document_type: str
+) -> bool:
+    return any(
+        document
+        for document in navigator_family.documents
+        if document.valid_metadata.get("type") == [document_type]
+    )
+
+
 def _entity_type_label(
     navigator_family: NavigatorFamily,
 ) -> list[LabelRelationship]:
@@ -1581,6 +1641,15 @@ def _entity_type_label(
                 LabelRelationship(
                     type="entity_type",
                     value=multilateral_climate_fund_project_project,
+                )
+            )
+
+    for document_type, entity_type_label in _document_type_to_entity_type_map.items():
+        if _has_document_of_type(navigator_family, document_type):
+            labels.append(
+                LabelRelationship(
+                    type="entity_type",
+                    value=entity_type_label,
                 )
             )
 

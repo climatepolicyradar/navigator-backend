@@ -2445,6 +2445,47 @@ def test_entity_type_label_returns_empty_for_non_mcf_corpus():
 
 
 @pytest.mark.parametrize(
+    "document_type,expected_entity_type_id",
+    [
+        ("Corporate voluntary report", "entity_type::Corporate voluntary report"),
+        ("Corporate regulatory filing", "entity_type::Corporate voluntary filing"),
+        ("Assessment Report", "entity_type::Assessment report"),
+        ("Annual Report", "entity_type::Annual report"),
+    ],
+)
+def test_entity_type_label_returns_label_for_document_type(
+    document_type, expected_entity_type_id
+):
+    family = NavigatorFamilyFactory.build(
+        corpus=NavigatorCorpusFactory.build(import_id="CCLW.corpus.i00000001.n0000"),
+        documents=[
+            NavigatorDocumentFactory.build(
+                valid_metadata={"type": [document_type]},
+            )
+        ],
+    )
+    labels = _entity_type_label(family)
+    entity_type_labels = [
+        label for label in labels if label.value.id == expected_entity_type_id
+    ]
+    assert len(entity_type_labels) == 1
+    assert entity_type_labels[0].type == "entity_type"
+    assert entity_type_labels[0].value.type == "entity_type"
+
+
+def test_entity_type_label_returns_empty_for_non_matching_document_type():
+    family = NavigatorFamilyFactory.build(
+        corpus=NavigatorCorpusFactory.build(import_id="CCLW.corpus.i00000001.n0000"),
+        documents=[
+            NavigatorDocumentFactory.build(
+                valid_metadata={"type": ["Some other document type"]},
+            )
+        ],
+    )
+    assert _entity_type_label(family) == []
+
+
+@pytest.mark.parametrize(
     "topic",
     ["Mitigation", "Adaptation", "Loss and Damage"],
 )
