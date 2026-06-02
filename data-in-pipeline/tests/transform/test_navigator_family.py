@@ -2451,6 +2451,12 @@ def test_entity_type_label_returns_empty_for_non_mcf_corpus():
         ("Corporate regulatory filing", "entity_type::Corporate voluntary filing"),
         ("Assessment Report", "entity_type::Assessment report"),
         ("Annual Report", "entity_type::Annual report"),
+        ("Annual Performance Report", "entity_type::Annual performance report"),
+        ("Approved funding proposal", "entity_type::Approved funding proposal"),
+        ("Final independent evaluation report", "entity_type::Final independent evaluation report"),
+        ("Gender action plan", "entity_type::Gender action plan"),
+        ("Gender assessment", "entity_type::Gender assessment"),
+        ("Project completion report", "entity_type::Project completion report"),
     ],
 )
 def test_entity_type_label_returns_label_for_document_type(

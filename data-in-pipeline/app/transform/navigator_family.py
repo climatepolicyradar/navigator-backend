@@ -85,6 +85,55 @@ multilateral_climate_fund_project_project = Label(
         LabelRelationship(type="subconcept_of", value=multilateral_climate_fund_project)
     ],
 )
+annual_performance_report = Label(
+    id="entity_type::Annual performance report",
+    value="Annual Performance Report",
+    type="entity_type",
+    labels=[
+        LabelRelationship(type="subconcept_of", value=multilateral_climate_fund_project)
+    ],
+)
+approved_funding_proposal = Label(
+    id="entity_type::Approved funding proposal",
+    value="Approved funding proposal",
+    type="entity_type",
+    labels=[
+        LabelRelationship(type="subconcept_of", value=multilateral_climate_fund_project)
+    ],
+)
+final_independent_evaluation_report = Label(
+    id="entity_type::Final independent evaluation report",
+    value="Final independent evaluation report",
+    type="entity_type",
+    labels=[
+        LabelRelationship(type="subconcept_of", value=multilateral_climate_fund_project)
+    ],
+)
+multilateral_climate_fund_project_gender_action_plan = Label(
+    id="entity_type::Gender action plan",
+    value="Gender action plan",
+    type="entity_type",
+    labels=[
+        LabelRelationship(type="subconcept_of", value=multilateral_climate_fund_project)
+    ],
+)
+gender_assessment = Label(
+    id="entity_type::Gender assessment",
+    value="Gender assessment",
+    type="entity_type",
+    labels=[
+        LabelRelationship(type="subconcept_of", value=multilateral_climate_fund_project)
+    ],
+)
+project_completion_report = Label(
+    id="entity_type::Project completion report",
+    value="Project completion report",
+    type="entity_type",
+    labels=[
+        LabelRelationship(type="subconcept_of", value=multilateral_climate_fund_project)
+    ],
+)
+
 
 law = Label(type="category", id="category::Law", value="Law")
 policy = Label(type="category", id="category::Policy", value="Policy")
@@ -1609,6 +1658,12 @@ _document_type_to_entity_type_map = {
     "Corporate regulatory filing": corporate_voluntary_filing,
     "Assessment Report": assessment_report,
     "Annual Report": annual_report,
+    "Annual Performance Report": annual_performance_report,
+    "Approved funding proposal": approved_funding_proposal,
+    "Final independent evaluation report": final_independent_evaluation_report,
+    "Gender action plan": multilateral_climate_fund_project_gender_action_plan,
+    "Gender assessment": gender_assessment,
+    "Project completion report": project_completion_report,
 }
 
 
@@ -1868,6 +1923,14 @@ def _implementing_agency_label(
 
 
 # region multilateral_climate_fund label
+_corpus_import_id_to_multilateral_climate_fund = {
+    "MCF.corpus.AF.n0000": "Adaptation Fund",
+    "MCF.corpus.CIF.n0000": "Climate Investment Funds",
+    "MCF.corpus.GCF.n0000": "Global Environment Facility",
+    "MCF.corpus.GEF.n0000": "Green Climate Fund",
+}
+
+
 def _multilateral_climate_fund_label(
     navigator_family: NavigatorFamily,
 ) -> list[LabelRelationship]:
@@ -1951,12 +2014,3 @@ def _un_convention_label(
         )
 
     return labels
-
-
-# region multilateral_climate_fund label
-_corpus_import_id_to_multilateral_climate_fund = {
-    "MCF.corpus.AF.n0000": "Adaptation Fund",
-    "MCF.corpus.CIF.n0000": "Climate Investment Funds",
-    "MCF.corpus.GCF.n0000": "Global Environment Facility",
-    "MCF.corpus.GEF.n0000": "Green Climate Fund",
-}
