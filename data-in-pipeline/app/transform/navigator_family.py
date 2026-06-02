@@ -57,7 +57,7 @@ corporate_voluntary_report = Label(
 )
 corporate_voluntary_filing = Label(
     id="entity_type::Corporate voluntary filing",
-    value="Corporate voluntary report",
+    value="Corporate voluntary filing",
     type="entity_type",
     labels=[
         LabelRelationship(type="subconcept_of", value=corporate_discloser),
