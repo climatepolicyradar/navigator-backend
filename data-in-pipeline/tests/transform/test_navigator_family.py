@@ -2449,11 +2449,20 @@ def test_entity_type_label_returns_empty_for_non_mcf_corpus():
     [
         ("Corporate voluntary report", ["entity_type::Corporate voluntary report"]),
         ("Corporate regulatory filing", ["entity_type::Corporate voluntary filing"]),
-        ("Assessment Report", ["report_type::Climate council report", "entity_type::Assessment report"]),
-        ("Annual Report", ["report_type::Climate council report", "entity_type::Annual report"]),
+        (
+            "Assessment Report",
+            ["report_type::Climate council report", "entity_type::Assessment report"],
+        ),
+        (
+            "Annual Report",
+            ["report_type::Climate council report", "entity_type::Annual report"],
+        ),
         ("Annual Performance Report", ["entity_type::Annual performance report"]),
         ("Approved funding proposal", ["entity_type::Approved funding proposal"]),
-        ("Final independent evaluation report", ["entity_type::Final independent evaluation report"]),
+        (
+            "Final independent evaluation report",
+            ["entity_type::Final independent evaluation report"],
+        ),
         ("Gender action plan", ["entity_type::Gender action plan"]),
         ("Gender assessment", ["entity_type::Gender assessment"]),
         ("Project completion report", ["entity_type::Project completion report"]),
@@ -2495,7 +2504,7 @@ def test_entity_type_label_returns_both_labels_for_oep_corpus():
     label_ids = [label.value.id for label in labels]
     assert "report_type::Industry report" in label_ids
     assert "entity_type::Offshore wind report" in label_ids
-    assert len(labels) == 2
+    assert len(labels) == 2  # noqa: PLR2004
 
 
 def test_entity_type_label_oep_always_applies_regardless_of_document_type():

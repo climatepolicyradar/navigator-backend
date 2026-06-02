@@ -183,6 +183,70 @@ offshore_wind_report = Label(
         LabelRelationship(type="subconcept_of", value=industry_report),
     ],
 )
+individual = Label(
+    id="author_type::Individual",
+    value="Individual",
+    type="author_type",
+    labels=[LabelRelationship(type="subconcept_of", value=report)],
+)
+academic_research = Label(
+    id="author_type::Academic/Research",
+    value="Academic/Research",
+    type="author_type",
+    labels=[LabelRelationship(type="subconcept_of", value=report)],
+)
+national_body = Label(
+    id="author_type::National Body",
+    value="National Body",
+    type="author_type",
+    labels=[LabelRelationship(type="subconcept_of", value=report)],
+)
+intergovernmental_organization = Label(
+    id="author_type::Intergovernmental Organization",
+    value="Intergovernmental Organization",
+    type="author_type",
+    labels=[LabelRelationship(type="subconcept_of", value=report)],
+)
+corporate = Label(
+    id="author_type::Corporate",
+    value="Corporate",
+    type="author_type",
+    labels=[LabelRelationship(type="subconcept_of", value=report)],
+)
+industry_body = Label(
+    id="author_type::Industry Body",
+    value="Industry Body",
+    type="author_type",
+    labels=[LabelRelationship(type="subconcept_of", value=report)],
+)
+ngo_civil_society = Label(
+    id="author_type::NGO/Civil Society",
+    value="NGO/Civil Society",
+    type="author_type",
+    labels=[LabelRelationship(type="subconcept_of", value=report)],
+)
+other = Label(
+    id="author_type::Other",
+    value="Other",
+    type="author_type",
+    labels=[LabelRelationship(type="subconcept_of", value=report)],
+)
+
+un_submission = Label(
+    type="category", id="category::UN submission", value="UN submission"
+)
+party = Label(
+    id="author_type::Party",
+    value="Party",
+    type="author_type",
+    labels=[LabelRelationship(type="subconcept_of", value=un_submission)],
+)
+non_party = Label(
+    id="author_type::Non-Party",
+    value="Non-Party",
+    type="author_type",
+    labels=[LabelRelationship(type="subconcept_of", value=un_submission)],
+)
 
 
 _eu_and_international_region_ids = {c.id: c for c in custom_countries}
@@ -301,7 +365,7 @@ def transform_navigator_family(
 def _transform_litigation_events(data: NavigatorFamily) -> list[Document]:
     documents = []
     labels = []
-    attributes = {}
+    attributes: dict[str, str | float | bool] = {}
     navigator_family_events = data.events
     navigator_document_event_ids = {
         doc.events[0].import_id for doc in data.documents if doc.events
@@ -1612,22 +1676,14 @@ def _category_label(
             labels.append(
                 LabelRelationship(
                     type="category",
-                    value=Label(
-                        id="category::Law",
-                        value="Law",
-                        type="category",
-                    ),
+                    value=law,
                 )
             )
         if navigator_family.category == "EXECUTIVE":
             labels.append(
                 LabelRelationship(
                     type="category",
-                    value=Label(
-                        id="category::Policy",
-                        value="Policy",
-                        type="category",
-                    ),
+                    value=policy,
                 )
             )
     else:
@@ -1775,22 +1831,22 @@ def _author_label(
 # region author_type label
 
 # These are controlled vocabularies
-_author_types = [
+_author_types = {
     # Intl. Agreements
     # @see: https://github.com/climatepolicyradar/data-migrations/blob/main/taxonomies/Intl.%20agreements.json#L145-L149
-    "Party",
-    "Non-Party",
+    "Party": party,
+    "Non-Party": non_party,
     # Reports
     # https://github.com/climatepolicyradar/data-migrations/blob/main/taxonomies/Reports.json#L32-L41
-    "Individual",
-    "Academic/Research",
-    "National Body",
-    "Intergovernmental Organization",
-    "Corporate",
-    "Industry Body",
-    "NGO/Civil Society",
-    "Other",
-]
+    "Individual": individual,
+    "Academic/Research": academic_research,
+    "National Body": national_body,
+    "Intergovernmental Organization": intergovernmental_organization,
+    "Corporate": corporate,
+    "Industry Body": industry_body,
+    "NGO/Civil Society": ngo_civil_society,
+    "Other": other,
+}
 
 
 def _author_type_label(
@@ -1798,18 +1854,8 @@ def _author_type_label(
 ) -> list[LabelRelationship]:
     labels: list[LabelRelationship] = []
     author_type_values = navigator_family.metadata.get("author_type")
-    if author_type_values and author_type_values[0] in _author_types:
-        author_type = author_type_values[0]
-        labels.append(
-            LabelRelationship(
-                type="author_type",
-                value=Label(
-                    id=f"author_type::{author_type}",
-                    value=author_type,
-                    type="author_type",
-                ),
-            )
-        )
+    if author_type_values and (label := _author_types.get(author_type_values[0])):
+        labels.append(LabelRelationship(type="author_type", value=label))
     return labels
 
 
