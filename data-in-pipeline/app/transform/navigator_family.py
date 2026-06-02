@@ -1976,11 +1976,11 @@ _author_types = {
     # https://github.com/climatepolicyradar/data-migrations/blob/main/taxonomies/Reports.json#L32-L41
     "Individual": individual,
     "Academic/Research": academic_research,
-    "National body": national_body,
-    "Intergovernmental organization": intergovernmental_organization,
+    "National Body": national_body,
+    "Intergovernmental Organization": intergovernmental_organization,
     "Corporate": corporate,
-    "Industry body": industry_body,
-    "NGO/Civil society": ngo_civil_society,
+    "Industry Body": industry_body,
+    "NGO/Civil Society": ngo_civil_society,
     "Other": other,
 }
 

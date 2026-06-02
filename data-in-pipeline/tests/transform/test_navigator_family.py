@@ -2263,7 +2263,7 @@ def test_transform_navigator_family_and_document_with_domain_metadata(
 def test_author_type_label_returns_label_for_non_stakeholder():
     family = NavigatorFamilyFactory.build(
         corpus=NavigatorCorpusFactory.build(import_id="UNFCCC.corpus.i00000001.n0000"),
-        metadata={"author_type": ["Intergovernmental organization"]},
+        metadata={"author_type": ["Intergovernmental Organization"]},
     )
     labels = _author_type_label(family)
     assert len(labels) == 1
