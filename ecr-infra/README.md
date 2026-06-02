@@ -47,11 +47,10 @@ these in their own configs.
               │   CloudFront (../api)    │
               └──────────────────────────┘
                             │
-                  ┌─────────┼─────────┬───────┐
-                  ▼         ▼         ▼       ▼
-              /concepts /families /geographies /...
-                  │         │         │       │
-                  ▼         ▼         ▼       ▼
+                            ┼
+                            ▼
+                            │
+                            ▼
          ┌─────────────────────────────────────────┐
          │   Shared ECS cluster (this project)     │
          │   ┌────────┐  ┌────────┐  ┌──────────┐  │
