@@ -2240,7 +2240,7 @@ def test_author_type_label_returns_label_for_non_stakeholder():
     labels = _author_type_label(family)
     assert len(labels) == 1
     assert labels[0].type == "author_type"
-    assert labels[0].value.id == "author_type::Intergovernmental Organization"
+    assert labels[0].value.id == "author_type::Intergovernmental organization"
 
 
 def test_author_type_label_returns_empty_when_no_metadata():
@@ -2442,6 +2442,82 @@ def test_entity_type_label_returns_empty_for_non_mcf_corpus():
         corpus=NavigatorCorpusFactory.build(import_id="CCLW.corpus.i00000001.n0000"),
     )
     assert _entity_type_label(family) == []
+
+
+@pytest.mark.parametrize(
+    "document_type,expected_entity_type_ids",
+    [
+        ("Corporate voluntary report", ["entity_type::Corporate voluntary report"]),
+        ("Corporate regulatory filing", ["entity_type::Corporate voluntary filing"]),
+        (
+            "Assessment Report",
+            ["report_type::Climate council report", "entity_type::Assessment report"],
+        ),
+        (
+            "Annual Report",
+            ["report_type::Climate council report", "entity_type::Annual report"],
+        ),
+        ("Annual Performance Report", ["entity_type::Annual performance report"]),
+        ("Approved funding proposal", ["entity_type::Approved funding proposal"]),
+        (
+            "Final independent evaluation report",
+            ["entity_type::Final independent evaluation report"],
+        ),
+        ("Gender action plan", ["entity_type::Gender action plan"]),
+        ("Gender assessment", ["entity_type::Gender assessment"]),
+        ("Project completion report", ["entity_type::Project completion report"]),
+    ],
+)
+def test_entity_type_label_returns_label_for_document_type(
+    document_type, expected_entity_type_ids
+):
+    family = NavigatorFamilyFactory.build(
+        corpus=NavigatorCorpusFactory.build(import_id="CCLW.corpus.i00000001.n0000"),
+        documents=[
+            NavigatorDocumentFactory.build(
+                valid_metadata={"type": [document_type]},
+            )
+        ],
+    )
+    labels = _entity_type_label(family)
+    assert [label.value.id for label in labels] == expected_entity_type_ids
+    assert all(label.type == "entity_type" for label in labels)
+
+
+def test_entity_type_label_returns_empty_for_non_matching_document_type():
+    family = NavigatorFamilyFactory.build(
+        corpus=NavigatorCorpusFactory.build(import_id="CCLW.corpus.i00000001.n0000"),
+        documents=[
+            NavigatorDocumentFactory.build(
+                valid_metadata={"type": ["Some other document type"]},
+            )
+        ],
+    )
+    assert _entity_type_label(family) == []
+
+
+def test_entity_type_label_returns_both_labels_for_oep_corpus():
+    family = NavigatorFamilyFactory.build(
+        corpus=NavigatorCorpusFactory.build(import_id="OEP.corpus.i00000001.n0000"),
+    )
+    labels = _entity_type_label(family)
+    label_ids = [label.value.id for label in labels]
+    assert "report_type::Industry report" in label_ids
+    assert "entity_type::Offshore wind report" in label_ids
+    assert len(labels) == 2  # noqa: PLR2004
+
+
+def test_entity_type_label_oep_always_applies_regardless_of_document_type():
+    family = NavigatorFamilyFactory.build(
+        corpus=NavigatorCorpusFactory.build(import_id="OEP.corpus.i00000001.n0000"),
+        documents=[
+            NavigatorDocumentFactory.build(valid_metadata={"type": ["Some other type"]})
+        ],
+    )
+    labels = _entity_type_label(family)
+    label_ids = [label.value.id for label in labels]
+    assert "report_type::Industry report" in label_ids
+    assert "entity_type::Offshore wind report" in label_ids
 
 
 @pytest.mark.parametrize(

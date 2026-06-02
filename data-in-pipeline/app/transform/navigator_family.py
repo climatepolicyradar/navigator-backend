@@ -47,6 +47,22 @@ from app.transform.models import (
 corporate_discloser = Label(
     type="category", id="category::Corporate Disclosures", value="Corporate Disclosures"
 )
+corporate_voluntary_report = Label(
+    id="entity_type::Corporate voluntary report",
+    value="Corporate voluntary report",
+    type="entity_type",
+    labels=[
+        LabelRelationship(type="subconcept_of", value=corporate_discloser),
+    ],
+)
+corporate_voluntary_filing = Label(
+    id="entity_type::Corporate voluntary filing",
+    value="Corporate voluntary filing",
+    type="entity_type",
+    labels=[
+        LabelRelationship(type="subconcept_of", value=corporate_discloser),
+    ],
+)
 
 multilateral_climate_fund_project = Label(
     type="category",
@@ -69,10 +85,168 @@ multilateral_climate_fund_project_project = Label(
         LabelRelationship(type="subconcept_of", value=multilateral_climate_fund_project)
     ],
 )
+annual_performance_report = Label(
+    id="entity_type::Annual performance report",
+    value="Annual performance report",
+    type="entity_type",
+    labels=[
+        LabelRelationship(type="subconcept_of", value=multilateral_climate_fund_project)
+    ],
+)
+approved_funding_proposal = Label(
+    id="entity_type::Approved funding proposal",
+    value="Approved funding proposal",
+    type="entity_type",
+    labels=[
+        LabelRelationship(type="subconcept_of", value=multilateral_climate_fund_project)
+    ],
+)
+final_independent_evaluation_report = Label(
+    id="entity_type::Final independent evaluation report",
+    value="Final independent evaluation report",
+    type="entity_type",
+    labels=[
+        LabelRelationship(type="subconcept_of", value=multilateral_climate_fund_project)
+    ],
+)
+multilateral_climate_fund_project_gender_action_plan = Label(
+    id="entity_type::Gender action plan",
+    value="Gender action plan",
+    type="entity_type",
+    labels=[
+        LabelRelationship(type="subconcept_of", value=multilateral_climate_fund_project)
+    ],
+)
+gender_assessment = Label(
+    id="entity_type::Gender assessment",
+    value="Gender assessment",
+    type="entity_type",
+    labels=[
+        LabelRelationship(type="subconcept_of", value=multilateral_climate_fund_project)
+    ],
+)
+project_completion_report = Label(
+    id="entity_type::Project completion report",
+    value="Project completion report",
+    type="entity_type",
+    labels=[
+        LabelRelationship(type="subconcept_of", value=multilateral_climate_fund_project)
+    ],
+)
+
 
 law = Label(type="category", id="category::Law", value="Law")
 policy = Label(type="category", id="category::Policy", value="Policy")
+
 report = Label(type="category", id="category::Report", value="Report")
+climate_council_report = Label(
+    id="report_type::Climate council report",
+    value="Climate council report",
+    type="report_type",
+    labels=[
+        LabelRelationship(
+            type="subconcept_of",
+            value=report,
+        )
+    ],
+)
+annual_report = Label(
+    id="entity_type::Annual report",
+    value="Annual report",
+    type="entity_type",
+    labels=[
+        LabelRelationship(type="subconcept_of", value=climate_council_report),
+    ],
+)
+assessment_report = Label(
+    id="entity_type::Assessment report",
+    value="Assessment report",
+    type="entity_type",
+    labels=[LabelRelationship(type="subconcept_of", value=climate_council_report)],
+)
+industry_report = Label(
+    id="report_type::Industry report",
+    value="Industry report",
+    type="report_type",
+    labels=[
+        LabelRelationship(
+            type="subconcept_of",
+            value=report,
+        )
+    ],
+)
+offshore_wind_report = Label(
+    id="entity_type::Offshore wind report",
+    value="Offshore wind report",
+    type="entity_type",
+    labels=[
+        LabelRelationship(type="subconcept_of", value=industry_report),
+    ],
+)
+individual = Label(
+    id="author_type::Individual",
+    value="Individual",
+    type="author_type",
+    labels=[LabelRelationship(type="subconcept_of", value=report)],
+)
+academic_research = Label(
+    id="author_type::Academic/Research",
+    value="Academic/Research",
+    type="author_type",
+    labels=[LabelRelationship(type="subconcept_of", value=report)],
+)
+national_body = Label(
+    id="author_type::National body",
+    value="National body",
+    type="author_type",
+    labels=[LabelRelationship(type="subconcept_of", value=report)],
+)
+intergovernmental_organization = Label(
+    id="author_type::Intergovernmental organization",
+    value="Intergovernmental organization",
+    type="author_type",
+    labels=[LabelRelationship(type="subconcept_of", value=report)],
+)
+corporate = Label(
+    id="author_type::Corporate",
+    value="Corporate",
+    type="author_type",
+    labels=[LabelRelationship(type="subconcept_of", value=report)],
+)
+industry_body = Label(
+    id="author_type::Industry body",
+    value="Industry body",
+    type="author_type",
+    labels=[LabelRelationship(type="subconcept_of", value=report)],
+)
+ngo_civil_society = Label(
+    id="author_type::NGO/Civil society",
+    value="NGO/Civil society",
+    type="author_type",
+    labels=[LabelRelationship(type="subconcept_of", value=report)],
+)
+other = Label(
+    id="author_type::Other",
+    value="Other",
+    type="author_type",
+    labels=[LabelRelationship(type="subconcept_of", value=report)],
+)
+
+un_submission = Label(
+    type="category", id="category::UN submission", value="UN submission"
+)
+party = Label(
+    id="author_type::Party",
+    value="Party",
+    type="author_type",
+    labels=[LabelRelationship(type="subconcept_of", value=un_submission)],
+)
+non_party = Label(
+    id="author_type::Non-Party",
+    value="Non-Party",
+    type="author_type",
+    labels=[LabelRelationship(type="subconcept_of", value=un_submission)],
+)
 
 
 _eu_and_international_region_ids = {c.id: c for c in custom_countries}
@@ -191,7 +365,7 @@ def transform_navigator_family(
 def _transform_litigation_events(data: NavigatorFamily) -> list[Document]:
     documents = []
     labels = []
-    attributes = {}
+    attributes: dict[str, str | float | bool] = {}
     navigator_family_events = data.events
     navigator_document_event_ids = {
         doc.events[0].import_id for doc in data.documents if doc.events
@@ -1502,22 +1676,14 @@ def _category_label(
             labels.append(
                 LabelRelationship(
                     type="category",
-                    value=Label(
-                        id="category::Law",
-                        value="Law",
-                        type="category",
-                    ),
+                    value=law,
                 )
             )
         if navigator_family.category == "EXECUTIVE":
             labels.append(
                 LabelRelationship(
                     type="category",
-                    value=Label(
-                        id="category::Policy",
-                        value="Policy",
-                        type="category",
-                    ),
+                    value=policy,
                 )
             )
     else:
@@ -1562,6 +1728,31 @@ def _deprecated_category_label(
 
 
 #  region entity_type label
+# The capitalisation of these keys is irregular as it is irregular in the source data
+_document_type_to_entity_type_map: dict[str, list[Label]] = {
+    "Corporate voluntary report": [corporate_voluntary_report],
+    "Corporate regulatory filing": [corporate_voluntary_filing],
+    "Assessment Report": [climate_council_report, assessment_report],
+    "Annual Report": [climate_council_report, annual_report],
+    "Annual Performance Report": [annual_performance_report],
+    "Approved funding proposal": [approved_funding_proposal],
+    "Final independent evaluation report": [final_independent_evaluation_report],
+    "Gender action plan": [multilateral_climate_fund_project_gender_action_plan],
+    "Gender assessment": [gender_assessment],
+    "Project completion report": [project_completion_report],
+}
+
+
+def _has_document_of_type(
+    navigator_family: NavigatorFamily, document_type: str
+) -> bool:
+    return any(
+        document
+        for document in navigator_family.documents
+        if document.valid_metadata.get("type") == [document_type]
+    )
+
+
 def _entity_type_label(
     navigator_family: NavigatorFamily,
 ) -> list[LabelRelationship]:
@@ -1583,6 +1774,26 @@ def _entity_type_label(
                     value=multilateral_climate_fund_project_project,
                 )
             )
+
+    for document_type, entity_type_labels in _document_type_to_entity_type_map.items():
+        if _has_document_of_type(navigator_family, document_type):
+            for entity_type_label in entity_type_labels:
+                labels.append(
+                    LabelRelationship(
+                        type="entity_type",
+                        value=entity_type_label,
+                    )
+                )
+    if navigator_family.corpus.import_id == "OEP.corpus.i00000001.n0000":
+        labels.extend(
+            [
+                LabelRelationship(
+                    type="entity_type",
+                    value=industry_report,
+                ),
+                LabelRelationship(type="entity_type", value=offshore_wind_report),
+            ]
+        )
 
     return labels
 
@@ -1620,22 +1831,22 @@ def _author_label(
 # region author_type label
 
 # These are controlled vocabularies
-_author_types = [
+_author_types = {
     # Intl. Agreements
     # @see: https://github.com/climatepolicyradar/data-migrations/blob/main/taxonomies/Intl.%20agreements.json#L145-L149
-    "Party",
-    "Non-Party",
+    "Party": party,
+    "Non-Party": non_party,
     # Reports
     # https://github.com/climatepolicyradar/data-migrations/blob/main/taxonomies/Reports.json#L32-L41
-    "Individual",
-    "Academic/Research",
-    "National Body",
-    "Intergovernmental Organization",
-    "Corporate",
-    "Industry Body",
-    "NGO/Civil Society",
-    "Other",
-]
+    "Individual": individual,
+    "Academic/Research": academic_research,
+    "National Body": national_body,
+    "Intergovernmental Organization": intergovernmental_organization,
+    "Corporate": corporate,
+    "Industry Body": industry_body,
+    "NGO/Civil Society": ngo_civil_society,
+    "Other": other,
+}
 
 
 def _author_type_label(
@@ -1643,18 +1854,8 @@ def _author_type_label(
 ) -> list[LabelRelationship]:
     labels: list[LabelRelationship] = []
     author_type_values = navigator_family.metadata.get("author_type")
-    if author_type_values and author_type_values[0] in _author_types:
-        author_type = author_type_values[0]
-        labels.append(
-            LabelRelationship(
-                type="author_type",
-                value=Label(
-                    id=f"author_type::{author_type}",
-                    value=author_type,
-                    type="author_type",
-                ),
-            )
-        )
+    if author_type_values and (label := _author_types.get(author_type_values[0])):
+        labels.append(LabelRelationship(type="author_type", value=label))
     return labels
 
 
@@ -1799,6 +2000,14 @@ def _implementing_agency_label(
 
 
 # region multilateral_climate_fund label
+_corpus_import_id_to_multilateral_climate_fund = {
+    "MCF.corpus.AF.n0000": "Adaptation Fund",
+    "MCF.corpus.CIF.n0000": "Climate Investment Funds",
+    "MCF.corpus.GCF.n0000": "Global Environment Facility",
+    "MCF.corpus.GEF.n0000": "Green Climate Fund",
+}
+
+
 def _multilateral_climate_fund_label(
     navigator_family: NavigatorFamily,
 ) -> list[LabelRelationship]:
@@ -1882,12 +2091,3 @@ def _un_convention_label(
         )
 
     return labels
-
-
-# region multilateral_climate_fund label
-_corpus_import_id_to_multilateral_climate_fund = {
-    "MCF.corpus.AF.n0000": "Adaptation Fund",
-    "MCF.corpus.CIF.n0000": "Climate Investment Funds",
-    "MCF.corpus.GCF.n0000": "Global Environment Facility",
-    "MCF.corpus.GEF.n0000": "Green Climate Fund",
-}
