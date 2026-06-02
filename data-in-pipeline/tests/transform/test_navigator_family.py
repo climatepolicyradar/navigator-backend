@@ -2240,7 +2240,7 @@ def test_author_type_label_returns_label_for_non_stakeholder():
     labels = _author_type_label(family)
     assert len(labels) == 1
     assert labels[0].type == "author_type"
-    assert labels[0].value.id == "author_type::Intergovernmental Organization"
+    assert labels[0].value.id == "author_type::Intergovernmental organization"
 
 
 def test_author_type_label_returns_empty_when_no_metadata():

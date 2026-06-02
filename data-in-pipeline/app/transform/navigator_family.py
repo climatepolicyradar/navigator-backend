@@ -196,14 +196,14 @@ academic_research = Label(
     labels=[LabelRelationship(type="subconcept_of", value=report)],
 )
 national_body = Label(
-    id="author_type::National Body",
-    value="National Body",
+    id="author_type::National body",
+    value="National body",
     type="author_type",
     labels=[LabelRelationship(type="subconcept_of", value=report)],
 )
 intergovernmental_organization = Label(
-    id="author_type::Intergovernmental Organization",
-    value="Intergovernmental Organization",
+    id="author_type::Intergovernmental organization",
+    value="Intergovernmental organization",
     type="author_type",
     labels=[LabelRelationship(type="subconcept_of", value=report)],
 )
@@ -214,14 +214,14 @@ corporate = Label(
     labels=[LabelRelationship(type="subconcept_of", value=report)],
 )
 industry_body = Label(
-    id="author_type::Industry Body",
-    value="Industry Body",
+    id="author_type::Industry body",
+    value="Industry body",
     type="author_type",
     labels=[LabelRelationship(type="subconcept_of", value=report)],
 )
 ngo_civil_society = Label(
-    id="author_type::NGO/Civil Society",
-    value="NGO/Civil Society",
+    id="author_type::NGO/Civil society",
+    value="NGO/Civil society",
     type="author_type",
     labels=[LabelRelationship(type="subconcept_of", value=report)],
 )
