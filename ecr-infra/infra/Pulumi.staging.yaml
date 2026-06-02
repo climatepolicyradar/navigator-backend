@@ -1,12 +1,2 @@
 config:
   aws:region: eu-west-1
-  api-services-shared:cloudfront_origin_prefix_list_id:
-    secure: AAABADRI1s4zZ4qyyzUBUdUv6+1QYswCaLvd/4Vhq9n5D5OZhjVaiEgpIg==
-  api-services-shared:vpc_id:
-    secure: AAABAAAId5JZZ27JnnafJNET77Ae/IFMBywrudZXAy7xOk947sMG5FaDNBD3PLDFqYiI7yw=
-  api-services-shared:vpc_public_subnet_1_id:
-    secure: AAABAKjbg9mLWe2dDs+tufQuSCiIiHECDPDiexy80lkZqQ3LF9mW8SQaTg+ToMQfjFC2obaM3Zo=
-  api-services-shared:vpc_public_subnet_2_id:
-    secure: AAABAAV4LSUUsVKzoZBGI8lxgPce4rDYHpWIzV1gou/7YLtpWaeJPyfe6sFcxhuW6tRIWWheOcQ=
-  api-services-shared:vpc_public_subnet_3_id:
-    secure: AAABAPGuaij4HsQqggC0Tji6Igg+iqLFaDE5ghgIRn1ayO4MJMEzCvxhLO1mGs6ckuF3KUiaU24=

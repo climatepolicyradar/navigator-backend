@@ -19,6 +19,12 @@ DEFAULT_TAGS = {
 }
 
 
+aws_env_stack = pulumi.StackReference(f"climatepolicyradar/aws_env/{STACK}")
+vpc_id = aws_env_stack.get_output("vpc_id")
+cloudfront_origin_prefix_list_id = aws_env_stack.get_output(
+    "cloudfront_origin_prefix_list_id"
+)
+
 ########################################################################
 # Shared ECS cluster
 ########################################################################
@@ -114,14 +120,14 @@ alb_security_group = aws.ec2.SecurityGroup(
         "Shared ingress SG for API microservice ALBs. "
         "Allows HTTP from CloudFront edge locations only."
     ),
-    vpc_id=CONFIG.require("vpc_id"),
+    vpc_id=vpc_id,
     ingress=[
         aws.ec2.SecurityGroupIngressArgs(
             description="HTTP from CloudFront edge locations",
             from_port=80,
             to_port=80,
             protocol="tcp",
-            prefix_list_ids=[CONFIG.require("cloudfront_origin_prefix_list_id")],
+            prefix_list_ids=[cloudfront_origin_prefix_list_id],
         ),
     ],
     egress=[
@@ -146,15 +152,3 @@ pulumi.export("cluster_name", cluster.name)
 pulumi.export("task_execution_role_arn", task_execution_role.arn)
 pulumi.export("infrastructure_role_arn", infrastructure_role.arn)
 pulumi.export("alb_security_group_id", alb_security_group.id)
-
-# Re-export networking values so downstream services don't all need to
-# carry these same five config keys in their own stack configs. They
-# can read them from this stack instead.
-pulumi.export("vpc_id", CONFIG.require("vpc_id"))
-pulumi.export("vpc_public_subnet_1_id", CONFIG.require("vpc_public_subnet_1_id"))
-pulumi.export("vpc_public_subnet_2_id", CONFIG.require("vpc_public_subnet_2_id"))
-pulumi.export("vpc_public_subnet_3_id", CONFIG.require("vpc_public_subnet_3_id"))
-pulumi.export(
-    "cloudfront_origin_prefix_list_id",
-    CONFIG.require("cloudfront_origin_prefix_list_id"),
-)

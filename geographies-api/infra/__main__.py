@@ -197,6 +197,12 @@ geographies_api_apprunner_service = aws.apprunner.Service(
 # ECS Express Gateway service
 ########################################################################
 
+aws_env_stack = pulumi.StackReference(f"climatepolicyradar/aws_env/{stack}")
+eu_west_1a_public_subnet_id = aws_env_stack.get_output("eu_west_1a_public_subnet_id")
+eu_west_1b_public_subnet_id = aws_env_stack.get_output("eu_west_1b_public_subnet_id")
+eu_west_1c_public_subnet_id = aws_env_stack.get_output("eu_west_1c_public_subnet_id")
+
+
 # Task role: the IAM role the *running container* assumes.
 ecs_task_role = aws.iam.Role(
     f"{NAME_PREFIX}-ecs-task-role",
@@ -286,9 +292,9 @@ ecs_express_service = ExpressGatewayService(
         ExpressGatewayServiceNetworkConfigurationArgs(
             security_groups=[shared.get_output("alb_security_group_id")],
             subnets=[
-                shared.get_output("vpc_public_subnet_1_id"),
-                shared.get_output("vpc_public_subnet_2_id"),
-                shared.get_output("vpc_public_subnet_3_id"),
+                eu_west_1a_public_subnet_id,
+                eu_west_1b_public_subnet_id,
+                eu_west_1c_public_subnet_id,
             ],
         ),
     ],
