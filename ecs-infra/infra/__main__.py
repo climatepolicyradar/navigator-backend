@@ -7,7 +7,7 @@ from pulumi_aws import ecs, iam
 CONFIG = pulumi.Config()
 STACK = pulumi.get_stack()
 PROJECT = pulumi.get_project()
-NAME_PREFIX = f"{PROJECT}-{STACK}"
+NAME_PREFIX = f"api-services-{STACK}"
 
 ACCOUNT_ID = aws.get_caller_identity().account_id
 

@@ -253,7 +253,7 @@ aws.iam.RolePolicy(
 # Container config
 primary_container = ExpressGatewayServicePrimaryContainerArgs(
     image=geographies_api_ecr_repository.repository_url.apply(
-        lambda url: f"{url}:{config.require('docker_tag')}"
+        lambda url: f"{url}:latest"
     ),
     container_port=8080,  # @related: PORT_NUMBER
     environments=[
