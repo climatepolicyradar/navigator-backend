@@ -300,11 +300,11 @@ ecs_express_service = ExpressGatewayService(
     ],
 )
 
-# pulumi.export(
-#     "ecs_express_service_url",
-#     ecs_express_service.ingress_paths.apply(
-#         lambda paths: paths[0].endpoint if paths else None
-#     ),
-# )
+pulumi.export(
+    "ecs_express_service_url",
+    ecs_express_service.ingress_paths.apply(
+        lambda paths: paths[0].endpoint if paths else None
+    ),
+)
 
 pulumi.export("apprunner_service_url", geographies_api_apprunner_service.service_url)
