@@ -1,4 +1,4 @@
-# api-services-infra-shared
+# api-services-infra-shared / ecs-infra
 
 Shared ECS infrastructure for the API microservices that sit behind
 `api.climatepolicyradar.org`.
@@ -8,8 +8,8 @@ Shared ECS infrastructure for the API microservices that sit behind
 This Pulumi project provisions resources that are common across all API
 microservices:
 
-- **ECS cluster** — a Fargate-only cluster (`api-services-infra-shared-<stack>`)
-  with Container Insights enabled
+- **ECS cluster** — a Fargate-only cluster (`ecs-infra-<stack>`) with Container
+  Insights enabled
 - **Task execution role** — used by ECS to pull images from ECR, write logs to
   CloudWatch, and inject configured secrets at container startup
 - **Infrastructure role** — used by ECS Express Gateway to provision and manage
@@ -72,7 +72,7 @@ A migrated API service references this project's outputs via `StackReference`:
 import pulumi
 
 stack = pulumi.get_stack()
-shared = pulumi.StackReference(f"climatepolicyradar/api-services-infra-shared/{stack}")
+shared = pulumi.StackReference(f"climatepolicyradar/ecs-infra/{stack}")
 
 ecs_express_service = ExpressGatewayService(
     f"concepts-api-{stack}-ecs-express-service",
@@ -103,7 +103,7 @@ service-specific rules to the shared SG.
 ## Deployment
 
 ```bash
-cd navigator-infra/api-services-infra-shared
+cd navigator-backend/ecs-infra/infra
 pulumi stack select staging   # or production
 pulumi up
 ```
@@ -127,6 +127,13 @@ Each stack needs the following config keys (in `Pulumi.<stack>.yaml`):
 Subnets must have a route to an Internet Gateway. Don't trust the `-public-` in
 the name tag — verify with `describe-route-tables` and look for an `igw-...`
 route.
+
+These values are also outputs from the aws_env stack, so you can reference that
+stack if you want to avoid hardcoding them:
+
+```python
+aws_env = pulumi.StackReference(f"climatepolicyradar/aws_env/{stack}")
+```
 
 ## Outputs
 
