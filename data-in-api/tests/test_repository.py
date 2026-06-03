@@ -440,6 +440,33 @@ def test_select_label_with_null_attributes(session: Session):
     assert result.attributes == {}
 
 
+def test_select_label_with_label_relationship(session: Session):
+    """A label with a LabelLabelRelationship should expose it in labels."""
+    create_label(session, "child", "Child Label", type_="principal_law")
+    create_label(session, "parent", "Parent Label", type_="principal_law")
+    link_label_to_parent(session, "child", "parent", type="subconcept_of")
+
+    result = select_label(session, "child")
+
+    assert result is not None
+    assert len(result.labels) == 1
+    rel = result.labels[0]
+    assert rel.type == "subconcept_of"
+    assert rel.value.id == "parent"
+    assert rel.value.type == "principal_law"
+    assert rel.value.labels == []
+
+
+def test_select_label_without_label_relationship(session: Session):
+    """A label with no LabelLabelRelationship should have an empty labels list."""
+    create_label(session, "standalone", "Standalone", type_="entity_type")
+
+    result = select_label(session, "standalone")
+
+    assert result is not None
+    assert result.labels == []
+
+
 def test_document_labels_include_attributes(session_with_documents: Session):
     """Test that label attributes appear in top-level document labels."""
     # Create a label with attributes and link to doc1
