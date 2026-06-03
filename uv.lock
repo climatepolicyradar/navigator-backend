@@ -176,7 +176,7 @@ requires-dist = [
     { name = "opentelemetry-instrumentation-sqlalchemy", specifier = ">=0.59b0" },
     { name = "opentelemetry-sdk", specifier = ">=1.38.0,<2.0.0" },
     { name = "pulumi", specifier = ">=3.166.0,<4.0.0" },
-    { name = "pulumi-aws", specifier = ">=6.78.0,<7.0.0" },
+    { name = "pulumi-aws", specifier = ">=7.0.0,<7.30.0" },
 ]
 
 [[package]]
@@ -449,7 +449,7 @@ requires-dist = [
     { name = "opentelemetry-instrumentation-sqlalchemy", specifier = ">=0.45b0" },
     { name = "opentelemetry-sdk", specifier = ">=1.21.0,<2.0.0" },
     { name = "pulumi", specifier = ">=3.166.0,<4.0.0" },
-    { name = "pulumi-aws", specifier = ">=6.78.0,<7.0.0" },
+    { name = "pulumi-aws", specifier = ">=7.0.0,<7.30.0" },
     { name = "pydantic-settings", specifier = ">=2.9.1,<3.0.0" },
     { name = "requests", specifier = ">=2.31.0,<3.0.0" },
     { name = "sqlmodel", specifier = ">=0.0.24,<0.1.0" },
@@ -877,7 +877,7 @@ requires-dist = [
     { name = "fastapi", extras = ["standard"], specifier = ">=0.116.0" },
     { name = "psycopg2", specifier = ">=2.9.10,<3.0.0" },
     { name = "pulumi", specifier = ">=3.166.0,<4.0.0" },
-    { name = "pulumi-aws", specifier = ">=6.78.0,<7.0.0" },
+    { name = "pulumi-aws", specifier = ">=7.0.0,<7.30.0" },
     { name = "pycountry", specifier = ">=24.6.1" },
     { name = "pydantic-settings", specifier = ">=2.9.1,<3.0.0" },
     { name = "python-slugify", specifier = ">=8.0.4" },
@@ -1069,7 +1069,7 @@ requires-dist = [
     { name = "boto3", specifier = ">=1.38.32,<2.0.0" },
     { name = "fastapi", extras = ["standard"], specifier = ">=0.116.0" },
     { name = "pulumi", specifier = ">=3.166.0,<4.0.0" },
-    { name = "pulumi-aws", specifier = ">=6.78.0,<7.0.0" },
+    { name = "pulumi-aws", specifier = ">=7.0.0,<7.30.0" },
     { name = "pycountry", specifier = ">=24.6.1,<25.0.0" },
     { name = "pydantic-settings", specifier = ">=2.9.1,<3.0.0" },
     { name = "python-slugify", specifier = ">=8.0.4" },
@@ -2115,16 +2115,16 @@ wheels = [
 
 [[package]]
 name = "pulumi-aws"
-version = "6.83.2"
+version = "7.29.0"
 source = { registry = "https://pypi.org/simple" }
 dependencies = [
     { name = "parver" },
     { name = "pulumi" },
     { name = "semver" },
 ]
-sdist = { url = "https://files.pythonhosted.org/packages/62/5a/24bc3e83d62e6717bbd5706383f76388715ddd901d0af66212fd5858c90c/pulumi_aws-6.83.2.tar.gz", hash = "sha256:dea49f7ea3079dc44f24d9fffe874e75d0918032e60cc7ffc1a47ad00f43c59b", size = 7836029, upload-time = "2025-11-11T01:36:45.958Z" }
+sdist = { url = "https://files.pythonhosted.org/packages/5a/37/dba236c3709533af5100fdc6c43d962cbc0f88d447408bd976fc5e7f359d/pulumi_aws-7.29.0.tar.gz", hash = "sha256:54a22657bab68a561477ab73891a67f4154d51b43e4e3ded005d6c14d5ee4916", size = 9554565, upload-time = "2026-05-07T14:05:43.066Z" }
 wheels = [
-    { url = "https://files.pythonhosted.org/packages/63/82/0f12c08918e7cbaf4eed9494f1f5f6879b01349e6fab91bd634d443da240/pulumi_aws-6.83.2-py3-none-any.whl", hash = "sha256:c7041960c814f3a4660e4eaf4fa55c3b5485474bda215228f163f07614f83b61", size = 10608061, upload-time = "2025-11-11T01:36:41.5Z" },
+    { url = "https://files.pythonhosted.org/packages/c2/48/474883f33b0e99f904c2b02f385a03d322ec4539dc4cb94fa235e6c0f6eb/pulumi_aws-7.29.0-py3-none-any.whl", hash = "sha256:03cc65658fa40702542a25d352169bcc58257b6b0fcdbefb1e371b4bb533c748", size = 12683135, upload-time = "2026-05-07T14:05:39.723Z" },
 ]
 
 [[package]]
