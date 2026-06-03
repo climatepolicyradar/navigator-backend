@@ -268,7 +268,19 @@ def _map_db_label_to_schema(db_label: DBLabel) -> LabelOutput:
         value=db_label.value,
         type=db_label.type,
         attributes=db_label.attributes or {},
-        # We purposefully do not map relation ships as they are not useful in the response
+        labels=[
+            LabelRelationship(
+                type=label_relationship.type,
+                value=LabelLabelRelationshipOutput(
+                    id=label_relationship.related_label_id,
+                    value=label_relationship.related_label_id,
+                    type=db_label.type,
+                    labels=[],
+                ),
+                timestamp=label_relationship.timestamp,
+            )
+            for label_relationship in db_label.labels
+        ],
     )
 
 

@@ -63,6 +63,12 @@ class Label(WithDbDatetimeFields, table=True):
     )
 
     documents: list["DocumentLabelRelationship"] = Relationship(back_populates="label")
+    labels: list["LabelLabelRelationship"] = Relationship(
+        back_populates="label",
+        sa_relationship_kwargs={
+            "foreign_keys": "[LabelLabelRelationship.label_id]",
+        },
+    )
 
 
 class DocumentLabelRelationship(WithDbDatetimeFields, table=True):
@@ -106,6 +112,13 @@ class LabelLabelRelationship(WithDbDatetimeFields, table=True):
     related_label_id: str = Field(
         foreign_key="label.id",
         primary_key=True,
+    )
+
+    label: Label = Relationship(
+        back_populates="labels",
+        sa_relationship_kwargs={
+            "foreign_keys": "[LabelLabelRelationship.label_id]",
+        },
     )
 
 

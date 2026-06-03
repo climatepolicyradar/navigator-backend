@@ -1,0 +1,22 @@
+# Override the root justfile test recipe with extra flags required by this service's
+# IAM-token-based auth setup (see README "Why we freeze time" and docker-compose.yml).
+# Other services don't use this mechanism so they don't need the overhead.
+#
+# --build:
+# Ensures the dev Dockerfile stage is up to date so libfaketime is installed
+# and LD_PRELOAD is set; without it a cached image may lack faketime and
+# generate_db_auth_token() produces a token with the real current time instead
+# of the FAKETIME-frozen 2026-01-01, which won't match POSTGRES_PASSWORD.
+#
+# --force-recreate:
+# ensures the test-db container is replaced even when docker-compose
+# doesn't detect a config change, so a stale container initialised
+# with an old POSTGRES_PASSWORD is never reused.
+#
+# --renew-anon-volumes:
+# wipes the anonymous volume that postgres:17 creates for
+# /var/lib/postgresql/data; without it postgres skips
+# initialisation on restart and retains the old password
+# hash even after the container is recreated.
+test-override:
+    docker compose -f docker-compose.yml --profile test up --build --force-recreate --renew-anon-volumes --abort-on-container-exit --exit-code-from test --remove-orphans
