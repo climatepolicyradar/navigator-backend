@@ -1,12 +1,12 @@
+import asyncio
 import os
 from pathlib import Path
 from typing import Any
 
 import pulumi.automation as auto
 from prefect import Flow
-from prefect.blocks.core import Block
 from prefect.docker.docker_image import DockerImage
-from prefect_aws.workers.ecs_worker import ECSVariables
+from prefect.variables import Variable
 from pulumi.automation._output import OutputMap
 from pydantic import BaseModel, model_validator
 
@@ -234,11 +234,7 @@ def _merge_job_environments(
     return merged
 
 
-class ECSVariablesBlock(Block, ECSVariables):  # type: ignore
-    pass
-
-
-def create_deployment(flow: Flow) -> None:
+async def create_deployment(flow: Flow) -> None:
     """Create a deployment for the specified flow.
 
     :param flow: Prefect flow that needs deploying.
@@ -269,13 +265,16 @@ def create_deployment(flow: Flow) -> None:
         docker_registry,
     )
 
-    default_job_variables = ECSVariablesBlock.load(
-        "ecs-default-job-variables-prefect-mvp-prod"
-    ).model_dump(  # type: ignore
-        # We have to exclude None for now as sending over values like
-        # container_name=None vs the key missing affects functionality
-        exclude_none=True
-    )
+    # In prefect the Variable is saved with the shortened prod suffix for the
+    # environment, so we need to adjust the suffix accordingly when loading the block.
+    aws_env_short: str = "prod" if aws_env == "production" else aws_env
+    default_variables_name = f"ecs-default-job-variables-prefect-mvp-{aws_env_short}"
+    default_job_variables: Any = await Variable.aget(default_variables_name)
+    if default_job_variables is None:
+        raise ValueError(f"Variable '{default_variables_name}' not found in Prefect")
+    default_job_variables = {
+        k: v for k, v in default_job_variables.items() if v is not None
+    }
 
     job_variables = _merge_job_environments(
         {
@@ -297,7 +296,7 @@ def create_deployment(flow: Flow) -> None:
         },
     }
 
-    _ = flow.deploy(
+    _ = await flow.adeploy(
         f"data-in-pipeline-{aws_env}",
         work_pool_name="mvp-prod-ecs",
         image=DockerImage(
@@ -315,4 +314,4 @@ def create_deployment(flow: Flow) -> None:
 
 
 if __name__ == "__main__":
-    create_deployment(data_in_pipeline)
+    asyncio.run(create_deployment(data_in_pipeline))
