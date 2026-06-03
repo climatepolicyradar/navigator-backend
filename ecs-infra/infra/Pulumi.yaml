@@ -1,0 +1,10 @@
+name: ecs-infra
+description: Shared ECS infrastructure for API microservices
+runtime:
+  name: python
+  options:
+    toolchain: uv
+config:
+  pulumi:tags:
+    value:
+      pulumi:template: aws-python

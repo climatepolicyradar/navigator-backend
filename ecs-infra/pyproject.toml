@@ -1,11 +1,11 @@
 [project]
-name = "api"
+name = "ecs-infra"
 version = "2.0.0"
 readme = "README.md"
 requires-python = ">=3.13,<3.14"
 
 dependencies = [
-  "fastapi[standard]>=0.116.0",
+  "fastapi[standard]>=0.115.12,<0.116.0",
   "pulumi>=3.166.0,<4.0.0",
   "pulumi-aws>=7.0.0,<7.30.0",
   "opentelemetry-instrumentation-fastapi>=0.59b0",
@@ -16,6 +16,9 @@ dependencies = [
   "opentelemetry-instrumentation-logging>=0.59b0",
   "opentelemetry-api>=1.38.0,<2.0.0",
 ]
+
+[tool.hatch.build.targets.wheel]
+packages = ["infra"]
 
 # This is needed as we want to include this member as a package in another member of the workspace.
 [build-system]
