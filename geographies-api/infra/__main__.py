@@ -24,7 +24,7 @@ NAME_PREFIX = f"geographies-api-{stack}"
 # Reference to shared API services infra
 ########################################################################
 
-shared = pulumi.StackReference(f"climatepolicyradar/ecs-infra/{stack}")
+ecs_infra = pulumi.StackReference(f"climatepolicyradar/ecs-infra/{stack}")
 
 
 # This stuff is being encapsulated in navigator-infra and we should use that once it is ready
@@ -272,9 +272,9 @@ primary_container = ExpressGatewayServicePrimaryContainerArgs(
 ecs_express_service = ExpressGatewayService(
     f"{NAME_PREFIX}-ecs-express-service",
     service_name=NAME_PREFIX,
-    cluster=shared.get_output("cluster_arn"),
-    execution_role_arn=shared.get_output("task_execution_role_arn"),
-    infrastructure_role_arn=shared.get_output("infrastructure_role_arn"),
+    cluster=ecs_infra.get_output("cluster_arn"),
+    execution_role_arn=ecs_infra.get_output("task_execution_role_arn"),
+    infrastructure_role_arn=ecs_infra.get_output("infrastructure_role_arn"),
     task_role_arn=ecs_task_role.arn,  # service-specific
     primary_container=primary_container,
     health_check_path="/health",
@@ -290,7 +290,7 @@ ecs_express_service = ExpressGatewayService(
     ],
     network_configurations=[
         ExpressGatewayServiceNetworkConfigurationArgs(
-            security_groups=[shared.get_output("alb_security_group_id")],
+            security_groups=[ecs_infra.get_output("alb_security_group_id")],
             subnets=[
                 eu_west_1a_public_subnet_id,
                 eu_west_1b_public_subnet_id,

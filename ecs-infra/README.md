@@ -112,29 +112,6 @@ pulumi up
 references it can deploy. If you `pulumi destroy` this stack, every dependent
 service stack will fail until it's recreated.
 
-## Stack config
-
-Each stack needs the following config keys (in `Pulumi.<stack>.yaml`):
-
-| Key                                | Example                 | Notes                                                                                                                                                      |
-| ---------------------------------- | ----------------------- | ---------------------------------------------------------------------------------------------------------------------------------------------------------- |
-| `vpc_id`                           | `vpc-**************`    | The VPC the cluster operates in                                                                                                                            |
-| `vpc_public_subnet_1_id`           | `subnet-**************` | Public subnet, eu-west-1a                                                                                                                                  |
-| `vpc_public_subnet_2_id`           | `subnet-**************` | Public subnet, eu-west-1b                                                                                                                                  |
-| `vpc_public_subnet_3_id`           | `subnet-**************` | Public subnet, eu-west-1c                                                                                                                                  |
-| `cloudfront_origin_prefix_list_id` | `pl-**************`     | Region-specific; look up with `aws ec2 describe-managed-prefix-lists --filters Name=prefix-list-name,Values=com.amazonaws.global.cloudfront.origin-facing` |
-
-Subnets must have a route to an Internet Gateway. Don't trust the `-public-` in
-the name tag — verify with `describe-route-tables` and look for an `igw-...`
-route.
-
-These values are also outputs from the aws_env stack, so you can reference that
-stack if you want to avoid hardcoding them:
-
-```python
-aws_env = pulumi.StackReference(f"climatepolicyradar/aws_env/{stack}")
-```
-
 ## Outputs
 
 | Output                             | Type   | Used by                                                  |
