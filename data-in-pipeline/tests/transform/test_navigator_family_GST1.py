@@ -247,6 +247,16 @@ def test_transform_navigator_family_UNFCCC_party_submission_to_GST1_label():
                     id="author_type::Party",
                     value="Party",
                     type="author_type",
+                    labels=[
+                        LabelRelationship(
+                            type="subconcept_of",
+                            value=Label(
+                                id="category::UN submission",
+                                value="UN submission",
+                                type="category",
+                            ),
+                        )
+                    ],
                 ),
             ),
             LabelRelationship(
@@ -255,6 +265,16 @@ def test_transform_navigator_family_UNFCCC_party_submission_to_GST1_label():
                     id="un_convention::UNFCCC",
                     value="UNFCCC",
                     type="un_convention",
+                    labels=[
+                        LabelRelationship(
+                            type="subconcept_of",
+                            value=Label(
+                                id="category::UN submission",
+                                value="UN submission",
+                                type="category",
+                            ),
+                        )
+                    ],
                 ),
             ),
         ],
@@ -602,6 +622,16 @@ def test_transform_navigator_family_UNFCCC_non_party_submission_to_GST1_label():
                     id="author_type::Non-Party",
                     value="Non-Party",
                     type="author_type",
+                    labels=[
+                        LabelRelationship(
+                            type="subconcept_of",
+                            value=Label(
+                                id="category::UN submission",
+                                value="UN submission",
+                                type="category",
+                            ),
+                        )
+                    ],
                 ),
             ),
             LabelRelationship(
@@ -610,6 +640,16 @@ def test_transform_navigator_family_UNFCCC_non_party_submission_to_GST1_label():
                     id="un_convention::UNFCCC",
                     value="UNFCCC",
                     type="un_convention",
+                    labels=[
+                        LabelRelationship(
+                            type="subconcept_of",
+                            value=Label(
+                                id="category::UN submission",
+                                value="UN submission",
+                                type="category",
+                            ),
+                        )
+                    ],
                 ),
             ),
         ],

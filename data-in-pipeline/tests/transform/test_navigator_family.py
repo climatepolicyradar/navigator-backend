@@ -23,6 +23,7 @@ from app.transform.navigator_family import (
     _implementing_agency_label,
     _law_type_label,
     _multilateral_climate_fund_label,
+    _report_type_label,
     _status_label,
     _topic_label,
     _un_convention_label,
@@ -487,6 +488,34 @@ def test_transform_navigator_family_with_single_matching_document(
                     id="deprecated_category::Laws and Policies",
                     value="Laws and Policies",
                     type="deprecated_category",
+                ),
+            ),
+            LabelRelationship(
+                type="entity_type",
+                value=Label(
+                    type="document_type",
+                    id="document_type::National Drought Plan (NDP)",
+                    value="National Drought Plan (NDP)",
+                    labels=[
+                        LabelRelationship(
+                            type="subconcept_of",
+                            value=Label(
+                                type="un_convention",
+                                id="un_convention::UNCCD",
+                                value="UNCCD",
+                                labels=[
+                                    LabelRelationship(
+                                        type="subconcept_of",
+                                        value=Label(
+                                            type="category",
+                                            id="category::UN submission",
+                                            value="UN submission",
+                                        ),
+                                    )
+                                ],
+                            ),
+                        )
+                    ],
                 ),
             ),
         ],
@@ -2239,7 +2268,7 @@ def test_author_type_label_returns_label_for_non_stakeholder():
     labels = _author_type_label(family)
     assert len(labels) == 1
     assert labels[0].type == "author_type"
-    assert labels[0].value.id == "author_type::Intergovernmental Organization"
+    assert labels[0].value.id == "author_type::Intergovernmental organization"
 
 
 def test_author_type_label_returns_empty_when_no_metadata():
@@ -2255,7 +2284,7 @@ def test_author_type_label_returns_empty_when_no_metadata():
     [
         ("UNFCCC.corpus.i00000001.n0000", "UNFCCC"),
         ("UN.corpus.UNCCD.n0000", "UNCCD"),
-        ("UN.corpus.UNCBD.n0000", "UNCBD"),
+        ("UN.corpus.UNCBD.n0000", "CBD"),
     ],
 )
 def test_un_convention_label_returns_label(corpus_import_id, expected_convention):
@@ -2444,6 +2473,82 @@ def test_entity_type_label_returns_empty_for_non_mcf_corpus():
 
 
 @pytest.mark.parametrize(
+    "document_type,expected_entity_type_ids",
+    [
+        ("Corporate voluntary report", ["entity_type::Corporate voluntary report"]),
+        ("Corporate regulatory filing", ["entity_type::Corporate voluntary filing"]),
+        (
+            "Assessment Report",
+            ["report_type::Climate council report", "entity_type::Assessment report"],
+        ),
+        (
+            "Annual Report",
+            ["report_type::Climate council report", "entity_type::Annual report"],
+        ),
+        ("Annual Performance Report", ["entity_type::Annual performance report"]),
+        ("Approved funding proposal", ["entity_type::Approved funding proposal"]),
+        (
+            "Final independent evaluation report",
+            ["entity_type::Final independent evaluation report"],
+        ),
+        ("Gender action plan", ["entity_type::Gender action plan"]),
+        ("Gender assessment", ["entity_type::Gender assessment"]),
+        ("Project completion report", ["entity_type::Project completion report"]),
+    ],
+)
+def test_entity_type_label_returns_label_for_document_type(
+    document_type, expected_entity_type_ids
+):
+    family = NavigatorFamilyFactory.build(
+        corpus=NavigatorCorpusFactory.build(import_id="CCLW.corpus.i00000001.n0000"),
+        documents=[
+            NavigatorDocumentFactory.build(
+                valid_metadata={"type": [document_type]},
+            )
+        ],
+    )
+    labels = _entity_type_label(family)
+    assert [label.value.id for label in labels] == expected_entity_type_ids
+    assert all(label.type == "entity_type" for label in labels)
+
+
+def test_entity_type_label_returns_empty_for_non_matching_document_type():
+    family = NavigatorFamilyFactory.build(
+        corpus=NavigatorCorpusFactory.build(import_id="CCLW.corpus.i00000001.n0000"),
+        documents=[
+            NavigatorDocumentFactory.build(
+                valid_metadata={"type": ["Some other document type"]},
+            )
+        ],
+    )
+    assert _entity_type_label(family) == []
+
+
+def test_entity_type_label_returns_both_labels_for_oep_corpus():
+    family = NavigatorFamilyFactory.build(
+        corpus=NavigatorCorpusFactory.build(import_id="OEP.corpus.i00000001.n0000"),
+    )
+    labels = _entity_type_label(family)
+    label_ids = [label.value.id for label in labels]
+    assert "report_type::Industry report" in label_ids
+    assert "entity_type::Offshore wind report" in label_ids
+    assert len(labels) == 2  # noqa: PLR2004
+
+
+def test_entity_type_label_oep_always_applies_regardless_of_document_type():
+    family = NavigatorFamilyFactory.build(
+        corpus=NavigatorCorpusFactory.build(import_id="OEP.corpus.i00000001.n0000"),
+        documents=[
+            NavigatorDocumentFactory.build(valid_metadata={"type": ["Some other type"]})
+        ],
+    )
+    labels = _entity_type_label(family)
+    label_ids = [label.value.id for label in labels]
+    assert "report_type::Industry report" in label_ids
+    assert "entity_type::Offshore wind report" in label_ids
+
+
+@pytest.mark.parametrize(
     "topic",
     ["Mitigation", "Adaptation", "Loss and Damage"],
 )
@@ -2460,7 +2565,7 @@ def test_topic_label_returns_label_for_topic_metadata(topic):
     assert labels[0].value.type == "topic"
 
 
-def test_topic_label_includes_subconcept_of_law():
+def test_topic_label_includes_subconcept_of_law_and_policy():
     family = NavigatorFamilyFactory.build(
         corpus=NavigatorCorpusFactory.build(import_id="CCLW.corpus.i00000001.n0000"),
         metadata={"topic": ["Mitigation"]},
@@ -2468,11 +2573,15 @@ def test_topic_label_includes_subconcept_of_law():
     labels = _topic_label(family)
     assert len(labels) == 1
     subconcept_labels = labels[0].value.labels
-    assert len(subconcept_labels) == 1
+    assert len(subconcept_labels) == 2  # noqa: PLR2004
     assert subconcept_labels[0].type == "subconcept_of"
     assert subconcept_labels[0].value.id == "category::Law"
     assert subconcept_labels[0].value.type == "category"
     assert subconcept_labels[0].value.value == "Law"
+    assert subconcept_labels[1].type == "subconcept_of"
+    assert subconcept_labels[1].value.id == "category::Policy"
+    assert subconcept_labels[1].value.type == "category"
+    assert subconcept_labels[1].value.value == "Policy"
 
 
 def test_topic_label_returns_empty_when_no_topic_key():
@@ -2668,3 +2777,34 @@ def test_implementing_agency_label_returns_empty_when_empty_string():
         metadata={"implementing_agency": [""]},
     )
     assert _implementing_agency_label(family) == []
+
+
+def test_report_type_label_returns_label_for_iccn_corpus():
+    family = NavigatorFamilyFactory.build(
+        corpus=NavigatorCorpusFactory.build(import_id="ICCN.corpus.i00000001.n0000"),
+    )
+    labels = _report_type_label(family)
+    assert len(labels) == 1
+    assert labels[0].type == "report_type"
+    assert labels[0].value.id == "report_type::Climate council report"
+    assert labels[0].value.value == "Climate council report"
+    assert labels[0].value.type == "agent"
+
+
+def test_report_type_label_includes_subconcept_of_report():
+    family = NavigatorFamilyFactory.build(
+        corpus=NavigatorCorpusFactory.build(import_id="ICCN.corpus.i00000001.n0000"),
+    )
+    labels = _report_type_label(family)
+    subconcept_labels = labels[0].value.labels
+    assert len(subconcept_labels) == 1
+    assert subconcept_labels[0].type == "subconcept_of"
+    assert subconcept_labels[0].value.id == "category::Report"
+    assert subconcept_labels[0].value.type == "category"
+
+
+def test_report_type_label_returns_empty_for_non_iccn_corpus():
+    family = NavigatorFamilyFactory.build(
+        corpus=NavigatorCorpusFactory.build(import_id="CCLW.corpus.i00000001.n0000"),
+    )
+    assert _report_type_label(family) == []

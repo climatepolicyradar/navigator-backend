@@ -2,6 +2,8 @@ from http import HTTPStatus
 from unittest.mock import Mock
 
 import pytest
+from data_in_models.db_models import Label as DBLabel
+from data_in_models.db_models import LabelLabelRelationship as DBLabelLabelRelationship
 from data_in_models.models import Document as DocumentOutput
 from fastapi.testclient import TestClient
 from sqlmodel import Session
@@ -145,3 +147,40 @@ def test_list_documents_returns_empty_list(client, monkeypatch):
     data = response.json()
     assert data["total"] == 0
     assert data["data"] == []
+
+
+def test_get_label_response_includes_label_relationships(session: Session):
+    """GET /labels/{id} should return label relationships in the labels field."""
+    child = DBLabel(
+        id="child", value="Child Label", type="principal_law", attributes={}
+    )
+    parent = DBLabel(
+        id="parent", value="Parent Label", type="principal_law", attributes={}
+    )
+    session.add(child)
+    session.add(parent)
+    session.commit()
+
+    link = DBLabelLabelRelationship(
+        label_id="child", related_label_id="parent", type="subconcept_of"
+    )
+    session.add(link)
+    session.commit()
+
+    def get_db_override():
+        yield session
+
+    app.dependency_overrides[get_db] = get_db_override
+    client = TestClient(app)
+
+    try:
+        response = client.get("/data-in/labels/child")
+        assert response.status_code == HTTPStatus.OK
+        data = response.json()["data"]
+        assert data["id"] == "child"
+        assert len(data["labels"]) == 1
+        rel = data["labels"][0]
+        assert rel["type"] == "subconcept_of"
+        assert rel["value"]["id"] == "parent"
+    finally:
+        app.dependency_overrides.clear()
