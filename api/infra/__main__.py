@@ -128,6 +128,16 @@ api_cloudfront_distribution = aws.cloudfront.Distribution(
             ),
         ),
         aws.cloudfront.DistributionOriginArgs(
+            domain_name=geographies_api_stack.get_output("ecs_express_service_url"),
+            origin_id="geographies-api-ecs-express",
+            custom_origin_config=aws.cloudfront.DistributionOriginCustomOriginConfigArgs(
+                http_port=80,
+                https_port=443,
+                origin_protocol_policy="https-only",
+                origin_ssl_protocols=["TLSv1.2"],
+            ),
+        ),
+        aws.cloudfront.DistributionOriginArgs(
             domain_name=concepts_api_stack.get_output("apprunner_service_url"),
             origin_id="concepts-api-apprunner",
             custom_origin_config=aws.cloudfront.DistributionOriginCustomOriginConfigArgs(
@@ -235,7 +245,7 @@ api_cloudfront_distribution = aws.cloudfront.Distribution(
                     "GET",
                     "OPTIONS",
                 ],
-                target_origin_id="geographies-api-apprunner",
+                target_origin_id="geographies-api-ecs-express",
                 viewer_protocol_policy="redirect-to-https",
                 cache_policy_id=api_cache_policy.id,
                 origin_request_policy_id=api_cors_policy.id,
