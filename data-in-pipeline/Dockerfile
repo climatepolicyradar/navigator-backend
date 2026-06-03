@@ -3,7 +3,7 @@
 # and also don't have a health endpoint to ping to provide a meaningful health
 # check
 # checkov:skip=CKV_DOCKER_2
-FROM prefecthq/prefect:3.7.2-python3.13
+FROM prefecthq/prefect:3.7.3-python3.13
 
 
 # Create a non-root user
@@ -14,13 +14,13 @@ RUN useradd -m -u 1000 prefect_user
 ENV UV_PROJECT_ENVIRONMENT="/usr/local/"
 
 # Copy your source code
-COPY ./data-in-pipeline /app/data-in-pipeline/
-COPY ./api /app/api/
-COPY ./data-in-models /app/data-in-models/
+COPY --chown=prefect_user:prefect_user ./data-in-pipeline /app/data-in-pipeline/
+COPY --chown=prefect_user:prefect_user ./api /app/api/
+COPY --chown=prefect_user:prefect_user ./data-in-models /app/data-in-models/
 WORKDIR /app
 
 # Copy dependency files
-COPY pyproject.toml uv.lock ./
+COPY --chown=prefect_user:prefect_user pyproject.toml uv.lock ./
 
 # Install uv (fast Python dependency manager)
 COPY --from=ghcr.io/astral-sh/uv:latest /uv /uvx /bin/
