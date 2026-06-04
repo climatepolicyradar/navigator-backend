@@ -136,9 +136,10 @@ async def search_concepts(
                 """,
                 [limit],
             )
-    elif has_classifier:
-        result = db.execute(
-            """
+    else:
+        if has_classifier:
+            result = db.execute(
+                """
                 SELECT
                     wikibase_id,
                     preferred_label,
@@ -153,11 +154,11 @@ async def search_concepts(
                 AND has_classifier = ?
                 LIMIT ?
                 """,
-            [f"{q}%", has_classifier, limit],
-        )
-    else:
-        result = db.execute(
-            """
+                [f"{q}%", has_classifier, limit],
+            )
+        else:
+            result = db.execute(
+                """
                 SELECT
                     wikibase_id,
                     preferred_label,
@@ -171,8 +172,8 @@ async def search_concepts(
                 WHERE preferred_label ILIKE ?
                 LIMIT ?
                 """,
-            [f"{q}%", limit],
-        )
+                [f"{q}%", limit],
+            )
 
     if result.description is not None and (rows := result.fetchall()):
         columns = [desc[0] for desc in result.description]
