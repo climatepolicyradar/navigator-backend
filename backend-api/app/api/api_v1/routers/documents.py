@@ -110,7 +110,7 @@ def family_detail_from_vespa(  # noqa: PLR0913
             limit=limit,
             max_hits_per_family=max_hits_per_family,
         )
-        if hits.total_family_hits == 0:
+        if hits.total_result_hits == 0:
             raise HTTPException(
                 status_code=NOT_FOUND, detail=f"Nothing found for {import_id} in Vespa"
             )
@@ -159,7 +159,7 @@ def doc_detail_from_vespa(
         hits = get_document_from_vespa(
             document_id=import_id, db=db, vespa_search_adapter=vespa_search_adapter
         )
-        if hits.total_family_hits == 0:
+        if hits.total_result_hits == 0:
             raise HTTPException(
                 status_code=NOT_FOUND, detail=f"Nothing found for {import_id} in Vespa"
             )
