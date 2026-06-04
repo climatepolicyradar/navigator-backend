@@ -36,6 +36,7 @@ eu_west_1a_public_subnet_id = aws_env_stack.get_output("eu_west_1a_public_subnet
 eu_west_1b_public_subnet_id = aws_env_stack.get_output("eu_west_1b_public_subnet_id")
 eu_west_1c_public_subnet_id = aws_env_stack.get_output("eu_west_1c_public_subnet_id")
 rds_vpc_security_group_id = aws_env_stack.get_output("rds_security_group_id")
+ecs_shared_task_execution_role_name = ecs_infra.get_output("task_execution_role_name")
 
 
 # This stuff is being encapsulated in navigator-infra and we should use that once it is ready
@@ -241,6 +242,23 @@ ecs_task_role = aws.iam.Role(
 aws.iam.RolePolicy(
     f"{NAME_PREFIX}-ecs-task-role-ssm-policy",
     role=ecs_task_role.id,
+    policy=aws.iam.get_policy_document(
+        statements=[
+            aws.iam.GetPolicyDocumentStatementArgs(
+                effect="Allow",
+                actions=["ssm:GetParameters"],
+                resources=[
+                    f"arn:aws:ssm:eu-west-1:{account_id}:parameter/families-api/*"
+                ],
+            )
+        ]
+    ).json,
+)
+
+
+aws.iam.RolePolicy(
+    f"{NAME_PREFIX}-execution-role-ssm-policy",
+    role=ecs_shared_task_execution_role_name,
     policy=aws.iam.get_policy_document(
         statements=[
             aws.iam.GetPolicyDocumentStatementArgs(
