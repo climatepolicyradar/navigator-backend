@@ -303,7 +303,7 @@ async def get_concept(concept_id: str):
     return {"concept": concept, "related_concepts": related, "subconcepts": subconcepts}
 
 
-@router.get("/health")
+@router.get("/db-health")
 async def health_check():
     db = get_db()
 
