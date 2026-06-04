@@ -27,7 +27,7 @@ try:
         ServiceManifest.from_file(f"{root_dir}/service-manifest.json"), ENV, "0.1.0"
     )
 except Exception as _:
-    _LOGGER.error("Failed to load service manifest, using defaults")
+    _LOGGER.exception("Failed to load service manifest, using defaults")
     otel_config = TelemetryConfig(
         service_name="navigator-backend",
         namespace_name="navigator",
@@ -53,13 +53,12 @@ async def lifespan(app: FastAPI):
     # Startup
     global conn
     try:
-
         db_path = root_dir / "initial-data" / "concepts.db"
         conn = duckdb.connect(db_path, read_only=True)
         _LOGGER.info("🔌 Database connection established")
         yield
     except Exception as e:
-        _LOGGER.error(f"❌ Database connection failed: {e}")
+        _LOGGER.exception(f"❌ Database connection failed: {e}")
         raise
     finally:
         # Shutdown
@@ -86,6 +85,21 @@ app = FastAPI(
     redoc_url="/concepts/redoc",
     openapi_url="/concepts/openapi.json",
 )
+
+
+@app.get("/health")
+async def service_health_check():
+    db = get_db()
+    try:
+        db.execute("SELECT 1").fetchone()
+        return {
+            "status": "ok",
+            "version": settings.github_sha,
+        }
+    except Exception:
+        raise HTTPException(
+            status_code=500, detail="Database connection failed"
+        ) from Exception
 
 
 @router.get("/search")
@@ -129,10 +143,9 @@ async def search_concepts(
                 """,
                 [limit],
             )
-    else:
-        if has_classifier:
-            result = db.execute(
-                """
+    elif has_classifier:
+        result = db.execute(
+            """
                 SELECT
                     wikibase_id,
                     preferred_label,
@@ -147,11 +160,11 @@ async def search_concepts(
                 AND has_classifier = ?
                 LIMIT ?
                 """,
-                [f"{q}%", has_classifier, limit],
-            )
-        else:
-            result = db.execute(
-                """
+            [f"{q}%", has_classifier, limit],
+        )
+    else:
+        result = db.execute(
+            """
                 SELECT
                     wikibase_id,
                     preferred_label,
@@ -165,8 +178,8 @@ async def search_concepts(
                 WHERE preferred_label ILIKE ?
                 LIMIT ?
                 """,
-                [f"{q}%", limit],
-            )
+            [f"{q}%", limit],
+        )
 
     if result.description is not None and (rows := result.fetchall()):
         columns = [desc[0] for desc in result.description]
