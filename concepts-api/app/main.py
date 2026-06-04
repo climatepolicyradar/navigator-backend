@@ -89,17 +89,10 @@ app = FastAPI(
 
 @app.get("/health")
 async def service_health_check():
-    db = get_db()
-    try:
-        db.execute("SELECT 1").fetchone()
-        return {
-            "status": "ok",
-            "version": settings.github_sha,
-        }
-    except Exception:
-        raise HTTPException(
-            status_code=500, detail="Database connection failed"
-        ) from Exception
+    return {
+        "status": "ok",
+        "version": settings.github_sha,
+    }
 
 
 @router.get("/search")
