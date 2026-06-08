@@ -345,6 +345,57 @@ eu_west_1a_public_subnet_id = aws_env_stack.get_output("eu_west_1a_public_subnet
 eu_west_1b_public_subnet_id = aws_env_stack.get_output("eu_west_1b_public_subnet_id")
 eu_west_1c_public_subnet_id = aws_env_stack.get_output("eu_west_1c_public_subnet_id")
 
+data_in_api_execution_role = aws.iam.Role(
+    f"{NAME_PREFIX}-execution-role",
+    name=f"{NAME_PREFIX}-execution-role",
+    assume_role_policy=aws.iam.get_policy_document(
+        statements=[
+            aws.iam.GetPolicyDocumentStatementArgs(
+                effect="Allow",
+                principals=[
+                    aws.iam.GetPolicyDocumentStatementPrincipalArgs(
+                        type="Service",
+                        identifiers=["ecs-tasks.amazonaws.com"],
+                    )
+                ],
+                actions=["sts:AssumeRole"],
+            ),
+        ]
+    ).json,
+    managed_policy_arns=[
+        "arn:aws:iam::aws:policy/service-role/AmazonECSTaskExecutionRolePolicy",
+    ],
+    tags=tags,
+)
+
+# The SSM permissions now live only on this service's role
+aws.iam.RolePolicy(
+    f"{NAME_PREFIX}-execution-role-ssm-policy",
+    role=data_in_api_execution_role.name,
+    policy=pulumi.Output.all(
+        aurora_read_replica_db_url_parameter=aurora_read_replica_db_url_parameter.arn,
+        aurora_read_replica_db_name_parameter=aurora_read_replica_db_name_parameter.arn,
+        aurora_read_replica_db_username_parameter=aurora_read_replica_db_username_parameter.arn,
+    ).apply(
+        lambda args: aws.iam.get_policy_document(
+            statements=[
+                aws.iam.GetPolicyDocumentStatementArgs(
+                    effect="Allow",
+                    actions=[
+                        "ssm:GetParameter",
+                        "ssm:GetParameters",
+                        "ssm:DescribeParameters",
+                    ],
+                    resources=[
+                        args["aurora_read_replica_db_url_parameter"],
+                        args["aurora_read_replica_db_name_parameter"],
+                        args["aurora_read_replica_db_username_parameter"],
+                    ],
+                ),
+            ]
+        ).json
+    ),
+)
 
 # Task role: the IAM role the *running container* assumes.
 ecs_task_role = aws.iam.Role(
@@ -419,7 +470,7 @@ ecs_express_service = ExpressGatewayService(
     f"{NAME_PREFIX}-ecs-express-service",
     service_name=NAME_PREFIX,
     cluster=ecs_infra.get_output("cluster_arn"),
-    execution_role_arn=ecs_infra.get_output("task_execution_role_arn"),
+    execution_role_arn=data_in_api_execution_role.arn,
     infrastructure_role_arn=ecs_infra.get_output("infrastructure_role_arn"),
     task_role_arn=ecs_task_role.arn,  # service-specific
     primary_container=primary_container,
