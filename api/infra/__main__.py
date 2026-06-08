@@ -370,6 +370,9 @@ navigator_backend_github_actions_deploy = aws.iam.Role(
                         resources=[
                             f"arn:aws:ssm:*:{account_id}:parameter/data-in-pipeline/*",
                             f"arn:aws:ssm:*:{account_id}:parameter/data-in-api/*",
+                            f"arn:aws:ssm:*:{account_id}:parameter/families-api/*",
+                            f"arn:aws:ssm:*:{account_id}:parameter/concepts-api/*",
+                            f"arn:aws:ssm:*:{account_id}:parameter/geographies-api/*",
                         ],
                     ),
                     aws.iam.GetPolicyDocumentStatementArgs(
@@ -407,9 +410,13 @@ navigator_backend_github_actions_deploy = aws.iam.Role(
                     aws.iam.GetPolicyDocumentStatementArgs(
                         actions=[
                             "iam:PassRole",
+                            "iam:CreateRole",
+                            "iam:DeleteRole",
                             "iam:DeleteRolePolicy",
                             "iam:GetRole",
                             "iam:ListRolePolicies",
+                            "iam:ListRoleTags",
+                            "iam:TagRole",
                             "iam:GetRolePolicy",
                             "iam:PutRolePolicy",
                             "iam:ListAttachedRolePolicies",
@@ -418,6 +425,9 @@ navigator_backend_github_actions_deploy = aws.iam.Role(
                         resources=[
                             f"arn:aws:iam::{account_id}:role/data-in-pipeline-*",
                             f"arn:aws:iam::{account_id}:role/data-in-api-*",
+                            f"arn:aws:iam::{account_id}:role/families-api-*",
+                            f"arn:aws:iam::{account_id}:role/concepts-api-*",
+                            f"arn:aws:iam::{account_id}:role/geographies-api-*",
                         ],
                     ),
                     aws.iam.GetPolicyDocumentStatementArgs(
@@ -427,6 +437,10 @@ navigator_backend_github_actions_deploy = aws.iam.Role(
                         effect="Allow",
                         resources=[
                             f"arn:aws:ssm:*:{account_id}:parameter/data-in-pipeline/*",
+                            f"arn:aws:ssm:*:{account_id}:parameter/data-in-api/*",
+                            f"arn:aws:ssm:*:{account_id}:parameter/families-api/*",
+                            f"arn:aws:ssm:*:{account_id}:parameter/concepts-api/*",
+                            f"arn:aws:ssm:*:{account_id}:parameter/geographies-api/*",
                         ],
                     ),
                 ]
