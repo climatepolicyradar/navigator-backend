@@ -1,8 +1,10 @@
 from enum import Enum
 from typing import List, Literal, Mapping, Optional, Sequence
 
+from cpr_sdk.models.search import Family as CprSdkFamily
 from cpr_sdk.models.search import Passage
 from cpr_sdk.models.search import SearchParameters as CprSdkSearchParameters
+from cpr_sdk.models.search import SearchResponse as CprSdkSearchResponse
 from db_client.models.dfce import FamilyCategory
 from pydantic import (
     BaseModel,
@@ -371,6 +373,41 @@ class SearchResponse(BaseModel):
                             passage_match_index
                         ].text_block_page += 1  # type: ignore
         return self
+
+
+class FamilySearchResponse(BaseModel):
+    """
+    Response model for the family and document detail endpoints.
+
+    Owns the API contract independently of the SDK's internal model,
+    insulating the frontend from SDK field renames.
+
+    Note: `families` is typed as `CprSdkFamily` — the top-level field names
+    are protected by this model, but nested field renames inside `CprSdkFamily`
+    would still propagate to the API response.
+    """
+
+    total_hits: int
+    total_family_hits: int
+    query_time_ms: int | None = None
+    total_time_ms: int | None = None
+    families: Sequence[CprSdkFamily]
+    continuation_token: str | None = None
+    this_continuation_token: str | None = None
+    prev_continuation_token: str | None = None
+
+    @classmethod
+    def from_sdk(cls, r: CprSdkSearchResponse[CprSdkFamily]) -> "FamilySearchResponse":
+        return cls(
+            total_hits=r.total_hits,
+            total_family_hits=r.total_result_hits,
+            families=r.results,
+            query_time_ms=r.query_time_ms,
+            total_time_ms=r.total_time_ms,
+            continuation_token=r.continuation_token,
+            this_continuation_token=r.this_continuation_token,
+            prev_continuation_token=r.prev_continuation_token,
+        )
 
 
 Top5FamilyList = Annotated[List[SearchResponseFamily], Field(max_length=5)]

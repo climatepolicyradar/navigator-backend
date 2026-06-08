@@ -2,7 +2,6 @@ import logging
 from http.client import NOT_FOUND
 from typing import Annotated, Union
 
-from cpr_sdk.models.search import SearchResponse
 from cpr_sdk.search_adaptors import VespaSearchAdapter
 from fastapi import APIRouter, Depends, Header, HTTPException, Request
 
@@ -11,6 +10,7 @@ from app.models.document import (
     FamilyAndDocumentsResponse,
     FamilyDocumentWithContextResponse,
 )
+from app.models.search import FamilySearchResponse
 from app.repository.document import (
     get_family_and_documents,
     get_family_document_and_context,
@@ -64,7 +64,7 @@ def family_or_document_detail(
         raise HTTPException(status_code=NOT_FOUND, detail=str(err))
 
 
-@documents_router.get("/families/{import_id}", response_model=SearchResponse)
+@documents_router.get("/families/{import_id}", response_model=FamilySearchResponse)
 def family_detail_from_vespa(  # noqa: PLR0913
     import_id: str,
     request: Request,
@@ -87,7 +87,7 @@ def family_detail_from_vespa(  # noqa: PLR0913
     :param Annotated[str, Header()] app_token: App token containing
         allowed corpora.
     :param Depends[get_db] db: Database session to query against.
-    :return SearchResponse: An object representing the family in
+    :return FamilySearchResponse: An object representing the family in
         Vespa - including concepts.
     """
     _LOGGER.info(
@@ -103,23 +103,25 @@ def family_detail_from_vespa(  # noqa: PLR0913
 
     try:
         # TODO: Make this respect the allowed corpora from the decoded token.
-        hits = get_family_from_vespa(
-            family_id=import_id,
-            db=db,
-            vespa_search_adapter=vespa_search_adapter,
-            limit=limit,
-            max_hits_per_family=max_hits_per_family,
+        response = FamilySearchResponse.from_sdk(
+            get_family_from_vespa(
+                family_id=import_id,
+                db=db,
+                vespa_search_adapter=vespa_search_adapter,
+                limit=limit,
+                max_hits_per_family=max_hits_per_family,
+            )
         )
-        if hits.total_result_hits == 0:
+        if response.total_family_hits == 0:
             raise HTTPException(
                 status_code=NOT_FOUND, detail=f"Nothing found for {import_id} in Vespa"
             )
-        return hits
+        return response
     except ValueError as err:
         raise HTTPException(status_code=NOT_FOUND, detail=str(err))
 
 
-@documents_router.get("/document/{import_id}", response_model=SearchResponse)
+@documents_router.get("/document/{import_id}", response_model=FamilySearchResponse)
 def doc_detail_from_vespa(
     import_id: str,
     request: Request,
@@ -140,7 +142,7 @@ def doc_detail_from_vespa(
     :param Annotated[str, Header()] app_token: App token containing
         allowed corpora.
     :param Depends[get_db] db: Database session to query against.
-    :return SearchResponse: An object representing the document in
+    :return FamilySearchResponse: An object representing the document in
         Vespa - including concepts.
     """
     _LOGGER.info(
@@ -156,13 +158,17 @@ def doc_detail_from_vespa(
 
     try:
         # TODO: Make this respect the allowed corpora from the decoded token.
-        hits = get_document_from_vespa(
-            document_id=import_id, db=db, vespa_search_adapter=vespa_search_adapter
+        response = FamilySearchResponse.from_sdk(
+            get_document_from_vespa(
+                document_id=import_id,
+                db=db,
+                vespa_search_adapter=vespa_search_adapter,
+            )
         )
-        if hits.total_result_hits == 0:
+        if response.total_family_hits == 0:
             raise HTTPException(
                 status_code=NOT_FOUND, detail=f"Nothing found for {import_id} in Vespa"
             )
-        return hits
+        return response
     except ValueError as err:
         raise HTTPException(status_code=NOT_FOUND, detail=str(err))
