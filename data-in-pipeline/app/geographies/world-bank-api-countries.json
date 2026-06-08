@@ -1,5 +1,5 @@
 [
-  { "page": 1, "pages": 1, "per_page": "300", "total": 296 },
+  { "page": 1, "pages": 1, "per_page": "300", "total": 297 },
   [
     {
       "id": "ABW",
@@ -5132,6 +5132,26 @@
       "capitalCity": "Ankara",
       "longitude": "32.3606",
       "latitude": "39.7153"
+    },
+    {
+      "id": "TWN",
+      "iso2Code": "TW",
+      "name": "Taiwan",
+      "region": {
+        "id": "EAS",
+        "iso2code": "Z4",
+        "value": "East Asia & Pacific"
+      },
+      "adminregion": { "id": "", "iso2code": "", "value": "" },
+      "incomeLevel": { "id": "HIC", "iso2code": "XD", "value": "High income" },
+      "lendingType": {
+        "id": "LNX",
+        "iso2code": "XX",
+        "value": "Not classified"
+      },
+      "capitalCity": "Taipei",
+      "longitude": "121.565",
+      "latitude": "25.033"
     },
     {
       "id": "TUV",
