@@ -371,6 +371,8 @@ navigator_backend_github_actions_deploy = aws.iam.Role(
                             f"arn:aws:ssm:*:{account_id}:parameter/data-in-pipeline/*",
                             f"arn:aws:ssm:*:{account_id}:parameter/data-in-api/*",
                             f"arn:aws:ssm:*:{account_id}:parameter/families-api/*",
+                            f"arn:aws:ssm:*:{account_id}:parameter/concepts-api/*",
+                            f"arn:aws:ssm:*:{account_id}:parameter/geographies-api/*",
                         ],
                     ),
                     aws.iam.GetPolicyDocumentStatementArgs(
@@ -424,6 +426,8 @@ navigator_backend_github_actions_deploy = aws.iam.Role(
                             f"arn:aws:iam::{account_id}:role/data-in-pipeline-*",
                             f"arn:aws:iam::{account_id}:role/data-in-api-*",
                             f"arn:aws:iam::{account_id}:role/families-api-*",
+                            f"arn:aws:iam::{account_id}:role/concepts-api-*",
+                            f"arn:aws:iam::{account_id}:role/geographies-api-*",
                         ],
                     ),
                     aws.iam.GetPolicyDocumentStatementArgs(
@@ -435,6 +439,8 @@ navigator_backend_github_actions_deploy = aws.iam.Role(
                             f"arn:aws:ssm:*:{account_id}:parameter/data-in-pipeline/*",
                             f"arn:aws:ssm:*:{account_id}:parameter/data-in-api/*",
                             f"arn:aws:ssm:*:{account_id}:parameter/families-api/*",
+                            f"arn:aws:ssm:*:{account_id}:parameter/concepts-api/*",
+                            f"arn:aws:ssm:*:{account_id}:parameter/geographies-api/*",
                         ],
                     ),
                 ]
