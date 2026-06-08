@@ -412,14 +412,18 @@ navigator_backend_github_actions_deploy = aws.iam.Role(
                             "iam:PassRole",
                             "iam:CreateRole",
                             "iam:DeleteRole",
-                            "iam:DeleteRolePolicy",
                             "iam:GetRole",
+                            "iam:UpdateRole",
+                            "iam:AttachRolePolicy",
+                            "iam:DetachRolePolicy",
+                            "iam:GetRolePolicy",
+                            "iam:PutRolePolicy",
+                            "iam:DeleteRolePolicy",
+                            "iam:ListAttachedRolePolicies",
+                            "iam:ListInstanceProfilesForRole",
                             "iam:ListRolePolicies",
                             "iam:ListRoleTags",
                             "iam:TagRole",
-                            "iam:GetRolePolicy",
-                            "iam:PutRolePolicy",
-                            "iam:ListAttachedRolePolicies",
                         ],
                         effect="Allow",
                         resources=[
@@ -441,6 +445,60 @@ navigator_backend_github_actions_deploy = aws.iam.Role(
                             f"arn:aws:ssm:*:{account_id}:parameter/families-api/*",
                             f"arn:aws:ssm:*:{account_id}:parameter/concepts-api/*",
                             f"arn:aws:ssm:*:{account_id}:parameter/geographies-api/*",
+                        ],
+                    ),
+                    aws.iam.GetPolicyDocumentStatementArgs(
+                        actions=[
+                            "ec2:DescribeSecurityGroups",
+                            "ec2:DescribeSecurityGroupRules",
+                            "ec2:AuthorizeSecurityGroupIngress",
+                            "ec2:RevokeSecurityGroupIngress",
+                        ],
+                        effect="Allow",
+                        resources=[
+                            "*"
+                        ],  # Describe actions do not support resource-level permissions, so you must specify them in a separate statement without conditions. https://docs.aws.amazon.com/AWSEC2/latest/UserGuide/iam-policies-for-amazon-ec2.html
+                    ),
+                    aws.iam.GetPolicyDocumentStatementArgs(
+                        actions=[
+                            "ecs:CreateService",
+                            "ecs:UpdateService",
+                            "ecs:DeleteService",
+                            "ecs:CreateExpressGatewayService",
+                            "ecs:UpdateExpressGatewayService",
+                            "ecs:DeleteExpressGatewayService",
+                        ],
+                        effect="Allow",
+                        resources=[
+                            f"arn:aws:ecs:eu-west-1:{account_id}:service/api-services-*/*",
+                        ],
+                    ),
+                    aws.iam.GetPolicyDocumentStatementArgs(
+                        actions=[
+                            "ecs:DescribeServices",
+                            "ecs:DescribeExpressGatewayService",
+                            "ecs:RegisterTaskDefinition",
+                            "ecs:DeregisterTaskDefinition",
+                            "ecs:DescribeTaskDefinition",
+                            "ecs:ListTaskDefinitions",
+                        ],
+                        effect="Allow",
+                        resources=["*"],
+                    ),
+                    aws.iam.GetPolicyDocumentStatementArgs(
+                        actions=[
+                            "iam:PassRole",
+                            "iam:PutRolePolicy",
+                            "iam:GetRolePolicy",
+                            "iam:DeleteRolePolicy",
+                            "iam:ListRolePolicies",
+                            "iam:GetRole",
+                            "iam:ListRoleTags",
+                        ],
+                        effect="Allow",
+                        resources=[
+                            f"arn:aws:iam::{account_id}:role/api-services-*-task-execution-role",
+                            f"arn:aws:iam::{account_id}:role/api-services-*-infrastructure-role",
                         ],
                     ),
                 ]
