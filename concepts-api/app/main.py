@@ -27,7 +27,7 @@ try:
         ServiceManifest.from_file(f"{root_dir}/service-manifest.json"), ENV, "0.1.0"
     )
 except Exception as _:
-    _LOGGER.error("Failed to load service manifest, using defaults")
+    _LOGGER.exception("Failed to load service manifest, using defaults")
     otel_config = TelemetryConfig(
         service_name="navigator-backend",
         namespace_name="navigator",
@@ -53,13 +53,12 @@ async def lifespan(app: FastAPI):
     # Startup
     global conn
     try:
-
         db_path = root_dir / "initial-data" / "concepts.db"
         conn = duckdb.connect(db_path, read_only=True)
         _LOGGER.info("🔌 Database connection established")
         yield
     except Exception as e:
-        _LOGGER.error(f"❌ Database connection failed: {e}")
+        _LOGGER.exception(f"❌ Database connection failed: {e}")
         raise
     finally:
         # Shutdown
@@ -86,6 +85,14 @@ app = FastAPI(
     redoc_url="/concepts/redoc",
     openapi_url="/concepts/openapi.json",
 )
+
+
+@app.get("/health")
+async def service_health_check():
+    return {
+        "status": "ok",
+        "version": settings.github_sha,
+    }
 
 
 @router.get("/search")
@@ -297,7 +304,7 @@ async def get_concept(concept_id: str):
     return {"concept": concept, "related_concepts": related, "subconcepts": subconcepts}
 
 
-@router.get("/health")
+@router.get("/db-health")
 async def health_check():
     db = get_db()
 
