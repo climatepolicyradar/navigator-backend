@@ -12,6 +12,7 @@ from pulumi_aws.ecs.express_gateway_service import (
     ExpressGatewayServiceNetworkConfigurationArgs,
     ExpressGatewayServicePrimaryContainerArgs,
     ExpressGatewayServicePrimaryContainerEnvironmentArgs,
+    ExpressGatewayServicePrimaryContainerSecretArgs,
     ExpressGatewayServiceScalingTargetArgs,
 )
 
@@ -384,6 +385,18 @@ aws.iam.RolePolicy(
     ).json,
 )
 
+secrets = {
+    "DB_URL": aurora_read_replica_db_url_parameter.arn,
+    "DB_NAME": aurora_read_replica_db_name_parameter.arn,
+    "DB_USERNAME": aurora_read_replica_db_username_parameter.arn,
+}
+
+env_vars = {
+    "DB_PORT": "5432",
+    "AWS_REGION": "eu-west-1",
+    "CDN_URL": config.require("cdn-url"),
+    "DB_SSLMODE": "require",
+}
 
 # Container config
 primary_container = ExpressGatewayServicePrimaryContainerArgs(
@@ -392,10 +405,12 @@ primary_container = ExpressGatewayServicePrimaryContainerArgs(
     ),
     container_port=8080,  # @related: PORT_NUMBER
     environments=[
-        ExpressGatewayServicePrimaryContainerEnvironmentArgs(
-            name="CDN_URL",
-            value=config.require("cdn-url"),
-        ),
+        ExpressGatewayServicePrimaryContainerEnvironmentArgs(name=k, value=v)
+        for k, v in env_vars.items()
+    ],
+    secrets=[
+        ExpressGatewayServicePrimaryContainerSecretArgs(name=k, value_from=v)
+        for k, v in secrets.items()
     ],
 )
 
