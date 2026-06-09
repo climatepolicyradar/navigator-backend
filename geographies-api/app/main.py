@@ -42,7 +42,7 @@ app = FastAPI(
     openapi_url="/geographies/openapi.json",
 )
 
-# Include custom routers in our app
+# Include custom routers in our app.
 app.include_router(
     geographies_router,
     prefix="/geographies",
@@ -50,7 +50,7 @@ app.include_router(
     include_in_schema=True,
 )
 
-# Add CORS middleware to allow cross origin requests from any port
+# Add CORS middleware to allow cross origin requests from any port.
 _ALLOW_ORIGIN_REGEX = (
     r"http://localhost:3000|"
     r"http://bs-local.com:3000|"
