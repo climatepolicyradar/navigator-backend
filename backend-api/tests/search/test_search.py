@@ -807,10 +807,10 @@ def _generate_search_response(specs: Sequence[FamSpec]) -> CprSdkSearchResponse:
 
     return CprSdkSearchResponse(
         total_hits=len(specs),
-        total_family_hits=(len(families) * 4),
+        total_result_hits=(len(families) * 4),
         query_time_ms=87 * len(specs),
         total_time_ms=95 * len(specs),
-        families=families,
+        results=families,
         continuation_token="ABCXYZ",
         this_continuation_token="",
         prev_continuation_token="ABCDEFXYZ",
@@ -985,7 +985,7 @@ def test_process_vespa_search_response(
     assert len(search_response.families) == min(len(fam_specs), page_size)
     assert search_response.query_time_ms == vespa_response.query_time_ms
     assert search_response.total_time_ms == vespa_response.total_time_ms
-    assert search_response.total_family_hits == vespa_response.total_family_hits
+    assert search_response.total_family_hits == vespa_response.total_result_hits
     assert search_response.continuation_token == vespa_response.continuation_token
     assert (
         search_response.this_continuation_token
@@ -1003,12 +1003,12 @@ def test_process_vespa_search_response(
 
         assert (
             search_response_family_i.total_passage_hits
-            == vespa_response.families[i + offset].total_passage_hits
+            == vespa_response.results[i + offset].total_passage_hits
         )
 
         # Check that we have the correct document details in the response
         expected_document_ids = set(
-            hit.document_import_id for hit in vespa_response.families[i + offset].hits
+            hit.document_import_id for hit in vespa_response.results[i + offset].hits
         )
         assert expected_document_ids  # we always expect document ids
         assert len(search_response_family_i.family_documents) == len(
@@ -1344,10 +1344,10 @@ def test_process_vespa_search_response_page_ordering_regression(
     mock_search = mocker.patch.object(test_vespa, "search")
     mock_search.return_value = CprSdkSearchResponse(
         total_hits=1,
-        total_family_hits=1,
+        total_result_hits=1,
         query_time_ms=100,
         total_time_ms=110,
-        families=[
+        results=[
             CprSdkFamily(
                 id=test_spec.family_import_id,
                 hits=test_passages,

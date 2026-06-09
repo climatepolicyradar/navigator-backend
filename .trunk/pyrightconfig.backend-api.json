@@ -3,7 +3,9 @@
   "venvPath": "../backend-api",
   "venv": ".venv",
   "executionEnvironments": [{ "root": "../backend-api" }],
+  "reportMissingImports": "none",
   "comment-1": "This file is referenced in .trunk/trunk.yaml to run pyright-backend-api",
   "comment-2": "This is structured this way as backend-api has too many conflicting dependencies with other API microservices in the repo",
-  "comment-3": "@related BACKEND_API_PYRIGHT_HACK"
+  "comment-3": "@related BACKEND_API_PYRIGHT_HACK",
+  "comment-4": "reportMissingImports is none because backend-api is excluded from the uv workspace, so its dependencies are never installed in the CI venv that pyright inspects"
 }

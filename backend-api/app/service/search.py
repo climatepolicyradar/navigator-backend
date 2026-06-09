@@ -433,8 +433,8 @@ def process_vespa_search_response(
     """Process a Vespa search response into a F/E search response"""
 
     return SearchResponse(
-        hits=len(vespa_search_response.families),
-        total_family_hits=vespa_search_response.total_family_hits,
+        hits=len(vespa_search_response.results),
+        total_family_hits=vespa_search_response.total_result_hits,
         query_time_ms=vespa_search_response.query_time_ms or 0,
         total_time_ms=vespa_search_response.total_time_ms or 0,
         continuation_token=vespa_search_response.continuation_token,
@@ -442,7 +442,7 @@ def process_vespa_search_response(
         prev_continuation_token=vespa_search_response.prev_continuation_token,
         families=_process_vespa_search_response_families(
             db,
-            vespa_search_response.families,
+            vespa_search_response.results,
             limit=limit,
             offset=offset,
             sort_within_page=sort_within_page,
