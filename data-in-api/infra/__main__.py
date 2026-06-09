@@ -436,6 +436,29 @@ aws.iam.RolePolicy(
     ).json,
 )
 
+aws.iam.RolePolicy(
+    f"{NAME_PREFIX}-ecs-task-role-rds-policy",
+    role=ecs_task_role.id,
+    policy=pulumi.Output.all(
+        aurora_cluster_resource_id=aurora_cluster_resource_id,
+        db_username=aurora_read_replica_db_username_parameter.value,
+    ).apply(
+        lambda args: (
+            aws.iam.get_policy_document(
+                statements=[
+                    aws.iam.GetPolicyDocumentStatementArgs(
+                        effect="Allow",
+                        actions=["rds-db:connect"],
+                        resources=[
+                            f"arn:aws:rds-db:eu-west-1:{account_id}:dbuser:{args['aurora_cluster_resource_id']}/{args['db_username']}"
+                        ],
+                    ),
+                ]
+            ).json
+        )
+    ),
+)
+
 secrets = {
     "DB_URL": aurora_read_replica_db_url_parameter.arn,
     "DB_NAME": aurora_read_replica_db_name_parameter.arn,
@@ -487,7 +510,10 @@ ecs_express_service = ExpressGatewayService(
     ],
     network_configurations=[
         ExpressGatewayServiceNetworkConfigurationArgs(
-            security_groups=[ecs_infra.get_output("alb_security_group_id")],
+            security_groups=[
+                ecs_infra.get_output("alb_security_group_id"),
+                vpc_sg.id,
+            ],
             subnets=[
                 eu_west_1a_public_subnet_id,
                 eu_west_1b_public_subnet_id,
