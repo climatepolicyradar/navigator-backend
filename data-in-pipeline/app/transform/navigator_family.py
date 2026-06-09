@@ -363,6 +363,9 @@ national_drought_plan = Label(
     labels=[LabelRelationship(type="subconcept_of", value=unccd)],
 )
 
+# region Litigation
+litigation = Label(type="category", id="category::Litigation", value="Litigation")
+
 
 _eu_and_international_region_ids = {c.id: c for c in custom_countries}
 
@@ -1066,21 +1069,27 @@ def _transform_litigation_concepts_to_label_relationships(
     # Wire up parent-child relationships
     for concept in concepts:
         child = label_map[(concept.relation, concept.id)]
-        for parent_name in concept.subconcept_of_labels:
-            parent = label_by_name.get((concept.relation, parent_name))
-            if parent is None:
-                warnings.append(
-                    UnknownParentLabel(
-                        family_import_id=family_import_id,
-                        relation=concept.relation,
-                        parent_name=parent_name,
-                    )
-                )
-                continue
-            parent_ref = _shallow_label(parent)
+
+        if not concept.subconcept_of_labels:
             child.labels.append(
-                LabelRelationship(type="subconcept_of", value=parent_ref)
+                LabelRelationship(type="subconcept_of", value=litigation)
             )
+        else:
+            for parent_name in concept.subconcept_of_labels:
+                parent = label_by_name.get((concept.relation, parent_name))
+                if parent is None:
+                    warnings.append(
+                        UnknownParentLabel(
+                            family_import_id=family_import_id,
+                            relation=concept.relation,
+                            parent_name=parent_name,
+                        )
+                    )
+                    continue
+                parent_ref = _shallow_label(parent)
+                child.labels.append(
+                    LabelRelationship(type="subconcept_of", value=parent_ref)
+                )
 
     labels = [
         # we use legal_concept over concept as `concept` is reserved for our knowledge graph labels
