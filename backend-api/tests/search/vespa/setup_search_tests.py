@@ -101,7 +101,8 @@ def _populate_db_families(
     """
 
     seen_family_ids = []
-    for count, (doc, family) in enumerate(_fixture_docs(), start=1):
+    seen_document_ids = []
+    for doc, family in _fixture_docs():
         if doc["fields"]["family_document_ref"] not in seen_family_ids:
             _create_family(db, family)
             _create_family_event(db, family)
@@ -110,8 +111,10 @@ def _populate_db_families(
             else:
                 _create_family_metadata_deterministic(db, family)
             seen_family_ids.append(doc["fields"]["family_document_ref"])
-        _create_document(db, doc, family)
-        if count == max_docs:
+        if family["fields"]["document_import_id"] not in seen_document_ids:
+            _create_document(db, doc, family)
+            seen_document_ids.append(family["fields"]["document_import_id"])
+        if len(seen_document_ids) == max_docs:
             return
 
 

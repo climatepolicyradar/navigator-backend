@@ -43,9 +43,9 @@ from app.transform.models import (
 # Constants
 # ---------------------------------------------------------------------------
 
-# region Corporate disclosures
+# region Corporate disclosure
 corporate_discloser = Label(
-    type="category", id="category::Corporate Disclosures", value="Corporate Disclosures"
+    type="category", id="category::Corporate Disclosure", value="Corporate Disclosure"
 )
 corporate_voluntary_report = Label(
     id="entity_type::Corporate voluntary report",
