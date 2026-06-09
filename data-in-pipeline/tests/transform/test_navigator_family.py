@@ -27,6 +27,8 @@ from app.transform.navigator_family import (
     _status_label,
     _topic_label,
     _un_convention_label,
+    corporate_discloser,
+    report,
     transform_navigator_family,
 )
 from tests.factories import (
@@ -2334,23 +2336,42 @@ def test_multilateral_climate_fund_label_returns_empty_for_non_mcf_corpus():
     assert _multilateral_climate_fund_label(family) == []
 
 
-def test_author_label_returns_label():
+@pytest.mark.parametrize(
+    "corpus_import_id,metadata,expected_related_labels",
+    [
+        # No author metadata -> no author label at all
+        ("UNFCCC.corpus.i00000001.n0000", {}, None),
+        # Author with a category that has no subconcept relationship
+        ("UNFCCC.corpus.i00000001.n0000", {"author": ["Canada"]}, []),
+        # Report category -> author is a subconcept_of report
+        (
+            "OEP.corpus.i00000001.n0000",
+            {"author": ["Canada"]},
+            [LabelRelationship(type="subconcept_of", value=report)],
+        ),
+        # Corporate Disclosure category -> author is a subconcept_of corporate discloser
+        (
+            "CPR.corpus.i00000002.n0000",
+            {"author": ["Canada"]},
+            [LabelRelationship(type="subconcept_of", value=corporate_discloser)],
+        ),
+    ],
+)
+def test_author_label(corpus_import_id, metadata, expected_related_labels):
     family = NavigatorFamilyFactory.build(
-        corpus=NavigatorCorpusFactory.build(import_id="UNFCCC.corpus.i00000001.n0000"),
-        metadata={"author": ["Greenpeace"]},
+        corpus=NavigatorCorpusFactory.build(import_id=corpus_import_id),
+        metadata=metadata,
     )
     labels = _author_label(family)
+
+    if expected_related_labels is None:
+        assert labels == []
+        return
+
     assert len(labels) == 1
     assert labels[0].type == "author"
-    assert labels[0].value.id == "author::Greenpeace"
-
-
-def test_author_label_returns_empty_when_no_metadata():
-    family = NavigatorFamilyFactory.build(
-        corpus=NavigatorCorpusFactory.build(import_id="UNFCCC.corpus.i00000001.n0000"),
-        metadata={},
-    )
-    assert _author_label(family) == []
+    assert labels[0].value.id == "author::Canada"
+    assert labels[0].value.labels == expected_related_labels
 
 
 def test_category_label_returns_law_for_legislative():
