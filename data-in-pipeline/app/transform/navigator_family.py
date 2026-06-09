@@ -1947,6 +1947,9 @@ def _author_label(
             LabelRelationship(type="subconcept_of", value=corporate_discloser)
         ]
 
+    if category == "Report":
+        related_labels = [LabelRelationship(type="subconcept_of", value=report)]
+
     author_values = navigator_family.metadata.get("author")
     if author_values and author_values[0]:
         author = author_values[0]
