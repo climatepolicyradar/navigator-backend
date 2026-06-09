@@ -212,6 +212,7 @@ jobs:
           PREFECT_API_KEY: ${{ secrets.PREFECT_API_KEY }}
           PREFECT_API_URL: ${{ secrets.PREFECT_API_URL }}
 
+  # @see: https://github.com/marketplace/actions/amazon-ecs-deploy-express-service-action-for-github-actions#complete-example-with-all-options
   deploy-ecs:
     uses: ./.github/workflows/deploy-ecs-service.yml
     secrets: inherit
