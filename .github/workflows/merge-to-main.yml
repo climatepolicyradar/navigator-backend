@@ -84,10 +84,9 @@ jobs:
       - id: parse
         run: |
           CHANGES='${{ steps.filter.outputs.changes }}'
-          ECS_SERVICES='["geographies-api", "families-api", "concepts-api", "data-in-api"]'
           echo "services=$(echo "$CHANGES" | jq -c '[.[] | select(contains("/infra") | not)]')" >> $GITHUB_OUTPUT
           echo "infra_services=$(echo "$CHANGES" | jq -c '[.[] | select(contains("/infra"))]')" >> $GITHUB_OUTPUT
-          echo "ecs_services=$(echo "$ECS_SERVICES" | jq -c '[.[] | select(IN($CHANGES[]))]')" >> $GITHUB_OUTPUT
+          echo "ecs_services=$(echo "$CHANGES" | jq -c '[.[] | select(contains("/infra") | not) | select(. == "geographies-api" or . == "families-api" or . == "concepts-api" or . == "data-in-api")]')" >> $GITHUB_OUTPUT
 
   test:
     needs: changes
