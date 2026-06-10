@@ -475,6 +475,8 @@ navigator_backend_github_actions_deploy = aws.iam.Role(
                     ),
                     aws.iam.GetPolicyDocumentStatementArgs(
                         actions=[
+                            "ecs:ListServiceDeployments",
+                            "ecs:DescribeServiceDeployments",
                             "ecs:DescribeServices",
                             "ecs:DescribeExpressGatewayService",
                             "ecs:RegisterTaskDefinition",
