@@ -97,9 +97,9 @@ class GeographyV2Base(BaseModel, Generic[Subconcept]):
 
     @property
     def subconcept_of(self) -> list[Subconcept]:
-        return []  # default initialisation
+        return []  # default initialisation.
 
-    # these are currently different / type while we work out how we want to standardise on this
+    # these are currently different / type while we work out how we want to standardise on this.
     @computed_field
     @property
     def slug(self) -> str:

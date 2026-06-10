@@ -1,4 +1,4 @@
-"""AWS utility functions for interacting with S3 and SSM."""
+"""AWS utility functions for interacting with S3 and SSM"""
 
 import logging
 import os

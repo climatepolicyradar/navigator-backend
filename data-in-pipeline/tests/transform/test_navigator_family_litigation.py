@@ -729,7 +729,16 @@ def test_transform_navigator_family_with_litigation_corpus_type_and_litigation_c
                 type="legal_concept",
                 value=LabelWithoutDocumentRelationships(
                     id="jurisdiction::England and Wales",
-                    labels=[],
+                    labels=[
+                        LabelRelationship(
+                            type="subconcept_of",
+                            value=Label(
+                                id="category::Litigation",
+                                value="Litigation",
+                                type="category",
+                            ),
+                        )
+                    ],
                     type="jurisdiction",
                     value="England and Wales",
                 ),
