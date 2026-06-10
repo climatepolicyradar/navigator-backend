@@ -12,7 +12,7 @@ account_id = aws.get_caller_identity().account_id
 
 config = pulumi.Config()
 stack = pulumi.get_stack()
-NAME_PREFIX = "concepts-api"
+NAME_PREFIX = f"concepts-api-{stack}"
 
 
 # TODO: https://linear.app/climate-policy-radar/issue/APP-584/standardise-naming-in-infra

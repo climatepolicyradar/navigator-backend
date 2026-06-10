@@ -72,7 +72,7 @@ app.add_middleware(
 
 
 # We use both routers to make sure we can have /families/health available publicly
-# and /health available to the internal network & AppRunner health check.
+# and /health available to the internal network & AppRunner health check
 @app.get("/health")
 @families_router.get("/health")
 def health_check():
@@ -82,6 +82,6 @@ def health_check():
     }
 
 
-# Set up Open Telemetry instrumentation.
+# Set up Open Telemetry instrumentation
 telemetry.instrument_fastapi(app)
 telemetry.setup_exception_hook()
