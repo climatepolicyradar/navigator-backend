@@ -15,7 +15,15 @@ _LOGGER = logging.getLogger(__name__)
 
 
 @router.get("/health")
-def health_check(db=Depends(get_db)):
+async def service_health_check():
+    return {
+        "status": "ok",
+        "version": settings.github_sha,
+    }
+
+
+@router.get("/db-health")
+def db_health_check(db=Depends(get_db)):
     """Health check endpoint using session module's health check."""
     try:
         is_healthy = check_db_health(db)
