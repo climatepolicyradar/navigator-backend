@@ -395,6 +395,8 @@ navigator_backend_github_actions_deploy = aws.iam.Role(
                             "ssm:GetParameter",
                             "ssm:GetParameters",
                             "ssm:PutParameter",
+                            "ssm:DeleteParameter",
+                            "ssm:DeleteParameters",
                         ],
                         effect="Allow",
                         resources=[
@@ -433,6 +435,7 @@ navigator_backend_github_actions_deploy = aws.iam.Role(
                     aws.iam.GetPolicyDocumentStatementArgs(
                         actions=[
                             "rds:ModifyDBCluster",
+                            "rds:ModifyDBInstance",
                             "rds:Describe*",
                             "rds:ListTagsForResource",
                             "rds:EnableHttpEndpoint",
@@ -488,6 +491,10 @@ navigator_backend_github_actions_deploy = aws.iam.Role(
                             "ec2:DescribeSecurityGroupRules",
                             "ec2:DescribeTags",
                             "ec2:DescribeVpcEndpoints",
+                            "ec2:DescribePrefixLists",
+                            "ec2:DescribeNetworkInterfaces",
+                            "ec2:DescribeSubnets",
+                            "ec2:DescribeVpcs",
                         ],
                         effect="Allow",
                         resources=[
