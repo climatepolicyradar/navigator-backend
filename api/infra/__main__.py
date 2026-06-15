@@ -491,10 +491,6 @@ navigator_backend_github_actions_deploy = aws.iam.Role(
                             "ec2:DescribeSecurityGroupRules",
                             "ec2:DescribeTags",
                             "ec2:DescribeVpcEndpoints",
-                            "ec2:DescribePrefixLists",
-                            "ec2:DescribeNetworkInterfaces",
-                            "ec2:DescribeSubnets",
-                            "ec2:DescribeVpcs",
                         ],
                         effect="Allow",
                         resources=[
