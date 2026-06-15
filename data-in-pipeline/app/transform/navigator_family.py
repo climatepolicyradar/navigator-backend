@@ -48,16 +48,16 @@ corporate_discloser = Label(
     type="category", id="category::Corporate Disclosure", value="Corporate Disclosure"
 )
 corporate_voluntary_report = Label(
-    id="entity_type::Corporate voluntary report",
-    value="Corporate voluntary report",
+    id="entity_type::Voluntary report",
+    value="Voluntary report",
     type="entity_type",
     labels=[
         LabelRelationship(type="subconcept_of", value=corporate_discloser),
     ],
 )
 corporate_voluntary_filing = Label(
-    id="entity_type::Corporate voluntary filing",
-    value="Corporate voluntary filing",
+    id="entity_type::Regulatory filing",
+    value="Regulatory filing",
     type="entity_type",
     labels=[
         LabelRelationship(type="subconcept_of", value=corporate_discloser),

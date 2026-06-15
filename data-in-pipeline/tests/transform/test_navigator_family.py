@@ -2496,8 +2496,8 @@ def test_entity_type_label_returns_empty_for_non_mcf_corpus():
 @pytest.mark.parametrize(
     "document_type,expected_entity_type_ids",
     [
-        ("Corporate voluntary report", ["entity_type::Corporate voluntary report"]),
-        ("Corporate regulatory filing", ["entity_type::Corporate voluntary filing"]),
+        ("Corporate voluntary report", ["entity_type::Voluntary report"]),
+        ("Corporate regulatory filing", ["entity_type::Regulatory filing"]),
         (
             "Assessment Report",
             ["report_type::Climate council report", "entity_type::Assessment report"],
