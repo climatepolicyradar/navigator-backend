@@ -18,6 +18,7 @@ jobs:
       services: ${{ steps.parse.outputs.services }}
       infra_services: ${{ steps.parse.outputs.infra_services }}
       ecs_services: ${{ steps.parse.outputs.ecs_services }}
+      deploy_load_api_ecs: ${{ steps.parse.outputs.deploy_load_api }}
 
     steps:
       - uses: actions/checkout@v6
@@ -86,7 +87,8 @@ jobs:
           CHANGES='${{ steps.filter.outputs.changes }}'
           echo "services=$(echo "$CHANGES" | jq -c '[.[] | select(contains("/infra") | not)]')" >> $GITHUB_OUTPUT
           echo "infra_services=$(echo "$CHANGES" | jq -c '[.[] | select(contains("/infra"))]')" >> $GITHUB_OUTPUT
-          echo "ecs_services=$(echo "$CHANGES" | jq -c '[.[] | select(contains("/infra") | not) | select(. == "geographies-api" or . == "families-api" or . == "data-in-pipeline-load-api" or . == "concepts-api" or . == "data-in-api")]')" >> $GITHUB_OUTPUT
+          echo "deploy_load_api_ecs=$(echo "$CHANGES" | jq -c 'any(.[]; . == "data-in-pipeline-load-api")')" >> $GITHUB_OUTPUT
+          echo "ecs_services=$(echo "$CHANGES" | jq -c '[.[] | select(contains("/infra") | not) | select(. == "geographies-api" or . == "families-api"  or . == "concepts-api" or . == "data-in-api")]')" >> $GITHUB_OUTPUT
 
   test:
     needs: changes
@@ -219,4 +221,15 @@ jobs:
     if: (needs.test.result == 'success' || needs.test.result == 'skipped') && needs.changes.result == 'success' && needs.changes.outputs.ecs_services != '[]'
     with:
       ecs_services: ${{ needs.changes.outputs.ecs_services }}
+      environment: '["staging", "production"]'
+
+  deploy-load-api:
+    uses: ./.github/workflows/deploy-load-api.yml
+    secrets: inherit
+    needs: [changes, test]
+    if: >-
+      (needs.test.result == 'success' || needs.test.result == 'skipped')
+      && needs.changes.result == 'success'
+      && needs.changes.outputs.deploy_load_api_ecs == 'true'
+    with:
       environment: '["staging", "production"]'
