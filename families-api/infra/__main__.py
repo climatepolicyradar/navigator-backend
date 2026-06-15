@@ -319,8 +319,8 @@ ecs_express_service = ExpressGatewayService(
     task_role_arn=ecs_task_role.arn,
     primary_container=primary_container,
     health_check_path="/health",
-    cpu="1024",
-    memory="2048",
+    cpu="2048",
+    memory="4096",
     scaling_targets=[
         ExpressGatewayServiceScalingTargetArgs(
             auto_scaling_metric="AVERAGE_CPU",

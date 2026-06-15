@@ -679,84 +679,6 @@ allow_data_in_pipeline_load_api_to_aurora = aws.ec2.SecurityGroupRule(
     description="Allow Postgres from load API VPC SG",
 )
 
-
-data_in_pipeline_load_api_apprunner_service = aws.apprunner.Service(
-    "data-in-pipeline-load-api-apprunner-service",
-    auto_scaling_configuration_arn=config.require("auto_scaling_configuration_arn"),
-    health_check_configuration=aws.apprunner.ServiceHealthCheckConfigurationArgs(
-        interval=10,
-        protocol="HTTP",
-        path="/load/health",
-        timeout=5,
-    ),
-    instance_configuration=aws.apprunner.ServiceInstanceConfigurationArgs(
-        instance_role_arn=data_in_pipeline_load_api_instance_role.arn,
-    ),
-    network_configuration=aws.apprunner.ServiceNetworkConfigurationArgs(
-        egress_configuration=aws.apprunner.ServiceNetworkConfigurationEgressConfigurationArgs(
-            egress_type="VPC",
-            vpc_connector_arn=vpc_connector.arn,
-        ),
-        ingress_configuration=aws.apprunner.ServiceNetworkConfigurationIngressConfigurationArgs(
-            # Private endpoint - ingress only. Egress via VPC connector (above) is separate
-            # and will continue to allow Aurora connectivity via existing security group rules.
-            # If external access is needed, create a VPC Ingress Connection (PrivateLink).
-            is_publicly_accessible=False,
-        ),
-        ip_address_type="IPV4",
-    ),
-    observability_configuration=aws.apprunner.ServiceObservabilityConfigurationArgs(
-        observability_enabled=False,
-    ),
-    service_name="data-in-pipeline-load-api",
-    source_configuration=aws.apprunner.ServiceSourceConfigurationArgs(
-        authentication_configuration=aws.apprunner.ServiceSourceConfigurationAuthenticationConfigurationArgs(
-            access_role_arn=data_in_pipeline_load_api_role.arn,
-        ),
-        image_repository=aws.apprunner.ServiceSourceConfigurationImageRepositoryArgs(
-            image_configuration=aws.apprunner.ServiceSourceConfigurationImageRepositoryImageConfigurationArgs(
-                runtime_environment_secrets={
-                    "LOAD_DATABASE_URL": data_in_pipeline_load_api_load_database_url.arn,
-                    "CDN_URL": data_in_pipeline_load_api_cdn_url.arn,
-                    "DB_NAME": data_in_pipeline_aurora_write_replica_db_name.arn,
-                    "DB_USERNAME": data_in_pipeline_aurora_write_replica_db_username.arn,
-                },
-                runtime_environment_variables={
-                    "DB_PORT": "5432",
-                    "AWS_REGION": "eu-west-1",
-                    "DB_SSLMODE": "require",
-                },
-            ),
-            image_identifier=data_in_pipeline_load_api_ecr_repository.repository_url.apply(
-                lambda repository_url: f"{repository_url}:latest"
-            ),
-            image_repository_type="ECR",
-        ),
-    ),
-    opts=pulumi.ResourceOptions(protect=True),
-)
-
-data_in_load_api_vpc_ingress_connection = aws.apprunner.VpcIngressConnection(
-    "dip-load-api-vpc-ingress-connection",
-    name="dip-load-api-vpc-ingress-connection",
-    service_arn=data_in_pipeline_load_api_apprunner_service.arn,
-    ingress_vpc_configuration=aws.apprunner.VpcIngressConnectionIngressVpcConfigurationArgs(
-        vpc_id=prefect_vpc_id,
-        vpc_endpoint_id=vpc_endpoint.id,
-    ),
-    tags={**tags},
-)
-
-load_api_base_url = "https://mdemumdvnc.eu-west-1.awsapprunner.com"
-
-data_in_pipeline_load_api_url = aws.ssm.Parameter(
-    "data-in-pipeline-load-api-url",
-    name="/data-in-pipeline-load-api/url",
-    description="URL of the load API service (via VPC Ingress Connection)",
-    type=aws.ssm.ParameterType.STRING,
-    value=load_api_base_url,
-)
-
 #######################################################################
 # ECS Express Service - Data in Load Api.
 #
@@ -1018,6 +940,90 @@ ecs_express_service = ExpressGatewayService(
         ),
     ],
 )
+
+load_api_base_url = ecs_express_service.ingress_paths.apply(
+    lambda paths: f"{paths[0].endpoint.rstrip('/')}/"
+)
+
+########################################################################
+# Create the App Runner Load API service.
+########################################################################
+
+data_in_pipeline_load_api_apprunner_service = aws.apprunner.Service(
+    "data-in-pipeline-load-api-apprunner-service",
+    auto_scaling_configuration_arn=config.require("auto_scaling_configuration_arn"),
+    health_check_configuration=aws.apprunner.ServiceHealthCheckConfigurationArgs(
+        interval=10,
+        protocol="HTTP",
+        path="/load/health",
+        timeout=5,
+    ),
+    instance_configuration=aws.apprunner.ServiceInstanceConfigurationArgs(
+        instance_role_arn=data_in_pipeline_load_api_instance_role.arn,
+    ),
+    network_configuration=aws.apprunner.ServiceNetworkConfigurationArgs(
+        egress_configuration=aws.apprunner.ServiceNetworkConfigurationEgressConfigurationArgs(
+            egress_type="VPC",
+            vpc_connector_arn=vpc_connector.arn,
+        ),
+        ingress_configuration=aws.apprunner.ServiceNetworkConfigurationIngressConfigurationArgs(
+            # Private endpoint - ingress only. Egress via VPC connector (above) is separate
+            # and will continue to allow Aurora connectivity via existing security group rules.
+            # If external access is needed, create a VPC Ingress Connection (PrivateLink).
+            is_publicly_accessible=False,
+        ),
+        ip_address_type="IPV4",
+    ),
+    observability_configuration=aws.apprunner.ServiceObservabilityConfigurationArgs(
+        observability_enabled=False,
+    ),
+    service_name="data-in-pipeline-load-api",
+    source_configuration=aws.apprunner.ServiceSourceConfigurationArgs(
+        authentication_configuration=aws.apprunner.ServiceSourceConfigurationAuthenticationConfigurationArgs(
+            access_role_arn=data_in_pipeline_load_api_role.arn,
+        ),
+        image_repository=aws.apprunner.ServiceSourceConfigurationImageRepositoryArgs(
+            image_configuration=aws.apprunner.ServiceSourceConfigurationImageRepositoryImageConfigurationArgs(
+                runtime_environment_secrets={
+                    "LOAD_DATABASE_URL": data_in_pipeline_load_api_load_database_url.arn,
+                    "CDN_URL": data_in_pipeline_load_api_cdn_url.arn,
+                    "DB_NAME": data_in_pipeline_aurora_write_replica_db_name.arn,
+                    "DB_USERNAME": data_in_pipeline_aurora_write_replica_db_username.arn,
+                },
+                runtime_environment_variables={
+                    "DB_PORT": "5432",
+                    "AWS_REGION": "eu-west-1",
+                    "DB_SSLMODE": "require",
+                },
+            ),
+            image_identifier=data_in_pipeline_load_api_ecr_repository.repository_url.apply(
+                lambda repository_url: f"{repository_url}:latest"
+            ),
+            image_repository_type="ECR",
+        ),
+    ),
+    opts=pulumi.ResourceOptions(protect=True),
+)
+
+data_in_load_api_vpc_ingress_connection = aws.apprunner.VpcIngressConnection(
+    "dip-load-api-vpc-ingress-connection",
+    name="dip-load-api-vpc-ingress-connection",
+    service_arn=data_in_pipeline_load_api_apprunner_service.arn,
+    ingress_vpc_configuration=aws.apprunner.VpcIngressConnectionIngressVpcConfigurationArgs(
+        vpc_id=prefect_vpc_id,
+        vpc_endpoint_id=vpc_endpoint.id,
+    ),
+    tags={**tags},
+)
+
+data_in_pipeline_load_api_url = aws.ssm.Parameter(
+    "data-in-pipeline-load-api-url",
+    name="/data-in-pipeline-load-api/url",
+    description="URL of the load API service (via VPC Ingress Connection)",
+    type=aws.ssm.ParameterType.STRING,
+    value=load_api_base_url,
+)
+
 
 #######################################################################
 # Create environment variables and secrets for Prefect flows/tasks.

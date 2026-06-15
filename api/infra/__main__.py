@@ -395,6 +395,8 @@ navigator_backend_github_actions_deploy = aws.iam.Role(
                             "ssm:GetParameter",
                             "ssm:GetParameters",
                             "ssm:PutParameter",
+                            "ssm:DeleteParameter",
+                            "ssm:DeleteParameters",
                         ],
                         effect="Allow",
                         resources=[
@@ -433,6 +435,7 @@ navigator_backend_github_actions_deploy = aws.iam.Role(
                     aws.iam.GetPolicyDocumentStatementArgs(
                         actions=[
                             "rds:ModifyDBCluster",
+                            "rds:ModifyDBInstance",
                             "rds:Describe*",
                             "rds:ListTagsForResource",
                             "rds:EnableHttpEndpoint",

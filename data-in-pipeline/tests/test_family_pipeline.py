@@ -811,3 +811,84 @@ def test_transform_correctly_transforms_collections_with_multiple_families():
 
     assert not errors
     assert_model_list_equality(transform_result, expected_family_transform_result)
+
+
+@patch("app.navigator_family_etl_pipeline.cache_jsonl_to_s3")
+@patch("app.navigator_family_etl_pipeline.run_db_migrations")
+@patch("app.navigator_family_etl_pipeline.upload_to_s3")
+@patch("app.navigator_family_etl_pipeline.NavigatorConnector")
+@patch("app.load.load.requests.put")
+def test_etl_pipeline_does_not_cache_to_s3_when_ids_provided(
+    mock_post,
+    mock_connector_class,
+    mock_upload,
+    mock_run_migrations,
+    mock_cache_jsonl_to_s3,
+):
+    """When specific IDs are provided the run is partial, so transformed
+    documents must not be cached to S3 (that would overwrite the full result)."""
+    mock_run_migrations.return_value = None
+    mock_upload.return_value = None
+
+    mock_connector_instance = MagicMock()
+    mock_connector_class.return_value = mock_connector_instance
+    mock_connector_instance.close.return_value = None
+
+    mock_post_response = MagicMock()
+    mock_post_response.status_code = 201
+    mock_post_response.json.return_value = ["i00000315"]
+    mock_post.return_value = mock_post_response
+
+    corpus = NavigatorCorpusFactory.build(
+        import_id="UNFCCC.corpus.i00000001.n0000",
+        corpus_type=NavigatorCorpusTypeFactory.build(name="corpus_type"),
+        organisation=NavigatorOrganisationFactory.build(id=1, name="UNFCCC"),
+    )
+    family_id = "i00000315"
+    test_data = [
+        NavigatorFamilyFactory.build(
+            import_id=family_id,
+            title="Belgium UNCBD National Targets",
+            summary="Family summary",
+            category="REPORTS",
+            created="2020-01-01T00:00:00Z",
+            corpus=corpus,
+            documents=[
+                NavigatorDocumentFactory.build(
+                    import_id=family_id,
+                    title="Belgium UNCBD National Targets",
+                    events=[],
+                )
+            ],
+            events=[],
+            collections=[],
+            geographies=[],
+        )
+    ]
+    test_envelope = ExtractedEnvelope(
+        data=test_data,
+        raw_payload=[family.model_dump() for family in test_data],
+        id="test-uuid-1",
+        source_name="navigator_family",
+        source_record_id="task-001-families-endpoint-page-1",
+        content_type="application/json",
+        connector_version="1.0.0",
+        metadata=ExtractedMetadata(
+            endpoint="https://api.example.com/families/?page=1",
+            http_status=HTTPStatus.OK,
+        ),
+        task_run_id="task-001",
+        flow_run_id="flow-001",
+    )
+
+    mock_connector_instance.fetch_families.return_value = FamilyFetchResult(
+        envelopes=[test_envelope], failures=[]
+    )
+
+    result = data_in_pipeline(ids=[family_id])
+
+    assert isinstance(result, PipelineResult)
+    assert result.status == "success"
+
+    # IDs were provided, so this is a partial run and nothing should be cached.
+    mock_cache_jsonl_to_s3.submit.assert_not_called()
