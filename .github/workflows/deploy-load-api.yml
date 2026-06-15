@@ -25,6 +25,21 @@ jobs:
           role-to-assume: arn:aws:iam::${{ secrets.AWS_ACCOUNT_ID }}:role/navigator-backend-github-actions-deploy
           role-session-name: GitHub_to_AWS_via_FederatedOIDC_${{ matrix.environment }}
           aws-region: eu-west-1
+
+      - name: Require existing service
+        env:
+          CLUSTER: data-in-pipeline-load-api-${{ matrix.environment }}
+          SERVICE_NAME: data-in-pipeline-load-api-${{ matrix.environment }}
+        run: |
+          set -euo pipefail
+          STATUS=$(aws ecs describe-services \
+            --cluster "${CLUSTER}" --services "${SERVICE_NAME}" \
+            --query 'services[0].status' --output text 2>/dev/null || echo "MISSING")
+          if [[ "${STATUS}" != "ACTIVE" ]]; then
+            echo "::error::Service ${SERVICE_NAME} not ACTIVE in ${CLUSTER} (got: ${STATUS}); refusing to create."
+            exit 1
+          fi
+
       - uses: aws-actions/amazon-ecr-login@v2
       - uses: astral-sh/setup-uv@v7
       - run: uv sync --all-packages
