@@ -747,7 +747,7 @@ data_in_load_api_vpc_ingress_connection = aws.apprunner.VpcIngressConnection(
     tags={**tags},
 )
 
-load_api_base_url = "https://mdemumdvnc.eu-west-1.awsapprunner.com"
+load_api_base_url = "https://da-9f758dc9847148f1b8df15150d4488fa.ecs.eu-west-1.on.aws/"
 
 data_in_pipeline_load_api_url = aws.ssm.Parameter(
     "data-in-pipeline-load-api-url",
