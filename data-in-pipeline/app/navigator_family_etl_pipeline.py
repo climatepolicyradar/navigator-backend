@@ -484,11 +484,12 @@ def data_in_pipeline(
     # -------------------------
     # CACHE TO S3
     # -------------------------
-    jsonl_future = cache_jsonl_to_s3.submit(transformed_documents, run_id)
-    # parquet_future = cache_parquet_to_s3.submit(transformed_documents, run_id)
-
-    jsonl_future.result()
-    # parquet_future.result()
+    # We only cache the results if this was a complete run.
+    # Otherwise we would just write out a partial response as the output
+    # which is incorrect.
+    if not ids:
+        jsonl_future = cache_jsonl_to_s3.submit(transformed_documents, run_id)
+        jsonl_future.result()
 
     # -------------------------
     # BATCH AND LOAD TO DB
