@@ -118,6 +118,16 @@ api_cloudfront_distribution = aws.cloudfront.Distribution(
             ),
         ),
         aws.cloudfront.DistributionOriginArgs(
+            domain_name=families_api_stack.get_output("ecs_express_service_url"),
+            origin_id="families-api-ecs-express",
+            custom_origin_config=aws.cloudfront.DistributionOriginCustomOriginConfigArgs(
+                http_port=80,
+                https_port=443,
+                origin_protocol_policy="https-only",
+                origin_ssl_protocols=["TLSv1.2"],
+            ),
+        ),
+        aws.cloudfront.DistributionOriginArgs(
             domain_name=geographies_api_stack.get_output("apprunner_service_url"),
             origin_id="geographies-api-apprunner",
             custom_origin_config=aws.cloudfront.DistributionOriginCustomOriginConfigArgs(
@@ -148,8 +158,28 @@ api_cloudfront_distribution = aws.cloudfront.Distribution(
             ),
         ),
         aws.cloudfront.DistributionOriginArgs(
+            domain_name=concepts_api_stack.get_output("ecs_express_service_url"),
+            origin_id="concepts-api-ecs-express",
+            custom_origin_config=aws.cloudfront.DistributionOriginCustomOriginConfigArgs(
+                http_port=80,
+                https_port=443,
+                origin_protocol_policy="https-only",
+                origin_ssl_protocols=["TLSv1.2"],
+            ),
+        ),
+        aws.cloudfront.DistributionOriginArgs(
             domain_name=data_in_api_stack.get_output("apprunner_service_url"),
             origin_id="data-in-api-apprunner",
+            custom_origin_config=aws.cloudfront.DistributionOriginCustomOriginConfigArgs(
+                http_port=80,
+                https_port=443,
+                origin_protocol_policy="https-only",
+                origin_ssl_protocols=["TLSv1.2"],
+            ),
+        ),
+        aws.cloudfront.DistributionOriginArgs(
+            domain_name=data_in_api_stack.get_output("ecs_express_service_url"),
+            origin_id="data-in-api-ecs-express",
             custom_origin_config=aws.cloudfront.DistributionOriginCustomOriginConfigArgs(
                 http_port=80,
                 https_port=443,
@@ -211,7 +241,7 @@ api_cloudfront_distribution = aws.cloudfront.Distribution(
                     "GET",
                     "OPTIONS",
                 ],
-                target_origin_id="concepts-api-apprunner",
+                target_origin_id="concepts-api-ecs-express",
                 viewer_protocol_policy="redirect-to-https",
                 cache_policy_id=api_cache_policy.id,
                 origin_request_policy_id=api_cors_policy.id,
@@ -228,7 +258,7 @@ api_cloudfront_distribution = aws.cloudfront.Distribution(
                     "GET",
                     "OPTIONS",
                 ],
-                target_origin_id="families-api-apprunner",
+                target_origin_id="families-api-ecs-express",
                 viewer_protocol_policy="redirect-to-https",
                 cache_policy_id=api_cache_policy.id,
                 origin_request_policy_id=api_cors_policy.id,
@@ -262,7 +292,7 @@ api_cloudfront_distribution = aws.cloudfront.Distribution(
                     "GET",
                     "OPTIONS",
                 ],
-                target_origin_id="data-in-api-apprunner",
+                target_origin_id="data-in-api-ecs-express",
                 viewer_protocol_policy="redirect-to-https",
                 cache_policy_id=api_cache_policy.id,
                 origin_request_policy_id=api_cors_policy.id,
@@ -369,6 +399,7 @@ navigator_backend_github_actions_deploy = aws.iam.Role(
                         effect="Allow",
                         resources=[
                             f"arn:aws:ssm:*:{account_id}:parameter/data-in-pipeline/*",
+                            f"arn:aws:ssm:*:{account_id}:parameter/data-in-pipeline-load-api/*",
                             f"arn:aws:ssm:*:{account_id}:parameter/data-in-api/*",
                             f"arn:aws:ssm:*:{account_id}:parameter/families-api/*",
                             f"arn:aws:ssm:*:{account_id}:parameter/concepts-api/*",
@@ -403,6 +434,9 @@ navigator_backend_github_actions_deploy = aws.iam.Role(
                         actions=[
                             "rds:ModifyDBCluster",
                             "rds:Describe*",
+                            "rds:ListTagsForResource",
+                            "rds:EnableHttpEndpoint",
+                            "rds:DisableHttpEndpoint",
                         ],
                         effect="Allow",
                         resources=["*"],
@@ -445,19 +479,53 @@ navigator_backend_github_actions_deploy = aws.iam.Role(
                             f"arn:aws:ssm:*:{account_id}:parameter/families-api/*",
                             f"arn:aws:ssm:*:{account_id}:parameter/concepts-api/*",
                             f"arn:aws:ssm:*:{account_id}:parameter/geographies-api/*",
+                            f"arn:aws:ssm:*:{account_id}:parameter/data-in-pipeline-load-api/*",
                         ],
                     ),
                     aws.iam.GetPolicyDocumentStatementArgs(
                         actions=[
                             "ec2:DescribeSecurityGroups",
                             "ec2:DescribeSecurityGroupRules",
-                            "ec2:AuthorizeSecurityGroupIngress",
-                            "ec2:RevokeSecurityGroupIngress",
+                            "ec2:DescribeTags",
+                            "ec2:DescribeVpcEndpoints",
                         ],
                         effect="Allow",
                         resources=[
                             "*"
-                        ],  # Describe actions do not support resource-level permissions, so you must specify them in a separate statement without conditions. https://docs.aws.amazon.com/AWSEC2/latest/UserGuide/iam-policies-for-amazon-ec2.html
+                        ],  # Describe actions do not support resource-level permissions, so they must be in a separate statement without resource scoping. https://docs.aws.amazon.com/AWSEC2/latest/UserGuide/iam-policies-for-amazon-ec2.html
+                    ),
+                    aws.iam.GetPolicyDocumentStatementArgs(
+                        actions=[
+                            "ec2:AuthorizeSecurityGroupIngress",
+                            "ec2:RevokeSecurityGroupIngress",
+                            "ec2:AuthorizeSecurityGroupEgress",
+                            "ec2:RevokeSecurityGroupEgress",
+                        ],
+                        effect="Allow",
+                        resources=[
+                            f"arn:aws:ec2:eu-west-1:{account_id}:security-group/*",
+                        ],
+                    ),
+                    aws.iam.GetPolicyDocumentStatementArgs(
+                        actions=[
+                            "ec2:CreateSecurityGroup",
+                            "ec2:DeleteSecurityGroup",
+                        ],
+                        effect="Allow",
+                        resources=[
+                            f"arn:aws:ec2:eu-west-1:{account_id}:security-group/*",
+                            f"arn:aws:ec2:eu-west-1:{account_id}:vpc/*",
+                        ],
+                    ),
+                    aws.iam.GetPolicyDocumentStatementArgs(
+                        actions=[
+                            "ec2:CreateTags",
+                            "ec2:DeleteTags",
+                        ],
+                        effect="Allow",
+                        resources=[
+                            f"arn:aws:ec2:eu-west-1:{account_id}:security-group/*",
+                        ],
                     ),
                     aws.iam.GetPolicyDocumentStatementArgs(
                         actions=[
@@ -471,6 +539,21 @@ navigator_backend_github_actions_deploy = aws.iam.Role(
                         effect="Allow",
                         resources=[
                             f"arn:aws:ecs:eu-west-1:{account_id}:service/api-services-*/*",
+                            f"arn:aws:ecs:eu-west-1:{account_id}:service/data-in-pipeline-load-api-*/*",
+                        ],
+                    ),
+                    aws.iam.GetPolicyDocumentStatementArgs(
+                        actions=[
+                            "ecs:CreateCluster",
+                            "ecs:DeleteCluster",
+                            "ecs:DescribeClusters",
+                            "ecs:TagResource",
+                            "ecs:UntagResource",
+                        ],
+                        effect="Allow",
+                        resources=[
+                            f"arn:aws:ecs:eu-west-1:{account_id}:cluster/data-in-pipeline-load-api-*",
+                            f"arn:aws:ecs:eu-west-1:{account_id}:cluster/api-services-*",
                         ],
                     ),
                     aws.iam.GetPolicyDocumentStatementArgs(
