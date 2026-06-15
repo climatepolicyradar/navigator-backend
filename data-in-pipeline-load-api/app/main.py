@@ -23,7 +23,7 @@ root_dir = Path(__file__).parent.parent
 
 _LOGGER.debug("🚀 Starting FastAPI application")
 
-# Configure Open Telemetry.
+# Configure Open Telemetry
 ENV = os.getenv("ENV", "development")
 os.environ["OTEL_PYTHON_LOG_CORRELATION"] = "True"
 try:
@@ -39,7 +39,7 @@ except Exception as _:
         environment=ENV,
     )
 
-# Configure FastAPI and SQLAlchemy telemetry for the service.
+# Configure FastAPI and SQLAlchemy telemetry for the service
 telemetry = FastAPITelemetry(otel_config)
 tracer = telemetry.get_tracer()
 sqlalchemy_telemetry = SQLAlchemyTelemetry(tracer)
