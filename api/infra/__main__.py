@@ -399,6 +399,7 @@ navigator_backend_github_actions_deploy = aws.iam.Role(
                         effect="Allow",
                         resources=[
                             f"arn:aws:ssm:*:{account_id}:parameter/data-in-pipeline/*",
+                            f"arn:aws:ssm:*:{account_id}:parameter/data-in-pipeline-load-api/*",
                             f"arn:aws:ssm:*:{account_id}:parameter/data-in-api/*",
                             f"arn:aws:ssm:*:{account_id}:parameter/families-api/*",
                             f"arn:aws:ssm:*:{account_id}:parameter/concepts-api/*",
@@ -433,6 +434,9 @@ navigator_backend_github_actions_deploy = aws.iam.Role(
                         actions=[
                             "rds:ModifyDBCluster",
                             "rds:Describe*",
+                            "rds:ListTagsForResource",
+                            "rds:EnableHttpEndpoint",
+                            "rds:DisableHttpEndpoint",
                         ],
                         effect="Allow",
                         resources=["*"],
@@ -475,19 +479,53 @@ navigator_backend_github_actions_deploy = aws.iam.Role(
                             f"arn:aws:ssm:*:{account_id}:parameter/families-api/*",
                             f"arn:aws:ssm:*:{account_id}:parameter/concepts-api/*",
                             f"arn:aws:ssm:*:{account_id}:parameter/geographies-api/*",
+                            f"arn:aws:ssm:*:{account_id}:parameter/data-in-pipeline-load-api/*",
                         ],
                     ),
                     aws.iam.GetPolicyDocumentStatementArgs(
                         actions=[
                             "ec2:DescribeSecurityGroups",
                             "ec2:DescribeSecurityGroupRules",
-                            "ec2:AuthorizeSecurityGroupIngress",
-                            "ec2:RevokeSecurityGroupIngress",
+                            "ec2:DescribeTags",
+                            "ec2:DescribeVpcEndpoints",
                         ],
                         effect="Allow",
                         resources=[
                             "*"
-                        ],  # Describe actions do not support resource-level permissions, so you must specify them in a separate statement without conditions. https://docs.aws.amazon.com/AWSEC2/latest/UserGuide/iam-policies-for-amazon-ec2.html
+                        ],  # Describe actions do not support resource-level permissions, so they must be in a separate statement without resource scoping. https://docs.aws.amazon.com/AWSEC2/latest/UserGuide/iam-policies-for-amazon-ec2.html
+                    ),
+                    aws.iam.GetPolicyDocumentStatementArgs(
+                        actions=[
+                            "ec2:AuthorizeSecurityGroupIngress",
+                            "ec2:RevokeSecurityGroupIngress",
+                            "ec2:AuthorizeSecurityGroupEgress",
+                            "ec2:RevokeSecurityGroupEgress",
+                        ],
+                        effect="Allow",
+                        resources=[
+                            f"arn:aws:ec2:eu-west-1:{account_id}:security-group/*",
+                        ],
+                    ),
+                    aws.iam.GetPolicyDocumentStatementArgs(
+                        actions=[
+                            "ec2:CreateSecurityGroup",
+                            "ec2:DeleteSecurityGroup",
+                        ],
+                        effect="Allow",
+                        resources=[
+                            f"arn:aws:ec2:eu-west-1:{account_id}:security-group/*",
+                            f"arn:aws:ec2:eu-west-1:{account_id}:vpc/*",
+                        ],
+                    ),
+                    aws.iam.GetPolicyDocumentStatementArgs(
+                        actions=[
+                            "ec2:CreateTags",
+                            "ec2:DeleteTags",
+                        ],
+                        effect="Allow",
+                        resources=[
+                            f"arn:aws:ec2:eu-west-1:{account_id}:security-group/*",
+                        ],
                     ),
                     aws.iam.GetPolicyDocumentStatementArgs(
                         actions=[
@@ -501,6 +539,21 @@ navigator_backend_github_actions_deploy = aws.iam.Role(
                         effect="Allow",
                         resources=[
                             f"arn:aws:ecs:eu-west-1:{account_id}:service/api-services-*/*",
+                            f"arn:aws:ecs:eu-west-1:{account_id}:service/data-in-pipeline-load-api-*/*",
+                        ],
+                    ),
+                    aws.iam.GetPolicyDocumentStatementArgs(
+                        actions=[
+                            "ecs:CreateCluster",
+                            "ecs:DeleteCluster",
+                            "ecs:DescribeClusters",
+                            "ecs:TagResource",
+                            "ecs:UntagResource",
+                        ],
+                        effect="Allow",
+                        resources=[
+                            f"arn:aws:ecs:eu-west-1:{account_id}:cluster/data-in-pipeline-load-api-*",
+                            f"arn:aws:ecs:eu-west-1:{account_id}:cluster/api-services-*",
                         ],
                     ),
                     aws.iam.GetPolicyDocumentStatementArgs(
