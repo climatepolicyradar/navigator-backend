@@ -86,7 +86,7 @@ jobs:
           CHANGES='${{ steps.filter.outputs.changes }}'
           echo "services=$(echo "$CHANGES" | jq -c '[.[] | select(contains("/infra") | not)]')" >> $GITHUB_OUTPUT
           echo "infra_services=$(echo "$CHANGES" | jq -c '[.[] | select(contains("/infra"))]')" >> $GITHUB_OUTPUT
-          echo "ecs_services=$(echo "$CHANGES" | jq -c '[.[] | select(contains("/infra") | not) | select(. == "geographies-api" or . == "families-api" or . == "concepts-api" or . == "data-in-api")]')" >> $GITHUB_OUTPUT
+          echo "ecs_services=$(echo "$CHANGES" | jq -c '[.[] | select(contains("/infra") | not) | select(. == "geographies-api" or . == "families-api" or . == "data-in-pipeline-load-api" or . == "concepts-api" or . == "data-in-api")]')" >> $GITHUB_OUTPUT
 
   test:
     needs: changes
