@@ -13,6 +13,7 @@ from app.models import (
     Collection,
     CollectionPublicWithFamilies,
     Corpus,
+    CorpusPublic,
     Family,
     FamilyCorpusLink,
     FamilyDocument,
@@ -277,6 +278,22 @@ def read_slug(*, session: Session = Depends(get_session), slug_name: str):
         raise HTTPException(status_code=404, detail="Not found")
 
     return APIItemResponse(data=slug)
+
+
+@router.get("/corpora", response_model=APIListResponse[CorpusPublic])
+def read_corpora(
+    *, session: Session = Depends(get_session), page: int = Query(1, ge=1)
+):
+    limit = 10
+    offset = (page - 1) * limit
+    corpus = session.exec(select(Corpus).offset(offset).limit(limit)).all()
+
+    return APIListResponse(
+        data=list(corpus),
+        total=len(corpus),
+        page=page,
+        page_size=len(corpus),
+    )
 
 
 @router.get("/{family_id}", response_model=APIItemResponse[FamilyPublic])
