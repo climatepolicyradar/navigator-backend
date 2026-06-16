@@ -37,13 +37,13 @@ class Settings(BaseSettings):
     # Valid values: disable, allow, prefer, require, verify-ca, verify-full
     # 'prefer' tries SSL but falls back to non-SSL for local dev (validates
     # certs if SSL is used). For production RDS without cert validation,
-    # set db_sslmode=require via environment variable.
+    # set db_sslmode=require via environment variable
     db_sslmode: str = "prefer"
 
 
 # Pydantic settings are set from the env variables passed in via
 # docker / apprunner. Missing required fields will raise a
-# ValidationError on import.
+# ValidationError on import
 # pyright: reportCallIssue=false
 # Pyright doesn't recognize that BaseSettings loads from environment variables, so it
 # flags required fields as missing constructor arguments. This is a false positive.
