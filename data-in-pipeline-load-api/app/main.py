@@ -18,12 +18,12 @@ logging.basicConfig(
 _LOGGER = logging.getLogger(__name__)
 
 # We always use a path relative to the file as the calling process can come
-# from multiple locations
+# from multiple locations.
 root_dir = Path(__file__).parent.parent
 
 _LOGGER.debug("🚀 Starting FastAPI application")
 
-# Configure Open Telemetry
+# Configure Open Telemetry.
 ENV = os.getenv("ENV", "development")
 os.environ["OTEL_PYTHON_LOG_CORRELATION"] = "True"
 try:
