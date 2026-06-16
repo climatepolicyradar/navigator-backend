@@ -18,7 +18,7 @@ jobs:
       services: ${{ steps.parse.outputs.services }}
       infra_services: ${{ steps.parse.outputs.infra_services }}
       ecs_services: ${{ steps.parse.outputs.ecs_services }}
-      deploy_load_api_ecs: ${{ steps.parse.outputs.deploy_load_api }}
+      deploy_load_api_ecs: ${{ steps.parse.outputs.deploy_load_api_ecs }}
 
     steps:
       - uses: actions/checkout@v6
