@@ -284,7 +284,7 @@ def read_slug(*, session: Session = Depends(get_session), slug_name: str):
 def read_corpora(
     *, session: Session = Depends(get_session), page: int = Query(1, ge=1)
 ):
-    limit = 10
+    limit = 100
     offset = (page - 1) * limit
     corpus = session.exec(select(Corpus).offset(offset).limit(limit)).all()
 
