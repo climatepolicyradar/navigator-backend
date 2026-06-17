@@ -479,7 +479,7 @@ class NavigatorConnector(HTTPConnector):
         logger.info(f"{len(failures)} families failed validation")
         return FetchResult(envelopes=successful_envelopes, failures=failures)
 
-    def fetch_all_corpora(self, task_run_id: str, flow_run_id: str) -> FetchResult:
+    def fetch_all_corpora(self) -> FetchResult:
         """Fetch all corpus records from the Navigator API with pagination.
 
         This method iterates through all available pages of the Navigator API's
@@ -489,10 +489,6 @@ class NavigatorConnector(HTTPConnector):
         Errors, such as temporary network issues, are
         recorded as :class:`PageFailure` objects and returned alongside the
         successfully fetched results.
-        :param str task_run_id: The unique Prefect task run identifier associated
-            with this extraction.
-        :param str flow_run_id: The unique Prefect flow run identifier for the
-            current pipeline run.
         :return FetchResult:
             - **Success((envelopes, failures))** if all (or some) pages are fetched successfully.
             - **Failure(exception)** if a fatal error prevents completion of the operation.
@@ -541,13 +537,13 @@ class NavigatorConnector(HTTPConnector):
                             data=validated_corpora,
                             id=generate_envelope_uuid(),
                             source_name="navigator_corpus",
-                            source_record_id=f"{task_run_id}-families-corpora-endpoint-page-{page}",
+                            source_record_id=f"families-corpora-endpoint-page-{page}",
                             raw_payload=corpora_data,
                             content_type="application/json",
                             connector_version="1.0.0",
                             extracted_at=datetime.datetime.now(datetime.UTC),
-                            task_run_id=task_run_id,
-                            flow_run_id=flow_run_id,
+                            task_run_id=None,
+                            flow_run_id=None,
                             metadata=ExtractedMetadata(
                                 endpoint=f"{self.config.base_url}/families/corpora?page={page}",
                                 http_status=HTTPStatus.OK,
@@ -567,9 +563,7 @@ class NavigatorConnector(HTTPConnector):
                     return FetchResult(
                         envelopes=successful_envelopes,
                         failures=[
-                            PageFetchFailure(
-                                page=page, error=str(e), task_run_id=task_run_id
-                            ),
+                            PageFetchFailure(page=page, error=str(e), task_run_id=None),
                         ],
                     )
 
@@ -583,9 +577,7 @@ class NavigatorConnector(HTTPConnector):
                     return FetchResult(
                         envelopes=successful_envelopes,
                         failures=[
-                            PageFetchFailure(
-                                page=page, error=str(e), task_run_id=task_run_id
-                            ),
+                            PageFetchFailure(page=page, error=str(e), task_run_id=None),
                         ],
                     )
 

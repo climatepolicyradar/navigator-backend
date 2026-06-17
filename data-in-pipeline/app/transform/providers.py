@@ -38,9 +38,9 @@ corpus_to_provider_map: dict[CorpusId, str] = {
 }
 
 
-def create_provider_labels(
-    task_run_id: str, flow_run_id: str
-) -> tuple[list[Label], list[Exception | TransformWarning]]:
+def create_provider_labels() -> (
+    tuple[dict[str, Label], list[Exception | TransformWarning]]
+):
     connector_config = NavigatorConnectorConfig(
         source_id="navigator_family",
         checkpoint_storage=CheckPointStorageType.S3,
@@ -48,7 +48,7 @@ def create_provider_labels(
     )
 
     connector = NavigatorConnector(connector_config)
-    corpora_envelopes = connector.fetch_all_corpora(task_run_id, flow_run_id).envelopes
+    corpora_envelopes = connector.fetch_all_corpora().envelopes
 
     corpora_by_id = {
         corpus.import_id: corpus
@@ -56,7 +56,7 @@ def create_provider_labels(
         for corpus in envelope.data
     }
 
-    provider_labels = []
+    provider_labels = {}
     warnings = []
 
     fetched_corpora_ids = set(corpora_by_id.keys())
@@ -70,23 +70,19 @@ def create_provider_labels(
 
     for corpus_import_id, provider_name in corpus_to_provider_map.items():
         if corpus_import_id in corpora_by_id:
-            provider_labels.append(
-                Label(
-                    type="agent",
-                    id=f"agent::{provider_name}",
-                    value=provider_name,
-                    attributes={
-                        "attribution_url": corpora_by_id[
-                            corpus_import_id
-                        ].attribution_url,
-                        "corpus_text": corpora_by_id[corpus_import_id].corpus_text,
-                        "corpus_image_url": (
-                            f"https://cdn.climatepolicyradar.org/{corpora_by_id[corpus_import_id].corpus_image_url}"
-                            if corpora_by_id[corpus_import_id].corpus_image_url
-                            else ""
-                        ),
-                    },
-                )
+            provider_labels[corpus_import_id] = Label(
+                type="agent",
+                id=f"agent::{provider_name}",
+                value=provider_name,
+                attributes={
+                    "attribution_url": corpora_by_id[corpus_import_id].attribution_url,
+                    "corpus_text": corpora_by_id[corpus_import_id].corpus_text,
+                    "corpus_image_url": (
+                        f"https://cdn.climatepolicyradar.org/{corpora_by_id[corpus_import_id].corpus_image_url}"
+                        if corpora_by_id[corpus_import_id].corpus_image_url
+                        else ""
+                    ),
+                },
             )
 
     return provider_labels, warnings

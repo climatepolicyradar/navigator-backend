@@ -26,12 +26,12 @@ def test_create_provider_labels_successfully_maps_corpus_to_provider(
             ]
         ),
     ]
-    labels, warnings = create_provider_labels("1", "2")
+    labels, warnings = create_provider_labels()
 
     assert not warnings
 
-    assert labels == [
-        Label(
+    assert labels == {
+        "test.corpus.0.0": Label(
             attributes={
                 "attribution_url": "https://climate-laws.com",
                 "corpus_text": "Test corpus text",
@@ -43,7 +43,7 @@ def test_create_provider_labels_successfully_maps_corpus_to_provider(
             labels=[],
             documents=[],
         )
-    ]
+    }
 
 
 @patch(
@@ -67,7 +67,7 @@ def test_create_provider_labels_returns_warning_if_no_provider_matching_corpus(
         )
     ]
 
-    labels, warnings = create_provider_labels("1", "2")
+    labels, warnings = create_provider_labels()
 
     assert not labels
     assert len(warnings) == 1
