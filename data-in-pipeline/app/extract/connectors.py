@@ -479,111 +479,118 @@ class NavigatorConnector(HTTPConnector):
         logger.info(f"{len(failures)} families failed validation")
         return FetchResult(envelopes=successful_envelopes, failures=failures)
 
+    def fetch_all_corpora(self, task_run_id: str, flow_run_id: str) -> FetchResult:
+        """Fetch all corpus records from the Navigator API with pagination.
 
-def fetch_all_corpora(self, task_run_id: str, flow_run_id: str) -> FetchResult:
-    """Fetch all corpus records from the Navigator API with pagination.
+        This method iterates through all available pages of the Navigator API's
+        `/families/corpora` endpoint. Each page of results is fetched and transformed into
+        a :class:`ExtractedEnvelope` object.
 
-    This method iterates through all available pages of the Navigator API's
-    `/families/corpora` endpoint. Each page of results is fetched and transformed into
-    a :class:`ExtractedEnvelope` object.
+        Errors, such as temporary network issues, are
+        recorded as :class:`PageFailure` objects and returned alongside the
+        successfully fetched results.
+        :param str task_run_id: The unique Prefect task run identifier associated
+            with this extraction.
+        :param str flow_run_id: The unique Prefect flow run identifier for the
+            current pipeline run.
+        :return FetchResult:
+            - **Success((envelopes, failures))** if all (or some) pages are fetched successfully.
+            - **Failure(exception)** if a fatal error prevents completion of the operation.
 
-    Errors, such as temporary network issues, are
-    recorded as :class:`PageFailure` objects and returned alongside the
-    successfully fetched results.
-    :param str task_run_id: The unique Prefect task run identifier associated
-        with this extraction.
-    :param str flow_run_id: The unique Prefect flow run identifier for the
-        current pipeline run.
-    :return FetchResult:
-        - **Success((envelopes, failures))** if all (or some) pages are fetched successfully.
-        - **Failure(exception)** if a fatal error prevents completion of the operation.
+        """
+        logger = get_logger()
 
-    """
-    logger = get_logger()
+        page = 1
+        successful_envelopes: list[ExtractedEnvelope] = []
+        failures: list[RecordValidationFailure] = []
 
-    page = 1
-    successful_envelopes: list[ExtractedEnvelope] = []
-    failures: list[RecordValidationFailure] = []
+        while True:
+            with log_context(page_number=page):
+                try:
+                    logger.info(f"Fetching corpora page {page}")
+                    response_json = self.get(f"families/corpora?page={page}")
+                    corpora_data = response_json.get("data", [])
 
-    while True:
-        with log_context(page_number=page):
-            try:
-                logger.info(f"Fetching corpora page {page}")
-                response_json = self.get(f"families/corpora?page={page}&page_size=100")
-                corpora_data = response_json.get("data", [])
-
-                # Break the loop if no more corpora are returned from the endpoint
-                if not corpora_data:
-                    logger.info(
-                        f"No more corpora found at page {page}. Total pages fetched: {len(successful_envelopes)}"
-                    )
-                    break
-
-                validated_corpora: list[NavigatorCorpus] = []
-
-                for corpus in corpora_data:
-                    try:
-                        validated_corpora.append(NavigatorCorpus.model_validate(corpus))
-                    except ValidationError as e:
+                    # Break the loop if no more corpora are returned from the endpoint
+                    if not corpora_data:
                         logger.info(
-                            f"Error validating corpus {corpus['import_id']}: {e.json()}"
+                            f"No more corpora found at page {page}. Total pages fetched: {len(successful_envelopes)}"
                         )
-                        failures.append(
-                            RecordValidationFailure(
-                                import_ids=[corpus["import_id"]],
-                                page=page,
-                                error=f"Error validating corpus: {e.json()}",
+                        break
+
+                    validated_corpora: list[NavigatorCorpus] = []
+
+                    for corpus in corpora_data:
+                        try:
+                            validated_corpora.append(
+                                NavigatorCorpus.model_validate(corpus)
                             )
+                        except ValidationError as e:
+                            logger.info(
+                                f"Error validating corpus {corpus['import_id']}: {e.json()}"
+                            )
+                            failures.append(
+                                RecordValidationFailure(
+                                    import_ids=[corpus["import_id"]],
+                                    page=page,
+                                    error=f"Error validating corpus: {e.json()}",
+                                )
+                            )
+                    if validated_corpora:
+                        envelope = ExtractedEnvelope(
+                            data=validated_corpora,
+                            id=generate_envelope_uuid(),
+                            source_name="navigator_corpus",
+                            source_record_id=f"{task_run_id}-families-corpora-endpoint-page-{page}",
+                            raw_payload=corpora_data,
+                            content_type="application/json",
+                            connector_version="1.0.0",
+                            extracted_at=datetime.datetime.now(datetime.UTC),
+                            task_run_id=task_run_id,
+                            flow_run_id=flow_run_id,
+                            metadata=ExtractedMetadata(
+                                endpoint=f"{self.config.base_url}/families/corpora?page={page}",
+                                http_status=HTTPStatus.OK,
+                            ),
                         )
-                if validated_corpora:
-                    envelope = ExtractedEnvelope(
-                        data=validated_corpora,
-                        id=generate_envelope_uuid(),
-                        source_name="navigator_corpus",
-                        source_record_id=f"{task_run_id}-families-corpora-endpoint-page-{page}",
-                        raw_payload=corpora_data,
-                        content_type="application/json",
-                        connector_version="1.0.0",
-                        extracted_at=datetime.datetime.now(datetime.UTC),
-                        task_run_id=task_run_id,
-                        flow_run_id=flow_run_id,
-                        metadata=ExtractedMetadata(
-                            endpoint=f"{self.config.base_url}/families/corpora?page={page}",
-                            http_status=HTTPStatus.OK,
-                        ),
+
+                        successful_envelopes.append(envelope)
+                    page += 1
+
+                except requests.RequestException as e:
+                    logger.exception(
+                        f"Request failed while fetching all corpora at page {page} {e}"
+                    )
+                    pipeline_metrics.record_error(
+                        Operation.PAGINATION, ErrorType.NETWORK
+                    )
+                    return FetchResult(
+                        envelopes=successful_envelopes,
+                        failures=[
+                            PageFetchFailure(
+                                page=page, error=str(e), task_run_id=task_run_id
+                            ),
+                        ],
                     )
 
-                    successful_envelopes.append(envelope)
-                page += 1
+                except Exception as e:
+                    logger.exception(
+                        f"Unexpected error {e} while fetching page {page} of corpora"
+                    )
+                    pipeline_metrics.record_error(
+                        Operation.PAGINATION, ErrorType.UNKNOWN
+                    )
+                    return FetchResult(
+                        envelopes=successful_envelopes,
+                        failures=[
+                            PageFetchFailure(
+                                page=page, error=str(e), task_run_id=task_run_id
+                            ),
+                        ],
+                    )
 
-            except requests.RequestException as e:
-                logger.exception(
-                    f"Request failed while fetching all corpora at page {page}"
-                )
-                pipeline_metrics.record_error(Operation.PAGINATION, ErrorType.NETWORK)
-                return FetchResult(
-                    envelopes=successful_envelopes,
-                    failures=[
-                        PageFetchFailure(
-                            page=page, error=str(e), task_run_id=task_run_id
-                        ),
-                    ],
-                )
-
-            except Exception as e:
-                logger.exception(
-                    f"Unexpected error {e} while fetching page {page} of corpora"
-                )
-                pipeline_metrics.record_error(Operation.PAGINATION, ErrorType.UNKNOWN)
-                return FetchResult(
-                    envelopes=successful_envelopes,
-                    failures=[
-                        PageFetchFailure(
-                            page=page, error=str(e), task_run_id=task_run_id
-                        ),
-                    ],
-                )
-
-    logger.info(f"Fetch corpora completed: {len(successful_envelopes)} pages succeeded")
-    logger.info(f"{len(failures)} corpora failed validation")
-    return FetchResult(envelopes=successful_envelopes, failures=failures)
+        logger.info(
+            f"Fetch corpora completed: {len(successful_envelopes)} pages succeeded"
+        )
+        logger.info(f"{len(failures)} corpora failed validation")
+        return FetchResult(envelopes=successful_envelopes, failures=failures)
