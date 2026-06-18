@@ -1,8 +1,13 @@
 {
-  "service.name": "families-api",
+  "service.name": "families-api-ecs",
   "service.namespace": "data-fetching",
   "team": "application",
-  "inputs": [{ "type": "aws", "name": "navigator-infra" }],
+  "inputs": [
+    {
+      "type": "aws",
+      "name": "navigator-infra"
+    }
+  ],
   "outputs": [],
   "repos": ["https://github.com/climatepolicyradar/navigator-backend"]
 }
