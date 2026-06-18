@@ -355,23 +355,25 @@ aws.iam.RolePolicy(
         aurora_read_replica_db_name_parameter=aurora_read_replica_db_name_parameter.arn,
         aurora_read_replica_db_username_parameter=aurora_read_replica_db_username_parameter.arn,
     ).apply(
-        lambda args: aws.iam.get_policy_document(
-            statements=[
-                aws.iam.GetPolicyDocumentStatementArgs(
-                    effect="Allow",
-                    actions=[
-                        "ssm:GetParameter",
-                        "ssm:GetParameters",
-                        "ssm:DescribeParameters",
-                    ],
-                    resources=[
-                        args["aurora_read_replica_db_url_parameter"],
-                        args["aurora_read_replica_db_name_parameter"],
-                        args["aurora_read_replica_db_username_parameter"],
-                    ],
-                ),
-            ]
-        ).json
+        lambda args: (
+            aws.iam.get_policy_document(
+                statements=[
+                    aws.iam.GetPolicyDocumentStatementArgs(
+                        effect="Allow",
+                        actions=[
+                            "ssm:GetParameter",
+                            "ssm:GetParameters",
+                            "ssm:DescribeParameters",
+                        ],
+                        resources=[
+                            args["aurora_read_replica_db_url_parameter"],
+                            args["aurora_read_replica_db_name_parameter"],
+                            args["aurora_read_replica_db_username_parameter"],
+                        ],
+                    ),
+                ]
+            ).json
+        )
     ),
 )
 
@@ -482,7 +484,7 @@ ecs_express_service = ExpressGatewayService(
         ExpressGatewayServiceScalingTargetArgs(
             auto_scaling_metric="AVERAGE_CPU",
             auto_scaling_target_value=70,
-            min_task_count=1,
+            min_task_count=2,
             max_task_count=4,
         ),
     ],
