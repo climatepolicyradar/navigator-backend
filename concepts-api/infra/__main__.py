@@ -225,7 +225,7 @@ ecs_express_service = ExpressGatewayService(
         ExpressGatewayServiceScalingTargetArgs(
             auto_scaling_metric="AVERAGE_CPU",
             auto_scaling_target_value=70,
-            min_task_count=1,
+            min_task_count=2,
             max_task_count=4,
         ),
     ],
