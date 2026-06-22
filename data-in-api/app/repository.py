@@ -112,7 +112,7 @@ def get_document_by_id(db: Session, document_id: str) -> DocumentOutput | None:
 
         if not db_doc:
             return None
-        _LOGGER.debug(f"Retrieved document {document_id} from the database.")
+        _LOGGER.debug(f"Retrieved document {document_id} from the database")
         return _map_db_document_to_schema(db, db_doc)
 
     except (OperationalError, DisconnectionError):

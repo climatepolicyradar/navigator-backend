@@ -12,7 +12,7 @@ account_id = aws.get_caller_identity().account_id
 
 config = pulumi.Config()
 stack = pulumi.get_stack()
-NAME_PREFIX = "concepts-api"
+NAME_PREFIX = f"concepts-api-{stack}"
 
 
 # TODO: https://linear.app/climate-policy-radar/issue/APP-584/standardise-naming-in-infra
@@ -225,7 +225,7 @@ ecs_express_service = ExpressGatewayService(
         ExpressGatewayServiceScalingTargetArgs(
             auto_scaling_metric="AVERAGE_CPU",
             auto_scaling_target_value=70,
-            min_task_count=1,
+            min_task_count=2,
             max_task_count=4,
         ),
     ],

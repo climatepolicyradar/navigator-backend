@@ -59,7 +59,7 @@ def root():
 
 
 # We use both routers to make sure we can have /data-in/health available publicly
-# and /health available to the AppRunner health check.
+# and /health available to the AppRunner health check
 @app.get("/health")
 @router.get("/health")
 def health():

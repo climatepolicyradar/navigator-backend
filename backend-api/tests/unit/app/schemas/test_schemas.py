@@ -1,9 +1,12 @@
 from datetime import datetime
 
 import pytest
+from cpr_sdk.models.search import Family as CprSdkFamily
+from cpr_sdk.models.search import SearchResponse as CprSdkSearchResponse
 
 from app.models.document import DocumentParserInput, FamilyDocumentResponse
 from app.models.search import (
+    FamilySearchResponse,
     SearchResponse,
     SearchResponseDocumentPassage,
     SearchResponseFamily,
@@ -197,6 +200,33 @@ def test_search_response() -> None:
             expected_pages.append(page + 1)
 
     assert expected_pages == first_document_incremented_pages
+
+
+def test_family_search_response_from_sdk_maps_fields():
+    """
+    FamilySearchResponse.from_sdk correctly maps renamed SDK fields to the API contract.
+    """
+    sdk_response = CprSdkSearchResponse(
+        total_hits=3,
+        total_result_hits=2,
+        query_time_ms=50,
+        total_time_ms=75,
+        results=[CprSdkFamily(id="CCLW.family.1.0", hits=[], total_passage_hits=0)],
+        continuation_token="NEXT",
+        this_continuation_token="THIS",
+        prev_continuation_token="PREV",
+    )
+
+    response = FamilySearchResponse.from_sdk(sdk_response)
+
+    assert response.total_hits == sdk_response.total_hits
+    assert response.total_family_hits == sdk_response.total_result_hits
+    assert response.query_time_ms == sdk_response.query_time_ms
+    assert response.total_time_ms == sdk_response.total_time_ms
+    assert response.families == sdk_response.results
+    assert response.continuation_token == sdk_response.continuation_token
+    assert response.this_continuation_token == sdk_response.this_continuation_token
+    assert response.prev_continuation_token == sdk_response.prev_continuation_token
 
 
 def test_document_parser_input_type():

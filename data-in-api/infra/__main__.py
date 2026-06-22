@@ -7,11 +7,20 @@ import json
 import components.aws as components_aws
 import pulumi
 import pulumi_aws as aws
+from pulumi_aws.ecs.express_gateway_service import (
+    ExpressGatewayService,
+    ExpressGatewayServiceNetworkConfigurationArgs,
+    ExpressGatewayServicePrimaryContainerArgs,
+    ExpressGatewayServicePrimaryContainerEnvironmentArgs,
+    ExpressGatewayServicePrimaryContainerSecretArgs,
+    ExpressGatewayServiceScalingTargetArgs,
+)
 
 config = pulumi.Config()
 environment = pulumi.get_stack()
 name = pulumi.get_project()
 account_id = aws.get_caller_identity().account_id
+NAME_PREFIX = f"data-in-api-{environment}"
 
 tags = {
     "CPR-Created-By": "pulumi",
@@ -24,6 +33,12 @@ tags = {
 data_in_pipeline_stack = pulumi.StackReference(
     f"climatepolicyradar/data-in-pipeline/{environment}"
 )
+
+########################################################################
+# Reference to shared API services infra
+########################################################################
+
+ecs_infra = pulumi.StackReference(f"climatepolicyradar/ecs-infra/{environment}")
 
 # AppRunner and related components
 ecr_repository = components_aws.ecr.Repository(
@@ -320,6 +335,179 @@ data_in_pipeline_load_api_github_actions_role = aws.iam.Role(
     name=f"{name}-{environment}-github-actions",
     tags=tags,
     opts=pulumi.ResourceOptions(protect=True),
+)
+
+########################################################################
+# ECS Express Gateway service
+########################################################################
+
+eu_west_1a_public_subnet_id = aws_env_stack.get_output("eu_west_1a_public_subnet_id")
+eu_west_1b_public_subnet_id = aws_env_stack.get_output("eu_west_1b_public_subnet_id")
+eu_west_1c_public_subnet_id = aws_env_stack.get_output("eu_west_1c_public_subnet_id")
+
+ecs_shared_task_execution_role_name = ecs_infra.get_output("task_execution_role_name")
+
+aws.iam.RolePolicy(
+    f"{NAME_PREFIX}-execution-role-ssm-policy",
+    role=ecs_shared_task_execution_role_name,
+    policy=pulumi.Output.all(
+        aurora_read_replica_db_url_parameter=aurora_read_replica_db_url_parameter.arn,
+        aurora_read_replica_db_name_parameter=aurora_read_replica_db_name_parameter.arn,
+        aurora_read_replica_db_username_parameter=aurora_read_replica_db_username_parameter.arn,
+    ).apply(
+        lambda args: (
+            aws.iam.get_policy_document(
+                statements=[
+                    aws.iam.GetPolicyDocumentStatementArgs(
+                        effect="Allow",
+                        actions=[
+                            "ssm:GetParameter",
+                            "ssm:GetParameters",
+                            "ssm:DescribeParameters",
+                        ],
+                        resources=[
+                            args["aurora_read_replica_db_url_parameter"],
+                            args["aurora_read_replica_db_name_parameter"],
+                            args["aurora_read_replica_db_username_parameter"],
+                        ],
+                    ),
+                ]
+            ).json
+        )
+    ),
+)
+
+# Task role: the IAM role the *running container* assumes.
+ecs_task_role = aws.iam.Role(
+    f"{NAME_PREFIX}-ecs-task-role",
+    name=f"{NAME_PREFIX}-ecs-task-role",
+    assume_role_policy=aws.iam.get_policy_document(
+        statements=[
+            aws.iam.GetPolicyDocumentStatementArgs(
+                effect="Allow",
+                principals=[
+                    aws.iam.GetPolicyDocumentStatementPrincipalArgs(
+                        type="Service",
+                        identifiers=["ecs-tasks.amazonaws.com"],
+                    )
+                ],
+                actions=["sts:AssumeRole"],
+            )
+        ]
+    ).json,
+)
+
+
+# SSM access for any secrets the container reads at runtime. Mirrors
+# the App Runner SSM policy.
+aws.iam.RolePolicy(
+    f"{NAME_PREFIX}-ecs-task-role-ssm-policy",
+    role=ecs_task_role.id,
+    policy=aws.iam.get_policy_document(
+        statements=[
+            aws.iam.GetPolicyDocumentStatementArgs(
+                effect="Allow",
+                actions=["ssm:GetParameters"],
+                resources=[
+                    f"arn:aws:ssm:eu-west-1:{account_id}:parameter/data-in-api/*"
+                ],
+            )
+        ]
+    ).json,
+)
+
+aws.iam.RolePolicy(
+    f"{NAME_PREFIX}-ecs-task-role-rds-policy",
+    role=ecs_task_role.id,
+    policy=pulumi.Output.all(
+        aurora_cluster_resource_id=aurora_cluster_resource_id,
+        db_username=aurora_read_replica_db_username_parameter.value,
+    ).apply(
+        lambda args: (
+            aws.iam.get_policy_document(
+                statements=[
+                    aws.iam.GetPolicyDocumentStatementArgs(
+                        effect="Allow",
+                        actions=["rds-db:connect"],
+                        resources=[
+                            f"arn:aws:rds-db:eu-west-1:{account_id}:dbuser:{args['aurora_cluster_resource_id']}/{args['db_username']}"
+                        ],
+                    ),
+                ]
+            ).json
+        )
+    ),
+)
+
+secrets = {
+    "DB_URL": aurora_read_replica_db_url_parameter.arn,
+    "DB_NAME": aurora_read_replica_db_name_parameter.arn,
+    "DB_USERNAME": aurora_read_replica_db_username_parameter.arn,
+}
+
+env_vars = {
+    "DB_PORT": "5432",
+    "AWS_REGION": "eu-west-1",
+    "CDN_URL": config.require("cdn-url"),
+    "DB_SSLMODE": "require",
+}
+
+# Container config
+primary_container = ExpressGatewayServicePrimaryContainerArgs(
+    image=ecr_repository.aws_ecr_repository.repository_url.apply(
+        lambda url: f"{url}:latest"
+    ),
+    container_port=8080,  # @related: PORT_NUMBER
+    environments=[
+        ExpressGatewayServicePrimaryContainerEnvironmentArgs(name=k, value=v)
+        for k, v in env_vars.items()
+    ],
+    secrets=[
+        ExpressGatewayServicePrimaryContainerSecretArgs(name=k, value_from=v)
+        for k, v in secrets.items()
+    ],
+)
+
+
+ecs_express_service = ExpressGatewayService(
+    f"{NAME_PREFIX}-ecs-express-service",
+    service_name=NAME_PREFIX,
+    cluster=ecs_infra.get_output("cluster_arn"),
+    execution_role_arn=ecs_infra.get_output("task_execution_role_arn"),
+    infrastructure_role_arn=ecs_infra.get_output("infrastructure_role_arn"),
+    task_role_arn=ecs_task_role.arn,  # service-specific
+    primary_container=primary_container,
+    health_check_path="/health",
+    cpu="1024",
+    memory="2048",
+    scaling_targets=[
+        ExpressGatewayServiceScalingTargetArgs(
+            auto_scaling_metric="AVERAGE_CPU",
+            auto_scaling_target_value=70,
+            min_task_count=2,
+            max_task_count=4,
+        ),
+    ],
+    network_configurations=[
+        ExpressGatewayServiceNetworkConfigurationArgs(
+            security_groups=[
+                ecs_infra.get_output("alb_security_group_id"),
+                vpc_sg.id,
+            ],
+            subnets=[
+                eu_west_1a_public_subnet_id,
+                eu_west_1b_public_subnet_id,
+                eu_west_1c_public_subnet_id,
+            ],
+        ),
+    ],
+)
+
+pulumi.export(
+    "ecs_express_service_url",
+    ecs_express_service.ingress_paths.apply(
+        lambda paths: paths[0].endpoint.removeprefix("https://") if paths else None
+    ),
 )
 
 pulumi.export("role_arn", data_in_pipeline_load_api_github_actions_role.arn)

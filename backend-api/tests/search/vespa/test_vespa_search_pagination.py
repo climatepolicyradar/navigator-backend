@@ -107,6 +107,7 @@ def test_continuation_token__passages(
         "document_ids": ["CCLW.executive.10246.4861", "CCLW.executive.4934.1571"],
         "limit": 1,
         "page_size": 1,
+        "max_hits_per_family": 1,
         "exact_match": False,
     }
     first_family = _make_search_request(data_client, valid_token, params)

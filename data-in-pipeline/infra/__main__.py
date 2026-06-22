@@ -4,6 +4,15 @@ from pathlib import Path
 import components.aws as components_aws
 import pulumi
 import pulumi_aws as aws
+from pulumi_aws import ecs
+from pulumi_aws.ecs.express_gateway_service import (
+    ExpressGatewayService,
+    ExpressGatewayServiceNetworkConfigurationArgs,
+    ExpressGatewayServicePrimaryContainerArgs,
+    ExpressGatewayServicePrimaryContainerEnvironmentArgs,
+    ExpressGatewayServicePrimaryContainerSecretArgs,
+    ExpressGatewayServiceScalingTargetArgs,
+)
 
 config = pulumi.Config()
 environment = pulumi.get_stack()
@@ -95,6 +104,9 @@ if environment == "staging":
 # Create the Aurora service.
 #######################################################################
 aws_env_stack = pulumi.StackReference(f"climatepolicyradar/aws_env/{environment}")
+cloudfront_origin_prefix_list_id = aws_env_stack.get_output(
+    "cloudfront_origin_prefix_list_id"
+)
 
 db_port = 5432
 db_name = config.require("db_name")
@@ -189,7 +201,7 @@ aurora_cluster = aws.rds.Cluster(
     cluster_name,
     cluster_identifier=cluster_name,
     engine="aurora-postgresql",
-    engine_version="17.6",
+    engine_version="17.7",
     database_name=db_name,
     manage_master_user_password=True,
     master_username=config.require("aurora_master_username"),
@@ -667,6 +679,275 @@ allow_data_in_pipeline_load_api_to_aurora = aws.ec2.SecurityGroupRule(
     description="Allow Postgres from load API VPC SG",
 )
 
+#######################################################################
+# ECS Express Service - Data in Load Api.
+#
+# Runs alongside the existing App Runner Load API service (above) during
+# migration. The *structure* mirrors the data-in-api ECS service, but the
+# image / secrets / env / health path / DB user all come from the App
+# Runner Load API config above, which is the source of truth for this
+# service.
+#######################################################################
+ecs_infra = pulumi.StackReference(f"climatepolicyradar/ecs-infra/{environment}")
+
+eu_west_1a_public_subnet_id = aws_env_stack.get_output("eu_west_1a_public_subnet_id")
+eu_west_1b_public_subnet_id = aws_env_stack.get_output("eu_west_1b_public_subnet_id")
+eu_west_1c_public_subnet_id = aws_env_stack.get_output("eu_west_1c_public_subnet_id")
+
+load_api_name = f"{name}-load-api-{environment}"
+
+# --- Dedicated cluster for the Load API ECS service.
+ecs_cluster = ecs.Cluster(
+    f"{load_api_name}-ecs-cluster",
+    name=f"{load_api_name}",
+    settings=[
+        ecs.ClusterSettingArgs(
+            name="containerInsights",
+            value="enabled",
+        )
+    ],
+    tags=tags,
+)
+
+
+ecs_execution_role = aws.iam.Role(
+    f"{load_api_name}-ecs-execution-role",
+    name=f"{load_api_name}-ecs-execution-role",
+    assume_role_policy=aws.iam.get_policy_document(
+        statements=[
+            aws.iam.GetPolicyDocumentStatementArgs(
+                effect="Allow",
+                principals=[
+                    aws.iam.GetPolicyDocumentStatementPrincipalArgs(
+                        type="Service",
+                        identifiers=["ecs-tasks.amazonaws.com"],
+                    )
+                ],
+                actions=["sts:AssumeRole"],
+            )
+        ]
+    ).json,
+    tags=tags,
+)
+
+aws.iam.RolePolicyAttachment(
+    f"{load_api_name}-ecs-execution-role-managed-policy",
+    role=ecs_execution_role.name,
+    policy_arn="arn:aws:iam::aws:policy/service-role/AmazonECSTaskExecutionRolePolicy",
+)
+
+# Read access to the four SSM params injected as secrets (the managed policy
+# above does not grant arbitrary SSM parameter access).
+aws.iam.RolePolicy(
+    f"{load_api_name}-execution-role-ssm-policy",
+    role=ecs_execution_role.id,
+    policy=pulumi.Output.all(
+        load_database_url=data_in_pipeline_load_api_load_database_url.arn,
+        cdn_url=data_in_pipeline_load_api_cdn_url.arn,
+        write_replica_db_name=data_in_pipeline_aurora_write_replica_db_name.arn,
+        write_replica_db_username=data_in_pipeline_aurora_write_replica_db_username.arn,
+    ).apply(
+        lambda args: (
+            aws.iam.get_policy_document(
+                statements=[
+                    aws.iam.GetPolicyDocumentStatementArgs(
+                        effect="Allow",
+                        actions=[
+                            "ssm:GetParameter",
+                            "ssm:GetParameters",
+                            "ssm:DescribeParameters",
+                        ],
+                        resources=[
+                            args["load_database_url"],
+                            args["cdn_url"],
+                            args["write_replica_db_name"],
+                            args["write_replica_db_username"],
+                        ],
+                    ),
+                ]
+            ).json
+        )
+    ),
+)
+
+# --- Infrastructure role:
+ecs_infrastructure_role = aws.iam.Role(
+    f"{load_api_name}-ecs-infrastructure-role",
+    name=f"{load_api_name}-ecs-infrastructure-role",
+    assume_role_policy=aws.iam.get_policy_document(
+        statements=[
+            aws.iam.GetPolicyDocumentStatementArgs(
+                sid="AllowAccessToECSForInfrastructureManagement",
+                effect="Allow",
+                principals=[
+                    aws.iam.GetPolicyDocumentStatementPrincipalArgs(
+                        type="Service",
+                        identifiers=["ecs.amazonaws.com"],
+                    )
+                ],
+                actions=["sts:AssumeRole"],
+            )
+        ]
+    ).json,
+    tags=tags,
+)
+
+aws.iam.RolePolicyAttachment(
+    f"{load_api_name}-ecs-infrastructure-role-managed-policy",
+    role=ecs_infrastructure_role.name,
+    # NOTE: verify this exact ARN/casing against the AWS managed policy list.
+    policy_arn="arn:aws:iam::aws:policy/service-role/AmazonECSInfrastructureRoleforExpressGatewayServices",
+)
+
+# --- Task role: the IAM role the *running container* assumes.
+ecs_task_role = aws.iam.Role(
+    f"{load_api_name}-ecs-task-role",
+    name=f"{load_api_name}-ecs-task-role",
+    assume_role_policy=aws.iam.get_policy_document(
+        statements=[
+            aws.iam.GetPolicyDocumentStatementArgs(
+                effect="Allow",
+                principals=[
+                    aws.iam.GetPolicyDocumentStatementPrincipalArgs(
+                        type="Service",
+                        identifiers=["ecs-tasks.amazonaws.com"],
+                    )
+                ],
+                actions=["sts:AssumeRole"],
+            )
+        ]
+    ).json,
+    tags=tags,
+)
+
+# Runtime SSM reads. Mirrors the App Runner instance-role param paths.
+aws.iam.RolePolicy(
+    f"{load_api_name}-ecs-task-role-ssm-policy",
+    role=ecs_task_role.id,
+    policy=aws.iam.get_policy_document(
+        statements=[
+            aws.iam.GetPolicyDocumentStatementArgs(
+                effect="Allow",
+                actions=[
+                    "ssm:GetParameter",
+                    "ssm:GetParameters",
+                    "ssm:DescribeParameters",
+                ],
+                resources=[
+                    f"arn:aws:ssm:eu-west-1:{account_id}:parameter/data-in-pipeline-load-api/*",
+                    f"arn:aws:ssm:eu-west-1:{account_id}:parameter/data-in-pipeline/*",
+                ],
+            )
+        ]
+    ).json,
+)
+
+# Connect to Aurora as api_load_writer via IAM auth. Reuse the existing policy
+# rather than rebuilding the rds-db:connect statement.
+aws.iam.RolePolicyAttachment(
+    f"{load_api_name}-ecs-task-role-rds-iam-connect-attach",
+    role=ecs_task_role.name,
+    policy_arn=api_load_writer_db_user_iam_policy.arn,
+)
+
+
+# Dedicated ALB ingress SG — locked to CloudFront, same as admin-backend.
+ecs_alb_security_group = aws.ec2.SecurityGroup(
+    f"{load_api_name}-ecs-alb-sg",
+    name=f"{load_api_name}-ecs-alb-sg",
+    description="Allows inbound HTTP from CloudFront to the Express Gateway ALB",
+    vpc_id=vpc_id,
+    ingress=[
+        aws.ec2.SecurityGroupIngressArgs(
+            description="HTTP from CloudFront edge locations",
+            from_port=80,
+            to_port=80,
+            protocol="tcp",
+            prefix_list_ids=[cloudfront_origin_prefix_list_id],
+        ),
+    ],
+    egress=[
+        aws.ec2.SecurityGroupEgressArgs(
+            from_port=0,
+            to_port=0,
+            protocol="-1",
+            cidr_blocks=["0.0.0.0/0"],
+        ),
+    ],
+    tags=tags,
+)
+
+# --- Container config: same image / secrets / env / health as the App Runner
+# Load API service above.
+secrets = {
+    "LOAD_DATABASE_URL": data_in_pipeline_load_api_load_database_url.arn,
+    "CDN_URL": data_in_pipeline_load_api_cdn_url.arn,
+    "DB_NAME": data_in_pipeline_aurora_write_replica_db_name.arn,
+    "DB_USERNAME": data_in_pipeline_aurora_write_replica_db_username.arn,
+}
+
+env_vars = {
+    "DB_PORT": "5432",
+    "AWS_REGION": "eu-west-1",
+    "DB_SSLMODE": "require",
+}
+
+primary_container = ExpressGatewayServicePrimaryContainerArgs(
+    image=data_in_pipeline_load_api_ecr_repository.repository_url.apply(
+        lambda url: f"{url}:latest"
+    ),
+    container_port=8080,  # @related: PORT_NUMBER
+    environments=[
+        ExpressGatewayServicePrimaryContainerEnvironmentArgs(name=k, value=v)
+        for k, v in env_vars.items()
+    ],
+    secrets=[
+        ExpressGatewayServicePrimaryContainerSecretArgs(name=k, value_from=v)
+        for k, v in secrets.items()
+    ],
+)
+
+ecs_express_service = ExpressGatewayService(
+    f"{load_api_name}-ecs-express-service",
+    service_name=load_api_name,
+    cluster=ecs_cluster.arn,
+    execution_role_arn=ecs_execution_role.arn,
+    infrastructure_role_arn=ecs_infrastructure_role.arn,
+    task_role_arn=ecs_task_role.arn,
+    primary_container=primary_container,
+    health_check_path="/load/health",
+    cpu="1024",
+    memory="2048",
+    scaling_targets=[
+        ExpressGatewayServiceScalingTargetArgs(
+            auto_scaling_metric="AVERAGE_CPU",
+            auto_scaling_target_value=70,
+            min_task_count=1,
+            max_task_count=4,
+        ),
+    ],
+    network_configurations=[
+        ExpressGatewayServiceNetworkConfigurationArgs(
+            security_groups=[
+                ecs_infra.get_output("alb_security_group_id"),
+                data_in_pipeline_load_api_vpc_sg.id,
+            ],
+            subnets=[
+                eu_west_1a_public_subnet_id,
+                eu_west_1b_public_subnet_id,
+                eu_west_1c_public_subnet_id,
+            ],
+        ),
+    ],
+)
+
+load_api_base_url = ecs_express_service.ingress_paths.apply(
+    lambda paths: f"{paths[0].endpoint.rstrip('/')}/"
+)
+
+########################################################################
+# Create the App Runner Load API service.
+########################################################################
 
 data_in_pipeline_load_api_apprunner_service = aws.apprunner.Service(
     "data-in-pipeline-load-api-apprunner-service",
@@ -734,8 +1015,6 @@ data_in_load_api_vpc_ingress_connection = aws.apprunner.VpcIngressConnection(
     ),
     tags={**tags},
 )
-
-load_api_base_url = "https://mdemumdvnc.eu-west-1.awsapprunner.com"
 
 data_in_pipeline_load_api_url = aws.ssm.Parameter(
     "data-in-pipeline-load-api-url",
@@ -815,4 +1094,11 @@ pulumi.export(
 pulumi.export(
     "aurora-cluster-resource-id",
     aurora_cluster.cluster_resource_id,
+)
+
+pulumi.export(
+    "load_api_ecs_express_service_url",
+    ecs_express_service.ingress_paths.apply(
+        lambda paths: paths[0].endpoint.removeprefix("https://") if paths else None
+    ),
 )

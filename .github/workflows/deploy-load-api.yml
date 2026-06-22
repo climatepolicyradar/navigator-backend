@@ -1,0 +1,85 @@
+name: Deploy Load API
+on:
+  workflow_call:
+    inputs:
+      environment:
+        required: true
+        type: string
+permissions:
+  id-token: write
+  contents: read
+jobs:
+  deploy-load-api:
+    runs-on: ubuntu-latest
+    strategy:
+      fail-fast: false
+      matrix:
+        environment: ${{ fromJSON(inputs.environment) }}
+    environment: ${{ matrix.environment }}
+    env:
+      SERVICE: data-in-pipeline-load-api
+    steps:
+      - uses: actions/checkout@v6
+      - uses: aws-actions/configure-aws-credentials@v6
+        with:
+          role-to-assume: arn:aws:iam::${{ secrets.AWS_ACCOUNT_ID }}:role/navigator-backend-github-actions-deploy
+          role-session-name: GitHub_to_AWS_via_FederatedOIDC_${{ matrix.environment }}
+          aws-region: eu-west-1
+
+      - name: Require existing service
+        env:
+          CLUSTER: data-in-pipeline-load-api-${{ matrix.environment }}
+          SERVICE_NAME: data-in-pipeline-load-api-${{ matrix.environment }}
+        run: |
+          set -euo pipefail
+          STATUS=$(aws ecs describe-services \
+            --cluster "${CLUSTER}" --services "${SERVICE_NAME}" \
+            --query 'services[0].status' --output text 2>/dev/null || echo "MISSING")
+          if [[ "${STATUS}" != "ACTIVE" ]]; then
+            echo "::error::Service ${SERVICE_NAME} not ACTIVE in ${CLUSTER} (got: ${STATUS}); refusing to create."
+            exit 1
+          fi
+
+      - uses: aws-actions/amazon-ecr-login@v2
+      - uses: astral-sh/setup-uv@v7
+      - run: uv sync --all-packages
+      - uses: extractions/setup-just@v4
+
+      - name: Build and push image
+        run: |
+          REGISTRY="${{ secrets.AWS_ACCOUNT_ID }}.dkr.ecr.eu-west-1.amazonaws.com"
+          just build "${SERVICE}" "${{ matrix.environment }}" "${{ github.sha }}"
+          docker tag "${SERVICE}:${{ github.sha }}" "${REGISTRY}/${SERVICE}:${{ github.sha }}"
+          docker tag "${SERVICE}:${{ github.sha }}" "${REGISTRY}/${SERVICE}:latest"
+          docker push "${REGISTRY}/${SERVICE}:${{ github.sha }}"
+          docker push "${REGISTRY}/${SERVICE}:latest"
+
+      - id: deploy
+        uses: aws-actions/amazon-ecs-deploy-express-service@v1
+        with:
+          cluster: data-in-pipeline-load-api-${{ matrix.environment }}
+          service-name: data-in-pipeline-load-api-${{ matrix.environment }}
+          image: ${{ secrets.AWS_ACCOUNT_ID }}.dkr.ecr.eu-west-1.amazonaws.com/data-in-pipeline-load-api:${{ github.sha }}
+          execution-role-arn: arn:aws:iam::${{ secrets.AWS_ACCOUNT_ID }}:role/data-in-pipeline-load-api-${{ matrix.environment }}-ecs-execution-role
+          infrastructure-role-arn: arn:aws:iam::${{ secrets.AWS_ACCOUNT_ID }}:role/data-in-pipeline-load-api-${{ matrix.environment }}-ecs-infrastructure-role
+
+      - name: Verify deployment outcome
+        env:
+          SERVICE_ARN: ${{ steps.deploy.outputs.service-arn }}
+          CLUSTER: data-in-pipeline-load-api-${{ matrix.environment }}
+        run: |
+          set -euo pipefail
+          if [[ -z "${SERVICE_ARN}" ]]; then
+            echo "::error::deploy step did not emit a service-arn output"; exit 1
+          fi
+          DEPLOY_ARN=$(aws ecs list-service-deployments \
+            --cluster "${CLUSTER}" --service "${SERVICE_ARN}" \
+            --query 'serviceDeployments[0].serviceDeploymentArn' --output text)
+          if [[ -z "${DEPLOY_ARN}" || "${DEPLOY_ARN}" == "None" ]]; then
+            echo "::error::Could not find a service deployment for ${SERVICE_ARN}"; exit 1
+          fi
+          STATUS=$(aws ecs describe-service-deployments \
+            --service-deployment-arns "${DEPLOY_ARN}" \
+            --query 'serviceDeployments[0].status' --output text)
+          echo "Deployment ${DEPLOY_ARN} final status: ${STATUS}"
+          [[ "${STATUS}" == "SUCCESSFUL" ]] || { echo "::error::status=${STATUS}"; exit 1; }

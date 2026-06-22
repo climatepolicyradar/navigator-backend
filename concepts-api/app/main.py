@@ -14,7 +14,7 @@ from pydantic_settings import BaseSettings
 conn = None
 
 # we always use a path relative to the file as the calling process can come
-# from multiple locations
+# from multiple locations.
 root_dir = Path(__file__).parent.parent
 
 _LOGGER = logging.getLogger(__name__)

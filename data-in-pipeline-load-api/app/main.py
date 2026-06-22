@@ -18,7 +18,7 @@ logging.basicConfig(
 _LOGGER = logging.getLogger(__name__)
 
 # We always use a path relative to the file as the calling process can come
-# from multiple locations
+# from multiple locations.
 root_dir = Path(__file__).parent.parent
 
 _LOGGER.debug("🚀 Starting FastAPI application")
@@ -39,7 +39,7 @@ except Exception as _:
         environment=ENV,
     )
 
-# Configure FastAPI and SQLAlchemy telemetry for the service.
+# Configure FastAPI and SQLAlchemy telemetry for the service
 telemetry = FastAPITelemetry(otel_config)
 tracer = telemetry.get_tracer()
 sqlalchemy_telemetry = SQLAlchemyTelemetry(tracer)
