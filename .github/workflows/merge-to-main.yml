@@ -21,7 +21,7 @@ jobs:
       deploy_load_api_ecs: ${{ steps.parse.outputs.deploy_load_api_ecs }}
 
     steps:
-      - uses: actions/checkout@v6
+      - uses: actions/checkout@v7
       - uses: dorny/paths-filter@v4
         id: filter
         with:
@@ -99,7 +99,7 @@ jobs:
         service: ${{ fromJSON(needs.changes.outputs.services) }}
       fail-fast: false
     steps:
-      - uses: actions/checkout@v6
+      - uses: actions/checkout@v7
       - uses: extractions/setup-just@v4
       - uses: astral-sh/setup-uv@v7
       - run: uv sync --project ${{ matrix.service }}
@@ -117,7 +117,7 @@ jobs:
     environment: ${{ matrix.environment }}
 
     steps:
-      - uses: actions/checkout@v6
+      - uses: actions/checkout@v7
       - uses: aws-actions/configure-aws-credentials@v6
         with:
           role-to-assume: arn:aws:iam::${{ secrets.AWS_ACCOUNT_ID }}:role/navigator-backend-github-actions-deploy
@@ -150,7 +150,7 @@ jobs:
     environment: ${{ matrix.environment }}
 
     steps:
-      - uses: actions/checkout@v6
+      - uses: actions/checkout@v7
       - uses: aws-actions/configure-aws-credentials@v6
         with:
           role-to-assume: arn:aws:iam::${{ secrets.AWS_ACCOUNT_ID }}:role/navigator-backend-github-actions-deploy
