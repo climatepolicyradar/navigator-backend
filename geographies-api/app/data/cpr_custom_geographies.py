@@ -23,4 +23,12 @@ countries = {
         "numeric": "",
         "flag": "🇪🇺",
     },
+    "XKX": {
+        "alpha_2": "XK",
+        "alpha_3": "XKX",
+        "name": "Kosovo",
+        "official_name": "Republic of Kosovo",
+        "numeric": "",
+        "flag": "🇽🇰",
+    },
 }
