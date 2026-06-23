@@ -88,7 +88,7 @@ jobs:
           echo "services=$(echo "$CHANGES" | jq -c '[.[] | select(contains("/infra") | not)]')" >> $GITHUB_OUTPUT
           echo "infra_services=$(echo "$CHANGES" | jq -c '[.[] | select(contains("/infra"))]')" >> $GITHUB_OUTPUT
           echo "deploy_load_api_ecs=$(echo "$CHANGES" | jq -c 'any(.[]; . == "data-in-pipeline-load-api")')" >> $GITHUB_OUTPUT
-          echo "ecs_services=$(echo "$CHANGES" | jq -c '[.[] | select(contains("/infra") | not) | select(. == "geographies-api" or . == "families-api"  or . == "concepts-api" or . == "data-in-api")]')" >> $GITHUB_OUTPUT
+          echo "ecs_services=$(echo "$CHANGES" | jq -c '[.[] | select(contains("/infra") | not) | select(. == "geographies-api" or . == "families-api" or . == "backend-api"  or . == "concepts-api" or . == "data-in-api")]')" >> $GITHUB_OUTPUT
 
   test:
     needs: changes
