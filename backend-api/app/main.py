@@ -130,7 +130,7 @@ app.add_middleware(
     allow_headers=["*"],
 )
 
-# add health endpoint
+# add health endpoint.
 app.add_api_route("/health", health([is_database_online]), include_in_schema=False)
 
 
