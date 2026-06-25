@@ -1,5 +1,5 @@
 {
-  "service.name": "geographies-api-ecs",
+  "service.name": "geographies-api",
   "service.namespace": "data-fetching",
   "team": "application",
   "inputs": [],
