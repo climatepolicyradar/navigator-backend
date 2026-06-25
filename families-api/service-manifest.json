@@ -1,5 +1,5 @@
 {
-  "service.name": "families-api-ecs",
+  "service.name": "families-api",
   "service.namespace": "data-fetching",
   "team": "application",
   "inputs": [
