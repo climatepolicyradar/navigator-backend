@@ -535,7 +535,11 @@ def _transform_litigation_events(data: NavigatorFamily) -> list[Document]:
         documents.append(
             Document(
                 id=event.import_id,
-                title=event.title,
+                # Event title not to be used here - it stores Sabin's original event type value
+                # which we ignore and map to a standardised value for even type in the
+                # litigation data mapper. Instead, we are constructing the title using
+                # the case title and event type to match how document titles are constructed
+                title=f"{data.title} - {event.event_type.lower()}",
                 description=event.metadata["description"][0],
                 labels=labels,
                 items=[],

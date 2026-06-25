@@ -184,7 +184,7 @@ def test_transform_navigator_documents_litigation_events_without_documents():
         [
             Document(
                 id="123",
-                title="decision",
+                title="Litigation family - decision",
                 description="Summary of the filed document",
                 labels=[
                     LabelRelationship(
