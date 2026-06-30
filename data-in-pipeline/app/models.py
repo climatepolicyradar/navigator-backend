@@ -25,8 +25,8 @@ class ExtractedEnvelope[ExtractedData](BaseModel):
     connector_version: str
     extracted_at: datetime = Field(default_factory=lambda: datetime.now(UTC))
     metadata: ExtractedMetadata
-    task_run_id: str | None
-    flow_run_id: str | None
+    task_run_id: str
+    flow_run_id: str
 
 
 class Identified[ExtractedData](BaseModel):
