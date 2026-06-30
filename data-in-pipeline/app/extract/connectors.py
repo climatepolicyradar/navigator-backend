@@ -298,7 +298,7 @@ class NavigatorConnector(HTTPConnector):
         :param import_ids: List of family import IDs to fetch.
         :param task_run_id: The unique Prefect task run identifier.
         :param flow_run_id: The unique Prefect flow run identifier.
-        :return: FetchResult containing the fetched families.
+        :return: FamilyFetchResult containing the fetched families.
         """
         logger = get_logger()
         try:
