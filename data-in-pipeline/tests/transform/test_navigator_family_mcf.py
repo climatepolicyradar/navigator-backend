@@ -264,6 +264,20 @@ def test_transform_navigator_family_with_multilateral_climate_fund_project(
                         "corpus_text": "Test corpus",
                         "corpus_image_url": "",
                     },
+                    labels=[
+                        LabelRelationship(
+                            timestamp=None,
+                            type="subconcept_of",
+                            value=Label(
+                                attributes={},
+                                documents=[],
+                                id="category::Multilateral Climate Fund project",
+                                labels=[],
+                                type="category",
+                                value="Multilateral Climate Fund project",
+                            ),
+                        ),
+                    ],
                 ),
             ),
             LabelRelationship(
@@ -368,6 +382,11 @@ def test_transform_navigator_family_with_multilateral_climate_fund_project(
                     id="agent::Adaptation Fund",
                     value="Adaptation Fund",
                     type="agent",
+                    attributes={
+                        "attribution_url": "testurl.org",
+                        "corpus_text": "Test corpus",
+                        "corpus_image_url": "",
+                    },
                     labels=[
                         LabelRelationship(
                             type="subconcept_of",
@@ -399,6 +418,20 @@ def test_transform_navigator_family_with_multilateral_climate_fund_project(
                                     "corpus_text": "Test corpus",
                                     "corpus_image_url": "",
                                 },
+                                labels=[
+                                    LabelRelationship(
+                                        timestamp=None,
+                                        type="subconcept_of",
+                                        value=Label(
+                                            attributes={},
+                                            documents=[],
+                                            id="category::Multilateral Climate Fund project",
+                                            labels=[],
+                                            type="category",
+                                            value="Multilateral Climate Fund project",
+                                        ),
+                                    ),
+                                ],
                             ),
                         ),
                         LabelRelationship(
@@ -443,6 +476,20 @@ def test_transform_navigator_family_with_multilateral_climate_fund_project(
                                     "corpus_text": "Test corpus",
                                     "corpus_image_url": "",
                                 },
+                                labels=[
+                                    LabelRelationship(
+                                        timestamp=None,
+                                        type="subconcept_of",
+                                        value=Label(
+                                            attributes={},
+                                            documents=[],
+                                            id="category::Multilateral Climate Fund project",
+                                            labels=[],
+                                            type="category",
+                                            value="Multilateral Climate Fund project",
+                                        ),
+                                    ),
+                                ],
                             ),
                         ),
                         LabelRelationship(
@@ -508,6 +555,20 @@ def test_transform_navigator_family_with_multilateral_climate_fund_project(
                                 "corpus_text": "Test corpus",
                                 "corpus_image_url": "",
                             },
+                            labels=[
+                                LabelRelationship(
+                                    timestamp=None,
+                                    type="subconcept_of",
+                                    value=Label(
+                                        attributes={},
+                                        documents=[],
+                                        id="category::Multilateral Climate Fund project",
+                                        labels=[],
+                                        type="category",
+                                        value="Multilateral Climate Fund project",
+                                    ),
+                                ),
+                            ],
                         ),
                     ),
                     LabelRelationship(
@@ -557,6 +618,20 @@ def test_transform_navigator_family_with_multilateral_climate_fund_project(
                                 "corpus_text": "Test corpus",
                                 "corpus_image_url": "",
                             },
+                            labels=[
+                                LabelRelationship(
+                                    timestamp=None,
+                                    type="subconcept_of",
+                                    value=Label(
+                                        attributes={},
+                                        documents=[],
+                                        id="category::Multilateral Climate Fund project",
+                                        labels=[],
+                                        type="category",
+                                        value="Multilateral Climate Fund project",
+                                    ),
+                                ),
+                            ],
                         ),
                     ),
                     LabelRelationship(
@@ -647,6 +722,20 @@ def test_transform_navigator_family_with_multilateral_climate_fund_guidance(
                                 "corpus_text": "Test corpus",
                                 "corpus_image_url": "",
                             },
+                            labels=[
+                                LabelRelationship(
+                                    timestamp=None,
+                                    type="subconcept_of",
+                                    value=Label(
+                                        attributes={},
+                                        documents=[],
+                                        id="category::Multilateral Climate Fund project",
+                                        labels=[],
+                                        type="category",
+                                        value="Multilateral Climate Fund project",
+                                    ),
+                                ),
+                            ],
                         ),
                     ),
                     LabelRelationship(
