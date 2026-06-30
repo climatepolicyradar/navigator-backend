@@ -145,7 +145,7 @@ class RecordValidationFailure(BaseModel):
     error: str
 
 
-class FetchResult(BaseModel):
+class FamilyFetchResult(BaseModel):
     envelopes: list[ExtractedEnvelope]
     failures: list[PageFetchFailure] | list[RecordValidationFailure]
 
@@ -292,7 +292,7 @@ class NavigatorConnector(HTTPConnector):
 
     def fetch_families(
         self, import_ids: list[str], task_run_id: str, flow_run_id: str
-    ) -> FetchResult:
+    ) -> FamilyFetchResult:
         """Fetch multiple families from Navigator API by their import IDs.
 
         :param import_ids: List of family import IDs to fetch.
@@ -307,7 +307,7 @@ class NavigatorConnector(HTTPConnector):
 
             if not families_data:
                 logger.info(f"No families found for import_ids: {import_ids}")
-                return FetchResult(
+                return FamilyFetchResult(
                     envelopes=[],
                     failures=[
                         RecordValidationFailure(
@@ -342,12 +342,12 @@ class NavigatorConnector(HTTPConnector):
             logger.info(
                 f"Successfully fetched {len(validated_families)} families by import_ids"
             )
-            return FetchResult(envelopes=[envelope], failures=[])
+            return FamilyFetchResult(envelopes=[envelope], failures=[])
 
         except requests.RequestException as e:
             logger.exception(f"Request failed fetching families {import_ids}")
             pipeline_metrics.record_error(Operation.EXTRACT, ErrorType.NETWORK)
-            return FetchResult(
+            return FamilyFetchResult(
                 envelopes=[],
                 failures=[
                     PageFetchFailure(page=0, error=str(e), task_run_id=task_run_id),
@@ -356,14 +356,16 @@ class NavigatorConnector(HTTPConnector):
         except Exception as e:
             logger.exception(f"Unexpected error fetching families {import_ids}: {e}")
             pipeline_metrics.record_error(Operation.EXTRACT, ErrorType.UNKNOWN)
-            return FetchResult(
+            return FamilyFetchResult(
                 envelopes=[],
                 failures=[
                     PageFetchFailure(page=0, error=str(e), task_run_id=task_run_id)
                 ],
             )
 
-    def fetch_all_families(self, task_run_id: str, flow_run_id: str) -> FetchResult:
+    def fetch_all_families(
+        self, task_run_id: str, flow_run_id: str
+    ) -> FamilyFetchResult:
         """Fetch all family records from the Navigator API with pagination.
 
         This method iterates through all available pages of the Navigator API's
@@ -448,7 +450,7 @@ class NavigatorConnector(HTTPConnector):
                     pipeline_metrics.record_error(
                         Operation.PAGINATION, ErrorType.NETWORK
                     )
-                    return FetchResult(
+                    return FamilyFetchResult(
                         envelopes=successful_envelopes,
                         failures=[
                             PageFetchFailure(
@@ -464,7 +466,7 @@ class NavigatorConnector(HTTPConnector):
                     pipeline_metrics.record_error(
                         Operation.PAGINATION, ErrorType.UNKNOWN
                     )
-                    return FetchResult(
+                    return FamilyFetchResult(
                         envelopes=successful_envelopes,
                         failures=[
                             PageFetchFailure(
@@ -477,4 +479,4 @@ class NavigatorConnector(HTTPConnector):
             f"Fetch families completed: {len(successful_envelopes)} pages succeeded"
         )
         logger.info(f"{len(failures)} families failed validation")
-        return FetchResult(envelopes=successful_envelopes, failures=failures)
+        return FamilyFetchResult(envelopes=successful_envelopes, failures=failures)
