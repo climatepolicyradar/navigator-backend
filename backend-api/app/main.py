@@ -56,7 +56,7 @@ try:
         ServiceManifest.from_file("service-manifest.json"), config.ENV, "0.1.0"
     )
 except Exception as _:
-    _LOGGER.error("Failed to load service manifest, using defaults")
+    _LOGGER.exception("Failed to load service manifest, using defaults")
     otel_config = TelemetryConfig(
         service_name="navigator-backend",
         namespace_name="navigator",
@@ -82,7 +82,7 @@ _docs_url = "/api/docs" if ENABLE_API_DOCS else None
 _openapi_url = "/api" if ENABLE_API_DOCS else None
 
 
-# Lifespan context manager for startup/shutdown events
+# Lifespan context manager for startup/shutdown events.
 @asynccontextmanager
 async def lifespan(app: FastAPI):
     # Startup
@@ -121,7 +121,7 @@ _ALLOW_ORIGIN_REGEX = (
     r"https://.+\.climatecasechart\.com"
 )
 
-# Add CORS middleware to allow cross origin requests from any port
+# Add CORS middleware to allow cross origin requests from any port.
 app.add_middleware(
     CORSMiddleware,
     allow_origin_regex=_ALLOW_ORIGIN_REGEX,
@@ -130,7 +130,7 @@ app.add_middleware(
     allow_headers=["*"],
 )
 
-# add health endpoint
+# add health endpoint.
 app.add_api_route("/health", health([is_database_online]), include_in_schema=False)
 
 
