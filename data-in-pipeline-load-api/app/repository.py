@@ -230,7 +230,7 @@ def _upsert_labels_and_relationships(
         )
         return
 
-    unique_rels = {rel.value.id: rel for rel in label_relationships}
+    unique_rels = {(rel.value.id, rel.type): rel for rel in label_relationships}
 
     rows = [
         {
@@ -246,20 +246,21 @@ def _upsert_labels_and_relationships(
 
     stmt = insert(DBDocumentLabelLink).values(rows)
     stmt = stmt.on_conflict_do_update(
-        index_elements=["document_id", "label_id"],
+        index_elements=["document_id", "label_id", "type"],
         set_={
-            "type": stmt.excluded.type,
             "timestamp": stmt.excluded.timestamp,
             "updated_at": now,
         },
-        where=(DBDocumentLabelLink.type != stmt.excluded.type),
+        where=(DBDocumentLabelLink.timestamp != stmt.excluded.timestamp),
     )
     db.exec(stmt)
 
     db.exec(
         delete(DBDocumentLabelLink).where(
             DBDocumentLabelLink.document_id == document_id,
-            ~DBDocumentLabelLink.label_id.in_(unique_rels.keys()),  # type: ignore[attr-defined]
+            ~tuple_(DBDocumentLabelLink.label_id, DBDocumentLabelLink.type).in_(  # type: ignore[attr-defined]
+                list(unique_rels.keys())
+            ),
         )
     )
 
