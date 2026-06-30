@@ -370,6 +370,14 @@ litigation = Label(type="category", id="category::Litigation", value="Litigation
 _eu_and_international_region_ids = {c.id: c for c in custom_countries}
 
 
+mcf_project_corpus_import_id_to_multilateral_climate_fund: dict[CorpusId, str] = {
+    "MCF.corpus.AF.n0000": "Adaptation Fund",
+    "MCF.corpus.CIF.n0000": "The Climate Investment Funds",
+    "MCF.corpus.GCF.n0000": "Green Climate Fund",
+    "MCF.corpus.GEF.n0000": "Global Environment Facility",
+}
+
+
 _corpus_to_provider_map: dict[CorpusId, str] = {
     "CCLW.corpus.i00000001.n0000": "Grantham Research Institute",
     "Academic.corpus.Litigation.n0000": "Sabin Center for Climate Change Law",
@@ -379,19 +387,16 @@ _corpus_to_provider_map: dict[CorpusId, str] = {
     "CPR.corpus.i00000002.n0000": "Climate Policy Radar",
     "CPR.corpus.i00000591.n0000": "Laws Africa",
     "CPR.corpus.i00000592.n0000": "UNDRR",
-    "MCF.corpus.AF.n0000": "Adaptation Fund",
     "MCF.corpus.AF.Guidance": "Adaptation Fund",
-    "MCF.corpus.CIF.n0000": "The Climate Investment Funds",
     "MCF.corpus.CIF.Guidance": "The Climate Investment Funds",
-    "MCF.corpus.GCF.n0000": "Green Climate Fund",
     "MCF.corpus.GCF.Guidance": "Green Climate Fund",
-    "MCF.corpus.GEF.n0000": "Global Environment Facility",
     "MCF.corpus.GEF.Guidance": "Global Environment Facility",
     "OEP.corpus.i00000001.n0000": "Ocean Energy Pathways",
     "UNFCCC.corpus.i00000001.n0000": "UNFCCC",
     "UN.corpus.UNCCD.n0000": "UNCCD",
     "UN.corpus.UNCBD.n0000": "UNCBD",
     "ICCN.corpus.i00000001.n0000": "International Climate Councils Network",
+    **mcf_project_corpus_import_id_to_multilateral_climate_fund,
 }
 
 
@@ -519,7 +524,7 @@ def _transform_litigation_events(data: NavigatorFamily) -> list[Document]:
                         type="activity_status",
                     ),
                 ),
-                _transform_family_corpus_organisation(data)[0],
+                _corpus_organisation_to_agent_label(data),
             ]
         )
 
@@ -732,38 +737,31 @@ def _family_document_merged(
 # ---------------------------------------------------------------------------
 
 
-def _transform_family_corpus_organisation(
+def _corpus_organisation_to_agent_label(
     navigator_family: NavigatorFamily,
-) -> list[LabelRelationship]:
+) -> Label:
     """
     Related ontologies
     @see: https://schema.org/provider
     """
-    labels: list[LabelRelationship] = []
 
     provider_name = _corpus_to_provider_map.get(
         navigator_family.corpus.import_id, "Unknown"
     )
-    labels.append(
-        LabelRelationship(
-            type="provider",
-            value=Label(
-                type="agent",
-                id=f"agent::{provider_name}",
-                value=provider_name,
-                attributes={
-                    "attribution_url": navigator_family.corpus.attribution_url,
-                    "corpus_text": navigator_family.corpus.corpus_text,
-                    "corpus_image_url": (
-                        f"https://cdn.climatepolicyradar.org/{navigator_family.corpus.corpus_image_url}"
-                        if navigator_family.corpus.corpus_image_url
-                        else ""
-                    ),
-                },
+    return Label(
+        type="agent",
+        id=f"agent::{provider_name}",
+        value=provider_name,
+        attributes={
+            "attribution_url": navigator_family.corpus.attribution_url,
+            "corpus_text": navigator_family.corpus.corpus_text,
+            "corpus_image_url": (
+                f"https://cdn.climatepolicyradar.org/{navigator_family.corpus.corpus_image_url}"
+                if navigator_family.corpus.corpus_image_url
+                else ""
             ),
-        )
+        },
     )
-    return labels
 
 
 def _transform_mcf_metadata(
@@ -1360,7 +1358,11 @@ def _transform_navigator_family(
     """
     Provider labels
     """
-    labels.extend(_transform_family_corpus_organisation(navigator_family))
+    labels.append(
+        LabelRelationship(
+            type="provider", value=_corpus_organisation_to_agent_label(navigator_family)
+        )
+    )
 
     """
     Geography labels
@@ -1583,7 +1585,11 @@ def _transform_navigator_document(
     """
     Provider labels
     """
-    labels.extend(_transform_family_corpus_organisation(navigator_family))
+    labels.append(
+        LabelRelationship(
+            type="provider", value=_corpus_organisation_to_agent_label(navigator_family)
+        )
+    )
 
     # GST1 labels
     if _part_of_gst1(navigator_family):
@@ -2171,17 +2177,7 @@ def _multilateral_climate_fund_label(
             labels.append(
                 LabelRelationship(
                     type="multilateral_climate_fund",
-                    value=Label(
-                        id=f"agent::{multilateral_climate_fund}",
-                        value=multilateral_climate_fund,
-                        type="agent",
-                        labels=[
-                            LabelRelationship(
-                                type="subconcept_of",
-                                value=multilateral_climate_fund_project,
-                            )
-                        ],
-                    ),
+                    value=_corpus_organisation_to_agent_label(navigator_family),
                 )
             )
 
