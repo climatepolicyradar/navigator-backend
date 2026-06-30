@@ -72,7 +72,7 @@ class Label(WithDbDatetimeFields, table=True):
 
 
 class DocumentLabelRelationship(WithDbDatetimeFields, table=True):
-    type: str
+    type: str = Field(primary_key=True)
     timestamp: datetime | None = None
     document_id: str = Field(
         foreign_key="document.id",

@@ -126,7 +126,7 @@ def test_upsert_creates_document_with_labels_and_items(session):
     assert label_entity is not None
     assert label_entity.value == "Important"
 
-    link = session.get(DocumentLabelRelationship, ("test-doc-2", "label_1"))
+    link = session.get(DocumentLabelRelationship, ("tag", "test-doc-2", "label_1"))
     assert link is not None
     assert link.type == "tag"
 
@@ -266,7 +266,7 @@ def test_create_document_success(session):
     assert label_entity is not None
     assert label_entity.value == "Important"
 
-    link = session.get(DocumentLabelRelationship, ("test-doc-2", "label_1"))
+    link = session.get(DocumentLabelRelationship, ("tag", "test-doc-2", "label_1"))
     assert link is not None
     assert link.type == "tag"
 
