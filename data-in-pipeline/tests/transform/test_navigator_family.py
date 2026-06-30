@@ -2312,9 +2312,9 @@ def test_un_convention_label_returns_empty_for_non_un_corpus():
     "corpus_import_id, expected_fund",
     [
         ("MCF.corpus.AF.n0000", "Adaptation Fund"),
-        ("MCF.corpus.CIF.n0000", "Climate Investment Funds"),
-        ("MCF.corpus.GCF.n0000", "Global Environment Facility"),
-        ("MCF.corpus.GEF.n0000", "Green Climate Fund"),
+        ("MCF.corpus.CIF.n0000", "The Climate Investment Funds"),
+        ("MCF.corpus.GCF.n0000", "Green Climate Fund"),
+        ("MCF.corpus.GEF.n0000", "Global Environment Facility"),
     ],
 )
 def test_multilateral_climate_fund_label_returns_label(corpus_import_id, expected_fund):

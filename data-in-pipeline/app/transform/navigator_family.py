@@ -524,7 +524,9 @@ def _transform_litigation_events(data: NavigatorFamily) -> list[Document]:
                         type="activity_status",
                     ),
                 ),
-                _corpus_organisation_to_agent_label(data),
+                LabelRelationship(
+                    type="provider", value=_corpus_organisation_to_agent_label(data)
+                ),
             ]
         )
 
@@ -748,7 +750,8 @@ def _corpus_organisation_to_agent_label(
     provider_name = _corpus_to_provider_map.get(
         navigator_family.corpus.import_id, "Unknown"
     )
-    return Label(
+
+    agent_label = Label(
         type="agent",
         id=f"agent::{provider_name}",
         value=provider_name,
@@ -762,6 +765,16 @@ def _corpus_organisation_to_agent_label(
             ),
         },
     )
+
+    if navigator_family.corpus.import_id in MCF_CORPORA:
+        agent_label.labels = [
+            LabelRelationship(
+                type="subconcept_of",
+                value=multilateral_climate_fund_project,
+            )
+        ]
+
+    return agent_label
 
 
 def _transform_mcf_metadata(
