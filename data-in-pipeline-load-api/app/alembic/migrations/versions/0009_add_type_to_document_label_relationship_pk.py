@@ -29,8 +29,14 @@ def upgrade() -> None:
             "WHERE table_name = 'documentlabelrelationship' AND constraint_type = 'PRIMARY KEY'"
         )
     ).fetchone()
+    if row is None:
+        raise RuntimeError(
+            "No primary key constraint found on documentlabelrelationship"
+        )
     pk_name = row[0]
-    conn.execute(text(f"ALTER TABLE documentlabelrelationship DROP CONSTRAINT {pk_name}"))
+    conn.execute(
+        text(f"ALTER TABLE documentlabelrelationship DROP CONSTRAINT {pk_name}")
+    )
     conn.execute(
         text(
             "ALTER TABLE documentlabelrelationship "
@@ -48,8 +54,14 @@ def downgrade() -> None:
             "WHERE table_name = 'documentlabelrelationship' AND constraint_type = 'PRIMARY KEY'"
         )
     ).fetchone()
+    if row is None:
+        raise RuntimeError(
+            "No primary key constraint found on documentlabelrelationship"
+        )
     pk_name = row[0]
-    conn.execute(text(f"ALTER TABLE documentlabelrelationship DROP CONSTRAINT {pk_name}"))
+    conn.execute(
+        text(f"ALTER TABLE documentlabelrelationship DROP CONSTRAINT {pk_name}")
+    )
     conn.execute(
         text(
             "ALTER TABLE documentlabelrelationship "
