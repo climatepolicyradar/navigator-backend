@@ -2157,12 +2157,6 @@ def _implementing_agency_label(
 
 
 # region multilateral_climate_fund label
-_corpus_import_id_to_multilateral_climate_fund = {
-    "MCF.corpus.AF.n0000": "Adaptation Fund",
-    "MCF.corpus.CIF.n0000": "Climate Investment Funds",
-    "MCF.corpus.GCF.n0000": "Global Environment Facility",
-    "MCF.corpus.GEF.n0000": "Green Climate Fund",
-}
 
 
 def _multilateral_climate_fund_label(
@@ -2170,8 +2164,10 @@ def _multilateral_climate_fund_label(
 ) -> list[LabelRelationship]:
     labels: list[LabelRelationship] = []
     if navigator_family.corpus.import_id in MCF_CORPORA:
-        multilateral_climate_fund = _corpus_import_id_to_multilateral_climate_fund.get(
-            navigator_family.corpus.import_id
+        multilateral_climate_fund = (
+            mcf_project_corpus_import_id_to_multilateral_climate_fund.get(
+                navigator_family.corpus.import_id
+            )
         )
         if multilateral_climate_fund:
             labels.append(
