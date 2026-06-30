@@ -273,11 +273,3 @@ async def read_geography(slug: str):
     return APIItemResponse(
         data=result,
     )
-
-
-@router.get("/test-5xx")
-def test_5xx():
-    raise HTTPException(
-        status_code=500,
-        detail="Testing 5xx errors for Grafana",
-    )
