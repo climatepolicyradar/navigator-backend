@@ -89,8 +89,6 @@ services:
       context: ..
       target: dev
       dockerfile: data-in-pipeline-load-api/Dockerfile
-    ports:
-      - 8080:8080
     volumes:
       - ..:/app
     working_dir: /app
@@ -119,6 +117,7 @@ services:
         -vvv,
       ]
     depends_on:
-      - test-db
+      test-db:
+        condition: service_healthy
 volumes:
   data-in-pipeline-load-api-postgres-data: {}
