@@ -942,7 +942,7 @@ ecs_express_service = ExpressGatewayService(
 )
 
 load_api_base_url = ecs_express_service.ingress_paths.apply(
-    lambda paths: f"{paths[0].endpoint.rstrip('/')}/"
+    lambda paths: f"{paths[0].endpoint.rstrip('/')}"
 )
 
 ########################################################################
