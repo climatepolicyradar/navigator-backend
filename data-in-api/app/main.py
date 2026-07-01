@@ -182,13 +182,4 @@ def read_label(label_id: str, db=Depends(get_db)):
         )
 
 
-@app.get("/test-5xx")
-@router.get("/test-5xx")
-def test_5xx():
-    raise HTTPException(
-        status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
-        detail="Testing 5xx errors for Grafana",
-    )
-
-
 app.include_router(router)
