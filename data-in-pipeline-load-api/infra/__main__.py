@@ -81,7 +81,7 @@ data_in_pipeline_load_api_github_actions_role = aws.iam.Role(
     ],
     name=f"{name}-{environment}-github-actions",
     tags=tags,
-    opts=pulumi.ResourceOptions(protect=True),
+    opts=pulumi.ResourceOptions(protect=False),
 )
 
 pulumi.export("role_arn", data_in_pipeline_load_api_github_actions_role.arn)
