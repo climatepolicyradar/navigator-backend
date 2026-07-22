@@ -190,7 +190,7 @@ geographies_api_apprunner_service = aws.apprunner.Service(
             image_repository_type="ECR",
         ),
     ),
-    opts=pulumi.ResourceOptions(protect=True),
+    opts=pulumi.ResourceOptions(protect=False),
 )
 
 ########################################################################
