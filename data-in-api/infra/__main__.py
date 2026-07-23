@@ -57,63 +57,6 @@ ecr_repository = components_aws.ecr.Repository(
     ),
 )
 
-access_role = aws.iam.Role(
-    "data-in-api-access-role",
-    name="data-in-api-access-role",
-    assume_role_policy=aws.iam.get_policy_document(
-        statements=[
-            aws.iam.GetPolicyDocumentStatementArgs(
-                effect="Allow",
-                principals=[
-                    aws.iam.GetPolicyDocumentStatementPrincipalArgs(
-                        type="Service",
-                        identifiers=["build.apprunner.amazonaws.com"],
-                    )
-                ],
-                actions=["sts:AssumeRole"],
-            )
-        ]
-    ).json,
-)
-access_role_policy = aws.iam.RolePolicy(
-    "data-in-api-access-role-policy",
-    name="data-in-api-access-role-policy",
-    role=access_role.id,
-    policy=aws.iam.get_policy_document(
-        statements=[
-            aws.iam.GetPolicyDocumentStatementArgs(
-                effect="Allow",
-                actions=[
-                    "ecr:GetDownloadUrlForLayer",
-                    "ecr:BatchGetImage",
-                    "ecr:DescribeImages",
-                    "ecr:GetAuthorizationToken",
-                    "ecr:BatchCheckLayerAvailability",
-                ],
-                resources=["*"],
-            )
-        ]
-    ).json,
-)
-
-instance_role = aws.iam.Role(
-    "data-in-api-instance-role",
-    name="data-in-api-instance-role",
-    assume_role_policy=aws.iam.get_policy_document(
-        statements=[
-            aws.iam.GetPolicyDocumentStatementArgs(
-                effect="Allow",
-                principals=[
-                    aws.iam.GetPolicyDocumentStatementPrincipalArgs(
-                        type="Service",
-                        identifiers=["tasks.apprunner.amazonaws.com"],
-                    )
-                ],
-                actions=["sts:AssumeRole"],
-            )
-        ]
-    ).json,
-)
 
 aurora_read_replica_db_url_parameter = data_in_pipeline_stack.get_output(
     "aurora-read-replica-db-url-parameter-name"
@@ -135,45 +78,6 @@ aurora_cluster_resource_id = data_in_pipeline_stack.require_output(
     "aurora-cluster-resource-id"
 )
 
-instance_role_policy = aws.iam.RolePolicy(
-    "data-in-api-instance-role-policy",
-    name="data-in-api-instance-role-policy",
-    role=instance_role.id,
-    policy=pulumi.Output.all(
-        aurora_read_replica_db_url_parameter=aurora_read_replica_db_url_parameter.arn,
-        aurora_read_replica_db_name_parameter=aurora_read_replica_db_name_parameter.arn,
-        aurora_read_replica_db_username_parameter=aurora_read_replica_db_username_parameter.arn,
-        aurora_cluster_resource_id=aurora_cluster_resource_id,
-        db_username=aurora_read_replica_db_username_parameter.value,
-    ).apply(
-        lambda args: (
-            aws.iam.get_policy_document(
-                statements=[
-                    aws.iam.GetPolicyDocumentStatementArgs(
-                        effect="Allow",
-                        actions=[
-                            "ssm:GetParameter",
-                            "ssm:GetParameters",
-                            "ssm:DescribeParameters",
-                        ],
-                        resources=[
-                            args["aurora_read_replica_db_url_parameter"],
-                            args["aurora_read_replica_db_name_parameter"],
-                            args["aurora_read_replica_db_username_parameter"],
-                        ],
-                    ),
-                    aws.iam.GetPolicyDocumentStatementArgs(
-                        effect="Allow",
-                        actions=["rds-db:connect"],
-                        resources=[
-                            f"arn:aws:rds-db:eu-west-1:{account_id}:dbuser:{args['aurora_cluster_resource_id']}/{args['db_username']}"
-                        ],
-                    ),
-                ]
-            ).json
-        )
-    ),
-)
 
 aws_env_stack = pulumi.StackReference(f"climatepolicyradar/aws_env/{environment}")
 vpc_id = aws_env_stack.get_output("vpc_id")
@@ -211,64 +115,6 @@ data_in_api_to_aurora_read_replica = aws.ec2.SecurityGroupRule(
     to_port=5432,
     description="Allow Postgres from load API VPC SG",
 )
-
-apprunner_service = aws.apprunner.Service(
-    "data-in-api-apprunner-service",
-    service_name="data-in-api",
-    # This is the default ASG
-    auto_scaling_configuration_arn=f"arn:aws:apprunner:eu-west-1:{account_id}:autoscalingconfiguration/DefaultConfiguration/1/00000000000000000000000000000001",
-    health_check_configuration=aws.apprunner.ServiceHealthCheckConfigurationArgs(
-        interval=2,  # seconds
-        protocol="HTTP",
-        path="/health",
-        timeout=5,  # seconds
-        unhealthy_threshold=2,  # seconds
-    ),
-    instance_configuration=aws.apprunner.ServiceInstanceConfigurationArgs(
-        instance_role_arn=instance_role.arn,
-    ),
-    network_configuration=aws.apprunner.ServiceNetworkConfigurationArgs(
-        ip_address_type="IPV4",
-        ingress_configuration=aws.apprunner.ServiceNetworkConfigurationIngressConfigurationArgs(
-            is_publicly_accessible=True,
-        ),
-        egress_configuration=aws.apprunner.ServiceNetworkConfigurationEgressConfigurationArgs(
-            egress_type="VPC",
-            vpc_connector_arn=vpc_connector.arn,
-        ),
-    ),
-    observability_configuration=aws.apprunner.ServiceObservabilityConfigurationArgs(
-        observability_enabled=False,
-    ),
-    source_configuration=aws.apprunner.ServiceSourceConfigurationArgs(
-        authentication_configuration=aws.apprunner.ServiceSourceConfigurationAuthenticationConfigurationArgs(
-            access_role_arn=access_role.arn,
-        ),
-        image_repository=aws.apprunner.ServiceSourceConfigurationImageRepositoryArgs(
-            image_configuration=aws.apprunner.ServiceSourceConfigurationImageRepositoryImageConfigurationArgs(
-                runtime_environment_secrets={
-                    "DB_URL": aurora_read_replica_db_url_parameter.arn,
-                    "DB_NAME": aurora_read_replica_db_name_parameter.arn,
-                    "DB_USERNAME": aurora_read_replica_db_username_parameter.arn,
-                },
-                runtime_environment_variables={
-                    "DB_PORT": "5432",
-                    "AWS_REGION": "eu-west-1",
-                    "CDN_URL": config.require("cdn-url"),
-                    "DB_SSLMODE": "require",
-                },
-            ),
-            image_identifier=ecr_repository.aws_ecr_repository.repository_url.apply(
-                lambda url: f"{url}:latest"
-            ),
-            image_repository_type="ECR",
-        ),
-    ),
-    opts=pulumi.ResourceOptions(
-        protect=False,
-    ),
-)
-
 
 # role for github actions to pulumi up resources in this stack
 data_in_pipeline_load_api_github_actions_role = aws.iam.Role(
@@ -512,7 +358,3 @@ pulumi.export(
 
 pulumi.export("role_arn", data_in_pipeline_load_api_github_actions_role.arn)
 pulumi.export("role_name", data_in_pipeline_load_api_github_actions_role.name)
-pulumi.export(
-    "apprunner_service_url",
-    apprunner_service.service_url,
-)
