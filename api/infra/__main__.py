@@ -108,16 +108,6 @@ api_cloudfront_distribution = aws.cloudfront.Distribution(
     comment="API",
     origins=[
         aws.cloudfront.DistributionOriginArgs(
-            domain_name=families_api_stack.get_output("apprunner_service_url"),
-            origin_id="families-api-apprunner",
-            custom_origin_config=aws.cloudfront.DistributionOriginCustomOriginConfigArgs(
-                http_port=80,
-                https_port=443,
-                origin_protocol_policy="https-only",
-                origin_ssl_protocols=["TLSv1.2"],
-            ),
-        ),
-        aws.cloudfront.DistributionOriginArgs(
             domain_name=families_api_stack.get_output("ecs_express_service_url"),
             origin_id="families-api-ecs-express",
             custom_origin_config=aws.cloudfront.DistributionOriginCustomOriginConfigArgs(
