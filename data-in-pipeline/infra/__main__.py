@@ -1002,7 +1002,7 @@ data_in_pipeline_load_api_apprunner_service = aws.apprunner.Service(
             image_repository_type="ECR",
         ),
     ),
-    opts=pulumi.ResourceOptions(protect=True),
+    opts=pulumi.ResourceOptions(protect=False),
 )
 
 data_in_load_api_vpc_ingress_connection = aws.apprunner.VpcIngressConnection(
