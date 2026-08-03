@@ -36,10 +36,10 @@ LABEL_TYPES_WITH_RELATIONSHIPS = {
 
 
 def check_db_health(db: Session) -> bool:
-    """Check database connection health.
+    """Check database connection health
 
     Performs a simple query to verify the database is accessible
-    and responsive.
+    and responsive
 
     :return: True if database is healthy, False otherwise
     :rtype: bool
@@ -94,7 +94,7 @@ def get_all_documents(
         _LOGGER.exception("System error during document retrieval operation")
         raise
     except Exception as e:
-        _LOGGER.exception(f"Failed to retrieve all documents: {str(e)}")
+        _LOGGER.exception(f"Failed to retrieve all documents: {e!s}")
         raise e
 
 
@@ -120,7 +120,7 @@ def get_document_by_id(db: Session, document_id: str) -> DocumentOutput | None:
         _LOGGER.exception("System error during document retrieval operation")
         raise
     except Exception as e:
-        _LOGGER.exception(f"Failed to retrieve document {document_id}: {str(e)}")
+        _LOGGER.exception(f"Failed to retrieve document {document_id}: {e!s}")
         db.rollback()
         raise e
 
@@ -145,7 +145,7 @@ def select_labels(db: Session, page: int, page_size: int) -> list[LabelOutput]:
         raise
 
     except Exception as e:
-        _LOGGER.exception(f"Failed to retrieve all labels: {str(e)}")
+        _LOGGER.exception(f"Failed to retrieve all labels: {e!s}")
         raise e
 
 
@@ -165,7 +165,7 @@ def select_label(db: Session, label_id: str) -> LabelOutput | None:
         raise
 
     except Exception as e:
-        _LOGGER.exception(f"Failed to retrieve label {label_id}: {str(e)}")
+        _LOGGER.exception(f"Failed to retrieve label {label_id}: {e!s}")
         db.rollback()
         raise e
 
