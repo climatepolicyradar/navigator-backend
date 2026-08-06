@@ -137,9 +137,52 @@ project_completion_report = Label(
 
 # region Law
 law = Label(type="category", id="category::Law", value="Law")
+framework_law = Label(
+    id="law_type::Framework law",
+    value="Framework law",
+    type="law_type",
+    labels=[LabelRelationship(type="subconcept_of", value=law)],
+)
 
 # region Policy
 policy = Label(type="category", id="category::Policy", value="Policy")
+# we use `topic`, but call this "response area" in the UI
+mitigation = Label(
+    id="topic::Mitigation",
+    value="Mitigation",
+    type="topic",
+    labels=[
+        LabelRelationship(type="subconcept_of", value=law),
+        LabelRelationship(type="subconcept_of", value=policy),
+    ],
+)
+adaptation = Label(
+    id="topic::Adaptation",
+    value="Adaptation",
+    type="topic",
+    labels=[
+        LabelRelationship(type="subconcept_of", value=law),
+        LabelRelationship(type="subconcept_of", value=policy),
+    ],
+)
+loss_and_damage = Label(
+    id="topic::Loss and damage",
+    value="Loss and damage",
+    type="topic",
+    labels=[
+        LabelRelationship(type="subconcept_of", value=law),
+        LabelRelationship(type="subconcept_of", value=policy),
+    ],
+)
+disaster_risk_management = Label(
+    id="topic::Disaster risk management",
+    value="Disaster risk management",
+    type="topic",
+    labels=[
+        LabelRelationship(type="subconcept_of", value=law),
+        LabelRelationship(type="subconcept_of", value=policy),
+    ],
+)
 
 # region Report
 report = Label(type="category", id="category::Report", value="Report")
@@ -2044,49 +2087,33 @@ def _author_type_label(
 
 # region topic label
 # This is also known as "response area" in the UI
+# These are controlled vocabularies
+# @see: https://github.com/climatepolicyradar/data-migrations/blob/main/taxonomies/Laws%20and%20Policies.json#L15-L18
+_topic_to_label_map = {
+    "Mitigation": mitigation,
+    "Adaptation": adaptation,
+    "Loss And Damage": loss_and_damage,
+    "Disaster Risk Management": disaster_risk_management,
+}
+
+
 def _topic_label(
     navigator_family: NavigatorFamily,
 ) -> list[LabelRelationship]:
     labels: list[LabelRelationship] = []
 
-    # These are controlled vocabularies
-    # @see: https://github.com/climatepolicyradar/data-migrations/blob/main/taxonomies/Laws%20and%20Policies.json#L15-L18
-    topic_values = navigator_family.metadata.get("topic")
-    if topic_values and topic_values[0]:
-        topic = topic_values[0]
-        labels.append(
-            LabelRelationship(
-                type="topic",
-                value=Label(
-                    id=f"topic::{topic}",
-                    value=topic,
+    topics = navigator_family.metadata.get("topic")
+
+    if topics and topics[0] and _topic_to_label_map.get(topics[0]):
+        mapped_topic_label = _topic_to_label_map[topics[0]]
+        if mapped_topic_label is not None:
+            labels.append(
+                LabelRelationship(
                     type="topic",
-                    labels=[
-                        LabelRelationship(type="subconcept_of", value=law),
-                        LabelRelationship(type="subconcept_of", value=policy),
-                    ],
-                ),
+                    value=mapped_topic_label,
+                )
             )
-        )
 
-    # These are controlled vocabularies
-    # @see: https://github.com/climatepolicyradar/data-migrations/blob/main/taxonomies/Laws%20and%20Policies.json#L496-L498
-    framework_values = navigator_family.metadata.get("framework")
-
-    # Only Mitigation makes this a Framework law
-    if framework_values and framework_values[0] in ["Mitigation"]:
-        topic = framework_values[0]
-        labels.append(
-            LabelRelationship(
-                type="law_type",
-                value=Label(
-                    id=f"law_type::{topic}",
-                    value="Framework law",
-                    type="law_type",
-                    labels=[LabelRelationship(type="subconcept_of", value=law)],
-                ),
-            )
-        )
     return labels
 
 
@@ -2100,22 +2127,13 @@ def _law_type_label(
     # @see: https://github.com/climatepolicyradar/data-migrations/blob/main/taxonomies/Laws%20and%20Policies.json#L490-L494
     framework_values = navigator_family.metadata.get("framework")
 
-    # Only Mitigation makes this a Framework law
-    if framework_values and framework_values[0] in [
-        "Adaptation",
-        "Mitigation",
-        "Drm/Drr",
-    ]:
-        topic = framework_values[0]
+    # Any value in the `framework` denotes it is a Framework law
+    # @see: https://linear.app/climate-policy-radar/issue/APP-2261/corporate-voluntary-report-missing-from-corporate-disclosure
+    if framework_values:
         labels.append(
             LabelRelationship(
                 type="law_type",
-                value=Label(
-                    id=f"law_type::{topic}",
-                    value="Framework law",
-                    type="law_type",
-                    labels=[LabelRelationship(type="subconcept_of", value=law)],
-                ),
+                value=framework_law,
             )
         )
     return labels
