@@ -473,7 +473,7 @@ LITIGATION_CORPORA = {"Academic.corpus.Litigation.n0000"}
 
 
 MCF_KEY_MAPPING = {"status": "project_status"}
-MCF_EXCLUDED_KEYS = {"region", "external_id"}
+MCF_EXCLUDED_KEYS = {"region", "external_id", "implementing_agency"}
 MCF_ATTRIBUTE_KEYS = {
     "project_id",
     "project_url",
