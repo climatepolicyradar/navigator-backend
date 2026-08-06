@@ -584,9 +584,29 @@ def test_transform_navigator_family_with_single_matching_document(
                         LabelRelationship(
                             type="entity_type",
                             value=Label(
-                                type="entity_type",
-                                id="entity_type::National drought plan (ndp)",
-                                value="National drought plan (ndp)",
+                                type="document_type",
+                                id="document_type::National Drought Plan (NDP)",
+                                value="National Drought Plan (NDP)",
+                                labels=[
+                                    LabelRelationship(
+                                        type="subconcept_of",
+                                        value=Label(
+                                            type="un_convention",
+                                            id="un_convention::UNCCD",
+                                            value="UNCCD",
+                                            labels=[
+                                                LabelRelationship(
+                                                    type="subconcept_of",
+                                                    value=Label(
+                                                        type="category",
+                                                        id="category::UN submission",
+                                                        value="UN submission",
+                                                    ),
+                                                )
+                                            ],
+                                        ),
+                                    )
+                                ],
                             ),
                         ),
                         LabelRelationship(
@@ -736,9 +756,29 @@ def test_transform_navigator_family_with_single_matching_document(
                     LabelRelationship(
                         type="entity_type",
                         value=Label(
-                            type="entity_type",
-                            id="entity_type::National drought plan (ndp)",
-                            value="National drought plan (ndp)",
+                            type="document_type",
+                            id="document_type::National Drought Plan (NDP)",
+                            value="National Drought Plan (NDP)",
+                            labels=[
+                                LabelRelationship(
+                                    type="subconcept_of",
+                                    value=Label(
+                                        type="un_convention",
+                                        id="un_convention::UNCCD",
+                                        value="UNCCD",
+                                        labels=[
+                                            LabelRelationship(
+                                                type="subconcept_of",
+                                                value=Label(
+                                                    type="category",
+                                                    id="category::UN submission",
+                                                    value="UN submission",
+                                                ),
+                                            )
+                                        ],
+                                    ),
+                                )
+                            ],
                         ),
                     ),
                     LabelRelationship(

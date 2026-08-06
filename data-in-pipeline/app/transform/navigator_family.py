@@ -1500,6 +1500,42 @@ def _transform_document_urls(navigator_document):
     return items
 
 
+# The capitalisation of these keys is irregular as it is irregular in the source data
+_document_type_to_entity_type_map: dict[str, list[Label]] = {
+    "Corporate voluntary report": [corporate_voluntary_report],
+    "Corporate regulatory filing": [corporate_voluntary_filing],
+    "Assessment Report": [climate_council_report, assessment_report],
+    "Annual Report": [climate_council_report, annual_report],
+    "Annual Performance Report": [annual_performance_report],
+    "Approved funding proposal": [approved_funding_proposal],
+    "Final independent evaluation report": [final_independent_evaluation_report],
+    "Gender action plan": [multilateral_climate_fund_project_gender_action_plan],
+    "Gender assessment": [gender_assessment],
+    "Project completion report": [project_completion_report],
+    "Nationally Determined Contribution": [nationally_determined_contribution],
+    "National Adaptation Plan": [national_adaptation_plan],
+    "Biennial Transparency Report": [biennial_transparency_report],
+    "Long-term Low-emission Development Strategy": [
+        long_term_low_emission_development_strategy
+    ],
+    "Biennial Update Report": [biennial_update_report],
+    "Biennial Report": [biennial_report],
+    "National Communication": [national_communication],
+    "National Inventory Report": [national_inventory_report],
+    "Adaptation Communication": [adaptation_communication],
+    "National Biodiversity Strategy and Action Plan (NBSAP)": [
+        national_biodiversity_strategy_and_action_plan
+    ],
+    "National Report (NR)": [national_report],
+    "National Target (NT)": [national_targets],
+    "Voluntary Land Degradation Neutrality Targets (LDN-T)": [
+        voluntary_land_degradation_neutrality_targets
+    ],
+    "Country Report (CR)": [country_report],
+    "National Drought Plan (NDP)": [national_drought_plan],
+}
+
+
 # trunk-ignore(ruff/PLR0912)
 def _transform_navigator_document(
     navigator_document: NavigatorDocument, navigator_family: NavigatorFamily
@@ -1569,17 +1605,29 @@ def _transform_navigator_document(
     """
     metadata_type = navigator_document.valid_metadata.get("type")
     if metadata_type is not None and len(metadata_type) > 0:
-        normalised_metadata_type = metadata_type[0].capitalize()
-        labels.append(
-            LabelRelationship(
-                type="entity_type",
-                value=Label(
-                    id=f"entity_type::{normalised_metadata_type}",
-                    value=normalised_metadata_type,
-                    type="entity_type",
-                ),
-            )
+        mapped_entity_type_labels = _document_type_to_entity_type_map.get(
+            metadata_type[0]
         )
+        if mapped_entity_type_labels is not None:
+            for entity_type_label in mapped_entity_type_labels:
+                labels.append(
+                    LabelRelationship(
+                        type="entity_type",
+                        value=entity_type_label,
+                    )
+                )
+        else:
+            normalised_metadata_type = metadata_type[0].capitalize()
+            labels.append(
+                LabelRelationship(
+                    type="entity_type",
+                    value=Label(
+                        id=f"entity_type::{normalised_metadata_type}",
+                        value=normalised_metadata_type,
+                        type="entity_type",
+                    ),
+                )
+            )
 
     domain_metadata = navigator_family.metadata.get("domain", [])
     labels.extend(_build_domain_labels(domain_metadata))
@@ -1875,42 +1923,6 @@ def _deprecated_category_label(
 
 
 #  region entity_type label
-# The capitalisation of these keys is irregular as it is irregular in the source data
-_document_type_to_entity_type_map: dict[str, list[Label]] = {
-    "Corporate voluntary report": [corporate_voluntary_report],
-    "Corporate regulatory filing": [corporate_voluntary_filing],
-    "Assessment Report": [climate_council_report, assessment_report],
-    "Annual Report": [climate_council_report, annual_report],
-    "Annual Performance Report": [annual_performance_report],
-    "Approved funding proposal": [approved_funding_proposal],
-    "Final independent evaluation report": [final_independent_evaluation_report],
-    "Gender action plan": [multilateral_climate_fund_project_gender_action_plan],
-    "Gender assessment": [gender_assessment],
-    "Project completion report": [project_completion_report],
-    "Nationally Determined Contribution": [nationally_determined_contribution],
-    "National Adaptation Plan": [national_adaptation_plan],
-    "Biennial Transparency Report": [biennial_transparency_report],
-    "Long-term Low-emission Development Strategy": [
-        long_term_low_emission_development_strategy
-    ],
-    "Biennial Update Report": [biennial_update_report],
-    "Biennial Report": [biennial_report],
-    "National Communication": [national_communication],
-    "National Inventory Report": [national_inventory_report],
-    "Adaptation Communication": [adaptation_communication],
-    "National Biodiversity Strategy and Action Plan (NBSAP)": [
-        national_biodiversity_strategy_and_action_plan
-    ],
-    "National Report (NR)": [national_report],
-    "National Target (NT)": [national_targets],
-    "Voluntary Land Degradation Neutrality Targets (LDN-T)": [
-        voluntary_land_degradation_neutrality_targets
-    ],
-    "Country Report (CR)": [country_report],
-    "National Drought Plan (NDP)": [national_drought_plan],
-}
-
-
 def _has_document_of_type(
     navigator_family: NavigatorFamily, document_type: str
 ) -> bool:
