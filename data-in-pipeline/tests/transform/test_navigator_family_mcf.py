@@ -305,14 +305,6 @@ def test_transform_navigator_family_with_multilateral_climate_fund_project(
                 ),
             ),
             LabelRelationship(
-                type="implementing_agency",
-                value=Label(
-                    id="implementing_agency::International Bank for Reconstruction",
-                    type="implementing_agency",
-                    value="International Bank for Reconstruction",
-                ),
-            ),
-            LabelRelationship(
                 type="category",
                 value=Label(
                     id="category::Multilateral Climate Fund project",
