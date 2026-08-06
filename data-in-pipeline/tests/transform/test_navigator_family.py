@@ -1156,7 +1156,7 @@ def test_transform_navigator_family_with_laws_and_policies_corpus_type(
             LabelRelationship(
                 type="law_type",
                 value=Label(
-                    id="law_type::Mitigation",
+                    id="law_type::Framework law",
                     value="Framework law",
                     type="law_type",
                     labels=[
@@ -2610,10 +2610,21 @@ def test_entity_type_label_oep_always_applies_regardless_of_document_type():
 
 
 @pytest.mark.parametrize(
-    "topic",
-    ["Mitigation", "Adaptation", "Loss and Damage"],
+    ("topic", "expected_id", "expected_value"),
+    [
+        ("Mitigation", "topic::Mitigation", "Mitigation"),
+        ("Adaptation", "topic::Adaptation", "Adaptation"),
+        ("Loss And Damage", "topic::Loss and damage", "Loss and damage"),
+        (
+            "Disaster Risk Management",
+            "topic::Disaster risk management",
+            "Disaster risk management",
+        ),
+    ],
 )
-def test_topic_label_returns_label_for_topic_metadata(topic):
+def test_topic_label_returns_label_for_topic_metadata(
+    topic, expected_id, expected_value
+):
     family = NavigatorFamilyFactory.build(
         corpus=NavigatorCorpusFactory.build(import_id="CCLW.corpus.i00000001.n0000"),
         metadata={"topic": [topic]},
@@ -2621,9 +2632,17 @@ def test_topic_label_returns_label_for_topic_metadata(topic):
     labels = _topic_label(family)
     assert len(labels) == 1
     assert labels[0].type == "topic"
-    assert labels[0].value.id == f"topic::{topic}"
-    assert labels[0].value.value == topic
+    assert labels[0].value.id == expected_id
+    assert labels[0].value.value == expected_value
     assert labels[0].value.type == "topic"
+
+
+def test_topic_label_returns_empty_for_unmapped_topic():
+    family = NavigatorFamilyFactory.build(
+        corpus=NavigatorCorpusFactory.build(import_id="CCLW.corpus.i00000001.n0000"),
+        metadata={"topic": ["Other"]},
+    )
+    assert _topic_label(family) == []
 
 
 def test_topic_label_includes_subconcept_of_law_and_policy():
@@ -2669,26 +2688,6 @@ def test_topic_label_returns_empty_when_topic_first_value_is_empty_string():
     assert _topic_label(family) == []
 
 
-def test_topic_label_returns_law_type_label_for_mitigation_framework():
-    family = NavigatorFamilyFactory.build(
-        corpus=NavigatorCorpusFactory.build(import_id="CCLW.corpus.i00000001.n0000"),
-        metadata={"framework": ["Mitigation"]},
-    )
-    labels = _topic_label(family)
-    assert len(labels) == 1
-    assert labels[0].type == "law_type"
-    assert labels[0].value.id == "law_type::Mitigation"
-    assert labels[0].value.value == "Framework law"
-
-
-def test_topic_label_ignores_non_mitigation_framework_metadata():
-    family = NavigatorFamilyFactory.build(
-        corpus=NavigatorCorpusFactory.build(import_id="CCLW.corpus.i00000001.n0000"),
-        metadata={"framework": ["Adaptation"]},
-    )
-    assert _topic_label(family) == []
-
-
 @pytest.mark.parametrize("framework", ["Adaptation", "Mitigation", "Drm/Drr"])
 def test_law_type_label_returns_label_for_framework_values(framework):
     family = NavigatorFamilyFactory.build(
@@ -2698,7 +2697,7 @@ def test_law_type_label_returns_label_for_framework_values(framework):
     labels = _law_type_label(family)
     assert len(labels) == 1
     assert labels[0].type == "law_type"
-    assert labels[0].value.id == f"law_type::{framework}"
+    assert labels[0].value.id == "law_type::Framework law"
     assert labels[0].value.value == "Framework law"
     assert labels[0].value.type == "law_type"
 
@@ -2724,12 +2723,14 @@ def test_law_type_label_returns_empty_when_no_framework_key():
     assert _law_type_label(family) == []
 
 
-def test_law_type_label_returns_empty_for_non_matching_framework():
+def test_law_type_label_returns_label_for_any_framework_value():
     family = NavigatorFamilyFactory.build(
         corpus=NavigatorCorpusFactory.build(import_id="CCLW.corpus.i00000001.n0000"),
         metadata={"framework": ["Other"]},
     )
-    assert _law_type_label(family) == []
+    labels = _law_type_label(family)
+    assert len(labels) == 1
+    assert labels[0].value.id == "law_type::Framework law"
 
 
 def test_law_type_label_returns_empty_when_framework_is_empty_list():
