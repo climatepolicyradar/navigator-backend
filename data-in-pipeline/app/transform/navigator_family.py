@@ -1244,31 +1244,6 @@ def _transform_navigator_family(
         )
     )
 
-    # MCF reports and guidance labels
-    if navigator_family.corpus.import_id in mcf_projects_corpus_import_ids:
-        labels.append(
-            LabelRelationship(
-                type="entity_type",
-                value=Label(
-                    id="entity_type::Project",
-                    value="Project",
-                    type="entity_type",
-                ),
-            )
-        )
-
-    if navigator_family.corpus.import_id in mcf_guidance_corpus_import_ids:
-        labels.append(
-            LabelRelationship(
-                type="entity_type",
-                value=Label(
-                    id="entity_type::Guidance",
-                    value="Guidance",
-                    type="entity_type",
-                ),
-            )
-        )
-
     # GST1 labels
     if _part_of_gst1(navigator_family):
         labels.append(
