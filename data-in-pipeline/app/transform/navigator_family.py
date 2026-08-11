@@ -471,6 +471,9 @@ LAWS_AND_POLICIES_CORPORA = {
 
 LITIGATION_CORPORA = {"Academic.corpus.Litigation.n0000"}
 
+# `topic` is handled by the `_topic_label` transformer
+LAWS_AND_POLICIES_EXCLUDED_KEYS = {"topic"}
+
 
 MCF_KEY_MAPPING = {"status": "project_status"}
 MCF_EXCLUDED_KEYS = {"region", "external_id", "implementing_agency"}
@@ -844,11 +847,18 @@ def _transform_mcf_metadata(
     return labels
 
 
+LAWS_POLICIES_EXCLUDED_KEYS = {"topic"}
+
+
 def _transform_laws_policies_metadata(metadata: dict) -> list[LabelRelationship]:
-    labels = []
+    labels: list[LabelRelationship] = []
 
     for key, values in metadata.items():
-        if not values:
+        if key in LAWS_POLICIES_EXCLUDED_KEYS:
+            continue
+
+    for key, values in metadata.items():
+        if key in LAWS_AND_POLICIES_EXCLUDED_KEYS or not values:
             continue
 
         for value in values:
