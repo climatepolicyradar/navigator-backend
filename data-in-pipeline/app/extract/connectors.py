@@ -93,6 +93,13 @@ type CorpusId = Literal[
     "UN.corpus.UNCCD.n0000",
     "UN.corpus.UNCBD.n0000",
     "ICCN.corpus.i00000001.n0000",
+    "Scetti.corpus.i00000001.n0000",
+    "BioFin.corpus.i00000001.n0000",
+    "POLEA.corpus.i00000001.n0000",
+    "Under2Coalition.corpus.i00000001.n0000",
+    "Regions4.corpus.i00000001.n0000",
+    "OECM.corpus.i00000001.n0000",
+    "Nature4Climate.corpus.i00000001.n0000",
 ]
 
 
