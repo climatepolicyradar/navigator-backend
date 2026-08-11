@@ -86,54 +86,108 @@ multilateral_climate_fund_project_project = Label(
         LabelRelationship(type="subconcept_of", value=multilateral_climate_fund_project)
     ],
 )
-annual_performance_report = Label(
-    id="entity_type::Annual performance report",
-    value="Annual performance report",
-    type="entity_type",
+concept_approved = Label(
+    id="activity_status::Concept approved",
+    value="Concept approved",
+    type="activity_status",
     labels=[
-        LabelRelationship(type="subconcept_of", value=multilateral_climate_fund_project)
+        LabelRelationship(
+            type="subconcept_of", value=multilateral_climate_fund_project_project
+        )
     ],
 )
-approved_funding_proposal = Label(
-    id="entity_type::Approved funding proposal",
-    value="Approved funding proposal",
-    type="entity_type",
+project_approved = Label(
+    id="activity_status::Project approved",
+    value="Project approved",
+    type="activity_status",
     labels=[
-        LabelRelationship(type="subconcept_of", value=multilateral_climate_fund_project)
+        LabelRelationship(
+            type="subconcept_of", value=multilateral_climate_fund_project_project
+        )
     ],
 )
-final_independent_evaluation_report = Label(
-    id="entity_type::Final independent evaluation report",
-    value="Final independent evaluation report",
-    type="entity_type",
+under_implementation = Label(
+    id="activity_status::Under implementation",
+    value="Under implementation",
+    type="activity_status",
     labels=[
-        LabelRelationship(type="subconcept_of", value=multilateral_climate_fund_project)
+        LabelRelationship(
+            type="subconcept_of", value=multilateral_climate_fund_project_project
+        )
     ],
 )
-multilateral_climate_fund_project_gender_action_plan = Label(
-    id="entity_type::Gender action plan",
-    value="Gender action plan",
+project_completed = Label(
+    id="entity_type::Project completed",
+    value="Project completed",
     type="entity_type",
     labels=[
-        LabelRelationship(type="subconcept_of", value=multilateral_climate_fund_project)
+        LabelRelationship(
+            type="subconcept_of", value=multilateral_climate_fund_project_project
+        )
     ],
 )
-gender_assessment = Label(
-    id="entity_type::Gender assessment",
-    value="Gender assessment",
+cancelled = Label(
+    id="entity_type::Cancelled",
+    value="Cancelled",
     type="entity_type",
     labels=[
-        LabelRelationship(type="subconcept_of", value=multilateral_climate_fund_project)
+        LabelRelationship(
+            type="subconcept_of", value=multilateral_climate_fund_project_project
+        )
     ],
 )
-project_completion_report = Label(
-    id="entity_type::Project completion report",
-    value="Project completion report",
-    type="entity_type",
-    labels=[
-        LabelRelationship(type="subconcept_of", value=multilateral_climate_fund_project)
-    ],
-)
+# This data was removed from the taxonomy, but I am not 100% sure it
+# will remain this way for long, but we need to remove it to NOT show
+# these filters in the UI
+# TODO: if you see this, it might be good to remove.
+# annual_performance_report = Label(
+#     id="entity_type::Annual performance report",
+#     value="Annual performance report",
+#     type="entity_type",
+#     labels=[
+#         LabelRelationship(type="subconcept_of", value=multilateral_climate_fund_project)
+#     ],
+# )
+# approved_funding_proposal = Label(
+#     id="entity_type::Approved funding proposal",
+#     value="Approved funding proposal",
+#     type="entity_type",
+#     labels=[
+#         LabelRelationship(type="subconcept_of", value=multilateral_climate_fund_project)
+#     ],
+# )
+# final_independent_evaluation_report = Label(
+#     id="entity_type::Final independent evaluation report",
+#     value="Final independent evaluation report",
+#     type="entity_type",
+#     labels=[
+#         LabelRelationship(type="subconcept_of", value=multilateral_climate_fund_project)
+#     ],
+# )
+# multilateral_climate_fund_project_gender_action_plan = Label(
+#     id="entity_type::Gender action plan",
+#     value="Gender action plan",
+#     type="entity_type",
+#     labels=[
+#         LabelRelationship(type="subconcept_of", value=multilateral_climate_fund_project)
+#     ],
+# )
+# gender_assessment = Label(
+#     id="entity_type::Gender assessment",
+#     value="Gender assessment",
+#     type="entity_type",
+#     labels=[
+#         LabelRelationship(type="subconcept_of", value=multilateral_climate_fund_project)
+#     ],
+# )
+# project_completion_report = Label(
+#     id="entity_type::Project completion report",
+#     value="Project completion report",
+#     type="entity_type",
+#     labels=[
+#         LabelRelationship(type="subconcept_of", value=multilateral_climate_fund_project)
+#     ],
+# )
 
 # region Law
 law = Label(type="category", id="category::Law", value="Law")
@@ -1534,12 +1588,15 @@ _document_type_to_entity_type_map: dict[str, list[Label]] = {
     "Corporate regulatory filing": [corporate_voluntary_filing],
     "Assessment Report": [climate_council_report, assessment_report],
     "Annual Report": [climate_council_report, annual_report],
-    "Annual Performance Report": [annual_performance_report],
-    "Approved funding proposal": [approved_funding_proposal],
-    "Final independent evaluation report": [final_independent_evaluation_report],
-    "Gender action plan": [multilateral_climate_fund_project_gender_action_plan],
-    "Gender assessment": [gender_assessment],
-    "Project completion report": [project_completion_report],
+    # This data was removed from the taxonomy, but I am not 100% sure it
+    # will remain this way for long, but we need to remove it to NOT show
+    # these filters in the UI TODO: if you see this, it might be good to remove.
+    # "Annual Performance Report": [annual_performance_report],
+    # "Approved funding proposal": [approved_funding_proposal],
+    # "Final independent evaluation report": [final_independent_evaluation_report],
+    # "Gender action plan": [multilateral_climate_fund_project_gender_action_plan],
+    # "Gender assessment": [gender_assessment],
+    # "Project completion report": [project_completion_report],
     "Nationally Determined Contribution": [nationally_determined_contribution],
     "National Adaptation Plan": [national_adaptation_plan],
     "Biennial Transparency Report": [biennial_transparency_report],
@@ -1932,8 +1989,8 @@ def _deprecated_category_label(
 ) -> list[LabelRelationship]:
     labels = []
     if navigator_family.corpus.corpus_type.name == "Laws and Policies":
-        # We are maintaing this as the assumption is all Laws and policies
-        # have been tagged as "LEGISLATIVE" OR "EXECUTIVE", but there is a possiblity
+        # We are maintaining this as the assumption is all Laws and policies
+        # have been tagged as "LEGISLATIVE" OR "EXECUTIVE", but there is a possibility
         # that they have not as the system allows it. This should allow us
         # to assess that data.
         labels.append(
@@ -2125,32 +2182,44 @@ def _law_type_label(
 
 
 # region status label
+_mcf_status_to_label_map = {
+    "Concept Approved": concept_approved,
+    "Project Approved": project_approved,
+    "Under Implementation": under_implementation,
+    "Project Completed": project_completed,
+    "Cancelled": cancelled,
+}
+
+
 def _status_label(
     navigator_family: NavigatorFamily,
 ) -> list[LabelRelationship]:
     labels: list[LabelRelationship] = []
 
-    # These are controlled vocabularies
-    # @see: https://github.com/climatepolicyradar/data-migrations/blob/main/taxonomies/GCF.json#L44-L48
     status_values = navigator_family.metadata.get("status")
+
     if status_values and status_values[0]:
         status = status_values[0]
+
+        # MCF statuses are a controlled vocabulary, so they map onto taxonomy concepts
+        # @see: https://github.com/climatepolicyradar/data-migrations/blob/main/taxonomies/GCF.json#L44-L48
+        status_label = _mcf_status_to_label_map.get(status)
+
+        # Anything else (e.g. litigation) is free text, so we synthesise the concept
+        if status_label is None:
+            status_label = Label(
+                id=f"status::{status}",
+                value=status,
+                type="status",
+            )
+
         labels.append(
             LabelRelationship(
                 type="status",
-                value=Label(
-                    id=f"status::{status}",
-                    value=status,
-                    type="status",
-                    labels=[
-                        LabelRelationship(
-                            type="subconcept_of",
-                            value=multilateral_climate_fund_project_project,
-                        )
-                    ],
-                ),
+                value=status_label,
             )
         )
+
     return labels
 
 
@@ -2162,15 +2231,15 @@ def _implementing_agency_label(
 
     # These are controlled vocabularies
     # @see: https://github.com/climatepolicyradar/data-migrations/blob/main/taxonomies/GCF.json#L44-L48
-    status_values = navigator_family.metadata.get("implementing_agency")
-    if status_values and status_values[0]:
-        status = status_values[0]
+    implementing_agency_values = navigator_family.metadata.get("implementing_agency")
+    if implementing_agency_values and implementing_agency_values[0]:
+        implementing_agency = implementing_agency_values[0]
         labels.append(
             LabelRelationship(
                 type="implementing_agency",
                 value=Label(
-                    id=f"agent::{status}",
-                    value=status,
+                    id=f"agent::{implementing_agency}",
+                    value=implementing_agency,
                     type="agent",
                     labels=[
                         LabelRelationship(
