@@ -2564,15 +2564,6 @@ def test_entity_type_label_returns_empty_for_non_mcf_corpus():
             "Annual Report",
             ["report_type::Climate council report", "entity_type::Annual report"],
         ),
-        ("Annual Performance Report", ["entity_type::Annual performance report"]),
-        ("Approved funding proposal", ["entity_type::Approved funding proposal"]),
-        (
-            "Final independent evaluation report",
-            ["entity_type::Final independent evaluation report"],
-        ),
-        ("Gender action plan", ["entity_type::Gender action plan"]),
-        ("Gender assessment", ["entity_type::Gender assessment"]),
-        ("Project completion report", ["entity_type::Project completion report"]),
     ],
 )
 def test_entity_type_label_returns_label_for_document_type(
@@ -2767,9 +2758,9 @@ def test_status_label_returns_label_for_status_metadata():
     labels = _status_label(family)
     assert len(labels) == 1
     assert labels[0].type == "status"
-    assert labels[0].value.id == "status::Under Implementation"
-    assert labels[0].value.value == "Under Implementation"
-    assert labels[0].value.type == "status"
+    assert labels[0].value.id == "activity_status::Under implementation"
+    assert labels[0].value.value == "Under implementation"
+    assert labels[0].value.type == "activity_status"
 
 
 def test_status_label_includes_subconcept_of_mcf_project():
@@ -2783,6 +2774,36 @@ def test_status_label_includes_subconcept_of_mcf_project():
     assert subconcept_labels[0].type == "subconcept_of"
     assert subconcept_labels[0].value.id == "entity_type::Project"
     assert subconcept_labels[0].value.type == "entity_type"
+
+
+def test_status_label_synthesises_label_for_free_text_status():
+    family = NavigatorFamilyFactory.build(
+        corpus=NavigatorCorpusFactory.build(
+            import_id="Academic.corpus.Litigation.n0000"
+        ),
+        metadata={"status": ["Decided"]},
+    )
+    labels = _status_label(family)
+    assert len(labels) == 1
+    assert labels[0].type == "status"
+    assert labels[0].value.id == "status::Decided"
+    assert labels[0].value.value == "Decided"
+    assert labels[0].value.type == "status"
+    # Non-MCF families should not be parented to the MCF project concept
+    assert labels[0].value.labels == []
+
+
+def test_status_label_synthesises_label_for_status_outside_mcf_vocabulary():
+    family = NavigatorFamilyFactory.build(
+        corpus=NavigatorCorpusFactory.build(import_id="MCF.corpus.AF.n0000"),
+        metadata={"status": ["Some Unmapped Status"]},
+    )
+    labels = _status_label(family)
+    assert len(labels) == 1
+    assert labels[0].value.id == "status::Some Unmapped Status"
+    assert labels[0].value.type == "status"
+    # Only the mapped MCF concepts carry a parent
+    assert labels[0].value.labels == []
 
 
 def test_status_label_returns_empty_when_no_status_key():

@@ -325,9 +325,9 @@ def test_transform_navigator_family_with_multilateral_climate_fund_project(
             LabelRelationship(
                 type="status",
                 value=Label(
-                    id="status::Under Implementation",
-                    value="Under Implementation",
-                    type="status",
+                    id="activity_status::Under implementation",
+                    value="Under implementation",
+                    type="activity_status",
                     labels=[
                         LabelRelationship(
                             type="subconcept_of",
