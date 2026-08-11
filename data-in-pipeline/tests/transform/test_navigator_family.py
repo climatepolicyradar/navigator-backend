@@ -1090,14 +1090,6 @@ def test_transform_navigator_family_with_laws_and_policies_corpus_type(
                 ),
             ),
             LabelRelationship(
-                type="topic",
-                value=Label(
-                    id="topic::Mitigation",
-                    value="Mitigation",
-                    type="topic",
-                ),
-            ),
-            LabelRelationship(
                 type="sector",
                 value=Label(
                     id="sector::Economy-wide",
@@ -1151,6 +1143,32 @@ def test_transform_navigator_family_with_laws_and_policies_corpus_type(
                     id="deprecated_category::Laws and Policies",
                     value="Laws and Policies",
                     type="deprecated_category",
+                ),
+            ),
+            LabelRelationship(
+                type="topic",
+                value=Label(
+                    id="topic::Mitigation",
+                    value="Mitigation",
+                    type="topic",
+                    labels=[
+                        LabelRelationship(
+                            type="subconcept_of",
+                            value=Label(
+                                id="category::Law",
+                                value="Law",
+                                type="category",
+                            ),
+                        ),
+                        LabelRelationship(
+                            type="subconcept_of",
+                            value=Label(
+                                id="category::Policy",
+                                value="Policy",
+                                type="category",
+                            ),
+                        ),
+                    ],
                 ),
             ),
             LabelRelationship(
