@@ -24,7 +24,7 @@ def test_load_family_success(mock_load_to_db):
     result = load_batch(documents)
 
     assert result == expected_ids
-    mock_load_to_db.assert_called_once_with(documents)
+    mock_load_to_db.assert_called_once_with(documents, run_version=None)
 
 
 @patch("app.navigator_family_etl_pipeline.load_to_db")
@@ -38,4 +38,4 @@ def test_load_family_handles_load_failure(mock_load_to_db):
     result = load_batch(documents)
 
     assert result == expected_error
-    mock_load_to_db.assert_called_once_with(documents)
+    mock_load_to_db.assert_called_once_with(documents, run_version=None)

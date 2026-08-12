@@ -2,7 +2,7 @@ import asyncio
 import io
 import itertools
 import json
-from datetime import datetime
+from datetime import UTC, datetime
 from typing import Any, Literal, cast
 
 import pyarrow as pa
@@ -25,7 +25,7 @@ from app.extract.connectors import (
 from app.extract.enums import CheckPointStorageType
 from app.identify.navigator_family import identify_navigator_families
 from app.load.aws_bucket import upload_to_s3
-from app.load.load import load_to_db
+from app.load.load import advance_version, load_to_db
 from app.models import ExtractedEnvelope, Identified, PipelineResult
 from app.pipeline_metrics import ErrorType, Operation, PipelineType, Status
 from app.run_db_migrations.run_db_migrations import run_db_migrations
@@ -283,6 +283,7 @@ def transform(
 @pipeline_metrics.track(operation=Operation.LOAD)
 def load_batch(
     transformed: list[Document],
+    run_version: datetime | None = None,
 ) -> str | Exception:
     """Load a batch of documents to the database.
 
@@ -291,7 +292,18 @@ def load_batch(
     :param documents: Batch of documents to load
     :return: List of document IDs or Exception if the batch fails
     """
-    return load_to_db(transformed)
+    return load_to_db(transformed, run_version=run_version)
+
+
+@task(log_prints=True, retries=2, retry_delay_seconds=[5, 10])
+def set_version_task(run_timestamp: datetime) -> datetime | Exception:
+    """
+    Advance the sync version watermark to run_timestamp, never backwards.
+
+    Call this once per full run, after every batch in that run has loaded
+    successfully - never per batch.
+    """
+    return advance_version(run_timestamp)
 
 
 @task(log_prints=True)
@@ -500,7 +512,10 @@ def data_in_pipeline(
     )
 
     document_batches = create_batches(transformed_documents, batch_size)
-    load_results = load_batch.map(document_batches)
+    fatal_transform_errors = [e for e in errors if isinstance(e, Exception)]
+    is_full_run = ids is None and not extract_failures and not fatal_transform_errors
+    run_version = datetime.now(UTC) if is_full_run else None
+    load_results = load_batch.map(document_batches, run_version=run_version)
 
     # Prefect resolves mapped task results before invoking tasks.
     # Pyright sees PrefectFutureList here, but runtime value is list[str | Exception].
@@ -509,6 +524,12 @@ def data_in_pipeline(
     if not all_succeeded:
         pipeline_metrics.record_processed(PipelineType.FAMILY, Status.FAILURE)
         return Exception("One or more batches failed to load")
+
+    if run_version is not None:
+        version_result = set_version_task(run_version)
+        if isinstance(version_result, Exception):
+            pipeline_metrics.record_processed(PipelineType.FAMILY, Status.FAILURE)
+            return Exception(f"Failed to set sync version: {version_result}")
 
     pipeline_metrics.record_processed(PipelineType.FAMILY, Status.SUCCESS)
     _LOGGER.info("ETL pipeline completed successfully")

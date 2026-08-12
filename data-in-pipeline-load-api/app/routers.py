@@ -1,10 +1,16 @@
 import logging
+from datetime import datetime
 
 from data_in_models.models import Document as DocumentSchema
-from fastapi import APIRouter, Depends, HTTPException, status
+from fastapi import APIRouter, Body, Depends, HTTPException, status
 
 from app.alembic.run_migrations import run_migrations
-from app.repository import check_db_health, create_documents, create_or_update_documents
+from app.repository import (
+    check_db_health,
+    create_documents,
+    create_or_update_documents,
+    set_version,
+)
 from app.session import get_db, get_engine
 from app.settings import settings
 
@@ -63,7 +69,11 @@ def create_document(documents: list[DocumentSchema], db=Depends(get_db)):
 
 
 @router.put("/documents", response_model=str, status_code=status.HTTP_200_OK)
-def update_documents(documents: list[DocumentSchema], db=Depends(get_db)):
+def update_documents(
+    documents: list[DocumentSchema],
+    run_version: datetime | None = None,
+    db=Depends(get_db),
+):
     if not documents:
         raise HTTPException(
             status_code=status.HTTP_400_BAD_REQUEST,
@@ -79,6 +89,24 @@ def update_documents(documents: list[DocumentSchema], db=Depends(get_db)):
         raise HTTPException(
             status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
             detail="Failed to update documents",
+        )
+
+
+@router.post("/version", response_model=datetime, status_code=status.HTTP_200_OK)
+def post_version(version: datetime = Body(...), db=Depends(get_db)):
+    """Set the sync version watermark to version, never backwards.
+
+    Called once per full run, after every batch in that run has loaded
+    successfully - never per batch.
+    """
+    try:
+        return set_version(db, version)
+
+    except Exception as e:
+        _LOGGER.exception(f"Failed to set version: {e}")
+        raise HTTPException(
+            status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
+            detail="Failed to set sync version",
         )
 
 

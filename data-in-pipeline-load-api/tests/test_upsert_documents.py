@@ -8,6 +8,7 @@ from data_in_models.db_models import (
     Item,
     Label,
     LabelLabelRelationship,
+    Version,
 )
 from data_in_models.models import Document as DocumentInput
 from data_in_models.models import (
@@ -25,7 +26,7 @@ from data_in_models.models import (
 from sqlalchemy.exc import IntegrityError
 from sqlmodel import select
 
-from app.repository import create_documents, create_or_update_documents
+from app.repository import create_documents, create_or_update_documents, set_version
 
 
 def create_mock_document_input(
@@ -514,6 +515,44 @@ def test_label_link_updated_when_parent_changes(session):
 
     assert session.get(LabelLabelRelationship, ("child", "parent-a")) is None
     assert session.get(LabelLabelRelationship, ("child", "parent-b")) is not None
+
+
+def test_advance_version_creates_then_advances_watermark(session):
+    """advance_version should create the singleton row, then move it forward."""
+    # The version column is timestamp-without-timezone (like created_at/updated_at),
+    # so comparisons here use naive datetimes to match what comes back from the DB.
+    t1 = datetime(2026, 1, 1)
+    t2 = datetime(2026, 1, 2)
+
+    assert set_version(session, t1) == t1
+    assert session.get(Version, 1).version == t1
+
+    assert set_version(session, t2) == t2
+    assert session.get(Version, 1).version == t2
+
+
+def test_advance_version_never_moves_backwards(session):
+    """A run finishing with an older timestamp should never regress the watermark."""
+    t_later = datetime(2026, 1, 2)
+    t_earlier = datetime(2026, 1, 1)
+
+    set_version(session, t_later)
+
+    assert set_version(session, t_earlier) == t_later
+    assert session.get(Version, 1).version == t_later
+
+
+def test_create_or_update_documents_never_touches_version(session):
+    """Upserting documents/labels should never advance the watermark by itself.
+
+    Advancing is a separate, explicit step (advance_version), called once per
+    full run - not a side effect of writing a batch.
+    """
+    doc = create_mock_document_input("version-doc-1", "Doc")
+
+    create_or_update_documents(session, [doc])
+
+    assert session.get(Version, 1) is None
 
 
 def test_multiple_labels_some_with_parents(session):
