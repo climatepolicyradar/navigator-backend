@@ -2287,7 +2287,7 @@ def _report_type_label(
             LabelRelationship(
                 type="report_type",
                 value=Label(
-                    id="report_type::Climate council report",
+                    id="agent::Climate council report",
                     value="Climate council report",
                     type="agent",
                     labels=[
