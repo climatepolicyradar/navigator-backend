@@ -2071,12 +2071,22 @@ def _author_label(
     category = _category_import_id_to_category(navigator_family)
     related_labels: list[LabelRelationship] = []
 
+    # We use an `id_prefix` as we are synthesizing from free text values at source.
+    # @see: https://github.com/climatepolicyradar/data-migrations/blob/main/taxonomies/Reports.json#L14
+    # This means identical values from "Corporate Disclosure" and "Report" can clash.
+    # e.g.
+    # - author::Corporate Disclosure/Ocean Conservancy -- subconcept_of --> corporate_discloser
+    # - author::Report/Ocean Conservancy -- subconcept_of --> report
+    id_prefix = ""
+
     if category == "Corporate Disclosure":
+        id_prefix = f"{corporate_discloser.value}/"
         related_labels = [
             LabelRelationship(type="subconcept_of", value=corporate_discloser)
         ]
 
     if category == "Report":
+        id_prefix = f"{report.value}/"
         related_labels = [LabelRelationship(type="subconcept_of", value=report)]
 
     author_values = navigator_family.metadata.get("author")
@@ -2086,7 +2096,7 @@ def _author_label(
             LabelRelationship(
                 type="author",
                 value=Label(
-                    id=f"author::{author}",
+                    id=f"author::{id_prefix}{author}",
                     value=author,
                     type="author",
                     labels=related_labels,
