@@ -2458,7 +2458,10 @@ def test_author_label_ids_are_namespaced_by_category_to_avoid_collisions():
 
     assert report_label.value.id != corporate_disclosure_label.value.id
     assert report_label.value.id == "author::Report/Ocean Conservancy"
-    assert corporate_disclosure_label.value.id == "author::Corporate Disclosure/Ocean Conservancy"
+    assert (
+        corporate_disclosure_label.value.id
+        == "author::Corporate Disclosure/Ocean Conservancy"
+    )
 
 
 def test_category_label_returns_law_for_legislative():
