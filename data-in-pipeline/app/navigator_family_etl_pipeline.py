@@ -296,12 +296,13 @@ def load_batch(
 
 
 @task(log_prints=True, retries=2, retry_delay_seconds=[5, 10])
-def set_version_task(run_timestamp: datetime) -> datetime | Exception:
+def set_version_task(run_timestamp: datetime) -> datetime:
     """
     Advance the sync version watermark to run_timestamp, never backwards.
 
     Call this once per full run, after every batch in that run has loaded
-    successfully - never per batch.
+    successfully - never per batch. Raises on failure so Prefect's retry
+    policy can act on it.
     """
     return advance_version(run_timestamp)
 
@@ -526,10 +527,11 @@ def data_in_pipeline(
         return Exception("One or more batches failed to load")
 
     if run_version is not None:
-        version_result = set_version_task(run_version)
-        if isinstance(version_result, Exception):
+        try:
+            set_version_task(run_version)
+        except Exception as e:
             pipeline_metrics.record_processed(PipelineType.FAMILY, Status.FAILURE)
-            return Exception(f"Failed to set sync version: {version_result}")
+            return Exception(f"Failed to set sync version: {e}")
 
     pipeline_metrics.record_processed(PipelineType.FAMILY, Status.SUCCESS)
     _LOGGER.info("ETL pipeline completed successfully")

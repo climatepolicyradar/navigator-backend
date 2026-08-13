@@ -50,14 +50,16 @@ def load_to_db(
     return response.text
 
 
-def advance_version(run_timestamp: datetime) -> datetime | Exception:
+def advance_version(run_timestamp: datetime) -> datetime:
     """Advance the sync version watermark to run_timestamp, never backwards.
 
     Call this once per full run, after every batch in that run has loaded
     successfully - never per batch.
 
     :param run_timestamp: The version value to advance to.
-    :returns: The watermark after this call, or the Exception if it failed.
+    :returns: The watermark after this call.
+    :raises requests.exceptions.HTTPError: if the load API call fails, so
+        that the calling Prefect task's retry policy can act on it.
     """
     _LOGGER = get_logger()
 
@@ -74,6 +76,6 @@ def advance_version(run_timestamp: datetime) -> datetime | Exception:
             e,
             e.response.text if e.response else "No response available",
         )
-        return e
+        raise
 
     return response.json()
