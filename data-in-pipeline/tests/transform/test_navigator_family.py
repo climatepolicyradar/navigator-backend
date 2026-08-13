@@ -2887,9 +2887,9 @@ def test_report_type_label_returns_label_for_iccn_corpus():
     labels = _report_type_label(family)
     assert len(labels) == 1
     assert labels[0].type == "report_type"
-    assert labels[0].value.id == "agent::Climate council report"
+    assert labels[0].value.id == "report_type::Climate council report"
     assert labels[0].value.value == "Climate council report"
-    assert labels[0].value.type == "agent"
+    assert labels[0].value.type == "report_type"
 
 
 def test_report_type_label_includes_subconcept_of_report():

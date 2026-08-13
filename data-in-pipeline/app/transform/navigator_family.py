@@ -2284,20 +2284,7 @@ def _report_type_label(
     labels: list[LabelRelationship] = []
     if navigator_family.corpus.import_id == "ICCN.corpus.i00000001.n0000":
         labels.append(
-            LabelRelationship(
-                type="report_type",
-                value=Label(
-                    id="agent::Climate council report",
-                    value="Climate council report",
-                    type="agent",
-                    labels=[
-                        LabelRelationship(
-                            type="subconcept_of",
-                            value=report,
-                        )
-                    ],
-                ),
-            )
+            LabelRelationship(type="report_type", value=climate_council_report)
         )
 
     return labels
