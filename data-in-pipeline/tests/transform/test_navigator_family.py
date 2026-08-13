@@ -2396,27 +2396,30 @@ def test_multilateral_climate_fund_label_returns_empty_for_non_mcf_corpus():
 
 
 @pytest.mark.parametrize(
-    "corpus_import_id,metadata,expected_related_labels",
+    "corpus_import_id,metadata,expected_id,expected_related_labels",
     [
         # No author metadata -> no author label at all
-        ("UNFCCC.corpus.i00000001.n0000", {}, None),
-        # Author with a category that has no subconcept relationship
-        ("UNFCCC.corpus.i00000001.n0000", {"author": ["Canada"]}, []),
-        # Report category -> author is a subconcept_of report
+        ("UNFCCC.corpus.i00000001.n0000", {}, None, None),
+        # Author with a category that has no subconcept relationship -> no prefix, no parent
+        ("UNFCCC.corpus.i00000001.n0000", {"author": ["Canada"]}, "author::Canada", []),
+        # Report category -> id is namespaced under "Report/" and subconcept_of report
         (
             "OEP.corpus.i00000001.n0000",
             {"author": ["Canada"]},
+            "author::Report/Canada",
             [LabelRelationship(type="subconcept_of", value=report)],
         ),
-        # Corporate Disclosure category -> author is a subconcept_of corporate discloser
+        # Corporate Disclosure category -> id is namespaced under "Corporate Disclosure/"
+        # and subconcept_of corporate_discloser
         (
             "CPR.corpus.i00000002.n0000",
             {"author": ["Canada"]},
+            "author::Corporate Disclosure/Canada",
             [LabelRelationship(type="subconcept_of", value=corporate_discloser)],
         ),
     ],
 )
-def test_author_label(corpus_import_id, metadata, expected_related_labels):
+def test_author_label(corpus_import_id, metadata, expected_id, expected_related_labels):
     family = NavigatorFamilyFactory.build(
         corpus=NavigatorCorpusFactory.build(import_id=corpus_import_id),
         metadata=metadata,
@@ -2429,8 +2432,33 @@ def test_author_label(corpus_import_id, metadata, expected_related_labels):
 
     assert len(labels) == 1
     assert labels[0].type == "author"
-    assert labels[0].value.id == "author::Canada"
+    assert labels[0].value.id == expected_id
     assert labels[0].value.labels == expected_related_labels
+
+
+def test_author_label_ids_are_namespaced_by_category_to_avoid_collisions():
+    """
+    The same author name can appear under different family categories
+    (e.g. a Report and a Corporate Disclosure family both citing "Ocean
+    Conservancy"). Namespacing the id by category means each id always
+    resolves to exactly one shape, instead of the same id sometimes having
+    a subconcept_of parent and sometimes not depending on the caller.
+    """
+    report_family = NavigatorFamilyFactory.build(
+        corpus=NavigatorCorpusFactory.build(import_id="OEP.corpus.i00000001.n0000"),
+        metadata={"author": ["Ocean Conservancy"]},
+    )
+    corporate_disclosure_family = NavigatorFamilyFactory.build(
+        corpus=NavigatorCorpusFactory.build(import_id="CPR.corpus.i00000002.n0000"),
+        metadata={"author": ["Ocean Conservancy"]},
+    )
+
+    report_label = _author_label(report_family)[0]
+    corporate_disclosure_label = _author_label(corporate_disclosure_family)[0]
+
+    assert report_label.value.id != corporate_disclosure_label.value.id
+    assert report_label.value.id == "author::Report/Ocean Conservancy"
+    assert corporate_disclosure_label.value.id == "author::Corporate Disclosure/Ocean Conservancy"
 
 
 def test_category_label_returns_law_for_legislative():
