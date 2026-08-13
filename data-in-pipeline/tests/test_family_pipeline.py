@@ -72,7 +72,7 @@ def test_process_family_updates_flow_multiple_families(  # noqa: PLR0913
 
     mock_advance_version_response = MagicMock()
     mock_advance_version_response.status_code = 200
-    mock_advance_version_response.json.return_value = 1
+    mock_advance_version_response.json.return_value = "2020-01-01T00:00:00+00:00"
     mock_advance_version_post.return_value = mock_advance_version_response
 
     corpus = NavigatorCorpusFactory.build(

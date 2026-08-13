@@ -50,7 +50,7 @@ def load_to_db(
     return response.text
 
 
-def advance_version(run_timestamp: datetime) -> datetime:
+def set_version(run_timestamp: datetime) -> datetime:
     """Advance the sync version watermark to run_timestamp, never backwards.
 
     Call this once per full run, after every batch in that run has loaded
@@ -78,4 +78,4 @@ def advance_version(run_timestamp: datetime) -> datetime:
         )
         raise
 
-    return response.json()
+    return datetime.fromisoformat(response.json())

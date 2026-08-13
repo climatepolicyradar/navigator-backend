@@ -25,7 +25,7 @@ from app.extract.connectors import (
 from app.extract.enums import CheckPointStorageType
 from app.identify.navigator_family import identify_navigator_families
 from app.load.aws_bucket import upload_to_s3
-from app.load.load import advance_version, load_to_db
+from app.load.load import load_to_db, set_version
 from app.models import ExtractedEnvelope, Identified, PipelineResult
 from app.pipeline_metrics import ErrorType, Operation, PipelineType, Status
 from app.run_db_migrations.run_db_migrations import run_db_migrations
@@ -304,7 +304,7 @@ def set_version_task(run_timestamp: datetime) -> datetime:
     successfully - never per batch. Raises on failure so Prefect's retry
     policy can act on it.
     """
-    return advance_version(run_timestamp)
+    return set_version(run_timestamp)
 
 
 @task(log_prints=True)
