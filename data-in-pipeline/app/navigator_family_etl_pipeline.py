@@ -514,7 +514,7 @@ def data_in_pipeline(
     document_batches = create_batches(transformed_documents, batch_size)
     fatal_transform_errors = [e for e in errors if isinstance(e, Exception)]
     is_full_run = ids is None and not extract_failures and not fatal_transform_errors
-    run_version = datetime.now(UTC) if is_full_run else None
+    run_version = datetime.now(UTC)
     load_results = load_batch.map(document_batches, run_version=run_version)
 
     # Prefect resolves mapped task results before invoking tasks.
@@ -525,7 +525,7 @@ def data_in_pipeline(
         pipeline_metrics.record_processed(PipelineType.FAMILY, Status.FAILURE)
         return Exception("One or more batches failed to load")
 
-    if run_version is not None:
+    if run_version is not None and is_full_run is True:
         version_result = set_version_task(run_version)
         if isinstance(version_result, Exception):
             pipeline_metrics.record_processed(PipelineType.FAMILY, Status.FAILURE)
