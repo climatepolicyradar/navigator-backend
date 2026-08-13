@@ -1146,6 +1146,70 @@ def _shallow_label(
     )
 
 
+def _concept_ancestor_path(
+    relation: str,
+    preferred_label: str,
+    concepts_by_name: dict[tuple[str, str], NavigatorConcept],
+    memo: dict[tuple[str, str], list[str]],
+    stack: set[tuple[str, str]],
+) -> list[str]:
+    """
+    Recursively resolve the ancestor value path (root-first, excluding
+    `preferred_label` itself) for a concept identified by (relation,
+    preferred_label). Multiple parents are walked and concatenated in
+    order, de-duplicating shared ancestors. Unknown parents are skipped
+    silently here - `UnknownParentLabel` is already raised by the caller.
+    `stack` guards against cycles in the source data.
+    """
+    key = (relation, preferred_label)
+    if key in memo:
+        return memo[key]
+    if key in stack:
+        return []
+
+    concept = concepts_by_name.get(key)
+    if concept is None or not concept.subconcept_of_labels:
+        memo[key] = []
+        return []
+
+    stack.add(key)
+    path: list[str] = []
+    for parent_name in concept.subconcept_of_labels:
+        parent = concepts_by_name.get((relation, parent_name))
+        if parent is None:
+            continue
+        for ancestor_value in _concept_ancestor_path(
+            relation, parent_name, concepts_by_name, memo, stack
+        ):
+            if ancestor_value not in path:
+                path.append(ancestor_value)
+        if parent.preferred_label not in path:
+            path.append(parent.preferred_label)
+    stack.discard(key)
+
+    memo[key] = path
+    return path
+
+
+def _concept_label_id(
+    concept_type: str,
+    relation: str,
+    preferred_label: str,
+    concepts_by_name: dict[tuple[str, str], NavigatorConcept],
+    memo: dict[tuple[str, str], list[str]],
+) -> str:
+    """
+    Build a collision-resistant id from a concept's full ancestry, e.g.
+    `case_category::Law/Environmental law/Water pollution`. Concepts with no
+    resolvable parents get a plain `{type}::{value}` - we don't want every
+    parentless concept id-prefixed with "Litigation".
+    """
+    ancestor_path = _concept_ancestor_path(
+        relation, preferred_label, concepts_by_name, memo, set()
+    )
+    return f"{concept_type}::{'/'.join([*ancestor_path, preferred_label])}"
+
+
 def _transform_litigation_concepts_to_label_relationships(
     concepts: list[NavigatorConcept],
     family_import_id: str,
@@ -1161,6 +1225,12 @@ def _transform_litigation_concepts_to_label_relationships(
           emitted; only the dangling link is dropped.
 
     Parent references are SHALLOW (labels=[] to prevent deep nesting).
+
+    Concept ids encode the full ancestor path (e.g.
+    `case_category::Law/Environmental law/Water pollution`) rather than the
+    source's own `concept.id`, since the same ancestry-free id would
+    otherwise collide across different concepts sharing a name but not a
+    lineage - see `_concept_label_id`.
     """
     warnings: list[TransformWarning] = []
 
@@ -1173,10 +1243,22 @@ def _transform_litigation_concepts_to_label_relationships(
         "principal_law": "principal_law",
     }
 
+    # Secondary index for ancestor-path resolution by preferred_label
+    concepts_by_name: dict[tuple[str, str], NavigatorConcept] = {
+        (c.relation, c.preferred_label): c for c in concepts
+    }
+    ancestor_path_memo: dict[tuple[str, str], list[str]] = {}
+
     # Build core labels indexed by (relation, id) - using a tuple here as the ids may not be unique across different concept types (relations)
     label_map: dict[tuple[str, str], LabelWithoutDocumentRelationships] = {
         (c.relation, c.id): LabelWithoutDocumentRelationships(
-            id=f"{relation_to_type_map.get(c.relation, 'litigation_concept')}::{c.id}",
+            id=_concept_label_id(
+                relation_to_type_map.get(c.relation, "litigation_concept"),
+                c.relation,
+                c.preferred_label,
+                concepts_by_name,
+                ancestor_path_memo,
+            ),
             type=relation_to_type_map.get(c.relation, "litigation_concept"),
             value=c.preferred_label,
         )

@@ -670,7 +670,7 @@ def test_transform_navigator_family_with_litigation_corpus_type_and_litigation_c
             LabelRelationship(
                 type="legal_concept",
                 value=LabelWithoutDocumentRelationships(
-                    id="jurisdiction::High Court of Justice",
+                    id="jurisdiction::England and Wales/High Court of Justice",
                     labels=[
                         LabelRelationship(
                             type="subconcept_of",
@@ -689,12 +689,12 @@ def test_transform_navigator_family_with_litigation_corpus_type_and_litigation_c
             LabelRelationship(
                 type="legal_concept",
                 value=LabelWithoutDocumentRelationships(
-                    id="jurisdiction::High Court of Justice (Administrative Court)",
+                    id="jurisdiction::England and Wales/High Court of Justice/High Court of Justice (Administrative Court)",
                     labels=[
                         LabelRelationship(
                             type="subconcept_of",
                             value=LabelWithoutDocumentRelationships(
-                                id="jurisdiction::High Court of Justice",
+                                id="jurisdiction::England and Wales/High Court of Justice",
                                 labels=[],
                                 type="jurisdiction",
                                 value="High Court of Justice",
