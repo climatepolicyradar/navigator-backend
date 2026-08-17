@@ -370,6 +370,11 @@ def check_load_results(batched_results: list[str | Exception]) -> bool:
 #  FLOW ORCHESTRATION
 # ---------------------------------------------------------------------
 
+# TODO: Add a new flow to load into aurora.
+#  Accepts an s3 prefix as a param.
+#  Loads jsonl documents of the transformed_documents format within .jsonl files
+#  Indexes these into to aurora.
+
 
 # NOTE: Pyright flags ThreadPoolTaskRunner here due to invariant generic
 # mismatch in Prefect's type hints, even though it is runtime-compatible.
@@ -380,6 +385,7 @@ task_runner = cast(
 )
 
 
+# TODO: Add a feature flag for aurora_load.
 @flow(log_prints=True, task_runner=task_runner, on_failure=[SlackNotify.message])
 @pipeline_metrics.track(
     pipeline_type=PipelineType.FAMILY, scope="batch", flush_on_exit=True
@@ -491,6 +497,8 @@ def data_in_pipeline(
         jsonl_future = cache_jsonl_to_s3.submit(transformed_documents, run_id)
         jsonl_future.result()
 
+    # TODO: Add in the feature flag conditional.
+    # TODO: Split out to a reusable function that we can call from the new aurora load deployment / flow.
     # -------------------------
     # BATCH AND LOAD TO DB
     # -------------------------
