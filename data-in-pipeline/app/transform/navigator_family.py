@@ -1234,6 +1234,30 @@ def _transform_litigation_concepts_to_label_relationships(
     """
     warnings: list[TransformWarning] = []
 
+    # The source data can list the same (relation, id) concept more than once,
+    # each declaring only one of several parents, instead of one entry with
+    # all parents e.g.
+    # {"id": "X", "relation": "category", "subconcept_of_labels": ["A"]}
+    # {"id": "X", "relation": "category", "subconcept_of_labels": ["B"]}
+    # Merge these into one concept with the union of all declared parents,
+    # so the id (which encodes the full ancestor path) and the wired-up
+    # `labels` always agree on the same parent set.
+    merged_concepts: dict[tuple[str, str], NavigatorConcept] = {}
+    for c in concepts:
+        key = (c.relation, c.id)
+        existing = merged_concepts.get(key)
+        if existing is None:
+            merged_concepts[key] = c
+            continue
+        merged_parents = list(existing.subconcept_of_labels)
+        for parent_name in c.subconcept_of_labels:
+            if parent_name not in merged_parents:
+                merged_parents.append(parent_name)
+        merged_concepts[key] = existing.model_copy(
+            update={"subconcept_of_labels": merged_parents}
+        )
+    concepts = list(merged_concepts.values())
+
     # The relation values unfortunately conflict with other values in the taxonomy, so we have to map them as `legal`
     # @see: https://github.com/climatepolicyradar/litigation-data-mapper/blob/49e8da8f4449dc8e3fec5a126b9973df4efb4d26/litigation_data_mapper/extract_concepts.py#L45
     relation_to_type_map = {
