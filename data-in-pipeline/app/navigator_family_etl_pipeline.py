@@ -541,6 +541,7 @@ def data_in_pipeline(
         run_id=run_id,
     )
 
+    # TODO: This should return a Failed prefect flow state (I think this would pass if it failed)
     return PipelineResult(
         documents_processed=len(transformed_documents),
         batches_loaded=document_batches_count,
