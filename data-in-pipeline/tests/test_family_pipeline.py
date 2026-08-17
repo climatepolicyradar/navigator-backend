@@ -13,6 +13,7 @@ from data_in_models.models import (
     Label,
     LabelRelationship,
 )
+from prefect.client.schemas.objects import State, StateType
 from requests.exceptions import HTTPError
 from returns.result import Failure, Success
 
@@ -190,9 +191,11 @@ def test_process_family_updates_flow_extraction_failure(
         ],
     )
 
-    result = data_in_pipeline()
+    result = data_in_pipeline(return_state=True)
 
-    assert isinstance(result, Exception)
+    assert isinstance(result, State)
+    assert result.type == StateType.FAILED
+    assert isinstance(result.result(raise_on_failure=False), Exception)
 
 
 @patch("app.navigator_family_etl_pipeline.cache_jsonl_to_s3")
@@ -273,10 +276,13 @@ def test_etl_pipeline_load_failure(  # noqa: PLR0913
 
     mock_load_batch_task.map.return_value = [HTTPError("Server error")]
 
-    result = data_in_pipeline()
+    result = data_in_pipeline(return_state=True)
 
-    assert isinstance(result, Exception)
-    assert expected_error_message in str(result)
+    assert isinstance(result, State)
+    assert result.type == StateType.FAILED
+    assert isinstance(result.result(raise_on_failure=False), Exception)
+    assert result.message
+    assert expected_error_message in result.message
 
     mock_connector_instance.close.assert_called_once()
 
@@ -461,10 +467,13 @@ def test_etl_pipeline_all_families_fail_transformation(
         Failure(NoMatchingTransformations()),
     ]
 
-    result = data_in_pipeline()
+    result = data_in_pipeline(return_state=True)
 
-    assert isinstance(result, Exception)
-    assert "No documents transformed successfully" in str(result)
+    assert isinstance(result, State)
+    assert result.type == StateType.FAILED
+    assert isinstance(result.result(raise_on_failure=False), Exception)
+    assert result.message
+    assert "No documents transformed successfully" in result.message
 
 
 @patch("app.navigator_family_etl_pipeline.get_s3_client")
