@@ -366,6 +366,48 @@ def check_load_results(batched_results: list[str | Exception]) -> bool:
     return True
 
 
+# TODO: Look at fixing this.
+# NOTE: Pyright flags ThreadPoolTaskRunner here due to invariant generic
+# mismatch in Prefect's type hints, even though it is runtime-compatible.
+# We cast explicitly to document intent and avoid a broad type ignore.
+task_runner = cast(
+    TaskRunner[PrefectFuture[Any]],
+    ThreadPoolTaskRunner(max_workers=1),
+)
+
+
+@flow(log_prints=True, task_runner=task_runner)
+def load_db(
+    documents: list[Document], batch_size: int, max_concurrent_batches: int, run_id: str
+) -> int:
+    """Batch and Load Documents to the Database."""
+    _LOGGER = get_logger()
+    _LOGGER.info(
+        f"Starting batched load: {len(documents)} documents, "
+        f"batch_size={batch_size}, max_concurrent={max_concurrent_batches}"
+    )
+
+    document_batches = create_batches(documents, batch_size)
+    load_results = load_batch.map(document_batches)
+
+    # Prefect resolves mapped task results before invoking tasks.
+    # Pyright sees PrefectFutureList here, but runtime value is list[str | Exception].
+    all_succeeded = check_load_results(load_results)  # type: ignore[reportArgumentType]
+
+    if not all_succeeded:
+        pipeline_metrics.record_processed(PipelineType.FAMILY, Status.FAILURE)
+        raise Exception("One or more batches failed to load")
+
+    pipeline_metrics.record_processed(PipelineType.FAMILY, Status.SUCCESS)
+    _LOGGER.info("ETL pipeline completed successfully")
+
+    # Prefect resolves mapped task results before invoking tasks.
+    # Pyright sees PrefectFutureList here, but runtime value is list[str | Exception].
+    upload_report(document_batches, load_results, run_id)  # type: ignore[reportArgumentType]
+
+    return len(document_batches)
+
+
 # ---------------------------------------------------------------------
 #  FLOW ORCHESTRATION
 # ---------------------------------------------------------------------
@@ -374,15 +416,6 @@ def check_load_results(batched_results: list[str | Exception]) -> bool:
 #  Accepts an s3 prefix as a param.
 #  Loads jsonl documents of the transformed_documents format within .jsonl files
 #  Indexes these into to aurora.
-
-
-# NOTE: Pyright flags ThreadPoolTaskRunner here due to invariant generic
-# mismatch in Prefect's type hints, even though it is runtime-compatible.
-# We cast explicitly to document intent and avoid a broad type ignore.
-task_runner = cast(
-    TaskRunner[PrefectFuture[Any]],
-    ThreadPoolTaskRunner(max_workers=1),
-)
 
 
 # TODO: Add a feature flag for aurora_load.
@@ -497,36 +530,19 @@ def data_in_pipeline(
         jsonl_future = cache_jsonl_to_s3.submit(transformed_documents, run_id)
         jsonl_future.result()
 
-    # TODO: Add in the feature flag conditional.
-    # TODO: Split out to a reusable function that we can call from the new aurora load deployment / flow.
     # -------------------------
     # BATCH AND LOAD TO DB
     # -------------------------
-    _LOGGER.info(
-        f"Starting batched load: {len(transformed_documents)} documents, "
-        f"batch_size={batch_size}, max_concurrent={max_concurrent_batches}"
+    # TODO: Add in the feature flag conditional.
+    document_batches_count: int = load_db(
+        documents=transformed_documents,
+        batch_size=batch_size,
+        max_concurrent_batches=max_concurrent_batches,
+        run_id=run_id,
     )
-
-    document_batches = create_batches(transformed_documents, batch_size)
-    load_results = load_batch.map(document_batches)
-
-    # Prefect resolves mapped task results before invoking tasks.
-    # Pyright sees PrefectFutureList here, but runtime value is list[str | Exception].
-    all_succeeded = check_load_results(load_results)  # type: ignore[reportArgumentType]
-
-    if not all_succeeded:
-        pipeline_metrics.record_processed(PipelineType.FAMILY, Status.FAILURE)
-        return Exception("One or more batches failed to load")
-
-    pipeline_metrics.record_processed(PipelineType.FAMILY, Status.SUCCESS)
-    _LOGGER.info("ETL pipeline completed successfully")
-
-    # Prefect resolves mapped task results before invoking tasks.
-    # Pyright sees PrefectFutureList here, but runtime value is list[str | Exception].
-    upload_report(document_batches, load_results, run_id)  # type: ignore[reportArgumentType]
 
     return PipelineResult(
         documents_processed=len(transformed_documents),
-        batches_loaded=len(document_batches),
+        batches_loaded=document_batches_count,
         status="success",
     )
