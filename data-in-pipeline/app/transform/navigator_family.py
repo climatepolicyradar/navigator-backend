@@ -117,9 +117,9 @@ under_implementation = Label(
     ],
 )
 project_completed = Label(
-    id="entity_type::Project completed",
+    id="activity_status::Project completed",
     value="Project completed",
-    type="entity_type",
+    type="activity_status",
     labels=[
         LabelRelationship(
             type="subconcept_of", value=multilateral_climate_fund_project_project
@@ -127,9 +127,9 @@ project_completed = Label(
     ],
 )
 cancelled = Label(
-    id="entity_type::Cancelled",
+    id="activity_status::Cancelled",
     value="Cancelled",
-    type="entity_type",
+    type="activity_status",
     labels=[
         LabelRelationship(
             type="subconcept_of", value=multilateral_climate_fund_project_project
@@ -1364,91 +1364,7 @@ def _transform_navigator_family(
             ),
         )
 
-    # We skip litigation as we hijacked the event_type for document type
-    if navigator_family.corpus.import_id != "Academic.corpus.Litigation.n0000":
-        """
-        Activity status
-
-        This is loosely inspired by the IATI ontology
-        @see: https://iatistandard.org/en/iati-standard/203/activity-standard/iati-activities/iati-activity/activity-status/
-        @see: https://iatistandard.org/en/iati-standard/203/codelists/activitystatus/
-
-        e.g.
-        Project Approved => Pipeline/identification
-        Under Implementation => Implementation
-        Project Completed => Closed
-        """
-
-        """
-        Values from Navigator are controlled
-        @see: https://github.com/climatepolicyradar/data-migrations/blob/main/taxonomies/AF.json#L7C9-L9C28
-        @see: https://github.com/climatepolicyradar/data-migrations/blob/main/taxonomies/CIF.json#L7-L10
-        @see: https://github.com/climatepolicyradar/data-migrations/blob/main/taxonomies/CIF.json#L7-L10
-        @see: https://github.com/climatepolicyradar/data-migrations/blob/main/taxonomies/GEF.json#L7-L11
-        """
-        mcf_project_event_type_to_activity_status_map = {
-            "Concept Approved": "Concept approved",
-            "Project Approved": "Approved",
-            "Under Implementation": "Under implementation",
-            "Project Completed": "Completed",
-            "Cancelled": "Cancelled",
-        }
-
-        """
-        Values from Navigator are controlled
-        @see: https://github.com/climatepolicyradar/data-migrations/blob/main/taxonomies/Laws%20and%20Policies.json#L17-L33
-        @see: https://github.com/climatepolicyradar/data-migrations/blob/main/taxonomies/Intl.%20agreements.json#L7-L24
-        """
-        laws_and_policies_event_type_to_activity_status_map = {
-            "Amended": "Amended/Updated",
-            "Appealed": "Appealed",
-            "Closed": "Closed",
-            "Declaration Of Climate Emergency": "Declaration of climate emergency",
-            "Dismissed": "Dismissed",
-            "Entered Into Force": "Entered into force",
-            "Filing": "Filing",
-            "Granted": "Granted",
-            "Implementation Details": "Implementation details",
-            "International Agreement": "International agreement",
-            "Net Zero Pledge": "Net zero pledge",
-            "Other": "Other",
-            "Passed/Approved": "Passed/Approved",
-            "Repealed/Replaced": "Repealed/Replaced",
-            "Set": "Set",
-            "Settled": "Settled",
-            "Updated": "Amended/Updated",
-        }
-
-        """
-        Values from Navigator are controlled
-        @see: https://github.com/climatepolicyradar/data-migrations/blob/main/taxonomies/Reports.json#L6
-        """
-        reports_event_type_to_activity_status_map = {
-            "Published": "Published",
-        }
-
-        event_type_to_activity_status_map = (
-            mcf_project_event_type_to_activity_status_map
-            | laws_and_policies_event_type_to_activity_status_map
-            | reports_event_type_to_activity_status_map
-        )
-
-        for event in navigator_family.events:
-            event_type_label_id = event_type_to_activity_status_map.get(
-                event.event_type,
-                "Unknown event_type",
-            )
-            labels.append(
-                LabelRelationship(
-                    type="activity_status",
-                    timestamp=event.date,
-                    value=Label(
-                        id=f"activity_status::{event_type_label_id}",
-                        value=event_type_label_id,
-                        type="activity_status",
-                    ),
-                )
-            )
+    labels.extend(_activity_status_label(navigator_family))
 
     """
     Provider labels
@@ -2217,6 +2133,97 @@ def _status_label(
             LabelRelationship(
                 type="status",
                 value=status_label,
+            )
+        )
+
+    return labels
+
+
+# region activity_status label
+# Values from Navigator are controlled
+# @see: https://github.com/climatepolicyradar/data-migrations/blob/main/taxonomies/Laws%20and%20Policies.json#L17-L33
+# @see: https://github.com/climatepolicyradar/data-migrations/blob/main/taxonomies/Intl.%20agreements.json#L7-L24
+
+_laws_and_policies_event_type_to_activity_status_map = {
+    "Amended": "Amended/Updated",
+    "Appealed": "Appealed",
+    "Closed": "Closed",
+    "Declaration Of Climate Emergency": "Declaration of climate emergency",
+    "Dismissed": "Dismissed",
+    "Entered Into Force": "Entered into force",
+    "Filing": "Filing",
+    "Granted": "Granted",
+    "Implementation Details": "Implementation details",
+    "International Agreement": "International agreement",
+    "Net Zero Pledge": "Net zero pledge",
+    "Other": "Other",
+    "Passed/Approved": "Passed/Approved",
+    "Repealed/Replaced": "Repealed/Replaced",
+    "Set": "Set",
+    "Settled": "Settled",
+    "Updated": "Amended/Updated",
+}
+
+
+# Values from Navigator are controlled
+# @see: https://github.com/climatepolicyradar/data-migrations/blob/main/taxonomies/Reports.json#L6
+_reports_event_type_to_activity_status_map = {
+    "Published": "Published",
+}
+
+_event_type_to_activity_status_map = (
+    _laws_and_policies_event_type_to_activity_status_map
+    | _reports_event_type_to_activity_status_map
+)
+
+
+def _activity_status_label(
+    navigator_family: NavigatorFamily,
+) -> list[LabelRelationship]:
+    """
+    This is loosely inspired by the IATI ontology
+    @see: https://iatistandard.org/en/iati-standard/203/activity-standard/iati-activities/iati-activity/activity-status/
+    @see: https://iatistandard.org/en/iati-standard/203/codelists/activitystatus/
+
+    e.g.
+    Project Approved => Pipeline/identification
+    Under Implementation => Implementation
+    Project Completed => Closed
+    """
+    labels: list[LabelRelationship] = []
+
+    # We skip litigation as we hijacked the event_type for document.type
+    if navigator_family.corpus.import_id == "Academic.corpus.Litigation.n0000":
+        return labels
+
+    for event in navigator_family.events:
+        # MCF statuses are a controlled vocabulary, so they map onto the same
+        # taxonomy concepts as `_status_label` uses for the family's current status.
+        mcf_status_label = _mcf_status_to_label_map.get(event.event_type)
+        if mcf_status_label is not None:
+            labels.append(
+                LabelRelationship(
+                    type="activity_status",
+                    timestamp=event.date,
+                    value=mcf_status_label,
+                )
+            )
+            continue
+
+        # Anything else (laws/policies, reports) is free text, so we synthesise the concept
+        event_type_label_id = _event_type_to_activity_status_map.get(
+            event.event_type,
+            "Unknown event_type",
+        )
+        labels.append(
+            LabelRelationship(
+                type="activity_status",
+                timestamp=event.date,
+                value=Label(
+                    id=f"activity_status::{event_type_label_id}",
+                    value=event_type_label_id,
+                    type="activity_status",
+                ),
             )
         )
 

@@ -206,15 +206,55 @@ def test_transform_navigator_family_with_multilateral_climate_fund_project(
                     id="activity_status::Concept approved",
                     value="Concept approved",
                     type="activity_status",
+                    labels=[
+                        LabelRelationship(
+                            type="subconcept_of",
+                            value=Label(
+                                id="entity_type::Project",
+                                value="Project",
+                                type="entity_type",
+                                labels=[
+                                    LabelRelationship(
+                                        type="subconcept_of",
+                                        value=Label(
+                                            id="category::Multilateral Climate Fund project",
+                                            value="Multilateral Climate Fund project",
+                                            type="category",
+                                        ),
+                                    )
+                                ],
+                            ),
+                        )
+                    ],
                 ),
                 timestamp=datetime.datetime(2020, 1, 1),
             ),
             LabelRelationship(
                 type="activity_status",
                 value=Label(
-                    id="activity_status::Approved",
-                    value="Approved",
+                    id="activity_status::Project approved",
+                    value="Project approved",
                     type="activity_status",
+                    labels=[
+                        LabelRelationship(
+                            type="subconcept_of",
+                            value=Label(
+                                id="entity_type::Project",
+                                value="Project",
+                                type="entity_type",
+                                labels=[
+                                    LabelRelationship(
+                                        type="subconcept_of",
+                                        value=Label(
+                                            id="category::Multilateral Climate Fund project",
+                                            value="Multilateral Climate Fund project",
+                                            type="category",
+                                        ),
+                                    )
+                                ],
+                            ),
+                        )
+                    ],
                 ),
                 timestamp=datetime.datetime(2020, 1, 1),
             ),
@@ -224,15 +264,55 @@ def test_transform_navigator_family_with_multilateral_climate_fund_project(
                     id="activity_status::Under implementation",
                     value="Under implementation",
                     type="activity_status",
+                    labels=[
+                        LabelRelationship(
+                            type="subconcept_of",
+                            value=Label(
+                                id="entity_type::Project",
+                                value="Project",
+                                type="entity_type",
+                                labels=[
+                                    LabelRelationship(
+                                        type="subconcept_of",
+                                        value=Label(
+                                            id="category::Multilateral Climate Fund project",
+                                            value="Multilateral Climate Fund project",
+                                            type="category",
+                                        ),
+                                    )
+                                ],
+                            ),
+                        )
+                    ],
                 ),
                 timestamp=datetime.datetime(2020, 1, 1),
             ),
             LabelRelationship(
                 type="activity_status",
                 value=Label(
-                    id="activity_status::Completed",
-                    value="Completed",
+                    id="activity_status::Project completed",
+                    value="Project completed",
                     type="activity_status",
+                    labels=[
+                        LabelRelationship(
+                            type="subconcept_of",
+                            value=Label(
+                                id="entity_type::Project",
+                                value="Project",
+                                type="entity_type",
+                                labels=[
+                                    LabelRelationship(
+                                        type="subconcept_of",
+                                        value=Label(
+                                            id="category::Multilateral Climate Fund project",
+                                            value="Multilateral Climate Fund project",
+                                            type="category",
+                                        ),
+                                    )
+                                ],
+                            ),
+                        )
+                    ],
                 ),
                 timestamp=datetime.datetime(2020, 1, 1),
             ),
@@ -242,6 +322,26 @@ def test_transform_navigator_family_with_multilateral_climate_fund_project(
                     id="activity_status::Cancelled",
                     value="Cancelled",
                     type="activity_status",
+                    labels=[
+                        LabelRelationship(
+                            type="subconcept_of",
+                            value=Label(
+                                id="entity_type::Project",
+                                value="Project",
+                                type="entity_type",
+                                labels=[
+                                    LabelRelationship(
+                                        type="subconcept_of",
+                                        value=Label(
+                                            id="category::Multilateral Climate Fund project",
+                                            value="Multilateral Climate Fund project",
+                                            type="category",
+                                        ),
+                                    )
+                                ],
+                            ),
+                        )
+                    ],
                 ),
                 timestamp=datetime.datetime(2020, 1, 1),
             ),
