@@ -234,13 +234,11 @@ def _merge_job_environments(
     return merged
 
 
-async def create_deployment(flow: Flow, job_parameters: dict | None = None) -> None:
+async def create_deployment(flow: Flow) -> None:
     """Create a deployment for the specified flow.
 
     :param flow: Prefect flow that needs deploying.
     :type flow: Flow
-    :param job_parameters: Run time parameters for the flow invocation.
-    :type job_parameters: dict | None
     :return: The function does not return anything.
     :rtype: None
     """
@@ -309,7 +307,6 @@ async def create_deployment(flow: Flow, job_parameters: dict | None = None) -> N
         # this is scheduled to run daily at 5am
         cron="0 5 * * *",
         job_variables=job_variables | network,
-        parameters=job_parameters,
         build=False,
         push=False,
     )
