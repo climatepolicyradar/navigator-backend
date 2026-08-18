@@ -11,11 +11,12 @@ from data_in_models.db_models import DocumentLabelRelationship as DBDocumentLabe
 from data_in_models.db_models import Item as DBItem
 from data_in_models.db_models import Label as DBLabel
 from data_in_models.db_models import LabelLabelRelationship as DBLabelLabelLink
+from data_in_models.db_models import Version as DBVersion
 from data_in_models.models import Document as DocumentInput
 from data_in_models.models import (
     DocumentRelationship as DocumentDocumentRelationshipInput,
 )
-from sqlalchemy import tuple_
+from sqlalchemy import func, tuple_
 from sqlalchemy.dialects.postgresql import insert
 from sqlalchemy.exc import DisconnectionError, IntegrityError, OperationalError
 from sqlmodel import Session, delete, select
@@ -49,6 +50,44 @@ def check_db_health(db: Session) -> bool:
     except Exception:
         _LOGGER.exception("Unexpected error during health check")
     return False
+
+
+def set_version(db: Session, version: datetime) -> datetime:
+    """
+    Set the sync version watermark to `version`, never backwards.
+
+    :param db: Database session
+    :param version: The version to set to - in practice the pipeline
+        run's own start timestamp, shared by every batch in that run
+    :return: The watermark after this call: `version` if it was newer than
+        what was already stored, otherwise whatever was already there
+    :raises Exception: If the database operation fails (transaction rolled back)
+    """
+    try:
+        now = datetime.now(UTC)
+        stmt = (
+            insert(DBVersion)
+            .values(id=1, version=version, created_at=now, updated_at=now)
+            .on_conflict_do_update(
+                index_elements=["id"],
+                set_={
+                    "version": func.greatest(DBVersion.version, version),
+                    "updated_at": now,
+                },
+            )
+            .returning(DBVersion.version)
+        )
+        new_version = db.exec(stmt).scalar_one()
+        db.commit()
+        return new_version
+    except (OperationalError, DisconnectionError):
+        db.rollback()
+        _LOGGER.exception("System error while setting sync version")
+        raise
+    except Exception:
+        db.rollback()
+        _LOGGER.exception("Failed to set version")
+        raise
 
 
 def create_or_update_documents(

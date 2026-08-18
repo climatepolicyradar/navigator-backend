@@ -122,6 +122,17 @@ class LabelLabelRelationship(WithDbDatetimeFields, table=True):
     )
 
 
+class Version(WithDbDatetimeFields, table=True):
+    """Singleton watermark for the last completed full run.
+
+    This allows the `pipeline` to set a version if completing a `full_run`
+    and the `api` to then query by that version.
+    """
+
+    id: int = Field(default=1, primary_key=True)
+    version: datetime
+
+
 class Item(WithDbDatetimeFields, table=True):
     url: str | None = None
     type: str

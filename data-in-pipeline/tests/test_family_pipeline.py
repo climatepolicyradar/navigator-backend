@@ -43,9 +43,11 @@ from tests.transform.assertions import assert_model_list_equality
 @patch("app.navigator_family_etl_pipeline.run_db_migrations")
 @patch("app.navigator_family_etl_pipeline.upload_to_s3")
 @patch("app.navigator_family_etl_pipeline.NavigatorConnector")
+@patch("app.load.load.requests.post")
 @patch("app.load.load.requests.put")
 def test_process_family_updates_flow_multiple_families(  # noqa: PLR0913
-    mock_post,
+    mock_put,
+    mock_advance_version_post,
     mock_connector_class,
     mock_upload,
     mock_run_migrations,
@@ -64,10 +66,15 @@ def test_process_family_updates_flow_multiple_families(  # noqa: PLR0913
     mock_connector_class.return_value = mock_connector_instance
     mock_connector_instance.close.return_value = None
 
-    mock_post_response = MagicMock()
-    mock_post_response.status_code = 201
-    mock_post_response.json.return_value = ["1", "2"]
-    mock_post.return_value = mock_post_response
+    mock_put_response = MagicMock()
+    mock_put_response.status_code = 201
+    mock_put_response.json.return_value = ["1", "2"]
+    mock_put.return_value = mock_put_response
+
+    mock_advance_version_response = MagicMock()
+    mock_advance_version_response.status_code = 200
+    mock_advance_version_response.json.return_value = "2020-01-01T00:00:00+00:00"
+    mock_advance_version_post.return_value = mock_advance_version_response
 
     corpus = NavigatorCorpusFactory.build(
         import_id="UNFCCC.corpus.i00000001.n0000",
