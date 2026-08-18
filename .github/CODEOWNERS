@@ -1,27 +1,8 @@
-###############################################################################
-# GitHub Code-owner Configuration for Navigator Backend
-#
-# Each line is a file pattern followed by one or more owners. See this link:
-# https://docs.github.com/en/repositories/managing-your-repositorys-settings-and-features/customizing-your-repository/about-code-owners#example-of-a-codeowners-file
-# for more information on configuring GitHub code owners, including examples.
-###############################################################################
+# Ownership per [RFC] Ownership of code and services
+# https://www.notion.so/3a49109609a480c4ae38f1f5b2672675
 
-# These owners will be the default owners for everything in
-# the repo. Unless a later match takes precedence, members
-# of @climatepolicyradar/application_engineers will be requested for
-# review when someone opens a pull request. Teams should
-# be identified in the format @org/team-name. Teams must have
-# explicit write access to the repository.
-
-*                                                               @climatepolicyradar/application_engineers
-backend-api/app/api/api_v1/routers/pipeline_trigger.py          @climatepolicyradar/deng
-backend-api/tests/unit/app/core/test_pipeline.py                @climatepolicyradar/deng
-backend-api/tests/non_search/app/test_pipeline_trigger.py       @climatepolicyradar/deng
-backend-api/app/repository/pipeline.py                          @climatepolicyradar/deng
-backend-api/app/service/pipeline.py                             @climatepolicyradar/deng
-backend-api/app/service/pipeline.sql                            @climatepolicyradar/deng
-backend-api/tests/search/vespa/fixtures/**                      @climatepolicyradar/deng
-backend-api/tests/search/search_fixtures/vespa_test_schema/**   @climatepolicyradar/deng
-backend-api/app/models/search.py                                @climatepolicyradar/deng
-backend-api/app/service/search.py                               @climatepolicyradar/deng
-backend-api/app/repository/search.py                            @climatepolicyradar/deng
+*                 @climatepolicyradar/enrichment
+backend-api/      @climatepolicyradar/fusion
+concepts-api/     @climatepolicyradar/fusion
+families-api/     @climatepolicyradar/fusion
+geographies-api/  @climatepolicyradar/fusion
