@@ -388,7 +388,7 @@ def data_in_pipeline(
     ids: list[str] | None = None,
     batch_size: int = 500,
     max_concurrent_batches: int = 3,
-) -> PipelineResult | Exception:
+) -> PipelineResult:
     """Run the full Navigator ETL pipeline.
 
     If IDs are provided, processes only those specific families.
@@ -448,7 +448,7 @@ def data_in_pipeline(
 
     if not envelopes:
         _LOGGER.info("No families found to process")
-        return Exception("No families found to process")
+        raise Exception("No families found to process")
 
     # -------------------------
     # IDENTIFY
@@ -479,7 +479,7 @@ def data_in_pipeline(
     if len(transformed_documents) == 0:
         _LOGGER.error("No documents were transformed successfully; aborting load")
         pipeline_metrics.record_processed(PipelineType.FAMILY, Status.FAILURE)
-        return Exception("No documents transformed successfully")
+        raise Exception("No documents transformed successfully")
 
     # -------------------------
     # CACHE TO S3
@@ -508,7 +508,7 @@ def data_in_pipeline(
 
     if not all_succeeded:
         pipeline_metrics.record_processed(PipelineType.FAMILY, Status.FAILURE)
-        return Exception("One or more batches failed to load")
+        raise Exception("One or more batches failed to load")
 
     pipeline_metrics.record_processed(PipelineType.FAMILY, Status.SUCCESS)
     _LOGGER.info("ETL pipeline completed successfully")
