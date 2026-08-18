@@ -10,6 +10,7 @@ import pyarrow.parquet as pq
 from data_in_models.models import Document
 from prefect import flow, task
 from prefect.runtime import flow_run, task_run
+from prefect.task_runners import ThreadPoolTaskRunner
 from returns.result import Failure, Success
 
 from app.bootstrap_telemetry import get_logger, pipeline_metrics
@@ -364,11 +365,40 @@ def check_load_results(batched_results: list[str | Exception]) -> bool:
     return True
 
 
+@flow(log_prints=True)
+def load_db(documents: list[Document], batch_size: int, run_id: str) -> int:
+    """Batch and Load Documents to the Database."""
+    _LOGGER = get_logger()
+    _LOGGER.info(
+        f"Starting batched load: {len(documents)} documents, "
+        f"batch_size={batch_size}"
+    )
+
+    document_batches = create_batches(documents, batch_size)
+    load_results = load_batch.map(document_batches)
+
+    # Prefect resolves mapped task results before invoking tasks.
+    # Pyright sees PrefectFutureList here, but runtime value is list[str | Exception].
+    all_succeeded = check_load_results(load_results)  # type: ignore[reportArgumentType]
+
+    if not all_succeeded:
+        pipeline_metrics.record_processed(PipelineType.FAMILY, Status.FAILURE)
+        raise Exception("One or more batches failed to load")
+
+    pipeline_metrics.record_processed(PipelineType.FAMILY, Status.SUCCESS)
+
+    # Prefect resolves mapped task results before invoking tasks.
+    # Pyright sees PrefectFutureList here, but runtime value is list[str | Exception].
+    upload_report(document_batches, load_results, run_id)  # type: ignore[reportArgumentType]
+
+    _LOGGER.info("Database load completed successfully!")
+
+    return len(document_batches)
+
+
 # ---------------------------------------------------------------------
 #  FLOW ORCHESTRATION
 # ---------------------------------------------------------------------
-
-
 @flow(log_prints=True, on_failure=[SlackNotify.message])
 @pipeline_metrics.track(
     pipeline_type=PipelineType.FAMILY, scope="batch", flush_on_exit=True
@@ -483,31 +513,17 @@ def data_in_pipeline(
     # -------------------------
     # BATCH AND LOAD TO DB
     # -------------------------
-    _LOGGER.info(
-        f"Starting batched load: {len(transformed_documents)} documents, "
-        f"batch_size={batch_size}, max_concurrent={max_concurrent_batches}"
+    batches_loaded_count: int = load_db.with_options(
+        task_runner=ThreadPoolTaskRunner(max_workers=max_concurrent_batches)  # type: ignore[reportArgumentType]
+    )(
+        documents=transformed_documents,
+        batch_size=batch_size,
+        run_id=run_id,
     )
-
-    document_batches = create_batches(transformed_documents, batch_size)
-    load_results = load_batch.map(document_batches)
-
-    # Prefect resolves mapped task results before invoking tasks.
-    # Pyright sees PrefectFutureList here, but runtime value is list[str | Exception].
-    all_succeeded = check_load_results(load_results)  # type: ignore[reportArgumentType]
-
-    if not all_succeeded:
-        pipeline_metrics.record_processed(PipelineType.FAMILY, Status.FAILURE)
-        raise Exception("One or more batches failed to load")
-
-    pipeline_metrics.record_processed(PipelineType.FAMILY, Status.SUCCESS)
-    _LOGGER.info("ETL pipeline completed successfully")
-
-    # Prefect resolves mapped task results before invoking tasks.
-    # Pyright sees PrefectFutureList here, but runtime value is list[str | Exception].
-    upload_report(document_batches, load_results, run_id)  # type: ignore[reportArgumentType]
+    _LOGGER.info("ETL pipeline completed successfully!")
 
     return PipelineResult(
         documents_processed=len(transformed_documents),
-        batches_loaded=len(document_batches),
+        batches_loaded=batches_loaded_count,
         status="success",
     )
