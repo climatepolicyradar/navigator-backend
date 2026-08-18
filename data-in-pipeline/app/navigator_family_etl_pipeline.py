@@ -10,6 +10,7 @@ import pyarrow.parquet as pq
 from data_in_models.models import Document
 from prefect import flow, task
 from prefect.runtime import flow_run, task_run
+from prefect.task_runners import ThreadPoolTaskRunner
 from returns.result import Failure, Success
 
 from app.bootstrap_telemetry import get_logger, pipeline_metrics
@@ -365,14 +366,12 @@ def check_load_results(batched_results: list[str | Exception]) -> bool:
 
 
 @flow(log_prints=True)
-def load_db(
-    documents: list[Document], batch_size: int, max_concurrent_batches: int, run_id: str
-) -> int:
+def load_db(documents: list[Document], batch_size: int, run_id: str) -> int:
     """Batch and Load Documents to the Database."""
     _LOGGER = get_logger()
     _LOGGER.info(
         f"Starting batched load: {len(documents)} documents, "
-        f"batch_size={batch_size}, max_concurrent={max_concurrent_batches}"
+        f"batch_size={batch_size}"
     )
 
     document_batches = create_batches(documents, batch_size)
@@ -514,10 +513,11 @@ def data_in_pipeline(
     # -------------------------
     # BATCH AND LOAD TO DB
     # -------------------------
-    batches_loaded_count: int = load_db(
+    batches_loaded_count: int = load_db.with_options(
+        task_runner=ThreadPoolTaskRunner(max_workers=max_concurrent_batches)  # type: ignore[reportArgumentType]
+    )(
         documents=transformed_documents,
         batch_size=batch_size,
-        max_concurrent_batches=max_concurrent_batches,
         run_id=run_id,
     )
     _LOGGER.info("ETL pipeline completed successfully!")
