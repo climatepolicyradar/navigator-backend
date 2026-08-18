@@ -387,11 +387,12 @@ def load_db(
         raise Exception("One or more batches failed to load")
 
     pipeline_metrics.record_processed(PipelineType.FAMILY, Status.SUCCESS)
-    _LOGGER.info("ETL pipeline completed successfully")
 
     # Prefect resolves mapped task results before invoking tasks.
     # Pyright sees PrefectFutureList here, but runtime value is list[str | Exception].
     upload_report(document_batches, load_results, run_id)  # type: ignore[reportArgumentType]
+
+    _LOGGER.info("Database load completed successfully!")
 
     return len(document_batches)
 
@@ -519,6 +520,7 @@ def data_in_pipeline(
         max_concurrent_batches=max_concurrent_batches,
         run_id=run_id,
     )
+    _LOGGER.info("ETL pipeline completed successfully!")
 
     return PipelineResult(
         documents_processed=len(transformed_documents),
