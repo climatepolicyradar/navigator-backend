@@ -35,7 +35,7 @@ from app.util import SlackNotify, get_s3_client
 
 LOAD_TASK_RUNNER = cast(
     TaskRunner[PrefectFuture[Any]],
-    ThreadPoolTaskRunner(max_workers=3),
+    ThreadPoolTaskRunner(max_workers=1),
 )
 
 
