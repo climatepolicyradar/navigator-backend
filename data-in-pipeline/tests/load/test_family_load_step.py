@@ -1,4 +1,4 @@
-from unittest.mock import patch
+from unittest.mock import ANY, patch
 
 from data_in_models.models import Document
 from polyfactory.factories.pydantic_factory import ModelFactory
@@ -63,18 +63,20 @@ def test_data_in__load_db(
     documents = DocumentFactory.batch(3)
     mock_run_db_migrations_task.return_value = None
     mock_read_documents_from_s3.return_value = documents
-    mock_load_db.with_options.return_value.return_value = 1
+    mock_load_db.return_value = 1
 
     result = data_in__load_db(bucket_name=bucket_name, s3_prefix=s3_prefix)
 
     assert result is None
     mock_run_db_migrations_task.assert_called_once()
     mock_read_documents_from_s3.assert_called_once_with(bucket_name, s3_prefix)
-    mock_load_db.with_options.assert_called_once()
+    mock_load_db.assert_called_once_with(
+        documents=documents, batch_size=500, run_id=ANY
+    )
 
     # Failure
     error_message: str = "One or more batches failed to load"
-    mock_load_db.with_options.return_value.side_effect = Exception(error_message)
+    mock_load_db.side_effect = Exception(error_message)
     result = data_in__load_db(
         bucket_name=bucket_name, s3_prefix=s3_prefix, return_state=True
     )

@@ -3,14 +3,15 @@ import io
 import itertools
 import json
 from datetime import datetime
-from typing import Literal
+from typing import Any, Literal, cast
 
 import pyarrow as pa
 import pyarrow.parquet as pq
 from data_in_models.models import Document
 from prefect import flow, task
+from prefect.futures import PrefectFuture
 from prefect.runtime import flow_run, task_run
-from prefect.task_runners import ThreadPoolTaskRunner
+from prefect.task_runners import TaskRunner, ThreadPoolTaskRunner
 from returns.result import Failure, Success
 
 from app.bootstrap_telemetry import get_logger, pipeline_metrics
@@ -31,6 +32,11 @@ from app.run_db_migrations.run_db_migrations import run_db_migrations
 from app.transform.models import TransformWarning
 from app.transform.navigator_family import transform_navigator_family
 from app.util import SlackNotify, get_s3_client
+
+LOAD_TASK_RUNNER = cast(
+    TaskRunner[PrefectFuture[Any]],
+    ThreadPoolTaskRunner(max_workers=3),
+)
 
 
 def generate_s3_cache_key(step: Literal["extract", "identify", "transform"]) -> str:
@@ -365,7 +371,6 @@ def check_load_results(batched_results: list[str | Exception]) -> bool:
     return True
 
 
-@flow(log_prints=True)
 def load_db(documents: list[Document], batch_size: int, run_id: str) -> int:
     """Batch and Load Documents to the Database."""
     _LOGGER = get_logger()
@@ -434,7 +439,11 @@ def read_documents_from_s3(bucket_name: str, s3_prefix: str) -> list[Document]:
 # ---------------------------------------------------------------------
 #  FLOW ORCHESTRATION
 # ---------------------------------------------------------------------
-@flow(log_prints=True, on_failure=[SlackNotify.message])
+@flow(
+    log_prints=True,
+    on_failure=[SlackNotify.message],
+    task_runner=LOAD_TASK_RUNNER,
+)
 @pipeline_metrics.track(
     pipeline_type=PipelineType.FAMILY, scope="batch", flush_on_exit=True
 )
@@ -442,7 +451,6 @@ def data_in__load_db(
     bucket_name: str,
     s3_prefix: str,
     batch_size: int = 500,
-    max_concurrent_batches: int = 3,
 ) -> None:
     """Load documents to the database from the snowflake export."""
 
@@ -457,9 +465,7 @@ def data_in__load_db(
     documents = read_documents_from_s3(bucket_name, s3_prefix)
     pipeline_metrics.log_run_info(PipelineType.FAMILY, len(documents), flow_name)
 
-    batches_loaded_count: int = load_db.with_options(
-        task_runner=ThreadPoolTaskRunner(max_workers=max_concurrent_batches)  # type: ignore[reportArgumentType]
-    )(
+    batches_loaded_count: int = load_db(
         documents=documents,
         batch_size=batch_size,
         run_id=flow_name,
@@ -470,14 +476,17 @@ def data_in__load_db(
     )
 
 
-@flow(log_prints=True, on_failure=[SlackNotify.message])
+@flow(
+    log_prints=True,
+    on_failure=[SlackNotify.message],
+    task_runner=LOAD_TASK_RUNNER,
+)
 @pipeline_metrics.track(
     pipeline_type=PipelineType.FAMILY, scope="batch", flush_on_exit=True
 )
 def data_in_pipeline(
     ids: list[str] | None = None,
     batch_size: int = 500,
-    max_concurrent_batches: int = 3,
     feature_flag__load_db: bool = True,
 ) -> PipelineResult:
     """Run the full Navigator ETL pipeline.
@@ -588,9 +597,7 @@ def data_in_pipeline(
     batches_loaded_count: int = 0
 
     if feature_flag__load_db:
-        batches_loaded_count: int = load_db.with_options(
-            task_runner=ThreadPoolTaskRunner(max_workers=max_concurrent_batches)  # type: ignore[reportArgumentType]
-        )(
+        batches_loaded_count: int = load_db(
             documents=transformed_documents,
             batch_size=batch_size,
             run_id=run_id,
