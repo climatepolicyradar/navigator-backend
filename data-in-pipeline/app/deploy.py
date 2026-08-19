@@ -297,7 +297,7 @@ async def create_deployment(flow: Flow) -> None:
     }
 
     _ = await flow.adeploy(
-        f"data-in-pipeline-{aws_env}",
+        name=f"{flow.name}-{aws_env}",
         work_pool_name="mvp-prod-ecs",
         image=DockerImage(
             name=f"{docker_registry}/data-in-pipeline",
