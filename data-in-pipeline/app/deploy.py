@@ -6,12 +6,13 @@ from typing import Any
 import pulumi.automation as auto
 from prefect import Flow
 from prefect.docker.docker_image import DockerImage
+from prefect.schedules import Schedule
 from prefect.variables import Variable
 from pulumi.automation._output import OutputMap
 from pydantic import BaseModel, model_validator
 
 from app.bootstrap_telemetry import get_logger
-from app.navigator_family_etl_pipeline import data_in_pipeline
+from app.navigator_family_etl_pipeline import data_in__load_db, data_in_pipeline
 
 # Fargate requires proportional CPU/Memory ratios
 # 16384 MB (16GB) memory requires minimum 4096 CPU (4 vCPU)
@@ -234,11 +235,13 @@ def _merge_job_environments(
     return merged
 
 
-async def create_deployment(flow: Flow) -> None:
+async def create_deployment(flow: Flow, schedule: Schedule | None = None) -> None:
     """Create a deployment for the specified flow.
 
     :param flow: Prefect flow that needs deploying.
     :type flow: Flow
+    :param schedule: Prefect schedule.
+    :type schedule: Schedule
     :return: The function does not return anything.
     :rtype: None
     """
@@ -297,15 +300,14 @@ async def create_deployment(flow: Flow) -> None:
     }
 
     _ = await flow.adeploy(
-        f"data-in-pipeline-{aws_env}",
+        name=f"{flow.name}-{aws_env}",
         work_pool_name="mvp-prod-ecs",
         image=DockerImage(
             name=f"{docker_registry}/data-in-pipeline",
             tag="latest",
             dockerfile="Dockerfile",
         ),
-        # this is scheduled to run daily at 5am
-        cron="0 5 * * *",
+        schedule=schedule,
         job_variables=job_variables | network,
         build=False,
         push=False,
@@ -314,4 +316,7 @@ async def create_deployment(flow: Flow) -> None:
 
 
 if __name__ == "__main__":
-    asyncio.run(create_deployment(data_in_pipeline))
+    asyncio.run(
+        create_deployment(flow=data_in_pipeline, schedule=Schedule(cron="0 5 * * *"))
+    )
+    asyncio.run(create_deployment(flow=data_in__load_db))

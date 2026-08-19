@@ -630,6 +630,7 @@ dependencies = [
 
 [package.dev-dependencies]
 dev = [
+    { name = "moto", extra = ["s3"] },
     { name = "polyfactory" },
     { name = "pytest" },
     { name = "uv" },
@@ -664,6 +665,7 @@ requires-dist = [
 
 [package.metadata.requires-dev]
 dev = [
+    { name = "moto", extras = ["s3"], specifier = ">=5.1.6" },
     { name = "polyfactory", specifier = ">=3.2.0" },
     { name = "pytest", specifier = ">=8.4.2" },
     { name = "uv", specifier = ">=0.9.2" },
