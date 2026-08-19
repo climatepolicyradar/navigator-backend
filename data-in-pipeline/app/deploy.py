@@ -6,6 +6,7 @@ from typing import Any
 import pulumi.automation as auto
 from prefect import Flow
 from prefect.docker.docker_image import DockerImage
+from prefect.schedules import Schedule
 from prefect.variables import Variable
 from pulumi.automation._output import OutputMap
 from pydantic import BaseModel, model_validator
@@ -234,11 +235,13 @@ def _merge_job_environments(
     return merged
 
 
-async def create_deployment(flow: Flow) -> None:
+async def create_deployment(flow: Flow, schedule: Schedule | None = None) -> None:
     """Create a deployment for the specified flow.
 
     :param flow: Prefect flow that needs deploying.
     :type flow: Flow
+    :param schedule: Prefect schedule.
+    :type schedule: Schedule
     :return: The function does not return anything.
     :rtype: None
     """
@@ -304,8 +307,7 @@ async def create_deployment(flow: Flow) -> None:
             tag="latest",
             dockerfile="Dockerfile",
         ),
-        # this is scheduled to run daily at 5am
-        cron="0 5 * * *",
+        schedule=schedule,
         job_variables=job_variables | network,
         build=False,
         push=False,
@@ -314,5 +316,7 @@ async def create_deployment(flow: Flow) -> None:
 
 
 if __name__ == "__main__":
-    asyncio.run(create_deployment(data_in_pipeline))
-    asyncio.run(create_deployment(data_in__load_db))
+    asyncio.run(
+        create_deployment(flow=data_in_pipeline, schedule=Schedule(cron="0 5 * * *"))
+    )
+    asyncio.run(create_deployment(flow=data_in__load_db))
