@@ -1360,6 +1360,16 @@ def _transform_navigator_family(
                     id="process::GST1",
                     value="GST1 Submission",
                     type="process",
+                    labels=[
+                        LabelRelationship(
+                            type="subconcept_of",
+                            value=Label(
+                                id="category::Global Stocktake",
+                                value="Global Stocktake",
+                                type="category",
+                            ),
+                        )
+                    ],
                 ),
             ),
         )
@@ -1662,6 +1672,16 @@ def _transform_navigator_document(
                     id="process::GST1",
                     value="GST1 Submission",
                     type="process",
+                    labels=[
+                        LabelRelationship(
+                            type="subconcept_of",
+                            value=Label(
+                                id="category::Global Stocktake",
+                                value="Global Stocktake",
+                                type="category",
+                            ),
+                        )
+                    ],
                 ),
             ),
         )
