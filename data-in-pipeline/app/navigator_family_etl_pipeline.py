@@ -396,9 +396,80 @@ def load_db(documents: list[Document], batch_size: int, run_id: str) -> int:
     return len(document_batches)
 
 
+@task(log_prints=True)
+@pipeline_metrics.track(operation=Operation.EXTRACT)
+def read_documents_from_s3(bucket_name: str, s3_prefix: str) -> list[Document]:
+    """Read every document from the .jsonl files under an S3 prefix."""
+
+    logger = get_logger()
+    client = get_s3_client()
+
+    prefix = s3_prefix.strip("/")
+    if not prefix:
+        raise ValueError("s3_prefix must not be empty")
+
+    keys: list[str] = [
+        obj["Key"]
+        for page in client.get_paginator("list_objects_v2").paginate(
+            Bucket=bucket_name, Prefix=f"{prefix}/"
+        )
+        for obj in page.get("Contents", [])
+        if obj["Key"].endswith(".jsonl")
+    ]
+
+    documents: list[Document] = [
+        Document.model_validate_json(line)
+        for key in keys
+        for line in client.get_object(Bucket=bucket_name, Key=key)["Body"].iter_lines()
+        if line.strip()
+    ]
+
+    logger.info(
+        f"Read {len(documents)} documents from {len(keys)} jsonl files "
+        f"under s3://{bucket_name}/{prefix}"
+    )
+    return documents
+
+
 # ---------------------------------------------------------------------
 #  FLOW ORCHESTRATION
 # ---------------------------------------------------------------------
+@flow(log_prints=True, on_failure=[SlackNotify.message])
+@pipeline_metrics.track(
+    pipeline_type=PipelineType.FAMILY, scope="batch", flush_on_exit=True
+)
+def data_in__load_db(
+    bucket_name: str,
+    s3_prefix: str,
+    batch_size: int = 500,
+    max_concurrent_batches: int = 3,
+) -> None:
+    """Load documents to the database from the snowflake export."""
+
+    logger = get_logger()
+    logger.info(f"S3 to DB load started for s3://{bucket_name}/{s3_prefix}")
+
+    flow_name: str = flow_run.get_name() or "unknown"
+    pipeline_metrics.set_flow_run_name(flow_name)
+
+    run_db_migrations_task()
+
+    documents = read_documents_from_s3(bucket_name, s3_prefix)
+    pipeline_metrics.log_run_info(PipelineType.FAMILY, len(documents), flow_name)
+
+    batches_loaded_count: int = load_db.with_options(
+        task_runner=ThreadPoolTaskRunner(max_workers=max_concurrent_batches)  # type: ignore[reportArgumentType]
+    )(
+        documents=documents,
+        batch_size=batch_size,
+        run_id=flow_name,
+    )
+    logger.info(
+        f"Data In Load DB flow completed successfully! "
+        f"Loaded {batches_loaded_count} batches."
+    )
+
+
 @flow(log_prints=True, on_failure=[SlackNotify.message])
 @pipeline_metrics.track(
     pipeline_type=PipelineType.FAMILY, scope="batch", flush_on_exit=True

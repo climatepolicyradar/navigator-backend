@@ -36,4 +36,4 @@ components = { git = "https://github.com/climatepolicyradar/infra", subdirectory
 
 
 [dependency-groups]
-dev = ["polyfactory>=3.2.0", "pytest>=8.4.2", "uv>=0.9.2"]
+dev = ["moto[s3]>=5.1.6", "polyfactory>=3.2.0", "pytest>=8.4.2", "uv>=0.9.2"]
