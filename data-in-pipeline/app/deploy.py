@@ -235,13 +235,19 @@ def _merge_job_environments(
     return merged
 
 
-async def create_deployment(flow: Flow, schedule: Schedule | None = None) -> None:
+async def create_deployment(
+    flow: Flow,
+    schedule: Schedule | None = None,
+    parameters: dict[str, Any] | None = None,
+) -> None:
     """Create a deployment for the specified flow.
 
     :param flow: Prefect flow that needs deploying.
     :type flow: Flow
     :param schedule: Prefect schedule.
     :type schedule: Schedule
+    :param parameters: Prefect flow parameters.
+    :type dict: dict[str, Any]
     :return: The function does not return anything.
     :rtype: None
     """
@@ -309,6 +315,7 @@ async def create_deployment(flow: Flow, schedule: Schedule | None = None) -> Non
         ),
         schedule=schedule,
         job_variables=job_variables | network,
+        parameters=parameters,
         build=False,
         push=False,
     )
@@ -317,6 +324,10 @@ async def create_deployment(flow: Flow, schedule: Schedule | None = None) -> Non
 
 if __name__ == "__main__":
     asyncio.run(
-        create_deployment(flow=data_in_pipeline, schedule=Schedule(cron="0 5 * * *"))
+        create_deployment(
+            flow=data_in_pipeline,
+            schedule=Schedule(cron="0 5 * * *"),
+            parameters={"feature_flag__load_db": False},
+        )
     )
     asyncio.run(create_deployment(flow=data_in__load_db))
