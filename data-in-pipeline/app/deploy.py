@@ -240,6 +240,8 @@ async def create_deployment(flow: Flow, schedule: Schedule | None = None) -> Non
 
     :param flow: Prefect flow that needs deploying.
     :type flow: Flow
+    :param schedule: Prefect schedule.
+    :type schedule: Schedule
     :return: The function does not return anything.
     :rtype: None
     """
