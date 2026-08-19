@@ -171,6 +171,14 @@ def test_transform_navigator_family_UNFCCC_party_submission_to_GST1_label():
                 ),
             ),
             LabelRelationship(
+                type="category",
+                value=Label(
+                    id="category::Global Stocktake",
+                    value="Global Stocktake",
+                    type="category",
+                ),
+            ),
+            LabelRelationship(
                 type="process",
                 value=Label(
                     id="process::GST1",
@@ -309,6 +317,14 @@ def test_transform_navigator_family_UNFCCC_party_submission_to_GST1_label():
                             ),
                         ),
                         LabelRelationship(
+                            type="category",
+                            value=Label(
+                                id="category::Global Stocktake",
+                                value="Global Stocktake",
+                                type="category",
+                            ),
+                        ),
+                        LabelRelationship(
                             type="process",
                             value=Label(
                                 id="process::GST1",
@@ -414,6 +430,14 @@ def test_transform_navigator_family_UNFCCC_party_submission_to_GST1_label():
                                 "corpus_text": "Test corpus",
                                 "corpus_image_url": "https://cdn.climatepolicyradar.org/corpus_image.png",
                             },
+                        ),
+                    ),
+                    LabelRelationship(
+                        type="category",
+                        value=Label(
+                            id="category::Global Stocktake",
+                            value="Global Stocktake",
+                            type="category",
                         ),
                     ),
                     LabelRelationship(
@@ -576,6 +600,14 @@ def test_transform_navigator_family_UNFCCC_non_party_submission_to_GST1_label():
                 ),
             ),
             LabelRelationship(
+                type="category",
+                value=Label(
+                    id="category::Global Stocktake",
+                    value="Global Stocktake",
+                    type="category",
+                ),
+            ),
+            LabelRelationship(
                 type="process",
                 value=Label(
                     id="process::GST1",
@@ -714,6 +746,14 @@ def test_transform_navigator_family_UNFCCC_non_party_submission_to_GST1_label():
                             ),
                         ),
                         LabelRelationship(
+                            type="category",
+                            value=Label(
+                                id="category::Global Stocktake",
+                                value="Global Stocktake",
+                                type="category",
+                            ),
+                        ),
+                        LabelRelationship(
                             type="process",
                             value=Label(
                                 id="process::GST1",
@@ -819,6 +859,14 @@ def test_transform_navigator_family_UNFCCC_non_party_submission_to_GST1_label():
                                 "corpus_text": "Test corpus",
                                 "corpus_image_url": "https://cdn.climatepolicyradar.org/corpus_image.png",
                             },
+                        ),
+                    ),
+                    LabelRelationship(
+                        type="category",
+                        value=Label(
+                            id="category::Global Stocktake",
+                            value="Global Stocktake",
+                            type="category",
                         ),
                     ),
                     LabelRelationship(
