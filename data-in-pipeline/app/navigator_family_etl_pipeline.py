@@ -478,6 +478,7 @@ def data_in_pipeline(
     ids: list[str] | None = None,
     batch_size: int = 500,
     max_concurrent_batches: int = 3,
+    feature_flag__load_db: bool = True,
 ) -> PipelineResult:
     """Run the full Navigator ETL pipeline.
 
@@ -584,13 +585,17 @@ def data_in_pipeline(
     # -------------------------
     # BATCH AND LOAD TO DB
     # -------------------------
-    batches_loaded_count: int = load_db.with_options(
-        task_runner=ThreadPoolTaskRunner(max_workers=max_concurrent_batches)  # type: ignore[reportArgumentType]
-    )(
-        documents=transformed_documents,
-        batch_size=batch_size,
-        run_id=run_id,
-    )
+    batches_loaded_count: int = 0
+
+    if feature_flag__load_db:
+        batches_loaded_count: int = load_db.with_options(
+            task_runner=ThreadPoolTaskRunner(max_workers=max_concurrent_batches)  # type: ignore[reportArgumentType]
+        )(
+            documents=transformed_documents,
+            batch_size=batch_size,
+            run_id=run_id,
+        )
+
     _LOGGER.info("ETL pipeline completed successfully!")
 
     return PipelineResult(

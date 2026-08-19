@@ -11,7 +11,7 @@ from pulumi.automation._output import OutputMap
 from pydantic import BaseModel, model_validator
 
 from app.bootstrap_telemetry import get_logger
-from app.navigator_family_etl_pipeline import data_in_pipeline
+from app.navigator_family_etl_pipeline import data_in__load_db, data_in_pipeline
 
 # Fargate requires proportional CPU/Memory ratios
 # 16384 MB (16GB) memory requires minimum 4096 CPU (4 vCPU)
@@ -315,3 +315,4 @@ async def create_deployment(flow: Flow) -> None:
 
 if __name__ == "__main__":
     asyncio.run(create_deployment(data_in_pipeline))
+    asyncio.run(create_deployment(data_in__load_db))
