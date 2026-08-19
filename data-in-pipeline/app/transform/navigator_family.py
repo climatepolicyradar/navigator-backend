@@ -1353,25 +1353,35 @@ def _transform_navigator_family(
 
     # GST1 labels
     if _part_of_gst1(navigator_family):
+        global_stocktake_category_label = Label(
+            id="category::Global Stocktake",
+            value="Global Stocktake",
+            type="category",
+        )
+
+        gst1_process_label = Label(
+            id="process::GST1",
+            value="GST1 Submission",
+            type="process",
+            labels=[
+                LabelRelationship(
+                    type="subconcept_of",
+                    value=global_stocktake_category_label,
+                )
+            ],
+        )
+
+        labels.append(
+            LabelRelationship(
+                type="category",
+                value=global_stocktake_category_label,
+            )
+        )
         labels.append(
             LabelRelationship(
                 type="process",
-                value=Label(
-                    id="process::GST1",
-                    value="GST1 Submission",
-                    type="process",
-                    labels=[
-                        LabelRelationship(
-                            type="subconcept_of",
-                            value=Label(
-                                id="category::Global Stocktake",
-                                value="Global Stocktake",
-                                type="category",
-                            ),
-                        )
-                    ],
-                ),
-            ),
+                value=gst1_process_label,
+            )
         )
 
     labels.extend(_activity_status_label(navigator_family))
@@ -1665,25 +1675,35 @@ def _transform_navigator_document(
 
     # GST1 labels
     if _part_of_gst1(navigator_family):
+        global_stocktake_category_label = Label(
+            id="category::Global Stocktake",
+            value="Global Stocktake",
+            type="category",
+        )
+
+        gst1_process_label = Label(
+            id="process::GST1",
+            value="GST1 Submission",
+            type="process",
+            labels=[
+                LabelRelationship(
+                    type="subconcept_of",
+                    value=global_stocktake_category_label,
+                )
+            ],
+        )
+
+        labels.append(
+            LabelRelationship(
+                type="category",
+                value=global_stocktake_category_label,
+            )
+        )
         labels.append(
             LabelRelationship(
                 type="process",
-                value=Label(
-                    id="process::GST1",
-                    value="GST1 Submission",
-                    type="process",
-                    labels=[
-                        LabelRelationship(
-                            type="subconcept_of",
-                            value=Label(
-                                id="category::Global Stocktake",
-                                value="Global Stocktake",
-                                type="category",
-                            ),
-                        )
-                    ],
-                ),
-            ),
+                value=gst1_process_label,
+            )
         )
 
     """
