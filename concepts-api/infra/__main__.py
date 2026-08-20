@@ -1,3 +1,5 @@
+import json
+
 import pulumi
 import pulumi_aws as aws
 from pulumi_aws.ecs.express_gateway_service import (
@@ -44,6 +46,27 @@ concepts_api_ecr_repository = aws.ecr.Repository(
     image_tag_mutability="MUTABLE",
     name="concepts-api",
     opts=pulumi.ResourceOptions(protect=True),
+)
+
+concepts_api_ecr_lifecycle_policy = aws.ecr.LifecyclePolicy(
+    "concepts-api-ecr-lifecycle-policy",
+    repository=concepts_api_ecr_repository.name,
+    policy=json.dumps(
+        {
+            "rules": [
+                {
+                    "rulePriority": 1,
+                    "description": "Keep last 25 images",
+                    "selection": {
+                        "tagStatus": "any",
+                        "countType": "imageCountMoreThan",
+                        "countNumber": 25,
+                    },
+                    "action": {"type": "expire"},
+                }
+            ]
+        }
+    ),
 )
 
 ########################################################################
