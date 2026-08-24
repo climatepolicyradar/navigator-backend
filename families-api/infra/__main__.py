@@ -1,3 +1,5 @@
+import json
+
 import pulumi
 import pulumi_aws as aws
 from pulumi_aws.ecs.express_gateway_service import (
@@ -68,6 +70,28 @@ families_api_ecr_repository = aws.ecr.Repository(
     image_tag_mutability="MUTABLE",
     name="families-api",
     opts=pulumi.ResourceOptions(protect=True),
+)
+
+
+families_api_ecr_lifecycle_policy = aws.ecr.LifecyclePolicy(
+    "families-api-ecr-repository-lifecycle",
+    repository=families_api_ecr_repository.name,
+    policy=json.dumps(
+        {
+            "rules": [
+                {
+                    "rulePriority": 1,
+                    "description": "Keep last 50 images",
+                    "selection": {
+                        "tagStatus": "any",
+                        "countType": "imageCountMoreThan",
+                        "countNumber": 50,
+                    },
+                    "action": {"type": "expire"},
+                }
+            ]
+        }
+    ),
 )
 
 families_api_apprunner_autoscaling_configuration = aws.apprunner.AutoScalingConfigurationVersion(
