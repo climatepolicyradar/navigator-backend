@@ -56,11 +56,11 @@ concepts_api_ecr_lifecycle_policy = aws.ecr.LifecyclePolicy(
             "rules": [
                 {
                     "rulePriority": 1,
-                    "description": "Keep last 25 images",
+                    "description": "Keep last 50 images",
                     "selection": {
                         "tagStatus": "any",
                         "countType": "imageCountMoreThan",
-                        "countNumber": 25,
+                        "countNumber": 50,
                     },
                     "action": {"type": "expire"},
                 }
