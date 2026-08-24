@@ -184,18 +184,18 @@ class SlackNotify:
         "Error message: {state.message}"
     )
 
-    # Block name
-    slack_channel_name = "alerts-prod"
-
     @classmethod
     def get_environment(cls) -> str:
         """Get the current environment."""
         return os.getenv("AWS_ENV", "sandbox")
 
     @classmethod
-    def get_slack_block_name(cls) -> str:
-        """Get the slack block name for the current environment."""
-        return f"slack-webhook-{cls.slack_channel_name}-prefect-mvp-{cls.get_environment()}"
+    def slack_channel_name(cls) -> str:
+        """Get the Slack channel to notify for the current environment."""
+        if env := cls.get_environment() == "prod":
+            env = "production"
+
+        return f"alerts-platform-{env}"
 
     @classmethod
     async def message(cls, flow, flow_run, state):
@@ -233,7 +233,7 @@ class SlackNotify:
         )
 
         await client.chat_postMessage(
-            channel=str(cls.slack_channel_name),
+            channel=cls.slack_channel_name(),
             text=msg,
             blocks=state_report_slack_blocks(cls, flow, flow_run, state, ui_url),
         )
@@ -249,4 +249,4 @@ class SlackNotify:
         )
         client = slack_credentials_block.get_client()  # type: ignore
 
-        await client.chat_postMessage(channel=str(cls.slack_channel_name), text=message)
+        await client.chat_postMessage(channel=cls.slack_channel_name(), text=message)
