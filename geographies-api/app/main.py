@@ -54,7 +54,7 @@ app.include_router(
 _ALLOW_ORIGIN_REGEX = (
     r"http://localhost:3000|"
     r"http://bs-local.com:3000|"
-    r"https://.+\.awsapprunner\.com|"
+    r"https://.+\.ecs.eu-west-1.on.aws\.com|"
     r"https://.+\.climatepolicyradar\.org|"
     r"https://.+\.staging.climatepolicyradar\.org|"
     r"https://.+\.production.climatepolicyradar\.org|"
