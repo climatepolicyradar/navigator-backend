@@ -349,6 +349,84 @@ non_party = Label(
     type="author_type",
     labels=[LabelRelationship(type="subconcept_of", value=un_submission)],
 )
+facilitative_sharing_of_views_report = Label(
+    id="entity_type::Facilitative Sharing of Views Report",
+    value="Facilitative Sharing of Views Report",
+    type="entity_type",
+    labels=[LabelRelationship(type="subconcept_of", value=non_party)],
+)
+fast_start_finance_report = Label(
+    id="entity_type::Fast-Start Finance Report",
+    value="Fast-Start Finance Report",
+    type="entity_type",
+    labels=[LabelRelationship(type="subconcept_of", value=non_party)],
+)
+global_stocktake_synthesis_report = Label(
+    id="entity_type::Global Stocktake Synthesis Report",
+    value="Global Stocktake Synthesis Report",
+    type="entity_type",
+    labels=[LabelRelationship(type="subconcept_of", value=non_party)],
+)
+intersessional_document = Label(
+    id="entity_type::Intersessional Document",
+    value="Intersessional Document",
+    type="entity_type",
+    labels=[LabelRelationship(type="subconcept_of", value=non_party)],
+)
+ipcc_report = Label(
+    id="entity_type::IPCC Report",
+    value="IPCC Report",
+    type="entity_type",
+    labels=[LabelRelationship(type="subconcept_of", value=non_party)],
+)
+pre_session_document = Label(
+    id="entity_type::Pre-Session Document",
+    value="Pre-Session Document",
+    type="entity_type",
+    labels=[LabelRelationship(type="subconcept_of", value=non_party)],
+)
+publication = Label(
+    id="entity_type::Publication",
+    value="Publication",
+    type="entity_type",
+    labels=[LabelRelationship(type="subconcept_of", value=non_party)],
+)
+report_entity_type = Label(
+    id="entity_type::Report",
+    value="Report",
+    type="entity_type",
+    labels=[LabelRelationship(type="subconcept_of", value=non_party)],
+)
+submission_to_the_global_stocktake = Label(
+    id="entity_type::Submission to the Global Stocktake",
+    value="Submission to the Global Stocktake",
+    type="entity_type",
+    labels=[LabelRelationship(type="subconcept_of", value=non_party)],
+)
+summary_report = Label(
+    id="entity_type::Summary Report",
+    value="Summary Report",
+    type="entity_type",
+    labels=[LabelRelationship(type="subconcept_of", value=non_party)],
+)
+synthesis_report = Label(
+    id="entity_type::Synthesis Report",
+    value="Synthesis Report",
+    type="entity_type",
+    labels=[LabelRelationship(type="subconcept_of", value=non_party)],
+)
+technical_analysis_summary_report = Label(
+    id="entity_type::Technical Analysis Summary Report",
+    value="Technical Analysis Summary Report",
+    type="entity_type",
+    labels=[LabelRelationship(type="subconcept_of", value=non_party)],
+)
+technical_analysis_technical_report = Label(
+    id="entity_type::Technical Analysis Technical Report",
+    value="Technical Analysis Technical Report",
+    type="entity_type",
+    labels=[LabelRelationship(type="subconcept_of", value=non_party)],
+)
 unfccc = Label(
     id="un_convention::UNFCCC",
     value="UNFCCC",
@@ -1519,6 +1597,9 @@ def _transform_document_urls(navigator_document):
 
 
 # The capitalisation of these keys is irregular as it is irregular in the source data
+# This is a non-exhaustive list of values from this controlled vocabulary under `document._type`
+# @see: https://github.com/climatepolicyradar/data-migrations/tree/main/taxonomies
+# Some values that are missing are intentional as values that we do not want to inherit for data-cleanliness
 _document_type_to_entity_type_map: dict[str, list[Label]] = {
     "Corporate voluntary report": [corporate_voluntary_report],
     "Corporate regulatory filing": [corporate_voluntary_filing],
@@ -1536,7 +1617,7 @@ _document_type_to_entity_type_map: dict[str, list[Label]] = {
     "Nationally Determined Contribution": [nationally_determined_contribution],
     "National Adaptation Plan": [national_adaptation_plan],
     "Biennial Transparency Report": [biennial_transparency_report],
-    "Long-term Low-emission Development Strategy": [
+    "Long-Term Low-Emission Development Strategy": [
         long_term_low_emission_development_strategy
     ],
     "Biennial Update Report": [biennial_update_report],
@@ -1554,6 +1635,19 @@ _document_type_to_entity_type_map: dict[str, list[Label]] = {
     ],
     "Country Report (CR)": [country_report],
     "National Drought Plan (NDP)": [national_drought_plan],
+    "Facilitative Sharing of Views Report": [facilitative_sharing_of_views_report],
+    "Fast-Start Finance Report": [fast_start_finance_report],
+    "Global Stocktake Synthesis Report": [global_stocktake_synthesis_report],
+    "Intersessional Document": [intersessional_document],
+    "IPCC Report": [ipcc_report],
+    "Pre-Session Document": [pre_session_document],
+    "Publication": [publication],
+    "Report": [report_entity_type],
+    "Submission to the Global Stocktake": [submission_to_the_global_stocktake],
+    "Summary Report": [summary_report],
+    "Synthesis Report": [synthesis_report],
+    "Technical Analysis Summary Report": [technical_analysis_summary_report],
+    "Technical Analysis Technical Report": [technical_analysis_technical_report],
 }
 
 

@@ -2564,6 +2564,34 @@ def test_entity_type_label_returns_empty_for_non_mcf_corpus():
             "Annual Report",
             ["report_type::Climate council report", "entity_type::Annual report"],
         ),
+        (
+            "Facilitative Sharing of Views Report",
+            ["entity_type::Facilitative Sharing of Views Report"],
+        ),
+        ("Fast-Start Finance Report", ["entity_type::Fast-Start Finance Report"]),
+        (
+            "Global Stocktake Synthesis Report",
+            ["entity_type::Global Stocktake Synthesis Report"],
+        ),
+        ("Intersessional Document", ["entity_type::Intersessional Document"]),
+        ("IPCC Report", ["entity_type::IPCC Report"]),
+        ("Pre-Session Document", ["entity_type::Pre-Session Document"]),
+        ("Publication", ["entity_type::Publication"]),
+        ("Report", ["entity_type::Report"]),
+        (
+            "Submission to the Global Stocktake",
+            ["entity_type::Submission to the Global Stocktake"],
+        ),
+        ("Summary Report", ["entity_type::Summary Report"]),
+        ("Synthesis Report", ["entity_type::Synthesis Report"]),
+        (
+            "Technical Analysis Summary Report",
+            ["entity_type::Technical Analysis Summary Report"],
+        ),
+        (
+            "Technical Analysis Technical Report",
+            ["entity_type::Technical Analysis Technical Report"],
+        ),
     ],
 )
 def test_entity_type_label_returns_label_for_document_type(
