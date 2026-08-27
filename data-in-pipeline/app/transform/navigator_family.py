@@ -1520,10 +1520,15 @@ def _transform_document_urls(navigator_document):
 
 # The capitalisation of these keys is irregular as it is irregular in the source data
 _document_type_to_entity_type_map: dict[str, list[Label]] = {
+    # These are a controlled vocabulary
+    # @see: https://github.com/climatepolicyradar/data-migrations/blob/main/taxonomies/Reports.json#L15-L28
     "Corporate voluntary report": [corporate_voluntary_report],
     "Corporate regulatory filing": [corporate_voluntary_filing],
     "Assessment Report": [climate_council_report, assessment_report],
     "Annual Report": [climate_council_report, annual_report],
+    # These are omitted as we don't actually filter for them
+    "Guidance": [],
+    "Other": [],
     # This data was removed from the taxonomy, but I am not 100% sure it
     # will remain this way for long, but we need to remove it to NOT show
     # these filters in the UI TODO: if you see this, it might be good to remove.

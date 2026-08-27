@@ -26,6 +26,7 @@ from app.transform.navigator_family import (
     _report_type_label,
     _status_label,
     _topic_label,
+    _transform_navigator_document,
     _un_convention_label,
     corporate_discloser,
     report,
@@ -2564,6 +2565,8 @@ def test_entity_type_label_returns_empty_for_non_mcf_corpus():
             "Annual Report",
             ["report_type::Climate council report", "entity_type::Annual report"],
         ),
+        ("Guidance", []),
+        ("Other", []),
     ],
 )
 def test_entity_type_label_returns_label_for_document_type(
@@ -2616,6 +2619,68 @@ def test_entity_type_label_oep_always_applies_regardless_of_document_type():
     label_ids = [label.value.id for label in labels]
     assert "report_type::Industry report" in label_ids
     assert "entity_type::Offshore wind report" in label_ids
+
+
+@pytest.mark.parametrize(
+    "document_type,expected_entity_type_ids",
+    [
+        ("Corporate voluntary report", ["entity_type::Corporate voluntary report"]),
+        ("Guidance", []),
+        ("Other", []),
+        ("Random Type", ["entity_type::Random type"]),
+    ],
+)
+def test_transform_navigator_document_entity_type_from_metadata_type(
+    document_type, expected_entity_type_ids
+):
+    """
+    Per-document entity_type mapping in `_transform_navigator_document`.
+
+    "Guidance" and "Other" are deliberately omitted from
+    `_document_type_to_entity_type_map` (mapped to `[]`) because we don't
+    filter on them - unlike a genuinely unmapped type, they should produce
+    no entity_type label at all rather than falling back to a synthesised one.
+    """
+    family = NavigatorFamilyFactory.build(
+        created="2020-01-01T00:00:00Z",
+        corpus=_cclw_corpus(),
+        metadata={},
+        geographies=[],
+    )
+    document = NavigatorDocumentFactory.build(
+        valid_metadata={"type": [document_type]},
+        events=[],
+    )
+    result, warnings = _transform_navigator_document(document, family)
+    entity_type_ids = [
+        label.value.id for label in result.labels if label.type == "entity_type"
+    ]
+    assert entity_type_ids == expected_entity_type_ids
+    assert warnings == []
+
+
+def test_transform_navigator_document_ignores_type_values_after_the_first():
+    """
+    `_transform_navigator_document` only reads `metadata_type[0]`. Real ICCN
+    documents can have type=["Guidance", "Annual Report"], and since
+    "Guidance" is first and intentionally unmapped, the document gets no
+    entity_type label at all - "Annual Report" at index 1 is never consulted.
+    """
+    family = NavigatorFamilyFactory.build(
+        created="2020-01-01T00:00:00Z",
+        corpus=NavigatorCorpusFactory.build(import_id="ICCN.corpus.i00000001.n0000"),
+        metadata={},
+        geographies=[],
+    )
+    document = NavigatorDocumentFactory.build(
+        valid_metadata={"type": ["Guidance", "Annual Report"]},
+        events=[],
+    )
+    result, warnings = _transform_navigator_document(document, family)
+    entity_type_ids = [
+        label.value.id for label in result.labels if label.type == "entity_type"
+    ]
+    assert entity_type_ids == []
 
 
 @pytest.mark.parametrize(
