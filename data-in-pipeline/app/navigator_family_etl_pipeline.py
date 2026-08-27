@@ -3,13 +3,15 @@ import io
 import itertools
 import json
 from datetime import datetime
-from typing import Literal
+from typing import Any, Literal, cast
 
 import pyarrow as pa
 import pyarrow.parquet as pq
 from data_in_models.models import Document
 from prefect import flow, task
+from prefect.futures import PrefectFuture
 from prefect.runtime import flow_run, task_run
+from prefect.task_runners import TaskRunner, ThreadPoolTaskRunner
 from returns.result import Failure, Success
 
 from app.bootstrap_telemetry import get_logger, pipeline_metrics
@@ -30,6 +32,11 @@ from app.run_db_migrations.run_db_migrations import run_db_migrations
 from app.transform.models import TransformWarning
 from app.transform.navigator_family import transform_navigator_family
 from app.util import SlackNotify, get_s3_client
+
+LOAD_TASK_RUNNER = cast(
+    TaskRunner[PrefectFuture[Any]],
+    ThreadPoolTaskRunner(max_workers=1),
+)
 
 
 def generate_s3_cache_key(step: Literal["extract", "identify", "transform"]) -> str:
@@ -364,19 +371,123 @@ def check_load_results(batched_results: list[str | Exception]) -> bool:
     return True
 
 
+def load_db(documents: list[Document], batch_size: int, run_id: str) -> int:
+    """Batch and Load Documents to the Database."""
+    _LOGGER = get_logger()
+    _LOGGER.info(
+        f"Starting batched load: {len(documents)} documents, "
+        f"batch_size={batch_size}"
+    )
+
+    document_batches = create_batches(documents, batch_size)
+    load_results = load_batch.map(document_batches)
+
+    # Prefect resolves mapped task results before invoking tasks.
+    # Pyright sees PrefectFutureList here, but runtime value is list[str | Exception].
+    all_succeeded = check_load_results(load_results)  # type: ignore[reportArgumentType]
+
+    if not all_succeeded:
+        pipeline_metrics.record_processed(PipelineType.FAMILY, Status.FAILURE)
+        raise Exception("One or more batches failed to load")
+
+    pipeline_metrics.record_processed(PipelineType.FAMILY, Status.SUCCESS)
+
+    # Prefect resolves mapped task results before invoking tasks.
+    # Pyright sees PrefectFutureList here, but runtime value is list[str | Exception].
+    upload_report(document_batches, load_results, run_id)  # type: ignore[reportArgumentType]
+
+    _LOGGER.info("Database load completed successfully!")
+
+    return len(document_batches)
+
+
+@task(log_prints=True)
+@pipeline_metrics.track(operation=Operation.EXTRACT)
+def read_documents_from_s3(bucket_name: str, s3_prefix: str) -> list[Document]:
+    """Read every document from the .jsonl files under an S3 prefix."""
+
+    logger = get_logger()
+    client = get_s3_client()
+
+    prefix = s3_prefix.strip("/")
+    if not prefix:
+        raise ValueError("s3_prefix must not be empty")
+
+    keys: list[str] = [
+        obj["Key"]
+        for page in client.get_paginator("list_objects_v2").paginate(
+            Bucket=bucket_name, Prefix=f"{prefix}/"
+        )
+        for obj in page.get("Contents", [])
+        if obj["Key"].endswith(".jsonl")
+    ]
+
+    documents: list[Document] = [
+        Document.model_validate_json(line)
+        for key in keys
+        for line in client.get_object(Bucket=bucket_name, Key=key)["Body"].iter_lines()
+        if line.strip()
+    ]
+
+    logger.info(
+        f"Read {len(documents)} documents from {len(keys)} jsonl files "
+        f"under s3://{bucket_name}/{prefix}"
+    )
+    return documents
+
+
 # ---------------------------------------------------------------------
 #  FLOW ORCHESTRATION
 # ---------------------------------------------------------------------
+@flow(
+    log_prints=True,
+    on_failure=[SlackNotify.message],
+    task_runner=LOAD_TASK_RUNNER,
+)
+@pipeline_metrics.track(
+    pipeline_type=PipelineType.FAMILY, scope="batch", flush_on_exit=True
+)
+def data_in__load_db(
+    bucket_name: str,
+    s3_prefix: str,
+    batch_size: int = 500,
+) -> None:
+    """Load documents to the database from the snowflake export."""
+
+    logger = get_logger()
+    logger.info(f"S3 to DB load started for s3://{bucket_name}/{s3_prefix}")
+
+    flow_name: str = flow_run.get_name() or "unknown"
+    pipeline_metrics.set_flow_run_name(flow_name)
+
+    run_db_migrations_task()
+
+    documents = read_documents_from_s3(bucket_name, s3_prefix)
+    pipeline_metrics.log_run_info(PipelineType.FAMILY, len(documents), flow_name)
+
+    batches_loaded_count: int = load_db(
+        documents=documents,
+        batch_size=batch_size,
+        run_id=flow_name,
+    )
+    logger.info(
+        f"Data In Load DB flow completed successfully! "
+        f"Loaded {batches_loaded_count} batches."
+    )
 
 
-@flow(log_prints=True, on_failure=[SlackNotify.message])
+@flow(
+    log_prints=True,
+    on_failure=[SlackNotify.message],
+    task_runner=LOAD_TASK_RUNNER,
+)
 @pipeline_metrics.track(
     pipeline_type=PipelineType.FAMILY, scope="batch", flush_on_exit=True
 )
 def data_in_pipeline(
     ids: list[str] | None = None,
     batch_size: int = 500,
-    max_concurrent_batches: int = 3,
+    feature_flag__load_db: bool = True,
 ) -> PipelineResult:
     """Run the full Navigator ETL pipeline.
 
@@ -483,31 +594,19 @@ def data_in_pipeline(
     # -------------------------
     # BATCH AND LOAD TO DB
     # -------------------------
-    _LOGGER.info(
-        f"Starting batched load: {len(transformed_documents)} documents, "
-        f"batch_size={batch_size}, max_concurrent={max_concurrent_batches}"
-    )
+    batches_loaded_count: int = 0
 
-    document_batches = create_batches(transformed_documents, batch_size)
-    load_results = load_batch.map(document_batches)
+    if feature_flag__load_db:
+        batches_loaded_count: int = load_db(
+            documents=transformed_documents,
+            batch_size=batch_size,
+            run_id=run_id,
+        )
 
-    # Prefect resolves mapped task results before invoking tasks.
-    # Pyright sees PrefectFutureList here, but runtime value is list[str | Exception].
-    all_succeeded = check_load_results(load_results)  # type: ignore[reportArgumentType]
-
-    if not all_succeeded:
-        pipeline_metrics.record_processed(PipelineType.FAMILY, Status.FAILURE)
-        raise Exception("One or more batches failed to load")
-
-    pipeline_metrics.record_processed(PipelineType.FAMILY, Status.SUCCESS)
-    _LOGGER.info("ETL pipeline completed successfully")
-
-    # Prefect resolves mapped task results before invoking tasks.
-    # Pyright sees PrefectFutureList here, but runtime value is list[str | Exception].
-    upload_report(document_batches, load_results, run_id)  # type: ignore[reportArgumentType]
+    _LOGGER.info("ETL pipeline completed successfully!")
 
     return PipelineResult(
         documents_processed=len(transformed_documents),
-        batches_loaded=len(document_batches),
+        batches_loaded=batches_loaded_count,
         status="success",
     )

@@ -171,11 +171,29 @@ def test_transform_navigator_family_UNFCCC_party_submission_to_GST1_label():
                 ),
             ),
             LabelRelationship(
+                type="category",
+                value=Label(
+                    id="category::Global Stocktake",
+                    value="Global Stocktake",
+                    type="category",
+                ),
+            ),
+            LabelRelationship(
                 type="process",
                 value=Label(
                     id="process::GST1",
                     value="GST1 Submission",
                     type="process",
+                    labels=[
+                        LabelRelationship(
+                            type="subconcept_of",
+                            value=Label(
+                                id="category::Global Stocktake",
+                                value="Global Stocktake",
+                                type="category",
+                            ),
+                        ),
+                    ],
                 ),
             ),
             LabelRelationship(
@@ -299,11 +317,29 @@ def test_transform_navigator_family_UNFCCC_party_submission_to_GST1_label():
                             ),
                         ),
                         LabelRelationship(
+                            type="category",
+                            value=Label(
+                                id="category::Global Stocktake",
+                                value="Global Stocktake",
+                                type="category",
+                            ),
+                        ),
+                        LabelRelationship(
                             type="process",
                             value=Label(
                                 id="process::GST1",
                                 value="GST1 Submission",
                                 type="process",
+                                labels=[
+                                    LabelRelationship(
+                                        type="subconcept_of",
+                                        value=Label(
+                                            id="category::Global Stocktake",
+                                            value="Global Stocktake",
+                                            type="category",
+                                        ),
+                                    ),
+                                ],
                             ),
                         ),
                         LabelRelationship(
@@ -397,11 +433,29 @@ def test_transform_navigator_family_UNFCCC_party_submission_to_GST1_label():
                         ),
                     ),
                     LabelRelationship(
+                        type="category",
+                        value=Label(
+                            id="category::Global Stocktake",
+                            value="Global Stocktake",
+                            type="category",
+                        ),
+                    ),
+                    LabelRelationship(
                         type="process",
                         value=Label(
                             id="process::GST1",
                             value="GST1 Submission",
                             type="process",
+                            labels=[
+                                LabelRelationship(
+                                    type="subconcept_of",
+                                    value=Label(
+                                        id="category::Global Stocktake",
+                                        value="Global Stocktake",
+                                        type="category",
+                                    ),
+                                ),
+                            ],
                         ),
                     ),
                     LabelRelationship(
@@ -546,11 +600,29 @@ def test_transform_navigator_family_UNFCCC_non_party_submission_to_GST1_label():
                 ),
             ),
             LabelRelationship(
+                type="category",
+                value=Label(
+                    id="category::Global Stocktake",
+                    value="Global Stocktake",
+                    type="category",
+                ),
+            ),
+            LabelRelationship(
                 type="process",
                 value=Label(
                     id="process::GST1",
                     value="GST1 Submission",
                     type="process",
+                    labels=[
+                        LabelRelationship(
+                            type="subconcept_of",
+                            value=Label(
+                                id="category::Global Stocktake",
+                                value="Global Stocktake",
+                                type="category",
+                            ),
+                        ),
+                    ],
                 ),
             ),
             LabelRelationship(
@@ -674,11 +746,29 @@ def test_transform_navigator_family_UNFCCC_non_party_submission_to_GST1_label():
                             ),
                         ),
                         LabelRelationship(
+                            type="category",
+                            value=Label(
+                                id="category::Global Stocktake",
+                                value="Global Stocktake",
+                                type="category",
+                            ),
+                        ),
+                        LabelRelationship(
                             type="process",
                             value=Label(
                                 id="process::GST1",
                                 value="GST1 Submission",
                                 type="process",
+                                labels=[
+                                    LabelRelationship(
+                                        type="subconcept_of",
+                                        value=Label(
+                                            id="category::Global Stocktake",
+                                            value="Global Stocktake",
+                                            type="category",
+                                        ),
+                                    ),
+                                ],
                             ),
                         ),
                         LabelRelationship(
@@ -772,11 +862,29 @@ def test_transform_navigator_family_UNFCCC_non_party_submission_to_GST1_label():
                         ),
                     ),
                     LabelRelationship(
+                        type="category",
+                        value=Label(
+                            id="category::Global Stocktake",
+                            value="Global Stocktake",
+                            type="category",
+                        ),
+                    ),
+                    LabelRelationship(
                         type="process",
                         value=Label(
                             id="process::GST1",
                             value="GST1 Submission",
                             type="process",
+                            labels=[
+                                LabelRelationship(
+                                    type="subconcept_of",
+                                    value=Label(
+                                        id="category::Global Stocktake",
+                                        value="Global Stocktake",
+                                        type="category",
+                                    ),
+                                )
+                            ],
                         ),
                     ),
                     LabelRelationship(
