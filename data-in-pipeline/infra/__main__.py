@@ -506,14 +506,13 @@ data_in_pipeline_aurora_read_replica_db_url = aws.ssm.Parameter(
     ),
     description="URL for the load database read-replica",
     type=aws.ssm.ParameterType.STRING,
-    # FIXME: we use the instance endpoint directly as the `aurora_cluster.reader_endpoint` is not allowing us to auth against it.
-    # `aurora_cluster.reader_endpoint` is a load balancing endpoint for read replicas.
-    # We know that [0] is the CURRENT reader instance as we looked in the console.
-    # Potential bugs
-    # - re-provisioning this might not work as expected (it might)
-    # - when and if we scaling this will yield odd results as we are not using the load balancer
+    # The cluster reader endpoint follows the reader role across failovers and
+    # load-balances if readers are added. It replaces a pinned instance-0
+    # endpoint (APP-1669), which would silently point at the writer after any
+    # failover. The auth failure that motivated the pin predates IAM auth: it
+    # was the rotated-master-password issue fixed in APP-1809.
     # @see: https://linear.app/climate-policy-radar/issue/APP-1669/use-aurora-clusterreader-endpoint
-    value=aurora_instances[0].endpoint,
+    value=aurora_cluster.reader_endpoint,
 )
 data_in_pipeline_aurora_read_replica_db_name = aws.ssm.Parameter(
     "data-in-pipeline-aurora-read-replica-db-name",
