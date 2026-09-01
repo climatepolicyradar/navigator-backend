@@ -19,14 +19,12 @@ depends_on: str | Sequence[str] | None = None
 
 def upgrade() -> None:
     """Upgrade schema."""
-    with op.get_context().autocommit_block():
-        op.execute(
-            "CREATE INDEX CONCURRENTLY IF NOT EXISTS ix_document_deprecated_slug "
-            "ON document ((attributes ->> 'deprecated_slug'))"
-        )
+    op.execute(
+        "CREATE INDEX IF NOT EXISTS ix_document_deprecated_slug "
+        "ON document ((attributes ->> 'deprecated_slug'))"
+    )
 
 
 def downgrade() -> None:
     """Downgrade schema."""
-    with op.get_context().autocommit_block():
-        op.execute("DROP INDEX CONCURRENTLY IF EXISTS ix_document_deprecated_slug")
+    op.execute("DROP INDEX IF EXISTS ix_document_deprecated_slug")
