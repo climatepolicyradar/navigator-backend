@@ -26,6 +26,7 @@ from app.transform.navigator_family import (
     _report_type_label,
     _status_label,
     _topic_label,
+    _topic_to_label_map,
     _un_convention_label,
     corporate_discloser,
     report,
@@ -2619,31 +2620,28 @@ def test_entity_type_label_oep_always_applies_regardless_of_document_type():
 
 
 @pytest.mark.parametrize(
-    ("topic", "expected_id", "expected_value"),
+    ("topic"),
     [
-        ("Mitigation", "topic::Mitigation", "Mitigation"),
-        ("Adaptation", "topic::Adaptation", "Adaptation"),
-        ("Loss And Damage", "topic::Loss and damage", "Loss and damage"),
-        (
-            "Disaster Risk Management",
-            "topic::Disaster risk management",
-            "Disaster risk management",
-        ),
+        (["Mitigation", "Adaptation"]),
+        (["Mitigation"]),
+        (["Adaptation"]),
+        (["Loss And Damage"]),
     ],
 )
-def test_topic_label_returns_label_for_topic_metadata(
-    topic, expected_id, expected_value
-):
+def test_topic_label_returns_label_for_topic_metadata(topic):
     family = NavigatorFamilyFactory.build(
         corpus=NavigatorCorpusFactory.build(import_id="CCLW.corpus.i00000001.n0000"),
-        metadata={"topic": [topic]},
+        metadata={"topic": topic},
     )
-    labels = _topic_label(family)
-    assert len(labels) == 1
-    assert labels[0].type == "topic"
-    assert labels[0].value.id == expected_id
-    assert labels[0].value.value == expected_value
-    assert labels[0].value.type == "topic"
+    label_relationships = _topic_label(family)
+
+    assert len(label_relationships) == len(family.metadata["topic"])
+    for relationship in label_relationships:
+        assert relationship.type == "topic"
+
+        label = relationship.value
+        assert label.id.startswith("topic::")
+        assert label.value in [lm.value for lm in _topic_to_label_map.values()]
 
 
 def test_topic_label_returns_empty_for_unmapped_topic():

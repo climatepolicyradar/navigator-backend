@@ -2100,17 +2100,15 @@ def _topic_label(
 ) -> list[LabelRelationship]:
     labels: list[LabelRelationship] = []
 
-    topics = navigator_family.metadata.get("topic")
-
-    if topics and topics[0] and _topic_to_label_map.get(topics[0]):
-        mapped_topic_label = _topic_to_label_map[topics[0]]
-        if mapped_topic_label is not None:
-            labels.append(
-                LabelRelationship(
-                    type="topic",
-                    value=mapped_topic_label,
+    if topics := navigator_family.metadata.get("topic"):
+        for topic in topics:
+            if mapped_topic_label := _topic_to_label_map.get(topic):
+                labels.append(
+                    LabelRelationship(
+                        type="topic",
+                        value=mapped_topic_label,
+                    )
                 )
-            )
 
     return labels
 
