@@ -11,6 +11,7 @@ from app.repository import (
     check_db_health,
     get_all_documents,
     get_document_by_id,
+    get_document_by_slug,
     select_label,
     select_labels,
 )
@@ -177,6 +178,27 @@ def read_label(label_id: str, db=Depends(get_db)):
         raise
     except Exception as e:
         _LOGGER.exception(f"Failed to fetch label {label_id}: {e}")
+        raise HTTPException(
+            status_code=status.HTTP_500_INTERNAL_SERVER_ERROR, detail=str(e)
+        )
+
+
+@router.get("/documents/slug/{slug}", response_model=APIItemResponse[DocumentOutput])
+def get_document_by_deprecated_slug_route(slug: str, db=Depends(get_db)):
+    try:
+        document = get_document_by_slug(db, slug)
+
+        if not document:
+            raise HTTPException(
+                status_code=status.HTTP_404_NOT_FOUND,
+                detail=f"Document with slug {slug} not found",
+            )
+
+        return APIItemResponse(data=document)
+    except HTTPException:
+        raise
+    except Exception as e:
+        _LOGGER.exception(f"Failed to fetch document by slug {slug}: {e}")
         raise HTTPException(
             status_code=status.HTTP_500_INTERNAL_SERVER_ERROR, detail=str(e)
         )
