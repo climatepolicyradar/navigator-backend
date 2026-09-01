@@ -44,44 +44,44 @@ jobs:
         with:
           filters: |
             families-api:
-              - 'families-api/**'
-              - '!families-api/infra/**'
+              - 'families-api/*'
+              - 'families-api/!(infra)/**'
               - 'api/**'
               - 'uv.lock'
               - pyproject.toml
 
             geographies-api:
-              - 'geographies-api/**'
-              - '!geographies-api/infra/**'
+              - 'geographies-api/*'
+              - 'geographies-api/!(infra)/**'
               - 'api/**'
               - 'uv.lock'
               - pyproject.toml
 
             concepts-api:
-              - 'concepts-api/**'
-              - '!concepts-api/infra/**'
+              - 'concepts-api/*'
+              - 'concepts-api/!(infra)/**'
               - 'api/**'
               - 'uv.lock'
               - pyproject.toml
 
             data-in-pipeline:
-              - 'data-in-pipeline/**'
-              - '!data-in-pipeline/infra/**'
+              - 'data-in-pipeline/*'
+              - 'data-in-pipeline/!(infra)/**'
               - 'api/**'
               - 'data-in-models/**'
               - 'uv.lock'
               - pyproject.toml
 
             data-in-pipeline-load-api:
-              - 'data-in-pipeline-load-api/**'
-              - '!data-in-pipeline-load-api/infra/**'
+              - 'data-in-pipeline-load-api/*'
+              - 'data-in-pipeline-load-api/!(infra)/**'
               - 'api/**'
               - 'uv.lock'
               - pyproject.toml
 
             data-in-api:
-              - 'data-in-api/**'
-              - '!data-in-api/infra/**'
+              - 'data-in-api/*'
+              - 'data-in-api/!(infra)/**'
               - 'api/**'
               - 'uv.lock'
               - pyproject.toml
