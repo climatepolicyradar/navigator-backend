@@ -52,6 +52,8 @@ jobs:
           filters: |
             backend-api:
               - 'backend-api/**'
+              - 'uv.lock'
+              - pyproject.toml
   non-search-tests:
     needs: changes
     defaults:

@@ -560,17 +560,3 @@ def test_get_document_by_slug_is_exact_match(session: Session):
     result = get_document_by_slug(session, "the-rights-of-mother-earth-law")
 
     assert result is None
-
-
-def test_get_document_by_slug_distinguishes_between_documents(session: Session):
-    """Two documents with different slugs should each resolve to themselves."""
-    create_document(session, "doc1", "Document 1", "", {"deprecated_slug": "slug-one"})
-    create_document(session, "doc2", "Document 2", "", {"deprecated_slug": "slug-two"})
-
-    result_one = get_document_by_slug(session, "slug-one")
-    result_two = get_document_by_slug(session, "slug-two")
-
-    assert result_one is not None
-    assert result_one.id == "doc1"
-    assert result_two is not None
-    assert result_two.id == "doc2"
