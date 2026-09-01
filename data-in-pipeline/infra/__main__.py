@@ -194,8 +194,12 @@ bastion_egress_to_rds = aws.ec2.SecurityGroupRule(
 cluster_name = f"{name}-{environment}-aurora-cluster"
 api_load_writer_db_user = config.require("api_load_writer_db_user")
 
-min_instances = int(config.require("aurora_min_instances"))
-max_instances: int = int(config.require("aurora_max_instances"))
+# ACU limits (Serverless v2 capacity) and instance count are configured
+# independently: previously a single config value drove both, so raising
+# the ACU ceiling would also have created more instances.
+min_acus = float(config.require("aurora_min_acus"))
+max_acus = float(config.require("aurora_max_acus"))
+num_instances = int(config.require("aurora_num_instances"))
 retention_period_days = int(config.require("aurora_retention_period_days"))
 aurora_cluster = aws.rds.Cluster(
     cluster_name,
@@ -216,8 +220,8 @@ aurora_cluster = aws.rds.Cluster(
     # FIXME: https://github.com/climatepolicyradar/navigator-backend/issues/964
     deletion_protection=False,
     serverlessv2_scaling_configuration=aws.rds.ClusterServerlessv2ScalingConfigurationArgs(
-        min_capacity=min_instances,
-        max_capacity=max_instances,
+        min_capacity=min_acus,
+        max_capacity=max_acus,
     ),
     tags=tags,
 )
@@ -233,7 +237,7 @@ aurora_instances = [
         auto_minor_version_upgrade=True,
         tags=tags,
     )
-    for i in range(max_instances)
+    for i in range(num_instances)
 ]
 
 pulumi.export(
