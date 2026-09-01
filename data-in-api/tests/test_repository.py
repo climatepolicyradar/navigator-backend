@@ -12,7 +12,12 @@ from data_in_models.db_models import LabelLabelRelationship as DBLabelLabelRelat
 from data_in_models.models import Document as DocumentOutput
 from sqlmodel import Session
 
-from app.repository import get_all_documents, get_document_by_id, select_label
+from app.repository import (
+    get_all_documents,
+    get_document_by_id,
+    get_document_by_slug,
+    select_label,
+)
 
 _LOGGER = logging.getLogger(__name__)
 
@@ -494,3 +499,64 @@ def test_document_labels_include_attributes(session_with_documents: Session):
         "priority": 1,
     }
     assert target_label.type == "category"
+
+
+def test_get_document_by_slug_returns_matching_document(session: Session):
+    create_document(
+        session,
+        "doc_with_slug",
+        "Document With Slug",
+        "Has a legacy slug",
+        {"deprecated_slug": "the-rights-of-mother-earth-law_c1df"},
+    )
+
+    result = get_document_by_slug(session, "the-rights-of-mother-earth-law_c1df")
+
+    assert result is not None
+    assert result.id == "doc_with_slug"
+
+
+def test_get_document_by_slug_returns_none_when_no_match(session: Session):
+    create_document(
+        session,
+        "doc_with_slug",
+        "Document With Slug",
+        "Has a legacy slug",
+        {"deprecated_slug": "the-rights-of-mother-earth-law_c1df"},
+    )
+
+    result = get_document_by_slug(session, "not-a-real-slug")
+
+    assert result is None
+
+
+def test_get_document_by_slug_ignores_documents_without_slug_attribute(
+    session: Session,
+):
+    # No deprecated_slug key at all in attributes
+    create_document(
+        session,
+        "doc_no_slug",
+        "Document Without Slug",
+        "No slug attribute set",
+        {"status": "published"},
+    )
+
+    result = get_document_by_slug(session, "the-rights-of-mother-earth-law_c1df")
+
+    assert result is None
+
+
+def test_get_document_by_slug_is_exact_match(session: Session):
+    """A partial/substring match on the slug should not return a result."""
+    create_document(
+        session,
+        "doc_with_slug",
+        "Document With Slug",
+        "Has a legacy slug",
+        {"deprecated_slug": "the-rights-of-mother-earth-law_c1df"},
+    )
+
+    result = get_document_by_slug(session, "the-rights-of-mother-earth-law")
+
+    assert result is None

@@ -125,6 +125,37 @@ def get_document_by_id(db: Session, document_id: str) -> DocumentOutput | None:
         raise e
 
 
+def get_document_by_slug(db: Session, slug: str) -> DocumentOutput | None:
+    """
+    Retrieve a single document by its deprecated_slug attribute.
+
+    :param db: Database session
+    :param slug: Legacy document slug
+    :return: Document schema or None if not found
+    """
+    try:
+        query = select(DBDocument).where(
+            DBDocument.attributes["deprecated_slug"].astext == slug
+        )
+        db_doc = db.exec(query).first()
+
+        if not db_doc:
+            return None
+        _LOGGER.debug(
+            f"Retrieved document with deprecated_slug {slug} from the database"
+        )
+        return _map_db_document_to_schema(db, db_doc)
+
+    except (OperationalError, DisconnectionError):
+        db.rollback()
+        _LOGGER.exception("System error during document retrieval operation")
+        raise
+    except Exception as e:
+        _LOGGER.exception(f"Failed to retrieve document by slug {slug}: {e!s}")
+        db.rollback()
+        raise e
+
+
 def select_labels(db: Session, page: int, page_size: int) -> list[LabelOutput]:
     try:
         offset = (page - 1) * page_size
