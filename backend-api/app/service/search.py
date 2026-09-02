@@ -15,7 +15,7 @@ from cpr_sdk.models.search import filter_fields
 from cpr_sdk.search_adaptors import VespaSearchAdapter
 from db_client.models.dfce import Family, FamilyDocument, FamilyMetadata
 from db_client.models.dfce.family import FamilyStatus
-from sqlalchemy.orm import Session
+from sqlalchemy.orm import Session, joinedload, lazyload, selectinload
 
 from app.clients.aws.client import S3Client
 from app.clients.aws.s3_document import S3Document
@@ -293,10 +293,29 @@ def _cached_or_new_family(
 @observe("_get_rds_data_for_vespa_response")
 def _get_rds_data_for_vespa_response(db: Session, all_response_family_ids: list[str]):
     # TODO: Potential disparity between what's in postgres and vespa
+    #
+    # The db-client Family model eager-joins several one-to-many collections by
+    # default (documents, slugs, events, document slugs, document languages).
+    # Loaded in a single statement they multiply into a cartesian product whose
+    # row count is roughly docs x events per family. For large litigation
+    # families that is tens of thousands of wide rows for one family, which
+    # exceeds the Postgres statement timeout and fails the whole search page.
+    #
+    # The response only reads documents (status + title) and events
+    # (published_date), so load exactly those, each with its own IN (...)
+    # query, and leave everything else lazy (and untouched).
     family_and_family_metadata: Sequence[tuple[Family, FamilyMetadata]] = (
         db.query(Family, FamilyMetadata)
         .filter(Family.import_id.in_(all_response_family_ids))
         .join(FamilyMetadata, FamilyMetadata.family_import_id == Family.import_id)
+        .options(
+            lazyload("*"),
+            selectinload(Family.family_documents).options(
+                lazyload("*"),
+                joinedload(FamilyDocument.physical_document).lazyload("*"),
+            ),
+            selectinload(Family.events),
+        )
         .all()
     )  # type: ignore
     db_family_lookup: Mapping[str, tuple[Family, FamilyMetadata]] = {
