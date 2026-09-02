@@ -155,7 +155,7 @@ api_cloudfront_distribution = aws.cloudfront.Distribution(
                 domain_name=search_stack.get_output("ecs_express_service_url").apply(
                     lambda url: url.removeprefix("https://")
                 ),
-                origin_id="search-apprunner",
+                origin_id="search-ecs-express",
                 custom_origin_config=aws.cloudfront.DistributionOriginCustomOriginConfigArgs(
                     http_port=80,
                     https_port=443,
