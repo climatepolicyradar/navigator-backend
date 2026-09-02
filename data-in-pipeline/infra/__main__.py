@@ -194,8 +194,12 @@ bastion_egress_to_rds = aws.ec2.SecurityGroupRule(
 cluster_name = f"{name}-{environment}-aurora-cluster"
 api_load_writer_db_user = config.require("api_load_writer_db_user")
 
-min_instances = int(config.require("aurora_min_instances"))
-max_instances: int = int(config.require("aurora_max_instances"))
+# ACU limits (Serverless v2 capacity) and instance count are configured
+# independently: previously a single config value drove both, so raising
+# the ACU ceiling would also have created more instances.
+min_acus = float(config.require("aurora_min_acus"))
+max_acus = float(config.require("aurora_max_acus"))
+num_instances = int(config.require("aurora_num_instances"))
 retention_period_days = int(config.require("aurora_retention_period_days"))
 aurora_cluster = aws.rds.Cluster(
     cluster_name,
@@ -216,8 +220,8 @@ aurora_cluster = aws.rds.Cluster(
     # FIXME: https://github.com/climatepolicyradar/navigator-backend/issues/964
     deletion_protection=False,
     serverlessv2_scaling_configuration=aws.rds.ClusterServerlessv2ScalingConfigurationArgs(
-        min_capacity=min_instances,
-        max_capacity=max_instances,
+        min_capacity=min_acus,
+        max_capacity=max_acus,
     ),
     tags=tags,
 )
@@ -233,7 +237,7 @@ aurora_instances = [
         auto_minor_version_upgrade=True,
         tags=tags,
     )
-    for i in range(max_instances)
+    for i in range(num_instances)
 ]
 
 pulumi.export(
@@ -502,14 +506,13 @@ data_in_pipeline_aurora_read_replica_db_url = aws.ssm.Parameter(
     ),
     description="URL for the load database read-replica",
     type=aws.ssm.ParameterType.STRING,
-    # FIXME: we use the instance endpoint directly as the `aurora_cluster.reader_endpoint` is not allowing us to auth against it.
-    # `aurora_cluster.reader_endpoint` is a load balancing endpoint for read replicas.
-    # We know that [0] is the CURRENT reader instance as we looked in the console.
-    # Potential bugs
-    # - re-provisioning this might not work as expected (it might)
-    # - when and if we scaling this will yield odd results as we are not using the load balancer
+    # The cluster reader endpoint follows the reader role across failovers and
+    # load-balances if readers are added. It replaces a pinned instance-0
+    # endpoint (APP-1669), which would silently point at the writer after any
+    # failover. The auth failure that motivated the pin predates IAM auth: it
+    # was the rotated-master-password issue fixed in APP-1809.
     # @see: https://linear.app/climate-policy-radar/issue/APP-1669/use-aurora-clusterreader-endpoint
-    value=aurora_instances[0].endpoint,
+    value=aurora_cluster.reader_endpoint,
 )
 data_in_pipeline_aurora_read_replica_db_name = aws.ssm.Parameter(
     "data-in-pipeline-aurora-read-replica-db-name",

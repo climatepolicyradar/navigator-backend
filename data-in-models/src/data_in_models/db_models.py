@@ -27,7 +27,7 @@ from datetime import UTC, datetime
 
 from sqlalchemy import Column
 from sqlalchemy.dialects.postgresql import JSONB
-from sqlmodel import Field, Relationship, SQLModel
+from sqlmodel import Field, Index, Relationship, SQLModel, text
 
 
 class WithDbDatetimeFields(SQLModel):
@@ -51,6 +51,13 @@ class Document(WithDbDatetimeFields, table=True):
 
     items: list["Item"] = Relationship(back_populates="document")
     labels: list["DocumentLabelRelationship"] = Relationship(back_populates="document")
+
+    __table_args__ = (
+        Index(
+            "ix_document_deprecated_slug",
+            text("(attributes ->> 'deprecated_slug')"),
+        ),
+    )
 
 
 class Label(WithDbDatetimeFields, table=True):
