@@ -29,6 +29,7 @@ from db_client.models.dfce import (
 from db_client.models.document import PhysicalDocument
 from slugify import slugify
 from sqlalchemy import event
+from sqlalchemy.exc import InvalidRequestError
 from sqlalchemy.orm import Session
 
 from app.service.search import (
@@ -327,12 +328,12 @@ def test_create_vespa_search_params(
     search_request_body = SearchRequestBody(
         query_string=query_string,
         exact_match=exact_match,
-        max_passages_per_doc=max_passages,  # type:ignore
+        max_passages_per_doc=max_passages,  # type: ignore
         family_ids=family_ids,
         document_ids=document_ids,
         keyword_filters=keyword_filters,
         year_range=year_range,
-        sort_field=sort_field,  # type:ignore
+        sort_field=sort_field,  # type: ignore
         sort_order=sort_order,
         page_size=page_size,
         offset=offset,
@@ -495,12 +496,12 @@ def test_create_browse_request_params(
     SearchRequestBody(
         query_string="",
         exact_match=exact_match,
-        max_passages_per_doc=max_passages,  # type:ignore
+        max_passages_per_doc=max_passages,  # type: ignore
         family_ids=family_ids,
         document_ids=document_ids,
         keyword_filters=keyword_filters,
         year_range=year_range,
-        sort_field=sort_field,  # type:ignore
+        sort_field=sort_field,  # type: ignore
         sort_order=sort_order,
         page_size=page_size,
         offset=offset,
@@ -1430,6 +1431,8 @@ def test_get_rds_data_for_vespa_response_does_not_eager_join_unused_collections(
 
     Family hydration must only load what the response reads: documents (status
     and title) and events (published_date), each via its own IN (...) query.
+    Anything else is raiseload, so a stray access is a hard error rather than
+    a silent lazy SELECT per object.
     """
     fam_spec = replace(
         _FAM_SPEC_0,
@@ -1500,10 +1503,11 @@ def test_get_rds_data_for_vespa_response_does_not_eager_join_unused_collections(
     # joined many-to-one for the title) and events. Nothing else.
     expected_tables = {"family", "family_document", "family_event"}
     assert len(statements) == len(expected_tables), statements
-    by_table = {
-        re.search(r"\nFROM (\w+)", statement).group(1): statement  # type: ignore
-        for statement in statements
-    }
+    by_table = {}
+    for statement in statements:
+        match = re.search(r"\nFROM (\w+)", statement)
+        assert match is not None, statement
+        by_table[match.group(1)] = statement
     assert set(by_table) == expected_tables
     assert "LEFT OUTER JOIN" not in by_table["family"]
     assert "JOIN physical_document " in by_table["family_document"]
@@ -1512,3 +1516,9 @@ def test_get_rds_data_for_vespa_response_does_not_eager_join_unused_collections(
     unused_tables = r"\b(?:JOIN|FROM)\s+(?:slug|physical_document_language|language)\b"
     for statement in statements:
         assert re.search(unused_tables, statement, re.IGNORECASE) is None, statement
+
+    # Touching an unloaded collection is a hard error, not a lazy SELECT.
+    with pytest.raises(InvalidRequestError, match="lazy='raise'"):
+        _ = db_family.slugs
+    with pytest.raises(InvalidRequestError, match="lazy='raise'"):
+        _ = next(iter(db_family_document_lookup.values())).slugs

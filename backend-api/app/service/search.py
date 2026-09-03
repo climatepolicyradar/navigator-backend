@@ -15,7 +15,7 @@ from cpr_sdk.models.search import filter_fields
 from cpr_sdk.search_adaptors import VespaSearchAdapter
 from db_client.models.dfce import Family, FamilyDocument, FamilyMetadata
 from db_client.models.dfce.family import FamilyStatus
-from sqlalchemy.orm import Session, joinedload, lazyload, selectinload
+from sqlalchemy.orm import Session, joinedload, raiseload, selectinload
 
 from app.clients.aws.client import S3Client
 from app.clients.aws.s3_document import S3Document
@@ -303,16 +303,25 @@ def _get_rds_data_for_vespa_response(db: Session, all_response_family_ids: list[
     #
     # The response only reads documents (status + title) and events
     # (published_date), so load exactly those, each with its own IN (...)
-    # query, and leave everything else lazy (and untouched).
+    # query. Everything else is marked raiseload so that a future access
+    # fails loudly in tests instead of silently firing a SELECT per object
+    # in production.
+    #
+    # Note the raise marker is stored per instance and lives for the rest of
+    # the session, not just this query. Later code in the same request that
+    # gets these same Family/FamilyDocument objects back and touches a
+    # collection its own query did not eager-load (e.g. Family.geographies)
+    # will raise. The CSV download path is safe because its FamilyDocument
+    # query eager-loads what it reads, which repopulates these instances.
     family_and_family_metadata: Sequence[tuple[Family, FamilyMetadata]] = (
         db.query(Family, FamilyMetadata)
         .filter(Family.import_id.in_(all_response_family_ids))
         .join(FamilyMetadata, FamilyMetadata.family_import_id == Family.import_id)
         .options(
-            lazyload("*"),
+            raiseload("*"),
             selectinload(Family.family_documents).options(
-                lazyload("*"),
-                joinedload(FamilyDocument.physical_document).lazyload("*"),
+                raiseload("*"),
+                joinedload(FamilyDocument.physical_document).raiseload("*"),
             ),
             selectinload(Family.events),
         )
