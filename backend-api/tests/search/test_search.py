@@ -1,5 +1,6 @@
 import random
-from dataclasses import dataclass
+import re
+from dataclasses import dataclass, replace
 from datetime import datetime
 from typing import Mapping, Sequence, Union
 
@@ -21,15 +22,20 @@ from db_client.models.dfce import (
     FamilyEvent,
     FamilyGeography,
     FamilyMetadata,
+    FamilyStatus,
     Geography,
+    Slug,
 )
 from db_client.models.document import PhysicalDocument
 from slugify import slugify
+from sqlalchemy import event
+from sqlalchemy.exc import InvalidRequestError
 from sqlalchemy.orm import Session
 
 from app.service.search import (
     SearchRequestBody,
     _convert_filters,
+    _get_rds_data_for_vespa_response,
     create_vespa_search_params,
     make_search_request,
     process_vespa_search_response,
@@ -490,12 +496,12 @@ def test_create_browse_request_params(
     SearchRequestBody(
         query_string="",
         exact_match=exact_match,
-        max_passages_per_doc=max_passages,  # type:ignore
+        max_passages_per_doc=max_passages,  # type: ignore
         family_ids=family_ids,
         document_ids=document_ids,
         keyword_filters=keyword_filters,
         year_range=year_range,
-        sort_field=sort_field,  # type:ignore
+        sort_field=sort_field,  # type: ignore
         sort_order=sort_order,
         page_size=page_size,
         offset=offset,
@@ -1409,3 +1415,110 @@ def test_process_vespa_search_response_page_ordering_regression(
     assert (
         actual_content == expected_content
     ), f"Expected content {expected_content}, got {actual_content}"
+
+
+@pytest.mark.search
+def test_get_rds_data_for_vespa_response_does_not_eager_join_unused_collections(
+    data_db: Session,
+):
+    """
+    Regression test for search requests hitting the Postgres statement timeout.
+
+    The db-client Family model eager-joins documents, slugs, events, document
+    slugs and document languages into one statement by default. For a family
+    with many documents and events that is a docs x events cartesian product,
+    and hydrating a page containing such a family times out.
+
+    Family hydration must only load what the response reads: documents (status
+    and title) and events (published_date), each via its own IN (...) query.
+    Anything else is raiseload, so a stray access is a hard error rather than
+    a silent lazy SELECT per object.
+    """
+    fam_spec = replace(
+        _FAM_SPEC_0,
+        family_import_id="CCLW.family.900.0",
+        family_name="Family name 900",
+        family_document_count=3,
+    )
+    populate_data_db(data_db, fam_specs=[fam_spec])
+
+    # Add extra events and slugs so that any cartesian product would show up
+    # as repeated rows if the eager joins were still in place.
+    for i in range(1, 5):
+        data_db.add(
+            FamilyEvent(
+                import_id=f"CCLW.event.900.{i}",
+                title=f"Amended {i}",
+                date=datetime.fromisoformat(f"2024-0{i}-01"),
+                event_type_name="Amended",
+                family_import_id=fam_spec.family_import_id,
+                family_document_import_id=None,
+                status=EventStatus.OK,
+                valid_metadata={
+                    "event_type": ["Amended"],
+                    "datetime_event_name": ["Passed/Approved"],
+                },
+            )
+        )
+    data_db.add(Slug(name="family-900", family_import_id=fam_spec.family_import_id))
+    for i in range(1, fam_spec.family_document_count + 1):
+        for j in range(1, 3):
+            data_db.add(
+                Slug(
+                    name=f"family-900-doc-{i}-{j}",
+                    family_document_import_id=f"{fam_spec.family_import_id}.{i}",
+                )
+            )
+    data_db.commit()
+
+    statements: list[str] = []
+
+    def _capture(conn, cursor, statement, *_):
+        statements.append(statement)
+
+    engine = data_db.get_bind().engine
+    event.listen(engine, "before_cursor_execute", _capture)
+    try:
+        db_family_lookup, db_family_document_lookup = _get_rds_data_for_vespa_response(
+            data_db, [fam_spec.family_import_id]
+        )
+        # Read everything the response builder reads, inside the capture
+        # window, so that any lazy load it triggers is caught too.
+        db_family, _ = db_family_lookup[fam_spec.family_import_id]
+        family_status = db_family.family_status
+        published_date = db_family.published_date
+        titles = sorted(
+            fd.physical_document.title for fd in db_family_document_lookup.values()
+        )
+    finally:
+        event.remove(engine, "before_cursor_execute", _capture)
+
+    # Behaviour is unchanged
+    assert family_status == FamilyStatus.PUBLISHED
+    assert published_date is not None
+    assert published_date.strftime("%Y-%m-%d") == fam_spec.family_ts
+    assert titles == [f"{fam_spec.family_name} {i}" for i in range(1, 4)]
+
+    # One statement each for families, documents (with physical document
+    # joined many-to-one for the title) and events. Nothing else.
+    expected_tables = {"family", "family_document", "family_event"}
+    assert len(statements) == len(expected_tables), statements
+    by_table = {}
+    for statement in statements:
+        match = re.search(r"\nFROM (\w+)", statement)
+        assert match is not None, statement
+        by_table[match.group(1)] = statement
+    assert set(by_table) == expected_tables
+    assert "LEFT OUTER JOIN" not in by_table["family"]
+    assert "JOIN physical_document " in by_table["family_document"]
+
+    # The unused one-to-many collections are never touched.
+    unused_tables = r"\b(?:JOIN|FROM)\s+(?:slug|physical_document_language|language)\b"
+    for statement in statements:
+        assert re.search(unused_tables, statement, re.IGNORECASE) is None, statement
+
+    # Touching an unloaded collection is a hard error, not a lazy SELECT.
+    with pytest.raises(InvalidRequestError, match="lazy='raise'"):
+        _ = db_family.slugs
+    with pytest.raises(InvalidRequestError, match="lazy='raise'"):
+        _ = next(iter(db_family_document_lookup.values())).slugs
