@@ -12,6 +12,13 @@ permissions:
   id-token: write
   contents: read
 
+# One rollout at a time. Two merges in quick succession would otherwise race
+# two ECS updates, and the verify step's "most recent deployment" lookup could
+# pick up the other run's.
+concurrency:
+  group: deploy-backend-api-staging
+  cancel-in-progress: false
+
 jobs:
   deploy-backend-api-staging:
     defaults:
@@ -21,8 +28,14 @@ jobs:
     runs-on: ubuntu-latest
     environment:
       name: staging
+    env:
+      # In a workflow_run job, github.sha is main's head at trigger time, not
+      # the commit CI just tested. Build and deploy the tested one.
+      DEPLOY_SHA: ${{ github.event.workflow_run.head_sha || github.sha }}
     steps:
       - uses: actions/checkout@v7
+        with:
+          ref: ${{ env.DEPLOY_SHA }}
       - run: make build
 
       - name: Configure AWS credentials (staging)
@@ -53,8 +66,8 @@ jobs:
       - id: slack_message
         working-directory: ${{ github.workspace }}
         run: |
-          COMMIT_URL="https://github.com/${{ github.repository }}/commit/${{ github.sha }}"
-          COMMIT_SHORT=$(echo "${{ github.sha }}" | cut -c1-7)
+          COMMIT_URL="https://github.com/${{ github.repository }}/commit/${DEPLOY_SHA}"
+          COMMIT_SHORT="${DEPLOY_SHA:0:7}"
           if [ -n "${{ steps.pr_data.outputs.pr_link }}" ]; then
             PR_URL="https://github.com/${{ github.repository }}/pull/${{ steps.pr_data.outputs.pr_number }}"
             PR_NUM="${{ steps.pr_data.outputs.pr_number }}"
@@ -74,7 +87,7 @@ jobs:
         id: build-image
         env:
           ECR_REGISTRY: ${{ secrets.DOCKER_REGISTRY }}
-          IMAGE_TAG: ${{ github.sha }}
+          IMAGE_TAG: ${{ env.DEPLOY_SHA }}
           AWS_REGION: eu-west-1
           ECR_REPOSITORY: navigator-backend
         run: |
@@ -83,3 +96,65 @@ jobs:
           echo "image=$ECR_REGISTRY/$ECR_REPOSITORY:$IMAGE_TAG" >> $GITHUB_OUTPUT
           docker tag navigator-backend $ECR_REGISTRY/$ECR_REPOSITORY:latest
           docker push $ECR_REGISTRY/$ECR_REPOSITORY:latest
+
+      # Pushing to ECR no longer deploys anything (that was App Runner's
+      # auto-deploy); the service has to be told about the new image. The
+      # service itself is created by the navigator-infra backend stack; this
+      # only swaps the image on the existing one.
+      # @see: https://github.com/marketplace/actions/amazon-ecs-deploy-express-service-action-for-github-actions
+      - name: Deploy to ECS Express (staging)
+        id: deploy
+        uses: aws-actions/amazon-ecs-deploy-express-service@v1
+        with:
+          cluster: api-services-staging
+          service-name: backend-api-staging
+          image: ${{ steps.build-image.outputs.image }}
+          execution-role-arn: arn:aws:iam::${{ secrets.AWS_ACCOUNT_ID }}:role/api-services-staging-task-execution-role
+          infrastructure-role-arn: arn:aws:iam::${{ secrets.AWS_ACCOUNT_ID }}:role/api-services-staging-infrastructure-role
+
+      # The action above returns success when its 15-minute poll times out
+      # (it only warns) and, at v1.2.2, does not treat ROLLBACK_* as terminal.
+      # This re-queries the most recent deployment and fails the job unless it
+      # actually reached SUCCESSFUL. Same step as deploy-ecs-service.yml.
+      - name: Verify deployment outcome
+        env:
+          SERVICE_ARN: ${{ steps.deploy.outputs.service-arn }}
+        run: |
+          set -euo pipefail
+          if [[ -z "${SERVICE_ARN}" ]]; then
+            echo "::error::deploy step did not emit a service-arn output"
+            exit 1
+          fi
+          DEPLOY_ARN=$(aws ecs list-service-deployments \
+            --cluster api-services-staging \
+            --service "${SERVICE_ARN}" \
+            --query 'serviceDeployments[0].serviceDeploymentArn' \
+            --output text)
+          if [[ -z "${DEPLOY_ARN}" || "${DEPLOY_ARN}" == "None" ]]; then
+            echo "::error::Could not find a service deployment for ${SERVICE_ARN}"
+            exit 1
+          fi
+          STATUS=$(aws ecs describe-service-deployments \
+            --service-deployment-arns "${DEPLOY_ARN}" \
+            --query 'serviceDeployments[0].status' \
+            --output text)
+          echo "Deployment ${DEPLOY_ARN} final status: ${STATUS}"
+          if [[ "${STATUS}" != "SUCCESSFUL" ]]; then
+            echo "::error::Deployment did not succeed (status=${STATUS})"
+            exit 1
+          fi
+
+      - name: Report failure to Slack
+        if: failure()
+        working-directory: ${{ github.workspace }}
+        run: |
+          RUN_URL="https://github.com/${{ github.repository }}/actions/runs/${{ github.run_id }}"
+          MESSAGE="❌ Deploying ${DEPLOY_SHA:0:7} to the staging *backend-api* failed (<${RUN_URL}|logs>)"
+          jq -n --arg msg "$MESSAGE" '{text: $msg, mrkdwn: true}' > slack-payload.json
+
+      - uses: slackapi/slack-github-action@v4.0.0
+        if: failure()
+        with:
+          webhook: ${{ secrets.SLACK_WEBHOOK_URL_STAGING_UPDATES_CHANNEL }}
+          webhook-type: incoming-webhook
+          payload-file-path: slack-payload.json
