@@ -130,8 +130,15 @@ app.add_middleware(
     allow_headers=["*"],
 )
 
-# add health endpoint.
-app.add_api_route("/health", health([is_database_online]), include_in_schema=False)
+# add health endpoints.
+# "/health" is a shallow check: it reports whether this process can serve a
+# request, and deliberately does not touch Postgres or Vespa. It is the target
+# of the load balancer and container health checks, which should only replace a
+# task when the task itself is unable to serve traffic.
+app.add_api_route("/health", health([]), include_in_schema=False)
+# "/health/deep" retains the dependency checks, for callers that want to know
+# whether Postgres and Vespa are reachable from this task.
+app.add_api_route("/health/deep", health([is_database_online]), include_in_schema=False)
 
 
 @app.get("/api/v1", include_in_schema=False)
