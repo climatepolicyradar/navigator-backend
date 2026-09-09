@@ -1519,6 +1519,8 @@ def _transform_document_urls(navigator_document):
 
 
 # The capitalisation of these keys is irregular as it is irregular in the source data
+# This is a controlled vocabulary from the _document.type field in the families toxonomies
+# @see: https://github.com/climatepolicyradar/data-migrations/blob/main/taxonomies
 _document_type_to_entity_type_map: dict[str, list[Label]] = {
     "Corporate voluntary report": [corporate_voluntary_report],
     "Corporate regulatory filing": [corporate_voluntary_filing],
@@ -1536,7 +1538,7 @@ _document_type_to_entity_type_map: dict[str, list[Label]] = {
     "Nationally Determined Contribution": [nationally_determined_contribution],
     "National Adaptation Plan": [national_adaptation_plan],
     "Biennial Transparency Report": [biennial_transparency_report],
-    "Long-term Low-emission Development Strategy": [
+    "Long-term Low-Emission Development Strategy": [
         long_term_low_emission_development_strategy
     ],
     "Biennial Update Report": [biennial_update_report],
