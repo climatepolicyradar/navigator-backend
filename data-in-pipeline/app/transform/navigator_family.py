@@ -1473,31 +1473,23 @@ def _transform_navigator_family(
     """
     # THOUGHTS
     #
-    # BLOCKER: can't just delete this, the attribute is load-bearing for the FE.
+    # BLOCKER: load-bearing for the FE and for snowflake partner exports, can't
+    # just delete.
     #
-    # Process Flow:
-    #   DIP -> Snowflake -> Vespa + Aurora
+    # Vespa is NOT a concern here - confirmed in the search repo that indexing
+    # doesn't filter on attributes.status at all, so that's out of scope.
     #
-    # Published in this context means the document ran through the pipeline
-    # and got published in RDS (no longer means it's in vespa at all as that's post snowflake).
+    # Traced source: doc.document_status -> connectors.py -> families-api ->
+    # FamilyDocument.document_status in RDS, i.e. exactly what admin.py's
+    # /processed write-back sets. That's the direct line into data-in-api's
+    # `status` attribute, which the FE schema requires (DISPLAY_ALLOWED_STATUSES)
+    # and which snowflake's cclw/mcf/cpr/ccc export models also hard-filter on
+    # (document_status = 'published') - both read the same relayed value, not
+    # anything independently derived downstream.
     #
-    # Traced source: doc.document_status here comes straight off
-    # NavigatorDocument.document_status (extract/connectors.py), which is
-    # populated from families-api, i.e. FamilyDocument.document_status in RDS -
-    # the exact field the admin.py /processed endpoint (the write-back) sets.
-    # So this is the direct line from "pipeline write-back" to the data-in-api
-    # `status` attribute the FE hard-depends on (DocumentAttributesSchema /
-    # DISPLAY_ALLOWED_STATUSES). Removing the write-back with nothing else
-    # changed means this either goes stale or silently stops being set.
-    #
-    # If we want to get the document status we should infer it at the snowflake level.
-    # Perhaps we make some changes in the data lake to infer the document status
-    # attribute for data-in documents in the snowflake models project.
-    # This matches the ticket's Definition of Done: "PUBLISHED status update is
-    # still supported in snowflake / data-in-api via a route not utilising RDS / DIP."
-    #
-    # If so, this whole block of code disappears, of course we need to check the downstream
-    # uses of the attribute whilst we're still depending upon this pipeline.
+    # Fix: infer "published" at the snowflake level instead of relaying RDS,
+    # per the ticket's DoD. Then this block disappears - but check downstream
+    # attribute usage first.
     contains_published_document = [
         doc
         for doc in navigator_family.documents
