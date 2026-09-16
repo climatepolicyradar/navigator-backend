@@ -115,8 +115,14 @@ def generate_pipeline_ingest_input(db=Depends(get_db)) -> Sequence[DocumentParse
     # TODO: Revert to raise a ValueError when the issue is resolved
     database_doc_count = (
         db.query(FamilyDocument)
-        .filter(FamilyDocument.document_status != DocumentStatus.DELETED)
-        .count()
+        # THOUGHTS
+        #
+        # Context(removing publish write back):
+        # Already only filtering deleted so no dependency upon the write back.
+        #
+        # Context(relying on vespa to drive results)
+        # Unrelated to search, this is just exporting non-deleted docs.
+        .filter(FamilyDocument.document_status != DocumentStatus.DELETED).count()
     )
     if len(documents) > database_doc_count:
         _LOGGER.warning(

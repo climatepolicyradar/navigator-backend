@@ -71,6 +71,20 @@ def browse_rds_families(db: Session, req: BrowseArgs) -> tuple[int, SearchRespon
     # Avoid using calculated family_status field
     published_families = (
         db.query(FamilyDocument.family_import_id)
+        # THOUGHTS
+        #
+        # BLOCKER: this is the one place "trust vespa" doesn't cover us.
+        #
+        # Context(removing publish write back):
+        # Would need to evaluate the risk of returning CREATED docs as well here.
+        # Unlike download.py/document.py, this path never cross-checks vespa at
+        # all, so a CREATED doc would surface directly in browse results with
+        # no other gate catching it - not just a wider window on an existing
+        # risk, but a genuinely new one.
+        #
+        # Context(relying on vespa to drive results):
+        # n/a (only queries rds) - would need to start querying vespa here, or
+        # accept CREATED docs showing in browse until publish/indexing catches up.
         .filter(FamilyDocument.document_status == DocumentStatus.PUBLISHED)
         .distinct()
         .subquery()

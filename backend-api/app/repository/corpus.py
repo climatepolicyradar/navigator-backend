@@ -21,6 +21,14 @@ def get_total_families_per_corpus(db: Session, corpus_import_id: str) -> int:
     # Avoid using calculated family_status field
     published_families = (
         db.query(FamilyDocument.family_import_id)
+        # THOUGHTS
+        #
+        # Context(removing publish write back):
+        # This is just a count, if we stopped writing back and only filtered deleted docs,
+        # we just take a higher number and make the assumption that docs were published downstream.
+        #
+        # Context(relying on vespa to drive results)
+        # n/a
         .filter(FamilyDocument.document_status == DocumentStatus.PUBLISHED)
         .distinct()
         .subquery()
@@ -49,6 +57,14 @@ def get_family_count_by_category_per_corpus(db: Session, corpus_import_id: str):
     # Avoid using calculated family_status field
     published_families = (
         db.query(FamilyDocument.family_import_id)
+        # THOUGHTS
+        #
+        # Context(removing publish write back):
+        # This is just a count, if we stopped writing back and only filtered deleted docs,
+        # we just take a higher number and make the assumption that docs were published downstream.
+        #
+        # Context(relying on vespa to drive results)
+        # n/a
         .filter(FamilyDocument.document_status == DocumentStatus.PUBLISHED)
         .distinct()
         .subquery()

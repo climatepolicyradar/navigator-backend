@@ -27,6 +27,14 @@ def count_families_per_category_per_corpus(
     # Avoid using calculated family_status field for performance reasons
     published_families = (
         db.query(FamilyDocument.family_import_id)
+        # THOUGHTS
+        #
+        # Context(removing publish write back):
+        # This is just a count, if we stopped writing back and only filtered deleted docs,
+        # we just take a higher number and make the assumption that docs were published downstream.
+        #
+        # Context(relying on vespa to drive results)
+        # n/a
         .filter(FamilyDocument.document_status == DocumentStatus.PUBLISHED)
         .distinct()
         .subquery()
