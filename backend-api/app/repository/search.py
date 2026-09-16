@@ -73,18 +73,18 @@ def browse_rds_families(db: Session, req: BrowseArgs) -> tuple[int, SearchRespon
         db.query(FamilyDocument.family_import_id)
         # THOUGHTS
         #
-        # BLOCKER: this is the one place "trust vespa" doesn't cover us.
-        #
         # Context(removing publish write back):
-        # Would need to evaluate the risk of returning CREATED docs as well here.
-        # Unlike download.py/document.py, this path never cross-checks vespa at
-        # all, so a CREATED doc would surface directly in browse results with
-        # no other gate catching it - not just a wider window on an existing
-        # risk, but a genuinely new one.
+        # Only used by the search_by_geography function in summaries.py, not main
+        # search, so blast radius is small if we add CREATED docs here as well.
         #
         # Context(relying on vespa to drive results):
-        # n/a (only queries rds) - would need to start querying vespa here, or
-        # accept CREATED docs showing in browse until publish/indexing catches up.
+        # n/a (only queries rds)
+        #
+        # Also, we run the published action today at the end of the processing pipeline.
+        # So we still have a massive window of docs not being in vespa but published.
+        # Imagine dbt run fails overnight that could easily be a day or 2 that we have
+        # docs in the PUBLISHED status that aren't in vespa.
+        # What about docs that fail indexing? Even longer.
         .filter(FamilyDocument.document_status == DocumentStatus.PUBLISHED)
         .distinct()
         .subquery()
