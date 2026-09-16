@@ -105,7 +105,7 @@ def _get_extra_csv_info(
         .filter(Slug.name.in_(all_family_slugs))
         .join(Family, Family.import_id == Slug.family_import_id)
         .join(FamilyDocument, Family.import_id == FamilyDocument.family_import_id)
-        .filter(FamilyDocument.document_status == DocumentStatus.PUBLISHED)
+        .filter(FamilyDocument.document_status != DocumentStatus.DELETED)
         .all()
     )
     # For now there is max one collection per family

@@ -17,11 +17,11 @@ def get_total_families_per_corpus(db: Session, corpus_import_id: str) -> int:
     :param corpus_import_id: The import ID of the corpus
     :return: The total number of families per corpus
     """
-    # Subquery to find families with at least one published document
+    # Subquery to find families with at least one non-deleted document.
     # Avoid using calculated family_status field
     published_families = (
         db.query(FamilyDocument.family_import_id)
-        .filter(FamilyDocument.document_status == DocumentStatus.PUBLISHED)
+        .filter(FamilyDocument.document_status != DocumentStatus.DELETED)
         .distinct()
         .subquery()
     )
@@ -45,11 +45,11 @@ def get_family_count_by_category_per_corpus(db: Session, corpus_import_id: str):
     :param corpus_import_id: The import ID of the corpus
     :return: A list of tuples where each tuple contains a family category and its count
     """
-    # Subquery to find families with at least one published document
+    # Subquery to find families with at least one non-deleted document.
     # Avoid using calculated family_status field
     published_families = (
         db.query(FamilyDocument.family_import_id)
-        .filter(FamilyDocument.document_status == DocumentStatus.PUBLISHED)
+        .filter(FamilyDocument.document_status != DocumentStatus.DELETED)
         .distinct()
         .subquery()
     )

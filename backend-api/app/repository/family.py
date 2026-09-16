@@ -23,11 +23,11 @@ def count_families_per_category_per_corpus(
     :param allowed_corpora_ids: The import IDs of the corpora
     :return: A list of tuples where each tuple contains a family category and its count
     """
-    # Subquery to find families with at least one published document
+    # Subquery to find families with at least one non-deleted document.
     # Avoid using calculated family_status field for performance reasons
     published_families = (
         db.query(FamilyDocument.family_import_id)
-        .filter(FamilyDocument.document_status == DocumentStatus.PUBLISHED)
+        .filter(FamilyDocument.document_status != DocumentStatus.DELETED)
         .distinct()
         .subquery()
     )
@@ -55,11 +55,11 @@ def count_families_per_category_per_corpus_latest_ingest_cycle(
     :param allowed_corpora_ids: The import IDs of the corpora
     :return: A list of tuples where each tuple contains a family category and its count
     """
-    # Subquery to find families with at least one published document
+    # Subquery to find families with at least one non-deleted document.
     # Avoid using calculated family_status field for performance reasons
     published_families = (
         db.query(FamilyDocument.family_import_id)
-        .filter(FamilyDocument.document_status == DocumentStatus.PUBLISHED)
+        .filter(FamilyDocument.document_status != DocumentStatus.DELETED)
         .distinct()
         .subquery()
     )
