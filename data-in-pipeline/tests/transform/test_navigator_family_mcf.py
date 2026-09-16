@@ -635,7 +635,6 @@ def test_transform_navigator_family_with_multilateral_climate_fund_project(
             "project_co_financing_usd": 100000,
             "project_fund_spend_usd": 250000,
             "project_url": "https://www.cif.org/projects",
-            "status": "published",
         },
     )
     assert_model_list_equality(

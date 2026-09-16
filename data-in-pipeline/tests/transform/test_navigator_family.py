@@ -735,7 +735,6 @@ def test_transform_navigator_family_with_single_matching_document(
             "deprecated_slug": "family-slug",
             "published_date": "2020-01-01T00:00:00Z",
             "last_updated_date": "2020-01-01T00:00:00Z",
-            "status": "published",
         },
     )
     assert_model_list_equality(
@@ -1522,7 +1521,6 @@ def test_transform_navigator_family_with_published_and_unpublished_documents():
         ],
         attributes={
             "deprecated_slug": "family-with-different-document-statuses-slug",
-            "status": "published",
         },
     )
     assert_model_list_equality(
@@ -2143,7 +2141,6 @@ def test_transform_navigator_family_and_document_with_domain_metadata(
             "deprecated_slug": "family-slug",
             "published_date": "2020-01-01T00:00:00Z",
             "last_updated_date": "2020-01-01T00:00:00Z",
-            "status": "published",
         },
         documents=[
             DocumentRelationship(

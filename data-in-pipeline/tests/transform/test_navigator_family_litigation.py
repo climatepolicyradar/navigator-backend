@@ -492,7 +492,6 @@ def test_transform_navigator_family_with_litigation_corpus_type(
             "identifier::provider_id": "123456",
             "published_date": "2020-01-0100:00:00Z",
             "last_updated_date": "2020-01-0100:00:00Z",
-            "status": "published",
             "core_object": "Core Object 123",
             "original_case_name": "Original case name",
             "case_status": "Decided",
@@ -797,7 +796,6 @@ def test_transform_navigator_family_with_litigation_corpus_type_and_litigation_c
             "deprecated_slug": "litigation-family-slug",
             "published_date": "2020-01-0100:00:00Z",
             "last_updated_date": "2020-01-0100:00:00Z",
-            "status": "published",
         },
     )
     assert_model_list_equality(
