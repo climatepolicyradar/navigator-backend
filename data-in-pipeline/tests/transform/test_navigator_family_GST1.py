@@ -408,7 +408,6 @@ def test_transform_navigator_family_UNFCCC_party_submission_to_GST1_label():
         ],
         attributes={
             "deprecated_slug": "family-with-different-document-statuses-slug",
-            "status": "published",
         },
     )
     assert_model_list_equality(
@@ -837,7 +836,6 @@ def test_transform_navigator_family_UNFCCC_non_party_submission_to_GST1_label():
         ],
         attributes={
             "deprecated_slug": "family-with-different-document-statuses-slug",
-            "status": "published",
         },
     )
     assert_model_list_equality(

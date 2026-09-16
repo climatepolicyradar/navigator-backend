@@ -19,7 +19,6 @@ from app.extract.connectors import (
     LitigationDocumentStatus,
     NavigatorCollection,
     NavigatorDocument,
-    NavigatorDocumentStatus,
     NavigatorFamily,
 )
 from app.geographies import (
@@ -1457,19 +1456,13 @@ def _transform_navigator_family(
     if navigator_family.last_updated_date:
         attributes["last_updated_date"] = navigator_family.last_updated_date
 
-    """This field defines whether a document is available to be searched in Vespa.
-    It is still used to filter out un-published or deleted documents in the frontend.
-    We are mapping it onto principal documents that have at least one related document
-    that has a 'PUBLISHED' status to keep the data-in-api clean. For simplicity, we do not
-    add a status if the family cannot be considered published.
-    """
-    contains_published_document = [
-        doc
-        for doc in navigator_family.documents
-        if doc.document_status == NavigatorDocumentStatus.PUBLISHED
-    ]
-    if navigator_family.documents and contains_published_document:
-        attributes["status"] = NavigatorDocumentStatus.PUBLISHED.value
+    # NOTE(ENRI-1632/ENRI-1713): `attributes["status"]` used to be set here,
+    # relayed from NavigatorDocument.document_status (itself sourced from
+    # RDS's FamilyDocument.document_status via families-api). That RDS
+    # write-back is being retired - see ENRI-1632. data-in-api now derives
+    # `status` at the Snowflake layer instead (ENRI-1712), from a signal
+    # computed off actual pipeline data rather than relayed from RDS, so it
+    # no longer needs to be set here.
 
     labels = (
         labels
@@ -1745,8 +1738,19 @@ def _transform_navigator_document(
     if navigator_document.md5_sum:
         attributes["md5_sum"] = navigator_document.md5_sum
 
-    """This field defines whether a document is available to be searched in Vespa.
-    It is still used to filter out un-published or deleted documents in the frontend."""
+    # NOTE(ENRI-1632/ENRI-1713): found while implementing this ticket - this is
+    # a SECOND, separate `attributes["status"]` dependency on RDS-derived
+    # document_status, distinct from the family-level one already removed
+    # above. Unlike that one (published-only, family-level), this passes
+    # through document_status verbatim (created/published/deleted/
+    # awaiting_source_file) for every individual document, and is almost
+    # certainly what the FE's DocumentAttributesSchema actually reads day to
+    # day. Left untouched here deliberately: hundreds of existing test
+    # assertions across tests/transform/ depend on this exact passthrough
+    # behaviour, and swapping it for the Snowflake-derived signal is a much
+    # bigger, more central change than the ticket as originally scoped
+    # assumed. Needs to be folded into ENRI-1713 (or split out) with its own
+    # pass over the test suite, not done blind in this template PR.
     attributes["status"] = navigator_document.document_status.value
 
     """Dates"""
