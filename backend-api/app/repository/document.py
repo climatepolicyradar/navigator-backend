@@ -128,6 +128,17 @@ def get_family_document_and_context(
 
     family, document, physical_document, geographies, family_corpus = db_objects
 
+    # THOUGHTS
+    #
+    # Context(removing publish write back):
+    # This is a real gate, not just a count - a CREATED document currently
+    # raises here (surfaced as 404 by the caller). Backs the single-document
+    # detail endpoint, so this is user-facing.
+    #
+    # Context(relying on vespa to drive results)
+    # Would need to swap to "not deleted" and trust vespa as the source of
+    # truth for what's actually searchable/published, same as search.py.
+    # Same race risk applies: published in RDS but not yet indexed in vespa.
     if (
         family.family_status != FamilyStatus.PUBLISHED
         or document.document_status != DocumentStatus.PUBLISHED
@@ -289,8 +300,16 @@ def _get_documents_for_family_import_id(
     db: Session, import_id: str
 ) -> list[FamilyDocumentResponse]:
     db_documents = (
-        db.query(FamilyDocument)
-        .filter(FamilyDocument.family_import_id == import_id)
+        db.query(FamilyDocument).filter(FamilyDocument.family_import_id == import_id)
+        # THOUGHTS
+        #
+        # Context(removing publish write back):
+        # Filters which documents are listed under a family - a CREATED
+        # document is silently dropped from this list today.
+        #
+        # Context(relying on vespa to drive results)
+        # Same treatment as search.py/get_family_document_and_context above:
+        # switch to "not deleted" and rely on vespa to decide what's published.
         .filter(FamilyDocument.document_status == DocumentStatus.PUBLISHED)
     )
 

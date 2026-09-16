@@ -45,6 +45,13 @@ def update_document_status(
             status_code=status.HTTP_422_UNPROCESSABLE_ENTITY,
         )
 
+    # THOUGHTS
+    #
+    # Context(removing publish write back):
+    # This is the very endpoint we're looking to delete, it's used for updating the status.
+    #
+    # Context(relying on vespa to drive results)
+    # n/a
     if family_document.document_status == DocumentStatus.CREATED:
         family_document.document_status = cast(Column, DocumentStatus.PUBLISHED)
         _LOGGER.info(

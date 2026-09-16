@@ -105,6 +105,10 @@ def _get_extra_csv_info(
         .filter(Slug.name.in_(all_family_slugs))
         .join(Family, Family.import_id == Slug.family_import_id)
         .join(FamilyDocument, Family.import_id == FamilyDocument.family_import_id)
+        # THOUGHTS
+        #
+        # Has this been replaced by the snowflake data download entirely now?
+        # Wondering whether this whole module can be removed.
         .filter(FamilyDocument.document_status == DocumentStatus.PUBLISHED)
         .all()
     )

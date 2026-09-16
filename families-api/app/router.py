@@ -213,6 +213,13 @@ def read_document(*, session: Session = Depends(get_session), document_id: str):
     if document is None:
         raise HTTPException(status_code=404, detail="Not found")
 
+    # THOUGHTS
+    #
+    # Context(removing publish write back):
+    # This only filters out deleted docs so doesn't have a dependency on the write back.
+    #
+    # Context(relying on vespa to drive results)
+    # This router is tied to postgres entirely so would have to be re-implemented.
     if document.document_status == FamilyDocumentStatus.DELETED:
         raise HTTPException(status_code=410, detail="Gone")
 
@@ -312,6 +319,13 @@ def read_family(
         raise HTTPException(status_code=404, detail="Not found")
 
     if exclude_deleted:
+        # THOUGHTS
+        #
+        # Context(removing publish write back):
+        # This only filters out deleted docs so doesn't have a dependency on the write back.
+        #
+        # Context(relying on vespa to drive results)
+        # This router is tied to postgres entirely so would have to be re-implemented.
         active_family_documents = [
             document
             for document in family.family_documents

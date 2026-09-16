@@ -635,6 +635,14 @@ def _transform_litigation_events(data: NavigatorFamily) -> list[Document]:
         if event.metadata["action_taken"]:
             attributes["action_taken"] = event.metadata["action_taken"][0]
 
+        # THOUGHTS
+        #
+        # Context(removing publish write back):
+        # Status here looks like a placeholder which is hardcoded so not dependent
+        # upon the write back.
+        #
+        # Context(relying on vespa to drive results)
+        # This is an event label within the data-in source so not linked to prod vespa.
         attributes["status"] = LitigationDocumentStatus.AWAITING_SOURCE_FILE.value
 
         labels = labels + _category_label(data) + _deprecated_category_label(data)
@@ -1463,6 +1471,25 @@ def _transform_navigator_family(
     that has a 'PUBLISHED' status to keep the data-in-api clean. For simplicity, we do not
     add a status if the family cannot be considered published.
     """
+    # THOUGHTS
+    #
+    # BLOCKER: load-bearing for the FE and for snowflake partner exports, can't
+    # just delete.
+    #
+    # Vespa is NOT a concern here - confirmed in the search repo that indexing
+    # doesn't filter on attributes.status at all, so that's out of scope.
+    #
+    # Traced source: doc.document_status -> connectors.py -> families-api ->
+    # FamilyDocument.document_status in RDS, i.e. exactly what admin.py's
+    # /processed write-back sets. That's the direct line into data-in-api's
+    # `status` attribute, which the FE schema requires (DISPLAY_ALLOWED_STATUSES)
+    # and which snowflake's cclw/mcf/cpr/ccc export models also hard-filter on
+    # (document_status = 'published') - both read the same relayed value, not
+    # anything independently derived downstream.
+    #
+    # Fix: infer "published" at the snowflake level instead of relaying RDS,
+    # per the ticket's DoD. Then this block disappears - but check downstream
+    # attribute usage first.
     contains_published_document = [
         doc
         for doc in navigator_family.documents

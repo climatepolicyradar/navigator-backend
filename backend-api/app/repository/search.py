@@ -71,6 +71,20 @@ def browse_rds_families(db: Session, req: BrowseArgs) -> tuple[int, SearchRespon
     # Avoid using calculated family_status field
     published_families = (
         db.query(FamilyDocument.family_import_id)
+        # THOUGHTS
+        #
+        # Context(removing publish write back):
+        # Only used by the search_by_geography function in summaries.py, not main
+        # search, so blast radius is small if we add CREATED docs here as well.
+        #
+        # Context(relying on vespa to drive results):
+        # n/a (only queries rds)
+        #
+        # Also, we run the published action today at the end of the processing pipeline.
+        # So we still have a massive window of docs not being in vespa but published.
+        # Imagine dbt run fails overnight that could easily be a day or 2 that we have
+        # docs in the PUBLISHED status that aren't in vespa.
+        # What about docs that fail indexing? Even longer.
         .filter(FamilyDocument.document_status == DocumentStatus.PUBLISHED)
         .distinct()
         .subquery()
