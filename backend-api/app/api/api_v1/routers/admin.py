@@ -1,7 +1,5 @@
 import logging
-from typing import cast
 
-from db_client.models.dfce import DocumentStatus
 from db_client.models.document.physical_document import (
     Language,
     LanguageSource,
@@ -9,7 +7,7 @@ from db_client.models.document.physical_document import (
     PhysicalDocumentLanguage,
 )
 from fastapi import APIRouter, Depends, HTTPException, Request, status
-from sqlalchemy import Column, update
+from sqlalchemy import update
 
 from app.clients.db.session import get_db
 from app.models.document import DocumentUpdateRequest
@@ -20,49 +18,6 @@ from app.telemetry_exceptions import ExceptionHandlingTelemetryRoute
 _LOGGER = logging.getLogger(__name__)
 
 admin_document_router = r = APIRouter(route_class=ExceptionHandlingTelemetryRoute)
-
-
-@r.post("/documents/{import_id_or_slug}/processed", status_code=status.HTTP_200_OK)
-def update_document_status(
-    request: Request,
-    import_id_or_slug: str,
-    db=Depends(get_db),
-    current_user=Depends(get_superuser_details),
-):
-    _LOGGER.info(
-        f"Superuser '{current_user.email}' called update_document_status",
-        extra={
-            "props": {
-                "superuser_email": current_user.email,
-                "import_id_or_slug": import_id_or_slug,
-            }
-        },
-    )
-
-    family_document = get_family_document_by_import_id_or_slug(db, import_id_or_slug)
-    if family_document is None:
-        raise HTTPException(
-            status_code=status.HTTP_422_UNPROCESSABLE_ENTITY,
-        )
-
-    if family_document.document_status == DocumentStatus.CREATED:
-        family_document.document_status = cast(Column, DocumentStatus.PUBLISHED)
-        _LOGGER.info(
-            "Publishing family document",
-            extra={
-                "props": {
-                    "superuser_email": current_user.email,
-                    "import_id_or_slug": import_id_or_slug,
-                    "result": family_document.document_status,
-                }
-            },
-        )
-
-    db.commit()
-    return {
-        "import_id": family_document.import_id,
-        "document_status": family_document.document_status,
-    }
 
 
 @r.put("/documents/{import_id_or_slug}", status_code=status.HTTP_200_OK)
