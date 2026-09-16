@@ -67,11 +67,11 @@ def browse_rds_families(db: Session, req: BrowseArgs) -> tuple[int, SearchRespon
 
     t0 = perf_counter_ns()
     geo_subquery = get_geo_subquery(db, req.geography_slugs, req.country_codes)
-    # Subquery to find families with at least one published document
+    # Subquery to find families with at least one non-deleted document.
     # Avoid using calculated family_status field
     published_families = (
         db.query(FamilyDocument.family_import_id)
-        .filter(FamilyDocument.document_status == DocumentStatus.PUBLISHED)
+        .filter(FamilyDocument.document_status != DocumentStatus.DELETED)
         .distinct()
         .subquery()
     )

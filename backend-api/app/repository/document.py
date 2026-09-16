@@ -128,9 +128,14 @@ def get_family_document_and_context(
 
     family, document, physical_document, geographies, family_corpus = db_objects
 
+    # NOTE: family.family_status is a calculated property from db_client (not
+    # this repo) that is itself derived from FamilyDocument.document_status.
+    # Swapping the document-level check below to "not deleted" doesn't change
+    # what family_status reports - it may still effectively gate on PUBLISHED
+    # until that's addressed upstream in db_client. Follow-up, not this ticket.
     if (
         family.family_status != FamilyStatus.PUBLISHED
-        or document.document_status != DocumentStatus.PUBLISHED
+        or document.document_status == DocumentStatus.DELETED
     ):
         raise ValueError(f"The document {family_document_import_id} is not published")
 
@@ -291,7 +296,7 @@ def _get_documents_for_family_import_id(
     db_documents = (
         db.query(FamilyDocument)
         .filter(FamilyDocument.family_import_id == import_id)
-        .filter(FamilyDocument.document_status == DocumentStatus.PUBLISHED)
+        .filter(FamilyDocument.document_status != DocumentStatus.DELETED)
     )
 
     def make_response(d: FamilyDocument) -> FamilyDocumentResponse:
