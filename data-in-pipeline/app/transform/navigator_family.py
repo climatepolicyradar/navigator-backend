@@ -587,7 +587,6 @@ def transform_navigator_family(
 
 def _transform_litigation_events(data: NavigatorFamily) -> list[Document]:
     documents = []
-    labels = []
     attributes: dict[str, str | float | bool] = {}
     navigator_family_events = data.events
     navigator_document_event_ids = {
@@ -605,6 +604,7 @@ def _transform_litigation_events(data: NavigatorFamily) -> list[Document]:
     ]
 
     for event in deduplicated_events:
+        labels: list[LabelRelationship] = []
         labels.extend(
             [
                 LabelRelationship(
