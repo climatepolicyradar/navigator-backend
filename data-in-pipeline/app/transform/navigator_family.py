@@ -587,7 +587,6 @@ def transform_navigator_family(
 
 def _transform_litigation_events(data: NavigatorFamily) -> list[Document]:
     documents = []
-    attributes: dict[str, str | float | bool] = {}
     navigator_family_events = data.events
     navigator_document_event_ids = {
         doc.events[0].import_id for doc in data.documents if doc.events
@@ -632,6 +631,7 @@ def _transform_litigation_events(data: NavigatorFamily) -> list[Document]:
 
         geo_labels, _ = _transform_geographies(data)
         labels.extend(geo_labels)
+        attributes: dict[str, str | float | bool] = {}
         if event.metadata["action_taken"]:
             attributes["action_taken"] = event.metadata["action_taken"][0]
 
