@@ -14,7 +14,10 @@ from app.extract.connectors import (
     NavigatorFamily,
 )
 from app.models import Identified, NavigatorConcept
-from app.transform.navigator_family import transform_navigator_family
+from app.transform.navigator_family import (
+    _transform_litigation_events,
+    transform_navigator_family,
+)
 from tests.factories import (
     NavigatorCorpusFactory,
     NavigatorCorpusTypeFactory,
@@ -870,3 +873,91 @@ def test_transform_navigator_family_with_litigation_corpus_type_and_litigation_c
             ),
         ],
     )
+
+
+@pytest.fixture
+def navigator_family_with_multiple_unlinked_litigation_events() -> NavigatorFamily:
+    """A family with two litigation events, neither linked to a document,
+    so both flow through _transform_litigation_events in the same call."""
+    return NavigatorFamilyFactory.build(
+        import_id="family",
+        title="Litigation family",
+        summary="Family summary",
+        category="LITIGATION",
+        last_updated_date="2020-01-0100:00:00Z",
+        published_date="2020-01-0100:00:00Z",
+        created="2020-01-01T00:00:00Z",
+        corpus=NavigatorCorpusFactory.build(
+            import_id="Academic.corpus.Litigation.n0000",
+            corpus_type=NavigatorCorpusTypeFactory.build(name="Litigation"),
+            organisation=NavigatorOrganisationFactory.build(id=1, name="Sabin"),
+            attribution_url="testurl.org",
+            corpus_text="Test corpus",
+            corpus_image_url=None,
+        ),
+        documents=[],
+        events=[
+            NavigatorEventFactory.build(
+                import_id="event-1",
+                event_type="Motion",
+                date=datetime.datetime(2020, 1, 1),
+                metadata={
+                    "event_type": ["Motion"],
+                    "datetime_event_name": ["Motion"],
+                    "action_taken": ["Motion filed"],
+                    "description": ["Description of motion event"],
+                },
+            ),
+            NavigatorEventFactory.build(
+                import_id="event-2",
+                event_type="Order",
+                date=datetime.datetime(2020, 1, 2),
+                metadata={
+                    "event_type": ["Order"],
+                    "datetime_event_name": ["Order"],
+                    "action_taken": ["Order issued"],
+                    "description": ["Description of order event"],
+                },
+            ),
+        ],
+        collections=[],
+        geographies=[],
+        slug="litigation-family-slug",
+        metadata={
+            "case_number": ["CASE-NUMBER 123"],
+            "core_object": ["Core Object 123"],
+            "status": ["Decided"],
+            "id": ["123456"],
+            "original_case_name": ["Original case name"],
+        },
+        concepts=[],
+    )
+
+
+def test_transform_litigation_events_does_not_accumulate_labels_across_events(
+    navigator_family_with_multiple_unlinked_litigation_events: NavigatorFamily,
+):
+    """Regression test for the bug where `labels` was initialised outside the
+    event loop and accumulated across iterations, so later events' documents
+    inherited earlier events' entity_type labels."""
+    result = _transform_litigation_events(
+        navigator_family_with_multiple_unlinked_litigation_events
+    )
+    expected_event_count = len(
+        navigator_family_with_multiple_unlinked_litigation_events.events
+    )
+
+    assert len(result) == expected_event_count
+
+    def entity_type_values(document: Document) -> list[str]:
+        return [
+            label.value.value
+            for label in document.labels
+            if label.type == "entity_type"
+        ]
+
+    assert entity_type_values(result[0]) == ["Motion"]
+    assert entity_type_values(result[1]) == ["Order"]
+
+    # The labels list must not be the same object shared/mutated across events.
+    assert result[0].labels is not result[1].labels
