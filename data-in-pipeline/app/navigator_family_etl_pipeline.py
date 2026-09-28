@@ -492,8 +492,6 @@ def data_in__load_db(
 )
 def data_in_pipeline(
     ids: list[str] | None = None,
-    batch_size: int = 500,
-    feature_flag__load_db: bool = True,
 ) -> PipelineResult:
     """Run the full Navigator ETL pipeline.
 
@@ -505,8 +503,9 @@ def data_in_pipeline(
         2. Identify their source type.
         3. Transform to target schema.
         4. Load transformed documents to S3 cache.
-        5. Save transformed documents to the load DB in batches.
-        6. Upload report with results.
+
+    Loading into the database is handled separately by the `data_in__load_db`
+    flow, which reads the Snowflake export from S3.
     """
     _LOGGER = get_logger()
     _LOGGER.info("ETL pipeline started")
@@ -514,8 +513,6 @@ def data_in_pipeline(
     # Set flow_run_name early so all metrics (including extract) have it
     run_id = flow_run.get_name() or "unknown"
     pipeline_metrics.set_flow_run_name(run_id)
-
-    run_db_migrations_task()
 
     # If IDs provided, process only those families
     if ids is not None:
@@ -597,22 +594,9 @@ def data_in_pipeline(
         jsonl_future = cache_jsonl_to_s3.submit(transformed_documents, run_id)
         jsonl_future.result()
 
-    # -------------------------
-    # BATCH AND LOAD TO DB
-    # -------------------------
-    batches_loaded_count: int = 0
-
-    if feature_flag__load_db:
-        batches_loaded_count: int = load_db(
-            documents=transformed_documents,
-            batch_size=batch_size,
-            run_id=run_id,
-        )
-
     _LOGGER.info("ETL pipeline completed successfully!")
 
     return PipelineResult(
         documents_processed=len(transformed_documents),
-        batches_loaded=batches_loaded_count,
         status="success",
     )
