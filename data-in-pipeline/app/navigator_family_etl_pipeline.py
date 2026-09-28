@@ -135,6 +135,30 @@ def cache_jsonl_to_s3(documents: list[Document], run_id: str | None = None):
 
 @task(log_prints=True)
 @pipeline_metrics.track(operation=Operation.LOAD)
+def cache_partial_transform_jsonl_to_s3(
+    documents: list[Document], run_id: str | None = None
+):
+    """Upload documents as jsonl to S3 cache."""
+    client = get_s3_client()
+
+    buffer = io.BytesIO()
+    for chunk in itertools.batched(documents, 10_000):
+        buffer.write(
+            "\n".join(json.dumps(doc.model_dump(mode="json")) for doc in chunk).encode()
+        )
+        buffer.write(b"\n")
+
+    value = buffer.getvalue()
+    client.put_object(
+        Bucket="cpr-cache",
+        Key=f"pipelines/data-in-pipeline/partial-transformations/{run_id}-transformed-result.jsonl",
+        Body=value,
+        ContentType="application/x-ndjson",
+    )
+
+
+@task(log_prints=True)
+@pipeline_metrics.track(operation=Operation.LOAD)
 def cache_parquet_to_s3(documents: list[Document], run_id: str | None = None):
     """Upload documents as parquet to S3 cache."""
     client = get_s3_client()
