@@ -5,7 +5,6 @@ from unittest.mock import MagicMock, patch
 
 import pyarrow as pa
 import pyarrow.parquet as pq
-import pytest
 from data_in_models.models import (
     Document,
     DocumentRelationship,
@@ -14,7 +13,6 @@ from data_in_models.models import (
     LabelRelationship,
 )
 from prefect.client.schemas.objects import State, StateType
-from requests.exceptions import HTTPError
 from returns.result import Failure, Success
 
 from app.extract.connectors import FamilyFetchResult
@@ -40,21 +38,15 @@ from tests.transform.assertions import assert_model_list_equality
 
 @patch("app.navigator_family_etl_pipeline.cache_jsonl_to_s3")
 @patch("app.navigator_family_etl_pipeline.cache_parquet_to_s3")
-@patch("app.navigator_family_etl_pipeline.run_db_migrations")
 @patch("app.navigator_family_etl_pipeline.upload_to_s3")
 @patch("app.navigator_family_etl_pipeline.NavigatorConnector")
-@patch("app.load.load.requests.put")
 def test_process_family_updates_flow_multiple_families(  # noqa: PLR0913
-    mock_post,
     mock_connector_class,
     mock_upload,
-    mock_run_migrations,
     mock_cache_parquet_to_s3,
     mock_cache_jsonl_to_s3,
 ):
     """Test ETL pipeline with multiple families across pages."""
-    mock_run_migrations.return_value = None
-
     mock_upload.return_value = None
 
     mock_cache_jsonl_to_s3.return_value = None
@@ -63,11 +55,6 @@ def test_process_family_updates_flow_multiple_families(  # noqa: PLR0913
     mock_connector_instance = MagicMock()
     mock_connector_class.return_value = mock_connector_instance
     mock_connector_instance.close.return_value = None
-
-    mock_post_response = MagicMock()
-    mock_post_response.status_code = 201
-    mock_post_response.json.return_value = ["1", "2"]
-    mock_post.return_value = mock_post_response
 
     corpus = NavigatorCorpusFactory.build(
         import_id="UNFCCC.corpus.i00000001.n0000",
@@ -156,25 +143,12 @@ def test_process_family_updates_flow_multiple_families(  # noqa: PLR0913
     assert result.status == "success"
 
 
-@patch("app.navigator_family_etl_pipeline.run_db_migrations")
-def test_process_family_updates_migrations_failure(mock_run_migrations):
-    """Test ETL pipeline when extraction fails completely."""
-    mock_run_migrations.side_effect = Exception("500 Internal Server Error")
-
-    # Simulate migrations failure
-    with pytest.raises(Exception, match="500 Internal Server Error"):
-        data_in_pipeline()
-
-
-@patch("app.navigator_family_etl_pipeline.run_db_migrations")
 @patch("app.navigator_family_etl_pipeline.upload_to_s3")
 @patch("app.navigator_family_etl_pipeline.NavigatorConnector")
 def test_process_family_updates_flow_extraction_failure(
-    mock_connector_class, mock_upload, mock_run_migrations
+    mock_connector_class, mock_upload
 ):
     """Test ETL pipeline when extraction fails completely."""
-    mock_run_migrations.return_value = None
-
     mock_upload.return_value = None
 
     mock_connector_instance = MagicMock()
@@ -200,111 +174,17 @@ def test_process_family_updates_flow_extraction_failure(
 
 @patch("app.navigator_family_etl_pipeline.cache_jsonl_to_s3")
 @patch("app.navigator_family_etl_pipeline.cache_parquet_to_s3")
-@patch("app.navigator_family_etl_pipeline.run_db_migrations")
-@patch("app.navigator_family_etl_pipeline.upload_to_s3")
-@patch("app.navigator_family_etl_pipeline.NavigatorConnector")
-@patch("app.navigator_family_etl_pipeline.load_batch")
-def test_etl_pipeline_load_failure(  # noqa: PLR0913
-    mock_load_batch_task,
-    mock_connector_class,
-    mock_upload,
-    mock_run_migrations,
-    mock_cache_jsonl_to_s3,
-    mock_cache_parquet_to_s3,
-):
-    mock_run_migrations.return_value = None
-    mock_upload.return_value = None
-
-    mock_cache_jsonl_to_s3.return_value = None
-    mock_cache_parquet_to_s3.return_value = None
-
-    mock_connector_instance = MagicMock()
-    mock_connector_class.return_value = mock_connector_instance
-    mock_connector_instance.close.return_value = None
-
-    test_family_id = "i00000315"
-    test_family_title = "Belgium UNCBD National Targets"
-    test_source_record_id = "task-001-families-endpoint-page-1"
-    test_endpoint = "https://api.example.com/families/?page=1"
-    expected_error_message = "One or more batches failed to load"
-
-    corpus = NavigatorCorpusFactory.build(
-        import_id="UNFCCC.corpus.i00000001.n0000",
-        corpus_type=NavigatorCorpusTypeFactory.build(name="corpus_type"),
-        organisation=NavigatorOrganisationFactory.build(id=1, name="UNFCCC"),
-    )
-    test_data = [
-        NavigatorFamilyFactory.build(
-            import_id=test_family_id,
-            title=test_family_title,
-            summary="Family summary",
-            category="REPORTS",
-            created="2020-01-01T00:00:00Z",
-            corpus=corpus,
-            documents=[
-                NavigatorDocumentFactory.build(
-                    import_id=test_family_id,
-                    title=test_family_title,
-                    events=[],
-                )
-            ],
-            events=[],
-            collections=[],
-            geographies=[],
-        )
-    ]
-    test_envelope = ExtractedEnvelope(
-        data=test_data,
-        raw_payload=[family.model_dump() for family in test_data],
-        id="test-uuid-1",
-        source_name="navigator_family",
-        source_record_id=test_source_record_id,
-        content_type="application/json",
-        connector_version="1.0.0",
-        metadata=ExtractedMetadata(
-            endpoint=test_endpoint,
-            http_status=HTTPStatus.OK,
-        ),
-        task_run_id="task-001",
-        flow_run_id="flow-001",
-    )
-
-    # Mock connector response
-    mock_connector_instance.fetch_all_families.return_value = FamilyFetchResult(
-        envelopes=[test_envelope], failures=[]
-    )
-
-    mock_load_batch_task.map.return_value = [HTTPError("Server error")]
-
-    result = data_in_pipeline(return_state=True)
-
-    assert isinstance(result, State)
-    assert result.type == StateType.FAILED
-    assert isinstance(result.result(raise_on_failure=False), Exception)
-    assert result.message
-    assert expected_error_message in result.message
-
-    mock_connector_instance.close.assert_called_once()
-
-
-@patch("app.navigator_family_etl_pipeline.cache_jsonl_to_s3")
-@patch("app.navigator_family_etl_pipeline.cache_parquet_to_s3")
 @patch("app.navigator_family_etl_pipeline.transform_navigator_family")
-@patch("app.navigator_family_etl_pipeline.run_db_migrations")
 @patch("app.navigator_family_etl_pipeline.upload_to_s3")
 @patch("app.navigator_family_etl_pipeline.NavigatorConnector")
-@patch("app.load.load.requests.put")
 def test_etl_pipeline_partial_transformation_failure(  # noqa: PLR0913
-    mock_put,
     mock_connector_class,
     mock_upload,
-    mock_run_migrations,
     mock_transform_families,
     mock_cache_jsonl_to_s3,
     mock_cache_parquet_to_s3,
 ):
     """Test that pipeline continues when some families fail transformation."""
-    mock_run_migrations.return_value = None
     mock_upload.return_value = None
 
     mock_cache_jsonl_to_s3.return_value = None
@@ -313,11 +193,6 @@ def test_etl_pipeline_partial_transformation_failure(  # noqa: PLR0913
     mock_connector_instance = MagicMock()
     mock_connector_class.return_value = mock_connector_instance
     mock_connector_instance.close.return_value = None
-
-    mock_put_response = MagicMock()
-    mock_put_response.status_code = 201
-    mock_put_response.json.return_value = ["valid-family-doc"]
-    mock_put.return_value = mock_put_response
 
     valid_corpus = NavigatorCorpusFactory.build(
         import_id="UNFCCC.corpus.i00000001.n0000",
@@ -408,14 +283,12 @@ def test_etl_pipeline_partial_transformation_failure(  # noqa: PLR0913
 
 
 @patch("app.navigator_family_etl_pipeline.transform_navigator_family")
-@patch("app.navigator_family_etl_pipeline.run_db_migrations")
 @patch("app.navigator_family_etl_pipeline.upload_to_s3")
 @patch("app.navigator_family_etl_pipeline.NavigatorConnector")
 def test_etl_pipeline_all_families_fail_transformation(
-    mock_connector_class, mock_upload, mock_run_migrations, mock_transform_families
+    mock_connector_class, mock_upload, mock_transform_families
 ):
     """Test that pipeline fails gracefully when all families fail transformation."""
-    mock_run_migrations.return_value = None
     mock_upload.return_value = None
 
     mock_connector_instance = MagicMock()
@@ -823,30 +696,20 @@ def test_transform_correctly_transforms_collections_with_multiple_families():
 
 
 @patch("app.navigator_family_etl_pipeline.cache_jsonl_to_s3")
-@patch("app.navigator_family_etl_pipeline.run_db_migrations")
 @patch("app.navigator_family_etl_pipeline.upload_to_s3")
 @patch("app.navigator_family_etl_pipeline.NavigatorConnector")
-@patch("app.load.load.requests.put")
 def test_etl_pipeline_does_not_cache_to_s3_when_ids_provided(
-    mock_post,
     mock_connector_class,
     mock_upload,
-    mock_run_migrations,
     mock_cache_jsonl_to_s3,
 ):
     """When specific IDs are provided the run is partial, so transformed
     documents must not be cached to S3 (that would overwrite the full result)."""
-    mock_run_migrations.return_value = None
     mock_upload.return_value = None
 
     mock_connector_instance = MagicMock()
     mock_connector_class.return_value = mock_connector_instance
     mock_connector_instance.close.return_value = None
-
-    mock_post_response = MagicMock()
-    mock_post_response.status_code = 201
-    mock_post_response.json.return_value = ["i00000315"]
-    mock_post.return_value = mock_post_response
 
     corpus = NavigatorCorpusFactory.build(
         import_id="UNFCCC.corpus.i00000001.n0000",

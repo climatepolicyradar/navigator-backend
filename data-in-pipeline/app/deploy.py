@@ -324,10 +324,6 @@ async def create_deployment(
 
 if __name__ == "__main__":
     asyncio.run(
-        create_deployment(
-            flow=data_in_pipeline,
-            schedule=Schedule(cron="0 5 * * *"),
-            parameters={"feature_flag__load_db": False},
-        )
+        create_deployment(flow=data_in_pipeline, schedule=Schedule(cron="0 5 * * *"))
     )
     asyncio.run(create_deployment(flow=data_in__load_db))
