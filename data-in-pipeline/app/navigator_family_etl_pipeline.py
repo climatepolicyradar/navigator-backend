@@ -139,6 +139,10 @@ def cache_partial_transform_jsonl_to_s3(
     documents: list[Document], run_id: str | None = None
 ):
     """Upload documents as jsonl to S3 cache."""
+
+    logger = get_logger()
+    logger.info(f"Caching partially transformed documents to S3 for run_id: {run_id}")
+
     client = get_s3_client()
 
     buffer = io.BytesIO()
@@ -171,7 +175,7 @@ def cache_parquet_to_s3(documents: list[Document], run_id: str | None = None):
             # we serialise the attributes to a json string and transform an empty dict => None
             # as parquet breaks when auto-deriving a field with `{}` as its value.
             doc_data = doc.model_dump(mode="json")
-            if "attributes" in doc_data and doc_data["attributes"]:
+            if doc_data.get("attributes"):
                 doc_data["attributes"] = json.dumps(doc_data["attributes"])
             else:
                 doc_data["attributes"] = None
@@ -405,8 +409,7 @@ def load_db(documents: list[Document], batch_size: int, run_id: str) -> int:
     """Batch and Load Documents to the Database."""
     _LOGGER = get_logger()
     _LOGGER.info(
-        f"Starting batched load: {len(documents)} documents, "
-        f"batch_size={batch_size}"
+        f"Starting batched load: {len(documents)} documents, batch_size={batch_size}"
     )
 
     document_batches = create_batches(documents, batch_size)
@@ -620,6 +623,11 @@ def data_in_pipeline(
     if not ids:
         jsonl_future = cache_jsonl_to_s3.submit(transformed_documents, run_id)
         jsonl_future.result()
+    else:
+        partial_jsonl_future = cache_partial_transform_jsonl_to_s3.submit(
+            transformed_documents, run_id
+        )
+        partial_jsonl_future.result()
 
     # -------------------------
     # BATCH AND LOAD TO DB

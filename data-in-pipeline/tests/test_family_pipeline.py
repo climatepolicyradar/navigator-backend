@@ -822,17 +822,17 @@ def test_transform_correctly_transforms_collections_with_multiple_families():
     assert_model_list_equality(transform_result, expected_family_transform_result)
 
 
-@patch("app.navigator_family_etl_pipeline.cache_jsonl_to_s3")
+@patch("app.navigator_family_etl_pipeline.cache_partial_transform_jsonl_to_s3")
 @patch("app.navigator_family_etl_pipeline.run_db_migrations")
 @patch("app.navigator_family_etl_pipeline.upload_to_s3")
 @patch("app.navigator_family_etl_pipeline.NavigatorConnector")
 @patch("app.load.load.requests.put")
-def test_etl_pipeline_does_not_cache_to_s3_when_ids_provided(
+def test_etl_pipeline_cache_partial_transform_jsonl_to_s3_when_ids_provided(
     mock_post,
     mock_connector_class,
     mock_upload,
     mock_run_migrations,
-    mock_cache_jsonl_to_s3,
+    mock_cache_partial_transform_jsonl_to_s3,
 ):
     """When specific IDs are provided the run is partial, so transformed
     documents must not be cached to S3 (that would overwrite the full result)."""
@@ -899,5 +899,4 @@ def test_etl_pipeline_does_not_cache_to_s3_when_ids_provided(
     assert isinstance(result, PipelineResult)
     assert result.status == "success"
 
-    # IDs were provided, so this is a partial run and nothing should be cached.
-    mock_cache_jsonl_to_s3.submit.assert_not_called()
+    mock_cache_partial_transform_jsonl_to_s3.submit.assert_called_once()
