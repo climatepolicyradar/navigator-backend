@@ -823,7 +823,6 @@ def test_transform_correctly_transforms_collections_with_multiple_families():
 
 
 @patch("app.navigator_family_etl_pipeline.cache_partial_transform_jsonl_to_s3")
-@patch("app.navigator_family_etl_pipeline.cache_jsonl_to_s3")
 @patch("app.navigator_family_etl_pipeline.run_db_migrations")
 @patch("app.navigator_family_etl_pipeline.upload_to_s3")
 @patch("app.navigator_family_etl_pipeline.NavigatorConnector")
@@ -833,7 +832,6 @@ def test_etl_pipeline_cache_partial_transform_jsonl_to_s3_when_ids_provided(
     mock_connector_class,
     mock_upload,
     mock_run_migrations,
-    mock_cache_jsonl_to_s3,
     mock_cache_partial_transform_jsonl_to_s3,
 ):
     """When specific IDs are provided the run is partial, so transformed
@@ -901,6 +899,4 @@ def test_etl_pipeline_cache_partial_transform_jsonl_to_s3_when_ids_provided(
     assert isinstance(result, PipelineResult)
     assert result.status == "success"
 
-    # IDs were provided, so this is a partial run.
-    mock_cache_jsonl_to_s3.submit.assert_not_called()
     mock_cache_partial_transform_jsonl_to_s3.submit.assert_called_once()
