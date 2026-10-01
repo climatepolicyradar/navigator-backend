@@ -117,6 +117,9 @@ regions_lookup: dict[str, Region] = {
     for c in _load_countries_from_worldbank_api()
     if c["region"]["id"] in _regions_by_id
 }
+# EUR is a custom country (not in the World Bank API data), so give it
+# an explicit region mapping.
+regions_lookup["EUR"] = _regions_by_id["ECS"]
 
 subdivisions = cast(list[PyCountrySubdivision], pycountry.subdivisions)
 
