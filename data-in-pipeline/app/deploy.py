@@ -323,10 +323,10 @@ async def create_deployment(
 
 
 if __name__ == "__main__":
+    # Unscheduled as it's triggered by run_e2e in data-lake.
     asyncio.run(
         create_deployment(
             flow=data_in_pipeline,
-            schedule=Schedule(cron="0 5 * * *"),
             parameters={"feature_flag__load_db": False},
         )
     )
