@@ -37,14 +37,13 @@ else:
     api_route53_zone_id = aws_env_stack.get_output("root_zone_id")
     # create an alias record
 
+us_east_1 = aws.Provider("us-east-1", region="us-east-1")
 
 api_certificate = aws.acm.Certificate(
     "api-climatepolicyradar-org-cert",
     domain_name=url,
     validation_method="DNS",
-    opts=pulumi.ResourceOptions(
-        provider=aws.Provider("us-east-1", region="us-east-1")
-    ),  # CloudFront requires certificates in us-east-1
+    opts=pulumi.ResourceOptions(provider=us_east_1),
 )
 
 # We are fine to use the first in the list as we know this will be a DNS validation from the certificate generated above
@@ -272,7 +271,7 @@ api_cloudfront_distribution = aws.cloudfront.Distribution(
                         "GET",
                         "OPTIONS",
                     ],
-                    target_origin_id="search-apprunner",
+                    target_origin_id="search-ecs-express",
                     viewer_protocol_policy="redirect-to-https",
                     cache_policy_id=api_cache_policy.id,
                     origin_request_policy_id=api_cors_policy.id,
@@ -292,6 +291,124 @@ api_cloudfront_distribution = aws.cloudfront.Distribution(
         "ssl_support_method": "sni-only",
         "minimum_protocol_version": "TLSv1.2_2021",
     },
+)
+
+# region CloudFront logs
+api_cloudfront_logs_bucket = aws.s3.Bucket(
+    "api-cloudfront-logs-bucket",
+    bucket=f"cpr-{stack}-api-cloudfront-logs",
+)
+
+aws.s3.BucketPublicAccessBlock(
+    "api-cloudfront-logs-bucket-public-access-block",
+    bucket=api_cloudfront_logs_bucket.id,
+    block_public_acls=True,
+    block_public_policy=True,
+    ignore_public_acls=True,
+    restrict_public_buckets=True,
+)
+
+aws.s3.BucketLifecycleConfiguration(
+    "api-cloudfront-logs-bucket-lifecycle",
+    bucket=api_cloudfront_logs_bucket.id,
+    rules=[
+        aws.s3.BucketLifecycleConfigurationRuleArgs(
+            id="expire-logs-30d",
+            status="Enabled",
+            # empty prefix so the rule covers the whole bucket
+            filter=aws.s3.BucketLifecycleConfigurationRuleFilterArgs(prefix=""),
+            expiration=aws.s3.BucketLifecycleConfigurationRuleExpirationArgs(
+                days=30,
+            ),
+        ),
+    ],
+)
+
+api_cloudfront_logs_bucket_policy = aws.s3.BucketPolicy(
+    "api-cloudfront-logs-bucket-policy",
+    bucket=api_cloudfront_logs_bucket.id,
+    policy=api_cloudfront_logs_bucket.arn.apply(
+        lambda bucket_arn: aws.iam.get_policy_document(
+            statements=[
+                aws.iam.GetPolicyDocumentStatementArgs(
+                    sid="AWSLogDeliveryWrite",
+                    actions=["s3:PutObject"],
+                    effect="Allow",
+                    principals=[
+                        aws.iam.GetPolicyDocumentStatementPrincipalArgs(
+                            type="Service",
+                            identifiers=["delivery.logs.amazonaws.com"],
+                        )
+                    ],
+                    resources=[f"{bucket_arn}/AWSLogs/{account_id}/*"],
+                    conditions=[
+                        aws.iam.GetPolicyDocumentStatementConditionArgs(
+                            test="StringEquals",
+                            variable="s3:x-amz-acl",
+                            values=["bucket-owner-full-control"],
+                        ),
+                        aws.iam.GetPolicyDocumentStatementConditionArgs(
+                            test="StringEquals",
+                            variable="aws:SourceAccount",
+                            values=[account_id],
+                        ),
+                        aws.iam.GetPolicyDocumentStatementConditionArgs(
+                            test="ArnLike",
+                            variable="aws:SourceArn",
+                            values=[
+                                f"arn:aws:logs:us-east-1:{account_id}:delivery-source:*"
+                            ],
+                        ),
+                    ],
+                )
+            ]
+        ).json
+    ),
+)
+
+api_cloudfront_logs_delivery_source = aws.cloudwatch.LogDeliverySource(
+    "api-cloudfront-logs-delivery-source",
+    name="api-cloudfront-access-logs",
+    log_type="ACCESS_LOGS",
+    resource_arn=api_cloudfront_distribution.arn,
+    opts=pulumi.ResourceOptions(provider=us_east_1),
+)
+
+api_cloudfront_logs_delivery_destination = aws.cloudwatch.LogDeliveryDestination(
+    "api-cloudfront-logs-delivery-destination",
+    name="api-cloudfront-access-logs",
+    # w3c keeps the on-disk format the same tab separated layout the legacy
+    # logs used. This cannot be changed after creation - switching format
+    # means replacing the destination.
+    output_format="w3c",
+    delivery_destination_configuration=aws.cloudwatch.LogDeliveryDestinationDeliveryDestinationConfigurationArgs(
+        # no prefix on the ARN, so CloudFront uses its default
+        # `AWSLogs/<account>/CloudFront/` path - which is what the bucket policy
+        # above grants PutObject on
+        destination_resource_arn=api_cloudfront_logs_bucket.arn,
+    ),
+    opts=pulumi.ResourceOptions(provider=us_east_1),
+)
+
+aws.cloudwatch.LogDelivery(
+    "api-cloudfront-logs-delivery",
+    delivery_source_name=api_cloudfront_logs_delivery_source.name,
+    delivery_destination_arn=api_cloudfront_logs_delivery_destination.arn,
+    field_delimiter="\t",
+    # record_fields is left unset so we get CloudFront's full default field
+    # set, which includes cache-behavior-path-pattern - that records which
+    # cache behaviour matched, so requests can be attributed back to an API
+    s3_delivery_configurations=[
+        aws.cloudwatch.LogDeliveryS3DeliveryConfigurationArgs(
+            enable_hive_compatible_path=False,
+            suffix_path="{DistributionId}/{yyyy}/{MM}/{dd}/{HH}",
+        )
+    ],
+    opts=pulumi.ResourceOptions(
+        provider=us_east_1,
+        # the bucket policy has to grant PutObject before the first delivery
+        depends_on=[api_cloudfront_logs_bucket_policy],
+    ),
 )
 
 
