@@ -127,7 +127,7 @@ def cache_jsonl_to_s3(documents: list[Document], run_id: str | None = None):
     )
     client.put_object(
         Bucket="cpr-prod-data-in-stage",
-        Key="latest/dip/documents-latest.jsonl",
+        Key="dip/documents-latest.jsonl",
         Body=value,
         ContentType="application/x-ndjson",
     )
