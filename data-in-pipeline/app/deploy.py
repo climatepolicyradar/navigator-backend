@@ -326,7 +326,6 @@ if __name__ == "__main__":
     asyncio.run(
         create_deployment(
             flow=data_in_pipeline,
-            schedule=Schedule(cron="0 5 * * *"),
             parameters={"feature_flag__load_db": False},
         )
     )
