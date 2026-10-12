@@ -20,7 +20,12 @@ _LOGGER = logging.getLogger(__name__)
 
 MetadataType = dict[str, list[str]]
 
-_ID_ELEMENT = r"[a-zA-Z0-9]+([-_]?[a-zA-Z0-9]+)*"
+# The separator is mandatory and the group non-capturing: with an optional
+# separator a plain alphanumeric run could be taken either by the leading
+# [a-zA-Z0-9]+ or by iterations of the group, so a failing match enumerated
+# exponentially many partitions. Slug-shaped input froze the process for hours.
+# See cpr-sdk#269 for the same fix upstream.
+_ID_ELEMENT = r"[a-zA-Z0-9]+(?:[-_][a-zA-Z0-9]+)*"
 IMPORT_ID_MATCHER = re.compile(
     rf"^{_ID_ELEMENT}\.{_ID_ELEMENT}\.{_ID_ELEMENT}\.{_ID_ELEMENT}$"
 )
