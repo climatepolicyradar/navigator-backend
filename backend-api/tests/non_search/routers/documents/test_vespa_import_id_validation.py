@@ -11,6 +11,7 @@ import pytest
 from fastapi import status
 from fastapi.testclient import TestClient
 
+from app.service.pipeline import is_valid_import_id
 from tests.non_search.routers.documents.setup_doc_fam_lookup import (
     DOCUMENTS_ENDPOINT,
     FAMILIES_ENDPOINT,
@@ -70,18 +71,31 @@ def test_rejection_does_not_require_a_valid_token(data_client: TestClient):
     assert response.status_code == status.HTTP_422_UNPROCESSABLE_ENTITY, response.text
 
 
+@pytest.mark.search
 @pytest.mark.parametrize("endpoint", [FAMILIES_ENDPOINT, VESPA_DOC_ENDPOINT])
 def test_well_formed_import_id_is_not_rejected_by_validation(
-    data_client: TestClient, valid_token, endpoint
+    data_client: TestClient, valid_token, endpoint, test_vespa
 ):
-    """A well-formed id must get past validation.
+    """A well-formed id must get past the guard and reach the Vespa lookup.
 
-    It may 404 without Vespa populated, which is fine -- the point is that the
-    guard does not turn it away with a 422.
+    Marked `search` because getting past the guard means the request goes on to
+    query Vespa -- the whole point is that it is not short-circuited with a 422.
+    `test_valid_import_id_passes_the_guard` covers the guard itself without
+    needing Vespa.
     """
     response = _get(data_client, f"{endpoint}/CCLW.family.10014.0", valid_token)
 
     assert response.status_code != status.HTTP_422_UNPROCESSABLE_ENTITY, response.text
+
+
+def test_valid_import_id_passes_the_guard():
+    """The guard itself accepts well-formed ids, independent of any route.
+
+    Keeps the "we did not break valid ids" assertion in the non-search suite,
+    where it does not depend on Vespa being reachable.
+    """
+    assert is_valid_import_id("CCLW.family.10014.0")
+    assert is_valid_import_id("CCLW.document.i00000004.n0000")
 
 
 def test_slug_route_still_accepts_slugs(data_client: TestClient, valid_token):
