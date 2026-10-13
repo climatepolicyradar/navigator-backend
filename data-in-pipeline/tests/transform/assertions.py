@@ -1,4 +1,6 @@
+import difflib
 from collections.abc import Sequence
+from pprint import pformat
 
 from pydantic import BaseModel
 
@@ -25,4 +27,14 @@ def assert_model_list_equality(
     actual_dumped = [model.model_dump() for model in actual]
     expected_dumped = [model.model_dump() for model in expected]
 
-    assert actual_dumped == expected_dumped
+    diff = "\n".join(
+        difflib.unified_diff(
+            pformat(expected_dumped).splitlines(),
+            pformat(actual_dumped).splitlines(),
+            fromfile="expected",
+            tofile="actual",
+            lineterm="",
+        )
+    )
+
+    assert actual_dumped == expected_dumped, diff
