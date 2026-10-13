@@ -543,6 +543,8 @@ def test_transform_navigator_family_with_single_matching_document(
                         "deprecated_slug": "collection-matching-slug",
                         "published_date": "2020-01-01T00:00:00Z",
                         "last_updated_date": "2020-01-01T00:00:00Z",
+                        "created": "2020-01-01T00:00:00Z",
+                        "last_modified": "2020-01-01T00:00:00Z",
                     },
                 ),
             ),
@@ -565,6 +567,8 @@ def test_transform_navigator_family_with_single_matching_document(
                         "deprecated_slug": "collection-slug",
                         "published_date": "2020-01-01T00:00:00Z",
                         "last_updated_date": "2020-01-01T00:00:00Z",
+                        "created": "2020-01-01T00:00:00Z",
+                        "last_modified": "2020-01-01T00:00:00Z",
                     },
                 ),
             ),
@@ -727,6 +731,8 @@ def test_transform_navigator_family_with_single_matching_document(
                         "status": "published",
                         "published_date": "2020-01-01T00:00:00Z",
                         "last_updated_date": "2020-01-01T00:00:00Z",
+                        "created": "2020-01-01T00:00:00Z",
+                        "last_modified": "2020-01-02T00:00:00Z",
                     },
                 ),
             ),
@@ -736,6 +742,8 @@ def test_transform_navigator_family_with_single_matching_document(
             "published_date": "2020-01-01T00:00:00Z",
             "last_updated_date": "2020-01-01T00:00:00Z",
             "status": "published",
+            "created": "2020-01-01T00:00:00Z",
+            "last_modified": "2020-01-02T00:00:00Z",
         },
     )
     assert_model_list_equality(
@@ -907,6 +915,8 @@ def test_transform_navigator_family_with_single_matching_document(
                     "status": "published",
                     "published_date": "2020-01-01T00:00:00Z",
                     "last_updated_date": "2020-01-01T00:00:00Z",
+                    "created": "2020-01-01T00:00:00Z",
+                    "last_modified": "2020-01-02T00:00:00Z",
                 },
             ),
             Document(
@@ -916,6 +926,8 @@ def test_transform_navigator_family_with_single_matching_document(
                     "deprecated_slug": "collection-matching-slug",
                     "published_date": "2020-01-01T00:00:00Z",
                     "last_updated_date": "2020-01-01T00:00:00Z",
+                    "created": "2020-01-01T00:00:00Z",
+                    "last_modified": "2020-01-01T00:00:00Z",
                 },
                 labels=[
                     LabelRelationship(
@@ -941,6 +953,8 @@ def test_transform_navigator_family_with_single_matching_document(
                     "deprecated_slug": "collection-slug",
                     "published_date": "2020-01-01T00:00:00Z",
                     "last_updated_date": "2020-01-01T00:00:00Z",
+                    "created": "2020-01-01T00:00:00Z",
+                    "last_modified": "2020-01-01T00:00:00Z",
                 },
                 id="collection",
                 title="Collection title",
@@ -1194,6 +1208,8 @@ def test_transform_navigator_family_with_laws_and_policies_corpus_type(
         documents=[],
         attributes={
             "deprecated_slug": "laws-and-policies-family-slug",
+            "created": "2020-01-01T00:00:00Z",
+            "last_modified": "2020-01-02T00:00:00Z",
         },
     )
     assert_model_list_equality(
@@ -1426,6 +1442,8 @@ def test_transform_navigator_family_with_published_and_unpublished_documents():
                         "variant": "Original language",
                         "md5_sum": "aaaaa11111bbbbb",
                         "status": "created",
+                        "created": "2020-01-01T00:00:00Z",
+                        "last_modified": "2020-01-02T00:00:00Z",
                     },
                 ),
             ),
@@ -1516,6 +1534,8 @@ def test_transform_navigator_family_with_published_and_unpublished_documents():
                         "variant": "Original language",
                         "md5_sum": "aaaaa11111cccc",
                         "status": "published",
+                        "created": "2020-01-01T00:00:00Z",
+                        "last_modified": "2020-01-02T00:00:00Z",
                     },
                 ),
             ),
@@ -1523,6 +1543,8 @@ def test_transform_navigator_family_with_published_and_unpublished_documents():
         attributes={
             "deprecated_slug": "family-with-different-document-statuses-slug",
             "status": "published",
+            "created": "2020-01-01T00:00:00Z",
+            "last_modified": "2020-01-02T00:00:00Z",
         },
     )
     assert_model_list_equality(
@@ -1622,6 +1644,8 @@ def test_transform_navigator_family_with_published_and_unpublished_documents():
                     "variant": "Original language",
                     "md5_sum": "aaaaa11111bbbbb",
                     "status": "created",
+                    "created": "2020-01-01T00:00:00Z",
+                    "last_modified": "2020-01-02T00:00:00Z",
                 },
             ),
             Document(
@@ -1717,6 +1741,8 @@ def test_transform_navigator_family_with_published_and_unpublished_documents():
                     "variant": "Original language",
                     "md5_sum": "aaaaa11111cccc",
                     "status": "published",
+                    "created": "2020-01-01T00:00:00Z",
+                    "last_modified": "2020-01-02T00:00:00Z",
                 },
             ),
         ],
@@ -1934,12 +1960,16 @@ def test_transform_navigator_family_with_no_published_documents():
                         "variant": "Original language",
                         "md5_sum": "aaaaa11111bbbbb",
                         "status": "deleted",
+                        "created": "2020-01-01T00:00:00Z",
+                        "last_modified": "2020-01-02T00:00:00Z",
                     },
                 ),
             ),
         ],
         attributes={
             "deprecated_slug": "family-with-no-published-documents-slug",
+            "created": "2020-01-01T00:00:00Z",
+            "last_modified": "2020-01-02T00:00:00Z",
         },
     )
     assert_model_list_equality(
@@ -2039,6 +2069,8 @@ def test_transform_navigator_family_with_no_published_documents():
                     "variant": "Original language",
                     "md5_sum": "aaaaa11111bbbbb",
                     "status": "deleted",
+                    "created": "2020-01-01T00:00:00Z",
+                    "last_modified": "2020-01-02T00:00:00Z",
                 },
             ),
         ],
@@ -2144,6 +2176,8 @@ def test_transform_navigator_family_and_document_with_domain_metadata(
             "published_date": "2020-01-01T00:00:00Z",
             "last_updated_date": "2020-01-01T00:00:00Z",
             "status": "published",
+            "created": "2020-01-01T00:00:00Z",
+            "last_modified": "2020-01-02T00:00:00Z",
         },
         documents=[
             DocumentRelationship(
@@ -2202,6 +2236,8 @@ def test_transform_navigator_family_and_document_with_domain_metadata(
                         "status": "published",
                         "variant": "Original language",
                         "md5_sum": "TrunksIsTheBest",
+                        "created": "2020-01-01T00:00:00Z",
+                        "last_modified": "2020-01-02T00:00:00Z",
                     },
                 ),
             ),
@@ -2314,6 +2350,8 @@ def test_transform_navigator_family_and_document_with_domain_metadata(
                     "last_updated_date": "2020-01-01T00:00:00Z",
                     "variant": "Original language",
                     "md5_sum": "TrunksIsTheBest",
+                    "created": "2020-01-01T00:00:00Z",
+                    "last_modified": "2020-01-02T00:00:00Z",
                 },
             ),
         ],

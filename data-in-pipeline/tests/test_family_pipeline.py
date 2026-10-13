@@ -685,6 +685,8 @@ def test_transform_correctly_transforms_collections_with_multiple_families():
                         "deprecated_slug": "collection-slug",
                         "published_date": "2020-01-01T00:00:00Z",
                         "last_updated_date": "2020-01-01T00:00:00Z",
+                        "created": "2020-01-01T00:00:00Z",
+                        "last_modified": "2020-01-01T00:00:00Z",
                     },
                 ),
             ),
@@ -693,6 +695,8 @@ def test_transform_correctly_transforms_collections_with_multiple_families():
             "deprecated_slug": "family1-slug",
             "published_date": "2020-01-01T00:00:00Z",
             "last_updated_date": "2020-01-01T00:00:00Z",
+            "created": "2020-01-01T00:00:00Z",
+            "last_modified": "2020-01-02T00:00:00Z",
         },
     )
     expected_family2_transform_result = Document(
@@ -766,6 +770,8 @@ def test_transform_correctly_transforms_collections_with_multiple_families():
                         "deprecated_slug": "collection-slug",
                         "published_date": "2020-01-01T00:00:00Z",
                         "last_updated_date": "2020-01-01T00:00:00Z",
+                        "created": "2020-01-01T00:00:00Z",
+                        "last_modified": "2020-01-01T00:00:00Z",
                     },
                 ),
             ),
@@ -774,6 +780,8 @@ def test_transform_correctly_transforms_collections_with_multiple_families():
             "deprecated_slug": "family2-slug",
             "published_date": "2020-01-01T00:00:00Z",
             "last_updated_date": "2020-01-01T00:00:00Z",
+            "created": "2020-01-01T00:00:00Z",
+            "last_modified": "2020-01-02T00:00:00Z",
         },
     )
     expected_collection_transform_result = Document(
@@ -781,6 +789,8 @@ def test_transform_correctly_transforms_collections_with_multiple_families():
             "deprecated_slug": "collection-slug",
             "published_date": "2020-01-01T00:00:00Z",
             "last_updated_date": "2020-01-01T00:00:00Z",
+            "created": "2020-01-01T00:00:00Z",
+            "last_modified": "2020-01-01T00:00:00Z",
         },
         id="collection",
         title="Collection title",
