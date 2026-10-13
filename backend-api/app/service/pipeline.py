@@ -30,6 +30,28 @@ IMPORT_ID_MATCHER = re.compile(
     rf"^{_ID_ELEMENT}\.{_ID_ELEMENT}\.{_ID_ELEMENT}\.{_ID_ELEMENT}$"
 )
 
+# Import ids are four dot-separated elements, so anything far longer than a
+# realistic id is already invalid. Bounding the length keeps validation cheap
+# regardless of what any downstream pattern does with the value.
+MAX_IMPORT_ID_LENGTH = 256
+
+
+def is_valid_import_id(value: str) -> bool:
+    """Check whether a value is a well-formed import id.
+
+    Import ids look like `CCLW.family.10014.0`: four dot-separated elements of
+    alphanumerics, optionally joined by single `-` or `_` separators.
+
+    This is for rejecting malformed input at an API boundary, so it must stay
+    cheap on values that are not import ids -- slugs reach these endpoints
+    routinely. The length bound is checked first so the pattern never sees an
+    unbounded string.
+    """
+    return (
+        len(value) <= MAX_IMPORT_ID_LENGTH
+        and IMPORT_ID_MATCHER.match(value) is not None
+    )
+
 
 class ResultType(str, enum.Enum):
     """Result type used when processing metadata values."""
