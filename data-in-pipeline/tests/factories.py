@@ -27,6 +27,9 @@ class NavigatorEventFactory(ModelFactory[NavigatorEvent]):
 class NavigatorDocumentFactory(ModelFactory[NavigatorDocument]):
     """Factory for NavigatorDocument. Override import_id, title, events, etc. as needed."""
 
+    created = "2020-01-01T00:00:00Z"
+    last_modified = "2020-01-02T00:00:00Z"
+
 
 class NavigatorCorpusTypeFactory(ModelFactory[NavigatorCorpusType]):
     """Factory for NavigatorCorpusType. Override name as needed."""
@@ -43,9 +46,15 @@ class NavigatorCorpusFactory(ModelFactory[NavigatorCorpus]):
 class NavigatorCollectionFactory(ModelFactory[NavigatorCollection]):
     """Factory for NavigatorCollection. Override import_id, title, description."""
 
+    created = "2020-01-01T00:00:00Z"
+    last_modified = "2020-01-02T00:00:00Z"
+
 
 class NavigatorFamilyFactory(ModelFactory[NavigatorFamily]):
     """Factory for NavigatorFamily. Override import_id, title, documents, corpus, etc."""
+
+    created = "2020-01-01T00:00:00Z"
+    last_modified = "2020-01-02T00:00:00Z"
 
 
 class PageFetchFailureFactory(ModelFactory[PageFetchFailure]):

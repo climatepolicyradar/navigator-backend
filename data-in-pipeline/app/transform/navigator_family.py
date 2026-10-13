@@ -1456,6 +1456,11 @@ def _transform_navigator_family(
         attributes["published_date"] = navigator_family.published_date
     if navigator_family.last_updated_date:
         attributes["last_updated_date"] = navigator_family.last_updated_date
+    attributes.update(
+        _rds_timestamp_attributes(
+            navigator_family.created, navigator_family.last_modified
+        )
+    )
 
     """This field defines whether a document is available to be searched in Vespa.
     It is still used to filter out un-published or deleted documents in the frontend.
@@ -1754,6 +1759,11 @@ def _transform_navigator_document(
         attributes["published_date"] = navigator_family.published_date
     if navigator_family.last_updated_date:
         attributes["last_updated_date"] = navigator_family.last_updated_date
+    attributes.update(
+        _rds_timestamp_attributes(
+            navigator_document.created, navigator_document.last_modified
+        )
+    )
 
     # Merged - experimental and should not be relied upon
     if _family_document_merged(navigator_family, navigator_document):
@@ -1807,6 +1817,11 @@ def _transform_navigator_collection(
         attributes["published_date"] = navigator_collection.created
     if navigator_collection.last_modified:
         attributes["last_updated_date"] = navigator_collection.last_modified
+    attributes.update(
+        _rds_timestamp_attributes(
+            navigator_collection.created, navigator_collection.last_modified
+        )
+    )
 
     return Document(
         id=navigator_collection.import_id,
@@ -1814,6 +1829,22 @@ def _transform_navigator_collection(
         labels=labels,
         attributes=attributes,
     )
+
+
+def _rds_timestamp_attributes(
+    created: str | None, last_modified: str | None
+) -> dict[str, str]:
+    """Pass through the RDS row timestamps, as received from the families-api.
+
+    These record when the record entered / last changed in our system, unlike
+    `published_date` / `last_updated_date`, which are derived from events.
+    """
+    attributes: dict[str, str] = {}
+    if created:
+        attributes["created"] = created
+    if last_modified:
+        attributes["last_modified"] = last_modified
+    return attributes
 
 
 def _deduplicate_labels(
