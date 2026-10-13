@@ -1,14 +1,72 @@
 from unittest.mock import patch
 
+import requests
 from pydantic import ValidationError
 
 from app.extract.connectors import (
+    DuplicateRecordFailure,
     NavigatorConnector,
     NavigatorConnectorConfig,
     NavigatorFamily,
+    PageFetchFailure,
     RecordValidationFailure,
 )
 from app.extract.enums import CheckPointStorageType
+from tests.factories import NavigatorCorpusFactory, NavigatorFamilyFactory
+
+
+def _connector() -> NavigatorConnector:
+    return NavigatorConnector(
+        NavigatorConnectorConfig(
+            source_id="navigator_family",
+            checkpoint_storage=CheckPointStorageType.S3,
+            checkpoint_key_prefix="navigator/families/",
+        )
+    )
+
+
+def _family_payload(import_id: str) -> dict:
+    return NavigatorFamilyFactory.build(
+        import_id=import_id,
+        corpus=NavigatorCorpusFactory.build(import_id="CCLW.corpus.i00000001.n0000"),
+    ).model_dump(mode="json")
+
+
+def test_fetch_all_families_keeps_validation_failures_when_a_page_fetch_fails():
+    responses = [
+        {"data": [{"import_id": "Invalid.family.0.0"}]},  # page 1 → validation failure
+        requests.ConnectionError("connection reset"),  # page 2 → fetch failure
+    ]
+
+    connector = _connector()
+    with patch.object(connector, "get", side_effect=responses):
+        result = connector.fetch_all_families(task_run_id="t", flow_run_id="f")
+
+    assert [type(f) for f in result.failures] == [
+        RecordValidationFailure,
+        PageFetchFailure,
+    ]
+    assert result.failures[1] == PageFetchFailure(
+        page=2, error="connection reset", task_run_id="t"
+    )
+
+
+def test_fetch_all_families_reports_records_seen_on_more_than_one_page():
+    """Offset pagination drifts if the underlying data changes mid-run: rows shift
+    between pages, so some are returned twice (and others are silently skipped)."""
+    responses = [
+        {"data": [_family_payload("family.a"), _family_payload("family.b")]},
+        {"data": [_family_payload("family.b"), _family_payload("family.c")]},
+        {"data": []},
+    ]
+
+    connector = _connector()
+    with patch.object(connector, "get", side_effect=responses):
+        result = connector.fetch_all_families(task_run_id="t", flow_run_id="f")
+
+    assert result.failures == [
+        DuplicateRecordFailure(import_ids=["family.b"], page=2),
+    ]
 
 
 def test_fetch_all_families_collects_validation_failures_and_continues():

@@ -555,24 +555,40 @@ def data_in_pipeline(
     # EXTRACT
     # -------------------------
     extracted_result = extract(ids)
-    extract_failures = extracted_result.failures
     cache_extraction_result(extracted_result)
 
-    if extract_failures and isinstance(extract_failures[0], RecordValidationFailure):
-        _LOGGER.error(f"Extraction failed for some families: {extract_failures}")
+    # An incomplete extract (missing pages, drifted pagination) must stop the run
+    # before anything is cached, otherwise a truncated dataset overwrites the
+    # latest output. Individual families failing validation are a partial success.
+    record_failures = [
+        f for f in extracted_result.failures if isinstance(f, RecordValidationFailure)
+    ]
+    incomplete_extract_failures = [
+        f
+        for f in extracted_result.failures
+        if not isinstance(f, RecordValidationFailure)
+    ]
+
+    if incomplete_extract_failures:
+        pipeline_metrics.record_processed(PipelineType.FAMILY, Status.FAILURE)
+        raise Exception(
+            f"Extract incomplete, aborting before caching: {incomplete_extract_failures}"
+        )
+
+    if record_failures:
+        _LOGGER.error(f"Extraction failed for some families: {record_failures}")
         pipeline_metrics.record_processed(PipelineType.FAMILY, Status.PARTIAL)
-        cache_extract_errors(extract_failures, run_id)  # type: ignore
+        cache_extract_errors(record_failures, run_id)
         asyncio.run(
             SlackNotify.send_custom_message(
                 message=(
                     f"⚠️ *Partial extract failure* in `{run_id}`\n"
-                    f"*Failed:* {len(extract_failures)} families\n"
+                    f"*Failed:* {len(record_failures)} families\n"
                     f"*Succeeded:* {len(extracted_result.envelopes)}\n"
                     f"Failed IDs cached to S3 → `s3://cpr-cache/pipelines/data-in-pipeline/extract_errors/{run_id}-extract-errors.json`"
                 )
             )
         )
-        pipeline_metrics.record_processed(PipelineType.FAMILY, Status.PARTIAL)
 
     envelopes = extracted_result.envelopes
 

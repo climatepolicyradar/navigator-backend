@@ -157,9 +157,23 @@ class RecordValidationFailure(BaseModel):
     error: str
 
 
+class DuplicateRecordFailure(BaseModel):
+    """Records already returned by an earlier page were returned again.
+
+    This means offset pagination drifted because the data changed mid-run, so other
+    records will have been skipped and the extract is incomplete.
+    """
+
+    import_ids: list[str]
+    page: int
+
+
+type ExtractFailure = PageFetchFailure | RecordValidationFailure | DuplicateRecordFailure
+
+
 class FamilyFetchResult(BaseModel):
     envelopes: list[ExtractedEnvelope]
-    failures: list[PageFetchFailure] | list[RecordValidationFailure]
+    failures: list[ExtractFailure]
 
 
 class HTTPConnector:
@@ -400,7 +414,8 @@ class NavigatorConnector(HTTPConnector):
 
         page = 1
         successful_envelopes: list[ExtractedEnvelope] = []
-        failures: list[RecordValidationFailure] = []
+        failures: list[ExtractFailure] = []
+        seen_import_ids: set[str] = set()
 
         while True:
             with log_context(page_number=page):
@@ -417,12 +432,16 @@ class NavigatorConnector(HTTPConnector):
                         break
 
                     validated_families: list[NavigatorFamily] = []
+                    duplicate_import_ids: list[str] = []
 
                     for family in families_data:
                         try:
-                            validated_families.append(
-                                NavigatorFamily.model_validate(family)
-                            )
+                            validated_family = NavigatorFamily.model_validate(family)
+                            if family["import_id"] in seen_import_ids:
+                                duplicate_import_ids.append(family["import_id"])
+                                continue
+                            seen_import_ids.add(family["import_id"])
+                            validated_families.append(validated_family)
                         except ValidationError as e:
                             logger.info(
                                 f"Error validating family {family['import_id']}: {e.json()}"
@@ -434,6 +453,15 @@ class NavigatorConnector(HTTPConnector):
                                     error=f"Error validating family: {e.json()}",
                                 )
                             )
+                    if duplicate_import_ids:
+                        logger.error(
+                            f"Families already seen on an earlier page were returned again: {duplicate_import_ids}"
+                        )
+                        failures.append(
+                            DuplicateRecordFailure(
+                                import_ids=duplicate_import_ids, page=page
+                            )
+                        )
                     if validated_families:
                         envelope = ExtractedEnvelope(
                             data=validated_families,
@@ -465,6 +493,7 @@ class NavigatorConnector(HTTPConnector):
                     return FamilyFetchResult(
                         envelopes=successful_envelopes,
                         failures=[
+                            *failures,
                             PageFetchFailure(
                                 page=page, error=str(e), task_run_id=task_run_id
                             ),
@@ -481,6 +510,7 @@ class NavigatorConnector(HTTPConnector):
                     return FamilyFetchResult(
                         envelopes=successful_envelopes,
                         failures=[
+                            *failures,
                             PageFetchFailure(
                                 page=page, error=str(e), task_run_id=task_run_id
                             ),
@@ -490,5 +520,5 @@ class NavigatorConnector(HTTPConnector):
         logger.info(
             f"Fetch families completed: {len(successful_envelopes)} pages succeeded"
         )
-        logger.info(f"{len(failures)} families failed validation")
+        logger.info(f"{len(failures)} extract failures")
         return FamilyFetchResult(envelopes=successful_envelopes, failures=failures)
