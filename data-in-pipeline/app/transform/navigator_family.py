@@ -688,7 +688,10 @@ def transform(
     document_from_family, family_warnings = _transform_navigator_family(input.data)
     warnings.extend(family_warnings)
 
-    documents_from_documents, warnings = _transform_navigator_documents(input.data)
+    documents_from_documents, document_warnings = _transform_navigator_documents(
+        input.data
+    )
+    warnings.extend(document_warnings)
 
     documents_from_collections: list[Document] = [
         _transform_navigator_collection(collection)
