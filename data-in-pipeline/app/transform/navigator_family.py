@@ -1781,6 +1781,7 @@ def _transform_navigator_document(
         labels
         + _category_label(navigator_family)
         + _deprecated_category_label(navigator_family)
+        + _un_convention_label(navigator_family)
     )
 
     document = Document(
