@@ -61,6 +61,9 @@ class NavigatorDocument(BaseModel):
     slug: str
     md5_sum: str | None = None
 
+    created: str
+    last_modified: str
+
 
 class NavigatorCorpusType(BaseModel):
     name: str
@@ -138,6 +141,8 @@ class NavigatorFamily(BaseModel):
     published_date: str | None = None
     last_updated_date: str | None = None
     created: str
+    # Excluded from the families-api response for now, so optional until it is exposed.
+    last_modified: str | None = None
 
 
 class PageFetchFailure(BaseModel):
