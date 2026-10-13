@@ -1544,7 +1544,7 @@ _document_type_to_entity_type_map: dict[str, list[Label]] = {
     "Nationally Determined Contribution": [nationally_determined_contribution],
     "National Adaptation Plan": [national_adaptation_plan],
     "Biennial Transparency Report": [biennial_transparency_report],
-    "Long-term Low-emission Development Strategy": [
+    "Long-Term Low-Emission Development Strategy": [
         long_term_low_emission_development_strategy
     ],
     "Biennial Update Report": [biennial_update_report],
