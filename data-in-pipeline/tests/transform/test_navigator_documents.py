@@ -130,6 +130,8 @@ def test_transform_navigator_documents_litigation_events_with_documents():
                     "variant": "Original language",
                     "status": "published",
                     "action_taken": "Action taken on decision",
+                    "created": "2020-01-01T00:00:00Z",
+                    "last_modified": "2020-01-02T00:00:00Z",
                 },
             ),
         ],

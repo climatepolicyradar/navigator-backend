@@ -402,6 +402,8 @@ def test_transform_navigator_family_UNFCCC_party_submission_to_GST1_label():
                         "variant": "Original language",
                         "md5_sum": "aaaaa11111bbbbb",
                         "status": "published",
+                        "created": "2020-01-01T00:00:00Z",
+                        "last_modified": "2020-01-02T00:00:00Z",
                     },
                 ),
             ),
@@ -409,6 +411,8 @@ def test_transform_navigator_family_UNFCCC_party_submission_to_GST1_label():
         attributes={
             "deprecated_slug": "family-with-different-document-statuses-slug",
             "status": "published",
+            "created": "2023-11-30T00:00:00Z",
+            "last_modified": "2020-01-02T00:00:00Z",
         },
     )
     assert_model_list_equality(
@@ -526,6 +530,8 @@ def test_transform_navigator_family_UNFCCC_party_submission_to_GST1_label():
                     "variant": "Original language",
                     "md5_sum": "aaaaa11111bbbbb",
                     "status": "published",
+                    "created": "2020-01-01T00:00:00Z",
+                    "last_modified": "2020-01-02T00:00:00Z",
                 },
             ),
         ],
@@ -831,6 +837,8 @@ def test_transform_navigator_family_UNFCCC_non_party_submission_to_GST1_label():
                         "variant": "Original language",
                         "md5_sum": "aaaaa11111bbbbb",
                         "status": "published",
+                        "created": "2020-01-01T00:00:00Z",
+                        "last_modified": "2020-01-02T00:00:00Z",
                     },
                 ),
             ),
@@ -838,6 +846,8 @@ def test_transform_navigator_family_UNFCCC_non_party_submission_to_GST1_label():
         attributes={
             "deprecated_slug": "family-with-different-document-statuses-slug",
             "status": "published",
+            "created": "2024-10-17T00:00:00Z",
+            "last_modified": "2020-01-02T00:00:00Z",
         },
     )
     assert_model_list_equality(
@@ -955,6 +965,8 @@ def test_transform_navigator_family_UNFCCC_non_party_submission_to_GST1_label():
                     "variant": "Original language",
                     "md5_sum": "aaaaa11111bbbbb",
                     "status": "published",
+                    "created": "2020-01-01T00:00:00Z",
+                    "last_modified": "2020-01-02T00:00:00Z",
                 },
             ),
         ],
