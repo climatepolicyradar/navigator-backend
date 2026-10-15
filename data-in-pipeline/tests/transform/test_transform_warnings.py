@@ -1,5 +1,7 @@
 """Non-fatal transform warnings are returned from `transform`."""
 
+import pytest
+
 from app.models import Identified
 from app.transform.models import UnknownGeography
 from app.transform.navigator_family import transform
@@ -36,3 +38,8 @@ def test_family_warnings_are_returned_for_a_family_without_documents():
     assert _transform_warnings() == [
         UnknownGeography(family_import_id="family", geography_id="NOT-A-GEOGRAPHY")
     ]
+
+
+@pytest.mark.parametrize("geography_id", ["VAT", "NIU", "COK"])
+def test_manually_mapped_geographies(geography_id: str) -> None:
+    assert _transform_warnings(geographies=[geography_id]) == []
