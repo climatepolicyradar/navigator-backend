@@ -585,7 +585,7 @@ def data_in_pipeline(
                     f"⚠️ *Partial extract failure* in `{run_id}`\n"
                     f"*Failed:* {len(record_failures)} families\n"
                     f"*Succeeded:* {len(extracted_result.envelopes)}\n"
-                    f"Failed IDs cached to S3 → `s3://cpr-cache/pipelines/data-in-pipeline/extract_errors/{run_id}-extract-errors.json`"
+                    f"Failed IDs cached to S3 → `https://eu-west-1.console.aws.amazon.com/s3/object/cpr-cache?region=eu-west-1&prefix=pipelines/data-in-pipeline/extract_errors/{run_id}-extract-errors.json`"
                 )
             )
         )
@@ -618,7 +618,7 @@ def data_in_pipeline(
                     f"⚠️ *Partial transform failure* in `{run_id}`\n"
                     f"*Failed:* {len(errors)} / {family_count} families\n"
                     f"*Succeeded:* {len(transformed_documents)}\n"
-                    f"Failed IDs cached to S3 → `s3://cpr-cache/pipelines/data-in-pipeline/transformation_errors/{run_id}-transform-errors.json`"
+                    f"Failed IDs cached to S3 → `https://eu-west-1.console.aws.amazon.com/s3/object/cpr-cache?region=eu-west-1&prefix=pipelines/data-in-pipeline/transformation_errors/{run_id}-transform-errors.json`"
                 )
             )
         )
