@@ -63,6 +63,13 @@ custom_countries = [
         alpha_3="EUR",
         numeric="",
     ),
+    Country(
+        id="XKX",
+        name="Kosovo",
+        alpha_2="XK",
+        alpha_3="XKX",
+        numeric="",
+    ),
 ]
 
 

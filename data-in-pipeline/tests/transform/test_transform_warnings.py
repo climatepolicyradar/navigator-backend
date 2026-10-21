@@ -40,6 +40,6 @@ def test_family_warnings_are_returned_for_a_family_without_documents():
     ]
 
 
-@pytest.mark.parametrize("geography_id", ["VAT", "NIU", "COK"])
+@pytest.mark.parametrize("geography_id", ["VAT", "NIU", "COK", "XKX"])
 def test_manually_mapped_geographies(geography_id: str) -> None:
     assert _transform_warnings(geographies=[geography_id]) == []
