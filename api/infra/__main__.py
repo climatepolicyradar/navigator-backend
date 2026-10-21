@@ -63,6 +63,8 @@ api_cache_policy = aws.cloudfront.CachePolicy(
     max_ttl=86400,
     min_ttl=0,
     parameters_in_cache_key_and_forwarded_to_origin={
+        "enable_accept_encoding_gzip": True,
+        "enable_accept_encoding_brotli": True,
         "cookies_config": {
             "cookie_behavior": "none",
         },
@@ -185,6 +187,7 @@ api_cloudfront_distribution = aws.cloudfront.Distribution(
         "target_origin_id": "concepts-api-ecs-express",
         "viewer_protocol_policy": "redirect-to-https",
         "cache_policy_id": api_cache_policy.id,
+        "compress": True,
     },
     ordered_cache_behaviors=(
         [
@@ -204,6 +207,7 @@ api_cloudfront_distribution = aws.cloudfront.Distribution(
                 viewer_protocol_policy="redirect-to-https",
                 cache_policy_id=api_cache_policy.id,
                 origin_request_policy_id=api_cors_policy.id,
+                compress=True,
             ),
             aws.cloudfront.DistributionOrderedCacheBehaviorArgs(
                 path_pattern="/families/*",
@@ -221,6 +225,7 @@ api_cloudfront_distribution = aws.cloudfront.Distribution(
                 viewer_protocol_policy="redirect-to-https",
                 cache_policy_id=api_cache_policy.id,
                 origin_request_policy_id=api_cors_policy.id,
+                compress=True,
             ),
             aws.cloudfront.DistributionOrderedCacheBehaviorArgs(
                 path_pattern="/geographies/*",
@@ -238,6 +243,7 @@ api_cloudfront_distribution = aws.cloudfront.Distribution(
                 viewer_protocol_policy="redirect-to-https",
                 cache_policy_id=api_cache_policy.id,
                 origin_request_policy_id=api_cors_policy.id,
+                compress=True,
             ),
             aws.cloudfront.DistributionOrderedCacheBehaviorArgs(
                 path_pattern="/data-in/*",
@@ -255,6 +261,7 @@ api_cloudfront_distribution = aws.cloudfront.Distribution(
                 viewer_protocol_policy="redirect-to-https",
                 cache_policy_id=api_cache_policy.id,
                 origin_request_policy_id=api_cors_policy.id,
+                compress=True,
             ),
         ]
         + (
@@ -275,6 +282,7 @@ api_cloudfront_distribution = aws.cloudfront.Distribution(
                     viewer_protocol_policy="redirect-to-https",
                     cache_policy_id=api_cache_policy.id,
                     origin_request_policy_id=api_cors_policy.id,
+                    compress=True,
                 ),
             ]
             if search_stack
