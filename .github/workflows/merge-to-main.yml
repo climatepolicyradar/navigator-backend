@@ -4,9 +4,11 @@ on:
   push:
     branches:
       - main
+    # The catch-all must come first: a positive pattern after a negative one
+    # re-includes the path, so listing the exclusion first makes it a no-op.
     paths:
-      - "!backend-api/**"
       - "**"
+      - "!backend-api/**"
 
 permissions:
   id-token: write
