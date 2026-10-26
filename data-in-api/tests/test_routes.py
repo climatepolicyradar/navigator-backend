@@ -184,3 +184,55 @@ def test_get_label_response_includes_label_relationships(session: Session):
         assert rel["value"]["id"] == "parent"
     finally:
         app.dependency_overrides.clear()
+
+
+EXPECTED_GEOGRAPHY_COUNT = 3
+
+GEOGRAPHY_COUNTS = [
+    ("country::MEX", "Mexico", "country", 3),
+    ("subdivision::MX-CMX", "Mexico City", "subdivision", 2),
+    ("subdivision::MX-TAB", "Tabasco", "subdivision", 1),
+]
+
+
+def test_aggregate_by_geography_returns_counts(client, monkeypatch):
+    """Test the aggregation endpoint maps repository rows to the response."""
+    mock_count = Mock(return_value=GEOGRAPHY_COUNTS)
+    monkeypatch.setattr("app.main.count_documents_by_geography", mock_count)
+
+    response = client.get("/data-in/documents:aggregateByGeography")
+
+    assert response.status_code == HTTPStatus.OK
+    body = response.json()
+    assert body["total"] == EXPECTED_GEOGRAPHY_COUNT
+    assert body["data"][0] == {
+        "id": "country::MEX",
+        "name": "Mexico",
+        "type": "country",
+        "count": 3,
+    }
+
+
+def test_aggregate_by_geography_passes_filters_to_repository(client, monkeypatch):
+    """Test query params are forwarded to the repository."""
+    mock_count = Mock(return_value=[])
+    monkeypatch.setattr("app.main.count_documents_by_geography", mock_count)
+
+    response = client.get(
+        "/data-in/documents:aggregateByGeography"
+        "?attributes.status=published&labels.value.type=subdivision"
+    )
+
+    assert response.status_code == HTTPStatus.OK
+    assert mock_count.call_args.kwargs["status"] == "published"
+    assert mock_count.call_args.kwargs["geography_types"] == ["subdivision"]
+
+
+def test_aggregate_by_geography_returns_empty_list(client, monkeypatch):
+    """Test the endpoint returns an empty payload when nothing matches."""
+    monkeypatch.setattr("app.main.count_documents_by_geography", Mock(return_value=[]))
+
+    response = client.get("/data-in/documents:aggregateByGeography")
+
+    assert response.status_code == HTTPStatus.OK
+    assert response.json() == {"data": [], "total": 0, "page": 1, "page_size": 0}

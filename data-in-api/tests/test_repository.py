@@ -13,6 +13,7 @@ from data_in_models.models import Document as DocumentOutput
 from sqlmodel import Session
 
 from app.repository import (
+    count_documents_by_geography,
     get_all_documents,
     get_document_by_id,
     get_document_by_slug,
@@ -560,3 +561,112 @@ def test_get_document_by_slug_is_exact_match(session: Session):
     result = get_document_by_slug(session, "the-rights-of-mother-earth-law")
 
     assert result is None
+
+
+MEXICO_DOCUMENT_COUNT = 3
+MEXICO_PUBLISHED_DOCUMENT_COUNT = 2
+CMX_DOCUMENT_COUNT = 2
+CMX_PUBLISHED_DOCUMENT_COUNT = 1
+TAB_DOCUMENT_COUNT = 1
+
+
+@pytest.fixture
+def session_with_geographies(session: Session):
+    """Set up documents linked to country, region and subdivision labels."""
+    create_label(session, "country::MEX", "Mexico", type_="country")
+    create_label(session, "region::LCN", "Latin America & Caribbean", type_="region")
+    create_label(session, "subdivision::MX-TAB", "Tabasco", type_="subdivision")
+    create_label(session, "subdivision::MX-CMX", "Mexico City", type_="subdivision")
+    create_label(session, "category::Law", "Law", type_="category")
+
+    create_document(session, "mx1", "Tabasco law", attributes={"status": "published"})
+    create_document(session, "mx2", "CMX law", attributes={"status": "published"})
+    create_document(session, "mx3", "Deleted law", attributes={"status": "deleted"})
+
+    for doc_id in ("mx1", "mx2", "mx3"):
+        link_document_label(session, doc_id, "country::MEX", type="geography")
+        link_document_label(session, doc_id, "region::LCN", type="geography")
+
+    link_document_label(session, "mx1", "subdivision::MX-TAB", type="geography")
+    link_document_label(session, "mx2", "subdivision::MX-CMX", type="geography")
+    link_document_label(session, "mx3", "subdivision::MX-CMX", type="geography")
+
+    # a non-geography label must not appear in the aggregation
+    link_document_label(session, "mx1", "category::Law", type="category")
+
+    return session
+
+
+def test_count_documents_by_geography_counts_each_geography(
+    session_with_geographies: Session,
+):
+    counts = {
+        label_id: count
+        for label_id, _, _, count in count_documents_by_geography(
+            session_with_geographies
+        )
+    }
+
+    assert counts["country::MEX"] == MEXICO_DOCUMENT_COUNT
+    assert counts["region::LCN"] == MEXICO_DOCUMENT_COUNT
+    assert counts["subdivision::MX-TAB"] == TAB_DOCUMENT_COUNT
+    assert counts["subdivision::MX-CMX"] == CMX_DOCUMENT_COUNT
+
+
+def test_count_documents_by_geography_excludes_non_geography_labels(
+    session_with_geographies: Session,
+):
+    label_ids = {
+        label_id
+        for label_id, _, _, _ in count_documents_by_geography(session_with_geographies)
+    }
+
+    assert "category::Law" not in label_ids
+
+
+def test_count_documents_by_geography_filters_by_status(
+    session_with_geographies: Session,
+):
+    counts = {
+        label_id: count
+        for label_id, _, _, count in count_documents_by_geography(
+            session_with_geographies, status="published"
+        )
+    }
+
+    assert counts["country::MEX"] == MEXICO_PUBLISHED_DOCUMENT_COUNT
+    assert counts["subdivision::MX-CMX"] == CMX_PUBLISHED_DOCUMENT_COUNT
+    assert counts["subdivision::MX-TAB"] == TAB_DOCUMENT_COUNT
+
+
+def test_count_documents_by_geography_filters_by_geography_type(
+    session_with_geographies: Session,
+):
+    results = count_documents_by_geography(
+        session_with_geographies, geography_types=["subdivision"]
+    )
+
+    assert {label_id for label_id, _, _, _ in results} == {
+        "subdivision::MX-TAB",
+        "subdivision::MX-CMX",
+    }
+    assert all(label_type == "subdivision" for _, _, label_type, _ in results)
+
+
+def test_count_documents_by_geography_returns_label_name_and_type(
+    session_with_geographies: Session,
+):
+    results = count_documents_by_geography(
+        session_with_geographies, geography_types=["subdivision"]
+    )
+    by_id = {label_id: (name, label_type) for label_id, name, label_type, _ in results}
+
+    assert by_id["subdivision::MX-TAB"] == ("Tabasco", "subdivision")
+
+
+def test_count_documents_by_geography_excludes_geographies_without_documents(
+    session: Session,
+):
+    create_label(session, "subdivision::MX-TAB", "Tabasco", type_="subdivision")
+
+    assert count_documents_by_geography(session) == []

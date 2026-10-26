@@ -28,6 +28,8 @@ from sqlmodel import Session, select
 
 _LOGGER = logging.getLogger(__name__)
 
+GEOGRAPHY_LABEL_TYPE = "geography"
+
 LABEL_TYPES_WITH_RELATIONSHIPS = {
     "case_category",
     "principal_law",
@@ -359,3 +361,64 @@ def _build_label_relationship_output(
         ),
         timestamp=doc_label.timestamp,
     )
+
+
+def count_documents_by_geography(
+    db: Session,
+    status: str | None = None,
+    geography_types: list[str] | None = None,
+) -> list[tuple[str, str, str, int]]:
+    """
+    Count documents per geography label.
+
+    Aggregates the number of documents linked to each geography label, so
+    callers can tell which countries, regions and subdivisions actually have
+    documents without fetching the documents themselves.
+
+    :param db: Database session
+    :param status: Optional attributes.status to filter documents by
+    :param geography_types: Optional label types to restrict the result to,
+        e.g. ["subdivision"]
+    :return: List of (label id, label value, label type, document count)
+    """
+    try:
+        query = (
+            select(
+                DBLabel.id,
+                DBLabel.value,
+                DBLabel.type,
+                func.count(func.distinct(DBDocumentLabelRelationship.document_id)),
+            )
+            .join(
+                DBDocumentLabelRelationship,
+                DBDocumentLabelRelationship.label_id == DBLabel.id,
+            )
+            .where(DBDocumentLabelRelationship.type == GEOGRAPHY_LABEL_TYPE)
+        )
+
+        if geography_types:
+            query = query.where(DBLabel.type.in_(geography_types))  # type: ignore[attr-defined]
+
+        if status:
+            query = query.join(
+                DBDocument, DBDocument.id == DBDocumentLabelRelationship.document_id
+            ).where(
+                func.lower(DBDocument.attributes["status"].as_string())
+                == status.lower()
+            )
+
+        query = query.group_by(DBLabel.id, DBLabel.value, DBLabel.type).order_by(
+            func.count(func.distinct(DBDocumentLabelRelationship.document_id)).desc()
+        )
+
+        results = db.exec(query).all()
+        _LOGGER.debug(f"Aggregated document counts for {len(results)} geographies.")
+        return [tuple(row) for row in results]
+
+    except (OperationalError, DisconnectionError):
+        db.rollback()
+        _LOGGER.exception("System error during geography aggregation operation")
+        raise
+    except Exception as e:
+        _LOGGER.exception(f"Failed to aggregate documents by geography: {e!s}")
+        raise e
