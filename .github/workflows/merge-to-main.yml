@@ -18,6 +18,7 @@ jobs:
       services: ${{ steps.parse.outputs.services }}
       infra_services: ${{ steps.parse.outputs.infra_services }}
       ecs_services: ${{ steps.parse.outputs.ecs_services }}
+      non_ecs_services: ${{ steps.parse.outputs.non_ecs_services }}
       deploy_load_api_ecs: ${{ steps.parse.outputs.deploy_load_api_ecs }}
 
     steps:
@@ -85,10 +86,25 @@ jobs:
       - id: parse
         run: |
           CHANGES='${{ steps.filter.outputs.changes }}'
-          echo "services=$(echo "$CHANGES" | jq -c '[.[] | select(contains("/infra") | not)]')" >> $GITHUB_OUTPUT
+
+          # Services that already build, push AND roll their own ECS service in
+          # a dedicated job: the api-services cluster ones via deploy-ecs, and
+          # data-in-pipeline-load-api via deploy-load-api. Everything else is
+          # built and pushed by the deploy job, which relies on a per-service
+          # `deploy-override` recipe to do the actual deployment.
+          ECS_SERVICES='["geographies-api", "families-api", "concepts-api", "data-in-api", "data-in-pipeline-load-api"]'
+
+          # The subset of the above sharing the api-services cluster, which
+          # deploy-ecs rolls as one matrix.
+          API_SERVICES_CLUSTER='["geographies-api", "families-api", "concepts-api", "data-in-api"]'
+
+          CODE_CHANGES=$(echo "$CHANGES" | jq -c '[.[] | select(contains("/infra") | not)]')
+
+          echo "services=$CODE_CHANGES" >> $GITHUB_OUTPUT
           echo "infra_services=$(echo "$CHANGES" | jq -c '[.[] | select(contains("/infra"))]')" >> $GITHUB_OUTPUT
           echo "deploy_load_api_ecs=$(echo "$CHANGES" | jq -c 'any(.[]; . == "data-in-pipeline-load-api")')" >> $GITHUB_OUTPUT
-          echo "ecs_services=$(echo "$CHANGES" | jq -c '[.[] | select(contains("/infra") | not) | select(. == "geographies-api" or . == "families-api" or . == "backend-api"  or . == "concepts-api" or . == "data-in-api")]')" >> $GITHUB_OUTPUT
+          echo "ecs_services=$(echo "$CODE_CHANGES" | jq -c --argjson ecs "$API_SERVICES_CLUSTER" '[.[] | select(IN($ecs[]))]')" >> $GITHUB_OUTPUT
+          echo "non_ecs_services=$(echo "$CODE_CHANGES" | jq -c --argjson ecs "$ECS_SERVICES" '[.[] | select(IN($ecs[]) | not)]')" >> $GITHUB_OUTPUT
 
   test:
     needs: changes
@@ -138,14 +154,17 @@ jobs:
         env:
           PULUMI_ACCESS_TOKEN: ${{ secrets.PULUMI_ACCESS_TOKEN }}
 
+  # Builds and pushes an image, then defers to the service's `deploy-override`
+  # recipe. Services running on ECS are handled by deploy-ecs instead, which
+  # also rolls the service.
   deploy:
     needs: [changes, test]
-    if: (needs.test.result == 'success' || needs.test.result == 'skipped') && needs.changes.result == 'success' && needs.changes.outputs.services != '[]'
+    if: (needs.test.result == 'success' || needs.test.result == 'skipped') && needs.changes.result == 'success' && needs.changes.outputs.non_ecs_services != '[]'
     runs-on: ubuntu-latest
     strategy:
       matrix:
         environment: [staging, production]
-        service: ${{ fromJSON(needs.changes.outputs.services) }}
+        service: ${{ fromJSON(needs.changes.outputs.non_ecs_services) }}
       fail-fast: false
     environment: ${{ matrix.environment }}
 
