@@ -6,4 +6,5 @@ backend-api/      @climatepolicyradar/fusion
 concepts-api/     @climatepolicyradar/fusion
 families-api/     @climatepolicyradar/fusion
 geographies-api/  @climatepolicyradar/fusion
+data-in-api/      @climatepolicyradar/fusion
 api/              @climatepolicyradar/fusion
