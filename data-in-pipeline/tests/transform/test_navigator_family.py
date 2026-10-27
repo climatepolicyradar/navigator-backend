@@ -528,6 +528,7 @@ def test_transform_navigator_family_with_single_matching_document(
                 value=DocumentWithoutRelationships(
                     id="collection_matching",
                     title="Matching title on family and document and collection",
+                    description="Collection description",
                     labels=[
                         LabelRelationship(
                             type="entity_type",
@@ -553,6 +554,7 @@ def test_transform_navigator_family_with_single_matching_document(
                 value=DocumentWithoutRelationships(
                     id="collection",
                     title="Collection title",
+                    description="Collection description",
                     labels=[
                         LabelRelationship(
                             type="entity_type",
@@ -922,6 +924,7 @@ def test_transform_navigator_family_with_single_matching_document(
             Document(
                 id="collection_matching",
                 title="Matching title on family and document and collection",
+                description="Collection description",
                 attributes={
                     "deprecated_slug": "collection-matching-slug",
                     "published_date": "2020-01-01T00:00:00Z",
@@ -958,6 +961,7 @@ def test_transform_navigator_family_with_single_matching_document(
                 },
                 id="collection",
                 title="Collection title",
+                description="Collection description",
                 labels=[
                     LabelRelationship(
                         type="entity_type",
