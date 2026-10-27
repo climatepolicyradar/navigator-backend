@@ -1830,6 +1830,7 @@ def _transform_navigator_collection(
     return Document(
         id=navigator_collection.import_id,
         title=navigator_collection.title,
+        description=navigator_collection.description,
         labels=labels,
         attributes=attributes,
     )

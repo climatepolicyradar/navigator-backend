@@ -751,6 +751,7 @@ def test_transform_correctly_transforms_collections_with_multiple_families():
                 value=DocumentWithoutRelationships(
                     id="collection",
                     title="Collection title",
+                    description="Collection description",
                     labels=[
                         LabelRelationship(
                             type="entity_type",
@@ -836,6 +837,7 @@ def test_transform_correctly_transforms_collections_with_multiple_families():
                 value=DocumentWithoutRelationships(
                     id="collection",
                     title="Collection title",
+                    description="Collection description",
                     labels=[
                         LabelRelationship(
                             type="entity_type",
@@ -874,6 +876,7 @@ def test_transform_correctly_transforms_collections_with_multiple_families():
         },
         id="collection",
         title="Collection title",
+        description="Collection description",
         labels=[
             LabelRelationship(
                 type="entity_type",
