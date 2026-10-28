@@ -41,9 +41,6 @@ class PipelineResult(BaseModel):
     documents_processed: int = Field(
         ..., description="Total number of documents successfully processed"
     )
-    batches_loaded: int = Field(
-        ..., description="Number of batches loaded to the database"
-    )
     status: str = Field(..., description="Pipeline execution status")
 
 
