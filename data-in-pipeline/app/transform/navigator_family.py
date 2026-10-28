@@ -1174,6 +1174,8 @@ def _transform_litigation_concepts_to_label_relationships(
         "jurisdiction": "jurisdiction",
         "category": "case_category",  # This is the main conflict - category is reserved for higher level types like "Law", "Policy", etc.
         "principal_law": "principal_law",
+        "plaintiff": "plaintiff",
+        "defendant": "defendant",
     }
 
     # Build core labels indexed by (relation, id) - using a tuple here as the ids may not be unique across different concept types (relations)
