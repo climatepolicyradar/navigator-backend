@@ -302,6 +302,10 @@ jobs:
           payload-file-path: slack-payload.json
 
       - uses: extractions/setup-just@v4
+      - name: Install Pulumi
+        uses: pulumi/actions@v7
+        env:
+          PULUMI_ACCESS_TOKEN: ${{ secrets.PULUMI_ACCESS_TOKEN }}
       - run: |
           just deploy ${{ matrix.service }} ${{ matrix.environment }} latest
           just deploy ${{ matrix.service }} ${{ matrix.environment }} ${{ github.sha }}
