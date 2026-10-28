@@ -80,7 +80,7 @@ def test_incomplete_extract_fails_run_without_caching(pipeline_mocks, fatal_fail
         envelopes=[_envelope("family.a")], failures=[fatal_failure]
     )
 
-    state = data_in_pipeline(feature_flag__load_db=False, return_state=True)
+    state = data_in_pipeline(return_state=True)
 
     assert state.type == StateType.FAILED
     assert "Extract incomplete" in str(state.result(raise_on_failure=False))
@@ -98,7 +98,7 @@ def test_record_validation_failures_still_cache_the_remaining_families(
         ],
     )
 
-    state = data_in_pipeline(feature_flag__load_db=False, return_state=True)
+    state = data_in_pipeline(return_state=True)
 
     assert state.type == StateType.COMPLETED
     cache_jsonl.submit.assert_called_once()

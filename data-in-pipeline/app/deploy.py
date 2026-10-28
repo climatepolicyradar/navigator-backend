@@ -323,7 +323,5 @@ async def create_deployment(
 
 
 if __name__ == "__main__":
-    asyncio.run(
-        create_deployment(flow=data_in_pipeline)
-    )
+    asyncio.run(create_deployment(flow=data_in_pipeline))
     asyncio.run(create_deployment(flow=data_in__load_db))
