@@ -127,7 +127,35 @@ def cache_jsonl_to_s3(documents: list[Document], run_id: str | None = None):
     )
     client.put_object(
         Bucket="cpr-prod-data-in-stage",
-        Key="latest/dip/documents-latest.jsonl",
+        Key="dip/documents-latest.jsonl",
+        Body=value,
+        ContentType="application/x-ndjson",
+    )
+
+
+@task(log_prints=True)
+@pipeline_metrics.track(operation=Operation.LOAD)
+def cache_partial_transform_jsonl_to_s3(
+    documents: list[Document], run_id: str | None = None
+):
+    """Upload documents as jsonl to S3 cache."""
+
+    logger = get_logger()
+    logger.info(f"Caching partially transformed documents to S3 for run_id: {run_id}")
+
+    client = get_s3_client()
+
+    buffer = io.BytesIO()
+    for chunk in itertools.batched(documents, 10_000):
+        buffer.write(
+            "\n".join(json.dumps(doc.model_dump(mode="json")) for doc in chunk).encode()
+        )
+        buffer.write(b"\n")
+
+    value = buffer.getvalue()
+    client.put_object(
+        Bucket="cpr-cache",
+        Key=f"pipelines/data-in-pipeline/partial-transformations/{run_id}-transformed-result.jsonl",
         Body=value,
         ContentType="application/x-ndjson",
     )
@@ -147,7 +175,7 @@ def cache_parquet_to_s3(documents: list[Document], run_id: str | None = None):
             # we serialise the attributes to a json string and transform an empty dict => None
             # as parquet breaks when auto-deriving a field with `{}` as its value.
             doc_data = doc.model_dump(mode="json")
-            if "attributes" in doc_data and doc_data["attributes"]:
+            if doc_data.get("attributes"):
                 doc_data["attributes"] = json.dumps(doc_data["attributes"])
             else:
                 doc_data["attributes"] = None
@@ -381,8 +409,7 @@ def load_db(documents: list[Document], batch_size: int, run_id: str) -> int:
     """Batch and Load Documents to the Database."""
     _LOGGER = get_logger()
     _LOGGER.info(
-        f"Starting batched load: {len(documents)} documents, "
-        f"batch_size={batch_size}"
+        f"Starting batched load: {len(documents)} documents, batch_size={batch_size}"
     )
 
     document_batches = create_batches(documents, batch_size)
@@ -525,24 +552,40 @@ def data_in_pipeline(
     # EXTRACT
     # -------------------------
     extracted_result = extract(ids)
-    extract_failures = extracted_result.failures
     cache_extraction_result(extracted_result)
 
-    if extract_failures and isinstance(extract_failures[0], RecordValidationFailure):
-        _LOGGER.error(f"Extraction failed for some families: {extract_failures}")
+    # An incomplete extract (missing pages, drifted pagination) must stop the run
+    # before anything is cached, otherwise a truncated dataset overwrites the
+    # latest output. Individual families failing validation are a partial success.
+    record_failures = [
+        f for f in extracted_result.failures if isinstance(f, RecordValidationFailure)
+    ]
+    incomplete_extract_failures = [
+        f
+        for f in extracted_result.failures
+        if not isinstance(f, RecordValidationFailure)
+    ]
+
+    if incomplete_extract_failures:
+        pipeline_metrics.record_processed(PipelineType.FAMILY, Status.FAILURE)
+        raise Exception(
+            f"Extract incomplete, aborting before caching: {incomplete_extract_failures}"
+        )
+
+    if record_failures:
+        _LOGGER.error(f"Extraction failed for some families: {record_failures}")
         pipeline_metrics.record_processed(PipelineType.FAMILY, Status.PARTIAL)
-        cache_extract_errors(extract_failures, run_id)  # type: ignore
+        cache_extract_errors(record_failures, run_id)
         asyncio.run(
             SlackNotify.send_custom_message(
                 message=(
                     f"⚠️ *Partial extract failure* in `{run_id}`\n"
-                    f"*Failed:* {len(extract_failures)} families\n"
+                    f"*Failed:* {len(record_failures)} families\n"
                     f"*Succeeded:* {len(extracted_result.envelopes)}\n"
-                    f"Failed IDs cached to S3 → `s3://cpr-cache/pipelines/data-in-pipeline/extract_errors/{run_id}-extract-errors.json`"
+                    f"Failed IDs cached to S3 → `https://eu-west-1.console.aws.amazon.com/s3/object/cpr-cache?region=eu-west-1&prefix=pipelines/data-in-pipeline/extract_errors/{run_id}-extract-errors.json`"
                 )
             )
         )
-        pipeline_metrics.record_processed(PipelineType.FAMILY, Status.PARTIAL)
 
     envelopes = extracted_result.envelopes
 
@@ -572,7 +615,7 @@ def data_in_pipeline(
                     f"⚠️ *Partial transform failure* in `{run_id}`\n"
                     f"*Failed:* {len(errors)} / {family_count} families\n"
                     f"*Succeeded:* {len(transformed_documents)}\n"
-                    f"Failed IDs cached to S3 → `s3://cpr-cache/pipelines/data-in-pipeline/transformation_errors/{run_id}-transform-errors.json`"
+                    f"Failed IDs cached to S3 → `https://eu-west-1.console.aws.amazon.com/s3/object/cpr-cache?region=eu-west-1&prefix=pipelines/data-in-pipeline/transformation_errors/{run_id}-transform-errors.json`"
                 )
             )
         )
@@ -593,6 +636,11 @@ def data_in_pipeline(
     if not ids:
         jsonl_future = cache_jsonl_to_s3.submit(transformed_documents, run_id)
         jsonl_future.result()
+    else:
+        partial_jsonl_future = cache_partial_transform_jsonl_to_s3.submit(
+            transformed_documents, run_id
+        )
+        partial_jsonl_future.result()
 
     _LOGGER.info("ETL pipeline completed successfully!")
 

@@ -18,6 +18,7 @@ from returns.result import Failure, Success
 from app.extract.connectors import FamilyFetchResult
 from app.models import ExtractedEnvelope, ExtractedMetadata, Identified, PipelineResult
 from app.navigator_family_etl_pipeline import (
+    cache_jsonl_to_s3,
     cache_parquet_to_s3,
     data_in_pipeline,
     transform,
@@ -425,6 +426,85 @@ def test_cache_parquet_to_s3_includes_attributes_as_json_string(mock_get_s3_clie
     assert rows[2]["attributes"] is None
 
 
+@patch("app.navigator_family_etl_pipeline.get_s3_client")
+def test_cache_jsonl_to_s3_documents_latest_includes_rds_timestamps(
+    mock_get_s3_client,
+):
+    """RDS row timestamps survive transform and serialisation into documents-latest.jsonl."""
+    mock_s3_client = MagicMock()
+    mock_get_s3_client.return_value = mock_s3_client
+
+    family = NavigatorFamilyFactory.build(
+        import_id="family",
+        category="REPORTS",
+        corpus=NavigatorCorpusFactory.build(import_id="UNFCCC.corpus.i00000001.n0000"),
+        created="2019-05-01T09:00:00Z",
+        last_modified=None,
+        published_date="2018-01-01T00:00:00Z",
+        last_updated_date="2018-06-01T00:00:00Z",
+        documents=[
+            NavigatorDocumentFactory.build(
+                import_id="document",
+                events=[],
+                valid_metadata={},
+                created="2023-02-03T04:05:06.789000",
+                last_modified="2024-07-08T09:10:11.120000",
+            )
+        ],
+        collections=[
+            NavigatorCollectionFactory.build(
+                import_id="collection",
+                created="2017-01-01T00:00:00Z",
+                last_modified="2017-02-01T00:00:00Z",
+            )
+        ],
+        events=[],
+        geographies=[],
+        concepts=[],
+        metadata={},
+    )
+    documents, errors = transform.fn(
+        [Identified(data=family, id=family.import_id, source="navigator_family")]
+    )
+    assert errors == []
+
+    cache_jsonl_to_s3.fn(documents, "test-run-id")
+
+    body = next(
+        call.kwargs["Body"]
+        for call in mock_s3_client.put_object.call_args_list
+        if call.kwargs["Key"]
+        == "pipelines/data-in-pipeline/navigator_family/documents-latest.jsonl"
+    )
+    timestamp_keys = ("published_date", "last_updated_date", "created", "last_modified")
+    timestamps_by_id = {
+        line["id"]: {
+            k: line["attributes"][k] for k in timestamp_keys if k in line["attributes"]
+        }
+        for line in map(json.loads, body.decode().splitlines())
+    }
+
+    assert timestamps_by_id == {
+        "family": {
+            "published_date": "2018-01-01T00:00:00Z",
+            "last_updated_date": "2018-06-01T00:00:00Z",
+            "created": "2019-05-01T09:00:00Z",
+        },
+        "document": {
+            "published_date": "2018-01-01T00:00:00Z",
+            "last_updated_date": "2018-06-01T00:00:00Z",
+            "created": "2023-02-03T04:05:06.789000",
+            "last_modified": "2024-07-08T09:10:11.120000",
+        },
+        "collection": {
+            "published_date": "2017-01-01T00:00:00Z",
+            "last_updated_date": "2017-02-01T00:00:00Z",
+            "created": "2017-01-01T00:00:00Z",
+            "last_modified": "2017-02-01T00:00:00Z",
+        },
+    }
+
+
 def test_transform_correctly_transforms_collections_with_multiple_families():
     test_corpus = NavigatorCorpusFactory.build(
         import_id="CCLW.corpus.i00000001.n0000",
@@ -544,6 +624,7 @@ def test_transform_correctly_transforms_collections_with_multiple_families():
                 value=DocumentWithoutRelationships(
                     id="collection",
                     title="Collection title",
+                    description="Collection description",
                     labels=[
                         LabelRelationship(
                             type="entity_type",
@@ -558,6 +639,8 @@ def test_transform_correctly_transforms_collections_with_multiple_families():
                         "deprecated_slug": "collection-slug",
                         "published_date": "2020-01-01T00:00:00Z",
                         "last_updated_date": "2020-01-01T00:00:00Z",
+                        "created": "2020-01-01T00:00:00Z",
+                        "last_modified": "2020-01-01T00:00:00Z",
                     },
                 ),
             ),
@@ -566,6 +649,8 @@ def test_transform_correctly_transforms_collections_with_multiple_families():
             "deprecated_slug": "family1-slug",
             "published_date": "2020-01-01T00:00:00Z",
             "last_updated_date": "2020-01-01T00:00:00Z",
+            "created": "2020-01-01T00:00:00Z",
+            "last_modified": "2020-01-02T00:00:00Z",
         },
     )
     expected_family2_transform_result = Document(
@@ -625,6 +710,7 @@ def test_transform_correctly_transforms_collections_with_multiple_families():
                 value=DocumentWithoutRelationships(
                     id="collection",
                     title="Collection title",
+                    description="Collection description",
                     labels=[
                         LabelRelationship(
                             type="entity_type",
@@ -639,6 +725,8 @@ def test_transform_correctly_transforms_collections_with_multiple_families():
                         "deprecated_slug": "collection-slug",
                         "published_date": "2020-01-01T00:00:00Z",
                         "last_updated_date": "2020-01-01T00:00:00Z",
+                        "created": "2020-01-01T00:00:00Z",
+                        "last_modified": "2020-01-01T00:00:00Z",
                     },
                 ),
             ),
@@ -647,6 +735,8 @@ def test_transform_correctly_transforms_collections_with_multiple_families():
             "deprecated_slug": "family2-slug",
             "published_date": "2020-01-01T00:00:00Z",
             "last_updated_date": "2020-01-01T00:00:00Z",
+            "created": "2020-01-01T00:00:00Z",
+            "last_modified": "2020-01-02T00:00:00Z",
         },
     )
     expected_collection_transform_result = Document(
@@ -654,9 +744,12 @@ def test_transform_correctly_transforms_collections_with_multiple_families():
             "deprecated_slug": "collection-slug",
             "published_date": "2020-01-01T00:00:00Z",
             "last_updated_date": "2020-01-01T00:00:00Z",
+            "created": "2020-01-01T00:00:00Z",
+            "last_modified": "2020-01-01T00:00:00Z",
         },
         id="collection",
         title="Collection title",
+        description="Collection description",
         labels=[
             LabelRelationship(
                 type="entity_type",
@@ -695,13 +788,13 @@ def test_transform_correctly_transforms_collections_with_multiple_families():
     assert_model_list_equality(transform_result, expected_family_transform_result)
 
 
-@patch("app.navigator_family_etl_pipeline.cache_jsonl_to_s3")
+@patch("app.navigator_family_etl_pipeline.cache_partial_transform_jsonl_to_s3")
 @patch("app.navigator_family_etl_pipeline.upload_to_s3")
 @patch("app.navigator_family_etl_pipeline.NavigatorConnector")
-def test_etl_pipeline_does_not_cache_to_s3_when_ids_provided(
+def test_etl_pipeline_cache_partial_transform_jsonl_to_s3_when_ids_provided(
     mock_connector_class,
     mock_upload,
-    mock_cache_jsonl_to_s3,
+    mock_cache_partial_transform_jsonl_to_s3,
 ):
     """When specific IDs are provided the run is partial, so transformed
     documents must not be cached to S3 (that would overwrite the full result)."""
@@ -762,5 +855,4 @@ def test_etl_pipeline_does_not_cache_to_s3_when_ids_provided(
     assert isinstance(result, PipelineResult)
     assert result.status == "success"
 
-    # IDs were provided, so this is a partial run and nothing should be cached.
-    mock_cache_jsonl_to_s3.submit.assert_not_called()
+    mock_cache_partial_transform_jsonl_to_s3.submit.assert_called_once()

@@ -9,6 +9,7 @@ from pydantic import BaseModel
 
 from app.repository import (
     check_db_health,
+    count_documents_by_geography,
     get_all_documents,
     get_document_by_id,
     get_document_by_slug,
@@ -52,6 +53,15 @@ class APIItemResponse[APIDataType](BaseModel):
     """Generic single item response."""
 
     data: APIDataType
+
+
+class GeographyDocumentCount(BaseModel):
+    """Document count for a single geography label."""
+
+    id: str
+    name: str
+    type: str
+    count: int
 
 
 @router.get("/")
@@ -199,6 +209,45 @@ def get_document_by_deprecated_slug_route(slug: str, db=Depends(get_db)):
         raise
     except Exception as e:
         _LOGGER.exception(f"Failed to fetch document by slug {slug}: {e}")
+        raise HTTPException(
+            status_code=status.HTTP_500_INTERNAL_SERVER_ERROR, detail=str(e)
+        )
+
+
+@router.get(
+    "/documents:aggregateByGeography",
+    response_model=APIListResponse[GeographyDocumentCount],
+)
+def aggregate_documents_by_geography(
+    document_status: str | None = Query(
+        default=None,
+        description="Filter by attributes.status",
+        alias="attributes.status",
+        examples=["published", "deleted", "created"],
+    ),
+    geography_types: list[str] | None = Query(
+        default=None,
+        description="Restrict the aggregation to these geography label types",
+        alias="labels.value.type",
+        examples=["subdivision"],
+    ),
+    db=Depends(get_db),
+):
+    try:
+        counts = count_documents_by_geography(
+            db,
+            status=document_status,
+            geography_types=geography_types,
+        )
+
+        data = [
+            GeographyDocumentCount(id=label_id, name=name, type=label_type, count=count)
+            for label_id, name, label_type, count in counts
+        ]
+
+        return APIListResponse(data=data, total=len(data), page=1, page_size=len(data))
+    except Exception as e:
+        _LOGGER.exception(f"Failed to aggregate documents by geography: {e}")
         raise HTTPException(
             status_code=status.HTTP_500_INTERNAL_SERVER_ERROR, detail=str(e)
         )

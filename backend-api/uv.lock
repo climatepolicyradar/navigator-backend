@@ -242,7 +242,7 @@ requires-dist = [
     { name = "bcrypt", specifier = ">=4.3.0,<5.0.0" },
     { name = "boto3", specifier = ">=1.26" },
     { name = "botocore", specifier = ">=1.38.37" },
-    { name = "cpr-sdk", extras = ["vespa", "datasets"], specifier = "==5.0.0" },
+    { name = "cpr-sdk", extras = ["vespa", "datasets"], specifier = "==6.0.0" },
     { name = "db-client", git = "https://github.com/climatepolicyradar/navigator-db-client.git?rev=v3.9.21" },
     { name = "fastapi", specifier = ">=0.115.8" },
     { name = "fastapi-health", specifier = ">=0.4.0" },
@@ -469,7 +469,7 @@ wheels = [
 
 [[package]]
 name = "cpr-sdk"
-version = "5.0.0"
+version = "6.0.0"
 source = { registry = "https://pypi.org/simple" }
 dependencies = [
     { name = "aws-error-utils" },
@@ -485,9 +485,9 @@ dependencies = [
     { name = "rich" },
     { name = "tqdm" },
 ]
-sdist = { url = "https://files.pythonhosted.org/packages/5e/e2/3ae3590d070064096b1c9b3e3d4b563bdf04e2a32247a23387d95ef7aab0/cpr_sdk-5.0.0.tar.gz", hash = "sha256:bda253ff14b9fc5f027a3bc9b477e1d708f9217c03b172332140bb95f436ca21", size = 76739, upload-time = "2026-06-09T08:36:09.417Z" }
+sdist = { url = "https://files.pythonhosted.org/packages/2b/b3/03f51576d11e02ccf4d6c305ac42bf1b7c4814d58002111241e55021dcf1/cpr_sdk-6.0.0.tar.gz", hash = "sha256:3daec115d2f7f53bad49a8612e0297d19e58ec8230172cd9834181b12c51422f", size = 55342, upload-time = "2026-10-12T17:02:28.049Z" }
 wheels = [
-    { url = "https://files.pythonhosted.org/packages/bc/09/fe881dd6e624b35341601792e8ec1232e763fae9de031b801574220ad20a/cpr_sdk-5.0.0-py3-none-any.whl", hash = "sha256:d1d55eff60503b2568b14b99b8edb551a093c6c5cb9e39d6ef5650e4f4743312", size = 82498, upload-time = "2026-06-09T08:36:10.429Z" },
+    { url = "https://files.pythonhosted.org/packages/9f/f5/56e8c0c140def845ae600380c796d7b465c4cbe2b18af6ccc597cb1e8153/cpr_sdk-6.0.0-py3-none-any.whl", hash = "sha256:74a45fbf3d542d3133ac4c70bec34fdcbf0226d6c7a3ca7380122dcade0f15e5", size = 61394, upload-time = "2026-10-12T17:02:29.014Z" },
 ]
 
 [package.optional-dependencies]

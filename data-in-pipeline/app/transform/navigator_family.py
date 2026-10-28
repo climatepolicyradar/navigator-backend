@@ -688,7 +688,10 @@ def transform(
     document_from_family, family_warnings = _transform_navigator_family(input.data)
     warnings.extend(family_warnings)
 
-    documents_from_documents, warnings = _transform_navigator_documents(input.data)
+    documents_from_documents, document_warnings = _transform_navigator_documents(
+        input.data
+    )
+    warnings.extend(document_warnings)
 
     documents_from_collections: list[Document] = [
         _transform_navigator_collection(collection)
@@ -1456,6 +1459,11 @@ def _transform_navigator_family(
         attributes["published_date"] = navigator_family.published_date
     if navigator_family.last_updated_date:
         attributes["last_updated_date"] = navigator_family.last_updated_date
+    attributes.update(
+        _rds_timestamp_attributes(
+            navigator_family.created, navigator_family.last_modified
+        )
+    )
 
     """This field defines whether a document is available to be searched in Vespa.
     It is still used to filter out un-published or deleted documents in the frontend.
@@ -1536,7 +1544,7 @@ _document_type_to_entity_type_map: dict[str, list[Label]] = {
     "Nationally Determined Contribution": [nationally_determined_contribution],
     "National Adaptation Plan": [national_adaptation_plan],
     "Biennial Transparency Report": [biennial_transparency_report],
-    "Long-term Low-emission Development Strategy": [
+    "Long-Term Low-Emission Development Strategy": [
         long_term_low_emission_development_strategy
     ],
     "Biennial Update Report": [biennial_update_report],
@@ -1754,6 +1762,11 @@ def _transform_navigator_document(
         attributes["published_date"] = navigator_family.published_date
     if navigator_family.last_updated_date:
         attributes["last_updated_date"] = navigator_family.last_updated_date
+    attributes.update(
+        _rds_timestamp_attributes(
+            navigator_document.created, navigator_document.last_modified
+        )
+    )
 
     # Merged - experimental and should not be relied upon
     if _family_document_merged(navigator_family, navigator_document):
@@ -1768,6 +1781,7 @@ def _transform_navigator_document(
         labels
         + _category_label(navigator_family)
         + _deprecated_category_label(navigator_family)
+        + _un_convention_label(navigator_family)
     )
 
     document = Document(
@@ -1807,13 +1821,35 @@ def _transform_navigator_collection(
         attributes["published_date"] = navigator_collection.created
     if navigator_collection.last_modified:
         attributes["last_updated_date"] = navigator_collection.last_modified
+    attributes.update(
+        _rds_timestamp_attributes(
+            navigator_collection.created, navigator_collection.last_modified
+        )
+    )
 
     return Document(
         id=navigator_collection.import_id,
         title=navigator_collection.title,
+        description=navigator_collection.description,
         labels=labels,
         attributes=attributes,
     )
+
+
+def _rds_timestamp_attributes(
+    created: str | None, last_modified: str | None
+) -> dict[str, str]:
+    """Pass through the RDS row timestamps, as received from the families-api.
+
+    These record when the record entered / last changed in our system, unlike
+    `published_date` / `last_updated_date`, which are derived from events.
+    """
+    attributes: dict[str, str] = {}
+    if created:
+        attributes["created"] = created
+    if last_modified:
+        attributes["last_modified"] = last_modified
+    return attributes
 
 
 def _deduplicate_labels(

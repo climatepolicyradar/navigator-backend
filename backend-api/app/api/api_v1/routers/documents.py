@@ -1,5 +1,5 @@
 import logging
-from http.client import NOT_FOUND
+from http.client import NOT_FOUND, UNPROCESSABLE_ENTITY
 from typing import Annotated, Union
 
 from cpr_sdk.search_adaptors import VespaSearchAdapter
@@ -17,6 +17,7 @@ from app.repository.document import (
     get_slugged_objects,
 )
 from app.service.custom_app import AppTokenFactory
+from app.service.pipeline import is_valid_import_id
 from app.service.search import get_document_from_vespa, get_family_from_vespa
 from app.service.vespa import get_vespa_search_adapter
 from app.telemetry_exceptions import ExceptionHandlingTelemetryRoute
@@ -74,7 +75,10 @@ def family_detail_from_vespa(  # noqa: PLR0913
     db=Depends(get_db),
     vespa_search_adapter: VespaSearchAdapter = Depends(get_vespa_search_adapter),
 ):
-    """Get details of the family associated with a slug from vespa.
+    """Get details of the family associated with an import id from vespa.
+
+    NOTE: despite the historic wording, this takes an import id such as
+    `CCLW.family.10014.0`, not a slug. Slugs are rejected with a 422.
 
     NOTE: As part of our concepts spike, we're going to use this endpoint
     to get the family data from Vespa. The frontend will use this
@@ -96,6 +100,16 @@ def family_detail_from_vespa(  # noqa: PLR0913
             "props": {"import_id_or_slug": import_id, "app_token": str(app_token)},
         },
     )
+
+    # This endpoint takes an import id, not a slug. Reject anything else here
+    # rather than passing it to the SDK, which validates ids with a pattern of
+    # its own -- an unchecked value reaching that pattern froze every task in
+    # production on 2026-10-12.
+    if not is_valid_import_id(import_id):
+        raise HTTPException(
+            status_code=UNPROCESSABLE_ENTITY,
+            detail=f"'{import_id}' is not a valid import id",
+        )
 
     # Decode the app token and validate it.
     token = AppTokenFactory()
@@ -129,7 +143,10 @@ def doc_detail_from_vespa(
     db=Depends(get_db),
     vespa_search_adapter: VespaSearchAdapter = Depends(get_vespa_search_adapter),
 ):
-    """Get details of the document associated with a slug from vespa.
+    """Get details of the document associated with an import id from vespa.
+
+    NOTE: despite the historic wording, this takes an import id such as
+    `CCLW.document.i00000004.n0000`, not a slug. Slugs are rejected with a 422.
 
     NOTE: As part of our concepts spike, we're going to use this endpoint
     to get the document data from Vespa. The frontend will use this
@@ -151,6 +168,14 @@ def doc_detail_from_vespa(
             "props": {"import_id_or_slug": import_id, "app_token": str(app_token)},
         },
     )
+
+    # See the note on `family_detail_from_vespa`: this route reaches the same
+    # SDK id validation, so it needs the same guard.
+    if not is_valid_import_id(import_id):
+        raise HTTPException(
+            status_code=UNPROCESSABLE_ENTITY,
+            detail=f"'{import_id}' is not a valid import id",
+        )
 
     # Decode the app token and validate it.
     token = AppTokenFactory()

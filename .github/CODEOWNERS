@@ -4,5 +4,7 @@
 *                 @climatepolicyradar/enrichment
 backend-api/      @climatepolicyradar/fusion
 concepts-api/     @climatepolicyradar/fusion
-families-api/     @climatepolicyradar/fusion
+families-api/     @climatepolicyradar/enrichment
 geographies-api/  @climatepolicyradar/fusion
+data-in-api/      @climatepolicyradar/fusion
+api/              @climatepolicyradar/fusion

@@ -558,6 +558,8 @@ def test_transform_navigator_family_with_multilateral_climate_fund_project(
                         "variant": "Original language",
                         "md5_sum": "aaaaa11111bbbbb",
                         "status": "published",
+                        "created": "2020-01-01T00:00:00Z",
+                        "last_modified": "2020-01-02T00:00:00Z",
                     },
                 ),
             ),
@@ -624,6 +626,8 @@ def test_transform_navigator_family_with_multilateral_climate_fund_project(
                         "variant": "Original language",
                         "md5_sum": "aaaaa11111bbbbb",
                         "status": "published",
+                        "created": "2020-01-01T00:00:00Z",
+                        "last_modified": "2020-01-02T00:00:00Z",
                     },
                 ),
             ),
@@ -636,6 +640,8 @@ def test_transform_navigator_family_with_multilateral_climate_fund_project(
             "project_fund_spend_usd": 250000,
             "project_url": "https://www.cif.org/projects",
             "status": "published",
+            "created": "2020-01-01T00:00:00Z",
+            "last_modified": "2020-01-02T00:00:00Z",
         },
     )
     assert_model_list_equality(
@@ -703,6 +709,8 @@ def test_transform_navigator_family_with_multilateral_climate_fund_project(
                     "variant": "Original language",
                     "md5_sum": "aaaaa11111bbbbb",
                     "status": "published",
+                    "created": "2020-01-01T00:00:00Z",
+                    "last_modified": "2020-01-02T00:00:00Z",
                 },
             ),
             Document(
@@ -774,6 +782,8 @@ def test_transform_navigator_family_with_multilateral_climate_fund_project(
                     "variant": "Original language",
                     "md5_sum": "aaaaa11111bbbbb",
                     "status": "published",
+                    "created": "2020-01-01T00:00:00Z",
+                    "last_modified": "2020-01-02T00:00:00Z",
                 },
             ),
         ],
@@ -870,6 +880,8 @@ def test_transform_navigator_family_with_multilateral_climate_fund_guidance(
                 documents=[],
                 attributes={
                     "deprecated_slug": "mcf-guidance-family-slug",
+                    "created": "2020-01-01T00:00:00Z",
+                    "last_modified": "2020-01-02T00:00:00Z",
                 },
             )
         ],

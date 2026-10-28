@@ -134,6 +134,6 @@ class Item(WithDbDatetimeFields, table=True):
     type: str
     content_type: str | None = None
     id: str = Field(primary_key=True)
-    document_id: str = Field(foreign_key="document.id")
+    document_id: str = Field(foreign_key="document.id", index=True)
 
     document: Document = Relationship(back_populates="items")

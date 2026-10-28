@@ -63,6 +63,13 @@ custom_countries = [
         alpha_3="EUR",
         numeric="",
     ),
+    Country(
+        id="XKX",
+        name="Kosovo",
+        alpha_2="XK",
+        alpha_3="XKX",
+        numeric="",
+    ),
 ]
 
 
@@ -111,12 +118,23 @@ regions = [
     Region(id="EAS", name="East Asia & Pacific"),
     Region(id="NAC", name="North America"),
 ]
+
 _regions_by_id = {r.id: r for r in regions}
+
 regions_lookup: dict[str, Region] = {
     c["id"]: _regions_by_id[c["region"]["id"]]
     for c in _load_countries_from_worldbank_api()
     if c["region"]["id"] in _regions_by_id
 }
+
+regions_lookup.update(
+    {
+        "EUR": _regions_by_id["ECS"],  # EU           -> Europe
+        "VAT": _regions_by_id["ECS"],  # Vatican      -> Europe
+        "NIU": _regions_by_id["EAS"],  # Niue         -> East Asia
+        "COK": _regions_by_id["EAS"],  # Cook Islands -> East Asia
+    }
+)
 
 subdivisions = cast(list[PyCountrySubdivision], pycountry.subdivisions)
 
