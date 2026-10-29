@@ -5,8 +5,6 @@ import json
 from datetime import datetime
 from typing import Any, Literal, cast
 
-import pyarrow as pa
-import pyarrow.parquet as pq
 from data_in_models.models import Document
 from prefect import flow, task
 from prefect.futures import PrefectFuture
@@ -158,47 +156,6 @@ def cache_partial_transform_jsonl_to_s3(
         Key=f"pipelines/data-in-pipeline/partial-transformations/{run_id}-transformed-result.jsonl",
         Body=value,
         ContentType="application/x-ndjson",
-    )
-
-
-@task(log_prints=True)
-@pipeline_metrics.track(operation=Operation.LOAD)
-def cache_parquet_to_s3(documents: list[Document], run_id: str | None = None):
-    """Upload documents as parquet to S3 cache."""
-    client = get_s3_client()
-
-    buffer = io.BytesIO()
-    writer = None
-    for chunk in itertools.batched(documents, 10_000):
-        rows = []
-        for doc in chunk:
-            # we serialise the attributes to a json string and transform an empty dict => None
-            # as parquet breaks when auto-deriving a field with `{}` as its value.
-            doc_data = doc.model_dump(mode="json")
-            if doc_data.get("attributes"):
-                doc_data["attributes"] = json.dumps(doc_data["attributes"])
-            else:
-                doc_data["attributes"] = None
-            rows.append(doc_data)
-        table = pa.Table.from_pylist(rows)
-        if writer is None:
-            writer = pq.ParquetWriter(buffer, table.schema)
-        writer.write_table(table)
-    if writer:
-        writer.close()
-
-    value = buffer.getvalue()
-    client.put_object(
-        Bucket="cpr-cache",
-        Key=f"pipelines/data-in-pipeline/navigator_family/{run_id}-transformed-result.parquet",
-        Body=value,
-        ContentType="application/octet-stream",
-    )
-    client.put_object(
-        Bucket="cpr-cache",
-        Key="pipelines/data-in-pipeline/navigator_family/documents-latest.parquet",
-        Body=value,
-        ContentType="application/octet-stream",
     )
 
 
