@@ -260,8 +260,6 @@ def transform_duplicate_collections(
 
 @task(log_prints=True)
 @pipeline_metrics.track(operation=Operation.TRANSFORM)
-@task(log_prints=True)
-@pipeline_metrics.track(operation=Operation.TRANSFORM)
 def transform(
     identified_families: list[Identified[NavigatorFamily]],
 ) -> tuple[list[Document], list[Exception | TransformWarning]]:
