@@ -1,10 +1,7 @@
-import io
 import json
 from http import HTTPStatus
 from unittest.mock import MagicMock, patch
 
-import pyarrow as pa
-import pyarrow.parquet as pq
 from data_in_models.models import (
     Document,
     DocumentRelationship,
@@ -19,7 +16,6 @@ from app.extract.connectors import FamilyFetchResult
 from app.models import ExtractedEnvelope, ExtractedMetadata, Identified, PipelineResult
 from app.navigator_family_etl_pipeline import (
     cache_jsonl_to_s3,
-    cache_parquet_to_s3,
     data_in_pipeline,
     transform,
 )
@@ -38,20 +34,17 @@ from tests.transform.assertions import assert_model_list_equality
 
 
 @patch("app.navigator_family_etl_pipeline.cache_jsonl_to_s3")
-@patch("app.navigator_family_etl_pipeline.cache_parquet_to_s3")
 @patch("app.navigator_family_etl_pipeline.upload_to_s3")
 @patch("app.navigator_family_etl_pipeline.NavigatorConnector")
-def test_process_family_updates_flow_multiple_families(  # noqa: PLR0913
+def test_process_family_updates_flow_multiple_families(
     mock_connector_class,
     mock_upload,
-    mock_cache_parquet_to_s3,
     mock_cache_jsonl_to_s3,
 ):
     """Test ETL pipeline with multiple families across pages."""
     mock_upload.return_value = None
 
     mock_cache_jsonl_to_s3.return_value = None
-    mock_cache_parquet_to_s3.return_value = None
 
     mock_connector_instance = MagicMock()
     mock_connector_class.return_value = mock_connector_instance
@@ -174,22 +167,19 @@ def test_process_family_updates_flow_extraction_failure(
 
 
 @patch("app.navigator_family_etl_pipeline.cache_jsonl_to_s3")
-@patch("app.navigator_family_etl_pipeline.cache_parquet_to_s3")
 @patch("app.navigator_family_etl_pipeline.transform_navigator_family")
 @patch("app.navigator_family_etl_pipeline.upload_to_s3")
 @patch("app.navigator_family_etl_pipeline.NavigatorConnector")
-def test_etl_pipeline_partial_transformation_failure(  # noqa: PLR0913
+def test_etl_pipeline_partial_transformation_failure(
     mock_connector_class,
     mock_upload,
     mock_transform_families,
     mock_cache_jsonl_to_s3,
-    mock_cache_parquet_to_s3,
 ):
     """Test that pipeline continues when some families fail transformation."""
     mock_upload.return_value = None
 
     mock_cache_jsonl_to_s3.return_value = None
-    mock_cache_parquet_to_s3.return_value = None
 
     mock_connector_instance = MagicMock()
     mock_connector_class.return_value = mock_connector_instance
@@ -348,82 +338,6 @@ def test_etl_pipeline_all_families_fail_transformation(
     assert isinstance(result.result(raise_on_failure=False), Exception)
     assert result.message
     assert "No documents transformed successfully" in result.message
-
-
-@patch("app.navigator_family_etl_pipeline.get_s3_client")
-def test_cache_parquet_to_s3_includes_attributes_as_json_string(mock_get_s3_client):
-    """Test that cache_parquet_to_s3 successfully includes the attributes field as a JSON string."""
-    mock_s3_client = MagicMock()
-    mock_get_s3_client.return_value = mock_s3_client
-
-    # Create test documents with attributes
-    doc1 = Document(
-        id="doc-1",
-        title="Doc 1",
-        description="Description 1",
-        attributes={"some_key": "some_value"},
-        items=[],
-        labels=[],
-        documents=[],
-    )
-    doc2 = Document(
-        id="doc-2",
-        title="Doc 2",
-        description="Description 2",
-        attributes={"other_key": "other_value"},
-        items=[],
-        labels=[],
-        documents=[],
-    )
-    doc3 = Document(
-        id="doc-3",
-        title="Doc 3",
-        description="Description 3",
-        items=[],
-        labels=[],
-        documents=[],
-    )
-
-    documents = [doc1, doc2, doc3]
-    run_id = "test-run-id"
-
-    cache_parquet_to_s3.fn(documents, run_id)
-
-    # Check the first call (for run_id-transformed-result.parquet)
-    call_args = mock_s3_client.put_object.call_args_list[0]
-    kwargs = call_args.kwargs
-
-    assert kwargs["Bucket"] == "cpr-cache"
-    assert (
-        kwargs["Key"]
-        == f"pipelines/data-in-pipeline/navigator_family/{run_id}-transformed-result.parquet"
-    )
-
-    # Read the parquet body to verify `attributes` is present as a string
-    body = kwargs["Body"]
-    buffer = io.BytesIO(body)
-
-    table = pq.read_table(buffer)
-    schema = table.schema
-
-    # The `attributes` field should be in the schema
-    assert "attributes" in schema.names
-
-    attr_field = schema.field("attributes")
-    assert pa.types.is_string(attr_field.type) or pa.types.is_large_string(
-        attr_field.type
-    )
-
-    # validate the json strings
-    rows = table.to_pylist()
-
-    parsed_attr = json.loads(rows[0]["attributes"])
-    assert parsed_attr == {"some_key": "some_value"}
-
-    parsed_attr_2 = json.loads(rows[1]["attributes"])
-    assert parsed_attr_2 == {"other_key": "other_value"}
-
-    assert rows[2]["attributes"] is None
 
 
 @patch("app.navigator_family_etl_pipeline.get_s3_client")
