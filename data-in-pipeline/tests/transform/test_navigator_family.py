@@ -18,6 +18,7 @@ from app.transform.navigator_family import (
     _author_label,
     _author_type_label,
     _category_label,
+    _corpus_organisation_to_agent_label,
     _deprecated_category_label,
     _entity_type_label,
     _implementing_agency_label,
@@ -2407,6 +2408,49 @@ def test_un_convention_label_returns_empty_for_non_un_corpus():
         metadata={},
     )
     assert _un_convention_label(family) == []
+
+
+def test_agent_label_uses_an_empty_attribution_url_when_the_corpus_has_none():
+    family = NavigatorFamilyFactory.build(
+        corpus=NavigatorCorpusFactory.build(
+            import_id="CCLW.corpus.i00000001.n0000", attribution_url=None
+        ),
+    )
+    label = _corpus_organisation_to_agent_label(family)
+    assert label.attributes["attribution_url"] == ""
+
+
+def test_transform_navigator_family_handles_a_scetti_family():
+    """Shaped like the prod Scetti family, which has a null attribution url."""
+    family = Identified(
+        id="Scetti.family.i00000001.n0000",
+        source="navigator_family",
+        data=NavigatorFamilyFactory.build(
+            import_id="Scetti.family.i00000001.n0000",
+            category="EXECUTIVE",
+            published_date=None,
+            last_updated_date=None,
+            created="2026-08-04T14:05:49Z",
+            corpus=NavigatorCorpusFactory.build(
+                import_id="Scetti.corpus.i00000001.n0000",
+                corpus_type=NavigatorCorpusTypeFactory.build(name="Laws and Policies"),
+                organisation=NavigatorOrganisationFactory.build(id=14, name="Scetti"),
+                attribution_url=None,
+                corpus_image_url=None,
+            ),
+            documents=[],
+            events=[],
+            collections=[],
+            geographies=["IND"],
+            metadata={},
+        ),
+    )
+
+    output = transform_navigator_family(family).unwrap()
+
+    label_ids = {label.value.id for label in output.documents[0].labels}
+    assert "agent::State Clean Electricity Transition Tracker India" in label_ids
+    assert "category::Policy" in label_ids
 
 
 @pytest.mark.parametrize(
