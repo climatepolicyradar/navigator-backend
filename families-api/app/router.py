@@ -3,10 +3,10 @@ import logging
 from pathlib import Path
 from typing import TypeVar
 
-from fastapi import APIRouter, Depends, HTTPException, Query
+from fastapi import APIRouter, Depends, HTTPException, Query, Response
 from pydantic import BaseModel
 from sqlalchemy import text
-from sqlmodel import Session, SQLModel, desc, func, select
+from sqlmodel import Session, SQLModel, col, desc, func, select
 
 from app.database import get_session
 from app.models import (
@@ -49,13 +49,15 @@ class APIItemResponse[APIDataType](BaseModel):
 
 
 @router.get("/", response_model=APIListResponse[FamilyPublic])
-def read_families(
+def read_families(  # noqa: PLR0913
     *,
     session: Session = Depends(get_session),
     page: int = Query(1, ge=1),
     page_size: int = Query(default=10, ge=1, le=100),
     corpus_import_ids: list[str] = Query(default=[], alias="corpus.import_id"),
     import_id: list[str] | None = Query(default=None),
+    after_import_id: str | None = Query(default=None),
+    response: Response,
 ):
     """Fetch families with optional filtering.
 
@@ -65,6 +67,10 @@ def read_families(
     :param corpus_import_ids: Filter by corpus import IDs.
     :param import_id: List of family import IDs to fetch.
         If provided, pagination is ignored.
+    :param after_import_id: Return the families after this import ID, ordered
+        by import ID, instead of a page (``page`` is ignored). Use an empty
+        string for the first page.
+    :param response: Used to stop after_import_id pages being cached.
     :return: List of families.
     """
     filters = []
@@ -82,15 +88,25 @@ def read_families(
         # doesn't auto-join related tables in filters.
         filters.append(Family.corpus.has(Corpus.import_id.in_(corpus_import_ids)))  # type: ignore
 
-    query = (
-        Family.eager_loaded_select()
-        .where(*filters)
-        .order_by(desc(Family.last_modified), desc(Family.import_id))
-    )
+    if after_import_id is not None:
+        # Edits re-sort the default order mid-crawl, but import_id never changes.
+        query = (
+            Family.eager_loaded_select()
+            .where(*filters, col(Family.import_id) > after_import_id)
+            .order_by(col(Family.import_id))
+            .limit(page_size)
+        )
+        response.headers["Cache-Control"] = "no-store"
+    else:
+        query = (
+            Family.eager_loaded_select()
+            .where(*filters)
+            .order_by(desc(Family.last_modified), desc(Family.import_id))
+        )
 
-    limit = page_size
-    offset = (page - 1) * limit
-    query = query.offset(offset).limit(limit)
+        limit = page_size
+        offset = (page - 1) * limit
+        query = query.offset(offset).limit(limit)
 
     families = session.exec(query).all()
 
