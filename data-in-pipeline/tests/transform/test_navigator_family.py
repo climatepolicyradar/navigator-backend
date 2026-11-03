@@ -2637,6 +2637,34 @@ def test_entity_type_label_returns_empty_for_non_matching_document_type():
     assert _entity_type_label(family) == []
 
 
+def test_entity_type_label_returns_labels_for_all_document_types():
+    family = NavigatorFamilyFactory.build(
+        corpus=NavigatorCorpusFactory.build(import_id="CCLW.corpus.i00000001.n0000"),
+        documents=[
+            NavigatorDocumentFactory.build(
+                valid_metadata={"type": ["Report", "Synthesis Report"]},
+            )
+        ],
+    )
+    labels = _entity_type_label(family)
+    assert sorted(label.value.id for label in labels) == [
+        "document_type::Report",
+        "document_type::Synthesis Report",
+    ]
+    assert all(label.type == "entity_type" for label in labels)
+
+
+@pytest.mark.parametrize("valid_metadata", [{}, {"type": []}])
+def test_entity_type_label_returns_empty_for_missing_or_empty_document_type(
+    valid_metadata,
+):
+    family = NavigatorFamilyFactory.build(
+        corpus=NavigatorCorpusFactory.build(import_id="CCLW.corpus.i00000001.n0000"),
+        documents=[NavigatorDocumentFactory.build(valid_metadata=valid_metadata)],
+    )
+    assert _entity_type_label(family) == []
+
+
 def test_entity_type_label_returns_both_labels_for_oep_corpus():
     family = NavigatorFamilyFactory.build(
         corpus=NavigatorCorpusFactory.build(import_id="OEP.corpus.i00000001.n0000"),
