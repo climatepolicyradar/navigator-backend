@@ -522,6 +522,7 @@ LAWS_AND_POLICIES_CORPORA = {
     "CPR.corpus.i00000589.n0000",
     "CPR.corpus.i00000591.n0000",
     "CPR.corpus.i00000592.n0000",
+    "Scetti.corpus.i00000001.n0000",
 }
 
 LITIGATION_CORPORA = {"Academic.corpus.Litigation.n0000"}

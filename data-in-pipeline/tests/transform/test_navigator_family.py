@@ -2442,7 +2442,12 @@ def test_transform_navigator_family_handles_a_scetti_family():
             events=[],
             collections=[],
             geographies=["IND"],
-            metadata={},
+            metadata={
+                "type": ["Policies"],
+                "topic": ["Mitigation"],
+                "domain": ["Climate"],
+                "sector": [],
+            },
         ),
     )
 
@@ -2451,6 +2456,7 @@ def test_transform_navigator_family_handles_a_scetti_family():
     label_ids = {label.value.id for label in output.documents[0].labels}
     assert "agent::State Clean Electricity Transition Tracker India" in label_ids
     assert "category::Policy" in label_ids
+    assert "type::Policies" in label_ids
 
 
 @pytest.mark.parametrize(
