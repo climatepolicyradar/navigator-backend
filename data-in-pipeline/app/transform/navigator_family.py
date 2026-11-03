@@ -1470,12 +1470,6 @@ def _transform_navigator_family(
 
     # GST1 labels
     if _part_of_gst1(navigator_family):
-        global_stocktake_category_label = Label(
-            id="category::Global Stocktake",
-            value="Global Stocktake",
-            type="category",
-        )
-
         gst1_process_label = Label(
             id="process::GST1",
             value="GST1 Submission",
