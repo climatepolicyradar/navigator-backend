@@ -2127,7 +2127,7 @@ def _has_document_of_type(
     return any(
         document
         for document in navigator_family.documents
-        if document.valid_metadata.get("type") == [document_type]
+        if document_type in (document.valid_metadata.get("type") or [])
     )
 
 
