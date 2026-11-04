@@ -1345,7 +1345,7 @@ def _part_of_gst1(navigator_family: NavigatorFamily) -> bool:
     gst1_party_submission_date = "2023-11-30"
 
     family_created_date_without_time = str(
-        datetime.fromisoformat(navigator_family.created.replace("Z", "+00:00")).date()
+        datetime.fromisoformat(navigator_family.created).date()
     )
 
     gst1_party_submission = (
@@ -1372,15 +1372,16 @@ def _part_of_gst1(navigator_family: NavigatorFamily) -> bool:
     )
 
     national_adaptation_plan_submission_cutoff = "2023-04-01"
-    family_published_date_without_time = str(
-        datetime.fromisoformat(
-            navigator_family.published_date.replace("Z", "+00:00")
-        ).date()
+    family_published_date_without_time = (
+        str(datetime.fromisoformat(navigator_family.published_date).date())
+        if navigator_family.published_date
+        else None
     )
 
     gst1_national_adaptation_plan = (
         navigator_family.category == "UNFCCC"
         and _has_document_of_type(navigator_family, "National Adaptation Plan")
+        and family_published_date_without_time is not None
         and family_published_date_without_time
         < national_adaptation_plan_submission_cutoff
     )
