@@ -32,6 +32,20 @@ def _family_payload(import_id: str) -> dict:
     ).model_dump(mode="json")
 
 
+def _page(*families: dict) -> dict:
+    return {"data": list(families)}
+
+
+def _invalid_family(import_id: str) -> dict:
+    return {"import_id": import_id}
+
+
+def _page_request(after_import_id: str):
+    return call(
+        "families/", params={"page_size": 100, "after_import_id": after_import_id}
+    )
+
+
 def test_fetch_all_families_keeps_validation_failures_when_a_page_fetch_fails():
     responses = [
         {"data": [{"import_id": "Invalid.family.0.0"}]},  # page 1 → validation failure
@@ -138,17 +152,11 @@ def test_fetch_all_families_collects_validation_failures_and_continues():
     )
 
 
-def _page_request(after_import_id: str):
-    return call(
-        "families/", params={"page_size": 100, "after_import_id": after_import_id}
-    )
-
-
 def test_fetch_all_families_requests_pages_by_import_id_cursor():
     responses = [
-        {"data": [_family_payload("family.a"), _family_payload("family.b")]},
-        {"data": [_family_payload("family.c")]},
-        {"data": []},
+        _page(_family_payload("family.a"), _family_payload("family.b")),
+        _page(_family_payload("family.c")),
+        _page(),
     ]
 
     connector = _connector()
@@ -164,29 +172,24 @@ def test_fetch_all_families_requests_pages_by_import_id_cursor():
 
 def test_fetch_all_families_advances_cursor_past_an_invalid_last_family():
     responses = [
-        {"data": [_family_payload("family.a"), {"import_id": "z.invalid"}]},
-        {"data": []},
+        _page(_family_payload("family.a"), _invalid_family("family.invalid")),
+        _page(),
     ]
 
     connector = _connector()
     with patch.object(connector, "get", side_effect=responses) as get:
         result = connector.fetch_all_families(task_run_id="t", flow_run_id="f")
 
-    assert get.call_args_list[1] == _page_request("z.invalid")
+    assert get.call_args_list[1] == _page_request("family.invalid")
     assert [type(f) for f in result.failures] == [RecordValidationFailure]
-
-
-def _same_page_repeatedly(page: dict) -> list:
-    # Capped so a crawl that never stops ends in a fetch failure instead of hanging.
-    return [page] * 5 + [AssertionError("crawl did not stop")]
 
 
 def test_fetch_all_families_stops_when_a_page_has_nothing_new():
     """An API that ignores the cursor returns the same page forever."""
-    page = {"data": [_family_payload("family.a"), _family_payload("family.b")]}
+    page = _page(_family_payload("family.a"), _family_payload("family.b"))
 
     connector = _connector()
-    with patch.object(connector, "get", side_effect=_same_page_repeatedly(page)) as get:
+    with patch.object(connector, "get", side_effect=[page, page, _page()]) as get:
         result = connector.fetch_all_families(task_run_id="t", flow_run_id="f")
 
     assert get.call_args_list == [_page_request(""), _page_request("family.b")]
@@ -196,13 +199,13 @@ def test_fetch_all_families_stops_when_a_page_has_nothing_new():
 
 
 def test_fetch_all_families_stops_when_a_repeated_page_contains_an_invalid_family():
-    page = {"data": [_family_payload("family.a"), {"import_id": "z.invalid"}]}
+    page = _page(_family_payload("family.a"), _invalid_family("family.invalid"))
 
     connector = _connector()
-    with patch.object(connector, "get", side_effect=_same_page_repeatedly(page)) as get:
+    with patch.object(connector, "get", side_effect=[page, page, _page()]) as get:
         result = connector.fetch_all_families(task_run_id="t", flow_run_id="f")
 
-    assert get.call_args_list == [_page_request(""), _page_request("z.invalid")]
+    assert get.call_args_list == [_page_request(""), _page_request("family.invalid")]
     assert result.failures[-1] == DuplicateRecordFailure(
-        import_ids=["family.a", "z.invalid"], page=2
+        import_ids=["family.a", "family.invalid"], page=2
     )
