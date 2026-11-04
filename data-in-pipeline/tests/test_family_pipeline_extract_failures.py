@@ -32,6 +32,7 @@ def _envelope(import_id: str) -> ExtractedEnvelope:
         import_id=import_id,
         category="REPORTS",
         created="2020-01-01T00:00:00Z",
+        published_date="2020-01-01T00:00:00Z",
         corpus=NavigatorCorpusFactory.build(import_id="UNFCCC.corpus.i00000001.n0000"),
         documents=[NavigatorDocumentFactory.build(events=[], valid_metadata={})],
         events=[],

@@ -19,16 +19,17 @@ from tests.factories import (
 
 
 def _simple_family(**overrides):
-    defaults = dict(
-        corpus=NavigatorCorpusFactory.build(import_id="CCLW.corpus.i00000001.n0000"),
-        documents=[],
-        events=[],
-        collections=[],
-        concepts=[],
-        metadata={},
-        geographies=[],
-        category="Legislative",
-    )
+    defaults = {
+        "published_date": None,
+        "corpus": NavigatorCorpusFactory.build(import_id="CCLW.corpus.i00000001.n0000"),
+        "documents": [],
+        "events": [],
+        "collections": [],
+        "concepts": [],
+        "metadata": {},
+        "geographies": [],
+        "category": "Legislative",
+    }
     return NavigatorFamilyFactory.build(**{**defaults, **overrides})
 
 
@@ -75,6 +76,7 @@ def test_document_attributes_use_the_documents_own_rds_timestamps():
     )
     family = _simple_family(
         created="2001-01-01T00:00:00Z",
+        published_date=None,
         last_modified="2002-01-01T00:00:00Z",
         documents=[navigator_document],
     )

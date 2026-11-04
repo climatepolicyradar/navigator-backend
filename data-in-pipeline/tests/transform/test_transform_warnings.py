@@ -12,18 +12,19 @@ from tests.factories import (
 
 
 def _transform_warnings(**family_overrides):
-    defaults = dict(
-        import_id="family",
-        corpus=NavigatorCorpusFactory.build(import_id="CCLW.corpus.i00000001.n0000"),
-        created="2020-01-01T00:00:00Z",
-        geographies=["NOT-A-GEOGRAPHY"],
-        documents=[],
-        events=[],
-        collections=[],
-        concepts=[],
-        metadata={},
-        category="Legislative",
-    )
+    defaults = {
+        "import_id": "family",
+        "corpus": NavigatorCorpusFactory.build(import_id="CCLW.corpus.i00000001.n0000"),
+        "created": "2020-01-01T00:00:00Z",
+        "published_date": None,
+        "geographies": ["NOT-A-GEOGRAPHY"],
+        "documents": [],
+        "events": [],
+        "collections": [],
+        "concepts": [],
+        "metadata": {},
+        "category": "Legislative",
+    }
     family = NavigatorFamilyFactory.build(**{**defaults, **family_overrides})
     return (
         transform(
