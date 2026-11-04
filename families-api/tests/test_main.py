@@ -1,4 +1,5 @@
 from datetime import datetime
+from http import HTTPStatus
 
 from fastapi.testclient import TestClient
 from sqlmodel import Session
@@ -76,6 +77,92 @@ def test_read_families_ordering(client: TestClient, session: Session, make_famil
 
     updated_ids = ["family_1", "family_2"]
     assert [family.import_id for family in response.data] == updated_ids
+
+
+# Keep the returned families referenced: the session holds them weakly, and families
+# reloaded from the test schema have naive dates that break serialisation.
+def _add_families(session: Session, make_family, family_numbers: list[int]) -> list:
+    families = []
+    for family_number in family_numbers:
+        (corpus_type, corpus, family, family_document, physical_document) = make_family(
+            family_number
+        )
+        session.add_all(
+            [corpus_type, corpus, family, family_document, physical_document]
+        )
+        families.append(family)
+    session.commit()
+    return families
+
+
+def _family_ids(response) -> list[str]:
+    assert response.status_code == HTTPStatus.OK
+    data = APIListResponse[FamilyPublic].model_validate(response.json()).data
+    return [family.import_id for family in data]
+
+
+def test_read_families_keyset_orders_by_import_id_and_ignores_last_modified(
+    client: TestClient, session: Session, make_family
+):
+    (family2, family3, family1) = _add_families(session, make_family, [2, 3, 1])
+    family3.last_modified = datetime.now()
+    session.add(family3)
+    session.commit()
+
+    assert _family_ids(client.get("/families/?after_import_id=&page_size=2")) == [
+        family1.import_id,
+        family2.import_id,
+    ]
+    assert _family_ids(
+        client.get("/families/?after_import_id=family_2&page_size=2")
+    ) == [family3.import_id]
+    assert _family_ids(client.get("/families/?after_import_id=family_3")) == []
+
+
+def test_read_families_keyset_ignores_page(
+    client: TestClient, session: Session, make_family
+):
+    (family1, family2, _family3) = _add_families(session, make_family, [1, 2, 3])
+
+    response = client.get("/families/?after_import_id=&page=2&page_size=2")
+
+    assert _family_ids(response) == [family1.import_id, family2.import_id]
+
+
+def test_read_families_keyset_applies_filters(
+    client: TestClient, session: Session, make_family
+):
+    (_family1, family2, family3) = _add_families(session, make_family, [1, 2, 3])
+
+    by_corpus = client.get("/families/?after_import_id=&corpus.import_id=corpus_2")
+    by_import_id = client.get(
+        "/families/?after_import_id=family_1&import_id=family_1&import_id=family_3"
+    )
+
+    assert _family_ids(by_corpus) == [family2.import_id]
+    assert _family_ids(by_import_id) == [family3.import_id]
+
+
+def test_read_families_keyset_is_not_cacheable(
+    client: TestClient, session: Session, make_family
+):
+    (family1,) = _add_families(session, make_family, [1])
+
+    response = client.get("/families/?after_import_id=")
+
+    assert _family_ids(response) == [family1.import_id]
+    assert response.headers["cache-control"] == "no-store"
+
+
+def test_read_families_default_mode_is_cacheable(
+    client: TestClient, session: Session, make_family
+):
+    (family1,) = _add_families(session, make_family, [1])
+
+    response = client.get("/families/")
+
+    assert _family_ids(response) == [family1.import_id]
+    assert "cache-control" not in response.headers
 
 
 def test_read_documents_ordering(client: TestClient, session: Session, make_family):
