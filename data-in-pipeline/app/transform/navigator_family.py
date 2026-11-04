@@ -1373,7 +1373,7 @@ def _part_of_gst1(navigator_family: NavigatorFamily) -> bool:
 
     national_adaptation_plan_submission_cutoff = "2023-04-01"
     is_national_adaptation_plan = any(
-        "National Adaptation Plan" == doc.valid_metadata["type"][0]
+        "National Adaptation Plan" in doc.valid_metadata["type"]
         for doc in navigator_family.documents
     )
     gst1_national_adaptation_plan = (

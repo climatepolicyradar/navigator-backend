@@ -116,10 +116,65 @@ def test_part_of_gst1_correctly_assesses_if_family_is_part_of_global_stocktake(
                 )
             ],
             True,
-        )
+        ),
+        (
+            "UNFCCC",
+            "2023-01-01T00:00:00Z",
+            [
+                NavigatorDocumentFactory.build(
+                    valid_metadata={"type": ["Report", "National Adaptation Plan"]}
+                )
+            ],
+            True,
+        ),
+        (
+            "UNFCCC",
+            "2023-01-01T00:00:00Z",
+            [
+                NavigatorDocumentFactory.build(valid_metadata={"type": ["Report"]}),
+                NavigatorDocumentFactory.build(
+                    valid_metadata={"type": ["National Adaptation Plan"]}
+                ),
+            ],
+            True,
+        ),
+        #
+        # invalid cases
+        (
+            "UNFCCC",
+            "2023-01-01T00:00:00Z",
+            [],
+            False,
+        ),  # no documents
+        (
+            "Executive",
+            "2023-01-01T00:00:00Z",
+            [
+                NavigatorDocumentFactory.build(
+                    valid_metadata={"type": ["National Adaptation Plan"]}
+                )
+            ],
+            False,
+        ),  # wrong category
+        (
+            "UNFCCC",
+            "2024-01-01T00:00:00Z",
+            [
+                NavigatorDocumentFactory.build(
+                    valid_metadata={"type": ["National Adaptation Plan"]}
+                )
+            ],
+            False,
+        ),  # wrong date
+        (
+            "UNFCCC",
+            "2023-01-01T00:00:00Z",
+            [NavigatorDocumentFactory.build(valid_metadata={"type": ["Report"]})],
+            False,
+        ),  # wrong document type
     ],
 )
-def test_part_of_gst1_correctly_assesses_national_adaptation_plans_as_part_of_global_stocktake(
+def test_part_of_gst1_correctly_assesses_national_adaptation_plans_that_are_part_of_global_stocktake(
     category, published_date, documents, expected_result
 ):
     test_family = NavigatorFamilyFactory.build(
