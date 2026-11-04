@@ -460,7 +460,7 @@ national_drought_plan = Label(
     labels=[LabelRelationship(type="subconcept_of", value=unccd)],
 )
 
-# document types
+# non-party document type labels
 facilitative_sharing_of_views_report = Label(
     id="document_type::Facilitative Sharing of Views Report",
     value="Facilitative Sharing of Views Report",
