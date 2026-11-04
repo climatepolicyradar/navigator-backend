@@ -205,12 +205,3 @@ def test_fetch_all_families_stops_when_a_repeated_page_contains_an_invalid_famil
     assert result.failures[-1] == DuplicateRecordFailure(
         import_ids=["family.a", "z.invalid"], page=2
     )
-
-
-def test_navigator_family_accepts_a_null_corpus_attribution_url():
-    payload = _family_payload("family.a")
-    payload["corpus"]["attribution_url"] = None
-
-    family = NavigatorFamily.model_validate(payload)
-
-    assert family.corpus.attribution_url is None

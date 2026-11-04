@@ -493,7 +493,6 @@ _corpus_to_provider_map: dict[CorpusId, str] = {
     "UN.corpus.UNCCD.n0000": "UNCCD",
     "UN.corpus.UNCBD.n0000": "UNCBD",
     "ICCN.corpus.i00000001.n0000": "International Climate Councils Network",
-    "Scetti.corpus.i00000001.n0000": "State Clean Electricity Transition Tracker India",
     **mcf_project_corpus_import_id_to_multilateral_climate_fund,
 }
 
@@ -522,7 +521,6 @@ LAWS_AND_POLICIES_CORPORA = {
     "CPR.corpus.i00000589.n0000",
     "CPR.corpus.i00000591.n0000",
     "CPR.corpus.i00000592.n0000",
-    "Scetti.corpus.i00000001.n0000",
 }
 
 LITIGATION_CORPORA = {"Academic.corpus.Litigation.n0000"}
@@ -861,7 +859,7 @@ def _corpus_organisation_to_agent_label(
         id=f"agent::{provider_name}",
         value=provider_name,
         attributes={
-            "attribution_url": navigator_family.corpus.attribution_url or "",
+            "attribution_url": navigator_family.corpus.attribution_url,
             "corpus_text": navigator_family.corpus.corpus_text,
             "corpus_image_url": (
                 f"https://cdn.climatepolicyradar.org/{navigator_family.corpus.corpus_image_url}"
@@ -1918,7 +1916,6 @@ _corpus_import_id_to_category_map: dict[CorpusId, Category | DeprecatedCategory]
     "CPR.corpus.i00000591.n0000": "Laws and Policies",
     "CPR.corpus.i00000589.n0000": "Laws and Policies",
     "CPR.corpus.i00000592.n0000": "Laws and Policies",
-    "Scetti.corpus.i00000001.n0000": "Laws and Policies",
 }
 
 
