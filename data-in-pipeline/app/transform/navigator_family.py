@@ -460,115 +460,71 @@ national_drought_plan = Label(
     labels=[LabelRelationship(type="subconcept_of", value=unccd)],
 )
 
-# global stocktake
-global_stocktake_category_label = Label(
-    id="category::Global Stocktake",
-    value="Global Stocktake",
-    type="category",
-)
+# document types
 facilitative_sharing_of_views_report = Label(
     id="document_type::Facilitative Sharing of Views Report",
     value="Facilitative Sharing of Views Report",
     type="document_type",
-    labels=[
-        LabelRelationship(type="subconcept_of", value=global_stocktake_category_label)
-    ],
 )
 fast_start_finance_report = Label(
     id="document_type::Fast-Start Finance Report",
     value="Fast-Start Finance Report",
     type="document_type",
-    labels=[
-        LabelRelationship(type="subconcept_of", value=global_stocktake_category_label)
-    ],
 )
 global_stocktake_synthesis_report = Label(
     id="document_type::Global Stocktake Synthesis Report",
     value="Global Stocktake Synthesis Report",
     type="document_type",
-    labels=[
-        LabelRelationship(type="subconcept_of", value=global_stocktake_category_label)
-    ],
 )
 intersessional_document = Label(
     id="document_type::Intersessional Document",
     value="Intersessional Document",
     type="document_type",
-    labels=[
-        LabelRelationship(type="subconcept_of", value=global_stocktake_category_label)
-    ],
 )
 ipcc_report = Label(
     id="document_type::IPCC Report",
     value="IPCC Report",
     type="document_type",
-    labels=[
-        LabelRelationship(type="subconcept_of", value=global_stocktake_category_label)
-    ],
 )
 presession_document = Label(
     id="document_type::Pre-Session Document",
     value="Pre-Session Document",
     type="document_type",
-    labels=[
-        LabelRelationship(type="subconcept_of", value=global_stocktake_category_label)
-    ],
 )
 publication = Label(
     id="document_type::Publication",
     value="Publication",
     type="document_type",
-    labels=[
-        LabelRelationship(type="subconcept_of", value=global_stocktake_category_label)
-    ],
 )
 document_type_report = Label(
     id="document_type::Report",
     value="Report",
     type="document_type",
-    labels=[
-        LabelRelationship(type="subconcept_of", value=global_stocktake_category_label)
-    ],
 )
 submission_to_the_global_stocktake = Label(
     id="document_type::Submission to the Global Stocktake",
     value="Submission to the Global Stocktake",
     type="document_type",
-    labels=[
-        LabelRelationship(type="subconcept_of", value=global_stocktake_category_label)
-    ],
 )
 summary_report = Label(
     id="document_type::Summary Report",
     value="Summary Report",
     type="document_type",
-    labels=[
-        LabelRelationship(type="subconcept_of", value=global_stocktake_category_label)
-    ],
 )
 synthesis_report = Label(
     id="document_type::Synthesis Report",
     value="Synthesis Report",
     type="document_type",
-    labels=[
-        LabelRelationship(type="subconcept_of", value=global_stocktake_category_label)
-    ],
 )
 technical_analysis_summary_report = Label(
     id="document_type::Technical Analysis Summary Report",
     value="Technical Analysis Summary Report",
     type="document_type",
-    labels=[
-        LabelRelationship(type="subconcept_of", value=global_stocktake_category_label)
-    ],
 )
 technical_analysis_technical_report = Label(
     id="document_type::Technical Analysis Technical Report",
     value="Technical Analysis Technical Report",
     type="document_type",
-    labels=[
-        LabelRelationship(type="subconcept_of", value=global_stocktake_category_label)
-    ],
 )
 
 
@@ -1470,6 +1426,12 @@ def _transform_navigator_family(
 
     # GST1 labels
     if _part_of_gst1(navigator_family):
+        global_stocktake_category_label = Label(
+            id="category::Global Stocktake",
+            value="Global Stocktake",
+            type="category",
+        )
+
         gst1_process_label = Label(
             id="process::GST1",
             value="GST1 Submission",
