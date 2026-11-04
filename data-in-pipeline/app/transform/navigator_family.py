@@ -1372,15 +1372,17 @@ def _part_of_gst1(navigator_family: NavigatorFamily) -> bool:
     )
 
     national_adaptation_plan_submission_cutoff = "2023-04-01"
-    is_national_adaptation_plan = any(
-        "National Adaptation Plan" in doc.valid_metadata["type"]
-        for doc in navigator_family.documents
+    family_published_date_without_time = str(
+        datetime.fromisoformat(
+            navigator_family.published_date.replace("Z", "+00:00")
+        ).date()
     )
+
     gst1_national_adaptation_plan = (
         navigator_family.category == "UNFCCC"
-        and is_national_adaptation_plan
-        and navigator_family.published_date is not None
-        and navigator_family.published_date < national_adaptation_plan_submission_cutoff
+        and _has_document_of_type(navigator_family, "National Adaptation Plan")
+        and family_published_date_without_time
+        < national_adaptation_plan_submission_cutoff
     )
 
     return (
