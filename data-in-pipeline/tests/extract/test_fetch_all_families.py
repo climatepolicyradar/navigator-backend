@@ -60,9 +60,10 @@ def test_fetch_all_families_reports_records_seen_on_more_than_one_page():
     ]
 
     connector = _connector()
-    with patch.object(connector, "get", side_effect=responses):
+    with patch.object(connector, "get", side_effect=responses) as get:
         result = connector.fetch_all_families(task_run_id="t", flow_run_id="f")
 
+    assert get.call_args_list[2] == _page_request("family.c")
     assert result.failures == [
         DuplicateRecordFailure(import_ids=["family.b"], page=2),
     ]
@@ -176,7 +177,7 @@ def test_fetch_all_families_advances_cursor_past_an_invalid_last_family():
 
 
 def _same_page_repeatedly(page: dict) -> list:
-    # Capped so a crawl that never stops fails the test instead of hanging it.
+    # Capped so a crawl that never stops ends in a fetch failure instead of hanging.
     return [page] * 5 + [AssertionError("crawl did not stop")]
 
 
