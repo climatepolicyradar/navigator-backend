@@ -102,7 +102,7 @@ def _family_ids(response) -> list[str]:
 def test_read_families_keyset_orders_by_import_id_and_ignores_last_modified(
     client: TestClient, session: Session, make_family
 ):
-    (_, _, family3) = _add_families(session, make_family, [1, 2, 3])
+    (_, family3, _) = _add_families(session, make_family, [2, 3, 1])
     family3.last_modified = datetime.now()
     session.add(family3)
     session.commit()
@@ -115,6 +115,30 @@ def test_read_families_keyset_orders_by_import_id_and_ignores_last_modified(
         client.get("/families/?after_import_id=family_2&page_size=2")
     ) == ["family_3"]
     assert _family_ids(client.get("/families/?after_import_id=family_3")) == []
+
+
+def test_read_families_keyset_ignores_page(
+    client: TestClient, session: Session, make_family
+):
+    _add_families(session, make_family, [1, 2, 3])
+
+    response = client.get("/families/?after_import_id=&page=2&page_size=2")
+
+    assert _family_ids(response) == ["family_1", "family_2"]
+
+
+def test_read_families_keyset_applies_filters(
+    client: TestClient, session: Session, make_family
+):
+    _add_families(session, make_family, [1, 2, 3])
+
+    by_corpus = client.get("/families/?after_import_id=&corpus.import_id=corpus_2")
+    by_import_id = client.get(
+        "/families/?after_import_id=family_1&import_id=family_1&import_id=family_3"
+    )
+
+    assert _family_ids(by_corpus) == ["family_2"]
+    assert _family_ids(by_import_id) == ["family_3"]
 
 
 def test_read_families_keyset_is_not_cacheable(
