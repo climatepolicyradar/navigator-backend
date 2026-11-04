@@ -1371,7 +1371,21 @@ def _part_of_gst1(navigator_family: NavigatorFamily) -> bool:
         and family_created_date_without_time in gst1_non_party_report_dates
     )
 
-    return gst1_party_submission or gst1_non_party_report
+    national_adaptation_plan_submission_cutoff = "2023-04-01"
+    is_national_adaptation_plan = any(
+        "National Adaptation Plan" == doc.valid_metadata["type"][0]
+        for doc in navigator_family.documents
+    )
+    gst1_national_adaptation_plan = (
+        navigator_family.category == "UNFCCC"
+        and is_national_adaptation_plan
+        and navigator_family.published_date is not None
+        and navigator_family.published_date < national_adaptation_plan_submission_cutoff
+    )
+
+    return (
+        gst1_party_submission or gst1_non_party_report or gst1_national_adaptation_plan
+    )
 
 
 def _build_domain_labels(domains: list[str]) -> list[LabelRelationship]:
