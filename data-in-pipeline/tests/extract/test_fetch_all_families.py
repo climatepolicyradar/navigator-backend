@@ -1,4 +1,4 @@
-from unittest.mock import patch
+from unittest.mock import call, patch
 
 import requests
 from pydantic import ValidationError
@@ -32,6 +32,20 @@ def _family_payload(import_id: str) -> dict:
     ).model_dump(mode="json")
 
 
+def _page(*families: dict) -> dict:
+    return {"data": list(families)}
+
+
+def _invalid_family(import_id: str) -> dict:
+    return {"import_id": import_id}
+
+
+def _page_request(after_import_id: str):
+    return call(
+        "families/", params={"page_size": 100, "after_import_id": after_import_id}
+    )
+
+
 def test_fetch_all_families_keeps_validation_failures_when_a_page_fetch_fails():
     responses = [
         {"data": [{"import_id": "Invalid.family.0.0"}]},  # page 1 → validation failure
@@ -52,8 +66,7 @@ def test_fetch_all_families_keeps_validation_failures_when_a_page_fetch_fails():
 
 
 def test_fetch_all_families_reports_records_seen_on_more_than_one_page():
-    """Offset pagination drifts if the underlying data changes mid-run: rows shift
-    between pages, so some are returned twice (and others are silently skipped)."""
+    """A family returned on two pages means the pages no longer line up, so others may be missing."""
     responses = [
         {"data": [_family_payload("family.a"), _family_payload("family.b")]},
         {"data": [_family_payload("family.b"), _family_payload("family.c")]},
@@ -61,9 +74,10 @@ def test_fetch_all_families_reports_records_seen_on_more_than_one_page():
     ]
 
     connector = _connector()
-    with patch.object(connector, "get", side_effect=responses):
+    with patch.object(connector, "get", side_effect=responses) as get:
         result = connector.fetch_all_families(task_run_id="t", flow_run_id="f")
 
+    assert get.call_args_list[2] == _page_request("family.c")
     assert result.failures == [
         DuplicateRecordFailure(import_ids=["family.b"], page=2),
     ]
@@ -135,4 +149,63 @@ def test_fetch_all_families_collects_validation_failures_and_continues():
     assert (
         failure.error
         == 'Error validating family: [{"type":"missing","loc":["slug"],"msg":"Field required","input":{},"url":"https://errors.pydantic.dev/2.12/v/missing"}]'
+    )
+
+
+def test_fetch_all_families_requests_pages_by_import_id_cursor():
+    responses = [
+        _page(_family_payload("family.a"), _family_payload("family.b")),
+        _page(_family_payload("family.c")),
+        _page(),
+    ]
+
+    connector = _connector()
+    with patch.object(connector, "get", side_effect=responses) as get:
+        connector.fetch_all_families(task_run_id="t", flow_run_id="f")
+
+    assert get.call_args_list == [
+        _page_request(""),
+        _page_request("family.b"),
+        _page_request("family.c"),
+    ]
+
+
+def test_fetch_all_families_advances_cursor_past_an_invalid_last_family():
+    responses = [
+        _page(_family_payload("family.a"), _invalid_family("family.invalid")),
+        _page(),
+    ]
+
+    connector = _connector()
+    with patch.object(connector, "get", side_effect=responses) as get:
+        result = connector.fetch_all_families(task_run_id="t", flow_run_id="f")
+
+    assert get.call_args_list[1] == _page_request("family.invalid")
+    assert [type(f) for f in result.failures] == [RecordValidationFailure]
+
+
+def test_fetch_all_families_stops_when_a_page_has_nothing_new():
+    """An API that ignores the cursor returns the same page forever."""
+    page = _page(_family_payload("family.a"), _family_payload("family.b"))
+
+    connector = _connector()
+    with patch.object(connector, "get", side_effect=[page, page, _page()]) as get:
+        result = connector.fetch_all_families(task_run_id="t", flow_run_id="f")
+
+    assert get.call_args_list == [_page_request(""), _page_request("family.b")]
+    assert result.failures == [
+        DuplicateRecordFailure(import_ids=["family.a", "family.b"], page=2),
+    ]
+
+
+def test_fetch_all_families_stops_when_a_repeated_page_contains_an_invalid_family():
+    page = _page(_family_payload("family.a"), _invalid_family("family.invalid"))
+
+    connector = _connector()
+    with patch.object(connector, "get", side_effect=[page, page, _page()]) as get:
+        result = connector.fetch_all_families(task_run_id="t", flow_run_id="f")
+
+    assert get.call_args_list == [_page_request(""), _page_request("family.invalid")]
+    assert result.failures[-1] == DuplicateRecordFailure(
+        import_ids=["family.a", "family.invalid"], page=2
     )

@@ -2,6 +2,7 @@ import datetime
 from enum import Enum
 from http import HTTPStatus
 from typing import Literal
+from urllib.parse import urlencode
 
 import requests
 from pydantic import BaseModel, ValidationError
@@ -160,8 +161,8 @@ class RecordValidationFailure(BaseModel):
 class DuplicateRecordFailure(BaseModel):
     """Records already returned by an earlier page were returned again.
 
-    This means offset pagination drifted because the data changed mid-run, so other
-    records will have been skipped and the extract is incomplete.
+    This means the pages no longer line up (e.g. stale or reordered responses), so
+    other records may have been skipped and the extract is incomplete.
     """
 
     import_ids: list[str]
@@ -413,6 +414,7 @@ class NavigatorConnector(HTTPConnector):
         logger = get_logger()
 
         page = 1
+        after_import_id = ""
         successful_envelopes: list[ExtractedEnvelope] = []
         failures: list[ExtractFailure] = []
         seen_import_ids: set[str] = set()
@@ -420,8 +422,12 @@ class NavigatorConnector(HTTPConnector):
         while True:
             with log_context(page_number=page):
                 try:
-                    logger.info(f"Fetching families page {page}")
-                    response_json = self.get(f"families/?page={page}&page_size=100")
+                    logger.info(
+                        f"Fetching families page {page} after import_id {after_import_id!r}"
+                    )
+                    # Paging by import_id, which edits can't change, keeps pages from drifting.
+                    params = {"page_size": 100, "after_import_id": after_import_id}
+                    response_json = self.get("families/", params=params)
                     families_data = response_json.get("data", [])
 
                     # Break the loop if no more families are returned from the endpoint
@@ -435,20 +441,22 @@ class NavigatorConnector(HTTPConnector):
                     duplicate_import_ids: list[str] = []
 
                     for family in families_data:
+                        import_id = family["import_id"]
+                        # Checked before validating, so invalid families count as repeats too.
+                        if import_id in seen_import_ids:
+                            duplicate_import_ids.append(import_id)
+                            continue
+                        seen_import_ids.add(import_id)
                         try:
                             validated_family = NavigatorFamily.model_validate(family)
-                            if family["import_id"] in seen_import_ids:
-                                duplicate_import_ids.append(family["import_id"])
-                                continue
-                            seen_import_ids.add(family["import_id"])
                             validated_families.append(validated_family)
                         except ValidationError as e:
                             logger.info(
-                                f"Error validating family {family['import_id']}: {e.json()}"
+                                f"Error validating family {import_id}: {e.json()}"
                             )
                             failures.append(
                                 RecordValidationFailure(
-                                    import_ids=[family["import_id"]],
+                                    import_ids=[import_id],
                                     page=page,
                                     error=f"Error validating family: {e.json()}",
                                 )
@@ -475,12 +483,19 @@ class NavigatorConnector(HTTPConnector):
                             task_run_id=task_run_id,
                             flow_run_id=flow_run_id,
                             metadata=ExtractedMetadata(
-                                endpoint=f"{self.config.base_url}/families/?page={page}",
+                                endpoint=f"{self.config.base_url}/families/?{urlencode(params)}",
                                 http_status=HTTPStatus.OK,
                             ),
                         )
 
                         successful_envelopes.append(envelope)
+                    # A page of only repeats means the API isn't honouring the cursor.
+                    page_has_only_repeats = len(duplicate_import_ids) == len(
+                        families_data
+                    )
+                    if page_has_only_repeats:
+                        break
+                    after_import_id = families_data[-1]["import_id"]
                     page += 1
 
                 except requests.RequestException as e:
