@@ -63,6 +63,7 @@ def test_process_family_updates_flow_multiple_families(
             category="REPORTS",
             created="2020-01-01T00:00:00Z",
             corpus=corpus,
+            published_date=None,
             documents=[
                 NavigatorDocumentFactory.build(
                     import_id="i00000315",
@@ -82,6 +83,7 @@ def test_process_family_updates_flow_multiple_families(
             summary="Family summary",
             category="REPORTS",
             created="2020-01-01T00:00:00Z",
+            published_date=None,
             corpus=corpus,
             documents=[
                 NavigatorDocumentFactory.build(
@@ -731,6 +733,7 @@ def test_etl_pipeline_cache_partial_transform_jsonl_to_s3_when_ids_provided(
             summary="Family summary",
             category="REPORTS",
             created="2020-01-01T00:00:00Z",
+            published_date=None,
             corpus=corpus,
             documents=[
                 NavigatorDocumentFactory.build(

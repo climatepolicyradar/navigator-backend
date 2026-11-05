@@ -77,7 +77,7 @@ def test_part_of_gst1_correctly_assesses_if_family_is_part_of_global_stocktake(
         import_id="family",
         title="GST1 party family",
         summary="Family summary",
-        category="EXECUTIVE",
+        category="UNFCCC",
         published_date=None,
         last_updated_date=None,
         created=created_date,
@@ -98,6 +98,107 @@ def test_part_of_gst1_correctly_assesses_if_family_is_part_of_global_stocktake(
             "author": ["Australia"],
             "author_type": [author_type],
         },
+    )
+
+    assert _part_of_gst1(test_family) == expected_result
+
+
+@pytest.mark.parametrize(
+    "category, published_date, documents, expected_result",
+    [
+        # valid cases
+        (
+            "UNFCCC",
+            "2023-01-01T00:00:00Z",
+            [
+                NavigatorDocumentFactory.build(
+                    valid_metadata={"type": ["National Adaptation Plan"]}
+                )
+            ],
+            True,
+        ),
+        (
+            "UNFCCC",
+            "2023-01-01T00:00:00Z",
+            [
+                NavigatorDocumentFactory.build(
+                    valid_metadata={"type": ["Report", "National Adaptation Plan"]}
+                )
+            ],
+            True,
+        ),
+        (
+            "UNFCCC",
+            "2023-01-01T00:00:00Z",
+            [
+                NavigatorDocumentFactory.build(valid_metadata={"type": ["Report"]}),
+                NavigatorDocumentFactory.build(
+                    valid_metadata={"type": ["National Adaptation Plan"]}
+                ),
+            ],
+            True,
+        ),
+        #
+        # invalid cases
+        (
+            "UNFCCC",
+            "2023-01-01T00:00:00Z",
+            [],
+            False,
+        ),  # no documents
+        (
+            "Executive",
+            "2023-01-01T00:00:00Z",
+            [
+                NavigatorDocumentFactory.build(
+                    valid_metadata={"type": ["National Adaptation Plan"]}
+                )
+            ],
+            False,
+        ),  # wrong category
+        (
+            "UNFCCC",
+            "2024-01-01T00:00:00Z",
+            [
+                NavigatorDocumentFactory.build(
+                    valid_metadata={"type": ["National Adaptation Plan"]}
+                )
+            ],
+            False,
+        ),  # wrong date
+        (
+            "UNFCCC",
+            "2023-01-01T00:00:00Z",
+            [NavigatorDocumentFactory.build(valid_metadata={"type": ["Report"]})],
+            False,
+        ),  # wrong document type
+    ],
+)
+def test_part_of_gst1_correctly_assesses_national_adaptation_plans_that_are_part_of_global_stocktake(
+    category, published_date, documents, expected_result
+):
+    test_family = NavigatorFamilyFactory.build(
+        import_id="family",
+        title="GST1 party family",
+        summary="Family summary",
+        category=category,
+        published_date=published_date,
+        last_updated_date=None,
+        created="2026-01-01T00:00:00Z",
+        corpus=NavigatorCorpusFactory.build(
+            import_id="UNFCCC.corpus.i00000001.n0000",
+            corpus_type=NavigatorCorpusTypeFactory.build(name="Intl. agreements"),
+            organisation=NavigatorOrganisationFactory.build(id=1, name="UNFCCC"),
+            attribution_url="testurl.org",
+            corpus_text="Test corpus",
+            corpus_image_url="corpus_image.png",
+        ),
+        documents=documents,
+        events=[],
+        collections=[],
+        geographies=["AUS"],
+        slug="family-with-different-document-statuses-slug",
+        metadata={},
     )
 
     assert _part_of_gst1(test_family) == expected_result
