@@ -79,7 +79,7 @@ def test_FamilyPublic_uses_date_from_event_with_datetime_event_name_for_publishe
     assert family.published_date == datetime_event.date
 
 
-def test_FamilyPublic_uses_date_from_earlierst_event_for_published_date_when_datetime_event_not_present():
+def test_FamilyPublic_uses_date_from_earliest_event_for_published_date_when_datetime_event_not_present():
     events = [
         FamilyEvent(
             import_id="1234",
