@@ -3,3 +3,7 @@ config:
   data-in-api:cdn-url: https://cdn.climatepolicyradar.org
   data-in-api:api_data_reader_db_user:
     secure: AAABAO3YTAdJERt4RSB3kfyBtcK4FQvc1ORNpOaKtch1TZFQDP14sC5sDlA2tmk=
+  aws:defaultTags:
+    tags:
+      Team: fusion
+      Environment: production
