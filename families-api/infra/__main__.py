@@ -202,6 +202,13 @@ primary_container = ExpressGatewayServicePrimaryContainerArgs(
     ],
 )
 
+# Task sizing is set per-stack so non-production environments can run smaller.
+task_cpu = pulumi_config.require("task-cpu")
+task_memory = pulumi_config.require("task-memory")
+min_task_count = pulumi_config.require_int("min-task-count")
+max_task_count = pulumi_config.require_int("max-task-count")
+auto_scaling_target_value = pulumi_config.require_int("auto-scaling-target-value")
+
 ecs_express_service = ExpressGatewayService(
     f"{NAME_PREFIX}-ecs-express-service",
     service_name=NAME_PREFIX,
@@ -211,14 +218,14 @@ ecs_express_service = ExpressGatewayService(
     task_role_arn=ecs_task_role.arn,
     primary_container=primary_container,
     health_check_path="/health",
-    cpu="2048",
-    memory="4096",
+    cpu=task_cpu,
+    memory=task_memory,
     scaling_targets=[
         ExpressGatewayServiceScalingTargetArgs(
             auto_scaling_metric="AVERAGE_CPU",
-            auto_scaling_target_value=70,
-            min_task_count=2,
-            max_task_count=4,
+            auto_scaling_target_value=auto_scaling_target_value,
+            min_task_count=min_task_count,
+            max_task_count=max_task_count,
         ),
     ],
     network_configurations=[
