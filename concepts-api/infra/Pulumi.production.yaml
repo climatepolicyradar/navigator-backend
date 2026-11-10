@@ -1,2 +1,7 @@
 config:
   aws:region: eu-west-1
+  concepts-api:task-cpu: "1024"
+  concepts-api:task-memory: "2048"
+  concepts-api:min-task-count: "2"
+  concepts-api:max-task-count: "4"
+  concepts-api:auto-scaling-target-value: "70"
