@@ -1,4 +1,9 @@
 config:
   aws:region: eu-west-1
+  geographies-api:task-cpu: "1024"
+  geographies-api:task-memory: "2048"
+  geographies-api:min-task-count: "2"
+  geographies-api:max-task-count: "4"
+  geographies-api:auto-scaling-target-value: "70"
   geographies-api:geographies_bucket: cpr-production-document-cache
   geographies-api:cdn_url: https://cdn.climatepolicyradar.org
