@@ -355,6 +355,7 @@ class FamilyPublic(FamilyBase):
             event.date
             for event in self.unparsed_events
             if event.valid_metadata is not None
+            and event.valid_metadata.get("datetime_event_name")
             and event.event_type_name == event.valid_metadata["datetime_event_name"][0]
         ]
 
