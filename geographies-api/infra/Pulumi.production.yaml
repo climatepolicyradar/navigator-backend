@@ -7,3 +7,7 @@ config:
   geographies-api:auto-scaling-target-value: "70"
   geographies-api:geographies_bucket: cpr-production-document-cache
   geographies-api:cdn_url: https://cdn.climatepolicyradar.org
+  aws:defaultTags:
+    tags:
+      Team: fusion
+      Environment: production

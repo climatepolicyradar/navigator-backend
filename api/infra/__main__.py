@@ -37,7 +37,15 @@ else:
     api_route53_zone_id = aws_env_stack.get_output("root_zone_id")
     # create an alias record
 
-us_east_1 = aws.Provider("us-east-1", region="us-east-1")
+# explicit providers do not inherit the stack's aws:defaultTags, so the same
+# defaults have to be passed in for us-east-1 resources to be tagged too
+default_tags = pulumi.Config("aws").require_object("defaultTags")
+
+us_east_1 = aws.Provider(
+    "us-east-1",
+    region="us-east-1",
+    default_tags=aws.ProviderDefaultTagsArgs(tags=default_tags["tags"]),
+)
 
 api_certificate = aws.acm.Certificate(
     "api-climatepolicyradar-org-cert",

@@ -1,3 +1,7 @@
 config:
   aws:region: eu-west-1
   url: api.staging.climatepolicyradar.org
+  aws:defaultTags:
+    tags:
+      Team: fusion
+      Environment: staging

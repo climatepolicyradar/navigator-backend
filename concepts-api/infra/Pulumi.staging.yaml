@@ -1,5 +1,9 @@
 config:
   aws:region: eu-west-1
+  aws:defaultTags:
+    tags:
+      Team: fusion
+      Environment: staging
   concepts-api:task-cpu: "512"
   concepts-api:task-memory: "1024"
   concepts-api:min-task-count: "1"
