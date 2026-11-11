@@ -109,3 +109,46 @@ def test_FamilyPublic_uses_date_from_earliest_event_for_published_date_when_date
     )
 
     assert family.published_date == events[0].date
+
+
+def test_FamilyPublic_uses_date_from_earliest_datetime_event_for_published_date_when_multiple_present():
+    earlier_event_date = datetime(2020, 1, 1, 0, 00)
+    later_event_date = datetime(2023, 1, 1, 0, 00)
+
+    events = [
+        FamilyEvent(
+            import_id="1234",
+            title="Test",
+            date=later_event_date,
+            event_type_name="Passed/Approved",
+            status="",
+            valid_metadata={"datetime_event_name": ["Passed/Approved"]},
+        ),
+        FamilyEvent(
+            import_id="1235",
+            title="Test",
+            date=earlier_event_date,
+            event_type_name="Passed/Approved",
+            status="",
+            valid_metadata={"datetime_event_name": ["Passed/Approved"]},
+        ),
+    ]
+
+    family = FamilyPublic(
+        import_id="Test",
+        title="Test",
+        concepts=[],
+        corpus=CorpusPublic(
+            import_id="Test",
+            title="Test",
+            corpus_type_name="Test",
+            corpus_text="Test",
+            attribution_url=None,
+            corpus_image_url=None,
+            organisation=Organisation(id=1, name="Test"),
+            corpus_type=CorpusTypePublic(name="Test", description=""),
+        ),
+        unparsed_events=events,
+    )
+
+    assert family.published_date == earlier_event_date

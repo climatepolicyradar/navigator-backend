@@ -351,16 +351,15 @@ class FamilyPublic(FamilyBase):
     def published_date(self) -> datetime | None:
         # datetime_event_name stores the value of the event.event_type_name that should be used for published_date
         # otherwise we use the earliest date
-        published_event_date = next(
-            (
-                event.date
-                for event in self.unparsed_events
-                if event.valid_metadata is not None
-                and event.event_type_name
-                == event.valid_metadata["datetime_event_name"][0]
-            ),
-            None,
-        )
+        published_event_dates = [
+            event.date
+            for event in self.unparsed_events
+            if event.valid_metadata is not None
+            and event.event_type_name == event.valid_metadata["datetime_event_name"][0]
+        ]
+
+        published_event_date = min((published_event_dates), default=None)
+
         earliest_event_date = min(
             (event.date for event in self.unparsed_events if event.date), default=None
         )
