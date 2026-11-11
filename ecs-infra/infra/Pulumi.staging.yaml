@@ -1,2 +1,6 @@
 config:
   aws:region: eu-west-1
+  aws:defaultTags:
+    tags:
+      Team: fusion
+      Environment: staging
