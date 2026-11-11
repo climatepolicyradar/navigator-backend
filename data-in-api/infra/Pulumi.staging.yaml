@@ -1,6 +1,11 @@
 config:
   aws:region: eu-west-1
   data-in-api:cdn-url: https://cdn.dev.climatepolicyradar.org
+  data-in-api:task-cpu: "512"
+  data-in-api:task-memory: "1024"
+  data-in-api:min-task-count: "1"
+  data-in-api:max-task-count: "2"
+  data-in-api:auto-scaling-target-value: "70"
   data-in-api:api_data_reader_db_user:
     secure: AAABADCiXpGVdosOlsitmWHw6Np1a4Fa00xc3ZjgA61HQ76xU9ZXs68pXmUJWIY=
   aws:defaultTags:

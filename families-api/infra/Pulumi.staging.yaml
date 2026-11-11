@@ -1,5 +1,10 @@
 config:
   aws:region: eu-west-1
+  families-api:task-cpu: "512"
+  families-api:task-memory: "1024"
+  families-api:min-task-count: "1"
+  families-api:max-task-count: "2"
+  families-api:auto-scaling-target-value: "70"
   # GOTCHA: This is `.dev` as we're still migrating over URLs
   families-api:cdn_url: https://cdn.dev.climatepolicyradar.org
   families-api:apprunner_vpc_connector_arn:
