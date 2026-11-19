@@ -477,9 +477,9 @@ class FamilyDocument(FamilyDocumentBase, table=True):
 
         # pyright: ignore[reportArgumentType]
         return select(FamilyDocument).options(
-            joinedload(FamilyDocument.physical_document)  # type: ignore
-            .selectinload(PhysicalDocument.unparsed_language_links)  # type: ignore
-            .joinedload(PhysicalDDocumentLanguageLink.language),  # type: ignore
+            joinedload(FamilyDocument.physical_document).selectinload(  # type: ignore
+                PhysicalDocument.unparsed_language_links  # type: ignore
+            ),  # type: ignore
             joinedload(FamilyDocument.family).options(  # type: ignore
                 selectinload(Family.unparsed_events),  # type: ignore
                 selectinload(Family.unparsed_geographies),  # type: ignore
@@ -587,7 +587,7 @@ class PhysicalDDocumentLanguageLink(SQLModel, table=True):
     document_id: int = Field(foreign_key="physical_document.id", primary_key=True)
     source: str = Field(primary_key=True)
     visible: bool
-    language: "Language" = Relationship()
+    language: "Language" = Relationship(sa_relationship_kwargs={"lazy": "joined"})
 
 
 class Language(SQLModel, table=True):
