@@ -547,7 +547,7 @@ class FamilyDocumentPublic(FamilyDocumentBase):
         links = self.physical_document.unparsed_language_links
         # Not `visible`: the admin service saves edited languages hidden.
         user_links = [link for link in links if link.source == "USER"]
-        return [link.language.language_code for link in user_links or links]
+        return sorted(link.language.language_code for link in user_links or links)
 
     @computed_field
     @property
