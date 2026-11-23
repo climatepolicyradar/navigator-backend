@@ -478,7 +478,7 @@ class FamilyDocument(FamilyDocumentBase, table=True):
         # pyright: ignore[reportArgumentType]
         return select(FamilyDocument).options(
             joinedload(FamilyDocument.physical_document).selectinload(  # type: ignore
-                PhysicalDocument.unparsed_languages  # type: ignore
+                PhysicalDocument.unparsed_language_links  # type: ignore
             ),  # type: ignore
             joinedload(FamilyDocument.family).options(  # type: ignore
                 selectinload(Family.unparsed_events),  # type: ignore
@@ -539,19 +539,15 @@ class FamilyDocumentPublic(FamilyDocumentBase):
     @computed_field
     @property
     def language(self) -> str | None:
-        return (
-            self.physical_document.unparsed_languages[0].language_code
-            if self.physical_document.unparsed_languages
-            else None
-        )
+        return next(iter(self.languages), None)
 
     @computed_field
     @property
     def languages(self) -> list[str]:
-        return [
-            language.language_code
-            for language in self.physical_document.unparsed_languages
-        ]
+        links = self.physical_document.unparsed_language_links
+        # Not `visible`: the admin service saves edited languages hidden.
+        user_links = [link for link in links if link.source == "USER"]
+        return sorted(link.language.language_code for link in user_links or links)
 
     @computed_field
     @property
@@ -589,8 +585,9 @@ class PhysicalDDocumentLanguageLink(SQLModel, table=True):
     __tablename__ = "physical_document_language"  # type: ignore[assignment]
     language_id: int = Field(foreign_key="language.id", primary_key=True)
     document_id: int = Field(foreign_key="physical_document.id", primary_key=True)
-    source: str
+    source: str = Field(primary_key=True)
     visible: bool
+    language: "Language" = Relationship(sa_relationship_kwargs={"lazy": "joined"})
 
 
 class Language(SQLModel, table=True):
@@ -613,9 +610,7 @@ class PhysicalDocumentBase(SQLModel):
 class PhysicalDocument(PhysicalDocumentBase, table=True):
     __tablename__ = "physical_document"  # type: ignore[assignment]
     family_document: FamilyDocument = Relationship(back_populates="physical_document")
-    unparsed_languages: list[Language] = Relationship(
-        link_model=PhysicalDDocumentLanguageLink
-    )
+    unparsed_language_links: list[PhysicalDDocumentLanguageLink] = Relationship()
 
 
 class PhysicalDocumentPublic(PhysicalDocumentBase):

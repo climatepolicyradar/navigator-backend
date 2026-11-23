@@ -9,6 +9,8 @@ from app.models import (
     FamilyDocument,
     FamilyDocumentStatus,
     FamilyPublic,
+    Language,
+    PhysicalDDocumentLanguageLink,
     PhysicalDocument,
 )
 from app.router import APIListResponse, ConceptPublic
@@ -414,3 +416,56 @@ def test_read_family_returns_410_when_all_documents_are_deleted(
     response = client.get(f"/families/{family.import_id}")
 
     assert response.status_code == HTTPStatus.GONE
+
+
+@pytest.mark.parametrize(
+    ("sources", "expected"),
+    [
+        ([("swe", "MODEL"), ("zho", "MODEL"), ("zho", "USER")], ["zho"]),
+        ([("swe", "MODEL")], ["swe"]),
+        ([("zho", "MODEL"), ("swe", "MODEL")], ["swe", "zho"]),
+        ([("zho", "USER"), ("swe", "USER")], ["swe", "zho"]),
+    ],
+    ids=[
+        "user entered over detected",
+        "detected when none entered",
+        "several detected",
+        "several user entered",
+    ],
+)
+def test_read_family_prefers_user_entered_document_languages(
+    client: TestClient,
+    session: Session,
+    make_family,
+    sources: list[tuple[str, str]],
+    expected: list[str],
+):
+    (corpus_type, corpus, family, family_document, physical_document) = make_family(1)
+    languages = {
+        "zho": Language(
+            id=1, language_code="zho", part1_code="zh", part2_code="chi", name="Chinese"
+        ),
+        "swe": Language(
+            id=2, language_code="swe", part1_code="sv", part2_code="swe", name="Swedish"
+        ),
+    }
+    physical_document.unparsed_language_links = [
+        PhysicalDDocumentLanguageLink(
+            language_id=languages[code].id,
+            document_id=physical_document.id,
+            source=source,
+            visible=False,
+            language=languages[code],
+        )
+        for code, source in sources
+    ]
+
+    session.add_all([corpus_type, corpus, family, family_document, physical_document])
+    session.commit()
+
+    response = client.get(f"/families/{family.import_id}")
+
+    assert response.status_code == HTTPStatus.OK
+    [document] = response.json()["data"]["documents"]
+    assert document["languages"] == expected
+    assert document["language"] == expected[0]
