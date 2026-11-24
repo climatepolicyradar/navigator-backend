@@ -119,6 +119,10 @@ def search_documents(
     the search database. The continuation token can be used to get the next set of
     results from the search database. See the request schema for more details.
     """
+    # Vespa has been retired: gate this endpoint. Remove this line to restore.
+    raise HTTPException(
+        status_code=status.HTTP_410_GONE, detail="Search has been retired"
+    )
     _LOGGER.info(
         "Search request",
         extra={
@@ -171,6 +175,10 @@ def download_search_documents(
     vespa_search_adapter: VespaSearchAdapter = Depends(get_vespa_search_adapter),
 ) -> StreamingResponse:
     """Download a CSV containing details of documents matching the search criteria."""
+    # Vespa has been retired: gate this endpoint. Remove this line to restore.
+    raise HTTPException(
+        status_code=status.HTTP_410_GONE, detail="Search has been retired"
+    )
     token = AppTokenFactory()
 
     _LOGGER.info(

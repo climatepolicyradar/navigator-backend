@@ -1,5 +1,5 @@
 import logging
-from http.client import NOT_FOUND, UNPROCESSABLE_ENTITY
+from http.client import GONE, NOT_FOUND, UNPROCESSABLE_ENTITY
 from typing import Annotated, Union
 
 from cpr_sdk.search_adaptors import VespaSearchAdapter
@@ -94,6 +94,8 @@ def family_detail_from_vespa(  # noqa: PLR0913
     :return FamilySearchResponse: An object representing the family in
         Vespa - including concepts.
     """
+    # Vespa has been retired: gate this endpoint. Remove this line to restore.
+    raise HTTPException(status_code=GONE, detail="This endpoint has been retired")
     _LOGGER.info(
         f"Getting detailed information for vespa family '{import_id}'",
         extra={
@@ -162,6 +164,8 @@ def doc_detail_from_vespa(
     :return FamilySearchResponse: An object representing the document in
         Vespa - including concepts.
     """
+    # Vespa has been retired: gate this endpoint. Remove this line to restore.
+    raise HTTPException(status_code=GONE, detail="This endpoint has been retired")
     _LOGGER.info(
         f"Getting detailed information for vespa document '{import_id}'",
         extra={

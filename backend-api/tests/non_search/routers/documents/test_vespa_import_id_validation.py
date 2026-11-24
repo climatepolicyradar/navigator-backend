@@ -17,6 +17,7 @@ from tests.non_search.routers.documents.setup_doc_fam_lookup import (
     FAMILIES_ENDPOINT,
     TEST_HOST,
 )
+from tests.utils import VESPA_RETIRED_SKIP
 
 # The slug that froze every backend-api task on 2026-10-12, plus other shapes
 # that are not import ids.
@@ -37,6 +38,7 @@ def _get(client: TestClient, path: str, token: str):
     return client.get(path, headers={"app-token": token, "origin": TEST_HOST})
 
 
+@VESPA_RETIRED_SKIP
 @pytest.mark.parametrize("malformed_id", MALFORMED_IDS)
 def test_vespa_family_route_rejects_malformed_import_id(
     data_client: TestClient, valid_token, malformed_id
@@ -47,6 +49,7 @@ def test_vespa_family_route_rejects_malformed_import_id(
     assert "is not a valid import id" in response.json()["detail"]
 
 
+@VESPA_RETIRED_SKIP
 @pytest.mark.parametrize("malformed_id", MALFORMED_IDS)
 def test_vespa_document_route_rejects_malformed_import_id(
     data_client: TestClient, valid_token, malformed_id
@@ -57,6 +60,7 @@ def test_vespa_document_route_rejects_malformed_import_id(
     assert "is not a valid import id" in response.json()["detail"]
 
 
+@VESPA_RETIRED_SKIP
 def test_rejection_does_not_require_a_valid_token(data_client: TestClient):
     """Validation runs before token decoding.
 
@@ -71,6 +75,7 @@ def test_rejection_does_not_require_a_valid_token(data_client: TestClient):
     assert response.status_code == status.HTTP_422_UNPROCESSABLE_ENTITY, response.text
 
 
+@VESPA_RETIRED_SKIP
 @pytest.mark.search
 @pytest.mark.parametrize("endpoint", [FAMILIES_ENDPOINT, VESPA_DOC_ENDPOINT])
 def test_well_formed_import_id_is_not_rejected_by_validation(

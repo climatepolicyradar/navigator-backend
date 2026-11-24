@@ -7,6 +7,9 @@ from tests.non_search.routers.documents.setup_doc_fam_lookup import (
     _make_vespa_fam_lookup_request,
 )
 from tests.search.vespa.setup_search_tests import _populate_db_families
+from tests.utils import VESPA_RETIRED_SKIP
+
+pytestmark = VESPA_RETIRED_SKIP
 
 
 @pytest.mark.search
