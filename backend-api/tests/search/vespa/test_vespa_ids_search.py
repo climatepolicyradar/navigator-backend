@@ -9,6 +9,9 @@ from tests.search.vespa.setup_search_tests import (
     _make_search_request,
     _populate_db_families,
 )
+from tests.utils import VESPA_RETIRED_SKIP
+
+pytestmark = VESPA_RETIRED_SKIP
 
 
 def _doc_ids_from_response(test_db: Session, response: dict) -> list[str]:
