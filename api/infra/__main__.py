@@ -111,6 +111,14 @@ api_cors_policy = aws.cloudfront.OriginRequestPolicy(
     query_strings_config={"query_string_behavior": "all"},
 )
 
+# For the MCP route, which needs every header passed through and no caching.
+caching_disabled_policy = aws.cloudfront.get_cache_policy(
+    name="Managed-CachingDisabled"
+)
+all_viewer_except_host_policy = aws.cloudfront.get_origin_request_policy(
+    name="Managed-AllViewerExceptHostHeader"
+)
+
 
 api_cloudfront_distribution = aws.cloudfront.Distribution(
     url,
@@ -274,6 +282,24 @@ api_cloudfront_distribution = aws.cloudfront.Distribution(
         ]
         + (
             [
+                # Must come before `/search/*`, which only allows GET.
+                aws.cloudfront.DistributionOrderedCacheBehaviorArgs(
+                    path_pattern="/search/mcp*",
+                    allowed_methods=[
+                        "HEAD",
+                        "GET",
+                        "OPTIONS",
+                        "PUT",
+                        "POST",
+                        "PATCH",
+                        "DELETE",
+                    ],
+                    cached_methods=["HEAD", "GET"],
+                    target_origin_id="search-ecs-express",
+                    viewer_protocol_policy="https-only",
+                    cache_policy_id=caching_disabled_policy.id,
+                    origin_request_policy_id=all_viewer_except_host_policy.id,
+                ),
                 aws.cloudfront.DistributionOrderedCacheBehaviorArgs(
                     path_pattern="/search/*",
                     allowed_methods=[
