@@ -119,10 +119,60 @@ all_viewer_except_host_policy = aws.cloudfront.get_origin_request_policy(
     name="Managed-AllViewerExceptHostHeader"
 )
 
+# Only prod has the MCP route, so only prod needs the WAF.
+api_web_acl_arn = None
+if search_stack:
+    # CloudFront web ACLs have to live in us-east-1.
+    api_web_acl = aws.wafv2.WebAcl(
+        "api-web-acl",
+        name="api-web-acl",
+        scope="CLOUDFRONT",
+        default_action={"allow": {}},
+        rules=[
+            {
+                "name": "mcp-rate-limit",
+                "priority": 0,
+                # Count only. claude.ai users share a few IPs, so blocking hits all.
+                "action": {"count": {}},
+                "statement": {
+                    "rate_based_statement": {
+                        "limit": 1_000,
+                        "evaluation_window_sec": 300,
+                        "aggregate_key_type": "IP",
+                        "scope_down_statement": {
+                            "byte_match_statement": {
+                                "search_string": "/search/mcp",
+                                "positional_constraint": "STARTS_WITH",
+                                "field_to_match": {"uri_path": {}},
+                                "text_transformations": [
+                                    {"priority": 0, "type": "URL_DECODE"},
+                                    {"priority": 1, "type": "NORMALIZE_PATH"},
+                                ],
+                            }
+                        },
+                    }
+                },
+                "visibility_config": {
+                    "cloudwatch_metrics_enabled": True,
+                    "metric_name": "mcp-rate-limit",
+                    "sampled_requests_enabled": True,
+                },
+            }
+        ],
+        visibility_config={
+            "cloudwatch_metrics_enabled": True,
+            "metric_name": "api-web-acl",
+            "sampled_requests_enabled": True,
+        },
+        opts=pulumi.ResourceOptions(provider=us_east_1),
+    )
+    api_web_acl_arn = api_web_acl.arn
+
 
 api_cloudfront_distribution = aws.cloudfront.Distribution(
     url,
     comment="API",
+    web_acl_id=api_web_acl_arn,
     origins=[
         aws.cloudfront.DistributionOriginArgs(
             domain_name=families_api_stack.get_output("ecs_express_service_url"),
