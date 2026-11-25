@@ -128,40 +128,42 @@ if search_stack:
         name="api-web-acl",
         scope="CLOUDFRONT",
         default_action={"allow": {}},
-        rules=[
-            {
-                "name": "mcp-rate-limit",
-                "priority": 0,
-                # Count only. claude.ai users share a few IPs, so blocking hits all.
-                "action": {"count": {}},
-                "statement": {
-                    "rate_based_statement": {
-                        "limit": 1_000,
-                        "evaluation_window_sec": 300,
-                        "aggregate_key_type": "IP",
-                        "scope_down_statement": {
-                            "byte_match_statement": {
-                                "search_string": "/search/mcp",
-                                "positional_constraint": "STARTS_WITH",
-                                "field_to_match": {"uri_path": {}},
-                                "text_transformations": [
-                                    {"priority": 0, "type": "URL_DECODE"},
-                                    {"priority": 1, "type": "NORMALIZE_PATH"},
-                                ],
-                            }
-                        },
-                    }
-                },
-                "visibility_config": {
-                    "cloudwatch_metrics_enabled": True,
-                    "metric_name": "mcp-rate-limit",
-                    "sampled_requests_enabled": True,
-                },
-            }
-        ],
         visibility_config={
             "cloudwatch_metrics_enabled": True,
             "metric_name": "api-web-acl",
+            "sampled_requests_enabled": True,
+        },
+        # Rules are managed as separate WebAclRule resources.
+        opts=pulumi.ResourceOptions(provider=us_east_1, ignore_changes=["rules"]),
+    )
+    aws.wafv2.WebAclRule(
+        "mcp-rate-limit",
+        name="mcp-rate-limit",
+        web_acl_arn=api_web_acl.arn,
+        priority=0,
+        # Count only. claude.ai users share a few IPs, so blocking hits all.
+        action={"count": {}},
+        statement={
+            "rate_based_statement": {
+                "limit": 1_000,
+                "evaluation_window_sec": 300,
+                "aggregate_key_type": "IP",
+                "scope_down_statement": {
+                    "byte_match_statement": {
+                        "search_string": "/search/mcp",
+                        "positional_constraint": "STARTS_WITH",
+                        "field_to_match": {"uri_path": {}},
+                        "text_transformations": [
+                            {"priority": 0, "type": "URL_DECODE"},
+                            {"priority": 1, "type": "NORMALIZE_PATH"},
+                        ],
+                    }
+                },
+            }
+        },
+        visibility_config={
+            "cloudwatch_metrics_enabled": True,
+            "metric_name": "mcp-rate-limit",
             "sampled_requests_enabled": True,
         },
         opts=pulumi.ResourceOptions(provider=us_east_1),
