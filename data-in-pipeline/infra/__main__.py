@@ -160,8 +160,9 @@ aurora_subnet_group = aws.rds.SubnetGroup(
 # Allow our Bastion to access the Aurora cluster.
 #######################################################################
 
-# Get backend stack reference to access bastion security group
-backend_stack = pulumi.StackReference(f"climatepolicyradar/backend/{environment}")
+# Get the bastion stack reference to access the bastion security group. The
+# bastion lives in the internal-tools repo (tools/bastion).
+bastion_stack = pulumi.StackReference(f"climatepolicyradar/bastion/{environment}")
 
 # Allow bastion SG ingress to RDS SG
 bastion_ingress_to_rds = aws.ec2.SecurityGroupRule(
@@ -171,18 +172,18 @@ bastion_ingress_to_rds = aws.ec2.SecurityGroupRule(
     to_port=db_port,
     protocol="tcp",
     security_group_id=aurora_security_group.id,
-    source_security_group_id=backend_stack.get_output("bastion_security_group_id"),
+    source_security_group_id=bastion_stack.get_output("bastion_security_group_id"),
     description="Allow Postgres from bastion SG",
 )
 
-# Allow bastion SG egress to RDS SG (needed for socat tunnel)
+# Allow bastion SG egress to RDS SG (needed to tunnel to Aurora through the bastion)
 bastion_egress_to_rds = aws.ec2.SecurityGroupRule(
     f"{name}-{environment}-bastion-egress-to-rds",
     type="egress",
     from_port=db_port,
     to_port=db_port,
     protocol="tcp",
-    security_group_id=backend_stack.get_output("bastion_security_group_id"),
+    security_group_id=bastion_stack.get_output("bastion_security_group_id"),
     source_security_group_id=aurora_security_group.id,
     description="Allow Postgres to RDS SG from bastion",
 )
