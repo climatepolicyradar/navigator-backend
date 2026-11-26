@@ -87,7 +87,7 @@ jobs:
           fi
           jq -n --arg msg "$MESSAGE" '{text: $msg, mrkdwn: true}' > slack-payload.json
 
-      - uses: slackapi/slack-github-action@v4.0.0
+      - uses: slackapi/slack-github-action@v4.1.0
         with:
           webhook: ${{ secrets.SLACK_WEBHOOK_URL_PRODUCTION_UPDATES_CHANNEL }}
           webhook-type: incoming-webhook
@@ -162,7 +162,7 @@ jobs:
           MESSAGE="❌ Deploying ${DEPLOY_SHA:0:7} to the production *backend-api* failed (<${RUN_URL}|logs>)"
           jq -n --arg msg "$MESSAGE" '{text: $msg, mrkdwn: true}' > slack-payload.json
 
-      - uses: slackapi/slack-github-action@v4.0.0
+      - uses: slackapi/slack-github-action@v4.1.0
         if: failure()
         with:
           webhook: ${{ secrets.SLACK_WEBHOOK_URL_PRODUCTION_UPDATES_CHANNEL }}
