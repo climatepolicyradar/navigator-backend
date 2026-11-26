@@ -223,7 +223,7 @@ aurora_cluster = aws.rds.Cluster(
         min_capacity=min_acus,
         max_capacity=max_acus,
     ),
-    tags=tags,
+    tags={**tags, "Backup": "true"},
 )
 
 aurora_instances = [
